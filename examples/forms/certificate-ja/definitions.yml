@@ -1,0 +1,53 @@
+version: 0.2.0
+type: object
+properties:
+  certificate:
+    type: object
+    properties:
+      number:
+        type: string
+        title: 証書番号
+        example: 2026-0342
+      verify_url:
+        type: string
+        title: 検証ページURL
+        example: https://school.shojikudo.example/verify/2026-0342
+    title: 証書
+  recipient:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 受講者名
+        example: 高橋 栞
+    title: 受講者
+  course:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 講座名
+        example: 活版印刷と本づくりの基礎
+      sessions:
+        type: number
+        title: 回数
+        example: 8
+      hours:
+        type: number
+        title: 総時間
+        example: 16
+      completed_on:
+        type: string
+        format: date
+        title: 修了日
+        example: '2026-06-28'
+        displayFormat: wareki
+    title: 講座
+  issuer:
+    type: object
+    properties:
+      director:
+        type: string
+        title: 代表者名
+        example: 正直 誠一郎
+    title: 発行者

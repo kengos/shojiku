@@ -1,0 +1,12 @@
+version: 1
+license: OFL-1.1
+redistributable: true
+faces:
+  - id: noto-sans-tc
+    file: NotoSansTC-Regular.otf
+    sha256: 5bab0cb3c1cf89dde07c4a95a4054b195afbcfe784d69d75c340780712237537
+  - id: noto-sans-tc-bold
+    file: NotoSansTC-Bold.otf
+    sha256: 55420b259eb119bf5f2a0aadba10cf9d736c12d64ab93e78546d69ef5f43558b
+    family: noto-sans-tc
+    weight: bold

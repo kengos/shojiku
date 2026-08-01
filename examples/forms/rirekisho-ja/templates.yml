@@ -1,0 +1,304 @@
+version: "0.1.0"
+name: rirekisho_ja
+
+page:
+  size: { w: "420mm", h: "297mm" }
+  margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" }
+
+defaults:
+  locale: ja-JP
+  style: { fontFamily: biz-udp-gothic, fontSize: 9 }
+  formats:
+    date: wareki
+
+styles:
+  label_sm: { fontSize: 7, color: "#444444" }
+  label_md: { fontSize: 8, fontWeight: bold }
+  value_lg: { fontSize: 16, fontWeight: bold }
+  box_title: { fontSize: 26, fontWeight: bold }
+  caption_sm: { fontSize: 5.5, color: "#555555", lineHeight: 1.3 }
+
+sections:
+  body:
+    type: absolute
+    items:
+      # ---------------------------------------------------------------
+      # LEFT HALF — header
+      # ---------------------------------------------------------------
+      - type: text
+        box: { x: "0mm", y: "0mm", w: "90mm", h: "14mm" }
+        styleNames: [ box_title ]
+        text: 履歴書
+
+      - type: text
+        box: { x: "105mm", y: "4mm", w: "90mm", h: "7mm" }
+        style: { fontSize: 10, textAlign: right }
+        text: "{fill_date:wareki}　現在"
+
+      # ---------------------------------------------------------------
+      # LEFT HALF — personal info grid (x:0..195mm, y:18..94mm)
+      # ---------------------------------------------------------------
+      - type: rect
+        box: { x: "0mm", y: "18mm", w: "195mm", h: "76mm" }
+        style: { borderWidth: 1 }
+
+      # main/photo column divider
+      - type: rect
+        box: { x: "159mm", y: "18mm", w: "0.3mm", h: "76mm" }
+        style: { backgroundColor: "#000000" }
+
+      # row dividers within the main column (x:0..159)
+      - type: rect
+        box: { x: "0mm", y: "40mm", w: "159mm", h: "0.3mm" }
+        style: { backgroundColor: "#000000" }
+      - type: rect
+        box: { x: "0mm", y: "50mm", w: "159mm", h: "0.3mm" }
+        style: { backgroundColor: "#000000" }
+      - type: rect
+        box: { x: "0mm", y: "76mm", w: "159mm", h: "0.3mm" }
+        style: { backgroundColor: "#000000" }
+
+      # -- Row A: furigana / name (y:18..40) --------------------------
+      - type: rect
+        box: { x: "0mm", y: "25mm", w: "159mm", h: "0.3mm" }
+        style: { backgroundColor: "#000000" }
+      - type: rect
+        box: { x: "20mm", y: "18mm", w: "0.3mm", h: "22mm" }
+        style: { backgroundColor: "#000000" }
+      - type: text
+        box: { x: "1mm", y: "19mm", w: "18mm", h: "6mm" }
+        styleNames: [ label_sm ]
+        text: ふりがな
+      - type: text
+        box: { x: "22mm", y: "19mm", w: "135mm", h: "6mm" }
+        style: { fontSize: 9 }
+        data: { key: furigana_name }
+      - type: text
+        box: { x: "1mm", y: "28mm", w: "18mm", h: "11mm" }
+        styleNames: [ label_md ]
+        style: { verticalAlign: middle }
+        text: 氏名
+      - type: text
+        box: { x: "22mm", y: "27mm", w: "112mm", h: "13mm" }
+        styleNames: [ value_lg ]
+        style: { verticalAlign: middle }
+        data: { key: full_name }
+      - type: rect
+        box: { x: "140mm", y: "28mm", w: "12mm", h: "10mm" }
+        style: { borderWidth: 1 }
+      - type: text
+        box: { x: "140mm", y: "28mm", w: "12mm", h: "10mm" }
+        style: { fontSize: 7, textAlign: center, verticalAlign: middle, color: "#666666" }
+        text: 印
+
+      # -- Row B: birth date / gender (y:40..50) ----------------------
+      - type: rect
+        box: { x: "110mm", y: "40mm", w: "0.3mm", h: "10mm" }
+        style: { backgroundColor: "#000000" }
+      - type: text
+        box: { x: "1mm", y: "43mm", w: "22mm", h: "6mm" }
+        styleNames: [ label_sm ]
+        text: 生年月日
+      - type: text
+        box: { x: "24mm", y: "43mm", w: "84mm", h: "6mm" }
+        style: { fontSize: 10 }
+        text: "{birth_date:wareki}生（満{applicant_age}歳）"
+      - type: text
+        box: { x: "112mm", y: "41mm", w: "20mm", h: "5mm" }
+        styleNames: [ label_sm ]
+        text: 性別
+      - type: text
+        box: { x: "112mm", y: "46mm", w: "20mm", h: "6mm" }
+        style: { fontSize: 9, textAlign: center }
+        text: 男
+        mark: { data: { key: gender, equals: "male" } }
+      - type: text
+        box: { x: "134mm", y: "46mm", w: "20mm", h: "6mm" }
+        style: { fontSize: 9, textAlign: center }
+        text: 女
+        mark: { data: { key: gender, equals: "female" } }
+
+      # -- Row C: address (y:50..76) ----------------------------------
+      - type: rect
+        box: { x: "110mm", y: "50mm", w: "0.3mm", h: "26mm" }
+        style: { backgroundColor: "#000000" }
+      - type: rect
+        box: { x: "0mm", y: "57mm", w: "110mm", h: "0.3mm" }
+        style: { backgroundColor: "#000000" }
+      - type: rect
+        box: { x: "0mm", y: "66mm", w: "110mm", h: "0.3mm" }
+        style: { backgroundColor: "#000000" }
+      - type: text
+        box: { x: "1mm", y: "51mm", w: "18mm", h: "5mm" }
+        styleNames: [ label_sm ]
+        text: ふりがな
+      - type: text
+        box: { x: "20mm", y: "51mm", w: "88mm", h: "5mm" }
+        style: { fontSize: 8 }
+        data: { key: furigana_current_address }
+      - type: text
+        box: { x: "1mm", y: "58mm", w: "18mm", h: "7mm" }
+        styleNames: [ label_md ]
+        style: { verticalAlign: middle }
+        text: 現住所
+      - type: container
+        box: { x: "20mm", y: "58mm", w: "88mm", h: "7mm", direction: row, alignItems: center, gap: "1mm" }
+        items:
+          - type: text
+            box: { w: "5mm" }
+            style: { fontSize: 8 }
+            text: 〒
+          - type: char_grid
+            box: { w: "15mm" }
+            data: { key: postal_code_1 }
+            grid: { charsPerLine: 3, lines: 1, cellSize: "5mm" }
+          - type: text
+            box: { w: "4mm" }
+            style: { fontSize: 8, textAlign: center }
+            text: "-"
+          - type: char_grid
+            box: { w: "20mm" }
+            data: { key: postal_code_2 }
+            grid: { charsPerLine: 4, lines: 1, cellSize: "5mm" }
+      - type: text
+        box: { x: "20mm", y: "67mm", w: "88mm", h: "9mm" }
+        style: { fontSize: 9, lineHeight: 1.3 }
+        data: { key: current_address }
+      - type: text
+        box: { x: "112mm", y: "53mm", w: "40mm", h: "6mm" }
+        styleNames: [ label_sm ]
+        style: { textAlign: center }
+        text: 電話
+      - type: text
+        box: { x: "112mm", y: "61mm", w: "40mm", h: "8mm" }
+        style: { fontSize: 11, textAlign: center }
+        data: { key: current_phone }
+
+      # -- Row D: contact (y:76..94) ----------------------------------
+      - type: rect
+        box: { x: "110mm", y: "76mm", w: "0.3mm", h: "18mm" }
+        style: { backgroundColor: "#000000" }
+      - type: text
+        box: { x: "1mm", y: "78mm", w: "26mm", h: "6mm" }
+        styleNames: [ label_md ]
+        text: 連絡先
+      - type: text
+        box: { x: "28mm", y: "78mm", w: "80mm", h: "6mm" }
+        style: { fontSize: 9 }
+        data: { key: contact_note }
+      - type: text
+        box: { x: "1mm", y: "85mm", w: "100mm", h: "6mm" }
+        style: { fontSize: 5.5, color: "#555555" }
+        text: "（現住所以外に連絡を希望する場合のみ記入）"
+      - type: text
+        box: { x: "112mm", y: "78mm", w: "40mm", h: "6mm" }
+        styleNames: [ label_sm ]
+        style: { textAlign: center }
+        text: 電話
+      - type: text
+        box: { x: "112mm", y: "85mm", w: "40mm", h: "7mm" }
+        style: { fontSize: 10, textAlign: center }
+        data: { key: contact_phone_note }
+
+      # -- Photo column (x:159..195, y:18..94) --------------------------
+      - type: text
+        box: { x: "160mm", y: "19mm", w: "34mm", h: "6mm" }
+        style: { fontSize: 6, textAlign: center, color: "#555555" }
+        text: 写真を貼る位置
+      - type: rect
+        box: { x: "163mm", y: "26mm", w: "28mm", h: "37mm" }
+        style: { borderWidth: 1 }
+      - type: text
+        box: { x: "160mm", y: "65mm", w: "34mm", h: "26mm" }
+        styleNames: [ caption_sm ]
+        style: { textAlign: center }
+        text: |-
+          縦36～40mm
+          横24～30mm
+          本人単身胸から上
+          （提出3か月以内撮影）
+
+      # ---------------------------------------------------------------
+      # LEFT HALF — education/employment table (y:100..277)
+      # ---------------------------------------------------------------
+      - type: table
+        id: education_table
+        box: { x: "0mm", y: "100mm", w: "195mm", h: "177mm" }
+        data: { key: education_history }
+        cellPadding: 3
+        style: { borderWidth: 0.5 }
+        header:
+          height: "9mm"
+          style: { backgroundColor: "#ededed", fontWeight: bold }
+        row:
+          height: "8mm"
+          conditionalStyles:
+            # Education/employment heading rows center; the closing 以上 row right-aligns.
+            - when: { key: kind, equals: heading }
+              style: { textAlign: center }
+            - when: { key: kind, equals: end }
+              style: { textAlign: right }
+        columns:
+          - { label: 年, data: { key: year }, width: "18mm", style: { textAlign: center } }
+          - { label: 月, data: { key: month }, width: "14mm", style: { textAlign: center } }
+          - { label: "学歴・職歴（各項目ごとにまとめて書く）", data: { key: item } }
+
+      # ---------------------------------------------------------------
+      # RIGHT HALF — licenses/qualifications table (x:205..400, y:0..90)
+      # ---------------------------------------------------------------
+      - type: table
+        id: licenses_table
+        box: { x: "205mm", y: "18mm", w: "195mm", h: "90mm" }
+        data: { key: licenses }
+        cellPadding: 3
+        style: { borderWidth: 0.5 }
+        header:
+          height: "9mm"
+          style: { backgroundColor: "#ededed", fontWeight: bold }
+        row:
+          height: "8.1mm"
+        columns:
+          - { label: 年, data: { key: year }, width: "18mm", style: { textAlign: center } }
+          - { label: 月, data: { key: month }, width: "14mm", style: { textAlign: center } }
+          - { label: 免許・資格, data: { key: item } }
+
+      # ---------------------------------------------------------------
+      # RIGHT HALF — motivation / self-PR / hobbies (y:94..204)
+      # ---------------------------------------------------------------
+      - type: rect
+        box: { x: "205mm", y: "112mm", w: "195mm", h: "92mm" }
+        style: { borderWidth: 1 }
+      - type: text
+        box: { x: "207mm", y: "114mm", w: "190mm", h: "6mm" }
+        styleNames: [ label_md ]
+        text: 志望の動機、自己PR、趣味・特技など
+      - type: rect
+        box: { x: "205mm", y: "122mm", w: "195mm", h: "0.3mm" }
+        style: { backgroundColor: "#000000" }
+      - type: text
+        box: { x: "207mm", y: "125mm", w: "190mm", h: "77mm" }
+        style: { fontSize: 10, lineHeight: 1.7 }
+        data: { key: motivation_text }
+
+      # ---------------------------------------------------------------
+      # RIGHT HALF — applicant-requests box (y:208..277)
+      # ---------------------------------------------------------------
+      - type: rect
+        box: { x: "205mm", y: "208mm", w: "195mm", h: "69mm" }
+        style: { borderWidth: 1 }
+      - type: text
+        box: { x: "207mm", y: "210mm", w: "190mm", h: "6mm" }
+        styleNames: [ label_md ]
+        text: 本人希望記入欄（特に給料・職種・勤務時間・勤務地・その他についての希望などがあれば記入）
+      - type: rect
+        box: { x: "205mm", y: "218mm", w: "195mm", h: "0.3mm" }
+        style: { backgroundColor: "#000000" }
+      - type: text
+        box: { x: "207mm", y: "221mm", w: "190mm", h: "44mm" }
+        style: { fontSize: 10, lineHeight: 1.7 }
+        data: { key: desired_conditions }
+      - type: text
+        box: { x: "207mm", y: "268mm", w: "190mm", h: "7mm" }
+        spans:
+          - { text: "メールアドレス　", styleNames: [ label_md ] }
+          - { data: { key: email }, style: { fontSize: 10 } }

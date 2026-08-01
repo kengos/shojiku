@@ -1,0 +1,111 @@
+version: 0.2.0
+type: object
+properties:
+  receipt:
+    type: object
+    properties:
+      number:
+        type: string
+        title: 收據編號
+        example: R-2026-0314-001
+      issued_at:
+        type: string
+        format: date-time
+        title: 開立日期
+        example: '2026-03-14T15:30:00+08:00'
+        displayFormats:
+        - id: default
+          label: 標準
+        - id: date
+          label: 僅日期
+        - id: long
+          label: 完整日期
+    title: 收據
+  recipient:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 抬頭
+        example: 陳雅婷
+    title: 抬頭
+  amount:
+    type: object
+    properties:
+      total_in_tax:
+        type: number
+        format: currency
+        title: 含稅總計
+        example: 3990
+        currency: TWD
+        precision: 0
+        recommendedStyle:
+          textAlign: right
+      total_ex_tax:
+        type: number
+        format: currency
+        title: 未稅金額
+        example: 3800
+        currency: TWD
+        precision: 0
+      tax:
+        type: number
+        format: currency
+        title: 營業稅
+        example: 190
+        currency: TWD
+        precision: 0
+    title: 金額
+  purpose:
+    type: string
+    title: 事由
+    example: 書籍及文具
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 單位名稱
+        example: 誠正圖書股份有限公司
+      tax_id:
+        type: string
+        title: 統一編號
+        example: 統一編號 12345678
+      address:
+        type: string
+        title: 地址
+        example: 臺北市中正區重慶南路一段 12 號
+      tel:
+        type: string
+        title: 電話
+        example: 電話 02-2311-4567
+    title: 開立單位
+  items:
+    type: array
+    title: 明細
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: 品名
+          example: 書籍
+        quantity:
+          type: number
+          format: quantity
+          title: 數量
+          example: 1
+          unit: item
+        unit_price:
+          type: number
+          format: currency
+          title: 單價
+          example: 1200
+          precision: 0
+        amount:
+          type: number
+          format: currency
+          title: 金額
+          example: 1200
+          precision: 0
+      title: 明細列

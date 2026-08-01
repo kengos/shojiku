@@ -1,0 +1,41 @@
+{
+  "receipt": {
+    "number": "R-2026-0314-001",
+    "issued_at": "2026-03-14T15:30:00+08:00"
+  },
+  "recipient": {
+    "name": "陳雅婷"
+  },
+  "amount": {
+    "total_in_tax": 3990,
+    "total_ex_tax": 3800,
+    "tax": 190
+  },
+  "purpose": "書籍及文具",
+  "issuer": {
+    "name": "誠正圖書股份有限公司",
+    "tax_id": "統一編號 12345678",
+    "address": "臺北市中正區重慶南路一段 12 號",
+    "tel": "電話 02-2311-4567"
+  },
+  "items": [
+    {
+      "name": "書籍《用 Rust 打造 PDF 排版引擎》",
+      "quantity": 1,
+      "unit_price": 1200,
+      "amount": 1200
+    },
+    {
+      "name": "技術同人誌套組（全二冊・典藏版・附限定書籤的長品名範例）",
+      "quantity": 2,
+      "unit_price": 950,
+      "amount": 1900
+    },
+    {
+      "name": "運費",
+      "quantity": 1,
+      "unit_price": 700,
+      "amount": 700
+    }
+  ]
+}

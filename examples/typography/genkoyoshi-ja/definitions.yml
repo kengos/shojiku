@@ -1,0 +1,6 @@
+version: 0.2.0
+type: object
+properties:
+  manuscript:
+    type: string
+    title: 本文（青空文庫ルビ記法・|基《よみ》）

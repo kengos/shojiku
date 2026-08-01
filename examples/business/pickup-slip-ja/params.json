@@ -1,0 +1,31 @@
+{
+  "reservation": {
+    "number": "RS-2026-0715-0392",
+    "reserved_at": "2026-07-15",
+    "pickup_from": "2026-07-18",
+    "pickup_to": "2026-07-31",
+    "branch": "正直堂 神保町本店"
+  },
+  "customer": {
+    "name": "中村 あおい",
+    "member_number": "M-004821",
+    "tel": "03-1234-9876"
+  },
+  "totals": {
+    "count": 5,
+    "amount": 14880
+  },
+  "meta": {
+    "printed_at": "2026-07-15T18:20:00+09:00"
+  },
+  "web": {
+    "status_url": "https://reserve.shojikudo.example/r/RS-2026-0715-0392"
+  },
+  "books": [
+    { "title": "Rustで作るPDFエンジン", "author": "神保 律", "price": 3200, "status": "arrived" },
+    { "title": "YAMLテンプレート設計入門", "author": "神田 結", "price": 2800, "status": "arrived" },
+    { "title": "帳票デザインの基礎 — 業務フォームの読みやすさを設計する", "author": "小川 冴", "price": 2400, "status": "backorder" },
+    { "title": "和文組版ハンドブック 改訂版", "author": "白岡 澪", "price": 4500, "status": "arrived" },
+    { "title": "はじめての電子署名", "author": "千代田 光", "price": 1980, "status": "backorder" }
+  ]
+}

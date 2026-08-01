@@ -1,0 +1,19 @@
+# Designer preset manifest: surfaces this bundled example in the locale-keyed
+# catalog. `locales` are the catalog tags it appears under; `engineLocale` is
+# the exact tag the app passes to the engine (font-pack selection).
+locales: [ja]
+engineLocale: ja-JP
+name:
+  ja: 納品書
+  en: Delivery note (Japanese)
+thumbnail: preview-1.png
+# Sample-data variants beyond the default params.json — each is params-<id>.json.
+# The default is a partial shipment where three rows still carry a remaining
+# count; `complete` is the fully-delivered twin, so switching shows the
+# data-driven row shading
+# appearing and disappearing without touching the template.
+variants:
+  - id: complete
+    name:
+      ja: 完納（残数なし）
+      en: Complete (nothing outstanding)

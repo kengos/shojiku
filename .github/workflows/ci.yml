@@ -1,0 +1,152 @@
+name: CI
+
+# Doc- and chore-only changes skip the whole gate: if every changed path
+# matches `paths-ignore`, no job runs. Any code or workflow change still runs
+# the full gate. For a manual escape hatch on a commit that does touch code,
+# put `[skip ci]` (or `[ci skip]`) in the commit message — GitHub Actions
+# honors it natively for push/pull_request. Branch protection does not enforce
+# these checks (private repo), so a skipped run never blocks a merge.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE*'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE*'
+
+env:
+  CARGO_TERM_COLOR: always
+  # Keep in sync with docker/Dockerfile's builder image.
+  RUST_VERSION: "1.97.1"
+
+jobs:
+  rust:
+    # Test execution lives in the coverage job (the instrumented run IS
+    # the test gate — a failing test fails it); running `cargo test` here
+    # too executed the whole suite twice per push (dedup 2026-07-10).
+    name: budget / fmt / clippy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+      - name: line budget
+        run: ../scripts/check-line-budget.sh
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+  coverage:
+    # 100% line coverage, blocking (docs/guidelines.md). Exclusions need
+    # the documented per-line justification, never whole files.
+    name: coverage (100% lines)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: cargo llvm-cov
+        run: >
+          cargo llvm-cov --workspace --locked
+          --fail-under-lines 100
+          --lcov --output-path lcov.info
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lcov
+          path: engine/lcov.info
+
+  examples:
+    # Rendering is deterministic (verified cross-arch: arm64 == amd64
+    # byte-for-byte), so the committed examples/*/output.pdf +
+    # preview-*.png must equal a fresh render. A mismatch means a change
+    # altered rendered output without re-running `make examples`.
+    name: examples (outputs match fresh render)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+      - name: Build CLI
+        run: cargo build --release -p shojiku-cli --locked
+        working-directory: engine
+      - name: Render and compare committed outputs
+        run: ./scripts/render-examples.sh --check
+
+  deny:
+    name: cargo deny (advisories / licenses)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: engine/Cargo.toml
+          command: check advisories licenses bans sources
+
+  docker:
+    name: docker build / render / scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/Dockerfile
+          load: true
+          tags: shojiku-ci:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Render the bundled example and verify the PDF
+        run: |
+          docker run --rm shojiku-ci:${{ github.sha }} > out.pdf 2> stderr.txt
+          if [ -s stderr.txt ]; then
+            echo "::error::render emitted diagnostics:" && cat stderr.txt && exit 1
+          fi
+          head -c 5 out.pdf | grep -q '%PDF-' || { echo "::error::not a PDF"; exit 1; }
+          echo "rendered $(wc -c < out.pdf) bytes"
+      - name: Scan image for CVEs
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: shojiku-ci:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          # Unfixed CVEs are not actionable; everything fixable fails the
+          # build regardless of severity. The bar is zero KNOWN, FIXABLE
+          # CVEs — not a severity threshold, which is why every level is
+          # listed below rather than HIGH,CRITICAL alone.
+          ignore-unfixed: true
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL

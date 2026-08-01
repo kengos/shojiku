@@ -1,0 +1,189 @@
+/* The Designer component's IRREDUCIBLE stylesheet — everything that Tailwind
+ * utilities can't cleanly express now lives here; all the chrome (toolbars,
+ * panels, tree, palette, dialogs, …) moved to utilities on the JSX (see
+ * ui/chrome.ts for the shared strings). Every value reads through the `--sj-*`
+ * custom properties, so a theme is still a token swap. What remains:
+ *   1. canvas SVG paint — stroke/fill on engine-rendered `<rect>`/`<line>`
+ *      overlays, driven by pseudo-classes and state (utilities can't reach SVG
+ *      presentation attributes across `:hover`/`--selected`/`:focus-visible`);
+ *   2. the contenteditable chip editor + its imperatively-built `{key}` chips
+ *      (chipModel.ts creates the DOM, so its classes carry the style);
+ *   3. the rendering-status dim and the place-chip pulse keyframe.
+ * Page-root base (box-sizing, typography, form-control font, focus ring) lives
+ * in the app's page root (designer-app/src/app.css). */
+
+/* ---- canvas box overlay (SVG paint over the engine render) ---- */
+
+.sj-box:hover {
+  stroke: var(--sj-accent);
+  stroke-width: 1;
+  stroke-opacity: 0.4;
+}
+
+/* Overrides the rect's presentational stroke attributes (CSS wins over
+ * attributes). */
+.sj-box--selected,
+.sj-box--selected:hover {
+  stroke: var(--sj-accent);
+  stroke-width: 1.5;
+  stroke-opacity: 1;
+}
+
+/* A multi-selection member (GU18): the accent stroke, lighter than the primary
+ * so the last-clicked box still reads as primary. */
+.sj-box--multi,
+.sj-box--multi:hover {
+  stroke: var(--sj-accent);
+  stroke-width: 1.5;
+  stroke-opacity: 0.55;
+}
+
+.sj-box:focus-visible {
+  outline: none;
+  stroke: var(--sj-focus);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+
+/* Canvas drag reorder: the source box dims while its ghost travels; the
+ * indicator marks the insertion slot. */
+.sj-box-overlay--dragging {
+  cursor: grabbing;
+}
+
+.sj-box--dragging {
+  stroke: var(--sj-accent);
+  stroke-opacity: 0.35;
+  stroke-dasharray: 4 3;
+}
+
+.sj-drag-ghost {
+  fill: var(--sj-accent);
+  fill-opacity: 0.12;
+  stroke: var(--sj-accent);
+}
+
+.sj-drop-indicator {
+  stroke: var(--sj-accent);
+}
+
+/* Absolute manipulation: resize handles, sibling alignment guides, the editor
+ * base grid. */
+.sj-handle {
+  fill: var(--sj-surface);
+  stroke: var(--sj-accent);
+}
+
+.sj-guide {
+  stroke: var(--sj-accent);
+}
+
+/* Multi-select group frame + rubber-band marquee (GU18). */
+.sj-group-bounds {
+  stroke: var(--sj-accent);
+  stroke-opacity: 0.8;
+}
+
+.sj-marquee {
+  fill: var(--sj-accent);
+  fill-opacity: 0.08;
+  stroke: var(--sj-accent);
+  stroke-opacity: 0.9;
+}
+
+.sj-grid-line {
+  stroke: var(--sj-text);
+  stroke-opacity: 0.08;
+}
+
+/* Preview dims while a fresh render is in flight (the last-good page stays up). */
+.sj-designer-canvas[data-status="rendering"] .sj-canvas,
+.sj-canvas-preview[data-status="rendering"] .sj-canvas {
+  opacity: 0.85;
+}
+
+/* ---- the shared contenteditable chip editor ---- */
+
+/* pre-wrap renders the "\n" text nodes the editor inserts for Enter. */
+.sj-text-editor {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.sj-text-editor:focus {
+  outline: 2px solid var(--sj-accent);
+  outline-offset: -1px;
+}
+
+/* The canvas overlay variant: the editor fills the box it is pinned over, with
+ * an accent ring instead of the panel field's border. */
+.sj-inline-editor {
+  z-index: 5;
+}
+
+.sj-inline-editor .sj-text-editor-root {
+  width: 100%;
+  height: 100%;
+}
+
+.sj-inline-editor .sj-text-editor {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  color: var(--sj-text);
+  background: var(--sj-surface);
+  border: 0;
+  border-radius: 2px;
+  padding: 1px 2px;
+  box-shadow: 0 0 0 2px var(--sj-accent);
+}
+
+/* Interpolation chips: atomic labeled tokens standing for a `{key}` wire
+ * expression, built imperatively (chipModel.ts) so the style rides the class. */
+.sj-chip {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: baseline;
+  background: var(--sj-chrome);
+  border: 1px solid var(--sj-border);
+  border-radius: 999px;
+  padding: 0 var(--sj-space-2);
+  margin: 0 1px;
+  font-size: 0.92em;
+  line-height: 1.4;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sj-chip-label {
+  color: var(--sj-accent);
+  font-weight: 600;
+}
+
+.sj-chip-format {
+  color: var(--sj-muted);
+  margin-left: var(--sj-space-1);
+  font-size: 0.9em;
+}
+
+/* ---- place-chip refusal pulse (the one keyframe) ---- */
+
+.sj-place-chip--refused {
+  animation: sj-chip-pulse 0.45s ease-out 2;
+}
+
+@keyframes sj-chip-pulse {
+  50% {
+    background: var(--sj-warn-bg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sj-place-chip--refused {
+    animation: none;
+  }
+}

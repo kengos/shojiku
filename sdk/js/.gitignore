@@ -1,0 +1,9 @@
+# No trailing slash: the gate links this in as a SYMLINK, and a slashed
+# pattern matches directories only.
+node_modules
+coverage/
+dist/
+*.tsbuildinfo
+
+# A container-run pnpm with no global store writes one here.
+.pnpm-store/

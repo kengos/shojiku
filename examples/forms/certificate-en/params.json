@@ -1,0 +1,14 @@
+{
+  "certificate": {
+    "number": "2026-0343",
+    "verify_url": "https://school.shojikudo.example/verify/2026-0343"
+  },
+  "recipient": { "name": "Wilhelmina von Brandenburg-Ansbach" },
+  "course": {
+    "name": "Letterpress & Bookbinding Basics",
+    "sessions": 8,
+    "hours": 16,
+    "completed_on": "2026-06-28"
+  },
+  "issuer": { "director": "Seiichiro Shojiki" }
+}

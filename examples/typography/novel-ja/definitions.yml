@@ -1,0 +1,43 @@
+version: 0.2.0
+type: object
+properties:
+  novel:
+    type: object
+    properties:
+      title:
+        type: string
+        title: 題名
+        example: 走れメロス
+      subtitle:
+        type: string
+        title: 副題
+        example: （抄）
+      author:
+        type: string
+        title: 著者
+        example: 太宰治
+      body:
+        type: string
+        title: 本文（段落 = 改行、字下げは全角空白）
+        example: 　メロスは激怒した。
+      source_note:
+        type: string
+        title: 底本注記
+        example: 底本 青空文庫（パブリックドメイン）
+    title: 作品
+  publisher:
+    type: object
+    properties:
+      label:
+        type: string
+        title: 文庫名
+        example: 正直堂文庫
+      printed_on:
+        type: string
+        title: 発行表記
+        example: 令和8年8月10日　第1刷発行
+      price:
+        type: string
+        title: 定価表記
+        example: 三百円（税別）
+    title: 発行

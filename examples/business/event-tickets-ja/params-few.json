@@ -1,0 +1,8 @@
+{
+  "tickets": [
+    { "ticket_no": "BF26-10-0001", "name": "高橋 栞", "type_label": "一般", "session": "10月10日（土） 10:00〜17:00", "url": "https://fes.shojikudo.example/t/BF26-10-0001" },
+    { "ticket_no": "BF26-10-0002", "name": "青柳 蒼太", "type_label": "学生", "session": "10月10日（土） 10:00〜17:00", "url": "https://fes.shojikudo.example/t/BF26-10-0002" },
+    { "ticket_no": "BF26-10-0003", "name": "ヴィルヘルミーナ・フォン・ブランデンブルク＝アンスバッハ", "type_label": "一般", "session": "10月10日（土） 10:00〜17:00", "url": "https://fes.shojikudo.example/t/BF26-10-0003" },
+    { "ticket_no": "BF26-10-0004", "name": "小野寺 まひろ", "type_label": "ＶＩＰ", "session": "10月10日（土） 10:00〜17:00", "seat": "A-12", "url": "https://fes.shojikudo.example/t/BF26-10-0004" }
+  ]
+}

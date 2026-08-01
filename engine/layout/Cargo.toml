@@ -1,0 +1,24 @@
+[package]
+name = "shojiku-layout"
+description = "Shojiku layout engine: templates + params -> positioned layout tree"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+skrifa = { workspace = true }
+harfrust = { workspace = true }
+shojiku-core = { workspace = true }
+shojiku-diagnostics = { workspace = true }
+shojiku-layout-box = { workspace = true }
+shojiku-formatter = { workspace = true }
+shojiku-image = { workspace = true }
+qrcodegen = { workspace = true }
+sha2 = { workspace = true }
+
+[lints]
+workspace = true

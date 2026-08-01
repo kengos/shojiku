@@ -1,0 +1,48 @@
+{
+  "name": "shojiku",
+  "version": "0.1.0",
+  "description": "Shojiku for Node.js — a YAML template plus your data, deterministically, as a PDF",
+  "type": "module",
+  "packageManager": "pnpm@11.15.1",
+  "license": "MIT OR Apache-2.0 OR BSD-3-Clause",
+  "author": "kengos",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kengos/shojiku.git",
+    "directory": "sdk/js"
+  },
+  "keywords": [
+    "pdf",
+    "document",
+    "invoice",
+    "template",
+    "yaml"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check --error-on-warnings .",
+    "format": "biome check --write .",
+    "test": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.5",
+    "@types/node": "^24.13.3",
+    "@vitest/coverage-v8": "^4.1.10",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

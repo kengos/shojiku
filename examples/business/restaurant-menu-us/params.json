@@ -1,0 +1,58 @@
+{
+  "restaurant": {
+    "name_ja": "正直亭",
+    "name_en": "SHOJIKI-TEI",
+    "tagline": "JAPANESE KITCHEN — SEATTLE, WA",
+    "address": "1200 Harbor Avenue, Seattle, WA",
+    "tel": "(206) 555-0134",
+    "web": "shojikitei.shojikudo.example"
+  },
+  "menu": {
+    "title_ja": "八月のおすすめ",
+    "title_en": "AUGUST SPECIALS"
+  },
+  "dishes": [
+    {
+      "name_ja": "枝豆",
+      "name_en": "Chilled Edamame",
+      "description": "steamed in the pod, Okinawan sea salt",
+      "price": 6
+    },
+    {
+      "name_ja": "揚げ出し豆腐",
+      "name_en": "Agedashi Tofu",
+      "description": "crisp-fried tofu, chilled dashi broth, grated ginger",
+      "price": 9
+    },
+    {
+      "name_ja": "刺身盛り合わせ",
+      "name_en": "Sashimi Selection",
+      "description": "chef's five kinds from today's market — served with fresh wasabi",
+      "price": 24
+    },
+    {
+      "name_ja": "鮎の塩焼き",
+      "name_en": "Salt-Grilled Ayu",
+      "description": "whole sweetfish, tade-vinegar sauce — our August signature",
+      "price": 18
+    },
+    {
+      "name_ja": "茄子の揚げ浸し",
+      "name_en": "Nasu Agebitashi",
+      "description": "chilled fried eggplant steeped in bonito broth",
+      "price": 9
+    },
+    {
+      "name_ja": "鰻ひつまぶし",
+      "name_en": "Unagi Hitsumabushi",
+      "description": "grilled eel over rice, served three ways — broth poured tableside",
+      "price": 32
+    },
+    {
+      "name_ja": "わらび餅",
+      "name_en": "Warabi-Mochi",
+      "description": "bracken-starch jelly, roasted soybean flour, black sugar syrup",
+      "price": 7
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+version: "0.1.0"
+name: genkoyoshi_yoko_a4_400
+
+# A4 landscape, horizontal 400-cell genkoyoshi (20 chars × 20 lines) — the
+# horizontal twin of the vertical genkoyoshi-ja. The body interprets the
+# params' Aozora ruby notation (吾輩《わがはい》) via markup: aozora and sets
+# the ruby above each line; overflowing text continues on the next sheet.
+
+# Margins follow commercial horizontal stock (A4, 20×20): 20mm top/bottom,
+# 18mm sides. Cells derive from the box width (460pt ÷ 20 ≒ 8.1mm square);
+page:
+  size: A4
+  margin: { top: 20mm, right: 18mm, bottom: 20mm, left: 18mm }
+
+defaults:
+  # The document locale picks the ja-JP pack (currency is unused).
+  locale: ja-JP
+
+sections:
+  body:
+    type: flow
+    items:
+      - type: char_grid
+        id: manuscript
+        box: { w: 460, margin: { left: auto, right: auto } }
+        data: { key: manuscript }
+        markup: aozora
+        writingMode: horizontal_tb
+        grid: { charsPerLine: 20, lines: 20, lineGap: 4mm }
+        style: { fontFamily: ipamj-mincho, borderColor: "#a8674f", color: "#222222" }
+
+  footer:
+    repeat: every_page
+    items:
+      - type: page_number
+        # Band coordinates resolve against the page margin box (A4 − 20mm
+        # top/bottom ⇒ 728.5pt tall); 708 + 12 sits just above its bottom edge.
+        box: { x: 0, y: 708, w: 100%, h: 12 }
+        format: "{page} / {pages}"
+        style: { fontSize: 8, textAlign: center, color: "#a8674f" }

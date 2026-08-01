@@ -1,0 +1,109 @@
+version: 0.2.0
+type: object
+properties:
+  receipt:
+    type: object
+    properties:
+      number:
+        type: string
+        title: 領収書番号
+        example: R-2026-0707-001
+      issued_at:
+        type: string
+        format: date-time
+        title: 発行日
+        example: '2026-07-07T15:30:00+09:00'
+        displayFormats:
+        - id: default
+          label: 標準
+        - id: ja
+          label: 日本語表記
+        - id: date
+          label: 日付のみ
+    title: 領収書
+  recipient:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 宛名
+        example: 山田太郎
+    title: 宛名
+  amount:
+    type: object
+    properties:
+      total_in_tax:
+        type: number
+        format: currency
+        title: 合計金額（税込）
+        example: 8360
+        currency: JPY
+        precision: 0
+        recommendedStyle:
+          textAlign: right
+      total_ex_tax:
+        type: number
+        format: currency
+        title: 税抜金額
+        example: 7600
+        currency: JPY
+        precision: 0
+      tax:
+        type: number
+        format: currency
+        title: 消費税
+        example: 760
+        currency: JPY
+        precision: 0
+    title: 金額
+  purpose:
+    type: string
+    title: 但し書き
+    example: 書籍代
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 発行者名
+        example: 正直堂書店
+      address:
+        type: string
+        title: 住所
+        example: 東京都千代田区神田神保町1-2-3
+      tel:
+        type: string
+        title: 電話番号
+        example: TEL 03-1234-5678
+    title: 発行者
+  qr_code:
+    type: string
+    title: 電子控え検証QRコード（data URI画像）
+    example: data:image/png;base64,iVBORw0KGgo...
+  items:
+    type: array
+    title: 内訳明細
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: 品目
+          example: 書籍
+        quantity:
+          type: number
+          format: quantity
+          title: 数量
+          example: 1
+          unit: item
+        unit_price:
+          type: number
+          format: currency
+          title: 単価
+          example: 3200
+        amount:
+          type: number
+          format: currency
+          title: 金額
+          example: 3200
+      title: 明細行

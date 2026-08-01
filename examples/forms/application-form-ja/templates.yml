@@ -1,0 +1,242 @@
+version: 0.1.0
+name: application_form_ja
+
+# A4 event application form — the blank↔filled pair: the SAME template renders a
+# printable blank form (params-blank.json) and a filled sample (params.json). Form
+# marks reserve their geometry whether or not they draw, string fields blank
+# cleanly on "", and typed fields carry `placeholder` in definitions.yml —
+# nothing shifts a single pt between the two params sets.
+page:
+  size: A4
+  orientation: portrait
+  margin: 25
+
+defaults:
+  locale: ja-JP
+
+styles:
+  rowLabel:
+    fontSize: 8.5
+    textAlign: center
+    lineHeight: 1.3
+    color: "#1a3c6e"
+  value:
+    fontSize: 10
+    lineHeight: 1.3
+  note:
+    fontSize: 8
+    lineHeight: 1.4
+    color: "#555555"
+
+sections:
+  body:
+    type: absolute
+    items:
+      # ---- Event banner -------------------------------------------------
+      - id: banner
+        type: container
+        box: { x: 0, y: 0, w: "100%", h: 44 }
+        style: { backgroundColor: "#1a3c6e" }
+        items:
+          - type: text
+            box: { x: 0, y: 8, w: "100%", h: 28 }
+            text: 正直堂ブックフェス2026　参加申込書
+            style: { fontSize: 17, textAlign: center, color: "#ffffff", fontWeight: bold, lineHeight: 1.4 }
+      - type: text
+        box: { x: 0, y: 50, w: 400, h: 13 }
+        text: 会期 2026年10月10日（土）〜10月12日（月・祝）　会場 神保町ブックホール
+        style: { fontSize: 9, lineHeight: 1.3 }
+      - type: text
+        box: { x: 0, y: 65, w: 400, h: 12 }
+        text: ※太枠内をご記入のうえ、会場受付までお持ちください。
+        styleNames: [ note ]
+
+      # ---- Reception block (right column) -------------------------------
+      - id: reception
+        type: container
+        box: { x: 415, y: 88, w: 130.28, h: 104 }
+        style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+        items:
+          - type: text
+            box: { x: 0, y: 6, w: "100%", h: 11 }
+            text: 受付番号
+            style: { fontSize: 8, textAlign: center, color: "#1a3c6e", lineHeight: 1.3 }
+          - type: text
+            box: { x: 0, y: 18, w: "100%", h: 16 }
+            data: { key: application.number }
+            style: { fontSize: 12, textAlign: center, lineHeight: 1.3 }
+          - id: entry_qr
+            type: qr_code
+            box: { x: 37, y: 38, w: 56, h: 56 }
+            data: { key: application.url }
+      - type: text
+        box: { x: 415, y: 196, w: 130.28, h: 11 }
+        text: オンライン申込はこちら
+        link: { url: "{application.url}" }
+        style: { fontSize: 7.5, textAlign: center, color: "#1a3c6e", lineHeight: 1.3 }
+
+      # ID-copy attachment box (chrome — same in blank and filled).
+      - id: photo_box
+        type: container
+        box: { x: 435, y: 220, w: 90, h: 120 }
+        style: { borderWidth: 0.6, borderColor: "#8a94a6" }
+        items:
+          - type: text
+            box: { x: 0, y: 42, w: "100%", h: 36 }
+            text: |-
+              本人確認書類
+              （写し）貼付欄
+            style: { fontSize: 8, textAlign: center, color: "#8a94a6", lineHeight: 1.5 }
+
+      # ---- Hand-ruled applicant grid ------------------------------------
+      # Outer frame (thick) + inner rules; the label column is x0..92.
+      - id: form_frame
+        type: rect
+        box: { x: 0, y: 88, w: 400, h: 276 }
+        style: { borderWidth: 1.6, borderColor: "#1a3c6e" }
+      - { type: line, from: { x: 0, y: 112 }, to: { x: 400, y: 112 }, style: { width: 0.6, color: "#1a3c6e" } }
+      - { type: line, from: { x: 0, y: 148 }, to: { x: 400, y: 148 }, style: { width: 0.6, color: "#1a3c6e" } }
+      - { type: line, from: { x: 0, y: 178 }, to: { x: 400, y: 178 }, style: { width: 0.6, color: "#1a3c6e" } }
+      - { type: line, from: { x: 0, y: 208 }, to: { x: 400, y: 208 }, style: { width: 0.6, color: "#1a3c6e" } }
+      - { type: line, from: { x: 92, y: 242 }, to: { x: 400, y: 242 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 0, y: 278 }, to: { x: 400, y: 278 }, style: { width: 0.6, color: "#1a3c6e" } }
+      - { type: line, from: { x: 0, y: 306 }, to: { x: 400, y: 306 }, style: { width: 0.6, color: "#1a3c6e" } }
+      - { type: line, from: { x: 0, y: 334 }, to: { x: 400, y: 334 }, style: { width: 0.6, color: "#1a3c6e" } }
+      - { type: line, from: { x: 92, y: 88 }, to: { x: 92, y: 364 }, style: { width: 0.6, color: "#1a3c6e" } }
+
+      # Row labels.
+      - { type: text, box: { x: 0, y: 94, w: 92, h: 12 }, text: ふりがな, styleNames: [ rowLabel ] }
+      - { type: text, box: { x: 0, y: 123, w: 92, h: 12 }, text: 氏名, styleNames: [ rowLabel ] }
+      - { type: text, box: { x: 0, y: 157, w: 92, h: 12 }, text: 生年月日, styleNames: [ rowLabel ] }
+      - { type: text, box: { x: 0, y: 187, w: 92, h: 12 }, text: 参加区分, styleNames: [ rowLabel ] }
+      - { type: text, box: { x: 0, y: 236, w: 92, h: 12 }, text: 住所, styleNames: [ rowLabel ] }
+      - { type: text, box: { x: 0, y: 286, w: 92, h: 12 }, text: 電話番号, styleNames: [ rowLabel ] }
+      - { type: text, box: { x: 0, y: 313, w: 92, h: 13 }, text: メールアドレス, style: { fontSize: 8, textAlign: center, lineHeight: 1.3, color: "#1a3c6e" } }
+      - { type: text, box: { x: 0, y: 343, w: 92, h: 12 }, text: 希望連絡方法, style: { fontSize: 8, textAlign: center, lineHeight: 1.3, color: "#1a3c6e" } }
+
+      # Row values.
+      - type: text
+        box: { x: 102, y: 94, w: 290, h: 13 }
+        data: { key: applicant.name_kana }
+        style: { fontSize: 9, lineHeight: 1.3 }
+      - type: text
+        box: { x: 102, y: 119, w: 290, h: 21 }
+        data: { key: applicant.name }
+        style: { fontSize: 14, lineHeight: 1.4 }
+      - type: text
+        box: { x: 102, y: 156, w: 290, h: 15 }
+        text: "{applicant.birth_date:wareki}生（満 {applicant.age} 歳）"
+        style: { fontSize: 10, lineHeight: 1.3 }
+
+      # Participation type — circled via the text-anchored mark; the matching oval draws.
+      - type: text
+        box: { x: 112, y: 185, w: 56, h: 16 }
+        text: 一般
+        mark: { data: { key: application.category, equals: general }, style: { borderColor: "#1a3c6e" } }
+        style: { fontSize: 10, textAlign: center, lineHeight: 1.4 }
+      - type: text
+        box: { x: 192, y: 185, w: 56, h: 16 }
+        text: 学生
+        mark: { data: { key: application.category, equals: student }, style: { borderColor: "#1a3c6e" } }
+        style: { fontSize: 10, textAlign: center, lineHeight: 1.4 }
+      - type: text
+        box: { x: 272, y: 185, w: 72, h: 16 }
+        text: 賛助会員
+        mark: { data: { key: application.category, equals: support }, style: { borderColor: "#1a3c6e" } }
+        style: { fontSize: 10, textAlign: center, lineHeight: 1.4 }
+
+      # 〒 entry boxes — 3 digits + a plain hyphen + 4 digits (the hyphen gets no cell).
+      - id: postal_row
+        type: container
+        box: { x: 102, y: 213, w: 290, h: 24, direction: row, gap: 6, alignItems: center }
+        items:
+          - { type: text, box: { w: 14 }, text: 〒, style: { fontSize: 11, lineHeight: 1.2 } }
+          - type: char_grid
+            box: { w: 54 }
+            data: { key: applicant.postal_code1 }
+            grid: { charsPerLine: 3, lines: 1, cellSize: 18 }
+          - { type: text, box: { w: 8 }, text: "−", style: { fontSize: 11, textAlign: center, lineHeight: 1.2 } }
+          - type: char_grid
+            box: { w: 72 }
+            data: { key: applicant.postal_code2 }
+            grid: { charsPerLine: 4, lines: 1, cellSize: 18 }
+      - type: text
+        box: { x: 102, y: 246, w: 290, h: 28 }
+        data: { key: applicant.address }
+        style: { fontSize: 9.5, lineHeight: 1.45 }
+
+      - type: text
+        box: { x: 102, y: 285, w: 290, h: 15 }
+        data: { key: applicant.tel }
+        styleNames: [ value ]
+      - type: text
+        box: { x: 102, y: 313, w: 290, h: 15 }
+        data: { key: applicant.email }
+        styleNames: [ value ]
+
+      # Preferred contact methods (multi-select) — an ARRAY value checks every contained choice.
+      - id: contact_row
+        type: container
+        box: { x: 102, y: 340, w: 290, h: 18, direction: row, gap: 18, alignItems: baseline }
+        items:
+          - type: container
+            box: { direction: row, gap: 5, alignItems: baseline }
+            items:
+              - { type: checkbox, data: { key: application.contact_methods, equals: email } }
+              - { type: text, text: メール, style: { fontSize: 9.5 } }
+          - type: container
+            box: { direction: row, gap: 5, alignItems: baseline }
+            items:
+              - { type: checkbox, data: { key: application.contact_methods, equals: tel } }
+              - { type: text, text: 電話, style: { fontSize: 9.5 } }
+          - type: container
+            box: { direction: row, gap: 5, alignItems: baseline }
+            items:
+              - { type: checkbox, data: { key: application.contact_methods, equals: mail } }
+              - { type: text, text: 郵送, style: { fontSize: 9.5 } }
+
+      # ---- Notes -----------------------------------------------------------
+      - id: notes_box
+        type: container
+        box: { x: 0, y: 384, w: "100%", h: 96 }
+        style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+        items:
+          - type: text
+            box: { x: 8, y: 6, w: 520, h: 11 }
+            text: 備考（参加希望日・ご要望などがあればご記入ください）
+            style: { fontSize: 8, color: "#1a3c6e", lineHeight: 1.3 }
+          - type: text
+            box: { x: 8, y: 22, w: 520, h: 42 }
+            data: { key: application.notes }
+            style: { fontSize: 9.5, lineHeight: 1.5 }
+
+      # ---- Consent ---------------------------------------------------------
+      - id: agree_row
+        type: container
+        box: { x: 0, y: 498, w: "100%", h: 16, direction: row, gap: 6, alignItems: baseline }
+        items:
+          - { type: checkbox, data: { key: application.agree } }
+          - type: text
+            text: 個人情報の取扱い（イベントプライバシーポリシー）に同意します。
+            style: { fontSize: 9.5 }
+
+      # ---- Office-use-only box (chrome only — blank in both params sets) ---
+      - id: office_box
+        type: container
+        box: { x: 0, y: 530, w: "100%", h: 58 }
+        style: { borderWidth: 0.6, borderColor: "#8a94a6" }
+        items:
+          - type: text
+            box: { x: 8, y: 5, w: 200, h: 11 }
+            text: 事務局記入欄
+            style: { fontSize: 8, color: "#8a94a6", lineHeight: 1.3 }
+          - { type: line, from: { x: 181.76, y: 0 }, to: { x: 181.76, y: 58 }, style: { width: 0.4, color: "#8a94a6" } }
+          - { type: line, from: { x: 363.52, y: 0 }, to: { x: 363.52, y: 58 }, style: { width: 0.4, color: "#8a94a6" } }
+          - { type: text, box: { x: 8, y: 40, w: 80, h: 12 }, text: 受付日, styleNames: [ note ] }
+          - { type: text, box: { x: 190, y: 40, w: 80, h: 12 }, text: 参加費, styleNames: [ note ] }
+          - { type: text, box: { x: 372, y: 40, w: 80, h: 12 }, text: 担当, styleNames: [ note ] }
+
+      - type: text
+        box: { x: 0, y: 604, w: "100%", h: 12 }
+        text: お問い合わせ　正直堂ブックフェス事務局　fes@shojikudo.example ／ 03-1234-5678
+        style: { fontSize: 8, textAlign: center, color: "#666666", lineHeight: 1.4 }

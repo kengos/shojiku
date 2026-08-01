@@ -1,0 +1,54 @@
+version: 0.2.0
+type: object
+properties:
+  catalog:
+    type: object
+    properties:
+      season_code:
+        type: string
+        title: 版数
+        example: Vol.12 / 2026-A
+    title: カタログ情報
+  products:
+    type: array
+    title: 商品
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: 商品名
+          example: A5ノート（方眼・糸かがり製本）
+        code:
+          type: string
+          title: 品番
+          example: ST-1101
+        price:
+          type: number
+          format: currency
+          title: 税込価格
+          example: 495
+          currency: JPY
+          precision: 0
+        description:
+          type: string
+          title: 商品説明
+          example: 開きの良い糸かがり製本。
+        colors:
+          type: string
+          title: カラー展開
+          example: 藍・墨・生成り
+        stock:
+          type: string
+          title: 在庫状況
+          example: 在庫あり
+        image:
+          type: string
+          format: image
+          title: 商品画像
+          example: assets/notebook.svg
+        url:
+          type: string
+          title: 商品詳細URL
+          example: https://store.shojikudo.example/p/ST-1101
+      title: 商品

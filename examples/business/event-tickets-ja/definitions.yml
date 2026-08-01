@@ -1,0 +1,35 @@
+version: 0.2.0
+type: object
+properties:
+  tickets:
+    type: array
+    title: 入場券
+    items:
+      type: object
+      properties:
+        ticket_no:
+          type: string
+          title: チケット番号
+          example: BF26-10-0042
+        name:
+          type: string
+          title: 参加者名
+          example: 高橋 栞
+        type_label:
+          type: string
+          title: 券種
+          example: 一般
+        session:
+          type: string
+          title: 入場日時
+          example: 10月10日（土） 10:00〜17:00
+        seat:
+          type: string
+          title: 座席（指定席のみ）
+          example: A-12
+          placeholder: 自由席
+        url:
+          type: string
+          title: 入場QRトークンURL
+          example: https://fes.shojikudo.example/t/BF26-10-0042
+      title: 券

@@ -1,0 +1,63 @@
+plugins:
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: enable
+  SuggestExtensions: false
+
+# The repo's own budget discipline, in this ecosystem's idiom: the engine caps
+# a file at 300 lines and a function at 150, and there is no reason an SDK
+# should be looser. What follows adjusts DEFAULTS that fight the house style,
+# never a rule that would hide a real problem.
+
+Style/StringLiterals:
+  # Double quotes everywhere, matching the Rust and TypeScript sides. One
+  # quoting habit across the repository beats each language's default.
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+Style/Documentation:
+  # Every class here already carries a comment; this cop also demands one on
+  # re-opened modules in specs, where it is noise.
+  Exclude:
+    - "spec/**/*"
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+
+Metrics/ParameterLists:
+  # Keyword arguments are how a configurable client is spelled in Ruby, and
+  # they are self-describing at the call site — the readability problem this
+  # cop exists for is positional arguments.
+  CountKeywordArgs: false
+
+RSpec/DescribeClass:
+  # These describe a round trip ACROSS classes — render, then sign, then
+  # verify — rather than one class's behaviour. Naming any single one of them
+  # would be arbitrary and would misdescribe the file.
+  Exclude:
+    - "spec/shojiku/signing_spec.rb"
+    - "spec/shojiku/verification_spec.rb"
+    - "spec/shojiku/boundary_spec.rb"
+    - "spec/shojiku/no_download_spec.rb"
+    - "spec/shojiku/source_generate_spec.rb"
+    - "spec/shojiku/concurrency_spec.rb"
+
+Layout/LineLength:
+  Max: 100
+
+RSpec/ExampleLength:
+  # An FFI round trip is set-up heavy: render, sign, then assert.
+  Max: 20
+
+RSpec/MultipleExpectations:
+  # One behaviour is often several assertions about one result object;
+  # splitting them would re-run the render for each.
+  Max: 8
+
+RSpec/NestedGroups:
+  Max: 4

@@ -1,0 +1,139 @@
+version: 0.1.0
+name: novel_ja
+
+# A B5 vertical-writing short-story booklet — literary typesetting of a
+# finished manuscript (no grid; a different thing from the genkoyoshi
+# samples). Cover → body → colophon: the body is a flow-level vertical
+# block paginating by column WITH its ruby; kinsoku is strict, hanging
+# punctuation and half-width punctuation apply. The colophon uses
+# tate-chu-yoko (textCombineUpright) so the digits of the print-run date
+# stand upright. Running heads + folios (vertical page_number) appear on
+page:
+  size: B5
+  orientation: portrait
+  margin: { top: 20mm, right: 20mm, bottom: 20mm, left: 20mm }
+
+defaults:
+  locale: ja-JP
+  style:
+    fontFamily: ipamj-mincho
+    color: "#26221e"
+
+sections:
+  # Running head (all pages but the cover).
+  header:
+    repeat: except_first_page
+    height: 0
+    items:
+      - type: text
+        box: { x: 0, y: 0, w: "100%", h: 11 }
+        text: "{novel.title}{novel.subtitle}　　{novel.author}"
+        style: { fontSize: 7.5, textAlign: center, color: "#8a8378", lineHeight: 1.3 }
+
+  body:
+    type: flow
+    box: { x: 0, y: 18, w: "100%", h: 566 }
+    items:
+      # ---- Cover ----
+      - id: cover
+        type: container
+        box: { h: 566 }
+        items:
+          - type: rect
+            box: { x: 36, y: 24, w: 330.52, h: 518 }
+            style: { borderWidth: 0.6, borderColor: "#8a6f4d" }
+          - type: rect
+            box: { x: 41, y: 29, w: 320.52, h: 508 }
+            style: { borderWidth: 0.3, borderColor: "#b7a27c" }
+          - id: cover_title
+            type: text
+            box: { x: 212, y: 92, w: 64, h: 320 }
+            data: { key: novel.title }
+            style:
+              writingMode: vertical_rl
+              fontSize: 36
+              letterSpacing: 14
+              lineHeight: 1.3
+          - type: text
+            box: { x: 182, y: 110, w: 22, h: 120 }
+            data: { key: novel.subtitle }
+            style: { writingMode: vertical_rl, fontSize: 12, color: "#8a8378", lineHeight: 1.3 }
+          - id: cover_author
+            type: text
+            box: { x: 132, y: 300, w: 30, h: 150 }
+            data: { key: novel.author }
+            style: { writingMode: vertical_rl, fontSize: 16, letterSpacing: 6, lineHeight: 1.3 }
+          # A seal-style vermilion + the imprint name.
+          - type: rect
+            box: { x: 96, y: 452, w: 13, h: 13 }
+            style: { backgroundColor: "#a83a2e" }
+          - type: text
+            box: { x: 0, y: 496, w: "100%", h: 13 }
+            data: { key: publisher.label }
+            style: { fontSize: 9.5, textAlign: center, letterSpacing: 6, color: "#6d5638", lineHeight: 1.3 }
+
+      - type: page_break
+
+      # ---- Body — pages break by column, ruby riding along ----
+      - id: body_text
+        type: text
+        data: { key: novel.body }
+        rubySize: 5.5
+        ruby:
+          - { base: 激怒, text: げきど }
+          - { base: 邪智暴虐, text: じゃちぼうぎゃく }
+          - { base: 未明, text: みめい }
+          - { base: 花婿, text: はなむこ }
+          - { base: 御馳走, text: ごちそう }
+          - { base: 竹馬, text: ちくば }
+          - { base: 石工, text: いしく }
+          - { base: 老爺, text: ろうや }
+          - { base: 世嗣, text: よつぎ }
+        style:
+          writingMode: vertical_rl
+          fontSize: 11.5
+          lineHeight: 1.95
+          lineBreak: strict
+          hangingPunctuation: allow_end
+          textSpacingTrim: normal
+
+      - type: page_break
+
+      # ---- Colophon — tate-chu-yoko keeps the date/print-run digits upright ----
+      - id: colophon
+        type: container
+        box: { h: 566 }
+        items:
+          - id: colophon_text
+            type: text
+            box: { x: 60, y: 140, w: 190, h: 340 }
+            text: |-
+              {novel.title}{novel.subtitle}
+              著者　{novel.author}
+              発行　{publisher.label}
+              {publisher.printed_on}
+              定価　{publisher.price}
+            style:
+              writingMode: vertical_rl
+              fontSize: 10.5
+              lineHeight: 2.6
+              textCombineUpright: { digits: 2 }
+          - type: text
+            box: { x: 0, y: 520, w: "100%", h: 12 }
+            data: { key: novel.source_note }
+            style: { fontSize: 7.5, textAlign: center, color: "#8a8378", lineHeight: 1.4 }
+
+  # Folio — a vertical page_number (all pages but the cover).
+  footer:
+    repeat: except_first_page
+    height: 0
+    items:
+      - id: nombre
+        type: page_number
+        box: { x: 0, y: 588, w: 14, h: 30 }
+        format: "{page}"
+        style:
+          writingMode: vertical_rl
+          textOrientation: upright
+          fontSize: 9
+          color: "#8a8378"

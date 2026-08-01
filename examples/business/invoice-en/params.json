@@ -1,0 +1,52 @@
+{
+  "invoice": {
+    "number": "US-2026-0731-018",
+    "issued_at": "2026-07-31",
+    "due_date": "2026-08-30",
+    "terms": "Net 30",
+    "po_number": "PO-88412"
+  },
+  "billing": {
+    "name": "Harbor Lights Bookstore LLC",
+    "address": "812 Pine Street\nSeattle, WA 98101",
+    "contact": "Purchasing — R. Alvarez"
+  },
+  "issuer": {
+    "name": "Shojikudo Books USA, Inc.",
+    "address": "1200 Harbor Avenue, Suite 300, Seattle, WA 98104",
+    "email": "billing@us.shojikudo.example"
+  },
+  "totals": {
+    "subtotal": 8506.00,
+    "tax": 754.91,
+    "total": 9260.91
+  },
+  "bank": {
+    "name": "Jimbocho Bank N.A.",
+    "routing": "125000000",
+    "account": "0012345678"
+  },
+  "web": {
+    "invoice_url": "https://billing.shojikudo.example/inv/US-2026-0731-018"
+  },
+  "items": [
+    { "description": "Rust PDF Engine Handbook (hardcover)", "quantity": 24, "unit_price": 28.50, "amount": 684.00 },
+    { "description": "YAML Template Design — A Field Guide", "quantity": 18, "unit_price": 24.00, "amount": 432.00 },
+    { "description": "Typesetting Monthly — July 2026 issue", "quantity": 40, "unit_price": 9.80, "amount": 392.00 },
+    { "description": "Typesetting Monthly — August 2026 issue", "quantity": 40, "unit_price": 9.80, "amount": 392.00 },
+    { "description": "A5 grid notebook, thread-bound (Shojikudo original)", "quantity": 200, "unit_price": 3.60, "amount": 720.00 },
+    { "description": "Fountain-pen ink \"Indigo Iron\" 50 ml", "quantity": 36, "unit_price": 18.75, "amount": 675.00 },
+    { "description": "Canvas book cover, paperback size — an extra-long description to exercise cell wrapping across two lines", "quantity": 80, "unit_price": 8.90, "amount": 712.00 },
+    { "description": "Brass bookmark set of three, letterpress motif", "quantity": 60, "unit_price": 11.25, "amount": 675.00 },
+    { "description": "Practical Business Dictionary, 9th edition", "quantity": 12, "unit_price": 49.00, "amount": 588.00 },
+    { "description": "Children's Literature Collection, 12-volume boxed set", "quantity": 4, "unit_price": 240.00, "amount": 960.00 },
+    { "description": "B2 poster panel mounting", "quantity": 10, "unit_price": 22.40, "amount": 224.00 },
+    { "description": "Drip coffee gift box, house blend, 24 ct", "quantity": 30, "unit_price": 14.00, "amount": 420.00 },
+    { "description": "Loose-leaf tea \"Study Afternoon\" 100 g", "quantity": 24, "unit_price": 9.50, "amount": 228.00 },
+    { "description": "Cookie tin \"Reading Companion\" (large)", "quantity": 20, "unit_price": 12.80, "amount": 256.00 },
+    { "description": "Manuscript paper pad, B5, 50 sheets", "quantity": 48, "unit_price": 4.25, "amount": 204.00 },
+    { "description": "Heavy canvas tote \"Carries the Classics\"", "quantity": 36, "unit_price": 16.50, "amount": 594.00 },
+    { "description": "Freight (free-shipping promotion applied)", "quantity": 1, "unit_price": 0.00, "amount": 0.00 },
+    { "description": "Shelf restocking service — July 2026", "quantity": 1, "unit_price": 350.00, "amount": 350.00 }
+  ]
+}

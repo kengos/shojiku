@@ -1,0 +1,16 @@
+# Sidecar ignore file for sdk/python/Dockerfile.
+#
+# A `<Dockerfile>.dockerignore` REPLACES the repository root `.dockerignore`
+# entirely for this build — it does not merge with it. That is the point: the
+# root file excludes `sdk`, so a build using the repository root as its context
+# cannot see the package it exists to test, and the failure reads as a missing
+# directory rather than as an ignore rule.
+#
+# So this file starts from "exclude everything" and admits exactly what the
+# image needs. The package's own sources are NOT among them: they arrive on the
+# gate's /repo mount, so a change to src/ or tests/ never invalidates a layer.
+*
+
+# The pre-compiled engine library, built by `make capi-lib`. Gitignored, and
+# the root ignore file never mentioned it because nothing else needs it.
+!dist/capi/local

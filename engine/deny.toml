@@ -1,0 +1,37 @@
+# cargo-deny configuration. Run: cargo deny check advisories licenses
+# from engine/. CI runs this on every push (see .github/workflows/ci.yml).
+
+[advisories]
+version = 2
+yanked = "deny"
+# No ignores: the krilla/fontations migration (2026-07) removed both former
+# exceptions (lopdf RUSTSEC-2026-0187, ttf-parser RUSTSEC-2026-0192) from the
+# dependency tree entirely. Keep it that way — a new ignore needs a written
+# argument for why the advisory is unreachable from this workspace, recorded
+# beside the entry rather than carried as a bare exception.
+ignore = []
+
+[licenses]
+version = 2
+# Project license is MIT OR Apache-2.0 OR BSD-3-Clause; dependencies must
+# stay within common permissive licenses compatible with all three.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "0BSD",
+    "ISC",
+    "Zlib",
+    "Unlicense",
+    "BSL-1.0",
+    "Unicode-3.0",
+]
+
+[bans]
+multiple-versions = "warn"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

@@ -1,0 +1,69 @@
+version: 0.2.0
+type: object
+properties:
+  restaurant:
+    type: object
+    properties:
+      name_ja:
+        type: string
+        title: 店名（縦書き・和文）
+        example: 正直亭
+      name_en:
+        type: string
+        title: 店名（欧文）
+        example: SHOJIKI-TEI
+      tagline:
+        type: string
+        title: タグライン
+        example: JAPANESE KITCHEN — SEATTLE, WA
+      address:
+        type: string
+        title: 所在地
+        example: 1200 Harbor Avenue, Seattle, WA
+      tel:
+        type: string
+        title: 電話番号
+        example: (206) 555-0134
+      web:
+        type: string
+        title: Web
+        example: shojikitei.shojikudo.example
+    title: 店舗
+  menu:
+    type: object
+    properties:
+      title_ja:
+        type: string
+        title: 月替わり見出し（縦書き・和文）
+        example: 八月のおすすめ
+      title_en:
+        type: string
+        title: 月替わり見出し（英文）
+        example: AUGUST SPECIALS
+    title: 献立情報
+  dishes:
+    type: array
+    title: 品書き
+    items:
+      type: object
+      properties:
+        name_ja:
+          type: string
+          title: 品名（縦書き・和文）
+          example: 鮎の塩焼き
+        name_en:
+          type: string
+          title: 品名（英文）
+          example: Salt-Grilled Ayu
+        description:
+          type: string
+          title: 説明（英文）
+          example: whole sweetfish, tade-vinegar sauce
+        price:
+          type: number
+          format: currency
+          title: 価格（USD）
+          example: 18
+          currency: USD
+          precision: 0
+      title: 品

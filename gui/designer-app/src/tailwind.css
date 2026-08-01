@@ -1,0 +1,46 @@
+/* The ONE CSS entry (Tailwind v4). The Designer ships as an app / own-page
+ * mount (sidekiq-web style), never into a host's DOM — so utilities are
+ * UNPREFIXED and there is no host-theme contract; the `--sj-*` tokens are an
+ * internal implementation detail (the light/dark value source).
+ *
+ * Preflight (Tailwind's global reset) is deliberately NOT imported — the
+ * legacy chrome CSS still expects browser defaults; revisit when the legacy
+ * sheets shrink. The legacy sheets load in `layer(components)` so utilities
+ * reliably win over them (unlayered CSS would beat every @layer rule).
+ *
+ * `@source` pulls the designer package's src into Tailwind's class scan: the
+ * component's own utilities compile into this same app bundle (the workspace
+ * symlink under node_modules is excluded from auto-detection). */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "@shojiku/designer/styles.css" layer(components);
+@import "./app.css" layer(components);
+
+@source "../../designer/src";
+
+/* `--sj-*` tokens bridged into Tailwind. `inline` is REQUIRED: the tokens live
+ * on the app/mount roots (per-scheme), not `:root` — the non-inline form emits
+ * `--color-*` at `:root` where `--sj-*` is undefined, so every utility computes
+ * to empty. `inline` inlines the var into the utility, deferring resolution to
+ * the use-site (and following the scheme switch). */
+@theme inline {
+  --color-bg: var(--sj-bg);
+  --color-chrome: var(--sj-chrome);
+  --color-surface: var(--sj-surface);
+  --color-border: var(--sj-border);
+  --color-text: var(--sj-text);
+  --color-muted: var(--sj-muted);
+  --color-accent: var(--sj-accent);
+  --color-on-accent: var(--sj-on-accent);
+  --color-canvas: var(--sj-canvas);
+  --color-focus: var(--sj-focus);
+  --color-error-bg: var(--sj-error-bg);
+  --color-error-text: var(--sj-error-text);
+  --color-warn-bg: var(--sj-warn-bg);
+  --color-warn-text: var(--sj-warn-text);
+  --color-diff-add-bg: var(--sj-diff-add-bg);
+  --color-diff-add-text: var(--sj-diff-add-text);
+  --color-diff-del-bg: var(--sj-diff-del-bg);
+  --color-diff-del-text: var(--sj-diff-del-text);
+}

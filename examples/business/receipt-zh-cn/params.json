@@ -1,0 +1,41 @@
+{
+  "receipt": {
+    "number": "R-2026-0314-001",
+    "issued_at": "2026-03-14T15:30:00+08:00"
+  },
+  "recipient": {
+    "name": "陈雅婷"
+  },
+  "amount": {
+    "total_in_tax": 848,
+    "total_ex_tax": 800,
+    "tax": 48
+  },
+  "purpose": "图书及文具",
+  "issuer": {
+    "name": "诚正图书有限公司",
+    "tax_id": "纳税人识别号 91310000MA1K2B3C4D",
+    "address": "上海市黄浦区福州路 100 号",
+    "tel": "电话 021-6322-4567"
+  },
+  "items": [
+    {
+      "name": "图书《用 Rust 打造 PDF 排版引擎》",
+      "quantity": 1,
+      "unit_price": 260,
+      "amount": 260
+    },
+    {
+      "name": "技术同人志套装（全二册・典藏版・附限定书签的长品名示例）",
+      "quantity": 2,
+      "unit_price": 200,
+      "amount": 400
+    },
+    {
+      "name": "运费",
+      "quantity": 1,
+      "unit_price": 140,
+      "amount": 140
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# Per-Dockerfile ignore (BuildKit sidecar): the ROOT .dockerignore excludes
+# gui/ entirely (the runtime image doesn't need it), but this build does — so
+# this file replaces it for `docker build -f gui/designer-app/Dockerfile`.
+.git
+.claude
+docs
+sdk
+plugins
+templates
+**/target
+**/node_modules
+**/test-results
+**/playwright-report
+**/coverage
+**/dist
+**/dist-assets
+engine/wasm/pkg

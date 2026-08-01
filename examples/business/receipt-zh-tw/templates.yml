@@ -1,0 +1,205 @@
+version: 0.1.0
+name: receipt_zh_tw
+
+page:
+  size: A4
+  orientation: portrait
+  margin: 25 # the margin box is the coordinate origin: x/y 0 = 25pt in
+
+# Document presentation defaults: zh-TW selects the locale pack
+# (packs/locale/zh-tw.yml -> Noto Sans TC + Traditional Chinese dates)
+# and TWD the document currency, so placements just bind the key.
+defaults:
+  locale: zh-TW
+  currency: TWD
+  formats:
+    currency: symbol
+
+styles:
+  標題 1:
+    fontSize: 20
+    fontWeight: bold
+    lineHeight: 1.3
+  標題 2:
+    fontSize: 16
+    fontWeight: bold
+    lineHeight: 1.3
+  標題 3:
+    fontSize: 13
+    fontWeight: bold
+    lineHeight: 1.3
+    color: "#444444"
+  內文:
+    fontSize: 10.5
+    lineHeight: 1.5
+  說明文字:
+    fontSize: 9
+    lineHeight: 1.4
+    color: "#666666"
+  heading:
+    fontSize: 24
+    textAlign: center
+    lineHeight: 1.2
+  amount:
+    textAlign: right
+    lineHeight: 1.2
+
+sections:
+  header:
+    repeat: every_page
+    height: 100
+    items:
+      - id: title
+        type: text
+        box: { x: 0, y: 17, w: 545.28, h: 30 }
+        text: 收　據
+        styleNames: [ heading ]
+        style: { backgroundColor: "#f2f2f2" }
+
+      - id: receipt_no
+        type: text
+        box: { x: 295, y: 57, w: 250.28, h: 12 }
+        text: "編號 {receipt.number}"
+        style: { fontSize: 9, textAlign: right, lineHeight: 1.2 }
+
+      - id: issued_at
+        type: text
+        box: { x: 295, y: 71, w: 250.28, h: 12 }
+        text: "開立日期 {receipt.issued_at:date}"
+        style: { fontSize: 9, textAlign: right, lineHeight: 1.2 }
+
+  body:
+    type: flow
+    # 545.28 = A4 width 595.28 − 25pt margins ×2
+    box: { x: 0, y: 105, w: 545.28, h: 620 }
+    gap: 16
+    items:
+      # Addressee — container establishes the underline width once.
+      - id: recipient
+        type: container
+        box: { h: 34 }
+        items:
+          - type: text
+            box: { x: 0, y: 0, w: "60%", h: 24 }
+            text: "{recipient.name} 台照"
+            style: { fontSize: 16 }
+          - type: line
+            from: { x: 0, y: 28 }
+            to: { x: 327.17, y: 28 }
+            style: { width: 0.8 }
+
+      # Amount — the container draws its own border.
+      - id: amount_box
+        type: container
+        box: { x: "10%", w: "80%", h: 56 }
+        style: { borderWidth: 1.2 }
+        items:
+          - type: text
+            box: { x: "3%", y: 20, w: 60, h: 16 }
+            text: 金額
+            style: { fontSize: 11 }
+          - type: text
+            box: { x: 0, y: 14, w: "100%", h: 28 }
+            text: "{amount.total_in_tax}整"
+            style: { fontSize: 22, textAlign: center, lineHeight: 1.2 }
+
+      - id: purpose
+        type: text
+        text: 茲收到上列款項，係支付 {purpose} 之費用，特此開立收據。
+        style: { fontSize: 11 }
+
+      - id: items_table
+        type: table
+        data: { key: items }
+        autoPageBreak: true
+        repeatHeader: true
+        emptyBehavior: collapse
+        row:
+          minHeight: 22
+        columns:
+          - id: name
+            label: 品名
+            data: { key: name }
+            width: 285.28
+          - id: quantity
+            label: 數量
+            data: { key: quantity }
+            width: 60
+            style: { textAlign: right }
+          - id: unit_price
+            label: 單價
+            data: { key: unit_price }
+            width: 100
+            style: { textAlign: right }
+          - id: amount
+            label: 金額
+            data: { key: amount }
+            width: 100
+            style: { textAlign: right }
+
+      # Totals — right-aligned summary block positioned with %.
+      - id: totals
+        type: container
+        box: { x: "55%", w: "45%" }
+        items:
+          - type: text
+            box: { x: 0, y: 0, w: "100%", h: 14 }
+            text: "未稅金額 {amount.total_ex_tax}"
+            style: { fontSize: 10, textAlign: right }
+          - type: text
+            box: { x: 0, y: 16, w: "100%", h: 14 }
+            text: "營業稅（5%） {amount.tax}"
+            style: { fontSize: 10, textAlign: right }
+          - type: text
+            box: { x: 0, y: 34, w: "100%", h: 18 }
+            text: "合計 {amount.total_in_tax}"
+            styleNames: [ amount ]
+            style: { fontSize: 13 }
+
+      # Issuing unit — seal box (nested container) + issuer info.
+      - id: issuer_block
+        type: container
+        box: { h: 96 }
+        items:
+          - id: stamp_box
+            type: container
+            box: { x: 0, y: 8, w: 70, h: 80 }
+            style: { borderWidth: 0.8 }
+            items:
+              - type: text
+                box: { x: 0, y: 0, w: "100%", h: "100%" }
+                text: 印鑑
+                style: { fontSize: 9, textAlign: center, verticalAlign: middle }
+          # No x/y -> a flex child; `margin.left: auto` hugs the right edge.
+          - id: issuer_info
+            type: container
+            box: { w: "45%", margin: { top: 8, left: auto } }
+            items:
+              - type: text
+                box: { x: 0, y: 10, w: "100%", h: 18 }
+                data: { key: issuer.name }
+                style: { fontSize: 13, lineHeight: 1.2 }
+              - type: text
+                box: { x: 0, y: 32, w: "100%", h: 12 }
+                data: { key: issuer.tax_id }
+                style: { fontSize: 9, lineHeight: 1.2 }
+              - type: text
+                box: { x: 0, y: 48, w: "100%", h: 12 }
+                data: { key: issuer.address }
+                style: { fontSize: 9, lineHeight: 1.2 }
+              - type: text
+                box: { x: 0, y: 62, w: "100%", h: 12 }
+                data: { key: issuer.tel }
+                style: { fontSize: 9, lineHeight: 1.2 }
+
+  footer:
+    repeat: every_page
+    height: 60
+    items:
+      - id: page_no
+        type: page_number
+        box: { x: 0, y: 780, w: 545.28, h: 14 }
+        format: "{page} / {pages}"
+        style:
+          fontSize: 9
+          textAlign: center
