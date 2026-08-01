@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Download the binary matrix
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: release-*
           run-id: ${{ inputs.artifacts_run_id }}

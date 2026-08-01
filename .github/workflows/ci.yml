@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: wasm-pkg
           path: engine/wasm/pkg/
@@ -182,7 +182,7 @@ jobs:
           - { lang: dotnet, var: DOTNET_VER, version: '10.0' }
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: engine-artifacts
           path: dist/
@@ -229,7 +229,7 @@ jobs:
         lang: [python, ruby, dotnet, java, js, php, go]
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: engine-artifacts
           path: dist/
