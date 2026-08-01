@@ -1,0 +1,29 @@
+[package]
+name = "shojiku-authoring"
+description = "Shojiku authoring surface: shared validate/prepare/preview/inspect/capabilities layer for the CLI, WASM bindings, and MCP server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[features]
+# Filesystem pack discovery (search dirs, overlay files) for the FS hosts
+# (CLI, MCP server). Default-on so the crate's own tests cover it; a
+# bytes-injecting host (WASM) builds with `default-features = false` to
+# stay filesystem-free.
+default = ["fs"]
+fs = []
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+shojiku-core = { workspace = true }
+shojiku-diagnostics = { workspace = true }
+shojiku-formatter = { workspace = true }
+shojiku-image = { workspace = true }
+shojiku-layout = { workspace = true }
+shojiku-render-png = { workspace = true }
+
+[lints]
+workspace = true

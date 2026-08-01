@@ -1,0 +1,118 @@
+version: 0.2.0
+# Re-authored from the legacy artifacts in legacy/ (see
+# docs/migration-thinreports.md). The legacy host materialized every DISPLAY
+# variant of a date or a price as its own key — `reserved_at` / `reserved_at_jp`
+# / `reserved_at_date`, `price_total_yen`. Each of those collapses to ONE typed
+# field here; the template picks the variant.
+type: object
+properties:
+  reservation:
+    type: object
+    properties:
+      number:
+        type: string
+        title: 受付番号
+        example: RS-2026-0715-0392
+      reserved_at:
+        type: string
+        format: date
+        title: 受付日
+        example: '2026-07-15'
+      pickup_from:
+        type: string
+        format: date
+        title: お引取開始日
+        example: '2026-07-18'
+      pickup_to:
+        type: string
+        format: date
+        title: お引取期限
+        example: '2026-07-31'
+      branch:
+        type: string
+        title: お引取店舗
+        example: 正直堂 神保町本店
+    title: 取り置き情報
+  customer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: お客様名
+        example: 中村 あおい
+      member_number:
+        type: string
+        title: 会員番号
+        example: M-004821
+      tel:
+        type: string
+        title: 電話番号
+        example: 03-1234-9876
+    title: お客様
+  totals:
+    type: object
+    properties:
+      count:
+        type: integer
+        format: quantity
+        title: 取り置き点数
+        example: 5
+      amount:
+        type: number
+        format: currency
+        title: 合計（税込）
+        example: 14880
+        currency: JPY
+        precision: 0
+        recommendedStyle:
+          textAlign: right
+    title: 合計（呼び出し側で計算）
+  meta:
+    type: object
+    properties:
+      printed_at:
+        type: string
+        format: date-time
+        title: 印刷日時
+        example: '2026-07-15T18:20:00+09:00'
+    title: 発行情報
+  web:
+    type: object
+    properties:
+      status_url:
+        type: string
+        title: 取り置き状況URL
+        example: https://reserve.shojikudo.example/r/RS-2026-0715-0392
+    title: 取り置き状況照会
+  books:
+    type: array
+    title: 取り置き明細
+    items:
+      type: object
+      properties:
+        title:
+          type: string
+          title: 書名
+          example: Rustで作るPDFエンジン
+        author:
+          type: string
+          title: 著者
+          example: 神保 律
+        price:
+          type: number
+          format: currency
+          title: 税込価格
+          example: 3200
+          currency: JPY
+          precision: 0
+        status:
+          type: string
+          title: 入荷状況
+          example: arrived
+          # The value→label pairs replace the legacy host's Ruby ternary
+          # (`（入荷待ち）`): params keep the machine value, the slip
+          # prints the words declared here.
+          enum:
+            - { value: arrived, label: 入荷済み }
+            - { value: backorder, label: 入荷待ち }
+      title: 明細行

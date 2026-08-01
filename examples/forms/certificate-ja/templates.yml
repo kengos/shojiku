@@ -1,0 +1,120 @@
+version: 0.1.0
+name: certificate_ja
+
+# A4 landscape certificate — the one-sheet design outside tables/forms: a
+# double-ruled decorative frame (`borderStyle: double`), mincho (ipamj-mincho),
+# a letter-spaced title, medal/seal SVGs, a wareki completion date, and a
+page:
+  size: A4
+  orientation: landscape
+  margin: 25
+
+defaults:
+  locale: ja-JP
+  style:
+    fontFamily: ipamj-mincho
+    color: "#2b2b2b"
+
+styles:
+  見出し1:
+    fontSize: 20
+    fontWeight: bold
+    lineHeight: 1.3
+  見出し2:
+    fontSize: 16
+    fontWeight: bold
+    lineHeight: 1.3
+  見出し3:
+    fontSize: 13
+    fontWeight: bold
+    lineHeight: 1.3
+    color: "#444444"
+  本文:
+    fontSize: 10.5
+    lineHeight: 1.5
+  キャプション:
+    fontSize: 9
+    lineHeight: 1.4
+    color: "#666666"
+
+sections:
+  body:
+    type: absolute
+    items:
+      # Ground color — laid past the margins (negative-coordinate bleed).
+      - type: rect
+        box: { x: -25, y: -25, w: 841.89, h: 595.28 }
+        style: { backgroundColor: "#fdfbf4" }
+      # Double decorative rule + a thin inner rule.
+      - type: rect
+        box: { x: 6, y: 6, w: 779.89, h: 533.28 }
+        style: { borderWidth: 4, borderStyle: double, borderColor: "#b7883f" }
+      - type: rect
+        box: { x: 16, y: 16, w: 759.89, h: 513.28 }
+        style: { borderWidth: 0.6, borderColor: "#b7883f" }
+
+      - type: text
+        box: { x: 36, y: 32, w: 300, h: 14 }
+        text: "証書番号 第 {certificate.number} 号"
+        style: { fontSize: 9.5, color: "#6d5638", lineHeight: 1.3 }
+
+      - type: text
+        box: { x: 0, y: 66, w: "100%", h: 46 }
+        text: 修　了　証　書
+        style: { fontSize: 32, textAlign: center, lineHeight: 1.35, letterSpacing: "0.25em" }
+
+      - type: text
+        box: { x: 0, y: 146, w: "100%", h: 32 }
+        text: "{recipient.name} 殿"
+        style: { fontSize: 22, textAlign: center, lineHeight: 1.4 }
+      - type: line
+        from: { x: 285.95, y: 184 }
+        to: { x: 505.95, y: 184 }
+        style: { width: 0.8, color: "#b7883f" }
+
+      - type: text
+        box: { x: 145.95, y: 216, w: 500, h: 96 }
+        text: |-
+          あなたは 正直堂カルチャースクール
+          「{course.name}」の全課程（全{course.sessions}回・{course.hours}時間）を
+          修了されたことをここに証します
+        style: { fontSize: 13, textAlign: center, lineHeight: 2.2 }
+
+      - type: text
+        box: { x: 0, y: 330, w: "100%", h: 18 }
+        text: "{course.completed_on:wareki}"
+        style: { fontSize: 12, textAlign: center, lineHeight: 1.4 }
+
+      # Issuer + seal (the stamp slightly overlaps the text, semi-transparent).
+      - type: text
+        box: { x: 245.95, y: 390, w: 300, h: 22 }
+        text: 正直堂カルチャースクール
+        style: { fontSize: 15, textAlign: center, lineHeight: 1.4 }
+      - type: text
+        box: { x: 245.95, y: 418, w: 300, h: 20 }
+        text: "代表 {issuer.director}"
+        style: { fontSize: 13, textAlign: center, lineHeight: 1.4 }
+      - type: image
+        box: { x: 512, y: 396, w: 48, h: 48 }
+        src: assets/seal.svg
+        style: { opacity: 0.88 }
+
+      - type: image
+        box: { x: 72, y: 368, w: 100, h: 118 }
+        src: assets/medal.svg
+
+      # Verification-page QR.
+      - id: verify_qr
+        type: qr_code
+        box: { x: 688, y: 420, w: 54, h: 54 }
+        data: { key: certificate.verify_url }
+      - type: text
+        box: { x: 676, y: 478, w: 78, h: 10 }
+        text: 証書の検証
+        link: { url: "{certificate.verify_url}" }
+        style: { fontSize: 6.5, textAlign: center, color: "#6d5638", lineHeight: 1.3, fontFamily: biz-udp-gothic }
+
+      - type: text
+        box: { x: 0, y: 505, w: "100%", h: 12 }
+        text: 発行 株式会社正直堂（正直堂カルチャースクール事務局）
+        style: { fontSize: 8, textAlign: center, color: "#8a7a5c", lineHeight: 1.3, fontFamily: biz-udp-gothic }

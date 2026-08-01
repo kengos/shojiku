@@ -1,0 +1,42 @@
+/* Page-root base (the app owns its page — sidekiq-web style). Everything that
+ * used to be app-shell chrome now rides Tailwind utilities on the JSX (see
+ * app/chrome.ts for the shared button/select/banner strings); what remains
+ * here is the irreducible page-root base that utilities can't express cleanly:
+ *
+ *  - the document-root typography + theme colors (Headless UI portals overlays
+ *    to <body>, OUTSIDE the app/designer subtrees, so these must live at the
+ *    page root or portaled popups fall back to UA styles);
+ *  - box-sizing + the form-control `font: inherit` reset (no Tailwind preflight
+ *    is imported — the legacy designer sheet still expects UA defaults);
+ *  - the keyboard focus ring (a trust feature — one rule for every control on
+ *    the page, app shell and Designer alike). */
+
+html {
+  font-family: var(--sj-font-family);
+  font-size: var(--sj-font-size);
+  line-height: 1.45;
+  background: var(--sj-bg);
+  color: var(--sj-text);
+}
+
+body {
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:where(button, input, select):focus-visible {
+  outline: 2px solid var(--sj-focus);
+  outline-offset: 1px;
+}

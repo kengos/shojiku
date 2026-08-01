@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Shojiku.Tests</RootNamespace>
+
+    <!--
+      Analyzer rules that argue against how a TEST assembly is written. It is
+      not a public API, and xUnit's own conventions (public fixture classes, a
+      `Collection`-suffixed definition, IDisposable teardown) are what several of
+      these object to. The library project runs the full `All` analysis set with
+      no such list.
+
+        CA1707  underscore-free names — test names are sentences here
+        CA2007  ConfigureAwait — irrelevant in a test host with no sync context
+        CA1861  constant array arguments — theory data, by construction
+        CA1515  "make it internal" — xUnit needs fixtures and tests public
+        CA1711  "do not end in Collection" — xUnit's own naming for one
+        CA1063  the full Dispose pattern — xUnit's teardown hook is IDisposable
+        CA1720  "identifier contains a type name" — `Signed` is a document here
+        CA1822  "can be static" — deliberate instance members in fakes
+        CA1849  "synchronously blocks" — proving the SYNC surface is the point
+        CS1591  missing XML docs on test members
+    -->
+    <NoWarn>$(NoWarn);CA1707;CA2007;CA1861;CA1515;CA1711;CA1063;CA1720;CA1822;CA1849;CS1591</NoWarn>
+
+    <!--
+      Coverlet's 100% LINE threshold, which docs/agents/sdk.md requires for this
+      language and which fails the build natively rather than printing a number
+      nobody reads. Scoped to the library: a test assembly's own coverage says
+      nothing about the binding.
+    -->
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletOutputFormat>lcov</CoverletOutputFormat>
+    <Include>[Shojiku]*</Include>
+    <Threshold>100</Threshold>
+    <ThresholdType>line</ThresholdType>
+    <ThresholdStat>total</ThresholdStat>
+    <!--
+      Source-generated code is the framework's, not this package's: the
+      [GeneratedRegex] partial methods in TemplateRoot expand into a state
+      machine with branches for inputs the four rules never produce. Holding
+      generated output to this package's coverage bar would measure the
+      generator.
+    -->
+    <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageReference Include="coverlet.msbuild" Version="6.0.4">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Shojiku/Shojiku.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The fixture templates travel beside the test assembly, so a suite run from
+      any working directory finds them.
+    -->
+    <None Include="Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,26 @@
+[package]
+name = "shojiku-mcp"
+description = "Shojiku MCP server: validate / render_preview / inspect_layout / capabilities tools over stdio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "shojiku-mcp"
+path = "src/main.rs"
+
+[dependencies]
+base64 = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+shojiku-authoring = { workspace = true }
+shojiku-core = { workspace = true }
+shojiku-diagnostics = { workspace = true }
+shojiku-image = { workspace = true }
+shojiku-layout = { workspace = true }
+
+[lints]
+workspace = true

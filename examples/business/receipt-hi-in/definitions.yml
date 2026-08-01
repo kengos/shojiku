@@ -1,0 +1,111 @@
+version: 0.2.0
+type: object
+properties:
+  receipt:
+    type: object
+    properties:
+      number:
+        type: string
+        title: रसीद क्रमांक
+        example: R-2026-0412-118
+      issued_at:
+        type: string
+        format: date-time
+        title: जारी दिनांक
+        example: '2026-04-12T11:20:00+05:30'
+        displayFormats:
+        - id: default
+          label: मानक
+        - id: date
+          label: केवल दिनांक
+        - id: long
+          label: पूर्ण दिनांक
+    title: रसीद
+  recipient:
+    type: object
+    properties:
+      name:
+        type: string
+        title: प्राप्तकर्ता
+        example: सरस्वती विद्या मंदिर, जयपुर
+    title: प्राप्तकर्ता
+  amount:
+    type: object
+    properties:
+      total_in_tax:
+        type: number
+        format: currency
+        title: कुल योग (कर सहित)
+        example: 324500
+        currency: INR
+        precision: 2
+        recommendedStyle:
+          textAlign: right
+      total_ex_tax:
+        type: number
+        format: currency
+        title: उप-योग (कर रहित)
+        example: 275000
+        currency: INR
+        precision: 2
+      tax:
+        type: number
+        format: currency
+        title: जीएसटी
+        example: 49500
+        currency: INR
+        precision: 2
+    title: राशि
+  purpose:
+    type: string
+    title: प्रयोजन
+    example: पुस्तकालय हेतु पुस्तकें एवं फ़र्नीचर
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: संस्था का नाम
+        example: ईमानदार पुस्तक भंडार प्रा. लि.
+      tax_id:
+        type: string
+        title: जीएसटीआईएन
+        example: जीएसटीआईएन 08ABCDE1234F1Z5
+      address:
+        type: string
+        title: पता
+        example: 12, एम. आई. रोड, जयपुर 302001
+      tel:
+        type: string
+        title: दूरभाष
+        example: दूरभाष 0141-234-5678
+    title: जारीकर्ता
+  items:
+    type: array
+    title: विवरण सूची
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: विवरण
+          example: हिंदी साहित्य संग्रह (कक्षा 9–12 पुस्तकालय सेट)
+        quantity:
+          type: number
+          format: quantity
+          title: मात्रा
+          example: 150
+          unit: item
+        unit_price:
+          type: number
+          format: currency
+          title: दर
+          example: 850
+          precision: 2
+        amount:
+          type: number
+          format: currency
+          title: राशि
+          example: 127500
+          precision: 2
+      title: विवरण पंक्ति

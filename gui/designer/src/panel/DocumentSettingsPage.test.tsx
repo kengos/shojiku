@@ -1,0 +1,189 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
+import { describe, expect, it, vi } from 'vitest';
+import { useEditor } from '../editor/useEditor';
+import type { RawPage } from '../engine/types';
+import { I18nProvider } from '../i18n/context';
+import { buildStyleUsage } from '../styles/usage';
+import { DocumentSettingsPage } from './DocumentSettingsPage';
+import type { DocSection } from './docSections';
+
+const BASE = 'sections:\n  body:\n    type: flow\n    items: []\n';
+
+const page = (): RawPage => ({ width: 4, height: 6, rgba: new Uint8Array(4 * 6 * 4) });
+
+function Harness({
+  source = BASE,
+  pages = [],
+  defaultFontFamily,
+  focus,
+  onClose = vi.fn(),
+}: {
+  readonly source?: string;
+  readonly pages?: readonly RawPage[];
+  readonly defaultFontFamily?: string;
+  readonly focus?: { readonly section: DocSection; readonly nonce: number };
+  readonly onClose?: () => void;
+}) {
+  const editor = useEditor(source);
+  return (
+    <I18nProvider locale="en">
+      <DocumentSettingsPage
+        controller={editor}
+        styleUsage={buildStyleUsage(editor.text)}
+        defaultFontFamily={defaultFontFamily}
+        pages={pages}
+        focus={focus}
+        onClose={onClose}
+      />
+      <pre data-testid="doc">{editor.text}</pre>
+    </I18nProvider>
+  );
+}
+
+/** Select a rail entry — one section is on screen at a time, so a test for a
+ * control outside the opening section opens its section first. */
+function openSection(name: string) {
+  fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${name}`) }));
+}
+
+describe('DocumentSettingsPage', () => {
+  it('lists every section in the rail and opens page setup first', () => {
+    render(<Harness />);
+    for (const name of ['Page setup', 'Normal text', 'Styles', 'Locale & currency']) {
+      expect(screen.getByRole('button', { name: new RegExp(`^${name}`) })).toBeTruthy();
+    }
+    // Only the opening section's body is mounted — the rail, not a scroller,
+    // is what gets you to the others.
+    expect(screen.getByRole('heading', { name: 'Page setup' })).toBeTruthy();
+    expect(screen.getByLabelText('Size')).toBeTruthy();
+    expect(screen.queryByLabelText('Line height')).toBeNull();
+    expect(screen.queryByLabelText('Locale')).toBeNull();
+  });
+
+  it('swaps the body to the section the rail selects', () => {
+    render(<Harness />);
+    openSection('Normal text');
+    expect(screen.getByRole('heading', { name: 'Normal text' })).toBeTruthy();
+    expect(screen.getByLabelText('Line height')).toBeTruthy();
+    openSection('Locale & currency');
+    expect(screen.getByLabelText('Locale')).toBeTruthy();
+    expect(screen.queryByLabelText('Line height')).toBeNull();
+  });
+
+  it('summarizes each section in its rail entry', () => {
+    render(
+      <Harness
+        source={`defaults:\n  locale: ja-JP\n  currency: JPY\n  style:\n    fontSize: 12\n    fontFamily: biz-ud-gothic\nstyles:\n  heading: { fontWeight: bold }\n${BASE}`}
+      />,
+    );
+    expect(screen.getByRole('button', { name: /^Normal text/ }).textContent).toContain(
+      '12pt biz-ud-gothic',
+    );
+    expect(screen.getByRole('button', { name: /^Styles/ }).textContent).toContain('1 styles');
+    expect(screen.getByRole('button', { name: /^Locale & currency/ }).textContent).toContain(
+      'ja-JP · JPY',
+    );
+  });
+
+  it('summarizes an unset base text by size alone (no family to name)', () => {
+    render(<Harness />);
+    expect(screen.getByRole('button', { name: /^Normal text/ }).textContent).toContain('10pt');
+  });
+
+  it('previews the base text in the aside on the normal-text section', () => {
+    render(<Harness defaultFontFamily="biz-udp-gothic" pages={[page()]} />);
+    openSection('Normal text');
+    expect(screen.getByText('Text with no style of its own is set like this.')).toBeTruthy();
+    // The page preview steps aside — the section's subject is the text itself.
+    expect(document.querySelectorAll('canvas').length).toBe(0);
+  });
+
+  it('shows the engine fallback as the family placeholder, not as a value', () => {
+    render(<Harness defaultFontFamily="biz-udp-gothic" />);
+    openSection('Normal text');
+    const input = screen.getByLabelText('Font family') as HTMLInputElement;
+    expect(input.value).toBe('');
+    expect(input.getAttribute('placeholder')).toBe('biz-udp-gothic');
+  });
+
+  it('shows a no-preview note when there are no rendered pages', () => {
+    render(<Harness pages={[]} />);
+    expect(screen.getByText('No preview yet.')).toBeTruthy();
+  });
+
+  it('renders one preview canvas per rendered page', () => {
+    const { container } = render(<Harness pages={[page(), page()]} />);
+    expect(container.querySelectorAll('canvas').length).toBe(2);
+    expect(screen.queryByText('No preview yet.')).toBeNull();
+  });
+
+  it('fires onClose from the close button', () => {
+    const onClose = vi.fn();
+    render(<Harness onClose={onClose} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Back to canvas' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the focused section, and re-selects it on a new nonce', () => {
+    function Wrapper() {
+      const [nonce, setNonce] = useState(1);
+      return (
+        <>
+          <Harness focus={{ section: 'styles', nonce }} />
+          <button type="button" onClick={() => setNonce((n) => n + 1)}>
+            bump
+          </button>
+        </>
+      );
+    }
+    render(<Wrapper />);
+    expect(screen.getByRole('heading', { name: 'Styles' })).toBeTruthy();
+    // Navigate away, then bump the nonce: a repeat jump to the SAME section
+    // still fires (the nonce is the trigger, not the section value).
+    openSection('Page setup');
+    expect(screen.queryByRole('heading', { name: 'Styles' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'bump' }));
+    expect(screen.getByRole('heading', { name: 'Styles' })).toBeTruthy();
+  });
+
+  it('opens at page setup when no focus is given', () => {
+    render(<Harness />);
+    expect(screen.getByRole('heading', { name: 'Page setup' })).toBeTruthy();
+  });
+
+  it('renders over a hostile/malformed document without throwing', () => {
+    // A non-map body still renders the settings shell + seeds.
+    render(<Harness source={'sections: not-a-map\n'} />);
+    expect(screen.getByRole('heading', { name: 'Page setup' })).toBeTruthy();
+    openSection('Normal text');
+    const lineHeight = screen.getByLabelText('Line height') as HTMLInputElement;
+    expect(lineHeight.value).toBe('');
+    expect(lineHeight.getAttribute('placeholder')).toBe('1.4');
+  });
+
+  it('renders seeds over an alias-bomb defaults subtree (guarded read → empty)', () => {
+    // The `defaults:` subtree is an alias bomb: the editor's capped read
+    // materializes it as empty, so the view shows the engine-default seeds
+    // instead of throwing or hanging.
+    const bomb = [
+      'seed: &x [1, 1, 1, 1, 1, 1, 1, 1]',
+      `defaults: { style: { fontSize: [${Array(80).fill('*x').join(', ')}] } }`,
+      BASE.trimEnd(),
+      '',
+    ].join('\n');
+    render(<Harness source={bomb} />);
+    expect(screen.getByRole('heading', { name: 'Page setup' })).toBeTruthy();
+    openSection('Normal text');
+    // Nothing survives the capped read, so every field reads unset — and shows
+    // the engine fallback as its placeholder rather than as an authored value.
+    for (const [label, fallback] of [
+      ['Line height', '1.4'],
+      ['Font size', '10'],
+    ]) {
+      const input = screen.getByLabelText(label) as HTMLInputElement;
+      expect(input.value).toBe('');
+      expect(input.getAttribute('placeholder')).toBe(fallback);
+    }
+  });
+});

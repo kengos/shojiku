@@ -1,0 +1,41 @@
+[package]
+name = "shojiku-wasm"
+description = "Shojiku browser/Workers WASM bindings: the JS host over the shared authoring surface (bytes-first fonts/assets, three-part render bundle)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+# cdylib for the wasm build (wasm-bindgen), rlib so the pure core is a normal
+# library the workspace tests/coverage/clippy gates exercise on the host.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+thiserror = { workspace = true }
+shojiku-core = { workspace = true }
+shojiku-diagnostics = { workspace = true }
+shojiku-formatter = { workspace = true }
+shojiku-image = { workspace = true }
+shojiku-layout = { workspace = true }
+# The PDF backend joins the browser build so the Designer can render the REAL
+# deliverable client-side (byte-identical to the CLI's). Composed HERE, in the
+# host, exactly as the CLI composes it — `shojiku-authoring` stays PDF-free.
+shojiku-render-pdf = { workspace = true }
+shojiku-render-png = { workspace = true }
+# By path (not workspace-inherited) so `default-features = false` takes effect:
+# bytes-first only, no `fs` filesystem pack discovery.
+shojiku-authoring = { path = "../authoring", default-features = false }
+
+# The wasm-bindgen shim compiles ONLY for wasm32, so a host build (test /
+# clippy / coverage) never pulls it and the shim's marshalling code stays out
+# of the host coverage surface.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { workspace = true }
+js-sys = { workspace = true }
+
+[lints]
+workspace = true

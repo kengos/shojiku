@@ -1,0 +1,158 @@
+version: 0.2.0
+type: object
+properties:
+  delivery:
+    type: object
+    properties:
+      number:
+        type: string
+        title: 納品番号
+        example: DN-2026-0810-041
+      delivered_on:
+        type: string
+        format: date
+        title: 納品日
+        example: '2026-08-10'
+      order_number:
+        type: string
+        title: ご注文番号
+        example: PO-2026-0801-112
+      subject:
+        type: string
+        title: 件名
+        example: 2026年秋 新装開店 什器・書籍一式
+      shipment:
+        type: string
+        title: 便区分
+        example: 第1便（分納）
+    title: 納品情報
+  shipTo:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 納品先名
+        example: 株式会社ヤマカワ書林
+      postal_code:
+        type: string
+        title: 郵便番号
+        example: 160-0022
+      address:
+        type: string
+        title: 納品先住所
+        example: 東京都新宿区新宿4-5-6 ヤマカワビル3F
+      contact:
+        type: string
+        title: ご担当者
+        example: 仕入部 田中
+    title: 納品先
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 発行者名
+        example: 株式会社正直堂
+      postal_code:
+        type: string
+        title: 郵便番号
+        example: 101-0051
+      address:
+        type: string
+        title: 住所
+        example: 東京都千代田区神田神保町1-2-3
+      tel:
+        type: string
+        title: 電話番号
+        example: 03-1234-5678
+      email:
+        type: string
+        title: メールアドレス
+        example: sales@shojikudo.example
+      staff:
+        type: string
+        title: 担当
+        example: 営業部 佐藤
+    title: 発行者
+  summary:
+    type: object
+    properties:
+      lines:
+        type: integer
+        title: 明細行数
+        example: 9
+      shipped_qty:
+        type: integer
+        format: quantity
+        title: 今回納品数 合計
+        example: 61
+      remaining_qty:
+        type: integer
+        format: quantity
+        title: 残数 合計
+        example: 25
+      amount:
+        type: number
+        format: currency
+        title: 今回納品分 参考金額（税抜）
+        example: 737400
+        currency: JPY
+        precision: 0
+        recommendedStyle:
+          textAlign: right
+    title: 納品サマリ（呼び出し側で計算）
+  notes:
+    type: object
+    properties:
+      next_shipment:
+        type: string
+        title: 次回納品予定
+        example: 残 25 点は 2026-08-24 に第2便として納品予定です。
+    title: 備考
+  web:
+    type: object
+    properties:
+      tracking_url:
+        type: string
+        title: 納品状況URL
+        example: https://track.shojikudo.example/dn/DN-2026-0810-041
+    title: 納品状況照会
+  items:
+    type: array
+    title: 明細
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: 品目
+          example: 書棚（大型・オーダー製作）
+        ordered:
+          type: integer
+          title: ご注文数
+          example: 6
+        shipped:
+          type: integer
+          title: 今回納品数
+          example: 4
+        remaining:
+          type: integer
+          title: 残数
+          example: 2
+        unit:
+          type: string
+          title: 単位
+          example: 台
+        amount:
+          type: number
+          format: currency
+          title: 今回納品分 金額（税抜）
+          example: 192000
+          currency: JPY
+          precision: 0
+        status:
+          type: string
+          title: 納品区分
+          example: partial
+          enum: [full, partial]
+      title: 明細行

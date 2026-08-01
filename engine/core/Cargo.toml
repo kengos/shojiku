@@ -1,0 +1,18 @@
+[package]
+name = "shojiku-core"
+description = "Shojiku data model: definitions, templates, params, and validation"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+serde_path_to_error = { workspace = true }
+thiserror = { workspace = true }
+shojiku-diagnostics = { workspace = true }
+
+[lints]
+workspace = true

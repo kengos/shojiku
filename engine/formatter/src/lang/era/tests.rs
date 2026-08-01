@@ -1,0 +1,96 @@
+//! Era wire parsing + lookup: boundaries, year-one, hostile dates.
+
+use super::*;
+
+fn eras() -> Vec<EraSpec> {
+    serde_yaml::from_str(
+        r#"
+- { name: 平成, start: "1989-01-08" }
+- { name: 令和, start: "2019-05-01" }
+- { name: 昭和, start: "1926-12-25" }
+"#,
+    )
+    .expect("eras")
+}
+
+fn day(year: i32, month: u8, day: u8) -> EraDate {
+    EraDate { year, month, day }
+}
+
+#[test]
+fn picks_latest_era_at_or_before_the_date_unsorted() {
+    let eras = eras();
+    let (era, year) = era_for(&eras, day(2026, 7, 10)).expect("era");
+    assert_eq!(era.name, "令和");
+    assert_eq!(year, 8);
+}
+
+#[test]
+fn era_start_day_is_year_one() {
+    let eras = eras();
+    let (era, year) = era_for(&eras, day(2019, 5, 1)).expect("era");
+    assert_eq!((era.name.as_str(), year), ("令和", 1));
+}
+
+#[test]
+fn day_before_a_start_belongs_to_the_previous_era() {
+    let eras = eras();
+    let (era, year) = era_for(&eras, day(2019, 4, 30)).expect("era");
+    assert_eq!((era.name.as_str(), year), ("平成", 31));
+}
+
+#[test]
+fn date_before_every_era_has_none() {
+    assert!(era_for(&eras(), day(1900, 1, 1)).is_none());
+}
+
+#[test]
+fn empty_era_list_has_none() {
+    assert!(era_for(&[], day(2026, 1, 1)).is_none());
+}
+
+#[test]
+fn far_future_date_does_not_overflow() {
+    let eras = eras();
+    let (era, year) = era_for(&eras, day(9999, 12, 31)).expect("era");
+    assert_eq!((era.name.as_str(), year), ("令和", 7981));
+}
+
+#[test]
+fn era_date_round_trips_zero_padded() {
+    let d: EraDate = serde_yaml::from_str("\"1989-01-08\"").expect("date");
+    assert_eq!(d, day(1989, 1, 8));
+    assert_eq!(
+        serde_yaml::to_string(&d).expect("yaml").trim(),
+        "1989-01-08"
+    );
+}
+
+#[test]
+fn invalid_era_dates_are_parse_errors() {
+    for bad in [
+        "\"2019-5\"",           // missing day
+        "\"2019-05-01-extra\"", // trailing part
+        "\"2019-13-01\"",       // month out of range
+        "\"2019-02-30\"",       // day not on the calendar
+        "\"abcd-ef-gh\"",       // non-numeric
+        "5",                    // not a string
+    ] {
+        let r: Result<EraDate, _> = serde_yaml::from_str(bad);
+        assert!(r.is_err(), "{bad} should be rejected");
+    }
+}
+
+#[test]
+fn hostile_era_date_echo_is_truncated() {
+    let long = format!("\"{}\"", "9".repeat(500));
+    let err = serde_yaml::from_str::<EraDate>(&long).expect_err("reject");
+    assert!(err.to_string().len() < 200, "echo must be bounded");
+}
+
+#[test]
+fn unknown_era_keys_are_rejected() {
+    let r: Result<EraSpec, _> =
+        serde_yaml::from_str("{ name: 令和, start: \"2019-05-01\", zzz: 1 }");
+    assert!(r.is_err());
+}

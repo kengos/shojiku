@@ -1,0 +1,37 @@
+[package]
+name = "shojiku-cli"
+description = "Shojiku CLI: validate, inspect, and render templates to PDF"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "shojiku"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+shojiku-authoring = { workspace = true }
+shojiku-core = { workspace = true }
+shojiku-diagnostics = { workspace = true }
+shojiku-fetch = { workspace = true }
+shojiku-formatter = { workspace = true }
+shojiku-image = { workspace = true }
+shojiku-layout = { workspace = true }
+shojiku-render-pdf = { workspace = true }
+shojiku-render-png = { workspace = true }
+shojiku-signing = { workspace = true }
+shojiku-verify = { workspace = true }
+rpassword = { workspace = true }
+zeroize = { workspace = true }
+
+[dev-dependencies]
+serde_yaml = { workspace = true }
+sha2 = { workspace = true }
+
+[lints]
+workspace = true

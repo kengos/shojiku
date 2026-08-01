@@ -1,0 +1,12 @@
+version: 1
+license: OFL-1.1
+redistributable: true
+faces:
+  - id: noto-sans-devanagari
+    file: NotoSansDevanagari-Regular.ttf
+    sha256: da2d2135e978c6f68852cfd8201c3a067df1acf73232fe80c58f89e6302ee6e8
+  - id: noto-sans-devanagari-bold
+    file: NotoSansDevanagari-Bold.ttf
+    sha256: ee8bb4df2203759d8d302a5e05aa2206b98067bd24a10e8f8c3d930f4b23135a
+    family: noto-sans-devanagari
+    weight: bold

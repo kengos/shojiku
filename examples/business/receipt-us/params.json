@@ -1,0 +1,25 @@
+{
+  "store": {
+    "name": "SHOJIKU MART",
+    "address": "123 Main Street, Springfield, IL 62704",
+    "phone": "(555) 010-1234"
+  },
+  "sale": {
+    "timestamp": "2026-07-07T18:23:00-05:00",
+    "register": "REG 02",
+    "cashier": "CLERK 07",
+    "payment": "VISA ****1234  AUTH 052319"
+  },
+  "amount": {
+    "subtotal": 18.88,
+    "tax_label": "TAX 8.875%",
+    "tax": 1.68,
+    "total": 20.56
+  },
+  "items": [
+    { "name": "MILK 1GAL", "qty": 1, "price": 3.49 },
+    { "name": "BREAD WHEAT", "qty": 1, "price": 2.29 },
+    { "name": "EGGS LARGE 12CT", "qty": 2, "price": 9.98 },
+    { "name": "APPLES FUJI 3LB", "qty": 1, "price": 3.12 }
+  ]
+}

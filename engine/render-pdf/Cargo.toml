@@ -1,0 +1,25 @@
+[package]
+name = "shojiku-render-pdf"
+description = "Shojiku PDF renderer: layout tree -> PDF bytes"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+# raster-images adds pure codec crates only (png/zune-jpeg/gif/image-webp/
+# imagesize) — nothing from the rustybuzz/ttf-parser stack that keeps
+# simple-text off.
+krilla = { workspace = true, features = ["raster-images"] }
+thiserror = { workspace = true }
+shojiku-image = { workspace = true }
+shojiku-layout = { workspace = true }
+
+[dev-dependencies]
+base64 = { workspace = true }
+serde_json = { workspace = true }
+shojiku-core = { workspace = true }
+shojiku-formatter = { workspace = true }
+
+[lints]
+workspace = true

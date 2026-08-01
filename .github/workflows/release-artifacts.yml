@@ -1,0 +1,138 @@
+name: Release artifacts
+
+# Builds the five-platform binary matrix the release embeds in packages:
+# the C ABI cdylib (FFI SDKs), the CLI (subprocess SDKs + GitHub Releases),
+# and the napi addon (npm platform packages). Produces ARTIFACTS only —
+# publishing stays a separate, deliberate act.
+#
+# Manual only, like publish-image.yml: main is force-pushed in place until
+# the first release, so push triggers do not fire reliably, and a release
+# build is something you ask for, not something that happens to you.
+#
+# WHY THREE BUILD STYLES. The linux and windows-mingw targets come from the
+# same pinned Docker cross-build a contributor runs (`make capi-dist
+# cli-dist`) — CI adds nothing but the runner. The macOS targets CANNOT come
+# from a container (Apple's toolchain does not run in linux Docker), and the
+# maintainer's machine deliberately has no local cargo, so the macOS runner
+# is the decided source of those two; same for the napi addon on Windows,
+# which needs MSVC (napi-rs does not support the -gnu target) where the
+# cdylib and CLI deliberately stay mingw (plain C ABI, FFI does not care,
+# and a Linux container can produce them).
+on:
+  workflow_dispatch:
+
+env:
+  # Keep in sync with Makefile RUST_VERSION / ci.yml / docker/Dockerfile.
+  RUST_VERSION: "1.97.1"
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux-and-mingw:
+    # Everything a Linux container can link: capi + cli for linux x64,
+    # linux arm64 and windows x64 (mingw), through the same make targets a
+    # contributor runs.
+    name: capi + cli (linux x64/arm64, windows mingw)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: capi-dist cli-dist
+          key: release-dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-linux-mingw
+          path: |
+            dist/capi/
+            dist/cli/
+          if-no-files-found: error
+
+  napi-linux:
+    # The addon per linux arch, natively on each runner through the pinned
+    # container (`make napi` is host-arch by design).
+    name: napi addon (linux ${{ matrix.slug }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-latest, slug: x64 }
+          - { runner: ubuntu-24.04-arm, slug: arm64 }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: napi
+          key: release-napi-${{ matrix.slug }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-napi-linux-${{ matrix.slug }}
+          path: dist/napi/local/shojiku.node
+          if-no-files-found: error
+
+  macos:
+    # Both Apple targets from one arm64 runner: arm64 natively, x64 by
+    # cross-compile (Apple's toolchain links both from either arch). Raw
+    # cargo rather than make — the make targets are Docker wrappers and
+    # macOS runners have no Docker; this job IS the decided exception.
+    name: capi + cli + napi (macOS x64/arm64)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Pin the toolchain
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal
+          rustup default "$RUST_VERSION"
+          rustup target add x86_64-apple-darwin aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+      - name: Build both targets
+        working-directory: engine
+        run: |
+          for target in aarch64-apple-darwin x86_64-apple-darwin; do
+            cargo build --release --locked --target "$target" \
+              -p shojiku-capi -p shojiku-cli
+            cargo build --release --locked --target "$target" \
+              -p shojiku-napi --features shim
+            out="../dist/release-macos/$target"
+            mkdir -p "$out"
+            cp "target/$target/release/libshojiku_capi.dylib" "$out/"
+            cp "target/$target/release/shojiku" "$out/"
+            cp "target/$target/release/libshojiku_napi.dylib" "$out/shojiku.node"
+          done
+      - name: Smoke the native-arch CLI
+        run: |
+          ./dist/release-macos/aarch64-apple-darwin/shojiku --version
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-macos
+          path: dist/release-macos/
+          if-no-files-found: error
+
+  napi-windows:
+    # The one artifact mingw cannot produce: napi-rs needs MSVC. The cdylib
+    # and CLI for Windows stay mingw (built in the linux job above) — a
+    # plain C ABI has no toolchain affinity, but a node addon does.
+    name: napi addon (windows x64, MSVC)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Pin the toolchain
+        run: |
+          rustup toolchain install $env:RUST_VERSION --profile minimal
+          rustup default $env:RUST_VERSION
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+      - name: Build the addon
+        working-directory: engine
+        run: |
+          cargo build --release --locked -p shojiku-napi --features shim
+          New-Item -ItemType Directory -Force ..\dist\release-windows | Out-Null
+          Copy-Item target\release\shojiku_napi.dll ..\dist\release-windows\shojiku.node
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-napi-windows-x64
+          path: dist/release-windows/shojiku.node
+          if-no-files-found: error

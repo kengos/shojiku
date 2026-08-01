@@ -1,0 +1,14 @@
+{
+  "certificate": {
+    "number": "2026-0342",
+    "verify_url": "https://school.shojikudo.example/verify/2026-0342"
+  },
+  "recipient": { "name": "高橋 栞" },
+  "course": {
+    "name": "活版印刷と本づくりの基礎",
+    "sessions": 8,
+    "hours": 16,
+    "completed_on": "2026-06-28"
+  },
+  "issuer": { "director": "正直 誠一郎" }
+}

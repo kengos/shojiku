@@ -1,0 +1,7 @@
+version: 1
+license: IPA-1.0
+redistributable: true
+faces:
+  - id: ipamj-mincho
+    file: ipamjm.ttf
+    sha256: a3e84f495f3c388db7a1473bf1985c1c076d0c814100f10a027ca6853eb1e8cb

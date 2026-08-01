@@ -1,0 +1,46 @@
+{
+  "delivery": {
+    "number": "DN-2026-0810-041",
+    "delivered_on": "2026-08-10",
+    "order_number": "PO-2026-0801-112",
+    "subject": "2026年秋 新装開店 什器・書籍一式",
+    "shipment": "第1便（分納）"
+  },
+  "shipTo": {
+    "name": "株式会社ヤマカワ書林",
+    "postal_code": "160-0022",
+    "address": "東京都新宿区新宿4-5-6 ヤマカワビル3F",
+    "contact": "仕入部 田中"
+  },
+  "issuer": {
+    "name": "株式会社正直堂",
+    "postal_code": "101-0051",
+    "address": "東京都千代田区神田神保町1-2-3",
+    "tel": "03-1234-5678",
+    "email": "sales@shojikudo.example",
+    "staff": "営業部 佐藤"
+  },
+  "summary": {
+    "lines": 9,
+    "shipped_qty": 61,
+    "remaining_qty": 25,
+    "amount": 737400
+  },
+  "notes": {
+    "next_shipment": "残 25 点は 2026-08-24 に第2便として納品予定です。店頭サイン工事一式は工事日程確定後の納品となります。"
+  },
+  "web": {
+    "tracking_url": "https://track.shojikudo.example/dn/DN-2026-0810-041"
+  },
+  "items": [
+    { "name": "書棚（大型・オーダー製作）", "ordered": 6, "shipped": 4, "remaining": 2, "unit": "台", "amount": 192000, "status": "partial" },
+    { "name": "レジカウンター什器", "ordered": 1, "shipped": 1, "remaining": 0, "unit": "台", "amount": 180000, "status": "full" },
+    { "name": "平台ディスプレイ什器", "ordered": 4, "shipped": 4, "remaining": 0, "unit": "台", "amount": 140000, "status": "full" },
+    { "name": "書籍『Rustで作るPDFエンジン』", "ordered": 30, "shipped": 20, "remaining": 10, "unit": "冊", "amount": 64000, "status": "partial" },
+    { "name": "書籍『YAMLテンプレート設計入門』", "ordered": 25, "shipped": 13, "remaining": 12, "unit": "冊", "amount": 36400, "status": "partial" },
+    { "name": "開店フェア用ポスター（B1・特殊加工／長い品目名の折り返し確認用に説明を冗長化したサンプル項目）", "ordered": 10, "shipped": 10, "remaining": 0, "unit": "枚", "amount": 45000, "status": "full" },
+    { "name": "のぼり旗（正直堂オリジナル・両面）", "ordered": 8, "shipped": 8, "remaining": 0, "unit": "本", "amount": 20000, "status": "full" },
+    { "name": "什器搬入・設置作業", "ordered": 1, "shipped": 1, "remaining": 0, "unit": "式", "amount": 60000, "status": "full" },
+    { "name": "店頭サイン工事一式", "ordered": 1, "shipped": 0, "remaining": 1, "unit": "式", "amount": 0, "status": "partial" }
+  ]
+}

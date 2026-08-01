@@ -1,0 +1,164 @@
+name: Publish packages
+
+# The irreversible half of the release: pushes the assembled packages to the
+# registries. Manual only, and each registry runs ONLY when both hold:
+#
+#   * its name is in the `registries` input (so one bad upload never turns
+#     into five), and
+#   * its secret exists (the Docker Hub pattern — a fork or a half-configured
+#     repository skips rather than fails).
+#
+# NuGet is the exception to the second rule: it publishes by OIDC Trusted
+# Publishing, so it has no secret to test. Its guard is the repository
+# itself, which keeps the fork-skips-rather-than-fails property.
+#
+# Secrets, all repository secrets, added as the release ceremony reaches
+# each registry:
+#   RUBYGEMS_API_KEY   push-scoped API key
+#   PYPI_API_TOKEN     account-scoped token (rescope to the project after)
+#   NPM_API_TOKEN      automation token (granular, All packages)
+#   CENTRAL_API_TOKEN      Sonatype Portal user token as `user:password`
+#   GPG_PRIVATE_KEY    ASCII-armored private key (Central signs artifacts)
+#   GPG_PASSPHRASE     its passphrase
+#
+# Maven stops at USER_MANAGED: the bundle uploads and validates, and the
+# final Publish click stays a human act in the Portal UI.
+on:
+  workflow_dispatch:
+    inputs:
+      artifacts_run_id:
+        description: 'The release-artifacts run whose binaries to publish'
+        required: true
+      registries:
+        description: 'Space-separated: ruby python npm nuget maven'
+        required: true
+        default: ruby
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Declaring any permission drops the rest, so the two the job already
+    # relied on are named here: `contents` for the checkout, `actions` for
+    # reading a DIFFERENT run's artifacts below.
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download the binary matrix
+        uses: actions/download-artifact@v7
+        with:
+          pattern: release-*
+          run-id: ${{ inputs.artifacts_run_id }}
+          github-token: ${{ github.token }}
+          path: dist/release/download
+
+      - name: Assemble the packages
+        run: |
+          scripts/release/normalize.sh
+          scripts/release/assemble.sh
+          echo "== inventory =="
+          cat dist/release/packages/SHA256SUMS
+
+      - name: Publish to RubyGems
+        if: contains(inputs.registries, 'ruby') && env.KEY != ''
+        env:
+          KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: |
+          # The PLAIN gem goes first — it is the push that registers the name —
+          # then the platform gems. Each push retries, because rubygems.org
+          # accepts uploads slowly enough to trip the client timeout, and a
+          # timed-out push may still have LANDED server-side: "already been
+          # pushed" on a retry is therefore success, not failure.
+          push_gem() {
+            for attempt in 1 2 3; do
+              out=$(gem push "$1" 2>&1) && { echo "$out"; return 0; }
+              echo "$out"
+              case "$out" in *"already been pushed"*) return 0 ;; esac
+              echo "retrying $1 (attempt $attempt failed)"
+              sleep 15
+            done
+            return 1
+          }
+          cd dist/release/packages/ruby
+          push_gem shojiku-0.1.0.gem
+          for gem in shojiku-0.1.0-*.gem; do
+            echo "pushing $gem"
+            push_gem "$gem"
+          done
+
+      - name: Publish to PyPI
+        if: contains(inputs.registries, 'python') && env.KEY != ''
+        env:
+          KEY: ${{ secrets.PYPI_API_TOKEN }}
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: pipx run twine upload dist/release/packages/python/*.whl
+
+      - name: Publish to npm
+        if: contains(inputs.registries, 'npm') && env.KEY != ''
+        env:
+          KEY: ${{ secrets.NPM_API_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_API_TOKEN }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+          cd dist/release/packages/npm
+          # Platform packages FIRST: the entry package's optionalDependencies
+          # name them, and npm rejects an entry whose optional deps 404.
+          for t in shojiku-linux-* shojiku-darwin-* shojiku-win32-*; do
+            echo "publishing $t"
+            npm publish --access public "$t"
+          done
+          echo "publishing the entry package"
+          npm publish --access public shojiku-0.1.0.tgz
+
+      # The key nuget.org hands back lives ONE hour and is single-use, so it
+      # is minted here, immediately before the push, rather than up front.
+      - name: NuGet login (OIDC)
+        if: contains(inputs.registries, 'nuget') && github.repository_owner == 'kengos'
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: kengos
+
+      - name: Publish to NuGet
+        if: contains(inputs.registries, 'nuget') && github.repository_owner == 'kengos'
+        env:
+          KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: >
+          dotnet nuget push dist/release/packages/dotnet/Shojiku.*.nupkg
+          --api-key "$KEY" --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+
+      - name: Upload the Maven Central bundle (USER_MANAGED)
+        if: contains(inputs.registries, 'maven') && env.KEY != ''
+        env:
+          KEY: ${{ secrets.CENTRAL_API_TOKEN }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          layout=bundle/jp/kengos/shojiku/0.1.0
+          mkdir -p "$layout"
+          cp dist/release/packages/java/* "$layout/"
+          cd "$layout"
+          for f in *.jar *.pom; do
+            gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "$GPG_PASSPHRASE" -ab "$f"
+            md5sum "$f"    | cut -d' ' -f1 > "$f.md5"
+            sha1sum "$f"   | cut -d' ' -f1 > "$f.sha1"
+          done
+          cd "$GITHUB_WORKSPACE/bundle"
+          zip -qr ../central-bundle.zip .
+          cd "$GITHUB_WORKSPACE"
+          token=$(printf '%s' "$KEY" | base64 -w0)
+          curl -sf -X POST \
+            -H "Authorization: Bearer $token" \
+            -F bundle=@central-bundle.zip \
+            "https://central.sonatype.com/api/v1/publisher/upload?publishingType=USER_MANAGED" \
+            | tee deployment-id.txt
+          echo
+          echo "deployment uploaded — validate & publish from the Portal UI"

@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Shojiku</RootNamespace>
+    <AssemblyName>Shojiku</AssemblyName>
+
+    <!--
+      Unmanaged function pointers (`delegate* unmanaged[Cdecl]<…>`) are how
+      this binding declares the C surface, so the library project — and only
+      the library project — allows unsafe blocks. See Engine.cs for why the
+      binding resolves entry points itself rather than through [LibraryImport].
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <!-- Public API, so the XML docs ship and a missing one is a build error. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <PackageId>Shojiku</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>kengos</Authors>
+    <Description>Deterministic PDF documents from a YAML template plus your data. Bindings for the Shojiku document engine.</Description>
+    <PackageTags>pdf;invoice;receipt;template;document</PackageTags>
+    <PackageProjectUrl>https://github.com/kengos/shojiku</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/kengos/shojiku</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- The workspace's tri-license, as the SPDX expression NuGet accepts. -->
+    <PackageLicenseExpression>MIT OR Apache-2.0 OR BSD-3-Clause</PackageLicenseExpression>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="/" />
+    <!--
+      What makes a PLATFORM package possible: the release process drops the
+      prebuilt engine under runtimes/<rid>/native/ before `dotnet pack`, and
+      this glob carries it into the nupkg at the same path — the NuGet layout
+      the consuming SDK copies to the application's output directory, which is
+      exactly where Library.PackagedDir() probes. Without it the package
+      carries only the README: installable, loadable, and unable to render.
+      In a source checkout the directory does not exist and the glob is inert.
+    -->
+    <None Include="runtimes/**" Pack="true" PackagePath="runtimes/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The suite proves the BINDING, not only the public surface: ownership at the
+      C boundary, the resolution order, the request envelope. Those collaborators
+      are internal on purpose — an application has no business reaching them —
+      so the tests are let in explicitly rather than the types being widened.
+    -->
+    <InternalsVisibleTo Include="Shojiku.Tests" />
+  </ItemGroup>
+
+  <!--
+    EXACTLY no package references. The transport is System.Runtime.InteropServices,
+    which is in the framework — the same reason the ruby reference depends only on
+    fiddle and the python mirror on nothing at all. An SDK that drags a stack into
+    an application's dependency graph is a cost the application did not ask for.
+  -->
+
+</Project>

@@ -1,0 +1,6 @@
+locales: [en]
+engineLocale: en-US
+name:
+  en: Receipt
+  ja: 領収書（英語）
+thumbnail: preview-1.png

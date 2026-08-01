@@ -1,0 +1,21 @@
+{
+  "application": {
+    "number": "B26-0117",
+    "url": "https://fes.shojikudo.example/entry",
+    "category": "student",
+    "contact_methods": ["email", "mail"],
+    "agree": true,
+    "notes": "10月11日のみ参加予定です。会場で新刊の取り置きをお願いしたいです。"
+  },
+  "applicant": {
+    "name": "高橋 栞",
+    "name_kana": "たかはし しおり",
+    "birth_date": "1996-04-12",
+    "age": 30,
+    "postal_code1": "166",
+    "postal_code2": "0004",
+    "address": "東京都杉並区阿佐谷南1-23-45 コーポことのは203",
+    "tel": "090-1234-5678",
+    "email": "s.takahashi@example.com"
+  }
+}

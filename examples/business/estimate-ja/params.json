@@ -1,0 +1,47 @@
+{
+  "estimate": {
+    "number": "EST-2026-0725-018",
+    "issued_at": "2026-07-25",
+    "valid_until": "2026-08-24",
+    "subject": "2026年秋 新装開店 什器・書籍一式"
+  },
+  "billing": {
+    "name": "株式会社ヤマカワ書林",
+    "postal_code": "160-0022",
+    "address": "東京都新宿区新宿4-5-6 ヤマカワビル3F",
+    "contact": "仕入部 田中"
+  },
+  "issuer": {
+    "name": "株式会社正直堂",
+    "registration_no": "T0123456789012",
+    "postal_code": "101-0051",
+    "address": "東京都千代田区神田神保町1-2-3",
+    "tel": "03-1234-5678",
+    "email": "sales@shojikudo.example"
+  },
+  "terms": {
+    "delivery_time": "ご発注後 約3週間",
+    "delivery_place": "貴社ご指定場所",
+    "payment_terms": "月末締め翌月末 銀行振込"
+  },
+  "totals": {
+    "subtotal": 969000,
+    "tax": 96900,
+    "total": 1065900
+  },
+  "web": {
+    "estimate_url": "https://estimate.shojikudo.example/est/EST-2026-0725-018"
+  },
+  "items": [
+    { "name": "書棚（大型・オーダー製作）", "quantity": 6, "unit_price": 48000, "amount": 288000 },
+    { "name": "レジカウンター什器", "quantity": 1, "unit_price": 180000, "amount": 180000 },
+    { "name": "平台ディスプレイ什器", "quantity": 4, "unit_price": 35000, "amount": 140000 },
+    { "name": "書籍『Rustで作るPDFエンジン』", "quantity": 30, "unit_price": 3200, "amount": 96000 },
+    { "name": "書籍『YAMLテンプレート設計入門』", "quantity": 25, "unit_price": 2800, "amount": 70000 },
+    { "name": "開店フェア用ポスター（B1・特殊加工／長い品目名の折り返し確認用に説明を冗長化したサンプル項目）", "quantity": 10, "unit_price": 4500, "amount": 45000 },
+    { "name": "のぼり旗（正直堂オリジナル・両面）", "quantity": 8, "unit_price": 2500, "amount": 20000 },
+    { "name": "什器搬入・設置作業", "quantity": 1, "unit_price": 60000, "amount": 60000 },
+    { "name": "店頭サイン工事一式", "quantity": 1, "unit_price": 120000, "amount": 120000 },
+    { "name": "新装開店キャンペーン値引き", "quantity": 1, "unit_price": -50000, "amount": -50000 }
+  ]
+}

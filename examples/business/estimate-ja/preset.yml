@@ -1,0 +1,9 @@
+# Designer preset manifest: surfaces this bundled example in the locale-keyed
+# catalog. `locales` are the catalog tags it appears under; `engineLocale` is
+# the exact tag the app passes to the engine (font-pack selection).
+locales: [ja]
+engineLocale: ja-JP
+name:
+  ja: 見積書
+  en: Estimate (Japanese)
+thumbnail: preview-1.png

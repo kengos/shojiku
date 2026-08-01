@@ -1,0 +1,5 @@
+locales: [en-us, en-ca, en-ph]
+engineLocale: en-US
+name:
+  en: Blank (Letter)
+thumbnail: preview-1.png

@@ -1,0 +1,111 @@
+version: 0.2.0
+type: object
+properties:
+  furigana_name:
+    type: string
+    title: ふりがな
+    example: ヤマダ タロウ
+  full_name:
+    type: string
+    title: 氏名
+    example: 山田 太郎
+  birth_date:
+    type: string
+    format: date
+    title: 生年月日
+    example: '1993-04-10'
+    displayFormat: wareki
+    placeholder: 　　年　月　日
+  applicant_age:
+    type: number
+    title: 満年齢
+    example: 33
+    placeholder: 　
+  gender:
+    type: string
+    title: 性別
+    example: male
+  furigana_current_address:
+    type: string
+    title: ふりがな（現住所）
+    example: トウキョウトチヨダクマルノウチ
+  postal_code_1:
+    type: string
+    title: 郵便番号（上3桁）
+    example: '100'
+  postal_code_2:
+    type: string
+    title: 郵便番号（下4桁）
+    example: '0005'
+  current_address:
+    type: string
+    title: 現住所
+    example: 東京都千代田区丸の内一丁目1番1号
+  current_phone:
+    type: string
+    title: 電話（現住所）
+    example: 090-1234-5678
+  contact_note:
+    type: string
+    title: 連絡先（現住所以外）
+    example: 上記に同じ
+  contact_phone_note:
+    type: string
+    title: 連絡先電話
+    example: 同上
+  fill_date:
+    type: string
+    format: date
+    title: 記入日
+    example: '2026-07-12'
+    displayFormat: wareki
+    placeholder: 　　年　月　日
+  motivation_text:
+    type: string
+    title: 志望の動機・自己PR・趣味特技
+    example: 貴社の事業に強い関心があり志望しました。
+  desired_conditions:
+    type: string
+    title: 本人希望記入欄
+    example: 貴社規定に従います。
+  email:
+    type: string
+    title: メールアドレス
+    example: taro.yamada@example.com
+  education_history:
+    type: array
+    title: 学歴・職歴
+    items:
+      type: object
+      properties:
+        year:
+          type: string
+          title: 年
+        month:
+          type: string
+          title: 月
+        item:
+          type: string
+          title: 学歴・職歴
+        kind:
+          type: string
+          title: 行種別
+          description: 見出し行(学歴/職歴)と結び行(以上)を示す任意の区分
+          enum: [heading, end]
+      title: 学歴・職歴行
+  licenses:
+    type: array
+    title: 免許・資格
+    items:
+      type: object
+      properties:
+        year:
+          type: string
+          title: 年
+        month:
+          type: string
+          title: 月
+        item:
+          type: string
+          title: 免許・資格
+      title: 免許・資格行

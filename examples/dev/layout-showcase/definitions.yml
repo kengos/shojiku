@@ -1,0 +1,191 @@
+version: 0.2.0
+type: object
+properties:
+  doc:
+    type: object
+    properties:
+      url:
+        type: string
+        title: Project URL
+        example: https://github.com/kengos/shojiku
+      venue:
+        type: string
+        title: 発行元
+        example: 本店 サービスカウンター
+      品名:
+        type: string
+        title: 品名（和文キー）
+        example: 特上弁当
+      generated_on:
+        type: string
+        format: date
+        title: 生成日
+      generated_at:
+        type: string
+        format: date-time
+        title: 生成日時
+      reviewed_on:
+        type: string
+        format: date
+        title: レビュー日
+        displayFormat: wareki
+        placeholder: （未レビュー）
+      amount:
+        type: number
+        format: currency
+        title: 金額
+      subtotal:
+        type: number
+        title: 小計
+      payment:
+        type: string
+        title: 支払方法
+      subscribed:
+        type: boolean
+        title: Newsletter
+      channels:
+        type: array
+        title: 連絡方法
+        items:
+          type: string
+    title: Document
+  features:
+    type: array
+    title: Feature table rows
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: Feature
+          example: Rich text spans
+        area:
+          type: string
+          title: Area
+          example: text
+        notes:
+          type: string
+          title: Notes
+          example: Per-span styling in one wrapped block
+  edu:
+    type: array
+    title: 学歴・職歴 rows
+    items:
+      type: object
+      properties:
+        y:
+          type: string
+        d:
+          type: string
+  roster:
+    type: array
+    title: Conditional-style table rows
+    items:
+      type: object
+      properties:
+        y:
+          type: string
+          title: 年
+        d:
+          type: string
+          title: 記録
+        kind:
+          type: string
+          title: 行種別
+          enum: [section, end]
+        flagged:
+          type: boolean
+          title: 要確認
+  lic:
+    type: array
+    title: 免許・資格 rows
+    items:
+      type: object
+      properties:
+        y:
+          type: string
+        d:
+          type: string
+  tickets:
+    type: array
+    title: Imposed tickets
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: Ticket name
+          example: ギフト券 A
+        code:
+          type: string
+          title: Serial
+          example: TK-2026-0001
+        url:
+          type: string
+          title: Redemption link
+          example: https://example.com/t/0001
+  releases:
+    type: array
+    title: Release cards
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: Title
+          example: Rich text & hyperlinks
+        summary:
+          type: string
+          title: Summary
+          example: Inline spans with per-run styling.
+        url:
+          type: string
+          title: Link target
+          example: https://github.com/kengos/shojiku
+  teas:
+    type: array
+    title: 縦書き table rows
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 煎茶
+        origin:
+          type: string
+          example: 静岡
+  highlights:
+    type: array
+    items:
+      type: string
+  vterms:
+    type: array
+    items:
+      type: string
+  vdates:
+    type: array
+    items:
+      type: string
+  parcelStatus:
+    type: string
+    title: 配送状況
+    enum:
+      - { value: packing, label: 梱包中 }
+      - { value: shipped, label: 出荷済み }
+  parcels:
+    type: array
+    title: 荷物
+    items:
+      type: object
+      properties:
+        code:
+          type: string
+          title: 荷物番号
+          example: PKG-0001
+        status:
+          type: string
+          title: 状況
+          enum:
+            - { value: packing, label: 梱包中 }
+            - { value: shipped, label: 出荷済み }
+            - hold

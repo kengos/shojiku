@@ -1,0 +1,111 @@
+version: 0.1.0
+name: catalog_ja
+
+# Product catalog + order sheet — variable-height `repeat_flow` cards: the
+# description length sets each card's height per element, and a card that
+# does not fit moves to the next page whole. Product images are
+# element-scoped dynamic bindings (params carry assets/ paths), cropped
+# into a square frame with `fit: cover`.
+page:
+  size: A4
+  orientation: portrait
+  margin: 25
+
+defaults:
+  locale: ja-JP
+  currency: JPY
+  formats:
+    currency: symbol
+
+styles:
+  cardMeta:
+    fontSize: 8.5
+    color: "#555555"
+    lineHeight: 1.4
+
+sections:
+  header:
+    repeat: every_page
+    height: 40
+    items:
+      - type: rect
+        box: { x: 0, y: 0, w: "100%", h: 4 }
+        style: { backgroundColor: "#1a3c6e" }
+      - type: text
+        box: { x: 0, y: 12, w: 380, h: 19 }
+        text: 正直堂オリジナル文具カタログ 2026秋
+        style: { fontSize: 14, fontWeight: bold, color: "#1a3c6e", lineHeight: 1.3 }
+      - type: text
+        box: { x: 380, y: 16, w: 165.28, h: 12 }
+        text: "{catalog.season_code}"
+        style: { fontSize: 8.5, textAlign: right, color: "#555555", lineHeight: 1.3 }
+
+  body:
+    type: flow
+    box: { x: 0, y: 50, w: "100%", h: 700 }
+    gap: 10
+    items:
+      - type: text
+        text: 気になる商品の「注文数」欄にご記入のうえ、店頭スタッフへお渡しください。QRコードから商品詳細ページもご覧いただけます。
+        style: { fontSize: 9, lineHeight: 1.5, color: "#333333" }
+
+      - id: products
+        type: repeat_flow
+        data: { key: products }
+        gap: 10
+        item:
+          box: { padding: 10 }
+          style: { borderWidth: 0.6, borderColor: "#c5cddb" }
+          items:
+            # Product image — a 4:3 SVG cropped into the square frame with `cover`.
+            - type: image
+              box: { x: 0, y: 0, w: 108, h: 108 }
+              data: { key: image }
+              fit: cover
+            # The text column is a flex column: the description's line count sets the card height.
+            - id: card_text
+              type: container
+              box: { x: 122, y: 0, w: 330, gap: 5 }
+              items:
+                - type: text
+                  data: { key: name }
+                  style: { fontSize: 12, fontWeight: bold, lineHeight: 1.35 }
+                - type: text
+                  text: "{price}（税込）　品番 {code}"
+                  style: { fontSize: 10, lineHeight: 1.35, color: "#1a3c6e" }
+                - type: text
+                  data: { key: description }
+                  style: { fontSize: 9, lineHeight: 1.55, color: "#333333" }
+                - type: text
+                  text: "カラー: {colors}　／　{stock}"
+                  styleNames: [ cardMeta ]
+            # Right column: product-detail QR + an order-quantity write-in box.
+            - id: detail_qr
+              type: qr_code
+              box: { x: 471.28, y: 0, w: 46, h: 46 }
+              data: { key: url }
+            - type: text
+              box: { x: 463.28, y: 48, w: 62, h: 10 }
+              text: 商品詳細
+              link: { url: "{url}" }
+              style: { fontSize: 6.5, textAlign: center, color: "#8a94a6", lineHeight: 1.3 }
+            - type: text
+              box: { x: 463.28, y: 66, w: 62, h: 10 }
+              text: 注文数
+              style: { fontSize: 7.5, textAlign: center, color: "#1a3c6e", lineHeight: 1.3 }
+            - type: rect
+              box: { x: 469.28, y: 78, w: 50, h: 26 }
+              style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+
+  footer:
+    repeat: every_page
+    height: 40
+    items:
+      - type: text
+        box: { x: 0, y: 762, w: "100%", h: 11 }
+        text: 株式会社正直堂　東京都千代田区神田神保町1-2-3　store@shojikudo.example　※価格・仕様は予告なく変更される場合があります。
+        style: { fontSize: 7.5, textAlign: center, color: "#666666", lineHeight: 1.3 }
+      - type: page_number
+        box: { x: 0, y: 776, w: "100%", h: 13 }
+        format: "{page} / {pages}"
+        style: { fontSize: 9, textAlign: center }

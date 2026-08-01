@@ -1,0 +1,86 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /engine
+    schedule:
+      interval: weekly
+    groups:
+      cargo-minor-patch:
+        update-types: [minor, patch]
+
+  # Three Dockerfiles pin the SAME `rust:<X.Y.Z>-slim-bookworm` builder and
+  # must move together. All three directories are listed so none is silently
+  # left behind (before this, only /docker was tracked and the other two were
+  # hand-synced). Of the non-rust base images here, only two are bumpable:
+  # `node:24-bookworm-slim` (tag carries a version) and the digest-pinned
+  # distroless runtime ref. `nginx:alpine` (×2) is a FLOATING tag with no
+  # version to compare, so dependabot will never open a PR for it — pin it to
+  # `nginx:<X.Y>-alpine` if you want those tracked.
+  #
+  # A RUST BUMP ARRIVES AS THREE PRs, ONE PER DOCKERFILE. Dependabot cannot
+  # collapse them: single-PR-across-directories needs `group-by:
+  # dependency-name`, which supports npm/bundler/composer/mix/maven/pip and
+  # NOT docker. The `rust-toolchain` group below therefore only labels the
+  # branches/titles so the three are recognizable as one logical bump — merge
+  # them together, and revisit this if docker ever gains `group-by`.
+  #
+  # AND EVERY ONE OF THOSE PRs IS INCOMPLETE. The version lives in FIVE pins;
+  # dependabot parses only the three Dockerfiles. The other two are plain
+  # variables it cannot see:
+  #   - Makefile                 -> RUST_VERSION (drives the local `make` gates)
+  #   - .github/workflows/ci.yml -> RUST_VERSION
+  # Hand-edit both before merging, or the gates keep building on the old
+  # toolchain. Locally the bump also does not take effect until
+  # `docker volume rm shojiku-rustup`.
+  # The five pins that must move together: `Makefile` (RUST_VERSION),
+  # `.github/workflows/ci.yml` (RUST_VERSION), `docker/Dockerfile`,
+  # `engine/wasm`'s toolchain, and the wasm-bindgen pin set, which has to
+  # match the wasm-bindgen-cli the wasm gate installs.
+  #
+  # NODE HAS THE SAME SPLIT, in miniature. A `node:` bump PR touches only
+  # `gui/designer-app/Dockerfile`; the pins dependabot cannot see are
+  # `Makefile` (`NODE_IMAGE`, which drives the local gui gates) and
+  # `gui/package.json` (`engines.node`). Sync all three, or the gates run a
+  # different Node than the image ships. Node also tracks LTS here
+  # deliberately (22 → 24 was chosen as LTS), so an even-numbered major that
+  # is still "Current" is a POLICY decision, not a routine bump — check
+  # nodejs.org/en/about/previous-releases before merging one.
+  - package-ecosystem: docker
+    directories:
+      - /docker
+      - /engine/wasm/e2e
+      - /gui/designer-app
+    schedule:
+      interval: weekly
+    groups:
+      rust-toolchain:
+        patterns: [rust]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # gui/ is a pnpm workspace (designer, designer-core, designer-app); point at
+  # the root that owns pnpm-workspace.yaml + pnpm-lock.yaml and dependabot
+  # resolves the member manifests from there (`npm` is also the pnpm key).
+  # (Sanity check resolved in practice: a jsdom PR touched only the MEMBER
+  # manifests, so member resolution from the root works.)
+  # Minor/patch land as one weekly PR — gui deps are the liberal side of the
+  # repo's dependency posture, engine deps stay strict — majors come singly.
+  #
+  # `cooldown` is set to match `minimumReleaseAge` in gui/pnpm-workspace.yaml
+  # (7 days). Without it the two fight: dependabot opened PRs within hours of a
+  # release, and `make gui` then failed them with
+  # ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION until the packages aged out — a PR
+  # that is red on arrival and silently turns green days later. KEEP THE TWO
+  # NUMBERS IN SYNC; lowering only this one brings the red-on-arrival back.
+  - package-ecosystem: npm
+    directory: /gui
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      gui-minor-patch:
+        update-types: [minor, patch]

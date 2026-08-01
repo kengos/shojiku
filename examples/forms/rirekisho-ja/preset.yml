@@ -1,0 +1,15 @@
+# Designer preset manifest: surfaces this bundled example in the locale-keyed
+# catalog. `locales` are the catalog tags it appears under; `engineLocale` is
+# the exact tag the app passes to the engine (font-pack selection).
+locales: [ja]
+engineLocale: ja-JP
+name:
+  ja: 履歴書
+  en: Résumé (Japanese)
+thumbnail: preview-1.png
+# Sample-data variants beyond the default params.json — each is params-<id>.json.
+variants:
+  - id: blank
+    name:
+      ja: 空欄
+      en: Blank

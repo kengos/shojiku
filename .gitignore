@@ -1,0 +1,79 @@
+# Local AI-assistant workspace: per-machine settings, the development
+# workflow skills, and scratch worktrees. Deliberately untracked — the
+# repository's own design record lives in docs/agents/ and docs/code-map/,
+# which ARE tracked and are what a coding agent should read.
+.claude/
+
+# Cycle session state (deleted when a change cycle completes)
+/CYCLE.md
+
+# Rust build output
+target/
+
+# Local CI mirror artifacts (make verify)
+/out.pdf
+/stderr.txt
+/engine/lcov.info
+
+# Full gate logs written by `make quiet T=<target>`
+/.make-logs/
+
+# Release artifacts built by `make capi-dist` / `make cli-dist` (the cdylib
+# and CLI platform matrices + their checksums). Built on demand and published
+# from a release run, never
+# committed — a binary in the tree is a binary nobody can review.
+/dist/
+
+# SDK build/gate artifacts. Coverage reports and built gems/wheels are outputs
+# of `make sdk-ruby` / `make sdk-python`, and a lockfile in a LIBRARY pins its
+# consumers' resolution — a library resolves against the application's
+# environment, not its own.
+sdk/*/coverage/
+sdk/*/*.gem
+sdk/ruby/Gemfile.lock
+sdk/*/dist/
+sdk/*/.coverage
+sdk/go/cover.out
+sdk/*/htmlcov/
+sdk/*/*.egg-info/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# A pnpm run with no global store configured writes one here.
+/.pnpm-store/
+
+# Fuzzing (`make fuzz`). The committed corpus under engine/fuzz/corpus is
+# curated by hand and stays; everything a run PRODUCES is local:
+#   - `generated-` seeds embed a freshly generated certificate, and the
+#     signing track forbids committed key material,
+#   - artifacts/ holds crash reproducers (turn one into a corpus file, with
+#     a test, rather than committing the artifact); the WORKING corpus is not
+#     here at all — it lives in the shojiku-fuzz-corpus named volume, because
+#     libFuzzer's per-input writes are punishingly slow on a bind mount,
+#   - the lockfile is fuzz-only: the crate is outside the workspace, so
+#     `cargo deny` never reads it and pinning it would only add churn.
+/engine/fuzz/corpus/**/generated-*
+/engine/fuzz/artifacts/
+/engine/fuzz/coverage/
+/engine/fuzz/Cargo.lock
+
+# .NET and Maven build outputs. Both toolchains write into the package tree the
+# gate mounts, so a gate run would otherwise dirty the working copy — the same
+# reason sdk/ruby's coverage/ and sdk/python's caches are ignored above.
+sdk/dotnet/**/bin/
+sdk/dotnet/**/obj/
+sdk/dotnet/**/TestResults/
+sdk/dotnet/**/coverage.info
+sdk/java/target/
+
+# PHP gate outputs, for the same reason: phpunit writes its clover report and
+# its cache into the package tree the gate mounts, and php-cs-fixer writes
+# one beside them. `composer.lock` is absent from this list because there is
+# nothing to lock — the package declares no dependencies at all, and the gate
+# toolchain is pinned in the image.
+sdk/php/build/
+sdk/php/.phpunit.cache/
+sdk/php/.php-cs-fixer.cache
+sdk/php/vendor/

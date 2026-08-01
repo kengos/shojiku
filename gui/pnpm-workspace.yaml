@@ -1,0 +1,38 @@
+packages:
+  - designer-core
+  - designer
+  - designer-app
+
+# pnpm 11 home for dependency build-script allowlisting (moved from
+# package.json's "pnpm" field): the review gate for allowing a postinstall
+# (per shojiku-node-security) — keep the list short and explicit.
+onlyBuiltDependencies:
+  - "@biomejs/biome"
+  - "@tailwindcss/oxide"
+  - esbuild
+
+# pnpm 11's supply-chain guard: refuse a version published less than N MINUTES
+# ago — the freshly-compromised-release attack window. 10080 = 7 days, chosen
+# over the 1440 (24h) default because dependency PRs here arrive unattended
+# (dependabot, weekly); a week is long enough for a compromised release to be
+# yanked before anything here installs it.
+#
+# IT ALSO GATES INSTALLATION, not just resolution. `pnpm install` — INCLUDING
+# `--frozen-lockfile`, what `make gui`/`make verify` run — re-verifies every
+# lockfile entry against the cutoff and fails with
+# ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION. So a dependabot PR whose packages are
+# younger than the window REDS THE GATE until they age out; that is the guard
+# working, not a broken PR. Wait out the window (the error prints each entry's
+# publish time) or exclude that one package below.
+#
+# Do NOT "fix" such a red by setting `trustLockfile: true` (default false),
+# which skips exactly this re-verification pass. Dependabot does its own
+# resolution and does not honour minimumReleaseAge, so for dependency PRs — the
+# way nearly every dep here moves — the install-time check is the ONLY point
+# where this guard is enforced at all. Trusting the lockfile disables it.
+#
+# Escape hatch for a security fix that must land inside the window: add the
+# package to minimumReleaseAgeExclude below (patterns allowed) rather than
+# lowering the guard for everything, and remove it once the window passes.
+minimumReleaseAge: 10080
+minimumReleaseAgeExclude: []
