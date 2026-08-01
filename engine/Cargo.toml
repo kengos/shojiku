@@ -138,7 +138,7 @@ ring = "0.17"
 # a caller keep the key encrypted on disk.
 der = "0.7"
 cms = "0.2"
-x509-cert = "0.2"
+x509-cert = "0.3"
 pkcs8 = { version = "0.10", features = ["encryption", "pem"] }
 zeroize = "1"
 # Reading a passphrase from the terminal without echoing it (CLI only). The
