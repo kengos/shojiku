@@ -1,0 +1,21 @@
+{
+  "application": {
+    "number": "",
+    "url": "https://fes.shojikudo.example/entry",
+    "category": "",
+    "contact_methods": [],
+    "agree": false,
+    "notes": ""
+  },
+  "applicant": {
+    "name": "",
+    "name_kana": "",
+    "birth_date": "",
+    "age": null,
+    "postal_code1": "",
+    "postal_code2": "",
+    "address": "",
+    "tel": "",
+    "email": ""
+  }
+}

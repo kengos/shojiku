@@ -1,0 +1,106 @@
+version: 0.2.0
+type: object
+properties:
+  receipt:
+    type: object
+    properties:
+      number:
+        type: string
+        title: 收据编号
+        example: R-2026-0314-001
+      issued_at:
+        type: string
+        format: date-time
+        title: 开具日期
+        example: '2026-03-14T15:30:00+08:00'
+        displayFormats:
+        - id: default
+          label: 标准
+        - id: date
+          label: 仅日期
+        - id: long
+          label: 完整日期
+    title: 收据
+  recipient:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 抬头
+        example: 陈雅婷
+    title: 抬头
+  amount:
+    type: object
+    properties:
+      total_in_tax:
+        type: number
+        format: currency
+        title: 含税合计
+        example: 848
+        currency: CNY
+        recommendedStyle:
+          textAlign: right
+      total_ex_tax:
+        type: number
+        format: currency
+        title: 不含税金额
+        example: 800
+        currency: CNY
+      tax:
+        type: number
+        format: currency
+        title: 增值税
+        example: 48
+        currency: CNY
+    title: 金额
+  purpose:
+    type: string
+    title: 事由
+    example: 图书及文具
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 单位名称
+        example: 诚正图书有限公司
+      tax_id:
+        type: string
+        title: 纳税人识别号
+        example: 纳税人识别号 91310000MA1K2B3C4D
+      address:
+        type: string
+        title: 地址
+        example: 上海市黄浦区福州路 100 号
+      tel:
+        type: string
+        title: 电话
+        example: 电话 021-6322-4567
+    title: 开具单位
+  items:
+    type: array
+    title: 明细
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: 品名
+          example: 图书
+        quantity:
+          type: number
+          format: quantity
+          title: 数量
+          example: 1
+          unit: item
+        unit_price:
+          type: number
+          format: currency
+          title: 单价
+          example: 260
+        amount:
+          type: number
+          format: currency
+          title: 金额
+          example: 260
+      title: 明细行

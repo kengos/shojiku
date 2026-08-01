@@ -1,0 +1,46 @@
+{
+  "delivery": {
+    "number": "DN-2026-0824-058",
+    "delivered_on": "2026-08-24",
+    "order_number": "PO-2026-0801-112",
+    "subject": "2026年秋 新装開店 什器・書籍一式",
+    "shipment": "一括納品（完納）"
+  },
+  "shipTo": {
+    "name": "株式会社ヤマカワ書林",
+    "postal_code": "160-0022",
+    "address": "東京都新宿区新宿4-5-6 ヤマカワビル3F",
+    "contact": "仕入部 田中"
+  },
+  "issuer": {
+    "name": "株式会社正直堂",
+    "postal_code": "101-0051",
+    "address": "東京都千代田区神田神保町1-2-3",
+    "tel": "03-1234-5678",
+    "email": "sales@shojikudo.example",
+    "staff": "営業部 佐藤"
+  },
+  "summary": {
+    "lines": 9,
+    "shipped_qty": 86,
+    "remaining_qty": 0,
+    "amount": 1019000
+  },
+  "notes": {
+    "next_shipment": "ご注文分はすべて納品済みです。ご検収のうえ受領書のご返送をお願いいたします。"
+  },
+  "web": {
+    "tracking_url": "https://track.shojikudo.example/dn/DN-2026-0824-058"
+  },
+  "items": [
+    { "name": "書棚（大型・オーダー製作）", "ordered": 6, "shipped": 6, "remaining": 0, "unit": "台", "amount": 288000, "status": "full" },
+    { "name": "レジカウンター什器", "ordered": 1, "shipped": 1, "remaining": 0, "unit": "台", "amount": 180000, "status": "full" },
+    { "name": "平台ディスプレイ什器", "ordered": 4, "shipped": 4, "remaining": 0, "unit": "台", "amount": 140000, "status": "full" },
+    { "name": "書籍『Rustで作るPDFエンジン』", "ordered": 30, "shipped": 30, "remaining": 0, "unit": "冊", "amount": 96000, "status": "full" },
+    { "name": "書籍『YAMLテンプレート設計入門』", "ordered": 25, "shipped": 25, "remaining": 0, "unit": "冊", "amount": 70000, "status": "full" },
+    { "name": "開店フェア用ポスター（B1・特殊加工／長い品目名の折り返し確認用に説明を冗長化したサンプル項目）", "ordered": 10, "shipped": 10, "remaining": 0, "unit": "枚", "amount": 45000, "status": "full" },
+    { "name": "のぼり旗（正直堂オリジナル・両面）", "ordered": 8, "shipped": 8, "remaining": 0, "unit": "本", "amount": 20000, "status": "full" },
+    { "name": "什器搬入・設置作業", "ordered": 1, "shipped": 1, "remaining": 0, "unit": "式", "amount": 60000, "status": "full" },
+    { "name": "店頭サイン工事一式", "ordered": 1, "shipped": 1, "remaining": 0, "unit": "式", "amount": 120000, "status": "full" }
+  ]
+}

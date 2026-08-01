@@ -1,0 +1,489 @@
+name: Publish packages
+
+# The irreversible half of the release: pushes the assembled packages to the
+# registries. Manual only, and each registry runs ONLY when both hold:
+#
+#   * its name is in the `registries` input (so one bad upload never turns
+#     into five), and
+#   * its secret exists (the Docker Hub pattern — a fork or a half-configured
+#     repository skips rather than fails).
+#
+# NuGet and RubyGems are the exceptions to the second rule: they publish by
+# OIDC Trusted Publishing, so they have no secret to test. Their guard is
+# the repository itself, which keeps the fork-skips-rather-than-fails
+# property. RubyGems' trusted publisher is registered against THIS
+# workflow's filename, so renaming this file breaks the ruby push.
+#
+# Secrets, all repository secrets, added as the release ceremony reaches
+# each registry:
+#   PYPI_API_TOKEN     account-scoped token (rescope to the project after)
+#   NPM_API_TOKEN      automation token (granular, All packages)
+#   CENTRAL_API_TOKEN      Sonatype Portal user token as `user:password`
+#   GPG_PRIVATE_KEY    ASCII-armored private key (Central signs artifacts)
+#   GPG_PASSPHRASE     its passphrase
+#
+# Maven stops at USER_MANAGED: the bundle uploads and validates, and the
+# final Publish click stays a human act in the Portal UI. The GitHub
+# Release stops the same way — it is created as a DRAFT.
+#
+# `registries: all` runs the whole batch in the documented order
+# (ruby → python → npm → nuget → maven → release). A failing step aborts
+# the run, so the batch is re-dispatched WHOLE — which is why skipping what
+# is already published is the DEFAULT: gem reads "already been pushed" as
+# success, twine takes --skip-existing, npm reads E403 "previously
+# published", nuget takes --skip-duplicate, and an existing Release is left
+# untouched. Maven is the one that does not self-heal — re-uploading a
+# published version leaves a deployment that FAILS validation in the Portal;
+# harmless to the run (the upload itself still returns 201), but drop
+# `maven` from the selection once it has shipped.
+#
+# `force` inverts that skipping. It does NOT overwrite: every registry here
+# treats a published version as immutable, so all `force` can do for them is
+# turn a silent skip into a loud failure — which is how you find out that
+# something you believed unpublished is in fact live. The GitHub Release is
+# the sole mutable target, so there `force` really does replace the assets.
+#
+# `dry_run` stops each step at the last action before its registry is
+# touched, but runs everything up to there for real: twine check, npm
+# publish --dry-run, gpg --verify over every Central signature,
+# sha256sum -c over the Release assets. It never mints the NuGet OIDC key,
+# which is single-use.
+on:
+  workflow_dispatch:
+    inputs:
+      artifacts_run_id:
+        description: 'The release-artifacts run whose binaries to publish'
+        required: true
+      registries:
+        description: 'Space-separated: ruby python npm nuget maven crates release — or `all`'
+        required: true
+        default: ruby
+      tag:
+        description: 'Release tag for `release` (blank = v<assembled version>)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Stop at the last step before each registry is touched'
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: 'Do not skip already-published versions (fail on them; replace Release assets)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Job-level so every publish step sees it without repeating it in seven
+    # `env:` blocks. Steps merge job env with their own.
+    env:
+      DRY_RUN: ${{ inputs.dry_run }}
+      FORCE: ${{ inputs.force }}
+    # Declaring any permission drops the rest, so the ones the job relies on
+    # are named here: `contents` for the checkout AND for creating the
+    # GitHub Release, `actions` for reading a DIFFERENT run's artifacts.
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      # `all` expands ONCE here rather than being ORed into every step's
+      # `if:`. The input reaches the shell through env, never interpolated
+      # into the script — a workflow_dispatch input is attacker-controlled
+      # text on a public repo.
+      - name: Expand the registry selection
+        id: sel
+        env:
+          R: ${{ inputs.registries }}
+        run: |
+          r=$R
+          [ "$r" = all ] && r='ruby python npm nuget maven crates release'
+          echo "selected: $r"
+          echo "registries=$r" >> "$GITHUB_OUTPUT"
+
+      - name: Download the binary matrix
+        uses: actions/download-artifact@v7
+        with:
+          pattern: release-*
+          run-id: ${{ inputs.artifacts_run_id }}
+          github-token: ${{ github.token }}
+          path: dist/release/download
+
+      - name: Assemble the packages
+        run: |
+          scripts/release/normalize.sh
+          scripts/release/assemble.sh
+          echo "== inventory =="
+          cat dist/release/packages/SHA256SUMS
+
+      # RubyGems publishes by OIDC Trusted Publishing, so like NuGet it has
+      # no secret to test and its guard is the repository itself. An API key
+      # is not merely unnecessary here, it does not WORK: the account has MFA
+      # enabled, so `gem push` blocks on a WebAuthn prompt no runner can
+      # answer and dies at the client timeout with `execution expired`
+      # (runs 30704974839 / 30705072838 / 30705395788 / 30724747817, all of
+      # which looked like a network fault and were not).
+      # SHA-pinned rather than tag-pinned like the actions around it: this
+      # one MINTS a publishing credential, so a moved tag would be a supply
+      # chain compromise of the release itself. (rubygems/release-gem pins
+      # this same action the same way.) Dependabot bumps the SHA + comment.
+      - name: RubyGems credentials (OIDC Trusted Publishing)
+        if: contains(steps.sel.outputs.registries, 'ruby') && github.repository_owner == 'kengos' && !inputs.dry_run
+        uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
+
+      - name: Publish to RubyGems
+        if: contains(steps.sel.outputs.registries, 'ruby') && github.repository_owner == 'kengos'
+        run: |
+          # The PLAIN gem goes first — it is the push that registers the name —
+          # then the platform gems. Each push retries, because rubygems.org
+          # accepts uploads slowly enough to trip the client timeout, and a
+          # timed-out push may still have LANDED server-side: "already been
+          # pushed" on a retry is therefore success, not failure.
+          push_gem() {
+            for attempt in 1 2 3; do
+              out=$(gem push "$1" 2>&1) && { echo "$out"; return 0; }
+              echo "$out"
+              case "$out" in *"already been pushed"*)
+                # WHICH attempt said it matters. On the first, the version was
+                # on the registry before this run started — that is the case
+                # `force` exists to surface. On a later one it is our own
+                # timed-out-but-landed push, which is success even under
+                # force, or the retry loop would fail on its own success.
+                if [ "$attempt" = 1 ] && [ "$FORCE" = true ]; then
+                  echo "  force: $1 was already published — not treating as success"
+                  return 1
+                fi
+                return 0 ;;
+              esac
+              echo "retrying $1 (attempt $attempt failed)"
+              sleep 15
+            done
+            return 1
+          }
+          cd dist/release/packages/ruby
+          if [ "$DRY_RUN" = true ]; then
+            echo "DRY RUN — not pushing. The gems, as rubygems would read them:"
+            # full_name is name-version-platform, i.e. exactly the identity
+            # the push would claim — proves each .gem parses, not just exists.
+            for g in *.gem; do
+              # `gem specification` emits YAML, so the value arrives behind
+              # a `--- ` document marker.
+              echo "  $g -> $(gem specification "$g" full_name | sed 's/^--- //')"
+            done
+            exit 0
+          fi
+          push_gem shojiku-0.1.0.gem
+          for gem in shojiku-0.1.0-*.gem; do
+            echo "pushing $gem"
+            push_gem "$gem"
+          done
+
+      - name: Publish to PyPI
+        if: contains(steps.sel.outputs.registries, 'python') && env.KEY != ''
+        env:
+          KEY: ${{ secrets.PYPI_API_TOKEN }}
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        # --skip-existing: a batch run that stops midway is re-dispatched as
+        # a whole, so every step has to tolerate the versions it already
+        # published. Without it PyPI 400s on the re-run and the steps after
+        # it never execute.
+        run: |
+          if [ "$DRY_RUN" = true ]; then
+            # `twine check` is the real metadata validation PyPI applies —
+            # a dry run that skipped it would prove nothing.
+            echo "DRY RUN — not uploading. Running twine check instead:"
+            pipx run twine check dist/release/packages/python/*.whl
+            exit 0
+          fi
+          [ "$FORCE" = true ] && SKIP= || SKIP=--skip-existing
+          pipx run twine upload $SKIP dist/release/packages/python/*.whl
+
+      - name: Publish to npm
+        if: contains(steps.sel.outputs.registries, 'npm') && env.KEY != ''
+        env:
+          KEY: ${{ secrets.NPM_API_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_API_TOKEN }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+          cd dist/release/packages/npm
+          # npm has no --skip-existing, and re-publishing a version is a hard
+          # E403. A re-dispatched batch must survive that, so the already-
+          # published case is read off the error and treated as success —
+          # the same rule the gem push applies to "already been pushed".
+          # npm is the one registry with a real dry-run: it packs, resolves
+          # and contacts the registry exactly as a publish would, then stops.
+          [ "$DRY_RUN" = true ] && DRY=--dry-run || DRY=
+          publish_pkg() {
+            out=$(npm publish --access public $DRY "$1" 2>&1) && { echo "$out"; return 0; }
+            echo "$out"
+            case "$out" in
+              *"previously published"*|*"cannot publish over"*)
+                [ "$FORCE" = true ] && {
+                  echo "  force: $1 was already published — not treating as success"
+                  return 1
+                }
+                echo "  ($1 is already on the registry — ok)"; return 0 ;;
+            esac
+            return 1
+          }
+          # Platform packages FIRST: the entry package's optionalDependencies
+          # name them, and npm rejects an entry whose optional deps 404.
+          for t in shojiku-linux-* shojiku-darwin-* shojiku-win32-*; do
+            echo "publishing $t"
+            publish_pkg "$t"
+          done
+          echo "publishing the entry package"
+          publish_pkg shojiku-0.1.0.tgz
+
+      # The key nuget.org hands back lives ONE hour and is single-use, so it
+      # is minted here, immediately before the push, rather than up front —
+      # and not at all on a dry run, which would burn one for nothing.
+      - name: NuGet login (OIDC)
+        if: contains(steps.sel.outputs.registries, 'nuget') && github.repository_owner == 'kengos' && !inputs.dry_run
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: kengos
+
+      - name: Publish to NuGet
+        if: contains(steps.sel.outputs.registries, 'nuget') && github.repository_owner == 'kengos'
+        env:
+          KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          if [ "$DRY_RUN" = true ]; then
+            echo "DRY RUN — not pushing. The packages, and what is inside them:"
+            for p in dist/release/packages/dotnet/Shojiku.*.nupkg; do
+              echo "  $p"
+              unzip -l "$p" | sed 's/^/    /'
+            done
+            exit 0
+          fi
+          [ "$FORCE" = true ] && SKIP= || SKIP=--skip-duplicate
+          dotnet nuget push dist/release/packages/dotnet/Shojiku.*.nupkg \
+            --api-key "$KEY" --source https://api.nuget.org/v3/index.json \
+            $SKIP
+
+      - name: Upload the Maven Central bundle (USER_MANAGED)
+        if: contains(steps.sel.outputs.registries, 'maven') && env.KEY != ''
+        env:
+          KEY: ${{ secrets.CENTRAL_API_TOKEN }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          layout=bundle/jp/kengos/shojiku/0.1.0
+          mkdir -p "$layout"
+          cp dist/release/packages/java/* "$layout/"
+          cd "$layout"
+          for f in *.jar *.pom; do
+            gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "$GPG_PASSPHRASE" -ab "$f"
+            md5sum "$f"    | cut -d' ' -f1 > "$f.md5"
+            sha1sum "$f"   | cut -d' ' -f1 > "$f.sha1"
+          done
+          cd "$GITHUB_WORKSPACE/bundle"
+          zip -qr ../central-bundle.zip .
+          cd "$GITHUB_WORKSPACE"
+          if [ "$DRY_RUN" = true ]; then
+            # The signing is the part that breaks, so a dry run VERIFIES it
+            # rather than merely reporting that files exist: a bad key or a
+            # wrong passphrase shows up here instead of at the Portal.
+            echo "DRY RUN — not uploading. Verifying every signature:"
+            # No `| sed` prettifying here: a pipeline reports only the last
+            # command's status, which is exactly how the empty-deployment-id
+            # bug hid. A failed verify must fail the step.
+            for a in "$layout"/*.asc; do
+              gpg --verify "$a" "${a%.asc}"
+            done
+            echo "bundle: $(du -h central-bundle.zip | cut -f1)"
+            unzip -l central-bundle.zip
+            exit 0
+          fi
+          # `tr -d '\r\n'` because a secret pasted with a trailing newline
+          # base64s into a token Central rejects as malformed.
+          token=$(printf '%s' "$KEY" | tr -d '\r\n' | base64 -w0)
+          # NOT `curl … | tee`: a pipeline reports only the LAST command's
+          # status, so `-f` failing left the step green with an empty id
+          # (run 30708025194 — nothing reached the Portal). `--fail-with-body`
+          # keeps the error body AND exits nonzero.
+          code=$(curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer $token" \
+            -F bundle=@central-bundle.zip \
+            "https://central.sonatype.com/api/v1/publisher/upload?publishingType=USER_MANAGED" \
+            -o deployment-id.txt -w '%{http_code}') || {
+              echo "Central rejected the upload — HTTP $code"
+              cat deployment-id.txt
+              exit 1
+            }
+          echo "HTTP $code, deployment id:"
+          cat deployment-id.txt
+          test -s deployment-id.txt
+          echo
+          echo "deployment uploaded — validate & publish from the Portal UI"
+
+      - name: Publish the GitHub Release (CLI binaries)
+        if: contains(steps.sel.outputs.registries, 'release')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_INPUT: ${{ inputs.tag }}
+        run: |
+          cd dist/release/packages/cli
+          # Default the tag off the assembled filenames rather than
+          # hardcoding it again: assemble.sh's VERSION then stays the single
+          # source of truth, and the tag can never disagree with the assets
+          # it labels. `tag` overrides for a re-tag or a dry run.
+          tag=$TAG_INPUT
+          [ -n "$tag" ] || tag=v$(ls shojiku-*-packs.tar.gz \
+            | sed 's/^shojiku-\(.*\)-packs\.tar\.gz$/\1/')
+          echo "== release $tag =="
+          ls -lh
+          if [ "$DRY_RUN" = true ]; then
+            echo "DRY RUN — not creating the release. Verifying the checksums instead:"
+            sha256sum -c SHA256SUMS
+            gh release view "$tag" >/dev/null 2>&1 \
+              && echo "note: $tag already exists" \
+              || echo "note: $tag does not exist yet — would be created as a draft"
+            exit 0
+          fi
+          # DRAFT for the same reason maven stops at USER_MANAGED: the act
+          # that makes a release public stays a human click. It also keeps
+          # this safe to run while `main` is still force-pushed — GitHub
+          # does not create the tag until the draft is published, so no tag
+          # can strand on an orphaned commit. `--target` resolves then too.
+          if gh release view "$tag" >/dev/null 2>&1; then
+            # A Release is the ONE mutable target here, so it is the one
+            # place `force` can genuinely replace rather than merely
+            # complain. Default leaves a finished release alone.
+            if [ "$FORCE" != true ]; then
+              echo "$tag already exists — leaving it alone (pass force to replace its assets)"
+              exit 0
+            fi
+            echo "force: replacing the assets of $tag"
+            gh release upload "$tag" ./* --clobber
+          else
+            gh release create "$tag" ./* \
+              --draft \
+              --target "${{ github.ref_name }}" \
+              --title "$tag" \
+              --notes 'CLI binaries for linux x64/arm64, macOS x64/arm64 and Windows x64. The fonts and locale packs ship once, in `shojiku-<version>-packs.tar.gz` — extract it beside the binary and the CLI finds `./packs` on its own. Checksums for every asset are in `SHA256SUMS`.'
+          fi
+          gh release view "$tag" --json isDraft,tagName,assets \
+            --jq '{tag: .tagName, draft: .isDraft, assets: [.assets[].name]}'
+
+  # crates.io is a SEPARATE job because it shares nothing with the one above:
+  # it publishes SOURCE, so it needs neither the binary matrix nor the
+  # assembled packages, and it needs a Rust toolchain the other job does not.
+  # `all` is re-tested here rather than reading the `sel` step, which lives in
+  # a job this one deliberately does not depend on.
+  crates:
+    if: contains(inputs.registries, 'crates') || inputs.registries == 'all'
+    runs-on: ubuntu-latest
+    env:
+      DRY_RUN: ${{ inputs.dry_run }}
+      FORCE: ${{ inputs.force }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # The runner's preinstalled stable Rust, deliberately NOT the pinned
+      # 1.97.1 container the gates use: publishing packages source and
+      # re-verifies a build that the pinned gates already proved, so tying it
+      # to the pin would add a SIXTH place the Rust version has to be bumped
+      # (Dockerfile ×3, Makefile, ci.yml) for no reproducibility gain.
+      # `cargo publish --workspace` needs cargo 1.90+ for the dependency
+      # ordering; the version is printed so a failure names the toolchain.
+      - name: Publish to crates.io
+        env:
+          KEY: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        working-directory: engine
+        run: |
+          cargo --version
+          if [ "$DRY_RUN" = true ]; then
+            echo "DRY RUN — packaging and verifying every crate, uploading none:"
+            cargo publish --workspace --dry-run --locked
+            exit 0
+          fi
+          if [ -z "$KEY" ]; then
+            echo "CARGO_REGISTRY_TOKEN is not set — skipping (fork or half-configured repo)"
+            exit 0
+          fi
+          # NOT `cargo publish --workspace`: it is all-or-nothing. Finding one
+          # member already on the index aborts the whole run —
+          # "crate shojiku-core@0.1.0 already exists on crates.io index" — and
+          # publishes NOTHING further, so it cannot resume a partial release.
+          # It has to resume, because crates.io rate-limits NEW crates
+          # (observed: a burst of 5, then roughly one per 10 minutes), and this
+          # workspace has 17. So: publish one at a time, skip what is already
+          # up, and wait out a 429 rather than dying on it. `cargo publish -p`
+          # waits for each crate to be live before returning, which is what
+          # keeps a dependency available for the crate that follows it.
+          #
+          # The ORDER is computed from cargo's own metadata rather than listed
+          # here, so adding a crate cannot leave a stale sequence behind.
+          # Every line stays inside the YAML block scalar — the common indent
+          # is stripped before python ever sees it, so the script reads at
+          # column 0 as python requires.
+          order=$(cargo metadata --no-deps --format-version 1 | python3 -c '
+          import json, sys
+          pkgs = [p for p in json.load(sys.stdin)["packages"] if p.get("publish") != []]
+          names = {p["name"] for p in pkgs}
+          deps = {p["name"]: {d["name"] for d in p["dependencies"]} & names for p in pkgs}
+          done, out = set(), []
+          while len(done) < len(names):
+              ready = sorted(n for n in names - done if deps[n] <= done)
+              if not ready:
+                  sys.exit("dependency cycle among workspace members: " + repr(names - done))
+              out += ready
+              done |= set(ready)
+          print(" ".join(out))
+          ')
+          echo "publish order: $order"
+          for c in $order; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              -H 'User-Agent: shojiku-release (github.com/kengos/shojiku)' \
+              "https://crates.io/api/v1/crates/$c")
+            [ "$code" = 200 ] && { echo "== $c is already on crates.io — skipping"; continue; }
+            attempt=1
+            while :; do
+              echo "== publishing $c (attempt $attempt)"
+              out=$(cargo publish -p "$c" --locked 2>&1) && { echo "$out"; break; }
+              echo "$out"
+              case "$out" in
+                *"429"*|*"Too Many Requests"*)
+                  [ "$attempt" -ge 8 ] && { echo "still rate-limited after $attempt tries"; break 2; }
+                  # The window the registry names is ~10 min; overshoot it
+                  # slightly rather than racing the same 429 again.
+                  echo "rate-limited — waiting 11 minutes"
+                  sleep 660
+                  attempt=$((attempt + 1)) ;;
+                *"already exists"*) echo "  (landed despite the error — continuing)"; break ;;
+                *) echo "publish of $c failed for a non-rate-limit reason"; break 2 ;;
+              esac
+            done
+          done
+          # THE REGISTRY IS THE ARBITER, not cargo's exit code. Reading the
+          # error text instead let a partial publish look complete: the first
+          # real run pushed 5 crates, hit crates.io's new-crate rate limit
+          # (burst 5, then ~1 per 10 min) and stopped, and an "already exists"
+          # handler would have called the rerun a success with 12 still
+          # missing. Ask crates.io about every member instead.
+          missing=
+          for c in $(cargo metadata --no-deps --format-version 1 \
+                     | jq -r '.packages[] | select(.publish != []) | .name'); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              -H 'User-Agent: shojiku-release (github.com/kengos/shojiku)' \
+              "https://crates.io/api/v1/crates/$c")
+            if [ "$code" = 200 ]; then echo "  on crates.io: $c"
+            else echo "  MISSING: $c (HTTP $code)"; missing="$missing $c"; fi
+          done
+          [ -z "$missing" ] || {
+            echo "not published:$missing"
+            echo "re-dispatch after the rate-limit window; publishing is resumable."
+            exit 1
+          }
+          echo "all workspace crates are on crates.io"

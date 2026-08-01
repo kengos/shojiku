@@ -1,0 +1,78 @@
+version: 0.2.0
+type: object
+properties:
+  application:
+    type: object
+    properties:
+      number:
+        type: string
+        title: 受付番号
+        example: B26-0117
+      url:
+        type: string
+        title: オンライン申込URL
+        example: https://fes.shojikudo.example/entry
+      category:
+        type: string
+        title: 参加区分（general / student / support）
+        example: student
+      contact_methods:
+        type: array
+        title: 希望連絡方法（email / tel / mail の配列・複数選択）
+        items:
+          type: string
+          enum: [email, tel, mail]
+        example: [email, mail]
+      agree:
+        type: boolean
+        title: 個人情報の取扱いへの同意
+        example: true
+      notes:
+        type: string
+        title: 備考
+        example: 10月11日のみ参加予定です。
+    title: 申込情報
+  applicant:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 氏名
+        example: 高橋 栞
+      name_kana:
+        type: string
+        title: ふりがな
+        example: たかはし しおり
+      birth_date:
+        type: string
+        format: date
+        title: 生年月日
+        example: '1996-04-12'
+        displayFormat: wareki
+        placeholder: 　　　　年　　月　　日
+      age:
+        type: number
+        title: 満年齢
+        example: 30
+        placeholder: ''
+      postal_code1:
+        type: string
+        title: 郵便番号（前3桁）
+        example: '166'
+      postal_code2:
+        type: string
+        title: 郵便番号（後4桁）
+        example: '0004'
+      address:
+        type: string
+        title: 住所
+        example: 東京都杉並区阿佐谷南1-23-45 コーポことのは203
+      tel:
+        type: string
+        title: 電話番号
+        example: 090-1234-5678
+      email:
+        type: string
+        title: メールアドレス
+        example: s.takahashi@example.com
+    title: 申込者

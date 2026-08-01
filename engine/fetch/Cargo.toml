@@ -1,0 +1,23 @@
+[package]
+name = "shojiku-fetch"
+description = "Host-level font fetch: pinned-reference download, sha256 verify, content-addressed cache"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+ureq = { workspace = true }
+rustls = { workspace = true }
+rustls-native-certs = { workspace = true }
+shojiku-formatter = { workspace = true }
+
+[dev-dependencies]
+shojiku-core = { workspace = true }
+
+[lints]
+workspace = true

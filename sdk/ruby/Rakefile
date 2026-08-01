@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+require "rspec/core/rake_task"
+require "rubocop/rake_task"
+
+RSpec::Core::RakeTask.new(:spec)
+RuboCop::RakeTask.new(:lint)
+
+desc "Build the gem and install it from the built artifact"
+task :package do
+  sh "gem build shojiku.gemspec"
+  sh "gem install --local --no-document shojiku-*.gem"
+end
+
+task default: %i[lint spec]

@@ -1,0 +1,6 @@
+locales: [ja]
+engineLocale: ja-JP
+name:
+  ja: 原稿用紙（縦書き）
+  en: Manuscript paper (vertical)
+thumbnail: preview-1.png

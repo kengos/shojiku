@@ -1,0 +1,180 @@
+version: 0.2.0
+type: object
+properties:
+  invoice:
+    type: object
+    properties:
+      number:
+        type: string
+        title: 請求書番号
+        example: INV-2026-0731-042
+      issued_at:
+        type: string
+        format: date
+        title: 発行日
+        example: '2026-07-31'
+      due_date:
+        type: string
+        format: date
+        title: お支払期限
+        example: '2026-08-31'
+      subject:
+        type: string
+        title: 件名
+        example: 2026年7月分 商品代金
+    title: 請求情報
+  billing:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 請求先名
+        example: 株式会社ヤマカワ書林
+      postal_code:
+        type: string
+        title: 郵便番号
+        example: 160-0022
+      address:
+        type: string
+        title: 住所
+        example: 東京都新宿区新宿4-5-6 ヤマカワビル3F
+      contact:
+        type: string
+        title: ご担当者
+        example: 仕入部 田中
+    title: 請求先
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 発行者名
+        example: 株式会社正直堂
+      registration_no:
+        type: string
+        title: 適格請求書発行事業者 登録番号
+        example: T0123456789012
+      postal_code:
+        type: string
+        title: 郵便番号
+        example: 101-0051
+      address:
+        type: string
+        title: 住所
+        example: 東京都千代田区神田神保町1-2-3
+      tel:
+        type: string
+        title: 電話番号
+        example: 03-1234-5678
+      email:
+        type: string
+        title: メールアドレス
+        example: billing@shojikudo.example
+    title: 発行者
+  totals:
+    type: object
+    properties:
+      subtotal_10:
+        type: number
+        format: currency
+        title: 小計（10%対象）
+        example: 514500
+        currency: JPY
+        precision: 0
+      tax_10:
+        type: number
+        format: currency
+        title: 消費税（10%）
+        example: 51450
+        currency: JPY
+        precision: 0
+      subtotal_8:
+        type: number
+        format: currency
+        title: 小計（8%対象）
+        example: 122000
+        currency: JPY
+        precision: 0
+      tax_8:
+        type: number
+        format: currency
+        title: 消費税（8%）
+        example: 9760
+        currency: JPY
+        precision: 0
+      total:
+        type: number
+        format: currency
+        title: 合計（税込）
+        example: 697710
+        currency: JPY
+        precision: 0
+        recommendedStyle:
+          textAlign: right
+    title: 合計（呼び出し側で計算）
+  bank:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 銀行名
+        example: 神保町銀行
+      branch:
+        type: string
+        title: 支店名
+        example: 本店営業部
+      account_type:
+        type: string
+        title: 預金種別
+        example: 普通
+      account_number:
+        type: string
+        title: 口座番号
+        example: '1234567'
+      holder:
+        type: string
+        title: 口座名義
+        example: カ）ショウジキドウ
+    title: 振込先
+  web:
+    type: object
+    properties:
+      invoice_url:
+        type: string
+        title: Web請求書URL
+        example: https://billing.shojikudo.example/inv/INV-2026-0731-042
+    title: Web請求書
+  items:
+    type: array
+    title: 明細
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: 品目
+          example: 書籍『Rustで作るPDFエンジン』
+        quantity:
+          type: number
+          format: quantity
+          title: 数量
+          example: 20
+        unit_price:
+          type: number
+          format: currency
+          title: 単価
+          example: 3200
+          currency: JPY
+          precision: 0
+        tax_rate:
+          type: string
+          title: 税率
+          example: 10%
+        amount:
+          type: number
+          format: currency
+          title: 金額
+          example: 64000
+          currency: JPY
+          precision: 0
+      title: 明細行

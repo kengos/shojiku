@@ -1,0 +1,14 @@
+# Cloudflare Pages headers. The app is same-origin except ONE deliberate hole:
+# `connect-src` also allows raw.githubusercontent.com, where the font picker
+# fetches a picked family's commit-pinned face bytes + licence text (the app's
+# own fetch layer re-checks every such URL against the same origin allowlist
+# and size caps). `wasm-unsafe-eval` is the ONLY script relaxation (required to
+# instantiate WebAssembly); there is no inline-script allowance. `style-src`
+# permits inline styles (Vite injects the app stylesheet inline and React uses
+# style attributes) — inline STYLE only, never inline script. Specimen fonts
+# are constructed from fetched bytes via `new FontFace(…, buffer)`, which needs
+# no `font-src` relaxation.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://raw.githubusercontent.com; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer

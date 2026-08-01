@@ -1,0 +1,175 @@
+[workspace]
+resolver = "2"
+# `fuzz/` is a crate, deliberately not a member: it is nightly-only
+# (libFuzzer), links a sanitizer runtime, and ships nowhere. Keeping it out
+# means `cargo test --workspace`, `cargo llvm-cov --workspace` and
+# `cargo deny` all stay describing what actually ships. `make fuzz` is the
+# only thing that builds it.
+exclude = ["fuzz"]
+members = [
+    "core",
+    "diagnostics",
+    "formatter",
+    "image",
+    "layout-box",
+    "layout",
+    "render-pdf",
+    "render-png",
+    "signing",
+    "verify",
+    "authoring",
+    "fetch",
+    "cli",
+    "mcp",
+    "wasm",
+    "capi",
+    "napi",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0 OR BSD-3-Clause"
+publish = true
+repository = "https://github.com/kengos/shojiku"
+homepage = "https://github.com/kengos/shojiku"
+
+[workspace.lints.clippy]
+# Anti-bloat gate (pairs with scripts/check-line-budget.sh): a function
+# past the clippy.toml threshold fails `clippy -D warnings`, not review.
+too_many_lines = "warn"
+
+[workspace.lints.rust]
+# cargo-llvm-cov builds with --cfg coverage; declare it so
+# `unexpected_cfgs` stays clean under clippy -D warnings.
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(coverage)"] }
+
+# Size-tuned profile for the WASM bindings (Makefile `wasm` target builds
+# `--profile wasm-release`); the CLI/MCP release builds stay untouched.
+[profile.wasm-release]
+inherits = "release"
+opt-level = "s"
+lto = true
+codegen-units = 1
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+# Wraps a Deserializer so a structural parse error carries the field PATH
+# (`sections.body.items[3].columns[0]`) alongside serde_yaml's line/column —
+# `serde_yaml::from_value` drops both. dtolnay, MIT/Apache-2.0, serde-only
+# dependency: deny.toml stays clean, no new transitives.
+serde_path_to_error = "0.1"
+thiserror = "2"
+time = { version = "0.3", features = ["parsing", "formatting", "macros"] }
+clap = { version = "4", features = ["derive"] }
+# Font-pack manifest integrity (sha256 verify at load). RustCrypto,
+# pure-Rust, MIT/Apache — deny.toml clean, no ttf-parser/lopdf/MPL.
+sha2 = "0.11"
+# default-features off: simple-text stays off because it pulls rustybuzz ->
+# unmaintained ttf-parser (RUSTSEC-2026-0192); the renderer draws pre-mapped
+# glyphs instead. render-pdf turns raster-images on: that feature only adds
+# pure codec crates (png/zune-jpeg/gif/image-webp/imagesize), nothing from
+# the rustybuzz/ttf-parser stack.
+krilla = { version = "0.8", default-features = false }
+# SVG support is a deliberate subset parser (shojiku-image): resvg/usvg are
+# MPL-2.0 and their text stack pulls ttf-parser, both of which deny.toml
+# rejects. These are MIT/Apache building blocks instead.
+# QR encoding (layout-time vector modules, N2): Project Nayuki's generator —
+# MIT, zero dependencies, pure Rust. Encoding happens in layout; renderers
+# only ever see RectShapes.
+qrcodegen = "1.8"
+base64 = "0.23"
+# Host-level font fetch (shojiku-fetch, CLI only — never in the render path).
+# Blocking client: the repo has no async runtime by decision.
+# `rustls-no-provider` (not `rustls`) is deliberate: the `rustls` feature pulls
+# webpki-roots, and `platform-verifier` pulls webpki-root-certs — both
+# CDLA-Permissive-2.0, which deny.toml's allowlist rejects. Roots come from
+# rustls-native-certs (the OS trust store) instead, and the crypto provider is
+# named explicitly (ureq only auto-selects ring behind its private `_ring`
+# feature), so no private feature is relied on.
+ureq = { version = "3", default-features = false, features = ["rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rustls-native-certs = "0.8"
+imagesize = "0.15"
+kurbo = "0.13"
+roxmltree = "0.21"
+svgtypes = "0.16"
+# Glyph outlines + font metrics. The single-copy goal lost to its two
+# neighbours: krilla pins its own older skrifa (0.42 -> read-fonts 0.39) and
+# harfrust requires read-fonts ^0.41, so read-fonts resolves three times
+# (deny.toml only WARNS on duplicates, and the wasm size budget is the real
+# guard). Re-unify when harfrust moves to read-fonts 0.42+; until then this
+# tracks upstream, which is where the font-parsing hardening lands.
+skrifa = "0.45"
+# HarfBuzz text shaping ported to Rust (HarfBuzz org): kerning, ligatures,
+# and complex-script shaping behind the layout font seam. MIT, no unsafe,
+# and font parsing rides read-fonts (^0.41, its own copy since skrifa 0.45) —
+# no ttf-parser, so deny.toml stays clean.
+harfrust = "0.12"
+# PNG preview backend: pure-Rust CPU rasterizer (BSD-3-Clause). Its
+# tiny-skia-path is the same crate/minor krilla already pulls, so the
+# workspace keeps a single copy.
+tiny-skia = "0.12"
+# Raster pixel decoders for the PNG backend (shojiku-image `decode`
+# feature). Pinned to the same minors krilla's raster-images already
+# resolves, so no second copy enters the tree.
+png = "0.18"
+zune-jpeg = "0.5"
+gif = "0.14"
+image-webp = "0.2"
+
+# Signing backend (shojiku-signing, host-only — never in the wasm build).
+# `ring` was already in the tree through the CLI's font-fetch TLS path
+# (shojiku-fetch -> ureq -> rustls -> ring) and already cleared cargo-deny,
+# so signing adds an algorithm surface rather than a new supply-chain risk;
+# it is what rules out the `rsa` crate, whose unfixed Marvin timing advisory
+# would need an ignore entry deny.toml deliberately does not have. Note it
+# builds C and assembly via `cc`: these crates need a C toolchain.
+ring = "0.17"
+# CMS SignedData, X.509 and PKCS#8 structures, all RustCrypto DER crates on
+# ONE version line so the tree keeps a single `der`. This is the der-0.7
+# line because it is the newest line `cms` has RELEASED — cms 0.3 exists
+# only as `0.3.0-pre.N`, and a prerelease is not something to build a
+# signature format on. It costs a second `sha2`/`digest` copy (pkcs8's
+# PBES2 key derivation is on the 0.10 line while the font-manifest hashing
+# is on 0.11); deny.toml warns on duplicates rather than failing, and
+# re-unifying is a one-line bump when cms 0.3 ships. `pkcs8/encryption`
+# decrypts password-protected PKCS#8 (PBES2) in-process, which is what lets
+# a caller keep the key encrypted on disk.
+der = "0.7"
+cms = "0.2"
+x509-cert = "0.2"
+pkcs8 = { version = "0.10", features = ["encryption", "pem"] }
+zeroize = "1"
+# Reading a passphrase from the terminal without echoing it (CLI only). The
+# alternative is hand-rolling termios, and a passphrase prompt is not the
+# place to be inventive.
+rpassword = "7"
+
+# Internal crates carry BOTH path and version: a path-only dependency is
+# fine to build but `cargo publish` rejects it, since a consumer resolving
+# from crates.io has no path to follow. This is the ONE place the version
+# is duplicated away from [workspace.package] — cargo has no
+# `version.workspace` inside a dependency spec — so a version bump has to
+# touch both, and `cargo publish --workspace` fails loudly if they drift.
+shojiku-core = { path = "core", version = "0.1.0" }
+shojiku-diagnostics = { path = "diagnostics", version = "0.1.0" }
+shojiku-formatter = { path = "formatter", version = "0.1.0" }
+shojiku-image = { path = "image", version = "0.1.0" }
+shojiku-layout-box = { path = "layout-box", version = "0.1.0" }
+shojiku-layout = { path = "layout", version = "0.1.0" }
+shojiku-render-pdf = { path = "render-pdf", version = "0.1.0" }
+shojiku-render-png = { path = "render-png", version = "0.1.0" }
+shojiku-authoring = { path = "authoring", version = "0.1.0" }
+shojiku-fetch = { path = "fetch", version = "0.1.0" }
+shojiku-signing = { path = "signing", version = "0.1.0" }
+shojiku-verify = { path = "verify", version = "0.1.0" }
+shojiku-capi = { path = "capi", version = "0.1.0" }
+
+# WASM boundary (shojiku-wasm) — target-gated to wasm32, so no host build
+# pulls them. wasm-bindgen is pinned EXACTLY: the wasm-bindgen CLI that
+# post-processes the build must match this crate version byte-for-byte.
+wasm-bindgen = "=0.2.126"
+js-sys = "0.3"

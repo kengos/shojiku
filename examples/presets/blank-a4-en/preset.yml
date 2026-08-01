@@ -1,0 +1,5 @@
+locales: [en-gb, en-au, en-in]
+engineLocale: en-US
+name:
+  en: Blank (A4)
+thumbnail: preview-1.png

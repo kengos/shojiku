@@ -1,0 +1,137 @@
+version: 0.2.0
+type: object
+properties:
+  invoice:
+    type: object
+    properties:
+      number:
+        type: string
+        title: Invoice number
+        example: US-2026-0731-018
+      issued_at:
+        type: string
+        format: date
+        title: Issue date
+        example: '2026-07-31'
+      due_date:
+        type: string
+        format: date
+        title: Due date
+        example: '2026-08-30'
+      terms:
+        type: string
+        title: Payment terms
+        example: Net 30
+      po_number:
+        type: string
+        title: PO number
+        example: PO-88412
+    title: Invoice
+  billing:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Customer
+        example: Harbor Lights Bookstore LLC
+      address:
+        type: string
+        title: Address
+        example: 812 Pine Street, Seattle, WA 98101
+      contact:
+        type: string
+        title: Contact
+        example: Purchasing — R. Alvarez
+    title: Bill to
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Company
+        example: Shojikudo Books USA, Inc.
+      address:
+        type: string
+        title: Address
+        example: 1200 Harbor Avenue, Suite 300, Seattle, WA 98104
+      email:
+        type: string
+        title: Billing e-mail
+        example: billing@us.shojikudo.example
+    title: Issuer
+  totals:
+    type: object
+    properties:
+      subtotal:
+        type: number
+        format: currency
+        title: Subtotal
+        example: 8506.0
+        currency: USD
+      tax:
+        type: number
+        format: currency
+        title: Sales tax
+        example: 754.91
+        currency: USD
+      total:
+        type: number
+        format: currency
+        title: Total
+        example: 9260.91
+        currency: USD
+        recommendedStyle:
+          textAlign: right
+    title: Totals (computed by the caller)
+  bank:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Bank
+        example: Jimbocho Bank N.A.
+      routing:
+        type: string
+        title: Routing number
+        example: '125000000'
+      account:
+        type: string
+        title: Account number
+        example: '0012345678'
+    title: Bank
+  web:
+    type: object
+    properties:
+      invoice_url:
+        type: string
+        title: Online invoice URL
+        example: https://billing.shojikudo.example/inv/US-2026-0731-018
+    title: Online invoice
+  items:
+    type: array
+    title: Line items
+    items:
+      type: object
+      properties:
+        description:
+          type: string
+          title: Description
+          example: Rust PDF Engine Handbook (hardcover)
+        quantity:
+          type: number
+          format: quantity
+          title: Qty
+          example: 24
+        unit_price:
+          type: number
+          format: currency
+          title: Unit price
+          example: 28.5
+          currency: USD
+        amount:
+          type: number
+          format: currency
+          title: Amount
+          example: 684.0
+          currency: USD
+      title: Line item

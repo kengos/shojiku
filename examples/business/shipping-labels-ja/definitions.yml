@@ -1,0 +1,54 @@
+version: 0.2.0
+type: object
+properties:
+  orders:
+    type: array
+    title: 注文
+    items:
+      type: object
+      properties:
+        order_no:
+          type: string
+          title: 注文番号
+          example: SO-2026-071401
+        name:
+          type: string
+          title: お届け先氏名
+          example: 高橋 栞
+        postal_code1:
+          type: string
+          title: 郵便番号（前3桁）
+          example: '166'
+        postal_code2:
+          type: string
+          title: 郵便番号（後4桁）
+          example: '0004'
+        address:
+          type: string
+          title: お届け先住所
+          example: 東京都杉並区阿佐谷南1-23-45 コーポことのは203
+        shipping_class:
+          type: string
+          title: 配送区分
+          example: 通常便
+        item_count:
+          type: number
+          format: quantity
+          title: 内容点数
+          example: 3
+        items:
+          type: array
+          title: 内容品
+          items:
+            type: string
+          example: [書籍『Rustで作るPDFエンジン』, A5ノート（方眼）]
+        url:
+          type: string
+          title: 配送伝票QR URL
+          example: https://ship.shojikudo.example/s/SO-2026-071401
+        note:
+          type: string
+          title: 取扱注意（任意）
+          example: ワレモノ注意（インク瓶同梱）
+          placeholder: ''
+      title: 注文

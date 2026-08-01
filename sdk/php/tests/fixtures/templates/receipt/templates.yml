@@ -1,0 +1,27 @@
+version: 0.1.0
+name: receipt
+
+page:
+  size: A4
+  margin: 25
+
+defaults:
+  locale: en-US
+  style:
+    fontFamily: noto-sans
+    fontSize: 10.5
+
+sections:
+  body:
+    type: flow
+    items:
+      - id: title
+        type: text
+        box: { x: 0, y: 0, w: 400, h: 30 }
+        text: Receipt
+        style: { fontSize: 18 }
+
+      - id: billed_to
+        type: text
+        box: { x: 0, y: 0, w: 400, h: 16 }
+        text: "Billed to {customer.name}"

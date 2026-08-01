@@ -1,0 +1,11 @@
+# Designer preset manifest: surfaces this bundled example in the locale-keyed
+# catalog. `locales` are the catalog tags it appears under; `engineLocale` is
+# the exact tag the app passes to the engine (locale pack + font selection).
+locales: [zh-cn]
+engineLocale: zh-CN
+name:
+  zh-cn: 收据
+  zh-tw: 收據（簡體中文）
+  en: Receipt (Simplified Chinese)
+  ja: 領収書（簡体字中国語）
+thumbnail: preview-1.png

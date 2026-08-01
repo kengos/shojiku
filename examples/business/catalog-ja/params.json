@@ -1,0 +1,85 @@
+{
+  "catalog": { "season_code": "Vol.12 / 2026-A" },
+  "products": [
+    {
+      "name": "A5ノート（方眼・糸かがり製本）",
+      "code": "ST-1101",
+      "price": 495,
+      "description": "180度フラットに開く糸かがり製本の方眼ノート。5mm方眼・96ページ。",
+      "colors": "藍・墨・生成り",
+      "stock": "在庫あり",
+      "image": "assets/notebook.svg",
+      "url": "https://store.shojikudo.example/p/ST-1101"
+    },
+    {
+      "name": "万年筆インク「藍鉄」50ml",
+      "code": "ST-2205",
+      "price": 2640,
+      "description": "神保町の夕暮れをイメージした沈むような藍色。書き出しは深い青、乾くとわずかに緑がかった鉄色へ変化します。耐水性の顔料系ではなく、洗浄しやすい染料系インクです。ガラスペン・つけペンにもお使いいただけます。",
+      "colors": "藍鉄（単色）",
+      "stock": "残りわずか",
+      "image": "assets/ink.svg",
+      "url": "https://store.shojikudo.example/p/ST-2205"
+    },
+    {
+      "name": "ブックカバー（帆布・文庫判）",
+      "code": "ST-3310",
+      "price": 1320,
+      "description": "倉敷帆布8号を使用。しおりひも付き。",
+      "colors": "生成り・藍・柿渋",
+      "stock": "在庫あり",
+      "image": "assets/bookcover.svg",
+      "url": "https://store.shojikudo.example/p/ST-3310"
+    },
+    {
+      "name": "真鍮しおり 3枚組「活字」",
+      "code": "ST-3422",
+      "price": 1650,
+      "description": "使い込むほどに鈍い金色へ育つ真鍮製。活字・約物・罫線の3種セットで、経年変化を楽しめる読書の相棒です。",
+      "colors": "真鍮（生地）",
+      "stock": "在庫あり",
+      "image": "assets/bookmark.svg",
+      "url": "https://store.shojikudo.example/p/ST-3422"
+    },
+    {
+      "name": "ドリップコーヒー「店頭ブレンド」24袋",
+      "code": "FD-5501",
+      "price": 2160,
+      "description": "併設喫茶で一番人気の中深煎りブレンドをドリップバッグに。読書のお供に、酸味ひかえめ・後味すっきり。個包装で日持ちします（賞味期限 製造から180日）。※軽減税率8%対象商品です。",
+      "colors": "—",
+      "stock": "在庫あり",
+      "image": "assets/coffee.svg",
+      "url": "https://store.shojikudo.example/p/FD-5501"
+    },
+    {
+      "name": "クッキー缶「読書のおとも」（大）",
+      "code": "FD-5620",
+      "price": 1728,
+      "description": "6種の焼き菓子詰合せ。缶は小物入れとして再利用できます。※軽減税率8%対象商品です。",
+      "colors": "—",
+      "stock": "入荷待ち（次回10月上旬）",
+      "image": "assets/cookies.svg",
+      "url": "https://store.shojikudo.example/p/FD-5620"
+    },
+    {
+      "name": "原稿用紙パッド B5（400字詰・50枚）",
+      "code": "ST-1240",
+      "price": 660,
+      "description": "にじみに強い中性紙を使った400字詰め原稿用紙。万年筆でもストレスなく書けるよう、罫色は目にやさしい柿渋色にしました。切り離せるパッド式で、推敲用の下書きから清書まで幅広く使えます。表紙裏には字数早見表付き。",
+      "colors": "柿渋罫（単色）",
+      "stock": "在庫あり",
+      "image": "assets/genkoyoshi.svg",
+      "url": "https://store.shojikudo.example/p/ST-1240"
+    },
+    {
+      "name": "トートバッグ「本の重さに負けない」",
+      "code": "ST-4801",
+      "price": 2420,
+      "description": "文庫20冊でもへこたれない極厚帆布。内ポケット2つ。",
+      "colors": "生成り・藍",
+      "stock": "在庫あり",
+      "image": "assets/tote.svg",
+      "url": "https://store.shojikudo.example/p/ST-4801"
+    }
+  ]
+}

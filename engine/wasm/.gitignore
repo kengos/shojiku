@@ -1,0 +1,9 @@
+# Build output of `make wasm` (wasm-bindgen `pkg/`) — an artifact, not source.
+/pkg/
+
+# Playwright / npm write these back into the mounted e2e dir; never commit
+# them (the pinned versions in e2e/package.json are the authored source).
+/e2e/node_modules/
+/e2e/test-results/
+/e2e/playwright-report/
+/e2e/package-lock.json

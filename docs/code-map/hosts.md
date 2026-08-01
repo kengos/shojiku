@@ -1,0 +1,330 @@
+# Code map — engine/authoring, engine/fetch, engine/cli, engine/mcp, engine/wasm, engine/capi
+
+> AI-only, token-dense. Index + repo-wide conventions: [CLAUDE.md](../../CLAUDE.md).
+> Read this BEFORE searching or editing the covered dirs; update it in the
+> same PR whenever files/modules/boundaries here change. Granularity: file
+> role + key exports + load-bearing contracts.
+
+## engine/authoring — the shared authoring-surface lib layer
+
+ONE contract, bytes-first (source strings + injectable font/asset bytes),
+wrapped by every host (CLI / MCP / WASM); the only filesystem code is the
+feature-gated `fs` module (default-on; WASM builds `default-features =
+false`), no clap.
+
+- `lib.rs` — module root + `InjectedPack`/`RawPage` re-export.
+- `sources.rs` — `Sources`/`load_sources` (strings → parsed
+  defs/template/params; hard-error render path) + `validate_strings`
+  (the `validate` op; parse errors surface as a `parse_error`
+  diagnostic).
+- `locale.rs` — `resolve_locale_id` (explicit > template > ja-JP) +
+  `valid_locale_id` (the ONE charset-guard home) + `load_pack` (id +
+  overlay string → builtin(+merge) | standalone | NotFound; never
+  touches the FS).
+- `fs.rs` — the FS pack discovery both FS hosts share:
+  `resolve_font_dirs`/`resolve_locale_dir` (flags > env > `./packs/*`),
+  `find_locale_file`, `load_locale_pack`; errors = `FsPackError`.
+- `prepare.rs` — `prepare`: the validate-gate → assets → layout → dedup
+  pipeline shared by inspect/preview/render; `AssetsInput` = `Prepare`
+  (FS walk) | `PrepareInjected` (bundled-byte walk) | `Prebuilt`;
+  returns `Prepared { document, boxes, margin, diagnostics, title,
+  assets }` or the full `Diagnostics` on any errors.
+- `inspect.rs` — `InspectEnvelope { engine, document, boxes, margin }` +
+  `inspect_json`.
+- `preview.rs` — `preview_pages` (PNG per page) + `preview_raw` (RGBA)
+  + the single-page `preview_page{,_raw}` (CLI `--page` / MCP `page` /
+  WASM `pageIndex` rasterize ONE page).
+- `capabilities.rs` — `EngineInfo`/`engine_info`/`run_capabilities`;
+  the `CAPABILITIES` key array lives under `capabilities/list.rs`
+  composing per-concern slices `list/{items,boxes,style,hosts}.rs`
+  (const-concat, wire order preserved) — **append a key to the matching
+  submodule whenever the wire format, accepted asset surface, or output
+  surface widens**.
+- The verified bytes-first font path is `FontStore::load_from_injected`
+  over `resolve_face_bytes`; `from_faces` (no verify) is never exposed
+  through this layer.
+
+## engine/fetch — the host-side font fetch layer
+
+The FIRST and ONLY network code in the repo, and a host crate no engine
+crate depends on (CLI only today). Turns a pinned reference (`FaceSpec`
+with `sha256` + `url:` hint, no file) into bytes on disk BEFORE render,
+so layout/render/sign/verify stay socket-free.
+
+- `ensure.rs` — `ensure_faces(specs, cache, policy, transport, Mode)`:
+  present file untouched → cache blob repoints → url fetched (≤3
+  redirect hops, each re-policy-checked) → hash-verify against the pin
+  (any mismatch = hard error, nothing unverified cached) → cache →
+  repoint.
+- `policy.rs` — `FetchPolicy` https-only host allowlist (exact or
+  `.`-boundary suffix; IP literals + userinfo rejected;
+  `with_extra_hosts` = CLI `--font-fetch-allow`).
+- `transport.rs` — `Transport` trait + `HttpTransport` (ureq+rustls,
+  native roots; redirects DISABLED so the core re-checks each hop).
+- `read.rs` — `read_capped` (streaming size cap + sha256 in one pass;
+  `is_sha256_hex` guards digests before they become cache paths).
+- `cache.rs` — `FontCache` content-addressed blobs (atomic tmp+rename,
+  re-hash-on-read self-heal; hand-rolled platform cache root — no
+  `dirs` crate, MPL).
+- `error.rs` — `FetchError`/`TransportError` + the clip guard on echoed
+  URLs.
+
+## engine/cli — thin wrapper over authoring
+
+- `lib.rs` — the clap surface (`render`/`validate`/`inspect`/`preview`/
+  `sign`/`verify`/`capabilities`) plus `ReportArg`, the `--report`
+  flag flattened into the three commands the SDK lifecycle binds; `main.rs` thin.
+  `VerificationFailed` carries an exit status only, and
+  `ValidationFailed` carries the diagnostics as well (stderr already had
+  them as prose; `--report` needs their codes and typed args) — both
+  have already printed the JSON that explains them, so `main.rs`
+  suppresses a second stderr line for each.
+- `error.rs` — `CliError` (wrapping `FsPackError`/`FetchError`/
+  `SigningError`/`KeyError`/`VerifyError`) and its classification:
+  `class()` splits caller error from a refused document, `kind()` is the
+  stable string an SDK branches on. Both are APPEND-ONLY contract, and
+  the kinds shared with `engine/capi` keep the capi's spelling — five
+  SDKs already map those strings. `error/tests.rs` walks one case per
+  variant, which is where the whole vocabulary is reviewable at once.
+- `report.rs` — the `--report <path>` envelope: `ok`, `diagnostics`
+  (the `Diagnostics` value itself, so it serializes as the
+  `{"items": […]}` object the shipped SDKs parse), `pageCount` (render
+  only), `verification` (verify only, on either verdict), `failure`
+  (absent when ok). `clip` bounds the echoed message exactly as the
+  capi's does. `main.rs`'s `fail()` writes the report on the FAILURE
+  path — the path an SDK most needs and the easiest to leave out —
+  swallowing the write's own error so the operation's real cause is
+  what the caller is told.
+- `commands.rs` — `run_*` wrap authoring; `run_render` returns
+  `Rendered` (bytes + diagnostics + page count), all three of which the
+  report needs and only the bytes of which used to survive the call.
+  `prepare_layout` reads files,
+  resolves the locale, then `load_fonts` (`resolve_face_specs` → fetch
+  only when a face is absent via `shojiku_fetch::ensure_faces` →
+  `FontStore::load_from_specs`; the all-present fast path skips fetch
+  entirely), then `authoring::prepare` + `render_pdf` composition;
+  `report_fetched` prints one stderr notice per downloaded face.
+- `sign.rs` — `run_sign` over `shojiku_signing::sign_document`. The
+  passphrase is asked for ONLY after the signing crate reports the key
+  needs one, so an unencrypted key never prompts and a script never blocks
+  on a question it cannot answer. `PassphraseSource` is a trait purely so
+  the terminal read — the one line no test harness can run — does not drag
+  the rest of the command out of the tests with it.
+- `verify.rs` — `run_verify` over `shojiku_verify::verify_document`
+  (map: [verify.md](verify.md)). `--anchor` is REQUIRED, because
+  verification never consults the machine's trust store and so has no
+  default to fall back on; several `--anchor` files are concatenated, so one
+  flag holding a chain and several holding one certificate each behave
+  identically. A document that fails to verify is NOT a `CliError`: the
+  report prints either way and the exit code carries the verdict.
+- Flags: pack `--font-dir`/`--locale-dir` (repeatable, earlier wins),
+  `--lang`; fetch `--offline`/`--font-fetch-allow`; asset
+  `--assets-dir`/`--asset-mode`/`--allow|deny-dynamic-image`; preview
+  `--output`/`--scale`/`--page`; sign
+  `--input`/`--key`/`--cert`/`--output`/`--passphrase-env`; verify
+  `--input`/`--anchor`; the machine-readable `--report` on render/sign/
+  verify (capability `cli.report`) — and deliberately NO flag carrying the passphrase
+  itself, since `argv` is readable by other processes and lands in shell
+  history (pinned twice: `tests/bin/sign.rs` proves it is absent from the
+  help, `src/tests/args.rs` proves clap REJECTS it), and none sizing the
+  signature window, since the default holds
+  every signature this release can produce.
+
+## engine/mcp — the stdio MCP server
+
+Hand-rolled newline-delimited JSON-RPC 2.0 (zero new deps, no async
+runtime — user decision, features.md § Decision log). The second thin
+host over authoring.
+
+- `lib.rs` — `ServerArgs` (pack flags like the CLI), `McpError` (only
+  transport I/O aborts), `run_stdio`.
+- `rpc.rs` — framing (`read_frame` bounded 1 MiB with drain-resync,
+  `write_frame`, error codes, the clip echo guard).
+- `server.rs` — the serve loop + dispatch (`initialize` version
+  negotiation, `ping`, `tools/list`, `tools/call`; notifications never
+  answered).
+- `tools.rs` — dispatcher + content parts (base64 PNG image parts +
+  diagnostics JSON part; `failure_result` — in-band `isError` carries a
+  message OR full diagnostics). `tools/schema.rs` — the pinned tool
+  descriptors (`validate`/`render_preview` (page cap without `page`)/
+  `inspect_layout`/`capabilities`); inline/path either-or rides
+  `allOf`+`anyOf`. `tools/sources.rs` — `Source` Path|Inline (`<name>`
+  XOR `<name>Path`, `MAX_INLINE_BYTES` per-argument cap).
+  `tools/assets.rs` — `AssetArgs` → `AssetPolicy` + root (capped id
+  lists). `tools/pipeline.rs` — args → `prepare_from` (validation gate
+  BEFORE pack/font loading — CLI-parity precedence). Per-tool impls in
+  `tools/{validate,preview,inspect}.rs`. Every template tool response
+  carries diagnostics (docs/agents/mcp.md bundle principle); binary e2e
+  in `tests/bin/`.
+
+## engine/wasm — the browser/Workers bindings
+
+The third thin host (no FS). Two layers: a pure host-testable core (the
+workspace gates run on it) + a `#[cfg(target_arch = "wasm32")]`
+marshalling shim (never host-compiled; wasm-bindgen/js-sys
+target-gated).
+
+- `session.rs` — `Session` pure state machine: locale pack, accumulated
+  `InjectedPack`s, `font_faces_needed` (the manifest's pinned `url`
+  hints surfaced to the host), the retained `FontStore` (`load_fonts` =
+  verified injected load; `load_fonts_subset` = the lenient browser
+  preview load returning absent `uses` pack ids the host lazily
+  fetches + re-injects on `missing_glyph` OR `unknown_font_family`),
+  injected asset byte map.
+- `error.rs` — `WasmError` = host-API misuse ONLY (document problems
+  are diagnostics, never thrown), carrying a stable snake_case `code()`
+  + typed `args()` (control-stripped/clipped) — an append-only registry
+  a JS host branches on instead of matching the message.
+- `render.rs` — `validate` → diagnostics JSON; the shared `ready` +
+  `stage` (parse → validate → layout); `render(PageFormat, …, page?)` →
+  `RenderResult` (PNG or raw pages + inspect + diagnostics; raw
+  all-pages capped by `MAX_RAW_PAGES` so uncompressed pages cannot
+  exhaust the heap); `render_pdf` → `PdfOutcome` composing
+  `shojiku_render_pdf::render_pdf` HERE in the host exactly as the CLI
+  does (authoring stays PDF-free; no scale/page/cap so browser bytes
+  cannot differ from the CLI's).
+- `shim.rs` (wasm32-only) + `shim/marshal.rs` — the `#[wasm_bindgen]
+  Engine` binding surface + value conversions: setLocale /
+  fontPacksNeeded / fontFilesNeeded / fontFacesNeeded / addFontPack /
+  addFontFile / loadFonts / loadFontsSubset / addAssetFile / validate /
+  renderPng / renderRaw (one arg order surface-wide: template, params,
+  definitions, scale, pageIndex?) / renderPdf; a `WasmError` becomes a
+  thrown JS Error carrying `code` + typed `args`.
+- Built via `make wasm` (Docker: wasm32 target + pinned wasm-bindgen +
+  pinned `wasm-opt -Oz` + `wasm-release` profile → `engine/wasm/pkg`,
+  size-budgeted; in `make verify`). Browser golden path in
+  `engine/wasm/e2e/` (Playwright, `make wasm-e2e`, on-demand).
+
+## engine/capi — the shared C ABI cdylib
+
+The FOURTH thin host (`cdylib` + `rlib`, the wasm crate's shape — the rlib is
+what keeps the workspace test/clippy/coverage gates on it). Host-side only:
+never in the wasm build, no crate depends on it, and **no `shojiku-fetch`
+dependency**, so the render path it exposes is socket-free. The FFI SDKs
+(python/ruby/c#/java) load it; `engine/napi` LINKS it (node has no stdlib FFI,
+so its addon reaches the engine through this host rather than beside it) and
+php/go get the CLI.
+
+**Three contracts the whole surface rests on** (`include/shojiku.h` states
+each for the C side): nothing is NUL-terminated — every string and buffer
+crosses as (pointer, length), because PDF bytes contain NUL; ONE allocation
+kind crosses (`ShojikuResult`) with ONE destructor, and accessors LEND
+pointers into it that die with it; a failure is data, never an unwind
+(`catch_unwind` at every entry point — so **no profile building this crate
+may set `panic = "abort"`**).
+
+**Two failure levels, and they are not the same thing.** A non-zero status
+means the CALLER erred (null pointer, non-UTF-8, a request the schema
+rejects) or a panic was caught. A document that will not lay out, a pack that
+is not installed, a key that will not sign are OUTCOMES: status 0,
+`success` 0, diagnostics attached. That split is what lets an SDK raise for
+the first and return a result object for the second (`docs/agents/sdk.md`).
+Both levels render the same `{step, kind, message}` object, so one mapping
+per SDK covers both.
+
+- `src/lib.rs` — crate role + the unsafe discipline this crate introduces to
+  the workspace (`deny(unsafe_op_in_unsafe_fn)` +
+  `deny(clippy::undocumented_unsafe_blocks)`); re-exports the surface.
+- `src/api.rs` (+ `api/tests.rs`) — the entry points
+  (`shojiku_abi_version`/`engine_info`/`validate`/`render`/`preview`/`sign`/
+  `verify`) and the shared frame: check `out`, BLANK it (so an unconditional
+  free in a binding's cleanup path is well defined), run under the shield,
+  write the result or the failure-as-result. `deliver` is function-pointer
+  taking, not generic, so one copy exists in the binary.
+- `src/api/work.rs` — the `Work` enum (one variant per entry point) and the
+  pointer borrowing. A VALUE, not a closure per entry point: a closure is a
+  separate function in every copy of this crate, and each copy the caller
+  does not reach reads to the coverage gate as dead code. Split from
+  `api.rs` when the verify arm pushed that file at the 300-line budget.
+- `src/status.rs` (+ `status/wire.rs`) — the status codes, `Failure` (one
+  enum for both levels; `status()` decides which), and the two shields.
+  **Both shields are non-generic on purpose**: a generic shield is
+  monomorphized per call site and each copy carries an unwind arm no test can
+  reach. `wire.rs` holds the `{step, kind, message}` rendering, the `clip`
+  echo bound, and `encode` — infallible by signature, with the refused-value
+  arm handled once in a non-generic helper.
+- `src/input.rs` — the ONE place raw pointers are dereferenced: null rejected
+  whatever the length says, cap checked before any read, zero length never
+  touching the pointer.
+- `src/result.rs` (+ `result/access.rs`) — the handle and its accessors.
+  One shape for every operation (an operation with no pages simply has none),
+  so a binding learns one calling convention. The `json` slot is per-operation:
+  engine info, a render's `{"pageCount": n}`, or a verification report.
+  A render's page count could NOT reuse `shojiku_result_page_count` — that
+  one counts a preview's PNG buffers, and redefining it would move the ABI
+  revision instead of appending to it.
+- `src/request.rs` — the JSON envelope, `deny_unknown_fields` (a misspelled
+  SDK key is a located error). Host-level caps mirroring MCP: the asset id
+  lists and `scale`. Sources travel as TEXT — this host reads no template
+  from disk.
+- `src/ops/verify.rs` — the verifier wrapped. `success` is the VERDICT, not
+  "a report came back": a binding that checked only `success` on a document
+  whose signature fails would otherwise be told everything is fine, and
+  fail-closed is the only direction a verification API may lean. The report
+  rides the result EITHER WAY, because it names the checks this release does
+  not perform; a failed verdict adds an error object naming the first failed
+  check (scanned in the report's own order, so two runs blame the same one).
+  A document that cannot be EVALUATED has no report at all — a different
+  fact from an empty one. Anchors are required: there is no trust store to
+  default to.
+- `src/ops.rs` + `ops/{info,validate,render,preview,sign,verify}.rs` — safe Rust over
+  borrowed strings; by the time these run the pointers are gone. `lay_out` is
+  the CLI's `prepare_layout` without the file reads and without the fetch.
+  The render/preview backend refusals are `From` impls rather than per-site
+  `map_err` closures, since the backends refuse only inputs the engine does
+  not produce.
+- `include/shojiku.h` — hand-written (cbindgen was rejected: a new toolchain
+  dependency for a 15-symbol surface, and the prose is the point). A parity
+  test in `tests/capi/header.rs` runs BOTH ways against the `#[no_mangle]`
+  attributes, so the two cannot drift.
+- `tests/capi/` — the near-e2e suite, driven through the exported symbols and
+  the real accessors only: anything an SDK cannot do, the tests do not do.
+  `threading.rs` pins the header's THREADING paragraph — four threads render
+  one document and must produce the SAME BYTES as a single-threaded call, so
+  both halves of the claim (no shared mutable state; determinism is not a
+  single-threaded property) ship executed.
+- Built via `make capi-dist` (Docker, on-demand — not in `verify`): release
+  cdylibs for linux x64/arm64 + windows x64-gnu with cross toolchains, plus
+  `SHA256SUMS`, into the gitignored `dist/capi/`. darwin needs a macOS
+  runner and is produced at release time.
+
+## engine/napi — the N-API addon the npm package loads
+
+The FIFTH thin host, and the only one that reaches the engine THROUGH another
+host: it links `shojiku-capi` as an rlib and calls its entry points. Node has
+no stdlib FFI, so it needs a native addon — but an addon that re-parsed the
+request envelope and re-dispatched the operations would be a FORK of the C
+host, two definitions of one append-only wire. So the envelope crosses this
+crate UNPARSED and the status integers are capi's own. (`cdylib` + `rlib`,
+the same shape as wasm/capi.)
+
+**The shim is behind a non-default `shim` cargo FEATURE**, which is what a
+target gate does for `engine/wasm`: `cargo test`/`llvm-cov --workspace` build
+the default set, so the N-API marshalling glue never enters the 100%-lines
+coverage surface, while `clippy --all-features` still lints it. Keep napi's
+DEFAULT features on (`napi4` + `dyn-symbols`) — without them the addon links
+and `dlopen`s and then fails at `require()` with `Module did not
+self-register`.
+
+- `src/call.rs` — the ONE place this crate crosses into capi: one handle per
+  call, read into an owned value and freed on every path, every lent buffer
+  copied out before the free. `read` takes the handle by POINTER so a null one
+  is an ordinary answer rather than undefined behaviour — which is also what
+  lets a test exercise that arm.
+- `src/outcome.rs` — the owned result, carrying `status` beside `success`
+  because those are the two levels the SDK contract rests on.
+- `src/shim.rs` — the `#[napi]` surface. Every lifecycle call is an
+  `AsyncTask` on the libuv threadpool (hence the npm package's async-only
+  surface); ONE task type over a `Work` enum rather than four. `Buffer`
+  borrows V8 memory and is not `Send`, so bytes are copied on the JS thread
+  before the hand-off. `abiVersion` is the exception — a constant read.
+- `build.rs` — `napi_build::setup()` under the feature; an empty `main`
+  without it, so it costs no coverage.
+- `src/call/tests/` — unit tests against the REAL engine (the crate's own
+  binary, not the integration one, so the coverage gate sees them): the four
+  operations, the two-level split both ways, hostile non-UTF-8 request bytes,
+  and a byte-identity check against the capi path — the node SDK's determinism
+  claim, made checkable.
+- Built via `make napi` (Docker: `--features shim` → `dist/napi/local/
+  shojiku.node`, then LOADED under the node floor image to prove the artifact
+  is what node thinks it is). In `make verify`.

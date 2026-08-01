@@ -1,0 +1,1825 @@
+version: 0.1.0
+name: layout_showcase
+
+# A component showcase (the PDF analog of a CSS framework's demo page):
+# every section exercises a family of engine features, so this file
+# doubles as living documentation for docs/engine/. Each demo is
+# immediately followed by a code panel (`code`/`codePanel` styles)
+# showing the essential YAML that produces it — read the PDF/PNG like a
+# CSS framework's demo page: see the look, copy the snippet. Sections
+# are split with explicit `page_break` items.
+
+page:
+  size: A4
+  orientation: portrait
+  margin: 25
+
+# Document presentation defaults + a named format registry — the
+# footer date below just binds the key and inherits `stamp` via the
+# `date` default.
+defaults:
+  # Document presentation defaults: locale + currency live here now,
+  # alongside the root style + per-type format defaults.
+  locale: ja-JP
+  currency: JPY
+  formats:
+    date: stamp
+formats:
+  stamp: { type: date, pattern: "yyyy.MM.dd" }
+
+styles:
+  noteBox: { borderWidth: 1, backgroundColor: "#fff8e1" }
+  h1:
+    fontSize: 22
+    lineHeight: 1.3
+  h2:
+    fontSize: 15
+    lineHeight: 1.4
+    color: "#0d6efd"
+  body:
+    fontSize: 10
+    lineHeight: 1.5
+  caption:
+    fontSize: 8
+    lineHeight: 1.4
+    color: "#6c757d"
+  panel:
+    backgroundColor: "#f8f9fa"
+    borderWidth: 0.6
+    borderColor: "#dee2e6"
+  swatch:
+    fontSize: 9
+    lineHeight: 1.2
+    textAlign: center
+    color: "#ffffff"
+    backgroundColor: "#0d6efd"
+  code:
+    fontFamily: noto-sans-mono
+    fontSize: 7.5
+    lineHeight: 1.55
+    color: "#343a40"
+  codePanel:
+    backgroundColor: "#f1f3f5"
+
+sections:
+  header:
+    repeat: every_page
+    height: 44
+    items:
+      - id: title
+        type: text
+        box: { x: 0, y: 0, w: 545.28, h: 30 }
+        text: Shojiku — Layout & Text Showcase
+        styleNames: [ h1 ]
+      - type: line
+        from: { x: 0, y: 32 }
+        to: { x: 545.28, y: 32 }
+        style: { width: 1.2, color: "#0d6efd" }
+
+  footer:
+    repeat: every_page
+    height: 20
+    items:
+      - type: text
+        box: { x: 0, y: 774, w: 300, h: 12 }
+        text: "{doc.url} — {doc.generated_on}"
+        styleNames: [ caption ]
+        link: { url: "{doc.url}" }
+      - type: page_number
+        box: { x: 445.28, y: 774, w: 100, h: 12 }
+        format: "{page} / {pages}"
+        style: { fontSize: 8, textAlign: right, lineHeight: 1.4, color: "#6c757d" }
+
+  body:
+    type: flow
+    box: { x: 0, y: 52, w: 545.28, h: 712 }
+    gap: 14
+    items:
+      # ---------------------------------------------------- typography
+      - type: text
+        text: "1. Typography & rich text"
+        styleNames: [ h2 ]
+
+      # Inline rich text: one wrapped block, per-span styling, and a
+      # span-level hyperlink. Wrapping runs over the joined text.
+      - type: text
+        styleNames: [ body ]
+        spans:
+          - text: "Shojiku "
+            style: { fontSize: 14, fontWeight: bold }
+          - text: "mixes "
+          - text: "sizes"
+            style: { fontSize: 13 }
+          - text: ", "
+          - text: "weights"
+            style: { fontWeight: bold }
+          - text: ", "
+          - text: "italics"
+            style: { fontStyle: italic }
+          - text: ", "
+          - text: "colors"
+            style: { color: "#dc3545" }
+          - text: ", "
+          - text: "underline"
+            style: { textDecoration: underline }
+          - text: ", "
+          - text: "strikethrough"
+            style: { textDecoration: line_through }
+          - text: ", tracked "
+          - text: "letterSpacing"
+            style: { letterSpacing: 2 }
+          - text: " and a real "
+          - text: "hyperlink"
+            style: { color: "#0d6efd", textDecoration: underline }
+            link: { url: "{doc.url}" }
+          - text: " in a single wrapped paragraph."
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: text
+                spans:
+                  - { text: "bold ",   style: { fontWeight: bold } }
+                  - { text: "italic ", style: { fontStyle: italic } }
+                  - { text: "tracked", style: { letterSpacing: 2 } }
+                  - { text: " link",   style: { textDecoration: underline },
+                      link: { url: "https://example.com" } }
+
+      # Alignment: three equal flex columns (unsized row children split
+      # the row evenly).
+      - type: container
+        box: { direction: row, gap: 8, h: 34 }
+        items:
+          - type: text
+            box: { padding: 8 }
+            text: textAlign left
+            styleNames: [ panel ]
+            style: { fontSize: 9, textAlign: left, lineHeight: 1.2 }
+          - type: text
+            box: { padding: 8 }
+            text: textAlign center
+            styleNames: [ panel ]
+            style: { fontSize: 9, textAlign: center, lineHeight: 1.2 }
+          - type: text
+            box: { padding: 8 }
+            text: textAlign right
+            styleNames: [ panel ]
+            style: { fontSize: 9, textAlign: right, lineHeight: 1.2 }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: container
+                box: { direction: row, gap: 8 }   # unsized children split the row
+                items:
+                  - { type: text, text: left,   style: { textAlign: left } }
+                  - { type: text, text: center, style: { textAlign: center } }
+                  - { type: text, text: right,  style: { textAlign: right } }
+
+      # Overflow policies act on a definite height: shrink refits the
+      # font, ellipsis clamps with a measured …, clip cuts at the edge.
+      - type: container
+        box: { direction: row, gap: 8, h: 56 }
+        items:
+          - type: container
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            items:
+              - type: text
+                box: { h: 14 }
+                text: "textOverflow: shrink"
+                styleNames: [ caption ]
+              - type: text
+                box: { h: 24 }
+                text: The quick brown fox jumps over the lazy dog and keeps on running far beyond this little box.
+                style: { fontSize: 11, lineHeight: 1.3, textOverflow: shrink }
+          - type: container
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            items:
+              - type: text
+                box: { h: 14 }
+                text: "textOverflow: ellipsis"
+                styleNames: [ caption ]
+              - type: text
+                box: { h: 24 }
+                text: The quick brown fox jumps over the lazy dog and keeps on running far beyond this little box.
+                style: { fontSize: 11, lineHeight: 1.3, textOverflow: ellipsis }
+          - type: container
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            items:
+              - type: text
+                box: { h: 24 }
+                text: "textOverflow: clip cuts mid-line at the box edge, pixel-exact."
+                style: { fontSize: 11, lineHeight: 1.3, textOverflow: clip }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              # textOverflow needs a definite height (box.h)
+              - type: text
+                box: { h: 24 }
+                text: The quick brown fox jumps over …
+                style: { textOverflow: shrink }   # or ellipsis / clip
+
+      # Locale typography: a serif face plus JP line breaking (kinsoku —
+      # leading punctuation is pushed back to the previous line).
+      - type: text
+        text: 明朝体の見本 — 行頭禁則により、句読点や「閉じ括弧」が行頭に来ることはありません。約物の扱いは自動です。
+        style: { fontFamily: ipamj-mincho, fontSize: 11, lineHeight: 1.6 }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: text
+                text: 明朝体の見本 — 行頭禁則により、句読点や「閉じ括弧」が…
+                style: { fontFamily: ipamj-mincho, fontSize: 11, lineHeight: 1.6 }
+
+      - type: text
+        text: Block-level opacity dims glyphs and decoration together (opacity 0.4).
+        styleNames: [ body ]
+        style: { opacity: 0.4, textDecoration: underline }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: text
+                text: Block-level opacity dims glyphs and decoration together.
+                style: { opacity: 0.4, textDecoration: underline }
+
+      # lineBreak modes: the SAME text in a deliberately narrow (3-char)
+      # column under each mode, so the break points differ visibly. strict
+      # holds small kana (きゃ…) and ー off a line start; normal (CSS
+      # default) lets them start a line; loose additionally frees ・ and
+      # iteration marks. Fixed-pitch face → each full-width char is 1em.
+      - type: container
+        box: { direction: row, gap: 24 }
+        items:
+          - type: container
+            box: { w: 120 }
+            items:
+              - { type: text, text: "lineBreak: strict", styleNames: [ caption ] }
+              - type: text
+                text: ハート・マークがきゅっと光る。
+                box: { w: 33 }
+                style: { fontFamily: biz-ud-gothic, fontSize: 11, lineHeight: 1.5, lineBreak: strict }
+          - type: container
+            box: { w: 120 }
+            items:
+              - { type: text, text: "lineBreak: normal", styleNames: [ caption ] }
+              - type: text
+                text: ハート・マークがきゅっと光る。
+                box: { w: 33 }
+                style: { fontFamily: biz-ud-gothic, fontSize: 11, lineHeight: 1.5, lineBreak: normal }
+          - type: container
+            box: { w: 120 }
+            items:
+              - { type: text, text: "lineBreak: loose", styleNames: [ caption ] }
+              - type: text
+                text: ハート・マークがきゅっと光る。
+                box: { w: 33 }
+                style: { fontFamily: biz-ud-gothic, fontSize: 11, lineHeight: 1.5, lineBreak: loose }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: text
+                text: ハート・マークがきゅっと光る。
+                style: { lineBreak: strict }   # normal (default) | loose
+
+      # JP micro-typography: half-width punctuation (textSpacingTrim) trims
+      # the half-em a fullwidth bracket / comma carries; hanging punctuation lets
+      # a line-terminating comma hang past the edge. The SAME text with and
+      # without both, in a fixed-pitch face so the effect is measurable.
+      - type: container
+        box: { direction: row, gap: 24 }
+        items:
+          - type: container
+            box: { w: 160 }
+            items:
+              - { type: text, text: "default (space_all / none)", styleNames: [ caption ] }
+              - type: text
+                text: 「東京」の、担当。
+                box: { w: 44 }
+                style: { fontFamily: biz-ud-gothic, fontSize: 11, lineHeight: 1.6 }
+          - type: container
+            box: { w: 160 }
+            items:
+              - { type: text, text: "trim_start + allow_end", styleNames: [ caption ] }
+              - type: text
+                text: 「東京」の、担当。
+                box: { w: 44 }
+                style: { fontFamily: biz-ud-gothic, fontSize: 11, lineHeight: 1.6, textSpacingTrim: trim_start, hangingPunctuation: allow_end }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: text
+                text: 「東京」の、担当。
+                style: { textSpacingTrim: trim_start, hangingPunctuation: allow_end }
+
+      - { type: page_break }
+
+      # ------------------------------------------------ boxes & layout
+      - type: text
+        text: "2. Boxes, flex & grid"
+        styleNames: [ h2 ]
+
+      # flexGrow: weighted shares of the leftover row width (1 : 2 : 3).
+      - type: container
+        box: { direction: row, gap: 6, h: 26 }
+        items:
+          - type: text
+            box: { flexGrow: 1, padding: 7 }
+            text: "flexGrow: 1"
+            styleNames: [ swatch ]
+          - type: text
+            box: { flexGrow: 2, padding: 7 }
+            text: "flexGrow: 2"
+            styleNames: [ swatch ]
+            style: { backgroundColor: "#6610f2" }
+          - type: text
+            box: { flexGrow: 3, padding: 7 }
+            text: "flexGrow: 3"
+            styleNames: [ swatch ]
+            style: { backgroundColor: "#198754" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: container
+                box: { direction: row, gap: 6 }
+                items:
+                  - { type: text, text: "1", box: { flexGrow: 1 } }
+                  - { type: text, text: "2", box: { flexGrow: 2 } }
+                  - { type: text, text: "3", box: { flexGrow: 3 } }
+
+      # justifyContent distributes fixed-width children; alignItems
+      # centers mixed heights on the cross axis.
+      - type: container
+        box: { direction: row, justifyContent: space_between, h: 24 }
+        items:
+          - type: text
+            box: { w: 150, padding: 6 }
+            text: space_between
+            styleNames: [ swatch ]
+            style: { backgroundColor: "#6c757d" }
+          - type: text
+            box: { w: 150, padding: 6 }
+            text: space_between
+            styleNames: [ swatch ]
+            style: { backgroundColor: "#6c757d" }
+          - type: text
+            box: { w: 150, padding: 6 }
+            text: space_between
+            styleNames: [ swatch ]
+            style: { backgroundColor: "#6c757d" }
+      - type: container
+        box: { direction: row, alignItems: center, gap: 6, h: 44 }
+        styleNames: [ panel ]
+        items:
+          - type: rect
+            box: { w: 120, h: 16 }
+            style: { backgroundColor: "#0d6efd" }
+          - type: rect
+            box: { w: 120, h: 36 }
+            style: { backgroundColor: "#6610f2" }
+          - type: text
+            box: { w: 160, h: 12 }
+            text: "alignItems: center"
+            styleNames: [ caption ]
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: container
+                box: { direction: row, justifyContent: space_between }
+                items: [ …three fixed-width children… ]
+              - type: container
+                box: { direction: row, alignItems: center, gap: 6 }
+                items: [ …mixed-height children… ]
+
+      # Horizontal auto margins center a sized flow item.
+      - type: text
+        box: { w: 220, margin: { left: auto, right: auto }, padding: 6 }
+        text: "margin: { left: auto, right: auto }"
+        styleNames: [ swatch ]
+        style: { backgroundColor: "#fd7e14" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: text
+                box: { w: 220, margin: { left: auto, right: auto } }
+                text: horizontally centered
+
+      # Static grid: four column tracks, auto row heights.
+      - type: container
+        box: { type: grid, columns: 4, columnGap: 6, rowGap: 6 }
+        items:
+          - { type: text, text: grid 1, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+          - { type: text, text: grid 2, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+          - { type: text, text: grid 3, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+          - { type: text, text: grid 4, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+          - { type: text, text: grid 5, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+          - { type: text, text: grid 6, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+          - { type: text, text: grid 7, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+          - { type: text, text: grid 8, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: container
+                box: { type: grid, columns: 4, columnGap: 6, rowGap: 6 }
+                items:   # cells fill row-first, rows auto-height
+                  - { type: text, text: grid 1 }
+                  - { type: text, text: grid 2 }
+
+      # Grid fr weights: the leftover width splits 1:2:1 across the tracks.
+      - type: container
+        box: { type: grid, columns: [ "1fr", "2fr", "1fr" ], columnGap: 6 }
+        items:
+          - { type: text, text: 1fr, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+          - { type: text, text: 2fr, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+          - { type: text, text: 1fr, box: { padding: 6 }, styleNames: [ panel ], style: { fontSize: 9, textAlign: center } }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: container
+                box: { type: grid, columns: ["1fr", "2fr", "1fr"] }
+                items:   # leftover splits 1:2:1 across the tracks
+                  - { type: text, text: 1fr }
+                  - { type: text, text: 2fr }
+                  - { type: text, text: 1fr }
+
+      # minHeight reserves space beyond the content; verticalAlign
+      # distributes the slack.
+      - type: text
+        box: { minHeight: 44, padding: 6 }
+        text: "box.minHeight: 44 + verticalAlign: middle"
+        styleNames: [ panel ]
+        style: { fontSize: 9, verticalAlign: middle, textAlign: center }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: text
+                box: { minHeight: 44, padding: 6 }
+                text: reserved height
+                style: { verticalAlign: middle, textAlign: center }
+
+      # overflow: hidden clips children to the border box (the oversized
+      # bar is cut at the container edge, no warning).
+      - type: container
+        box: { h: 30 }
+        style: { overflow: hidden, borderWidth: 0.6, borderColor: "#dee2e6" }
+        items:
+          - type: rect
+            box: { x: 380, y: 8, w: 300, h: 60 }
+            style: { backgroundColor: "#ffc107" }
+          - type: text
+            box: { x: 6, y: 8, w: 300, h: 14 }
+            text: "overflow: hidden clips the yellow bar"
+            styleNames: [ caption ]
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: container
+                box: { h: 30 }
+                style: { overflow: hidden }   # clips children to the border box
+                items:
+                  - { type: rect, box: { x: 380, y: 8, w: 300, h: 60 },
+                      style: { backgroundColor: "#ffc107" } }
+
+      # Per-item paint alpha on shapes.
+      - type: container
+        box: { direction: row, gap: 6, h: 18 }
+        items:
+          - { type: rect, box: { w: 101, h: 18 }, style: { backgroundColor: "#0d6efd", opacity: 1.0 } }
+          - { type: rect, box: { w: 101, h: 18 }, style: { backgroundColor: "#0d6efd", opacity: 0.8 } }
+          - { type: rect, box: { w: 101, h: 18 }, style: { backgroundColor: "#0d6efd", opacity: 0.6 } }
+          - { type: rect, box: { w: 101, h: 18 }, style: { backgroundColor: "#0d6efd", opacity: 0.4 } }
+          - { type: rect, box: { w: 101, h: 18 }, style: { backgroundColor: "#0d6efd", opacity: 0.2 } }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: rect
+                box: { w: 101, h: 18 }
+                style: { backgroundColor: "#0d6efd", opacity: 0.6 }   # 0..=1 paint alpha
+
+      # rect speaks the unified Style: named styles, per-side borders,
+      # and double rules — one property model across every item.
+      - type: container
+        box: { direction: row, gap: 6, h: 40, margin: { top: 10 } }
+        items:
+          - { type: rect, box: { w: 165, h: 36 }, styleNames: [ noteBox ] }
+          - { type: rect, box: { w: 165, h: 36 }, style: { borderWidth: { bottom: 2 }, borderColor: "#0d6efd" } }
+          - { type: rect, box: { w: 165, h: 36 }, style: { borderWidth: 1, borderStyle: double, borderColor: "#6610f2" } }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              styles:
+                noteBox: { borderWidth: 1, backgroundColor: "#fff8e1" }  # shared via styleNames
+              # a bare rect draws nothing; every stroke/fill is authored Style
+              - { type: rect, styleNames: [noteBox] }
+              - { type: rect, style: { borderWidth: { bottom: 2 }, borderColor: "#0d6efd" } }
+              - { type: rect, style: { borderWidth: 1, borderStyle: double, borderColor: "#6610f2" } }
+
+      - { type: page_break }
+
+      # -------------------------------------------- components & data
+      - type: text
+        text: "3. Data components"
+        styleNames: [ h2 ]
+
+      # Data-driven table: Length column widths, a repeating header row,
+      # zebra striping via alternateStyle.
+      - type: table
+        data: { key: features }
+        cellPadding: 5
+        header:
+          height: 22
+        row:
+          minHeight: 18
+          alternateStyle: { backgroundColor: "#eef4ff" }
+        style: { fontSize: 9, lineHeight: 1.3, borderWidth: 0.5, borderColor: "#adb5bd" }
+        columns:
+          - label: Feature
+            data: { key: name }
+            width: 150
+            style: { fontWeight: bold }
+          - label: Area
+            data: { key: area }
+            width: 110
+          - label: Notes
+            data: { key: notes }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: table
+                data: { key: features }          # array group in params
+                header: { height: 22 }           # repeats on every page
+                row: { alternateStyle: { backgroundColor: "#eef4ff" } }
+                columns:
+                  - { label: Feature, data: { key: name }, width: 150 }
+                  - { label: Notes,   data: { key: notes } }   # no width = leftover
+
+      # `table.box`: two variable-row tables SIDE BY SIDE — each a
+      # `direction: row` container child, rendered as one bounded block
+      # (no pagination). The A3 two-page-spread rirekisho left/right split.
+      - type: container
+        box: { direction: row, gap: 12 }
+        items:
+          - type: table
+            data: { key: edu }
+            cellPadding: 4
+            header: { height: 22 }
+            style: { fontSize: 9, borderWidth: 0.5, borderColor: "#adb5bd" }
+            columns:
+              - { label: 年, data: { key: y }, width: 42 }
+              - { label: 学歴・職歴, data: { key: d } }
+          - type: table
+            data: { key: lic }
+            cellPadding: 4
+            header: { height: 22 }
+            style: { fontSize: 9, borderWidth: 0.5, borderColor: "#adb5bd" }
+            columns:
+              - { label: 年, data: { key: y }, width: 42 }
+              - { label: 免許・資格, data: { key: d } }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: container            # two tables side by side
+                box: { direction: row, gap: 12 }
+                items:
+                  - { type: table, data: { key: edu }, columns: [ … ] }
+                  - { type: table, data: { key: lic }, columns: [ … ] }
+
+      # `cell:` columns — a column hosts a per-row sub-template of freely
+      # placed items (the CELL's top-left is their origin) instead of
+      # binding one value. The row grows to its tallest cell, so the
+      # wrapped summary below decides each row's height.
+      - type: table
+        data: { key: releases }
+        cellPadding: 4
+        header: { height: 22 }
+        row: { minHeight: 28 }
+        keepTogether: true
+        style: { fontSize: 9, borderWidth: 0.5, borderColor: "#adb5bd" }
+        columns:
+          - label: "#"
+            width: 30
+            cell:
+              box: { padding: 5 }
+              items:
+                - type: rect
+                  box: { w: 8, h: 8 }
+                  style: { backgroundColor: "#0d6efd" }
+          - label: Release
+            cell:
+              box: { padding: 5, gap: 2 }
+              items:
+                - type: text
+                  data: { key: name }
+                  style: { fontWeight: bold }
+                - type: text
+                  data: { key: summary }
+                  style: { fontSize: 8, color: "#6c757d" }
+                  link: { url: "{url}" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: table
+                data: { key: releases }
+                row: { minHeight: 28 }           # auto rows grow to the tallest cell
+                columns:
+                  - label: Release
+                    cell:                        # instead of `data:` — the two are exclusive
+                      box: { padding: 5, gap: 2 }
+                      items:                     # freely placed, cell corner = origin
+                        - { type: text, data: { key: name }, style: { fontWeight: bold } }
+                        - type: text
+                          data: { key: summary }        # scoped to THIS row
+                          link: { url: "{{url}" }
+
+      # Per-row conditional styles: a row's OWN data selects extra style
+      # layers on top of the base and zebra ones. The predicate is the
+      # form-mark one (`when: { key, equals? }`), read relative to the row —
+      # with `mergeEmptyCells` the section rows read as full-width banners.
+      - type: table
+        data: { key: roster }
+        cellPadding: 5
+        mergeEmptyCells: true
+        header: { height: 22 }
+        row:
+          minHeight: 18
+          alternateStyle: { backgroundColor: "#f6f8fa" }
+          conditionalStyles:
+            - when: { key: kind, equals: section }
+              style: { backgroundColor: "#dbe7ff", textAlign: center, fontWeight: bold }
+            - when: { key: kind, equals: end }
+              style: { textAlign: right }
+            - when: { key: flagged }
+              style: { backgroundColor: "#fff3cd" }
+        style: { fontSize: 9, lineHeight: 1.3, borderWidth: 0.5, borderColor: "#adb5bd" }
+        columns:
+          - { label: 年, data: { key: y }, width: 60, style: { textAlign: center } }
+          - { label: 記録, data: { key: d } }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: table
+                data: { key: roster }
+                mergeEmptyCells: true          # empty runs merge → one wide cell
+                row:
+                  alternateStyle: { backgroundColor: "#f6f8fa" }   # zebra first
+                  conditionalStyles:            # …then whatever the row matches
+                    - when: { key: kind, equals: section }
+                      style: { backgroundColor: "#dbe7ff", textAlign: center }
+                    - when: { key: flagged }     # no `equals` → boolean field
+                      style: { backgroundColor: "#fff3cd" }
+
+      # Bounded list: entries clamp at the box height and the overflow
+      # line reports what was cut.
+      - type: container
+        box: { direction: row, gap: 10 }
+        items:
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ panel ]
+            items:
+              - type: text
+                box: { h: 12 }
+                text: "type: list + overflowText"
+                styleNames: [ caption ]
+              - type: list
+                box: { h: 52 }
+                data: { key: highlights }
+                overflowText: "…and {count} more"
+                style: { fontSize: 9, lineHeight: 1.45 }
+          - type: container
+            box: { w: 170, padding: 8, direction: row, gap: 8 }
+            styleNames: [ panel ]
+            items:
+              - type: qr_code
+                box: { w: 56, h: 56 }
+                text: "{doc.url} — {doc.generated_on}"
+              - type: text
+                box: { h: 56 }
+                text: Layout-time vector QR — scan or click.
+                styleNames: [ caption ]
+                style: { verticalAlign: middle }
+                link: { url: "{doc.url}" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: list
+                box: { h: 52 }                   # definite h clamps the entries
+                data: { key: highlights }
+                overflowText: "…and {{count} more"
+              - type: qr_code
+                box: { w: 56, h: 56 }
+                text: "{{doc.url}"                # scope-aware, like text items
+
+      # Inline SVG with a linear gradient, clickable (image + link).
+      - type: image
+        box: { w: 545.28, h: 36 }
+        src: '<svg viewBox="0 0 545 36"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0d6efd"/><stop offset="0.5" stop-color="#6610f2"/><stop offset="1" stop-color="#198754"/></linearGradient></defs><rect width="545" height="36" fill="url(#g)"/></svg>'
+        link: { url: "{doc.url}" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: image
+                box: { w: "100%", h: 36 }
+                src: '<svg viewBox="0 0 545 36"><defs><linearGradient id="g" …>
+                      …</linearGradient></defs><rect … fill="url(#g)"/></svg>'
+                link: { url: "{{doc.url}" }
+
+      # Flow repeat: one auto-height card per array element, stacked
+      # with a gap; bindings inside the card are element-scoped.
+      - type: text
+        text: "type: repeat_flow — element-scoped cards"
+        styleNames: [ caption ]
+      - type: repeat_flow
+        data: { key: releases }
+        gap: 8
+        item:
+          box: { padding: 8, direction: row, gap: 10 }
+          style: { borderWidth: 0.6, borderColor: "#dee2e6" }
+          items:
+            - type: qr_code
+              box: { w: 40, h: 40 }
+              data: { key: url }
+            - type: container
+              items:
+                - type: text
+                  box: { h: 16 }
+                  text: "{name}"
+                  style: { fontSize: 11, fontWeight: bold, lineHeight: 1.3 }
+                - type: text
+                  box: { h: 24 }
+                  text: "{summary}"
+                  styleNames: [ caption ]
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: repeat_flow
+                data: { key: releases }
+                gap: 8
+                item:                            # one element-scoped card per entry
+                  box: { padding: 8, direction: row, gap: 10 }
+                  items:
+                    - { type: qr_code, box: { w: 40, h: 40 }, data: { key: url } }
+                    - { type: text, text: "{{name} — {{summary}" }
+
+      - { type: page_break }
+
+      # ------------------------------------------- imposition / n-up
+      - type: text
+        text: "3b. repeat — 面付け (n-up) と breakBefore"
+        styleNames: [ h2 ]
+
+      # An imposition grid tiles one cell per array element and owns
+      # the flow region. `breakBefore: auto` lets it START at the flow
+      # cursor instead of forcing a fresh page: the heading, caption
+      # and code panel below all share the grid's page, and the first
+      # page simply takes fewer ROWS — cells keep the size every page
+      # draws them, since the sheet gets physically cut. The default
+      # (`page`) would push the grid to a page of its own. It is also
+      # why this section shows its code BEFORE the demo: a repeat
+      # consumes the rest of the region, so nothing follows it.
+      - type: text
+        text: 3 列の面付けシートが、見出しとコードパネルの下から始まる。breakBefore を省くとグリッドだけで 1 ページを使う。gap は両軸まとめて指定、cutMarks はグリッド外側に出る断裁トンボ、scope は券ごとではなく文書全体の値を読む。
+        styleNames: [ caption ]
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: repeat
+                data: { key: tickets }
+                breakBefore: auto            # start at the cursor, not a fresh page
+                cutMarks: true               # trim guides just outside the grid
+                grid: { columns: 3, rows: 6, gap: 10 }   # gap = both axes
+                cell:                        # one element-scoped cell per entry
+                  box: { padding: 8 }
+                  style: { borderWidth: 0.6 }
+                  items:
+                    - { type: text, data: { key: name } }
+                    - { type: text, data: { key: doc.venue, scope: document } }
+                    - { type: qr_code, box: { w: 46, h: 46 }, data: { key: url } }
+
+      - type: repeat
+        data: { key: tickets }
+        breakBefore: auto
+        cutMarks: true
+        grid: { columns: 3, rows: 6, gap: 10 }
+        cell:
+          box: { padding: 8 }
+          style: { borderWidth: 0.6, borderColor: "#adb5bd" }
+          items:
+            - type: text
+              data: { key: name }
+              style: { fontSize: 11, fontWeight: bold, lineHeight: 1.4 }
+            - type: text
+              data: { key: code }
+              style: { fontSize: 8, color: "#6c757d", lineHeight: 1.5 }
+            - type: text
+              data: { key: doc.venue, scope: document }
+              style: { fontSize: 7, color: "#6c757d", lineHeight: 1.6 }
+            - type: qr_code
+              box: { w: 46, h: 46 }
+              data: { key: url }
+
+      - { type: page_break }
+
+      # -------------------------------------------- char_grid / genkoyoshi
+      - type: text
+        text: "4. char_grid — 原稿用紙・記入マス"
+        styleNames: [ h2 ]
+
+      # Horizontal manuscript cells with aozora ruby (|base《reading》).
+      # In a flow body, text beyond one sheet continues on a full grid
+      # sheet on the NEXT page (examples/genkoyoshi-ja paginates this
+      # way); in bands/containers the item is one sheet + a warning.
+      - type: char_grid
+        text: 吾輩《わがはい》は猫《ねこ》である。名前《なまえ》はまだ無《な》い。どこで生《う》まれたかとんと見当《けんとう》がつかぬ。
+        grid: { charsPerLine: 20, lines: 3, cellSize: 7mm, lineGap: 3mm }
+        markup: aozora
+        box: { padding: { top: 10 } }
+        style: { fontFamily: ipamj-mincho, borderColor: "#a8674f" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: char_grid                # 横書き原稿用紙
+                text: 吾輩《わがはい》は猫《ねこ》である。
+                grid: { charsPerLine: 20, lines: 3, cellSize: 7mm, lineGap: 3mm }
+                markup: aozora                 # 《》 = ruby; omit = verbatim
+                style: { fontFamily: ipamj-mincho, borderColor: "#a8674f" }
+              # flow body: overflow continues on full sheets on the next
+              # page; bands/containers draw ONE sheet (char_grid_overflow)
+
+      # Vertical (vertical_rl): lines top-to-bottom, columns right-to-left,
+      # with the closed presentation subset (、。 offsets, bracket forms).
+      - type: container
+        box: { direction: row, gap: 10 }
+        items:
+          - type: char_grid
+            text: 祇園精舎《ぎおんしょうじゃ》の鐘《かね》の声《こえ》、諸行無常《しょぎょうむじょう》の響《ひび》きあり。
+            grid: { charsPerLine: 12, lines: 6, cellSize: 6mm, lineGap: 3mm }
+            writingMode: vertical_rl
+            markup: aozora
+            box: { w: 170 }
+            style: { fontFamily: ipamj-mincho, borderColor: "#5f7a8a" }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  - type: char_grid            # 縦書き
+                    text: 祇園精舎《ぎおんしょうじゃ》の鐘《かね》の声《こえ》、
+                    grid: { charsPerLine: 12, lines: 6,
+                            cellSize: 6mm, lineGap: 3mm }
+                    writingMode: vertical_rl   # 行は上→下、列は右→左
+                    markup: aozora
+                    style: { fontFamily: ipamj-mincho }
+
+      # Entry boxes: separated cells via charGap, one row.
+      - type: container
+        box: { direction: row, gap: 3mm, alignItems: center, h: 40 }
+        items:
+          - type: text
+            box: { w: 30, h: 20 }
+            text: "〒"
+            style: { fontSize: 14, lineHeight: 1.3 }
+          - type: char_grid
+            text: "1234567"
+            grid: { charsPerLine: 7, lines: 1, cellSize: 8mm, charGap: 2mm }
+            box: { w: 220 }
+            style: { borderColor: "#5f7a8a" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: container                # 記入マス row (〒 + boxes)
+                box: { direction: row, gap: 3mm, alignItems: center }
+                items:
+                  - { type: text, text: "〒", style: { fontSize: 14 } }
+                  - type: char_grid
+                    text: "1234567"
+                    grid: { charsPerLine: 7, lines: 1,
+                            cellSize: 8mm, charGap: 2mm }
+
+      - { type: page_break }
+
+      # End alignment (textAlign): a partly filled line fills toward its
+      # END instead of its start — the name-field case. A FULL line has no
+      # free cells, so wrapped body text never moves.
+      - type: container
+        box: { direction: row, gap: 3mm, alignItems: center, h: 40 }
+        items:
+          - type: text
+            box: { w: 30, h: 20 }
+            text: "氏名"
+            style: { fontSize: 11, lineHeight: 1.3 }
+          - type: char_grid
+            text: "山田"
+            grid: { charsPerLine: 8, lines: 1, cellSize: 8mm }
+            box: { w: 200 }
+            style: { textAlign: right, borderColor: "#5f7a8a" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: char_grid                # 記入欄を右寄せ
+                text: "山田"
+                grid: { charsPerLine: 8, lines: 1, cellSize: 8mm }
+                style: { textAlign: right }   # left (既定) | center | right
+              # 縦書きでは right = 下寄せ(行の END は列の下端)。
+              # 満杯の行は空きマスが無いので動かない。
+
+      # Sheet break: the aozora ［＃改ページ］ note ends the current sheet
+      # under `markup: aozora`. Both sheets fit here, so they stack; in a
+      # taller grid the next sheet lands on the next page.
+      - type: char_grid
+        text: "序文です［＃改ページ］本文はここから。"
+        grid: { charsPerLine: 10, lines: 2, cellSize: 5mm }
+        markup: aozora
+        style: { fontFamily: ipamj-mincho, borderColor: "#a8674f" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: char_grid                # ［＃改ページ］でシート送り
+                text: "序文です［＃改ページ］本文はここから。"
+                grid: { charsPerLine: 10, lines: 2, cellSize: 5mm }
+                markup: aozora                 # 注記は opt-in。省略時は逐語
+              # 改ページ以外の ［＃…］ は逐語描画 + aozora_note_ignored 警告。
+              # 先頭・連続・末尾の改ページは畳まれる(page_break と同じ)。
+
+      # Large writing + placement notes: aozora notes scale one character
+      # across n×n cells (［＃「対象」は大書き］) and indent / flush-end /
+      # center a line. An essay title sheet (centered heading + flush-end
+      - type: char_grid
+        text: "［＃中央］見出し
+
+
+          本文の会話《かいわ》［＃「会話」は大書き］が続きます。
+
+          ［＃地付き］署名"
+        grid: { charsPerLine: 14, lines: 8, cellSize: 6mm, lineGap: 3mm }
+        markup: aozora
+        style: { fontFamily: ipamj-mincho, borderColor: "#a8674f" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: char_grid                # 大書き + 配置注記
+                text: "［＃中央］見出し\n本文の会話《かいわ》\
+                       ［＃「会話」は大書き］。\n［＃地付き］署名"
+                grid: { charsPerLine: 14, lines: 8, cellSize: 6mm }
+                markup: aozora
+              # ［＃「対象」は大書き］ = 2×2、はＮ倍の大書き = n×n。
+              # ［＃Ｎ字下げ］/［＃地付き］/［＃地からＮ字上げ］/［＃中央］は
+              # 行頭で1行を配置(item の textAlign を上書き)。中央は独自拡張。
+
+      - { type: page_break }
+
+      # ------------------------------------------------- document defaults
+      - type: text
+        text: "5. Document defaults — locale & currency"
+        styleNames: [ h2 ]
+
+      # The `defaults:` block at the top of this template sets
+      # locale: ja-JP + currency: JPY once. The LOCALE governs how dates
+      # and money look; the document currency fills every bare-key binding
+      # — no per-field currency or per-field pattern anywhere below.
+      - type: text
+        styleNames: [ body ]
+        text: "Currency — one document code (JPY) fills three variants; no per-field code anywhere:"
+
+      - type: container
+        box: { direction: row, gap: 8, h: 30 }
+        items:
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "default → {doc.amount}"
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "symbol → {doc.amount:symbol}"
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "name → {doc.amount:name}"
+
+      - type: text
+        styleNames: [ body ]
+        text: "A plain NUMBER field promotes too — a symbol/name pick coerces it to currency, so money display needs no definitions type:"
+
+      - type: container
+        box: { direction: row, gap: 8, h: 30 }
+        items:
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "bare → {doc.subtotal}"
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "symbol → {doc.subtotal:symbol}"
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "name → {doc.subtotal:name}"
+
+      - type: text
+        styleNames: [ body ]
+        text: "Dates — the same locale (ja-JP) supplies the long and 和暦 (Japanese-era) forms:"
+
+      - type: container
+        box: { direction: row, gap: 8, h: 30 }
+        items:
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "long → {doc.generated_on:long}"
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "和暦 → {doc.generated_on:wareki}"
+
+      - type: text
+        styleNames: [ body ]
+        text: "Date-times carry the clock too — the same long and 和暦 forms append HH:mm:"
+
+      - type: container
+        box: { direction: row, gap: 8, h: 30 }
+        items:
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "long → {doc.generated_at:long}"
+          - type: text
+            box: { padding: 6 }
+            styleNames: [ panel ]
+            style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
+            text: "和暦 → {doc.generated_at:wareki}"
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              defaults:
+                locale: ja-JP    # picks the pack → dates, 和暦, currency, units
+                currency: JPY    # document currency code — no per-field spelling
+              # ...then every binding stays a bare {{key}:
+              - { type: text, text: "{{doc.amount:name}" }         # 12,345円
+              # a PLAIN number field promotes with an explicit pick:
+              - { type: text, text: "{{doc.subtotal:symbol}" }     # ¥9,800
+              - { type: text, text: "{{doc.generated_on:long}" }   # 2026年7月5日(日)
+              - { type: text, text: "{{doc.generated_on:wareki}" } # 令和8年7月5日
+              # a date-time value (RFC 3339) keeps the clock:
+              - { type: text, text: "{{doc.generated_at:long}" }   # 2026年7月5日(日) 15:30
+              - { type: text, text: "{{doc.generated_at:wareki}" } # 令和8年7月5日 15:30
+
+      - { type: page_break }
+
+      # ------------------------------------------------------ form marks
+      - type: text
+        text: "6. Form marks — ellipse (丸囲み) & checkbox"
+        styleNames: [ h2 ]
+
+      - type: text
+        styleNames: [ body ]
+        text: "Presence is params-driven, geometry is template-fixed — the SAME template renders a blank form and a 記入例. An ellipse circles a printed choice; a checkbox frame always draws, its check is content."
+
+      # Circling: the payment value picks which oval draws — DB enum codes
+      # (cash/card/transfer) pass straight through to `equals`. Absolute
+      # placement; every choice's text box and ellipse share the SAME
+      # x/w (textAlign: center), and the text y is tuned so the measured
+      # A text-level `mark:` circles the chosen payment method: the oval
+      # auto-centers on each label's GLYPH band and auto-sizes to it, so
+      # there is no per-font y/size tuning — only the matching label draws
+      # its oval, and its geometry never shifts between params sets.
+      - type: container
+        box: { h: 40, padding: 8 }
+        styleNames: [ panel ]
+        items:
+          - { type: text, box: { x: 0, y: 6, w: 60, h: 18 }, text: "支払方法", style: { fontSize: 12 } }
+          - { type: text, box: { x: 80, y: 6, w: 40, h: 18 }, text: 現金, style: { fontSize: 12, textAlign: center }, mark: { data: { key: doc.payment, equals: cash }, style: { borderColor: "#cc0000", borderWidth: 1.5 } } }
+          - { type: text, box: { x: 132, y: 6, w: 56, h: 18 }, text: カード, style: { fontSize: 12, textAlign: center }, mark: { data: { key: doc.payment, equals: card }, style: { borderColor: "#cc0000", borderWidth: 1.5 } } }
+          - { type: text, box: { x: 200, y: 6, w: 40, h: 18 }, text: 振込, style: { fontSize: 12, textAlign: center }, mark: { data: { key: doc.payment, equals: transfer }, style: { borderColor: "#cc0000", borderWidth: 1.5 } } }
+          - { type: text, box: { x: 264, y: 4, w: 240, h: 20 }, style: { verticalAlign: middle }, text: "mark: auto-centers on the glyph band (no y-tuning)", styleNames: [ caption ] }
+
+      # checkbox: a boolean binding, plus a multi-select group where one
+      # array field (channels) drives three boxes via array-contains.
+      # Each box+label is its own tight pair row (gap 6); the wider gap
+      # (20) separates pairs — one `gap` on a flat row would apply
+      # between EVERY child and read as a weird margin.
+      # alignItems: baseline sits each frame's bottom edge on its
+      # label's text baseline; the frame omits box.w/h and auto-sizes to
+      # the label's cap-height square, so its top edge lands on the cap
+      # top — baseline puts any excess height ABOVE the caps, so an
+      # oversized frame reads as floating high.
+      - type: container
+        box: { direction: row, gap: 24, h: 56, padding: 8 }
+        styleNames: [ panel ]
+        items:
+          - type: container
+            box: { w: 140 }
+            items:
+              - { type: text, box: { h: 18 }, text: "boolean binding", styleNames: [ caption ] }
+              - type: container
+                box: { direction: row, gap: 6, alignItems: baseline }
+                items:
+                  - { type: checkbox, data: { key: doc.subscribed } }
+                  - { type: text, text: "newsletter", style: { fontSize: 11 } }
+          - type: container
+            items:
+              - { type: text, box: { h: 18 }, text: "multi-select — channels: [email, sms]", styleNames: [ caption ] }
+              - type: container
+                box: { direction: row, gap: 20 }
+                items:
+                  - type: container
+                    box: { w: 62, direction: row, gap: 6, alignItems: baseline }
+                    items:
+                      - { type: checkbox, data: { key: doc.channels, equals: "email" } }
+                      - { type: text, text: "email", style: { fontSize: 11 } }
+                  - type: container
+                    box: { w: 58, direction: row, gap: 6, alignItems: baseline }
+                    items:
+                      - { type: checkbox, data: { key: doc.channels, equals: "sms" } }
+                      - { type: text, text: "SMS", style: { fontSize: 11 } }
+                  - type: container
+                    box: { w: 62, direction: row, gap: 6, alignItems: baseline }
+                    items:
+                      - { type: checkbox, data: { key: doc.channels, equals: "postal" } }
+                      - { type: text, text: "postal", style: { fontSize: 11 } }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              # 丸囲み: a text-level mark: auto-centers the oval on the
+              # label's glyphs — no y/size tuning, only the match draws.
+              - type: text
+                box: { x: 132, y: 6, w: 56 }
+                style: { textAlign: center }
+                text: カード
+                mark: { data: { key: doc.payment, equals: card } }   # type-strict
+              # checkbox: frame auto-sizes to the label cap height (no w/h),
+              # frame always drawn, check is content.
+              - { type: checkbox, data: { key: doc.subscribed } }  # boolean
+              # multi-select: one array field drives many boxes.
+              - { type: checkbox, data: { key: doc.channels, equals: email } }
+              - { type: checkbox, data: { key: doc.channels, equals: sms } }
+
+      - { type: page_break }
+
+      # -------------------------------------------- vertical text
+      - type: text
+        text: "7. 縦書き — writingMode: vertical_rl"
+        styleNames: [ h2 ]
+
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          # mixed (default): CJK upright, Latin/digits rotated 90° clockwise;
+          # ー and dashes take the font's GSUB vert forms (rotated glyphs).
+          - type: text
+            text: "コーヒーを一杯——吾輩は猫である。名前はまだ無い。西暦2026年、どこで生まれたかとんと見当がつかぬ。"
+            box: { w: 150, h: 230 }
+            style: { fontFamily: ipamj-mincho, fontSize: 15, lineHeight: 1.8, writingMode: vertical_rl }
+          # upright: every character upright, including Latin.
+          - type: text
+            text: "縦A書Bき"
+            box: { w: 40, h: 150 }
+            style: { fontFamily: ipamj-mincho, fontSize: 15, lineHeight: 1.7, writingMode: vertical_rl, textOrientation: upright }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  - type: text                   # 縦書き自由文 (plain text)
+                    text: コーヒーを一杯——吾輩は…西暦2026年…
+                    box: { w: 150, h: 230 }       # h = the column length
+                    style:
+                      writingMode: vertical_rl    # 行→上から下、列→右から左
+                      textOrientation: mixed      # CJK立て / 英数字は90°回転
+                  # ー・——・「」 rotate via the font's GSUB vert forms;
+                  # `upright` keeps Latin upright; kinsoku is honored.
+                  # spans / list / table cells / page_number go vertical
+                  # too (below); only a text mark: still warns.
+
+      # rich spans, a list, and a table text cell — all vertical.
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          # spans: per-span size/color, stacked down each column.
+          - type: text
+            box: { w: 130, h: 200 }
+            style: { fontFamily: ipamj-mincho, fontSize: 15, lineHeight: 1.7, writingMode: vertical_rl }
+            spans:
+              - { text: "吾輩は", style: { color: "#1155cc", fontSize: 19 } }
+              - { text: "猫である。名は2026年まだ無い。" }
+          # list: each array entry becomes a right→left column.
+          - type: list
+            data: { key: vterms }
+            box: { w: 60, h: 200 }
+            style: { fontFamily: ipamj-mincho, fontSize: 14, lineHeight: 1.6, writingMode: vertical_rl }
+          # table: a vertical text cell fills the row rectangle.
+          - type: table
+            box: { w: 120 }
+            data: { key: teas }
+            columns:
+              - label: 銘柄
+                width: 60
+                data: { key: name }
+                style: { fontFamily: ipamj-mincho, fontSize: 13, writingMode: vertical_rl }
+              - label: 産地
+                width: 60
+                data: { key: origin }
+                style: { fontFamily: ipamj-mincho, fontSize: 13 }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  # writingMode: vertical_rl now covers every text surface:
+                  spans: [ { text: 吾輩は }, { text: 猫である。… } ]
+                  # list → entries are right→left columns
+                  # table column style → the cell fills the row rectangle
+                  # page_number → the {{page}}／{{pages}} string runs vertical
+
+      # the block knobs, axes swapped: the side-line (underline → the column's
+      # right side), hanging punctuation (a comma hangs past the column bottom),
+      # half-width punctuation (adjacent fullwidth punctuation trims to half-em), and
+      # textOverflow against the box WIDTH (ellipsis below; a flow
+      # vertical block with the default `visible` paginates by columns).
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          - type: text
+            text: "吾輩は猫である、名前はまだ無い、どこで生れたか。"
+            box: { w: 90, h: 170 }
+            style: { fontFamily: ipamj-mincho, fontSize: 14, lineHeight: 1.8, writingMode: vertical_rl, textDecoration: underline, hangingPunctuation: allow_end }
+          - type: text
+            text: "「吾輩」は、『猫』である。"
+            box: { w: 60, h: 170 }
+            style: { fontFamily: ipamj-mincho, fontSize: 14, lineHeight: 1.8, writingMode: vertical_rl, textSpacingTrim: normal }
+          - type: text
+            text: "長い文章は列数が箱に収まらないとき省略記号で終わる。"
+            box: { w: 30, h: 170 }
+            style: { fontFamily: ipamj-mincho, fontSize: 13, lineHeight: 1.8, writingMode: vertical_rl, textOverflow: ellipsis }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  style:
+                    writingMode: vertical_rl
+                    textDecoration: underline  # 傍線は列の右側
+                    hangingPunctuation: allow_end  # 読点は列の下へぶら下げ
+                    textSpacingTrim: normal  # 」、「 が半角に詰まる
+                    textOverflow: ellipsis  # 幅に収まらない列は「…」
+                    verticalAlign: middle  # 列スタックを中央へ(論理軸)
+                  # flow 直下の visible あふれは列単位で改ページ
+
+      # ruby (furigana) + tate-chu-yoko: readings sit right of their base runs;
+      # short digit runs share one upright cell (textCombineUpright).
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          - type: text
+            text: "吾輩は猫である。"
+            box: { w: 70, h: 170 }
+            rubySize: 7
+            ruby:
+              - { base: 吾輩, text: わがはい }
+              - { base: 猫, text: ねこ }
+            style: { fontFamily: ipamj-mincho, fontSize: 14, lineHeight: 2.0, writingMode: vertical_rl }
+          - type: text
+            text: "第12話、西暦2026年1月31日"
+            box: { w: 56, h: 170 }
+            style: { fontFamily: ipamj-mincho, fontSize: 14, lineHeight: 1.8, writingMode: vertical_rl, textCombineUpright: { digits: 2 } }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  - type: text                    # ルビ (ふりがな)
+                    text: 吾輩は猫である。
+                    rubySize: 7               # 省略時は fontSize の半分
+                    ruby:                     # base を描画テキストに順に照合
+                      - { base: 吾輩, text: わがはい }
+                      - { base: 猫, text: ねこ }
+                    style: { writingMode: vertical_rl, lineHeight: 2.0 }
+                  # 読みは親文字列の右へ。lineHeight ≳ 1.5 で列間に帯を確保
+                  style:                          # 縦中横
+                    textCombineUpright: { digits: 2 }
+                  # 2桁までの数字が1マスに正立 (12・31)。桁数超過 (2026) は回転のまま
+
+      # ruby is honored on EVERY text surface: horizontal blocks draw
+      # readings ABOVE the base runs (author lineHeight ≳ 1.5 for the
+      # band; a margin gives the first line's reading room), spans
+      # blocks locate bases through the per-span runs, and
+      # `textCombineUpright: all` combines a whole span into one cell.
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          - type: text
+            text: "吾輩は猫である。名前はまだ無い。"
+            box: { w: 140, margin: { top: 8 } }
+            ruby:
+              - { base: 吾輩, text: わがはい }
+              - { base: 名前, text: なまえ }
+            style: { fontFamily: ipamj-mincho, fontSize: 12, lineHeight: 2.0 }
+          - type: text
+            box: { w: 44, h: 150, margin: { top: 8 } }
+            ruby:
+              - { base: 発行, text: はっこう }
+            spans:
+              - { text: "発行日は" }
+              - { text: "31", style: { textCombineUpright: all, color: "#1155cc" } }
+              - { text: "日" }
+            style: { fontFamily: ipamj-mincho, fontSize: 14, lineHeight: 2.0, writingMode: vertical_rl }
+          - type: list
+            data: { key: vdates }
+            box: { w: 76, h: 150, margin: { top: 8 } }
+            style: { fontFamily: ipamj-mincho, fontSize: 13, lineHeight: 1.6, writingMode: vertical_rl, textCombineUpright: { digits: 2 } }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  - type: text          # 横書きルビ
+                    text: 吾輩は猫である。…
+                    ruby:
+                      - { base: 吾輩, text: わがはい }
+                    style: { lineHeight: 2.0 }
+                  - type: text          # spans にも
+                    spans:
+                      - text: "31"
+                        style:
+                          textCombineUpright: all
+                  # all はスパン全体を1マスに正立。
+                  # 縦リストにも digits が効き、ルビ付き
+                  # flow ブロックは読み仮名ごと改ページ
+      - { type: page_break }
+
+      # ------------------------------------ blank-form placeholder
+      - type: text
+        text: "8. Blank-form placeholder — data.placeholder"
+        styleNames: [ h2 ]
+
+      # A binding whose value is absent / null / "" draws its
+      # placeholder verbatim instead of emitting a diagnostic — the
+      # "intentionally blank" signal a fillable form needs. Here
+      # `doc.reviewed_on` is "" in params, so the field-level
+      # placeholder renders; a present value would format as wareki.
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          - type: container
+            box: { w: 150, padding: 8 }
+            styleNames: [ panel ]
+            items:
+              - { type: text, text: "レビュー日", styleNames: [ caption ] }
+              - type: text
+                data: { key: doc.reviewed_on }
+                style: { fontSize: 12 }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  # field-level default (definitions.yml):
+                  - key: doc.reviewed_on
+                    type: date
+                    placeholder: "（未レビュー）"   # drawn when blank
+                  # placement override (templates.yml):
+                  - type: text
+                    data: { key: doc.reviewed_on, placeholder: "—" }
+                  # present → formats normally; blank / absent / "" →
+                  # the placeholder, and NO missing_data / format_error.
+
+      - { type: page_break }
+
+      # ------------------------------------ border decoration
+      - type: text
+        text: "9. Border decoration — dashed / dotted / borderRadius"
+        styleNames: [ h2 ]
+
+      # `borderStyle` gains two patterned keywords, and `borderRadius`
+      # rounds the border box. A uniform border (one width, one colour,
+      # one non-double style) stays a single stroked rect, so the corner
+      # rounding and the dash ride the same stroke.
+      - type: container
+        box: { direction: row, gap: 10 }
+        items:
+          - type: container
+            box: { w: 96, h: 44, padding: 6 }
+            style: { borderWidth: 1, borderColor: "#0d6efd", borderStyle: dashed }
+            items:
+              - { type: text, text: "dashed", styleNames: [ caption ] }
+          - type: container
+            box: { w: 96, h: 44, padding: 6 }
+            style: { borderWidth: 1, borderColor: "#0d6efd", borderStyle: dotted }
+            items:
+              - { type: text, text: "dotted", styleNames: [ caption ] }
+          - type: container
+            box: { w: 96, h: 44, padding: 6 }
+            style: { borderWidth: 1, borderColor: "#198754", borderRadius: 8 }
+            items:
+              - { type: text, text: "borderRadius: 8", styleNames: [ caption ] }
+          - type: container
+            box: { w: 96, h: 44, padding: 6 }
+            style:
+              borderWidth: 1
+              borderColor: "#198754"
+              borderStyle: dashed
+              borderRadius: 8
+              backgroundColor: "#f1f8f4"
+            items:
+              - { type: text, text: "dashed + radius", styleNames: [ caption ] }
+
+      # A `%` radius resolves against each axis independently (CSS), so
+      # 50% is a full ellipse on an oblong box and a circle on a square
+      # one. A stadium ("pill") is instead an absolute radius larger than
+      # the box can hold — it clamps to half the short side.
+      - type: container
+        box: { direction: row, gap: 10, margin: { top: 10 }, alignItems: center }
+        items:
+          - type: container
+            box: { w: 130, h: 30, padding: { left: 12, top: 7 } }
+            style: { borderWidth: 1, borderColor: "#6f42c1", borderRadius: 999 }
+            items:
+              - { type: text, text: "999 → ピル型", styleNames: [ caption ] }
+          - type: container
+            box: { w: 90, h: 34 }
+            style: { borderWidth: 1, borderColor: "#6f42c1", borderRadius: "50%" }
+            items: []
+          - type: container
+            box: { w: 44, h: 44 }
+            style: { borderWidth: 1, borderColor: "#6f42c1", borderRadius: "50%" }
+            items: []
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  style:
+                    borderWidth: 1
+                    borderStyle: dashed   # solid|double|
+                                          #   dashed|dotted
+                    borderRadius: 8       # pt / mm / em
+                  # 999   → 収まる最大値に一律縮小 = ピル型
+                  # "50%" → 幅と高さで別々に解決
+                  #         長方形は楕円 / 正方形は真円
+                  # 一辺ずつ違う枠線や double では角丸は
+                  #   無効 (border_radius_ignored)
+                  # overflow: hidden は角丸に沿ってクリップ
+
+      # Cut-here line: the `line` item takes the same keyword set, so a
+      # dashed cut guide is one item.
+      - type: text
+        text: "切り取り線"
+        styleNames: [ caption ]
+        box: { margin: { top: 12 } }
+      - type: line
+        from: { x: 0, y: 4 }
+        to: { x: 515, y: 4 }
+        style: { width: 0.8, color: "#adb5bd", style: dashed }
+
+      - { type: page_break }
+
+      # ---------------------------------- named binding declarations
+      - type: text
+        text: "10. Named bindings — bindings: 宣言つき補間"
+        styleNames: [ h2 ]
+
+      # `bindings:` gives ONE interpolation name the full `data:` option
+      # set: another key, a scope, a placeholder, a format. Names NOT
+      # listed keep their original meaning, so the key is purely additive.
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          - type: container
+            box: { w: 262, padding: 8 }
+            styleNames: [ panel ]
+            items:
+              - { type: text, text: "和文キーと書式の上書き", styleNames: [ caption ] }
+              # `品名` is outside the {…} key charset, so a bare {品名}
+              # prints its own braces; the declaration gives it an ASCII
+              # name. The inline `:symbol` overrides the declaration's
+              # `format: currency`.
+              - type: text
+                text: "{hinmei} / {sum:symbol}"
+                bindings:
+                  hinmei: { key: doc.品名 }
+                  sum: { key: doc.amount, format: currency }
+                style: { fontSize: 12 }
+              - type: text
+                text: "1行でスコープを混ぜる"
+                styleNames: [ caption ]
+                box: { margin: { top: 8 } }
+              # Inside the per-entry template `{shop}` escapes to the
+              # document while `{name}` stays the entry's own field —
+              # the line a bare `{key}` cannot express at all.
+              - type: list
+                box: { h: 30 }
+                data: { key: releases }
+                text: "{name} @ {shop}"
+                bindings:
+                  shop: { key: doc.venue, scope: document }
+                style: { fontSize: 8, lineHeight: 1.5 }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  - type: text
+                    text: "{{hinmei} / {{sum:symbol}"
+                    bindings:
+                      hinmei: { key: doc.品名 }
+                      sum: { key: doc.amount, format: currency }
+                  # 宣言のない {{key} は今までどおり (完全に追加仕様)
+                  # インラインの :format が宣言の format より優先
+                  # data: は宣言を参照しない (名前空間は別)
+                  - type: list                # 一覧の各行で
+                    text: "{{name} @ {{shop}"
+                    bindings:
+                      shop: { key: doc.venue, scope: document }
+                  # 未宣言の {{品名} は括弧のまま印字される —
+                  #   interpolation_key_charset が知らせる
+
+      - type: text
+        text: "11. headerGroups — 見出しグループ行のグループ別塗り"
+        styleNames: [ h2 ]
+
+      # A `headerGroups` entry's own `backgroundColor` / border paints over
+      # the group row's band, so each group is tinted independently; a
+      # group that authors neither keeps the band's default fill.
+      - type: table
+        data: { key: releases }
+        cellPadding: 5
+        headerGroups:
+          - label: 内容
+            span: 2
+            style: { backgroundColor: "#dbe7ff", color: "#1a3c6e", fontWeight: bold }
+          - label: 参照
+            span: 1
+            style: { backgroundColor: "#fff3cd", fontWeight: bold }
+        header:
+          height: 22
+        row:
+          minHeight: 18
+        style: { fontSize: 9, lineHeight: 1.3, borderWidth: 0.5, borderColor: "#adb5bd" }
+        columns:
+          - label: 名称
+            data: { key: name }
+            width: 110
+          - label: 概要
+            data: { key: summary }
+            width: 240
+          - label: リンク
+            data: { key: url }
+            style: { fontSize: 7 }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: table
+                headerGroups:
+                  - label: 内容                  # 2列にまたがる見出し
+                    span: 2
+                    style: { backgroundColor: "#dbe7ff", fontWeight: bold }
+                  - { label: 参照, span: 1, style: { backgroundColor: "#fff3cd" } }
+                header: { height: 22 }          # ラベル行 (既定塗り #ededed)
+                columns:
+                  - { label: 名称, data: { key: name }, width: 110 }
+                  - { label: 概要, data: { key: summary }, width: 240 }
+                  - { label: リンク, data: { key: url } }
+              # 塗りを書かないグループはバンドの既定色のまま
+              # span の合計が列数を超えると header_group_span_clamped
+      - { type: page_break }
+
+      # ---------------------------------- enum display labels
+      - type: text
+        text: "12. enum 表示ラベル — params は機械値のまま、言葉で印字"
+        styleNames: [ h2 ]
+
+      # A labeled `enum` member (`{ value, label }`) prints its label
+      # wherever the field is placed; `format: value` (or `{key:value}`)
+      # prints the machine value instead. Params never carry the words.
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          - type: container
+            box: { w: 262, padding: 8 }
+            styleNames: [ panel ]
+            items:
+              - { type: text, text: "既定はラベル / :value で生値", styleNames: [ caption ] }
+              - type: text
+                text: "{parcelStatus} ← {parcelStatus:value}"
+                style: { fontSize: 12 }
+              - type: text
+                text: "表の列も同じ (未ラベルの hold は生値のまま)"
+                styleNames: [ caption ]
+                box: { margin: { top: 8 } }
+              - type: table
+                data: { key: parcels }
+                cellPadding: 4
+                # fontSize 8 x lineHeight 1.3 = 10.4pt + 2 x cellPadding 4
+                # = 18.4 — an 18pt header clips it and warns text_overflow.
+                header: { height: 20 }
+                row: { minHeight: 16 }
+                style: { fontSize: 8, lineHeight: 1.3, borderWidth: 0.5, borderColor: "#adb5bd" }
+                columns:
+                  - { label: 荷物番号, data: { key: code }, width: 90 }
+                  - { label: 状況, data: { key: status }, width: 70 }
+                  - { label: 生値, data: { key: status, format: value }, width: 70, style: { fontSize: 7, color: "#666666" } }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  # definitions.yml — 値とラベルを1エントリで宣言
+                  status:
+                    type: string
+                    enum:
+                      - { value: shipped, label: 出荷済み }
+                      - { value: packing, label: 梱包中 }
+                      - hold                # 素の値も混在できる
+                  # templates.yml — 置き方は今までどおり
+                  - text: "{{parcelStatus}"        # → 出荷済み
+                  - text: "{{parcelStatus:value}"  # → shipped

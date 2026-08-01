@@ -1,0 +1,20 @@
+{
+  // GUI-editing container for the gui/ pnpm workspace: Node 24 + the same
+  // pnpm store volume the `make gui*` targets mount, so the node_modules
+  // symlinks one side installs stay valid for the other. Engine artifacts
+  // still build on the HOST (`make wasm` — needs docker); inside, run:
+  //   cd gui
+  //   pnpm --filter @shojiku/designer-app assemble   # once per wasm/pack change
+  //   pnpm --filter @shojiku/designer-app dev        # Vite dev server (HMR)
+  "name": "shojiku-gui",
+  "image": "node:24-bookworm",
+  "forwardPorts": [5173],
+  "mounts": ["source=shojiku-pnpm,target=/pnpm-store,type=volume"],
+  "containerEnv": { "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0" },
+  "postCreateCommand": "corepack enable && pnpm config set store-dir /pnpm-store && cd gui && pnpm install --frozen-lockfile",
+  "customizations": {
+    "vscode": {
+      "extensions": ["biomejs.biome"]
+    }
+  }
+}

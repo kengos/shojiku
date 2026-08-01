@@ -1,0 +1,48 @@
+[package]
+name = "shojiku-napi"
+description = "Shojiku Node.js addon: the N-API host the npm package loads"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[lib]
+# cdylib is the artifact node loads (renamed to `shojiku.node`); rlib keeps
+# the same code inside the workspace test/clippy/coverage gates on the host,
+# exactly as engine/wasm and engine/capi do.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# The C ABI host, as an rlib. This crate does NOT re-parse the request
+# envelope or re-dispatch the operations: it hands the envelope through and
+# reads the handle back, so the envelope has exactly one definition in the
+# repository and node rides the same code path as the four cdylib SDKs.
+shojiku-capi = { workspace = true }
+
+# The N-API shim, behind a non-default feature. `cargo test`/`clippy`/
+# `llvm-cov --workspace` build the default feature set, so the marshalling
+# glue never enters the host gates' surface — the same containment
+# engine/wasm gets from `cfg(target_arch = "wasm32")`. `make napi` is what
+# builds (and lints) it with the feature on.
+#
+# `napi` keeps its DEFAULT features on purpose: they are `napi4` +
+# `dyn-symbols`, and without them the addon still links and still dlopens but
+# fails at `require()` with "Module did not self-register".
+napi = { version = "3", optional = true }
+napi-derive = { version = "3", optional = true }
+
+[build-dependencies]
+napi-build = { version = "2", optional = true }
+
+[dev-dependencies]
+# Test fixtures only: the request envelope is built as JSON here exactly as
+# the npm package builds it. The crate itself never looks inside one.
+serde_json = { workspace = true }
+
+[features]
+shim = ["dep:napi", "dep:napi-derive", "dep:napi-build"]
+
+[lints]
+workspace = true

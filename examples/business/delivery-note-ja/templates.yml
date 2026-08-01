@@ -1,0 +1,323 @@
+version: 0.1.0
+name: delivery_note_ja
+
+# A4 delivery note — the 正直堂 trade-doc set's third sibling, between
+# estimate-ja and invoice-ja: the same customer and the same subject, one step
+# later. What neither sibling shows:
+#   * `headerGroups` — a spanning quantity group over the ordered / delivered-now / remaining columns, so a
+#     delivery note reads as quantities first and money second.
+#   * `row.conditionalStyles` — rows whose `status` is `partial` (still undelivered) are
+#     shaded from the DATA, not from a second template.
+#   * a receipt-stamp write-in box for the customer to stamp and return.
+# Money stays a tax-excluded reference-amount line: billing is invoice-ja's job, and the
+# engine never does arithmetic — every total is pre-computed in params.
+# `params-complete.json` is the same template with a fully-delivered shipment (zero remaining,
+# every row `full`), which is how the conditional shading proves both states.
+page:
+  size: A4
+  orientation: portrait
+  margin: 25
+
+defaults:
+  locale: ja-JP
+  currency: JPY
+  formats:
+    currency: symbol
+
+styles:
+  meta:
+    fontSize: 9
+    lineHeight: 1.3
+    textAlign: right
+  small:
+    fontSize: 8.5
+    lineHeight: 1.5
+    color: "#444444"
+  countLine:
+    fontSize: 10
+    lineHeight: 1.2
+    textAlign: right
+
+sections:
+  header:
+    repeat: every_page
+    height: 64
+    items:
+      # Brand bar — the 正直堂 indigo (matches assets/logo.svg).
+      - type: rect
+        box: { x: 0, y: 0, w: "100%", h: 4 }
+        style: { backgroundColor: "#1a3c6e" }
+
+      - id: title
+        type: text
+        box: { x: 0, y: 16, w: "100%", h: 30 }
+        text: 納 品 書
+        style:
+          fontSize: 22
+          textAlign: center
+          lineHeight: 1.2
+          color: "#1a3c6e"
+          fontWeight: bold
+
+      - id: delivery_no
+        type: text
+        box: { x: 345, y: 14, w: 200.28, h: 12 }
+        text: "納品番号 {delivery.number}"
+        styleNames: [ meta ]
+      - id: delivered_on
+        type: text
+        box: { x: 345, y: 27, w: 200.28, h: 12 }
+        text: "納品日 {delivery.delivered_on}"
+        styleNames: [ meta ]
+      - id: order_no
+        type: text
+        box: { x: 345, y: 40, w: 200.28, h: 12 }
+        text: "ご注文番号 {delivery.order_number}"
+        styleNames: [ meta ]
+
+  body:
+    type: flow
+    box: { x: 0, y: 74, w: "100%", h: 672 }
+    gap: 12
+    items:
+      # Ship-to (left) / issuer (right) — one container, absolute children.
+      - id: parties
+        type: container
+        box: { h: 92 }
+        items:
+          - type: text
+            box: { x: 0, y: 4, w: 300, h: 22 }
+            text: "{shipTo.name} 御中"
+            style: { fontSize: 15, lineHeight: 1.2 }
+          - type: line
+            from: { x: 0, y: 30 }
+            to: { x: 300, y: 30 }
+            style: { width: 0.8, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 36, w: 300, h: 26 }
+            text: |-
+              〒{shipTo.postal_code} {shipTo.address}
+            style: { fontSize: 9, lineHeight: 1.4 }
+          - type: text
+            box: { x: 0, y: 66, w: 300, h: 13 }
+            text: "ご担当: {shipTo.contact} 様"
+            style: { fontSize: 9, lineHeight: 1.4 }
+
+          - id: issuer_block
+            type: container
+            box: { x: 330, y: 0, w: 215.28, h: 92 }
+            items:
+              - type: image
+                box: { x: 0, y: 4, w: 30, h: 30 }
+                src: assets/logo.svg
+              - type: text
+                box: { x: 38, y: 8, w: 177.28, h: 16 }
+                data: { key: issuer.name }
+                style: { fontSize: 12, lineHeight: 1.2 }
+              - type: text
+                box: { x: 38, y: 26, w: 177.28, h: 11 }
+                text: "担当 {issuer.staff}"
+                style: { fontSize: 8, lineHeight: 1.3, color: "#444444" }
+              - type: text
+                box: { x: 0, y: 42, w: 215.28, h: 42 }
+                text: |-
+                  〒{issuer.postal_code} {issuer.address}
+                  TEL {issuer.tel} / {issuer.email}
+                style: { fontSize: 8.5, lineHeight: 1.5, color: "#222222" }
+
+      # Delivered-now-count highlight (the estimate's amount slot — a delivery note leads
+      # with quantities) + subject/shipping-class line.
+      - id: shipment_summary
+        type: container
+        box: { h: 70 }
+        items:
+          - id: count_box
+            type: container
+            box: { x: 0, y: 0, w: 320, h: 48 }
+            style:
+              backgroundColor: "#eef2f8"
+              borderColor: "#1a3c6e"
+              borderWidth: { bottom: 2 }
+            items:
+              - type: text
+                box: { x: 12, y: 16, w: 96, h: 16 }
+                text: 今回納品数
+                style: { fontSize: 10, lineHeight: 1.2 }
+              - type: text
+                box: { x: 108, y: 10, w: 110, h: 28 }
+                data: { key: summary.shipped_qty }
+                style: { fontSize: 20, textAlign: right, lineHeight: 1.3, fontWeight: bold, color: "#1a3c6e" }
+              - type: text
+                box: { x: 224, y: 18, w: 84, h: 14 }
+                text: "残 {summary.remaining_qty}"
+                style: { fontSize: 11, textAlign: right, lineHeight: 1.2, color: "#444444" }
+          - id: shipment_kind
+            type: text
+            box: { x: 330, y: 12, w: 215.28, h: 26 }
+            text: "{delivery.shipment}"
+            style: { fontSize: 11, textAlign: right, lineHeight: 1.3, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 54, w: "100%", h: 14 }
+            text: "件名: {delivery.subject}　—　下記のとおり納品いたしました。"
+            style: { fontSize: 9.5, lineHeight: 1.3 }
+
+      # Line items — `headerGroups` puts one quantity band over the three count columns,
+      # and `conditionalStyles` shades the rows that still carry a remaining count.
+      - id: items_table
+        type: table
+        data: { key: items }
+        autoPageBreak: true
+        repeatHeader: true
+        emptyBehavior: collapse
+        cellPadding: 4
+        # These groups style their text only, so the band keeps the default
+        # header-group fill (a group may also set its own `backgroundColor`).
+        headerGroups:
+          - { label: 品目, span: 2, style: { color: "#1a3c6e", fontWeight: bold } }
+          - { label: 数量, span: 3, style: { color: "#1a3c6e", fontWeight: bold } }
+          - { label: 金額, span: 1, style: { color: "#1a3c6e", fontWeight: bold } }
+        header:
+          height: 22
+          style: { backgroundColor: "#1a3c6e", color: "#ffffff", fontSize: 9.5 }
+        row:
+          minHeight: 20
+          alternateStyle: { backgroundColor: "#f4f6fa" }
+          conditionalStyles:
+            - when: { key: status, equals: partial }
+              style: { backgroundColor: "#fdf3e7" }
+        style: { fontSize: 9.5, borderColor: "#c5cddb" }
+        columns:
+          - id: name
+            label: 品名
+            data: { key: name }
+            width: 259.28
+          - id: unit
+            label: 単位
+            data: { key: unit }
+            width: 36
+            style: { textAlign: center }
+          - id: ordered
+            label: ご注文
+            data: { key: ordered }
+            width: 52
+            style: { textAlign: right }
+          - id: shipped
+            label: 今回納品
+            data: { key: shipped }
+            width: 60
+            style: { textAlign: right }
+          - id: remaining
+            label: 残
+            data: { key: remaining }
+            width: 48
+            style: { textAlign: right }
+          - id: amount
+            label: 今回分（税抜）
+            data: { key: amount }
+            width: 90
+            style: { textAlign: right }
+
+      # Row/quantity totals and the reference amount (all pre-computed in params).
+      - id: totals
+        type: container
+        box: { h: 56 }
+        items:
+          - type: text
+            box: { x: 0, y: 2, w: 300, h: 13 }
+            text: "※ 残数のある行に色を付けています（分納）。"
+            styleNames: [ small ]
+          - type: text
+            box: { x: 300, y: 0, w: 245.28, h: 14 }
+            text: "明細 {summary.lines} 行 / 今回納品 {summary.shipped_qty} / 残 {summary.remaining_qty}"
+            styleNames: [ countLine ]
+          - type: line
+            from: { x: 360, y: 18 }
+            to: { x: 545.28, y: 18 }
+            style: { width: 0.8, color: "#1a3c6e" }
+          - type: text
+            box: { x: 300, y: 22, w: 245.28, h: 18 }
+            text: "参考金額（税抜） {summary.amount}"
+            style: { fontSize: 13, textAlign: right, lineHeight: 1.3, fontWeight: bold }
+          - type: text
+            box: { x: 240, y: 42, w: 305.28, h: 12 }
+            text: 本書は金額のご請求書ではありません。ご請求は別途 請求書にて申し上げます。
+            style: { fontSize: 8, textAlign: right, lineHeight: 1.4, color: "#666666" }
+
+      # Receipt-stamp box (the customer stamps and returns it) + delivery-status QR.
+      - id: receipt
+        type: container
+        box: { h: 100 }
+        items:
+          - id: receipt_box
+            type: container
+            box: { x: 0, y: 0, w: 350, h: 96 }
+            style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+            items:
+              - type: text
+                box: { x: 12, y: 10, w: 160, h: 14 }
+                text: 受領印欄
+                style: { fontSize: 10, fontWeight: bold, color: "#1a3c6e", lineHeight: 1.2 }
+              - type: text
+                box: { x: 12, y: 28, w: 326, h: 14 }
+                text: 上記のとおり受領いたしました。
+                style: { fontSize: 9.5, lineHeight: 1.4 }
+              - type: text
+                box: { x: 12, y: 50, w: 100, h: 13 }
+                text: 受領日
+                style: { fontSize: 9, lineHeight: 1.4, color: "#444444" }
+              - type: line
+                from: { x: 46, y: 62 }
+                to: { x: 150, y: 62 }
+                style: { width: 0.5, color: "#888888" }
+              - type: text
+                box: { x: 12, y: 70, w: 100, h: 13 }
+                text: 御署名
+                style: { fontSize: 9, lineHeight: 1.4, color: "#444444" }
+              - type: line
+                from: { x: 46, y: 82 }
+                to: { x: 240, y: 82 }
+                style: { width: 0.5, color: "#888888" }
+              - id: stamp_box
+                type: rect
+                box: { x: 268, y: 44, w: 56, h: 44 }
+                style: { borderWidth: 0.5, borderColor: "#888888" }
+              - type: text
+                box: { x: 268, y: 60, w: 56, h: 13 }
+                text: 印
+                style: { fontSize: 9, textAlign: center, lineHeight: 1.4, color: "#888888" }
+          - id: tracking_qr
+            type: qr_code
+            box: { x: 481.28, y: 6, w: 64, h: 64 }
+            data: { key: web.tracking_url }
+          - type: text
+            box: { x: 400, y: 74, w: 145.28, h: 12 }
+            text: 納品状況の照会
+            link: { url: "{web.tracking_url}" }
+            style: { fontSize: 8.5, textAlign: center, color: "#1a3c6e", textDecoration: underline }
+
+      # Notes.
+      - id: notes
+        type: text
+        box: { h: 30 }
+        text: |-
+          {notes.next_shipment}
+          お手数ですが記載内容をご確認のうえ、相違がある場合は {issuer.staff}（{issuer.email}）までご連絡ください。
+        styleNames: [ small ]
+
+  footer:
+    repeat: every_page
+    height: 46
+    items:
+      - type: line
+        from: { x: 0, y: 756 }
+        to: { x: 545.28, y: 756 }
+        style: { width: 0.5, color: "#c5cddb" }
+      - type: text
+        box: { x: 0, y: 762, w: "100%", h: 11 }
+        text: "{issuer.name}　この納品書に関するお問い合わせ: {issuer.email}"
+        style: { fontSize: 7.5, textAlign: center, color: "#666666", lineHeight: 1.3 }
+      - id: page_no
+        type: page_number
+        box: { x: 0, y: 776, w: "100%", h: 13 }
+        format: "{page} / {pages}"
+        style: { fontSize: 9, textAlign: center }

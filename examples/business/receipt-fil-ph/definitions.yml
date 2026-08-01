@@ -1,0 +1,111 @@
+version: 0.2.0
+type: object
+properties:
+  receipt:
+    type: object
+    properties:
+      number:
+        type: string
+        title: Blg. ng resibo
+        example: R-2026-0509-042
+      issued_at:
+        type: string
+        format: date-time
+        title: Petsa ng paglabas
+        example: '2026-05-09T14:05:00+08:00'
+        displayFormats:
+        - id: default
+          label: Karaniwan
+        - id: date
+          label: Petsa lamang
+        - id: long
+          label: Buong petsa
+    title: Resibo
+  recipient:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Natanggap mula kay
+        example: Andrea Reyes
+    title: Natanggap mula kay
+  amount:
+    type: object
+    properties:
+      total_in_tax:
+        type: number
+        format: currency
+        title: Kabuuang halaga (kasama ang VAT)
+        example: 6876.8
+        currency: PHP
+        precision: 2
+        recommendedStyle:
+          textAlign: right
+      total_ex_tax:
+        type: number
+        format: currency
+        title: Kabuuan bago ang VAT
+        example: 6140
+        currency: PHP
+        precision: 2
+      tax:
+        type: number
+        format: currency
+        title: VAT
+        example: 736.8
+        currency: PHP
+        precision: 2
+    title: Halaga
+  purpose:
+    type: string
+    title: Layunin
+    example: mga aklat at gamit sa paaralan
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Pangalan ng kompanya
+        example: Tapat na Aklatan, Inc.
+      tax_id:
+        type: string
+        title: TIN
+        example: TIN 123-456-789-000
+      address:
+        type: string
+        title: Address
+        example: 88 Rizal Avenue, Lungsod Quezon 1103
+      tel:
+        type: string
+        title: Telepono
+        example: Telepono (02) 8123-4567
+    title: Nagbigay
+  items:
+    type: array
+    title: Mga aytem
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: Paglalarawan
+          example: Aklat na “Paggawa ng PDF Engine sa Rust”
+        quantity:
+          type: number
+          format: quantity
+          title: Dami
+          example: 2
+          unit: item
+        unit_price:
+          type: number
+          format: currency
+          title: Presyo
+          example: 1250
+          precision: 2
+        amount:
+          type: number
+          format: currency
+          title: Halaga
+          example: 2500
+          precision: 2
+      title: Aytem

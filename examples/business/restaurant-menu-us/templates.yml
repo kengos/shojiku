@@ -1,0 +1,160 @@
+version: 0.1.0
+name: restaurant_menu_us
+
+# An American Japanese restaurant's monthly specials menu: the reading face
+# is English + USD prices, while the vertical 正直亭 brand column on the left
+# band and small vertical dish-name columns supply the Japanese accent.
+# Frame / left band / header are bands (every_page); the menu list is a
+# `repeat_flow` card flow. Fonts come from the ja-JP locale: biz-udp-gothic
+page:
+  size: Letter
+  orientation: portrait
+  margin: 25
+
+defaults:
+  # ja-JP loads the JP font packs (en-US carries only noto-sans — no kanji).
+  # Only the currency swaps to USD — the `{price}` format stays and renders `$24`.
+  locale: ja-JP
+  currency: USD
+  formats:
+    currency: symbol
+  style:
+    fontFamily: biz-udp-gothic
+    color: "#2b2320"
+
+styles:
+  latinMuted:
+    color: "#7a6a58"
+    lineHeight: 1.5
+
+sections:
+  # Decorative frame + vertical left band + shop-name header (a one-pager,
+  header:
+    repeat: every_page
+    height: 0
+    items:
+      # Unbleached ground — bleeds past the margins.
+      - type: rect
+        box: { x: -25, y: -25, w: 612, h: 792 }
+        style: { backgroundColor: "#fbf8f1" }
+      - type: rect
+        box: { x: 6, y: 6, w: 550, h: 730 }
+        style: { borderWidth: 3.5, borderStyle: double, borderColor: "#7a2e2a" }
+      - type: rect
+        box: { x: 15, y: 15, w: 532, h: 712 }
+        style: { borderWidth: 0.5, borderColor: "#b4552d" }
+
+      # ---- Left band: vertical shop name + a seal-style red + the vertical monthly note ----
+      - id: brand_vertical
+        type: text
+        box: { x: 36, y: 42, w: 56, h: 220 }
+        data: { key: restaurant.name_ja }
+        style:
+          writingMode: vertical_rl
+          fontFamily: ipamj-mincho
+          fontSize: 42
+          letterSpacing: 8
+          lineHeight: 1.2
+      - type: rect
+        box: { x: 56, y: 226, w: 15, h: 15 }
+        style: { backgroundColor: "#b4552d" }
+      - id: month_vertical
+        type: text
+        box: { x: 46, y: 268, w: 24, h: 170 }
+        data: { key: menu.title_ja }
+        style:
+          writingMode: vertical_rl
+          fontFamily: ipamj-mincho
+          fontSize: 13
+          letterSpacing: 3
+          color: "#7a2e2a"
+          lineHeight: 1.4
+
+      # Photo placeholder (grey) — swap in a `type: image` in a real deployment.
+      - type: rect
+        box: { x: 30, y: 486, w: 90, h: 120 }
+        style: { backgroundColor: "#ddd8cf", borderWidth: 0.5, borderColor: "#c9bfae" }
+      - type: text
+        box: { x: 30, y: 538, w: 90, h: 12 }
+        text: SAMPLE
+        style: { fontSize: 8, textAlign: center, letterSpacing: 2.5, color: "#a39a8d", lineHeight: 1.4 }
+      - type: text
+        box: { x: 30, y: 612, w: 90, h: 22 }
+        text: Salt-grilled ayu, our August signature
+        style: { fontSize: 6.5, textAlign: center, color: "#a39a8d", lineHeight: 1.5 }
+
+      - type: line
+        from: { x: 136, y: 36 }
+        to: { x: 136, y: 700 }
+        style: { width: 0.5, color: "#d8c9b4" }
+
+      # ---- Shop-name header (English-led) ----
+      - type: text
+        box: { x: 156, y: 40, w: 381, h: 30 }
+        data: { key: restaurant.name_en }
+        style: { fontSize: 22, fontWeight: bold, letterSpacing: 5, lineHeight: 1.3 }
+      - type: text
+        box: { x: 156, y: 74, w: 381, h: 12 }
+        data: { key: restaurant.tagline }
+        style: { fontSize: 8, letterSpacing: 3, color: "#7a6a58", lineHeight: 1.4 }
+      - type: line
+        from: { x: 156, y: 96 }
+        to: { x: 537, y: 96 }
+        style: { width: 0.6, color: "#b4552d" }
+      - type: text
+        box: { x: 156, y: 106, w: 381, h: 16 }
+        data: { key: menu.title_en }
+        style: { fontSize: 11, letterSpacing: 3, color: "#7a2e2a", lineHeight: 1.4 }
+
+  # ---- Menu list: vertical dish-name columns + English names/descriptions + $ prices ----
+  body:
+    type: flow
+    box: { x: 156, y: 138, w: 381, h: 542 }
+    items:
+      - id: dishes
+        type: repeat_flow
+        data: { key: dishes }
+        gap: 10
+        item:
+          items:
+            - type: text
+              box: { x: 0, y: 2, w: 15, h: 64 }
+              data: { key: name_ja }
+              style:
+                writingMode: vertical_rl
+                fontFamily: ipamj-mincho
+                fontSize: 8
+                color: "#7a2e2a"
+                lineHeight: 1.2
+            - type: text
+              box: { x: 30, y: 2, w: 270, h: 16 }
+              data: { key: name_en }
+              style: { fontSize: 11, fontWeight: bold, lineHeight: 1.35 }
+            - type: text
+              box: { x: 311, y: 2, w: 70, h: 16 }
+              data: { key: price }
+              style: { fontSize: 11, fontWeight: bold, textAlign: right, color: "#7a2e2a", lineHeight: 1.35 }
+            - type: text
+              box: { x: 30, y: 21, w: 280, h: 26 }
+              data: { key: description }
+              styleNames: [ latinMuted ]
+              style: { fontSize: 8.5 }
+
+  footer:
+    repeat: every_page
+    height: 0
+    items:
+      - type: line
+        from: { x: 156, y: 686 }
+        to: { x: 537, y: 686 }
+        style: { width: 0.5, color: "#d8c9b4" }
+      - type: text
+        box: { x: 156, y: 692, w: 381, h: 21 }
+        text: |-
+          Consuming raw or undercooked seafood may increase your risk of foodborne illness.
+          Sales tax not included. A 20% gratuity is added for parties of six or more.
+        style: { fontSize: 6.8, color: "#a39a8d", lineHeight: 1.5 }
+      - type: text
+        box: { x: 0, y: 714, w: "100%", h: 11 }
+        text: "{restaurant.address}　·　{restaurant.tel}　·　{restaurant.web}"
+        style: { fontSize: 7.5, textAlign: center, color: "#7a6a58", lineHeight: 1.4 }

@@ -1,0 +1,54 @@
+# `type: list`
+
+A bounded per-element list: renders an array field one entry per line,
+clamping at the last fitting entry and ending with an overflow line when
+entries were cut. No pagination by design — inside a `repeat` cell the
+box is a fixed slot; in a flow an auto-height list simply grows.
+
+## Syntax
+
+```yaml
+- type: list
+  box: { w: "100%", h: 64 }        # definite h activates the clamp
+  data: { key: items }             # array: params key, or element field in a cell
+  text: "{name} ×{quantity}"       # per-entry template ({key} against the entry)
+  overflowText: "他{count}件"       # default "+{count}"
+  style: { fontSize: 8 }
+```
+
+## Keys
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `data` | `{ key }` | required | The array to render — a params key, or inside a `repeat` cell / `repeat_flow` card a field of the bound element (scope-aware). `scope: document` reads the top-level array even from inside a cell — see [data-binding.md](data-binding.md#scope--the-escape-back-to-the-document). |
+| `text` | string | unset | Per-entry template with `{key}` interpolation against the entry object. Unset: scalar entries print directly (strings as-is, numbers in plain form — no locale formatting). |
+| `bindings` | map of name → binding | unset | Named declarations for the `{name}` interpolations in `text`. They resolve per ENTRY like `text` itself, unless one authors `scope: document` ([data-binding.md](data-binding.md#named-binding-declarations)). |
+| `overflowText` | string | `+{count}` | Template for the trailing overflow line; `{count}` = the number of entries that did **not** fit. |
+| `box` / `style` / `styleNames` | | | Usual forms; the text properties style every line. |
+
+## Behavior
+
+- One line per entry, never wrapped: an entry wider than the box takes
+  the per-entry **ellipsis** (`…`, kinsoku-aware) instead.
+- A definite `box.h` clamps at the last fitting entry **minus one** and
+  appends the `overflowText` line; auto-height lists grow.
+- `MAX_LIST_ENTRIES` (1,000) bounds hostile arrays — capped entries
+  still count into `{count}`.
+- Under `writingMode: vertical_rl` each entry is a right-to-left COLUMN
+  (see [vertical_text.md](vertical_text.md)); tate-chu-yoko
+  (`textCombineUpright`) applies per entry, and the definite-`box.h`
+  `…` clamp keeps a combined group whole — kept or dropped, never
+  split.
+
+## Diagnostics
+
+| Code | Meaning |
+| --- | --- |
+| `missing_data` / `not_an_array` | array source problems |
+
+Capability key: `list`.
+
+## See also
+
+- [table.md](table.md) — paginating columnar data
+- [repeat.md](repeat.md) — the living use case (`examples/business/shipping-labels-ja`: 2×3 shipping labels with an overflow-count line)

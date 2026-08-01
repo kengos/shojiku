@@ -1,0 +1,150 @@
+{
+  "orders": [
+    {
+      "order_no": "SO-2026-071401",
+      "name": "高橋 栞",
+      "address": "東京都杉並区阿佐谷南1-23-45 コーポことのは203",
+      "shipping_class": "通常便",
+      "item_count": 3,
+      "items": [
+        "書籍『Rustで作るPDFエンジン』",
+        "A5ノート（方眼）",
+        "真鍮しおり 3枚組"
+      ],
+      "url": "https://ship.shojikudo.example/s/SO-2026-071401",
+      "note": "",
+      "postal_code1": "166",
+      "postal_code2": "0004"
+    },
+    {
+      "order_no": "SO-2026-071402",
+      "name": "ヴィルヘルミーナ・フォン・ブランデンブルク＝アンスバッハ",
+      "address": "北海道札幌市中央区旭ケ丘9-87-6 グランメゾン藻岩山パークサイドレジデンス南棟1408号室",
+      "shipping_class": "通常便",
+      "item_count": 1,
+      "items": [
+        "辞書『新明解実務用語辞典 第九版』"
+      ],
+      "url": "https://ship.shojikudo.example/s/SO-2026-071402",
+      "note": "",
+      "postal_code1": "064",
+      "postal_code2": "0941"
+    },
+    {
+      "order_no": "SO-2026-071403",
+      "name": "佐々木 詠美",
+      "address": "愛媛県松山市大街道3-2-1",
+      "shipping_class": "クール便",
+      "item_count": 8,
+      "items": [
+        "クッキー缶「読書のおとも」（大）",
+        "クッキー缶「読書のおとも」（小）",
+        "和三盆干菓子「活版」",
+        "ジャム2種詰合せ",
+        "はちみつ「百花」140g",
+        "紅茶リーフ「書斎の午後」",
+        "ドリップコーヒー24袋",
+        "りんごジュース 720ml"
+      ],
+      "url": "https://ship.shojikudo.example/s/SO-2026-071403",
+      "note": "要冷蔵・お届け時間指定 14〜16時",
+      "postal_code1": "790",
+      "postal_code2": "0004"
+    },
+    {
+      "order_no": "SO-2026-071404",
+      "name": "リー・ウェイ",
+      "address": "京都府京都市下京区烏丸通七条下ル東塩小路町721-1",
+      "shipping_class": "冊子小包",
+      "item_count": 2,
+      "items": [
+        "月刊『組版技術』7月号",
+        "月刊『組版技術』8月号"
+      ],
+      "url": "https://ship.shojikudo.example/s/SO-2026-071404",
+      "note": "",
+      "postal_code1": "600",
+      "postal_code2": "8216"
+    },
+    {
+      "order_no": "SO-2026-071405",
+      "name": "小野寺 まひろ",
+      "address": "宮城県仙台市青葉区中央2-11-19",
+      "shipping_class": "通常便",
+      "item_count": 5,
+      "items": [
+        "万年筆インク「藍鉄」50ml",
+        "ガラスペン（替え先付き）",
+        "インク吸取紙 50枚",
+        "ペントレイ（真鍮）",
+        "A5ノート（方眼）"
+      ],
+      "url": "https://ship.shojikudo.example/s/SO-2026-071405",
+      "note": "ワレモノ注意（インク瓶同梱）",
+      "postal_code1": "980",
+      "postal_code2": "0021"
+    },
+    {
+      "order_no": "SO-2026-071406",
+      "name": "堂本 一花",
+      "address": "北海道札幌市北区北六条西4-3-1",
+      "shipping_class": "通常便",
+      "item_count": 1,
+      "items": [
+        "トートバッグ「本の重さに負けない」"
+      ],
+      "url": "https://ship.shojikudo.example/s/SO-2026-071406",
+      "note": "",
+      "postal_code1": "060",
+      "postal_code2": "0806"
+    },
+    {
+      "order_no": "SO-2026-071407",
+      "name": "村雨 悠人",
+      "address": "沖縄県那覇市久茂地3-2-10 くもじマンション505",
+      "shipping_class": "速達",
+      "item_count": 2,
+      "items": [
+        "書籍『YAMLテンプレート設計入門』",
+        "ブックカバー（帆布・文庫判）"
+      ],
+      "url": "https://ship.shojikudo.example/s/SO-2026-071407",
+      "note": "折り曲げ厳禁",
+      "postal_code1": "900",
+      "postal_code2": "0015"
+    },
+    {
+      "order_no": "SO-2026-071408",
+      "name": "灰谷 樹",
+      "address": "鹿児島県鹿児島市東千石町1-38 天文館ビル2F 書肆はいたに気付",
+      "shipping_class": "通常便",
+      "item_count": 12,
+      "items": [
+        "書籍『Rustで作るPDFエンジン』×3",
+        "書籍『YAMLテンプレート設計入門』×3",
+        "A5ノート（方眼）×2",
+        "原稿用紙パッド B5 ×2",
+        "ブックカバー（帆布）",
+        "真鍮しおり 3枚組"
+      ],
+      "url": "https://ship.shojikudo.example/s/SO-2026-071408",
+      "note": "",
+      "postal_code1": "892",
+      "postal_code2": "0842"
+    },
+    {
+      "order_no": "SO-2026-071409",
+      "name": "遠野 このみ",
+      "address": "長野県松本市中央1-4-15",
+      "shipping_class": "通常便",
+      "item_count": 1,
+      "items": [
+        "万年筆インク「藍鉄」50ml"
+      ],
+      "url": "https://ship.shojikudo.example/s/SO-2026-071409",
+      "note": "ワレモノ注意",
+      "postal_code1": "390",
+      "postal_code2": "0811"
+    }
+  ]
+}

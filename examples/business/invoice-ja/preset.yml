@@ -1,0 +1,17 @@
+# Designer preset manifest: surfaces this bundled example in the locale-keyed
+# catalog. `locales` are the catalog tags it appears under; `engineLocale` is
+# the exact tag the app passes to the engine (font-pack selection).
+locales: [ja]
+engineLocale: ja-JP
+name:
+  ja: 請求書
+  en: Invoice (Japanese)
+thumbnail: preview-1.png
+# Sample-data variants beyond the default params.json — each is params-<id>.json.
+# The default is the 22-row two-page invoice; `short` is the 3-row single page,
+# so switching answers "does this data volume change the page break?" at a click.
+variants:
+  - id: short
+    name:
+      ja: 3行（1ページ）
+      en: Short (1 page)

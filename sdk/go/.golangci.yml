@@ -1,0 +1,18 @@
+# The go SDK's linter set.
+#
+# The standard set plus two: revive, which insists every exported symbol is
+# documented (this package's whole surface is contract, so that is the bar it
+# should be held to), and misspell.
+#
+# gosec is deliberately NOT enabled. Its G204 rule fires on every subprocess
+# launched with a variable argument vector — which is this package's entire
+# job, and the reason no shell is involved — so enabling it would mean one
+# blanket suppression at the only place that matters, saying nothing. The
+# argv, workspace and secret-handling rules are pinned by tests instead.
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - revive
+    - misspell
