@@ -136,7 +136,7 @@ ring = "0.17"
 # re-unifying is a one-line bump when cms 0.3 ships. `pkcs8/encryption`
 # decrypts password-protected PKCS#8 (PBES2) in-process, which is what lets
 # a caller keep the key encrypted on disk.
-der = "0.7"
+der = "0.8"
 cms = "0.2"
 x509-cert = "0.2"
 pkcs8 = { version = "0.10", features = ["encryption", "pem"] }
