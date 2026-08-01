@@ -17,7 +17,7 @@ RUN cargo build -p shojiku-wasm --profile wasm-release --target wasm32-unknown-u
 RUN wasm-bindgen --target web --out-dir /out/pkg \
       target/wasm32-unknown-unknown/wasm-release/shojiku_wasm.wasm
 
-FROM node:24-bookworm-slim AS app
+FROM node:25-bookworm-slim AS app
 RUN corepack enable
 WORKDIR /repo
 COPY gui ./gui
