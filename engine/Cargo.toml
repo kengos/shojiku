@@ -139,7 +139,7 @@ ring = "0.17"
 der = "0.7"
 cms = "0.2"
 x509-cert = "0.2"
-pkcs8 = { version = "0.10", features = ["encryption", "pem"] }
+pkcs8 = { version = "0.11", features = ["encryption", "pem"] }
 zeroize = "1"
 # Reading a passphrase from the terminal without echoing it (CLI only). The
 # alternative is hand-rolling termios, and a passphrase prompt is not the
