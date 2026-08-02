@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 import { injectAssets, injectTier, loadLocale, renderPreview, type TierSource, type WasmEngine } from "../lib/engineClient.ts";
 import { subsetManifest, TIERS } from "../lib/fonts.ts";
-import { FLEX_KNOB_DEFAULTS, flexDemoTemplate, FONT_KNOB_DEFAULTS, fontDemoTemplate, GRID_KNOB_DEFAULTS, gridDemoTemplate, TEXT_KNOB_DEFAULTS, textDemoTemplate } from "../lib/playground.ts";
+import { FLEX_KNOB_DEFAULTS, flexDemoTemplate, flexWidthDemoTemplate, FONT_KNOB_DEFAULTS, fontDemoTemplate, GRID_KNOB_DEFAULTS, gridDemoTemplate, TEXT_KNOB_DEFAULTS, textDemoTemplate } from "../lib/playground.ts";
 
 const REPO = new URL("../../../", import.meta.url);
 const PKG_JS = new URL("engine/wasm/pkg/shojiku_wasm.js", REPO);
@@ -86,6 +86,17 @@ describe("immediate tier (en-US)", () => {
     loadLocale(e, "en-US");
     for (const columns of [1, 2, 3, 4]) {
       const out = renderPreview(e, { template: flexDemoTemplate({ ...FLEX_KNOB_DEFAULTS, columns }), params: "{}" }, 2);
+      expect(out.diagnostics).toEqual([]);
+      expect(out.ok).toBe(true);
+    }
+  });
+
+  it("renders the fixed-width flex demo across the width range", async () => {
+    const e = new mod.Engine();
+    await injectTierSet(e, "immediate");
+    loadLocale(e, "en-US");
+    for (const width of [60, 80, 180]) {
+      const out = renderPreview(e, { template: flexWidthDemoTemplate({ width }), params: "{}" }, 2);
       expect(out.diagnostics).toEqual([]);
       expect(out.ok).toBe(true);
     }

@@ -2,55 +2,74 @@
 title: Compare
 ---
 
-# Would another engine do?
+# Compared with other tools
 
-Maybe — they are good tools with different centers of gravity. An honest map:
+Each is good at different things. In turn:
 
 ## HTML/CSS engines (WeasyPrint, Prince, wkhtmltopdf, Puppeteer print)
 
-Tools for making paper out of web assets. Strong for document-like pages,
-existing CSS, free-flowing long text. The things business forms need —
-pixel-fixed boxes, table headers that repeat across page breaks, n-up
-imposition, entry cells, Japanese line-breaking rules — live outside CSS or
-in implementation-specific corners. Byte determinism is not guaranteed
-either: a browser engine may draw differently between runs, which is why
-regression tests end up as screenshot diffs.
+Tools that turn browser rendering straight into a PDF. For letting a user
+download the page you are already showing on screen, they are a good
+choice, and existing CSS assets carry over.
 
-Shojiku draws from a layout tree; the same input produces the same bytes,
-and CI gates every bundled example by byte comparison.
+The rendering, though, depends on the environment: browser and library
+versions and the installed fonts can change the output. The things
+business forms need (table headers that repeat across page breaks, n-up
+imposition, entry cells, Japanese line-breaking rules) are either missing
+from the CSS standard or supported differently by every tool.
+
+There is also the problem that the output bytes are not the same on
+every run. Fix one spot in a template and you cannot check mechanically
+that the other documents did not change; verification falls back to
+eyeballing screenshot diffs.
+
+Shojiku produces the same bytes for the same input. A byte comparison
+alone catches a regression, and CI gates every bundled example that way.
 
 ## Programmatic PDF libraries (ReportLab, prawn, the FPDF family)
 
-Drawing with coordinates and an API. They can draw anything, but the layout
-becomes code — not a file a designer, a PM, or an AI agent can read. There
-is no field catalog; only code review protects the wiring between data and
-page.
+Tools that draw directly, with coordinates and an API (pseudocode):
 
-A Shojiku template is declarative YAML, and `definitions.yml` validates the
-wiring: a reference to an undeclared key stops with a diagnostic code before
-anything renders.
+```python
+c = canvas.Canvas("receipt.pdf", pagesize=A4)
+c.setFont("Helvetica", 14)
+c.drawString(96, 720, customer.name)
+c.drawRightString(500, 690, f"${order.subtotal_ex_tax:,}")  # the ex-tax box
+c.drawRightString(500, 660, f"${order.total_in_tax:,}")     # the in-tax box
+c.save()
+```
+
+They can draw anything, but because the layout becomes code, they are a
+poor fit for working together with a designer, a PM, or an AI agent.
+Which data lands where is something you learn only by reading the code,
+the code tends to grow long, and maintaining it gets genuinely painful.
+
+On top of that, take the pseudocode above: the only difference between
+the ex-tax box and the in-tax box is whether the y is `690` or `660`. Swap them and nothing
+errors; a plausible-looking page comes out anyway. A field you forgot
+to draw is the same, and the only thing that notices is a pair of eyes.
+
+In Shojiku the layout is a YAML file, not code. Which key appears where
+is visible in the file, and a designer, a PM and an AI agent can all
+edit the same file. A mismatch between the template and the catalog of data items
+(`definitions.yml`) is caught by validate before anything renders, and
+a missing or mistyped params value comes back as a warning with a
+diagnostic code.
 
 ## pdfme
 
-A good tool with the same template + data instinct, including a browser
-designer. The difference is the center of gravity: pdfme is JSON templates +
-TypeScript, at home in Node and the browser. Shojiku's engine is
-locale-agnostic Rust; the CLI, Docker, seven SDKs, browser WASM and the MCP
-server all emit identical bytes, and the paper culture the engine grew up in
-— vertical writing, manuscript grids, wareki dates, locale packs — is built
-in as layers. Signing and verification are engine operations too.
+A good tool with the same template + data idea, including a browser
+designer. If your server side is Node, you do not need to migrate to
+Shojiku.
+
+The big difference is whether you can use it from anything other than
+Node. Shojiku's engine is a Rust binary, so any language can use it.
+Each also has features of its own — Shojiku brings deep vertical
+writing (kinsoku, ruby, tate-chu-yoko), Japanese-era dates, and signing
+and verification — so choose by your requirements.
 
 ## Typst / LaTeX
 
-In a different league as typesetting languages. For prose-led documents —
-papers, books — go there. Business forms, where the data leads and a frame
-must not move a single point, are a different problem, and Shojiku only does
-that one.
-
-## Choosing
-
-- Document resembles a web page, CSS assets exist → WeasyPrint / Prince
-- Full control in code, one language → ReportLab / prawn
-- Prose-led typesetting → Typst
-- Business documents, in files both humans and AI can edit, byte-identical
-  everywhere, verified at the end → Shojiku
+Long, prose-led documents like papers and books are not what Shojiku is
+for; use Typst or LaTeX there. Shojiku targets the printing of business documents a
+few pages long: receipts, delivery notes, forms.

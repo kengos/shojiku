@@ -4,49 +4,65 @@ title: Playground
 
 # Playground
 
-Turn a knob, watch the page change. Each block generates a small template
-from the control values and renders it with the engine in your tab — the
-YAML you see is exactly what rendered.
+Like MDN's interactive examples, the look changes right here as the
+YAML changes. The set of demos is still small, and it will grow.
 
 ## Text style
 
-`textAlign`, `fontSize`, `lineHeight`, `letterSpacing`. The box height is
-computed from `fontSize × lineHeight` — the
-[reference](https://github.com/kengos/shojiku/blob/main/docs/engine/text.md)'s
-rule that a fixed-height box below that product raises `text_overflow` is
-one you can verify with the slider.
+Styles are written almost exactly like CSS; the differences are of the
+`text-align` → `textAlign` kind. Here you can change `textAlign`,
+`fontSize`, `lineHeight` and `letterSpacing` with the controls. The box
+height is computed from `fontSize × lineHeight`, and a fixed-height box
+lower than that raises a `text_overflow` warning. The
+[reference](https://github.com/kengos/shojiku/blob/main/docs/engine/text.md)
+describes this behavior; here you can verify it by moving the slider.
 
 <ClientOnly><PropertyPlayground demo="text" /></ClientOnly>
 
-## Layout: columns from omission
+## Flex layout
 
-The flex row's rule: children WITHOUT a width split the leftover
-equally. Three columns is not a property — it is three children that
-each declined to claim one. Slide the count and the gap.
+Do you know how flex works in CSS?
+
+```css
+.row { display: flex; gap: 8px; }
+.row > div { flex: 1; }  /* widthless children split equally */
+```
+
+Shojiku lays pages out with nearly the same mechanism. In a flex row,
+children without a width split the leftover equally. There is no
+three-column property; put three widthless children in a row and you
+get three columns. Move the count and the gap to see it.
 
 <ClientOnly><PropertyPlayground demo="flex" /></ClientOnly>
 
+Children with and without a width can be mixed. Below, only the left
+card sets `w`, and the other two split what is left. Move the left
+width and the two on the right narrow by the same amount.
+
+<ClientOnly><PropertyPlayground demo="flexw" /></ClientOnly>
+
 ## Fonts
 
-Fonts are packs, and a `fontFamily` may only name a face from a pack the
-active locale `uses` — under ja-JP that is BIZ UDP Gothic and Noto Sans
-Mono here. The Japanese line keeps the locale's default family; the knob
-swaps the Latin specimen. Adding your own font is the same mechanism:
-one pack directory, one `uses` line (see the [tutorials](/tutorials)).
+A typeface is chosen with `fontFamily` in `style`, and only faces
+installed as font packs can be named. This page has the BIZ UDP Gothic
+and Noto Sans Mono packs loaded. The control switches the Latin line's
+`fontFamily`; the Japanese line has no `fontFamily` and stays on the
+locale default, BIZ UDP Gothic. How to add your own font as a pack is
+in the [tutorials](/tutorials).
 
 <ClientOnly><PropertyPlayground demo="font" /></ClientOnly>
 
 ## Character grids and vertical writing
 
-The manuscript-paper `char_grid`. `writingMode` is an item-level key, not a
-style property; `vertical_rl` turns lines into right-to-left columns. Cell
-size is `grid.cellSize`.
+The manuscript-paper `char_grid`. `writingMode` is an item-level key
+rather than a style property; set `vertical_rl` and lines become
+right-to-left columns. Cell size is set with `grid.cellSize`.
 
 <ClientOnly><PropertyPlayground demo="grid" /></ClientOnly>
 
-## The full story
+## To the reference
 
-The complete property list lives in the
+This page holds only the representative properties that are easier to
+understand in motion. The full property list is in the
 [reference](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md)
-— one page per feature. This page holds only the properties whose behavior
-travels faster as motion than as words.
+(one page per feature).

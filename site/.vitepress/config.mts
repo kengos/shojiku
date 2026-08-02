@@ -23,7 +23,7 @@ export default defineConfig({
       lang: "en",
       themeConfig: {
         nav: [
-          { text: "Why", link: "/why", activeMatch: "^/why" },
+          { text: "Concept", link: "/concept", activeMatch: "^/concept" },
           { text: "Gallery", link: "/gallery", activeMatch: "^/gallery" },
           { text: "Tutorials", link: "/tutorials", activeMatch: "^/tutorials" },
           { text: "Playground", link: "/playground", activeMatch: "^/playground" },
@@ -38,7 +38,7 @@ export default defineConfig({
       lang: "ja",
       themeConfig: {
         nav: [
-          { text: "なぜ", link: "/ja/why", activeMatch: "^/ja/why" },
+          { text: "コンセプト", link: "/ja/concept", activeMatch: "^/ja/concept" },
           { text: "ギャラリー", link: "/ja/gallery", activeMatch: "^/ja/gallery" },
           { text: "チュートリアル", link: "/ja/tutorials", activeMatch: "^/ja/tutorials" },
           { text: "プレイグラウンド", link: "/ja/playground", activeMatch: "^/ja/playground" },

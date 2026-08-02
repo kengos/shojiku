@@ -4,7 +4,7 @@ title: Shojiku
 hero:
   name: Shojiku
   text: Write YAML. Get documents.
-  tagline: Invoices, receipts, application forms, manuscript paper. Two YAML files and one JSON render to byte-identical PDFs on every machine — an engine built for AI agents.
+  tagline: Invoices, receipts, application forms, manuscript paper. A YAML template and a JSON of data render to byte-identical PDFs on every machine.
   image:
     src: /brand/hero.png
     alt: The Shojiku hero banner — itself rendered by the Shojiku engine
@@ -22,38 +22,83 @@ hero:
 
 <div class="sj-note">The banner above is output from the engine this site describes — one 200mm×90mm template (<a href="https://github.com/kengos/shojiku/tree/main/examples/dev/site-hero/">templates.yml</a>). The two vertical columns on the right are a manuscript-paper <code>char_grid</code>; the red seal is an <code>ellipse</code> stamped over the blank cells.</div>
 
-## Edit the YAML. Render it right here.
+## Live preview
 
-The editor holds a real bundled example. Rendering happens in the WASM engine inside your tab — nothing is uploaded. The Latin example renders immediately on ~1.2 MB of fonts; one click fetches the Japanese font pack (10 MB) for the Japanese one.
+The WASM engine loaded together with this page. Edit the YAML below and the engine re-renders it on the spot (nothing is sent to a server).
+
+For example, change `fontSize: 14` on `store_name` to `24` and the store name grows right there. The Japanese example loads the Japanese fonts (about 9 MB) at the press of a button.
+
+Here it ran in your browser, but the CLI, Docker and the SDKs all produce the same bytes from the same input.
 
 <ClientOnly><LiveRenderer /></ClientOnly>
 
-## For the documents other engines give up on
+## Architecture
 
-Shojiku grew out of Japanese business paperwork: vertical-writing book typography, 200-character manuscript paper, an A3 résumé spread, an application form whose blank and filled versions render from one template without a single point shifting. Swap the locale pack and the same receipt renders in Traditional Chinese, Simplified Chinese, or Hindi — the geometry never moves.
+Shojiku's main job is generating documents like receipts and the customer copy of a reception slip — an engine for business documents that get printed and handed over, not shown on a screen.
+
+The structure is two pieces: a document template and per-customer parameters. The template is `templates.yml`, the parameters are `params.json`; in production you assemble the parameters from the data in your database.
+
+In the Python SDK:
+
+```python
+import shojiku
+
+client = shojiku.Client(
+    templates="templates/", font_dirs=["packs/fonts"], locale_dirs=["packs/locale"]
+)
+params = {"order": fetch_order(order_id)}  # assembled from your DB
+result = client.generate("receipt-ja", params)
+open("receipt.pdf", "wb").write(result.artifact.bytes)
+```
+
+For how templates are written and what they can express, see the [reference](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md) (one page per feature) and the [tutorials](/tutorials). The skills for handing the writing to an AI are on the [agents](/agents) page.
+
+## Signing, too
+
+Once a receipt is handed out, the question can become whether your server really produced it. Most PDF generation libraries have no signing at all; in Shojiku it is part of the engine's job.
+
+```python
+provider = shojiku.LocalPem(key="signer.key", cert="signer.crt")
+signed = result.artifact.sign(provider)
+open("receipt-signed.pdf", "wb").write(signed.artifact.bytes)
+```
+
+Keep the signed PDF in storage and `verify` can later confirm, electronically, that it is what your server produced. For signing with cloud keys like AWS KMS or Google Cloud KMS there is a two-step API: take the digest from the engine, have KMS produce the signature, hand that signature back. The private key never has to enter your application's process.
+
+## The vertical writing that sat on wish lists for years
+
+Most PDF generation libraries never got around to vertical writing. Shojiku supports it. A vertical-writing novel look, an A3 résumé spread — you can just make them, along with the application forms you see at retail counters and exam-style worksheets. It can be closer to home than it sounds: a Japanese restaurant's specials menu (English text, USD prices, a vertical brand column) ships as one of the bundled examples. Math notation for exam papers (TeX or similar input) is in preparation.
+
+Documents like these can be authored by an AI agent as well, so the tedious part of the work can be handed over.
 
 | | |
 | :---: | :---: |
-| [![Vertical-writing novel](/gallery/typography-novel-ja/preview-2.png)](/gallery) | [![Rirekisho](/gallery/forms-rirekisho-ja/preview-1.png)](/gallery) |
+| [![Vertical-writing novel](/gallery/typography-novel-ja/preview-2.png)](/gallery) | [![Japanese restaurant menu: English text with vertical brand and dish names](/gallery/business-restaurant-menu-us/preview-1.png)](/gallery) |
 
-The [gallery](/gallery) holds every bundled example; CI byte-compares each one on every run.
+For more output examples, see the [gallery](/gallery).
 
-## One engine, all the way to verification
+## Making documents with an AI agent
 
-Authoring, checking and shipping all pass through the same engine. Signing and verification are CLI operations and use no network.
+You do not have to write the template yourself. The MCP server and the skills ship with the engine, so you can just ask an agent. Setup is two commands (the Claude Code form; see the [quickstart](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md) for the details):
 
-1. **validate** — machine-readable diagnostics with stable codes, before anything renders.
-2. **preview** — one PNG per page; look before you ship.
-3. **render** — the same input produces the same bytes from the CLI, Docker, every SDK and the browser.
-4. **sign** — an incremental-update signature; the file stays a readable PDF.
-5. **verify** — reports the byte range the signature actually covers, and names what it did not check.
+```bash
+claude mcp add shojiku -- \
+  docker run --rm -i --entrypoint shojiku-mcp \
+  -v "$PWD:/work" -w /work ghcr.io/kengos/shojiku:edge
+```
 
-The [tutorials](/tutorials) walk the whole path; the [playground](/playground) shows how the template language behaves.
+```bash
+npx skills add kengos/shojiku
+```
 
-## Hand the loop to an AI agent
+Then just ask:
 
-The MCP server ships in the same Docker image. An agent writes YAML, validates, looks at the preview, and iterates against diagnostic codes — the loop this engine was designed around. Details on the [agents](/agents) page.
+> Make a reception-slip template: shop name on top, the reservation number and a QR code in the middle, an order-items table below.
 
-## There is a GUI. It is one way in, not the only one.
+The agent writes the YAML, validates through the MCP server, checks the preview, and fixes until the diagnostics are gone. That is all it takes to get a PDF. See the [agents](/agents) page for the setup.
 
-The [Designer](/designer/) is a visual editor over the same engine, reading and writing the same files your agent does. Open a document in the GUI, fix it in YAML, open it in the GUI again.
+## Fine adjustments by hand, in a GUI
+
+When an AI-authored template has a spot you do not like, the GUI is there for a human to fix it by hand. Open the [Designer](/designer/) in your browser, load the `templates.yml`, and adjust positions and styles on the canvas.
+
+![The Designer with the estimate template open, the total-amount text selected for editing](/media/designer-editor.png)

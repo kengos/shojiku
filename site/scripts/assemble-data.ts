@@ -80,7 +80,7 @@ for (const dir of LIVE) {
 // 5. llms.txt + llms-full.txt from the shared preamble + repo docs.
 const pages = [
   { path: "/index", title: "Shojiku" },
-  { path: "/why", title: "Why Shojiku exists" },
+  { path: "/concept", title: "Concept" },
   { path: "/gallery", title: "Gallery" },
   { path: "/tutorials", title: "Production tutorials" },
   { path: "/playground", title: "Playground" },
