@@ -1,0 +1,26 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example</groupId>
+  <artifactId>renderer</artifactId>
+  <version>1</version>
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>jp.kengos</groupId>
+      <artifactId>shojiku</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+    <!-- The engine payload for the platform you RUN on. This line is the
+         documented shape (like Netty/LWJGL), not a workaround: pick
+         linux-x64 / linux-arm64 / darwin-x64 / darwin-arm64 / win-x64. -->
+    <dependency>
+      <groupId>jp.kengos</groupId>
+      <artifactId>shojiku</artifactId>
+      <version>0.1.0</version>
+      <classifier>linux-x64</classifier>
+    </dependency>
+  </dependencies>
+</project>

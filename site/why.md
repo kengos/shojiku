@@ -1,3 +1,7 @@
+---
+title: Why Shojiku exists
+---
+
 # Why Shojiku exists
 
 Shojiku was built by someone who maintained business-document templates
@@ -113,11 +117,3 @@ would have meant importing the problems.
 
 It is also not a service. There is no account, no upload, and no
 hosted rendering to depend on.
-
----
-
-*Author's note for the draft: this page is strongest with one real
-anecdote at the top — the specific field that broke, or the specific
-format key that was added one time too many. I have kept the three
-failures factual and left the personal detail out rather than invent
-it. Drop in the real story and cut this note.*

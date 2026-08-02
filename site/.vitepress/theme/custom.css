@@ -57,6 +57,25 @@
 .live-diags { list-style: none; margin: 0; padding: 8px 14px; border-top: 1px solid var(--vp-c-divider); font-size: 12.5px; }
 .live-diags code { color: var(--sj-accent); }
 
+/* --- the "this is a render" note under the hero --- */
+.sj-note {
+  border-left: 3px solid var(--sj-accent);
+  background: var(--vp-c-bg-soft);
+  padding: 10px 16px;
+  font-size: 13.5px;
+  color: var(--vp-c-text-2);
+  margin: 8px 0 8px;
+}
+
+/* --- gallery --- */
+.gal { display: flex; flex-direction: column; gap: 40px; margin-top: 24px; }
+.gal-card h3 { margin: 10px 0 4px; }
+.gal-card p { margin: 4px 0; }
+.gal-figs img { border: 1px solid var(--vp-c-divider); background: #fff; max-height: 560px; width: auto; max-width: 100%; }
+.gal-figs.pair { display: flex; gap: 10px; }
+.gal-figs.pair img { max-width: calc(50% - 5px); }
+.gal-src { font-size: 13px; }
+
 .dark {
   --vp-c-brand-1: #8fb0dc;
   --vp-c-brand-2: #a9c4e8;

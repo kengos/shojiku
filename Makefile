@@ -187,6 +187,8 @@ CARGO_IN_DOCKER = docker run --rm \
         proof-php proof-go
 .PHONY: proof-published proof-published-python proof-published-ruby \
         proof-published-dotnet proof-published-java proof-published-js
+.PHONY: proof-deploy site site-lint site-test site-data site-check site-build \
+        site-dev verify\:site lint\:site test\:site
 .PHONY: help verify quiet rust budget fmt fmt-fix clippy test coverage deny \
         verify\:engine verify\:gui verify\:docker lint\:engine lint\:gui \
         test\:engine test\:gui budget\:engine budget\:gui \
@@ -1328,6 +1330,9 @@ gui-dev: ## Vite dev server (HMR) in Docker for gui/ work (http://localhost:5173
 		pnpm install --frozen-lockfile; \
 		pnpm --filter @shojiku/designer-app assemble; \
 		pnpm --filter @shojiku/designer-app dev'
+
+proof-deploy: ## Run every deploy-recipe proof against the public registries (network; on demand)
+	@for l in python ruby node dotnet java; do scripts/install-proof/deploy-$$l.sh || exit 1; done
 
 ## ---- site (the homepage — site/, VitePress + the live wasm renderer) ----
 
