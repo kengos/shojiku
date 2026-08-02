@@ -90,9 +90,21 @@ this pipeline before deciding which crate/package it belongs to.
   Donation-level support (GitHub Sponsors / Buy Me a Coffee-class
   links) is welcome and planned; it funds nothing specific and promises
   nothing in return.
+- **Not shipping a hidden-text channel.** No invisible text layer (PDF
+  text rendering mode 3 or equivalent) whose purpose is to carry content
+  a human reader cannot see. A document that silently instructs the
+  machine reading it is the prompt-injection primitive, and this engine
+  also *signs and verifies* documents — a signature over invisible
+  instructions would attest to something no reader can check, which is
+  the opposite of what signing is for. Machine-facing description
+  belongs in document metadata (`/Info` + XMP), where every reader and
+  every extraction tool can surface it.
 
-These are deliberately deferred, not rejected. Absence from
+Most of these are deliberately deferred, not rejected: absence from
 [engine/features.md](engine/features.md) means unbuilt, not unwanted.
+The two exceptions are standing refusals — Thinreports file/API
+compatibility and the hidden-text channel — which say so in their own
+entries.
 
 ## Core concepts
 
