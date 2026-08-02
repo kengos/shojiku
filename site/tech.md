@@ -4,89 +4,108 @@ title: Tech
 
 # Technology, licensing & the security model
 
-Every claim on this page is checkable against the repository. The
-numbers are measured, not written.
+## Security policy
 
-## The stack
+Everything is designed and implemented on the assumption that no input
+can be trusted. The engine is zero-network: it has no networking
+capability at all.
 
-The engine is a **17-crate Rust workspace**: two-pass template parsing,
-a CSS-like box model, the layout tree (the only contract between layout
-and drawing), two render backends (PDF and PNG), signing and
-verification, and five hosts — CLI, MCP server, browser WASM, a C ABI,
-and an N-API addon — wrapping the same single engine. Layout never
-draws; renderers never re-measure. That split is enforced at crate
-boundaries, which is why every host emits identical bytes.
+Templates, params, fonts, images and PDFs under verification are all
+parsed as untrusted input.
 
-The Designer is TypeScript + React and reaches the engine only through
-WASM. The engine stays locale-agnostic: dates, currency, units and wareki
-come from locale data (ja-JP and en-US are builtins; other locales are
-`packs/locale/` packs), fonts from `packs/fonts/`.
+- Fonts are **sha256-verified per file at load**, and the OS/2
+  embedding-rights bits (fsType) are checked. A font with restricted
+  embedding is refused unless its `manifest.yml` explicitly attests
+  permission
+- Image assets that resolve outside the root are refused
+  (`asset_traversal`), and **remote URLs are refused**. The rendering
+  path contains no network I/O code at all
+- A template resolving outside the template root is refused
+  (`template_escapes_root`). Params-bound dynamic images pass only when
+  the host's policy (allow/deny lists) explicitly permits them
+- The parsers are fuzzed with libFuzzer (`make fuzz`). Inputs that ever
+  crashed are kept, and replayed on every run to prevent regressions
 
-## Quality gates
+**The verification report also states what it did not check.** It
+reports the byte range the signature actually covers, and a signature
+covering only part of the file is treated as a forgery. Trust anchors
+are named explicitly on every call; the machine's certificate store is
+never consulted.
 
-CI runs the same `make` targets a developer runs locally — there is no
-second definition of a gate to drift.
-
-- **100% line coverage, blocking**, across the whole engine workspace
-- `clippy -D warnings`, rustfmt, and a **300-line-per-file cap**
-  (150 effective lines on the GUI side)
-- Every bundled example renders in CI and is **byte-compared** against
-  its committed output — determinism is a gate, not a claim
-- The Designer side: typecheck, zero lint warnings, 100%×4 coverage
-
-## Dependencies & SBOM
+The supply chain is checked too.
 
 - [cargo-deny](https://github.com/kengos/shojiku/blob/main/engine/deny.toml)
-  gates advisories and licenses with **zero advisory ignores** — a
-  dependency that needs one is not adopted
-- **CycloneDX SBOMs are committed** to the repository
-  ([sbom/](https://github.com/kengos/shojiku/tree/main/sbom)):
-  currently engine 235 / gui 258 / sdk-js 127 components, regenerated
-  whenever a lockfile moves
-- On the npm side, pnpm's `minimumReleaseAge` is set to **7 days**:
-  a package published more recently will not install, which closes the
-  freshly-compromised-release window. Postinstall scripts run only from
-  an explicit allowlist
+  checks advisories and licenses, with **zero advisory ignores**. A
+  dependency that needs an ignore to pass is not adopted
+- **A CycloneDX SBOM is committed to the repository**
+  ([sbom/](https://github.com/kengos/shojiku/tree/main/sbom)): currently
+  235 components for the engine, 258 for the gui, 127 for sdk-js,
+  regenerated whenever a lockfile changes
+- On the npm side, pnpm's `minimumReleaseAge` is set to **7 days**. A
+  package published less than 7 days ago fails to install at all, so a
+  compromised release cannot slip in before it gets pulled. postinstall
+  scripts run only from an explicit allowlist
 
-## Licensing
-
-The code is **triple-licensed — Apache-2.0, MIT, or BSD 3-Clause, at
-your option**. Bundled fonts: the BIZ UD and Noto families under SIL
-OFL 1.1, IPAmj Mincho under the IPA Font License. Every pack ships its
-full license text, and each `manifest.yml` states whether the fonts are
-redistributable.
-
-## The security model
-
-**All input is treated as hostile.** Templates, params, fonts, images,
-and PDFs under verification are read by parsers written for untrusted
-bytes.
-
-- Fonts are **sha256-verified per face at load**, and the OS/2
-  embedding-rights bits (fsType) are checked — a restricted font is
-  refused unless explicitly attested
-- Image assets cannot escape their root (`asset_traversal`), and
-  **remote URLs are refused** — there is no network I/O in the render
-  path to give them to
-- A template resolving outside its root is refused
-  (`template_escapes_root`); params-driven dynamic images pass only
-  through the host's explicit allow/deny policy
-- The parsers are **fuzzed** with libFuzzer (an on-demand `make fuzz`;
-  inputs that ever crashed are kept as a corpus and replayed as
-  regressions)
-
-**Rendering, signing and verification use no network** — by design, not
-configuration: the crates involved contain no socket-opening code.
-
-**Verification reports what it did not check.** It states the byte
-range a signature actually covers and treats a valid signature over an
-incomplete range as a forgery. Trust anchors are named explicitly per
-call; the machine's certificate store is never consulted.
-
-**This site holds the same posture**: rendering happens in the WASM
-engine inside your tab, nothing is uploaded, the CSP forbids inline
-scripts (build-time sha256 hashes allow exactly the shipped ones), and
-the analytics are cookieless.
+**This site is built the same way.** Rendering happens in WASM inside
+your browser and nothing is uploaded. The CSP forbids inline scripts
+(at build time, only the sha256 of the actually emitted scripts is
+allowed), and the analytics are cookieless.
 
 **Reporting**: [SECURITY.md](https://github.com/kengos/shojiku/blob/main/SECURITY.md)
 — kengo+shojiku@kengos.jp
+
+## Licensing
+
+The code is **triple-licensed Apache-2.0 / MIT / BSD 3-Clause**, at
+your option. For the bundled fonts, the BIZ UD and Noto families are
+SIL OFL 1.1 and IPAmj Mincho is the IPA Font License. Every pack ships
+its full license text, and whether a font may be redistributed is
+stated in its `manifest.yml`.
+
+## The engine (Rust)
+
+### Stack
+
+The engine is a **17-crate** Rust workspace: template parsing, a
+CSS-like box model, the layout tree, signing and verification. PDF
+generation uses [krilla](https://crates.io/crates/krilla); PNG
+rendering uses [tiny-skia](https://crates.io/crates/tiny-skia).
+
+Five entry points call the same engine: the CLI, the MCP server,
+browser WASM, a C ABI, and N-API. Layout and rendering are separate
+crates, and the renderer only draws the layout tree. Because of this
+structure, the same input produces the same bytes no matter where you
+call from.
+
+The engine itself is locale-agnostic. Dates, currency, units and
+Japanese-era formatting come from locale data: ja-JP and en-US are
+built in, and the rest are packs under `packs/locale/`. Fonts come from
+packs under `packs/fonts/`.
+
+### Quality rules
+
+- **100% line coverage** across the whole workspace; anything less
+  fails CI
+- `clippy -D warnings` and rustfmt
+- A **300-line cap** per file
+- Every bundled example is rendered and **byte-compared** against its
+  committed output
+- CI runs the same `make` targets a developer runs locally; there is no
+  CI-only definition
+
+## The Designer
+
+### Stack
+
+TypeScript + React, styled with Tailwind CSS and Headless UI, built
+with Vite. It talks to the engine through WASM.
+
+### Quality rules
+
+- Lint and formatting by
+  [Biome](https://github.com/kengos/shojiku/blob/main/gui/biome.json),
+  with zero warnings allowed
+- TypeScript typecheck
+- **100% coverage** in all four packages
+- An effective **150-line cap** per file (blank lines and comments are
+  not counted)

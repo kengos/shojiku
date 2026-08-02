@@ -4,7 +4,7 @@ title: Shojiku
 hero:
   name: Shojiku
   text: YAMLを書けば、帳票になる。
-  tagline: 請求書・領収書・申込書・原稿用紙。二枚のYAMLと一つのJSONから、どのマシンでも同じバイト列のPDFを出す、AIエージェント前提の帳票エンジン。
+  tagline: 請求書、領収書、申込書、原稿用紙。テンプレートのYAMLとデータのJSONから、どのマシンでも同じバイト列のPDFを出す帳票エンジンです。
   image:
     src: /brand/hero.png
     alt: Shojikuのヒーローバナー。この画像自体がShojikuのレンダリング出力
@@ -22,38 +22,83 @@ hero:
 
 <div class="sj-note">上のバナーは、このサイトが説明しているエンジンそのものの出力です（200mm×90mmのテンプレート1枚。<a href="https://github.com/kengos/shojiku/tree/main/examples/dev/site-hero/">templates.yml</a>）。右の縦書き二列は原稿用紙スタイルの <code>char_grid</code> で、朱印は空白マスの上に置いた <code>ellipse</code> です。</div>
 
-## YAMLを書き換えて、その場でレンダリングする
+## ライブプレビュー
 
-エディタの中身は同梱例の実ファイルです。レンダリングはあなたのタブの中のWASMエンジンが行い、何もアップロードされません。最初はラテン文字の例（約1.2MBのフォント）を即時に、日本語の例はボタン一つで日本語フォント一式（10MB）を読み込んでから描きます。
+このページを開いた時点で、WASMのエンジンがブラウザに読み込まれています。下のYAMLを書き換えると、エンジンがその場でレンダリングし直します（※ サーバーには何も送信されません）。
+
+例えば、`store_name`の`fontSize: 14`を`24`に変更してみましょう。店名がその場で大きくなります。日本語の例を試すときは、ボタンを押して日本語フォント（約9MB）を読み込んでください。
+
+今回はブラウザ上で動かしましたが、CLIでもDockerでもSDKでも、同じ入力からは同じバイト列のPDFが出ます。
 
 <ClientOnly><LiveRenderer /></ClientOnly>
 
-## ふつうのPDFエンジンが諦める文書のために
+## アーキテクチャ
 
-Shojikuは日本の商習慣の帳票から生まれました。縦書きの小説組版、200字詰の原稿用紙、A3見開きの履歴書、記入済とブランクを1ptもずらさず出し分ける申込書。同じテンプレートがロケールパックの差し替えだけで繁体字・簡体字・ヒンディー語の領収書にもなります。
+Shojikuのメインの機能は、領収書や、受付票のお客様控えのような帳票の生成です。画面で見せるためではなく、印刷して渡すことを前提にした、業務用の帳票エンジンです。
+
+構成は、文書のテンプレートと、お客様ごとに異なるパラメータの二つです。テンプレートは`templates.yml`、パラメータは`params.json`で、実際の運用ではDBに登録されたデータからパラメータを組み立てて渡します。
+
+PythonのSDKではこう書きます。
+
+```python
+import shojiku
+
+client = shojiku.Client(
+    templates="templates/", font_dirs=["packs/fonts"], locale_dirs=["packs/locale"]
+)
+params = {"order": fetch_order(order_id)}  # DBのデータから組み立てる
+result = client.generate("receipt-ja", params)
+open("receipt.pdf", "wb").write(result.artifact.bytes)
+```
+
+テンプレートの書き方やできる表現は、[リファレンス](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md)（機能ごとに1ページ）と[チュートリアル](/ja/tutorials)を参考にしてください。テンプレート作成をAIに任せるためのスキルは[エージェント](/ja/agents)にあります。
+
+## 署名もできます
+
+領収書のような帳票は、配ったあとに「本当にこのサーバーが出力したものか」が問題になることがあります。多くのPDF生成ライブラリは電子署名に対応していませんが、Shojikuは署名までサポートしています。
+
+```python
+provider = shojiku.LocalPem(key="signer.key", cert="signer.crt")
+signed = result.artifact.sign(provider)
+open("receipt-signed.pdf", "wb").write(signed.artifact.bytes)
+```
+
+署名したPDFをストレージに保存しておけば、あとから`verify`で、正しくサーバーから出力されたものであることを電子的に確認できます。AWS KMSやGoogle Cloud KMSのようなクラウドの鍵で署名したい場合のために、二段構えのAPIも用意しています。エンジンからdigestを受け取り、KMSで署名を作り、その署名をエンジンに渡す流れです。秘密鍵をアプリのプロセスに持ち込む必要はありません。
+
+## 長年要望されていた縦書きにも対応
+
+ほとんどのPDF生成ライブラリでは、縦書きに対応していませんでした。Shojikuは対応しています。縦書きの小説のような見た目も、A3見開きの履歴書も作れます。小売店などでよく見かける申込書や、試験問題のプリントも作れます。数学のテスト向けの数式組版（TeXなど）は準備中です。
+
+こうした帳票も、AIエージェントに頼めばテンプレートから作れます。退屈な帳票作成の仕事は、任せてしまえます。
 
 | | |
 | :---: | :---: |
 | [![縦書き小説](/gallery/typography-novel-ja/preview-2.png)](/ja/gallery) | [![履歴書](/gallery/forms-rirekisho-ja/preview-1.png)](/ja/gallery) |
 
-実例は[ギャラリー](/ja/gallery)に並べています。どれもリポジトリ同梱で、CIがバイト単位で出力を照合しています。
+その他の出力例は[ギャラリー](/ja/gallery)を確認してみてください。
 
-## 検証まで、一つのエンジンで
+## AIエージェントでの帳票の作成
 
-作る・確かめる・配るの全工程が同じエンジンを通ります。署名と検証はCLIの仕事で、ネットワークを使いません。
+テンプレートを自分で書く必要はありません。MCPサーバとスキルが同梱されているので、AIエージェントにそのまま頼めます。セットアップは2コマンドです（Claude Codeの例。詳細は[クイックスタート](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md)を確認してみてください）。
 
-1. **validate** — 安定した診断コードつきで、レンダリング前に間違いを機械可読に指摘します。
-2. **preview** — ページごとのPNG。目で見てから出荷できます。
-3. **render** — 同じ入力なら、CLIでもDockerでもSDKでもブラウザでも同じバイト列のPDF。
-4. **sign** — 増分更新の電子署名。署名後もPDFとして開けます。
-5. **verify** — 署名が実際に覆うバイト範囲を報告し、検証しなかったことも明示します。
+```bash
+claude mcp add shojiku -- \
+  docker run --rm -i --entrypoint shojiku-mcp \
+  -v "$PWD:/work" -w /work ghcr.io/kengos/shojiku:edge
+```
 
-進め方は[チュートリアル](/ja/tutorials)に、テンプレートの書き味は[プレイグラウンド](/ja/playground)にあります。
+```bash
+npx skills add kengos/shojiku
+```
 
-## AIエージェントに全工程を渡す
+あとは頼むだけです。
 
-MCPサーバが同じDockerイメージに入っています。エージェントはYAMLを書き、validateし、プレビューを見て、診断コードに対して修正を繰り返します。このループのためにエンジンを設計しました。詳細は[エージェント](/ja/agents)へ。
+> 受付票のテンプレートを作って。上に店名、真ん中に予約番号とQRコード、下に注文の明細表。
 
-## GUIもある。ただし唯一の入口ではない
+エージェントがYAMLを書き、MCPサーバで検証し、プレビューを確認し、診断が消えるまで直します。これで簡単にPDFが作れます。詳細は[エージェント](/ja/agents)を確認してみてください。
 
-[Designer](/designer/)は同じエンジンの上のビジュアルエディタで、エージェントと同じファイルを読み書きします。GUIで開いて、YAMLで直して、またGUIで開けます。
+## GUIでの細かい修正も可能
+
+AIが出力したテンプレートで気に入らないところを、人間が手で直すためのGUIも用意しました。使い方は、[Designer](/designer/)をブラウザで開いて`templates.yml`を読み込み、キャンバス上で位置やスタイルを修正するだけです。
+
+![Designerで見積書テンプレートを開き、合計金額のテキストを選択して編集しているところ](/media/designer-editor.png)

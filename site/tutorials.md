@@ -19,7 +19,7 @@ docker run --rm ghcr.io/kengos/shojiku:edge > receipt.pdf
 
 Lifting a template out of the image, editing it and previewing the result
 is the [quickstart](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md)'s
-job — the edit → validate → preview loop lives there.
+job; the edit → validate → preview loop lives there.
 
 ## 2. Embed it in your app (the published SDKs)
 
@@ -77,30 +77,69 @@ if not result.success:
 open("out.pdf", "wb").write(result.artifact.bytes)
 ```
 
-Vendor the repository's `packs/` next to your templates — trimmed to the
-packs your locales actually use.
+Bundle the font and locale packs with your app, the same way you bundle
+the templates. The release tarball is the easiest way to get the full
+set, and you can delete the packs for locales you do not use.
 
-## 3. Add a logo and your own font
+```bash
+wget https://github.com/kengos/shojiku/releases/download/v0.1.0/shojiku-0.1.0-packs.tar.gz
+tar xzf shojiku-0.1.0-packs.tar.gz   # unpacks packs/fonts and packs/locale
+```
 
-The first two things a real template needs.
+## 3. Use your own images
 
-**Images** sit next to the template and are referenced by `src`. The root
-is the template file's directory (the CLI can move it with
-`--assets-dir`); `data:` URIs, inline SVG and params-bound dynamic images
-work too. The normative page is
-[image.md](https://github.com/kengos/shojiku/blob/main/docs/engine/image.md).
+This is for putting your own image, a logo say, into a template. Put the
+file in an `assets/` directory next to the template file.
+
+```
+templates/
+  receipt-ja/
+    templates.yml
+    assets/
+      logo.png
+```
+
+With this layout, a relative path in the template is all it takes to
+draw it. There is no step where you hand the engine the bytes.
 
 ```yaml
 - type: image
   box: { w: 120, h: 40 }
-  src: assets/logo.svg
+  src: assets/logo.png
 ```
 
-**Fonts are packs.** Put the font files and a `manifest.yml` (one license
-+ a sha256 per face) under `packs/fonts/<id>/`, then add the pack to the
-locale's `uses` via an overlay. The sha256 and the face's embedding
-rights (fsType) are verified at load. The normative page is
-[fonts.md](https://github.com/kengos/shojiku/blob/main/docs/engine/fonts.md).
+Paths resolve against the template file's directory; the CLI can move
+the root with `--assets-dir`. `data:` URIs, inline SVG and params-bound
+dynamic images are also available. The exact rules are in
+[image.md](https://github.com/kengos/shojiku/blob/main/docs/engine/image.md).
+
+## 4. Use a font beyond the bundled packs
+
+This is for a family you picked in the [Designer](/designer/)'s font
+picker, or a corporate font of your own. On the template side the
+selection is the `fontFamily` style property.
+
+```yaml
+# templates.yml — set it on a container and the elements below inherit it
+style: { fontFamily: my-corporate }
+```
+
+To make that id resolve, the engine needs a font pack, registered in the
+locale.
+
+**If the Designer picked it**, the export kit (zip) already contains the
+pack, license file included. Unzip it into `packs/fonts/` and the pack
+side is done.
+
+**If you have the TTF**, write the pack yourself. Put the font file
+under `packs/fonts/my-corporate/` and declare one license plus a sha256
+per face in `manifest.yml`. The sha256 and the face's embedding rights
+(fsType) are verified at load.
+
+```bash
+mkdir -p packs/fonts/my-corporate
+sha256sum packs/fonts/my-corporate/MyCorporate-Regular.ttf   # goes into the manifest
+```
 
 ```yaml
 # packs/fonts/my-corporate/manifest.yml
@@ -113,23 +152,37 @@ faces:
     sha256: <output of sha256sum>
 ```
 
+Either way, finish by adding the pack to the locale's `uses`. A one-file
+overlay is enough.
+
 ```yaml
 # packs/locale/ja-jp.yml (an overlay over the builtin ja-JP)
 fonts:
   uses: [biz-ud, ipamj-mincho, noto-sans-mono, my-corporate]
 ```
 
-Now `fontFamily: my-corporate` resolves. Two things to watch: `uses`
-REPLACES the list (state the whole set, not just your addition), and a
-`fontFamily` naming a pack the locale doesn't `use` silently falls back.
-The Dockerfile recipes below `COPY packs/` wholesale, so your own pack
-rides the same line.
+`uses` restates the whole list rather than appending, so keep the
+bundled packs in place when you add yours. A `fontFamily` naming a pack
+the locale does not `use` warns `unknown_font_family` and falls back to
+the locale's default font.
 
-## 4. Ship it (the Dockerfile recipes)
+Pack lookup works the same in the CLI and the SDKs: the search list
+grows from explicit directories, to the environment, to `./packs/fonts`
+and `./packs/locale` in the current directory. In an SDK the explicit
+directories are client options (the `font_dirs` / `locale_dirs` passed
+in section 2's Python example). The environment variables are
+`SHOJIKU_FONT_DIR` / `SHOJIKU_LOCALE_DIR` (PATH-separated); the CLI
+flags are `--font-dir` / `--locale-dir`. The Dockerfiles in the next
+section `COPY packs/` wholesale, so your own pack rides the same line.
+The exact rules (auto-fetch via pinned `url:`, fallback chains) are in
+[fonts.md](https://github.com/kengos/shojiku/blob/main/docs/engine/fonts.md).
 
-Once the template is right, bake app + template + packs into one image.
-These are the real recipe files for all five languages — the same files
-`make proof-deploy` builds and renders against the public registries.
+## 5. Ship it (the Dockerfile recipes)
+
+Once the template is right, bake the app, the templates and the packs
+into one image. These are the real recipe files for all five languages —
+the same files `make proof-deploy` builds and renders against the public
+registries.
 
 ::: code-group
 
@@ -152,7 +205,7 @@ come from the DB:
 
 <<< ../examples/deploy/python/render.py{python}
 
-## 5. Sign it, verify it
+## 6. Sign it, verify it
 
 Sign before you distribute; the receiving side verifies. Neither touches
 the network, and there is deliberately no flag that takes a passphrase on
@@ -165,7 +218,7 @@ shojiku verify --input signed.pdf --anchor signer.crt
 
 `verify` prints a JSON report that includes the byte range the signature
 actually covers, and exits non-zero when the document does not verify. The
-certs you trust are named with `--anchor` every time — the machine's trust
+certs you trust are named with `--anchor` every time; the machine's trust
 store is never consulted.
 
 ## Next

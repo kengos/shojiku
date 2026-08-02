@@ -7,11 +7,14 @@ import { computed, onMounted, ref, watch } from "vue";
 import type { Diagnostic } from "../../../src/lib/engineClient.ts";
 import {
   clampFlexKnobs,
+  clampFlexWidthKnobs,
   clampFontKnobs,
   clampGridKnobs,
   clampTextKnobs,
   FLEX_KNOB_DEFAULTS,
+  FLEX_WIDTH_KNOB_DEFAULTS,
   flexDemoTemplate,
+  flexWidthDemoTemplate,
   FONT_KNOB_DEFAULTS,
   fontDemoTemplate,
   GRID_KNOB_DEFAULTS,
@@ -21,11 +24,12 @@ import {
 } from "../../../src/lib/playground.ts";
 import { engine, japaneseLoaded, loadJapanese, pageUrl, render } from "../engine.ts";
 
-const props = defineProps<{ demo: "text" | "grid" | "flex" | "font" }>();
+const props = defineProps<{ demo: "text" | "grid" | "flex" | "flexw" | "font" }>();
 
 const text = ref({ ...TEXT_KNOB_DEFAULTS });
 const grid = ref({ ...GRID_KNOB_DEFAULTS });
 const flex = ref({ ...FLEX_KNOB_DEFAULTS });
+const flexw = ref({ ...FLEX_WIDTH_KNOB_DEFAULTS });
 const font = ref({ ...FONT_KNOB_DEFAULTS });
 const img = ref("");
 const diagnostics = ref<Diagnostic[]>([]);
@@ -42,6 +46,8 @@ const template = computed(() => {
       return gridDemoTemplate(clampGridKnobs(grid.value));
     case "flex":
       return flexDemoTemplate(clampFlexKnobs(flex.value));
+    case "flexw":
+      return flexWidthDemoTemplate(clampFlexWidthKnobs(flexw.value));
     default:
       return fontDemoTemplate(clampFontKnobs(font.value));
   }
@@ -76,7 +82,7 @@ async function enableJp(): Promise<void> {
   await rerender();
 }
 
-watch([text, grid, flex, font], () => void rerender(), { deep: true });
+watch([text, grid, flex, flexw, font], () => void rerender(), { deep: true });
 
 onMounted(async () => {
   await engine();
@@ -118,6 +124,11 @@ onMounted(async () => {
           </label>
           <label>gap {{ flex.gap }}
             <input v-model.number="flex.gap" type="range" min="0" max="24" step="2" />
+          </label>
+        </div>
+        <div v-else-if="demo === 'flexw'" class="pg-knobs">
+          <label>width {{ flexw.width }}
+            <input v-model.number="flexw.width" type="range" min="60" max="180" step="5" />
           </label>
         </div>
         <div v-else-if="demo === 'font'" class="pg-knobs">

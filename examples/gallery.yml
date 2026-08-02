@@ -148,10 +148,14 @@ entries:
     blurb_ja: 横位置の証書。二重罫の飾り枠と全面塗り足し。
   - dir: typography/kokugo-print-ja
     preview: preview-1.png
-    title_en: Kokugo worksheet
-    title_ja: 国語プリント
-    blurb_en: Horizontal + vertical char grids with ruby and practice cells.
-    blurb_ja: 横書きと縦書きの文字マスにルビとなぞり書きマス。小学校の漢字プリントがそのまま作れる。
+    title_en: Kokugo reading worksheet
+    title_ja: 国語の読解プリント
+    blurb_en: >-
+      A framed vertical passage from Run, Melos! with ruby, then vertical
+      questions read right to left with answer boxes and kanji cells — a
+      grade-school reading-comprehension sheet.
+    blurb_ja: >-
+      走れメロスの縦書き本文にルビ、右から読む縦書きの設問に解答欄と漢字マス。小学校の読解プリントがそのまま作れる。
   - dir: typography/genkoyoshi-ja
     preview: preview-1.png
     title_en: Genkoyoshi (vertical)

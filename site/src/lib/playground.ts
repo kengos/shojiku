@@ -160,6 +160,55 @@ export function clampFlexKnobs(k: FlexKnobs): FlexKnobs {
   };
 }
 
+export interface FlexWidthKnobs {
+  width: number;
+}
+
+export const FLEX_WIDTH_KNOB_DEFAULTS: FlexWidthKnobs = { width: 80 };
+
+/** The fixed-width flex demo: the FIRST child claims a width, and the two
+ * widthless children split only what is left. One knob — the claimed
+ * width — so the trade reads at a glance. */
+export function flexWidthDemoTemplate(k: FlexWidthKnobs): string {
+  const card = (label: string, w?: number): string[] => [
+    "      - type: container",
+    w === undefined
+      ? "        box: { h: 96, padding: 8 }"
+      : `        box: { w: ${w}, h: 96, padding: 8 }`,
+    '        style: { borderWidth: 0.8, borderColor: "#1a3c6e" }',
+    "        items:",
+    "          - type: text",
+    '            box: { w: "100%", h: 16 }',
+    `            text: ${label}`,
+    "            style: { fontSize: 11, textAlign: center }",
+  ];
+  return (
+    [
+      'version: "0.1.0"',
+      "page: { size: A5, margin: 24 }",
+      "defaults: { locale: en-US }",
+      "sections:",
+      "  body:",
+      "    type: flow",
+      "    items:",
+      "      - type: text",
+      '        box: { w: "100%", h: 18 }',
+      "        text: The first child claims a width; the other two split the leftover.",
+      "        style: { fontSize: 10 }",
+      "      - type: container",
+      '        box: { w: "100%", direction: row, gap: 12 }',
+      "        items:",
+      ...[...card(`w:${k.width}`, k.width), ...card("auto"), ...card("auto")].map((l) => "    " + l),
+    ].join("\n") + "\n"
+  );
+}
+
+export function clampFlexWidthKnobs(k: FlexWidthKnobs): FlexWidthKnobs {
+  // The lower bound keeps the card's own `w:NN` label on one line — below it
+  // the demo would ship a text_overflow warning as its first impression.
+  return { width: Math.min(180, Math.max(60, Number.isFinite(k.width) ? Math.round(k.width) : 80)) };
+}
+
 export interface FontKnobs {
   family: "biz-udp-gothic" | "noto-sans-mono";
   weight: "normal" | "bold";

@@ -3,11 +3,14 @@
 import { describe, expect, it } from "vitest";
 import {
   clampFlexKnobs,
+  clampFlexWidthKnobs,
   clampFontKnobs,
   clampGridKnobs,
   clampTextKnobs,
   FLEX_KNOB_DEFAULTS,
+  FLEX_WIDTH_KNOB_DEFAULTS,
   flexDemoTemplate,
+  flexWidthDemoTemplate,
   FONT_KNOB_DEFAULTS,
   fontDemoTemplate,
   GRID_KNOB_DEFAULTS,
@@ -52,6 +55,17 @@ describe("flexDemoTemplate", () => {
   });
 });
 
+describe("flexWidthDemoTemplate", () => {
+  it("gives only the first card a width; the other two stay widthless", () => {
+    const t = flexWidthDemoTemplate({ width: 120 });
+    expect(t.match(/- type: container/g)?.length).toBe(4); // the row + 3 cards
+    expect(t).toContain("box: { w: 120, h: 96, padding: 8 }");
+    expect(t.match(/box: \{ h: 96, padding: 8 \}/g)?.length).toBe(2);
+    expect(t).toContain("text: w:120");
+    expect(t.match(/text: auto/g)?.length).toBe(2);
+  });
+});
+
 describe("fontDemoTemplate", () => {
   it("keeps the JP line on the locale default and swaps only the Latin line", () => {
     const t = fontDemoTemplate({ family: "noto-sans-mono", weight: "bold", fontSize: 20 });
@@ -88,6 +102,13 @@ describe("clamping", () => {
     expect(clampFlexKnobs({ columns: Number.NaN, gap: Number.NaN })).toEqual({ columns: 3, gap: 12 });
   });
 
+  it("clamps hostile flex-width knobs", () => {
+    expect(clampFlexWidthKnobs({ width: 5000 })).toEqual({ width: 180 });
+    expect(clampFlexWidthKnobs({ width: 1 })).toEqual({ width: 60 });
+    expect(clampFlexWidthKnobs({ width: 80.6 })).toEqual({ width: 81 });
+    expect(clampFlexWidthKnobs({ width: Number.NaN })).toEqual({ width: 80 });
+  });
+
   it("clamps hostile font knobs", () => {
     expect(clampFontKnobs({ family: "comic-sans" as never, weight: "900" as never, fontSize: 900 })).toEqual({
       family: "biz-udp-gothic",
@@ -106,6 +127,7 @@ describe("clamping", () => {
     expect(clampTextKnobs(TEXT_KNOB_DEFAULTS)).toEqual(TEXT_KNOB_DEFAULTS);
     expect(clampGridKnobs(GRID_KNOB_DEFAULTS)).toEqual(GRID_KNOB_DEFAULTS);
     expect(clampFlexKnobs(FLEX_KNOB_DEFAULTS)).toEqual(FLEX_KNOB_DEFAULTS);
+    expect(clampFlexWidthKnobs(FLEX_WIDTH_KNOB_DEFAULTS)).toEqual(FLEX_WIDTH_KNOB_DEFAULTS);
     expect(clampFontKnobs(FONT_KNOB_DEFAULTS)).toEqual(FONT_KNOB_DEFAULTS);
   });
 });

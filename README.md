@@ -248,7 +248,7 @@ template** with different data:
 [Shipping labels](examples/business/shipping-labels-ja/) (2×3 n-up labels with 〒 cells and an overflowing contents list),
 [Rirekisho (JIS-style résumé)](examples/forms/rirekisho-ja/) (A3 spread, blank ↔ filled from one template),
 [Certificate (ja)](examples/forms/certificate-ja/) (Landscape certificate with a double-rule frame and full bleed),
-[Kokugo worksheet](examples/typography/kokugo-print-ja/) (Horizontal + vertical char grids with ruby and practice cells),
+[Kokugo reading worksheet](examples/typography/kokugo-print-ja/) (A framed vertical passage from Run, Melos! with ruby, then vertical questions read right to left with answer boxes and kanji cells — a grade-school reading-comprehension sheet),
 [Genkoyoshi (vertical)](examples/typography/genkoyoshi-ja/) (200-character manuscript paper with Aozora ruby),
 [Genkoyoshi (horizontal)](examples/typography/genkoyoshi-yoko-ja/) (The 400-character horizontal sheet),
 [Receipt (ja)](examples/business/receipt-ja/) (The quickstart document: containers with `%` widths, a boxed total, tax breakdown, issuer block and QR),
