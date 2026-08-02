@@ -1,4 +1,4 @@
-// The site's font tiering (docs/TODO.md § HP1): which faces of which packs
+// The site's font tiering: which faces of which packs
 // ship to the live renderer, in which tier. Whole packs are too heavy for a
 // marketing page (biz-ud is 18 MB, ipamj-mincho 45 MB > the 25 MiB Pages
 // file cap), so each tier ships a SUBSET manifest naming only the faces it

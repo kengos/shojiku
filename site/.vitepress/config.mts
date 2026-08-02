@@ -1,10 +1,9 @@
 import { defineConfig } from "vitepress";
 import { headTags, isJapanese } from "../src/lib/seo.ts";
 
-// The homepage pitch site (docs/TODO.md § HP1): seven pages, English canonical
-// with a /ja twin per page. Reference documentation stays in docs/ — this site
-// links to it and restates nothing (the anti-duplication rules live in the
-// HP1 item and docs/code-map/repo.md).
+// The homepage pitch site: seven pages, English canonical with a /ja twin per
+// page. Reference documentation stays in docs/ — this site links to it and
+// restates nothing (docs/code-map/repo.md § site/ carries the rest).
 
 // The origin the site is served from. It is baked into the sitemap's <loc>s,
 // every canonical and every social-card URL, so it moves the day a custom
@@ -21,7 +20,20 @@ const DESCRIPTION_JA =
 export default defineConfig({
   title: "Shojiku",
   description: DESCRIPTION,
-  head: [["link", { rel: "icon", type: "image/png", href: "/brand/icon.png" }]],
+  head: [
+    ["link", { rel: "icon", type: "image/png", href: "/brand/icon.png" }],
+    // Search Console's ownership proof for the URL-prefix property. It must stay
+    // on a served page for the property to remain verified — Google re-checks it,
+    // so removing this tag later un-verifies the site. The HTML-file method is not
+    // an option here: Cloudflare Pages 308s /<name>.html to the extensionless path.
+    [
+      "meta",
+      {
+        name: "google-site-verification",
+        content: "Qnnp8t3auuCZPt5uRPOEBRpkVL-R6NawlyJ8pom3_rI",
+      },
+    ],
+  ],
   cleanUrls: true,
   // Emitted as /sitemap.xml at build time — the URL list Search Console and
   // Bing consume, hreflang pairs included.
@@ -45,7 +57,7 @@ export default defineConfig({
   srcExclude: ["src/**"],
   lastUpdated: false,
   // /designer/ is not a VitePress page — the Designer app is merged into the
-  // deployed output beside the site (HP1: one Pages project, path-mounted).
+  // deployed output beside the site (one Pages project, path-mounted).
   ignoreDeadLinks: [/^\/designer\//],
 
   locales: {
