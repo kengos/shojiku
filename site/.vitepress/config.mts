@@ -21,7 +21,20 @@ const DESCRIPTION_JA =
 export default defineConfig({
   title: "Shojiku",
   description: DESCRIPTION,
-  head: [["link", { rel: "icon", type: "image/png", href: "/brand/icon.png" }]],
+  head: [
+    ["link", { rel: "icon", type: "image/png", href: "/brand/icon.png" }],
+    // Search Console's ownership proof for the URL-prefix property. It must stay
+    // on a served page for the property to remain verified — Google re-checks it,
+    // so removing this tag later un-verifies the site. The HTML-file method is not
+    // an option here: Cloudflare Pages 308s /<name>.html to the extensionless path.
+    [
+      "meta",
+      {
+        name: "google-site-verification",
+        content: "Qnnp8t3auuCZPt5uRPOEBRpkVL-R6NawlyJ8pom3_rI",
+      },
+    ],
+  ],
   cleanUrls: true,
   // Emitted as /sitemap.xml at build time — the URL list Search Console and
   // Bing consume, hreflang pairs included.
