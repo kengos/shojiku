@@ -28,6 +28,14 @@ check whose empty output read as "all covered").
   the match count and the stale count were 0. Printing the per-module
   count of imports that legitimately REMAIN is what proved the sweep
   reached the modules at all.
+- **zsh also refuses an unquoted GLOB it cannot match, so the command
+  never runs.** `grep -rn 'Foo {' engine --include=*.rs` dies with
+  `(eval):1: no matches found: --include=*.rs` — zsh expands the
+  argument against the CWD first (bash passes it through), and with the
+  whole pipeline dead the `| wc -l` at the end still prints a
+  reassuring `0`. A census that comes back zero next to a shell error
+  line is not a census. Quote every glob that is meant for the tool
+  rather than the shell (`--include='*.rs'`, `-name '*.md'`).
 - **This repo's shell is zsh, which does NOT word-split an unquoted
   `$var`** — in EVERY shape it appears: `set -- $r` inside a loop over
   rows, and `for s in $syms` over a captured multi-line list (which

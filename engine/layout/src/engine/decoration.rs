@@ -9,10 +9,14 @@
 //! templates). Per-side widths/colors and `double` styles emit one
 //! filled rect per line, centered on the box edge like a stroke is, so
 //! the uniform and per-side forms cover the same pixels at equal widths.
+//!
+//! This module RESOLVES; [`paint`] draws. The split exists because a
+//! pagination fragment re-emits its box's decoration at its own height,
+//! and resolving again per fragment would repeat every warning below.
 
 use crate::color::{parse_color, snippet};
 use crate::style::ComputedStyle;
-use crate::tree::{Corners, LayoutItem, LineShape, RectShape};
+use crate::tree::{Corners, LayoutItem};
 use shojiku_core::{BorderStyleKind, FontRel};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::Basis;
@@ -20,96 +24,11 @@ use shojiku_layout_box::Basis;
 use super::Ctx;
 
 mod dash;
+mod paint;
 mod radius;
 
 pub(super) use dash::dash_pattern;
-
-/// Fully resolved per-side border paint: widths (sanity-clamped),
-/// colors, and line styles, `[top, right, bottom, left]`.
-pub(super) struct SideBorders {
-    pub widths: [f64; 4],
-    pub colors: [(f32, f32, f32); 4],
-    pub styles: [BorderStyleKind; 4],
-}
-
-/// Emits the per-side border lines for a border box at `(x, y, w, h)`:
-/// each side with a positive width becomes one (solid) or two
-/// (`double`, a third of the width each) filled rects centered on the
-/// edge, so per-side and uniform-stroke forms cover the same pixels at
-/// equal widths. Corners overlap; paint order top, right, bottom, left.
-pub(super) fn push_side_borders(
-    items: &mut Vec<LayoutItem>,
-    borders: &SideBorders,
-    (x, y, w, h): (f64, f64, f64, f64),
-    opacity: f32,
-) {
-    for (side, &width) in borders.widths.iter().enumerate() {
-        if width <= 0.0 {
-            continue;
-        }
-        // The side's center line, as (x, y, w, h) of a width-thick band.
-        let band = match side {
-            0 => (x - width / 2.0, y - width / 2.0, w + width, width),
-            1 => (x + w - width / 2.0, y - width / 2.0, width, h + width),
-            2 => (x - width / 2.0, y + h - width / 2.0, w + width, width),
-            _ => (x - width / 2.0, y - width / 2.0, width, h + width),
-        };
-        // A dashed/dotted side cannot be a filled band — the gaps are the
-        // point — so it becomes a stroked centre line carrying the
-        // pattern. Solid and `double` keep the filled-band emission, whose
-        // pixels match the uniform stroke at equal widths.
-        if let Some(pattern) = dash_pattern(borders.styles[side], width) {
-            let (bx, by, bw, bh) = band;
-            let (x1, y1, x2, y2) = if side % 2 == 0 {
-                let mid = by + bh / 2.0;
-                (bx, mid, bx + bw, mid)
-            } else {
-                let mid = bx + bw / 2.0;
-                (mid, by, mid, by + bh)
-            };
-            items.push(LayoutItem::Line(LineShape {
-                x1,
-                y1,
-                x2,
-                y2,
-                width,
-                color: borders.colors[side],
-                opacity,
-                dash: Some(pattern),
-            }));
-            continue;
-        }
-        // Only solid and `double` reach here (the patterned styles took the
-        // line path above), so this is an if/else rather than a match with
-        // an arm no input can select.
-        let stripes: &[(f64, f64)] = if borders.styles[side] == BorderStyleKind::Double {
-            // CSS double: two lines of a third each, a third apart.
-            &[(0.0, 1.0 / 3.0), (2.0 / 3.0, 1.0 / 3.0)]
-        } else {
-            // One band covering the full width.
-            &[(0.0, 1.0)]
-        };
-        for &(offset, share) in stripes {
-            let (bx, by, bw, bh) = band;
-            let (sx, sy, sw, sh) = if side % 2 == 0 {
-                (bx, by + bh * offset, bw, bh * share)
-            } else {
-                (bx + bw * offset, by, bw * share, bh)
-            };
-            items.push(LayoutItem::Rect(RectShape {
-                x: sx,
-                y: sy,
-                w: sw,
-                h: sh,
-                stroke: None,
-                stroke_width: 0.0,
-                fill: Some(borders.colors[side]),
-                opacity,
-                ..Default::default()
-            }));
-        }
-    }
-}
+pub(in crate::engine) use paint::{push_side_borders, DecorationPaint, SideBorders};
 
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Prepends the decoration for a border box at `(x, 0)` (atom
@@ -127,6 +46,31 @@ impl<'a, 'b> Ctx<'a, 'b> {
         w: f64,
         h: f64,
     ) -> Corners {
+        let (paint, radius) = self.decoration_paint(computed, x, w, h);
+        if let Some(paint) = &paint {
+            paint.emit(items, 0.0, h);
+        }
+        radius
+    }
+
+    /// [`Self::push_decoration`]'s resolving half: the style's fill,
+    /// widths, colors, styles and corners as a replayable
+    /// [`DecorationPaint`], plus the corners painted. Every diagnostic
+    /// the decoration can raise (invalid color, ignored radius) fires
+    /// HERE — exactly once — which is what lets a paginating text hand
+    /// the paint to its fragments instead of re-resolving per fragment.
+    /// `None` when the style draws nothing at all.
+    /// `h` sizes the `%` corner radii only; the paint itself is
+    /// height-independent, so a fragment replays the corners resolved for
+    /// the whole block (CSS `box-decoration-break: clone` clones the
+    /// decoration, it does not re-derive it).
+    pub(in crate::engine) fn decoration_paint(
+        &mut self,
+        computed: &ComputedStyle,
+        x: f64,
+        w: f64,
+        h: f64,
+    ) -> (Option<DecorationPaint>, Corners) {
         let fill = self.background_fill(computed.background_color.as_deref());
         let opacity = self.sane_opacity(computed.opacity);
         // Clamp once for a uniform width so a hostile value warns once,
@@ -169,54 +113,28 @@ impl<'a, 'b> Ctx<'a, 'b> {
             let width = widths[0];
             let stroke =
                 (width > 0.0).then(|| self.color_or_black(computed.border_colors[0].as_deref()));
-            if fill.is_none() && stroke.is_none() {
-                return radius;
-            }
-            items.push(LayoutItem::Rect(RectShape {
-                x,
-                y: 0.0,
-                w,
-                h,
-                stroke,
-                stroke_width: if stroke.is_some() { width } else { 0.0 },
-                fill,
-                opacity,
-                radius,
-                dash: stroke.and_then(|_| dash_pattern(style, width)),
-            }));
-            return radius;
+            let paint =
+                DecorationPaint::uniform((x, w), fill, opacity, (stroke, width, radius), style);
+            return (paint, radius);
         }
 
         // Per-side widths/colors or `double`: the corner treatment has no
         // meaning across mismatched sides, so it is dropped with a warning
         // rather than applied to some edges only.
         self.warn_radius_ignored(computed, "a per-side or double border");
-        if let Some(fill) = fill {
-            items.push(LayoutItem::Rect(RectShape {
-                x,
-                y: 0.0,
-                w,
-                h,
-                stroke: None,
-                stroke_width: 0.0,
-                fill: Some(fill),
-                opacity,
-                ..Default::default()
-            }));
-        }
         let colors =
             [0, 1, 2, 3].map(|side| self.color_or_black(computed.border_colors[side].as_deref()));
-        push_side_borders(
-            items,
-            &SideBorders {
+        let paint = DecorationPaint::sides(
+            (x, w),
+            fill,
+            opacity,
+            SideBorders {
                 widths,
                 colors,
                 styles: computed.border_styles,
             },
-            (x, 0.0, w, h),
-            opacity,
         );
-        Corners::default()
+        (Some(paint), Corners::default())
     }
 
     /// Parses a `backgroundColor`. An invalid color warns and fills

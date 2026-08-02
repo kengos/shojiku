@@ -343,7 +343,12 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   `style.hangingPunctuation`.
 - **Long-text pagination**: an auto-height flow text taller than the
   region splits at line boundaries like table rows, filling the current
-  page first; decoration and vertical chrome are cloned per fragment.
+  page first; decoration and vertical chrome are cloned per fragment —
+  the WHOLE box, so per-side borders, `double` and dashed sides redraw
+  complete at each fragment's height. A `minHeight` taller than the text
+  keeps its reservation across the split: the slack `verticalAlign` put
+  above the content leads the first fragment, the slack below it trails
+  the last, so the fragment heights sum to the reserved height.
   Definite-height text never splits (that is `textOverflow`'s domain).
 - **Missing glyphs**: `missing_glyph` fires only when *no* face in the
   fallback chain covers the char; deduped and bounded per block.

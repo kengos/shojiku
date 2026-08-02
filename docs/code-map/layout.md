@@ -54,10 +54,16 @@ Wire types stay in core; content measurement stays in layout.
 - `engine/band.rs` — header/footer + `page_number` (vertical_rl routes to
   `vertical_text_block`).
 - `engine/decoration.rs` — box decoration shared by text blocks/containers/
-  repeat cells/images/table frames: `push_decoration` (uniform border stays
-  ONE `RectShape`; returns the `Corners` painted so `overflow: hidden`
-  clips to the same box; per-side/`double` emit edge-centered bands via the
-  pure `push_side_borders`); `decoration/dash.rs` (`dash_pattern`, the pure
+  repeat cells/images/table frames. RESOLVES only: `decoration_paint` turns
+  a style into a `DecorationPaint` (and raises every decoration warning
+  exactly once), `push_decoration` = that plus one `emit`; returns the
+  `Corners` painted so `overflow: hidden` clips to the same box.
+  `decoration/paint.rs` — the resolved paint + the PURE emitter over it
+  (uniform border stays ONE `RectShape`; per-side/`double` emit
+  edge-centered bands via `push_side_borders`, dashed sides a stroked
+  centre `Line`). Replayable at any height, which is what lets a
+  pagination fragment redraw the whole box at its own size.
+  `decoration/dash.rs` (`dash_pattern`, the pure
   keyword→interval table, floored); `decoration/radius.rs`
   (`corner_radius`/`resolve_corners` — `borderRadius` → `Corners`, per-axis
   `%`, hostile values → square; `warn_radius_ignored` shared reporter).
@@ -175,10 +181,19 @@ Wire types stay in core; content measurement stays in layout.
   plain+rich); `text/overflow.rs` (policy math: `fit_font_size` bisection,
   measured-`…` clamp, line-end-kinsoku-aware).
 - `text/paginate.rs` — flow text pagination: auto-height flow text splits
-  at line boundaries table-style; `split_parts` = the consuming end of the
-  block/rich items-assembly contract; `RubyCarry` re-anchors fragment ruby.
+  at line boundaries table-style; `split_block` finds the splittable block,
+  while the box travels as DATA on the `Ctx::split_chrome` channel
+  (`text/chrome.rs`) — the decoration redrawn per fragment at that
+  fragment's height, and the reserved slack `verticalAlign` distributed
+  (leading slack on the first fragment, trailing on the last);
+  `RubyCarry` re-anchors fragment ruby.
   `text/paginate/vertical.rs` — column pagination for vertical blocks
-  (whole-column fragments re-anchored per page).
+  (whole-column fragments re-anchored per page; no vertical slack — the
+  overflow axis is the width).
+- `text/chrome.rs` — the ONE assembly tail all four block builders share
+  (plain/rich × horizontal/vertical): decoration under the block, the
+  `textOverflow: clip` wrapper around it, and `SplitChrome` (`BlockGeom`
+  is its box argument) filled for the paginator.
 - `text/rich.rs` — rich `spans` blocks: uniform line grid, same atom shape
   as block.rs so pagination needs no changes; `rich/resolve.rs` (per-span
   cascade, `MAX_SPANS` guard), `rich/lines.rs` (piece→`TextRun`
@@ -282,7 +297,7 @@ Modules mirror the src module they target: `atoms`/`band`/`bindings/`
 (carriers/scopes/precedence)/`char_grid/`/`container`/`flex/`/`flow`
 (+`page_break`)/`grid`/`link/`/`repeat/`/`repeat_flow/`/`table/`
 (geom/rows/style/boxes (+`boxes/groups` — the `headerGroups` box
-addressing)/vertical)/`text` (+ overflow/paginate/glyphs/
+addressing)/vertical)/`text` (+ overflow/paginate/ (+decoration, slack)/glyphs/
 decoration/rich/line_break/spacing_trim/hanging/ruby/ and the vertical
 family: vertical, vertical_degrade, vertical_rich, vertical_knobs/,
 vertical_combine/, vertical_ruby/, vertical_paginate/)/`style`/

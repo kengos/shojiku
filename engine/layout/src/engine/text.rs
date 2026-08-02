@@ -3,6 +3,7 @@
 //! [`block`] (plain) and [`rich`] (RT1 spans).
 
 mod block;
+mod chrome;
 mod height;
 mod mark;
 mod metrics;
@@ -20,6 +21,7 @@ mod vrich;
 
 pub(in crate::engine) use block::collect_missing;
 pub(super) use block::decoration_spec;
+pub(in crate::engine) use chrome::{BlockGeom, SplitChrome};
 pub(super) use overflow::clamp_line;
 pub(in crate::engine) use vcol::{
     along_offset, clamp_column_down, column_extent, column_left, vertical_decoration_spec,

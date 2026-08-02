@@ -9,10 +9,11 @@
 //! places whole.
 
 use crate::boxes::PlacedBox;
-use crate::tree::{LayoutItem, RectShape, TextBlock, TextLine};
+use crate::tree::{LayoutItem, TextBlock, TextLine};
 use shojiku_diagnostics::DiagnosticCode as Code;
 use shojiku_layout_box::ResolvedBox;
 
+use super::super::super::decoration::DecorationPaint;
 use super::super::super::flex::h_auto_margin;
 use super::super::super::flow::FlowLayouter;
 use super::super::super::{Atom, Basis, Ctx};
@@ -30,13 +31,13 @@ impl<'a, 'b> Ctx<'a, 'b> {
     pub(super) fn place_flow_vertical(
         &mut self,
         atom: Atom,
-        parts: (ResolvedBox, Option<RectShape>, TextBlock),
+        parts: (ResolvedBox, Option<DecorationPaint>, TextBlock),
         ruby: RubyCarry,
         mark: usize,
         region: &Basis,
         layouter: &mut FlowLayouter,
     ) {
-        let (rb, deco, block) = parts;
+        let (rb, paint, block) = parts;
         let content_x = rb.x + rb.padding[3];
         let content_w = (rb.w_or_fill(region, 1.0) - rb.padding[1] - rb.padding[3]).max(0.0);
         let needed = block.lines.len() as f64 * block.line_height;
@@ -50,14 +51,14 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let placement = atom.boxes.first().cloned();
         self.place_column_fragments(
             VerticalFragments {
-                deco,
+                paint,
                 block,
                 placement,
                 height: atom.height,
                 content: (content_x, content_w),
                 ruby,
             },
-            Some(rb),
+            rb,
             region,
             layouter,
         );
@@ -72,7 +73,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     fn place_column_fragments(
         &mut self,
         f: VerticalFragments,
-        rb: Option<ResolvedBox>,
+        rb: ResolvedBox,
         region: &Basis,
         layouter: &mut FlowLayouter,
     ) {
@@ -114,11 +115,16 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 let new_x = content_x + content_w - ((j - lo) as f64 + 1.0) * col_w;
                 (new_x - f.block.lines[j].x, 0.0)
             });
-            if let Some(d) = &f.deco {
-                // Cloned whole per fragment (box-decoration-break: clone);
-                // like the horizontal split, only the FIRST decoration rect
-                // is carried — the recorded per-side-border limitation.
-                items.push(LayoutItem::Rect(d.clone()));
+            if let Some(paint) = &f.paint {
+                // Redrawn whole per fragment (box-decoration-break: clone).
+                // Every column fragment keeps the box's full height, so the
+                // geometry is the block's own — unlike the horizontal
+                // split, which redraws at each fragment's height.
+                paint.emit(
+                    &mut items,
+                    rb.margin[0],
+                    f.height - rb.margin[0] - rb.margin[2],
+                );
             }
             // Each fragment carries its own placement with per-column
             // metrics rebuilt for ITS columns (pure over the block fields).
@@ -137,7 +143,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 height: f.height,
                 items,
                 boxes,
-                rb,
+                rb: Some(rb),
             };
             layouter.place(h_auto_margin(fragment, region), &mut self.diags);
         }
@@ -147,7 +153,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
 /// One vertical block's split parts, bundled so the fragment loop's
 /// signature stays flat.
 struct VerticalFragments {
-    deco: Option<RectShape>,
+    /// The block's decoration as replayable paint — redrawn whole per
+    /// fragment (`box-decoration-break: clone`), so per-side borders and
+    /// `double` strokes survive a column split.
+    paint: Option<DecorationPaint>,
     block: TextBlock,
     placement: Option<PlacedBox>,
     height: f64,

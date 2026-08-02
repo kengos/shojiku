@@ -53,7 +53,9 @@ resolve `%` against the parent width, height bounds against its height
 - An authored `w`/`h` is clamped at resolve; a filled (unset) width is
   clamped after the fill; an **auto height** is clamped after the content
   height is known. A `minHeight` taller than the content reserves the
-  extra space, which `verticalAlign` then distributes; a `maxHeight`
+  extra space, which `verticalAlign` then distributes — and which a flow
+  text carries across a page split, leading the first fragment and
+  trailing the last ([text](text.md) § Pagination of long text); a `maxHeight`
   shorter than the content behaves like a too-short explicit `h` —
   content overflows visually, without a warning (the author set the
   bound).

@@ -313,6 +313,8 @@ to do:
   overview, boundaries), then [docs/agents/](docs/agents/) (per-area
   policy) and [docs/guidelines.md](docs/guidelines.md) (formatting +
   100%-coverage policy).
+- **See what changed** → [CHANGELOG.md](CHANGELOG.md), which also
+  carries what has landed since the last release.
 
 ### Supported language versions
 

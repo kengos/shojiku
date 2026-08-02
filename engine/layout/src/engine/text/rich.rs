@@ -172,24 +172,20 @@ impl<'a, 'b> Ctx<'a, 'b> {
             text_combine: None,
             lines: positioned,
         });
-        // CONTRACT: `super::paginate::split_parts` destructures this items
-        // shape (decoration `Rect`s first, the `Text` block last, `Clip`
-        // only under a definite height) — update it in the same change if
-        // this assembly changes.
-        let mut items = Vec::with_capacity(2);
-        self.push_decoration(&mut items, computed, x, w, block_h);
-        if clip {
-            items.push(super::super::container::clip_children(
-                vec![block],
+        // The box + the split chrome, exactly as the plain builder does it
+        // (`super::chrome` is the one home for both).
+        let slack_top = offset - padding[0];
+        let items = self.assemble_block(
+            block,
+            computed,
+            super::BlockGeom {
                 x,
-                0.0,
                 w,
-                block_h,
-                crate::tree::Corners::default(),
-            ));
-        } else {
-            items.push(block);
-        }
+                h: block_h,
+                clip,
+            },
+            (slack_top, (block_h - padded_h - slack_top).max(0.0)),
+        );
         Atom {
             height: block_h,
             items,

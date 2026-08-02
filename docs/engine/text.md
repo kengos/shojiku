@@ -229,9 +229,19 @@ An **auto-height** text directly in a flow that is taller than the whole
 flow region splits at line boundaries like table rows: it fills the
 space left on the current page, then continues page by page. Decoration
 and vertical padding/margins are **cloned** onto every fragment (CSS
-`box-decoration-break: clone`); an `id` yields one box-index placement
-per fragment. Definite-`h` text never splits (that is `textOverflow`'s
-domain).
+`box-decoration-break: clone`) — the whole box, so per-side
+`borderWidth`s, `borderStyle: double` and dashed sides each redraw
+complete at the fragment's own height; an `id` yields one box-index
+placement per fragment. Definite-`h` text never splits (that is
+`textOverflow`'s domain).
+
+A `minHeight` taller than the text reserves space that
+[`verticalAlign`](style.md) distributes, and the fragments carry that
+reservation between them: the slack above the content leads the FIRST
+fragment (so `verticalAlign: bottom` keeps pushing the text down),
+the slack below it trails the LAST. The fragment heights therefore still
+sum to the reserved height. With no `minHeight` there is no slack and
+every fragment is exactly its lines.
 
 ## Diagnostics
 
