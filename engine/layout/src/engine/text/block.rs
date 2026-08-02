@@ -154,14 +154,6 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // rect per line.
         let decoration = decoration_spec(resolved.primary.face, computed.text_decoration, size);
 
-        // Decoration (background fill / border stroke, if any) goes
-        // underneath the text, covering the border box (CSS: backgrounds
-        // paint under the padding). Under `clip` the text alone is
-        // wrapped in the clip node — the decoration IS the box and stays
-        // outside it. CONTRACT: `super::paginate::split_parts`
-        // destructures this items shape (decoration `Rect`s first, the
-        // `Text` block last, `Clip` only under a definite height) —
-        // update it in the same change if this assembly changes.
         let block = LayoutItem::Text(TextBlock {
             font_id,
             fallback_ids: resolved.fallback_ids,
@@ -187,20 +179,22 @@ impl<'a, 'b> Ctx<'a, 'b> {
             text_combine: None,
             lines: positioned,
         });
-        let mut items = Vec::with_capacity(2);
-        self.push_decoration(&mut items, computed, x, w, block_h);
-        if clip {
-            items.push(super::super::container::clip_children(
-                vec![block],
+        // The box around the finished block, and the split chrome the
+        // paginator replays per fragment (`super::chrome`): the slack
+        // `verticalAlign` put above the content is `offset` minus the top
+        // padding, the rest of the reserved height sits below it.
+        let slack_top = offset - padding[0];
+        let items = self.assemble_block(
+            block,
+            computed,
+            super::BlockGeom {
                 x,
-                0.0,
                 w,
-                block_h,
-                crate::tree::Corners::default(),
-            ));
-        } else {
-            items.push(block);
-        }
+                h: block_h,
+                clip,
+            },
+            (slack_top, (block_h - padded_h - slack_top).max(0.0)),
+        );
 
         Atom {
             height: block_h,

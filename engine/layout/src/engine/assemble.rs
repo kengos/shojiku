@@ -38,6 +38,7 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
         page_margin: [0.0; 4],
         flow_text: false,
         ruby_anchors: Vec::new(),
+        split_chrome: crate::engine::text::SplitChrome::default(),
     };
     let (page_width, page_height) = input.template.page.dimensions_pt();
     if input.template.page.orientation_ignored() {

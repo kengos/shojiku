@@ -53,3 +53,39 @@ sections:
         p2[0].lines[0].x
     );
 }
+
+#[test]
+fn readings_follow_the_reserved_slack_on_the_first_fragment() {
+    // `minHeight` 100 over 80pt of lines, bottom-aligned: 20pt of slack
+    // leads the first fragment, and the readings move down with the
+    // lines they annotate rather than staying at the old anchor.
+    let yaml = r#"
+page: { margin: 0 }
+sections:
+  body:
+    type: flow
+    box: { x: 0, y: 0, w: 300, h: 60 }
+    items:
+      - type: text
+        text: "吾輩は猫である名前はまだ無いよ"
+        box: { w: 40, minHeight: 100 }
+        style:
+          fontSize: 10
+          lineHeight: 2.0
+          fontFamily: biz-ud-gothic
+          verticalAlign: bottom
+        ruby:
+          - { base: 吾輩, text: わがはい }
+"#;
+    let (doc, _) = run(yaml, json!({}));
+    // 20pt of slack leaves 40pt on page 1 = 2 lines; the reading sits
+    // 5pt above the first of them (y 20 → 15).
+    let p1 = ruby_blocks(&doc.pages[0]);
+    assert_eq!(p1.len(), 1);
+    assert!(
+        (p1[0].lines[0].y - 15.0).abs() < 0.01,
+        "{}",
+        p1[0].lines[0].y
+    );
+    assert!((text_blocks(&doc.pages[0])[0].lines[0].y - 20.0).abs() < 0.01);
+}

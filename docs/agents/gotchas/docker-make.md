@@ -4,6 +4,17 @@
 > `shojiku-node-professional`; this file is the incident list for
 > running anything through the Docker wrappers.
 
+## Check `make --version` once, at the start of the session
+
+macOS's `/usr/bin/make` is GNU Make **3.81**, and gates run under it can
+pass here and fail in CI ([CONTRIBUTING.md](../../../CONTRIBUTING.md)
+names the fix). The Makefile does warn — but it warns as a three-line
+banner on EVERY invocation, which is exactly the shape a reader learns to
+skip, and the gate still runs and still prints `PASS`. So the warning is
+not a reliable interrupt: check the version once yourself, and if it is
+3.x use Homebrew's `gmake` (GNU Make 4.x) for every gate in the session
+rather than re-reading the banner each time.
+
 ## Mount discipline — the single biggest time-sink in this repo
 
 The mount MUST be the absolute repo root, and it MUST stay the same

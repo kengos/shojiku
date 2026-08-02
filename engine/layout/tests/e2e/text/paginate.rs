@@ -3,10 +3,13 @@
 //! fills partially-used pages, clones decoration per fragment, and
 //! keeps atom-unit behavior everywhere else.
 
+mod decoration;
+mod slack;
+
 use crate::common::*;
 
 /// `n` one-word paragraphs → exactly `n` wrapped lines at any sane width.
-fn numbered_lines(n: usize) -> String {
+pub(crate) fn numbered_lines(n: usize) -> String {
     (1..=n)
         .map(|i| format!("L{i}"))
         .collect::<Vec<_>>()
@@ -123,38 +126,6 @@ sections:
     );
     assert_eq!(doc.pages.len(), 1);
     assert!(diags.iter().any(|d| d.code == "section_overflow"));
-}
-
-#[test]
-fn decoration_is_cloned_onto_every_fragment() {
-    let (doc, _) = run(
-        &format!(
-            r##"
-page: {{ margin: 0 }}
-sections:
-  body:
-    type: flow
-    box: {{ x: 0, y: 0, w: 200, h: 500 }}
-    items:
-      - type: text
-        text: "{}"
-        style:
-          fontSize: 10
-          lineHeight: 1.0
-          backgroundColor: "#eeeeee"
-          borderWidth: 1
-"##,
-            numbered_lines(60)
-        ),
-        json!({}),
-    );
-    assert_eq!(doc.pages.len(), 2);
-    for (i, expected_h) in [(0, 500.0), (1, 100.0)] {
-        let rects = rect_shapes(&doc.pages[i]);
-        assert_eq!(rects.len(), 1, "one decoration per fragment");
-        assert_eq!(rects[0].h, expected_h);
-        assert!(rects[0].stroke.is_some() && rects[0].fill.is_some());
-    }
 }
 
 #[test]

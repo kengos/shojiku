@@ -202,23 +202,19 @@ impl<'a, 'b> Ctx<'a, 'b> {
             text_combine: None,
             lines,
         });
-        // CONTRACT: decoration `Rect`s first, the `Text` block last, `Clip`
-        // only under `clip` — `super::paginate::split_parts` destructures
-        // this shape (a clipped block never splits).
-        let mut items = Vec::with_capacity(2);
-        self.push_decoration(&mut items, computed, x, w, block_h);
-        if clip {
-            items.push(super::super::container::clip_children(
-                vec![block],
+        // The box + the split chrome (`super::chrome`); no vertical slack,
+        // like the plain vertical builder.
+        let items = self.assemble_block(
+            block,
+            computed,
+            super::BlockGeom {
                 x,
-                0.0,
                 w,
-                block_h,
-                crate::tree::Corners::default(),
-            ));
-        } else {
-            items.push(block);
-        }
+                h: block_h,
+                clip,
+            },
+            (0.0, 0.0),
+        );
         Atom {
             height: block_h,
             items,

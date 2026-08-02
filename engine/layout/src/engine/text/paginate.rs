@@ -12,13 +12,14 @@
 mod vertical;
 
 use crate::boxes::PlacedBox;
-use crate::tree::{LayoutItem, RectShape, TextBlock, TextLine};
+use crate::tree::{LayoutItem, TextBlock, TextLine};
 use shojiku_core::TextItem;
 use shojiku_layout_box::ResolvedBox;
 
 use super::super::flex::h_auto_margin;
 use super::super::flow::FlowLayouter;
 use super::super::{Atom, Basis, Ctx};
+use super::SplitChrome;
 
 /// The ruby readings a splitting flow text atom carries: each reading
 /// block (one line each) paired with its owning line/column index (the
@@ -72,37 +73,25 @@ fn ruby_readings(items: &[LayoutItem]) -> Vec<TextBlock> {
         .collect()
 }
 
-/// Destructures a text atom's items into the parts a fragment rebuild
-/// needs: the (first) decoration rect and the text block. This is the
-/// consuming end of the assembly CONTRACT in `block.rs`/`rich.rs`
-/// (decoration `Rect`s first, the `Text` block last; a `Clip` wrapper
-/// only exists under a definite height, which never splits) — change
-/// both ends together. `None` (no `Text` at the top level) keeps the
-/// safe non-splitting fallback rather than a panic. Both branches of
-/// each walk execute under the e2e suite alone (decorated atoms visit
-/// Rect→non-match and Text→match) — engine modules deliberately have no
+/// The splittable text block in an atom's items, if it has one. The
+/// decoration does NOT come from here — the builder handed it over as
+/// paint through [`SplitChrome`], which is what lets a fragment redraw
+/// per-side borders and `double` strokes (several rects, or `Line`s for
+/// dashed sides) instead of the one rect a walk over items could find.
+/// `None` (no `Text` at the top level) keeps the safe non-splitting
+/// fallback rather than a panic, and is what makes a `textOverflow: clip`
+/// block — whose text is nested in a `Clip` — never split. Both branches
+/// execute under the e2e suite alone; engine modules deliberately have no
 /// unit tests (a partially-covered second instantiation would trip the
-/// 100% gate). Known limitation, to be fixed with the
-/// typed-splittability rework: only
-/// the FIRST rect is carried, so per-side borders (several rects) lose
-/// their remaining sides on split, and fragments re-derive line ys from
-/// the top (a `minHeight` + middle/bottom valign offset is dropped).
-fn split_parts(items: &[LayoutItem]) -> Option<(Option<RectShape>, TextBlock)> {
-    let deco = items.iter().find_map(|i| {
-        if let LayoutItem::Rect(r) = i {
-            Some(r.clone())
-        } else {
-            None
-        }
-    });
-    let block = items.iter().find_map(|i| {
+/// 100% gate).
+fn split_block(items: &[LayoutItem]) -> Option<TextBlock> {
+    items.iter().find_map(|i| {
         if let LayoutItem::Text(t) = i {
             Some(t.clone())
         } else {
             None
         }
-    });
-    block.map(|b| (deco, b))
+    })
 }
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -126,9 +115,11 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let mark = self.diags.len();
         self.flow_text = true;
         self.ruby_anchors.clear();
+        self.split_chrome = SplitChrome::default();
         let atom = self.text_atom(text, region);
         self.flow_text = false;
         let anchors = std::mem::take(&mut self.ruby_anchors);
+        let chrome = std::mem::take(&mut self.split_chrome);
         let region_h = layouter.region_bottom - layouter.region_top;
         let splitting = !definite_h && atom.height > region_h + 0.01;
         // Readings ride fragments via the anchors channel; a mismatch
@@ -137,21 +128,28 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // readings.
         let readings = ruby_readings(&atom.items);
         let carried = anchors.len() == readings.len();
-        match (splitting, atom.rb, split_parts(&atom.items)) {
+        match (splitting, atom.rb, split_block(&atom.items)) {
             // A vertical block's overflow axis is the WIDTH, never the
             // height: more columns than the box holds continue on the next
             // page in reading order (`vertical`); the height-splitting
             // fragment rebuild below would restack its columns as
             // horizontal rows. A clipped block (its text inside a `Clip`)
             // has no split shape and falls to the atom-unit arm.
-            (_, Some(rb), Some((deco, block))) if block.vertical.is_some() && carried => {
+            (_, Some(rb), Some(block)) if block.vertical.is_some() && carried => {
                 let ruby = RubyCarry { anchors, readings };
-                self.place_flow_vertical(atom, (rb, deco, block), ruby, mark, region, layouter);
+                self.place_flow_vertical(
+                    atom,
+                    (rb, chrome.paint, block),
+                    ruby,
+                    mark,
+                    region,
+                    layouter,
+                );
             }
-            (true, Some(rb), Some((deco, block))) if block.vertical.is_none() && carried => {
+            (true, Some(rb), Some(block)) if block.vertical.is_none() && carried => {
                 let placement = atom.boxes.first().cloned();
                 let ruby = RubyCarry { anchors, readings };
-                self.place_fragments(rb, deco, block, placement, ruby, region, layouter);
+                self.place_fragments(rb, chrome, block, placement, ruby, region, layouter);
             }
             _ => layouter.place(h_auto_margin(atom, region), &mut self.diags),
         }
@@ -164,7 +162,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     fn place_fragments(
         &mut self,
         rb: ResolvedBox,
-        deco: Option<RectShape>,
+        chrome: SplitChrome,
         block: TextBlock,
         placement: Option<PlacedBox>,
         ruby: RubyCarry,
@@ -176,24 +174,40 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let lead = rb.margin[0] + rb.padding[0];
         let tail = rb.margin[2] + rb.padding[2];
         let per_line = block.line_height;
+        // Reserved height `verticalAlign` put around the content (a
+        // `minHeight` taller than the text) travels with the edge it was
+        // aligned to: the leading slack is the FIRST fragment's extra
+        // lead, the trailing slack the LAST fragment's extra tail. Both
+        // are zero for the ordinary auto-height block, where every number
+        // below is then exactly the pre-slack one.
+        let mut lead_i = lead + chrome.slack_top;
 
         let mut i = 0;
         while i < block.lines.len() {
             // Lines that fit from the current cursor; an exhausted page
             // breaks first so capacity is measured against usable space.
-            let mut avail = layouter.region_bottom - layouter.cursor - lead - tail;
+            let mut avail = layouter.region_bottom - layouter.cursor - lead_i - tail;
             if (avail / per_line) < 1.0 && !layouter.fresh_page {
                 if !layouter.break_page(&mut self.diags) {
                     return; // page cap hit; `page_overflow` already emitted
                 }
-                avail = layouter.region_bottom - layouter.cursor - lead - tail;
+                avail = layouter.region_bottom - layouter.cursor - lead_i - tail;
             }
             // At least one line per fragment: a single line taller than
             // the page cannot fit anywhere — `place` warns and moves on,
             // so the loop always advances (no hostile-metrics spin).
             let capacity = ((avail / per_line).floor()).max(0.0) as usize;
             let take = capacity.max(1).min(block.lines.len() - i);
-            let height = lead + take as f64 * per_line + tail;
+            // Capacity above was measured against the ordinary tail: which
+            // fragment is last is only known once `take` is, and a last
+            // fragment whose trailing slack no longer fits is placed by
+            // `layouter.place` like any other oversized atom.
+            let tail_i = if i + take == block.lines.len() {
+                tail + chrome.slack_bottom
+            } else {
+                tail
+            };
+            let height = lead_i + take as f64 * per_line + tail_i;
 
             let lines: Vec<TextLine> = block.lines[i..i + take]
                 .iter()
@@ -201,7 +215,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 .map(|(k, line)| TextLine {
                     text: line.text.clone(),
                     x: line.x,
-                    y: lead + k as f64 * per_line,
+                    y: lead_i + k as f64 * per_line,
                     width: line.width,
                     // Rich runs ride the fragment (their x/width are
                     // line-relative already; only y moved).
@@ -224,12 +238,15 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 })
                 .collect();
             let mut items = Vec::with_capacity(2);
-            if let Some(d) = &deco {
-                items.push(LayoutItem::Rect(RectShape {
-                    y: rb.margin[0],
-                    h: height - rb.margin[0] - rb.margin[2],
-                    ..d.clone()
-                }));
+            // The whole decoration redrawn at this fragment's height —
+            // every border side, `double` stripe and dashed line of it
+            // (`box-decoration-break: clone`).
+            if let Some(paint) = &chrome.paint {
+                paint.emit(
+                    &mut items,
+                    rb.margin[0],
+                    height - rb.margin[0] - rb.margin[2],
+                );
             }
             items.push(LayoutItem::Text(TextBlock {
                 lines,
@@ -238,7 +255,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             // This fragment's ruby readings, shifted with their lines
             // (only y moves on a horizontal split).
             items.extend(ruby.for_lines(i, i + take, |j| {
-                (0.0, lead + (j - i) as f64 * per_line - block.lines[j].y)
+                (0.0, lead_i + (j - i) as f64 * per_line - block.lines[j].y)
             }));
             let fragment = Atom {
                 height,
@@ -248,6 +265,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             };
             layouter.place(h_auto_margin(fragment, region), &mut self.diags);
             i += take;
+            // Only the first fragment leads with the slack.
+            lead_i = lead;
         }
     }
 }

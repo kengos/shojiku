@@ -145,6 +145,13 @@ struct Ctx<'a, 'b> {
     /// shifted with them). Cleared before each direct-flow text build;
     /// meaningless (stale) in every other context, which never reads it.
     ruby_anchors: Vec<usize>,
+    /// The chrome the LAST text block built — its decoration paint and the
+    /// vertical slack `verticalAlign` distributed — handed to the flow
+    /// paginator as DATA so a fragment rebuilds the box instead of
+    /// shape-matching the emitted items. Same channel discipline as
+    /// [`Self::ruby_anchors`]: reset before each direct-flow text build,
+    /// stale (and unread) everywhere else.
+    split_chrome: text::SplitChrome,
 }
 
 impl Ctx<'_, '_> {

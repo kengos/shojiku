@@ -126,3 +126,25 @@ sections:
     assert_eq!(line_texts(p2), vec!["えおか"]);
     assert!(!p2.lines[0].runs.is_empty(), "runs ride the fragment");
 }
+
+#[test]
+fn per_side_borders_are_cloned_onto_every_fragment() {
+    // A column fragment keeps the whole box height, so each one redraws
+    // the same four bands — the split used to carry the top one alone.
+    let (doc, _diags) = run(
+        &tmpl(
+            "あいうえおかきくけこさしすせそたちつてと",
+            "w: 25, h: 30",
+            "",
+            ", borderWidth: { top: 2, right: 1, bottom: 4, left: 1 }",
+        ),
+        json!({}),
+    );
+    assert!(doc.pages.len() > 1);
+    for page in &doc.pages {
+        let bands = rect_shapes(page);
+        assert_eq!(bands.len(), 4, "every side on every fragment");
+        assert_eq!((bands[0].y, bands[0].h), (-1.0, 2.0), "top");
+        assert_eq!((bands[2].y, bands[2].h), (28.0, 4.0), "bottom");
+    }
+}
