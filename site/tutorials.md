@@ -1,5 +1,6 @@
 ---
 title: Tutorials
+description: "From rendering one PDF to baking a template into a Docker image and shipping it. Every command is transcribed from something CI actually runs."
 ---
 
 # Tutorials — from a first PDF to a production release

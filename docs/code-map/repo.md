@@ -139,7 +139,9 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   render/splice, llms renderers, `engineClient` — the site's OWN thin
   glue over the raw `engine/wasm` pkg (deliberately NOT
   `@shojiku/designer`'s transport; keeps the package standalone),
-  playground knob→template generation), 100%×4 vitest +
+  playground knob→template generation, `seo.ts` = `pagePath`/`twinPaths`/
+  `headTags` deriving canonical + en↔ja hreflang + the OG/twitter card
+  from a page's `relativePath`), 100%×4 vitest +
   `src/integration/liveRenderer.test.ts` (REAL wasm: tier gate,
   receipt renders, both playground demos) + `src/headers.test.ts`
   (pins BOTH `_headers` CSP scopes; `/designer/*` must equal the
@@ -159,7 +161,15 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   `inject-csp-hashes.ts` swaps the `__INLINE_SCRIPT_HASHES__` token for
   the sha256 of the inline scripts VitePress actually emitted, keeping
   the site scope's no-'unsafe-inline' stance — the token appears ONCE,
-  and its survival is a build failure). Gates: `make site` /
+  and its survival is a build failure). `.vitepress/config.mts` holds the
+  ONE `HOSTNAME` constant every absolute URL is built from (sitemap
+  `<loc>`s, canonicals, card URLs) — a custom domain moves it in one
+  place; `transformPageData` applies `seo.ts` to every page, and each page
+  carries its own `description` frontmatter (the `ja` locale sets its own
+  default, so a Japanese page never inherits the English sentence).
+  `public/robots.txt` replaces Cloudflare's managed file: its Content
+  Signals preamble VERBATIM (no signal expressed — that is a policy
+  decision) plus the crawl grant and the `Sitemap:` line. Gates: `make site` /
   `site-check` / `site-build` (+ `verify:site` grid entry, CI job
   `site`). Font tiers: immediate = noto-sans Regular+Bold (~1.2 MB),
   lazy-ja = BIZ UDP pair (~8.9 MB — ja-JP's default family);

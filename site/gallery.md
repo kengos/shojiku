@@ -1,5 +1,6 @@
 ---
 title: Gallery
+description: "Invoices, receipts, resumes, manuscript paper: the runnable example templates bundled in the repository, beside the PDFs the CLI renders from them."
 ---
 
 <script setup>

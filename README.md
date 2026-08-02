@@ -4,6 +4,9 @@
 
 **Write YAML. Get PDFs. Built for AI agents.**
 
+[shojiku.pages.dev](https://shojiku.pages.dev) — the gallery, the
+tutorials, and a playground that renders in your browser.
+
 > [!IMPORTANT]
 > **Pre-1.0 — not recommended for production yet.** The template wire
 > format (`templates.yml` / `definitions.yml`), the CLI surface and every

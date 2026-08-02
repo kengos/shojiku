@@ -1,6 +1,7 @@
 ---
 layout: home
 title: Shojiku
+description: "YAMLのテンプレートとJSONのデータから、請求書・領収書・申込書を出す帳票エンジン。同じ入力なら、どのマシンでも同じバイト列のPDFになります。AIエージェントから扱えます。"
 hero:
   name: Shojiku
   text: YAMLを書けば、帳票になる。

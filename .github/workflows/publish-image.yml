@@ -1,8 +1,7 @@
 name: Publish container image
 
 # Manual only. Nothing about pushing an image belongs on a code push while the
-# repository is pre-release — and `main` is force-pushed in place, so a push
-# trigger would not fire reliably anyway.
+# repository is pre-1.0: which commit becomes an image stays a deliberate act.
 on:
   workflow_dispatch:
     inputs:

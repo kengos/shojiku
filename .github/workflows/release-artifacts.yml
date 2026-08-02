@@ -5,9 +5,8 @@ name: Release artifacts
 # and the napi addon (npm platform packages). Produces ARTIFACTS only —
 # publishing stays a separate, deliberate act.
 #
-# Manual only, like publish-image.yml: main is force-pushed in place until
-# the first release, so push triggers do not fire reliably, and a release
-# build is something you ask for, not something that happens to you.
+# Manual only, like publish-image.yml: a release build is something you ask
+# for, not something that happens to you.
 #
 # WHY THREE BUILD STYLES. The linux and windows-mingw targets come from the
 # same pinned Docker cross-build a contributor runs (`make capi-dist

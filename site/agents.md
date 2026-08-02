@@ -1,5 +1,6 @@
 ---
 title: Agents
+description: "Templates are YAML and JSON, errors come back as stable diagnostic codes, and the layout reads back as a tree. Register the MCP server, then let an agent write and check its own work."
 ---
 
 # Making templates with an AI agent
