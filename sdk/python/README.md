@@ -4,10 +4,6 @@ Python bindings for [Shojiku](../../README.md) — a document engine that
 turns a YAML template plus your data into a deterministic PDF, then signs
 and verifies the result.
 
-> **Unreleased.** All seven Shojiku SDKs publish together at v0.1.0. Until
-> then, install from a clone (see [Development](#development)) and point
-> `SHOJIKU_LIBRARY` at an engine library you built.
-
 ## Install
 
 ```bash

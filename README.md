@@ -25,9 +25,9 @@ engine renders them with your data into deterministic PDFs.
 It runs **anywhere** and needs no service: a CLI and Docker image for
 servers and CI, browser WASM for the Designer (rendering stays on the
 machine — nothing is uploaded), a stdio MCP server for AI agents, and
-native SDKs for seven languages — Python, Node, Ruby, .NET and Java
-install from their own registries today; PHP and Go are built but not
-yet published (see [Install](#install)). Local-first by design — a
+native SDKs for seven languages — Python, Node, Ruby, .NET, Java and Go
+install from their own registries today; PHP is built but not yet on
+Packagist (see [Install](#install)). Local-first by design — a
 PM producing a customer estimate or a teacher printing worksheets
 renders on their own machine.
 
@@ -166,9 +166,10 @@ agent playbook is
 
 ## Install
 
-The engine is one binary; every SDK carries it inside the package, so
-there is no separate engine to install and no build step on the
-platforms below.
+The engine is one binary. The FFI SDKs carry it inside the package, so
+there is no separate engine to install and no build step; the two
+subprocess SDKs (Go, PHP) drive the CLI binary instead and need it
+installed alongside.
 
 | | Install | Package |
 | --- | --- | --- |
@@ -179,16 +180,12 @@ platforms below.
 | .NET | `dotnet add package Shojiku` | [`Shojiku`](https://www.nuget.org/packages/Shojiku) |
 | Java | Maven / Gradle — **also declare the platform classifier** | [`jp.kengos:shojiku`](https://central.sonatype.com/artifact/jp.kengos/shojiku), see [sdk/java](sdk/java/README.md) |
 | Rust | `cargo install shojiku-cli` | [`shojiku-cli`](https://crates.io/crates/shojiku-cli); [`shojiku-authoring`](https://crates.io/crates/shojiku-authoring) is the embedding surface |
+| Go | `go get github.com/kengos/shojiku/sdk/go` | [`github.com/kengos/shojiku/sdk/go`](https://pkg.go.dev/github.com/kengos/shojiku/sdk/go); drives the CLI binary, install it separately |
+| CLI binary | [GitHub releases](https://github.com/kengos/shojiku/releases/latest) | per-platform archives plus the shared packs archive, checksummed in `SHA256SUMS` |
 | PHP | not yet published | built ([sdk/php](sdk/php/)); Packagist registration pending |
-| Go | not yet published | built ([sdk/go](sdk/go/)); awaiting the module tag |
-| CLI binary | not yet published | per-platform archives are built; the first GitHub release is pending |
 
-Until the binary release lands, `cargo install shojiku-cli`, the Docker
-image, or any SDK will get you a working engine.
-
-The CLI archives are built and checksummed; when the release goes up they
-will be a plain binary per platform plus one shared archive of the fonts
-and locale packs, used like this:
+The CLI archives are a plain binary per platform plus one shared archive
+of the fonts and locale packs, used like this:
 
 ```bash
 tar xzf shojiku-0.1.0-darwin-arm64.tar.gz
@@ -220,10 +217,12 @@ Template / Definitions
   -> Archive         (not built)
 ```
 
-Form layout expressed as reviewable YAML, a GUI designer *(built, not
-yet publicly hosted)*, a stable CLI *(shipped)*, SDKs *(built for all
-seven languages, Ruby as the reference implementation)*, and an electronic
-signature/trust pipeline *(built: CLI `sign` / `verify`)*.
+Form layout expressed as reviewable YAML, a GUI designer *(live at
+[shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/) —
+it renders in your browser, nothing is uploaded)*, a stable CLI
+*(shipped)*, SDKs *(built for all seven languages, Ruby as the reference
+implementation)*, and an electronic signature/trust pipeline *(built: CLI
+`sign` / `verify`)*.
 [What exists today](#what-exists-today) has the rest.
 
 ## Gallery
@@ -277,14 +276,15 @@ locale's standard size — A4 or Letter), not a document sample.
   [docs/engine/features.md](docs/engine/features.md) is the capability
   inventory.
 - **The Designer** — a browser GUI that round-trips the same YAML the
-  engine reads, never its own format — is built and runs locally
-  ([below](#running-the-gui-locally)). It is not hosted anywhere yet.
-- **The SDKs** for seven languages are built; five install from their
+  engine reads, never its own format — is live at
+  [shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/) and
+  also runs locally ([below](#running-the-gui-locally)). It renders in
+  the browser, so nothing you open there is uploaded.
+- **The SDKs** for seven languages are built; six install from their
   own registries ([Install](#install)).
 
-Not built: the bundle and archive stages of the lifecycle, and a hosted
-Designer. [docs/architecture.md](docs/architecture.md) is the target
-architecture.
+Not built: the bundle and archive stages of the lifecycle.
+[docs/architecture.md](docs/architecture.md) is the target architecture.
 
 ## Documentation
 
@@ -294,9 +294,10 @@ to do:
 - **Write or fix a template** → [docs/engine/](docs/engine/README.md),
   the template reference: one MDN-style page per feature (items, box
   model, styles, tables, repeats, …) with syntax, defaults, and
-  diagnostics. The Designer app is built but not yet publicly hosted
-  (see Running the GUI locally below); non-engineers typically have an AI
-  agent author the YAML
+  diagnostics. The Designer app is live at
+  [shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/), and
+  [Running the GUI locally](#running-the-gui-locally) covers the local
+  route; non-engineers typically have an AI agent author the YAML
   ([skills/shojiku-template-author/](skills/shojiku-template-author/SKILL.md),
   AI-only playbook).
 - **Embed or evaluate the engine** → today's integration surfaces are

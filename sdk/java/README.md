@@ -4,12 +4,6 @@ JVM bindings for [Shojiku](../../README.md) — a document engine that
 turns a YAML template plus your data into a deterministic PDF. Usable
 from Java, Kotlin and Scala alike.
 
-> **Built, not yet published.** The artifact is unreleased — all seven
-> Shojiku SDKs publish together at v0.1.0. Until then, build it from a
-> repository clone (`make verify:sdk:java` runs its whole gate in a
-> container) or use the CLI or the Docker image — see the
-> [quickstart](../../docs/quickstart.md).
-
 ## Install
 
 The engine binary ships in a **platform classifier jar**, and you ask for

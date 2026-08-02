@@ -3,10 +3,6 @@
 Go bindings for [Shojiku](../../README.md) — a document engine that
 turns a YAML template plus your data into a deterministic PDF.
 
-> **Unreleased.** All seven Shojiku SDKs publish together at v0.1.0;
-> until then, install from a clone of this repository (a `replace`
-> directive pointing at `/path/to/shojiku/sdk/go`).
-
 ## Install
 
 ```bash
@@ -16,11 +12,10 @@ go get github.com/kengos/shojiku/sdk/go
 This module is pure Go with **no dependencies and no cgo**: it drives the
 `shojiku` command-line binary as a subprocess, so `go build` stays a plain
 cross-compilable build. **Install that binary separately** — the module
-never downloads an executable, by design. Today that means building it
-from a repository clone or using the Docker image; the
-[quickstart](../../docs/quickstart.md) covers both. From the first public
-release there will also be prebuilt binaries on GitHub Releases and
-`cargo install shojiku-cli`.
+never downloads an executable, by design. Take it from the [GitHub
+release](https://github.com/kengos/shojiku/releases/latest) (a per-platform
+archive plus the shared `packs` archive), `cargo install shojiku-cli`, or
+the Docker image; the [quickstart](../../docs/quickstart.md) covers them.
 
 The SDK looks for the binary in the `SHOJIKU_BIN` environment variable
 first, then the path you configure, then `PATH`.
