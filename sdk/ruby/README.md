@@ -4,12 +4,6 @@ Ruby bindings for [Shojiku](../../README.md) — a document engine that
 turns a YAML template plus your data into a deterministic PDF, signs it,
 and verifies it.
 
-> **Unreleased.** The gem is written and gated but not published yet —
-> all seven Shojiku SDKs publish together at v0.1.0. Until then, install
-> from a repository clone (see [Building the engine
-> library](#building-the-engine-library) below), or use the CLI or the
-> Docker image — see the [quickstart](../../docs/quickstart.md).
-
 ## Install
 
 ```bash
@@ -282,7 +276,9 @@ Nothing in this gem downloads anything, at install time or at run time.
 
 ## Building the engine library
 
-Until the platform gems are published, build the library from a clone:
+The platform gems carry the library, so this is only for a platform they
+do not cover, or for working against an engine you changed. Build it from
+a clone:
 
 ```bash
 make capi-lib

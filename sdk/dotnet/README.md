@@ -3,12 +3,6 @@
 .NET bindings for [Shojiku](../../README.md) — a document engine that
 turns a YAML template plus your data into a deterministic PDF.
 
-> **Built, not yet published.** The package is unreleased — all seven
-> Shojiku SDKs publish together at v0.1.0. Until then, build it from a
-> repository clone (`make verify:sdk:dotnet` runs its whole gate in a
-> container) or use the CLI or the Docker image — see the
-> [quickstart](../../docs/quickstart.md).
-
 ## Install
 
 ```bash

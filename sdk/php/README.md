@@ -3,8 +3,9 @@
 PHP bindings for [Shojiku](../../README.md) — a document engine that
 turns a YAML template plus your data into a deterministic PDF.
 
-> **Unreleased.** All seven Shojiku SDKs publish together at v0.1.0; until
-> then, install from a clone of this repository (`composer config
+> **Not on Packagist yet.** The other six Shojiku SDKs shipped at v0.1.0;
+> this one waits on its Packagist registration. Until it lands, install
+> from a clone of this repository (`composer config
 > repositories.shojiku path /path/to/shojiku/sdk/php`).
 
 ## Install
@@ -16,11 +17,10 @@ composer require shojiku/shojiku
 This package is pure PHP with **no dependencies and no extension to
 compile**: it drives the `shojiku` command-line binary as a subprocess.
 **Install that binary separately** — the package never downloads an
-executable, by design. Today that means building it from a repository
-clone or using the Docker image; the
-[quickstart](../../docs/quickstart.md) covers both. From the first public
-release there will also be prebuilt binaries on GitHub Releases and
-`cargo install shojiku-cli`.
+executable, by design. Take it from the [GitHub
+release](https://github.com/kengos/shojiku/releases/latest) (a per-platform
+archive plus the shared `packs` archive), `cargo install shojiku-cli`, or
+the Docker image; the [quickstart](../../docs/quickstart.md) covers them.
 
 The SDK looks for the binary in the `SHOJIKU_BIN` environment variable
 first, then the path you configure, then `PATH`.

@@ -3,12 +3,6 @@
 Node.js bindings for [Shojiku](../../README.md) — a document engine that
 turns a YAML template plus your data into a deterministic PDF.
 
-> **Unreleased.** The package is built and gated but not published: all
-> seven Shojiku SDKs publish together at v0.1.0. Until then, build the
-> addon from a repository clone (`make napi`) and point
-> `SHOJIKU_LIBRARY` at it — see the
-> [quickstart](../../docs/quickstart.md) for the CLI and Docker routes.
-
 ## Install
 
 ```bash
