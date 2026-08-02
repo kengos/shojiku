@@ -1,6 +1,6 @@
 // /llms.txt and /llms-full.txt renderers. Everything here is either the ONE
-// shared preamble (src/llms-preamble.md, the single hand-written blob the
-// HP1 rules allow) or generated from repo truth (the docs files themselves)
+// shared preamble (src/llms-preamble.md, the single hand-written blob this
+// site allows) or generated from repo truth (the docs files themselves)
 // — never per-page hand-written summaries.
 import type { GalleryEntry } from "./gallery.ts";
 

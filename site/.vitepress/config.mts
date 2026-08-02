@@ -1,10 +1,9 @@
 import { defineConfig } from "vitepress";
 import { headTags, isJapanese } from "../src/lib/seo.ts";
 
-// The homepage pitch site (docs/TODO.md § HP1): seven pages, English canonical
-// with a /ja twin per page. Reference documentation stays in docs/ — this site
-// links to it and restates nothing (the anti-duplication rules live in the
-// HP1 item and docs/code-map/repo.md).
+// The homepage pitch site: seven pages, English canonical with a /ja twin per
+// page. Reference documentation stays in docs/ — this site links to it and
+// restates nothing (docs/code-map/repo.md § site/ carries the rest).
 
 // The origin the site is served from. It is baked into the sitemap's <loc>s,
 // every canonical and every social-card URL, so it moves the day a custom
@@ -58,7 +57,7 @@ export default defineConfig({
   srcExclude: ["src/**"],
   lastUpdated: false,
   // /designer/ is not a VitePress page — the Designer app is merged into the
-  // deployed output beside the site (HP1: one Pages project, path-mounted).
+  // deployed output beside the site (one Pages project, path-mounted).
   ignoreDeadLinks: [/^\/designer\//],
 
   locales: {
