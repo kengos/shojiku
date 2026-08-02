@@ -1,0 +1,122 @@
+version: 0.1.0
+name: event_tickets_ja
+
+# Event-ticket imposition (n-up): 2×4 = 8 tickets per A4 sheet. `type: repeat`
+# tiles the attendee array and rolls to a new page when a sheet fills —
+# params.json (14 people) makes 2 pages, params-few.json (4) one page, from
+# the same template. The 0.5pt grey cell frame doubles as the cut line.
+page:
+  size: A4
+  orientation: portrait
+  margin: 0
+
+defaults:
+  locale: ja-JP
+
+styles:
+  bandText:
+    fontSize: 9.5
+    color: "#ffffff"
+    lineHeight: 1.3
+  meta:
+    fontSize: 8
+    color: "#555555"
+    lineHeight: 1.4
+
+sections:
+  # Trim marks: cut positions shown in the four margins. margin: 0, so band
+  # coordinates = paper coordinates. Vertical cuts x = 30 / 297.64 / 565.28;
+  # horizontal cuts y = 30 / 222.47 / 420.95 / 619.42 / 811.89 (cell 186.47pt
+  # + 12pt gap, centered). every_page, so later sheets get them too.
+  header:
+    repeat: every_page
+    height: 0
+    items:
+      - { type: line, from: { x: 30, y: 8 }, to: { x: 30, y: 22 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 297.64, y: 8 }, to: { x: 297.64, y: 22 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 565.28, y: 8 }, to: { x: 565.28, y: 22 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 30, y: 819.89 }, to: { x: 30, y: 833.89 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 297.64, y: 819.89 }, to: { x: 297.64, y: 833.89 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 565.28, y: 819.89 }, to: { x: 565.28, y: 833.89 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 8, y: 30 }, to: { x: 22, y: 30 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 8, y: 222.47 }, to: { x: 22, y: 222.47 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 8, y: 420.95 }, to: { x: 22, y: 420.95 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 8, y: 619.42 }, to: { x: 22, y: 619.42 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 8, y: 811.89 }, to: { x: 22, y: 811.89 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 573.28, y: 30 }, to: { x: 587.28, y: 30 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 573.28, y: 222.47 }, to: { x: 587.28, y: 222.47 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 573.28, y: 420.95 }, to: { x: 587.28, y: 420.95 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 573.28, y: 619.42 }, to: { x: 587.28, y: 619.42 }, style: { width: 0.4, color: "#8a94a6" } }
+      - { type: line, from: { x: 573.28, y: 811.89 }, to: { x: 587.28, y: 811.89 }, style: { width: 0.4, color: "#8a94a6" } }
+
+  body:
+    type: flow
+    box: { x: 30, y: 30, w: 535.28, h: 781.89 }
+    items:
+      - id: tickets
+        type: repeat
+        data: { key: tickets }
+        grid:
+          columns: 2
+          rows: 4
+          direction: row
+          columnGap: 12
+          rowGap: 12
+        cell:
+          # The 0.5pt cell frame doubles as the cutting guide.
+          style: { borderColor: "#9aa4b2", borderWidth: 0.5 }
+          items:
+            # Brand color band with the ticket type on the right.
+            - id: band
+              type: container
+              box: { x: 0, y: 0, w: "100%", h: 26 }
+              style: { backgroundColor: "#1a3c6e" }
+              items:
+                - type: text
+                  box: { x: 10, y: 6, w: 160, h: 14 }
+                  text: 正直堂ブックフェス2026
+                  styleNames: [ bandText ]
+                - type: text
+                  box: { x: 170, y: 6, w: 81.64, h: 14 }
+                  data: { key: type_label }
+                  styleNames: [ bandText ]
+                  style: { textAlign: right, fontWeight: bold }
+            - type: text
+              box: { x: 10, y: 34, w: 170, h: 20 }
+              text: "{name} 様"
+              style: { fontSize: 12.5, lineHeight: 1.3, textOverflow: shrink }
+            - type: text
+              box: { x: 10, y: 58, w: 170, h: 12 }
+              text: "チケット番号 {ticket_no}"
+              styleNames: [ meta ]
+            - type: text
+              box: { x: 10, y: 76, w: 170, h: 13 }
+              data: { key: session }
+              style: { fontSize: 9.5, lineHeight: 1.3 }
+            - type: text
+              box: { x: 10, y: 92, w: 170, h: 12 }
+              text: 神保町ブックホール 2F ホールA
+              styleNames: [ meta ]
+            - type: text
+              box: { x: 10, y: 110, w: 170, h: 15 }
+              text: "座席 {seat}"
+              style: { fontSize: 10.5, lineHeight: 1.3, fontWeight: bold, color: "#1a3c6e" }
+            # Admission QR — per-element content, encoded at layout time.
+            - id: gate_qr
+              type: qr_code
+              box: { x: 189.64, y: 40, w: 62, h: 62 }
+              data: { key: url }
+            - type: text
+              box: { x: 184.64, y: 106, w: 72, h: 10 }
+              text: 入場用QR
+              style: { fontSize: 6.5, textAlign: center, color: "#8a94a6", lineHeight: 1.3 }
+            - type: line
+              from: { x: 10, y: 136 }
+              to: { x: 251.64, y: 136 }
+              style: { width: 0.4, color: "#d4d9e2" }
+            - type: text
+              box: { x: 10, y: 142, w: 241.64, h: 32 }
+              text: |-
+                開場は各回30分前です。入場時に本券をご提示ください（再入場可）。
+                本券の転売はご遠慮ください。主催 株式会社正直堂
+              style: { fontSize: 6.5, color: "#8a94a6", lineHeight: 1.5 }

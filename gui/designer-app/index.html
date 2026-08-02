@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shojiku Designer</title>
+    <!--
+      The first-paint splash, inline on purpose: it has to be on screen BEFORE
+      any module, stylesheet or JSON request resolves, which rules out both
+      Tailwind and the `--sj-*` theme tokens (those arrive with the app). So the
+      few colours here are literals, matching LIGHT_THEME / DARK_THEME in
+      gui/designer/src/theme/tokens.ts. React replaces #root's contents on mount,
+      so this is visible for one short moment and is never a component's concern.
+
+      It carries no progress: nothing has run yet that could measure anything.
+      The staged, byte-counted wait is `src/loading/LoadingView.tsx`, and the
+      module transfer's own rail appears in the shell once the app renders.
+    -->
+    <style>
+      .sj-splash {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 14px;
+        background: #f7f5f1;
+        color: #6f675a;
+        font-family:
+          "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .sj-splash-rail {
+        position: relative;
+        overflow: hidden;
+        width: 160px;
+        height: 3px;
+        border-radius: 2px;
+        background: rgba(194, 64, 42, 0.2);
+      }
+      .sj-splash-rail::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 40%;
+        border-radius: 2px;
+        background: #c2402a;
+        animation: sj-splash-slide 1.2s ease-in-out infinite;
+      }
+      @keyframes sj-splash-slide {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(400%);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .sj-splash-rail::after {
+          animation: none;
+          left: 30%;
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        .sj-splash {
+          background: #201e1b;
+          color: #a59d8f;
+        }
+        .sj-splash-rail {
+          background: rgba(224, 102, 74, 0.2);
+        }
+        .sj-splash-rail::after {
+          background: #e0664a;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="sj-splash">
+        <span>Shojiku Designer</span>
+        <span class="sj-splash-rail"></span>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

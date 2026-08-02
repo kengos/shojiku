@@ -1,0 +1,11 @@
+.git
+.claude
+docs
+gui
+sdk
+plugins
+templates
+**/target
+**/node_modules
+**/test-results
+engine/wasm/pkg

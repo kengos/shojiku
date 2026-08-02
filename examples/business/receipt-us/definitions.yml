@@ -1,0 +1,91 @@
+version: 0.2.0
+type: object
+properties:
+  store:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Store name
+        example: SHOJIKU MART
+      address:
+        type: string
+        title: Address
+        example: 123 Main Street, Springfield, IL 62704
+      phone:
+        type: string
+        title: Phone
+        example: (555) 010-1234
+    title: Store
+  sale:
+    type: object
+    properties:
+      timestamp:
+        type: string
+        format: date-time
+        title: Date/time
+        example: '2026-07-07T18:23:00-05:00'
+      register:
+        type: string
+        title: Register
+        example: REG 02
+      cashier:
+        type: string
+        title: Cashier
+        example: CLERK 07
+      payment:
+        type: string
+        title: Payment
+        example: VISA ****1234  AUTH 052319
+    title: Sale
+  amount:
+    type: object
+    properties:
+      subtotal:
+        type: number
+        format: currency
+        title: Subtotal
+        example: 18.88
+        currency: USD
+        precision: 2
+      tax_label:
+        type: string
+        title: Tax label
+        example: TAX 8.875%
+      tax:
+        type: number
+        format: currency
+        title: Tax
+        example: 1.68
+        currency: USD
+        precision: 2
+      total:
+        type: number
+        format: currency
+        title: Total
+        example: 20.56
+        currency: USD
+        precision: 2
+    title: Amounts
+  items:
+    type: array
+    title: Line items
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: Item
+          example: MILK 1GAL
+        qty:
+          type: number
+          title: Qty
+          example: 1
+        price:
+          type: number
+          format: currency
+          title: Price
+          example: 3.49
+          currency: USD
+          precision: 2
+      title: Line item

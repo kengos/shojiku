@@ -1,0 +1,254 @@
+name: CI
+
+# Every job runs a `make` target — the SAME target a contributor runs locally,
+# in the SAME pinned container. CI keeps no second copy of the cargo flags,
+# the coverage threshold or the image tags; when a gate changes it changes in
+# the Makefile, and both sides move together. "Green on my machine" and "green
+# in CI" therefore mean the same thing.
+#
+# Doc- and chore-only changes skip the whole gate: if every changed path
+# matches `paths-ignore`, no job runs. For a manual escape hatch on a commit
+# that does touch code, put `[skip ci]` in the commit message.
+on:
+  # Until the first release, main is one amended commit that is force-pushed
+  # in place, so each push replaces the branch with an unrelated ROOT commit.
+  # GitHub cannot diff that against what was there, and the path filters below
+  # then keep the run from starting at all — pushing normally triggers CI,
+  # force-pushing a rootless history does not. This is the manual trigger for
+  # that case: `gh workflow run ci.yml`.
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE*'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE*'
+
+# main is force-pushed freely until the first release, so a run for a commit
+# that has already been overwritten is wasted signal.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine-lint:
+    name: engine — budget / fmt / clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: rust
+          key: lint
+
+  engine-coverage:
+    # The instrumented run IS the test gate — a failing test fails it — so
+    # there is no separate `make test` job.
+    name: engine — coverage (100% lines)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: coverage
+          key: coverage
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lcov
+          path: engine/lcov.info
+          if-no-files-found: ignore
+
+  examples:
+    # Rendering is deterministic (verified cross-arch: arm64 == amd64
+    # byte-for-byte), so the committed examples/*/output.pdf + preview-*.png
+    # must equal a fresh render. A mismatch means a change altered rendered
+    # output without re-running `make examples`.
+    name: examples (outputs match fresh render)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: examples-check
+          key: examples
+
+  deny:
+    name: cargo deny (advisories / licenses)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: deny
+          key: deny
+
+  wasm:
+    name: wasm (build + size budget)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: wasm
+          key: wasm
+      # engine/wasm/pkg is gitignored and built, not committed, and the gui
+      # integration suites load it. Locally `make verify` happens to run wasm
+      # first; as parallel jobs nothing orders them, so the bytes travel.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wasm-pkg
+          path: engine/wasm/pkg/
+          if-no-files-found: error
+
+  gui:
+    name: gui (budget / biome / tsc / vitest)
+    needs: wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          name: wasm-pkg
+          path: engine/wasm/pkg/
+      - run: make gui
+
+  site:
+    name: site (tsc / vitest / data check / Pages build)
+    needs: wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          name: wasm-pkg
+          path: engine/wasm/pkg/
+      - run: make site
+      - run: make site-check
+      - run: make site-build
+
+  docker:
+    name: docker build / render / scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: make docker
+
+  # What the SDK gates load, built ONCE: the C ABI cdylib the four FFI
+  # bindings open, the CLI the two subprocess ones drive, and the napi addon
+  # the js package resolves. Building these inside each consuming job would
+  # compile the whole engine many times in parallel for identical artifacts.
+  engine-artifacts:
+    name: engine artifacts (cdylib + CLI + addon)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: capi-lib cli-bin napi
+          key: artifacts
+      - uses: actions/upload-artifact@v7
+        with:
+          name: engine-artifacts
+          path: dist/
+          if-no-files-found: error
+
+  sdk:
+    # Language × version. Each row runs the same `make sdk-<lang>` a
+    # contributor runs, against artifacts that already exist.
+    #
+    # Two versions per language, not the whole range: the FLOOR from
+    # docs/agents/sdk.md — which a bare local `make` also gates on — and the
+    # newest published line. Breakage lives at the ends (an API the floor
+    # lacks, a deprecation the newest enforces); a middle release rarely
+    # breaks alone, and paying for it in every run buys little.
+    #
+    # .NET has one row because 10 is currently the only admitted line: 8 LTS
+    # and 9 STS both end 2026-11, and 11 is unreleased.
+    #
+    # js is absent here: it loads the napi ADDON rather than the cdylib, so it
+    # has its own job below instead of a row that would ignore both artifacts.
+    name: sdk — ${{ matrix.lang }} ${{ matrix.version }}
+    needs: engine-artifacts
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { lang: ruby,   var: RUBY_VER,   version: '3.3' }
+          - { lang: ruby,   var: RUBY_VER,   version: '4.0' }
+          - { lang: python, var: PYTHON_VER, version: '3.11' }
+          - { lang: python, var: PYTHON_VER, version: '3.14' }
+          - { lang: java,   var: JAVA_VER,   version: '21' }
+          - { lang: java,   var: JAVA_VER,   version: '25' }
+          - { lang: php,    var: PHP_VER,    version: '8.3' }
+          - { lang: php,    var: PHP_VER,    version: '8.5' }
+          - { lang: go,     var: GO_VER,     version: '1.25' }
+          - { lang: go,     var: GO_VER,     version: '1.26' }
+          - { lang: dotnet, var: DOTNET_VER, version: '10.0' }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          name: engine-artifacts
+          path: dist/
+      - name: Restore the executable bit the artifact upload drops
+        run: chmod +x dist/cli/local/shojiku
+      - run: >
+          make sdk-${{ matrix.lang }}
+          ${{ matrix.var }}=${{ matrix.version }}
+          CAPI_PREBUILT=1 CLI_PREBUILT=1
+
+  sdk-js:
+    # Covers `make napi` too — sdk-js depends on it, so a separate napi job
+    # would build the same addon twice. Both supported Node lines run; the
+    # addon is rebuilt per row because it is what the version is testing.
+    name: sdk — js ${{ matrix.version }} (+ napi addon)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['22', '26']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: sdk-js
+          key: sdk-js-${{ matrix.version }}
+          env: NODE_VER=${{ matrix.version }}
+
+  install-proof:
+    # The question no SDK gate can answer: does the package reach the engine
+    # THROUGH ITS OWN PACKAGING? Each row embeds the payload the way a release
+    # does, builds the real package, installs it into a CLEAN floor-version
+    # container — no injected engine, no SHOJIKU_LIBRARY/SHOJIKU_BIN — and
+    # renders through it. One platform on purpose: the defect class this
+    # exists to catch (a lookup that works from an exploded directory and not
+    # from the shipped archive) is about SHAPE, which does not vary across
+    # the release matrix.
+    name: install proof — ${{ matrix.lang }}
+    needs: engine-artifacts
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [python, ruby, dotnet, java, js, php, go]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          name: engine-artifacts
+          path: dist/
+      - name: Restore the executable bit the artifact upload drops
+        run: chmod +x dist/cli/local/shojiku
+      - run: >
+          make proof-${{ matrix.lang }}
+          CAPI_PREBUILT=1 CLI_PREBUILT=1 NAPI_PREBUILT=1

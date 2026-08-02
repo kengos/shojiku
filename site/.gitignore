@@ -1,0 +1,10 @@
+node_modules/
+.vitepress/dist/
+.vitepress/cache/
+coverage/
+# build-time generated public areas (assemble-data.ts)
+public/data/
+public/gallery/
+public/brand/
+public/llms.txt
+public/llms-full.txt

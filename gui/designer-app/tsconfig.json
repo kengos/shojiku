@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["node"],
+    // scripts/assemble-site.ts runs under node's type stripping, which needs
+    // explicit `.ts` extensions on the runtime import chain it pulls from src.
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src", "scripts"]
+}

@@ -1,0 +1,47 @@
+{
+  "receipt": {
+    "number": "R-2026-0509-042",
+    "issued_at": "2026-05-09T14:05:00+08:00"
+  },
+  "recipient": {
+    "name": "Andrea Reyes"
+  },
+  "amount": {
+    "total_in_tax": 6876.8,
+    "total_ex_tax": 6140.0,
+    "tax": 736.8
+  },
+  "purpose": "mga aklat at gamit sa paaralan",
+  "issuer": {
+    "name": "Tapat na Aklatan, Inc.",
+    "tax_id": "TIN 123-456-789-000",
+    "address": "88 Rizal Avenue, Lungsod Quezon 1103",
+    "tel": "Telepono (02) 8123-4567"
+  },
+  "items": [
+    {
+      "name": "Aklat na “Paggawa ng PDF Engine sa Rust”",
+      "quantity": 2,
+      "unit_price": 1250.0,
+      "amount": 2500.0
+    },
+    {
+      "name": "Kuwaderno (100 dahon, pakete ng 12) — mahabang pangalan para subukan ang pagbalot ng linya",
+      "quantity": 4,
+      "unit_price": 510.0,
+      "amount": 2040.0
+    },
+    {
+      "name": "Bolpen na itim (kahon ng 50)",
+      "quantity": 1,
+      "unit_price": 1250.0,
+      "amount": 1250.0
+    },
+    {
+      "name": "Padala",
+      "quantity": 1,
+      "unit_price": 350.0,
+      "amount": 350.0
+    }
+  ]
+}

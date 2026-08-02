@@ -1,0 +1,19 @@
+version: 0.2.0
+type: object
+properties:
+  print:
+    type: object
+    properties:
+      date:
+        type: string
+        title: 配布日
+        example: 2026年7月14日
+    title: プリント情報
+  student:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 名前（配布時は空欄）
+        example: ''
+    title: 児童

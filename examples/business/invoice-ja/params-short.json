@@ -1,0 +1,44 @@
+{
+  "invoice": {
+    "number": "INV-2026-0714-007",
+    "issued_at": "2026-07-14",
+    "due_date": "2026-08-14",
+    "subject": "書籍・文具ほか小口注文分"
+  },
+  "billing": {
+    "name": "喫茶こもれび",
+    "postal_code": "101-0052",
+    "address": "東京都千代田区神田小川町7-8",
+    "contact": "店主 佐藤"
+  },
+  "issuer": {
+    "name": "株式会社正直堂",
+    "registration_no": "T0123456789012",
+    "postal_code": "101-0051",
+    "address": "東京都千代田区神田神保町1-2-3",
+    "tel": "03-1234-5678",
+    "email": "billing@shojikudo.example"
+  },
+  "totals": {
+    "subtotal_10": 4100,
+    "tax_10": 410,
+    "subtotal_8": 2000,
+    "tax_8": 160,
+    "total": 6670
+  },
+  "bank": {
+    "name": "神保町銀行",
+    "branch": "本店営業部",
+    "account_type": "普通",
+    "account_number": "1234567",
+    "holder": "カ）ショウジキドウ"
+  },
+  "web": {
+    "invoice_url": "https://billing.shojikudo.example/inv/INV-2026-0714-007"
+  },
+  "items": [
+    { "name": "書籍『Rustで作るPDFエンジン』", "quantity": 1, "unit_price": 3200, "tax_rate": "10%", "amount": 3200 },
+    { "name": "A5ノート（方眼・正直堂オリジナル）", "quantity": 2, "unit_price": 450, "tax_rate": "10%", "amount": 900 },
+    { "name": "ドリップコーヒー詰合せ（店頭ブレンド・24袋）", "quantity": 1, "unit_price": 2000, "tax_rate": "8%", "amount": 2000 }
+  ]
+}

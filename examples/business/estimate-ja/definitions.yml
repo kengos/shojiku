@@ -1,0 +1,154 @@
+version: 0.2.0
+type: object
+properties:
+  estimate:
+    type: object
+    properties:
+      number:
+        type: string
+        title: 見積番号
+        example: EST-2026-0725-018
+      issued_at:
+        type: string
+        format: date
+        title: 発行日
+        example: '2026-07-25'
+      valid_until:
+        type: string
+        format: date
+        title: 有効期限
+        example: '2026-08-24'
+      subject:
+        type: string
+        title: 件名
+        example: 2026年秋 新装開店 什器・書籍一式
+    title: 見積情報
+  billing:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 宛先名
+        example: 株式会社ヤマカワ書林
+      postal_code:
+        type: string
+        title: 郵便番号
+        example: 160-0022
+      address:
+        type: string
+        title: 住所
+        example: 東京都新宿区新宿4-5-6 ヤマカワビル3F
+      contact:
+        type: string
+        title: ご担当者
+        example: 仕入部 田中
+    title: 宛先
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 発行者名
+        example: 株式会社正直堂
+      registration_no:
+        type: string
+        title: 適格請求書発行事業者 登録番号
+        example: T0123456789012
+      postal_code:
+        type: string
+        title: 郵便番号
+        example: 101-0051
+      address:
+        type: string
+        title: 住所
+        example: 東京都千代田区神田神保町1-2-3
+      tel:
+        type: string
+        title: 電話番号
+        example: 03-1234-5678
+      email:
+        type: string
+        title: メールアドレス
+        example: sales@shojikudo.example
+    title: 発行者
+  terms:
+    type: object
+    properties:
+      delivery_time:
+        type: string
+        title: 納期
+        example: ご発注後 約3週間
+      delivery_place:
+        type: string
+        title: 受渡場所
+        example: 貴社ご指定場所
+      payment_terms:
+        type: string
+        title: お支払条件
+        example: 月末締め翌月末 銀行振込
+    title: 見積条件
+  totals:
+    type: object
+    properties:
+      subtotal:
+        type: number
+        format: currency
+        title: 小計
+        example: 969000
+        currency: JPY
+        precision: 0
+      tax:
+        type: number
+        format: currency
+        title: 消費税（10%）
+        example: 96900
+        currency: JPY
+        precision: 0
+      total:
+        type: number
+        format: currency
+        title: 合計（税込）
+        example: 1065900
+        currency: JPY
+        precision: 0
+        recommendedStyle:
+          textAlign: right
+    title: 合計（呼び出し側で計算）
+  web:
+    type: object
+    properties:
+      estimate_url:
+        type: string
+        title: オンライン見積URL
+        example: https://estimate.shojikudo.example/est/EST-2026-0725-018
+    title: オンライン見積
+  items:
+    type: array
+    title: 明細
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: 品目
+          example: 書棚（大型・オーダー製作）
+        quantity:
+          type: number
+          format: quantity
+          title: 数量
+          example: 6
+        unit_price:
+          type: number
+          format: currency
+          title: 単価
+          example: 48000
+          currency: JPY
+          precision: 0
+        amount:
+          type: number
+          format: currency
+          title: 金額
+          example: 288000
+          currency: JPY
+          precision: 0
+      title: 明細行

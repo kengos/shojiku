@@ -1,0 +1,35 @@
+{
+  "catalog": { "season_code": "Vol.12 / 2026-A（抜粋）" },
+  "products": [
+    {
+      "name": "A5ノート（方眼・糸かがり製本）",
+      "code": "ST-1101",
+      "price": 495,
+      "description": "180度フラットに開く糸かがり製本の方眼ノート。5mm方眼・96ページ。",
+      "colors": "藍・墨・生成り",
+      "stock": "在庫あり",
+      "image": "assets/notebook.svg",
+      "url": "https://store.shojikudo.example/p/ST-1101"
+    },
+    {
+      "name": "万年筆インク「藍鉄」50ml",
+      "code": "ST-2205",
+      "price": 2640,
+      "description": "神保町の夕暮れをイメージした沈むような藍色。書き出しは深い青、乾くとわずかに緑がかった鉄色へ変化します。",
+      "colors": "藍鉄（単色）",
+      "stock": "残りわずか",
+      "image": "assets/ink.svg",
+      "url": "https://store.shojikudo.example/p/ST-2205"
+    },
+    {
+      "name": "ブックカバー（帆布・文庫判）",
+      "code": "ST-3310",
+      "price": 1320,
+      "description": "倉敷帆布8号を使用。しおりひも付き。",
+      "colors": "生成り・藍・柿渋",
+      "stock": "在庫あり",
+      "image": "assets/bookcover.svg",
+      "url": "https://store.shojikudo.example/p/ST-3310"
+    }
+  ]
+}

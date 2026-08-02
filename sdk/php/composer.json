@@ -1,0 +1,35 @@
+{
+    "name": "shojiku/shojiku",
+    "description": "Deterministic PDF documents from a YAML template plus your data",
+    "type": "library",
+    "keywords": ["pdf", "invoice", "receipt", "template", "document"],
+    "homepage": "https://github.com/kengos/shojiku",
+    "license": ["MIT", "Apache-2.0", "BSD-3-Clause"],
+    "authors": [
+        {
+            "name": "kengos",
+            "email": "kengo@kengos.jp"
+        }
+    ],
+    "require": {
+        "php": "^8.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Shojiku\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Shojiku\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "support": {
+        "issues": "https://github.com/kengos/shojiku/issues",
+        "source": "https://github.com/kengos/shojiku/tree/main/sdk/php",
+        "docs": "https://github.com/kengos/shojiku/blob/main/docs/engine/README.md"
+    }
+}

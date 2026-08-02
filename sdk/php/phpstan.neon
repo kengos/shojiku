@@ -1,0 +1,22 @@
+parameters:
+    # Level 9 is the top of the scale for this codebase's shape: everything is
+    # typed, and the loose spots that remain — a decoded JSON payload, an
+    # options array — are exactly where a `mixed` must be narrowed by hand
+    # rather than trusted. `docs/agents/sdk.md` asks for 6+; this package has
+    # no reason to sit lower. src/ is analysed with nothing ignored.
+    level: 9
+    paths:
+        - src
+        - tests
+        - tools
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # A test asserts what it means to assert. Both of these rules say
+        # "the type system already knows that", which is true and is beside
+        # the point in a suite whose job is to pin behaviour: a `?->` that
+        # documents which accessor is nullable, and an assertion that a
+        # throw actually propagated. Neither is ignored under src/.
+        - identifier: nullsafe.neverNull
+          path: tests/*
+        - identifier: staticMethod.alreadyNarrowedType
+          path: tests/*

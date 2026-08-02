@@ -1,0 +1,246 @@
+version: 0.1.0
+name: invoice_en
+
+# US-style Letter invoice — the English counterpart of examples/invoice-ja:
+# Letter page preset, en-US locale, USD with cents, 18 line items paginating
+# with a repeating table header. Totals/tax are PRE-COMPUTED by the caller —
+# the engine formats, it never does arithmetic.
+page:
+  size: Letter
+  orientation: portrait
+  margin: 25
+
+defaults:
+  locale: en-US
+  currency: USD
+  formats:
+    currency: symbol
+
+styles:
+  Heading 1:
+    fontSize: 20
+    fontWeight: bold
+    lineHeight: 1.3
+  Heading 2:
+    fontSize: 16
+    fontWeight: bold
+    lineHeight: 1.3
+  Heading 3:
+    fontSize: 13
+    fontWeight: bold
+    lineHeight: 1.3
+    color: "#444444"
+  Body:
+    fontSize: 10.5
+    lineHeight: 1.5
+  Caption:
+    fontSize: 9
+    lineHeight: 1.4
+    color: "#666666"
+  label:
+    fontSize: 7.5
+    letterSpacing: 1
+    color: "#7a8497"
+    lineHeight: 1.4
+  meta:
+    fontSize: 9
+    lineHeight: 1.3
+  totalLine:
+    fontSize: 10
+    lineHeight: 1.2
+    textAlign: right
+
+sections:
+  header:
+    repeat: every_page
+    height: 64
+    items:
+      - type: rect
+        box: { x: 0, y: 0, w: "100%", h: 4 }
+        style: { backgroundColor: "#1a3c6e" }
+      - type: image
+        box: { x: 0, y: 14, w: 28, h: 28 }
+        src: assets/logo.svg
+      - type: text
+        box: { x: 36, y: 16, w: 260, h: 15 }
+        data: { key: issuer.name }
+        style: { fontSize: 11.5, fontWeight: bold, lineHeight: 1.3 }
+      - type: text
+        box: { x: 36, y: 33, w: 300, h: 11 }
+        data: { key: issuer.address }
+        style: { fontSize: 7.5, color: "#555555", lineHeight: 1.4 }
+      - id: title
+        type: text
+        box: { x: 342, y: 8, w: 220, h: 32 }
+        text: INVOICE
+        style: { fontSize: 24, textAlign: right, fontWeight: bold, color: "#1a3c6e", lineHeight: 1.3, letterSpacing: 2 }
+      - type: text
+        box: { x: 342, y: 44, w: 220, h: 12 }
+        text: "No. {invoice.number}"
+        style: { fontSize: 9, textAlign: right, color: "#555555", lineHeight: 1.3 }
+
+  body:
+    type: flow
+    box: { x: 0, y: 76, w: "100%", h: 622 }
+    gap: 14
+    items:
+      # Bill-to (left) / dates & terms (right).
+      - id: parties
+        type: container
+        box: { h: 78 }
+        items:
+          - type: text
+            box: { x: 0, y: 0, w: 120, h: 11 }
+            text: BILL TO
+            styleNames: [ label ]
+          - type: text
+            box: { x: 0, y: 14, w: 300, h: 17 }
+            data: { key: billing.name }
+            style: { fontSize: 12.5, fontWeight: bold, lineHeight: 1.3 }
+          - type: text
+            box: { x: 0, y: 34, w: 300, h: 26 }
+            data: { key: billing.address }
+            style: { fontSize: 8.5, lineHeight: 1.5 }
+          - type: text
+            box: { x: 0, y: 63, w: 300, h: 12 }
+            text: "Attn: {billing.contact}"
+            style: { fontSize: 8.5, lineHeight: 1.4, color: "#555555" }
+
+          - id: terms_block
+            type: container
+            box: { x: 350, y: 0, w: 212, h: 76 }
+            items:
+              - { type: text, box: { x: 0, y: 2, w: 100, h: 12 }, text: Issue date, styleNames: [ meta ], style: { color: "#7a8497" } }
+              - { type: text, box: { x: 100, y: 2, w: 112, h: 12 }, text: "{invoice.issued_at}", styleNames: [ meta ], style: { textAlign: right } }
+              - { type: text, box: { x: 0, y: 20, w: 100, h: 12 }, text: Due date, styleNames: [ meta ], style: { color: "#7a8497" } }
+              - { type: text, box: { x: 100, y: 20, w: 112, h: 12 }, text: "{invoice.due_date}", styleNames: [ meta ], style: { textAlign: right } }
+              - { type: text, box: { x: 0, y: 38, w: 100, h: 12 }, text: Terms, styleNames: [ meta ], style: { color: "#7a8497" } }
+              - { type: text, box: { x: 100, y: 38, w: 112, h: 12 }, text: "{invoice.terms}", styleNames: [ meta ], style: { textAlign: right } }
+              - { type: text, box: { x: 0, y: 56, w: 100, h: 12 }, text: PO number, styleNames: [ meta ], style: { color: "#7a8497" } }
+              - { type: text, box: { x: 100, y: 56, w: 112, h: 12 }, text: "{invoice.po_number}", styleNames: [ meta ], style: { textAlign: right } }
+
+      # Amount-due highlight.
+      - id: amount_due
+        type: container
+        box: { w: 320, h: 44 }
+        style:
+          backgroundColor: "#eef2f8"
+          borderColor: "#1a3c6e"
+          borderWidth: { bottom: 2 }
+        items:
+          - type: text
+            box: { x: 12, y: 15, w: 110, h: 14 }
+            text: AMOUNT DUE
+            styleNames: [ label ]
+          - type: text
+            box: { x: 116, y: 8, w: 192, h: 28 }
+            data: { key: totals.total }
+            style: { fontSize: 19, textAlign: right, lineHeight: 1.4, fontWeight: bold, color: "#1a3c6e" }
+
+      - id: items_table
+        type: table
+        data: { key: items }
+        autoPageBreak: true
+        repeatHeader: true
+        emptyBehavior: collapse
+        cellPadding: 4
+        header:
+          height: 22
+          style: { backgroundColor: "#1a3c6e", color: "#ffffff", fontSize: 9 }
+        row:
+          minHeight: 20
+          alternateStyle: { backgroundColor: "#f4f6fa" }
+        style: { fontSize: 9.5, borderColor: "#c5cddb" }
+        columns:
+          - id: description
+            label: Description
+            data: { key: description }
+            width: 287
+          - id: quantity
+            label: Qty
+            data: { key: quantity }
+            width: 65
+            style: { textAlign: right }
+          - id: unit_price
+            label: Unit price
+            data: { key: unit_price }
+            width: 100
+            style: { textAlign: right }
+          - id: amount
+            label: Amount
+            data: { key: amount }
+            width: 110
+            style: { textAlign: right }
+
+      - id: totals
+        type: container
+        box: { x: "55%", w: "45%" }
+        items:
+          - type: text
+            box: { x: 0, y: 0, w: "100%", h: 14 }
+            text: "Subtotal {totals.subtotal}"
+            styleNames: [ totalLine ]
+          - type: text
+            box: { x: 0, y: 15, w: "100%", h: 14 }
+            text: "Sales tax (8.875%) {totals.tax}"
+            styleNames: [ totalLine ]
+          - type: line
+            from: { x: 70, y: 33 }
+            to: { x: 252.9, y: 33 }
+            style: { width: 0.8, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 38, w: "100%", h: 18 }
+            text: "Total {totals.total}"
+            style: { fontSize: 13, textAlign: right, lineHeight: 1.3, fontWeight: bold }
+
+      # Payment instructions + pay-online QR.
+      - id: payment
+        type: container
+        box: { h: 96 }
+        items:
+          - id: payment_box
+            type: container
+            box: { x: 0, y: 0, w: 360, h: 92 }
+            style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+            items:
+              - type: text
+                box: { x: 12, y: 10, w: 120, h: 12 }
+                text: PAYMENT
+                styleNames: [ label ]
+              - type: text
+                box: { x: 12, y: 26, w: 336, h: 34 }
+                text: |-
+                  ACH / Wire — {bank.name}, Routing {bank.routing}, Account {bank.account}
+                  Checks payable to {issuer.name}
+                style: { fontSize: 9, lineHeight: 1.7 }
+              - type: text
+                box: { x: 12, y: 62, w: 336, h: 26 }
+                text: Please reference the invoice number with your payment. A 1.5% monthly late fee applies after the due date.
+                style: { fontSize: 8, lineHeight: 1.5, color: "#555555" }
+          - id: pay_qr
+            type: qr_code
+            box: { x: 498, y: 2, w: 60, h: 60 }
+            data: { key: web.invoice_url }
+          - type: text
+            box: { x: 478, y: 66, w: 100, h: 11 }
+            text: Pay online
+            link: { url: "{web.invoice_url}" }
+            style: { fontSize: 8, textAlign: center, color: "#1a3c6e", textDecoration: underline, lineHeight: 1.3 }
+
+  footer:
+    repeat: every_page
+    height: 44
+    items:
+      - type: line
+        from: { x: 0, y: 708 }
+        to: { x: 562, y: 708 }
+        style: { width: 0.5, color: "#c5cddb" }
+      - type: text
+        box: { x: 0, y: 714, w: "100%", h: 11 }
+        text: "{issuer.name} — Questions about this invoice? {issuer.email}"
+        style: { fontSize: 7.5, textAlign: center, color: "#666666", lineHeight: 1.3 }
+      - id: page_no
+        type: page_number
+        box: { x: 0, y: 728, w: "100%", h: 13 }
+        format: "{page} / {pages}"
+        style: { fontSize: 9, textAlign: center }

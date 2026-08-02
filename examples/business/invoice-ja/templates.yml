@@ -1,0 +1,288 @@
+version: 0.1.0
+name: invoice_ja
+
+# A4 invoice — the multi-page hero: one template, 22 line items paginating
+# with a repeating table header (params.json) or 3 items on one page
+# (params-short.json). Totals/tax are PRE-COMPUTED by the caller and passed
+# in params — the engine formats, it never does arithmetic.
+page:
+  size: A4
+  orientation: portrait
+  margin: 25
+
+defaults:
+  locale: ja-JP
+  currency: JPY
+  formats:
+    currency: symbol
+
+styles:
+  見出し1:
+    fontSize: 20
+    fontWeight: bold
+    lineHeight: 1.3
+  見出し2:
+    fontSize: 16
+    fontWeight: bold
+    lineHeight: 1.3
+  見出し3:
+    fontSize: 13
+    fontWeight: bold
+    lineHeight: 1.3
+    color: "#444444"
+  本文:
+    fontSize: 10.5
+    lineHeight: 1.5
+  キャプション:
+    fontSize: 9
+    lineHeight: 1.4
+    color: "#666666"
+  meta:
+    fontSize: 9
+    lineHeight: 1.3
+    textAlign: right
+  small:
+    fontSize: 8.5
+    lineHeight: 1.5
+    color: "#444444"
+  totalLine:
+    fontSize: 10
+    lineHeight: 1.2
+    textAlign: right
+
+sections:
+  header:
+    repeat: every_page
+    height: 64
+    items:
+      # Brand bar — the 正直堂 indigo (matches assets/logo.svg).
+      - type: rect
+        box: { x: 0, y: 0, w: "100%", h: 4 }
+        style: { backgroundColor: "#1a3c6e" }
+
+      - id: title
+        type: text
+        box: { x: 0, y: 16, w: "100%", h: 30 }
+        text: 御 請 求 書
+        style:
+          fontSize: 22
+          textAlign: center
+          lineHeight: 1.2
+          color: "#1a3c6e"
+          fontWeight: bold
+
+      - id: invoice_no
+        type: text
+        box: { x: 345, y: 14, w: 200.28, h: 12 }
+        text: "請求書番号 {invoice.number}"
+        styleNames: [ meta ]
+      - id: issued_at
+        type: text
+        box: { x: 345, y: 27, w: 200.28, h: 12 }
+        text: "発行日 {invoice.issued_at}"
+        styleNames: [ meta ]
+      - id: due_date
+        type: text
+        box: { x: 345, y: 40, w: 200.28, h: 12 }
+        text: "お支払期限 {invoice.due_date}"
+        styleNames: [ meta ]
+
+  body:
+    type: flow
+    box: { x: 0, y: 74, w: "100%", h: 672 }
+    gap: 14
+    items:
+      # Bill-to (left) / issuer (right) — one container, absolute children.
+      - id: parties
+        type: container
+        box: { h: 92 }
+        items:
+          - type: text
+            box: { x: 0, y: 4, w: 300, h: 22 }
+            text: "{billing.name} 御中"
+            style: { fontSize: 15, lineHeight: 1.2 }
+          - type: line
+            from: { x: 0, y: 30 }
+            to: { x: 300, y: 30 }
+            style: { width: 0.8, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 36, w: 300, h: 26 }
+            text: |-
+              〒{billing.postal_code} {billing.address}
+            style: { fontSize: 9, lineHeight: 1.4 }
+          - type: text
+            box: { x: 0, y: 66, w: 300, h: 13 }
+            text: "ご担当: {billing.contact} 様"
+            style: { fontSize: 9, lineHeight: 1.4 }
+
+          - id: issuer_block
+            type: container
+            box: { x: 330, y: 0, w: 215.28, h: 92 }
+            items:
+              - type: image
+                box: { x: 0, y: 4, w: 30, h: 30 }
+                src: assets/logo.svg
+              - type: text
+                box: { x: 38, y: 8, w: 177.28, h: 16 }
+                data: { key: issuer.name }
+                style: { fontSize: 12, lineHeight: 1.2 }
+              - type: text
+                box: { x: 38, y: 26, w: 177.28, h: 11 }
+                text: "登録番号 {issuer.registration_no}"
+                style: { fontSize: 8, lineHeight: 1.3, color: "#444444" }
+              - type: text
+                box: { x: 0, y: 42, w: 215.28, h: 42 }
+                text: |-
+                  〒{issuer.postal_code} {issuer.address}
+                  TEL {issuer.tel} / {issuer.email}
+                style: { fontSize: 8.5, lineHeight: 1.5, color: "#222222" }
+
+      # Billed-amount highlight + subject line.
+      - id: amount_summary
+        type: container
+        box: { h: 66 }
+        items:
+          - id: total_box
+            type: container
+            box: { x: 0, y: 0, w: 320, h: 44 }
+            style:
+              backgroundColor: "#eef2f8"
+              borderColor: "#1a3c6e"
+              borderWidth: { bottom: 2 }
+            items:
+              - type: text
+                box: { x: 12, y: 14, w: 110, h: 16 }
+                text: ご請求金額（税込）
+                style: { fontSize: 10, lineHeight: 1.2 }
+              - type: text
+                box: { x: 120, y: 8, w: 188, h: 28 }
+                text: "{totals.total}−"
+                style: { fontSize: 20, textAlign: right, lineHeight: 1.3, fontWeight: bold, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 52, w: "100%", h: 13 }
+            text: "件名: {invoice.subject}　—　下記のとおりご請求申し上げます。"
+            style: { fontSize: 9.5, lineHeight: 1.3 }
+
+      - id: items_table
+        type: table
+        data: { key: items }
+        autoPageBreak: true
+        repeatHeader: true
+        emptyBehavior: collapse
+        cellPadding: 4
+        header:
+          height: 22
+          style: { backgroundColor: "#1a3c6e", color: "#ffffff", fontSize: 9.5 }
+        row:
+          minHeight: 20
+          alternateStyle: { backgroundColor: "#f4f6fa" }
+        style: { fontSize: 9.5, borderColor: "#c5cddb" }
+        columns:
+          - id: name
+            label: 品目
+            data: { key: name }
+            width: 275.28
+          - id: quantity
+            label: 数量
+            data: { key: quantity }
+            width: 50
+            style: { textAlign: right }
+          - id: unit_price
+            label: 単価
+            data: { key: unit_price }
+            width: 80
+            style: { textAlign: right }
+          - id: tax_rate
+            label: 税率
+            data: { key: tax_rate }
+            width: 50
+            style: { textAlign: center }
+          - id: amount
+            label: 金額
+            data: { key: amount }
+            width: 90
+            style: { textAlign: right }
+
+      # Per-rate tax breakdown + totals (pre-computed in params).
+      - id: totals
+        type: container
+        box: { x: "55%", w: "45%" }
+        items:
+          - type: text
+            box: { x: 0, y: 0, w: "100%", h: 14 }
+            text: "小計（10%対象） {totals.subtotal_10}"
+            styleNames: [ totalLine ]
+          - type: text
+            box: { x: 0, y: 15, w: "100%", h: 14 }
+            text: "消費税（10%） {totals.tax_10}"
+            styleNames: [ totalLine ]
+          - type: text
+            box: { x: 0, y: 30, w: "100%", h: 14 }
+            text: "小計（8%対象 ※軽減税率） {totals.subtotal_8}"
+            styleNames: [ totalLine ]
+          - type: text
+            box: { x: 0, y: 45, w: "100%", h: 14 }
+            text: "消費税（8%） {totals.tax_8}"
+            styleNames: [ totalLine ]
+          - type: line
+            from: { x: 60, y: 63 }
+            to: { x: 245.38, y: 63 }
+            style: { width: 0.8, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 68, w: "100%", h: 18 }
+            text: "合計（税込） {totals.total}"
+            style: { fontSize: 13, textAlign: right, lineHeight: 1.3, fontWeight: bold }
+
+      # Bank details + web-invoice QR.
+      - id: payment
+        type: container
+        box: { h: 100 }
+        items:
+          - id: bank_box
+            type: container
+            box: { x: 0, y: 0, w: 350, h: 96 }
+            style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+            items:
+              - type: text
+                box: { x: 12, y: 10, w: 100, h: 14 }
+                text: お振込先
+                style: { fontSize: 10, fontWeight: bold, color: "#1a3c6e", lineHeight: 1.2 }
+              - type: text
+                box: { x: 12, y: 28, w: 326, h: 32 }
+                text: |-
+                  {bank.name} {bank.branch}　{bank.account_type} {bank.account_number}
+                  口座名義　{bank.holder}
+                style: { fontSize: 9.5, lineHeight: 1.6 }
+              - type: text
+                box: { x: 12, y: 64, w: 326, h: 26 }
+                text: |-
+                  恐れ入りますが、振込手数料は貴社にてご負担願います。
+                  お振込みの際は請求書番号をお知らせください。
+                styleNames: [ small ]
+          - id: web_qr
+            type: qr_code
+            box: { x: 481.28, y: 6, w: 64, h: 64 }
+            data: { key: web.invoice_url }
+          - type: text
+            box: { x: 400, y: 74, w: 145.28, h: 12 }
+            text: Web請求書はこちら
+            link: { url: "{web.invoice_url}" }
+            style: { fontSize: 8.5, textAlign: center, color: "#1a3c6e", textDecoration: underline }
+
+  footer:
+    repeat: every_page
+    height: 46
+    items:
+      - type: line
+        from: { x: 0, y: 756 }
+        to: { x: 545.28, y: 756 }
+        style: { width: 0.5, color: "#c5cddb" }
+      - type: text
+        box: { x: 0, y: 762, w: "100%", h: 11 }
+        text: "{issuer.name}　この請求書に関するお問い合わせ: {issuer.email}"
+        style: { fontSize: 7.5, textAlign: center, color: "#666666", lineHeight: 1.3 }
+      - id: page_no
+        type: page_number
+        box: { x: 0, y: 776, w: "100%", h: 13 }
+        format: "{page} / {pages}"
+        style: { fontSize: 9, textAlign: center }

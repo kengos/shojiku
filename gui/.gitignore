@@ -1,0 +1,12 @@
+node_modules/
+coverage/
+dist/
+dist-assets/
+*.tsbuildinfo
+
+# Playwright / npm write these back into the mounted designer-app/e2e dir; the
+# pinned versions in e2e/package.json are the authored source.
+designer-app/e2e/node_modules/
+designer-app/e2e/test-results/
+designer-app/e2e/playwright-report/
+designer-app/e2e/package-lock.json

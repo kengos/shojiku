@@ -1,0 +1,54 @@
+name: run a make gate with a warm target directory
+description: >
+  Run one `make` target — the same one a contributor runs — with
+  engine/target restored from cache around it. Wrapping the run (rather than
+  just the cache) is what keeps the restore/chown/save order correct: the
+  toolchain container writes as root, so the save step cannot read what it
+  produced until ownership is handed back.
+
+inputs:
+  target:
+    description: The make target to run, e.g. "coverage" or "sdk-ruby".
+    required: true
+  key:
+    description: >
+      A per-job cache suffix. Jobs build different profiles into one target
+      directory, so a shared entry means each save evicts work the next job
+      needed. One entry per job keeps them independent.
+    required: true
+  env:
+    description: Extra VAR=VALUE arguments appended to the make invocation.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    # Only engine/target is cached. The cargo and rustup homes stay Docker
+    # NAMED VOLUMES, because the pinned image ships cargo and rustc inside
+    # /usr/local/cargo — a named volume inherits that content on first use,
+    # while a host bind mount would MASK it and leave the container with no
+    # toolchain at all. Compilation output is the expensive part anyway; the
+    # registry download is seconds.
+    - uses: actions/cache/restore@v4
+      with:
+        path: engine/target
+        key: engine-${{ inputs.key }}-${{ hashFiles('engine/Cargo.lock') }}
+        restore-keys: engine-${{ inputs.key }}-
+
+    - shell: bash
+      run: make ${{ inputs.target }} ${{ inputs.env }}
+
+    - name: Hand the target directory back to the runner
+      if: always()
+      shell: bash
+      # Everything the container wrote is root-owned and the save step runs as
+      # the runner. Without this the save fails and every run starts cold —
+      # silently, because a cache miss is not an error.
+      run: sudo chown -R "$(id -u):$(id -g)" engine/target 2>/dev/null || true
+
+    - uses: actions/cache/save@v4
+      if: always()
+      with:
+        path: engine/target
+        key: engine-${{ inputs.key }}-${{ hashFiles('engine/Cargo.lock') }}

@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    // Colocated tests read fixtures via node:fs/node:url; TS 7 resolves
+    // node builtins only when @types/node is in `types` (TS 5 accepted the
+    // bare imports). Same shape as designer-app's tsconfig.
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

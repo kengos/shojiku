@@ -1,0 +1,16 @@
+[package]
+name = "shojiku-diagnostics"
+description = "Structured diagnostics shared across the Shojiku engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

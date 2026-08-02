@@ -1,0 +1,10 @@
+# Designer preset manifest: surfaces this bundled example in the locale-keyed
+# catalog. `locales` are the catalog tags it appears under; `engineLocale` is
+# the exact tag the app passes to the engine (locale pack + font selection).
+locales: [fil]
+engineLocale: fil-PH
+name:
+  fil: Resibo
+  en: Receipt (Filipino)
+  ja: 領収書（フィリピン語）
+thumbnail: preview-1.png

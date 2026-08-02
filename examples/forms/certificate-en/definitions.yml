@@ -1,0 +1,52 @@
+version: 0.2.0
+type: object
+properties:
+  certificate:
+    type: object
+    properties:
+      number:
+        type: string
+        title: Certificate number
+        example: 2026-0343
+      verify_url:
+        type: string
+        title: Verification URL
+        example: https://school.shojikudo.example/verify/2026-0343
+    title: Certificate
+  recipient:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Recipient name
+        example: Wilhelmina von Brandenburg-Ansbach
+    title: Recipient
+  course:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Course name
+        example: Letterpress & Bookbinding Basics
+      sessions:
+        type: number
+        title: Sessions
+        example: 8
+      hours:
+        type: number
+        title: Total hours
+        example: 16
+      completed_on:
+        type: string
+        format: date
+        title: Completion date
+        example: '2026-06-28'
+    title: Course
+  issuer:
+    type: object
+    properties:
+      director:
+        type: string
+        title: Director
+        example: Seiichiro Shojiki
+    title: Issuer

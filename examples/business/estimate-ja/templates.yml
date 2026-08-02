@@ -1,0 +1,262 @@
+version: 0.1.0
+name: estimate_ja
+
+# A4 estimate — invoice-ja's sibling in the same 正直堂 world. One clean single
+# page: 10 line items at a SINGLE 10% rate (vs the invoice's per-rate split),
+# an estimate-amount highlight, and an estimate-terms box (validity / delivery date / place / payment terms)
+# where the invoice carries its bank details. Totals are PRE-COMPUTED in params —
+# the engine formats, it never does arithmetic. autoPageBreak stays on so a
+# longer estimate still paginates with a repeating header.
+page:
+  size: A4
+  orientation: portrait
+  margin: 25
+
+defaults:
+  locale: ja-JP
+  currency: JPY
+  formats:
+    currency: symbol
+
+styles:
+  meta:
+    fontSize: 9
+    lineHeight: 1.3
+    textAlign: right
+  small:
+    fontSize: 8.5
+    lineHeight: 1.5
+    color: "#444444"
+  totalLine:
+    fontSize: 10
+    lineHeight: 1.2
+    textAlign: right
+
+sections:
+  header:
+    repeat: every_page
+    height: 64
+    items:
+      # Brand bar — the 正直堂 indigo (matches assets/logo.svg).
+      - type: rect
+        box: { x: 0, y: 0, w: "100%", h: 4 }
+        style: { backgroundColor: "#1a3c6e" }
+
+      - id: title
+        type: text
+        box: { x: 0, y: 16, w: "100%", h: 30 }
+        text: 御 見 積 書
+        style:
+          fontSize: 22
+          textAlign: center
+          lineHeight: 1.2
+          color: "#1a3c6e"
+          fontWeight: bold
+
+      - id: estimate_no
+        type: text
+        box: { x: 345, y: 14, w: 200.28, h: 12 }
+        text: "見積番号 {estimate.number}"
+        styleNames: [ meta ]
+      - id: issued_at
+        type: text
+        box: { x: 345, y: 27, w: 200.28, h: 12 }
+        text: "発行日 {estimate.issued_at}"
+        styleNames: [ meta ]
+      - id: valid_until
+        type: text
+        box: { x: 345, y: 40, w: 200.28, h: 12 }
+        text: "有効期限 {estimate.valid_until}"
+        styleNames: [ meta ]
+
+  body:
+    type: flow
+    box: { x: 0, y: 74, w: "100%", h: 672 }
+    gap: 12
+    items:
+      # Addressee (left) / issuer (right) — one container, absolute children.
+      - id: parties
+        type: container
+        box: { h: 92 }
+        items:
+          - type: text
+            box: { x: 0, y: 4, w: 300, h: 22 }
+            text: "{billing.name} 御中"
+            style: { fontSize: 15, lineHeight: 1.2 }
+          - type: line
+            from: { x: 0, y: 30 }
+            to: { x: 300, y: 30 }
+            style: { width: 0.8, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 36, w: 300, h: 26 }
+            text: |-
+              〒{billing.postal_code} {billing.address}
+            style: { fontSize: 9, lineHeight: 1.4 }
+          - type: text
+            box: { x: 0, y: 66, w: 300, h: 13 }
+            text: "ご担当: {billing.contact} 様"
+            style: { fontSize: 9, lineHeight: 1.4 }
+
+          - id: issuer_block
+            type: container
+            box: { x: 330, y: 0, w: 215.28, h: 92 }
+            items:
+              - type: image
+                box: { x: 0, y: 4, w: 30, h: 30 }
+                src: assets/logo.svg
+              - type: text
+                box: { x: 38, y: 8, w: 177.28, h: 16 }
+                data: { key: issuer.name }
+                style: { fontSize: 12, lineHeight: 1.2 }
+              - type: text
+                box: { x: 38, y: 26, w: 177.28, h: 11 }
+                text: "登録番号 {issuer.registration_no}"
+                style: { fontSize: 8, lineHeight: 1.3, color: "#444444" }
+              - type: text
+                box: { x: 0, y: 42, w: 215.28, h: 42 }
+                text: |-
+                  〒{issuer.postal_code} {issuer.address}
+                  TEL {issuer.tel} / {issuer.email}
+                style: { fontSize: 8.5, lineHeight: 1.5, color: "#222222" }
+
+      # Estimate-amount highlight + subject line.
+      - id: amount_summary
+        type: container
+        box: { h: 66 }
+        items:
+          - id: total_box
+            type: container
+            box: { x: 0, y: 0, w: 320, h: 44 }
+            style:
+              backgroundColor: "#eef2f8"
+              borderColor: "#1a3c6e"
+              borderWidth: { bottom: 2 }
+            items:
+              - type: text
+                box: { x: 12, y: 14, w: 130, h: 16 }
+                text: お見積金額（税込）
+                style: { fontSize: 10, lineHeight: 1.2 }
+              - type: text
+                box: { x: 140, y: 8, w: 168, h: 28 }
+                text: "{totals.total}−"
+                style: { fontSize: 20, textAlign: right, lineHeight: 1.3, fontWeight: bold, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 52, w: "100%", h: 13 }
+            text: "件名: {estimate.subject}　—　下記のとおりお見積り申し上げます。"
+            style: { fontSize: 9.5, lineHeight: 1.3 }
+
+      - id: items_table
+        type: table
+        data: { key: items }
+        autoPageBreak: true
+        repeatHeader: true
+        emptyBehavior: collapse
+        cellPadding: 4
+        header:
+          height: 22
+          style: { backgroundColor: "#1a3c6e", color: "#ffffff", fontSize: 9.5 }
+        row:
+          minHeight: 20
+          alternateStyle: { backgroundColor: "#f4f6fa" }
+        style: { fontSize: 9.5, borderColor: "#c5cddb" }
+        columns:
+          - id: name
+            label: 品目
+            data: { key: name }
+            width: 305.28
+          - id: quantity
+            label: 数量
+            data: { key: quantity }
+            width: 50
+            style: { textAlign: right }
+          - id: unit_price
+            label: 単価
+            data: { key: unit_price }
+            width: 90
+            style: { textAlign: right }
+          - id: amount
+            label: 金額
+            data: { key: amount }
+            width: 100
+            style: { textAlign: right }
+
+      # Subtotal / tax / total (pre-computed in params).
+      - id: totals
+        type: container
+        box: { x: "55%", w: "45%" }
+        items:
+          - type: text
+            box: { x: 0, y: 0, w: "100%", h: 14 }
+            text: "小計 {totals.subtotal}"
+            styleNames: [ totalLine ]
+          - type: text
+            box: { x: 0, y: 15, w: "100%", h: 14 }
+            text: "消費税（10%） {totals.tax}"
+            styleNames: [ totalLine ]
+          - type: line
+            from: { x: 60, y: 33 }
+            to: { x: 245.38, y: 33 }
+            style: { width: 0.8, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 38, w: "100%", h: 18 }
+            text: "合計（税込） {totals.total}"
+            style: { fontSize: 13, textAlign: right, lineHeight: 1.3, fontWeight: bold }
+
+      # Estimate terms + approval QR (the invoice's bank-details slot).
+      - id: terms
+        type: container
+        box: { h: 100 }
+        items:
+          - id: terms_box
+            type: container
+            box: { x: 0, y: 0, w: 350, h: 96 }
+            style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+            items:
+              - type: text
+                box: { x: 12, y: 10, w: 120, h: 14 }
+                text: お見積条件
+                style: { fontSize: 10, fontWeight: bold, color: "#1a3c6e", lineHeight: 1.2 }
+              - type: text
+                box: { x: 12, y: 28, w: 326, h: 66 }
+                text: |-
+                  有効期限　{estimate.valid_until}まで
+                  納　　期　{terms.delivery_time}
+                  受渡場所　{terms.delivery_place}
+                  お支払条件　{terms.payment_terms}
+                style: { fontSize: 9.5, lineHeight: 1.7 }
+          - id: approve_qr
+            type: qr_code
+            box: { x: 481.28, y: 6, w: 64, h: 64 }
+            data: { key: web.estimate_url }
+          - type: text
+            box: { x: 400, y: 74, w: 145.28, h: 12 }
+            text: オンラインでご確認
+            link: { url: "{web.estimate_url}" }
+            style: { fontSize: 8.5, textAlign: center, color: "#1a3c6e", textDecoration: underline }
+
+      # Notes.
+      - id: notes
+        type: text
+        box: { h: 30 }
+        text: |-
+          ※本見積書は上記有効期限内にご発注いただいた場合に適用されます。
+          この度はお見積りのご依頼を賜り、誠にありがとうございます。ご検討のほどよろしくお願い申し上げます。
+        styleNames: [ small ]
+
+  footer:
+    repeat: every_page
+    height: 46
+    items:
+      - type: line
+        from: { x: 0, y: 756 }
+        to: { x: 545.28, y: 756 }
+        style: { width: 0.5, color: "#c5cddb" }
+      - type: text
+        box: { x: 0, y: 762, w: "100%", h: 11 }
+        text: "{issuer.name}　この見積書に関するお問い合わせ: {issuer.email}"
+        style: { fontSize: 7.5, textAlign: center, color: "#666666", lineHeight: 1.3 }
+      - id: page_no
+        type: page_number
+        box: { x: 0, y: 776, w: "100%", h: 13 }
+        format: "{page} / {pages}"
+        style: { fontSize: 9, textAlign: center }

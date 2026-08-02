@@ -1,0 +1,39 @@
+[package]
+name = "shojiku-capi"
+description = "Shojiku C ABI: the shared library the FFI SDKs (python/ruby/c#/java) load"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[lib]
+# cdylib is the artifact the SDKs load (`libshojiku_capi.so` / `.dylib` /
+# `shojiku_capi.dll`); rlib keeps the very same code inside the workspace
+# test/clippy/coverage gates on the host, exactly as engine/wasm does.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+# The authoring surface with its `fs` feature ON: this host discovers locale
+# and font packs from the filesystem like the CLI, not from injected bytes.
+shojiku-authoring = { workspace = true }
+shojiku-diagnostics = { workspace = true }
+shojiku-formatter = { workspace = true }
+shojiku-image = { workspace = true }
+shojiku-layout = { workspace = true }
+# Composed HERE, in the host, exactly as the CLI and the WASM bindings do —
+# `shojiku-authoring` stays PDF-free. render-png is named for its error type
+# alone: the preview ops go through the authoring layer.
+shojiku-render-pdf = { workspace = true }
+shojiku-render-png = { workspace = true }
+shojiku-signing = { workspace = true }
+shojiku-verify = { workspace = true }
+# Deliberately absent: shojiku-fetch. The render path this library exposes is
+# socket-free, so a missing font face is a structured failure rather than a
+# download nobody asked for.
+
+[lints]
+workspace = true

@@ -1,0 +1,16 @@
+version: 0.1.0
+name: broken
+
+page:
+  size: A4
+  margin: 25
+
+sections:
+  body:
+    type: flow
+    items:
+      # An image with no source: an ERROR the engine raises with no
+      # definitions involved, which is what makes it a stable fixture.
+      - id: logo
+        type: image
+        box: { x: 0, y: 0, w: 40, h: 40 }

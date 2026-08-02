@@ -1,0 +1,57 @@
+# Code map — gui/designer — the in-app tutorial
+
+> AI-only, token-dense. Index + repo-wide conventions: [CLAUDE.md](../../CLAUDE.md).
+> Read this BEFORE searching or editing the covered dirs; update it in the
+> same PR whenever files/modules/boundaries here change.
+> Designer work often spans packages — seam work reads the neighbor's map too:
+> [gui-core.md](gui-core.md) ← this component ← [gui-app.md](gui-app.md).
+> **This component's map is split by area** — read the file for what you touch:
+> [index/shell](gui-designer.md) ·
+> [canvas](gui-designer-canvas.md) ·
+> [panel](gui-designer-panel.md) ·
+> [insert](gui-designer-insert.md) ·
+> [chrome](gui-designer-chrome.md) ·
+> [tutorial](gui-designer-tutorial.md).
+
+Covers `tutorial/`. The course is DATA over the existing document model: a step
+completes on committed ops / the selection path / the page count / a closed set
+of UI events, never on a DOM observation — so anything a step asks for, an AI
+satisfies by emitting the same ops. Shell + tree: [gui-designer.md](gui-designer.md).
+
+Two runnable UNIT kinds share the one runner: the nine-chapter through-course
+and the help-menu **topic shorts** (single-chapter units, 5±2 steps, focused
+2–3 min drills). A topic reuses a course step's SENTENCE via `copyId` while its
+own `id` stays unique, so progress never collides; it runs on its own practice
+document and restores the reader's own on exit ("use it on my own document").
+
+## Schema + registries
+
+- `tutorial/types.ts` (type-only: **`TutorialStep`** `{id, copyId?, anchor {kind: menu|toolbar|panel|sidebar|dialog|canvas, selector}, done}` — `id` is the PROGRESS key (unique across every unit), `copyId` the reused course step whose sentence it shows (absent → copy keyed by `id`); **`StepDone`** = `{ops: OpPredicate[]}` | `{selection:{pathPrefix}}` | `{ui}` | `{pageCount:{min}}` | `{auto:true}`; **`OpPredicate`** `{op, keys?, pathPrefix?}` (absent field = wildcard); **`UI_EVENTS`** — the CLOSED set a step may wait on (`dialog:container`/`dialog:field`/`dialog:iterable`/`sample:edited`/`export:done`/`tab:data`), covering the moments that change no template bytes; **`TutorialCourse`** `{id, chapters, params?}` (`params` = the practice document's sample data, absent → the shared `PRACTICE_PARAMS`); **`TutorialTopic`** = a `TutorialCourse` alias (a topic is a single-chapter unit); `TutorialProgress {completed: stepId[], dismissed}` — ids not indices, so inserting a step never marks new work done; `TutorialStore` = the host persistence seam)
+- `tutorial/anchors.ts` (**`TOUR_ANCHORS`** — every `data-tour` id the chrome carries, in ONE place, with `TOUR_ANCHOR_IDS` for the drift test; **`anchorRect(id, root?)`** → viewport `AnchorRect` or null when the control is not mounted. The id is escaped by hand (`"`/`\` inside a double-quoted attribute selector) rather than with `CSS.escape`, which jsdom does not implement — a runtime-conditional escape would leave a branch no environment can cover)
+
+## The pure model
+
+- `tutorial/model.ts` (**`allStepIds(units)`** — the flat union of every unit's step ids, the known-id set `readProgress(raw, units[])` filters against so a topic's completed ids survive a course reload (and a stored `__proto__` never reaches a lookup); **`stepDone(step, event)`** — the whole completion rule set: an op predicate matches kind + a leading `keys` PREFIX (`['box']` catches `box.x` and `box.y`) + a `pathPrefix` at SEGMENT boundaries (`items[1]` never matches `items[10]`, a root-addressed op never matches a path-prefixed predicate); a list of predicates is an OR (the drag-to-bind pair: an insert OR a `data.key` write); an `auto` step is advanced only by the Next button. Plus **`resumeAt`** (the first GAP, so a reader who jumped ahead is sent back to what they skipped), `chapterProgress`, `markComplete` (idempotent), `courseSteps`, and **`readProgress(raw, course)`** — persisted progress is user-writable, so it is size-capped (`MAX_PROGRESS_BYTES` 32 KiB, refused BEFORE parsing), JSON-guarded, and filtered against the REAL step ids, which is also what stops a stored `__proto__`/`constructor` from reaching a lookup; anything unrecognizable degrades to a fresh start)
+
+## Course data
+
+- `tutorial/course.ts` (**`COURSE`** — nine chapters, ch0–ch8, blank page → exported invoice (the design-session script it mirrored shipped and was deleted — the course data here IS the script now). Structure only: step ids key both the copy and the progress, so a topic tutorial can reuse a step by referencing its id)
+- `tutorial/topics.ts` (**`TOPICS`** — the six help-menu topic shorts, in launcher order: containers & layout / data binding / tables (list data) / footers & page numbers / fixed vs auto placement / style & format provenance. Each is a single-chapter `TutorialTopic`; a `reuse(id, courseStepId, step)` helper stamps a unique progress `id` + a `copyId` on a step that borrows a course sentence, `step(...)` builds a topic-specific one. Seeds mostly reuse `CHAPTER_SEEDS` (a chapter's structure fits the drill); the footer topic uses `TOPIC_SEEDS.footer`. Topic-specific step predicates were verified against the real ops: grid columns = `setScalar box.columns`, pin = `setScalar box`, unpin = `removeKey box`, rebind = `setScalar data.key`, paste/nest = `insertItem`, style update = `setScalar styles`)
+- `tutorial/seeds.ts` (**`CHAPTER_SEEDS`** — the document each chapter STARTS from, so a reader can jump to or resume at any chapter and find the page in the state its copy describes; each is the document the previous chapter's steps produce. **`TOPIC_SEEDS`** carries the extra practice documents topics need (today `footer`: a titled body + a footer band with only a page number, so the footer topic fills in the company-name text). **`PRACTICE_PARAMS`** is the sample data they bind. Data keys are ASCII: the engine interpolates `{key}` over `[A-Za-z0-9_.]` only, so a Japanese-named key works as a whole-item binding but prints literally inside a sentence — every bundled ja example follows the same convention and the course teaches it. Band items carry margin-box coordinates (a footer sits near y 762 of A4-at-margin-24's 794pt box, NOT y 8) and containers author `direction: row` (the flex default is `column`). All nine chapter seeds AND every topic seed are pinned diagnostics-CLEAN against the real ja engine by `designer-app`'s `integration/tutorialSeeds.test.ts` — the component's own wasm suite boots en-US, where the Japanese text would raise `missing_glyph` for unrelated reasons)
+- `tutorial/copy.ja.ts` / `tutorial/copy.en.ts` (the sentences, keyed by step id, + chapter titles + topic titles/subtitles + the launcher section headers/intro (`TOPIC_TITLES_*`/`TOPIC_SUBTITLES_*`/`LAUNCHER_*`). Deliberately NOT chrome-catalog content: the catalog's parity gate demands all six languages, and machine-translating instructional prose is worse than falling back to the one other language a maintainer reviews — so topic launcher text falls back to en for zh/hi/fil exactly as chapter titles already do. Copy renders as React text and never through `formatMessage`, which is what lets a step show binding syntax like `{total}` verbatim)
+- `tutorial/copy.ts` (**`courseCopy(locale)`** — ja for `ja*`, else en; returns `{steps, titles (chapters+topics merged), subtitles, launcher}`. `stepCopy(copy, copyKey)`/`chapterTitle`/`topicSubtitle` are own-property lookups, so an inherited name never resolves)
+
+## Controller + surfaces
+
+- `tutorial/useTutorial.ts` (**`useTutorial(course, topics, host, store?)`** — the session over a selectable ACTIVE unit (the course or a topic). `start(unit, chapter)` re-reads the store (an accessor, never a boot snapshot), snapshots the reader's own text + sample data into a REF, seeds that unit's document (`unit.params ?? PRACTICE_PARAMS`), and opens at the resumed step; the session carries `{unit, chapter, step}` so `observe`/`complete` read the running unit, and `readProgress` filters against ALL units' ids. `stop()` restores from that ref, which is why the restore does not depend on a render having happened. Crossing a chapter boundary does NOT re-seed (the reader's work carries forward); finishing the last step restores and ends. `observe(event)` feeds the matcher, `next()` advances an acknowledgement step, `restart`/`dismissHint` persist through the store. `TutorialHost` is the four document-level callbacks it needs, passed in rather than reached for)
+- `tutorial/CoachOverlay.tsx` (**`CoachOverlay`** — presentational: a spotlight ring inline-positioned around the anchor rect (a 6px halo) and a bubble carrying the step's sentence, chapter and progress. The overlay is `pointer-events-none` so the pointed-at control stays usable; only the bubble is interactive. **`bubblePosition(rect)`** is pure — under the anchor, clamped into the viewport, centered when there is no anchor (a step never disappears because its control did). Next renders only for an acknowledgement step)
+- `tutorial/TutorialDialog.tsx` (**`TutorialDialog`** over `ui/Modal` — the launcher: a full-course section (chapters with per-chapter counts, "resume" — only for a reader actually part-way through, else "start" — and a direct chapter pick) then a topics section (each topic's title + subtitle + its own progress badge, `onStartTopic(index)`), under a practice-document trust-note intro; a progress reset in the footer. Per-unit progress via `chapterProgress`, so a topic's badge is independent of the course. Opening it starts nothing)
+
+## Where the Designer wires it
+
+The Designer's composer (`wiring.ts`) owns the session (see
+[gui-designer.md](gui-designer.md)): the
+Help menu entry is BUILT IN (no host injection), the event feed is
+`editor.subscribe` + the selection + the last-good page count + `uiEvent(...)`
+calls in the dialog/tab/export handlers, and the first-run suggestion shows only
+for a reader with no recorded progress.

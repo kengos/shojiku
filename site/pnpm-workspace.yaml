@@ -1,0 +1,16 @@
+# Standalone pnpm project (the site is not a gui/ workspace member — it is a
+# different deploy target with its own lifecycle). The supply-chain posture
+# mirrors gui/pnpm-workspace.yaml, where the rationale comments live:
+# build-script allowlisting + a 7-day minimum release age that is enforced at
+# install time (including --frozen-lockfile), so a freshly compromised release
+# cannot reach a build.
+packages:
+  - .
+
+# esbuild's postinstall places its native binary — the one reviewed build
+# script this project allows (pnpm 11's allowBuilds spelling).
+allowBuilds:
+  esbuild: true
+
+minimumReleaseAge: 10080
+minimumReleaseAgeExclude: []

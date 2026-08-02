@@ -1,0 +1,25 @@
+version: 0.1.0
+name: warns
+
+page:
+  size: A4
+  margin: 25
+
+defaults:
+  locale: en-US
+  style:
+    fontFamily: noto-sans
+    fontSize: 10.5
+
+sections:
+  body:
+    type: flow
+    items:
+      # Deliberately one line-height too short: 18pt text needs 25.2pt and
+      # this box gives it 24. The engine WARNS and still renders, which is
+      # exactly the case a caller who only inspects failures would miss.
+      - id: cramped
+        type: text
+        box: { x: 0, y: 0, w: 400, h: 24 }
+        text: Cramped
+        style: { fontSize: 18 }

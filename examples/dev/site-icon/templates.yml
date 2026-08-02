@@ -1,0 +1,42 @@
+version: 0.1.0
+name: site_icon
+
+# Shojiku site icon — a shoji lattice as a document grid, rendered by the
+# engine itself. 40mm square, full bleed (margin 0).
+page:
+  size: { w: "40mm", h: "40mm" }
+  margin: 0
+
+defaults:
+  locale: ja-JP
+
+sections:
+  body:
+    type: absolute
+    items:
+      # Indigo ground (full bleed).
+      - type: rect
+        box: { x: 0, y: 0, w: 113.39, h: 113.39 }
+        style: { backgroundColor: "#1a3c6e" }
+      # Lattice frame.
+      - type: rect
+        box: { x: 14, y: 14, w: 85.4, h: 85.4 }
+        style: { borderWidth: 5.5, borderColor: "#f6f2e9" }
+      # Inner bars — vertical.
+      - type: rect
+        box: { x: 40.63, y: 14, w: 5.5, h: 85.4 }
+        style: { backgroundColor: "#f6f2e9" }
+      - type: rect
+        box: { x: 67.27, y: 14, w: 5.5, h: 85.4 }
+        style: { backgroundColor: "#f6f2e9" }
+      # Inner bars — horizontal.
+      - type: rect
+        box: { x: 14, y: 40.63, w: 85.4, h: 5.5 }
+        style: { backgroundColor: "#f6f2e9" }
+      - type: rect
+        box: { x: 14, y: 67.27, w: 85.4, h: 5.5 }
+        style: { backgroundColor: "#f6f2e9" }
+      # One warm pane (bottom-right) — the hanko accent.
+      - type: rect
+        box: { x: 72.77, y: 72.77, w: 23.88, h: 23.88 }
+        style: { backgroundColor: "#c73e2e" }

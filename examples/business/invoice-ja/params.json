@@ -1,0 +1,63 @@
+{
+  "invoice": {
+    "number": "INV-2026-0731-042",
+    "issued_at": "2026-07-31",
+    "due_date": "2026-08-31",
+    "subject": "2026年7月分 商品代金"
+  },
+  "billing": {
+    "name": "株式会社ヤマカワ書林",
+    "postal_code": "160-0022",
+    "address": "東京都新宿区新宿4-5-6 ヤマカワビル3F",
+    "contact": "仕入部 田中"
+  },
+  "issuer": {
+    "name": "株式会社正直堂",
+    "registration_no": "T0123456789012",
+    "postal_code": "101-0051",
+    "address": "東京都千代田区神田神保町1-2-3",
+    "tel": "03-1234-5678",
+    "email": "billing@shojikudo.example"
+  },
+  "totals": {
+    "subtotal_10": 514500,
+    "tax_10": 51450,
+    "subtotal_8": 122000,
+    "tax_8": 9760,
+    "total": 697710
+  },
+  "bank": {
+    "name": "神保町銀行",
+    "branch": "本店営業部",
+    "account_type": "普通",
+    "account_number": "1234567",
+    "holder": "カ）ショウジキドウ"
+  },
+  "web": {
+    "invoice_url": "https://billing.shojikudo.example/inv/INV-2026-0731-042"
+  },
+  "items": [
+    { "name": "書籍『Rustで作るPDFエンジン』", "quantity": 20, "unit_price": 3200, "tax_rate": "10%", "amount": 64000 },
+    { "name": "書籍『YAMLテンプレート設計入門』", "quantity": 15, "unit_price": 2800, "tax_rate": "10%", "amount": 42000 },
+    { "name": "技術同人誌セット（全2巻・特装版・限定しおり付きの長い品目名の折り返し確認用サンプル）", "quantity": 8, "unit_price": 1800, "tax_rate": "10%", "amount": 14400 },
+    { "name": "月刊『組版技術』2026年7月号", "quantity": 30, "unit_price": 980, "tax_rate": "10%", "amount": 29400 },
+    { "name": "月刊『組版技術』2026年8月号", "quantity": 30, "unit_price": 980, "tax_rate": "10%", "amount": 29400 },
+    { "name": "A5ノート（方眼・正直堂オリジナル）", "quantity": 100, "unit_price": 450, "tax_rate": "10%", "amount": 45000 },
+    { "name": "万年筆インク「藍鉄」50ml", "quantity": 12, "unit_price": 2400, "tax_rate": "10%", "amount": 28800 },
+    { "name": "ブックカバー（帆布・文庫判）", "quantity": 40, "unit_price": 1200, "tax_rate": "10%", "amount": 48000 },
+    { "name": "しおりセット（真鍮・3枚組）", "quantity": 25, "unit_price": 1500, "tax_rate": "10%", "amount": 37500 },
+    { "name": "辞書『新明解実務用語辞典 第九版』", "quantity": 5, "unit_price": 6600, "tax_rate": "10%", "amount": 33000 },
+    { "name": "『児童文学全集』全12巻セット", "quantity": 2, "unit_price": 36000, "tax_rate": "10%", "amount": 72000 },
+    { "name": "ポスターパネル加工（B2）", "quantity": 6, "unit_price": 3500, "tax_rate": "10%", "amount": 21000 },
+    { "name": "配送料（送料無料キャンペーン適用）", "quantity": 1, "unit_price": 0, "tax_rate": "10%", "amount": 0 },
+    { "name": "書架整理サービス（2026年7月分）", "quantity": 1, "unit_price": 50000, "tax_rate": "10%", "amount": 50000 },
+    { "name": "ドリップコーヒー詰合せ（店頭ブレンド・24袋）", "quantity": 10, "unit_price": 2000, "tax_rate": "8%", "amount": 20000 },
+    { "name": "紅茶リーフ「書斎の午後」100g", "quantity": 12, "unit_price": 1350, "tax_rate": "8%", "amount": 16200 },
+    { "name": "クッキー缶「読書のおとも」（小）", "quantity": 20, "unit_price": 900, "tax_rate": "8%", "amount": 18000 },
+    { "name": "クッキー缶「読書のおとも」（大）", "quantity": 10, "unit_price": 1600, "tax_rate": "8%", "amount": 16000 },
+    { "name": "和三盆干菓子「活版」12粒入", "quantity": 15, "unit_price": 1080, "tax_rate": "8%", "amount": 16200 },
+    { "name": "りんごジュース 果汁100% 720ml", "quantity": 24, "unit_price": 600, "tax_rate": "8%", "amount": 14400 },
+    { "name": "はちみつ「百花」140g", "quantity": 8, "unit_price": 1150, "tax_rate": "8%", "amount": 9200 },
+    { "name": "ジャム2種詰合せ（いちご・マーマレード）", "quantity": 10, "unit_price": 1200, "tax_rate": "8%", "amount": 12000 }
+  ]
+}

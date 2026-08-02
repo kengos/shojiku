@@ -1,0 +1,26 @@
+# pnpm settings for the node SDK's own package.
+#
+# Two standing security controls, the same ones `gui/` carries — a dependency
+# change that lowers either is a security decision, never a side effect of
+# getting an install to pass:
+#
+#   * `onlyBuiltDependencies` is the postinstall ALLOWLIST. pnpm runs no
+#     dependency's install scripts by default; the tools listed here need
+#     theirs to link their own platform binary, and adding to this list IS the
+#     review gate for allowing a postinstall.
+#   * `minimumReleaseAge` refuses a version younger than the window, which
+#     blunts a compromised-release push. It fails `--frozen-lockfile`, not just
+#     `pnpm add`, so a freshly published bump reds the gate until it ages in.
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - esbuild
+
+minimumReleaseAge: 10080
+
+# The gate mounts the source tree and links the image's dependency store in as
+# `node_modules`. pnpm 11 otherwise runs a deps-status check before every
+# `pnpm run` script, decides that linked store is stale, and tries to PURGE it
+# — which fails outright without a TTY, and would delete the image's store if
+# it succeeded. Turning the check off is what lets the gate keep invoking the
+# package's own scripts rather than duplicating their command lines.
+verifyDepsBeforeRun: false

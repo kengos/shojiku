@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>shojiku-wasm golden path</title>
+    <style>
+      body { font: 14px system-ui, sans-serif; margin: 1rem; }
+      #status[data-state="error"] { color: #b00; }
+      #status[data-state="done"] { color: #070; }
+      canvas { border: 1px solid #ccc; max-width: 100%; }
+      pre { white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <h1>shojiku-wasm golden path</h1>
+    <p id="status" data-state="loading">loading…</p>
+    <pre id="metrics"></pre>
+    <pre id="error" hidden></pre>
+    <div id="pages"></div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

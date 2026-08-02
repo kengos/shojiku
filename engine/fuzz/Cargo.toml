@@ -1,0 +1,80 @@
+# Fuzz targets for the parsers that read attacker-chosen bytes.
+#
+# Deliberately OUTSIDE the engine workspace (`exclude = ["fuzz"]` there, its
+# own `[workspace]` table here): `cargo test --workspace`, `cargo llvm-cov
+# --workspace` and `cargo deny` all scope to the workspace, and none of them
+# should grow a nightly-only, libFuzzer-linked member. Nothing here ships —
+# no gate builds it, no artifact contains it, and `make fuzz` is the only
+# thing that compiles it.
+[package]
+name = "shojiku-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0 OR BSD-3-Clause"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+shojiku-signing = { path = "../signing" }
+shojiku-verify = { path = "../verify" }
+
+# libFuzzer wants line numbers in its crash reports; full debug info would
+# quadruple the build for nothing.
+[profile.release]
+debug = 1
+
+[lib]
+name = "shojiku_fuzz"
+path = "src/lib.rs"
+test = false
+doc = false
+bench = false
+
+# The seed generator is an EXAMPLE rather than a bin so `cargo fuzz list`
+# keeps naming fuzz targets only.
+[[example]]
+name = "seed"
+path = "examples/seed.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pdf_document"
+path = "fuzz_targets/pdf_document.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "verify_document"
+path = "fuzz_targets/verify_document.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "contents_window"
+path = "fuzz_targets/contents_window.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "cms_container"
+path = "fuzz_targets/cms_container.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "trust_anchors"
+path = "fuzz_targets/trust_anchors.rs"
+test = false
+doc = false
+bench = false

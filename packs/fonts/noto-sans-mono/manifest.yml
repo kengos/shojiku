@@ -1,0 +1,12 @@
+version: 1
+license: OFL-1.1
+redistributable: true
+faces:
+  - id: noto-sans-mono
+    file: NotoSansMono-Regular.ttf
+    sha256: 65b5e2b2c4a1fba9ae8be1f026cb35b03dcb8886d9b2a4147054fde12f7e767d
+  - id: noto-sans-mono-bold
+    file: NotoSansMono-Bold.ttf
+    sha256: a21ea0ba6ea49fda7b34ca39a504b487f1130885d36e1a4f9f4255b3ba6994bc
+    family: noto-sans-mono
+    weight: bold

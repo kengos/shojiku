@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>jp.kengos</groupId>
+  <artifactId>shojiku</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+
+  <name>Shojiku</name>
+  <description>
+    JVM bindings for Shojiku, a document engine for invoices, receipts and slips.
+    A YAML template plus JSON or YAML params in, a deterministic PDF out, with
+    signing and verification over the result. The layout engine is a shared C
+    library loaded through JNA, so the same params produce the same bytes here as
+    in the CLI and every other Shojiku SDK.
+  </description>
+  <url>https://github.com/kengos/shojiku</url>
+
+  <!-- The workspace's tri-license: any of these, at the user's option. -->
+  <licenses>
+    <license>
+      <name>MIT</name>
+      <url>https://github.com/kengos/shojiku/blob/main/LICENSE-MIT</url>
+    </license>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://github.com/kengos/shojiku/blob/main/LICENSE-APACHE</url>
+    </license>
+    <license>
+      <name>BSD-3-Clause</name>
+      <url>https://github.com/kengos/shojiku/blob/main/LICENSE-BSD</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>kengos</id>
+      <name>kengos</name>
+      <email>kengo@kengos.jp</email>
+    </developer>
+  </developers>
+
+  <scm>
+    <url>https://github.com/kengos/shojiku</url>
+    <connection>scm:git:https://github.com/kengos/shojiku.git</connection>
+  </scm>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!--
+      21 is the FLOOR from docs/agents/sdk.md, and JNA is the decided transport
+      precisely so it can stay there: the foreign-function API finalizes in 22,
+      which would exclude the LTS the enterprise and systems-integrator segment
+      actually runs.
+    -->
+    <maven.compiler.release>21</maven.compiler.release>
+    <jna.version>5.18.1</jna.version>
+    <junit.version>5.14.0</junit.version>
+  </properties>
+
+  <dependencies>
+    <!--
+      EXACTLY one runtime dependency. JNA is the transport; nothing else is
+      pulled into an application's classpath, which is why the JSON on the wire
+      is parsed by a small reader in this package rather than by Jackson.
+    -->
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>${jna.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.14.0</version>
+        <configuration>
+          <!--
+            The compiler's own lint with warnings as errors — the alternative
+            docs/agents/sdk.md sanctions beside ErrorProne, and the one that
+            keeps the build free of a plugin that downloads its own toolchain.
+          -->
+          <compilerArgs>
+            <arg>-Xlint:all,-serial,-this-escape</arg>
+            <arg>-Werror</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.2</version>
+        <configuration>
+          <!--
+            One JVM, tests in order: the configuration singleton is process-wide
+            state, so a test that sets a default would otherwise decide what an
+            unrelated one resolves to.
+          -->
+          <forkCount>1</forkCount>
+          <reuseForks>true</reuseForks>
+          <argLine>@{jacoco.surefire.argLine}</argLine>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.13</version>
+        <configuration>
+          <propertyName>jacoco.surefire.argLine</propertyName>
+        </configuration>
+        <executions>
+          <execution>
+            <id>prepare</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>coverage</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <!--
+                100% LINE coverage, which fails the build natively rather than
+                printing a number nobody reads. The bar docs/agents/sdk.md sets
+                for this language.
+              -->
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>1.0</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>2.44.5</version>
+        <configuration>
+          <java>
+            <googleJavaFormat>
+              <version>1.28.0</version>
+            </googleJavaFormat>
+            <removeUnusedImports />
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <id>format-check</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!--
+        Central requires both of these beside the jar. Produced by the ordinary
+        build rather than by a release profile, so a stage that ships the package
+        proves the artifacts it will publish.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.11.2</version>
+        <configuration>
+          <doclint>all,-missing</doclint>
+          <quiet>true</quiet>
+          <!--
+            Named explicitly. Without it the plugin passes `-J-Duser.language=`
+            with an EMPTY value whenever the JVM reports no locale — which a bare
+            container does — and javadoc refuses to start. It also keeps the
+            published javadoc jar from varying with whoever built it.
+          -->
+          <locale>en_US</locale>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

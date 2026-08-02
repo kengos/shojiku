@@ -1,0 +1,14 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gemspec
+
+# Development-only. The runtime dependency list stays at exactly one entry
+# (fiddle) — an SDK that drags a stack into an application's bundle is a cost
+# the application did not ask for.
+gem "rake", "~> 13.0"
+gem "rspec", "~> 3.13"
+gem "rubocop", "~> 1.66"
+gem "rubocop-rspec", "~> 3.0"
+gem "simplecov", "~> 0.22"

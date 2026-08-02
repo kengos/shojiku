@@ -1,0 +1,37 @@
+version: "0.1.0"
+name: genkoyoshi_b5_200
+
+# B5 portrait, vertical-writing 200-cell genkoyoshi (20 chars × 10 lines).
+# The body interprets the params' Aozora ruby notation (吾輩《わがはい》) via
+# markup: aozora and sets the ruby in the line gap. Overflowing text
+
+# Margins follow commercial 200-cell stock (B5, vertical 20×10): top 22mm /
+# sides 20mm / bottom 25mm; 9mm cells : 4.5mm line gap (the usual 2:1).
+page:
+  size: B5
+  margin: { top: 22mm, right: 20mm, bottom: 25mm, left: 20mm }
+
+defaults:
+  # DF1: the document locale drives the ja-JP pack (no currency here).
+  locale: ja-JP
+
+sections:
+  body:
+    type: flow
+    items:
+      - type: char_grid
+        id: manuscript
+        box: { w: 372, margin: { left: auto, right: auto } }
+        data: { key: manuscript }
+        markup: aozora
+        writingMode: vertical_rl
+        grid: { charsPerLine: 20, lines: 10, cellSize: 9mm, lineGap: 4.5mm }
+        style: { fontFamily: ipamj-mincho, borderColor: "#a8674f", color: "#222222" }
+
+  footer:
+    repeat: every_page
+    items:
+      - type: page_number
+        box: { x: 0, y: 575, w: 100%, h: 12 }
+        format: "{page} / {pages}"
+        style: { fontSize: 8, textAlign: center, color: "#a8674f" }

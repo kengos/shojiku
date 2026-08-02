@@ -1,0 +1,33 @@
+[package]
+name = "shojiku-image"
+description = "Shojiku image assets: raster/SVG decoding, source policy, and the asset store"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+base64 = { workspace = true }
+imagesize = { workspace = true }
+kurbo = { workspace = true }
+roxmltree = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+svgtypes = { workspace = true }
+thiserror = { workspace = true }
+shojiku-core = { workspace = true }
+shojiku-diagnostics = { workspace = true }
+# Raster pixel decoders (`decode_raster`), used by the PNG backend. These
+# codec crates are already in the workspace tree (krilla's raster-images),
+# so depending on them here adds no new dependency; keeping decode
+# unconditional keeps a single, always-tested instantiation rather than a
+# feature-gated one that the coverage tooling counts per-consumer.
+png = { workspace = true }
+zune-jpeg = { workspace = true }
+gif = { workspace = true }
+image-webp = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,34 @@
+<Project>
+
+  <!--
+    Settings both projects share.
+
+    .NET 10 is the FLOOR from docs/agents/sdk.md: .NET 8 (LTS) and 9 (STS)
+    both reach end of support in 2026-11, which leaves 10 the only line the
+    "no version whose support ends within six months" policy admits. The floor
+    is what the gate runs on — a package that only builds on the newest SDK has
+    not supported the version it claims.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!--
+      Warnings are errors, and the analyzers are on at the "all" level, which
+      is the gate docs/agents/sdk.md requires for this language. A warning that
+      is merely printed is a warning nobody reads.
+    -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisMode>All</AnalysisMode>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+
+    <!-- Reproducible restores: a gate run resolves exactly what was tested. -->
+    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+
+</Project>

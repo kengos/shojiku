@@ -1,0 +1,146 @@
+name: Publish container image
+
+# Manual only. Nothing about pushing an image belongs on a code push while the
+# repository is pre-release — and `main` is force-pushed in place, so a push
+# trigger would not fire reliably anyway.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag (keep `edge` until a real release exists)'
+        required: true
+        default: edge
+
+env:
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+  DOCKERHUB_IMAGE: kengos/shojiku
+
+# TWO registries, deliberately. ghcr is where the docs point: it needs no
+# secret (the built-in GITHUB_TOKEN writes this repository's own packages) and
+# public images there have no anonymous pull limit. Docker Hub is where people
+# LOOK, but rate-limits anonymous pulls per IP, which a shared CI address hits.
+#
+# Docker Hub is SKIPPED when its secret is absent, so this workflow works
+# before anyone sets it up. To turn it on: create a Docker Hub personal access
+# token with Read/Write, then add it as the repository secret DOCKERHUB_TOKEN.
+
+jobs:
+  # One job per architecture, each on its OWN native runner. The image compiles
+  # the Rust engine, and building linux/amd64 on an arm64 host (or the reverse)
+  # means QEMU emulating every one of those minutes. GitHub gives public
+  # repositories both architectures for free, so nothing has to be emulated.
+  build:
+    name: build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            slug: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            slug: arm64
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Pushed BY DIGEST, not by tag: two jobs writing the same tag would race,
+      # and the last one to finish would win with a single-architecture image.
+      # The manifest job below assembles the digests into one multi-arch tag.
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=image-${{ matrix.slug }}
+          cache-to: type=gha,scope=image-${{ matrix.slug }},mode=max
+
+      - name: Export the digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: digest-${{ matrix.slug }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  manifest:
+    name: assemble the multi-arch tag
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: /tmp/digests
+          pattern: digest-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create the manifest list on ghcr
+        run: |
+          cd /tmp/digests
+          docker buildx imagetools create \
+            -t "${GHCR_IMAGE}:${{ inputs.tag }}" \
+            $(for d in *; do echo "${GHCR_IMAGE}@sha256:$d"; done)
+          docker buildx imagetools inspect "${GHCR_IMAGE}:${{ inputs.tag }}"
+
+      # Everything below is Docker Hub, and every step is conditional on the
+      # secret existing, so a fork or a not-yet-configured repository publishes
+      # to ghcr and stops rather than failing.
+      - name: Is Docker Hub configured?
+        id: hub
+        env:
+          TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else echo "enabled=false" >> "$GITHUB_OUTPUT"
+               echo "DOCKERHUB_TOKEN is not set — publishing to ghcr only."
+          fi
+
+      - if: steps.hub.outputs.enabled == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: kengos
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Copied from the digests already on ghcr rather than rebuilt: the same
+      # bytes reach both registries, so "which one did I pull from" can never
+      # be the reason two users see different behaviour.
+      - name: Mirror the manifest list to Docker Hub
+        if: steps.hub.outputs.enabled == 'true'
+        run: |
+          cd /tmp/digests
+          docker buildx imagetools create \
+            -t "${DOCKERHUB_IMAGE}:${{ inputs.tag }}" \
+            $(for d in *; do echo "${GHCR_IMAGE}@sha256:$d"; done)
+          docker buildx imagetools inspect "${DOCKERHUB_IMAGE}:${{ inputs.tag }}"

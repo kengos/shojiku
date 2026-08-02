@@ -1,0 +1,217 @@
+version: 0.1.0
+name: pickup_slip_ja
+
+# A5 book-reservation pickup slip — the RESULT of the Thinreports migration walkthrough
+# (docs/migration-thinreports.md). The "before" is in legacy/: a Thinreports-
+# shaped .tlf plus the Ruby host that filled it. Nothing parses those files —
+# they are read as context and the document is re-authored natively, which is
+# what this file is.
+#
+# What the migration deliberately changed (Design notes in the walkthrough):
+#   * the legacy line-item box was seven separate line items — it is one `table` here,
+#     so the rules stay even and the columns stay aligned;
+#   * one style block was copy-pasted per text block — the repeated ones are
+#     named `styles` now;
+#   * every date/price display variant was its own key — one typed field each,
+#     with the variant picked in the template (`defaults.formats`, `{k:wareki}`).
+page:
+  size: A5
+  orientation: portrait
+  margin: 18
+
+defaults:
+  locale: ja-JP
+  currency: JPY
+  formats:
+    currency: symbol
+
+styles:
+  label:
+    fontSize: 8.5
+    lineHeight: 1.4
+    color: "#444444"
+  note:
+    fontSize: 8
+    lineHeight: 1.5
+    color: "#444444"
+
+sections:
+  body:
+    type: flow
+    box: { x: 0, y: 0, w: "100%", h: 559.28 }
+    gap: 10
+    items:
+      # Title + reception number/date.
+      - id: head
+        type: container
+        box: { h: 62 }
+        items:
+          - type: rect
+            box: { x: 0, y: 0, w: "100%", h: 3 }
+            style: { backgroundColor: "#1a3c6e" }
+          - type: image
+            box: { x: 0, y: 14, w: 26, h: 26 }
+            src: assets/logo.svg
+          - id: title
+            type: text
+            box: { x: 0, y: 14, w: "100%", h: 28 }
+            text: お取り置き引取票
+            style:
+              fontSize: 18
+              textAlign: center
+              lineHeight: 1.3
+              color: "#1a3c6e"
+              fontWeight: bold
+          - type: text
+            box: { x: 233.53, y: 44, w: 150, h: 14 }
+            text: "受付番号 {reservation.number}"
+            style: { fontSize: 8.5, textAlign: right, lineHeight: 1.4, color: "#444444" }
+          - type: text
+            box: { x: 0, y: 44, w: 200, h: 14 }
+            text: "受付日 {reservation.reserved_at}"
+            style: { fontSize: 8.5, lineHeight: 1.4, color: "#444444" }
+
+      # Customer.
+      - id: customer
+        type: container
+        box: { h: 52 }
+        items:
+          - type: text
+            box: { x: 0, y: 0, w: 260, h: 24 }
+            text: "{customer.name} 様"
+            style: { fontSize: 15, lineHeight: 1.4 }
+          - type: line
+            from: { x: 0, y: 27 }
+            to: { x: 260, y: 27 }
+            style: { width: 0.8, color: "#1a3c6e" }
+          - type: text
+            box: { x: 0, y: 32, w: 200, h: 13 }
+            text: "会員番号 {customer.member_number}"
+            styleNames: [ label ]
+          - type: text
+            box: { x: 210, y: 32, w: 173.53, h: 13 }
+            text: "TEL {customer.tel}"
+            style: { fontSize: 8.5, textAlign: right, lineHeight: 1.4, color: "#444444" }
+
+      # Pickup window — the legacy slip's three separate text blocks
+      # (from_jp / 〜 / to_jp) are one interpolated line over two typed dates.
+      - id: pickup
+        type: container
+        box: { h: 66 }
+        style:
+          backgroundColor: "#eef2f8"
+          borderColor: "#1a3c6e"
+          borderWidth: { bottom: 2 }
+        items:
+          - type: text
+            box: { x: 12, y: 10, w: 120, h: 14 }
+            text: お引取期間
+            style: { fontSize: 9.5, lineHeight: 1.4, fontWeight: bold, color: "#1a3c6e" }
+          - type: text
+            box: { x: 12, y: 26, w: 359.53, h: 20 }
+            text: "{reservation.pickup_from} 〜 {reservation.pickup_to}"
+            style: { fontSize: 13, lineHeight: 1.4 }
+          - type: text
+            box: { x: 12, y: 48, w: 359.53, h: 13 }
+            text: "お引取店舗: {reservation.branch}"
+            styleNames: [ label ]
+
+      # Line items — the legacy box was seven `line` items plus per-row text blocks.
+      - id: books_table
+        type: table
+        data: { key: books }
+        autoPageBreak: true
+        repeatHeader: true
+        emptyBehavior: collapse
+        cellPadding: 4
+        header:
+          # fontSize 9 x lineHeight 1.4 = 12.6pt, plus 2 x cellPadding 4 = 20.6 —
+          # a fixed 20pt header clipped it and warned `text_overflow`.
+          height: 22
+          style: { backgroundColor: "#1a3c6e", color: "#ffffff", fontSize: 9 }
+        row:
+          minHeight: 20
+          conditionalStyles:
+            - when: { key: status, equals: backorder }
+              style: { backgroundColor: "#fdf3e7" }
+        style: { fontSize: 9, borderColor: "#c5cddb" }
+        columns:
+          - id: title
+            label: 書名
+            data: { key: title }
+            width: 168.53
+          - id: author
+            label: 著者
+            data: { key: author }
+            width: 75
+          - id: price
+            label: 税込価格
+            data: { key: price }
+            width: 90
+            style: { textAlign: right }
+          # Prints the words the definitions declare per status value —
+          # the column the legacy slip drew from a host-side ternary.
+          - id: status
+            label: 状況
+            data: { key: status }
+            width: 50
+            style: { textAlign: center }
+
+      # Count and total (pre-computed in params — the engine never does arithmetic).
+      - id: totals
+        type: container
+        box: { h: 40 }
+        items:
+          - type: text
+            box: { x: 0, y: 2, w: 220, h: 13 }
+            text: "※ 色の付いた行は入荷待ちです。"
+            styleNames: [ note ]
+          - type: text
+            box: { x: 180, y: 0, w: 203.53, h: 14 }
+            text: "取り置き {totals.count}"
+            style: { fontSize: 9.5, textAlign: right, lineHeight: 1.4, color: "#444444" }
+          - type: line
+            from: { x: 240, y: 18 }
+            to: { x: 383.53, y: 18 }
+            style: { width: 0.8, color: "#1a3c6e" }
+          - type: text
+            box: { x: 180, y: 22, w: 203.53, h: 18 }
+            text: "合計（税込） {totals.amount}"
+            style: { fontSize: 12, textAlign: right, lineHeight: 1.4, fontWeight: bold }
+
+      # Guidance + reservation-status QR.
+      - id: notice
+        type: container
+        box: { h: 84 }
+        items:
+          - id: notice_box
+            type: container
+            box: { x: 0, y: 0, w: 289.53, h: 80 }
+            style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+            items:
+              - type: text
+                box: { x: 10, y: 8, w: 269.53, h: 64 }
+                text: |-
+                  ・お引取の際は本票をレジまでお持ちください。
+                  ・お引取期限は {reservation.pickup_to} です。
+                  ・期間を過ぎたお取り置きは店頭在庫に戻させていただきます。
+                  ・入荷待ちの書籍は入荷次第ご連絡いたします。
+                styleNames: [ note ]
+          - id: status_qr
+            type: qr_code
+            box: { x: 319.53, y: 2, w: 64, h: 64 }
+            data: { key: web.status_url }
+          - type: text
+            box: { x: 299.53, y: 68, w: 84, h: 13 }
+            text: 状況照会
+            link: { url: "{web.status_url}" }
+            style: { fontSize: 8, textAlign: center, color: "#1a3c6e", textDecoration: underline }
+
+      # Issue info — the legacy `printed_at_datetime` string is a typed datetime
+      # supplied by the caller (the engine has no clock; renders stay
+      # deterministic).
+      - id: printed
+        type: text
+        box: { h: 14 }
+        text: "{meta.printed_at} 印刷　{reservation.branch}"
+        style: { fontSize: 7, textAlign: right, lineHeight: 1.4, color: "#666666" }

@@ -1,0 +1,103 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
+
+[*.{cs,csproj,props,targets}]
+indent_size = 4
+
+[*.{json,yml,yaml,md}]
+indent_size = 2
+
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_sort_system_directives_first = true
+
+# ---------------------------------------------------------------------------
+# Analyzer policy.
+#
+# `AnalysisMode=All` is on and warnings are errors, per docs/agents/sdk.md's
+# gate for this language. The rules below are turned down deliberately, each
+# because it argues against a decision the CROSS-LANGUAGE contract already
+# made — not because it was inconvenient. Everything else stays at its default
+# severity, which is the point of running at `All`.
+# ---------------------------------------------------------------------------
+
+# CA1002/CA1819/CA2227: "do not expose List<T>/arrays/settable collections".
+# The contract's result objects are data the caller reads — diagnostics, the
+# not-checked list, PDF bytes. Wrapping every one of them in a ReadOnly facade
+# would make this SDK's shape differ from the other six for a rule about
+# library-design taste, and PDF bytes ARE a byte array in every ecosystem.
+dotnet_diagnostic.CA1002.severity = none
+dotnet_diagnostic.CA1819.severity = none
+dotnet_diagnostic.CA2227.severity = none
+
+# CA1062: "validate arguments of public methods". This API's answer to a bad
+# argument is UsageException, thrown where the contract says it is thrown —
+# not a blanket ArgumentNullException on every parameter, which would convert
+# documented outcomes into a different exception type.
+dotnet_diagnostic.CA1062.severity = none
+
+# CA1303: "do not pass literals as localized parameters". Nothing here is
+# localized by design: diagnostics carry the engine's stable codes and typed
+# args, and translation happens in the consumer, never in an SDK.
+dotnet_diagnostic.CA1303.severity = none
+
+# CA1848/CA1727: LoggerMessage source generators and template casing belong to
+# Microsoft.Extensions.Logging, which this package deliberately does not
+# depend on — the log channel is a one-method interface so the dependency list
+# stays empty.
+dotnet_diagnostic.CA1848.severity = none
+dotnet_diagnostic.CA1727.severity = none
+
+# CA1031: "do not catch general exception types". The boundary catches are
+# narrow and named (OSError-equivalents, JsonException); where a broad catch
+# exists it is the deliberate "turn this into a failed result" seam.
+dotnet_diagnostic.CA1031.severity = none
+
+# CA1305/CA1307/CA1310: culture-sensitivity warnings. InvariantGlobalization
+# is on for the whole build, and every comparison here is ordinal by nature
+# (wire keys, reserved device names, ASCII rule matching).
+dotnet_diagnostic.CA1305.severity = none
+dotnet_diagnostic.CA1307.severity = none
+dotnet_diagnostic.CA1310.severity = none
+
+# CA1716: "identifiers should not match keywords" — fires on `Error`, which is
+# the contract's own word for the exception base and for a diagnostic's
+# severity in all seven languages.
+dotnet_diagnostic.CA1716.severity = none
+
+# CA5394: "do not use insecure randomness" and friends do not apply; there is
+# no randomness here. Kept out so a future edit does not silently acquire one.
+
+# IDE0058: "expression value is never used" — fires on the deliberate
+# fire-and-forget accessor calls at the C boundary, whose return value is the
+# status the caller already branched on.
+dotnet_diagnostic.IDE0058.severity = none
+
+# CA1032: "implement standard exception constructors". The parameterless and
+# (message, inner) overloads it demands would be lines no caller reaches — and
+# the SAME policy file sets a 100% line-coverage bar, which dead constructors
+# cannot meet. Each exception here keeps exactly the constructors the contract
+# builds it with; the information each one carries (a failure, a material kind)
+# is why it exists as a separate type at all.
+dotnet_diagnostic.CA1032.severity = none
+
+# CA1064/CA1065: exception-design rules that argue for a different base or for
+# not throwing from a property. `Unwrap` throwing is the frozen ruling, stated
+# in Result.cs, and the exception hierarchy is the one all seven SDKs share.
+dotnet_diagnostic.CA1064.severity = none
+dotnet_diagnostic.CA1065.severity = none
+
+# CA1724 for `Shojiku.Configuration` only: the rule objects that the name
+# partially matches the .NET Framework's `System.Configuration` namespace, which
+# this target framework does not even carry. `Shojiku.Configuration.Configure`
+# is the ecosystem-idiomatic entry point the cross-language contract asks each
+# SDK for, and `ShojikuConfiguration` inside namespace `Shojiku` would stutter.
+# The other type this rule flagged (`Sources`) was made internal instead, which
+# is the honest fix where one exists.
+[Shojiku/Configuration.cs]
+dotnet_diagnostic.CA1724.severity = none
