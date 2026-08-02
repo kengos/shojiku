@@ -10,12 +10,10 @@ name: CI
 # matches `paths-ignore`, no job runs. For a manual escape hatch on a commit
 # that does touch code, put `[skip ci]` in the commit message.
 on:
-  # Until the first release, main is one amended commit that is force-pushed
-  # in place, so each push replaces the branch with an unrelated ROOT commit.
-  # GitHub cannot diff that against what was there, and the path filters below
-  # then keep the run from starting at all — pushing normally triggers CI,
-  # force-pushing a rootless history does not. This is the manual trigger for
-  # that case: `gh workflow run ci.yml`.
+  # main takes no force pushes (repository ruleset), so every push to it
+  # diffs against real history and starts a run. This stays as the manual
+  # trigger for the doc-only case the path filters below skip entirely, and
+  # for re-running a gate without a new commit: `gh workflow run ci.yml`.
   workflow_dispatch:
   push:
     branches: [main]
@@ -31,8 +29,8 @@ on:
       - '.gitignore'
       - 'LICENSE*'
 
-# main is force-pushed freely until the first release, so a run for a commit
-# that has already been overwritten is wasted signal.
+# A newer push to the same ref supersedes the run in flight: nobody acts on
+# the older commit's result, so paying for it is wasted signal.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true

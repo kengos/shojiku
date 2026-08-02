@@ -154,12 +154,9 @@ When a feature ships, its substance moves along this list; the
 *(Internal maintenance note — for contributors and AI agents; readers of
 the docs can ignore this section.)*
 
-Last full doc audit (`shojiku-document-curator`): **the whole of `main`**.
-A hash cannot be recorded yet: until the first release `main` is ONE
-commit that is amended and force-pushed, so any hash written here is
-invalidated by the very commit that writes it, and "since the marker"
-always means "everything". Replace this with the audited hash once real
-history begins at v0.1.0.
+Last full doc audit (`shojiku-document-curator`): commit `1dfbe58a`.
+That is the v0.1.0 commit — the last one written under the amend-and-
+force-push convention, so it audited the whole tree rather than a range.
 Machine-read: the architect checks
 `git log --oneline <hash>..HEAD` against this marker during
 `/shojiku-cycle` Phase 0 and recommends a new curation pass when the

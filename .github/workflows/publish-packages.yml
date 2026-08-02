@@ -351,10 +351,9 @@ jobs:
             exit 0
           fi
           # DRAFT for the same reason maven stops at USER_MANAGED: the act
-          # that makes a release public stays a human click. It also keeps
-          # this safe to run while `main` is still force-pushed — GitHub
-          # does not create the tag until the draft is published, so no tag
-          # can strand on an orphaned commit. `--target` resolves then too.
+          # that makes a release public stays a human click. GitHub also
+          # withholds the tag until the draft is published, so an abandoned
+          # draft leaves nothing behind. `--target` resolves then too.
           if gh release view "$tag" >/dev/null 2>&1; then
             # A Release is the ONE mutable target here, so it is the one
             # place `force` can genuinely replace rather than merely
