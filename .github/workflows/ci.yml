@@ -121,6 +121,20 @@ jobs:
           path: engine/wasm/pkg/
       - run: make gui
 
+  site:
+    name: site (tsc / vitest / data check / Pages build)
+    needs: wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          name: wasm-pkg
+          path: engine/wasm/pkg/
+      - run: make site
+      - run: make site-check
+      - run: make site-build
+
   docker:
     name: docker build / render / scan
     runs-on: ubuntu-latest

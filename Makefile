@@ -221,7 +221,7 @@ help: ## Show this help
 # `coverage`: it is a full wasm32 build rather than a lint, so it does not
 # belong before the tests — but a size-budget crossing used to be discovered
 # only after paying for the single most expensive step in the run.
-verify: rust wasm coverage deny examples-check napi gui sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
+verify: rust wasm coverage deny examples-check napi gui site site-check sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
 	@echo "\n✅ verify passed — every CI gate is green locally. Safe to push."
 
 ## ---- <verb>:<scope> — "did it work?" entry points ----------------------
@@ -261,6 +261,15 @@ verify\:gui: ## Verify gui/ — budget + typecheck + lint (0 warnings) + tests/c
 
 verify\:docker: ## Verify the runtime image — build, render a PDF, trivy scan
 	@$(MAKE) --no-print-directory quiet T=docker
+
+verify\:site: ## Verify site/ — typecheck + tests (incl. real-wasm) + committed-data check
+	@$(MAKE) --no-print-directory quiet T="site site-check"
+
+lint\:site: ## site/ static checks only — tsc typecheck
+	@$(MAKE) --no-print-directory quiet T=site-lint
+
+test\:site: ## site/ tests only (vitest incl. the real-wasm integration suite)
+	@$(MAKE) --no-print-directory quiet T=site-test
 
 lint\:engine: ## engine/ static checks only — cargo fmt --check + clippy -D warnings
 	@$(MAKE) --no-print-directory quiet T="fmt clippy"
@@ -1319,6 +1328,67 @@ gui-dev: ## Vite dev server (HMR) in Docker for gui/ work (http://localhost:5173
 		pnpm install --frozen-lockfile; \
 		pnpm --filter @shojiku/designer-app assemble; \
 		pnpm --filter @shojiku/designer-app dev'
+
+## ---- site (the homepage — site/, VitePress + the live wasm renderer) ----
+
+# Run a pnpm/node command over site/ in the pinned Node image (the gui macro's
+# sibling; site/ is a standalone pnpm project, not a gui workspace member).
+SITE_IN_DOCKER = docker run --rm \
+	-v "$(CURDIR):/repo" -w /repo/site \
+	-v shojiku-pnpm:/pnpm-store \
+	-e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+	$(NODE_IMAGE) sh -euc
+
+site: ## site/ gates: typecheck + tests/coverage (integration suite needs `make wasm` once)
+	@echo "== site (typecheck + tests) =="
+	@test -d engine/wasm/pkg || $(MAKE) wasm
+	@$(SITE_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
+		pnpm config set store-dir /pnpm-store; \
+		pnpm install --frozen-lockfile; \
+		pnpm typecheck; \
+		pnpm test'
+
+site-lint: ## site/ typecheck only (what `make lint:site` runs)
+	@echo "== site typecheck =="
+	@$(SITE_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
+		pnpm config set store-dir /pnpm-store; \
+		pnpm install --frozen-lockfile; \
+		pnpm typecheck'
+
+site-test: ## site/ vitest only (what `make test:site` runs)
+	@echo "== site tests =="
+	@test -d engine/wasm/pkg || $(MAKE) wasm
+	@$(SITE_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
+		pnpm config set store-dir /pnpm-store; \
+		pnpm install --frozen-lockfile; \
+		pnpm test'
+
+site-data: ## Refresh the committed site inputs (site/.data/wasm + the README gallery section)
+	@echo "== site data refresh =="
+	@test -d engine/wasm/pkg || $(MAKE) wasm
+	@$(SITE_IN_DOCKER) 'node scripts/refresh-data.ts'
+
+site-check: ## Fail if committed site inputs differ from a fresh refresh (CI job "site")
+	@echo "== site data check =="
+	@test -d engine/wasm/pkg || $(MAKE) wasm
+	@$(SITE_IN_DOCKER) 'node scripts/refresh-data.ts --check'
+
+site-build: ## The full Pages build locally (site + /designer/) into site/.vitepress/dist
+	@echo "== site build (Pages mirror) =="
+	@$(SITE_IN_DOCKER) 'bash scripts/build-pages.sh'
+
+site-dev: ## VitePress dev server in Docker (http://localhost:5174, Ctrl-C stops)
+	@echo "== site dev server =="
+	@test -d engine/wasm/pkg || $(MAKE) wasm
+	docker run --rm -it -p 5174:5174 \
+		-v "$(CURDIR):/repo" -w /repo/site \
+		-v shojiku-pnpm:/pnpm-store \
+		-e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+		$(NODE_IMAGE) sh -euc 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
+		pnpm config set store-dir /pnpm-store; \
+		pnpm install --frozen-lockfile; \
+		node scripts/assemble-data.ts; \
+		pnpm exec vitepress dev --host --port 5174'
 
 ## ---- sbom ---------------------------------------------------------------
 

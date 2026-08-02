@@ -1,0 +1,199 @@
+# The ONE source for every gallery surface: the README "Gallery" table, the
+# site's /gallery and /ja/gallery pages (docs/TODO.md § HP1 anti-duplication —
+# gallery entries are generated, never transcribed). `featured: true` entries
+# form the README two-column table and the gallery page leads; the rest join
+# the "more" list. `preview`/`preview2` name committed render outputs inside
+# the entry's dir; two previews render side by side (the blank↔filled pairs).
+#
+# Regenerate the consumers with `make site-data` (hash-gated by site-check).
+entries:
+  - dir: business/invoice-ja
+    featured: true
+    preview: preview-1.png
+    title_en: Invoice (ja)
+    title_ja: 請求書
+    blurb_en: >-
+      22 line items paginate with a repeating table header, per-tax-rate
+      totals, QR + link; `params-short.json` renders a 3-item single page
+      from the same template.
+    blurb_ja: >-
+      22明細が表ヘッダの繰り返し付きで自動改ページする。税率別の集計、QRコードとリンクも1枚のYAMLに収まる。同じテンプレートに`params-short.json`を渡すと3明細の1ページ請求書になる。
+  - dir: typography/novel-ja
+    featured: true
+    preview: preview-2.png
+    title_en: Vertical short story, paperback style (ja)
+    title_ja: 縦書き小説（文庫風）
+    blurb_en: >-
+      Run, Melos! (excerpt): vertical columns paginate with their ruby,
+      strict kinsoku + hanging punctuation, tate-chu-yoko in the colophon,
+      vertical page numbers.
+    blurb_ja: >-
+      「走れメロス」冒頭をB5の縦組みで。ルビは行と一緒に改ページし、行頭行末の禁則とぶら下がり、奥付の縦中横、縦書きノンブルまで揃う。
+  - dir: business/invoice-en
+    featured: true
+    preview: preview-1.png
+    title_en: Invoice (en-US)
+    title_ja: 請求書（en-US）
+    blurb_en: >-
+      Letter-size US invoice: USD with cents, plural-aware quantities
+      (`1 item` / `24 items`), Net-30 terms, payment box + pay-online QR.
+    blurb_ja: >-
+      レターサイズの米国式請求書。セント付きUSD、単複を数える数量表示（`1 item`/`24 items`）、Net-30の支払条件、オンライン決済のQRつき。
+  - dir: forms/certificate-en
+    featured: true
+    preview: preview-1.png
+    title_en: Certificate (en-US)
+    title_ja: 修了証書（en-US）
+    blurb_en: >-
+      Letter-landscape certificate: double-rule frame, wide letter spacing,
+      real italics, verification QR.
+    blurb_ja: >-
+      レター横の証書。二重罫の飾り枠、広い字間、本物のイタリック、検証用QR。
+  - dir: business/receipt-zh-tw
+    featured: true
+    preview: preview-1.png
+    title_en: Receipt (zh-TW)
+    title_ja: 領収書（zh-TW）
+    blurb_en: >-
+      The locale-pack story: the same receipt geometry as ja / zh-CN /
+      80mm en-US, with currency, dates, tax wording, and font fallback
+      swapped by the pack.
+    blurb_ja: >-
+      ロケールパックの実証。ja / zh-CN / 80mm en-US と同じジオメトリのまま、通貨・日付・税表記・フォントフォールバックだけがパックで入れ替わる。
+  - dir: forms/application-form-ja
+    featured: true
+    preview: preview-1.png
+    preview2: preview-blank-1.png
+    title_en: Application form, filled ↔ blank (ja)
+    title_ja: 申込書（記入済↔ブランク）
+    blurb_en: >-
+      ONE template, two params files: form marks, 〒 entry cells, wareki
+      with a blank-form `placeholder`; not a single pt shifts.
+    blurb_ja: >-
+      テンプレートは1つ、paramsが2つ。丸囲みマーク、〒の記入マス、和暦とブランク用`placeholder`。記入済とブランクで1ptもずれない。
+  - dir: business/restaurant-menu-us
+    featured: true
+    preview: preview-1.png
+    title_en: Restaurant menu (en + vertical writing)
+    title_ja: レストランメニュー（英語+縦書き）
+    blurb_en: >-
+      An American Japanese restaurant's specials: English menu, USD prices,
+      and the vertical 正直亭 brand column + per-dish vertical names carrying
+      the Japanese feel.
+    blurb_ja: >-
+      アメリカの和食店のスペシャルメニュー。本文は英語とUSD、店名の縦書きコラムと料理名の縦書きが和の空気を運ぶ。
+  - dir: business/event-tickets-ja
+    featured: true
+    preview: preview-1.png
+    title_en: Event tickets (ja)
+    title_ja: イベントチケット
+    blurb_en: >-
+      2×4 n-up imposition with per-ticket QR, trim marks for the cutter,
+      `placeholder` seat fallback; 14 attendees flow onto sheet 2
+      automatically.
+    blurb_ja: >-
+      2×4の面付けにチケットごとのQR、断裁用トンボつき。座席未定は`placeholder`で埋まり、14人目からは2枚目に自動で流れる。
+  - dir: business/estimate-ja
+    preview: preview-1.png
+    title_en: Estimate
+    title_ja: 見積書
+    blurb_en: >-
+      The invoice's sibling: single-rate one-pager, estimate-terms box,
+      discount row.
+    blurb_ja: >-
+      請求書の兄弟。単一税率の1ページ構成に、見積条件の枠と値引き行。
+  - dir: business/delivery-note-ja
+    preview: preview-1.png
+    title_en: Delivery note
+    title_ja: 納品書
+    blurb_en: >-
+      Between estimate and invoice: quantity-bundling `headerGroups`,
+      data-driven row styling that tints only rows with items remaining,
+      a receipt-stamp field; partial ↔ complete delivery as two data files.
+    blurb_ja: >-
+      見積と請求の間の1枚。`headerGroups`で数量列を束ね、残数のある行だけをデータ条件で着色する。受領印欄つき。一部納品と完納は2つのデータファイルで出し分ける。
+  - dir: business/pickup-slip-ja
+    preview: preview-1.png
+    title_en: Pickup slip
+    title_ja: 引取伝票
+    blurb_en: >-
+      The Thinreports migration artifact — the migration walkthrough's
+      result.
+    blurb_ja: >-
+      Thinreports移行のワークスルーがそのまま残した成果物。旧`.tlf`をレンダリング画像からAIが再作成した。
+  - dir: business/catalog-ja
+    preview: preview-1.png
+    title_en: Product catalog
+    title_ja: 商品カタログ
+    blurb_en: Variable-height `repeat_flow` cards with dynamic images.
+    blurb_ja: 高さ可変の`repeat_flow`カード。商品画像はparamsから差し込む。
+  - dir: business/shipping-labels-ja
+    preview: preview-1.png
+    title_en: Shipping labels
+    title_ja: 宛名ラベル
+    blurb_en: 2×3 n-up labels with 〒 cells and an overflowing contents list.
+    blurb_ja: 2×3の面付けラベル。〒マスと、収まらない内容品を省略する`list`。
+  - dir: forms/rirekisho-ja
+    preview: preview-1.png
+    preview2: preview-blank-1.png
+    title_en: Rirekisho (JIS-style résumé)
+    title_ja: 履歴書（JIS風）
+    blurb_en: A3 spread, blank ↔ filled from one template.
+    blurb_ja: A3見開き。1つのテンプレートからブランクと記入例の両方を出す。
+  - dir: forms/certificate-ja
+    preview: preview-1.png
+    title_en: Certificate (ja)
+    title_ja: 修了証書
+    blurb_en: Landscape certificate with a double-rule frame and full bleed.
+    blurb_ja: 横位置の証書。二重罫の飾り枠と全面塗り足し。
+  - dir: typography/kokugo-print-ja
+    preview: preview-1.png
+    title_en: Kokugo worksheet
+    title_ja: 国語プリント
+    blurb_en: Horizontal + vertical char grids with ruby and practice cells.
+    blurb_ja: 横書きと縦書きの文字マスにルビとなぞり書きマス。小学校の漢字プリントがそのまま作れる。
+  - dir: typography/genkoyoshi-ja
+    preview: preview-1.png
+    title_en: Genkoyoshi (vertical)
+    title_ja: 原稿用紙（縦書き）
+    blurb_en: 200-character manuscript paper with Aozora ruby.
+    blurb_ja: 200字詰の原稿用紙。青空文庫記法のルビが降る。
+  - dir: typography/genkoyoshi-yoko-ja
+    preview: preview-1.png
+    title_en: Genkoyoshi (horizontal)
+    title_ja: 原稿用紙（横書き）
+    blurb_en: The 400-character horizontal sheet.
+    blurb_ja: 400字詰の横書き版。
+  - dir: business/receipt-ja
+    preview: preview-1.png
+    title_en: Receipt (ja)
+    title_ja: 領収書
+    blurb_en: >-
+      The quickstart document: containers with `%` widths, a boxed total,
+      tax breakdown, issuer block and QR.
+    blurb_ja: >-
+      クイックスタートの題材。`%`幅のコンテナ、金額の枠、税内訳、発行者ブロックとQR。
+  - dir: business/receipt-us
+    preview: preview-1.png
+    title_en: Receipt (80mm thermal, en-US)
+    title_ja: レシート（80mm感熱紙・en-US）
+    blurb_en: A custom-size 80mm thermal-printer receipt.
+    blurb_ja: 80mm幅のカスタム用紙サイズで感熱プリンタのレシートを組む。
+  - dir: business/receipt-zh-cn
+    preview: preview-1.png
+    title_en: Receipt (zh-CN)
+    title_ja: 領収書（zh-CN）
+    blurb_en: The simplified-Chinese member of the locale set.
+    blurb_ja: ロケールセットの簡体字版。
+  - dir: business/receipt-hi-in
+    preview: preview-1.png
+    title_en: Receipt (hi-IN)
+    title_ja: 領収書（hi-IN）
+    blurb_en: Devanagari conjuncts + lakh/crore digit grouping.
+    blurb_ja: デーヴァナーガリーの結合文字と、ラーク/クローレ式の桁区切り。
+  - dir: business/receipt-fil-ph
+    preview: preview-1.png
+    title_en: Receipt (fil-PH)
+    title_ja: 領収書（fil-PH）
+    blurb_en: Latin face + Philippine peso from the fil-PH pack.
+    blurb_ja: ラテン書体とフィリピン・ペソ。fil-PHパックだけで賄う。

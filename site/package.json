@@ -1,0 +1,27 @@
+{
+  "name": "shojiku-site",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "node scripts/assemble-data.ts && vitepress build",
+    "preview": "vitepress preview",
+    "data": "node scripts/assemble-data.ts",
+    "test": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "typescript": "^7.0.2",
+    "vitepress": "1.6.3",
+    "vitest": "^4.1.10"
+  }
+}

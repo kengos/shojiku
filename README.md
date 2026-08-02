@@ -232,33 +232,31 @@ resolve in the repository source, not in a docs-only copy). Where an example
 ships multiple `params-*.json`, every output comes from the **same
 template** with different data:
 
+<!-- gallery:generated:start (edit examples/gallery.yml, then `make site-data`) -->
 |  |  |
 | :---: | :---: |
-| [<img src="examples/business/invoice-ja/preview-1.png" width="420" alt="Multi-page invoice (ja)">](examples/business/invoice-ja/)<br>**Invoice (ja)** — 22 line items paginate with a repeating table header, per-tax-rate totals, QR + link; `params-short.json` renders a 3-item single page from the same template | [<img src="examples/typography/novel-ja/preview-2.png" width="420" alt="Vertical-writing paperback">](examples/typography/novel-ja/)<br>**Vertical short story, paperback style (ja)** — Run, Melos! (excerpt): vertical columns paginate **with their ruby**, strict kinsoku + hanging punctuation, tate-chu-yoko in the colophon, vertical page numbers |
-| [<img src="examples/business/invoice-en/preview-1.png" width="420" alt="US-style invoice (en)">](examples/business/invoice-en/)<br>**Invoice (en-US)** — Letter-size US invoice: USD with cents, plural-aware quantities (`1 item` / `24 items`), Net-30 terms, payment box + pay-online QR | [<img src="examples/forms/certificate-en/preview-1.png" width="420" alt="Certificate of completion (en)">](examples/forms/certificate-en/)<br>**Certificate (en-US)** — Letter-landscape certificate: double-rule frame, wide letter spacing, real italics, verification QR |
-| [<img src="examples/business/receipt-zh-tw/preview-1.png" width="420" alt="Receipt (zh-TW)">](examples/business/receipt-zh-tw/)<br>**Receipt (zh-TW)** — the locale-pack story: the same receipt geometry as [ja](examples/business/receipt-ja/) / [zh-CN](examples/business/receipt-zh-cn/) / [80mm en-US](examples/business/receipt-us/), with currency, dates, tax wording, and font fallback swapped by the pack | [<img src="examples/forms/application-form-ja/preview-1.png" width="206" alt="Application form, filled sample">](examples/forms/application-form-ja/) [<img src="examples/forms/application-form-ja/preview-blank-1.png" width="206" alt="Application form, blank">](examples/forms/application-form-ja/)<br>**Application form, filled ↔ blank (ja)** — ONE template, two params files: form marks, 〒 entry cells, wareki with a blank-form `placeholder`; not a single pt shifts |
-| [<img src="examples/business/restaurant-menu-us/preview-1.png" width="420" alt="US Japanese restaurant menu">](examples/business/restaurant-menu-us/)<br>**Restaurant menu (en + vertical writing)** — an American Japanese restaurant's specials: English menu, USD prices, and the vertical 正直亭 brand column + per-dish vertical names carrying the Japanese feel | [<img src="examples/business/event-tickets-ja/preview-1.png" width="420" alt="Event-ticket imposition">](examples/business/event-tickets-ja/)<br>**Event tickets (ja)** — 2×4 n-up imposition with per-ticket QR, trim marks for the cutter, `placeholder` seat fallback; 14 attendees flow onto sheet 2 automatically |
+| [<img src="examples/business/invoice-ja/preview-1.png" width="420" alt="Invoice (ja)">](examples/business/invoice-ja/)<br>**Invoice (ja)** — 22 line items paginate with a repeating table header, per-tax-rate totals, QR + link; `params-short.json` renders a 3-item single page from the same template. | [<img src="examples/typography/novel-ja/preview-2.png" width="420" alt="Vertical short story, paperback style (ja)">](examples/typography/novel-ja/)<br>**Vertical short story, paperback style (ja)** — Run, Melos! (excerpt): vertical columns paginate with their ruby, strict kinsoku + hanging punctuation, tate-chu-yoko in the colophon, vertical page numbers. |
+| [<img src="examples/business/invoice-en/preview-1.png" width="420" alt="Invoice (en-US)">](examples/business/invoice-en/)<br>**Invoice (en-US)** — Letter-size US invoice: USD with cents, plural-aware quantities (`1 item` / `24 items`), Net-30 terms, payment box + pay-online QR. | [<img src="examples/forms/certificate-en/preview-1.png" width="420" alt="Certificate (en-US)">](examples/forms/certificate-en/)<br>**Certificate (en-US)** — Letter-landscape certificate: double-rule frame, wide letter spacing, real italics, verification QR. |
+| [<img src="examples/business/receipt-zh-tw/preview-1.png" width="420" alt="Receipt (zh-TW)">](examples/business/receipt-zh-tw/)<br>**Receipt (zh-TW)** — The locale-pack story: the same receipt geometry as ja / zh-CN / 80mm en-US, with currency, dates, tax wording, and font fallback swapped by the pack. | [<img src="examples/forms/application-form-ja/preview-1.png" width="206" alt="Application form, filled ↔ blank (ja)">](examples/forms/application-form-ja/) [<img src="examples/forms/application-form-ja/preview-blank-1.png" width="206" alt="Application form, filled ↔ blank (ja)">](examples/forms/application-form-ja/)<br>**Application form, filled ↔ blank (ja)** — ONE template, two params files: form marks, 〒 entry cells, wareki with a blank-form `placeholder`; not a single pt shifts. |
+| [<img src="examples/business/restaurant-menu-us/preview-1.png" width="420" alt="Restaurant menu (en + vertical writing)">](examples/business/restaurant-menu-us/)<br>**Restaurant menu (en + vertical writing)** — An American Japanese restaurant's specials: English menu, USD prices, and the vertical 正直亭 brand column + per-dish vertical names carrying the Japanese feel. | [<img src="examples/business/event-tickets-ja/preview-1.png" width="420" alt="Event tickets (ja)">](examples/business/event-tickets-ja/)<br>**Event tickets (ja)** — 2×4 n-up imposition with per-ticket QR, trim marks for the cutter, `placeholder` seat fallback; 14 attendees flow onto sheet 2 automatically. |
 
-Fifteen more live in [examples/](examples/):
-[Estimate](examples/business/estimate-ja/) (the invoice's sibling:
-single-rate one-pager, estimate-terms box, discount row),
-[Delivery note](examples/business/delivery-note-ja/) (between estimate
-and invoice: quantity-bundling `headerGroups`, data-driven row styling
-that tints only rows with items remaining, a receipt-stamp field;
-partial ↔ complete delivery as two data files),
-[Pickup slip](examples/business/pickup-slip-ja/) (the Thinreports
-migration artifact — the
-[migration walkthrough](docs/migration-thinreports.md)'s result),
-[Product catalog](examples/business/catalog-ja/) (variable-height `repeat_flow`
-cards), [Shipping labels](examples/business/shipping-labels-ja/) (2×3 n-up),
-[Rirekisho](examples/forms/rirekisho-ja/) (A3 spread, blank ↔ filled),
-[Certificate (ja)](examples/forms/certificate-ja/),
-[Kokugo worksheet](examples/typography/kokugo-print-ja/),
-[Genkoyoshi vertical](examples/typography/genkoyoshi-ja/) · [horizontal](examples/typography/genkoyoshi-yoko-ja/),
-and the receipts above in [ja](examples/business/receipt-ja/) /
-[zh-CN](examples/business/receipt-zh-cn/) / [80mm en-US](examples/business/receipt-us/) /
-[hi-IN](examples/business/receipt-hi-in/) (Devanagari + lakh/crore digit
-grouping) / [fil-PH](examples/business/receipt-fil-ph/).
+15 more live in [examples/](examples/):
+[Estimate](examples/business/estimate-ja/) (The invoice's sibling: single-rate one-pager, estimate-terms box, discount row),
+[Delivery note](examples/business/delivery-note-ja/) (Between estimate and invoice: quantity-bundling `headerGroups`, data-driven row styling that tints only rows with items remaining, a receipt-stamp field; partial ↔ complete delivery as two data files),
+[Pickup slip](examples/business/pickup-slip-ja/) (The Thinreports migration artifact — the migration walkthrough's result),
+[Product catalog](examples/business/catalog-ja/) (Variable-height `repeat_flow` cards with dynamic images),
+[Shipping labels](examples/business/shipping-labels-ja/) (2×3 n-up labels with 〒 cells and an overflowing contents list),
+[Rirekisho (JIS-style résumé)](examples/forms/rirekisho-ja/) (A3 spread, blank ↔ filled from one template),
+[Certificate (ja)](examples/forms/certificate-ja/) (Landscape certificate with a double-rule frame and full bleed),
+[Kokugo worksheet](examples/typography/kokugo-print-ja/) (Horizontal + vertical char grids with ruby and practice cells),
+[Genkoyoshi (vertical)](examples/typography/genkoyoshi-ja/) (200-character manuscript paper with Aozora ruby),
+[Genkoyoshi (horizontal)](examples/typography/genkoyoshi-yoko-ja/) (The 400-character horizontal sheet),
+[Receipt (ja)](examples/business/receipt-ja/) (The quickstart document: containers with `%` widths, a boxed total, tax breakdown, issuer block and QR),
+[Receipt (80mm thermal, en-US)](examples/business/receipt-us/) (A custom-size 80mm thermal-printer receipt),
+[Receipt (zh-CN)](examples/business/receipt-zh-cn/) (The simplified-Chinese member of the locale set),
+[Receipt (hi-IN)](examples/business/receipt-hi-in/) (Devanagari conjuncts + lakh/crore digit grouping),
+[Receipt (fil-PH)](examples/business/receipt-fil-ph/) (Latin face + Philippine peso from the fil-PH pack).
+<!-- gallery:generated:end -->
 
 **Developer examples** — [`examples/dev/layout-showcase`](examples/dev/layout-showcase/)
 is the engine feature index, not a business document: one labeled

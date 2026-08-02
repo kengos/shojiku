@@ -1,0 +1,21 @@
+# Cloudflare Pages headers for the WHOLE deployment (site + the Designer
+# merged under /designer/ — one Pages project, path-scoped CSP).
+#
+# The site scope is STRICTER than the Designer's: no raw.githubusercontent.com
+# (that hole exists only for the Designer's font picker — a marketing page is
+# not a reason to widen it). Additions the site needs: `img-src blob:` (the
+# live renderer shows engine output via object URLs) and the Cloudflare Web
+# Analytics beacon (script + its report endpoint), which is the decided,
+# cookieless analytics. `wasm-unsafe-eval` instantiates the engine; there is
+# no inline-script allowance anywhere.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+
+# The Designer keeps ITS policy verbatim (gui/designer-app/public/_headers is
+# the canonical text; src/headers.test.ts pins the two in sync). `!` detaches
+# the site-scope value so the two CSPs never stack into an intersection.
+/designer/*
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://raw.githubusercontent.com; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'

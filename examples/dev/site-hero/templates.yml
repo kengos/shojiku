@@ -1,0 +1,111 @@
+version: 0.1.0
+name: site_hero
+
+# Shojiku homepage hero v2 — rendered by the engine itself (the image IS a
+# Shojiku output). 200mm x 90mm banner, full bleed. Right side: two
+# genkoyoshi-style vertical char_grid columns (Japanese + Chinese) with a
+# seal stamped over the blank cells.
+page:
+  size: { w: "200mm", h: "90mm" }
+  margin: 0
+
+defaults:
+  locale: ja-JP
+  style: { fontFamily: biz-udp-gothic, color: "#22262e" }
+
+sections:
+  body:
+    type: absolute
+    items:
+      # Warm paper ground.
+      - type: rect
+        box: { x: 0, y: 0, w: 566.93, h: 255.12 }
+        style: { backgroundColor: "#f8f6f0" }
+
+      # --- Lattice mark (echoes the site icon) ---
+      - type: rect
+        box: { x: 44, y: 52, w: 40, h: 40 }
+        style: { backgroundColor: "#1a3c6e" }
+      - type: rect
+        box: { x: 49, y: 57, w: 30, h: 30 }
+        style: { borderWidth: 2, borderColor: "#f6f2e9" }
+      - type: rect
+        box: { x: 58.4, y: 57, w: 2, h: 30 }
+        style: { backgroundColor: "#f6f2e9" }
+      - type: rect
+        box: { x: 67.8, y: 57, w: 2, h: 30 }
+        style: { backgroundColor: "#f6f2e9" }
+      - type: rect
+        box: { x: 49, y: 66.4, w: 30, h: 2 }
+        style: { backgroundColor: "#f6f2e9" }
+      - type: rect
+        box: { x: 49, y: 75.8, w: 30, h: 2 }
+        style: { backgroundColor: "#f6f2e9" }
+      - type: rect
+        box: { x: 69.8, y: 77.8, w: 7.2, h: 7.2 }
+        style: { backgroundColor: "#c73e2e" }
+
+      # --- Title + tagline ---
+      - type: text
+        box: { x: 96, y: 42, w: 280, h: 58 }
+        text: Shojiku
+        style: { fontWeight: bold, fontSize: 46, color: "#1a3c6e", lineHeight: 1.2 }
+      - type: text
+        box: { x: 98, y: 108, w: 280, h: 38 }
+        text: |-
+          Write YAML. Get PDFs.
+          Built for AI agents.
+        style: { fontSize: 13, color: "#4a4f58", lineHeight: 1.35 }
+
+      # --- Feature chips (English) ---
+      - type: rect
+        box: { x: 98, y: 168, w: 58, h: 22 }
+        style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+      - type: text
+        box: { x: 98, y: 173.5, w: 58, h: 14 }
+        text: Signing
+        style: { fontSize: 9.5, color: "#1a3c6e", textAlign: center, lineHeight: 1.2 }
+      - type: rect
+        box: { x: 164, y: 168, w: 104, h: 22 }
+        style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+      - type: text
+        box: { x: 164, y: 173.5, w: 104, h: 14 }
+        text: 7-language SDKs
+        style: { fontSize: 9.5, color: "#1a3c6e", textAlign: center, lineHeight: 1.2 }
+      - type: rect
+        box: { x: 276, y: 168, w: 42, h: 22 }
+        style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+      - type: text
+        box: { x: 276, y: 173.5, w: 42, h: 14 }
+        text: GUI
+        style: { fontSize: 9.5, color: "#1a3c6e", textAlign: center, lineHeight: 1.2 }
+      - type: rect
+        box: { x: 326, y: 168, w: 46, h: 22 }
+        style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+      - type: text
+        box: { x: 326, y: 173.5, w: 46, h: 14 }
+        text: MCP
+        style: { fontSize: 9.5, color: "#1a3c6e", textAlign: center, lineHeight: 1.2 }
+
+      # --- Genkoyoshi-style vertical columns (right): ja + zh ---
+      - type: char_grid
+        box: { x: 520, y: 16, w: 26, h: 226 }
+        text: 縦書きも、そのまま。
+        writingMode: vertical_rl
+        grid: { charsPerLine: 10, lines: 1, cellSize: 22 }
+        style: { fontFamily: ipamj-mincho, borderColor: "#a8674f", color: "#22262e" }
+      - type: char_grid
+        box: { x: 488, y: 16, w: 26, h: 226 }
+        text: 直排也可
+        writingMode: vertical_rl
+        grid: { charsPerLine: 10, lines: 1, cellSize: 22 }
+        style: { fontFamily: ipamj-mincho, borderColor: "#a8674f", color: "#22262e" }
+
+      # --- Seal stamped over the blank cells ---
+      - type: ellipse
+        box: { x: 486, y: 176, w: 26, h: 26 }
+        style: { borderWidth: 1.2, borderColor: "#c73e2e" }
+      - type: text
+        box: { x: 486, y: 183, w: 26, h: 12 }
+        text: 正直
+        style: { fontSize: 7.5, color: "#c73e2e", textAlign: center, lineHeight: 1.2 }
