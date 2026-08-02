@@ -80,7 +80,52 @@ open("out.pdf", "wb").write(result.artifact.bytes)
 Vendor the repository's `packs/` next to your templates — trimmed to the
 packs your locales actually use.
 
-## 3. Ship it (the Dockerfile recipes)
+## 3. Add a logo and your own font
+
+The first two things a real template needs.
+
+**Images** sit next to the template and are referenced by `src`. The root
+is the template file's directory (the CLI can move it with
+`--assets-dir`); `data:` URIs, inline SVG and params-bound dynamic images
+work too. The normative page is
+[image.md](https://github.com/kengos/shojiku/blob/main/docs/engine/image.md).
+
+```yaml
+- type: image
+  box: { w: 120, h: 40 }
+  src: assets/logo.svg
+```
+
+**Fonts are packs.** Put the font files and a `manifest.yml` (one license
++ a sha256 per face) under `packs/fonts/<id>/`, then add the pack to the
+locale's `uses` via an overlay. The sha256 and the face's embedding
+rights (fsType) are verified at load. The normative page is
+[fonts.md](https://github.com/kengos/shojiku/blob/main/docs/engine/fonts.md).
+
+```yaml
+# packs/fonts/my-corporate/manifest.yml
+version: 1
+license: Proprietary
+redistributable: false
+faces:
+  - id: my-corporate
+    file: MyCorporate-Regular.ttf
+    sha256: <output of sha256sum>
+```
+
+```yaml
+# packs/locale/ja-jp.yml (an overlay over the builtin ja-JP)
+fonts:
+  uses: [biz-ud, ipamj-mincho, noto-sans-mono, my-corporate]
+```
+
+Now `fontFamily: my-corporate` resolves. Two things to watch: `uses`
+REPLACES the list (state the whole set, not just your addition), and a
+`fontFamily` naming a pack the locale doesn't `use` silently falls back.
+The Dockerfile recipes below `COPY packs/` wholesale, so your own pack
+rides the same line.
+
+## 4. Ship it (the Dockerfile recipes)
 
 Once the template is right, bake app + template + packs into one image.
 These are the real recipe files for all five languages — the same files
@@ -107,7 +152,7 @@ come from the DB:
 
 <<< ../examples/deploy/python/render.py{python}
 
-## 4. Sign it, verify it
+## 5. Sign it, verify it
 
 Sign before you distribute; the receiving side verifies. Neither touches
 the network, and there is deliberately no flag that takes a passphrase on

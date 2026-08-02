@@ -71,7 +71,40 @@ open("out.pdf", "wb").write(result.artifact.bytes)
 
 フォントとロケールのパックはリポジトリの `packs/` をアプリに同梱します。使うロケールのパックだけに絞って構いません。
 
-## 3. 本番に載せる（Dockerfileレシピ）
+## 3. ロゴ画像と自社フォントを足す
+
+実務のテンプレートで最初に必要になるのは、この二つです。
+
+**画像**はテンプレートの隣に置いて `src` で参照します。基準ディレクトリはテンプレートファイルのある場所（CLIなら `--assets-dir` で変更可）で、`data:` URIやインラインSVG、paramsから差し込む動的画像も使えます。正確な仕様は[image.md](https://github.com/kengos/shojiku/blob/main/docs/engine/image.md)へ。
+
+```yaml
+- type: image
+  box: { w: 120, h: 40 }
+  src: assets/logo.svg
+```
+
+**フォント**はパックです。フォントファイルと `manifest.yml`（ライセンス1つ + 顔ごとのsha256）を `packs/fonts/<id>/` に置き、ロケールのオーバーレイで `uses` に足します。読み込み時にsha256と埋め込み権利（fsType）が検証されます。正確な仕様は[fonts.md](https://github.com/kengos/shojiku/blob/main/docs/engine/fonts.md)へ。
+
+```yaml
+# packs/fonts/my-corporate/manifest.yml
+version: 1
+license: Proprietary
+redistributable: false
+faces:
+  - id: my-corporate
+    file: MyCorporate-Regular.ttf
+    sha256: <sha256sum の出力>
+```
+
+```yaml
+# packs/locale/ja-jp.yml（ビルトインja-JPへのオーバーレイ）
+fonts:
+  uses: [biz-ud, ipamj-mincho, noto-sans-mono, my-corporate]
+```
+
+これで `fontFamily: my-corporate` が使えます。`uses` は全体を書き直す点（追記ではない）と、ロケールが `uses` していないパックの `fontFamily` は黙ってフォールバックする点に注意。下のDockerfileレシピは `packs/` を丸ごとCOPYするので、自作パックも同じ行に乗ります。
+
+## 4. 本番に載せる（Dockerfileレシピ）
 
 テンプレートができたら、アプリ・テンプレート・パックを1つのイメージに焼き込みます。以下は5言語ぶんの実レシピで、`make proof-deploy` が公開レジストリに対して実際にビルド＆レンダリングして検証しているファイルそのものです。
 
@@ -93,7 +126,7 @@ Pythonのレシピは一歩進めて、paramsをイメージ内のSQLiteから�
 
 <<< ../../examples/deploy/python/render.py{python}
 
-## 4. 署名して、検証する
+## 5. 署名して、検証する
 
 配る前に署名し、受け取った側が検証します。どちらもネットワークを使いません。パスフレーズを引数で渡すフラグは意図的にありません（`argv` は他プロセスから読めるため）。
 
