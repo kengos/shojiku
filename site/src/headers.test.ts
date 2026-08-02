@@ -3,7 +3,7 @@
 // the site scope must stay STRICTER (no raw.githubusercontent.com) while
 // carrying exactly the additions the site needs (blob: images, the analytics
 // beacon). A widened origin anywhere here is a red diff, not a silent ship.
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -41,6 +41,25 @@ describe("_headers", () => {
     expect(siteCsp).toContain("script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com");
     expect(siteCsp).toContain("connect-src 'self' https://cloudflareinsights.com");
     expect(siteCsp).toContain("frame-ancestors 'none'");
+  });
+
+  it("no CDN or Google-Fonts origin anywhere in the site source (S3)", () => {
+    const dirs = ["src", ".vitepress/theme", "scripts", "public"];
+    const files: string[] = [];
+    const walk = (d: string): void => {
+      for (const e of readdirSync(join(ROOT, "site", d), { withFileTypes: true })) {
+        if (e.isDirectory()) walk(join(d, e.name));
+        else files.push(join(d, e.name));
+      }
+    };
+    for (const d of dirs) walk(d);
+    const pages = readdirSync(join(ROOT, "site")).filter((f) => f.endsWith(".md"));
+    const all = [...files, ...pages, ...readdirSync(join(ROOT, "site", "ja")).map((f) => join("ja", f))];
+    expect(all.length).toBeGreaterThan(30); // positive control: the sweep saw the tree
+    for (const f of all.filter((f) => !f.endsWith("headers.test.ts"))) {
+      const text = readFileSync(join(ROOT, "site", f), "utf8");
+      expect(text, f).not.toMatch(/fonts\.gstatic|fonts\.googleapis|cdn\.jsdelivr|unpkg\.com|cdnjs/);
+    }
   });
 
   it("both scopes keep the hard lines", () => {

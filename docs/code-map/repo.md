@@ -85,6 +85,26 @@ What each example PROVES (one line each):
   a shipped pack; no definitions.yml; not gallery material).
 - `dev/layout-showcase` — the visual index: EVERY new authorable
   feature adds a labeled section here (cycle Phase C).
+- `dev/site-hero` / `dev/site-icon` — the homepage's brand renders
+  (the hero banner + the lattice icon), engine outputs like everything
+  else so the site's "this banner is a Shojiku render" claim stays
+  hash-gated; the site assembly copies their previews to
+  `/brand/*.png`.
+
+`examples/gallery.yml` — the ONE gallery source (dir + title/blurb
+en/ja + preview names, `featured:` marks the README-table set): the
+README "Gallery" section (generated between `gallery:generated`
+markers by `make site-data`), `/gallery` and `/ja/gallery` all render
+from it — never edit those surfaces by hand.
+
+`examples/deploy/<lang>/` — the production-packaging recipes the site's
+tutorial pages TRANSCLUDE (python/ruby/node/dotnet/java: Dockerfile +
+render program; python pulls params from SQLite built at image build).
+Excluded from every render/preset glob (no preset.yml, not in
+render-examples.sh); proven by `make proof-deploy`
+(`scripts/install-proof/deploy-*.sh` — stages the receipt-ja example +
+packs/ as the vendored app, builds against the PUBLIC registries;
+network-dependent, on demand, never in `make verify`).
 
 Each example commits its rendered `output.pdf` + `preview-<n>.png`
 (`make examples` regenerates; the list lives in
@@ -110,10 +130,36 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
 ## docker/, docs/, site/, skills/, scripts/
 
 - `docker/` — the runtime image.
-- `site/` — the homepage pitch pages (Cloudflare Pages launch;
-  `why.md` first). Persuasive copy, NOT reference docs: writing/editing
-  routes through the `shojiku-copywriter` skill, accuracy claims still
-  verify against the code.
+- `site/` — the homepage (Cloudflare Pages): a STANDALONE pnpm project
+  (not a gui/ workspace member), VitePress, seven pages ×2 locales
+  (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per
+  `shojiku-copywriter`'s vendored prose standard, EN derived).
+  Structure: `src/lib/` = the tested pure modules (gallery.yml
+  parse/validate, font-tier subset manifests, README-gallery
+  render/splice, llms renderers, `engineClient` — the site's OWN thin
+  glue over the raw `engine/wasm` pkg (deliberately NOT
+  `@shojiku/designer`'s transport; keeps the package standalone),
+  playground knob→template generation), 100%×4 vitest +
+  `src/integration/liveRenderer.test.ts` (REAL wasm: tier gate,
+  receipt renders, both playground demos) + `src/headers.test.ts`
+  (pins BOTH `_headers` CSP scopes; `/designer/*` must equal the
+  designer's canonical file) + `src/parity.test.ts` (en↔ja page set /
+  components / section counts). `.vitepress/theme/` = brand tokens +
+  the live components (LiveRenderer, PropertyPlayground, GalleryGrid;
+  browser glue, coverage-excluded). `scripts/assemble-data.ts` =
+  build-time pure-Node assembly (public/data wasm+tiered fonts+live
+  examples, gallery previews, brand renders, llms.txt/llms-full.txt;
+  25 MiB Pages cap asserted); `scripts/refresh-data.ts` = the COMMITTED
+  halves (`site/.data/wasm` from `make wasm` + the README gallery
+  section between `gallery:generated` markers), `--check` = the
+  `site-check` drift gate; `scripts/build-pages.sh` = the Cloudflare
+  build (stages .data/wasm into engine/wasm/pkg, builds+assembles the
+  Designer, merges it under `/designer/`, strips its own _headers —
+  root `public/_headers` carries both CSP scopes). Gates: `make site` /
+  `site-check` / `site-build` (+ `verify:site` grid entry, CI job
+  `site`). Font tiers: immediate = noto-sans Regular+Bold (~1.2 MB),
+  lazy-ja = BIZ UDP pair (~8.9 MB — ja-JP's default family);
+  ipamj-anything stays static-PNG only (45 MB > the 25 MiB cap).
 - `docs/` — the doc set (`docs/engine/` = the per-feature template
   reference; `docs/migration-thinreports.md` = the worked migration
   walkthrough; `docs/mockups/` = per-design-session handoff artifacts,

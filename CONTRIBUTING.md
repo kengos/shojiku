@@ -15,12 +15,12 @@ they use different commands.
 To check a result, use the `<verb>:<scope>` grid. Each prints **one
 PASS/FAIL line** and exits with the gate's **real exit code**:
 
-| | `engine` | `gui` | `docker` |
-| --- | --- | --- | --- |
-| `budget:` | `make budget:engine` | `make budget:gui` | — |
-| `lint:` | `make lint:engine` | `make lint:gui` | — |
-| `test:` | `make test:engine` | `make test:gui` | — |
-| `verify:` | `make verify:engine` | `make verify:gui` | `make verify:docker` |
+| | `engine` | `gui` | `site` | `docker` |
+| --- | --- | --- | --- | --- |
+| `budget:` | `make budget:engine` | `make budget:gui` | — | — |
+| `lint:` | `make lint:engine` | `make lint:gui` | `make lint:site` | — |
+| `test:` | `make test:engine` | `make test:gui` | `make test:site` | — |
+| `verify:` | `make verify:engine` | `make verify:gui` | `make verify:site` | `make verify:docker` |
 
 The `sdk` scope nests one level further, one entry per language, because
 each has its own toolchain and container: `make verify:sdk:ruby`,
