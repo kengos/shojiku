@@ -1,5 +1,7 @@
 //! The `line` item's stroke pattern (`style.style`): the dashed cut
-//! guide (キリトリ線) and the two-stroke `double` form.
+//! guide (キリトリ線) and the two-stroke `double` form — plus the sanity
+//! bound on `style.width`, which reaches the renderers' stroke math
+//! directly and so shares `borderWidth`'s 0..=1000pt cap.
 
 use crate::common::*;
 
@@ -112,6 +114,74 @@ sections:
     let lines = line_shapes(&doc.pages[0]);
     assert_eq!(lines.len(), 1);
     assert!(lines[0].x1.is_finite() && lines[0].y1.is_finite());
+}
+
+/// Pinned copy of the engine's stroke-width cap, asserted as behavior.
+const MAX_STROKE_WIDTH_PT: f64 = 1_000.0;
+
+#[test]
+fn a_stroke_width_past_the_cap_falls_back_to_the_wire_default() {
+    let (doc, diags) = run_line("{ width: 1e300 }");
+    assert!(
+        diags.iter().any(|d| d.code == "invalid_line_width"),
+        "{diags:?}"
+    );
+    // Degrades to 1pt, not to 0: a line that strokes nothing is an item
+    // that draws nothing (unlike `borderWidth`, whose 0 IS "no border").
+    assert_eq!(line_shapes(&doc.pages[0])[0].width, 1.0);
+}
+
+#[test]
+fn the_largest_admitted_stroke_width_passes_clean() {
+    let (doc, diags) = run_line("{ width: 1000 }");
+    assert!(
+        !diags.iter().any(|d| d.code == "invalid_line_width"),
+        "{diags:?}"
+    );
+    assert_eq!(line_shapes(&doc.pages[0])[0].width, MAX_STROKE_WIDTH_PT);
+}
+
+#[test]
+fn a_negative_stroke_width_falls_back_with_a_diagnostic() {
+    // Unlike `borderWidth`, a negative `line` width parses fine — the
+    // guard is the only thing standing between it and the stroke math.
+    let (doc, diags) = run_line("{ width: -1 }");
+    assert!(
+        diags.iter().any(|d| d.code == "invalid_line_width"),
+        "{diags:?}"
+    );
+    assert_eq!(line_shapes(&doc.pages[0])[0].width, 1.0);
+}
+
+#[test]
+fn a_zero_stroke_width_stays_legal_and_undiagnosed() {
+    let (doc, diags) = run_line("{ width: 0 }");
+    assert!(
+        !diags.iter().any(|d| d.code == "invalid_line_width"),
+        "{diags:?}"
+    );
+    assert_eq!(line_shapes(&doc.pages[0])[0].width, 0.0);
+}
+
+#[test]
+fn a_dash_pattern_derives_from_the_clamped_width() {
+    // The guard runs before `dash_pattern`, so the interval is three
+    // times the FALLBACK width, not three times 1e300.
+    let (doc, _) = run_line("{ width: 1e300, style: dashed }");
+    let dash = line_shapes(&doc.pages[0])[0]
+        .dash
+        .expect("dashed carries a pattern");
+    assert_eq!((dash.on, dash.off), (3.0, 3.0));
+}
+
+#[test]
+fn the_double_split_derives_from_the_clamped_width() {
+    let (doc, _) = run_line("{ width: 1e300, style: double }");
+    let lines = line_shapes(&doc.pages[0]);
+    assert_eq!(lines.len(), 2, "double still draws a pair");
+    for l in &lines {
+        assert!((l.width - 1.0 / 3.0).abs() < 1e-9, "width {}", l.width);
+    }
 }
 
 #[test]

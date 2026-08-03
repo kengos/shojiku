@@ -93,9 +93,12 @@ export const en: LanguageCatalog = {
     page_margin_too_large:
       '{axis} page margins ({a}pt + {b}pt) consume the page {dimension} {total}pt; using 0',
     invalid_font_size: 'fontSize {value} is not a positive finite number; using {default}',
+    font_size_out_of_range: 'fontSize {value}pt exceeds the {max}pt cap; using {default}',
     invalid_line_height: 'lineHeight {value} is not a positive finite number; using {default}',
+    line_height_out_of_range: 'lineHeight {value} exceeds the {max} cap; using {default}',
     invalid_letter_spacing: 'letterSpacing {value} is not a finite value within ±{max}pt; using 0',
     invalid_border_width: 'borderWidth {value} is not within 0..={max}pt; drawing no border',
+    invalid_line_width: 'line width {value} is not within 0..={max}pt; using {default}',
     invalid_border_radius:
       'borderRadius {value} did not resolve to a non-negative length; using {fallback}',
     border_radius_ignored: 'borderRadius has no effect on {context}; drawing square corners',

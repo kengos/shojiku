@@ -23,7 +23,7 @@ import {
   type BorderProp,
   type BorderStyleValue,
   type BorderView,
-  MAX_BORDER_WIDTH,
+  MAX_STROKE_WIDTH,
   type Pen,
 } from './borderTypes';
 
@@ -37,10 +37,10 @@ function styleWire(style: BorderStyleValue): string {
  * can carry an out-of-range number; the read side already floors negatives). */
 function clampWidths(sides: SideMap<number>): SideMap<number> {
   return {
-    top: Math.min(sides.top, MAX_BORDER_WIDTH),
-    right: Math.min(sides.right, MAX_BORDER_WIDTH),
-    bottom: Math.min(sides.bottom, MAX_BORDER_WIDTH),
-    left: Math.min(sides.left, MAX_BORDER_WIDTH),
+    top: Math.min(sides.top, MAX_STROKE_WIDTH),
+    right: Math.min(sides.right, MAX_STROKE_WIDTH),
+    bottom: Math.min(sides.bottom, MAX_STROKE_WIDTH),
+    left: Math.min(sides.left, MAX_STROKE_WIDTH),
   };
 }
 

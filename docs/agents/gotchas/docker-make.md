@@ -121,6 +121,26 @@ every tree; it is re-entrant (`make quiet T=verify` holds it once for the
 whole run), and it releases on Ctrl-C. If a crash ever leaves one
 behind, the error message prints the exact `rm -rf` to clear it.
 
+**Before running that `rm -rf`, TEST that the holder is dead** — clearing
+a LIVE holder's lock causes precisely the `engine/target` corruption the
+lock exists to prevent, and the message itself cannot tell the two cases
+apart. Two checks, both needed: `ps -p <the pid the message names>` must
+come back empty, AND no container may still be mounting the tree —
+
+```sh
+docker ps -q | xargs -r docker inspect \
+  --format '{{.Name}} | {{.Config.Image}} | {{range .Mounts}}{{.Source}} {{end}}' \
+  | grep <repo path>
+```
+
+The two answers can disagree, which is why one alone will not do: a stale
+lock naming a dead `site-build` pid was found while two unrelated day-old
+`pnpm … dev` containers were still mounted on that same tree — so "is
+anything running?" answered no by pid and yes by container. Neither
+container was a gate, so the lock really was stale; but the pid check
+alone would have been believed too readily, and the container check alone
+would have blocked a clear that was safe.
+
 **What the lock does NOT cover — the global docker namespace.** Image
 tags, container names and host ports belong to the daemon, not to a tree
 or a volume, so two worktrees still collide there. `WORK_TAG` namespaces

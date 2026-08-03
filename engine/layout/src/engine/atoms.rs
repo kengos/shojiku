@@ -194,7 +194,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// width so the pair straddles it symmetrically.
     pub(super) fn line_atom(&mut self, line: &shojiku_core::LineItem, region_x: f64) -> Atom {
         let height = line.from.y.max(line.to.y);
-        let width = line.style.width();
+        // Guarded BEFORE it is consumed, so the dash pattern and the
+        // `double` split both derive from the clamped width.
+        let width = self.sane_line_width(line.style.width());
         let stroke = LineShape {
             x1: region_x + line.from.x,
             y1: line.from.y,

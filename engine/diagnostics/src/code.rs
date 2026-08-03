@@ -135,9 +135,12 @@ diagnostic_codes! {
     OrientationIgnored = "orientation_ignored", Warning, Layout, "`orientation: landscape` is ignored for a custom page size; express the orientation in the dimensions instead";
     PageMarginTooLarge = "page_margin_too_large", Warning, Layout, "{axis} page margins ({a}pt + {b}pt) consume the page {dimension} {total}pt; using 0";
     InvalidFontSize = "invalid_font_size", Warning, Layout, "fontSize {value} is not a positive finite number; using {default}";
+    FontSizeOutOfRange = "font_size_out_of_range", Warning, Layout, "fontSize {value}pt exceeds the {max}pt cap; using {default}";
     InvalidLineHeight = "invalid_line_height", Warning, Layout, "lineHeight {value} is not a positive finite number; using {default}";
+    LineHeightOutOfRange = "line_height_out_of_range", Warning, Layout, "lineHeight {value} exceeds the {max} cap; using {default}";
     InvalidLetterSpacing = "invalid_letter_spacing", Warning, Layout, "letterSpacing {value} is not a finite value within ±{max}pt; using 0";
     InvalidBorderWidth = "invalid_border_width", Warning, Layout, "borderWidth {value} is not within 0..={max}pt; drawing no border";
+    InvalidLineWidth = "invalid_line_width", Warning, Layout, "line width {value} is not within 0..={max}pt; using {default}";
     InvalidBorderRadius = "invalid_border_radius", Warning, Layout, "borderRadius {value} did not resolve to a non-negative length; using {fallback}";
     BorderRadiusIgnored = "border_radius_ignored", Warning, Style, "borderRadius has no effect on {context}; drawing square corners";
     InvalidOpacity = "invalid_opacity", Warning, Layout, "opacity {value} is not within 0..=1; drawing opaque";

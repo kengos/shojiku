@@ -38,7 +38,7 @@ A dashed cut-here guide is one item:
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `from` / `to` | `{ x, y }` (pt numbers) | required | Endpoints relative to the parent origin (margin box / container). |
-| `style.width` | number (pt) | `1` | Stroke width. |
+| `style.width` | number (pt) | `1` | Stroke width. Capped 0..=1000 pt — it shares `borderWidth`'s bound, since both reach the renderers' stroke math directly. A negative, non-finite, or over-cap width warns `invalid_line_width` and strokes at the 1 pt default (unlike `borderWidth`, whose `0` legitimately means "no border", a `line` that strokes nothing draws nothing). An authored `0` passes through undiagnosed. |
 | `style.color` | `#rrggbb` | black | Stroke color. |
 | `style.opacity` | number `0..=1` | `1` | Paint alpha for the stroke. Out-of-range warns `invalid_opacity` and draws opaque. |
 | `style.style` | `solid` \| `dashed` \| `dotted` \| `double` | `solid` | Stroke pattern, sharing the border wire's keyword set ([style.md](style.md)). `dashed` paints three widths on and three off, `dotted` one and one. `double` draws two parallel lines a third of the width each, offset either side of the authored geometry along its normal — so a diagonal doubles correctly. Advertised as the `line.style` capability. |

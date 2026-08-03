@@ -96,10 +96,15 @@ export const ja: LanguageCatalog = {
     page_margin_too_large:
       '{axis} のページ余白（{a}pt + {b}pt）がページの{dimension} {total}pt を使い切ります。0 を使用します',
     invalid_font_size: 'fontSize {value} は正の有限数ではありません。{default} を使用します',
+    font_size_out_of_range:
+      'fontSize {value}pt は上限 {max}pt を超えています。{default} を使用します',
     invalid_line_height: 'lineHeight {value} は正の有限数ではありません。{default} を使用します',
+    line_height_out_of_range:
+      'lineHeight {value} は上限 {max} を超えています。{default} を使用します',
     invalid_letter_spacing:
       'letterSpacing {value} は ±{max}pt 以内の有限値ではありません。0 を使用します',
     invalid_border_width: 'borderWidth {value} は 0..={max}pt の範囲外です。枠線は描画されません',
+    invalid_line_width: '線幅 {value} は 0..={max}pt の範囲外です。{default} を使用します',
     invalid_border_radius:
       'borderRadius {value} は 0 以上の長さとして解決できません。{fallback} で描画します',
     border_radius_ignored: 'borderRadius は {context} では効きません。角は直角で描画されます',

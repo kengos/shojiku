@@ -188,10 +188,13 @@ inline:
 | Code | Fallback |
 | --- | --- |
 | `invalid_font_size` | 10 pt |
+| `font_size_out_of_range` | 10 pt (cap 1000 pt) |
 | `invalid_line_height` | 1.4 |
+| `line_height_out_of_range` | 1.4 (cap 1000×) |
 | `invalid_letter_spacing` | 0 (magnitude cap ±1000 pt) |
 | `invalid_flex_grow` | 0 (negative / non-finite `flexGrow`) |
 | `invalid_border_width` | no border (cap 0..=1000 pt) |
+| `invalid_line_width` | 1 pt, the `line` wire default (cap 0..=1000 pt) |
 | `invalid_border_radius` | square corners (a negative or non-finite radius) |
 | `border_radius_ignored` | square corners (a per-side/`double` border, a `table`, or a form mark cannot round) |
 | `invalid_opacity` | opaque (out-of-range / non-finite `opacity`; never invisible) |

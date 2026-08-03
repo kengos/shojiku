@@ -43,7 +43,7 @@ pub use enums::{
     FontStyle, FontWeight, HangingPunctuation, LineBreak, Overflow, TextAlign, TextDecoration,
     TextOverflow, TextSpacingTrim, VerticalAlign,
 };
-pub use shapes::LineStyle;
+pub use shapes::{LineStyle, DEFAULT_STROKE_PT};
 pub use writing::{TextCombine, TextCombineUpright, TextOrientation, WritingMode};
 
 /// A bag of optional appearance properties. Every field unset (`None`)
@@ -242,3 +242,10 @@ pub const MAX_STYLES: usize = 256;
 
 /// See [`MAX_STYLES`].
 pub const MAX_STYLE_NAMES: usize = 16;
+
+/// The engine's initial `lineHeight` (a multiplier of `fontSize`). One
+/// definition, because layout uses it in two places that must agree: the
+/// cascade's initial value, and the fallback its sanity guard degrades a
+/// hostile multiplier to — the guard names that fallback in the warning it
+/// emits, so a drift between the two would make the diagnostic lie.
+pub const DEFAULT_LINE_HEIGHT: f64 = 1.4;

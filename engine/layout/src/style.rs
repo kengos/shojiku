@@ -17,7 +17,7 @@
 use shojiku_core::{
     BorderStyleKind, FontRel, FontStyle, FontWeight, HangingPunctuation, Length, LineBreak,
     Overflow, Style, TextAlign, TextCombineUpright, TextDecoration, TextOrientation, TextOverflow,
-    TextSpacingTrim, VerticalAlign, WritingMode, DEFAULT_FONT_SIZE_PT,
+    TextSpacingTrim, VerticalAlign, WritingMode, DEFAULT_FONT_SIZE_PT, DEFAULT_LINE_HEIGHT,
 };
 
 /// A fully resolved style: every property concrete, ready for measurement
@@ -109,7 +109,7 @@ impl Default for ComputedStyle {
             font_size: DEFAULT_FONT_SIZE_PT,
             rem_root: DEFAULT_FONT_SIZE_PT,
             font_family: None,
-            line_height: 1.4,
+            line_height: DEFAULT_LINE_HEIGHT,
             color: None,
             text_align: TextAlign::Left,
             vertical_align: VerticalAlign::Top,

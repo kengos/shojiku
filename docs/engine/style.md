@@ -33,12 +33,12 @@ never participates in geometry. See
 
 | Property | Type / values | Engine default | Inherited | Description |
 | --- | --- | --- | --- | --- |
-| `fontSize` | number (pt) or length string | `10` | yes | Strings take `pt`/`mm`/`cm`/`in`, `em`/`%` (of the *inherited* size — nested relative sizes multiply), or `rem` (of the engine default). Non-positive/non-finite computed values fall back with `invalid_font_size`. |
+| `fontSize` | number (pt) or length string | `10` | yes | Strings take `pt`/`mm`/`cm`/`in`, `em`/`%` (of the *inherited* size — nested relative sizes multiply), or `rem` (of the engine default). Non-positive/non-finite computed values fall back with `invalid_font_size`; computed sizes over 1000 pt fall back with `font_size_out_of_range` (the cap pairs with `lineHeight`'s so the tallest admitted line box is the ±1,000,000 pt resolved-length cap). |
 | `fontFamily` | string (face id from the lang pack) | pack default face | yes | Valid ids and the default: [fonts.md](fonts.md) (default `biz-udp-gothic`; also `biz-ud-gothic`, `ipamj-mincho`). |
 | `fontWeight` | `normal` \| `bold` | `normal` | yes | `bold` selects the family's real bold face when it ships one (the `biz-*-gothic` families do); otherwise it renders as synthetic emboldening (glyphs stroked in the text color, advances unchanged — CSS faux bold). |
 | `fontStyle` | `normal` \| `italic` | `normal` | yes | Synthetic baseline-anchored skew (~12°), advances unchanged. |
 | `letterSpacing` | number (pt, negative allowed) or length string | `0` | yes | Strings take `pt`/`mm`/`cm`/`in` or `em`/`rem` (`em` = the item's own computed fontSize); `%` is a parse error (CSS letter-spacing has none). Added to every character advance; measurement, wrapping, alignment, and drawing share the one policy. Magnitude capped at ±1000 pt (`invalid_letter_spacing` → 0). |
-| `lineHeight` | number (multiplier of fontSize) | `1.4` | yes | Non-positive/non-finite falls back with `invalid_line_height`. |
+| `lineHeight` | number (multiplier of fontSize) | `1.4` | yes | Non-positive/non-finite falls back with `invalid_line_height`; multipliers over 1000 fall back with `line_height_out_of_range`. |
 | `color` | `#rrggbb` string | black | yes | Text color. |
 | `textAlign` | `left` \| `center` \| `right` | `left` | yes | On a vertical (`vertical_rl`) block the keyword names the line's end along the column (`right` = bottom). A `char_grid` honors it too — filling a partly filled line toward its end — but reads it from the ITEM only, never inherited ([char_grid.md](char_grid.md)). |
 | `verticalAlign` | `top` \| `middle` \| `bottom` | `top` | no | Vertical alignment within the item's box (needs a definite `h`, or `minHeight` slack). On a vertical (`vertical_rl`) block it maps CSS-logically to the column-stack shift: `top` → right edge, `middle` → centered, `bottom` → left edge ([vertical_text.md](vertical_text.md)). |
@@ -125,6 +125,7 @@ silent no-op ([line.md](line.md)).
 | `border_radius_ignored` | `borderRadius` on a per-side/`double` border, a `table`, or a form mark; square corners drawn |
 | `invalid_border_radius` | a negative or non-finite `borderRadius`; square corners drawn |
 | `invalid_font_size` / `invalid_line_height` / `invalid_letter_spacing` / `invalid_border_width` / `invalid_color` / `invalid_opacity` | hostile values; guarded fallback |
+| `font_size_out_of_range` / `line_height_out_of_range` | finite but absurd values past the 1000 caps; guarded fallback |
 
 Capability keys: `styles`, `styleNames`, `style.fontWeight`,
 `style.fontStyle`, `style.letterSpacing`, `style.lineBreak`,

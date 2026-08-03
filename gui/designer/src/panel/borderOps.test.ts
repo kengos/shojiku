@@ -3,7 +3,7 @@ import { Editor, type ReadFn } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
 import { readBorder } from './borderModel';
 import { edgeOps, presetOps } from './borderOps';
-import { MAX_BORDER_WIDTH, type Pen } from './borderTypes';
+import { MAX_STROKE_WIDTH, type Pen } from './borderTypes';
 
 const P = 'sections.body.items[0]';
 
@@ -207,7 +207,7 @@ describe('edgeOps / presetOps author the simplest wire form', () => {
   it('clamps a hostile pen width to the engine cap on write', () => {
     const v = readBorder(reader({ type: 'text' }), P);
     expect(presetOps(P, v, 'all', { width: 1e300, color: '', style: 'solid' })).toEqual([
-      { op: 'setScalar', path: P, keys: ['style', 'borderWidth'], value: MAX_BORDER_WIDTH },
+      { op: 'setScalar', path: P, keys: ['style', 'borderWidth'], value: MAX_STROKE_WIDTH },
     ]);
   });
 });

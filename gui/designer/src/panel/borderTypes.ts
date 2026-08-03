@@ -79,7 +79,9 @@ export interface RadiusView {
   readonly ownPresent: boolean;
 }
 
-/** The write cap the engine enforces on a border width (`invalid_border_width`
- * clamps to 0..=1000). Clamping GUI-side keeps a hostile pen from authoring an
- * out-of-range value the engine would only warn on. */
-export const MAX_BORDER_WIDTH = 1000;
+/** The write cap the engine enforces on a stroke width — `borderWidth`
+ * (`invalid_border_width`) and the `line` item's `style.width`
+ * (`invalid_line_width`) share one 0..=1000 bound, because both reach the
+ * renderers' stroke math directly. Clamping GUI-side keeps a hostile pen from
+ * authoring an out-of-range value the engine would only warn on. */
+export const MAX_STROKE_WIDTH = 1000;

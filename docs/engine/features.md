@@ -239,6 +239,13 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   named styles in listed order ← inline. Inherited: `color`,
   `fontSize`, `fontFamily`, `fontWeight`, `fontStyle`, `letterSpacing`,
   `lineHeight`, `textAlign`, `lineBreak`; the rest reset per item.
+- **Style-scalar sanity guards**: every numeric style scalar a template
+  can set to anything is bounded at use, degrading to a diagnostic plus a
+  usable fallback rather than reaching the measurement or stroke math.
+  `fontSize` (1000 pt) and `lineHeight` (1000×) cap as a pair, so the
+  tallest admitted line box is exactly the ±1,000,000 pt resolved-length
+  cap; `letterSpacing` caps at ±1000 pt; `borderWidth` and the `line`
+  item's `style.width` share one 0..=1000 pt stroke bound.
 - **Named styles**: the `styles:` registry + `styleNames:` refs stay
   *named* in the file (round-trip; the GUI style picker);
   `undefined_style_name` and the `MAX_STYLES`/`MAX_STYLE_NAMES` caps.
