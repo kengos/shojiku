@@ -21,7 +21,12 @@ import { buildEditorNodes, type ChipMeta, serializeEditor } from './chipModel';
 import { planChipInsert } from './declMint';
 import { chipMetaFor, type PendingDecl } from './declModel';
 import { selectAllContent } from './editorDom';
-import { handleEditorKeyDown, insertChipAt, insertPlainTextAt } from './editorHandlers';
+import {
+  handleEditorKeyDown,
+  handleEditorMouseDown,
+  insertChipAt,
+  insertPlainTextAt,
+} from './editorHandlers';
 import { InsertFieldMenu } from './InsertFieldMenu';
 
 export interface TextEditorProps {
@@ -139,6 +144,7 @@ export function TextEditor({
         // it for tooling that cannot see contentEditable implies it.
         tabIndex={0}
         onKeyDown={(event) => handleEditorKeyDown(event, { commit: commitFrom, cancel })}
+        onMouseDown={handleEditorMouseDown}
         onDrop={(event) => {
           // Same posture as paste: dropped content inserts as plain text only
           // — native HTML drop would mint live elements.

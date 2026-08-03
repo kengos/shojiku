@@ -14,13 +14,17 @@
 const BUILTIN_FORMAT_SUGGESTIONS: Record<string, readonly string[]> = {
   currency: ['symbol', 'name'],
   number: ['currency', 'percentage', 'quantity'],
-  string: ['date', 'datetime'],
   date: ['datetime'],
   datetime: ['date'],
   percentage: ['number'],
   quantity: ['number'],
   // No format changes how these render — suggesting one would only bait a
-  // live engine warning.
+  // live engine warning. A TEXT field is in this set: naming `date` on one
+  // overrides the declared type, and the engine then parses the value as a
+  // date — which fails on every string that is not one, so offering it beside
+  // a customer name was offering an error. A text field that really does hold
+  // an ISO date is the expert path: the spelling can still be typed.
+  string: [],
   boolean: [],
   image: [],
 };

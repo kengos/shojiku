@@ -35,6 +35,21 @@ export function Field({ label, children }: FieldProps) {
   );
 }
 
+/** The same label row WITHOUT the `<label>` element, for a field whose content
+ * is not one labelable control. A `<label>` forwards every click inside it to
+ * its implicit control, and a contenteditable is not labelable — so the text
+ * field's label reached PAST the editor to the insert-a-field button beside it,
+ * and clicking the text pressed that button instead of placing a caret. The
+ * editor names itself with `aria-label`, so the plain block loses nothing. */
+export function FieldGroup({ label, children }: FieldProps) {
+  return (
+    <span className="mb-2 block">
+      <span className={FIELD_LABEL}>{label}</span>
+      {children}
+    </span>
+  );
+}
+
 export interface TextFieldProps {
   readonly label: string;
   readonly value: string;

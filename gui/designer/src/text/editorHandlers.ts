@@ -8,10 +8,17 @@
 // a hostile page would execute in the host origin). All of them are replaced
 // with plain-text insertion at the caret.
 
-import type { KeyboardEvent } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { type ChipMeta, chipSpan } from './chipModel';
 import type { ChipInsert } from './declMint';
-import { adjacentChip, insertNode, rangeInRoot, restoreCaret } from './editorDom';
+import {
+  adjacentChip,
+  caretBesideChip,
+  chipFromTarget,
+  insertNode,
+  rangeInRoot,
+  restoreCaret,
+} from './editorDom';
 
 /** Insert `text` as a plain text node at the caret (the ONE ingress the editor
  * offers pasted, dropped and Enter-typed content). */
@@ -39,6 +46,22 @@ export function insertChipAt(
   insertNode(el, range, chipSpan(el.ownerDocument, plan.wire, plan.name, null, spanMeta));
   el.focus();
   restoreCaret(sel, range);
+}
+
+/** Clicking a chip has to land the caret beside it. A chip is `user-select:
+ * none` (so a drag across the field never selects half a label), and the
+ * browser answers a click on unselectable content inside a contenteditable by
+ * doing NOTHING: no focus, no caret. Since the pill is the widest target in a
+ * short field, that read as "the field will not take the cursor". */
+export function handleEditorMouseDown(event: MouseEvent<HTMLDivElement>): void {
+  const el = event.currentTarget;
+  const chip = chipFromTarget(el, event.target);
+  if (chip === null) {
+    return;
+  }
+  event.preventDefault();
+  el.focus();
+  caretBesideChip(chip, event.clientX, document.getSelection());
 }
 
 export interface EditorKeyHandlers {

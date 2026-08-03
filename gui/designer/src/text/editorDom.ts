@@ -62,6 +62,33 @@ export function adjacentChip(range: Range, direction: 'backward' | 'forward'): E
   return null;
 }
 
+/** The chip an event landed on — the pill itself, or the label/format span
+ * inside it — when the target is within `root`. `null` for a click on ordinary
+ * text (where the browser's own caret placement is correct). */
+export function chipFromTarget(root: HTMLElement, target: EventTarget | null): Element | null {
+  // A text node answers through its parent element (the label span inside a
+  // pill, or the editor itself for ordinary text), so both node kinds reduce
+  // to one `closest` walk from an element inside the editor.
+  const from =
+    target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
+  return from !== null && root.contains(from) ? from.closest(`[${CHIP_WIRE_ATTR}]`) : null;
+}
+
+/** Put a collapsed caret beside `chip`: after it when the point falls past the
+ * pill's midline, before it otherwise — the same "nearest edge" rule a click on
+ * a character follows. */
+export function caretBesideChip(chip: Element, clientX: number, sel: Selection | null): void {
+  const box = chip.getBoundingClientRect();
+  const range = chip.ownerDocument.createRange();
+  if (clientX > box.left + box.width / 2) {
+    range.setStartAfter(chip);
+  } else {
+    range.setStartBefore(chip);
+  }
+  range.collapse(true);
+  restoreCaret(sel, range);
+}
+
 /** Re-apply a range (left collapsed by `insertNode`) as the live caret. */
 export function restoreCaret(sel: Selection | null, range: Range | null): void {
   if (sel === null || range === null) {

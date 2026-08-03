@@ -20,6 +20,7 @@
 import { useState } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
+import { TYPE_LABEL_KEYS } from '../palette/paletteRow';
 import { IconChevronDown } from '../ui/icons';
 import { Field } from './fields';
 import { DOCUMENT_SCOPE } from './model';
@@ -32,6 +33,27 @@ const SCOPE_BADGE_ON =
   'rounded-full border px-1.5 text-xs whitespace-nowrap shrink-0 border-accent text-accent';
 
 const NO_OPTIONS: readonly PickerOption[] = [];
+
+/** What the bound key IS, under the closed control: the same three facts the
+ * popover row carries (name, type, live sample). The key alone reads as a
+ * spelling nobody can check — `customer.name` says nothing about which field
+ * that is or what it will print. Absent for a key no offer matches: an
+ * undeclared key is exactly what the live diagnostic is for. */
+function BoundField({ option }: { option: PickerOption }) {
+  const { t } = useI18n();
+  const typeLabelKey = TYPE_LABEL_KEYS.get(option.type);
+  return (
+    <p className="m-0 mb-2 flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm text-muted">
+      <span className="font-semibold text-text">{option.label}</span>
+      <span className="whitespace-nowrap">
+        {typeLabelKey === undefined ? option.type : t(typeLabelKey)}
+      </span>
+      {option.sample === '' ? null : (
+        <span className="min-w-0 truncate italic">{option.sample}</span>
+      )}
+    </p>
+  );
+}
 
 export interface FieldPickerProps {
   readonly label: string;
@@ -98,6 +120,7 @@ export function FieldPicker({
       doc: true,
     },
   ].filter((section) => section.rows.length > 0);
+  const bound = [...options, ...documentOptions].find((option) => option.key === value);
   const commitPick = (key: string, documentScoped: boolean) => {
     setOpen(false);
     setQuery('');
@@ -150,6 +173,7 @@ export function FieldPicker({
           <IconChevronDown size={12} className="text-muted" />
         </button>
       </span>
+      {bound === undefined ? null : <BoundField option={bound} />}
       {open ? (
         <PickerPopover
           query={query}

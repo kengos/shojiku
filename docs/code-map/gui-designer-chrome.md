@@ -205,13 +205,19 @@ resolved style.
   per-item context BOTH hosts (panel field, canvas overlay) build
   through so they cannot drift; reading declarations is ungated, only
   AUTHORING is capability-gated (`canDeclare`).
-- `text/editorDom.ts` — Selection/Range helpers (no execCommand).
+- `text/editorDom.ts` — Selection/Range helpers (no execCommand), incl.
+  `chipFromTarget`/`caretBesideChip` — a chip is `user-select: none`, and
+  a click on unselectable content inside a contenteditable is answered by
+  the browser with NOTHING (no focus, no caret), so the editor places the
+  caret at the pill's nearer edge itself.
 - `text/InsertFieldMenu.tsx` — the insert-a-field popover over the same
   `PickerOption` rows as the binding picker; with `canDeclare` every
   field is offerable + a row-scoped item gains the document-scope
   section; offerability settled BEFORE the search filter; explicit
   `aria-label` on the trigger.
-- `text/editorHandlers.ts` — keyboard + text-ingress behavior:
+- `text/editorHandlers.ts` — keyboard, pointer + text-ingress behavior:
+  `handleEditorMouseDown` (a click on a chip focuses the editor and lands
+  the caret beside it),
   `handleEditorKeyDown` (⌘Enter commit, plain `\n` Enter, Escape cancel
   with stopPropagation, ⌘B/I/U preventDefaulted, atomic chip erosion),
   `insertPlainTextAt` (the ONE ingress paste/drop/Enter share — a
@@ -280,6 +286,10 @@ is Tailwind utilities over the `--sj-*` tokens.
 
 - `src/styles.css` — IRREDUCIBLE-ONLY hand CSS (canvas SVG paint,
   the chip editor's `.sj-chip*`, the rendering-status dim); everything
-  else is Tailwind utilities; hand-CSS uses the `.sj-*` namespace. Dark
+  else is Tailwind utilities; hand-CSS uses the `.sj-*` namespace. The
+  chip aligns `vertical-align: middle`, never `baseline`: its `overflow`
+  is not `visible`, and such an inline-block takes its BOTTOM MARGIN EDGE
+  as its baseline (CSS 2.1 §10.8.1), which hung the pill a descender
+  above the text beside it. Dark
   mode themes CHROME only — the canvas paper is engine pixels and stays
   white. CSS posture: `gui/STYLE.md`.

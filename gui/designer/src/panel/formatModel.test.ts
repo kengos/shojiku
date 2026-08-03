@@ -86,6 +86,14 @@ describe('formatOptions', () => {
     ]);
   });
 
+  it('offers a TEXT field no builtin: `date` on one is an error, not a format', () => {
+    // Naming a type override rewrites the field's type, and the engine then
+    // parses the value as a date — which fails on every string that is not
+    // one. The registry names a template DOES define still show.
+    expect(formatOptions([], 'string')).toEqual([]);
+    expect(formatOptions(['mask_tel'], 'string').map((row) => row.spelling)).toEqual(['mask_tel']);
+  });
+
   it('keeps a hostile registry name a plain spelling-only row (no proto walk)', () => {
     const rows = formatOptions(['__proto__'], 'currency');
     expect(rows[0]).toEqual({ spelling: '__proto__', labelKey: undefined, sample: '' });

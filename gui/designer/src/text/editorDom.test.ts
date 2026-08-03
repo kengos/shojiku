@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { chipMetaMap, chipSpan } from './chipModel';
-import { adjacentChip, insertNode, rangeInRoot, restoreCaret, selectAllContent } from './editorDom';
+import {
+  adjacentChip,
+  caretBesideChip,
+  chipFromTarget,
+  insertNode,
+  rangeInRoot,
+  restoreCaret,
+  selectAllContent,
+} from './editorDom';
 
 const META = chipMetaMap([]);
 
@@ -177,6 +185,44 @@ describe('restoreCaret / selectAllContent', () => {
     expect(range.startOffset).toBe(0);
     expect(range.endOffset).toBe(2);
     selectAllContent(root, null);
+    root.remove();
+  });
+});
+
+describe('chipFromTarget', () => {
+  it('finds the chip a click landed on, pill or label', () => {
+    const pill = chip();
+    const root = mounted(document.createTextNode('a'), pill);
+    expect(chipFromTarget(root, pill)).toBe(pill);
+    expect(chipFromTarget(root, pill.firstChild)).toBe(pill);
+    root.remove();
+  });
+
+  it('is null for ordinary text, for a node outside the root, and for a non-node', () => {
+    const text = document.createTextNode('abc');
+    const root = mounted(text, chip());
+    const outside = mounted(chip());
+    expect(chipFromTarget(root, text)).toBeNull();
+    expect(chipFromTarget(root, outside.firstChild)).toBeNull();
+    expect(chipFromTarget(root, null)).toBeNull();
+    root.remove();
+    outside.remove();
+  });
+});
+
+describe('caretBesideChip', () => {
+  // jsdom lays nothing out, so the pill states its own box.
+  function placed(pill: HTMLElement, clientX: number): number {
+    pill.getBoundingClientRect = () => ({ left: 100, width: 40, top: 0, height: 20 }) as DOMRect;
+    caretBesideChip(pill, clientX, selection());
+    return selection().getRangeAt(0).startOffset;
+  }
+
+  it('lands after the chip past its midline and before it otherwise', () => {
+    const pill = chip();
+    const root = mounted(document.createTextNode('a'), pill, document.createTextNode('b'));
+    expect(placed(pill, 135)).toBe(2);
+    expect(placed(pill, 105)).toBe(1);
     root.remove();
   });
 });

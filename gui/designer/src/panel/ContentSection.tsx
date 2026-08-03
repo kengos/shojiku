@@ -11,7 +11,7 @@ import { INPUT } from '../ui/chrome';
 import { ImageContent, PageNumberContent } from './contentParts';
 import { FieldPicker } from './FieldPicker';
 import { FormatPicker } from './FormatPicker';
-import { Field, TextField } from './fields';
+import { Field, FieldGroup, TextField } from './fields';
 import { formatOptions } from './formatModel';
 import { IterableSourceSection } from './IterableSourceSection';
 import { hasCapability, type ItemPanelProps } from './itemPanelProps';
@@ -93,7 +93,10 @@ export function ContentSection(props: ItemPanelProps) {
         </select>
       </Field>
       {view.contentMode === 'text' ? (
-        <Field label={t('panel.field.text')}>
+        // FieldGroup, not Field: the editor is a contenteditable next to the
+        // insert-a-field button, and a `<label>` around that pair sends every
+        // click inside it to the button.
+        <FieldGroup label={t('panel.field.text')}>
           <TextEditor
             // Keyed by value: the contenteditable seeds once per mount, so it
             // reseeds on an EXTERNAL change (undo, a delete shifting a sibling
@@ -116,7 +119,7 @@ export function ContentSection(props: ItemPanelProps) {
               )
             }
           />
-        </Field>
+        </FieldGroup>
       ) : (
         <>
           <FieldPicker

@@ -389,3 +389,45 @@ describe('TextEditor', () => {
     expect(sel?.getRangeAt(0).endOffset).toBe(1);
   });
 });
+
+describe('clicking a chip', () => {
+  // A chip is `user-select: none`, and the browser answers a click on
+  // unselectable content inside a contenteditable by doing nothing at all —
+  // no focus, no caret. The pill is the widest target in a short field, so
+  // that read as "this field will not take the cursor".
+  function pill(value: string) {
+    drawWithChips({ value });
+    const editor = screen.getByRole('textbox');
+    const chip = editor.querySelector(`[${CHIP_WIRE_ATTR}]`);
+    if (!(chip instanceof HTMLElement)) {
+      throw new Error('the chip is seeded');
+    }
+    chip.getBoundingClientRect = () => ({ left: 100, width: 40, top: 0, height: 20 }) as DOMRect;
+    return { editor, chip };
+  }
+
+  it('focuses the editor and lands the caret past the chip', () => {
+    const { editor, chip } = pill('{customer.name} 様');
+    fireEvent.mouseDown(chip, { clientX: 135 });
+    expect(document.activeElement).toBe(editor);
+    const range = document.getSelection()?.getRangeAt(0);
+    expect(range?.startContainer).toBe(editor);
+    expect(range?.startOffset).toBe(1);
+    expect(range?.collapsed).toBe(true);
+  });
+
+  it('lands before the chip when the near half was clicked', () => {
+    const { chip } = pill('{customer.name} 様');
+    fireEvent.mouseDown(chip, { clientX: 105 });
+    expect(document.getSelection()?.getRangeAt(0).startOffset).toBe(0);
+  });
+
+  it('leaves a click on ordinary text to the browser', () => {
+    const { editor } = pill('{customer.name} 様');
+    const before = document.activeElement;
+    fireEvent.mouseDown(editor, { clientX: 300 });
+    // No takeover: the editor is not focused BY the handler (jsdom performs no
+    // native caret placement, which is exactly the path being left alone).
+    expect(document.activeElement).toBe(before);
+  });
+});
