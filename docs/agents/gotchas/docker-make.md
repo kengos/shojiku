@@ -118,8 +118,30 @@ working tree, so separate worktrees still run gates in parallel — which
 is the point of isolating a parallel session in one. `SHOJIKU_GATE_DIR`
 puts the marker somewhere shared so `ls` shows every running gate across
 every tree; it is re-entrant (`make quiet T=verify` holds it once for the
-whole run), and it releases on Ctrl-C. If a crash ever leaves one
-behind, the error message prints the exact `rm -rf` to clear it.
+whole run), and it releases on an INTERACTIVE Ctrl-C. If a crash ever
+leaves one behind, the error message prints the exact `rm -rf` to clear
+it.
+
+**Cancelling a gate you started from an agent harness is not Ctrl-C, and
+`kill -INT` on the top-level make does NOT stop it.** The signal does not
+reach the `docker run` under the recipe: the container keeps compiling,
+the lock stays held, and `ps` on the make pid still answers alive — so a
+run you believe you cancelled goes on owning the tree. Kill the CONTAINER
+first, then the make chain:
+
+```sh
+docker ps -q | xargs -r docker inspect \
+  --format '{{.Name}} | {{range .Mounts}}{{.Source}} {{end}}' | grep <repo path>
+docker kill <the container name that printed>
+kill -INT <make pids, innermost first>
+```
+
+Then confirm BOTH: `ls $SHOJIKU_GATE_DIR` is empty and the inspect sweep
+finds no container still mounting the tree. Cancelling is worth doing
+rather than waiting whenever the tree is about to change — a mid-run
+scope decision (a review finding, an answer that widens the change)
+makes the in-flight `verify` stale the moment you edit, and its ~10
+minutes are already spent.
 
 **Before running that `rm -rf`, TEST that the holder is dead** — clearing
 a LIVE holder's lock causes precisely the `engine/target` corruption the
