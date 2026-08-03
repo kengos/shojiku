@@ -10,7 +10,7 @@
 import { useId } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
-import { PICKER_POPOVER, PICKER_ROW, PICKER_TOGGLE } from '../ui/chrome';
+import { INPUT, PICKER_POPOVER, PICKER_ROW, PICKER_TOGGLE } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
 import { SideButtonField } from './fields';
 import type { FormatOption } from './formatModel';
@@ -50,8 +50,11 @@ export function FormatPicker({ label, value, options, onCommit }: FormatPickerPr
           key={value}
           id={id}
           type="text"
-          className="w-full"
+          className={`${INPUT} w-full min-w-0`}
           defaultValue={value}
+          // An empty box with no placeholder reads as "not loaded yet"; an
+          // unset format is the type's own rendering.
+          placeholder={t('panel.field.formatNone')}
           onBlur={(event) => {
             if (event.currentTarget.value !== value) {
               onCommit(event.currentTarget.value);

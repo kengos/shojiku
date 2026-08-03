@@ -21,7 +21,7 @@ import { useId, useState } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
 import { TYPE_LABEL_KEYS } from '../palette/paletteRow';
-import { PICKER_TOGGLE } from '../ui/chrome';
+import { INPUT, PICKER_TOGGLE } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
 import { SideButtonField } from './fields';
 import { DOCUMENT_SCOPE } from './model';
@@ -48,15 +48,22 @@ function BoundField({ option }: { option: PickerOption }) {
   const { t } = useI18n();
   const typeLabelKey = TYPE_LABEL_KEYS.get(option.type);
   return (
-    <p className="m-0 -mt-1.5 mb-2 flex min-w-0 flex-wrap items-center gap-x-2 text-sm text-muted">
+    <p className="m-0 -ml-px mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 text-sm text-muted">
       <span className="sj-chip">
         <span className="sj-chip-label">{option.label}</span>
       </span>
+      {/* Separated, not just spaced: read cold, `[今回納品数] 数量 61` looks like
+          one run of text whose pill stops halfway. The dot is the same one the
+          origin badge uses to list a value's attributes. */}
+      <span aria-hidden="true">·</span>
       <span className="whitespace-nowrap">
         {typeLabelKey === undefined ? option.type : t(typeLabelKey)}
       </span>
       {option.sample === '' ? null : (
-        <span className="min-w-0 truncate italic">{option.sample}</span>
+        <>
+          <span aria-hidden="true">·</span>
+          <span className="min-w-0 truncate italic">{option.sample}</span>
+        </>
       )}
     </p>
   );
@@ -176,7 +183,7 @@ export function FieldPicker({
           key={value}
           id={id}
           type="text"
-          className="w-full"
+          className={`${INPUT} w-full min-w-0`}
           defaultValue={value}
           onBlur={(event) => {
             if (event.currentTarget.value !== value) {
