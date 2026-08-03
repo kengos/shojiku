@@ -116,6 +116,18 @@ check whose empty output read as "all covered").
   itself, and no grep or gate can see it. Prose grown by edit-at-a-time
   is where this happens; one full read of the finished file is the whole
   check.
+  **An APPEND-ONLY file grown by successive cycles is the worst case,
+  because the two entries were written weeks apart and only the READER
+  ever sees them together.** `CHANGELOG.md` under one `Unreleased`
+  heading is the example: a first cycle wrote "values clip at 200
+  characters", a second cycle bounded a composed value at 80 and added
+  its own entry — each true in isolation, contradictory side by side,
+  and the newer entry landed ABOVE the one defining the regime it
+  refines, so the reader met "that field is capped" before learning what
+  the cap was. Whenever an entry lands next to an existing one on the
+  SAME subject, read the pair in reading order and make the newer one
+  connect to the older one's numbers ("at most 80 of those 200") instead
+  of restating its own. Ordering is part of the claim.
 - A discovery glob needs `expect(files.length)` against the real total,
   not `toBeGreaterThan(0)` (a 1-of-27 match also passes); READ the
   resulting diff before staging.
@@ -177,6 +189,15 @@ check whose empty output read as "all covered").
   unescaped), so `-ciE 'traversal\|\.\.'` matches nothing and looks
   like a missing clause — three zeros in that same review were this,
   not the artifact.
+  **The same root cause in CODE: a two-stage `grep A | grep B` pipeline
+  only ever finds sites where A and B share a LINE, and a formatter
+  wraps them apart.** A census of "an untrusted value composed into a
+  single diagnostic arg" ran `grep '\.arg(' | grep 'format!'` and
+  reported one site in a file that had two — the second had `.arg(` and
+  `format!` on different lines after rustfmt. Treat such a pipeline as a
+  LOWER BOUND, and confirm the real count with something line-agnostic
+  (a scripted `str.count` of the exact text you are replacing, which is
+  what caught this one, or `rg -U` over the whole file).
 - **Measure file/line counts AFTER the formatter has run, and re-measure
   after review fixes** — the formatter is a bulk edit of every number
   you just took. **It is a bulk edit of every ANCHOR too**: a scripted
