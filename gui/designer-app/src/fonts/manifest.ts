@@ -11,15 +11,12 @@
 
 import { Document } from 'yaml';
 import type { CatalogFace, CatalogFamily } from './catalog';
+import { packIdForFamilyId } from './packId';
 
-/** Prefix for every generated pack + face id. Face ids are a flat global
- * namespace shared with the bundled packs, so a picked `noto-sans` must not
- * collide with the bundled one — the prefix keeps the two spaces disjoint. */
-const ID_PREFIX = 'gf-';
-
-/** The pack id (and `packs/fonts/<id>/` directory name) for a family. */
+/** The pack id (and `packs/fonts/<id>/` directory name) for a family. The
+ * minting — and the engine rule it must satisfy — lives in `./packId`. */
 export function packIdFor(family: CatalogFamily): string {
-  return `${ID_PREFIX}${family.id}`;
+  return packIdForFamilyId(family.id);
 }
 
 /** The `fontFamily` value an author writes to use this family. Every face of

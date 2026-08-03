@@ -5,7 +5,8 @@
 //! directory walk, no file reads. sha256 verification stays downstream (the
 //! layout `FontStore`), so a bad face is caught the same way on both paths.
 
-use super::{confine, PackError};
+use super::confine::{check_pack_id, confine};
+use super::PackError;
 use crate::lang::{LangPack, PackManifest};
 use shojiku_core::{FontStyle, FontWeight};
 use shojiku_diagnostics::Echo;
@@ -69,6 +70,7 @@ pub fn resolve_face_bytes(
     let mut seen = HashSet::new();
     let mut done = HashSet::new();
     for pack_id in pack.font_pack_ids() {
+        check_pack_id(pack_id)?;
         if !done.insert(pack_id.as_str()) {
             continue;
         }
@@ -83,8 +85,9 @@ pub fn resolve_face_bytes(
 /// The browser-preview mirror of [`resolve_face_bytes`]: resolves whatever
 /// `uses` packs the host has injected so far and REPORTS the absent ones in
 /// [`SubsetFaces::missing`] instead of failing. Only absence is tolerated —
-/// a malformed manifest, missing declared bytes, or a `../` traversal in an
-/// injected pack still fails loudly, so font integrity is unchanged. An
+/// a malformed manifest, missing declared bytes, an invalid pack id, or a
+/// `../` traversal in an injected pack still fails loudly, so font
+/// integrity is unchanged. An
 /// injected pack the locale does not `uses` is ignored (never "missing"),
 /// and a duplicate `uses` entry is processed once — a loaded pack is never
 /// reported missing (which would send the host refetching a pack it has),
@@ -99,6 +102,7 @@ pub fn resolve_face_bytes_subset(
     let mut seen = HashSet::new();
     let mut done = HashSet::new();
     for pack_id in pack.font_pack_ids() {
+        check_pack_id(pack_id)?;
         if !done.insert(pack_id.as_str()) {
             continue;
         }

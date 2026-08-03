@@ -41,6 +41,15 @@ describe('isUsableFamily', () => {
     expect(isUsableFamily(family({ id: 'a/b' }))).toBe(false);
   });
 
+  it('rejects an id whose minted pack id the engine would refuse', () => {
+    // Safe as a URL segment, unusable as a pack id: a `uses:` entry the
+    // engine refuses fails the whole locale pack, not just this font.
+    expect(isUsableFamily(family({ id: 'foo.bar' }))).toBe(false);
+    expect(isUsableFamily(family({ id: 'a'.repeat(62) }))).toBe(false);
+    // …and one that still fits with the `gf-` prefix stays usable.
+    expect(isUsableFamily(family({ id: 'a'.repeat(61) }))).toBe(true);
+  });
+
   it('rejects an unsafe face file name or licence file name', () => {
     expect(isUsableFamily(family({ faces: [{ file: '../x.ttf', url: 'https://x.test/x' }] }))).toBe(
       false,

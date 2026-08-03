@@ -15,6 +15,24 @@ platform binaries.
 
 ### Changed
 
+- **A font pack can no longer reach outside its own directory.** Two
+  things could point somewhere they had no business pointing. A locale
+  pack's `fonts.uses:` entry names a directory under your font search
+  dir, and nothing checked what was in it — an entry like `../..`, or an
+  absolute path, aimed the lookup wherever it liked. And a face's
+  `file:` was checked only as text, so a symlink sitting inside the pack
+  quietly read whatever it pointed at. Now a `uses:` entry must be a
+  plain single path segment (letters, digits, `-`, `_`, at most 64
+  characters) or the locale pack fails to parse; a face file must still
+  resolve inside its pack once symlinks are followed; and a pack
+  directory that is itself a symlink is refused. A face file that is
+  simply *absent* is untouched — that is how a pinned pack travels
+  without its bytes, and it still works exactly as before. If you were
+  relying on a symlinked pack directory, name the real directory with
+  `--font-dir` instead (it is repeatable). The Designer's font picker
+  holds itself to the same rule, so it cannot offer you a font whose
+  pack the engine would then refuse — no font in today's catalog is
+  affected.
 - **Error messages no longer replay a document's own bytes at you.**
   Anything the engine quotes back — a mistyped template key, a params
   value, a font-pack or locale id, a file path — is now stripped of

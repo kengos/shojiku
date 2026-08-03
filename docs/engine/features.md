@@ -521,7 +521,14 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   biz-udp-gothic` regardless of pack); first-dir/first-id wins, so user
   packs override bundled ones. Every face is sha256-verified at load
   and OS/2 `fsType`-checked (`font_embedding_restricted` unless
-  attested); `..`/absolute manifest paths are rejected.
+  attested). A pack is confined to its own directory: a `uses:` entry
+  must be a plain single path segment (letters, digits, `-`, `_`, at
+  most 64 characters — anything else fails the locale-pack parse), a
+  manifest `file:` may be neither absolute nor `..`-climbing, and the
+  resolved face must still sit inside the pack directory once symlinks
+  are followed. A pack directory that is itself a symlink is refused.
+  A face file that is simply *absent* stays fine — that is how a pinned
+  pack travels without its bytes.
 - **Face-variant selection**: faces declare `family`/`weight`/`style`;
   `FontStore::resolve` matches with independent weight/style fallback
   and reports whether the pick is a *real* bold/italic — synthetic

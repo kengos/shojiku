@@ -151,3 +151,26 @@ fn locale_fonts_parses_uses_default_fallback() {
 fn locale_fonts_rejects_unknown_keys() {
     assert!(serde_yaml::from_str::<LocaleFonts>("uses: [x]\ndefault: d\nbogus: 1\n").is_err());
 }
+
+#[test]
+fn locale_fonts_rejects_a_uses_entry_that_is_not_a_pack_id() {
+    // The guard belongs to this struct's parse, so it is pinned here as
+    // well as through a whole locale pack: a `uses` entry names a
+    // DIRECTORY, and `LocaleFonts` is where that becomes true.
+    let over_long = "p".repeat(MAX_PACK_ID + 1);
+    for bad in ["../evil", "/etc", "a/b", ".", "", &over_long] {
+        let yaml = format!("uses: [\"{bad}\"]\ndefault: d\n");
+        assert!(
+            serde_yaml::from_str::<LocaleFonts>(&yaml).is_err(),
+            "accepted `{bad}` as a pack id"
+        );
+    }
+    // …and still takes the shapes the shipped packs use.
+    for good in ["biz-ud", "noto_sans", "Gf-Lato2"] {
+        let yaml = format!("uses: [\"{good}\"]\ndefault: d\n");
+        assert!(
+            serde_yaml::from_str::<LocaleFonts>(&yaml).is_ok(),
+            "rejected `{good}`"
+        );
+    }
+}
