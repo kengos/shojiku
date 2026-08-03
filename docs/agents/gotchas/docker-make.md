@@ -111,6 +111,37 @@ learned there is no Debian-based .NET 10 image at all.
 
 ## Never run two gates at once
 
+**This is now enforced, not just advised**: `scripts/gate-lock.sh` wraps
+every containerised gate and refuses a second one in the SAME working
+tree, naming the holder (command, pid, start time). It is keyed by
+working tree, so separate worktrees still run gates in parallel — which
+is the point of isolating a parallel session in one. `SHOJIKU_GATE_DIR`
+puts the marker somewhere shared so `ls` shows every running gate across
+every tree; it is re-entrant (`make quiet T=verify` holds it once for the
+whole run), and it releases on Ctrl-C. If a crash ever leaves one
+behind, the error message prints the exact `rm -rf` to clear it.
+
+**What the lock does NOT cover — the global docker namespace.** Image
+tags, container names and host ports belong to the daemon, not to a tree
+or a volume, so two worktrees still collide there. `WORK_TAG` namespaces
+every locally built image (and the designer e2e's container name and
+port); the default reproduces today's names exactly, so the tags quoted
+in README and docs stay correct. A parallel session sets
+`WORK_TAG=<work item code>` and removes its images when the work
+completes. The sharpest case was the designer e2e: it used a FIXED
+container name with `docker rm -f` plus a `trap … EXIT`, so a second
+session actively killed the first's running container — and the victim
+reported "server never came up", which reads like a flaky test.
+
+**Cache volumes stay SHARED on purpose.** Deleting a per-session
+`shojiku-cargo` costs a crate re-download plus a `cargo-llvm-cov`
+recompile (minutes, every cycle), while an image rebuilds from the layer
+cache in seconds. `CARGO_VOLUME` / `RUSTUP_VOLUME` / `PNPM_VOLUME` are
+overridable if a session ever needs true isolation — but that is an
+escape hatch, and whatever it creates has to be cleaned up: seven
+orphaned `shojiku-*` volumes (≈2 GB, oldest a month old) were found and
+reaped on one machine.
+
 - The browser-smoke prep step `rm -rf gui/*/coverage` is a GATE-KILLER
   when a gui gate is running in the background: vitest dies mid-run with
   "Something removed the coverage directory … Vitest created earlier",

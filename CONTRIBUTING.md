@@ -131,6 +131,14 @@ never need this; if you must pipe, set `pipefail` first.
 > its supported language versions, as parallel jobs. A gate is defined
 > once, in the Makefile, so a green local run means what it says.
 >
+> **One gate at a time per working tree.** Two gates in one tree corrupt
+> each other — they share `engine/target`, and the failure blames a test
+> rather than your code. `scripts/gate-lock.sh` enforces this and names
+> the holder; separate git worktrees still run gates in parallel. If you
+> work two branches at once, also set `WORK_TAG=<something>` so the
+> locally built image tags, the designer e2e container name and its port
+> do not collide — those belong to the docker daemon, not to your tree.
+
 > **You need GNU Make 4 or newer.** make is the one tool that does not
 > run in a container, and macOS still ships 3.81 (2006), which parses
 > recipe quoting differently enough to hide a real failure. The Makefile
