@@ -17,12 +17,13 @@
 // offer derivation and what a pick commits; the open popover is
 // `PickerPopover.tsx`.
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
 import { TYPE_LABEL_KEYS } from '../palette/paletteRow';
+import { PICKER_TOGGLE } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
-import { Field } from './fields';
+import { SideButtonField } from './fields';
 import { DOCUMENT_SCOPE } from './model';
 import { PickerPopover } from './PickerPopover';
 import { filterOptions, type PickerOption } from './pickerModel';
@@ -105,6 +106,7 @@ export function FieldPicker({
   const { t } = useI18n();
   const { open, setOpen, rootRef } = usePopover();
   const [query, setQuery] = useState('');
+  const id = useId();
   // Offerability is settled BEFORE the search filter, so an empty offer reads
   // as "no fields" rather than as a query that matched nothing.
   const offered = options.length + documentOptions.length;
@@ -146,40 +148,43 @@ export function FieldPicker({
   };
   return (
     <div className="relative" ref={rootRef}>
-      <span className="mb-2 flex min-w-0 items-end gap-1">
-        <span className="min-w-0 flex-1">
-          <Field label={label} flush>
-            {/* `w-full` keeps the input inside its shrunken flex cell: an
-                unsized input takes its default ~20ch and overflows the cell,
-                which now runs under the scope badge beside it. */}
-            <input
-              key={value}
-              type="text"
-              className="w-full"
-              defaultValue={value}
-              onBlur={(event) => {
-                if (event.currentTarget.value !== value) {
-                  onCommit(event.currentTarget.value);
-                }
-              }}
-            />
-          </Field>
-        </span>
-        {scope === DOCUMENT_SCOPE ? (
-          <span className={SCOPE_BADGE_ON}>{t('picker.scope.document')}</span>
-        ) : null}
-        <button
-          type="button"
-          className="shrink-0 cursor-pointer rounded-md border border-border bg-chrome px-2 text-text"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          aria-label={t('picker.open')}
-          onClick={() => setOpen((v) => !v)}
-        >
-          <IconChevronDown size={12} className="text-muted" />
-        </button>
-      </span>
-      {bound === undefined ? null : <BoundField option={bound} />}
+      <SideButtonField
+        label={label}
+        htmlFor={id}
+        after={bound === undefined ? null : <BoundField option={bound} />}
+        button={
+          <>
+            {scope === DOCUMENT_SCOPE ? (
+              <span className={SCOPE_BADGE_ON}>{t('picker.scope.document')}</span>
+            ) : null}
+            <button
+              type="button"
+              className={PICKER_TOGGLE}
+              aria-haspopup="menu"
+              aria-expanded={open}
+              aria-label={t('picker.open')}
+              onClick={() => setOpen((v) => !v)}
+            >
+              <IconChevronDown size={12} className="text-muted" />
+            </button>
+          </>
+        }
+      >
+        {/* `w-full` keeps the input inside its shrunken flex cell: an unsized
+            input takes its default ~20ch and overflows the cell. */}
+        <input
+          key={value}
+          id={id}
+          type="text"
+          className="w-full"
+          defaultValue={value}
+          onBlur={(event) => {
+            if (event.currentTarget.value !== value) {
+              onCommit(event.currentTarget.value);
+            }
+          }}
+        />
+      </SideButtonField>
       {open ? (
         <PickerPopover
           query={query}

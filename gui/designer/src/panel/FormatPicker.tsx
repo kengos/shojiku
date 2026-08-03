@@ -7,11 +7,12 @@
 // possible for a registry name the picker does not enumerate. The samples are
 // illustrative (the engine is the live validator/renderer, not the GUI).
 
+import { useId } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
-import { PICKER_POPOVER, PICKER_ROW } from '../ui/chrome';
+import { PICKER_POPOVER, PICKER_ROW, PICKER_TOGGLE } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
-import { Field } from './fields';
+import { SideButtonField } from './fields';
 import type { FormatOption } from './formatModel';
 
 export interface FormatPickerProps {
@@ -26,34 +27,38 @@ export interface FormatPickerProps {
 export function FormatPicker({ label, value, options, onCommit }: FormatPickerProps) {
   const { t } = useI18n();
   const { open, setOpen, rootRef } = usePopover();
+  const id = useId();
   return (
     <div className="relative" ref={rootRef}>
-      <span className="mb-2 flex min-w-0 items-end gap-1">
-        <span className="min-w-0 flex-1">
-          <Field label={label} flush>
-            <input
-              key={value}
-              type="text"
-              defaultValue={value}
-              onBlur={(event) => {
-                if (event.currentTarget.value !== value) {
-                  onCommit(event.currentTarget.value);
-                }
-              }}
-            />
-          </Field>
-        </span>
-        <button
-          type="button"
-          className="shrink-0 cursor-pointer rounded-md border border-border bg-chrome px-2 text-text"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          aria-label={t('format.open')}
-          onClick={() => setOpen((v) => !v)}
-        >
-          <IconChevronDown size={12} className="text-muted" />
-        </button>
-      </span>
+      <SideButtonField
+        label={label}
+        htmlFor={id}
+        button={
+          <button
+            type="button"
+            className={PICKER_TOGGLE}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={t('format.open')}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <IconChevronDown size={12} className="text-muted" />
+          </button>
+        }
+      >
+        <input
+          key={value}
+          id={id}
+          type="text"
+          className="w-full"
+          defaultValue={value}
+          onBlur={(event) => {
+            if (event.currentTarget.value !== value) {
+              onCommit(event.currentTarget.value);
+            }
+          }}
+        />
+      </SideButtonField>
       {open ? (
         <div role="menu" className={PICKER_POPOVER}>
           {options.length === 0 ? (

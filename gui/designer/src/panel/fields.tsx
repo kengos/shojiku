@@ -23,20 +23,50 @@ import { FIELD_LABEL, INPUT } from '../ui/chrome';
 export interface FieldProps {
   readonly label: string;
   readonly children: ReactNode;
-  /** Drop the field's own bottom margin. For a field laid out BESIDE something
-   * (a picker's toggle): the row aligns the two on their ends, and a margin on
-   * one of them is 8px of skew between the input and the button. The row owns
-   * the spacing instead. */
-  readonly flush?: boolean;
 }
 
-export function Field({ label, children, flush = false }: FieldProps) {
+export function Field({ label, children }: FieldProps) {
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: the control is always passed in as `children` (a single input/select), which the label wraps implicitly.
-    <label className={flush ? 'block' : 'mb-2 block'}>
+    <label className="mb-2 block">
       <span className={FIELD_LABEL}>{label}</span>
       {children}
     </label>
+  );
+}
+
+/** A field whose control sits BESIDE a button — the pickers' ▼ toggle. The
+ * house shape for this (it is `StepperField`'s ▲▼ row): the label is associated
+ * by id rather than by wrapping (a `<label>` around the pair would forward
+ * clicks to the BUTTON), the outer block owns the bottom margin so no margin
+ * lands inside the row, and the row is `items-stretch` — the button takes the
+ * input's height instead of being lined up on one of its edges, which is what
+ * left the ▼ 8px low and 2px short. `after` renders under the row, inside the
+ * same block (the bound-field line). */
+export function SideButtonField({
+  label,
+  htmlFor,
+  button,
+  after,
+  children,
+}: {
+  readonly label: string;
+  readonly htmlFor: string;
+  readonly button: ReactNode;
+  readonly after?: ReactNode;
+  readonly children: ReactNode;
+}) {
+  return (
+    <span className="mb-2 block">
+      <label htmlFor={htmlFor} className={FIELD_LABEL}>
+        {label}
+      </label>
+      <span className="flex min-w-0 items-stretch gap-1">
+        <span className="min-w-0 flex-1">{children}</span>
+        {button}
+      </span>
+      {after}
+    </span>
   );
 }
 

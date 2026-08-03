@@ -144,10 +144,11 @@ read side, never the reverse.
   `{key}` text. Only mixed text (`{customer.name} 様`) has to be dropped,
   and `ContentSection` keeps it for the way back).
 - `panel/fields.tsx` — the base widgets: `Field` (label wrapper),
-  `flush` (drop the field's own bottom margin — inside an `items-end` row
-  beside a toggle button, that margin IS an 8px skew between input and
-  button; the row owns the spacing), **`FieldGroup`** (the same row WITHOUT
-  the `<label>` — a `<label>`
+  **`SideButtonField`** (a control BESIDE a button — the pickers' ▼: label by
+  `htmlFor` not by wrapping, the outer block owns the bottom margin so none
+  lands inside the row, and `items-stretch` gives the button the input's
+  height. The house shape, `StepperField`'s ▲▼ row; the button itself wears
+  `PICKER_TOGGLE`), **`FieldGroup`** (the same row WITHOUT the `<label>` — a `<label>`
   forwards every click inside it to its implicit control, and a
   contenteditable is not labelable, so the text field's label reached
   past the editor to the insert-a-field button beside it: clicking the
