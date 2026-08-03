@@ -135,6 +135,24 @@ check whose empty output read as "all covered").
   file and still left three live code references that only the pattern
   sweep caught. The enumeration says where to start; the empty sweep
   says you are done.
+- **A census by DECLARATION NAME finds only the sites someone named
+  consistently — sweep for the BEHAVIOUR to find the rest.** Counting a
+  duplicated primitive with `grep 'fn clip\|fn sanitize\|fn truncated'`
+  reported 9; the real number was 13. The four it could not see were an
+  INLINE expression with no function at all (`locale.chars().take(64)`),
+  and two more named `snippet` — one of which documented itself as a
+  hand-copy of the first, "crate-private there", which is exactly the
+  condition that spawns unnamed clones. Only a sweep for the code SHAPE
+  (`filter(|c| !c.is_control())`, `chars().take(`) found them, and it ran
+  as the negative sweep AFTER the work was believed finished. So: when
+  the deliverable is "consolidate N copies", derive N from behaviour
+  before scoping, and treat a name-based count as a lower bound. The same
+  asymmetry applies to enumerating a SURFACE: organizing by the type
+  involved (every error enum) missed two of seven echo boundaries that
+  grepping every WRITE site (`eprintln!`/`writeln!`) found immediately —
+  one of them a line that reads as transparency ("fetched font `{id}`
+  from {url}") rather than as an error, which is why two passes skipped
+  it.
 
 ## Counts and structural claims in prose
 

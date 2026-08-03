@@ -18,6 +18,32 @@
   promises an exact line for item-internal errors; verify the actual
   path/line with a probe (a throwaway `examples/*.rs` that prints the
   error) before writing assertions.
+- **A hostile-input test needs a POSITIVE CONTROL proving the payload
+  reaches the surface under test.** An echo-bounding suite planted a
+  unique marker in hostile templates/params and asserted the stderr came
+  back short and control-free — both assertions passed while the marker
+  never appeared at all, because three separate facts made the fixtures
+  unreachable, and each had to be measured rather than assumed:
+  **(a)** `serde_yaml`/`serde_json` *syntax* errors report POSITIONS
+  ("could not find expected ':' at line 2 column 5043") and never quote
+  the offending text, so a malformed document proves nothing about
+  echoing — what gets quoted is an unknown/mistyped KEY, i.e. the
+  located path; **(b)** YAML refuses a simple key past 1024 characters,
+  so an over-long key is a syntax error, not an unknown-field error
+  (300 is a usable hostile length); **(c)** both parsers reject a RAW
+  control byte in source text ("control characters are not allowed"), so
+  the reachable injection is a well-formed document whose *decoded*
+  scalar carries the escape (`"\e[2J…"` in YAML, `` in JSON) — a
+  raw byte tests the parser, not the echo. The suite only became real
+  once a third test asserted the marker DOES come back (bounded and
+  sanitized, but present); without it, a change that stopped echoing
+  entirely would look identical to a change that fixed the bound.
+- **`thiserror` treats a field literally named `source` as the error
+  source**, so retyping it to something that is not an `Error` fails
+  with `the method as_dyn_error exists ... but its trait bounds were not
+  satisfied` — which reads as a trait-import problem, not a naming one.
+  Rename the field (`detail` when it now holds a rendered message, which
+  is usually more honest anyway) rather than hunting the bound.
 
 ## Scripted edits over source
 
