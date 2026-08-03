@@ -3,6 +3,7 @@
 //! (never the font bytes), so fixtures need no real `.ttf`.
 
 use super::*;
+use shojiku_diagnostics::Echo;
 use std::fs;
 
 fn tmp(name: &str) -> PathBuf {
@@ -91,4 +92,62 @@ fn unreadable_manifest_is_an_io_error() {
     fs::create_dir_all(pack_dir.join("manifest.yml")).unwrap();
     let err = resolve_face_specs(&locale("[p]"), &[dir]).unwrap_err();
     assert!(matches!(err, PackError::Io { .. }));
+}
+
+/// A hostile pack id: over the echo cap and carrying a terminal escape.
+fn hostile_id() -> String {
+    format!("\u{1b}[2J\u{7}{}", "p".repeat(10_000))
+}
+
+#[test]
+fn pack_errors_bound_every_echoed_manifest_value() {
+    // A manifest names its own packs and faces, so every id in these
+    // messages is text the document chose. The field type is what bounds
+    // them — there is no per-site call left to forget.
+    let errors = [
+        PackError::NotFound(Echo::from(hostile_id())),
+        PackError::Traversal {
+            pack: Echo::from(hostile_id()),
+            id: Echo::from(hostile_id()),
+        },
+        PackError::MissingBytes {
+            pack: Echo::from(hostile_id()),
+            id: Echo::from(hostile_id()),
+        },
+        PackError::ParseInjected {
+            pack: Echo::from(hostile_id()),
+            detail: Echo::from(hostile_id()),
+        },
+        PackError::Parse {
+            path: Echo::from(hostile_id()),
+            detail: Echo::from(hostile_id()),
+        },
+    ];
+    for err in errors {
+        let message = err.to_string();
+        assert!(
+            !message.chars().any(char::is_control),
+            "control character survived: {message:?}"
+        );
+        // Two echoed values at most, each capped, plus fixed prose.
+        assert!(
+            message.chars().count() < 2 * (shojiku_diagnostics::MAX_ECHO + 1) + 200,
+            "unbounded pack error ({} chars)",
+            message.chars().count()
+        );
+    }
+}
+
+#[test]
+fn a_hostile_manifest_reaches_the_bound_through_a_real_resolve() {
+    // The constructed cases above pin the type; this one proves the real
+    // path builds them that way. An id that escapes its pack dir is the
+    // cheapest reachable construction.
+    let err = confine("../../etc/passwd", &hostile_id(), &hostile_id()).unwrap_err();
+    let message = err.to_string();
+    assert!(!message.chars().any(char::is_control));
+    assert!(
+        message.contains('…'),
+        "expected a truncation marker: {message:?}"
+    );
 }

@@ -1417,6 +1417,7 @@ dependencies = [
  "rustls-native-certs",
  "sha2 0.11.0",
  "shojiku-core",
+ "shojiku-diagnostics",
  "shojiku-formatter",
  "thiserror",
  "ureq",
@@ -1430,6 +1431,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "shojiku-core",
+ "shojiku-diagnostics",
  "thiserror",
  "time",
 ]

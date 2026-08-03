@@ -7,16 +7,20 @@ use super::{format_number, FormatWarning, Formatted, Pick};
 use crate::lang::{currency_fraction_digits, LangPack};
 use shojiku_core::FieldSpec;
 
+/// The cap for a name echoed into a format warning. Deliberately tighter
+/// than the workspace default: a currency code is three characters and a
+/// variant name a short identifier, so anything longer is already a mistake
+/// and there is nothing useful to show past this.
+const MAX_NAME: usize = 32;
+
 /// Truncates a caller-supplied name before it is echoed into a warning —
 /// variant/unit/currency names arrive from untrusted templates.
+///
+/// The cap is this module's; the guard itself is the workspace's single
+/// implementation, which also strips control characters (this copy used not
+/// to, so a hostile currency code could carry a terminal escape).
 pub(super) fn clip(name: &str) -> String {
-    const MAX_CHARS: usize = 32;
-    if name.chars().count() <= MAX_CHARS {
-        name.to_string()
-    } else {
-        let head: String = name.chars().take(MAX_CHARS).collect();
-        format!("{head}…")
-    }
+    shojiku_diagnostics::sanitize_marked(name, MAX_NAME)
 }
 
 /// Renders a currency amount per the picked variant. The code resolves

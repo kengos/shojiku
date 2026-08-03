@@ -51,7 +51,7 @@ impl Transport for FakeTransport {
                 sha256: sha_of(b),
                 bytes: b.clone(),
             }),
-            Some((_, Reply::Redirect(to))) => Err(TransportError::Redirect(to.clone())),
+            Some((_, Reply::Redirect(to))) => Err(TransportError::Redirect(to.as_str().into())),
             None => Err(TransportError::Status(404)),
         }
     }

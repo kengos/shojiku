@@ -14,6 +14,7 @@ thiserror = { workspace = true }
 ureq = { workspace = true }
 rustls = { workspace = true }
 rustls-native-certs = { workspace = true }
+shojiku-diagnostics = { workspace = true }
 shojiku-formatter = { workspace = true }
 
 [dev-dependencies]

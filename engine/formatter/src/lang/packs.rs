@@ -4,33 +4,32 @@
 //! duplicate face id, so a user/override pack shadows a bundled one.
 
 use super::{FaceSpec, LangPack, PackManifest};
+use shojiku_diagnostics::Echo;
 use std::collections::HashSet;
 use std::path::{Component, Path, PathBuf};
 use thiserror::Error;
 
+/// Font-pack resolution failures.
+///
+/// Every field quoting the manifest back — pack ids, face ids, paths, and
+/// the serde message that names the offending key — is an [`Echo`]: a
+/// manifest is untrusted input, and these messages reach a terminal. The
+/// `std::io::Error` sources stay typed, because their text is written by the
+/// OS rather than by the document.
 #[derive(Debug, Error)]
 pub enum PackError {
     #[error("font pack `{0}` not found in any font dir")]
-    NotFound(String),
+    NotFound(Echo),
     #[error("failed to read font pack manifest {path}: {source}")]
-    Io {
-        path: PathBuf,
-        source: std::io::Error,
-    },
-    #[error("failed to parse font pack manifest {path}: {source}")]
-    Parse {
-        path: PathBuf,
-        source: serde_yaml::Error,
-    },
+    Io { path: Echo, source: std::io::Error },
+    #[error("failed to parse font pack manifest {path}: {detail}")]
+    Parse { path: Echo, detail: Echo },
     #[error("font pack `{pack}` face `{id}` file escapes the pack directory")]
-    Traversal { pack: String, id: String },
-    #[error("failed to parse injected font pack manifest for `{pack}`: {source}")]
-    ParseInjected {
-        pack: String,
-        source: serde_yaml::Error,
-    },
+    Traversal { pack: Echo, id: Echo },
+    #[error("failed to parse injected font pack manifest for `{pack}`: {detail}")]
+    ParseInjected { pack: Echo, detail: Echo },
     #[error("injected font pack `{pack}` face `{id}` bytes not provided")]
-    MissingBytes { pack: String, id: String },
+    MissingBytes { pack: Echo, id: Echo },
 }
 
 /// Resolves the locale's `uses` packs into an ordered, deduped list of
@@ -62,23 +61,22 @@ fn load_pack(pack_id: &str, font_dirs: &[PathBuf]) -> Result<(PackManifest, Path
         let manifest_path = pack_dir.join("manifest.yml");
         match std::fs::read_to_string(&manifest_path) {
             Ok(content) => {
-                let manifest =
-                    serde_yaml::from_str(&content).map_err(|source| PackError::Parse {
-                        path: manifest_path,
-                        source,
-                    })?;
+                let manifest = serde_yaml::from_str(&content).map_err(|err| PackError::Parse {
+                    path: Echo::from(manifest_path.as_path()),
+                    detail: Echo::from(err.to_string()),
+                })?;
                 return Ok((manifest, pack_dir));
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
             Err(source) => {
                 return Err(PackError::Io {
-                    path: manifest_path,
+                    path: Echo::from(manifest_path.as_path()),
                     source,
                 })
             }
         }
     }
-    Err(PackError::NotFound(pack_id.to_string()))
+    Err(PackError::NotFound(Echo::from(pack_id)))
 }
 
 /// Rejects a manifest `file` that would escape its pack dir — an absolute
@@ -90,8 +88,8 @@ fn confine(file: &str, pack: &str, id: &str) -> Result<(), PackError> {
     let escapes = p.is_absolute() || p.components().any(|c| matches!(c, Component::ParentDir));
     if escapes {
         return Err(PackError::Traversal {
-            pack: pack.to_string(),
-            id: id.to_string(),
+            pack: Echo::from(pack),
+            id: Echo::from(id),
         });
     }
     Ok(())

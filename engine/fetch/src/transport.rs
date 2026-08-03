@@ -8,6 +8,7 @@
 
 use crate::error::TransportError;
 use crate::read::{read_capped, Hashed, MAX_FACE_BYTES};
+use shojiku_diagnostics::Echo;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -82,7 +83,7 @@ impl Transport for HttpTransport {
             .agent
             .get(url)
             .call()
-            .map_err(|e| TransportError::Io(e.to_string()))?;
+            .map_err(|e| TransportError::Io(Echo::from(e.to_string())))?;
         let status = resp.status().as_u16();
         if (300..400).contains(&status) {
             let location = resp
@@ -90,7 +91,7 @@ impl Transport for HttpTransport {
                 .get("location")
                 .and_then(|v| v.to_str().ok())
                 .ok_or(TransportError::RedirectNoLocation)?;
-            return Err(TransportError::Redirect(location.to_string()));
+            return Err(TransportError::Redirect(Echo::from(location)));
         }
         if status != 200 {
             return Err(TransportError::Status(status));

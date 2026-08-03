@@ -5,6 +5,7 @@
 //! bytes path is byte-for-byte the same store as the CLI filesystem path.
 
 use super::{verify, FontError, FontFace, FontStore};
+use shojiku_diagnostics::Echo;
 use shojiku_formatter::{
     resolve_face_bytes, resolve_face_bytes_subset, resolve_face_specs, FaceBytes, FaceSpec,
     InjectedPack, LangPack, SubsetFaces,
@@ -37,7 +38,7 @@ impl FontStore {
     pub fn load_from_specs(specs: Vec<FaceSpec>, pack: &LangPack) -> Result<Self, FontError> {
         let default_id = Self::default_id_of(pack)?;
         if specs.is_empty() {
-            return Err(FontError::NoFonts(pack.id.clone()));
+            return Err(FontError::NoFonts(Echo::from(&pack.id)));
         }
         let built = specs
             .into_iter()
@@ -93,7 +94,7 @@ impl FontStore {
         default_id: String,
     ) -> Result<Self, FontError> {
         if specs.is_empty() {
-            return Err(FontError::NoFonts(pack.id.clone()));
+            return Err(FontError::NoFonts(Echo::from(&pack.id)));
         }
         let built = specs
             .into_iter()
@@ -115,7 +116,7 @@ impl FontStore {
         let order: Vec<String> = faces.iter().map(|f| f.id.clone()).collect();
         let map: HashMap<String, FontFace> = faces.into_iter().map(|f| (f.id.clone(), f)).collect();
         if !map.contains_key(default_id) {
-            return Err(FontError::UnknownFace(default_id.to_string()));
+            return Err(FontError::UnknownFace(Echo::from(default_id)));
         }
         Ok(Self {
             faces: map,
@@ -129,7 +130,7 @@ impl FontStore {
     fn default_id_of(pack: &LangPack) -> Result<String, FontError> {
         pack.default_font()
             .map(str::to_string)
-            .ok_or_else(|| FontError::NoFonts(pack.id.clone()))
+            .ok_or_else(|| FontError::NoFonts(Echo::from(&pack.id)))
     }
 
     /// Verifies each `(face, sha256, embedding_attested)` and assembles the
@@ -147,7 +148,7 @@ impl FontStore {
             faces.insert(face.id.clone(), face);
         }
         if !faces.contains_key(&default_id) {
-            return Err(FontError::UnknownFace(default_id));
+            return Err(FontError::UnknownFace(Echo::from(default_id)));
         }
         Ok(Self {
             faces,

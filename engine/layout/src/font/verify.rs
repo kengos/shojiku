@@ -5,6 +5,7 @@
 
 use super::{FontError, FontFace};
 use sha2::{Digest, Sha256};
+use shojiku_diagnostics::Echo;
 use skrifa::raw::TableProvider;
 use skrifa::FontRef;
 
@@ -18,10 +19,10 @@ pub(super) fn verify_face(
     embedding_attested: bool,
 ) -> Result<(), FontError> {
     if hex(&Sha256::digest(face.data.as_slice())) != expected_sha256 {
-        return Err(FontError::Sha256Mismatch(face.id.clone()));
+        return Err(FontError::Sha256Mismatch(Echo::from(&face.id)));
     }
     if !embedding_attested && embedding_restricted(face) {
-        return Err(FontError::EmbeddingRestricted(face.id.clone()));
+        return Err(FontError::EmbeddingRestricted(Echo::from(&face.id)));
     }
     Ok(())
 }

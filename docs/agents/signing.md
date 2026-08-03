@@ -348,8 +348,10 @@ assurance, which is precisely the trust the signing story is selling.
   error type on this surface owns anything needing a drop, so a variant
   holding a `String` fails to compile. A message is `&'static str` plus
   numbers; names and offsets locate a problem without quoting it. The
-  authoring surface's rule is deliberately the opposite — `CoreError`
-  clips the author text it quotes, because naming the mistyped key is
+  authoring surface's rule is deliberately the opposite, and structural
+  in its own way — its errors declare `shojiku_diagnostics::Echo` fields
+  rather than `String`, so the text they quote is sanitized and clipped
+  at construction and no variant can opt out. Naming the mistyped key is
   the whole point there.
 - **The parsers that read attacker-chosen bytes are fuzzed.** Targets
   live in `engine/fuzz` (outside the workspace: nightly + libFuzzer) and

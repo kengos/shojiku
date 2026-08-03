@@ -6,7 +6,7 @@
 use crate::error::WasmError;
 use crate::render::{Pages, PdfOutcome, RenderOutcome};
 use js_sys::{Array, Error, Object, Reflect, Uint8Array};
-use shojiku_diagnostics::ArgValue;
+use shojiku_diagnostics::{sanitize, ArgValue, MAX_MESSAGE};
 use wasm_bindgen::prelude::*;
 
 /// Maps a host-misuse error to a thrown JS `Error` carrying a stable `code`
@@ -18,7 +18,9 @@ use wasm_bindgen::prelude::*;
 /// always is — a failed attach degrades to the bare `Error` rather than
 /// masking the real error with a marshalling one.
 pub(super) fn throw(err: WasmError) -> JsValue {
-    let error = Error::new(&err.to_string());
+    // `args` are already bounded (they ride `ArgValue::text`); the message
+    // was not, and it is the half a Designer actually shows to a user.
+    let error = Error::new(&sanitize(&err.to_string(), MAX_MESSAGE));
     let _ = Reflect::set(&error, &"code".into(), &err.code().into());
     let args = Object::new();
     for (key, value) in err.args() {

@@ -47,11 +47,11 @@ impl<'de> Deserialize<'de> for EraDate {
     }
 }
 
-fn truncated(s: &str) -> &str {
-    match s.char_indices().nth(32) {
-        Some((i, _)) => &s[..i],
-        None => s,
-    }
+/// Bounds a pack-supplied date string echoed into a deserialize error. The
+/// cap is this module's (an era start date is ten characters); the guard is
+/// the workspace's one implementation, which also strips control characters.
+fn truncated(s: &str) -> String {
+    shojiku_diagnostics::sanitize_marked(s, 32)
 }
 
 /// Strict `yyyy-mm-dd` parse; the day must exist on the real calendar.

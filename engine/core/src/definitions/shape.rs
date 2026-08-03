@@ -5,6 +5,7 @@
 use super::schema::{Schema, SchemaType, MAX_ENUM_VALUES, MAX_SCHEMA_DEPTH, MAX_SCHEMA_NODES};
 use super::Definitions;
 use crate::error::CoreError;
+use shojiku_diagnostics::Echo;
 
 /// Walk state: the running node budget.
 struct Walk {
@@ -109,22 +110,16 @@ fn check_required_declared(
 }
 
 /// A located error with no line info: the schema path is the locator.
+///
+/// `path` comes from the document; `message` is always a literal from this
+/// module, but both take the same bounded type so the distinction never has
+/// to be re-derived by whoever adds the next check.
 fn err(path: &str, message: &str) -> CoreError {
     CoreError::Located {
         what: "definitions",
-        path: clip(path),
+        path: Echo::from(path),
         line: 0,
         column: 0,
-        message: message.to_string(),
+        message: Echo::from(message),
     }
-}
-
-/// Clips a hostile-length path the same way located serde errors do.
-fn clip(path: &str) -> String {
-    const MAX: usize = 200;
-    if path.chars().count() <= MAX {
-        return path.to_string();
-    }
-    let clipped: String = path.chars().take(MAX).collect();
-    format!("{clipped}…")
 }

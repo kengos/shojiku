@@ -187,14 +187,12 @@ fn parse_number(text: &str) -> Result<f64, String> {
 /// non-finite numbers, not string sizes). Shared with other template
 /// string parsers (e.g. `PageSize`).
 pub(crate) fn snippet(text: &str) -> String {
-    const MAX_CHARS: usize = 32;
-    if text.chars().count() <= MAX_CHARS {
-        text.to_string()
-    } else {
-        let head: String = text.chars().take(MAX_CHARS).collect();
-        format!("{head}…")
-    }
+    shojiku_diagnostics::sanitize_marked(text, MAX_SNIPPET)
 }
+
+/// The cap for a length/size snippet. Tighter than the workspace default:
+/// a well-formed length is a handful of characters.
+const MAX_SNIPPET: usize = 32;
 
 /// YAML numbers are already guarded by `yaml_guard`, but string forms
 /// (`"1e309%"`) parse through `str::parse` and can produce infinities —

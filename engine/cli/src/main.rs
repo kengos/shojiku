@@ -5,7 +5,7 @@ use shojiku_cli::{
     report_diagnostics, run_capabilities, run_inspect, run_preview, run_render, run_sign,
     run_validate, run_verify, write_output, Cli, CliError, Command, Report, ReportArg,
 };
-use shojiku_diagnostics::Diagnostics;
+use shojiku_diagnostics::{sanitize, Diagnostics, MAX_MESSAGE};
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
@@ -20,7 +20,11 @@ fn main() -> ExitCode {
                 CliError::ValidationFailed { .. } | CliError::VerificationFailed
             );
             if !reported {
-                eprintln!("shojiku: {err}");
+                // The last unbounded echo boundary on this surface: an engine
+                // error quotes template keys, pack ids and file paths, all of
+                // which a hostile document chooses. stderr is a terminal, so
+                // an unfiltered escape sequence here repaints it.
+                eprintln!("shojiku: {}", sanitize(&err.to_string(), MAX_MESSAGE));
             }
             ExitCode::FAILURE
         }

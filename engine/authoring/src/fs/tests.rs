@@ -116,6 +116,17 @@ fn locale_ids_with_hostile_characters_are_rejected() {
     let long = "/".repeat(500);
     let err = load_locale_pack(&long, &[]).unwrap_err();
     assert!(err.to_string().len() < 200);
+
+    // Length was never the whole risk: a hostile id can be SHORT and still
+    // repaint the terminal that prints the rejection. Both guards now come
+    // from the same place, so neither can be applied without the other.
+    let escaping = format!("\u{1b}[2J\u{7}{}", "x".repeat(70));
+    let err = load_locale_pack(&escaping, &[]).unwrap_err();
+    let message = err.to_string();
+    assert!(
+        !message.chars().any(char::is_control),
+        "control character survived into a locale-id rejection: {message:?}"
+    );
 }
 
 #[test]

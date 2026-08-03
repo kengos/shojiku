@@ -23,8 +23,9 @@ use shojiku_diagnostics::Diagnostics;
 use shojiku_verify::VerificationReport;
 use std::path::Path;
 
-/// Longest failure message the report echoes, matching the capi's cap.
-const MAX_MESSAGE: usize = 400;
+/// Longest failure message the report echoes — the shared host-boundary cap,
+/// which the capi reads from the same place.
+use shojiku_diagnostics::MAX_MESSAGE;
 
 /// One operation's outcome.
 #[derive(Debug, Serialize)]
@@ -135,11 +136,7 @@ impl<'a> Report<'a> {
 /// Diagnostics themselves pass through as the engine emitted them, exactly
 /// as they do through the capi, which bounds its own echoed values.
 fn clip(message: &str) -> String {
-    message
-        .chars()
-        .filter(|c| !c.is_control())
-        .take(MAX_MESSAGE)
-        .collect()
+    shojiku_diagnostics::sanitize(message, MAX_MESSAGE)
 }
 
 #[cfg(test)]

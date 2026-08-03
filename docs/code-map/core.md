@@ -196,5 +196,30 @@ injected at parse). The template model splits along CSS lines.
   String|Number|Bool (strings control-char-stripped + clipped;
   non-finite clamped). `render.rs` — single-pass `{name}` template
   substitution (arg values never re-scanned).
+- `echo.rs` — **the workspace's ONE bounded-echo guard**, and the type
+  that applies it structurally. `sanitize(s, max)` strips control
+  characters (log/terminal-injection guard) AND the bidirectional
+  formatting characters (the "Trojan Source" family — NOT control
+  characters, so `char::is_control` misses every one of them; ZWJ/ZWNJ
+  are deliberately kept because they carry meaning in real text), then
+  clips by CHARACTER
+  count — in that order, so a hostile string cannot pad itself to push
+  an escape past the cap; `sanitize_marked` adds the `…` truncation
+  marker (and must filter by the same predicate, or the marker lies). Caps: `MAX_ECHO` 200 (one echoed value — a field path, a pack
+  id) and `MAX_MESSAGE` 400 (a whole assembled message at a host
+  boundary), with a `const` assertion that the message cap is not the
+  tighter of the two. `Echo` is the guard as a FIELD TYPE: an error
+  variant declaring `Echo` instead of `String` cannot be constructed
+  with unsanitized text, so the decision survives the next variant
+  somebody adds. It `Deref`s to `str` and compares against `&str`, so
+  it drops into code that held a `String`. `Echo::clipped_to(s, max)`
+  is for values the DOMAIN bounds more tightly (a locale id at 64, a
+  currency code at 32). Consumers: `CoreError`, `PackError`,
+  `LangPackError`, `FontError`, `FetchError`/`TransportError`,
+  `FsPackError`; the per-site caps in `format/money.rs`,
+  `lang/era.rs`, `core/length.rs`, `layout/color.rs`; and every host
+  echo boundary (CLI stderr + its diagnostics lines, the `--report`
+  sidecar, the capi status wire, the MCP JSON-RPC error, the wasm
+  thrown `Error.message`).
 - `CoreError::to_diagnostic()` (in core) maps located parse errors →
   diagnostics.

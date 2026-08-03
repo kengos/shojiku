@@ -98,3 +98,31 @@ fn missing_locale_file_is_io_error() {
     let result = LangPack::load(Path::new("/no/such/locale.yml"));
     assert!(matches!(result, Err(LangPackError::Io { .. })));
 }
+
+#[test]
+fn lang_pack_errors_bound_their_echoed_path_and_parse_detail() {
+    // A locale pack is untrusted input like any other document: its file
+    // path comes from a host-supplied search dir and its parse failure
+    // quotes pack content.
+    let hostile = format!("\u{1b}[2J\u{7}{}", "l".repeat(10_000));
+    let io = LangPackError::Io {
+        path: shojiku_diagnostics::Echo::from(&hostile),
+        source: std::io::Error::new(std::io::ErrorKind::NotFound, "nope"),
+    };
+    let parse = LangPackError::from(
+        serde_yaml::from_str::<LangPack>(&format!("id: \"{}\"\n  bad", "y".repeat(500)))
+            .unwrap_err(),
+    );
+    for err in [io, parse] {
+        let message = err.to_string();
+        assert!(
+            !message.chars().any(char::is_control),
+            "control character survived: {message:?}"
+        );
+        assert!(
+            message.chars().count() < shojiku_diagnostics::MAX_ECHO + 200,
+            "unbounded locale-pack error ({} chars)",
+            message.chars().count()
+        );
+    }
+}

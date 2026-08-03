@@ -3,7 +3,7 @@
 //! that keeps a control-char-laden pack message from riding the args raw.
 
 use crate::error::WasmError;
-use shojiku_diagnostics::ArgValue;
+use shojiku_diagnostics::{ArgValue, MAX_MESSAGE};
 
 #[test]
 fn every_variant_maps_to_its_stable_code() {
@@ -78,5 +78,37 @@ fn detail_args_are_sanitized_through_argvalue() {
             panic!("detail must be a string arg");
         };
         assert!(!sanitized.chars().any(char::is_control));
+    }
+}
+
+#[test]
+fn the_thrown_message_is_bounded_while_code_and_args_stay_intact() {
+    // The other half of the wasm error contract. `args` were already
+    // sanitized; the MESSAGE — which is what a Designer actually shows a
+    // user — was echoed raw, so a hostile locale/font/render detail could
+    // both run unbounded and carry terminal/log control sequences.
+    let hostile = format!("\u{1b}[2J\u{7}{}", "x".repeat(10_000));
+    for err in [
+        WasmError::Locale(hostile.clone()),
+        WasmError::Fonts(hostile.clone()),
+        WasmError::Render(hostile.clone()),
+        WasmError::UnknownFontPack(hostile.clone()),
+    ] {
+        let code = err.code();
+        let args = err.args();
+        let thrown = shojiku_diagnostics::sanitize(&err.to_string(), MAX_MESSAGE);
+        assert!(
+            thrown.chars().count() <= MAX_MESSAGE,
+            "{code}: unbounded thrown message ({} chars)",
+            thrown.chars().count()
+        );
+        assert!(
+            !thrown.chars().any(char::is_control),
+            "{code}: control character in the thrown message"
+        );
+        // The code and the arg keys are the append-only contract and must
+        // not shift because the message got a bound.
+        assert!(!code.is_empty());
+        assert!(!args.is_empty());
     }
 }

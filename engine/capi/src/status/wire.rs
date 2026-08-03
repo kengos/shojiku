@@ -18,8 +18,9 @@ use super::Failure;
 use serde::Serialize;
 use serde_json::{json, Value};
 
-/// Longest message echoed back through `error_json`.
-const MAX_MESSAGE: usize = 400;
+/// Longest message echoed back through `error_json` — the workspace's
+/// host-boundary cap, so this surface and the CLI report cannot drift apart.
+use shojiku_diagnostics::MAX_MESSAGE;
 
 impl Failure {
     /// The `{step, kind, message}` object the caller reads off the handle.
@@ -71,11 +72,7 @@ impl Failure {
 /// Hostile content reaches here (a template path inside an engine error), so
 /// this is a guard, not cosmetics.
 pub(crate) fn clip(message: &str) -> String {
-    message
-        .chars()
-        .filter(|c| !c.is_control())
-        .take(MAX_MESSAGE)
-        .collect()
+    shojiku_diagnostics::sanitize(message, MAX_MESSAGE)
 }
 
 /// Serializes a value for the wire.

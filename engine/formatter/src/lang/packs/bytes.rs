@@ -8,6 +8,7 @@
 use super::{confine, PackError};
 use crate::lang::{LangPack, PackManifest};
 use shojiku_core::{FontStyle, FontWeight};
+use shojiku_diagnostics::Echo;
 use std::collections::{BTreeMap, HashSet};
 
 /// One host-injected font pack: the `manifest.yml` source and the bytes of
@@ -73,7 +74,7 @@ pub fn resolve_face_bytes(
         }
         let inj = by_id
             .remove(pack_id)
-            .ok_or_else(|| PackError::NotFound(pack_id.to_string()))?;
+            .ok_or_else(|| PackError::NotFound(Echo::from(pack_id.as_str())))?;
         resolve_pack(pack_id, inj, &mut seen, &mut out)?;
     }
     Ok(out)
@@ -130,9 +131,9 @@ fn resolve_pack(
     out: &mut Vec<FaceBytes>,
 ) -> Result<(), PackError> {
     let manifest: PackManifest =
-        serde_yaml::from_str(&inj.manifest).map_err(|source| PackError::ParseInjected {
-            pack: pack_id.to_string(),
-            source,
+        serde_yaml::from_str(&inj.manifest).map_err(|err| PackError::ParseInjected {
+            pack: Echo::from(pack_id),
+            detail: Echo::from(err.to_string()),
         })?;
     // Confine every declared file first (defense-in-depth: `file` is a
     // lookup key here, but keeping parity with the filesystem path means
@@ -163,8 +164,8 @@ fn resolve_pack(
             _ => inj.files.remove(&face.file),
         }
         .ok_or_else(|| PackError::MissingBytes {
-            pack: pack_id.to_string(),
-            id: face.id.clone(),
+            pack: Echo::from(pack_id),
+            id: Echo::from(&face.id),
         })?;
         let (family, weight, style) = face.variant();
         out.push(FaceBytes {

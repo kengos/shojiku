@@ -25,15 +25,15 @@ fn every_variant_declares_its_class_and_kind() {
             "io",
         ),
         (
-            CliError::Font(shojiku_layout::FontError::NoFonts("ja-JP".to_string())),
+            CliError::Font(shojiku_layout::FontError::NoFonts("ja-JP".into())),
             FailureClass::Document,
             "font",
         ),
         (
             CliError::Fetch(shojiku_fetch::FetchError::MissingNoUrl {
-                pack: "biz-ud".to_string(),
-                id: "regular".to_string(),
-                path: "biz-ud.ttf".to_string(),
+                pack: "biz-ud".into(),
+                id: "regular".into(),
+                path: "biz-ud.ttf".into(),
             }),
             FailureClass::Document,
             "fetch",
