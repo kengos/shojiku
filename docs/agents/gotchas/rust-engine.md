@@ -56,6 +56,17 @@
   generating script was still on disk). `mkdir -p` the child directory and
   write the child FIRST, then edit the parent; or hold the split in one
   script that writes both before touching either.
+- **A split that moves an `use` out of the parent breaks the parent's
+  TEST module, and only `--all-targets` says so.** A `#[cfg(test)] mod
+  tests;` sibling reaches its fixtures' types through `use super::*`, so
+  it silently depends on whatever the parent imported — move
+  `std::path::Path` into the new child alongside the function that
+  wanted it and the library still compiles clean while
+  `cargo clippy --all-targets` dies in the test file with
+  `cannot find type Path in this scope`, pointing at a line the split
+  never touched. After any split, re-run `make lint:<scope>` (which is
+  `--all-targets`) rather than trusting a build, and check the parent's
+  test module for names it was borrowing.
 - **Scripted source edits must assert their anchor matched AND is
   unique**: a python `str.replace` whose anchor drifts silently no-ops
   (a test that was never written cost a full coverage round), and an
