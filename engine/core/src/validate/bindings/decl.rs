@@ -7,7 +7,7 @@ mod surfaces;
 
 use crate::interpolate::{is_valid_interpolation_name, parse_segments, scan_suspect_keys, Segment};
 use crate::template::{Binding, BindingScope, Bindings, Item, MAX_BINDINGS};
-use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
+use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 use std::collections::BTreeSet;
 
 use super::cell::{check_cell_field, CellScope};
@@ -67,7 +67,9 @@ pub(in crate::validate) fn check_item_structure(item: &Item, path: &str, diags: 
     }
     let used = referenced_names(&strings, decls);
     for name in decls.keys() {
-        let decl_path = format!("{path}.bindings.{name}");
+        // Arbitrary text: the checks below fire when `name` is INVALID, and
+        // `with_path` does no sanitizing (other paths are index-built).
+        let decl_path = format!("{path}.bindings.{}", Echo::inline(name));
         if !is_valid_interpolation_name(name) {
             diags.push(
                 Diagnostic::new(Code::InvalidBindingName)
@@ -107,7 +109,9 @@ pub(in crate::validate) fn check_item_keys(
     };
     check_format_overrides(&interpolated_strings(item), decls, &item_decls, path, diags);
     for (name, decl) in decls {
-        let decl_path = format!("{path}.bindings.{name}");
+        // Arbitrary text: the checks below fire when `name` is INVALID, and
+        // `with_path` does no sanitizing (other paths are index-built).
+        let decl_path = format!("{path}.bindings.{}", Echo::inline(name));
         check_decl_key(decl, decl.format.as_deref(), &item_decls, &decl_path, diags);
         // An unreferenceable name is already reported by the structural
         // pass; a non-ASCII one may match a declared non-ASCII key it can
@@ -163,7 +167,11 @@ fn check_format_overrides(
             let Some((name, decl)) = decls.get_key_value(&key) else {
                 continue;
             };
-            let decl_path = format!("{path}.bindings.{name}");
+            // The name is document-declared and the diagnostics below fire when
+            // it is INVALID, so it is arbitrary text — and `with_path` does no
+            // sanitizing of its own (the other builders' paths are engine-built
+            // from indices, which is why this is the exception).
+            let decl_path = format!("{path}.bindings.{}", Echo::inline(name));
             check_decl_key(decl, Some(&format), item, &decl_path, diags);
         }
     }

@@ -3,7 +3,7 @@
 
 use crate::definitions::FieldType;
 use crate::template::{FormatRef, Template, MAX_FORMATS};
-use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
+use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 
 pub(super) fn check_formats(template: &Template, diags: &mut Diagnostics) {
     if template.formats.len() > MAX_FORMATS {
@@ -21,7 +21,7 @@ pub(super) fn check_formats(template: &Template, diags: &mut Diagnostics) {
             diags.push(
                 Diagnostic::new(Code::ReservedFormatName)
                     .arg("name", name)
-                    .with_path(format!("formats.{name}")),
+                    .with_path(format!("formats.{}", Echo::inline(name))),
             );
         }
     }
@@ -39,8 +39,8 @@ pub(super) fn check_formats(template: &Template, diags: &mut Diagnostics) {
         if matches!(slot, Some(FormatRef::Inline(_))) {
             diags.push(
                 Diagnostic::new(Code::FormatPatternIgnored)
-                    .arg("key", format!("defaults.formats.{key}"))
-                    .with_path(format!("defaults.formats.{key}")),
+                    .arg("key", format!("defaults.formats.{}", Echo::inline(key)))
+                    .with_path(format!("defaults.formats.{}", Echo::inline(key))),
             );
         }
     }

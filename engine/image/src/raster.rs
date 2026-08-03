@@ -6,6 +6,7 @@
 //! decompression bomb be rejected before any expensive work happens.
 
 use crate::error::ImageError;
+use shojiku_diagnostics::Echo;
 
 /// Raster formats the PDF backend can embed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -38,8 +39,12 @@ pub fn sniff(bytes: &[u8]) -> Option<RasterFormat> {
 /// Reads dimensions from the image header (no pixel decode) and enforces
 /// the pixel cap.
 pub fn checked_dimensions(bytes: &[u8], max_pixels: u64) -> Result<(u64, u64), ImageError> {
-    let size = imagesize::blob_size(bytes)
-        .map_err(|e| ImageError::Bad(format!("cannot read image dimensions: {e}")))?;
+    let size = imagesize::blob_size(bytes).map_err(|e| {
+        ImageError::Bad(format!(
+            "cannot read image dimensions: {}",
+            Echo::inline(&e.to_string())
+        ))
+    })?;
     let (width, height) = (size.width as u64, size.height as u64);
     if width == 0 || height == 0 {
         return Err(ImageError::Bad("image has a zero dimension".to_string()));

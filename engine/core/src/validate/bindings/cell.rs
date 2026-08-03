@@ -7,7 +7,7 @@
 use crate::catalog::Catalog;
 use crate::interpolate::{parse_segments, Segment};
 use crate::template::{Binding, BindingScope, Bindings, Item, Link};
-use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
+use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 
 use super::decl::{check_item_keys, DeclCtx};
 use super::{check_scalar_binding, BindingCtx};
@@ -183,7 +183,10 @@ pub(super) fn check_cell_field(
         diags.push(
             Diagnostic::new(Code::UnknownDataKey)
                 .arg("key", field)
-                .arg("source", format!("array group `{array_key}`"))
+                .arg(
+                    "source",
+                    format!("array group `{}`", Echo::inline(array_key)),
+                )
                 .with_path(path.to_string()),
         );
     }

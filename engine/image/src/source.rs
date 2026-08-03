@@ -8,6 +8,7 @@
 use crate::error::ImageError;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
+use shojiku_diagnostics::Echo;
 
 /// Where an image's bytes come from.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,9 +70,12 @@ pub fn decode_data_uri(uri: &str, max_bytes: usize) -> Result<DataUriPayload, Im
             cap: max_bytes,
         });
     }
-    let bytes = STANDARD
-        .decode(payload)
-        .map_err(|e| ImageError::Bad(format!("invalid base64 payload: {e}")))?;
+    let bytes = STANDARD.decode(payload).map_err(|e| {
+        ImageError::Bad(format!(
+            "invalid base64 payload: {}",
+            Echo::inline(&e.to_string())
+        ))
+    })?;
     if mime.eq_ignore_ascii_case("image/svg+xml") {
         let text = String::from_utf8(bytes)
             .map_err(|_| ImageError::Bad("svg payload is not valid UTF-8".to_string()))?;
