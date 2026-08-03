@@ -354,7 +354,18 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   standalone `config.json` (`{}`).
 - Run/dev: `designer-app/Dockerfile` (wasm → build → assemble → nginx)
   behind `make gui-serve` (:8788) and `e2e/run-e2e.sh` (Playwright,
-  `make gui-e2e`); `make gui-dev` = Vite dev server (:5173) over the
+  `make gui-e2e`); **`e2e/shot.js` + `run-shot.sh` (`make gui-shot`)**
+  screenshot the RUNNING `gui-dev` into `.shots/` (catalog / editor /
+  panel / document settings; `SHOT_ITEM=<tree label>` picks what the
+  panel shot shows, `SHOT_PRESET`/`SHOT_LOCALE`/`SHOT_SCHEME` the rest)
+  — it asserts nothing and is not in `verify`: it exists because a
+  chrome change that measures 0px of skew can still be visibly broken
+  (a pill overlapping the border under it shipped exactly that way), and
+  because a zero-context reader can be handed the PNG. Two traps it
+  absorbs: Vite 403s a Host it does not allow (an IP literal is fine, so
+  the wrapper resolves the gateway), and the catalog is locale-keyed off
+  Accept-Language (a default en-US context never sees 納品書);
+  `make gui-dev` = Vite dev server (:5173) over the
   repo mount (builds wasm if absent, runs assemble);
   `scripts/dev-data-plugin.ts` maps `/data` → the assembled `dist/data`
   (traversal-guarded; 404 on miss, NEVER the SPA fallback; 503 when
