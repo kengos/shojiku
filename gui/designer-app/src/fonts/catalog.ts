@@ -9,6 +9,7 @@
 // Pure over the parsed snapshot: no fetch, no DOM.
 
 import { isSafeAssetName } from '../assets/paths';
+import { isValidPackId, packIdForFamilyId } from './packId';
 
 /** The only licences a generated pack may claim. `buildManifest` writes
  * `redistributable: true` on this basis, so it is enforced at RUNTIME against
@@ -57,11 +58,14 @@ export const MAX_RESULTS = 60;
 /** Whether a snapshot entry is structurally usable. The snapshot is a build
  * artifact, but it is fetched at runtime like any asset, so the picker re-checks
  * what it depends on rather than trusting the file: ids must pass the same
- * charset guard as any other asset name (they become URL segments and pack
- * directory names), and a family with no faces has nothing to install. */
+ * charset guard as any other asset name (they become URL segments), the id this
+ * family would MINT a pack from must be one the engine accepts (a `uses:` entry
+ * the engine refuses fails the whole locale pack, not one font — see
+ * `./packId`), and a family with no faces has nothing to install. */
 export function isUsableFamily(family: CatalogFamily): boolean {
   return (
     isSafeAssetName(family.id) &&
+    isValidPackId(packIdForFamilyId(family.id)) &&
     isSafeAssetName(family.licenseFile) &&
     ALLOWED_LICENSES.includes(family.license) &&
     family.faces.length > 0 &&

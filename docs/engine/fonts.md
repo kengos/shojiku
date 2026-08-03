@@ -105,6 +105,11 @@ fonts:
   fallback: [ipamj-mincho]      # fallback chain, tried in order for missing glyphs
 ```
 
+A `uses:` entry names a **directory** under a font search dir, so it must
+be a plain single path segment: letters, digits, `-` and `_`, 1–64
+characters. Anything else — a `/`, a `..`, an absolute path — fails the
+locale pack's parse rather than being looked up.
+
 ### A font pack's manifest
 
 `packs/fonts/<pack>/manifest.yml` declares the faces plus one license and
@@ -136,6 +141,13 @@ rights** are checked — a restricted face is rejected (`font_embedding_restrict
 unless the manifest sets `embeddingAttested: true`. One license per pack:
 mixed-license fonts split into separate packs (so IPAmj Mincho is its own
 `ipamj-mincho` pack, not part of `biz-ud`).
+
+A `file:` stays **inside the pack directory**. It may be neither absolute
+nor `..`-climbing, and once symlinks are followed the file it resolves to
+must still be under the pack — a link pointing out of the pack is refused,
+one pointing within it is fine. The pack directory itself may not be a
+symlink. A `file:` that is merely *absent* is not an error: that is the
+pinned-reference case below.
 
 ### Pinned faces & auto-fetch (`url:`)
 

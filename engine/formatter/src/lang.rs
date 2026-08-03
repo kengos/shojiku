@@ -12,7 +12,7 @@ mod tests;
 
 pub use builtin::{currency_fraction_digits, BUILTIN_LOCALE_IDS};
 pub use era::{EraDate, EraSpec};
-pub use fonts::{FaceSpec, FontFaceDecl, LocaleFonts, PackManifest};
+pub use fonts::{valid_pack_id, FaceSpec, FontFaceDecl, LocaleFonts, PackManifest, MAX_PACK_ID};
 pub use packs::{
     resolve_face_bytes, resolve_face_bytes_subset, resolve_face_specs, FaceBytes, InjectedPack,
     PackError, SubsetFaces,

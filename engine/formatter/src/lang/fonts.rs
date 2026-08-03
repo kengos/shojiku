@@ -9,6 +9,9 @@ use serde::{Deserialize, Serialize};
 use shojiku_core::{FontStyle, FontWeight};
 use std::path::PathBuf;
 
+mod pack_id;
+pub use pack_id::{valid_pack_id, MAX_PACK_ID};
+
 /// A font pack's `manifest.yml`: the faces it provides plus one license and
 /// the integrity metadata (`version` is the schema version, forward-compat
 /// for the GUI font-upload flow).
@@ -70,7 +73,9 @@ pub struct FontFaceDecl {
 #[serde(deny_unknown_fields)]
 pub struct LocaleFonts {
     /// Font pack ids to load and merge (earlier wins on a duplicate id, so
-    /// a user/override pack shadows a bundled one).
+    /// a user/override pack shadows a bundled one). Each entry is a single
+    /// path segment ([`valid_pack_id`]) — an invalid one fails the parse.
+    #[serde(deserialize_with = "pack_id::deserialize_uses")]
     pub uses: Vec<String>,
     pub default: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

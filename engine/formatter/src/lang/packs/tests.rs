@@ -3,8 +3,12 @@
 //! (never the font bytes), so fixtures need no real `.ttf`.
 
 use super::*;
+use crate::lang::MAX_PACK_ID;
 use shojiku_diagnostics::Echo;
 use std::fs;
+use std::path::Path;
+
+mod hardening;
 
 fn tmp(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join("shojiku-packtest").join(name);
@@ -41,7 +45,11 @@ fn merges_faces_and_first_dir_and_first_id_win() {
     let specs = resolve_face_specs(&locale("[p, q]"), &[user.clone(), bundled.clone()]).unwrap();
     let ids: Vec<_> = specs.iter().map(|s| s.id.as_str()).collect();
     assert_eq!(ids, ["user"]); // user pack's `user` face; q's dup `user` deduped
-    assert_eq!(specs[0].path, user.join("p/user.ttf"));
+
+    // Rooted at the CANONICAL search dir — a temp dir is itself reached
+    // through a symlink on some platforms.
+    let root = user.canonicalize().expect("canonicalize");
+    assert_eq!(specs[0].path, root.join("p/user.ttf"));
 }
 
 #[test]
@@ -122,6 +130,8 @@ fn pack_errors_bound_every_echoed_manifest_value() {
             path: Echo::from(hostile_id()),
             detail: Echo::from(hostile_id()),
         },
+        PackError::InvalidPackId(Echo::clipped_to(&hostile_id(), MAX_PACK_ID)),
+        PackError::PackTraversal(Echo::from(hostile_id())),
     ];
     for err in errors {
         let message = err.to_string();

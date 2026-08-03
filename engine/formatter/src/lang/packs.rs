@@ -6,7 +6,7 @@
 use super::{FaceSpec, LangPack, PackManifest};
 use shojiku_diagnostics::Echo;
 use std::collections::HashSet;
-use std::path::{Component, Path, PathBuf};
+use std::path::PathBuf;
 use thiserror::Error;
 
 /// Font-pack resolution failures.
@@ -30,6 +30,10 @@ pub enum PackError {
     ParseInjected { pack: Echo, detail: Echo },
     #[error("injected font pack `{pack}` face `{id}` bytes not provided")]
     MissingBytes { pack: Echo, id: Echo },
+    #[error("font pack id `{0}` is not a valid pack id (allowed: letters, digits, `-`, `_`)")]
+    InvalidPackId(Echo),
+    #[error("font pack `{0}` directory is a symlink")]
+    PackTraversal(Echo),
 }
 
 /// Resolves the locale's `uses` packs into an ordered, deduped list of
@@ -42,11 +46,18 @@ pub fn resolve_face_specs(
     let mut out = Vec::new();
     let mut seen = HashSet::new();
     for pack_id in pack.font_pack_ids() {
+        check_pack_id(pack_id)?;
         let (manifest, pack_dir) = load_pack(pack_id, font_dirs)?;
         for face in &manifest.faces {
             confine(&face.file, pack_id, &face.id)?;
         }
-        for spec in manifest.face_specs(pack_id, &pack_dir) {
+        let specs = manifest.face_specs(pack_id, &pack_dir);
+        // Confine EVERY declared face, not only the ones that win the
+        // dedupe below — same posture as the lexical pass above.
+        for spec in &specs {
+            contained(&pack_dir, &spec.path, pack_id, &spec.id)?;
+        }
+        for spec in specs {
             if seen.insert(spec.id.clone()) {
                 out.push(spec);
             }
@@ -55,9 +66,27 @@ pub fn resolve_face_specs(
     Ok(out)
 }
 
+/// Finds `pack_id`'s manifest, returning it with the pack's **canonical**
+/// directory. Rooting at the canonicalized search dir is what lets
+/// [`contained`] decide containment by prefix; a search dir that does not
+/// exist is skipped, exactly as an absent manifest already was.
+///
+/// The pack directory itself may not be a symlink: `pack_id` comes from a
+/// locale pack, and a user-created pack directory is precisely the context
+/// this confinement exists for.
 fn load_pack(pack_id: &str, font_dirs: &[PathBuf]) -> Result<(PackManifest, PathBuf), PackError> {
     for dir in font_dirs {
-        let pack_dir = dir.join(pack_id);
+        let Ok(root) = dir.canonicalize() else {
+            continue;
+        };
+        let pack_dir = root.join(pack_id);
+        match std::fs::symlink_metadata(&pack_dir) {
+            Err(_) => continue,
+            Ok(meta) if meta.is_symlink() => {
+                return Err(PackError::PackTraversal(Echo::from(pack_id)))
+            }
+            Ok(_) => {}
+        }
         let manifest_path = pack_dir.join("manifest.yml");
         match std::fs::read_to_string(&manifest_path) {
             Ok(content) => {
@@ -79,21 +108,8 @@ fn load_pack(pack_id: &str, font_dirs: &[PathBuf]) -> Result<(PackManifest, Path
     Err(PackError::NotFound(Echo::from(pack_id)))
 }
 
-/// Rejects a manifest `file` that would escape its pack dir — an absolute
-/// path (which `join` makes replace the base) or one climbing out with
-/// `..`. Only the manifest-declared relative `file` is untrusted; the
-/// search-dir prefix may legitimately contain `..`, so it is not examined.
-fn confine(file: &str, pack: &str, id: &str) -> Result<(), PackError> {
-    let p = Path::new(file);
-    let escapes = p.is_absolute() || p.components().any(|c| matches!(c, Component::ParentDir));
-    if escapes {
-        return Err(PackError::Traversal {
-            pack: Echo::from(pack),
-            id: Echo::from(id),
-        });
-    }
-    Ok(())
-}
+mod confine;
+use confine::{check_pack_id, confine, contained};
 
 mod bytes;
 pub use bytes::{
