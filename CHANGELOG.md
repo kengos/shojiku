@@ -15,6 +15,21 @@ platform binaries.
 
 ### Changed
 
+- **Absurd font sizes and stroke widths now fall back with a warning
+  instead of reaching the geometry.** `fontSize` and `lineHeight` accept
+  up to 1000 each, and the `line` item's `style.width` joins the
+  0..=1000 pt bound `borderWidth` already had. Past those, the value
+  warns (`font_size_out_of_range`, `line_height_out_of_range`,
+  `invalid_line_width`) and the engine draws at its default — 10 pt, 1.4
+  and 1 pt respectively. The two font caps are a pair: their product is
+  the tallest line box the engine will build, which is exactly the
+  ±1,000,000 pt limit every other length already obeyed. `fontSize` was
+  the one length that escaped it, so a huge finite size could drive the
+  line-height and advance sums toward values no longer representable.
+  Real documents are nowhere near — the largest font size in any bundled
+  example is 46 pt — and an authored `width: 0` on a `line` is still
+  legal and silent.
+
 - **The homepage playground now runs a released engine, and says which
   one.** It used to run whatever was on `main`, so a visitor could try a
   fix in the browser and then install a package without it — the demo
