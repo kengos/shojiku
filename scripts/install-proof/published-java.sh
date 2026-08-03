@@ -10,7 +10,7 @@
 # path, which is the only one worth guarding.
 #
 # The classifier dependency below is PERMANENT, not a stopgap: carrying every
-# platform in one jar was weighed and declined (docs/TODO.md), because it is
+# platform in one jar was weighed and declined, because it is
 # a cycle of arch-detection work to save consumers one line in an ecosystem
 # where Netty and LWJGL ask for the same line.
 # See published-python.sh for the rest of the rationale.

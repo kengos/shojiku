@@ -10,8 +10,8 @@
 - **Pre-flight (before building)**: during `/shojiku-cycle` Phase A, the
   plan names which gotcha files apply to the change (route by the table
   below) and copies the handful of *specific* applicable traps into
-  CYCLE.md as a known-traps (pre-flight) list. The Phase B implementer reads
-  that list before the first edit.
+  the change's cycle file as a known-traps (pre-flight) list. The Phase B
+  implementer reads that list before the first edit.
 - **When stuck**: a red gate with a confusing message, a smoke that
   "disproves" a tested feature, a sweep that reports zero — check the
   matching file here *before* debugging cold. Most entries exist because
