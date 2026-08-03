@@ -17,7 +17,6 @@
 // CANONICAL WASM = the x86_64 CI build (the `wasm-pkg` artifact). At release
 // time, refresh engine/wasm/pkg from the release commit's run
 // (`gh run download <run> -n wasm-pkg -R kengos/shojiku`) before --release-wasm.
-import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseGallery } from "../src/lib/gallery.ts";
@@ -28,6 +27,7 @@ import {
   releasedVersions,
   renderWasmSource,
   repinRefusal,
+  sha256,
   workspacePackageVersion,
   type WasmSource,
 } from "../src/lib/wasmSource.ts";
@@ -59,7 +59,7 @@ function settle(dest: string, next: Buffer): void {
 function digestsOf(dir: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const f of readdirSync(dir).sort()) {
-    out[f] = createHash("sha256").update(readFileSync(join(dir, f))).digest("hex");
+    out[f] = sha256(readFileSync(join(dir, f)));
   }
   return out;
 }
@@ -109,9 +109,7 @@ if (mode === "release-wasm") {
   if (files.length === 0) throw new Error("engine/wasm/pkg is empty — run `make wasm` first");
   const next: WasmSource = {
     version: workspacePackageVersion(readFileSync(join(ROOT, "engine", "Cargo.toml"), "utf8")),
-    files: Object.fromEntries(
-      files.map((f) => [f, createHash("sha256").update(readFileSync(join(pkg, f))).digest("hex")]),
-    ),
+    files: Object.fromEntries(files.map((f) => [f, sha256(readFileSync(join(pkg, f)))])),
   };
   const refusal = repinRefusal(readSource(), next, released());
   if (refusal !== undefined) throw new Error(`refusing to re-pin the site engine: ${refusal}`);
