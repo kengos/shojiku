@@ -4,6 +4,7 @@
 // sections in `TableColumnsSection.tsx` / `IterableSourceSection.tsx`.
 
 import type { Op } from '@shojiku/designer-core';
+import { useRef } from 'react';
 import { useI18n } from '../i18n/context';
 import { commitOps } from '../text/declCommit';
 import { TextEditor } from '../text/TextEditor';
@@ -16,7 +17,14 @@ import { formatOptions } from './formatModel';
 import { IterableSourceSection } from './IterableSourceSection';
 import { hasCapability, type ItemPanelProps } from './itemPanelProps';
 import { type ContentMode, registryNames } from './itemView';
-import { applyPanelOp, bindingKeyOp, formatOp, placeholderOp, switchContentOps } from './model';
+import {
+  applyPanelOp,
+  bindingKeyOp,
+  formatOp,
+  placeholderOp,
+  switchContentOps,
+  textAsBinding,
+} from './model';
 import {
   chipsFor,
   documentScopeCreateField,
@@ -27,6 +35,11 @@ import { TableColumnsSection } from './TableColumnsSection';
 
 export function ContentSection(props: ItemPanelProps) {
   const { t } = useI18n();
+  // The mixed text a switch to data mode had to drop (`{customer.name} 様` is
+  // not something any single `data:` can hold), offered back when the reader
+  // switches this SAME item straight back. It waits here rather than in the
+  // file because the document carries exactly one content key.
+  const dropped = useRef<{ path: string; text: string } | null>(null);
   const { controller, path, view, capabilities } = props;
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   const chips = chipsFor(props);
@@ -82,11 +95,14 @@ export function ContentSection(props: ItemPanelProps) {
         <select
           className={INPUT}
           value={view.contentMode}
-          onChange={(event) =>
-            controller.applyAll(
-              switchContentOps(path, view, event.currentTarget.value as ContentMode),
-            )
-          }
+          onChange={(event) => {
+            const target = event.currentTarget.value as ContentMode;
+            if (target === 'data' && textAsBinding(view.text) === null) {
+              dropped.current = view.text === '' ? null : { path, text: view.text };
+            }
+            const back = dropped.current?.path === path ? dropped.current.text : '';
+            controller.applyAll(switchContentOps(path, view, target, back));
+          }}
         >
           <option value="text">{t('panel.contentMode.text')}</option>
           <option value="data">{t('panel.contentMode.data')}</option>

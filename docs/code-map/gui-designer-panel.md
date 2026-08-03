@@ -137,9 +137,17 @@ read side, never the reverse.
   or root-addressed)/`bindingKeyOp`/`bindingPickOps` (a document pick
   authors `data.scope: document` — the only spelling the GUI writes; a
   row pick clears it only when present)/`formatOp`/`placeholderOp`/
-  `stepValueOp`/`styleNamesOp`/`toggleStyleName`/`switchContentOps`.
+  `stepValueOp`/`styleNamesOp`/`toggleStyleName`/`switchContentOps`
+  (+ `textAsBinding`/`bindingAsText`: the two modes both express "this item
+  IS that field", so the switch CARRIES the binding across — a text of one
+  expression becomes that data key with its format, a data key becomes
+  `{key}` text. Only mixed text (`{customer.name} 様`) has to be dropped,
+  and `ContentSection` keeps it for the way back).
 - `panel/fields.tsx` — the base widgets: `Field` (label wrapper),
-  **`FieldGroup`** (the same row WITHOUT the `<label>` — a `<label>`
+  `flush` (drop the field's own bottom margin — inside an `items-end` row
+  beside a toggle button, that margin IS an 8px skew between input and
+  button; the row owns the spacing), **`FieldGroup`** (the same row WITHOUT
+  the `<label>` — a `<label>`
   forwards every click inside it to its implicit control, and a
   contenteditable is not labelable, so the text field's label reached
   past the editor to the insert-a-field button beside it: clicking the

@@ -28,9 +28,9 @@ export function FormatPicker({ label, value, options, onCommit }: FormatPickerPr
   const { open, setOpen, rootRef } = usePopover();
   return (
     <div className="relative" ref={rootRef}>
-      <span className="flex min-w-0 items-end gap-1">
+      <span className="mb-2 flex min-w-0 items-end gap-1">
         <span className="min-w-0 flex-1">
-          <Field label={label}>
+          <Field label={label} flush>
             <input
               key={value}
               type="text"

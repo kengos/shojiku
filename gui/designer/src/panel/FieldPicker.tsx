@@ -38,13 +38,19 @@ const NO_OPTIONS: readonly PickerOption[] = [];
  * popover row carries (name, type, live sample). The key alone reads as a
  * spelling nobody can check — `customer.name` says nothing about which field
  * that is or what it will print. Absent for a key no offer matches: an
- * undeclared key is exactly what the live diagnostic is for. */
+ * undeclared key is exactly what the live diagnostic is for.
+ *
+ * The name wears the chip editor's own pill (`sj-chip`), because it IS the same
+ * thing: a text item shows 「お客様名」 in a pill while a bound item showed the raw
+ * `customer.name`, so one binding was named two ways across the content modes. */
 function BoundField({ option }: { option: PickerOption }) {
   const { t } = useI18n();
   const typeLabelKey = TYPE_LABEL_KEYS.get(option.type);
   return (
-    <p className="m-0 mb-2 flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm text-muted">
-      <span className="font-semibold text-text">{option.label}</span>
+    <p className="m-0 -mt-1.5 mb-2 flex min-w-0 flex-wrap items-center gap-x-2 text-sm text-muted">
+      <span className="sj-chip">
+        <span className="sj-chip-label">{option.label}</span>
+      </span>
       <span className="whitespace-nowrap">
         {typeLabelKey === undefined ? option.type : t(typeLabelKey)}
       </span>
@@ -140,9 +146,9 @@ export function FieldPicker({
   };
   return (
     <div className="relative" ref={rootRef}>
-      <span className="flex min-w-0 items-end gap-1">
+      <span className="mb-2 flex min-w-0 items-end gap-1">
         <span className="min-w-0 flex-1">
-          <Field label={label}>
+          <Field label={label} flush>
             {/* `w-full` keeps the input inside its shrunken flex cell: an
                 unsized input takes its default ~20ch and overflows the cell,
                 which now runs under the scope badge beside it. */}

@@ -23,12 +23,17 @@ import { FIELD_LABEL, INPUT } from '../ui/chrome';
 export interface FieldProps {
   readonly label: string;
   readonly children: ReactNode;
+  /** Drop the field's own bottom margin. For a field laid out BESIDE something
+   * (a picker's toggle): the row aligns the two on their ends, and a margin on
+   * one of them is 8px of skew between the input and the button. The row owns
+   * the spacing instead. */
+  readonly flush?: boolean;
 }
 
-export function Field({ label, children }: FieldProps) {
+export function Field({ label, children, flush = false }: FieldProps) {
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: the control is always passed in as `children` (a single input/select), which the label wraps implicitly.
-    <label className="mb-2 block">
+    <label className={flush ? 'block' : 'mb-2 block'}>
       <span className={FIELD_LABEL}>{label}</span>
       {children}
     </label>

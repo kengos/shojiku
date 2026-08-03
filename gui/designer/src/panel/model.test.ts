@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ItemView } from './itemView';
 import {
   applyPanelOp,
+  bindingAsText,
   bindingKeyOp,
   bindingPickOps,
   formatOp,
@@ -13,6 +14,7 @@ import {
   stepValueOp,
   styleNamesOp,
   switchContentOps,
+  textAsBinding,
   toggleStyleName,
 } from './model';
 
@@ -234,6 +236,65 @@ describe('switchContentOps', () => {
     expect(switchContentOps('p', { ...textView, hasData: false }, 'text')).toEqual([
       { op: 'setScalar', path: 'p', keys: ['text'], value: '' },
     ]);
+  });
+
+  // Both modes can say "this item is that field", so switching between them
+  // must not throw the binding away and make the reader re-pick it.
+  it('carries a lone expression into the binding, format and all', () => {
+    const view = { ...textView, text: '{order.total:symbol}' };
+    expect(switchContentOps('p', view, 'data')).toEqual([
+      { op: 'removeKey', path: 'p', keys: ['text'] },
+      { op: 'setScalar', path: 'p', keys: ['data', 'key'], value: 'order.total' },
+      { op: 'setScalar', path: 'p', keys: ['data', 'format'], value: 'symbol' },
+    ]);
+  });
+
+  it('carries the binding back out as text', () => {
+    const dataView: ItemView = {
+      ...textView,
+      hasText: false,
+      hasData: true,
+      contentMode: 'data',
+      dataKey: 'order.total',
+      format: 'symbol',
+    };
+    expect(switchContentOps('p', dataView, 'text')).toEqual([
+      { op: 'removeKey', path: 'p', keys: ['data'] },
+      { op: 'setScalar', path: 'p', keys: ['text'], value: '{order.total:symbol}' },
+    ]);
+  });
+
+  it('seeds the panel’s kept text when the binding itself carries nothing', () => {
+    const dataView: ItemView = { ...textView, hasText: false, hasData: true, contentMode: 'data' };
+    expect(switchContentOps('p', dataView, 'text', '{customer.name} 様')).toEqual([
+      { op: 'removeKey', path: 'p', keys: ['data'] },
+      { op: 'setScalar', path: 'p', keys: ['text'], value: '{customer.name} 様' },
+    ]);
+  });
+});
+
+describe('the two content modes over one binding', () => {
+  it('reads a lone expression as a binding, with or without a format', () => {
+    expect(textAsBinding('{customer.name}')).toEqual({ key: 'customer.name', format: '' });
+    expect(textAsBinding('{total:symbol}')).toEqual({ key: 'total', format: 'symbol' });
+  });
+
+  it('reads nothing from text no single binding could hold', () => {
+    // Mixed text, plain text, and empty: none of them IS one field.
+    expect(textAsBinding('{customer.name} 様')).toBeNull();
+    expect(textAsBinding('御請求書')).toBeNull();
+    expect(textAsBinding('')).toBeNull();
+  });
+
+  it('writes a binding back as its interpolation', () => {
+    expect(bindingAsText('customer.name', '')).toBe('{customer.name}');
+    expect(bindingAsText('total', 'symbol')).toBe('{total:symbol}');
+  });
+
+  it('writes nothing for a key the bare grammar cannot spell', () => {
+    // A declared name is the chip editor's business; `text:` has no way to
+    // reach a key outside the interpolation charset.
+    expect(bindingAsText('品名', '')).toBe('');
   });
 });
 

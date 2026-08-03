@@ -10,6 +10,8 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { stepLength } from '../canvas/lengths';
+import { chipWire } from '../text/chipModel';
+import { parseRawSegments } from '../text/interpolate';
 import { type ContentMode, type ItemView, record } from './itemView';
 
 /** A number-or-unit-string value: a bare number is authored as a number (so the
@@ -164,22 +166,62 @@ export function toggleStyleName(current: readonly string[], name: string, on: bo
   return current.filter((n) => n !== name);
 }
 
+/** The binding a text carries when it is NOTHING BUT one expression — the case
+ * the two content modes can both express, so switching between them need not
+ * throw the binding away. Null for mixed text (`{customer.name} 様`), which no
+ * single `data:` can hold. */
+export function textAsBinding(text: string): { key: string; format: string } | null {
+  const segments = parseRawSegments(text);
+  const only = segments.length === 1 ? segments[0] : undefined;
+  return only === undefined || only.kind !== 'expr'
+    ? null
+    : { key: only.key, format: only.format ?? '' };
+}
+
+/** The same binding written as text, for the other direction. Empty when the
+ * key cannot be spelled in the interpolation charset (a declared name is the
+ * chip editor's business, not a bare `text:`) — the switch then opens blank. */
+export function bindingAsText(key: string, format: string): string {
+  const wire = chipWire(key);
+  if (wire === null) {
+    return '';
+  }
+  return format === '' ? wire : `{${key}:${format}}`;
+}
+
 /** The atomic content-mode switch (text ⇄ data): remove the key that is present
  * and seed the target, so the item always has exactly one content key and one
- * undo step reverts the whole switch. Dispatched via `applyAll`. */
-export function switchContentOps(path: string, view: ItemView, target: ContentMode): Op[] {
+ * undo step reverts the whole switch. Dispatched via `applyAll`.
+ *
+ * The seed CARRIES THE BINDING ACROSS whenever both modes can say it: a text of
+ * one expression becomes that data key (with its format), and a data key
+ * becomes `{key}` text. Switching by mistake then costs nothing, and only mixed
+ * text — which no `data:` can hold — is dropped. `restore` is what the panel
+ * kept of that dropped text, seeded on the way back when the binding itself
+ * carries nothing. */
+export function switchContentOps(
+  path: string,
+  view: ItemView,
+  target: ContentMode,
+  restore = '',
+): Op[] {
   if (target === 'data') {
     const ops: Op[] = [];
+    const carried = view.hasText ? textAsBinding(view.text) : null;
     if (view.hasText) {
       ops.push({ op: 'removeKey', path, keys: ['text'] });
     }
-    ops.push({ op: 'setScalar', path, keys: ['data', 'key'], value: '' });
+    ops.push({ op: 'setScalar', path, keys: ['data', 'key'], value: carried?.key ?? '' });
+    if (carried !== null && carried.format !== '') {
+      ops.push({ op: 'setScalar', path, keys: ['data', 'format'], value: carried.format });
+    }
     return ops;
   }
   const ops: Op[] = [];
+  const carried = view.hasData ? bindingAsText(view.dataKey, view.format) : '';
   if (view.hasData) {
     ops.push({ op: 'removeKey', path, keys: ['data'] });
   }
-  ops.push({ op: 'setScalar', path, keys: ['text'], value: '' });
+  ops.push({ op: 'setScalar', path, keys: ['text'], value: carried === '' ? restore : carried });
   return ops;
 }
