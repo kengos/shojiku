@@ -4,8 +4,6 @@
 # which ARE tracked and are what a coding agent should read.
 .claude/
 
-# Cycle session state (deleted when a change cycle completes)
-/CYCLE.md
 
 # Rust build output
 target/

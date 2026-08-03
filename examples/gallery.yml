@@ -1,6 +1,6 @@
 # The ONE source for every gallery surface: the README "Gallery" table, the
-# site's /gallery and /ja/gallery pages (docs/TODO.md § HP1 anti-duplication —
-# gallery entries are generated, never transcribed). `featured: true` entries
+# site's /gallery and /ja/gallery pages — gallery entries are GENERATED from
+# this file, never transcribed into those surfaces by hand. `featured: true` entries
 # form the README two-column table and the gallery page leads; the rest join
 # the "more" list. `preview`/`preview2` name committed render outputs inside
 # the entry's dir; two previews render side by side (the blank↔filled pairs).
