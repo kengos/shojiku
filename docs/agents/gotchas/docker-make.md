@@ -189,6 +189,24 @@ reaped on one machine.
   pair — the wrong guess either fails to install or silently builds the
   native target twice.
 
+## A compound `quiet` run does NOT refresh the per-target logs
+
+`make quiet T="site site-check"` (what `verify:site` delegates to)
+writes ONE log, `.make-logs/site_site-check.log`. The per-target
+`.make-logs/site-check.log` is left exactly as whatever the last
+STANDALONE run of that target wrote — which, right after you have
+deliberately induced a failure to prove a gate has teeth, is a FAILING
+log sitting next to a passing compound gate. Reading it back is how a
+green run gets reported as red (and the reverse is worse). Match the
+log file to the command you actually ran, and re-run the target
+standalone if you want its own log to reflect the current state.
+
+`.make-logs/last-error.log` has the same shape: it is cleared when that
+TARGET next passes, so a deliberately-failing smoke (a guard that is
+SUPPOSED to refuse) leaves a FAILED header behind indefinitely. Read its
+first line — it names the target — before treating it as an outstanding
+failure.
+
 ## Exit codes: never pipe a gate
 
 - **Inside a gate RECIPE, `sh -euc 'a && b; c'` greens over a failed `b`.**
@@ -306,6 +324,30 @@ lines once mis-parsed `FAILED. 553 passed; 1 failed` as green.
 - `cargo fuzz` finds its crate through `--fuzz-dir <abs path>`, so the
   fuzz crate does not have to sit under the crate it fuzzes — which is
   what lets ONE out-of-workspace crate carry targets for two crates.
+
+## `make site-build` replaces `engine/wasm/pkg` with the SITE's engine
+
+`site/scripts/build-pages.sh` stages the committed `site/.data/wasm` into
+`engine/wasm/pkg` (the designer-app's assemble reads that path, and it is
+gitignored). That directory is also what `liveRenderer.test.ts` loads as
+"a fresh build of HEAD", so **after a `make site-build`, `make site` is
+silently testing the RELEASED engine, not HEAD** — a green run proving
+less than it looks like it does.
+
+This only became consequential once `site/.data/wasm` deliberately
+STOPPED tracking HEAD: before that the two were near enough that the
+swap was invisible. `make verify` is unaffected (it does not run
+`site-build`), and CI cannot hit it (separate jobs, fresh checkouts that
+download the `wasm-pkg` artifact) — it bites the human who runs
+`site-build` and then a gate in the same tree. Re-run `make wasm`, or
+keep a copy, before trusting a later `make site`.
+
+The tell is subtle and worth recognising: `make site-wasm-release`
+suddenly SUCCEEDS where it refused minutes earlier. It is not a broken
+guard — the guard compares bytes, `pkg` now holds the site's own bytes,
+and the no-op re-pin is a legitimate allowed case. Check what is in
+`pkg` (`shasum -a 256 engine/wasm/pkg/shojiku_wasm_bg.wasm`) before
+concluding anything about the refusal logic.
 
 ## `make wasm` is not byte-reproducible across host architectures
 
