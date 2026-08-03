@@ -23,7 +23,7 @@ mod render;
 pub use arg::ArgValue;
 pub use category::Category;
 pub use code::DiagnosticCode;
-pub use echo::{sanitize, sanitize_marked, Echo, MAX_ECHO, MAX_MESSAGE};
+pub use echo::{sanitize, sanitize_marked, Echo, MAX_ECHO, MAX_INLINE_ECHO, MAX_MESSAGE};
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;

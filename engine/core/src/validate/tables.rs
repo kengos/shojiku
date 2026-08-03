@@ -9,7 +9,7 @@ use crate::template::{
     BindingScope, Column, ColumnType, RowSpec, Template, MAX_ROW_CONDITIONAL_STYLES,
 };
 use serde_json::Value;
-use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
+use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 
 use super::bindings::{check_cell_bindings, check_scalar_binding, BindingCtx, CellScope};
 use super::check_array_params;
@@ -105,7 +105,7 @@ fn check_column_bindings(
             diags.push(
                 Diagnostic::new(Code::UnknownDataKey)
                     .arg("key", field)
-                    .arg("source", format!("array group `{key}`"))
+                    .arg("source", format!("array group `{}`", Echo::inline(key)))
                     .with_path(col_path),
             );
         }
@@ -138,7 +138,7 @@ fn check_row_conditions(
                 diags.push(
                     Diagnostic::new(Code::UnknownDataKey)
                         .arg("key", field)
-                        .arg("source", format!("array group `{key}`"))
+                        .arg("source", format!("array group `{}`", Echo::inline(key)))
                         .with_path(entry_path),
                 );
             } else if entry.when.equals.is_none() {

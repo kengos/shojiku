@@ -64,8 +64,18 @@ fn expand_to_rgba(samples: &[u8], channels: usize) -> Result<Vec<u8>, ImageError
 /// (not a per-site closure) so each codec's error type instantiates one
 /// coverable function, exercised by the junk-input tests and unit-tested
 /// directly below.
+///
+/// This is the ONE place a third-party codec's text enters an engine error,
+/// and that text is derived from bytes the document chose — so it is bounded
+/// here rather than at each of the four codecs. The cap is the inline one:
+/// the message ends up composed into a single diagnostic arg
+/// (`"inline image: {err}"`), so leaving the codec the whole arg budget would
+/// push the surrounding explanation out of the message.
 fn codec_err<E: std::fmt::Display>(error: E) -> ImageError {
-    ImageError::Bad(error.to_string())
+    ImageError::Bad(shojiku_diagnostics::sanitize_marked(
+        &error.to_string(),
+        shojiku_diagnostics::MAX_INLINE_ECHO,
+    ))
 }
 
 fn decode_png(bytes: &[u8]) -> Result<RgbaImage, ImageError> {

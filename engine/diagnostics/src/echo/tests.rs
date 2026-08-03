@@ -178,3 +178,29 @@ fn the_truncation_marker_counts_by_the_same_rule_the_strip_uses() {
     assert_eq!(out, "a".repeat(MAX_ECHO));
     assert!(!out.ends_with('…'));
 }
+
+#[test]
+fn an_inline_echo_leaves_most_of_the_arg_budget_to_the_prose() {
+    // The ratio is asserted at compile time in `echo.rs`; this pins the
+    // behaviour it buys — a hostile value composed into a message cannot
+    // crowd out the text explaining the failure, because value + marker plus
+    // a realistic sentence still fits inside MAX_ECHO.
+    let hostile = "z".repeat(10_000);
+    let value = Echo::inline(&hostile);
+    assert_eq!(value.as_str().chars().count(), MAX_INLINE_ECHO + 1);
+
+    let composed = format!("asset `{value}`: unrecognized image format");
+    assert!(
+        composed.chars().count() <= MAX_ECHO,
+        "a composed message must survive the arg clip intact: {} chars",
+        composed.chars().count()
+    );
+    assert!(composed.ends_with("unrecognized image format"));
+}
+
+#[test]
+fn an_inline_echo_strips_the_same_characters_as_every_other_echo() {
+    // The cap is the only thing that differs between the echo flavours.
+    let hostile = "id\u{1b}[2J\u{202e}x";
+    assert_eq!(Echo::inline(hostile), "id[2Jx");
+}

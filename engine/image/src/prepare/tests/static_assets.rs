@@ -170,3 +170,50 @@ fn bundled_svg_with_bad_utf8_or_bad_markup_errors() {
     let (_s, diags) = prepare_assets(&tpl, &json!({}), &AssetPolicy::default(), Some(&dir));
     assert!(diags.iter().any(|d| d.code == "invalid_image_asset"));
 }
+
+#[test]
+fn a_hostile_asset_path_never_crowds_out_the_reason_it_failed() {
+    // The invariant this cap exists for. `invalid_image_asset`'s template is a
+    // single `{detail}` slot, and the arg is clipped at 200 characters — so a
+    // value allowed the whole budget leaves the reader a wall of the hostile
+    // string and NO statement of what was wrong with it, at exactly the moment
+    // they need one. Assert the reason, not the length: a length assertion
+    // passes on a message that says nothing.
+    let dir = temp_dir("hostile-path-reason");
+    let hostile = "a".repeat(10_000);
+    let tpl = parse_template(&format!(
+        r#"
+sections:
+  body:
+    type: flow
+    box: {{ x: 0, y: 0, w: 500, h: 700 }}
+    items:
+      - type: image
+        box: {{ w: 100, h: 100 }}
+        src: {hostile}.png
+"#
+    ))
+    .expect("template");
+
+    let (_store, diags) = prepare_assets(&tpl, &json!({}), &AssetPolicy::default(), Some(&dir));
+    let detail = diags
+        .iter()
+        .find(|d| d.code == "invalid_image_asset")
+        .map(|d| d.message.clone())
+        .expect("an invalid_image_asset diagnostic");
+
+    assert!(
+        detail.contains("No such file") || detail.contains("failed to read"),
+        "the failure reason was crowded out by the echoed path: {detail:?}"
+    );
+    // And the echo is still there, just bounded — a fix that stopped echoing
+    // entirely would also satisfy the assertion above.
+    assert!(
+        detail.contains("aaaa"),
+        "the path is no longer echoed at all"
+    );
+    assert!(
+        detail.contains('…'),
+        "a truncated echo must say so: {detail:?}"
+    );
+}

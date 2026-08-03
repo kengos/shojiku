@@ -4,6 +4,7 @@
 use super::FormatError;
 use crate::lang::LangPack;
 use serde_json::Value;
+use shojiku_diagnostics::Echo;
 use time::format_description::well_known::Rfc3339;
 use time::{Date, OffsetDateTime, Weekday};
 
@@ -23,7 +24,9 @@ pub(super) fn parse_datetime(value: &Value) -> Result<OffsetDateTime, FormatErro
     let s = match value {
         Value::String(s) => s.as_str(),
         other => {
-            return Err(FormatError::InvalidDatetime(other.to_string()));
+            return Err(FormatError::InvalidDatetime(Echo::inline(
+                &other.to_string(),
+            )));
         }
     };
     if let Ok(odt) = OffsetDateTime::parse(s, &Rfc3339) {
@@ -32,7 +35,7 @@ pub(super) fn parse_datetime(value: &Value) -> Result<OffsetDateTime, FormatErro
     if let Some(date) = parse_simple_date(s) {
         return Ok(date.midnight().assume_utc());
     }
-    Err(FormatError::InvalidDatetime(s.to_string()))
+    Err(FormatError::InvalidDatetime(Echo::inline(s)))
 }
 
 /// The token inventory, longest-match first. **Append-only contract**

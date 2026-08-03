@@ -177,3 +177,25 @@ fn expand_rejects_bad_channel_counts() {
         Err(ImageError::Bad(_))
     ));
 }
+
+#[test]
+fn a_codec_message_is_bounded_before_it_becomes_an_engine_error() {
+    // `codec_err` is the ONE place a third-party decoder's text enters an
+    // engine error, and that text is derived from bytes the document chose.
+    // Four codecs route through it, so bounding it here is what keeps any of
+    // them from writing an unbounded — or escape-bearing — message into the
+    // single `detail` arg it ends up composed into.
+    let hostile = format!("\u{1b}[2J{}", "q".repeat(10_000));
+    let ImageError::Bad(message) = codec_err(hostile) else {
+        panic!("codec errors map to ImageError::Bad");
+    };
+    assert!(
+        !message.chars().any(char::is_control),
+        "a codec message carried a control character: {message:?}"
+    );
+    assert_eq!(
+        message.chars().count(),
+        shojiku_diagnostics::MAX_INLINE_ECHO + 1,
+        "80 characters plus the truncation marker"
+    );
+}

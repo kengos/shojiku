@@ -272,3 +272,23 @@ fn invalid_datetime_is_error() {
     );
     assert!(result.is_err());
 }
+
+#[test]
+fn a_hostile_datetime_value_never_crowds_out_the_reason() {
+    // `format_error`'s template is `` `{key}`: {detail}`` — the key survives on
+    // its own arg, but the detail carries the whole FormatError message, and
+    // that message quotes a params value the document chose.
+    let hostile = "9".repeat(10_000);
+    let err = super::super::datetime::parse_datetime(&json!(hostile)).unwrap_err();
+    let message = err.to_string();
+    assert!(
+        message.ends_with("is not a valid datetime (RFC 3339 expected)"),
+        "the reason was crowded out: {message:?}"
+    );
+    assert!(
+        message.chars().count() <= shojiku_diagnostics::MAX_ECHO,
+        "the detail will be clipped at the arg cap ({} chars)",
+        message.chars().count()
+    );
+    assert!(!message.chars().any(char::is_control));
+}

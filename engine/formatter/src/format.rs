@@ -17,19 +17,24 @@ use datetime::{parse_datetime, parse_simple_date, render_datetime_pattern};
 use number::format_number;
 use serde_json::Value;
 use shojiku_core::{FieldSpec, FieldType, FormatDefaults, FormatRef, NamedFormat};
+use shojiku_diagnostics::Echo;
 use std::collections::BTreeMap;
 use thiserror::Error;
 use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 
+/// Value-formatting failures.
+///
+/// The variant that quotes the offending value takes [`Echo`] at the INLINE
+/// cap, not `String`: the whole message ends up in one diagnostic `detail`
+/// arg, so an unbounded params value would push "is not a valid datetime"
+/// out of the message the reader needs it in.
 #[derive(Debug, Error)]
 pub enum FormatError {
     #[error("value is not a number")]
     NotANumber,
     #[error("value `{0}` is not a valid datetime (RFC 3339 expected)")]
-    InvalidDatetime(String),
-    #[error("value `{0}` is not a valid date (yyyy-mm-dd expected)")]
-    InvalidDate(String),
+    InvalidDatetime(Echo),
 }
 
 /// A degradation notice: the value rendered on its fallback form and the

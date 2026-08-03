@@ -214,7 +214,17 @@ injected at parse). The template model splits along CSS lines.
   somebody adds. It `Deref`s to `str` and compares against `&str`, so
   it drops into code that held a `String`. `Echo::clipped_to(s, max)`
   is for values the DOMAIN bounds more tightly (a locale id at 64, a
-  currency code at 32). Consumers: `CoreError`, `PackError`,
+  currency code at 32). **`Echo::inline`** is the third flavour: the
+  cap for a value composed INTO a message that then occupies ONE arg
+  (`MAX_INLINE_ECHO` 80, asserted at compile time to be at most half of
+  `MAX_ECHO`). Without it the value eats the arg budget and the prose
+  explaining the failure disappears — which is the moment a reader needs
+  it. Prefer a value's own arg where the code's template allows one;
+  `invalid_image_asset`/`invalid_image_data` are single-`{detail}` slots,
+  which is why they clip instead. **`Diagnostic::with_path` does NOT
+  sanitize** — nearly every path is engine-built from indices, but the two
+  builders that interpolate a document-declared NAME (`formats.<name>`,
+  `<path>.bindings.<name>`) apply `Echo::inline` themselves. Consumers: `CoreError`, `PackError`,
   `LangPackError`, `FontError`, `FetchError`/`TransportError`,
   `FsPackError`; the per-site caps in `format/money.rs`,
   `lang/era.rs`, `core/length.rs`, `layout/color.rs`; and every host

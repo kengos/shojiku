@@ -9,7 +9,7 @@ use crate::store::AssetKind;
 use crate::svg::parse_svg;
 use serde_json::Value;
 use shojiku_core::resolve_path;
-use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
+use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 use std::sync::Arc;
 
 use super::bundled::{load_bytes, AssetsRoot};
@@ -75,7 +75,10 @@ pub(super) fn dynamic_asset(
     let Some(raw) = value.as_str() else {
         diags.push(
             Diagnostic::new(Code::InvalidImageData)
-                .arg("detail", format!("params value at `{key}` is not a string"))
+                .arg(
+                    "detail",
+                    format!("params value at `{}` is not a string", Echo::inline(key)),
+                )
                 .with_path(path.to_string()),
         );
         return None;
@@ -209,7 +212,9 @@ fn bundled_kind(
             None
         }
         Err(err) => {
-            diags.push(origin.content_problem(format!("asset `{rel}`: {err}"), path));
+            diags.push(
+                origin.content_problem(format!("asset `{}`: {err}", Echo::inline(rel)), path),
+            );
             None
         }
     }

@@ -38,13 +38,36 @@ pub const MAX_ECHO: usize = 200;
 /// possibly several already-bounded values.
 pub const MAX_MESSAGE: usize = 400;
 
+/// The cap for a value composed INTO a message that then occupies a single
+/// diagnostic arg — `format!("asset `{value}`: {reason}")` handed to one
+/// `.arg("detail", …)`.
+///
+/// Deliberately a fraction of [`MAX_ECHO`]. The arg itself is clipped at
+/// `MAX_ECHO`, so a value allowed that whole budget pushes the PROSE
+/// explaining the failure out of the message entirely — the reader gets a
+/// wall of the hostile string and never learns what was wrong with it, at
+/// exactly the moment they need to. Leaving the majority of the budget to
+/// the prose keeps the reason readable no matter what the document contains.
+///
+/// Prefer giving the value its own arg where the code's template allows it;
+/// this is for the codes whose template is a single slot.
+pub const MAX_INLINE_ECHO: usize = 80;
+
 /// A message is prose plus possibly several already-bounded values, so it
 /// must have at least as much room as one of them. Handed to the compiler
-/// rather than left as a convention, since the two constants are edited
+/// rather than left as a convention, since the constants are edited
 /// independently.
 const _: () = assert!(
     MAX_MESSAGE >= MAX_ECHO,
     "a whole message may not be bounded more tightly than one value inside it",
+);
+
+/// An inline value must leave room for the prose around it, or the bound it
+/// is under defeats its own purpose.
+const _: () = assert!(
+    MAX_INLINE_ECHO * 2 <= MAX_ECHO,
+    "a value composed into a message may take at most half the arg budget, \
+     so the text explaining the failure always survives beside it",
 );
 
 /// Whether `c` may not appear in an echo.
@@ -129,6 +152,16 @@ impl Echo {
     /// not affected by the cap and is never optional.
     pub fn clipped_to(s: &str, max: usize) -> Self {
         Echo(sanitize_marked(s, max))
+    }
+
+    /// Sanitizes `s` to [`MAX_INLINE_ECHO`], for a value being composed INTO
+    /// a message that will occupy one diagnostic arg.
+    ///
+    /// Use this wherever a `format!` interpolates document-supplied text into
+    /// a string handed to a single `.arg(…)`: it is what keeps the prose
+    /// explaining the failure inside the arg's own budget.
+    pub fn inline(s: &str) -> Self {
+        Echo::clipped_to(s, MAX_INLINE_ECHO)
     }
 
     /// The sanitized text.

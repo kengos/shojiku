@@ -1114,6 +1114,13 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   JSON-RPC error, and the `Error.message` the browser build throws.
   Diagnostic `args` were already bounded and are unchanged, so a
   translating consumer sees exactly the values it saw before.
+  **A value composed INTO a message takes only a share of that message's
+  budget**, so the text explaining the failure always survives beside it:
+  a few diagnostics render as a single opaque `detail` field, and there an
+  unbounded value would otherwise leave the reader a wall of their own
+  input and no statement of what was wrong with it. The location a
+  diagnostic points at is bounded on the same rule wherever it embeds a
+  document-declared name.
 - **The parsers that read attacker-chosen bytes have fuzz targets** —
   the shared document reader, the whole verifier, the `/Contents` window
   decoder, the CMS container decoder and the anchor loader. They live in

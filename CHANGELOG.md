@@ -27,9 +27,9 @@ platform binaries.
   go the same way — those change the order a message *displays* in without
   changing a byte of it, which defeats the whole point of quoting your key
   back to you. Zero-width joiners stay, since they carry meaning in real
-  text. Values clip at 200 characters and
-  whole messages at 400, with tighter limits where the value itself is
-  short by nature — 64 for a locale id, 32 for a currency code. Every
+  text. Values clip at 200 characters and whole messages at 400, with
+  tighter limits where the value itself is short by nature — 64 for a
+  locale id, 32 for a currency code. Every
   surface that prints an engine error now applies the same bound: the
   CLI's stderr, the `--report` sidecar, the C ABI status, the MCP error
   response, and the error the browser build throws. Diagnostics were
@@ -39,6 +39,18 @@ platform binaries.
   The Designer applies the same rule to its own editing errors, and now
   counts by character rather than by UTF-16 unit, so a clipped run of
   emoji or rare CJK is no longer cut mid-character.
+
+- **A hostile value can no longer crowd the explanation out of an error.**
+  A few diagnostics have no structure to render — they carry one prewritten
+  sentence, like "asset `<path>`: unrecognized image format" — and that whole
+  sentence lives in a single 200-character value. So a document with a
+  10,000-character asset path filled the entire budget with its own path, and
+  you got a wall of text without ever learning what was wrong with the image.
+  A value quoted inside such a sentence now takes at most 80 of those 200
+  characters, leaving the rest to the explanation, which therefore always
+  survives beside it. The value is still shown and still ends in `…` when
+  cut. The same limit applies where a diagnostic's *location* embeds a name
+  the document chose, which nothing had been bounding.
 
 - **Absurd font sizes and stroke widths now fall back with a warning
   instead of reaching the geometry.** `fontSize` and `lineHeight` accept
