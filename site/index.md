@@ -12,9 +12,12 @@ hero:
     - theme: brand
       text: Get started
       link: /tutorials
+    # target forces a full page load: /designer/ is a separate app merged into
+    # the deployed output, so VitePress's SPA router must not intercept it.
     - theme: alt
       text: Open the Designer
       link: /designer/
+      target: _self
     - theme: alt
       text: GitHub
       link: https://github.com/kengos/shojiku
@@ -99,6 +102,6 @@ The agent writes the YAML, validates through the MCP server, checks the preview,
 
 ## Fine adjustments by hand, in a GUI
 
-When an AI-authored template has a spot you do not like, the GUI is there for a human to fix it by hand. Open the [Designer](/designer/) in your browser, load the `templates.yml`, and adjust positions and styles on the canvas.
+When an AI-authored template has a spot you do not like, the GUI is there for a human to fix it by hand. Open the <a href="/designer/" target="_self">Designer</a> in your browser, load the `templates.yml`, and adjust positions and styles on the canvas.
 
 ![The Designer with the estimate template open, the total-amount text selected for editing](/media/designer-editor.png)

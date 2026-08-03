@@ -13,9 +13,12 @@ hero:
     - theme: brand
       text: はじめる
       link: /ja/tutorials
+    # target forces a full page load: /designer/ is a separate app merged into
+    # the deployed output, so VitePress's SPA router must not intercept it.
     - theme: alt
       text: Designerを開く
       link: /designer/
+      target: _self
     - theme: alt
       text: GitHub
       link: https://github.com/kengos/shojiku
@@ -100,6 +103,6 @@ npx skills add kengos/shojiku
 
 ## GUIでの細かい修正も可能
 
-AIが出力したテンプレートで気に入らないところを、人間が手で直すためのGUIも用意しました。使い方は、[Designer](/designer/)をブラウザで開いて`templates.yml`を読み込み、キャンバス上で位置やスタイルを修正するだけです。
+AIが出力したテンプレートで気に入らないところを、人間が手で直すためのGUIも用意しました。使い方は、<a href="/designer/" target="_self">Designer</a>をブラウザで開いて`templates.yml`を読み込み、キャンバス上で位置やスタイルを修正するだけです。
 
 ![Designerで見積書テンプレートを開き、合計金額のテキストを選択して編集しているところ](/media/designer-editor.png)

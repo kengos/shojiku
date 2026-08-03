@@ -116,7 +116,7 @@ dynamic images are also available. The exact rules are in
 
 ## 4. Use a font beyond the bundled packs
 
-This is for a family you picked in the [Designer](/designer/)'s font
+This is for a family you picked in the <a href="/designer/" target="_self">Designer</a>'s font
 picker, or a corporate font of your own. On the template side the
 selection is the `fontFamily` style property.
 
