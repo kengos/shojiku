@@ -3,6 +3,7 @@
 // en-US example immediately; the JP example behind the explicit font load.
 import { onMounted, ref } from "vue";
 import type { Diagnostic } from "../../../src/lib/engineClient.ts";
+import EngineVersion from "./EngineVersion.vue";
 import { engine, fetchLiveDoc, japaneseLoaded, loadJapanese, pageUrl, render, renderPdfUrl, type LiveDoc } from "../engine.ts";
 
 const template = ref("");
@@ -93,6 +94,7 @@ onMounted(() =>
       <span class="live-spacer"></span>
       <button v-if="!jp" class="live-btn" :disabled="busy !== ''" @click="toJapanese">日本語フォントを読み込む (10 MB)</button>
       <span v-if="busy" class="live-note">{{ busy }}</span>
+      <EngineVersion />
     </div>
     <ul v-if="diagnostics.length" class="live-diags">
       <li v-for="(d, i) in diagnostics" :key="i"><code>{{ d.severity }}[{{ d.code }}]</code> {{ d.message }}</li>

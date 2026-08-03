@@ -207,7 +207,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 .PHONY: proof-published proof-published-python proof-published-ruby \
         proof-published-dotnet proof-published-java proof-published-js \
         proof-published-crates
-.PHONY: proof-deploy site site-lint site-test site-data site-check site-build \
+.PHONY: proof-deploy site site-lint site-test site-data site-check site-wasm-release site-build \
         site-dev verify\:site lint\:site test\:site
 .PHONY: help verify quiet rust budget fmt fmt-fix clippy test coverage deny \
         verify\:engine verify\:gui verify\:docker lint\:engine lint\:gui \
@@ -1390,15 +1390,21 @@ site-test: ## site/ vitest only (what `make test:site` runs)
 		pnpm install --frozen-lockfile; \
 		pnpm test'
 
-site-data: ## Refresh the committed site inputs (site/.data/wasm + the README gallery section)
+site-data: ## Refresh the committed README gallery section from examples/gallery.yml
 	@echo "== site data refresh =="
-	@test -d engine/wasm/pkg || $(MAKE) wasm
 	@$(SITE_IN_DOCKER) 'node scripts/refresh-data.ts'
 
-site-check: ## Fail if committed site inputs differ from a fresh refresh (CI job "site")
+# No wasm build: site/.data/wasm is pinned by the sha256 digests recorded in
+# site/.data/wasm-source.json, so this says the same thing on every host
+# architecture. Rebuilding to compare is what made the homepage track HEAD.
+site-check: ## Fail if the committed site inputs drift (README gallery + the site engine pin)
 	@echo "== site data check =="
-	@test -d engine/wasm/pkg || $(MAKE) wasm
 	@$(SITE_IN_DOCKER) 'node scripts/refresh-data.ts --check'
+
+site-wasm-release: ## RELEASE ONLY: re-pin site/.data/wasm to the released engine (engine/wasm/pkg)
+	@echo "== site engine re-pin =="
+	@test -d engine/wasm/pkg || $(MAKE) wasm
+	@$(SITE_IN_DOCKER) 'node scripts/refresh-data.ts --release-wasm'
 
 site-build: ## The full Pages build locally (site + /designer/) into site/.vitepress/dist
 	@echo "== site build (Pages mirror) =="

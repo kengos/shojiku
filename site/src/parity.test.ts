@@ -15,7 +15,7 @@ function pages(dir: string): string[] {
 }
 
 function componentTags(text: string): string[] {
-  return [...text.matchAll(/<(LiveRenderer|PropertyPlayground|GalleryGrid)[\s/>]/g)]
+  return [...text.matchAll(/<(LiveRenderer|PropertyPlayground|GalleryGrid|EngineVersion)[\s/>]/g)]
     .map((m) => m[1]!)
     .sort();
 }

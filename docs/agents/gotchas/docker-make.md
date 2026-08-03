@@ -312,31 +312,30 @@ lines once mis-parsed `FAILED. 553 passed; 1 failed` as green.
 The pinned Rust container produces a DIFFERENT `shojiku_wasm_bg.wasm`
 on an arm64 host than on CI's x86_64 runners (the `.js`/`.d.ts`
 outputs match; only the binary differs), while CI runs reproduce each
-other byte-for-byte. Anything that byte-compares the wasm — the
-`site-check` gate over `site/.data/wasm` — therefore treats the
-x86_64 CI build as canonical: on a non-x86 host, refresh from the CI
-`wasm-pkg` artifact (`gh run download <run> -n wasm-pkg`) instead of
-your local `make wasm` output. Root-causing the nondeterminism is a
-filed backlog candidate.
+other byte-for-byte. Root-causing the nondeterminism is a filed backlog
+candidate.
 
-**But do NOT read a stale `site-check` as "just the arm64 thing".** Any
-change to a crate the wasm links — `shojiku-layout` especially — moves
-the binary for real, and CI's `site` job compares its OWN x86_64
-`wasm-pkg` against the committed `site/.data/wasm`, so architecture
-cannot be the cause there: the job fails on CI too until the committed
-data is refreshed. The two causes look identical locally (`stale:
-…/shojiku_wasm_bg.wasm`, `drift 1`), so tell them apart by what the
-change touched, not by the message. `site/.data/wasm` had been committed
-exactly once and every PR since was docs/site, which is how the first
-engine PR after it inherited the surprise.
+**`site-check` no longer trips on this, and an ordinary engine PR no
+longer refreshes anything.** `site/.data/wasm` holds a RELEASED engine
+build pinned by the sha256 digests in `site/.data/wasm-source.json`, so
+the gate compares the committed bytes against that RECORD rather than
+against a fresh local build — the same answer on every host. A gate that
+rebuilds to compare is what forced the old dance, and it also quietly
+made the homepage serve unreleased code, because "committed == a build of
+HEAD" is exactly what it enforced.
 
-The refresh has a forced ORDERING, because the canonical bytes only
-exist on CI: push the branch and open the PR first, let the `wasm` job
-run, then `gh run download <run-id> -n wasm-pkg -D <tmp>`, copy the
-files over `engine/wasm/pkg/`, `make site-data`, and commit the
-refreshed binary as a second commit on the same PR. (wasm is
+What remains architecture-sensitive is the RELEASE-time re-pin, which is
+rare (once per release) and deliberate. The canonical bytes are the
+x86_64 CI build, so on a non-x86 host: let the release commit's `wasm`
+job run, `gh run download <run-id> -n wasm-pkg -D <tmp>`, copy the files
+over `engine/wasm/pkg/`, then `make site-wasm-release`. (wasm is
 architecture-neutral to RUN, so dropping the x86 build into a local
-`pkg/` is fine — only its bytes differ.) Expect `make verify` to be red
-at `site-check` until that second commit, and remember verify is a
-CHAIN: the `sdk-*` and `docker` targets after it never ran, so say so
-rather than reporting a clean local bar.
+`pkg/` is fine — only its bytes differ.)
+
+That target refuses to run at the wrong moment rather than trusting the
+procedure: it stops when the version being pinned to is not one
+`CHANGELOG.md` lists as released, and — the one no downstream check could
+ever see — when the version has NOT moved but the bytes have, since same
+version + different build is by definition a build nobody released. A
+mid-cycle `make site-wasm-release` therefore fails loudly instead of
+silently re-pointing the site at HEAD.

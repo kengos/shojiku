@@ -8,6 +8,9 @@ description: "Change the YAML and the rendering changes with it — the engine's
 Like MDN's interactive examples, the look changes right here as the
 YAML changes. The set of demos is still small, and it will grow.
 
+Every demo below runs on <ClientOnly><EngineVersion /></ClientOnly>. That is
+a published release — the same version you install and run yourself.
+
 ## Text style
 
 Styles are written almost exactly like CSS; the differences are of the
