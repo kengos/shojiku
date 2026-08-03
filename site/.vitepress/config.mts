@@ -57,7 +57,11 @@ export default defineConfig({
   srcExclude: ["src/**"],
   lastUpdated: false,
   // /designer/ is not a VitePress page — the Designer app is merged into the
-  // deployed output beside the site (one Pages project, path-mounted).
+  // deployed output beside the site (one Pages project, path-mounted). This
+  // silences the BUILD-time dead-link check only; at runtime VitePress's
+  // router would still intercept the click and render its own 404, so every
+  // link to /designer/ must also carry target="_self" (or `target: _self` on a
+  // hero action) to force a real page load. src/designer-link.test.ts pins it.
   ignoreDeadLinks: [/^\/designer\//],
 
   locales: {

@@ -101,7 +101,7 @@ templates/
 
 ## 4. 同梱パック以外のフォントを使う
 
-[Designer](/designer/)のフォントピッカーで選んだ書体や、自社のコーポレートフォントを使いたい場合です。テンプレート側の指定は `style` の `fontFamily` です。
+<a href="/designer/" target="_self">Designer</a>のフォントピッカーで選んだ書体や、自社のコーポレートフォントを使いたい場合です。テンプレート側の指定は `style` の `fontFamily` です。
 
 ```yaml
 # templates.yml — コンテナに書けば、下の要素に継承されます
