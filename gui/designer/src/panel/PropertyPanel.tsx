@@ -104,7 +104,12 @@ export function PropertyPanel({
       <aside data-tour={TOUR_ANCHORS.panel} className={PANEL} aria-label={t('panel.title')}>
         <p className="m-0 mb-3 text-sm text-muted">{t('panel.noSelection.hint')}</p>
         {onOpenDocument !== undefined ? (
-          <button type="button" className={BTN} onClick={onOpenDocument}>
+          <button
+            type="button"
+            className={BTN}
+            data-tour={TOUR_ANCHORS.panelDocSettings}
+            onClick={onOpenDocument}
+          >
             {t('panel.noSelection.open')}
           </button>
         ) : null}

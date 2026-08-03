@@ -39,8 +39,22 @@ const CHAPTERS: readonly TutorialChapter[] = [
     seed: CHAPTER_SEEDS.ch0,
     steps: [
       step('ch0.blank', canvas('sections.body'), { auto: true }),
-      step('ch0.pageSize', panel(), { auto: true }),
-      step('ch0.margin', panel(), { ops: [{ op: 'setScalar', keys: ['page', 'margin'] }] }),
+      // The route in, then the page it opens — NOT the property panel, which
+      // the document-settings view replaces the moment the reader presses it.
+      step(
+        'ch0.pageSize',
+        { kind: 'panel', selector: TOUR_ANCHORS.panelDocSettings },
+        {
+          auto: true,
+        },
+      ),
+      step(
+        'ch0.margin',
+        { kind: 'panel', selector: TOUR_ANCHORS.docSettings },
+        {
+          ops: [{ op: 'setScalar', keys: ['page', 'margin'] }],
+        },
+      ),
     ],
   },
   {
@@ -95,7 +109,7 @@ const CHAPTERS: readonly TutorialChapter[] = [
       step('ch3.openField', menu(TOUR_ANCHORS.menuInsert), { ui: 'dialog:field' }),
       step(
         'ch3.create',
-        { kind: 'dialog', selector: TOUR_ANCHORS.menuInsert },
+        { kind: 'dialog', selector: TOUR_ANCHORS.dialogField },
         {
           ops: [insertIntoBody, { op: 'setScalar', keys: ['data', 'key'] }],
         },
@@ -118,7 +132,7 @@ const CHAPTERS: readonly TutorialChapter[] = [
       step('ch4.openIterable', menu(TOUR_ANCHORS.menuInsert), { ui: 'dialog:iterable' }),
       step(
         'ch4.create',
-        { kind: 'dialog', selector: TOUR_ANCHORS.menuInsert },
+        { kind: 'dialog', selector: TOUR_ANCHORS.dialogIterable },
         {
           ops: [insertIntoBody],
         },

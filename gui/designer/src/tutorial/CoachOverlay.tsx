@@ -33,6 +33,12 @@ const HALO = 6;
 /** Bubble width; also the clamp width when it would run off the viewport. */
 const BUBBLE_WIDTH = 320;
 
+/** Room the bubble is assumed to need below its top edge. Its real height is
+ * whatever the sentence takes, so this is a floor, not a measurement — enough
+ * that a bubble under a tall anchor (a whole dialog, the settings page) stays
+ * on screen instead of sliding off the bottom. */
+const BUBBLE_ROOM = 180;
+
 /** Place the bubble under the anchor (or centered when there is none). Kept
  * separate and pure so the placement rules are unit-testable. */
 export function bubblePosition(rect: AnchorRect | null): { left: number; top: number } {
@@ -43,7 +49,9 @@ export function bubblePosition(rect: AnchorRect | null): { left: number; top: nu
     Math.max(16, rect.left),
     Math.max(16, window.innerWidth - BUBBLE_WIDTH - 16),
   );
-  return { left, top: rect.top + rect.height + HALO * 2 };
+  const under = rect.top + rect.height + HALO * 2;
+  const top = Math.max(16, Math.min(under, window.innerHeight - BUBBLE_ROOM));
+  return { left, top };
 }
 
 export function CoachOverlay({

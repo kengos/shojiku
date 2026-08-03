@@ -18,6 +18,15 @@ export const TOUR_ANCHORS = {
   panelTabs: 'panel-tabs',
   diagnostics: 'diagnostics',
   containerPicker: 'container-picker',
+  // The route into the document-settings page, and the page itself. The page
+  // is a FULLSCREEN view: it replaces the editing grid, so a step showing
+  // while it is open cannot point at the panel or the sidebar — they are gone.
+  panelDocSettings: 'panel-doc-settings',
+  docSettings: 'doc-settings',
+  // The two insert dialogs a step waits inside. `containerPicker` above marks
+  // the grid within its own dialog; these mark the dialog body.
+  dialogField: 'dialog-field',
+  dialogIterable: 'dialog-iterable',
 } as const;
 
 export type TourAnchorId = (typeof TOUR_ANCHORS)[keyof typeof TOUR_ANCHORS];

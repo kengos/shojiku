@@ -25,6 +25,7 @@ import type { EditorController } from '../editor/useEditor';
 import type { RawPage } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import type { StyleUsage } from '../styles/usage';
+import { TOUR_ANCHORS } from '../tutorial/anchors';
 import { IconButton } from '../ui/Button';
 import { SECTION_TITLE } from '../ui/chrome';
 import { IconClose } from '../ui/icons';
@@ -134,7 +135,10 @@ export function DocumentSettingsPage({
         />
         {/* The selected section, alone: roomy, and short enough to read without
             scrolling on every document the presets ship. */}
-        <div className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
+        <div
+          className="min-w-0 flex-1 overflow-y-auto px-6 py-5"
+          data-tour={TOUR_ANCHORS.docSettings}
+        >
           <div className="mx-auto max-w-[520px]">
             <section>
               <h3 className={SECTION_TITLE}>{t(SECTION_TITLE_KEYS[current])}</h3>
