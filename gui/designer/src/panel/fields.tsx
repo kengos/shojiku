@@ -35,6 +35,56 @@ export function Field({ label, children }: FieldProps) {
   );
 }
 
+/** A field whose control sits BESIDE a button — the pickers' ▼ toggle. The
+ * house shape for this (it is `StepperField`'s ▲▼ row): the label is associated
+ * by id rather than by wrapping (a `<label>` around the pair would forward
+ * clicks to the BUTTON), the outer block owns the bottom margin so no margin
+ * lands inside the row, and the row is `items-stretch` — the button takes the
+ * input's height instead of being lined up on one of its edges, which is what
+ * left the ▼ 8px low and 2px short. `after` renders under the row, inside the
+ * same block (the bound-field line). */
+export function SideButtonField({
+  label,
+  htmlFor,
+  button,
+  after,
+  children,
+}: {
+  readonly label: string;
+  readonly htmlFor: string;
+  readonly button: ReactNode;
+  readonly after?: ReactNode;
+  readonly children: ReactNode;
+}) {
+  return (
+    <span className="mb-2 block">
+      <label htmlFor={htmlFor} className={FIELD_LABEL}>
+        {label}
+      </label>
+      <span className="flex min-w-0 items-stretch gap-1">
+        <span className="min-w-0 flex-1">{children}</span>
+        {button}
+      </span>
+      {after}
+    </span>
+  );
+}
+
+/** The same label row WITHOUT the `<label>` element, for a field whose content
+ * is not one labelable control. A `<label>` forwards every click inside it to
+ * its implicit control, and a contenteditable is not labelable — so the text
+ * field's label reached PAST the editor to the insert-a-field button beside it,
+ * and clicking the text pressed that button instead of placing a caret. The
+ * editor names itself with `aria-label`, so the plain block loses nothing. */
+export function FieldGroup({ label, children }: FieldProps) {
+  return (
+    <span className="mb-2 block">
+      <span className={FIELD_LABEL}>{label}</span>
+      {children}
+    </span>
+  );
+}
+
 export interface TextFieldProps {
   readonly label: string;
   readonly value: string;

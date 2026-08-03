@@ -144,6 +144,37 @@ describe('the tutorial', () => {
     }
   });
 
+  // The steps that run while a fullscreen view or a dialog is up cannot point
+  // at the panel or the sidebar: those are unmounted by then. Each of these ids
+  // has to resolve in the state its own step arrives in.
+  it('mounts the document-settings route and the page it opens', async () => {
+    draw(makeTransport(), { source: SOURCE });
+    await waitFor(() => screen.getByRole('button', { name: 'Help' }));
+    // Nothing selected: the panel offers the way in.
+    expect(document.querySelector('[data-tour="panel-doc-settings"]')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Open document settings' }));
+    // …and the page that replaces the grid carries the anchor the margin step
+    // points at, while the panel it replaced is gone.
+    await waitFor(() =>
+      expect(document.querySelector('[data-tour="doc-settings"]')).not.toBeNull(),
+    );
+    expect(document.querySelector('[data-tour="panel"]')).toBeNull();
+  });
+
+  it('mounts the field and list-data dialog anchors when those dialogs open', async () => {
+    draw(makeTransport(), { source: SOURCE });
+    await waitFor(() => screen.getByRole('button', { name: 'Help' }));
+    pickMenu('Insert', 'Create data field…');
+    await waitFor(() =>
+      expect(document.querySelector('[data-tour="dialog-field"]')).not.toBeNull(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    pickMenu('Insert', 'Place list data…');
+    await waitFor(() =>
+      expect(document.querySelector('[data-tour="dialog-iterable"]')).not.toBeNull(),
+    );
+  });
+
   it('mounts the data-editor gear anchor when the data tab is open', () => {
     // The gear is conditional (only in the data tab, which needs data). ch3's
     // sample steps point at it, so it must resolve in a rendered tree there.

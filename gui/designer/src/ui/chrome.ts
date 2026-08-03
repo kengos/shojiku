@@ -32,6 +32,12 @@ export const PANEL_FLUSH = 'min-w-0 overflow-y-auto border-l border-border bg-ch
 export const SECTION_TITLE =
   'm-0 mb-2 text-sm font-semibold uppercase tracking-[0.08em] text-muted';
 
+/** The ▼ that opens a picker's popover, standing beside its input. It STRETCHES
+ * to the row (`SideButtonField` is `items-stretch`), so the glyph is centred
+ * rather than the box being lined up on one edge of the input. */
+export const PICKER_TOGGLE =
+  'flex shrink-0 cursor-pointer items-center rounded-md border border-border bg-chrome px-2 text-text';
+
 /** A field label above its control. */
 export const FIELD_LABEL = 'mb-0.5 block text-sm text-muted';
 

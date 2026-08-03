@@ -128,14 +128,31 @@ read side, never the reverse.
 - `panel/formatModel.ts` — `formatOptions`: registry names first, then
   the closed builtin spellings per display type (localized labels +
   `FORMAT_SAMPLES`); own-property-guarded; currency variants
-  capability-gated. The engine stays the validator.
+  capability-gated. The engine stays the validator. A TEXT field offers
+  NO builtin (naming `date` on one overrides the type and the engine
+  then fails to parse the value as a date — that is an error, not a
+  format); its registry names still show, and typing stays open.
 - `panel/model.ts` — the WRITE side: `applyPanelOp` (the shared dispatch
   guard) + op builders `lengthOp`/`numberOp`/`plainTextOp` (item-scoped
   or root-addressed)/`bindingKeyOp`/`bindingPickOps` (a document pick
   authors `data.scope: document` — the only spelling the GUI writes; a
   row pick clears it only when present)/`formatOp`/`placeholderOp`/
-  `stepValueOp`/`styleNamesOp`/`toggleStyleName`/`switchContentOps`.
+  `stepValueOp`/`styleNamesOp`/`toggleStyleName`/`switchContentOps`
+  (+ `textAsBinding`/`bindingAsText`: the two modes both express "this item
+  IS that field", so the switch CARRIES the binding across — a text of one
+  expression becomes that data key with its format, a data key becomes
+  `{key}` text. Only mixed text (`{customer.name} 様`) has to be dropped,
+  and `ContentSection` keeps it for the way back).
 - `panel/fields.tsx` — the base widgets: `Field` (label wrapper),
+  **`SideButtonField`** (a control BESIDE a button — the pickers' ▼: label by
+  `htmlFor` not by wrapping, the outer block owns the bottom margin so none
+  lands inside the row, and `items-stretch` gives the button the input's
+  height. The house shape, `StepperField`'s ▲▼ row; the button itself wears
+  `PICKER_TOGGLE`), **`FieldGroup`** (the same row WITHOUT the `<label>` — a `<label>`
+  forwards every click inside it to its implicit control, and a
+  contenteditable is not labelable, so the text field's label reached
+  past the editor to the insert-a-field button beside it: clicking the
+  text pressed that button instead of placing a caret),
   `TextField`, `UnitBadge` + `unitIsImplicit`/`badgeText` (the implicit
   `pt` badge shows only while the text is a bare numeral).
 - `panel/StepperField.tsx` — length/number input + ▲▼ (one step op per
@@ -155,8 +172,10 @@ read side, never the reverse.
   RegExp), `scopeAuthorable` (the ONE home for the `binding.scope`
   capability — gates OFFERING/AUTHORING, never reading).
 - `panel/FieldPicker.tsx` — the `data.key` editor: the closed control
-  (free entry, scope badge, toggle), the offer derivation and what a pick
-  COMMITS; row-scoped pickers split row/document sections (free entry
+  (free entry, scope badge, toggle, and `BoundField` — the bound key's
+  name / localized type / live sample, the popover row's three facts
+  shown WITHOUT opening it, absent for a key no offer matches), the
+  offer derivation and what a pick COMMITS; row-scoped pickers split row/document sections (free entry
   never re-scopes). `panel/PickerPopover.tsx` — the open popover: search,
   the three offer states, the rows (label / key / localized type / sample
   / document badge) and the optional `onCreateField` tail (workshop mode,

@@ -17,11 +17,13 @@
 // offer derivation and what a pick commits; the open popover is
 // `PickerPopover.tsx`.
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
+import { TYPE_LABEL_KEYS } from '../palette/paletteRow';
+import { INPUT, PICKER_TOGGLE } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
-import { Field } from './fields';
+import { SideButtonField } from './fields';
 import { DOCUMENT_SCOPE } from './model';
 import { PickerPopover } from './PickerPopover';
 import { filterOptions, type PickerOption } from './pickerModel';
@@ -32,6 +34,40 @@ const SCOPE_BADGE_ON =
   'rounded-full border px-1.5 text-xs whitespace-nowrap shrink-0 border-accent text-accent';
 
 const NO_OPTIONS: readonly PickerOption[] = [];
+
+/** What the bound key IS, under the closed control: the same three facts the
+ * popover row carries (name, type, live sample). The key alone reads as a
+ * spelling nobody can check — `customer.name` says nothing about which field
+ * that is or what it will print. Absent for a key no offer matches: an
+ * undeclared key is exactly what the live diagnostic is for.
+ *
+ * The name wears the chip editor's own pill (`sj-chip`), because it IS the same
+ * thing: a text item shows 「お客様名」 in a pill while a bound item showed the raw
+ * `customer.name`, so one binding was named two ways across the content modes. */
+function BoundField({ option }: { option: PickerOption }) {
+  const { t } = useI18n();
+  const typeLabelKey = TYPE_LABEL_KEYS.get(option.type);
+  return (
+    <p className="m-0 -ml-px mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 text-sm text-muted">
+      <span className="sj-chip">
+        <span className="sj-chip-label">{option.label}</span>
+      </span>
+      {/* Separated, not just spaced: read cold, `[今回納品数] 数量 61` looks like
+          one run of text whose pill stops halfway. The dot is the same one the
+          origin badge uses to list a value's attributes. */}
+      <span aria-hidden="true">·</span>
+      <span className="whitespace-nowrap">
+        {typeLabelKey === undefined ? option.type : t(typeLabelKey)}
+      </span>
+      {option.sample === '' ? null : (
+        <>
+          <span aria-hidden="true">·</span>
+          <span className="min-w-0 truncate italic">{option.sample}</span>
+        </>
+      )}
+    </p>
+  );
+}
 
 export interface FieldPickerProps {
   readonly label: string;
@@ -77,6 +113,7 @@ export function FieldPicker({
   const { t } = useI18n();
   const { open, setOpen, rootRef } = usePopover();
   const [query, setQuery] = useState('');
+  const id = useId();
   // Offerability is settled BEFORE the search filter, so an empty offer reads
   // as "no fields" rather than as a query that matched nothing.
   const offered = options.length + documentOptions.length;
@@ -98,6 +135,7 @@ export function FieldPicker({
       doc: true,
     },
   ].filter((section) => section.rows.length > 0);
+  const bound = [...options, ...documentOptions].find((option) => option.key === value);
   const commitPick = (key: string, documentScoped: boolean) => {
     setOpen(false);
     setQuery('');
@@ -117,39 +155,43 @@ export function FieldPicker({
   };
   return (
     <div className="relative" ref={rootRef}>
-      <span className="flex min-w-0 items-end gap-1">
-        <span className="min-w-0 flex-1">
-          <Field label={label}>
-            {/* `w-full` keeps the input inside its shrunken flex cell: an
-                unsized input takes its default ~20ch and overflows the cell,
-                which now runs under the scope badge beside it. */}
-            <input
-              key={value}
-              type="text"
-              className="w-full"
-              defaultValue={value}
-              onBlur={(event) => {
-                if (event.currentTarget.value !== value) {
-                  onCommit(event.currentTarget.value);
-                }
-              }}
-            />
-          </Field>
-        </span>
-        {scope === DOCUMENT_SCOPE ? (
-          <span className={SCOPE_BADGE_ON}>{t('picker.scope.document')}</span>
-        ) : null}
-        <button
-          type="button"
-          className="shrink-0 cursor-pointer rounded-md border border-border bg-chrome px-2 text-text"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          aria-label={t('picker.open')}
-          onClick={() => setOpen((v) => !v)}
-        >
-          <IconChevronDown size={12} className="text-muted" />
-        </button>
-      </span>
+      <SideButtonField
+        label={label}
+        htmlFor={id}
+        after={bound === undefined ? null : <BoundField option={bound} />}
+        button={
+          <>
+            {scope === DOCUMENT_SCOPE ? (
+              <span className={SCOPE_BADGE_ON}>{t('picker.scope.document')}</span>
+            ) : null}
+            <button
+              type="button"
+              className={PICKER_TOGGLE}
+              aria-haspopup="menu"
+              aria-expanded={open}
+              aria-label={t('picker.open')}
+              onClick={() => setOpen((v) => !v)}
+            >
+              <IconChevronDown size={12} className="text-muted" />
+            </button>
+          </>
+        }
+      >
+        {/* `w-full` keeps the input inside its shrunken flex cell: an unsized
+            input takes its default ~20ch and overflows the cell. */}
+        <input
+          key={value}
+          id={id}
+          type="text"
+          className={`${INPUT} w-full min-w-0`}
+          defaultValue={value}
+          onBlur={(event) => {
+            if (event.currentTarget.value !== value) {
+              onCommit(event.currentTarget.value);
+            }
+          }}
+        />
+      </SideButtonField>
       {open ? (
         <PickerPopover
           query={query}

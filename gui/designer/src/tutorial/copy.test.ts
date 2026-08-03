@@ -41,7 +41,7 @@ describe('lookups are own-property only', () => {
 
   it('returns a topic subtitle, or null when there is none', () => {
     const copy = courseCopy('ja');
-    expect(topicSubtitle(copy, 'topic-containers')).toBe('縦積み・表組み・ネスト・スロット追加');
+    expect(topicSubtitle(copy, 'topic-containers')).toBe('縦積み、表組み、入れ子、スロット追加');
     expect(topicSubtitle(copy, 'ch0')).toBeNull();
     expect(topicSubtitle(copy, 'constructor')).toBeNull();
   });

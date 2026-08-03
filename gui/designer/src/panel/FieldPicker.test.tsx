@@ -26,6 +26,30 @@ describe('FieldPicker', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
+  it('says what the bound key IS without opening the popover', () => {
+    // The key alone is a spelling nobody can check: `order.code` names neither
+    // the field nor what it prints.
+    draw('order.code', OPTIONS);
+    const control = screen.getByLabelText('Data key').closest('div');
+    expect(control?.textContent).toContain('注文コード');
+    expect(control?.textContent).toContain('Text');
+    expect(control?.textContent).toContain('ORD-9');
+  });
+
+  it('shows no such line for a key nothing offers, or a field with no sample', () => {
+    draw('typo.key', OPTIONS);
+    // An undeclared key is what the live diagnostic is for; the panel does not
+    // invent an identity for it.
+    expect(screen.getByLabelText('Data key').closest('div')?.textContent).not.toContain(
+      '注文コード',
+    );
+    cleanup();
+    draw('order.logo', OPTIONS);
+    const control = screen.getByLabelText('Data key').closest('div');
+    expect(control?.textContent).toContain('ロゴ');
+    expect(control?.textContent).toContain('weird-type');
+  });
+
   it('opens the popover with label, key, localized type, and sample per row', () => {
     draw('', OPTIONS);
     fireEvent.click(screen.getByRole('button', { name: 'Choose a data field' }));

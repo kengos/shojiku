@@ -10,6 +10,7 @@
 import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n/context';
 import type { SampleScalar } from '../sample/model';
+import { TOUR_ANCHORS } from '../tutorial/anchors';
 import { BTN_SM, INPUT } from '../ui/chrome';
 import { Modal } from '../ui/Modal';
 import {
@@ -65,6 +66,7 @@ export function FieldDialog({ onConfirm, onClose }: FieldDialogProps) {
     <Modal
       open
       onClose={onClose}
+      tour={TOUR_ANCHORS.dialogField}
       title={t('field.title')}
       closeLabel={t('help.close')}
       footer={

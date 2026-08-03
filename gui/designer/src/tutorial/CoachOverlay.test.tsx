@@ -99,4 +99,19 @@ describe('bubblePosition', () => {
     expect(bubblePosition({ ...RECT, left: -500 }).left).toBe(16);
     expect(bubblePosition({ ...RECT, left: 99999 }).left).toBeLessThan(window.innerWidth);
   });
+
+  // A step can point at a whole dialog or the settings page, and "under the
+  // anchor" would then be past the bottom of the window.
+  it('pulls the bubble back up under a full-height anchor', () => {
+    const tall = bubblePosition({ ...RECT, top: 0, height: window.innerHeight });
+    expect(tall.top).toBeLessThan(window.innerHeight);
+    expect(tall.top).toBeGreaterThanOrEqual(16);
+  });
+
+  it('never places the bubble above the viewport, however short the window', () => {
+    const original = window.innerHeight;
+    Object.defineProperty(window, 'innerHeight', { value: 100, configurable: true });
+    expect(bubblePosition(RECT).top).toBe(16);
+    Object.defineProperty(window, 'innerHeight', { value: original, configurable: true });
+  });
 });

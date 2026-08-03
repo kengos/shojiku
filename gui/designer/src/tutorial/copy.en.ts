@@ -20,14 +20,14 @@ export const COPY_EN: Record<string, string> = {
   'ch0.pageSize':
     'Press "Open document settings" on the right to open the whole-document view, and check under Page setup that the paper is A4, portrait.',
   'ch0.margin':
-    'In the same view, set the margin to 24. Lengths are in points — 1pt is about 0.35mm, and A4 is 595pt wide.',
+    'In the same view, set the margin to 24. Lengths are in points — 1pt is about 0.35mm, and A4 is 595 × 842pt.',
   'ch1.insertText': 'Insert → Text places a box for text.',
   'ch1.type': 'Double-click the box and type "INVOICE".',
   'ch1.bold': 'Make it bold from the format bar above.',
   'ch1.size': 'Set the size to 21.',
   'ch1.align': 'Set the text alignment to centered.',
   'ch1.style':
-    'You can name this look and reuse it — use Styles → Save selection as style and call it "Title".',
+    'You can name this look and reuse it: from the format bar, Styles → Save formatting as a style, and call it "Title".',
   'ch2.openPicker':
     'A box that arranges several elements is called a container — open Insert → Container.',
   'ch2.pick':
@@ -39,7 +39,7 @@ export const COPY_EN: Record<string, string> = {
   'ch2.ratio':
     "Set the ratio to 1:2:1, left to right. The numbers are each slot's share of the width, so the middle one becomes twice as wide.",
   'ch2.auto':
-    'The X/Y on the Placement tab read "auto" in grey. The tool computes positions for you — the only places you type coordinates are the repeating band in chapter 6 and the seal in chapter 7.',
+    'The X/Y on the Layout tab read "auto" in grey. Positions are computed for you — the only places you type coordinates are the repeating band in chapter 6 and the seal in chapter 7.',
   'ch3.openField':
     'Values that change with every issue (customer, date, amount) become data fields — open Insert → Create data field.',
   'ch3.create':
@@ -50,11 +50,12 @@ export const COPY_EN: Record<string, string> = {
     'Drag the date field into the middle of the "Date: " text. It lands mid-sentence as a chip.',
   'ch3.sample':
     'Open the editor from the gear on the Data fields tab and edit the customer value. The page follows immediately.',
-  'ch3.format': 'Choose the "symbol" display format for the amount. It now prints like ¥300,000.',
+  'ch3.format':
+    'Choose the "symbol" Format for the amount. It now prints like ¥300,000 ("name" spells the currency out instead). The stored value stays a number; only its display changes.',
   'ch4.openIterable':
     'Repeating data whose row count varies — like line items — goes in as list data. Choose Insert → Place list data.',
   'ch4.create':
-    'Create a list named "items" with name, qty, price and amount, and place it as a table.',
+    'Create a list named "items" with name, qty, price and amount. It can be shown as a table, as cards or as a list — choose the table.',
   'ch4.drawn': 'The table is drawn with one row per sample row, and a header row on top.',
   'ch4.width': 'In the Columns section on the right, set the amount column width to 90.',
   'ch4.alignRight':
@@ -76,13 +77,15 @@ export const COPY_EN: Record<string, string> = {
   'ch6.everyPage': 'Check that the same footer appears on every page.',
   'ch7.image': 'Insert → Place image, and choose the seal image.',
   'ch7.pin':
-    'Press "Pinned" on the Placement tab. It looks the same, but from now on this image stays put as other elements come and go (press "Auto" to return it to the flow at any time).',
-  'ch7.move': 'Set X 480 / Y 40. You can also drag it on the page — and undo with ⌘Z if it slips.',
+    'Press "Fixed" on the Layout tab. It looks the same, but from now on this image stays put as other elements come and go (press "Auto" to return it to the flow at any time).',
+  'ch7.move':
+    'Set X 480 / Y 40. You can also drag it on the page, and undo (⌘Z / Ctrl+Z) if it slips.',
   'ch8.diagnostics':
     'Check that the warning list at the bottom is empty. Anything wrong is listed there, and clicking a warning jumps to the element.',
   'ch8.sample':
     'In the data-field editor, swap the sample data once more and watch the whole document follow.',
-  'ch8.export': 'File → Export writes the result out.',
+  'ch8.export':
+    'File → Export writes out the template (templates.yml) and its sample data — what you just built by hand, as readable YAML. For a PDF, use File → Download as PDF.',
   'ch8.done':
     'That is the whole flow. The invoice you built makes a fine starting point for your own template.',
   // Topic-specific steps (reused steps show their course sentence via copyId).
@@ -100,17 +103,17 @@ export const COPY_EN: Record<string, string> = {
   'topic-table.paste':
     'If you have a table in Excel, Insert → Paste table is a shortcut — it infers the columns from the copied cells.',
   'topic-placement.explain':
-    'This document’s header holds three texts inside a container. The tool positions the inner elements automatically (the Placement tab shows X/Y as grey "auto").',
+    'This document’s header holds three texts inside a container. The inner elements are positioned automatically (the Layout tab shows X/Y as grey "auto").',
   'topic-placement.pin':
-    'Select the left text and press "Pinned" on the Placement tab. It looks the same, but from now on this element stays put as others come and go.',
+    'Select the left text and press "Fixed" on the Layout tab. It looks the same, but from now on this element stays put as others come and go.',
   'topic-placement.move':
-    'Change X/Y and only the pinned element moves. You can also drag it on the page — undo with ⌘Z if it slips.',
+    'Change X/Y and only the pinned element moves. You can also drag it on the page, and undo (⌘Z / Ctrl+Z) if it slips.',
   'topic-placement.unpin':
-    'Press "Auto" again to release the pin and return it to the flow — the tool recomputes the position.',
+    'Press "Auto" again to release the pin and return it to the flow — the position is computed again.',
   'topic-style.origin':
-    'Click "INVOICE" and each control on the right panel shows an origin badge — size from style "Title", colour from the default. The three kinds (style / inherited / default) show where a value comes from.',
+    'Click "INVOICE" and open the Style tab on the right. Every control without a value of its own gains a line giving the effective value and where it came from: from style "Title", inherited from a container, or from document defaults.',
   'topic-style.update':
-    'First update the "Title" style itself — change its size from the style picker’s update row, and every place that uses it follows at once.',
+    'First update the "Title" style itself. Change the title’s size, then pick Styles → Update "Title" to match selection: the change moves out of the element and into the style, and every place that uses it follows at once.',
   'topic-style.override':
     'Now select the title and change its size directly from the format bar. Its origin flips from the style to this element, and it no longer follows the style — an override affects only this element.',
 };

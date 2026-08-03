@@ -29,6 +29,10 @@ export interface ModalProps {
    * for a surface that shows a DOCUMENT (the PDF preview) and needs page-sized
    * room. */
   readonly size?: ModalSize;
+  /** Optional `data-tour` id for the panel — a coach mark points at a dialog
+   * as a whole, since a step waits on what the reader fills in, not on one
+   * control inside it. */
+  readonly tour?: string;
   readonly children: ReactNode;
 }
 
@@ -47,6 +51,7 @@ export function Modal({
   closeLabel,
   footer,
   size = 'default',
+  tour,
   children,
 }: ModalProps) {
   return (
@@ -58,6 +63,7 @@ export function Modal({
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel
           transition
+          data-tour={tour}
           className={`flex ${PANEL_WIDTH[size]} max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] flex-col overflow-y-auto rounded-md border border-border bg-surface p-6 text-text shadow-2xl transition duration-150 data-closed:translate-y-2 data-closed:opacity-0`}
         >
           <div className="mb-3 flex items-center justify-between gap-3">

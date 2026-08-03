@@ -26,7 +26,12 @@ export function HelpfulHeading({
 }) {
   const { t } = useI18n();
   return (
-    <div className="flex items-center gap-1">
+    // `SECTION_TITLE` carries the section's bottom margin, and inside a centred
+    // flex line that margin sits within the line box: it pushed the heading text
+    // up by half of it and left the hint icon 4px low. The row takes the margin,
+    // and the h3 is stripped of it through a variant (a bare `mb-0` in the class
+    // string would not win — utility order decides, not string order).
+    <div className="mb-2 flex items-center gap-1 [&>h3]:mb-0">
       <h3 className={SECTION_TITLE}>{title}</h3>
       <HelpHint
         label={t(topic === 'content' ? 'help.content.title' : 'help.style.title')}

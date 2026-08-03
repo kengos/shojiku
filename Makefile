@@ -228,7 +228,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         sdk-js sdk-js-test sdk-js-lint sdk-js-format \
         sdk-php sdk-php-test sdk-php-lint \
         sdk-go sdk-go-test sdk-go-lint \
-        gui gui-budget gui-lint gui-test gui-format gui-e2e \
+        gui gui-budget gui-lint gui-test gui-format gui-e2e gui-shot \
         gui-serve gui-dev sbom clean cache-clean
 
 help: ## Show this help
@@ -1327,6 +1327,10 @@ gui-format: ## Apply Biome formatting/lint fixes across gui/ (writes files)
 gui-e2e: ## Designer-app browser golden path (Playwright in Docker) — on-demand, not in verify
 	@echo "== designer-app e2e (browser golden path) =="
 	@sh gui/designer-app/e2e/run-e2e.sh
+
+gui-shot: ## Screenshot the running `make gui-dev` into .shots/ — LOOK at a chrome change
+	@echo "== designer screenshots (Playwright in Docker, against gui-dev) =="
+	@sh gui/designer-app/e2e/run-shot.sh
 
 # The self-contained Designer-app image (wasm + Vite build + assembled data +
 # nginx) — the same image the gui-e2e golden path tests.

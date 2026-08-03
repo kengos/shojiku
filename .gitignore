@@ -75,3 +75,6 @@ sdk/php/build/
 sdk/php/.phpunit.cache/
 sdk/php/.php-cs-fixer.cache
 sdk/php/vendor/
+
+# `make gui-shot` output — screenshots of the running Designer, for looking at
+.shots/

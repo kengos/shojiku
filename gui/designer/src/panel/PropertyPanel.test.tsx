@@ -534,6 +534,68 @@ describe('PropertyPanel', () => {
     expect(group.textContent).toContain('(default)');
   });
 
+  // Flipping 内容の種類 by mistake used to empty the field: the switch dropped
+  // whichever content key was there and seeded the other one blank.
+  it('carries a lone binding across a content-mode switch, both ways', () => {
+    const controller = makeController({
+      [PATH]: { type: 'text', text: '{total:symbol}' },
+      formats: {},
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    fireEvent.change(screen.getByLabelText('Content source'), { target: { value: 'data' } });
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'removeKey', path: PATH, keys: ['text'] },
+      { op: 'setScalar', path: PATH, keys: ['data', 'key'], value: 'total' },
+      { op: 'setScalar', path: PATH, keys: ['data', 'format'], value: 'symbol' },
+    ]);
+  });
+
+  it('offers back the mixed text no binding could hold, on the way back', () => {
+    // `{customer.name} 様` is not one field, so the switch to data has to drop
+    // it — but switching straight back must not cost the reader the sentence.
+    const controller = makeController({
+      [PATH]: { type: 'text', text: '{customer.name} 様' },
+      formats: {},
+    });
+    const { rerender } = draw(<PropertyPanel controller={controller} path={PATH} />);
+    fireEvent.change(screen.getByLabelText('Content source'), { target: { value: 'data' } });
+    // The document now reads as a binding; the panel re-renders over it.
+    const bound = makeController(
+      { [PATH]: { type: 'text', data: { key: '' } }, formats: {} },
+      { applyAll: controller.applyAll },
+    );
+    rerender(
+      <I18nProvider locale="en">
+        <PropertyPanel controller={bound} path={PATH} />
+      </I18nProvider>,
+    );
+    fireEvent.change(screen.getByLabelText('Content source'), { target: { value: 'text' } });
+    expect(controller.applyAll).toHaveBeenLastCalledWith([
+      { op: 'removeKey', path: PATH, keys: ['data'] },
+      { op: 'setScalar', path: PATH, keys: ['text'], value: '{customer.name} 様' },
+    ]);
+  });
+
+  it('keeps nothing when the text it drops is empty', () => {
+    const controller = makeController({ [PATH]: { type: 'text', text: '' }, formats: {} });
+    const { rerender } = draw(<PropertyPanel controller={controller} path={PATH} />);
+    fireEvent.change(screen.getByLabelText('Content source'), { target: { value: 'data' } });
+    const bound = makeController(
+      { [PATH]: { type: 'text', data: { key: '' } }, formats: {} },
+      { applyAll: controller.applyAll },
+    );
+    rerender(
+      <I18nProvider locale="en">
+        <PropertyPanel controller={bound} path={PATH} />
+      </I18nProvider>,
+    );
+    fireEvent.change(screen.getByLabelText('Content source'), { target: { value: 'text' } });
+    expect(controller.applyAll).toHaveBeenLastCalledWith([
+      { op: 'removeKey', path: PATH, keys: ['data'] },
+      { op: 'setScalar', path: PATH, keys: ['text'], value: '' },
+    ]);
+  });
+
   it('edits a data binding key and clears the format', () => {
     const controller = makeController({
       [PATH]: { type: 'text', data: { key: 'total', format: 'currency' } },

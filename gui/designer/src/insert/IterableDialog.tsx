@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
+import { TOUR_ANCHORS } from '../tutorial/anchors';
 import { BTN_SM } from '../ui/chrome';
 import { Modal } from '../ui/Modal';
 import { IterableCreateForm, type IterableDraft } from './iterableCreateForm';
@@ -66,6 +67,7 @@ export function IterableDialog({ groups, workshop, onConfirm, onClose }: Iterabl
     <Modal
       open
       onClose={onClose}
+      tour={TOUR_ANCHORS.dialogIterable}
       title={t('iterable.title')}
       closeLabel={t('help.close')}
       footer={
