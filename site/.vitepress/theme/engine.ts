@@ -6,6 +6,7 @@
 import { withBase } from "vitepress";
 import { TIERS } from "../../src/lib/fonts.ts";
 import {
+  engineVersion,
   injectAssets,
   injectTier,
   loadLocale,
@@ -17,7 +18,7 @@ import {
 
 interface WasmModule {
   default(input?: { module_or_path: string | URL }): Promise<unknown>;
-  Engine: new () => WasmEngine;
+  Engine: (new () => WasmEngine) & { capabilities(): string };
 }
 
 function tierSource(tier: "immediate" | "lazy-ja", pack: string): TierSource {
@@ -31,12 +32,25 @@ function tierSource(tier: "immediate" | "lazy-ja", pack: string): TierSource {
 
 let boot: Promise<WasmEngine> | undefined;
 let jaLoaded: Promise<void> | undefined;
+let capabilities = "";
+
+/**
+ * The version the loaded engine reports for ITSELF. site/.data/wasm holds a
+ * RELEASED build, so this is also the version a visitor installs — asking the
+ * binary rather than carrying a string beside it is what keeps the two from
+ * disagreeing.
+ */
+export async function reportedVersion(): Promise<string> {
+  await engine();
+  return engineVersion(capabilities);
+}
 
 /** The shared session, booted en-US on the immediate tier. */
 export function engine(): Promise<WasmEngine> {
   boot ??= (async () => {
     const mod = (await import(/* @vite-ignore */ withBase("/data/wasm/shojiku_wasm.js"))) as WasmModule;
     await mod.default({ module_or_path: withBase("/data/wasm/shojiku_wasm_bg.wasm") });
+    capabilities = mod.Engine.capabilities();
     const e = new mod.Engine();
     await injectTier(e, tierSource("immediate", "noto-sans"));
     loadLocale(e, "en-US");

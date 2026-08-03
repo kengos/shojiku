@@ -141,20 +141,37 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   `@shojiku/designer`'s transport; keeps the package standalone),
   playground knob→template generation, `seo.ts` = `pagePath`/`twinPaths`/
   `headTags` deriving canonical + en↔ja hreflang + the OG/twitter card
-  from a page's `relativePath`), 100%×4 vitest +
-  `src/integration/liveRenderer.test.ts` (REAL wasm: tier gate,
-  receipt renders, both playground demos) + `src/headers.test.ts`
+  from a page's `relativePath`, `wasmSource.ts` = the SITE ENGINE PIN —
+  parse/render of `.data/wasm-source.json`, the drift check, the
+  CHANGELOG released-version read, and `repinRefusal`, the guard that
+  refuses new bytes under an already-pinned version), 100%×4 vitest +
+  `src/integration/liveRenderer.test.ts` (REAL wasm from
+  `engine/wasm/pkg` — a fresh build of HEAD: tier gate, receipt renders,
+  both playground demos) + `src/integration/committedEngine.test.ts`
+  (the REAL bytes Pages SERVES — `.data/wasm` self-reports the version
+  the record pins it to, and the released engine still renders the
+  site's own demos) + `src/headers.test.ts`
   (pins BOTH `_headers` CSP scopes; `/designer/*` must equal the
   designer's canonical file) + `src/parity.test.ts` (en↔ja page set /
   components / section counts). `.vitepress/theme/` = brand tokens +
-  the live components (LiveRenderer, PropertyPlayground, GalleryGrid;
-  browser glue, coverage-excluded). `scripts/assemble-data.ts` =
+  the live components (LiveRenderer, PropertyPlayground, GalleryGrid,
+  EngineVersion — the label stating which engine a live block runs, read
+  from the binary's OWN `capabilities()` report rather than a string kept
+  beside it; browser glue, coverage-excluded). `scripts/assemble-data.ts` =
   build-time pure-Node assembly (public/data wasm+tiered fonts+live
   examples, gallery previews, brand renders, llms.txt/llms-full.txt;
   25 MiB Pages cap asserted); `scripts/refresh-data.ts` = the COMMITTED
-  halves (`site/.data/wasm` from `make wasm` + the README gallery
-  section between `gallery:generated` markers), `--check` = the
-  `site-check` drift gate; `scripts/build-pages.sh` = the Cloudflare
+  halves, in three modes: default (`make site-data`) regenerates ONLY the
+  README gallery section between the `gallery:generated` markers;
+  `--check` (`make site-check`) compares both halves; `--release-wasm`
+  (`make site-wasm-release`) is the RELEASE-TIME re-pin.
+  **`site/.data/wasm` holds a RELEASED engine build, not HEAD's** — it is
+  what Pages serves, so a visitor's playground can never be ahead of the
+  package they install. The check pins it by the sha256 digests in
+  `site/.data/wasm-source.json` and by that record's version being one
+  `CHANGELOG.md` lists as released; it does NOT rebuild, which is what
+  makes it say the same thing on every host architecture (the `.wasm`
+  binary is not byte-reproducible between arm64 and CI's x86_64); `scripts/build-pages.sh` = the Cloudflare
   build (stages .data/wasm into engine/wasm/pkg, builds+assembles the
   Designer, merges it under `/designer/`, strips its own _headers —
   root `public/_headers` carries both CSP scopes; and
@@ -171,7 +188,7 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   Signals preamble VERBATIM (no signal expressed — that is a policy
   decision) plus the crawl grant and the `Sitemap:` line. Gates: `make site` /
   `site-check` / `site-build` (+ `verify:site` grid entry, CI job
-  `site`). Font tiers: immediate = noto-sans Regular+Bold (~1.2 MB),
+  `site`); `make site-wasm-release` is release-only and in no gate. Font tiers: immediate = noto-sans Regular+Bold (~1.2 MB),
   lazy-ja = BIZ UDP pair (~8.9 MB — ja-JP's default family);
   ipamj-anything stays static-PNG only (45 MB > the 25 MiB cap).
 - `docs/` — the doc set (`docs/engine/` = the per-feature template

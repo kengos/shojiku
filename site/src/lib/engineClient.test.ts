@@ -2,6 +2,7 @@
 // proof lives in src/integration/liveRenderer.test.ts).
 import { describe, expect, it } from "vitest";
 import {
+  engineVersion,
   injectAssets,
   injectTier,
   loadLocale,
@@ -46,6 +47,17 @@ describe("parseDiagnostics", () => {
   it("degrades non-JSON to one synthetic error and no items to empty", () => {
     expect(parseDiagnostics("not json")[0]?.code).toBe("bad_diagnostics_json");
     expect(parseDiagnostics(JSON.stringify({ items: "x" }))).toEqual([]);
+  });
+});
+
+describe("engineVersion", () => {
+  it("reads the version the engine reports for itself", () => {
+    expect(engineVersion(JSON.stringify({ version: "0.1.0", capabilities: [] }))).toBe("0.1.0");
+  });
+
+  it("yields an empty label rather than throwing on a surprising report", () => {
+    expect(engineVersion(JSON.stringify({ capabilities: [] }))).toBe("");
+    expect(engineVersion("not json")).toBe("");
   });
 });
 

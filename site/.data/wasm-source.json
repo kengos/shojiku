@@ -1,0 +1,9 @@
+{
+  "version": "0.1.0",
+  "files": {
+    "shojiku_wasm.d.ts": "0dc5b231fbbc3d38ebdedfe3a0f9f4f9e0c4a6b42d7743c689a53387f49a63a5",
+    "shojiku_wasm.js": "3be3a9c99374f26b6e02d3c47791e8dd9c1c577fb539c37becb5ccf187443697",
+    "shojiku_wasm_bg.wasm": "23aa3cdf0ab34ac995ece0fb6c8d9e3c22ce31b8f18bf3e03085669f1db017ee",
+    "shojiku_wasm_bg.wasm.d.ts": "15a42e0b82baffbe4596931c68939bf8ce5a98959276566a5cf5d7442924ec2c"
+  }
+}

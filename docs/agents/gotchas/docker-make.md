@@ -189,6 +189,24 @@ reaped on one machine.
   pair — the wrong guess either fails to install or silently builds the
   native target twice.
 
+## A compound `quiet` run does NOT refresh the per-target logs
+
+`make quiet T="site site-check"` (what `verify:site` delegates to)
+writes ONE log, `.make-logs/site_site-check.log`. The per-target
+`.make-logs/site-check.log` is left exactly as whatever the last
+STANDALONE run of that target wrote — which, right after you have
+deliberately induced a failure to prove a gate has teeth, is a FAILING
+log sitting next to a passing compound gate. Reading it back is how a
+green run gets reported as red (and the reverse is worse). Match the
+log file to the command you actually ran, and re-run the target
+standalone if you want its own log to reflect the current state.
+
+`.make-logs/last-error.log` has the same shape: it is cleared when that
+TARGET next passes, so a deliberately-failing smoke (a guard that is
+SUPPOSED to refuse) leaves a FAILED header behind indefinitely. Read its
+first line — it names the target — before treating it as an outstanding
+failure.
+
 ## Exit codes: never pipe a gate
 
 - **Inside a gate RECIPE, `sh -euc 'a && b; c'` greens over a failed `b`.**
@@ -307,36 +325,59 @@ lines once mis-parsed `FAILED. 553 passed; 1 failed` as green.
   fuzz crate does not have to sit under the crate it fuzzes — which is
   what lets ONE out-of-workspace crate carry targets for two crates.
 
+## `make site-build` replaces `engine/wasm/pkg` with the SITE's engine
+
+`site/scripts/build-pages.sh` stages the committed `site/.data/wasm` into
+`engine/wasm/pkg` (the designer-app's assemble reads that path, and it is
+gitignored). That directory is also what `liveRenderer.test.ts` loads as
+"a fresh build of HEAD", so **after a `make site-build`, `make site` is
+silently testing the RELEASED engine, not HEAD** — a green run proving
+less than it looks like it does.
+
+This only became consequential once `site/.data/wasm` deliberately
+STOPPED tracking HEAD: before that the two were near enough that the
+swap was invisible. `make verify` is unaffected (it does not run
+`site-build`), and CI cannot hit it (separate jobs, fresh checkouts that
+download the `wasm-pkg` artifact) — it bites the human who runs
+`site-build` and then a gate in the same tree. Re-run `make wasm`, or
+keep a copy, before trusting a later `make site`.
+
+The tell is subtle and worth recognising: `make site-wasm-release`
+suddenly SUCCEEDS where it refused minutes earlier. It is not a broken
+guard — the guard compares bytes, `pkg` now holds the site's own bytes,
+and the no-op re-pin is a legitimate allowed case. Check what is in
+`pkg` (`shasum -a 256 engine/wasm/pkg/shojiku_wasm_bg.wasm`) before
+concluding anything about the refusal logic.
+
 ## `make wasm` is not byte-reproducible across host architectures
 
 The pinned Rust container produces a DIFFERENT `shojiku_wasm_bg.wasm`
 on an arm64 host than on CI's x86_64 runners (the `.js`/`.d.ts`
 outputs match; only the binary differs), while CI runs reproduce each
-other byte-for-byte. Anything that byte-compares the wasm — the
-`site-check` gate over `site/.data/wasm` — therefore treats the
-x86_64 CI build as canonical: on a non-x86 host, refresh from the CI
-`wasm-pkg` artifact (`gh run download <run> -n wasm-pkg`) instead of
-your local `make wasm` output. Root-causing the nondeterminism is a
-filed backlog candidate.
+other byte-for-byte. Root-causing the nondeterminism is a filed backlog
+candidate.
 
-**But do NOT read a stale `site-check` as "just the arm64 thing".** Any
-change to a crate the wasm links — `shojiku-layout` especially — moves
-the binary for real, and CI's `site` job compares its OWN x86_64
-`wasm-pkg` against the committed `site/.data/wasm`, so architecture
-cannot be the cause there: the job fails on CI too until the committed
-data is refreshed. The two causes look identical locally (`stale:
-…/shojiku_wasm_bg.wasm`, `drift 1`), so tell them apart by what the
-change touched, not by the message. `site/.data/wasm` had been committed
-exactly once and every PR since was docs/site, which is how the first
-engine PR after it inherited the surprise.
+**`site-check` no longer trips on this, and an ordinary engine PR no
+longer refreshes anything.** `site/.data/wasm` holds a RELEASED engine
+build pinned by the sha256 digests in `site/.data/wasm-source.json`, so
+the gate compares the committed bytes against that RECORD rather than
+against a fresh local build — the same answer on every host. A gate that
+rebuilds to compare is what forced the old dance, and it also quietly
+made the homepage serve unreleased code, because "committed == a build of
+HEAD" is exactly what it enforced.
 
-The refresh has a forced ORDERING, because the canonical bytes only
-exist on CI: push the branch and open the PR first, let the `wasm` job
-run, then `gh run download <run-id> -n wasm-pkg -D <tmp>`, copy the
-files over `engine/wasm/pkg/`, `make site-data`, and commit the
-refreshed binary as a second commit on the same PR. (wasm is
+What remains architecture-sensitive is the RELEASE-time re-pin, which is
+rare (once per release) and deliberate. The canonical bytes are the
+x86_64 CI build, so on a non-x86 host: let the release commit's `wasm`
+job run, `gh run download <run-id> -n wasm-pkg -D <tmp>`, copy the files
+over `engine/wasm/pkg/`, then `make site-wasm-release`. (wasm is
 architecture-neutral to RUN, so dropping the x86 build into a local
-`pkg/` is fine — only its bytes differ.) Expect `make verify` to be red
-at `site-check` until that second commit, and remember verify is a
-CHAIN: the `sdk-*` and `docker` targets after it never ran, so say so
-rather than reporting a clean local bar.
+`pkg/` is fine — only its bytes differ.)
+
+That target refuses to run at the wrong moment rather than trusting the
+procedure: it stops when the version being pinned to is not one
+`CHANGELOG.md` lists as released, and — the one no downstream check could
+ever see — when the version has NOT moved but the bytes have, since same
+version + different build is by definition a build nobody released. A
+mid-cycle `make site-wasm-release` therefore fails loudly instead of
+silently re-pointing the site at HEAD.

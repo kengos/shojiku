@@ -13,6 +13,16 @@ platform binaries.
 
 ## [Unreleased]
 
+### Changed
+
+- **The homepage playground now runs a released engine, and says which
+  one.** It used to run whatever was on `main`, so a visitor could try a
+  fix in the browser and then install a package without it — the demo
+  ran ahead of the product. The engine the site serves is now pinned to
+  a published release and moves only when a release moves it, and the
+  site states which version that is — read from the running binary's own
+  report rather than written down beside it.
+
 ### Fixed
 
 - **Long text that splits across pages now redraws its whole box on

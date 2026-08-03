@@ -52,6 +52,19 @@ export function parseDiagnostics(json: string): Diagnostic[] {
   }
 }
 
+/** The version the engine reports for ITSELF (`Engine.capabilities()`) — what
+ * the site's live blocks label themselves with, so the stated version is the
+ * running binary's own answer rather than a string maintained beside it.
+ * Malformed input yields "" so a label can never break a live block. */
+export function engineVersion(capabilitiesJson: string): string {
+  try {
+    const doc = JSON.parse(capabilitiesJson) as { version?: unknown };
+    return typeof doc.version === "string" ? doc.version : "";
+  } catch {
+    return "";
+  }
+}
+
 /** One tier's byte source: how the manifest and each face reach the engine.
  * The browser implementation fetches /data/fonts/<tier>/<pack>/…; the node
  * integration test reads packs/fonts + subsetManifest. */

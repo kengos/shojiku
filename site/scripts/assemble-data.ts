@@ -1,7 +1,8 @@
 // Build-time assembly (pure Node — runs on Cloudflare Pages too): stages the
 // live-renderer engine + tiered fonts + gallery previews + llms files into
 // public/. Inputs are the repo (packs/, examples/, docs/) and the COMMITTED
-// site/.data/wasm (the one artifact a Node build cannot produce — see
+// site/.data/wasm (the one artifact a Node build cannot produce — a RELEASED
+// engine build, pinned by site/.data/wasm-source.json; see
 // scripts/refresh-data.ts). Deterministic: sorted walks, fixed orders.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -30,10 +31,10 @@ for (const area of ["data", "gallery", "brand", "llms.txt", "llms-full.txt"]) {
   rmSync(join(PUB, area), { recursive: true, force: true });
 }
 
-// 1. The wasm engine (committed under .data by `make site-data`).
+// 1. The wasm engine (committed under .data, re-pinned only by a release).
 const wasmSrc = join(SITE, ".data", "wasm");
 if (!existsSync(wasmSrc)) {
-  throw new Error("site/.data/wasm is missing — run `make site-data` (it copies the `make wasm` output)");
+  throw new Error("site/.data/wasm is missing — it is committed; restore it from git, or re-pin with `make site-wasm-release`");
 }
 const wasmFiles = readdirSync(wasmSrc).sort();
 if (wasmFiles.length === 0) throw new Error("site/.data/wasm is empty");

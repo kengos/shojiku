@@ -7,6 +7,8 @@ description: "YAMLを書き換えると、その場で描画が変わります�
 
 MDNのドキュメントのように、YAMLの変更で見た目がその場で変わるようにしてあります。デモの数はまだ少ないですが、順に増やしていきます。
 
+以下のデモはすべて <ClientOnly><EngineVersion /></ClientOnly> で動いています。公開済みのリリースそのもので、インストールして手元で動かすものと同じバージョンです。
+
 ## テキストスタイル
 
 スタイルは、CSSとほぼ同じ書き方にしてあります。`text-align`が`textAlign`になる、といった違いはあります。ここでは`textAlign`、`fontSize`、`lineHeight`、`letterSpacing`をコントロールで変えられます。ボックスの高さは`fontSize × lineHeight`から計算され、高さを固定したボックスがこの値より低いと`text_overflow`の警告が出ます。この挙動は[リファレンス](https://github.com/kengos/shojiku/blob/main/docs/engine/text.md)にも書いてありますが、ここでは実際に動かして確かめられます。
