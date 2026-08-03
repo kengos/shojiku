@@ -85,8 +85,24 @@ export const OK: OpResult = { ok: true };
  * engine's diagnostics discipline: never reflect unbounded content. */
 const MAX_ECHO = 200;
 
+/**
+ * Characters that may not appear in an echo, matching the engine's
+ * `shojiku_diagnostics::sanitize`: C0/C1 controls (an escape sequence
+ * repaints a terminal, a newline forges a log line) plus the bidirectional
+ * formatting characters, which reorder how the rest of the message displays
+ * without changing its content. The zero-width joiner and non-joiner are
+ * deliberately NOT here — they carry meaning in real text.
+ */
+// biome-ignore lint/suspicious/noControlCharactersInRegex: matching them is the point
+const UNSAFE_ECHO = /[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
+
 export function clip(input: string): string {
-  return input.length > MAX_ECHO ? `${input.slice(0, MAX_ECHO)}…` : input;
+  const safe = input.replace(UNSAFE_ECHO, '');
+  // Count by CODE POINT, not UTF-16 unit: `slice` on a string of astral
+  // characters (emoji, rare CJK) can cut a surrogate pair in half and
+  // produce a lone surrogate, which renders as a replacement character.
+  const points = Array.from(safe);
+  return points.length > MAX_ECHO ? `${points.slice(0, MAX_ECHO).join('')}…` : safe;
 }
 
 /** A path's label for an error message: the clipped path, or `document root`

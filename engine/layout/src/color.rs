@@ -19,16 +19,13 @@ pub fn parse_color(input: &str) -> Option<(f32, f32, f32)> {
 
 /// Truncates a template-supplied color string before echoing it into a
 /// diagnostic: colors are attacker-controlled and unbounded (yaml_guard
-/// caps non-finite numbers, not string sizes). Mirrors
-/// `shojiku_core::length::snippet` (crate-private there).
+/// caps non-finite numbers, not string sizes).
+///
+/// This used to be a hand-copied mirror of `shojiku_core::length::snippet`,
+/// because that one is crate-private there. Both now call the workspace's
+/// one guard, which also strips control characters — neither copy did.
 pub(crate) fn snippet(text: &str) -> String {
-    const MAX_CHARS: usize = 32;
-    if text.chars().count() <= MAX_CHARS {
-        text.to_string()
-    } else {
-        let head: String = text.chars().take(MAX_CHARS).collect();
-        format!("{head}…")
-    }
+    shojiku_diagnostics::sanitize_marked(text, 32)
 }
 
 #[cfg(test)]

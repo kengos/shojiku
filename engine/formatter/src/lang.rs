@@ -20,19 +20,26 @@ pub use packs::{
 pub use specs::{CurrencySpec, NumberSpec, UnitSpec};
 
 use serde::{Deserialize, Serialize};
+use shojiku_diagnostics::Echo;
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use thiserror::Error;
 
+/// Locale-pack loading failures. Paths and the serde message are echoes of
+/// untrusted pack content, so they take the bounded type; the I/O source is
+/// OS text and stays as it is.
 #[derive(Debug, Error)]
 pub enum LangPackError {
     #[error("failed to read locale pack file {path}: {source}")]
-    Io {
-        path: PathBuf,
-        source: std::io::Error,
-    },
+    Io { path: Echo, source: std::io::Error },
     #[error("failed to parse locale pack: {0}")]
-    Parse(#[from] serde_yaml::Error),
+    Parse(Echo),
+}
+
+impl From<serde_yaml::Error> for LangPackError {
+    fn from(err: serde_yaml::Error) -> Self {
+        LangPackError::Parse(Echo::from(err.to_string()))
+    }
 }
 
 /// One locale's defaults, loaded from `locale.yml`.
@@ -113,7 +120,7 @@ impl LangPack {
     /// Loads a locale pack from `<file>` (`packs/locale/<id>.yml`).
     pub fn load(file: &Path) -> Result<Self, LangPackError> {
         let content = std::fs::read_to_string(file).map_err(|source| LangPackError::Io {
-            path: file.to_path_buf(),
+            path: Echo::from(file),
             source,
         })?;
         Self::from_yaml_str(&content)

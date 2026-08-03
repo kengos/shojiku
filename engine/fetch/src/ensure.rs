@@ -8,10 +8,11 @@
 //! a later `--offline` one.
 
 use crate::cache::FontCache;
-use crate::error::{clip, FetchError, TransportError};
+use crate::error::{FetchError, TransportError};
 use crate::policy::FetchPolicy;
 use crate::read::{is_sha256_hex, MAX_FACE_BYTES};
 use crate::transport::Transport;
+use shojiku_diagnostics::Echo;
 use shojiku_formatter::FaceSpec;
 
 /// How many `Location` hops a fetch will follow. Each hop is re-checked
@@ -22,7 +23,12 @@ const MAX_REDIRECTS: u32 = 3;
 #[derive(Debug, Default)]
 pub struct FetchReport {
     /// `(face id, url)` for each face fetched over the network this run.
-    pub fetched: Vec<(String, String)>,
+    ///
+    /// Both are [`Echo`]s: the CLI prints this pair to stderr, and both the
+    /// face id and the URL come from a font-pack manifest. The URL was
+    /// bounded from the start; the id was not, which left the same hole on
+    /// the same line.
+    pub fetched: Vec<(Echo, Echo)>,
 }
 
 /// Whether missing faces may be fetched.
@@ -76,9 +82,9 @@ fn ensure_one(
     // is a broken manifest, not something to paper over.
     if !is_sha256_hex(&spec.sha256) {
         return Err(FetchError::BadSha256 {
-            pack: spec.pack.clone(),
-            id: spec.id.clone(),
-            sha256: clip(&spec.sha256),
+            pack: Echo::from(&spec.pack),
+            id: Echo::from(&spec.id),
+            sha256: Echo::from(&spec.sha256),
         });
     }
     if let Some(hit) = cache.get(&spec.sha256) {
@@ -86,21 +92,21 @@ fn ensure_one(
     }
     let Some(url) = spec.url.as_deref() else {
         return Err(FetchError::MissingNoUrl {
-            pack: spec.pack.clone(),
-            id: spec.id.clone(),
-            path: spec.path.display().to_string(),
+            pack: Echo::from(&spec.pack),
+            id: Echo::from(&spec.id),
+            path: Echo::from(spec.path.as_path()),
         });
     };
     if mode == Mode::Offline {
         return Err(FetchError::Offline {
-            pack: spec.pack.clone(),
-            id: spec.id.clone(),
-            url: clip(url),
+            pack: Echo::from(&spec.pack),
+            id: Echo::from(&spec.id),
+            url: Echo::from(url),
         });
     }
     let bytes = fetch_verified(spec, url, policy, transport)?;
     let path = cache.put(&spec.sha256, &bytes)?;
-    report.fetched.push((spec.id.clone(), clip(url)));
+    report.fetched.push((Echo::from(&spec.id), Echo::from(url)));
     Ok(path)
 }
 
@@ -120,10 +126,10 @@ fn fetch_verified(
         policy
             .check(&current)
             .map_err(|reason| FetchError::Policy {
-                pack: spec.pack.clone(),
-                id: spec.id.clone(),
-                url: clip(&current),
-                reason,
+                pack: Echo::from(&spec.pack),
+                id: Echo::from(&spec.id),
+                url: Echo::from(&current),
+                reason: Echo::from(reason),
             })?;
         match transport.get(&current, MAX_FACE_BYTES) {
             Ok(got) => {
@@ -131,29 +137,29 @@ fn fetch_verified(
                     Ok(got.bytes)
                 } else {
                     Err(FetchError::Sha256Mismatch {
-                        pack: spec.pack.clone(),
-                        id: spec.id.clone(),
-                        url: clip(&current),
-                        expected: spec.sha256.clone(),
-                        actual: got.sha256,
+                        pack: Echo::from(&spec.pack),
+                        id: Echo::from(&spec.id),
+                        url: Echo::from(&current),
+                        expected: Echo::from(&spec.sha256),
+                        actual: Echo::from(&got.sha256),
                     })
                 };
             }
             Err(TransportError::Redirect(location)) => current = resolve(&current, &location),
             Err(source) => {
                 return Err(FetchError::Transport {
-                    pack: spec.pack.clone(),
-                    id: spec.id.clone(),
-                    url: clip(&current),
+                    pack: Echo::from(&spec.pack),
+                    id: Echo::from(&spec.id),
+                    url: Echo::from(&current),
                     source,
                 })
             }
         }
     }
     Err(FetchError::Transport {
-        pack: spec.pack.clone(),
-        id: spec.id.clone(),
-        url: clip(url),
+        pack: Echo::from(&spec.pack),
+        id: Echo::from(&spec.id),
+        url: Echo::from(url),
         source: TransportError::TooManyRedirects(MAX_REDIRECTS),
     })
 }

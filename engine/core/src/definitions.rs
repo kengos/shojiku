@@ -14,6 +14,7 @@
 
 use crate::error::CoreError;
 use serde::{Deserialize, Serialize};
+use shojiku_diagnostics::Echo;
 use std::collections::BTreeMap;
 
 mod schema;
@@ -73,12 +74,12 @@ fn v1_form_hint(input: &str) -> Option<CoreError> {
         .contains_key(&key)
         .then(|| CoreError::Located {
             what: "definitions",
-            path: "groups".to_string(),
+            path: Echo::from("groups"),
             line: 0,
             column: 0,
             message: "the `groups` list is the retired v1 form; definitions now use the \
                   OpenAPI-schema shape (`type: object` + `properties`) — see \
                   docs/engine/definitions.md"
-                .to_string(),
+                .into(),
         })
 }

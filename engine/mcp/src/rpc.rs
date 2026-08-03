@@ -79,7 +79,7 @@ pub(crate) fn error_response(id: Value, code: i64, message: &str) -> Value {
 /// Bounds an attacker-controlled echo: control characters stripped, then
 /// clipped to 200 chars (the diagnostics layer's convention).
 pub(crate) fn clip(s: &str) -> String {
-    s.chars().filter(|c| !c.is_control()).take(200).collect()
+    shojiku_diagnostics::sanitize(s, shojiku_diagnostics::MAX_ECHO)
 }
 
 #[cfg(test)]

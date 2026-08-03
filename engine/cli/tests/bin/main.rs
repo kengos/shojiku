@@ -5,6 +5,7 @@
 //! coverage measurement (cargo-llvm-cov instruments child processes).
 
 mod caps;
+mod echo;
 mod fetch;
 mod outputs;
 mod report;

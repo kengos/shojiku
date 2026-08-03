@@ -4,7 +4,8 @@
 //! here so both hosts agree; bytes-injecting hosts (WASM) build the crate
 //! with `default-features = false` and never compile this module.
 
-use crate::locale::{load_pack, valid_locale_id, LocaleError};
+use crate::locale::{load_pack, valid_locale_id, LocaleError, MAX_LOCALE_ID};
+use shojiku_diagnostics::Echo;
 use shojiku_formatter::{LangPack, LangPackError};
 use std::path::PathBuf;
 use thiserror::Error;
@@ -14,7 +15,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum FsPackError {
     #[error("locale id `{0}` contains invalid characters (allowed: letters, digits, `-`, `_`)")]
-    InvalidLocale(String),
+    InvalidLocale(Echo),
     #[error("failed to read {path}: {source}")]
     Io {
         path: PathBuf,
@@ -71,9 +72,12 @@ pub fn find_locale_file(locale: &str, locale_dirs: &[PathBuf]) -> Option<PathBuf
 /// pack. The not-found result becomes the dir-listing error.
 pub fn load_locale_pack(locale: &str, locale_dirs: &[PathBuf]) -> Result<LangPack, FsPackError> {
     if !valid_locale_id(locale) {
-        return Err(FsPackError::InvalidLocale(
-            locale.chars().take(64).collect(),
-        ));
+        // The id's own domain cap: past MAX_LOCALE_ID the value is
+        // invalid by definition, so there is nothing useful to echo.
+        return Err(FsPackError::InvalidLocale(Echo::clipped_to(
+            locale,
+            MAX_LOCALE_ID,
+        )));
     }
     let overlay = find_locale_file(locale, locale_dirs)
         .map(|path| {

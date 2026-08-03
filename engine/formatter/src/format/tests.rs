@@ -117,3 +117,19 @@ fn an_image_field_renders_its_reference_verbatim() {
     );
     assert_eq!(out, "logo.png");
 }
+
+#[test]
+fn a_format_warning_keeps_its_tighter_domain_cap_and_gains_the_control_strip() {
+    // Currency/variant/unit names clip at 32, not the workspace default of
+    // 200: a currency code is three characters, so there is nothing useful
+    // past that. Delegating to the shared guard kept the cap and added the
+    // control-character strip this site never had.
+    let hostile = format!("\u{1b}[31m\u{7}{}", "c".repeat(500));
+    let clipped = crate::format::money::clip(&hostile);
+    assert!(!clipped.chars().any(char::is_control));
+    assert_eq!(clipped.chars().count(), 33, "32 chars plus the marker");
+    assert!(clipped.ends_with('…'));
+
+    // A short, well-formed code is untouched and unmarked.
+    assert_eq!(crate::format::money::clip("JPY"), "JPY");
+}

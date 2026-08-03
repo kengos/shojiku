@@ -10,7 +10,7 @@ use shojiku_authoring::{
     inspect_json, load_sources, prepare, preview_page, preview_pages, resolve_locale_id,
     validate_strings, AssetsInput, PrepareCtx, Prepared,
 };
-use shojiku_diagnostics::Diagnostics;
+use shojiku_diagnostics::{sanitize, Diagnostics, MAX_MESSAGE};
 use shojiku_formatter::{resolve_face_specs, LangPack};
 use shojiku_layout::FontStore;
 use std::path::Path;
@@ -146,9 +146,17 @@ fn report_and_fail(diags: Diagnostics) -> CliError {
 }
 
 /// Prints diagnostics to stderr, one per line.
+///
+/// Bounded like every other echo on this surface. A diagnostic's ARGS are
+/// already sanitized (`ArgValue::text`), so no control character can reach
+/// here — but its rendered message is prose plus several 200-character args,
+/// which for a located parse error runs past 650 characters and grows with
+/// the arg count. The structured `--report` sidecar is unaffected: it carries
+/// the diagnostics as the engine emitted them, and this is only the
+/// human-readable line.
 pub fn report_diagnostics(diags: &Diagnostics) {
     for d in diags.iter() {
-        eprintln!("shojiku: {d}");
+        eprintln!("shojiku: {}", sanitize(&d.to_string(), MAX_MESSAGE));
     }
 }
 

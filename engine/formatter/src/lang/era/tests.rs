@@ -94,3 +94,14 @@ fn unknown_era_keys_are_rejected() {
         serde_yaml::from_str("{ name: 令和, start: \"2019-05-01\", zzz: 1 }");
     assert!(r.is_err());
 }
+
+#[test]
+fn an_era_date_echo_keeps_its_domain_cap_and_strips_controls() {
+    // Same shape as the format-warning cap: an era start date is ten
+    // characters, so 32 is generous, and the pack that supplies it is
+    // untrusted input.
+    let hostile = format!("\u{1b}[2J\u{7}{}", "9".repeat(500));
+    let out = super::truncated(&hostile);
+    assert!(!out.chars().any(char::is_control));
+    assert_eq!(out.chars().count(), 33, "32 chars plus the marker");
+}

@@ -3,6 +3,7 @@
 //! cache directory, loop forever, or smuggle escapes onto the terminal.
 
 use super::*;
+use shojiku_diagnostics::Echo;
 
 #[test]
 fn wrong_bytes_fail_loudly_and_are_never_cached() {
@@ -21,7 +22,7 @@ fn wrong_bytes_fail_loudly_and_are_never_cached() {
     .unwrap_err();
 
     assert!(
-        matches!(err, FetchError::Sha256Mismatch { ref expected, .. } if *expected == pinned),
+        matches!(err, FetchError::Sha256Mismatch { ref expected, .. } if expected.as_str() == pinned),
         "got: {err}"
     );
     // Nothing unverified may reach the cache.
@@ -234,4 +235,50 @@ fn a_hostile_url_is_stripped_and_clipped_in_the_error() {
     assert!(!msg.contains('\u{7}'), "bell survived: {msg:?}");
     assert!(msg.contains('…'), "not clipped: {msg}");
     assert!(msg.len() < 400, "unbounded echo: {}", msg.len());
+}
+
+#[test]
+fn every_fetch_error_field_is_bounded_not_just_the_url() {
+    // The residual this cycle closes on the fetch path: `clip()` was applied
+    // at seven call sites and only ever to the URL, so a manifest's pack id,
+    // face id, file path and sha256 rode out raw. The bound is now the field
+    // type, which no new variant can skip.
+    let hostile = format!("\u{1b}[2J\u{7}{}", "z".repeat(10_000));
+    let errors = [
+        FetchError::MissingNoUrl {
+            pack: Echo::from(&hostile),
+            id: Echo::from(&hostile),
+            path: Echo::from(&hostile),
+        },
+        FetchError::BadSha256 {
+            pack: Echo::from(&hostile),
+            id: Echo::from(&hostile),
+            sha256: Echo::from(&hostile),
+        },
+        FetchError::Sha256Mismatch {
+            pack: Echo::from(&hostile),
+            id: Echo::from(&hostile),
+            url: Echo::from(&hostile),
+            expected: Echo::from(&hostile),
+            actual: Echo::from(&hostile),
+        },
+        FetchError::Policy {
+            pack: Echo::from(&hostile),
+            id: Echo::from(&hostile),
+            url: Echo::from(&hostile),
+            reason: Echo::from(&hostile),
+        },
+    ];
+    for err in errors {
+        let message = err.to_string();
+        assert!(
+            !message.chars().any(char::is_control),
+            "control character survived: {message:?}"
+        );
+        assert!(
+            message.chars().count() < 5 * (shojiku_diagnostics::MAX_ECHO + 1) + 300,
+            "unbounded fetch error ({} chars)",
+            message.chars().count()
+        );
+    }
 }

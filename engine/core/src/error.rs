@@ -1,15 +1,22 @@
 //! The crate error type for parsing untrusted input artifacts.
 
-use shojiku_diagnostics::{Diagnostic, DiagnosticCode};
+use shojiku_diagnostics::{Diagnostic, DiagnosticCode, Echo};
 use thiserror::Error;
 
 /// Errors produced while parsing Shojiku input artifacts.
+///
+/// Every field that quotes the input back is an [`Echo`], not a `String`:
+/// this type's whole job is to tell an author which key they mistyped, and
+/// the key comes from a document nobody vetted. The serde failures keep the
+/// message rather than the error value because nothing in the workspace
+/// walks the source chain, and an [`Echo`] cannot smuggle an escape sequence
+/// onto a terminal the way a raw `serde_yaml::Error` rendering can.
 #[derive(Debug, Error)]
 pub enum CoreError {
     #[error("failed to parse YAML/JSON: {0}")]
-    Parse(#[from] serde_yaml::Error),
+    Parse(Echo),
     #[error("failed to parse JSON: {0}")]
-    Json(#[from] serde_json::Error),
+    Json(Echo),
     #[error("{0} contains non-finite numbers (NaN/Infinity), which are not allowed")]
     NonFinite(&'static str),
     /// A structural parse failure located to a field path. `path`
@@ -23,26 +30,39 @@ pub enum CoreError {
     #[error("failed to parse {what} at `{path}`: {message}")]
     Located {
         what: &'static str,
-        path: String,
+        path: Echo,
         /// 1-based line, or 0 when the location is unavailable.
         line: usize,
         /// 1-based column, or 0 when the location is unavailable.
         column: usize,
-        message: String,
+        message: Echo,
     },
+}
+
+impl From<serde_yaml::Error> for CoreError {
+    fn from(err: serde_yaml::Error) -> Self {
+        CoreError::Parse(Echo::from(err.to_string()))
+    }
+}
+
+impl From<serde_json::Error> for CoreError {
+    fn from(err: serde_json::Error) -> Self {
+        CoreError::Json(Echo::from(err.to_string()))
+    }
 }
 
 impl CoreError {
     /// Builds a [`CoreError::Located`] from a `serde_path_to_error`
     /// failure, extracting the field path and the underlying YAML
     /// line/column. Attacker-controlled text (an unbounded unknown key
-    /// name, a deeply nested path) is clipped so a hostile document
-    /// cannot blow up the error message.
+    /// name, a deeply nested path) is bounded by the [`Echo`] field type,
+    /// so a hostile document cannot blow up the error message or repaint
+    /// the terminal reading it.
     pub(crate) fn located(
         what: &'static str,
         err: serde_path_to_error::Error<serde_yaml::Error>,
     ) -> Self {
-        let path = clip(&err.path().to_string());
+        let path = Echo::from(err.path().to_string());
         let inner = err.into_inner();
         let (line, column) = inner
             .location()
@@ -53,7 +73,7 @@ impl CoreError {
             path,
             line,
             column,
-            message: clip(&inner.to_string()),
+            message: Echo::from(inner.to_string()),
         }
     }
 
@@ -75,9 +95,9 @@ impl CoreError {
             } => {
                 let mut diag = Diagnostic::new(DiagnosticCode::ParseError)
                     .arg("what", *what)
-                    .arg("path", path.clone())
-                    .arg("detail", message.clone())
-                    .with_path(path.clone());
+                    .arg("path", path.as_str())
+                    .arg("detail", message.as_str())
+                    .with_path(path.as_str());
                 if *line > 0 {
                     diag = diag.arg("line", *line);
                 }
@@ -89,80 +109,16 @@ impl CoreError {
             CoreError::NonFinite(what) => {
                 Diagnostic::new(DiagnosticCode::NonFiniteNumber).arg("what", *what)
             }
-            CoreError::Parse(err) => Diagnostic::new(DiagnosticCode::ParseError)
-                .arg("what", "input")
-                .arg("path", "")
-                .arg("detail", err.to_string()),
-            CoreError::Json(err) => Diagnostic::new(DiagnosticCode::ParseError)
-                .arg("what", "input")
-                .arg("path", "")
-                .arg("detail", err.to_string()),
+            CoreError::Parse(detail) | CoreError::Json(detail) => {
+                Diagnostic::new(DiagnosticCode::ParseError)
+                    .arg("what", "input")
+                    .arg("path", "")
+                    .arg("detail", detail.as_str())
+            }
         }
     }
 }
 
-/// Bounds a possibly attacker-controlled string echoed into an error.
-fn clip(text: &str) -> String {
-    const MAX_CHARS: usize = 200;
-    if text.chars().count() <= MAX_CHARS {
-        text.to_string()
-    } else {
-        let head: String = text.chars().take(MAX_CHARS).collect();
-        format!("{head}…")
-    }
-}
-
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn located_maps_to_parse_error_with_location_args() {
-        let err = CoreError::Located {
-            what: "template",
-            path: "sections.body".to_string(),
-            line: 3,
-            column: 5,
-            message: "unknown field `foo`".to_string(),
-        };
-        let diag = err.to_diagnostic();
-        assert_eq!(diag.code, "parse_error");
-        assert_eq!(diag.path.as_deref(), Some("sections.body"));
-        assert_eq!(diag.args.get("line"), Some(&3usize.into()));
-        assert_eq!(diag.args.get("column"), Some(&5usize.into()));
-        assert!(diag.message.contains("unknown field `foo`"));
-    }
-
-    #[test]
-    fn located_without_location_omits_line_and_column() {
-        let err = CoreError::Located {
-            what: "template",
-            path: "root".to_string(),
-            line: 0,
-            column: 0,
-            message: "bad".to_string(),
-        };
-        let diag = err.to_diagnostic();
-        assert!(!diag.args.contains_key("line"));
-        assert!(!diag.args.contains_key("column"));
-    }
-
-    #[test]
-    fn non_finite_maps_to_its_own_code() {
-        let diag = CoreError::NonFinite("params").to_diagnostic();
-        assert_eq!(diag.code, "non_finite_number");
-        assert!(diag.message.contains("params"));
-    }
-
-    #[test]
-    fn structural_yaml_and_json_errors_degrade_to_parse_error() {
-        let yaml = serde_yaml::from_str::<i32>("[unterminated").unwrap_err();
-        let diag = CoreError::Parse(yaml).to_diagnostic();
-        assert_eq!(diag.code, "parse_error");
-        assert!(diag.args.contains_key("detail"));
-
-        let json = serde_json::from_str::<i32>("{").unwrap_err();
-        let diag = CoreError::Json(json).to_diagnostic();
-        assert_eq!(diag.code, "parse_error");
-    }
-}
+#[path = "error/tests.rs"]
+mod tests;

@@ -255,3 +255,29 @@ fn no_command_takes_a_passphrase_on_the_command_line() {
     ])
     .is_ok());
 }
+
+#[test]
+fn a_hostile_face_id_or_url_cannot_ride_the_fetched_line_to_stderr() {
+    // This line prints a manifest's own face id and URL, so it is an echo
+    // like any error message — and it is the one that reads as transparency
+    // rather than as a failure, which is why it was easy to miss.
+    let hostile = format!("\u{1b}[2J\u{7}{}", "n".repeat(10_000));
+    let mut report = shojiku_fetch::FetchReport::default();
+    report
+        .fetched
+        .push((hostile.as_str().into(), hostile.as_str().into()));
+
+    let mut out = Vec::new();
+    crate::commands::report_fetched(&report, &mut out);
+
+    let text = String::from_utf8(out).expect("utf8");
+    assert!(
+        !text.chars().any(|c| c.is_control() && c != '\n'),
+        "control character reached stderr: {text:?}"
+    );
+    assert!(
+        text.chars().count() < 2 * (shojiku_diagnostics::MAX_ECHO + 1) + 100,
+        "unbounded fetched line ({} chars)",
+        text.chars().count()
+    );
+}

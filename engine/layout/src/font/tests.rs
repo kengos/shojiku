@@ -6,6 +6,7 @@ use std::path::Path;
 
 use super::test_support::ja_store;
 use super::*;
+use shojiku_diagnostics::Echo;
 
 #[test]
 fn loads_the_ja_pack_faces() {
@@ -258,4 +259,30 @@ fn from_faces_rejects_bad_default() {
     .expect("face");
     let result = FontStore::from_faces(vec![face], "other");
     assert!(result.is_err());
+}
+
+#[test]
+fn font_errors_bound_every_echoed_pack_supplied_id() {
+    // Face ids, family ids and locale ids all come from a locale pack or a
+    // font-pack manifest, and this surface prints to a terminal.
+    let hostile = format!("\u{1b}[2J\u{7}{}", "f".repeat(10_000));
+    let errors = [
+        FontError::NoFonts(Echo::from(&hostile)),
+        FontError::UnknownFace(Echo::from(&hostile)),
+        FontError::Sha256Mismatch(Echo::from(&hostile)),
+        FontError::EmbeddingRestricted(Echo::from(&hostile)),
+    ];
+    for err in errors {
+        let message = err.to_string();
+        assert!(
+            !message.chars().any(char::is_control),
+            "control character survived: {message:?}"
+        );
+        assert!(
+            message.chars().count() < shojiku_diagnostics::MAX_ECHO + 200,
+            "unbounded font error ({} chars)",
+            message.chars().count()
+        );
+        assert!(message.contains('…'), "expected a truncation marker");
+    }
 }

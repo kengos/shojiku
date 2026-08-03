@@ -7,6 +7,7 @@
 use crate::error::FetchError;
 use crate::read::{hex, is_sha256_hex};
 use sha2::{Digest, Sha256};
+use shojiku_diagnostics::Echo;
 use std::path::{Path, PathBuf};
 
 /// A cache rooted at a directory. The root is created lazily on first write,
@@ -91,7 +92,7 @@ impl FontCache {
     pub fn put(&self, sha256: &str, bytes: &[u8]) -> Result<PathBuf, FetchError> {
         let path = self.blob_path(sha256).ok_or_else(|| FetchError::Cache {
             action: "build a cache path for",
-            path: sha256.chars().take(64).collect(),
+            path: Echo::from(sha256),
             source: std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 "digest is not 64 lowercase hex characters",
@@ -130,7 +131,7 @@ fn cache_io(action: &'static str, path: &Path, r: std::io::Result<()>) -> Result
 fn cache_err(action: &'static str, path: &Path, source: std::io::Error) -> FetchError {
     FetchError::Cache {
         action,
-        path: path.display().to_string(),
+        path: Echo::from(path),
         source,
     }
 }

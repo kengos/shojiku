@@ -5,6 +5,7 @@
 
 use crate::error::TransportError;
 use sha2::{Digest, Sha256};
+use shojiku_diagnostics::Echo;
 use std::io::Read;
 
 /// Largest face the host will accept. The bundled rare-kanji fallback
@@ -39,7 +40,7 @@ pub fn read_capped(src: &mut dyn Read, cap: u64) -> Result<Hashed, TransportErro
     loop {
         let n = src
             .read(&mut chunk)
-            .map_err(|e| TransportError::Io(e.to_string()))?;
+            .map_err(|e| TransportError::Io(Echo::from(e.to_string())))?;
         if n == 0 {
             break;
         }

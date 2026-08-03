@@ -2,6 +2,7 @@
 //! outline extraction (y-down, cubics only) for pixel backends.
 
 use shojiku_core::{FontStyle, FontWeight};
+use shojiku_diagnostics::Echo;
 use shojiku_image::PathCmd;
 use skrifa::instance::{LocationRef, Size};
 use skrifa::outline::DrawSettings;
@@ -59,7 +60,7 @@ impl FontFace {
         let id = id.into();
         let data = Arc::new(data);
         let font = FontRef::from_index(&data, 0).map_err(|source| FontError::Parse {
-            id: id.clone(),
+            id: Echo::from(&id),
             source,
         })?;
         let metrics = font.metrics(Size::unscaled(), LocationRef::default());
@@ -126,7 +127,7 @@ impl FontFace {
 
     pub fn load(id: impl Into<String>, path: &Path) -> Result<Self, FontError> {
         let bytes = std::fs::read(path).map_err(|source| FontError::Io {
-            path: path.display().to_string(),
+            path: Echo::from(path),
             source,
         })?;
         Self::from_bytes(id, bytes)

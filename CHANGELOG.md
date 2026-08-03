@@ -15,6 +15,31 @@ platform binaries.
 
 ### Changed
 
+- **Error messages no longer replay a document's own bytes at you.**
+  Anything the engine quotes back — a mistyped template key, a params
+  value, a font-pack or locale id, a file path — is now stripped of
+  control characters and clipped to a bounded length before it reaches
+  you, with a `…` marking anything cut. Two things prompted this. A
+  document could make an error run to thousands of characters, and, worse,
+  it could smuggle a terminal escape sequence into one: a message printed
+  to your terminal or shipped to your log aggregator could repaint the
+  screen or forge a second log line. Bidirectional formatting characters
+  go the same way — those change the order a message *displays* in without
+  changing a byte of it, which defeats the whole point of quoting your key
+  back to you. Zero-width joiners stay, since they carry meaning in real
+  text. Values clip at 200 characters and
+  whole messages at 400, with tighter limits where the value itself is
+  short by nature — 64 for a locale id, 32 for a currency code. Every
+  surface that prints an engine error now applies the same bound: the
+  CLI's stderr, the `--report` sidecar, the C ABI status, the MCP error
+  response, and the error the browser build throws. Diagnostics were
+  already bounded and are unchanged, so anything reading `code` and
+  `args` sees exactly what it saw before — only the human-readable
+  message got shorter, and only when it was hostile to begin with.
+  The Designer applies the same rule to its own editing errors, and now
+  counts by character rather than by UTF-16 unit, so a clipped run of
+  emoji or rare CJK is no longer cut mid-character.
+
 - **Absurd font sizes and stroke widths now fall back with a warning
   instead of reaching the geometry.** `fontSize` and `lineHeight` accept
   up to 1000 each, and the `line` item's `style.width` joins the

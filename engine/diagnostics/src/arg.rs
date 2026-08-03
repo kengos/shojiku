@@ -14,9 +14,12 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::echo::{sanitize, MAX_ECHO};
+
 /// The longest string an argument echoes; a hostile template/params key
-/// cannot blow up a diagnostic beyond this.
-const MAX_ARG_CHARS: usize = 200;
+/// cannot blow up a diagnostic beyond this. An arg IS one echoed value, so
+/// it takes the shared value cap.
+const MAX_ARG_CHARS: usize = MAX_ECHO;
 
 /// One typed argument value: string, number, or boolean.
 ///
@@ -43,8 +46,12 @@ pub enum ArgValue {
 impl ArgValue {
     /// Builds a string value, stripping control characters and clipping to
     /// [`MAX_ARG_CHARS`].
+    ///
+    /// An arg carries no `…` marker, unlike [`crate::Echo`]: the arg map is
+    /// data a consumer re-renders through its own catalog, and a marker in
+    /// it would be engine prose leaking into a value.
     pub fn text(s: &str) -> Self {
-        ArgValue::Str(sanitize(s))
+        ArgValue::Str(sanitize(s, MAX_ARG_CHARS))
     }
 
     /// Builds a number value, forcing non-finite inputs to 0.
@@ -61,15 +68,6 @@ impl ArgValue {
             ArgValue::Str(s) => s.clone(),
         }
     }
-}
-
-/// Strips control characters (log/terminal-injection guard) and clips to a
-/// bounded character count.
-fn sanitize(s: &str) -> String {
-    s.chars()
-        .filter(|c| !c.is_control())
-        .take(MAX_ARG_CHARS)
-        .collect()
 }
 
 /// Renders a finite number for an English message: integers print without a

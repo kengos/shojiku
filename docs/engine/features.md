@@ -1092,7 +1092,28 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   `assert_errors_are_bounded!` asserts `!needs_drop` over each error type,
   so a variant that grew a `String` stops the build. The other surface's
   rule is the opposite on purpose: an authoring error CLIPS the text it
-  quotes, because naming the mistyped key is its job.
+  quotes, because naming the mistyped key is its job — and it is handed
+  to the compiler the same way, through the field TYPE rather than a
+  call each site must remember (see below).
+- **Everything the engine quotes back is bounded and control-free, by
+  one guard.** Any message that echoes a template key, a params value, a
+  pack id or a file path is text the document chose, so it is stripped of
+  control characters (an escape sequence in an error is an injection
+  channel into whatever terminal or log reads it) and of bidirectional
+  formatting characters (which reorder how the rest of the line DISPLAYS
+  without changing its bytes — the zero-width joiners are deliberately
+  kept, since they carry meaning in real text) and clipped by
+  character count — 200 for a single value, 400 for a whole message, and
+  tighter where the domain says so (64 for a locale id, 32 for a
+  currency code or a length snippet). A clipped value ends in `…`.
+  The guard lives in one place, and the error enums carry an `Echo`
+  field type rather than calling it, so a new variant cannot reopen the
+  hole. Every surface that prints an engine error applies the same bound
+  on the way out: the CLI's stderr and its per-diagnostic lines, the
+  `--report` sidecar an SDK reads, the C ABI status wire, the MCP
+  JSON-RPC error, and the `Error.message` the browser build throws.
+  Diagnostic `args` were already bounded and are unchanged, so a
+  translating consumer sees exactly the values it saw before.
 - **The parsers that read attacker-chosen bytes have fuzz targets** —
   the shared document reader, the whole verifier, the `/Contents` window
   decoder, the CMS container decoder and the anchor loader. They live in

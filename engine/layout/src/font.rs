@@ -25,6 +25,7 @@ pub(crate) use vertical::vertical_extent;
 pub use vertical::{arrange_vertical, down_advance_over, VGlyph};
 
 use shojiku_core::{FontStyle, FontWeight};
+use shojiku_diagnostics::Echo;
 use shojiku_formatter::PackError;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -48,28 +49,31 @@ pub struct ResolvedChain<'a> {
     pub fallback_ids: Vec<String>,
 }
 
+/// Font loading and resolution failures.
+///
+/// Face ids, family ids, locale ids and file paths all come from a locale
+/// pack or a font-pack manifest — untrusted input — so each is an [`Echo`].
+/// The `skrifa` and `std::io` sources stay typed: their text is written by
+/// the library and the OS, not by the document.
 #[derive(Debug, Error)]
 pub enum FontError {
     #[error("failed to read font file {path}: {source}")]
-    Io {
-        path: String,
-        source: std::io::Error,
-    },
+    Io { path: Echo, source: std::io::Error },
     #[error("failed to parse font {id}: {source}")]
     Parse {
-        id: String,
+        id: Echo,
         source: skrifa::raw::ReadError,
     },
     #[error("locale `{0}` declares no fonts; cannot render text")]
-    NoFonts(String),
+    NoFonts(Echo),
     #[error("unknown font face `{0}`")]
-    UnknownFace(String),
+    UnknownFace(Echo),
     #[error("failed to resolve font pack: {0}")]
     Pack(#[from] PackError),
     #[error("font `{0}` failed sha256 integrity check")]
-    Sha256Mismatch(String),
+    Sha256Mismatch(Echo),
     #[error("font `{0}` embedding is restricted by its fsType (font_embedding_restricted)")]
-    EmbeddingRestricted(String),
+    EmbeddingRestricted(Echo),
 }
 
 /// All faces loaded from a lang pack, addressable by id.

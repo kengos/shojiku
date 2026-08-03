@@ -8,7 +8,7 @@ use thiserror::Error;
 
 /// Longest accepted locale id. BCP 47 tags stay well under this; the id is
 /// echoed on the invalid-id error, so the cap also bounds that echo.
-const MAX_LOCALE_ID: usize = 64;
+pub(crate) const MAX_LOCALE_ID: usize = 64;
 
 #[derive(Debug, Error)]
 pub enum LocaleError {

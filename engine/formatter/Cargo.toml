@@ -15,6 +15,7 @@ serde_yaml = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
 shojiku-core = { workspace = true }
+shojiku-diagnostics = { workspace = true }
 
 [lints]
 workspace = true

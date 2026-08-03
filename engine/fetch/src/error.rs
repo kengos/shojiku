@@ -4,72 +4,47 @@
 //! determinism the sha256 pin exists to guarantee). Attacker-influenceable
 //! text (manifest URLs) is clipped before it reaches a message.
 
+use shojiku_diagnostics::Echo;
 use thiserror::Error;
 
-/// Longest attacker-influenceable string echoed into an error message.
-const CLIP: usize = 200;
-
-/// Strips control characters and clips to [`CLIP`] chars. Manifest URLs are
-/// untrusted input printed to a terminal, so they may not smuggle escape
-/// sequences (cursor moves, colour codes) or run unbounded.
-pub(crate) fn clip(s: &str) -> String {
-    let mut out: String = s
-        .chars()
-        .filter(|c| !c.is_control())
-        .take(CLIP)
-        .collect::<String>();
-    if s.chars().filter(|c| !c.is_control()).count() > CLIP {
-        out.push('…');
-    }
-    out
-}
-
+/// Every attacker-influenceable field is an [`Echo`], so the bound is the
+/// field TYPE rather than a call each construction site has to remember.
+/// It used to be a local `clip()` applied at seven call sites — and only to
+/// the URLs, leaving pack ids, face ids and file paths unbounded.
 #[derive(Debug, Error)]
 pub enum FetchError {
     #[error("font pack `{pack}` face `{id}`: file `{path}` is missing and the manifest declares no `url:` to fetch it from")]
-    MissingNoUrl {
-        pack: String,
-        id: String,
-        path: String,
-    },
+    MissingNoUrl { pack: Echo, id: Echo, path: Echo },
     #[error("font pack `{pack}` face `{id}`: file is missing and offline mode blocked the fetch from `{url}` (warm the cache with an online run, or install the pack locally)")]
-    Offline {
-        pack: String,
-        id: String,
-        url: String,
-    },
+    Offline { pack: Echo, id: Echo, url: Echo },
     #[error("font pack `{pack}` face `{id}`: `{url}` is not an allowed fetch source ({reason}); pass `--font-fetch-allow <host>` to trust it")]
     Policy {
-        pack: String,
-        id: String,
-        url: String,
-        reason: String,
+        pack: Echo,
+        id: Echo,
+        url: Echo,
+        reason: Echo,
     },
     #[error("font pack `{pack}` face `{id}`: fetch from `{url}` failed: {source}")]
     Transport {
-        pack: String,
-        id: String,
-        url: String,
+        pack: Echo,
+        id: Echo,
+        url: Echo,
         source: TransportError,
     },
     #[error("font pack `{pack}` face `{id}`: bytes fetched from `{url}` do not match the manifest sha256 (expected {expected}, got {actual}) — refusing to use them")]
     Sha256Mismatch {
-        pack: String,
-        id: String,
-        url: String,
-        expected: String,
-        actual: String,
+        pack: Echo,
+        id: Echo,
+        url: Echo,
+        expected: Echo,
+        actual: Echo,
     },
     #[error("font pack `{pack}` face `{id}`: manifest sha256 `{sha256}` is not 64 lowercase hex characters")]
-    BadSha256 {
-        pack: String,
-        id: String,
-        sha256: String,
-    },
+    BadSha256 { pack: Echo, id: Echo, sha256: Echo },
     #[error("font cache: failed to {action} {path}: {source}")]
     Cache {
         action: &'static str,
-        path: String,
+        path: Echo,
         source: std::io::Error,
     },
     #[error("font cache directory cannot be determined: set $SHOJIKU_CACHE_DIR")]
@@ -81,11 +56,11 @@ pub enum FetchError {
 #[derive(Debug, Error)]
 pub enum TransportError {
     #[error("{0}")]
-    Io(String),
+    Io(Echo),
     #[error("unexpected HTTP status {0}")]
     Status(u16),
     #[error("redirect to `{0}`")]
-    Redirect(String),
+    Redirect(Echo),
     #[error("redirect without a Location header")]
     RedirectNoLocation,
     #[error("too many redirects (limit {0})")]

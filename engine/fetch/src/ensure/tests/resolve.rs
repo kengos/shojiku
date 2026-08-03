@@ -2,6 +2,7 @@
 //! network — and that the cheaper sources short-circuit the later ones.
 
 use super::*;
+use shojiku_diagnostics::Echo;
 
 #[test]
 fn a_present_file_is_left_alone_and_never_fetched() {
@@ -68,7 +69,7 @@ fn a_missing_face_is_fetched_verified_cached_and_repointed() {
 
     assert_eq!(t.calls(), [url]);
     assert_eq!(std::fs::read(&out[0].path).unwrap(), FONT);
-    assert_eq!(report.fetched, [("sans".to_string(), url.to_string())]);
+    assert_eq!(report.fetched, [(Echo::from("sans"), Echo::from(url))]);
     // The bytes landed in the cache, so a second run is offline-clean.
     assert!(FontCache::new(root).get(&sha).is_some());
 }
