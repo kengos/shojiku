@@ -4,6 +4,7 @@
 use crate::common::*;
 
 mod font_family;
+mod numeric_caps;
 
 #[test]
 fn container_line_break_is_inherited_and_overridable() {

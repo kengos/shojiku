@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { BorderStyleValue } from './borderTypes';
+import { type BorderStyleValue, MAX_STROKE_WIDTH } from './borderTypes';
 import { lineStyleOps, readLineStyle } from './lineModel';
 
 const KNOWN: readonly BorderStyleValue[] = ['solid', 'double', 'dashed', 'dotted'];
@@ -89,6 +89,18 @@ describe('lineStyleOps', () => {
     // is refused rather than written and warned about later.
     expect(lineStyleOps(PATH, solid, { width: '2mm' })).toEqual([]);
     expect(lineStyleOps(PATH, solid, { width: '-1' })).toEqual([]);
+  });
+
+  it('clamps an over-cap width instead of authoring what the engine would warn on', () => {
+    // The engine caps a line stroke at 0..=1000pt (`invalid_line_width`) and
+    // falls back to 1pt; the pen writes the cap so the file never carries the
+    // out-of-range value. Same rule the border pen applies.
+    expect(lineStyleOps(PATH, solid, { width: '1e300' })).toEqual([
+      { op: 'setScalar', path: PATH, keys: ['style', 'width'], value: MAX_STROKE_WIDTH },
+    ]);
+    expect(lineStyleOps(PATH, solid, { width: '1000' })).toEqual([
+      { op: 'setScalar', path: PATH, keys: ['style', 'width'], value: MAX_STROKE_WIDTH },
+    ]);
   });
 
   it('is a no-op when the edit names no property', () => {

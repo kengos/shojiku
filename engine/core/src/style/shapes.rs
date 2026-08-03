@@ -9,7 +9,9 @@ use super::BorderStyleKind;
 use serde::{Deserialize, Serialize};
 
 /// Default stroke width for the line item (pt), applied via the accessor.
-const DEFAULT_STROKE_PT: f64 = 1.0;
+/// Public because layout's sanity guard degrades a hostile width back to
+/// it — a `line` that draws nothing is not a useful fallback.
+pub const DEFAULT_STROKE_PT: f64 = 1.0;
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

@@ -46,7 +46,8 @@ pub use style::{
     BorderColor, BorderStyle, BorderStyleKind, BorderWidth, FontStyle, FontWeight,
     HangingPunctuation, LineBreak, LineStyle, Overflow, Style, TextAlign, TextCombine,
     TextCombineUpright, TextDecoration, TextOrientation, TextOverflow, TextSpacingTrim,
-    VerticalAlign, WritingMode, MAX_STYLES, MAX_STYLE_NAMES,
+    VerticalAlign, WritingMode, DEFAULT_LINE_HEIGHT, DEFAULT_STROKE_PT, MAX_STYLES,
+    MAX_STYLE_NAMES,
 };
 pub use template::{
     parse_template, Band, Binding, BindingScope, Bindings, Body, BreakBefore, CharGridItem,

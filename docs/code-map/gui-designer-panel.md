@@ -70,7 +70,9 @@ read side, never the reverse.
   (drift-guarded against `engine/core/src/style/border.rs`),
   `PATTERNED_BORDER_STYLES` (the capability-gated subset an older engine
   parse-rejects), `BORDERABLE_TYPES`, the editor-local `Pen`, the
-  resolved `BorderProp`/`BorderView`/`RadiusView`, `MAX_BORDER_WIDTH`.
+  resolved `BorderProp`/`BorderView`/`RadiusView`, `MAX_STROKE_WIDTH`
+  (the engine's shared 0..=1000 pt bound over BOTH stroke widths —
+  `borderWidth` and the `line` item's `style.width`).
   The vocabulary the panel, the toolbar and the line editor share.
 - `panel/borderModel.ts` — what the DOCUMENT says: the non-inherited
   cascade (own > named styles; hostile registry names own-property
@@ -90,7 +92,8 @@ read side, never the reverse.
   style-supplied radius authors an explicit `0`).
 - `panel/lineModel.ts` — pure model for the `line` item's own stroke
   (`readLineStyle`/`lineStyleOps`; removes rather than authors engine
-  defaults; non-numeric width refused).
+  defaults; non-numeric width refused, over-cap width clamped to
+  `MAX_STROKE_WIDTH` like the border pen).
 - `panel/LineStyleEditor.tsx` — the line cluster for a `line` item
   (width/colour/keyword picker, capability-gated) — exists because the
   cut-here-line scaffold can CREATE a line.

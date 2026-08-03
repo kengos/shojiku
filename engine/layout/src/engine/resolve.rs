@@ -1,26 +1,17 @@
 //! Resolve-pass primitives: thin `Ctx` bridges to the box-model math in
-//! `shojiku-layout-box` (length/edge resolution, `ResolvedBox`), plus
-//! the color/font sanity guards and the layered style resolver (engine
-//! default <- inherited <- named styles <- inline).
+//! `shojiku-layout-box` (length/edge resolution, `ResolvedBox`), the page
+//! margin resolution, and the layered style resolver (engine default <-
+//! inherited <- named styles <- inline). The per-scalar sanity guards
+//! those layers feed live in [`sane`].
 
-use crate::color::{parse_color, snippet};
 use crate::style::ComputedStyle;
-use shojiku_core::{FontRel, Length, OptBox, Style, DEFAULT_FONT_SIZE_PT, MAX_STYLE_NAMES};
+use shojiku_core::{FontRel, Length, OptBox, Style, MAX_STYLE_NAMES};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::ResolvedBox;
 
-use super::{Basis, Ctx, BLACK};
+use super::{Basis, Ctx};
 
-/// Sanity bound on `letterSpacing` magnitude. Spacing is added to *every*
-/// character advance, so a huge template value multiplies by the content
-/// length and can overflow width math to non-finite; anything past this is
-/// authoring garbage, not typography.
-const MAX_LETTER_SPACING_PT: f64 = 1_000.0;
-
-/// Sanity bound on `borderWidth`. A border wider than this is authoring
-/// garbage (the A4 long edge is ~842pt); an absurd untrusted value would
-/// feed the renderers' stroke math directly.
-const MAX_BORDER_WIDTH_PT: f64 = 1_000.0;
+mod sane;
 
 impl<'a, 'b> Ctx<'a, 'b> {
     /// The font-relative bases at the current cascade point: `em` is the
@@ -98,100 +89,6 @@ impl<'a, 'b> Ctx<'a, 'b> {
             m[2] = 0.0;
         }
         m
-    }
-
-    pub(super) fn color_or_black(&mut self, color: Option<&str>) -> (f32, f32, f32) {
-        match color {
-            None => BLACK,
-            Some(c) => match parse_color(c) {
-                Some(rgb) => rgb,
-                None => {
-                    self.diags.push(
-                        Diagnostic::new(Code::InvalidColor)
-                            .arg("value", snippet(c))
-                            .arg("fallback", "using black"),
-                    );
-                    BLACK
-                }
-            },
-        }
-    }
-
-    /// Clamps a template-supplied font size to something renderable.
-    /// Templates are untrusted; zero/negative/non-finite sizes would
-    /// corrupt every downstream measurement.
-    pub(super) fn sane_font_size(&mut self, size: f64) -> f64 {
-        if size.is_finite() && size > 0.0 {
-            size
-        } else {
-            self.diags.push(
-                Diagnostic::new(Code::InvalidFontSize)
-                    .arg("value", size)
-                    .arg("default", DEFAULT_FONT_SIZE_PT),
-            );
-            DEFAULT_FONT_SIZE_PT
-        }
-    }
-
-    /// Same guard for the line-height multiplier.
-    pub(super) fn sane_line_height(&mut self, multiplier: f64) -> f64 {
-        if multiplier.is_finite() && multiplier > 0.0 {
-            multiplier
-        } else {
-            self.diags.push(
-                Diagnostic::new(Code::InvalidLineHeight)
-                    .arg("value", multiplier)
-                    .arg("default", 1.4),
-            );
-            1.4
-        }
-    }
-
-    /// Guard for `letterSpacing`: negative is legal (CSS tightening), but
-    /// the value is untrusted — non-finite or absurd magnitudes would
-    /// poison every advance in the run, so they fall back to 0 with a
-    /// diagnostic.
-    pub(super) fn sane_letter_spacing(&mut self, spacing: f64) -> f64 {
-        if spacing.is_finite() && spacing.abs() <= MAX_LETTER_SPACING_PT {
-            spacing
-        } else {
-            self.diags.push(
-                Diagnostic::new(Code::InvalidLetterSpacing)
-                    .arg("value", spacing)
-                    .arg("max", MAX_LETTER_SPACING_PT),
-            );
-            0.0
-        }
-    }
-
-    /// Guard for `borderWidth`: `0` legitimately means "no border" (the
-    /// initial value, checked without a diagnostic); negative, non-finite,
-    /// or absurd widths fall back to 0 with a diagnostic.
-    pub(super) fn sane_border_width(&mut self, width: f64) -> f64 {
-        if width.is_finite() && (0.0..=MAX_BORDER_WIDTH_PT).contains(&width) {
-            width
-        } else {
-            self.diags.push(
-                Diagnostic::new(Code::InvalidBorderWidth)
-                    .arg("value", width)
-                    .arg("max", MAX_BORDER_WIDTH_PT),
-            );
-            0.0
-        }
-    }
-
-    /// Guards a paint alpha (F2 `opacity`): `0..=1` passes through,
-    /// anything else warns and draws opaque — a typo'd opacity silently
-    /// hiding content would be worse than ignoring it. Template values are
-    /// finite (yaml_guard), but the guard re-checks for defense in depth.
-    pub(super) fn sane_opacity(&mut self, opacity: f64) -> f32 {
-        if opacity.is_finite() && (0.0..=1.0).contains(&opacity) {
-            opacity as f32
-        } else {
-            self.diags
-                .push(Diagnostic::new(Code::InvalidOpacity).arg("value", opacity));
-            1.0
-        }
     }
 
     /// Resolves the font chain for a computed style, warning once per

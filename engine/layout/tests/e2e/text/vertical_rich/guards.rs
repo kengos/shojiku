@@ -26,10 +26,24 @@ sections:
 
 #[test]
 fn a_hostile_huge_font_size_degrades_without_panicking() {
-    // `sane_font_size` has no upper cap: 1e300 passes clean, the column
-    // width goes astronomically wide, and the overflow check must warn
-    // (∞-safe f64 math), never panic.
+    // `sane_font_size` caps at 1000pt, so 1e300 never reaches the column
+    // math: it warns and falls back to the 10pt default, and the block
+    // then fits the box with no overflow.
     let (doc, diags) = run(&tmpl("あいう", "w: 200, h: 100", "1e300", ""), json!({}));
+    assert_eq!(doc.pages.len(), 1);
+    assert!(
+        diags.iter().any(|d| d.code == "font_size_out_of_range"),
+        "{diags:?}"
+    );
+    assert!(!diags.iter().any(|d| d.code == "horizontal_overflow"));
+}
+
+#[test]
+fn the_largest_admitted_font_size_still_reaches_the_column_math() {
+    // The boundary the cap creates: 1000pt passes clean, the column goes
+    // far wider than the 200pt box, and the overflow check must warn
+    // (∞-safe f64 math) rather than panic.
+    let (doc, diags) = run(&tmpl("あいう", "w: 200, h: 100", "1000", ""), json!({}));
     assert_eq!(doc.pages.len(), 1);
     assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
 }

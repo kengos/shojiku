@@ -5,7 +5,7 @@
 // actually changed, and drop a key rather than authoring the engine's default.
 
 import type { Op, ReadFn } from '@shojiku/designer-core';
-import type { BorderStyleValue } from './borderTypes';
+import { type BorderStyleValue, MAX_STROKE_WIDTH } from './borderTypes';
 
 /** A line's stroke, as the panel edits it. `color: ''` = the engine default
  * (black); `style` is always concrete (`solid` when unauthored) so the select
@@ -92,7 +92,12 @@ export function lineStyleOps(path: string, view: LineStyleView, edit: LineStyleE
     const value = Number(text);
     // A non-numeric or negative entry is refused outright: the engine takes a
     // bare pt number here (no unit strings), so there is nothing to preserve.
-    return Number.isFinite(value) && value >= 0 ? [scalarOp(path, 'width', value)] : [];
+    // An over-cap entry is clamped rather than refused, exactly as the border
+    // pen clamps — the engine would only warn (`invalid_line_width`) and draw
+    // at 1pt, so a hostile pen must not be able to author the value at all.
+    return Number.isFinite(value) && value >= 0
+      ? [scalarOp(path, 'width', Math.min(value, MAX_STROKE_WIDTH))]
+      : [];
   }
   return [];
 }
