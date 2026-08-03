@@ -4,8 +4,13 @@
 # Run from the repository root:  sh gui/designer-app/e2e/run-e2e.sh
 set -eu
 
-IMAGE=shojiku-designer-app-e2e
-NAME=shojiku-designer-app-e2e-run
+# WORK_TAG namespaces the image, the container name and the port: all three are
+# GLOBAL to the docker daemon, so with fixed values a second session's run
+# retags this image and `docker rm -f`s this container out from under a live
+# test — which surfaces as "server never came up", not as a collision.
+WORK_TAG="${WORK_TAG:-local}"
+IMAGE="shojiku-designer-app-e2e:${WORK_TAG}"
+NAME="shojiku-designer-app-e2e-run-${WORK_TAG}"
 PORT="${PORT:-8790}"
 PLAYWRIGHT_IMAGE=mcr.microsoft.com/playwright:v1.49.0-noble
 

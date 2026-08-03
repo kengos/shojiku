@@ -8,7 +8,7 @@
 
 JAVA_VER="${JAVA_VER:-21}"
 IMG="maven:3.9-eclipse-temurin-${JAVA_VER}"
-GATE_IMG="shojiku-sdk-java:${JAVA_VER}"
+GATE_IMG="${GATE_IMG:-shojiku-sdk-java:${JAVA_VER}}"
 require_artifact "$CAPI_LIB" capi-lib
 
 case "$(uname -m)" in

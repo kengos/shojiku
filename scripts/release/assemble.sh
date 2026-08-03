@@ -213,7 +213,7 @@ assemble_dotnet() {
 assemble_java() {
   echo "== assemble java (3 jars + 5 classifier jars + pom) =="
   rm -rf "$OUT/java" && mkdir -p "$OUT/java"
-  GATE_IMG="shojiku-sdk-java:${JAVA_VER:-21}"
+  GATE_IMG="${GATE_IMG:-shojiku-sdk-java:${JAVA_VER:-21}}"
   DOCKER_BUILDKIT=1 docker build -q --build-arg JAVA_VERSION="${JAVA_VER:-21}" \
     -f "$ROOT/sdk/java/Dockerfile" -t "$GATE_IMG" "$ROOT" >/dev/null
   stage="$ROOT/dist/release/stage/java"

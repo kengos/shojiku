@@ -99,7 +99,25 @@ RUST_VERSION := 1.97.1
 RUST_IMAGE   := rust:$(RUST_VERSION)-slim-bookworm
 TRIVY_IMAGE  := aquasec/trivy:latest
 SYFT_IMAGE   := anchore/syft:latest
-IMAGE        := shojiku-ci:local
+# Parallel-session isolation. Image tags, container names and host ports are
+# GLOBAL to the docker daemon — a second worktree building the same tag retags
+# the first session's image out from under it, and a fixed container name lets
+# one session `docker rm -f` another session's running container. Neither a
+# worktree nor a separate cache volume prevents that.
+#
+# WORK_TAG namespaces every LOCALLY BUILT image. The default keeps today's
+# names byte-for-byte, so the tags quoted in README/docs stay correct; a
+# parallel session sets WORK_TAG=<work item code> and deletes its images when
+# the work completes (images rebuild from the layer cache in seconds — cache
+# VOLUMES stay shared on purpose, because rebuilding those costs minutes).
+WORK_TAG   ?= local
+# Version-tagged images keep their bare `:<version>` tag by default and take a
+# suffix only when a session opts in.
+SDK_SUFFIX := $(if $(filter-out local,$(WORK_TAG)),-$(WORK_TAG))
+# One gate at a time per working tree (scripts/gate-lock.sh explains why).
+GATE_LOCK  := scripts/gate-lock.sh
+
+IMAGE        := shojiku-ci:$(WORK_TAG)
 
 # Node image for the gui/ workspace gates (typecheck + lint + coverage). The
 # host has no Node toolchain either — like Rust, every gui gate runs in Docker.
@@ -174,9 +192,10 @@ WASM_MAX_GZIP := 3145728
 # cargo flags that drifts from them. `engine/target/` needs no such switch —
 # it is inside the repository mount, so it is already on the host.
 CARGO_VOLUME  ?= shojiku-cargo
+PNPM_VOLUME   ?= shojiku-pnpm
 RUSTUP_VOLUME ?= shojiku-rustup
 
-CARGO_IN_DOCKER = docker run --rm \
+CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 	-v "$(CURDIR):/repo" -w /repo/engine \
 	-v "$(CARGO_VOLUME):/usr/local/cargo" \
 	-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
@@ -362,7 +381,7 @@ quiet: ## Run ANY target this way: make quiet T=gui (same PASS/FAIL + real exit 
 	fi
 	@mkdir -p $(LOG_DIR)
 	@log="$(LOG_DIR)/$$(echo '$(T)' | tr ' /' '__').log"; \
-	if $(MAKE) --no-print-directory $(T) > "$$log" 2>&1; then \
+	if $(GATE_LOCK) $(MAKE) --no-print-directory $(T) > "$$log" 2>&1; then \
 		if [ -f "$(ERROR_LOG)" ] && head -1 "$(ERROR_LOG)" | grep -qx "# FAILED: $(T)"; then \
 			rm -f "$(ERROR_LOG)"; \
 		fi; \
@@ -459,7 +478,7 @@ deny: ## cargo deny check advisories licenses bans sources
 # Floor from docs/agents/sdk.md. CI also runs the newest supported line;
 # the tag carries the version so the two do not overwrite each other.
 PHP_VER ?= 8.3
-PHP_IMAGE := shojiku-sdk-php:$(PHP_VER)
+PHP_IMAGE := shojiku-sdk-php:$(PHP_VER)$(SDK_SUFFIX)
 
 # The first SUBPROCESS SDK, so the injected binary is the `shojiku` CLI
 # (`make cli-bin`) rather than a library the package loads — but everything
@@ -518,7 +537,7 @@ sdk-php-lint: cli-bin ## sdk/php php-cs-fixer + phpstan (what `make lint:sdk:php
 # Floor from docs/agents/sdk.md. CI also runs the newest supported line;
 # the tag carries the version so the two do not overwrite each other.
 GO_VER ?= 1.25
-GO_IMAGE := shojiku-sdk-go:$(GO_VER)
+GO_IMAGE := shojiku-sdk-go:$(GO_VER)$(SDK_SUFFIX)
 
 # The second SUBPROCESS SDK, so it shares php's injected binary (`make
 # cli-bin`) rather than the cdylib the four FFI SDKs load. The sidecar
@@ -597,13 +616,13 @@ docker-scan: ## Trivy scan of the image (mirrors CI: fixable CVEs fail)
 
 examples: ## Re-render every example's committed output.pdf + preview-*.png
 	@$(CARGO_IN_DOCKER) 'cargo build --release -p shojiku-cli'
-	@docker run --rm \
+	@$(GATE_LOCK) docker run --rm \
 		-v "$(CURDIR):/repo" -w /repo \
 		$(RUST_IMAGE) ./scripts/render-examples.sh
 
 examples-check: ## Fail if committed example outputs differ from a fresh render
 	@$(CARGO_IN_DOCKER) 'cargo build --release -p shojiku-cli'
-	@docker run --rm \
+	@$(GATE_LOCK) docker run --rm \
 		-v "$(CURDIR):/repo" -w /repo \
 		$(RUST_IMAGE) ./scripts/render-examples.sh --check
 
@@ -611,7 +630,7 @@ examples-check: ## Fail if committed example outputs differ from a fresh render
 
 wasm: ## Build the browser WASM bindings (engine/wasm/pkg) + assert size budget
 	@echo "== wasm build (size-budgeted) =="
-	@docker run --rm \
+	@$(GATE_LOCK) docker run --rm \
 		-v "$(CURDIR):/repo" -w /repo/engine \
 		-v "$(CARGO_VOLUME):/usr/local/cargo" \
 		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
@@ -681,7 +700,7 @@ CAPI_DIST := dist/capi
 capi-dist: ## Build the C ABI cdylib for the platform matrix + checksums (on-demand)
 	@echo "== capi dist ($(CAPI_TARGETS)) =="
 	@mkdir -p $(CAPI_DIST)
-	@docker run --rm \
+	@$(GATE_LOCK) docker run --rm \
 		-v "$(CURDIR):/repo" -w /repo/engine \
 		-v "$(CARGO_VOLUME):/usr/local/cargo" \
 		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
@@ -740,7 +759,7 @@ CLI_DIST := dist/cli
 cli-dist: ## Build the `shojiku` CLI for the platform matrix + checksums (on-demand)
 	@echo "== cli dist ($(CLI_TARGETS)) =="
 	@mkdir -p $(CLI_DIST)
-	@docker run --rm \
+	@$(GATE_LOCK) docker run --rm \
 		-v "$(CURDIR):/repo" -w /repo/engine \
 		-v "$(CARGO_VOLUME):/usr/local/cargo" \
 		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
@@ -785,7 +804,7 @@ CAPI_LOCAL := $(CAPI_DIST)/local
 # Floor from docs/agents/sdk.md. CI also runs the newest supported line;
 # the tag carries the version so the two do not overwrite each other.
 RUBY_VER ?= 3.3
-RUBY_IMAGE := shojiku-sdk-ruby:$(RUBY_VER)
+RUBY_IMAGE := shojiku-sdk-ruby:$(RUBY_VER)$(SDK_SUFFIX)
 
 # CAPI_PREBUILT=1 accepts a library that is already in place instead of
 # building one. The seven SDK gates each depend on this target, so in a
@@ -914,7 +933,7 @@ proof-ruby: capi-lib ## Install proof: platform gem carrying the cdylib
 proof-dotnet: capi-lib ## Install proof: nupkg with a RID native asset
 	@DOTNET_VER=$(DOTNET_VER) sh scripts/install-proof/dotnet.sh
 proof-java: capi-lib ## Install proof: platform classifier jar on a consumer classpath
-	@JAVA_VER=$(JAVA_VER) sh scripts/install-proof/java.sh
+	@JAVA_VER=$(JAVA_VER) GATE_IMG=$(JAVA_IMAGE) sh scripts/install-proof/java.sh
 proof-js: napi ## Install proof: napi addon inside a platform package
 	@NODE_VER=$(NODE_VER) sh scripts/install-proof/js.sh
 proof-php: cli-bin ## Install proof: composer package driving a PATH-found CLI
@@ -982,7 +1001,7 @@ sdk-ruby-lint: capi-lib ## sdk/ruby rubocop only (what `make lint:sdk:ruby` runs
 # Floor from docs/agents/sdk.md. CI also runs the newest supported line;
 # the tag carries the version so the two do not overwrite each other.
 PYTHON_VER ?= 3.11
-PYTHON_IMAGE := shojiku-sdk-python:$(PYTHON_VER)
+PYTHON_IMAGE := shojiku-sdk-python:$(PYTHON_VER)$(SDK_SUFFIX)
 
 # Same shape as sdk-ruby: the engine library is INJECTED already compiled
 # (capi-lib); no language image ever builds Rust. The sidecar
@@ -1035,7 +1054,7 @@ sdk-python-lint: capi-lib ## sdk/python static checks only (ruff + mypy)
 # Floor from docs/agents/sdk.md. CI also runs the newest supported line;
 # the tag carries the version so the two do not overwrite each other.
 DOTNET_VER ?= 10.0
-DOTNET_IMAGE := shojiku-sdk-dotnet:$(DOTNET_VER)
+DOTNET_IMAGE := shojiku-sdk-dotnet:$(DOTNET_VER)$(SDK_SUFFIX)
 
 # Same shape as sdk-ruby and sdk-python: the engine library is INJECTED already
 # compiled (capi-lib); no language image ever builds Rust. The sidecar
@@ -1083,7 +1102,7 @@ sdk-dotnet-lint: capi-lib ## sdk/dotnet format + analyzers only (what `make lint
 # Floor from docs/agents/sdk.md. CI also runs the newest supported line;
 # the tag carries the version so the two do not overwrite each other.
 JAVA_VER ?= 21
-JAVA_IMAGE := shojiku-sdk-java:$(JAVA_VER)
+JAVA_IMAGE := shojiku-sdk-java:$(JAVA_VER)$(SDK_SUFFIX)
 
 # Same shape again. Two things this one had to get right beyond the others:
 #
@@ -1163,7 +1182,7 @@ FUZZ_SECS    ?= 60
 
 fuzz: ## Fuzz the sign/verify parsers (nightly+libFuzzer; FUZZ_TARGET=<name> FUZZ_SECS=<n>)
 	@echo "== fuzz ($(FUZZ_SECS)s per target) =="
-	@docker run --rm \
+	@$(GATE_LOCK) docker run --rm \
 		-v "$(CURDIR):/repo" -w /repo/engine/fuzz \
 		-v "$(CARGO_VOLUME):/usr/local/cargo" \
 		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
@@ -1192,7 +1211,7 @@ fuzz: ## Fuzz the sign/verify parsers (nightly+libFuzzer; FUZZ_TARGET=<name> FUZ
 # Floor from docs/agents/sdk.md. CI also runs the newest supported line;
 # the tag carries the version so the two do not overwrite each other.
 NODE_VER ?= 22
-JS_IMAGE := shojiku-sdk-js:$(NODE_VER)
+JS_IMAGE := shojiku-sdk-js:$(NODE_VER)$(SDK_SUFFIX)
 
 # Same shape as the other four SDK gates, with one difference that is the whole
 # reason node needed its own transport: the injected binary is the NATIVE ADDON
@@ -1265,9 +1284,9 @@ PNPM_VERSION_SDK := $(shell sed -n 's/.*"packageManager": *"pnpm@\([^"]*\)".*/\1
 # Run a pnpm command over the gui/ workspace in the pinned Node image. A named
 # volume persists the pnpm store across runs (like the cargo/rustup volumes).
 # pnpm is installed at the version gui/package.json pins (see PNPM_VERSION).
-PNPM_IN_DOCKER = docker run --rm \
+PNPM_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 	-v "$(CURDIR):/repo" -w /repo/gui \
-	-v shojiku-pnpm:/pnpm-store \
+	-v "$(PNPM_VOLUME):/pnpm-store" \
 	-e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
 	$(NODE_IMAGE) sh -euc
 
@@ -1311,7 +1330,7 @@ gui-e2e: ## Designer-app browser golden path (Playwright in Docker) — on-deman
 
 # The self-contained Designer-app image (wasm + Vite build + assembled data +
 # nginx) — the same image the gui-e2e golden path tests.
-GUI_APP_IMAGE := shojiku-designer-app:local
+GUI_APP_IMAGE := shojiku-designer-app:$(WORK_TAG)
 GUI_SERVE_PORT ?= 8788
 GUI_DEV_PORT   ?= 5173
 
@@ -1326,7 +1345,7 @@ gui-dev: ## Vite dev server (HMR) in Docker for gui/ work (http://localhost:5173
 	@test -d engine/wasm/pkg || $(MAKE) wasm
 	docker run --rm -it -p $(GUI_DEV_PORT):5173 \
 		-v "$(CURDIR):/repo" -w /repo/gui \
-		-v shojiku-pnpm:/pnpm-store \
+		-v "$(PNPM_VOLUME):/pnpm-store" \
 		-e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
 		$(NODE_IMAGE) sh -euc 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
 		pnpm config set store-dir /pnpm-store; \
@@ -1341,9 +1360,9 @@ proof-deploy: ## Run every deploy-recipe proof against the public registries (ne
 
 # Run a pnpm/node command over site/ in the pinned Node image (the gui macro's
 # sibling; site/ is a standalone pnpm project, not a gui workspace member).
-SITE_IN_DOCKER = docker run --rm \
+SITE_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 	-v "$(CURDIR):/repo" -w /repo/site \
-	-v shojiku-pnpm:/pnpm-store \
+	-v "$(PNPM_VOLUME):/pnpm-store" \
 	-e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
 	$(NODE_IMAGE) sh -euc
 
@@ -1390,7 +1409,7 @@ site-dev: ## VitePress dev server in Docker (http://localhost:5174, Ctrl-C stops
 	@test -d engine/wasm/pkg || $(MAKE) wasm
 	docker run --rm -it -p 5174:5174 \
 		-v "$(CURDIR):/repo" -w /repo/site \
-		-v shojiku-pnpm:/pnpm-store \
+		-v "$(PNPM_VOLUME):/pnpm-store" \
 		-e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
 		$(NODE_IMAGE) sh -euc 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
 		pnpm config set store-dir /pnpm-store; \
@@ -1409,4 +1428,4 @@ clean: ## Remove local artifacts (out.pdf, lcov.info, stderr.txt)
 	rm -f out.pdf stderr.txt engine/lcov.info
 
 cache-clean: ## Drop the persistent cargo/rustup/pnpm Docker volumes
-	-docker volume rm shojiku-cargo shojiku-rustup shojiku-pnpm
+	-docker volume rm $(CARGO_VOLUME) $(RUSTUP_VOLUME) $(PNPM_VOLUME)
