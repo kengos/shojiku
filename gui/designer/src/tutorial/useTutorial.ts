@@ -10,10 +10,10 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { AnchorRect } from './anchors';
-import { anchorRect } from './anchors';
 import { EMPTY_PROGRESS, markComplete, readProgress, resumeAt, stepDone } from './model';
 import { PRACTICE_PARAMS } from './seeds';
 import type { TutorialCourse, TutorialEvent, TutorialProgress, TutorialStore } from './types';
+import { useAnchorRect } from './useAnchorRect';
 
 /** What the controller needs from the surrounding Designer to swap documents.
  * Passed in rather than reached for, so the controller stays testable without
@@ -67,7 +67,16 @@ export function useTutorial(
   const units = useMemo(() => [course, ...topics], [course, topics]);
   const [session, setSession] = useState<TutorialSession | null>(null);
   const [progress, setProgress] = useState<TutorialProgress>(EMPTY_PROGRESS);
-  const [rect, setRect] = useState<AnchorRect | null>(null);
+  // The step's anchor is TRACKED, not captured: a fullscreen view (document
+  // settings, the data-item editor) unmounts the panel a step points at while
+  // that step is still showing, and a rect measured at open would leave the
+  // ring behind on the old layout. A canvas step points at the page, not at
+  // chrome, so it tracks nothing.
+  const showing =
+    session === null ? null : session.unit.chapters[session.chapter].steps[session.step];
+  const rect = useAnchorRect(
+    showing === null || showing.anchor.kind === 'canvas' ? null : showing.anchor.selector,
+  );
   // The reader's own document, held outside React state so `stop` can restore
   // it from any code path — including an error handler.
   const snapshot = useRef<{ text: string; params: string } | null>(null);
@@ -84,8 +93,6 @@ export function useTutorial(
 
   const showStep = useCallback((unit: TutorialCourse, chapter: number, step: number) => {
     setSession({ unit, chapter, step });
-    const anchor = unit.chapters[chapter].steps[step].anchor;
-    setRect(anchor.kind === 'canvas' ? null : anchorRect(anchor.selector));
   }, []);
 
   // Read the store at OPEN time, never a boot snapshot: another tab (or the
@@ -123,7 +130,6 @@ export function useTutorial(
     const saved = snapshot.current;
     snapshot.current = null;
     setSession(null);
-    setRect(null);
     if (saved !== null) {
       hostRef.current.setText(saved.text);
       hostRef.current.setParams(saved.params);
