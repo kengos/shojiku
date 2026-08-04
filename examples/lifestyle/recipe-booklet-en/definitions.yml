@@ -1,0 +1,116 @@
+version: 0.2.0
+type: object
+properties:
+  labels:
+    type: object
+    title: Page chrome
+    properties:
+      shopping_heading:
+        type: string
+        title: Shopping-list heading
+        example: Shopping list
+      method_heading:
+        type: string
+        title: Method heading
+        example: Method
+      col_ingredient:
+        type: string
+        title: Ingredient column label
+        example: Ingredient
+      col_amount:
+        type: string
+        title: Amount column label
+        example: Amount
+      col_note:
+        type: string
+        title: Sourcing column label
+        example: If you cannot find it
+      qr_prompt:
+        type: string
+        title: Footer QR prompt
+        example: Scan for the original recipe video
+  recipe:
+    type: object
+    title: Recipe
+    properties:
+      title:
+        type: string
+        title: Dish name
+        example: Simmered Pork and Potatoes
+      subtitle:
+        type: string
+        title: One-line description
+        example: A weeknight simmer of pork, potatoes, carrot and onion in a sweet-savory broth.
+      servings:
+        type: string
+        title: Servings
+        example: Serves 2
+      total_time:
+        type: string
+        title: Total time
+        example: 40 minutes
+      source_url:
+        type: string
+        title: Source recipe URL
+        example: https://recipes.shojikudo.example/r/simmered-pork-and-potatoes
+      source_label:
+        type: string
+        title: Source credit line
+        example: Original recipe and video by Shojikudo Kitchen (in Japanese).
+      hero:
+        type: string
+        format: image
+        title: Finished-dish photo
+        example: assets/hero.svg
+      shopping_note:
+        type: string
+        title: Where to shop
+        example: >-
+          Everything except the mirin and the dashi granules is in any
+          supermarket. For those two, try an East Asian grocery.
+  ingredients:
+    type: array
+    title: Shopping list
+    items:
+      type: object
+      title: Ingredient
+      properties:
+        name:
+          type: string
+          title: Ingredient
+          example: Pork shoulder, thinly sliced
+        amount:
+          type: string
+          title: Amount
+          example: 200 g (7 oz)
+        note:
+          type: string
+          title: Sourcing note or substitute
+          example: Ask the butcher to slice it thin, or use thin-cut pork belly.
+  steps:
+    type: array
+    title: Method
+    items:
+      type: object
+      title: Step
+      properties:
+        n:
+          type: string
+          title: Step label
+          example: Step 1
+        image:
+          type: string
+          format: image
+          title: Step photo
+          example: assets/step-1.svg
+        text:
+          type: string
+          title: Instruction
+          example: Peel the potatoes and cut out any eyes. Peel the carrot and trim the onion.
+        note:
+          type: string
+          title: Explanation of an implied technique
+          example: >-
+            Japanese recipes assume you know these cuts. A rolling wedge cut
+            means cutting on a diagonal, rolling the vegetable a quarter turn,
+            and cutting again.

@@ -1,5 +1,6 @@
 //! Leaf item atoms: rect, image (contain/cover/stretch/none fit against
-//! the prepared asset store, cover/none clipped to the box), and line.
+//! the prepared asset store; cover/none clipped to the box, and every SVG
+//! clipped to it whatever the fit), and line.
 
 use crate::tree::{ClipShape, ImageShape, LayoutItem, LineShape};
 use shojiku_core::{BorderStyleKind, ImageFit, ImageItem, RectItem};
@@ -93,7 +94,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// Builds an image atom: reserves the item's box (border-box: padding
     /// insets the fit area, the reserved height stays `box.h`), fitting
     /// the asset's intrinsic size into it per `fit` (contain/cover/
-    /// stretch/none) — cover/none crop to the content box with a clip.
+    /// stretch/none) — cover/none crop to the content box with a clip,
+    /// as does every SVG regardless of fit.
     /// The final draw rect goes into the tree so renderers never re-measure.
     pub(super) fn image_atom(&mut self, image: &ImageItem, basis: &Basis) -> Option<Atom> {
         let key = asset_key(image);
@@ -136,6 +138,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // Intrinsic dimensions are always positive (loading rejects zero
         // sizes), so the fit math cannot divide by zero.
         let (iw, ih) = asset.intrinsic_size();
+        let clips_to_viewport = asset.clips_to_viewport();
         let (dw, dh) = fit_size(image.fit(), (iw, ih), cw, ch);
         let boxes = vec![placed_box(
             &self.current_path(),
@@ -160,9 +163,12 @@ impl<'a, 'b> Ctx<'a, 'b> {
             link: self.resolve_link(image.link.as_ref(), &image.bindings),
         });
         // `cover`/`none` can exceed the content box; crop the overflow
-        // with a D2 clip over the content box. `contain`/`stretch` never
-        // overflow, so they stay a bare shape (no needless clip node).
-        if dw > cw + 0.01 || dh > ch + 0.01 {
+        // with a D2 clip over the content box. A raster under
+        // `contain`/`stretch` never overflows, so it stays a bare shape
+        // (no needless clip node) — but an SVG is clipped either way: its
+        // paths may sit outside the `viewBox` the fit math measured, and
+        // the viewport clips them (`Asset::clips_to_viewport`).
+        if clips_to_viewport || dw > cw + 0.01 || dh > ch + 0.01 {
             items.push(LayoutItem::Clip(ClipShape {
                 x: rb.content_x(),
                 y: rb.padding[0],

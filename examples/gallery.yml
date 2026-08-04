@@ -168,6 +168,21 @@ entries:
     title_ja: 原稿用紙（横書き）
     blurb_en: The 400-character horizontal sheet.
     blurb_ja: 400字詰の横書き版。
+  - dir: lifestyle/recipe-booklet-en
+    preview: preview-1.png
+    preview2: preview-ja-1.png
+    title_en: Recipe booklet (en-US ↔ ja)
+    title_ja: レシピ小冊子（en-US ↔ 日本語）
+    blurb_en: >-
+      A Japanese recipe video, reprinted for the kitchen counter: a
+      photo-led shopping page whose third column carries substitutes,
+      then `repeat_flow` step cards that paginate whole, with the source
+      URL and its QR in the footer of every page. Not one reader-facing
+      word lives in the template — even the table's column labels are
+      bindings — so the English and Japanese sheets are one file and two
+      params.
+    blurb_ja: >-
+      日本語のレシピ動画を、台所に置ける紙に組み直す。写真と買い物リスト（3列目は代替品や選び方）が1ページ目、以降は`repeat_flow`の手順カードがカード単位で改ページする。全ページのフッターに出典URLとQR。読み手に見える文字はテンプレートに1つも書かれておらず、表の見出しまで含めて全部バインディング——英語版と日本語版は同じ1ファイルにparamsを2つ渡しただけ。
   - dir: business/receipt-ja
     preview: preview-1.png
     title_en: Receipt (ja)

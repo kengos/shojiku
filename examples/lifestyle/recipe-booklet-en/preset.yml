@@ -1,0 +1,15 @@
+# Designer preset manifest: surfaces this bundled example in the locale-keyed
+# catalog. `locales` are the catalog tags it appears under; `engineLocale` is
+# the exact tag the app passes to the engine (font-pack selection).
+locales: [en]
+engineLocale: en-US
+name:
+  ja: レシピ小冊子（en-US）
+  en: Recipe booklet (en-US)
+thumbnail: preview-1.png
+# `params-ja.json` is deliberately NOT declared as a variant here. The
+# catalog's `engineLocale` is per-PRESET, so the Designer would render the
+# Japanese sample under en-US and draw missing-glyph boxes — the font pack
+# follows the locale. The gallery still shows it (its committed render gets
+# `--lang ja-JP` from the `params-ja.json.lang` sidecar). Declare the variant
+# once a catalog variant can carry its own engineLocale.

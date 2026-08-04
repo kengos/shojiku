@@ -14,7 +14,7 @@ export interface GalleryEntry {
   blurbJa: string;
 }
 
-const DIR_RE = /^(business|forms|typography)\/[a-z0-9-]+$/;
+const DIR_RE = /^(business|forms|typography|lifestyle)\/[a-z0-9-]+$/;
 const PREVIEW_RE = /^preview[a-z0-9-]*\.png$/;
 
 function req(v: unknown, what: string): string {

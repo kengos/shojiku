@@ -50,7 +50,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
 
     /// Draws an image cell (geometry as in [`Self::cell_qr`]): the
     /// per-element asset fits the padded cell box; `cover`/`none`
-    /// overflow is clipped (D2).
+    /// overflow is clipped (D2), and an SVG is clipped whatever the fit
+    /// (its paths may leave the `viewBox` — `Asset::clips_to_viewport`).
     pub(super) fn cell_image(
         &mut self,
         cell: &Cell<'_>,
@@ -66,6 +67,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             return;
         };
         let (dw, dh) = fit_size(fit, asset.intrinsic_size(), cw, ch);
+        let clips_to_viewport = asset.clips_to_viewport();
         let opacity = self.sane_opacity(cell.computed.opacity);
         let shape = LayoutItem::Image(ImageShape {
             asset_id: asset_id.to_string(),
@@ -76,7 +78,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             opacity,
             link: None,
         });
-        if dw > cw + 0.01 || dh > ch + 0.01 {
+        if clips_to_viewport || dw > cw + 0.01 || dh > ch + 0.01 {
             items.push(LayoutItem::Clip(ClipShape {
                 x: cx + padding,
                 y: padding,

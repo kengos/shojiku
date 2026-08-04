@@ -1,0 +1,105 @@
+{
+  "labels": {
+    "shopping_heading": "Shopping list",
+    "method_heading": "Method",
+    "col_ingredient": "Ingredient",
+    "col_amount": "Amount",
+    "col_note": "If you cannot find it",
+    "qr_prompt": "Scan for the original recipe video"
+  },
+  "recipe": {
+    "title": "Simmered Pork and Potatoes",
+    "subtitle": "A weeknight one-pot simmer: pork, potatoes, carrot and onion cooked down in a sweet-savory broth until the potatoes fall apart at the edges.",
+    "servings": "Serves 2",
+    "total_time": "40 minutes",
+    "source_url": "https://recipes.shojikudo.example/r/simmered-pork-and-potatoes",
+    "source_label": "Original recipe and cooking video by Shojikudo Kitchen (in Japanese).",
+    "hero": "assets/hero.svg",
+    "shopping_note": "Most of this list is ordinary supermarket shopping. The two exceptions are mirin and dashi granules, which live in the East Asian aisle of a large supermarket or in any Japanese, Korean or Chinese grocery. Both keep for months, so buy them once."
+  },
+  "ingredients": [
+    {
+      "name": "Pork shoulder, thinly sliced",
+      "amount": "200 g (7 oz)",
+      "note": "Sold pre-sliced at East Asian groceries as \"shabu-shabu\" pork. Otherwise ask the butcher to slice it thin, or freeze a piece for 30 minutes and slice it yourself."
+    },
+    {
+      "name": "Potatoes",
+      "amount": "3 medium (about 450 g)",
+      "note": "Use a floury variety — Russet or Maris Piper. Waxy potatoes stay firm and will not soak up the broth."
+    },
+    { "name": "Carrot", "amount": "1 large", "note": "" },
+    { "name": "Onion", "amount": "1 medium", "note": "" },
+    { "name": "Water", "amount": "200 ml (about 3/4 cup)", "note": "" },
+    {
+      "name": "Soy sauce",
+      "amount": "2 tbsp (30 ml)",
+      "note": "Japanese-style soy sauce. Chinese light soy is saltier — start with 1.5 tbsp and taste."
+    },
+    {
+      "name": "Cooking sake",
+      "amount": "2 tbsp (30 ml)",
+      "note": "Dry sherry works. Do not use \"cooking sake\" that lists added salt without cutting the soy sauce back."
+    },
+    {
+      "name": "Mirin",
+      "amount": "2 tbsp (30 ml)",
+      "note": "If you cannot find it, use 2 tbsp water plus 2 tsp sugar and add it with the soy sauce."
+    },
+    {
+      "name": "Dashi granules",
+      "amount": "1/2 tbsp",
+      "note": "Instant dashi powder. Substitute 200 ml of light chicken or vegetable stock in place of the water."
+    },
+    {
+      "name": "Sugar",
+      "amount": "2 tbsp",
+      "note": "Light brown sugar suits this better than white."
+    },
+    { "name": "Neutral oil", "amount": "1 tbsp", "note": "" }
+  ],
+  "steps": [
+    {
+      "n": "Step 1",
+      "image": "assets/step-1.svg",
+      "text": "Peel the potatoes and cut out any eyes. Peel the carrot and trim off the leafy end. Trim the root end off the onion and peel it.",
+      "note": "Leaving the root end on the onion until after you cut it keeps the wedges held together in the pot."
+    },
+    {
+      "n": "Step 2",
+      "image": "assets/step-2.svg",
+      "text": "Cut the potatoes and carrot into rolling wedges. Cut the onion into wedges about 1 cm thick.",
+      "note": "A rolling wedge cut: slice diagonally, roll the vegetable a quarter turn toward you, slice again. Every piece ends up with more cut surface than a plain cube, which is how the broth gets inside in only 20 minutes."
+    },
+    {
+      "n": "Step 3",
+      "image": "assets/step-3.svg",
+      "text": "Cut the sliced pork into bite-sized pieces.",
+      "note": "Bite-sized here means one chopstick-load — roughly 4 cm across."
+    },
+    {
+      "n": "Step 4",
+      "image": "assets/step-4.svg",
+      "text": "Heat the oil in a pot over medium heat and cook the pork until it is no longer pink. Add the onion, carrot and potatoes and cook, stirring, until the surfaces turn translucent.",
+      "note": "You are not browning anything here. Stop as soon as the potato edges go glassy — colour would make the broth muddy."
+    },
+    {
+      "n": "Step 5",
+      "image": "assets/step-5.svg",
+      "text": "Add the water, soy sauce, sake, mirin, dashi granules and sugar. Bring to a boil and skim off the foam that rises.",
+      "note": "The foam is protein from the pork. Skimming it is what keeps the finished broth clear rather than cloudy."
+    },
+    {
+      "n": "Step 6",
+      "image": "assets/step-6.svg",
+      "text": "Lower the heat, cover the surface with a drop lid and simmer for about 20 minutes, until a skewer goes through the potatoes without resistance.",
+      "note": "A drop lid sits directly on the food instead of on the pot rim, so a shallow amount of broth circulates over everything without you stirring and breaking the potatoes. Cut a circle of parchment slightly smaller than the pot and pierce a hole in the middle."
+    },
+    {
+      "n": "Step 7",
+      "image": "assets/step-7.svg",
+      "text": "Take the pot off the heat and let it stand for 10 minutes before serving.",
+      "note": "This rest is where most of the flavour arrives. The broth is drawn back into the potatoes as everything cools, so do not skip it."
+    }
+  ]
+}

@@ -21,7 +21,7 @@
 ## examples/ — bundled gallery + Designer presets
 
 Grouped by DOCUMENT KIND, never by locale (`examples/<bucket>/<name>/`,
-bucket ∈ `business`/`forms`/`typography`/`presets`/`dev`); locale is a
+bucket ∈ `business`/`forms`/`typography`/`lifestyle`/`presets`/`dev`); locale is a
 name SUFFIX so ja↔en twins and the receipt locale-comparison set stay
 adjacent. **The preset id is the LEAF dir name, not the path**
 (`isSafeAssetName` forbids slashes; the site assembly walks two levels
@@ -80,6 +80,16 @@ What each example PROVES (one line each):
   authoring gap-driver): custom size + absolute body, `char_grid` 〒,
   text-`mark`, bounded tables, `spans`; ships the blank↔filled params
   pair proving `binding.placeholder`.
+- `lifestyle/recipe-booklet-en` — the counter-side booklet the
+  `shojiku-recipe-booklet` skill ships: photo-led hero row (flex `row`,
+  `fit: cover`), a shopping `table` whose first column is a `cell:`
+  checkbox and whose third carries substitutes, `page_break`, then
+  `repeat_flow` step cards; `footer` band = source URL + `qr_code` +
+  page number on every page. Its `definitions.yml`/`templates.yml` are
+  the SOURCE for `skills/shojiku-recipe-booklet/template/` — the copies
+  are byte-gated by `scripts/check-skill-template-sync.sh`. Assets are
+  shape-only SVG placeholders (no fetched photos; SVG text is not
+  rendered anyway).
 - `presets/blank-*` — the per-locale blank preset family (each catalog
   locale opens a blank page at ITS standard size; engine locale = a builtin or
   a shipped pack; no definitions.yml; not gallery material).
@@ -208,9 +218,23 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   `shojiku-definitions-author` (derive definitions.yml + the
   params-building code from an existing schema/DB/API source; proves
   the mapping via the `params_*` validation diagnostics; references
-  the deploy recipes' SQLite shape).
+  the deploy recipes' SQLite shape),
+  `shojiku-recipe-booklet` (a Japanese recipe video → a printable
+  booklet in the READER's language, Japanese nowhere in the output:
+  schema.org `Recipe` JSON-LD extraction, implicit Japanese cooking
+  technique spelled out, local sourcing/substitutes, step stills from
+  the page or — kurashiru has none — from `video.contentUrl` via
+  ffmpeg. The ONLY skill that BUNDLES a template
+  (`template/*.yml`, so a standalone `npx skills add` install still
+  works); that copy is byte-gated against
+  `examples/lifestyle/recipe-booklet-en/`).
 - `scripts/` — repo gates (`check-line-budget.sh`,
-  `check-gui-line-budget.sh`) + `generate-sbom.sh` (`make sbom` —
+  `check-gui-line-budget.sh`, `check-skill-template-sync.sh` — the
+  first step of `make examples-check`: a skill's bundled
+  `template/*.yml` must be byte-identical to the example it came from,
+  so the rendered+hash-checked example is the proof for the copy that
+  ships standalone; the example is the source, the skill the copy)
+  + `generate-sbom.sh` (`make sbom` —
   syft-in-Docker CycloneDX inventories committed under `sbom/`;
   regenerate + commit whenever a lockfile changes; no byte-compare
   gate) + codegen (`gen-locale-builtins.py` — authoring-time CLDR

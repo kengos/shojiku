@@ -242,7 +242,7 @@ template** with different data:
 | [<img src="examples/business/receipt-zh-tw/preview-1.png" width="420" alt="Receipt (zh-TW)">](examples/business/receipt-zh-tw/)<br>**Receipt (zh-TW)** — The locale-pack story: the same receipt geometry as ja / zh-CN / 80mm en-US, with currency, dates, tax wording, and font fallback swapped by the pack. | [<img src="examples/forms/application-form-ja/preview-1.png" width="206" alt="Application form, filled ↔ blank (ja)">](examples/forms/application-form-ja/) [<img src="examples/forms/application-form-ja/preview-blank-1.png" width="206" alt="Application form, filled ↔ blank (ja)">](examples/forms/application-form-ja/)<br>**Application form, filled ↔ blank (ja)** — ONE template, two params files: form marks, 〒 entry cells, wareki with a blank-form `placeholder`; not a single pt shifts. |
 | [<img src="examples/business/restaurant-menu-us/preview-1.png" width="420" alt="Restaurant menu (en + vertical writing)">](examples/business/restaurant-menu-us/)<br>**Restaurant menu (en + vertical writing)** — An American Japanese restaurant's specials: English menu, USD prices, and the vertical 正直亭 brand column + per-dish vertical names carrying the Japanese feel. | [<img src="examples/business/event-tickets-ja/preview-1.png" width="420" alt="Event tickets (ja)">](examples/business/event-tickets-ja/)<br>**Event tickets (ja)** — 2×4 n-up imposition with per-ticket QR, trim marks for the cutter, `placeholder` seat fallback; 14 attendees flow onto sheet 2 automatically. |
 
-15 more live in [examples/](examples/):
+16 more live in [examples/](examples/):
 [Estimate](examples/business/estimate-ja/) (The invoice's sibling: single-rate one-pager, estimate-terms box, discount row),
 [Delivery note](examples/business/delivery-note-ja/) (Between estimate and invoice: quantity-bundling `headerGroups`, data-driven row styling that tints only rows with items remaining, a receipt-stamp field; partial ↔ complete delivery as two data files),
 [Pickup slip](examples/business/pickup-slip-ja/) (The Thinreports migration artifact — the migration walkthrough's result),
@@ -253,6 +253,7 @@ template** with different data:
 [Kokugo reading worksheet](examples/typography/kokugo-print-ja/) (A framed vertical passage from Run, Melos! with ruby, then vertical questions read right to left with answer boxes and kanji cells — a grade-school reading-comprehension sheet),
 [Genkoyoshi (vertical)](examples/typography/genkoyoshi-ja/) (200-character manuscript paper with Aozora ruby),
 [Genkoyoshi (horizontal)](examples/typography/genkoyoshi-yoko-ja/) (The 400-character horizontal sheet),
+[Recipe booklet (en-US ↔ ja)](examples/lifestyle/recipe-booklet-en/) (A Japanese recipe video, reprinted for the kitchen counter: a photo-led shopping page whose third column carries substitutes, then `repeat_flow` step cards that paginate whole, with the source URL and its QR in the footer of every page. Not one reader-facing word lives in the template — even the table's column labels are bindings — so the English and Japanese sheets are one file and two params),
 [Receipt (ja)](examples/business/receipt-ja/) (The quickstart document: containers with `%` widths, a boxed total, tax breakdown, issuer block and QR),
 [Receipt (80mm thermal, en-US)](examples/business/receipt-us/) (A custom-size 80mm thermal-printer receipt),
 [Receipt (zh-CN)](examples/business/receipt-zh-cn/) (The simplified-Chinese member of the locale set),
@@ -358,8 +359,10 @@ matches yours.
 (`shojiku-mcp`, stdio — see [Quickstart](#quickstart)) and follow
 [skills/shojiku-template-author/](skills/shojiku-template-author/SKILL.md).
 Write YAML, render a preview, inspect the layout, repair, repeat.
-[skills/](skills/) also carries a render debugger and a Thinreports
-migrator.
+[skills/](skills/) also carries a render debugger, a definitions author,
+a Thinreports migrator, and — as a worked vertical — a recipe booklet
+built from a Japanese cooking video, printable in the cook's own
+language.
 
 **Working on this codebase**: read [CLAUDE.md](CLAUDE.md) first. It is a
 deliberately token-dense routing table, not prose — it maps each

@@ -40,17 +40,17 @@ hero:
 
 Shojikuのメインの機能は、領収書や、受付票のお客様控えのような帳票の生成です。画面で見せるためではなく、印刷して渡すことを前提にした、業務用の帳票エンジンです。
 
-構成は、文書のテンプレートと、お客様ごとに異なるパラメータの二つです。テンプレートは`templates.yml`、パラメータは`params.json`で、実際の運用ではDBに登録されたデータからパラメータを組み立てて渡します。
-
 PythonのSDKではこう書きます。
 
 ```python
 import shojiku
 
 client = shojiku.Client(
-    templates="templates/", font_dirs=["packs/fonts"], locale_dirs=["packs/locale"]
+    templates="templates/",        # テンプレート(templates.yml)を置いたディレクトリ
+    font_dirs=["packs/fonts"],
+    locale_dirs=["packs/locale"],
 )
-params = {"order": fetch_order(order_id)}  # DBのデータから組み立てる
+params = {"order": fetch_order(order_id)}  # 帳票に載せる値。DBのデータから組み立てる
 result = client.generate("receipt-ja", params)
 open("receipt.pdf", "wb").write(result.artifact.bytes)
 ```
@@ -67,7 +67,7 @@ signed = result.artifact.sign(provider)
 open("receipt-signed.pdf", "wb").write(signed.artifact.bytes)
 ```
 
-署名したPDFをストレージに保存しておけば、あとから`verify`で、正しくサーバーから出力されたものであることを電子的に確認できます。AWS KMSやGoogle Cloud KMSのようなクラウドの鍵で署名したい場合のために、二段構えのAPIも用意しています。エンジンからdigestを受け取り、KMSで署名を作り、その署名をエンジンに渡す流れです。秘密鍵をアプリのプロセスに持ち込む必要はありません。
+署名したPDFをストレージに保存しておけば、あとから`verify`で、正しくサーバーから出力されたものであることを電子的に確認できます。
 
 ## 長年要望されていた縦書きにも対応
 
@@ -83,7 +83,7 @@ open("receipt-signed.pdf", "wb").write(signed.artifact.bytes)
 
 ## AIエージェントでの帳票の作成
 
-テンプレートを自分で書く必要はありません。MCPサーバとスキルが同梱されているので、AIエージェントにそのまま頼めます。セットアップは2コマンドです（Claude Codeの例。詳細は[クイックスタート](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md)を確認してみてください）。
+テンプレートを自分で書く必要はありません。MCPサーバーとスキルが同梱されているので、AIエージェントにそのまま頼めます。セットアップは2コマンドです（Claude Codeの例。詳細は[クイックスタート](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md)を確認してみてください）。
 
 ```bash
 claude mcp add shojiku -- \
@@ -99,7 +99,7 @@ npx skills add kengos/shojiku
 
 > 受付票のテンプレートを作って。上に店名、真ん中に予約番号とQRコード、下に注文の明細表。
 
-エージェントがYAMLを書き、MCPサーバで検証し、プレビューを確認し、診断が消えるまで直します。これで簡単にPDFが作れます。詳細は[エージェント](/ja/agents)を確認してみてください。
+エージェントがYAMLを書き、MCPサーバーで検証し、プレビューを確認し、診断が消えるまで直します。これで簡単にPDFが作れます。詳細は[エージェント](/ja/agents)を確認してみてください。
 
 ## GUIでの細かい修正も可能
 

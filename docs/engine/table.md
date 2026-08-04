@@ -68,7 +68,8 @@ reject unknown keys, and every optional scalar is omitted-when-unset
 
 ## Spanning & non-text cells
 
-- **`headerGroups`** renders one extra row above the column labels; each
+- **`headerGroups`** renders one extra row above the column labels (its
+  `label` interpolates exactly like a column's); each
   group spans `span` columns (cumulative span clamps to the column
   count, `header_group_span_clamped`; uncovered columns become one
   unlabeled trailing cell). It repeats with the header on every page.
@@ -171,7 +172,7 @@ Row keys live under `row:` (`minHeight` / `height` / `style` /
 
 | Key | Type | Description |
 | --- | --- | --- |
-| `label` | string | Header cell text (a `cell:` column's header is still a plain label). |
+| `label` | string | Header cell text (a `cell:` column's header is still a plain label). **Interpolates `{key}` like static text**, against **top-level** params — header chrome belongs to the document, not to any row — so `label: "{labels.amount}"` lets one template print its headings in whichever language the params carry. A label with no `{…}` resolves to itself. |
 | `data` | `{ key, format? }` | Row-relative binding ([data-binding.md](data-binding.md)); `scope: document` reads top-level params instead, so a column can show one document-wide value (a `type: image` column then loads one shared asset rather than one per row). Exclusive with `cell`; one of the two is required. |
 | `cell` | container | A per-row sub-template — see [Container cells](#container-cells). Exclusive with `data` / `type` / `fit`. |
 | `width` | [Length](length.md) | `%` of the flow region width; physical units work; omitted = an **equal share of the leftover** after the sized columns (all omitted = an even split). Negative → 0 with `invalid_column_width`. |

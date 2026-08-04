@@ -1,0 +1,204 @@
+version: 0.1.0
+name: recipe_booklet
+
+# A Japanese recipe video, reprinted as a kitchen-counter booklet in the
+# cook's own language. Page 1 is the shopping trip — finished dish, then a
+# checkbox list where the third column carries substitutes for what a
+# foreign supermarket will not have. Page 2 on is the method: one
+# `repeat_flow` card per step, each holding a frame lifted from the video
+# and a note that spells out the technique the Japanese original left
+# implicit. Every page footers the source URL plus its QR, so the phone
+# can pick up the video where the paper stops.
+#
+# NOT ONE WORD OF READER-FACING TEXT LIVES HERE. Every heading and column
+# label is a `{labels.*}` binding — including the table's, since column
+# labels interpolate like any other text — so the SAME file prints an
+# English booklet for a cook in Texas and a Japanese one for a cook in
+# Tokyo. `params.json` and `params-ja.json` are that pair; the language
+# is a data decision, and the only template-level knob it needs is the
+# render locale (`--lang`, which picks the font pack).
+page:
+  size: A4
+  orientation: portrait
+  margin: 25
+
+defaults:
+  locale: en-US
+  style: { fontSize: 10, color: "#22252b" }
+
+styles:
+  sectionHeading:
+    fontSize: 13
+    fontWeight: bold
+    color: "#1f5136"
+    lineHeight: 1.3
+  meta:
+    fontSize: 9.5
+    color: "#5b6169"
+    lineHeight: 1.45
+  stepNote:
+    fontSize: 8.5
+    color: "#5b6169"
+    lineHeight: 1.5
+
+sections:
+  header:
+    repeat: except_first_page
+    height: 26
+    items:
+      - type: text
+        box: { x: 0, y: 0, w: 420, h: 12 }
+        text: "{recipe.title}"
+        style: { fontSize: 8.5, color: "#5b6169", lineHeight: 1.3 }
+      - type: text
+        box: { x: 420, y: 0, w: 125.28, h: 12 }
+        text: "{recipe.total_time}"
+        style: { fontSize: 8.5, textAlign: right, color: "#5b6169", lineHeight: 1.3 }
+      - type: rect
+        box: { x: 0, y: 16, w: "100%", h: 0.6 }
+        style: { backgroundColor: "#d6dbe2" }
+
+  body:
+    type: flow
+    box: { x: 0, y: 26, w: "100%", h: 696 }
+    gap: 14
+    items:
+      # ---- page 1: the shopping trip ----------------------------------
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          - type: image
+            box: { w: 158, h: 158 }
+            data: { key: recipe.hero }
+            fit: cover
+          - type: container
+            box: { gap: 7 }
+            items:
+              - type: text
+                data: { key: recipe.title }
+                style: { fontSize: 21, fontWeight: bold, lineHeight: 1.25 }
+              - type: text
+                data: { key: recipe.subtitle }
+                style: { fontSize: 9.5, lineHeight: 1.55, color: "#3d434b" }
+              - type: rect
+                box: { w: 44, h: 2 }
+                style: { backgroundColor: "#1f5136" }
+              - type: text
+                text: "{recipe.servings}   ·   {recipe.total_time}"
+                styleNames: [ meta ]
+              - type: text
+                data: { key: recipe.source_label }
+                styleNames: [ meta ]
+
+      - type: text
+        text: "{labels.shopping_heading}"
+        styleNames: [ sectionHeading ]
+
+      - type: container
+        box: { padding: 8 }
+        style: { backgroundColor: "#f4f7f5", borderWidth: 0.5, borderColor: "#cfdcd4" }
+        items:
+          - type: text
+            data: { key: recipe.shopping_note }
+            style: { fontSize: 9, lineHeight: 1.5, color: "#3d434b" }
+
+      - type: table
+        id: shopping_list
+        data: { key: ingredients }
+        cellPadding: 4
+        style: { borderWidth: 0.5, borderColor: "#d6dbe2" }
+        header:
+          height: 22
+          style: { backgroundColor: "#eef3ef", fontWeight: bold, fontSize: 9 }
+        row:
+          minHeight: 20
+          alternateStyle: { backgroundColor: "#fafbfc" }
+        columns:
+          # The tick column: no label, and no drawn box inside it either.
+          # A drawn box has to sit somewhere, and rows here vary in height
+          # (a long sourcing note makes one three lines tall), so it ends
+          # up floating against a vertically centred ingredient name. The
+          # empty cell is already a box — the grid draws its border — and
+          # that is what a pen ticks in a shop.
+          - id: check_col
+            width: 22
+            cell:
+              box: { padding: 0 }
+              items: []
+          - id: name_col
+            label: "{labels.col_ingredient}"
+            data: { key: name }
+            style: { fontSize: 9.5 }
+          - id: amount_col
+            label: "{labels.col_amount}"
+            data: { key: amount }
+            width: 92
+            style: { fontSize: 9.5 }
+          - id: note_col
+            label: "{labels.col_note}"
+            data: { key: note }
+            width: 196
+            style: { fontSize: 8.5, color: "#5b6169" }
+
+      - type: page_break
+
+      # ---- page 2 on: the method --------------------------------------
+      - type: text
+        text: "{labels.method_heading}"
+        styleNames: [ sectionHeading ]
+
+      - id: steps
+        type: repeat_flow
+        data: { key: steps }
+        gap: 11
+        item:
+          box: { padding: 10 }
+          style: { borderWidth: 0.5, borderColor: "#d6dbe2" }
+          items:
+            # `contain`, not `cover`: step stills arrive at whatever
+            # aspect the source used — a square frame from a Japanese
+            # recipe video, a 16:9 still from a photo-per-step site — and
+            # cropping a square into a wide box would cut away the
+            # on-screen caption that names the ingredient.
+            - type: image
+              box: { x: 0, y: 0, w: 112, h: 112 }
+              data: { key: image }
+              fit: contain
+            - type: container
+              box: { x: 128, y: 0, w: 397.28, gap: 5 }
+              items:
+                - type: text
+                  data: { key: n }
+                  style: { fontSize: 8.5, fontWeight: bold, color: "#1f5136", lineHeight: 1.3 }
+                - type: text
+                  data: { key: text }
+                  style: { fontSize: 10, lineHeight: 1.55 }
+                - type: text
+                  data: { key: note }
+                  styleNames: [ stepNote ]
+
+  footer:
+    repeat: every_page
+    items:
+      - type: rect
+        box: { x: 0, y: 728, w: "100%", h: 0.6 }
+        style: { backgroundColor: "#d6dbe2" }
+      # 56pt, not the 44 the layout would like: a real recipe URL carries
+      # a UUID, and at 44pt that many modules land under 1pt each —
+      # `qr_module_too_small`, i.e. a code the kitchen phone may not scan.
+      - type: qr_code
+        box: { x: 0, y: 734, w: 56, h: 56 }
+        data: { key: recipe.source_url }
+      - type: text
+        box: { x: 64, y: 740, w: 320, h: 12 }
+        text: "{labels.qr_prompt}"
+        style: { fontSize: 8, fontWeight: bold, color: "#3d434b", lineHeight: 1.3 }
+      - type: text
+        box: { x: 64, y: 754, w: 320, h: 22 }
+        text: "{recipe.source_url}"
+        link: { url: "{recipe.source_url}" }
+        style: { fontSize: 7.5, color: "#5b6169", lineHeight: 1.4 }
+      - type: page_number
+        box: { x: 400, y: 778, w: 145.28, h: 12 }
+        format: "{page} / {pages}"
+        style: { fontSize: 8.5, textAlign: right, color: "#5b6169" }

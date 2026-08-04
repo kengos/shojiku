@@ -12,7 +12,7 @@ mod span;
 mod style;
 
 use serde_json::Value;
-use shojiku_core::{resolve_path, AlignItems, EmptyBehavior, TableItem};
+use shojiku_core::{resolve_path, AlignItems, Bindings, EmptyBehavior, TableItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::cross_offset;
 
@@ -180,6 +180,25 @@ impl<'a, 'b> Ctx<'a, 'b> {
             return None;
         }
         Some(rows)
+    }
+
+    /// A header label as drawn: interpolated like any other static text,
+    /// so `label: "{labels.amount}"` reads params instead of pinning one
+    /// language into the template. Shared by the column labels
+    /// (`rows/prepare.rs`) and the `headerGroups` ones (`span.rs`) — the
+    /// two surfaces that used the authored string verbatim while every
+    /// other text-bearing item already resolved bindings.
+    ///
+    /// Header chrome is document-level, so segments read TOP-LEVEL params
+    /// (a header is not scoped to any row) and the label declares no
+    /// bindings of its own. A label with no `{…}` in it resolves to
+    /// itself, which is why every existing template renders unchanged.
+    /// An absent label is passed straight through: `resolve_content`
+    /// answers `None` when nothing is authored (silently — the caller
+    /// owns any diagnostic), so the unlabeled column needs no branch here.
+    pub(super) fn header_label(&mut self, label: Option<&str>) -> String {
+        self.resolve_content(label, None, &Bindings::new())
+            .unwrap_or_default()
     }
 
     /// The horizontal region a flow table occupies: `box.x`/`box.w`

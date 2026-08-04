@@ -27,10 +27,26 @@ never sizes from image pixels).
 | `src` | string | | Bundled path, `data:` URI, or inline SVG. A path resolves against the **assets root** — `--assets-dir`, defaulting to **the template file's directory** (so `examples/business/receipt-ja/templates.yml` can say `src: assets/logo.svg`); paths escaping the root are rejected (`asset_traversal`). Remote URLs are recognized and rejected (`remote_asset_unsupported` — the render path has no network I/O, and unlike a font there is no `sha256` pin that would make fetching an image deterministic). |
 | `data` | `{ key }` | | Dynamic source from params; the host's asset policy (open vs bundled-only, per-item allow/deny via CLI `--allow/deny-dynamic-image`) gates it. |
 | `bindings` | map of name → binding | | Named declarations for the `{name}` interpolations in this item's `link.url` ([data-binding.md](data-binding.md#named-binding-declarations)). |
-| `fit` | `contain` \| `cover` \| `stretch` \| `none` | `contain` | CSS `object-fit`, all centered. `contain` preserves aspect ratio inside the box (letterbox); `cover` preserves aspect ratio filling the box and crops the overflow; `stretch` fills the box exactly (distorting); `none` draws at the asset's intrinsic size (raster px at 72dpi / SVG viewBox units). `cover`/`none` clip anything past the content box. |
+| `fit` | `contain` \| `cover` \| `stretch` \| `none` | `contain` | CSS `object-fit`, all centered. `contain` preserves aspect ratio inside the box (letterbox); `cover` preserves aspect ratio filling the box and crops the overflow; `stretch` fills the box exactly (distorting); `none` draws at the asset's intrinsic size (raster px at 72dpi / SVG viewBox units). `cover`/`none` clip anything past the content box — and an **SVG clips under every fit** (see below). |
 | `box.w` / `box.h` | [Length](length.md) | required | The fit box (inset by padding). |
 | `style` / `styleNames` | | | Decoration (`backgroundColor`, `borderWidth`/`borderColor`) plus **`opacity`** (see below); text properties are unused. |
 | `link` | `{ url }` | | Hyperlink over the draw box. See [link.md](link.md). |
+
+## The box always holds
+
+An image never paints outside its content box. For a raster that falls
+out of the fit math — the pixels are exactly their own rect — so only
+`cover`/`none` need the crop. An **SVG** is different: its intrinsic
+size is the `viewBox`, but nothing stops a path from being drawn
+outside it, so the fitted rect is not the painted rect. The `viewBox`
+is the viewport and a viewport clips (the outermost `<svg>` carries
+`overflow: hidden`), so every SVG is clipped to the content box under
+every fit — `contain` and `stretch` included.
+
+This matters when the asset is not yours: without it, one hostile or
+merely sloppy SVG could paint over the whole page. If your own artwork
+looks cropped, its shapes extend past the `viewBox` — widen the
+`viewBox` rather than expecting the overflow to draw.
 
 ## Opacity
 

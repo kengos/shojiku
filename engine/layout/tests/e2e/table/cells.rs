@@ -168,6 +168,29 @@ fn cover_fit_clips_the_cell_image() {
 }
 
 #[test]
+fn svg_cell_image_is_clipped_even_when_it_fits() {
+    use shojiku_image::{parse_svg, Asset, AssetKind, AssetStore, SvgLimits};
+    let mut store = AssetStore::empty();
+    store.insert(Asset {
+        id: shojiku_image::cell_asset_key("items", 0, "photo"),
+        kind: AssetKind::Svg(
+            parse_svg(r#"<svg viewBox="0 0 10 10"/>"#, &SvgLimits::default()).expect("svg"),
+        ),
+    });
+    let (doc, _) = cell_table(
+        "          - { data: { key: photo }, type: image, fit: contain, width: 100 }\n",
+        json!([{ "photo": "row0.svg" }]),
+        Some(&store),
+    );
+    // `contain` cannot overflow, but an SVG's paths can leave the
+    // viewBox, so the cell clips it to the padded cell box regardless.
+    assert!(image_shapes(&doc.pages[0]).is_empty());
+    let clips = crate::clip::clip_shapes(&doc.pages[0]);
+    assert_eq!(clips.len(), 1);
+    assert_eq!(clips[0].items.len(), 1);
+}
+
+#[test]
 fn over_cap_qr_cell_content_warns_and_draws_nothing() {
     let long = "x".repeat(2000);
     let (_, diags) = cell_table(
