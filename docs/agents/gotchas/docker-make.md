@@ -111,6 +111,24 @@ learned there is no Debian-based .NET 10 image at all.
 
 ## Never run two gates at once
 
+**`make -n` is NOT a dry run here, and it can kill a running gate.** GNU
+make executes any recipe line containing `$(MAKE)` even under `-n` (that
+is the documented `+`/`$(MAKE)` recursion rule — the point is to let
+sub-makes report what THEY would do). Most of this repo's convenience
+targets delegate that way, so `make -n verify` and `make -n quiet
+T=budget` really run sub-makes: they take the gate lock, contend with a
+gate already running in the tree, and the running `make verify` dies at
+whatever target it had reached (`cli-bin`, in the incident) with a lock
+message that reads like a stale lock rather than like contention. The
+"dry run" also leaves a `# FAILED: <target>` header in
+`.make-logs/last-error.log` from its own sub-make, which then looks like
+an outstanding failure of the real run.
+
+To check that an edit did not break the Makefile, parse it instead of
+pretending to run it: `make help` (it only greps the file), or diff the
+change and confirm it touched no recipe line. To see what a target would
+do, read the recipe.
+
 **This is now enforced, not just advised**: `scripts/gate-lock.sh` wraps
 every containerised gate and refuses a second one in the SAME working
 tree, naming the holder (command, pid, start time). It is keyed by
@@ -307,28 +325,27 @@ failure.
 
 ## Scoped gui test iteration (faster than the ~2-min `make gui`)
 
-```sh
-docker run -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
-  -v "/abs/repo:/repo" -w /repo/gui \
-  -v shojiku-pnpm:/pnpm-store node:24-bookworm-slim sh -euc '
-    corepack enable; pnpm config set store-dir /pnpm-store;
-    pnpm install --frozen-lockfile >/dev/null 2>&1;
-    cd <pkg>; pnpm exec vitest run <files>'
-```
+**`make test:gui F=<pattern>`.** It runs vitest across the workspace
+against test files whose path matches, WITHOUT coverage — one file
+cannot meet a 100% workspace threshold, so a scoped run that kept the
+threshold would always fail and teach you to ignore the gate.
 
-The env var silences corepack's update prompt (which otherwise hangs
-the run to EXIT=1 with no output); the ABSOLUTE mount avoids the drift
-above. Re-run the full `make gui` once before committing (it also runs
-lint/format on the final files).
+This used to be a hand-written `docker run … pnpm exec vitest run`, and
+that recipe is deliberately gone: a correctness check comes from a make
+target and nothing else (`docs/agents/verification.md`). The reason it
+had to be exact is the reason it should not be typed at all —
+`node_modules` lives on the repo mount, so an install under a different
+base image leaves another platform's native bindings there and the next
+run dies with `Cannot find module './rolldown-binding.<platform>.node'`,
+which reads exactly like a broken dependency tree rather than an image
+mismatch. The target carries the right image (`NODE_IMAGE`), the right
+store volume (`shojiku-pnpm:/pnpm-store`), the absolute repo-root mount
+and `COREPACK_ENABLE_DOWNLOAD_PROMPT=0` (without which the run hangs to
+`EXIT=1` with no output).
 
-**Use THIS image and store volume, not an improvised pair.** `node_modules`
-lives on the repo mount, so an install run under a different base image
-leaves another platform's native bindings there and the next run dies with
-`Cannot find module './rolldown-binding.<platform>.node'` — which reads
-exactly like a broken dependency tree rather than an image mismatch. The
-image must be the Makefile's `NODE_IMAGE` and the store must be
-`shojiku-pnpm:/pnpm-store`; copy the flags from `PNPM_IN_DOCKER` rather
-than typing them from memory.
+A narrowed run proves nothing about the packages it skipped: finish with
+`make test:gui` — or `make verify:gui`, which also lints and typechecks
+the files you just changed — before saying the tests pass.
 
 ## Judging a `make test` run
 

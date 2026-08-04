@@ -33,6 +33,7 @@ fn raster_kind(bytes: Vec<u8>) -> shojiku_image::AssetKind {
 
 fn image_doc(shape: ImageShape) -> LayoutDocument {
     LayoutDocument {
+        metadata: Default::default(),
         page_width: 595.28,
         page_height: 841.89,
         pages: vec![shojiku_layout::LayoutPage {
@@ -123,7 +124,7 @@ fn translucent_raster_and_svg_render_through_the_opacity_group() {
         let mut s = shape("faded", 50.0, 50.0);
         s.opacity = 0.4;
         let doc = image_doc(s);
-        let bytes = render_pdf(&doc, fonts, &assets, "x").expect("render");
+        let bytes = render_pdf(&doc, fonts, &assets).expect("render");
         assert!(bytes.starts_with(b"%PDF-"));
     }
 }
@@ -133,7 +134,7 @@ fn unknown_asset_id_is_an_error() {
     let (_pack, fonts) = shared_fonts();
     let doc = image_doc(shape("ghost", 10.0, 10.0));
     assert!(matches!(
-        render_pdf(&doc, fonts, &AssetStore::empty(), "x"),
+        render_pdf(&doc, fonts, &AssetStore::empty()),
         Err(RenderError::UnknownAsset(id)) if id == "ghost"
     ));
 }
@@ -159,7 +160,7 @@ fn undecodable_raster_bytes_are_an_error() {
             },
         );
         let doc = image_doc(shape("bad", 10.0, 10.0));
-        let err = render_pdf(&doc, fonts, &assets, "x").expect_err("junk bytes");
+        let err = render_pdf(&doc, fonts, &assets).expect_err("junk bytes");
         assert!(matches!(&err, RenderError::BadImage { id, .. } if id == "bad"));
         assert!(err.to_string().contains("bad"));
     }
@@ -173,13 +174,13 @@ fn degenerate_image_shapes_are_skipped() {
     // Non-finite / non-positive rects skip before any decode.
     for (w, h) in [(f64::NAN, 10.0), (0.0, 10.0), (10.0, -1.0)] {
         let doc = image_doc(shape("ok", w, h));
-        let bytes = render_pdf(&doc, fonts, &assets, "x").expect("render");
+        let bytes = render_pdf(&doc, fonts, &assets).expect("render");
         assert!(bytes.starts_with(b"%PDF-"));
     }
 
     // Finite in f64 but infinite as f32: krilla's Size rejects it
     // after the decode, exercising the size fallback.
     let doc = image_doc(shape("ok", 1e300, 10.0));
-    let bytes = render_pdf(&doc, fonts, &assets, "x").expect("render");
+    let bytes = render_pdf(&doc, fonts, &assets).expect("render");
     assert!(bytes.starts_with(b"%PDF-"));
 }

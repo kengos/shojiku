@@ -41,6 +41,10 @@ fn engine_info_reports_version_capabilities_and_locales() {
     // given key is present.
     assert!(info.capabilities.contains(&"definitions.schema"));
     assert!(info.capabilities.contains(&"definitions.enum.labels"));
+    // The `document:` metadata block (PDF `/Info` + XMP). Pinned
+    // individually — the registry's structural tests pass whether or not a
+    // given key is present.
+    assert!(info.capabilities.contains(&"template.document.metadata"));
     // The WASM host surface and its encode-free preview form advertise here.
     assert!(info.capabilities.contains(&"wasm.bindings"));
     assert!(info.capabilities.contains(&"preview.raw"));

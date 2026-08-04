@@ -98,7 +98,8 @@ this pipeline before deciding which crate/package it belongs to.
   instructions would attest to something no reader can check, which is
   the opposite of what signing is for. Machine-facing description
   belongs in document metadata (`/Info` + XMP), where every reader and
-  every extraction tool can surface it.
+  every extraction tool can surface it — which is what the template's
+  `document:` block writes ([engine/document.md](engine/document.md)).
 
 Most of these are deliberately deferred, not rejected: absence from
 [engine/features.md](engine/features.md) means unbuilt, not unwanted.

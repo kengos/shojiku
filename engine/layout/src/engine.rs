@@ -23,6 +23,7 @@ mod grid;
 mod link;
 mod list;
 mod marks;
+mod meta;
 mod path;
 mod predicate;
 mod qr;

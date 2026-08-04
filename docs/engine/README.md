@@ -134,6 +134,7 @@ Disallowed placements warn and skip (never a hard failure) — codes in
 | [template.md](template.md) | file structure: `page` / `styles` / `defaults` / `formats` / `sections`, bands, bodies, common item keys |
 | [defaults.md](defaults.md) | document presentation defaults: root style (rem root), per-type format defaults, the `formats:` registry |
 | [page.md](page.md) | page size, orientation, margin; the margin box as coordinate origin |
+| [document.md](document.md) | `document:` metadata: title / description / keywords / language / authors → the PDF's document properties (PDF only) |
 | [length.md](length.md) | units: pt, `%`, `mm`/`cm`/`in`, `em`/`rem`; round-trip; guards |
 | [box.md](box.md) | `box:` geometry — x/y/w/h, margin/padding, minWidth/maxWidth/minHeight/maxHeight |
 | [flex.md](flex.md) | default child placement: direction, gap, alignItems, justifyContent, auto margins |

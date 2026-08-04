@@ -105,6 +105,7 @@ sections:
 fn unknown_font_id_in_layout_is_an_error() {
     let (_pack, fonts) = shared_fonts();
     let doc = LayoutDocument {
+        metadata: Default::default(),
         page_width: 595.28,
         page_height: 841.89,
         pages: vec![shojiku_layout::LayoutPage {
@@ -137,7 +138,7 @@ fn unknown_font_id_in_layout_is_an_error() {
         }],
     };
     assert!(matches!(
-        render_pdf(&doc, fonts, &AssetStore::empty(), "x"),
+        render_pdf(&doc, fonts, &AssetStore::empty()),
         Err(RenderError::UnknownFont(id)) if id == "ghost"
     ));
 }
@@ -146,12 +147,13 @@ fn unknown_font_id_in_layout_is_an_error() {
 fn non_positive_page_size_is_an_error() {
     let (_pack, fonts) = shared_fonts();
     let doc = LayoutDocument {
+        metadata: Default::default(),
         page_width: 0.0,
         page_height: 841.89,
         pages: vec![shojiku_layout::LayoutPage { items: vec![] }],
     };
     assert!(matches!(
-        render_pdf(&doc, fonts, &AssetStore::empty(), "x"),
+        render_pdf(&doc, fonts, &AssetStore::empty()),
         Err(RenderError::BadPageSize(w, _)) if w == 0.0
     ));
 }
@@ -257,12 +259,13 @@ fn error_mappers_wrap_messages() {
 fn empty_layout_is_an_error() {
     let (_pack, fonts) = shared_fonts();
     let empty = LayoutDocument {
+        metadata: Default::default(),
         page_width: 595.28,
         page_height: 841.89,
         pages: vec![],
     };
     assert!(matches!(
-        render_pdf(&empty, fonts, &AssetStore::empty(), "x"),
+        render_pdf(&empty, fonts, &AssetStore::empty()),
         Err(RenderError::NoPages)
     ));
 }

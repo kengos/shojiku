@@ -13,6 +13,7 @@ fn svg_page(svg: &str) -> (AssetStore, LayoutDocument) {
         kind: AssetKind::Svg(tree),
     });
     let doc = LayoutDocument {
+        metadata: Default::default(),
         page_width: 100.0,
         page_height: 100.0,
         pages: vec![LayoutPage {

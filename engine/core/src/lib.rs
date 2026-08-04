@@ -51,13 +51,13 @@ pub use style::{
 };
 pub use template::{
     parse_template, Band, Binding, BindingScope, Bindings, Body, BreakBefore, CharGridItem,
-    CharGridSpec, CheckboxItem, Column, ColumnType, ContainerItem, EcLevel, EllipseItem,
-    EmptyBehavior, EqualsValue, FlowBody, FormatDefaults, FormatRef, GridDirection, GridSpec,
-    HeaderGroup, ImageFit, ImageItem, InlineFormat, Item, KinsokuMode, LineItem, Link, ListItem,
-    MarkBinding, Markup, NamedFormat, NamedFormatKind, PageBreakItem, PageNumberItem, QrCodeItem,
-    RectItem, Repeat, RepeatFlowItem, RepeatItem, RowConditionalStyle, RowSpec, RubyPair, Sections,
-    Span, TableHeaderSpec, TableItem, Template, TemplateDefaults, TextItem, TextMark, MAX_BINDINGS,
-    MAX_CHAR_GRID_CELLS, MAX_CONTAINER_DEPTH, MAX_FORMATS, MAX_IMPOSITION_PER_PAGE,
-    MAX_ROW_CONDITIONAL_STYLES, MAX_RUBY_ENTRIES, MAX_SPANS,
+    CharGridSpec, CheckboxItem, Column, ColumnType, ContainerItem, DocumentMeta, EcLevel,
+    EllipseItem, EmptyBehavior, EqualsValue, FlowBody, FormatDefaults, FormatRef, GridDirection,
+    GridSpec, HeaderGroup, ImageFit, ImageItem, InlineFormat, Item, KinsokuMode, LineItem, Link,
+    ListItem, MarkBinding, Markup, NamedFormat, NamedFormatKind, PageBreakItem, PageNumberItem,
+    QrCodeItem, RectItem, Repeat, RepeatFlowItem, RepeatItem, RowConditionalStyle, RowSpec,
+    RubyPair, Sections, Span, TableHeaderSpec, TableItem, Template, TemplateDefaults, TextItem,
+    TextMark, MAX_BINDINGS, MAX_CHAR_GRID_CELLS, MAX_CONTAINER_DEPTH, MAX_DOCUMENT_ENTRIES,
+    MAX_FORMATS, MAX_IMPOSITION_PER_PAGE, MAX_ROW_CONDITIONAL_STYLES, MAX_RUBY_ENTRIES, MAX_SPANS,
 };
 pub use validate::validate;

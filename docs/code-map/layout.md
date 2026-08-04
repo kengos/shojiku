@@ -96,6 +96,13 @@ Wire types stay in core; content measurement stays in layout.
 - `engine/link.rs` — `link:`: `resolve_link` (scope-aware interpolation) +
   `check_link_url` (scheme allowlist + length/control gates) — layout is
   the trust boundary; renderers emit what the tree carries.
+- `engine/meta.rs` — `document:`: `document_metadata` (interpolates each
+  field through the shared binding funnel) + `check_meta_text` /
+  `check_meta_language` — the same trust boundary as `link.rs`, and the
+  language gate is load-bearing (`xmp-writer` writes a language tag
+  RAW while it escapes every other value). A gate REJECT is terminal:
+  the title→`name` and language→`defaults.locale` fallbacks cover only
+  an ABSENT value, never a refused one.
 - `engine/qr.rs` — `type: qr_code`: layout-time qrcodegen encode →
   RLE-merged module `RectShape`s; scope-aware content, so per-element in
   cells.
@@ -288,6 +295,10 @@ Wire types stay in core; content measurement stays in layout.
   `PlacedBox.text` = the two-form (horizontal lines / vertical columns)
   metrics wire.
 - `tree.rs` — **`LayoutDocument`: the ONLY layout↔renderer contract**.
+  Carries `metadata: DocumentMetadata` (`tree/meta.rs` — resolved title/
+  description/keywords/language/authors + `DEFAULT_DOCUMENT_TITLE`; the
+  PDF backend writes it, the PNG backend ignores it, and `inspect`
+  serializes it).
   Text types in `tree/text.rs` (+ `tree/text/view.rs` — `RunView`/
   `line_runs`, the ONE runs view both renderers draw); corner/dash
   vocabulary in `tree/round.rs` (`Corners`, `Dash`, `rounded_rect_cmds` —

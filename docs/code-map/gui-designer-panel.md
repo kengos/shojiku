@@ -301,7 +301,22 @@ read side, never the reverse.
     each read through that section's OWN pure model, so a hostile
     document degrades exactly as that section does).
   - `panel/DocSectionRail.tsx` — the rail: the view's table of contents
-    AND its navigation (`current`/`summaries`/`onSelect`).
+    AND its navigation (`current`/`summaries`/`onSelect`, plus an
+    optional `sections` the page narrows by capability — a gated-off
+    section leaves no row rather than a row opening onto nothing).
+  - `panel/documentMetaModel.ts` — the pure `document:` model
+    (`readDocumentMetaView` — a hostile node reads all-empty and a
+    non-scalar list entry is dropped rather than shown as uneditable
+    text; `metaTextOp`/`metaListOp` root-addressed, `setStrings` for the
+    two lists like `styleNames`; `replaceEntry`/`removeEntry`).
+  - `panel/DocumentMetaFields.tsx` — the section itself: title /
+    description / keywords / authors / language, gated on
+    `template.document.metadata`. `language` is a ComboField over the
+    known locale tags because the engine charset-gates the tag and drops
+    anything else. Its list rows are `panel/StringListField.tsx` — one
+    input per entry plus a TRAILING BLANK ROW that appends (no "add"
+    button: a button would have to author the empty entry the engine
+    drops), Enter→blur guarded on `isComposing`.
   - `panel/BaseTextPreview.tsx` — the base-text section's preview (a
     sample paragraph set in the document's base text, over the engine
     floor from `buildStyleFloor`) — shown INSTEAD of the page preview,

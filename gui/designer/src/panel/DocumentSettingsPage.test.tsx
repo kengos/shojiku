@@ -16,12 +16,14 @@ function Harness({
   source = BASE,
   pages = [],
   defaultFontFamily,
+  capabilities,
   focus,
   onClose = vi.fn(),
 }: {
   readonly source?: string;
   readonly pages?: readonly RawPage[];
   readonly defaultFontFamily?: string;
+  readonly capabilities?: readonly string[];
   readonly focus?: { readonly section: DocSection; readonly nonce: number };
   readonly onClose?: () => void;
 }) {
@@ -32,6 +34,7 @@ function Harness({
         controller={editor}
         styleUsage={buildStyleUsage(editor.text)}
         defaultFontFamily={defaultFontFamily}
+        capabilities={capabilities}
         pages={pages}
         focus={focus}
         onClose={onClose}
@@ -50,7 +53,13 @@ function openSection(name: string) {
 describe('DocumentSettingsPage', () => {
   it('lists every section in the rail and opens page setup first', () => {
     render(<Harness />);
-    for (const name of ['Page setup', 'Normal text', 'Styles', 'Locale & currency']) {
+    for (const name of [
+      'Page setup',
+      'Normal text',
+      'Styles',
+      'Locale & currency',
+      'Document properties',
+    ]) {
       expect(screen.getByRole('button', { name: new RegExp(`^${name}`) })).toBeTruthy();
     }
     // Only the opening section's body is mounted — the rail, not a scroller,
@@ -84,6 +93,32 @@ describe('DocumentSettingsPage', () => {
     expect(screen.getByRole('button', { name: /^Locale & currency/ }).textContent).toContain(
       'ja-JP · JPY',
     );
+  });
+
+  it('summarizes the document properties by title, or says they are unset', () => {
+    render(<Harness source={`document:\n  title: Monthly invoice\n${BASE}`} />);
+    expect(screen.getByRole('button', { name: /^Document properties/ }).textContent).toContain(
+      'Monthly invoice',
+    );
+  });
+
+  it('says the document properties are unset when nothing is authored', () => {
+    render(<Harness />);
+    expect(screen.getByRole('button', { name: /^Document properties/ }).textContent).toContain(
+      'Not set',
+    );
+  });
+
+  it('gates the document-properties section on the engine capability', () => {
+    // Present: the rail row and the section body both exist.
+    const withKey = render(<Harness capabilities={['template.document.metadata']} />);
+    openSection('Document properties');
+    expect(screen.getByLabelText('Title')).toBeTruthy();
+    withKey.unmount();
+    // Absent: no row at all — a row that opens onto nothing is worse than none.
+    render(<Harness capabilities={[]} />);
+    expect(screen.queryByRole('button', { name: /^Document properties/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /^Page setup/ })).toBeTruthy();
   });
 
   it('summarizes an unset base text by size alone (no family to name)', () => {

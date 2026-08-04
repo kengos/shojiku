@@ -5,6 +5,7 @@ use super::*;
 #[test]
 fn empty_document_is_an_error() {
     let doc = LayoutDocument {
+        metadata: Default::default(),
         page_width: 100.0,
         page_height: 100.0,
         pages: vec![],
@@ -25,6 +26,7 @@ fn bad_scale_and_page_size_are_errors() {
         ));
     }
     let bad = LayoutDocument {
+        metadata: Default::default(),
         page_width: 0.0,
         page_height: 100.0,
         pages: vec![LayoutPage { items: vec![] }],
@@ -38,6 +40,7 @@ fn bad_scale_and_page_size_are_errors() {
 #[test]
 fn oversized_canvas_is_capped() {
     let doc = LayoutDocument {
+        metadata: Default::default(),
         page_width: 10_000.0,
         page_height: 10_000.0,
         pages: vec![LayoutPage { items: vec![] }],

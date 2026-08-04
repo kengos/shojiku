@@ -472,6 +472,19 @@ export const fil: LanguageCatalog = {
     'defaults.styleIntro':
       'Ito ang batayang teksto ng buong dokumento. Ang bawat kahong iniwang blangko ay sumusunod sa sariling halaga ng engine — ang binago mo lang ang naisusulat sa file.',
     'defaults.unset': 'Hindi nakatakda',
+    'docMeta.title': 'Impormasyon ng dokumento',
+    'docMeta.intro':
+      'Kung ano ang sinasabi ng file tungkol sa sarili nito. Napupunta ito sa mga katangian ng PDF, hindi sa pahina — hindi magbabago ang preview, at wala nito sa mga PNG preview.',
+    'docMeta.docTitle': 'Pamagat',
+    'docMeta.titlePlaceholder': 'Kapag walang laman, ginagamit ang pangalan ng template',
+    'docMeta.description': 'Paglalarawan',
+    'docMeta.keywords': 'Mga keyword',
+    'docMeta.authors': 'Mga may-akda',
+    'docMeta.language': 'Wika',
+    'docMeta.languageHint': 'Kapag walang laman, ginagamit ang locale sa itaas.',
+    'docMeta.addEntry': 'Mag-type para magdagdag',
+    'docMeta.remove': 'Alisin',
+    'docMeta.unset': 'Hindi nakatakda',
     'defaults.unsetWith': 'Hindi nakatakda ({value})',
     'defaults.sizeHint':
       'Mas madaling basahin ang katawang teksto kapag bahagyang mas malaki kaysa sa halaga ng engine — mga {size}pt.',

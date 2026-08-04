@@ -148,6 +148,12 @@ export const zhCn: LanguageCatalog = {
       '表格列出了 {count} 个 row conditionalStyles（超过上限 {max}）；仅前 {max} 个生效',
     too_many_bindings:
       '项目声明了 {count} 个 bindings（超过上限 {max}）；请检查是否为生成器造成的膨胀',
+    too_many_document_entries:
+      '`document.{key}` 有 {count} 个项目（超过上限 {max}）；仅写入前 {max} 个',
+    document_metadata_control_chars: '`document.{key}` 含有控制字符；不会写入 PDF',
+    document_metadata_too_long: '`document.{key}` 超过 {max} 字节；不会写入 PDF',
+    invalid_document_language:
+      '`document.{key}` 不是语言标签（只能使用 A-Z a-z 0-9 与 `-`）；不会写入 PDF',
     link_url_too_long: '链接 URL 超过 {max} 字节；已丢弃链接',
     qr_content_too_long: 'qr_code 内容为 {bytes} 字节（超过上限 {max}）；已跳过该项',
     char_grid_clamped:
@@ -598,6 +604,19 @@ export const zhCn: LanguageCatalog = {
     'defaults.styleIntro':
       '这是整个文档的基础文字设置。留空的项目沿用引擎自身的值，只有你改动过的项目才会写入文件。',
     'defaults.unset': '未设置',
+    'docMeta.title': '文档信息',
+    'docMeta.intro':
+      '这份文档是什么的说明。这些值会写入 PDF 的文档属性，不会出现在页面上（预览不会改变，PNG 预览也不包含这些信息）。',
+    'docMeta.docTitle': '标题',
+    'docMeta.titlePlaceholder': '留空时会使用模板名称',
+    'docMeta.description': '说明',
+    'docMeta.keywords': '关键词',
+    'docMeta.authors': '作者',
+    'docMeta.language': '语言',
+    'docMeta.languageHint': '留空时会使用上方的区域设置。',
+    'docMeta.addEntry': '输入以添加',
+    'docMeta.remove': '移除',
+    'docMeta.unset': '未设置',
     'defaults.unsetWith': '未设置（{value}）',
     'defaults.sizeHint': '正文比引擎默认值稍大一些更易读，{size}pt 左右为宜。',
     'defaults.sizeApply': '设为 {size}pt',

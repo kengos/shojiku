@@ -32,7 +32,14 @@ import { IconClose } from '../ui/icons';
 import { BaseTextPreview } from './BaseTextPreview';
 import { DocSectionRail } from './DocSectionRail';
 import { DocumentDefaults } from './DocumentDefaults';
-import { type DocSection, SECTION_TITLE_KEYS, sectionSummaries } from './docSections';
+import { DocumentMetaFields } from './DocumentMetaFields';
+import {
+  type DocSection,
+  SECTION_ORDER,
+  SECTION_TITLE_KEYS,
+  sectionSummaries,
+} from './docSections';
+import { hasCapability } from './itemPanelProps';
 import { PageSetup } from './PageSetup';
 import { StylesManager } from './StylesManager';
 
@@ -79,10 +86,17 @@ export function DocumentSettingsPage({
     }
   }, [nonce]);
 
+  // A section whose engine capability is missing is not listed at all — an
+  // empty rail row that opens onto nothing is worse than no row.
+  const showMetadata = hasCapability(capabilities, 'template.document.metadata');
+  const sections = SECTION_ORDER.filter((section) => section !== 'metadata' || showMetadata);
+
   const sectionBody = (section: DocSection) => {
     switch (section) {
       case 'page':
         return <PageSetup controller={controller} titled={false} />;
+      case 'metadata':
+        return <DocumentMetaFields controller={controller} />;
       case 'defaults':
         return (
           <DocumentDefaults
@@ -131,6 +145,7 @@ export function DocumentSettingsPage({
         <DocSectionRail
           current={current}
           summaries={sectionSummaries(controller, t)}
+          sections={sections}
           onSelect={setCurrent}
         />
         {/* The selected section, alone: roomy, and short enough to read without

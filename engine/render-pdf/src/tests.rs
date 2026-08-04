@@ -7,6 +7,7 @@ mod fonts;
 mod images;
 mod links;
 mod marks;
+mod metadata;
 mod patterns;
 mod spans;
 mod vertical;
@@ -62,5 +63,5 @@ pub(super) fn render_template(template_yaml: &str, params: serde_json::Value) ->
     let out = layout(&input);
     let (doc, diags) = (out.document, out.diagnostics);
     assert!(!diags.has_errors(), "layout errors: {diags:?}");
-    render_pdf(&doc, fonts, &assets, "test").expect("render")
+    render_pdf(&doc, fonts, &assets).expect("render")
 }

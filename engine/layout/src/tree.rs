@@ -8,8 +8,10 @@
 use serde::Serialize;
 use shojiku_image::PathCmd;
 
+mod meta;
 mod round;
 mod text;
+pub use meta::{DocumentMetadata, DEFAULT_DOCUMENT_TITLE};
 pub use round::{rounded_rect_cmds, Corners, Dash};
 pub use text::{DecorationSpec, RunView, TextBlock, TextLine, TextRun};
 
@@ -19,6 +21,9 @@ pub struct LayoutDocument {
     pub page_width: f64,
     pub page_height: f64,
     pub pages: Vec<LayoutPage>,
+    /// What the document says it IS (PDF `/Info` + XMP). Resolved and
+    /// gated by layout; the PNG backend ignores it.
+    pub metadata: DocumentMetadata,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]

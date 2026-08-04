@@ -37,10 +37,11 @@ fn empty_path_is_skipped() {
         opacity: 1.0,
     });
     let doc = LayoutDocument {
+        metadata: Default::default(),
         page_width: 100.0,
         page_height: 100.0,
         pages: vec![LayoutPage { items: vec![path] }],
     };
-    let bytes = render_pdf(&doc, fonts, &AssetStore::empty(), "x").expect("render");
+    let bytes = render_pdf(&doc, fonts, &AssetStore::empty()).expect("render");
     assert!(bytes.starts_with(b"%PDF"));
 }

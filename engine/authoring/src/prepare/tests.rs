@@ -16,7 +16,7 @@ fn svg_bytes() -> Vec<u8> {
 #[test]
 fn lays_out_a_valid_template_with_the_default_title() {
     let prepared = run(SIMPLE, "{}").unwrap();
-    assert_eq!(prepared.title, "Shojiku Document");
+    assert_eq!(prepared.document.metadata.title, "Shojiku Document");
     assert!(!prepared.document.pages.is_empty());
     assert!(!prepared.diagnostics.has_errors());
 }
@@ -45,7 +45,7 @@ sections:
         },
     )
     .unwrap();
-    assert_eq!(prepared.title, "Invoice");
+    assert_eq!(prepared.document.metadata.title, "Invoice");
 }
 
 #[test]

@@ -11,6 +11,7 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 mod bindings;
 mod box_keys;
 mod collect;
+mod document;
 mod formats;
 mod marks;
 mod ruby;
@@ -27,6 +28,7 @@ use bindings::{
 };
 use box_keys::{check_box_keys, check_table_pagination_keys};
 use collect::{check_container_depth, collect_images, collect_repeats, walk_sections};
+use document::check_document;
 use formats::check_formats;
 use marks::check_marks;
 use ruby::check_ruby;
@@ -94,6 +96,11 @@ pub fn validate(
             walk_item(item, &path, &mut check_binding);
         }
     }
+
+    // `document:` metadata: the same key checks the drawn strings get,
+    // plus the two list caps (the block is document-scoped, so it is
+    // checked once rather than per section).
+    check_document(template, &binding_ctx, &mut diags);
 
     // Named binding declarations (`bindings:`) and the charset scan over
     // interpolated strings. A separate walk because it reports on the

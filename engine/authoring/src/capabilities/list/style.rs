@@ -178,6 +178,12 @@ pub(super) const KEYS: &[&str] = &[
     // TemplateDefaults denies unknown fields, so older engines reject
     // the keys.
     "template.defaults.document",
+    // The `document:` block — title / description / keywords / language /
+    // authors, each `{key}` interpolable, written to the PDF `/Info`
+    // dictionary and the XMP packet. PDF-only (PNG has no metadata
+    // channel); `Template` denies unknown fields, so older engines reject
+    // the key outright.
+    "template.document.metadata",
     // The definitions `image` field type — declares an image reference
     // (bundled path / data URI / inline SVG) so the Designer can offer an
     // upload widget and validation confirms the bound key exists.

@@ -190,12 +190,8 @@ pub fn run_render(args: &RenderArgs) -> Result<Rendered, CliError> {
     let cli = prepare_layout(&args.common)?;
     report_diagnostics(&cli.prepared.diagnostics);
     let page_count = cli.prepared.document.pages.len();
-    let rendered = shojiku_render_pdf::render_pdf(
-        &cli.prepared.document,
-        &cli.fonts,
-        &cli.prepared.assets,
-        &cli.prepared.title,
-    );
+    let rendered =
+        shojiku_render_pdf::render_pdf(&cli.prepared.document, &cli.fonts, &cli.prepared.assets);
     // `rendered?` rides a line the success path executes. A bare `)?;`
     // closing the call above puts the propagation on a line of its own,
     // which no test reaches while the backend does not fail — and the

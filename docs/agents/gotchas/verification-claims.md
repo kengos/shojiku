@@ -21,6 +21,13 @@ check whose empty output read as "all covered").
   paths reported `0` for every hostile pattern because grep took the
   whole list as ONE filename. Print the file/line count the sweep is
   reading FIRST, check it against expectation, then trust a zero.
+  **And reconcile the count the sweep REPORTS, the moment it prints** —
+  printing it is not checking it. A queue-renumbering script announced
+  "renumbered 15 items" over a 12-item queue and the three extra were an
+  unrelated numbered list further down the same file, silently rewritten
+  (the same over-matching incident as the one above, one cycle later).
+  A section-scoped sweep is bounded by the SECTION — stop at the next
+  heading rather than at the end of the file.
 - **Once the sweep has an intermediate MATCHING stage, it needs its own
   POSITIVE CONTROL — a number you know must be non-zero.** A rename
   sweep honestly reported "550 source files read" and still passed

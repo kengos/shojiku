@@ -18,6 +18,7 @@ use std::collections::BTreeMap;
 
 mod binding;
 mod char_grid;
+mod document;
 mod formats;
 mod imposition;
 mod items;
@@ -37,6 +38,7 @@ pub use formats::{
 
 pub use binding::{Binding, BindingScope, Bindings, MAX_BINDINGS};
 pub use char_grid::{CharGridItem, CharGridSpec, KinsokuMode, Markup, MAX_CHAR_GRID_CELLS};
+pub use document::{DocumentMeta, MAX_DOCUMENT_ENTRIES};
 pub use imposition::{
     BreakBefore, ContainerItem, GridDirection, GridSpec, RepeatItem, MAX_CONTAINER_DEPTH,
     MAX_IMPOSITION_PER_PAGE,
@@ -64,6 +66,11 @@ pub struct Template {
     pub version: Option<Version>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    /// What the document IS (PDF `/Info` + XMP): title, description,
+    /// keywords, language, authors — each bindable from params. PDF-only;
+    /// the PNG backend has no metadata channel.
+    #[serde(default, skip_serializing_if = "DocumentMeta::is_empty")]
+    pub document: DocumentMeta,
     #[serde(default, skip_serializing_if = "PageSpec::is_default")]
     pub page: PageSpec,
     /// Named styles (CSS classes): a registry of reusable [`Style`]s that

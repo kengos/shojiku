@@ -112,6 +112,7 @@ inline:
 | `too_many_formats` | warning | `formats:` registry over the 256-entry cap; extras ignored |
 | `too_many_row_conditions` | warning | a table's `row.conditionalStyles` over the 16-entry cap; extras ignored |
 | `too_many_bindings` | warning | an item's `bindings:` over the 256-entry cap; advisory only — every declaration still resolves |
+| `too_many_document_entries` | warning | `document.keywords` / `document.authors` over the 64-entry cap; only the first 64 are written |
 | `container_depth_exceeded` | error | nesting > 32 (also enforced independently at layout) |
 
 ## Layout — geometry & resolution
@@ -179,6 +180,7 @@ inline:
 | `row_condition_value_not_bool` | a row's value is not a boolean under an `equals`-less `conditionalStyles` entry; the layer is not applied |
 | `qr_content_too_long` / `qr_module_too_small` | QR content over 1 KiB (skipped) / modules under 1 pt (drawn) |
 | `unsupported_link_scheme` / `link_url_too_long` / `empty_link_url` | resolved `link.url` outside http/https/mailto/tel (or control chars) / over 2048 bytes / empty — the link is dropped, the item still renders |
+| `document_metadata_control_chars` / `document_metadata_too_long` / `invalid_document_language` | a resolved `document:` value carries control characters / is over its byte cap (2048, or 64 for `language`) / is not a `[A-Za-z0-9-]` language tag — that field is not written to the PDF and is NOT replaced by its fallback |
 | `table_too_wide` | sized columns exceed the flow width |
 | `row_overflow` | a row overflows with `autoPageBreak: false` |
 | `invalid_column_width` / `invalid_row_height` / `invalid_cell_padding` | negative table geometry; clamped to 0 / treated as auto |

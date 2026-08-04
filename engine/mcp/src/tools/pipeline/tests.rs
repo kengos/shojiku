@@ -175,7 +175,10 @@ fn inline_sources_prepare_like_their_paths_do() {
         from_inline.prepared.document.pages.len(),
         from_paths.prepared.document.pages.len()
     );
-    assert_eq!(from_inline.prepared.title, from_paths.prepared.title);
+    assert_eq!(
+        from_inline.prepared.document.metadata.title,
+        from_paths.prepared.document.metadata.title
+    );
 }
 
 #[test]

@@ -49,6 +49,7 @@ fn empty_path_is_skipped() {
         opacity: 1.0,
     });
     let doc = LayoutDocument {
+        metadata: Default::default(),
         page_width: 50.0,
         page_height: 50.0,
         pages: vec![LayoutPage { items: vec![path] }],
