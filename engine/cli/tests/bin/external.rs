@@ -230,3 +230,39 @@ fn both_verbs_work_with_no_report_asked_for_at_all() {
     );
     assert!(completed.stdout.starts_with(b"%PDF-"));
 }
+
+#[test]
+fn an_output_path_that_cannot_be_written_is_reported_and_still_files_a_report() {
+    // The second failure the completing verb has, and a different one from a
+    // refused signature: the document was produced and the place to put it
+    // was not writable. An SDK has to be able to tell those apart.
+    let payload = prepare(&temp_path("prepare-2.json"));
+    let signature = sign_elsewhere(&payload, "signature-2.bin");
+    let directory = temp_path("not-a-file");
+    std::fs::create_dir_all(&directory).expect("the fixture directory");
+    let report = temp_path("output-failure.json");
+
+    let out = shojiku(&[
+        "sign-complete",
+        "--input",
+        &example_pdf(),
+        "--cert",
+        &path_arg(key_dir().join("rsa2048.cert.pem")),
+        "--algorithm",
+        RSA,
+        "--signature",
+        &path_arg(signature),
+        "--output",
+        &path_arg(directory.clone()),
+        "--report",
+        &path_arg(report.clone()),
+    ]);
+    std::fs::remove_dir_all(&directory).expect("cleanup");
+
+    assert!(!out.status.success());
+    let envelope: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&report).expect("the report was written"))
+            .expect("the report is JSON");
+    assert_eq!(envelope["failure"]["kind"], serde_json::json!("output"));
+    assert_eq!(envelope["failure"]["class"], serde_json::json!("usage"));
+}
