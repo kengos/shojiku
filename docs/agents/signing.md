@@ -288,8 +288,9 @@ Every signing feature that inherently needs the network is therefore
 
 This mirrors how font distribution already works — the host-level fetch
 crate fills a cache *before* rendering, and the render path itself
-never opens a socket. A future KMS provider is a host component, not an
-engine dependency.
+never opens a socket. A KMS provider is a host component, not an engine
+dependency — which is precisely what the two-call surface above makes
+reachable from outside, and why no client for one ships here.
 
 ## Template wire boundary
 
