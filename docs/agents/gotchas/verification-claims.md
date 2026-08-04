@@ -311,6 +311,17 @@ check whose empty output read as "all covered").
   sentence ("the wiring hooks never import each other") the diff never
   went near. When a change alters an area's shape, re-prove the
   invariants that area's map asserts.
+- **A claim about an EXTERNAL system's behaviour has no grep that can
+  falsify it — check it against the real thing, or do not write it.**
+  The sweep discipline above all assumes the evidence is in the tree; a
+  sentence about what a registry renders, what a CI provider skips, or
+  what a viewer displays is confidently written from memory and passes
+  every gate green. A changelog entry asserting "the four registries
+  that render a package README" shipped as far as the review before one
+  fetch of a real package page showed a fifth one does. The tells are
+  the same set-claim words (`the only`, `exactly N`, `all of them`)
+  pointed at something outside the repo: either fetch the page and
+  count, or weaken the sentence to the part the tree can prove.
 - **A doc claim that a GATE enforces something is checked against the
   gate**: a code-map line called a convention "a test-visible rule"
   while no test enforced it — worse than a wrong count, because it
