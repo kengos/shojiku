@@ -98,6 +98,39 @@ on a passing verdict as well as a failing one. A document whose
 signature does not verify comes back as a *failed* result that still
 carries the full report.
 
+### Signing with a key this process never holds
+
+When the private key lives in a cloud KMS, an HSM or a smartcard, use
+`ExternalSigner` instead. Shojiku hands out the bytes a signature has to
+cover; your block signs them wherever the key is and hands the signature
+back, so the key never enters your application:
+
+```ruby
+provider = Shojiku::ExternalSigner.new(cert: "signer.crt",
+                                       algorithm: :ecdsa_p256_sha256) do |to_be_signed|
+  kms.sign(key_id: ENV.fetch("KEY_ID"), message: to_be_signed,
+           message_type: "RAW", signing_algorithm: "ECDSA_SHA_256").signature
+end
+
+signed = result.artifact.sign(provider)
+```
+
+The call site is unchanged — which provider you pass is the only
+difference, and a provider registered by name works the same way under
+`strict:`. This gem ships no cloud client of its own: the block is
+whichever client your application already uses.
+
+Two details worth getting right. The bytes handed to the block are the
+CMS **signed attributes**, not the document's digest — a service that
+signs a digest must hash *these* bytes with SHA-256 itself. And the
+signature is that operation's raw output: PKCS#1 v1.5 bytes for
+`:rsa_pkcs1_sha256`, an ASN.1 DER sequence for `:ecdsa_p256_sha256`,
+which is what AWS KMS and Google Cloud KMS both return unchanged.
+
+Exceptions raised inside your block are *not* swallowed into a failed
+result: an outage at your key service is not a fact about the document,
+and `Result#failure?` would read as one.
+
 ### Results, not exceptions
 
 Nothing raises in the normal flow. Every operation returns a result you

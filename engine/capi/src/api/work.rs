@@ -12,7 +12,8 @@
 //! can get a document wrong ever sees a pointer.
 
 use crate::input::{
-    self, MAX_ANCHOR_BYTES, MAX_KEY_BYTES, MAX_PASSPHRASE_BYTES, MAX_PDF_BYTES, MAX_REQUEST_BYTES,
+    self, MAX_ALGORITHM_BYTES, MAX_ANCHOR_BYTES, MAX_KEY_BYTES, MAX_PASSPHRASE_BYTES,
+    MAX_PDF_BYTES, MAX_REQUEST_BYTES,
 };
 use crate::ops;
 use crate::request::Request;
@@ -38,6 +39,15 @@ pub(super) enum Work {
         key: Arg,
         cert: Arg,
         pass: Arg,
+    },
+    /// The first half of signing with a key held elsewhere.
+    SignPrepare { pdf: Arg, cert: Arg, algorithm: Arg },
+    /// The second half: a signature made elsewhere, coming back.
+    SignComplete {
+        pdf: Arg,
+        cert: Arg,
+        algorithm: Arg,
+        signature: Arg,
     },
     /// Verification: a signed document and the anchors to judge it against.
     Verify { pdf: Arg, anchors: Arg },
@@ -78,6 +88,23 @@ impl Work {
                 // SAFETY: the caller's contract, as above.
                 unsafe { signed(pdf, key, cert, pass) }
             }
+            Work::SignPrepare {
+                pdf,
+                cert,
+                algorithm,
+            } => {
+                // SAFETY: the caller's contract, as above.
+                unsafe { sign_prepared(pdf, cert, algorithm) }
+            }
+            Work::SignComplete {
+                pdf,
+                cert,
+                algorithm,
+                signature,
+            } => {
+                // SAFETY: the caller's contract, as above.
+                unsafe { sign_completed(pdf, cert, algorithm, signature) }
+            }
             Work::Verify { pdf, anchors } => {
                 // SAFETY: the caller's contract, as above.
                 unsafe { verified(pdf, anchors) }
@@ -105,6 +132,46 @@ unsafe fn signed(pdf: Arg, key: Arg, cert: Arg, pass: Arg) -> Result<ShojikuResu
         let cert = input::bytes(cert.0, cert.1, MAX_KEY_BYTES, "certificate")?;
         let pass = input::opt_bytes(pass.0, pass.1, MAX_PASSPHRASE_BYTES, "passphrase")?;
         ops::sign::run(pdf, key, cert, pass)
+    }
+}
+
+/// Borrows the three byte arguments of `sign_prepare` and runs it.
+///
+/// # Safety
+///
+/// As [`shojiku_sign_prepare`](super::shojiku_sign_prepare).
+unsafe fn sign_prepared(pdf: Arg, cert: Arg, algorithm: Arg) -> Result<ShojikuResult, Failure> {
+    // SAFETY: each pair describes a byte range the caller guarantees valid
+    // for this call, and no borrow outlives it.
+    unsafe {
+        let pdf = input::bytes(pdf.0, pdf.1, MAX_PDF_BYTES, "pdf")?;
+        let cert = input::bytes(cert.0, cert.1, MAX_KEY_BYTES, "certificate")?;
+        let raw = input::bytes(algorithm.0, algorithm.1, MAX_ALGORITHM_BYTES, "algorithm")?;
+        ops::sign::external::prepare(pdf, cert, input::text(raw, "algorithm")?)
+    }
+}
+
+/// Borrows the four byte arguments of `sign_complete` and runs it.
+///
+/// # Safety
+///
+/// As [`shojiku_sign_complete`](super::shojiku_sign_complete).
+unsafe fn sign_completed(
+    pdf: Arg,
+    cert: Arg,
+    algorithm: Arg,
+    signature: Arg,
+) -> Result<ShojikuResult, Failure> {
+    // SAFETY: each pair describes a byte range the caller guarantees valid
+    // for this call, and no borrow outlives it.
+    unsafe {
+        let pdf = input::bytes(pdf.0, pdf.1, MAX_PDF_BYTES, "pdf")?;
+        let cert = input::bytes(cert.0, cert.1, MAX_KEY_BYTES, "certificate")?;
+        let raw = input::bytes(algorithm.0, algorithm.1, MAX_ALGORITHM_BYTES, "algorithm")?;
+        let max = ops::sign::external::MAX_SIGNATURE_BYTES;
+        let signature = input::bytes(signature.0, signature.1, max, "signature")?;
+        let algorithm = input::text(raw, "algorithm")?;
+        ops::sign::external::complete(pdf, cert, algorithm, signature)
     }
 }
 

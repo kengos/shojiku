@@ -51,8 +51,10 @@ fn engine_info_reports_version_capabilities_and_locales() {
     assert!(info.capabilities.contains(&"preview.page"));
     // Real PDF output from the browser host (`renderPdf`).
     assert!(info.capabilities.contains(&"wasm.render.pdf"));
-    // The C ABI library the FFI SDKs load.
+    // The C ABI library the FFI SDKs load, and its two-call signing surface
+    // for a key that lives outside the calling process.
     assert!(info.capabilities.contains(&"capi.abi"));
+    assert!(info.capabilities.contains(&"capi.sign.external"));
     // The CLI's machine-readable `--report` sidecar the subprocess SDKs read.
     assert!(info.capabilities.contains(&"cli.report"));
     // Layout diagnostics addressed by structural item path, and per-group

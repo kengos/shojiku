@@ -15,6 +15,9 @@ homepage.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+# The two-step signing surface hands binary out through a JSON payload, so it
+# needs the same encoding the MCP host already uses for binary parts.
+base64 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 # The authoring surface with its `fs` feature ON: this host discovers locale

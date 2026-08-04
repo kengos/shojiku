@@ -69,6 +69,19 @@ open("receipt-signed.pdf", "wb").write(signed.artifact.bytes)
 
 署名したPDFをストレージに保存しておけば、あとから`verify`で、正しくサーバーから出力されたものであることを電子的に確認できます。
 
+秘密鍵をアプリケーションに置けない場合 — クラウドKMSやHSMで管理している場合 — は、署名を2回の呼び出しに分けられます。署名対象のバイト列をShojikuが渡し、鍵を持っている側がそれに署名し、Shojikuが署名を文書に書き込みます。秘密鍵はPDFを生成するプロセスに入りません。
+
+```ruby
+provider = Shojiku::ExternalSigner.new(cert: "signer.crt", algorithm: :ecdsa_p256_sha256) do |to_be_signed|
+  kms.sign(key_id: ENV.fetch("KEY_ID"), message: to_be_signed,
+           message_type: "RAW", signing_algorithm: "ECDSA_SHA_256").signature
+end
+
+signed = result.artifact.sign(provider)
+```
+
+KMSのクライアントはShojiku側では持ちません。ブロックの中身は、アプリケーションがすでに使っているクライアントそのものです。この機能はC ABIと、言語SDKではRubyで使えます。残る6言語はこれからです。
+
 ## 長年要望されていた縦書きにも対応
 
 ほとんどのPDF生成ライブラリでは、縦書きに対応していませんでした。Shojikuは対応しています。縦書きの小説のような見た目も、A3見開きの履歴書も作れます。小売店などでよく見かける申込書や、試験問題のプリントも作れます。数学のテスト向けの数式組版（TeXなど）は準備中です。

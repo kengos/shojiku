@@ -15,6 +15,22 @@ platform binaries.
 
 ### Added
 
+- **You can now sign with a key that never enters your application.**
+  When the private key lives in a cloud KMS, an HSM or a smartcard,
+  signing splits into two calls: Shojiku hands out the bytes a signature
+  has to cover, whatever holds the key signs them, and Shojiku writes
+  the signature into the document. The C ABI gained
+  `shojiku_sign_prepare` and `shojiku_sign_complete`, and the Ruby SDK
+  gained `ExternalSigner`, which takes a block that does the signing —
+  so the call site is `artifact.sign(provider)` exactly as before, and
+  only the provider differs. Shojiku ships no KMS client of its own: the
+  block is whichever client your application already uses. RSA PKCS#1
+  v1.5 and ECDSA P-256 are supported, both over SHA-256, and the
+  signature format is what AWS KMS and Google Cloud KMS return
+  unchanged. The documents produced this way are byte-for-byte the ones
+  the in-process signer produces from the same material. The other six
+  SDKs and the CLI follow.
+
 - **A template can now say what the document IS, not just what it
   draws.** A new top-level `document:` block carries `title`,
   `description`, `keywords`, `language` and `authors`, and they land in

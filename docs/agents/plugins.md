@@ -45,15 +45,17 @@ formatter interface:
   format(value, type, locale, options) -> string | image | structured output
 
 signer interface:
-  sign(digest, options) -> signature
+  sign(message, options) -> signature
 ```
 
 An external signer implements **only** that one operation. Wrapping the
-digest into a document (`prepare_sign` / `complete_sign`) belongs to
+signature into a document (`prepare_sign` / `complete_sign`) belongs to
 `engine/signing`, and verification is a separate crate
-(`engine/verify`) — a provider is asked to sign a digest wherever the
-key lives, and is never handed the document or asked for a verdict. See
-[signing.md](signing.md).
+(`engine/verify`) — a provider is asked to sign the bytes it is handed,
+wherever the key lives, and is never given the document or asked for a
+verdict. Those bytes are the CMS signed ATTRIBUTES, which carry the
+document digest; a provider that signs the digest itself produces a
+document that fails verification. See [signing.md](signing.md).
 
 ## Extension mechanism order
 

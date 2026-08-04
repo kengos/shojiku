@@ -73,7 +73,8 @@ fn the_document_constructors_each_carry_their_own_payload() {
     assert_eq!(previewed.pages_for_test().len(), 2);
     assert_eq!(previewed.success_for_test(), 1);
 
-    let verified = ShojikuResult::report("{\"valid\":true}".into(), "{\"items\":[]}".into());
+    let verified =
+        ShojikuResult::json_and_diagnostics("{\"valid\":true}".into(), "{\"items\":[]}".into());
     assert_eq!(verified.success_for_test(), 1);
     assert_eq!(verified.json_for_test(), "{\"valid\":true}");
     assert_eq!(verified.diagnostics_for_test(), "{\"items\":[]}");

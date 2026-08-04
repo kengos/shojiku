@@ -1111,11 +1111,15 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   explicit check that NAMES what was unsupported — never signed on a
   best-effort basis.
 - **A private key is optional.** `prepare_sign` hands out the digest and
-  the ranges; `complete_sign` takes a finished container back. A caller
-  whose key lives in a smartcard or a cloud service never puts it in this
-  process, and `LocalPemSigner` (PKCS#8 PEM, plain or passphrase-
+  the ranges and `complete_sign` takes a finished container back, so a
+  caller whose key lives in a smartcard or a cloud service never puts it
+  in this process; `LocalPemSigner` (PKCS#8 PEM, plain or passphrase-
   encrypted; RSA PKCS#1 v1.5 and ECDSA P-256, both over SHA-256) is one
-  caller of that seam rather than a privileged path.
+  caller of that seam rather than a privileged path. What the external
+  key actually signs is the CMS signed ATTRIBUTES
+  (`SignatureContainer::to_be_signed`), which carry the digest — not the
+  digest itself. The seam is reachable from outside the engine through
+  the C ABI's two-call surface and the ruby SDK's `ExternalSigner`.
 - **Signatures are reproducible**: the CMS container carries no
   `signingTime`, so the same document signed twice with the same RSA key
   yields the same bytes. `/ID` is carried into the appended trailer
@@ -1244,10 +1248,34 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   signing over a C ABI — the fourth thin host, and the binary the
   python / ruby / c# / java SDKs load. Operations:
   `shojiku_engine_info` / `validate` / `render` / `preview` / `sign` /
-  `verify`, plus `shojiku_abi_version` and the result accessors. The
-  header (`engine/capi/include/shojiku.h`) is hand-written and pinned to
-  the exports by a both-ways parity test that also pins the numeric
-  status codes.
+  `sign_prepare` / `sign_complete` / `verify`, plus `shojiku_abi_version`
+  and the result accessors. The header
+  (`engine/capi/include/shojiku.h`) is hand-written and pinned to the
+  exports by a both-ways parity test that also pins the numeric status
+  codes.
+- **Signing in two calls, so the private key can stay out of the
+  process.** `shojiku_sign_prepare` reserves the signature window and
+  reports, as JSON, the bytes a signature must cover (`toBeSigned`,
+  base64), the document's own digest, the `/ByteRange` and the window's
+  capacity; the caller signs those bytes wherever the key lives — a
+  cloud KMS, an HSM, a smartcard — and `shojiku_sign_complete` writes
+  the finished signature into the document. `algorithm` is
+  `"rsa-pkcs1-sha256"` or `"ecdsa-p256-sha256"`, and the signature is
+  that operation's raw output (PKCS#1 v1.5 bytes; an ASN.1 DER sequence
+  for ECDSA — what both major cloud key services return). What gets
+  signed is the CMS signed ATTRIBUTES, not the bare document digest,
+  which is why the payload carries both and names them.
+  The pair is **stateless**: no prepared-document handle crosses, both
+  calls take the same document, certificate and algorithm, and the
+  second re-derives what the first prepared — sound because preparing is
+  deterministic. Completing with a signature made over a different
+  document is not detected at the boundary; it produces a well-formed
+  document that fails verification. The two paths do not fork: the
+  external one reaches the same `sign_document` call the local one does,
+  and produces byte-identical output for the same material.
+  Shojiku ships no cloud-KMS client of its own — the caller signs with
+  whatever client their language already has. Capability key
+  `capi.sign.external`.
 
 ### Node addon (`engine/napi`)
 - **`shojiku-napi`**: the N-API addon the npm package loads, and the one
@@ -1375,6 +1403,24 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   authoring-skill proof).
 
 ## Decision log
+
+- **Signing with a key held elsewhere is two stateless calls, and the
+  key service is the adopter's.** The engine has had the
+  `prepare_sign`/`complete_sign` split since the signing crate shipped;
+  what it lacked was any way to reach it from outside. A prepared-document
+  HANDLE was rejected: the C ABI has exactly one allocation kind and one
+  destructor, and a second would be a second ownership rule in seven
+  SDKs. So both halves take the same document, certificate and algorithm,
+  and the completing half re-prepares — which the existing determinism
+  guarantee (`/ID` carried through, no `signingTime`) makes exact, and
+  which removes the class of bug where a caller supplies a digest that
+  disagrees with the bytes being signed. The completing half also reaches
+  the engine through the shipped `Signer` trait rather than a second
+  code path, so the external and local routes provably write the same
+  bytes. Shipping AWS/GCP KMS clients was rejected in the same pass:
+  `deny.toml` carries zero advisory ignores, the SDKs are thin wrappers
+  by contract, and every one of these languages already has a first-party
+  client in the adopter's application.
 
 - **Document metadata is PDF-only, and its language gate is a security
   control rather than validation.** The PNG backend has no metadata

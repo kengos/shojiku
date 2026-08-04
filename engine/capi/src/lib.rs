@@ -45,7 +45,7 @@ mod status;
 
 pub use api::{
     shojiku_abi_version, shojiku_engine_info, shojiku_preview, shojiku_render, shojiku_sign,
-    shojiku_validate, shojiku_verify,
+    shojiku_sign_complete, shojiku_sign_prepare, shojiku_validate, shojiku_verify,
 };
 pub use result::{
     shojiku_result_diagnostics_json, shojiku_result_error_json, shojiku_result_free,

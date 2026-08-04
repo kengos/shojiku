@@ -287,10 +287,15 @@ pass, never treat it as local idiom.
   `not_checked` must reach the caller either way. A document that cannot
   be evaluated at all (no signature, unreadable container) has NO report,
   which is a different fact from an empty one.
-- **A signing provider is a class** (`LocalPem`), not arguments on
-  `sign`, so the deferred KMS/HSM providers add a class rather than a
-  signature change in seven languages. It takes either paths or bytes,
-  explicitly — never sniffed.
+- **A signing provider is a class**, not arguments on `sign` — which is
+  what let the second one (`ExternalSigner`, for a key held in a cloud
+  KMS, an HSM or a smartcard) arrive as a class rather than as a
+  signature change in seven languages. `LocalPem` holds the key in the
+  process; `ExternalSigner` takes a callable that signs the bytes the
+  engine hands out, and the SDK ships no key-service client of its own.
+  Either takes its material as paths or bytes, explicitly — never
+  sniffed. The mirrors carry `LocalPem` today; `ExternalSigner` is built
+  in ruby and follows in the other six.
 - **The two failure levels map as the capi defines them**: a non-zero
   status becomes that language's programmer-misuse exception; status
   zero with `success` false becomes a failed result. A refused document,
@@ -366,6 +371,10 @@ is diffed against.
   of a provider object prints the private key and the passphrase into
   consoles, exception reporters and log lines. Every SDK overrides it to
   show the class and which FORM each half came from, and nothing else.
+  This holds for a provider that holds NO key too: a callable-backed one
+  closes over whatever built it, which in practice is a client carrying
+  credentials, so it prints its certificate's form and its algorithm and
+  never the callable.
 - **Explicit, never sniffed, in BOTH directions.** Passing a path AND
   bytes for the same material (`key:`/`key_pem:`, `anchors:`/
   `anchors_pem:`) is programmer misuse, not a silent preference for one

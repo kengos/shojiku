@@ -135,6 +135,76 @@ pub unsafe extern "C" fn shojiku_sign(
     unsafe { deliver(out, work) }
 }
 
+/// Reserves a signature window and reports the bytes a signature has to be
+/// computed over, as JSON on the result.
+///
+/// The first half of signing with a key this process is never given. The
+/// payload carries `toBeSigned` and `digest` as base64, plus the document's
+/// `byteRange` and the window's `capacity`. Nothing secret crosses in either
+/// direction — the certificate and the eventual signature are both public.
+///
+/// Call [`shojiku_sign_complete`] with the SAME `pdf`, `certificate` and
+/// `algorithm`; the pair is stateless, and the second call re-derives the
+/// prepared document rather than taking a handle for it.
+///
+/// # Safety
+///
+/// Each `(pointer, length)` pair must describe readable bytes for the
+/// duration of the call; `out` must be null or point at one writable slot.
+#[no_mangle]
+pub unsafe extern "C" fn shojiku_sign_prepare(
+    pdf: *const u8,
+    pdf_len: usize,
+    certificate: *const u8,
+    certificate_len: usize,
+    algorithm: *const u8,
+    algorithm_len: usize,
+    out: *mut *mut ShojikuResult,
+) -> i32 {
+    let work = Work::SignPrepare {
+        pdf: (pdf, pdf_len),
+        cert: (certificate, certificate_len),
+        algorithm: (algorithm, algorithm_len),
+    };
+    // SAFETY: the pairs are handed on unchanged under the caller's contract;
+    // `deliver` checks `out` itself.
+    unsafe { deliver(out, work) }
+}
+
+/// Writes a signature produced elsewhere into the document, returning the
+/// signed bytes on the result.
+///
+/// `signature` is the raw output of signing `toBeSigned` from
+/// [`shojiku_sign_prepare`]: PKCS#1 v1.5 bytes for `rsa-pkcs1-sha256`, an
+/// ASN.1 DER `SEQUENCE` for `ecdsa-p256-sha256` — which is what both major
+/// cloud key services return.
+///
+/// # Safety
+///
+/// As [`shojiku_sign_prepare`].
+#[no_mangle]
+pub unsafe extern "C" fn shojiku_sign_complete(
+    pdf: *const u8,
+    pdf_len: usize,
+    certificate: *const u8,
+    certificate_len: usize,
+    algorithm: *const u8,
+    algorithm_len: usize,
+    signature: *const u8,
+    signature_len: usize,
+    out: *mut *mut ShojikuResult,
+) -> i32 {
+    let work = Work::SignComplete {
+        pdf: (pdf, pdf_len),
+        cert: (certificate, certificate_len),
+        algorithm: (algorithm, algorithm_len),
+        signature: (signature, signature_len),
+    };
+    // SAFETY: the pairs are handed on unchanged under the caller's contract;
+    // `deliver` checks `out` itself.
+    unsafe { deliver(out, work) }
+}
+
 /// Verifies a signed PDF against caller-supplied trust anchors, writing the
 /// report to the result's JSON payload.
 ///

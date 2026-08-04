@@ -25,6 +25,10 @@ pub(crate) const MAX_KEY_BYTES: usize = 64 * 1024;
 pub(crate) const MAX_ANCHOR_BYTES: usize = 64 * 1024;
 /// Longest accepted passphrase.
 pub(crate) const MAX_PASSPHRASE_BYTES: usize = 1024;
+/// Longest accepted signature-algorithm name. The accepted spellings are two
+/// short kebab-case words; this leaves room for a mistyped one to be reported
+/// as unsupported rather than as oversized.
+pub(crate) const MAX_ALGORITHM_BYTES: usize = 64;
 
 /// Borrows a required `(pointer, length)` argument as bytes.
 ///
