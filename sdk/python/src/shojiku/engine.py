@@ -54,13 +54,13 @@ _BUFFERS = (
 
 # The (pointer, length) pair every data argument crosses as, and the result
 # slot every operation ends with.
-_PAIR = [c_char_p, c_size_t]
-_OUT = [POINTER(ResultPtr)]
+_PAIR: list[Any] = [c_char_p, c_size_t]
+_OUT: list[Any] = [POINTER(ResultPtr)]
 
 # The lifecycle surface as a TABLE, mirroring ruby's. An operation's arity is
 # the count of its data arguments, so adding one is a single line and cannot
 # drift from the header by a hand-typed argument list.
-_SIGNATURES = {
+_SIGNATURES: dict[str, list[Any]] = {
     "shojiku_engine_info": _OUT,
     "shojiku_render": _PAIR + _OUT,
     "shojiku_sign": _PAIR * 4 + _OUT,
@@ -100,9 +100,7 @@ class Engine:
         return self._invoke(lambda out: self._calls["shojiku_engine_info"](out))
 
     def render(self, request: bytes) -> Snapshot:
-        return self._invoke(
-            lambda out: self._calls["shojiku_render"](request, len(request), out)
-        )
+        return self._invoke(lambda out: self._calls["shojiku_render"](request, len(request), out))
 
     def sign(
         self, pdf: bytes, key: bytes, certificate: bytes, passphrase: bytes | None = None

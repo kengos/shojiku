@@ -149,9 +149,7 @@ class TestWhatCountsAsMisuse:
 
     def test_refuses_neither_form_of_the_certificate(self) -> None:
         with pytest.raises(shojiku.UsageError, match="needs either"):
-            shojiku.ExternalSigner(
-                lambda _: b"x", algorithm=shojiku.Algorithm.RSA_PKCS1_SHA256
-            )
+            shojiku.ExternalSigner(lambda _: b"x", algorithm=shojiku.Algorithm.RSA_PKCS1_SHA256)
 
     def test_needs_an_algorithm(self, keys: str) -> None:
         with pytest.raises(shojiku.UsageError, match="needs `algorithm`"):
@@ -177,11 +175,11 @@ class TestWhatIsNotThisPackagesProblem:
         self, rendered: shojiku.DocumentArtifact, keys: str
     ) -> None:
         # A key service outage is the caller's, not a fact about this document.
-        class KeyServiceDown(RuntimeError):
+        class KeyServiceDownError(RuntimeError):
             pass
 
         def unavailable(_: bytes) -> bytes:
-            raise KeyServiceDown("the key service is unreachable")
+            raise KeyServiceDownError("the key service is unreachable")
 
         provider = shojiku.ExternalSigner(
             unavailable,
@@ -189,8 +187,29 @@ class TestWhatIsNotThisPackagesProblem:
             algorithm=shojiku.Algorithm.RSA_PKCS1_SHA256,
         )
 
-        with pytest.raises(KeyServiceDown):
+        with pytest.raises(KeyServiceDownError):
             rendered.sign(provider)
+
+    def test_returns_a_refused_document_without_ever_asking_for_a_signature(
+        self, client: shojiku.Client, keys: str
+    ) -> None:
+        # The engine itself refuses: these bytes are not a document it rendered.
+        asked: list[bytes] = []
+
+        def record(to_be_signed: bytes) -> bytes:
+            asked.append(to_be_signed)
+            return b"never reached"
+
+        provider = shojiku.ExternalSigner(
+            record,
+            cert=f"{keys}/rsa2048.cert.pem",
+            algorithm=shojiku.Algorithm.RSA_PKCS1_SHA256,
+        )
+
+        result = client.sign(client.artifact(b"not a PDF at all"), provider)
+
+        assert result.failed
+        assert asked == []
 
     def test_returns_a_failed_prepare_without_ever_asking_for_a_signature(
         self, rendered: shojiku.DocumentArtifact, tmp_path: Path
@@ -216,9 +235,7 @@ class TestWhatIsNotThisPackagesProblem:
 
 
 class TestWhatItPrints:
-    def test_shows_the_certificate_form_and_the_algorithm_and_nothing_else(
-        self, keys: str
-    ) -> None:
+    def test_shows_the_certificate_form_and_the_algorithm_and_nothing_else(self, keys: str) -> None:
         provider = shojiku.ExternalSigner(
             lambda _: b"x",
             cert=f"{keys}/rsa2048.cert.pem",

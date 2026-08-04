@@ -136,9 +136,7 @@ class ExternalSigner:
         to_be_signed = b64decode(json.loads(prepared.json)["toBeSigned"])
         signature = self._sign(to_be_signed)
         if not isinstance(signature, bytes) or not signature:
-            raise UsageError(
-                "the signer callable must return the signature as non-empty bytes"
-            )
+            raise UsageError("the signer callable must return the signature as non-empty bytes")
         return signature
 
     @staticmethod
