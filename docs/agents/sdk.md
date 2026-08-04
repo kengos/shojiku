@@ -757,6 +757,41 @@ None is queued; raise any of them with the user before filing.
    matters only for documents large enough that nothing in the current
    test corpus approaches it.
 
+## Package metadata: where the URLs point
+
+Every registry renders a *homepage* link and a *source* link, and they
+are different places: **homepage is `https://shojiku.pages.dev`**, the
+product's own site, and **source / repository / documentation stay on
+GitHub**. This holds for everything published, the engine's crates
+included. The fields, per registry, are the whole list — there is no
+other lever:
+
+| registry | homepage field | source/doc fields |
+| --- | --- | --- |
+| RubyGems | `spec.homepage` (+ `metadata["homepage_uri"]`) | `source_code_uri`, `documentation_uri` — built off the `SHOJIKU_REPO` constant, *not* off `spec.homepage` |
+| PyPI | `[project.urls] Homepage` | `Source`, `Documentation` |
+| npm | `homepage` | `repository`, `bugs` |
+| NuGet | `<PackageProjectUrl>` | `<RepositoryUrl>` |
+| Maven Central | `<url>` | `<scm><url>` |
+| Packagist | `homepage` | `support.source`, `support.issues`, `support.docs` |
+| pkg.go.dev | **none** — derived from the module path | none |
+| crates.io | `homepage` | `repository` — both set once in `engine/Cargo.toml` `[workspace.package]`, inherited by every published crate |
+
+Go therefore carries its link in prose: the package comment in
+`sdk/go/doc.go` and the README, which pkg.go.dev renders. The five
+platform addon packages `scripts/release/assemble.sh` generates
+(`@shojiku/<os>-<cpu>`) get their own npm pages, so their generated
+`package.json` carries the homepage too.
+
+**A shipped README's links must be absolute.** npm, PyPI, NuGet,
+Packagist and pkg.go.dev render the README as the package page, where a
+link written relative to the repository resolves against the registry's
+own host and 404s. (RubyGems does not render it — it shows the gemspec
+description and the sidebar links, which is why the metadata URIs above
+carry the weight there.) Link to the site for the product and to
+`https://github.com/kengos/shojiku/blob/main/…` for anything in the
+checkout.
+
 ## Versioning
 
 SDK versions move in lockstep with the engine's workspace version while

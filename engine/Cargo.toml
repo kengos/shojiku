@@ -31,8 +31,11 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0 OR BSD-3-Clause"
 publish = true
+# Two different places, and crates.io links them separately: `homepage` is
+# the product's own site, `repository` the checkout. Every published crate
+# inherits both.
 repository = "https://github.com/kengos/shojiku"
-homepage = "https://github.com/kengos/shojiku"
+homepage = "https://shojiku.pages.dev"
 
 [workspace.lints.clippy]
 # Anti-bloat gate (pairs with scripts/check-line-budget.sh): a function

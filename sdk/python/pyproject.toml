@@ -34,7 +34,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/kengos/shojiku"
+# Homepage is the product's own site; Source and Documentation are paths
+# inside the repository. PyPI renders all three in the sidebar.
+Homepage = "https://shojiku.pages.dev"
 Source = "https://github.com/kengos/shojiku/tree/main/sdk/python"
 Documentation = "https://github.com/kengos/shojiku/blob/main/docs/engine/README.md"
 

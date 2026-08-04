@@ -1,6 +1,6 @@
 # Shojiku for Java
 
-JVM bindings for [Shojiku](../../README.md) — a document engine that
+JVM bindings for [Shojiku](https://shojiku.pages.dev) — a document engine that
 turns a YAML template plus your data into a deterministic PDF. Usable
 from Java, Kotlin and Scala alike.
 
@@ -164,13 +164,15 @@ Java 21 or newer.
 
 ## Documentation
 
-- [Template reference](../../docs/engine/README.md) — how to write the
-  YAML the engine renders
-- [SDK policy](../../docs/agents/sdk.md) — the lifecycle contract every
-  Shojiku SDK implements
+- [Template reference](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md) —
+  how to write the YAML the engine renders
+- [SDK policy](https://github.com/kengos/shojiku/blob/main/docs/agents/sdk.md) —
+  the lifecycle contract every Shojiku SDK implements
 
 ## License
 
-Licensed under any of [Apache-2.0](../../LICENSE-APACHE),
-[MIT](../../LICENSE-MIT), or [BSD-3-Clause](../../LICENSE-BSD), at your
-option.
+Licensed under any of
+[Apache-2.0](https://github.com/kengos/shojiku/blob/main/LICENSE-APACHE),
+[MIT](https://github.com/kengos/shojiku/blob/main/LICENSE-MIT), or
+[BSD-3-Clause](https://github.com/kengos/shojiku/blob/main/LICENSE-BSD),
+at your option.

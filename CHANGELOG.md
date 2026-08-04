@@ -120,6 +120,16 @@ platform binaries.
 
 ### Fixed
 
+- **Every package page now links somewhere useful.** All seven SDKs and
+  every published crate told their registry that the project's home was
+  the GitHub repository, so none of them linked to the site at all. Each
+  now points its homepage field at
+  [shojiku.pages.dev](https://shojiku.pages.dev) and keeps GitHub as the
+  separate source link. The READMEs had the worse problem: their links
+  were written relative to the repository, so on every registry that
+  renders a package README — npm, PyPI, NuGet, Packagist and
+  pkg.go.dev — the template reference, the SDK policy and all three
+  licences were dead links. They are absolute now.
 - **Long text that splits across pages now redraws its whole box on
   every fragment.** Only the first piece of the decoration used to carry
   over, so a text with per-side `borderWidth`s kept its top border and
