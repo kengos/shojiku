@@ -22,7 +22,7 @@ const ok = `entries:
 describe("parseGallery", () => {
   it("parses the real gallery.yml and every named file exists", () => {
     const entries = parseGallery(REAL);
-    expect(entries.length).toBe(23);
+    expect(entries.length).toBe(24);
     expect(entries.filter((e) => e.featured).length).toBe(8);
     for (const e of entries) {
       for (const p of e.preview2 === undefined ? [e.preview] : [e.preview, e.preview2]) {

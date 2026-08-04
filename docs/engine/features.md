@@ -781,6 +781,14 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   education/employment heading-row case; qr/image cells never merge).
   Explicit body rowspan/colspan is deliberately out of scope: rows are
   data-driven.
+- **Header labels interpolate**: a column `label` and a `headerGroups`
+  `label` run through the same resolver every other text-bearing item
+  uses, against **top-level** params (header chrome is document-level,
+  not row-scoped). This was the last authored string the engine drew
+  verbatim, which pinned one language into any template with a table;
+  now `label: "{labels.amount}"` prints the heading the params carry. A
+  brace-free label resolves to itself, so existing templates are
+  byte-identical.
 - **Non-text columns**: column `type: text | qr_code | image`.
   QR cells encode at layout (shared seam with the item, same caps);
   image cells draw per-element assets prepared by the scoped walk in
@@ -1043,6 +1051,14 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **`fit`** (CSS `object-fit`): `contain`/`stretch`/`cover`/`none`;
   the overflowing modes clip to the content box via the clip node.
   Capability key `image.fit.cover_none`.
+- **The SVG viewport clips**, so an SVG gets that same clip node under
+  EVERY fit, not only the overflowing ones. Its intrinsic size is the
+  `viewBox`, but a path may lie outside it — and until this was fixed a
+  `contain`/`stretch` SVG painted those paths over the rest of the
+  page, past the box the template reserved for it. A raster is exactly
+  its pixel rect, so it still clips only when the fit overflows
+  (`Asset::clips_to_viewport` decides; the rule is the same for image
+  items and `type: image` table cells).
 - **SVG gradients**: linear/radial fills, both `gradientUnits`,
   `gradientTransform`, `spreadMethod`, one-level `href` stop
   inheritance (cycle-guarded), radial focal point; stops clamped and

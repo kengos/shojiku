@@ -53,9 +53,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
             // style IS the band's and would double-paint per cell.
             let mut computed = self.resolve_style(&group.style_names, &group.style);
             computed.vertical_align = self.cell_valign(&group.style_names, &group.style);
+            let label = self.header_label(group.label.as_deref());
             cells.push(Cell {
                 width: frame.widths[col..end].iter().sum(),
-                content: CellContent::Text(group.label.clone().unwrap_or_default()),
+                content: CellContent::Text(label),
                 computed,
                 id: None,
                 path: CellPath::Group(index),

@@ -5,6 +5,8 @@
 # beside the default `params.json` renders `output-<variant>.pdf` +
 # `preview-<variant>-<n>.png` from the SAME templates/definitions — the
 # blank↔filled rirekisho pair is the driving case (one form, two data files).
+# A variant that is a different LANGUAGE adds a `<params file>.lang`
+# sidecar naming its locale (see `render_params`).
 #
 # Default: write the outputs into each examples/<name>/ directory
 #          (this is what `make examples` runs).
@@ -28,8 +30,8 @@ export SHOJIKU_FONT_DIR="${SHOJIKU_FONT_DIR:-$ROOT/packs/fonts}"
 export SHOJIKU_LOCALE_DIR="${SHOJIKU_LOCALE_DIR:-$ROOT/packs/locale}"
 
 # Paths are `<bucket>/<name>` — examples/ is grouped by document kind
-# (business / forms / typography / presets / dev), and every path below is
-# joined onto $ROOT/examples/, so the slash needs no special handling.
+# (business / forms / typography / lifestyle / presets / dev), and every path
+# below is joined onto $ROOT/examples/, so the slash needs no special handling.
 EXAMPLES="business/invoice-ja business/invoice-en business/estimate-ja
           business/delivery-note-ja business/pickup-slip-ja
           business/event-tickets-ja business/catalog-ja
@@ -41,6 +43,7 @@ EXAMPLES="business/invoice-ja business/invoice-en business/estimate-ja
           forms/certificate-ja forms/certificate-en
           typography/kokugo-print-ja typography/novel-ja
           typography/genkoyoshi-ja typography/genkoyoshi-yoko-ja
+          lifestyle/recipe-booklet-en
           dev/layout-showcase dev/site-hero dev/site-icon
           presets/blank-a4 presets/blank-a4-en presets/blank-letter-us
           presets/blank-letter-fil presets/blank-a4-zh-tw
@@ -64,15 +67,26 @@ render_params() {
   if [ -f "$d/definitions.yml" ]; then
     defs=(--definitions "$d/definitions.yml")
   fi
+  # Render locale. Normally the template's `defaults.locale` decides, but
+  # `defaults` is per-TEMPLATE while params files are per-DOCUMENT — so an
+  # example whose variants differ only in language (one template, an
+  # English params set and a Japanese one) has no way to say so. A
+  # `<params file>.lang` sidecar holding a locale id (`ja-JP`) becomes
+  # `--lang`, which is also what picks the font pack. No sidecar = the
+  # template's own default, i.e. every existing example is unchanged.
+  local lang=()
+  if [ -f "$params.lang" ]; then
+    lang=(--lang "$(cat "$params.lang")")
+  fi
   # `${defs[@]+...}` keeps the empty-array expansion safe under `set -u`
   # on old bash (3.2) too.
-  "$BIN" render ${defs[@]+"${defs[@]}"} \
+  "$BIN" render ${defs[@]+"${defs[@]}"} ${lang[@]+"${lang[@]}"} \
     --templates "$d/templates.yml" --params "$params" \
     --output "$out/$pdf" 2> "$err" || { cat "$err"; return 1; }
   if [ -s "$err" ]; then
     echo "$1: render emitted diagnostics:" && cat "$err" && return 1
   fi
-  "$BIN" preview ${defs[@]+"${defs[@]}"} \
+  "$BIN" preview ${defs[@]+"${defs[@]}"} ${lang[@]+"${lang[@]}"} \
     --templates "$d/templates.yml" --params "$params" \
     --output "$out/$preview" 2> "$err" || { cat "$err"; return 1; }
   if [ -s "$err" ]; then

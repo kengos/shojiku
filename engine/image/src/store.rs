@@ -51,6 +51,21 @@ impl Asset {
             AssetKind::Svg(tree) => (tree.width, tree.height),
         }
     }
+
+    /// Whether the asset can paint outside the rect the fit math reserved
+    /// for it, so layout must clip it to the content box even when the
+    /// fitted size does not overflow.
+    ///
+    /// A raster is exactly its pixel rect and never can. An SVG can: its
+    /// intrinsic size is the `viewBox`, but nothing stops a path from
+    /// lying outside it — and the `viewBox` IS the viewport, which clips
+    /// (the outermost `<svg>` carries `overflow: hidden`). Without the
+    /// clip, `contain`/`stretch` — the fits that "cannot overflow" — let
+    /// an asset draw over the rest of the page, which for an untrusted
+    /// asset is the whole point of the box.
+    pub fn clips_to_viewport(&self) -> bool {
+        matches!(self.kind, AssetKind::Svg(_))
+    }
 }
 
 /// All assets one render needs, keyed by asset id.
@@ -133,5 +148,19 @@ mod tests {
             kind: AssetKind::Svg(tree),
         };
         assert_eq!(svg.intrinsic_size(), (64.0, 32.0));
+    }
+
+    #[test]
+    fn only_svg_clips_to_its_viewport() {
+        // A raster is exactly its pixel rect; an SVG's paths may sit
+        // outside the viewBox, so layout must clip it whatever the fit.
+        assert!(!raster_asset("r").clips_to_viewport());
+
+        let tree = parse_svg(r#"<svg viewBox="0 0 10 10"/>"#, &SvgLimits::default()).expect("svg");
+        let svg = Asset {
+            id: "s".to_string(),
+            kind: AssetKind::Svg(tree),
+        };
+        assert!(svg.clips_to_viewport());
     }
 }

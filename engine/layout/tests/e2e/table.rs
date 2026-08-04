@@ -11,6 +11,7 @@ mod conditional;
 mod container_cell;
 mod frame;
 mod geom;
+mod header_labels;
 mod placement;
 mod rows;
 mod span;

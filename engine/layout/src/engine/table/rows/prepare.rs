@@ -1,4 +1,5 @@
-//! Preparing cells from columns: the header row's labels and one body
+//! Preparing cells from columns: the header row's labels (interpolated
+//! against top-level params, like any other static text) and one body
 //! row's content, each resolved under the right style cascade before
 //! `row_atom` measures and draws them.
 
@@ -36,6 +37,13 @@ impl<'a, 'b> Ctx<'a, 'b> {
         if decor.background_color.is_none() {
             decor.background_color = Some(TABLE_HEADER_FILL.to_string());
         }
+        // Resolved up front, not inside the `map` below: interpolation
+        // needs `&mut self` (it can warn) and the closure already borrows
+        // self for the style cascade.
+        let mut labels: Vec<String> = Vec::with_capacity(table.columns.len());
+        for column in &table.columns {
+            labels.push(self.header_label(column.label.as_deref()));
+        }
         let cells: Vec<Cell> = table
             .columns
             .iter()
@@ -56,7 +64,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     width,
                     // A `cell:` column's header is still a label: the
                     // sub-template is per-ROW content, not a header cell.
-                    content: CellContent::Text(column.label.clone().unwrap_or_default()),
+                    content: CellContent::Text(labels[col].clone()),
                     computed,
                     id: column.id.clone(),
                     path: CellPath::Column(col),

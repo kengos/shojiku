@@ -87,6 +87,7 @@ const pages = [
   { path: "/playground", title: "Playground" },
   { path: "/compare", title: "Compared to other engines" },
   { path: "/agents", title: "For AI agents" },
+  { path: "/tips", title: "Tips: uses outside business documents" },
   { path: "/tech", title: "Technology, licensing & security model" },
 ] as const;
 putText(renderLlmsTxt(pages), join(PUB, "llms.txt"));

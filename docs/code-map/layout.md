@@ -77,7 +77,11 @@ Wire types stay in core; content measurement stays in layout.
 - `engine/atoms.rs` — rect/image/line atoms (rect routes through
   `push_decoration`); margins fold into every atom via
   `with_vertical_margin`, so flow/absolute/container placement space them
-  identically.
+  identically. `fit_size` is the shared `object-fit` math (also used by
+  `engine/table/content.rs`'s image cells); BOTH sites wrap the shape in
+  a `Clip` when the fitted rect overflows the content box **or**
+  `Asset::clips_to_viewport()` — i.e. always for an SVG, whose paths may
+  sit outside the `viewBox` the fit math measured.
 - `engine/cell.rs` — the ONE slot-filling, data-scoped cell shared by
   `repeat` and table `cell:` columns: `layout_cell_slot(cell, CellSlot,
   Scope) → CellFill` (definite or auto-height slot); also
@@ -146,7 +150,11 @@ Wire types stay in core; content measurement stays in layout.
   `TextBlock`s), `ruby.rs` (readings along base runs, scale-aware,
   vertical readings ride the GSUB `vert` path).
 - `engine/table.rs` — table root: `place_table` flow pagination, repeating
-  headers, table-level `keepTogether`, and the shared `Fragments`
+  headers, table-level `keepTogether`, **`header_label`** (the ONE place
+  a column or `headerGroups` label becomes a drawn string — routed
+  through `resolve_content` against TOP-LEVEL params, since header chrome
+  is document-level; brace-free labels resolve to themselves, which is
+  why the change was byte-neutral for existing templates), and the shared `Fragments`
   (`engine/fragments.rs`: per-page item box-index rects used by table/
   repeat/repeat_flow). Submodules: `table/geom.rs` (column widths/row
   heights/`cellPadding` guards), `table/rows.rs` (`Cell`/`CellContent`

@@ -39,17 +39,17 @@ Here it ran in your browser, but the CLI, Docker and the SDKs all produce the sa
 
 Shojiku's main job is generating documents like receipts and the customer copy of a reception slip — an engine for business documents that get printed and handed over, not shown on a screen.
 
-The structure is two pieces: a document template and per-customer parameters. The template is `templates.yml`, the parameters are `params.json`; in production you assemble the parameters from the data in your database.
-
 In the Python SDK:
 
 ```python
 import shojiku
 
 client = shojiku.Client(
-    templates="templates/", font_dirs=["packs/fonts"], locale_dirs=["packs/locale"]
+    templates="templates/",        # the directory holding your templates.yml
+    font_dirs=["packs/fonts"],
+    locale_dirs=["packs/locale"],
 )
-params = {"order": fetch_order(order_id)}  # assembled from your DB
+params = {"order": fetch_order(order_id)}  # the values on the page, from your DB
 result = client.generate("receipt-ja", params)
 open("receipt.pdf", "wb").write(result.artifact.bytes)
 ```
@@ -66,7 +66,7 @@ signed = result.artifact.sign(provider)
 open("receipt-signed.pdf", "wb").write(signed.artifact.bytes)
 ```
 
-Keep the signed PDF in storage and `verify` can later confirm, electronically, that it is what your server produced. For signing with cloud keys like AWS KMS or Google Cloud KMS there is a two-step API: take the digest from the engine, have KMS produce the signature, hand that signature back. The private key never has to enter your application's process.
+Keep the signed PDF in storage and `verify` can later confirm that it is what your server produced.
 
 ## The vertical writing that sat on wish lists for years
 
