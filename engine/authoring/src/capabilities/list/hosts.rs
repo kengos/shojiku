@@ -85,6 +85,16 @@ pub(super) const KEYS: &[&str] = &[
     // itself is reported by `shojiku_abi_version` (1 today) and moves only if
     // an existing symbol changes meaning.
     "capi.abi",
+    // Signing in two calls over the C ABI (`shojiku_sign_prepare` /
+    // `shojiku_sign_complete`): the first hands out the bytes a signature
+    // must cover, the second takes a finished signature back and writes the
+    // document, so the private key can live in a cloud KMS, an HSM or a
+    // smartcard and never enter the calling process. Additive — the one-shot
+    // `shojiku_sign` with a local PEM key is unchanged, and the two paths
+    // produce byte-identical output for the same material. Shojiku ships no
+    // KMS client of its own: the caller signs the bytes with whatever client
+    // their language already has.
+    "capi.sign.external",
     // The CLI's machine-readable operation report (`--report <path>` on
     // `render` / `sign` / `verify`): one JSON object carrying `ok`, the
     // engine's `diagnostics` on success as well as failure, a render's

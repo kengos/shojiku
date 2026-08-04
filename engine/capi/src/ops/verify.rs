@@ -34,7 +34,10 @@ pub(crate) fn run(pdf: &[u8], anchors: &[u8]) -> Result<ShojikuResult, Failure> 
     let Some((kind, reason)) = failed_check(&report) else {
         // Verification emits no diagnostics of its own; the empty list keeps
         // every operation's result the same shape for an SDK to read.
-        return Ok(ShojikuResult::report(json, encode(&Diagnostics::new())));
+        return Ok(ShojikuResult::json_and_diagnostics(
+            json,
+            encode(&Diagnostics::new()),
+        ));
     };
     // Rendered through `Failure` rather than by hand, so the failed verdict
     // reaches the caller as the same `{step, kind, message}` object every

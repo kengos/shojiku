@@ -184,6 +184,46 @@ int32_t shojiku_sign(const uint8_t *pdf, size_t pdf_len,
                      ShojikuResult **out);
 
 /*
+ * Signing in two calls, for a key this process must never hold.
+ *
+ * shojiku_sign_prepare reserves the signature window and reports, as JSON on
+ * the result (shojiku_result_json), what a signature has to be computed over:
+ *
+ *   { "toBeSigned": <base64>, "digest": <base64>,
+ *     "byteRange": [a, b, c, d], "capacity": n }
+ *
+ * Sign the DECODED `toBeSigned` bytes wherever the key lives — a cloud KMS,
+ * an HSM, a smartcard — and hand the result to shojiku_sign_complete, which
+ * writes the signed document (shojiku_result_pdf). `digest` is the document's
+ * own SHA-256, offered for audit logging; it is NOT what gets signed, so do
+ * not send it to a signer by mistake.
+ *
+ * `signature` is the raw output of that operation: PKCS#1 v1.5 bytes for
+ * "rsa-pkcs1-sha256", an ASN.1 DER SEQUENCE for "ecdsa-p256-sha256". Those
+ * two strings are the only accepted values of `algorithm`.
+ *
+ * THE TWO CALLS TAKE THE SAME `pdf`, `certificate` AND `algorithm`. The pair
+ * is stateless — there is no prepared-document handle, because this library
+ * has one allocation that crosses and one destructor for it — so the second
+ * call re-derives the prepared document from those inputs. Preparing is
+ * deterministic, which is what makes that sound. Completing with a signature
+ * made over a DIFFERENT document's `toBeSigned` is not detected here: it
+ * produces a well-formed document that fails shojiku_verify.
+ *
+ * Neither call ever sees a private key, which is the entire point.
+ */
+int32_t shojiku_sign_prepare(const uint8_t *pdf, size_t pdf_len,
+                             const uint8_t *certificate, size_t certificate_len,
+                             const uint8_t *algorithm, size_t algorithm_len,
+                             ShojikuResult **out);
+
+int32_t shojiku_sign_complete(const uint8_t *pdf, size_t pdf_len,
+                              const uint8_t *certificate, size_t certificate_len,
+                              const uint8_t *algorithm, size_t algorithm_len,
+                              const uint8_t *signature, size_t signature_len,
+                              ShojikuResult **out);
+
+/*
  * Verifies a signed PDF. Read the report with shojiku_result_json.
  *
  * `anchors` is REQUIRED and holds concatenated PEM certificates — one flag
@@ -226,8 +266,9 @@ int32_t shojiku_result_pdf(const ShojikuResult *result,
 /*
  * The operation's JSON payload, as UTF-8 bytes. One meaning per operation:
  * engine info from shojiku_engine_info, {"pageCount": n} from shojiku_render,
- * and the verification report from shojiku_verify (present whichever way the
- * verdict went). Empty for the operations that have no payload.
+ * the bytes-to-sign object from shojiku_sign_prepare, and the verification
+ * report from shojiku_verify (present whichever way the verdict went). Empty
+ * for the operations that have no payload.
  */
 int32_t shojiku_result_json(const ShojikuResult *result,
                             const uint8_t **out_ptr, size_t *out_len);

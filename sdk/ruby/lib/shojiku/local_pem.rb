@@ -3,10 +3,10 @@
 module Shojiku
   # A signing provider backed by a PEM key and certificate.
   #
-  # The only provider this release has. KMS and HSM providers are a recorded
-  # deferral, which is why this is a named class rather than a pair of
-  # arguments on `sign` — a second provider then adds a class, not a signature
-  # change in seven languages.
+  # For a key this process may hold. When it may not — a cloud KMS, an HSM, a
+  # smartcard — the provider is an {ExternalSigner} instead, which is why this
+  # is a named class rather than a pair of arguments on `sign`: the second
+  # provider added a class, not a signature change in seven languages.
   #
   # The material comes either from paths (`key:` / `cert:`) or from bytes
   # already in memory (`key_pem:` / `cert_pem:`), so a key fetched from a
@@ -51,6 +51,16 @@ module Shojiku
 
     def certificate
       @certificate ||= @cert_pem || Material.read(@cert_path, "certificate_unreadable")
+    end
+
+    # Signs `pdf`, in one call, with the key this provider holds.
+    #
+    # Each provider knows how to reach the engine for its own kind of key, so
+    # the client asks the provider rather than branching on its class — the
+    # difference between a local key and one held elsewhere is two engine
+    # calls instead of one, and that belongs here.
+    def sign_with(engine, pdf)
+      engine.sign(pdf: pdf, key: key, certificate: certificate, passphrase: passphrase)
     end
 
     private

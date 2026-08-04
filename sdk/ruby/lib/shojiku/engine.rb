@@ -33,45 +33,77 @@ module Shojiku
     INT32 = "l"
     SIZE = Fiddle::SIZEOF_SIZE_T == 8 ? "Q" : "L"
 
+    # Every data argument crosses as a (pointer, length) PAIR — nothing is
+    # NUL-terminated, because PDF bytes contain NUL — and every call ends with
+    # the out-slot the result handle is written to. Spelling the signatures as
+    # a table rather than one call each keeps them impossible to disagree
+    # with the header: an operation's arity is the count of its arguments.
+    PAIR = [VOIDP, SIZE_T].freeze
+    OUT = [VOIDP].freeze
+
     # Only the lifecycle the SDK contract defines is bound: engine info,
     # render, sign, verify. `validate` and `preview` are the authoring
     # surface's, not an artifact lifecycle's — the Designer reaches them
     # through the WASM bindings, and binding them here would be surface with
     # no contract behind it.
+    SIGNATURES = {
+      shojiku_engine_info: OUT,
+      shojiku_render: PAIR + OUT,
+      shojiku_sign: (PAIR * 4) + OUT,
+      shojiku_sign_prepare: (PAIR * 3) + OUT,
+      shojiku_sign_complete: (PAIR * 4) + OUT,
+      shojiku_verify: (PAIR * 2) + OUT
+    }.freeze
+
     def initialize(library)
       @library = library
-      @info = library.function(:shojiku_engine_info, [VOIDP], INT)
-      @render = library.function(:shojiku_render, [VOIDP, SIZE_T, VOIDP], INT)
-      @sign = library.function(
-        :shojiku_sign,
-        [VOIDP, SIZE_T, VOIDP, SIZE_T, VOIDP, SIZE_T, VOIDP, SIZE_T, VOIDP], INT
-      )
-      @verify = library.function(:shojiku_verify, [VOIDP, SIZE_T, VOIDP, SIZE_T, VOIDP], INT)
+      @calls = SIGNATURES.to_h { |name, args| [name, library.function(name, args, INT)] }
       declare_accessors(library)
     end
 
     def engine_info
-      invoke { |out| @info.call(out) }
+      invoke { |out| call(:shojiku_engine_info, out) }
     end
 
     def render(request)
-      invoke { |out| @render.call(request, request.bytesize, out) }
+      invoke { |out| call(:shojiku_render, request, request.bytesize, out) }
     end
 
     def sign(pdf:, key:, certificate:, passphrase: nil)
       invoke do |out|
-        @sign.call(
-          pdf, pdf.bytesize, key, key.bytesize, certificate, certificate.bytesize,
-          passphrase, passphrase ? passphrase.bytesize : 0, out
-        )
+        call(:shojiku_sign, pdf, pdf.bytesize, key, key.bytesize,
+             certificate, certificate.bytesize,
+             passphrase, passphrase ? passphrase.bytesize : 0, out)
+      end
+    end
+
+    # The two halves of signing with a key held elsewhere. Both take the same
+    # document, certificate and algorithm — the pair is stateless, so the
+    # second call re-derives what the first prepared.
+    def sign_prepare(pdf:, certificate:, algorithm:)
+      invoke do |out|
+        call(:shojiku_sign_prepare, pdf, pdf.bytesize, certificate, certificate.bytesize,
+             algorithm, algorithm.bytesize, out)
+      end
+    end
+
+    def sign_complete(pdf:, certificate:, algorithm:, signature:)
+      invoke do |out|
+        call(:shojiku_sign_complete, pdf, pdf.bytesize, certificate, certificate.bytesize,
+             algorithm, algorithm.bytesize, signature, signature.bytesize, out)
       end
     end
 
     def verify(pdf:, anchors:)
-      invoke { |out| @verify.call(pdf, pdf.bytesize, anchors, anchors.bytesize, out) }
+      invoke { |out| call(:shojiku_verify, pdf, pdf.bytesize, anchors, anchors.bytesize, out) }
     end
 
     private
+
+    # The one place a lifecycle call crosses.
+    def call(name, *)
+      @calls.fetch(name).call(*)
+    end
 
     def declare_accessors(library)
       buffers = %i[shojiku_result_pdf shojiku_result_json shojiku_result_diagnostics_json

@@ -82,8 +82,13 @@ impl ShojikuResult {
         }
     }
 
-    /// A verification report on a document that passed every check.
-    pub(crate) fn report(json: String, diagnostics: String) -> Self {
+    /// A JSON payload from a document operation, with the diagnostics that
+    /// ride every one of them — a verification report, or the bytes-to-sign
+    /// object `shojiku_sign_prepare` hands out. Named for its SHAPE rather
+    /// than for either operation: the two want the identical thing, and a
+    /// second constructor for the second caller is how a shape acquires two
+    /// spellings.
+    pub(crate) fn json_and_diagnostics(json: String, diagnostics: String) -> Self {
         ShojikuResult {
             json,
             diagnostics,

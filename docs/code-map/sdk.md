@@ -57,7 +57,11 @@ contract behind it.
   only (library discovery + which position won, ABI, step/duration/verdict),
   never params, diagnostics or key material.
 - `lib/shojiku/engine.rb` — the declared C surface and the ONE place a call
-  crosses. `Snapshot` (a Data value) is copied out of the handle and the
+  crosses. `SIGNATURES` is the surface as a TABLE (`PAIR` = the
+  (pointer, length) every data argument crosses as, `OUT` = the result slot),
+  so an operation's arity is the count of its arguments and cannot drift from
+  the header by a hand-typed list. `Snapshot` (a Data value) is copied out of
+  the handle and the
   handle is freed in an `ensure`, so no Ruby object ever holds an engine
   pointer. `INT32`/`SIZE` unpack directives are picked to match the C types
   EXACTLY — `unpack1` returns nil rather than raising when the directive is
@@ -84,6 +88,21 @@ contract behind it.
   bytes-first render has engine-made bytes and a caller's template.
 - `lib/shojiku/verification_report.rb` — the four checks as separate fields
   plus `not_checked`, passed through on a FAILING verdict too.
+- `lib/shojiku/external_signer.rb` — the SECOND signing provider, for a key
+  this process is never given (cloud KMS, HSM, smartcard). A block receives
+  the bytes to sign and returns the signature; the SDK ships no cloud client,
+  so the block is whatever client the application already has. Both engine
+  calls happen inside ONE method, which is what makes pairing a prepare of
+  one document with a complete of another impossible from Ruby. The block's
+  own exceptions are deliberately NOT rescued — a key-service outage is the
+  caller's, not a fact about the document — while a block returning a
+  non-String or an empty one is `UsageError`. The certificate takes the same
+  explicit path-XOR-bytes rule `LocalPem` uses, and `#inspect` prints the
+  form and the algorithm only. Decodes the payload with core
+  `String#unpack1("m")` rather than the `base64` gem, keeping this SDK's
+  runtime dependency list at fiddle alone. `sign_with(engine, pdf)` is the
+  polymorphic hook BOTH providers implement, so `Client#sign` branches on
+  nothing.
 - `lib/shojiku/local_pem.rb` + `errors.rb` — the signing provider (paths or
   bytes, explicit never sniffed in EITHER direction — both forms at once is a
   `UsageError` — with a redacting `#inspect`, since the default one prints the

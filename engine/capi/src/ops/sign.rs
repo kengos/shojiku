@@ -10,6 +10,11 @@
 //! turns out to need one. An unencrypted key never has to carry a null
 //! passphrase argument for form's sake, and an encrypted one with no
 //! passphrase supplied gets a named failure rather than a parse error.
+//!
+//! [`external`] is the other half of the surface: the same signature, in two
+//! calls, for a key this process is never given.
+
+pub(crate) mod external;
 
 use crate::result::ShojikuResult;
 use crate::status::{encode, Failure};

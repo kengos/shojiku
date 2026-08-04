@@ -229,7 +229,8 @@ per SDK covers both.
   `deny(clippy::undocumented_unsafe_blocks)`); re-exports the surface.
 - `src/api.rs` (+ `api/tests.rs`) — the entry points
   (`shojiku_abi_version`/`engine_info`/`validate`/`render`/`preview`/`sign`/
-  `verify`) and the shared frame: check `out`, BLANK it (so an unconditional
+  `sign_prepare`/`sign_complete`/`verify`) and the shared frame: check `out`,
+  BLANK it (so an unconditional
   free in a binding's cleanup path is well defined), run under the shield,
   write the result or the failure-as-result. `deliver` is function-pointer
   taking, not generic, so one copy exists in the binary.
@@ -251,7 +252,11 @@ per SDK covers both.
 - `src/result.rs` (+ `result/access.rs`) — the handle and its accessors.
   One shape for every operation (an operation with no pages simply has none),
   so a binding learns one calling convention. The `json` slot is per-operation:
-  engine info, a render's `{"pageCount": n}`, or a verification report.
+  engine info, a render's `{"pageCount": n}`, a verification report, or
+  `sign_prepare`'s bytes-to-sign object. The last two take the SAME
+  constructor (`json_and_diagnostics`, named for the shape rather than for
+  either caller) — a second one for the second caller is how one shape
+  acquires two spellings.
   A render's page count could NOT reuse `shojiku_result_page_count` — that
   one counts a preview's PNG buffers, and redefining it would move the ABI
   revision instead of appending to it.
@@ -269,6 +274,22 @@ per SDK covers both.
   A document that cannot be EVALUATED has no report at all — a different
   fact from an empty one. Anchors are required: there is no trust store to
   default to.
+- `src/ops/sign/external.rs` (+ `external/tests.rs`) — the two-call signing
+  surface for a key this process is never given. **Stateless on purpose**:
+  no prepared-document handle crosses (one allocation kind, one destructor),
+  so both halves take the same document/certificate/algorithm and `complete`
+  RE-PREPARES — exact because appending the placeholder is deterministic, and
+  it makes a digest that disagrees with the bytes impossible. `complete`
+  builds a private `Fixed` `Signer` whose `sign()` returns the caller's
+  finished signature and hands it to the SHIPPED `sign_document`, so the
+  external route cannot fork the local one (a test pins byte identity).
+  `prepare` takes the certificate + algorithm it does not need for
+  `to_be_signed` so unusable material fails BEFORE a key-service round trip.
+  `parse_algorithm` (the kebab wire spellings, refusal naming what IS
+  accepted) and `require_signature` (empty is refused, not written) are free
+  functions so the crate's OWN test binary covers them.
+  `MAX_SIGNATURE_BYTES` = `DEFAULT_CONTENTS_CAPACITY`: longer than the whole
+  window fits no container.
 - `src/ops.rs` + `ops/{info,validate,render,preview,sign,verify}.rs` — safe Rust over
   borrowed strings; by the time these run the pointers are gone. `lay_out` is
   the CLI's `prepare_layout` without the file reads and without the fetch.
@@ -281,6 +302,12 @@ per SDK covers both.
   attributes, so the two cannot drift.
 - `tests/capi/` — the near-e2e suite, driven through the exported symbols and
   the real accessors only: anything an SDK cannot do, the tests do not do.
+  `external_signing.rs` (+ `external_signing/refusals.rs`) drives the two-call
+  surface the way a KMS-backed SDK does, with an in-test key standing in for
+  the service — the round trips (RSA, ECDSA, a leaf chaining to its CA), the
+  byte-identity claim against the one-shot path, prepare idempotence, and the
+  two outcomes the header says are NOT caught at the boundary (a signature
+  over another document; a tampered file) proven to fail verification.
   `threading.rs` pins the header's THREADING paragraph — four threads render
   one document and must produce the SAME BYTES as a single-threaded call, so
   both halves of the claim (no shared mutable state; determinism is not a

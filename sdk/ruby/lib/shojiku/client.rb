@@ -128,8 +128,11 @@ module Shojiku
     # Signs an artifact with `provider`, returning a {Result}. The signed
     # bytes begin with the input byte for byte — signing appends a revision.
     #
-    # `provider` is a {LocalPem} (or another provider object), or the NAME of
-    # one registered in configuration. A strict client takes the name only.
+    # `provider` is a {LocalPem} (a key in this process), an {ExternalSigner}
+    # (a key that never enters it — a cloud KMS, an HSM, a smartcard), or the
+    # NAME of one registered in configuration. A strict client takes the name
+    # only. Which kind it is changes nothing here: the provider knows how to
+    # reach the engine for its own sort of key.
     def sign(artifact, provider)
       signer = @settings.lockdown.provider!(provider)
       @settings.lockdown.signable!(artifact)
@@ -177,10 +180,7 @@ module Shojiku
     # The signed document inherits the origin of what it signed: appending a
     # revision does not launder where the document came from.
     def signed(artifact, provider)
-      snapshot = @engine.sign(
-        pdf: artifact.bytes, key: provider.key, certificate: provider.certificate,
-        passphrase: provider.passphrase
-      )
+      snapshot = provider.sign_with(@engine, artifact.bytes)
       Outcome.document(snapshot, step: :sign, client: self, origin: artifact.origin)
     rescue MaterialUnreadable => e
       Result.failed(Failure.new(step: :sign, kind: e.kind, message: e.message))

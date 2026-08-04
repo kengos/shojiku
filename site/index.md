@@ -68,6 +68,19 @@ open("receipt-signed.pdf", "wb").write(signed.artifact.bytes)
 
 Keep the signed PDF in storage and `verify` can later confirm that it is what your server produced.
 
+If the key may not live in your application at all — a cloud KMS, an HSM — signing splits into two calls. Shojiku hands out the bytes a signature has to cover, whatever holds the key signs them, and Shojiku writes the signature into the document. The private key never enters the process that renders the PDF.
+
+```ruby
+provider = Shojiku::ExternalSigner.new(cert: "signer.crt", algorithm: :ecdsa_p256_sha256) do |to_be_signed|
+  kms.sign(key_id: ENV.fetch("KEY_ID"), message: to_be_signed,
+           message_type: "RAW", signing_algorithm: "ECDSA_SHA_256").signature
+end
+
+signed = result.artifact.sign(provider)
+```
+
+Shojiku ships no KMS client of its own — the block is whichever client your application already uses. This is available through the C ABI and, among the language SDKs, in Ruby; the other six follow.
+
 ## The vertical writing that sat on wish lists for years
 
 Most PDF generation libraries never got around to vertical writing. Shojiku supports it. A vertical-writing novel look, an A3 résumé spread — you can just make them, along with the application forms you see at retail counters and exam-style worksheets. It can be closer to home than it sounds: a Japanese restaurant's specials menu (English text, USD prices, a vertical brand column) ships as one of the bundled examples. Math notation for exam papers (TeX or similar input) is in preparation.

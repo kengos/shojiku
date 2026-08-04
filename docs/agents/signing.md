@@ -45,9 +45,27 @@ verify()        -> verification result
 
 The `prepare_sign` / `complete_sign` split exists specifically so a private
 key never needs to touch this codebase or process — an external signer
-(HSM, cloud KMS, Adobe/DocuSign) can consume the digest and return just the
-signature. It is also the seam that keeps the engine socket-free (see
+(HSM, cloud KMS, Adobe/DocuSign) can produce just the signature. It is also
+the seam that keeps the engine socket-free (see
 [Network boundary](#network-boundary)).
+
+**What the external signer signs is the CMS signed ATTRIBUTES, not the
+document digest.** `prepare_sign` reports the digest, and the digest goes
+INTO the attributes (`messageDigest`); what a key must actually sign is
+`SignatureContainer::to_be_signed`, the DER encoding of those attributes.
+Stated explicitly because "consume the digest and return the signature" is
+the natural shorthand and it describes a signature that fails verification.
+The `to_be_signed` bytes do not depend on the algorithm — the attributes are
+built from the digest alone — so only the finishing half needs to know which
+algorithm the key uses.
+
+Hosts expose this pair as two calls with the same inputs rather than as a
+prepared-document handle: the C ABI's `shojiku_sign_prepare` /
+`shojiku_sign_complete`, and the ruby SDK's `ExternalSigner`. The second
+call re-derives what the first prepared, which is sound because appending
+the placeholder is deterministic (`/ID` carried through, no `signingTime`)
+and which means the digest inside the container is always the digest of the
+bytes being written.
 
 ## First-release scope
 
@@ -62,7 +80,7 @@ Explicitly **deferred** — decided deferrals, not oversights:
 | --- | --- |
 | Visible signature appearance | Needs a template item type and its Designer operability pass; the wire split is decided (see [Template wire boundary](#template-wire-boundary)) but nothing ships until that phase |
 | PAdES / LTV / PDF-A profiles | Each is a conformance surface with its own test corpus; the baseline signature must exist first |
-| KMS / HSM / PKCS#11 providers | The `prepare_sign` seam already admits them without engine changes; provider work is host-side (see [Network boundary](#network-boundary)) |
+| Cloud KMS / HSM CLIENTS in this repo | The seam is exposed (C ABI two-call surface, the ruby `ExternalSigner`), but the client that talks to a key service is the ADOPTER's, not ours: every one of these languages already has a first-party one, `deny.toml` carries zero advisory ignores, and a vendor SDK is a large transitive tree to drag through it for a wrapper this thin |
 | Timestamps (TSA) | Requires network I/O, which is host-side by the same rule |
 | Revocation checking (OCSP / CRL) | Same network constraint, plus a caching/freshness policy this project has not decided |
 | Signing arbitrary third-party PDFs | See [Input document scope](#input-document-scope) |
@@ -260,10 +278,11 @@ request-forgery exposure.
 Every signing feature that inherently needs the network is therefore
 **host-side, reached through the `prepare_sign`/`complete_sign` split**:
 
-- A **cloud KMS or HSM** signer receives the digest from
-  `prepare_sign`, signs it wherever the key lives, and hands the
-  signature to `complete_sign`. The engine never learns that a network
-  was involved.
+- A **cloud KMS or HSM** signer receives the signed attributes from
+  `prepare_sign` (see [Workflow](#workflow) — the attributes, not the
+  digest), signs them wherever the key lives, and hands the signature to
+  `complete_sign`. The engine never learns that a network was involved,
+  and ships no client that would.
 - A **timestamp authority** is the same shape: the host fetches the
   timestamp token and supplies it.
 

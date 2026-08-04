@@ -6,6 +6,7 @@
 //! sibling modules.
 
 mod documents;
+mod external_signing;
 mod header;
 mod refusals;
 mod signing;
@@ -191,6 +192,49 @@ fn sign(
             certificate.len(),
             pass_ptr,
             pass_len,
+            &mut out,
+        )
+    };
+    (status, out)
+}
+
+/// Calls `shojiku_sign_prepare`, returning the status and the handle.
+fn sign_prepare(pdf: &[u8], certificate: &[u8], algorithm: &[u8]) -> (i32, *mut ShojikuResult) {
+    let mut out: *mut ShojikuResult = std::ptr::null_mut();
+    // SAFETY: every pair describes a live buffer and `out` is a local slot.
+    let status = unsafe {
+        shojiku_sign_prepare(
+            pdf.as_ptr(),
+            pdf.len(),
+            certificate.as_ptr(),
+            certificate.len(),
+            algorithm.as_ptr(),
+            algorithm.len(),
+            &mut out,
+        )
+    };
+    (status, out)
+}
+
+/// Calls `shojiku_sign_complete`, returning the status and the handle.
+fn sign_complete(
+    pdf: &[u8],
+    certificate: &[u8],
+    algorithm: &[u8],
+    signature: &[u8],
+) -> (i32, *mut ShojikuResult) {
+    let mut out: *mut ShojikuResult = std::ptr::null_mut();
+    // SAFETY: every pair describes a live buffer and `out` is a local slot.
+    let status = unsafe {
+        shojiku_sign_complete(
+            pdf.as_ptr(),
+            pdf.len(),
+            certificate.as_ptr(),
+            certificate.len(),
+            algorithm.as_ptr(),
+            algorithm.len(),
+            signature.as_ptr(),
+            signature.len(),
             &mut out,
         )
     };
