@@ -79,6 +79,7 @@ fn unknown_run_font_is_an_error() {
         }],
     };
     let doc = LayoutDocument {
+        metadata: Default::default(),
         page_width: 100.0,
         page_height: 100.0,
         pages: vec![shojiku_layout::LayoutPage {
@@ -86,7 +87,7 @@ fn unknown_run_font_is_an_error() {
         }],
     };
     assert!(matches!(
-        render_pdf(&doc, fonts, &AssetStore::empty(), "x"),
+        render_pdf(&doc, fonts, &AssetStore::empty()),
         Err(RenderError::UnknownFont(id)) if id == "ghost"
     ));
 }

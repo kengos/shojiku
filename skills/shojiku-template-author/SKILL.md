@@ -157,6 +157,19 @@ reddens on the first render.
   `sections.body` and listing body keys (`id`/`box`/`styleNames`/
   `style`/`items`) means "something inside the body failed"; bisect the
   items rather than reading the reported path.
+  **The per-element sub-template is spelled differently per item**:
+  `repeat` and a table column take **`cell:`**, `repeat_flow` takes
+  **`item:`**. Writing `cell:` on a `repeat_flow` is a parse error whose
+  message DOES list the valid keys (`id`, `data`, `gap`, `item`) — read
+  the key list in the error rather than assuming the shape is shared.
+- **A bundled example must round-trip through the Designer's document
+  model byte-for-byte** (`gui/designer-core`'s `serialize(parse(src)) ===
+  src` test over every `examples/**/templates.yml`). The form that bites
+  a hand-authored block is the FLOW SEQUENCE: the canonical spelling has
+  inner spaces — `[ a, b ]`, not `[a, b]` — which is also what the
+  Designer writes. `make examples` stays green either way; only the gui
+  gate catches it, so match the spacing of the neighbouring
+  `styleNames: [ meta ]` lines when adding a list to an example.
 - Custom `page.size` + `orientation` **double-swap** without warning: a
   landscape custom size (`w` > `h`) plus `orientation: landscape` flips
   the page back to portrait. With a custom size, omit `orientation`.

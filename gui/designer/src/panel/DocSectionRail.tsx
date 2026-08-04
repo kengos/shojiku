@@ -8,17 +8,26 @@ import { type DocSection, SECTION_ORDER, SECTION_TITLE_KEYS } from './docSection
 export interface DocSectionRailProps {
   readonly current: DocSection;
   readonly summaries: Readonly<Record<DocSection, string>>;
+  /** The sections to list. Defaults to all of them; the page narrows it
+   * when the engine lacks a section's capability, so a gated-off section
+   * leaves no row that opens onto nothing. */
+  readonly sections?: readonly DocSection[];
   readonly onSelect: (section: DocSection) => void;
 }
 
-export function DocSectionRail({ current, summaries, onSelect }: DocSectionRailProps) {
+export function DocSectionRail({
+  current,
+  summaries,
+  sections = SECTION_ORDER,
+  onSelect,
+}: DocSectionRailProps) {
   const { t } = useI18n();
   return (
     <nav
       className="w-[184px] shrink-0 overflow-y-auto border-r border-border bg-chrome p-2"
       aria-label={t('docSettings.sections')}
     >
-      {SECTION_ORDER.map((section) => (
+      {sections.map((section) => (
         <button
           key={section}
           type="button"

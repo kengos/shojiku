@@ -13,7 +13,32 @@ platform binaries.
 
 ## [Unreleased]
 
+### Added
+
+- **A template can now say what the document IS, not just what it
+  draws.** A new top-level `document:` block carries `title`,
+  `description`, `keywords`, `language` and `authors`, and they land in
+  the PDF's document properties — the panel a reader opens with ⌘D, the
+  fields a search index reads, and the language a screen reader
+  announces. Every value takes `{key}` interpolation like ordinary text,
+  so an invoice can title itself after its own number. The Designer
+  gained a matching **Document properties** section in the
+  document-settings view, with the language offered as a pick rather
+  than free text (the engine only accepts a proper language tag).
+  Nothing here is drawn on the page, and PNG previews carry none of it —
+  the format has no metadata channel, the same reason previews carry no
+  links. There is deliberately no creation date: a timestamp would make
+  the same inputs produce different bytes, and identical output is what
+  signing rests on.
+
 ### Changed
+
+- **A document that declares a locale now says so in the PDF itself.**
+  When `document.language` is not set, it falls back to
+  `defaults.locale`, so a template that already declares `ja-JP` gains a
+  document language without authoring it twice. Existing PDFs change by
+  exactly that one field (plus the XMP entry beside it); nothing on the
+  page moves.
 
 - **A font pack can no longer reach outside its own directory.** Two
   things could point somewhere they had no business pointing. A locale

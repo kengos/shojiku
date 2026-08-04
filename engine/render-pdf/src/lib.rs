@@ -14,7 +14,7 @@ use krilla::page::PageSettings;
 use krilla::text::Font;
 use krilla::Document;
 use shojiku_image::AssetStore;
-use shojiku_layout::{FontFace, FontStore, LayoutDocument};
+use shojiku_layout::{DocumentMetadata, FontFace, FontStore, LayoutDocument};
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -41,14 +41,13 @@ pub fn render_pdf(
     layout: &LayoutDocument,
     fonts: &FontStore,
     assets: &AssetStore,
-    title: &str,
 ) -> Result<Vec<u8>, RenderError> {
     if layout.pages.is_empty() {
         return Err(RenderError::NoPages);
     }
 
     let mut document = Document::new();
-    document.set_metadata(Metadata::new().title(title.to_string()));
+    document.set_metadata(metadata_of(&layout.metadata));
 
     // Wrap every face the store carries; layouts reference them by id.
     // krilla only embeds (and subsets) faces that actually draw glyphs,
@@ -85,6 +84,26 @@ pub fn render_pdf(
     }
 
     document.finish().map_err(write_error)
+}
+
+/// The krilla metadata for a resolved [`DocumentMetadata`]. Layout has
+/// already interpolated and gated every value (control characters,
+/// length, and the language tag's charset — XMP writes that one
+/// unescaped), so this only maps field for field.
+///
+/// `creation_date` is deliberately never set: krilla writes no date
+/// unless given one, which is what keeps the same inputs producing the
+/// same bytes.
+fn metadata_of(meta: &DocumentMetadata) -> Metadata {
+    let mut out = Metadata::new().title(meta.title.clone());
+    if let Some(description) = &meta.description {
+        out = out.description(description.clone());
+    }
+    if let Some(language) = &meta.language {
+        out = out.language(language.clone());
+    }
+    out.keywords(meta.keywords.clone())
+        .authors(meta.authors.clone())
 }
 
 /// Maps a font-wrapping failure. Named (rather than a closure) so the

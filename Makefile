@@ -1,5 +1,33 @@
 # Shojiku local CI mirror.
 #
+# THESE ARE THE ONLY SANCTIONED WAYS TO CHECK ANYTHING (user rule). Do not
+# invent an equivalent; if what you need is missing, ASK and add it here.
+# Rulebook: docs/agents/verification.md   Full inventory: make help
+#
+#   Is it correct?            one PASS/FAIL line, real exit code, log kept
+#     make verify               everything CI runs — the merge bar
+#     make verify:engine        engine: budget + lint + tests
+#     make verify:gui           gui: budget + typecheck + lint + coverage
+#     make verify:site          make verify:docker      make verify:sdk:<lang>
+#
+#   Faster slices while iterating
+#     make budget:engine        make lint:engine        make test:engine
+#     make budget:gui           make lint:gui           make test:gui [F=<pat>]
+#     make quiet T=<target>     same treatment for any target below
+#
+#   Apply fixes
+#     make fmt-fix              rustfmt          make gui-format   biome
+#     make examples             re-render the committed example outputs
+#
+#   Where did it break?
+#     cat .make-logs/last-error.log                always the last failure
+#
+#   What makes these trustworthy — do not defeat it:
+#     * NEVER wrap a gate in a pipe, in `; echo $?`, or in `make -n`.
+#       Each has reported a RED gate as green in this repo.
+#     * A green `make verify` stays green for changes no gate reads
+#       (comments here, docs/agents/**). Re-run the scope, not the mirror.
+#
 # The host has no Rust toolchain (see shojiku-rust-professional): every gate
 # runs inside Docker. Named volumes persist CARGO_HOME/RUSTUP_HOME so the
 # toolchain components and cargo subcommands (llvm-cov, deny) install once and
@@ -89,7 +117,35 @@ endif
 #
 # Do NOT do `make gui | tail -40`: a pipeline reports the LAST command's status,
 # so it exits 0 over a FAILED gate, and tail discards the steps you would need
-# to diagnose it. That mistake is the reason the targets above exist.
+# to diagnose it. That mistake is the reason the targets above exist. This bites
+# HARDEST in a background run: a backgrounded `make verify | tail -30` is
+# reported as "completed (exit 0)" while a gate inside it failed, and the pipe
+# also costs the only progress signal — an unpiped target writes
+# $(LOG_DIR)/<target>.log LIVE, so it can be tailed while it runs. There is
+# nothing to shorten in the first place: a <verb>:<scope> target's whole output
+# is ONE line.
+#
+# So: to run a long gate in the BACKGROUND, background `make quiet T=verify`
+# ITSELF — nothing else. There is no BG=/--detach flag here on purpose: the
+# supervision belongs to whatever backgrounds it (your shell's `&`, an agent
+# harness), and the gate lock is scoped to the lifetime of the make process
+# that holds it, so a Makefile that detached its own children would have to
+# reinvent that ownership. The two ways this has been got wrong, both of which
+# reported a RED gate as green:
+#   make coverage 2>&1 | tail -20          # exit code is tail's
+#   make verify > out.log 2>&1; echo $?    # exit code is echo's — the same
+#                                          # trap in suffix form, and the real
+#                                          # code is then only in the text
+# Neither shortcut buys anything: `quiet` already gives you one line, the full
+# log at a known path, and the true exit code.
+#
+# The traps you cannot read off this file — mount drift, a docker daemon that
+# answers `docker version` and still pulls nothing, base-image pull timeouts,
+# how to actually cancel a gate, scoped gui/fuzz iteration recipes — live in
+# docs/agents/gotchas/docker-make.md. Read it before debugging a confusing gate
+# failure cold; most such symptoms are catalogued there rather than being a
+# defect in your change. Point-of-use notes on the targets below repeat only the
+# trap each one can spring, not that file's contents.
 #
 # `make <gate> JOBS=N` caps parallelism (cargo --jobs / Vitest --maxWorkers) for
 # a machine that `make verify` would otherwise thrash.
@@ -115,6 +171,22 @@ WORK_TAG   ?= local
 # suffix only when a session opts in.
 SDK_SUFFIX := $(if $(filter-out local,$(WORK_TAG)),-$(WORK_TAG))
 # One gate at a time per working tree (scripts/gate-lock.sh explains why).
+# Re-entrant, so `make quiet T=verify` holds it once for the whole run, and
+# keyed by working tree, so separate worktrees still run gates in parallel —
+# which is the point of isolating a parallel session in one. Set
+# SHOJIKU_GATE_DIR to a shared path and `ls` shows every running gate across
+# every tree.
+#
+# `make -n` does NOT keep you out of this: GNU make runs any recipe line
+# containing $(MAKE) even under -n, so `make -n verify` really takes the lock
+# and can kill a gate already running in this tree. To check an edit here,
+# `make help` (it only greps the file) or read the recipe.
+#
+# Cancelling a gate started from an AGENT HARNESS is not Ctrl-C: `kill -INT` on
+# the top-level make does not reach the `docker run` under the recipe, so the
+# container keeps compiling and the lock stays held while `ps` says the make is
+# alive. Kill the CONTAINER first (find it by its repo-path mount), then the
+# make chain — recipe in docs/agents/gotchas/docker-make.md.
 GATE_LOCK  := scripts/gate-lock.sh
 
 IMAGE        := shojiku-ci:$(WORK_TAG)
@@ -135,6 +207,17 @@ NODE_FLOOR_IMAGE := node:22-bookworm-slim
 # the last `== step ==` reached) and then the whole log, and is removed when the
 # same target next passes. A recipe cannot export a variable into the calling
 # shell, so this is a file rather than $ERROR; `cat $(ERROR_LOG)` is the idiom.
+#
+# Two ways to misread these logs, both of which have reported a green run as red
+# (and, worse, the reverse):
+#   * a COMPOUND run writes ONE log named after the whole T —
+#     `make quiet T="site site-check"` writes site_site-check.log and leaves
+#     site-check.log as whatever the last STANDALONE run of that target wrote.
+#     Match the log file to the command you actually ran.
+#   * ERROR_LOG is cleared only when THAT target next passes, so a deliberately
+#     failing smoke (a guard that is supposed to refuse) leaves a FAILED header
+#     behind indefinitely. Read its first line — it names the target — before
+#     treating it as an outstanding failure.
 LOG_DIR   := .make-logs
 ERROR_LOG := $(LOG_DIR)/last-error.log
 
@@ -191,6 +274,19 @@ WASM_MAX_GZIP := 3145728
 # lets the pipeline run these very targets instead of a hand-copied set of
 # cargo flags that drifts from them. `engine/target/` needs no such switch —
 # it is inside the repository mount, so it is already on the host.
+#
+# MOUNT DISCIPLINE — the single biggest time-sink in this repo, and the reason
+# this uses $(CURDIR) rather than $(pwd). Copy these flags for an ad-hoc cargo
+# run; do not retype them:
+#   * mount the REPO ROOT at /repo and let -w select the subdirectory. A
+#     `cd engine` first, or a `$(pwd)` mount taken from the wrong cwd, makes a
+#     CORRECT change look broken: font-loading tests answer
+#     `Pack(NotFound("biz-ud"))`, and because the path is baked in at compile
+#     time via CARGO_MANIFEST_DIR the wrong mount POISONS the cached test
+#     binary — it keeps failing after you fix the mount until you force a
+#     rebuild.
+#   * keep the mount IDENTICAL across runs. Mixing mounts corrupts the shared
+#     cache; symptoms and recovery are in docs/agents/gotchas/docker-make.md.
 CARGO_VOLUME  ?= shojiku-cargo
 PNPM_VOLUME   ?= shojiku-pnpm
 RUSTUP_VOLUME ?= shojiku-rustup
@@ -299,10 +395,10 @@ lint\:engine: ## engine/ static checks only — cargo fmt --check + clippy -D wa
 lint\:gui: ## gui/ static checks only — tsc typecheck + biome (0 warnings)
 	@$(MAKE) --no-print-directory quiet T=gui-lint
 
-test\:engine: ## engine/ tests only (cargo test --workspace), no lint or coverage gate
+test\:engine: ## engine/ tests only; P=<crate> and/or F=<name filter> narrow it
 	@$(MAKE) --no-print-directory quiet T=test
 
-test\:gui: ## gui/ tests only (vitest), no budget/typecheck/lint
+test\:gui: ## gui/ tests only (vitest); F=<file pattern> narrows it (no coverage)
 	@$(MAKE) --no-print-directory quiet T=gui-test
 
 budget\:engine: ## engine/ per-file .rs line budget + //! role headers
@@ -429,9 +525,24 @@ clippy: ## cargo clippy -D warnings (matches CI flags; JOBS=N caps parallelism)
 	$(CARGO_IN_DOCKER) 'rustup component add clippy >/dev/null 2>&1; \
 		cargo clippy --workspace --all-targets --all-features --locked $(CARGO_JOBS) -- -D warnings'
 
-test: ## cargo test --workspace --locked + link the capi cdylib (JOBS=N caps parallelism)
-	@echo "== test =="
-	$(CARGO_IN_DOCKER) 'cargo test --workspace --locked $(CARGO_JOBS)'
+# Judging a run by eye: count `test result: FAILED` rather than parsing the
+# result lines by field position (`FAILED. 553 passed; 1 failed` has been
+# mis-read as green). Cargo STOPS at the first failing binary, so FEWER
+# `test result:` lines than usual is itself the tell that something failed
+# early — the PASS/FAIL line from `make test:engine` is the reliable answer.
+#
+# P=<crate> and F=<name filter> narrow the run for the edit-run-edit loop
+# (`make test:engine P=shojiku-layout`, `… F=document_meta`, or both) — the
+# whole workspace is ~4 min and a crate is ~30 s, which is the gap that used
+# to get filled with a hand-typed `docker run … cargo test -p …`. A narrowed
+# run SKIPS the capi cdylib link below and proves nothing about the crates it
+# did not build, so finish with a plain `make test:engine` before saying the
+# tests pass. P takes several crates: P="shojiku-core shojiku-layout".
+test: ## cargo test --workspace --locked + link the capi cdylib (P=<crate> F=<filter> narrow it)
+	@echo "== test$(if $(P), P=$(P))$(if $(F), F=$(F)) =="
+	$(CARGO_IN_DOCKER) 'cargo test $(if $(P),$(foreach p,$(P),-p $(p)),--workspace) --locked $(CARGO_JOBS) $(F)'
+	@$(if $(or $(P),$(F)),echo "== capi cdylib link SKIPPED (narrowed run) ==",:)
+ifeq ($(strip $(P)$(F)),)
 	@echo "== capi cdylib link =="
 	@# `cargo test` builds only the rlib the test harness links; nothing in
 	@# the gate grid would otherwise LINK the shared library that is the
@@ -441,6 +552,7 @@ test: ## cargo test --workspace --locked + link the capi cdylib (JOBS=N caps par
 	@# in capi-dist.
 	$(CARGO_IN_DOCKER) 'cargo build -p shojiku-capi --locked $(CARGO_JOBS) \
 		&& ls target/debug/*shojiku_capi.* >/dev/null'
+endif
 
 ## ---- job: coverage -----------------------------------------------------
 
@@ -628,6 +740,19 @@ examples-check: ## Fail if committed example outputs differ from a fresh render
 
 ## ---- wasm --------------------------------------------------------------
 
+# NOT byte-reproducible across host architectures: the pinned container emits a
+# different shojiku_wasm_bg.wasm on an arm64 host than on CI's x86_64 runners
+# (the .js/.d.ts outputs match — only the binary differs), while CI runs
+# reproduce each other exactly. Nothing in `make verify` compares those bytes,
+# so this only matters at the release-time re-pin — see site-wasm-release.
+#
+# `engine/wasm/pkg` is gitignored, so it holds whatever the last local build
+# left. Two consumers read it as "a build of HEAD" and will quietly disagree
+# with you otherwise: the gui integration suites dynamic-import it (a stale pkg
+# reds the whole wasm suite with parse errors that look like GUI regressions),
+# and the designer-app dev server serves an assembled COPY taken at startup.
+# Re-run this after every engine edit batch, and re-assemble (or restart the
+# dev server) before judging a capability-gated feature in the browser.
 wasm: ## Build the browser WASM bindings (engine/wasm/pkg) + assert size budget
 	@echo "== wasm build (size-budgeted) =="
 	@$(GATE_LOCK) docker run --rm \
@@ -1170,6 +1295,12 @@ sdk-java-lint: capi-lib ## sdk/java spotless + compiler lint only (what `make li
 # you can read it); turn it into a committed corpus file — the replay tests
 # then guard it — rather than committing the artifact.
 #
+# Two things to know before hand-rolling a `cargo fuzz run` outside this
+# target: the FIRST corpus argument is the WRITABLE one (pass the volume path
+# first and the committed seeds after, or libFuzzer writes its finds into the
+# repo mount), and the pinned rust image has `gcc` but no `g++`/`clang` — a
+# fuzz dependency needing a C++ compiler fails at build time, not at run time.
+#
 # The WORKING corpus lives in a named volume, not on the repo mount, and that
 # is a performance decision rather than tidiness: libFuzzer writes a file per
 # NEW/REDUCE, which is thousands of small writes a minute, and on a bind mount
@@ -1284,6 +1415,16 @@ PNPM_VERSION_SDK := $(shell sed -n 's/.*"packageManager": *"pnpm@\([^"]*\)".*/\1
 # Run a pnpm command over the gui/ workspace in the pinned Node image. A named
 # volume persists the pnpm store across runs (like the cargo/rustup volumes).
 # pnpm is installed at the version gui/package.json pins (see PNPM_VERSION).
+#
+# Iterating on a few gui test files is much faster than the whole `make gui`,
+# but run it under THIS image and THIS store volume — copy the flags below
+# rather than improvising a pair. `node_modules` lives on the repo mount, so an
+# install under a different base image leaves another platform's native
+# bindings there and the next run dies with `Cannot find module
+# './rolldown-binding.<platform>.node'`, which reads exactly like a broken
+# dependency tree rather than an image mismatch. The full scoped-iteration
+# recipe (and why COREPACK_ENABLE_DOWNLOAD_PROMPT=0 is load-bearing) is in
+# docs/agents/gotchas/docker-make.md; re-run `make gui` before committing.
 PNPM_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 	-v "$(CURDIR):/repo" -w /repo/gui \
 	-v "$(PNPM_VOLUME):/pnpm-store" \
@@ -1307,12 +1448,20 @@ gui-lint: ## gui/ typecheck + lint only (what `make lint:gui` runs)
 		pnpm -r typecheck; \
 		pnpm lint'
 
-gui-test: ## gui/ vitest only, no budget/typecheck/lint (what `make test:gui` runs)
-	@echo "== gui test =="
+# F=<pattern> narrows the run to test files whose path matches, for the
+# edit-run-edit loop (`make test:gui F=documentMetaModel`). It deliberately
+# drops --coverage: one file cannot meet a 100% workspace threshold, so a
+# scoped run that kept it would always fail and teach you to ignore the gate.
+# `--passWithNoTests` is what lets it sweep every workspace package when only
+# one of them holds a match. The plain form (no F) is the real gate and is what
+# `make verify` runs; a narrowed run proves nothing about the others, so finish
+# with `make test:gui` before saying tests pass.
+gui-test: ## gui/ vitest only, no budget/typecheck/lint (F=<pattern> narrows, no coverage)
+	@echo "== gui test$(if $(F), (F=$(F))) =="
 	@$(PNPM_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
 		pnpm config set store-dir /pnpm-store; \
 		pnpm install --frozen-lockfile; \
-		pnpm -r test $(if $(JOBS),-- $(VITEST_JOBS))'
+		$(if $(F),pnpm -r exec vitest run --passWithNoTests "$(F)",pnpm -r test $(if $(JOBS),-- $(VITEST_JOBS)))'
 
 gui-budget: ## gui/ per-file executable-line budget (scripts/check-gui-line-budget.sh)
 	@echo "== gui line budget =="
@@ -1410,6 +1559,16 @@ site-wasm-release: ## RELEASE ONLY: re-pin site/.data/wasm to the released engin
 	@test -d engine/wasm/pkg || $(MAKE) wasm
 	@$(SITE_IN_DOCKER) 'node scripts/refresh-data.ts --release-wasm'
 
+# WARNING — this STAGES site/.data/wasm (a RELEASED engine build) into
+# engine/wasm/pkg, which is also what the site's own tests load as "a fresh
+# build of HEAD". So after a `make site-build`, a later `make site` in the same
+# tree is silently testing the RELEASED engine, not your changes — a green run
+# proving less than it looks like it does. `make verify` is unaffected (it does
+# not run this) and CI cannot hit it (fresh checkouts); it bites the human who
+# runs both in one tree. Re-run `make wasm` before trusting a later gate. The
+# tell: `make site-wasm-release` suddenly SUCCEEDS where it refused minutes
+# earlier — that is the guard comparing the site's own bytes against
+# themselves, not a fixed problem.
 site-build: ## The full Pages build locally (site + /designer/) into site/.vitepress/dist
 	@echo "== site build (Pages mirror) =="
 	@$(SITE_IN_DOCKER) 'bash scripts/build-pages.sh'

@@ -55,7 +55,6 @@ pub struct Prepared {
     /// Resolved page margins `[top, right, bottom, left]` in pt.
     pub margin: [f64; 4],
     pub diagnostics: Diagnostics,
-    pub title: String,
     pub assets: AssetStore,
 }
 
@@ -102,17 +101,11 @@ pub fn prepare(sources: Sources, ctx: PrepareCtx) -> Result<Prepared, Diagnostic
         return Err(all);
     }
 
-    let title = sources
-        .template
-        .name
-        .clone()
-        .unwrap_or_else(|| "Shojiku Document".to_string());
     Ok(Prepared {
         document: out.document,
         boxes: out.boxes,
         margin: out.margin,
         diagnostics: all,
-        title,
         assets,
     })
 }

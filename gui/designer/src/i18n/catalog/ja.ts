@@ -191,6 +191,14 @@ export const ja: LanguageCatalog = {
       '表に {count} 件の行 conditionalStyles があります（上限 {max} 超過）。最初の {max} 件のみ適用されます',
     too_many_bindings:
       '項目に {count} 件の bindings 宣言があります（上限 {max} 超過）。生成による肥大化を確認してください',
+    too_many_document_entries:
+      '`document.{key}` に {count} 件の項目があります（上限 {max} 超過）。先頭 {max} 件のみ書き込まれます',
+    document_metadata_control_chars:
+      '`document.{key}` に制御文字が含まれています。PDF には書き込まれません',
+    document_metadata_too_long:
+      '`document.{key}` が {max} バイトを超えています。PDF には書き込まれません',
+    invalid_document_language:
+      '`document.{key}` は言語タグではありません（使えるのは A-Z a-z 0-9 と `-` のみ）。PDF には書き込まれません',
     link_url_too_long: 'リンク URL が {max} バイトを超えています。リンクは無視されました',
     qr_content_too_long:
       'qr_code の内容が {bytes} バイトです（上限 {max} 超過）。項目はスキップされました',
@@ -660,6 +668,19 @@ export const ja: LanguageCatalog = {
     'defaults.styleIntro':
       '文書ぜんたいの土台になる文字の設定です。空のままの項目はエンジンの値で組まれ、変えた項目だけがファイルに書かれます。',
     'defaults.unset': '未設定',
+    'docMeta.title': 'ドキュメント情報',
+    'docMeta.intro':
+      'この書類が何であるかを表す情報です。PDF のプロパティに書き込まれるもので、ページ上には現れません（プレビューは変わりません。PNG プレビューにも含まれません）。',
+    'docMeta.docTitle': 'タイトル',
+    'docMeta.titlePlaceholder': '空のときはテンプレート名が使われます',
+    'docMeta.description': '説明',
+    'docMeta.keywords': 'キーワード',
+    'docMeta.authors': '作成者',
+    'docMeta.language': '言語',
+    'docMeta.languageHint': '空のときは、上のロケールが使われます。',
+    'docMeta.addEntry': '入力して追加',
+    'docMeta.remove': '削除',
+    'docMeta.unset': '未設定',
     'defaults.unsetWith': '未設定（{value}）',
     'defaults.sizeHint': '本文はエンジンの値より少し大きめ、{size}pt あたりが読みやすい目安です。',
     'defaults.sizeApply': '{size}pt にする',

@@ -513,6 +513,39 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   `link.url`.
 - Reference: [link](link.md).
 
+### Document metadata (`engine/core`, `engine/layout`, `engine/render-pdf`)
+- **A root `document:` block** carrying `title`, `description`,
+  `keywords`, `language` and `authors` — each taking `{key:format}`
+  interpolation like static text, resolved against top-level params
+  through the same binding funnel the drawn strings use. Unknown keys
+  reject; there is no per-block `bindings:` map, so an interpolation
+  name must be inside the reference charset.
+- **Layout is the trust boundary**, as it is for links: values are
+  interpolated, then gated before they enter the tree — no control
+  characters, ≤ 2048 bytes, and for `language` a `[A-Za-z0-9-]` tag of
+  ≤ 64 bytes. The language gate is load-bearing rather than tidy: the
+  XMP writer escapes every other value but writes a language tag RAW,
+  so an ungated tag could close the element and inject markup. A
+  rejected field warns — `document_metadata_control_chars` /
+  `document_metadata_too_long` / `invalid_document_language`, one code
+  per reason so the whole message translates — and is dropped;
+  over-long lists warn `too_many_document_entries` and keep the first 64.
+- **A reject is never replaced by a fallback.** `title` falls back to
+  the template `name:` then to `Shojiku Document`, and `language` to
+  `defaults.locale` — but only from an ABSENT value, so a refused value
+  cannot hide behind plausible output.
+- **PDF backend** writes the whole set through krilla, which lands it in
+  BOTH the `/Info` dictionary and the XMP packet, plus the catalog
+  `/Lang` (what assistive technology reads) for the language. PNG
+  ignores metadata — the format has no channel for it — exactly as it
+  ignores links.
+- **No creation date, by decision**: none is authorable and none is
+  written, so the same inputs keep producing the same bytes.
+- The resolved metadata rides `LayoutDocument`, so `inspect` exposes it
+  to the GUI and to AI consumers for free. Capability key
+  `template.document.metadata`.
+- Reference: [document](document.md).
+
 ### Fonts (`packs/`, `engine/formatter`, `engine/layout`)
 - **Fonts-only shared packs**: `packs/fonts/<pack>/manifest.yml`
   (version, one license per pack, `redistributable`/`embeddingAttested`,
@@ -1326,6 +1359,22 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   authoring-skill proof).
 
 ## Decision log
+
+- **Document metadata is PDF-only, and its language gate is a security
+  control rather than validation.** The PNG backend has no metadata
+  channel, so `document:` is silently inert there — a warning would fire
+  on every Designer preview and redden the WARNING-clean examples gate,
+  and the same reasoning already governs links. On the PDF side the XMP
+  packet is XML: the writer escapes ordinary values but emits a language
+  tag verbatim, so `language` is charset-gated where the other fields
+  only need control-character and length gates. Two further calls fell
+  out of writing it: a gate REJECT does not fall through to a fallback
+  (the fallbacks exist so a value is not authored twice, not to paper
+  over a refusal), and `creationDate` is not authorable at all — a
+  rendered timestamp would break "same inputs ⇒ same bytes", which
+  signing rests on. Adding `language`'s fallback to `defaults.locale`
+  changed the bytes of every committed example that declares a locale:
+  one added `dc:language` + `/Lang` element, no page pixels moved.
 
 - **char_grid alignment reuses `textAlign`; the shift is per line and
   post-assignment.** No `start`/`end` logical keywords were added: the

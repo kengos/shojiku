@@ -27,8 +27,10 @@ false`), no clap.
 - `prepare.rs` — `prepare`: the validate-gate → assets → layout → dedup
   pipeline shared by inspect/preview/render; `AssetsInput` = `Prepare`
   (FS walk) | `PrepareInjected` (bundled-byte walk) | `Prebuilt`;
-  returns `Prepared { document, boxes, margin, diagnostics, title,
-  assets }` or the full `Diagnostics` on any errors.
+  returns `Prepared { document, boxes, margin, diagnostics, assets }` or
+  the full `Diagnostics` on any errors. (No `title`: the PDF title —
+  and the rest of the document metadata — resolves in LAYOUT and rides
+  `document.metadata`, so the hosts pass the tree and nothing else.)
 - `inspect.rs` — `InspectEnvelope { engine, document, boxes, margin }` +
   `inspect_json`.
 - `preview.rs` — `preview_pages` (PNG per page) + `preview_raw` (RGBA)

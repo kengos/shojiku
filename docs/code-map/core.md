@@ -46,7 +46,10 @@ injected at parse). The template model splits along CSS lines.
   `text`/`data`). `template/ruby.rs` — `RubyPair` (verbatim
   template-authored readings; distinct from the aozora parser in
   `ruby.rs`). `template/link.rs` — `Link` (`{ url }`, `{key}`
-  interpolation). `template/marks.rs` — form marks: `EllipseItem` /
+  interpolation). `template/document.rs` — `DocumentMeta` (the root
+  `document:` block: title/description/keywords/language/authors, each
+  `{key}`-interpolable; `MAX_DOCUMENT_ENTRIES` per list; no
+  `creationDate` — determinism). `template/marks.rs` — form marks: `EllipseItem` /
   `CheckboxItem` (unified `Style` like `rect`), `MarkBinding`
   `{ key, equals?, scope }` (presence predicate; `EqualsValue` =
   scalar-only `serde_json::Value` newtype), `TextMark` (text-anchored
@@ -145,6 +148,10 @@ injected at parse). The template model splits along CSS lines.
   quality walk (`definitions_format_ignored`,
   `definitions_enum_labels_ignored` — labeled entries on a non-text
   field).
+- `validate/document.rs` — the `document:` block: the two list caps plus
+  the same interpolation-key and suspect-key checks the drawn strings
+  get, addressed `document.<key>` / `document.<key>[n]`. Catalog-free —
+  it runs with or without definitions.
 - `validate/bindings.rs` — scalar/interpolated keys incl. per-span and
   `link.url`; `BindingCtx`; the shared `walk_text` skips segments whose
   name the item declares. `validate/bindings/decl.rs` — the `bindings:`

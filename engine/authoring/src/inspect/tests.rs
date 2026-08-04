@@ -28,6 +28,23 @@ fn inspect_json_has_the_four_top_level_keys() {
 }
 
 #[test]
+fn the_document_carries_its_resolved_metadata() {
+    // The metadata rides the layout tree, so it reaches a Designer or an AI
+    // consumer through `inspect` without a second surface. A document that
+    // says nothing about itself still carries the default title, and the
+    // unset fields do not serialize as nulls.
+    let prepared = ok_prepared();
+    let json = inspect_json(&prepared).unwrap();
+    let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+    let meta = &value["document"]["metadata"];
+    assert_eq!(meta["title"], "Shojiku Document");
+    assert!(meta.get("description").is_none());
+    assert!(meta.get("language").is_none());
+    assert!(meta.get("keywords").is_none());
+    assert!(meta.get("authors").is_none());
+}
+
+#[test]
 fn boxes_carry_a_structural_path_for_id_less_items() {
     // SIMPLE's single text item has no `id:`; the index still emits its box,
     // addressed by the structural path alone (no `id` key serialized).

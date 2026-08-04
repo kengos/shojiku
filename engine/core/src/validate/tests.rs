@@ -7,6 +7,7 @@ mod bindings_decl;
 mod cell_images;
 mod char_grid;
 mod column_cells;
+mod document;
 mod format_picks;
 mod marks;
 mod placeholder;

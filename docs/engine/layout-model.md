@@ -11,7 +11,10 @@ is split per feature — see the [reference index](README.md).
 relative offsets and `%` lengths all disappear inside the layout pass;
 the `LayoutDocument` handed to `render-pdf` / `render-png` contains only
 absolute page coordinates. Renderers never re-measure, re-format, or
-re-resolve. The single exception: `overflow:
+re-resolve. (The tree also carries the document's resolved
+[metadata](document.md) — interpolated and gated by layout, written by
+the PDF backend, ignored by PNG. Not geometry, same rule: the renderer
+writes what it is given.) The single exception: `overflow:
 hidden` / `textOverflow: clip` emit a rectangular **clip group**
 (`kind: clip`) — the one nested tree node — and both backends honor it
 (krilla clip path / tiny-skia mask). Renderers still never re-measure;

@@ -96,6 +96,7 @@ pub(super) fn png_1x1_red() -> String {
 
 pub(super) fn base_doc() -> LayoutDocument {
     LayoutDocument {
+        metadata: Default::default(),
         page_width: 100.0,
         page_height: 100.0,
         pages: vec![LayoutPage { items: vec![] }],

@@ -22,6 +22,7 @@ mod container;
 mod decoration;
 mod defaults;
 mod diagnostic_paths;
+mod document_meta;
 mod flex;
 mod flow;
 mod format;

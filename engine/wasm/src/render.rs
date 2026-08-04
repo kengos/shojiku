@@ -162,13 +162,8 @@ impl Session {
                 })
             }
         };
-        let pdf = shojiku_render_pdf::render_pdf(
-            &prepared.document,
-            fonts,
-            &prepared.assets,
-            &prepared.title,
-        )
-        .map_err(pdf_err)?;
+        let pdf = shojiku_render_pdf::render_pdf(&prepared.document, fonts, &prepared.assets)
+            .map_err(pdf_err)?;
         let diagnostics = prepared.diagnostics.clone();
         Ok(PdfOutcome {
             pdf,

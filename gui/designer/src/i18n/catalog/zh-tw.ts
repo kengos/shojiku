@@ -148,6 +148,12 @@ export const zhTw: LanguageCatalog = {
       '表格列出了 {count} 個 row conditionalStyles（超過上限 {max}）；僅前 {max} 個生效',
     too_many_bindings:
       '項目宣告了 {count} 個 bindings（超過上限 {max}）；請檢查是否為產生器造成的膨脹',
+    too_many_document_entries:
+      '`document.{key}` 有 {count} 個項目（超過上限 {max}）；僅寫入前 {max} 個',
+    document_metadata_control_chars: '`document.{key}` 含有控制字元；不會寫入 PDF',
+    document_metadata_too_long: '`document.{key}` 超過 {max} 位元組；不會寫入 PDF',
+    invalid_document_language:
+      '`document.{key}` 不是語言標籤（只能使用 A-Z a-z 0-9 與 `-`）；不會寫入 PDF',
     link_url_too_long: '連結 URL 超過 {max} 位元組；已捨棄連結',
     qr_content_too_long: 'qr_code 內容為 {bytes} 位元組（超過上限 {max}）；已略過項目',
     char_grid_clamped:
@@ -599,6 +605,19 @@ export const zhTw: LanguageCatalog = {
     'defaults.styleIntro':
       '這是整份文件的基礎文字設定。留空的項目沿用引擎本身的值，只有你改過的項目才會寫入檔案。',
     'defaults.unset': '未設定',
+    'docMeta.title': '文件資訊',
+    'docMeta.intro':
+      '這份文件是什麼的說明。這些值會寫入 PDF 的文件內容，不會出現在頁面上（預覽不會改變，PNG 預覽也不包含這些資訊）。',
+    'docMeta.docTitle': '標題',
+    'docMeta.titlePlaceholder': '留空時會使用範本名稱',
+    'docMeta.description': '說明',
+    'docMeta.keywords': '關鍵字',
+    'docMeta.authors': '作者',
+    'docMeta.language': '語言',
+    'docMeta.languageHint': '留空時會使用上方的地區設定。',
+    'docMeta.addEntry': '輸入以新增',
+    'docMeta.remove': '移除',
+    'docMeta.unset': '未設定',
     'defaults.unsetWith': '未設定（{value}）',
     'defaults.sizeHint': '內文比引擎預設值稍大一些較易讀，{size}pt 左右為宜。',
     'defaults.sizeApply': '設為 {size}pt',

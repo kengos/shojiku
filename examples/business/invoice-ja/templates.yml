@@ -5,6 +5,17 @@ name: invoice_ja
 # with a repeating table header (params.json) or 3 items on one page
 # (params-short.json). Totals/tax are PRE-COMPUTED by the caller and passed
 # in params — the engine formats, it never does arithmetic.
+# What the FILE says it is (DM1): written into the PDF's document
+# properties — the reader's Properties panel, a search index, a screen
+# reader's language. Nothing here is drawn on the page, and PNG previews
+# carry none of it. `language` is omitted on purpose: it falls back to
+# `defaults.locale` below.
+document:
+  title: 請求書 {invoice.number}
+  description: '{invoice.subject}（{billing.name} 様）'
+  keywords: [ 請求書, invoice, '{invoice.number}' ]
+  authors: [ '{issuer.name}' ]
+
 page:
   size: A4
   orientation: portrait

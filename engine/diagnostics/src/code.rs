@@ -87,6 +87,9 @@ diagnostic_codes! {
     RowConditionValueNotBool = "row_condition_value_not_bool", Warning, Data, "`{key}` is not a boolean; row style not applied";
     EmptyLinkUrl = "empty_link_url", Warning, Data, "link URL is empty; link dropped";
     UnsupportedLinkScheme = "unsupported_link_scheme", Warning, Data, "link URL must be http/https/mailto/tel without control characters; link dropped";
+    DocumentMetadataControlChars = "document_metadata_control_chars", Warning, Data, "`document.{key}` contains control characters; it is not written to the PDF";
+    DocumentMetadataTooLong = "document_metadata_too_long", Warning, Data, "`document.{key}` is over {max} bytes; it is not written to the PDF";
+    InvalidDocumentLanguage = "invalid_document_language", Warning, Data, "`document.{key}` is not a language tag (only A-Z a-z 0-9 and `-`); it is not written to the PDF";
     ParamsMissingRequired = "params_missing_required", Warning, Data, "params do not contain required key `{key}`";
     ParamsTypeMismatch = "params_type_mismatch", Warning, Data, "`{key}` expects {expected}, got {actual}";
     ParamsOutOfRange = "params_out_of_range", Warning, Data, "`{key}` value {value} is {relation} {limit}";
@@ -198,6 +201,7 @@ diagnostic_codes! {
     TooManyFormats = "too_many_formats", Warning, Limits, "template defines {count} named formats (over the {max} cap); extra entries are ignored";
     TooManyRowConditions = "too_many_row_conditions", Warning, Limits, "table lists {count} row conditionalStyles (over the {max} cap); only the first {max} apply";
     TooManyBindings = "too_many_bindings", Warning, Limits, "item declares {count} bindings (over the {max} cap); check for generated bloat";
+    TooManyDocumentEntries = "too_many_document_entries", Warning, Limits, "`document.{key}` lists {count} entries (over the {max} cap); only the first {max} are written";
     LinkUrlTooLong = "link_url_too_long", Warning, Limits, "link URL exceeds {max} bytes; link dropped";
     QrContentTooLong = "qr_content_too_long", Warning, Limits, "qr_code content is {bytes} bytes (over the {max} cap); item skipped";
     CharGridClamped = "char_grid_clamped", Warning, Limits, "grid {columns}×{lines} is outside 1..={max} cells per sheet; clamped to {clamped_columns}×{clamped_lines}";

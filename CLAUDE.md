@@ -35,10 +35,28 @@ crate's `tests/` directory.
 | `sdk/` | [docs/code-map/sdk.md](docs/code-map/sdk.md) | the seven language wrappers, all built — the ruby gem (the REFERENCE the other six mirror: result/trace shape, template-root hardening, the fiddle ownership rules), the python package mirroring it over ctypes, the .NET package over function pointers and the JVM one over JNA, the npm package over the N-API addon, and the two SUBPROCESS ones (php, go) that script the CLI instead, plus their gate containers |
 | `packs/`, `examples/`, `docker/`, `docs/`, `site/`, `skills/`, `scripts/` | [docs/code-map/repo.md](docs/code-map/repo.md) | font/locale packs, bundled examples (+ the output-refresh rule), runtime image, doc set, homepage pitch pages, product-facing AI skills (`npx skills add` layout), repo gate scripts |
 
+## The other half of the map: the rulebooks
+
+The table above answers **WHERE** — which files own the thing you are
+changing. These answer **HOW**, and each is the single canonical home for
+its concern (component docs reference them rather than restating):
+
+| You need | Read |
+| --- | --- |
+| where a feature BELONGS; which boundary must not move | [docs/architecture.md](docs/architecture.md) (the constitution) + [docs/agents/`<area>`.md](docs/agents/) for the component |
+| the style / lint / 100%-coverage bar, in any language | [docs/guidelines.md](docs/guidelines.md) |
+| how correctness is ESTABLISHED at all — and why you may not invent a check | [docs/agents/verification.md](docs/agents/verification.md) + the allowlist at `head -30 Makefile` |
+| what already cost someone a loop (toolchain, tests, smokes, counts) | [docs/agents/gotchas/](docs/agents/gotchas/README.md) — routing table in its README |
+| what is BUILT vs merely DECIDED | [docs/engine/features.md](docs/engine/features.md) vs `docs/agents/<area>.md` |
+
+Working order for a change: **code map → rulebooks → build → the
+verification rulebook says whether it worked.** The forward-looking queue
+(what to work on) is deliberately NOT in this repository.
+
 ## Rules that bite
 
 - No local cargo: run gates via `make` (Docker wrapper). `make verify` = full CI mirror (line budget, fmt, clippy -D warnings, test, coverage **100% lines blocking**, cargo-deny, examples output-hash check (`make examples-check`; refresh via `make examples`), docker build/render/trivy).
-- **Checking a result ≠ reading output.** To check, use the `<verb>:<scope>` grid — `make verify:engine` / `verify:gui` / `verify:site` / `verify:docker`, and the faster slices `budget:` / `lint:` / `test:` over `engine`/`gui`/`site` (`make quiet T=<any target>` for the rest; `make help` lists them). Each prints ONE PASS/FAIL line, exits with the gate's REAL code, and keeps the full log in `.make-logs/`. **A failure always lands at the fixed path `.make-logs/last-error.log`** (headed with the target, exit code and the last `== step ==` reached, cleared when that target next passes) — `cat` it instead of re-running to find where it broke. **Never pipe a gate to `tail`** — a pipeline reports the last command's status, so `make gui | tail -40` exits 0 over a FAILED gate and discards the steps needed to diagnose it. Bare targets (`gui`, `rust`, `docker`…) stay verbose for debugging.
+- **Checking a result ≠ reading output.** To check, use the `<verb>:<scope>` grid — `make verify:engine` / `verify:gui` / `verify:site` / `verify:docker`, and the faster slices `budget:` / `lint:` / `test:` over `engine`/`gui`/`site` (`make quiet T=<any target>` for the rest; `make help` lists them). Each prints ONE PASS/FAIL line, exits with the gate's REAL code, and keeps the full log in `.make-logs/`. **A failure always lands at the fixed path `.make-logs/last-error.log`** (headed with the target, exit code and the last `== step ==` reached, cleared when that target next passes) — `cat` it instead of re-running to find where it broke. **A correctness claim comes from a make TARGET — never invent an equivalent** (user rule): the sanctioned commands are the allowlist at the top of the `Makefile` (`head -30 Makefile`), and the rulebook behind it — what counts as a claim vs mere inspection, never wrapping a gate in a pipe / `; echo $?` / `make -n`, what to do when the command you need is missing, and when a green `verify` still stands — is **[docs/agents/verification.md](docs/agents/verification.md)**. Read it before saying anything works. Bare targets (`gui`, `rust`, `docker`…) stay verbose for debugging.
 - **CI runs the same `make` targets you do** (`.github/workflows/ci.yml`), in the same pinned containers, as ~21 parallel jobs — engine, gui, wasm, docker, and every SDK across its supported language versions. There is no second definition of a gate to keep in sync.
 - **`main` takes no force pushes and cannot be deleted** (repository ruleset); history accumulates through PRs. A push or PR starts CI normally — the exception is a change whose every path matches `ci.yml`'s `paths-ignore` (`**/*.md`, `docs/**`, `.gitignore`, `LICENSE*`), where NO job runs at all. `gh workflow run ci.yml --ref main` is the manual trigger for that case and for re-running a gate without a new commit.
 - **GNU Make 4 or newer.** make is the only tool that does not run in a container, so it is the one place local and CI can disagree; macOS ships 3.81, which parses recipe quoting differently. The Makefile warns and names the fix.

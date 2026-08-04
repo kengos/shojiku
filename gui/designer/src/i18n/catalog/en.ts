@@ -173,6 +173,14 @@ export const en: LanguageCatalog = {
       'table lists {count} row conditionalStyles (over the {max} cap); only the first {max} apply',
     too_many_bindings:
       'item declares {count} bindings (over the {max} cap); check for generated bloat',
+    too_many_document_entries:
+      '`document.{key}` lists {count} entries (over the {max} cap); only the first {max} are written',
+    document_metadata_control_chars:
+      '`document.{key}` contains control characters; it is not written to the PDF',
+    document_metadata_too_long:
+      '`document.{key}` is over {max} bytes; it is not written to the PDF',
+    invalid_document_language:
+      '`document.{key}` is not a language tag (only A-Z a-z 0-9 and `-`); it is not written to the PDF',
     link_url_too_long: 'link URL exceeds {max} bytes; link dropped',
     qr_content_too_long: 'qr_code content is {bytes} bytes (over the {max} cap); item skipped',
     char_grid_clamped:
@@ -641,6 +649,19 @@ export const en: LanguageCatalog = {
     'defaults.styleIntro':
       "These are the document's base text settings. Every box left empty keeps the engine's own value — only what you change is written to the file.",
     'defaults.unset': 'Not set',
+    'docMeta.title': 'Document properties',
+    'docMeta.intro':
+      "What the file says it is. These go into the PDF's properties, not onto the page — the preview will not change, and PNG previews carry none of it.",
+    'docMeta.docTitle': 'Title',
+    'docMeta.titlePlaceholder': 'The template name is used when this is empty',
+    'docMeta.description': 'Description',
+    'docMeta.keywords': 'Keywords',
+    'docMeta.authors': 'Authors',
+    'docMeta.language': 'Language',
+    'docMeta.languageHint': 'Left empty, the document locale above is used.',
+    'docMeta.addEntry': 'Type to add',
+    'docMeta.remove': 'Remove',
+    'docMeta.unset': 'Not set',
     'defaults.unsetWith': 'Not set ({value})',
     'defaults.sizeHint':
       'Body text usually reads best a little larger than the engine fallback — around {size}pt.',

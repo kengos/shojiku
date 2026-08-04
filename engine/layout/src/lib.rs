@@ -22,8 +22,8 @@ pub use font::{
 };
 pub use shojiku_core::TextOrientation;
 pub use tree::{
-    rounded_rect_cmds, ClipShape, Corners, Dash, DecorationSpec, ImageShape, LayoutDocument,
-    LayoutItem, LayoutPage, LineShape, PathShape, RectShape, RunView, TextBlock, TextLine, TextRun,
-    MAX_CLIP_DEPTH,
+    rounded_rect_cmds, ClipShape, Corners, Dash, DecorationSpec, DocumentMetadata, ImageShape,
+    LayoutDocument, LayoutItem, LayoutPage, LineShape, PathShape, RectShape, RunView, TextBlock,
+    TextLine, TextRun, DEFAULT_DOCUMENT_TITLE, MAX_CLIP_DEPTH,
 };
 pub use wrap::wrap_text;

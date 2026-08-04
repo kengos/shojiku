@@ -23,6 +23,7 @@ fn rect(x: f64, y: f64, w: f64, h: f64) -> LayoutItem {
 
 fn doc_with(items: Vec<LayoutItem>) -> LayoutDocument {
     LayoutDocument {
+        metadata: Default::default(),
         page_width: 100.0,
         page_height: 100.0,
         pages: vec![LayoutPage { items }],
@@ -31,7 +32,7 @@ fn doc_with(items: Vec<LayoutItem>) -> LayoutDocument {
 
 fn render_items(items: Vec<LayoutItem>) -> Vec<u8> {
     let (_pack, fonts) = shared_fonts();
-    render_pdf(&doc_with(items), fonts, &AssetStore::empty(), "clip").expect("render")
+    render_pdf(&doc_with(items), fonts, &AssetStore::empty()).expect("render")
 }
 
 #[test]
@@ -151,7 +152,7 @@ fn child_error_inside_a_clip_still_propagates() {
         ..Default::default()
     });
     assert!(matches!(
-        render_pdf(&doc_with(vec![clip]), fonts, &AssetStore::empty(), "x"),
+        render_pdf(&doc_with(vec![clip]), fonts, &AssetStore::empty()),
         Err(RenderError::UnknownFont(id)) if id == "ghost"
     ));
 }

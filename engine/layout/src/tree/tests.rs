@@ -137,6 +137,7 @@ fn text_run_combine_serializes_only_when_set() {
 #[test]
 fn serializes_with_kind_tags() {
     let doc = LayoutDocument {
+        metadata: Default::default(),
         page_width: 595.28,
         page_height: 841.89,
         pages: vec![LayoutPage {

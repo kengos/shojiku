@@ -11,6 +11,10 @@ anywhere in the document.
 version: 0.1.0            # optional, informational
 name: receipt_ja          # optional, informational
 
+document:                 # what the PDF says it IS → document.md
+  title: 領収書 {order.code}
+  language: ja-JP
+
 page:                     # page size / orientation / margin → page.md
   size: A4
   margin: 25
@@ -39,6 +43,7 @@ sections:
 | --- | --- | --- | --- |
 | `version` | number or string | no | Author-owned version marker; the engine does not interpret it. `version: 1`, `1.5`, and `"2.0"` all parse and round-trip in the authored form (capability key `template.version.scalar`). |
 | `name` | string | no | Template name. |
+| `document` | map | no | Document metadata written into the PDF's `/Info` dictionary and XMP: `title`, `description`, `keywords`, `language`, `authors`. Each value interpolates like static text. PDF only — PNG previews carry no metadata. See [document.md](document.md). |
 | `page` | map | no | Page size, orientation, and margin. Defaults: A4 portrait, 25pt margin. See [page.md](page.md). |
 | `styles` | map of name → style | no | Named-style registry; items reference entries via `styleNames`. Max `MAX_STYLES` (256) entries. See [style.md](style.md). |
 | `defaults` | map | no | Document presentation defaults: `style` (the cascade root; the rem root follows it) + `formats` (per-type format defaults). See [defaults.md](defaults.md). |

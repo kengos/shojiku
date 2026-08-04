@@ -94,6 +94,7 @@ fn raw_honors_the_input_guards() {
         Err(RenderPngError::BadScale(_))
     ));
     let empty = LayoutDocument {
+        metadata: Default::default(),
         page_width: 100.0,
         page_height: 100.0,
         pages: vec![],

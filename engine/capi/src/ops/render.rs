@@ -45,7 +45,7 @@ pub(crate) fn run(request: &Request) -> Result<ShojikuResult, Failure> {
 /// executes, and the coverage gate reads it as dead code.
 fn draw(laid: &Laid) -> Result<Vec<u8>, RenderError> {
     let Laid { prepared, fonts } = laid;
-    render_pdf(&prepared.document, fonts, &prepared.assets, &prepared.title)
+    render_pdf(&prepared.document, fonts, &prepared.assets)
 }
 
 #[cfg(test)]

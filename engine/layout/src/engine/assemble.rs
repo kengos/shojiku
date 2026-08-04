@@ -57,6 +57,13 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
         font: ctx.font_rel(),
     };
 
+    // Document metadata resolves BEFORE the body walk, not after it: it is
+    // document-scoped, and at this point `ctx.scope` is structurally None
+    // rather than None-because-every-cell-walk-restored-it. Its diagnostics
+    // are raised before any descent, which is what leaves them unlocated
+    // (document scope) — see `enter_item`/`leave_item`.
+    let metadata = ctx.document_metadata();
+
     let body_pages = match &input.template.sections.body {
         Body::Flow(flow) => ctx.layout_flow(flow, &page_basis),
         Body::Absolute(abs) => {
@@ -115,6 +122,7 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
             page_width,
             page_height,
             pages,
+            metadata,
         },
         boxes: BoxIndex { pages: box_pages },
         margin,
