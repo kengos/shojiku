@@ -55,11 +55,15 @@ export interface Anchors {
   anchorsPem?: Buffer;
 }
 
-/** A signing provider: whatever `LocalPem` is, plus the material it loads. */
+/**
+ * A signing provider: anything that can produce a signed document.
+ *
+ * One method, because that is the only thing a client needs from a provider —
+ * a local key and one held in a cloud service differ in HOW they sign, not in
+ * what the client does with the answer.
+ */
 interface Provider {
-  key(): Promise<Buffer>;
-  certificate(): Promise<Buffer>;
-  passphrase: Buffer | string | null;
+  signWith(engine: Engine, pdf: Buffer): Promise<Snapshot>;
 }
 
 /** A configured engine and the sources to render with it. */
@@ -248,12 +252,7 @@ export class Client {
   ): Promise<Result<DocumentArtifact>> {
     let snapshot: Snapshot;
     try {
-      snapshot = await this.engine.sign(
-        artifact.bytes,
-        await provider.key(),
-        await provider.certificate(),
-        passphraseBytes(provider.passphrase),
-      );
+      snapshot = await provider.signWith(this.engine, artifact.bytes);
     } catch (error) {
       if (!(error instanceof MaterialUnreadableError)) {
         throw error;
@@ -294,13 +293,6 @@ function identifier(name: unknown): void {
     `a template name must be a string; got ${typeof name}. ` +
       'Sources you already hold go to `generateSource`.',
   );
-}
-
-function passphraseBytes(passphrase: Buffer | string | null): Buffer | null {
-  if (typeof passphrase === 'string') {
-    return Buffer.from(passphrase, 'utf8');
-  }
-  return passphrase;
 }
 
 async function anchorMaterial({ anchors, anchorsPem }: Anchors): Promise<Buffer> {

@@ -57,6 +57,9 @@ fn engine_info_reports_version_capabilities_and_locales() {
     assert!(info.capabilities.contains(&"capi.sign.external"));
     // The CLI's machine-readable `--report` sidecar the subprocess SDKs read.
     assert!(info.capabilities.contains(&"cli.report"));
+    // …and its own two-call signing surface, the seam behind the subprocess
+    // SDKs' external provider.
+    assert!(info.capabilities.contains(&"cli.sign.external"));
     // Layout diagnostics addressed by structural item path, and per-group
     // header fills. Each is pinned individually — the registry's
     // structural tests pass whether or not a given key is present.

@@ -42,12 +42,14 @@ final class Report
      * @param list<Diagnostic> $diagnostics
      * @param array{class: string, step: string, kind: string, message: string}|null $failure
      * @param array<mixed>|null $verification
+     * @param array<mixed>|null $prepared
      */
     private function __construct(
         public readonly bool $ok,
         public readonly array $diagnostics,
         public readonly ?int $pageCount,
         public readonly ?array $verification,
+        public readonly ?array $prepared,
         public readonly ?array $failure,
     ) {
     }
@@ -104,6 +106,10 @@ final class Report
             isset($payload['pageCount']) && is_int($payload['pageCount']) ? $payload['pageCount'] : null,
             isset($payload['verification']) && is_array($payload['verification'])
                 ? $payload['verification']
+                : null,
+            // What `sign-prepare` reported, in the C ABI's own key names.
+            isset($payload['prepared']) && is_array($payload['prepared'])
+                ? $payload['prepared']
                 : null,
             self::failure($payload['failure'] ?? null),
         );

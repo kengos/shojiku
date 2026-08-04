@@ -294,8 +294,10 @@ pass, never treat it as local idiom.
   process; `ExternalSigner` takes a callable that signs the bytes the
   engine hands out, and the SDK ships no key-service client of its own.
   Either takes its material as paths or bytes, explicitly — never
-  sniffed. The mirrors carry `LocalPem` today; `ExternalSigner` is built
-  in ruby and follows in the other six.
+  sniffed. All seven carry both. The five that link the library reach the
+  seam through `shojiku_sign_prepare` / `shojiku_sign_complete`; the two
+  subprocess ones script the CLI's `sign-prepare` / `sign-complete` verbs
+  and probe `cli.sign.external` before using them.
 - **The two failure levels map as the capi defines them**: a non-zero
   status becomes that language's programmer-misuse exception; status
   zero with `success` false becomes a failed result. A refused document,

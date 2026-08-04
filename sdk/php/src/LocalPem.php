@@ -29,7 +29,7 @@ use Shojiku\Exception\UsageException;
  * `#[\SensitiveParameter]` covers the fifth surface — a stack trace, which
  * prints the arguments a constructor was called with.
  */
-final class LocalPem
+final class LocalPem implements SigningProvider
 {
     /**
      * The material, keyed by the provider that owns it. Deliberately not a
@@ -99,6 +99,34 @@ final class LocalPem
     public function passphrase(): ?string
     {
         return self::store()[$this]['passphrase'];
+    }
+
+    /**
+     * Signs with the key this process holds.
+     *
+     * A configured PATH goes across as itself; only material the caller
+     * handed over as BYTES is written down, and then only 0600 inside a 0700
+     * directory that is removed on every path.
+     *
+     * @return array{Report, string}
+     */
+    public function signWith(Engine $engine, Workspace $workspace, DocumentArtifact $artifact): array
+    {
+        $passphrase = $this->passphrase();
+        $argv = Request::sign(
+            $workspace->write('input.pdf', $artifact->bytes()),
+            $this->keyPath() ?? $workspace->write('key.pem', (string) $this->keyPem()),
+            $this->certPath() ?? $workspace->write('cert.pem', (string) $this->certPem()),
+            $passphrase === null ? null : Client::PASSPHRASE_VARIABLE,
+        );
+
+        // The passphrase crosses in the CHILD's environment only — never in
+        // `argv`, which other processes can read.
+        return $engine->execute(
+            $argv,
+            $workspace,
+            $passphrase === null ? [] : [Client::PASSPHRASE_VARIABLE => $passphrase],
+        );
     }
 
     /**

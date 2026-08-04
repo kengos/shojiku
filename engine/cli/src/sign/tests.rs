@@ -2,10 +2,9 @@
 
 use std::cell::Cell;
 use std::path::PathBuf;
-use std::process::Command;
-use std::sync::OnceLock;
 
 use super::{run_sign_with, PassphraseSource};
+use crate::tests::{example_pdf, key_dir};
 use crate::{CliError, ReportArg, SignArgs};
 use zeroize::Zeroizing;
 
@@ -56,29 +55,6 @@ impl PassphraseSource for Stub {
                 std::io::Error::new(std::io::ErrorKind::NotConnected, "no terminal in a test")
             })
     }
-}
-
-/// The generated key directory for this test process.
-fn key_dir() -> &'static PathBuf {
-    static DIR: OnceLock<PathBuf> = OnceLock::new();
-    DIR.get_or_init(|| {
-        let dir =
-            std::env::temp_dir().join(format!("shojiku-cli-sign-keys-{}", std::process::id()));
-        let script =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../scripts/gen-test-keys.sh");
-        let output = Command::new("sh")
-            .arg(&script)
-            .arg(&dir)
-            .output()
-            .unwrap_or_else(|error| panic!("could not run {}: {error}", script.display()));
-        assert!(output.status.success(), "the key generator failed");
-        dir
-    })
-}
-
-/// A committed example's rendered output.
-fn example_pdf() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/business/receipt-ja/output.pdf")
 }
 
 /// Arguments signing the example with one of the generated key pairs.

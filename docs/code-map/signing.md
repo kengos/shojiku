@@ -136,7 +136,11 @@
   runs — an encrypted OpenSSL "traditional" key carries `Proc-Type:`/
   `DEK-Info:` headers RFC 7468 forbids, so checked afterwards the caller
   would be told "not PEM" about a file that plainly is one; the refusal
-  names `openssl pkcs8 -topk8`. `size.rs` reads the modulus bit length out
+  names `openssl pkcs8 -topk8`. `SignatureAlgorithm` also owns the host-boundary SPELLINGS
+  (`wire_name` / `from_wire`, `rsa-pkcs1-sha256` / `ecdsa-p256-sha256`):
+  two hosts take an algorithm by name, and a host that transcribed the
+  strings itself would be a second chance to disagree about what one means.
+  `size.rs` reads the modulus bit length out
   of the PKCS#1 body so a rejection can NAME the size — the backend refuses
   out-of-range keys opaquely — and holds the backend's SIGNING bounds
   (2047..=4096; verification admits more, which is why a key can verify
@@ -155,11 +159,18 @@
   site is a separate never-executed instantiation, which the coverage
   summary counts per instantiation).
 
-- `engine/signing/src/signer.rs` — the `Signer` trait (algorithm,
-  certificate, bytes → signature) and `LocalPemSigner`. Small on purpose:
-  everything a signer might otherwise want to know is the caller's business,
-  which is what lets a host-side provider implement it without this crate
-  learning anything about it.
+- `engine/signing/src/signer.rs` (+ `signer/tests.rs`) — the `Signer` trait
+  (algorithm, certificate, bytes → signature), `LocalPemSigner`, and
+  `PresignedSigner`. Small on purpose: everything a signer might otherwise
+  want to know is the caller's business, which is what lets a host-side
+  provider implement it without this crate learning anything about it.
+  `PresignedSigner` is the FINISHING half of the external flow — a signature
+  the caller already made, answered back — and it lives here rather than in
+  each host so both the C ABI and the CLI complete through the SAME
+  `sign_document`. Its test states the byte equality that makes that claim
+  checkable, plus the documented outcome nothing else asserted: a signature
+  made over a DIFFERENT document writes a well-formed file that fails
+  verification.
 
 - `engine/signing/src/sign.rs` — `prepare_sign` (placeholder + SHA-256 over
   the byte ranges) → `PreparedSign` (`digest`, `byte_range`, `capacity`) →

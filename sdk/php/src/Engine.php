@@ -38,8 +38,15 @@ final class Engine
     /** The capability key the subprocess contract needs to exist at all. */
     public const REPORT_CAPABILITY = 'cli.report';
 
-    /** Asked once per binary, then remembered. */
-    private ?bool $supported = null;
+    /** The key the two-step signing verbs advertise. */
+    public const EXTERNAL_CAPABILITY = 'cli.sign.external';
+
+    /**
+     * Which capabilities have been asked for, and answered.
+     *
+     * @var array<string, bool>
+     */
+    private array $supported = [];
 
     public function __construct(
         private readonly Binary $binary,
@@ -94,25 +101,52 @@ final class Engine
      */
     public function requireReport(): void
     {
-        if ($this->supported === true) {
+        $this->require(self::REPORT_CAPABILITY, 'report what an operation did');
+    }
+
+    /**
+     * Refuses a binary without the two-step signing verbs, which is what an
+     * {@see ExternalSigner} drives.
+     *
+     * @throws IncompatibleEngineException
+     */
+    public function requireExternal(): void
+    {
+        $this->require(self::EXTERNAL_CAPABILITY, 'sign with a key it never sees');
+    }
+
+    /**
+     * Refuses a binary that does not advertise `$key`.
+     *
+     * Each key is asked for once per binary. `$what` completes the sentence
+     * "so it cannot …", because an operator reading the refusal needs to know
+     * which capability is missing AND what it was going to be used for.
+     *
+     * @throws IncompatibleEngineException
+     */
+    private function require(string $key, string $what): void
+    {
+        if (($this->supported[$key] ?? false) === true) {
             return;
         }
         $info = $this->engineInfo();
         $keys = isset($info['capabilities']) && is_array($info['capabilities']) ? $info['capabilities'] : [];
-        $this->supported = in_array(self::REPORT_CAPABILITY, $keys, true);
+        $this->supported[$key] = in_array($key, $keys, true);
         $this->log->event('engine_checked', [
             'version' => is_string($info['version'] ?? null) ? $info['version'] : null,
-            'report' => $this->supported ? 'true' : 'false',
+            'capability' => $key,
+            'supported' => $this->supported[$key] ? 'true' : 'false',
         ]);
-        if ($this->supported) {
+        if ($this->supported[$key]) {
             return;
         }
 
         throw new IncompatibleEngineException(sprintf(
-            '`%s` does not advertise `%s`, so it cannot report what an operation did. '
+            '`%s` does not advertise `%s`, so it cannot %s. '
             .'Install an engine from this release or newer.',
             Text::bounded($this->binary->path),
-            self::REPORT_CAPABILITY,
+            $key,
+            $what,
         ));
     }
 
@@ -130,7 +164,7 @@ final class Engine
     public function execute(array $argv, Workspace $workspace, array $extraEnv = []): array
     {
         $this->requireReport();
-        $reportPath = $workspace->reserve('report.json');
+        $reportPath = $workspace->reserveReport();
         [, $stdout, $stderr] = $this->spawn([...$argv, '--report', $reportPath], $extraEnv);
 
         return [Report::read($reportPath, $stderr), $stdout];

@@ -55,6 +55,36 @@ are identifiers, never paths. An explicit `templates:` beats that variable;
 `SHOJIKU_LIBRARY` is the deliberate exception and beats an explicit
 `library:`, because where the engine lives is a deployment decision.
 
+## Signing with a key this process never holds
+
+When the private key lives in a cloud KMS, an HSM or a smartcard, use
+`ExternalSigner` instead. Shojiku hands out the bytes a signature has to
+cover; your code signs them wherever the key is and hands the signature
+back, so the key never enters your application:
+
+```csharp
+var provider = new ExternalSigner(
+    toBeSigned => kms.Sign(keyId, toBeSigned),
+    Algorithm.EcdsaP256Sha256,
+    cert: "signer.crt");
+var signed = await artifact.SignAsync(provider);
+```
+
+The call site does not change — which provider you pass is the only
+difference, and a provider registered by name works the same way under a
+strict client. This package ships no cloud client of its own: the
+callback is whichever client your application already uses.
+
+Two details worth getting right. The bytes you are handed are the CMS
+**signed attributes**, not the document's digest — a service that signs a
+digest must hash *these* bytes with SHA-256 itself. And the signature is
+that operation's raw output: PKCS#1 v1.5 bytes for `rsa-pkcs1-sha256`, an
+ASN.1 DER sequence for `ecdsa-p256-sha256`, which is what AWS KMS and
+Google Cloud KMS both return unchanged.
+
+A failure inside your own code is *not* swallowed into a failed result:
+an outage at your key service is not a fact about the document.
+
 ## Requirements
 
 .NET 10 or newer.

@@ -107,6 +107,15 @@ pub(super) const KEYS: &[&str] = &[
     // Additive — absent the flag, stdout, stderr and the exit code are
     // exactly what they were.
     "cli.report",
+    // Signing in two calls over the CLI (`sign-prepare` / `sign-complete`),
+    // the same seam `capi.sign.external` exposes to the SDKs that link the
+    // library. `sign-prepare` prints what a signature must cover — and
+    // carries it in the `--report` envelope as `prepared` — while
+    // `sign-complete` takes the finished signature back as a file of raw
+    // bytes. Neither takes a key or a passphrase. This is what the
+    // subprocess SDKs (php, go) need to offer a provider for a key held in a
+    // cloud KMS, an HSM or a smartcard.
+    "cli.sign.external",
     // Diagnostics v2: every diagnostic carries typed `args` (String |
     // Number | Bool) + a `category` + an `origin` alongside `code` +
     // `message`, so a GUI can localize from `code` + `args` instead of the

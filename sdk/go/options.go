@@ -14,7 +14,7 @@ type config struct {
 	binary     *string
 	logger     Logger
 	strict     bool
-	providers  map[string]*LocalPem
+	providers  map[string]Provider
 	env        *bool
 }
 
@@ -86,9 +86,9 @@ func WithStrict(strict bool) Option {
 // It REPLACES rather than merges: a client that declares its own registry is
 // stating the whole set it may sign with, and quietly adding globally
 // registered keys to that set would defeat the point.
-func WithProviders(providers map[string]*LocalPem) Option {
+func WithProviders(providers map[string]Provider) Option {
 	return func(c *config) {
-		registry := make(map[string]*LocalPem, len(providers))
+		registry := make(map[string]Provider, len(providers))
 		for name, provider := range providers {
 			registry[name] = provider
 		}

@@ -14,6 +14,9 @@
 
 use crate::key::{KeyError, PrivateKey, SignatureAlgorithm};
 
+#[cfg(test)]
+mod tests;
+
 /// Something that can produce a signature for this crate's containers.
 pub trait Signer {
     /// The algorithm the signatures are produced with.
@@ -72,5 +75,61 @@ impl Signer for LocalPemSigner {
 
     fn sign(&self, message: &[u8]) -> Result<Vec<u8>, KeyError> {
         self.key.sign(message)
+    }
+}
+
+/// A signer that has ALREADY signed: it answers with bytes the caller brought
+/// back from wherever the key lives.
+///
+/// This is the finishing half of the external flow, and it exists so that
+/// half stays the SAME code path as a local key's. A host completing an
+/// external signature calls [`crate::sign_document`] with one of these, so
+/// the container, the algorithm identifier, the reserved window and its size
+/// check are all the shipped ones — there is no second writer that could
+/// drift from the first.
+///
+/// It is not a way to bypass anything. The signature it carries either covers
+/// this document's signed attributes or it does not, and a signature made
+/// over a DIFFERENT document produces a well-formed file that fails
+/// verification — which is stated on the C ABI's own entry points and pinned
+/// by a test here.
+pub struct PresignedSigner<'a> {
+    algorithm: SignatureAlgorithm,
+    certificate: &'a [u8],
+    signature: &'a [u8],
+}
+
+impl<'a> PresignedSigner<'a> {
+    /// Wraps a finished signature.
+    ///
+    /// Borrows rather than copies: every host already holds these bytes for
+    /// the length of the call, and a signature is not material that benefits
+    /// from another copy in memory.
+    #[must_use]
+    pub fn new(algorithm: SignatureAlgorithm, certificate: &'a [u8], signature: &'a [u8]) -> Self {
+        Self {
+            algorithm,
+            certificate,
+            signature,
+        }
+    }
+}
+
+impl Signer for PresignedSigner<'_> {
+    fn algorithm(&self) -> SignatureAlgorithm {
+        self.algorithm
+    }
+
+    fn certificate_pem(&self) -> &[u8] {
+        self.certificate
+    }
+
+    /// Answers with the signature it was built from.
+    ///
+    /// The message is ignored deliberately: the caller signed it already, out
+    /// of process. Checking here that the bytes match what was prepared is
+    /// not possible — that is precisely what only the key holder could do.
+    fn sign(&self, _message: &[u8]) -> Result<Vec<u8>, KeyError> {
+        Ok(self.signature.to_vec())
     }
 }

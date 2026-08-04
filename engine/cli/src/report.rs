@@ -18,6 +18,7 @@
 //! binary's stdout, stderr and exit codes are untouched.
 
 use crate::error::{CliError, FailureClass};
+use crate::external::Prepared;
 use serde::Serialize;
 use shojiku_diagnostics::Diagnostics;
 use shojiku_verify::VerificationReport;
@@ -47,6 +48,12 @@ pub struct Report<'a> {
     /// way.
     #[serde(skip_serializing_if = "Option::is_none")]
     verification: Option<&'a VerificationReport>,
+    /// What a signature has to cover, on `sign-prepare` only. It is also on
+    /// stdout, as the verification report is — but stdout carries the PDF for
+    /// the commands beside this one, so an SDK reads results HERE and this
+    /// object has to be here to be readable at all.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    prepared: Option<&'a Prepared>,
     /// Why the operation did not produce it. Absent when `ok`.
     #[serde(skip_serializing_if = "Option::is_none")]
     failure: Option<Failure>,
@@ -75,6 +82,7 @@ impl<'a> Report<'a> {
             diagnostics,
             page_count: None,
             verification: None,
+            prepared: None,
             failure: None,
         }
     }
@@ -86,6 +94,7 @@ impl<'a> Report<'a> {
             diagnostics,
             page_count: None,
             verification: None,
+            prepared: None,
             failure: Some(Failure {
                 class: error.class(),
                 step,
@@ -106,6 +115,13 @@ impl<'a> Report<'a> {
     #[must_use]
     pub fn with_verification(mut self, report: &'a VerificationReport) -> Self {
         self.verification = Some(report);
+        self
+    }
+
+    /// Adds what a signature has to cover.
+    #[must_use]
+    pub fn with_prepared(mut self, prepared: &'a Prepared) -> Self {
+        self.prepared = Some(prepared);
         self
     }
 

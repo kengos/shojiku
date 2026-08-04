@@ -144,3 +144,37 @@ fn a_written_report_round_trips_as_json() {
     let value: serde_json::Value = serde_json::from_str(&text).expect("valid json on disk");
     assert_eq!(value["pageCount"], serde_json::json!(1));
 }
+
+#[test]
+fn a_prepare_report_carries_the_payload_under_prepared() {
+    // The subprocess SDKs read the prepare payload off the ENVELOPE, not off
+    // stdout — stdout carries the PDF for the commands beside this one — so
+    // the key and its contents are the contract, not an extra.
+    let empty = Diagnostics::new();
+    let prepared = crate::external::run_sign_prepare(&crate::args::SignPrepareArgs {
+        input: crate::tests::example_pdf(),
+        cert: crate::tests::key_dir().join("rsa2048.cert.pem"),
+        algorithm: "rsa-pkcs1-sha256".to_owned(),
+        report: crate::ReportArg::default(),
+    })
+    .expect("preparing succeeds");
+
+    let value = serde_json::to_value(Report::success(&empty).with_prepared(&prepared))
+        .expect("the envelope serializes");
+
+    assert_eq!(value["ok"], serde_json::json!(true));
+    let mut keys: Vec<&str> = value["prepared"]
+        .as_object()
+        .expect("a prepared object")
+        .keys()
+        .map(String::as_str)
+        .collect();
+    keys.sort_unstable();
+    assert_eq!(keys, ["byteRange", "capacity", "digest", "toBeSigned"]);
+    // Absent on every other operation, so a caller cannot mistake one report
+    // for another.
+    assert!(serde_json::to_value(Report::success(&empty))
+        .expect("serializes")
+        .get("prepared")
+        .is_none());
+}

@@ -1119,7 +1119,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   key actually signs is the CMS signed ATTRIBUTES
   (`SignatureContainer::to_be_signed`), which carry the digest — not the
   digest itself. The seam is reachable from outside the engine through
-  the C ABI's two-call surface and the ruby SDK's `ExternalSigner`.
+  the C ABI's two-call surface, the CLI's `sign-prepare` / `sign-complete`
+  verbs, and every language SDK's `ExternalSigner`.
 - **Signatures are reproducible**: the CMS container carries no
   `signingTime`, so the same document signed twice with the same RSA key
   yields the same bytes. `/ID` is carried into the appended trailer
@@ -1238,6 +1239,17 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   characters and capped, as it is at the C ABI boundary, because an
   engine error quotes template paths and content. Purely additive:
   without the flag, stdout, stderr and the exit code are unchanged.
+- **Signing in two calls** (`sign-prepare` / `sign-complete`, capability
+  key `cli.sign.external`), for a key this process is never given.
+  `sign-prepare` takes the document, the signer's certificate and an
+  `--algorithm` (`rsa-pkcs1-sha256` or `ecdsa-p256-sha256`) and prints
+  `{toBeSigned, digest, byteRange, capacity}` — the C ABI's own key names
+  — on stdout, and carries the same object in the `--report` envelope as
+  `prepared`. `sign-complete` takes the SAME three inputs plus
+  `--signature <file>` holding the RAW signature bytes, and writes the
+  signed document. Neither verb takes a key or a passphrase: what gets
+  signed is the CMS signed attributes, and the certificate and the
+  signature are both public. This is what the two subprocess SDKs drive.
 - Prebuilt binaries come from `make cli-dist` (on-demand): release CLIs
   for linux x64/arm64 and windows x64-gnu plus `SHA256SUMS`, the
   artifacts a GitHub Release offers. macOS builds need a macOS runner

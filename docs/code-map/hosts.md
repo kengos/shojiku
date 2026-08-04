@@ -73,14 +73,31 @@ so layout/render/sign/verify stay socket-free.
 
 ## engine/cli — thin wrapper over authoring
 
-- `lib.rs` — the clap surface (`render`/`validate`/`inspect`/`preview`/
-  `sign`/`verify`/`capabilities`) plus `ReportArg`, the `--report`
-  flag flattened into the three commands the SDK lifecycle binds; `main.rs` thin.
+- `lib.rs` — the crate root is now the command TABLE alone
+  (`render`/`validate`/`inspect`/`preview`/`sign`/`sign-prepare`/
+  `sign-complete`/`verify`/`capabilities`) plus the module wiring and
+  re-exports; `main.rs` thin.
   `VerificationFailed` carries an exit status only, and
   `ValidationFailed` carries the diagnostics as well (stderr already had
   them as prose; `--report` needs their codes and typed args) — both
   have already printed the JSON that explains them, so `main.rs`
   suppresses a second stderr line for each.
+- `args.rs` (+ `args/signing.rs`) — the flags each command takes. Split out
+  of the root when the two external verbs would have pushed it past the
+  300-line cap, and split AGAIN by subject: the four commands that sign or
+  check a signature live together, which is what makes "no key crosses the
+  external verbs" readable rather than something to re-derive from a flag
+  list. `ReportArg` (the `--report` flag) is flattened into every command
+  whose outcome an SDK consumes.
+- `external.rs` (+ `external/tests.rs`, `tests/{accept,refuse}.rs`) — the
+  `sign-prepare` / `sign-complete` pair: signing with no key, no
+  passphrase and no prompt in reach. `Prepared` carries the C ABI's own
+  four key names (`toBeSigned`/`digest`/`byteRange`/`capacity`), because
+  the two subprocess SDKs read the SAME object off both hosts. The
+  algorithm SPELLINGS come from `shojiku_signing::SignatureAlgorithm`
+  rather than a table here, and the finishing half goes through
+  `PresignedSigner` + `sign_document` — the same writer the local-key path
+  uses, so the external route cannot drift from it.
 - `error.rs` — `CliError` (wrapping `FsPackError`/`FetchError`/
   `SigningError`/`KeyError`/`VerifyError`) and its classification:
   `class()` splits caller error from a refused document, `kind()` is the

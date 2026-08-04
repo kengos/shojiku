@@ -55,6 +55,13 @@ export interface Addon {
     certificate: Buffer,
     passphrase?: Buffer | null,
   ): Promise<Snapshot>;
+  signPrepare(pdf: Buffer, certificate: Buffer, algorithm: Buffer): Promise<Snapshot>;
+  signComplete(
+    pdf: Buffer,
+    certificate: Buffer,
+    algorithm: Buffer,
+    signature: Buffer,
+  ): Promise<Snapshot>;
   verify(pdf: Buffer, anchors: Buffer): Promise<Snapshot>;
 }
 

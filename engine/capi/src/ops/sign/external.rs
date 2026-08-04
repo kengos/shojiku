@@ -28,8 +28,8 @@ use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
 use shojiku_diagnostics::Diagnostics;
 use shojiku_signing::{
-    prepare_sign, sign_document, CmsError, KeyError, PlaceholderOptions, SignatureAlgorithm,
-    SignatureContainer, Signer,
+    prepare_sign, sign_document, CmsError, PlaceholderOptions, PresignedSigner, SignatureAlgorithm,
+    SignatureContainer,
 };
 
 /// Longest signature this library accepts.
@@ -84,11 +84,11 @@ pub(crate) fn complete(
     algorithm: &str,
     signature: &[u8],
 ) -> Result<ShojikuResult, Failure> {
-    let signer = Fixed {
-        algorithm: parse_algorithm(algorithm)?,
+    let signer = PresignedSigner::new(
+        parse_algorithm(algorithm)?,
         certificate,
-        signature: require_signature(signature)?,
-    };
+        require_signature(signature)?,
+    );
     // Deliberately the SAME call the one-shot path makes. The external route
     // differs only in where the signature came from, so it cannot drift from
     // the local one: the container, the algorithm identifier, the window and
@@ -114,41 +114,19 @@ fn attributes_to_sign(
     SignatureContainer::new(certificate, digest, algorithm)?.to_be_signed()
 }
 
-/// A signer that has already signed: it answers with the bytes the caller
-/// brought back, so the whole finished path stays the one `sign_document`
-/// walks for a local key.
-struct Fixed<'a> {
-    algorithm: SignatureAlgorithm,
-    certificate: &'a [u8],
-    signature: &'a [u8],
-}
-
-impl Signer for Fixed<'_> {
-    fn algorithm(&self) -> SignatureAlgorithm {
-        self.algorithm
-    }
-
-    fn certificate_pem(&self) -> &[u8] {
-        self.certificate
-    }
-
-    fn sign(&self, _message: &[u8]) -> Result<Vec<u8>, KeyError> {
-        Ok(self.signature.to_vec())
-    }
-}
-
-/// The wire spellings of the algorithms this release can write.
+/// This host's refusal for a name no algorithm answers to.
 ///
-/// Refused values are never echoed — the string is the caller's — so the
-/// message names what IS accepted instead, exactly as `assetMode` does.
+/// The SPELLINGS live with the algorithm enum in `shojiku-signing`, because
+/// the CLI takes an algorithm by name too and two transcriptions of one wire
+/// are two chances to disagree. What stays here is the refusal: a `Failure`
+/// this host can classify, whose message names what IS accepted rather than
+/// echoing the caller's string back.
 pub(crate) fn parse_algorithm(algorithm: &str) -> Result<SignatureAlgorithm, Failure> {
-    match algorithm {
-        "rsa-pkcs1-sha256" => Ok(SignatureAlgorithm::RsaPkcs1Sha256),
-        "ecdsa-p256-sha256" => Ok(SignatureAlgorithm::EcdsaP256Sha256),
-        _ => Err(Failure::InvalidRequest(
+    SignatureAlgorithm::from_wire(algorithm).ok_or_else(|| {
+        Failure::InvalidRequest(
             "`algorithm` must be \"rsa-pkcs1-sha256\" or \"ecdsa-p256-sha256\"".into(),
-        )),
-    }
+        )
+    })
 }
 
 /// An empty signature is refused rather than written.

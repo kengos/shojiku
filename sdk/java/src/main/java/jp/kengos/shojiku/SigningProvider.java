@@ -1,26 +1,11 @@
 package jp.kengos.shojiku;
 
-/** What a client needs from anything it can sign with. */
-public interface SigningProvider {
-
-  /**
-   * The private key, as PEM or DER bytes.
-   *
-   * @return the key material
-   */
-  byte[] key();
-
-  /**
-   * The signing certificate, as PEM or DER bytes.
-   *
-   * @return the certificate material
-   */
-  byte[] certificate();
-
-  /**
-   * The key's passphrase, when it has one.
-   *
-   * @return the passphrase, or null
-   */
-  byte[] passphrase();
-}
+/**
+ * What a client can sign with.
+ *
+ * <p>A marker. The operation a provider performs crosses package-private types (the engine and its
+ * snapshot), so the hook itself lives on {@code EngineSigner} and the two providers this package
+ * ships — {@link LocalPem} and {@link ExternalSigner} — are its implementations. A provider of your
+ * own is a design change rather than a subclass.
+ */
+public interface SigningProvider {}

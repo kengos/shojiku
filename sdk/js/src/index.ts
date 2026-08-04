@@ -46,6 +46,8 @@ export {
   UnwrapError,
   UsageError,
 } from './errors.js';
+export type { Algorithm, ExternalSignerInit } from './externalSigner.js';
+export { ExternalSigner } from './externalSigner.js';
 export type { FailureInit } from './failure.js';
 export { Failure, Step } from './failure.js';
 export type { LocalPemInit } from './localPem.js';

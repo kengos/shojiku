@@ -28,8 +28,18 @@ platform binaries.
   v1.5 and ECDSA P-256 are supported, both over SHA-256, and the
   signature format is what AWS KMS and Google Cloud KMS return
   unchanged. The documents produced this way are byte-for-byte the ones
-  the in-process signer produces from the same material. The other six
-  SDKs and the CLI follow.
+  the in-process signer produces from the same material.
+
+  **All seven SDKs and the command line now offer it.** Python, .NET,
+  Java and Node reach the seam through the shared library; PHP and Go
+  drive two new CLI verbs, `shojiku sign-prepare` and
+  `shojiku sign-complete`, which take a document, a certificate and an
+  `--algorithm` and never take a key or a passphrase. `sign-prepare`
+  prints what a signature must cover as JSON and carries the same object
+  in the `--report` sidecar, so a shell script can do this as readily as
+  an application can. In every SDK the provider is a class beside
+  `LocalPem` — the call site does not change — and the value it hands
+  your code is the CMS signed attributes, not the document digest.
 
 - **A template can now say what the document IS, not just what it
   draws.** A new top-level `document:` block carries `title`,

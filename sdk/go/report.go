@@ -32,7 +32,21 @@ type report struct {
 	diagnostics  []Diagnostic
 	pageCount    *int
 	verification *VerificationReport
+	prepared     *preparedWire
 	failure      *reportFailure
+}
+
+// preparedWire is what `sign-prepare` reports, in the C ABI's own key names.
+//
+// Only ToBeSigned is read: the digest is offered for an audit trail and the
+// ranges and capacity describe a document this package never inspects. They
+// are named here anyway so the envelope this package accepts is the one the
+// engine documents, rather than whatever subset today's code happens to use.
+type preparedWire struct {
+	ToBeSigned string `json:"toBeSigned"`
+	Digest     string `json:"digest"`
+	ByteRange  []int  `json:"byteRange"`
+	Capacity   int    `json:"capacity"`
 }
 
 type reportFailure struct {
@@ -49,6 +63,7 @@ type reportWire struct {
 	Diagnostics  json.RawMessage   `json:"diagnostics"`
 	PageCount    *int              `json:"pageCount"`
 	Verification *verificationWire `json:"verification"`
+	Prepared     *preparedWire     `json:"prepared"`
 	Failure      *failureWire      `json:"failure"`
 }
 
@@ -113,6 +128,7 @@ func parseReport(data []byte, stderr string) (*report, error) {
 	if wire.Verification != nil {
 		parsed.verification = fromWire(*wire.Verification)
 	}
+	parsed.prepared = wire.Prepared
 	if wire.Failure != nil {
 		parsed.failure = &reportFailure{
 			class:   orElse(wire.Failure.Class, "document"),

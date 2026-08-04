@@ -52,6 +52,23 @@ _BUFFERS = (
     "shojiku_result_error_json",
 )
 
+# The (pointer, length) pair every data argument crosses as, and the result
+# slot every operation ends with.
+_PAIR = [c_char_p, c_size_t]
+_OUT = [POINTER(ResultPtr)]
+
+# The lifecycle surface as a TABLE, mirroring ruby's. An operation's arity is
+# the count of its data arguments, so adding one is a single line and cannot
+# drift from the header by a hand-typed argument list.
+_SIGNATURES = {
+    "shojiku_engine_info": _OUT,
+    "shojiku_render": _PAIR + _OUT,
+    "shojiku_sign": _PAIR * 4 + _OUT,
+    "shojiku_sign_prepare": _PAIR * 3 + _OUT,
+    "shojiku_sign_complete": _PAIR * 4 + _OUT,
+    "shojiku_verify": _PAIR * 2 + _OUT,
+}
+
 
 class Engine:
     """The bound lifecycle, and the copy-then-free discipline around it.
@@ -67,28 +84,9 @@ class Engine:
         # objects below borrow from this library's open handle, so letting it
         # be collected would leave them pointing into an unloaded object.
         self._library = library
-        self._info = library.function("shojiku_engine_info", [POINTER(ResultPtr)], c_int32)
-        self._render = library.function(
-            "shojiku_render", [c_char_p, c_size_t, POINTER(ResultPtr)], c_int32
-        )
-        self._sign = library.function(
-            "shojiku_sign",
-            [
-                c_char_p,
-                c_size_t,
-                c_char_p,
-                c_size_t,
-                c_char_p,
-                c_size_t,
-                c_char_p,
-                c_size_t,
-                POINTER(ResultPtr),
-            ],
-            c_int32,
-        )
-        self._verify = library.function(
-            "shojiku_verify", [c_char_p, c_size_t, c_char_p, c_size_t, POINTER(ResultPtr)], c_int32
-        )
+        self._calls = {
+            name: library.function(name, args, c_int32) for name, args in _SIGNATURES.items()
+        }
         self._accessors = {
             name: library.function(name, [ResultPtr, POINTER(c_void_p), POINTER(c_size_t)], c_int32)
             for name in _BUFFERS
@@ -99,16 +97,18 @@ class Engine:
         self._free = library.function("shojiku_result_free", [ResultPtr], None)
 
     def engine_info(self) -> Snapshot:
-        return self._invoke(lambda out: self._info(out))
+        return self._invoke(lambda out: self._calls["shojiku_engine_info"](out))
 
     def render(self, request: bytes) -> Snapshot:
-        return self._invoke(lambda out: self._render(request, len(request), out))
+        return self._invoke(
+            lambda out: self._calls["shojiku_render"](request, len(request), out)
+        )
 
     def sign(
         self, pdf: bytes, key: bytes, certificate: bytes, passphrase: bytes | None = None
     ) -> Snapshot:
         return self._invoke(
-            lambda out: self._sign(
+            lambda out: self._calls["shojiku_sign"](
                 pdf,
                 len(pdf),
                 key,
@@ -121,8 +121,52 @@ class Engine:
             )
         )
 
+    def sign_prepare(self, pdf: bytes, certificate: bytes, algorithm: bytes) -> Snapshot:
+        """Reserve the signature window and report what a signature must cover.
+
+        The first half of signing with a key this process is never given. What
+        comes back on the snapshot's ``json`` is ``toBeSigned`` (base64) plus
+        the document's ``digest``, ``byteRange`` and the window's ``capacity``.
+        """
+        return self._invoke(
+            lambda out: self._calls["shojiku_sign_prepare"](
+                pdf,
+                len(pdf),
+                certificate,
+                len(certificate),
+                algorithm,
+                len(algorithm),
+                out,
+            )
+        )
+
+    def sign_complete(
+        self, pdf: bytes, certificate: bytes, algorithm: bytes, signature: bytes
+    ) -> Snapshot:
+        """Write a signature produced elsewhere into the document.
+
+        Takes the SAME document, certificate and algorithm the prepare half
+        took: the pair is stateless, and this call re-derives what the first
+        one prepared rather than holding a handle for it.
+        """
+        return self._invoke(
+            lambda out: self._calls["shojiku_sign_complete"](
+                pdf,
+                len(pdf),
+                certificate,
+                len(certificate),
+                algorithm,
+                len(algorithm),
+                signature,
+                len(signature),
+                out,
+            )
+        )
+
     def verify(self, pdf: bytes, anchors: bytes) -> Snapshot:
-        return self._invoke(lambda out: self._verify(pdf, len(pdf), anchors, len(anchors), out))
+        return self._invoke(
+            lambda out: self._calls["shojiku_verify"](pdf, len(pdf), anchors, len(anchors), out)
+        )
 
     def _invoke(self, call: Callable[[Any], int]) -> Snapshot:
         """Run one operation and copy its result out.

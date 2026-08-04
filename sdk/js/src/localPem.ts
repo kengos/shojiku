@@ -16,7 +16,9 @@
  * strings, so a rejection cannot echo it back either.
  */
 
+import type { Engine } from './engine.js';
 import { readMaterial, UsageError } from './errors.js';
+import type { Snapshot } from './library.js';
 
 /** What one provider is built from. */
 export interface LocalPemInit {
@@ -43,6 +45,22 @@ export class LocalPem {
     this.passphrase = passphrase ?? null;
     oneSource(this.keyPath, this.keyBytes, 'key');
     oneSource(this.certPath, this.certBytes, 'cert');
+  }
+
+  /**
+   * Signs `pdf` with the key this process holds.
+   *
+   * The polymorphic hook every provider implements, so `Client.sign` branches
+   * on nothing: what differs between a local key and one held in a cloud
+   * service is HOW a signature is produced, which is exactly what this is.
+   */
+  async signWith(engine: Engine, pdf: Buffer): Promise<Snapshot> {
+    return engine.sign(
+      pdf,
+      await this.key(),
+      await this.certificate(),
+      passphraseBytes(this.passphrase),
+    );
   }
 
   async key(): Promise<Buffer> {
@@ -109,4 +127,15 @@ function oneSource(path: string | null, pem: Buffer | null, what: string): void 
   if (path === null && pem === null) {
     throw new UsageError(`LocalPem needs either ${forms}`);
   }
+}
+
+/**
+ * The passphrase as bytes, since where it came from — a prompt, a variable, a
+ * secret store — is the host's decision and the engine takes bytes.
+ */
+function passphraseBytes(passphrase: Buffer | string | null): Buffer | null {
+  if (typeof passphrase === 'string') {
+    return Buffer.from(passphrase, 'utf8');
+  }
+  return passphrase;
 }

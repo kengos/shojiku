@@ -20,7 +20,7 @@ import java.nio.file.Path;
  * <p>Nothing here logs key material, and the engine builds its refusals from fixed strings, so a
  * rejection cannot echo it back either.
  */
-public final class LocalPem implements SigningProvider {
+public final class LocalPem implements EngineSigner {
 
   private final Path keyPath;
   private final Path certPath;
@@ -57,7 +57,11 @@ public final class LocalPem implements SigningProvider {
     return new Builder();
   }
 
-  @Override
+  /**
+   * The private key, as PEM or DER bytes.
+   *
+   * @return the key material
+   */
   public byte[] key() {
     if (keyPem == null) {
       keyPem = Texts.readMaterial(keyPath, "key_unreadable");
@@ -65,7 +69,11 @@ public final class LocalPem implements SigningProvider {
     return keyPem;
   }
 
-  @Override
+  /**
+   * The signing certificate, as PEM or DER bytes.
+   *
+   * @return the certificate material
+   */
   public byte[] certificate() {
     if (certPem == null) {
       certPem = Texts.readMaterial(certPath, "certificate_unreadable");
@@ -73,7 +81,11 @@ public final class LocalPem implements SigningProvider {
     return certPem;
   }
 
-  @Override
+  /**
+   * The key's passphrase, when it has one.
+   *
+   * @return the passphrase, or null
+   */
   public byte[] passphrase() {
     return passphrase;
   }
@@ -89,6 +101,11 @@ public final class LocalPem implements SigningProvider {
    *
    * @return the redacted form
    */
+  @Override
+  public Snapshot signWith(Engine engine, byte[] pdf) {
+    return engine.sign(pdf, key(), certificate(), passphrase());
+  }
+
   @Override
   public String toString() {
     return "<LocalPem key="

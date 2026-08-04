@@ -40,7 +40,7 @@ use Shojiku\Exception\UsageException;
 final class Lockdown
 {
     /**
-     * @param array<string, LocalPem> $providers
+     * @param array<string, SigningProvider> $providers
      */
     public function __construct(
         private readonly bool $strict,
@@ -97,7 +97,7 @@ final class Lockdown
      * alternative is strict's. A provider object is accepted only when this
      * client is not strict.
      */
-    public function provider(LocalPem|string $provider): LocalPem
+    public function provider(SigningProvider|string $provider): SigningProvider
     {
         if (is_string($provider)) {
             return $this->providers[$provider]

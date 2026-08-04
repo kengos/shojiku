@@ -34,6 +34,41 @@ pub enum SignatureAlgorithm {
     EcdsaP256Sha256,
 }
 
+impl SignatureAlgorithm {
+    /// The name this algorithm is spelled with at a host boundary.
+    ///
+    /// The spellings live HERE, with the enum, rather than in each host that
+    /// has to accept one. Two hosts already take an algorithm by name — the C
+    /// ABI's two-call signing surface and the CLI's — and a host that
+    /// transcribed the strings itself would be a second chance to disagree
+    /// about what `ecdsa-p256-sha256` means, which is the same reasoning that
+    /// keeps the OID table and the PDF parser single copies.
+    #[must_use]
+    pub fn wire_name(self) -> &'static str {
+        match self {
+            Self::RsaPkcs1Sha256 => "rsa-pkcs1-sha256",
+            Self::EcdsaP256Sha256 => "ecdsa-p256-sha256",
+        }
+    }
+
+    /// The algorithm a host boundary named, or `None` if it named none of
+    /// them.
+    ///
+    /// Returns an `Option` rather than an error because the REFUSAL belongs
+    /// to the host: each one already has its own failure type and its own
+    /// bounded-echo rule, and a rejection minted here would arrive as an
+    /// error a host has to translate. What a host must not do is echo the
+    /// string it was given — the accepted names are the useful half.
+    #[must_use]
+    pub fn from_wire(name: &str) -> Option<Self> {
+        match name {
+            "rsa-pkcs1-sha256" => Some(Self::RsaPkcs1Sha256),
+            "ecdsa-p256-sha256" => Some(Self::EcdsaP256Sha256),
+            _ => None,
+        }
+    }
+}
+
 /// A private key loaded from PEM, ready to sign.
 ///
 /// Deliberately not `Debug`, `Clone` or serializable: every one of those would

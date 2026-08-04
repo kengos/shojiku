@@ -101,6 +101,8 @@ internal sealed unsafe class Engine
     private readonly delegate* unmanaged[Cdecl]<IntPtr*, int> info;
     private readonly delegate* unmanaged[Cdecl]<byte*, nuint, IntPtr*, int> render;
     private readonly delegate* unmanaged[Cdecl]<byte*, nuint, byte*, nuint, byte*, nuint, byte*, nuint, IntPtr*, int> sign;
+    private readonly delegate* unmanaged[Cdecl]<byte*, nuint, byte*, nuint, byte*, nuint, IntPtr*, int> signPrepare;
+    private readonly delegate* unmanaged[Cdecl]<byte*, nuint, byte*, nuint, byte*, nuint, byte*, nuint, IntPtr*, int> signComplete;
     private readonly delegate* unmanaged[Cdecl]<byte*, nuint, byte*, nuint, IntPtr*, int> verify;
     private readonly delegate* unmanaged[Cdecl]<IntPtr, int*, int> success;
     private readonly IntPtr free;
@@ -113,6 +115,11 @@ internal sealed unsafe class Engine
         render = (delegate* unmanaged[Cdecl]<byte*, nuint, IntPtr*, int>)library.Export("shojiku_render");
         sign = (delegate* unmanaged[Cdecl]<byte*, nuint, byte*, nuint, byte*, nuint, byte*, nuint, IntPtr*, int>)
             library.Export("shojiku_sign");
+        signPrepare = (delegate* unmanaged[Cdecl]<byte*, nuint, byte*, nuint, byte*, nuint, IntPtr*, int>)
+            library.Export("shojiku_sign_prepare");
+        signComplete =
+            (delegate* unmanaged[Cdecl]<byte*, nuint, byte*, nuint, byte*, nuint, byte*, nuint, IntPtr*, int>)
+            library.Export("shojiku_sign_complete");
         verify = (delegate* unmanaged[Cdecl]<byte*, nuint, byte*, nuint, IntPtr*, int>)library.Export("shojiku_verify");
         success = (delegate* unmanaged[Cdecl]<IntPtr, int*, int>)library.Export("shojiku_result_success");
         free = library.Export("shojiku_result_free");
@@ -161,6 +168,55 @@ internal sealed unsafe class Engine
                 (nuint)certificate.Length,
                 passPtr,
                 (nuint)(passphrase?.Length ?? 0),
+                &handle);
+            return Read(status, handle);
+        }
+    }
+
+    /// <summary>
+    /// Reserves the signature window and reports what a signature must cover.
+    /// </summary>
+    /// <remarks>
+    /// The payload arrives on the snapshot's JSON, unparsed here: this binding
+    /// has no schema of its own.
+    /// </remarks>
+    internal Snapshot SignPrepare(byte[] pdf, byte[] certificate, byte[] algorithm)
+    {
+        fixed (byte* pdfPtr = pdf)
+        fixed (byte* certPtr = certificate)
+        fixed (byte* algorithmPtr = algorithm)
+        {
+            IntPtr handle;
+            var status = signPrepare(
+                pdfPtr,
+                (nuint)pdf.Length,
+                certPtr,
+                (nuint)certificate.Length,
+                algorithmPtr,
+                (nuint)algorithm.Length,
+                &handle);
+            return Read(status, handle);
+        }
+    }
+
+    /// <summary>Writes a signature produced elsewhere into the document.</summary>
+    internal Snapshot SignComplete(byte[] pdf, byte[] certificate, byte[] algorithm, byte[] signature)
+    {
+        fixed (byte* pdfPtr = pdf)
+        fixed (byte* certPtr = certificate)
+        fixed (byte* algorithmPtr = algorithm)
+        fixed (byte* signaturePtr = signature)
+        {
+            IntPtr handle;
+            var status = signComplete(
+                pdfPtr,
+                (nuint)pdf.Length,
+                certPtr,
+                (nuint)certificate.Length,
+                algorithmPtr,
+                (nuint)algorithm.Length,
+                signaturePtr,
+                (nuint)signature.Length,
                 &handle);
             return Read(status, handle);
         }

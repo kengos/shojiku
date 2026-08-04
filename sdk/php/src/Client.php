@@ -41,14 +41,15 @@ final class Client
     private const ANCHOR_FORMS = '`anchors:` (paths) or `anchorsPem:` (bytes)';
 
     /** The variable the passphrase crosses in, never `argv`. */
-    private const PASSPHRASE_VARIABLE = 'SHOJIKU_PASSPHRASE';
+    /** The variable a passphrase crosses in — read by {@see LocalPem::signWith()}, never argv. */
+    public const PASSPHRASE_VARIABLE = 'SHOJIKU_PASSPHRASE';
 
     private readonly Settings $settings;
 
     /**
      * @param list<string>|null $fontDirs
      * @param list<string>|null $localeDirs
-     * @param array<string, LocalPem>|null $providers
+     * @param array<string, SigningProvider>|null $providers
      */
     public function __construct(
         ?string $templates = null,
@@ -190,10 +191,11 @@ final class Client
      * signed bytes begin with the input byte for byte — signing appends a
      * revision.
      *
-     * `$provider` is a {@see LocalPem} (or the NAME of one registered in
-     * configuration). A strict client takes the name only.
+     * `$provider` is a {@see LocalPem} or an {@see ExternalSigner} (or the
+     * NAME of one registered in configuration). A strict client takes the
+     * name only.
      */
-    public function sign(DocumentArtifact $artifact, LocalPem|string $provider): Result
+    public function sign(DocumentArtifact $artifact, SigningProvider|string $provider): Result
     {
         $signer = $this->settings->lockdown()->provider($provider);
         $this->settings->lockdown()->signable($artifact);
@@ -274,25 +276,13 @@ final class Client
      * The signed document inherits the origin of what it signed: appending a
      * revision does not launder where the document came from.
      */
-    private function signed(DocumentArtifact $artifact, LocalPem $provider): Result
+    private function signed(DocumentArtifact $artifact, SigningProvider $provider): Result
     {
         return Workspace::in(function (Workspace $workspace) use ($artifact, $provider) {
-            $passphrase = $provider->passphrase();
-            $argv = Request::sign(
-                $workspace->write('input.pdf', $artifact->bytes()),
-                // A configured PATH goes across as itself; only material the
-                // caller handed over as BYTES is written down, and then only
-                // 0600 inside a 0700 directory that is removed on every path.
-                $provider->keyPath() ?? $workspace->write('key.pem', (string) $provider->keyPem()),
-                $provider->certPath() ?? $workspace->write('cert.pem', (string) $provider->certPem()),
-                $passphrase === null ? null : self::PASSPHRASE_VARIABLE,
-            );
-            [$report, $bytes] = $this->settings->engine()->execute(
-                $argv,
+            [$report, $bytes] = $provider->signWith(
+                $this->settings->engine(),
                 $workspace,
-                // The passphrase crosses in the CHILD's environment only —
-                // never in `argv`, which other processes can read.
-                $passphrase === null ? [] : [self::PASSPHRASE_VARIABLE => $passphrase],
+                $artifact,
             );
 
             return Outcome::document($report, $bytes, Step::Sign, $this, $artifact->origin());

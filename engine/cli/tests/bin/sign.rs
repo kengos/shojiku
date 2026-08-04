@@ -19,7 +19,7 @@ use super::{path_arg, shojiku, temp_path};
 /// exists rewrites the keys under a test already reading them — which showed
 /// up only under the slower coverage run, as a signing failure with no
 /// obvious cause.
-fn key_dir() -> &'static PathBuf {
+pub(super) fn key_dir() -> &'static PathBuf {
     static DIR: OnceLock<PathBuf> = OnceLock::new();
     DIR.get_or_init(|| {
         let dir =
@@ -36,7 +36,7 @@ fn key_dir() -> &'static PathBuf {
     })
 }
 
-fn example_pdf() -> String {
+pub(super) fn example_pdf() -> String {
     path_arg(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../examples/business/receipt-ja/output.pdf"),

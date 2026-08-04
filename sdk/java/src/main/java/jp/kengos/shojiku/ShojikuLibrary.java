@@ -47,6 +47,28 @@ interface ShojikuLibrary extends Library {
       SizeT passphraseLen,
       PointerByReference out);
 
+  /** Reserves the signature window and reports what a signature must cover, as JSON. */
+  int shojiku_sign_prepare(
+      byte[] pdf,
+      SizeT pdfLen,
+      byte[] certificate,
+      SizeT certificateLen,
+      byte[] algorithm,
+      SizeT algorithmLen,
+      PointerByReference out);
+
+  /** Writes a signature produced elsewhere into the document. */
+  int shojiku_sign_complete(
+      byte[] pdf,
+      SizeT pdfLen,
+      byte[] certificate,
+      SizeT certificateLen,
+      byte[] algorithm,
+      SizeT algorithmLen,
+      byte[] signature,
+      SizeT signatureLen,
+      PointerByReference out);
+
   /** Verifies a signed PDF against concatenated PEM anchors. */
   int shojiku_verify(
       byte[] pdf, SizeT pdfLen, byte[] anchors, SizeT anchorsLen, PointerByReference out);

@@ -90,6 +90,44 @@ final class Request
     }
 
     /**
+     * Asks what a signature must cover. No key crosses: the two external
+     * verbs take a certificate and an algorithm and nothing else.
+     *
+     * @return list<string>
+     */
+    public static function signPrepare(string $pdfPath, string $certPath, string $algorithm): array
+    {
+        return [
+            'sign-prepare',
+            '--input', $pdfPath,
+            '--cert', $certPath,
+            '--algorithm', $algorithm,
+        ];
+    }
+
+    /**
+     * Writes a signature produced elsewhere into the document — the same
+     * input, certificate and algorithm the prepare half was given.
+     *
+     * @return list<string>
+     */
+    public static function signComplete(
+        string $pdfPath,
+        string $certPath,
+        string $algorithm,
+        string $signaturePath,
+    ): array {
+        return [
+            'sign-complete',
+            '--input', $pdfPath,
+            '--cert', $certPath,
+            '--algorithm', $algorithm,
+            '--signature', $signaturePath,
+            '--output', '-',
+        ];
+    }
+
+    /**
      * @param list<string> $anchorPaths
      *
      * @return list<string>

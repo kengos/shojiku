@@ -31,7 +31,7 @@ package shojiku
 // not ecosystem idiom.
 type lockdown struct {
 	strict    bool
-	providers map[string]*LocalPem
+	providers map[string]Provider
 }
 
 // sourceEntrance guards the bytes-first entrance.
@@ -62,10 +62,10 @@ func (l *lockdown) signable(artifact *DocumentArtifact) error {
 // provider resolves the provider to sign with. The rules per form live on the
 // two [Provider] implementations; what is here is the one shape neither of
 // them can answer for — no provider at all.
-func (l *lockdown) provider(provider Provider) (*LocalPem, error) {
+func (l *lockdown) provider(provider Provider) (signer, error) {
 	if provider == nil {
-		return nil, usagef("signing needs a provider: a *LocalPem, or the ProviderName " +
-			"of one registered with shojiku.WithProviders")
+		return nil, usagef("signing needs a provider: a *LocalPem, an *ExternalSigner, " +
+			"or the ProviderName of one registered with shojiku.WithProviders")
 	}
 	return provider.resolve(l)
 }

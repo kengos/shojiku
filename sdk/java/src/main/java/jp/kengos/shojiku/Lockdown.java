@@ -75,12 +75,12 @@ final class Lockdown {
    * practice everywhere, and only the REFUSAL of the alternative is strict's. A provider object is
    * accepted only when this client is not strict.
    */
-  SigningProvider provider(Object provider) {
+  EngineSigner provider(Object provider) {
     if (provider instanceof String name) {
       return registered(name);
     }
     if (!strict) {
-      if (provider instanceof SigningProvider signer) {
+      if (provider instanceof EngineSigner signer) {
         return signer;
       }
       throw new UsageException(
@@ -92,8 +92,19 @@ final class Lockdown {
             + "with a provider object.");
   }
 
-  private SigningProvider registered(String name) {
-    SigningProvider provider = providers.get(name);
+  /**
+   * The registered value, when it is one this package can sign with.
+   *
+   * <p>A registry may only hold providers that CARRY material: {@link SigningProvider} is a public
+   * marker, so a value implementing it and nothing else would otherwise reach the transport with no
+   * way to produce a signature.
+   */
+  private static EngineSigner asSigner(SigningProvider provider) {
+    return provider instanceof EngineSigner signer ? signer : null;
+  }
+
+  private EngineSigner registered(String name) {
+    EngineSigner provider = asSigner(providers.get(name));
     if (provider == null) {
       throw new UsageException(
           "no signing provider named `" + Texts.bounded(name) + "` is registered");

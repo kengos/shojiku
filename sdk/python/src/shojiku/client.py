@@ -237,17 +237,8 @@ class Client:
 
         Appending a revision does not launder where the document came from.
         """
-        passphrase = provider.passphrase
-        if isinstance(passphrase, str):
-            passphrase = passphrase.encode("utf-8")
-
         try:
-            snapshot = self._engine.sign(
-                pdf=artifact.bytes,
-                key=provider.key,
-                certificate=provider.certificate,
-                passphrase=passphrase,
-            )
+            snapshot = provider.sign_with(self._engine, artifact.bytes)
         except MaterialUnreadableError as error:
             return Result.from_failure(Failure(step=Step.SIGN, kind=error.kind, message=str(error)))
 

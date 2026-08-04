@@ -24,7 +24,7 @@ func TestStrictRefusesTheBytesEntrance(t *testing.T) {
 func TestStrictRefusesSigningALoadedArtifact(t *testing.T) {
 	// Bytes handed over whole are the caller's, exactly like a bytes-first
 	// template.
-	client := strictClient(t, WithProviders(map[string]*LocalPem{"release": testSigner(t)}))
+	client := strictClient(t, WithProviders(map[string]Provider{"release": testSigner(t)}))
 	loaded := client.Artifact(rendered(t).Bytes())
 
 	_, err := client.Sign(context.Background(), loaded, ProviderName("release"))
@@ -36,7 +36,7 @@ func TestStrictRefusesSigningASourceOriginArtifact(t *testing.T) {
 	// The gap a boolean "was it loaded" would leave open: an artifact from a
 	// bytes-first render has engine-laid-out bytes and a caller's template,
 	// which is a third thing.
-	client := strictClient(t, WithProviders(map[string]*LocalPem{"release": testSigner(t)}))
+	client := strictClient(t, WithProviders(map[string]Provider{"release": testSigner(t)}))
 	fromSource := &DocumentArtifact{bytes: rendered(t).Bytes(), client: client, origin: OriginSource}
 
 	_, err := client.Sign(context.Background(), fromSource, ProviderName("release"))
@@ -107,7 +107,7 @@ func TestConfiguredStrictnessSurvivesACallSiteAskingForFalse(t *testing.T) {
 func TestANamedProviderIsAcceptedOutsideStrictToo(t *testing.T) {
 	// Naming providers is good practice everywhere; only the REFUSAL of the
 	// alternative belongs to strict.
-	client := newTestClient(t, WithProviders(map[string]*LocalPem{"release": testSigner(t)}))
+	client := newTestClient(t, WithProviders(map[string]Provider{"release": testSigner(t)}))
 
 	result, err := client.Sign(context.Background(), rendered(t), ProviderName("release"))
 

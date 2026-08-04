@@ -148,7 +148,7 @@ func (c *Client) Sign(
 	}
 
 	return c.settings.log.timed(StepSign, func() (*Result, error) {
-		return c.signed(ctx, artifact, signer)
+		return signer.signWith(ctx, c, artifact)
 	})
 }
 
@@ -214,38 +214,6 @@ func (c *Client) render(
 			return nil, err
 		}
 		return documentOutcome(rep, pdf, StepGenerate, c, origin)
-	})
-}
-
-// signed appends a signature revision.
-//
-// The signed document inherits the origin of what it signed: appending a
-// revision does not launder where the document came from.
-func (c *Client) signed(
-	ctx context.Context, artifact *DocumentArtifact, provider *LocalPem,
-) (*Result, error) {
-	return inWorkspace(func(ws *workspace) (*Result, error) {
-		input := ws.write("input.pdf", artifact.bytes)
-		// A configured PATH goes across as itself; only material the caller
-		// handed over as BYTES is written down, and then only 0600 inside a
-		// 0700 directory that is removed on every path.
-		key := materialPath(ws, "key.pem", provider.keyPath, provider.keyPEM)
-		cert := materialPath(ws, "cert.pem", provider.certPath, provider.certPEM)
-
-		var extraEnv map[string]string
-		variable := ""
-		if provider.passphrase != "" {
-			// The passphrase crosses in the CHILD's environment only — never
-			// in argv, which other processes can read.
-			variable = passphraseVariable
-			extraEnv = map[string]string{passphraseVariable: provider.passphrase}
-		}
-		rep, pdf, err := c.settings.engine.execute(
-			ctx, signArgs(input, key, cert, variable), ws, extraEnv)
-		if err != nil {
-			return nil, err
-		}
-		return documentOutcome(rep, pdf, StepSign, c, artifact.origin)
 	})
 }
 
