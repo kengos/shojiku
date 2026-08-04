@@ -17,20 +17,34 @@
 namespace Shojiku;
 
 /// <summary>What a client needs from anything it can sign with.</summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "CA1040:Avoid empty interfaces",
+    Justification =
+        "A marker is what this IS: the operation a provider performs crosses internal types, " +
+        "so the hook lives on the internal IEngineSigner and this names the public concept a " +
+        "caller passes to Sign. Giving it a member would put an engine type on the public surface.")]
 public interface ISigningProvider
 {
-    /// <summary>The private key, as PEM or DER bytes.</summary>
-    byte[] Key { get; }
+}
 
-    /// <summary>The signing certificate, as PEM or DER bytes.</summary>
-    byte[] Certificate { get; }
-
-    /// <summary>The key's passphrase, when it has one.</summary>
-    byte[]? Passphrase { get; }
+/// <summary>What a client actually needs from a provider: a signed document.</summary>
+/// <remarks>
+/// The polymorphic hook, so <see cref="ShojikuClient.Sign"/> branches on
+/// nothing — what differs between a key held in this process and one held in a
+/// cloud service is HOW a signature is produced, which is exactly what this
+/// method is. It is INTERNAL because it crosses internal types (the engine and
+/// its snapshot), which also makes <see cref="ISigningProvider"/> a marker: the
+/// providers this package ships are the implementations, and a provider of your
+/// own is a design change rather than a subclass.
+/// </remarks>
+internal interface IEngineSigner : ISigningProvider
+{
+    Snapshot SignWith(Engine engine, byte[] pdf);
 }
 
 /// <summary>PEM key + certificate, from paths or from bytes, never sniffed.</summary>
-public sealed class LocalPem : ISigningProvider
+public sealed class LocalPem : IEngineSigner
 {
     private readonly string? keyPath;
     private readonly string? certPath;
@@ -59,14 +73,18 @@ public sealed class LocalPem : ISigningProvider
         OneSource(cert, certPem, "cert");
     }
 
-    /// <inheritdoc />
+    /// <summary>The private key, as PEM or DER bytes.</summary>
     public byte[] Key => keyPem ??= Text.ReadMaterial(keyPath!, "key_unreadable");
 
-    /// <inheritdoc />
+    /// <summary>The signing certificate, as PEM or DER bytes.</summary>
     public byte[] Certificate => certPem ??= Text.ReadMaterial(certPath!, "certificate_unreadable");
 
-    /// <inheritdoc />
+    /// <summary>The key's passphrase, when it has one.</summary>
     public byte[]? Passphrase { get; }
+
+    /// <summary>Signs with the key this process holds.</summary>
+    Snapshot IEngineSigner.SignWith(Engine engine, byte[] pdf) =>
+        engine.Sign(pdf, Key, Certificate, Passphrase);
 
     /// <summary>
     /// Redacted, deliberately.

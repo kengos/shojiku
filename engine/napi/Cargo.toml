@@ -40,6 +40,10 @@ napi-build = { version = "2", optional = true }
 # Test fixtures only: the request envelope is built as JSON here exactly as
 # the npm package builds it. The crate itself never looks inside one.
 serde_json = { workspace = true }
+# Also fixtures only: the two-step signing test stands in for a key service by
+# signing the bytes the engine hands out. The addon itself never loads a key —
+# that is the entire point of the pair.
+shojiku-signing = { workspace = true }
 
 [features]
 shim = ["dep:napi", "dep:napi-derive", "dep:napi-build"]

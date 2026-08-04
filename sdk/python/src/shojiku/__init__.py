@@ -40,6 +40,7 @@ from shojiku.errors import (
     UnwrapError,
     UsageError,
 )
+from shojiku.external_signer import Algorithm, ExternalSigner
 from shojiku.failure import Failure, Step
 from shojiku.local_pem import LocalPem
 from shojiku.lockdown import Lockdown
@@ -49,12 +50,14 @@ from shojiku.version import __version__
 
 __all__ = [
     "AbiMismatchError",
+    "Algorithm",
     "Check",
     "Client",
     "Config",
     "Diagnostic",
     "DocumentArtifact",
     "Error",
+    "ExternalSigner",
     "Failure",
     "LibraryNotFoundError",
     "LocalPem",

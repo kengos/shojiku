@@ -79,7 +79,7 @@ end
 signed = result.artifact.sign(provider)
 ```
 
-Shojiku ships no KMS client of its own — the block is whichever client your application already uses. This is available through the C ABI and, among the language SDKs, in Ruby; the other six follow.
+Shojiku ships no KMS client of its own — the block is whichever client your application already uses. Every language SDK offers it, and so does the command line.
 
 ## The vertical writing that sat on wish lists for years
 

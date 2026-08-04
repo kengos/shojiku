@@ -17,7 +17,12 @@ strings, so a rejection cannot echo it back either.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from shojiku.errors import UsageError, read_material
+
+if TYPE_CHECKING:
+    from shojiku.engine import Engine, Snapshot
 
 
 class LocalPem:
@@ -54,6 +59,21 @@ class LocalPem:
         return (
             f"<{type(self).__name__} key={self._form(self._key_path)} "
             f"cert={self._form(self._cert_path)} passphrase={passphrase}>"
+        )
+
+    def sign_with(self, engine: Engine, pdf: bytes) -> Snapshot:
+        """Sign ``pdf`` with the key this process holds.
+
+        The polymorphic hook every provider implements, so ``Client.sign``
+        branches on nothing: what differs between a local key and one held in a
+        cloud service is HOW a signature is produced, which is exactly what
+        this method is.
+        """
+        passphrase = self.passphrase
+        if isinstance(passphrase, str):
+            passphrase = passphrase.encode("utf-8")
+        return engine.sign(
+            pdf=pdf, key=self.key, certificate=self.certificate, passphrase=passphrase
         )
 
     @property

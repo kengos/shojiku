@@ -18,7 +18,8 @@ use crate::outcome::Outcome;
 use shojiku_capi::{
     shojiku_abi_version, shojiku_engine_info, shojiku_render, shojiku_result_diagnostics_json,
     shojiku_result_error_json, shojiku_result_free, shojiku_result_json, shojiku_result_pdf,
-    shojiku_result_success, shojiku_sign, shojiku_verify, ShojikuResult,
+    shojiku_result_success, shojiku_sign, shojiku_sign_complete, shojiku_sign_prepare,
+    shojiku_verify, ShojikuResult,
 };
 
 /// A buffer accessor's shape, shared by the four this host reads.
@@ -83,6 +84,61 @@ pub fn sign(pdf: &[u8], key: &[u8], certificate: &[u8], passphrase: Option<&[u8]
             certificate.len(),
             pass_ptr,
             pass_len,
+            &mut handle,
+        )
+    };
+    // SAFETY: as above.
+    unsafe { read(status, handle) }
+}
+
+/// Reserves the signature window and reports what a signature must cover.
+///
+/// The first half of signing with a key this process is never given. The
+/// payload arrives on the outcome's `json`, unparsed — this host has no
+/// schema of its own, exactly as it has none for the request envelope.
+#[must_use]
+pub fn sign_prepare(pdf: &[u8], certificate: &[u8], algorithm: &[u8]) -> Outcome {
+    let mut handle = std::ptr::null_mut();
+    // SAFETY: every pair describes a live slice for the duration of the call
+    // and `handle` is one writable slot.
+    let status = unsafe {
+        shojiku_sign_prepare(
+            pdf.as_ptr(),
+            pdf.len(),
+            certificate.as_ptr(),
+            certificate.len(),
+            algorithm.as_ptr(),
+            algorithm.len(),
+            &mut handle,
+        )
+    };
+    // SAFETY: as above.
+    unsafe { read(status, handle) }
+}
+
+/// Writes a signature produced elsewhere into the document.
+///
+/// Takes the SAME document, certificate and algorithm the prepare half took:
+/// the pair is stateless, and this call re-derives what the first prepared.
+#[must_use]
+pub fn sign_complete(
+    pdf: &[u8],
+    certificate: &[u8],
+    algorithm: &[u8],
+    signature: &[u8],
+) -> Outcome {
+    let mut handle = std::ptr::null_mut();
+    // SAFETY: as `sign_prepare`.
+    let status = unsafe {
+        shojiku_sign_complete(
+            pdf.as_ptr(),
+            pdf.len(),
+            certificate.as_ptr(),
+            certificate.len(),
+            algorithm.as_ptr(),
+            algorithm.len(),
+            signature.as_ptr(),
+            signature.len(),
             &mut handle,
         )
     };

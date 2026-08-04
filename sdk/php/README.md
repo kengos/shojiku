@@ -128,6 +128,37 @@ this client rendered from its own template root, and takes signing
 material only as the name of a registered provider. Verification is
 never restricted.
 
+## Signing with a key this process never holds
+
+When the private key lives in a cloud KMS, an HSM or a smartcard, use
+`ExternalSigner` instead. Shojiku hands out the bytes a signature has to
+cover; your code signs them wherever the key is and hands the signature
+back, so the key never enters your application:
+
+```php
+$provider = new Shojiku\ExternalSigner(
+    sign: fn (string $toBeSigned): string => $kms->sign($keyId, $toBeSigned),
+    cert: 'signer.crt',
+    algorithm: Shojiku\Algorithm::EcdsaP256Sha256,
+);
+$signed = $artifact->sign($provider);
+```
+
+The call site does not change — which provider you pass is the only
+difference, and a provider registered by name works the same way under a
+strict client. This package ships no cloud client of its own: the
+callback is whichever client your application already uses.
+
+Two details worth getting right. The bytes you are handed are the CMS
+**signed attributes**, not the document's digest — a service that signs a
+digest must hash *these* bytes with SHA-256 itself. And the signature is
+that operation's raw output: PKCS#1 v1.5 bytes for `rsa-pkcs1-sha256`, an
+ASN.1 DER sequence for `ecdsa-p256-sha256`, which is what AWS KMS and
+Google Cloud KMS both return unchanged.
+
+A failure inside your own code is *not* swallowed into a failed result:
+an outage at your key service is not a fact about the document.
+
 ## Requirements
 
 PHP 8.3 or newer, and the `shojiku` binary installed as described above.

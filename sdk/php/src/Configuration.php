@@ -47,7 +47,7 @@ final class Configuration
     /**
      * @param list<string>|null $fontDirs
      * @param list<string>|null $localeDirs
-     * @param array<string, LocalPem>|null $providers
+     * @param array<string, SigningProvider>|null $providers
      */
     public function __construct(
         public readonly ?string $templates = null,
@@ -216,7 +216,7 @@ final class Configuration
     /**
      * @param array<string, mixed> $overrides
      *
-     * @return array<string, LocalPem>|null
+     * @return array<string, SigningProvider>|null
      */
     private static function asProviders(array $overrides): ?array
     {
@@ -230,8 +230,10 @@ final class Configuration
 
         $providers = [];
         foreach ($value as $name => $provider) {
-            if (!$provider instanceof LocalPem) {
-                throw new UsageException('a registered signing provider must be a LocalPem');
+            if (!$provider instanceof SigningProvider) {
+                throw new UsageException(
+                    'a registered signing provider must be a LocalPem or an ExternalSigner',
+                );
             }
             $providers[(string) $name] = $provider;
         }

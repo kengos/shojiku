@@ -370,12 +370,12 @@ public sealed class ShojikuClient : IDisposable
     /// The signed document inherits the origin of what it signed.
     /// </summary>
     /// <remarks>Appending a revision does not launder where the document came from.</remarks>
-    private Result<DocumentArtifact> Signed(DocumentArtifact artifact, ISigningProvider provider)
+    private Result<DocumentArtifact> Signed(DocumentArtifact artifact, IEngineSigner provider)
     {
         Snapshot snapshot;
         try
         {
-            snapshot = engine.Sign(artifact.Bytes, provider.Key, provider.Certificate, provider.Passphrase);
+            snapshot = provider.SignWith(engine, artifact.Bytes);
         }
         catch (MaterialUnreadableException error)
         {

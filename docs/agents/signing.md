@@ -61,7 +61,10 @@ algorithm the key uses.
 
 Hosts expose this pair as two calls with the same inputs rather than as a
 prepared-document handle: the C ABI's `shojiku_sign_prepare` /
-`shojiku_sign_complete`, and the ruby SDK's `ExternalSigner`. The second
+`shojiku_sign_complete`, the CLI's `sign-prepare` / `sign-complete`
+(capability key `cli.sign.external`; the payload rides stdout AND the
+`--report` envelope's `prepared` object), and every SDK's
+`ExternalSigner`. The second
 call re-derives what the first prepared, which is sound because appending
 the placeholder is deterministic (`/ID` carried through, no `signingTime`)
 and which means the digest inside the container is always the digest of the
@@ -80,7 +83,7 @@ Explicitly **deferred** — decided deferrals, not oversights:
 | --- | --- |
 | Visible signature appearance | Needs a template item type and its Designer operability pass; the wire split is decided (see [Template wire boundary](#template-wire-boundary)) but nothing ships until that phase |
 | PAdES / LTV / PDF-A profiles | Each is a conformance surface with its own test corpus; the baseline signature must exist first |
-| Cloud KMS / HSM CLIENTS in this repo | The seam is exposed (C ABI two-call surface, the ruby `ExternalSigner`), but the client that talks to a key service is the ADOPTER's, not ours: every one of these languages already has a first-party one, `deny.toml` carries zero advisory ignores, and a vendor SDK is a large transitive tree to drag through it for a wrapper this thin |
+| Cloud KMS / HSM CLIENTS in this repo | The seam is exposed (C ABI two-call surface, the CLI's two verbs, every SDK's `ExternalSigner`), but the client that talks to a key service is the ADOPTER's, not ours: every one of these languages already has a first-party one, `deny.toml` carries zero advisory ignores, and a vendor SDK is a large transitive tree to drag through it for a wrapper this thin |
 | Timestamps (TSA) | Requires network I/O, which is host-side by the same rule |
 | Revocation checking (OCSP / CRL) | Same network constraint, plus a caching/freshness policy this project has not decided |
 | Signing arbitrary third-party PDFs | See [Input document scope](#input-document-scope) |
@@ -290,7 +293,8 @@ This mirrors how font distribution already works — the host-level fetch
 crate fills a cache *before* rendering, and the render path itself
 never opens a socket. A KMS provider is a host component, not an engine
 dependency — which is precisely what the two-call surface above makes
-reachable from outside, and why no client for one ships here.
+reachable from outside, and why no client for one ships here. Every host
+that can sign now exposes it: the C ABI, the CLI, and all seven SDKs.
 
 ## Template wire boundary
 

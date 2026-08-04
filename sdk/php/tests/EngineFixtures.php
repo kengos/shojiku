@@ -8,6 +8,7 @@ use Shojiku\Client;
 use Shojiku\Configuration;
 use Shojiku\DocumentArtifact;
 use Shojiku\LocalPem;
+use Shojiku\SigningProvider;
 
 /**
  * Fixtures shared by every test: the real engine binary, the repository's own
@@ -292,7 +293,7 @@ trait EngineFixtures
     /**
      * @param array<string, mixed> $settings
      *
-     * @return array<string, LocalPem>|null
+     * @return array<string, SigningProvider>|null
      */
     private static function providers(array $settings): ?array
     {
@@ -302,7 +303,7 @@ trait EngineFixtures
         }
         $providers = [];
         foreach ($value as $name => $provider) {
-            if ($provider instanceof LocalPem) {
+            if ($provider instanceof SigningProvider) {
                 $providers[(string) $name] = $provider;
             }
         }

@@ -219,7 +219,7 @@ func TestAProcessThatCannotBeStartedAtAllIsAHostFailure(t *testing.T) {
 	// is driven directly with a path that has since stopped being one.
 	client := stubClient(t, stubBinary(t, `exit 0`))
 	client.settings.engine.binary = &binary{path: t.TempDir(), source: "configuration"}
-	client.settings.engine.probed = true
+	client.settings.engine.probed = map[string]bool{reportCapability: true}
 
 	_, _, _, err := client.settings.engine.spawn(context.Background(), []string{"render"}, nil)
 
@@ -238,7 +238,7 @@ func TestTheCapabilityProbeRunsOncePerEngine(t *testing.T) {
 		}
 	}
 
-	if !client.settings.engine.probed {
+	if !client.settings.engine.probed[reportCapability] {
 		t.Error("the engine was never marked as probed")
 	}
 }
@@ -260,7 +260,7 @@ func TestTheProbeStaysOncePerEngineUnderConcurrentCallers(t *testing.T) {
 	}
 	wg.Wait()
 
-	if !client.settings.engine.probed {
+	if !client.settings.engine.probed[reportCapability] {
 		t.Error("the engine was never marked as probed")
 	}
 }
@@ -275,7 +275,7 @@ func TestAFailingProbeIsRetriedRatherThanRemembered(t *testing.T) {
 
 	assertEngineFailure(t, first, "")
 	assertEngineFailure(t, second, "")
-	if client.settings.engine.probed {
+	if client.settings.engine.probed[reportCapability] {
 		t.Error("a failed probe was remembered as a success")
 	}
 }

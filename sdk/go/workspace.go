@@ -2,6 +2,7 @@ package shojiku
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -29,6 +30,11 @@ import (
 type workspace struct {
 	dir     string
 	written []string
+	// How many reports this workspace has handed out. An operation can run
+	// the engine more than once (external signing is two calls), and a shared
+	// report path would let the SECOND call read the FIRST one's file when it
+	// dies without writing — reporting success over a leg that never ran.
+	reports int
 	// The first write that failed, if any. Accumulated rather than returned
 	// per call: every write here goes into a directory this package created
 	// moments ago and owns alone, so a failure means the machine is out of
@@ -95,6 +101,14 @@ func writeExclusive(path string, content []byte) error {
 	}
 	_, err = file.Write(content)
 	return errors.Join(err, file.Close())
+}
+
+// reserveReport is a fresh path for one child's --report sidecar.
+//
+// Fresh per call, never shared: see [workspace.reports].
+func (w *workspace) reserveReport() string {
+	w.reports++
+	return w.reserve(fmt.Sprintf("report-%d.json", w.reports))
 }
 
 // reserve is the path a file WOULD have, for outputs the child writes itself

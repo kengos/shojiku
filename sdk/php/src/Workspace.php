@@ -33,6 +33,12 @@ final class Workspace
     /** @var list<string> */
     private array $written = [];
 
+    /**
+     * How many reports this workspace has handed out — see
+     * {@see self::reserveReport()}.
+     */
+    private int $reports = 0;
+
     private function __construct(private readonly string $dir)
     {
     }
@@ -108,6 +114,19 @@ final class Workspace
      * `--report` sidecar). Registered for removal even though nothing here
      * creates it.
      */
+    /**
+     * A fresh path for one child's `--report` sidecar.
+     *
+     * Fresh per call, never shared: an operation can run the engine more than
+     * once (external signing is two calls), and a shared report path would let
+     * the SECOND call read the FIRST one's file when it dies without writing —
+     * reporting success over a leg that never ran.
+     */
+    public function reserveReport(): string
+    {
+        return $this->reserve(sprintf('report-%d.json', ++$this->reports));
+    }
+
     public function reserve(string $name): string
     {
         $path = $this->dir.DIRECTORY_SEPARATOR.$name;

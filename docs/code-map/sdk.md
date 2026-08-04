@@ -103,6 +103,19 @@ contract behind it.
   runtime dependency list at fiddle alone. `sign_with(engine, pdf)` is the
   polymorphic hook BOTH providers implement, so `Client#sign` branches on
   nothing.
+- **Every mirror now carries `ExternalSigner` too**, and the shape is the
+  same in all seven: cert path XOR cert bytes, an algorithm named by that
+  language's idiomatic enum whose VALUE is the wire spelling, a callable
+  that signs, BOTH engine calls inside one method, a redacted printed form,
+  and the callable's own failure passed through rather than filed as a
+  document failure. Two things differ by transport and are worth reading
+  before diffing: the five that link the library call
+  `shojiku_sign_prepare`/`shojiku_sign_complete`, while php and go run the
+  CLI's `sign-prepare`/`sign-complete` verbs and probe `cli.sign.external`
+  first; and `.NET`/`java` narrowed their public provider interface to a
+  MARKER (`ISigningProvider` / `SigningProvider`) with the hook on an
+  internal one (`IEngineSigner` / `EngineSigner`), because the hook crosses
+  types those packages keep internal.
 - `lib/shojiku/local_pem.rb` + `errors.rb` — the signing provider (paths or
   bytes, explicit never sniffed in EITHER direction — both forms at once is a
   `UsageError` — with a redacting `#inspect`, since the default one prints the

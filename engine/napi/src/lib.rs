@@ -35,5 +35,5 @@ mod outcome;
 #[cfg(feature = "shim")]
 pub mod shim;
 
-pub use call::{abi_version, engine_info, render, sign, verify};
+pub use call::{abi_version, engine_info, render, sign, sign_complete, sign_prepare, verify};
 pub use outcome::Outcome;

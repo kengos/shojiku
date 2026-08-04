@@ -55,6 +55,37 @@ final class Engine {
     return read(status, out);
   }
 
+  /**
+   * Reserves the signature window and reports what a signature must cover.
+   *
+   * <p>The payload arrives on the snapshot's JSON, unparsed here: this binding has no schema of its
+   * own.
+   */
+  Snapshot signPrepare(byte[] pdf, byte[] certificate, byte[] algorithm) {
+    PointerByReference out = new PointerByReference();
+    int status =
+        bound.shojiku_sign_prepare(
+            pdf, size(pdf), certificate, size(certificate), algorithm, size(algorithm), out);
+    return read(status, out);
+  }
+
+  /** Writes a signature produced elsewhere into the document. */
+  Snapshot signComplete(byte[] pdf, byte[] certificate, byte[] algorithm, byte[] signature) {
+    PointerByReference out = new PointerByReference();
+    int status =
+        bound.shojiku_sign_complete(
+            pdf,
+            size(pdf),
+            certificate,
+            size(certificate),
+            algorithm,
+            size(algorithm),
+            signature,
+            size(signature),
+            out);
+    return read(status, out);
+  }
+
   Snapshot verify(byte[] pdf, byte[] anchors) {
     PointerByReference out = new PointerByReference();
     int status = bound.shojiku_verify(pdf, size(pdf), anchors, size(anchors), out);

@@ -83,6 +83,19 @@ pub enum CliError {
     #[error(transparent)]
     Key(#[from] shojiku_signing::KeyError),
     #[error(transparent)]
+    Cms(#[from] shojiku_signing::CmsError),
+    /// The caller's `--algorithm` is not one this release writes. The string
+    /// itself is never echoed — it is the caller's, and the accepted names
+    /// are the useful half of the answer.
+    #[error("`--algorithm` must be \"rsa-pkcs1-sha256\" or \"ecdsa-p256-sha256\"")]
+    Algorithm,
+    /// An empty `--signature` file. Writing it would produce a well-formed
+    /// container that fails verification — a document that looks signed and
+    /// is not, which is the one outcome a signing surface must never produce
+    /// quietly.
+    #[error("the signature file is empty; there is nothing to write into the document")]
+    EmptySignature,
+    #[error(transparent)]
     Verify(#[from] shojiku_verify::VerifyError),
     #[error("could not read the passphrase: {0}")]
     Passphrase(std::io::Error),
@@ -107,7 +120,11 @@ impl CliError {
             | CliError::OutputPatternRequired(_)
             | CliError::Serialize(_)
             | CliError::Output { .. }
-            | CliError::PassphraseVariableUnset { .. } => FailureClass::Usage,
+            | CliError::PassphraseVariableUnset { .. }
+            // The caller chose these too: an algorithm no release writes, and
+            // a signature file with nothing in it.
+            | CliError::Algorithm
+            | CliError::EmptySignature => FailureClass::Usage,
             _ => FailureClass::Document,
         }
     }
@@ -144,6 +161,11 @@ impl CliError {
             CliError::Serialize(_) => "serialize",
             CliError::Output { .. } => "output",
             CliError::Signing(_) => "signing",
+            // The capi's own spelling for an unusable certificate, and for a
+            // request it will not act on: the two subprocess SDKs map the same
+            // strings the other five already do.
+            CliError::Cms(_) => "certificate",
+            CliError::Algorithm | CliError::EmptySignature => "invalid_request",
             CliError::Key(_) => "key",
             CliError::Verify(_) => "verify",
             CliError::Passphrase(_) => "passphrase",

@@ -79,10 +79,10 @@ func TestProvidersReplaceRatherThanMerge(t *testing.T) {
 	// sign with; quietly adding globally-registered keys would defeat that.
 	global := testSigner(t)
 	own := testSigner(t)
-	Configure(WithProviders(map[string]*LocalPem{"global": global}))
+	Configure(WithProviders(map[string]Provider{"global": global}))
 	t.Cleanup(ResetConfiguration)
 
-	merged := globalDefaults().merge([]Option{WithProviders(map[string]*LocalPem{"own": own})})
+	merged := globalDefaults().merge([]Option{WithProviders(map[string]Provider{"own": own})})
 
 	if _, present := merged.providers["global"]; present {
 		t.Error("the globally-registered provider survived into a client's own registry")
@@ -93,7 +93,7 @@ func TestProvidersReplaceRatherThanMerge(t *testing.T) {
 }
 
 func TestARegisteredProviderMapIsCopiedRatherThanAliased(t *testing.T) {
-	registry := map[string]*LocalPem{"release": testSigner(t)}
+	registry := map[string]Provider{"release": testSigner(t)}
 
 	merged := config{}.merge([]Option{WithProviders(registry)})
 	delete(registry, "release")

@@ -13,6 +13,9 @@ import (
 // exist at all.
 const reportCapability = "cli.report"
 
+// externalCapability is the key the two-step signing verbs advertise.
+const externalCapability = "cli.sign.external"
+
 // engine is the ONE place a call crosses out of Go.
 //
 // Everything about the subprocess transport that could be got wrong lives
@@ -46,17 +49,17 @@ type engine struct {
 	env    *env
 	log    *logSink
 
-	// The capability probe is asked once per binary and then remembered.
+	// Each capability is probed once per binary and then remembered.
 	// Behind a mutex because a Go client is documented as safe for concurrent
 	// use, so "once" has to mean once even when four goroutines arrive
 	// together — the SDKs in languages without threads got this for free.
 	mu     sync.Mutex
-	probed bool
+	probed map[string]bool
 }
 
 func newEngine(bin *binary, e *env, log *logSink) *engine {
 	log.event("binary_found", "path", bin.path, "source", bin.source)
-	return &engine{binary: bin, env: e, log: log}
+	return &engine{binary: bin, env: e, log: log, probed: map[string]bool{}}
 }
 
 // engineInfo is what this build of the engine can do — its version,
@@ -92,9 +95,24 @@ func (g *engine) engineInfo(ctx context.Context) (map[string]any, error) {
 // leaves prose on stderr as the only output, and saying so by name is better
 // than parsing it.
 func (g *engine) requireReport(ctx context.Context) error {
+	return g.require(ctx, reportCapability, "report what an operation did")
+}
+
+// requireExternal refuses a binary without the two-step signing verbs, which
+// is what an [ExternalSigner] drives.
+func (g *engine) requireExternal(ctx context.Context) error {
+	return g.require(ctx, externalCapability, "sign with a key it never sees")
+}
+
+// require refuses a binary that does not advertise key.
+//
+// Each key is asked for once per binary. `what` completes the sentence "so it
+// cannot …", because an operator reading the refusal needs to know which
+// capability they are missing AND what it was going to be used for.
+func (g *engine) require(ctx context.Context, key, what string) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	if g.probed {
+	if g.probed[key] {
 		return nil
 	}
 
@@ -102,16 +120,16 @@ func (g *engine) requireReport(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	supported := hasCapability(info, reportCapability)
+	supported := hasCapability(info, key)
 	version, _ := info["version"].(string)
-	g.log.event("engine_checked", "version", version, "report", supported)
+	g.log.event("engine_checked", "version", version, "capability", key,
+		"supported", supported)
 	if !supported {
 		return &IncompatibleEngineError{Message: "`" + bounded(g.binary.path) +
-			"` does not advertise `" + reportCapability +
-			"`, so it cannot report what an operation did. " +
+			"` does not advertise `" + key + "`, so it cannot " + what + ". " +
 			"Install an engine from this release or newer."}
 	}
-	g.probed = true
+	g.probed[key] = true
 	return nil
 }
 
@@ -143,7 +161,7 @@ func (g *engine) execute(
 	if err := ws.failed(); err != nil {
 		return nil, nil, err
 	}
-	reportPath := ws.reserve("report.json")
+	reportPath := ws.reserveReport()
 	_, stdout, stderr, err := g.spawn(ctx, append(argv, "--report", reportPath), extraEnv)
 	if err != nil {
 		return nil, nil, err

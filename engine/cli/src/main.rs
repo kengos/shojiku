@@ -3,7 +3,8 @@
 use clap::Parser;
 use shojiku_cli::{
     report_diagnostics, run_capabilities, run_inspect, run_preview, run_render, run_sign,
-    run_validate, run_verify, write_output, Cli, CliError, Command, Report, ReportArg,
+    run_sign_complete, run_sign_prepare, run_validate, run_verify, write_output, Cli, CliError,
+    Command, Report, ReportArg,
 };
 use shojiku_diagnostics::{sanitize, Diagnostics, MAX_MESSAGE};
 use std::process::ExitCode;
@@ -87,6 +88,26 @@ fn run(cli: Cli) -> Result<(), CliError> {
             if let Some(path) = args.report.path() {
                 // No page count: signing appends a revision to bytes it
                 // never laid out, and zero would read as "no pages".
+                Report::success(&Diagnostics::new()).write(path)?;
+            }
+            Ok(())
+        }
+        Command::SignPrepare(args) => {
+            let prepared =
+                run_sign_prepare(&args).map_err(|err| fail("sign", &args.report, err))?;
+            println!("{}", serde_json::to_string_pretty(&prepared)?);
+            if let Some(path) = args.report.path() {
+                Report::success(&Diagnostics::new())
+                    .with_prepared(&prepared)
+                    .write(path)?;
+            }
+            Ok(())
+        }
+        Command::SignComplete(args) => {
+            let bytes = run_sign_complete(&args).map_err(|err| fail("sign", &args.report, err))?;
+            write_output(&args.output, &bytes).map_err(|err| fail("sign", &args.report, err))?;
+            if let Some(path) = args.report.path() {
+                // No page count, for the reason `sign` has none.
                 Report::success(&Diagnostics::new()).write(path)?;
             }
             Ok(())

@@ -85,7 +85,7 @@ internal sealed class Lockdown
     /// alternative is strict's. A provider object is accepted only when this
     /// client is not strict.
     /// </remarks>
-    internal ISigningProvider Provider(object provider)
+    internal IEngineSigner Provider(object provider)
     {
         if (provider is string name)
         {
@@ -94,7 +94,7 @@ internal sealed class Lockdown
 
         if (!Strict)
         {
-            return provider as ISigningProvider
+            return provider as IEngineSigner
                 ?? throw new UsageException(
                     "a signing provider must implement ISigningProvider, or be the name of one "
                     + "registered in configuration");
@@ -105,14 +105,14 @@ internal sealed class Lockdown
             + "configuration, not with a provider object.");
     }
 
-    private ISigningProvider Registered(string name)
+    private IEngineSigner Registered(string name)
     {
         if (!providers.TryGetValue(name, out var provider))
         {
             throw new UsageException($"no signing provider named `{Text.Bounded(name)}` is registered");
         }
 
-        return provider as ISigningProvider
+        return provider as IEngineSigner
             ?? throw new UsageException(
                 $"the provider registered as `{Text.Bounded(name)}` does not implement ISigningProvider");
     }

@@ -13,6 +13,9 @@ name = "shojiku"
 path = "src/main.rs"
 
 [dependencies]
+# The prepare half hands binary out through a JSON payload, so it needs the
+# same encoding the C ABI's own two-call surface uses.
+base64 = { workspace = true }
 clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

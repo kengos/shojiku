@@ -184,7 +184,7 @@ public final class ShojikuClient {
    * @return the signed document, or the failure
    */
   public Result<DocumentArtifact> sign(DocumentArtifact artifact, Object provider) {
-    SigningProvider signer = settings.lockdown().provider(provider);
+    EngineSigner signer = settings.lockdown().provider(provider);
     settings.lockdown().signable(artifact);
     return settings.log().timed("sign", () -> signed(artifact, signer));
   }
@@ -258,12 +258,10 @@ public final class ShojikuClient {
    *
    * <p>Appending a revision does not launder where the document came from.
    */
-  private Result<DocumentArtifact> signed(DocumentArtifact artifact, SigningProvider provider) {
+  private Result<DocumentArtifact> signed(DocumentArtifact artifact, EngineSigner provider) {
     Snapshot snapshot;
     try {
-      snapshot =
-          engine.sign(
-              artifact.raw(), provider.key(), provider.certificate(), provider.passphrase());
+      snapshot = provider.signWith(engine, artifact.raw());
     } catch (MaterialUnreadableException error) {
       return Result.fromFailure(new Failure(Step.SIGN, error.kind(), error.getMessage()));
     }

@@ -6,6 +6,7 @@
 
 mod caps;
 mod echo;
+mod external;
 mod fetch;
 mod outputs;
 mod report;

@@ -1,6 +1,9 @@
 package shojiku
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // Provider names the material a signature is made with.
 //
@@ -15,7 +18,19 @@ import "fmt"
 // switch: "look this name up" and "is a bare value allowed here" are what the
 // two forms differ IN, so that is what the method is.
 type Provider interface {
-	resolve(*lockdown) (*LocalPem, error)
+	resolve(*lockdown) (signer, error)
+}
+
+// signer is a provider that carries its own material, which is what a
+// registry may hold and what [Client.Sign] finally calls.
+//
+// The polymorphic hook is signWith, so Client.Sign branches on nothing: what
+// differs between a key in this process and one in a cloud service is HOW a
+// signature is produced, which is exactly what the method is. Unexported, so
+// the set of providers stays closed to this package.
+type signer interface {
+	Provider
+	signWith(ctx context.Context, c *Client, artifact *DocumentArtifact) (*Result, error)
 }
 
 // ProviderName is the name of a signing provider registered with
@@ -25,16 +40,24 @@ type ProviderName string
 // resolve looks the name up. Registered names are accepted in strict mode and
 // out of it — naming providers is good practice everywhere, and only the
 // REFUSAL of the alternative belongs to strict.
-func (n ProviderName) resolve(l *lockdown) (*LocalPem, error) {
+func (n ProviderName) resolve(l *lockdown) (signer, error) {
 	registered, found := l.providers[string(n)]
 	if !found {
 		return nil, usagef("no signing provider named `%s` is registered", bounded(string(n)))
 	}
-	return registered, nil
+	// A registry may only hold providers that CARRY material. Registering a
+	// name under a name would resolve to another lookup, and the honest
+	// answer to that is a refusal rather than a chain nobody meant to write.
+	material, ok := registered.(signer)
+	if !ok {
+		return nil, usagef("the provider registered as `%s` is a name, not signing material",
+			bounded(string(n)))
+	}
+	return material, nil
 }
 
 // resolve accepts the value itself, unless this client is locked down.
-func (p *LocalPem) resolve(l *lockdown) (*LocalPem, error) {
+func (p *LocalPem) resolve(l *lockdown) (signer, error) {
 	// The interface is closed, but a NIL *LocalPem still satisfies it and
 	// would otherwise reach the transport as a provider with no material.
 	if p == nil {
@@ -45,6 +68,35 @@ func (p *LocalPem) resolve(l *lockdown) (*LocalPem, error) {
 			"registered in configuration, not with a provider value.")
 	}
 	return p, nil
+}
+
+// signWith signs with the key this process holds.
+func (p *LocalPem) signWith(
+	ctx context.Context, c *Client, artifact *DocumentArtifact,
+) (*Result, error) {
+	return inWorkspace(func(ws *workspace) (*Result, error) {
+		input := ws.write("input.pdf", artifact.bytes)
+		// A configured PATH goes across as itself; only material the caller
+		// handed over as BYTES is written down, and then only 0600 inside a
+		// 0700 directory that is removed on every path.
+		key := materialPath(ws, "key.pem", p.keyPath, p.keyPEM)
+		cert := materialPath(ws, "cert.pem", p.certPath, p.certPEM)
+
+		var extraEnv map[string]string
+		variable := ""
+		if p.passphrase != "" {
+			// The passphrase crosses in the CHILD's environment only — never
+			// in argv, which other processes can read.
+			variable = passphraseVariable
+			extraEnv = map[string]string{passphraseVariable: p.passphrase}
+		}
+		rep, pdf, err := c.settings.engine.execute(
+			ctx, signArgs(input, key, cert, variable), ws, extraEnv)
+		if err != nil {
+			return nil, err
+		}
+		return documentOutcome(rep, pdf, StepSign, c, artifact.origin)
+	})
 }
 
 // LocalPem is a signing provider backed by a PEM key and certificate.

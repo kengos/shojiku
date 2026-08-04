@@ -1,5 +1,5 @@
 /**
- * The boundary: one loaded addon, and the four operations it exposes.
+ * The boundary: one loaded addon, and the operations it exposes.
  *
  * The thinnest module in the package on purpose. Everything that could be got
  * wrong at an FFI boundary — pointer ownership, buffer lengths, freeing the
@@ -39,6 +39,26 @@ export class Engine {
     passphrase: Buffer | null,
   ): Promise<Snapshot> {
     return this.addon.sign(pdf, key, certificate, passphrase);
+  }
+
+  /**
+   * Reserves the signature window and reports what a signature must cover.
+   *
+   * The payload arrives on the snapshot's `json`, unparsed by the addon —
+   * that host has no schema of its own.
+   */
+  signPrepare(pdf: Buffer, certificate: Buffer, algorithm: Buffer): Promise<Snapshot> {
+    return this.addon.signPrepare(pdf, certificate, algorithm);
+  }
+
+  /** Writes a signature produced elsewhere into the document. */
+  signComplete(
+    pdf: Buffer,
+    certificate: Buffer,
+    algorithm: Buffer,
+    signature: Buffer,
+  ): Promise<Snapshot> {
+    return this.addon.signComplete(pdf, certificate, algorithm, signature);
   }
 
   verify(pdf: Buffer, anchors: Buffer): Promise<Snapshot> {

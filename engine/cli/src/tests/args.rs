@@ -1,6 +1,7 @@
 //! Argument parsing, path resolution, and the pack-error mapping.
 
 use super::*;
+use shojiku_image::AssetMode;
 
 #[test]
 fn cli_parses_render_command() {

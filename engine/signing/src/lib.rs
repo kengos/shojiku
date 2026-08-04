@@ -70,7 +70,7 @@ pub use object::{array_elements, dict_value_span, parse_ref, parse_uint, Dict, O
 pub use placeholder::{append_signature_placeholder, PlaceholderOptions, PreparedPdf};
 pub use revision::{Revision, RevisionBuilder};
 pub use sign::{complete_sign, prepare_sign, sign_document, PreparedSign};
-pub use signer::{LocalPemSigner, Signer};
+pub use signer::{LocalPemSigner, PresignedSigner, Signer};
 
 // Every error this crate can hand a caller, held to the bound the `bounded`
 // module explains. One decision, checked by the compiler, rather than a rule

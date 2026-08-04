@@ -56,6 +56,30 @@ func signArgs(pdfPath, keyPath, certPath, passphraseVariable string) []string {
 	return argv
 }
 
+// signPrepareArgs asks what a signature must cover. No key crosses: the two
+// external verbs take a certificate and an algorithm and nothing else.
+func signPrepareArgs(pdfPath, certPath, algorithm string) []string {
+	return []string{
+		"sign-prepare",
+		"--input", pdfPath,
+		"--cert", certPath,
+		"--algorithm", algorithm,
+	}
+}
+
+// signCompleteArgs writes a signature produced elsewhere into the document.
+// The same input, certificate and algorithm the prepare half was given.
+func signCompleteArgs(pdfPath, certPath, algorithm, signaturePath string) []string {
+	return []string{
+		"sign-complete",
+		"--input", pdfPath,
+		"--cert", certPath,
+		"--algorithm", algorithm,
+		"--signature", signaturePath,
+		"--output", "-",
+	}
+}
+
 func verifyArgs(pdfPath string, anchorPaths []string) []string {
 	argv := []string{"verify", "--input", pdfPath}
 	for _, anchor := range anchorPaths {

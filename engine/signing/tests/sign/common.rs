@@ -155,6 +155,27 @@ pub fn container_in(signed: &[u8]) -> SignedData {
 /// container must be the digest of the bytes the document says are covered,
 /// and the signature must check out against the certificate it ships with.
 pub fn assert_verifies(signed: &[u8], stem: &str) {
+    signature_check(signed, stem)
+        .unwrap_or_else(|()| panic!("the signature should verify ({stem})"));
+}
+
+/// The mirror assertion: a document that is well-formed and whose signature
+/// does NOT check out.
+///
+/// Worth a helper of its own because "writes a file that fails verification"
+/// is a documented OUTCOME of the external seam — completing with a signature
+/// made over another document — and a claim like that belongs in a test
+/// rather than in a comment.
+pub fn assert_does_not_verify(signed: &[u8], stem: &str) {
+    shojiku_signing::PdfDocument::parse(signed).expect("the signed document still parses");
+    assert!(
+        signature_check(signed, stem).is_err(),
+        "the signature should not verify ({stem})"
+    );
+}
+
+/// Checks a signed document the way a verifier would, reporting the verdict.
+fn signature_check(signed: &[u8], stem: &str) -> Result<(), ()> {
     // First: the finished bytes are still a document the reader opens. A
     // signature over a file no reader can parse is worthless however valid
     // its cryptography, so every combination that reaches this checker also
@@ -187,7 +208,7 @@ pub fn assert_verifies(signed: &[u8], stem: &str) {
         .expect("the public key is whole bytes");
     UnparsedPublicKey::new(verifier(stem), public_key)
         .verify(&to_be_signed, signer_info.signature.as_bytes())
-        .unwrap_or_else(|_| panic!("the signature should verify ({stem})"));
+        .map_err(|_| ())
 }
 
 /// Position of the FIRST occurrence of `needle`.

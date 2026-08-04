@@ -102,7 +102,7 @@ final class DocumentArtifact
      * artifact. The signed bytes begin with these bytes byte for byte:
      * signing appends a revision, it never rewrites what was there.
      */
-    public function sign(LocalPem|string $provider): Result
+    public function sign(SigningProvider|string $provider): Result
     {
         return $this->client->sign($this, $provider);
     }

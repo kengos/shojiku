@@ -66,6 +66,17 @@ pub enum Work {
         certificate: Vec<u8>,
         passphrase: Option<Vec<u8>>,
     },
+    SignPrepare {
+        pdf: Vec<u8>,
+        certificate: Vec<u8>,
+        algorithm: Vec<u8>,
+    },
+    SignComplete {
+        pdf: Vec<u8>,
+        certificate: Vec<u8>,
+        algorithm: Vec<u8>,
+        signature: Vec<u8>,
+    },
     Verify {
         pdf: Vec<u8>,
         anchors: Vec<u8>,
@@ -89,6 +100,17 @@ impl Task for Call {
                 certificate,
                 passphrase,
             } => call::sign(pdf, key, certificate, passphrase.as_deref()),
+            Work::SignPrepare {
+                pdf,
+                certificate,
+                algorithm,
+            } => call::sign_prepare(pdf, certificate, algorithm),
+            Work::SignComplete {
+                pdf,
+                certificate,
+                algorithm,
+                signature,
+            } => call::sign_complete(pdf, certificate, algorithm, signature),
             Work::Verify { pdf, anchors } => call::verify(pdf, anchors),
         })
     }
@@ -129,6 +151,36 @@ pub fn sign(
         key: key.to_vec(),
         certificate: certificate.to_vec(),
         passphrase: passphrase.map(|bytes| bytes.to_vec()),
+    }))
+}
+
+/// Reserves the signature window and reports what a signature must cover.
+///
+/// The first half of signing with a key this process is never given: sign the
+/// reported bytes wherever the key lives, then hand the signature to
+/// [`sign_complete`].
+#[napi]
+pub fn sign_prepare(pdf: Buffer, certificate: Buffer, algorithm: Buffer) -> AsyncTask<Call> {
+    AsyncTask::new(Call(Work::SignPrepare {
+        pdf: pdf.to_vec(),
+        certificate: certificate.to_vec(),
+        algorithm: algorithm.to_vec(),
+    }))
+}
+
+/// Writes a signature produced elsewhere into the document.
+#[napi]
+pub fn sign_complete(
+    pdf: Buffer,
+    certificate: Buffer,
+    algorithm: Buffer,
+    signature: Buffer,
+) -> AsyncTask<Call> {
+    AsyncTask::new(Call(Work::SignComplete {
+        pdf: pdf.to_vec(),
+        certificate: certificate.to_vec(),
+        algorithm: algorithm.to_vec(),
+        signature: signature.to_vec(),
     }))
 }
 

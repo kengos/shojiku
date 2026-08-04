@@ -9,12 +9,46 @@ use der::{Decode, Document, Encode};
 use pkcs8::spki::AlgorithmIdentifierRef;
 use pkcs8::{LineEnding, PrivateKeyInfo};
 
-use super::{KeyError, PrivateKey};
+use super::{KeyError, PrivateKey, SignatureAlgorithm};
 use crate::oid;
 use crate::testkit::keys::keys;
 
 mod accept;
 mod refuse;
+
+#[test]
+fn each_algorithm_answers_to_the_name_hosts_spell_it_with() {
+    assert_eq!(
+        SignatureAlgorithm::from_wire("rsa-pkcs1-sha256"),
+        Some(SignatureAlgorithm::RsaPkcs1Sha256)
+    );
+    assert_eq!(
+        SignatureAlgorithm::from_wire("ecdsa-p256-sha256"),
+        Some(SignatureAlgorithm::EcdsaP256Sha256)
+    );
+}
+
+#[test]
+fn a_name_no_algorithm_has_is_not_resolved_to_one() {
+    assert_eq!(SignatureAlgorithm::from_wire("rsa"), None);
+    // A near miss is the case worth pinning separately: a caller reaching for
+    // SHA-1 must be refused rather than quietly upgraded to the SHA-256
+    // algorithm whose name it almost spells.
+    assert_eq!(SignatureAlgorithm::from_wire("rsa-pkcs1-sha1"), None);
+}
+
+#[test]
+fn every_algorithms_own_name_resolves_back_to_it() {
+    for algorithm in [
+        SignatureAlgorithm::RsaPkcs1Sha256,
+        SignatureAlgorithm::EcdsaP256Sha256,
+    ] {
+        assert_eq!(
+            SignatureAlgorithm::from_wire(algorithm.wire_name()),
+            Some(algorithm)
+        );
+    }
+}
 
 /// Loads a generated key with no passphrase.
 fn load(name: &str) -> Result<PrivateKey, KeyError> {
