@@ -20,7 +20,8 @@
     <Authors>kengos</Authors>
     <Description>Deterministic PDF documents from a YAML template plus your data. Bindings for the Shojiku document engine.</Description>
     <PackageTags>pdf;invoice;receipt;template;document</PackageTags>
-    <PackageProjectUrl>https://github.com/kengos/shojiku</PackageProjectUrl>
+    <!-- The product's site; the repository is the separate link beside it. -->
+    <PackageProjectUrl>https://shojiku.pages.dev</PackageProjectUrl>
     <RepositoryUrl>https://github.com/kengos/shojiku</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <!-- The workspace's tri-license, as the SPDX expression NuGet accepts. -->

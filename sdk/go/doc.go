@@ -1,6 +1,9 @@
 // Package shojiku turns a YAML template plus your data into a deterministic
 // PDF, and signs and verifies the result.
 //
+// The gallery, the tutorials, and a playground that renders in your browser
+// are at https://shojiku.pages.dev.
+//
 // Three things to know before reading any of it.
 //
 // # Results, not errors, for what a document did

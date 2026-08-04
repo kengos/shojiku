@@ -8,6 +8,11 @@
 VERSION_FILE = File.expand_path("lib/shojiku/version.rb", __dir__)
 SHOJIKU_VERSION = File.read(VERSION_FILE)[/VERSION = "([^"]+)"/, 1]
 
+# The repository, kept separate from `homepage` because they are different
+# places: `homepage` is the product's own site, and everything below —
+# source, documentation — is a path inside the checkout.
+SHOJIKU_REPO = "https://github.com/kengos/shojiku"
+
 Gem::Specification.new do |spec|
   spec.name = "shojiku"
   spec.version = SHOJIKU_VERSION
@@ -22,7 +27,7 @@ Gem::Specification.new do |spec|
     shared C library loaded through fiddle, so the same params produce the same
     bytes here as in the CLI and every other Shojiku SDK.
   TEXT
-  spec.homepage = "https://github.com/kengos/shojiku"
+  spec.homepage = "https://shojiku.pages.dev"
   # The workspace's `MIT OR Apache-2.0 OR BSD-3-Clause`, in the form RubyGems
   # understands: a list of SPDX identifiers, which it reads as "any of these,
   # at your option". The single-string SPDX expression is rejected as an
@@ -35,8 +40,8 @@ Gem::Specification.new do |spec|
 
   spec.metadata = {
     "homepage_uri" => spec.homepage,
-    "source_code_uri" => "#{spec.homepage}/tree/main/sdk/ruby",
-    "documentation_uri" => "#{spec.homepage}/blob/main/docs/engine/README.md",
+    "source_code_uri" => "#{SHOJIKU_REPO}/tree/main/sdk/ruby",
+    "documentation_uri" => "#{SHOJIKU_REPO}/blob/main/docs/engine/README.md",
     "rubygems_mfa_required" => "true"
   }
 

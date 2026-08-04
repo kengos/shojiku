@@ -17,7 +17,8 @@
     library loaded through JNA, so the same params produce the same bytes here as
     in the CLI and every other Shojiku SDK.
   </description>
-  <url>https://github.com/kengos/shojiku</url>
+  <!-- The product's site. The repository is <scm> below, not this. -->
+  <url>https://shojiku.pages.dev</url>
 
   <!-- The workspace's tri-license: any of these, at the user's option. -->
   <licenses>

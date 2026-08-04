@@ -1,6 +1,6 @@
 # Shojiku for PHP
 
-PHP bindings for [Shojiku](../../README.md) — a document engine that
+PHP bindings for [Shojiku](https://shojiku.pages.dev) — a document engine that
 turns a YAML template plus your data into a deterministic PDF.
 
 > **Not on Packagist yet.** The other six Shojiku SDKs shipped at v0.1.0;
@@ -20,7 +20,9 @@ compile**: it drives the `shojiku` command-line binary as a subprocess.
 executable, by design. Take it from the [GitHub
 release](https://github.com/kengos/shojiku/releases/latest) (a per-platform
 archive plus the shared `packs` archive), `cargo install shojiku-cli`, or
-the Docker image; the [quickstart](../../docs/quickstart.md) covers them.
+the Docker image; the
+[quickstart](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md)
+covers them.
 
 The SDK looks for the binary in the `SHOJIKU_BIN` environment variable
 first, then the path you configure, then `PATH`.
@@ -142,13 +144,15 @@ make verify:sdk:php
 
 ## Documentation
 
-- [Template reference](../../docs/engine/README.md) — how to write the
-  YAML the engine renders
-- [SDK policy](../../docs/agents/sdk.md) — the lifecycle contract every
-  Shojiku SDK implements
+- [Template reference](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md) —
+  how to write the YAML the engine renders
+- [SDK policy](https://github.com/kengos/shojiku/blob/main/docs/agents/sdk.md) —
+  the lifecycle contract every Shojiku SDK implements
 
 ## License
 
-Licensed under any of [Apache-2.0](../../LICENSE-APACHE),
-[MIT](../../LICENSE-MIT), or [BSD-3-Clause](../../LICENSE-BSD), at your
-option.
+Licensed under any of
+[Apache-2.0](https://github.com/kengos/shojiku/blob/main/LICENSE-APACHE),
+[MIT](https://github.com/kengos/shojiku/blob/main/LICENSE-MIT), or
+[BSD-3-Clause](https://github.com/kengos/shojiku/blob/main/LICENSE-BSD),
+at your option.
