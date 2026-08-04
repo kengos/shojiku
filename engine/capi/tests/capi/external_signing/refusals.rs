@@ -118,14 +118,17 @@ fn a_certificate_that_is_not_pem_is_refused_by_prepare_before_any_round_trip() {
     // Which is why `prepare` takes the certificate at all: the caller learns
     // the material is unusable before paying a service to sign anything.
     let pdf = rendered_receipt();
-    let (status, out) = sign_prepare(&pdf, b"-----BEGIN NONSENSE-----", RSA);
+    let distinctive = b"-----BEGIN NONSENSE----- swordfish";
+    let (status, out) = sign_prepare(&pdf, distinctive, RSA);
     assert_eq!(status, SHOJIKU_OK, "an unusable certificate is an outcome");
     assert!(!succeeded(out));
-    assert!(
-        error_of(out).contains("\"kind\":\"certificate\""),
-        "{}",
-        error_of(out)
-    );
+    let error = error_of(out);
+    assert!(error.contains("\"kind\":\"certificate\""), "{error}");
+    // The signing crate's errors are `&'static str` and numbers by design —
+    // a compile-time assertion over there, not a convention — so a rejection
+    // cannot quote the material back. Pinned here because this is the
+    // boundary that hands an error to another process's logger.
+    assert!(!error.contains("swordfish"), "{error}");
     free(out);
 }
 
@@ -151,7 +154,12 @@ fn nulling_any_one_required_pointer_is_refused_by_name() {
     let pdf = rendered_receipt();
     let certificate = key_bytes("rsa2048.cert.pem");
     let (doc, cert, alg) = (pair(&pdf), pair(&certificate), pair(RSA));
-    let mut out: *mut ShojikuResult = std::ptr::null_mut();
+    // Seeded with a value the library must overwrite. The result slot is
+    // BLANKED before any work starts, so a caller that frees it
+    // unconditionally frees something well defined rather than whatever was
+    // in that variable — this is the observable half of that contract.
+    let stale = std::ptr::NonNull::dangling().as_ptr();
+    let mut out: *mut ShojikuResult = stale;
 
     // One null per row, so a check that covered only the first argument would
     // show up here rather than hide behind it.
@@ -165,7 +173,13 @@ fn nulling_any_one_required_pointer_is_refused_by_name() {
         // others are live buffers and `out` is a local slot.
         let status = unsafe { shojiku_sign_prepare(a.0, a.1, b.0, b.1, c.0, c.1, &mut out) };
         assert_eq!(status, SHOJIKU_ERR_NULL_ARG, "prepare/{label}");
+        assert_ne!(
+            out, stale,
+            "prepare/{label}: the result slot was not written"
+        );
+        assert!(error_of(out).contains(label), "prepare/{label}");
         free(out);
+        out = stale;
     }
 
     // SAFETY: only the signature is null; the rest are live buffers.
@@ -175,6 +189,11 @@ fn nulling_any_one_required_pointer_is_refused_by_name() {
         )
     };
     assert_eq!(status, SHOJIKU_ERR_NULL_ARG, "complete/signature");
+    assert_ne!(
+        out, stale,
+        "complete/signature: the result slot was not written"
+    );
+    assert!(error_of(out).contains("signature"), "complete/signature");
     free(out);
 }
 
