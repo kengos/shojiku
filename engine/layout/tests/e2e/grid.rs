@@ -4,6 +4,7 @@
 
 mod fr;
 mod spans;
+mod track_width;
 
 use crate::common::*;
 

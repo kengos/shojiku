@@ -1,7 +1,11 @@
 //! Shared fixtures for the near-e2e layout suite: font/lang pack
 //! loading, the `run` harness, and layout-tree extraction helpers.
+//! Diagnostic-arg readers live in [`diag`].
 
 use std::path::PathBuf;
+
+mod diag;
+pub use diag::{arg_num, args_all_numeric};
 
 pub use serde_json::{json, Value};
 pub use shojiku_core::{

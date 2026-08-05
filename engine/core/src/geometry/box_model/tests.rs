@@ -1,12 +1,17 @@
 //! Unit tests for the [`OptBox`] wire keys: the D3 min/max bounds and
 //! the D4 `flexGrow` weight — parse, the Length forms, authored-form
-//! round-trip, defaults, and typo safety.
+//! round-trip, defaults, and typo safety. Plus [`PointSpec`], the `line`
+//! endpoint, whose axes are full `Length`s.
 
-use super::OptBox;
+use super::{OptBox, PointSpec};
 use crate::length::Length;
 
 fn parse(yaml: &str) -> OptBox {
     serde_yaml::from_str(yaml).expect("box should parse")
+}
+
+fn point(yaml: &str) -> PointSpec {
+    serde_yaml::from_str(yaml).expect("point should parse")
 }
 
 #[test]
@@ -76,4 +81,64 @@ fn flex_grow_effective_default_is_one_and_round_trips() {
         let e = serde_yaml::from_str::<OptBox>(typo).expect_err("must reject");
         assert!(e.to_string().contains("unknown field"), "got: {e}");
     }
+}
+
+#[test]
+fn an_endpoint_takes_every_length_form() {
+    let p = point("{ x: \"100%\", y: \"1.5em\" }");
+    assert_eq!(p.x, Length::Percent(100.0));
+    assert_eq!(p.y, Length::Em(1.5));
+    let p = point("{ x: \"20mm\", y: \"2rem\" }");
+    assert!(matches!(p.x, Length::Physical(v, _) if v == 20.0));
+    assert_eq!(p.y, Length::Rem(2.0));
+}
+
+#[test]
+fn a_bare_number_endpoint_stays_pt_and_round_trips_as_a_number() {
+    // The wire-compatibility clause: every pre-existing template writes
+    // bare numbers, and they must come back out as bare numbers — not as
+    // `"0pt"` — or the Designer's serialize(parse(src)) == src breaks and
+    // every committed template's bytes churn.
+    let p = point("{ x: 0, y: 28.5 }");
+    assert_eq!(p.x, Length::Pt(0.0));
+    assert_eq!(p.y, Length::Pt(28.5));
+    let yaml = serde_yaml::to_string(&p).expect("serialize");
+    assert!(yaml.contains("x: 0"), "got: {yaml}");
+    assert!(yaml.contains("y: 28.5"), "got: {yaml}");
+    assert!(!yaml.contains("pt"), "unit injected: {yaml}");
+    // The authored `%` form round-trips as the string it was written as.
+    let yaml = serde_yaml::to_string(&point("{ x: \"50%\", y: 0 }")).expect("serialize");
+    assert!(yaml.contains("x: 50%"), "got: {yaml}");
+}
+
+#[test]
+fn a_malformed_endpoint_is_a_parse_error_not_a_silent_zero() {
+    // `px` is deliberately not a template unit, and a garbage string must
+    // not degrade to 0 — a line silently collapsing to a point is exactly
+    // the invisible authoring bug the wire is meant to surface.
+    // The error echoes the OFFENDING VALUE and lists the accepted forms,
+    // which is what makes it actionable. (It does not name the axis — the
+    // `Length` parser is field-agnostic and reports the same way for
+    // `w`/`minWidth`/every other length key.)
+    for (yaml, bad) in [
+        ("{ x: \"12px\", y: 0 }", "12px"),
+        ("{ x: abc, y: 0 }", "abc"),
+        ("{ y: \"3ex\", x: 0 }", "3ex"),
+    ] {
+        let e = serde_yaml::from_str::<PointSpec>(yaml)
+            .expect_err("must reject")
+            .to_string();
+        assert!(e.contains("invalid length"), "got: {e}");
+        assert!(e.contains(bad), "error must echo `{bad}`: {e}");
+        assert!(e.contains("em"), "error must list the accepted units: {e}");
+    }
+    // An empty string is refused too, rather than defaulting to 0.
+    let e = serde_yaml::from_str::<PointSpec>("{ x: \"\", y: 0 }").expect_err("must reject");
+    assert!(e.to_string().contains("invalid length"), "got: {e}");
+    // Hostile non-finite strings are refused at the Length boundary too.
+    let e = serde_yaml::from_str::<PointSpec>("{ x: \"1e309%\", y: 0 }").expect_err("must reject");
+    assert!(!e.to_string().is_empty(), "got: {e}");
+    // And an unknown axis stays a parse error under deny_unknown_fields.
+    let e = serde_yaml::from_str::<PointSpec>("{ x: 0, y: 0, z: 1 }").expect_err("must reject");
+    assert!(e.to_string().contains("unknown field"), "got: {e}");
 }

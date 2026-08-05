@@ -212,6 +212,15 @@ diagnostic_codes! {
     GridTracksClamped = "grid_tracks_clamped", Warning, Limits, "{detail}";
     ImpositionGridClamped = "imposition_grid_clamped", Warning, Limits, "grid {columns}×{rows} is over the {max} cells/page cap (or has a zero axis); clamped to {clamped_columns}×{clamped_rows}";
     CellImageAssetsCapped = "cell_image_assets_capped", Warning, Limits, "per-element cell images exceed the {max} cap; the rest are skipped";
+    // The horizontal-overflow family. `horizontal_overflow` above carries
+    // its whole sentence in a free-text `{detail}` arg, so a translating
+    // consumer can only pass the English through; these carry NUMBERS and
+    // nothing else, so each catalog writes its own sentence. One code per
+    // reason rather than one code with a `{where}` discriminator — an enum
+    // value would reach a non-English reader in English either way.
+    SheetOverflow = "sheet_overflow", Warning, Layout, "item reaches {over}pt past the right edge of the sheet and renders off-paper";
+    ChildOverflow = "child_overflow", Warning, Layout, "child overflows its {avail}pt content box by {over}pt";
+    GridColumnOverflow = "grid_column_overflow", Warning, Layout, "grid child ({child}pt) is wider than the {track}pt column run it spans ({span} tracks)";
 }
 
 #[cfg(test)]

@@ -33,6 +33,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         inner: &Basis,
         b: &OptBox,
         depth: usize,
+        clipped: bool,
     ) -> (Vec<LayoutItem>, Vec<PlacedBox>, f64) {
         let align = b.align_items.unwrap_or_default();
         // Grid fill order defaults to row-major (CSS `grid-auto-flow:
@@ -101,6 +102,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
                         font: inner.font,
                     };
                     if let Some(atom) = self.flex_child_atom(kind, &basis, depth) {
+                        // The column-axis counterpart of the row-track
+                        // check below: a child wider than the track run it
+                        // was placed in spills over its neighbour.
+                        self.check_track_width(&atom, &basis, cell.cols);
                         // Horizontal auto margins act within the cell run.
                         slots.push(Slot::Flex(h_auto_margin(atom, &basis)));
                         cells.push(cell);
@@ -108,6 +113,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 }
                 None => {
                     if let Some((atom, dy)) = self.absolute_child_atom(child, inner, depth) {
+                        self.check_child_right(&atom, inner, clipped);
                         slots.push(Slot::Abs(atom, dy));
                     }
                 }

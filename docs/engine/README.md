@@ -110,7 +110,7 @@ below uses:
 | --- | --- | --- | --- |
 | `text` | static / interpolated / bound text; rich `spans:` | F A B C cell | [text.md](text.md) |
 | `rect` | rectangle (border/fill) | F A B C cell | [rect.md](rect.md) |
-| `line` | stroked segment (pt-only) | F A B C cell | [line.md](line.md) |
+| `line` | stroked segment; `Length` endpoints (`to: { x: "100%" }`) | F A B C cell | [line.md](line.md) |
 | `image` | PNG/JPEG/GIF/WebP/SVG asset | F A B C cell | [image.md](image.md) |
 | `qr_code` | layout-time vector QR | F A B C cell | [qr_code.md](qr_code.md) |
 | `list` | one line per array entry + overflow clamp | F A B C cell | [list.md](list.md) |

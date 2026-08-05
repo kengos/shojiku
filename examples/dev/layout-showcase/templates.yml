@@ -1823,3 +1823,75 @@ sections:
                   # templates.yml — 置き方は今までどおり
                   - text: "{{parcelStatus}"        # → 出荷済み
                   - text: "{{parcelStatus:value}"  # → shipped
+      - { type: page_break }
+
+      # ---------------------------------- line endpoints as lengths
+      - type: text
+        text: "13. line の端点も Length — to: { x: 100% }"
+        styleNames: [ h2 ]
+
+      # `from`/`to` take the full length vocabulary, so an endpoint can
+      # name a FRACTION of the box the line sits in instead of a
+      # hand-measured pt. That is what makes an underline under a flex
+      # child expressible at all: the child's real width is a share of
+      # the row, decided at layout time, and nobody can write it down
+      # while authoring. Bare numbers stay pt, so every existing
+      # template is unchanged.
+      - type: container
+        box: { direction: row, gap: 16 }
+        items:
+          - type: container
+            box: { w: 262, padding: 8 }
+            styleNames: [ panel ]
+            items:
+              - { type: text, text: "氏名欄 — 下線は欄の幅ぴったり", styleNames: [ caption ] }
+              - type: container
+                box: { direction: row, gap: 12, margin: { top: 4 } }
+                items:
+                  - type: container
+                    box: { h: 28, padding: { left: 2 } }
+                    items:
+                      - { type: text, text: 山田 太郎, style: { fontSize: 11 } }
+                      - type: line
+                        from: { x: 0, y: 24 }
+                        to: { x: "100%", y: 24 }
+                        style: { width: 0.6, color: "#495057" }
+                  - type: container
+                    box: { h: 28, padding: { left: 2 } }
+                    items:
+                      - { type: text, text: ヤマダ タロウ, style: { fontSize: 9 } }
+                      - type: line
+                        from: { x: 0, y: 24 }
+                        to: { x: "100%", y: 24 }
+                        style: { width: 0.6, color: "#495057" }
+              - type: text
+                text: "同じ 2 本を pt で書くと、欄の幅を変えるたびに引き直しになる"
+                styleNames: [ caption ]
+                box: { margin: { top: 8 } }
+              - { type: text, text: "50% なら半分だけ:", styleNames: [ caption ], box: { margin: { top: 6 } } }
+              - type: container
+                box: { h: 14 }
+                items:
+                  - type: line
+                    from: { x: 0, y: 6 }
+                    to: { x: "50%", y: 6 }
+                    style: { width: 0.6, color: "#0d6efd" }
+          - type: container
+            box: { padding: 8 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  - type: container          # 幅は行の取り分しだい
+                    items:
+                      - type: text
+                        text: 山田 太郎
+                      - type: line
+                        from: { x: 0, y: 24 }
+                        to:   { x: "100%", y: 24 }
+                  # x は置かれた箱の幅、y は高さに解決する
+                  # 100% = 内容ボックスの右端 (padding の内側)
+                  # 0 / 24 のような素の数値は今までどおり pt
+                  # em / rem / mm も端点に書ける
+                  # 高さ自動の親に y: "50%" は percent_of_auto

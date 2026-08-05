@@ -105,6 +105,9 @@ export const zhTw: LanguageCatalog = {
     container_overflow: '容器內容（{content}pt）超過其內容高度（{avail}pt）',
     grid_cell_overflow: '格線子項（{child}pt）超過其 {track}pt 的{extent}',
     horizontal_overflow: '{detail}',
+    sheet_overflow: '項目超出紙張右緣 {over}pt，將繪製於紙面之外',
+    child_overflow: '子項超出其內容方塊（{avail}pt）達 {over}pt',
+    grid_column_overflow: '格線子項（{child}pt）比其跨越的 {span} 個欄軌（共 {track}pt）更寬',
     text_overflow: '文字超過方塊高度（內容 {content}pt，可用 {avail}pt）',
     char_grid_overflow:
       'char_grid 內容超過流動主體外可用的單張（{cells} 格）；已捨棄 {dropped} 個字元',

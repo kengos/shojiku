@@ -5,12 +5,11 @@ mod layouter;
 
 pub(in crate::engine) use layouter::{FlowLayouter, MAX_PAGES};
 
-use crate::boxes::translate_boxes;
 use shojiku_core::Item;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::flex::h_auto_margin;
-use super::{translate, Basis, Ctx, PageBuild};
+use super::{Basis, Ctx, PageBuild};
 
 impl<'a, 'b> Ctx<'a, 'b> {
     pub(super) fn layout_flow(
@@ -61,7 +60,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     }
                 }
                 Item::Line(line) => {
-                    let atom = self.line_atom(line, region.x);
+                    let atom = self.line_atom(line, &region);
                     layouter.place(atom, &mut self.diags);
                 }
                 Item::Table(table) => {
@@ -127,37 +126,38 @@ impl<'a, 'b> Ctx<'a, 'b> {
     }
 
     pub(super) fn place_absolute_item(&mut self, item: &Item, basis: &Basis, page: &mut PageBuild) {
+        // As in a band, every arm hands its atom to `emit_placed` — the one
+        // tail that translates it onto the page AND checks the sheet edge.
         match item {
             Item::Text(text) => {
                 let b = text.box_.clone().unwrap_or_default();
                 let dy = self.resolve_y(b.y, basis).unwrap_or(0.0);
                 let atom = self.text_atom(text, basis);
-                page.items.extend(translate(&atom.items, dy));
-                page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                self.emit_placed(page, atom, dy, basis);
             }
             Item::Rect(rect) => {
                 if let Some(atom) = self.rect_atom(rect, basis) {
                     let dy = self.resolve_y(rect.box_.y, basis).unwrap_or(0.0);
-                    page.items.extend(translate(&atom.items, dy));
-                    page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                    self.emit_placed(page, atom, dy, basis);
                 }
             }
             Item::Line(line) => {
-                // Absolute lines use their own coordinates, offset to the
-                // margin origin (`basis.x`; y is the assembly translate).
-                // Built by the shared `line_atom` so the stroke pattern
-                // cannot drift between placement contexts.
-                let atom = self.line_atom(line, basis.x);
-                page.items.extend(atom.items);
-                page.boxes.extend(atom.boxes);
+                // Absolute lines resolve their endpoints against the page
+                // margin box; the endpoints ARE the offsets, so there is
+                // no `dy` to apply. Built by the shared `line_atom` so the
+                // stroke pattern cannot drift between placement contexts,
+                // and emitted through the same tail as every sibling — a
+                // line carries no box, so the sheet-edge check reads
+                // `rb: None` and returns.
+                let atom = self.line_atom(line, basis);
+                self.emit_placed(page, atom, 0.0, basis);
             }
             Item::Image(image) => {
                 if let Some(atom) = self.image_atom(image, basis) {
                     let dy = self
                         .resolve_y(image.box_.clone().unwrap_or_default().y, basis)
                         .unwrap_or(0.0);
-                    page.items.extend(translate(&atom.items, dy));
-                    page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                    self.emit_placed(page, atom, dy, basis);
                 }
             }
             Item::Container(container) => {
@@ -165,8 +165,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     .resolve_y(container.box_.clone().unwrap_or_default().y, basis)
                     .unwrap_or(0.0);
                 if let Some(atom) = self.container_atom(container, basis, 1) {
-                    page.items.extend(translate(&atom.items, dy));
-                    page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                    self.emit_placed(page, atom, dy, basis);
                 }
             }
             Item::QrCode(qr) => {
@@ -174,8 +173,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     let dy = self
                         .resolve_y(qr.box_.clone().unwrap_or_default().y, basis)
                         .unwrap_or(0.0);
-                    page.items.extend(translate(&atom.items, dy));
-                    page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                    self.emit_placed(page, atom, dy, basis);
                 }
             }
             Item::List(list) => {
@@ -183,8 +181,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     let dy = self
                         .resolve_y(list.box_.clone().unwrap_or_default().y, basis)
                         .unwrap_or(0.0);
-                    page.items.extend(translate(&atom.items, dy));
-                    page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                    self.emit_placed(page, atom, dy, basis);
                 }
             }
             Item::CharGrid(grid) => {
@@ -192,15 +189,13 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     let dy = self
                         .resolve_y(grid.box_.clone().unwrap_or_default().y, basis)
                         .unwrap_or(0.0);
-                    page.items.extend(translate(&atom.items, dy));
-                    page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                    self.emit_placed(page, atom, dy, basis);
                 }
             }
             Item::Ellipse(e) => {
                 if let Some(atom) = self.ellipse_atom(e, basis) {
                     let dy = self.resolve_y(e.box_.y, basis).unwrap_or(0.0);
-                    page.items.extend(translate(&atom.items, dy));
-                    page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                    self.emit_placed(page, atom, dy, basis);
                 }
             }
             Item::Checkbox(c) => {
@@ -208,8 +203,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     let dy = self
                         .resolve_y(super::marks::box_y(c.box_.as_ref()), basis)
                         .unwrap_or(0.0);
-                    page.items.extend(translate(&atom.items, dy));
-                    page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                    self.emit_placed(page, atom, dy, basis);
                 }
             }
             Item::Table(table) => {
@@ -219,8 +213,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     .resolve_y(table.box_.clone().unwrap_or_default().y, basis)
                     .unwrap_or(0.0);
                 if let Some(atom) = self.guarded_table_atom(table, basis) {
-                    page.items.extend(translate(&atom.items, dy));
-                    page.boxes.extend(translate_boxes(&atom.boxes, dy));
+                    self.emit_placed(page, atom, dy, basis);
                 }
             }
             Item::Repeat(_) => {

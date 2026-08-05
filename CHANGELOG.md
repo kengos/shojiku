@@ -15,6 +15,35 @@ platform binaries.
 
 ### Added
 
+- **An underline can now span a field whose width you don't know.** A
+  `line`'s `from`/`to` accept the same length forms as everything else —
+  `to: { x: "100%" }` reaches the right edge of whatever box the line
+  sits in, and `em`/`rem`/`mm` work too. Until now endpoints were bare
+  point numbers, which made a name-field rule under a flex child
+  impossible to write: the field's real width is a share of the row,
+  decided when the page is laid out, so there was no number to type.
+  Nest the line in the field and it follows the field. Templates written
+  before this are untouched — a bare number still means points, and it
+  is still written back as a bare number.
+
+- **Items that render off the paper now say so.** Three new warnings
+  cover the cases that used to render silently: `sheet_overflow` when a
+  header/footer or absolute-body item — a bare `line` included — runs
+  past the edge of the sheet, `child_overflow` when a stacked or
+  hand-positioned child runs past its container's content box (naming
+  the child, not the container), and `grid_column_overflow` when a grid
+  child is wider than the column track it sits in. Reaching into the
+  page margins stays silent on purpose: a full-bleed background or a
+  rule wider than the text column is a normal thing to want, so only ink
+  that leaves the paper is reported.
+
+  Each of the three carries **numbers only** — how far over, and what it
+  had to fit in — so the Designer renders them in your language instead
+  of passing an English sentence through, as the older
+  `horizontal_overflow` (which keeps its existing cases) has to. The
+  Japanese, Traditional Chinese and Simplified Chinese wordings ship with
+  them.
+
 - **A list inside a repeat cell now knows what its entries are.** When a
   row of your data carries its own array — the contents of each parcel on
   a shipping label, say — that array is a data source like any other. Its

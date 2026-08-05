@@ -126,10 +126,13 @@ inline:
 | `container_depth_exceeded` | error | nesting > 32; subtree skipped |
 | `container_overflow` | warning | content taller than a definite-`h` content box; suppressed by `overflow: hidden` |
 | `section_overflow` | warning | an unsplittable item is taller than the flow region |
-| `horizontal_overflow` | warning | a fixed-width flex row exceeds its parent content box, or a definite-width flow item reaches past the region's right edge; suppressed under `overflow: hidden`. Absolute-body/band items past the page edge draw silently (no warning) — check the preview |
+| `horizontal_overflow` | warning | a fixed-width flex row exceeds its parent content box, a definite-width flow item reaches past the region's right edge, or a vertical text block needs more width than its box; suppressed under `overflow: hidden`. Carries its whole sentence in `detail`, so a translating consumer can only pass it through — the three codes below are its number-only successors |
+| `sheet_overflow` | warning | a band / absolute-body item (a `line`'s endpoints included) reaches `over` pt past the right edge of the **sheet** and renders off-paper. The bound is the paper, not the margin box: reaching into the margins is a deliberate escape hatch, so only ink that leaves the sheet warns. Filling items never warn |
+| `child_overflow` | warning | a column or `x`/`y`-positioned box child overflows its parent's `avail` pt content box by `over` pt. States the magnitude, never a side — cross-axis alignment runs after the check, and `alignItems: center`/`end` push the excess LEFT. Suppressed under `overflow: hidden`; a ROW child is reported once, by the row-level `horizontal_overflow` |
+| `grid_column_overflow` | warning | a grid child (`child` pt) is wider than the `track` pt run of `span` column tracks it sits in, so it spills over its neighbour. Column tracks are always definite, unlike auto rows |
 | `page_overflow` | error | layout exceeded 500 pages; output truncated |
 | `grid_tracks_clamped` | warning | grid `columns`/`rows` outside 1..=64 tracks; clamped |
-| `grid_cell_overflow` | warning | grid child taller than its explicit row track |
+| `grid_cell_overflow` | warning | grid child TALLER than its explicit row track; the `extent` arg says `row track` or `spanned rows` (auto rows grow instead of warning). The width axis is `grid_column_overflow` above |
 | `imposition_grid_clamped` | warning | `repeat` grid over 64 cells/page (or a zero axis); clamped |
 | `char_grid_clamped` | warning | `char_grid` outside 1..=4096 cells/sheet; clamped |
 | `char_grid_markup_clamped` | warning | an aozora note asks for more cells than the grid holds (a large-writing scale > `min(columns, lines)`, an indent/raise past the line); clamped |

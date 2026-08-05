@@ -165,13 +165,30 @@ Pipeline: `Template/Definitions → Bundle → Layout → Render → Preview →
 
 ### Box model (`engine/core`, `engine/layout-box`, `engine/layout`)
 
-- **Horizontal-overflow diagnostic** (`horizontal_overflow`): a fixed
-  row wider than its parent content box, or a definite-width flow item
-  past the region's right edge, warns instead of silently rendering
-  off-sheet; `overflow: hidden` parents clip by intent and stay silent
-  (the `container_overflow` convention). Off-page checks for
-  band/absolute items stay open — they collide with the deliberate
-  page-margin escape hatch.
+- **Horizontal-overflow diagnostics**: every context where a definite
+  width can be compared against the box holding it warns instead of
+  silently rendering off-sheet. `horizontal_overflow` keeps the fixed
+  flex row and the definite-width flow item; the rest report their own
+  NUMBER-ONLY codes, so a translating consumer writes its own sentence
+  instead of passing English through — `child_overflow` (a column or
+  `x`/`y`-positioned child past its parent's content box, named on the
+  CHILD; a row child is reported once, by the row-level check),
+  `sheet_overflow` (a band / absolute-body item past the edge of the
+  **sheet**, a `line`'s endpoints included), and `grid_column_overflow`
+  (a grid child wider than its column-track run, beside the existing
+  row-track `grid_cell_overflow`). The sheet rather than the margin box
+  is what reconciles the check with the deliberate page-margin escape
+  hatch: reaching into the margins is a designed-for move, leaving the
+  paper is not. Filling items never warn, and `overflow: hidden` parents
+  clip by intent and stay silent (the `container_overflow` convention).
+  `child_overflow` states the overflow MAGNITUDE and never a side —
+  cross-axis alignment runs after the check and can push the excess
+  left.
+- **`line` endpoints are full lengths**: `from`/`to` take `%`/`em`/`rem`/
+  physical units per axis, so an underline can span a flex child whose
+  width is only decided at layout time (the rirekisho name field). Bare
+  numbers stay pt and round-trip as bare numbers. Capability key
+  `line.length`.
 
 **Core invariant: everything resolves to absolute pt at layout time** —
 the `tree.rs` renderer contract never changes for layout features.

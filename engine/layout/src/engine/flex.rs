@@ -157,7 +157,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // `box.type: grid` takes the static-grid walk; everything else
         // (unset or `flex`) is flex-like.
         if parent_box.type_ == Some(shojiku_core::BoxType::Grid) {
-            return self.layout_grid_children(items, inner, parent_box, depth);
+            return self.layout_grid_children(items, inner, parent_box, depth, clipped);
         }
         let spec = FlexSpec::of(parent_box);
         // Grid spans are inert outside `box.type: grid`; a span key
@@ -203,11 +203,18 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     };
                     flex_idx += 1;
                     if let Some(atom) = self.flex_child_atom(kind, &child_basis, depth) {
+                        // A ROW child is already spoken for by `plan_row`'s
+                        // row-level check; checking it again here would
+                        // report the same overflow twice.
+                        if spec.direction == FlexDirection::Column {
+                            self.check_child_right(&atom, inner, clipped);
+                        }
                         slots.push(Slot::Flex(atom));
                     }
                 }
                 None => {
                     if let Some((atom, dy)) = self.absolute_child_atom(child, inner, depth) {
+                        self.check_child_right(&atom, inner, clipped);
                         slots.push(Slot::Abs(atom, dy));
                     }
                 }

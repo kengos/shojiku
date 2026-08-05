@@ -172,9 +172,11 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 Some((atom, dy))
             }
             Item::Line(line) => {
-                // Line coordinates are already offsets from the box top
-                // (pt only in Phase 1).
-                Some((self.line_atom(line, inner.x), 0.0))
+                // Line endpoints are offsets from the box top-left,
+                // resolved against the container's CONTENT box — so
+                // `to: { x: "100%" }` underlines the full inner width of
+                // a flex child whose share was only known at layout time.
+                Some((self.line_atom(line, inner), 0.0))
             }
             Item::Image(image) => {
                 let atom = self.guarded_image_atom(image, inner)?;

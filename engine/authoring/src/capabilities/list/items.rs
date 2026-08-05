@@ -137,4 +137,10 @@ pub(super) const KEYS: &[&str] = &[
     // (the axis-swapped analog of `lines`; `baseline` is the column-axis
     // x). Older engines omit `text` on vertical items entirely.
     "inspect.text_metrics.vertical",
+    // A `line`'s `from`/`to` endpoints take full `Length` values, not just
+    // bare pt numbers: `to: { x: "100%" }` reaches the right edge of
+    // whatever box the line sits in, so an underline under a flex child
+    // no longer needs a width nobody can know at authoring time. Older
+    // engines reject the string form as a number-typed field.
+    "line.length",
 ];

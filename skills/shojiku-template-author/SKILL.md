@@ -102,9 +102,18 @@ reddens on the first render.
   `{ top: "15mm", right: "15mm", bottom: "15mm", left: "15mm" }`.
 - **Flex row widths**: children without `box.w` split the leftover
   equally — that is the idiom for "N columns". A fixed-width row that
-  exceeds its parent warns `horizontal_overflow`, but absolute-body and
-  band items past the page edge still render **silently** — the preview
-  is the only check there (see the overflow bullet below).
+  exceeds its parent warns `horizontal_overflow`; so does a column or
+  hand-positioned child past its container's content box, and a band /
+  absolute-body item past the edge of the SHEET. Reaching into the page
+  margins stays silent by design (the full-bleed escape hatch), so the
+  preview is still the only check for "did I mean to bleed into the
+  margin".
+- **An underline under a flex child**: `line`'s `from`/`to` take full
+  lengths, so nest the line INSIDE the field and write
+  `to: { x: "100%" }` — the field's width is a row share nobody can type
+  as a pt value. A line is never itself a flex item (no box to size); it
+  always resolves against its parent's content box, so `padding` insets
+  it.
 - **Showcase code panels indent with NON-BREAKING spaces (U+00A0), not
   ordinary spaces.** A `text: |-` block scalar strips the common leading
   indent, and the text layer then drops the remaining ordinary leading
