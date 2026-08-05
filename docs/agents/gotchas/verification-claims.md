@@ -365,6 +365,22 @@ check whose empty output read as "all covered").
   Reviewing against a pre-fix revision is exactly when this bites. Use
   `grep -a`, or read the blob with a tool that does no binary
   detection.
+- **A special character typed into a tool call may not survive as
+  itself — so a checker that spells it literally can LIE about work that
+  is correct.** A showcase code panel must be indented with NBSP
+  (U+00A0); the generator's `NB = " "` transported fine and the file was
+  right, but the *verifier* written moments later in a separate call had
+  its `NB` arrive as an ordinary space, so `line.startswith(NB)` reported
+  `0 NBSP-indented lines` over a file that had six — and the correct work
+  was reverted on the strength of it. The tell is a second signal
+  disagreeing: the file's own byte count (`perl -ne '/\xc2\xa0/'`) had
+  gone 168 → 174, i.e. exactly the six lines the checker denied. Name any
+  such character by CODE POINT (`"\u00a0"`) on both sides — in the writer
+  and in the check — and prefer a byte-level probe (`perl`, `grep -c`)
+  over an in-language literal for the verification. Before reverting on a
+  checker's say-so, confirm with a tool that reads bytes: a
+  disagreement between two measurements is a measurement bug until proven
+  otherwise, and reverting is the expensive direction to be wrong in.
 - **Writing the escape is where the byte gets in**: an editing tool
   hands the file whatever your content literally contained, so a
   `\u0000` typed into tool-call content can land as a RAW NUL. **This is

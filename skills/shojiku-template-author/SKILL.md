@@ -178,7 +178,12 @@ reddens on the first render.
   inner spaces — `[ a, b ]`, not `[a, b]` — which is also what the
   Designer writes. `make examples` stays green either way; only the gui
   gate catches it, so match the spacing of the neighbouring
-  `styleNames: [ meta ]` lines when adding a list to an example.
+  `styleNames: [ meta ]` lines when adding a list to an example. **A
+  TRAILING BLANK LINE fails the same gate the same way** — the serializer
+  emits exactly one final newline, so a section appended with one `\n`
+  too many reds `roundtrip.test.ts` with a diff whose entire content is a
+  bare `-`. `make examples` passes it happily; end the file with exactly
+  one newline.
 - Custom `page.size` + `orientation` **double-swap** without warning: a
   landscape custom size (`w` > `h`) plus `orientation: landscape` flips
   the page back to portrait. With a custom size, omit `orientation`.
