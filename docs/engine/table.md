@@ -318,7 +318,8 @@ own `data` problems stay on the table item.
 | `invalid_column_width` / `invalid_row_height` / `invalid_cell_padding` | negative geometry; clamped/auto |
 | `header_group_span_clamped` | `headerGroups` spans exceed the columns; clamped/dropped |
 | `row_condition_not_boolean` | an `equals`-less `conditionalStyles` entry targets a non-boolean field |
-| `row_condition_type_mismatch` | a row value's type differs from the entry's `equals`; layer not applied |
+| `row_condition_type_mismatch` | a row value's type differs from the entry's `equals`; layer not applied. With definitions, the DECLARED type is checked the same way at validate |
+| `row_condition_equals_not_declared` | the entry's `equals` literal is outside the field's declared `enum` — a layer that can never apply |
 | `row_condition_value_not_bool` | a row value is not a boolean under an `equals`-less entry; layer not applied |
 | `too_many_row_conditions` | more than 16 `conditionalStyles` entries; the rest are ignored |
 | `ignored_column_key` | `fit` on a non-image column; ignored |

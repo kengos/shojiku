@@ -14,8 +14,22 @@ export const ARRAY_SOURCE_TYPES = new Set(['table', 'repeat', 'repeat_flow', 'li
 /** Item types whose static `text:` the engine interpolates against data
  * (`{key}` / `{key:format}` — see [data-binding docs]); a field driven only
  * through interpolation must still read as used. `list` is separate: its
- * `text:` resolves against the array ENTRY, so its keys are row-relative. */
+ * `text:` resolves against the array ENTRY, one scope further in than the
+ * item sits — [`entryScope`] is where that scope comes from. */
 export const TEXT_INTERPOLATION_TYPES = new Set(['text', 'qr_code']);
+
+/** The scope a `list`'s per-entry keys resolve in: the array it binds,
+ * addressed the way the engine's catalog does — a row-relative key joins its
+ * enclosing scope, a `scope: document` one (or a list at document scope)
+ * names a top-level source. `null` when the list binds nothing. */
+export function entryScope(data: unknown, ambient: string | null): string | null {
+  const key = bindingKey(data);
+  if (key === undefined) {
+    return null;
+  }
+  const scope = bindingScope(data, ambient);
+  return scope === null ? key : `${scope}.${key}`;
+}
 
 export function bindingKey(value: unknown): string | undefined {
   const key = record(value)?.key;

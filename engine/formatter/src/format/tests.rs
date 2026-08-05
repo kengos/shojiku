@@ -79,6 +79,7 @@ pub(super) fn spec(field_type: FieldType) -> FieldSpec {
         formats: vec![],
         placeholder: None,
         enum_labels: vec![],
+        enum_values: vec![],
     }
 }
 

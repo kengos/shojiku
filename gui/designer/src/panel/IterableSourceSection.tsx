@@ -54,7 +54,18 @@ export function IterableSourceSection({
         label={t('panel.field.dataKey')}
         value={dataKey}
         onCommit={(v) => dispatch(bindingKeyOp(path, v))}
-        {...sourceScopeProps(controller, path, sourceOptions(groups), dataScope, capabilities)}
+        {...sourceScopeProps(
+          controller,
+          path,
+          sourceOptions(groups),
+          dataScope,
+          capabilities,
+          // Only a `list` may bind an array its enclosing ROW carries: a
+          // `repeat_flow` nested in a cell is skipped by layout the way a
+          // nested repeat is, so offering it one would author a source that
+          // never draws.
+          entryText === null ? null : groups,
+        )}
       />
       {entryText === null ? null : (
         <Field label={t('panel.field.entryText')}>

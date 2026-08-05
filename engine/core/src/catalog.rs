@@ -4,12 +4,21 @@
 //! reduces to the same dotted-key lookup tables the validator and the
 //! formatter always consumed, so nothing downstream knows the wire shape
 //! changed. Nested objects flatten to dotted scalar keys
-//! (`receipt.number`); an array property registers under its dotted path
-//! with its row fields keyed relative to one element.
+//! (`receipt.number`); an array property registers as an [`ArrayGroup`]
+//! under its dotted path, with its row fields keyed relative to one
+//! element — and a row's own array child registers as a group of its own
+//! under the joined path (`orders.items`), so a nested source is as
+//! addressable as a top-level one.
+//!
+//! The walk is recursive and takes no depth argument: `MAX_SCHEMA_DEPTH`
+//! is enforced at parse (`definitions::shape`), which bounds every walk
+//! over a parsed schema — the same arrangement the template tree relies
+//! on. Pinned by `nesting_at_the_parse_cap_flattens`.
 
-use crate::definitions::{Definitions, FieldType, Schema, SchemaType};
+use crate::definitions::{Definitions, FieldType};
 use std::collections::{HashMap, HashSet};
 
+mod flatten;
 #[cfg(test)]
 mod tests;
 
@@ -38,6 +47,40 @@ pub struct FieldSpec {
     /// render through their own formatter (validation warns there).
     /// Matched by VALUE equality, exactly as enum membership is.
     pub enum_labels: Vec<(serde_json::Value, String)>,
+    /// Every declared `enum` member's VALUE, in authored order, for EVERY
+    /// field type — the closed set a template-side `equals` literal is
+    /// checked against. Distinct from [`FieldSpec::enum_labels`], which is
+    /// presentation and exists for plain text fields only.
+    pub enum_values: Vec<serde_json::Value>,
+}
+
+/// What the schema says about ONE element of an array source.
+#[derive(Debug, Clone)]
+pub enum ArrayElement {
+    /// `items:` declares an object — the element's fields are known, and
+    /// live in the group's field table.
+    Object,
+    /// `items:` declares a scalar — one spec, no fields.
+    Scalar(Box<FieldSpec>),
+    /// No `items:`, or an element the catalog does not model (an array of
+    /// arrays): the element shape is UNKNOWN, so every check that would
+    /// read it stays silent rather than guessing.
+    Undeclared,
+}
+
+/// One array source: what a `table` / `repeat` / `repeat_flow` / `list`
+/// binds to. Reached only through [`Catalog`]'s accessors, never handed
+/// out.
+#[derive(Debug, Clone)]
+pub(crate) struct ArrayGroup {
+    /// Leaf fields of one element, keyed relative to it (nested row
+    /// objects flatten to dotted relative keys).
+    fields: HashMap<String, FieldSpec>,
+    /// Row-relative keys that are themselves ARRAYS (a list inside a
+    /// repeat cell). Each also registers as a group of its own under the
+    /// joined dotted path.
+    row_arrays: HashSet<String>,
+    element: ArrayElement,
 }
 
 /// Lookup tables built from [`Definitions`].
@@ -45,19 +88,17 @@ pub struct FieldSpec {
 pub struct Catalog {
     /// Scalar fields keyed by full dotted path (`order.code`).
     scalars: HashMap<String, FieldSpec>,
-    /// Array sources: dotted array path -> (row-relative key -> spec).
-    arrays: HashMap<String, HashMap<String, FieldSpec>>,
-    /// Row-relative ARRAY keys per array source (a list inside a repeat
-    /// cell): declared shape, no scalar spec — binding checks accept the
-    /// key, layout checks the value.
-    row_arrays: HashMap<String, HashSet<String>>,
+    /// Array sources keyed by full dotted path — top-level (`items`),
+    /// nested in an object (`order.lines`), or carried by another array's
+    /// rows (`orders.items`).
+    arrays: HashMap<String, ArrayGroup>,
 }
 
 impl Catalog {
     pub fn from_definitions(defs: &Definitions) -> Self {
         let mut catalog = Catalog::default();
         for (name, schema) in &defs.properties {
-            flatten(name.clone(), schema, &mut catalog);
+            flatten::flatten(name.clone(), schema, &mut catalog);
         }
         catalog
     }
@@ -74,104 +115,43 @@ impl Catalog {
 
     /// Looks up a field inside an array source by row-relative key.
     pub fn array_field(&self, array_key: &str, field_key: &str) -> Option<&FieldSpec> {
-        self.arrays.get(array_key)?.get(field_key)
+        self.arrays.get(array_key)?.fields.get(field_key)
     }
 
     /// Whether `field_key` is a declared row-relative ARRAY of the source
-    /// (a list bound inside its cell/card).
+    /// (a list bound inside its cell/card). The nested source itself is
+    /// registered under `<array_key>.<field_key>`.
     pub fn row_array(&self, array_key: &str, field_key: &str) -> bool {
-        self.row_arrays
+        self.arrays
             .get(array_key)
-            .is_some_and(|keys| keys.contains(field_key))
+            .is_some_and(|group| group.row_arrays.contains(field_key))
+    }
+
+    /// What the schema declares about one element of the array source —
+    /// `None` when the key names no array source at all.
+    pub fn array_element(&self, array_key: &str) -> Option<&ArrayElement> {
+        self.arrays.get(array_key).map(|group| &group.element)
     }
 
     /// Whether any field (scalar or array source) with this key exists.
     pub fn contains(&self, key: &str) -> bool {
         self.scalars.contains_key(key) || self.arrays.contains_key(key)
     }
-}
 
-/// Registers one top-level-or-nested property under its dotted prefix.
-fn flatten(prefix: String, schema: &Schema, catalog: &mut Catalog) {
-    match schema.schema_type {
-        SchemaType::Object => {
-            for (name, child) in &schema.properties {
-                flatten(format!("{prefix}.{name}"), child, catalog);
-            }
-        }
-        SchemaType::Array => {
-            let mut fields = HashMap::new();
-            let mut row_arrays = HashSet::new();
-            if let Some(items) = &schema.items {
-                if items.schema_type == SchemaType::Object {
-                    collect_row(None, items, &mut fields, &mut row_arrays);
-                }
-            }
-            catalog.arrays.insert(prefix.clone(), fields);
-            catalog.row_arrays.insert(prefix, row_arrays);
-        }
-        _ => {
-            catalog.scalars.insert(prefix, spec_from(schema));
-        }
-    }
-}
-
-/// Collects one array row's leaf fields, keys relative to the element
-/// (nested row objects flatten to dotted relative keys). A row's own ARRAY
-/// child (a list inside a repeat cell) registers its KEY only — binding
-/// checks accept it, layout checks the value shape.
-fn collect_row(
-    prefix: Option<&str>,
-    row: &Schema,
-    fields: &mut HashMap<String, FieldSpec>,
-    row_arrays: &mut HashSet<String>,
-) {
-    for (name, child) in &row.properties {
-        let key = match prefix {
-            Some(prefix) => format!("{prefix}.{name}"),
-            None => name.clone(),
+    /// The catalog path of the array a source key names from inside
+    /// `scope`: a row-relative key resolves ONLY against its parent's
+    /// path, and a document-scope key (the `scope: document` escape, or
+    /// no enclosing scope at all) only against the top level. There is
+    /// deliberately no fallback between them — a row-relative `items`
+    /// must not silently resolve to a top-level array that happens to
+    /// share the name, since layout reads it from the ROW. `None` back
+    /// means no declared source, and the caller then stays silent rather
+    /// than guessing.
+    pub fn resolve_array_path(&self, scope: Option<&str>, key: &str) -> Option<String> {
+        let path = match scope {
+            Some(parent) => format!("{parent}.{key}"),
+            None => key.to_string(),
         };
-        match child.schema_type {
-            SchemaType::Object => collect_row(Some(&key), child, fields, row_arrays),
-            SchemaType::Array => {
-                row_arrays.insert(key);
-            }
-            _ => {
-                fields.insert(key, spec_from(child));
-            }
-        }
-    }
-}
-
-/// The declared value→label pairs, for a plain-text field only. A bare
-/// member contributes nothing (it renders its value); every other field
-/// type drops the labels here and warns at validate.
-fn enum_labels_of(schema: &Schema) -> Vec<(serde_json::Value, String)> {
-    if schema.field_type() != FieldType::String {
-        return Vec::new();
-    }
-    let mut out = Vec::new();
-    for entry in schema.enum_values.as_deref().unwrap_or_default() {
-        if let Some(label) = entry.label() {
-            out.push((entry.value().clone(), label.to_string()));
-        }
-    }
-    out
-}
-
-fn spec_from(schema: &Schema) -> FieldSpec {
-    FieldSpec {
-        field_type: schema.field_type(),
-        currency: schema.currency.clone(),
-        precision: schema.precision,
-        unit: schema.unit.clone(),
-        format: schema.display_format.clone(),
-        formats: schema
-            .display_formats
-            .iter()
-            .map(|f| f.id.clone())
-            .collect(),
-        placeholder: schema.placeholder.clone(),
-        enum_labels: enum_labels_of(schema),
+        self.arrays.contains_key(&path).then_some(path)
     }
 }

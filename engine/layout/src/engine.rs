@@ -191,7 +191,16 @@ impl Ctx<'_, '_> {
 #[derive(Clone)]
 struct Scope {
     element: Rc<Value>,
+    /// The key exactly as the template AUTHORED it — row-relative inside
+    /// an enclosing scope. It is the asset identity
+    /// (`shojiku_image::cell_asset_key`), which must keep matching what
+    /// `prepare_assets` precomputed, so it is never rewritten.
     array_key: String,
+    /// The same array's full dotted path in the definitions catalog —
+    /// equal to `array_key` at document scope, joined with the enclosing
+    /// scope's path for a nested source (`orders.items`). Field specs
+    /// (format, placeholder, enum labels) are looked up under THIS key.
+    catalog_key: String,
     index: usize,
 }
 

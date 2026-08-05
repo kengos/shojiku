@@ -4,6 +4,7 @@
 
 mod cell;
 mod decl;
+mod entry;
 pub(super) use cell::{check_cell_bindings, CellScope};
 pub(super) use decl::check_declarations;
 
@@ -211,8 +212,8 @@ pub(super) fn walk_item<F: FnMut(&str, Option<&str>, Option<&str>, &str)>(
         // Table, repeat, and list bindings are array-scoped, not scalar:
         // table/repeat/repeat_flow are validated separately in `validate`;
         // a list's array key is checked against params at layout
-        // (`missing_data` / `not_an_array`), and definitions do not model
-        // nested arrays at all.
+        // (`missing_data` / `not_an_array`), and its per-entry keys
+        // against the element scope in [`entry`].
         Item::Table(_) | Item::Repeat(_) | Item::RepeatFlow(_) | Item::List(_) => {}
     }
 }

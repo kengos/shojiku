@@ -113,7 +113,12 @@ Wire types stay in core; content measurement stays in layout.
 - `engine/list.rs` — `type: list`: scope-aware array → one line/entry,
   per-entry ellipsis, overflow `{count}` line; routes `VerticalRl` to
   `engine/list/vertical.rs` (right→left columns, axis-swapped overflow
-  column, shared `vcol` down-clamp).
+  column, shared `vcol` down-clamp). `EntryKeys` carries the array's TWO
+  identities to each entry — the AUTHORED key (`Scope.array_key`, the
+  asset identity `shojiku_image::cell_asset_key` must keep matching) and
+  its definitions-catalog path (`Scope.catalog_key`, joined with the
+  enclosing scope's for a nested source, which is what makes a nested
+  entry's field specs resolve at all).
 - `engine/predicate.rs` — the shared `{ key, equals? }` truth table
   (`eval_predicate` → Apply|Skip|TypeMismatch|NotBool), `Ctx`-free; used by
   form marks AND table conditional row styles.

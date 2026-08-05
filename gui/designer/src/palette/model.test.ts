@@ -1,7 +1,7 @@
 import { MAX_TEMPLATE_BYTES } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
 import { MAX_PALETTE_FIELDS, MAX_PALETTE_GROUPS, MAX_TEXT_CHARS } from './caps';
-import { readDefinitionsView } from './model';
+import { type PaletteGroup, readDefinitionsView, rowScopeLabel } from './model';
 
 const DEFINITIONS = [
   'version: "0.2.0"',
@@ -132,9 +132,73 @@ describe('readDefinitionsView', () => {
     );
     expect(groups?.map((g) => g.id)).toEqual(['order', 'order.lines']);
     expect(groups?.[1].isArray).toBe(true);
-    // Row fields flatten to dotted RELATIVE keys; arrays inside rows are
-    // engine-rejected and the display walk skips them.
+    expect(groups?.[1].rowScope).toBeUndefined();
+    // Row fields flatten to dotted RELATIVE keys.
     expect(groups?.[1].fields.map((f) => f.key)).toEqual(['shipping.weight']);
+  });
+
+  it('surfaces an array carried by another array’s rows, scoped to its parent', () => {
+    // The shipping-labels shape: each order carries its own list of items.
+    const groups = readDefinitionsView(
+      [
+        'type: object',
+        'properties:',
+        '  orders:',
+        '    type: array',
+        '    items:',
+        '      type: object',
+        '      properties:',
+        '        name:',
+        '          type: string',
+        '        items:',
+        '          type: array',
+        '          title: 内容品',
+        '          items:',
+        '            type: object',
+        '            properties:',
+        '              title:',
+        '                type: string',
+        '',
+      ].join('\n'),
+    );
+    expect(groups?.map((g) => g.id)).toEqual(['orders', 'orders.items']);
+    // The nested source is NOT a leaf field of its parent.
+    expect(groups?.[0].fields.map((f) => f.key)).toEqual(['name']);
+    expect(groups?.[0].rowScope).toBeUndefined();
+    const nested = groups?.[1];
+    expect(nested?.isArray).toBe(true);
+    // Only bindable from inside `orders`, so the parent is recorded.
+    expect(nested?.rowScope).toBe('orders');
+    expect(nested?.label).toBe('内容品');
+    expect(nested?.fields.map((f) => f.key)).toEqual(['title']);
+  });
+
+  it('scopes a row array declared under a nested row object to the same parent', () => {
+    const groups = readDefinitionsView(
+      [
+        'type: object',
+        'properties:',
+        '  orders:',
+        '    type: array',
+        '    items:',
+        '      type: object',
+        '      properties:',
+        '        ship:',
+        '          type: object',
+        '          properties:',
+        '            parcels:',
+        '              type: array',
+        '              items:',
+        '                type: object',
+        '                properties:',
+        '                  code:',
+        '                    type: string',
+        '',
+      ].join('\n'),
+    );
+    expect(groups?.map((g) => g.id)).toEqual(['orders', 'orders.ship.parcels']);
+    expect(groups?.[1].rowScope).toBe('orders');
+    expect(groups?.[1].fields.map((f) => f.key)).toEqual(['code']);
   });
 
   it('skips garbage property entries field-by-field', () => {
@@ -325,3 +389,68 @@ describe('readDefinitionsView', () => {
  * `bindings.test.ts`, which owns the walk itself: the two suites assert over
  * the same document from opposite ends, and a shared fixture MODULE would be
  * neither budget-exempt nor coverage-excluded. */
+
+// Node types are referenced HERE only (the base tsconfig sets `types: []`):
+// this block reads a bundled example off disk, so the claim is about the
+// SHIPPED schema rather than a fixture written to agree with the walk.
+/// <reference types="node" />
+
+describe('readDefinitionsView over a bundled example', () => {
+  it('surfaces the shipping labels’ per-order item list as its own scoped group', async () => {
+    // `import.meta.url` is an http URL under this package's jsdom
+    // environment, so the path is resolved from the package directory.
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const source = readFileSync(
+      resolve(process.cwd(), '../../examples/business/shipping-labels-ja/definitions.yml'),
+      'utf8',
+    );
+    const groups = readDefinitionsView(source);
+    expect(groups?.map((g) => g.id)).toEqual(['orders', 'orders.items']);
+    const nested = groups?.[1];
+    expect(nested?.rowScope).toBe('orders');
+    // The example declares string entries, so the group carries no fields —
+    // what matters is that the source is VISIBLE at all: the `list` on the
+    // label binds it, and the palette used to drop it silently.
+    expect(nested?.fields).toEqual([]);
+    expect(nested?.label).toBe('内容品');
+  });
+});
+
+describe('rowScopeLabel', () => {
+  const nested: PaletteGroup = {
+    id: 'orders.items',
+    label: '内容品',
+    description: '',
+    isArray: true,
+    rowScope: 'orders',
+    fields: [],
+  };
+
+  it('names the parent group a source is carried by', () => {
+    const parent: PaletteGroup = {
+      id: 'orders',
+      label: '注文',
+      description: '',
+      isArray: true,
+      fields: [],
+    };
+    expect(rowScopeLabel([parent, nested], nested)).toBe('注文');
+  });
+
+  it('falls back to the parent id when the parent is untitled or absent', () => {
+    const untitled: PaletteGroup = {
+      id: 'orders',
+      label: '',
+      description: '',
+      isArray: true,
+      fields: [],
+    };
+    expect(rowScopeLabel([untitled, nested], nested)).toBe('orders');
+    expect(rowScopeLabel([nested], nested)).toBe('orders');
+  });
+
+  it('says nothing about a group bindable at document scope', () => {
+    expect(rowScopeLabel([nested], { ...nested, rowScope: undefined })).toBeUndefined();
+  });
+});

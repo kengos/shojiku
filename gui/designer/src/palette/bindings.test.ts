@@ -720,3 +720,58 @@ describe('readBindings — `scope: document` escapes the row', () => {
     expect(readBindings(source)[1]?.scope).toBe('items');
   });
 });
+
+describe('a nested list’s entries', () => {
+  const NESTED = [
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - type: repeat',
+    '        data: { key: orders }',
+    '        cell:',
+    '          items:',
+    '            - type: list',
+    '              data: { key: items }',
+    '              text: "{title} ×{qty}"',
+    '            - type: list',
+    '              data: { key: releases, scope: document }',
+    '              text: "{name}"',
+    '            - type: list',
+    '              text: "{orphan}"',
+    '',
+  ].join('\n');
+
+  it('count under the array’s own scope — joined for a row-carried source', () => {
+    const usage = buildUsage(readBindings(NESTED));
+    // The row-carried list: its entry keys belong to `orders.items`, NOT to
+    // `orders` (where they would mark the ORDER's fields as used) and not to
+    // a bare `items` (which no group is keyed by).
+    expect(usage.rows.get('orders.items')?.get('title')).toEqual([
+      'sections.body.items[0].cell.items[0]',
+    ]);
+    expect(usage.rows.get('orders')?.get('title')).toBeUndefined();
+    expect(usage.rows.get('items')).toBeUndefined();
+    // The list itself is still a row-relative SOURCE binding of `orders`.
+    expect(usage.rows.get('orders')?.get('items')).toEqual([
+      'sections.body.items[0].cell.items[0]',
+    ]);
+  });
+
+  it('escape to the top level with the list, when it does', () => {
+    const usage = buildUsage(readBindings(NESTED));
+    expect(usage.rows.get('releases')?.get('name')).toEqual([
+      'sections.body.items[0].cell.items[1]',
+    ]);
+  });
+
+  it('contribute nothing when the list binds no array at all', () => {
+    const usage = buildUsage(readBindings(NESTED));
+    const scopes = [...usage.rows.keys()];
+    expect(scopes).not.toContain('orphan');
+    for (const [, fields] of usage.rows) {
+      expect(fields.has('orphan')).toBe(false);
+    }
+    expect(usage.scalar.has('orphan')).toBe(false);
+  });
+});

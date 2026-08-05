@@ -11,9 +11,14 @@ interface GroupSectionProps {
   readonly usage: UsageIndex;
   readonly onPick: (id: string, paths: readonly string[]) => void;
   readonly drag?: PaletteDrag;
+  /** The display label of the group whose ROWS carry this one, when they do.
+   * A nested source shows its own title like any other group, so without
+   * this the reader cannot tell 「内容品」 (per order) from a top-level list
+   * of the same name — and the two are bound in different scopes. */
+  readonly parentLabel?: string;
 }
 
-export function GroupSection({ group, usage, onPick, drag }: GroupSectionProps) {
+export function GroupSection({ group, usage, onPick, drag, parentLabel }: GroupSectionProps) {
   const { t } = useI18n();
   const sourcePaths = groupUsage(usage, group);
   // Top-level scalar fields gather into one unlabeled group; the model keeps
@@ -27,13 +32,22 @@ export function GroupSection({ group, usage, onPick, drag }: GroupSectionProps) 
           {t('palette.array')}
         </span>
       ) : null}
+      {parentLabel === undefined ? null : (
+        <span className="rounded-full border border-border px-2 text-sm font-normal text-muted">
+          {t('palette.rowScope', { group: parentLabel })}
+        </span>
+      )}
     </>
   );
   // An array group's HEADING drags its default scaffold onto the canvas; the
   // pointer handlers ride the h3 so both the bound (button) and unbound
-  // (plain) headings arm the same drag.
+  // (plain) headings arm the same drag. A `rowScope` group is bindable only
+  // from inside its parent's cell, with a row-relative key, so it is shown
+  // but never dragged — a scaffold from here would author a document-scope
+  // source path that resolves to nothing.
+  const draggableGroup = group.isArray && group.rowScope === undefined;
   const groupDragProps =
-    drag === undefined || !group.isArray
+    drag === undefined || !draggableGroup
       ? {}
       : {
           onPointerDown: (event: React.PointerEvent<Element>) =>
@@ -42,7 +56,7 @@ export function GroupSection({ group, usage, onPick, drag }: GroupSectionProps) 
           onPointerUp: drag.up,
           onPointerCancel: drag.cancel,
         };
-  const groupDraggableClass = drag !== undefined && group.isArray ? ' cursor-grab touch-none' : '';
+  const groupDraggableClass = drag !== undefined && draggableGroup ? ' cursor-grab touch-none' : '';
   return (
     <section className="mb-4" aria-label={label}>
       <h3
@@ -81,8 +95,10 @@ export function GroupSection({ group, usage, onPick, drag }: GroupSectionProps) 
             group={group.isArray ? group.id : null}
             // An array group's field drags too, but only INTO a cell whose
             // rows come from that same group — the planner refuses the rest,
-            // and a refused hover paints nothing.
-            drag={drag}
+            // and a refused hover paints nothing. A row-scoped group has no
+            // such cell to drop into (its own source cannot be bound at
+            // document scope), so its rows alone stay display-only.
+            drag={group.rowScope === undefined ? drag : undefined}
           />
         ))}
       </ul>

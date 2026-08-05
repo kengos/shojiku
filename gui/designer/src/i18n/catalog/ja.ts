@@ -39,11 +39,15 @@ export const ja: LanguageCatalog = {
     mark_binding_not_boolean:
       '`{key}` は真偽値フィールドではありません。`equals` のないマークには真偽値が必要です',
     mark_equals_type_mismatch: '`{key}` の値の型が `equals` と異なります。マークは描画されません',
+    mark_equals_not_declared:
+      '`{key}` の `enum` にこの `equals` の値がありません。マークは決して描画されません',
     mark_value_not_bool: '`{key}` は真偽値ではありません。マークは描画されません',
     row_condition_not_boolean:
       '`{key}` は真偽値フィールドではありません。`equals` のない行条件には真偽値が必要です',
     row_condition_type_mismatch:
       '`{key}` の値の型が `equals` と異なります。行スタイルは適用されません',
+    row_condition_equals_not_declared:
+      '`{key}` の `enum` にこの `equals` の値がありません。行スタイルは決して適用されません',
     row_condition_value_not_bool: '`{key}` は真偽値ではありません。行スタイルは適用されません',
     empty_link_url: 'リンク URL が空です。リンクは無視されました',
     unsupported_link_scheme:
@@ -762,6 +766,7 @@ export const ja: LanguageCatalog = {
     'palette.used': '{count, number}箇所で使用',
     'palette.unused': '未使用',
     'palette.array': '繰り返し',
+    'palette.rowScope': '{group} の中',
     'palette.ungrouped': 'その他のフィールド',
     'palette.type.string': 'テキスト',
     'palette.type.number': '数値',

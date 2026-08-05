@@ -21,7 +21,7 @@ box is a fixed slot; in a flow an auto-height list simply grows.
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `data` | `{ key }` | required | The array to render — a params key, or inside a `repeat` cell / `repeat_flow` card a field of the bound element (scope-aware). `scope: document` reads the top-level array even from inside a cell — see [data-binding.md](data-binding.md#scope--the-escape-back-to-the-document). |
-| `text` | string | unset | Per-entry template with `{key}` interpolation against the entry object. Unset: scalar entries print directly (strings as-is, numbers in plain form — no locale formatting). |
+| `text` | string | unset | Per-entry template with `{key}` interpolation against the entry object. The keys are the fields the array's `items:` schema declares, so a typo warns `unknown_data_key` at validate; each resolves through its declared field spec (display format, `placeholder`, `enum` label). Unset: scalar entries print directly (strings as-is, numbers in plain form — no locale formatting). |
 | `bindings` | map of name → binding | unset | Named declarations for the `{name}` interpolations in `text`. They resolve per ENTRY like `text` itself, unless one authors `scope: document` ([data-binding.md](data-binding.md#named-binding-declarations)). |
 | `overflowText` | string | `+{count}` | Template for the trailing overflow line; `{count}` = the number of entries that did **not** fit. |
 | `box` / `style` / `styleNames` | | | Usual forms; the text properties style every line. |
@@ -45,6 +45,7 @@ box is a fixed slot; in a flow an auto-height list simply grows.
 | Code | Meaning |
 | --- | --- |
 | `missing_data` / `not_an_array` | array source problems |
+| `unknown_data_key` | a `text:` key (or a `bindings:` declaration) that the array's declared element does not carry. Silent when no definitions declare the source, or when its `items:` is absent — an unknown shape claims nothing. |
 
 Capability key: `list`.
 

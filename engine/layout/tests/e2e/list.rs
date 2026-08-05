@@ -3,6 +3,7 @@
 //! the hostile-array cap. The vertical (縦書き) list lives in
 //! [`vertical`].
 
+mod nested;
 mod vertical;
 mod vertical_combine;
 

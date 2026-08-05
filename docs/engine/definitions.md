@@ -178,8 +178,12 @@ array is NOT blank and stays subject to `minItems`.
   nested); its columns/cells then bind row-relative field keys (dotted
   through nested row objects).
 - A row's own `type: array` child (a `list` inside a repeat cell) is a
-  declared row-relative array: binding checks accept its key; the value
-  shape is layout's check.
+  data source in its own right. Its key is bound row-relatively
+  (`data: { key: items }` inside the cell), and its `items:` schema
+  describes ONE ENTRY — so the list's per-entry `text:` keys are checked
+  against it, and those entries carry their declared display formats,
+  `placeholder` and `enum` labels exactly as a top-level array's rows do.
+  Nesting is not limited to one level.
 - A `format:` variant on a binding must appear in that field's
   `displayFormats` list, the template's `formats:` registry, the
   currency variants (`default`/`symbol`/`name` on a currency field;

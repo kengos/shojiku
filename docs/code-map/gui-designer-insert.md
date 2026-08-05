@@ -39,22 +39,33 @@ succeeded.
 - `palette/schemaWalk.ts` — the definitions schema walk: `leafField`,
   `collectFields` (object groups flatten to dotted full keys; nested
   array properties surface as their own groups), `collectRowFields`
-  (row-relative keys; arrays inside rows are engine-rejected and just
-  skipped), `arrayGroup`. Depth- and count-bounded.
+  (row-relative keys; a row's own ARRAY child becomes a group of its own
+  under the joined dotted path, carrying `rowScope` = its parent group —
+  the engine models it, but it is bindable only from inside that
+  parent's cell, so the palette shows it and arms NO drag and
+  `insert/iterableModel`'s `arrayGroups` filters it out), `arrayGroup`.
+  Depth- and count-bounded.
 - `palette/model.ts` — the palette's view types (`PaletteField`,
-  `PaletteGroup`) + `readDefinitionsView`: the `properties` tree →
-  groups, `null` for anything unparseable/oversized/the retired v1
-  `groups:` form. The widely-imported surface of the area.
+  `PaletteGroup`, whose `rowScope` names the group whose ROWS carry this
+  one) + `readDefinitionsView`: the `properties` tree → groups, `null`
+  for anything unparseable/oversized/the retired v1 `groups:` form; +
+  `rowScopeLabel` (the parent's display label for the heading badge,
+  falling back to the parent id). The widely-imported surface of the
+  area.
 - `palette/bindings.ts` — the template walk → `BindingRef {path, key,
   scope, source}`; unparseable text yields `[]`, never a throw.
 - `palette/bindingRefs.ts` — its per-item helpers: `bindingKey`,
   `bindingScope` (`scope: document` files a ref at document scope even
-  inside a cell), `collectInterpolations` + `pushInterpolated` (`{key}`
-  refs and `bindings:` declarations resolved via `text/declModel`; one
-  ref per distinct (key, scope)).
+  inside a cell), `entryScope` (a `list`'s per-entry keys resolve one
+  scope FURTHER IN — against the array it binds, addressed the way the
+  engine's catalog does, so a row-carried source joins its parent's
+  path), `collectInterpolations` + `pushInterpolated` (`{key}` refs and
+  `bindings:` declarations resolved via `text/declModel`; one ref per
+  distinct (key, scope)).
 - `palette/usage.ts` — `buildUsage` (→ real `Map`s; binding keys are
   attacker-influenced, so `__proto__` stays inert) + `fieldUsage` /
-  `groupUsage`.
+  `groupUsage` (a `rowScope` group is bound row-relatively, so its usage
+  sits in its PARENT's row map under the trailing key).
 - `palette/filter.ts` — `filterGroups`: plain `includes`, never a
   RegExp; a group-level hit keeps the whole group.
 - `palette/FieldPalette.tsx` — the read-only grouped/searchable panel

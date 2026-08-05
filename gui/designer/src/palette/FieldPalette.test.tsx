@@ -236,6 +236,97 @@ describe('FieldPalette — drag-to-bind wiring', () => {
     });
   });
 
+  it('names the parent group on a row-carried source, falling back to its id', () => {
+    // Two sources can legitimately share a title — one per order, one for the
+    // document — and they are bound in different scopes, so the heading has
+    // to say which is which.
+    const definitions = [
+      'type: object',
+      'properties:',
+      '  orders:',
+      '    type: array',
+      '    title: Orders',
+      '    items:',
+      '      type: object',
+      '      properties:',
+      '        items:',
+      '          type: array',
+      '          title: Contents',
+      '          items:',
+      '            type: object',
+      '            properties:',
+      '              title:',
+      '                type: string',
+      '',
+    ].join('\n');
+    draw({ definitions, templateText: 'sections:\n  body:\n    type: flow\n    items: []\n' });
+    expect(screen.getByText('Inside Orders')).toBeDefined();
+
+    // A parent with no title of its own: the heading falls back to the id it
+    // is addressed by, never to nothing.
+    const untitled = definitions.replace('    title: Orders\n', '');
+    draw({
+      definitions: untitled,
+      templateText: 'sections:\n  body:\n    type: flow\n    items: []\n',
+    });
+    expect(screen.getAllByText('Inside orders').length).toBeGreaterThan(0);
+  });
+
+  it('never arms a drag for an array carried by another array’s rows', () => {
+    // `orders.items` is bindable only from inside an `orders` cell, with a
+    // row-relative key: dragging its heading would author a document-scope
+    // scaffold whose source path resolves to nothing, and its rows have no
+    // cell to be dropped into. Both stay display-only — while the
+    // document-scope array group beside it keeps its drag.
+    const drag = makeDrag();
+    const definitions = [
+      'type: object',
+      'properties:',
+      '  orders:',
+      '    type: array',
+      '    title: Orders',
+      '    items:',
+      '      type: object',
+      '      properties:',
+      '        name:',
+      '          type: string',
+      '          title: Recipient',
+      '        items:',
+      '          type: array',
+      '          title: Contents',
+      '          items:',
+      '            type: object',
+      '            properties:',
+      '              title:',
+      '                type: string',
+      '                title: Product',
+      '',
+    ].join('\n');
+    draw({
+      definitions,
+      templateText: 'sections:\n  body:\n    type: flow\n    items: []\n',
+      drag,
+    });
+
+    const nestedHeading = screen.getByText('Contents');
+    fireEvent.pointerDown(nestedHeading, { pointerId: 1, isPrimary: true, clientX: 5, clientY: 5 });
+    const nestedField = screen.getByText('Product').closest('.sj-palette-field');
+    expect(nestedField).not.toBeNull();
+    if (nestedField !== null) {
+      fireEvent.pointerDown(nestedField, { pointerId: 2, isPrimary: true, clientX: 5, clientY: 5 });
+    }
+    expect(drag.begin).not.toHaveBeenCalled();
+
+    // The control: the parent group is document-scope and still drags.
+    fireEvent.pointerDown(screen.getByText('Orders'), {
+      pointerId: 3,
+      isPrimary: true,
+      clientX: 5,
+      clientY: 5,
+    });
+    expect(drag.begin).toHaveBeenCalledTimes(1);
+  });
+
   it('arms an array-group field with its GROUP id, so the planner can place it', () => {
     // A row-relative key resolves only inside a cell fed by that same group;
     // carrying the id is what lets the drop planner tell those cells apart

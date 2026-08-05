@@ -15,6 +15,30 @@ platform binaries.
 
 ### Added
 
+- **A list inside a repeat cell now knows what its entries are.** When a
+  row of your data carries its own array — the contents of each parcel on
+  a shipping label, say — that array is a data source like any other. Its
+  fields are checked when you validate, so a typo in the entry template
+  (`{tilte}`) is reported against the template instead of quietly
+  printing nothing, and each entry now formats the way you declared it:
+  currency, dates, `placeholder` for a blank, and `enum` display labels
+  all apply, where before they silently did not one level in. Nothing
+  about the file format changed — `definitions.yml` always accepted this
+  shape, and the engine now reads all of it. The Designer keeps up: such
+  an array appears in the field palette, badged with the group it
+  belongs to (so two sources named 内容品 are told apart), its "used"
+  count is correct, and the data-source picker offers it to a list
+  inside that group's cell — picking it writes the row-relative key,
+  with no scope escape, because that is what the engine reads. It used
+  to be left out of the palette entirely.
+
+- **A never-matching `equals` is now reported before you render.** A form
+  mark or a table row-condition whose `equals` is a different kind of
+  value than the field declares (`equals: 2` against a text field), or a
+  value outside the field's declared `enum` (`equals: fier` against
+  `[fire, flood]`), can never match anything — `validate` says so now,
+  naming the field. The value you wrote is never echoed back.
+
 - **You can now sign with a key that never enters your application.**
   When the private key lives in a cloud KMS, an HSM or a smartcard,
   signing splits into two calls: Shojiku hands out the bytes a signature

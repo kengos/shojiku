@@ -31,7 +31,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // Cloning the `Rc`/key is cheap and releases the borrow on `self`.
         let scope = self.scope.clone();
         let (row, array_key) = match &scope {
-            Some(s) => (Some(s.element.as_ref()), Some(s.array_key.as_str())),
+            Some(s) => (Some(s.element.as_ref()), Some(s.catalog_key.as_str())),
             None => (None, None),
         };
         if let Some(binding) = data {

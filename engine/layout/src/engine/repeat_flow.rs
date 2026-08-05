@@ -49,6 +49,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 layouter.add_gap(gap);
             }
             self.scope = Some(Scope {
+                catalog_key: key.clone(),
                 element: Rc::new(element),
                 array_key: key.clone(),
                 index: i,

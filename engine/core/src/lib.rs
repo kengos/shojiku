@@ -25,7 +25,7 @@ mod template;
 mod validate;
 mod yaml_guard;
 
-pub use catalog::{Catalog, FieldSpec};
+pub use catalog::{ArrayElement, Catalog, FieldSpec};
 pub use definitions::{
     parse_definitions, Definitions, EnumEntry, FieldType, FormatVariant, LabeledEnumValue, Schema,
     SchemaType, MAX_ENUM_VALUES, MAX_SCHEMA_DEPTH, MAX_SCHEMA_NODES,

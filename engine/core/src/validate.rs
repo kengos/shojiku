@@ -12,6 +12,7 @@ mod bindings;
 mod box_keys;
 mod collect;
 mod document;
+mod equals;
 mod formats;
 mod marks;
 mod ruby;

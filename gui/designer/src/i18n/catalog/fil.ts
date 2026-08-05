@@ -570,6 +570,7 @@ export const fil: LanguageCatalog = {
     'palette.used': 'Ginagamit sa {count, number} lugar',
     'palette.unused': 'Hindi ginagamit',
     'palette.array': 'Umuulit',
+    'palette.rowScope': 'Nasa loob ng {group}',
     'palette.ungrouped': 'Pangkalahatang field',
     'palette.type.string': 'Teksto',
     'palette.type.number': 'Numero',

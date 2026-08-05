@@ -232,11 +232,14 @@ read side, never the reverse.
   `addColumnOp`/`removeColumnOp`/`moveColumnOp`).
 - `panel/sourceScope.ts` — the source-picker wiring shared by the table
   section and `IterableSourceSection` (props + a commit callback, not a
-  pure model): `sourceOptions` (the array groups
-  as picker options) + `sourceScopeProps` — a row-scoped iterable's
-  offers move to the document section and author `scope: document`
-  (every offered group is TOP-LEVEL, so a pick only resolves if the
-  binding escapes the row).
+  pure model): `sourceOptions` (the TOP-LEVEL array groups as picker
+  options), `rowSourceOptions` (the arrays the enclosing row itself
+  carries, keyed row-relatively) + `sourceScopeProps` — inside a row
+  scope the row's own arrays stay element-scoped offers while the
+  top-level ones move to the document section and author
+  `scope: document`, since only those need the escape. A `repeat_flow`
+  is passed no groups: layout skips one nested in a cell, so a
+  row-relative offer there would author a source that never draws.
 - `panel/ColumnBindingFields.tsx` — the binding pair a column earns
   (`FieldPicker` for `data.key`; `FormatPicker` once a key is picked,
   its options type-resolved through the row options), shared by the

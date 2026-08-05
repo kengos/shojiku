@@ -163,7 +163,8 @@ glyphs).
 | --- | --- | --- |
 | `mark_missing_size` | warning | `box.w`/`box.h` absent or non-positive; skipped |
 | `mark_content_conflict` | warning | checkbox sets both `checked` and `data` (`data` wins) |
-| `mark_equals_type_mismatch` | warning | value type differs from `equals`; not drawn |
+| `mark_equals_type_mismatch` | warning | value type differs from `equals`; not drawn. With definitions, the DECLARED type is checked the same way at validate |
+| `mark_equals_not_declared` | warning | the `equals` literal is outside the field's declared `enum` — a mark that can never be drawn |
 | `mark_value_not_bool` | warning | `equals`-less binding value is not a boolean; not drawn |
 | `mark_binding_not_boolean` | warning | (validation) an `equals`-less binding targets a non-boolean field |
 | `unknown_data_key` | error | (validation) the binding key is not in definitions |
