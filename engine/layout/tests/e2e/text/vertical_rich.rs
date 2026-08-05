@@ -161,7 +161,7 @@ fn a_span_link_rides_its_runs() {
 }
 
 #[test]
-fn too_many_columns_warn_horizontal_overflow_outside_a_flow_region() {
+fn too_many_columns_warn_vertical_text_overflow_outside_a_flow_region() {
     // A 15pt-wide box holds one 10pt column; two columns overflow. As a
     // container child (not a direct flow item) the warn stays — a direct
     // flow rich block paginates instead (vertical_paginate).
@@ -184,7 +184,7 @@ sections:
 "#,
         json!({}),
     );
-    assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(diags.iter().any(|d| d.code == "vertical_text_overflow"));
 }
 
 #[test]

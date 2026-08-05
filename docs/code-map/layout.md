@@ -67,12 +67,13 @@ Wire types stay in core; content measurement stays in layout.
 - `engine/overflow.rs` — the horizontal-overflow POLICY, all three bounds
   in one file so they read against each other. Each emits its OWN
   number-only code (`sheet_overflow` / `child_overflow` /
-  `grid_column_overflow`) rather than the older `horizontal_overflow`,
+  `grid_column_overflow`) rather than the retired `horizontal_overflow`,
   whose single `{detail}` arg carries a whole English sentence a
   translating consumer can only pass through — one code per reason, since
   a shared code with a `{where}` arg would leak an English enum value the
-  same way. (`horizontal_overflow` still serves its three PRE-EXISTING
-  sites: flow region, flex row pre-pass, vertical text.) The three:
+  same way. (`horizontal_overflow` is now emitted by NOTHING — its three
+  other sites became `flow_item_overflow`, `flex_row_overflow` and
+  `vertical_text_overflow`.) The three here:
   `check_sheet_edge` (band / absolute-body item vs the PAPER — reaching
   into the page margins is a deliberate escape hatch, and the sheet edge
   is derived as `basis.x + basis.w + page_margin[1]`, so no page width is
@@ -122,7 +123,7 @@ Wire types stay in core; content measurement stays in layout.
   (column default, `direction: row` side-by-side), others stay absolute;
   `Atom.rb` carries each child's `ResolvedBox` so offsets never re-resolve.
   `engine/flex/offsets.rs` (row pre-pass + column/row cross math; the
-  row-level `horizontal_overflow` check lives in `plan_row`, the
+  row-level `flex_row_overflow` check lives in `plan_row`, the
   per-child ones in `engine/overflow.rs`);
   `engine/flex/baseline.rs` (`alignItems: baseline` via first-text
   baselines).

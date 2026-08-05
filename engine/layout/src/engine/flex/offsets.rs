@@ -95,14 +95,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // stay silent (the container_overflow convention).
         if free < -H_OVERFLOW_EPS && !clipped {
             self.diags.push(
-                Diagnostic::new(Code::HorizontalOverflow).arg(
-                    "detail",
-                    format!(
-                        "row children need {:.1}pt but the content box is only {:.1}pt wide; the row overflows to the right",
-                        fixed + gap * n.saturating_sub(1) as f64,
-                        inner.w
-                    ),
-                ),
+                Diagnostic::new(Code::FlexRowOverflow)
+                    .arg("needed", fixed + gap * n.saturating_sub(1) as f64)
+                    .arg("avail", inner.w),
             );
         }
         let (shares, lead, between, auto_sh) = if !weights.is_empty() {

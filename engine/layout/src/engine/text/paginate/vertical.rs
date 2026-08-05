@@ -5,8 +5,9 @@
 //! paginates — `clip` hides its block inside a `Clip` (no split shape, so
 //! the router never sends it here), `shrink`/`ellipsis` resolve the
 //! overflow in the builder, and a `shrink` still overflowing at its floor
-//! warned `horizontal_overflow` (the marker this module checks) and
-//! places whole.
+//! warned `vertical_text_overflow` (the marker this module checks) and
+//! places whole. The marker is the vertical case's OWN code, so an
+//! unrelated overflow landing in the same window cannot trip it.
 
 use crate::boxes::PlacedBox;
 use crate::tree::{LayoutItem, TextBlock, TextLine};
@@ -23,8 +24,8 @@ use super::RubyCarry;
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Places a vertical flow atom: paginated at column boundaries when
     /// its columns overflow the content width and no policy handled the
-    /// overflow (a `horizontal_overflow` warned at or after `mark` — the
-    /// shrink-at-floor case), else whole. `parts` are the atom's split
+    /// overflow (a `vertical_text_overflow` warned at or after `mark` —
+    /// the shrink-at-floor case), else whole. `parts` are the atom's split
     /// clones (the router already destructured them); the content box is
     /// re-derived from the resolved box + region exactly as the builder
     /// derived it, so the two cannot disagree.
@@ -43,7 +44,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let needed = block.lines.len() as f64 * block.line_height;
         let handled = self.diags.items[mark..]
             .iter()
-            .any(|d| d.code == Code::HorizontalOverflow);
+            .any(|d| d.code == Code::VerticalTextOverflow);
         if needed <= content_w + 0.01 || handled {
             layouter.place(h_auto_margin(atom, region), &mut self.diags);
             return;

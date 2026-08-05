@@ -18,7 +18,7 @@ fn columns_continue_across_pages_in_reading_order() {
         json!({}),
     );
     assert!(
-        !diags.iter().any(|d| d.code == "horizontal_overflow"),
+        !diags.iter().any(|d| d.code == "vertical_text_overflow"),
         "pagination replaces the overflow warning: {diags:?}"
     );
     assert_eq!(doc.pages.len(), 4);
@@ -119,7 +119,7 @@ sections:
 "#,
         json!({}),
     );
-    assert!(!diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(!diags.iter().any(|d| d.code == "vertical_text_overflow"));
     // 6 cells → 2 columns; a 15pt box holds one per page.
     assert_eq!(doc.pages.len(), 2);
     let p2 = text_blocks(&doc.pages[1])[0];

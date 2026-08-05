@@ -161,6 +161,12 @@ diagnostic_codes! {
     MarkMissingSize = "mark_missing_size", Warning, Layout, "ellipse/checkbox items need a positive box.w and box.h; item skipped";
     ContainerOverflow = "container_overflow", Warning, Layout, "container content ({content}pt) exceeds its content height ({avail}pt)";
     GridCellOverflow = "grid_cell_overflow", Warning, Layout, "grid child ({child}pt) exceeds its {track}pt {extent}";
+    // RETIRED — emitted by nothing. Its single free-text `{detail}` arg
+    // held a whole English sentence, which a translating consumer could
+    // only pass through. The reasons it covered were enumerable, so each
+    // became its own number-carrying code (see the layout tail below).
+    // The entry stays because codes and arg keys are append-only and a
+    // consumer may still hold a catalog key for it.
     HorizontalOverflow = "horizontal_overflow", Warning, Layout, "{detail}";
     TextOverflow = "text_overflow", Warning, Layout, "text overflows the box height ({content}pt content vs {avail}pt available)";
     CharGridOverflow = "char_grid_overflow", Warning, Layout, "char_grid content exceeds the single sheet ({cells} cells) available outside a flow body; {dropped} characters dropped";
@@ -221,6 +227,9 @@ diagnostic_codes! {
     SheetOverflow = "sheet_overflow", Warning, Layout, "item reaches {over}pt past the right edge of the sheet and renders off-paper";
     ChildOverflow = "child_overflow", Warning, Layout, "child overflows its {avail}pt content box by {over}pt";
     GridColumnOverflow = "grid_column_overflow", Warning, Layout, "grid child ({child}pt) is wider than the {track}pt column run it spans ({span} tracks)";
+    FlowItemOverflow = "flow_item_overflow", Warning, Layout, "item reaches {over}pt past the right edge of the {avail}pt flow region and renders off-sheet";
+    FlexRowOverflow = "flex_row_overflow", Warning, Layout, "row children need {needed}pt but the content box is only {avail}pt wide; the row overflows";
+    VerticalTextOverflow = "vertical_text_overflow", Warning, Layout, "vertical text needs {columns} columns ({needed}pt) but the box is {avail}pt wide";
 }
 
 #[cfg(test)]

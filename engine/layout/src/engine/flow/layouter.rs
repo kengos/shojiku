@@ -76,13 +76,11 @@ impl FlowLayouter {
         if let Some((rb, w)) = atom.rb.and_then(|rb| rb.w.map(|w| (rb, w))) {
             let over = (rb.x - self.region_x) + w + rb.margin[1] - self.region_w;
             if over > H_OVERFLOW_EPS {
-                diags.push(Diagnostic::new(Code::HorizontalOverflow).arg(
-                    "detail",
-                    format!(
-                        "item reaches {over:.1}pt past the flow region's right edge \
-                             and renders off-sheet"
-                    ),
-                ));
+                diags.push(
+                    Diagnostic::new(Code::FlowItemOverflow)
+                        .arg("over", over)
+                        .arg("avail", self.region_w),
+                );
             }
         }
         if !self.fits(atom.height) && !self.fresh_page && !self.break_page(diags) {

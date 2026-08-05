@@ -1,11 +1,15 @@
-//! The horizontal-overflow family. `horizontal_overflow` keeps the flow
-//! region and the flex row pre-pass; the residual contexts report their
-//! own number-only codes — `sheet_overflow` (a band / absolute-body item
+//! The horizontal-overflow family — one number-carrying code per reason:
+//! `flex_row_overflow` (fixed row children + gaps over the parent content
+//! box), `flow_item_overflow` (a definite-width flow item past the
+//! region's right edge), `sheet_overflow` (a band / absolute-body item
 //! past the SHEET edge, a `line`'s endpoints included) and
-//! `child_overflow` (a column or absolute child past its parent's
-//! content box).
+//! `child_overflow` (a column or absolute child past its parent's content
+//! box). The retired `horizontal_overflow` carried all of these in one
+//! free-text arg and is emitted by nothing.
 
 use crate::common::*;
+
+mod sheet;
 
 fn page(items: &str) -> String {
     format!(
@@ -15,16 +19,16 @@ fn page(items: &str) -> String {
 
 /// Any code in the horizontal-overflow family — the negative assertions
 /// must not pass merely because the reason moved to a sibling code.
-fn overflows(diags: &Diagnostics) -> bool {
+pub(super) fn overflows(diags: &Diagnostics) -> bool {
     diags.iter().any(|d| {
         matches!(
             d.code.as_str(),
-            "horizontal_overflow" | "sheet_overflow" | "child_overflow"
+            "flex_row_overflow" | "flow_item_overflow" | "sheet_overflow" | "child_overflow"
         )
     })
 }
 
-fn only(diags: &Diagnostics, code: &str) -> Diagnostic {
+pub(super) fn only(diags: &Diagnostics, code: &str) -> Diagnostic {
     let hits: Vec<_> = diags.iter().filter(|d| d.code == code).collect();
     assert_eq!(hits.len(), 1, "expected one `{code}`: {diags:?}");
     hits[0].clone()
@@ -36,7 +40,11 @@ fn over_wide_fixed_row_warns() {
         "      - type: container\n        box: { w: 100, direction: row }\n        items:\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 80, h: 10 } }\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 80, h: 10 } }\n",
     );
     let (_, diags) = run(&yaml, json!({}));
-    assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
+    let hit = only(&diags, "flex_row_overflow");
+    // 80 + 80 fixed children in a 100pt content box.
+    assert_eq!(arg_num(&hit, "needed"), Some(160.0));
+    assert_eq!(arg_num(&hit, "avail"), Some(100.0));
+    assert!(args_all_numeric(&hit), "{hit:?}");
 }
 
 #[test]
@@ -45,7 +53,7 @@ fn exact_fit_row_does_not_warn() {
         "      - type: container\n        box: { w: 100, direction: row, gap: 10 }\n        items:\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 45, h: 10 } }\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 45, h: 10 } }\n",
     );
     let (_, diags) = run(&yaml, json!({}));
-    assert!(diags.iter().all(|d| d.code != "horizontal_overflow"));
+    assert!(diags.iter().all(|d| d.code != "flex_row_overflow"));
 }
 
 #[test]
@@ -55,7 +63,7 @@ fn unsized_children_shrink_and_stay_silent() {
         "      - type: container\n        box: { w: 100, direction: row }\n        items:\n          - { type: text, text: あああ }\n          - { type: text, text: いいい }\n",
     );
     let (_, diags) = run(&yaml, json!({}));
-    assert!(diags.iter().all(|d| d.code != "horizontal_overflow"));
+    assert!(diags.iter().all(|d| d.code != "flex_row_overflow"));
 }
 
 #[test]
@@ -64,7 +72,7 @@ fn overflow_hidden_parent_clips_by_intent_and_stays_silent() {
         "      - type: container\n        box: { w: 100, direction: row }\n        style: { overflow: hidden }\n        items:\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 80, h: 10 } }\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 80, h: 10 } }\n",
     );
     let (_, diags) = run(&yaml, json!({}));
-    assert!(diags.iter().all(|d| d.code != "horizontal_overflow"));
+    assert!(diags.iter().all(|d| d.code != "flex_row_overflow"));
 }
 
 #[test]
@@ -72,108 +80,18 @@ fn flow_item_past_the_region_edge_warns() {
     let yaml =
         page("      - { type: rect, style: { borderWidth: 1 }, box: { x: 150, w: 100, h: 10 } }\n");
     let (_, diags) = run(&yaml, json!({}));
-    let hit = diags
-        .iter()
-        .find(|d| d.code == "horizontal_overflow")
-        .expect("overflow warning");
+    let hit = only(&diags, "flow_item_overflow");
     // 150 + 100 over a 200pt region: 50pt past the edge.
-    assert!(hit.message.contains("50.0pt"), "{}", hit.message);
+    assert_eq!(arg_num(&hit, "over"), Some(50.0));
+    assert_eq!(arg_num(&hit, "avail"), Some(200.0));
+    assert!(args_all_numeric(&hit), "{hit:?}");
 }
 
 #[test]
 fn filling_flow_items_never_warn() {
     let yaml = page("      - { type: text, text: あ, box: { w: 100% } }\n");
     let (_, diags) = run(&yaml, json!({}));
-    assert!(diags.iter().all(|d| d.code != "horizontal_overflow"));
-}
-
-// --- Residual 1: band / absolute-body items past the SHEET edge --------
-//
-// The bound is the paper, not the margin box: reaching INTO the page
-// margins is a deliberate escape hatch, so only ink that leaves the sheet
-// warns. Page 200pt wide with a 20pt margin → margin box 20..180, sheet
-// edge 200.
-
-fn absolute_body(item: &str) -> Diagnostics {
-    run(
-        &format!(
-            "page: {{ size: {{ w: 200, h: 200 }}, margin: 20 }}\n\
-             sections:\n  body:\n    type: absolute\n    items:\n      - {item}\n"
-        ),
-        json!({}),
-    )
-    .1
-}
-
-#[test]
-fn an_absolute_item_past_the_sheet_edge_warns() {
-    // x 100 (margin-box relative → sheet x 120) + w 100 = 220: 20pt off.
-    let diags = absolute_body(
-        "{ type: rect, style: { borderWidth: 1 }, box: { x: 100, y: 0, w: 100, h: 10 } }",
-    );
-    let hit = only(&diags, "sheet_overflow");
-    // The payload is a NUMBER, not a pre-rendered English sentence: that
-    // is what lets a translating consumer write its own wording.
-    assert_eq!(arg_num(&hit, "over"), Some(20.0));
-    assert!(args_all_numeric(&hit), "{hit:?}");
-}
-
-#[test]
-fn an_item_reaching_only_into_the_page_margin_stays_silent() {
-    // The escape hatch: x 100 + w 80 = sheet x 200 exactly — it eats the
-    // whole right margin and is still ON the paper. A rule written
-    // against the MARGIN BOX would warn here and train authors to ignore
-    // the code.
-    let diags = absolute_body(
-        "{ type: rect, style: { borderWidth: 1 }, box: { x: 100, y: 0, w: 80, h: 10 } }",
-    );
-    assert!(!overflows(&diags), "{diags:?}");
-}
-
-#[test]
-fn a_band_item_past_the_sheet_edge_warns() {
-    let (_, diags) = run(
-        "page: { size: { w: 200, h: 200 }, margin: 20 }\n\
-         sections:\n  header:\n    items:\n      \
-         - { type: rect, style: { borderWidth: 1 }, box: { x: 150, y: 0, w: 100, h: 10 } }\n  \
-         body:\n    type: flow\n    items: []\n",
-        json!({}),
-    );
-    assert_eq!(arg_num(&only(&diags, "sheet_overflow"), "over"), Some(70.0));
-}
-
-#[test]
-fn a_filling_absolute_item_never_warns_about_the_sheet() {
-    // `rb.w` unset — the item is bounded by its basis and cannot overflow.
-    let diags = absolute_body("{ type: text, text: あ, box: { x: 0, y: 0 } }");
-    assert!(!overflows(&diags), "{diags:?}");
-}
-
-#[test]
-fn a_line_whose_endpoints_leave_the_sheet_warns() {
-    // A `line` has no border box, so the border-box comparison every other
-    // item uses reads `rb: None`. Its placed box IS the endpoint bounding
-    // box, which is the same rectangle the stroke inks — so that is what
-    // the sheet check falls back to. Margin box 20..180, sheet edge 200;
-    // an endpoint at 220 (margin-box relative) lands at 240: 40pt off.
-    let diags = absolute_body("{ type: line, from: { x: 0, y: 10 }, to: { x: 220, y: 10 } }");
-    assert_eq!(arg_num(&only(&diags, "sheet_overflow"), "over"), Some(40.0));
-}
-
-#[test]
-fn a_line_reaching_only_into_the_page_margin_stays_silent() {
-    // The same escape hatch a boxed item gets: a rule drawn out to the
-    // paper's edge is a normal thing to want.
-    let diags = absolute_body("{ type: line, from: { x: 0, y: 10 }, to: { x: 180, y: 10 } }");
-    assert!(!overflows(&diags), "{diags:?}");
-}
-
-#[test]
-fn a_percent_line_endpoint_can_never_leave_the_sheet() {
-    // `100%` is the margin box, which is strictly inside the paper — the
-    // new authoring form cannot produce the defect the check looks for.
-    let diags = absolute_body("{ type: line, from: { x: 0, y: 10 }, to: { x: \"100%\", y: 10 } }");
-    assert!(!overflows(&diags), "{diags:?}");
+    assert!(diags.iter().all(|d| d.code != "flow_item_overflow"));
 }
 
 // --- Residuals 2/3: per-child right-edge checks inside a container -----
@@ -255,8 +173,8 @@ fn the_child_warning_states_a_magnitude_not_a_side() {
 #[test]
 fn an_over_wide_row_child_is_reported_once_by_the_row_check_only() {
     // The per-child check deliberately skips ROW children: `plan_row`
-    // already speaks for the whole row, and both firing would report one
-    // overflow twice.
+    // already speaks for the whole row (`flex_row_overflow`), and both
+    // firing would report one overflow twice.
     let yaml = page(
         "      - type: container\n        box: { w: 100, direction: row }\n        items:\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 180, h: 10 } }\n",
     );
@@ -264,7 +182,7 @@ fn an_over_wide_row_child_is_reported_once_by_the_row_check_only() {
     assert_eq!(
         diags
             .iter()
-            .filter(|d| d.code == "horizontal_overflow")
+            .filter(|d| d.code == "flex_row_overflow")
             .count(),
         1,
         "{diags:?}"
@@ -274,4 +192,30 @@ fn an_over_wide_row_child_is_reported_once_by_the_row_check_only() {
         diags.iter().all(|d| d.code != "child_overflow"),
         "{diags:?}"
     );
+}
+
+#[test]
+fn the_retired_free_text_code_is_emitted_by_nothing() {
+    // `horizontal_overflow` kept its registry entry (codes and arg keys
+    // are append-only, and a consumer may still hold a catalog key) but
+    // every reason it covered now has its own number-carrying code. The
+    // shapes that used to raise it must raise a successor instead — one
+    // per reason, so a mis-routed emit shows up as a MISSING successor
+    // rather than as a still-passing generic assertion.
+    let row = page(
+        "      - type: container\n        box: { w: 100, direction: row }\n        items:\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 80, h: 10 } }\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 80, h: 10 } }\n",
+    );
+    let flow =
+        page("      - { type: rect, style: { borderWidth: 1 }, box: { x: 150, w: 100, h: 10 } }\n");
+    for (yaml, successor) in [(row, "flex_row_overflow"), (flow, "flow_item_overflow")] {
+        let (_, diags) = run(&yaml, json!({}));
+        assert!(
+            diags.iter().all(|d| d.code != "horizontal_overflow"),
+            "retired code was emitted: {diags:?}"
+        );
+        assert!(
+            diags.iter().any(|d| d.code == successor),
+            "expected `{successor}`: {diags:?}"
+        );
+    }
 }

@@ -40,7 +40,7 @@ cells.
   fills it starts a new column to its left. With no `h`, the block wraps
   against the containing region's height.
 - **`box.w`** bounds how many columns fit; more columns than fit warn
-  `horizontal_overflow` (they still draw, extending left).
+  `vertical_text_overflow` (they still draw, extending left).
 - **`lineHeight`** is the em multiplier for the **column width** (the gap
   between columns), mirroring how it sets line spacing in horizontal text.
 - **`textAlign`** distributes a short column *along* its length:
@@ -99,7 +99,7 @@ never ends one.
   authored box and cuts at its edge; `shrink` bisects the font size
   (column width scales along, 4 pt floor); `ellipsis` keeps the columns
   that fit and ends the last with `…` (line-end-kinsoku-aware). `visible` (the
-  default) warns `horizontal_overflow` — except as a direct flow item,
+  default) warns `vertical_text_overflow` — except as a direct flow item,
   where it **paginates** (below). Rich `spans` keep the horizontal
   parity: `clip` is honored, `shrink`/`ellipsis` warn
   `span_overflow_unsupported` and behave like `visible`.
@@ -216,7 +216,7 @@ need more width than the box holds continues on the **next page**:
 whole columns, right-to-left reading order preserved, each following
 page re-starting at its own right edge (the `textOverflow: visible`
 default; a policy that resolved the overflow never paginates). The
-`horizontal_overflow` warning is replaced by the pagination — it still
+`vertical_text_overflow` warning is replaced by the pagination — it still
 fires when not even one column fits, and in bounded contexts
 (containers, bands, absolute bodies, cells), which keep the
 place-as-one-unit behavior.
@@ -249,7 +249,7 @@ Each remaining limit degrades loudly.
 | --- | --- |
 | `vertical_text_unsupported` | a vertical writing mode reached a text `mark:` (the circled-text overlay) |
 | `span_overflow_unsupported` | `textOverflow: shrink`/`ellipsis` on a vertical `spans` block (overflowing like `visible`) |
-| `horizontal_overflow` | more columns than the box width holds, where pagination cannot take over (bounded contexts; not even one column fits; a `shrink` still overflowing at its 4 pt floor) |
+| `vertical_text_overflow` | more columns than the box width holds, where pagination cannot take over (bounded contexts; not even one column fits; a `shrink` still overflowing at its 4 pt floor) |
 | `ruby_base_not_found` | a `ruby` entry's `base` never occurs in the drawn text (reading skipped) |
 | `ruby_overflow` | a reading longer than its base run even at the 4 pt floor |
 | `empty_ruby_entry` | a `ruby` entry with an empty `base` or `text` (validation) |

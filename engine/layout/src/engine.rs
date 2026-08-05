@@ -138,7 +138,7 @@ struct Ctx<'a, 'b> {
     /// True while building a DIRECT flow text item (`place_flow_text`).
     /// A vertical block whose columns overflow the box width there is
     /// paginated at column boundaries instead of warned, so the builders
-    /// suppress the `horizontal_overflow` warning for the visible-behaving
+    /// suppress the `vertical_text_overflow` warning for the visible-behaving
     /// policies; every other context keeps warning. Set/restored around
     /// the one `text_atom` call, like the other walk state.
     flow_text: bool,

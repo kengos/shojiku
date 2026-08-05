@@ -21,7 +21,7 @@ fn clip_wraps_the_block_and_keeps_every_column() {
         ),
         json!({}),
     );
-    assert_eq!(count_code(&diags, "horizontal_overflow"), 0);
+    assert_eq!(count_code(&diags, "vertical_text_overflow"), 0);
     assert!(
         text_blocks(&doc.pages[0]).is_empty(),
         "block moved into the clip"
@@ -52,7 +52,7 @@ fn shrink_bisects_until_the_columns_fit() {
         ),
         json!({}),
     );
-    assert_eq!(count_code(&diags, "horizontal_overflow"), 0);
+    assert_eq!(count_code(&diags, "vertical_text_overflow"), 0);
     let block = text_blocks(&doc.pages[0])[0];
     assert!(block.font_size < 10.0, "{}", block.font_size);
     assert!(block.font_size >= 4.0);
@@ -71,7 +71,7 @@ fn shrink_at_its_floor_keeps_the_floor_and_warns() {
         json!({}),
     );
     assert_eq!(doc.pages.len(), 1);
-    assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(diags.iter().any(|d| d.code == "vertical_text_overflow"));
     let block = text_blocks(&doc.pages[0])[0];
     assert!((block.font_size - 4.0).abs() < 1e-9);
 }
@@ -88,7 +88,7 @@ fn ellipsis_keeps_whole_columns_and_ends_the_last_with_dots() {
         ),
         json!({}),
     );
-    assert_eq!(count_code(&diags, "horizontal_overflow"), 0);
+    assert_eq!(count_code(&diags, "vertical_text_overflow"), 0);
     let block = text_blocks(&doc.pages[0])[0];
     assert_eq!(line_texts(block), vec!["あいう", "えお…"]);
     assert_eq!(doc.pages.len(), 1, "resolved overflow never paginates");
@@ -100,7 +100,7 @@ fn ellipsis_with_no_room_for_a_single_column_warns_and_clamps_to_nothing() {
         &tmpl("あいうえお", "w: 5, h: 30", ", textOverflow: ellipsis"),
         json!({}),
     );
-    assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(diags.iter().any(|d| d.code == "vertical_text_overflow"));
     let block = text_blocks(&doc.pages[0])[0];
     assert!(block.lines.is_empty());
 }
@@ -113,13 +113,13 @@ fn content_exactly_at_the_column_cap_runs_no_policy() {
         &tmpl("あいうえおか", "w: 20, h: 30", ", textOverflow: ellipsis"),
         json!({}),
     );
-    assert_eq!(count_code(&diags, "horizontal_overflow"), 0);
+    assert_eq!(count_code(&diags, "vertical_text_overflow"), 0);
     let block = text_blocks(&doc.pages[0])[0];
     assert_eq!(line_texts(block), vec!["あいう", "えおか"]);
 }
 
 #[test]
-fn rich_spans_keep_the_horizontal_overflow_parity() {
+fn rich_spans_keep_the_vertical_text_overflow_parity() {
     // A rich vertical block in a container (no pagination there): clip is
     // honored; shrink warns `span_overflow_unsupported` and overflows
     // like visible.
@@ -148,7 +148,7 @@ sections:
     assert_eq!(crate::clip::clip_shapes(&doc.pages[0]).len(), 1);
     let (_doc, diags) = run(&rich("shrink"), json!({}));
     assert_eq!(count_code(&diags, "span_overflow_unsupported"), 1);
-    assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(diags.iter().any(|d| d.code == "vertical_text_overflow"));
 }
 
 #[test]
@@ -242,7 +242,7 @@ sections:
 "#,
         json!({}),
     );
-    assert!(!diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(!diags.iter().any(|d| d.code == "vertical_text_overflow"));
     let block = text_blocks(&doc.pages[0])[0];
     assert!(block.font_size < 10.0, "{}", block.font_size);
     let needed = block.lines.len() as f64 * block.line_height;

@@ -88,7 +88,7 @@ Capability keys: `box.flex`, `box.flexGrow`.
 ## Overflow
 
 A row whose fixed widths + gaps exceed the parent content box warns
-`horizontal_overflow` (unsized children shrink their shares instead and
+`flex_row_overflow` (unsized children shrink their shares instead and
 never warn). A parent with `overflow: hidden` clips by intent and stays
 silent. Definite-width flow items reaching past the flow region's right
 edge warn the same code.
