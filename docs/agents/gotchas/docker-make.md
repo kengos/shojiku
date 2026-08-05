@@ -108,6 +108,15 @@ learned there is no Debian-based .NET 10 image at all.
   the whole bar for a clean artifact — do not go looking for a code
   cause, and do not treat it as a review finding. (Same family as the
   trivy vuln-DB download flake in `shojiku-release-engineer` § CI.)
+- **A `can't find crate for <dep>` in a crate your change never touched
+  is the same class.** `make test:engine` died with
+  `error[E0463]: can't find crate for clap` in `cli/src/main.rs` — three
+  missing extern crates in one unrelated binary — on a tree whose
+  previous `test:engine` had passed, and PASSED again on an UNCHANGED
+  re-run. The tell is the same one: the error names crates and a file
+  nothing in the diff goes near, and the failing crate is not the one you
+  edited. Re-run the single gate once before reading a line of code; only
+  a failure that REPRODUCES is about the change.
 
 ## Never run two gates at once
 
