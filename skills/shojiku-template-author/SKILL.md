@@ -102,7 +102,7 @@ reddens on the first render.
   `{ top: "15mm", right: "15mm", bottom: "15mm", left: "15mm" }`.
 - **Flex row widths**: children without `box.w` split the leftover
   equally — that is the idiom for "N columns". A fixed-width row that
-  exceeds its parent warns `horizontal_overflow`; so does a column or
+  exceeds its parent warns `flex_row_overflow`; so does a column or
   hand-positioned child past its container's content box, and a band /
   absolute-body item past the edge of the SHEET. Reaching into the page
   margins stays silent by design (the full-bleed escape hatch), so the
@@ -259,10 +259,11 @@ reddens on the first render.
   draws square and warns `svg_unsupported` — which reddens
   `make examples`. Author example assets without `rx` (and without
   `<text>`, which the subset also lacks).
-- Since the same engine version, a fixed-width flex row that exceeds
-  its parent and a definite-width flow item past the region edge warn
-  `horizontal_overflow` — but absolute-body/band items past the page
-  edge still render silently; keep previewing those.
+- Since the same engine version, a fixed-width flex row that exceeds its
+  parent warns `flex_row_overflow` and a definite-width flow item past
+  the region edge warns `flow_item_overflow`. Band / absolute-body items
+  are covered too, by `sheet_overflow` — see the overflow bullet above
+  for what stays deliberately silent (a bleed into the page margin).
 - **Blank-form fields**: a `data:` binding (or its `definitions.yml`
   field) takes a `placeholder` — verbatim text drawn when the value is
   absent / `null` / `""`, so an intentionally-blank fillable form

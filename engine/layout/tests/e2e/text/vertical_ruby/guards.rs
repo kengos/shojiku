@@ -26,7 +26,7 @@ fn an_unmatched_base_warns_and_later_entries_still_apply() {
 #[test]
 fn a_shrink_at_floor_ruby_block_places_whole_with_readings() {
     // `shrink` that still overflows at its floor warned
-    // `horizontal_overflow` (the paginator's `mark` check): the block is
+    // `vertical_text_overflow` (the paginator's `mark` check): the block is
     // policy-handled and places WHOLE — one page, readings drawn once.
     let yaml = r#"
 page: { margin: 0 }
@@ -48,7 +48,7 @@ sections:
         1,
         "policy-handled overflow never paginates"
     );
-    assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(diags.iter().any(|d| d.code == "vertical_text_overflow"));
     // The size-based `ruby_blocks` filter is useless post-shrink (the
     // MAIN block is small too); find the reading by its text.
     let readings = text_blocks(&doc.pages[0])

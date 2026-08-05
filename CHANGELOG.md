@@ -39,10 +39,8 @@ platform binaries.
 
   Each of the three carries **numbers only** — how far over, and what it
   had to fit in — so the Designer renders them in your language instead
-  of passing an English sentence through, as the older
-  `horizontal_overflow` (which keeps its existing cases) has to. The
-  Japanese, Traditional Chinese and Simplified Chinese wordings ship with
-  them.
+  of passing an English sentence through. The Japanese, Traditional
+  Chinese and Simplified Chinese wordings ship with them.
 
 - **A list inside a repeat cell now knows what its entries are.** When a
   row of your data carries its own array — the contents of each parcel on
@@ -67,6 +65,22 @@ platform binaries.
   value outside the field's declared `enum` (`equals: fier` against
   `[fire, flood]`), can never match anything — `validate` says so now,
   naming the field. The value you wrote is never echoed back.
+
+- **Every overflow warning now speaks your language.** The remaining
+  three cases that reported through `horizontal_overflow` — a flex row
+  whose fixed children don't fit, a flow item past the region's right
+  edge, and vertical text needing more columns than its box holds — each
+  gained their own warning carrying numbers instead of a prewritten
+  English sentence: `flex_row_overflow`, `flow_item_overflow` and
+  `vertical_text_overflow`, with Japanese, Traditional Chinese and
+  Simplified Chinese wordings.
+
+  **`horizontal_overflow` is now emitted by nothing.** If you filter or
+  branch on that code, move to the successor for the case you care about
+  — the list above plus `sheet_overflow`, `child_overflow` and
+  `grid_column_overflow` from the entry above. The code itself is not
+  removed (codes are a frozen contract), so nothing breaks on the way
+  in; it simply stops appearing.
 
 - **You can now sign with a key that never enters your application.**
   When the private key lives in a cloud KMS, an HSM or a smartcard,

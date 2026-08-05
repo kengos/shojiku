@@ -29,7 +29,7 @@ fn a_policy_handled_overflow_places_whole() {
         json!({}),
     );
     assert_eq!(doc.pages.len(), 1);
-    assert!(!diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(!diags.iter().any(|d| d.code == "vertical_text_overflow"));
 }
 
 #[test]
@@ -39,7 +39,7 @@ fn a_column_too_wide_for_the_box_warns_instead_of_paginating() {
     // and the block places whole on one page.
     let (doc, diags) = run(&tmpl("あいう", "w: 5, h: 100", "", ""), json!({}));
     assert_eq!(doc.pages.len(), 1);
-    assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(diags.iter().any(|d| d.code == "vertical_text_overflow"));
 }
 
 #[test]

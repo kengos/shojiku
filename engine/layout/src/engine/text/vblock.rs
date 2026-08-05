@@ -205,18 +205,23 @@ impl Ctx<'_, '_> {
         }
     }
 
-    /// Warns `horizontal_overflow` for a vertical block needing more
-    /// columns than its content width holds (the message every vertical
+    /// Warns `vertical_text_overflow` for a vertical block needing more
+    /// columns than its content width holds (the warning every vertical
     /// surface shares).
+    ///
+    /// The flow paginator reads this code's PRESENCE as "a policy already
+    /// resolved this block's overflow, so place it whole instead of
+    /// paginating its columns" — see `paginate::vertical`. That is why it
+    /// is the vertical case's OWN code and not a shared one: the marker
+    /// then cannot be tripped by an unrelated overflow landing in the
+    /// same diagnostics window.
     pub(super) fn warn_columns_overflow(&mut self, columns: usize, col_width: f64, content_w: f64) {
-        self.diags
-            .push(Diagnostic::new(Code::HorizontalOverflow).arg(
-                "detail",
-                format!(
-                    "vertical text needs {columns} columns ({:.1}pt) but the box is {content_w:.1}pt wide",
-                    columns as f64 * col_width,
-                ),
-            ));
+        self.diags.push(
+            Diagnostic::new(Code::VerticalTextOverflow)
+                .arg("columns", columns as f64)
+                .arg("needed", columns as f64 * col_width)
+                .arg("avail", content_w),
+        );
     }
 }
 

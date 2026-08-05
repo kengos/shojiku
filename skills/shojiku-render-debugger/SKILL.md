@@ -136,7 +136,7 @@ detailed in the template-author **Wire gotchas** — cross-read it.
   invisible without `borderWidth` (outline) or `backgroundColor` (fill),
   and a rect needs explicit `box.w`+`box.h` (it cannot fill/auto-size).
 - **Content silently missing with no diagnostic** → an absolute-body or
-  band item that leaves the SHEET now warns `horizontal_overflow`, but
+  band item that leaves the SHEET now warns `sheet_overflow`, but
   one sitting in the page margin (or a FILLING item, which is bounded by
   its basis and never checked) still renders silently; only the preview
   shows it. Check the box coordinates against the page size.

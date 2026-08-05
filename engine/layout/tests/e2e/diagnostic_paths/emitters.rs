@@ -6,7 +6,7 @@ use super::{flow_body, only};
 use crate::common::*;
 
 #[test]
-fn the_flow_layouters_horizontal_overflow_names_the_item() {
+fn the_flow_layouters_overflow_warning_names_the_item() {
     // Raised by `engine/flow/layouter.rs::place`, a free function with no
     // `Ctx` — it pushes into the shared list inside the item's window.
     let (_, diags) = run(
@@ -24,9 +24,9 @@ sections:
 "#,
         json!({}),
     );
-    let overflow = only(&diags, "horizontal_overflow");
+    let overflow = only(&diags, "flow_item_overflow");
     assert_eq!(overflow.path.as_deref(), Some("sections.body.items[1]"));
-    assert!(overflow.message.contains("right edge"), "{overflow:?}");
+    assert_eq!(arg_num(overflow, "over"), Some(200.0));
 }
 
 #[test]

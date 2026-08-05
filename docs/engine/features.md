@@ -167,10 +167,13 @@ Pipeline: `Template/Definitions → Bundle → Layout → Render → Preview →
 
 - **Horizontal-overflow diagnostics**: every context where a definite
   width can be compared against the box holding it warns instead of
-  silently rendering off-sheet. `horizontal_overflow` keeps the fixed
-  flex row and the definite-width flow item; the rest report their own
-  NUMBER-ONLY codes, so a translating consumer writes its own sentence
-  instead of passing English through — `child_overflow` (a column or
+  silently rendering off-sheet, and EVERY one of them reports a
+  NUMBER-ONLY code so a translating consumer writes its own sentence
+  instead of passing English through: `flex_row_overflow` (fixed row
+  children over the parent content box), `flow_item_overflow` (a
+  definite-width flow item past the region's right edge),
+  `vertical_text_overflow` (a vertical block needing more columns than
+  its width holds), `child_overflow` (a column or
   `x`/`y`-positioned child past its parent's content box, named on the
   CHILD; a row child is reported once, by the row-level check),
   `sheet_overflow` (a band / absolute-body item past the edge of the
@@ -467,7 +470,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   overflow the box width continues on the next page (whole columns,
   reading order preserved, fragments re-anchored at each page's right
   edge; decoration cloned per fragment). Policy-resolved and
-  cannot-fit-one-column overflows keep the `horizontal_overflow` warn
+  cannot-fit-one-column overflows keep the `vertical_text_overflow` warn
   and place whole; bounded contexts are unchanged. Table-cell rows keep
   measuring the UNTRIMMED extent (the wrapper's break estimate) so the
   definite-height render pass never re-wraps.

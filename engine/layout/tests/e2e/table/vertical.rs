@@ -65,7 +65,7 @@ fn an_auto_row_grows_to_the_longest_column_without_drift() {
     // 50pt extent, no overflow warning.
     let (doc, diags) = run_auto("あいうえお");
     assert!(!diags.has_errors());
-    assert_eq!(count(&diags, "horizontal_overflow"), 0);
+    assert_eq!(count(&diags, "vertical_text_overflow"), 0);
     let block = vertical_block(&doc.pages[0]);
     assert_eq!(block.lines.len(), 1, "the row must not wrap the column");
     assert!(

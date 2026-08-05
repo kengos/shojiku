@@ -120,6 +120,12 @@ export const en: LanguageCatalog = {
     container_overflow: 'container content ({content}pt) exceeds its content height ({avail}pt)',
     grid_cell_overflow: 'grid child ({child}pt) exceeds its {track}pt {extent}',
     horizontal_overflow: '{detail}',
+    flow_item_overflow:
+      'item reaches {over}pt past the right edge of the {avail}pt flow region and renders off-sheet',
+    flex_row_overflow:
+      'row children need {needed}pt but the content box is only {avail}pt wide; the row overflows',
+    vertical_text_overflow:
+      'vertical text needs {columns} columns ({needed}pt) but the box is {avail}pt wide',
     sheet_overflow: 'item reaches {over}pt past the right edge of the sheet and renders off-paper',
     child_overflow: 'child overflows its {avail}pt content box by {over}pt',
     grid_column_overflow:

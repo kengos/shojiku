@@ -124,9 +124,10 @@ grid parent warn `span_outside_grid` at layout.
 | `container_overflow` | content taller than a definite-`h` container's content box |
 
 Horizontal overflow warns wherever a definite width can be compared
-against the box that holds it: `horizontal_overflow` for a fixed-width
-flex row exceeding its parent and a definite-width flow item past the
-region edge, `child_overflow` for a column or `x`/`y`-positioned child
+against the box that holds it: `flex_row_overflow` for a fixed-width
+flex row exceeding its parent, `flow_item_overflow` for a definite-width
+flow item past the region edge, `child_overflow` for a column or
+`x`/`y`-positioned child
 past its parent's content box, and `sheet_overflow` for a band /
 absolute-body item past the edge of the **sheet** (see
 [diagnostics.md](diagnostics.md)).

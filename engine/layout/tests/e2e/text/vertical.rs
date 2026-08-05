@@ -152,7 +152,7 @@ sections:
 "#,
         json!({}),
     );
-    assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(diags.iter().any(|d| d.code == "vertical_text_overflow"));
 }
 
 #[test]

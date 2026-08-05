@@ -35,7 +35,7 @@ fn a_hostile_huge_font_size_degrades_without_panicking() {
         diags.iter().any(|d| d.code == "font_size_out_of_range"),
         "{diags:?}"
     );
-    assert!(!diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(!diags.iter().any(|d| d.code == "vertical_text_overflow"));
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn the_largest_admitted_font_size_still_reaches_the_column_math() {
     // (∞-safe f64 math) rather than panic.
     let (doc, diags) = run(&tmpl("あいう", "w: 200, h: 100", "1000", ""), json!({}));
     assert_eq!(doc.pages.len(), 1);
-    assert!(diags.iter().any(|d| d.code == "horizontal_overflow"));
+    assert!(diags.iter().any(|d| d.code == "vertical_text_overflow"));
 }
 
 #[test]
@@ -72,13 +72,13 @@ fn a_negative_letter_spacing_never_panics() {
 fn columns_exactly_filling_the_box_do_not_warn() {
     // Twelve 10pt cells in a 100pt-tall box → two 10pt columns; a 20pt
     // box width holds them EXACTLY. The boundary must not warn
-    // `horizontal_overflow` (the +1 side is pinned in the parent module).
+    // `vertical_text_overflow` (the +1 side is pinned in the parent module).
     let (_doc, diags) = run(
         &tmpl("あいうえおかきくけこさし", "w: 20, h: 100", "10", ""),
         json!({}),
     );
     assert!(
-        diags.iter().all(|d| d.code != "horizontal_overflow"),
+        diags.iter().all(|d| d.code != "vertical_text_overflow"),
         "spurious overflow at the exact-fit boundary"
     );
 }
