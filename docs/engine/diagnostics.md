@@ -174,9 +174,11 @@ inline:
 | `unknown_unit` | a semantic unit key missing from the locale pack; rendered verbatim |
 | `format_pattern_ignored` | an inline `format: { pattern }` on a non-dated type; the default form rendered |
 | `mark_missing_size` | a form mark without a positive `box.w`/`box.h` (a checkbox may omit them — it auto-sizes; an `ellipse` may not); skipped |
-| `mark_equals_type_mismatch` | a mark's params value type differs from its `equals` literal; not drawn |
+| `mark_equals_type_mismatch` | a mark's params value type differs from its `equals` literal; not drawn. Also raised at validate when the DECLARED field type differs, which no params value can satisfy |
+| `mark_equals_not_declared` | a mark's `equals` literal is outside the field's declared `enum`, so the mark can never be drawn |
 | `mark_value_not_bool` | an `equals`-less mark binding's value is not a boolean; not drawn |
-| `row_condition_type_mismatch` | a row's value type differs from a `conditionalStyles` entry's `equals`; the layer is not applied |
+| `row_condition_type_mismatch` | a row's value type differs from a `conditionalStyles` entry's `equals`; the layer is not applied. Also raised at validate against the DECLARED field type |
+| `row_condition_equals_not_declared` | a `conditionalStyles` entry's `equals` literal is outside the field's declared `enum`, so the layer can never apply |
 | `row_condition_value_not_bool` | a row's value is not a boolean under an `equals`-less `conditionalStyles` entry; the layer is not applied |
 | `qr_content_too_long` / `qr_module_too_small` | QR content over 1 KiB (skipped) / modules under 1 pt (drawn) |
 | `unsupported_link_scheme` / `link_url_too_long` / `empty_link_url` | resolved `link.url` outside http/https/mailto/tel (or control chars) / over 2048 bytes / empty — the link is dropped, the item still renders |

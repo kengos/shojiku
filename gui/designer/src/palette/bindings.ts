@@ -10,6 +10,7 @@ import {
   bindingKey,
   bindingScope,
   collectInterpolations,
+  entryScope,
   pushInterpolated,
   TEXT_INTERPOLATION_TYPES,
 } from './bindingRefs';
@@ -86,13 +87,16 @@ function walkItems(
     // The item's own declarations redirect the names its surfaces use.
     const decls = narrowDeclarations(item.bindings);
     pushInterpolated(out, path, interpolated, decls, scope);
-    // A `list`'s per-entry text template resolves against the array entry —
-    // its keys count under the list's own source scope (only meaningful when
-    // the list actually binds one).
-    if (item.type === 'list' && isSource && key !== undefined) {
+    // A `list`'s per-entry text template resolves against the array ENTRY, so
+    // its keys count under the array's own scope — which for a row-carried
+    // array is the JOINED path (`orders.items`), never the authored key
+    // alone: that is where the engine's catalog declares those fields, and
+    // where the palette's group for them lives.
+    const entries = item.type === 'list' && isSource ? entryScope(item.data, scope) : null;
+    if (entries !== null) {
       const entryKeys = new Set<string>();
       collectInterpolations(entryKeys, item.text);
-      pushInterpolated(out, path, entryKeys, decls, key);
+      pushInterpolated(out, path, entryKeys, decls, entries);
     }
     if (Array.isArray(item.items)) {
       walkItems(out, `${path}.items`, item.items, scope, depth + 1);

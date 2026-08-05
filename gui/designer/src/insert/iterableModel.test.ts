@@ -40,6 +40,16 @@ describe('iterableAvailable / arrayGroups', () => {
     expect(arrayGroups([ARRAY_GROUP, SCALAR_GROUP])).toEqual([ARRAY_GROUP]);
     expect(arrayGroups(null)).toEqual([]);
   });
+
+  it('does not offer an array carried by another array’s rows', () => {
+    // `orders.items` resolves only from inside an `orders` cell, with the
+    // row-relative key — a document-scope insert would bind a path no
+    // params can walk.
+    const nested: PaletteGroup = { ...ARRAY_GROUP, id: 'orders.items', rowScope: 'orders' };
+    expect(arrayGroups([ARRAY_GROUP, nested])).toEqual([ARRAY_GROUP]);
+    expect(iterableAvailable([nested], false)).toBe(false);
+    expect(iterableAvailable([nested], true)).toBe(true);
+  });
 });
 
 describe('validateCreateForm', () => {

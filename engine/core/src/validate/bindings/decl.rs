@@ -4,6 +4,7 @@
 //! place a `{…}` that LOOKS like a key but cannot parse is surfaced.
 
 mod surfaces;
+mod walks;
 
 use crate::interpolate::{is_valid_interpolation_name, parse_segments, scan_suspect_keys, Segment};
 use crate::template::{Binding, BindingScope, Bindings, Item, MAX_BINDINGS};
@@ -13,6 +14,8 @@ use std::collections::BTreeSet;
 use super::cell::{check_cell_field, CellScope};
 use super::{check_scalar_binding, BindingCtx};
 use surfaces::{declarations, interpolated_strings, is_entry_scoped};
+
+pub(in crate::validate) use walks::check_declarations;
 
 /// What a declaration is checked against: the whole-template invariants,
 /// plus the enclosing data-scoped construct when there is one (a
@@ -231,68 +234,6 @@ fn shadows_ambient_key(name: &str, decl: &Binding, item: &ItemDecls<'_>) -> bool
                 return false;
             };
             catalog.scalar(name).is_some() && decl.key != name
-        }
-    }
-}
-
-/// Entry point from [`crate::validate`]: two walks over the section's
-/// items.
-///
-/// The STRUCTURAL walk reaches every item the template holds, cell
-/// contents included, because its checks need no catalog — riding the
-/// cell walk instead would silence them for any template validated
-/// without definitions. The SCOPED walk stops at containers; cell
-/// contents reach [`check_item_keys`] through [`super::cell`], where the
-/// array scope is known.
-pub(in crate::validate) fn check_declarations(
-    items: &[Item],
-    bindings: &BindingCtx<'_>,
-    prefix: &str,
-    diags: &mut Diagnostics,
-) {
-    walk_structure(items, prefix, diags);
-    let ctx = DeclCtx {
-        bindings,
-        cell: None,
-    };
-    walk_keys(items, &ctx, prefix, diags);
-}
-
-/// Every item, descending through each construct that nests one. Paths
-/// mirror the walks that own those constructs, so a reader sees the same
-/// address the key checks report.
-fn walk_structure(items: &[Item], prefix: &str, diags: &mut Diagnostics) {
-    for (i, item) in items.iter().enumerate() {
-        let path = format!("{prefix}[{i}]");
-        check_item_structure(item, &path, diags);
-        match item {
-            Item::Container(container) => {
-                walk_structure(&container.items, &format!("{path}.items"), diags);
-            }
-            Item::Repeat(repeat) => {
-                walk_structure(&repeat.cell.items, &format!("{path}.cell.items"), diags);
-            }
-            Item::RepeatFlow(rf) => {
-                walk_structure(&rf.item.items, &format!("{path}.item.items"), diags);
-            }
-            Item::Table(table) => {
-                for (ci, column) in table.columns.iter().enumerate() {
-                    let Some(cell) = &column.cell else { continue };
-                    let cell_path = format!("{path}.columns[{ci}].cell.items");
-                    walk_structure(&cell.items, &cell_path, diags);
-                }
-            }
-            _ => {}
-        }
-    }
-}
-
-fn walk_keys(items: &[Item], ctx: &DeclCtx<'_>, prefix: &str, diags: &mut Diagnostics) {
-    for (i, item) in items.iter().enumerate() {
-        let path = format!("{prefix}[{i}]");
-        check_item_keys(item, ctx, &path, diags);
-        if let Item::Container(container) = item {
-            walk_keys(&container.items, ctx, &format!("{path}.items"), diags);
         }
     }
 }

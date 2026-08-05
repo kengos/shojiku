@@ -62,8 +62,17 @@ export function fieldUsage(
 }
 
 /** The paths where an ARRAY group is bound as a data source (`table`/
- * `repeat`/`repeat_flow`/`list` `data.key` == the group id). Scalar groups
- * are display grouping only — no group-level binding exists. */
+ * `repeat`/`repeat_flow`/`list` `data.key` == the group id). A group the
+ * rows of another carry is bound ROW-RELATIVELY, so its usage sits in its
+ * parent's row map under the trailing key — reading it as a document-scope
+ * source would report every such group as unused. Scalar groups are display
+ * grouping only: no group-level binding exists. */
 export function groupUsage(usage: UsageIndex, group: PaletteGroup): readonly string[] {
-  return group.isArray ? (usage.sources.get(group.id) ?? []) : [];
+  if (!group.isArray) {
+    return [];
+  }
+  if (group.rowScope === undefined) {
+    return usage.sources.get(group.id) ?? [];
+  }
+  return usage.rows.get(group.rowScope)?.get(group.id.slice(group.rowScope.length + 1)) ?? [];
 }

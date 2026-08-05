@@ -329,6 +329,68 @@ describe('IterableSourceSection', () => {
     });
   });
 
+  it('offers the enclosing row’s OWN array, row-relatively and unescaped', () => {
+    // A list inside a `rows` cell binding that row's `parcels`: the engine
+    // reads it from the ROW, so the picker must offer the row-relative key
+    // and author it WITHOUT `scope: document` — which is what the top-level
+    // groups beside it do need.
+    const nested = [
+      ...GROUPS,
+      {
+        id: 'rows.parcels',
+        label: '荷物',
+        description: '',
+        isArray: true,
+        rowScope: 'rows',
+        fields: [],
+      },
+    ];
+    const cellPath = `${TABLE}.columns[0].cell.items[0]`;
+    const controller = makeController({ [TABLE]: { type: 'table', data: { key: 'rows' } } });
+    draw(
+      <IterableSourceSection
+        controller={controller}
+        path={cellPath}
+        dataKey=""
+        dataScope=""
+        entryText="{code}"
+        groups={nested}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a data field' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /荷物/ }));
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path: cellPath, keys: ['data', 'key'], value: 'parcels' },
+    ]);
+  });
+
+  it('offers no row-relative source to a repeat_flow, which layout would skip', () => {
+    const nested = [
+      ...GROUPS,
+      {
+        id: 'rows.parcels',
+        label: '荷物',
+        description: '',
+        isArray: true,
+        rowScope: 'rows',
+        fields: [],
+      },
+    ];
+    const controller = makeController({ [TABLE]: { type: 'table', data: { key: 'rows' } } });
+    draw(
+      <IterableSourceSection
+        controller={controller}
+        path={`${TABLE}.columns[0].cell.items[0]`}
+        dataKey=""
+        dataScope=""
+        entryText={null}
+        groups={nested}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a data field' }));
+    expect(screen.queryByRole('menuitem', { name: /荷物/ })).toBeNull();
+  });
+
   it('hides the entry-text field for a repeat_flow (source picker only)', () => {
     const controller = makeController({});
     draw(

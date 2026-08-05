@@ -81,9 +81,11 @@ diagnostic_codes! {
     MarkContentConflict = "mark_content_conflict", Warning, Data, "checkbox sets both `checked` and `data`; `data` wins";
     MarkBindingNotBoolean = "mark_binding_not_boolean", Warning, Data, "`{key}` is not a boolean field; a mark without `equals` expects one";
     MarkEqualsTypeMismatch = "mark_equals_type_mismatch", Warning, Data, "`{key}` value type differs from `equals`; mark not drawn";
+    MarkEqualsNotDeclared = "mark_equals_not_declared", Warning, Data, "`{key}` declares an `enum` that does not list this `equals` value; the mark can never be drawn";
     MarkValueNotBool = "mark_value_not_bool", Warning, Data, "`{key}` is not a boolean; mark not drawn";
     RowConditionNotBoolean = "row_condition_not_boolean", Warning, Data, "`{key}` is not a boolean field; a row condition without `equals` expects one";
     RowConditionTypeMismatch = "row_condition_type_mismatch", Warning, Data, "`{key}` value type differs from `equals`; row style not applied";
+    RowConditionEqualsNotDeclared = "row_condition_equals_not_declared", Warning, Data, "`{key}` declares an `enum` that does not list this `equals` value; the row style can never apply";
     RowConditionValueNotBool = "row_condition_value_not_bool", Warning, Data, "`{key}` is not a boolean; row style not applied";
     EmptyLinkUrl = "empty_link_url", Warning, Data, "link URL is empty; link dropped";
     UnsupportedLinkScheme = "unsupported_link_scheme", Warning, Data, "link URL must be http/https/mailto/tel without control characters; link dropped";

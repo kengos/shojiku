@@ -3,12 +3,12 @@
 //! column), and a boolean-type hint for an `equals`-less binding — a
 //! checkbox bound to a non-boolean field never toggles, so surface it.
 
+use super::equals::{equals_fault, reads_as_boolean, resolve_target, EqualsFault, EqualsTarget};
 use crate::catalog::Catalog;
-use crate::definitions::FieldType;
 use crate::params::resolve_path;
 use crate::template::{Body, CheckboxItem, EllipseItem, Item, MarkBinding, Template, TextItem};
 use serde_json::Value;
-use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
+use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 
 pub(super) fn check_marks(
     template: &Template,
@@ -40,7 +40,7 @@ struct MarkCtx<'a> {
     diags: &'a mut Diagnostics,
 }
 
-impl MarkCtx<'_> {
+impl<'a> MarkCtx<'a> {
     /// Walks items tracking the enclosing `repeat` array group (`None` at
     /// document scope), descending into containers and repeat cells.
     fn walk(&mut self, items: &[Item], array: Option<&str>, prefix: &str) {
@@ -103,10 +103,11 @@ impl MarkCtx<'_> {
     }
 
     /// Checks a mark binding's key exists (in the scalar catalog or the
-    /// enclosing array group), that params carry it (scalar scope), and
-    /// that an `equals`-less binding targets a boolean field.
+    /// enclosing array group), that params carry it (scalar scope), that
+    /// an `equals`-less binding targets a boolean field, and that an
+    /// `equals` literal is one the field can actually carry.
     fn check_binding(&mut self, binding: &MarkBinding, array: Option<&str>, path: &str) {
-        let field_type = self.lookup(&binding.key, array, path);
+        let target = self.lookup(&binding.key, array, path);
         if array.is_none() {
             if let Some(params) = self.params {
                 if resolve_path(params, &binding.key).is_none() {
@@ -119,51 +120,53 @@ impl MarkCtx<'_> {
                 }
             }
         }
-        if binding.equals.is_none() {
-            if let Some(ft) = field_type {
-                if ft != Some(FieldType::Boolean) {
-                    self.diags.push(
-                        Diagnostic::new(Code::MarkBindingNotBoolean)
-                            .arg("key", &binding.key)
-                            .with_path(path.to_string()),
-                    );
-                }
-            }
-        }
-    }
-
-    /// Resolves the field's declared type, emitting `unknown_data_key`
-    /// when definitions are present but the key is absent. Outer `None` =
-    /// no catalog or unknown key (error pushed); `Some(None)` = the key is
-    /// a declared ARRAY source (the multi-select `equals` array-contains
-    /// form — known, but carrying no scalar type, so an `equals`-less mark
-    /// still warns it is not boolean).
-    fn lookup(&mut self, key: &str, array: Option<&str>, path: &str) -> Option<Option<FieldType>> {
-        let catalog = self.catalog?;
-        let spec = match array {
-            Some(group) => catalog.array_field(group, key),
-            None => catalog.scalar(key),
-        };
-        let known_array = match array {
-            Some(group) => catalog.row_array(group, key),
-            None => catalog.is_array(key),
-        };
-        match spec {
-            Some(spec) => Some(Some(spec.field_type)),
-            None if known_array => Some(None),
-            None => {
-                let source = match array {
-                    Some(group) => format!("array group `{group}`"),
-                    None => "definitions".to_string(),
-                };
+        let Some(target) = target else { return };
+        let Some(equals) = &binding.equals else {
+            if !reads_as_boolean(&target) {
                 self.diags.push(
-                    Diagnostic::new(Code::UnknownDataKey)
-                        .arg("key", key)
-                        .arg("source", source)
+                    Diagnostic::new(Code::MarkBindingNotBoolean)
+                        .arg("key", &binding.key)
                         .with_path(path.to_string()),
                 );
-                None
             }
+            return;
+        };
+        // The literal is never echoed — the key names the field, exactly
+        // as the params-side `enum` check does.
+        let code = match equals_fault(&target, equals) {
+            Some(EqualsFault::Kind) => Code::MarkEqualsTypeMismatch,
+            Some(EqualsFault::NotDeclared) => Code::MarkEqualsNotDeclared,
+            None => return,
+        };
+        self.diags.push(
+            Diagnostic::new(code)
+                .arg("key", &binding.key)
+                .with_path(path.to_string()),
+        );
+    }
+
+    /// Resolves what the field declares, emitting `unknown_data_key` when
+    /// definitions are present but the key is absent. `None` = no catalog
+    /// or unknown key (the error is pushed here); an ARRAY source is the
+    /// multi-select form and carries its ELEMENT spec when the schema
+    /// declares a scalar one.
+    fn lookup(&mut self, key: &str, array: Option<&str>, path: &str) -> Option<EqualsTarget<'a>> {
+        let catalog = self.catalog?;
+        if let Some(target) = resolve_target(catalog, array, key) {
+            return Some(target);
         }
+        // The group name is document-declared, so it is bounded where it
+        // is composed into the arg (the same rule the cell walk follows).
+        let source = match array {
+            Some(group) => format!("array group `{}`", Echo::inline(group)),
+            None => "definitions".to_string(),
+        };
+        self.diags.push(
+            Diagnostic::new(Code::UnknownDataKey)
+                .arg("key", key)
+                .arg("source", source)
+                .with_path(path.to_string()),
+        );
+        None
     }
 }

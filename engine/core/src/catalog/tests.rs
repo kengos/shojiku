@@ -1,5 +1,8 @@
 //! Unit tests for the schema → lookup-table flatten walk.
 
+mod nested;
+mod paths;
+
 use super::*;
 use crate::definitions::parse_definitions;
 

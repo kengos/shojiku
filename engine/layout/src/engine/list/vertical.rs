@@ -22,7 +22,7 @@ use super::super::text::{
     along_offset, clamp_column_down, column_extent, column_left, vertical_decoration_spec,
 };
 use super::super::{placed_box, with_vertical_margin, Atom, Ctx};
-use super::MAX_LIST_ENTRIES;
+use super::{EntryKeys, MAX_LIST_ENTRIES};
 
 impl Ctx<'_, '_> {
     /// Builds a vertical list atom from the resolved box and entries (the
@@ -37,6 +37,7 @@ impl Ctx<'_, '_> {
         w: f64,
         entries: Vec<Value>,
         computed: &ComputedStyle,
+        keys: &EntryKeys<'_>,
     ) -> Atom {
         let orient = computed.text_orientation;
         let resolved = self.resolved_chain(computed);
@@ -62,10 +63,9 @@ impl Ctx<'_, '_> {
         .min(MAX_LIST_ENTRIES);
         let cut = total - kept;
 
-        let key = &list.data.key;
         let mut texts: Vec<String> = Vec::with_capacity(kept + 1);
         for (index, entry) in entries.iter().take(kept).enumerate() {
-            texts.push(self.entry_text(list, entry, (key, index)));
+            texts.push(self.entry_text(list, entry, keys, index));
         }
         if cut > 0 {
             let template = list.overflow_text.as_deref().unwrap_or("+{count}");

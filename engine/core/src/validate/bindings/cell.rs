@@ -156,11 +156,11 @@ pub(in crate::validate) fn check_cell_bindings(
             }
             Item::List(list) => {
                 // The list's array must be a declared field of the group
-                // (or, escaped, a top-level key); its per-entry `text`
-                // template resolves against entry objects whose shape
-                // definitions do not model, so those keys are checked at
-                // layout (missing values warn there).
-                check_cell_binding(&list.data, cell, &path, diags);
+                // (or, escaped, a top-level key); its per-entry template
+                // resolves one level further in, against the ELEMENTS of
+                // that array — see `super::entry`.
+                super::entry::check_list_source(list, &decl_ctx, &path, diags);
+                super::entry::check_list_entries(list, &decl_ctx, &path, diags);
             }
             Item::Container(container) => {
                 check_cell_bindings(&container.items, cell, &format!("{path}.items"), diags);

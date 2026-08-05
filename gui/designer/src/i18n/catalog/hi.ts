@@ -548,6 +548,7 @@ export const hi: LanguageCatalog = {
     'palette.used': '{count, number} स्थानों में प्रयुक्त',
     'palette.unused': 'अप्रयुक्त',
     'palette.array': 'दोहराव',
+    'palette.rowScope': '{group} के भीतर',
     'palette.ungrouped': 'सामान्य फ़ील्ड',
     'palette.type.string': 'पाठ',
     'palette.type.number': 'संख्या',

@@ -21,7 +21,7 @@ import { INPUT, SECTION_TITLE } from '../ui/chrome';
 import { IconGear } from '../ui/icons';
 import { readBindings } from './bindings';
 import { filterGroups } from './filter';
-import { readDefinitionsView } from './model';
+import { readDefinitionsView, rowScopeLabel } from './model';
 import { GroupSection } from './paletteGroup';
 import type { PaletteDrag } from './paletteRow';
 import { buildUsage } from './usage';
@@ -90,7 +90,14 @@ export function FieldPalette({
         <p className="m-0 text-muted">{t('palette.noMatches')}</p>
       ) : (
         shown.map((group) => (
-          <GroupSection key={group.id} group={group} usage={usage} onPick={pick} drag={drag} />
+          <GroupSection
+            key={group.id}
+            group={group}
+            usage={usage}
+            onPick={pick}
+            drag={drag}
+            parentLabel={rowScopeLabel(groups, group)}
+          />
         ))
       )}
     </section>

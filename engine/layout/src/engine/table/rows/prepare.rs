@@ -147,6 +147,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             return CellContent::Cell {
                 item: cell,
                 scope: Scope {
+                    catalog_key: table.data.key.clone(),
                     element: Rc::clone(element),
                     array_key: table.data.key.clone(),
                     index,

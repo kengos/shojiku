@@ -48,9 +48,13 @@ export function iterableAvailable(
   return workshop || arrayGroups(groups).length > 0;
 }
 
-/** The bindable array groups of a definitions view. */
+/** The bindable array groups of a definitions view — the ones a new
+ * iterable can bind at document scope. A `rowScope` group is carried by
+ * another array's ROWS: its key resolves only from inside that parent's
+ * cell, so offering it here would author a source path no params can
+ * walk. */
 export function arrayGroups(groups: readonly PaletteGroup[] | null): readonly PaletteGroup[] {
-  return (groups ?? []).filter((group) => group.isArray);
+  return (groups ?? []).filter((group) => group.isArray && group.rowScope === undefined);
 }
 
 /** Validate the blank-start form. `null` = good to go. Params-dependent

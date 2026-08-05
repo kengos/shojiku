@@ -118,13 +118,24 @@ injected at parse). The template model splits along CSS lines.
 - `params.rs` — params parse + `resolve_path` dotted lookup + `is_blank`
   (the shared absent/null/`""` predicate placeholders key off).
 - `catalog.rs` — the schema tree flattens to dotted-key lookup tables
-  (`scalars`/`arrays`/`row_arrays`) with `FieldSpec` — the
-  compatibility keystone that let validate/formatter never learn the wire
-  moved. `FieldSpec.enum_labels` = the declared `(value, label)` pairs
-  in authored order, populated for plain-text fields only (other types
-  warn `definitions_enum_labels_ignored` in the validate quality walk
-  and get an empty list); lookup equality = `check_enum` membership
-  equality.
+  (`scalars` + `arrays`, the latter of `ArrayGroup { fields, row_arrays,
+  element }`) with `FieldSpec` — the compatibility keystone that let
+  validate/formatter never learn the wire moved. A row's own array child
+  registers as an `ArrayGroup` of its OWN under the joined path
+  (`orders.items`) besides staying in its parent's `row_arrays`, so a
+  nested source is as addressable as a top-level one; `resolve_array_path`
+  is the row-relative→full join every consumer routes through.
+  `ArrayElement` = `Object` | `Scalar(FieldSpec)` | `Undeclared` — the
+  distinction a check needs before claiming anything about an element.
+  `catalog/flatten.rs` holds the walk, which carries no depth argument:
+  `MAX_SCHEMA_DEPTH` is enforced at parse and bounds it (pinned by
+  `nesting_at_the_parse_cap_flattens`). `FieldSpec.enum_labels` = the
+  declared `(value, label)` pairs in authored order, populated for
+  plain-text fields only (other types warn
+  `definitions_enum_labels_ignored` in the validate quality walk and get
+  an empty list); `FieldSpec.enum_values` = every declared member's value
+  for EVERY type, which is what a template-side `equals` is checked
+  against; lookup equality = `check_enum` membership equality.
 - `interpolate.rs` — `{{key}}` strings: `parse_segments`/`Segment` +
   `is_valid_interpolation_name` (the ONE charset statement, shared with
   declaration names) + `scan_suspect_keys` (the looks-like-a-key-but-
@@ -160,9 +171,21 @@ injected at parse). The template model splits along CSS lines.
   `decl/surfaces.rs` — the pure item-shape half (which map an item
   carries, which strings it interpolates); `validate/bindings/cell.rs` —
   cell/card/`cell:`-column bindings, array-scoped; `scope: document`
-  routes to the scalar check so the escape keeps full checking.
+  routes to the scalar check so the escape keeps full checking;
+  `validate/bindings/entry.rs` — a `list`'s ENTRY scope, one level
+  further in: its source key (a `scope: document` one names an array, so
+  it is checked against the declared SOURCES, not the scalars) plus every
+  per-entry `text:` segment and element-scoped declaration against the
+  bound array's `items:` fields. Silent for an `Undeclared` element.
 - `validate/marks.rs` — form-mark checks (content conflicts, boolean-ness,
   data keys; `TextItem.mark` walked the same way).
+- `validate/equals.rs` — what a declarative `{ key, equals? }` binding can
+  be checked against BEFORE any params exist, shared by marks and table
+  row conditions so the two cannot drift: `EqualsTarget` (a leaf, or an
+  array source carrying its element spec — the multi-select form),
+  `reads_as_boolean` (only a boolean LEAF does), and `equals_fault` =
+  wrong scalar kind | outside the declared `enum`. Literals are never
+  echoed.
 - `validate/tables.rs` — table checks: bound array group, per-column
   content shape, row-relative keys, `cell:` sub-template bindings, and the
   `conditionalStyles` predicates.

@@ -17,6 +17,16 @@ mod vertical;
 use super::text::clamp_line;
 use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx};
 
+/// The two identities of the array a list binds, threaded to each entry.
+/// They differ only for a NESTED source, and conflating them is exactly
+/// the bug this split exists to prevent.
+pub(super) struct EntryKeys<'a> {
+    /// As AUTHORED — row-relative inside a cell. The asset identity.
+    pub array_key: &'a str,
+    /// The definitions catalog's full dotted path. Field specs only.
+    pub catalog_key: &'a str,
+}
+
 /// Cap on rendered entries. Params are untrusted and a hostile array
 /// would otherwise drive unbounded measurement; entries past the cap are
 /// never rendered but still count into the overflow line's `{count}`.
@@ -59,11 +69,28 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
         };
 
+        // The entries' catalog identity: a row-relative key joins the
+        // enclosing scope's path (`orders` + `items`), so a nested list's
+        // per-entry fields carry their declared formats exactly as a
+        // top-level list's do. `scope: document` escapes to the top level,
+        // so it joins nothing.
+        let parent = scope.as_ref().map(|s| s.catalog_key.as_str());
+        let catalog_key = self
+            .input
+            .catalog
+            .and_then(|c| c.resolve_array_path(parent, key))
+            .unwrap_or_else(|| key.clone());
+
+        let keys = EntryKeys {
+            array_key: key,
+            catalog_key: &catalog_key,
+        };
+
         let computed = self.resolve_style(&list.style_names, &list.style);
         // A vertical writing mode turns the list into right-to-left columns
         // (one per entry); the horizontal path below is the default.
         if computed.writing_mode == shojiku_core::WritingMode::VerticalRl {
-            return Some(self.vertical_list_atom(list, rb, w, entries, &computed));
+            return Some(self.vertical_list_atom(list, rb, w, entries, &computed, &keys));
         }
         let resolved = self.resolved_chain(&computed);
         let font_id = resolved.primary.face.id.clone();
@@ -95,7 +122,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
 
         let mut texts: Vec<String> = Vec::with_capacity(kept + 1);
         for (index, entry) in entries.iter().take(kept).enumerate() {
-            texts.push(self.entry_text(list, entry, (key, index)));
+            texts.push(self.entry_text(list, entry, &keys, index));
         }
         if cut > 0 {
             let template = list.overflow_text.as_deref().unwrap_or("+{count}");
@@ -194,14 +221,16 @@ impl<'a, 'b> Ctx<'a, 'b> {
         &mut self,
         list: &ListItem,
         entry: &Value,
-        (array_key, index): (&str, usize),
+        keys: &EntryKeys<'_>,
+        index: usize,
     ) -> String {
         match &list.text {
             Some(template) => {
                 let saved = self.scope.take();
                 self.scope = Some(super::Scope {
                     element: std::rc::Rc::new(entry.clone()),
-                    array_key: array_key.to_string(),
+                    array_key: keys.array_key.to_string(),
+                    catalog_key: keys.catalog_key.to_string(),
                     index,
                 });
                 // `text` is authored, so `resolve_content` is always `Some`.

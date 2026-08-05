@@ -38,10 +38,14 @@ export const en: LanguageCatalog = {
     mark_content_conflict: 'checkbox sets both `checked` and `data`; `data` wins',
     mark_binding_not_boolean: '`{key}` is not a boolean field; a mark without `equals` expects one',
     mark_equals_type_mismatch: '`{key}` value type differs from `equals`; mark not drawn',
+    mark_equals_not_declared:
+      '`{key}` declares an `enum` that does not list this `equals` value; the mark can never be drawn',
     mark_value_not_bool: '`{key}` is not a boolean; mark not drawn',
     row_condition_not_boolean:
       '`{key}` is not a boolean field; a row condition without `equals` expects one',
     row_condition_type_mismatch: '`{key}` value type differs from `equals`; row style not applied',
+    row_condition_equals_not_declared:
+      '`{key}` declares an `enum` that does not list this `equals` value; the row style can never apply',
     row_condition_value_not_bool: '`{key}` is not a boolean; row style not applied',
     empty_link_url: 'link URL is empty; link dropped',
     unsupported_link_scheme:
@@ -744,6 +748,7 @@ export const en: LanguageCatalog = {
     'palette.used': 'Used ×{count, number}',
     'palette.unused': 'Unused',
     'palette.array': 'Repeating',
+    'palette.rowScope': 'Inside {group}',
     'palette.ungrouped': 'General fields',
     'palette.type.string': 'Text',
     'palette.type.number': 'Number',

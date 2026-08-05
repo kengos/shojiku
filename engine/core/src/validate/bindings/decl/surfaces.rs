@@ -45,10 +45,9 @@ pub(super) fn interpolated_strings(item: &Item) -> Vec<&str> {
 
 /// Whether the item's `{name}` interpolations resolve against ARRAY
 /// ELEMENTS of its own (a `list`'s per-entry template), rather than the
-/// ambient scope. Definitions do not model entry shapes, so an
-/// element-scoped declaration on such an item is unverifiable here and
-/// checked at layout — exactly like the entry template's bare `{key}`
-/// segments already are.
+/// ambient scope. Such a declaration is checked against the ELEMENT
+/// scope in `super::super::entry`, so this walk leaves it alone — its
+/// key would otherwise be reported twice, once against the wrong scope.
 pub(super) fn is_entry_scoped(item: &Item) -> bool {
     matches!(item, Item::List(_))
 }

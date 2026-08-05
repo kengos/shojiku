@@ -30,6 +30,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 h: Some(slot.h),
             },
             Scope {
+                catalog_key: array_key.to_string(),
                 element,
                 array_key: array_key.to_string(),
                 index,

@@ -46,6 +46,25 @@ Pipeline: `Template/Definitions → Bundle → Layout → Render → Preview →
   hint); caps: depth 16 / 4096 nodes / 256 enum values; a definitions
   file with no properties warns `empty_definitions`. Capability key
   `definitions.schema`.
+- **Nested array sources**: an array declared inside another array's
+  `items:` (a `list` inside a `repeat` cell) is a data source in its own
+  right, at any depth the schema cap admits. It is bound row-relatively,
+  and its element fields are known under the joined dotted path — so a
+  `list`'s per-entry `text:` keys are checked at validate
+  (`unknown_data_key`) instead of surfacing as a layout `missing_data`,
+  and each entry resolves through its declared display format,
+  `placeholder` and `enum` labels exactly as a top-level array's rows do.
+  Silent where the schema says nothing: an array with no `items:` claims
+  no shape. No wire change — the recursive schema always parsed this;
+  what shipped is the engine consuming it.
+- **`equals` checked against the declaration**: a form mark's or a table
+  row condition's `equals` literal is compared with what the field
+  declares, before any params exist — a different scalar kind, or a value
+  outside a declared `enum`, is a predicate no params can ever satisfy
+  (`mark_equals_type_mismatch` / `mark_equals_not_declared`,
+  `row_condition_type_mismatch` / `row_condition_equals_not_declared`).
+  For a multi-select (an array source), the array's ELEMENT is what the
+  literal is checked against. Literals are never echoed.
 - **Enum display labels**: an `enum` member is a bare value OR a
   `{ value, label }` pair (mixed lists fine, per-member authored form
   round-trips) — a plain-text field with labeled members renders the
@@ -930,7 +949,10 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **`type: list`**: an array field, one entry per line, per-entry
   ellipsis (entries never wrap); a definite height clamps and appends
   the `overflowText` `{count}` line (`他{count}件`); `MAX_LIST_ENTRIES`
-  1000; never paginates by design (a cell is a fixed slot).
+  1000; never paginates by design (a cell is a fixed slot). The
+  per-entry `text:` template resolves against the array's declared
+  element — including for a NESTED source — so its keys are validated
+  and its values carry their field specs.
 - Capability keys: `qr_code`, `list`. Reference:
   [qr_code](qr_code.md), [list](list.md).
 

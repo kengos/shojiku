@@ -3,8 +3,8 @@
 //! row `conditionalStyles` predicates, and the array-scoped bindings
 //! inside a `cell:` column's sub-template.
 
+use super::equals::{equals_fault, reads_as_boolean, resolve_target, EqualsFault};
 use crate::catalog::Catalog;
-use crate::definitions::FieldType;
 use crate::template::{
     BindingScope, Column, ColumnType, RowSpec, Template, MAX_ROW_CONDITIONAL_STYLES,
 };
@@ -113,9 +113,10 @@ fn check_column_bindings(
 }
 
 /// Every `row.conditionalStyles` predicate against the bound array group:
-/// the `when.key` is row-relative (like a column's own binding), and an
-/// `equals`-less entry reads that field as a boolean, so a non-boolean
-/// declaration is a condition that can never hold.
+/// the `when.key` is row-relative (like a column's own binding). A
+/// predicate that can never hold for ANY params is the finding — an
+/// `equals`-less entry over a non-boolean field, or an `equals` literal
+/// of the wrong kind or outside the field's declared `enum`.
 fn check_row_conditions(
     row: &RowSpec,
     key: &str,
@@ -131,32 +132,32 @@ fn check_row_conditions(
     {
         let entry_path = format!("{path}.row.conditionalStyles[{index}]");
         let field = &entry.when.key;
-        let Some(spec) = catalog.array_field(key, field) else {
-            // A declared row-level ARRAY is known but carries no scalar
-            // type — the multi-select `equals` contains form.
-            if !catalog.row_array(key, field) {
-                diags.push(
-                    Diagnostic::new(Code::UnknownDataKey)
-                        .arg("key", field)
-                        .arg("source", format!("array group `{}`", Echo::inline(key)))
-                        .with_path(entry_path),
-                );
-            } else if entry.when.equals.is_none() {
-                diags.push(
-                    Diagnostic::new(Code::RowConditionNotBoolean)
-                        .arg("key", field)
-                        .with_path(entry_path),
-                );
-            }
-            continue;
-        };
-        if entry.when.equals.is_none() && spec.field_type != FieldType::Boolean {
+        let Some(target) = resolve_target(catalog, Some(key), field) else {
             diags.push(
-                Diagnostic::new(Code::RowConditionNotBoolean)
+                Diagnostic::new(Code::UnknownDataKey)
                     .arg("key", field)
+                    .arg("source", format!("array group `{}`", Echo::inline(key)))
                     .with_path(entry_path),
             );
-        }
+            continue;
+        };
+        // An `equals`-less entry reads the field as a boolean; with one,
+        // the literal must be a value the field can actually carry. The
+        // literal is never echoed — the key names the field.
+        let code = match &entry.when.equals {
+            None if !reads_as_boolean(&target) => Code::RowConditionNotBoolean,
+            None => continue,
+            Some(equals) => match equals_fault(&target, equals) {
+                Some(EqualsFault::Kind) => Code::RowConditionTypeMismatch,
+                Some(EqualsFault::NotDeclared) => Code::RowConditionEqualsNotDeclared,
+                None => continue,
+            },
+        };
+        diags.push(
+            Diagnostic::new(code)
+                .arg("key", field)
+                .with_path(entry_path),
+        );
     }
 }
 

@@ -38,6 +38,12 @@ export interface PaletteGroup {
   readonly description: string;
   /** A repeating group (the table/repeat/list data source). */
   readonly isArray: boolean;
+  /** For an array carried by ANOTHER array's rows (a `list` inside a
+   * `repeat` cell): the id of that parent group. Such a source is only
+   * bindable from inside its parent's scope, with a row-relative key, so
+   * the palette shows it but arms no drag and the insert dialog does not
+   * offer it. Absent for every group bindable at document scope. */
+  readonly rowScope?: string;
   readonly fields: readonly PaletteField[];
 }
 
@@ -45,10 +51,12 @@ export interface PaletteGroup {
  * palette's display view. `null` when the text does not parse to a map with
  * a `properties` map (over the size cap, malformed YAML, an alias bomb, the
  * retired v1 `groups` form) — the palette shows its empty state. A top-level
- * object property is a group (nested arrays surface as their own groups); a
- * top-level array property is an array group; top-level scalars gather into
- * one leading unlabeled group (`id`/`label` empty — the component shows the
- * localized "ungrouped" heading). Entries are tolerated field-by-field. */
+ * object property is a group (nested arrays surface as their own groups, at
+ * every depth — including the arrays an array's ROWS carry, which are marked
+ * `rowScope`); a top-level array property is an array group; top-level
+ * scalars gather into one leading unlabeled group (`id`/`label` empty — the
+ * component shows the localized "ungrouped" heading). Entries are tolerated
+ * field-by-field. */
 export function readDefinitionsView(source: string): readonly PaletteGroup[] | null {
   let raw: unknown;
   try {
@@ -68,7 +76,11 @@ export function readDefinitionsView(source: string): readonly PaletteGroup[] | n
       continue;
     }
     if (schema.type === 'array') {
-      groups.push(arrayGroup(name, schema));
+      // A top-level array's rows may carry arrays of their own; they are
+      // sources in their own right and follow their parent in the list.
+      const nested: PaletteGroup[] = [];
+      groups.push(arrayGroup(name, schema, undefined, nested));
+      groups.push(...nested);
     } else if (schema.type === 'object') {
       const fields: PaletteField[] = [];
       const nestedArrays: PaletteGroup[] = [];
@@ -94,4 +106,21 @@ export function readDefinitionsView(source: string): readonly PaletteGroup[] | n
     groups.unshift({ id: '', label: '', description: '', isArray: false, fields: ungrouped });
   }
   return groups.slice(0, MAX_PALETTE_GROUPS);
+}
+
+/** The label of the group whose rows carry `group`, or `undefined` when the
+ * group is bindable at document scope. Resolved against the FULL group list:
+ * a search that matches the child but not its parent must still say where the
+ * child lives. A parent that is missing or carries no title of its own falls
+ * back to the id it is addressed by — never to nothing, since the whole point
+ * of the label is telling two same-named sources apart. */
+export function rowScopeLabel(
+  groups: readonly PaletteGroup[],
+  group: PaletteGroup,
+): string | undefined {
+  if (group.rowScope === undefined) {
+    return undefined;
+  }
+  const parent = groups.find((candidate) => candidate.id === group.rowScope);
+  return parent === undefined || parent.label === '' ? group.rowScope : parent.label;
 }
