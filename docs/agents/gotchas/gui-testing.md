@@ -260,6 +260,24 @@
   fixture must be a valid encoding** (CRC-checked chunks) — generate a
   minimal valid 1×1 PNG (`python3 -c` with `zlib`+`struct`), never
   hand-type base64.
+- **`import.meta.url` is an `http://` URL under the `designer` package's
+  jsdom environment**, so reading a bundled file the designer-core way
+  (`readFileSync(new URL('../../examples/…', import.meta.url))`) dies with
+  `TypeError: The URL must be of scheme file`. designer-core's suite runs
+  in the NODE environment, where the same line is correct — so the idiom
+  copies across packages and breaks. In `designer`, resolve from the
+  package directory instead
+  (`resolve(process.cwd(), '../../examples/…')`), and keep the
+  `/// <reference types="node" />` the base tsconfig's `types: []`
+  requires.
+- **Take a chrome query's NAME from the catalog and its ROLE from what
+  the component actually renders.** Two guesses, two runs: the binding
+  picker's toggle answers to `picker.open` ("Choose a data field", not
+  the plausible "Pick a data field"), and its popover rows are
+  `menuitem`, not `button` — `getByRole('button', { name: /…/ })` then
+  fails with a wall of accessible roles that DOES list the element,
+  under the other role. Grep the catalog for the label and read the
+  component's `role=` before writing the query.
 - **A Designer-level pointer test's client coordinates are divided by
   the render scale** (jsdom rects are unmeasurable so only the ÷`scale`
   remains; the Designer renders at `DEFAULT_SCALE` 2) — a drop meant for
