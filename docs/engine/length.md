@@ -67,11 +67,14 @@ normalized pt number. Bare numbers stay bare numbers.
 - Heights (`h`, `minHeight`, `maxHeight`, `y`) inside an auto-height
   container (`percent_of_auto` at layout). `em`/`rem` need no height
   basis and still resolve there.
-- `line` items are pt-only (`from`/`to` are bare-number points).
+A `line`'s `from`/`to` take the full vocabulary on both axes (`x`
+against the placement box's width, `y` against its height) — see
+[line.md](line.md); a `%` `y` under an auto-height parent drops with
+`percent_of_auto` like any other height.
 
 Capability keys: `length.physical`, `box.percent`, `length.em_rem`,
 `style.fontSize.length`, `style.letterSpacing.length`,
-`flow.gap.length`.
+`flow.gap.length`, `line.length`.
 
 ## See also
 

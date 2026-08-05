@@ -51,7 +51,13 @@ Child keys (on a grid child's `box`, like `flexGrow` in flex):
   cell); horizontal auto margins center/push within the cell. A child
   taller than its explicit row track warns `grid_cell_overflow` and
   overflows visually, CSS-like — to clip, author `overflow: hidden` on
-  the child container itself.
+  the child container itself. A child *wider* than its column-track run
+  warns `grid_column_overflow` (its own code, carrying only numbers —
+  `child`/`track`/`span` — so a translating consumer writes its own
+  sentence); column tracks are always definite, so unlike auto ROWS —
+  which grow to their tallest child — a definite-width child either fits
+  or spills over its neighbour. A child with no authored `w` fills the
+  run and never warns.
 - **Caps**: track counts and list lengths clamp to `MAX_GRID_TRACKS`
   (64) per axis with `grid_tracks_clamped`, so hostile counts cannot
   drive allocation.
@@ -90,7 +96,8 @@ box: { type: grid, columns: ["1fr", "2fr", 90] }   # 90pt fixed; the
 | Code | Meaning |
 | --- | --- |
 | `grid_tracks_clamped` | `columns`/`rows` outside 1..=64 tracks (or an empty list); clamped |
-| `grid_cell_overflow` | child taller than its explicit row track; overflows visually |
+| `grid_cell_overflow` | child TALLER than its explicit row track; overflows visually |
+| `grid_column_overflow` | child WIDER than the column-track run it spans; overflows visually |
 | `grid_key_ignored` | grid keys authored without `box.type: grid` |
 | `grid_span_clamped` | `columnSpan`/`rowSpan` beyond the axis; clamped |
 | `span_outside_grid` | span keys on a child of a non-grid box; ignored |

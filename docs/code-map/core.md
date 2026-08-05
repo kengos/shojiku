@@ -64,7 +64,10 @@ injected at parse). The template model splits along CSS lines.
   `dimensions_pt()` swaps a NAMED size on landscape, no-op + warn flag for
   custom sizes). `geometry/box_model.rs` — `BoxSpec`/`OptBox` (margin/
   padding, flex keys, min/max bounds, `flexGrow`, `columnSpan`/`rowSpan`)/
-  `PointSpec`. `geometry/page_margin.rs` — `PageMargin` (bare | per-side |
+  `PointSpec` (`{ x, y }`, the `line` endpoint — both axes are full
+  `Length`s, so a bare number is still pt and `"100%"` reaches the edge
+  of whatever box the line sits in; only `LineItem` uses it).
+  `geometry/page_margin.rs` — `PageMargin` (bare | per-side |
   legacy array, authored form round-trips; the margin box is the
   coordinate origin). `geometry/flex.rs` — flex wire enums (`BoxType`/
   `FlexDirection`/`AlignItems` incl. baseline/`JustifyContent`).

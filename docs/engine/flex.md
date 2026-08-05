@@ -92,3 +92,18 @@ A row whose fixed widths + gaps exceed the parent content box warns
 never warn). A parent with `overflow: hidden` clips by intent and stays
 silent. Definite-width flow items reaching past the flow region's right
 edge warn the same code.
+
+Individual children are checked too, against the box they were placed
+in: a **column** child or an `x`/`y`-positioned (absolute) child whose
+border box plus right margin passes its parent's content box warns
+`child_overflow`, and the diagnostic names the CHILD (`items[i]`), not
+the container. A ROW
+child is deliberately not re-checked here — the row-level check above
+already speaks for it, and both firing would report one overflow twice.
+
+The message states **how much** a child overflows by, never which side
+it spills off: cross-axis alignment is applied after the check, and an
+over-wide child under `alignItems: center` puts half the excess past the
+LEFT edge, under `end` all of it. Only the amount is invariant. (Auto
+margins absorb nothing when space is already short, so they never move
+an overflowing child.)

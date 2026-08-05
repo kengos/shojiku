@@ -130,6 +130,10 @@ export const ja: LanguageCatalog = {
     container_overflow: 'コンテナの内容（{content}pt）が内容高さ（{avail}pt）を超えています',
     grid_cell_overflow: 'グリッドの子要素（{child}pt）が {track}pt の {extent} を超えています',
     horizontal_overflow: '{detail}',
+    sheet_overflow: '項目が用紙の右端を {over}pt はみ出しており、紙面外に描画されます',
+    child_overflow: '子要素が内容ボックス（{avail}pt）を {over}pt はみ出しています',
+    grid_column_overflow:
+      'グリッドの子要素（{child}pt）が、またがる {span} 列分のトラック幅（{track}pt）より広くなっています',
     text_overflow:
       'テキストがボックス高さを超えています（内容 {content}pt に対し利用可能 {avail}pt）',
     char_grid_overflow:

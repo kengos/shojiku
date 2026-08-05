@@ -105,6 +105,9 @@ export const zhCn: LanguageCatalog = {
     container_overflow: '容器内容（{content}pt）超过其内容高度（{avail}pt）',
     grid_cell_overflow: '网格子项（{child}pt）超过其 {track}pt 的{extent}',
     horizontal_overflow: '{detail}',
+    sheet_overflow: '项目超出纸张右边缘 {over}pt，将绘制在纸面之外',
+    child_overflow: '子项超出其内容框（{avail}pt）达 {over}pt',
+    grid_column_overflow: '网格子项（{child}pt）比其跨越的 {span} 个列轨（共 {track}pt）更宽',
     text_overflow: '文本超过盒子高度（内容 {content}pt，可用 {avail}pt）',
     char_grid_overflow:
       'char_grid 内容超过流式主体外可用的单张（{cells} 格）；已丢弃 {dropped} 个字符',

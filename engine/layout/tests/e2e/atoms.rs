@@ -2,6 +2,7 @@
 //! sizing and color diagnostics; image fit and clipping in `image`.
 
 mod image;
+mod line_length;
 mod line_style;
 
 use crate::common::*;

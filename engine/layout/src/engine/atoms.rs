@@ -198,16 +198,30 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// form — becomes two parallel lines a third of the width each,
     /// offset either side of the authored geometry by a third of the
     /// width so the pair straddles it symmetrically.
-    pub(super) fn line_atom(&mut self, line: &shojiku_core::LineItem, region_x: f64) -> Atom {
-        let height = line.from.y.max(line.to.y);
+    ///
+    /// Endpoints are full `Length`s resolved against `basis`, the same
+    /// box every sibling item resolves against: `x` against its width
+    /// (offset from `basis.x`, so `"100%"` lands on the right edge), `y`
+    /// against its height. An unresolvable endpoint — a `%` under an
+    /// auto-height parent, or a hostile value past the resolve cap —
+    /// falls back to 0 having already warned.
+    pub(super) fn line_atom(&mut self, line: &shojiku_core::LineItem, basis: &Basis) -> Atom {
+        let x1 = basis.x + self.resolve_x(Some(line.from.x), basis).unwrap_or(0.0);
+        let x2 = basis.x + self.resolve_x(Some(line.to.x), basis).unwrap_or(0.0);
+        let y1 = self.resolve_y(Some(line.from.y), basis).unwrap_or(0.0);
+        let y2 = self.resolve_y(Some(line.to.y), basis).unwrap_or(0.0);
+        // The reserved height floors at 0: a line whose endpoints both sit
+        // ABOVE its origin would otherwise reserve a negative height and
+        // walk the flow cursor backwards over already-placed content.
+        let height = y1.max(y2).max(0.0);
         // Guarded BEFORE it is consumed, so the dash pattern and the
         // `double` split both derive from the clamped width.
         let width = self.sane_line_width(line.style.width());
         let stroke = LineShape {
-            x1: region_x + line.from.x,
-            y1: line.from.y,
-            x2: region_x + line.to.x,
-            y2: line.to.y,
+            x1,
+            y1,
+            x2,
+            y2,
             width,
             color: self.color_or_black(line.style.color.as_deref()),
             opacity: self.sane_opacity(line.style.opacity.unwrap_or(1.0)),
@@ -226,8 +240,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             boxes: vec![super::line_placed_box(
                 &self.current_path(),
                 line.id.as_deref(),
-                (region_x + line.from.x, line.from.y),
-                (region_x + line.to.x, line.to.y),
+                (x1, y1),
+                (x2, y2),
             )],
             rb: None,
         }

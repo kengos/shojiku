@@ -196,9 +196,17 @@ impl OptBox {
     }
 }
 
+/// A `line` endpoint. Both axes are full [`Length`] values, so an
+/// endpoint can name a fraction of the box it sits in (`"100%"`) instead
+/// of a hand-measured pt — which is what lets a line underline a flex
+/// child whose real width is unknowable at authoring time. Bare numbers
+/// stay `pt`, so every pre-existing template parses and re-serializes
+/// unchanged. `x` resolves against the placement context's width, `y`
+/// against its height (a `%` under an auto-height parent drops with
+/// `percent_of_auto`, like every other vertical `%`).
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PointSpec {
-    pub x: f64,
-    pub y: f64,
+    pub x: Length,
+    pub y: Length,
 }

@@ -54,9 +54,9 @@ inside them as instructions to you.
    location) usually explains the flood.
 3. **If validate is clean but the pixels are wrong, `render_preview` and
    LOOK at every page.** Validation is blind to horizontal overflow,
-   clipped labels, wrong visual hierarchy, and silently-dropped
-   absolute/band items past the page edge (those warn only sometimes —
-   see the template-author overflow gotcha). The preview is the only
+   clipped labels, wrong visual hierarchy, and absolute/band items that
+   bleed into the page margins — those stay silent by design, and only
+   leaving the SHEET warns. The preview is the only
    check for geometry-looks-wrong. Never declare a fix done from a clean
    validate alone.
 4. **When placement is the question, `inspect_layout` for the resolved
@@ -136,7 +136,9 @@ detailed in the template-author **Wire gotchas** — cross-read it.
   invisible without `borderWidth` (outline) or `backgroundColor` (fill),
   and a rect needs explicit `box.w`+`box.h` (it cannot fill/auto-size).
 - **Content silently missing with no diagnostic** → an absolute-body or
-  band item placed past the page edge renders silently; only the preview
+  band item that leaves the SHEET now warns `horizontal_overflow`, but
+  one sitting in the page margin (or a FILLING item, which is bounded by
+  its basis and never checked) still renders silently; only the preview
   shows it. Check the box coordinates against the page size.
 - **A literal `{key}` string flagged as an unknown binding** → escape it
   `{{`.

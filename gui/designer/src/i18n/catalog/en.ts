@@ -120,6 +120,10 @@ export const en: LanguageCatalog = {
     container_overflow: 'container content ({content}pt) exceeds its content height ({avail}pt)',
     grid_cell_overflow: 'grid child ({child}pt) exceeds its {track}pt {extent}',
     horizontal_overflow: '{detail}',
+    sheet_overflow: 'item reaches {over}pt past the right edge of the sheet and renders off-paper',
+    child_overflow: 'child overflows its {avail}pt content box by {over}pt',
+    grid_column_overflow:
+      'grid child ({child}pt) is wider than the {track}pt column run it spans ({span} tracks)',
     text_overflow: 'text overflows the box height ({content}pt content vs {avail}pt available)',
     char_grid_overflow:
       'char_grid content exceeds the single sheet ({cells} cells) available outside a flow body; {dropped} characters dropped',

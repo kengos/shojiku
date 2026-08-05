@@ -59,7 +59,34 @@ Wire types stay in core; content measurement stays in layout.
   `FlowLayouter`, the paginating cursor (page breaks, the `MAX_PAGES`
   runaway cap, atom placement = vertical fit + horizontal-overflow check).
 - `engine/band.rs` — header/footer + `page_number` (vertical_rl routes to
-  `vertical_text_block`).
+  `vertical_text_block`); every arm hands its atom to `sheet.rs`'s
+  `emit_placed` rather than translating it inline.
+- `engine/sheet.rs` — `emit_placed`, the ONE tail EVERY band and
+  absolute-body arm goes through (translate onto the page + the
+  sheet-edge check). No arm emits by hand, `line` included.
+- `engine/overflow.rs` — the horizontal-overflow POLICY, all three bounds
+  in one file so they read against each other. Each emits its OWN
+  number-only code (`sheet_overflow` / `child_overflow` /
+  `grid_column_overflow`) rather than the older `horizontal_overflow`,
+  whose single `{detail}` arg carries a whole English sentence a
+  translating consumer can only pass through — one code per reason, since
+  a shared code with a `{where}` arg would leak an English enum value the
+  same way. (`horizontal_overflow` still serves its three PRE-EXISTING
+  sites: flow region, flex row pre-pass, vertical text.) The three:
+  `check_sheet_edge` (band / absolute-body item vs the PAPER — reaching
+  into the page margins is a deliberate escape hatch, and the sheet edge
+  is derived as `basis.x + basis.w + page_margin[1]`, so no page width is
+  carried on `Ctx`; a BOX-LESS atom — a `line` — falls back to its placed
+  endpoint bbox, which is the rectangle the stroke inks),
+  `check_child_right` (column / absolute box child vs its parent's
+  content box; states the overflow MAGNITUDE and never a side, because
+  `cross_offset` has not run yet and `alignItems: center`/`end` push the
+  excess LEFT), and `check_track_width` (grid child vs its column-track
+  run, reported as `grid_cell_overflow` with `extent` naming the axis).
+  A filling item (`rb.w` unset) is never checked; each fires inside the
+  child's own `items[i]` mark. The flex ROW check stays in
+  `flex/offsets.rs::plan_row` — it speaks for the whole row, which is why
+  row children are excluded from `check_child_right`.
 - `engine/decoration.rs` — box decoration shared by text blocks/containers/
   repeat cells/images/table frames. RESOLVES only: `decoration_paint` turns
   a style into a `DecorationPaint` (and raises every decoration warning
@@ -94,7 +121,9 @@ Wire types stay in core; content measurement stays in layout.
   child-walk: children with no authored `box.x`/`box.y` are flex items
   (column default, `direction: row` side-by-side), others stay absolute;
   `Atom.rb` carries each child's `ResolvedBox` so offsets never re-resolve.
-  `engine/flex/offsets.rs` (row pre-pass + column/row cross math);
+  `engine/flex/offsets.rs` (row pre-pass + column/row cross math; the
+  row-level `horizontal_overflow` check lives in `plan_row`, the
+  per-child ones in `engine/overflow.rs`);
   `engine/flex/baseline.rs` (`alignItems: baseline` via first-text
   baselines).
 - `engine/link.rs` — `link:`: `resolve_link` (scope-aware interpolation) +
@@ -128,7 +157,9 @@ Wire types stay in core; content measurement stays in layout.
   one-template invariant); `shape_paint` = the ONE unified-Style→uniform-
   paint reduction shared with the text mark; emits `LayoutItem::Path`.
 - `engine/grid.rs` — static grid (`box.type: grid`): column tracks + fill
-  order + auto/explicit row heights + spans; `engine/grid/tracks.rs`
+  order + auto/explicit row heights + spans (the row-track
+  `grid_cell_overflow` check is here; its column-axis mirror is
+  `engine/overflow.rs::check_track_width`); `engine/grid/tracks.rs`
   (track resolution + `fr` leftover via `grow_shares`);
   `engine/grid/span.rs` (`Occupancy` + pure fill-order placement).
 - `engine/repeat.rs` — imposition/n-up: `place_repeat` tiles a data array

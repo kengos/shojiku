@@ -123,13 +123,20 @@ grid parent warn `span_outside_grid` at layout.
 | `grid_key_ignored` | grid keys without `box.type: grid` |
 | `container_overflow` | content taller than a definite-`h` container's content box |
 
-Horizontal overflow is only *warned* where layout can see it
-(`horizontal_overflow`: fixed-width flex rows exceeding their parent,
-definite-width flow items past the region edge — see
-[diagnostics.md](diagnostics.md)). An **absolutely placed item** — in a
-band, an absolute body, or an `x`/`y`-positioned container child — that
-reaches past the page edge renders **silently, with no diagnostic**;
-the rendered preview is the only check for those.
+Horizontal overflow warns wherever a definite width can be compared
+against the box that holds it: `horizontal_overflow` for a fixed-width
+flex row exceeding its parent and a definite-width flow item past the
+region edge, `child_overflow` for a column or `x`/`y`-positioned child
+past its parent's content box, and `sheet_overflow` for a band /
+absolute-body item past the edge of the **sheet** (see
+[diagnostics.md](diagnostics.md)).
+
+The sheet — not the margin box — is the bound for band and absolute-body
+items on purpose: reaching into the page margins is a deliberate escape
+hatch (a full-bleed background, a rule wider than the text column), so
+only ink that leaves the paper is a defect. Items that FILL (no authored
+`w`) are bounded by their basis and never warn, and a parent with
+`overflow: hidden` clips by intent and stays silent.
 
 Capability keys: `box.margin`, `box.padding`, `box.percent`,
 `box.minmax`, `margin.auto`.
