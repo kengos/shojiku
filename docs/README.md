@@ -155,9 +155,19 @@ When a feature ships, its substance moves along this list; the
 *(Internal maintenance note — for contributors and AI agents; readers of
 the docs can ignore this section.)*
 
-Last full doc audit (`shojiku-document-curator`): commit `1dfbe58a`.
-That is the v0.1.0 commit — the last one written under the amend-and-
-force-push convention, so it audited the whole tree rather than a range.
+Last full doc audit (`shojiku-document-curator`): commit `a66096c9`.
+It covered the 31 pull requests merged since `1dfbe58a` (the v0.1.0
+commit, which audited the whole tree rather than a range).
+
+What that pass mechanically checked, and found already true: every one
+of the 150 codes in the `DiagnosticCode` registry appears in
+[engine/diagnostics.md](engine/diagnostics.md), and the one retired code
+is marked retired rather than deleted (the registry is append-only);
+all 143 wire field spellings in `engine/core` appear in the reference;
+all 686 relative links across 79 markdown files resolve; every engine
+crate appears in a [code map](code-map/); and every top-level doc is
+indexed below. It did **not** run the zero-context reader pass — that
+one is worth its own sitting, and this pass reorganized nothing.
 Machine-read: the architect checks
 `git log --oneline <hash>..HEAD` against this marker during
 `/shojiku-cycle` Phase 0 and recommends a new curation pass when the
