@@ -298,6 +298,16 @@ failure.
   `make budget 2>&1 | tail -1 && git commit …` the chain sees TAIL's
   exit code, so a red gate sails through to the commit (this shipped a
   315-line file past the budget once).
+- **Backgrounding a piped gate turns that into a confident lie.** The
+  harness reports the finished job as "completed (exit code 0)" — the
+  PIPELINE's status, i.e. `tail`'s — and that notification reads as the
+  gate's own verdict, with no FAIL line anywhere near it. A backgrounded
+  `make quiet T=coverage 2>&1 | tail -6` was announced as exit 0 over a
+  run that had failed with 55 uncovered lines, and the truth only
+  surfaced because someone opened the output file for another reason.
+  Background gates UNPIPED (`quiet` already prints one line), and read
+  the verdict from the output file or `.make-logs/last-error.log`, never
+  from the completion notification's exit code.
 - **This includes background runs**: a backgrounded
   `make verify | tail -30` reports "completed (exit 0)" while a gate
   inside it failed — the notification carries the PIPE's exit code, and

@@ -339,6 +339,32 @@ check whose empty output read as "all covered").
   file you did not expect to exist, check its path before editing it.
   `git worktree list` is the one-line confirmation.
 
+## A behaviour fix needs a NEGATIVE control, and it must not cost you the fix
+
+A test written alongside a fix is not evidence the fix does anything.
+Both halves of that have bitten here.
+
+- **Assert the number the fix CHANGED, not a number nearby.** A test for
+  "an `fr` grid row must subtract the auto row above it" asserted the
+  rows' y OFFSETS — which were identical before and after, because the
+  auto row was always folded to its tallest child afterwards. It passed
+  on the unfixed engine. What actually changed was the row's SIZE, and
+  the only way to see a track's size from the outside was what fits in
+  it: a 70pt child clean, a 71pt one overflowing. When a fix's effect is
+  a size, an internal budget, or anything the output does not print, ask
+  what observable value differs — if you cannot name one, the test you
+  are about to write is decoration.
+- **Then prove it: neutralize the fix and watch the test go red.** One
+  line is enough (`+ auto_sum` → `+ auto_sum * 0.0`), and it is the
+  difference between "my test passes" and "my test tests". Do this
+  BEFORE committing, while the neutralization is trivial to undo.
+- **Undo the experiment with a COPY, never with git.** `git checkout
+  <path>` restores the file from HEAD, which silently deletes every
+  uncommitted change in it — a whole feature's wiring vanished that way,
+  mid-negative-control, and had to be re-applied from scratch. `cp
+  file /tmp/backup` first and `cp` back after; git's undo verbs are for
+  committed history, not for a two-minute experiment on live work.
+
 ## Binary-classified files: the grep blind spot
 
 - **A zero-hit grep over a NARROWED path is evidence about the path, not
