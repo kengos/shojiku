@@ -86,6 +86,40 @@ impl ResolvedBox {
         })
     }
 
+    /// The authored height, or — when the parent handed one down in
+    /// `fill_h` (a `stretch` row's cross size, or a column child's
+    /// `flexGrow` share) — that outer height minus this box's vertical
+    /// margins, clamped to the `minHeight`/`maxHeight` bounds.
+    ///
+    /// The height mirror of [`Self::w_or_fill`], and it returns an
+    /// `Option` rather than an `f64` because an unsized height without a
+    /// cross fill is still genuinely unset: the box takes its content
+    /// height, which only the caller can compute. That is why the fill
+    /// could not be folded into `resolve_box` — "no authored height" and
+    /// "height comes from the parent" are different answers.
+    ///
+    /// The three conditions are CSS's, in CSS's order (Flexbox §9.4
+    /// "Cross Size Determination"): the item takes the handed-down height
+    /// only if its own is auto, **neither vertical margin is `auto`**,
+    /// and the parent has one to give. An `auto` margin beats alignment
+    /// everywhere else in this engine, and this is no exception —
+    /// `margin: { top: auto }` on a row child means "push me down", which
+    /// filling the row would silently overrule, and on a column child it
+    /// is what makes it absorb the free space instead of growing into it.
+    /// The result is the used OUTER size, so the margins come off before
+    /// the clamp.
+    pub fn h_or_fill(&self, basis: &Basis) -> Option<f64> {
+        if let Some(h) = self.h {
+            return Some(h);
+        }
+        if self.margin_auto[0] || self.margin_auto[2] {
+            return None;
+        }
+        let outer = basis.fill_h?;
+        let fill = (outer - self.margin[0] - self.margin[2]).max(0.0);
+        Some(clamp_size(fill, self.h_bounds.0, self.h_bounds.1))
+    }
+
     /// Clamps an auto (content-derived) height to the min/max height
     /// bounds (D3). Authored heights are clamped at resolve; this is for
     /// the use sites that compute an auto height (`container_atom`). A

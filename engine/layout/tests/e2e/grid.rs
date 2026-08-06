@@ -2,7 +2,9 @@
 //! sizing, fill order, row heights, gaps, alignment, and the
 //! hostile-input clamps.
 
+mod auto;
 mod fr;
+mod hostile;
 mod spans;
 mod track_width;
 

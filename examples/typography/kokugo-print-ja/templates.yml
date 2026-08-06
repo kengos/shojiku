@@ -103,9 +103,11 @@ sections:
         box: { h: 360, direction: row, gap: 16 }
         items:
           # Listed left to right; the reading order is (1) on the right.
+          # `flexBasis: 0` + `flexGrow: 1` gives each question an equal third of
+          # the row — the inner `margin: { left: auto }` needs that free space.
           - id: q3
             type: container
-            box: { direction: row, gap: 10 }
+            box: { direction: row, gap: 10, flexBasis: 0, flexGrow: 1 }
             items:
               - id: q3_quote
                 type: text
@@ -120,7 +122,7 @@ sections:
                 style: { writingMode: vertical_rl, textCombineUpright: { digits: 2 } }
           - id: q2
             type: container
-            box: { direction: row, gap: 10 }
+            box: { direction: row, gap: 10, flexBasis: 0, flexGrow: 1 }
             items:
               - id: q2_answer
                 type: char_grid
@@ -136,7 +138,7 @@ sections:
                 style: { writingMode: vertical_rl, textCombineUpright: { digits: 2 } }
           - id: q1
             type: container
-            box: { direction: row, gap: 10 }
+            box: { direction: row, gap: 10, flexBasis: 0, flexGrow: 1 }
             items:
               - id: q1_answer
                 type: rect

@@ -20,6 +20,8 @@ const BASIS: Basis = Basis {
         em: 10.0,
         rem: 10.0,
     },
+    pct_w: None,
+    fill_h: None,
 };
 
 #[test]
@@ -138,6 +140,8 @@ fn percent_min_height_against_auto_parent_drops() {
         w: 300.0,
         h: None,
         font: shojiku_core::FontRel::default(),
+        pct_w: None,
+        fill_h: None,
     };
     let (rb, d) = resolve("{ minHeight: \"50%\" }", &auto);
     assert!(d.iter().any(|x| x.code == "percent_of_auto"));

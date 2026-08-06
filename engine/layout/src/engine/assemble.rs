@@ -34,6 +34,8 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
         warned_families: std::collections::HashSet::new(),
         warned_formats: std::collections::HashSet::new(),
         warned_row_conditions: std::collections::HashSet::new(),
+        reflow_budget: crate::engine::flex::MAX_REFLOW_PLACEMENTS,
+        reflow_exhausted: false,
         path: Vec::new(),
         page_margin: [0.0; 4],
         flow_text: false,
@@ -55,6 +57,8 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
         w: page_width - margin[3] - margin[1],
         h: Some(page_height - margin[0] - margin[2]),
         font: ctx.font_rel(),
+        pct_w: None,
+        fill_h: None,
     };
 
     // Document metadata resolves BEFORE the body walk, not after it: it is
@@ -112,6 +116,14 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
         box_pages.push(boxes);
     }
 
+    // The re-flow budget is reported here, after the whole walk, because
+    // it is drained from inside a parked measure pass — where every
+    // diagnostic is discarded — and it is a fact about the DOCUMENT, not
+    // about the container that happened to ask for the placement that
+    // ran out. Once, at document scope.
+    if ctx.reflow_exhausted {
+        ctx.diags.push(Diagnostic::new(Code::ReflowBudgetExhausted));
+    }
     // Collapse `(code, path)` duplicates: a diagnostic re-emitted for one
     // item across the measure and render passes (hostile font metrics in
     // table cells) or a child width resolved twice by the row pre-pass and

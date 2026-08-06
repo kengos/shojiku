@@ -60,9 +60,12 @@ fn min_max_percent_string_is_finite_checked_by_length_parser() {
 }
 
 #[test]
-fn flex_grow_effective_default_is_one_and_round_trips() {
-    // Unset → effective default 1 (CSS initial); authored value is kept.
-    assert_eq!(parse("{ w: 10 }").flex_grow(), 1.0);
+fn flex_grow_effective_default_is_zero_and_round_trips() {
+    // Unset → 0, CSS's initial `flex-grow`. It used to be 1, from when
+    // an unsized row child split the leftover evenly whether the author
+    // asked or not; now the child sizes to its content and growing is
+    // opt-in. Authored values are kept as written.
+    assert_eq!(parse("{ w: 10 }").flex_grow(), 0.0);
     let b = parse("{ flexGrow: 2 }");
     assert_eq!(b.flex_grow, Some(2.0));
     assert_eq!(b.flex_grow(), 2.0);
@@ -141,4 +144,53 @@ fn a_malformed_endpoint_is_a_parse_error_not_a_silent_zero() {
     // And an unknown axis stays a parse error under deny_unknown_fields.
     let e = serde_yaml::from_str::<PointSpec>("{ x: 0, y: 0, z: 1 }").expect_err("must reject");
     assert!(e.to_string().contains("unknown field"), "got: {e}");
+}
+
+#[test]
+fn flex_basis_parses_its_variants_and_stays_unset_when_unwritten() {
+    // T3. `flexBasis` picks where a flexible child STARTS: `content`
+    // (the default) from its own max-content size, `0` from nothing so
+    // `flexGrow` divides the whole row — CSS's `flex: 1`.
+    use crate::geometry::FlexBasis;
+    assert_eq!(parse("{ w: 10 }").flex_basis(), FlexBasis::Content);
+    assert_eq!(parse("{ w: 10 }").flex_basis, None);
+    assert_eq!(
+        parse("{ flexBasis: content }").flex_basis,
+        Some(FlexBasis::Content)
+    );
+    let zero = parse("{ flexBasis: 0 }");
+    assert_eq!(zero.flex_basis, Some(FlexBasis::Zero));
+    assert_eq!(zero.flex_basis(), FlexBasis::Zero);
+
+    // Round-trips in authored form; an unset key is skipped, never
+    // injected. Asserted on the BOX alone — serializing a whole template
+    // would let the older structs around it supply defaults and hide an
+    // injection here.
+    let yaml = serde_yaml::to_string(&zero).expect("serialize");
+    assert!(yaml.contains("flexBasis"), "got: {yaml}");
+    // Both variants round-trip, so a re-serialized template stays
+    // re-parseable whichever one the author wrote.
+    let content = serde_yaml::to_string(&parse("{ flexBasis: content }")).expect("serialize");
+    assert!(content.contains("content"), "got: {content}");
+    let again: OptBox = serde_yaml::from_str(&content).expect("re-parse");
+    assert_eq!(again.flex_basis, Some(FlexBasis::Content));
+    assert!(
+        !serde_yaml::to_string(&parse("{ w: 10 }"))
+            .unwrap()
+            .contains("flexBasis"),
+        "injected flexBasis"
+    );
+}
+
+#[test]
+fn an_unknown_flex_basis_is_a_parse_error() {
+    // T4. The variant set is closed: an authoring typo surfaces instead
+    // of silently defaulting to `content` and laying out the other way.
+    for bad in [
+        "{ flexBasis: auto }",
+        "{ flexBasis: 1 }",
+        "{ flexBasis: \"\" }",
+    ] {
+        serde_yaml::from_str::<OptBox>(bad).expect_err("must reject");
+    }
 }

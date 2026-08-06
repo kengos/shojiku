@@ -9,14 +9,26 @@
 
 ## engine/layout-box — pure box-model math (no fonts/params/assets)
 
-- `lib.rs` — `Basis`: the `%` bases + em/rem font bases.
+- `lib.rs` — `Basis`: the `%` bases + em/rem font bases, plus the two
+  overrides that exist because a slot is not a `%` base: `pct_w` (a row
+  child's `%` widths resolve against the CONTAINER, not its share) and
+  `fill_h` (a handed-down height, so `h` never has to mean two things).
 - `resolve.rs` — guarded resolution (`resolve_x`/`resolve_y`/`resolve_edges`,
   the `MAX_RESOLVED_PT` cap) + `clamp_size` (min>max>size CSS-order clamp).
 - `resolved.rs` — `ResolvedBox`: one `OptBox` resolved (margins/padding/
-  border-box, `margin_auto` flags, `w_or_fill`/`content_*`/`clamp_h` helpers);
-  deliberately y-less — vertical placement is the walk's job.
+  border-box, `margin_auto` flags, `w_or_fill`/`h_or_fill`/`content_*`/
+  `clamp_h` helpers); deliberately y-less — vertical placement is the
+  walk's job. `h_or_fill` reads `Basis.fill_h`, the height a parent HANDS
+  DOWN (a `stretch` row's cross size, a column child's `flexGrow` share)
+  — kept apart from `Basis.h`, which stays purely the `%` base.
 - `flex.rs` — flex distribution math, axis-generic pure fns
-  (`main_spacing`/`cross_offset`/`auto_share`/`equal_share`/`grow_shares`).
+  (`main_spacing`/`cross_offset`/`auto_share`/`equal_share`/`grow_shares`);
+  `flex/lengths.rs` — CSS §9.7 resolution of flexible main sizes
+  (`FlexItem { basis, weight, min, max }` → `resolve_flex_lengths`): grow
+  by `flexGrow` weight, or shrink in proportion to the bases when they
+  overflow, freezing an item at a violated min/max and redistributing
+  what it gave up. Loops over NUMBERS only — one round per freeze, at
+  most n — so children are placed exactly once.
 - `grid.rs` — track math (`equal_track`/`track_offsets`).
 
 Wire types stay in core; content measurement stays in layout.
@@ -122,11 +134,40 @@ Wire types stay in core; content measurement stays in layout.
   child-walk: children with no authored `box.x`/`box.y` are flex items
   (column default, `direction: row` side-by-side), others stay absolute;
   `Atom.rb` carries each child's `ResolvedBox` so offsets never re-resolve.
-  `engine/flex/offsets.rs` (row pre-pass + column/row cross math; the
-  row-level `flex_row_overflow` check lives in `plan_row`, the
-  per-child ones in `engine/overflow.rs`);
+  `engine/flex/kind.rs` (`FlexKind` — the participating-child
+  classification + its authored-box accessor);
+  `engine/flex/slots.rs` (`Slot`/`emit_slots`, the document-order tail
+  the grid walk shares, plus `h_auto_margin` — horizontal-only ON
+  PURPOSE: its consumers include grid cells, `char_grid` sheets,
+  `repeat_flow` cards and both text paginators, and grid cells already
+  absorb vertical autos via `cross_offset`);
+  `engine/flex/offsets.rs` (the ROW side: `plan_row` reads each unsized
+  child's `flexBasis` — `content` measures through `engine/intrinsic.rs`
+  — and hands the set to `resolve_flex_lengths`, then `row_cross` aligns.
+  The row-level `flex_row_overflow` check lives here and fires AFTER
+  resolution, so a row that shrank to fit stays silent; the per-child
+  checks are in `engine/overflow.rs`);
+  `engine/flex/column.rs` (the COLUMN side: `plan_column` — `flexGrow` on
+  the column's MAIN axis. Unlike a row it must MEASURE first, because a
+  column child's basis is its content height, which nothing knows before
+  placement; parked, budgeted, and skipped entirely when no child
+  authored a positive `flexGrow`. Grows only — never shrinks, and the
+  reason is on docs/engine/flex.md. Plus `column_offsets`);
   `engine/flex/baseline.rs` (`alignItems: baseline` via first-text
   baselines).
+- `engine/intrinsic.rs` — max-content (intrinsic) width: the ONE machine
+  the flex row planner and the grid's `auto` columns both read.
+  Deliberately NOT a discarded layout pass — it builds no `LayoutItem`
+  and never calls `flex_child_atom`, so a row nested in a row stays
+  linear instead of `2^depth`. The `MAX_CONTAINER_DEPTH` bound sits on
+  `measure_kind`, the RECURSION point, not on the public entry: the
+  container walk's own check fires at layout time, after this walk has
+  already descended the subtree. Clamps to `MAX_RESOLVED_PT`. Returns `Option<f64>`;
+  `None` = no defined intrinsic width, and the caller keeps its
+  share-based behavior. `engine/intrinsic/leaf.rs` — the measured kinds:
+  horizontal plain text (widest authored line, shaped through
+  `run_width`) and containers (Σ children + gaps in a `row`, the widest
+  in a `column`).
 - `engine/link.rs` — `link:`: `resolve_link` (scope-aware interpolation) +
   `check_link_url` (scheme allowlist + length/control gates) — layout is
   the trust boundary; renderers emit what the tree carries.
@@ -157,11 +198,25 @@ Wire types stay in core; content measurement stays in layout.
   box-reserving atoms whose geometry is params-independent (blank↔filled
   one-template invariant); `shape_paint` = the ONE unified-Style→uniform-
   paint reduction shared with the text mark; emits `LayoutItem::Path`.
-- `engine/grid.rs` — static grid (`box.type: grid`): column tracks + fill
-  order + auto/explicit row heights + spans (the row-track
-  `grid_cell_overflow` check is here; its column-axis mirror is
-  `engine/overflow.rs::check_track_width`); `engine/grid/tracks.rs`
-  (track resolution + `fr` leftover via `grow_shares`);
+- `engine/grid.rs` — static grid (`box.type: grid`): cells are assigned
+  BEFORE tracks are sized, because an `auto` column is sized from the
+  cells placed in it and a spec's column COUNT is knowable without any
+  size; then fill order + auto/explicit row heights + spans (the
+  row-track `grid_cell_overflow` check is here; its column-axis mirror is
+  `engine/overflow.rs::check_track_width`);
+  `engine/grid/cells.rs` (`plan_cells` — the assignment pre-pass, run
+  ONCE because `clamped_spans` warns; it carries each child's `FlexKind`
+  so the later passes are handed the classification rather than
+  re-deriving it. `auto_column_widths` — per-column max-content,
+  single-column cells only; `measure_auto_rows` — the parked pass that
+  gives the `fr` ROW split the auto rows' heights, single-row cells only
+  (a span's contribution is genuinely circular there, unlike on the
+  column axis); `spec_columns`, which clamps SILENTLY since
+  `column_tracks` still emits `grid_tracks_clamped`);
+  `engine/grid/tracks.rs` (track resolution, `auto` columns clamped
+  together into the container by `clamp_autos`, `fr` leftover via
+  `grow_shares`; `row_tracks` returns an `FrRows` so the `fr` split can
+  be RE-run once the auto rows are measured);
   `engine/grid/span.rs` (`Occupancy` + pure fill-order placement).
 - `engine/repeat.rs` — imposition/n-up: `place_repeat` tiles a data array
   into a rigid columns×rows grid, paginating; `breakBefore: auto` starts
@@ -358,7 +413,7 @@ Wire types stay in core; content measurement stays in layout.
 
 Modules mirror the src module they target: `atoms`/`band`/`bindings/`
 (carriers/scopes/precedence)/`char_grid/`/`container`/`flex/`/`flow`
-(+`page_break`)/`grid`/`link/`/`repeat/`/`repeat_flow/`/`table/`
+(+`page_break`)/`grid/` (+auto/fr/spans/track_width)/`link/`/`repeat/`/`repeat_flow/`/`table/`
 (geom/rows/style/boxes (+`boxes/groups` — the `headerGroups` box
 addressing)/vertical)/`text` (+ overflow/paginate/ (+decoration, slack)/glyphs/
 decoration/rich/line_break/spacing_trim/hanging/ruby/ and the vertical

@@ -78,5 +78,60 @@ pub enum JustifyContent {
     SpaceEvenly,
 }
 
+/// The main-axis starting size of a flex child (`box.flexBasis`, CSS
+/// `flex-basis`), for a `row` child that authors no `w`.
+///
+/// The engine default is [`FlexBasis::Content`]: the child starts at its
+/// max-content width and `flexGrow` then splits what is left over, which
+/// is CSS's `flex-basis: auto` behavior. [`FlexBasis::Zero`] — authored
+/// as the number `0` — starts the child at nothing so `flexGrow` splits
+/// the WHOLE row, i.e. exactly CSS's `flex: 1` idiom.
+///
+/// Only those two forms parse. A length basis is deliberately absent:
+/// `w` already sizes a child, and admitting both would leave two keys
+/// competing for one number.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum FlexBasis {
+    /// Start from the child's max-content width (the engine default).
+    #[default]
+    Content,
+    /// Start from zero — `flexGrow` divides the entire row.
+    Zero,
+}
+
+/// Wire form: the string `"content"` or the number `0`.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum BasisRepr {
+    Number(f64),
+    Text(String),
+}
+
+impl<'de> Deserialize<'de> for FlexBasis {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        match BasisRepr::deserialize(deserializer)? {
+            BasisRepr::Number(0.0) => Ok(FlexBasis::Zero),
+            BasisRepr::Number(v) => Err(serde::de::Error::custom(format!(
+                "invalid `flexBasis` {v}: expected `content` or 0 \
+                 (use `w` for a fixed width)"
+            ))),
+            BasisRepr::Text(s) if s.trim() == "content" => Ok(FlexBasis::Content),
+            BasisRepr::Text(s) => Err(serde::de::Error::custom(format!(
+                "invalid `flexBasis` `{}`: expected `content` or 0",
+                crate::length::snippet(s.trim())
+            ))),
+        }
+    }
+}
+
+impl Serialize for FlexBasis {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            FlexBasis::Content => serializer.serialize_str("content"),
+            FlexBasis::Zero => serializer.serialize_u64(0),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests;

@@ -42,7 +42,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             computed,
             rb.x,
             w,
-            rb.h,
+            rb.h_or_fill(basis),
             basis.h.unwrap_or(0.0),
             rb.padding,
         );

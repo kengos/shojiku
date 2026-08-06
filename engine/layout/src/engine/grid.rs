@@ -7,10 +7,11 @@
 //! `shojiku-layout-box`; the `TrackSpec` resolution (with the hostile
 //! track-count caps) is in the `tracks` submodule.
 
+mod cells;
 mod span;
 mod tracks;
 
-use span::{CellSpan, Occupancy};
+use span::CellSpan;
 
 use shojiku_core::{FlexDirection, Item, OptBox};
 use shojiku_layout_box::{cross_offset, main_spacing, track_offsets};
@@ -50,8 +51,12 @@ impl<'a, 'b> Ctx<'a, 'b> {
             .unwrap_or(0.0)
             .max(0.0);
 
-        let col_ws = self.column_tracks(b.columns.as_ref(), inner.w, col_gap);
-        let cols = col_ws.len();
+        // Order matters and is the reverse of the obvious one: an `auto`
+        // column is as wide as the cells placed in it, so the cells must
+        // be assigned before the tracks can be sized. The column COUNT is
+        // knowable from the spec without any size, which is what breaks
+        // the circle.
+        let cols = cells::spec_columns(b.columns.as_ref());
         let n_grid = items.iter().filter(|i| FlexKind::of(i).is_some()).count();
         // Row spans can reach past the count-derived bound; an explicit
         // track list keeps every authored row regardless of child count.
@@ -60,7 +65,12 @@ impl<'a, 'b> Ctx<'a, 'b> {
             _ => 0,
         };
         let rows_count = n_grid.div_ceil(cols).max(1).max(explicit_len);
-        let explicit_rows = self.row_tracks(b.rows.as_ref(), inner, row_gap, rows_count);
+        let cell_plan = self.plan_cells(items, cols, direction, rows_count);
+        let auto_widths =
+            self.auto_column_widths(&cell_plan, b.columns.as_ref(), inner, cols, depth);
+        let col_ws = self.column_tracks(b.columns.as_ref(), inner.w, col_gap, &auto_widths);
+        let (mut explicit_rows, fr_rows) =
+            self.row_tracks(b.rows.as_ref(), inner, row_gap, rows_count);
 
         // Column x offsets: leftover width distributes per
         // `justifyContent` (equal-count tracks consume it all, so this
@@ -70,20 +80,48 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let (lead, between) = main_spacing(inner.w - used, cols, justify);
         let col_xs = track_offsets(&col_ws, col_gap + between, inner.x + lead);
 
+        // `fr` rows split what is LEFT, and until now "left" meant only
+        // the fixed rows: an auto row's height is its tallest child's, and
+        // nothing had been placed. So measure the auto rows now — parked,
+        // so the throwaway placement says nothing to the author — and run
+        // the split again with them subtracted too.
+        if let Some(auto_sum) = self.measure_auto_rows(
+            &cell_plan,
+            &explicit_rows,
+            &fr_rows,
+            &col_ws,
+            &col_xs,
+            col_gap,
+            inner,
+            depth,
+        ) {
+            self.distribute_fr_rows(
+                &mut explicit_rows,
+                &fr_rows.frs,
+                inner.h,
+                fr_rows.fixed_sum + auto_sum,
+                row_gap,
+                rows_count,
+            );
+        }
+
         // Pass 1: lay out every child in document order. Grid items take
         // The next free cell run from the occupancy map (spans:
         // `columnSpan`/`rowSpan` consume several tracks, clamped to the
         // axis with a diagnostic).
         let mut slots = Vec::new();
         let mut cells: Vec<CellSpan> = Vec::new();
-        let mut occupancy = Occupancy::new(cols);
-        let mut explicit_rows = explicit_rows;
+        let mut plan_idx = 0;
         for (i, child) in items.iter().enumerate() {
             let mark = self.enter_item(format!("items[{i}]"));
             match FlexKind::of(child) {
                 Some(kind) => {
-                    let (cs, rs) = self.clamped_spans(&kind.box_(), cols);
-                    let cell = occupancy.place(cs, rs, direction, rows_count);
+                    // `cell_plan` was built with the same `FlexKind::of`
+                    // filter over the same items, so `plan_idx` is always
+                    // in range — the flex walk indexes its row bases the
+                    // same way.
+                    let cell = cell_plan[plan_idx].2;
+                    plan_idx += 1;
                     while explicit_rows.len() < cell.row + cell.rows {
                         explicit_rows.push(None);
                     }
@@ -100,6 +138,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
                         w,
                         h,
                         font: inner.font,
+                        pct_w: None,
+                        fill_h: None,
                     };
                     if let Some(atom) = self.flex_child_atom(kind, &basis, depth) {
                         // The column-axis counterpart of the row-track
@@ -133,50 +173,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 Slot::Abs(..) => None,
             })
             .collect();
-        let mut row_hs: Vec<f64> = explicit_rows.iter().map(|h| h.unwrap_or(0.0)).collect();
-        for (atom, cell) in grid_atoms.iter().zip(&cells) {
-            if cell.rows > 1 {
-                continue;
-            }
-            match explicit_rows[cell.row] {
-                Some(h) => {
-                    if atom.height > h + 0.01 {
-                        self.diags.push(
-                            Diagnostic::new(Code::GridCellOverflow)
-                                .arg("child", atom.height)
-                                .arg("track", h)
-                                .arg("extent", "row track"),
-                        );
-                    }
-                }
-                None => row_hs[cell.row] = row_hs[cell.row].max(atom.height),
-            }
-        }
-        for (atom, cell) in grid_atoms.iter().zip(&cells) {
-            if cell.rows == 1 {
-                continue;
-            }
-            let last = cell.row + cell.rows - 1;
-            let spanned: f64 =
-                row_hs[cell.row..=last].iter().sum::<f64>() + row_gap * (cell.rows - 1) as f64;
-            match explicit_rows[last] {
-                Some(_) => {
-                    if atom.height > spanned + 0.01 {
-                        self.diags.push(
-                            Diagnostic::new(Code::GridCellOverflow)
-                                .arg("child", atom.height)
-                                .arg("track", spanned)
-                                .arg("extent", "spanned rows"),
-                        );
-                    }
-                }
-                None => {
-                    if atom.height > spanned {
-                        row_hs[last] += atom.height - spanned;
-                    }
-                }
-            }
-        }
+        let row_hs = self.row_heights(&grid_atoms, &cells, &explicit_rows, row_gap);
 
         // Pass 2: vertical offsets — row start plus the within-span
         // alignment (auto vertical margins beat `alignItems`, as in
@@ -218,5 +215,68 @@ impl<'a, 'b> Ctx<'a, 'b> {
             );
         }
         (cs_eff, rs_eff)
+    }
+
+    /// The final height of every row: an explicit track keeps its size
+    /// (a taller child warns and overflows, CSS-like), an auto row takes
+    /// its tallest single-row child, and only then do row-spanning
+    /// children pour whatever they still overflow into their LAST spanned
+    /// row (the v1 span distribution — simple and order-stable).
+    ///
+    /// The order of the two walks is load-bearing: a span's leftover is
+    /// measured against rows that already know their own children.
+    fn row_heights(
+        &mut self,
+        grid_atoms: &[&Atom],
+        cells: &[CellSpan],
+        explicit_rows: &[Option<f64>],
+        row_gap: f64,
+    ) -> Vec<f64> {
+        let mut row_hs: Vec<f64> = explicit_rows.iter().map(|h| h.unwrap_or(0.0)).collect();
+        for (atom, cell) in grid_atoms.iter().zip(cells) {
+            if cell.rows > 1 {
+                continue;
+            }
+            match explicit_rows[cell.row] {
+                Some(h) => {
+                    if atom.height > h + 0.01 {
+                        self.diags.push(
+                            Diagnostic::new(Code::GridCellOverflow)
+                                .arg("child", atom.height)
+                                .arg("track", h)
+                                .arg("extent", "row track"),
+                        );
+                    }
+                }
+                None => row_hs[cell.row] = row_hs[cell.row].max(atom.height),
+            }
+        }
+        for (atom, cell) in grid_atoms.iter().zip(cells) {
+            if cell.rows == 1 {
+                continue;
+            }
+            let last = cell.row + cell.rows - 1;
+            let spanned: f64 =
+                row_hs[cell.row..=last].iter().sum::<f64>() + row_gap * (cell.rows - 1) as f64;
+            match explicit_rows[last] {
+                Some(_) => {
+                    if atom.height > spanned + 0.01 {
+                        self.diags.push(
+                            Diagnostic::new(Code::GridCellOverflow)
+                                .arg("child", atom.height)
+                                .arg("track", spanned)
+                                .arg("extent", "spanned rows"),
+                        );
+                    }
+                }
+                None => {
+                    if atom.height > spanned {
+                        row_hs[last] += atom.height - spanned;
+                    }
+                }
+            }
+        }
+
+        row_hs
     }
 }

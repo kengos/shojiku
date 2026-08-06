@@ -20,6 +20,7 @@ mod flex;
 mod flow;
 mod fragments;
 mod grid;
+mod intrinsic;
 mod link;
 mod list;
 mod marks;
@@ -121,6 +122,21 @@ struct Ctx<'a, 'b> {
     /// bound array would otherwise build one duplicate per row before the
     /// output dedup ever collapses them.
     warned_row_conditions: std::collections::HashSet<String>,
+    /// Remaining budget for placements the flex walk makes a SECOND
+    /// time — see `flex::MAX_REFLOW_PLACEMENTS` for what spends it and
+    /// why it is bounded. Counts WORK, not depth: depth is capped
+    /// separately and is not the thing that compounds.
+    reflow_budget: usize,
+    /// Whether the re-flow budget ran out anywhere in the document.
+    ///
+    /// Separate from `reflow_budget` because the WARNING cannot be
+    /// emitted where the refusal happens: a runaway drains the budget
+    /// inside a parked measure pass, and `end_measure` discards
+    /// everything that pass said — so a once-only diagnostic pushed
+    /// there is lost for good, and every later refusal is silent by
+    /// design. This flag survives the park; `layout()` reports it once,
+    /// at document scope, which is also the only honest scope for it.
+    reflow_exhausted: bool,
     /// The structural path segments of the item currently being laid out,
     /// in the validate-diagnostic grammar. Pushed/popped via
     /// `enter_item`/`leave_item` as the walk descends into sections, items,

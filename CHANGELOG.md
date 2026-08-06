@@ -15,6 +15,15 @@ platform binaries.
 
 ### Added
 
+- **Grid columns can size themselves to their contents.** A track list
+  now takes `auto` beside `fr` and fixed lengths —
+  `columns: ["auto", "1fr"]` gives a label column exactly the width its
+  text needs and hands the rest to its neighbour. Only cells sitting in
+  a single column set the width; if the content asks for more than the
+  grid has, the `auto` columns scale down together and the text wraps
+  inside them. `auto` in a *row* list means the auto row it always did,
+  so a mixed list reads plainly.
+
 - **An underline can now span a field whose width you don't know.** A
   `line`'s `from`/`to` accept the same length forms as everything else —
   `to: { x: "100%" }` reaches the right edge of whatever box the line
@@ -125,6 +134,64 @@ platform binaries.
   signing rests on.
 
 ### Changed
+
+- **Row children with no width now size to their content.** Until now a
+  `direction: row` child without a `w` took an equal share of the row
+  whatever it held, so a short label and a long paragraph came out the
+  same width. Each child now starts at the width its own content wants
+  and only what is left over is split by `flexGrow` — the way CSS sizes
+  a flex row. If the contents together are wider than the row, the
+  children give the excess back in proportion and the text re-wraps
+  instead of running off the edge; `minWidth` and `maxWidth` hold a
+  child at its bound while the others take up the slack.
+
+  **This changes existing layouts.** Write `flexBasis: 0` together with
+  `flexGrow: 1` on a child to put it back on the plain share it had
+  before — that pair is CSS's `flex: 1`, which is exactly what the old
+  behaviour was. Some kinds have no content width to measure (`rect`,
+  `image`, `qr_code` and `ellipse` need an authored size anyway;
+  vertical text, tables, `list` and `char_grid` are not measured) and
+  keep the share unchanged.
+
+- **Nothing grows unless you ask it to.** `flexGrow` now defaults to 0,
+  as it does in CSS. Together with the change above that means a row
+  child with no width sizes to its content and stays there, and the rest
+  of the row is free space for `justifyContent` and auto margins to
+  place. Every bundled example that relied on the old fill now writes
+  `flexBasis: 0` + `flexGrow: 1`, which is the same edit an existing
+  template needs.
+
+- **`flexGrow` works in a column too.** A column's main axis is its
+  height, so a child with no `h` in a container of a known height can
+  take a share of what its siblings leave over — the same key, the same
+  weights, the other axis. A column with no definite height has nothing
+  to share, as in CSS. Unlike a row, a column never shrinks its children
+  back: squeezing a width re-wraps text and keeps it readable, squeezing
+  a height only clips.
+
+- **`alignItems: stretch` now really stretches in a row.** It is the
+  default, and until now it quietly behaved like `start`: a row child
+  with no height kept its content height, so bordered or filled boxes
+  side by side came out ragged. They now fill the row — its own height
+  when it has one, otherwise the tallest child's. A `margin: { top:
+  auto }` or `{ bottom: auto }` opts a child out, since an auto margin
+  beats alignment.
+
+- **`fr` grid rows now account for the content rows above them.** An
+  `fr` row splits what is left of a definite height, and "what is left"
+  used to mean only the fixed rows — an `auto` or implicit content row
+  counted as nothing, so `rows: ["auto", "1fr"]` handed the `fr` row the
+  whole grid and the two together claimed more space than there was. The
+  auto rows are measured first now. A row-*spanning* child is still not
+  counted; that one is genuinely circular, and it is written down on the
+  grid page rather than left to be discovered.
+
+- **A `minWidth` above a child's share no longer overflows its row.**
+  The floor was applied, but its siblings kept the width they had
+  already been given, so the row came out wider than its container by
+  exactly the difference. Each round of the sizing now redistributes
+  from the children's own bases, the way CSS specifies it, and both
+  floors and ceilings settle inside the row.
 
 - **A document that declares a locale now says so in the PDF itself.**
   When `document.language` is not set, it falls back to

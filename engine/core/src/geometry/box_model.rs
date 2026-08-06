@@ -8,7 +8,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::{AlignItems, BoxType, FlexDirection, JustifyContent, TrackSpec};
+use super::{AlignItems, BoxType, FlexBasis, FlexDirection, JustifyContent, TrackSpec};
 use crate::edges::EdgeSpec;
 use crate::length::Length;
 
@@ -124,15 +124,25 @@ pub struct OptBox {
     /// Vertical gap between grid rows. Falls back to `gap`.
     #[serde(rename = "rowGap", default, skip_serializing_if = "Option::is_none")]
     pub row_gap: Option<Length>,
-    /// Flex grow weight (CSS `flex-grow`, D4): when a `row` splits
-    /// leftover main-axis width among children without an authored `w`,
-    /// each takes `flexGrow / Σ` of it (default 1 = the equal split, the
-    /// pre-D4 behavior). Unlike the container keys above this is a
+    /// Flex grow weight (CSS `flex-grow`): how much of the row's LEFTOVER
+    /// main-axis width this child takes, once every child has its basis.
+    /// `flexGrow / Σ` of the leftover. The default is CSS's 0 — a child
+    /// sizes to its content and the leftover stays free space for
+    /// `justifyContent`. Unlike the container keys above this is a
     /// *child* property, so it is valid on a leaf box; it is inert on a
-    /// sized child, in a `column`, and under `grid`. A negative /
-    /// non-finite value warns (`invalid_flex_grow`) and contributes 0.
+    /// sized child and under `grid`. A negative / non-finite value warns
+    /// (`invalid_flex_grow`) and contributes 0.
     #[serde(rename = "flexGrow", default, skip_serializing_if = "Option::is_none")]
     pub flex_grow: Option<f64>,
+    /// Flex basis (CSS `flex-basis`): the main-axis size a `row` child
+    /// without an authored `w` starts from, before `flexGrow` splits the
+    /// leftover. Unset = [`FlexBasis::Content`] (max-content, CSS
+    /// `flex-basis: auto`); author `0` for the `flex: 1` idiom, where
+    /// `flexGrow` divides the whole row. A *child* property like
+    /// `flexGrow`; inert on a sized child, in a `column`, and under
+    /// `grid`.
+    #[serde(rename = "flexBasis", default, skip_serializing_if = "Option::is_none")]
+    pub flex_basis: Option<FlexBasis>,
     /// Grid child: how many column tracks this child spans. A
     /// *child* property like `flexGrow` — valid on leaves. Only acts
     /// inside a `box.type: grid` parent (elsewhere layout warns
@@ -151,11 +161,16 @@ pub struct OptBox {
 }
 
 impl OptBox {
-    /// Effective flex grow weight (CSS initial 1 when unset). Layout
+    /// Effective flex grow weight (CSS initial 0 when unset). Layout
     /// warns+clamps a negative / non-finite authored value, so this
     /// returns the raw author intent.
     pub fn flex_grow(&self) -> f64 {
-        self.flex_grow.unwrap_or(1.0)
+        self.flex_grow.unwrap_or(0.0)
+    }
+
+    /// Effective flex basis (CSS-aligned default: size from content).
+    pub fn flex_basis(&self) -> FlexBasis {
+        self.flex_basis.unwrap_or_default()
     }
 
     /// Effective grid spans `(columns, rows)`, floored at 1.

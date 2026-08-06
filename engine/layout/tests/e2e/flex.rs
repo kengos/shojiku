@@ -8,6 +8,8 @@ use crate::common::*;
 
 mod baseline;
 mod column;
+mod freeze;
+mod intrinsic;
 mod mixed;
 mod overflow;
 mod row;

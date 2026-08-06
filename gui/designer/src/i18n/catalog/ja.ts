@@ -162,6 +162,8 @@ export const ja: LanguageCatalog = {
     span_outside_grid:
       'columnSpan/rowSpan は `box.type: grid` の親の中でのみ作用します。無視されます',
     grid_fr_no_basis: '`fr` の行トラックには確定した高さが必要です。自動サイズの行として扱います',
+    reflow_budget_exhausted:
+      '再レイアウトが必要な箱（高さ自動の stretch 行・flexGrow の列・auto 行を含む fr グリッド）の入れ子が多すぎます。最も内側の子は内容のサイズのままになります',
     cut_marks_clipped:
       'cutMarks を描く余白が用紙の {sides} 側にありません。その辺のトンボは省略しました',
     vertical_text_unsupported:

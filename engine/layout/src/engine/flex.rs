@@ -8,19 +8,40 @@
 //! the template and measures content. Paint order stays document order.
 
 mod baseline;
+mod column;
+mod kind;
 mod offsets;
+mod slots;
 
-use shojiku_core::{
-    AlignItems, CharGridItem, CheckboxItem, ContainerItem, EllipseItem, FlexDirection, ImageItem,
-    Item, JustifyContent, Length, ListItem, OptBox, QrCodeItem, RectItem, TableItem, TextItem,
-};
-use shojiku_layout_box::cross_offset;
+use shojiku_core::{AlignItems, FlexDirection, Item, JustifyContent, Length, OptBox};
 
-use crate::boxes::{translate_boxes, translate_boxes_x, PlacedBox};
+use crate::boxes::PlacedBox;
 use crate::tree::LayoutItem;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::{translate, translate_x, Atom, Basis, Ctx};
+use super::{Atom, Basis, Ctx};
+
+pub(in crate::engine) use kind::FlexKind;
+pub(in crate::engine) use slots::{emit_slots, h_auto_margin, Slot};
+
+/// Runaway cap on the placements the layout walk makes a SECOND time.
+///
+/// Three paths spend it, and all three have the same shape — a size that
+/// cannot be known until something has been laid out, so the walk
+/// measures once and then places for real:
+///
+/// - an auto-height `stretch` row, whose cross size is its tallest child;
+/// - a `flexGrow` column, whose shares divide what its children's content
+///   heights leave over;
+/// - a grid whose `fr` rows must wait for an auto row to be measured.
+///
+/// Each of them re-places a CONTAINER's children, so nesting compounds
+/// per level: `MAX_CONTAINER_DEPTH` of them is `2^32` placements. This is
+/// the same shape of guard `MAX_PAGES` is, and like it the number is a
+/// backstop rather than a budget an ordinary document approaches — a
+/// definite-height row, a column nobody asked to grow, and a grid without
+/// `fr` rows over an auto one each spend exactly nothing.
+pub(in crate::engine) const MAX_REFLOW_PLACEMENTS: usize = 10_000;
 
 /// The parent box's flex keys, defaulted (unset `box.type` is flex).
 pub(super) struct FlexSpec {
@@ -39,104 +60,6 @@ impl FlexSpec {
             justify: b.justify_content.unwrap_or_default(),
         }
     }
-}
-
-/// A flex/grid-participating child: one of the box-atom kinds, authored
-/// without `box.x` / `box.y`.
-pub(super) enum FlexKind<'i> {
-    Text(&'i TextItem),
-    Rect(&'i RectItem),
-    Image(&'i ImageItem),
-    Container(&'i ContainerItem),
-    QrCode(&'i QrCodeItem),
-    List(&'i ListItem),
-    CharGrid(&'i CharGridItem),
-    Table(&'i TableItem),
-    Ellipse(&'i EllipseItem),
-    Checkbox(&'i CheckboxItem),
-}
-
-impl<'i> FlexKind<'i> {
-    /// Classifies a child: `Some` participates in flex/grid placement.
-    /// Lines (point-based) and the warn+skip kinds (`page_number` /
-    /// `repeat`) always take the absolute path.
-    pub(super) fn of(item: &'i Item) -> Option<Self> {
-        let no_xy = |b: Option<&OptBox>| b.is_none_or(|b| b.x.is_none() && b.y.is_none());
-        match item {
-            Item::Text(t) if no_xy(t.box_.as_ref()) => Some(FlexKind::Text(t)),
-            Item::Rect(r) if no_xy(Some(&r.box_)) => Some(FlexKind::Rect(r)),
-            Item::Image(i) if no_xy(i.box_.as_ref()) => Some(FlexKind::Image(i)),
-            Item::Container(c) if no_xy(c.box_.as_ref()) => Some(FlexKind::Container(c)),
-            Item::QrCode(q) if no_xy(q.box_.as_ref()) => Some(FlexKind::QrCode(q)),
-            Item::List(l) if no_xy(l.box_.as_ref()) => Some(FlexKind::List(l)),
-            Item::CharGrid(g) if no_xy(g.box_.as_ref()) => Some(FlexKind::CharGrid(g)),
-            Item::Table(t) if no_xy(t.box_.as_ref()) => Some(FlexKind::Table(t)),
-            Item::Ellipse(e) if no_xy(Some(&e.box_)) => Some(FlexKind::Ellipse(e)),
-            Item::Checkbox(c) if no_xy(c.box_.as_ref()) => Some(FlexKind::Checkbox(c)),
-            _ => None,
-        }
-    }
-
-    /// The child's authored box (`repeat`-style defaulting).
-    pub(super) fn box_(&self) -> OptBox {
-        match self {
-            FlexKind::Text(t) => t.box_.clone().unwrap_or_default(),
-            FlexKind::Rect(r) => r.box_.clone(),
-            FlexKind::Image(i) => i.box_.clone().unwrap_or_default(),
-            FlexKind::Container(c) => c.box_.clone().unwrap_or_default(),
-            FlexKind::QrCode(q) => q.box_.clone().unwrap_or_default(),
-            FlexKind::List(l) => l.box_.clone().unwrap_or_default(),
-            FlexKind::CharGrid(g) => g.box_.clone().unwrap_or_default(),
-            FlexKind::Table(t) => t.box_.clone().unwrap_or_default(),
-            FlexKind::Ellipse(e) => e.box_.clone(),
-            FlexKind::Checkbox(c) => c.box_.clone().unwrap_or_default(),
-        }
-    }
-}
-
-/// One laid-out child, in document order (paint order is preserved).
-pub(super) enum Slot {
-    /// Absolutely positioned child at its resolved y offset.
-    Abs(Atom, f64),
-    /// Flex/grid item; its main/cross offsets are computed after the
-    /// pass.
-    Flex(Atom),
-}
-
-/// Emits laid-out slots in document order: absolute children at their
-/// own dy, flex/grid children at their computed `(dy, dx)` (one entry
-/// per `Slot::Flex`, in order). Returns the items, their placements,
-/// and the lowest bottom edge. Shared by the flex and grid walks.
-pub(super) fn emit_slots(
-    slots: &[Slot],
-    offs: &[(f64, f64)],
-) -> (Vec<LayoutItem>, Vec<PlacedBox>, f64) {
-    let mut out = Vec::new();
-    let mut out_boxes: Vec<PlacedBox> = Vec::new();
-    let mut bottom: f64 = 0.0;
-    let mut flex_i = 0;
-    for slot in slots {
-        let (atom, dy, dx) = match slot {
-            Slot::Abs(atom, dy) => (atom, *dy, 0.0),
-            Slot::Flex(atom) => {
-                // `offs` was computed over these same Flex slots in
-                // order, so `flex_i` is always in range.
-                let (dy, dx) = offs[flex_i];
-                flex_i += 1;
-                (atom, dy, dx)
-            }
-        };
-        bottom = bottom.max(dy + atom.height);
-        let mut items = translate(&atom.items, dy);
-        let mut boxes = translate_boxes(&atom.boxes, dy);
-        if dx != 0.0 {
-            items = translate_x(&items, dx);
-            boxes = translate_boxes_x(&boxes, dx);
-        }
-        out.extend(items);
-        out_boxes.extend(boxes);
-    }
-    (out, out_boxes, bottom)
 }
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -172,19 +95,56 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 }
             }
         }
-        // Row: the side-by-side bases must be planned before layout
-        // (fixed widths measured, leftover split equally). Each child
+        // Both axes plan their MAIN size before layout, and each child
         // keeps its document index so the plan's diagnostics land on the
         // same item the walk will name.
-        let row_bases = if spec.direction == FlexDirection::Row {
-            let kinds: Vec<(usize, FlexKind)> = items
-                .iter()
-                .enumerate()
-                .filter_map(|(i, c)| FlexKind::of(c).map(|k| (i, k)))
-                .collect();
-            Some(self.plan_row(&kinds, inner, &spec, clipped))
-        } else {
-            None
+        //
+        // Row: the side-by-side bases must be planned first (fixed widths
+        // measured, unsized children sized from their content basis, then
+        // the leftover split), because a child cannot lay out until it
+        // knows its width. Column: the main size is the height, which a
+        // child computes for itself — so the plan only has something to
+        // say when `flexGrow` is authored, and returns `None` otherwise.
+        let kinds: Vec<(usize, FlexKind)> = items
+            .iter()
+            .enumerate()
+            .filter_map(|(i, c)| FlexKind::of(c).map(|k| (i, k)))
+            .collect();
+        let row = spec.direction == FlexDirection::Row;
+        let bases = match spec.direction {
+            FlexDirection::Row => Some(self.plan_row(&kinds, inner, &spec, clipped, depth)),
+            FlexDirection::Column => self.plan_column(&kinds, inner, &spec, depth),
+        };
+
+        // An auto-height `stretch` row has no cross size to fill until
+        // its tallest child is known. CSS (Flexbox §9.4): the line's
+        // cross size is the largest of the items' hypothetical outer
+        // cross sizes. So measure once — parked, so nothing the measure
+        // says reaches the user — then place for real against what it
+        // found. A DEFINITE-height row never gets here: its cross size
+        // was known before any child laid out.
+        let bases = match bases {
+            Some(bases) if row && spec.align == AlignItems::Stretch && inner.h.is_none() => {
+                if self.spend_reflow(bases.len()) {
+                    let cross = self.measure_row_cross(&kinds, &bases, depth);
+                    // The discovered cross size is a height to HAND DOWN,
+                    // not a `%` base: the row is still auto-height, so a
+                    // `%` height inside it stays `percent_of_auto` as CSS
+                    // says it must.
+                    Some(
+                        bases
+                            .into_iter()
+                            .map(|b| Basis {
+                                fill_h: Some(cross),
+                                ..b
+                            })
+                            .collect(),
+                    )
+                } else {
+                    Some(bases)
+                }
+            }
+            other => other,
         };
 
         // Pass 1: lay out every child in document order.
@@ -194,10 +154,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
             let mark = self.enter_item(format!("items[{i}]"));
             match FlexKind::of(child) {
                 Some(kind) => {
-                    // `row_bases` was built with the same `FlexKind::of`
+                    // `bases` was built with the same `FlexKind::of`
                     // filter over the same items, so `flex_idx` is always
                     // in range.
-                    let child_basis = match &row_bases {
+                    let child_basis = match &bases {
                         Some(bases) => bases[flex_idx],
                         None => *inner,
                     };
@@ -240,6 +200,73 @@ impl<'a, 'b> Ctx<'a, 'b> {
         emit_slots(&slots, &offs)
     }
 
+    /// The cross size of an auto-height row: the tallest child's OUTER
+    /// height (vertical margins are already folded into every atom).
+    /// Runs parked — this placement is thrown away, and only the one
+    /// that follows describes what the author gets.
+    ///
+    /// Takes the already-classified `kinds` rather than the raw items:
+    /// `bases` is indexed by flex-child position, so re-deriving the
+    /// classification here would mean re-deriving that alignment too.
+    fn measure_row_cross(
+        &mut self,
+        kinds: &[(usize, FlexKind)],
+        bases: &[Basis],
+        depth: usize,
+    ) -> f64 {
+        let parked = self.begin_measure();
+        let mut cross = 0.0_f64;
+        for (i, (_, kind)) in kinds.iter().enumerate() {
+            if let Some(atom) = self.flex_child_atom(*kind, &bases[i], depth) {
+                cross = cross.max(atom.height);
+            }
+        }
+        self.end_measure(parked);
+        cross
+    }
+
+    /// Sanitizes an authored `flexGrow` weight: a negative or non-finite
+    /// value warns (`invalid_flex_grow`) and degrades to 0 (never grows),
+    /// matching the warn+clamp posture of the resolve guards. Shared by
+    /// both axes' pre-passes — the key means the same thing whichever one
+    /// is the main axis.
+    fn grow_weight(&mut self, g: f64) -> f64 {
+        if g.is_finite() && g >= 0.0 {
+            g
+        } else {
+            self.diags
+                .push(Diagnostic::new(Code::InvalidFlexGrow).arg("value", g));
+            0.0
+        }
+    }
+
+    /// Draws `n` placements from the re-placement budget, or reports the
+    /// runaway once and refuses. Refusing is not a failure mode the
+    /// author can hit by accident — it takes nested auto-height stretch
+    /// rows, growing columns or `fr`-over-auto grids deep enough to be
+    /// pathological — and the degradation is benign every time: the
+    /// children keep the size they had before the feature that wanted a
+    /// second look existed.
+    ///
+    /// Shared with the grid walk, whose `fr`-row correction spends from
+    /// the same pool: a grid of grids where every row is an `fr` is the
+    /// case that compounds per level.
+    pub(in crate::engine) fn spend_reflow(&mut self, n: usize) -> bool {
+        if self.reflow_budget >= n {
+            self.reflow_budget -= n;
+            return true;
+        }
+        // Raise a flag rather than warn here. The budget is drained from
+        // INSIDE a parked measure pass — that is what a runaway is — and
+        // `end_measure` discards everything such a pass said, so a
+        // diagnostic pushed here is thrown away and, being once-only,
+        // never emitted again. `layout()` reports the flag once the walk
+        // is over.
+        self.reflow_budget = 0;
+        self.reflow_exhausted = true;
+        false
+    }
+
     /// Lays out one flex/grid child against its assigned basis (the
     /// parent content box in a column; the planned slot in a row; the
     /// cell in a grid).
@@ -265,34 +292,5 @@ impl<'a, 'b> Ctx<'a, 'b> {
             FlexKind::Ellipse(e) => self.ellipse_atom(e, basis),
             FlexKind::Checkbox(c) => self.checkbox_atom(c, basis),
         }
-    }
-}
-
-/// Applies horizontal auto margins to a flow item's atom (the flow body
-/// is the column-flex special case): with an authored width and `auto`
-/// left/right margins, the atom shifts within the region like a flex
-/// child — `{ left: auto, right: auto }` centers, a single `auto`
-/// pushes to the opposite edge. No-op without auto margins or without
-/// a definite width (a filling item leaves no free space).
-pub(super) fn h_auto_margin(atom: Atom, region: &Basis) -> Atom {
-    let Some(rb) = atom.rb else { return atom };
-    let Some(w) = rb.w else { return atom };
-    if !(rb.margin_auto[3] || rb.margin_auto[1]) {
-        return atom;
-    }
-    // Free space after the authored x offset, left margin (both inside
-    // `rb.x`), width, and right margin.
-    let free = region.w - ((rb.x - region.x) + w + rb.margin[1]);
-    let dx = cross_offset(
-        free,
-        AlignItems::Start,
-        rb.margin_auto[3],
-        rb.margin_auto[1],
-    );
-    Atom {
-        height: atom.height,
-        items: translate_x(&atom.items, dx),
-        boxes: translate_boxes_x(&atom.boxes, dx),
-        rb: atom.rb,
     }
 }

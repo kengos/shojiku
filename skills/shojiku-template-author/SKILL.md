@@ -100,9 +100,17 @@ reddens on the first render.
 - `page.margin`: a **bare number is pt** and units-as-one-value
   (`margin: 15mm`) is rejected — for units use the per-side map
   `{ top: "15mm", right: "15mm", bottom: "15mm", left: "15mm" }`.
-- **Flex row widths**: children without `box.w` split the leftover
-  equally — that is the idiom for "N columns". A fixed-width row that
-  exceeds its parent warns `flex_row_overflow`; so does a column or
+- **Flex row widths**: children without `box.w` size to their CONTENT
+  and stay there — `flexGrow` defaults to 0, the way CSS does, so
+  nothing takes the leftover unless you ask. For "N equal columns" write
+  `flexBasis: 0` AND `flexGrow: 1` on each child — that pair is CSS's
+  `flex: 1`; `flexBasis: 0` alone collapses the child to nothing, and
+  `flexGrow: 1` alone gives each child its content width plus an equal
+  share of the slack, which is not an equal split. For "this one takes
+  whatever is left" (a value beside a fixed label), `flexGrow: 1` on its
+  own is exactly right. A row whose content is too wide shrinks its children rather
+  than overflowing; a row that still cannot fit warns
+  `flex_row_overflow`; so does a column or
   hand-positioned child past its container's content box, and a band /
   absolute-body item past the edge of the SHEET. Reaching into the page
   margins stays silent by design (the full-bleed escape hatch), so the

@@ -34,6 +34,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             w,
             h: Some(h),
             font: self.font_rel(),
+            pct_w: None,
+            fill_h: None,
         };
         let mut layouter = FlowLayouter::new(&region, y, y + h);
         // A hostile negative gap would walk the cursor backwards into

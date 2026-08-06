@@ -165,12 +165,20 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 computed,
                 rb.x,
                 w,
-                rb.h,
+                rb.h_or_fill(basis),
                 basis.h.unwrap_or(0.0),
                 rb.padding,
             )
         } else {
-            self.text_block(&content, computed, rb.x, w, rb.h, rb.padding, rb.h_bounds())
+            self.text_block(
+                &content,
+                computed,
+                rb.x,
+                w,
+                rb.h_or_fill(basis),
+                rb.padding,
+                rb.h_bounds(),
+            )
         };
         if let Some(link) = self.resolve_link(text.link.as_ref(), &text.bindings) {
             set_block_link(&mut atom.items, &link);

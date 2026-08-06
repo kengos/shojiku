@@ -152,6 +152,8 @@ export const en: LanguageCatalog = {
     span_outside_grid: 'columnSpan/rowSpan only act inside a `box.type: grid` parent; ignored',
     grid_fr_no_basis:
       '`fr` row tracks need a definite container height; sized as auto rows instead',
+    reflow_budget_exhausted:
+      'too many nested re-flowing boxes (auto-height stretch rows, flexGrow columns, fr-over-auto grids); the innermost children keep their content size',
     cut_marks_clipped:
       'cutMarks have no room outside the grid on the {sides} side(s) of the sheet; those ticks are omitted',
     vertical_text_unsupported:

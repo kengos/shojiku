@@ -15,7 +15,7 @@ mod grid;
 mod page_margin;
 
 pub use box_model::{BoxSpec, OptBox, PointSpec};
-pub use flex::{AlignItems, BoxType, FlexDirection, JustifyContent};
+pub use flex::{AlignItems, BoxType, FlexBasis, FlexDirection, JustifyContent};
 pub use grid::{GridTrack, TrackSpec, MAX_GRID_TRACKS};
 pub use page_margin::PageMargin;
 

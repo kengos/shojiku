@@ -62,4 +62,20 @@ pub(super) const KEYS: &[&str] = &[
     "style.fontSize.length",
     "style.letterSpacing.length",
     "flow.gap.length",
+    // `auto` grid COLUMN tracks (`columns: ["auto", "1fr"]`): the track is
+    // as wide as the widest cell placed in it. Older engines parse-reject
+    // `auto` (not a Length, not an `fr`), the same gate story as
+    // `grid.fr`. `auto` in a ROW list is the implicit auto row and needs
+    // no capability of its own.
+    "grid.auto",
+    // box.flexBasis — `content` (the default: an unsized row child starts
+    // at its max-content width) or `0` (the `flex: 1` idiom, where
+    // flexGrow divides the whole row).
+    //
+    // This key gates the ESCAPE HATCH, not the behavior. The default
+    // changed with it, so a consumer cannot use this key to learn which
+    // sizing an engine applied — an older engine given the same wire
+    // silently splits the row evenly instead. What the key does tell a
+    // consumer is that writing `flexBasis: 0` will be understood.
+    "box.flexBasis",
 ];

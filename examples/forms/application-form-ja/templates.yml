@@ -175,22 +175,24 @@ sections:
         styleNames: [ value ]
 
       # Preferred contact methods (multi-select) — an ARRAY value checks every contained choice.
+      # `flexBasis: 0` + `flexGrow: 1` spreads the three options evenly across the
+      # field; a row child sizes to its own content otherwise.
       - id: contact_row
         type: container
         box: { x: 102, y: 340, w: 290, h: 18, direction: row, gap: 18, alignItems: baseline }
         items:
           - type: container
-            box: { direction: row, gap: 5, alignItems: baseline }
+            box: { direction: row, gap: 5, alignItems: baseline, flexBasis: 0, flexGrow: 1 }
             items:
               - { type: checkbox, data: { key: application.contact_methods, equals: email } }
               - { type: text, text: メール, style: { fontSize: 9.5 } }
           - type: container
-            box: { direction: row, gap: 5, alignItems: baseline }
+            box: { direction: row, gap: 5, alignItems: baseline, flexBasis: 0, flexGrow: 1 }
             items:
               - { type: checkbox, data: { key: application.contact_methods, equals: tel } }
               - { type: text, text: 電話, style: { fontSize: 9.5 } }
           - type: container
-            box: { direction: row, gap: 5, alignItems: baseline }
+            box: { direction: row, gap: 5, alignItems: baseline, flexBasis: 0, flexGrow: 1 }
             items:
               - { type: checkbox, data: { key: application.contact_methods, equals: mail } }
               - { type: text, text: 郵送, style: { fontSize: 9.5 } }
