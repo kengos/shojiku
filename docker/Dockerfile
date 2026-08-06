@@ -5,6 +5,12 @@
 FROM rust:1.97.1-slim-bookworm AS builder
 WORKDIR /app
 COPY engine ./engine
+# `shojiku-mcp` embeds the bundled examples with `include_str!` so its read
+# surface works with no root path, which makes examples/ a COMPILE-time
+# input here, not just a runtime one — the builder cannot see the copy made
+# into the runtime stage below. Removing this line fails the build with
+# `couldn't read .../examples/...` from inside a macro expansion.
+COPY examples ./examples
 WORKDIR /app/engine
 # --locked: the committed Cargo.lock is authoritative; fail the build
 # rather than silently resolving new dependency versions.

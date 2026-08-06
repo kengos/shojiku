@@ -158,15 +158,44 @@ host over authoring.
 - `lib.rs` — `ServerArgs` (pack flags like the CLI), `McpError` (only
   transport I/O aborts), `run_stdio`.
 - `rpc.rs` — framing (`read_frame` bounded 1 MiB with drain-resync,
-  `write_frame`, error codes, the clip echo guard).
+  `write_frame`, error codes incl. MCP's `RESOURCE_NOT_FOUND` -32002,
+  `RpcError { code, message, data }` — the tool surface's `(code,
+  message)` pair converts into it — and the clip echo guard).
 - `server.rs` — the serve loop + dispatch (`initialize` version
-  negotiation, `ping`, `tools/list`, `tools/call`; notifications never
-  answered).
+  negotiation + declared capabilities + `instructions`, `ping`,
+  `tools/list`, `tools/call`, `resources/list`, `resources/read`;
+  notifications never answered).
+- `instructions.rs` — the `INSTRUCTIONS` const returned at initialize:
+  three-file model, the authoring loop, the example surface, and the
+  staleness rule. A signpost, size-pinned by its tests.
+- `examples.rs` — the bundled-example catalog: `SourceFile`,
+  `CatalogEntry { id, title, description, files }`, `catalog()` (built
+  once behind a `OnceLock`) and `find(id)`. Prose COMPOSES from
+  `examples/gallery.yml` (`include_str!` + serde_yaml) for the 24 listed
+  entries plus an `EXTRAS` table for the showcase and the 7 presets —
+  never a second copy of the gallery text. `examples/embed.rs` — the
+  compile-time `include_str!` table of all 32 entries' source files (the
+  one place that knows the repo layout); `examples/uri.rs` — the
+  `shojiku://example/…` grammar, a closed charset that refuses `.`/`..`,
+  `%`-escapes, control bytes and separators, so a reference NEVER becomes
+  a filesystem path. `examples/tests.rs` holds the DRIFT GATE: the
+  embedded set is asserted equal to the real `examples/` directory in
+  both directions, per-entry file lists included, plus the build-time
+  per-file size bound.
+- `resources.rs` — `resources/list` (all 32 entries, complete, no
+  cursor) + `resources/read` (an entry's files together, or one named
+  file). `MAX_ENTRY_BYTES` 64 KiB caps a BUNDLE and refuses with the
+  per-file URIs rather than truncating; a named file is served whole.
 - `tools.rs` — dispatcher + content parts (base64 PNG image parts +
   diagnostics JSON part; `failure_result` — in-band `isError` carries a
-  message OR full diagnostics). `tools/schema.rs` — the pinned tool
+  message OR full diagnostics). `tools/examples.rs` — `list_examples`
+  (the catalog + how to fetch) and `get_example` (delegates to
+  `resources::read`, so the two entry points cannot drift; an unreadable
+  target comes back in-band as `isError` rather than as a protocol
+  fault, unlike the resource spelling). `tools/schema.rs` — the pinned tool
   descriptors (`validate`/`render_preview` (page cap without `page`)/
-  `inspect_layout`/`capabilities`); inline/path either-or rides
+  `inspect_layout`/`capabilities`/`list_examples`/`get_example`);
+  inline/path either-or rides
   `allOf`+`anyOf`. `tools/sources.rs` — `Source` Path|Inline (`<name>`
   XOR `<name>Path`, `MAX_INLINE_BYTES` per-argument cap).
   `tools/assets.rs` — `AssetArgs` → `AssetPolicy` + root (capped id

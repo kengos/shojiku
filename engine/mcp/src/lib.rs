@@ -14,6 +14,9 @@ use clap::Parser;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+mod examples;
+mod instructions;
+mod resources;
 mod rpc;
 mod server;
 mod tools;

@@ -1493,6 +1493,7 @@ dependencies = [
  "clap",
  "serde",
  "serde_json",
+ "serde_yaml",
  "shojiku-authoring",
  "shojiku-core",
  "shojiku-diagnostics",

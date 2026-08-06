@@ -15,6 +15,27 @@ platform binaries.
 
 ### Added
 
+- **The MCP server now hands an agent something to read.** Registering
+  `shojiku-mcp` used to give an AI four tools and nothing else: with only
+  the Docker image there is no `docs/` and no skills on disk, so the only
+  way to learn the template syntax was to write something and read the
+  rejection. Two things change that. The server now answers `initialize`
+  with a short `instructions` string — the three files, the
+  validate → preview → inspect loop, and a reminder that the running
+  engine is the authority on syntax rather than whatever the model
+  remembers — which clients hand to the model before it starts. And the
+  32 bundled examples became readable over the wire: `list_examples`
+  gives every entry's title and what it exercises, and `get_example`
+  returns that entry's `templates.yml`, `definitions.yml` and
+  `params.json` together, since a template's bindings mean nothing
+  without its definitions. The same documents are also MCP *resources*
+  under `shojiku://example/<bucket>/<name>`, so clients that browse
+  resources see them there. Nothing is truncated to fit: an entry too
+  large to send whole — only the layout showcase, today — is refused with
+  the per-file URIs to ask for instead, so a fragment can never be
+  mistaken for a document. Detectable as the `mcp.examples` capability
+  key.
+
 - **Grid columns can size themselves to their contents.** A track list
   now takes `auto` beside `fr` and fixed lengths —
   `columns: ["auto", "1fr"]` gives a label column exactly the width its
@@ -134,6 +155,16 @@ platform binaries.
   signing rests on.
 
 ### Changed
+
+- **The MCP server is no longer published to crates.io.** `shojiku-mcp`
+  now carries the bundled examples inside the binary, and those files
+  live outside the crate's own directory — a crates.io package copies
+  only what sits under the crate, so a published copy would be missing
+  them and would not build. It stays available where the docs actually
+  point you: the Docker image and the release binaries. The crates.io
+  surface is unchanged for everyone else — `shojiku-cli` for the command
+  line, `shojiku-authoring` for embedding — and `shojiku-mcp` 0.1.0 stays
+  where it is.
 
 - **Row children with no width now size to their content.** Until now a
   `direction: row` child without a `w` took an equal share of the row

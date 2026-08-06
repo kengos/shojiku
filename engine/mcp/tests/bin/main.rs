@@ -25,6 +25,10 @@ fn initialize_list_and_capabilities_over_stdio() {
                 "\n",
                 r#"{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"capabilities"}}"#,
                 "\n",
+                r#"{"jsonrpc":"2.0","id":4,"method":"resources/list"}"#,
+                "\n",
+                r#"{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"uri":"shojiku://example/presets/blank-a4/templates.yml"}}"#,
+                "\n",
             )
             .as_bytes(),
         )
@@ -38,16 +42,36 @@ fn initialize_list_and_capabilities_over_stdio() {
         .lines()
         .map(|line| serde_json::from_str(line).expect("response JSON"))
         .collect();
-    assert_eq!(lines.len(), 3);
+    assert_eq!(lines.len(), 5);
     assert_eq!(lines[0]["result"]["serverInfo"]["name"], "shojiku-mcp");
+    // The guidance a client feeds the model, and the resources capability,
+    // both ride the real handshake.
+    assert!(lines[0]["result"]["instructions"]
+        .as_str()
+        .expect("instructions")
+        .contains("templates.yml"));
+    assert!(lines[0]["result"]["capabilities"]["resources"].is_object());
     assert_eq!(
         lines[1]["result"]["tools"].as_array().expect("tools").len(),
-        4
+        6
     );
     let caps = lines[2]["result"]["content"][0]["text"]
         .as_str()
         .expect("capabilities text");
     assert!(caps.contains("mcp.stdio"));
+    // The bundled examples are listable and readable over real stdio — the
+    // whole point of the surface, proven through the shipped binary.
+    assert_eq!(
+        lines[3]["result"]["resources"]
+            .as_array()
+            .expect("resources")
+            .len(),
+        32
+    );
+    let source = lines[4]["result"]["contents"][0]["text"]
+        .as_str()
+        .expect("source text");
+    assert!(source.contains("sections:"), "served a real templates.yml");
 }
 
 /// A client with no shared filesystem: the whole document travels inline in

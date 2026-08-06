@@ -9,6 +9,46 @@ pub(crate) const PARSE_ERROR: i64 = -32700;
 pub(crate) const INVALID_REQUEST: i64 = -32600;
 pub(crate) const METHOD_NOT_FOUND: i64 = -32601;
 pub(crate) const INVALID_PARAMS: i64 = -32602;
+/// MCP's resource-not-found code (spec 2025-06-18, Resources § Error
+/// Handling), outside the JSON-RPC standard range.
+pub(crate) const RESOURCE_NOT_FOUND: i64 = -32002;
+
+/// A dispatchable error. The tool surface answers with a bare
+/// `(code, message)` pair; the resources area additionally attaches the
+/// spec's `data` object, so this carries the optional third field and
+/// converts from the pair.
+#[derive(Debug)]
+pub(crate) struct RpcError {
+    pub(crate) code: i64,
+    pub(crate) message: String,
+    pub(crate) data: Option<Value>,
+}
+
+impl RpcError {
+    /// An error with no `data` member.
+    pub(crate) fn new(code: i64, message: String) -> Self {
+        Self {
+            code,
+            message,
+            data: None,
+        }
+    }
+
+    /// An error carrying a structured `data` member.
+    pub(crate) fn with_data(code: i64, message: String, data: Value) -> Self {
+        Self {
+            code,
+            message,
+            data: Some(data),
+        }
+    }
+}
+
+impl From<(i64, String)> for RpcError {
+    fn from((code, message): (i64, String)) -> Self {
+        Self::new(code, message)
+    }
+}
 
 /// Longest accepted request line. Inputs are file PATHS (not inline
 /// content), so real requests stay tiny; the cap bounds a hostile client's
@@ -74,6 +114,15 @@ pub(crate) fn result_response(id: Value, result: Value) -> Value {
 /// A JSON-RPC error response.
 pub(crate) fn error_response(id: Value, code: i64, message: &str) -> Value {
     json!({ "jsonrpc": "2.0", "id": id, "error": { "code": code, "message": message } })
+}
+
+/// A JSON-RPC error response carrying an optional `data` member.
+pub(crate) fn error_response_full(id: Value, error: &RpcError) -> Value {
+    let mut body = json!({ "code": error.code, "message": error.message });
+    if let Some(data) = &error.data {
+        body["data"] = data.clone();
+    }
+    json!({ "jsonrpc": "2.0", "id": id, "error": body })
 }
 
 /// Bounds an attacker-controlled echo: control characters stripped, then

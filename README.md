@@ -151,7 +151,8 @@ install.
 **[docs/quickstart.md](docs/quickstart.md)** takes it from
 there: where to get a first template to edit, how to see your changes,
 and how to register the stdio MCP server (`shojiku-mcp` — validate /
-render_preview / inspect_layout / capabilities) in Claude Code, Claude
+render_preview / inspect_layout / capabilities, plus list_examples /
+get_example for the bundled examples) in Claude Code, Claude
 Desktop, VS Code or Cursor.
 
 The agent-first loop in one line — register the server and ask:

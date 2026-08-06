@@ -3,10 +3,10 @@
 //! transport I/O failures abort the loop.
 
 use crate::rpc::{
-    clip, error_response, read_frame, result_response, write_frame, Frame, INVALID_REQUEST,
-    METHOD_NOT_FOUND, PARSE_ERROR,
+    clip, error_response, error_response_full, read_frame, result_response, write_frame, Frame,
+    RpcError, INVALID_REQUEST, METHOD_NOT_FOUND, PARSE_ERROR,
 };
-use crate::{tools, McpError, ServerArgs};
+use crate::{instructions, resources, tools, McpError, ServerArgs};
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 
@@ -66,7 +66,7 @@ fn handle_line(args: &ServerArgs, line: &str) -> Option<Value> {
     let id = id?; // no id → a notification: handle nothing, answer nothing
     Some(match dispatch(args, method, &params) {
         Some(Ok(result)) => result_response(id, result),
-        Some(Err((code, message))) => error_response(id, code, &message),
+        Some(Err(error)) => error_response_full(id, &error),
         None => error_response(
             id,
             METHOD_NOT_FOUND,
@@ -76,24 +76,33 @@ fn handle_line(args: &ServerArgs, line: &str) -> Option<Value> {
 }
 
 /// Routes a request; `None` = unknown method.
-fn dispatch(args: &ServerArgs, method: &str, params: &Value) -> Option<tools::ToolOutcome> {
+fn dispatch(args: &ServerArgs, method: &str, params: &Value) -> Option<Result<Value, RpcError>> {
     match method {
         "initialize" => Some(Ok(initialize_result(params))),
         "ping" => Some(Ok(json!({}))),
         "tools/list" => Some(Ok(tools::list())),
-        "tools/call" => Some(tools::call(args, params)),
+        "tools/call" => Some(tools::call(args, params).map_err(RpcError::from)),
+        "resources/list" => Some(Ok(resources::list())),
+        "resources/read" => Some(resources::read(params)),
         _ => None,
     }
 }
 
-/// The `initialize` result: negotiated protocol revision, the tools
-/// capability, and this build's identity.
+/// The `initialize` result: negotiated protocol revision, the declared
+/// capabilities, this build's identity, and the usage guidance clients
+/// hand to the model.
+///
+/// `resources` is declared bare: this server implements `resources/list`
+/// and `resources/read` and neither `subscribe` nor `listChanged`, which
+/// MCP 2025-06-18 permits — the resource set is compiled in, so it cannot
+/// change while the server runs.
 fn initialize_result(params: &Value) -> Value {
     let requested = params.get("protocolVersion").and_then(Value::as_str);
     json!({
         "protocolVersion": negotiate_version(requested),
-        "capabilities": { "tools": {} },
+        "capabilities": { "tools": {}, "resources": {} },
         "serverInfo": { "name": "shojiku-mcp", "version": env!("CARGO_PKG_VERSION") },
+        "instructions": instructions::INSTRUCTIONS,
     })
 }
 

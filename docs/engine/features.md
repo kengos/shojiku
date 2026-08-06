@@ -1417,11 +1417,50 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 
 ### MCP server (`engine/mcp`)
 - **`shojiku-mcp`**: a stdio MCP server (newline-delimited JSON-RPC 2.0,
-  hand-rolled — zero new dependencies, no async runtime) exposing the
+  hand-rolled — no async runtime) exposing the
   authoring surface as tools: `validate` / `render_preview` /
-  `inspect_layout` / `capabilities`. Capability key `mcp.stdio`; the
+  `inspect_layout` / `capabilities`, plus the read surface's
+  `list_examples` / `get_example`. Capability key `mcp.stdio`; the
   binary ships in the Docker image
   (`docker run -i --entrypoint shojiku-mcp`).
+- **The server says what it is for, at `initialize`.** The result carries
+  an `instructions` string — the three-file model, the
+  validate → render_preview → inspect_layout loop, where the bundled
+  examples are, and the staleness rule (whatever the agent recalls about
+  Shojiku syntax is absent from its training data or older than this
+  build, so the running engine is the authority). An agent installed the
+  advertised way has no `docs/` and no `skills/`; this is the only text
+  it is guaranteed to see before it starts authoring.
+- **The bundled examples are readable over the wire** (`mcp.examples`).
+  32 entries — the 24 the product gallery lists, the syntax showcase, and
+  the 7 blank per-locale presets — addressed as
+  `shojiku://example/<bucket>/<name>`, with `…/<file>` for one source
+  file. Discovery is a TOOL (`list_examples`: title, what each entry
+  exercises, file names and sizes) because several MCP clients never pull
+  a resource into model context on their own; the fetch is either
+  `resources/read` or the `get_example` tool over the same body of text,
+  so a client without resources support is not left able to list and
+  unable to read. An entry answers its source files TOGETHER — a template
+  cannot be understood without the definitions its bindings name. The
+  catalog composes its prose from `examples/gallery.yml` rather than
+  copying it, and a test asserts the embedded set equals the real
+  directory in both directions, so a new example cannot silently go
+  missing.
+- **Response size is bounded by refusal, never by truncation.** A whole
+  entry is served up to 64 KiB; beyond that the read is refused with the
+  per-file URIs to use instead (the syntax showcase is the one entry that
+  exceeds it, which makes reading it an explicit choice rather than a
+  surprise). A named file is served in full — it is the atomic unit — and
+  the per-file bound is asserted over the compiled-in corpus at build
+  time instead, so an oversized example fails the suite rather than
+  shipping unreadable.
+- **`resources` is declared bare** (`{}`): `resources/list` and
+  `resources/read` are implemented, `subscribe` and `listChanged` are
+  not, which MCP 2025-06-18 permits explicitly and which is honest — the
+  set is compiled into the binary, so it cannot change while the server
+  runs. `resources/list` answers completely, with no `nextCursor`. A
+  missing resource answers the spec's `-32002` with the requested URI in
+  `data`; a malformed one answers invalid-params.
 - **Diagnostics ride every template tool response** (the
   [agents/mcp.md](../agents/mcp.md) three-part principle): `render_preview`
   answers one PNG image part per page followed by the diagnostics JSON;
@@ -1610,8 +1649,14 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   tree into a workspace whose deny.toml carries zero advisory ignores;
   four tools over newline-delimited stdio need only serde_json (already
   present), so `shojiku-mcp` implements the loop directly (user
-  decision). Revisit if the surface grows past tools (resources,
-  sampling) or a second transport lands. Tool inputs are file **paths**
+  decision). **That revisit has since happened once, and the answer held**:
+  the read surface added the `resources` capability, and the measured cost
+  against the 2025-06-18 spec was two request methods, one error code, and
+  no notifications — `subscribe` and `listChanged` are optional and were
+  declined, so no async runtime and no SDK were implied (the one new
+  dependency, `serde_yaml`, was already a workspace member). The trigger
+  for re-opening it stands for a second transport, sampling, or anything
+  needing server-initiated messages. Tool inputs are file **paths**
   (the AI authoring loop works on project files; asset-root semantics
   match the CLI) — inline-content arguments remain an additive widening.
   The CLI's filesystem pack discovery moved into `shojiku-authoring`
