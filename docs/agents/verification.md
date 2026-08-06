@@ -71,11 +71,36 @@ Both say the same thing about their own limits: a narrowed run proves
 nothing about what it skipped, so the plain target is what you run
 before claiming the tests pass.
 
-## A green `make verify` does not expire on every edit
+## CI is the merge bar; `make verify` is the offline fallback
 
-`make verify` is a statement about the tree's **gate-relevant** state.
-Re-running the ~20-minute mirror for a change that cannot reach a gate
-is waste, not rigor — and it trains you to treat the gate as ceremony.
+**User decision: the routine pre-PR step is no longer a local full run.**
+CI is a strict SUPERSET of `make verify` — every prerequisite of that
+target has a CI job running the same `make` target in the same pinned
+container, and CI additionally runs `site-build`, the SDK version matrix
+(local runs one version per language) and the `proof-<lang>` install
+checks. A green CI therefore says everything a green local mirror would
+and more, in parallel minutes instead of ~20 serial ones.
+
+What stays local is the `<verb>:<scope>` grid, **coverage included**:
+`budget:` / `lint:` / `test:` while iterating, `verify:engine` /
+`verify:gui` / `quiet T=coverage` before pushing. Coverage earns its
+place because it is the one gate whose failure demands NEW TESTS rather
+than a fix — discovering that through a push-and-wait loop is the
+expensive way to learn it.
+
+Reach for the full `make verify` only when CI is not available to you:
+working offline, or changing a gate's own recipe and wanting the answer
+before it reaches CI. It is still correct, just no longer routine.
+
+Note the trigger: CI fires on `pull_request`, so opening the PR is what
+starts it — pushing a feature branch alone runs nothing.
+
+## A green run does not expire on every edit
+
+The same reasoning applies to whatever you last ran, `make verify`
+included: it is a statement about the tree's **gate-relevant** state.
+Re-running a mirror for a change that cannot reach a gate is waste, not
+rigor — and it trains you to treat the gate as ceremony.
 
 - Changes no gate reads: Makefile **comments**, `docs/agents/**`, this
   file. Nothing parses them; verify stays valid. Prove it by grep if you
