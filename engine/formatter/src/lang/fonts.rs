@@ -120,6 +120,33 @@ impl FontFaceDecl {
 }
 
 impl PackManifest {
+    /// The manifest's `manifest.yml` text.
+    ///
+    /// Lives beside the wire type rather than in the generator so what is
+    /// WRITTEN and what is PARSED are the same struct: the skip-when-unset
+    /// attributes above are what keep a generated manifest free of keys its
+    /// author never wrote, and a generator serializing by hand would lose
+    /// that the moment a field is added.
+    ///
+    /// Infallible by construction: every field is a `String`, a `u32`, a
+    /// bool or a `Vec` of those, and serde_yaml refuses only shapes this
+    /// struct cannot hold (non-string map keys, non-finite floats). Were
+    /// that ever untrue the result would be an empty document, which
+    /// [`Self::from_yaml`] rejects for want of `version` — a pack that
+    /// fails loudly at the next load rather than one that silently means
+    /// nothing.
+    #[must_use]
+    pub fn to_yaml(&self) -> String {
+        serde_yaml::to_string(self).unwrap_or_default()
+    }
+
+    /// Parses a `manifest.yml`'s text. The inverse of [`Self::to_yaml`],
+    /// here so a generator round-trips through the same pair the resolver
+    /// parses with instead of carrying its own YAML dependency.
+    pub fn from_yaml(text: &str) -> Result<Self, serde_yaml::Error> {
+        serde_yaml::from_str(text)
+    }
+
     /// Resolved faces of this pack, files joined onto `pack_dir` and
     /// variant defaults applied, in declaration order.
     pub fn face_specs(&self, pack_id: &str, pack_dir: &std::path::Path) -> Vec<FaceSpec> {

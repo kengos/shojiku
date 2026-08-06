@@ -39,6 +39,23 @@ pub fn resolve_font_dirs(explicit: &[PathBuf]) -> Vec<PathBuf> {
     search_dirs(explicit, "SHOJIKU_FONT_DIR", "packs/fonts")
 }
 
+/// The font dir a NEW pack is created in: the highest-priority entry of
+/// the font search list, so a pack `shojiku font add` writes is the one a
+/// later render finds first.
+///
+/// Resolved directly rather than as `resolve_font_dirs(..).first()`,
+/// which would leave an empty-list arm no input can produce. The two are
+/// pinned equal by a test instead, so the precedence cannot drift apart.
+pub fn primary_font_dir(explicit: &[PathBuf]) -> PathBuf {
+    if let Some(dir) = explicit.first() {
+        return dir.clone();
+    }
+    if let Ok(dir) = std::env::var("SHOJIKU_FONT_DIR") {
+        return PathBuf::from(dir);
+    }
+    PathBuf::from("packs/fonts")
+}
+
 /// Locale pack search dirs, highest priority first:
 /// explicit flags (repeatable) > `$SHOJIKU_LOCALE_DIR` > `./packs/locale`.
 pub fn resolve_locale_dir(explicit: &[PathBuf]) -> Vec<PathBuf> {

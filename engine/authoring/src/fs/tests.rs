@@ -12,7 +12,7 @@ fn font_and_locale_search_lists_are_additive() {
     assert_eq!(
         resolve_font_dirs(std::slice::from_ref(&flag)),
         vec![
-            flag,
+            flag.clone(),
             PathBuf::from("/env/fonts"),
             PathBuf::from("packs/fonts"),
         ]
@@ -21,10 +21,19 @@ fn font_and_locale_search_lists_are_additive() {
         resolve_locale_dir(&[]),
         vec![PathBuf::from("/env/locale"), PathBuf::from("packs/locale")]
     );
+    // `primary_font_dir` resolves the same precedence separately, so pin
+    // it against the list's own head at every position rather than trusting
+    // the two to stay in step.
+    assert_eq!(
+        primary_font_dir(std::slice::from_ref(&flag)),
+        resolve_font_dirs(std::slice::from_ref(&flag))[0]
+    );
+    assert_eq!(primary_font_dir(&[]), resolve_font_dirs(&[])[0]);
     std::env::remove_var("SHOJIKU_FONT_DIR");
     std::env::remove_var("SHOJIKU_LOCALE_DIR");
     // No flag, no env → just the default.
     assert_eq!(resolve_font_dirs(&[]), vec![PathBuf::from("packs/fonts")]);
+    assert_eq!(primary_font_dir(&[]), resolve_font_dirs(&[])[0]);
 }
 
 /// A temp locale dir holding one `<file_name>` with `content`. `tag`

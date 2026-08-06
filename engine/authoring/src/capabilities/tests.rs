@@ -72,6 +72,9 @@ fn engine_info_reports_version_capabilities_and_locales() {
     // …and its own two-call signing surface, the seam behind the subprocess
     // SDKs' external provider.
     assert!(info.capabilities.contains(&"cli.sign.external"));
+    // …and user font packs: `font add` plus the `--font-pack` flag that
+    // loads one.
+    assert!(info.capabilities.contains(&"cli.font.add"));
     // Layout diagnostics addressed by structural item path, and per-group
     // header fills. Each is pinned individually — the registry's
     // structural tests pass whether or not a given key is present.

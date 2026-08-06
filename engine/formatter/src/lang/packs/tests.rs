@@ -31,6 +31,51 @@ const FACE: &str =
     "version: 1\nlicense: X\nfaces:\n  - id: {ID}\n    file: {ID}.ttf\n    sha256: aa\n";
 
 #[test]
+fn an_extra_pack_resolves_before_the_locales_own_and_shadows_a_face_id() {
+    // The `--font-pack` rule: a host-added pack resolves FIRST, so when it
+    // declares a face id the locale's own pack also declares, the user's
+    // face is the one that survives the dedupe. Same "earlier wins" the
+    // search-dir precedence uses — this pins which side is earlier.
+    let root = tmp("extra-shadow");
+    write_pack(
+        &root,
+        "bundled",
+        "version: 1\nlicense: X\nfaces:\n  - id: a\n    file: bundled.ttf\n    sha256: aa\n",
+    );
+    write_pack(
+        &root,
+        "mine",
+        "version: 1\nlicense: X\nfaces:\n  - id: a\n    file: mine.ttf\n    sha256: bb\n",
+    );
+
+    // Without the extra, the locale's own pack provides `a`.
+    let own = resolve_face_specs(&locale("[bundled]"), std::slice::from_ref(&root)).unwrap();
+    assert_eq!(own[0].pack, "bundled");
+    assert_eq!(own[0].sha256, "aa");
+
+    // With it, the extra shadows that face — and contributes no second one.
+    let extra = ["mine".to_string()];
+    let specs =
+        resolve_face_specs_with(&locale("[bundled]"), std::slice::from_ref(&root), &extra).unwrap();
+    let ids: Vec<_> = specs.iter().map(|s| s.id.as_str()).collect();
+    assert_eq!(ids, ["a"]);
+    assert_eq!(specs[0].pack, "mine");
+    assert_eq!(specs[0].sha256, "bb");
+}
+
+#[test]
+fn an_extra_pack_id_is_guarded_exactly_as_a_locales_own_entry_is() {
+    // `--font-pack` is host input and bypasses the locale wire's own serde
+    // guard, so the resolver re-checks it rather than trusting the flag.
+    let root = tmp("extra-guard");
+    write_pack(&root, "p", &FACE.replace("{ID}", "p"));
+    let hostile = ["../evil".to_string()];
+    let err = resolve_face_specs_with(&locale("[p]"), std::slice::from_ref(&root), &hostile)
+        .expect_err("a traversal id must not be looked up");
+    assert!(matches!(err, PackError::InvalidPackId(ref id) if id == "../evil"));
+}
+
+#[test]
 fn merges_faces_and_first_dir_and_first_id_win() {
     let bundled = tmp("merge-bundled");
     let user = tmp("merge-user");

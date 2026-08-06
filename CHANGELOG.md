@@ -15,6 +15,32 @@ platform binaries.
 
 ### Added
 
+- **Your own fonts, in one command.** Shojiku renders with fonts from
+  packs and never scans the system, which kept output reproducible but
+  meant a licensed corporate font had to be installed by hand: create the
+  directory, run `sha256sum`, write a `manifest.yml` by hand, and get
+  every field right or find out at the next render. `shojiku font add
+  MyCorporate-Regular.ttf --family my-corporate --license Proprietary`
+  now does all of it — the directory, the copied file, and the manifest
+  with the digest already pinned. Run it again with `--weight bold` to
+  add the bold face to the same family. It refuses rather than writing
+  something the renderer would later reject: a file that is not a font, a
+  face id the pack already uses, a name already taken by different bytes,
+  a second licence in one pack, an existing manifest it cannot read — and
+  a refusal writes nothing at all. Fonts whose embedding rights say no
+  are refused too, naming `--embedding-attested` for the case where you
+  hold a separate embedding licence; nothing is ever attested silently.
+  Packs stay non-redistributable unless you say otherwise, which is
+  usually what a licence requires.
+
+  To render with one, `--font-pack my-corporate` on `render`, `preview`
+  or `inspect` loads it alongside the locale's own fonts. That is the
+  short way round: adding a pack to a built-in locale by hand means
+  restating its entire font list, because a locale overlay replaces the
+  list rather than adding to it. A pack named this way is tried first, so
+  it can also stand in for a bundled font of the same id. Detectable as
+  the `cli.font.add` capability key.
+
 - **The MCP server now hands an agent something to read.** Registering
   `shojiku-mcp` used to give an AI four tools and nothing else: with only
   the Docker image there is no `docs/` and no skills on disk, so the only

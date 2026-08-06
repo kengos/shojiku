@@ -13,7 +13,7 @@ mod lang;
 pub use format::{format_value, FormatContext, FormatError, FormatWarning, Formatted};
 pub use lang::{
     currency_fraction_digits, resolve_face_bytes, resolve_face_bytes_subset, resolve_face_specs,
-    valid_pack_id, CurrencySpec, EraDate, EraSpec, FaceBytes, FaceSpec, FontFaceDecl, InjectedPack,
-    LangPack, LangPackError, LocaleFonts, NumberSpec, PackError, PackManifest, SubsetFaces,
-    UnitSpec, BUILTIN_LOCALE_IDS, MAX_PACK_ID,
+    resolve_face_specs_with, valid_pack_id, CurrencySpec, EraDate, EraSpec, FaceBytes, FaceSpec,
+    FontFaceDecl, InjectedPack, LangPack, LangPackError, LocaleFonts, NumberSpec, PackError,
+    PackManifest, SubsetFaces, UnitSpec, BUILTIN_LOCALE_IDS, MAX_PACK_ID,
 };

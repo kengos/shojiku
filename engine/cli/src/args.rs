@@ -11,8 +11,10 @@ use clap::{Args, ValueEnum};
 use shojiku_image::{AssetMode, AssetPolicy};
 use std::path::{Path, PathBuf};
 
+mod font;
 mod signing;
 
+pub use font::{FontAddArgs, FontCommand, FontStyleArg, FontWeightArg};
 pub use signing::{SignArgs, SignCompleteArgs, SignPrepareArgs, VerifyArgs};
 
 /// The `--report` flag, flattened into every command whose outcome an SDK
@@ -61,6 +63,12 @@ pub struct RenderishArgs {
     /// $SHOJIKU_FONT_DIR then ./packs/fonts.
     #[arg(long)]
     pub font_dir: Vec<PathBuf>,
+    /// Load this font pack in addition to the locale's own `fonts.uses`
+    /// (repeatable) — how a pack made by `shojiku font add` is used
+    /// without rewriting the locale. These resolve FIRST, so a face id
+    /// they define shadows a bundled one.
+    #[arg(long = "font-pack", value_name = "ID")]
+    pub font_pack: Vec<String>,
     /// Locale pack search dir (repeatable, earlier wins). Adds to
     /// $SHOJIKU_LOCALE_DIR then ./packs/locale.
     #[arg(long)]

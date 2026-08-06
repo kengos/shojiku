@@ -38,6 +38,11 @@ pub enum Command {
     /// Check a signed PDF against a trust anchor and print the report as
     /// JSON. Exits non-zero when the document does not verify.
     Verify(VerifyArgs),
+    /// Manage font packs — the fonts a template can name.
+    Font {
+        #[command(subcommand)]
+        command: FontCommand,
+    },
     /// Print this engine's version and machine-readable capability list
     /// as JSON (for GUI/SDK feature gating; needs no inputs).
     Capabilities,
@@ -47,6 +52,7 @@ mod args;
 mod commands;
 mod error;
 mod external;
+mod font;
 mod report;
 mod sign;
 #[cfg(test)]
@@ -54,8 +60,9 @@ mod tests;
 mod verify;
 
 pub use args::{
-    AssetModeArg, PreviewArgs, RenderArgs, RenderishArgs, ReportArg, SignArgs, SignCompleteArgs,
-    SignPrepareArgs, ValidateArgs, VerifyArgs,
+    AssetModeArg, FontAddArgs, FontCommand, FontStyleArg, FontWeightArg, PreviewArgs, RenderArgs,
+    RenderishArgs, ReportArg, SignArgs, SignCompleteArgs, SignPrepareArgs, ValidateArgs,
+    VerifyArgs,
 };
 pub use commands::{
     report_diagnostics, resolve_preview_output, run_inspect, run_preview, run_render, run_validate,
@@ -63,6 +70,7 @@ pub use commands::{
 };
 pub use error::{CliError, FailureClass};
 pub use external::{run_sign_complete, run_sign_prepare, Prepared};
+pub use font::{run_font_add, AddedFace, FontPackError};
 pub use report::Report;
 pub use sign::run_sign;
 pub use verify::run_verify;

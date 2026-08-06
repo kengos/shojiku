@@ -112,25 +112,38 @@ style: { fontFamily: my-corporate }
 
 **Designerで選んだ場合**は、エクスポートキット（zip）にパック一式がライセンスファイルごと入っています。`packs/fonts/` に展開すれば、パックの用意は終わりです。
 
-**手元にTTFがある場合**は、パックを自分で用意します。フォントファイルを `packs/fonts/my-corporate/` に置き、`manifest.yml` にライセンス1つと顔ごとの sha256 を書きます。読み込み時に sha256 と埋め込み権利（fsType）が検証されます。
+**手元にTTFがある場合**は、コマンド1つでパックができます。
 
 ```bash
-mkdir -p packs/fonts/my-corporate
-sha256sum packs/fonts/my-corporate/MyCorporate-Regular.ttf   # この値を manifest に書く
+shojiku font add MyCorporate-Regular.ttf \
+  --family my-corporate --license Proprietary
+# 同じファミリーにボールドを足す
+shojiku font add MyCorporate-Bold.ttf \
+  --family my-corporate --license Proprietary --weight bold
 ```
+
+`packs/fonts/my-corporate/` を作り、フォントファイルをコピーし、その sha256 を書き込んだ `manifest.yml` を生成します。
 
 ```yaml
 # packs/fonts/my-corporate/manifest.yml
 version: 1
 license: Proprietary
-redistributable: false
 faces:
   - id: my-corporate
     file: MyCorporate-Regular.ttf
-    sha256: <sha256sum の出力>
+    sha256: <自動で計算されます>
 ```
 
-どちらの場合も、最後にロケールの `uses` にパックを足します。オーバーレイファイルを1枚置くだけです。
+読み込み時には sha256 と埋め込み権利（fsType）が検証されますが、`font add` も同じ2つを先に確認します。埋め込みが許可されていないフォントは、最初のレンダリング時ではなくこの時点で弾かれます。別途埋め込みライセンスを持っている場合は `--embedding-attested` で明示します。パックは既定では再配布不可で、`--redistributable` を渡したときだけ再配布可になります。
+
+どちらの場合も、最後にどのパックをロードするかをレンダリングに伝えます。1回のレンダリングならフラグで済みます。
+
+```bash
+shojiku render --templates templates.yml --params params.json \
+  --output out.pdf --font-pack my-corporate
+```
+
+毎回のレンダリングで使うデプロイなら、ロケールの `uses` に入れます。オーバーレイファイルを1枚置くだけです。
 
 ```yaml
 # packs/locale/ja-jp.yml（ビルトインja-JPへのオーバーレイ）
@@ -138,7 +151,7 @@ fonts:
   uses: [biz-ud, ipamj-mincho, noto-sans-mono, my-corporate]
 ```
 
-`uses` は追記ではなく全体の書き直しなので、同梱パックを並べたまま自分のパックを足します。`uses` していないパックのフォントを `fontFamily` に指定すると、`unknown_font_family` の警告が出て、ロケール既定のフォントにフォールバックします。
+`uses` は追記ではなく全体の書き直しなので、同梱パックを並べたまま自分のパックを足します。1回だけなら `--font-pack` のほうが短いのは、こちらが置き換えではなく追加だからです。ロケールが `uses` しておらず、実行時にも指定していないパックのフォントを `fontFamily` に指定すると、`unknown_font_family` の警告が出て、ロケール既定のフォントにフォールバックします。
 
 パックの探し方はCLIもSDKも同じで、明示指定、環境変数、カレントの `./packs/fonts` と `./packs/locale` のすべてから探します。同じidがぶつかったときは、明示指定が優先されます。SDKでの明示指定はクライアントのオプションです（セクション2のPythonの例で渡していた `font_dirs` / `locale_dirs` がそれです）。環境変数は `SHOJIKU_FONT_DIR` / `SHOJIKU_LOCALE_DIR`（PATH区切り）、CLIのフラグは `--font-dir` / `--locale-dir` です。次のセクションのDockerfileは `packs/` を丸ごとCOPYするので、自作パックも一緒に含まれます。正確な仕様（`url:` による自動フェッチ、フォールバックチェーンなど）は[fonts.md](https://github.com/kengos/shojiku/blob/main/docs/engine/fonts.md)にあります。
 
