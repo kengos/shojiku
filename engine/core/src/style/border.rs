@@ -5,7 +5,7 @@
 //! `{ top, right, bottom, left }` map (unset side = width 0 / color
 //! black / style solid). Hand-written visitors — not `untagged` — so a
 //! wrong shape names the accepted forms instead of serde's "did not
-//! match any variant" (the AA4 guess-hostility lesson). The authored
+//! match any variant" (the guess-hostility lesson). The authored
 //! form round-trips.
 
 use serde::de::{Error as DeError, MapAccess, Visitor};

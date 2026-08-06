@@ -39,7 +39,7 @@ styles:
 
 sections:
   body:
-    type: flow # no `box`: the flow fills the whole margin box (PM1)
+    type: flow # no `box`: the flow fills the whole margin box
     gap: 7
     items:
       - id: store_name

@@ -51,7 +51,7 @@ export function renderEditor(ui: HeaderReportingElement) {
 export function pickMenu(menu: string, item: string) {
   fireEvent.click(screen.getByRole('button', { name: menu }));
   fireEvent.click(screen.getByRole('menuitem', { name: item }));
-  // Save/Export open a review pane first (GU16); its confirm button carries the
+  // Save/Export open a review pane first; its confirm button carries the
   // same label, so confirm it to reach the actual save/export.
   if (item === 'Save' || item === 'Export') {
     fireEvent.click(screen.getByRole('button', { name: item }));

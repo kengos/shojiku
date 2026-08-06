@@ -1,4 +1,4 @@
-//! Unit tests for the F2 wire keys: `textDecoration` and `opacity`.
+//! Unit tests for the wire keys: `textDecoration` and `opacity`.
 
 use super::*;
 

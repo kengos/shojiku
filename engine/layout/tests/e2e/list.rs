@@ -152,7 +152,7 @@ sections:
 
 #[test]
 fn repeat_cells_scope_the_list_to_each_element() {
-    // The N2 pickup ticket: each cell lists ITS element's items.
+    // The pickup ticket: each cell lists ITS element's items.
     let (doc, diags) = run(
         r#"
 page: { margin: 0 }

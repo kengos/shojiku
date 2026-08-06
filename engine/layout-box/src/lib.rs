@@ -26,7 +26,7 @@ pub use resolved::ResolvedBox;
 /// The parent box lengths resolve against: an x origin plus the `%` and
 /// font-relative bases. The width basis is always definite; the height
 /// basis is `None` while a container's auto height is still being
-/// computed. `font` carries the `em`/`rem` bases (U1) — the constructor
+/// computed. `font` carries the `em`/`rem` bases — the constructor
 /// picks `em` from the style cascade in effect, so derived bases copy it.
 #[derive(Clone, Copy, Debug)]
 pub struct Basis {

@@ -1,6 +1,6 @@
 // @vitest-environment node
 //
-// The REAL-wasm proof (T4/T5): the site's engine glue drives the actual
+// The REAL-wasm proof: the site's engine glue drives the actual
 // `make wasm` build over the actual tier subsets — receipt-us renders
 // warning-free on the immediate tier alone, receipt-ja needs the ja tier
 // (the gate) and renders clean once injected, and both playground demos

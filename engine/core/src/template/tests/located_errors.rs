@@ -8,7 +8,7 @@
 use super::*;
 use crate::error::CoreError;
 
-/// The AA4 case: an author writes `key:`/`format:` on a table column, but
+/// The guess-hostility case: an author writes `key:`/`format:` on a table column, but
 /// the wire wants `data: { key, format }`. The old bare error named no
 /// alternative; now the message lists the expected fields (including
 /// `data`) and the path points into the body.

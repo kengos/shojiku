@@ -1,4 +1,4 @@
-// T8: the /ja twin set stays in lockstep with the English canon — same page
+// The /ja twin set stays in lockstep with the English canon — same page
 // set, same interactive components, same section skeleton (the copy is
 // rewritten per language, so the CONTENT differs on purpose; the structure
 // must not).

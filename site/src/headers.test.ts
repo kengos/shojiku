@@ -1,4 +1,4 @@
-// S1: the deployed _headers is pinned — the /designer/* scope must equal the
+// The deployed _headers is pinned — the /designer/* scope must equal the
 // Designer's canonical CSP verbatim (gui/designer-app/public/_headers), and
 // the site scope must stay STRICTER (no raw.githubusercontent.com) while
 // carrying exactly the additions the site needs (blob: images, the analytics
@@ -47,7 +47,7 @@ describe("_headers", () => {
     expect(siteCsp).toContain("frame-ancestors 'none'");
   });
 
-  it("no CDN or Google-Fonts origin anywhere in the site source (S3)", () => {
+  it("no CDN or Google-Fonts origin anywhere in the site source", () => {
     const dirs = ["src", ".vitepress/theme", "scripts", "public"];
     const extraFiles = [".vitepress/config.mts", "gallery.data.ts", "vitest.config.ts", "package.json", "pnpm-workspace.yaml"];
     const files: string[] = [];

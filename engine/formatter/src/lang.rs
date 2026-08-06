@@ -137,7 +137,7 @@ impl LangPack {
         self.fonts.as_ref().map(|f| f.default.as_str())
     }
 
-    /// The locale fallback chain (F3): face/family ids tried in order for
+    /// The locale fallback chain: face/family ids tried in order for
     /// glyphs the primary face cannot map. Empty when unset.
     pub fn font_fallback(&self) -> &[String] {
         self.fonts.as_ref().map_or(&[], |f| &f.fallback)

@@ -1,4 +1,4 @@
-//! Unit tests for font lengths (U1): `fontSize`/`letterSpacing` as
+//! Unit tests for font lengths: `fontSize`/`letterSpacing` as
 //! `Length` strings (em/rem/`%`/physical), the letterSpacing `%`
 //! rejection, and authored-form round-trips.
 

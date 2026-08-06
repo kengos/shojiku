@@ -94,7 +94,7 @@ pub struct Template {
 
 /// Template version, informational only (no engine consumer yet).
 /// Accepts what authors naturally write — `version: 1`, `1.5`, or
-/// `"2.0"` — and serializes back in the authored form (AA1: the bare
+/// `"2.0"` — and serializes back in the authored form (the bare
 /// number was the universal miss in the external acceptance run).
 /// Numbers are finite by construction (`yaml_guard`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -170,7 +170,7 @@ pub enum Body {
 pub struct FlowBody {
     /// The region the flow occupies on every page, relative to the page
     /// margin box. Omitted = the whole margin box, so simple templates
-    /// need no `box` at all (PM1).
+    /// need no `box` at all.
     #[serde(rename = "box", default, skip_serializing_if = "Option::is_none")]
     pub box_: Option<BoxSpec>,
     /// Vertical gap between stacked items (a [`Length`]: bare pt, `%` of

@@ -87,7 +87,7 @@ pub struct RectShape {
     pub stroke: Option<(f32, f32, f32)>,
     pub stroke_width: f64,
     pub fill: Option<(f32, f32, f32)>,
-    /// Paint alpha `0..=1` (F2 `opacity`) applied to fill and stroke
+    /// Paint alpha `0..=1` (`opacity`) applied to fill and stroke
     /// alike. Already sanity-clamped by layout; `1.0` = opaque.
     pub opacity: f32,
     /// Corner radii (`borderRadius`), already resolved and clamped to the
@@ -136,7 +136,7 @@ pub struct ImageShape {
     /// backends apply it as a group over the whole raster/vector image, so
     /// a partly-transparent image reads as one unit.
     pub opacity: f32,
-    /// Hyperlink URL (LK1), already interpolated and scheme/length-gated
+    /// Hyperlink URL, already interpolated and scheme/length-gated
     /// by layout. The PDF backend emits one link annotation over the draw
     /// box; PNG has no annotation surface and ignores it (a link has no
     /// visual form, so backend symmetry is preserved).
@@ -152,7 +152,7 @@ pub struct LineShape {
     pub y2: f64,
     pub width: f64,
     pub color: (f32, f32, f32),
-    /// Paint alpha `0..=1` (F2 `opacity`). Already sanity-clamped; `1.0`
+    /// Paint alpha `0..=1` (`opacity`). Already sanity-clamped; `1.0`
     /// = opaque.
     pub opacity: f32,
     /// Stroke dash pattern in pt (`line` items' `style: dashed | dotted`

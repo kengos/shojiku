@@ -30,7 +30,7 @@ const PKG_WASM = new URL('engine/wasm/pkg/shojiku_wasm_bg.wasm', REPO);
 const PACKS_BASE = fileURLToPath(new URL('packs/', REPO));
 const FONTS_DIR = fileURLToPath(new URL('packs/fonts/', REPO));
 // The 原稿用紙(横書き) preset AUTHORS a lazy-tier `fontFamily: ipamj-mincho`, the
-// exact GC2 bug shape: absent at boot, so the engine reports
+// exact bug shape: absent at boot, so the engine reports
 // `unknown_font_family` (never `missing_glyph`) and the old trigger never fired.
 const PRESET_TEMPLATE = fileURLToPath(
   new URL('examples/typography/genkoyoshi-yoko-ja/templates.yml', REPO),

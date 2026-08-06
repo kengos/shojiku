@@ -1,11 +1,11 @@
-//! Font drawing: the F3 fallback-chain run and synthetic emboldening.
+//! Font drawing: the fallback-chain run and synthetic emboldening.
 
 use super::*;
 
 #[test]
 fn renders_fallback_chain_glyph_from_the_secondary_face() {
     // The default face (biz-udp-gothic) lacks 𠮷 (U+20BB7, the 土吉
-    // surname kanji) but the ja pack's F3 fallback (ipamj-mincho) has it,
+    // surname kanji) but the ja pack's locale fallback (ipamj-mincho) has it,
     // so layout tags the glyph with a non-zero face_index and draw_text
     // groups the line into per-face runs, pulling 𠮷 from the fallback
     // face. Exercises this backend's fallback-run draw path.

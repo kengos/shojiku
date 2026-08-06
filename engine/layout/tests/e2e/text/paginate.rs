@@ -91,7 +91,7 @@ sections:
 
 #[test]
 fn definite_height_text_keeps_atom_unit_behavior() {
-    // `box.h` is the T1 domain: no split, one page, the existing
+    // `box.h` is the overflow-policy domain: no split, one page, the existing
     // text_overflow warning.
     let (doc, diags) = run(
         &flow_template(500, "\n        box: { h: 30 }", &numbered_lines(80)),

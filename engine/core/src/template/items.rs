@@ -14,7 +14,7 @@ use super::spans::Span;
 
 /// A text item. Content comes from `text` (static, with `{key:format}`
 /// interpolation), `data` (single bound value), or `spans` (inline rich
-/// text, RT1) — exactly one of which should be set.
+/// text) — exactly one of which should be set.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TextItem {
@@ -30,7 +30,7 @@ pub struct TextItem {
     /// included — see [`Bindings`]. Bounded by [`super::binding::MAX_BINDINGS`].
     #[serde(default, skip_serializing_if = "Bindings::is_empty")]
     pub bindings: Bindings,
-    /// Inline rich text (RT1): styled fragments drawn as one wrapped
+    /// Inline rich text: styled fragments drawn as one wrapped
     /// block. Takes precedence over `text`/`data` when non-empty
     /// (validation warns on the conflict). Bounded by
     /// [`super::spans::MAX_SPANS`].
@@ -43,7 +43,7 @@ pub struct TextItem {
     pub style_names: Vec<String>,
     #[serde(default, skip_serializing_if = "Style::is_empty")]
     pub style: Style,
-    /// Hyperlink (LK1) over the whole block (every line; spans may
+    /// Hyperlink over the whole block (every line; spans may
     /// override per fragment with their own `link`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub link: Option<Link>,
@@ -122,7 +122,7 @@ pub struct ImageItem {
     pub style_names: Vec<String>,
     #[serde(default, skip_serializing_if = "Style::is_empty")]
     pub style: Style,
-    /// Hyperlink (LK1) over the image's draw box.
+    /// Hyperlink over the image's draw box.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub link: Option<Link>,
 }
@@ -144,7 +144,7 @@ pub enum ImageFit {
     None,
 }
 
-/// A QR code item (N2). Content comes from `text` (static, with
+/// A QR code item. Content comes from `text` (static, with
 /// `{key}` interpolation) or `data` (single bound value) — exactly like
 /// a text item; the engine encodes whatever string it is given (URL /
 /// number / opaque token — no semantics). Encoded at *layout* time into
@@ -190,7 +190,7 @@ pub enum EcLevel {
     High,
 }
 
-/// A bounded per-element list (N2): renders an array field one entry per
+/// A bounded per-element list: renders an array field one entry per
 /// line, clamping at the last fitting entry and ending with an overflow
 /// line when entries were cut. No pagination — inside a `repeat` cell the
 /// box is a fixed slot; in a flow an auto-height list simply grows.
@@ -227,7 +227,7 @@ pub struct ListItem {
     pub style: Style,
 }
 
-/// An explicit page break (PB1): the next flow item starts on a fresh
+/// An explicit page break: the next flow item starts on a fresh
 /// page. Flow-only (bands/absolute bodies/containers/cells warn+skip);
 /// a break at the top of an untouched page is a no-op, so consecutive
 /// breaks collapse to one — blank pages are never generated.

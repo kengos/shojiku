@@ -24,7 +24,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// `backgroundColor` fill covers the full border box. Lines carry
     /// absolute x and y relative to the block top; the sanity clamps still
     /// apply since a resolved size/height can be hostile.
-    #[allow(clippy::too_many_arguments)] // border box + padding + D3 height bounds
+    #[allow(clippy::too_many_arguments)] // border box + padding + min/max height bounds
     pub(in crate::engine) fn text_block(
         &mut self,
         content: &str,

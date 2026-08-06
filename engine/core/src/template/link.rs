@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// A hyperlink (LK1) on a text item, image item, or rich-text span,
+/// A hyperlink on a text item, image item, or rich-text span,
 /// emitted as a PDF link annotation over the item's drawn geometry
 /// (per line/run for text, the draw box for images). Object form — not a
 /// bare string — so internal destinations (`destination:`) can be added

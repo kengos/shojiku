@@ -243,7 +243,7 @@ export function IconAlignStretch(props: IconProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Object align / distribute marks (GU18 multi-select cluster). Distinct from
+// Object align / distribute marks (multi-select cluster). Distinct from
 // the text/flex alignment icons above: these show two/three OBJECTS lining up
 // to a guide edge (filled rects) or spacing out evenly, the Figma vocabulary.
 // The guide is a stroked line; the objects are `fill=currentColor` rects.

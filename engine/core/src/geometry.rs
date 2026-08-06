@@ -26,7 +26,7 @@ pub struct PageSpec {
     pub size: PageSize,
     #[serde(default, skip_serializing_if = "Orientation::is_default")]
     pub orientation: Orientation,
-    /// Printable-area insets (PM1): the margin box is the coordinate
+    /// Printable-area insets: the margin box is the coordinate
     /// origin for bands and the body — `x: 0` / `y: 0` mean the margin
     /// corner, and absolute items reach into the margin with negative
     /// coordinates. Defaults to 25pt on every side.

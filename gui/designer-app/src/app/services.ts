@@ -78,7 +78,7 @@ export interface RemoteServices {
   readonly projects: ProjectSource;
   readonly store: TemplateStore;
   /** The definitions-write seam — present = the host lets the Designer edit
-   * `definitions.yml` (GU22); absent = definitions stay read-only on this host. */
+   * `definitions.yml`; absent = definitions stay read-only on this host. */
   readonly definitions?: DefinitionsStore;
 }
 

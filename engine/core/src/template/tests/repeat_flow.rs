@@ -1,4 +1,4 @@
-//! Parsing and round-trip serialization of the IG1 `repeat_flow` wire:
+//! Parsing and round-trip serialization of the `repeat_flow` wire:
 //! the data/gap/item keys and deny-unknown-fields typo safety.
 
 use super::super::*;

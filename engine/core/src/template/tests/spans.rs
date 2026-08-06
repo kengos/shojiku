@@ -1,4 +1,4 @@
-//! Parsing and round-trip serialization of rich-text `spans` (RT1).
+//! Parsing and round-trip serialization of rich-text `spans`.
 
 use super::super::*;
 

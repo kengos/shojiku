@@ -163,7 +163,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             link: self.resolve_link(image.link.as_ref(), &image.bindings),
         });
         // `cover`/`none` can exceed the content box; crop the overflow
-        // with a D2 clip over the content box. A raster under
+        // with an `overflow` clip over the content box. A raster under
         // `contain`/`stretch` never overflows, so it stays a bare shape
         // (no needless clip node) — but an SVG is clipped either way: its
         // paths may sit outside the `viewBox` the fit math measured, and

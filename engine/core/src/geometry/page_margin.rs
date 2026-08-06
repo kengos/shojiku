@@ -1,5 +1,5 @@
 //! `page.margin` wire type: the printable-area insets that become the
-//! coordinate origin (PM1).
+//! coordinate origin.
 //!
 //! Wire forms: the [`EdgeSpec`] forms — a bare number (all sides) or a
 //! per-side `{ top/right/bottom/left }` mapping — plus the legacy

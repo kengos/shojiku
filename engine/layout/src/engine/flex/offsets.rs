@@ -15,7 +15,7 @@ use super::{FlexKind, FlexSpec};
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Plans the row bases: fixed-width children (authored `w`) keep it,
     /// children without split the leftover width by their `flexGrow`
-    /// weight (default 1 = an equal split, D4). With no unsized children,
+    /// weight (default 1 = an equal split). With no unsized children,
     /// auto margins absorb the free space, then `justifyContent`
     /// distributes what remains. Each basis carries the slot x; fixed
     /// children see the full parent width (so `%` resolves against the
@@ -63,7 +63,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
             let m = resolve_edges(b.margin.as_ref(), inner, &mut self.diags);
             autos.push(b.margin.map(|e| e.auto_sides()).unwrap_or([false; 4]));
-            // Clamp the authored width to its min/max bounds (D3) so the
+            // Clamp the authored width to its min/max bounds so the
             // planned slot matches the width the child's ResolvedBox will
             // report. An unsized child carries the same bounds into the
             // resolution loop, which clamps them AFTER growth.

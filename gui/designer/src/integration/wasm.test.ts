@@ -188,7 +188,7 @@ describe('wasm transport against the real engine (receipt-us)', () => {
 
 // The data-item editor's definition edits reach the SAME validate the render
 // path uses — real-engine proof that editing `definitions.yml` in the Designer
-// (GU22) behaves like editing the file on disk. `store.name` is a bound field
+// behaves like editing the file on disk. `store.name` is a bound field
 // (`data: { key: store.name }`), so removing its declaration is observable.
 describe('definition edits reach the engine validate (receipt-us)', () => {
   const namePath = ['properties', 'store', 'properties', 'name'];

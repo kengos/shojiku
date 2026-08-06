@@ -1,4 +1,4 @@
-//! Hyperlink resolution (LK1): interpolates `link.url` against the
+//! Hyperlink resolution: interpolates `link.url` against the
 //! current data scope, then gates the resolved value before it enters
 //! the tree — layout is the trust boundary; renderers emit whatever the
 //! tree carries without judgment.

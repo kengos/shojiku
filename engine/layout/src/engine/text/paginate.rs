@@ -1,8 +1,8 @@
-//! Long-text pagination (LT1): a flow text item taller than the flow
+//! Long-text pagination: a flow text item taller than the flow
 //! region splits at the last fitting line and continues page by page,
 //! like table rows — instead of warning (`section_overflow`) and drawing
 //! over. Only auto-height direct flow children split: a definite `box.h`
-//! is the T1 overflow-policy domain, and containers keep atom-unit page
+//! is the overflow-policy domain, and containers keep atom-unit page
 //! breaking. A VERTICAL flow block paginates on its own overflow axis —
 //! the width — at column boundaries ([`vertical`]). Decoration and
 //! padding are **cloned** onto every fragment (CSS

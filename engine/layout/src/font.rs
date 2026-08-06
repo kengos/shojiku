@@ -42,7 +42,7 @@ pub struct ResolvedFace<'a> {
     pub real_italic: bool,
 }
 
-/// A resolved primary face plus its fallback chain (F3): `faces` is
+/// A resolved primary face plus its fallback chain: `faces` is
 /// `[primary, …fallbacks]` for shaping/measuring; `fallback_ids` are the
 /// resolved fallback face ids the tree carries so renderers rebuild the
 /// same chain.
@@ -85,7 +85,7 @@ pub struct FontStore {
     faces: HashMap<String, FontFace>,
     order: Vec<String>,
     default_id: String,
-    /// Locale fallback chain (F3): face/family ids tried in order for
+    /// Locale fallback chain: face/family ids tried in order for
     /// glyphs the primary face cannot map. Empty = no fallback.
     fallback: Vec<String>,
 }
@@ -152,7 +152,7 @@ impl FontStore {
     }
 
     /// Resolves the primary face for `(family, weight, style)` plus the
-    /// locale fallback chain (F3): each fallback id is resolved at the
+    /// locale fallback chain: each fallback id is resolved at the
     /// same weight/style; duplicates (a fallback that lands on a face
     /// already in the chain, e.g. self-fallback) are dropped. The
     /// returned `faces` is `[primary, …fallbacks]` for shaping.

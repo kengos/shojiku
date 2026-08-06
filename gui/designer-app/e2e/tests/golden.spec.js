@@ -26,7 +26,7 @@ test('open a preset, preview it client-side, and export', async ({ page }) => {
   const canvas = page.locator('canvas').first();
   await expect(canvas).toBeVisible({ timeout: 30000 });
 
-  // Tweak: page setup lives in the fullscreen document-settings view now (GU42),
+  // Tweak: page setup lives in the fullscreen document-settings view now,
   // reached from the 「全体」 layer-tree root row. Open it, change the page size,
   // and the live preview re-renders at the new dimensions (the receipt-us preset
   // is a custom 80mm size, so Legal is a visible jump).

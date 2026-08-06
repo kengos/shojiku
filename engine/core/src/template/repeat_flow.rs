@@ -1,5 +1,5 @@
 //! Flow repeat (`type: repeat_flow`): one auto-height card per array
-//! element, stacked in normal flow and paginating card-by-card (IG1).
+//! element, stacked in normal flow and paginating card-by-card.
 
 use serde::{Deserialize, Serialize};
 

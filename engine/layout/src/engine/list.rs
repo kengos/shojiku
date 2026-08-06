@@ -1,8 +1,8 @@
-//! List items (N2): a bounded per-element list — one line per array
+//! List items: a bounded per-element list — one line per array
 //! entry, clamped at the last fitting entry with a count-aware overflow
 //! line (`他{count}件`). No pagination: inside a `repeat` cell the box is
 //! a fixed slot; an auto-height list simply grows. Entries wider than
-//! the box take a per-entry ellipsis (the T1 clamp).
+//! the box take a per-entry ellipsis (the overflow clamp).
 
 use crate::font::{run_width, RunOptions};
 use crate::tree::{LayoutItem, TextBlock, TextLine};
@@ -128,7 +128,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             let template = list.overflow_text.as_deref().unwrap_or("+{count}");
             texts.push(template.replace("{count}", &cut.to_string()));
         }
-        // Per-entry ellipsis (T1 clamp) so an over-wide entry never wraps
+        // Per-entry ellipsis (the overflow clamp) so an over-wide entry never wraps
         // and never draws past the content box.
         let texts: Vec<String> = texts
             .into_iter()
@@ -186,7 +186,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             decoration,
             opacity: self.sane_opacity(computed.opacity),
             baseline: None,
-            // Lists have no `link:` wire (LK1 scope: text/image/span).
+            // Lists have no `link:` wire (scope: text/image/span).
             link: None,
             // half-width punctuation is not applied to list entries in v1 (they are short
             // labels; measurement and drawing stay untrimmed together).

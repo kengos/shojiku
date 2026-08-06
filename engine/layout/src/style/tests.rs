@@ -3,8 +3,8 @@
 use super::*;
 use shojiku_core::{BorderColor, BorderStyle, BorderWidth, Length, TextCombineUpright};
 
-/// The single-inline cascade S1 shipped, now expressed via the two
-/// primitives — kept as a test helper so the S1 semantics stay pinned.
+/// The single-inline cascade that originally shipped, now expressed via
+/// the two primitives — kept as a test helper so the semantics stay pinned.
 fn cascade(inherited: &ComputedStyle, inline: &Style) -> ComputedStyle {
     ComputedStyle::base(inherited).overlaid(inline)
 }

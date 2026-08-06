@@ -1,4 +1,4 @@
-// The save/export review pane (GU16): a Modal shown BEFORE a save or export
+// The save/export review pane: a Modal shown BEFORE a save or export
 // that displays the line-level YAML diff between the opened document and the
 // current text — the round-trip guarantee ("only touched keys change") made
 // visible. Two audiences in one pane: the nontech-pm reads the plain-language

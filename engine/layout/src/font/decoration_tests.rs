@@ -1,4 +1,4 @@
-//! Unit tests for the F2 decoration metrics: real font tables, fallback
+//! Unit tests for the decoration metrics: real font tables, fallback
 //! behavior, and the hostile-value clamps.
 
 use super::face::decoration::scaled_or_fallback;

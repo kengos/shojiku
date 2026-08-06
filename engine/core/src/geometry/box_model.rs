@@ -2,7 +2,7 @@
 //!
 //! The box half of [`crate::geometry`] — a fully specified [`BoxSpec`]
 //! and the partial [`OptBox`] that carries positioning, the border-box
-//! spacing (`margin`/`padding`), the D3 min/max bounds, and the flex /
+//! spacing (`margin`/`padding`), the min/max bounds, and the flex /
 //! grid layout keys. Positioning never cascades (see the module header);
 //! this file only models the wire form, layout resolves it.
 
@@ -45,20 +45,20 @@ pub struct OptBox {
     pub w: Option<Length>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub h: Option<Length>,
-    /// Minimum border-box width (CSS `min-width`, D3). A [`Length`]; `%`
+    /// Minimum border-box width (CSS `min-width`). A [`Length`]; `%`
     /// resolves against the parent width. Clamps the resolved/filled
     /// width in CSS order (min wins over max wins over the size).
     #[serde(rename = "minWidth", default, skip_serializing_if = "Option::is_none")]
     pub min_width: Option<Length>,
-    /// Maximum border-box width (CSS `max-width`, D3).
+    /// Maximum border-box width (CSS `max-width`).
     #[serde(rename = "maxWidth", default, skip_serializing_if = "Option::is_none")]
     pub max_width: Option<Length>,
-    /// Minimum border-box height (CSS `min-height`, D3). `%` resolves
+    /// Minimum border-box height (CSS `min-height`). `%` resolves
     /// against the parent height; against an auto-height parent it drops
     /// with `percent_of_auto`, like `h`.
     #[serde(rename = "minHeight", default, skip_serializing_if = "Option::is_none")]
     pub min_height: Option<Length>,
-    /// Maximum border-box height (CSS `max-height`, D3).
+    /// Maximum border-box height (CSS `max-height`).
     #[serde(rename = "maxHeight", default, skip_serializing_if = "Option::is_none")]
     pub max_height: Option<Length>,
     /// Outer spacing: a bare number (all sides) or a per-side map

@@ -1,4 +1,4 @@
-//! `textOverflow: clip` (D2): pixel-clip semantics on text blocks —
+//! `textOverflow: clip`: pixel-clip semantics on text blocks —
 //! every line kept, exact height reserved, warning suppressed.
 
 use super::{clip_shapes, only_clip};
@@ -57,7 +57,7 @@ sections:
 "#,
         json!({}),
     );
-    // Auto-height boxes grow to fit (the T1 rule); nothing to clip.
+    // Auto-height boxes grow to fit (the overflow-policy rule); nothing to clip.
     assert!(diags.is_empty(), "diags: {diags:?}");
     assert!(clip_shapes(&doc.pages[0]).is_empty());
 }

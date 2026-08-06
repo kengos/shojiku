@@ -1,4 +1,4 @@
-//! Clip-group drawing (D2): mask clipping, nesting intersection, the
+//! Clip-group drawing: mask clipping, nesting intersection, the
 //! depth cap, and fail-closed degenerate rects — all asserted per pixel.
 
 use super::*;

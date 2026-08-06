@@ -1,4 +1,4 @@
-//! Flow repeat (`type: repeat_flow`, IG1): one auto-height card per
+//! Flow repeat (`type: repeat_flow`): one auto-height card per
 //! array element, stacked in flow with `gap` and paginating card-by-card.
 
 use shojiku_core::RepeatFlowItem;
