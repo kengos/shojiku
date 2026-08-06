@@ -185,8 +185,9 @@ fn overlaid_applies_every_property_it_sets() {
 
 #[test]
 fn decoration_and_opacity_do_not_inherit() {
-    // F2 keys are non-inherited (matches CSS): a decorated, translucent
-    // ancestor must not leak either onto children via `base`.
+    // `textDecoration` and `opacity` are non-inherited (matches CSS): a
+    // decorated, translucent ancestor must not leak either onto children
+    // via `base`.
     let ancestor = ComputedStyle::default().overlaid(&Style {
         text_decoration: Some(TextDecoration::LineThrough),
         opacity: Some(0.3),

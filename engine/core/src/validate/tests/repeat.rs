@@ -247,7 +247,7 @@ fn list_cell_array_must_be_a_declared_group_field() {
 
 #[test]
 fn repeat_cell_link_url_keys_are_element_scoped() {
-    // LK1: a link URL inside a cell binds against the array group, like
+    // A `link.url` inside a cell binds against the array group, like
     // cell text — on the text item, its spans, and images alike.
     let template = tpl(r#"
       - type: repeat

@@ -105,7 +105,7 @@ sections:
 
 #[test]
 fn decoration_paints_a_backing_under_the_modules() {
-    // D1 decoration: a white backgroundColor is the scannable backing.
+    // Box decoration: a white backgroundColor is the scannable backing.
     let (doc, _) = run(
         r##"
 page: { margin: 0 }

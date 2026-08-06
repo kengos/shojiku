@@ -224,7 +224,7 @@ sections:
 
 #[test]
 fn link_url_keys_are_checked_like_text() {
-    // LK1: `{key}` segments in a link URL bind exactly like static text —
+    // `{key}` segments in a `link.url` bind exactly like static text —
     // unknown keys error on the text item, its spans, and images alike.
     let template = tpl(r#"
       - type: text

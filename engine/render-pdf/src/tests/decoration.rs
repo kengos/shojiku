@@ -1,6 +1,6 @@
-//! F2 on the PDF backend: decoration rects render and `opacity`
-//! surfaces as PDF graphics-state alpha (pixel-exact behavior is
-//! asserted on the PNG backend, which shares the tree contract).
+//! `textDecoration` on the PDF backend: decoration rects render and
+//! `opacity` surfaces as PDF graphics-state alpha (pixel-exact behavior
+//! is asserted on the PNG backend, which shares the tree contract).
 
 use super::*;
 

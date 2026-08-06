@@ -1,4 +1,4 @@
-//! U1 relative units end to end — deliberately cross-cutting. This root
+//! Relative units end to end — deliberately cross-cutting. This root
 //! holds the `em`/`rem` box-length tests (inherited-font-size basis);
 //! `gap` covers the flow `gap` as a `Length`, `font` the fontSize/
 //! letterSpacing length strings through the cascade.

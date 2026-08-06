@@ -1,4 +1,4 @@
-//! RT1 rich spans on the PNG backend: a styled span actually changes
+//! `spans` on the PNG backend: a styled span actually changes
 //! the painted pixels (per-run color reaches the canvas), synthetic
 //! effects and decoration draw through the run path, and unknown run
 //! fonts fail loudly.

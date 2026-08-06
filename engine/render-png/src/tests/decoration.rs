@@ -1,6 +1,6 @@
-//! F2 on the PNG backend: the underline actually draws a continuous line
-//! (spanning gaps glyphs leave), and `opacity` blends toward the white
-//! background.
+//! `textDecoration` on the PNG backend: the underline actually draws a
+//! continuous line (spanning gaps glyphs leave), and `opacity` blends
+//! toward the white background.
 
 use super::*;
 

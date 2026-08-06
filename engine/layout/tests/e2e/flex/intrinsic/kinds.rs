@@ -9,10 +9,10 @@ use crate::common::*;
 
 #[test]
 fn flex_basis_content_is_the_default_spelled_out() {
-    // T10, clause 1: writing `flexBasis: content` explicitly must be a
-    // NO-OP — it names the default, so the same fixture with and without
-    // it has to produce the same width. A key that quietly changed
-    // behaviour when spelled would be worse than not having it.
+    // Writing `flexBasis: content` explicitly must be a NO-OP — it names
+    // the default, so the same fixture with and without it has to produce
+    // the same width. A key that quietly changed behaviour when spelled
+    // would be worse than not having it.
     let implied = probe(
         "- type: container\n  box: { h: 20 }\n  style: { borderWidth: 1 }\n  items:\n    - type: text\n      text: あいうえ",
     );
@@ -27,10 +27,10 @@ fn flex_basis_content_is_the_default_spelled_out() {
 
 #[test]
 fn flex_basis_content_with_grow_zero_is_pure_content_width() {
-    // T10, clause 2: the two keys together are the explicit "size to
-    // your content and stay there". Discriminated against the same
-    // fixture at `flexGrow: 1`, which adds the whole leftover — so the
-    // pair of numbers proves growth was the variable, not the basis.
+    // `flexBasis: content` and `flexGrow: 0` together are the explicit
+    // "size to your content and stay there". Discriminated against the
+    // same fixture at `flexGrow: 1`, which adds the whole leftover — so
+    // the pair of numbers proves growth was the variable, not the basis.
     let still = probe(
         "- type: container\n  box: { h: 20, flexBasis: content, flexGrow: 0 }\n  style: { borderWidth: 1 }\n  items:\n    - type: text\n      text: あいうえ",
     );
@@ -45,9 +45,10 @@ fn flex_basis_content_with_grow_zero_is_pure_content_width() {
 
 #[test]
 fn a_vertical_writing_block_has_no_intrinsic_width_and_keeps_its_share() {
-    // T12, golden 1. A vertical-writing block's inline axis runs DOWN, so
-    // its horizontal extent is (column count × column width) — a function
-    // of the available HEIGHT, not a max-content width. `max_content_width`
+    // No-intrinsic-width golden 1. A vertical-writing block's inline axis
+    // runs DOWN, so its horizontal extent is (column count × column
+    // width) — a function of the available HEIGHT, not a max-content
+    // width. `max_content_width`
     // returns `None` for it, and the caller falls back to the share-based
     // behaviour: it GROWS rather than collapsing to nothing.
     //
@@ -68,9 +69,9 @@ fn a_vertical_writing_block_has_no_intrinsic_width_and_keeps_its_share() {
 
 #[test]
 fn a_table_has_no_intrinsic_width_and_keeps_its_share() {
-    // T12, golden 2. A table resolves its column widths as `%` of the
-    // region it is given, so its max-content width is defined in terms of
-    // the width being measured. `None`, and it grows.
+    // No-intrinsic-width golden 2. A table resolves its column widths as
+    // `%` of the region it is given, so its max-content width is defined
+    // in terms of the width being measured. `None`, and it grows.
     //
     // Successor: a real table max-content means summing per-column
     // max-content over every row's cells — the `auto` COLUMN machinery
@@ -91,7 +92,7 @@ fn a_table_has_no_intrinsic_width_and_keeps_its_share() {
 
 #[test]
 fn a_checkbox_measures_the_cap_square_it_will_draw() {
-    // T13, the checkbox arm: it auto-sizes to the inherited cap-height
+    // The checkbox arm of the walk: it auto-sizes to the inherited cap-height
     // square, and its BASIS is that same square — so its reserved slot
     // and its drawn mark agree by construction rather than by luck.
     let r = row(
@@ -108,7 +109,7 @@ fn a_checkbox_measures_the_cap_square_it_will_draw() {
 
 #[test]
 fn a_container_max_content_recurses_and_follows_its_own_direction() {
-    // T13, the container arm — the one that makes the walk a walk. A
+    // The container arm — the one that makes the walk a walk. A
     // `row` container needs every child side by side (Σ widths + gaps); a
     // `column` needs its widest. Both measured from the SAME children, so
     // the two numbers discriminate the direction rather than just being
@@ -129,10 +130,11 @@ fn a_container_max_content_recurses_and_follows_its_own_direction() {
 
 #[test]
 fn a_grid_container_has_no_intrinsic_width() {
-    // T13's boundary: a `grid` container's tracks resolve against a width
-    // that is exactly what the measurement is trying to produce, so it
-    // returns `None` and grows. Without this arm the walk would recurse
-    // into track sizing and ask itself the question it is answering.
+    // The container arm's boundary: a `grid` container's tracks resolve
+    // against a width that is exactly what the measurement is trying to
+    // produce, so it returns `None` and grows. Without this arm the walk
+    // would recurse into track sizing and ask itself the question it is
+    // answering.
     let r = probe(
         "- type: container\n  box: { h: 20, type: grid, columns: 2 }\n  style: { borderWidth: 1 }\n  items:\n    - type: text\n      text: あいうえ\n    - type: text\n      text: あい",
     );
@@ -143,8 +145,8 @@ fn a_grid_container_has_no_intrinsic_width() {
 
 #[test]
 fn a_container_with_nothing_in_flow_has_no_intrinsic_width() {
-    // T13's other boundary: a container whose only children are
-    // absolutely placed contributes no measurable child, so it has no
+    // The container arm's other boundary: a container whose only children
+    // are absolutely placed contributes no measurable child, so it has no
     // content width to report — `None`, and it falls back to a share.
     // The `counted == 0` arm.
     let r = probe(

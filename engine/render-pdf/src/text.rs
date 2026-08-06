@@ -104,7 +104,7 @@ fn draw_run(
         surface.pop();
     }
     surface.set_stroke(None);
-    // F2/RT1 decoration: one filled rect per run in the run's fill,
+    // `textDecoration` on a span run: one filled rect per run in its fill,
     // drawn unskewed even under synthetic italic (matching how browsers
     // underline faux-italic text). Layout precomputed offset/thickness
     // relative to the line top.

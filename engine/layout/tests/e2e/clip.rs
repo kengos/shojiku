@@ -1,4 +1,4 @@
-//! D2 `overflow: hidden` / `textOverflow: clip` end to end
+//! `overflow: hidden` / `textOverflow: clip` end to end
 //! (deliberately cross-cutting: the clip node is emitted by
 //! containers, repeat cells, repeat_flow cards, and text blocks).
 

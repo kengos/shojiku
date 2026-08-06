@@ -1,12 +1,12 @@
-//! AA-batch tests: `version:` scalar forms (AA1), the deny-unknown /
-//! no-injected-serialization sweep (AA2) — every wire struct rejects a
-//! typo'd key, and a minimal template round-trips byte-lean.
+//! Authorability tests: `version:` scalar forms, and the deny-unknown /
+//! no-injected-serialization sweep — every wire struct rejects a typo'd
+//! key, and a minimal template round-trips byte-lean.
 
 use super::*;
 
 #[test]
 fn version_accepts_number_and_string_and_round_trips_as_authored() {
-    // AA1: `version: 1` failed every file in the external acceptance run.
+    // `version: 1` failed every file in the external acceptance run.
     let n: Template = parse_template("version: 1\nsections:\n  body: { type: absolute }\n")
         .expect("number version");
     assert_eq!(n.version, Some(Version::Number(1.0)));
@@ -27,7 +27,7 @@ fn version_accepts_number_and_string_and_round_trips_as_authored() {
 
 #[test]
 fn minimal_template_serializes_without_injected_keys() {
-    // AA2: the round-trip is byte-lean — nothing the author didn't write
+    // The round-trip is byte-lean — nothing the author didn't write
     // appears (no `null`s, no injected defaults). This is the sweep's
     // one-glance regression net.
     let tpl = parse_template(
@@ -88,7 +88,7 @@ sections:
 
 #[test]
 fn every_wire_struct_rejects_unknown_keys() {
-    // AA2: a typo'd key anywhere is a parse error, never a silent no-op.
+    // A typo'd key anywhere is a parse error, never a silent no-op.
     // One probe per struct, each with a plausible author mistake.
     let cases: &[(&str, &str)] = &[
         ("Template", "sections: { body: { type: absolute } }\nbogus: 1\n"),

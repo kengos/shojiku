@@ -45,7 +45,7 @@ fn text_overflow_parses_round_trips_and_defaults_to_visible() {
         ("textOverflow: visible", TextOverflow::Visible),
         ("textOverflow: shrink", TextOverflow::Shrink),
         ("textOverflow: ellipsis", TextOverflow::Ellipsis),
-        // D2 made the reserved `clip` value real.
+        // `clip` is a real value, no longer merely reserved.
         ("textOverflow: clip", TextOverflow::Clip),
     ] {
         let s: Style = serde_yaml::from_str(yaml).expect("parse");

@@ -25,7 +25,7 @@ fn inspects_example_layout() {
         value["boxes"]["pages"].as_array().map(Vec::len),
         value["document"]["pages"].as_array().map(Vec::len)
     );
-    // PM1: the resolved margins ride the envelope for Designer guides
+    // The resolved `page.margin` rides the envelope for Designer guides
     // (receipt-ja authors `margin: 25`).
     assert_eq!(
         value["margin"]
@@ -54,7 +54,7 @@ fn capabilities_payload_is_versioned_json() {
         // Asset-surface widenings gate too: a pre-gradient engine leaves
         // gradient SVG fills unpainted, so the GUI must be able to tell.
         "image.svg.gradient",
-        // LB1: builtin locale packs + 和暦 era formatting.
+        // Builtin locale packs + 和暦 era formatting.
         "locale.builtin",
         "format.wareki",
         // per-side borders, spanning, non-text columns.

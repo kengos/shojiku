@@ -62,7 +62,7 @@ pub(crate) fn draw_text_vertical(
                 orient,
             };
             draw_column(surface, &col, &line.text);
-            // F2 decoration as a SIDE band: one filled rect per column at
+            // `textDecoration` as a SIDE band: one filled rect per column at
             // the layout-resolved x offset, running the column's inked
             // down-extent (matches the horizontal per-line rect).
             if let Some(d) = block.decoration {

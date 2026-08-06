@@ -46,9 +46,9 @@ impl PhysicalUnit {
 }
 
 /// The engine default font size in pt: the root of the style cascade
-/// (`ComputedStyle::default()` in layout) and the `rem` root. A deliberate
-/// U1 decision — `rem` is a constant scale unit today; a template-level
-/// root style may replace this base later (pre-1.0 reversible).
+/// (`ComputedStyle::default()` in layout) and the `rem` root. Deliberate —
+/// `rem` is a constant scale unit today; a template-level root style may
+/// replace this base later (pre-1.0 reversible).
 pub const DEFAULT_FONT_SIZE_PT: f64 = 10.0;
 
 /// The font-relative bases an `em`/`rem` length resolves against: `em` is

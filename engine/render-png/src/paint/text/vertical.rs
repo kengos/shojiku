@@ -59,7 +59,7 @@ impl Painter<'_> {
                     orient,
                 };
                 self.draw_column(pixmap, &col, &line.text, &mut paint, mask);
-                // F2 decoration as a SIDE band: one filled rect per column
+                // `textDecoration` as a SIDE band: one filled rect per column
                 // at the layout-resolved x offset, running the column's
                 // inked down-extent (mirrors the PDF backend).
                 if let Some(d) = block.decoration {

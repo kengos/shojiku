@@ -156,7 +156,7 @@ fn grow_column(column_box: &str) -> Vec<(f64, f64)> {
 
 #[test]
 fn flex_grow_takes_the_leftover_height_of_a_definite_column() {
-    // T17: a column's MAIN axis is the height, so `flexGrow` there is the
+    // A column's MAIN axis is the height, so `flexGrow` there is the
     // same flexible-length resolution a row runs on width. The grower
     // starts at its CONTENT height and takes everything the fixed sibling
     // leaves, so the two must exactly fill the parent.

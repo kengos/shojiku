@@ -186,7 +186,7 @@ fn a_child_taller_than_its_fr_row_warns_grid_cell_overflow() {
 
 #[test]
 fn fr_rows_subtract_the_measured_height_of_an_auto_row() {
-    // T20. h 100, rows ["auto", "1fr"]: the auto row is as tall as its
+    // h 100, rows ["auto", "1fr"]: the auto row is as tall as its
     // 30pt child, so the `fr` row is the remaining 70 — not the whole
     // 100 it used to take, when the split could only subtract the FIXED
     // rows and an auto row counted as nothing.
