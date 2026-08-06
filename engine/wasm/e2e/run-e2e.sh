@@ -4,8 +4,15 @@
 # Run from the repository root:  sh engine/wasm/e2e/run-e2e.sh
 set -eu
 
-IMAGE=shojiku-wasm-e2e
-NAME=shojiku-wasm-e2e-run
+# WORK_TAG namespaces the image and the container name: both are GLOBAL to the
+# docker daemon, so with fixed values a second session's run retags this image
+# and `docker rm -f`s this container out from under a live test — which
+# surfaces as "server never came up" below, not as a collision. The PORT is
+# global too but is NOT derived from WORK_TAG; a parallel run must pass its own
+# PORT=. Same scheme as gui/designer-app/e2e/run-e2e.sh.
+WORK_TAG="${WORK_TAG:-local}"
+IMAGE="shojiku-wasm-e2e:${WORK_TAG}"
+NAME="shojiku-wasm-e2e-run-${WORK_TAG}"
 PORT="${PORT:-8789}"
 PLAYWRIGHT_IMAGE=mcr.microsoft.com/playwright:v1.49.0-noble
 

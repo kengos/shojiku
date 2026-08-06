@@ -193,6 +193,14 @@ GATE_LOCK  := scripts/gate-lock.sh
 
 IMAGE        := shojiku-ci:$(WORK_TAG)
 
+# The two browser golden paths build their images from shell scripts rather
+# than from a recipe here, so their names are declared alongside the other
+# session-namespaced ones — both so `images-clean` can name them and so the
+# WORK_TAG scheme has a single place to read. The scripts derive the same
+# names from $WORK_TAG.
+APP_E2E_IMAGE  := shojiku-designer-app-e2e:$(WORK_TAG)
+WASM_E2E_IMAGE := shojiku-wasm-e2e:$(WORK_TAG)
+
 # Node image for the gui/ workspace gates (typecheck + lint + coverage). The
 # host has no Node toolchain either — like Rust, every gui gate runs in Docker.
 NODE_IMAGE := node:24-bookworm-slim
@@ -327,7 +335,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         sdk-php sdk-php-test sdk-php-lint \
         sdk-go sdk-go-test sdk-go-lint \
         gui gui-budget gui-lint gui-test gui-format gui-e2e gui-shot \
-        gui-serve gui-dev sbom clean cache-clean
+        gui-serve gui-dev sbom clean cache-clean images-clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z0-9_\\:-]+:.*## ' $(MAKEFILE_LIST) \
@@ -1604,3 +1612,24 @@ clean: ## Remove local artifacts (out.pdf, lcov.info, stderr.txt)
 
 cache-clean: ## Drop the persistent cargo/rustup/pnpm Docker volumes
 	-docker volume rm $(CARGO_VOLUME) $(RUSTUP_VOLUME) $(PNPM_VOLUME)
+
+# The images a local gate run leaves behind. They are cheap to lose — each
+# rebuilds from the layer cache in seconds — but there are eleven of them and
+# together they run to gigabytes, so a machine that has run `make verify` a few
+# times accumulates silently with nothing offering to clean up.
+#
+# Deliberately driven off the same variables the gates BUILD with, rather than
+# a `docker images` name pattern: that makes it WORK_TAG-aware for free, so a
+# parallel session removes exactly its own images and cannot reach another
+# session's. It also means a renamed image cannot be missed here.
+#
+# Cache VOLUMES are NOT touched — they are shared on purpose and cost minutes
+# to rebuild, not seconds. `cache-clean` above is the deliberate way to drop
+# those.
+BUILT_IMAGES := $(IMAGE) $(GUI_APP_IMAGE) $(APP_E2E_IMAGE) $(WASM_E2E_IMAGE) \
+                $(PHP_IMAGE) $(GO_IMAGE) $(RUBY_IMAGE) $(PYTHON_IMAGE) \
+                $(DOTNET_IMAGE) $(JAVA_IMAGE) $(JS_IMAGE)
+
+images-clean: ## Remove the docker images this tree's gates build (keeps the cache volumes)
+	@docker rmi $(BUILT_IMAGES) 2>/dev/null || true
+	@echo "removed this tree's built images (WORK_TAG=$(WORK_TAG)); cache volumes kept — 'make cache-clean' drops those"
