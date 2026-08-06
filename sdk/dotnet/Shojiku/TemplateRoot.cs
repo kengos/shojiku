@@ -209,11 +209,34 @@ internal sealed partial class TemplateRoot
         throw new RejectedException("template_escapes_root", "the template resolves outside the template root");
     }
 
+    /// <summary>Absolute, symlinks followed, and with NO trailing separator.</summary>
+    /// <remarks>
+    /// The trim is what keeps this SDK's canonical form the same SHAPE as the other
+    /// six, whose canonicalizers (<c>realpath</c> and its equivalents) drop a trailing
+    /// separator as part of what they do. .NET's do not — <c>DirectoryInfo.FullName</c>
+    /// and <c>Path.GetFullPath</c> both preserve it — so a root configured as
+    /// <c>templates/</c> canonicalized to <c>/app/templates/</c> while every parent
+    /// <see cref="IsUnder"/> walks canonicalizes without one. No comparison could match,
+    /// and a perfectly good root was reported as <c>template_escapes_root</c>. Relative
+    /// versus absolute never mattered; the separator did.
+    /// <para>
+    /// <c>Path.TrimEndingDirectorySeparator</c> rather than a hand-rolled <c>TrimEnd</c>:
+    /// it deliberately leaves a ROOT path alone, so <c>/</c> stays <c>/</c> and
+    /// <c>C:\</c> stays <c>C:\</c> instead of becoming an empty string and a
+    /// drive-relative <c>C:</c>.
+    /// </para>
+    /// <para>
+    /// Normalizing HERE, not at the comparison: containment stays the structural walk
+    /// below. Making the root comparable by string-prefix instead would admit a sibling
+    /// directory named <c>&lt;root&gt;-evil</c>, which is exactly what that walk exists
+    /// to refuse.
+    /// </para>
+    /// </remarks>
     private static string Canonical(string directory)
     {
         var info = new DirectoryInfo(directory);
         var resolved = info.ResolveLinkTarget(returnFinalTarget: true)?.FullName ?? info.FullName;
-        return System.IO.Path.GetFullPath(resolved);
+        return System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetFullPath(resolved));
     }
 
     private static bool IsUnder(string real, string root)

@@ -12,7 +12,7 @@
 
 import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ECHO_LIMIT } from '../src/errors.js';
 import { resetConfiguration } from '../src/index.js';
@@ -179,5 +179,71 @@ describe('containment', () => {
 
   it('resolves the ordinary case against the configured root', async () => {
     expect(makeClient().templateRoot?.path).toBe(FIXTURE_TEMPLATES);
+  });
+});
+
+/**
+ * The SHAPE of the root itself. Everything above constrains the NAME; what a
+ * root may look like was never pinned, and the .NET SDK drifted there — its
+ * canonical form kept a trailing separator while the parents it compared
+ * against did not, so `templates/` could never contain anything. Node is
+ * immune because `fs.realpath` drops the separator; these pin that rather than
+ * leaving it to the implementation it happens to use.
+ */
+describe('the shape of the root', () => {
+  it.each(['', '/', '//'])('accepts a trailing separator (%j)', async (suffix) => {
+    const result = await makeClient({ templates: FIXTURE_TEMPLATES + suffix }).generate(
+      'receipt',
+      {},
+    );
+
+    expect(result.failure?.message).toBeUndefined();
+    expect(result.success).toBe(true);
+  });
+
+  it.each(['', '/'])('accepts a relative root (%j)', async (suffix) => {
+    // Expressed relative to the current directory rather than by changing it:
+    // the process cwd is global state and moving it is a trap for every other
+    // test in the run.
+    const rel = relative(process.cwd(), FIXTURE_TEMPLATES);
+    expect(isAbsolute(rel)).toBe(false);
+
+    const result = await makeClient({ templates: rel + suffix }).generate('receipt', {});
+
+    expect(result.failure?.message).toBeUndefined();
+    expect(result.success).toBe(true);
+  });
+
+  it('still refuses a symlink out of a root written with a trailing separator', async () => {
+    // Normalizing the root must not loosen containment.
+    const base = await mkdtemp(join(tmpdir(), 'shojiku-rootshape-'));
+    const root = join(base, 'root');
+    const outside = join(base, 'outside');
+    await mkdir(root, { recursive: true });
+    await mkdir(outside, { recursive: true });
+    await writeFile(join(outside, 'templates.yml'), 'version: 0.1.0\n');
+    await symlink(outside, join(root, 'escape'));
+
+    const result = await makeClient({ templates: `${root}/` }).generate('escape', {});
+
+    expect(result.failed).toBe(true);
+    expect(result.failure?.kind).toBe('template_escapes_root');
+  });
+
+  it('still refuses a sibling sharing the root’s prefix under a trailing separator', async () => {
+    // A string prefix compare would accept `<root>-evil`; containment is
+    // structural. Normalizing the root is what makes that mistake reachable.
+    const base = await mkdtemp(join(tmpdir(), 'shojiku-rootshape-prefix-'));
+    const root = join(base, 'root');
+    const evil = join(base, 'root-evil', 'receipt');
+    await mkdir(root, { recursive: true });
+    await mkdir(evil, { recursive: true });
+    await writeFile(join(evil, 'templates.yml'), 'version: 0.1.0\n');
+    await symlink(evil, join(root, 'receipt'));
+
+    const result = await makeClient({ templates: `${root}/` }).generate('receipt', {});
+
+    expect(result.failed).toBe(true);
+    expect(result.failure?.kind).toBe('template_escapes_root');
   });
 });

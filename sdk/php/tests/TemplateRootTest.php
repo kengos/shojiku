@@ -193,4 +193,82 @@ final class TemplateRootTest extends TestCase
             putenv('SHOJIKU_TEMPLATE_ROOT');
         }
     }
+
+    // The SHAPE of the root itself. Everything above constrains the NAME; what a
+    // root may look like was never pinned, and the .NET SDK drifted there — its
+    // canonical form kept a trailing separator while the parents it compared
+    // against did not, so `templates/` could never contain anything. PHP is
+    // immune because realpath() drops the separator; these pin that rather than
+    // leaving it to the implementation it happens to use.
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function rootSuffixes(): iterable
+    {
+        yield 'no separator' => [''];
+        yield 'one separator' => ['/'];
+        yield 'repeated separators' => ['//'];
+    }
+
+    #[DataProvider('rootSuffixes')]
+    public function testATrailingSeparatorOnTheRootStillResolves(string $suffix): void
+    {
+        $result = $this->client(['templates' => $this->fixtureTemplates().$suffix])->generate('receipt', []);
+
+        self::assertTrue($result->success(), (string) $result->failure()?->message());
+    }
+
+    public function testARelativeRootResolves(): void
+    {
+        // chdir is process-global, so it is restored in a finally rather than
+        // left for the next test to discover.
+        $previous = getcwd();
+        self::assertIsString($previous);
+        try {
+            chdir(dirname($this->fixtureTemplates()));
+            $name = basename($this->fixtureTemplates());
+
+            foreach ([$name, $name.'/'] as $relative) {
+                $result = $this->client(['templates' => $relative])->generate('receipt', []);
+
+                self::assertTrue($result->success(), $relative.': '.((string) $result->failure()?->message()));
+            }
+        } finally {
+            chdir($previous);
+        }
+    }
+
+    public function testATrailingSeparatorDoesNotFollowASymlinkOutOfTheRoot(): void
+    {
+        // Normalizing the root must not loosen containment.
+        $this->inTempDir(function (string $dir): void {
+            mkdir($dir.'/root');
+            mkdir($dir.'/outside');
+            file_put_contents($dir.'/outside/templates.yml', "version: 0.1.0\nname: x\n");
+            symlink($dir.'/outside', $dir.'/root/escape');
+
+            $failure = $this->client(['templates' => $dir.'/root/'])->generate('escape', [])->failure();
+
+            self::assertNotNull($failure);
+            self::assertSame('template_escapes_root', $failure->kind());
+        });
+    }
+
+    public function testATrailingSeparatorDoesNotAdmitAPrefixSibling(): void
+    {
+        // A string prefix compare would accept `<root>-evil`; containment is
+        // structural. Normalizing the root is what makes that mistake reachable.
+        $this->inTempDir(function (string $dir): void {
+            mkdir($dir.'/root-evil/receipt', 0o700, true);
+            file_put_contents($dir.'/root-evil/receipt/templates.yml', "version: 0.1.0\nname: x\n");
+            mkdir($dir.'/root');
+            symlink($dir.'/root-evil/receipt', $dir.'/root/receipt');
+
+            $failure = $this->client(['templates' => $dir.'/root/'])->generate('receipt', [])->failure();
+
+            self::assertNotNull($failure);
+            self::assertSame('template_escapes_root', $failure->kind());
+        });
+    }
 }

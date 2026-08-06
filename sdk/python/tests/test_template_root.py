@@ -177,3 +177,63 @@ def test_strips_control_characters_out_of_the_name_it_echoes_back() -> None:
 
 def test_uses_the_platform_separator_in_the_assets_directory_it_reports() -> None:
     assert ROOT.resolve("receipt").assets_dir.endswith(f"{os.sep}receipt")
+
+
+class TestTheShapeOfTheRoot:
+    """The root itself, not the name.
+
+    Everything else here constrains the NAME; what a root may look like was
+    never pinned, and the .NET SDK drifted there — its canonical form kept a
+    trailing separator while the parents it compared against did not, so
+    ``templates/`` could never contain anything. Python is immune because
+    ``Path.resolve`` drops the separator; these pin that rather than leaving it
+    to the implementation it happens to use.
+    """
+
+    @pytest.mark.parametrize("suffix", ["", "/", "//"])
+    def test_a_trailing_separator_on_the_root_still_resolves(self, suffix: str) -> None:
+        sources = TemplateRoot(FIXTURE_TEMPLATES + suffix).resolve("receipt")
+
+        assert "name: receipt" in sources.template
+
+    @pytest.mark.parametrize("suffix", ["", "/"])
+    def test_a_relative_root_resolves(self, suffix: str) -> None:
+        # Expressed relative to the current directory rather than by changing
+        # it: the process cwd is global state and moving it is a trap for
+        # every other test.
+        relative = os.path.relpath(FIXTURE_TEMPLATES)
+        assert not Path(relative).is_absolute()
+
+        sources = TemplateRoot(relative + suffix).resolve("receipt")
+
+        assert "name: receipt" in sources.template
+
+    def test_a_trailing_separator_does_not_follow_a_symlink_out(self, tmp_path: Path) -> None:
+        # Normalizing the root must not loosen containment.
+        outside = tmp_path / "outside" / "escape"
+        outside.mkdir(parents=True)
+        (outside / "templates.yml").write_text("version: 0.1.0\n", encoding="utf-8")
+        root = tmp_path / "root"
+        root.mkdir()
+        (root / "escape").symlink_to(outside)
+
+        with pytest.raises(RejectedError) as caught:
+            TemplateRoot(f"{root}/").resolve("escape")
+
+        assert caught.value.kind == "template_escapes_root"
+
+    def test_a_sibling_sharing_the_roots_prefix_is_not_inside_it(self, tmp_path: Path) -> None:
+        # A string prefix compare would accept `<root>-evil`; containment is
+        # structural. Normalizing the root is what makes that mistake reachable,
+        # so it is pinned here rather than left to the five SDKs that had it.
+        evil = tmp_path / "root-evil" / "receipt"
+        evil.mkdir(parents=True)
+        (evil / "templates.yml").write_text("version: 0.1.0\n", encoding="utf-8")
+        root = tmp_path / "root"
+        root.mkdir()
+        (root / "receipt").symlink_to(evil)
+
+        with pytest.raises(RejectedError) as caught:
+            TemplateRoot(f"{root}/").resolve("receipt")
+
+        assert caught.value.kind == "template_escapes_root"

@@ -226,6 +226,79 @@ class TemplateRootTest extends Fixtures {
     assertNull(Settings.resolveRoot(null, new Env(true, Map.of())));
   }
 
+  // The SHAPE of the root itself. Everything above constrains the NAME; what a root may
+  // look like was never pinned, and the .NET SDK drifted there — its canonical form kept a
+  // trailing separator while the parents it compared against did not, so `templates/` could
+  // never contain anything. Java is immune because Path.toRealPath() drops the separator;
+  // these pin that rather than leaving it to the implementation it happens to use.
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", "/", "//"})
+  void aTrailingSeparatorOnTheRootStillResolves(String suffix) {
+    Result<DocumentArtifact> result =
+        client().templates(TEMPLATES + suffix).build().generate("receipt", null);
+
+    assertTrue(result.success(), () -> String.valueOf(result.failure()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", "/"})
+  void aRelativeRootResolves(String suffix) {
+    // Expressed relative to the working directory rather than by changing it: Java cannot
+    // portably change the process cwd at all, and relativize needs no such trick.
+    Path relative = Paths.get("").toAbsolutePath().relativize(Paths.get(TEMPLATES));
+    assertFalse(relative.isAbsolute());
+
+    Result<DocumentArtifact> result =
+        client().templates(relative + suffix).build().generate("receipt", null);
+
+    assertTrue(result.success(), () -> String.valueOf(result.failure()));
+  }
+
+  @Test
+  void aTrailingSeparatorDoesNotFollowASymlinkOutOfTheRoot() throws IOException {
+    // Normalizing the root must not loosen containment.
+    Path outside = Files.createTempDirectory("shojiku-outside");
+    Path root = Files.createTempDirectory("shojiku-root");
+    try {
+      Files.copy(
+          Paths.get(TEMPLATES, "receipt", "templates.yml"), outside.resolve("templates.yml"));
+      Files.createSymbolicLink(root.resolve("escape"), outside);
+
+      Result<DocumentArtifact> result =
+          client().templates(root + "/").build().generate("escape", null);
+
+      assertTrue(result.failed());
+      assertEquals("template_escapes_root", result.failure().kind());
+    } finally {
+      delete(root);
+      delete(outside);
+    }
+  }
+
+  @Test
+  void aTrailingSeparatorDoesNotAdmitAPrefixSibling() throws IOException {
+    // A string prefix compare would accept `<root>-evil`; containment is structural.
+    // Normalizing the root is what makes that mistake reachable.
+    Path parent = Files.createTempDirectory("shojiku-prefix-shape");
+    try {
+      Path root = parent.resolve("root");
+      Path evil = parent.resolve("root-evil").resolve("receipt");
+      Files.createDirectories(root);
+      Files.createDirectories(evil);
+      Files.copy(Paths.get(TEMPLATES, "receipt", "templates.yml"), evil.resolve("templates.yml"));
+      Files.createSymbolicLink(root.resolve("receipt"), evil);
+
+      Result<DocumentArtifact> result =
+          client().templates(root + "/").build().generate("receipt", null);
+
+      assertTrue(result.failed());
+      assertEquals("template_escapes_root", result.failure().kind());
+    } finally {
+      delete(parent);
+    }
+  }
+
   private static void delete(Path directory) throws IOException {
     try (Stream<Path> walk = Files.walk(directory)) {
       walk.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(java.io.File::delete);
