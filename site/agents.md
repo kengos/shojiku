@@ -13,7 +13,8 @@ agent can iterate on its own: write, then check.
 ## Register the MCP server
 
 `shojiku-mcp` is a stdio server with `validate` / `render_preview` /
-`inspect_layout` / `capabilities`, shipped in the same Docker image as the
+`inspect_layout` / `capabilities`, plus `list_examples` / `get_example`
+for reading the bundled documents, shipped in the same Docker image as the
 CLI. In Claude Code, one command registers it:
 
 ```bash
@@ -47,12 +48,14 @@ checking the mapping against the engine's `params_*` diagnostics.
 
 ## The loop an agent runs
 
-1. Declare the data items in `definitions.yml`
-2. Write `templates.yml`
-3. `validate` — mistakes come back as diagnostic codes
-4. `render_preview` — look at the page PNGs
-5. `inspect_layout` — read the resolved layout back
-6. Return to 2 until the diagnostics are clean
+1. `list_examples` — find the bundled document closest to the job, and
+   `get_example` to read its source
+2. Declare the data items in `definitions.yml`
+3. Write `templates.yml`
+4. `validate` — mistakes come back as diagnostic codes
+5. `render_preview` — look at the page PNGs
+6. `inspect_layout` — read the resolved layout back
+7. Return to 3 until the diagnostics are clean
 
 The [hero banner](/) on this site was made through this loop.
 

@@ -418,7 +418,10 @@ jobs:
           # It has to resume, because crates.io rate-limits NEW crates
           # (observed: a burst of 5, then roughly one per 10 minutes), and this
           # workspace has 17. So: publish one at a time, skip what is already
-          # up, and wait out a 429 rather than dying on it. `cargo publish -p`
+          # up, and wait out a 429 rather than dying on it. (17 members, 16 of
+          # them publishable: `shojiku-mcp` sets `publish = false` because it
+          # embeds files from outside its own directory, which a crates.io
+          # tarball cannot carry.) `cargo publish -p`
           # waits for each crate to be live before returning, which is what
           # keeps a dependency available for the crate that follows it.
           #

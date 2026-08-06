@@ -9,7 +9,7 @@ Shojikuのテンプレートは、AIエージェントが読み書きできる�
 
 ## MCPサーバを登録する
 
-`shojiku-mcp`は、`validate` / `render_preview` / `inspect_layout` / `capabilities` を持つstdioサーバで、CLIと同じDockerイメージに入っています。Claude Codeでは、次のコマンドで登録できます。
+`shojiku-mcp`は、`validate` / `render_preview` / `inspect_layout` / `capabilities` に加えて、同梱サンプルを読むための `list_examples` / `get_example` を持つstdioサーバで、CLIと同じDockerイメージに入っています。Claude Codeでは、次のコマンドで登録できます。
 
 ```bash
 claude mcp add shojiku -- \
@@ -31,12 +31,13 @@ npx skills add kengos/shojiku
 
 ## エージェントが回すループ
 
-1. `definitions.yml`にデータ項目を宣言する
-2. `templates.yml`を書く
-3. `validate` — 間違いが診断コードで返る
-4. `render_preview` — ページのPNGを確認する
-5. `inspect_layout` — 確定したレイアウトを読み返す
-6. 診断がきれいになるまで2に戻る
+1. `list_examples` — 目的に一番近い同梱サンプルを探し、`get_example`でそのソースを読む
+2. `definitions.yml`にデータ項目を宣言する
+3. `templates.yml`を書く
+4. `validate` — 間違いが診断コードで返る
+5. `render_preview` — ページのPNGを確認する
+6. `inspect_layout` — 確定したレイアウトを読み返す
+7. 診断がきれいになるまで3に戻る
 
 このサイトの[ヒーローバナー](/ja/)も、このループで作られました。
 

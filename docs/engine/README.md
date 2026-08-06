@@ -3,9 +3,15 @@
 The complete authorable surface of the Shojiku engine, one page per
 feature (MDN-style): what you can write in `templates.yml`, what each
 key means, its defaults, and the diagnostics it can produce. This is
-the human- and machine-readable source for "what syntax exists" — the
-same material the MCP tool surface returns; keep it accurate against
-the code (see the curation rules in [../README.md](../README.md)).
+the human- and machine-readable source for "what syntax exists"; keep it
+accurate against the code (see the curation rules in
+[../README.md](../README.md)).
+
+These pages are **not** on the MCP wire. An agent talking to
+`shojiku-mcp` gets the initialize `instructions`, the bundled examples
+(`list_examples` / `get_example` / `resources`), `capabilities`, and
+`validate`'s diagnostics — working documents and machine-checkable
+answers, not this reference. Serving the reference itself is open work.
 
 Feature availability per engine build is machine-checkable: `shojiku
 capabilities` prints the key list, and each page notes its capability

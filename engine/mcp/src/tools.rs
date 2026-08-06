@@ -5,6 +5,7 @@
 //! `tools/sources.rs` and `tools/assets.rs`).
 
 pub(crate) mod assets;
+pub(crate) mod examples;
 pub(crate) mod inspect;
 pub(crate) mod pipeline;
 pub(crate) mod preview;
@@ -24,7 +25,8 @@ use serde_json::{json, Value};
 /// protocol-level `(code, message)` error for a malformed request.
 pub(crate) type ToolOutcome = Result<Value, (i64, String)>;
 
-/// `tools/list` result: the four authoring tools.
+/// `tools/list` result: the four authoring tools plus the two that read
+/// the bundled examples.
 pub(crate) fn list() -> Value {
     json!({ "tools": schema::descriptors() })
 }
@@ -46,6 +48,8 @@ pub(crate) fn call(args: &ServerArgs, params: &Value) -> ToolOutcome {
         "render_preview" => preview::run(args, &arguments),
         "inspect_layout" => inspect::run(args, &arguments),
         "capabilities" => Ok(capabilities_result()),
+        "list_examples" => examples::list(&arguments),
+        "get_example" => examples::get(&arguments),
         other => Err((INVALID_PARAMS, format!("unknown tool: {}", clip(other)))),
     }
 }

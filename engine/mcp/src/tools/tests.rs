@@ -21,7 +21,9 @@ fn tools_list_pins_the_descriptor_contract() {
             "validate",
             "render_preview",
             "inspect_layout",
-            "capabilities"
+            "capabilities",
+            "list_examples",
+            "get_example"
         ]
     );
     for tool in tools {

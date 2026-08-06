@@ -74,7 +74,30 @@ pub(crate) fn descriptors() -> Value {
             "description": "This engine build's version and machine-readable capability key list (feature gating; needs no inputs).",
             "inputSchema": { "type": "object", "properties": {} },
         },
+        {
+            "name": "list_examples",
+            "description": "List the bundled example documents: for each, its shojiku://example/... URI, title, what syntax it exercises, its source file names and total size. Start here — authoring from a working example beats writing a template from scratch (needs no inputs).",
+            "inputSchema": { "type": "object", "properties": {} },
+        },
+        {
+            "name": "get_example",
+            "description": "Read one bundled example by its shojiku://example/<bucket>/<name> URI: returns its source files together (templates.yml with the definitions.yml its bindings need, and params.json). Append /<file> to read a single file. Same content as resources/read, for clients that do not fetch resources.",
+            "inputSchema": {
+                "type": "object",
+                "properties": { "uri": example_uri_prop() },
+                "required": ["uri"],
+            },
+        },
     ])
+}
+
+/// The example-reference property: the exact URI shape, since a wrong
+/// guess costs a round trip.
+fn example_uri_prop() -> Value {
+    json!({
+        "type": "string",
+        "description": "An example URI from list_examples: `shojiku://example/<bucket>/<name>` for the whole entry, or `shojiku://example/<bucket>/<name>/<file>` for one source file",
+    })
 }
 
 /// A string path property with a description.

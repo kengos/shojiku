@@ -60,6 +60,9 @@ fn engine_info_reports_version_capabilities_and_locales() {
     assert!(info.capabilities.contains(&"preview.page"));
     // Real PDF output from the browser host (`renderPdf`).
     assert!(info.capabilities.contains(&"wasm.render.pdf"));
+    // The MCP read surface: initialize instructions + the bundled examples
+    // over tools and resources.
+    assert!(info.capabilities.contains(&"mcp.examples"));
     // The C ABI library the FFI SDKs load, and its two-call signing surface
     // for a key that lives outside the calling process.
     assert!(info.capabilities.contains(&"capi.abi"));

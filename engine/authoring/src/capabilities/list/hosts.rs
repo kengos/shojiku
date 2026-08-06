@@ -42,6 +42,13 @@ pub(super) const KEYS: &[&str] = &[
     // an item may carry. Defaults keep the previous behavior (open policy,
     // root = the template's directory).
     "mcp.asset_policy",
+    // The MCP read surface: `instructions` in the initialize result, the
+    // bundled examples listed by the `list_examples` tool and fetched by
+    // `get_example` or `resources/read` over `shojiku://example/...` URIs,
+    // and the `resources` capability (list + read; no subscribe, no
+    // listChanged). Read-only and additive — the server still never writes
+    // a file. A client can gate on this instead of probing for the tools.
+    "mcp.examples",
     // The browser/Workers WASM bindings (`shojiku-wasm`): the same authoring
     // ops (validate / render / inspect / capabilities) wrapped for JS, with
     // bytes-first injected fonts/assets/locale packs and a three-part render

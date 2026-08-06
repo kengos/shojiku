@@ -13,8 +13,50 @@ fn initialize_negotiates_and_identifies_the_server() {
     assert_eq!(responses[0]["id"], 1);
     assert_eq!(result["protocolVersion"], "2025-06-18");
     assert!(result["capabilities"]["tools"].is_object());
+    // Declared bare: this server implements resources/list + resources/read
+    // and neither subscribe nor listChanged, which 2025-06-18 permits.
+    assert_eq!(result["capabilities"]["resources"], serde_json::json!({}));
     assert_eq!(result["serverInfo"]["name"], "shojiku-mcp");
     assert_eq!(result["serverInfo"]["version"], env!("CARGO_PKG_VERSION"));
+    // Clients feed this to the model as usage guidance — for a docker-only
+    // agent it is the only text it sees before it starts authoring.
+    let instructions = result["instructions"].as_str().expect("instructions");
+    assert!(instructions.contains("templates.yml"));
+    assert!(instructions.contains("list_examples"));
+}
+
+#[test]
+fn resources_are_listed_and_readable_over_the_loop() {
+    let input = concat!(
+        r#"{"jsonrpc":"2.0","id":1,"method":"resources/list"}"#,
+        "\n",
+        r#"{"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"shojiku://example/presets/blank-a4"}}"#,
+        "\n",
+        r#"{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"shojiku://example/nope/nope"}}"#,
+        "\n",
+    );
+    let responses = talk(input);
+    assert_eq!(responses.len(), 3);
+    assert_eq!(
+        responses[0]["result"]["resources"]
+            .as_array()
+            .expect("resources")
+            .len(),
+        32
+    );
+    assert_eq!(
+        responses[1]["result"]["contents"]
+            .as_array()
+            .expect("contents")
+            .len(),
+        2
+    );
+    // The spec's resource-not-found code, with the requested URI in `data`.
+    assert_eq!(responses[2]["error"]["code"], -32002);
+    assert_eq!(
+        responses[2]["error"]["data"]["uri"],
+        "shojiku://example/nope/nope"
+    );
 }
 
 #[test]

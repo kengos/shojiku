@@ -187,7 +187,8 @@ printf '%s\n' \
 ```
 
 You should get two JSON lines back: the server naming itself
-`shojiku-mcp`, then the four tools with their schemas. If the first line
+`shojiku-mcp` — alongside a short `instructions` string your client hands
+to the model — then the six tools with their schemas. If the first line
 never arrives, the usual cause is a missing `-i` — without it the server
 sees EOF and exits before answering.
 

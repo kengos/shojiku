@@ -352,6 +352,19 @@ migrator/debugger skills reference this section, they never restate it.
   | `render_preview` | `templatePath`, `paramsPath` | `definitionsPath`, `lang`, `scale` (default 2.0), `page` (1-based), the asset knobs | one PNG per page, then diagnostics JSON |
   | `inspect_layout` | `templatePath`, `paramsPath` | `definitionsPath`, `lang`, the asset knobs | inspect envelope (engine info + layout tree + path-addressed boxes + margins), then diagnostics JSON |
   | `capabilities` | — | — | engine version + capability-key list |
+  | `list_examples` | — | — | the bundled catalog: each entry's `shojiku://example/...` URI, title, what it exercises, file names, size |
+  | `get_example` | `uri` | — | that entry's source files together (append `/<file>` to the URI for one file) |
+
+  **Start from a bundled example rather than a blank file.** The 32
+  entries cover invoices, receipts, forms, labels, vertical typography
+  and 7 blank per-locale page setups; `dev/layout-showcase` exercises
+  most of the syntax in one document. An entry answers its
+  `templates.yml`, `definitions.yml` and `params.json` together, because
+  a template's bindings are meaningless without the definitions. The
+  showcase is over the 64 KiB bundle cap, so read it one file at a time
+  (`shojiku://example/dev/layout-showcase/templates.yml`) — the refusal
+  message names the URIs. The same content is a `resources/read` away for
+  clients that fetch resources.
 
   Every `<name>Path` argument has an inline twin — `definitions` /
   `template` / `params` carrying the source TEXT — for a client that
@@ -365,7 +378,10 @@ migrator/debugger skills reference this section, they never restate it.
   `denyDynamicImage` (item-id arrays, ≤256 entries).
 
 - **Fall back to the CLI when no MCP server is available** (or you are
-  driving Docker). Same four operations plus `render`; every template
+  driving Docker). The same four template operations plus `render` — the
+  two example-reading tools have no CLI twin, but the image carries the
+  files themselves at `/opt/shojiku/examples`, so read them off disk
+  instead; every template
   command takes `--templates` (note the plural); the rendering commands
   (`preview` / `inspect` / `render`) also require `--params`, while
   `validate` accepts it optionally (mirroring the MCP table) —

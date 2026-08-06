@@ -8,7 +8,10 @@ is passed either by path or inline as text (never both for one source),
 with a per-call asset policy mirroring the CLI's;
 every template tool response carries its diagnostics, and
 the layout tree/boxes are retrievable via `inspect_layout` with the
-same inputs. The remaining tool surface below is future work.
+same inputs. The **read surface** is shipped too — `instructions` at
+initialize, and the bundled examples over `list_examples` /
+`get_example` / `resources` (below). The remaining tool surface below is
+future work.
 
 ## Principle
 
@@ -39,6 +42,48 @@ always riding along; `assets?` = the `assetsDir` / `assetMode` /
   -> inspect envelope (engine info / layout tree / boxes / margins)
   + diagnostics`
 - `capabilities() -> engine version + capability keys + builtin locales`
+- `list_examples() -> the bundled catalog (URI, title, what it exercises,
+  file names, size) + how to fetch one`
+- `get_example(uri) -> that entry's source files (or one named file)`
+
+## The read surface (`instructions` + resources)
+
+An agent installed the advertised way (`docker pull` + `claude mcp add`)
+has no `docs/` and no `skills/` — the image carries the binaries,
+`packs/` and `examples/` only. Two things close that gap, and both are
+part of the core surface rather than optional extras:
+
+- **`instructions` in the `initialize` result** — the three-file model,
+  the validate → preview → inspect loop, where the examples are, and the
+  **staleness rule**: whatever the agent recalls about Shojiku syntax is
+  absent from its training data or older than the running build, so the
+  engine is the authority and `validate` settles disputes. It is a
+  signpost, not a copy of the reference; keep it short.
+- **The bundled examples, listed then fetched.** The wire shape is a
+  deliberate **hybrid** (decided): the LIST is a tool, because several
+  MCP clients never pull a resource into model context on their own and a
+  catalog nobody reads closes nothing; the FETCH is a `resources/read`
+  over `shojiku://example/<bucket>/<name>`, with `get_example` as a
+  second entry point on the same body of text so a client without
+  resources support is not stranded. MA2 and any later reference surface
+  ride this shape rather than re-deciding it.
+
+Rules this surface must keep:
+
+- **The entry is the unit.** A template read alone cannot be understood —
+  `{customer.name}` means nothing without `definitions.yml` — so an entry
+  answers its source files together. Not every entry has all three; the
+  presets carry no definitions.
+- **Bound by refusal, never by truncation.** An over-cap entry is refused
+  with the per-file URIs to use instead. A silently truncated template is
+  worse than no template: the agent cannot tell it is reading a fragment.
+- **The catalog is gated against the tree, not hand-trusted.** Its prose
+  composes from `examples/gallery.yml` (the one gallery source) rather
+  than copying it, and a test asserts the served set equals the real
+  directory both ways. A catalog the agent trusts is worse than none once
+  it lies.
+- **Read-only.** Writing files stays the agent's job (decided) — three
+  writers on one file is the thing this avoids.
 
 Future:
 
