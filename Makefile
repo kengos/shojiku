@@ -18,6 +18,9 @@
 #   Apply fixes
 #     make fmt-fix              rustfmt          make gui-format   biome
 #     make examples             re-render the committed example outputs
+#     make lock                 after changing a Cargo.toml dependency —
+#                               every gate is --locked and will refuse until
+#                               you do (then: git add -f engine/Cargo.lock)
 #
 #   Where did it break?
 #     cat .make-logs/last-error.log                always the last failure
@@ -315,7 +318,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         proof-published-crates
 .PHONY: proof-deploy site site-lint site-test site-data site-check site-wasm-release site-build \
         site-dev verify\:site lint\:site test\:site
-.PHONY: help verify quiet rust budget fmt fmt-fix clippy test coverage deny \
+.PHONY: help verify quiet rust budget fmt fmt-fix lock clippy test coverage deny \
         verify\:engine verify\:gui verify\:docker lint\:engine lint\:gui \
         test\:engine test\:gui budget\:engine budget\:gui \
         verify\:sdk\:ruby test\:sdk\:ruby lint\:sdk\:ruby \
@@ -529,6 +532,24 @@ fmt: ## cargo fmt --check
 fmt-fix: ## cargo fmt (apply formatting)
 	$(CARGO_IN_DOCKER) 'rustup component add rustfmt >/dev/null 2>&1; \
 		cargo fmt --all'
+
+# The one place the workspace is resolved WITHOUT `--locked`, and the reason
+# it has to exist: every gate passes `--locked` (the committed lockfile is
+# authoritative), so the first gate after a dependency is added or removed
+# dies with "cannot update the lock file ... because --locked was passed".
+# Without a target for it the only way forward is a hand-built `docker run`
+# reproducing CARGO_IN_DOCKER's mount and both cache volumes by hand — which
+# is exactly the mount discipline docs/agents/gotchas/docker-make.md calls
+# the single biggest time-sink in this repo.
+#
+# `cargo metadata` resolves and writes the lockfile without compiling
+# anything, so this is seconds rather than a build. It updates only what the
+# manifest change requires; it is NOT `cargo update`, which would bump
+# unrelated dependencies.
+lock: ## Refresh engine/Cargo.lock after a Cargo.toml dependency change (then: git add -f engine/Cargo.lock)
+	@echo "== lock =="
+	$(CARGO_IN_DOCKER) 'cargo metadata --format-version 1 >/dev/null'
+	@echo "engine/Cargo.lock refreshed — stage it with: git add -f engine/Cargo.lock"
 
 clippy: ## cargo clippy -D warnings (matches CI flags; JOBS=N caps parallelism)
 	@echo "== clippy =="
