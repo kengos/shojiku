@@ -126,10 +126,25 @@ reddens on the first render.
   ordinary spaces.** A `text: |-` block scalar strips the common leading
   indent, and the text layer then drops the remaining ordinary leading
   spaces, so a code sample written with real spaces renders **flush
-  left** — no diagnostic, `make examples` stays green, only the preview
-  shows it. Indent every level of a code panel with NBSP (2 per level);
-  grep the showcase for `\xa0` to copy the idiom. A `cell:`/nested block
-  in a panel needs the same treatment as any other level.
+  left** — the render emits no diagnostic and `make examples` stays
+  green, so for a long time only the preview showed it and eight of the
+  showcase's forty-four panels shipped that way. **Tabs collapse
+  identically** — the wrap tokenizer folds a tab into the same space run
+  — so an editor's auto-indent inside a block scalar is the same bug.
+  `make examples-check` now refuses both forms
+  (`scripts/check-example-text-indent.sh`, which reports the offending
+  `path:line`), but the gate only fires under `examples/` and `skills/`
+  — nothing catches it in a template you author elsewhere, so the
+  preview is still the check there. **`char_grid` is the exception to
+  the whole rule**: it takes the same `text:` key but never reaches the
+  wrapper (it fills cells verbatim), so a leading ASCII space there is a
+  real occupied cell — which is exactly how you write a 原稿用紙
+  1字下げ. Keep ordinary spaces in a `char_grid` block and waive the
+  gate with a `text-indent-exempt: <reason>` comment on the opener line.
+  Indent every level of a code
+  panel with NBSP (2 per level); grep the showcase for `\xa0` to copy
+  the idiom. A `cell:`/nested block in a panel needs the same treatment
+  as any other level.
 - Mixed styles inside one line (label + value) use `spans:` on a text
   item (per-span `style`/`styleNames`, `text` or `data`) — see
   [text.md](../../docs/engine/text.md).

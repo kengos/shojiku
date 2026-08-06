@@ -57,6 +57,11 @@ emit "coverage:" "$(pick '^(UNCOVERED|COVERED IN ONE COPY ONLY) |^  [a-z].*\.rs:
 # exit rather than WHICH example drifted.
 emit "examples:" "$(pick '^MISMATCH examples/')"
 
+# examples-check, second step: the block-scalar indent check prints one
+# `path:line: ...` per offending line. Same reason as above — the tail shows
+# only the count, not which template and which line.
+emit "text indent:" "$(pick '^(examples|skills)/.*: block scalar ')"
+
 # wasm: the budget assertion prints the measured sizes and then which of the
 # two budgets was crossed. Both lines matter — the sizes are the delta you act
 # on, "over budget" alone does not say by how much. NOTE the size line is

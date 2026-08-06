@@ -233,7 +233,18 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   first step of `make examples-check`: a skill's bundled
   `template/*.yml` must be byte-identical to the example it came from,
   so the rendered+hash-checked example is the proof for the copy that
-  ships standalone; the example is the source, the skill the copy)
+  ships standalone; the example is the source, the skill the copy;
+  `check-example-text-indent.sh` — the step beside it: no block scalar
+  under `examples/` or `skills/` may be indented with ordinary spaces or
+  tabs, because WRAPPED text collapses line-head whitespace the way CSS
+  does (tabs join the same space run) and such a code sample renders
+  FLUSH LEFT while every gate stays green. Hard indentation is U+00A0.
+  `char_grid` is the exception — it takes the same `text:` key but never
+  reaches the wrapper, so a leading space there is a real occupied cell
+  (1字下げ); waive per block with a `text-indent-exempt: <reason>`
+  comment on the opener line, same shape as `line-budget-exempt`. It
+  self-tests against a known-bad fixture before scanning, so a detector
+  that stopped detecting fails instead of reporting OK)
   + `generate-sbom.sh` (`make sbom` —
   syft-in-Docker CycloneDX inventories committed under `sbom/`;
   regenerate + commit whenever a lockfile changes; no byte-compare

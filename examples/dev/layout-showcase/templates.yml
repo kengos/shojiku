@@ -312,8 +312,8 @@ sections:
             styleNames: [ code ]
             text: |-
               - type: text
-                text: ハート・マークがきゅっと光る。
-                style: { lineBreak: strict }   # normal (default) | loose
+                text: ハート・マークがきゅっと光る。
+                style: { lineBreak: strict }   # normal (default) | loose
 
       # JP micro-typography: half-width punctuation (textSpacingTrim) trims
       # the half-em a fullwidth bracket / comma carries; hanging punctuation lets
@@ -347,8 +347,8 @@ sections:
             styleNames: [ code ]
             text: |-
               - type: text
-                text: 「東京」の、担当。
-                style: { textSpacingTrim: trim_start, hangingPunctuation: allow_end }
+                text: 「東京」の、担当。
+                style: { textSpacingTrim: trim_start, hangingPunctuation: allow_end }
 
       - { type: page_break }
 
@@ -556,11 +556,11 @@ sections:
             styleNames: [ code ]
             text: |-
               - type: container
-                box: { type: grid, columns: ["1fr", "2fr", "1fr"] }
-                items:   # leftover splits 1:2:1 across the tracks
-                  - { type: text, text: 1fr }
-                  - { type: text, text: 2fr }
-                  - { type: text, text: 1fr }
+                box: { type: grid, columns: ["1fr", "2fr", "1fr"] }
+                items:   # leftover splits 1:2:1 across the tracks
+                  - { type: text, text: 1fr }
+                  - { type: text, text: 2fr }
+                  - { type: text, text: 1fr }
 
       # minHeight reserves space beyond the content; verticalAlign
       # distributes the slack.
@@ -729,10 +729,10 @@ sections:
             styleNames: [ code ]
             text: |-
               - type: container            # two tables side by side
-                box: { direction: row, gap: 12 }
-                items:
-                  - { type: table, data: { key: edu }, columns: [ … ] }
-                  - { type: table, data: { key: lic }, columns: [ … ] }
+                box: { direction: row, gap: 12 }
+                items:
+                  - { type: table, data: { key: edu }, columns: [ … ] }
+                  - { type: table, data: { key: lic }, columns: [ … ] }
 
       # `cell:` columns — a column hosts a per-row sub-template of freely
       # placed items (the CELL's top-left is their origin) instead of
@@ -1168,10 +1168,10 @@ sections:
             styleNames: [ code ]
             text: |-
               - type: char_grid                # 大書き + 配置注記
-                text: "［＃中央］見出し\n本文の会話《かいわ》\
-                       ［＃「会話」は大書き］。\n［＃地付き］署名"
-                grid: { charsPerLine: 14, lines: 8, cellSize: 6mm }
-                markup: aozora
+                text: "［＃中央］見出し\n本文の会話《かいわ》\
+                       ［＃「会話」は大書き］。\n［＃地付き］署名"
+                grid: { charsPerLine: 14, lines: 8, cellSize: 6mm }
+                markup: aozora
               # ［＃「対象」は大書き］ = 2×2、はＮ倍の大書き = n×n。
               # ［＃Ｎ字下げ］/［＃地付き］/［＃地からＮ字上げ］/［＃中央］は
               # 行頭で1行を配置(item の textAlign を上書き)。中央は独自拡張。
@@ -1373,10 +1373,10 @@ sections:
               # 丸囲み: a text-level mark: auto-centers the oval on the
               # label's glyphs — no y/size tuning, only the match draws.
               - type: text
-                box: { x: 132, y: 6, w: 56 }
-                style: { textAlign: center }
-                text: カード
-                mark: { data: { key: doc.payment, equals: card } }   # type-strict
+                box: { x: 132, y: 6, w: 56 }
+                style: { textAlign: center }
+                text: カード
+                mark: { data: { key: doc.payment, equals: card } }   # type-strict
               # checkbox: frame auto-sizes to the label cap height (no w/h),
               # frame always drawn, check is content.
               - { type: checkbox, data: { key: doc.subscribed } }  # boolean
@@ -1413,11 +1413,11 @@ sections:
                 styleNames: [ code ]
                 text: |-
                   - type: text                   # 縦書き自由文 (plain text)
-                    text: コーヒーを一杯——吾輩は…西暦2026年…
-                    box: { w: 150, h: 230 }       # h = the column length
-                    style:
-                      writingMode: vertical_rl    # 行→上から下、列→右から左
-                      textOrientation: mixed      # CJK立て / 英数字は90°回転
+                    text: コーヒーを一杯——吾輩は…西暦2026年…
+                    box: { w: 150, h: 230 }       # h = the column length
+                    style:
+                      writingMode: vertical_rl    # 行→上から下、列→右から左
+                      textOrientation: mixed      # CJK立て / 英数字は90°回転
                   # ー・——・「」 rotate via the font's GSUB vert forms;
                   # `upright` keeps Latin upright; kinsoku is honored.
                   # spans / list / table cells / page_number go vertical
@@ -1693,10 +1693,10 @@ sections:
                 styleNames: [ code ]
                 text: |-
                   style:
-                    borderWidth: 1
-                    borderStyle: dashed   # solid|double|
-                                          #   dashed|dotted
-                    borderRadius: 8       # pt / mm / em
+                    borderWidth: 1
+                    borderStyle: dashed   # solid|double|
+                                          #   dashed|dotted
+                    borderRadius: 8       # pt / mm / em
                   # 999   → 収まる最大値に一律縮小 = ピル型
                   # "50%" → 幅と高さで別々に解決
                   #         長方形は楕円 / 正方形は真円
