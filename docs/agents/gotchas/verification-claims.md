@@ -43,6 +43,20 @@ check whose empty output read as "all covered").
   reassuring `0`. A census that comes back zero next to a shell error
   line is not a census. Quote every glob that is meant for the tool
   rather than the shell (`--include='*.rs'`, `-name '*.md'`).
+- **An APOSTROPHE inside a single-quoted program string ends the
+  string, and any backtick after it becomes live command
+  substitution.** Embedding an awk/sed/python program as `PROG='…'` is
+  the normal way to share one detector between a self-test and a real
+  run — but a prose COMMENT inside that program is where the quote
+  sneaks in, because prose is where apostrophes live. A gate script grew
+  the comment "folds a tab into the same space run as ' '", which closed
+  the string; the backticks a few words later then ran as commands, and
+  the script died with `File name too long` — an error naming neither
+  the quote nor the line that carried it. Two habits close it: keep
+  every embedded program free of apostrophes and backticks (say "a plain
+  space", not `' '`), and run `bash -n` on the script after editing a
+  comment, not only after editing code. The same trap in reverse is a
+  heredoc: `<<'PY'` is inert, `<<PY` is not.
 - **This repo's shell is zsh, which does NOT word-split an unquoted
   `$var`** — in EVERY shape it appears: `set -- $r` inside a loop over
   rows, and `for s in $syms` over a captured multi-line list (which
