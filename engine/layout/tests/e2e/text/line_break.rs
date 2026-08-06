@@ -60,6 +60,73 @@ fn loose_frees_a_separator_that_normal_holds() {
 }
 
 #[test]
+fn a_closing_quote_is_pushed_off_a_line_head() {
+    // Chinese quotation marks reach the wrapper as their own tokens when
+    // they sit between CJK characters, so `”` can land at a line head —
+    // and must not. Held in every mode; `loose` does not free it.
+    for mode in ["normal", "loose"] {
+        let (doc, diags) = run(&wrapped(mode, "ああ”あ"), json!({}));
+        assert!(!diags.has_errors());
+        assert_eq!(
+            line_texts(text_blocks(&doc.pages[0])[0]),
+            vec!["あ", "あ”あ"],
+            "under {mode}"
+        );
+    }
+}
+
+#[test]
+fn an_opening_quote_is_pushed_off_a_line_end() {
+    // The mirror case: `“` fits at the end of the first line, and line-end
+    // kinsoku moves it down to stay with what it opens.
+    let (doc, diags) = run(&wrapped("normal", "あ“ああ"), json!({}));
+    assert!(!diags.has_errors());
+    assert_eq!(
+        line_texts(text_blocks(&doc.pages[0])[0]),
+        vec!["あ", "“ああ"]
+    );
+}
+
+#[test]
+fn the_latin_interpunct_is_not_held_off_a_line_head() {
+    // `·` (U+00B7) is UAX #14 class AI — language-dependent, and used as a
+    // Latin field separator in the bundled examples — so it is
+    // deliberately unclassified. The katakana `・` is the control: same
+    // box, same position, and it IS pushed off the line head under
+    // `normal`. A 20pt box is what puts the half-width `·` at a head at
+    // all (in the 25pt box it still fits on the first line).
+    let narrow = |text: &str| {
+        format!(
+            r#"
+page: {{ margin: 0 }}
+sections:
+  body:
+    type: flow
+    box: {{ x: 0, y: 0, w: 500, h: 500 }}
+    items:
+      - type: text
+        text: "{text}"
+        box: {{ w: 20 }}
+        style: {{ fontSize: 10, fontFamily: biz-ud-gothic }}
+"#
+        )
+    };
+    let (dot, dd) = run(&narrow("ああ·あ"), json!({}));
+    let (kana, dk) = run(&narrow("ああ・あ"), json!({}));
+    assert!(!dd.has_errors() && !dk.has_errors());
+    assert_eq!(
+        line_texts(text_blocks(&dot.pages[0])[0]),
+        vec!["ああ", "·あ"],
+        "· may head a line"
+    );
+    assert_eq!(
+        line_texts(text_blocks(&kana.pages[0])[0]),
+        vec!["あ", "あ・あ"],
+        "・ is pushed off the head"
+    );
+}
+
+#[test]
 fn line_break_cascades_from_the_document_defaults() {
     // `defaults.style.lineBreak` is the cascade root: a strict default
     // reaches a text item that sets no lineBreak of its own.

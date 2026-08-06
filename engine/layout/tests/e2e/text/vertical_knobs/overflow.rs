@@ -169,6 +169,22 @@ fn an_ellipsis_clamp_never_ends_on_an_opening_bracket() {
 }
 
 #[test]
+fn an_ellipsis_clamp_never_ends_on_an_opening_quote() {
+    // Same trace with a Chinese opening quote: the vertical clamp reads
+    // the shared line-end set, so widening it must reach this path too.
+    let (doc, _d) = run(
+        &tmpl(
+            "あいうえおか“きくけこ",
+            "w: 25, h: 40",
+            ", textOverflow: ellipsis",
+        ),
+        json!({}),
+    );
+    let block = text_blocks(&doc.pages[0])[0];
+    assert_eq!(line_texts(block), vec!["あいうえ", "おか…"]);
+}
+
+#[test]
 fn a_hostile_negative_font_size_degrades_on_the_policy_path() {
     // `sane_font_size` rejects the -5 before any policy math runs: the
     // block builds at the fallback size, warns `invalid_font_size`, and

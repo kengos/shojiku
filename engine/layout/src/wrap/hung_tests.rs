@@ -36,6 +36,25 @@ fn hanging_a_full_stop_never_exposes_a_closing_bracket() {
 }
 
 #[test]
+fn hanging_a_full_stop_never_exposes_a_closing_quote() {
+    // The Chinese twin of the 。」 case above: 。” is just as illegal a
+    // line head, so the hang pass must refuse there too and leave the
+    // pair for kinsoku push-out.
+    let f = fixed();
+    let lines = wrap_text_chain_hung(
+        &[f],
+        "ああああ。”い",
+        10.0,
+        40.0,
+        LineBreak::Normal,
+        0.0,
+        AllowEnd,
+    );
+    assert_eq!(texts(&lines), vec!["あああ", "あ。”い"]);
+    assert!(lines.iter().all(|l| !l.hung));
+}
+
+#[test]
 fn a_lone_full_stop_still_hangs_when_the_rest_is_legal() {
     // Same shape without the bracket: "ああああ。い" hangs the 。 (one
     // line fewer than the kinsoku push-out would give).

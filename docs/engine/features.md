@@ -356,12 +356,23 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   `lineBreak` (a CSS `line-break` subset) selects the strictness of
   Line-start kinsoku: `normal` (default, CSS-aligned — small kana, `ー`, and `〜`
   may start a line), `strict` (also holds small kana, `ー`, and `〜゠`
-  back), `loose` (only closing brackets and commas/full stops held;
-  centered punctuation `・：；！？` and inseparables `‥…` freed), and
-  `anywhere` (no kinsoku). Line-end kinsoku (opening brackets) applies in every
+  back), `loose` (only closing brackets, closing quotes and commas/full
+  stops held; centered punctuation `・：；！？` and inseparables `‥…`
+  freed), and
+  `anywhere` (no kinsoku). Line-end kinsoku (opening brackets and opening
+  quotes) applies in every
   mode but `anywhere`; prohibited characters are pushed off line edges by
   push-out. The prohibition sets live in one place (`shojiku-layout`
-  `wrap::kinsoku`), shared with the ellipsis clamp. **Note:** `normal`
+  `wrap::kinsoku`), shared with the ellipsis clamp. One set serves
+  Japanese and Chinese: the bracket classes are keyed on
+  `General_Category` (`Ps` opens, `Pe` closes), which takes in the white
+  forms `〖〗〘〙〚〛` and the double-prime forms `〝〞〟` — named quotation
+  marks but categorized as structural open/close. Only `‘’“”` need the
+  category split (`Pi` opens, `Pf` closes), because Unicode's QU class
+  does not say which end they belong to. The interpuncts `·`/`‧`, the em
+  dash and the PO/PR classes are deliberately unclassified — they are
+  language-dependent, and `·` separates Latin fields in the bundled
+  examples (full table incl. the exclusions: [text.md](text.md)). **Note:** `normal`
   follows CSS; documents that relied on the older `normal` (small kana
   held back) set `lineBreak: strict`. Break points use a per-char width
   estimate; each finished line is re-measured with shaping, so reserved

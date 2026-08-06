@@ -337,6 +337,25 @@ platform binaries.
 
 ### Fixed
 
+- **Chinese text no longer breaks in front of a closing quotation mark.**
+  Line breaking knew the CJK brackets but not the quotation marks
+  Chinese actually writes with, so `“…”` could wrap with the closing `”`
+  stranded at the head of the next line, and `“` left dangling at the end
+  of one — wrong in any Chinese document. Closing quotes `’ ” 〞 〟` are now held off a
+  line start in every strictness mode, opening quotes `‘ “ 〝` off a line
+  end, and the white bracket forms `〖〗〘〙〚〛` and the double-prime forms
+  `〝〞〟` join the bracket classes they belong to. No character that
+  Japanese kinsoku already classified changed class, and every bundled
+  example still renders byte-identically — but a Japanese document that
+  uses `‘’“”〝〞〟` does wrap differently now, which is the fix rather
+  than a side effect. Latin text is untouched:
+  the interpuncts `·`/`‧` and the em dash are deliberately left alone,
+  because `·` separates fields in Latin documents (`address · tel · web`)
+  and holding it back would pull a letter off the previous line. The
+  classification follows the Unicode categories, with `‘’“”` split by
+  initial/final category since Unicode's line-break class does not say
+  which end of a quotation they sit at.
+
 - **The .NET client accepts a template root written the way everyone
   writes one.** `new ShojikuClient(templates: "templates/")` failed every
   render with "the template resolves outside the template root", while
