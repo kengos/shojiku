@@ -35,6 +35,27 @@ check whose empty output read as "all covered").
   the match count and the stale count were 0. Printing the per-module
   count of imports that legitimately REMAIN is what proved the sweep
   reached the modules at all.
+- **A pattern anchored to the CONTEXT rather than the TOKEN is a lower
+  bound, and it reports the biggest offender as clean.** A sweep for
+  work-item codes written as `// [A-Z]{1,3}[0-9]+` requires the code
+  immediately after the comment marker. It found and cleaned that shape,
+  and returned nothing over 123 further sites in the same files — every
+  one of them a code sitting MID-SENTENCE in a `///` or `//!` doc comment,
+  which the anchor cannot reach. The follow-up sweep then "confirmed
+  clean" for a whole cycle. Anchor on the token you are hunting, sweep the
+  whole line, and pay for it by EXCLUDING the false positives by name
+  (paper sizes, codepoints, OIDs) — an exclusion list you can read is
+  evidence; an anchor that quietly narrows the search is not. The same
+  applies to `--include` lists: the gui half of that sweep missed codes in
+  `.css` and in an e2e `.js` because the list said `*.ts,*.tsx`, and it
+  missed test names because they are not comments at all.
+- **Extracting the comment BODY with a negated-quote class truncates it.**
+  `grep -oE "(//|///|//!)[^\"]*"` stops at the first `"` on the line, so a
+  doc comment like ``/// `"2.0"` — … (AA1: the bare number)`` yields only
+  the fragment before the quote and the code after it counts as ZERO
+  occurrences. Match whole comment LINES
+  (`^[[:space:]]*(///|//!|//)`, plus a trailing ` // `) and search the
+  full line; a comment line has no non-comment content to protect against.
 - **zsh also refuses an unquoted GLOB it cannot match, so the command
   never runs.** `grep -rn 'Foo {' engine --include=*.rs` dies with
   `(eval):1: no matches found: --include=*.rs` — zsh expands the

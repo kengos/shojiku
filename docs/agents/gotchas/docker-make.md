@@ -39,6 +39,19 @@ make a *correct* change look broken:
   no output), because the subpath you mounted now sits one level below
   `/repo` and the path you asked for is empty. `ls /repo` before
   believing the tool.
+- **With WORKTREES the drift has no tell at all — the gate goes GREEN over
+  the wrong tree.** The tells above (`No rule to make target`, a tool
+  reporting nothing to do) all assume you drifted somewhere that is not a
+  repo. A worktree session drifts to the PRIMARY CHECKOUT, which has a
+  Makefile, a full source tree and a warm `engine/target`, so the gate runs
+  to completion and prints `PASS` — for `main`, not for your change. The
+  agent-harness Bash tool resets cwd to the primary checkout BETWEEN calls,
+  so this is the default outcome, not an accident: a bare `make lint:engine`
+  from a worktree session gates the wrong tree every time. Always name the
+  tree: `make -C /absolute/path/to/worktree <target>` (`-C` sets `$(CURDIR)`,
+  so the docker mount follows correctly). The same reset is why a script
+  that opens a bare filename edits the primary checkout's copy.
+
 - **mixing mounts corrupts the cache**: building under an engine-mounted
   layout once bakes a wrong `CARGO_MANIFEST_DIR` into the cached e2e
   test binary; a later correct-mount run *reuses that stale binary* and
@@ -402,6 +415,21 @@ lines once mis-parsed `FAILED. 553 passed; 1 failed` as green.
 - `cargo fuzz` finds its crate through `--fuzz-dir <abs path>`, so the
   fuzz crate does not have to sit under the crate it fuzzes — which is
   what lets ONE out-of-workspace crate carry targets for two crates.
+
+## A fresh worktree has no `engine/wasm/pkg`, so the gui gates cannot run
+
+`engine/wasm/pkg` is gitignored, so it exists only where someone has built
+it. A worktree starts without one, and the gui integration suites that load
+it (`wasm.test.ts`, `sampleData.test.ts`) fail before the gui gate can say
+anything about the change. Run `make wasm` once in a new worktree, before
+`test:gui` / `verify:gui`.
+
+The failure is honest — the suites throw
+`engine/wasm/pkg is missing — run make wasm before the gui gates` — so it
+costs one run rather than a debug loop. Worth knowing in advance anyway,
+because the surrounding advice about `make wasm` is all about REFRESHING a
+stale pkg (after a rebase onto engine work, or after the `site-build` swap
+below), which reads as "not applicable, this tree never had one".
 
 ## `make site-build` replaces `engine/wasm/pkg` with the SITE's engine
 
