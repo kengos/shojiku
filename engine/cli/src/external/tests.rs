@@ -6,6 +6,7 @@
 //! that could tell would be testing something the command cannot see.
 
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
@@ -61,6 +62,15 @@ pub(super) fn complete_args(stem: &str, algorithm: &str, signature: PathBuf) -> 
 
 /// Signs the prepared bytes with a key the command never sees, and writes the
 /// raw signature where `--signature` will read it.
+///
+/// The file name carries a per-call counter as well as the pid. Cargo runs
+/// these tests as threads of ONE process, so the pid does not separate two
+/// callers that pass the same `name` — and two did, both going through
+/// [`round_trip`] with the same key stem. Whichever write landed second
+/// truncated the file the other was still reading, and that test failed
+/// `EmptySignature` at whatever rate the threads happened to interleave. The
+/// counter makes the path unique by construction rather than by asking every
+/// caller to pick a distinct name.
 pub(super) fn sign_elsewhere(prepared: &Prepared, stem: &str, name: &str) -> PathBuf {
     let to_be_signed = STANDARD
         .decode(&prepared.to_be_signed)
@@ -72,8 +82,10 @@ pub(super) fn sign_elsewhere(prepared: &Prepared, stem: &str, name: &str) -> Pat
     .expect("the key loads")
     .sign(&to_be_signed)
     .expect("the external signer produces a signature");
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    let nth = NEXT.fetch_add(1, Ordering::Relaxed);
     let path = std::env::temp_dir().join(format!(
-        "shojiku-cli-external-{}-{name}.sig",
+        "shojiku-cli-external-{}-{name}-{nth}.sig",
         std::process::id()
     ));
     std::fs::write(&path, signature).expect("writing the signature");

@@ -307,6 +307,19 @@ platform binaries.
   tall as its lines. The slack above the content now leads the first
   fragment and the slack below it trails the last, so the fragments
   still sum to the reserved height.
+- **The layout showcase's YAML samples now show their nesting.** Eight of its
+  forty-four code panels were written with ordinary spaces, and the
+  engine collapses whitespace at a line head the way CSS does, so those
+  samples rendered flush left — every nested key sitting under its
+  parent instead of inside it, which is exactly backwards for a sample
+  whose subject is structure. They now use the no-break spaces the other
+  panels already used. Documents you author are unaffected: the
+  collapsing is deliberate and unchanged, and it is still U+00A0 that
+  buys hard indentation. A new check refuses ordinary spaces and tabs
+  alike in any bundled template — a tab collapses the same way, so an
+  editor's auto-indent inside a block scalar is the same trap — since
+  nothing about this was visible before: the render emitted no warning
+  and the page simply looked wrong.
 
 ## [0.1.0] - 2026-08-02
 

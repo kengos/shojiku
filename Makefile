@@ -61,7 +61,8 @@ endif
 #   deny              -> job "deny"
 #   docker-* / docker -> job "docker"    (build, render+verify PDF, trivy scan)
 #   examples-check    -> job "examples"  (committed outputs == fresh render,
-#                                         plus skills/*/template == its example)
+#                                         plus skills/*/template == its example,
+#                                         plus no space/tab-indented block scalar)
 #   wasm              -> job "wasm"      (build wasm32 bindings + size budget)
 #   sdk-ruby          -> job "sdk-ruby"  (rubocop, rspec at 100% coverage, gem
 #                                         build/install; engine library injected
@@ -733,9 +734,11 @@ examples: ## Re-render every example's committed output.pdf + preview-*.png
 		-v "$(CURDIR):/repo" -w /repo \
 		$(RUST_IMAGE) ./scripts/render-examples.sh
 
-examples-check: ## Fail if committed example outputs differ from a fresh render, or a skill's bundled template drifts from its example
+examples-check: ## Fail if committed example outputs drift, a skill's template drifts, or a block scalar is space-indented
 	@echo "== skill template sync =="
 	@./scripts/check-skill-template-sync.sh
+	@echo "== block scalar indentation =="
+	@./scripts/check-example-text-indent.sh
 	@$(CARGO_IN_DOCKER) 'cargo build --release -p shojiku-cli'
 	@$(GATE_LOCK) docker run --rm \
 		-v "$(CURDIR):/repo" -w /repo \
