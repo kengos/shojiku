@@ -224,6 +224,20 @@
   green while `make verify` reds on a downstream fixture. In Phase A,
   `grep -rn '<StructName> {' engine/` (spread `..` forms survive; bare
   literals don't) and add the field to every hit.
+  **Pick the StructName from the fields you ADD, not from the types the
+  change reads.** A font-pack cycle correctly pre-listed `FaceSpec` and
+  `FontFaceDecl` — the two types the feature is about — and modified
+  neither; the struct that actually gained a field was `RenderishArgs`,
+  the CLI flag bag, which the plan never named because adding a flag
+  does not feel like a wire change. It broke 6 test constructors, and
+  clippy's first pass reported only 4 of them (compilation stops), so
+  the grep is what enumerates the set, not the compiler. Write the field
+  list first, then grep one struct per field.
+  And count the hits by READING them: `grep '<Type> {'` also matches the
+  `pub struct <Type> {` declaration and every `fn … -> <Type> {`
+  signature, so the same cycle's raw counts (4 and 8) were really 2 and
+  6 (catalogued in
+  [verification-claims.md](verification-claims.md) § Counts).
 - **A new wire type needs the full re-export chain**: core's top-level
   modules are crate-private — a `pub use` inside `template.rs` alone
   leaves the type unreachable from dependent crates AND fires
