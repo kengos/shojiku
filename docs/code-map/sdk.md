@@ -182,8 +182,8 @@ where python differs.
   `Path.resolve(strict=True)`: unlike ruby's `File.realpath`, a plain
   `resolve()` does NOT raise for a missing path, so a non-strict resolve would
   canonicalize a nonexistent template happily and fall through.
-- `tests/` — pytest against the REAL library, 18 modules mirroring ruby's 18
-  spec files (216 examples, 100% line coverage). `conftest.py` is the
+- `tests/` — pytest against the REAL library, 19 modules mirroring ruby's 19
+  spec files (240 examples, 100% line coverage). `conftest.py` is the
   `spec_helper` + `engine_fixtures` equivalent; `keys` is session-scoped so the
   shared generator runs ONCE. Fixture templates are copies of ruby's
   (`receipt` clean / `warns` a box one line-height short / `broken` an image
@@ -233,8 +233,11 @@ map above for what each MEANS.
   testable against a library that only ever reports revision 1.
 - `TemplateRoot.cs` — same union-of-platforms rules, with `[GeneratedRegex]`
   source generators; containment checks existence explicitly and compares
-  STRUCTURALLY (a sibling `root-evil` beats a prefix compare).
-- `Shojiku.Tests/` — xunit against the REAL library, 15 suites / **211 tests**,
+  STRUCTURALLY (a sibling `root-evil` beats a prefix compare). `Canonical`
+  TRIMS the trailing separator: .NET's `Path.GetFullPath` preserves one where
+  the other six SDKs' realpath equivalents drop it, so a root written
+  `templates/` used to contain nothing at all.
+- `Shojiku.Tests/` — xunit against the REAL library, 20 suites / **231 tests**,
   100% line coverage. One xunit COLLECTION, so the process-wide `Configuration`
   cannot leak between tests and the key generator runs once. Generated code is
   excluded from coverage by attribute (the regex generator's state machine is
@@ -288,7 +291,7 @@ bound lifecycle and module split as ruby.
 - `TemplateRoot.java` — same union-of-platforms rules; containment uses
   `toRealPath()` (which DOES raise for a missing path) and a structural
   parent walk.
-- `src/test/java/` — JUnit 5 against the REAL library, 20 suites / **220
+- `src/test/java/` — JUnit 5 against the REAL library, 21 suites / **244
   tests**, 100% line coverage via jacoco. One surefire fork, tests serial, so
   process-wide `Configuration` cannot leak. Fixture templates are copies of
   ruby's; hostile control characters are written as Java ESCAPES
@@ -371,7 +374,7 @@ are only where node differs.
   `util.inspect.custom`: node's console uses the latter and never calls the
   former, so overriding one leaves the key printing where it is most likely to
   be seen.
-- `test/` — vitest against the REAL addon, 18 suites / **177 tests**, 100% on
+- `test/` — vitest against the REAL addon, 19 suites / **200 tests**, 100% on
   all four axes (lines/statements/functions/branches). Mirrors ruby's 18 spec
   files. `test/support/fixtures.ts` is the `spec_helper` + `engine_fixtures`
   equivalent; the key generator is memoized so it runs ONCE. Fixture templates
@@ -446,8 +449,8 @@ both subprocess SDKs script.
   the provider, not in properties: PHP has four dump functions and
   `__debugInfo()` covers one. Plus `__toString()` and `#[\SensitiveParameter]`
   (which is what keeps a constructor argument out of a stack trace).
-- `tests/` — phpunit against the REAL binary, 19 suites / **189 tests**
-  mirroring ruby's 18 spec files (`Concurrency` has no meaning for a
+- `tests/` — phpunit against the REAL binary, 20 suites / **213 tests**
+  mirroring ruby's 19 spec files (`Concurrency` has no meaning for a
   single-threaded subprocess SDK and is replaced by `Workspace`; `Subprocess`
   is added for the transport's own failure modes), 100% line coverage. `EngineFixtures` is the
   `spec_helper` + `engine_fixtures` equivalent; `StubBinary` writes a shell

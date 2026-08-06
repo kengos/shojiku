@@ -4,11 +4,11 @@ using System.Text.Json;
 using Shojiku;
 
 using var client = new ShojikuClient(
-    templates: "/app/templates",
-    fontDirs: new[] { "/app/packs/fonts" },
-    localeDirs: new[] { "/app/packs/locale" });
+    templates: "templates/",
+    fontDirs: new[] { "packs/fonts" },
+    localeDirs: new[] { "packs/locale" });
 var parameters = JsonSerializer.Deserialize<JsonElement>(
-    File.ReadAllText("/app/templates/receipt-ja/params.json"));
+    File.ReadAllText("templates/receipt-ja/params.json"));
 var result = client.Generate("receipt-ja", parameters);
 if (!result.Success)
 {

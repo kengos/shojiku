@@ -235,7 +235,23 @@ exactly why the lookup must be hardened:
   market runs on), so a backslash is a separator, `C:name` is
   drive-relative, `\\host\share` is a UNC path, and names like `CON` and
   `NUL` are reserved devices — every one of them rejected on **every**
-  platform, so the same template name is valid or invalid everywhere.
+  platform, so the same template name is valid or invalid everywhere;
+- **the ROOT, unlike a name, is a path, and every shape of one is
+  accepted**: relative or absolute, with or without a trailing
+  separator, `templates` and `templates/` and `./templates` alike. It is
+  canonicalized once — absolute, symlinks followed, no trailing
+  separator — and containment compares against that canonical form.
+  This is stated because leaving it unstated cost a bug: six SDKs
+  canonicalize through a `realpath` that drops a trailing separator as a
+  side effect, .NET's `Path.GetFullPath` PRESERVES one, and a root
+  configured as `templates/` therefore contained nothing — every parent
+  the containment walk compared against canonicalized without the
+  separator. The contract is the accepted shapes, not whichever
+  normalization a language's standard library happens to perform.
+  **Containment stays structural** (walk the parents), never a string
+  prefix compare, which would admit a sibling named `<root>-evil` —
+  normalizing the root makes that mistake easier to reach, so each SDK
+  pins it with a test.
 
 ## The decisions the reference froze
 

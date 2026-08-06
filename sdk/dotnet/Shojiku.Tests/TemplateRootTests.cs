@@ -242,4 +242,97 @@ public sealed class TemplateRootTests(EngineFixture engine) : ShojikuTest(engine
             Environment.SetEnvironmentVariable("SHOJIKU_TEMPLATE_ROOT", null);
         }
     }
+
+    // ---- The SHAPE of the root itself -------------------------------------
+    //
+    // The rules above all constrain the NAME. What the root may look like was
+    // never pinned, and this SDK drifted there: its canonical form kept a
+    // trailing separator (DirectoryInfo.FullName and Path.GetFullPath both
+    // preserve one) while every parent the containment walk compares against
+    // canonicalizes without one, so `templates/` — a root four of the five
+    // deploy recipes pass — could never contain anything. Relative versus
+    // absolute never mattered; the separator did.
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("/")]
+    [InlineData("//")]
+    public void ATrailingSeparatorOnTheRootStillResolves(string suffix)
+    {
+        var result = Engine.Client(templates: EngineFixture.Templates + suffix).Generate("receipt");
+
+        Assert.True(result.Success, result.Failure?.Message);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("/")]
+    public void ARelativeRootResolves(string suffix)
+    {
+        // Expressed relative to the CURRENT directory rather than by changing it:
+        // the process cwd is global state, and a test that moves it is a trap for
+        // every other test in the collection.
+        var relative = Path.GetRelativePath(Environment.CurrentDirectory, EngineFixture.Templates);
+        Assert.False(Path.IsPathRooted(relative), "the fixture root must be expressible relatively");
+
+        var result = Engine.Client(templates: relative + suffix).Generate("receipt");
+
+        Assert.True(result.Success, result.Failure?.Message);
+    }
+
+    [Fact]
+    public void ATrailingSeparatorDoesNotFollowASymlinkOutOfTheRoot()
+    {
+        // Normalizing the root must not have loosened containment. Same escape as
+        // ASymlinkPointingOutsideTheRootIsNotFollowed, with the root spelled the
+        // way that used to fail closed for the wrong reason.
+        var outside = Directory.CreateTempSubdirectory("shojiku-outside");
+        var root = Directory.CreateTempSubdirectory("shojiku-root");
+        try
+        {
+            File.Copy(
+                Path.Combine(EngineFixture.Templates, "receipt", "templates.yml"),
+                Path.Combine(outside.FullName, "templates.yml"));
+            Directory.CreateSymbolicLink(Path.Combine(root.FullName, "escape"), outside.FullName);
+
+            var result = Engine.Client(templates: root.FullName + "/").Generate("escape");
+
+            Assert.True(result.Failed);
+            Assert.Equal("template_escapes_root", result.Failure!.Kind);
+        }
+        finally
+        {
+            Directory.Delete(root.FullName, recursive: true);
+            Directory.Delete(outside.FullName, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ATrailingSeparatorDoesNotAdmitAPrefixSibling()
+    {
+        // The hole a string-prefix containment test would open once the root is
+        // normalized: `/tmp/root-evil` starts with `/tmp/root`. Containment stays
+        // the structural parent walk, so this is still refused.
+        var parent = Directory.CreateTempSubdirectory("shojiku-prefix");
+        try
+        {
+            var root = Path.Combine(parent.FullName, "root");
+            var evil = Path.Combine(parent.FullName, "root-evil", "receipt");
+            Directory.CreateDirectory(root);
+            Directory.CreateDirectory(evil);
+            File.Copy(
+                Path.Combine(EngineFixture.Templates, "receipt", "templates.yml"),
+                Path.Combine(evil, "templates.yml"));
+            Directory.CreateSymbolicLink(Path.Combine(root, "receipt"), evil);
+
+            var result = Engine.Client(templates: root + "/").Generate("receipt");
+
+            Assert.True(result.Failed);
+            Assert.Equal("template_escapes_root", result.Failure!.Kind);
+        }
+        finally
+        {
+            Directory.Delete(parent.FullName, recursive: true);
+        }
+    }
 }

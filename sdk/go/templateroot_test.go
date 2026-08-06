@@ -205,3 +205,110 @@ func TestGeneratingWithNoTemplateRootIsMisuse(t *testing.T) {
 		t.Errorf("TemplateRoot() = %q, want empty", client.TemplateRoot())
 	}
 }
+
+// The SHAPE of the root itself. Everything above constrains the NAME; what a
+// root may look like was never pinned, and the .NET SDK drifted there — its
+// canonical form kept a trailing separator while the parents it compared
+// against did not, so `templates/` could never contain anything. Go is immune
+// because filepath.EvalSymlinks Cleans the path; these pin that rather than
+// leaving it to the implementation it happens to use.
+func TestTheRootMayCarryATrailingSeparator(t *testing.T) {
+	for _, suffix := range []string{"", "/", "//"} {
+		t.Run("suffix="+suffix, func(t *testing.T) {
+			root := &templateRoot{path: fixtureTemplates(t) + suffix}
+
+			sources, rejection := root.resolve("receipt")
+			if rejection != nil {
+				t.Fatalf("resolving receipt under %q: %+v", root.path, rejection)
+			}
+			// This SDK drives the CLI, so `template` is the PATH the subprocess
+			// is handed, not the file's contents.
+			if want := filepath.Join("receipt", templateFile); !strings.HasSuffix(sources.template, want) {
+				t.Errorf("template = %q, want it to end with %q", sources.template, want)
+			}
+		})
+	}
+}
+
+func TestTheRootMayBeRelative(t *testing.T) {
+	// Expressed relative to the current directory rather than by changing it:
+	// the process cwd is global state and moving it is a trap for every other
+	// test in the package.
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("reading the working directory: %v", err)
+	}
+	relative, err := filepath.Rel(cwd, fixtureTemplates(t))
+	if err != nil {
+		t.Fatalf("expressing the fixture root relatively: %v", err)
+	}
+	if filepath.IsAbs(relative) {
+		t.Fatalf("relative = %q, want a relative path", relative)
+	}
+
+	for _, suffix := range []string{"", "/"} {
+		t.Run("suffix="+suffix, func(t *testing.T) {
+			root := &templateRoot{path: relative + suffix}
+
+			sources, rejection := root.resolve("receipt")
+			if rejection != nil {
+				t.Fatalf("resolving receipt under %q: %+v", root.path, rejection)
+			}
+			// This SDK drives the CLI, so `template` is the PATH the subprocess
+			// is handed, not the file's contents.
+			if want := filepath.Join("receipt", templateFile); !strings.HasSuffix(sources.template, want) {
+				t.Errorf("template = %q, want it to end with %q", sources.template, want)
+			}
+		})
+	}
+}
+
+func TestATrailingSeparatorDoesNotFollowASymlinkOutOfTheRoot(t *testing.T) {
+	// Normalizing the root must not loosen containment.
+	outside := t.TempDir()
+	if err := os.WriteFile(filepath.Join(outside, templateFile), []byte("version: 0.1.0\n"), 0o644); err != nil {
+		t.Fatalf("writing the outside template: %v", err)
+	}
+	root := t.TempDir()
+	if err := os.Symlink(outside, filepath.Join(root, "escape")); err != nil {
+		t.Fatalf("linking out of the root: %v", err)
+	}
+
+	_, rejection := (&templateRoot{path: root + "/"}).resolve("escape")
+
+	if rejection == nil {
+		t.Fatal("the symlink was followed out of the root")
+	}
+	if rejection.kind != "template_escapes_root" {
+		t.Errorf("kind = %q, want template_escapes_root", rejection.kind)
+	}
+}
+
+func TestATrailingSeparatorDoesNotAdmitAPrefixSibling(t *testing.T) {
+	// A string prefix compare would accept `<root>-evil`; containment is
+	// structural. Normalizing the root is what makes that mistake reachable.
+	base := t.TempDir()
+	evil := filepath.Join(base, "root-evil", "receipt")
+	if err := os.MkdirAll(evil, 0o755); err != nil {
+		t.Fatalf("creating the sibling: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(evil, templateFile), []byte("version: 0.1.0\n"), 0o644); err != nil {
+		t.Fatalf("writing the sibling template: %v", err)
+	}
+	root := filepath.Join(base, "root")
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		t.Fatalf("creating the root: %v", err)
+	}
+	if err := os.Symlink(evil, filepath.Join(root, "receipt")); err != nil {
+		t.Fatalf("linking to the sibling: %v", err)
+	}
+
+	_, rejection := (&templateRoot{path: root + "/"}).resolve("receipt")
+
+	if rejection == nil {
+		t.Fatal("the prefix sibling passed containment")
+	}
+	if rejection.kind != "template_escapes_root" {
+		t.Errorf("kind = %q, want template_escapes_root", rejection.kind)
+	}
+}

@@ -337,6 +337,21 @@ platform binaries.
 
 ### Fixed
 
+- **The .NET client accepts a template root written the way everyone
+  writes one.** `new ShojikuClient(templates: "templates/")` failed every
+  render with "the template resolves outside the template root", while
+  the identical layout worked from Python, Ruby, Node and Java. The
+  trailing separator was the whole cause: .NET's `Path.GetFullPath` keeps
+  one where the other languages' `realpath` equivalents drop it, so the
+  canonicalized root ended in `/` and could never match the parent
+  directories the containment check walks. A relative root was never the
+  problem — an absolute `/app/templates/` failed just as hard, and
+  `templates` without the slash worked. The root is now canonicalized to
+  one form, and all seven SDKs pin the accepted shapes — relative or
+  absolute, with or without a trailing separator — so this cannot drift
+  in one language again. Containment itself is unchanged and still
+  refuses a symlink or a same-prefix sibling that leaves the root.
+
 - **Every package page now links somewhere useful.** All seven SDKs and
   every published crate told their registry that the project's home was
   the GitHub repository, so none of them linked to the site at all. Each

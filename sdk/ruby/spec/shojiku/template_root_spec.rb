@@ -167,4 +167,75 @@ RSpec.describe Shojiku::TemplateRoot do
 
     expect(error.message).to include("badname")
   end
+
+  # The SHAPE of the root itself. Everything above constrains the NAME; what a
+  # root may look like was never pinned, and the .NET SDK drifted there — its
+  # canonical form kept a trailing separator while the parents it compared
+  # against did not, so `templates/` could never contain anything. Ruby is
+  # immune because `File.realpath` drops the separator, and these pin that
+  # rather than leaving it to the implementation it happens to use.
+  describe "the shape of the root" do
+    it "accepts a trailing separator" do
+      expect(described_class.new("#{EngineFixtures::FIXTURE_TEMPLATES}/").resolve("receipt").template)
+        .to include("name: receipt")
+    end
+
+    it "accepts repeated trailing separators" do
+      expect(described_class.new("#{EngineFixtures::FIXTURE_TEMPLATES}//").resolve("receipt").template)
+        .to include("name: receipt")
+    end
+
+    it "accepts a relative root" do
+      # Expressed relative to the current directory rather than by changing it:
+      # the process cwd is global, and moving it is a trap for every other spec.
+      relative = Pathname.new(EngineFixtures::FIXTURE_TEMPLATES).relative_path_from(Pathname.pwd).to_s
+      expect(relative).not_to start_with("/")
+
+      expect(described_class.new(relative).resolve("receipt").template).to include("name: receipt")
+    end
+
+    it "accepts a relative root with a trailing separator" do
+      relative = Pathname.new(EngineFixtures::FIXTURE_TEMPLATES).relative_path_from(Pathname.pwd).to_s
+      expect(described_class.new("#{relative}/").resolve("receipt").template)
+        .to include("name: receipt")
+    end
+
+    it "still refuses a sibling sharing the root's prefix, trailing separator or not" do
+      # A string prefix compare would accept `<root>-evil`; containment is
+      # structural. Normalizing the root is what makes that mistake reachable,
+      # so it is pinned here rather than left to the five SDKs that had it.
+      in_temp_dir do |dir|
+        evil = File.join(dir, "root-evil", "receipt")
+        FileUtils.mkdir_p(evil)
+        File.write(File.join(evil, "templates.yml"), "version: 0.1.0\n")
+
+        inside = File.join(dir, "root")
+        FileUtils.mkdir_p(inside)
+        File.symlink(evil, File.join(inside, "receipt"))
+
+        expect { described_class.new("#{inside}/").resolve("receipt") }
+          .to raise_error(Shojiku::TemplateRoot::Rejected) { |error|
+            expect(error.kind).to eq("template_escapes_root")
+          }
+      end
+    end
+
+    it "still refuses a symlink out of a root written with a trailing separator" do
+      # Normalizing the root must not loosen containment.
+      in_temp_dir do |dir|
+        outside = File.join(dir, "outside")
+        FileUtils.mkdir_p(outside)
+        File.write(File.join(outside, "templates.yml"), "version: 0.1.0\n")
+
+        inside = File.join(dir, "root")
+        FileUtils.mkdir_p(inside)
+        File.symlink(outside, File.join(inside, "escape"))
+
+        expect { described_class.new("#{inside}/").resolve("escape") }
+          .to raise_error(Shojiku::TemplateRoot::Rejected) { |error|
+            expect(error.kind).to eq("template_escapes_root")
+          }
+      end
+    end
+  end
 end
