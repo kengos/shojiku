@@ -9,7 +9,7 @@ pub use diag::{arg_num, args_all_numeric};
 
 pub use serde_json::{json, Value};
 pub use shojiku_core::{
-    parse_definitions, parse_template, Catalog, MAX_CONTAINER_DEPTH, MAX_SPANS,
+    parse_definitions, parse_template, Catalog, MAX_CONTAINER_DEPTH, MAX_GRID_TRACKS, MAX_SPANS,
 };
 pub use shojiku_diagnostics::{Diagnostic, Diagnostics};
 pub use shojiku_formatter::LangPack;

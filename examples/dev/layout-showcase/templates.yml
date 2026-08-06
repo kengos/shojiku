@@ -149,23 +149,26 @@ sections:
                   - { text: " link",   style: { textDecoration: underline },
                       link: { url: "https://example.com" } }
 
-      # Alignment: three equal flex columns (unsized row children split
-      # the row evenly).
+      # Alignment: three equal flex columns. `flexBasis: 0` starts each
+      # child from zero instead of its own text width, so `flexGrow: 1`
+      # splits the row into equal thirds — the CSS `flex: 1` idiom.
+      # Without it a row child sizes to its content and the three
+      # alignments would have nothing to align inside.
       - type: container
         box: { direction: row, gap: 8, h: 34 }
         items:
           - type: text
-            box: { padding: 8 }
+            box: { padding: 8, flexBasis: 0, flexGrow: 1 }
             text: textAlign left
             styleNames: [ panel ]
             style: { fontSize: 9, textAlign: left, lineHeight: 1.2 }
           - type: text
-            box: { padding: 8 }
+            box: { padding: 8, flexBasis: 0, flexGrow: 1 }
             text: textAlign center
             styleNames: [ panel ]
             style: { fontSize: 9, textAlign: center, lineHeight: 1.2 }
           - type: text
-            box: { padding: 8 }
+            box: { padding: 8, flexBasis: 0, flexGrow: 1 }
             text: textAlign right
             styleNames: [ panel ]
             style: { fontSize: 9, textAlign: right, lineHeight: 1.2 }
@@ -178,8 +181,8 @@ sections:
             styleNames: [ code ]
             text: |-
               - type: container
-                box: { direction: row, gap: 8 }   # unsized children split the row
-                items:
+                box: { direction: row, gap: 8 }   # 行の子は既定で内容幅
+                items:   # 3つとも box: { flexBasis: 0, flexGrow: 1 } で均等3分割
                   - { type: text, text: left,   style: { textAlign: left } }
                   - { type: text, text: center, style: { textAlign: center } }
                   - { type: text, text: right,  style: { textAlign: right } }
@@ -354,21 +357,24 @@ sections:
         text: "2. Boxes, flex & grid"
         styleNames: [ h2 ]
 
-      # flexGrow: weighted shares of the leftover row width (1 : 2 : 3).
+      # flexGrow: weighted shares of the row width (1 : 2 : 3). The
+      # `flexBasis: 0` is what makes the ratio exact — without it each
+      # child starts at its own text width and only the LEFTOVER splits
+      # 1:2:3, so the bars read closer to 1 : 1.5 : 1.9.
       - type: container
         box: { direction: row, gap: 6, h: 26 }
         items:
           - type: text
-            box: { flexGrow: 1, padding: 7 }
+            box: { flexGrow: 1, flexBasis: 0, padding: 7 }
             text: "flexGrow: 1"
             styleNames: [ swatch ]
           - type: text
-            box: { flexGrow: 2, padding: 7 }
+            box: { flexGrow: 2, flexBasis: 0, padding: 7 }
             text: "flexGrow: 2"
             styleNames: [ swatch ]
             style: { backgroundColor: "#6610f2" }
           - type: text
-            box: { flexGrow: 3, padding: 7 }
+            box: { flexGrow: 3, flexBasis: 0, padding: 7 }
             text: "flexGrow: 3"
             styleNames: [ swatch ]
             style: { backgroundColor: "#198754" }
@@ -383,9 +389,63 @@ sections:
               - type: container
                 box: { direction: row, gap: 6 }
                 items:
-                  - { type: text, text: "1", box: { flexGrow: 1 } }
-                  - { type: text, text: "2", box: { flexGrow: 2 } }
-                  - { type: text, text: "3", box: { flexGrow: 3 } }
+                  - { type: text, text: "1", box: { flexGrow: 1, flexBasis: 0 } }
+                  - { type: text, text: "2", box: { flexGrow: 2, flexBasis: 0 } }
+                  - { type: text, text: "3", box: { flexGrow: 3, flexBasis: 0 } }
+
+      # The same key on the OTHER axis, beside the grid answer to the
+      # same question. A `column`'s main axis is its height, so a child
+      # with no `h` in a definite-height column takes its `flexGrow`
+      # share of what its siblings leave over; a grid says it with
+      # `rows: ["auto", "1fr"]`, where the `fr` row is what is left
+      # after the auto row has been MEASURED.
+      - type: container
+        box: { direction: row, gap: 10, h: 76 }
+        items:
+          - type: container
+            box: { flexBasis: 0, flexGrow: 1, direction: column, gap: 4, h: 76 }
+            items:
+              - type: text
+                box: { flexGrow: 1, padding: 6 }
+                text: "column flexGrow: 1"
+                styleNames: [ swatch ]
+              - type: text
+                box: { h: 20, padding: 4 }
+                text: "h: 20 (fixed)"
+                styleNames: [ swatch ]
+                style: { backgroundColor: "#6c757d" }
+          - type: container
+            box: { flexBasis: 0, flexGrow: 1, type: grid, columns: 1, rows: [ "auto", "1fr" ], h: 76, rowGap: 4 }
+            items:
+              - type: text
+                box: { padding: 4 }
+                text: "auto row — as tall as this"
+                styleNames: [ swatch ]
+                style: { backgroundColor: "#6c757d" }
+              - type: text
+                # `h: "100%"` so the swatch SHOWS the row it was given: a
+                # grid cell hands its child the row height as a `%` base,
+                # but a text with no `h` still takes its content height.
+                box: { h: "100%", padding: 6 }
+                text: "1fr row — the rest"
+                styleNames: [ swatch ]
+                style: { backgroundColor: "#198754" }
+
+      - type: container
+        box: { padding: 8 }
+        styleNames: [ codePanel ]
+        items:
+          - type: text
+            styleNames: [ code ]
+            text: |-
+              - type: container          # 列の主軸は高さ
+                box: { h: 76 }
+                items:
+                  - { type: text, box: { flexGrow: 1 } }   # 余りを取る
+                  - { type: text, box: { h: 20 } }
+              - type: container          # グリッドで同じこと
+                box: { type: grid, columns: 1, h: 76,
+                    rows: [ "auto", "1fr" ] }   # fr = auto 行の残り
 
       # justifyContent distributes fixed-width children; alignItems
       # centers mixed heights on the cross axis.
@@ -773,8 +833,11 @@ sections:
       - type: container
         box: { direction: row, gap: 10 }
         items:
+          # `flexGrow: 1` is how a child says "take what is left" now that
+          # widths come from content — the QR panel beside it is a fixed
+          # 170pt, and this one fills the rest.
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ panel ]
             items:
               - type: text
@@ -984,7 +1047,7 @@ sections:
             box: { w: 170 }
             style: { fontFamily: ipamj-mincho, borderColor: "#5f7a8a" }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1132,17 +1195,17 @@ sections:
         box: { direction: row, gap: 8, h: 30 }
         items:
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "default → {doc.amount}"
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "symbol → {doc.amount:symbol}"
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "name → {doc.amount:name}"
@@ -1155,17 +1218,17 @@ sections:
         box: { direction: row, gap: 8, h: 30 }
         items:
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "bare → {doc.subtotal}"
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "symbol → {doc.subtotal:symbol}"
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "name → {doc.subtotal:name}"
@@ -1178,12 +1241,12 @@ sections:
         box: { direction: row, gap: 8, h: 30 }
         items:
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "long → {doc.generated_on:long}"
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "和暦 → {doc.generated_on:wareki}"
@@ -1196,12 +1259,12 @@ sections:
         box: { direction: row, gap: 8, h: 30 }
         items:
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "long → {doc.generated_at:long}"
           - type: text
-            box: { padding: 6 }
+            box: { padding: 6, flexBasis: 0, flexGrow: 1 }
             styleNames: [ panel ]
             style: { fontSize: 11, lineHeight: 1.3, textAlign: center }
             text: "和暦 → {doc.generated_at:wareki}"
@@ -1343,7 +1406,7 @@ sections:
             box: { w: 40, h: 150 }
             style: { fontFamily: ipamj-mincho, fontSize: 15, lineHeight: 1.7, writingMode: vertical_rl, textOrientation: upright }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1390,7 +1453,7 @@ sections:
                 data: { key: origin }
                 style: { fontFamily: ipamj-mincho, fontSize: 13 }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1423,7 +1486,7 @@ sections:
             box: { w: 30, h: 170 }
             style: { fontFamily: ipamj-mincho, fontSize: 13, lineHeight: 1.8, writingMode: vertical_rl, textOverflow: ellipsis }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1456,7 +1519,7 @@ sections:
             box: { w: 56, h: 170 }
             style: { fontFamily: ipamj-mincho, fontSize: 14, lineHeight: 1.8, writingMode: vertical_rl, textCombineUpright: { digits: 2 } }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1503,7 +1566,7 @@ sections:
             box: { w: 76, h: 150, margin: { top: 8 } }
             style: { fontFamily: ipamj-mincho, fontSize: 13, lineHeight: 1.6, writingMode: vertical_rl, textCombineUpright: { digits: 2 } }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1546,7 +1609,7 @@ sections:
                 data: { key: doc.reviewed_on }
                 style: { fontSize: 12 }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1623,7 +1686,7 @@ sections:
             style: { borderWidth: 1, borderColor: "#6f42c1", borderRadius: "50%" }
             items: []
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1695,7 +1758,7 @@ sections:
                   shop: { key: doc.venue, scope: document }
                 style: { fontSize: 8, lineHeight: 1.5 }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1807,7 +1870,7 @@ sections:
                   - { label: 状況, data: { key: status }, width: 70 }
                   - { label: 生値, data: { key: status, format: value }, width: 70, style: { fontSize: 7, color: "#666666" } }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
@@ -1849,7 +1912,7 @@ sections:
                 box: { direction: row, gap: 12, margin: { top: 4 } }
                 items:
                   - type: container
-                    box: { h: 28, padding: { left: 2 } }
+                    box: { h: 28, padding: { left: 2 }, flexBasis: 0, flexGrow: 1 }
                     items:
                       - { type: text, text: 山田 太郎, style: { fontSize: 11 } }
                       - type: line
@@ -1857,7 +1920,7 @@ sections:
                         to: { x: "100%", y: 24 }
                         style: { width: 0.6, color: "#495057" }
                   - type: container
-                    box: { h: 28, padding: { left: 2 } }
+                    box: { h: 28, padding: { left: 2 }, flexBasis: 0, flexGrow: 1 }
                     items:
                       - { type: text, text: ヤマダ タロウ, style: { fontSize: 9 } }
                       - type: line
@@ -1877,13 +1940,14 @@ sections:
                     to: { x: "50%", y: 6 }
                     style: { width: 0.6, color: "#0d6efd" }
           - type: container
-            box: { padding: 8 }
+            box: { padding: 8, flexGrow: 1 }
             styleNames: [ codePanel ]
             items:
               - type: text
                 styleNames: [ code ]
                 text: |-
-                  - type: container          # 幅は行の取り分しだい
+                  - type: container          # 欄は行を等分 (flex: 1 相当)
+                    box: { flexBasis: 0, flexGrow: 1 }
                     items:
                       - type: text
                         text: 山田 太郎

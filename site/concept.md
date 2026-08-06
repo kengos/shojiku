@@ -113,8 +113,8 @@ always a project.
 
 Shojiku places things relatively, with absolute coordinates reserved
 for where you want them. The page margin lives in one place, the body
-stacks top-down, and in a flex row children without a width split the
-leftover equally.
+stacks top-down, and in a flex row children without a width size
+themselves to their content.
 
 ```yaml
 page: { size: A4, margin: 25 }    # change to 20 and nothing below changes
@@ -134,8 +134,8 @@ sections:
 Changing the margin is one edit. Raise the title's `fontSize` to 32 and
 its box grows with the content, pushing everything below down by
 exactly that much. The defaults are part of the specification: leave
-out a width and you get an equal split; leave out a height and the box
-grows with its content. The [playground](/playground) has exactly this
+out a width and the box takes the width its content needs, leave out a
+height and it grows with its content. The [playground](/playground) has exactly this
 behavior under a slider.
 
 ## Placing a table is a struggle

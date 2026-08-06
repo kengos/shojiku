@@ -58,7 +58,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let b = container.box_.clone().unwrap_or_default();
         let rb = self.resolve_box(&b, basis);
         let w = rb.w_or_fill(basis, 1.0);
-        let h = rb.h;
+        let h = rb.h_or_fill(basis);
 
         // Style cascade (inheritance): the container's own `style`
         // overrides what it inherited, and its children see those values
@@ -81,6 +81,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             w: rb.content_w(w),
             h: h.map(|v| rb.content_h(v)),
             font: self.font_rel(),
+            pct_w: None,
+            fill_h: None,
         };
 
         let (items, child_boxes, bottom) = self.layout_box_children(

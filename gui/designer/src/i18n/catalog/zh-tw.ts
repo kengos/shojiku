@@ -128,6 +128,8 @@ export const zhTw: LanguageCatalog = {
     ignored_column_key: '`fit` 僅適用於 `type: image` 的欄；已忽略',
     span_outside_grid: 'columnSpan/rowSpan 僅在 `box.type: grid` 父項內作用；已忽略',
     grid_fr_no_basis: '`fr` 的 rows 軌道需要明確的容器高度；改以自動高度的軌道處理',
+    reflow_budget_exhausted:
+      '需要重新排版的方框（高度自動的 stretch 列、flexGrow 的直欄、含 auto 列的 fr 格線）巢狀過深；最內層的子項將維持內容尺寸',
     cut_marks_clipped: 'cutMarks 在紙張 {sides} 側沒有可繪製的邊界；該側的裁切標記已省略',
     vertical_text_unsupported: '{feature} 在 v1 中不支援直書（writingMode: vertical_rl）',
     ruby_base_not_found: 'ruby 基底文字 `{base}` 未出現在繪製文字中；已略過讀音',

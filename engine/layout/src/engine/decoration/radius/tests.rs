@@ -15,6 +15,8 @@ fn basis() -> Basis {
             em: 10.0,
             rem: 10.0,
         },
+        pct_w: None,
+        fill_h: None,
     }
 }
 

@@ -172,3 +172,111 @@ fn out_of_range_child_width_warns_once_after_dedup() {
         "pre-pass + atom double resolve must dedup: {diags:?}"
     );
 }
+
+#[test]
+fn percent_margins_of_an_unsized_row_child_resolve_against_the_container() {
+    // CSS resolves a flex item's `%` margins against the flex CONTAINER,
+    // not against the slot the item ended up with. The engine used to do
+    // the latter, which made an authored `10%` mean a different number
+    // depending on how many siblings the child had.
+    //
+    // 200pt row, two unsized children, `margin: { left: "10%" }` on the
+    // first: 10% of 200 = 20pt. Against its own ~100pt share it would
+    // have been ~10pt — the two numbers discriminate.
+    let yaml = container_body(
+        "{ x: 0, y: 0, w: 200, direction: row }",
+        "- type: container\n  box: { margin: { left: \"10%\" }, flexBasis: 0 }\n  items:\n    - type: rect\n      style: { borderWidth: 1 }\n      box: { w: \"100%\", h: 10 }\n- type: text\n  text: x\n  box: { flexBasis: 0 }",
+    );
+    let (doc, diags) = run(&yaml, json!({}));
+    assert!(!diags.has_errors(), "{diags:?}");
+    let r = rect_shapes(&doc.pages[0]);
+    assert_eq!(r[0].x, 20.0, "10% of the 200pt container, not of the share");
+}
+
+/// A definite-height row holding one cross-unsized child and one with an
+/// authored `h`, both bordered so their boxes report their heights.
+fn stretch_row(row_box: &str) -> Vec<(f64, f64, f64, f64)> {
+    let yaml = container_body(
+        row_box,
+        "- type: container\n  box: { flexBasis: 0 }\n  style: { borderWidth: 1 }\n  items:\n    - type: text\n      text: a\n\
+         - type: container\n  box: { flexBasis: 0, h: 20 }\n  style: { borderWidth: 1 }\n  items:\n    - type: text\n      text: b",
+    );
+    let (doc, diags) = run(&yaml, json!({}));
+    assert!(!diags.has_errors(), "{diags:?}");
+    rect_shapes(&doc.pages[0])
+        .iter()
+        .map(|r| (r.x, r.y, r.w, r.h))
+        .collect()
+}
+
+#[test]
+fn align_items_stretch_resizes_a_cross_unsized_row_child() {
+    // `stretch` is the DEFAULT `alignItems`, and in a row the cross axis
+    // is the height. A child with no authored `h` now fills the row's
+    // cross size instead of keeping its content height — the mirror of an
+    // unsized WIDTH filling a column's cross axis.
+    //
+    // Asserted on the HEIGHT, not the y offset: aligning a child at y=0
+    // and resizing it to the row are indistinguishable by position, and
+    // only the second is what `stretch` means.
+    let r = stretch_row("{ x: 0, y: 0, w: 200, h: 100, direction: row }");
+    assert_eq!(r[0].3, 100.0, "cross-unsized child fills the row height");
+    assert_eq!(r[1].3, 20.0, "an authored `h` is untouched");
+}
+
+#[test]
+fn align_items_start_leaves_a_row_child_at_its_content_height() {
+    // The discriminating opposite: with `stretch` turned off the same
+    // child keeps the content height it had before this behaviour
+    // existed, well short of the row.
+    let r = stretch_row("{ x: 0, y: 0, w: 200, h: 100, direction: row, alignItems: start }");
+    assert!(r[0].3 < 100.0, "no stretch under `start`, got {}", r[0].3);
+    assert_eq!(r[1].3, 20.0);
+}
+
+/// An AUTO-height row (no definite parent height) holding a one-line
+/// child beside a three-line one, both bordered. Returns their heights.
+fn auto_height_row(extra: &str, align: &str) -> (f64, f64) {
+    let yaml = container_body(
+        &format!("{{ x: 0, y: 0, w: 200, direction: row{align} }}"),
+        &format!(
+            "- type: container\n  box: {{ flexBasis: 0{extra} }}\n  style: {{ borderWidth: 1 }}\n  items:\n    - type: text\n      text: one line\n\
+             - type: container\n  box: {{ flexBasis: 0 }}\n  style: {{ borderWidth: 1 }}\n  items:\n    - type: text\n      text: \"three\\nlines\\nhere\""
+        ),
+    );
+    let (doc, diags) = run(&yaml, json!({}));
+    assert!(!diags.has_errors(), "{diags:?}");
+    let r = rect_shapes(&doc.pages[0]);
+    (r[0].h, r[1].h)
+}
+
+#[test]
+fn align_items_stretch_fills_an_auto_height_row_from_its_tallest_child() {
+    // T16: with no definite parent height the row's cross size is the
+    // tallest child (CSS Flexbox §9.4 — the line's cross size is the
+    // largest hypothetical outer cross size), so the SHORTER child grows
+    // to meet it. Discriminated against the same fixture under `start`,
+    // where the two keep their own content heights.
+    let (short_start, tall_start) = auto_height_row("", ", alignItems: start");
+    assert!(
+        short_start < tall_start,
+        "fixture must have unequal children: {short_start} vs {tall_start}"
+    );
+
+    let (short, tall) = auto_height_row("", "");
+    assert_eq!(short, tall, "both fill the row's cross size");
+    assert_eq!(tall, tall_start, "which is the tallest child's own height");
+    assert!(short > short_start, "the short child grew");
+}
+
+#[test]
+fn an_auto_cross_margin_opts_a_row_child_out_of_stretch() {
+    // CSS stretches an item only when NEITHER cross-axis margin is
+    // `auto` — an auto margin means "position me", which filling the
+    // line would silently overrule.
+    let (short, tall) = auto_height_row(", margin: { top: auto }", "");
+    assert!(
+        short < tall,
+        "auto margin opts out of stretch: {short} vs {tall}"
+    );
+}

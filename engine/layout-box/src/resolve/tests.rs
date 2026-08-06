@@ -9,6 +9,8 @@ fn basis(w: f64, h: Option<f64>) -> Basis {
         w,
         h,
         font: FontRel::default(),
+        pct_w: None,
+        fill_h: None,
     }
 }
 

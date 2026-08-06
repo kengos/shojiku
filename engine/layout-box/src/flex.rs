@@ -10,6 +10,10 @@
 
 use shojiku_core::{AlignItems, JustifyContent};
 
+mod lengths;
+
+pub use lengths::{resolve_flex_lengths, FlexItem};
+
 /// Main-axis spacing for `justifyContent` over `count` children with
 /// `free` leftover space: returns `(leading, between)` — the offset
 /// before the first child and the extra space between neighbours

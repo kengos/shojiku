@@ -183,3 +183,78 @@ fn a_child_taller_than_its_fr_row_warns_grid_cell_overflow() {
         "{diags:?}"
     );
 }
+
+#[test]
+fn fr_rows_subtract_the_measured_height_of_an_auto_row() {
+    // T20. h 100, rows ["auto", "1fr"]: the auto row is as tall as its
+    // 30pt child, so the `fr` row is the remaining 70 — not the whole
+    // 100 it used to take, when the split could only subtract the FIXED
+    // rows and an auto row counted as nothing.
+    //
+    // Asserted on the row's SIZE, via what fits in it. The row STARTS
+    // did not move: the auto row was always folded to its tallest child
+    // afterwards, so `track_offsets` put the `fr` row at 30 either way,
+    // and a test reading y offsets would have passed before this existed.
+    // What was wrong is that the two rows then claimed 130pt of a 100pt
+    // grid.
+    let overflows = |h: f64| {
+        let children = format!(
+            "- type: rect\n  style: {{ borderWidth: 1 }}\n  box: {{ w: \"100%\", h: 30 }}\n\
+             - type: rect\n  style: {{ borderWidth: 1 }}\n  box: {{ w: \"100%\", h: {h} }}"
+        );
+        let yaml = container_body(
+            "{ x: 0, y: 0, w: 200, h: 100, type: grid, columns: 1, rows: [\"auto\", \"1fr\"] }",
+            &children,
+        );
+        let (_, diags) = run(&yaml, json!({}));
+        let hit = diags.iter().any(|d| d.code == "grid_cell_overflow");
+        hit
+    };
+    assert!(
+        !overflows(70.0),
+        "70pt fits the corrected fr row (100 - 30)"
+    );
+    assert!(
+        overflows(71.0),
+        "71pt does not — the row is 70, not the whole 100"
+    );
+}
+
+#[test]
+fn an_auto_row_measured_for_the_fr_split_reports_its_content_once() {
+    // The measurement is a THROWAWAY placement, so anything it says must
+    // stay parked: the auto row here holds a child that warns, and the
+    // author must see that warning exactly once, from the real pass.
+    let children = "- type: text\n  box: { h: 8 }\n  text: a line long enough to want more room than it is given\n\
+                    - type: rect\n  style: { borderWidth: 1 }\n  box: { w: \"100%\", h: 10 }";
+    let yaml = container_body(
+        "{ x: 0, y: 0, w: 200, h: 100, type: grid, columns: 1, rows: [\"auto\", \"1fr\"] }",
+        children,
+    );
+    let (_, diags) = run(&yaml, json!({}));
+    let overflows = diags.iter().filter(|d| d.code == "text_overflow").count();
+    assert_eq!(overflows, 1, "measured once, reported once: {diags:?}");
+}
+
+#[test]
+fn a_row_spanning_child_does_not_feed_the_fr_split() {
+    // The documented residual. A child spanning the auto row and the `fr`
+    // row pours its overflow into its LAST spanned row only once the rows
+    // it spans have sizes — and one of those sizes is what the split is
+    // computing. So the span contributes nothing here and the `fr` row
+    // takes the leftover after the SINGLE-row cells alone. Pinned so the
+    // limitation is a decision, not a surprise.
+    let children = "- type: rect\n  style: { borderWidth: 1 }\n  box: { w: \"100%\", h: 30 }\n\
+                    - type: rect\n  style: { borderWidth: 1 }\n  box: { w: \"100%\", h: 20, rowSpan: 2 }";
+    let yaml = container_body(
+        "{ x: 0, y: 0, w: 200, h: 100, type: grid, columns: 1, rows: [\"auto\", \"1fr\", \"1fr\"] }",
+        children,
+    );
+    let (doc, diags) = run(&yaml, json!({}));
+    assert!(!diags.has_errors(), "{diags:?}");
+    let ys: Vec<f64> = rect_shapes(&doc.pages[0]).iter().map(|r| r.y).collect();
+    // Auto row = 30 (its own single-row child); the two fr rows split the
+    // remaining 70. The spanning child starts at the second row.
+    assert_eq!(ys[0], 0.0);
+    assert_eq!(ys[1], 30.0);
+}

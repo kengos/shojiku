@@ -22,8 +22,8 @@ a flex stack. Grid is explicit-only: grid keys without `type: grid` warn
 | Key | Values | Default | Description |
 | --- | --- | --- | --- |
 | `type` | `grid` | — | Required to activate grid placement. |
-| `columns` | count \| list of [Length](length.md)/`fr` | 1 column | Column tracks: a **count** (equal split of the content width minus gaps) or a **track list** (`["1fr", "30%", 50]`, any Length and/or `fr` weight — see [`fr` weights](#fr-weights)). |
-| `rows` | count \| list of Length/`fr` | auto rows | A count needs a definite container height (auto-height degrades to auto rows with a diagnostic); rows beyond an explicit list are implicit — auto, sized by their tallest child. An `fr` row needs a definite height too (auto-height degrades with `grid_fr_no_basis`). |
+| `columns` | count \| list of [Length](length.md)/`fr`/`auto` | 1 column | Column tracks: a **count** (equal split of the content width minus gaps) or a **track list** (`["auto", "1fr", "30%", 50]`, any Length, `fr` weight — see [`fr` weights](#fr-weights) — and/or `auto`, sized to the widest cell placed in the track). |
+| `rows` | count \| list of Length/`fr`/`auto` | auto rows | A count needs a definite container height (auto-height degrades to auto rows with a diagnostic); rows beyond an explicit list are implicit — auto, sized by their tallest child. Writing `auto` in the list says exactly that, so `["auto", "1fr"]` reads the way it looks. An `fr` row needs a definite height (auto-height degrades with `grid_fr_no_basis`). |
 | `columnGap` / `rowGap` | Length | 0 | Per-axis gaps; the flex `gap` doubles as the both-axes shorthand (specific keys win). Negative gaps are 0. |
 | `direction` | `row` \| `column` | `row` | Fill order (CSS `grid-auto-flow` analog): `row` = row-major. |
 | `justifyContent` | flex values | `start` | Distributes leftover width across tracks (only meaningful for track lists — counts consume the axis). |
@@ -54,10 +54,10 @@ Child keys (on a grid child's `box`, like `flexGrow` in flex):
   the child container itself. A child *wider* than its column-track run
   warns `grid_column_overflow` (its own code, carrying only numbers —
   `child`/`track`/`span` — so a translating consumer writes its own
-  sentence); column tracks are always definite, so unlike auto ROWS —
-  which grow to their tallest child — a definite-width child either fits
-  or spills over its neighbour. A child with no authored `w` fills the
-  run and never warns.
+  sentence). A definite-width child either fits its track run or spills
+  over its neighbour; a child with no authored `w` fills the run and
+  never warns. Sizing a track to its content is what `auto` columns are
+  for.
 - **Caps**: track counts and list lengths clamp to `MAX_GRID_TRACKS`
   (64) per axis with `grid_tracks_clamped`, so hostile counts cannot
   drive allocation.
@@ -85,11 +85,52 @@ box: { type: grid, columns: ["1fr", "2fr", 90] }   # 90pt fixed; the
 - **Columns** always have a width basis, so column `fr` always resolves.
   **Rows** need a definite container height (like a row *count*); an
   auto-height container degrades `fr` rows to auto with `grid_fr_no_basis`.
-- **Limitation**: an `fr` row splits the leftover after the *fixed* rows
-  and gaps only — it does not subtract the content height of implicit
-  auto rows, so mixing `fr` rows with implicit content rows in one
-  definite-height grid over-allocates (the implicit rows overflow). Keep
-  the explicit list covering every row when using `fr` rows.
+- An `fr` row splits the leftover after the fixed rows, the gaps **and
+  the auto rows** — mixing `fr` rows with `auto` or implicit content rows
+  in one definite-height grid works, and the auto rows are measured
+  before the split rather than counting as nothing.
+- **Limitation**: a row-SPANNING child does not feed that measurement. A
+  span pours its overflow into its LAST spanned row only once the rows it
+  covers have sizes, and one of those is the `fr` size being computed —
+  genuinely circular, unlike the column case. So an auto row whose extra
+  height would have come from a span is measured without it, and the `fr`
+  rows take slightly more than they should. Keep row-spanning children
+  out of grids that mix `fr` with auto rows, or give those rows fixed
+  heights.
+
+## `auto` tracks
+
+A track in a list may also be **`auto`**. An `auto` **column** is as
+wide as the widest cell placed in it — its content width, the width at
+which that cell's text would not wrap:
+
+```yaml
+box: { type: grid, columns: ["auto", "1fr"] }   # label column fits its
+                                                # text; the rest follows
+```
+
+- Sizing runs **before** the cells are laid out, which is why the grid
+  assigns cells first and sizes tracks second. `fr` tracks still take
+  whatever is left after the fixed and `auto` ones.
+- Only children occupying a **single** column contribute a width. CSS
+  spreads a spanning child's demand across the tracks it covers; doing
+  that needs the other tracks' sizes, which is the circularity this
+  ordering avoids. An `auto` column holding nothing but spanning
+  children therefore sizes to 0.
+- Content is measured with no container to bound it, so a long unwrapped
+  string can ask for more than the whole grid. The `auto` tracks then
+  scale down together to what is actually there, and the content wraps
+  inside them.
+- The measurement is the same one flex `flexBasis: content` uses, so the
+  kinds with **no** max-content width are the same — see the list on
+  [flex.md](flex.md#child-key-on-a-flex-items-own-box). A cell with an
+  authored `w` contributes that width directly.
+- `auto` in a **row** list is the implicit auto row (as tall as its
+  tallest child), which is what omitting the entry already means. It
+  adds no machinery; it is accepted so a mixed list reads plainly.
+- Like `fr`, `auto` is **grid-track-only** — `"auto"` where a plain
+  length is expected is a parse error, and older engines reject it the
+  same way.
 
 ## Diagnostics
 

@@ -65,3 +65,39 @@ fn huge_count_parses_and_is_left_for_layout_to_clamp() {
     let b = parse("{ columns: 1000000000 }");
     assert_eq!(b.columns, Some(TrackSpec::Count(1_000_000_000)));
 }
+
+#[test]
+fn an_auto_track_parses_trims_and_round_trips() {
+    // T1. `auto` is a track keyword alongside a length and an `fr`
+    // weight, and it survives the authored-form round-trip as the same
+    // word — a re-serialized template must stay re-parseable.
+    let b = parse("{ type: grid, columns: [\"auto\", \"1fr\", 40] }");
+    let Some(TrackSpec::Tracks(cols)) = &b.columns else { panic!("columns should be tracks") };
+    assert_eq!(cols[0], GridTrack::Auto);
+    assert_eq!(cols[1], GridTrack::Fr(1.0));
+    assert_eq!(cols[2], GridTrack::Fixed(Length::Pt(40.0)));
+    // Surrounding space is trimmed, as it is for every string track.
+    let padded = parse("{ type: grid, columns: [\"  auto  \"] }");
+    let Some(TrackSpec::Tracks(cols)) = &padded.columns else { panic!("columns should be tracks") };
+    assert_eq!(cols[0], GridTrack::Auto);
+
+    let yaml = serde_yaml::to_string(&b).expect("serialize");
+    assert!(yaml.contains("auto"), "got: {yaml}");
+    let again: OptBox = serde_yaml::from_str(&yaml).expect("re-parse");
+    assert_eq!(again.columns, b.columns);
+}
+
+#[test]
+fn a_mis_cased_or_extended_auto_is_a_parse_error() {
+    // T2. `auto` is matched EXACTLY, the same spelling rule the `auto`
+    // margin sides follow. A near-miss must surface as an authoring
+    // error, never fall through to a length parse that quietly yields
+    // something else.
+    for bad in ["AUTO", "Auto", "autox", "auto auto"] {
+        let e = parse_err(&format!("{{ type: grid, columns: [\"{bad}\"] }}"));
+        assert!(
+            !e.is_empty(),
+            "`{bad}` must be rejected, not parsed as a track"
+        );
+    }
+}

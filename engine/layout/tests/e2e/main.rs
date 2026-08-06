@@ -35,6 +35,7 @@ mod min_max;
 mod page_margin;
 mod page_orientation;
 mod qr;
+mod reflow;
 mod repeat;
 mod repeat_flow;
 mod style;

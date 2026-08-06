@@ -103,7 +103,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // How many lines fit: definite h clamps (reserving one line for
         // the overflow text when entries are cut); auto height fits all.
         let total = entries.len();
-        let kept = match rb.h {
+        let kept = match rb.h_or_fill(basis) {
             Some(h) => {
                 let avail = rb.content_h(h).max(0.0);
                 // `line_height > 0` (both factors sanity-guarded); the cast

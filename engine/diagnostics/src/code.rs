@@ -182,6 +182,7 @@ diagnostic_codes! {
     IgnoredColumnKey = "ignored_column_key", Warning, Layout, "`fit` only applies to `type: image` columns; ignored";
     SpanOutsideGrid = "span_outside_grid", Warning, Layout, "columnSpan/rowSpan only act inside a `box.type: grid` parent; ignored";
     GridFrNoBasis = "grid_fr_no_basis", Warning, Layout, "`fr` row tracks need a definite container height; sized as auto rows instead";
+    ReflowBudgetExhausted = "reflow_budget_exhausted", Warning, Layout, "too many nested re-flowing boxes (auto-height stretch rows, flexGrow columns, fr-over-auto grids); the innermost children keep their content size";
     CutMarksClipped = "cut_marks_clipped", Warning, Layout, "cutMarks have no room outside the grid on the {sides} side(s) of the sheet; those ticks are omitted";
     VerticalTextUnsupported = "vertical_text_unsupported", Warning, Layout, "{feature} does not support vertical writing (writingMode: vertical_rl) in v1";
     RubyBaseNotFound = "ruby_base_not_found", Warning, Layout, "ruby base `{base}` was not found in the drawn text; reading skipped";

@@ -29,13 +29,17 @@ Do you know how flex works in CSS?
 
 ```css
 .row { display: flex; gap: 8px; }
-.row > div { flex: 1; }  /* widthless children split equally */
+.row > div { }           /* each child sizes to its content */
+.row > div { flex: 1; }  /* or: ignore content, split evenly */
 ```
 
-Shojiku lays pages out with nearly the same mechanism. In a flex row,
-children without a width split the leftover equally. There is no
-three-column property; put three widthless children in a row and you
-get three columns. Move the count and the gap to see it.
+Shojiku lays pages out with the same mechanism, down to the defaults. In
+a flex row, a child without a width sizes to its content and stays
+there — nothing grows unless you ask, exactly as in CSS. Write
+`flexBasis: 0` with `flexGrow: 1` for the even split, which is what
+`flex: 1` means. There is no three-column property
+either way — put three widthless children in a row and you get three
+columns. Move the count and the gap to see it.
 
 <ClientOnly><PropertyPlayground demo="flex" /></ClientOnly>
 

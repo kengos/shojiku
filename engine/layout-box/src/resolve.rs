@@ -48,7 +48,7 @@ pub fn clamp_size(value: f64, min: Option<f64>, max: Option<f64>) -> f64 {
 /// definite.
 pub fn resolve_x(len: Option<Length>, basis: &Basis, diags: &mut Diagnostics) -> Option<f64> {
     let len = len?;
-    cap_len(len.resolve(basis.w, basis.font), diags)
+    cap_len(len.resolve(basis.pct_base(), basis.font), diags)
 }
 
 /// Resolves a vertical length (`y`/`h`). Absolute lengths (pt and

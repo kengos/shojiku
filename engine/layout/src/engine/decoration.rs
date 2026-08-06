@@ -108,6 +108,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     em: computed.font_size,
                     rem: computed.rem_root,
                 },
+                pct_w: None,
+                fill_h: None,
             };
             let radius = self.corner_radius(computed, w, h, &basis);
             let width = widths[0];

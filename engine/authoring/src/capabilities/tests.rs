@@ -12,8 +12,17 @@ fn engine_info_reports_version_capabilities_and_locales() {
     assert!(info.capabilities.contains(&"style.textCombineUpright.all"));
     // Number→currency coercion via a `symbol`/`name` format pick.
     assert!(info.capabilities.contains(&"format.currency.coerce"));
-    // Grid `fr` track weights (leftover distribution).
+    // Grid `fr` track weights (leftover distribution) and `auto` COLUMN
+    // tracks (sized to the widest cell placed in the track). Each is
+    // pinned individually — the registry's structural tests pass whether
+    // or not a given key is present, so this is the only per-key proof.
     assert!(info.capabilities.contains(&"grid.fr"));
+    assert!(info.capabilities.contains(&"grid.auto"));
+    // `box.flexBasis`: the `flexBasis: 0` escape hatch is understood.
+    // Deliberately NOT a gate on the sizing behavior — the DEFAULT
+    // changed with this key, so an older engine reads the same wire and
+    // splits the row evenly instead; no capability can report that.
+    assert!(info.capabilities.contains(&"box.flexBasis"));
     // Data-driven table row layers (`row.conditionalStyles`).
     assert!(info.capabilities.contains(&"table.row.conditionalStyles"));
     // Border decoration: the patterned borderStyle keywords, corner

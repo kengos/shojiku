@@ -43,6 +43,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             w: rb.content_w(w),
             h: None,
             font: self.font_rel(),
+            pct_w: None,
+            fill_h: None,
         };
         let rows = self.table_rows(table)?;
         // Columns wider than the box overflow it silently (the parent's
@@ -86,7 +88,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // Border-box height: a definite `box.h` reserves it (overflow is
         // the parent's story); auto height is the stacked grid plus
         // padding, clamped to the box min/max.
-        let height = match rb.h {
+        let height = match rb.h_or_fill(&region) {
             Some(h) => h,
             None => rb.clamp_h(gy + rb.v_padding()),
         };

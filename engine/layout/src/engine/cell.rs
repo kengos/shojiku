@@ -99,6 +99,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             w: slot.w,
             h: slot.h,
             font: self.font_rel(),
+            pct_w: None,
+            fill_h: None,
         };
         let b = cell.box_.clone().unwrap_or_default();
         let rb = self.resolve_box(&b, &slot_basis);
@@ -128,6 +130,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             w: rb.content_w(w),
             h: definite.map(|h| rb.content_h(h)),
             font: self.font_rel(),
+            pct_w: None,
+            fill_h: None,
         };
         let saved_scope = self.scope.take();
         self.scope = Some(scope);

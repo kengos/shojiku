@@ -49,23 +49,60 @@ fn em_rem_and_physical_endpoints_resolve_like_any_other_length() {
     assert_eq!(only_line(&doc.pages[0]), (10.0, 20.0, 72.0, 20.0));
 }
 
+/// The row both tests below share: a 200pt row holding a padded
+/// container (whose only child is the underline) beside a text "b".
+fn underline_row(
+    basis: &str,
+) -> (
+    shojiku_layout::LayoutDocument,
+    shojiku_diagnostics::Diagnostics,
+) {
+    run(
+        &format!(
+            "page: {{ size: {{ w: 200, h: 200 }}, margin: 0 }}\n\
+             sections:\n  body:\n    type: flow\n    items:\n      \
+             - type: container\n        box: {{ w: 200, direction: row }}\n        items:\n          \
+             - type: container\n            box: {{ h: 40, padding: 5{basis} }}\n            items:\n              \
+             - {{ type: line, from: {{ x: 0, y: 20 }}, to: {{ x: \"100%\", y: 20 }} }}\n          \
+             - {{ type: text, text: b, box: {{ h: 40{basis} }} }}\n"
+        ),
+        json!({}),
+    )
+}
+
 #[test]
 fn a_percent_endpoint_in_a_container_spans_its_content_box() {
-    // The rirekisho underline: the line sits INSIDE the flex child, so
-    // `100%` is that child's resolved CONTENT width — padding inset, and
-    // never the page. The child is an unsized share of a 200pt row split
-    // two ways (100pt), minus 5pt padding a side: 90pt of content.
-    let (doc, diags) = run(
-        "page: { size: { w: 200, h: 200 }, margin: 0 }\n\
-         sections:\n  body:\n    type: flow\n    items:\n      \
-         - type: container\n        box: { w: 200, direction: row }\n        items:\n          \
-         - type: container\n            box: { h: 40, padding: 5 }\n            items:\n              \
-         - { type: line, from: { x: 0, y: 20 }, to: { x: \"100%\", y: 20 } }\n          \
-         - { type: text, text: b }\n",
-        json!({}),
-    );
+    // The line sits INSIDE the flex child, so `100%` is that child's
+    // resolved CONTENT width — padding inset, and never the page.
+    //
+    // What the child's width IS changed when unsized row children started
+    // sizing from their content. A `line` is not a flex child (point-based
+    // items take the absolute path), so this container has NO flex
+    // children and its max-content is 0 — CSS says the same of a flex
+    // container with nothing in flow. The text "b" measures ~7.0996pt, so
+    // the container takes `(200 - 7.0996) / 2 = 96.4502` of the row and
+    // the line spans `5 .. 96.4502 - 5`. It used to be an even 100pt
+    // split, giving 90pt of content.
+    let (doc, diags) = underline_row("");
     let (x1, _, x2, _) = only_line(&doc.pages[0]);
-    assert_eq!((x1, x2), (5.0, 95.0), "content box, padding inset");
+    assert_eq!((x1, x2), (5.0, 187.900390625), "content box, padding inset");
+    assert!(diags.is_empty(), "{diags:?}");
+}
+
+#[test]
+fn flex_basis_zero_restores_the_even_split_for_the_underline() {
+    // The escape hatch is the full CSS `flex: 1` — `flexBasis: 0` says
+    // "start from nothing" and `flexGrow: 1` says "then take a share".
+    // Writing only the first collapses the child to zero width, which is
+    // what CSS does too and what an earlier draft of this test hit.
+    //
+    // It goes on BOTH children deliberately: the container's basis is
+    // already 0 (a `line` is not a flex child, so it has no in-flow
+    // content to measure), and it is the TEXT's content basis that was
+    // taking the extra width.
+    let (doc, diags) = underline_row(", flexBasis: 0, flexGrow: 1");
+    let (x1, _, x2, _) = only_line(&doc.pages[0]);
+    assert_eq!((x1, x2), (5.0, 95.0), "even split restored");
     assert!(diags.is_empty(), "{diags:?}");
 }
 

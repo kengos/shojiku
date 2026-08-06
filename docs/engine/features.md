@@ -213,14 +213,35 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   *width* for all edges (CSS rule), border-box, no margin collapse;
   margin sides also take `auto` (free-space absorption).
 - **Flex (the default)**: `direction: column|row`, `gap`, `alignItems`,
-  `justifyContent`; unsized row children split the leftover by
-  per-child **`flexGrow`** weight (default 1 = equal split).
+  `justifyContent`; an unsized row child starts at its **max-content
+  width** (`flexBasis: content`, the default) and stays there — `flexGrow`
+  defaults to 0, as in CSS, so nothing grows unless asked. `flexBasis: 0`
+  with `flexGrow: 1` is CSS's `flex: 1`: start from nothing and take an
+  equal share of the row. **`flexGrow` works on both axes**, each on its
+  own main axis, so a `column` child with no `h` takes its share of a
+  definite parent height; a column grows but never shrinks. `alignItems:
+  stretch` (the default) **resizes** a cross-unsized row child to the
+  row's cross size — its own height when definite, its tallest child's
+  otherwise — unless a cross-axis `auto` margin opts it out. A row whose content overflows **shrinks**
+  back in proportion to the bases (`flex-shrink: 1`), freezing children
+  at their `minWidth`/`maxWidth`, so text re-wraps instead of running
+  off the edge; only a row that still cannot fit warns
+  `flex_row_overflow`. Kinds with no defined max-content width (marks
+  and images, which require an authored size; vertical text; tables;
+  `list`/`char_grid`/rich spans) keep a plain share.
 - **Static grid**: `box.type: grid` — `columns`/`rows` as a count or a
-  track list of `Length`s and/or **`fr` weights** (`["1fr", "2fr", 90]`;
-  the leftover after the fixed tracks and gaps distributes across the
-  weights like `flexGrow`), `columnGap`/`rowGap`, fill order `direction`;
+  track list of `Length`s, **`fr` weights** (`["1fr", "2fr", 90]`; the
+  leftover after the fixed tracks and gaps distributes across the
+  weights like `flexGrow`) and/or **`auto`** (a COLUMN sized to the
+  widest cell placed in it — cells are assigned before tracks are sized,
+  and the auto tracks scale down together when their content
+  out-demands the grid; `auto` in a ROW list is the implicit auto row),
+  `columnGap`/`rowGap`, fill order `direction`;
   tracks clamp to `MAX_GRID_TRACKS` 64/axis. `fr` rows need a definite
-  container height (auto-height degrades them with `grid_fr_no_basis`).
+  container height (auto-height degrades them with `grid_fr_no_basis`)
+  and split what is left after the fixed rows, the gaps AND the measured
+  auto rows — a row-spanning child is the one contribution they cannot
+  subtract.
 - **Min/max**: `minWidth`/`maxWidth`/`minHeight`/`maxHeight` on every
   item box, clamped in CSS order (min > max > size).
 - **Participation rule**: a child that authors neither `box.x` nor
@@ -230,7 +251,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   guarded resolution with the ±1e6 pt cap, `ResolvedBox`, flex/grid
   distribution) — unit-testable with plain numbers, no font fixtures.
 - Capability keys: `box.percent`, `box.margin`, `box.padding`,
-  `box.flex`, `box.grid`, `grid.fr`, `box.minmax`, `box.flexGrow`,
+  `box.flex`, `box.grid`, `grid.fr`, `grid.auto`, `box.minmax`,
+  `box.flexGrow`, `box.flexBasis`,
   `margin.auto`, `length.physical`, `length.em_rem`,
   `style.fontSize.length`, `style.letterSpacing.length`,
   `flow.gap.length`.
@@ -2054,10 +2076,20 @@ identified by their wire spellings, never by internal work-item codes.
   derive the mode from fields it already edits. Enum values are
   snake_case (`space_between`) matching the established wire enums;
   keys stay camelCase.
-- **Row flex avoids intrinsic measurement**: unsized row children split
-  the leftover (weighted by `flexGrow`) instead of max-content sizing —
-  text has no natural width without a measurement mode the engine
-  doesn't have; the split covers the common 2–3-column layouts.
+- **Row flex measures content, and the measurement is not a discarded
+  layout**: an unsized row child starts at its max-content width. The
+  engine's other measure idiom runs a full layout and throws it away,
+  which is affordable for one table cell and quadratic-to-exponential
+  here — a row child that is itself a row would double per level. So
+  max-content is a dedicated walk that builds no layout items, keeping a
+  layout linear in the item count. Kinds whose natural width is
+  undefined (or would need the data scope) keep the older even split
+  rather than being guessed at.
+- **Taking CSS's basis meant taking CSS's shrink**: sizing from content
+  without `flex-shrink` made rows overflow wherever a paragraph would
+  have wrapped. Both directions run through one resolution loop over
+  numbers — never over layout — freezing a child at its min/max bound
+  and redistributing what it gave up.
 - **Boxes are a sidecar, not tree items**: adding ids to `LayoutItem`
   would widen the renderer contract and force both renderers to skip
   non-drawing data; a parallel index keeps the contract byte-identical

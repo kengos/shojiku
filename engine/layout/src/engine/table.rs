@@ -228,6 +228,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             w: rb.content_w(w),
             h: region.h,
             font: region.font,
+            pct_w: None,
+            fill_h: None,
         }
     }
 }

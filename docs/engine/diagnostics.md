@@ -132,7 +132,7 @@ inline:
 | `vertical_text_overflow` | warning | a vertical text block needs `columns` columns (`needed` pt) but its box is `avail` pt wide. The flow paginator reads this code's PRESENCE as "a policy already resolved this block's overflow", so it places whole instead of paginating its columns |
 | `sheet_overflow` | warning | a band / absolute-body item (a `line`'s endpoints included) reaches `over` pt past the right edge of the **sheet** and renders off-paper. The bound is the paper, not the margin box: reaching into the margins is a deliberate escape hatch, so only ink that leaves the sheet warns. Filling items never warn |
 | `child_overflow` | warning | a column or `x`/`y`-positioned box child overflows its parent's `avail` pt content box by `over` pt. States the magnitude, never a side — cross-axis alignment runs after the check, and `alignItems: center`/`end` push the excess LEFT. Suppressed under `overflow: hidden`; a ROW child is reported once, by the row-level `flex_row_overflow` |
-| `grid_column_overflow` | warning | a grid child (`child` pt) is wider than the `track` pt run of `span` column tracks it sits in, so it spills over its neighbour. Column tracks are always definite, unlike auto rows |
+| `grid_column_overflow` | warning | a grid child (`child` pt) is wider than the `track` pt run of `span` column tracks it sits in, so it spills over its neighbour (an `auto` column sizes to its content; a fixed or `fr` one does not) |
 | `page_overflow` | error | layout exceeded 500 pages; output truncated |
 | `grid_tracks_clamped` | warning | grid `columns`/`rows` outside 1..=64 tracks; clamped |
 | `grid_cell_overflow` | warning | grid child TALLER than its explicit row track; the `extent` arg says `row track` or `spanned rows` (auto rows grow instead of warning). The width axis is `grid_column_overflow` above |
@@ -155,6 +155,7 @@ inline:
 | `grid_span_clamped` | warning | `columnSpan`/`rowSpan` beyond the axis; clamped |
 | `span_outside_grid` | warning | span keys on a child of a non-grid box; inert |
 | `grid_fr_no_basis` | warning | `fr` row tracks in an auto-height container; sized as auto rows |
+| `reflow_budget_exhausted` | warning | too many nested boxes needing a second placement (auto-height `stretch` rows, `flexGrow` columns, `fr`-over-auto grids); the innermost children keep their content size |
 | `cut_marks_clipped` | warning | `cutMarks` have no room outside the grid on a sheet side; those ticks are omitted |
 | `header_group_span_clamped` | warning | `headerGroups` spans exceed the table's columns |
 

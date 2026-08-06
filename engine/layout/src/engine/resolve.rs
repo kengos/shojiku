@@ -58,6 +58,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             w: page_w,
             h: Some(page_h),
             font: self.font_rel(),
+            pct_w: None,
+            fill_h: None,
         };
         let mut m = [0.0; 4];
         let edges = self.input.template.page.margin.edges();

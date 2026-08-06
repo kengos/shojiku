@@ -11,8 +11,9 @@
 use crate::length::{finite, parse_length_text, snippet, Length};
 use serde::{Deserialize, Serialize, Serializer};
 
-/// A grid track size: an absolute/relative [`Length`], or an `fr` weight
-/// that shares the axis leftover after the fixed tracks and gaps.
+/// A grid track size: an absolute/relative [`Length`], an `fr` weight
+/// that shares the axis leftover after the fixed tracks and gaps, or
+/// `auto` (sized to the track's content).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum GridTrack {
     /// A fixed track sized by a [`Length`] (pt / `%` / physical / em / rem).
@@ -20,6 +21,11 @@ pub enum GridTrack {
     /// An `fr` weight: this track takes `weight / Σweights` of the axis
     /// leftover (`flexGrow`-style distribution).
     Fr(f64),
+    /// `auto`: a COLUMN track sized to the max-content of the cells
+    /// placed in it; a ROW track spelled `auto` is the implicit
+    /// auto row (as tall as its tallest child), which is what omitting
+    /// the entry already means.
+    Auto,
 }
 
 /// Wire form: a bare number (pt) or a suffixed string (`"1fr"`, `"30%"`,
@@ -42,10 +48,16 @@ impl TryFrom<TrackRepr> for GridTrack {
     }
 }
 
-/// Parses a string track: an `"Nfr"` weight, otherwise a [`Length`]. The
-/// `fr` suffix is unambiguous — no `Length` unit ends in `fr`.
+/// Parses a string track: the `auto` keyword, an `"Nfr"` weight, or
+/// otherwise a [`Length`]. The `fr` suffix is unambiguous — no `Length`
+/// unit ends in `fr`. `auto` is matched exactly (trimmed,
+/// case-SENSITIVE), the same spelling rule margin sides already use for
+/// `auto` in `crate::edges`.
 fn parse_track_text(s: &str) -> Result<GridTrack, String> {
     let s = s.trim();
+    if s == "auto" {
+        return Ok(GridTrack::Auto);
+    }
     match s.strip_suffix("fr") {
         Some(num) => parse_fr_weight(num).map(GridTrack::Fr),
         None => parse_length_text(s).map(GridTrack::Fixed),
@@ -80,6 +92,7 @@ impl Serialize for GridTrack {
         match self {
             GridTrack::Fixed(len) => len.serialize(serializer),
             GridTrack::Fr(w) => serializer.serialize_str(&format!("{w}fr")),
+            GridTrack::Auto => serializer.serialize_str("auto"),
         }
     }
 }
