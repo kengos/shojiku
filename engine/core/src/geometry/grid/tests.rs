@@ -68,7 +68,7 @@ fn huge_count_parses_and_is_left_for_layout_to_clamp() {
 
 #[test]
 fn an_auto_track_parses_trims_and_round_trips() {
-    // T1. `auto` is a track keyword alongside a length and an `fr`
+    // `auto` is a track keyword alongside a length and an `fr`
     // weight, and it survives the authored-form round-trip as the same
     // word — a re-serialized template must stay re-parseable.
     let b = parse("{ type: grid, columns: [\"auto\", \"1fr\", 40] }");
@@ -89,7 +89,7 @@ fn an_auto_track_parses_trims_and_round_trips() {
 
 #[test]
 fn a_mis_cased_or_extended_auto_is_a_parse_error() {
-    // T2. `auto` is matched EXACTLY, the same spelling rule the `auto`
+    // `auto` is matched EXACTLY, the same spelling rule the `auto`
     // margin sides follow. A near-miss must surface as an authoring
     // error, never fall through to a length parse that quietly yields
     // something else.

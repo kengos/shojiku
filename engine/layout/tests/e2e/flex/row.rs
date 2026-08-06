@@ -252,7 +252,7 @@ fn auto_height_row(extra: &str, align: &str) -> (f64, f64) {
 
 #[test]
 fn align_items_stretch_fills_an_auto_height_row_from_its_tallest_child() {
-    // T16: with no definite parent height the row's cross size is the
+    // With no definite parent height the row's cross size is the
     // tallest child (CSS Flexbox §9.4 — the line's cross size is the
     // largest hypothetical outer cross size), so the SHORTER child grows
     // to meet it. Discriminated against the same fixture under `start`,

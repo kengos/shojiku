@@ -14,15 +14,14 @@ fn capabilities_prints_versioned_feature_list() {
     assert!(value["version"].as_str().is_some());
     let caps = value["capabilities"].as_array().expect("caps");
     assert!(caps.iter().any(|c| c == "inspect.boxes"));
-    // D1 box decoration keys (GUI gating for border + box backgrounds).
+    // Box decoration keys (GUI gating for border + backgroundColor).
     assert!(caps.iter().any(|c| c == "style.border"));
     assert!(caps.iter().any(|c| c == "style.backgroundColor.box"));
-    // T1 overflow policy key.
+    // The textOverflow policy key.
     assert!(caps.iter().any(|c| c == "style.textOverflow"));
-    // N2 item types.
+    // Item types gate on their own keys, not on a style key.
     assert!(caps.iter().any(|c| c == "qr_code"));
     assert!(caps.iter().any(|c| c == "list"));
-    // PB1 item type.
     assert!(caps.iter().any(|c| c == "page_break"));
 }
 

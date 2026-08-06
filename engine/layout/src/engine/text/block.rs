@@ -59,17 +59,18 @@ impl<'a, 'b> Ctx<'a, 'b> {
         );
         let mut content_h = wrapped.len() as f64 * line_height;
 
-        // T1 overflow policies act only on a definite height with actual
-        // overflow — auto-height boxes grow to fit (Thinreports `expand`),
-        // and `visible` keeps today's warn-and-grow behavior (the warning
-        // below still fires when content overflows after the policy).
+        // The `textOverflow` policies act only on a definite height with
+        // actual overflow — auto-height boxes grow to fit (Thinreports
+        // `expand`), and `visible` keeps today's warn-and-grow behavior
+        // (the warning below still fires when content overflows after
+        // the policy).
         let avail = box_h.map(|h| content_avail(h, padding));
         let mut clip = false;
         if let Some(avail) = avail {
             if content_h > avail + 0.01 {
                 match computed.text_overflow {
                     TextOverflow::Visible => {}
-                    // D2: keep every line; the block reserves exactly the
+                    // `clip` keeps every line; the block reserves the
                     // authored height and the renderers cut at its edge
                     // (a partially visible line is clipped, not clamped).
                     TextOverflow::Clip => clip = true,
@@ -149,7 +150,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             },
         );
 
-        // F2 decoration: resolved here — at the FINAL (post-shrink) size,
+        // `textDecoration`: resolved here — at the FINAL (post-shrink) size,
         // from the primary face's own tables — so renderers just draw a
         // rect per line.
         let decoration = decoration_spec(resolved.primary.face, computed.text_decoration, size);
@@ -220,9 +221,9 @@ pub(in crate::engine) fn decoration_spec(
     decoration_spec_at(face, kind, size, face.ascent(size))
 }
 
-/// [`decoration_spec`] against an explicit baseline offset: rich blocks
-/// (RT1) share one layout-computed baseline across mixed-size runs, so
-/// each run's decoration hangs off that baseline, not its own ascent.
+/// [`decoration_spec`] against an explicit baseline offset: blocks built
+/// from `spans` share one layout-computed baseline across mixed-size runs,
+/// so each run's decoration hangs off that baseline, not its own ascent.
 pub(super) fn decoration_spec_at(
     face: &crate::font::FontFace,
     kind: TextDecoration,

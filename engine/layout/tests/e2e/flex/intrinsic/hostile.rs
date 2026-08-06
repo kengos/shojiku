@@ -29,7 +29,7 @@ fn deep_row(depth: usize) -> (Vec<f64>, bool) {
 
 #[test]
 fn a_container_nested_past_the_depth_cap_degrades_to_finite_widths() {
-    // S1. `flexBasis: content` at every level of a hostile nesting means
+    // `flexBasis: content` at every level of a hostile nesting means
     // the measurement walk recurses before a single box is placed —
     // `container_atom`'s own depth check runs at LAYOUT time, far too
     // late. So the walk carries its OWN bound.
@@ -51,7 +51,7 @@ fn a_container_nested_past_the_depth_cap_degrades_to_finite_widths() {
 
 #[test]
 fn a_container_exactly_at_the_depth_cap_still_measures() {
-    // S2, the boundary the clamp itself creates. One level shallower must
+    // The boundary the clamp itself creates. One level shallower must
     // still be MEASURED and clean — a guard that fires a level early
     // silently changes the layout of legitimate deep templates, and no
     // other test would notice.
@@ -68,7 +68,7 @@ fn a_container_exactly_at_the_depth_cap_still_measures() {
 
 #[test]
 fn a_pathological_params_text_clamps_its_measured_width() {
-    // S3. The content is params-driven, so its length is attacker-chosen:
+    // The content is params-driven, so its length is attacker-chosen:
     // a 200k-character single line measures to something far past any page
     // and must clamp at `MAX_RESOLVED_PT` rather than poisoning the row's
     // arithmetic. Numeric, and it must terminate.

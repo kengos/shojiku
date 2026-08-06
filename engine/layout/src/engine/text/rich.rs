@@ -120,8 +120,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             if content_h > avail + 0.01 {
                 match computed.text_overflow {
                     TextOverflow::Visible => {}
-                    // D2 semantics, like the plain block: reserve exactly
-                    // the authored height and clip at its edge.
+                    // `clip` semantics, like the plain block: reserve
+                    // exactly the authored height and clip at its edge.
                     TextOverflow::Clip => clip = true,
                     TextOverflow::Shrink | TextOverflow::Ellipsis => {
                         self.diags

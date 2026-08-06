@@ -38,11 +38,11 @@ fn an_even_split_is_the_unclamped_baseline() {
 
 #[test]
 fn a_max_width_freezes_a_share_and_the_surplus_goes_to_the_siblings() {
-    // T18. The child is capped well under its 100pt share; what it gives
-    // up must land on the UNFROZEN siblings, not be dropped on the floor.
-    // That redistribution is the whole difference between a real freeze
-    // loop and a single clamp-and-stop — a clamp-and-stop would leave
-    // 40/100/100 and 60pt of unexplained space.
+    // A `maxWidth` bound. The child is capped well under its 100pt share;
+    // what it gives up must land on the UNFROZEN siblings, not be dropped
+    // on the floor. That redistribution is the whole difference between a
+    // real freeze loop and a single clamp-and-stop — a clamp-and-stop
+    // would leave 40/100/100 and 60pt of unexplained space.
     let r = shares(", maxWidth: 40");
     assert_eq!(r[0], 40.0, "frozen at maxWidth");
     assert_eq!(r[1], 130.0);
@@ -52,8 +52,8 @@ fn a_max_width_freezes_a_share_and_the_surplus_goes_to_the_siblings() {
 
 #[test]
 fn a_min_width_freezes_a_share_and_the_siblings_give_up_the_difference() {
-    // T18, the other bound. A floor above the natural share pushes the
-    // siblings BELOW theirs, so the deficit flows the opposite way
+    // The other bound. A `minWidth` floor above the natural share pushes
+    // the siblings BELOW theirs, so the deficit flows the opposite way
     // through the same loop.
     let r = shares(", minWidth: 180");
     assert_eq!(r[0], 180.0, "frozen at minWidth");
@@ -64,7 +64,7 @@ fn a_min_width_freezes_a_share_and_the_siblings_give_up_the_difference() {
 
 #[test]
 fn a_min_and_a_max_clamping_at_once_terminate_and_fill_the_row() {
-    // T19. Two children freeze in the SAME row, at opposite bounds. Each
+    // Two children freeze in the SAME row, at opposite bounds. Each
     // round of the loop freezes at least one item, so it must terminate —
     // and the third child absorbs whatever the other two could not take.
     let children = "- type: container\n  box: { h: 20, flexBasis: 0, flexGrow: 1, minWidth: 180 }\n  style: { borderWidth: 1 }\n  items:\n    - type: text\n      text: x\n\
@@ -82,9 +82,9 @@ fn a_min_and_a_max_clamping_at_once_terminate_and_fill_the_row() {
 
 #[test]
 fn hostile_bounds_on_a_flex_share_stay_finite_and_non_negative() {
-    // S8, probed AT the admitted maximum rather than trusted from a doc
-    // comment — the last time a distribution helper's comment was taken
-    // at its word it claimed "shares 0" and returned NaN.
+    // Hostile bounds, probed AT the admitted maximum rather than trusted
+    // from a doc comment — the last time a distribution helper's comment
+    // was taken at its word it claimed "shares 0" and returned NaN.
     //
     // A row cursor that walks BACKWARDS is the concrete harm: every
     // width here feeds `cur += outer_w`, so one negative or non-finite

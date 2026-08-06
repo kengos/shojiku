@@ -1,11 +1,11 @@
-//! AA3 `unknown_font_family`: a typo'd family warns once and falls
+//! `unknown_font_family`: a typo'd family warns once and falls
 //! back to the default face; declared families resolve silently.
 
 use crate::common::*;
 
 #[test]
 fn unknown_font_family_warns_once_and_falls_back() {
-    // AA3: a typo'd fontFamily used to fall back to the default face with
+    // A typo'd fontFamily used to fall back to the default face with
     // no diagnostic (while a styleNames typo warned). It warns now — and
     // only once per family, even across many items.
     let (doc, diags) = run(

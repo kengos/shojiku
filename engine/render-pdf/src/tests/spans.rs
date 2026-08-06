@@ -1,4 +1,4 @@
-//! RT1 rich spans on the PDF backend: per-run fonts/colors/synthetic
+//! `spans` on the PDF backend: per-run fonts/colors/synthetic
 //! effects/decoration draw through the run path, and hand-built rich
 //! trees fail loudly on unknown run fonts.
 

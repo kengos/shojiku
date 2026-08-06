@@ -148,7 +148,7 @@ fn a_malformed_endpoint_is_a_parse_error_not_a_silent_zero() {
 
 #[test]
 fn flex_basis_parses_its_variants_and_stays_unset_when_unwritten() {
-    // T3. `flexBasis` picks where a flexible child STARTS: `content`
+    // `flexBasis` picks where a flexible child STARTS: `content`
     // (the default) from its own max-content size, `0` from nothing so
     // `flexGrow` divides the whole row — CSS's `flex: 1`.
     use crate::geometry::FlexBasis;
@@ -184,8 +184,9 @@ fn flex_basis_parses_its_variants_and_stays_unset_when_unwritten() {
 
 #[test]
 fn an_unknown_flex_basis_is_a_parse_error() {
-    // T4. The variant set is closed: an authoring typo surfaces instead
-    // of silently defaulting to `content` and laying out the other way.
+    // The `flexBasis` variant set is closed: an authoring typo surfaces
+    // instead of silently defaulting to `content` and laying out the
+    // other way.
     for bad in [
         "{ flexBasis: auto }",
         "{ flexBasis: 1 }",

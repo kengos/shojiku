@@ -1,4 +1,4 @@
-//! F2 `textDecoration` + `opacity` end to end: decoration geometry from
+//! `textDecoration` + `opacity` end to end: decoration geometry from
 //! real font metrics, scaling under `shrink`, survival across pagination,
 //! per-item opacity on text/rect/line and box decoration, non-inheritance,
 //! and the `invalid_opacity` guard.

@@ -162,7 +162,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             })
             .collect();
 
-        // F2 decoration, resolved like text_block does (same metric
+        // `textDecoration`, resolved like text_block does (same metric
         // source, same line-top-relative offset).
         let decoration =
             super::text::decoration_spec(resolved.primary.face, computed.text_decoration, size);

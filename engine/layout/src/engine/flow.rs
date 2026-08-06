@@ -51,9 +51,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
             let item_mark = self.enter_item(format!("items[{index}]"));
             match item {
                 Item::Text(text) => {
-                    // Splits across pages when taller than the region
-                    // (LT1); otherwise places atom-unit with horizontal
-                    // auto margins, like every flow item.
+                    // Splits across pages when taller than the region;
+                    // otherwise places atom-unit with horizontal auto
+                    // margins, like every flow item.
                     self.place_flow_text(text, &region, &mut layouter);
                 }
                 Item::Rect(rect) => {

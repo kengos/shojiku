@@ -19,10 +19,10 @@ fn diags_of(yaml: &str) -> Vec<String> {
 
 #[test]
 fn an_ordinary_document_never_approaches_the_budget() {
-    // T23, the load-bearing half. The budget counts PLACEMENTS, and a row
-    // that asks for no second look spends none of them — so a document
-    // with far more flex children than the budget has placements must
-    // still come back clean.
+    // The load-bearing half of the reflow budget. It counts PLACEMENTS,
+    // and a row that asks for no second look spends none of them — so a
+    // document with far more flex children than the budget has
+    // placements must still come back clean.
     //
     // Without this, "the budget is a backstop, not a limit authors hit"
     // is an assertion in a comment rather than a property.
@@ -47,7 +47,7 @@ fn an_ordinary_document_never_approaches_the_budget() {
 
 #[test]
 fn a_definite_height_stretch_row_spends_nothing() {
-    // T23's discriminating pair, and the reason `stretch` being the
+    // The budget's discriminating pair, and the reason `stretch` being the
     // DEFAULT `alignItems` is affordable at all: a row whose cross size
     // is already known needs no measurement, so the common case costs
     // exactly zero. Only the AUTO-height variant has to look twice.
@@ -90,12 +90,12 @@ fn nested_fr_grids(depth: usize) -> String {
 
 #[test]
 fn nested_fr_over_auto_grids_stop_at_the_budget_and_still_terminate() {
-    // S7 — the plan called this the most important hostile case in the
-    // cycle, and it is the one the measurement design does NOT already
-    // prevent. A grid whose cells are grids, every row an `fr` over an
-    // auto row, doubles its placements per level: the measure pass at one
-    // level lays out cells that each run their own measure pass, and the
-    // real pass runs them all again. That is `2^depth`.
+    // The most important hostile case here, and the one the measurement
+    // design does NOT already prevent. A grid whose cells are grids,
+    // every row an `fr` over an auto row, doubles its placements per
+    // level: the measure pass at one level lays out cells that each run
+    // their own measure pass, and the real pass runs them all again.
+    // That is `2^depth`.
     //
     // The budget has to stop it, say so, and let the render finish. A
     // guard that merely made it slower would be no guard at all, so the

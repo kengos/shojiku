@@ -16,7 +16,7 @@ fn widths(yaml: &str) -> Vec<f64> {
 
 #[test]
 fn auto_tracks_at_the_track_cap_stay_finite() {
-    // S4. `MAX_GRID_TRACKS` `auto` columns, each holding content of a
+    // `MAX_GRID_TRACKS` `auto` columns, each holding content of a
     // different width, so the measurement runs once per track at the
     // maximum count the parser admits. Every resulting width must be
     // finite and non-negative — a NaN track poisons `track_offsets` and
@@ -43,7 +43,7 @@ fn auto_tracks_at_the_track_cap_stay_finite() {
 
 #[test]
 fn a_huge_fixed_track_beside_an_auto_one_leaves_no_negative_leftover() {
-    // S5. A `1e308`-scale fixed track consumes the axis and then some.
+    // A `1e308`-scale fixed track consumes the axis and then some.
     // The `auto` column beside it has to end up at a finite, non-negative
     // width — the leftover is negative here, and a subtraction that is
     // allowed to stay negative walks the column cursor backwards.
@@ -61,7 +61,7 @@ fn a_huge_fixed_track_beside_an_auto_one_leaves_no_negative_leftover() {
 
 #[test]
 fn a_degenerate_container_width_clamps_auto_columns_to_zero() {
-    // S6. A zero-width container is authorable, and the `auto`
+    // A zero-width container is authorable, and the `auto`
     // measurement can legitimately report content WIDER than it. The
     // tracks must clamp at 0 rather than going negative: a negative width
     // is not a small box, it is a rect drawn to the left of its own

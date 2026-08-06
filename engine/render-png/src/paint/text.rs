@@ -111,7 +111,7 @@ impl Painter<'_> {
                 pixmap.stroke_path(&path, &paint, stroke, transform, mask);
             }
         }
-        // F2/RT1 decoration: one filled rect per run in the run's paint,
+        // `textDecoration` on a span run: one filled rect per run in its paint,
         // drawn unskewed even under synthetic italic (matches the PDF
         // backend). Layout precomputed offset/thickness per line top.
         if let Some(d) = run.decoration {

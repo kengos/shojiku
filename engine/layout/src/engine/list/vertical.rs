@@ -126,8 +126,8 @@ impl Ctx<'_, '_> {
             color: self.color_or_black(computed.color.as_deref()),
             synthetic_bold,
             synthetic_italic: false,
-            // F2 decoration as a per-column side band, resolved like the
-            // horizontal list resolves its per-line rect.
+            // `textDecoration` as a per-column side band, resolved like
+            // the horizontal list resolves its per-line rect.
             decoration: vertical_decoration_spec(
                 resolved.primary.face,
                 computed.text_decoration,

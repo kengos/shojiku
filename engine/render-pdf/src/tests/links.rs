@@ -1,4 +1,4 @@
-//! LK1 link annotations on the PDF backend: URI actions per line/run,
+//! `link` annotations on the PDF backend: URI actions per line/run,
 //! image draw boxes, and links inside clip groups.
 
 use super::*;
