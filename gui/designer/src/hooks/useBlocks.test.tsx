@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ABS_VARIED, outcomeAbs, THREE_ITEMS } from '../testkit/fixtures';
 import { draw, makeTransport } from '../testkit/harness';
 
-describe('Designer — reusable blocks (GU19)', () => {
+describe('Designer — reusable blocks', () => {
   const openInsert = () => fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
 
   it('omits the reusable-block group when the host did not arm persistence', () => {

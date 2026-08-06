@@ -1,4 +1,4 @@
-//! Clip-group drawing (D2) on the PDF backend: structural render
+//! Clip-group drawing on the PDF backend: structural render
 //! success through the pipeline, the depth cap, and fail-closed
 //! degenerate rects (pixel-level clip behavior is asserted on the PNG
 //! backend, which shares the tree contract).

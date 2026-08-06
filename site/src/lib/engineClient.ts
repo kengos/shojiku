@@ -105,7 +105,7 @@ export interface RenderOutcome {
   diagnostics: Diagnostic[];
 }
 
-/** Size cap on editor input reaching the engine (S2): generous for hand
+/** Size cap on editor input reaching the engine: generous for hand
  * edits, refusing pasted megabytes before they hit wasm. */
 export const MAX_SOURCE_BYTES = 256 * 1024;
 

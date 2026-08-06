@@ -65,8 +65,8 @@ part of the core surface rather than optional extras:
   catalog nobody reads closes nothing; the FETCH is a `resources/read`
   over `shojiku://example/<bucket>/<name>`, with `get_example` as a
   second entry point on the same body of text so a client without
-  resources support is not stranded. MA2 and any later reference surface
-  ride this shape rather than re-deciding it.
+  resources support is not stranded. A second reference surface, and
+  any later one, rides this shape rather than re-deciding it.
 
 Rules this surface must keep:
 

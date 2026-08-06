@@ -21,7 +21,7 @@ fn is_space_all(t: &TextSpacingTrim) -> bool {
 #[derive(Debug, Clone, Serialize)]
 pub struct TextBlock {
     pub font_id: String,
-    /// Fallback face ids after the primary (F3): renderers rebuild the
+    /// Fallback face ids after the primary: renderers rebuild the
     /// chain `[font_id, …fallback_ids]` and draw each glyph with the face
     /// its `face_index` points at. Empty = no fallback (the common case).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -42,7 +42,7 @@ pub struct TextBlock {
     /// Synthetic (faux) italic: renderers skew each line rightward by
     /// [`TextBlock::SYNTHETIC_ITALIC_SKEW`] about its baseline.
     pub synthetic_italic: bool,
-    /// Decoration line (F2 `textDecoration`), fully resolved: renderers
+    /// Decoration line (`textDecoration`), fully resolved: renderers
     /// draw one filled rect per line at
     /// `(line.x, line.y + offset, line.width, thickness)` in the text
     /// color — no font knowledge needed. `None` = no decoration. On a
@@ -50,17 +50,17 @@ pub struct TextBlock {
     /// axis-swapped — see [`DecorationSpec`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub decoration: Option<DecorationSpec>,
-    /// Paint alpha `0..=1` (F2 `opacity`), applied to glyphs and the
+    /// Paint alpha `0..=1` (`opacity`), applied to glyphs and the
     /// decoration line alike. Already sanity-clamped by layout.
     pub opacity: f32,
-    /// Baseline offset from each line's top, in pt (RT1). Set for rich
+    /// Baseline offset from each line's top, in pt. Set for rich
     /// (span) blocks, where mixed font sizes share one layout-computed
     /// baseline; `None` = the primary face's ascent at `font_size`
     /// (plain blocks, today's behavior) — see
     /// [`TextBlock::baseline_offset`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub baseline: Option<f64>,
-    /// Hyperlink URL (LK1) over every line of a *plain* block, already
+    /// Hyperlink URL over every line of a *plain* block, already
     /// interpolated and scheme/length-gated by layout; the PDF backend
     /// emits one link annotation per line rect. Rich blocks keep this
     /// `None` — their links ride the runs ([`TextRun::link`]).
@@ -147,7 +147,7 @@ pub struct TextLine {
     /// Measured width of this line in pt (the same measurement alignment
     /// used). Lets renderers size per-line decoration without measuring.
     pub width: f64,
-    /// Styled runs (RT1 rich spans), left to right; empty = the whole
+    /// Styled runs (rich spans), left to right; empty = the whole
     /// line is one implicit run in the block's style (plain text, the
     /// common case — the wire stays exactly as before).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -175,7 +175,7 @@ pub struct TextRun {
     /// along the column (vertical).
     pub width: f64,
     pub font_id: String,
-    /// Fallback face ids after the primary (F3), like the block's.
+    /// Fallback face ids after the primary, like the block's.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub fallback_ids: Vec<String>,
     pub font_size: f64,
@@ -188,7 +188,7 @@ pub struct TextRun {
     /// the shared baseline in).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub decoration: Option<DecorationSpec>,
-    /// Hyperlink URL for this run (LK1): the span's own `link`, else the
+    /// Hyperlink URL for this run: the span's own `link`, else the
     /// block's, resolved and gated by layout. The PDF backend emits one
     /// link annotation per run rect.
     #[serde(default, skip_serializing_if = "Option::is_none")]

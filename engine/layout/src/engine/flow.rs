@@ -18,7 +18,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         page: &Basis,
     ) -> Vec<PageBuild> {
         // The flow box resolves against the page margin box; omitted, the
-        // flow occupies the whole margin box (PM1).
+        // flow occupies the whole margin box.
         let page_h = page.h.unwrap_or(0.0);
         let (x, y, w, h) = match &flow.box_ {
             Some(b) => (

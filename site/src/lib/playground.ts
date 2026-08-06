@@ -89,7 +89,7 @@ export function gridDemoTemplate(k: GridKnobs): string {
 }
 
 /** Knob bounds, enforced before generation so a hostile value cannot reach
- * the template (S2 belt beside the engine's own validation). */
+ * the template (a belt beside the engine's own validation). */
 export function clampTextKnobs(k: TextKnobs): TextKnobs {
   const align = ["left", "center", "right"].includes(k.textAlign) ? k.textAlign : "left";
   return {

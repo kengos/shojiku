@@ -57,7 +57,7 @@ pub(in crate::engine) fn collect_missing(
 ) -> bool {
     for c in content.chars() {
         // A glyph is missing only when NO face in the fallback chain
-        // maps it (F3).
+        // maps it.
         if c.is_control() || missing.contains(c) || !crate::font::all_missing(chain, c) {
             continue;
         }

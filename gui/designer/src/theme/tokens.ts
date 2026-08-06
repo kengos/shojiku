@@ -46,7 +46,7 @@ export const LIGHT_THEME = {
   warnText: '#8a6116',
   errorBg: '#f9e4e2',
   errorText: '#8f1d26',
-  // Save/export diff review (GU16): sage-green added / terracotta removed,
+  // Save/export diff review: sage-green added / terracotta removed,
   // tuned to the warm-paper ground (the error/warn pairs are the only other
   // semantic colours and neither is a green). AA-pinned in tokens.test.ts.
   diffAddBg: '#e7efdc',

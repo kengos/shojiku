@@ -1,4 +1,4 @@
-//! Structural checks for rich-text `spans` (RT1): content exclusivity,
+//! Structural checks for rich-text `spans`: content exclusivity,
 //! the MAX_SPANS cap, and span-inapplicable style keys.
 
 use crate::template::{Item, Template, TextItem, MAX_SPANS};

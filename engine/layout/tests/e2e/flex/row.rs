@@ -41,7 +41,7 @@ fn row_children_without_width_split_the_leftover_equally() {
 #[test]
 fn row_unsized_children_split_leftover_by_flex_grow() {
     // Two unsized children weighted 2:1 split the 120pt leftover (w 130,
-    // gap 10) as 80:40 instead of the equal 60:60 (D4).
+    // gap 10) as 80:40 instead of the equal 60:60.
     let children = "- type: container\n  box: { h: 20, flexGrow: 2 }\n  items:\n    - type: rect\n      style: { borderWidth: 1 }\n      box: { x: 0, y: 0, w: \"100%\", h: 10 }\n- type: container\n  box: { h: 20, flexGrow: 1 }\n  items:\n    - type: rect\n      style: { borderWidth: 1 }\n      box: { x: 0, y: 0, w: \"100%\", h: 10 }";
     let yaml = container_body(
         "{ x: 0, y: 0, w: 130, h: 40, direction: row, gap: 10 }",

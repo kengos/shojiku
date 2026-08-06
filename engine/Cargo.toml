@@ -79,7 +79,7 @@ krilla = { version = "0.8", default-features = false }
 # SVG support is a deliberate subset parser (shojiku-image): resvg/usvg are
 # MPL-2.0 and their text stack pulls ttf-parser, both of which deny.toml
 # rejects. These are MIT/Apache building blocks instead.
-# QR encoding (layout-time vector modules, N2): Project Nayuki's generator —
+# QR encoding (layout-time vector modules): Project Nayuki's generator —
 # MIT, zero dependencies, pure Rust. Encoding happens in layout; renderers
 # only ever see RectShapes.
 qrcodegen = "1.8"

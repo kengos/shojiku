@@ -141,7 +141,7 @@ pub fn validate(
     check_tables(template, catalog.as_ref(), params, &mut diags);
     check_repeats(template, catalog.as_ref(), params, &mut diags);
 
-    // Rich-text spans (RT1): content exclusivity, the span cap, and
+    // Rich-text spans: content exclusivity, the span cap, and
     // span-inapplicable style keys.
     check_spans(template, &mut diags);
 

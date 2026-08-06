@@ -33,10 +33,10 @@ pub struct ResolvedBox {
     /// x offset within the parent including the left margin — kept for
     /// the fill-width math.
     dx: f64,
-    /// Resolved `(minWidth, maxWidth)` bounds (D3); reapplied to the fill
+    /// Resolved `(minWidth, maxWidth)` bounds; reapplied to the fill
     /// width in [`Self::w_or_fill`].
     w_bounds: (Option<f64>, Option<f64>),
-    /// Resolved `(minHeight, maxHeight)` bounds (D3); reapplied to an
+    /// Resolved `(minHeight, maxHeight)` bounds; reapplied to an
     /// auto height in [`Self::clamp_h`].
     h_bounds: (Option<f64>, Option<f64>),
 }
@@ -50,7 +50,7 @@ impl ResolvedBox {
         let margin_auto = b.margin.map(|m| m.auto_sides()).unwrap_or([false; 4]);
         let padding = resolve_edges(b.padding.as_ref(), basis, diags);
         let dx = resolve_x(b.x, basis, diags).unwrap_or(0.0) + margin[3];
-        // Min/max bounds (D3): width against the width basis, height
+        // Min/max bounds: width against the width basis, height
         // against the height basis, same axis rules as `w`/`h`.
         let w_bounds = (
             resolve_x(b.min_width, basis, diags),
@@ -78,7 +78,7 @@ impl ResolvedBox {
     /// Border-box width: the authored one (already clamped), or fill the
     /// parent minus the x offset and right margin, floored at `min`
     /// (contexts differ: most fill to ≥ 1pt, repeat cells to ≥ 0), then
-    /// clamped to the min/max width bounds (D3).
+    /// clamped to the min/max width bounds.
     pub fn w_or_fill(&self, basis: &Basis, min: f64) -> f64 {
         self.w.unwrap_or_else(|| {
             let fill = (basis.w - self.dx - self.margin[1]).max(min);
@@ -121,14 +121,14 @@ impl ResolvedBox {
     }
 
     /// Clamps an auto (content-derived) height to the min/max height
-    /// bounds (D3). Authored heights are clamped at resolve; this is for
+    /// bounds. Authored heights are clamped at resolve; this is for
     /// the use sites that compute an auto height (`container_atom`). A
     /// no-op when neither bound is set.
     pub fn clamp_h(&self, auto: f64) -> f64 {
         clamp_size(auto, self.h_bounds.0, self.h_bounds.1)
     }
 
-    /// The resolved `(minHeight, maxHeight)` bounds (D3), for callers
+    /// The resolved `(minHeight, maxHeight)` bounds, for callers
     /// that build the height themselves and cannot go through
     /// [`Self::clamp_h`] as a single value — `text_block` clamps its
     /// auto height *before* distributing vertical-align slack, so a

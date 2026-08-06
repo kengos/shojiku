@@ -94,7 +94,7 @@ sections:
             to: { x: 327.17, y: 28 }
             style: { width: 0.8 }
 
-      # Amount — the container draws its own border (D1 box decoration).
+      # Amount — the container draws its own border (box decoration).
       - id: amount_box
         type: container
         box: { x: "10%", w: "80%", h: 56 }

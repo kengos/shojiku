@@ -67,7 +67,7 @@ pub fn render_pdf(
         let (w, h) = (layout.page_width, layout.page_height);
         let settings =
             PageSettings::from_wh(w as f32, h as f32).ok_or(RenderError::BadPageSize(w, h))?;
-        // Link annotations (LK1) are page-level, not surface draws:
+        // Link annotations are page-level, not surface draws:
         // collect them from the same tree, add after the surface closes.
         let mut annotations = Vec::new();
         annot::collect_annotations(&page_layout.items, 0, &mut annotations);

@@ -230,7 +230,7 @@ pub(crate) fn line_path(x1: f64, y1: f64, x2: f64, y2: f64) -> Option<Path> {
     pb.finish()
 }
 
-/// A solid fill at the given paint alpha (F2 `opacity`). Layout clamps
+/// A solid fill at the given paint alpha (`opacity`). Layout clamps
 /// opacity to `0..=1`; the guard covers hand-built trees.
 pub(crate) fn solid_fill(color: (f32, f32, f32), opacity: f32) -> Fill {
     Fill {

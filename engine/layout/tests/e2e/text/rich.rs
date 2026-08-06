@@ -1,4 +1,4 @@
-//! Rich text spans (RT1) end to end, split by concern: run output
+//! Rich text spans end to end, split by concern: run output
 //! (`runs`), wrapping/pagination (`wrapping`), and guards/policy scope
 //! (`guards`).
 

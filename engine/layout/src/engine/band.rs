@@ -152,7 +152,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let w = rb.w_or_fill(basis, 1.0);
         let dy = self.resolve_y(b.y, basis).unwrap_or(0.0);
         let computed = self.resolve_style(&pn.style_names, &pn.style);
-        // Band boxes carry no min/max height (D3 is item-box scoped). A
+        // Band boxes carry no min/max height (the bounds are item-box scoped). A
         // vertical writing mode makes the page number a vertical-writing column; the
         // band's margin-box height is the inline basis its column wraps
         // against (`page_number` is short, so this rarely wraps).

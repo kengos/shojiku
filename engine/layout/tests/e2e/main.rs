@@ -5,7 +5,7 @@
 //! `format` (formatter integration), `limits` (cross-module
 //! hostile-input caps), `box_model` (padding/margin across item
 //! kinds), `diagnostic_paths` (every warning names its item), and
-//! `units` (U1 em/rem + font-length strings) are
+//! `units` (em/rem + font-length strings) are
 //! deliberately cross-cutting; `common` holds shared fixtures.
 
 mod binding_scope;

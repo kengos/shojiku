@@ -1,6 +1,6 @@
-//! Rich text blocks (RT1): resolving `spans` into styled runs on a
+//! Rich text blocks: resolving `spans` into styled runs on a
 //! uniform line grid — one shared baseline and line height per block, so
-//! mixed sizes sit on a baseline grid and LT1 pagination keeps its
+//! mixed sizes sit on a baseline grid and long-text pagination keeps its
 //! uniform-line capacity math. Produces the same atom shape as
 //! [`super::block`], so flow/absolute placement, decoration, and
 //! pagination need no changes. Span/style/font resolution lives in
@@ -34,7 +34,7 @@ pub(in crate::engine::text) struct SpanRun<'a> {
     pub(in crate::engine::text) decoration_kind: TextDecoration,
     /// Filled once the block baseline is known (see `resolve::span_grid`).
     pub(in crate::engine::text) decoration: Option<DecorationSpec>,
-    /// Resolved hyperlink for this span's runs (LK1): the span's own
+    /// Resolved hyperlink for this span's runs: the span's own
     /// `link`, else the block's (see `resolve::resolve_spans`).
     pub(in crate::engine::text) link: Option<String>,
     /// tate-chu-yoko for this span (`digits N` / `all`), from the span cascade —
@@ -80,7 +80,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// Builds the wrapped, aligned rich block. Overflow policies: v1
     /// honors `visible` and `clip`; `shrink`/`ellipsis` warn and behave
     /// like `visible`.
-    #[allow(clippy::too_many_arguments)] // border box + padding + D3 height bounds, like text_block
+    #[allow(clippy::too_many_arguments)] // border box + padding + min/max height bounds, like text_block
     fn rich_block(
         &mut self,
         text: &TextItem,

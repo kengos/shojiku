@@ -1,4 +1,4 @@
-// The align/distribute cluster (GU18): a selection-context icon-button group
+// The align/distribute cluster: a selection-context icon-button group
 // on the slim toolbar's rail, shown only when the canvas multi-selection holds
 // at least two movable items (`MIN_ALIGN`). Six edge/center align actions plus
 // two equal-gap distribute actions (enabled at `MIN_DISTRIBUTE`), each a plain

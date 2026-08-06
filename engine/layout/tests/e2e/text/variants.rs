@@ -74,7 +74,7 @@ sections:
 #[test]
 fn fallback_chain_covers_a_glyph_the_default_face_lacks() {
     // The ja pack's default (biz-udp-gothic) lacks `𠮷` (U+20BB7, the
-    // 土吉 surname kanji, as in 𠮷野家) but the F3 fallback (ipamj-mincho)
+    // 土吉 surname kanji, as in 𠮷野家) but the fallback (ipamj-mincho)
     // has it, so it is NOT tofu; a truly uncoverable char still warns.
     let (doc, diags) = run(
         r#"

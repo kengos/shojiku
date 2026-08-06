@@ -29,7 +29,7 @@
   stroke-opacity: 1;
 }
 
-/* A multi-selection member (GU18): the accent stroke, lighter than the primary
+/* A multi-selection member: the accent stroke, lighter than the primary
  * so the last-clicked box still reads as primary. */
 .sj-box--multi,
 .sj-box--multi:hover {
@@ -78,7 +78,7 @@
   stroke: var(--sj-accent);
 }
 
-/* Multi-select group frame + rubber-band marquee (GU18). */
+/* Multi-select group frame + rubber-band marquee. */
 .sj-group-bounds {
   stroke: var(--sj-accent);
   stroke-opacity: 0.8;

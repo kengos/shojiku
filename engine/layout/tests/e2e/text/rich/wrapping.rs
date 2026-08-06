@@ -1,4 +1,4 @@
-//! Rich-span wrapping: cross-span kinsoku, LT1 pagination of rich flow
+//! Rich-span wrapping: cross-span kinsoku, long-text pagination of rich flow
 //! text, and element-scoped bindings in repeat cells.
 
 use crate::common::*;
@@ -37,7 +37,7 @@ sections:
 #[test]
 fn rich_flow_text_paginates_line_by_line() {
     // 40 paragraphs at ~14pt leading in a 100pt-tall region: the rich
-    // block must split across pages like plain long text (LT1), runs
+    // block must split across pages like plain long text, runs
     // riding each fragment.
     // `\n` stays an ESCAPE inside the YAML double-quoted scalar (a raw
     // newline would fold to a space instead).

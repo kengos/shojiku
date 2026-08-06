@@ -1,4 +1,4 @@
-//! QR code items (N2): content is encoded at *layout* time and emitted
+//! QR code items: content is encoded at *layout* time and emitted
 //! as run-length-merged module [`RectShape`]s — no tree/renderer/asset
 //! change, which is what lets a `qr_code` work inside `repeat` cells
 //! with element-scoped bindings on day one. The engine encodes whatever
@@ -28,7 +28,7 @@ const MIN_MODULE_PT: f64 = 1.0;
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Builds a QR atom: resolves the content (scope-aware, like text),
     /// encodes, and centers the code square (quiet zone included) in the
-    /// content box. Decoration (D1) paints under the modules — a
+    /// content box. Decoration paints under the modules — a
     /// `backgroundColor` is the usual white backing.
     pub(super) fn qr_atom(&mut self, qr: &QrCodeItem, basis: &Basis) -> Option<Atom> {
         let b = qr.box_.clone().unwrap_or_default();

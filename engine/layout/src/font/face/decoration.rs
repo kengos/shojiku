@@ -1,4 +1,4 @@
-//! Decoration-line metrics (F2 `textDecoration`): underline and strikeout
+//! Decoration-line metrics (`textDecoration`): underline and strikeout
 //! positions scaled from the face's font tables, with conventional
 //! fallbacks and hostile-value clamps.
 

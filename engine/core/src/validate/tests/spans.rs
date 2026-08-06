@@ -1,4 +1,4 @@
-//! Validation of rich-text `spans` (RT1): content exclusivity, caps,
+//! Validation of rich-text `spans`: content exclusivity, caps,
 //! inert style keys, bindings, and styleName references.
 
 use super::*;

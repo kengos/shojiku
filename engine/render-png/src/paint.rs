@@ -237,7 +237,7 @@ pub(crate) fn rgb((r, g, b): (f32, f32, f32)) -> Color {
         .unwrap_or(Color::BLACK)
 }
 
-/// A color with its F2 paint alpha applied. Layout clamps opacity; the
+/// A color with its paint alpha applied. Layout clamps opacity; the
 /// clamp here covers hand-built trees.
 pub(crate) fn rgba((r, g, b): (f32, f32, f32), opacity: f32) -> Color {
     Color::from_rgba(

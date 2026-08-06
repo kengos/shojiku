@@ -60,7 +60,7 @@ describe('Designer', () => {
       pickMenu('File', item);
       expect(spy).toHaveBeenCalledOnce();
     }
-    // Export routes through the review pane first (GU16): the host callback
+    // Export routes through the review pane first: the host callback
     // fires only once the pane is confirmed.
     pickMenu('File', 'Export');
     expect(onExport).not.toHaveBeenCalled();
@@ -572,7 +572,7 @@ describe('Designer', () => {
     expect((screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('multi-selects, aligns, and distributes absolute items from the canvas (GU18)', async () => {
+  it('multi-selects, aligns, and distributes absolute items from the canvas', async () => {
     const onChange = vi.fn();
     const paths = ['sections.body.items[0]', 'sections.body.items[1]', 'sections.body.items[2]'];
     const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs(paths)) });
@@ -591,7 +591,7 @@ describe('Designer', () => {
     await waitFor(() => expect(onChange).toHaveBeenCalled());
   });
 
-  it('aligning already-aligned items dispatches nothing (no empty undo step) (GU18)', async () => {
+  it('aligning already-aligned items dispatches nothing (no empty undo step)', async () => {
     const onChange = vi.fn();
     const paths = ['sections.body.items[0]', 'sections.body.items[1]', 'sections.body.items[2]'];
     // ABS_ITEMS + outcomeStacked: all three share x=0 and are evenly spaced in
@@ -609,7 +609,7 @@ describe('Designer', () => {
     expect((screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('toggles a multi-selected item back off with a second shift-click (GU18)', async () => {
+  it('toggles a multi-selected item back off with a second shift-click', async () => {
     const paths = ['sections.body.items[0]', 'sections.body.items[1]'];
     const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs(paths)) });
     draw(transport, { source: ABS_VARIED });
@@ -622,7 +622,7 @@ describe('Designer', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull());
   });
 
-  it('clears the multi-selection on Escape (GU18)', async () => {
+  it('clears the multi-selection on Escape', async () => {
     const paths = ['sections.body.items[0]', 'sections.body.items[1]'];
     const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs(paths)) });
     draw(transport, { source: ABS_VARIED });
@@ -634,7 +634,7 @@ describe('Designer', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull());
   });
 
-  it('ignores a shift-click on a non-movable (flow) item (GU18)', async () => {
+  it('ignores a shift-click on a non-movable (flow) item', async () => {
     const paths = ['sections.body.items[0]', 'sections.body.items[1]', 'sections.body.items[2]'];
     const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeStacked(paths)) });
     draw(transport, { source: THREE_ITEMS });
@@ -645,7 +645,7 @@ describe('Designer', () => {
     expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull();
   });
 
-  it('rubber-band selects absolute items, additive adds, an empty sweep deselects (GU18)', async () => {
+  it('rubber-band selects absolute items, additive adds, an empty sweep deselects', async () => {
     const paths = ['sections.body.items[0]', 'sections.body.items[1]', 'sections.body.items[2]'];
     const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs(paths)) });
     const { container } = draw(transport, { source: ABS_VARIED });

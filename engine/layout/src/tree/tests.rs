@@ -172,7 +172,7 @@ fn serializes_with_kind_tags() {
                     w: 3.0,
                     h: 4.0,
                 }),
-                // The D2 clip group nests items; inspect consumers
+                // The clip group nests items; inspect consumers
                 // must see the nested kind tags.
                 LayoutItem::Clip(ClipShape {
                     x: 0.0,
@@ -207,7 +207,7 @@ fn serializes_with_kind_tags() {
 
 #[test]
 fn plain_lines_serialize_without_runs_or_baseline() {
-    // The RT1 widening is additive: a plain block's JSON must not grow
+    // The rich-span widening is additive: a plain block's JSON must not grow
     // `runs`/`baseline` noise (inspect stability for pre-span documents).
     let block = TextBlock {
         font_id: "f".to_string(),

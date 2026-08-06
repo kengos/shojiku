@@ -84,7 +84,7 @@ fn flex_lengths_collapse_a_non_finite_basis_to_zero() {
 #[test]
 fn flex_lengths_over_a_full_row_shrink_rather_than_overflow() {
     // Re-pointed when `flex-shrink` landed: this used to assert the bases
-    // survived untouched, which was D4 taking CSS's basis without CSS's
+    // survived untouched, which took CSS's basis without CSS's
     // shrink. Unbounded children now give the space back.
     let sizes = resolve_flex_lengths(10.0, &[item(80.0, 1.0), item(80.0, 1.0)]);
     assert_eq!(sizes, vec![5.0, 5.0]);
@@ -97,7 +97,7 @@ fn flex_lengths_of_an_empty_row_is_empty() {
 
 #[test]
 fn flex_lengths_shrink_proportionally_when_the_bases_overflow() {
-    // The CSS half D4 was missing: bases wider than the row are taken
+    // The CSS half that was missing: bases wider than the row are taken
     // back in proportion, so text re-wraps instead of running off the
     // right edge. 120+40 into 80 -> each keeps half of its basis.
     let sizes = resolve_flex_lengths(80.0, &[item(120.0, 1.0), item(40.0, 1.0)]);

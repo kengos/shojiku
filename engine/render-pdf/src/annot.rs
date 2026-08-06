@@ -1,4 +1,4 @@
-//! Link annotations (LK1): walks a laid-out page and emits one krilla
+//! Link annotations: walks a laid-out page and emits one krilla
 //! link annotation per linked run/line rect (text) or draw box (image).
 //! Layout already resolved and gated every URL — this walk only maps
 //! geometry the renderer draws anyway; a rect krilla cannot represent

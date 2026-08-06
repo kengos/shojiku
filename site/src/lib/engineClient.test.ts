@@ -105,7 +105,7 @@ describe("renderPreview", () => {
     expect(out.diagnostics).toEqual([]);
   });
 
-  it("refuses oversized input before it reaches the engine (S2)", () => {
+  it("refuses oversized input before it reaches the engine", () => {
     const e = fakeEngine({
       renderPng: () => {
         throw new Error("must not be called");

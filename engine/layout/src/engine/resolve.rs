@@ -94,7 +94,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     }
 
     /// Resolves the font chain for a computed style, warning once per
-    /// unknown `fontFamily` (AA3): `FontStore::resolve` falls back to the
+    /// unknown `fontFamily`: `FontStore::resolve` falls back to the
     /// default face, which silently hid typos like `ipaexg` for
     /// `ipaex-gothic` while `styleNames` typos warned. Deduped per family
     /// so a list/table using the typo warns once, not per item.

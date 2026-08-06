@@ -77,14 +77,14 @@ pub struct ComputedStyle {
     /// Extra advance after every character, in pt. Inherited; negative
     /// tightens. Sanity-clamped at use (`sane_letter_spacing`).
     pub letter_spacing: f64,
-    /// What the box does with content outside its border box (D2). Not
+    /// What the box does with content outside its border box. Not
     /// inherited; `Hidden` wraps the box's children in a clip node.
     pub overflow: Overflow,
-    /// Decoration line on text (F2). Not inherited (matches CSS —
+    /// Decoration line on text. Not inherited (matches CSS —
     /// decoration *propagation* is not modeled). Position/thickness come
     /// from the font's metrics at emit time.
     pub text_decoration: TextDecoration,
-    /// Paint alpha `0..=1` (F2). Not inherited; per-item paint alpha, not
+    /// Paint alpha `0..=1`. Not inherited; per-item paint alpha, not
     /// CSS group compositing. Sanity-clamped at use (`sane_opacity`).
     pub opacity: f64,
     /// Line direction (CSS `writing-mode`). Inherited. `VerticalRl` builds

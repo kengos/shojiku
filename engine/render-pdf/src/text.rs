@@ -1,7 +1,7 @@
-//! Text drawing for the PDF backend: the F3 fallback-chain glyph runs and
+//! Text drawing for the PDF backend: the fallback-chain glyph runs and
 //! the krilla glyph mapping. `FontFace` decided every glyph id, advance,
 //! and fallback face; layout decided every run's font/color/decoration
-//! (`TextBlock::line_runs` — plain lines yield one implicit run, RT1 rich
+//! (`TextBlock::line_runs` — plain lines yield one implicit run, rich
 //! lines their spans). This only groups glyphs into per-face runs (krilla
 //! draws one font per call) and converts advances to em units.
 

@@ -1,5 +1,5 @@
 //! Template length values: absolute points/physical units, a percentage
-//! of the parent, or a font-relative `em`/`rem` (U1).
+//! of the parent, or a font-relative `em`/`rem`.
 //!
 //! Bare YAML numbers stay `pt` (backwards compatible); strings add units:
 //! `"50%"` resolves against the parent's size along the same axis, `"12pt"`

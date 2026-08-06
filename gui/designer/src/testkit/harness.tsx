@@ -50,7 +50,7 @@ export function pickMenu(menu: string, item: string) {
   fireEvent.click(screen.getByRole('menuitem', { name: item }));
 }
 
-// Save/Export now open the review pane (GU16) first; confirming it proceeds
+// Save/Export now open the review pane first; confirming it proceeds
 // with the actual save/export. This inlines the menu open + confirm (never via
 // `pickMenu`, so a bulk edit over its literal cannot catch this helper's body).
 export function saveViaReview() {

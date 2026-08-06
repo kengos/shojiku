@@ -117,7 +117,7 @@ export function pageUrl(page: Uint8Array): string {
 
 export async function renderPdfUrl(doc: LiveDoc): Promise<{ url: string; diagnostics: RenderOutcome["diagnostics"] } | null> {
   const e = await engine();
-  // The PDF path takes the same size cap as the preview path (S2).
+  // The PDF path takes the same size cap as the preview path.
   const { MAX_SOURCE_BYTES, parseDiagnostics } = await import("../../src/lib/engineClient.ts");
   if (new TextEncoder().encode(doc.template).length > MAX_SOURCE_BYTES) {
     return { url: "", diagnostics: [{ severity: "error", code: "source_too_large", message: `template exceeds ${MAX_SOURCE_BYTES} bytes` }] };

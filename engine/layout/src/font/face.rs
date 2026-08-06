@@ -245,7 +245,7 @@ pub struct PositionedGlyph {
     /// Byte range of the source cluster within the run text (a ligature
     /// glyph spans every char of its cluster — the ToUnicode contract).
     pub source: std::ops::Range<usize>,
-    /// Index into the fallback chain of the face that drew this glyph (F3;
+    /// Index into the fallback chain of the face that drew this glyph (
     /// 0 = the primary face). Single-face runs are always 0.
     pub face_index: usize,
 }

@@ -1,4 +1,4 @@
-//! The flow region under PM1: omitted `box` = the whole margin box,
+//! The flow region under the page margins: omitted `box` = the whole margin box,
 //! authored boxes re-base to the margin origin, and pagination respects
 //! the bottom margin.
 
@@ -13,7 +13,7 @@ sections:
   body:
     type: flow
     items:
-      # D1 decoration: the background rect covers the border box, so it
+      # Box decoration: the background rect covers the border box, so it
       # exposes the fill width.
       - type: text
         text: aaa

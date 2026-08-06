@@ -1,4 +1,4 @@
-//! Unit tests for fallback-aware shaping (F3). Uses the bundled ja pack:
+//! Unit tests for fallback-aware shaping. Uses the bundled ja pack:
 //! `biz-udp-gothic` (the default) lacks the CJK Ext-B surname kanji `𠮷`
 //! (U+20BB7, as in 𠮷野家) that `ipamj-mincho` has, giving a real
 //! primary/fallback coverage gap.

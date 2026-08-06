@@ -1,6 +1,6 @@
 //! Text drawing for the PNG backend: glyph outlines filled per run.
 //! Layout decided every run's font/color/decoration
-//! (`TextBlock::line_runs` — plain lines yield one implicit run, RT1
+//! (`TextBlock::line_runs` — plain lines yield one implicit run,
 //! rich lines their spans); `FontFace` decides glyph ids and positions.
 
 mod vertical;
@@ -53,7 +53,7 @@ impl Painter<'_> {
         opacity: f32,
         mask: Option<&Mask>,
     ) -> Result<(), RenderPngError> {
-        // Fallback chain (F3): the primary face plus any present fallback
+        // Fallback chain: the primary face plus any present fallback
         // faces; each glyph's `face_index` selects which one drew it.
         // `self.fonts` is a `&`-reference, so these faces outlive `&mut
         // self` (the glyph cache below borrows `self` mutably).

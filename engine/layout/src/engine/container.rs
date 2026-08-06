@@ -11,7 +11,7 @@ use crate::tree::{ClipShape, Corners, LayoutItem};
 use super::{placed_box, translate, with_vertical_margin, Atom, Basis, Ctx};
 
 /// Wraps a box's already-positioned children in a clip node over its
-/// border box (D2 `overflow: hidden`). The box's own decoration stays
+/// border box (`overflow: hidden`). The box's own decoration stays
 /// outside — the clip hides overflowing *content*, not the box itself.
 /// `radius` rounds the clipping box so a `borderRadius` box with
 /// `overflow: hidden` cannot leak content past its rounded edge; the
@@ -112,7 +112,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 h
             }
             // Auto height: the content height plus padding, clamped to
-            // the min/max height bounds (D3). A `maxHeight` shorter than
+            // the min/max height bounds. A `maxHeight` shorter than
             // the content behaves like a definite `h` too short —
             // content overflows visually, no warning (the author set the
             // bound).

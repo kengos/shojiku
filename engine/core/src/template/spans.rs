@@ -1,4 +1,4 @@
-//! Inline rich-text spans (RT1): styled fragments inside one text item.
+//! Inline rich-text spans: styled fragments inside one text item.
 
 use crate::style::Style;
 use serde::{Deserialize, Serialize};
@@ -31,7 +31,7 @@ pub struct Span {
     pub style_names: Vec<String>,
     #[serde(default, skip_serializing_if = "Style::is_empty")]
     pub style: Style,
-    /// Hyperlink (LK1) over this fragment's runs. Overrides the block's
+    /// Hyperlink over this fragment's runs. Overrides the block's
     /// own `link` for these runs; a span link that layout rejects drops
     /// the link (no fallback), so the author's warning is not masked.
     #[serde(default, skip_serializing_if = "Option::is_none")]

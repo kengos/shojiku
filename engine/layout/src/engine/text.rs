@@ -1,6 +1,6 @@
 //! Text content and atoms: binding/interpolation resolution and the
 //! text-item atom (margins + padding); block building lives in
-//! [`block`] (plain) and [`rich`] (RT1 spans).
+//! [`block`] (plain) and [`rich`] (spans).
 
 mod block;
 mod chrome;
@@ -92,7 +92,7 @@ fn valign_offset(valign: VerticalAlign, padding_top: f64, avail_h: f64, content_
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Builds a text item's atom: border box from the resolved box,
     /// padding passed through to the block builder, margins wrapped
-    /// around the reserved height. Rich items (`spans`, RT1) route to
+    /// around the reserved height. Rich items (`spans`) route to
     /// the span builder, which produces the same atom shape. A `mark:`
     /// (text-anchored circled-text) overlays a glyph-band oval last, so it draws
     /// over the finished block in either path.

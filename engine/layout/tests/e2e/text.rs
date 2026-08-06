@@ -3,7 +3,7 @@
 
 use crate::common::*;
 
-mod decoration_f2;
+mod decoration;
 mod glyphs;
 mod hanging;
 mod line_break;

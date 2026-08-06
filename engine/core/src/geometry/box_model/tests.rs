@@ -1,5 +1,5 @@
-//! Unit tests for the [`OptBox`] wire keys: the D3 min/max bounds and
-//! the D4 `flexGrow` weight — parse, the Length forms, authored-form
+//! Unit tests for the [`OptBox`] wire keys: the min/max bounds and
+//! the `flexGrow` weight — parse, the Length forms, authored-form
 //! round-trip, defaults, and typo safety. Plus [`PointSpec`], the `line`
 //! endpoint, whose axes are full `Length`s.
 

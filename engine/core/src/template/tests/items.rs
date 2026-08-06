@@ -5,7 +5,7 @@ use super::super::*;
 
 #[test]
 fn image_style_and_style_names_parse_and_round_trip() {
-    // Images carry `style`/`styleNames` for box decoration (D1); unset
+    // Images carry `style`/`styleNames` for box decoration; unset
     // they serialize to nothing, set they round-trip.
     let tpl = parse_template(
         r#"
@@ -69,7 +69,7 @@ sections:
     assert_eq!(second.style_names, vec!["backing".to_string()]);
     let yaml = serde_yaml::to_string(&tpl).expect("yaml");
     assert!(yaml.contains("errorCorrection: high"), "got: {yaml}");
-    // The defaulted level does not serialize on the first item (AA2):
+    // The defaulted level does not serialize on the first item:
     // only the authored `high` appears.
     assert_eq!(yaml.matches("errorCorrection").count(), 1, "got: {yaml}");
 }

@@ -48,7 +48,7 @@ fn walk_text<F: FnMut(&str, Option<&str>, Option<&str>, &str)>(
     }
 }
 
-/// A `link.url` binds exactly like static text content (LK1).
+/// A `link.url` binds exactly like static text content.
 fn url_of(link: Option<&Link>) -> Option<&str> {
     link.map(|link| link.url.as_str())
 }
@@ -141,7 +141,7 @@ pub(super) fn walk_item<F: FnMut(&str, Option<&str>, Option<&str>, &str)>(
             // names are treated as always valid downstream.
             walk_text(text.text.as_deref(), &text.bindings, path, check);
             walk_text(url_of(text.link.as_ref()), &text.bindings, path, check);
-            // Rich spans (RT1) bind exactly like the item's own content,
+            // Rich spans bind exactly like the item's own content,
             // through the OWNING item's declarations — a span has none.
             for (si, span) in text.spans.iter().enumerate() {
                 let span_path = format!("{path}.spans[{si}]");

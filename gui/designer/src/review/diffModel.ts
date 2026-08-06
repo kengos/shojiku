@@ -1,5 +1,5 @@
 // Pure line-level diff between the OPENED document text and the current text —
-// the model behind the save/export review pane (GU16). It never mutates the
+// the model behind the save/export review pane. It never mutates the
 // document (read-only review chrome, so no patch op), and it renders nothing:
 // the component maps `rows` to escaped React text. The two inputs are already
 // in memory (the Designer's baseline snapshot + `editor.text`), both produced

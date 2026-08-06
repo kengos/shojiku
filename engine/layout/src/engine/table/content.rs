@@ -50,7 +50,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
 
     /// Draws an image cell (geometry as in [`Self::cell_qr`]): the
     /// per-element asset fits the padded cell box; `cover`/`none`
-    /// overflow is clipped (D2), and an SVG is clipped whatever the fit
+    /// overflow is clipped, and an SVG is clipped whatever the fit
     /// (its paths may leave the `viewBox` — `Asset::clips_to_viewport`).
     pub(super) fn cell_image(
         &mut self,
