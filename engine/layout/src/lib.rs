@@ -17,8 +17,8 @@ pub use boxes::{BoxIndex, BoxRect, PlacedBox};
 pub use color::parse_color;
 pub use engine::{layout, LayoutInput, LayoutOutput};
 pub use font::{
-    arrange_vertical, shape_run, FontError, FontFace, FontStore, PositionedGlyph, RunOptions,
-    VGlyph,
+    arrange_vertical, embedding_restricted, face_sha256, shape_run, FontError, FontFace, FontStore,
+    PositionedGlyph, RunOptions, VGlyph,
 };
 pub use shojiku_core::TextOrientation;
 pub use tree::{

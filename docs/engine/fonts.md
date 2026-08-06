@@ -149,6 +149,82 @@ one pointing within it is fine. The pack directory itself may not be a
 symlink. A `file:` that is merely *absent* is not an error: that is the
 pinned-reference case below.
 
+### Adding your own font (`shojiku font add`)
+
+A font you hold a licence for becomes an ordinary pack — no different
+from a bundled one — with one command per face:
+
+```bash
+shojiku font add MyCorporate-Regular.ttf --family my-corporate --license Proprietary
+```
+
+That creates `packs/fonts/my-corporate/`, copies the file in, and writes
+the `manifest.yml` with the file's sha256 already pinned. Run it again
+with the same `--pack` to add another face to the same family:
+
+```bash
+shojiku font add MyCorporate-Bold.ttf --family my-corporate --license Proprietary \
+  --weight bold
+```
+
+| Flag | Effect |
+| --- | --- |
+| `--family <id>` | *(required)* what `style.fontFamily` names. |
+| `--license <id>` | *(required)* one licence for the whole pack. |
+| `--pack <id>` | Pack directory name. Default: the family id. |
+| `--face-id <id>` | Default: the family id plus `-bold` / `-italic` / `-bold-italic`. |
+| `--weight normal\|bold`, `--style normal\|italic` | This face's variant keys. |
+| `--url <url>` | Record a `url:` pin hint (see below). |
+| `--license-file <path>` | Copy the licence text into the pack. |
+| `--redistributable` | Mark the pack redistributable. **Off by default** — a licensed font usually may not be. |
+| `--embedding-attested` | See below. |
+| `--dir <path>` | Font dir to create the pack in. Default: the first of `$SHOJIKU_FONT_DIR`, else `./packs/fonts`. |
+
+Ids are the same charset a `uses:` entry takes: letters, digits, `-`,
+`_`, 1–64 characters.
+
+The command refuses rather than writing a pack the engine would later
+reject: a file that does not parse as a font, a face id the pack already
+declares, a file name already present with different bytes, a second
+licence in one pack, and a manifest already there that will not parse.
+A refusal writes nothing at all.
+
+**If the font's OS/2 `fsType` forbids embedding**, `font add` refuses it
+— the renderer would refuse it too (`font_embedding_restricted`), so the
+useful place to say so is before the pack exists. `--embedding-attested`
+asserts a separately held embedding licence and writes
+`embeddingAttested: true`; the run says on stderr that the guard no
+longer applies to that pack. There is no silent path between the two.
+
+Shojiku never scans system fonts. A pack exists because someone ran this
+command, and it is loaded because a run named it — so what a document was
+rendered with is an input, not a property of the machine.
+
+### Using a pack the locale does not name (`--font-pack`)
+
+A pack is loaded only if it is named. A locale's own `fonts.uses` is one
+way; the other is per run:
+
+```bash
+shojiku render --templates templates.yml --params params.json \
+  --output out.pdf --font-pack my-corporate
+```
+
+`--font-pack <id>` is repeatable and **adds to** the locale's `uses`
+rather than replacing it — which is what makes it the short way round:
+an overlay's sequences replace, so putting one pack into builtin `ja-JP`
+by hand means restating `[biz-ud, ipamj-mincho, noto-sans-mono]` too.
+
+These packs resolve **before** the locale's own, so a face id they
+declare shadows a bundled one of the same id — the same "earlier wins"
+rule that lets an earlier `--font-dir` override a bundled pack. A hostile
+id is refused by the same guard a locale pack's entry meets; the flag
+buys no trust.
+
+Put the pack in the locale's `uses` instead when every render of that
+locale should have it (a deployment's corporate font); use
+`--font-pack` when one run needs it.
+
 ### Pinned faces & auto-fetch (`url:`)
 
 A face may carry a **`url:`** alongside its `sha256`, so a pack can travel

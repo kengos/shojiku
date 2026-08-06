@@ -2,6 +2,14 @@
 //! sha256 must match the file bytes (tamper/corruption), and the OS/2
 //! `fsType` must permit embedding unless the pack attests a separately-held
 //! embedding license (fsType cannot express purchased embed rights).
+//!
+//! Both rules are also what a pack GENERATOR must satisfy, so each is
+//! exposed as a byte-taking free function ([`face_sha256`],
+//! [`embedding_restricted`]) and `verify_face` is written in terms of
+//! them. A generator that computed its own digest, or read `fsType` its
+//! own way, would be a second definition of "a valid pack" — and the two
+//! would drift silently, since a pack that fails these checks is only
+//! rejected at render time.
 
 use super::{FontError, FontFace};
 use sha2::{Digest, Sha256};
@@ -18,20 +26,29 @@ pub(super) fn verify_face(
     expected_sha256: &str,
     embedding_attested: bool,
 ) -> Result<(), FontError> {
-    if hex(&Sha256::digest(face.data.as_slice())) != expected_sha256 {
+    if face_sha256(&face.data) != expected_sha256 {
         return Err(FontError::Sha256Mismatch(Echo::from(&face.id)));
     }
-    if !embedding_attested && embedding_restricted(face) {
+    if !embedding_attested && embedding_restricted(&face.data) {
         return Err(FontError::EmbeddingRestricted(Echo::from(&face.id)));
     }
     Ok(())
 }
 
+/// Lowercase-hex SHA-256 of a face's bytes — exactly the value a pack
+/// manifest's `sha256` must carry for those bytes to load.
+#[must_use]
+pub fn face_sha256(bytes: &[u8]) -> String {
+    hex(&Sha256::digest(bytes))
+}
+
 /// True when the face's OS/2 `fsType` forbids embedding. A face without an
-/// OS/2 table (or unparsable) is treated as unrestricted — the same bytes
-/// already parsed once when the face loaded.
-fn embedding_restricted(face: &FontFace) -> bool {
-    FontRef::from_index(&face.data, 0)
+/// OS/2 table (or unparsable) is treated as unrestricted — at load these
+/// are the same bytes that already parsed once when the face loaded, and a
+/// generator refuses an unparsable file before it ever gets here.
+#[must_use]
+pub fn embedding_restricted(bytes: &[u8]) -> bool {
+    FontRef::from_index(bytes, 0)
         .ok()
         .and_then(|f| f.os2().ok())
         .is_some_and(|os2| os2.fs_type() & FS_TYPE_RESTRICTED != 0)
@@ -58,7 +75,22 @@ mod tests {
     }
 
     fn sha_hex(bytes: &[u8]) -> String {
-        hex(&Sha256::digest(bytes))
+        face_sha256(bytes)
+    }
+
+    #[test]
+    fn face_sha256_is_lowercase_hex_of_the_bytes() {
+        // The empty input's digest is the published SHA-256 constant, so this
+        // pins the encoding (lowercase hex, 64 chars) without a fixture.
+        assert_eq!(
+            face_sha256(&[]),
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
+    }
+
+    #[test]
+    fn unparsable_bytes_are_not_reported_restricted() {
+        assert!(!embedding_restricted(b"not a font"));
     }
 
     #[test]
@@ -95,6 +127,8 @@ mod tests {
         bytes[o] = 0x00;
         bytes[o + 1] = 0x02;
         let sha = sha_hex(&bytes);
+        // The exposed predicate and the load-time guard read the same bit.
+        assert!(embedding_restricted(&bytes));
         let face = FontFace::from_bytes("biz", bytes).expect("face");
         let err = verify_face(&face, &sha, false).unwrap_err();
         assert!(matches!(err, FontError::EmbeddingRestricted(ref id) if id == "biz"));

@@ -43,6 +43,7 @@ pub(super) fn example_render_args() -> RenderArgs {
             deny_dynamic_image: Vec::new(),
             offline: false,
             font_fetch_allow: Vec::new(),
+            font_pack: Vec::new(),
         },
         output: "-".to_string(),
         report: ReportArg::default(),

@@ -2,9 +2,9 @@
 
 use clap::Parser;
 use shojiku_cli::{
-    report_diagnostics, run_capabilities, run_inspect, run_preview, run_render, run_sign,
-    run_sign_complete, run_sign_prepare, run_validate, run_verify, write_output, Cli, CliError,
-    Command, Report, ReportArg,
+    report_diagnostics, run_capabilities, run_font_add, run_inspect, run_preview, run_render,
+    run_sign, run_sign_complete, run_sign_prepare, run_validate, run_verify, write_output, Cli,
+    CliError, Command, FontCommand, Report, ReportArg,
 };
 use shojiku_diagnostics::{sanitize, Diagnostics, MAX_MESSAGE};
 use std::process::ExitCode;
@@ -135,6 +135,34 @@ fn run(cli: Cli) -> Result<(), CliError> {
             } else {
                 Err(CliError::VerificationFailed)
             }
+        }
+        Command::Font {
+            command: FontCommand::Add(args),
+        } => {
+            let added = run_font_add(&args)?;
+            // What was written, and the one thing a caller cannot guess:
+            // the pack id `--font-pack` must name. No suggested command
+            // line — an embedded one is a claim that has to stay true.
+            //
+            // Sanitized like the error path above: the ids are charset-
+            // guarded by now, but `--dir` is arbitrary argv and this is a
+            // terminal. A success line is exactly where that gets
+            // forgotten, because it does not read as an echo boundary.
+            println!(
+                "added face `{}` (family `{}`) to font pack `{}` at {}",
+                added.face_id,
+                added.family,
+                added.pack,
+                sanitize(&added.pack_dir.display().to_string(), MAX_MESSAGE)
+            );
+            if added.embedding_attested {
+                eprintln!(
+                    "shojiku: pack `{}` records an embedding attestation; \
+                     the OS/2 fsType embedding guard will not apply to it",
+                    added.pack
+                );
+            }
+            Ok(())
         }
         Command::Capabilities => {
             println!("{}", run_capabilities()?);

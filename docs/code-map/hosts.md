@@ -23,7 +23,11 @@ false`), no clap.
   touches the FS).
 - `fs.rs` — the FS pack discovery both FS hosts share:
   `resolve_font_dirs`/`resolve_locale_dir` (flags > env > `./packs/*`),
-  `find_locale_file`, `load_locale_pack`; errors = `FsPackError`.
+  `primary_font_dir` (the dir a NEW pack is created in — the same
+  precedence resolved directly rather than as `resolve_font_dirs(..)
+  .first()`, which would leave an empty-list arm no input can produce; a
+  test pins the two equal at every position), `find_locale_file`,
+  `load_locale_pack`; errors = `FsPackError`.
 - `prepare.rs` — `prepare`: the validate-gate → assets → layout → dedup
   pipeline shared by inspect/preview/render; `AssetsInput` = `Prepare`
   (FS walk) | `PrepareInjected` (bundled-byte walk) | `Prebuilt`;
@@ -75,8 +79,8 @@ so layout/render/sign/verify stay socket-free.
 
 - `lib.rs` — the crate root is now the command TABLE alone
   (`render`/`validate`/`inspect`/`preview`/`sign`/`sign-prepare`/
-  `sign-complete`/`verify`/`capabilities`) plus the module wiring and
-  re-exports; `main.rs` thin.
+  `sign-complete`/`verify`/`font add`/`capabilities`) plus the module
+  wiring and re-exports; `main.rs` thin.
   `VerificationFailed` carries an exit status only, and
   `ValidationFailed` carries the diagnostics as well (stderr already had
   them as prose; `--report` needs their codes and typed args) — both
@@ -98,6 +102,26 @@ so layout/render/sign/verify stay socket-free.
   rather than a table here, and the finishing half goes through
   `PresignedSigner` + `sign_document` — the same writer the local-key path
   uses, so the external route cannot drift from it.
+- `font.rs` (+ `font/{ids,write}.rs`, `font/tests/hostile.rs`) — the only
+  command that writes to paths it DERIVES rather than paths the caller
+  named (`--output`, `--report`): `font add` turns a licensed font file
+  into a pack (`<font-dir>/<pack>/manifest.yml` + the
+  copied face, sha256 pinned), creating the pack or APPENDING a face to
+  it. Both rules a generated pack must satisfy are the LOADER's
+  (`shojiku_layout::{face_sha256, embedding_restricted}`), never restated
+  here — a pack this writes and the engine then refuses is the one
+  failure a generator exists to prevent. `FontPackError` is its own
+  vocabulary (one `CliError::FontPack` arm, kind `font_pack`), since
+  `font add` carries no `--report` for an SDK to branch on. `ids.rs` =
+  the pure rules (the pack-id charset applied to family/face ids too, the
+  `-bold`/`-italic` face-id suffixes matching what the Designer's
+  browser-side builder mints, the face file-name guard); `write.rs` = the
+  FS half only, deciding nothing — pack dir via
+  `authoring::fs::primary_font_dir`, the size cap + parse probe, the
+  existing-manifest read, and the face-then-manifest commit with the
+  manifest written tmp+rename. Its tests provoke every IO refusal with a
+  DIRECTORY where a file belongs: the gates run as root, so an unreadable
+  file proves nothing.
 - `error.rs` — `CliError` (wrapping `FsPackError`/`FetchError`/
   `SigningError`/`KeyError`/`VerifyError`) and its classification:
   `class()` splits caller error from a refused document, `kind()` is the
@@ -137,6 +161,9 @@ so layout/render/sign/verify stay socket-free.
   identically. A document that fails to verify is NOT a `CliError`: the
   report prints either way and the exit code carries the verdict.
 - Flags: pack `--font-dir`/`--locale-dir` (repeatable, earlier wins),
+  `--font-pack` (repeatable — extra pack ids resolved BEFORE the locale's
+  own `uses`, so a user face id shadows a bundled one; re-guarded by the
+  resolver, since a flag is no more trusted than a parsed entry),
   `--lang`; fetch `--offline`/`--font-fetch-allow`; asset
   `--assets-dir`/`--asset-mode`/`--allow|deny-dynamic-image`; preview
   `--output`/`--scale`/`--page`; sign

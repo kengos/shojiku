@@ -43,9 +43,27 @@ pub fn resolve_face_specs(
     pack: &LangPack,
     font_dirs: &[PathBuf],
 ) -> Result<Vec<FaceSpec>, PackError> {
+    resolve_face_specs_with(pack, font_dirs, &[])
+}
+
+/// [`resolve_face_specs`] plus `extra` pack ids a HOST added outside the
+/// locale — the CLI's `--font-pack`, so a pack a user created is reachable
+/// without rewriting the locale's whole `uses` sequence (an overlay's
+/// sequences replace rather than merge).
+///
+/// The extras resolve FIRST, so a user face id shadows a bundled one on a
+/// collision: earlier wins on a duplicate face id, which is the same rule
+/// that already lets an earlier font dir override a bundled pack. Each id
+/// goes through the identical [`check_pack_id`] guard the locale's own
+/// entries do — a host-supplied id is no more trusted than a parsed one.
+pub fn resolve_face_specs_with(
+    pack: &LangPack,
+    font_dirs: &[PathBuf],
+    extra: &[String],
+) -> Result<Vec<FaceSpec>, PackError> {
     let mut out = Vec::new();
     let mut seen = HashSet::new();
-    for pack_id in pack.font_pack_ids() {
+    for pack_id in extra.iter().chain(pack.font_pack_ids()) {
         check_pack_id(pack_id)?;
         let (manifest, pack_dir) = load_pack(pack_id, font_dirs)?;
         for face in &manifest.faces {

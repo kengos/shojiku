@@ -104,6 +104,12 @@ pub enum CliError {
         /// The variable `--passphrase-env` named.
         variable: String,
     },
+    /// `font add` would not write the pack. Its own vocabulary lives in
+    /// `crate::font` rather than being spread across variants here: none of
+    /// it is reachable from an operation an SDK consumes, since `font add`
+    /// carries no `--report`.
+    #[error(transparent)]
+    FontPack(#[from] crate::font::FontPackError),
 }
 
 impl CliError {
@@ -124,7 +130,10 @@ impl CliError {
             // The caller chose these too: an algorithm no release writes, and
             // a signature file with nothing in it.
             | CliError::Algorithm
-            | CliError::EmptySignature => FailureClass::Usage,
+            | CliError::EmptySignature
+            // And these: the file to add, the ids to give it, whether to
+            // attest an embedding licence.
+            | CliError::FontPack(_) => FailureClass::Usage,
             _ => FailureClass::Document,
         }
     }
@@ -170,6 +179,7 @@ impl CliError {
             CliError::Verify(_) => "verify",
             CliError::Passphrase(_) => "passphrase",
             CliError::PassphraseVariableUnset { .. } => "passphrase_variable",
+            CliError::FontPack(_) => "font_pack",
         }
     }
 }

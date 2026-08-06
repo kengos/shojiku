@@ -100,6 +100,15 @@ fn every_variant_declares_its_class_and_kind() {
             FailureClass::Usage,
             "passphrase_variable",
         ),
+        (
+            // `font add` failures are the caller's: which file, which ids,
+            // whether to attest an embedding licence.
+            CliError::FontPack(crate::FontPackError::NotAFont {
+                path: "MyFont.otf".into(),
+            }),
+            FailureClass::Usage,
+            "font_pack",
+        ),
     ];
     for (error, class, kind) in cases {
         assert_eq!(error.class(), class, "class of {error}");

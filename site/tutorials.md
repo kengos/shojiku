@@ -132,29 +132,46 @@ locale.
 pack, license file included. Unzip it into `packs/fonts/` and the pack
 side is done.
 
-**If you have the TTF**, write the pack yourself. Put the font file
-under `packs/fonts/my-corporate/` and declare one license plus a sha256
-per face in `manifest.yml`. The sha256 and the face's embedding rights
-(fsType) are verified at load.
+**If you have the TTF**, one command builds the pack:
 
 ```bash
-mkdir -p packs/fonts/my-corporate
-sha256sum packs/fonts/my-corporate/MyCorporate-Regular.ttf   # goes into the manifest
+shojiku font add MyCorporate-Regular.ttf \
+  --family my-corporate --license Proprietary
+# add the bold face to the same family
+shojiku font add MyCorporate-Bold.ttf \
+  --family my-corporate --license Proprietary --weight bold
 ```
+
+That writes `packs/fonts/my-corporate/`, copies the file in, and pins
+its sha256 in the manifest:
 
 ```yaml
 # packs/fonts/my-corporate/manifest.yml
 version: 1
 license: Proprietary
-redistributable: false
 faces:
   - id: my-corporate
     file: MyCorporate-Regular.ttf
-    sha256: <output of sha256sum>
+    sha256: <computed for you>
 ```
 
-Either way, finish by adding the pack to the locale's `uses`. A one-file
-overlay is enough.
+The sha256 and the face's embedding rights (fsType) are verified at
+load — and `font add` checks the same two things up front, so a font
+whose licence forbids embedding is refused there rather than at your
+first render. If you hold a separate embedding licence, say so with
+`--embedding-attested`. Packs are non-redistributable unless you pass
+`--redistributable`.
+
+Either way, finish by telling the render which pack to load. Per run,
+that is a flag:
+
+```bash
+shojiku render --templates templates.yml --params params.json \
+  --output out.pdf --font-pack my-corporate
+```
+
+For a deployment where every render should have it, put it in the
+locale's `uses` instead. A one-file overlay is enough:
 
 ```yaml
 # packs/locale/ja-jp.yml (an overlay over the builtin ja-JP)
@@ -163,8 +180,10 @@ fonts:
 ```
 
 `uses` restates the whole list rather than appending, so keep the
-bundled packs in place when you add yours. A `fontFamily` naming a pack
-the locale does not `use` warns `unknown_font_family` and falls back to
+bundled packs in place when you add yours — which is why `--font-pack`
+is the shorter route for one run: it adds to the list instead of
+replacing it. A `fontFamily` naming a pack that neither the locale
+`use`s nor the run names warns `unknown_font_family` and falls back to
 the locale's default font.
 
 Pack lookup works the same in the CLI and the SDKs: the search list

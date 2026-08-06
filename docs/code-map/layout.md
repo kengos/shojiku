@@ -354,7 +354,11 @@ Wire types stay in core; content measurement stays in layout.
   (FS), `load_from_specs` (host fetch layer seam), `load_from_injected`
   (WASM/MCP bytes), `load_from_injected_subset` (lenient browser preview;
   returns skipped pack ids); all share the sha256/fsType verify in
-  `font/verify.rs`. `font/face.rs` — `FontFace`: skrifa metrics, cached
+  `font/verify.rs` — which also EXPORTS both rules as byte-taking free
+  functions (`face_sha256`, `embedding_restricted`, crate-root
+  re-exported) so a pack GENERATOR (`shojiku font add`) satisfies exactly
+  what the loader checks instead of carrying a second definition of a
+  valid pack; `verify_face` is written in terms of them. `font/face.rs` — `FontFace`: skrifa metrics, cached
   harfrust `ShaperData`, `glyph_path` outline extraction for PNG;
   `face/pen.rs` (outline→`PathCmd`, y-flip + quad→cubic),
   `face/metrics.rs` (vertical band metrics + hostile-value fallbacks),

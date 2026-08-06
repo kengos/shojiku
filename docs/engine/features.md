@@ -639,6 +639,25 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **CLI search paths**: additive `--font-dir`/`--locale-dir`
   (repeatable, earlier wins) over `$SHOJIKU_FONT_DIR`/
   `$SHOJIKU_LOCALE_DIR` over `./packs/{fonts,locale}`.
+- **User font packs** (`cli.font.add`): `shojiku font add <file>
+  --family <id> --license <id>` turns a licensed font into an ordinary
+  pack — creating `<font-dir>/<pack>/`, copying the face in, and writing
+  the manifest with the file's sha256 already pinned; re-running with the
+  same `--pack` appends a face to the same family. The generated pack is
+  held to exactly what the LOADER checks, because both rules come from
+  it (`shojiku_layout::{face_sha256, embedding_restricted}`) rather than
+  being restated in the generator. A face whose OS/2 `fsType` forbids
+  embedding is refused at add time unless `--embedding-attested` asserts
+  a separately held licence; `--redistributable` is off by default. Every
+  other refusal (an unparsable file, a duplicate face id, a file name
+  taken by different bytes, a second licence, an unreadable existing
+  manifest) writes nothing. Still **never system-font scanning**.
+  `--font-pack <id>` (repeatable, on render/preview/inspect) then loads
+  such a pack ALONGSIDE the locale's own `fonts.uses` — resolving before
+  them, so a user face id shadows a bundled one — which is what avoids
+  restating a builtin locale's whole `uses` sequence in an overlay just
+  to add one pack. A `--font-pack` id meets the same confinement guard a
+  locale's own entry does.
 - **Pinned faces + host auto-fetch** (`fonts.face.url`): a manifest face
   may carry `url:` beside its `sha256`, so a pack travels as a *reference*
   (manifest, no bytes). The CLI resolves a missing face from a

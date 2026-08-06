@@ -11,7 +11,7 @@ use shojiku_authoring::{
     validate_strings, AssetsInput, PrepareCtx, Prepared,
 };
 use shojiku_diagnostics::{sanitize, Diagnostics, MAX_MESSAGE};
-use shojiku_formatter::{resolve_face_specs, LangPack};
+use shojiku_formatter::{resolve_face_specs_with, LangPack};
 use shojiku_layout::FontStore;
 use std::path::Path;
 
@@ -106,8 +106,12 @@ fn prepare_layout(common: &RenderishArgs) -> Result<CliPrepared, CliError> {
 /// time the store exists every face is a local file, so the render path stays
 /// socket-free and a warm-cache `--offline` run produces identical bytes.
 fn load_fonts(pack: &LangPack, common: &RenderishArgs) -> Result<FontStore, CliError> {
-    let specs = resolve_face_specs(pack, &resolve_font_dirs(&common.font_dir))
-        .map_err(shojiku_layout::FontError::from)?;
+    let specs = resolve_face_specs_with(
+        pack,
+        &resolve_font_dirs(&common.font_dir),
+        &common.font_pack,
+    )
+    .map_err(shojiku_layout::FontError::from)?;
     // Every face already shipped with its pack — the overwhelmingly common
     // case. Skip the fetch layer entirely rather than requiring a usable cache
     // directory (or building an HTTP agent) to render fonts we already have.

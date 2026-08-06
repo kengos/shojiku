@@ -33,6 +33,7 @@ sections:
         deny_dynamic_image: Vec::new(),
         offline: false,
         font_fetch_allow: Vec::new(),
+        font_pack: Vec::new(),
     };
     assert!(matches!(
         run_inspect(&args),
@@ -79,6 +80,7 @@ sections:
             deny_dynamic_image: Vec::new(),
             offline: false,
             font_fetch_allow: Vec::new(),
+            font_pack: Vec::new(),
         },
         output: "-".to_string(),
         report: ReportArg::default(),
@@ -122,6 +124,7 @@ sections:
         deny_dynamic_image: Vec::new(),
         offline: false,
         font_fetch_allow: Vec::new(),
+        font_pack: Vec::new(),
     };
     assert!(matches!(
         run_inspect(&args),
@@ -144,6 +147,7 @@ fn unreadable_input_fails_inspect() {
         deny_dynamic_image: Vec::new(),
         offline: false,
         font_fetch_allow: Vec::new(),
+        font_pack: Vec::new(),
     };
     assert!(matches!(run_inspect(&args), Err(CliError::Io { .. })));
 }
@@ -244,6 +248,7 @@ sections:
             deny_dynamic_image: Vec::new(),
             offline: false,
             font_fetch_allow: Vec::new(),
+            font_pack: Vec::new(),
         },
         output: "-".to_string(),
         report: ReportArg::default(),

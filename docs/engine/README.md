@@ -66,6 +66,9 @@ Useful defaults on `render` / `preview` / `inspect`:
   (repeatable) locate the packs,
   adding to `$SHOJIKU_LOCALE_DIR` / `$SHOJIKU_FONT_DIR` then
   `./packs/{locale,fonts}`. See [fonts.md](fonts.md).
+- `--font-pack <id>` (repeatable) loads a font pack in addition to the
+  locale's own `fonts.uses` — how a pack made by `shojiku font add` is
+  used without rewriting the locale. See [fonts.md](fonts.md).
 - A font pack whose faces are **pinned** (`sha256` + `url:`) but absent is
   downloaded into `$SHOJIKU_CACHE_DIR` before rendering; `--offline`
   refuses instead, and `--font-fetch-allow <host>` trusts an extra

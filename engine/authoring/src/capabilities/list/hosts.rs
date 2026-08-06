@@ -123,6 +123,16 @@ pub(super) const KEYS: &[&str] = &[
     // subprocess SDKs (php, go) need to offer a provider for a key held in a
     // cloud KMS, an HSM or a smartcard.
     "cli.sign.external",
+    // User font packs from the CLI (`shojiku font add`): a licensed font
+    // file a user holds becomes an ordinary pack — `manifest.yml` + the
+    // face, sha256-pinned — under a font search dir, and `--font-pack <id>`
+    // (repeatable, on render / preview / inspect) loads it in addition to
+    // the locale's own `fonts.uses`, resolving BEFORE them so a user face id
+    // shadows a bundled one. Never system-font scanning: a pack is loaded
+    // because a run named it. A face whose OS/2 fsType forbids embedding is
+    // refused at add time unless `--embedding-attested` asserts a separately
+    // held licence.
+    "cli.font.add",
     // Diagnostics v2: every diagnostic carries typed `args` (String |
     // Number | Bool) + a `category` + an `origin` alongside `code` +
     // `message`, so a GUI can localize from `code` + `args` instead of the

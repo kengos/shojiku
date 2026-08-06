@@ -126,6 +126,80 @@ fn manifest_true_flags_still_serialize() {
 }
 
 #[test]
+fn to_yaml_and_from_yaml_round_trip_a_generated_manifest() {
+    // The pair a GENERATOR writes and the resolver reads. What matters is
+    // that a manifest built in memory survives the trip unchanged — a
+    // generator whose output parsed back differently would write packs that
+    // load as something other than what it was asked for.
+    let built = PackManifest {
+        version: 1,
+        license: "Proprietary".to_string(),
+        redistributable: false,
+        embedding_attested: true,
+        faces: vec![FontFaceDecl {
+            id: "mine-bold".to_string(),
+            file: "Mine-Bold.ttf".to_string(),
+            sha256: "aa".to_string(),
+            url: None,
+            family: Some("mine".to_string()),
+            weight: Some(FontWeight::Bold),
+            style: None,
+        }],
+    };
+    let back = PackManifest::from_yaml(&built.to_yaml()).expect("round trip");
+    assert_eq!(back.version, 1);
+    assert_eq!(back.license, "Proprietary");
+    assert!(!back.redistributable);
+    assert!(back.embedding_attested);
+    assert_eq!(back.faces.len(), 1);
+    assert_eq!(back.faces[0].id, "mine-bold");
+    assert_eq!(back.faces[0].family.as_deref(), Some("mine"));
+    assert_eq!(back.faces[0].weight, Some(FontWeight::Bold));
+    assert_eq!(back.faces[0].style, None);
+}
+
+#[test]
+fn to_yaml_writes_no_key_the_manifest_did_not_set() {
+    // `to_yaml` inherits the struct's skip-when-unset attributes rather
+    // than composing YAML itself — which is the whole reason it lives
+    // beside the wire type instead of in the generator.
+    let plain = PackManifest {
+        version: 1,
+        license: "X".to_string(),
+        redistributable: false,
+        embedding_attested: false,
+        faces: vec![FontFaceDecl {
+            id: "s".to_string(),
+            file: "s.ttf".to_string(),
+            sha256: "aa".to_string(),
+            url: None,
+            family: None,
+            weight: None,
+            style: None,
+        }],
+    };
+    let out = plain.to_yaml();
+    for key in [
+        "url:",
+        "family:",
+        "weight:",
+        "style:",
+        "redistributable:",
+        "embeddingAttested:",
+    ] {
+        assert!(!out.contains(key), "injected {key}: {out}");
+    }
+}
+
+#[test]
+fn from_yaml_refuses_a_manifest_it_cannot_read() {
+    // The generator distinguishes "no pack yet" from "a pack I cannot
+    // read", so this has to be an error rather than a default.
+    assert!(PackManifest::from_yaml("faces: [oh dear\n").is_err());
+    assert!(PackManifest::from_yaml("").is_err());
+}
+
+#[test]
 fn face_rejects_unknown_keys() {
     let bad = "version: 1\nlicense: X\nfaces:\n  - id: s\n    file: s.ttf\n    \
                sha256: aa\n    hover: x\n";

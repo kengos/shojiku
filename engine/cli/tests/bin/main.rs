@@ -8,6 +8,7 @@ mod caps;
 mod echo;
 mod external;
 mod fetch;
+mod font;
 mod outputs;
 mod report;
 mod sign;

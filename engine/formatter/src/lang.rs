@@ -14,8 +14,8 @@ pub use builtin::{currency_fraction_digits, BUILTIN_LOCALE_IDS};
 pub use era::{EraDate, EraSpec};
 pub use fonts::{valid_pack_id, FaceSpec, FontFaceDecl, LocaleFonts, PackManifest, MAX_PACK_ID};
 pub use packs::{
-    resolve_face_bytes, resolve_face_bytes_subset, resolve_face_specs, FaceBytes, InjectedPack,
-    PackError, SubsetFaces,
+    resolve_face_bytes, resolve_face_bytes_subset, resolve_face_specs, resolve_face_specs_with,
+    FaceBytes, InjectedPack, PackError, SubsetFaces,
 };
 pub use specs::{CurrencySpec, NumberSpec, UnitSpec};
 
