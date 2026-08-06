@@ -130,6 +130,45 @@
   there — and expect a synthetic fixture to hide exactly this class,
   which is what the near-e2e suites over real output exist to catch.
 
+## Embedding files with `include_str!`
+
+- **A compile-time include that reaches OUTSIDE the crate directory costs
+  you something in EVERY packaging context, and no code gate can see any
+  of them.** `include_str!("../../../../examples/…")` from `engine/mcp`
+  compiles fine in a workspace build, so `budget` / `lint` / `test` /
+  `coverage` all stayed green while the crate was broken in two separate
+  ways at once:
+  - **crates.io** — `cargo package` copies only files under the package
+    root, so the tarball omitted every embedded file and the published
+    crate could not build (~90 `include_str!` errors). Caught only by
+    running `cargo package` during review.
+  - **the Docker image** — `docker/Dockerfile`'s builder stage did
+    `COPY engine ./engine` and nothing else; the `COPY examples` in the
+    file lands in the RUNTIME stage, which the builder cannot see.
+    Embedding silently promoted `examples/` to a *compile-time* input.
+    Caught only by CI.
+
+  The in-crate precedent is publishable precisely because it does not
+  escape: `engine/formatter/src/lang/builtin.rs` includes
+  `builtin/*.yml`, which live inside the crate. Before embedding
+  anything from outside the crate, enumerate every context that BUILDS
+  the crate (`grep -rn '<crate-name>' Makefile .github/workflows
+  docker/Dockerfile`) and check each one can see the files.
+- **`cargo package -p <crate>` ignores `publish = false`** — an explicit
+  `-p` packages it anyway, so a still-red single-crate package is NOT
+  evidence that an exclusion failed. The proof of exclusion is
+  `cargo publish --workspace --dry-run`: it skips the crate and reports
+  the ones it would upload.
+- **A red `cargo package -p <crate>` is not automatically about your
+  change.** It resolves path dependencies from the PUBLISHED registry
+  versions, which lag the source between releases, so it fails on
+  symbols that exist locally (`cannot find function sanitize in crate
+  shojiku_diagnostics`). Two habits keep this honest: run the same
+  command on the base commit before attributing anything to yourself,
+  and remember `cargo publish --workspace` builds a temp registry from
+  the LOCAL crates — so it can be green while the single-crate package
+  is red, and it is the one that describes the real release path.
+
 ## Designing against externals
 
 - Verify a third-party API — or an external *asset capability* — exists
