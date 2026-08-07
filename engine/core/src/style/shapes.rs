@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 pub const DEFAULT_STROKE_PT: f64 = 1.0;
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct LineStyle {
     #[serde(default, skip_serializing_if = "Option::is_none")]

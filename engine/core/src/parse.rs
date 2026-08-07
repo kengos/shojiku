@@ -40,12 +40,14 @@ mod tests {
     use serde::Deserialize;
 
     #[derive(Debug, Deserialize)]
+    #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
     #[serde(deny_unknown_fields)]
     struct Doc {
         items: Vec<Item>,
     }
 
     #[derive(Debug, Deserialize)]
+    #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
     #[serde(deny_unknown_fields)]
     struct Item {
         #[allow(dead_code)]

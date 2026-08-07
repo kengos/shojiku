@@ -32,6 +32,7 @@ pub use schema::{
 /// loud, not a silently dropped dictionary that would flood every binding
 /// with `unknown_data_key`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Definitions {
     #[serde(default, skip_serializing_if = "Option::is_none")]

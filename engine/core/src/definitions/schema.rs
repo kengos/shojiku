@@ -15,6 +15,7 @@ pub const MAX_ENUM_VALUES: usize = 256;
 /// metadata the Designer/AI read (title, example, display formats).
 /// Unknown keys are parse errors; unset keys never serialize.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Schema {
     #[serde(rename = "type")]
@@ -140,6 +141,7 @@ impl<'de> Deserialize<'de> for EnumEntry {
 
 /// The labeled `enum` member form: `{ value: shipped, label: 出荷済み }`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct LabeledEnumValue {
     /// The params value this entry declares (scalars only — see
@@ -151,6 +153,7 @@ pub struct LabeledEnumValue {
 
 /// A named display-format variant a field supports.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct FormatVariant {
     pub id: String,
@@ -160,6 +163,7 @@ pub struct FormatVariant {
 
 /// The JSON-Schema base types the engine understands.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum SchemaType {
     String,
@@ -187,6 +191,7 @@ impl SchemaType {
 /// The set of field types the engine understands (unchanged vocabulary —
 /// `{key:type}` interpolation overrides keep using these names).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum FieldType {
     String,

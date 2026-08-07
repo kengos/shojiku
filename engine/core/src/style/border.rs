@@ -18,6 +18,7 @@ use std::fmt;
 /// `dotted` stroke one line with a repeating on/off pattern derived from
 /// the side's width (see the layout side's `dash_pattern`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum BorderStyleKind {
     #[default]

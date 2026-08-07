@@ -43,7 +43,7 @@ capability list is the single source every surface advertises.)
   in `plugins/` (see agents/lang.md, agents/plugins.md) — `formatter`
   itself should stay generic.
 
-## The key catalog (decided; not built)
+## The key catalog (the artifact and its gate are built; the prose layer is not)
 
 The per-key facts of the authorable wire — key name, type, allowed
 values, default, the tagged union of item types — are held ONCE as
@@ -72,18 +72,42 @@ data half.
 
 **Derivation: a Cargo feature, per the extension order below.** The
 schema derive sits on the `engine/core` wire types behind a non-default
-feature, and a generator emits the committed artifact; a default build
-links none of it, so no shipped binary carries the derive or its
-dependency. What a binary does carry is the artifact's own bytes where
-it embeds them — a real number, small against the WASM budget but not
-zero, and one to measure rather than assume. The
-parser is then the only source of the structure, which is what makes
-drift structurally impossible rather than merely tested. This is
-conditional on the derive dependency clearing `cargo-deny` (the licence
-allowlist, and an advisory list that holds zero ignores). If it cannot,
-the fallback is a hand-authored skeleton with a test asserting set
-equality against the parser — **the gate is the requirement; the
-direction is an implementation choice.**
+`schema` feature, and `reference-gen` — a `required-features` binary in
+`engine/authoring` — emits the committed artifact; a default build links
+none of it, so no shipped binary carries the derive or its dependency.
+The parser is then the only source of the structure, which is what makes
+drift structurally impossible rather than merely tested.
+
+The dependency question is **settled**: `schemars` (MIT) with
+`default-features = false` adds six crates, all MIT or MIT/Apache-2.0,
+and clears `cargo-deny`. The fallback — a hand-authored skeleton with a
+test asserting set equality against the parser — was not needed. What
+answering it turned up matters more than the answer: **`cargo deny` does
+not traverse an optional dependency that no enabled feature turns on**,
+so the gate could not see the derive at all until the recipe gained
+`--all-features`. Proven by negative control — a crate whose licence the
+allowlist rejects passes as an optional dep and fails the moment it is
+made non-optional — and it had been leaving the Node addon's own
+dependencies unchecked for as long as they existed.
+
+The embedded bytes were the other thing to measure rather than assume.
+Measured: **zero**. `make wasm` reports the same raw and gzip size with
+the catalog embedded as without it, because `CATALOG` is a `const` that
+nothing in that build references and the linker strips it. It will cost
+its bytes at the stage that serves it, which is where the number is
+worth taking again.
+
+**Derived is not the same as accurate, and the difference is one-sided.**
+Fourteen wire types parse through a hand-written `Deserialize`, and for
+those the derive describes the RUST shape while the parser accepts
+something else. It fails toward being too WIDE — `flexBasis` derives as
+"any number or any string" and accepts `content` or `0` — which is the
+one direction that actively misleads, because it tells an agent to emit
+input the engine rejects. Those fourteen carry hand-written schemas in
+`engine/core/src/schema/`, each pinned by a test that feeds every form
+the schema declares through the real parser AND one form it excludes.
+Only the second clause can catch a too-wide schema, and it is the clause
+a plan omits.
 
 **Prose: authored beside the schema, merged into it.** The per-key
 narrative — what the key means, the CSS property it mirrors, what it
@@ -102,8 +126,11 @@ is the single authoring substrate and CLI / MCP / WASM are its host
 surfaces — the capability list is the same class of thing one level
 coarser (a machine-readable inventory this crate owns and every host
 reads), so a second crate beside it would put a parallel substrate where
-the boundary says there is one. The VitePress build reads the data files
-directly, the way it already reads the one gallery source.
+the boundary says there is one. The artifact is committed at
+`engine/authoring/reference/catalog.schema.json` and embedded as
+`shojiku_authoring::reference::CATALOG`. The VitePress build is to read
+the data files directly, the way it already reads the one gallery source
+— that half is not built; nothing on the site consumes the catalog yet.
 
 **One identifier across every surface**, chosen before each surface grows
 its own: the [../engine/](../engine/) page stem names a topic and
@@ -114,11 +141,27 @@ ways.
 **Two gates, both required**, mirroring the one that keeps the gallery
 honest (regenerate, then fail on drift):
 
-- the artifact regenerates from the parser and matches what is committed
-  — a key added without regenerating is a red gate, not a silent lie;
-- every artifact node has an annotation and every annotation names a real
-  node. A key with no prose is therefore *detectable*, which is what
-  keeps the narrative layer honest as the wire grows.
+- **built** — the artifact regenerates from the parser and matches what
+  is committed; a key added without regenerating is a red gate, not a
+  silent lie. `make reference-data` regenerates, `make reference-check`
+  fails on drift. That target also runs the schema tests, because the
+  drift comparison on its own is an *idempotence* claim: it protects a
+  wrong artifact exactly as faithfully as a right one.
+- **not built** — every artifact node has an annotation and every
+  annotation names a real node. A key with no prose is therefore
+  *detectable*, which is what keeps the narrative layer honest as the
+  wire grows. It arrives with the annotation layer; there is nothing to
+  gate until prose exists.
+
+Because the annotation layer has not landed, the shipped artifact carries
+**no node-local prose at all** — and that is deliberate rather than
+pending. schemars lifts Rust doc comments into `description` for free,
+and taking the free version would have defeated the second gate before it
+was written: every node would arrive pre-annotated with text nobody wrote
+for an author, so "every node has an annotation" would pass vacuously
+over engine-developer prose in the wrong register that cannot carry a
+second locale. Generation strips them. The empty slots are what make the
+next stage's absence measurable.
 
 What splits which way: key name, type, default, allowed values, the CSS
 property mirrored, the effect on the resolved box, the diagnostics

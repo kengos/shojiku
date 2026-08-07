@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 
 /// The `defaults:` block: document-wide presentation defaults.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TemplateDefaults {
     /// Document locale id (BCP 47, e.g. `ja-JP`): the fallback the CLI
@@ -53,6 +54,7 @@ impl TemplateDefaults {
 /// Format default per field type. A typed struct (not a map) so an
 /// unknown type key is a parse error, never silently ignored.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct FormatDefaults {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -74,6 +76,7 @@ pub struct FormatDefaults {
 /// definition map. The string|map union follows the `Length`/`PageSize`
 /// wire precedent.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]
 pub enum FormatRef {
     /// A variant name reference (locale-independent).
@@ -86,6 +89,7 @@ pub enum FormatRef {
 /// The inline definition body. Only `pattern` exists today; new keys
 /// stay append-only (`Option`+skip).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct InlineFormat {
     /// A CLDR-subset date/datetime pattern (the pack `dateFormats`
@@ -98,6 +102,7 @@ pub struct InlineFormat {
 /// (`date`/`datetime`); `quantity` entries are deferred until composition
 /// proves insufficient (user decision).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NamedFormat {
     #[serde(rename = "type")]
@@ -108,6 +113,7 @@ pub struct NamedFormat {
 
 /// The registry entry kinds v1 supports.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum NamedFormatKind {
     Date,

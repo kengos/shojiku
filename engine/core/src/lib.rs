@@ -20,6 +20,8 @@ mod length;
 mod params;
 mod parse;
 mod ruby;
+#[cfg(feature = "schema")]
+mod schema;
 mod style;
 mod template;
 mod validate;

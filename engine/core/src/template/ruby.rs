@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 /// surface — plain and `spans`, horizontal (readings above the base
 /// runs) and vertical (readings right of the base runs).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct RubyPair {
     /// The base run to annotate, matched verbatim against the resolved

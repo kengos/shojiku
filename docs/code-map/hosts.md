@@ -49,6 +49,26 @@ false`), no clap.
 - The verified bytes-first font path is `FontStore::load_from_injected`
   over `resolve_face_bytes`; `from_faces` (no verify) is never exposed
   through this layer.
+- `reference.rs` — the **key catalog**: `CATALOG` (`include_str!` of the
+  committed artifact — inside the crate root, so `cargo package` and the
+  Docker builder both see it) and `CATALOG_PATH` (a compile-time constant
+  from `CARGO_MANIFEST_DIR`; the generator takes no argument and reads no
+  environment, so nothing a caller supplies steers a write).
+  `reference/generate.rs` (`schema` feature only) — two roots
+  (`Template`, `Definitions`) into one `$defs`, `for_deserialize`, and the
+  `StripDeveloperProse` transform that removes the `description`/`title`
+  schemars lifts out of Rust doc comments: node-local prose belongs to the
+  unbuilt annotation layer, and pre-filling it would make that layer's
+  "every node has an annotation" gate pass vacuously.
+  `src/bin/reference-gen.rs` — `[[bin]]` with `required-features =
+  ["schema"]`, so a default build never compiles it.
+  Artifact: `reference/catalog.schema.json` (81 named shapes).
+  Gates: `make reference-data` regenerates, `make reference-check` runs
+  the schema tests **and** the drift comparison — the comparison alone is
+  an idempotence claim and would protect a wrong artifact just as well.
+  The tests over the artifact's own properties read `CATALOG` and so run
+  in the DEFAULT suite (and the coverage gate); only regeneration and
+  determinism need the feature.
 
 ## engine/fetch — the host-side font fetch layer
 

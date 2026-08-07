@@ -30,8 +30,9 @@ each has its own toolchain and container: `make verify:sdk:ruby`,
 slices.
 
 - **`verify:<scope>`** is that scope's whole bar — budget + lint + tests
-  plus whatever else the scope needs (100% coverage, cargo-deny, example
-  byte-compare and the WASM build for `engine`). It is the slow,
+  plus whatever else the scope needs (100% coverage, cargo-deny, the
+  key-catalog drift gate, example byte-compare and the WASM build for
+  `engine`). It is the slow,
   conclusive one.
 - **`budget:` / `lint:` / `test:`** are the fast slices to iterate on.
 - **`make verify`** is every scope at once: the full CI mirror, and the

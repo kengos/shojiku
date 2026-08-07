@@ -17,6 +17,7 @@ use super::link::Link;
 /// listed order with no separator; wrapping runs over the joined text, so
 /// a Latin word crossing a span boundary still wraps as one word.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Span {
     #[serde(default, skip_serializing_if = "Option::is_none")]

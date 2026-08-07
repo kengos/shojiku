@@ -234,9 +234,10 @@ definitions
   behavior, visibility conditions, and signature field settings.
   It holds the style keys it edits, their enum vocabularies and the engine
   default values as GUI-side data, and those tables are **hand-copied from
-  the engine today with no gate asserting the sets match**. When the key
-  catalog ships (`agents/engine.md` § The key catalog), they are asserted
-  against that artifact instead — the panel may edit a deliberate SUBSET,
+  the engine today with no gate asserting the sets match**. The catalog
+  artifact now exists (`agents/engine.md` § The key catalog) — what is
+  still missing is this side: the tables are to be asserted
+  against it rather than maintained beside it. The panel may edit a deliberate SUBSET,
   but every key and value it does carry must be one the parser accepts,
   and a spelling the engine has retired must fail a gate rather than
   survive as a control that writes an unparseable document.

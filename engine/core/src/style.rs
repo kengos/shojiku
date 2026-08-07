@@ -59,6 +59,7 @@ pub use writing::{TextCombine, TextCombineUpright, TextOrientation, WritingMode}
 /// only surfaces in e2e). If spans (or shapes) must NOT honor the
 /// new key, also list it in `style/inert.rs`.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Style {
     /// Font size: a bare number is pt; strings take the [`Length`] units —

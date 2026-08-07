@@ -85,11 +85,11 @@ Rules this surface must keep:
 - **Read-only.** Writing files stays the agent's job (decided) — three
   writers on one file is the thing this avoids.
 
-**The reference is the next body of text to ride this shape, and its
-form is already decided** (`agents/engine.md` § The key catalog): the
-per-key facts are one machine-readable artifact derived from the parser,
-JSON Schema shaped, with prose merged in node-locally, embedded in
-`engine/authoring` and addressed by the reference page stem —
+**The reference is the next body of text to ride this shape, and the
+artifact it serves now EXISTS** (`agents/engine.md` § The key catalog):
+the per-key facts are one machine-readable artifact derived from the
+parser, JSON Schema shaped, committed and embedded in `engine/authoring`
+as `reference::CATALOG`, and addressed by the reference page stem —
 `shojiku://reference/<page>`, `<page>#<key>` for one key. So what is
 left open here is only *when* it is served, not what it looks like on
 the wire; when it ships, it is a list tool plus a `resources/read`, like

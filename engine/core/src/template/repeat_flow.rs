@@ -16,6 +16,7 @@ use super::{Binding, ContainerItem};
 /// fresh pages); `repeat_flow` is the vertical card-list counterpart.
 /// Flow-body only, like `table` and `repeat`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct RepeatFlowItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]

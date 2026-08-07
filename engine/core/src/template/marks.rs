@@ -22,6 +22,7 @@ use super::binding::BindingScope;
 /// layer authors a width the outline defaults to 1pt black (a mark's
 /// visible geometry is its function).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct EllipseItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -42,6 +43,7 @@ pub struct EllipseItem {
 /// matches. An empty box is the blank-form state. `checked` and `data:`
 /// are mutually exclusive (validation warns; `data:` wins).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct CheckboxItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -78,6 +80,7 @@ pub struct CheckboxItem {
 /// glyph band and the oval; the style is the unified [`Style`] (uniform
 /// border + `backgroundColor` fill, 1pt outline default like `ellipse`).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct TextMark {
     /// Presence binding; `None` = always draw.
@@ -99,6 +102,7 @@ pub struct TextMark {
 /// contains it — multi-select); without `equals` the value is read as a
 /// boolean and the mark draws when it is `true`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct MarkBinding {
     pub key: String,

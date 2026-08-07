@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 /// alone drops kinsoku entirely. The prohibition sets live in one place
 /// (`shojiku-layout` `wrap::kinsoku`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum LineBreak {
     /// Kinsoku with the common Japanese line-start prohibitions (closing
@@ -51,6 +52,7 @@ pub enum LineBreak {
 /// (no bundled face carries the OpenType `chws` feature), not by riding a
 /// font feature.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum TextSpacingTrim {
     /// Every fullwidth punctuation glyph keeps its full advance — no
@@ -80,6 +82,7 @@ pub enum TextSpacingTrim {
 /// line's inked width (so an overlay measures it) but excluded from
 /// alignment, so the glyph sits past the alignment edge.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum HangingPunctuation {
     /// No hanging — a line-terminating comma or full stop wraps or is
@@ -101,6 +104,7 @@ pub enum HangingPunctuation {
 /// Font weight (CSS `font-weight`), keyword subset. `normal` | `bold`;
 /// numeric weights (100–900) are a possible future extension.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum FontWeight {
     #[default]
@@ -110,6 +114,7 @@ pub enum FontWeight {
 
 /// Font slant (CSS `font-style`), keyword subset. `normal` | `italic`.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum FontStyle {
     #[default]
@@ -122,6 +127,7 @@ pub enum FontStyle {
 /// descendants instead, which this engine does not model yet). `none`
 /// exists so an inline style can switch a named style's decoration off.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum TextDecoration {
     /// No decoration line — the engine default, and the explicit "turn a
@@ -138,6 +144,7 @@ pub enum TextDecoration {
 /// What a box does with content outside its border box (CSS `overflow`
 /// keyword subset). Not inherited.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum Overflow {
     /// Content draws past the box, with an overflow warning. The engine
@@ -152,6 +159,7 @@ pub enum Overflow {
 
 /// Overflow policy for text in a definite-height box.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum TextOverflow {
     /// Draw everything and warn (`text_overflow`); the reserved block
@@ -176,6 +184,7 @@ pub enum TextOverflow {
 
 /// Horizontal text alignment (CSS `text-align`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum TextAlign {
     #[default]
@@ -186,6 +195,7 @@ pub enum TextAlign {
 
 /// Vertical alignment within an item's box.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum VerticalAlign {
     #[default]

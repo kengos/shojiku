@@ -8,6 +8,11 @@ publish.workspace = true
 repository.workspace = true
 homepage.workspace = true
 
+[features]
+# Non-default: the JSON Schema derive for the key catalog. A default build
+# and the WASM bundle link none of it; only the catalog generator turns it on.
+schema = ["dep:schemars"]
+
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -15,6 +20,7 @@ serde_yaml = { workspace = true }
 serde_path_to_error = { workspace = true }
 thiserror = { workspace = true }
 shojiku-diagnostics = { workspace = true }
+schemars = { workspace = true, optional = true }
 
 [lints]
 workspace = true

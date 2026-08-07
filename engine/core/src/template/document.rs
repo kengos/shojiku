@@ -24,6 +24,7 @@ pub const MAX_DOCUMENT_ENTRIES: usize = 64;
 /// output differ run to run, and "same inputs ⇒ same bytes" is the
 /// property sign/verify rests on.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct DocumentMeta {
     /// The document's title. Falls back to the template `name:` when

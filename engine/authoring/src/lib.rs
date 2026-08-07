@@ -20,6 +20,7 @@ mod inspect;
 mod locale;
 mod prepare;
 mod preview;
+pub mod reference;
 mod sources;
 
 #[cfg(test)]

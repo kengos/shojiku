@@ -15,6 +15,26 @@ platform binaries.
 
 ### Added
 
+- **A machine-readable catalog of every authorable key.** The per-key
+  facts of the wire — key name, type, the closed set of values a key
+  accepts, which keys a shape requires, and the tagged union of item
+  types — are now held once, as a JSON Schema document derived from the
+  parser itself and committed at
+  `engine/authoring/reference/catalog.schema.json` (81 named shapes).
+  Until now those facts were retyped wherever they were needed, and
+  nothing checked the copies against the parser.
+  Deriving it from the parser is what makes it trustworthy: `make
+  reference-check` regenerates and fails on any difference, so a key
+  added without regenerating is a red gate rather than a quiet lie.
+  The types whose parsing is hand-written carry hand-written schemas,
+  each pinned by a test that feeds every form the schema declares
+  through the real parser and one form it excludes — because a catalog
+  that claims more than the engine accepts is worse than no catalog,
+  and that is exactly what a naive derivation produced for `flexBasis`
+  (which takes `content` or `0`, not any number).
+  The document carries structure only. Per-key prose is authored
+  separately, per locale, and lands with the surfaces that serve it.
+
 - **Thai, wrapped where the words are.** Thai writes without spaces
   between words, so a wrapper looking for one finds nothing: a Thai
   paragraph used to arrive as a single unbreakable run and get cut at
@@ -364,6 +384,16 @@ platform binaries.
   report rather than written down beside it.
 
 ### Fixed
+
+- **The dependency licence and advisory gate now sees every dependency.**
+  `cargo deny` was running without `--all-features`, and in that mode it
+  does not traverse an optional dependency that no enabled feature turns
+  on — so a rejected licence could ride in unseen. This was not
+  theoretical: the Node addon's N-API dependencies sit behind a
+  non-default feature, are built into the addon the npm package ships,
+  and had never been checked. Nothing in the tree turned out to violate
+  the policy, so the fix is the gate rather than any dependency; what
+  changed is that a future one cannot hide there.
 
 - **A short date no longer prints the year twice.** `format: compact` on
   a Hindi or Filipino document rendered `14/3/20262026` instead of

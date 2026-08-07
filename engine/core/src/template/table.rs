@@ -25,6 +25,7 @@ use super::Binding;
 /// the grid border (`borderWidth`/`borderColor`, default 0.5pt black) and
 /// cascade their inherited properties into every cell.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TableItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -116,6 +117,7 @@ impl TableItem {
 /// `style`/`styleNames` layer over the table cascade (the classic
 /// header fill applies unless overridden).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct HeaderGroup {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -128,6 +130,7 @@ pub struct HeaderGroup {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum EmptyBehavior {
     /// Hide the whole table when the array is empty.
@@ -140,6 +143,7 @@ pub enum EmptyBehavior {
 /// Header-row overrides: height and style (its `backgroundColor` replaces
 /// the default header fill).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TableHeaderSpec {
     #[serde(default, skip_serializing_if = "Option::is_none")]

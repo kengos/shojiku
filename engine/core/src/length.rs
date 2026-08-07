@@ -117,6 +117,7 @@ impl Length {
 
 /// Wire form: a bare number (pt) or a suffixed string.
 #[derive(Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]
 enum LengthRepr {
     Number(f64),

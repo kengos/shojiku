@@ -27,6 +27,7 @@ pub const MAX_ROW_CONDITIONAL_STYLES: usize = 16;
 /// `conditionalStyles` overlays the rows whose own data matches, on top
 /// of both.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RowSpec {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -77,6 +78,7 @@ impl RowSpec {
 /// column's `data:` binding — so a table over `order_items` addresses the
 /// element's own `kind`, not a document-level key.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RowConditionalStyle {
     /// The predicate against this row's element.

@@ -84,6 +84,16 @@ krilla = { version = "0.8", default-features = false }
 # only ever see RectShapes.
 qrcodegen = "1.8"
 base64 = "0.23"
+# JSON Schema derive for the key catalog (shojiku-core `schema` feature,
+# non-default). `default-features = false` + the two features named
+# explicitly keeps the optional integrations (chrono/url/uuid/indexmap/…)
+# out of the graph, so the added transitives are exactly dyn-clone,
+# ref-cast and schemars_derive — all MIT or MIT/Apache-2.0. Nothing that
+# ships links it: the catalog generator is the only consumer.
+schemars = { version = "1", default-features = false, features = [
+    "derive",
+    "std",
+] }
 # Host-level font fetch (shojiku-fetch, CLI only — never in the render path).
 # Blocking client: the repo has no async runtime by decision.
 # `rustls-no-provider` (not `rustls`) is deliberate: the `rustls` feature pulls

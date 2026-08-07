@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 
 /// The box layout mode (`box.type`). Unset behaves like [`BoxType::Flex`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum BoxType {
     /// Children stack along [`FlexDirection`], with `gap`,
@@ -29,6 +30,7 @@ pub enum BoxType {
 
 /// The flex main axis (`box.direction`, CSS `flex-direction`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum FlexDirection {
     /// Children stack top-to-bottom (the flow-body special case).
@@ -41,6 +43,7 @@ pub enum FlexDirection {
 
 /// Cross-axis alignment of flex children (`box.alignItems`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum AlignItems {
     /// Children without a cross size fill it (the CSS initial value; in
@@ -64,6 +67,7 @@ pub enum AlignItems {
 /// Distributes only when the container's main size is definite; auto
 /// margins on the main axis absorb the free space first (CSS order).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum JustifyContent {
     #[default]
@@ -101,6 +105,7 @@ pub enum FlexBasis {
 
 /// Wire form: the string `"content"` or the number `0`.
 #[derive(Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]
 enum BasisRepr {
     Number(f64),

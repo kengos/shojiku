@@ -150,6 +150,34 @@ injected at parse). The template model splits along CSS lines.
   `ruby/warning.rs` (append-only English fallbacks), `ruby/reading.rs`
   (the `《…》` machinery; base = max trailing kanji run).
 
+### JSON Schema for the key catalog (`schema` feature, non-default)
+
+- `schema.rs` — module root, compiled only under `#[cfg(feature =
+  "schema")]`: the `SIDES` key order, `per_side_map` (the
+  `{top/right/bottom/left}` closed-map shape all three border properties
+  parse by hand), and `sub::<T>` (a `$ref` into `$defs`). Every wire type
+  in this crate carries `#[cfg_attr(feature = "schema",
+  derive(schemars::JsonSchema))]`; these files exist for the **14 types
+  whose `Deserialize` is hand-written**, where the derive would describe
+  the Rust shape instead of the accepted wire form. Living out of the wire
+  files is what keeps `definitions/schema.rs`, `edges.rs` and
+  `style/border.rs` under the 300-line budget.
+  **A hand-written schema fails toward being too WIDE** (a `*Repr`
+  delegate says "any number or string" where `flexBasis` takes `content`
+  or `0`), which is the direction that misleads an agent — so each is
+  pinned two-sidedly in `schema/tests/`: every declared form parses
+  through the real `Deserialize`, and one excluded form does not.
+- `schema/length.rs` — `Length` (number | unit-suffixed string),
+  `FlexBasis` (`content` | `0`), `GridTrack` (number | `auto` | `<n>fr` |
+  length), `TrackSpec` (integer count | track sequence).
+  `schema/edges.rs` — `EdgeValue`, `EdgeSpec` (number | `$ref`
+  `EdgeMapRepr` — the one genuinely delegated arm), `PageMargin` (+ the
+  legacy positional array), `PageSize` (8 names | `{w,h}`).
+  `schema/border.rs` — `BorderWidth`/`BorderColor`/`BorderStyle` (scalar |
+  per-side map) + `TextCombineUpright` (`none`/`all` | `{digits: 2..=4}`).
+  `schema/value.rs` — `EqualsValue` (scalars only), `EnumEntry`
+  (`LabeledEnumValue` | bare scalar).
+
 ### Validation
 
 - `validate.rs` — orchestration root (definitions present → schema-quality
