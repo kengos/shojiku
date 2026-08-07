@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 mod box_model;
 mod flex;
-mod grid;
+pub(crate) mod grid;
 mod page_margin;
 
 pub use box_model::{BoxSpec, OptBox, PointSpec};
@@ -20,6 +20,7 @@ pub use grid::{GridTrack, TrackSpec, MAX_GRID_TRACKS};
 pub use page_margin::PageMargin;
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PageSpec {
     #[serde(default, skip_serializing_if = "PageSize::is_default")]
@@ -128,6 +129,7 @@ impl PageSize {
 
 /// Wire form: a name string or a `{ w, h }` mapping.
 #[derive(Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]
 enum PageSizeRepr {
     Name(String),
@@ -205,6 +207,7 @@ impl Serialize for PageSize {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum Orientation {
     #[default]

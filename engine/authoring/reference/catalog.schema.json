@@ -1,0 +1,3214 @@
+{
+  "$defs": {
+    "AlignItems": {
+      "oneOf": [
+        {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "stretch",
+          "type": "string"
+        },
+        {
+          "const": "baseline",
+          "type": "string"
+        }
+      ]
+    },
+    "Band": {
+      "additionalProperties": false,
+      "properties": {
+        "height": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/Item"
+          },
+          "type": "array"
+        },
+        "repeat": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Repeat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Binding": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "key": {
+          "type": "string"
+        },
+        "placeholder": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BindingScope"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "type": "object"
+    },
+    "BindingScope": {
+      "oneOf": [
+        {
+          "const": "element",
+          "type": "string"
+        },
+        {
+          "const": "document",
+          "type": "string"
+        }
+      ]
+    },
+    "Body": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/BoxSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "gap": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Length"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "items": {
+              "items": {
+                "$ref": "#/$defs/Item"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "flow",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "items": {
+              "items": {
+                "$ref": "#/$defs/Item"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "absolute",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "BorderColor": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bottom": {
+              "type": "string"
+            },
+            "left": {
+              "type": "string"
+            },
+            "right": {
+              "type": "string"
+            },
+            "top": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "BorderStyle": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/BorderStyleKind"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bottom": {
+              "$ref": "#/$defs/BorderStyleKind"
+            },
+            "left": {
+              "$ref": "#/$defs/BorderStyleKind"
+            },
+            "right": {
+              "$ref": "#/$defs/BorderStyleKind"
+            },
+            "top": {
+              "$ref": "#/$defs/BorderStyleKind"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "BorderStyleKind": {
+      "enum": [
+        "solid",
+        "double",
+        "dashed",
+        "dotted"
+      ],
+      "type": "string"
+    },
+    "BorderWidth": {
+      "oneOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bottom": {
+              "minimum": 0,
+              "type": "number"
+            },
+            "left": {
+              "minimum": 0,
+              "type": "number"
+            },
+            "right": {
+              "minimum": 0,
+              "type": "number"
+            },
+            "top": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "BoxSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "h": {
+          "$ref": "#/$defs/Length"
+        },
+        "w": {
+          "$ref": "#/$defs/Length"
+        },
+        "x": {
+          "$ref": "#/$defs/Length"
+        },
+        "y": {
+          "$ref": "#/$defs/Length"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "type": "object"
+    },
+    "BoxType": {
+      "oneOf": [
+        {
+          "const": "flex",
+          "type": "string"
+        },
+        {
+          "const": "grid",
+          "type": "string"
+        }
+      ]
+    },
+    "BreakBefore": {
+      "oneOf": [
+        {
+          "const": "auto",
+          "type": "string"
+        },
+        {
+          "const": "page",
+          "type": "string"
+        }
+      ]
+    },
+    "CharGridSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "cellSize": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "charGap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "charsPerLine": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "lineGap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lines": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "charsPerLine",
+        "lines"
+      ],
+      "type": "object"
+    },
+    "Column": {
+      "additionalProperties": false,
+      "properties": {
+        "cell": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContainerItem"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImageFit"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "style": {
+          "$ref": "#/$defs/Style"
+        },
+        "styleNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColumnType"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "width": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ColumnType": {
+      "enum": [
+        "text",
+        "qr_code",
+        "image"
+      ],
+      "type": "string"
+    },
+    "ContainerItem": {
+      "additionalProperties": false,
+      "properties": {
+        "box": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OptBox"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/Item"
+          },
+          "type": "array"
+        },
+        "style": {
+          "$ref": "#/$defs/Style"
+        },
+        "styleNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Definitions": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "properties": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Schema"
+          },
+          "type": "object"
+        },
+        "required": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "$ref": "#/$defs/SchemaType"
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "DocumentMeta": {
+      "additionalProperties": false,
+      "properties": {
+        "authors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "EcLevel": {
+      "enum": [
+        "low",
+        "medium",
+        "quartile",
+        "high"
+      ],
+      "type": "string"
+    },
+    "EdgeMapRepr": {
+      "additionalProperties": false,
+      "properties": {
+        "bottom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "left": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "right": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "top": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "EdgeSpec": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "$ref": "#/$defs/EdgeMapRepr"
+        }
+      ]
+    },
+    "EdgeValue": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Length"
+        },
+        {
+          "const": "auto"
+        }
+      ]
+    },
+    "EmptyBehavior": {
+      "oneOf": [
+        {
+          "const": "collapse",
+          "type": "string"
+        },
+        {
+          "const": "reserve",
+          "type": "string"
+        }
+      ]
+    },
+    "EnumEntry": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/LabeledEnumValue"
+        },
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null",
+            "array"
+          ]
+        }
+      ]
+    },
+    "EqualsValue": {
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "FlexBasis": {
+      "enum": [
+        "content",
+        0
+      ]
+    },
+    "FlexDirection": {
+      "oneOf": [
+        {
+          "const": "column",
+          "type": "string"
+        },
+        {
+          "const": "row",
+          "type": "string"
+        }
+      ]
+    },
+    "FontStyle": {
+      "enum": [
+        "normal",
+        "italic"
+      ],
+      "type": "string"
+    },
+    "FontWeight": {
+      "enum": [
+        "normal",
+        "bold"
+      ],
+      "type": "string"
+    },
+    "FormatDefaults": {
+      "additionalProperties": false,
+      "properties": {
+        "currency": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FormatRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "date": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FormatRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "datetime": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FormatRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "number": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FormatRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "percentage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FormatRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FormatRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "FormatRef": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/InlineFormat"
+        }
+      ]
+    },
+    "FormatVariant": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "GridDirection": {
+      "oneOf": [
+        {
+          "const": "row",
+          "type": "string"
+        },
+        {
+          "const": "column",
+          "type": "string"
+        }
+      ]
+    },
+    "GridSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "columnGap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "columns": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GridDirection"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rowGap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rows": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "GridTrack": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "const": "auto"
+        },
+        {
+          "pattern": "fr\\s*$",
+          "type": "string"
+        },
+        {
+          "pattern": "(%|pt|rem|em|mm|cm|in)\\s*$",
+          "type": "string"
+        }
+      ]
+    },
+    "HangingPunctuation": {
+      "oneOf": [
+        {
+          "const": "none",
+          "type": "string"
+        },
+        {
+          "const": "allow_end",
+          "type": "string"
+        },
+        {
+          "const": "force_end",
+          "type": "string"
+        }
+      ]
+    },
+    "HeaderGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "span": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "style": {
+          "$ref": "#/$defs/Style"
+        },
+        "styleNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "span"
+      ],
+      "type": "object"
+    },
+    "ImageFit": {
+      "oneOf": [
+        {
+          "const": "contain",
+          "type": "string"
+        },
+        {
+          "const": "stretch",
+          "type": "string"
+        },
+        {
+          "const": "cover",
+          "type": "string"
+        },
+        {
+          "const": "none",
+          "type": "string"
+        }
+      ]
+    },
+    "InlineFormat": {
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ],
+      "type": "object"
+    },
+    "Item": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bindings": {
+              "additionalProperties": {
+                "$ref": "#/$defs/Binding"
+              },
+              "type": "object"
+            },
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Binding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "link": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Link"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "mark": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TextMark"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "ruby": {
+              "items": {
+                "$ref": "#/$defs/RubyPair"
+              },
+              "type": "array"
+            },
+            "rubySize": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Length"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "spans": {
+              "items": {
+                "$ref": "#/$defs/Span"
+              },
+              "type": "array"
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "const": "text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "box": {
+              "$ref": "#/$defs/OptBox"
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "rect",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "box"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "from": {
+              "$ref": "#/$defs/PointSpec"
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "$ref": "#/$defs/LineStyle"
+            },
+            "to": {
+              "$ref": "#/$defs/PointSpec"
+            },
+            "type": {
+              "const": "line",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "from",
+            "to"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "autoPageBreak": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cellPadding": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "columns": {
+              "items": {
+                "$ref": "#/$defs/Column"
+              },
+              "type": "array"
+            },
+            "data": {
+              "$ref": "#/$defs/Binding"
+            },
+            "emptyBehavior": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EmptyBehavior"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "header": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TableHeaderSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "headerGroups": {
+              "items": {
+                "$ref": "#/$defs/HeaderGroup"
+              },
+              "type": "array"
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "keepTogether": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "mergeEmptyCells": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "repeatHeader": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "row": {
+              "$ref": "#/$defs/RowSpec"
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "table",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "data",
+            "columns"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "format": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "page_number",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bindings": {
+              "additionalProperties": {
+                "$ref": "#/$defs/Binding"
+              },
+              "type": "object"
+            },
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Binding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "fit": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ImageFit"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "link": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Link"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "src": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "image",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "items": {
+              "items": {
+                "$ref": "#/$defs/Item"
+              },
+              "type": "array"
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "container",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "breakBefore": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/BreakBefore"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cell": {
+              "$ref": "#/$defs/ContainerItem"
+            },
+            "cutMarks": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "data": {
+              "$ref": "#/$defs/Binding"
+            },
+            "grid": {
+              "$ref": "#/$defs/GridSpec"
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "const": "repeat",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "data",
+            "cell"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "data": {
+              "$ref": "#/$defs/Binding"
+            },
+            "gap": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Length"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "item": {
+              "$ref": "#/$defs/ContainerItem"
+            },
+            "type": {
+              "const": "repeat_flow",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "data",
+            "item"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bindings": {
+              "additionalProperties": {
+                "$ref": "#/$defs/Binding"
+              },
+              "type": "object"
+            },
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Binding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "errorCorrection": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EcLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "const": "qr_code",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bindings": {
+              "additionalProperties": {
+                "$ref": "#/$defs/Binding"
+              },
+              "type": "object"
+            },
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "data": {
+              "$ref": "#/$defs/Binding"
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "overflowText": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "const": "list",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "data"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "const": "page_break",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bindings": {
+              "additionalProperties": {
+                "$ref": "#/$defs/Binding"
+              },
+              "type": "object"
+            },
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Binding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "grid": {
+              "$ref": "#/$defs/CharGridSpec"
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "kinsoku": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/KinsokuMode"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "markup": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Markup"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "rubySize": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Length"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "const": "char_grid",
+              "type": "string"
+            },
+            "writingMode": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/WritingMode"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "grid"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "box": {
+              "$ref": "#/$defs/OptBox"
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/MarkBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "ellipse",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "box"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "box": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "checked": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/MarkBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "$ref": "#/$defs/Style"
+            },
+            "styleNames": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "checkbox",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "JustifyContent": {
+      "oneOf": [
+        {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "space_between",
+          "type": "string"
+        },
+        {
+          "const": "space_around",
+          "type": "string"
+        },
+        {
+          "const": "space_evenly",
+          "type": "string"
+        }
+      ]
+    },
+    "KinsokuMode": {
+      "oneOf": [
+        {
+          "const": "school",
+          "type": "string"
+        },
+        {
+          "const": "none",
+          "type": "string"
+        }
+      ]
+    },
+    "LabeledEnumValue": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {}
+      },
+      "required": [
+        "value",
+        "label"
+      ],
+      "type": "object"
+    },
+    "Length": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "(%|pt|rem|em|mm|cm|in)\\s*$",
+          "type": "string"
+        }
+      ]
+    },
+    "LineBreak": {
+      "oneOf": [
+        {
+          "const": "normal",
+          "type": "string"
+        },
+        {
+          "const": "strict",
+          "type": "string"
+        },
+        {
+          "const": "loose",
+          "type": "string"
+        },
+        {
+          "const": "anywhere",
+          "type": "string"
+        }
+      ]
+    },
+    "LineStyle": {
+      "additionalProperties": false,
+      "properties": {
+        "color": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "opacity": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "style": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BorderStyleKind"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "width": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Link": {
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "type": "object"
+    },
+    "MarkBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "equals": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EqualsValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "key": {
+          "type": "string"
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BindingScope"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "type": "object"
+    },
+    "Markup": {
+      "oneOf": [
+        {
+          "const": "aozora",
+          "type": "string"
+        }
+      ]
+    },
+    "NamedFormat": {
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/NamedFormatKind"
+        }
+      },
+      "required": [
+        "type",
+        "pattern"
+      ],
+      "type": "object"
+    },
+    "NamedFormatKind": {
+      "enum": [
+        "date",
+        "datetime"
+      ],
+      "type": "string"
+    },
+    "OptBox": {
+      "additionalProperties": false,
+      "properties": {
+        "alignItems": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AlignItems"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "columnGap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "columnSpan": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "columns": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TrackSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlexDirection"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "flexBasis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlexBasis"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "flexGrow": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "gap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "h": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "justifyContent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/JustifyContent"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "margin": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxHeight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxWidth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "minHeight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "minWidth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rowGap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rowSpan": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "rows": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TrackSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoxType"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "w": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "x": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "y": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Orientation": {
+      "enum": [
+        "portrait",
+        "landscape"
+      ],
+      "type": "string"
+    },
+    "Overflow": {
+      "oneOf": [
+        {
+          "const": "visible",
+          "type": "string"
+        },
+        {
+          "const": "hidden",
+          "type": "string"
+        }
+      ]
+    },
+    "PageMargin": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "$ref": "#/$defs/EdgeMapRepr"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/Length"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        }
+      ]
+    },
+    "PageSize": {
+      "oneOf": [
+        {
+          "enum": [
+            "A3",
+            "A4",
+            "A5",
+            "B4",
+            "B5",
+            "Letter",
+            "Legal",
+            "Tabloid"
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "h": {
+              "$ref": "#/$defs/Length"
+            },
+            "w": {
+              "$ref": "#/$defs/Length"
+            }
+          },
+          "required": [
+            "w",
+            "h"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PageSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "margin": {
+          "$ref": "#/$defs/PageMargin"
+        },
+        "orientation": {
+          "$ref": "#/$defs/Orientation"
+        },
+        "size": {
+          "$ref": "#/$defs/PageSize"
+        }
+      },
+      "type": "object"
+    },
+    "PointSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "$ref": "#/$defs/Length"
+        },
+        "y": {
+          "$ref": "#/$defs/Length"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "type": "object"
+    },
+    "Repeat": {
+      "enum": [
+        "every_page",
+        "first_page",
+        "except_first_page",
+        "last_page"
+      ],
+      "type": "string"
+    },
+    "RowConditionalStyle": {
+      "additionalProperties": false,
+      "properties": {
+        "style": {
+          "$ref": "#/$defs/Style"
+        },
+        "styleNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "when": {
+          "$ref": "#/$defs/MarkBinding"
+        }
+      },
+      "required": [
+        "when"
+      ],
+      "type": "object"
+    },
+    "RowSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "alternateStyle": {
+          "$ref": "#/$defs/Style"
+        },
+        "alternateStyleNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "conditionalStyles": {
+          "items": {
+            "$ref": "#/$defs/RowConditionalStyle"
+          },
+          "type": "array"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "minHeight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "style": {
+          "$ref": "#/$defs/Style"
+        },
+        "styleNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "RubyPair": {
+      "additionalProperties": false,
+      "properties": {
+        "base": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "base",
+        "text"
+      ],
+      "type": "object"
+    },
+    "Schema": {
+      "additionalProperties": false,
+      "properties": {
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "displayFormat": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "displayFormats": {
+          "items": {
+            "$ref": "#/$defs/FormatVariant"
+          },
+          "type": "array"
+        },
+        "enum": {
+          "items": {
+            "$ref": "#/$defs/EnumEntry"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "example": {},
+        "format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "items": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Schema"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxItems": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "maxLength": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "maximum": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "minItems": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "minLength": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "minimum": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "placeholder": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "precision": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "properties": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Schema"
+          },
+          "type": "object"
+        },
+        "recommendedStyle": true,
+        "required": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "$ref": "#/$defs/SchemaType"
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "SchemaType": {
+      "enum": [
+        "string",
+        "number",
+        "integer",
+        "boolean",
+        "object",
+        "array"
+      ],
+      "type": "string"
+    },
+    "Sections": {
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/Body"
+        },
+        "footer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Band"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "header": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Band"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "body"
+      ],
+      "type": "object"
+    },
+    "Span": {
+      "additionalProperties": false,
+      "properties": {
+        "data": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "link": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Link"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "style": {
+          "$ref": "#/$defs/Style"
+        },
+        "styleNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Style": {
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "borderColor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BorderColor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "borderRadius": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "borderStyle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BorderStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "borderWidth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BorderWidth"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "color": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fontFamily": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fontSize": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fontStyle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FontStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fontWeight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FontWeight"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hangingPunctuation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HangingPunctuation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "letterSpacing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lineBreak": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineBreak"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lineHeight": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "opacity": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "overflow": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Overflow"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "textAlign": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextAlign"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "textCombineUpright": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextCombineUpright"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "textDecoration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextDecoration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "textOrientation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextOrientation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "textOverflow": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextOverflow"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "textSpacingTrim": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextSpacingTrim"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "verticalAlign": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VerticalAlign"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "writingMode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WritingMode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "TableHeaderSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "height": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "style": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Style"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "styleNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Template": {
+      "additionalProperties": false,
+      "properties": {
+        "defaults": {
+          "$ref": "#/$defs/TemplateDefaults"
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentMeta"
+        },
+        "formats": {
+          "additionalProperties": {
+            "$ref": "#/$defs/NamedFormat"
+          },
+          "type": "object"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "page": {
+          "$ref": "#/$defs/PageSpec"
+        },
+        "sections": {
+          "$ref": "#/$defs/Sections"
+        },
+        "styles": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Style"
+          },
+          "type": "object"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Version"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "sections"
+      ],
+      "type": "object"
+    },
+    "TemplateDefaults": {
+      "additionalProperties": false,
+      "properties": {
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "formats": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FormatDefaults"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "locale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "style": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Style"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "TextAlign": {
+      "enum": [
+        "left",
+        "center",
+        "right"
+      ],
+      "type": "string"
+    },
+    "TextCombineUpright": {
+      "oneOf": [
+        {
+          "enum": [
+            "none",
+            "all"
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "digits": {
+              "maximum": 4,
+              "minimum": 2,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "digits"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "TextDecoration": {
+      "oneOf": [
+        {
+          "const": "none",
+          "type": "string"
+        },
+        {
+          "const": "underline",
+          "type": "string"
+        },
+        {
+          "const": "line_through",
+          "type": "string"
+        }
+      ]
+    },
+    "TextMark": {
+      "additionalProperties": false,
+      "properties": {
+        "data": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "padding": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Length"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "style": {
+          "$ref": "#/$defs/Style"
+        },
+        "styleNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "TextOrientation": {
+      "oneOf": [
+        {
+          "const": "mixed",
+          "type": "string"
+        },
+        {
+          "const": "upright",
+          "type": "string"
+        }
+      ]
+    },
+    "TextOverflow": {
+      "oneOf": [
+        {
+          "const": "visible",
+          "type": "string"
+        },
+        {
+          "const": "shrink",
+          "type": "string"
+        },
+        {
+          "const": "ellipsis",
+          "type": "string"
+        },
+        {
+          "const": "clip",
+          "type": "string"
+        }
+      ]
+    },
+    "TextSpacingTrim": {
+      "oneOf": [
+        {
+          "const": "space_all",
+          "type": "string"
+        },
+        {
+          "const": "normal",
+          "type": "string"
+        },
+        {
+          "const": "trim_start",
+          "type": "string"
+        }
+      ]
+    },
+    "TrackSpec": {
+      "oneOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/GridTrack"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "Version": {
+      "anyOf": [
+        {
+          "format": "double",
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "VerticalAlign": {
+      "enum": [
+        "top",
+        "middle",
+        "bottom"
+      ],
+      "type": "string"
+    },
+    "WritingMode": {
+      "oneOf": [
+        {
+          "const": "horizontal_tb",
+          "type": "string"
+        },
+        {
+          "const": "vertical_rl",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "$id": "https://shojiku.pages.dev/reference/catalog.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Per-key facts of the Shojiku template and definitions wire, derived from the parser. Regenerate with `make reference-data`; `make reference-check` fails on drift.",
+  "properties": {
+    "definitions": {
+      "$ref": "#/$defs/Definitions"
+    },
+    "template": {
+      "$ref": "#/$defs/Template"
+    }
+  },
+  "title": "Shojiku authorable wire",
+  "type": "object"
+}

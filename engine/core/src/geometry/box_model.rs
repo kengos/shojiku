@@ -18,6 +18,7 @@ mod tests;
 /// A fully specified rectangle. Lengths resolve against the parent
 /// (`%` of the page for top-level boxes) at layout time.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct BoxSpec {
     pub x: Length,
@@ -35,6 +36,7 @@ pub struct BoxSpec {
 /// would be an invisible authoring bug. (Not `Copy`: grid track lists
 /// are heap-backed — callers clone, which is cheap and rare.)
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct OptBox {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -220,6 +222,7 @@ impl OptBox {
 /// against its height (a `%` under an auto-height parent drops with
 /// `percent_of_auto`, like every other vertical `%`).
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct PointSpec {
     pub x: Length,

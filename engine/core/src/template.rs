@@ -60,6 +60,7 @@ pub use table::{
 /// Top-level template document. Unknown keys are parse errors and unset
 /// fields never serialize — the file round-trips as authored.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct Template {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -98,6 +99,7 @@ pub struct Template {
 /// number was the universal miss in the external acceptance run).
 /// Numbers are finite by construction (`yaml_guard`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]
 pub enum Version {
     Number(f64),
@@ -105,6 +107,7 @@ pub enum Version {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct Sections {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -116,6 +119,7 @@ pub struct Sections {
 
 /// A repeating band (header/footer) with absolutely positioned items.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct Band {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -135,6 +139,7 @@ impl Band {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum Repeat {
     #[default]
@@ -159,6 +164,7 @@ impl Repeat {
 /// The body section: either a flow (items stack, tables paginate) or a
 /// plain absolute layout.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Body {
     Flow(FlowBody),
@@ -166,6 +172,7 @@ pub enum Body {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct FlowBody {
     /// The region the flow occupies on every page, relative to the page
@@ -190,6 +197,7 @@ impl FlowBody {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct AbsoluteBody {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -197,6 +205,7 @@ pub struct AbsoluteBody {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Item {
     Text(TextItem),

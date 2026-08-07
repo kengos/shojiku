@@ -149,8 +149,9 @@ impl EdgeSpec {
 /// The mapping wire form. Unknown keys are rejected — a typo like
 /// `letf:` silently meaning 0 would be an invisible authoring bug.
 #[derive(Deserialize, Serialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
-struct EdgeMapRepr {
+pub(crate) struct EdgeMapRepr {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     top: Option<EdgeValue>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

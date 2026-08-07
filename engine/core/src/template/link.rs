@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 /// else warns and drops the link (params are untrusted, and a PDF `/URI`
 /// action reaches the reader's machine).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct Link {
     pub url: String,

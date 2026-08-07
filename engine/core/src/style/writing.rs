@@ -19,6 +19,7 @@ use std::fmt;
 /// `writingMode` (the genkoyoshi grid direction), and it is also a `style`
 /// property that turns a plain `type: text` item into a vertical block.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum WritingMode {
     /// Horizontal lines stacked top→bottom (Latin). The engine
@@ -36,6 +37,7 @@ pub enum WritingMode {
 /// the effective [`WritingMode`] is vertical; inert in horizontal text.
 /// The engine default is [`TextOrientation::Mixed`], matching CSS.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum TextOrientation {
     /// Upright CJK, with non-CJK runs (Latin digits/letters) rotated 90°
@@ -76,6 +78,7 @@ pub enum TextCombineUpright {
 /// `Some(None)`. Serializes as the authored forms (`{ digits: N }` /
 /// `all`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum TextCombine {
     /// See [`TextCombineUpright::Digits`].
@@ -149,6 +152,7 @@ impl<'de> Visitor<'de> for CombineVisitor {
 /// The `{ digits: N }` wire form — the derive supplies the located
 /// unknown-key / duplicate-key / missing-field errors.
 #[derive(Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 struct DigitsForm {
     digits: u8,

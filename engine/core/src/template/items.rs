@@ -16,6 +16,7 @@ use super::spans::Span;
 /// interpolation), `data` (single bound value), or `spans` (inline rich
 /// text) — exactly one of which should be set.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct TextItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -71,6 +72,7 @@ pub struct TextItem {
 /// nothing draws unless a style layer authors it: a bare `rect` is
 /// invisible (the pre-convergence 1pt default stroke is gone).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct RectItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -84,6 +86,7 @@ pub struct RectItem {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct LineItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -99,6 +102,7 @@ pub struct LineItem {
 /// (a params-bound value, subject to the host's asset policy) — exactly
 /// one should be set. `box.w`/`box.h` are required to reserve space.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct ImageItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -129,6 +133,7 @@ pub struct ImageItem {
 
 /// How an image scales into its box (CSS `object-fit`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum ImageFit {
     /// Preserve aspect ratio, fit inside the box, center the remainder.
@@ -153,6 +158,7 @@ pub enum ImageFit {
 /// required; the code is drawn square (the smaller side) with the
 /// spec's 4-module quiet zone inside.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct QrCodeItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -181,6 +187,7 @@ pub struct QrCodeItem {
 
 /// QR error-correction level (ISO 18004): tolerated damage ~7/15/25/30%.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum EcLevel {
     Low,
@@ -195,6 +202,7 @@ pub enum EcLevel {
 /// line when entries were cut. No pagination — inside a `repeat` cell the
 /// box is a fixed slot; in a flow an auto-height list simply grows.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ListItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -232,6 +240,7 @@ pub struct ListItem {
 /// a break at the top of an untouched page is a no-op, so consecutive
 /// breaks collapse to one — blank pages are never generated.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct PageBreakItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -241,6 +250,7 @@ pub struct PageBreakItem {
 /// A page number item; only valid in header/footer bands.
 /// `format` supports `{page}` and `{pages}` tokens.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct PageNumberItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]

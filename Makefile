@@ -323,6 +323,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 .PHONY: proof-deploy site site-lint site-test site-data site-check site-wasm-release site-build \
         site-dev verify\:site lint\:site test\:site
 .PHONY: help verify quiet rust budget fmt fmt-fix lock clippy test coverage deny \
+        reference-data reference-check \
         verify\:engine verify\:gui verify\:docker lint\:engine lint\:gui \
         test\:engine test\:gui budget\:engine budget\:gui \
         verify\:sdk\:ruby test\:sdk\:ruby lint\:sdk\:ruby \
@@ -359,7 +360,7 @@ help: ## Show this help
 # `coverage`: it is a full wasm32 build rather than a lint, so it does not
 # belong before the tests — but a size-budget crossing used to be discovered
 # only after paying for the single most expensive step in the run.
-verify: rust wasm coverage deny examples-check napi gui site site-check sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
+verify: rust wasm coverage deny reference-check examples-check napi gui site site-check sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
 	@echo "\n✅ verify passed — every CI gate is green locally. Safe to push."
 
 ## ---- <verb>:<scope> — "did it work?" entry points ----------------------
@@ -392,7 +393,7 @@ verify: rust wasm coverage deny examples-check napi gui site site-check sdk-ruby
 # Invocation is plain (`make verify:gui`); `help` strips the backslash.
 
 verify\:engine: ## Verify engine/ — budget + lint + tests at 100% coverage, deny, examples, wasm
-	@$(MAKE) --no-print-directory quiet T="rust coverage deny examples-check wasm"
+	@$(MAKE) --no-print-directory quiet T="rust coverage deny reference-check examples-check wasm"
 
 verify\:gui: ## Verify gui/ — budget + typecheck + lint (0 warnings) + tests/coverage
 	@$(MAKE) --no-print-directory quiet T=gui
@@ -703,12 +704,40 @@ coverage-why: ## Name the lines that failed the coverage gate (reads engine/lcov
 
 ## ---- job: deny ---------------------------------------------------------
 
-deny: ## cargo deny check advisories licenses bans sources
+# `--all-features` is load-bearing, not thoroughness: without it cargo-deny
+# does NOT traverse an optional dependency that no enabled feature turns on,
+# so a rejected licence rides in unseen. Proven by negative control —
+# webpki-roots (CDLA-Permissive-2.0, which the allowlist rejects) added as an
+# OPTIONAL dep passes this gate and fails it the moment it is made
+# non-optional. Two feature-gated trees depend on the flag: engine/napi's
+# `shim` (which the npm package ships) and engine/core's `schema`.
+deny: ## cargo deny check advisories licenses bans sources (ALL features — see above)
 	@echo "== cargo deny =="
 	$(CARGO_IN_DOCKER) 'command -v git >/dev/null 2>&1 || \
 			{ apt-get update -qq && apt-get install -y -qq git >/dev/null; }; \
 		command -v cargo-deny >/dev/null 2>&1 || cargo install cargo-deny --locked; \
-		cargo deny check advisories licenses bans sources'
+		cargo deny --all-features check advisories licenses bans sources'
+
+## ---- job: reference ----------------------------------------------------
+
+# The key catalog is derived from the parser, so the parser is the only source
+# of its structure. This pair mirrors site-data/site-check: one target
+# regenerates, the other fails on drift. Both build engine/core's non-default
+# `schema` feature, which is also the only place the hand-written JsonSchema
+# impls and their tests are compiled at all.
+reference-data: ## Regenerate the committed key catalog from the parser
+	@echo "== reference data refresh =="
+	$(CARGO_IN_DOCKER) 'cargo run -p shojiku-authoring --bin reference-gen \
+		--features schema --locked $(CARGO_JOBS)'
+
+# Runs the schema TESTS as well as the drift comparison: the drift check alone
+# is an idempotence claim, and would protect a wrong artifact exactly as
+# faithfully as a right one. The hand-written schemas are pinned against the
+# real parser in engine/core's own suite.
+reference-check: ## Fail if the key catalog drifts, or a hand-written schema lies
+	@echo "== reference schema tests =="
+	$(CARGO_IN_DOCKER) 'cargo test -p shojiku-core --features schema --locked $(CARGO_JOBS) ;\
+		cargo test -p shojiku-authoring --features schema --locked $(CARGO_JOBS)'
 
 ## ---- job: sdk-php ------------------------------------------------------
 

@@ -31,6 +31,7 @@ pub enum GridTrack {
 /// Wire form: a bare number (pt) or a suffixed string (`"1fr"`, `"30%"`,
 /// `"8mm"`, …).
 #[derive(Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]
 enum TrackRepr {
     Number(f64),

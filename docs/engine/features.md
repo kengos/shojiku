@@ -1527,9 +1527,19 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **Anti-bloat gate**: every `.rs` ≤300 lines hard with a first-line
   `//!` role header (`make budget`); function length via
   `clippy::too_many_lines` (150).
-- `cargo deny` (advisories/licenses/bans/sources, **zero ignores**),
-  trivy on the Docker job, Dependabot weekly, **coverage blocking at
-  100% lines**; doc-only changes skip CI.
+- `cargo deny` (advisories/licenses/bans/sources, **zero ignores**, run
+  with `--all-features` so a feature-gated optional dependency cannot
+  ride in unchecked), trivy on the Docker job, Dependabot weekly,
+  **coverage blocking at 100% lines**; doc-only changes skip CI.
+- **Key catalog + drift gate**: the per-key facts of the authorable wire
+  are derived from the parser as a JSON Schema document, committed at
+  `engine/authoring/reference/catalog.schema.json` and embedded as
+  `shojiku_authoring::reference::CATALOG`. `make reference-data`
+  regenerates it; `make reference-check` fails on drift and runs the
+  schema tests with it. The derive lives behind `engine/core`'s
+  non-default `schema` feature, so no shipped binary links it. The
+  document carries structure only — per-key prose is a separate,
+  unbuilt layer (`docs/agents/engine.md` § The key catalog).
 - License: triple **MIT OR Apache-2.0 OR BSD-3-Clause**. Bundled
   examples (the full inventory + gallery order live in
   `docs/code-map/repo.md` and README.md § Gallery): business documents

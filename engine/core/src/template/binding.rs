@@ -26,6 +26,7 @@ pub const MAX_BINDINGS: usize = 256;
 
 /// A data binding: which params key to read and which format variant to use.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct Binding {
     pub key: String,
@@ -70,6 +71,7 @@ impl Binding {
 /// deliberately INERT there rather than a diagnostic: a sub-template must
 /// compose the same way in and out of a `repeat`.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum BindingScope {
     /// The ambient scope: the bound array element inside a data-scoped

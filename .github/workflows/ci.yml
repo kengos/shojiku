@@ -79,6 +79,20 @@ jobs:
           target: examples-check
           key: examples
 
+  reference:
+    # The key catalog is derived from the parser, so a key added without
+    # regenerating is a red gate rather than a silent lie. This also runs the
+    # schema tests, which live behind the same non-default `schema` feature
+    # and are therefore invisible to the coverage job above.
+    name: reference (key catalog matches the parser)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: reference-check
+          key: reference
+
   deny:
     name: cargo deny (advisories / licenses)
     runs-on: ubuntu-latest

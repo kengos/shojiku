@@ -19,6 +19,7 @@ pub const MAX_CONTAINER_DEPTH: usize = 32;
 /// means auto height (the lowest child bottom edge). Containers nest;
 /// `table` and `page_number` are not allowed inside (Phase 1).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct ContainerItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -56,6 +57,7 @@ pub const MAX_IMPOSITION_PER_PAGE: usize = 64;
 /// warn and skip. `table` / `page_number` inside a cell are out of the first
 /// cut (they warn and skip, like inside a container).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(deny_unknown_fields)]
 pub struct RepeatItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -103,6 +105,7 @@ impl RepeatItem {
 /// `break-before` semantics, narrowed to the two values that mean something
 /// for a grid that owns the whole region).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum BreakBefore {
     /// Start at the flow cursor: the first page's grid keeps the cell size
@@ -120,6 +123,7 @@ pub enum BreakBefore {
 /// fill order, and the gaps between them. Omitted entirely, it defaults to a
 /// single cell per page (`1 × 1`).
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GridSpec {
     /// Cells across per page (≥ 1). `columns × rows` is the cells-per-page
@@ -185,6 +189,7 @@ impl GridSpec {
 
 /// Order in which cells fill the grid (CSS `grid-auto-flow` analog).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum GridDirection {
     /// Left-to-right, then wrap to the next row.

@@ -15,12 +15,17 @@ homepage.workspace = true
 # stay filesystem-free.
 default = ["fs"]
 fs = []
+# Non-default: the key-catalog GENERATOR. The committed artifact is
+# embedded either way; only regenerating it needs the schema derive, so a
+# default build and the WASM bundle link none of schemars.
+schema = ["dep:schemars", "shojiku-core/schema"]
 
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 shojiku-core = { workspace = true }
+schemars = { workspace = true, optional = true }
 shojiku-diagnostics = { workspace = true }
 shojiku-formatter = { workspace = true }
 shojiku-image = { workspace = true }
@@ -29,3 +34,9 @@ shojiku-render-png = { workspace = true }
 
 [lints]
 workspace = true
+
+# The generator is skipped entirely unless the feature is on, so `cargo
+# build`/`test`/`llvm-cov` never compile it.
+[[bin]]
+name = "reference-gen"
+required-features = ["schema"]

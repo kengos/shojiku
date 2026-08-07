@@ -10,7 +10,7 @@
 //! string (not a sequence) is rejected — there is no track mini-grammar
 //! to keep in sync with the GUI (North star: structured forms only).
 
-mod track;
+pub(crate) mod track;
 
 pub use track::GridTrack;
 

@@ -20,6 +20,7 @@ pub const MAX_CHAR_GRID_CELLS: usize = 4096;
 /// `markup: aozora` (`|base《ruby》`); without it every string renders
 /// verbatim, markup characters included.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CharGridItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -81,6 +82,7 @@ impl CharGridItem {
 /// Dimensions are writing-mode-relative — a vertical 200-cell genkoyoshi
 /// is `charsPerLine: 20, lines: 10` regardless of direction.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CharGridSpec {
     /// Cells per line. Clamped to at least 1 and at most
@@ -104,6 +106,7 @@ pub struct CharGridSpec {
 
 /// Kinsoku (line-break prohibition) rule sets for cell assignment.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum KinsokuMode {
     /// The school-education rule: trailing punctuation (`。、` etc.) hangs back into
@@ -117,6 +120,7 @@ pub enum KinsokuMode {
 
 /// Content markup grammars (opt-in; `None` = verbatim).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum Markup {
     /// Aozora Bunko ruby notation: `《reading》` annotates the preceding kanji

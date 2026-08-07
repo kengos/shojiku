@@ -21,6 +21,7 @@ use super::super::Binding;
 /// could not do: serde buffers the internally-tagged `Item` enum, so an
 /// error inside a column surfaces at the `sections.body` boundary.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Column {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -73,6 +74,7 @@ impl Column {
 
 /// What a table column renders per row from its `data:` binding.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum ColumnType {
     #[default]
