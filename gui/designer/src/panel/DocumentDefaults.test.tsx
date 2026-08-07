@@ -4,6 +4,7 @@ import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { LOCALES } from '../i18n/locales';
 import { DocumentDefaults } from './DocumentDefaults';
+import { localeFacts } from './localeFacts';
 
 /** A real-editor harness: applying an op mutates the document and re-renders, so
  * tests assert the serialized doc, not a spy. */
@@ -49,11 +50,24 @@ describe('DocumentDefaults', () => {
     render(<Harness source={`defaults:\n  locale: ja-JP\n  currency: JPY\n${BASE}`} />);
     expect((screen.getByLabelText('Locale') as HTMLInputElement).value).toBe('ja-JP');
     expect((screen.getByLabelText('Currency') as HTMLInputElement).value).toBe('JPY');
-    // The locale datalist is the endonym registry's tags.
+    // The locale datalist is the endonym registry's tags PLUS the engine
+    // locales that have no chrome catalog of their own. th-TH is the case
+    // that separates the two axes: it ships a locale pack (Buddhist era,
+    // baht, Thai month names) while the Designer's UI has no Thai, so it
+    // must be offered here and must NOT be in the chrome registry.
     const options = Array.from(document.querySelectorAll('#sj-defaults-locale option'), (o) =>
       o.getAttribute('value'),
     );
-    expect(options).toEqual(LOCALES.map((l) => l.tag));
+    expect(options.slice(0, LOCALES.length)).toEqual(LOCALES.map((l) => l.tag));
+    expect(options).toContain('th-TH');
+    expect(LOCALES.map((l) => l.tag)).not.toContain('th-TH');
+    // Every EXTRA tag can say what it does — that is the whole point of
+    // sourcing them from the facts table. (The chrome tags cannot be
+    // checked this way: `localeFacts` is keyed by the ENGINE locale, and a
+    // regional English like en-GB resolves to en-US before the lookup.)
+    for (const tag of options.slice(LOCALES.length)) {
+      expect(localeFacts(tag as string), tag as string).not.toBeNull();
+    }
     // The hint says the preview does not follow the locale.
     expect(screen.getByText(/preview doesn't follow/i)).toBeTruthy();
     // The inherited-subset style editor is present, backgroundColor is not.

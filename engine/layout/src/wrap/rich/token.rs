@@ -4,6 +4,7 @@
 //! [`super`] (the assembly half) for the line budget.
 
 use super::super::is_cjk;
+use super::super::thai;
 use super::width::is_all;
 use super::{RichSpan, Styled};
 
@@ -21,6 +22,34 @@ pub(super) enum Token {
     All(Vec<Styled>),
 }
 
+/// Pushes one accumulated word.
+///
+/// A word carrying Thai is split at the segmenter's word boundaries, one
+/// token per segment — Thai has no spaces to mark them, so without this the
+/// greedy fill has nothing to break on. A word with no Thai character takes
+/// the single-token path untouched, which is what keeps the line breaking of
+/// every existing document unchanged.
+fn push_word(word: Vec<Styled>, tokens: &mut Vec<Token>) {
+    if !word.iter().any(|&(c, _)| thai::is_thai(c)) {
+        tokens.push(Token::Word(word));
+        return;
+    }
+    let text: String = word.iter().map(|&(c, _)| c).collect();
+    let breaks = thai::break_indices(&text);
+    // `break_indices` yields strictly ascending CHARACTER indices, interior
+    // only — `1..word.len()`, over these same characters — so each split
+    // lands inside what is left. The saturating form keeps that a property
+    // of this function rather than a promise its callee has to keep.
+    let mut rest = word;
+    let mut consumed = 0usize;
+    for at in breaks {
+        let tail = rest.split_off(at.saturating_sub(consumed).min(rest.len()));
+        tokens.push(Token::Word(std::mem::replace(&mut rest, tail)));
+        consumed = at;
+    }
+    tokens.push(Token::Word(rest));
+}
+
 pub(super) fn tokenize(spans: &[RichSpan], paragraph: &[Styled]) -> Vec<Token> {
     let mut tokens = Vec::new();
     let mut word: Vec<Styled> = Vec::new();
@@ -29,7 +58,7 @@ pub(super) fn tokenize(spans: &[RichSpan], paragraph: &[Styled]) -> Vec<Token> {
 
     let flush_word = |word: &mut Vec<Styled>, tokens: &mut Vec<Token>| {
         if !word.is_empty() {
-            tokens.push(Token::Word(std::mem::take(word)));
+            push_word(std::mem::take(word), tokens);
         }
     };
     let flush_space = |space: &mut Vec<Styled>, tokens: &mut Vec<Token>| {

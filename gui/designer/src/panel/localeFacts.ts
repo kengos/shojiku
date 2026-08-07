@@ -119,6 +119,20 @@ export const LOCALE_FACTS: Readonly<Record<string, LocaleFacts>> = {
     date: 'Ene 5, 2026',
     amount: '₱1,234.00',
   },
+  'th-TH': {
+    datePattern: 'd MMM y',
+    groupSeparator: ',',
+    decimalSeparator: '.',
+    number: '1,234,567.5',
+    currencyDefault: 'THB',
+    currencySymbol: '฿',
+    currencyName: 'บาทไทย',
+    // The Buddhist era, which is exactly what this locale's pick changes:
+    // 2026 CE prints as 2569. The pack's `y` token resolves through its era
+    // table — this literal reports that, it does not compute it.
+    date: '5 ม.ค. 2569',
+    amount: '฿1,234.00',
+  },
 };
 
 /** The facts for an authored `defaults.locale` value. A tag the engine cannot

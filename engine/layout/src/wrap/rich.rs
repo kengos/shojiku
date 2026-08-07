@@ -195,7 +195,22 @@ fn wrap_paragraph(
         // The token alone exceeds the line: hard-break char by char.
         for sc in piece {
             let cw = width_of(spans, sc);
-            if !current.is_empty() && current_width + cw > max_width {
+            // Thai clusters must not be cut on either side. A vowel or tone
+            // mark attaches to the character BEFORE it, so it never opens a
+            // line; a leading vowel (เ แ โ ใ ไ) is written before the
+            // consonant it belongs to, so a line never ends with one. Either
+            // break would draw the pair detached.
+            // The leading-vowel half is bounded to the PAIR: a vowel
+            // followed by another leading vowel is degenerate input (a
+            // vowel is always pronounced after a consonant), and holding
+            // those together too would let params drive one unbreakable
+            // line of any length.
+            let after_leading_vowel = current
+                .last()
+                .is_some_and(|&(c, _)| super::thai::is_thai_leading_vowel(c))
+                && !super::thai::is_thai_leading_vowel(sc.0);
+            let breakable = !super::thai::is_thai_combining(sc.0) && !after_leading_vowel;
+            if breakable && !current.is_empty() && current_width + cw > max_width {
                 push_line(&mut current, &mut current_width, lines);
             }
             current.push(sc);

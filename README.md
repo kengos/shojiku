@@ -2,8 +2,7 @@
 
 [![CI](https://github.com/kengos/shojiku/actions/workflows/ci.yml/badge.svg)](https://github.com/kengos/shojiku/actions/workflows/ci.yml)
 
-**Write YAML. Get PDFs.** A Rust engine for business documents:
-invoices, receipts, application forms, manuscript paper.
+**Write YAML. Get PDFs. Built for AI agents.**
 
 [shojiku.pages.dev](https://shojiku.pages.dev) — the gallery, the
 tutorials, and a playground that renders in your browser.
@@ -125,12 +124,13 @@ a human or an AI can check a template against it before rendering.
 </details>
 
 **Languages and locales.** The same template machinery drives documents
-in English, Japanese, Simplified and Traditional Chinese, Hindi and
-Filipino: `en-US` and `ja-JP` are built into the engine, and
-[`packs/locale/`](packs/locale/) adds `zh-CN`, `zh-TW`, `hi-IN` and
-`fil-PH` — each supplying its own currency, date, number-grouping and
-unit wording, with font fallback to match (Devanagari, Simplified and
-Traditional faces all ship in [`packs/fonts/`](packs/fonts/)). The
+in English, Japanese, Simplified and Traditional Chinese, Hindi,
+Filipino and Thai: `en-US` and `ja-JP` are built into the engine, and
+[`packs/locale/`](packs/locale/) adds `zh-CN`, `zh-TW`, `hi-IN`,
+`fil-PH` and `th-TH` — each supplying its own currency, date,
+number-grouping and unit wording, with font fallback to match
+(Devanagari, Thai, Simplified and Traditional faces all ship in
+[`packs/fonts/`](packs/fonts/)). The
 receipt in the Gallery below is the clearest demonstration: **one
 geometry, six locales**, differing only by the pack. Japanese adds
 vertical writing, ruby, kinsoku line-breaking and wareki dates; Indian
@@ -244,7 +244,7 @@ template** with different data:
 | [<img src="examples/business/receipt-zh-tw/preview-1.png" width="420" alt="Receipt (zh-TW)">](examples/business/receipt-zh-tw/)<br>**Receipt (zh-TW)** — The locale-pack story: the same receipt geometry as ja / zh-CN / 80mm en-US, with currency, dates, tax wording, and font fallback swapped by the pack. | [<img src="examples/forms/application-form-ja/preview-1.png" width="206" alt="Application form, filled ↔ blank (ja)">](examples/forms/application-form-ja/) [<img src="examples/forms/application-form-ja/preview-blank-1.png" width="206" alt="Application form, filled ↔ blank (ja)">](examples/forms/application-form-ja/)<br>**Application form, filled ↔ blank (ja)** — ONE template, two params files: form marks, 〒 entry cells, wareki with a blank-form `placeholder`; not a single pt shifts. |
 | [<img src="examples/business/restaurant-menu-us/preview-1.png" width="420" alt="Restaurant menu (en + vertical writing)">](examples/business/restaurant-menu-us/)<br>**Restaurant menu (en + vertical writing)** — An American Japanese restaurant's specials: English menu, USD prices, and the vertical 正直亭 brand column + per-dish vertical names carrying the Japanese feel. | [<img src="examples/business/event-tickets-ja/preview-1.png" width="420" alt="Event tickets (ja)">](examples/business/event-tickets-ja/)<br>**Event tickets (ja)** — 2×4 n-up imposition with per-ticket QR, trim marks for the cutter, `placeholder` seat fallback; 14 attendees flow onto sheet 2 automatically. |
 
-16 more live in [examples/](examples/):
+17 more live in [examples/](examples/):
 [Estimate](examples/business/estimate-ja/) (The invoice's sibling: single-rate one-pager, estimate-terms box, discount row),
 [Delivery note](examples/business/delivery-note-ja/) (Between estimate and invoice: quantity-bundling `headerGroups`, data-driven row styling that tints only rows with items remaining, a receipt-stamp field; partial ↔ complete delivery as two data files),
 [Pickup slip](examples/business/pickup-slip-ja/) (The Thinreports migration artifact — the migration walkthrough's result),
@@ -260,7 +260,8 @@ template** with different data:
 [Receipt (80mm thermal, en-US)](examples/business/receipt-us/) (A custom-size 80mm thermal-printer receipt),
 [Receipt (zh-CN)](examples/business/receipt-zh-cn/) (The simplified-Chinese member of the locale set),
 [Receipt (hi-IN)](examples/business/receipt-hi-in/) (Devanagari conjuncts + lakh/crore digit grouping),
-[Receipt (fil-PH)](examples/business/receipt-fil-ph/) (Latin face + Philippine peso from the fil-PH pack).
+[Receipt (fil-PH)](examples/business/receipt-fil-ph/) (Latin face + Philippine peso from the fil-PH pack),
+[Receipt (th-TH)](examples/business/receipt-th-th/) (Thai wrapped at word boundaries, dated in the Buddhist era).
 <!-- gallery:generated:end -->
 
 **Developer examples** — [`examples/dev/layout-showcase`](examples/dev/layout-showcase/)

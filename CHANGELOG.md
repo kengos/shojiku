@@ -15,6 +15,34 @@ platform binaries.
 
 ### Added
 
+- **Thai, wrapped where the words are.** Thai writes without spaces
+  between words, so a wrapper looking for one finds nothing: a Thai
+  paragraph used to arrive as a single unbreakable run and get cut at
+  whatever character the line width reached — mid-word, and sometimes
+  between a character and the vowel or tone mark that belongs to it.
+  Thai runs are now segmented into words first (ICU4X's line segmenter,
+  the same Unicode data a browser uses) and break at those boundaries
+  instead. Where a single word is still wider than the line and has to
+  be split, the break is held back so the cluster is not cut on either
+  side: a non-spacing mark never opens a line, and a leading vowel
+  (เ แ โ ใ ไ, written before the consonant it is pronounced after) never
+  ends one.
+  `lineBreak` does not switch this off — segmentation supplies break
+  opportunities, `lineBreak` governs the prohibitions applied after
+  them. Text in every other script tokenizes exactly as before, so no
+  existing document's line breaking moves.
+
+- **A `th-TH` locale pack, dated in the Buddhist era.** Thai chrome —
+  month and weekday names, the baht, `d MMM y` patterns — plus a
+  `noto-sans-thai` font pack, so a Thai document renders glyphs rather
+  than boxes. Dates print the year Thailand actually uses: 2026 CE comes
+  out as 2569 BE, from the pack's own era table. Add `format: gregorian`
+  to a date field for the Christian year instead; the bundled
+  [Thai receipt](examples/business/receipt-th-th/) prints both in its
+  footer. Making that possible needed one engine fix: an era's start
+  date could not be written with a year before 1, which is exactly what
+  the Buddhist era needs (`-542-01-01`).
+
 - **Your own fonts, in one command.** Shojiku renders with fonts from
   packs and never scans the system, which kept output reproducible but
   meant a licensed corporate font had to be installed by hand: create the
@@ -336,6 +364,15 @@ platform binaries.
   report rather than written down beside it.
 
 ### Fixed
+
+- **A short date no longer prints the year twice.** `format: compact` on
+  a Hindi or Filipino document rendered `14/3/20262026` instead of
+  `14/3/2026`. CLDR spells short dates with a two-digit year (`yy`) and
+  those packs carried its spelling verbatim, but the pattern grammar has
+  no two-digit-year token — the longest match for `yy` is the year
+  token twice. Both packs now spell the year in full. The missing token
+  is a real gap and is still open; what is fixed is that no shipped pack
+  authors a token the grammar does not have.
 
 - **Chinese text no longer breaks in front of a closing quotation mark.**
   Line breaking knew the CJK brackets but not the quotation marks

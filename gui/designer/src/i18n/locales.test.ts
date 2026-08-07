@@ -71,7 +71,9 @@ describe('locale registry', () => {
   it('resolves every entry engine locale to a builtin or a shipped pack', () => {
     // The engine accepts a builtin (ja-JP / en-US) or a standalone
     // `packs/locale/<id>.yml` pack; nothing else resolves at setLocale.
-    const resolvable = new Set(['ja-JP', 'en-US', 'zh-TW', 'zh-CN', 'hi-IN', 'fil-PH']);
+    // A superset of what `LOCALES` can name — `th-TH` ships a pack but no
+    // chrome catalog, so no picker entry resolves to it.
+    const resolvable = new Set(['ja-JP', 'en-US', 'zh-TW', 'zh-CN', 'hi-IN', 'fil-PH', 'th-TH']);
     for (const locale of LOCALES) {
       expect(resolvable.has(locale.engineLocale), `${locale.tag}/${locale.engineLocale}`).toBe(
         true,

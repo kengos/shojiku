@@ -16,7 +16,8 @@ export interface LocaleInfo {
   readonly messages: string;
   /** The engine-RESOLVABLE locale tag this locale's documents format through:
    * a formatter builtin (`ja-JP` / `en-US`) or a shipped `packs/locale/<id>.yml`
-   * pack (`fil-PH` / `hi-IN` / `zh-CN` / `zh-TW`). Regional English tags
+   * pack (`fil-PH` / `hi-IN` / `zh-CN` / `zh-TW`; `th-TH` ships a pack but
+   * no chrome, so it is not a picker entry). Regional English tags
    * (`en-GB`, `en-AU`, …) have no builtin and no pack, so they map to `en-US`
    * — the value `setLocale` and a blank preset's `defaults.locale` carry. */
   readonly engineLocale: string;

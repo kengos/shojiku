@@ -346,7 +346,12 @@ Wire types stay in core; content measurement stays in layout.
   all` runs are atomic); `wrap/kinsoku.rs` (the per-mode kinsoku prohibition
   sets — the single home shared by wrapper, ellipsis clamp, and hang
   pass); `wrap/hang.rs` (the hanging-punctuation post-pass `apply_hang`, at most one
-  hung comma per line, shared `hangable` predicate).
+  hung comma per line, shared `hangable` predicate); `wrap/thai.rs` (the
+  Thai word segmenter behind the tokenizer — `is_thai`, the
+  combining-mark predicate the hard-break arm consults, and
+  `break_indices`, which converts ICU4X's byte offsets to char indices
+  in one forward pass. Thai has no inter-word spaces, so these ARE its
+  break opportunities).
 - `font.rs` — `FontStore`: `resolve(family, weight, style) → ResolvedFace`
   (declaration-order variant selection, `real_bold`/`real_italic` flags so
   callers drop synthetics), `resolve_chain → ResolvedChain` (the locale

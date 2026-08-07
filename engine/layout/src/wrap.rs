@@ -1,6 +1,8 @@
 //! Greedy text wrapping with CJK-aware break opportunities and optional
 //! kinsoku (CJK line-break prohibition — one set serves Japanese and
-//! Chinese; see `wrap/kinsoku.rs`). The engine itself works on
+//! Chinese; see `wrap/kinsoku.rs`). Thai, which writes without
+//! inter-word spaces, gets its break opportunities from a word segmenter
+//! instead (`wrap/thai.rs`). The engine itself works on
 //! styled characters (`wrap/rich.rs`) so plain text and rich spans
 //! wrap identically; the plain API here is a one-span convenience.
 
@@ -11,6 +13,9 @@ mod kinsoku;
 mod rich;
 #[cfg(test)]
 mod tests;
+mod thai;
+#[cfg(test)]
+mod thai_tests;
 #[cfg(test)]
 mod vertical_tests;
 #[cfg(test)]

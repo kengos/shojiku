@@ -1,9 +1,15 @@
 //! `lineBreak: strict | loose` end to end (`src/style/enums.rs` →
 //! `src/wrap/kinsoku.rs`): the wire keyword reaches the wrapper and
 //! changes which characters are held off a line start, while the default
-//! `normal` follows CSS (small kana may start a line).
+//! `normal` follows CSS (small kana may start a line). Thai reaches the
+//! same wrapper by a different route (`src/wrap/thai.rs`): it has no
+//! spaces, so its break opportunities come from a word segmenter.
 
 use crate::common::*;
+
+/// ภาษา ("language") and ไทย ("Thai") — the two words the Thai fixtures
+/// below are built from, so an assertion can name whole words.
+const THAI_WORDS: [&str; 2] = ["ภาษา", "ไทย"];
 
 /// One flow text item, `lineBreak` mode selectable. Fixed-pitch
 /// `biz-ud-gothic` so every full-width glyph is exactly 1em (10pt) and a
@@ -152,4 +158,61 @@ sections:
         line_texts(text_blocks(&doc.pages[0])[0]),
         vec!["あ", "あっあ"]
     );
+}
+
+/// One flow text item at a fixed narrow width. The e2e font store carries
+/// only the ja pack, so Thai draws as `.notdef` — deliberately not relied
+/// on: the assertions below hold for any advance that pkg face gives it.
+fn thai(text: &str) -> String {
+    format!(
+        r#"
+page: {{ margin: 0 }}
+sections:
+  body:
+    type: flow
+    box: {{ x: 0, y: 0, w: 500, h: 500 }}
+    items:
+      - type: text
+        text: "{text}"
+        box: {{ w: 45 }}
+        style: {{ fontSize: 10, fontFamily: biz-ud-gothic }}
+"#
+    )
+}
+
+#[test]
+fn thai_breaks_only_at_word_boundaries() {
+    // Thai has no spaces, so before segmentation the whole run was ONE
+    // token and the greedy fill's last resort cut it per character —
+    // mid-word. Every line here must be whole words instead. The
+    // assertion names the words rather than a pt width, so it does not
+    // depend on what advance the `.notdef` glyph happens to declare.
+    let (doc, d) = run(&thai("ภาษาไทยภาษาไทย"), json!({}));
+    assert!(!d.has_errors());
+    let lines = line_texts(text_blocks(&doc.pages[0])[0]);
+    assert!(lines.len() > 1, "a 45pt box must break this run: {lines:?}");
+    assert_eq!(lines.concat(), "ภาษาไทยภาษาไทย", "no character may be lost");
+    for line in &lines {
+        let mut rest = line.as_str();
+        while let Some(word) = THAI_WORDS.iter().find(|w| rest.starts_with(**w)) {
+            rest = &rest[word.len()..];
+        }
+        assert!(rest.is_empty(), "line {line:?} is cut mid-word: {lines:?}");
+    }
+}
+
+#[test]
+fn the_same_width_still_hard_breaks_a_latin_word_mid_word() {
+    // The control for the test above: 45pt is genuinely too narrow for
+    // the run, so "every line is a whole word" is a statement about the
+    // segmenter and not about the box being roomy. A Latin word has no
+    // interior break opportunity and is cut wherever the width lands.
+    let (doc, d) = run(&thai("aaaaaaaaaaaaaaaaaaaaaaaa"), json!({}));
+    assert!(!d.has_errors());
+    let lines = line_texts(text_blocks(&doc.pages[0])[0]);
+    assert!(
+        lines.len() > 1,
+        "a 45pt box must break this word: {lines:?}"
+    );
+    assert_eq!(lines.concat(), "aaaaaaaaaaaaaaaaaaaaaaaa");
 }

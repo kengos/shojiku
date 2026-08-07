@@ -39,6 +39,7 @@ EXAMPLES="business/invoice-ja business/invoice-en business/estimate-ja
           business/receipt-ja business/receipt-us
           business/receipt-zh-tw business/receipt-zh-cn
           business/receipt-hi-in business/receipt-fil-ph
+          business/receipt-th-th
           forms/application-form-ja forms/rirekisho-ja
           forms/certificate-ja forms/certificate-en
           typography/kokugo-print-ja typography/novel-ja

@@ -18,7 +18,7 @@ fn err(uri: &str) -> RpcError {
 fn list_returns_every_catalog_entry() {
     let listed = list();
     let resources = listed["resources"].as_array().expect("array");
-    assert_eq!(resources.len(), 33);
+    assert_eq!(resources.len(), 34);
     for resource in resources {
         assert!(resource["uri"]
             .as_str()

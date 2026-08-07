@@ -216,3 +216,9 @@ entries:
     title_ja: 領収書（fil-PH）
     blurb_en: Latin face + Philippine peso from the fil-PH pack.
     blurb_ja: ラテン書体とフィリピン・ペソ。fil-PHパックだけで賄う。
+  - dir: business/receipt-th-th
+    preview: preview-1.png
+    title_en: Receipt (th-TH)
+    title_ja: 領収書（th-TH）
+    blurb_en: Thai wrapped at word boundaries, dated in the Buddhist era.
+    blurb_ja: 単語境界で折り返すタイ語と、仏暦で入る日付。

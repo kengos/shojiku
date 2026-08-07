@@ -1,0 +1,113 @@
+version: 0.2.0
+type: object
+properties:
+  receipt:
+    type: object
+    properties:
+      number:
+        type: string
+        title: เลขที่ใบเสร็จ
+        example: R-2569-0412-118
+      issued_at:
+        type: string
+        format: date-time
+        title: วันที่ออก
+        example: '2026-04-12T11:20:00+07:00'
+        displayFormats:
+        - id: default
+          label: มาตรฐาน
+        - id: date
+          label: เฉพาะวันที่
+        - id: long
+          label: วันที่แบบเต็ม
+        - id: gregorian
+          label: ปีคริสต์ศักราช
+    title: ใบเสร็จรับเงิน
+  recipient:
+    type: object
+    properties:
+      name:
+        type: string
+        title: ผู้จ่ายเงิน
+        example: บริษัท ศรีสุวรรณพาณิชย์ จำกัด
+    title: ผู้จ่ายเงิน
+  amount:
+    type: object
+    properties:
+      total_in_tax:
+        type: number
+        format: currency
+        title: รวมทั้งสิ้น
+        example: 141775
+        currency: THB
+        precision: 2
+        recommendedStyle:
+          textAlign: right
+      total_ex_tax:
+        type: number
+        format: currency
+        title: รวมเป็นเงิน
+        example: 132500
+        currency: THB
+        precision: 2
+      tax:
+        type: number
+        format: currency
+        title: ภาษีมูลค่าเพิ่ม
+        example: 9275
+        currency: THB
+        precision: 2
+    title: จำนวนเงิน
+  note:
+    type: string
+    title: หมายเหตุ
+    example: ได้รับเงินตามรายการข้างต้นไว้เป็นการถูกต้องเรียบร้อยแล้ว
+  issuer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: ชื่อผู้รับเงิน
+        example: ห้างหุ้นส่วนจำกัด เฟอร์นิเจอร์สำนักงานไทย
+      tax_id:
+        type: string
+        title: เลขประจำตัวผู้เสียภาษี
+        example: เลขประจำตัวผู้เสียภาษี 0105558001234
+      address:
+        type: string
+        title: ที่อยู่
+        example: 88 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110
+      tel:
+        type: string
+        title: โทรศัพท์
+        example: โทร 02-123-4567
+    title: ผู้รับเงิน
+  items:
+    type: array
+    title: รายการสินค้า
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: รายการ
+          example: โต๊ะทำงานไม้ปาร์ติเคิลบอร์ดพร้อมลิ้นชักสามชั้น
+        quantity:
+          type: number
+          format: quantity
+          title: จำนวน
+          example: 12
+          unit: item
+        unit_price:
+          type: number
+          format: currency
+          title: ราคาต่อหน่วย
+          example: 4500
+          precision: 2
+        amount:
+          type: number
+          format: currency
+          title: จำนวนเงิน
+          example: 54000
+          precision: 2
+      title: รายการสินค้าหนึ่งบรรทัด

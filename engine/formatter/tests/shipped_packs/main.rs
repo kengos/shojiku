@@ -11,6 +11,8 @@ use shojiku_core::{FieldSpec, FieldType};
 use shojiku_formatter::{format_value, FormatContext, LangPack};
 use std::path::PathBuf;
 
+mod th;
+
 /// Load a shipped pack exactly as a host does: read the file, parse it as a
 /// whole pack. Also pins the declared `id` — a pack whose id drifts from its
 /// file name would never resolve for the tag the file name promises.
@@ -221,6 +223,7 @@ fn every_shipped_pack_formats_the_bare_default_variant_and_plain_numbers() {
         ("zh-CN", "CNY", "1,234,567.50"),
         ("hi-IN", "INR", "12,34,567.50"),
         ("fil-PH", "PHP", "1,234,567.50"),
+        ("th-TH", "THB", "1,234,567.50"),
     ] {
         let pack = shipped(id);
         assert_eq!(
@@ -251,7 +254,7 @@ fn every_shipped_pack_formats_the_bare_default_variant_and_plain_numbers() {
 fn every_shipped_pack_declares_its_fonts() {
     // A pack whose `fonts` block is missing/misspelled would degrade every
     // glyph to `missing_glyph` at render — cheaper to catch here.
-    for id in ["zh-TW", "zh-CN", "hi-IN", "fil-PH"] {
+    for id in ["zh-TW", "zh-CN", "hi-IN", "fil-PH", "th-TH"] {
         let pack = shipped(id);
         assert!(
             !pack.font_pack_ids().is_empty(),

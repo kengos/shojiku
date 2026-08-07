@@ -1,0 +1,202 @@
+version: 0.1.0
+name: receipt_th_th
+
+page:
+  size: A4
+  orientation: portrait
+  margin: 25 # the margin box is the coordinate origin: x/y 0 = 25pt in
+
+# th-TH selects the locale pack (packs/locale/th-th.yml -> Noto Sans Thai +
+# Thai chrome) and THB the document currency. The pack carries an ERA table,
+# so every `date`/`date-time` here prints the Buddhist year — 2026 CE renders
+# as 2569 BE, which is what a Thai document shows. `format: gregorian` is the
+# escape hatch and the footer uses it, so both years appear on one page.
+#
+# Thai writes without spaces between words, so the two long passages below —
+# the note paragraph and the item names — wrap at word boundaries found by a
+# segmenter rather than at arbitrary characters. They are the reason this
+# example is deliberately wordy.
+defaults:
+  locale: th-TH
+  currency: THB
+  formats:
+    currency: symbol
+
+styles:
+  heading:
+    fontSize: 24
+    textAlign: center
+    lineHeight: 1.2
+  amount:
+    textAlign: right
+    lineHeight: 1.2
+
+sections:
+  header:
+    repeat: every_page
+    height: 100
+    items:
+      - id: title
+        type: text
+        box: { x: 0, y: 17, w: 545.28, h: 32 }
+        text: ใบเสร็จรับเงิน
+        styleNames: [ heading ]
+        style: { backgroundColor: "#f2f2f2" }
+
+      - id: receipt_no
+        type: text
+        box: { x: 295, y: 57, w: 250.28, h: 12 }
+        text: "เลขที่ {receipt.number}"
+        style: { fontSize: 9, textAlign: right, lineHeight: 1.2 }
+
+      - id: issued_at
+        type: text
+        box: { x: 295, y: 71, w: 250.28, h: 12 }
+        text: "วันที่ {receipt.issued_at:date}"
+        style: { fontSize: 9, textAlign: right, lineHeight: 1.2 }
+
+  body:
+    type: flow
+    # 545.28 = A4 width 595.28 − 25pt margins ×2
+    box: { x: 0, y: 105, w: 545.28, h: 620 }
+    gap: 16
+    items:
+      # ได้รับเงินจาก — container establishes the underline width once.
+      - id: recipient
+        type: container
+        box: { h: 36 }
+        items:
+          - type: text
+            box: { x: 0, y: 0, w: "70%", h: 26 }
+            text: "ได้รับเงินจาก {recipient.name}"
+            style: { fontSize: 15 }
+          - type: line
+            from: { x: 0, y: 30 }
+            to: { x: 381.7, y: 30 }
+            style: { width: 0.8 }
+
+      # จำนวนเงิน — the container draws its own border.
+      - id: amount_box
+        type: container
+        box: { x: "10%", w: "80%", h: 56 }
+        style: { borderWidth: 1.2 }
+        items:
+          - type: text
+            box: { x: "3%", y: 20, w: 80, h: 16 }
+            text: จำนวนเงิน
+            style: { fontSize: 11 }
+          - type: text
+            box: { x: 0, y: 14, w: "100%", h: 28 }
+            text: "{amount.total_in_tax} ถ้วน"
+            style: { fontSize: 22, textAlign: center, lineHeight: 1.2 }
+
+      # The wrapped paragraph: one long Thai sentence with almost no spaces.
+      # Its line breaks are the segmenter's word boundaries.
+      - id: note
+        type: text
+        data: { key: note }
+        style: { fontSize: 11, lineHeight: 1.5 }
+
+      - id: items_table
+        type: table
+        data: { key: items }
+        autoPageBreak: true
+        repeatHeader: true
+        emptyBehavior: collapse
+        row:
+          minHeight: 22
+        columns:
+          - id: name
+            label: รายการ
+            data: { key: name }
+            width: 245.28
+          - id: quantity
+            label: จำนวน
+            data: { key: quantity }
+            width: 70
+            style: { textAlign: right }
+          - id: unit_price
+            label: ราคาต่อหน่วย
+            data: { key: unit_price }
+            width: 110
+            style: { textAlign: right }
+          - id: amount
+            label: จำนวนเงิน
+            data: { key: amount }
+            width: 120
+            style: { textAlign: right }
+
+      # รวม — right-aligned summary block positioned with %.
+      - id: totals
+        type: container
+        box: { x: "50%", w: "50%" }
+        items:
+          - type: text
+            box: { x: 0, y: 0, w: "100%", h: 14 }
+            text: "รวมเป็นเงิน {amount.total_ex_tax}"
+            style: { fontSize: 10, textAlign: right }
+          - type: text
+            box: { x: 0, y: 16, w: "100%", h: 14 }
+            text: "ภาษีมูลค่าเพิ่ม (7%) {amount.tax}"
+            style: { fontSize: 10, textAlign: right }
+          - type: text
+            box: { x: 0, y: 34, w: "100%", h: 18 }
+            text: "รวมทั้งสิ้น {amount.total_in_tax}"
+            styleNames: [ amount ]
+            style: { fontSize: 13 }
+
+      # ผู้รับเงิน — ประทับตรา (nested container) + issuer info.
+      - id: issuer_block
+        type: container
+        box: { h: 96 }
+        items:
+          - id: stamp_box
+            type: container
+            box: { x: 0, y: 8, w: 70, h: 80 }
+            style: { borderWidth: 0.8 }
+            items:
+              - type: text
+                box: { x: 0, y: 0, w: "100%", h: "100%" }
+                text: ประทับตรา
+                style: { fontSize: 9, textAlign: center, verticalAlign: middle }
+          # No x/y -> a flex child; `margin.left: auto` hugs the right edge.
+          - id: issuer_info
+            type: container
+            box: { w: "50%", margin: { top: 8, left: auto } }
+            items:
+              - type: text
+                box: { x: 0, y: 10, w: "100%", h: 18 }
+                data: { key: issuer.name }
+                style: { fontSize: 12, lineHeight: 1.2 }
+              - type: text
+                box: { x: 0, y: 32, w: "100%", h: 12 }
+                data: { key: issuer.tax_id }
+                style: { fontSize: 9, lineHeight: 1.2 }
+              - type: text
+                box: { x: 0, y: 48, w: "100%", h: 12 }
+                data: { key: issuer.address }
+                style: { fontSize: 9, lineHeight: 1.2 }
+              - type: text
+                box: { x: 0, y: 62, w: "100%", h: 12 }
+                data: { key: issuer.tel }
+                style: { fontSize: 9, lineHeight: 1.2 }
+
+  footer:
+    repeat: every_page
+    height: 60
+    items:
+      # The same instant in both calendars: the default pattern renders the
+      # Buddhist year, `gregorian` the Christian one.
+      - id: issued_both
+        type: text
+        box: { x: 0, y: 766, w: 545.28, h: 12 }
+        text: "ออกเอกสารวันที่ {receipt.issued_at:date} ({receipt.issued_at:gregorian})"
+        style: { fontSize: 8, textAlign: center, lineHeight: 1.2 }
+
+      - id: page_no
+        type: page_number
+        box: { x: 0, y: 782, w: 545.28, h: 14 }
+        format: "หน้า {page} / {pages}"
+        style:
+          fontSize: 9
+          textAlign: center
