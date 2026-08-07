@@ -50,8 +50,8 @@ unsettled rather than rejected, so it is worth proposing.
   bindings** (`engine/wasm`, the Designer's preview transport — a JS
   host injects fonts/assets and renders client-side).
   Of the language SDKs, **all seven are built** (`sdk/ruby`, `sdk/python`,
-  `sdk/dotnet`, `sdk/java`, `sdk/js`, `sdk/php` and `sdk/go`, unpublished until
-  they release together) — ruby is
+  `sdk/dotnet`, `sdk/java`, `sdk/js`, `sdk/php` and `sdk/go`; six install
+  from their registries and php awaits Packagist) — ruby is
   the reference the other six mirror. [agents/sdk.md](agents/sdk.md) is the
   policy, and it also carries the frozen contract, the transport
   decision per language and the recorded deferrals. For scope and
