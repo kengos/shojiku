@@ -66,7 +66,7 @@ put(join(ROOT, "examples", "dev", "site-icon", "preview-1.png"), join(PUB, "bran
 
 // 4. The live-renderer examples: the REAL files of one en-US and one ja-JP
 //    document (anti-duplication — the editor shows the committed example).
-const LIVE = ["business/receipt-us", "business/receipt-ja"] as const;
+const LIVE = ["dev/live-flex", "business/receipt-ja"] as const;
 for (const dir of LIVE) {
   const name = dir.split("/")[1]!;
   for (const f of ["templates.yml", "params.json", "definitions.yml"]) {

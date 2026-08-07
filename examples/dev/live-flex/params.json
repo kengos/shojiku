@@ -1,0 +1,18 @@
+{
+  "seller": { "name": "Shojiku Supply Co." },
+  "buyer": {
+    "name": "Northgate Books",
+    "address": "88 Harbor Road, Portland, OR 97204"
+  },
+  "invoice": {
+    "number": "INV-2026-0142",
+    "issued_at": "2026-08-07",
+    "total": 1284.5
+  },
+  "items": [
+    { "name": "Shelf label roll", "qty": 12, "amount": 384.0 },
+    { "name": "Thermal paper, 80mm", "qty": 24, "amount": 456.0 },
+    { "name": "Counter display stand", "qty": 3, "amount": 289.5 },
+    { "name": "Setup and delivery", "qty": 1, "amount": 155.0 }
+  ]
+}

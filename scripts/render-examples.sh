@@ -44,7 +44,7 @@ EXAMPLES="business/invoice-ja business/invoice-en business/estimate-ja
           typography/kokugo-print-ja typography/novel-ja
           typography/genkoyoshi-ja typography/genkoyoshi-yoko-ja
           lifestyle/recipe-booklet-en
-          dev/layout-showcase dev/site-hero dev/site-icon
+          dev/layout-showcase dev/site-hero dev/site-icon dev/live-flex
           presets/blank-a4 presets/blank-a4-en presets/blank-letter-us
           presets/blank-letter-fil presets/blank-a4-zh-tw
           presets/blank-a4-zh-cn presets/blank-a4-hi"

@@ -51,9 +51,9 @@ sections:
         text: Shojiku
         style: { fontWeight: bold, fontSize: 46, color: "#1a3c6e", lineHeight: 1.2 }
       - type: text
-        box: { x: 98, y: 108, w: 280, h: 38 }
+        box: { x: 98, y: 108, w: 370, h: 38 }
         text: |-
-          Write YAML. Get PDFs.
+          Write YAML, get the same PDF anywhere.
           Built for AI agents.
         style: { fontSize: 13, color: "#4a4f58", lineHeight: 1.35 }
 
@@ -89,8 +89,11 @@ sections:
 
       # --- Genkoyoshi-style vertical columns (right): ja + zh ---
       - type: char_grid
-        box: { x: 520, y: 16, w: 26, h: 226 }
-        text: 縦書きも、そのまま。
+        # Wider than the 22pt cell on purpose: in vertical_rl the ruby band
+        # draws in the leftover box width, to the right of the grid.
+        box: { x: 520, y: 16, w: 34, h: 226 }
+        text: 縦書《たてが》きも、そのまま。
+        markup: aozora
         writingMode: vertical_rl
         grid: { charsPerLine: 10, lines: 1, cellSize: 22 }
         style: { fontFamily: ipamj-mincho, borderColor: "#a8674f", color: "#22262e" }

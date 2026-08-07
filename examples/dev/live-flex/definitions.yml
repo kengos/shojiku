@@ -1,0 +1,62 @@
+version: 0.2.0
+type: object
+properties:
+  seller:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Seller name
+        example: Shojiku Supply Co.
+    title: Seller
+  buyer:
+    type: object
+    properties:
+      name:
+        type: string
+        title: Buyer name
+        example: Northgate Books
+      address:
+        type: string
+        title: Address
+        example: 88 Harbor Road, Portland, OR 97204
+    title: Buyer
+  invoice:
+    type: object
+    properties:
+      number:
+        type: string
+        title: Invoice number
+        example: INV-2026-0142
+      issued_at:
+        type: string
+        format: date
+        title: Issue date
+        example: "2026-08-07"
+      total:
+        type: number
+        format: currency
+        currency: USD
+        title: Total
+        example: 1284.5
+    title: Invoice
+  items:
+    type: array
+    title: Line items
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          title: Item
+          example: Shelf label roll
+        qty:
+          type: integer
+          title: Quantity
+          example: 12
+        amount:
+          type: number
+          format: currency
+          currency: USD
+          title: Amount
+          example: 384.0

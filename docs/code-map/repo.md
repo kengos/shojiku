@@ -95,6 +95,12 @@ What each example PROVES (one line each):
   a shipped pack; no definitions.yml; not gallery material).
 - `dev/layout-showcase` — the visual index: EVERY new authorable
   feature adds a labeled section here (cycle Phase C).
+- `dev/live-flex` — the sample the homepage live block OPENS with, and
+  the only example whose job is to be edited by a stranger: A5, one
+  flex row, one padded card, and exactly three knobs the prose names
+  (`page.margin`, `defaults.style.fontSize`, the card's `box.padding`).
+  Keep it small — it has to fit a textarea — and keep those three keys
+  spelled as the prose spells them.
 - `dev/site-hero` / `dev/site-icon` — the homepage's brand renders
   (the hero banner + the lattice icon), engine outputs like everything
   else so the site's "this banner is a Shojiku render" claim stays
@@ -164,7 +170,11 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   (pins BOTH `_headers` CSP scopes; `/designer/*` must equal the
   designer's canonical file) + `src/parity.test.ts` (en↔ja page set /
   components / section counts). `.vitepress/theme/` = brand tokens +
-  the live components (LiveRenderer, PropertyPlayground, GalleryGrid,
+  the live components (LiveRenderer — renders on a 400 ms debounce after
+  typing, no Render button, with Reset back to the committed example;
+  HeroBanner — the `home-hero-before` slot both index pages rely on,
+  which is WHY neither declares `hero.image` or `hero.text`;
+  PropertyPlayground, GalleryGrid,
   EngineVersion — the label stating which engine a live block runs, read
   from the binary's OWN `capabilities()` report rather than a string kept
   beside it; browser glue, coverage-excluded). `scripts/assemble-data.ts` =
