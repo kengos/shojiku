@@ -131,6 +131,41 @@ learned there is no Debian-based .NET 10 image at all.
   edited. Re-run the single gate once before reading a line of code; only
   a failure that REPRODUCES is about the change.
 
+## A gate WRITES files, and a rebase replays those writes
+
+Gate recipes are not read-only. `make gui-format` runs `pnpm install`
+WITHOUT `--frozen-lockfile` — nine other recipes DO pin it, which is what
+makes this one easy to miss — `make sbom` regenerates all three
+inventories from the LOCAL build state, and `make site-data` rewrites the
+committed README gallery section. Any of them can move a file your change
+never touched.
+
+That is harmless until a rebase. A `git add -A` before rebasing captures
+the gate's writes at the pre-rebase state, and replaying that commit onto
+a newer `main` silently UNDOES whatever main landed in between. One cycle
+produced a diff that reverted six files of a dependency-security commit —
+the `postcss@<=8.5.22: ^8.5.23` advisory override in two
+`pnpm-workspace.yaml`s, both `pnpm-lock.yaml`s, two SBOMs,
+`.github/dependabot.yml` and `CONTRIBUTING.md` — plus 108 lines of
+`Makefile`, an entire `lock:<scope>` / `update:<scope>` target family.
+
+**Every gate was green over it.** Nothing in `budget` / `lint` / `test` /
+`coverage` / `examples-check` / `deny` asks whether a diff reverts a
+neighbour's commit, and 61 files where 57 were intended reads as
+ordinary. The tell was in the DIFFSTAT: a `Makefile` showing 108 changed
+lines against a seven-line edit.
+
+So after any rebase, and before any squash, run
+`git diff origin/main --name-only` and read every line against the set you
+meant to touch. Restore the rest with
+`git checkout origin/main -- <paths>`.
+
+The SBOM case needs one more judgement, because `make sbom` legitimately
+has to run when a lockfile moves: regenerate, then commit ONLY the
+inventory whose lockfile YOU changed. The others' churn is your machine's
+build state — one cycle saw `sbom/gui.cdx.json` lose four components on a
+change that touched no gui dependency at all.
+
 ## Never run two gates at once
 
 **`make -n` is NOT a dry run here, and it can kill a running gate.** GNU
@@ -430,6 +465,13 @@ costs one run rather than a debug loop. Worth knowing in advance anyway,
 because the surrounding advice about `make wasm` is all about REFRESHING a
 stale pkg (after a rebase onto engine work, or after the `site-build` swap
 below), which reads as "not applicable, this tree never had one".
+
+The same holds for `site/node_modules`, and there the failure is NOT
+honest: `make site-data` dies with a bare
+`Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'yaml'` and a Node
+stack trace, naming no remedy and never mentioning the worktree. Run
+`make site` once in a new tree — it installs first — before reaching for
+`site-data` / `site-check`.
 
 ## `make site-build` replaces `engine/wasm/pkg` with the SITE's engine
 
