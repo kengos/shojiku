@@ -417,6 +417,21 @@ check whose empty output read as "all covered").
   three declarations and three signatures. Anchor to an assignment or
   call position, or list the matches and read them — which is what the
   rule two bullets down asks for anyway.
+  **Over-anchoring is the same failure with the opposite sign, and the
+  tell is two of your own measurements disagreeing.** Counting one
+  attribute across a crate went 93 → 90 → 92 in three attempts: the bare
+  substring billed the DOC COMMENT that quotes the attribute, and the
+  `^`-anchored pattern then missed the two occurrences that are INDENTED
+  inside a nested item. Only "allow leading whitespace AND exclude
+  comment lines" is the real count. Neither wrong answer looks wrong on
+  its own — each is a plausible number from a plausible command — so the
+  rule is procedural: when a count matters, measure it twice by
+  DIFFERENT means and reconcile the difference before writing it down.
+  The same shape appears over JSON: counting `description` keys in a
+  schema document reported three stray nodes that were wire keys
+  literally NAMED `description`, whose value is a subschema rather than
+  a string. A keyword and a property name are the same token; only the
+  VALUE tells them apart.
 - **CORRECTING a falsifiable claim is where it most often stays
   falsifiable: re-run the grep and write the claim from its FULL
   output**, never from the one instance you remember (a review narrowed
@@ -467,6 +482,28 @@ check whose empty output read as "all covered").
 
 A test written alongside a fix is not evidence the fix does anything.
 Both halves of that have bitten here.
+
+- **A GATE needs the same control, and a green one is not evidence it
+  LOOKED at your change.** `make deny` printed PASS over a dependency it
+  never traversed: `cargo deny check` does not walk an optional
+  dependency that no enabled feature turns on, so adding one behind a
+  non-default Cargo feature is invisible to it. The PASS was not wrong
+  about anything — it was about a graph the new crate was not in. The
+  control that settled it took two runs: a crate whose licence the
+  allowlist REJECTS (`webpki-roots`, CDLA-Permissive-2.0) passes this
+  gate as an optional dep, and fails it the moment it is made
+  non-optional. `--all-features` is the fix, and the same probe proves
+  the fix reaches. The lesson is not about cargo-deny: **when a phase's
+  job is to get an answer FROM a gate, make the gate fail on purpose
+  before believing its pass.** It cost nothing here and turned up a hole
+  that had been open for as long as `engine/napi`'s feature-gated N-API
+  dependencies had existed — shipped inside the npm package, never
+  licence- or advisory-checked.
+  The mirror-image duty applies to a gate you SHIP: a doc sentence
+  saying `make <new-gate>` fails on drift is a claim about the gate, and
+  observing only its PASS does not check it. Perturb the artifact,
+  watch the gate go red, read the message it prints (it should name the
+  fix), and restore — with a COPY, per the rule three bullets down.
 
 - **Assert the number the fix CHANGED, not a number nearby.** A test for
   "an `fr` grid row must subtract the auto row above it" asserted the
