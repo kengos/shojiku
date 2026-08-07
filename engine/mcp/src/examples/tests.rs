@@ -124,9 +124,9 @@ fn every_embedded_file_matches_the_file_on_disk() {
 
 #[test]
 fn the_catalog_holds_the_expected_number_of_entries() {
-    // 34 dirs carry a templates.yml; two are excluded.
-    assert_eq!(catalog().len(), 32);
-    assert_eq!(on_disk_entries().len(), 34);
+    // 35 dirs carry a templates.yml; two are excluded.
+    assert_eq!(catalog().len(), 33);
+    assert_eq!(on_disk_entries().len(), 35);
 }
 
 #[test]

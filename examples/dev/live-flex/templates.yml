@@ -1,0 +1,70 @@
+version: 0.1.0
+name: live_flex
+
+# The sample the homepage live block opens with. It is deliberately small
+# and has exactly three knobs a first-time reader can turn:
+#
+#   page.margin              moves the whole page
+#   defaults.style.fontSize  every line below inherits it
+#   the card's box.padding   one number, not one per child
+#
+# Turn any of them and nothing else needs touching — that is the claim the
+# page makes two screens above this editor.
+page:
+  size: A5
+  margin: 24
+
+defaults:
+  locale: en-US
+  currency: USD
+  formats: { currency: symbol }
+  style: { fontSize: 10, lineHeight: 1.5 }
+
+styles:
+  title: { fontSize: 20, fontWeight: bold, color: "#1a3c6e" }
+  label: { fontSize: 8, color: "#7a8497" }
+  card: { backgroundColor: "#f4f6fa", borderWidth: 0.6, borderColor: "#c5cddb" }
+
+sections:
+  body:
+    type: flow
+    gap: 14
+    items:
+      - { type: text, text: "{seller.name}", styleNames: [ title ] }
+
+      # A flex row: neither child is given a width, so they split it evenly.
+      - type: container
+        box: { direction: row, gap: 12 }
+        items:
+          - type: container
+            items:
+              - { type: text, text: Billed to, styleNames: [ label ] }
+              - { type: text, text: "{buyer.name}" }
+              - { type: text, text: "{buyer.address}" }
+          - type: container
+            items:
+              - { type: text, text: Invoice, styleNames: [ label ] }
+              - { type: text, text: "{invoice.number}" }
+              - { type: text, text: "{invoice.issued_at}" }
+
+      # The padding sits on the card, not on every row inside it.
+      - type: container
+        box: { padding: 12 }
+        styleNames: [ card ]
+        items:
+          - type: table
+            data: { key: items }
+            cellPadding: 4
+            header: { style: { fontWeight: bold } }
+            columns:
+              - { id: name, label: Item, data: { key: name } }
+              - { id: qty, label: Qty, data: { key: qty }, width: 44, style: { textAlign: right } }
+              - { id: amount, label: Amount, data: { key: amount }, width: 76, style: { textAlign: right } }
+
+      - type: container
+        box: { direction: row, justifyContent: end }
+        items:
+          - type: text
+            box: { w: 160 }
+            text: "Total {invoice.total}"
+            style: { fontSize: 13, fontWeight: bold, textAlign: right }

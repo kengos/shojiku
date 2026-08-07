@@ -103,6 +103,10 @@ pub(crate) const ENTRIES: &[Embedded] = &[
         ["templates.yml", "definitions.yml", "params.json"]
     ),
     entry!(
+        "dev/live-flex",
+        ["templates.yml", "definitions.yml", "params.json"]
+    ),
+    entry!(
         "forms/application-form-ja",
         ["templates.yml", "definitions.yml", "params.json"]
     ),

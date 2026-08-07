@@ -1,0 +1,14 @@
+# Designer preset manifest: surfaces this bundled example in the locale-keyed
+# catalog. `locales` are the catalog tags it appears under; `engineLocale` is
+# the exact tag the app passes to the engine (font-pack selection).
+#
+# The one preset whose catalog tag and engine locale deliberately disagree:
+# the reading face is English with USD prices, but the vertical brand and
+# dish-name columns are Japanese, so the engine locale has to be ja-JP or the
+# font pack lands without the glyphs those columns need.
+locales: [en]
+engineLocale: ja-JP
+name:
+  en: Restaurant menu
+  ja: レストランのメニュー（英語）
+thumbnail: preview-1.png

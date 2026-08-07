@@ -66,7 +66,7 @@ fn initialize_list_and_capabilities_over_stdio() {
             .as_array()
             .expect("resources")
             .len(),
-        32
+        33
     );
     let source = lines[4]["result"]["contents"][0]["text"]
         .as_str()

@@ -13,9 +13,9 @@ const HOSTNAME = "https://shojiku.pages.dev";
 // Per-locale fallback for a page that declares no description of its own.
 // Without the ja one, a Japanese page inherits the English sentence.
 const DESCRIPTION =
-  "Write YAML. Get PDFs. A deterministic PDF document engine for invoices, receipts and forms — built for AI agents.";
+  "Write YAML, get the same PDF anywhere. A Rust PDF engine for invoices, receipts and forms — callable from seven languages, built for AI agents, and shaped for multi-tenant SaaS.";
 const DESCRIPTION_JA =
-  "YAMLのテンプレートとJSONのデータから、請求書・領収書・申込書を出す帳票エンジン。同じ入力なら、どのマシンでも同じバイト列のPDFになります。AIエージェントから扱えます。";
+  "YAMLのテンプレートとJSONのデータから請求書・領収書・申込書のPDFを出すRust製の帳票エンジン。Python、Go、Rubyなど7言語から呼べます。マルチテナントのSaaSでは、テナントごとのテンプレートを差し替えるだけで体裁を変えられます。";
 
 export default defineConfig({
   title: "Shojiku",

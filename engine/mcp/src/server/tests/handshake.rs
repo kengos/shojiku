@@ -42,7 +42,7 @@ fn resources_are_listed_and_readable_over_the_loop() {
             .as_array()
             .expect("resources")
             .len(),
-        32
+        33
     );
     assert_eq!(
         responses[1]["result"]["contents"]

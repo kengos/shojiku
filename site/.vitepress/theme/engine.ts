@@ -82,7 +82,7 @@ export interface LiveDoc {
 }
 
 /** Fetch one staged live example (+ inject its bundled assets). */
-export async function fetchLiveDoc(name: "receipt-us" | "receipt-ja"): Promise<LiveDoc> {
+export async function fetchLiveDoc(name: "live-flex" | "receipt-ja"): Promise<LiveDoc> {
   const base = withBase(`/data/live/${name}/`);
   const text = async (f: string): Promise<string> => (await fetch(`${base}${f}`)).text();
   const [template, params, definitions, indexText] = await Promise.all([
