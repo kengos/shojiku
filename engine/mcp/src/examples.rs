@@ -80,6 +80,11 @@ const EXTRAS: &[(&str, &str, &str)] = &[
         "The syntax exerciser: most of the authorable surface in one document — flex and grid, containers, tables, repeat and repeat_flow, borders, styles. Large; read its templates.yml by its own URI rather than as a bundle.",
     ),
     (
+        "dev/live-flex",
+        "Minimal flex invoice (the site's live editor sample)",
+        "The smallest document that still shows the layout model: one flow, one flex row whose unsized children split the width, and one padded card holding a table. Three knobs move everything — page.margin, defaults.style.fontSize, and the card's box.padding. A good starting point to copy from.",
+    ),
+    (
         "presets/blank-a4",
         "Blank A4 (ja)",
         "An empty A4 page set up for Japanese: page size, margins and default locale, with nothing on it. A starting skeleton.",

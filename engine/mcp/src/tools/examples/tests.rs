@@ -17,7 +17,7 @@ fn list_examples_returns_the_whole_catalog() {
     assert_eq!(result["isError"], false);
     let body = payload(&result);
     let entries = body["examples"].as_array().expect("examples");
-    assert_eq!(entries.len(), 32);
+    assert_eq!(entries.len(), 33);
     for entry in entries {
         assert!(entry["uri"]
             .as_str()
