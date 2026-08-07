@@ -5,7 +5,7 @@
 // WHETHER a tag has a shipped pack and fetches its text.
 //
 // The engine holds builtins for ja-JP / en-US and needs no file for them; every
-// other locale (zh-TW, zh-CN, hi-IN, fil-PH) is a whole pack shipped from
+// other locale (zh-TW, zh-CN, hi-IN, fil-PH, th-TH) is a whole pack shipped from
 // packs/locale/. So a tag absent from the index is NOT an error here: it means
 // "no pack to send", and `setLocale` either resolves a builtin or throws its own
 // typed locale-not-found error, which the app surfaces as a diagnostic.

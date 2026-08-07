@@ -69,6 +69,7 @@ change.
 | `zh-CN` | `uses: [noto-sans-sc, noto-sans-mono]`, CNY default (`¥`), `y年M月d日` patterns, weekday short names. |
 | `hi-IN` | `uses: [noto-sans-devanagari, noto-sans, noto-sans-mono]`, `fallback: [noto-sans]` for Latin, INR default (`₹`), `d MMM y` patterns. Groups digits in 3s, not lakh/crore — see [features.md](features.md) § Locale data. |
 | `fil-PH` | `uses: [noto-sans, noto-sans-mono]` (Latin script — no font of its own), PHP default (`₱`), `MMM d, y` patterns. |
+| `th-TH` | `uses: [noto-sans-thai, noto-sans, noto-sans-mono]`, `fallback: [noto-sans]` for Latin, THB default (`฿`), `d MMM y` patterns. Dates carry the **Buddhist era**: the pack declares one open-ended era, so `y` renders 2026 CE as 2569 BE and `yyyy` stays Gregorian (the `gregorian` variant). Thai also wraps at word boundaries — see [text.md](text.md) § Wrapping & line breaking. |
 
 ## Font packs & `fontFamily`
 
@@ -82,11 +83,12 @@ however the packs are laid out. The bundled packs provide:
 | `biz-udp-gothic` | `biz-ud` (OFL-1.1) | **the ja default**; proportional kana; real bold |
 | `biz-ud-gothic` | `biz-ud` (OFL-1.1) | fixed-pitch (aligned digits, full-width kana); real bold |
 | `ipamj-mincho` | `ipamj-mincho` (IPA-1.0) | fallback-only mincho, MJ set (~55k glyphs) for the rare-name tail (e.g. `𠮷`); bold/italic synthetic |
-| `noto-sans` | `noto-sans` (OFL-1.1) | **the en-US default**; real bold / italic / bold-italic (no synthetic slant); also the fil-PH default and the hi-IN Latin fallback |
+| `noto-sans` | `noto-sans` (OFL-1.1) | **the en-US default**; real bold / italic / bold-italic (no synthetic slant); also the fil-PH default and the hi-IN / th-TH Latin fallback |
 | `noto-sans-mono` | `noto-sans-mono` (OFL-1.1) | monospace for code/technical text (every bundled locale); real bold; CJK via the locale fallback chain |
 | `noto-sans-tc` | `noto-sans-tc` (OFL-1.1) | **the zh-TW default**; Traditional Chinese + its own Latin; real bold; OTF/CFF outlines |
 | `noto-sans-sc` | `noto-sans-sc` (OFL-1.1) | **the zh-CN default**; Simplified Chinese + its own Latin; real bold; OTF/CFF outlines |
 | `noto-sans-devanagari` | `noto-sans-devanagari` (OFL-1.1) | **the hi-IN default**; Devanagari only (Latin comes from the `noto-sans` fallback); real bold |
+| `noto-sans-thai` | `noto-sans-thai` (OFL-1.1) | **the th-TH default**; Thai only (Latin comes from the `noto-sans` fallback); real bold |
 
 Each pack ships its license text (`OFL.txt` /
 `IPA_Font_License_Agreement_v1.0.txt`) beside the fonts. An unknown

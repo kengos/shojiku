@@ -14,6 +14,7 @@ Shipped packs:
 | `zh-cn.yml` | 简体中文（中国） | CNY | noto-sans-sc |
 | `hi-in.yml` | हिन्दी（भारत） | INR | noto-sans-devanagari + noto-sans |
 | `fil-ph.yml` | Filipino (Pilipinas) | PHP | noto-sans |
+| `th-th.yml` | ไทย (ประเทศไทย) | THB | noto-sans-thai + noto-sans |
 
 They are **@generated** — add or change a locale in `PACK_CONFIG` in
 [`scripts/gen-locale-builtins.py`](../../scripts/gen-locale-builtins.py)

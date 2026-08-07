@@ -67,6 +67,37 @@ fn era_date_round_trips_zero_padded() {
 }
 
 #[test]
+fn an_era_may_start_before_year_one() {
+    // The Buddhist era: CLDR writes its start `-542-01-01`, and the plain
+    // subtraction in `era_for` then yields the Buddhist year.
+    let d: EraDate = serde_yaml::from_str("\"-542-01-01\"").expect("date");
+    assert_eq!(d, day(-542, 1, 1));
+    let eras: Vec<EraSpec> =
+        serde_yaml::from_str("- { name: พุทธศักราช, abbr: พ.ศ., start: \"-542-01-01\" }")
+            .expect("eras");
+    let (era, year) = era_for(&eras, day(2026, 1, 5)).expect("era");
+    assert_eq!((era.abbr.as_deref(), year), (Some("พ.ศ."), 2569));
+}
+
+#[test]
+fn a_negative_era_date_round_trips() {
+    // `{:04}` counts the sign in its width, so the emitted form is the one
+    // CLDR authors and re-parses to the same value.
+    let d: EraDate = serde_yaml::from_str("\"-542-01-01\"").expect("date");
+    let text = serde_yaml::to_string(&d).expect("yaml");
+    assert_eq!(text.trim(), "-542-01-01");
+    let back: EraDate = serde_yaml::from_str(text.trim()).expect("reparse");
+    assert_eq!(back, d);
+}
+
+#[test]
+fn a_date_before_a_negative_era_start_still_has_none() {
+    let eras: Vec<EraSpec> =
+        serde_yaml::from_str("- { name: พุทธศักราช, start: \"-542-01-01\" }").expect("eras");
+    assert!(era_for(&eras, day(-1000, 1, 1)).is_none());
+}
+
+#[test]
 fn invalid_era_dates_are_parse_errors() {
     for bad in [
         "\"2019-5\"",           // missing day
@@ -75,6 +106,12 @@ fn invalid_era_dates_are_parse_errors() {
         "\"2019-02-30\"",       // day not on the calendar
         "\"abcd-ef-gh\"",       // non-numeric
         "5",                    // not a string
+        "\"--542-01-01\"",      // the sign is not a field of its own
+        "\"-\"",                // a sign and nothing else
+        "\"-542-01-01-\"",      // trailing separator after a signed year
+        "\"-99999-01-01\"",     // outside the calendar's year range
+        "\"-+542-01-01\"",      // a sign after the sign: one sign, one place
+        "\"+542-01-01\"",       // and a bare `+` year is not the wire either
     ] {
         let r: Result<EraDate, _> = serde_yaml::from_str(bad);
         assert!(r.is_err(), "{bad} should be rejected");

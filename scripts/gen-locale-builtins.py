@@ -224,10 +224,13 @@ PACK_CONFIG = {
         "currencySymbolOverrides": {},
         "currencyNameOverrides": {},
         "weekdayWidth": "abbreviated",
+        # `compact` deviates from CLDR's `d/M/yy`: the engine's token
+        # inventory has no two-digit year, so `yy` matches `y` twice and
+        # renders the year doubled. Spelled `y`, it prints the full year.
         "dateFormats": {
             "default": "d MMM y",
             "long": "EEEE, d MMMM y",
-            "compact": "d/M/yy",
+            "compact": "d/M/y",
         },
         "datetimeFormats": {
             "default": "d MMM y, h:mm a",
@@ -259,10 +262,12 @@ PACK_CONFIG = {
         "currencySymbolOverrides": {},
         "currencyNameOverrides": {},
         "weekdayWidth": "abbreviated",
+        # `compact` deviates from CLDR's `M/d/yy` for the reason given on
+        # the hi-IN entry above: there is no two-digit-year token.
         "dateFormats": {
             "default": "MMM d, y",
             "long": "EEEE, MMMM d, y",
-            "compact": "M/d/yy",
+            "compact": "M/d/y",
         },
         "datetimeFormats": {
             "default": "MMM d, y, h:mm a",
@@ -289,6 +294,56 @@ PACK_CONFIG = {
         "fonts": {
             "uses": ["noto-sans", "noto-sans-mono"],
             "default": "noto-sans",
+        },
+    },
+    "th-TH": {
+        "cldr": "th",
+        "direction": "ltr",
+        "writingMode": "horizontal-tb",
+        "currencyDefault": "THB",
+        "currencySymbolOverrides": {},
+        "currencyNameOverrides": {},
+        "weekdayWidth": "abbreviated",
+        # Thailand dates in the BUDDHIST era, and CLDR agrees: `th` declares
+        # the buddhist calendar as its default. So the patterns below are
+        # CLDR's own th buddhist ones and `y` renders the era year (2026 ->
+        # 2569) through the `eras` table; `gregorian` is the escape hatch,
+        # spelled with `yyyy`, which is always the Gregorian year.
+        #
+        # CLDR writes its full pattern with `G`. Here it is `GG`: this
+        # engine's tokens are `G` = era NAME and `GG` = abbreviation, the
+        # inverse of CLDR's width convention, and a Thai document prints
+        # the abbreviation.
+        # `compact` spells the year `y`, not CLDR's `yy` — see the hi-IN
+        # entry above; here `y` is the full Buddhist year.
+        "dateFormats": {
+            "default": "d MMM y",
+            "long": "EEEEที่ d MMMM GG y",
+            "compact": "d/M/y",
+            "gregorian": "d MMM yyyy",
+        },
+        "datetimeFormats": {
+            "default": "d MMM y HH:mm",
+            "long": "EEEEที่ d MMMM GG y HH:mm",
+            "date": "d MMM y",
+            "gregorian": "d MMM yyyy HH:mm",
+        },
+        "eras": "buddhist",
+        "eraYearOne": None,
+        # รายการ = the generic "item" counter on a Thai receipt.
+        "units": {"item": {"other": "รายการ"}},
+        "unitFormat": "{amount} {unit}",
+        "percentFormat": "{amount}%",
+        "nameFormat": "{amount} {name}",
+        "fontsComment": (
+            "# Noto Sans Thai (OFL) for Thai; noto-sans (OFL) is the Latin\n"
+            "# fallback (the Thai face is script-only), noto-sans-mono =\n"
+            "# code face."
+        ),
+        "fonts": {
+            "uses": ["noto-sans-thai", "noto-sans", "noto-sans-mono"],
+            "default": "noto-sans-thai",
+            "fallback": ["noto-sans"],
         },
     },
 }
@@ -436,6 +491,24 @@ def emit(locale_id, cfg, cldr):
                 f" start: {quote(era_starts[idx]['_start'])} }}"
             )
         lines.append(f"eraYearOne: {quote(cfg['eraYearOne'])}")
+    elif cfg["eras"] == "buddhist":
+        eras = cldr[f"buddhist/{cfg['cldr']}"]["main"][cfg["cldr"]]["dates"][
+            "calendars"
+        ]["buddhist"]["eras"]
+        start = cldr["supplemental-calendar"]["supplemental"]["calendarData"][
+            "buddhist"
+        ]["eras"]["0"]["_start"]
+        lines.append("")
+        lines.append("# The Buddhist era, CLDR buddhist calendar data. One")
+        lines.append("# open-ended era beginning before year 1, so `y` is the")
+        lines.append("# Buddhist year for every date a document can carry and")
+        lines.append("# `yyyy` stays the Gregorian one.")
+        lines.append("eras:")
+        lines.append(
+            f"  - {{ name: {quote(eras['eraNames']['0'])},"
+            f" abbr: {quote(eras['eraAbbr']['0'])},"
+            f" start: {quote(start)} }}"
+        )
     lines.append("")
     lines.append("units:")
     for k, spec in cfg["units"].items():
@@ -487,6 +560,13 @@ def main():
         cldr.setdefault(
             f"gregorian/{c}", fetch(f"cldr-dates-full/main/{c}/ca-gregorian.json")
         )
+        # Month/weekday names are shared with the Gregorian data above; only
+        # the era table comes from the buddhist calendar.
+        if cfg["eras"] == "buddhist":
+            cldr.setdefault(
+                f"buddhist/{c}",
+                fetch(f"cldr-cal-buddhist-full/main/{c}/ca-buddhist.json"),
+            )
     for out_dir, config in ((OUT_DIR, CONFIG), (PACK_OUT_DIR, PACK_CONFIG)):
         out_dir.mkdir(parents=True, exist_ok=True)
         for locale_id, cfg in config.items():

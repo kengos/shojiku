@@ -8,7 +8,7 @@ currencyDefault: PHP
 dateFormats:
   default: "MMM d, y"
   long: "EEEE, MMMM d, y"
-  compact: "M/d/yy"
+  compact: "M/d/y"
 
 datetimeFormats:
   default: "MMM d, y, h:mm a"

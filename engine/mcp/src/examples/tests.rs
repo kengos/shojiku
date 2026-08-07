@@ -124,9 +124,9 @@ fn every_embedded_file_matches_the_file_on_disk() {
 
 #[test]
 fn the_catalog_holds_the_expected_number_of_entries() {
-    // 35 dirs carry a templates.yml; two are excluded.
-    assert_eq!(catalog().len(), 33);
-    assert_eq!(on_disk_entries().len(), 35);
+    // 36 dirs carry a templates.yml; two are excluded.
+    assert_eq!(catalog().len(), 34);
+    assert_eq!(on_disk_entries().len(), 36);
 }
 
 #[test]
@@ -249,5 +249,5 @@ fn a_malformed_gallery_degrades_instead_of_panicking() {
     }
     // Positive control: the real gallery DOES parse, so the assertion above
     // is about malformed input rather than about a parser that never works.
-    assert_eq!(parse_gallery(GALLERY_YML).len(), 24);
+    assert_eq!(parse_gallery(GALLERY_YML).len(), 25);
 }

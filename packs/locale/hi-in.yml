@@ -8,7 +8,7 @@ currencyDefault: INR
 dateFormats:
   default: "d MMM y"
   long: "EEEE, d MMMM y"
-  compact: "d/M/yy"
+  compact: "d/M/y"
 
 datetimeFormats:
   default: "d MMM y, h:mm a"

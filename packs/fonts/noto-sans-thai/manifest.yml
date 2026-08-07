@@ -1,0 +1,12 @@
+version: 1
+license: OFL-1.1
+redistributable: true
+faces:
+  - id: noto-sans-thai
+    file: NotoSansThai-Regular.ttf
+    sha256: 61cf814eec46b294d6ea4401ac295d0cecd5207bd2331dcc5a15e7301d30ee44
+  - id: noto-sans-thai-bold
+    file: NotoSansThai-Bold.ttf
+    sha256: 2ac6c6e8a478e23b15f76e4894af1fa2210f8f350e4e6e54aad530bec03efbfb
+    family: noto-sans-thai
+    weight: bold

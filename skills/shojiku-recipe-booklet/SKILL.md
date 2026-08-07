@@ -272,7 +272,7 @@ German, Portuguese, Indonesian — translate the text and render under the
 closest available locale. This booklet prints no currency and no dates,
 so the locale is doing almost nothing beyond font selection.
 
-Korean, Thai, Arabic, Hebrew and Vietnamese have **no bundled font** and
+Korean, Arabic, Hebrew and Vietnamese have **no bundled font** and
 will render as missing-glyph boxes. Say so up front rather than
 producing an unreadable PDF; adding a font pack is a Shojiku change, not
 something to work around here.

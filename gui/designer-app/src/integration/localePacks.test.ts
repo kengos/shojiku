@@ -75,6 +75,9 @@ const fetchBytesNode = (url: string): Promise<Uint8Array> =>
 // noto-sans-tc and would be missing from a Latin-only lineup.
 const TC_TEXT = '收據 發票 傳統中文';
 const SC_TEXT = '收据 发票 简体中文';
+// Thai-only glyphs, and the string a Latin-only lineup would render as
+// `.notdef` boxes: only noto-sans-thai carries them.
+const THAI_TEXT = 'ใบเสร็จรับเงิน ภาษาไทย';
 
 const templateFor = (locale: string, text: string) =>
   [
@@ -119,12 +122,14 @@ describe('shipped locale packs against the real engine', () => {
     // The packs the app can fetch; ja-JP/en-US are builtin and ship no file.
     expect(localeIndex.locales).toContain('zh-tw');
     expect(localeIndex.locales).toContain('zh-cn');
+    expect(localeIndex.locales).toContain('th-th');
     expect(localeIndex.locales).not.toContain('ja-jp');
   });
 
   it.each([
     ['zh-TW', TC_TEXT],
     ['zh-CN', SC_TEXT],
+    ['th-TH', THAI_TEXT],
   ])('boots %s from its fetched pack and renders its glyphs', async (tag, text) => {
     const engine = new wasmModule.Engine();
     const fonts = makeFontSource({
@@ -145,8 +150,8 @@ describe('shipped locale packs against the real engine', () => {
       index,
       fonts,
     });
-    // The Chinese face is the DEFAULT face, not a rare-glyph fallback: it
-    // must be primary-tier so the first paint has its glyphs.
+    // Each of these is its locale's DEFAULT face, not a rare-glyph
+    // fallback: it must be primary-tier so the first paint has its glyphs.
     expect(absentPackIds).toEqual([]);
 
     const outcome = await createWasmTransport(engine).renderRaw(
@@ -206,6 +211,11 @@ const distinctEngineLocales = [...new Set(LOCALES.map((locale) => locale.engineL
 
 // The blank presets whose engine locale has NO builtin — the pack file is
 // load-bearing at boot (fil-PH, hi-IN).
+//
+// th-TH is deliberately absent: the preset CATALOG is keyed to the
+// Designer's chrome locales, and there is no Thai chrome, so a Thai preset
+// could never surface (`blankCatalog.test.ts` calls that an orphan). Its
+// pack is still exercised — by the fetched-pack render case above.
 // Values are `<bucket>/<id>` under examples/ (grouped by document kind).
 const PACK_BLANKS: Record<string, string> = {
   'fil-PH': 'presets/blank-letter-fil',

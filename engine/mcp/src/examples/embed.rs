@@ -79,6 +79,10 @@ pub(crate) const ENTRIES: &[Embedded] = &[
         ["templates.yml", "definitions.yml", "params.json"]
     ),
     entry!(
+        "business/receipt-th-th",
+        ["templates.yml", "definitions.yml", "params.json"]
+    ),
+    entry!(
         "business/receipt-us",
         ["templates.yml", "definitions.yml", "params.json"]
     ),

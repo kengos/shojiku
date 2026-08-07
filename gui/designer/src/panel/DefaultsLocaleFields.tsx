@@ -15,10 +15,23 @@ import { useI18n } from '../i18n/context';
 import { LOCALES } from '../i18n/locales';
 import { ComboField } from './choiceFields';
 import { CURRENCY_SUGGESTIONS, currencyOp, localeOp, readDefaultsView } from './defaultsModel';
-import { amountSample, localeFacts } from './localeFacts';
+import { amountSample, LOCALE_FACTS, localeFacts } from './localeFacts';
 import { applyPanelOp } from './model';
 
-const LOCALE_TAGS: readonly string[] = LOCALES.map((locale) => locale.tag);
+/** What the `defaults.locale` picker offers.
+ *
+ * Two independent axes meet here. `LOCALES` is the CHROME registry — the
+ * languages the Designer's own UI is translated into — while a document
+ * formats through whatever locale the ENGINE can resolve, which is the two
+ * builtins plus every shipped pack. Those sets overlap but neither contains
+ * the other: th-TH ships a locale pack (Buddhist era, THB, Thai month names)
+ * without the Designer having Thai chrome. `LOCALE_FACTS` is keyed by the
+ * engine side, so taking its keys keeps the picker complete with no second
+ * list to maintain. */
+const LOCALE_TAGS: readonly string[] = [
+  ...LOCALES.map((locale) => locale.tag),
+  ...Object.keys(LOCALE_FACTS).filter((tag) => !LOCALES.some((l) => l.tag === tag)),
+];
 
 /** The engine-resolvable tag an authored `defaults.locale` formats through: a
  * regional English (`en-GB`) resolves to the locale the engine actually has

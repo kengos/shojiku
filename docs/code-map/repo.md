@@ -11,9 +11,10 @@
   fallback), `noto-sans` (OFL), `noto-sans-mono` (OFL code face),
   `noto-sans-tc`/`noto-sans-sc` (OFL CJK OTF/CFF — the only non-TTF
   faces; under the 25 MiB lazy threshold ON PURPOSE: a locale's DEFAULT
-  face must paint the first preview), `noto-sans-devanagari` (OFL).
+  face must paint the first preview), `noto-sans-devanagari` (OFL),
+  `noto-sans-thai` (OFL).
 - `packs/locale/<id>.yml` — shipped locale packs (`zh-tw`/`zh-cn`/
-  `hi-in`/`fil-ph`), @generated from `PACK_CONFIG` in
+  `hi-in`/`fil-ph`/`th-th`), @generated from `PACK_CONFIG` in
   `scripts/gen-locale-builtins.py`. A locale with NO builtin ships the
   WHOLE pack; an id with a builtin (ja-JP/en-US) would be a per-key
   overlay. **A new locale is a pack, never engine code.**
@@ -75,7 +76,10 @@ What each example PROVES (one line each):
   80mm thermal), `receipt-zh-tw`/`receipt-zh-cn` (one geometry, two
   locales — the locale-pack render proof), `receipt-hi-in` (Devanagari
   conjuncts + lakh-scale grouping ON PURPOSE — smaller amounts would
-  prove nothing) / `receipt-fil-ph` (Latin face + PHP).
+  prove nothing) / `receipt-fil-ph` (Latin face + PHP) /
+  `receipt-th-th` (Thai word-boundary wrapping + Buddhist-era dates; no
+  `preset.yml`, because the Designer's preset catalog is keyed to its
+  CHROME locales and there is no Thai chrome).
 - `forms/rirekisho-ja` — an A3 two-page-spread JIS-style rirekisho (the zero-context
   authoring gap-driver): custom size + absolute body, `char_grid` 〒,
   text-`mark`, bounded tables, `spans`; ships the blank↔filled params

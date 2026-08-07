@@ -18,6 +18,7 @@ const PACK_FILE: Readonly<Record<string, string>> = {
   'zh-TW': '../../../../packs/locale/zh-tw.yml',
   'hi-IN': '../../../../packs/locale/hi-in.yml',
   'fil-PH': '../../../../packs/locale/fil-ph.yml',
+  'th-TH': '../../../../packs/locale/th-th.yml',
 };
 
 const FRACTIONS_FILE = '../../../../engine/formatter/src/lang/builtin/currency-fractions.yml';
@@ -113,8 +114,19 @@ describe('the number sample shows the grouping RULE, not just the separator', ()
     // The regression this sample length exists to prevent: at 1,234.5 every
     // locale looked identical, so the panel silently under-described hi-IN.
     expect(LOCALE_FACTS['hi-IN'].number).toBe('12,34,567.5');
-    for (const tag of ['ja-JP', 'en-US', 'zh-CN', 'zh-TW', 'fil-PH'] as const) {
+    for (const tag of ['ja-JP', 'en-US', 'zh-CN', 'zh-TW', 'fil-PH', 'th-TH'] as const) {
       expect(LOCALE_FACTS[tag].number, tag).toBe('1,234,567.5');
+    }
+  });
+
+  it('reports the Buddhist year for th-TH, not the Gregorian one', () => {
+    // The one shipped locale whose date sample is not a re-spelling of the
+    // same year: th-TH's pack carries an era table, so `d MMM y` renders
+    // 2026 CE as 2569 BE. A sample showing 2026 would under-describe the
+    // pick in the way this panel exists to prevent.
+    expect(LOCALE_FACTS['th-TH'].date).toContain('2569');
+    for (const tag of ['ja-JP', 'en-US', 'hi-IN', 'fil-PH'] as const) {
+      expect(LOCALE_FACTS[tag].date, tag).toContain('2026');
     }
   });
 

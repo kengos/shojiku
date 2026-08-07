@@ -111,6 +111,28 @@ skrifa = "0.45"
 # and font parsing rides read-fonts (^0.41, its own copy since skrifa 0.45) —
 # no ttf-parser, so deny.toml stays clean.
 harfrust = "0.12"
+# Thai word segmentation for line breaking (ICU4X, Unicode-org): Thai writes
+# without inter-word spaces, so a greedy wrapper has no break opportunity to
+# find and falls through to breaking per character. Pure Rust, Unicode-3.0 —
+# already on deny.toml's allowlist.
+#
+# `default-features = false` drops `auto`; `new_lstm` is named explicitly so a
+# future ICU4X redefinition of "the best available data" cannot silently move
+# the build onto the dictionary. That matters because it is the WASM budget's
+# whole story, measured against `make wasm`'s own size line:
+#
+#   baseline      raw 4,798,116  gzip 1,688,577
+#   + LSTM        raw 5,170,236  gzip 2,004,699   (+372 KB / +316 KB)
+#   + dictionary  raw 6,623,066  gzip 2,571,280   (+1.8 MB / +883 KB)
+#
+# The dictionary is exact where the LSTM infers, but it would spend 82% of the
+# gzip budget on one script. The LSTM's floats are reproducible: its only math
+# dependency, core_maths, routes every call to the pure-Rust `libm` with no
+# `cfg` branch, so break positions are identical on x86-64, aarch64 and wasm32.
+icu_segmenter = { version = "2.2", default-features = false, features = [
+    "compiled_data",
+    "lstm",
+] }
 # PNG preview backend: pure-Rust CPU rasterizer (BSD-3-Clause). Its
 # tiny-skia-path is the same crate/minor krilla already pulls, so the
 # workspace keeps a single copy.

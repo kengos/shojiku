@@ -344,6 +344,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         sdk-php sdk-php-test sdk-php-lint \
         sdk-go sdk-go-test sdk-go-lint \
         gui gui-budget gui-lint gui-test gui-format gui-e2e gui-shot \
+        normalize-examples \
         gui-serve gui-dev sbom clean cache-clean images-clean
 
 help: ## Show this help
@@ -1600,6 +1601,13 @@ gui-format: ## Apply Biome formatting/lint fixes across gui/ (writes files)
 		pnpm config set store-dir /pnpm-store; \
 		pnpm install; \
 		pnpm format'
+
+normalize-examples: ## Rewrite examples/*/*/templates.yml at the Designer's canonical CST fixed point (writes files)
+	@echo "== normalize examples =="
+	@$(PNPM_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
+		pnpm config set store-dir /pnpm-store; \
+		pnpm install --frozen-lockfile; \
+		pnpm --filter @shojiku/designer-core normalize:examples'
 
 gui-e2e: ## Designer-app browser golden path (Playwright in Docker) — on-demand, not in verify
 	@echo "== designer-app e2e (browser golden path) =="

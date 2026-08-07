@@ -141,7 +141,7 @@ heads a line, an opening quote never ends one.
 | --- | --- |
 | `·` U+00B7 (interpunct) | Unicode class AI — it means different things in different languages, and Latin text uses it as a field separator (`address · tel · web`), where holding it back would drag a letter off the previous line. |
 | `‧` U+2027 | Class BA — a break *opportunity*, not a prohibition. |
-| `—` U+2014 | Class B2 — a break opportunity on both sides. A doubled `——` (and `……`) already stays whole anyway: runs of non-CJK characters wrap as one unbreakable unit. |
+| `—` U+2014 | Class B2 — a break opportunity on both sides. A doubled `——` (and `……`) already stays whole anyway: a run of non-CJK characters wraps as one unit unless a segmenter finds boundaries inside it, and none of these is Thai (§ Thai below). |
 | `‐ –` U+2010, U+2013 | Class HH (hyphens), whose rule is conditional on the *preceding* character's class — context a per-character test cannot see. |
 | `％ ￥` | The PO/PR classes are unmodelled for the same context-dependence. |
 | `﹁﹂﹃﹄` U+FE41–FE44 | Nothing authors these: the engine maps `「」『』` onto them at shape time, *after* wrapping, so the wrapper only ever sees the canonical forms — which are classified above. |
@@ -150,6 +150,40 @@ heads a line, an opening quote never ends one.
 > line. Earlier engines held them back under `normal`; to keep that
 > behavior, set `lineBreak: strict` (once, on `defaults.style` for the
 > whole document).
+
+### Thai
+
+Thai writes without spaces between words, so there is nothing for a
+greedy wrapper to break on: an entire Thai paragraph arrives as one
+unbreakable run and would be split per character at whatever position
+the line width happened to reach — inside words, and between a
+character and the vowel or tone mark that belongs to it.
+
+Thai runs are therefore segmented into words first (ICU4X's line
+segmenter, the same Unicode data a browser uses), and those word
+boundaries become the break opportunities a space would otherwise
+provide. Three consequences worth knowing:
+
+- **A script change is not itself a break opportunity.** `abcไทย` stays
+  one unit — UAX #14 puts a Latin letter and the Thai word glued to it
+  in the same class. A Latin prefix does not suppress the Thai word
+  boundaries further along, though: `abcภาษาไทย` still breaks between
+  `ภาษา` and `ไทย`.
+- **`lineBreak` does not switch it off.** Segmentation creates break
+  *opportunities*; `lineBreak` governs the kinsoku *prohibitions*
+  applied afterwards. Thai wraps at word boundaries under every value,
+  exactly as a Latin sentence keeps wrapping at its spaces.
+- **A cluster is not cut on either side.** Where a single Thai word is
+  wider than the whole line and has to be broken per character, the break
+  is held back so a non-spacing mark never opens a line, and a leading
+  vowel (เ แ โ ใ ไ, written before the consonant it is pronounced after)
+  never ends one. The vowels written IN LINE — `ะ`, `า`, `ำ` — take a
+  break on either side like any other letter, because they are ordinary
+  advancing characters. This guard is the last-resort path only; a break
+  the segmenter itself offers is already at a word boundary.
+
+Nothing else changes: text in any other script tokenizes exactly as
+before, so no existing document's line breaking moves.
 
 A `\n` in the text splits it into **paragraphs**: each paragraph wraps
 independently and starts on a new line (YAML block scalars `|`/`|-` are

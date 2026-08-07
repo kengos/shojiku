@@ -85,9 +85,12 @@ unitFormat: "{amount}{unit}"
 
 The era model covers exactly the **year-relabeling calendars**: same
 Gregorian months/days, different year naming — wareki (ja), Minguo
-(zh-TW), Dangi (ko), Thai Buddhist Era (one era starting year -542).
-These stay
-pure locale data: adding one is a generator entry, zero engine code.
+(zh-TW), Dangi (ko), Thai Buddhist Era (one era starting year -542,
+shipped in `th-TH`). These stay
+pure locale data: adding one is a generator entry, and the engine
+already knows how. The Thai era did cost one function — the era-start
+parser split on `-`, so a year before 1 could not be authored at all —
+and that was the last of it; a BC start is now ordinary wire.
 **Month/day-recomputing calendars** (Hijri, Hebrew, Persian, Ethiopic,
 Chinese lunisolar) are arithmetic, not data — when demand appears they
 ride `icu_calendar` (ICU4X, deny.toml-clean) behind a **Cargo feature**,

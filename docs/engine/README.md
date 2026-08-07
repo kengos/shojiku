@@ -255,7 +255,9 @@ receipt geometry under zh locale packs),
 [`examples/business/receipt-hi-in`](../../examples/business/receipt-hi-in) (Devanagari
 conjuncts + lakh/crore digit grouping) /
 [`examples/business/receipt-fil-ph`](../../examples/business/receipt-fil-ph) (Latin
-face + the Philippine peso),
+face + the Philippine peso) /
+[`examples/business/receipt-th-th`](../../examples/business/receipt-th-th) (Thai wrapped
+at word boundaries, dated in the Buddhist era),
 [`examples/typography/genkoyoshi-ja`](../../examples/typography/genkoyoshi-ja) (a B5 vertical
 200-cell genkoyoshi: `char_grid` + aozora ruby) and its horizontal twin
 [`examples/typography/genkoyoshi-yoko-ja`](../../examples/typography/genkoyoshi-yoko-ja),
