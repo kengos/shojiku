@@ -112,6 +112,8 @@ Vertical writing, and forms shaped like a Japanese résumé. Most document engin
 
 For more output examples, see the [gallery](/gallery).
 
+Japanese and English are the only languages compiled into the engine. Traditional and Simplified Chinese, Hindi, Filipino and Thai arrive as locale packs, one file each. Currency, dates, digit grouping and fonts all come from that file, so the same template serves every one of them. [Other languages](/languages) covers how to load one.
+
 ## Making documents with an AI agent
 
 You do not have to write the template yourself. The MCP server and the skills ship with the engine, so you can just ask an agent. Setup is two commands (the Claude Code form; see the [quickstart](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md) for the details):
