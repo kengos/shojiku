@@ -101,6 +101,26 @@
   even that fails, **`read_page` still works while hidden** and confirms
   the page is alive. The pane tends to go hidden right after a
   `left_click_drag` — expect it and lead with the screenshot.
+- **On a page taller than a few viewports, only scroll position 0
+  composites — every scrolled screenshot comes back as flat background.**
+  Not the theming stall above: `javascript_tool` confirms the DOM is
+  fine (`scrollY` moved, the section is at the expected offset) and the
+  shot is still blank, so it reads as "my page is broken" over a page
+  that is not. A reload renders the top correctly, which is the tell.
+  Neither `scroll` nor a `#anchor` navigation fixes it. What works is
+  removing the height instead of scrolling past it: hide the sibling
+  sections (`[...wrap.children].forEach(c => c.style.display = c.id ===
+  target ? '' : 'none')`) so the part you want sits at 0, shoot, restore.
+  Reviewing a multi-state mock is where this bites, because the whole
+  point is one tall page holding every state.
+- **Editing a file the pane is displaying REPLACES the tab with a
+  `file://` view of it**, silently dropping the `http://localhost:<port>`
+  page you were testing — and you cannot `navigate` back, because a
+  localhost URL is pane-policy-blocked. The next tool call then fails
+  with "No site is open in this tab". Re-open with
+  **`preview_start {url}`**, which is the only way in; expect it after
+  every edit-then-recheck loop on a served mock, and note the tab id
+  changes each time.
 - **A canvas DRAG uses the REPORTED "Screenshot size"** (e.g. 800×450)
   as the coordinate space, not the rendered image's pixel size (often
   2×) — out-of-bounds coordinates silently no-op the gesture.

@@ -158,6 +158,28 @@ check whose empty output read as "all covered").
   itself, and no grep or gate can see it. Prose grown by edit-at-a-time
   is where this happens; one full read of the finished file is the whole
   check.
+  **Read EVERY file the commit touched, not just the one you think of as
+  the main one, and read each against ITS OWN other sections rather than
+  only against reality.** A docs-home change did the end-to-end read on
+  `architecture.md` alone and against the tree — and shipped three
+  contradictions past it: a rule stating "nothing reader-facing is
+  authored on the site" one screen below that same commit's own layout
+  block listing the site's nine hand-written pitch pages; a
+  two-sided "which pages are projected" partition naming 8 of the 9
+  files it claimed to cover; and, in the sibling file the same commit
+  edited, the present-tense "rendered here" that the main file had just
+  been fixed to mark `(planned)`. The fresh reviewer found all three.
+  A MECHANISM claim outranks a wrong count here: as written, the first
+  one forbade the next author from adding a page to the site.
+  **And a claim you ADD converts merely-stale sentences elsewhere into
+  live contradictions — so the subject you introduce is a subject to
+  sweep.** The same commit stated "six of the seven SDKs are already
+  published"; three untouched sentences said all seven were unpublished.
+  They had been quietly out of date for a release; the new sentence is
+  what put a denial of them into the constitution, on the ordinary
+  reader path. Sweeping only the subject you came to change (here: the
+  docs home) never reaches it — after drafting, grep the subject of
+  every NEW claim too.
   **An APPEND-ONLY file grown by successive cycles is the worst case,
   because the two entries were written weeks apart and only the READER
   ever sees them together.** `CHANGELOG.md` under one `Unreleased`
