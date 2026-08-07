@@ -232,6 +232,14 @@ definitions
 - **Property Panel** exposes data binding, format selection (type-dependent:
   datetime/currency/quantity variants), style, box, layout mode, page break
   behavior, visibility conditions, and signature field settings.
+  It holds the style keys it edits, their enum vocabularies and the engine
+  default values as GUI-side data, and those tables are **hand-copied from
+  the engine today with no gate asserting the sets match**. When the key
+  catalog ships (`agents/engine.md` § The key catalog), they are asserted
+  against that artifact instead — the panel may edit a deliberate SUBSET,
+  but every key and value it does carry must be one the parser accepts,
+  and a spelling the engine has retired must fail a gate rather than
+  survive as a control that writes an unparseable document.
 - **Diagnostics** surfaces engine-produced diagnostics (missing data, unknown
   key, unsupported format, overflow, missing font/image, page-break
   warnings, accessibility warnings) — the GUI displays these, it does not

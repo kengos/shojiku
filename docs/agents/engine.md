@@ -43,6 +43,97 @@ capability list is the single source every surface advertises.)
   in `plugins/` (see agents/lang.md, agents/plugins.md) — `formatter`
   itself should stay generic.
 
+## The key catalog (decided; not built)
+
+The per-key facts of the authorable wire — key name, type, allowed
+values, default, the tagged union of item types — are held ONCE as
+machine-readable data, and every surface that describes a key renders
+that one source: the MCP answer an agent asks for, a reader-facing
+reference on the site, the Designer's property help, and the key tables
+inside the template reference ([../engine/](../engine/) — the doc pages,
+not this crate tree). The scale is a few hundred nodes, not thousands,
+which is what makes one artifact practical.
+
+The reason it must be data rather than four prose copies is already
+visible: the Designer carries hand-copied style keys and hand-copied
+engine defaults, and nothing asserts either set against the parser. A
+catalog the agent trusts is worse than none once it lies.
+
+**Format: JSON Schema, derived from the parser.** Not a bespoke
+`availables` shape. An agent reads an OpenAPI document correctly because
+it is imitating a format it has seen constantly, and the properties that
+make that work are the ones being copied — node-local `description`,
+closed enumeration (so absence is information), constraints in machine
+form, an example per shape, named `$ref` shapes, and `oneOf` with a
+discriminator for a tagged union, which is exactly what the item `type:`
+is. The product has made this choice twice already: MCP `inputSchema` is
+JSON Schema, and `definitions.yml` is the OpenAPI-shaped schema for the
+data half.
+
+**Derivation: a Cargo feature, per the extension order below.** The
+schema derive sits on the `engine/core` wire types behind a non-default
+feature, and a generator emits the committed artifact; a default build
+links none of it, so no shipped binary carries the derive or its
+dependency. What a binary does carry is the artifact's own bytes where
+it embeds them — a real number, small against the WASM budget but not
+zero, and one to measure rather than assume. The
+parser is then the only source of the structure, which is what makes
+drift structurally impossible rather than merely tested. This is
+conditional on the derive dependency clearing `cargo-deny` (the licence
+allowlist, and an advisory list that holds zero ignores). If it cannot,
+the fallback is a hand-authored skeleton with a test asserting set
+equality against the parser — **the gate is the requirement; the
+direction is an implementation choice.**
+
+**Prose: authored beside the schema, merged into it.** The per-key
+narrative — what the key means, the CSS property it mirrors, what it
+does to the resolved box, which diagnostics it can emit — is authored in
+per-locale annotation files and merged into the artifact as node-local
+`description` at generation time, so the served document keeps prose on
+the key it constrains. Rust doc comments stay what they are: engine
+developer material, in a different register, and unable to carry a
+second locale. The engine serves English only, per its non-translating
+rule; a localized reference is the site's to render.
+
+**Home: `engine/authoring`.** The data files live under it and are
+embedded with `include_str!`, so the surface needs no root path and a URI
+can never become a filesystem path. Not a new crate: `engine/authoring`
+is the single authoring substrate and CLI / MCP / WASM are its host
+surfaces — the capability list is the same class of thing one level
+coarser (a machine-readable inventory this crate owns and every host
+reads), so a second crate beside it would put a parallel substrate where
+the boundary says there is one. The VitePress build reads the data files
+directly, the way it already reads the one gallery source.
+
+**One identifier across every surface**, chosen before each surface grows
+its own: the [../engine/](../engine/) page stem names a topic and
+`<page>#<key>` names a key, so `shojiku://reference/<page>`,
+`/reference/<page>` and `<page>.md#<key>` are the same spelling three
+ways.
+
+**Two gates, both required**, mirroring the one that keeps the gallery
+honest (regenerate, then fail on drift):
+
+- the artifact regenerates from the parser and matches what is committed
+  — a key added without regenerating is a red gate, not a silent lie;
+- every artifact node has an annotation and every annotation names a real
+  node. A key with no prose is therefore *detectable*, which is what
+  keeps the narrative layer honest as the wire grows.
+
+What splits which way: key name, type, default, allowed values, the CSS
+property mirrored, the effect on the resolved box, the diagnostics
+emitted and the capability key are FACTS and live in the catalog;
+which construct to reach for, worked examples, how features compose and
+the authoring order that avoids rework are NARRATIVE and stay in the
+pages. Pushing narrative into JSON produces a reference nobody can read;
+leaving the facts in prose produces the drift this exists to end.
+
+Two obligations follow for other components: the Designer's copied key
+lists and default values are asserted against the artifact rather than
+maintained beside it, and serving the reference on the MCP wire rides
+the list-then-fetch hybrid already decided for the bundled examples
+rather than re-deciding a transport.
+
 ## Boundaries — do not cross these
 
 - Engine does not know about GUI concerns (drag-and-drop state, canvas
