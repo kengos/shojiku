@@ -122,6 +122,23 @@ check whose empty output read as "all covered").
   The tell is the INPUT sanity line: print the byte/line size of each
   "original" blob first, and a 263-line file arriving as 62 lines stops
   the run before its numbers reach a doc.
+  **The same error with the opposite sign: the tree you are STANDING in
+  is not the tree you just shipped.** Cycle work happens in a worktree,
+  and removing it drops you back into the primary checkout — which is
+  still at whatever commit it held when the session began, several
+  merges ago. A repo-wide sweep run there greps the OLD content and
+  returns a confident ZERO for text that is live on `main`. It is worse
+  than the case above because nothing looks wrong: the command is
+  correct, the file list is complete, and the answer is simply about
+  another commit. One such sweep "confirmed" a defect absent minutes
+  after a diff had shown it present. The tell is exactly that
+  contradiction — a sweep disagreeing with a diff you just read is a
+  measurement bug until proven otherwise. Two habits close it: after
+  removing a worktree, `git pull --ff-only` the primary checkout before
+  measuring anything; and for a claim about what SHIPPED, read the ref
+  rather than the filesystem (`git show origin/main:<path>`,
+  `git grep <pat> origin/main`), which is immune to where you are
+  standing.
 - **Never reuse an OFFSET across a mutation** — a script that computes
   `start`/`end` with `.index(…)`, then does an unrelated `.replace()`,
   then splices at the saved offsets writes into the wrong place (it ate
@@ -211,6 +228,16 @@ check whose empty output read as "all covered").
   file and still left three live code references that only the pattern
   sweep caught. The enumeration says where to start; the empty sweep
   says you are done.
+  **A REVIEW FINDING is an enumeration too, and the most tempting one to
+  treat as a census** — it arrives already itemized, by someone who
+  looked hard, so fixing the files it lists feels complete. A reviewer
+  reported one file stating an unbuilt feature in the present tense; the
+  author fixed that file plus the one they had written it in, shipped,
+  and left the same sentence standing in a third — the site config,
+  which is the file a contributor to that area opens first. Nobody had
+  asked "which OTHER files carry this claim?". After applying any review
+  fix, sweep for the CLAIM's shape, not for the reported paths; a fix
+  is finished when the sweep is empty, not when the list is.
 - **Grepping a fan-out by NAME finds the code; it cannot find the
   COUNTS.** Sizing "what does adding one of these touch?" by grepping an
   existing member's name (`hi-IN`, `noto-sans-devanagari`) reaches every
