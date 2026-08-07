@@ -1,5 +1,6 @@
 //! Greedy text wrapping with CJK-aware break opportunities and optional
-//! kinsoku (Japanese line-break prohibition). The engine itself works on
+//! kinsoku (CJK line-break prohibition — one set serves Japanese and
+//! Chinese; see `wrap/kinsoku.rs`). The engine itself works on
 //! styled characters (`wrap/rich.rs`) so plain text and rich spans
 //! wrap identically; the plain API here is a one-span convenience.
 
@@ -12,6 +13,8 @@ mod rich;
 mod tests;
 #[cfg(test)]
 mod vertical_tests;
+#[cfg(test)]
+mod zh_tests;
 
 pub(crate) use kinsoku::{no_line_end, no_line_start};
 pub use rich::{wrap_spans, wrap_spans_hung, RichPiece, RichSpan, WrappedLine};

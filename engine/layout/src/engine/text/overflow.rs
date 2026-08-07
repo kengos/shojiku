@@ -66,8 +66,9 @@ pub(in crate::engine) fn fit_font_size(
 /// Clamps wrapped `lines` to `max_lines`, trimming the last kept line
 /// until it fits `content_w` with `…` appended (measured with the same
 /// face/size/spacing as the text, so reserved == drawn). Trailing
-/// line-end-prohibited characters (line-end kinsoku: opening brackets) are
-/// dropped so a clamp never ends `「…`. `max_lines == 0` clamps to
+/// line-end-prohibited characters (line-end kinsoku: opening brackets and
+/// opening quotes) are dropped so a clamp never ends `「…` or `“…`.
+/// `max_lines == 0` clamps to
 /// nothing — the caller warns.
 pub(in crate::engine) fn clamp_with_ellipsis(
     chain: &[&FontFace],

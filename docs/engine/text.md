@@ -97,15 +97,54 @@ subset, inherited) selects the kinsoku strictness:
 
 | Value | Held off a line start (line-start kinsoku) |
 | --- | --- |
-| `normal` (default) | closing brackets, commas/full stops `、。，．`, centered punctuation `・：；！？`, inseparables `‥…`, iteration marks `々` — but small kana (`っ`, `ゃ` …), `ー`, and `〜` **may** start a line |
+| `normal` (default) | closing brackets, closing quotes `’”`, commas/full stops `、。，．`, centered punctuation `・：；！？`, inseparables `‥…`, iteration marks `々` — but small kana (`っ`, `ゃ` …), `ー`, and `〜` **may** start a line |
 | `strict` | everything `normal` holds, **plus** small kana, `ー`, and the CJK hyphens `〜゠` |
-| `loose` | only closing brackets and commas/full stops; centered punctuation, inseparables, iteration marks, small kana, and `ー` may all start a line |
+| `loose` | only closing brackets, closing quotes, and commas/full stops; centered punctuation, inseparables, iteration marks, small kana, and `ー` may all start a line |
 | `anywhere` | no kinsoku — break between any two characters |
 
-Line-end kinsoku (opening brackets never end a line) applies the same way in
-`normal`/`strict`/`loose`; only `anywhere` drops it. Prohibited
-characters are pushed off line edges by push-out (moving the preceding
-character down).
+Line-end kinsoku (an opening bracket or opening quote never ends a line)
+applies the same way in `normal`/`strict`/`loose`; only `anywhere` drops
+it. Prohibited characters are pushed off line edges by push-out (moving
+the preceding character down).
+
+### The character sets
+
+Japanese and Chinese share one set — the classification is per character,
+not per language.
+
+| Class | Characters | Held |
+| --- | --- | --- |
+| Closing brackets | `）］｝〕〉》」』】｣` `〗〙〛` `〞〟` | off a line start, every mode |
+| Closing quotes | `’ ”` | off a line start, every mode |
+| Commas / full stops | `、。，．｡､` | off a line start, every mode |
+| Centered punctuation, inseparables | `・：；･！？‼⁇⁈⁉` `‥…` | off a line start in `normal`/`strict` |
+| Iteration marks | `々ゝゞヽヾ` | off a line start in `normal`/`strict` |
+| Small kana, prolonged sound mark | `ぁぃぅぇぉっゃゅょゎ` `ァィゥェォッャュョヮ` `ー` | off a line start in `strict` only |
+| CJK hyphens | `〜゠` | off a line start in `strict` only |
+| Opening brackets | `（［｛〔〈《「『【｢` `〖〘〚` `〝` | off a line **end**, every mode |
+| Opening quotes | `‘ “` | off a line **end**, every mode |
+
+Which end a character belongs to comes from its Unicode category. Most of
+the set is unambiguous: `Ps` opens and `Pe` closes, which is why `〝〞〟`
+sit with the brackets — they are named "quotation mark" but categorized
+`Ps`/`Pe`, so they behave as structural open/close forms.
+
+`‘’“”` are the exception. Unicode files them under one line-break class
+(QU) that does not say which end of a quotation they sit at, so the split
+follows their category instead — `Pi` (initial) opens, `Pf` (final)
+closes. That is what Chinese practice asks for: a closing quote never
+heads a line, an opening quote never ends one.
+
+**Deliberately not classified**, so a break stays legal on both sides:
+
+| Character | Why |
+| --- | --- |
+| `·` U+00B7 (interpunct) | Unicode class AI — it means different things in different languages, and Latin text uses it as a field separator (`address · tel · web`), where holding it back would drag a letter off the previous line. |
+| `‧` U+2027 | Class BA — a break *opportunity*, not a prohibition. |
+| `—` U+2014 | Class B2 — a break opportunity on both sides. A doubled `——` (and `……`) already stays whole anyway: runs of non-CJK characters wrap as one unbreakable unit. |
+| `‐ –` U+2010, U+2013 | Class HH (hyphens), whose rule is conditional on the *preceding* character's class — context a per-character test cannot see. |
+| `％ ￥` | The PO/PR classes are unmodelled for the same context-dependence. |
+| `﹁﹂﹃﹄` U+FE41–FE44 | Nothing authors these: the engine maps `「」『』` onto them at shape time, *after* wrapping, so the wrapper only ever sees the canonical forms — which are classified above. |
 
 > **Migration.** `normal` follows CSS: small kana and `ー` may begin a
 > line. Earlier engines held them back under `normal`; to keep that

@@ -239,6 +239,15 @@ fn apply_kinsoku(lines: &mut [Vec<Styled>], mode: LineBreak, hanging: HangingPun
             // arm is the fail-closed guard, not a reachable path).
             let Some(moved) = lines[i].pop() else { break };
             lines[i + 1].insert(0, moved);
+            // The pop can re-expose a trailing space that `push_line`
+            // already stripped (`He said “` → `He said `), and the line
+            // is measured over its whole text, so an unstripped space
+            // shifts a centred or end-aligned line. Drop it the same way
+            // the wrapper does — never emptying the line, which is the
+            // invariant the outer guard keeps.
+            while lines[i].len() > 1 && lines[i].last().is_some_and(|&(c, _)| c.is_whitespace()) {
+                lines[i].pop();
+            }
         }
     }
 }

@@ -103,6 +103,19 @@ fn clamp_strips_line_end_prohibited_chars_before_the_ellipsis() {
 }
 
 #[test]
+fn clamp_strips_an_opening_quote_before_the_ellipsis() {
+    let store = ja_store();
+    let face = store.face(None);
+    // The clamp shares the wrapper's line-end set, so widening that set
+    // reaches here too: an opening quote must go the same way `「` does,
+    // and never be left dangling as `“…`.
+    let lines = vec!["ああ“かかか".to_string()];
+    let em = face.text_width("あ", 10.0, 0.0);
+    let clamped = clamp_with_ellipsis(&[face], lines, 10.0, 0.0, em * 4.2, 1);
+    assert_eq!(clamped, vec!["ああ…".to_string()]);
+}
+
+#[test]
 fn clamp_degrades_to_a_bare_ellipsis_when_nothing_fits() {
     let store = ja_store();
     let face = store.face(None);
