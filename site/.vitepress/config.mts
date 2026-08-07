@@ -1,9 +1,10 @@
 import { defineConfig } from "vitepress";
 import { headTags, isJapanese } from "../src/lib/seo.ts";
 
-// The homepage pitch site: seven pages, English canonical with a /ja twin per
-// page. Reference documentation stays in docs/ — this site links to it and
-// restates nothing (docs/code-map/repo.md § site/ carries the rest).
+// The public site: nine nav pages plus the index, English canonical with a /ja
+// twin per page. Reference documentation is SOURCED in docs/ and rendered here
+// — this site restates nothing (docs/architecture.md § Where a doc paragraph
+// goes is the rule; docs/code-map/repo.md § site/ carries the rest).
 
 // The origin the site is served from. It is baked into the sitemap's <loc>s,
 // every canonical and every social-card URL, so it moves the day a custom

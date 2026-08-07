@@ -12,7 +12,8 @@
 > whose transport is a CLI SUBPROCESS. Where each ecosystem's
 > idiom legitimately differs is recorded in
 > [../code-map/sdk.md](../code-map/sdk.md), one section per language.
-> All seven are unpublished, and release together at v0.1.0.
+> All seven released together at v0.1.0. Six are installable from their
+> registries; php is the one gap — it awaits a Packagist listing.
 >
 > The other integration surfaces are the CLI (see the render commands in
 > [the template reference](../engine/README.md)), the stdio MCP server,
@@ -20,8 +21,8 @@
 > (`engine/capi`) the in-process SDKs load. The transport decisions per
 > language and the **list of decisions the Ruby SDK froze for the other
 > six** are below: § The decisions the reference froze, § Transports.
-> None of the seven is published yet; each ships a prebuilt engine
-> binary through its ecosystem's own channel when it is.
+> Six of the seven are published (php awaits Packagist); each ships a
+> prebuilt engine binary through its ecosystem's own channel.
 
 ```text
 sdk/

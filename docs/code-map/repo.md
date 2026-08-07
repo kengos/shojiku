@@ -150,10 +150,16 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
 ## docker/, docs/, site/, skills/, scripts/
 
 - `docker/` — the runtime image.
-- `site/` — the homepage (Cloudflare Pages): a STANDALONE pnpm project
-  (not a gui/ workspace member), VitePress, seven pages ×2 locales
-  (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per
-  `shojiku-copywriter`'s vendored prose standard, EN derived).
+- `site/` — the public site (Cloudflare Pages): a STANDALONE pnpm project
+  (not a gui/ workspace member), VitePress, nine nav pages + the index
+  ×2 locales (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per
+  `shojiku-copywriter`'s vendored prose standard, EN derived). It is the
+  DECIDED reader-facing home for the reference — sourced in
+  `docs/engine/`, rendered here rather than restated — but that half is
+  **not built**: there is no `/reference/` route and the pages still link
+  out to the repository. The rule and the list of which docs pages are
+  projected live in [../architecture.md](../architecture.md) § Where a
+  doc paragraph goes.
   Structure: `src/lib/` = the tested pure modules (gallery.yml
   parse/validate, font-tier subset manifests, README-gallery
   render/splice, llms renderers, `engineClient` — the site's OWN thin

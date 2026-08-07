@@ -35,8 +35,12 @@ export interface FullDoc {
 }
 
 /** llms-full.txt: the shared preamble, the gallery index (generated from
- * gallery.yml), then whole repo docs — concatenated verbatim, separated by
- * labeled rules so an agent can navigate. */
+ * gallery.yml), then the repo docs the caller passes — concatenated verbatim,
+ * separated by labeled rules so an agent can navigate. Today `assemble-data.ts`
+ * passes three (the reference INDEX, the diagnostics registry, the quickstart),
+ * not the 31 per-feature pages: an agent that needs `flex` still has to fetch
+ * it. Widening this is the reference project's job, not this renderer's — it
+ * takes whatever list it is given. */
 export function renderLlmsFull(
   preamble: string,
   entries: GalleryEntry[],

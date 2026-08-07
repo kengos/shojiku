@@ -212,6 +212,11 @@ shojiku/
                may ship via a fetched catalog (see agents/gui.md)
   examples/    Fixtures used for tests/snapshots and documentation
   docs/        This documentation set (architecture, policy, template reference)
+               — the SOURCE of every reader-facing page, in English
+  site/        The public site (VitePress on Cloudflare Pages): the pitch
+               pages and the live playground — and (planned) the RENDERED
+               reader-facing half of docs/, per "Where a doc paragraph
+               goes" below
 ```
 
 See each `docs/agents/*.md` for the policy governing work inside a given
@@ -289,6 +294,53 @@ composable. Do not blur them for local convenience.
    error. Embedding permissions (OS/2 `fsType`) are checked at load;
    restricted faces are rejected unless the pack manifest explicitly
    attests to an embedding license.
+
+### Where a doc paragraph goes
+
+The repo holds each fact and each narrative **once**, and every surface
+that shows it renders that one copy. `docs/` is the source; the site
+renders the reader-facing half of it — alongside its own pitch pages —
+rather than keeping a second edition of it.
+
+This is the rule for where a paragraph is WRITTEN, and it is in force
+now. The rendering half is decided but **not yet built** — the site
+still links out to the repository, and `/reference/` does not resolve
+until it ships.
+
+- **`docs/` is the source of every documentation page**, in English. No
+  documentation page is authored on the site and nothing from `docs/` is
+  restated there. The site's own pitch pages (concept, tutorials,
+  compare, tips, …) are a different genre: they are written on the site,
+  have no `docs/` counterpart, and this rule does not move them.
+- **The site is the reader-facing HOME**: the reference will be served
+  at `/reference/<page>`, generated at build time from
+  `docs/engine/<page>.md`, with the nav, search and locale switch a
+  markdown blob on a git host cannot offer. The page stem is the same
+  identifier the key catalog uses, so `/reference/<page>`,
+  `shojiku://reference/<page>` and `docs/engine/<page>.md#<key>` name
+  the same thing three ways ([agents/engine.md](agents/engine.md) § The
+  key catalog).
+- **Which pages are projected.** Projected: `docs/engine/**`,
+  `quickstart.md`, `architecture.md`, `migration-thinreports.md`,
+  `from-source.md`, `designer-mount.md`, `designer-hooks.md`. Never
+  projected: `docs/agents/**`, `docs/code-map/**`, `guidelines.md`,
+  `make_issues.md` — contributor and AI material — and `README.md`,
+  which is this set's own entrance in the repository and points AT the
+  site rather than being copied onto it. Together those two lists are
+  every `docs/*.md`; a new top-level page joins one of them in the same
+  change that adds it.
+- **`docs/` is not deleted, and its paths do not move.** Three things
+  depend on them resolving: every one of the seven SDK READMEs links
+  `blob/main/docs/engine/README.md`, and six of them are already
+  published to registries, where a release is immutable — the link is
+  frozen into versions that are shipped and cannot be revised; the
+  docs-only distribution an MCP consumer reads has no site to fall back
+  to; and the engine's own doc comments plus `skills/` cite these paths
+  from inside the repository. A GitHub blob URL cannot be redirected, so
+  a move is a break, not a migration.
+- **A second locale is the site's**, never `docs/`'s — the repo is
+  English-only apart from locale data. An untranslated page serves the
+  English body under a notice rather than 404ing.
 
 ## Sequencing
 
