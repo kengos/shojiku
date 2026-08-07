@@ -201,6 +201,22 @@
   inputs on BOTH paths — duplicate list entries especially, since a
   mirror that CONSUMES its input (`map.remove` per entry) diverges from
   a re-read-based original exactly there.
+- **Fetching the primary source is not enough when a SUMMARIZING tool
+  sits between you and the file — cross-check each entry against a
+  property you can derive offline.** The rule above was followed and the
+  table still shipped wrong: a fetch of `LineBreak.txt` reported
+  U+301D–301F as class QU with `General_Category` Pi/Pf, because the
+  summarizer pattern-matched "QUOTATION MARK" in the character NAMES.
+  They are Ps/Pe — structural brackets — so three of thirteen characters
+  were justified by a rule they do not obey, in six places including two
+  published docs. Behaviour was right, so no gate could catch it. The
+  file is also too large for the fetch tool, which truncates mid-range
+  and then answers about what it did receive. `unicodedata` ships the
+  real UCD offline (`u.category('〝')` → `Ps`, `u.unidata_version`), so a
+  three-line python check falsifies a bad summary for free — run it for
+  every character, and prefer classifying by the property you verified
+  over the one the fetch narrated. A fetched claim the tool could not
+  produce a raw line for is unverified, not confirmed.
 
 ## Native addons (napi-rs)
 

@@ -207,6 +207,17 @@ check whose empty output read as "all covered").
   one of them a line that reads as transparency ("fetched font `{id}`
   from {url}") rather than as an error, which is why two passes skipped
   it.
+- **A membership sweep over SOURCE must read the table, not the file** —
+  prose in doc comments contains the very characters and identifiers the
+  table lists. Checking which of 18 candidate characters were already in
+  a `matches!` set with `if c in open(path).read()` reported the em dash
+  PRESENT; it occurs only in the comments' own `—` punctuation, and the
+  table did not list it. Slice the function body first
+  (`re.search(r"fn <name>\(.*?\) -> bool \{(.*?)\n\}", src, re.S)`, then
+  `re.findall(r"'(.)'", body)`) so the answer is about code. The same
+  slicing makes the reverse check cheap: a doc table's rows diffed
+  set-by-set against the code sets, which is what catches doc/code drift
+  no gate reads.
 
 ## Counts and structural claims in prose
 
@@ -215,6 +226,18 @@ check whose empty output read as "all covered").
   maps" (29) and "three named `styles`" over a template that used two;
   a README said "Fourteen more" over a list of 13. Re-grep after any
   later edit of the artifact.
+- **A NEGATIVE-SCOPE claim — "X is unaffected", "Y is untouched" — is
+  falsified by the change's own test fixtures first.** It reads as
+  reassurance rather than as an assertion, so it escapes the grep pass
+  that a count would get. A CHANGELOG entry said "Japanese output is
+  unaffected" while the same commit added a test whose fixture is
+  hiragana (`ああ”あ`) and whose whole point is that it now wraps
+  differently. The bundled examples WERE unchanged — a narrower, true
+  statement that had been conflated with the broad one. Before writing
+  such a sentence, grep your own new fixtures for the population you are
+  exempting, and say the narrow thing you actually verified. This class
+  matters more than a wrong count: an upgrade-risk line is what a reader
+  uses to decide whether to re-check their own documents.
 - **Hard-wrapped prose defeats a line-anchored grep: flatten before
   matching.** Docs in this repo wrap at ~72 chars, so any phrase longer
   than a few words straddles a newline and `grep "publish together at"`
