@@ -189,6 +189,23 @@ check whose empty output read as "all covered").
   file and still left three live code references that only the pattern
   sweep caught. The enumeration says where to start; the empty sweep
   says you are done.
+- **Grepping a fan-out by NAME finds the code; it cannot find the
+  COUNTS.** Sizing "what does adding one of these touch?" by grepping an
+  existing member's name (`hi-IN`, `noto-sans-devanagari`) reaches every
+  site that spells it and misses every site that asserts only how MANY
+  there are. Adding one bundled example turned up eight such sites: two in
+  the catalog's own test, one in its gallery-parse positive control, then
+  `resources/tests.rs`, `tools/examples/tests.rs`,
+  `server/tests/handshake.rs`, `tests/bin/main.rs` and the site's
+  `gallery.test.ts` — plus a title TABLE (`examples.rs`'s `EXTRAS`) whose
+  absence fails a DIFFERENT test ("every entry has a title"), because an
+  entry with no gallery row falls back to its id. The name grep found two
+  of the eight; the rest arrived one red suite at a time, across three
+  gate runs. When a change adds a member to a SET, sweep for the set's
+  CARDINALITY too — `grep -rn 'len(), [0-9]'` and `grep -rn 'toBe([0-9]'`
+  over the area — and re-derive the number from the tree (`grep -c` the
+  declaration, `find | wc -l` the directory) rather than incrementing the
+  one you found.
 - **A census by DECLARATION NAME finds only the sites someone named
   consistently — sweep for the BEHAVIOUR to find the rest.** Counting a
   duplicated primitive with `grep 'fn clip\|fn sanitize\|fn truncated'`
