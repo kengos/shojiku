@@ -136,4 +136,4 @@ The agent writes the YAML, checks it against the MCP server, looks at the previe
 
 When an AI-authored template has a spot you do not like, the GUI is there for a human to fix it by hand. Open the <a href="/designer/" target="_self">Designer</a> in your browser, load the `templates.yml`, and adjust positions and styles on the canvas.
 
-![The Designer with the estimate template open, the total-amount text selected for editing](/media/designer-editor.png)
+![The Designer with the invoice template open, the bound total selected and its data key shown in the property panel](/media/designer-editor-en.png)
