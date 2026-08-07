@@ -2,7 +2,8 @@
 
 [![CI](https://github.com/kengos/shojiku/actions/workflows/ci.yml/badge.svg)](https://github.com/kengos/shojiku/actions/workflows/ci.yml)
 
-**Write YAML. Get PDFs. Built for AI agents.**
+**Write YAML. Get PDFs.** A Rust engine for business documents:
+invoices, receipts, application forms, manuscript paper.
 
 [shojiku.pages.dev](https://shojiku.pages.dev) — the gallery, the
 tutorials, and a playground that renders in your browser.
