@@ -17,6 +17,13 @@ onlyBuiltDependencies:
 
 minimumReleaseAge: 10080
 
+# Transitive advisory pin, the same shape gui/pnpm-workspace.yaml carries and
+# for the same reason: postcss arrives under vite, whose range the lockfile
+# already satisfies, so `pnpm update` never reaches it. TEMPORARY — drop it
+# once vite's own range moves past the patched version, then `make lock:sdk:js`.
+overrides:
+  postcss@<=8.5.22: ^8.5.23
+
 # The gate mounts the source tree and links the image's dependency store in as
 # `node_modules`. pnpm 11 otherwise runs a deps-status check before every
 # `pnpm run` script, decides that linked store is stale, and tries to PURGE it

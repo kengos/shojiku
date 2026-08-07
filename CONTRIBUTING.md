@@ -116,6 +116,41 @@ A shell pipeline reports the **last** command's status, so this exits
 steps you would need to diagnose it. The commands above exist so you
 never need this; if you must pipe, set `pipefail` first.
 
+### Changing a dependency
+
+Every gate installs from a committed lockfile (`--locked` for cargo,
+`--frozen-lockfile` for pnpm) and refuses to re-resolve on its own, so a
+manifest edit is not finished until the lockfile catches up. Two verbs,
+over the four lockfiles — `engine`, `gui`, `site`, `sdk:js`:
+
+```bash
+make lock:gui
+```
+
+re-resolves after you edited a `package.json` or `Cargo.toml`; anything
+that already satisfies its range stays put. And:
+
+```bash
+make update:gui
+```
+
+bumps to the newest release each range still allows. That one moves
+dependencies you did not name, so read the lockfile diff before
+committing it. `make lock` on its own is the engine scope, as it always
+was; engine changes still need `git add -f engine/Cargo.lock`, which a
+global gitignore otherwise hides.
+
+Neither verb reaches a **transitive** dependency — if the parent's range
+is already satisfied, pnpm keeps the version it resolved, which is how a
+security advisory can survive a full `update:`. Force it with an
+`overrides:` entry in that project's `pnpm-workspace.yaml`
+(`pnpm audit --fix=override` writes them) and apply it with `lock:`.
+Treat every such entry as temporary: it pins a dependency the tree would
+otherwise move past on its own, so drop it once the parent widens.
+
+These write files; they check nothing. Follow them with the scope's
+`verify:`.
+
 ## Before you open a pull request
 
 1. `make verify` is green. That is the merge bar.

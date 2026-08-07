@@ -36,3 +36,22 @@ onlyBuiltDependencies:
 # lowering the guard for everything, and remove it once the window passes.
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude: []
+
+# Transitive advisory pins. `pnpm update` cannot reach these — the parent's
+# range (jsdom's on undici, vite's on postcss) is already satisfied by the
+# lockfile, so pnpm keeps the resolved version and the fix never arrives.
+# `pnpm audit --fix=override` writes the entries below; a plain
+# `make lock:gui` then applies them.
+#
+# EACH ENTRY IS TEMPORARY. It exists only until the parent widens its own
+# range past the patched version — drop it then and re-run `make lock:gui`,
+# because a stale override silently pins a dependency the tree would
+# otherwise have moved past on its own.
+#
+# `pnpm audit --fix` also appends the patched versions to
+# minimumReleaseAgeExclude above. Neither needed it (both were ~2 weeks old
+# when this landed), so they were removed rather than committed: an exclusion
+# that buys nothing still turns the supply-chain guard off for that version.
+overrides:
+  postcss@<=8.5.22: ^8.5.23
+  undici@>=7.0.0 <7.29.0: ^7.29.0
