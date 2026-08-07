@@ -84,3 +84,36 @@ updates:
     groups:
       gui-minor-patch:
         update-types: [minor, patch]
+
+  # site/ and sdk/js/ are STANDALONE pnpm projects (not gui/ workspace members
+  # — each owns its own lockfile), and neither was listed here until five npm
+  # advisories sat open against them with no PR ever arriving. That is the
+  # failure mode to remember: GitHub raises an ALERT for every lockfile it can
+  # see, whether or not the directory is configured, but it only opens an
+  # update PR for a directory listed below. An untracked project therefore
+  # looks monitored — the alerts are real and visible — while nothing is ever
+  # going to fix them.
+  #
+  # Same 7-day cooldown as /gui, and for the same reason: it must match the
+  # `minimumReleaseAge` each project sets in its own pnpm-workspace.yaml, or
+  # the PR lands red with ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION and silently
+  # turns green days later once the packages age out.
+  - package-ecosystem: npm
+    directory: /site
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      site-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /sdk/js
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      sdk-js-minor-patch:
+        update-types: [minor, patch]

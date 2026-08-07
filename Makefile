@@ -18,9 +18,13 @@
 #   Apply fixes
 #     make fmt-fix              rustfmt          make gui-format   biome
 #     make examples             re-render the committed example outputs
-#     make lock                 after changing a Cargo.toml dependency —
-#                               every gate is --locked and will refuse until
-#                               you do (then: git add -f engine/Cargo.lock)
+#     make lock:<scope>         re-resolve a lockfile after a manifest edit —
+#                               every gate is --locked / --frozen-lockfile and
+#                               refuses until you do. scope = engine | gui |
+#                               site | sdk:js; `make lock` is lock:engine
+#                               (engine then: git add -f engine/Cargo.lock)
+#     make update:<scope>       same scopes, but BUMP within the manifest's
+#                               ranges — the verb that clears an advisory
 #
 #   Where did it break?
 #     cat .make-logs/last-error.log                always the last failure
@@ -328,6 +332,8 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         verify\:sdk\:js test\:sdk\:js lint\:sdk\:js \
         verify\:sdk\:php test\:sdk\:php lint\:sdk\:php \
         verify\:sdk\:go test\:sdk\:go lint\:sdk\:go \
+        lock\:engine lock\:gui lock\:site lock\:sdk\:js \
+        update\:engine update\:gui update\:site update\:sdk\:js \
         docker docker-build docker-render docker-scan examples examples-check \
         wasm wasm-e2e capi-dist capi-lib cli-dist cli-bin napi napi-lib fuzz \
         sdk-ruby sdk-ruby-test sdk-ruby-lint \
@@ -516,6 +522,93 @@ quiet: ## Run ANY target this way: make quiet T=gui (same PASS/FAIL + real exit 
 		exit $$code; \
 	fi
 
+## ---- lock:<scope> / update:<scope> — the four lockfiles -----------------
+#
+# These WRITE files. They belong to the "Apply fixes" half of the surface, not
+# the <verb>:<scope> grid above, and deliberately do NOT go through `quiet`:
+# you want to read what moved, and a PASS line would invite reading them as
+# gates. They prove nothing — run the scope's `verify:` afterwards.
+#
+# Two verbs, because these are not the same request:
+#
+#   lock:<scope>    re-resolve after a MANIFEST edit. A dependency that
+#                   already satisfies its range does not move.
+#   update:<scope>  bump to the newest release each range still allows — the
+#                   advisory-clearing verb. It moves things you did not name,
+#                   so read the lockfile diff before committing it.
+#
+# The scopes are the four lockfiles: engine/Cargo.lock and the three pnpm
+# projects (gui/ is a 3-member workspace, site/ and sdk/js/ are standalone).
+#
+# minimumReleaseAge (7 days, in each pnpm-workspace.yaml) applies at
+# RESOLUTION here, so `update:` will decline a fix published this week and
+# leave the older version in place. That is the supply-chain guard working;
+# the escape hatch is a per-package minimumReleaseAgeExclude entry, never
+# lowering the window.
+
+lock\:engine: lock ## Re-resolve engine/Cargo.lock, no version bumps (alias of `make lock`)
+
+update\:engine: ## Bump engine/ deps within their Cargo.toml ranges (then: git add -f engine/Cargo.lock)
+	@echo "== update:engine =="
+	$(CARGO_IN_DOCKER) 'cargo update'
+	@echo "engine/Cargo.lock updated — stage it with: git add -f engine/Cargo.lock"
+
+lock\:gui: ## Re-resolve gui/pnpm-lock.yaml after a package.json change
+	@echo "== lock:gui =="
+	@$(PNPM_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
+		pnpm config set store-dir /pnpm-store; \
+		pnpm install --lockfile-only'
+
+update\:gui: ## Bump gui/ deps within their package.json ranges
+	@echo "== update:gui =="
+	@$(PNPM_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
+		pnpm config set store-dir /pnpm-store; \
+		pnpm update -r'
+
+lock\:site: ## Re-resolve site/pnpm-lock.yaml after a package.json change
+	@echo "== lock:site =="
+	@$(SITE_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
+		pnpm config set store-dir /pnpm-store; \
+		pnpm install --lockfile-only'
+
+update\:site: ## Bump site/ deps within their package.json ranges
+	@echo "== update:site =="
+	@$(SITE_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
+		pnpm config set store-dir /pnpm-store; \
+		pnpm update -r'
+
+# sdk/js is the one that cannot install onto the mount. Its gates run in the
+# purpose-built JS_IMAGE and link the image's store in with
+# `ln -sfn /pkg/node_modules node_modules`; over a REAL directory that puts the
+# symlink INSIDE it and `make sdk-js` then resolves nothing. gui/ and site/
+# already keep node_modules on the mount (their own gates put it there), so
+# only this scope needs the detour: resolve in a scratch copy, carry back the
+# lockfile alone.
+SDK_JS_LOCK_IN_DOCKER = $(GATE_LOCK) docker run --rm \
+	-v "$(CURDIR):/repo" -w /repo/sdk/js \
+	-v "$(PNPM_VOLUME):/pnpm-store" \
+	-e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+	$(NODE_IMAGE) sh -euc
+
+# $(1) is the pnpm subcommand to run against the scratch copy.
+define sdk_js_resolve
+@$(SDK_JS_LOCK_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION_SDK) >/dev/null 2>&1; \
+	pnpm config set store-dir /pnpm-store; \
+	rm -rf /tmp/lockwork; mkdir -p /tmp/lockwork; \
+	cp package.json pnpm-lock.yaml pnpm-workspace.yaml /tmp/lockwork/; \
+	cd /tmp/lockwork; \
+	$(1); \
+	cp pnpm-lock.yaml /repo/sdk/js/pnpm-lock.yaml'
+endef
+
+lock\:sdk\:js: ## Re-resolve sdk/js/pnpm-lock.yaml after a package.json change
+	@echo "== lock:sdk:js =="
+	$(call sdk_js_resolve,pnpm install --lockfile-only)
+
+update\:sdk\:js: ## Bump sdk/js deps within their package.json ranges
+	@echo "== update:sdk:js =="
+	$(call sdk_js_resolve,pnpm update -r)
+
 ## ---- job: rust ---------------------------------------------------------
 
 rust: budget fmt clippy ## line budget + fmt + clippy (CI job "rust"; tests run in coverage)
@@ -546,7 +639,7 @@ fmt-fix: ## cargo fmt (apply formatting)
 # anything, so this is seconds rather than a build. It updates only what the
 # manifest change requires; it is NOT `cargo update`, which would bump
 # unrelated dependencies.
-lock: ## Refresh engine/Cargo.lock after a Cargo.toml dependency change (then: git add -f engine/Cargo.lock)
+lock: ## engine scope of lock:<scope> — re-resolve Cargo.lock (then: git add -f engine/Cargo.lock)
 	@echo "== lock =="
 	$(CARGO_IN_DOCKER) 'cargo metadata --format-version 1 >/dev/null'
 	@echo "engine/Cargo.lock refreshed — stage it with: git add -f engine/Cargo.lock"
