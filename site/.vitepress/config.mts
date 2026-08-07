@@ -2,9 +2,11 @@ import { defineConfig } from "vitepress";
 import { headTags, isJapanese } from "../src/lib/seo.ts";
 
 // The public site: nine nav pages plus the index, English canonical with a /ja
-// twin per page. Reference documentation is SOURCED in docs/ and rendered here
-// — this site restates nothing (docs/architecture.md § Where a doc paragraph
-// goes is the rule; docs/code-map/repo.md § site/ carries the rest).
+// twin per page. Reference documentation is SOURCED in docs/ and this site
+// restates nothing. It is DECIDED that the reference is rendered here, but that
+// half is not built: there is no /reference/ route and the pages still link out
+// to the repository (docs/architecture.md § Where a doc paragraph goes is the
+// rule; docs/code-map/repo.md § site/ carries the rest).
 
 // The origin the site is served from. It is baked into the sitemap's <loc>s,
 // every canonical and every social-card URL, so it moves the day a custom
