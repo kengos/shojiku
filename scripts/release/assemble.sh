@@ -24,7 +24,7 @@ set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BIN="$ROOT/dist/release/bin"
 OUT="$ROOT/dist/release/packages"
-VERSION=0.1.0
+VERSION=0.2.0
 
 # slug ↔ per-ecosystem spellings, one row per release platform.
 #   slug        capi payload              wheel tag             gem platform     npm package                  rid
