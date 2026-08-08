@@ -51,15 +51,24 @@
 #
 #     export PATH="$(brew --prefix make)/libexec/gnubin:$PATH"
 #
-# A warning rather than an error: every GATE runs in a container regardless,
-# and CI is the merge bar, so an old make is a hazard to be named rather than
-# a reason to refuse to run.
+# A hard error, not a warning (user decision — this used to warn, and the
+# warning printed as a banner on EVERY invocation, which is exactly the shape
+# a reader learns to skip: gates went green under 3.81 and the difference
+# surfaced only in CI). `help` — the default goal — is exempt, so a stock-
+# macOS first contact still gets the target list and this remedy instead of
+# only a refusal.
 ifeq ($(firstword $(subst ., ,$(MAKE_VERSION))),3)
-$(warning )
-$(warning *** GNU Make $(MAKE_VERSION) — CI runs 4.x, and the two differ on)
-$(warning *** recipe quoting. A gate can pass here and fail there.)
-$(warning *** export PATH="$$(brew --prefix make)/libexec/gnubin:$$PATH")
-$(warning )
+ifneq ($(filter-out help,$(MAKECMDGOALS)),)
+$(error GNU Make $(MAKE_VERSION) — CI runs 4.x, and the two differ on recipe quoting: a gate can pass here and fail there. Use Homebrew make: export PATH="$$(brew --prefix make)/libexec/gnubin:$$PATH")
+endif
+endif
+
+# `make -n` is NOT a dry run here: GNU make still executes recipe lines
+# containing $(MAKE) (the documented recursion rule), so a "dry" run takes
+# the gate lock, contends with a running gate, and has killed one mid-run.
+# Refuse it outright — read the recipe, or use `make help`.
+ifneq (,$(findstring n,$(firstword -$(MAKEFLAGS))))
+$(error make -n executes this Makefile's $$(MAKE) delegations for real (it can take the gate lock and kill a running gate). Read the recipe instead, or run `make help`)
 endif
 #
 # Target -> CI job (.github/workflows/ci.yml):
@@ -324,7 +333,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 .PHONY: proof-published proof-published-python proof-published-ruby \
         proof-published-dotnet proof-published-java proof-published-js \
         proof-published-php proof-published-crates
-.PHONY: proof-deploy site site-lint site-test site-data site-check site-wasm-release site-build \
+.PHONY: proof-deploy site site-lint site-test site-data site-check site-node-modules site-wasm-release site-build \
         site-dev verify\:site lint\:site test\:site
 .PHONY: help verify quiet rust budget fmt fmt-fix lock clippy test coverage deny \
         reference-data reference-check \
@@ -501,6 +510,11 @@ quiet: ## Run ANY target this way: make quiet T=gui (same PASS/FAIL + real exit 
 		exit 2; \
 	fi
 	@mkdir -p $(LOG_DIR)
+	@# A compound run (T="site site-check") writes ONE combined log; each
+	@# member's stand-alone log would otherwise keep whatever an EARLIER run
+	@# wrote — a stale FAIL beside a passing compound has been read back as a
+	@# red gate. Delete them up front: an absent log cannot be misread.
+	@for t in $(T); do rm -f "$(LOG_DIR)/$$(echo "$$t" | tr '/' '_').log"; done
 	@log="$(LOG_DIR)/$$(echo '$(T)' | tr ' /' '__').log"; \
 	if $(GATE_LOCK) $(MAKE) --no-print-directory $(T) > "$$log" 2>&1; then \
 		if [ -f "$(ERROR_LOG)" ] && head -1 "$(ERROR_LOG)" | grep -qx "# FAILED: $(T)"; then \
@@ -1601,6 +1615,7 @@ PNPM_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 
 gui: gui-budget ## gui/ workspace gates: line budget + typecheck + lint (0 warnings) + test/coverage
 	@echo "== gui (typecheck + lint + coverage) =="
+	@test -d engine/wasm/pkg || $(MAKE) wasm
 	@$(PNPM_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
 		pnpm config set store-dir /pnpm-store; \
 		pnpm install --frozen-lockfile; \
@@ -1626,6 +1641,7 @@ gui-lint: ## gui/ typecheck + lint only (what `make lint:gui` runs)
 # with `make test:gui` before saying tests pass.
 gui-test: ## gui/ vitest only, no budget/typecheck/lint (F=<pattern> narrows, no coverage)
 	@echo "== gui test$(if $(F), (F=$(F))) =="
+	@test -d engine/wasm/pkg || $(MAKE) wasm
 	@$(PNPM_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
 		pnpm config set store-dir /pnpm-store; \
 		pnpm install --frozen-lockfile; \
@@ -1638,7 +1654,7 @@ gui-budget: ## gui/ per-file executable-line budget (scripts/check-gui-line-budg
 gui-format: ## Apply Biome formatting/lint fixes across gui/ (writes files)
 	@$(PNPM_IN_DOCKER) 'npm install -g pnpm@$(PNPM_VERSION) >/dev/null 2>&1; \
 		pnpm config set store-dir /pnpm-store; \
-		pnpm install; \
+		pnpm install --frozen-lockfile; \
 		pnpm format'
 
 normalize-examples: ## Rewrite examples/*/*/templates.yml at the Designer's canonical CST fixed point (writes files)
@@ -1718,14 +1734,23 @@ site-test: ## site/ vitest only (what `make test:site` runs)
 		pnpm install --frozen-lockfile; \
 		pnpm test'
 
-site-data: ## Refresh the committed README gallery section from examples/gallery.yml
+# site-data/site-check skip the pnpm install for speed, so in a fresh worktree
+# they would die inside Node with a bare ERR_MODULE_NOT_FOUND naming no
+# remedy. Name it here instead.
+site-node-modules:
+	@test -d site/node_modules || { \
+		echo "site/node_modules missing — run 'make site' once in this tree (it installs first; site-data/site-check skip the install for speed)" >&2; \
+		exit 1; \
+	}
+
+site-data: site-node-modules ## Refresh the committed README gallery section from examples/gallery.yml
 	@echo "== site data refresh =="
 	@$(SITE_IN_DOCKER) 'node scripts/refresh-data.ts'
 
 # No wasm build: site/.data/wasm is pinned by the sha256 digests recorded in
 # site/.data/wasm-source.json, so this says the same thing on every host
 # architecture. Rebuilding to compare is what made the homepage track HEAD.
-site-check: ## Fail if the committed site inputs drift (README gallery + the site engine pin)
+site-check: site-node-modules ## Fail if the committed site inputs drift (README gallery + the site engine pin)
 	@echo "== site data check =="
 	@$(SITE_IN_DOCKER) 'node scripts/refresh-data.ts --check'
 

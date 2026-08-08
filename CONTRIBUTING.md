@@ -178,7 +178,8 @@ These write files; they check nothing. Follow them with the scope's
 > **You need GNU Make 4 or newer.** make is the one tool that does not
 > run in a container, and macOS still ships 3.81 (2006), which parses
 > recipe quoting differently enough to hide a real failure. The Makefile
-> warns if it sees 3.x; on macOS, `brew install make` and put its
+> REFUSES to run anything but `help` under 3.x (it used to warn, and the
+> warning was skimmed past); on macOS, `brew install make` and put its
 > `libexec/gnubin` ahead of `/usr/bin` in `PATH`.
 
 ## Where the rules live
