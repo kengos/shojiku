@@ -138,8 +138,9 @@ make update:gui
 bumps to the newest release each range still allows. That one moves
 dependencies you did not name, so read the lockfile diff before
 committing it. `make lock` on its own is the engine scope, as it always
-was; engine changes still need `git add -f engine/Cargo.lock`, which a
-global gitignore otherwise hides.
+was; engine changes stage `engine/Cargo.lock` normally — an old note
+said a global gitignore hides it and `git add -f` is needed, which was
+a misread of `*.log` in the global excludes.
 
 Neither verb reaches a **transitive** dependency — if the parent's range
 is already satisfied, pnpm keeps the version it resolved, which is how a

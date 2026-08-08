@@ -14,9 +14,9 @@ engine/
   formatter/      type -> locale-aware display string/image
   diagnostics/    structured validation/inspection output
   authoring/      shared validate/prepare/preview/inspect/capabilities layer
-  signing/        incremental-update writer + signer (agents/signing.md)
-  verify/         signature verifier (agents/signing.md)
-  mcp/            MCP tool server (see agents/mcp.md)
+  signing/        incremental-update writer + signer (see signing.md)
+  verify/         signature verifier (see signing.md)
+  mcp/            MCP tool server (see mcp.md)
   cli/            `shojiku` command surface (thin wrapper over authoring/)
   wasm/           browser WASM host over authoring/
   capi/           C ABI cdylib host the FFI SDKs load
