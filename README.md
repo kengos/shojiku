@@ -429,6 +429,13 @@ ways to run your own copy:
   directly in `gui/` (`pnpm install --frozen-lockfile && pnpm -r test`),
   but the Docker path above is the supported, toolchain-free one.
 
+## Support
+
+If Shojiku is useful to you, you can support its development on
+[GitHub Sponsors](https://github.com/sponsors/kengos). Donations fund
+nothing specific and promise nothing in return — the project stays
+focused on the OSS core.
+
 ## License
 
 Licensed under any of
