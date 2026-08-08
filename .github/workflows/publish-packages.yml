@@ -458,11 +458,18 @@ jobs:
           print(" ".join(out))
           ')
           echo "publish order: $order"
+          # The probe asks about THIS VERSION, never the bare crate: every
+          # member already exists at the previous release, so a crate-level
+          # 200 says nothing — a version-blind probe once skipped all 16
+          # members of a version bump and called it a green publish.
+          ver=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '[.packages[] | select(.publish != [])][0].version')
+          echo "publishing version: $ver"
           for c in $order; do
             code=$(curl -s -o /dev/null -w '%{http_code}' \
               -H 'User-Agent: shojiku-release (github.com/kengos/shojiku)' \
-              "https://crates.io/api/v1/crates/$c")
-            [ "$code" = 200 ] && { echo "== $c is already on crates.io — skipping"; continue; }
+              "https://crates.io/api/v1/crates/$c/$ver")
+            [ "$code" = 200 ] && { echo "== $c@$ver is already on crates.io — skipping"; continue; }
             attempt=1
             while :; do
               echo "== publishing $c (attempt $attempt)"
@@ -492,16 +499,16 @@ jobs:
                      | jq -r '.packages[] | select(.publish != []) | .name'); do
             code=$(curl -s -o /dev/null -w '%{http_code}' \
               -H 'User-Agent: shojiku-release (github.com/kengos/shojiku)' \
-              "https://crates.io/api/v1/crates/$c")
-            if [ "$code" = 200 ]; then echo "  on crates.io: $c"
-            else echo "  MISSING: $c (HTTP $code)"; missing="$missing $c"; fi
+              "https://crates.io/api/v1/crates/$c/$ver")
+            if [ "$code" = 200 ]; then echo "  on crates.io: $c@$ver"
+            else echo "  MISSING: $c@$ver (HTTP $code)"; missing="$missing $c"; fi
           done
           [ -z "$missing" ] || {
-            echo "not published:$missing"
+            echo "not published at $ver:$missing"
             echo "re-dispatch after the rate-limit window; publishing is resumable."
             exit 1
           }
-          echo "all workspace crates are on crates.io"
+          echo "all workspace crates are on crates.io at $ver"
 
   # php is a SEPARATE job for the same reason crates is: it publishes SOURCE,
   # so it needs neither the binary matrix nor the assembled packages. It also
