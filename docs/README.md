@@ -161,7 +161,7 @@ When a feature ships, its substance moves along this list; the
 *(Internal maintenance note — for contributors and AI agents; readers of
 the docs can ignore this section.)*
 
-Last full doc audit (`shojiku-document-curator`): commit `a66096c9`.
+Last full doc audit (`shojiku-document-curator`): commit `b243c9ac`.
 It covered the 31 pull requests merged since `1dfbe58a` (the v0.1.0
 commit, which audited the whole tree rather than a range).
 

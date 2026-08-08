@@ -9,6 +9,137 @@
 > [canvas](gui-designer-canvas.md) / [panel](gui-designer-panel.md) /
 > [insert](gui-designer-insert.md) / [chrome](gui-designer-chrome.md).
 
-GUI (TypeScript, `gui/`): the React Designer — a pnpm workspace (Node 24, pnpm 11) of three packages, dependency direction strictly downward `designer-app → designer → designer-core`. Toolchain: TypeScript `strict`, **Biome** (one stack for lint + format, NOT ESLint/Prettier), Vitest with 100%×4 coverage thresholds; all gates run in Docker via **`make gui`** (in `make verify`) — no host Node toolchain, mirroring the Rust/wasm gates. Two length gates, RuboCop-style (rule on, explicit waiver list, burn it down): per FILE, `make gui-budget` (`scripts/check-gui-line-budget.sh`, pure POSIX sh + awk, runs FIRST in `make gui` on the host) caps every non-test `.ts`/`.tsx` at **150 executable lines** — blank lines and comments do not count, so documenting a file costs no budget — with an in-file `line-budget-exempt: <reason>` waiver (the same token the engine budget uses); per FUNCTION, Biome's `noExcessiveLinesPerFunction` at 150, test files and `e2e/` excluded, with NO waiver list.
+## Workspace / toolchain preamble (applies to all of `gui/`)
 
-`gui/designer-core/` — **headless document core, pure TS, no React**: `index.ts` (the public barrel — the only import surface `designer`/hosts see), `document.ts` (**`parseTemplate(source, maxBytes?)`** = size-capped `eemeli/yaml` `parseDocument` → CST `Document` (default cap `MAX_TEMPLATE_BYTES` 2 MiB, raisable per-call toward `MAX_TEMPLATE_BYTES_CEILING` 8 MiB for inline images; **`clampTemplateMaxBytes`** fail-closes a hostile limit to the default and clamps to the ceiling); parsing holds aliases as nodes so it is bomb-safe, and **`readTemplate`** = `doc.toJS({ maxAliasCount })` is where alias expansion + the "billion laughs" cap live; **`readNode`** = the SAME cap over the subtree at a yaml-path (the panel's per-node read; missing → `undefined`; a RAW scalar leaf — what `map.set` stores when `setScalar` replaces a collection-valued key, e.g. a `columns` track list rewritten to a count — returns as-is, never `undefined`); **`serializeTemplate`** = `doc.toString({ lineWidth: 0 })`, the ONE serialization home — folding off so authored long lines survive, output is a fixed point; `TemplateParseError`), `ops.ts` (the op layer's ENTRY POINT + public surface: `applyOp` dispatches by what an op ADDRESSES — the five MAP-KEY ops to `keyOps.ts`, the four SEQUENCE ops to `seqOps.ts` — over `opTypes.ts` (the wire vocabulary `Op`/`OpError`/`OpResult` + the clip/fail primitives), `snippet.ts` (what a snippet VALUE is, refused without reading the document), `opTarget.ts` (where an op LANDS, read-only: `resolveMap`/`resolveSeq`/`checkKeys`/`walkIntermediates`/`findPairByKey`) and `opCreate.ts` (the resolvers that CREATE the missing target: `setLeaf`'s intermediate maps, the DEFERRED sequence auto-create). **named patch operations** — the ONLY edit path, each a serializable `Op` value for AI parity: `setScalar`/`setStrings`/`removeKey`/`renameKey`/`putValue`/`moveItem`/`duplicateItem`/`insertItem`/`removeItem`. Scalar/strings ops address a leaf by `path` (structural, with `[n]` indices) + `keys` (a pure map-key path under it — `["box","x"]`, `["data","key"]`); setting auto-creates missing intermediate maps, removing prunes maps left empty. `path` is OPTIONAL on `setScalar`/`setStrings`/`removeKey` — absent = the document ROOT map (`doc.contents`), the only way to reach top-level keys the structural grammar cannot spell (it has no root token); and `path` addresses a SEQUENCE ELEMENT by its `[n]` index (`sections.body.items[0].row.conditionalStyles[1]`), which `keys` cannot — so a leaf edit inside a list entry is a TARGETED op (`setScalar`/`removeKey` at the entry's path), never a whole-list `putValue` rewrite: the rewrite re-serializes the sibling entries (flow→block) and DESTROYS their comments; the page-setup surface edits `page.size` via `{op:'setScalar', keys:['page','size'], value:'A4'}`. The sequence ops (`moveItem`/`duplicateItem`/`insertItem`/`removeItem`) keep a required `path` (the root is a map, never a seq). **`renameKey`** `{path?, keys, to}` renames the map key `keys` addresses by replacing the `Pair`'s KEY scalar IN PLACE (value node + position + comments preserved; `findPairByKey` matches both parsed-Scalar and op-created raw-string keys; a `createNode(to)` authors a YAML-syntax `to` as a quoted scalar — no structural injection); errors `key_not_found`/`not_a_map`/`path_not_found`/`invalid_value` (empty `to`, `to`===source, collision). **`putValue`** `{path?, keys, value}` is the map-key twin of `insertItem` — sets a JSON-shaped `SnippetValue` at the key path (auto-creating intermediates, replacing an existing value), validated by the SAME snippet checker (depth/node caps, finite scalars, plain maps, `__proto__` inert data) then composed via `doc.createNode`; the styles-registry create-empty-style form (`putValue keys:['styles',<name>] value:{}`). **`insertItem`** takes `{path, index (0..=len), value}` where `value` is a plain JSON-shaped `SnippetValue` composed via `doc.createNode` — never YAML text (no second grammar, no alias/anchor surface), validated BEFORE mutation (`MAX_SNIPPET_DEPTH` 16 — also terminates cyclic hostile values, `MAX_SNIPPET_NODES` 256, finite scalars only, plain-object maps only so exotic objects are rejected and a JSON `__proto__` key stays inert data); a MISSING final `items`-like key on an existing map auto-creates an empty seq (deferred until index validation passes — the `setLeaf` auto-create precedent), covering a `body:` without `items:`. The FIRST item inserted into an empty seq clears the flow flag → BLOCK style (`items:\n  - …`, the form every preset uses), so an authored `items: []` or an auto-created seq stops reading as `items: [ … ]`; a non-empty flow seq keeps its form. **`removeItem`** `{path, index}` splices one element; an emptied seq is KEPT (`items: []`), never pruned. The `keys` surface is AI-parity-public so it is capped — `MAX_KEY_DEPTH` 16, `setStrings` values `MAX_STRING_VALUES` 256. **`isSnippetValue(value)`** is the exported type guard over the SAME `checkSnippet` walk (the ONE public home for the snippet-shape rule), so a consumer that persists/reuses a materialized node (the reusable-block library) narrows hostile storage the way the op layer does without re-implementing it. **`applyOp`** validates fully BEFORE mutating so a failure returns a typed `OpResult` with no partial edit — `OpError` codes `path_not_found`/`not_a_map`/`not_a_seq`/`key_not_found`/`index_out_of_range`/`invalid_value`), `path.ts` (the structural **path grammar** shared with the engine box index — `sections.body.items[3]` → `PathSegment[]`; `parsePath`/`formatPath`/`toYamlPath`, `PathSyntaxError`), `history.ts` (what the undo stack IS — `HistoryEntry`, the `MAX_HISTORY` count + `MAX_HISTORY_BYTES` 32 MiB budget, and the pure `trimHistory`), `editor.ts` (**`Editor`** session = live `Document` + `serializeTemplate` snapshot undo/redo where each `HistoryEntry {text, selection}` restores BOTH text AND selection (undo of a `moveItem` re-selects the item at its OLD path; redo re-selects an inserted item) — `trimHistory` (from `history.ts`) caps the undo stack, always keeping ≥1; a selection-only change is NOT a history step + selection keyed by the path grammar; **`create(source, {maxBytes})`** + **`setMaxBytes`** thread the template-size cap through EVERY re-parse (rollback / undo / redo) so a legally-oversized (image-bearing) document stays editable; **`subscribe(listener)`** reports each COMMITTED change (`{ops, source: 'apply'|'batch'|'undo'|'redo'}`) after the document and history settle, returning an unsubscribe — observation only (a refused op and an empty batch report nothing), so the op surface stays the single mutation path; **`applyAll`** applies a batch transactionally — all land as ONE undo step, or the first failure rolls back byte-exact and returns the failing op's `index` (`BatchResult`, `MAX_BATCH_OPS` 256), used for the atomic text⇄data content switch; **`read`** exposes `readNode` for the panel, and **`ReadFn`** — `(path: string) => unknown`, the type of that read — is exported here as the document-read contract every pure model in `designer` takes (33 non-test files in `designer/src` at last count, across canvas/panel/text/toolbar/insert/palette/hooks; it used to live in `designer/src/insert/model.ts`, which had those consumers importing a document type from a feature area)), `wire.ts` (type-only read views of the template wire subset, mirroring `engine/core` serde names — `data` is a `DataBinding {key?,format?}` map (never a bare string), enum unions copied from the engine; no runtime code), `scripts/normalize-examples.ts` (the `normalize:examples` one-shot: rewrites every `examples/*/*/templates.yml` to the `serializeTemplate` fixed point). Tests are sibling-per-module (`keyOps.test.ts` = the five map-key ops, `seqOps.test.ts` = the four sequence ops, `snippet.test.ts` = `isSnippetValue`, `history.test.ts` = `trimHistory`, `ops.test.ts` = dispatch + the root-addressed form), all exercised through `applyOp` — `opTarget.ts`/`opCreate.ts`/`opTypes.ts` have no separate public surface and are pinned through those suites (their headers say so). Round-trip is tested against a canonical fixed-point fixture (eemeli round-trips at canonical-CST fidelity — comments + key order preserved, flow-seq inner spacing normalized to `[ x ]`), so an op touches only its keys; `roundtrip.test.ts` also globs every bundled `templates.yml` and asserts `serialize(parse(src)) === src` — the **permanent fixed-point gate** (bundled presets are stored normalized so a first-edit diff stays clean).
+GUI (TypeScript, `gui/`): the React Designer — a pnpm workspace (Node
+24, pnpm 11) of three packages, dependency direction strictly downward
+`designer-app → designer → designer-core`. Toolchain: TypeScript
+`strict`, **Biome** (one stack for lint + format, NOT ESLint/Prettier),
+Vitest with 100%×4 coverage thresholds; all gates run in Docker via
+**`make gui`** (in `make verify`) — no host Node toolchain, mirroring
+the Rust/wasm gates. Two length gates, RuboCop-style (rule on, explicit
+waiver list, burn it down): per FILE, `make gui-budget`
+(`scripts/check-gui-line-budget.sh`, pure POSIX sh + awk, runs FIRST in
+`make gui` on the host) caps every non-test `.ts`/`.tsx` at **150
+executable lines** — blank lines and comments do not count, so
+documenting a file costs no budget — with an in-file
+`line-budget-exempt: <reason>` waiver (the same token the engine budget
+uses); per FUNCTION, Biome's `noExcessiveLinesPerFunction` at 150, test
+files and `e2e/` excluded, with NO waiver list.
+
+## gui/designer-core/src (headless document core — pure TS, no React)
+
+- `index.ts` — the public barrel: the ONLY import surface
+  `designer`/hosts see.
+- `document.ts` — the parse/serialize home.
+  **`parseTemplate(source, maxBytes?)`** = size-capped `eemeli/yaml`
+  `parseDocument` → CST `Document` (default cap `MAX_TEMPLATE_BYTES`,
+  raisable per-call toward `MAX_TEMPLATE_BYTES_CEILING` for inline
+  images; **`clampTemplateMaxBytes`** fail-closes a hostile limit to the
+  default and clamps to the ceiling). Parsing holds aliases as NODES so
+  it is bomb-safe; **`readTemplate`** = `doc.toJS({ maxAliasCount })` is
+  where alias expansion + the "billion laughs" cap live. **`readNode`**
+  = the SAME cap over the subtree at a yaml-path (the panel's per-node
+  read; missing → `undefined`; a RAW scalar leaf stored by `map.set`
+  returns as-is, never `undefined`). **`serializeTemplate`** =
+  `doc.toString({ lineWidth: 0 })`, the ONE serialization home —
+  folding off so authored long lines survive; output is a fixed point.
+  `TemplateParseError`.
+- `ops.ts` — the op layer's ENTRY POINT + public surface. **Named patch
+  operations are the ONLY edit path**, each a serializable `Op` value
+  for AI parity: `setScalar`/`setStrings`/`removeKey`/`renameKey`/
+  `putValue`/`moveItem`/`duplicateItem`/`insertItem`/`removeItem`.
+  `applyOp` dispatches by what an op ADDRESSES — the five MAP-KEY ops to
+  `keyOps.ts`, the four SEQUENCE ops to `seqOps.ts` — and validates
+  fully BEFORE mutating, so a failure returns a typed `OpResult` with no
+  partial edit (`OpError` codes: `path_not_found`/`not_a_map`/
+  `not_a_seq`/`key_not_found`/`index_out_of_range`/`invalid_value`).
+  Addressing: `path` is structural with `[n]` indices; `keys` is a pure
+  map-key path under it. `path` is OPTIONAL on scalar/key ops — absent =
+  the document ROOT map, the only way to reach top-level keys — and
+  `path` addresses a SEQUENCE ELEMENT by index, which `keys` cannot: a
+  leaf edit inside a list entry is a TARGETED op, never a whole-list
+  `putValue` rewrite (the rewrite re-serializes sibling entries and
+  DESTROYS their comments). The `keys` surface is AI-parity-public so it
+  is capped (`MAX_KEY_DEPTH`, `setStrings` `MAX_STRING_VALUES`).
+- `keyOps.ts` — the five map-key ops. `setScalar`/`setStrings`
+  auto-create missing intermediate maps; `removeKey` prunes maps left
+  empty. **`renameKey`** `{path?, keys, to}` replaces the `Pair`'s KEY
+  scalar IN PLACE (value node + position + comments preserved;
+  `createNode(to)` authors a YAML-syntax `to` as a quoted scalar — no
+  structural injection). **`putValue`** `{path?, keys, value}` is the
+  map-key twin of `insertItem` — a JSON-shaped `SnippetValue` set at the
+  key path, validated by the SAME snippet checker, then composed via
+  `doc.createNode` (the styles-registry create-empty-style form).
+- `seqOps.ts` — the four sequence ops (required `path`; the root is a
+  map, never a seq). **`insertItem`** `{path, index, value}`: `value` is
+  a plain JSON-shaped `SnippetValue` — never YAML text (no second
+  grammar, no alias/anchor surface); a MISSING final `items`-like key on
+  an existing map auto-creates an empty seq, deferred until index
+  validation passes. The FIRST item inserted into an empty seq clears
+  the flow flag → BLOCK style, so an authored `items: []` stops reading
+  as `items: [ … ]`; a non-empty flow seq keeps its form.
+  **`removeItem`** splices one element; an emptied seq is KEPT
+  (`items: []`), never pruned.
+- `snippet.ts` — what a snippet VALUE is, refused without reading the
+  document: depth/node caps (`MAX_SNIPPET_DEPTH` also terminates cyclic
+  hostile values, `MAX_SNIPPET_NODES`), finite scalars only,
+  plain-object maps only (exotic objects rejected; a JSON `__proto__`
+  key stays inert data). **`isSnippetValue(value)`** is the exported
+  type guard over the SAME walk — the ONE public home for the
+  snippet-shape rule, so a consumer that persists/reuses a materialized
+  node narrows hostile storage the way the op layer does.
+- `opTarget.ts` — where an op LANDS, read-only: `resolveMap`/
+  `resolveSeq`/`checkKeys`/`walkIntermediates`/`findPairByKey` (matches
+  both parsed-Scalar and op-created raw-string keys).
+- `opCreate.ts` — the resolvers that CREATE a missing target:
+  `setLeaf`'s intermediate maps, the deferred sequence auto-create.
+- `opTypes.ts` — the wire vocabulary (`Op`/`OpError`/`OpResult`) + the
+  clip/fail primitives.
+- `path.ts` — the structural **path grammar** shared with the engine box
+  index (`sections.body.items[3]` → `PathSegment[]`); `parsePath`/
+  `formatPath`/`toYamlPath`, `PathSyntaxError`.
+- `history.ts` — what the undo stack IS: `HistoryEntry`, the
+  `MAX_HISTORY` count + `MAX_HISTORY_BYTES` budget, the pure
+  `trimHistory`.
+- `editor.ts` — **`Editor`** session = live `Document` +
+  `serializeTemplate` snapshot undo/redo, each `HistoryEntry
+  {text, selection}` restoring BOTH text AND selection (undo of a
+  `moveItem` re-selects at the OLD path; redo re-selects an inserted
+  item); a selection-only change is NOT a history step; selection is
+  keyed by the path grammar. **`create(source, {maxBytes})`** +
+  **`setMaxBytes`** thread the template-size cap through EVERY re-parse
+  (rollback / undo / redo) so a legally-oversized document stays
+  editable. **`subscribe(listener)`** reports each COMMITTED change
+  (`{ops, source: 'apply'|'batch'|'undo'|'redo'}`) after the document
+  and history settle — observation only (a refused op and an empty
+  batch report nothing), so the op surface stays the single mutation
+  path. **`applyAll`** applies a batch transactionally — all land as
+  ONE undo step, or the first failure rolls back byte-exact and returns
+  the failing op's `index` (`BatchResult`, `MAX_BATCH_OPS`).
+  **`read`** exposes `readNode` for the panel, and **`ReadFn`** —
+  `(path: string) => unknown` — is exported HERE as the document-read
+  contract every pure model in `designer` takes (it used to live in a
+  `designer` feature area, which had dozens of consumers importing a
+  document type from a feature module).
+- `wire.ts` — type-only read views of the template wire subset,
+  mirroring `engine/core` serde names (`data` is a `DataBinding
+  {key?,format?}` map, never a bare string; enum unions copied from the
+  engine); no runtime code.
+- `scripts/normalize-examples.ts` — the `normalize:examples` one-shot:
+  rewrites every `examples/*/*/templates.yml` to the
+  `serializeTemplate` fixed point.
+
+Tests are sibling-per-module (`keyOps.test.ts` = the five map-key ops,
+`seqOps.test.ts` = the four sequence ops, `snippet.test.ts` =
+`isSnippetValue`, `history.test.ts` = `trimHistory`, `ops.test.ts` =
+dispatch + the root-addressed form), all exercised through `applyOp` —
+`opTarget.ts`/`opCreate.ts`/`opTypes.ts` have no separate public surface
+and are pinned through those suites (their headers say so). Round-trip
+is tested against a canonical fixed-point fixture (eemeli round-trips at
+canonical-CST fidelity — comments + key order preserved, flow-seq inner
+spacing normalized to `[ x ]`), so an op touches only its keys;
+`roundtrip.test.ts` also globs every bundled `templates.yml` and asserts
+`serialize(parse(src)) === src` — the **permanent fixed-point gate**
+(bundled presets are stored normalized so a first-edit diff stays
+clean).
