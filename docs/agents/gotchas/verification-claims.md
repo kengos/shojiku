@@ -287,6 +287,35 @@ check whose empty output read as "all covered").
 
 ## Counts and structural claims in prose
 
+- **A "now X, rather than Y" contrast asserts something about the PREVIOUS
+  state, and only `git show <base>:<path>` can check it.** The claim reads
+  as a description of your own change, so it never reaches the grep pass a
+  count gets — but half of it is a claim about code you did not write. A
+  CHANGELOG entry, a component comment and a code-map line all said a
+  playground panel now held "the whole runnable file rather than an excerpt
+  beside the controls"; `git show HEAD~1:` showed the panel had ALWAYS
+  rendered the whole file, and the change was only that it became a
+  `<details>`. Three copies of one false contrast, shipped green, because
+  nobody re-read the old file. Before writing "rather than", open the base
+  revision.
+- **A UNIVERSAL claim over a set you just generated ("each entry names its
+  diagnostic code", "every page carries X") is counted, not asserted.** The
+  set is large enough that you cannot have checked it by reading, and the
+  counter-examples are legitimate: a Limitations pass produced 139 bullets of
+  which 39 name no code, because a structural limit ("there is no `calc()`")
+  has no diagnostic to name. The prose was the only thing wrong — and the
+  cross-cutting table four rows under the claim already showed four dashes.
+  Write the qualified form ("where a diagnostic reports it, the entry names
+  its code"), which is both true and what the gate actually enforces.
+- **The file you are ALREADY EDITING is the one you sweep least.** Editing it
+  feels like having read it. Two in one change: a doc's INTRO PARAGRAPH still
+  said the feature was "not yet built" while the two bullets directly under
+  it had just been corrected to say it was; and a code map whose site section
+  was rewritten by 61 lines kept "nine nav pages" while the same sentence's
+  copy in the source file was updated to ten. Both sit inside the diff. After
+  the last edit, re-read each touched file for the claim you came to change —
+  the neighbouring sentences are where its other half lives.
+
 - **A count or structural claim you assert in prose is grepped before
   it ships** — no gate reads prose. A walkthrough claimed "~25 style
   maps" (29) and "three named `styles`" over a template that used two;
