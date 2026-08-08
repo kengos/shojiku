@@ -19,7 +19,7 @@ hero:
       link: https://github.com/kengos/shojiku
 features:
   - title: どの言語からでも
-    details: Python、Node.js、Ruby、C#、Java、Go、PHP（Packagistへの登録は準備中）。Rustで書いたエンジン1つを、7言語のSDKが同じように呼びます。エンジンをRustで書いて各言語から呼ぶ形にしたのは、JavaScript製のライブラリをRailsから使えずに諦めたからです。
+    details: Python、Node.js、Ruby、C#、Java、Go、PHP。どれもそれぞれのパッケージレジストリから入ります。Rustで書いたエンジン1つを、7言語のSDKが同じように呼びます。エンジンをRustで書いて各言語から呼ぶ形にしたのは、JavaScript製のライブラリをRailsから使えずに諦めたからです。
   - title: どの環境でも同じPDF
     details: ブラウザもヘッドレスChromeも使いません。CLIでもDockerでもブラウザ上のWASMでも、同じテンプレートと同じデータからは、ハッシュ値まで一致するPDFが出ます。
   - title: HTMLのように積む

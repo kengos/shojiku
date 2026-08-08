@@ -262,14 +262,18 @@ platform binaries.
   the same inputs produce different bytes, and identical output is what
   signing rests on.
 
-- **The PHP package now has a way onto Packagist.** Of the seven SDKs it
-  was the only one you could not install from a registry, and the reason
-  was structural: Packagist reads `composer.json` from a repository root,
-  while Shojiku keeps php's under `sdk/php`. Publishing now splits that
-  directory into a derived repository Packagist can track — carrying the
-  real commit history, and only the version tags this repository has
-  already released, so it can never offer a version that was not shipped
-  here. The listing itself is the step that remains.
+- **`composer require shojiku/shojiku` — all seven SDKs now install from a
+  registry.** PHP was the only one you could not, and the reason was
+  structural rather than unfinished work: Packagist reads `composer.json`
+  from a repository root, while Shojiku keeps php's under `sdk/php`.
+  Publishing now splits that directory into a derived repository Packagist
+  tracks, carrying the real commit history and only the version tags this
+  repository has already released — so it can never offer a version that
+  was not shipped here. `0.1.0` is listed, backfilled from the tag that
+  released it, so the package works for the version already out; being a
+  faithful copy of what shipped, it predates the licence files and the
+  homepage now pointing at the site, and both arrive with the next
+  release.
 
 ### Changed
 

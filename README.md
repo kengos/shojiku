@@ -25,9 +25,9 @@ engine renders them with your data into deterministic PDFs.
 It runs **anywhere** and needs no service: a CLI and Docker image for
 servers and CI, browser WASM for the Designer (rendering stays on the
 machine — nothing is uploaded), a stdio MCP server for AI agents, and
-native SDKs for seven languages — Python, Node, Ruby, .NET, Java and Go
-install from their own registries today; PHP is built but not yet on
-Packagist (see [Install](#install)). Local-first by design — a
+native SDKs for seven languages — Python, Node, Ruby, .NET, Java, Go and
+PHP, each installing from its own registry (see [Install](#install)).
+Local-first by design — a
 PM producing a customer estimate or a teacher printing worksheets
 renders on their own machine.
 
@@ -183,8 +183,8 @@ installed alongside.
 | Java | Maven / Gradle — **also declare the platform classifier** | [`jp.kengos:shojiku`](https://central.sonatype.com/artifact/jp.kengos/shojiku), see [sdk/java](sdk/java/README.md) |
 | Rust | `cargo install shojiku-cli` | [`shojiku-cli`](https://crates.io/crates/shojiku-cli); [`shojiku-authoring`](https://crates.io/crates/shojiku-authoring) is the embedding surface |
 | Go | `go get github.com/kengos/shojiku/sdk/go` | [`github.com/kengos/shojiku/sdk/go`](https://pkg.go.dev/github.com/kengos/shojiku/sdk/go); drives the CLI binary, install it separately |
+| PHP | `composer require shojiku/shojiku` | [`shojiku/shojiku`](https://packagist.org/packages/shojiku/shojiku); drives the CLI binary, install it separately |
 | CLI binary | [GitHub releases](https://github.com/kengos/shojiku/releases/latest) | per-platform archives plus the shared packs archive, checksummed in `SHA256SUMS` |
-| PHP | not yet published | built ([sdk/php](sdk/php/)); Packagist registration pending |
 
 The CLI archives are a plain binary per platform plus one shared archive
 of the fonts and locale packs, used like this:
@@ -284,8 +284,8 @@ locale's standard size — A4 or Letter), not a document sample.
   [shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/) and
   also runs locally ([below](#running-the-gui-locally)). It renders in
   the browser, so nothing you open there is uploaded.
-- **The SDKs** for seven languages are built; six install from their
-  own registries ([Install](#install)).
+- **The SDKs** for seven languages are built, and each installs from its
+  own registry ([Install](#install)).
 
 Not built: the bundle and archive stages of the lifecycle.
 [docs/architecture.md](docs/architecture.md) is the target architecture.

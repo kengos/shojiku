@@ -18,7 +18,7 @@ hero:
       link: https://github.com/kengos/shojiku
 features:
   - title: From any language
-    details: Python, Node.js, Ruby, C#, Java, Go, PHP (the Packagist listing is on its way). One engine written in Rust, called the same way by seven SDKs. It has that shape because the JavaScript library that does this job could not be reached from a Rails app.
+    details: Python, Node.js, Ruby, C#, Java, Go, PHP — each installs from its own package registry. One engine written in Rust, called the same way by seven SDKs. It has that shape because the JavaScript library that does this job could not be reached from a Rails app.
   - title: The same PDF in every environment
     details: No browser, no headless Chrome. From the CLI, from Docker, or from WASM in the page you are reading, the same template and the same data produce a PDF that matches down to its hash.
   - title: It stacks like HTML

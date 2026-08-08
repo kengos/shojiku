@@ -12,8 +12,9 @@
 > whose transport is a CLI SUBPROCESS. Where each ecosystem's
 > idiom legitimately differs is recorded in
 > [../code-map/sdk.md](../code-map/sdk.md), one section per language.
-> All seven released together at v0.1.0. Six are installable from their
-> registries; php is the one gap — it awaits a Packagist listing.
+> All seven released together at v0.1.0, and all seven install from their
+> registries — php through a derived repository, for the reason in
+> § How php is published.
 >
 > The other integration surfaces are the CLI (see the render commands in
 > [the template reference](../engine/README.md)), the stdio MCP server,
@@ -21,8 +22,9 @@
 > (`engine/capi`) the in-process SDKs load. The transport decisions per
 > language and the **list of decisions the Ruby SDK froze for the other
 > six** are below: § The decisions the reference froze, § Transports.
-> Six of the seven are published (php awaits Packagist); each ships a
-> prebuilt engine binary through its ecosystem's own channel.
+> All seven are published, and the five in-process ones ship a prebuilt
+> engine binary through their ecosystem's own channel; php and go carry no
+> binary at all, because they drive the CLI.
 
 ```text
 sdk/
@@ -800,11 +802,22 @@ proof drawing on two publish channels — the composer package from
 Packagist, the CLI from the GitHub Release — because this package drives
 a binary rather than carrying one.
 
-The machinery is in the tree; the **listing is the step that remains**,
-which is why the statements at the top of this file still say php awaits
-Packagist. Registering the package against the derived repository is a
-manual act performed once, and until it happens that proof arm has
-nothing to install.
+Two properties of the **backfilled `v0.1.0`** are worth knowing, because
+both read as defects and neither is one. That tag reproduces `sdk/php` as
+it stood at v0.1.0, so it carries no licence FILES (they were added with
+this publish path) and its `homepage` is the GitHub repo rather than the
+site (the metadata pass that moved it landed afterwards). The tag is
+faithful to what shipped; both resolve at the next release.
+
+Three things only the real registry could have caught, all of them found
+that way and worth not rediscovering. `actions/checkout` leaves an
+`http.https://github.com/.extraheader` that overrides the credentials in
+a remote URL, so the push went out as `github-actions[bot]` until
+`persist-credentials: false` — which is also why the dry run ends with a
+`git push --dry-run` rather than an `ls-remote`: the derived repo is
+PUBLIC, so reading it authorizes nothing and succeeds with any token at
+all. And Packagist serves the package as a dist ZIP, which the floor php
+image cannot open without `unzip`.
 
 ## Deferred follow-ups
 

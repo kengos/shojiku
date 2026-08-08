@@ -487,7 +487,8 @@ both subprocess SDKs script.
   `lint:sdk:php`; `sdk-php` is in `make verify`. `make cli-bin` builds the
   host-arch binary into the gitignored `dist/cli/local/` — the subprocess
   transport's `capi-lib`. `make proof-published-php` is the registry-side
-  proof and can only run once Packagist carries the version.
+  proof: it installs from Packagist, takes the CLI from the GitHub Release,
+  and renders the same 29433 bytes every other published proof does.
 
 ## sdk/go — the second SUBPROCESS mirror, and the last stage
 
