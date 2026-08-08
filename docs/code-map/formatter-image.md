@@ -4,6 +4,175 @@
 > Read this BEFORE searching or editing the covered dirs; update it in the
 > same PR whenever files/modules/boundaries here change.
 
-- `engine/formatter/src/` — display strings. `format.rs` (**format dispatch root**: `format_value(value, spec, variant, FormatContext, pack) → Formatted { text, warning }` — the precedence chain placement ← `Field.format` ← template `defaults.formats[type]` ← pack default via `effective()`/`Pick`; a placement variant that names a TYPE overrides the type, and a `symbol`/`name` pick on a Number value coerces it to Currency with the variant kept (placement-pick-only, `format.currency.coerce`); degradations = `FormatWarning` (UnknownVariant/UnknownCurrency/UnknownUnit/IgnoredPattern, names clipped) never failures; `FormatContext` carries the template's `FormatDefaults` + `formats:` registry + `currency` doc-default code) with `format/datetime.rs` (date parse + the **CLDR-subset pattern grammar**: append-only token inventory `yyyy y MMMM MMM MM M dd d EEEE E HH H hh h mm ss a GG G`, `'…'` quoting w/ `''` escape (unterminated degrades), month/weekday/dayPeriod names, 12-hour clock, `G`/`GG`/`y` era set (GG = `abbr`, R7.4.1)) and `format/money.rs` (currency variants **default (bare) | symbol | name**, precision chain field → pack → the compiled CLDR fractions table; `format_quantity` = semantic key → plural word + `unitFormat` layout) and `format/number.rs` (grouping/precision-clamp/trim) and `format/text.rs` (the text arm — String/Boolean/Image display + the `enum` display-label lookup over `FieldSpec.enum_labels`: label by default, `value` pick → raw, other picks → label + UnknownVariant; a label-less field keeps its historical silent-ignore; `display_string` lives here), `lang.rs` (**`LangPack`** wire incl. months/weekdays/dayPeriods name tables, `unit_format`/`percent_format` layouts, **`eras: Vec<EraSpec>`** (+ optional `abbr`)/`era_year_one` + `era_for()`; locale-fonts accessors `font_pack_ids()`/`default_font()`/`font_fallback()`) with `lang/specs.rs` (**`NumberSpec`** (`groupSeparator`/`decimalSeparator` + **`groupSize`** default 3 / **`secondaryGroupSize`** `Option`, absent = uniform — the CLDR `#,##,##0` Indian rule as pack DATA; `format/number.rs` `group_integer` is generic over the pair and treats 0/absurd sizes as "no grouping" since packs are untrusted)/**`CurrencySpec`** (symbol+`name`+`symbolFormat`/`nameFormat`+optional precision)/**`UnitSpec`** (`one?`/`other`/`format?` + the plural `word()` pick)) and `lang/builtin.rs` (**builtin locale packs**: CLDR-generated YAML under `lang/builtin/*.yml` (regen: `scripts/gen-locale-builtins.py`, authoring-time fetch, pinned CLDR version) embedded via `include_str!`; `BUILTIN_LOCALE_IDS` = ja-JP/en-US; **`LangPack::builtin(id, overlay)`** — case-insensitive + unique-language-prefix id match, per-key YAML deep merge (maps recurse, scalars/sequences replace); a `packs/locale/<id>.yml` is an overlay, whole-pack only for non-builtin locales; + **`currency_fraction_digits`** over the compiled `builtin/currency-fractions.yml` — the full CLDR fractions table, engine-wide) and `lang/era.rs` (`EraSpec`/`EraDate` strict `yyyy-mm-dd` wire + the date→era lookup) and `lang/fonts.rs` (**pack-manifest + locale-fonts wire**: **`PackManifest`** (`packs/fonts/<pack>/manifest.yml`: `version` + `license` + `redistributable`/`embeddingAttested` + `faces`; camelCase, `deny_unknown`; **`to_yaml`/`from_yaml`** = the serialized form kept BESIDE the wire type so a generator (`shojiku font add`) round-trips through the same pair the resolver parses with and inherits the skip-when-unset discipline instead of hand-writing YAML; `to_yaml` is infallible by construction — every field is a String/u32/bool/Vec of those, the shapes serde_yaml cannot refuse)/**`FontFaceDecl`** (`id`/`file`/**`sha256`** + `family`/`weight`/`style` + optional **`url`** (a fetch HINT for the host-side `shojiku-fetch`; `sha256` stays the guarantee), defaults family=id & normal, skip-when-unset; `redistributable`/`embeddingAttested` are skip-when-false)/**`LocaleFonts`** (locale `fonts:` block = `uses: [pack-id]` + `default` + `fallback`, references only; **`uses` is `deserialize_with`-guarded**, see `lang/fonts/pack_id.rs`) with `lang/fonts/pack_id.rs` (**what a pack id may be**: `valid_pack_id` = a single path segment (alnum + `-`/`_`, 1..=`MAX_PACK_ID` 64) since the id becomes a directory NAME *and* a fetch-URL segment on hosts, + the `deserialize_uses` hook that makes a hostile `uses` entry a locale-pack PARSE error — so `LangPack::font_pack_ids()` can never hand one out)/**`FaceSpec`** = a resolved face + path + variant keys + sha256 + embedding-attest + optional `url` + owning `pack` id (the last two carry the fetch hint + a user-facing name through to `shojiku-fetch`)) with `lang/packs.rs` (**`resolve_face_specs`** + **`resolve_face_specs_with`** (the same walk plus `extra` pack ids a HOST added outside the locale — the CLI's `--font-pack` — chained FIRST so a user face id shadows a bundled one on the first-id-wins dedupe, each `extra` re-checked by `check_pack_id` exactly as a parsed entry is): finds each `uses` pack's manifest across the font search dirs (first dir wins — each dir CANONICALIZED, a non-existent one skipped, so a pack dir is a canonical root the containment check can prefix-match; a pack dir that is itself a symlink → `PackError::PackTraversal`), merges faces first-id-wins for user override) with `lang/packs/confine.rs` (**the confinement rules, shared by both resolvers**: `check_pack_id` = the resolvers' own re-check of `valid_pack_id` (`LocaleFonts.uses` is a public field, so serde is bypassable) → `PackError::InvalidPackId`; `confine` = the LEXICAL face-path check (`..`/absolute → `PackError::Traversal`), the only one the no-filesystem bytes path can make; `contained` = the FILESYSTEM check the lexical one cannot make — symlinks followed, canonical path must stay under the pack dir, an **absent** face is deliberately fine (a pinned pack travels without bytes) and a dangling link is `PackError::Io`; the residual read-time race is benign because the loader sha256-verifies the bytes it actually read) and `lang/packs/bytes.rs` (**`resolve_face_bytes`** (strict, every `uses` pack required → `PackError::NotFound`) + **`resolve_face_bytes_subset`** → **`SubsetFaces { faces, missing }`** (the browser-preview lenient path — SKIPS absent `uses` packs and reports their ids, only *absence* tolerated; a pack outside `uses` is ignored) over the shared `resolve_pack`/`index_injected` walk, so both resolve face-for-face; **`InjectedPack`**/**`FaceBytes`**: the bytes-first mirror — host-injected manifest STRINGS + face bytes (keyed by manifest `file`), same pack-id check/confine/dedupe/first-wins, sha256 stays downstream; `PackError::ParseInjected`/`MissingBytes`; the variant-defaults helper `FontFaceDecl::variant()` is shared with `face_specs`).
+Postures stated once: formatting degrades, never fails — every bad input
+becomes a `FormatWarning`, echoed names clipped. Packs are UNTRUSTED
+data: every numeric knob a pack supplies is range-checked at use. Spec
+detail (the pattern-token inventory, currency variants, grouping rules,
+the manifest wire's key list) lives in `docs/engine/`
+([data-binding.md](../engine/data-binding.md),
+[fonts.md](../engine/fonts.md)) — this map carries only who owns what.
 
-- `engine/image/src/` — image assets. `error.rs` (**`ImageError`** — traversal/IO/injected-missing/policy/decode failures; `prepare_assets` converts them into diagnostics: errors for template assets + policy/security violations, warnings for params-supplied content, so a render degrades instead of panicking), `geom.rs` (**`PathCmd`** — the backend-neutral vector-path currency shared by SVG assets, font glyph outlines, form marks, and both renderers; `Serialize` so it rides `tree::PathShape`; crate-root re-export), `source.rs` (classify: bundled path / data URI / inline SVG / remote URL), `policy.rs` (`AssetPolicy`: open|bundled-only + per-item allow/deny + caps), `svg.rs` (subset SVG parser root: `SvgLimits`/`SvgTree`/`parse_svg`; `SvgPath.fill` is an **`SvgPaint`** = solid **or gradient** — resvg/usvg are banned: MPL + ttf-parser) with `svg/style.rs` (affine transforms + presentation attrs; `PaintRef` = solid|`url(#id)` gradient ref; `parse_color`), `svg/walk.rs` (element walk, node/depth caps, per-path bbox + gradient-fill resolution), `svg/path.rs` (`d=` parsing, arc flattening), `svg/paint.rs` (**`SvgPaint`**/`LinearGradient`/`RadialGradient`/`GradientStop`/`SpreadMode` — gradient stops in a local space + a `local→viewBox` affine; stop normalization + `MAX_GRADIENT_STOPS`), `svg/gradient.rs` (**`<linear/radialGradient>` collection + `url(#id)` resolution**: `gradientUnits` user/objectBoundingBox via path bbox, `gradientTransform`, `spreadMethod`, one-level `href` stop inheritance w/ cycle guard, focal point) with `svg/gradient/parse.rs` (per-element + `<stop>` attribute/`style=` parsing); `raster.rs` (magic-byte sniff + header dims), `decode.rs` (`decode_raster`: encoded bytes → RGBA8 via png/zune-jpeg/gif/image-webp, for pixel backends), `store.rs` (`AssetStore`, FontStore-style; `Asset::intrinsic_size` = the raster pixel rect or the SVG `viewBox`, and **`Asset::clips_to_viewport`** = "can this asset paint outside the rect the fit math gave it" — true only for SVG, which is why layout clips every SVG image to its content box whatever the `fit`), `prepare.rs` (`prepare_assets` root: template+params walk — the top-level `image_items` walk also descends into every per-element cell (repeat/repeat_flow cells AND a table column's `cell:`) via the `in_cell` flag and collects the images whose source is SHARED across the elements: a static `src:`, or a `data:` binding at `scope: document` (one `dyn:<key>` asset, uncounted against the per-element cap). **`is_element_scoped(image)`** is the ONE predicate the shared and per-element walks split on, so neither can both-claim or both-skip an item) with `prepare/cells.rs` (**scoped per-element cell assets**: `type: image` table columns AND `data:`-bound `image` items inside a per-element cell — a repeat/repeat_flow cell OR a table column's `cell:` — each load one asset per element as `cell_asset_key` = `dyn:<array>[<i>].<key>`, policy id = column/image `id`, one shared `MAX_CELL_IMAGE_ASSETS` 1000 `Cap` across both walks; a `scope: document` image COLUMN instead loads ONCE off top-level params under `dyn:<key>`, uncounted against the cap, matching the id layout asks for) with `prepare/cells/walk.rs` (the collection walks: **`body_tables`** finds tables in the flow body AND nested in containers — a bounded table's image columns bind per row exactly like a flow table's, so the walk mirrors validate's recursion — and `element_cell_images` finds the ELEMENT-scoped `data:`-bound cell images, skipping the document-scoped ones the shared walk owns) with `prepare/load.rs` (static/dynamic loading incl. the shared `dynamic_value` tail) with `prepare/bundled.rs` (**`AssetsRoot`** None|Dir(FS)|Injected(host bytes map) — the ONE bundled-byte loader both roots share: `confined_key` traversal check + byte cap, so an injected WASM host and the CLI reject the same `../`/absolute path and cap identically; **`prepare_assets` = FS entry (`Option<&Path>`), `prepare_assets_injected` = bytes entry (`&BTreeMap<String, Vec<u8>>`)**, both delegating to one walk).
+## engine/formatter/src (display strings)
+
+- `lib.rs` — crate root: locale-aware value formatting.
+- `format.rs` — **format dispatch root**: `format_value(value, spec,
+  variant, FormatContext, pack) → Formatted { text, warning }`.
+  Precedence chain placement ← `Field.format` ← template
+  `defaults.formats[type]` ← pack default via `effective()`/`Pick`; a
+  placement variant naming a TYPE overrides the type; a `symbol`/`name`
+  pick on a Number coerces it to Currency keeping the variant
+  (placement-pick-only, `format.currency.coerce`). `FormatContext`
+  carries the template's `FormatDefaults` + `formats:` registry +
+  `currency` doc-default code.
+- `format/datetime.rs` — date/datetime parse + the CLDR-subset pattern
+  renderer (token inventory is APPEND-ONLY; the list itself is in
+  data-binding.md); `'…'` quoting with `''` escape (unterminated
+  degrades); name tables and the era tokens resolve through the pack.
+- `format/money.rs` — the three currency variants (bare | `symbol` |
+  `name`); precision chain field → pack → the compiled CLDR fractions
+  table. `format_quantity` = semantic key → plural word + `unitFormat`
+  layout.
+- `format/number.rs` — grouping/precision-clamp/trim shared by every
+  numeric type; `group_integer` is generic over
+  (`groupSize`, `secondaryGroupSize`) and treats 0/absurd sizes as "no
+  grouping" (packs are untrusted).
+- `format/text.rs` — the text arm: String/Boolean/Image display +
+  the `enum` display-label lookup over `FieldSpec.enum_labels` (label by
+  default, `value` pick → raw, other picks → label + UnknownVariant; a
+  label-less field keeps its historical silent-ignore). `display_string`
+  lives here.
+- `lang.rs` — **`LangPack`** wire: month/weekday/dayPeriod name tables,
+  `unit_format`/`percent_format` layouts, `eras: Vec<EraSpec>` +
+  `era_year_one` + `era_for()`; locale-fonts accessors
+  `font_pack_ids()`/`default_font()`/`font_fallback()`.
+- `lang/specs.rs` — pack value specs: **`NumberSpec`** (separators +
+  group sizes; the Indian `#,##,##0` rule is pack DATA, not code),
+  **`CurrencySpec`** (symbol/name + formats + optional precision),
+  **`UnitSpec`** (`one?`/`other`/`format?` + the plural `word()` pick).
+- `lang/builtin.rs` — builtin locale packs: CLDR-generated YAML under
+  `lang/builtin/*.yml` (regen `scripts/gen-locale-builtins.py` —
+  authoring-time fetch, pinned CLDR version) embedded via
+  `include_str!`; `BUILTIN_LOCALE_IDS` = ja-JP/en-US.
+  **`LangPack::builtin(id, overlay)`**: case-insensitive +
+  unique-language-prefix id match; per-key YAML deep merge (maps
+  recurse, scalars/sequences REPLACE). A `packs/locale/<id>.yml` is an
+  overlay for a builtin, a whole pack otherwise. Also
+  `currency_fraction_digits` over the compiled
+  `builtin/currency-fractions.yml` (the full CLDR table, engine-wide).
+- `lang/era.rs` — `EraSpec`/`EraDate`: strict `yyyy-mm-dd` wire + the
+  date→era lookup.
+- `lang/fonts.rs` — pack-manifest + locale-fonts wire.
+  **`PackManifest`** (`packs/fonts/<pack>/manifest.yml`; camelCase,
+  `deny_unknown`) with **`to_yaml`/`from_yaml`** kept BESIDE the wire
+  type so a generator (`shojiku font add`) round-trips through the same
+  pair the resolver parses with (`to_yaml` infallible by construction —
+  only shapes serde_yaml cannot refuse). **`FontFaceDecl`** (`id`/`file`/
+  `sha256` + variant keys + optional `url` — a fetch HINT for the
+  host-side `shojiku-fetch`; `sha256` stays the guarantee).
+  **`LocaleFonts`** (`uses: [pack-id]` + `default` + `fallback`,
+  references only; `uses` is `deserialize_with`-guarded).
+  **`FaceSpec`** = a resolved face + path + variant keys + sha256 +
+  embedding-attest + optional `url` + owning `pack` id (the last two
+  carry the fetch hint and a user-facing name to `shojiku-fetch`).
+- `lang/fonts/pack_id.rs` — what a pack id may be: `valid_pack_id` = one
+  path segment (the id becomes a directory name AND a fetch-URL segment
+  on hosts) + the `deserialize_uses` hook that makes a hostile `uses`
+  entry a locale-pack PARSE error — so `font_pack_ids()` can never hand
+  one out.
+- `lang/packs.rs` — **`resolve_face_specs`** +
+  **`resolve_face_specs_with`** (same walk plus `extra` pack ids a HOST
+  added outside the locale — the CLI's `--font-pack` — chained FIRST so
+  a user face id shadows a bundled one on the first-id-wins dedupe;
+  each `extra` re-checked by `check_pack_id` exactly as a parsed entry
+  is). Finds each `uses` pack's manifest across the font search dirs
+  (first dir wins; each dir CANONICALIZED, absent dirs skipped; a pack
+  dir that is itself a symlink → `PackError::PackTraversal`).
+- `lang/packs/confine.rs` — the confinement rules shared by both
+  resolvers: `check_pack_id` (serde is bypassable — `uses` is a public
+  field, so the resolver re-checks) → `InvalidPackId`; `confine` = the
+  LEXICAL face-path check (`..`/absolute → `Traversal`), the only one
+  the no-filesystem bytes path can make; `contained` = the FILESYSTEM
+  check (symlinks followed, canonical path must stay under the pack
+  dir; an ABSENT face is deliberately fine — a pinned pack travels
+  without bytes; a dangling link is `Io`). The residual read-time race
+  is benign: the loader sha256-verifies the bytes it actually read.
+- `lang/packs/bytes.rs` — **`resolve_face_bytes`** (strict: every
+  `uses` pack required → `NotFound`) + **`resolve_face_bytes_subset`** →
+  `SubsetFaces { faces, missing }` (the browser-preview lenient path —
+  only ABSENCE of a `uses` pack is tolerated, reported by id) over one
+  shared walk, so both resolve face-for-face. **`InjectedPack`**/
+  **`FaceBytes`**: the bytes-first mirror — host-injected manifest
+  strings + face bytes keyed by manifest `file`, same
+  check/confine/dedupe as the filesystem path, sha256 downstream.
+
+## engine/image/src (image assets)
+
+- `lib.rs` — crate root: image assets for the render pipeline.
+- `error.rs` — **`ImageError`** (traversal/IO/injected-missing/policy/
+  decode); `prepare_assets` converts to diagnostics — errors for
+  template assets and policy violations, warnings for params-supplied
+  content, so a render degrades instead of panicking.
+- `geom.rs` — **`PathCmd`**: the backend-neutral vector-path currency
+  shared by SVG assets, font glyph outlines, form marks, and both
+  renderers; `Serialize` so it rides `tree::PathShape`; crate-root
+  re-export.
+- `source.rs` — classify a raw source string: bundled path / data URI /
+  inline SVG / remote URL.
+- `policy.rs` — `AssetPolicy`: open|bundled-only + per-item allow/deny +
+  caps.
+- `raster.rs` — magic-byte sniff + header-only dimension checks.
+- `decode.rs` — `decode_raster`: encoded bytes → straight-alpha RGBA8
+  (png/zune-jpeg/gif/image-webp) for pixel backends.
+- `store.rs` — `AssetStore` (FontStore-style). `Asset::intrinsic_size` =
+  raster pixel rect or SVG `viewBox`; **`Asset::clips_to_viewport`** =
+  "can this asset paint outside the rect the fit math gave it" — true
+  only for SVG, which is why layout clips every SVG image to its
+  content box whatever the `fit`.
+- `svg.rs` — subset SVG parser root: `SvgLimits`/`SvgTree`/`parse_svg`;
+  `SvgPath.fill` is an **`SvgPaint`** = solid OR gradient. resvg/usvg
+  are banned (MPL + ttf-parser).
+- `svg/style.rs` — affine transforms + inheritable presentation attrs;
+  `PaintRef` = solid | `url(#id)` gradient ref; `parse_color`.
+- `svg/walk.rs` — the element walk: group/shape traversal with node and
+  depth caps, per-path bbox + gradient-fill resolution.
+- `svg/path.rs` — `d=` parsing into transformed cubics, arc flattening,
+  smooth-command reflection.
+- `svg/paint.rs` — **`SvgPaint`**/`LinearGradient`/`RadialGradient`/
+  `GradientStop`/`SpreadMode`: gradient stops in a local space + a
+  `local→viewBox` affine; stop normalization + `MAX_GRADIENT_STOPS`.
+- `svg/gradient.rs` — `<linearGradient>`/`<radialGradient>` collection +
+  `url(#id)` resolution: `gradientUnits` user/objectBoundingBox via path
+  bbox, `gradientTransform`, `spreadMethod`, one-level `href` stop
+  inheritance with a cycle guard, focal point.
+- `svg/gradient/parse.rs` — per-element + `<stop>` attribute/`style=`
+  parsing.
+- `prepare.rs` — `prepare_assets` root: the template+params walk. The
+  top-level `image_items` walk also descends into every per-element cell
+  (repeat/repeat_flow cells AND a table column's `cell:`) via the
+  `in_cell` flag, collecting images whose source is SHARED across
+  elements — a static `src:`, or a `data:` binding at `scope: document`
+  (one `dyn:<key>` asset, uncounted against the per-element cap).
+  **`is_element_scoped(image)`** is the ONE predicate the shared and
+  per-element walks split on, so neither can both-claim or both-skip an
+  item.
+- `prepare/cells.rs` — scoped per-element cell assets: `type: image`
+  table columns AND `data:`-bound `image` items inside a per-element
+  cell, each loading one asset per element as `cell_asset_key` =
+  `dyn:<array>[<i>].<key>`, policy id = the column/image `id`, one
+  shared `MAX_CELL_IMAGE_ASSETS` `Cap` across both walks. A
+  `scope: document` image COLUMN instead loads ONCE off top-level
+  params under `dyn:<key>`, uncounted, matching the id layout asks for.
+- `prepare/cells/walk.rs` — the collection walks: **`body_tables`**
+  finds tables in the flow body AND nested in containers (a bounded
+  table's image columns bind per row exactly like a flow table's, so
+  the walk mirrors validate's recursion); `element_cell_images` finds
+  the ELEMENT-scoped `data:`-bound cell images, skipping the
+  document-scoped ones the shared walk owns.
+- `prepare/load.rs` — static (template `src:`) and dynamic
+  (params-bound) loading incl. the shared `dynamic_value` tail.
+- `prepare/bundled.rs` — **`AssetsRoot`** None | Dir(FS) |
+  Injected(host bytes map): the ONE bundled-byte loader both roots
+  share (`confined_key` traversal check + byte cap), so an injected
+  WASM host and the CLI reject the same `../`/absolute path and cap
+  identically. `prepare_assets` = FS entry, `prepare_assets_injected` =
+  bytes entry, both delegating to one walk.
