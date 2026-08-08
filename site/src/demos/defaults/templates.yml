@@ -1,0 +1,19 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults:
+  locale: en-US
+  currency: USD
+  style: { fontSize: 10, color: "#333333" }
+  formats: { date: { pattern: "MMM d, yyyy" }, currency: symbol }
+sections:
+  body:
+    type: flow
+    gap: 6
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: "Due {order.due} — {order.total:currency}"
+      - type: text
+        box: { w: "100%" }
+        text: Both values are formatted by the defaults above; neither placement names a format.
+        style: { fontSize: 8, color: "#888888" }

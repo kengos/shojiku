@@ -1,0 +1,17 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+document:
+  title: Q3 statement
+  description: A demo of the document metadata block
+  keywords: [invoice, demo, shojiku]
+  language: en-US
+  authors: [Shojiku]
+sections:
+  body:
+    type: flow
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: These five keys land in the PDF's document properties, not on the page.
+        style: { fontSize: 11 }

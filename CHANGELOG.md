@@ -15,6 +15,36 @@ platform binaries.
 
 ### Added
 
+- **The template reference now reads as a website.** The 33 pages under
+  `docs/engine/` are rendered at
+  [/reference/](https://shojiku.pages.dev/reference/) — one route each,
+  with a sidebar that follows the WIRE's own shape (the top-level keys,
+  the fifteen item types, the shared item keys, the layout modes, then
+  `definitions.yml` and the cross-cutting concepts) instead of an
+  alphabetical file list. The item order is the parser's own, taken from
+  the key catalog rather than retyped, and a page that does not declare
+  where it belongs fails the build instead of quietly vanishing from the
+  tree.
+  Each page carries a **live demo**: a small complete document, rendered
+  by the engine in your own tab, that you can open and copy. Where the
+  syntax a page documents is newer than the engine this site serves, the
+  demo says so and shows the document as source rather than handing you a
+  parse error — it starts rendering by itself at the next release.
+  Nothing is restated. A page's prose is the repository file byte for
+  byte, and a gate proves it after undoing the handful of link rewrites
+  the web needs; the page tells you which file it renders and offers it
+  for copying, so an AI agent can take the source rather than the HTML.
+  `llms-full.txt` now carries every reference page too, so an agent
+  asking about `flex` gets it in one fetch instead of two.
+
+- **Every feature page now states its limits.** All 31 pages gained a
+  `Limitations` section, and where a diagnostic reports the restriction the
+  entry names its code — so a claim about what the engine will not do can
+  be checked against the diagnostics registry rather than believed. The
+  cross-cutting version lives on the reference index as **Not supported
+  yet**, which is where restrictions that used to be findable only on
+  some other feature's page now are.
+
 - **A machine-readable catalog of every authorable key.** The per-key
   facts of the wire — key name, type, the closed set of values a key
   accepts, which keys a shape requires, and the tagged union of item
@@ -229,6 +259,10 @@ platform binaries.
   signing rests on.
 
 ### Changed
+
+- The playground's YAML panel — the whole runnable file, as before — is
+  now one disclosure away instead of sitting open beside the controls, so
+  the rendered page leads and the source is there when you want it.
 
 - **The MCP server is no longer published to crates.io.** `shojiku-mcp`
   now carries the bundled examples inside the binary, and those files

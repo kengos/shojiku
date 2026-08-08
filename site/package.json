@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "vitepress dev",
+    "dev": "node scripts/assemble-data.ts && vitepress dev",
     "build": "node scripts/assemble-data.ts && vitepress build",
     "preview": "vitepress preview",
     "data": "node scripts/assemble-data.ts",

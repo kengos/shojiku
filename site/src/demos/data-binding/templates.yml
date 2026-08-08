@@ -1,0 +1,25 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults:
+  locale: en-US
+  currency: USD
+  formats: { date: long }
+sections:
+  body:
+    type: flow
+    gap: 6
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: "Interpolated: {customer.name} owes {order.total:currency}"
+        style: { fontSize: 12 }
+      - type: text
+        box: { w: "100%" }
+        data: { key: order.note }
+        style: { fontSize: 11 }
+      - type: text
+        box: { w: "100%" }
+        text: "Declared binding: {due}"
+        bindings:
+          due: { key: order.dueAt, format: date }
+        style: { fontSize: 11 }

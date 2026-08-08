@@ -1,0 +1,17 @@
+version: "0.1.0"
+page:
+  size: A5
+  orientation: landscape
+  margin: { top: 30, right: 20, bottom: 20, left: 40 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    items:
+      - type: rect
+        box: { w: "100%", h: "100%" }
+        style: { borderWidth: 0.8, borderColor: "#1a3c6e", borderStyle: dashed }
+      - type: text
+        box: { x: 6, y: 6, w: "90%" }
+        text: The dashed frame is the margin box — the origin every coordinate resolves against.
+        style: { fontSize: 10 }

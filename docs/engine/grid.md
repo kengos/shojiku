@@ -1,3 +1,12 @@
+---
+reference:
+  group: layout
+  order: 3
+  keys: [grid]
+  shapes: [TrackSpec, GridTrack]
+  summary: "Explicit column tracks — `fr` weights and `auto` sizing — instead of a flex stack."
+---
+
 # Static grid (`box.type: grid`)
 
 An explicit `box.type: grid` on a container (or `repeat` cell /
@@ -131,6 +140,21 @@ box: { type: grid, columns: ["auto", "1fr"] }   # label column fits its
 - Like `fr`, `auto` is **grid-track-only** — `"auto"` where a plain
   length is expected is a parse error, and older engines reject it the
   same way.
+
+## Limitations
+
+- Explicit only: grid keys without `box.type: grid` are ignored
+  (`grid_key_ignored`) and never imply the mode.
+- 1..=64 tracks per axis (`grid_tracks_clamped`); a `columnSpan`/`rowSpan`
+  past the axis is clamped (`grid_span_clamped`).
+- `fr` ROW tracks need a definite height. In an auto-height container they
+  size as auto rows instead (`grid_fr_no_basis`).
+- A child wider than its track run spills over its neighbour
+  (`grid_column_overflow`); taller than an EXPLICIT row track it warns
+  (`grid_cell_overflow`) — auto rows grow instead.
+- Span keys on a child of a non-grid box are inert (`span_outside_grid`).
+- No named areas and no auto-placement algorithm: children fill the tracks in
+  order.
 
 ## Diagnostics
 

@@ -1,0 +1,10 @@
+{
+  "customer": {
+    "name": "Shojikudo Trading"
+  },
+  "order": {
+    "total": 128000,
+    "note": "A bound value fills the whole item.",
+    "dueAt": "2026-03-31"
+  }
+}

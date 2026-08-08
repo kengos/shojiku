@@ -69,7 +69,7 @@ A pack is data, so adding one does not change how anything is laid out. Three la
 
 **Indian digit grouping.** `₹1,23,45,678` groups three digits from the right and then two at a time. The widths are numbers the pack supplies, so the grouping code takes no locale argument at all.
 
-**Thai word segmentation and the Buddhist era.** Thai is written without spaces between words, so a segmenter decides where a line may break ([details](https://github.com/kengos/shojiku/blob/main/docs/engine/text.md)). Dates print in the Buddhist era: 2026 comes out as 2569. For the Gregorian year, ask the date field for its `gregorian` variant.
+**Thai word segmentation and the Buddhist era.** Thai is written without spaces between words, so a segmenter decides where a line may break ([details](/reference/text)). Dates print in the Buddhist era: 2026 comes out as 2569. For the Gregorian year, ask the date field for its `gregorian` variant.
 
 ## Adding a language
 

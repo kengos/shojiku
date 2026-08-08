@@ -1,0 +1,16 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: qr_code
+        box: { w: 90, h: 90 }
+        text: https://shojiku.pages.dev
+        errorCorrection: medium
+      - type: text
+        box: { w: "100%" }
+        text: Encoded at layout time into vector modules — no font, no raster.
+        style: { fontSize: 10 }

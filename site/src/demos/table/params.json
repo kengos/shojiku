@@ -1,0 +1,19 @@
+{
+  "lines": [
+    {
+      "name": "Design retainer",
+      "qty": 1,
+      "amount": 240000
+    },
+    {
+      "name": "Illustration",
+      "qty": 3,
+      "amount": 45000
+    },
+    {
+      "name": "Print supervision",
+      "qty": 2,
+      "amount": 30000
+    }
+  ]
+}

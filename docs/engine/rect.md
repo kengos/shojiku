@@ -1,3 +1,10 @@
+---
+reference:
+  group: item
+  keys: [rect]
+  summary: "A rectangle: pure decoration painted by the unified style properties."
+---
+
 # `type: rect`
 
 A rectangle: a pure decoration box painted by the unified
@@ -37,6 +44,15 @@ for an outline, `backgroundColor` for a fill.
 The retired shape-style spelling `fillColor` is a located parse error —
 use `backgroundColor`. Engines without the `style.shapes.unified`
 capability key expect the old `fillColor` wire instead.
+
+## Limitations
+
+- `box.w`/`box.h` are required (`rect_missing_size`).
+- A `rect` has no content, so text and box style keys are inert on it
+  (`shape_style_ignored`).
+- `borderRadius` is a single value for all four corners — there are no
+  per-corner radii — and it is refused on a per-side or `double` border
+  (`border_radius_ignored`, `invalid_border_radius`).
 
 ## Diagnostics
 

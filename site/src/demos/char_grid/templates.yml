@@ -1,0 +1,13 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: ja-JP }
+sections:
+  body:
+    type: flow
+    gap: 12
+    items:
+      - type: char_grid
+        box: { w: "100%", h: 120 }
+        text: 一字一マス、行と桁は engine が割り付けます。
+        grid: { charsPerLine: 12, lines: 4, cellSize: 20 }
+        style: { borderColor: "#a8674f", fontSize: 15 }

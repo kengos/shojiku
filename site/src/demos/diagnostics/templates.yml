@@ -1,0 +1,16 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: text
+        box: { w: "100%", h: 14 }
+        text: This sentence is longer than the fourteen points its box reserves for it, so the engine reports it rather than silently clipping.
+        style: { fontSize: 11 }
+      - type: text
+        box: { w: "100%" }
+        text: The warning below is the engine's own output, not a caption written beside it.
+        style: { fontSize: 9, color: "#888888" }

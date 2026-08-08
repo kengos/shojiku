@@ -1,3 +1,10 @@
+---
+reference:
+  group: item
+  keys: [list]
+  summary: "A bounded per-element list: one entry per line, clamped with an overflow line."
+---
+
 # `type: list`
 
 A bounded per-element list: renders an array field one entry per line,
@@ -39,6 +46,15 @@ box is a fixed slot; in a flow an auto-height list simply grows.
   (`textCombineUpright`) applies per entry, and the definite-`box.h`
   `…` clamp keeps a combined group whole — kept or dropped, never
   split.
+
+## Limitations
+
+- No pagination, by design. The box is a fixed slot: entries past it are cut
+  and the overflow line ends the list.
+- One line per entry. There is no per-entry style, no nested item, and no
+  bullet/numbering key — the entries are the array's own strings.
+- The source must be an array property (`not_an_array`); a missing key warns
+  (`missing_data`) and an undeclared one (`unknown_data_key`).
 
 ## Diagnostics
 

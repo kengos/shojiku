@@ -1,3 +1,11 @@
+---
+reference:
+  group: concept
+  order: 3
+  keys: [fonts]
+  summary: "Locale packs and font packs: where formatting data and typefaces come from."
+---
+
 # Locales & fonts (packs)
 
 Formatting (dates, numbers, currency, era tables) and fonts come from
@@ -325,6 +333,19 @@ Capability keys: `locale.builtin` (the ja-JP/en-US builtins + the
 overlay merge; engines without it need a pack file even for those two).
 The shipped `packs/locale/` packs are host-supplied data, not a
 capability.
+
+## Limitations
+
+- `fontFamily` names a loaded face id, not a system font. An unmatched family
+  falls back to the default face (`unknown_font_family`, warned once per
+  family) rather than failing.
+- Characters no loaded face can map render as tofu (`missing_glyph`).
+- Rendering never uses the network. A pinned face is fetched at
+  authoring/bundle time; `--offline` refuses instead, and an image source is
+  refused outright (`remote_asset_unsupported`).
+- A pack is loaded only when something NAMES it — a locale's `fonts.uses`, or
+  `--font-pack`. Dropping a pack directory in place does not make it
+  available.
 
 ## See also
 

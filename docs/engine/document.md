@@ -1,3 +1,12 @@
+---
+reference:
+  group: root
+  order: 3
+  keys: [document]
+  shapes: [DocumentMeta]
+  summary: "Document metadata written into the PDF's properties: title, description, keywords, language, authors."
+---
+
 # `document:` — document metadata
 
 What the file says it *is*, as opposed to what it draws: the title,
@@ -72,6 +81,17 @@ key cannot be referenced from `document:`, and writing one warns
   and none is written: a rendered timestamp would make the same inputs
   produce different bytes, and byte-identical output is what signing and
   verification rest on.
+
+## Limitations
+
+- PDF only. PNG previews have no metadata channel, so nothing here is
+  observable in a preview.
+- `keywords` and `authors` are capped at 64 entries; only the first 64 are
+  written (`too_many_document_entries`).
+- Each value is capped at 2048 bytes, and `language` at 64
+  (`document_metadata_too_long`); control characters are refused
+  (`document_metadata_control_chars`) and `language` must be a
+  `[A-Za-z0-9-]` tag (`invalid_document_language`).
 
 ## Diagnostics
 

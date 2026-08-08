@@ -1,3 +1,11 @@
+---
+reference:
+  group: item
+  keys: [qr_code]
+  shapes: [EcLevel]
+  summary: "A QR code encoded at layout time into vector modules — static text or a bound value."
+---
+
 # `type: qr_code`
 
 A QR code item. Content comes from `text` (static, with `{key}`
@@ -38,6 +46,17 @@ containers (flex or absolute placement).
   untrusted and modules fan out into tree items.
 - Modules smaller than 1 pt draw but warn `qr_module_too_small`
   (scanners may struggle).
+
+## Limitations
+
+- `box.w`/`box.h` are required (`qr_missing_size`).
+- Content is capped at 1 KiB; past that the item is skipped
+  (`qr_content_too_long`).
+- Modules under 1 pt still draw but warn (`qr_module_too_small`) — a scanner
+  may not read them.
+- QR only. No other symbology, and no barcode types.
+- The engine encodes the string it is given and reads no semantics from it:
+  a payload's validity is the host's business.
 
 ## Diagnostics
 

@@ -1,3 +1,10 @@
+---
+reference:
+  group: appendix
+  order: 1
+  summary: "What the engine can do today — shipped capabilities and the decisions behind them."
+---
+
 # Engine features (implemented)
 
 What the Shojiku engine (`engine/`) can do **today**. This is the record of
@@ -2011,10 +2018,10 @@ identified by their wire spellings, never by internal work-item codes.
   mini-grammar) keeps one truth table in the engine and one thing for
   an author to learn; a 16-entry cap bounds the per-row work, and a
   missing key stays silent so a blank form renders unchanged.
-- **Cell assets are per-element ids, not per-key**: `dyn:<array>[<i>].
-  <key>` lets layout and prepare agree without a registry; the column
-  `id` is the policy identity so allow/deny lists stay item-shaped;
-  the 1000-load cap bounds params-driven fan-out.
+- **Cell assets are per-element ids, not per-key**:
+  `dyn:<array>[<i>].<key>` lets layout and prepare agree without a
+  registry; the column `id` is the policy identity so allow/deny lists
+  stay item-shaped; the 1000-load cap bounds params-driven fan-out.
 - **Builtin locale data is generated YAML, not generated Rust**: the
   CLDR codegen emits the same wire format the overlay files use and the
   engine embeds it via `include_str!` — one parser, one wire shape, and

@@ -9,6 +9,8 @@ import { dirname, join } from "node:path";
 import { parseGallery } from "../src/lib/gallery.ts";
 import { MAX_FILE_BYTES, subsetManifest, TIERS } from "../src/lib/fonts.ts";
 import { renderLlmsFull, renderLlmsTxt } from "../src/lib/llms.ts";
+import { DEMO_DIR } from "../src/lib/demos.ts";
+import { landingIndex, projectPage, readPage, REFERENCE_LOCALES, SOURCE_DIR } from "../src/lib/reference.ts";
 
 const SITE = join(import.meta.dirname, "..");
 const ROOT = join(SITE, "..");
@@ -78,13 +80,25 @@ for (const dir of LIVE) {
   putText(JSON.stringify({ assets: assetFiles }), join(PUB, "data", "live", name, "index.json"));
 }
 
-// 5. llms.txt + llms-full.txt from the shared preamble + repo docs.
+// The reference pages, read once: step 5 inlines their bodies and step 6
+// projects them into routes.
+const srcDir = join(ROOT, SOURCE_DIR);
+const stems = readdirSync(srcDir).filter((f) => f.endsWith(".md")).map((f) => f.slice(0, -3)).sort();
+const refPages = stems.map((s) => readPage(s, readFileSync(join(srcDir, `${s}.md`), "utf8")));
+const demoNames = new Set(readdirSync(join(ROOT, DEMO_DIR)));
+
+// 5. llms.txt + llms-full.txt from the shared preamble + repo docs. The
+//    reference is inlined WHOLE (see step 6 for the page read): an agent
+//    asking about `flex` used to get the index and have to fetch the rest.
+//    Bodies only — the `reference:` front-matter is projection metadata, not
+//    documentation, and would read as authorable syntax.
 const pages = [
   { path: "/index", title: "Shojiku" },
   { path: "/concept", title: "Concept" },
   { path: "/gallery", title: "Gallery" },
   { path: "/tutorials", title: "Production tutorials" },
   { path: "/playground", title: "Playground" },
+  { path: "/reference/", title: "Template reference (one page per feature)" },
   { path: "/compare", title: "Compared to other engines" },
   { path: "/agents", title: "For AI agents" },
   { path: "/tips", title: "Tips: uses outside business documents" },
@@ -96,17 +110,55 @@ putText(
     readFileSync(join(SITE, "src", "llms-preamble.md"), "utf8"),
     gallery,
     [
-      { label: "docs/engine/README.md (template reference index)", text: readFileSync(join(ROOT, "docs", "engine", "README.md"), "utf8") },
-      { label: "docs/engine/diagnostics.md (the complete diagnostic-code registry)", text: readFileSync(join(ROOT, "docs", "engine", "diagnostics.md"), "utf8") },
+      ...refPages.map((p) => ({ label: `${SOURCE_DIR}${p.stem}.md — ${p.meta.summary}`, text: p.body })),
       { label: "docs/quickstart.md", text: readFileSync(join(ROOT, "docs", "quickstart.md"), "utf8") },
     ],
   ),
   join(PUB, "llms-full.txt"),
 );
 
+// 6. The reference: docs/engine/*.md projected to site/reference/*.md (a
+//    VitePress route each) plus the per-page demo documents under public/.
+//    Paths are FIXED repo locations — never derived from file content — so
+//    nothing a page says can redirect what the build reads or writes.
+for (const locale of REFERENCE_LOCALES) {
+  const out = join(ROOT, locale.dir);
+  rmSync(out, { recursive: true, force: true });
+  mkdirSync(out, { recursive: true });
+  for (const page of refPages) {
+    // README is the landing (/reference/); every other page keeps its stem.
+    const route = page.stem === "README" ? "index" : page.stem;
+    writeFileSync(
+      join(out, `${route}.md`),
+      projectPage(page, {
+        source: `${SOURCE_DIR}${page.stem}.md`,
+        demo: demoNames.has(page.stem) ? page.stem : undefined,
+        extra: page.stem === "README" ? landingIndex(refPages, locale.base) : undefined,
+        landing: page.stem === "README",
+        notice: locale.notice,
+      }),
+    );
+  }
+}
+// Each page's own markdown, served from THIS origin, for the strip's "Copy
+// for AI". Fetching the GitHub blob from the page cannot work: the site CSP
+// is `connect-src 'self'` and widening it for github-raw is the exact hole
+// `headers.test.ts` refuses. Bodies only — the `reference:` front-matter is
+// projection metadata, and an agent handed it would read it as syntax.
+for (const page of refPages) {
+  putText(page.body, join(PUB, "data", "reference", `${page.stem}.md`));
+}
+for (const name of [...demoNames].sort()) {
+  const from = join(ROOT, DEMO_DIR, name);
+  const files = readdirSync(from).sort();
+  for (const f of files) put(join(from, f), join(PUB, "data", "reference", name, f));
+  putText(JSON.stringify({ files }), join(PUB, "data", "reference", name, "index.json"));
+}
+
 // Prove the run: input counts first, then the cap check over every emitted
 // file (a zero anywhere here is a broken assembly, not a clean one).
 if (gallery.length === 0 || wasmFiles.length === 0) throw new Error("empty inputs");
+if (refPages.length === 0 || demoNames.size === 0) throw new Error("empty reference inputs");
 let over = 0;
 for (const f of emitted) {
   if (statSync(f).size >= MAX_FILE_BYTES) {
@@ -116,5 +168,5 @@ for (const f of emitted) {
 }
 if (over > 0) throw new Error(`${over} file(s) exceed the Pages per-file cap`);
 console.log(
-  `assembled: wasm ${wasmFiles.length} files, tiers ${TIERS.length}, gallery ${gallery.length} entries, emitted ${emitted.length} files, all under 25 MiB`,
+  `assembled: wasm ${wasmFiles.length} files, tiers ${TIERS.length}, gallery ${gallery.length} entries, reference ${refPages.length} pages + ${demoNames.size} demos, emitted ${emitted.length} files, all under 25 MiB`,
 );

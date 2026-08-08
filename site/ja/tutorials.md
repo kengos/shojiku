@@ -97,7 +97,7 @@ templates/
   src: assets/logo.png
 ```
 
-パスの基準はテンプレートファイルのあるディレクトリで、CLIでは `--assets-dir` で変えられます。`data:` URIやインラインSVG、paramsから差し込む動的画像も使えます。正確な仕様は[image.md](https://github.com/kengos/shojiku/blob/main/docs/engine/image.md)にあります。
+パスの基準はテンプレートファイルのあるディレクトリで、CLIでは `--assets-dir` で変えられます。`data:` URIやインラインSVG、paramsから差し込む動的画像も使えます。正確な仕様は[image.md](/ja/reference/image)にあります。
 
 ## 4. 同梱パック以外のフォントを使う
 
@@ -153,7 +153,7 @@ fonts:
 
 `uses` は追記ではなく全体の書き直しなので、同梱パックを並べたまま自分のパックを足します。1回だけなら `--font-pack` のほうが短いのは、こちらが置き換えではなく追加だからです。ロケールが `uses` しておらず、実行時にも指定していないパックのフォントを `fontFamily` に指定すると、`unknown_font_family` の警告が出て、ロケール既定のフォントにフォールバックします。
 
-パックの探し方はCLIもSDKも同じで、明示指定、環境変数、カレントの `./packs/fonts` と `./packs/locale` のすべてから探します。同じidがぶつかったときは、明示指定が優先されます。SDKでの明示指定はクライアントのオプションです（セクション2のPythonの例で渡していた `font_dirs` / `locale_dirs` がそれです）。環境変数は `SHOJIKU_FONT_DIR` / `SHOJIKU_LOCALE_DIR`（PATH区切り）、CLIのフラグは `--font-dir` / `--locale-dir` です。次のセクションのDockerfileは `packs/` を丸ごとCOPYするので、自作パックも一緒に含まれます。正確な仕様（`url:` による自動フェッチ、フォールバックチェーンなど）は[fonts.md](https://github.com/kengos/shojiku/blob/main/docs/engine/fonts.md)にあります。
+パックの探し方はCLIもSDKも同じで、明示指定、環境変数、カレントの `./packs/fonts` と `./packs/locale` のすべてから探します。同じidがぶつかったときは、明示指定が優先されます。SDKでの明示指定はクライアントのオプションです（セクション2のPythonの例で渡していた `font_dirs` / `locale_dirs` がそれです）。環境変数は `SHOJIKU_FONT_DIR` / `SHOJIKU_LOCALE_DIR`（PATH区切り）、CLIのフラグは `--font-dir` / `--locale-dir` です。次のセクションのDockerfileは `packs/` を丸ごとCOPYするので、自作パックも一緒に含まれます。正確な仕様（`url:` による自動フェッチ、フォールバックチェーンなど）は[fonts.md](/ja/reference/fonts)にあります。
 
 ## 5. 本番に載せる（Dockerfileレシピ）
 
@@ -190,6 +190,6 @@ shojiku verify --input signed.pdf --anchor signer.crt
 
 ## 次へ
 
-- テンプレートの書き方そのものは[リファレンス](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md)（32ページ、機能ごとに1ページ）
+- テンプレートの書き方そのものは[リファレンス](/ja/reference/)（31ページ、機能ごとに1ページ）
 - 触って確かめるなら[プレイグラウンド](/ja/playground)
 - 書くのをAIに任せるなら[エージェント](/ja/agents)

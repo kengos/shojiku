@@ -1,0 +1,23 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: A text item wraps inside its box and grows to fit when no height is given.
+        style: { fontSize: 12, lineHeight: 1.5 }
+      - type: text
+        box: { w: "100%" }
+        spans:
+          - { text: "Inline spans " }
+          - { text: mix styles, style: { fontWeight: bold, color: "#1a3c6e" } }
+          - { text: " inside one wrapped block." }
+        style: { fontSize: 12 }
+      - type: text
+        box: { w: "100%", h: 16 }
+        text: A definite height plus textOverflow clips with an ellipsis when the line is too long to fit.
+        style: { fontSize: 11, textOverflow: ellipsis }

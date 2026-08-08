@@ -1,0 +1,20 @@
+{
+  "tickets": [
+    {
+      "seat": "A-1",
+      "holder": "Aoi Tanaka"
+    },
+    {
+      "seat": "A-2",
+      "holder": "Ken Sato"
+    },
+    {
+      "seat": "B-1",
+      "holder": "Mio Ishii"
+    },
+    {
+      "seat": "B-2",
+      "holder": "Rei Okada"
+    }
+  ]
+}

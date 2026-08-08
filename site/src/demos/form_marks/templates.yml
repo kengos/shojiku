@@ -1,0 +1,25 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 10
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: Choice marks are vector paths, so output never depends on font coverage.
+        style: { fontSize: 10 }
+      - type: container
+        box: { w: "100%", h: 40, direction: row, gap: 10, alignItems: center }
+        items:
+          - type: ellipse
+            box: { w: 34, h: 22 }
+            style: { borderWidth: 1.2, borderColor: "#a8674f" }
+          - type: checkbox
+            box: { w: 16, h: 16 }
+            checked: true
+            style: { borderWidth: 1, borderColor: "#1a3c6e" }
+          - type: checkbox
+            box: { w: 16, h: 16 }
+            style: { borderWidth: 1, borderColor: "#1a3c6e" }

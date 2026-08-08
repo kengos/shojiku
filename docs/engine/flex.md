@@ -1,3 +1,12 @@
+---
+reference:
+  group: layout
+  order: 2
+  keys: [flex]
+  shapes: [AlignItems, FlexBasis, FlexDirection, JustifyContent]
+  summary: "The default container mode: CSS-flex semantics down to the defaults, keyed on `box.type`."
+---
+
 # Flex layout (`box.type: flex`, the default)
 
 A container box (and a `repeat` cell / `repeat_flow` card) lays out its
@@ -125,6 +134,18 @@ Paint order stays document order.
   and `column` is the default `direction`, so it would re-size the
   children of every container ever authored. Deliberate, and the reason
   is the asymmetry rather than the effort.
+
+## Limitations
+
+- No wrapping. A row is one line: fixed children plus gaps wider than the
+  content box warn (`flex_row_overflow`), and unsized children shrink instead
+  and never warn.
+- A negative or non-finite `flexGrow` is treated as 0 (`invalid_flex_grow`).
+- Flex keys on a leaf box are inert (`layout_key_on_leaf`).
+- There is no `position` key: authoring `x` or `y` is what opts a child out
+  of flex, and it opts out of BOTH axes.
+- The second-placement pass is budgeted; past it the innermost children keep
+  their first placement (`reflow_budget_exhausted`).
 
 ## Diagnostics
 

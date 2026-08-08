@@ -1,0 +1,19 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US, currency: USD }
+styles:
+  th: { fontWeight: bold, color: "#ffffff", backgroundColor: "#1a3c6e" }
+sections:
+  body:
+    type: flow
+    items:
+      - type: table
+        data: { key: lines }
+        cellPadding: 4
+        header: { height: 26, styleNames: [th] }
+        row: { alternateStyle: { backgroundColor: "#f5f7fa" } }
+        style: { fontSize: 10, borderWidth: 0.5, borderColor: "#cccccc" }
+        columns:
+          - { label: Item, data: { key: name }, width: "50%" }
+          - { label: Qty, data: { key: qty }, width: "20%", style: { textAlign: right } }
+          - { label: Amount, data: { key: amount }, width: "30%", style: { textAlign: right } }

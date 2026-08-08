@@ -1,3 +1,12 @@
+---
+reference:
+  group: item-keys
+  order: 1
+  keys: [box]
+  shapes: [OptBox, BoxType, EdgeSpec, EdgeValue, EdgeMapRepr]
+  summary: "Position, size, margin, padding and min/max bounds — the border-box every item is placed by."
+---
+
 # `box` — position, size, spacing, bounds
 
 Every item (except `line` and `page_break`) takes a `box:` map that
@@ -112,6 +121,19 @@ without `type: grid` warn `grid_key_ignored`. The child-side keys —
 `flexGrow` ([flex.md](flex.md)) and the grid spans `columnSpan` /
 `rowSpan` ([grid.md](grid.md)) — are valid on leaves; spans outside a
 grid parent warn `span_outside_grid` at layout.
+
+## Limitations
+
+- `%` needs a definite basis. Against an auto-sized parent axis the value is
+  dropped (`percent_of_auto`) rather than guessed.
+- Layout-mode keys are CONTAINER keys: on a leaf box they are inert
+  (`layout_key_on_leaf`), and grid keys never imply the mode on their own
+  (`grid_key_ignored`).
+- `margin` sides accept `auto`; `padding` does not, and padding is
+  non-negative.
+- A resolved length past ±1e6 pt falls back to the key's default
+  (`length_out_of_range`).
+- `overflow` is one key for the box, not one per axis.
 
 ## Diagnostics
 

@@ -1,0 +1,17 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: list
+        box: { w: "100%", h: 60 }
+        data: { key: contents }
+        overflowText: "and more"
+        style: { fontSize: 11, lineHeight: 1.4 }
+      - type: text
+        box: { w: "100%" }
+        text: The box is a fixed slot — entries past it are cut and the overflow line ends the list.
+        style: { fontSize: 9, color: "#888888" }

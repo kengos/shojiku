@@ -1,0 +1,11 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: ja-JP }
+sections:
+  body:
+    type: flow
+    items:
+      - type: text
+        box: { w: "100%", h: 220 }
+        text: 縦書きでは、文字は上から下へ並び、行は右から左へ流れます。証書や封筒、熨斗紙のための組み方です。
+        style: { writingMode: vertical_rl, fontSize: 14, lineHeight: 1.8 }

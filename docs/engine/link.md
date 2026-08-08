@@ -1,3 +1,12 @@
+---
+reference:
+  group: item-keys
+  order: 2
+  keys: [link]
+  shapes: [Link]
+  summary: "A clickable URL emitted as a PDF link annotation over the item's drawn geometry."
+---
+
 # `link:` — hyperlinks
 
 A clickable URL on a text item, an image item, or a rich-text span,
@@ -49,6 +58,16 @@ object form reserves room for internal destinations later.
   still renders, without the annotation.
 - Styling is the author's job: links are not auto-underlined or
   recolored (use `textDecoration: underline` etc.).
+
+## Limitations
+
+- Text items, image items and rich spans only. There is no link on a `rect`,
+  a `table` cell, or a container.
+- PNG previews carry no annotation surface, so a link is observable in the
+  PDF only.
+- `http`, `https`, `mailto` and `tel` only (`unsupported_link_scheme`), 2048
+  bytes maximum (`link_url_too_long`), and an empty URL drops the link
+  (`empty_link_url`) while the item still renders.
 
 ## Diagnostics
 

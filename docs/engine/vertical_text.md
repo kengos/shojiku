@@ -1,3 +1,12 @@
+---
+reference:
+  group: layout
+  order: 4
+  keys: [vertical_rl]
+  shapes: [WritingMode]
+  summary: "Vertical writing: characters fill a column top-to-bottom, columns lay out right-to-left."
+---
+
 # Vertical writing
 
 `writingMode: vertical_rl` turns a `type: text` item into a **vertical
@@ -242,6 +251,21 @@ Each remaining limit degrades loudly.
 - [`char_grid`](char_grid.md)'s vertical cells now shape through the
   same GSUB `vert` arrangement as this page's blocks (its item-level
   `writingMode` remains its own key).
+
+## Limitations
+
+- A text `mark:` (the circled-text overlay) is horizontal-only and is skipped
+  in a vertical block (`vertical_text_unsupported`).
+- `textOverflow: shrink`/`ellipsis` on a rich (`spans:`) block falls back to
+  visible (`span_overflow_unsupported`).
+- A block needing more columns than its box is wide warns
+  (`vertical_text_overflow`); the flow paginator reads that as the signal to
+  move it.
+- Ruby carries the same caps as horizontal text
+  (`too_many_ruby_entries`, `ruby_entry_too_long`, `empty_ruby_entry`,
+  `ruby_base_not_found`).
+- `writingMode` is an ITEM-level key on a `char_grid`; as a style property
+  on one it parses and silently stays horizontal.
 
 ## Diagnostics
 

@@ -1,0 +1,17 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 10
+    items:
+      - type: rect
+        box: { w: "100%", h: 40 }
+        style: { backgroundColor: "#f2f5fa", borderWidth: 0.8, borderColor: "#1a3c6e", borderRadius: 6 }
+      - type: rect
+        box: { w: "100%", h: 40 }
+        style: { borderWidth: 1.6, borderColor: "#a8674f", borderStyle: double }
+      - type: rect
+        box: { w: "60%", h: 24 }
+        style: { backgroundColor: "#1a3c6e", opacity: 0.35 }

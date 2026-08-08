@@ -5,6 +5,7 @@
 // it composes is the tested lib + the real-wasm integration suite.
 import { withBase } from "vitepress";
 import { TIERS } from "../../src/lib/fonts.ts";
+import { capabilityKeys } from "../../src/lib/demos.ts";
 import {
   engineVersion,
   injectAssets,
@@ -43,6 +44,19 @@ let capabilities = "";
 export async function reportedVersion(): Promise<string> {
   await engine();
   return engineVersion(capabilities);
+}
+
+/**
+ * The capability keys the LOADED engine publishes. The site serves a released
+ * build while docs/engine/ documents HEAD, so a reference page can carry
+ * syntax this binary cannot parse; a demo declares the keys it needs and the
+ * page shows a static listing instead of handing the engine a document it
+ * will reject. Keys, not the version string — both builds report the same
+ * version today.
+ */
+export async function engineCapabilityKeys(): Promise<string[]> {
+  await engine();
+  return capabilityKeys(capabilities);
 }
 
 /** The shared session, booted en-US on the immediate tier. */

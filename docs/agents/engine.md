@@ -128,9 +128,11 @@ coarser (a machine-readable inventory this crate owns and every host
 reads), so a second crate beside it would put a parallel substrate where
 the boundary says there is one. The artifact is committed at
 `engine/authoring/reference/catalog.schema.json` and embedded as
-`shojiku_authoring::reference::CATALOG`. The VitePress build is to read
-the data files directly, the way it already reads the one gallery source
-— that half is not built; nothing on the site consumes the catalog yet.
+`shojiku_authoring::reference::CATALOG`. The VitePress build reads
+the data files directly, the way it already reads the one gallery source:
+the site's reference sidebar takes the ITEM ORDER from the catalog's own
+item union, so the order a reader sees is the parser's rather than a list
+kept beside it.
 
 **One identifier across every surface**, chosen before each surface grows
 its own: the [../engine/](../engine/) page stem names a topic and

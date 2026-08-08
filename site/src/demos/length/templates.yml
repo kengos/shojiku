@@ -1,0 +1,25 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults:
+  style: { fontSize: 12 }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: rect
+        box: { w: "100%", h: 20 }
+        style: { backgroundColor: "#1a3c6e" }
+      - type: rect
+        box: { w: "50%", h: 20 }
+        style: { backgroundColor: "#1a3c6e" }
+      - type: rect
+        box: { w: "40mm", h: 20 }
+        style: { backgroundColor: "#a8674f" }
+      - type: rect
+        box: { w: "10em", h: 20 }
+        style: { backgroundColor: "#a8674f" }
+      - type: text
+        box: { w: "100%" }
+        text: "Top to bottom: 100%, 50%, 40mm, 10em (em resolves against the item's own font size)."
+        style: { fontSize: 9, color: "#888888" }

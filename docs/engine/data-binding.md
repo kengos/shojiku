@@ -1,3 +1,12 @@
+---
+reference:
+  group: concept
+  order: 2
+  keys: [data-binding]
+  shapes: [Binding, BindingScope, MarkBinding, EqualsValue]
+  summary: "How templates bind runtime params and how the locale pack formats them for display."
+---
+
 # Data binding & formatting
 
 Templates bind runtime data (`params.json`/`params.yml`) into items three
@@ -345,6 +354,22 @@ which are business vocabulary and so live here, not in a locale pack); a
 keys, undeclared display variants, missing data — and, when params are
 supplied, the params tree against the schema (`required`, types,
 ranges, `enum`).
+
+## Limitations
+
+- A `{…}` key outside `[A-Za-z0-9_.]` prints its own braces
+  (`interpolation_key_charset`); a `bindings:` declaration is how such a key
+  is reached.
+- A `bindings:` name outside the reference charset can never be referenced
+  (`invalid_binding_name`), and the per-item registry is capped at 256
+  (`too_many_bindings`).
+- An inline `format: { pattern }` applies to `date`/`datetime` only;
+  elsewhere the default form renders (`format_pattern_ignored`).
+- A currency with no display data falls back to the code itself
+  (`unknown_currency`), and a unit key missing from the pack renders verbatim
+  (`unknown_unit`).
+- Binding does no arithmetic. Totals, tax and rounding are computed by the
+  host and bound as values — there is no expression syntax.
 
 ## Diagnostics
 

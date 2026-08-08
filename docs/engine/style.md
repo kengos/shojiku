@@ -1,3 +1,12 @@
+---
+reference:
+  group: root
+  order: 5
+  keys: [styles]
+  shapes: [Style, BorderColor, BorderStyle, BorderStyleKind, BorderWidth, FontStyle, FontWeight, HangingPunctuation, LineBreak, Overflow, TextAlign, TextCombineUpright, TextDecoration, TextOrientation, TextOverflow, TextSpacingTrim, VerticalAlign]
+  summary: "Every appearance property and the three-surface cascade that resolves them per item."
+---
+
 # `style` — appearance properties & the cascade
 
 Appearance is a CSS-style property bag: every property is optional, and
@@ -113,6 +122,26 @@ spelling is a parse error pointing at `backgroundColor`.
 `line`'s style **rejects unknown keys like every other wire struct** —
 `borderWidth` on a `line` is a parse error pointing at the typo, not a
 silent no-op ([line.md](line.md)).
+
+## Limitations
+
+- Unset means inherit (for inherited properties) or the engine default.
+  There is no `initial`/`unset` keyword to reset one.
+- The `styles:` registry is capped at 256 (`too_many_styles`) and
+  `styleNames` at 16 per item (`too_many_style_names`); an undefined name
+  warns and is skipped (`undefined_style_name`).
+- Out-of-range values FALL BACK rather than failing the render: a bad or
+  oversized font size becomes 10 pt (`invalid_font_size`,
+  `font_size_out_of_range`), a line height 1.4 (`invalid_line_height`,
+  `line_height_out_of_range`), letter spacing 0 (`invalid_letter_spacing`),
+  a border none (`invalid_border_width`), opacity opaque
+  (`invalid_opacity`), and a colour the default (`invalid_color`).
+- `borderRadius` is one value for all corners, and is refused on a per-side
+  or `double` border, on a `table`, and on the form marks
+  (`border_radius_ignored`).
+- Not a CSS engine: no selectors, no media queries, no pseudo-classes, no
+  transitions. `styleNames` and a table's `row.conditionalStyles` are the
+  only conditional surfaces.
 
 ## Diagnostics
 

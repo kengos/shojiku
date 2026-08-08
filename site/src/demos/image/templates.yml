@@ -1,0 +1,16 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: image
+        box: { w: 120, h: 80 }
+        fit: contain
+        src: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80"><rect width="120" height="80" fill="#f2f5fa"/><circle cx="42" cy="40" r="24" fill="#1a3c6e"/><rect x="72" y="20" width="34" height="40" fill="#a8674f"/></svg>'
+      - type: text
+        box: { w: "100%" }
+        text: box.w and box.h reserve the space; fit decides how the source fills it.
+        style: { fontSize: 10 }

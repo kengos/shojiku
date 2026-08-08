@@ -11,7 +11,7 @@ MDNのドキュメントのように、YAMLの変更で見た目がその場で�
 
 ## テキストスタイル
 
-スタイルは、CSSとほぼ同じ書き方にしてあります。`text-align`が`textAlign`になる、といった違いはあります。ここでは`textAlign`、`fontSize`、`lineHeight`、`letterSpacing`をコントロールで変えられます。ボックスの高さは`fontSize × lineHeight`から計算され、高さを固定したボックスがこの値より低いと`text_overflow`の警告が出ます。この挙動は[リファレンス](https://github.com/kengos/shojiku/blob/main/docs/engine/text.md)にも書いてありますが、ここでは実際に動かして確かめられます。
+スタイルは、CSSとほぼ同じ書き方にしてあります。`text-align`が`textAlign`になる、といった違いはあります。ここでは`textAlign`、`fontSize`、`lineHeight`、`letterSpacing`をコントロールで変えられます。ボックスの高さは`fontSize × lineHeight`から計算され、高さを固定したボックスがこの値より低いと`text_overflow`の警告が出ます。この挙動は[リファレンス](/ja/reference/text)にも書いてありますが、ここでは実際に動かして確かめられます。
 
 <ClientOnly><PropertyPlayground demo="text" /></ClientOnly>
 
@@ -46,4 +46,4 @@ Shojikuでは、ほぼ同じ仕組みでレイアウトを組むことができ�
 
 ## リファレンスへ
 
-ここには、動かすと分かりやすい代表的なプロパティだけを置いています。全プロパティの一覧は[リファレンス](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md)（機能ごとに1ページ）にあります。
+ここには、動かすと分かりやすい代表的なプロパティだけを置いています。全プロパティの一覧は[リファレンス](/ja/reference/)（機能ごとに1ページ）にあります。

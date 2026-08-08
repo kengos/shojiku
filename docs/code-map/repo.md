@@ -151,15 +151,48 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
 
 - `docker/` — the runtime image.
 - `site/` — the public site (Cloudflare Pages): a STANDALONE pnpm project
-  (not a gui/ workspace member), VitePress, nine nav pages + the index
+  (not a gui/ workspace member), VitePress, ten nav pages + the index
   ×2 locales (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per
-  `shojiku-copywriter`'s vendored prose standard, EN derived). It is the
-  DECIDED reader-facing home for the reference — sourced in
-  `docs/engine/`, rendered here rather than restated — but that half is
-  **not built**: there is no `/reference/` route and the pages still link
-  out to the repository. The rule and the list of which docs pages are
-  projected live in [../architecture.md](../architecture.md) § Where a
-  doc paragraph goes.
+  `shojiku-copywriter`'s vendored prose standard, EN derived), PLUS the
+  projected reference. It is the reader-facing home for the reference —
+  sourced in `docs/engine/`, rendered here rather than restated. The rule
+  and the list of which docs pages are projected live in
+  [../architecture.md](../architecture.md) § Where a doc paragraph goes.
+  **The reference (`/reference/**`, `/ja/reference/**`)**: every
+  `docs/engine/*.md` becomes one route, generated into `site/reference/`
+  and `site/ja/reference/` (both GITIGNORED — nobody edits them) by
+  `assemble-data.ts`. `README.md` is the landing (`index`, full width);
+  each page gains a provenance strip and a live demo. Each source page
+  declares `reference:` FRONT-MATTER — `group` / `order` / `keys` /
+  `shapes` / `summary` — which is what the sidebar tree is built from,
+  crossed with the parser's key catalog
+  (`engine/authoring/reference/catalog.schema.json`): the `item` group's
+  ORDER comes from the catalog's own item list, so nobody maintains a
+  second taxonomy. Four groups under `templates.yml` (root · item · item
+  keys · layout modes), `definitions.yml`, and five Concepts — exactly the
+  31 feature pages. A page missing its front-matter FAILS the build.
+  The projection makes exactly FOUR reversible edits to a body (links
+  leaving `docs/engine/` → absolute repo URLs; `README.md` → the landing;
+  inline code holding `{{` → `v-pre`, since Vue reads a double brace as an
+  interpolation; the generated blocks between `<!-- rf:begin/end -->`
+  markers) and `src/reference.test.ts` undoes all four and demands the
+  source body BYTE FOR BYTE — so a fifth edit is a red gate. It also holds
+  the route total (33, not `> 0`), the catalog↔front-matter bijection (81
+  shapes claimed exactly once), tree coverage, the internalised-outlink
+  negative sweep, and the Limitations claims (every code named on a
+  `## Limitations` section must exist in `docs/engine/diagnostics.md`).
+  **The demos** (`src/demos/<page>/`, one per feature page:
+  `templates.yml` + optional `params.json`/`definitions.yml`/`expect.json`)
+  are staged to `public/data/reference/` and rendered in the reader's tab.
+  `expect.json` declares the diagnostics a demo is SUPPOSED to emit (so
+  `diagnostics.md`'s demo can honestly warn) and the engine CAPABILITY
+  KEYS its wire needs. That last part matters because `.data/wasm` is a
+  RELEASED build while `docs/engine/` documents HEAD: a demo whose keys
+  the served engine lacks degrades to a static listing plus a notice, and
+  `src/integration/referenceDemos.test.ts` renders it against
+  `engine/wasm/pkg` instead — so it is still proven, and a re-pin lights
+  it up with no edit. Version strings cannot detect that gap (both builds
+  report the same one); capability keys can.
   Structure: `src/lib/` = the tested pure modules (gallery.yml
   parse/validate, font-tier subset manifests, README-gallery
   render/splice, llms renderers, `engineClient` — the site's OWN thin
@@ -184,13 +217,22 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   typing, no Render button, with Reset back to the committed example;
   HeroBanner — the `home-hero-before` slot both index pages rely on,
   which is WHY neither declares `hero.image` or `hero.text`;
-  PropertyPlayground, GalleryGrid,
+  PropertyPlayground — its source panel is a COLLAPSED `<details>`; it has
+  always held the whole runnable file, and collapsing it lets the rendered
+  page lead; GalleryGrid,
+  ReferenceProvenance / ReferenceDemo / ReferenceSidebarBadge (the
+  reference page's strip, its capability-gated live block, and the
+  `Generated` badge — scoped to the SIDEBAR, the one derived thing on the
+  page, via the `sidebar-nav-before` slot),
   EngineVersion — the label stating which engine a live block runs, read
   from the binary's OWN `capabilities()` report rather than a string kept
   beside it; browser glue, coverage-excluded). `scripts/assemble-data.ts` =
   build-time pure-Node assembly (public/data wasm+tiered fonts+live
-  examples, gallery previews, brand renders, llms.txt/llms-full.txt;
-  25 MiB Pages cap asserted); `scripts/refresh-data.ts` = the COMMITTED
+  examples, gallery previews, brand renders, llms.txt/llms-full.txt —
+  which now inlines the WHOLE reference, bodies only, so an agent asking
+  about `flex` has it; the reference projection + demo staging;
+  25 MiB Pages cap asserted). It is what `pnpm dev` runs first, too —
+  without it a dev server has no reference routes; `scripts/refresh-data.ts` = the COMMITTED
   halves, in three modes: default (`make site-data`) regenerates ONLY the
   README gallery section between the `gallery:generated` markers;
   `--check` (`make site-check`) compares both halves; `--release-wasm`

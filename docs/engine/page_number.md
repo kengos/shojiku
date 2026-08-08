@@ -1,3 +1,10 @@
+---
+reference:
+  group: item
+  keys: [page_number]
+  summary: "The current page number — band-only, because the count is known at assembly."
+---
+
 # `type: page_number`
 
 Draws the current page number. **Band-only** (header/footer): the page
@@ -33,6 +40,14 @@ Combine with the band's `repeat` mode (`every_page` /
 `except_first_page` / …) to control which pages show it.
 
 Capability key: `page_number`.
+
+## Limitations
+
+- Bands only. In a body it warns (`page_number_in_body`) and in a container
+  (`page_number_in_container`), and is skipped either way: the page count is
+  known only at assembly.
+- The `format` string interpolates `{page}` and `{pages}` and nothing else.
+  There is no numbering-style key (roman, kanji) and no per-section restart.
 
 ## See also
 
