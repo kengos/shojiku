@@ -307,6 +307,12 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   comment on the opener line, same shape as `line-budget-exempt`. It
   self-tests against a known-bad fixture before scanning, so a detector
   that stopped detecting fails instead of reporting OK)
+  `check-php-licenses.sh` — first step of `make sdk-php`: `sdk/php` keeps
+  its OWN copy of the root `LICENSE-*` set, because the php package is
+  published from a subtree-split repository whose root is `sdk/php` and a
+  split cannot inject files. Derives the file list from the ROOT, so a
+  fourth licence is a failure rather than a silent omission, and refuses a
+  run that matched no files at all.
   + `generate-sbom.sh` (`make sbom` —
   syft-in-Docker CycloneDX inventories committed under `sbom/`;
   regenerate + commit whenever a lockfile changes; no byte-compare
@@ -325,6 +331,15 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   irreversible half and stays a separate act. The platform spelling
   table (slug ↔ wheel tag / gem platform / npm name / RID) lives at the
   top of assemble.sh and is the single place a new target is added.
+  `split-php.sh` is the same boundary applied to php, whose publish is a
+  REPOSITORY rather than an archive: it runs `git subtree split --prefix=
+  sdk/php` over HEAD and over every `v*` tag, asserts each produced
+  commit's root tree IS `sdk/php`'s tree at that ref (an object-id
+  identity, not a file diff) and that every tag split is an ancestor of
+  main, and writes `dist/release/php-split.txt` for the workflow to push.
+  It never pushes or tags a remote. Because the tag set is derived from
+  tags that already exist here, the derived repo cannot serve a version
+  this one has not released.
 - `scripts/install-proof/` — the seven per-language install proofs
   (`make proof-<lang>` / `make proof`; CI job `install-proof`): embed
   the host-arch payload the way a release does, build the REAL package
@@ -338,6 +353,12 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   (RID / platform package / classifier) derives from `uname -m` — an
   arm64 payload filed under linux-x64 is correctly refused by the
   consuming runtime.
+  `published-*.sh` (`make proof-published[-<lang>]`) asks the same question
+  of the REGISTRY copy and takes no local artifact at all; go needs none,
+  since its publish IS a repo tag. `published-php.sh` is the one drawing on
+  two publish channels — the composer package from Packagist and the CLI
+  from the GitHub Release, archive chosen by `uname -m` — because that
+  package drives a binary rather than carrying one.
 - (The throwaway `spike/wasm-preview/` is removed — the production
   bindings shipped as `engine/wasm`; its baseline numbers live in
   docs/engine/features.md § Decision log.)

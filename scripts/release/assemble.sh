@@ -9,8 +9,9 @@
 # Assembly only — nothing here talks to a registry, signs, or tags. The
 # split is deliberate: this half is mechanical and rerunnable, while
 # publishing is the irreversible half and stays a separate, deliberate act.
-# php ships no binary (subprocess SDK; blocked on a subtree-split repo for
-# Packagist) and go publishes as a git tag, so neither appears here. `cli`
+# php ships no binary (subprocess SDK) and its publish is a repository rather
+# than an archive — split-php.sh builds it — while go publishes as a git tag,
+# so neither appears here. `cli`
 # is the odd one out: its output is not a registry package but the archives
 # a human downloads from the GitHub Release.
 #

@@ -1,7 +1,9 @@
 # Shojiku for PHP
 
 PHP bindings for [Shojiku](https://shojiku.pages.dev) — a document engine that
-turns a YAML template plus your data into a deterministic PDF.
+turns a YAML template plus your data into a deterministic PDF. The package is
+pure PHP and renders nothing on its own: it drives the `shojiku` command-line
+binary, which you install separately.
 
 > **Not on Packagist yet.** The other six Shojiku SDKs shipped at v0.1.0;
 > this one waits on its Packagist registration. Until it lands, install
@@ -14,10 +16,9 @@ turns a YAML template plus your data into a deterministic PDF.
 composer require shojiku/shojiku
 ```
 
-This package is pure PHP with **no dependencies and no extension to
-compile**: it drives the `shojiku` command-line binary as a subprocess.
-**Install that binary separately** — the package never downloads an
-executable, by design. Take it from the [GitHub
+**No dependencies and no extension to compile.** The binary is the other
+half, and the package never downloads an executable — that is deliberate.
+Take it from the [GitHub
 release](https://github.com/kengos/shojiku/releases/latest) (a per-platform
 archive plus the shared `packs` archive), `cargo install shojiku-cli`, or
 the Docker image; the
@@ -165,7 +166,9 @@ PHP 8.3 or newer, and the `shojiku` binary installed as described above.
 
 ## Development
 
-Gates run in a container, so no PHP toolchain is needed locally:
+Development happens in the
+[monorepo](https://github.com/kengos/shojiku), where this package is
+`sdk/php`. Gates run in a container, so no PHP toolchain is needed locally:
 
 ```bash
 make verify:sdk:php
