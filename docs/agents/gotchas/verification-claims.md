@@ -403,6 +403,16 @@ check whose empty output read as "all covered").
   `make gui-budget` "which prints the offenders", but that gate reports
   only UNWAIVED violations and every listed file was waived — it prints
   `OK` and nothing else.
+- **A check whose EXPECTED answer is zero cannot sit in an `&&` chain:
+  `grep -c` exits 1 when it counts nothing.** Verifying an ABSENCE is
+  exactly where this bites — `git log -1 --format=%B | grep -ciE
+  'co-authored-by|claude' && git push` prints the reassuring `0` and then
+  silently drops the push, because the successful verification is a
+  non-zero exit. The chain simply ends; nothing says a step was skipped,
+  and the missing effect is discovered later, if at all. Run an
+  absence check as its own command, or terminate it (`|| true`) when it
+  must stay in a chain — and treat any `&&` chain whose later steps
+  produced no output as a suspected short-circuit rather than a no-op.
 - **A gate run through a pipe reports the PIPE's exit code, not the
   gate's.** `make <gate> 2>&1 | tail -40` exits 0 because `tail` exited
   0 — the gate underneath may have failed, and the harness reports
@@ -479,6 +489,21 @@ check whose empty output read as "all covered").
   sentence ("the wiring hooks never import each other") the diff never
   went near. When a change alters an area's shape, re-prove the
   invariants that area's map asserts.
+- **A claim about an artifact your own tooling will PRODUCE is
+  measurable in seconds — produce it before you argue from it.** The
+  external-system rule below is about evidence you cannot reach; this is
+  its opposite and it is easier to get wrong, because the artifact does
+  not exist yet and the claim feels like a prediction rather than a
+  measurement. A design choice was put to the user partly on the grounds
+  that a real `git subtree split` history would show "a repository with
+  history" on the package page; the split, run locally later in the same
+  cycle, produced **7 commits on main and one at the release tag**, since
+  a split keeps only the commits that touched the subdirectory. The
+  decision survived on its other merits (stable shas, real ancestry,
+  fast-forward pushes) and the overstatement had to be corrected after
+  the fact. When an OPTION's selling point is a property of something a
+  command can generate now, generate it first — the cost is one command
+  and it moves the claim from prediction to measurement.
 - **A claim about an EXTERNAL system's behaviour has no grep that can
   falsify it — check it against the real thing, or do not write it.**
   The sweep discipline above all assumes the evidence is in the tree; a
