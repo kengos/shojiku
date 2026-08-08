@@ -8,7 +8,14 @@ name: CI
 #
 # Doc- and chore-only changes skip the whole gate: if every changed path
 # matches `paths-ignore`, no job runs. For a manual escape hatch on a commit
-# that does touch code, put `[skip ci]` in the commit message.
+# that does touch code, put `[skip ci]` in the commit message. (A marker can
+# only ever SKIP, never start: these filters are evaluated against the EVENT,
+# so a filtered-out workflow never runs and nothing is there to read one.)
+#
+# "No job runs" is not the same as "nothing is checked". A few of the paths
+# ignored here are read by the site — `docs/engine/**`, `CHANGELOG.md`,
+# `README.md` — so `site-docs.yml` runs `make verify:site` over exactly those,
+# with no Rust and no wasm. Anything else ignored here really is inert.
 on:
   # main takes no force pushes (repository ruleset), so every push to it
   # diffs against real history and starts a run. This stays as the manual

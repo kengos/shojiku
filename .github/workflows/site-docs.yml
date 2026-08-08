@@ -1,0 +1,75 @@
+name: Site (docs-only changes)
+
+# THE HOLE THIS FILLS. `ci.yml` skips its whole matrix when every changed path
+# matches its `paths-ignore` (`**/*.md`, `docs/**`, …), on the premise that
+# markdown cannot redden a gate. That premise is false for a few files,
+# because the site READS them:
+#
+#   docs/engine/**   projected onto /reference/ and into llms-full.txt, and
+#                    `make site` reads those files LIVE. What it asserts is
+#                    structural, not a snapshot: every page declares its
+#                    `reference:` front-matter, the page set and the demo set
+#                    correspond, and the link rewrites round-trip losslessly.
+#                    So ordinary prose edits pass (correctly), while adding a
+#                    page, dropping front-matter or writing a link the
+#                    projection cannot invert turns two suites red. Verified
+#                    by doing exactly that and watching it fail.
+#   CHANGELOG.md     `site/src/lib/wasmSource.ts` parses its `## [x.y.z]`
+#                    headings to decide which engine versions are RELEASED;
+#                    `make site-check` refuses a pin the changelog does not
+#                    list
+#   README.md        `site/scripts/refresh-data.ts` reads it for the generated
+#                    gallery section
+#
+# Two docs-only PRs in a row can therefore move `main` past a site gate that
+# nobody ran. That is not hypothetical: it happened, and the only thing that
+# caught it was a cycle re-running the gate locally after merging main in.
+#
+# WHY A SEPARATE WORKFLOW rather than narrowing ci.yml's `paths-ignore`.
+# Narrowing it makes every gotchas write-back — one per cycle — pay the full
+# ~31-job matrix for a paragraph. This runs ONE job that needs no Rust and no
+# wasm, on exactly the paths ci.yml cannot see.
+#
+# NOT A MARKER. A `[run-site]` in a commit message could not work: paths
+# filters are evaluated against the EVENT, so a filtered-out workflow never
+# starts and there is nothing running to read the message. Markers can only
+# ever SKIP (`[skip ci]`), never start.
+#
+# `site-build` is deliberately absent — it is the one step that needs the wasm
+# artifact, and Cloudflare Pages already builds the site on every PR including
+# the docs-only ones. That check is not this repo's `make site-build`, so it
+# proves the build rather than the target; the tsc/vitest/data half is what
+# nothing else was running.
+# The two path lists are duplicated rather than shared through a YAML anchor:
+# GitHub's workflow parser is not plain YAML and anchors are not something to
+# find out about from a run that silently did not fire. Keep them identical.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/engine/**'
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - '.github/workflows/site-docs.yml'
+  pull_request:
+    paths:
+      - 'docs/engine/**'
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - '.github/workflows/site-docs.yml'
+
+# A `site/**` change is NOT listed above on purpose: site/ is absent from
+# ci.yml's `paths-ignore`, so touching it already starts the full matrix and
+# its own `site` job. Listing it here would only run the same target twice.
+
+jobs:
+  site:
+    name: site (tsc / vitest / data check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # The same target a contributor runs, like every other job in this repo:
+      # `make verify:site` is `site` + `site-check`. Neither needs
+      # engine/wasm/pkg — the real-wasm suite loads the RELEASED build committed
+      # under site/.data/wasm — so this job builds no Rust at all.
+      - run: make verify:site
