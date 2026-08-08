@@ -1,0 +1,17 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: Everything above the break stays on page one.
+        style: { fontSize: 12 }
+      - type: page_break
+      - type: text
+        box: { w: "100%" }
+        text: And the next item starts a fresh page.
+        style: { fontSize: 12 }

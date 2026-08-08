@@ -62,6 +62,7 @@ The [hero banner](/) on this site was made through this loop.
 ## Feed the pages to an AI
 
 Every page on this site has a plain `.md` version. [/llms.txt](/llms.txt)
-is the table of contents, and [/llms-full.txt](/llms-full.txt) includes
-the reference index and the complete list of diagnostic codes. To teach
-an agent Shojiku, handing it that URL is enough.
+is the table of contents, and [/llms-full.txt](/llms-full.txt) carries the
+whole template reference — every feature page, not just the index and the
+diagnostic codes — so an agent asking about `flex` has it without a second
+fetch. To teach an agent Shojiku, handing it that URL is enough.

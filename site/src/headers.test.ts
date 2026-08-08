@@ -49,6 +49,13 @@ describe("_headers", () => {
 
   it("no CDN or Google-Fonts origin anywhere in the site source", () => {
     const dirs = ["src", ".vitepress/theme", "scripts", "public"];
+    // Build OUTPUT is not source. public/data, public/gallery, public/brand
+    // and the two llms files are written by assemble-data.ts, so including
+    // them made this sweep answer differently depending on whether a build
+    // had run — and llms-full.txt now inlines fonts.md, which DOCUMENTS the
+    // font-fetch allowlist (fonts.gstatic.com) in prose. None of it is a
+    // resource the site loads; the CSP guard is about what the page fetches.
+    const generated = /^public[/\\](data|gallery|brand)[/\\]|^public[/\\]llms(-full)?\.txt$/;
     const extraFiles = [".vitepress/config.mts", "gallery.data.ts", "vitest.config.ts", "package.json", "pnpm-workspace.yaml"];
     const files: string[] = [];
     const walk = (d: string): void => {
@@ -59,9 +66,13 @@ describe("_headers", () => {
     };
     for (const d of dirs) walk(d);
     const pages = readdirSync(join(ROOT, "site")).filter((f) => f.endsWith(".md"));
-    const all = [...files, ...extraFiles, ...pages, ...readdirSync(join(ROOT, "site", "ja")).map((f) => join("ja", f))];
+    // .md only on both sides: site/reference/ and site/ja/reference/ are
+    // generated projections of docs/engine/ (gitignored), and the ja listing
+    // read the directory itself before this filter existed.
+    const jaPages = readdirSync(join(ROOT, "site", "ja")).filter((f) => f.endsWith(".md"));
+    const all = [...files, ...extraFiles, ...pages, ...jaPages.map((f) => join("ja", f))];
     expect(all.length).toBeGreaterThan(30); // positive control: the sweep saw the tree
-    for (const f of all.filter((f) => !f.endsWith("headers.test.ts"))) {
+    for (const f of all.filter((f) => !f.endsWith("headers.test.ts") && !generated.test(f))) {
       const text = readFileSync(join(ROOT, "site", f), "utf8");
       expect(text, f).not.toMatch(/fonts\.gstatic|fonts\.googleapis|cdn\.jsdelivr|unpkg\.com|cdnjs/);
     }

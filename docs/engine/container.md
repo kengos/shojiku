@@ -1,3 +1,11 @@
+---
+reference:
+  group: item
+  keys: [container]
+  shapes: [ContainerItem]
+  summary: "An origin and a resolved size: children position, resolve `%`, and inherit against it."
+---
+
 # `type: container`
 
 A container establishes an origin and a resolved size: children position
@@ -41,6 +49,18 @@ properties. Containers nest up to `MAX_CONTAINER_DEPTH` (32).
   how two tables sit side by side in a `direction: row` container.
 - Containers keep **atom-unit page breaking** in a flow: a container
   that doesn't fit moves whole to the next page (no fragmentation).
+
+## Limitations
+
+- Nesting is capped at 32; a deeper subtree is skipped
+  (`container_depth_exceeded`).
+- The flow-only items do not work inside a container: `repeat`
+  (`repeat_in_container`), `repeat_flow` (`repeat_flow_in_container`) and
+  `page_break` (`page_break_in_container`) are skipped, and `page_number` is
+  band-only (`page_number_in_container`).
+- Content taller than a definite `h` warns (`container_overflow`) unless
+  `overflow: hidden` suppresses it — the content is not clipped by default.
+- `%` against an auto-height container is dropped (`percent_of_auto`).
 
 ## Diagnostics
 

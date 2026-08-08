@@ -1,3 +1,10 @@
+---
+reference:
+  group: item
+  keys: [ellipse, checkbox]
+  summary: "Choice marks drawn as vector paths — circling a printed option, or a checkbox."
+---
+
 # `type: ellipse` / `type: checkbox` — form marks
 
 Choice marks for real forms: circling a printed choice, a
@@ -156,6 +163,21 @@ cap-height square; that default is the metric size and ignores
 requires a size — an absent or non-positive one warns `mark_missing_size`
 and skips. A text-anchored `mark:` never takes a size (it auto-fits the
 glyphs).
+
+## Limitations
+
+- An `ellipse` needs a positive `box.w`/`box.h`; only a `checkbox` may omit
+  them and auto-size (`mark_missing_size`).
+- Per-side `borderWidth` is reduced to the top side
+  (`shape_border_sides_ignored`), and a radius is refused
+  (`border_radius_ignored`).
+- Text and box style keys are inert on a mark (`shape_style_ignored`).
+- An `equals`-less binding must target a boolean
+  (`mark_binding_not_boolean`, `mark_value_not_bool`). With `equals`, the
+  literal must sit inside the field's declared enum
+  (`mark_equals_not_declared`) and match the value's type
+  (`mark_equals_type_mismatch`).
+- Two shapes only. There is no radio, no cross, no tick-style key.
 
 ## Diagnostics
 

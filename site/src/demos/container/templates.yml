@@ -1,0 +1,20 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    items:
+      - type: container
+        box: { w: "100%", h: 110, padding: 10 }
+        style: { fontSize: 10, color: "#1a3c6e", borderWidth: 0.8, borderColor: "#1a3c6e" }
+        items:
+          - type: text
+            box: { w: "100%" }
+            text: Children inherit this container's style and resolve % against it.
+          - type: rect
+            box: { w: "50%", h: 30 }
+            style: { backgroundColor: "#f2f5fa" }
+          - type: text
+            box: { w: "100%" }
+            text: The rect above is 50% of the container's CONTENT box, not the page.

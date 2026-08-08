@@ -1,3 +1,11 @@
+---
+reference:
+  group: item
+  keys: [char_grid]
+  shapes: [CharGridSpec, KinsokuMode, Markup]
+  summary: "One character per cell: manuscript paper, practice sheets, and form entry boxes."
+---
+
 # `char_grid` — manuscript-paper / workbook / form character cells
 
 One character per cell in a fixed grid: manuscript paper (genkoyoshi),
@@ -250,6 +258,21 @@ Malformed markup (unclosed `《`, empty reading, no base, a reading over
 64 chars, dangling `|`) renders literally and warns
 `ruby_markup_invalid`. Interpolation runs first, so a `{key}` value can
 carry readings — only when the template opted in with `markup: aozora`.
+
+## Limitations
+
+- Outside a flow body — in a band, an absolute body, or a container — a
+  `char_grid` is a SINGLE sheet, and content past it is dropped
+  (`char_grid_overflow`).
+- 1..=4096 cells per sheet; a grid outside that range is clamped
+  (`char_grid_clamped`).
+- Only three aozora notes are acted on (sheet break, large writing,
+  placement). Anything else renders literally (`aozora_note_ignored`), and a
+  malformed note is refused (`ruby_markup_invalid`).
+- A large-writing scale past `min(columns, lines)`, or an indent past the
+  line, is clamped (`char_grid_markup_clamped`).
+- A cell size that is not positive and finite skips the item
+  (`invalid_cell_size`).
 
 ## Diagnostics
 

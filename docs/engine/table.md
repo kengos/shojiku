@@ -1,3 +1,11 @@
+---
+reference:
+  group: item
+  keys: [table]
+  shapes: [Column, ColumnType, RowSpec, RowConditionalStyle, HeaderGroup, TableHeaderSpec, EmptyBehavior]
+  summary: "A data-driven table: bound or container columns, spanning headers, conditional rows, row-by-row pagination."
+---
+
 # `type: table`
 
 A data-driven table: rows come from an array params key, and each column
@@ -294,6 +302,27 @@ box, so a click there falls through to the table fragment. A bounded
 (`box`-placed) table never paginates, so it
 is a single rectangle. An authored `id:` on the table or a column adds a
 stable lookup alias on top of the path (a group authors no `id:`).
+
+## Limitations
+
+- Not inside a cell. A `table` in a `repeat` cell, a `repeat_flow` card, or a
+  column's `cell:` is skipped (`table_in_cell`).
+- No body-cell spanning (colspan). `headerGroups` spans the HEADER only, and
+  a span past the column count is clamped (`header_group_span_clamped`); a
+  full-width banner row is expressed from the data with
+  `row.conditionalStyles` + `mergeEmptyCells`.
+- One grid stroke width — there is no thick-outer/thin-inner pair.
+- A column takes exactly one of `data`/`cell` (`column_content_conflict`,
+  `column_content_missing`), and `fit` on a non-image column is ignored
+  (`ignored_column_key`).
+- Outside a flow body a table is one BOUNDED block: the pagination keys warn
+  and do nothing (`table_pagination_key_ignored`).
+- Sized columns wider than the flow width warn (`table_too_wide`), and with
+  `autoPageBreak: false` an overflowing row warns (`row_overflow`).
+- `row.conditionalStyles` is capped at 16 entries
+  (`too_many_row_conditions`).
+- `cellPadding` does not inset a container cell — use `cell.box.padding` —
+  and a radius is refused on a table (`border_radius_ignored`).
 
 ## Diagnostics
 

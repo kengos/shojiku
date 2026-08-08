@@ -1,0 +1,22 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 10
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: Flow stacks items top-down with gap between them.
+        style: { fontSize: 12 }
+      - type: rect
+        box: { w: "100%", h: 24 }
+        style: { backgroundColor: "#f2f5fa" }
+      - type: text
+        box: { w: "100%" }
+        text: A short item above pulls everything below it up — "auto move up" is inherent, not a setting.
+        style: { fontSize: 10, lineHeight: 1.5 }
+      - type: rect
+        box: { w: "100%", h: 24 }
+        style: { backgroundColor: "#f2f5fa" }

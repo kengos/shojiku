@@ -1,0 +1,22 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    items:
+      - type: repeat
+        data: { key: tickets }
+        grid: { columns: 2, rows: 2, gap: 8 }
+        cell:
+          box: { h: 90, padding: 8 }
+          style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+          items:
+            - type: text
+              box: { w: "100%" }
+              data: { key: seat }
+              style: { fontSize: 14, fontWeight: bold, color: "#1a3c6e" }
+            - type: text
+              box: { w: "100%" }
+              data: { key: holder }
+              style: { fontSize: 10 }

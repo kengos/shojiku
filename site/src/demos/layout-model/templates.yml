@@ -1,0 +1,32 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+styles:
+  cap: { fontSize: 9, color: "#888888" }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: container
+        box: { w: "100%", direction: row, gap: 8 }
+        items:
+          - type: container
+            box: { flexBasis: 0, flexGrow: 1, h: 60, padding: 6 }
+            style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+            items:
+              - type: text
+                box: { w: "100%" }
+                text: parent origin
+                style: { fontSize: 10 }
+          - type: container
+            box: { flexBasis: 0, flexGrow: 1, h: 60, padding: 6 }
+            style: { borderWidth: 0.8, borderColor: "#a8674f" }
+            items:
+              - type: rect
+                box: { x: 8, y: 8, w: 40, h: 20 }
+                style: { backgroundColor: "#a8674f" }
+      - type: text
+        box: { w: "100%" }
+        styleNames: [cap]
+        text: Left child flows; the right one's x/y opt it out of flex into absolute placement. Both resolve to absolute pt in the same tree.

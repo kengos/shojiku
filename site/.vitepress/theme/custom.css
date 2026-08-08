@@ -122,3 +122,64 @@
   --vp-c-bg-soft: #1a2029;
   --vp-c-bg-alt: #1a2029;
 }
+
+/* --- the reference (/reference/**) ---
+   A projected repo file, so the chrome around it says so: the provenance
+   strip states which file the prose IS, and the `Generated` badge sits over
+   the sidebar — the one derived thing on the page. Both use the existing
+   --vp-c-* tokens, so the dark theme follows without a second declaration. */
+.rf-badge {
+  margin: 0 0 12px;
+  padding: 3px 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--vp-c-text-3);
+  background: var(--vp-c-bg-soft);
+}
+
+.rf-prov {
+  margin: 12px 0 24px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--sj-accent);
+  background: var(--vp-c-bg-soft);
+  font-size: 13px;
+}
+.rf-prov-line { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.rf-prov-gen { color: var(--vp-c-text-3); }
+.rf-prov-acts { margin: 8px 0 0; display: flex; gap: 8px; }
+.rf-prov-btn {
+  padding: 3px 10px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.rf-prov-btn:hover { border-color: var(--vp-c-brand-1); color: var(--vp-c-brand-1); }
+
+.rf-demo .live-grid { justify-content: center; padding: 12px; }
+.rf-demo .live-out img { max-width: 100%; height: auto; }
+
+.rf-gated {
+  padding: 14px;
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+}
+.rf-gated p { margin: 0 0 6px; }
+.rf-gated-keys code { margin-right: 6px; }
+
+/* The whole runnable document, one disclosure away — on the reference pages
+   and on /playground alike. */
+.rf-src { border-top: 1px solid var(--vp-c-divider); }
+.rf-src > summary {
+  padding: 8px 14px;
+  font-size: 12.5px;
+  color: var(--vp-c-text-3);
+  cursor: pointer;
+}
+.rf-src .pg-src { margin: 0; }

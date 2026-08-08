@@ -1,9 +1,12 @@
 <script setup lang="ts">
 // The playground block: typed knobs generate a small template (never a
-// string patch), the engine re-renders it, and the generated YAML is shown
-// beside the page — the spec and the pixels cannot diverge. Enum knobs are
-// segmented buttons (a bare <select> read as a text box in review).
+// string patch), the engine re-renders it, and the generated YAML is one
+// disclosure away — the spec and the pixels cannot diverge. The source has
+// always been the whole runnable file; collapsing it lets the rendered page
+// lead, and open it is still something you can save and render. Enum knobs
+// are segmented buttons (a bare <select> read as a text box in review).
 import { computed, onMounted, ref, watch } from "vue";
+import { useData } from "vitepress";
 import type { Diagnostic } from "../../../src/lib/engineClient.ts";
 import {
   clampFlexKnobs,
@@ -25,6 +28,9 @@ import {
 import { engine, japaneseLoaded, loadJapanese, pageUrl, render } from "../engine.ts";
 
 const props = defineProps<{ demo: "text" | "grid" | "flex" | "flexw" | "font" }>();
+
+const { lang } = useData();
+const srcLabel = computed(() => (lang.value === "ja" ? "この文書のソース" : "This document's source"));
 
 const text = ref({ ...TEXT_KNOB_DEFAULTS });
 const grid = ref({ ...GRID_KNOB_DEFAULTS });
@@ -153,7 +159,10 @@ onMounted(async () => {
             <input v-model.number="grid.cellSize" type="range" min="12" max="32" step="1" />
           </label>
         </div>
-        <pre class="pg-src"><code>{{ template }}</code></pre>
+        <details class="rf-src">
+          <summary>{{ srcLabel }}</summary>
+          <pre class="pg-src"><code>{{ template }}</code></pre>
+        </details>
       </div>
       <div class="live-out">
         <img v-if="img" :src="img" alt="The rendered demo page" />

@@ -1,0 +1,31 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+document:
+  title: Reference demo
+sections:
+  header:
+    height: 28
+    items:
+      - type: text
+        box: { x: 0, y: 6, w: "100%" }
+        text: A header band repeats on every page
+        style: { fontSize: 9, textAlign: center, color: "#1a3c6e" }
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: The body holds the content and paginates.
+        style: { fontSize: 12 }
+      - type: rect
+        box: { w: "100%", h: 0.8 }
+        style: { backgroundColor: "#1a3c6e" }
+  footer:
+    height: 24
+    items:
+      - type: text
+        box: { x: 0, y: 6, w: "100%" }
+        text: and so does a footer band
+        style: { fontSize: 9, textAlign: center, color: "#666666" }

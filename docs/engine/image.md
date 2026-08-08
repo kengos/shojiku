@@ -1,3 +1,11 @@
+---
+reference:
+  group: item
+  keys: [image]
+  shapes: [ImageFit]
+  summary: "A raster or SVG image from a template-time source or a params-bound value."
+---
+
 # `type: image`
 
 An image item. The source comes from `src` (template-time: a path under
@@ -90,6 +98,23 @@ shared asset (`dyn:<key>`, loaded once and uncounted against the
 per-element cap) — the shop logo on every ticket, without hard-coding a
 `src:` path.
 The host asset policy gates dynamic cell images by the image item's `id`.
+
+## Limitations
+
+- `box.w`/`box.h` are required — layout reserves the space before it knows
+  the source (`image_missing_size`).
+- Exactly one of `src`/`data` (`image_source_conflict` /
+  `image_source_missing`).
+- No network at render time: a remote URL source is refused
+  (`remote_asset_unsupported`).
+- A bundled path must stay under the assets root (`missing_asset`,
+  `assets_root_missing`, `asset_traversal`).
+- SVG is a SUBSET parser; constructs outside it leave the shape unpainted
+  (`svg_unsupported`).
+- Per-element cell images share a 1000-load cap across table columns and
+  `repeat`/`repeat_flow` cells (`cell_image_assets_capped`), and a
+  params-bound image can be refused by the host's asset policy
+  (`dynamic_image_denied`).
 
 ## Diagnostics
 

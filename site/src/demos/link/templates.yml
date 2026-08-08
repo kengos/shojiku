@@ -1,0 +1,24 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: The whole line is one annotation
+        link: { url: https://shojiku.pages.dev }
+        style: { fontSize: 12, color: "#1a3c6e", textDecoration: underline }
+      - type: text
+        box: { w: "100%" }
+        spans:
+          - { text: "or just " }
+          - { text: one span, link: { url: https://shojiku.pages.dev }, style: { color: "#1a3c6e", textDecoration: underline } }
+          - { text: " inside a sentence." }
+        style: { fontSize: 12 }
+      - type: text
+        box: { w: "100%" }
+        text: PNG previews have no annotation surface, so links are visible only in the PDF.
+        style: { fontSize: 9, color: "#888888" }

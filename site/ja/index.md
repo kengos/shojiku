@@ -60,7 +60,7 @@ result = client.generate("receipt-ja", params)
 open("receipt.pdf", "wb").write(result.artifact.bytes)
 ```
 
-テンプレートの書き方やできる表現は、[リファレンス](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md)（機能ごとに1ページ）と[チュートリアル](/ja/tutorials)を参考にしてください。テンプレート作成をAIに任せるためのスキルは[エージェント](/ja/agents)にあります。
+テンプレートの書き方やできる表現は、[リファレンス](/ja/reference/)（機能ごとに1ページ）と[チュートリアル](/ja/tutorials)を参考にしてください。テンプレート作成をAIに任せるためのスキルは[エージェント](/ja/agents)にあります。
 
 ## マルチテナントのSaaSで帳票を出す
 

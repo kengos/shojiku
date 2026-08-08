@@ -18,7 +18,7 @@ Styles are written almost exactly like CSS; the differences are of the
 `fontSize`, `lineHeight` and `letterSpacing` with the controls. The box
 height is computed from `fontSize × lineHeight`, and a fixed-height box
 lower than that raises a `text_overflow` warning. The
-[reference](https://github.com/kengos/shojiku/blob/main/docs/engine/text.md)
+[reference](/reference/text)
 describes this behavior; here you can verify it by moving the slider.
 
 <ClientOnly><PropertyPlayground demo="text" /></ClientOnly>
@@ -72,5 +72,5 @@ right-to-left columns. Cell size is set with `grid.cellSize`.
 
 This page holds only the representative properties that are easier to
 understand in motion. The full property list is in the
-[reference](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md)
+[reference](/reference/)
 (one page per feature).

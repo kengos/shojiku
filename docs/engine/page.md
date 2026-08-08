@@ -1,3 +1,12 @@
+---
+reference:
+  group: root
+  order: 2
+  keys: [page]
+  shapes: [PageSpec, PageSize, Orientation, PageMargin]
+  summary: "Sheet geometry: paper size, orientation, and the margin box every coordinate resolves against."
+---
+
 # `page` — size, orientation, margin
 
 The `page:` block fixes the sheet geometry for every page of the
@@ -45,6 +54,16 @@ the margin box. Consequences:
   `w: "100%"` (or 545.28) and a bottom-of-page footer item needs
   `y ≈ 791.89 − item height` (there is no footer-local origin —
   [page_number.md](page_number.md) shows the computed example).
+
+## Limitations
+
+- `orientation` is IGNORED on a custom `{ w, h }` size
+  (`orientation_ignored`) — express the orientation in the dimensions
+  instead, or the two swap each other back.
+- Margins that consume a page axis fall that axis back to 0
+  (`page_margin_too_large`).
+- One geometry per document. Size, orientation and margin are fixed for every
+  page; there is no per-section page setup.
 
 ## Diagnostics
 

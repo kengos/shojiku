@@ -1,3 +1,12 @@
+---
+reference:
+  group: definitions
+  order: 1
+  keys: [root, "property#types-and-format"]
+  shapes: [Definitions, Schema, SchemaType, EnumEntry, LabeledEnumValue, FormatVariant]
+  summary: "The data dictionary: the engineer-to-author seam that enriches validation and formatting."
+---
+
 # `definitions.yml` — the data dictionary
 
 Definitions describe the data a template binds: the engineer↔author
@@ -208,6 +217,22 @@ members (`MAX_ENUM_VALUES`) — labeled or bare.
 If a definitions file has **zero properties**, it defines no keys, so
 every template binding reports `unknown_data_key`. Validation surfaces
 the upstream cause once as `empty_definitions`.
+
+## Limitations
+
+- Definitions are not required to render. They enrich `validate`; a document
+  with none still produces the same PDF.
+- Params checks REPORT, they do not gate: a type, range, enum, length or
+  required violation warns (`params_type_mismatch`, `params_out_of_range`,
+  `params_enum_mismatch`, `params_length_out_of_range`,
+  `params_missing_required`) and the render continues.
+- A semantic `format` on a base type it does not apply to is ignored
+  (`definitions_format_ignored`), and labeled `enum` members on a field that
+  is not plain text render unlabeled (`definitions_enum_labels_ignored`).
+- A file that declares no properties makes every binding read as unknown
+  (`empty_definitions`).
+- `locale` and `currency` are no longer definitions keys — they live in
+  `defaults:`, and a stale copy is a located parse error (`parse_error`).
 
 ## Diagnostics
 

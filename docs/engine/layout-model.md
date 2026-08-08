@@ -1,3 +1,11 @@
+---
+reference:
+  group: concept
+  order: 4
+  keys: [layout-model]
+  summary: "How a template plus params becomes the resolved layout tree every backend draws."
+---
+
 # The layout model
 
 How `shojiku-layout` turns a template + params into the fully resolved
@@ -136,3 +144,15 @@ exhausted. Details: [text.md](text.md).
 
 The capability inventory and the reasoning behind each feature live in
 [features.md](features.md).
+
+## Limitations
+
+- The caps are hard: 500 pages (`page_overflow`), 32 levels of container
+  nesting (`container_depth_exceeded`), and ±1e6 pt on any resolved length
+  (`length_out_of_range`).
+- The second-placement pass is budgeted; past it the innermost children keep
+  their first placement (`reflow_budget_exhausted`).
+- The engine computes GEOMETRY, never data. No sums, no sorting, no
+  filtering: what the params carry is what the page shows.
+- Renderers never re-measure. Anything a backend would need to decide for
+  itself has to be decided here first.

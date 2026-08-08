@@ -1,3 +1,12 @@
+---
+reference:
+  group: concept
+  order: 1
+  keys: [length]
+  shapes: [Length]
+  summary: "Every geometry value: absolute units, `%`, `em`/`rem`, and where each has no basis."
+---
+
 # Lengths & units
 
 Every geometry value (`box` coordinates and sizes, min/max bounds,
@@ -75,6 +84,17 @@ against the placement box's width, `y` against its height) — see
 Capability keys: `length.physical`, `box.percent`, `length.em_rem`,
 `style.fontSize.length`, `style.letterSpacing.length`,
 `flow.gap.length`, `line.length`.
+
+## Limitations
+
+- `%` needs a definite basis. Against an auto axis the value is dropped
+  (`percent_of_auto`).
+- A resolved length past ±1e6 pt falls back to the key's default
+  (`length_out_of_range`).
+- Physical units are STRINGS (`"15mm"`); a bare number is always pt.
+- `page.margin` takes a bare pt number or a per-side map — a single
+  unit-bearing scalar (`margin: 15mm`) is refused.
+- There is no `calc()` and no arithmetic of any kind.
 
 ## See also
 

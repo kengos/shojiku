@@ -1,12 +1,29 @@
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { defineConfig } from "vitepress";
 import { headTags, isJapanese } from "../src/lib/seo.ts";
+import { readPage, REFERENCE_LOCALES, SOURCE_DIR } from "../src/lib/reference.ts";
+import { buildSidebar } from "../src/lib/referenceNav.ts";
 
-// The public site: nine nav pages plus the index, English canonical with a /ja
-// twin per page. Reference documentation is SOURCED in docs/ and this site
-// restates nothing. It is DECIDED that the reference is rendered here, but that
-// half is not built: there is no /reference/ route and the pages still link out
-// to the repository (docs/architecture.md § Where a doc paragraph goes is the
-// rule; docs/code-map/repo.md § site/ carries the rest).
+// The public site: ten nav pages plus the index, English canonical with a /ja
+// twin per page. Reference documentation is SOURCED in docs/engine/ and this
+// site restates nothing: `scripts/assemble-data.ts` PROJECTS those files into
+// site/reference/ (gitignored) and the sidebar below is derived from the same
+// files' front-matter crossed with the parser's key catalog, so neither is a
+// second copy anyone maintains (docs/architecture.md § Where a doc paragraph
+// goes is the rule; docs/code-map/repo.md § site/ carries the rest).
+
+const ROOT = join(import.meta.dirname, "..", "..");
+const CATALOG = JSON.parse(readFileSync(join(ROOT, "engine/authoring/reference/catalog.schema.json"), "utf8")) as unknown;
+const REFERENCE_PAGES = readdirSync(join(ROOT, SOURCE_DIR))
+  .filter((f) => f.endsWith(".md"))
+  .sort()
+  .map((f) => readPage(f.slice(0, -3), readFileSync(join(ROOT, SOURCE_DIR, f), "utf8")));
+
+// One sidebar per locale, keyed by the route prefix VitePress matches on.
+const REFERENCE_SIDEBAR = Object.fromEntries(
+  REFERENCE_LOCALES.map((l) => [l.base, buildSidebar(REFERENCE_PAGES, CATALOG, l.base)]),
+);
 
 // The origin the site is served from. It is baked into the sitemap's <loc>s,
 // every canonical and every social-card URL, so it moves the day a custom
@@ -56,8 +73,11 @@ export default defineConfig({
     );
     pageData.frontmatter.head = [...(pageData.frontmatter.head ?? []), ...tags];
   },
-  // src/ holds lib code + the llms preamble — never site pages.
-  srcExclude: ["src/**"],
+  // src/ holds lib code + the llms preamble — never site pages. public/ is
+  // static assets: it carries each reference page's own markdown (the strip's
+  // same-origin "Copy for AI" source), and VitePress would otherwise try to
+  // ROUTE those .md files and compile them as Vue.
+  srcExclude: ["src/**", "public/**"],
   lastUpdated: false,
   // /designer/ is not a VitePress page — the Designer app is merged into the
   // deployed output beside the site (one Pages project, path-mounted). This
@@ -77,6 +97,7 @@ export default defineConfig({
           { text: "Gallery", link: "/gallery", activeMatch: "^/gallery" },
           { text: "Tutorials", link: "/tutorials", activeMatch: "^/tutorials" },
           { text: "Playground", link: "/playground", activeMatch: "^/playground" },
+          { text: "Reference", link: "/reference/", activeMatch: "^/reference" },
           { text: "Compare", link: "/compare", activeMatch: "^/compare" },
           { text: "Agents", link: "/agents", activeMatch: "^/agents" },
           { text: "Languages", link: "/languages", activeMatch: "^/languages" },
@@ -95,6 +116,7 @@ export default defineConfig({
           { text: "ギャラリー", link: "/ja/gallery", activeMatch: "^/ja/gallery" },
           { text: "チュートリアル", link: "/ja/tutorials", activeMatch: "^/ja/tutorials" },
           { text: "プレイグラウンド", link: "/ja/playground", activeMatch: "^/ja/playground" },
+          { text: "リファレンス", link: "/ja/reference/", activeMatch: "^/ja/reference" },
           { text: "比較", link: "/ja/compare", activeMatch: "^/ja/compare" },
           { text: "エージェント", link: "/ja/agents", activeMatch: "^/ja/agents" },
           { text: "多言語", link: "/ja/languages", activeMatch: "^/ja/languages" },
@@ -106,6 +128,9 @@ export default defineConfig({
   },
 
   themeConfig: {
+    // Scoped to /reference/** by the route prefixes: every other page keeps
+    // the full-width pitch layout it had.
+    sidebar: REFERENCE_SIDEBAR,
     logo: "/brand/icon.png",
     socialLinks: [{ icon: "github", link: "https://github.com/kengos/shojiku" }],
     search: { provider: "local" },

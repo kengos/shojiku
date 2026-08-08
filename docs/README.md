@@ -28,7 +28,10 @@ unsettled rather than rejected, so it is worth proposing.
 - **Writing or fixing templates?** Start at [engine/](engine/README.md) —
   the template reference: one MDN-style page per feature (items, box
   model, styles, tables, repeats, …) with syntax, defaults, diagnostics,
-  and the render commands. It is the "what can I write?" surface, and
+  and the render commands. **To read rather than to edit, use
+  <https://shojiku.pages.dev/reference/>**: the same files, rendered with
+  a key-level sidebar and a live demo per page that renders in your
+  browser. These files stay the source — the site restates nothing. It is the "what can I write?" surface, and
   the source material for MCP tool responses. Two facts up front:
   **the GUI Designer is built but not yet publicly hosted** (templates
   are plain YAML files the Designer round-trips; the root README's

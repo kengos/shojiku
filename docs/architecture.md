@@ -303,26 +303,29 @@ renders the reader-facing half of it — alongside its own pitch pages —
 rather than keeping a second edition of it.
 
 This is the rule for where a paragraph is WRITTEN, and it is in force
-now. The rendering half is decided but **not yet built** — the site
-still links out to the repository, and `/reference/` does not resolve
-until it ships.
+now. The rendering half is **built** for `docs/engine/**`: `/reference/`
+and `/ja/reference/` resolve, and the site's own pages link there rather
+than out to the repository. The remaining projected pages are listed
+below and still leave for the repository.
 
 - **`docs/` is the source of every documentation page**, in English. No
   documentation page is authored on the site and nothing from `docs/` is
   restated there. The site's own pitch pages (concept, tutorials,
   compare, tips, …) are a different genre: they are written on the site,
   have no `docs/` counterpart, and this rule does not move them.
-- **The site is the reader-facing HOME**: the reference will be served
-  at `/reference/<page>`, generated at build time from
+- **The site is the reader-facing HOME**: the reference is served at
+  `/reference/<page>`, generated at build time from
   `docs/engine/<page>.md`, with the nav, search and locale switch a
   markdown blob on a git host cannot offer. The page stem is the same
   identifier the key catalog uses, so `/reference/<page>`,
   `shojiku://reference/<page>` and `docs/engine/<page>.md#<key>` name
   the same thing three ways ([agents/engine.md](agents/engine.md) § The
   key catalog).
-- **Which pages are projected.** Projected: `docs/engine/**`,
+- **Which pages are projected.** Projected: `docs/engine/**` (BUILT),
   `quickstart.md`, `architecture.md`, `migration-thinreports.md`,
-  `from-source.md`, `designer-mount.md`, `designer-hooks.md`. Never
+  `from-source.md`, `designer-mount.md`, `designer-hooks.md` (those six
+  are decided but not yet routed — links to them still leave for the
+  repository). Never
   projected: `docs/agents/**`, `docs/code-map/**`, `guidelines.md`,
   `make_issues.md` — contributor and AI material — and `README.md`,
   which is this set's own entrance in the repository and points AT the

@@ -1,3 +1,12 @@
+---
+reference:
+  group: root
+  order: 4
+  keys: [defaults, formats]
+  shapes: [TemplateDefaults, FormatDefaults, FormatRef, InlineFormat, NamedFormat, NamedFormatKind]
+  summary: "Document-wide presentation defaults and the named format registry — the CSS `:root` analog."
+---
+
 # Template defaults & the format registry
 
 Document-wide presentation defaults — the CSS-`:root` analog. Elements
@@ -63,6 +72,18 @@ maps.
 
 Capability keys: `template.defaults`, `template.defaults.document`
 (locale + currency), `template.formats`.
+
+## Limitations
+
+- A `formats:` entry that shadows a builtin variant name is ignored
+  (`reserved_format_name`), and the registry is capped at 256 entries
+  (`too_many_formats`).
+- Inline `{ pattern }` defaults apply to `date`/`datetime` only; on another
+  type the default form renders (`format_pattern_ignored`).
+- A variant name that exists in no pack renders the default form
+  (`unknown_format_variant`).
+- Defaults are PRESENTATION only. They never supply data, and a missing
+  bound value is still a missing value (`missing_data`).
 
 ## See also
 

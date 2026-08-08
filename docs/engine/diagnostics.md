@@ -1,3 +1,11 @@
+---
+reference:
+  group: concept
+  order: 5
+  keys: [diagnostics]
+  summary: "The complete registry of every code the engine can emit, with severity and meaning."
+---
+
 # Diagnostics reference
 
 Everything the engine wants to tell a human, a GUI, or an AI flows
@@ -221,6 +229,17 @@ inline:
 | `dynamic_image_denied` | params-bound image blocked by the asset policy |
 | `svg_unsupported` | SVG constructs outside the subset parser |
 | `cell_image_assets_capped` | per-element cell images (table columns + repeat/repeat_flow cells) over the shared 1000-load cap; the rest are skipped |
+
+## Limitations
+
+- Codes and argument keys are APPEND-ONLY: an existing code never changes
+  meaning, so a consumer that matches on one keeps working across engine
+  versions.
+- The engine does not translate. Messages are English and carry typed
+  arguments; rendering them in another language is the consumer's job.
+- A retired code stays listed and is emitted by nothing, rather than being
+  removed (`horizontal_overflow`, `vertical_style_ignored`) — a matcher
+  keyed on it must not start matching something else.
 
 ## See also
 

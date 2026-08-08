@@ -1,0 +1,20 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: ja-JP }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: 書けば、帳票になる。0123456789
+        style: { fontSize: 14 }
+      - type: text
+        box: { w: "100%" }
+        text: Shojiku AaBbCc 0123456789
+        style: { fontFamily: noto-sans-mono, fontSize: 14 }
+      - type: text
+        box: { w: "100%" }
+        text: The first line is the locale's default family; the second names a pack face.
+        style: { fontSize: 9, color: "#888888" }

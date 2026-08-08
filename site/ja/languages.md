@@ -80,7 +80,7 @@ shojiku render --templates templates.yml --params params.json \
 区切りの幅はパックが持つ数値なので、エンジンのアルゴリズムは言語を知りません。
 
 **タイ語の分かち書きと仏暦**：タイ語は単語のあいだに空白を置きません。
-折り返す場所は単語分割器が決めます([詳細](https://github.com/kengos/shojiku/blob/main/docs/engine/text.md))。
+折り返す場所は単語分割器が決めます([詳細](/ja/reference/text))。
 日付は仏暦で入り、2026 年は 2569 年になります。
 西暦で出したいときは日付の書式に `gregorian` を指定します。
 

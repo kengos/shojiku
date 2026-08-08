@@ -1,0 +1,24 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  footer:
+    height: 24
+    items:
+      - type: page_number
+        box: { x: 0, y: 6, w: "100%" }
+        format: "Page {page} of {pages}"
+        style: { fontSize: 9, textAlign: center, color: "#666666" }
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: page_number is band-only — the page count is known at assembly.
+        style: { fontSize: 11 }
+      - type: page_break
+      - type: text
+        box: { w: "100%" }
+        text: The second page carries the same footer.
+        style: { fontSize: 11 }

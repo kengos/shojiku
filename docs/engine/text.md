@@ -1,3 +1,11 @@
+---
+reference:
+  group: item
+  keys: [text]
+  shapes: [Span, TextMark, RubyPair]
+  summary: "Static, interpolated, or bound text — inline spans, ruby, wrapping, and overflow."
+---
+
 # `type: text`
 
 A text item draws static, interpolated, or bound text. Content comes
@@ -315,6 +323,24 @@ fragment (so `verticalAlign: bottom` keeps pushing the text down),
 the slack below it trails the LAST. The fragment heights therefore still
 sum to the reserved height. With no `minHeight` there is no slack and
 every fragment is exactly its lines.
+
+## Limitations
+
+- Exactly one of `text`/`data`/`spans`. None set warns
+  (`empty_text_item`), and `spans` beside the others wins
+  (`span_content_conflict`).
+- `textOverflow: shrink`/`ellipsis` needs a definite `h`, and does NOT work
+  on a rich `spans` block — it falls back to visible
+  (`span_overflow_unsupported`). Past the 4 pt shrink floor the text
+  overflows and warns (`text_overflow`).
+- 256 spans (`too_many_spans`) and 256 ruby entries
+  (`too_many_ruby_entries`) per item. A ruby `base` that never occurs in the
+  drawn text is skipped (`ruby_base_not_found`), an entry over 64 characters
+  is skipped (`ruby_entry_too_long`), and a reading that overflows its base
+  even at the 4 pt floor warns (`ruby_overflow`).
+- Block-level style keys on a span are inert (`ignored_span_style`).
+- No hyphenation, and no justified alignment: `textAlign` is `left`,
+  `center` or `right`.
 
 ## Diagnostics
 

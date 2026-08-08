@@ -1,3 +1,11 @@
+---
+reference:
+  group: layout
+  order: 1
+  keys: [flow]
+  summary: "A flow body stacks items top-down and paginates when content passes the region bottom."
+---
+
 # Flow — stacking & pagination
 
 A `type: flow` body stacks items top-down with `gap` between them and
@@ -63,6 +71,16 @@ flow body — in a band, absolute body, or container it renders as one
 **bounded** block instead ([table.md](table.md) § Placement with
 `box`); the one place a table cannot go is inside a `repeat` /
 `repeat_flow` / `cell:` cell (`table_in_cell`).
+
+## Limitations
+
+- An item that cannot be split and is taller than the region overflows rather
+  than shrinking (`section_overflow`).
+- Layout stops at 500 pages and truncates the output (`page_overflow`).
+- Only a flow body paginates. An absolute body is a single page, and a band
+  repeats rather than continuing.
+- Blank pages are never generated: a `page_break` with nothing after it
+  produces no page.
 
 ## Diagnostics
 

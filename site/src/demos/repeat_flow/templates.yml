@@ -1,0 +1,22 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    items:
+      - type: repeat_flow
+        data: { key: cards }
+        gap: 8
+        item:
+          box: { w: "100%", padding: 8 }
+          style: { borderWidth: 0.8, borderColor: "#cccccc" }
+          items:
+            - type: text
+              box: { w: "100%" }
+              data: { key: title }
+              style: { fontSize: 12, fontWeight: bold, color: "#1a3c6e" }
+            - type: text
+              box: { w: "100%" }
+              data: { key: body }
+              style: { fontSize: 10, lineHeight: 1.5 }

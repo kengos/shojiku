@@ -1,0 +1,22 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 10
+    items:
+      - type: container
+        box: { w: "100%", h: 70, padding: 12 }
+        style: { borderWidth: 0.8, borderColor: "#1a3c6e" }
+        items:
+          - type: rect
+            box: { w: "100%", h: 46 }
+            style: { backgroundColor: "#f2f5fa" }
+      - type: text
+        box: { w: "70%", margin: { left: 40 } }
+        text: padding insets the content; margin spaces the box within its parent.
+        style: { fontSize: 10 }
+      - type: rect
+        box: { w: "100%", h: 30, maxWidth: 160 }
+        style: { backgroundColor: "#a8674f" }

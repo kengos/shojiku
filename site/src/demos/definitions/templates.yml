@@ -1,0 +1,20 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 6
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: "Customer: {customer.name}"
+        style: { fontSize: 12 }
+      - type: text
+        box: { w: "100%" }
+        text: "Placed {order.placedAt} — {order.total:currency}"
+        style: { fontSize: 11 }
+      - type: text
+        box: { w: "100%" }
+        text: definitions.yml is not needed to render; it is what makes validate able to answer.
+        style: { fontSize: 9, color: "#888888" }

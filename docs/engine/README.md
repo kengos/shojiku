@@ -1,3 +1,10 @@
+---
+reference:
+  group: index
+  order: 1
+  summary: "The reference index: every authorable key, one page per feature."
+---
+
 # Shojiku template reference
 
 The complete authorable surface of the Shojiku engine, one page per
@@ -185,6 +192,31 @@ Not inherited: `verticalAlign` `backgroundColor` `borderWidth`
 `textDecoration`
 `opacity`.
 Full table with defaults and value sets: [style.md](style.md).
+
+## Not supported yet
+
+The cross-cutting list, gathered from the per-feature pages. Where a
+diagnostic reports the restriction, the entry names its code, so the claim is
+checkable against [diagnostics.md](diagnostics.md); a structural limit that
+nothing reports carries a dash instead. A restriction stated here is stated on
+its own page's **Limitations** section too.
+
+| Not supported | Reported as |
+| --- | --- |
+| A `table` inside a `repeat` cell, a `repeat_flow` card, or a table column's `cell:` | `table_in_cell` |
+| Body-cell spanning (colspan). `headerGroups` spans the header row only | `header_group_span_clamped` |
+| `repeat` / `repeat_flow` / `page_break` outside a flow body | `repeat_in_band`, `repeat_flow_in_container`, `page_break_in_absolute_body`, … |
+| `page_number` outside a band | `page_number_in_body`, `page_number_in_container` |
+| A text `mark:` in vertical writing | `vertical_text_unsupported` |
+| `textOverflow: shrink` / `ellipsis` on a rich `spans` block | `span_overflow_unsupported` |
+| Per-corner border radii; any radius on a per-side or `double` border, a `table`, or a form mark | `border_radius_ignored` |
+| SVG constructs outside the subset parser | `svg_unsupported` |
+| Remote image sources — the render path has no network I/O, by design | `remote_asset_unsupported` |
+| Flex wrapping: a row is one line | `flex_row_overflow` |
+| Justified text and hyphenation (`textAlign` is `left`/`center`/`right`) | — |
+| Barcode symbologies other than QR | — |
+| Arithmetic in bindings: totals and tax are computed by the host | — |
+| Per-section page geometry: one `page` block per document | — |
 
 ## Reading order for new authors
 

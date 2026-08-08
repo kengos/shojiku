@@ -1,3 +1,11 @@
+---
+reference:
+  group: item
+  keys: [line]
+  shapes: [LineStyle, PointSpec]
+  summary: "A stroked segment between two points — no box, its own style shape."
+---
+
 # `type: line`
 
 A straight stroked segment between two points. A line has no `box`;
@@ -87,6 +95,21 @@ In the `inspect` box index a line reports its **endpoint bounding box**
 
 Capability keys: `line`, `line.style`, `line.length` (the `Length`
 endpoints — an older engine rejects the string form on `from`/`to`).
+
+## Limitations
+
+- A `line` has no `box`: no margin, no padding, no min/max, and it never
+  participates in flex or grid. It always resolves against its parent's
+  content box.
+- Its `style` is its OWN shape — `width`, `color`, `style`, `opacity` — not
+  the full style property set.
+- A width that is negative or non-finite falls back to 1 pt
+  (`invalid_line_width`).
+- `double` becomes two parallel strokes offset along the segment's normal;
+  there is no other multi-stroke form, and a zero-length line stays one
+  stroke.
+- In a band or an absolute body, endpoints past the sheet warn
+  (`sheet_overflow`).
 
 ## See also
 

@@ -2,6 +2,9 @@ node_modules/
 .vitepress/dist/
 .vitepress/cache/
 coverage/
+# the projected reference (assemble-data.ts) — sourced in docs/engine/
+reference/
+ja/reference/
 # build-time generated public areas (assemble-data.ts)
 public/data/
 public/gallery/

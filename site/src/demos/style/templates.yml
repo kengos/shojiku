@@ -1,0 +1,25 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+styles:
+  heading: { fontSize: 16, fontWeight: bold, color: "#1a3c6e" }
+  muted: { fontSize: 9, color: "#888888" }
+defaults:
+  style: { fontSize: 11, lineHeight: 1.5 }
+sections:
+  body:
+    type: flow
+    gap: 6
+    items:
+      - type: text
+        box: { w: "100%" }
+        styleNames: [heading]
+        text: Named styles resolve below inline ones
+      - type: text
+        box: { w: "100%" }
+        styleNames: [heading]
+        style: { color: "#a8674f" }
+        text: the same named style, with color overridden inline
+      - type: text
+        box: { w: "100%" }
+        styleNames: [muted]
+        text: fontSize and lineHeight come from defaults.style unless a property overrides them.

@@ -112,7 +112,7 @@ draw it. There is no step where you hand the engine the bytes.
 Paths resolve against the template file's directory; the CLI can move
 the root with `--assets-dir`. `data:` URIs, inline SVG and params-bound
 dynamic images are also available. The exact rules are in
-[image.md](https://github.com/kengos/shojiku/blob/main/docs/engine/image.md).
+[image.md](/reference/image).
 
 ## 4. Use a font beyond the bundled packs
 
@@ -195,7 +195,7 @@ in section 2's Python example). The environment variables are
 flags are `--font-dir` / `--locale-dir`. The Dockerfiles in the next
 section `COPY packs/` wholesale, so your own pack rides the same line.
 The exact rules (auto-fetch via pinned `url:`, fallback chains) are in
-[fonts.md](https://github.com/kengos/shojiku/blob/main/docs/engine/fonts.md).
+[fonts.md](/reference/fonts).
 
 ## 5. Ship it (the Dockerfile recipes)
 
@@ -243,6 +243,6 @@ store is never consulted.
 
 ## Next
 
-- The template language itself: the [reference](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md) — 32 pages, one per feature
+- The template language itself: the [reference](/reference/) — 31 pages, one per feature
 - To feel how it behaves: the [playground](/playground)
 - To hand the writing to an AI: the [agents](/agents) page

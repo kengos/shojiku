@@ -1,3 +1,10 @@
+---
+reference:
+  group: item
+  keys: [repeat_flow]
+  summary: "One auto-height card per array element, in normal flow — a vertical card list."
+---
+
 # `type: repeat_flow` — flow repeat (card list)
 
 A `repeat_flow` lays **one auto-height card per element** of a `data`
@@ -59,6 +66,18 @@ paginate card-by-card. Flow-body only. Unknown keys are parse errors.
   carries the item's `path` and its authored `id:`. An empty array (or
   truncation before the first card) leaves the path with zero placements —
   a box-index consumer must tolerate that.
+
+## Limitations
+
+- Flow bodies only (`repeat_flow_in_absolute_body`, `repeat_flow_in_band`,
+  `repeat_flow_in_container`).
+- One card per row. There is no grid — a fixed n-up sheet is
+  [`repeat`](repeat.md).
+- The per-element sub-template is `item:`, not `cell:`; writing `cell:` is a
+  parse error (`parse_error`).
+- `table` is unsupported inside a card (`table_in_cell`).
+- A single card taller than the flow region overflows rather than splitting
+  (`section_overflow`).
 
 ## Diagnostics
 

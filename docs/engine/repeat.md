@@ -1,3 +1,11 @@
+---
+reference:
+  group: item
+  keys: [repeat]
+  shapes: [GridSpec, GridDirection, BreakBefore]
+  summary: "Imposition / n-up: N data-scoped copies of one cell laid onto each page."
+---
+
 # `type: repeat` — imposition / n-up
 
 A `repeat` lays **N instances of a `cell`** onto each page, one per
@@ -98,6 +106,21 @@ once (no per-instance field renaming). Flow-body only.
   (empty/missing data, or truncation before the first cell) means no
   fragment for that path — a box-index consumer must tolerate a path with
   zero placements.
+
+## Limitations
+
+- Flow bodies only (`repeat_in_absolute_body`, `repeat_in_band`,
+  `repeat_in_container`).
+- 64 cells per page maximum; a larger grid (or a zero axis) is clamped
+  (`imposition_grid_clamped`).
+- A cell is a FIXED grid slot: it does not grow with its content. A card that
+  should size to its own text is [`repeat_flow`](repeat_flow.md).
+- `table` and `page_number` are unsupported inside a cell (`table_in_cell`,
+  `page_number_in_container`).
+- `cutMarks` with no room outside the grid omit those ticks
+  (`cut_marks_clipped`).
+- Per-element cell images share the 1000-load cap
+  (`cell_image_assets_capped`).
 
 ## Diagnostics
 

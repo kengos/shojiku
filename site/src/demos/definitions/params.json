@@ -1,0 +1,9 @@
+{
+  "customer": {
+    "name": "Shojikudo Trading"
+  },
+  "order": {
+    "placedAt": "2026-02-14",
+    "total": 315000
+  }
+}

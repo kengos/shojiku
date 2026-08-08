@@ -1,0 +1,16 @@
+{
+  "cards": [
+    {
+      "title": "Auto height",
+      "body": "Each card is as tall as its own content — the short one stays short."
+    },
+    {
+      "title": "In normal flow",
+      "body": "Cards stack with gap between them and paginate like any other flow item, so a long list simply continues on the next page instead of being clipped to a grid slot."
+    },
+    {
+      "title": "Data-scoped",
+      "body": "Bindings inside the card read the element, not the document."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 10
+    items:
+      - type: container
+        box: { w: "100%", direction: row, gap: 8 }
+        items:
+          - type: container
+            box: { h: 40, flexBasis: 0, flexGrow: 1 }
+            style: { backgroundColor: "#1a3c6e" }
+            items: []
+          - type: container
+            box: { h: 40, flexBasis: 0, flexGrow: 1 }
+            style: { backgroundColor: "#1a3c6e" }
+            items: []
+          - type: container
+            box: { h: 40, flexBasis: 0, flexGrow: 1 }
+            style: { backgroundColor: "#1a3c6e" }
+            items: []
+      - type: text
+        box: { w: "100%" }
+        text: "flexBasis: 0 with flexGrow: 1 is CSS's flex: 1 — the even split."
+        style: { fontSize: 10 }
+      - type: container
+        box: { w: "100%", direction: row, gap: 8 }
+        items:
+          - type: container
+            box: { w: 90, h: 40 }
+            style: { backgroundColor: "#a8674f" }
+            items: []
+          - type: container
+            box: { h: 40, flexGrow: 1 }
+            style: { backgroundColor: "#f2f5fa" }
+            items: []
+      - type: text
+        box: { w: "100%" }
+        text: "A fixed width beside flexGrow: 1 — the second child takes whatever is left."
+        style: { fontSize: 10 }

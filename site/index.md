@@ -59,7 +59,7 @@ result = client.generate("receipt-ja", params)
 open("receipt.pdf", "wb").write(result.artifact.bytes)
 ```
 
-For how templates are written and what they can express, see the [reference](https://github.com/kengos/shojiku/blob/main/docs/engine/README.md) (one page per feature) and the [tutorials](/tutorials). The skills for handing the writing to an AI are on the [agents](/agents) page.
+For how templates are written and what they can express, see the [reference](/reference/) (one page per feature) and the [tutorials](/tutorials). The skills for handing the writing to an AI are on the [agents](/agents) page.
 
 ## Documents in a multi-tenant SaaS
 

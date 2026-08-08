@@ -1,3 +1,12 @@
+---
+reference:
+  group: root
+  order: 1
+  keys: [template]
+  shapes: [Template, Version, Sections, Band, Repeat, Body, BoxSpec, Item]
+  summary: "The file's own shape: top-level keys, the header/body/footer sections, and what every item shares."
+---
+
 # Template file structure
 
 A template (`templates.yml`, YAML or JSON) describes one document: the
@@ -91,6 +100,17 @@ authored length units are preserved (`80mm` stays `80mm`), and named
 styles stay named. Unknown keys anywhere in the template — every wire
 struct rejects them — are parse **errors**, not silent no-ops: a typo
 cannot mean "unset".
+
+## Limitations
+
+- Unknown keys anywhere are parse ERRORS, not silent no-ops (`parse_error`):
+  a typo cannot mean "unset", in any wire struct.
+- `.nan`, `.inf` and overflowing numbers are refused anywhere in the document
+  (`non_finite_number`).
+- One `body`, and `header`/`footer` are the only bands. There is no third
+  section and no per-page section switch.
+- `version` is author-owned: the engine records it and interprets nothing.
+- There is no include/import. A template is one file.
 
 ## See also
 
