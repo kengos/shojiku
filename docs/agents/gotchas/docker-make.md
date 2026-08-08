@@ -490,6 +490,18 @@ download the `wasm-pkg` artifact) — it bites the human who runs
 `site-build` and then a gate in the same tree. Re-run `make wasm`, or
 keep a copy, before trusting a later `make site`.
 
+Do not expect the `site` recipe to save you, and do not let reading it
+reassure you: its wasm step is `test -d engine/wasm/pkg || $(MAKE) wasm`,
+which self-heals exactly one case — the directory being ABSENT (a fresh
+worktree) — and is blind by construction to the directory being STALE,
+which is the state `site-build` leaves behind. A reader who checks the
+recipe sees "it rebuilds wasm when needed" and skips the manual `make
+wasm`; that reading is correct for the absent case and wrong for this
+one, and this one is the case that reds the gate. The safe loop order in
+a tree that runs both is: `make site` / `verify:site` first, `site-build`
+LAST — and after ANY `site-build`, the next site gate is preceded by
+`make wasm`, unconditionally, without consulting the recipe.
+
 Since the reference demos landed there is also a LOUD tell, and it reads
 like broken content rather than a stale build: `make site` fails with five
 `referenceDemos` cases reporting wire parse errors (``unknown field
