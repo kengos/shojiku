@@ -41,12 +41,12 @@ cat > "$WORK/pom.xml" <<XML
     <dependency>
       <groupId>jp.kengos</groupId>
       <artifactId>shojiku</artifactId>
-      <version>${SHOJIKU_VERSION:-0.1.0}</version>
+      <version>${SHOJIKU_VERSION:-0.2.0}</version>
     </dependency>
     <dependency>
       <groupId>jp.kengos</groupId>
       <artifactId>shojiku</artifactId>
-      <version>${SHOJIKU_VERSION:-0.1.0}</version>
+      <version>${SHOJIKU_VERSION:-0.2.0}</version>
       <classifier>$CLASSIFIER</classifier>
     </dependency>
   </dependencies>

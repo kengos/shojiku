@@ -16,7 +16,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <PackageId>Shojiku</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>kengos</Authors>
     <Description>Deterministic PDF documents from a YAML template plus your data. Bindings for the Shojiku document engine.</Description>
     <PackageTags>pdf;invoice;receipt;template;document</PackageTags>

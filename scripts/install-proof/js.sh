@@ -37,7 +37,7 @@ cp "$NAPI_ADDON" "$WORK/platform/shojiku.node"
 cat > "$WORK/platform/package.json" <<JSON
 {
   "name": "$PLATFORM_PKG",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shojiku engine addon (install proof build)",
   "files": ["shojiku.node"],
   "license": "MIT"

@@ -38,7 +38,7 @@ docker run --rm -v "$WORK:/w" -w /w/src "$GATE_IMG" sh -euc '
 mkdir -p "$WORK/cj/native"
 cp "$CAPI_LIB" "$WORK/cj/native/"
 docker run --rm -v "$WORK:/w" -w /w/cj "$GATE_IMG" \
-  jar cf "/w/shojiku-0.1.0-$PLATFORM.jar" native
+  jar cf "/w/shojiku-0.2.0-$PLATFORM.jar" native
 
 cat > "$WORK/Proof.java" <<'JAVA'
 import java.nio.file.Files;
@@ -75,7 +75,7 @@ JAVA
 docker run --rm -v "$WORK:/w" \
   -v "$ROOT/examples/business:/ex:ro" -v "$ROOT/packs:/packs:ro" \
   "$IMG" sh -euc '
-  CP="$(ls /w/shojiku-0.1.0.jar):/w/shojiku-0.1.0-'"$PLATFORM"'.jar:/w/jna.jar"
+  CP="$(ls /w/shojiku-0.2.0.jar):/w/shojiku-0.2.0-'"$PLATFORM"'.jar:/w/jna.jar"
   javac -cp "$CP" -d /w/classes /w/Proof.java
   java -cp "/w/classes:$CP" Proof'
 

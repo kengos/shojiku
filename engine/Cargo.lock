@@ -1527,7 +1527,7 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "shojiku-authoring"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "schemars",
  "serde",
@@ -1543,7 +1543,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-capi"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.23.1",
  "serde",
@@ -1561,7 +1561,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.23.1",
  "clap",
@@ -1587,7 +1587,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "schemars",
  "serde",
@@ -1600,7 +1600,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-diagnostics"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -1608,7 +1608,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-fetch"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "rustls",
  "rustls-native-certs",
@@ -1622,7 +1622,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-formatter"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -1635,7 +1635,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-image"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.23.1",
  "gif",
@@ -1655,7 +1655,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-layout"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "harfrust",
  "icu_segmenter",
@@ -1674,7 +1674,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-layout-box"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde_yaml",
  "shojiku-core",
@@ -1683,7 +1683,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-mcp"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.23.1",
  "clap",
@@ -1700,7 +1700,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-napi"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -1712,7 +1712,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-render-pdf"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.23.1",
  "krilla",
@@ -1726,7 +1726,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-render-png"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.23.1",
  "gif",
@@ -1743,7 +1743,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-signing"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cms",
  "der",
@@ -1756,7 +1756,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-verify"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cms",
  "der",
@@ -1770,7 +1770,7 @@ dependencies = [
 
 [[package]]
 name = "shojiku-wasm"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "js-sys",
  "serde",

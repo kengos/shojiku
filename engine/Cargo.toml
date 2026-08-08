@@ -27,7 +27,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT OR Apache-2.0 OR BSD-3-Clause"
 publish = true
@@ -189,19 +189,19 @@ rpassword = "7"
 # is duplicated away from [workspace.package] — cargo has no
 # `version.workspace` inside a dependency spec — so a version bump has to
 # touch both, and `cargo publish --workspace` fails loudly if they drift.
-shojiku-core = { path = "core", version = "0.1.0" }
-shojiku-diagnostics = { path = "diagnostics", version = "0.1.0" }
-shojiku-formatter = { path = "formatter", version = "0.1.0" }
-shojiku-image = { path = "image", version = "0.1.0" }
-shojiku-layout-box = { path = "layout-box", version = "0.1.0" }
-shojiku-layout = { path = "layout", version = "0.1.0" }
-shojiku-render-pdf = { path = "render-pdf", version = "0.1.0" }
-shojiku-render-png = { path = "render-png", version = "0.1.0" }
-shojiku-authoring = { path = "authoring", version = "0.1.0" }
-shojiku-fetch = { path = "fetch", version = "0.1.0" }
-shojiku-signing = { path = "signing", version = "0.1.0" }
-shojiku-verify = { path = "verify", version = "0.1.0" }
-shojiku-capi = { path = "capi", version = "0.1.0" }
+shojiku-core = { path = "core", version = "0.2.0" }
+shojiku-diagnostics = { path = "diagnostics", version = "0.2.0" }
+shojiku-formatter = { path = "formatter", version = "0.2.0" }
+shojiku-image = { path = "image", version = "0.2.0" }
+shojiku-layout-box = { path = "layout-box", version = "0.2.0" }
+shojiku-layout = { path = "layout", version = "0.2.0" }
+shojiku-render-pdf = { path = "render-pdf", version = "0.2.0" }
+shojiku-render-png = { path = "render-png", version = "0.2.0" }
+shojiku-authoring = { path = "authoring", version = "0.2.0" }
+shojiku-fetch = { path = "fetch", version = "0.2.0" }
+shojiku-signing = { path = "signing", version = "0.2.0" }
+shojiku-verify = { path = "verify", version = "0.2.0" }
+shojiku-capi = { path = "capi", version = "0.2.0" }
 
 # WASM boundary (shojiku-wasm) — target-gated to wasm32, so no host build
 # pulls them. wasm-bindgen is pinned EXACTLY: the wasm-bindgen CLI that

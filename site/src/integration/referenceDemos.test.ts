@@ -95,15 +95,21 @@ describe("the reference demos cover the reference", () => {
     expect(names).toEqual(pages);
   });
 
-  it("exercises both engine paths", () => {
+  it("keeps the served engine live, and no gate outlives its release", () => {
     // The per-demo `which` is computed from the declarations, so asserting
-    // it per demo is definitional. What is falsifiable is that neither
-    // branch has gone dead: a release that re-pins the served engine empties
-    // the gated set, and this is where that is noticed rather than in a
-    // reader's browser.
+    // it per demo is definitional. Two things are falsifiable. An all-gated
+    // set is a stale or broken pin, never new syntax — the served engine
+    // must run something. And a `requires` the served engine satisfies is a
+    // leftover: right after a re-pin the gated set legitimately empties, and
+    // the release that re-pinned is supposed to delete those declarations,
+    // or the page degrades to a static listing under a notice that lies.
     const gated = names.filter((n) => !runnableHere(requiredCapabilities(load(n).expect), keys.served));
-    expect(gated.length, "no demo is gated — did a re-pin land? drop the now-unneeded `requires`").toBeGreaterThan(0);
     expect(names.length - gated.length).toBeGreaterThan(0);
+    const overDeclared = names.filter((n) => {
+      const need = requiredCapabilities(load(n).expect);
+      return need.length > 0 && runnableHere(need, keys.served);
+    });
+    expect(overDeclared, "these demos declare `requires` the served engine satisfies — a re-pin landed; drop them").toEqual([]);
   });
 
   it("declares only capability keys HEAD actually publishes", () => {
@@ -118,7 +124,9 @@ describe("the reference demos cover the reference", () => {
       declared.filter((k) => !keys.head.includes(k)),
       "engine/wasm/pkg does not publish these keys — if `make site-build` ran since the last `make wasm`, it replaced pkg with the RELEASED engine; re-run `make wasm`",
     ).toEqual([]);
-    expect(declared.length).toBeGreaterThan(0);
+    // No lower bound on declared.length: right after a re-pin no demo
+    // declares anything, and that is the healthy state until a page
+    // documents syntax newer than the pinned engine again.
   });
 });
 

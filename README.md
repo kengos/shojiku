@@ -190,8 +190,8 @@ The CLI archives are a plain binary per platform plus one shared archive
 of the fonts and locale packs, used like this:
 
 ```bash
-tar xzf shojiku-0.1.0-darwin-arm64.tar.gz
-tar xzf shojiku-0.1.0-packs.tar.gz
+tar xzf shojiku-0.2.0-darwin-arm64.tar.gz
+tar xzf shojiku-0.2.0-packs.tar.gz
 ./shojiku render --templates templates.yml --params params.json --output out.pdf
 ```
 

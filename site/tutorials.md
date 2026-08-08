@@ -52,12 +52,12 @@ dotnet add package Shojiku
 <dependency>
   <groupId>jp.kengos</groupId>
   <artifactId>shojiku</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dependency>
 <dependency>
   <groupId>jp.kengos</groupId>
   <artifactId>shojiku</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <classifier>linux-x64</classifier>
 </dependency>
 ```
@@ -83,8 +83,8 @@ the templates. The release tarball is the easiest way to get the full
 set, and you can delete the packs for locales you do not use.
 
 ```bash
-wget https://github.com/kengos/shojiku/releases/download/v0.1.0/shojiku-0.1.0-packs.tar.gz
-tar xzf shojiku-0.1.0-packs.tar.gz   # unpacks packs/fonts and packs/locale
+wget https://github.com/kengos/shojiku/releases/download/v0.2.0/shojiku-0.2.0-packs.tar.gz
+tar xzf shojiku-0.2.0-packs.tar.gz   # unpacks packs/fonts and packs/locale
 ```
 
 ## 3. Use your own images

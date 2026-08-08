@@ -44,12 +44,12 @@ dotnet add package Shojiku
 <dependency>
   <groupId>jp.kengos</groupId>
   <artifactId>shojiku</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dependency>
 <dependency>
   <groupId>jp.kengos</groupId>
   <artifactId>shojiku</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <classifier>linux-x64</classifier>
 </dependency>
 ```
@@ -73,8 +73,8 @@ open("out.pdf", "wb").write(result.artifact.bytes)
 フォントとロケールのパックは、テンプレートと同じくアプリに同梱してください。一式はリリースの tarball から取るのが手軽で、使わないロケールのパックは消して構いません。
 
 ```bash
-wget https://github.com/kengos/shojiku/releases/download/v0.1.0/shojiku-0.1.0-packs.tar.gz
-tar xzf shojiku-0.1.0-packs.tar.gz   # packs/fonts と packs/locale が出てくる
+wget https://github.com/kengos/shojiku/releases/download/v0.2.0/shojiku-0.2.0-packs.tar.gz
+tar xzf shojiku-0.2.0-packs.tar.gz   # packs/fonts と packs/locale が出てくる
 ```
 
 ## 3. 自前の画像を使う

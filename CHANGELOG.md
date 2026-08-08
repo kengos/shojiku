@@ -13,6 +13,8 @@ platform binaries.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-08
+
 ### Added
 
 - **The template reference now reads as a website.** The 33 pages under
@@ -85,6 +87,10 @@ platform binaries.
   opportunities, `lineBreak` governs the prohibitions applied after
   them. Text in every other script tokenizes exactly as before, so no
   existing document's line breaking moves.
+  The segmentation model has a cost the browser build pays: the wasm
+  engine grows by about 316 KB gzipped (372 KB raw) for the ICU4X
+  line-break data, unconditionally — there is no feature flag to leave
+  Thai out.
 
 - **A `th-TH` locale pack, dated in the Buddhist era.** Thai chrome —
   month and weekday names, the baht, `d MMM y` patterns — plus a
@@ -132,7 +138,7 @@ platform binaries.
   validate → preview → inspect loop, and a reminder that the running
   engine is the authority on syntax rather than whatever the model
   remembers — which clients hand to the model before it starts. And the
-  32 bundled examples became readable over the wire: `list_examples`
+  34 bundled examples became readable over the wire: `list_examples`
   gives every entry's title and what it exercises, and `get_example`
   returns that entry's `templates.yml`, `definitions.yml` and
   `params.json` together, since a template's bindings mean nothing
@@ -261,6 +267,11 @@ platform binaries.
   links. There is deliberately no creation date: a timestamp would make
   the same inputs produce different bytes, and identical output is what
   signing rests on.
+  The values are bounded, and a value that breaks a bound is left out of
+  the PDF rather than truncated — with a warning saying so:
+  `document_metadata_control_chars`, `document_metadata_too_long`,
+  `invalid_document_language` and `too_many_document_entries` name what
+  was dropped and why.
 
 - **`composer require shojiku/shojiku` — all seven SDKs now install from a
   registry.** PHP was the only one you could not, and the reason was
@@ -272,8 +283,38 @@ platform binaries.
   was not shipped here. `0.1.0` is listed, backfilled from the tag that
   released it, so the package works for the version already out; being a
   faithful copy of what shipped, it predates the licence files and the
-  homepage now pointing at the site, and both arrive with the next
-  release.
+  homepage now pointing at the site; the 0.2.0 package carries both.
+
+- **Table headers can now come from your data.** A column's `label` and
+  the labels in `headerGroups` take `{key}` interpolation like ordinary
+  text, resolved against the top-level params. They were the last
+  authored strings the renderer drew verbatim, which meant a template
+  serving more than one language had to hard-code its header row in one
+  of them.
+
+- **A warning when nesting asks for more re-flows than the engine will
+  spend.** Deeply nested boxes that keep re-flowing each other now stop
+  at a budget and report `reflow_budget_exhausted`; the innermost
+  children keep their content size instead of looping further.
+
+- **A recipe booklet, as an example and a skill.** The bundled examples
+  gained `examples/lifestyle/recipe-booklet-en`, and
+  `skills/shojiku-recipe-booklet` ships beside the other product skills
+  (`npx skills add kengos/shojiku`), so an agent can be handed the whole
+  booklet job. The site's new `/tips` page walks through it and lists
+  the clients that can run it.
+
+- **Four more presets in the Designer's catalog.** `invoice-en`,
+  `restaurant-menu-us`, `certificate-en` and `certificate-ja` now open
+  as starting points from the Designer, and the homepage's live block
+  gained a flex example (`examples/dev/live-flex`) small enough to read
+  whole.
+
+- **Printing in a language the engine does not build in, written down.**
+  The site's `/languages` page (both locales) covers picking a locale
+  pack, adding a font pack, and where the engine stops and the pack
+  takes over — the layer that was referenced all over the docs but
+  specified nowhere.
 
 ### Changed
 
@@ -434,6 +475,13 @@ platform binaries.
   site states which version that is — read from the running binary's own
   report rather than written down beside it.
 
+- **The concept page moved: `/why` is now `/concept`, in both locales.**
+  The old URL is gone, not redirected — a static host has no redirect to
+  offer — so update any bookmark. The 原稿用紙 example
+  (`examples/typography/kokugo-print-ja`) was rebuilt as a
+  reading-comprehension worksheet at the same time, which is what its
+  gallery entry now shows.
+
 ### Fixed
 
 - **The docs no longer contradict themselves about what is built and
@@ -555,6 +603,31 @@ platform binaries.
   nothing about this was visible before: the render emitted no warning
   and the page simply looked wrong.
 
+- **An SVG is now clipped to its own box under every `fit`.** With
+  `contain` or `stretch`, paths reaching outside the image's `viewBox`
+  used to paint wherever they landed — one sloppy or hostile SVG could
+  draw over the rest of the page. Every placed SVG now clips to its
+  content box; the committed example outputs moved by exactly that
+  clipping.
+
+- **The Designer keeps your binding across a content-mode switch.**
+  Changing a text item between plain text and a bound field used to
+  drop the binding on the floor. The pickers behind this moved to the
+  house input row, the chip text field finally takes a caret, the
+  property panel now says what a binding is instead of assuming you
+  know, and three visual defects in those controls went with it.
+
+- **The tutorial's coach mark points at controls that still exist.** It
+  anchored to controls a later change had removed, and it measured its
+  anchor once and never again, so it drifted when the layout moved. It
+  now tracks the anchor, and the English and Japanese step copy were
+  re-audited against the current chrome.
+
+- **Site links into `/designer/` no longer 404.** The Designer is a
+  separate app merged into the deployed output, and VitePress's client
+  router intercepted the links and served its own not-found page; all
+  six now force a full page load.
+
 ### Security
 
 - **The four npm advisories on the homepage's build tooling are
@@ -589,5 +662,6 @@ Docker, every SDK and browser WASM.
 - **SDKs** — Python, Ruby, Node, .NET, Java, Go and PHP, all against one
   frozen lifecycle contract.
 
-[Unreleased]: https://github.com/kengos/shojiku/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/kengos/shojiku/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/kengos/shojiku/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/kengos/shojiku/releases/tag/v0.1.0

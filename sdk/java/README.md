@@ -28,12 +28,12 @@ Maven:
 <dependency>
   <groupId>jp.kengos</groupId>
   <artifactId>shojiku</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dependency>
 <dependency>
   <groupId>jp.kengos</groupId>
   <artifactId>shojiku</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <classifier>linux-x64</classifier>
 </dependency>
 ```
@@ -41,8 +41,8 @@ Maven:
 Gradle:
 
 ```groovy
-implementation 'jp.kengos:shojiku:0.1.0'
-runtimeOnly 'jp.kengos:shojiku:0.1.0:linux-x64'
+implementation 'jp.kengos:shojiku:0.2.0'
+runtimeOnly 'jp.kengos:shojiku:0.2.0:linux-x64'
 ```
 
 ### Building for more than one platform
@@ -97,8 +97,8 @@ def shojikuClassifier = {
   return (os.contains('mac') ? 'darwin-' : 'linux-') + cpu
 }()
 
-implementation 'jp.kengos:shojiku:0.1.0'
-runtimeOnly "jp.kengos:shojiku:0.1.0:${shojikuClassifier}"
+implementation 'jp.kengos:shojiku:0.2.0'
+runtimeOnly "jp.kengos:shojiku:0.2.0:${shojikuClassifier}"
 ```
 
 Note that these select for the machine running the BUILD. A build that

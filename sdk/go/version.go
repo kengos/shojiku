@@ -8,4 +8,4 @@ package shojiku
 // so this constant is where an application reads it — and a test pins it
 // against engine/Cargo.toml, which is what makes "in lockstep" a checked
 // claim rather than an intention.
-const Version = "0.1.0"
+const Version = "0.2.0"
