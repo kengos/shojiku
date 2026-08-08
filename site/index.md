@@ -100,9 +100,9 @@ provider = shojiku.ExternalSigner(
 signed = result.artifact.sign(provider)
 ```
 
-Every SDK and the CLI write it the same way.
+Every SDK and the CLI write this call the same way.
 
-## Some less usual uses
+## Some less common uses
 
 Vertical writing, and forms shaped like a Japanese résumé. Most document engines handle neither. Both pages below were authored by an AI agent and rendered by Shojiku.
 
@@ -116,7 +116,7 @@ Japanese and English are the only languages compiled into the engine. Traditiona
 
 ## Making documents with an AI agent
 
-You do not have to write the template yourself. The MCP server and the skills ship with the engine, so you can just ask an agent. Setup is two commands (the Claude Code form; see the [quickstart](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md) for the details):
+You do not have to write the template yourself. The MCP server and the skills ship with the engine, so you can hand the job to an agent. Setup is two commands (shown for Claude Code; see the [quickstart](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md) for the details):
 
 ```bash
 claude mcp add shojiku -- \
@@ -128,7 +128,7 @@ claude mcp add shojiku -- \
 npx skills add kengos/shojiku
 ```
 
-Then just ask:
+Then ask:
 
 > Make a reception-slip template: shop name on top, the reservation number and a QR code in the middle, an order-items table below.
 
@@ -136,6 +136,6 @@ The agent writes the YAML, checks it against the MCP server, looks at the previe
 
 ## Fine adjustments by hand, in a GUI
 
-When an AI-authored template has a spot you do not like, the GUI is there for a human to fix it by hand. Open the <a href="/designer/" target="_self">Designer</a> in your browser, load the `templates.yml`, and adjust positions and styles on the canvas.
+When an AI-authored template has a spot you do not like, fix it yourself: open the <a href="/designer/" target="_self">Designer</a> in your browser, load the `templates.yml`, and adjust positions and styles on the canvas.
 
 ![The Designer with the invoice template open, the bound total selected and its data key shown in the property panel](/media/designer-editor-en.png)
