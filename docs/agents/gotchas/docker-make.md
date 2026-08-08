@@ -473,45 +473,34 @@ stack trace, naming no remedy and never mentioning the worktree. Run
 `make site` once in a new tree — it installs first — before reaching for
 `site-data` / `site-check`.
 
-## `make site-build` replaces `engine/wasm/pkg` with the SITE's engine
+## The Pages build swaps `engine/wasm/pkg` — the make recipe restores it
 
 `site/scripts/build-pages.sh` stages the committed `site/.data/wasm` into
 `engine/wasm/pkg` (the designer-app's assemble reads that path, and it is
 gitignored). That directory is also what `liveRenderer.test.ts` loads as
-"a fresh build of HEAD", so **after a `make site-build`, `make site` is
-silently testing the RELEASED engine, not HEAD** — a green run proving
-less than it looks like it does.
+"a fresh build of HEAD", so a tree left in the swapped state has
+`make site` silently testing the RELEASED engine, not HEAD — a green run
+proving less than it looks like it does. It bit five times across two
+cycles before being fixed structurally.
 
-This only became consequential once `site/.data/wasm` deliberately
-STOPPED tracking HEAD: before that the two were near enough that the
-swap was invisible. `make verify` is unaffected (it does not run
-`site-build`), and CI cannot hit it (separate jobs, fresh checkouts that
-download the `wasm-pkg` artifact) — it bites the human who runs
-`site-build` and then a gate in the same tree. Re-run `make wasm`, or
-keep a copy, before trusting a later `make site`.
+**The `site-build` RECIPE now closes this**: it backs `pkg` up before the
+build and restores it after — pass, fail, or a leftover backup from an
+interrupted run (a surviving backup is treated as the pre-swap truth and
+restored first) — and when no `pkg` existed before, it REMOVES the
+staged copy so the next gate's `test -d engine/wasm/pkg || make wasm`
+rebuilds HEAD. `make site` after `make site-build` therefore tests HEAD
+again, with no manual `make wasm` in between.
 
-Do not expect the `site` recipe to save you, and do not let reading it
-reassure you: its wasm step is `test -d engine/wasm/pkg || $(MAKE) wasm`,
-which self-heals exactly one case — the directory being ABSENT (a fresh
-worktree) — and is blind by construction to the directory being STALE,
-which is the state `site-build` leaves behind. A reader who checks the
-recipe sees "it rebuilds wasm when needed" and skips the manual `make
-wasm`; that reading is correct for the absent case and wrong for this
-one, and this one is the case that reds the gate. The safe loop order in
-a tree that runs both is: `make site` / `verify:site` first, `site-build`
-LAST — and after ANY `site-build`, the next site gate is preceded by
-`make wasm`, unconditionally, without consulting the recipe.
-
-Since the reference demos landed there is also a LOUD tell, and it reads
-like broken content rather than a stale build: `make site` fails with five
-`referenceDemos` cases reporting wire parse errors (``unknown field
-`document` ``, ``unknown field `flexBasis` ``) — the released engine
-genuinely cannot parse syntax HEAD documents. The suite's
-capability-key assertion now says so in its own message ("if `make
-site-build` ran since the last `make wasm`, it replaced pkg with the
-RELEASED engine; re-run `make wasm`"), which is the cheapest possible fix
-for a gate whose failure does not name its cause. It bit three times in
-one cycle before that message existed.
+The swap still exists on the paths the recipe does not own: running
+`bash scripts/build-pages.sh` directly (the Pages deploy's own path,
+which runs on a fresh checkout and never runs a later gate), and DURING
+the build itself. If a tree somehow ends up swapped anyway, the tell is
+LOUD but reads like broken content rather than a stale build: `make
+site` fails with five `referenceDemos` cases reporting wire parse errors
+(``unknown field `document` ``, ``unknown field `flexBasis` ``) — the
+released engine genuinely cannot parse syntax HEAD documents — and the
+suite's capability-key assertion names the cause and the remedy
+("re-run `make wasm`") in its own message.
 
 The other tell is subtle and worth recognising: `make site-wasm-release`
 suddenly SUCCEEDS where it refused minutes earlier. It is not a broken
