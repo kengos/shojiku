@@ -555,6 +555,19 @@ platform binaries.
   nothing about this was visible before: the render emitted no warning
   and the page simply looked wrong.
 
+### Security
+
+- **The four npm advisories on the homepage's build tooling are
+  cleared.** All sat on `site/pnpm-lock.yaml`, in dependencies the site
+  never ships to a visitor — vite 5.4.21 (CVE-2026-53571, high, plus
+  CVE-2026-53632 and CVE-2026-39365) and the esbuild 0.21.5 under it
+  (GHSA-67mh-4wv8-2f99), both reached only through VitePress. Both are
+  transitive, so no update could touch them while VitePress's own range
+  was satisfied; the same override mechanism the gui already uses now
+  pins them past the advisories (vite 6.4.3, esbuild 0.25.12), and the
+  site builds and tests green on the result. Nothing about the published
+  pages changes.
+
 ## [0.1.0] - 2026-08-02
 
 First release: a deterministic PDF document engine for business

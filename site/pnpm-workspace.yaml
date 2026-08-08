@@ -14,3 +14,13 @@ allowBuilds:
 
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude: []
+
+# Transitive advisory pins — same mechanism and lifetime rules as
+# gui/pnpm-workspace.yaml (where the full rationale lives): `pnpm update`
+# cannot reach a transitive dep whose parent range is already satisfied, so
+# each entry pins past the advisory until the parent (vitepress) widens its
+# own range — drop it then and re-run `make lock:site`. Neither version is
+# young enough to need a minimumReleaseAgeExclude entry.
+overrides:
+  vite@<=6.4.2: ^6.4.3
+  esbuild@<=0.24.2: ^0.25.0
