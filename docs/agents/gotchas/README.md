@@ -33,6 +33,7 @@
 | touch the `eemeli/yaml` document model (designer-core ops, serialization) | [yaml-doc-model.md](yaml-doc-model.md) |
 | smoke the running Designer in a browser (dev server, Browser pane, drag) | [browser-smoke.md](browser-smoke.md) |
 | run a bulk edit/rename/sweep, or write a count/claim into a doc, commit message, or review | [verification-claims.md](verification-claims.md) |
+| touch `site/` — VitePress config, `assemble-data.ts`, or any markdown the reference projection carries onto the site | [site-vitepress.md](site-vitepress.md) |
 
 Coverage-gate diagnosis for the Rust workspace stays in its own skill
 (`shojiku-coverage`); the gui-side coverage traps are in

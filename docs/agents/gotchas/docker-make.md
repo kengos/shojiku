@@ -490,7 +490,18 @@ download the `wasm-pkg` artifact) — it bites the human who runs
 `site-build` and then a gate in the same tree. Re-run `make wasm`, or
 keep a copy, before trusting a later `make site`.
 
-The tell is subtle and worth recognising: `make site-wasm-release`
+Since the reference demos landed there is also a LOUD tell, and it reads
+like broken content rather than a stale build: `make site` fails with five
+`referenceDemos` cases reporting wire parse errors (``unknown field
+`document` ``, ``unknown field `flexBasis` ``) — the released engine
+genuinely cannot parse syntax HEAD documents. The suite's
+capability-key assertion now says so in its own message ("if `make
+site-build` ran since the last `make wasm`, it replaced pkg with the
+RELEASED engine; re-run `make wasm`"), which is the cheapest possible fix
+for a gate whose failure does not name its cause. It bit three times in
+one cycle before that message existed.
+
+The other tell is subtle and worth recognising: `make site-wasm-release`
 suddenly SUCCEEDS where it refused minutes earlier. It is not a broken
 guard — the guard compares bytes, `pkg` now holds the site's own bytes,
 and the no-op re-pin is a legitimate allowed case. Check what is in
