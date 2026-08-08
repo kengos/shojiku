@@ -33,7 +33,7 @@ features:
 
 ## ライブプレビュー
 
-このページを開いた時点で、WASMのエンジンがブラウザに読み込まれています。下のYAMLを書き換えると、入力が止まるとレンダリングし直します（※ サーバーには何も送信されません）。
+このページを開いた時点で、WASMのエンジンがブラウザに読み込まれています。下のYAMLを書き換えて入力が止まると、レンダリングし直します（※ サーバーには何も送信されません）。
 
 いじる場所は3つだけです。`page`の`margin: 24`を`40`にすればページ全体が動き、`defaults`の`fontSize: 10`を`13`にすれば下の行が全部大きくなり、カードの`padding: 12`を`24`にすれば表の周りだけ空きます。どれも1箇所で、下の要素の位置はエンジンが計算し直します。
 
@@ -60,7 +60,7 @@ result = client.generate("receipt-ja", params)
 open("receipt.pdf", "wb").write(result.artifact.bytes)
 ```
 
-テンプレートの書き方やできる表現は、[リファレンス](/ja/reference/)（機能ごとに1ページ）と[チュートリアル](/ja/tutorials)を参考にしてください。テンプレート作成をAIに任せるためのスキルは[エージェント](/ja/agents)にあります。
+テンプレートの書き方やできる表現は、[リファレンス](/ja/reference/)（機能ごとに1ページ）と[チュートリアル](/ja/tutorials)を参考にしてください。テンプレート作成をAIに任せる方法は[エージェント](/ja/agents)で説明しています。
 
 ## マルチテナントのSaaSで帳票を出す
 
@@ -82,7 +82,7 @@ open("receipt-signed.pdf", "wb").write(signed.artifact.bytes)
 
 署名したPDFをストレージ（S3やCloud Storage）に保存しておくことで、あとから正しくサーバーから出力されたものであることを確認できます。
 
-秘密鍵の管理をクラウドKMSやHSMで行うこともできます。
+秘密鍵をクラウドKMSやHSMから出さずに署名することもできます。
 
 ```python
 # 秘密鍵はShojikuのエンジンに渡りません。エンジンは署名対象のバイト列を渡すだけで、
@@ -100,7 +100,7 @@ provider = shojiku.ExternalSigner(
 signed = result.artifact.sign(provider)
 ```
 
-この機能はすべてのSDKとCLIで、同じ書き方で使えます。
+この機能はすべてのSDKとCLIから、同じ書き方で使えます。
 
 ## ちょっと変わった使い方も
 
@@ -110,7 +110,7 @@ signed = result.artifact.sign(provider)
 | :---: | :---: |
 | [![縦書き小説](/gallery/typography-novel-ja/preview-2.png)](/ja/gallery) | [![履歴書](/gallery/forms-rirekisho-ja/preview-1.png)](/ja/gallery) |
 
-その他の出力例は[ギャラリー](/ja/gallery)を確認してみてください。
+出力例は他にも[ギャラリー](/ja/gallery)に並んでいます。
 
 エンジンに組み込まれている言語は日本語と英語だけですが、繁体字と簡体字の中国語、ヒンディー語、フィリピン語、タイ語はロケールパックというファイルで足せます。
 通貨も日付も桁区切りもフォントもそのファイルが決めるので、テンプレートは1つのまま使い回せます。
@@ -118,7 +118,7 @@ signed = result.artifact.sign(provider)
 
 ## AIエージェントでの帳票の作成
 
-テンプレートを自分で書く必要はありません。MCPサーバーとスキルが同梱されているので、AIエージェントにそのまま頼めます。セットアップは2コマンドです（Claude Codeの例。詳細は[クイックスタート](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md)を確認してみてください）。
+テンプレートを自分で書く必要はありません。MCPサーバーとスキルが同梱されているので、AIエージェントにそのまま頼めます。セットアップは2コマンドです（Claude Codeの例。詳細は[クイックスタート](https://github.com/kengos/shojiku/blob/main/docs/quickstart.md)を参照してください）。
 
 ```bash
 claude mcp add shojiku -- \
@@ -134,7 +134,7 @@ npx skills add kengos/shojiku
 
 > 受付票のテンプレートを作って。上に店名、真ん中に予約番号とQRコード、下に注文の明細表。
 
-エージェントがYAMLを書き、MCPサーバーで検証し、プレビューを確認し、診断が消えるまで直します。詳細は[エージェント](/ja/agents)を確認してみてください。
+エージェントがYAMLを書き、MCPサーバーで検証し、プレビューを確認し、診断が消えるまで直します。詳細は[エージェント](/ja/agents)にあります。
 
 ## GUIでの細かい修正も可能
 
