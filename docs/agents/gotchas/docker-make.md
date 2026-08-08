@@ -4,17 +4,6 @@
 > `shojiku-node-professional`; this file is the incident list for
 > running anything through the Docker wrappers.
 
-## Check `make --version` once, at the start of the session
-
-macOS's `/usr/bin/make` is GNU Make **3.81**, and gates run under it can
-pass here and fail in CI ([CONTRIBUTING.md](../../../CONTRIBUTING.md)
-names the fix). The Makefile does warn — but it warns as a three-line
-banner on EVERY invocation, which is exactly the shape a reader learns to
-skip, and the gate still runs and still prints `PASS`. So the warning is
-not a reliable interrupt: check the version once yourself, and if it is
-3.x use Homebrew's `gmake` (GNU Make 4.x) for every gate in the session
-rather than re-reading the banner each time.
-
 ## Mount discipline — the single biggest time-sink in this repo
 
 The mount MUST be the absolute repo root, and it MUST stay the same
@@ -133,12 +122,12 @@ learned there is no Debian-based .NET 10 image at all.
 
 ## A gate WRITES files, and a rebase replays those writes
 
-Gate recipes are not read-only. `make gui-format` runs `pnpm install`
-WITHOUT `--frozen-lockfile` — nine other recipes DO pin it, which is what
-makes this one easy to miss — `make sbom` regenerates all three
+Gate recipes are not read-only. `make sbom` regenerates all three
 inventories from the LOCAL build state, and `make site-data` rewrites the
 committed README gallery section. Any of them can move a file your change
-never touched.
+never touched. (`make gui-format` used to run `pnpm install` unpinned —
+the one recipe of ten that could rewrite a lockfile as a side effect; it
+now pins `--frozen-lockfile` like the rest.)
 
 That is harmless until a rebase. A `git add -A` before rebasing captures
 the gate's writes at the pre-rebase state, and replaying that commit onto
@@ -168,23 +157,10 @@ change that touched no gui dependency at all.
 
 ## Never run two gates at once
 
-**`make -n` is NOT a dry run here, and it can kill a running gate.** GNU
-make executes any recipe line containing `$(MAKE)` even under `-n` (that
-is the documented `+`/`$(MAKE)` recursion rule — the point is to let
-sub-makes report what THEY would do). Most of this repo's convenience
-targets delegate that way, so `make -n verify` and `make -n quiet
-T=budget` really run sub-makes: they take the gate lock, contend with a
-gate already running in the tree, and the running `make verify` dies at
-whatever target it had reached (`cli-bin`, in the incident) with a lock
-message that reads like a stale lock rather than like contention. The
-"dry run" also leaves a `# FAILED: <target>` header in
-`.make-logs/last-error.log` from its own sub-make, which then looks like
-an outstanding failure of the real run.
-
-To check that an edit did not break the Makefile, parse it instead of
-pretending to run it: `make help` (it only greps the file), or diff the
-change and confirm it touched no recipe line. To see what a target would
-do, read the recipe.
+(`make -n` is refused at parse time — its `$(MAKE)` recursion once
+killed a running gate. To check that an edit did not break the
+Makefile: `make help` only greps the file; to see what a target would
+do, read the recipe.)
 
 **This is now enforced, not just advised**: `scripts/gate-lock.sh` wraps
 every containerised gate and refuses a second one in the SAME working
@@ -306,17 +282,15 @@ reaped on one machine.
   pair — the wrong guess either fails to install or silently builds the
   native target twice.
 
-## A compound `quiet` run does NOT refresh the per-target logs
+## A compound `quiet` run writes ONE log — and deletes the members' old ones
 
 `make quiet T="site site-check"` (what `verify:site` delegates to)
-writes ONE log, `.make-logs/site_site-check.log`. The per-target
-`.make-logs/site-check.log` is left exactly as whatever the last
-STANDALONE run of that target wrote — which, right after you have
-deliberately induced a failure to prove a gate has teeth, is a FAILING
-log sitting next to a passing compound gate. Reading it back is how a
-green run gets reported as red (and the reverse is worse). Match the
-log file to the command you actually ran, and re-run the target
-standalone if you want its own log to reflect the current state.
+writes ONE log, `.make-logs/site_site-check.log`, and now DELETES each
+member's stand-alone log (`site.log`, `site-check.log`) up front — a
+stale FAIL log sitting beside a passing compound gate was read back as
+a red gate once, and an absent log cannot be misread. Match the log
+file to the command you actually ran; re-run a target standalone if you
+want its own log.
 
 `.make-logs/last-error.log` has the same shape: it is cleared when that
 TARGET next passes, so a deliberately-failing smoke (a guard that is
@@ -451,27 +425,20 @@ lines once mis-parsed `FAILED. 553 passed; 1 failed` as green.
   fuzz crate does not have to sit under the crate it fuzzes — which is
   what lets ONE out-of-workspace crate carry targets for two crates.
 
-## A fresh worktree has no `engine/wasm/pkg`, so the gui gates cannot run
+## A fresh worktree self-heals its missing artifacts (mostly)
 
-`engine/wasm/pkg` is gitignored, so it exists only where someone has built
-it. A worktree starts without one, and the gui integration suites that load
-it (`wasm.test.ts`, `sampleData.test.ts`) fail before the gui gate can say
-anything about the change. Run `make wasm` once in a new worktree, before
-`test:gui` / `verify:gui`.
+`engine/wasm/pkg` is gitignored, so it exists only where someone has
+built it. The gates that need it — `site`, `gui`, `gui-test` (what
+`test:gui` runs) — all self-heal an ABSENT pkg with a
+`test -d engine/wasm/pkg || make wasm` step, so a fresh worktree costs a
+wasm build, not a failed run. A STALE pkg after a rebase onto engine
+work still needs a manual `make wasm` — no recipe can tell stale from
+current.
 
-The failure is honest — the suites throw
-`engine/wasm/pkg is missing — run make wasm before the gui gates` — so it
-costs one run rather than a debug loop. Worth knowing in advance anyway,
-because the surrounding advice about `make wasm` is all about REFRESHING a
-stale pkg (after a rebase onto engine work, or after the `site-build` swap
-below), which reads as "not applicable, this tree never had one".
-
-The same holds for `site/node_modules`, and there the failure is NOT
-honest: `make site-data` dies with a bare
-`Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'yaml'` and a Node
-stack trace, naming no remedy and never mentioning the worktree. Run
-`make site` once in a new tree — it installs first — before reaching for
-`site-data` / `site-check`.
+`site-data` / `site-check` skip the pnpm install for speed, so in a
+fresh worktree they refuse with a named remedy ("run `make site` once in
+this tree") instead of running — they used to die inside Node with a
+bare `ERR_MODULE_NOT_FOUND: Cannot find package 'yaml'` naming nothing.
 
 ## The Pages build swaps `engine/wasm/pkg` — the make recipe restores it
 
