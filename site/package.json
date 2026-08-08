@@ -21,7 +21,7 @@
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.1.10",
     "typescript": "^7.0.2",
-    "vitepress": "1.6.3",
+    "vitepress": "1.6.4",
     "vitest": "^4.1.10"
   }
 }
