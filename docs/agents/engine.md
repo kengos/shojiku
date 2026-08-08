@@ -7,25 +7,31 @@ fast, and shared by every SDK, the GUI preview, and the CLI:
 engine/
   core/           shared types: definitions, params, templates model
   layout/         layout algorithm (absolute/flow/grid/table/group, page break)
+  layout-box/     pure box-model math under layout/
   render-pdf/     PDF backend
   render-png/     PNG preview backend
   image/          png/jpg/webp/svg/qrcode/barcode/placement
-  bundle/         compile + bundle format (single template & multi-template registry)
   formatter/      type -> locale-aware display string/image
   diagnostics/    structured validation/inspection output
   authoring/      shared validate/prepare/preview/inspect/capabilities layer
-  signing/        sign/verify (see agents/signing.md for the trust-specific rules)
-  verify/
+  signing/        incremental-update writer + signer (agents/signing.md)
+  verify/         signature verifier (agents/signing.md)
   mcp/            MCP tool server (see agents/mcp.md)
   cli/            `shojiku` command surface (thin wrapper over authoring/)
+  wasm/           browser WASM host over authoring/
+  capi/           C ABI cdylib host the FFI SDKs load
+  napi/           N-API addon (npm) — reaches the engine through capi/
+  fetch/          host-only font fetch (never linked into render paths)
+  fuzz/           out-of-workspace libFuzzer targets
 ```
 
-(Target shape — `bundle/`, `signing/`, `verify/`, and `mcp/` are reserved
-future crates; the code map (`docs/code-map/`, indexed from CLAUDE.md) records what exists today. There is
-also `layout-box/`, the pure box-model math crate under `layout/`.
-`authoring/` is the bytes-first lib layer the CLI — and the future WASM
-bindings and `mcp/` — all wrap, so no surface grows a second grammar; its
-capability list is the single source every surface advertises.)
+(All of these exist and ship today except one: a `bundle/` crate — the
+compile + multi-template registry stage — remains a reserved future
+crate. The code map (`docs/code-map/`, indexed from CLAUDE.md) records
+the file-by-file detail. `authoring/` is the bytes-first lib layer the
+CLI, the WASM bindings, and `mcp/` all wrap, so no surface grows a
+second grammar; its capability list is the single source every surface
+advertises.)
 
 ## Responsibilities
 

@@ -211,8 +211,9 @@ the pick as pinned metadata (never font bytes):
 Store the array verbatim and return it on load; the app re-fetches the
 font bytes through each manifest's pinned URL and verifies the sha256.
 Rendering the saved template outside the Designer works the same way —
-the manifest is a normal shojiku font pack (see the CLI's pinned-face
-auto-fetch).
+the manifest is a normal shojiku font pack (the CLI's pinned-face
+auto-fetch: [engine/fonts.md § Pinned faces &
+auto-fetch](engine/fonts.md#pinned-faces--auto-fetch-url)).
 
 ### Validation the client enforces
 

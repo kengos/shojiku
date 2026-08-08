@@ -1,4 +1,4 @@
-# Code map — engine/authoring, engine/fetch, engine/cli, engine/mcp, engine/wasm, engine/capi
+# Code map — engine/authoring, engine/fetch, engine/cli, engine/mcp, engine/wasm, engine/capi, engine/napi
 
 > AI-only, token-dense. Index + repo-wide conventions: [CLAUDE.md](../../CLAUDE.md).
 > Read this BEFORE searching or editing the covered dirs; update it in the

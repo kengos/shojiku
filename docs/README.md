@@ -34,9 +34,10 @@ unsettled rather than rejected, so it is worth proposing.
   browser. These files stay the source — the site restates nothing. The
   reference is the "what can I write?" surface, and the source material
   for MCP tool responses. Two facts up front:
-  **the GUI Designer is built but not yet publicly hosted** (templates
-  are plain YAML files the Designer round-trips; the root README's
-  "Running the GUI locally" section shows how to serve it), and the
+  **the GUI Designer is live at
+  <https://shojiku.pages.dev/designer/>** (templates are plain YAML
+  files the Designer round-trips; the root README's "Running the GUI
+  locally" section shows how to serve your own copy), and the
   practical authoring path for non-engineers is to have an AI agent
   write the template — the agent playbook is
   [skills/shojiku-template-author/](../skills/shojiku-template-author/SKILL.md)

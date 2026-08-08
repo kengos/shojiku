@@ -7,7 +7,7 @@
 > file role + key exports + load-bearing contracts.
 
 Covers `i18n/`, `toolbar/`, `menubar/`, `help/`, `hooks/`, `styles/`,
-`text/`, `ui/`, `theme/`, `review/`, `src/styles.css`.
+`text/`, `ui/`, `theme/`, `review/`, `pdf/`, `src/styles.css`.
 
 Chrome-wide postures: every label rendered is CHROME text (catalog keys),
 auto-escaped — never document-derived HTML; document-derived values reach

@@ -97,5 +97,4 @@ plugin is implemented in.
 ## Notes
 
 A full plugin-authoring guide (how to package, publish, and version a
-third-party plugin) is planned for Phase 6 (OSS Ready) and is not written
-yet.
+third-party plugin) is future work and is not written yet.
