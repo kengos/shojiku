@@ -337,7 +337,7 @@ below and still leave for the repository.
   change that adds it.
 - **`docs/` is not deleted, and its paths do not move.** Three things
   depend on them resolving: every one of the seven SDK READMEs links
-  `blob/main/docs/engine/README.md`, and six of them are already
+  `blob/main/docs/engine/README.md`, and all seven are already
   published to registries, where a release is immutable — the link is
   frozen into versions that are shipped and cannot be revised; the
   docs-only distribution an MCP consumer reads has no site to fall back

@@ -4,7 +4,7 @@
 > language standards in `shojiku-node-professional`; live-browser smoke
 > traps in [browser-smoke.md](browser-smoke.md). A gui suite that dies
 > BEFORE vitest means anything (a fresh worktree's missing
-> `engine/wasm/pkg`, a stale pkg after `make site-build`) is a
+> `engine/wasm/pkg`, a pkg left stale by a rebase) is a
 > toolchain trap: [docker-make.md](docker-make.md).
 
 ## jsdom's missing pieces

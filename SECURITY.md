@@ -31,11 +31,9 @@ will hear why rather than nothing.
 
 ## Supported versions
 
-Shojiku has not had its first release yet. Until `v0.1.0` ships, the
-supported version is **the `main` branch**, and fixes land there.
-
-After `v0.1.0`, the most recent minor release is supported. Older
-minors get fixes only for vulnerabilities rated high or critical.
+The most recent minor release is supported, and fixes land on `main`
+first. Older minors get fixes only for vulnerabilities rated high or
+critical.
 
 ## Scope
 
