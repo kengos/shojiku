@@ -147,6 +147,50 @@ describe("demoAnchor", () => {
     const body = "# T\n\n## Syntax\n\nyaml\n";
     expect(demoAnchor(body)).toBe(body.length);
   });
+
+  // A `## ` inside a code fence is a shell prompt or a YAML comment, not a
+  // section. Splicing the demo there puts a Vue component tag INSIDE the
+  // fence — which no gate can see (the drift gate strips the generated
+  // blocks before comparing, so it stays green) and only the page is broken.
+  it("ignores a `## ` line inside a ``` fence", () => {
+    const body = "# T\n\n## Syntax\n\n```sh\n## not a heading\n```\n\n## Keys\n\nk\n";
+    expect(body.slice(demoAnchor(body))).toBe("## Keys\n\nk\n");
+  });
+
+  it("ignores a `## ` line inside a ~~~ fence", () => {
+    const body = "# T\n\nintro\n\n~~~yaml\n## not a heading\n~~~\n\n## Accepted forms\n\nx\n";
+    expect(body.slice(demoAnchor(body))).toBe("## Accepted forms\n\nx\n");
+  });
+
+  it("falls back to the end when the only `## ` line is fenced", () => {
+    const body = "# T\n\n```sh\n## not a heading\n```\n";
+    expect(demoAnchor(body)).toBe(body.length);
+  });
+
+  // A fence closes on its OWN delimiter only. Toggling on either would end
+  // this block at the `~~~`, promote the line after it to a section, and
+  // splice the demo into the code — the very failure the fence tracking is
+  // here to prevent.
+  it("does not let a ~~~ line close a ``` fence", () => {
+    const body = "# T\n\nintro\n\n```yaml\n~~~\n## not a heading\n```\n\n## Keys\n\nk\n";
+    expect(body.slice(demoAnchor(body))).toBe("## Keys\n\nk\n");
+  });
+
+  // Longer closes shorter, never the reverse: a ``` line inside a ````
+  // block is content (that is how a fence quotes a fence).
+  it("needs a closing fence at least as long as the opener", () => {
+    const body = "# T\n\nintro\n\n````\n```\n## not a heading\n````\n\n## Keys\n\nk\n";
+    expect(body.slice(demoAnchor(body))).toBe("## Keys\n\nk\n");
+  });
+
+  // A closing fence may be followed only by whitespace (CommonMark) — a
+  // ```yaml line inside an open ``` block is content, not a close. Treating
+  // it as one reopens the same hole from the other side: the block "ends"
+  // early and the `## ` still inside it reads as a section.
+  it("does not let a fence with an info string close a block", () => {
+    const body = "# T\n\nintro\n\n```\n```yaml\n## not a heading\n```\n\n## Keys\n\nk\n";
+    expect(body.slice(demoAnchor(body))).toBe("## Keys\n\nk\n");
+  });
 });
 
 describe("projectPage", () => {

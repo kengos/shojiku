@@ -44,6 +44,22 @@ export const REFERENCE_LOCALES = [
  * must land somewhere. */
 export const NON_FEATURE = ["README", "features"] as const;
 
+/** What llms-full.txt does NOT inline. `features.md` is the
+ * implemented-capability inventory and the decision log — docs/engine/README.md
+ * says so itself: it records "*that* a feature exists and why it is shaped that
+ * way; the pages here carry only *how to author it*". It is also a THIRD of
+ * the payload (146,877 of 442,505 bytes), which an agent asking how to write
+ * `flex` pays for and never reads. The landing stays: it is the index, and
+ * `NON_FEATURE` would drop it too, which is why this list is its own.
+ *
+ * It stays fully reachable — routed at /reference/features, served raw at
+ * /data/reference/features.md, and linked from the reference index. */
+const LLMS_FULL_OMIT = ["features"] as const;
+
+export function llmsFullPages(pages: readonly ReferencePage[]): ReferencePage[] {
+  return pages.filter((p) => !(LLMS_FULL_OMIT as readonly string[]).includes(p.stem));
+}
+
 /** Where a page sits in the sidebar. `index` and `appendix` are routed but
  * are not tree entries (the landing, and the shipped-capability record). */
 export type Group = "index" | "appendix" | "root" | "item" | "item-keys" | "layout" | "definitions" | "concept";
@@ -182,14 +198,52 @@ export function stripInjected(text: string): string {
   return text.replace(BLOCK, "");
 }
 
+const FENCE = /^(```+|~~~+)/;
+
+/** The page's h2 lines, with their offsets — SKIPPING fenced code, where a
+ * line starting `## ` is a shell prompt or a YAML comment, not a section.
+ * A plain `/^## /gm` sweep cannot tell the two apart, and getting it wrong is
+ * invisible to every gate: the drift gate strips the generated blocks before
+ * comparing, so it passes, the Limitations gate passes, and only the rendered
+ * page is broken — a provenance strip or a live demo spliced INSIDE a code
+ * fence. No page carries such a line today (verified across all 33); this
+ * exists so that the day one does, the block still lands outside it.
+ *
+ * A fence closes only on its OWN delimiter, at least as long as the opener,
+ * with nothing after it but whitespace, per CommonMark — a `~~~` line inside
+ * a ``` block is content, and so is a ```yaml line (an info string belongs to
+ * an OPENER; a closer carries none). Accepting either as a close would reopen
+ * the hole this function exists to close: the block would end early, the
+ * `## ` after it would read as a section, and the splice would land in the
+ * code after all.
+ *
+ * A line walk rather than a regex over the whole body: it stays linear in the
+ * page length, with nothing to backtrack. Both the fences and the headings
+ * are matched at column 0 only — the same discipline every other gate over
+ * these files uses (`/^## /` in the Limitations and drift gates). */
+function headings(body: string): { text: string; index: number }[] {
+  const found: { text: string; index: number }[] = [];
+  let open: string | undefined;
+  let at = 0;
+  for (const line of body.split("\n")) {
+    const fence = FENCE.exec(line)?.[1];
+    const closes = fence !== undefined && open !== undefined && fence.startsWith(open) && line.slice(fence.length).trim() === "";
+    if (fence !== undefined && open === undefined) open = fence;
+    else if (closes) open = undefined;
+    else if (open === undefined && line.startsWith("## ")) found.push({ text: line.trim(), index: at });
+    at += line.length + 1;
+  }
+  return found;
+}
+
 /** Where the demo goes: after the `## Syntax` section when the page has one
  * (the anatomy's title → provenance → Syntax → playground order), otherwise
  * straight after the opening prose. Pages differ — `defaults.md` opens with
  * `## \`defaults:\``, `length.md` with `## Accepted forms` — so the anchor is
  * computed, not assumed. */
 export function demoAnchor(body: string): number {
-  const heads = [...body.matchAll(/^## .*$/gm)];
-  const syntax = heads.findIndex((h) => h[0].trim() === "## Syntax");
+  const heads = headings(body);
+  const syntax = heads.findIndex((h) => h.text === "## Syntax");
   const next = syntax === -1 ? heads[0] : heads[syntax + 1];
   return next?.index ?? body.length;
 }

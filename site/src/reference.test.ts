@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   landingIndex,
+  llmsFullPages,
   NON_FEATURE,
   projectPage,
   projectedBody,
@@ -41,6 +42,20 @@ describe("every reference page has a route", () => {
 
   it("gives every feature page a demo, and no demo an orphan page", () => {
     expect(readdirSync(at(DEMO_DIR)).sort()).toEqual(features);
+  });
+});
+
+describe("what llms-full.txt inlines", () => {
+  // features.md is the decision log — a third of the payload (146,877 of
+  // 442,505 bytes) that an agent asking how to write `flex` never reads.
+  // README.md is the index and MUST stay, which is why LLMS_FULL_OMIT is its
+  // own list rather than a reuse of NON_FEATURE.
+  it("carries all 33 pages but features.md", () => {
+    const inlined = llmsFullPages(pages).map((p) => p.stem);
+    expect(inlined).toHaveLength(32);
+    expect(inlined).not.toContain("features");
+    expect(inlined).toContain("README");
+    expect(features.every((s) => inlined.includes(s))).toBe(true);
   });
 });
 

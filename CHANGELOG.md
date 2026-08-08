@@ -34,8 +34,12 @@ platform binaries.
   byte, and a gate proves it after undoing the handful of link rewrites
   the web needs; the page tells you which file it renders and offers it
   for copying, so an AI agent can take the source rather than the HTML.
-  `llms-full.txt` now carries every reference page too, so an agent
-  asking about `flex` gets it in one fetch instead of two.
+  `llms-full.txt` now carries the reference's authoring pages too, so an
+  agent asking about `flex` gets it in one fetch instead of two. The one
+  page it leaves out is `features.md`, which records why the engine is
+  shaped as it is rather than how to author anything — a third of the
+  payload for something a template author never reads. It is still on the
+  site, and still offered for copying, like every other page.
 
 - **Every feature page now states its limits.** All 31 pages gained a
   `Limitations` section, and where a diagnostic reports the restriction the
@@ -427,6 +431,16 @@ platform binaries.
   report rather than written down beside it.
 
 ### Fixed
+
+- **`llms.txt` lists the pages this site actually has.** Its table of
+  contents had drifted from the site in both directions: the page about
+  printing in a language the engine does not build in was missing
+  entirely, and the template reference was listed at an address that
+  returns a 404 — its markdown is generated, and what is served is one
+  file per page under `/data/reference/`, which is where the reference
+  section now points. An agent handed `llms.txt` no longer follows a dead
+  link or misses a page. The build now refuses to produce a table of
+  contents that disagrees with the pages beside it.
 
 - **The dependency licence and advisory gate now sees every dependency.**
   `cargo deny` was running without `--all-features`, and in that mode it

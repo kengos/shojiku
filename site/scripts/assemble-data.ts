@@ -8,9 +8,9 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
 import { dirname, join } from "node:path";
 import { parseGallery } from "../src/lib/gallery.ts";
 import { MAX_FILE_BYTES, subsetManifest, TIERS } from "../src/lib/fonts.ts";
-import { renderLlmsFull, renderLlmsTxt } from "../src/lib/llms.ts";
+import { checkSitePages, renderLlmsFull, renderLlmsTxt, SITE_PAGES } from "../src/lib/llms.ts";
 import { DEMO_DIR } from "../src/lib/demos.ts";
-import { landingIndex, projectPage, readPage, REFERENCE_LOCALES, SOURCE_DIR } from "../src/lib/reference.ts";
+import { landingIndex, llmsFullPages, projectPage, readPage, REFERENCE_LOCALES, SOURCE_DIR } from "../src/lib/reference.ts";
 
 const SITE = join(import.meta.dirname, "..");
 const ROOT = join(SITE, "..");
@@ -88,29 +88,22 @@ const refPages = stems.map((s) => readPage(s, readFileSync(join(srcDir, `${s}.md
 const demoNames = new Set(readdirSync(join(ROOT, DEMO_DIR)));
 
 // 5. llms.txt + llms-full.txt from the shared preamble + repo docs. The
-//    reference is inlined WHOLE (see step 6 for the page read): an agent
-//    asking about `flex` used to get the index and have to fetch the rest.
-//    Bodies only — the `reference:` front-matter is projection metadata, not
-//    documentation, and would read as authorable syntax.
-const pages = [
-  { path: "/index", title: "Shojiku" },
-  { path: "/concept", title: "Concept" },
-  { path: "/gallery", title: "Gallery" },
-  { path: "/tutorials", title: "Production tutorials" },
-  { path: "/playground", title: "Playground" },
-  { path: "/reference/", title: "Template reference (one page per feature)" },
-  { path: "/compare", title: "Compared to other engines" },
-  { path: "/agents", title: "For AI agents" },
-  { path: "/tips", title: "Tips: uses outside business documents" },
-  { path: "/tech", title: "Technology, licensing & security model" },
-] as const;
-putText(renderLlmsTxt(pages), join(PUB, "llms.txt"));
+//    reference's AUTHORING pages are inlined (see step 6 for the page read):
+//    an agent asking about `flex` used to get the index and have to fetch the
+//    rest. Bodies only — the `reference:` front-matter is projection metadata,
+//    not documentation, and would read as authorable syntax. `features.md` is
+//    left out (src/lib/reference.ts § LLMS_FULL_OMIT): it is the decision log,
+//    and a third of the payload.
+//    The Site list is checked against the pages that really exist rather than
+//    trusted — an entry with no file is a 404 an agent follows.
+checkSitePages(readdirSync(SITE).filter((f) => f.endsWith(".md")).map((f) => f.slice(0, -3)));
+putText(renderLlmsTxt(SITE_PAGES), join(PUB, "llms.txt"));
 putText(
   renderLlmsFull(
     readFileSync(join(SITE, "src", "llms-preamble.md"), "utf8"),
     gallery,
     [
-      ...refPages.map((p) => ({ label: `${SOURCE_DIR}${p.stem}.md — ${p.meta.summary}`, text: p.body })),
+      ...llmsFullPages(refPages).map((p) => ({ label: `${SOURCE_DIR}${p.stem}.md — ${p.meta.summary}`, text: p.body })),
       { label: "docs/quickstart.md", text: readFileSync(join(ROOT, "docs", "quickstart.md"), "utf8") },
     ],
   ),

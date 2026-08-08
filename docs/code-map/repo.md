@@ -229,8 +229,15 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   beside it; browser glue, coverage-excluded). `scripts/assemble-data.ts` =
   build-time pure-Node assembly (public/data wasm+tiered fonts+live
   examples, gallery previews, brand renders, llms.txt/llms-full.txt —
-  which now inlines the WHOLE reference, bodies only, so an agent asking
-  about `flex` has it; the reference projection + demo staging;
+  which inlines the reference's AUTHORING pages, bodies only, so an agent
+  asking about `flex` has it; `features.md` is the one page left out
+  (`src/lib/reference.ts` § `LLMS_FULL_OMIT`): it is the decision log
+  rather than authorable syntax, and a THIRD of the payload. llms.txt's
+  Site list is `SITE_PAGES` in `src/lib/llms.ts`, hand-ordered to follow
+  the nav, and `checkSitePages()` fails the build when it and `site/*.md`
+  drift apart in either direction — an entry with no file renders as a
+  404 an agent follows, and a file with no entry is invisible to one;
+  the reference projection + demo staging;
   25 MiB Pages cap asserted). It is what `pnpm dev` runs first, too —
   without it a dev server has no reference routes; `scripts/refresh-data.ts` = the COMMITTED
   halves, in three modes: default (`make site-data`) regenerates ONLY the
