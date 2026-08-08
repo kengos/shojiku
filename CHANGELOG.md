@@ -258,6 +258,15 @@ platform binaries.
   the same inputs produce different bytes, and identical output is what
   signing rests on.
 
+- **The PHP package now has a way onto Packagist.** Of the seven SDKs it
+  was the only one you could not install from a registry, and the reason
+  was structural: Packagist reads `composer.json` from a repository root,
+  while Shojiku keeps php's under `sdk/php`. Publishing now splits that
+  directory into a derived repository Packagist can track — carrying the
+  real commit history, and only the version tags this repository has
+  already released, so it can never offer a version that was not shipped
+  here. The listing itself is the step that remains.
+
 ### Changed
 
 - The playground's YAML panel — the whole runnable file, as before — is

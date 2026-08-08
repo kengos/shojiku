@@ -466,12 +466,28 @@ both subprocess SDKs script.
   the gate toolchain (php-cs-fixer, phpstan, phpunit) is pinned as a global
   composer install rather than as `require-dev` — which is why the package has
   no `composer.lock` for the SBOM script to find.
-- Gates: `make verify:sdk:php` (php-cs-fixer, phpstan, phpunit at 100%,
+- `LICENSE-MIT` / `LICENSE-APACHE` / `LICENSE-BSD` — copies of the root set,
+  and the only SDK directory that carries any, because this is the one whose
+  directory becomes a repository ROOT when it is published (below).
+  `scripts/check-php-licenses.sh` compares them against the originals.
+- Publish path — the one SDK that does not push a package to a registry.
+  Packagist resolves `composer.json` from a repository root, so `sdk/php` is
+  split out to the derived repo `kengos/shojiku-php`, which Packagist tracks.
+  `scripts/release/split-php.sh` produces the commits (real history, via
+  `git subtree split`; idempotent, so pushes are fast-forwards) and
+  `publish-packages.yml`'s `php` job pushes them under a fine-grained PAT.
+  The derived repo is a build ARTIFACT — never hand-edited — and carries
+  ONLY tags that already exist here, so it cannot serve a version the
+  monorepo has not released. `composer.json` has no `version` field: the tag
+  is the version.
+- Gates: `make verify:sdk:php` (the licence-copy check, php-cs-fixer,
+  phpstan, phpunit at 100%,
   `composer validate --strict`, and an install of the package from its own
   artifact through a `path` repository with packagist OFF), `test:sdk:php`,
   `lint:sdk:php`; `sdk-php` is in `make verify`. `make cli-bin` builds the
   host-arch binary into the gitignored `dist/cli/local/` — the subprocess
-  transport's `capi-lib`.
+  transport's `capi-lib`. `make proof-published-php` is the registry-side
+  proof and can only run once Packagist carries the version.
 
 ## sdk/go — the second SUBPROCESS mirror, and the last stage
 

@@ -761,6 +761,51 @@ pack list builds a nupkg that installs and cannot render). The proofs
 run with network (each installs its packaging toolchain), so they are
 NOT in `make verify`; CI runs them as their own matrix.
 
+## How php is published: a derived repository
+
+Six SDKs publish by uploading a package. php cannot, and the reason is
+structural rather than a gap in the tooling: **Packagist resolves
+`composer.json` from a repository ROOT**, and this repo keeps php's at
+`sdk/php/composer.json`. Moving the manifest to the root instead would
+claim the whole monorepo as the php package and drag every font pack
+into a `composer require` — roughly 47 MB for `ipamj-mincho` alone — so
+that option is closed, not merely unattractive.
+
+php therefore publishes as **`kengos/shojiku-php`, a derived repository
+that Packagist tracks**, produced by `git subtree split --prefix=sdk/php`
+(`scripts/release/split-php.sh` builds the commits;
+`publish-packages.yml`'s `php` job pushes them). Four rules hold it in
+place:
+
+- **It is a build ARTIFACT.** Never hand-edited; the monorepo stays the
+  source, and `composer.json`'s `support.source` keeps pointing here — a
+  reader who wants the code should land where the code is developed.
+- **It carries the REAL history**, not a synthetic commit per release, so
+  the split is a pure function of this repository's history: re-running
+  it reproduces the same shas and a push is a fast-forward.
+- **Its tags are a strict MIRROR of this repository's `v*` tags.** The job
+  creates only tags that already exist here and never moves one, so the
+  derived repo cannot serve a version the monorepo has not released. That
+  matters because the release procedure creates the tag by publishing the
+  draft GitHub Release — i.e. after the publish run — so php is dispatched
+  a second time, on its own, once the tag exists.
+- **The split root must stand on its own.** A subtree split cannot inject
+  files, so anything a Packagist visitor needs has to live in `sdk/php/`
+  in this tree: the README (which is why its links are absolute, and why
+  it names the monorepo as the development home) and a copy of the licence
+  set, gated against drift by `scripts/check-php-licenses.sh`.
+
+`make proof-published-php` is the arm that proves it, and it is the only
+proof drawing on two publish channels — the composer package from
+Packagist, the CLI from the GitHub Release — because this package drives
+a binary rather than carrying one.
+
+The machinery is in the tree; the **listing is the step that remains**,
+which is why the statements at the top of this file still say php awaits
+Packagist. Registering the package against the derived repository is a
+manual act performed once, and until it happens that proof arm has
+nothing to install.
+
 ## Deferred follow-ups
 
 Each is a decided deferral with a recorded reason, not an open question.

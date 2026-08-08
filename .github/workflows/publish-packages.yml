@@ -21,13 +21,26 @@ name: Publish packages
 #   CENTRAL_API_TOKEN      Sonatype Portal user token as `user:password`
 #   GPG_PRIVATE_KEY    ASCII-armored private key (Central signs artifacts)
 #   GPG_PASSPHRASE     its passphrase
+#   SPLIT_REPO_TOKEN   fine-grained PAT, Contents: Read and write, scoped to
+#                      kengos/shojiku-php ONLY — `github.token` is scoped to
+#                      this repository and cannot push to another one
 #
 # Maven stops at USER_MANAGED: the bundle uploads and validates, and the
 # final Publish click stays a human act in the Portal UI. The GitHub
 # Release stops the same way — it is created as a DRAFT.
 #
-# `registries: all` runs the whole batch in the documented order
-# (ruby → python → npm → nuget → maven → release). A failing step aborts
+# php is the odd one out: it publishes by pushing a DERIVED repository that
+# Packagist tracks (kengos/shojiku-php — Packagist reads composer.json from a
+# repository root, and this one keeps it at sdk/php/). Its job therefore
+# creates only tags that already exist HERE, so the derived repo can never
+# serve a version the monorepo has not released. Since the release procedure
+# creates the tag by publishing the draft Release — i.e. AFTER this workflow
+# has run — php is dispatched a second time, on its own, once the tag exists.
+#
+# `registries: all` runs the publish job's steps in the documented order
+# (ruby → python → npm → nuget → maven → release) and, beside them, the two
+# jobs that share nothing with it — crates and php — which are unordered
+# against the batch because nothing in it feeds them. A failing step aborts
 # the run, so the batch is re-dispatched WHOLE — which is why skipping what
 # is already published is the DEFAULT: gem reads "already been pushed" as
 # success, twine takes --skip-existing, npm reads E403 "previously
@@ -55,7 +68,7 @@ on:
         description: 'The release-artifacts run whose binaries to publish'
         required: true
       registries:
-        description: 'Space-separated: ruby python npm nuget maven crates release — or `all`'
+        description: 'Space-separated: ruby python npm nuget maven crates php release — or `all`'
         required: true
         default: ruby
       tag:
@@ -101,7 +114,7 @@ jobs:
           R: ${{ inputs.registries }}
         run: |
           r=$R
-          [ "$r" = all ] && r='ruby python npm nuget maven crates release'
+          [ "$r" = all ] && r='ruby python npm nuget maven crates php release'
           echo "selected: $r"
           echo "registries=$r" >> "$GITHUB_OUTPUT"
 
@@ -489,3 +502,82 @@ jobs:
             exit 1
           }
           echo "all workspace crates are on crates.io"
+
+  # php is a SEPARATE job for the same reason crates is: it publishes SOURCE,
+  # so it needs neither the binary matrix nor the assembled packages. It also
+  # needs the FULL history, which the `publish` job's checkout does not fetch.
+  # `artifacts_run_id` is unused here, exactly as it is unused by crates.
+  php:
+    if: contains(inputs.registries, 'php') || inputs.registries == 'all'
+    runs-on: ubuntu-latest
+    env:
+      DRY_RUN: ${{ inputs.dry_run }}
+      FORCE: ${{ inputs.force }}
+    # The checkout, and nothing else. The cross-repository write comes from the
+    # PAT rather than from this job's token, which is what holds the blast
+    # radius at the one derived repository that token is scoped to.
+    permissions:
+      contents: read
+    steps:
+      # `git subtree split` reads the whole history and a shallow clone would
+      # silently yield a truncated one; split-php.sh refuses rather than
+      # trusting this line to stay correct.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Runs even without the secret below (a fork, a half-configured repo):
+      # the split asserts that every produced commit's tree really is
+      # sdk/php's, which is signal worth having on its own.
+      - name: Split sdk/php
+        run: scripts/release/split-php.sh
+
+      - name: Push the derived repository
+        if: github.repository_owner == 'kengos' && env.KEY != ''
+        env:
+          KEY: ${{ secrets.SPLIT_REPO_TOKEN }}
+        run: |
+          # The push target is a LITERAL. Taking it from an input would let
+          # anyone who can dispatch this workflow send the token to a
+          # repository they control.
+          remote="https://x-access-token:$KEY@github.com/kengos/shojiku-php.git"
+          main_sha=$(awk '$1 == "main" { print $2 }' dist/release/php-split.txt)
+          awk '$1 == "tag" { print $2, $3 }' dist/release/php-split.txt \
+            > dist/release/php-tags.txt
+
+          if [ "$DRY_RUN" = true ]; then
+            echo "DRY RUN — not pushing. What this run would push:"
+            cat dist/release/php-split.txt
+            echo "== tags the derived repo already carries =="
+            git ls-remote --tags "$remote" | sed 's/^/  /'
+            exit 0
+          fi
+
+          # A plain push. The split is a pure function of this repository's
+          # history, so a re-run is a fast-forward — and a REJECTION means the
+          # two histories genuinely diverged, which is a fact a human should
+          # see rather than something --force should paper over.
+          git push "$remote" "$main_sha:refs/heads/main"
+          echo "pushed main -> $main_sha"
+
+          # Tags are CREATED, never moved: a tag the derived repo already
+          # carries is what a composer.lock pins, so replacing one rewrites a
+          # version somebody has already resolved. `force` therefore does here
+          # what it does everywhere else in this file — it turns a silent skip
+          # into a loud failure, which is how you learn that something you
+          # believed unpublished is live.
+          #
+          # Fed by redirect rather than by a pipe: a `while` on the right of a
+          # pipe runs in a SUBSHELL, where the exit below would fail nothing.
+          while read -r name sha; do
+            if [ -n "$(git ls-remote --tags "$remote" "refs/tags/$name")" ]; then
+              if [ "$FORCE" = true ]; then
+                echo "  force: $name is already on the derived repo — not treating as success"
+                exit 1
+              fi
+              echo "  ($name is already on the derived repo — ok)"
+              continue
+            fi
+            git push "$remote" "$sha:refs/tags/$name"
+            echo "  created $name -> $sha"
+          done < dist/release/php-tags.txt

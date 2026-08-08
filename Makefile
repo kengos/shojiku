@@ -92,7 +92,11 @@ endif
 #                                         line coverage via a clover assertion,
 #                                         composer install of the package; the
 #                                         injected binary here is the CLI, which
-#                                         this SDK drives as a subprocess)
+#                                         this SDK drives as a subprocess. Also
+#                                         checks sdk/php's license copies against
+#                                         the root originals — they are what the
+#                                         Packagist package ships, and nothing
+#                                         else compares them)
 #   sdk-go            -> job "sdk-go"    (gofmt, go vet, golangci-lint, go test
 #                                         -race at 100% statement coverage, and
 #                                         a build of the package from a scratch
@@ -319,7 +323,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         proof-php proof-go
 .PHONY: proof-published proof-published-python proof-published-ruby \
         proof-published-dotnet proof-published-java proof-published-js \
-        proof-published-crates
+        proof-published-php proof-published-crates
 .PHONY: proof-deploy site site-lint site-test site-data site-check site-wasm-release site-build \
         site-dev verify\:site lint\:site test\:site
 .PHONY: help verify quiet rust budget fmt fmt-fix lock clippy test coverage deny \
@@ -761,7 +765,8 @@ PHP_IMAGE := shojiku-sdk-php:$(PHP_VER)$(SDK_SUFFIX)
 # ONE COMMAND PER LINE, deliberately. Under `sh -euc`, errexit is SUPPRESSED
 # for a failing command inside an `&&` chain, so `lint && test; package` would
 # report the PACKAGE step's status and green over a failed test run.
-sdk-php: cli-bin ## sdk/php gates: php-cs-fixer + phpstan + phpunit at 100% coverage + composer install
+sdk-php: cli-bin ## sdk/php gates: licenses + php-cs-fixer + phpstan + phpunit at 100% + composer install
+	@sh scripts/check-php-licenses.sh
 	@echo "== sdk php image =="
 	@DOCKER_BUILDKIT=1 docker build -q --build-arg PHP_VERSION=$(PHP_VER) -f sdk/php/Dockerfile -t $(PHP_IMAGE) . >/dev/null
 	@echo "== sdk php (php-cs-fixer + phpstan + phpunit + package) =="
@@ -1230,9 +1235,12 @@ proof: proof-python proof-ruby proof-dotnet proof-java proof-js proof-php proof-
 # instead of a package built here. They take no artifact prerequisite — the
 # point is that nothing local is involved — and they only mean anything once
 # the version is actually published. SHOJIKU_VERSION=x.y.z pins one;
-# unset takes whatever the registry calls latest. php and go are absent
-# because their SDKs are not published (Packagist deferred; go is a repo tag),
-# and crates is absent until crates.io has a first publish.
+# unset takes whatever the registry calls latest. go is the one language with
+# no arm here and needs none: its publish IS a repo tag, so there is no
+# registry copy that could differ from the tree. php takes BOTH of its halves
+# from publish channels — the composer package from Packagist and the CLI from
+# the GitHub Release — because the package drives a binary rather than
+# carrying one.
 proof-published-python: ## Published-install proof: pip install shojiku from PyPI
 	@PYTHON_VER=$(PYTHON_VER) sh scripts/install-proof/published-python.sh
 proof-published-ruby: ## Published-install proof: gem install shojiku from rubygems.org
@@ -1243,10 +1251,12 @@ proof-published-java: ## Published-install proof: jp.kengos:shojiku from Maven C
 	@sh scripts/install-proof/published-java.sh
 proof-published-js: ## Published-install proof: npm install shojiku from npmjs.com
 	@NODE_VER=$(NODE_VER) sh scripts/install-proof/published-js.sh
+proof-published-php: ## Published-install proof: composer require shojiku/shojiku from Packagist
+	@PHP_VER=$(PHP_VER) sh scripts/install-proof/published-php.sh
 proof-published-crates: ## Published-install proof: cargo install shojiku-cli from crates.io
 	@RUST_VER=$(RUST_VERSION) sh scripts/install-proof/published-crates.sh
 
-proof-published: proof-published-python proof-published-ruby proof-published-dotnet proof-published-java proof-published-js proof-published-crates ## All published-install proofs
+proof-published: proof-published-python proof-published-ruby proof-published-dotnet proof-published-java proof-published-js proof-published-php proof-published-crates ## All published-install proofs
 
 # The engine library is INJECTED already compiled (capi-lib above); no
 # language image ever builds Rust. The sidecar sdk/ruby/Dockerfile.dockerignore
