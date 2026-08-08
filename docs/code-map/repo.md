@@ -267,7 +267,9 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   Signals preamble VERBATIM (no signal expressed — that is a policy
   decision) plus the crawl grant and the `Sitemap:` line. Gates: `make site` /
   `site-check` / `site-build` (+ `verify:site` grid entry, CI job
-  `site`); `make site-wasm-release` is release-only and in no gate. Font tiers: immediate = noto-sans Regular+Bold (~1.2 MB),
+  `site`; `site-docs.yml` runs `verify:site` again on PRs touching
+  `docs/engine/**` / `CHANGELOG.md` / `README.md`, which `ci.yml`
+  ignores); `make site-wasm-release` is release-only and in no gate. Font tiers: immediate = noto-sans Regular+Bold (~1.2 MB),
   lazy-ja = BIZ UDP pair (~8.9 MB — ja-JP's default family);
   ipamj-anything stays static-PNG only (45 MB > the 25 MiB cap).
 - `docs/` — the doc set (`docs/engine/` = the per-feature template
