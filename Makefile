@@ -1734,19 +1734,32 @@ site-wasm-release: ## RELEASE ONLY: re-pin site/.data/wasm to the released engin
 	@test -d engine/wasm/pkg || $(MAKE) wasm
 	@$(SITE_IN_DOCKER) 'node scripts/refresh-data.ts --release-wasm'
 
-# WARNING — this STAGES site/.data/wasm (a RELEASED engine build) into
-# engine/wasm/pkg, which is also what the site's own tests load as "a fresh
-# build of HEAD". So after a `make site-build`, a later `make site` in the same
-# tree is silently testing the RELEASED engine, not your changes — a green run
-# proving less than it looks like it does. `make verify` is unaffected (it does
-# not run this) and CI cannot hit it (fresh checkouts); it bites the human who
-# runs both in one tree. Re-run `make wasm` before trusting a later gate. The
-# tell: `make site-wasm-release` suddenly SUCCEEDS where it refused minutes
-# earlier — that is the guard comparing the site's own bytes against
-# themselves, not a fixed problem.
+# The Pages build STAGES site/.data/wasm (a RELEASED engine build) into
+# engine/wasm/pkg (build-pages.sh needs it there for the designer-app
+# assemble), which is also what the site's own tests load as "a fresh build of
+# HEAD". This recipe therefore backs pkg up first and restores it after —
+# pass, fail, or a leftover from an interrupted earlier run (a surviving
+# backup is always the pre-swap truth, so it is restored before a new backup
+# is taken). If no pkg existed before, the staged copy is REMOVED so the next
+# gate's `test -d` rebuilds HEAD instead of silently testing the released
+# engine. Running `bash scripts/build-pages.sh` directly (not via make) still
+# leaves the swap in place — that path is the Pages deploy's, which runs on a
+# fresh checkout and never runs a later gate.
 site-build: ## The full Pages build locally (site + /designer/) into site/.vitepress/dist
 	@echo "== site build (Pages mirror) =="
-	@$(SITE_IN_DOCKER) 'bash scripts/build-pages.sh'
+	@if [ -d engine/wasm/.pkg-pre-site-build ]; then \
+		echo "== restoring engine/wasm/pkg from an interrupted site-build =="; \
+		rm -rf engine/wasm/pkg; \
+		mv engine/wasm/.pkg-pre-site-build engine/wasm/pkg; \
+	fi
+	@if [ -d engine/wasm/pkg ]; then cp -R engine/wasm/pkg engine/wasm/.pkg-pre-site-build; fi
+	@$(SITE_IN_DOCKER) 'bash scripts/build-pages.sh'; rc=$$?; \
+	rm -rf engine/wasm/pkg; \
+	if [ -d engine/wasm/.pkg-pre-site-build ]; then \
+		mv engine/wasm/.pkg-pre-site-build engine/wasm/pkg; \
+		echo "== engine/wasm/pkg restored (the build staged the RELEASED engine there) =="; \
+	fi; \
+	exit $$rc
 
 site-dev: ## VitePress dev server in Docker (http://localhost:5174, Ctrl-C stops)
 	@echo "== site dev server =="
