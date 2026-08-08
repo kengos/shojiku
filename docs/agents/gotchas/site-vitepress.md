@@ -115,3 +115,26 @@ a broken regex. Use `$(?![\s\S])` for end-of-input under the `m` flag.
   them. Adding a transform without its inverse reds `src/reference.test.ts`,
   which is the intended behaviour — the point of the gate is that the site
   restates nothing.
+
+## A green Pages check on the merge commit is not "production serves it"
+
+The site rule already says the deploy is asynchronous, so a check read
+immediately after merging measures the PREVIOUS build, and to poll the merge
+commit's own check-runs instead. That is necessary and not sufficient: after
+that check reports `success`, production can still serve the old bytes for
+tens of seconds. Measured once at roughly 20 seconds, on a change whose whole
+diff was markdown.
+
+It is a nasty gap to sit in, because everything says done — the merge
+returned, the check is green, and the URL is up — and only the CONTENT
+disagrees. Two things separate it from the failure it resembles:
+
+- **It is not a CDN cache.** The response carries
+  `cache-control: public, max-age=0, must-revalidate`, and a cache-busting
+  query string returns the old body just the same. Reaching for `?cb=` and
+  finding no change is evidence about the deploy, not about the edge.
+- **Poll the CLAIM, not the check.** Fetch the page and grep for the sentence
+  the change introduced AND for the one it removed — a bounded loop of ~20s
+  ticks. Both directions matter: a page that has not rebuilt yet still
+  contains the old wording, so `new=0 old=1` names the state exactly, while
+  `new=0` alone cannot tell "not deployed" from "I grepped the wrong string".

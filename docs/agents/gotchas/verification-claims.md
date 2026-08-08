@@ -413,6 +413,23 @@ check whose empty output read as "all covered").
   absence check as its own command, or terminate it (`|| true`) when it
   must stay in a chain — and treat any `&&` chain whose later steps
   produced no output as a suspected short-circuit rather than a no-op.
+- **"No job ran" is not "nothing was broken", and a PR reporting zero
+  checks is the easiest green there is to misread.** `ci.yml` skips its
+  whole matrix when every changed path matches `paths-ignore`, on the
+  premise that markdown cannot redden a gate. Three of those paths are
+  read by the site — `docs/engine/**` (projected onto `/reference/`),
+  `CHANGELOG.md` (which versions the site may pin) and `README.md` (the
+  generated gallery) — so two markdown-only PRs in a row moved `main`
+  past a gate nobody had run. What caught it was a cycle re-running
+  `make verify:site` locally after merging `main` into its branch; no
+  amount of reading the PRs would have. `site-docs.yml` now covers
+  exactly those paths, and the durable habit is the one that found it:
+  after merging `main` into a branch, re-run the gates for whatever the
+  INCOMING commits touched, not only for your own diff.
+  **A commit-message marker cannot rescue this** — the reflex is to reach
+  for a `[run-site]` — because path filters are evaluated against the
+  EVENT: a filtered-out workflow never starts, so nothing is running to
+  read one. Markers can only ever SKIP (`[skip ci]`), never start.
 - **A gate run through a pipe reports the PIPE's exit code, not the
   gate's.** `make <gate> 2>&1 | tail -40` exits 0 because `tail` exited
   0 — the gate underneath may have failed, and the harness reports
