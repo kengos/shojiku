@@ -1,0 +1,117 @@
+# Gotchas — the site (VitePress, and projecting `docs/` into it)
+
+Traps met while building `site/`, especially the reference projection
+(`docs/engine/*.md` → `/reference/**`). Everything here cost a debug loop;
+none of it is inferable from the VitePress docs at the moment you need it.
+
+Read this before touching `site/scripts/assemble-data.ts`,
+`site/src/lib/reference*.ts`, `.vitepress/config.mts`, or any markdown that
+the projection carries onto the site.
+
+## Markdown that reaches Vue is a TEMPLATE, not just prose
+
+VitePress renders markdown to HTML and then compiles the result as a Vue
+template. Two classes of perfectly ordinary markdown therefore fail the
+BUILD, and neither fails any test that only parses the markdown.
+
+### `{{` is an interpolation, and the wire spells a literal brace `{{`
+
+`docs/engine/data-binding.md` and `text.md` document `` `{{` `` as the escape
+for a literal `{`. Vue reads it as the opening of a mustache and dies with
+
+```
+Error parsing JavaScript expression: Unexpected token (1:2)
+```
+
+pointing at the prose. Inline code does NOT protect it — markdown-it emits
+`<code>{{</code>` and Vue still sees the braces.
+
+The fix belongs to the PROJECTION, not to the repo file: `docs/` is also read
+on GitHub and in the docs-only distribution, so a `<span v-pre>` written into
+the source would be site-specific markup in a file the site does not own.
+`site/src/lib/reference.ts` wraps the inline-code spans that contain `{{`,
+and `projectedBody()` unwraps them so the drift gate still compares against
+the source byte for byte.
+
+### An unclosed-looking tag fails with coordinates that are NOT the source's
+
+Vue's `Element is missing end tag` reports a position in the RENDERED HTML,
+which for a long page is nowhere near the markdown line. One such error
+pointed at `features.md (2100:80)` — a line of ordinary prose about border
+radii, ~80 lines from the cause, and the position did not move when the file
+was truncated to 2050 lines, which is the tell that the number is not a
+source coordinate.
+
+The cause was a code span split across a line break **mid-identifier**:
+
+```markdown
+- **Cell assets are per-element ids, not per-key**: `dyn:<array>[<i>].
+  <key>` lets layout and prepare agree without a registry
+```
+
+Every scan for "a raw `<tag>` outside code" comes back empty here, because a
+CommonMark-correct scan sees one code span covering both lines. It also
+rendered a stray space inside the identifier on GitHub, so reflowing the
+source to keep the span on one line is the right fix rather than a workaround.
+
+**How it was actually found: bisect against `make site-build`.** The Vue
+transform fails in under a second, so truncating the file (`head -N`) and
+rebuilding is cheap — 1200 clean, 2050 red, 1900 clean, 2024 red — and lands
+on the paragraph in five runs. Do that instead of re-reading the file; the
+reported coordinate will keep sending you to the wrong place.
+
+## VitePress ROUTES `public/**/*.md`
+
+Anything staged under `site/public/` with a `.md` extension is picked up as a
+page and compiled as Vue, so staging raw markdown there (for a same-origin
+"copy the source" affordance, say) fails the build on the first file that
+contains something Vue dislikes. `srcExclude: ["src/**", "public/**"]` is the
+fix: `public/` is static assets and never routes.
+
+## The site CSP is `connect-src 'self'` — an in-page fetch to GitHub cannot work
+
+`site/public/_headers` sets `connect-src 'self' https://cloudflareinsights.com`,
+and `headers.test.ts` explicitly refuses the github-raw hole the Designer
+scope has. So a feature that fetches a repository file from the page (a
+"Copy for AI" button reading the page's own markdown) is broken in
+production while working in any local preview that serves no CSP header.
+
+A **link** is fine — a navigation is not governed by these directives. Only
+`fetch`/XHR is. If a page needs repo bytes, stage them into `public/` at
+build time and read them same-origin.
+
+This class ships green: no gate reads the CSP against the components, so the
+check is to grep the new component's `fetch(` calls and confirm every one of
+them is same-origin.
+
+## A sweep test that walks `public/` answers differently after a build
+
+`headers.test.ts`'s "no CDN origin anywhere in the site source" walked
+`public/`, which holds build OUTPUT that only exists once `assemble-data.ts`
+has run. In CI (fresh checkout, no prior build) it saw three files; locally
+after a build it saw the whole generated tree — including `llms-full.txt`,
+which inlines `fonts.md` and therefore quotes `fonts.gstatic.com` as
+documentation of the font-fetch allowlist.
+
+A sweep over a directory that mixes source and generated output is not a
+sweep over source. Scope it, and say in the test WHY the generated paths are
+excluded — otherwise the next reader restores them.
+
+## `\Z` is not a JavaScript regex escape
+
+`/^## Limitations$([\s\S]*?)(?=^## |\Z)/m` looks like "up to the next h2 or
+end of input". JavaScript has no `\Z`; the escape degrades to a literal `Z`,
+so the pattern silently fails to match any section that runs to the end of
+the file — one page out of 31, which reads as a missing section rather than
+a broken regex. Use `$(?![\s\S])` for end-of-input under the `m` flag.
+
+## The reference projection's own invariants
+
+- `docs/engine/` carries **no absolute links** today, which is what makes the
+  outlink rewrite invertible and the drift gate exact. Adding one to a source
+  page breaks the round trip; the gate will say so.
+- The projection is allowed exactly the edits listed at the top of
+  `site/src/lib/reference.ts`, and `projectedBody()` must undo every one of
+  them. Adding a transform without its inverse reds `src/reference.test.ts`,
+  which is the intended behaviour — the point of the gate is that the site
+  restates nothing.
