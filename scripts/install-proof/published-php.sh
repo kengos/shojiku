@@ -78,12 +78,23 @@ PHP
 # it is part of what the package has to do. The php base image carries no
 # composer, so the binary is borrowed from the composer image exactly as the
 # local proof and the gate Dockerfile do.
+#
+# It also carries no unzip and no zip extension, and Packagist serves this
+# package as a dist ZIP — so composer reaches the archive, cannot open it, and
+# says `The zip extension and unzip/7z commands are both missing, skipping`.
+# unzip is installed here for the same reason composer is: it is packaging
+# TOOLING, not the payload. `--prefer-source` would dodge it and cost the
+# proof its point, since that clones from GitHub instead of installing the
+# dist Packagist actually serves. The local proof never needed it because a
+# `path` repository copies files rather than downloading an archive.
 docker run --rm -e VER="$VER" -v "$WORK:/w" \
   -v "$ROOT/examples/business:/ex:ro" -v "$ROOT/packs:/packs:ro" \
   -v "$WORK/cli/shojiku:/usr/local/bin/shojiku:ro" \
   "$IMG" sh -euc '
   test ! -e /opt/shojiku || { echo "void: an engine exists outside the package" >&2; exit 1; }
   shojiku --version
+  apt-get -qq update
+  apt-get -qq install -y --no-install-recommends unzip >/dev/null
   php -r "copy(\"https://getcomposer.org/download/latest-stable/composer.phar\", \"/usr/local/bin/composer\");" \
     && chmod +x /usr/local/bin/composer
   mkdir /consumer && cd /consumer
