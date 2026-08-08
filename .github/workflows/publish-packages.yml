@@ -189,8 +189,8 @@ jobs:
             done
             exit 0
           fi
-          push_gem shojiku-0.1.0.gem
-          for gem in shojiku-0.1.0-*.gem; do
+          push_gem shojiku-0.2.0.gem
+          for gem in shojiku-0.2.0-*.gem; do
             echo "pushing $gem"
             push_gem "$gem"
           done
@@ -251,7 +251,7 @@ jobs:
             publish_pkg "$t"
           done
           echo "publishing the entry package"
-          publish_pkg shojiku-0.1.0.tgz
+          publish_pkg shojiku-0.2.0.tgz
 
       # The key nuget.org hands back lives ONE hour and is single-use, so it
       # is minted here, immediately before the push, rather than up front —
@@ -289,7 +289,7 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           echo "$GPG_PRIVATE_KEY" | gpg --batch --import
-          layout=bundle/jp/kengos/shojiku/0.1.0
+          layout=bundle/jp/kengos/shojiku/0.2.0
           mkdir -p "$layout"
           cp dist/release/packages/java/* "$layout/"
           cd "$layout"

@@ -31,7 +31,7 @@ shojiku-render-png = { workspace = true }
 # By path (not workspace-inherited) so `default-features = false` takes effect:
 # bytes-first only, no `fs` filesystem pack discovery. `version` is required
 # alongside `path` for publishing — see the note in the workspace manifest.
-shojiku-authoring = { path = "../authoring", version = "0.1.0", default-features = false }
+shojiku-authoring = { path = "../authoring", version = "0.2.0", default-features = false }
 
 # The wasm-bindgen shim compiles ONLY for wasm32, so a host build (test /
 # clippy / coverage) never pulls it and the shim's marshalling code stays out
