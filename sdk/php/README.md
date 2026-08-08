@@ -5,11 +5,6 @@ turns a YAML template plus your data into a deterministic PDF. The package is
 pure PHP and renders nothing on its own: it drives the `shojiku` command-line
 binary, which you install separately.
 
-> **Not on Packagist yet.** The other six Shojiku SDKs shipped at v0.1.0;
-> this one waits on its Packagist registration. Until it lands, install
-> from a clone of this repository (`composer config
-> repositories.shojiku path /path/to/shojiku/sdk/php`).
-
 ## Install
 
 ```bash
