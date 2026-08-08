@@ -522,9 +522,20 @@ jobs:
       # `git subtree split` reads the whole history and a shallow clone would
       # silently yield a truncated one; split-php.sh refuses rather than
       # trusting this line to stay correct.
+      #
+      # persist-credentials: false is what makes the PAT below REACH the push.
+      # checkout otherwise leaves an
+      # `http.https://github.com/.extraheader` in the local config, and that
+      # header applies to every github.com URL — so it overrides the
+      # credentials in the remote URL and the push goes out as
+      # github-actions[bot], which has no access to the derived repository:
+      # `remote: Permission to kengos/shojiku-php.git denied to
+      # github-actions[bot]`. Nothing here needs the job token after the
+      # checkout: the split is entirely local.
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       # Runs even without the secret below (a fork, a half-configured repo):
       # the split asserts that every produced commit's tree really is
@@ -550,6 +561,15 @@ jobs:
             cat dist/release/php-split.txt
             echo "== tags the derived repo already carries =="
             git ls-remote --tags "$remote" | sed 's/^/  /'
+            # `git push --dry-run` rather than stopping at ls-remote, because
+            # the derived repo is PUBLIC: reading it needs no credentials at
+            # all, so an ls-remote succeeds just as happily with the wrong
+            # token as with the right one. A dry-run push reaches
+            # git-receive-pack, which authorizes, so a scope mistake fails
+            # HERE instead of on the run that was meant to publish.
+            echo "== write access =="
+            git push --dry-run "$remote" "$main_sha:refs/heads/main"
+            echo "  the token can write to the derived repository"
             exit 0
           fi
 
