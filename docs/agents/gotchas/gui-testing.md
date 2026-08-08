@@ -2,7 +2,10 @@
 
 > AI-only. Test *strategy* lives in `shojiku-test-professional`;
 > language standards in `shojiku-node-professional`; live-browser smoke
-> traps in [browser-smoke.md](browser-smoke.md).
+> traps in [browser-smoke.md](browser-smoke.md). A gui suite that dies
+> BEFORE vitest means anything (a fresh worktree's missing
+> `engine/wasm/pkg`, a stale pkg after `make site-build`) is a
+> toolchain trap: [docker-make.md](docker-make.md).
 
 ## jsdom's missing pieces
 

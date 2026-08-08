@@ -432,6 +432,21 @@ platform binaries.
 
 ### Fixed
 
+- **The docs no longer contradict themselves about what is built and
+  where keys live.** A comprehension audit of the documentation set
+  found and fixed the places where following the text would mislead:
+  the fonts page still told authors to set `locale:` in
+  `definitions.yml`, which the engine now rejects as a parse error
+  (it lives in the template's `defaults:` block); the table page's
+  column key table omitted `type` and `fit`, the keys that make QR and
+  image columns writable from the reference alone; the quickstart
+  enumerated four MCP tools and then said "six" (`list_examples` /
+  `get_example` are now named); and several pages still described the
+  Designer as not publicly hosted and the signing/verify/MCP/WASM
+  crates as future work — all of which shipped. Cross-references were
+  added where a term was defined in one file and used in another
+  (renderer ↔ layout-tree vocabulary, the pinned-face auto-fetch).
+
 - **`llms.txt` lists the pages this site actually has.** Its table of
   contents had drifted from the site in both directions: the page about
   printing in a language the engine does not build in was missing

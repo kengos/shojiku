@@ -402,8 +402,9 @@ check-your-work workflow; the common ones:
 
 The Designer ships as a static app (`gui/designer-app`): a locale-keyed
 preset catalog opening into the full editor (canvas preview, property
-panel, diagnostics, undo/redo, file open/export). It is not publicly
-hosted yet; the ways to run it:
+panel, diagnostics, undo/redo, file open/export). It is live at
+[shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/); the
+ways to run your own copy:
 
 - **`make gui-serve`** builds the complete app image (WASM engine + Vite
   build + assembled presets/fonts/locale packs — `gui/designer-app/Dockerfile`)

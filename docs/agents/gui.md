@@ -179,15 +179,19 @@ the core — both forms are part of the design, the bundled set is never
 replaced by the fetch. The fetch mechanism (catalog source, integrity
 verification, browse/fetch UI) is unbuilt.
 
-**Product story until public hosting (decided):** the AI-agent
-authoring workflow (MCP/CLI + the template-author playbook) leads the
-product story — the README pitches agents first; the Designer is the
-second entrance and takes over the non-engineer story once hosted.
+**Product story (decided):** the AI-agent authoring workflow (MCP/CLI +
+the template-author playbook) leads the product story — the README
+pitches agents first; the Designer (hosted at
+shojiku.pages.dev/designer) is the second entrance and carries the
+non-engineer story.
 
 **Non-goals (v1):** SaaS/accounts, font-upload UI (the user's OWN font
 files — distinct from the shipped Google-Fonts catalog picker, which
-installs catalog fonts by pinned reference), in-GUI AI review,
-Workers-side preview. (A definitions editor was a v1 non-goal until the
+installs catalog fonts by pinned reference), in-GUI AI review — an AI
+CRITIQUING the document (a review/lint pane written by a model; the
+decided AI copilot is the opposite direction: the AI proposes ops and
+the HUMAN reviews them before apply — the **AI copilot (op output)**
+entry above), Workers-side preview. (A definitions editor was a v1 non-goal until the
 data-item editor shipped it; field-KEY rename and field delete remain
 out of scope.)
 

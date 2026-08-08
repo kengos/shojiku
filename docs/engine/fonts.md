@@ -28,7 +28,7 @@ at render time.
 Resolution order (first match wins):
 
 1. `--lang <id>` on the CLI (e.g. `--lang en-US`)
-2. `locale:` in `definitions.yml`
+2. `defaults.locale` in `templates.yml` ([defaults.md](defaults.md))
 3. `ja-JP` (the engine default)
 
 Builtin matching is case-insensitive and a bare language tag selects its

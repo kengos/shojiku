@@ -123,9 +123,10 @@ agent (next section).
 ## With an AI coding agent (MCP)
 
 `shojiku-mcp` is a stdio MCP server exposing `validate` /
-`render_preview` / `inspect_layout` / `capabilities`. It ships in the
-same image, and stdio is exactly what `docker run -i` gives you — for
-Claude Code:
+`render_preview` / `inspect_layout` / `capabilities`, plus
+`list_examples` / `get_example` over the bundled examples. It ships in
+the same image, and stdio is exactly what `docker run -i` gives you —
+for Claude Code:
 
 ```bash
 claude mcp add shojiku -- \

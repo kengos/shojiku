@@ -48,9 +48,9 @@ this pipeline before deciding which crate/package it belongs to.
   form is the integrator's own: the Designer mounts under a host
   system's reverse proxy behind the host's auth (shipped —
   [designer-mount.md](designer-mount.md)).
-- **Lead with AI agents**: until the Designer is publicly hosted (and
-  likely after), the agent-authoring workflow (MCP/CLI + the
-  template-author playbook) is the front door of the product story.
+- **Lead with AI agents**: even with the Designer publicly hosted, the
+  agent-authoring workflow (MCP/CLI + the template-author playbook)
+  stays the front door of the product story.
 - Represent PDF forms as JSON/YAML that is easy to code-review, diff, and
   generate/repair with AI. **YAML is the canonical authored form**;
   JSON is accepted everywhere as an equivalent (typically
@@ -195,7 +195,8 @@ shojiku/
                (planned crate: bundle)
   gui/         React Designer pnpm workspace — document core, canvas,
                property panel + diagnostics, and the standalone
-               preset-catalog app shell (not publicly hosted yet)
+               preset-catalog app shell (live at
+               shojiku.pages.dev/designer)
   sdk/         Thin language wrappers (python, js, ruby, dotnet, php,
                java, go) — never reimplement the layout engine. All
                seven are built: ruby is the reference the other six
@@ -277,7 +278,9 @@ composable. Do not blur them for local convenience.
    A pack may travel as a **pinned reference** — a manifest whose faces
    carry `sha256` + a `url:` hint but no bytes — which a **host** resolves
    by filling a local cache *before* rendering (`shojiku-fetch`, used by
-   the CLI; `--offline` opts out). That is cache-filling distribution, not
+   the CLI; `--offline` opts out — flags and cache locations in
+   [engine/fonts.md § Pinned faces &
+   auto-fetch](engine/fonts.md#pinned-faces--auto-fetch-url)). That is cache-filling distribution, not
    render I/O: the layout/render/sign/verify path itself never opens a
    socket, and the pin means fetched bytes either match exactly or fail
    loudly. `FontStore`
