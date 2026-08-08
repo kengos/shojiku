@@ -139,6 +139,26 @@ check whose empty output read as "all covered").
   rather than the filesystem (`git show origin/main:<path>`,
   `git grep <pat> origin/main`), which is immune to where you are
   standing.
+- **`git diff A..B` compares two TREES, not a commit range — so once a
+  parallel branch merges, `git diff origin/main..HEAD` starts reporting
+  THEIR files as yours.** The two-dot spelling is a range for `git log`
+  and merely a separator for `git diff`, which is why the habit
+  transfers wrongly. A pre-merge gate asking "does this PR touch
+  anything outside `docs/agents/gotchas/`?" answered **2** — `Makefile`
+  and `engine/wasm/.gitignore`, both belonging to a neighbouring PR that
+  had merged minutes earlier, moving the local `origin/main` past this
+  branch's base. The PR really did contain two files, both under
+  `gotchas/`. Use `origin/main...HEAD` (three dots) or an explicit
+  `$(git merge-base origin/main HEAD)..HEAD`.
+  Two things make this worse than an ordinary miscount. The number is
+  **not noise — it is a correct answer to a different question**, so it
+  reads as a genuine finding about your own change rather than as a
+  broken command. And a count computed inside a command substitution
+  (`echo "… $(… | grep -c …)" && <the irreversible thing>`) cannot gate
+  anything: `echo` succeeds whatever the number is, so the `&&` proceeds.
+  This one was merged past — correctly, as it turned out, which is the
+  only reason it cost nothing. Put a check that guards an irreversible
+  step in its OWN command, and compare its value explicitly.
 - **Never reuse an OFFSET across a mutation** — a script that computes
   `start`/`end` with `.index(…)`, then does an unrelated `.replace()`,
   then splices at the saved offsets writes into the wrong place (it ate
