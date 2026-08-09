@@ -306,6 +306,29 @@ read side, never the reverse.
   touches only its own leaf (a rule the user never opened must not move
   in the diff); the FIRST rule seeds the list with `putValue`. Numeric
   fields get NUMBER literals — the engine predicate is type-strict.
+- `panel/VisibilitySection.tsx` — an item's `visible:` presence binding,
+  rendered ABOVE the content/decoration/placement tabs because it applies to
+  every item type and is none of those concerns. It is also what gives
+  `page_break` an editing surface at all (the wire takes only `id` and
+  `visible:`), which is what a conditional page break is. Gated on the
+  `item.visible` capability — an older engine parse-rejects the key. The
+  field picker follows the item's OWN data scope, derived from its path by
+  `bindingScopeFor` like every other row-scoped surface: inside a `repeat`
+  cell it offers the bound element's fields, with the top-level ones as a
+  labeled second section that writes `scope: document` **in the same op
+  batch** when picked. Offering document fields at element scope would author
+  a key resolving to nothing — the item then vanishes with no diagnostic, or
+  reports an undeclared one.
+  `panel/visibilityModel.ts` (pure, READ) — `readVisible` → the row, or
+  `null` when the item authors none / authors a non-map; re-exports
+  `valueFormFor` so the two presence surfaces cannot disagree about which
+  field type earns which control. `panel/visibilityOps.ts` (pure, WRITE) —
+  `visible:` is a MAP, so every edit is a leaf `setScalar`/`removeKey`;
+  clearing `collapse` REMOVES the key (unset never serializes) and a repoint
+  reconciles a stale `equals` AND the data scope in the same batch (one undo
+  step). A `page_break` gets no collapse control at all: the engine always
+  removes one whose predicate fails, so the choice has nothing to choose
+  between and the default's copy would state the opposite.
 - `panel/TableColumnSheet.tsx` — the same per-column editing transposed
   horizontally in a bottom `ui/Offcanvas.tsx` sheet (columns as strips;
   header drag-reorder or Alt+←/→, ONE `moveItem` each; reuses the same

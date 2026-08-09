@@ -775,3 +775,43 @@ describe('a nested list’s entries', () => {
     expect(usage.scalar.has('orphan')).toBe(false);
   });
 });
+
+describe('`visible:` presence bindings', () => {
+  const VISIBLE = [
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - type: image',
+    '        src: stamp.svg',
+    '        visible: { key: order.status, equals: approved }',
+    '      - type: repeat',
+    '        data: { key: rows }',
+    '        grid: { columns: 1 }',
+    '        cell:',
+    '          items:',
+    '            - type: rect',
+    '              box: { x: 0, y: 0, w: 1, h: 1 }',
+    '              visible: { key: flagged }',
+    '            - type: rect',
+    '              box: { x: 0, y: 0, w: 1, h: 1 }',
+    '              visible: { key: draft, scope: document }',
+  ].join('\n');
+
+  it('counts a document-scope `visible.key` as a reference', () => {
+    // Without this the field would read as UNUSED in the palette even though
+    // the document depends on it to decide whether the item draws.
+    const refs = readBindings(VISIBLE);
+    expect(refs.some((r) => r.key === 'order.status' && r.scope === null)).toBe(true);
+  });
+
+  it('scopes a `visible.key` inside a repeat cell to the bound element', () => {
+    const refs = readBindings(VISIBLE);
+    expect(refs.some((r) => r.key === 'flagged' && r.scope === 'rows')).toBe(true);
+  });
+
+  it('honours the `scope: document` escape from inside a cell', () => {
+    const refs = readBindings(VISIBLE);
+    expect(refs.some((r) => r.key === 'draft' && r.scope === null)).toBe(true);
+  });
+});

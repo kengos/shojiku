@@ -42,6 +42,12 @@ export const ja: LanguageCatalog = {
     mark_equals_not_declared:
       '`{key}` の `enum` にこの `equals` の値がありません。マークは決して描画されません',
     mark_value_not_bool: '`{key}` は真偽値ではありません。マークは描画されません',
+    visible_not_boolean:
+      '`{key}` は真偽値のフィールドではありません。`equals` のない `visible` は真偽値を期待します',
+    visible_equals_not_declared:
+      '`{key}` の `enum` にこの `equals` の値がありません。この項目は決して表示されません',
+    visible_type_mismatch: '`{key}` の値の型が `equals` と異なります。項目は表示されません',
+    visible_value_not_bool: '`{key}` は真偽値ではありません。項目は表示されません',
     row_condition_not_boolean:
       '`{key}` は真偽値フィールドではありません。`equals` のない行条件には真偽値が必要です',
     row_condition_type_mismatch:
@@ -572,6 +578,22 @@ export const ja: LanguageCatalog = {
     'align.distributeV': '上下に等間隔',
     'panel.field.border': '枠線',
     'panel.field.line': '線',
+    'tree.conditional':
+      'データが条件に合うときだけ表示されます。今はページに出ていない場合があります。',
+    'tree.conditional.badge': '条件',
+    'panel.visible.title': '表示する条件',
+    'panel.visible.hint':
+      'この項目は常に表示されます。フィールドに紐づけると、データに応じて表示・非表示を切り替えられます。',
+    'panel.visible.add': '条件付き表示にする',
+    'panel.visible.field': 'フィールド',
+    'panel.visible.value': 'この値のときに表示',
+    'panel.visible.breakNote':
+      '条件に合わないときは改ページが起きないだけです。改ページは場所を取らないので、確保するものがありません。',
+    'panel.visible.collapse': '非表示のときは詰める',
+    'panel.visible.collapseOn': '非表示のとき、この項目は取り除かれ、後ろの項目が上に詰まります。',
+    'panel.visible.collapseOff': '非表示のとき、この項目は場所を確保したままで、他は動きません。',
+    'panel.visible.documentScope': 'この条件は繰り返し行ではなく、最上位のデータを参照します。',
+    'panel.visible.remove': '常に表示する',
     'panel.rowConditions.title': '行の条件スタイル',
     'panel.rowConditions.hint':
       'データの値に応じて、特定の行だけ見た目を変えます（例: 見出し行を中央寄せ）。',

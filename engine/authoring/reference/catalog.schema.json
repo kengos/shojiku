@@ -462,6 +462,16 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VisibleBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "type": "object"
@@ -1046,6 +1056,16 @@
             "type": {
               "const": "text",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1077,6 +1097,16 @@
             "type": {
               "const": "rect",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1106,6 +1136,16 @@
             "type": {
               "const": "line",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1215,6 +1255,16 @@
             "type": {
               "const": "table",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1261,6 +1311,16 @@
             "type": {
               "const": "page_number",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1341,6 +1401,16 @@
             "type": {
               "const": "image",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1385,6 +1455,16 @@
             "type": {
               "const": "container",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1429,6 +1509,16 @@
             "type": {
               "const": "repeat",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1466,6 +1556,16 @@
             "type": {
               "const": "repeat_flow",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1538,6 +1638,16 @@
             "type": {
               "const": "qr_code",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1597,6 +1707,16 @@
             "type": {
               "const": "list",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1617,6 +1737,16 @@
             "type": {
               "const": "page_break",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1711,6 +1841,16 @@
               "const": "char_grid",
               "type": "string"
             },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "writingMode": {
               "anyOf": [
                 {
@@ -1762,6 +1902,16 @@
             "type": {
               "const": "ellipse",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1817,6 +1967,16 @@
             "type": {
               "const": "checkbox",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -3184,6 +3344,44 @@
         "bottom"
       ],
       "type": "string"
+    },
+    "VisibleBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "collapse": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "equals": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EqualsValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "key": {
+          "type": "string"
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BindingScope"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "type": "object"
     },
     "WritingMode": {
       "oneOf": [

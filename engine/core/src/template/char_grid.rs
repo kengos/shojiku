@@ -5,6 +5,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::binding::{Binding, Bindings};
+use super::visibility::VisibleBinding;
 use crate::geometry::OptBox;
 use crate::length::Length;
 use crate::style::{Style, WritingMode};
@@ -25,6 +26,9 @@ pub const MAX_CHAR_GRID_CELLS: usize = 4096;
 pub struct CharGridItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Params-conditional presence; unset draws unconditionally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible: Option<VisibleBinding>,
     #[serde(rename = "box", default, skip_serializing_if = "Option::is_none")]
     pub box_: Option<OptBox>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

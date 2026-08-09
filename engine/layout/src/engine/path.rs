@@ -29,6 +29,7 @@ pub(super) fn line_placed_box(
         border: rect,
         content: rect,
         text: None,
+        hidden: false,
     }
 }
 
@@ -59,5 +60,6 @@ pub(super) fn placed_box(
             h: rb.content_h(h),
         },
         text: None,
+        hidden: false,
     }
 }

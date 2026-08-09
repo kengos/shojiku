@@ -76,6 +76,21 @@ Wire types stay in core; content measurement stays in layout.
 - `engine/sheet.rs` — `emit_placed`, the ONE tail EVERY band and
   absolute-body arm goes through (translate onto the page + the
   sheet-edge check). No arm emits by hand, `line` included.
+- `engine/visibility.rs` — `visible:` at layout time: `Visibility`
+  (`Draw`/`Hidden`/`Collapsed`) computed ONCE per child list by
+  `child_visibility` (the predicate's array path is O(params length) and its
+  faults are pushed at evaluation, so a second pass would double both cost and
+  diagnostics). Hiding has two mechanisms because the walks differ: `blank`/
+  `blank_if` strip an ATOM the flex/grid walks hand back, while `draw_mark`/
+  `blank_since` bracket the walks whose arms push straight into the pages and
+  return nothing (a split text block, a table, a `repeat`) — pages a hidden
+  item opened stay, since it still reserves what it would have occupied. A
+  `page_break` whose predicate fails is always `Collapsed`: it reserves no box,
+  so "reserve the box, paint nothing" has nothing to mean for it.
+  Every placement walk consults the verdict — flow (whose gap accounting keys
+  off "has something been placed", not document position), band, absolute body,
+  `flex.rs`'s `kinds` pre-pass AND its loop, and `grid.rs`'s `n_grid` +
+  `plan_cells`.
 - `engine/overflow.rs` — the horizontal-overflow POLICY, all three bounds
   in one file so they read against each other. Each emits its OWN
   number-only code (`sheet_overflow` / `child_overflow` /
@@ -114,6 +129,9 @@ Wire types stay in core; content measurement stays in layout.
   keyword→interval table, floored); `decoration/radius.rs`
   (`corner_radius`/`resolve_corners` — `borderRadius` → `Corners`, per-axis
   `%`, hostile values → square; `warn_radius_ignored` shared reporter).
+- `engine/flex/child.rs` — placing and measuring ONE flex/grid child
+  (`flex_child_atom` + the parked `measure_row_cross`), split from `flex.rs`
+  for the line budget.
 - `engine/atoms.rs` — rect/image/line atoms (rect routes through
   `push_decoration`); margins fold into every atom via
   `with_vertical_margin`, so flow/absolute/container placement space them
@@ -402,7 +420,10 @@ Wire types stay in core; content measurement stays in layout.
   `PlacedBox.path` = the always-present structural address in the
   validate-diagnostic grammar; `id` = the optional authored alias;
   `PlacedBox.text` = the two-form (horizontal lines / vertical columns)
-  metrics wire.
+  metrics wire; `PlacedBox.hidden` = the item's `visible:` predicate did not
+  hold and it reserved its box without painting, so an editor can ghost it
+  (skip-serialized, so the wire is byte-unchanged for a document that
+  authors no `visible:`; a COLLAPSED item emits no `PlacedBox` at all).
 - `tree.rs` — **`LayoutDocument`: the ONLY layout↔renderer contract**.
   Carries `metadata: DocumentMetadata` (`tree/meta.rs` — resolved title/
   description/keywords/language/authors + `DEFAULT_DOCUMENT_TITLE`; the

@@ -5,7 +5,16 @@ import { useI18n } from '../i18n/context';
 import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
 import { FIELD_LABEL, PANEL_SWATCH_TRIGGER } from '../ui/chrome';
 import { Field } from './fields';
-import type { RowConditionRow, valueFormFor } from './rowConditionsModel';
+import type { valueFormFor } from './rowConditionsModel';
+
+/** The `equals` state this control renders — the two fields both presence
+ * surfaces share. Typed structurally rather than as one surface's row so a
+ * table row condition and an item's `visible:` can use the same control
+ * instead of keeping two copies of it. */
+export interface EqualsState {
+  readonly equals: string;
+  readonly hasEquals: boolean;
+}
 
 /** The value control the picked field earns: its `enum` as a select, nothing
  * at all for a boolean (the wire omits `equals`), else free entry. A stale
@@ -16,20 +25,23 @@ export function ValueControl({
   rule,
   options,
   onChange,
+  label,
 }: {
   readonly form: ReturnType<typeof valueFormFor>;
-  readonly rule: RowConditionRow;
+  readonly rule: EqualsState;
   readonly options: readonly string[];
   readonly onChange: (value: string | null) => void;
+  /** Overrides the row-conditions wording when another surface uses it. */
+  readonly label?: string;
 }) {
   const { t } = useI18n();
   if (form === 'boolean' && !rule.hasEquals) {
     return null;
   }
-  const label = t('panel.rowConditions.value');
+  const fieldLabel = label ?? t('panel.rowConditions.value');
   if (form === 'enum') {
     return (
-      <Field label={label}>
+      <Field label={fieldLabel}>
         <select value={rule.equals} onChange={(event) => onChange(event.currentTarget.value)}>
           <option value="">{t('panel.rowConditions.unset')}</option>
           {options.map((value) => (
@@ -42,7 +54,7 @@ export function ValueControl({
     );
   }
   return (
-    <Field label={label}>
+    <Field label={fieldLabel}>
       <input
         key={rule.equals}
         type="text"

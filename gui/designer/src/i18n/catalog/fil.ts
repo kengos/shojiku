@@ -357,6 +357,25 @@ export const fil: LanguageCatalog = {
     'align.distributeV': 'Ipamahagi nang patayo',
     'panel.field.border': 'Border',
     'panel.field.line': 'Linya',
+    'tree.conditional':
+      'Lumalabas lang kapag tumugma ang data — maaaring wala ito sa pahina ngayon.',
+    'tree.conditional.badge': 'kung',
+    'panel.visible.title': 'Ipakita lamang kapag…',
+    'panel.visible.hint':
+      'Palaging lumalabas ang item na ito. Iugnay ito sa isang field para lumabas lang sa ilang data.',
+    'panel.visible.add': 'Gawing may kondisyon',
+    'panel.visible.field': 'Field',
+    'panel.visible.value': 'Ipakita kapag ang halaga ay',
+    'panel.visible.breakNote':
+      'Kapag hindi tumugma, hindi na lang mangyayari ang page break — walang espasyong kinukuha ang break, kaya walang itatabi.',
+    'panel.visible.collapse': 'Isara ang puwang kapag nakatago',
+    'panel.visible.collapseOn':
+      'Kapag nakatago, inaalis ang item at umaangat ang mga kasunod nito.',
+    'panel.visible.collapseOff':
+      'Kapag nakatago, pinananatili ng item ang puwang nito at walang ibang gumagalaw.',
+    'panel.visible.documentScope':
+      'Binabasa ng binding na ito ang top-level na data, hindi ang inuulit na row.',
+    'panel.visible.remove': 'Palaging ipakita',
     'panel.rowConditions.title': 'Mga kondisyon ng row',
     'panel.rowConditions.hint':
       'Baguhin ang itsura ng ilang row batay sa datos nito (halimbawa, isentro ang mga heading row).',

@@ -14,7 +14,7 @@ mod collect;
 mod document;
 mod equals;
 mod formats;
-mod marks;
+mod presence;
 mod ruby;
 mod schema;
 mod shapes;
@@ -31,7 +31,7 @@ use box_keys::{check_box_keys, check_table_pagination_keys};
 use collect::{check_container_depth, collect_images, collect_repeats, walk_sections};
 use document::check_document;
 use formats::check_formats;
-use marks::check_marks;
+use presence::check_presence;
 use ruby::check_ruby;
 use shapes::check_shape_styles;
 use spans::check_spans;
@@ -168,7 +168,7 @@ pub fn validate(
 
     // Form marks: the checked×data conflict, binding-key existence, and
     // the boolean-type hint for an `equals`-less binding.
-    check_marks(template, catalog.as_ref(), params, &mut diags);
+    check_presence(template, catalog.as_ref(), params, &mut diags);
 
     // Collapse any `(code, path)` a walk emitted more than once.
     diags.dedup();

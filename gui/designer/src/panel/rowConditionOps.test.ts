@@ -125,7 +125,7 @@ describe('op builders', () => {
     const withEquals = [{ when: { key: 'kind', equals: 'heading' } }];
     // Non-boolean target, equals present → key only (the value control
     // stays rendered, so the equals remains visible and editable).
-    expect(repointRuleOps(TABLE, withEquals, 0, 'note', 'string', [], true)).toEqual([
+    expect(repointRuleOps(TABLE, withEquals, 0, 'note', 'string', [], true, 'heading')).toEqual([
       {
         op: 'setScalar',
         path: `${TABLE}.row.conditionalStyles[0]`,
@@ -134,24 +134,31 @@ describe('op builders', () => {
       },
     ]);
     // Boolean target, equals present → key + equals removal in ONE batch.
-    expect(repointRuleOps(TABLE, withEquals, 0, 'flagged', 'boolean', [], true)).toEqual([
-      {
-        op: 'setScalar',
-        path: `${TABLE}.row.conditionalStyles[0]`,
-        keys: ['when', 'key'],
-        value: 'flagged',
-      },
-      { op: 'removeKey', path: `${TABLE}.row.conditionalStyles[0]`, keys: ['when', 'equals'] },
-    ]);
-    // Boolean target but no equals → key only.
-    expect(repointRuleOps(TABLE, ONE, 0, 'flagged', 'boolean', [], false)).toHaveLength(1);
-    // A boolean field with a declared enum keeps its enum FORM, so the
-    // equals survives the repoint.
-    expect(repointRuleOps(TABLE, withEquals, 0, 'flagged', 'boolean', ['true'], true)).toHaveLength(
-      1,
+    expect(repointRuleOps(TABLE, withEquals, 0, 'flagged', 'boolean', [], true, 'heading')).toEqual(
+      [
+        {
+          op: 'setScalar',
+          path: `${TABLE}.row.conditionalStyles[0]`,
+          keys: ['when', 'key'],
+          value: 'flagged',
+        },
+        { op: 'removeKey', path: `${TABLE}.row.conditionalStyles[0]`, keys: ['when', 'equals'] },
+      ],
     );
+    // Boolean target but no equals → key only.
+    expect(repointRuleOps(TABLE, ONE, 0, 'flagged', 'boolean', [], false, '')).toHaveLength(1);
+    // A boolean field with a declared enum keeps its enum FORM, so an equals
+    // the new enum LISTS survives the repoint — the select can still show it.
+    expect(
+      repointRuleOps(TABLE, withEquals, 0, 'flagged', 'boolean', ['true'], true, 'true'),
+    ).toHaveLength(1);
+    // …but one it does not list is cleared: the select would fall back to
+    // "unset" while the wire still carried the old value.
+    expect(
+      repointRuleOps(TABLE, withEquals, 0, 'flagged', 'boolean', ['true'], true, 'heading'),
+    ).toHaveLength(2);
     // Out of range → empty batch.
-    expect(repointRuleOps(TABLE, ONE, 9, 'b', 'string', [], false)).toEqual([]);
+    expect(repointRuleOps(TABLE, ONE, 9, 'b', 'string', [], false, '')).toEqual([]);
   });
 
   it('refuses an out-of-range index instead of writing', () => {

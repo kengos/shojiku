@@ -115,6 +115,12 @@ present `box:` with only `x`/`y` (placement, no size) also auto-sizes.
 
 ## Binding presence: `data: { key, equals }`
 
+> The same predicate is available on **every** item type as
+> [`visible:`](visible.md) — this section describes the mark's own `data:`
+> key, and `visible:` reuses its grammar and its truth table unchanged. Use
+> `data:` to decide whether a MARK is drawn; use `visible:` to decide whether
+> any item is shown at all.
+
 `key` reads a params value (scoped to the enclosing `repeat` element, else
 top-level params; `data: { key, scope: document }` is the
 [escape](data-binding.md#scope--the-escape-back-to-the-document) for a
@@ -201,3 +207,4 @@ Capability keys: `ellipse`, `checkbox`, `text.mark`,
 - [rect.md](rect.md) — the shape style ellipse/checkbox share
 - [definitions.md](definitions.md) — the `boolean` field type for checkbox bindings
 - [data-binding.md](data-binding.md) — how `key` resolves against params and cells
+- [visible.md](visible.md) — the same presence predicate on any item, with the reserve-box / `collapse:` choice

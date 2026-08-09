@@ -48,7 +48,14 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   box-index/diagnostic paths; a table's `headerGroups` get leaf nodes
   ahead of its columns, the order the table draws them; hostile posture:
   never throws, degrades to
-  null, depth/node budgets → `truncated`). Its two neighbours split off
+  null, depth/node budgets → `truncated`). A node carries `conditional`
+  when its item authors a `visible:` binding — the tree never EVALUATES the
+  predicate (that is the engine's answer, arriving as the preview), it only
+  reports that one exists, which is what explains a COLLAPSED item whose row
+  highlights nothing on canvas because it emits no placed box.
+  `tree/nodeFields.ts` holds the pure field readers the node builders share
+  (`record`/`pickLabel`/`bindingKey` + `MAX_LABEL_CHARS`), split out for the
+  line budget — nothing there walks or recurses. Its two neighbours split off
   what happens to a BUILT tree: `tree/reorder.ts` (what a drag decides —
   `RowRect`/`dropIndexFor`/`seqPosition`/`moveOpFor` + the `MoveItemOp`
   shape) and `tree/selection.ts` (where the selection sits and goes —

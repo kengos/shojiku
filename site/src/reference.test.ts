@@ -31,12 +31,12 @@ const features = stems.filter((s) => !(NON_FEATURE as readonly string[]).include
 describe("every reference page has a route", () => {
   // The real total, not `> 0`: a projection that silently drops a page is
   // exactly what a greater-than-zero assertion cannot see.
-  it("routes all 33 source files, in both locales", () => {
-    expect(stems).toHaveLength(33);
-    expect(features).toHaveLength(31);
+  it("routes all 34 source files, in both locales", () => {
+    expect(stems).toHaveLength(34);
+    expect(features).toHaveLength(32);
     expect(REFERENCE_LOCALES).toHaveLength(2);
     const routes = pages.map((p) => (p.stem === "README" ? "index" : p.stem));
-    expect(new Set(routes).size).toBe(33);
+    expect(new Set(routes).size).toBe(34);
     expect(routes).toContain("index");
   });
 
@@ -50,9 +50,9 @@ describe("what llms-full.txt inlines", () => {
   // 442,505 bytes) that an agent asking how to write `flex` never reads.
   // README.md is the index and MUST stay, which is why LLMS_FULL_OMIT is its
   // own list rather than a reuse of NON_FEATURE.
-  it("carries all 33 pages but features.md", () => {
+  it("carries all 34 pages but features.md", () => {
     const inlined = llmsFullPages(pages).map((p) => p.stem);
-    expect(inlined).toHaveLength(32);
+    expect(inlined).toHaveLength(33);
     expect(inlined).not.toContain("features");
     expect(inlined).toContain("README");
     expect(features.every((s) => inlined.includes(s))).toBe(true);
@@ -95,7 +95,7 @@ describe("the front-matter and the catalog agree", () => {
 
   it("claims every catalog shape exactly once", () => {
     const defs = Object.keys(catalog.$defs).sort();
-    expect(defs).toHaveLength(81);
+    expect(defs).toHaveLength(82);
     expect([...claimed].sort()).toEqual(defs);
   });
 
@@ -122,7 +122,7 @@ describe("the front-matter and the catalog agree", () => {
 });
 
 describe("the sidebar reaches every page", () => {
-  it("shows all 31 feature pages and nothing else", () => {
+  it("shows all 32 feature pages and nothing else", () => {
     const sidebar = buildSidebar(pages, catalog, "/reference/");
     expect(treeStems(sidebar).sort()).toEqual(features);
   });
@@ -201,7 +201,7 @@ describe("every Limitations claim names a real diagnostic code", () => {
     if (m !== null) sections.set(page.stem, m[1]!);
   }
 
-  it("gives all 31 feature pages a Limitations section", () => {
+  it("gives all 32 feature pages a Limitations section", () => {
     expect([...sections.keys()].sort()).toEqual(features);
   });
 

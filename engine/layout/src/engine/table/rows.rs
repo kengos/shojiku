@@ -243,5 +243,6 @@ fn cell_box(path: &str, id: Option<&str>, x: f64, w: f64, h: f64, padding: f64) 
             h: (h - padding * 2.0).max(0.0),
         },
         text: None,
+        hidden: false,
     }
 }

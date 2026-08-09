@@ -35,6 +35,23 @@ line / which cause**.
 
 ## Open
 
+- [ ] `make_issue_biome_info_outranks_the_error` — **When**: `make
+      lint:gui` fails on a real Biome FORMAT error while `gui/biome.json`
+      also emits an informational diagnostic (today: its `$schema` pins
+      2.5.5 while `package.json` floats `^2.5.6`, so every run carries a
+      "configuration schema version does not match" info). **Not detected
+      by**: the culprit extractor takes Biome's FIRST diagnostic block,
+      and Biome prints the `i` info before the `×` error — so "where it
+      broke" named `biome.json:2:14`, a file the change never touched,
+      and said nothing about the file that actually failed.
+      **Recovered by**: `grep -n "×" .make-logs/gui-lint.log`, which
+      finds the real diagnostic ~20 lines further down. The fix is
+      probably to rank `×` blocks above `i` blocks in the matcher rather
+      than taking the first; note that a green run also prints "Found 1
+      info", so the info cannot simply be treated as failure evidence.
+      *(Separately worth someone's deliberate one-liner: bump that
+      `$schema` to match the declared dependency and the info disappears.
+      Left out of the cycle that found it — an unrelated file.)*
 - [ ] `make_issue_trivy_no_package` — **When**: `make docker-scan` fails
       on a fixable CVE. **Not detected by**: no matcher; Trivy's summary
       line carries only a count and its table is too wide for the tail.

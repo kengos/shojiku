@@ -9,6 +9,7 @@ use crate::tree::{LayoutDocument, LayoutPage};
 use shojiku_core::Body;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
+use super::visibility::{self, Visibility};
 use super::{translate, Basis, Ctx, LayoutInput, LayoutOutput, PageBuild};
 
 /// Lays out the template into pages.
@@ -73,10 +74,21 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
         Body::Absolute(abs) => {
             let body_mark = ctx.enter_item("sections.body".to_string());
             let mut page = PageBuild::default();
+            let visibility = ctx.child_visibility(&abs.items);
             for (i, item) in abs.items.iter().enumerate() {
+                if visibility[i].is_collapsed() {
+                    continue;
+                }
+                // Absolutely placed, so hiding and collapsing look the same
+                // on the page; only the reported `PlacedBox` differs.
+                let mark = (visibility[i] == Visibility::Hidden)
+                    .then(|| visibility::draw_mark(std::slice::from_ref(&page)));
                 let item_mark = ctx.enter_item(format!("items[{i}]"));
                 ctx.place_absolute_item(item, &page_basis, &mut page);
                 ctx.leave_item(item_mark);
+                if let Some(mark) = mark {
+                    visibility::blank_since(std::slice::from_mut(&mut page), &mark);
+                }
             }
             ctx.leave_item(body_mark);
             vec![page]

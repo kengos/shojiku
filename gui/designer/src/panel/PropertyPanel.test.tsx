@@ -778,17 +778,18 @@ describe('PropertyPanel', () => {
     expect(controller.apply).not.toHaveBeenCalled();
   });
 
-  it('states plainly that a page_break has nothing to edit', () => {
-    // `page_break` takes only `id` on the wire, so every field the panel could
-    // show would author a key the engine rejects — including the box fields
-    // this panel used to offer.
+  it('offers a page_break only its presence binding — no field that would be invalid', () => {
+    // `page_break` takes only `id` and `visible:` on the wire, so every OTHER
+    // field the panel could show would author a key the engine rejects —
+    // including the box fields this panel used to offer. The presence binding
+    // is the exception, and it is what makes a conditional break authorable.
     const controller = makeController({ [PATH]: { type: 'page_break' } });
     draw(<PropertyPanel controller={controller} path={PATH} />);
     expect(screen.queryByRole('heading', { name: 'Style' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Content' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Image' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Box' })).toBeNull();
-    expect(screen.getByText('This element has no editable properties.')).toBeDefined();
+    expect(screen.getByText('Show only when…')).toBeDefined();
   });
 
   it('gives a line a 装飾 tab carrying its own stroke controls', () => {

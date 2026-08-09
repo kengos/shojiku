@@ -138,6 +138,21 @@ export function TreeRow({
           <span className="overflow-hidden text-ellipsis whitespace-nowrap">
             {nodeLabel(node, t)}
           </span>
+          {node.conditional === true ? (
+            // Whether this item draws depends on the data. Worth a mark
+            // because a COLLAPSED one produces no box, so selecting its row
+            // highlights nothing on canvas — which reads as a broken editor
+            // unless the row says why.
+            // Native `title` is banned by the chrome convention (its
+            // OS-controlled delay reads as "no tooltip"), and a bare
+            // `aria-label` is not allowed on a generic span — so the badge
+            // shows a short token and carries its explanation as
+            // screen-reader text.
+            <span className="ml-1 shrink-0 rounded-sm border border-border px-1 text-[10px] text-muted">
+              <span className="sr-only">{t('tree.conditional')}</span>
+              <span aria-hidden="true">{t('tree.conditional.badge')}</span>
+            </span>
+          ) : null}
         </button>
       </div>
       {node.children.length > 0 && !isCollapsed ? (

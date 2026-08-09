@@ -448,3 +448,35 @@ describe('LayerTree — the 全体 document root row', () => {
     expect(event.defaultPrevented).toBe(false);
   });
 });
+
+describe('a conditionally shown item', () => {
+  const CONDITIONAL = buildTree(
+    [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: text',
+      '        text: Stamp',
+      '        visible: { key: approved, collapse: true }',
+      '      - type: text',
+      '        text: Always',
+    ].join('\n'),
+  );
+
+  it('carries a badge, so a row that highlights nothing on canvas is explained', () => {
+    // A COLLAPSED item emits no placed box, so selecting its row highlights
+    // nothing — without the badge that reads as a broken editor rather than
+    // as the document doing what the data told it.
+    draw({ view: CONDITIONAL });
+    const marked = screen.getByRole('button', { name: /Stamp/ });
+    expect(marked.textContent).toContain('if');
+    const plain = screen.getByRole('button', { name: /Always/ });
+    expect(plain.textContent).not.toContain('if');
+  });
+
+  it('explains the badge to a screen reader', () => {
+    draw({ view: CONDITIONAL });
+    expect(screen.getByText(/Shown only when the data matches/)).toBeTruthy();
+  });
+});

@@ -1,0 +1,26 @@
+version: "0.1.0"
+page: { size: A5, margin: 24 }
+defaults: { locale: en-US }
+sections:
+  body:
+    type: flow
+    gap: 8
+    items:
+      - type: text
+        box: { w: "100%" }
+        text: "Order {code}"
+        style: { fontSize: 14, fontWeight: bold }
+      - type: text
+        box: { w: "100%" }
+        text: APPROVED
+        style: { fontSize: 12, color: "#1a7f37" }
+        visible: { key: status, equals: approved }
+      - type: text
+        box: { w: "100%" }
+        text: This paragraph only applies to extended contracts, and the lines below close up when it does not.
+        style: { fontSize: 11 }
+        visible: { key: extended, collapse: true }
+      - type: text
+        box: { w: "100%" }
+        text: Everything after a collapsed item moves up, gap included.
+        style: { fontSize: 11 }

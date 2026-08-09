@@ -18,6 +18,7 @@ use crate::length::Length;
 use crate::style::Style;
 use serde::{Deserialize, Serialize};
 
+use super::visibility::VisibleBinding;
 use super::Binding;
 
 /// A data-driven table. Rows come from an array params key; each column
@@ -30,6 +31,9 @@ use super::Binding;
 pub struct TableItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Params-conditional presence; unset draws unconditionally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible: Option<VisibleBinding>,
     /// Optional geometry box. In the FLOW body it narrows the table
     /// horizontally (`box.x`/`box.w`, `auto` margins center; `box.y` and
     /// height stay flow-owned) while pagination continues. In every other

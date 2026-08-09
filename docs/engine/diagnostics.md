@@ -195,6 +195,10 @@ inline:
 | `row_condition_type_mismatch` | a row's value type differs from a `conditionalStyles` entry's `equals`; the layer is not applied. Also raised at validate against the DECLARED field type |
 | `row_condition_equals_not_declared` | a `conditionalStyles` entry's `equals` literal is outside the field's declared `enum`, so the layer can never apply |
 | `row_condition_value_not_bool` | a row's value is not a boolean under an `equals`-less `conditionalStyles` entry; the layer is not applied |
+| `visible_not_boolean` | an item's `visible:` field is declared non-boolean and the binding has no `equals`, so the item can never be shown |
+| `visible_equals_not_declared` | an item's `visible.equals` literal is outside the field's declared `enum`, so the item can never be shown |
+| `visible_type_mismatch` | an item's params value type differs from its `visible.equals`; not shown. Also raised at validate against the DECLARED field type |
+| `visible_value_not_bool` | an `equals`-less `visible:` binding's value is not a boolean; not shown |
 | `qr_content_too_long` / `qr_module_too_small` | QR content over 1 KiB (skipped) / modules under 1 pt (drawn) |
 | `unsupported_link_scheme` / `link_url_too_long` / `empty_link_url` | resolved `link.url` outside http/https/mailto/tel (or control chars) / over 2048 bytes / empty — the link is dropped, the item still renders |
 | `document_metadata_control_chars` / `document_metadata_too_long` / `invalid_document_language` | a resolved `document:` value carries control characters / is over its byte cap (2048, or 64 for `language`) / is not a `[A-Za-z0-9-]` language tag — that field is not written to the PDF and is NOT replaced by its fallback |

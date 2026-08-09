@@ -15,6 +15,23 @@ platform binaries.
 
 ### Added
 
+- **Any item can now be shown or hidden by the data.** Add
+  `visible: { key: status, equals: approved }` to a text block, an image,
+  a table — anything — and it draws only when the params say so. An
+  approved stamp that appears on approved orders and nowhere else, a
+  paragraph that belongs only to one kind of customer, a page break that
+  happens only for long documents: each is one key on the item that needs
+  it, rather than a second template. The predicate is the one the form
+  marks already use, unchanged — a plain value, a list to mean "any of
+  these", or a bare key read as a yes/no — so there is nothing new to
+  learn and a wrong literal is still reported before you render.
+  By default a hidden item keeps its space, exactly as a blank form field
+  does today, so a document does not reshuffle depending on the data.
+  Adding `collapse: true` says the opposite: take the item out of the
+  layout entirely and let everything after it close up, gaps and grid
+  cells included. The two match CSS `visibility: hidden` and
+  `display: none`, and hiding an item hides everything inside it.
+
 - **The Designer tells you when text has landed on other text.** Change a
   document's page size and the parts pinned in points stay exactly where
   they were, while anything sized `100%` grows with the sheet — so a
@@ -41,6 +58,14 @@ platform binaries.
   parsing.
 
 ### Fixed
+
+- **A form mark reading a page-global flag no longer reports a false error.**
+  A `data: { key: …, scope: document }` binding inside a repeated block is the
+  documented way to let one top-level field tick a mark in every row — but
+  checking it looked the key up among the row's own fields, found nothing, and
+  reported it as an undeclared data key. The document rendered correctly the
+  whole time; only the check was wrong, which is the worse way round, because
+  it puts a red error on a file that has nothing wrong with it.
 
 - **The Designer no longer offers layout fields on items that cannot take
   them.** A `line` draws between two points and a `page_break` carries
