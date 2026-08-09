@@ -877,6 +877,8 @@ export const ja: LanguageCatalog = {
     'diagnostics.empty': '問題はありません。',
     'diagnostics.fix': '直す',
     'diagnostics.fixTip': 'この警告の原因になっているキーを削除して直します（元に戻せます）。',
+    'diagnostics.advisory': '確認',
+    'diagnostics.textCollision': '{page} ページ目で `{a}` と `{b}` の文字が重なっています。',
     'severity.error': 'エラー',
     'severity.warning': '警告',
     'severity.info': '情報',

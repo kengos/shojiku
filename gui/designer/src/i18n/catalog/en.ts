@@ -859,6 +859,8 @@ export const en: LanguageCatalog = {
     'diagnostics.empty': 'No problems.',
     'diagnostics.fix': 'Fix',
     'diagnostics.fixTip': 'Remove the keys causing this warning (undoable).',
+    'diagnostics.advisory': 'Check',
+    'diagnostics.textCollision': 'Text in `{a}` and `{b}` overlaps on page {page}.',
     'severity.error': 'Error',
     'severity.warning': 'Warning',
     'severity.info': 'Info',

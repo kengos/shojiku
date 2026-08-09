@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Diagnostic } from '../engine/types';
 import { I18nProvider } from '../i18n/context';
+import type { TextCollision } from './collisions';
 import { DiagnosticsPanel } from './DiagnosticsPanel';
 import type { ReadNode } from './fixModel';
 
@@ -187,6 +188,96 @@ describe('DiagnosticsPanel', () => {
         />,
       );
       expect(screen.queryByRole('button', { name: '直す' })).toBeNull();
+    });
+  });
+
+  describe('GUI advisories', () => {
+    const collision: TextCollision = {
+      page: 0,
+      a: { path: 'sections.header.items[1]', label: 'title' },
+      b: { path: 'sections.header.items[2]', label: 'delivery_no' },
+    };
+
+    function drawAdvisories(
+      advisories: readonly TextCollision[],
+      onSelect: (path: string) => void = vi.fn(),
+    ) {
+      return draw(
+        <DiagnosticsPanel
+          diagnostics={[]}
+          advisories={advisories}
+          onSelect={onSelect}
+          read={noFix}
+          onApplyFix={vi.fn()}
+        />,
+      );
+    }
+
+    it('names both items and a one-based page number', () => {
+      drawAdvisories([collision]);
+      expect(
+        screen.getByText('1 ページ目で `title` と `delivery_no` の文字が重なっています。'),
+      ).toBeDefined();
+      expect(screen.getByText('確認')).toBeDefined();
+    });
+
+    it('is not the empty state when only an advisory is present', () => {
+      // The reported defect: a document the engine passes cleanly still said
+      // "no problems" while text sat on top of text.
+      drawAdvisories([collision]);
+      expect(screen.queryByText('問題はありません。')).toBeNull();
+    });
+
+    it('keeps the empty state when both lists are empty', () => {
+      drawAdvisories([]);
+      expect(screen.getByText('問題はありません。')).toBeDefined();
+    });
+
+    it('selects the first of the two items when the row is clicked', () => {
+      const onSelect = vi.fn();
+      drawAdvisories([collision], onSelect);
+      fireEvent.click(screen.getByRole('button'));
+      expect(onSelect).toHaveBeenCalledWith('sections.header.items[1]');
+    });
+
+    it('renders engine diagnostics and advisories together', () => {
+      draw(
+        <DiagnosticsPanel
+          diagnostics={[withPath]}
+          advisories={[collision]}
+          onSelect={vi.fn()}
+          read={noFix}
+          onApplyFix={vi.fn()}
+        />,
+      );
+      expect(
+        screen.getByText('styleName `heading` は `styles` レジストリに定義されていません'),
+      ).toBeDefined();
+      expect(screen.getByText('確認')).toBeDefined();
+    });
+
+    it('renders an HTML-looking item label as inert text, never as markup', () => {
+      const { container } = drawAdvisories([
+        {
+          page: 0,
+          a: { path: 'a', label: '<img src=x onerror="alert(1)">' },
+          b: { path: 'b', label: 'other' },
+        },
+      ]);
+      expect(container.textContent).toContain('<img src=x onerror="alert(1)">');
+      expect(container.querySelector('img')).toBeNull();
+    });
+
+    it('renders one row per collision', () => {
+      drawAdvisories([
+        collision,
+        {
+          page: 1,
+          a: { path: 'sections.body.items[0]', label: 'total' },
+          b: { path: 'sections.body.items[1]', label: 'note' },
+        },
+      ]);
+      expect(screen.getAllByRole('button')).toHaveLength(2);
     });
   });
 });

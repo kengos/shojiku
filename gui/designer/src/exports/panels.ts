@@ -3,6 +3,14 @@
 // document-outline trio (layer tree / breadcrumb / tabbed sidebar).
 // Re-exported wholesale by the package index.
 
+// The GUI-derived advisories half of the diagnostics list: the panel prop's
+// types, plus the pure model behind them so a host mounting the panel
+// directly can build the list rather than reimplement the rule.
+export {
+  type CollisionItem,
+  findTextCollisions,
+  type TextCollision,
+} from '../diagnostics/collisions';
 export { DiagnosticsPanel, type DiagnosticsPanelProps } from '../diagnostics/DiagnosticsPanel';
 // Field-palette model (pure; the read-only definitions view + the
 // used-in-template correlation).

@@ -670,6 +670,8 @@ export const fil: LanguageCatalog = {
     'diagnostics.empty': 'Walang problema.',
     'diagnostics.fix': 'Ayusin',
     'diagnostics.fixTip': 'Alisin ang mga key na dahilan ng babalang ito (maibabalik).',
+    'diagnostics.advisory': 'Suriin',
+    'diagnostics.textCollision': 'Nagsasapawan ang teksto ng `{a}` at `{b}` sa pahina {page}.',
     'severity.error': 'Error',
     'severity.warning': 'Babala',
     'severity.info': 'Impormasyon',

@@ -647,6 +647,8 @@ export const hi: LanguageCatalog = {
     'diagnostics.empty': 'कोई समस्या नहीं।',
     'diagnostics.fix': 'ठीक करें',
     'diagnostics.fixTip': 'इस चेतावनी का कारण बनने वाली कुंजियाँ हटाएँ (पूर्ववत करने योग्य)।',
+    'diagnostics.advisory': 'जाँचें',
+    'diagnostics.textCollision': 'पृष्ठ {page} पर `{a}` और `{b}` का टेक्स्ट आपस में ओवरलैप हो रहा है।',
     'severity.error': 'त्रुटि',
     'severity.warning': 'चेतावनी',
     'severity.info': 'जानकारी',

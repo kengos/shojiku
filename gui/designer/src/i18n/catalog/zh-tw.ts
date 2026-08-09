@@ -805,6 +805,8 @@ export const zhTw: LanguageCatalog = {
     'diagnostics.empty': '沒有問題。',
     'diagnostics.fix': '修正',
     'diagnostics.fixTip': '移除造成此警告的鍵（可復原）。',
+    'diagnostics.advisory': '檢查',
+    'diagnostics.textCollision': '第 {page} 頁中 `{a}` 與 `{b}` 的文字重疊。',
     'severity.error': '錯誤',
     'severity.warning': '警告',
     'severity.info': '資訊',
