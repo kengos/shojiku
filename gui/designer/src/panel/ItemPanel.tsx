@@ -19,6 +19,8 @@ import { BORDERABLE_TYPES } from './borderTypes';
 import { ContentSection } from './ContentSection';
 import type { ItemPanelProps } from './itemPanelProps';
 import { BOXLESS_TYPES, type ItemView } from './itemView';
+import { LinePointsEditor } from './LinePointsEditor';
+import { readLinePoints } from './linePoints';
 import { StyleSection } from './StyleSection';
 
 export type PanelTab = 'content' | 'style' | 'box';
@@ -42,11 +44,16 @@ const CONTENT_TAB_TYPES = new Set([
  * end). */
 const STYLED_TYPES: ReadonlySet<string> = new Set([...BORDERABLE_TYPES, 'line']);
 
-/** The tabs that apply to an item, in fixed content→decoration→placement order.
- * Box-less types are excluded from the placement tab — the engine rejects a
- * `box:` key on them as a parse error, so offering the fields would write a
- * key that breaks the document. `page_break` ends up with NO tabs (it takes
- * only `id`); the panel renders a placeholder for that. */
+/** Types whose placement tab is NOT the box fields. A `line` has a position
+ * (its two endpoints) but no `box:` — the engine rejects that key as a parse
+ * error — so its placement tab carries the points editor instead. */
+const POINT_PLACED_TYPES: ReadonlySet<string> = new Set(['line']);
+
+/** The tabs that apply to an item, in fixed content→decoration→placement
+ * order. A type gets the placement tab when it has a position the panel can
+ * author — a box, or (for `line`) endpoints. `page_break` has neither and
+ * ends up with NO tabs at all (it takes only `id`); the panel renders a
+ * placeholder for that. */
 export function applicableTabs(view: ItemView): PanelTab[] {
   const tabs: PanelTab[] = [];
   if (CONTENT_TAB_TYPES.has(view.type)) {
@@ -55,7 +62,7 @@ export function applicableTabs(view: ItemView): PanelTab[] {
   if (STYLED_TYPES.has(view.type)) {
     tabs.push('style');
   }
-  if (!BOXLESS_TYPES.has(view.type)) {
+  if (!BOXLESS_TYPES.has(view.type) || POINT_PLACED_TYPES.has(view.type)) {
     tabs.push('box');
   }
   return tabs;
@@ -83,6 +90,12 @@ export function ItemPanel(props: ItemPanelProps) {
       <ContentSection {...props} />
     ) : tab === 'style' ? (
       <StyleSection {...props} />
+    ) : POINT_PLACED_TYPES.has(view.type) ? (
+      <LinePointsEditor
+        view={readLinePoints(props.controller.read, props.path)}
+        path={props.path}
+        controller={props.controller}
+      />
     ) : (
       <BoxSection {...props} />
     );

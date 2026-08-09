@@ -653,6 +653,13 @@ export const ja: LanguageCatalog = {
     'panel.tab.style': '装飾',
     'panel.tab.box': '配置',
     'panel.noEditable': 'この要素には編集できるプロパティがありません。',
+    'panel.line.points': '始点・終点',
+    'panel.line.fromX': '始点 X',
+    'panel.line.fromY': '始点 Y',
+    'panel.line.toX': '終点 X',
+    'panel.line.toY': '終点 Y',
+    'panel.line.pointsHint':
+      '親からの相対位置です。数値だけならポイント、100% と書けば親の端まで届きます。',
     'panel.effective.label': '実効値',
     'panel.effective.jump': '文書設定へ',
     'panel.doc.localeCurrency': 'ロケール・通貨',
