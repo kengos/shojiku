@@ -1044,6 +1044,22 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **`type: checkbox`**: an always-drawn stroked frame (chrome) plus a
   check mark (an open round-stroked polyline) drawn when `checked: true`
   or `data:` matches (`data` wins over `checked`).
+- **Params-conditional item presence `visible: { key, equals?, scope?, collapse? }`**
+  on EVERY item type: the form-mark predicate above, generalized to the whole
+  item vocabulary (type-strict equality, array-contains multi-select, a bare
+  key read as a boolean, `scope: document` escape). Unset `collapse` reserves
+  the item's box and paints nothing — the form-mark posture, so a
+  blank↔filled params pair never shifts layout; `collapse: true` removes the
+  box from layout and its siblings close up over it, taking the flow gap and
+  the grid cell with it. Hiding is not inherited in the CSS sense and does not
+  need to be: there is no force-visible spelling, so a hidden item hides its
+  whole subtree exactly as the inherited rule would. On a `page_break` the two
+  are the same thing — it reserves no box — which is what makes a conditional
+  page break authorable. Four warnings (`visible_not_boolean`,
+  `visible_equals_not_declared`, `visible_type_mismatch`,
+  `visible_value_not_bool`) mirror the mark's, each leaving the item unshown.
+  `inspect` marks a hidden item's placement `hidden` so an editor can ghost
+  it; a collapsed item has no placement to report.
 - **Presence binding `data: { key, equals }`** (scope-aware like text):
   `equals` set = type-strict equality (`"2"` ≠ `2`); an **array** value
   is multi-select (draws when it *contains* `equals`); `equals` omitted =

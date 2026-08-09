@@ -140,6 +140,10 @@ below uses:
 | `checkbox` | always-drawn frame + params-driven check | F A B C cell | [form_marks.md](form_marks.md) |
 | `page_number` | `{page} / {pages}` | B only | [page_number.md](page_number.md) |
 
+Every type in this table also takes **`visible:`**, which binds whether the
+item is shown to a params field — reserving its box by default, or removing
+it from layout with `collapse: true`. See [visible.md](visible.md).
+
 Disallowed placements warn and skip (never a hard failure) — codes in
 [diagnostics.md](diagnostics.md).
 
@@ -161,6 +165,7 @@ Disallowed placements warn and skip (never a hard failure) — codes in
 | [vertical_text.md](vertical_text.md) | `writingMode: vertical_rl` / `textOrientation` — vertical text (plain, spans, list, table cells, page_number) |
 | [link.md](link.md) | `link: { url }` hyperlinks on text/image/spans → PDF annotations |
 | [data-binding.md](data-binding.md) | `data:` bindings, `{key:format}` interpolation, `bindings:` named declarations, params, format types |
+| [visible.md](visible.md) | `visible:` — show an item only for some data; the reserve-box default and the `collapse: true` opt-in |
 | [definitions.md](definitions.md) | `definitions.yml`: the OpenAPI-shaped schema (properties/items, `format` hints, constraints, display variants, params validation) |
 | [fonts.md](fonts.md) | locales, lang packs, valid `fontFamily` face ids |
 | [layout-model.md](layout-model.md) | the resolve invariant, box tree, caps, box index |

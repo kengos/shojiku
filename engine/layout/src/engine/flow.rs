@@ -9,6 +9,7 @@ use shojiku_core::Item;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::flex::h_auto_margin;
+use super::visibility::{self, Visibility};
 use super::{Basis, Ctx, PageBuild};
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -44,10 +45,24 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let gap = self.resolve_y(flow.gap(), &region).unwrap_or(0.0).max(0.0);
 
         let body_mark = self.enter_item("sections.body".to_string());
+        let visibility = self.child_visibility(&flow.items);
+        // The gap belongs to the item that FOLLOWS one already placed, not
+        // to document position: a collapsed item takes its gap with it (as
+        // `display: none` does), so `index > 0` would leave a hole behind.
+        let mut placed_any = false;
         for (index, item) in flow.items.iter().enumerate() {
-            if index > 0 {
+            if visibility[index].is_collapsed() {
+                continue;
+            }
+            if placed_any {
                 layouter.add_gap(gap);
             }
+            placed_any = true;
+            // A hidden item is placed in full and then stripped of what it
+            // drew — the only way its reserved height (a wrapped block, an
+            // auto-height container, a paginated table) is exactly right.
+            let mark = (visibility[index] == Visibility::Hidden)
+                .then(|| visibility::draw_mark(&layouter.pages));
             let item_mark = self.enter_item(format!("items[{index}]"));
             match item {
                 Item::Text(text) => {
@@ -122,6 +137,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 }
             }
             self.leave_item(item_mark);
+            if let Some(mark) = mark {
+                visibility::blank_since(&mut layouter.pages, &mark);
+            }
         }
         self.leave_item(body_mark);
         layouter.pages

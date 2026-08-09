@@ -41,6 +41,12 @@ export const en: LanguageCatalog = {
     mark_equals_not_declared:
       '`{key}` declares an `enum` that does not list this `equals` value; the mark can never be drawn',
     mark_value_not_bool: '`{key}` is not a boolean; mark not drawn',
+    visible_not_boolean:
+      '`{key}` is not a boolean field; a `visible` binding without `equals` expects one',
+    visible_equals_not_declared:
+      '`{key}` declares an `enum` that does not list this `equals` value; the item can never be shown',
+    visible_type_mismatch: '`{key}` value type differs from `equals`; item not shown',
+    visible_value_not_bool: '`{key}` is not a boolean; item not shown',
     row_condition_not_boolean:
       '`{key}` is not a boolean field; a row condition without `equals` expects one',
     row_condition_type_mismatch: '`{key}` value type differs from `equals`; row style not applied',
@@ -551,6 +557,21 @@ export const en: LanguageCatalog = {
     'align.distributeV': 'Distribute vertically',
     'panel.field.border': 'Border',
     'panel.field.line': 'Line',
+    'tree.conditional': 'Shown only when the data matches — it may not be on the page right now.',
+    'tree.conditional.badge': 'if',
+    'panel.visible.title': 'Show only when…',
+    'panel.visible.hint':
+      'This item always draws. Bind it to a field to show it only for some data.',
+    'panel.visible.add': 'Show conditionally',
+    'panel.visible.field': 'Field',
+    'panel.visible.value': 'Shown when the value is',
+    'panel.visible.breakNote':
+      'When this does not match, the page break simply does not happen — a break takes no space, so there is nothing to keep.',
+    'panel.visible.collapse': 'Close the gap when hidden',
+    'panel.visible.collapseOn': 'Hidden: the item is removed and the items after it move up.',
+    'panel.visible.collapseOff': 'Hidden: the item keeps its space and nothing else moves.',
+    'panel.visible.documentScope': 'This binding reads the top-level data, not the repeated row.',
+    'panel.visible.remove': 'Always show',
     'panel.rowConditions.title': 'Row conditions',
     'panel.rowConditions.hint':
       'Change how certain rows look, based on their data (for example, center the heading rows).',

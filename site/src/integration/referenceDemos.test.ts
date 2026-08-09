@@ -91,7 +91,7 @@ describe("the reference demos cover the reference", () => {
       .map((f) => f.slice(0, -3))
       .filter((s) => s !== "README" && s !== "features")
       .sort();
-    expect(pages).toHaveLength(31);
+    expect(pages).toHaveLength(32);
     expect(names).toEqual(pages);
   });
 

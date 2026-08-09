@@ -81,19 +81,35 @@ function makeController(reads: Record<string, unknown>): EditorController {
 
 const PATH = 'sections.body.items[0]';
 
-function drawPanel(item: Record<string, unknown>) {
+function drawPanel(item: Record<string, unknown>, capabilities?: readonly string[]) {
   return render(
     <I18nProvider locale="en">
-      <PropertyPanel controller={makeController({ [PATH]: item })} path={PATH} />
+      <PropertyPanel
+        controller={makeController({ [PATH]: item })}
+        path={PATH}
+        capabilities={capabilities}
+      />
     </I18nProvider>,
   );
 }
 
 describe('ItemPanel — box-less types', () => {
-  it('renders the no-editable placeholder for a page_break, and no tabs', () => {
+  it('gives a page_break the presence binding and still no tabs', () => {
+    // The wire takes only `id` and `visible:`, so there is no TAB to show —
+    // but a conditional page break is exactly what `visible:` is for, and the
+    // panel used to say the type had nothing editable at all.
     drawPanel({ type: 'page_break' });
-    expect(screen.getByText('This element has no editable properties.')).toBeTruthy();
     expect(screen.queryAllByRole('tab')).toEqual([]);
+    expect(screen.getByText('Show only when…')).toBeTruthy();
+    expect(screen.queryByText('This element has no editable properties.')).toBeNull();
+  });
+
+  it('falls back to the no-editable placeholder when the engine lacks the key', () => {
+    // An older engine parse-REJECTS `visible:`, so the control is withheld —
+    // and a page_break then genuinely has nothing to edit again.
+    drawPanel({ type: 'page_break' }, ['text']);
+    expect(screen.getByText('This element has no editable properties.')).toBeTruthy();
+    expect(screen.queryByText('Show only when…')).toBeNull();
   });
 
   it('gives a line a placement tab carrying the endpoint fields, not the box fields', () => {
@@ -104,5 +120,54 @@ describe('ItemPanel — box-less types', () => {
     // The box fields must be absent — authoring one is a parse error.
     expect(screen.queryByLabelText('X')).toBeNull();
     expect(screen.queryByLabelText('W')).toBeNull();
+  });
+});
+
+describe('ItemPanel — the `visible:` capability gate', () => {
+  it('offers the presence binding when the engine carries the key', () => {
+    drawPanel({ type: 'text', text: 'x' }, ['item.visible']);
+    expect(screen.getByText('Show only when…')).toBeTruthy();
+  });
+
+  it('withholds it when the engine does not', () => {
+    // A gate that fails OPEN would write a key the engine rejects at parse.
+    drawPanel({ type: 'text', text: 'x' }, ['text']);
+    expect(screen.queryByText('Show only when…')).toBeNull();
+  });
+
+  it('offers it when no capability list is known (the bundled engine)', () => {
+    drawPanel({ type: 'text', text: 'x' });
+    expect(screen.getByText('Show only when…')).toBeTruthy();
+  });
+});
+
+describe('ItemPanel — `visible:` inside a row scope', () => {
+  const CELL = 'sections.body.items[0].cell.items[0]';
+
+  function drawInCell(capabilities?: readonly string[]) {
+    const controller = makeController({
+      'sections.body.items[0]': { type: 'repeat', data: { key: 'rows' } },
+      [CELL]: { type: 'text', text: 'x' },
+    });
+    return render(
+      <I18nProvider locale="en">
+        <PropertyPanel controller={controller} path={CELL} capabilities={capabilities} />
+      </I18nProvider>,
+    );
+  }
+
+  it('offers the presence binding on an item inside a repeat cell', () => {
+    // The item's data scope is the bound ELEMENT here, not the document —
+    // offering top-level fields at element scope would author a key that
+    // resolves to nothing and hides the item with no diagnostic.
+    drawInCell();
+    expect(screen.getByText('Show only when…')).toBeTruthy();
+  });
+
+  it('still offers it when the engine cannot author a binding scope', () => {
+    // Without `binding.scope` there is no second section to commit, so both
+    // scopes go in one flat list rather than a section that cannot be picked.
+    drawInCell(['item.visible']);
+    expect(screen.getByText('Show only when…')).toBeTruthy();
   });
 });

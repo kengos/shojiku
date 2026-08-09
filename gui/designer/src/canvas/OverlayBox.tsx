@@ -84,6 +84,13 @@ export function OverlayBox({
   // suppresses both (it draws its own dashed outline).
   const primaryStroke = selected && !marked;
   const multiStroke = !selected && !marked && inMultiSelection;
+  // A `visible:` item whose predicate does not hold under the current sample
+  // data reserved its box and painted nothing. Without a mark the canvas shows
+  // an unexplained empty region, so an unselected hidden box carries a faint
+  // dashed outline — enough to say "something lives here, the data is hiding
+  // it" without competing with the selection stroke. A COLLAPSED item has no
+  // box at all and is reachable from the layer tree instead.
+  const ghost = box.hidden === true && !primaryStroke && !multiStroke && !marked;
   return (
     // biome-ignore lint/a11y/useSemanticElements: a native button cannot be SVG geometry; the rect carries the button role for the overlay.
     <rect
@@ -105,9 +112,10 @@ export function OverlayBox({
       // stylesheet (when imported) overrides it with var(--sj-accent),
       // so this is only the no-stylesheet fallback (attributes cannot
       // reference CSS custom properties).
-      stroke={primaryStroke || multiStroke ? '#c2402a' : 'none'}
-      strokeWidth={primaryStroke || multiStroke ? 1.5 : 0}
-      strokeOpacity={multiStroke ? 0.55 : 1}
+      stroke={primaryStroke || multiStroke || ghost ? '#c2402a' : 'none'}
+      strokeWidth={primaryStroke || multiStroke ? 1.5 : ghost ? 1 : 0}
+      strokeOpacity={multiStroke ? 0.55 : ghost ? 0.4 : 1}
+      strokeDasharray={ghost ? '3 3' : undefined}
       style={{ cursor: boxCursor(selected, selectedAbility) }}
       role="button"
       tabIndex={0}
@@ -116,7 +124,7 @@ export function OverlayBox({
       data-path={box.path}
       className={`sj-box${selected ? ' sj-box--selected' : ''}${
         multiStroke ? ' sj-box--multi' : ''
-      }${dragging ? ' sj-box--dragging' : ''}`}
+      }${dragging ? ' sj-box--dragging' : ''}${box.hidden === true ? ' sj-box--hidden' : ''}`}
       onClick={(event) => {
         // The trailing click of a completed/cancelled drag must not
         // re-select — the old path may now address a different item.

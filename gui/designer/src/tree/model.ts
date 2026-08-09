@@ -19,9 +19,6 @@ export const MAX_TREE_DEPTH = 32;
  * The walk stops here and the view reports `truncated`. */
 export const MAX_TREE_NODES = 1024;
 
-/** Row-label clip — a label is a glance hint, not a text viewer. */
-export const MAX_LABEL_CHARS = 60;
-
 export interface TreeNode {
   /** Structural path (the box-index grammar) — the shared-selection key. */
   readonly path: string;
@@ -33,6 +30,13 @@ export interface TreeNode {
   /** Content-derived label (clipped), or `null` → display the kind's name. */
   readonly label: string | null;
   readonly children: readonly TreeNode[];
+  /** The item authors a `visible:` binding, so whether it draws depends on
+   * the data. The tree does NOT evaluate the predicate — that is the
+   * engine's answer, arriving as the preview — it only reports that one
+   * exists. A COLLAPSED item emits no placed box at all, so clicking its row
+   * highlights nothing on canvas; without this marker that reads as a broken
+   * editor rather than as the document doing what it was told. */
+  readonly conditional?: boolean;
 }
 
 export interface TreeView {
@@ -41,32 +45,11 @@ export interface TreeView {
   readonly truncated: boolean;
 }
 
+import { bindingKey, pickLabel, record } from './nodeFields';
+
+export { MAX_LABEL_CHARS } from './nodeFields';
+
 const SECTION_NAMES = ['header', 'body', 'footer'] as const;
-
-function record(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
-function clip(value: string): string {
-  return value.length > MAX_LABEL_CHARS ? `${value.slice(0, MAX_LABEL_CHARS)}…` : value;
-}
-
-/** The first non-empty string among candidate label sources, clipped. */
-function pickLabel(...candidates: readonly unknown[]): string | null {
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate !== '') {
-      return clip(candidate);
-    }
-  }
-  return null;
-}
-
-function bindingKey(value: unknown): string | undefined {
-  const key = record(value)?.key;
-  return typeof key === 'string' && key !== '' ? key : undefined;
-}
 
 /** Mutable walk budget shared across the recursion. */
 interface Walk {
@@ -144,7 +127,10 @@ function itemNode(walk: Walk, path: string, entry: unknown, depth: number): Tree
   if (Array.isArray(cardItems)) {
     children.push(...walkItems(walk, `${path}.item.items`, cardItems, depth + 1));
   }
-  return { path, kind, label, children };
+  const conditional = record(item.visible) !== undefined;
+  return conditional
+    ? { path, kind, label, children, conditional }
+    : { path, kind, label, children };
 }
 
 /** A node for one `headerGroups` entry. A group is a leaf — its label is the

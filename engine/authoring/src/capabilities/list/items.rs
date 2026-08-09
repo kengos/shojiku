@@ -143,4 +143,12 @@ pub(super) const KEYS: &[&str] = &[
     // no longer needs a width nobody can know at authoring time. Older
     // engines reject the string form as a number-typed field.
     "line.length",
+    // Any item takes `visible: { key, equals?, scope?, collapse? }` — the
+    // form-mark presence predicate, generalized to the whole item
+    // vocabulary. Unset `collapse` reserves the box and paints nothing
+    // (CSS `visibility: hidden`); `collapse: true` removes it from layout
+    // (CSS `display: none`), gaps and grid cells included. Older engines
+    // reject the key outright (`deny_unknown_fields`), so a GUI must gate
+    // the control on this rather than write it hopefully.
+    "item.visible",
 ];

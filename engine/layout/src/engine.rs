@@ -36,6 +36,7 @@ mod sheet;
 mod table;
 mod text;
 mod translate;
+mod visibility;
 
 pub use assemble::layout;
 

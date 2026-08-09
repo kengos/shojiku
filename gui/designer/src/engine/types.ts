@@ -61,6 +61,13 @@ export interface PlacedBox {
   readonly border: BoxRect;
   readonly content: BoxRect;
   readonly text?: TextMetrics;
+  /** The item's `visible:` predicate did not hold and it reserved its box
+   * without painting. The geometry is real — this is where the item WOULD
+   * have drawn — so the canvas ghosts it rather than showing an unexplained
+   * gap. A COLLAPSED item emits no box at all, so it is reachable from the
+   * layer tree rather than the canvas. Absent on every engine that predates
+   * the key, and on every item that authors no `visible:`. */
+  readonly hidden?: boolean;
 }
 
 /** Per-page box sidecar: `pages[p]` is the boxes laid out on page `p`. */

@@ -12,7 +12,7 @@
 // refuses rather than writing.
 
 import type { Op, ScalarValue, SnippetValue } from '@shojiku/designer-core';
-import { valueFormFor } from './rowConditionsModel';
+import { equalsGoesStale } from './rowConditionsModel';
 
 /** The display types that mean "the params value is a NUMBER" (the engine's
  * `(type, format)` map collapses currency/percentage/quantity onto number).
@@ -98,12 +98,13 @@ export function repointRuleOps(
   newFieldType: string,
   newFieldEnums: readonly string[],
   hasEquals: boolean,
+  equals: string,
 ): readonly Op[] {
   const keyOp = setRuleKeyOp(tablePath, entries, index, key);
   if (keyOp === null) {
     return [];
   }
-  if (!hasEquals || valueFormFor(newFieldType, newFieldEnums) !== 'boolean') {
+  if (!equalsGoesStale(hasEquals, equals, newFieldType, newFieldEnums)) {
     return [keyOp];
   }
   // `keyOp` being non-null proves the index is in range, so the removal

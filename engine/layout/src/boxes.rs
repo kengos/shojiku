@@ -50,6 +50,17 @@ pub struct PlacedBox {
     /// line, in the same coordinates as `border`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<TextMetrics>,
+    /// The item's `visible:` predicate did not hold and it reserved its
+    /// box without painting (the `visibility: hidden` default). The
+    /// geometry is real — this is where the item WOULD have drawn — so a
+    /// Designer can ghost it rather than showing an unexplained gap. A
+    /// COLLAPSED item emits no `PlacedBox` at all: it has no position to
+    /// report.
+    ///
+    /// Skipped when false, so the wire is byte-unchanged for every
+    /// document that authors no `visible:`.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub hidden: bool,
 }
 
 impl PlacedBox {
@@ -63,6 +74,7 @@ impl PlacedBox {
             border: shift(self.border),
             content: shift(self.content),
             text: self.text.as_ref().map(|t| t.shifted(dy)),
+            hidden: self.hidden,
         }
     }
 
@@ -76,6 +88,7 @@ impl PlacedBox {
             border: shift(self.border),
             content: shift(self.content),
             text: self.text.as_ref().map(|t| t.shifted_x(dx)),
+            hidden: self.hidden,
         }
     }
 }
@@ -121,6 +134,7 @@ mod tests {
                 h: 20.0,
             },
             text: None,
+            hidden: false,
         };
         let shifted = placed.shifted(5.0);
         assert_eq!((shifted.border.y, shifted.content.y), (25.0, 30.0));
@@ -159,6 +173,7 @@ mod tests {
                 h: 10.0,
             },
             text: None,
+            hidden: false,
         };
         let json = serde_json::to_string(&placed).expect("serialize");
         assert!(json.contains("\"path\":\"sections.body.items[2].columns[1]\""));
@@ -196,6 +211,7 @@ mod tests {
                     em_bottom: 14.0,
                 }],
             }),
+            hidden: false,
         };
         // The accessors are variant-exact: lines Some, columns None.
         assert!(placed.text.as_ref().expect("text").columns().is_none());
@@ -241,6 +257,7 @@ mod tests {
                     em_right: 40.0,
                 }],
             }),
+            hidden: false,
         };
         let metrics = placed.text.as_ref().expect("text");
         // The accessors are variant-exact: columns Some, lines None.

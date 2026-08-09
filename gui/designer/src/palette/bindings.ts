@@ -67,6 +67,15 @@ function walkItems(
     if (markKey !== undefined) {
       out.push({ path, key: markKey, scope: bindingScope(markData, scope), source: false });
     }
+    // `visible: { key, … }` is a data reference like any other — without
+    // this, a field used ONLY to hide an item reads as unused in the
+    // palette. It resolves the same way a mark's `data:` does, element
+    // scope by default with the `scope: document` escape.
+    const visible = record(item.visible);
+    const visibleKey = bindingKey(visible);
+    if (visibleKey !== undefined) {
+      out.push({ path, key: visibleKey, scope: bindingScope(visible, scope), source: false });
+    }
     // Row-relative scope opens only under a source's sub-template keys
     // (columns / cell / item); a container's own `items` stay at this scope.
     const childScope = isSource && key !== undefined ? key : scope;

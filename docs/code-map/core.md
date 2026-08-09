@@ -20,11 +20,20 @@ injected at parse). The template model splits along CSS lines.
   `defaults: TemplateDefaults` + the named-style registry
   `Template.styles`; re-exports submodules so `shojiku_core::X` paths stay
   stable.
-- `template/items.rs` — the leaf items: `TextItem` (incl. `mark`,
+- `template/items.rs` — the drawn leaves: `TextItem` (incl. `mark`,
   `bindings` — ONE map per item serving its `text`/`link.url` AND its
   spans), `RectItem` (unified `Style`, no default stroke), `LineItem`,
-  `ImageItem`, `PageNumberItem`, `QrCodeItem`, `ListItem` (per-entry
-  `text` template + `overflowText`), `PageBreakItem`.
+  `ImageItem` (+ `ImageFit`); re-exports the split-out file below so
+  `shojiku_core::X` paths are unchanged.
+  `template/items/generated.rs` — the leaves the ENGINE fills in rather than
+  the author drawing: `QrCodeItem` (+ `EcLevel`), `ListItem` (per-entry
+  `text` template + `overflowText`), `PageNumberItem`, `PageBreakItem`. Split
+  purely for the line budget when every item struct gained `visible:`.
+- `template/visibility.rs` — `VisibleBinding { key, equals?, scope?,
+  collapse? }`, the `visible:` key EVERY item struct carries. The predicate
+  is the mark's, re-declared rather than `#[serde(flatten)]`-ed (flatten
+  silently disables `deny_unknown_fields`, which would let a misspelled key
+  through); `collapse()` picks between reserve-the-box and remove-it.
 - `template/imposition.rs` — `Item::Container` (nesting, depth cap) +
   `Item::Repeat` (imposition/n-up: data + `breakBefore` + `cutMarks` +
   `GridSpec` + `cell`; the gap accessors fold the CSS `gap` shorthand).
@@ -208,8 +217,13 @@ injected at parse). The template model splits along CSS lines.
   it is checked against the declared SOURCES, not the scalars) plus every
   per-entry `text:` segment and element-scoped declaration against the
   bound array's `items:` fields. Silent for an `Undeclared` element.
-- `validate/marks.rs` — form-mark checks (content conflicts, boolean-ness,
-  data keys; `TextItem.mark` walked the same way).
+- `validate/presence.rs` — the checks BOTH presence surfaces share: a form
+  mark's `data:` and any item's `visible:` (content conflicts, boolean-ness,
+  data keys; `TextItem.mark` walked the same way). The pre-params checks are
+  identical for the two, so the walk is shared and only the DIAGNOSTIC CODES
+  are a parameter (`FaultCodes`) — each message names what the fault costs
+  ("mark not drawn" vs "item not shown"). The `visible:` hook runs for every
+  item, ahead of the mark-specific arms.
 - `validate/equals.rs` — what a declarative `{ key, equals? }` binding can
   be checked against BEFORE any params exist, shared by marks and table
   row conditions so the two cannot drift: `EqualsTarget` (a leaf, or an

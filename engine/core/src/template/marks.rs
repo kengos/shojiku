@@ -13,6 +13,7 @@ use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize};
 
 use super::binding::BindingScope;
+use super::visibility::VisibleBinding;
 
 /// A box-inscribed ellipse. With no `data:` it always draws (decoration —
 /// e.g. a stroked oval circling the chosen payment method on a form); with `data:`
@@ -27,6 +28,9 @@ use super::binding::BindingScope;
 pub struct EllipseItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Params-conditional presence; unset draws unconditionally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible: Option<VisibleBinding>,
     #[serde(rename = "box")]
     pub box_: OptBox,
     /// Presence binding; `None` = always draw.
@@ -48,6 +52,9 @@ pub struct EllipseItem {
 pub struct CheckboxItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Params-conditional presence; unset draws unconditionally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible: Option<VisibleBinding>,
     /// Frame box; may be omitted entirely — the frame then defaults to the
     /// inherited font's cap-height square (a label-matched checkbox). An
     /// omitted `w`/`h` inside a present `box:` (e.g. for placement) falls

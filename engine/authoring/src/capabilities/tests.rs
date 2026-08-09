@@ -25,6 +25,7 @@ fn engine_info_reports_version_capabilities_and_locales() {
     assert!(info.capabilities.contains(&"box.flexBasis"));
     // Data-driven table row layers (`row.conditionalStyles`).
     assert!(info.capabilities.contains(&"table.row.conditionalStyles"));
+    assert!(info.capabilities.contains(&"item.visible"));
     // Border decoration: the patterned borderStyle keywords, corner
     // rounding, and the `line` item's own stroke pattern. Each is pinned
     // individually — the registry's structural tests pass whether or not

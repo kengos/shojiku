@@ -409,3 +409,58 @@ describe('buildTree', () => {
     expect(({} as { polluted?: unknown }).polluted).toBeUndefined();
   });
 });
+
+describe('a conditionally hidden or collapsed item', () => {
+  const SOURCE = [
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - type: text',
+    '        text: gone',
+    '        visible: { key: show, collapse: true }',
+    '      - type: page_break',
+    '        visible: { key: split }',
+  ].join('\n');
+
+  it('is still listed, because the tree reads the DOCUMENT and not the layout', () => {
+    // A COLLAPSED item emits no `PlacedBox` at all, so the canvas cannot
+    // hit-test it — the layer tree is its only selection path, and the `line`
+    // precedent (a box-less item editable NOWHERE) is what makes that worth
+    // pinning rather than assuming.
+    const tree = buildTree(SOURCE);
+    const body = tree?.roots.find((n) => n.path === 'sections.body');
+    const paths = body?.children.map((n) => n.path);
+    expect(paths).toEqual(['sections.body.items[0]', 'sections.body.items[1]']);
+  });
+
+  it('marks the row as conditional so an absent item is explained', () => {
+    // The tree does not evaluate the predicate — that is the engine's answer
+    // — it only reports that one exists. Without the mark, selecting a
+    // COLLAPSED item highlights nothing on canvas and reads as broken.
+    const tree = buildTree(SOURCE);
+    const body = tree?.roots.find((n) => n.path === 'sections.body');
+    expect(body?.children.map((n) => n.conditional)).toEqual([true, true]);
+  });
+
+  it('leaves an unconditional item unmarked', () => {
+    const tree = buildTree(
+      [
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - type: text',
+        '        text: always',
+      ].join('\n'),
+    );
+    const body = tree?.roots.find((n) => n.path === 'sections.body');
+    expect(body?.children[0]?.conditional).toBeUndefined();
+  });
+
+  it('keeps the item kinds so the row is recognisable', () => {
+    const tree = buildTree(SOURCE);
+    const body = tree?.roots.find((n) => n.path === 'sections.body');
+    expect(body?.children.map((n) => n.kind)).toEqual(['text', 'page_break']);
+  });
+});

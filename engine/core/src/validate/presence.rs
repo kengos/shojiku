@@ -1,22 +1,54 @@
-//! Form-mark validation: the `checked`×`data` conflict, binding-key
-//! existence (scalar, or scoped to a `repeat` element like a table
-//! column), and a boolean-type hint for an `equals`-less binding — a
-//! checkbox bound to a non-boolean field never toggles, so surface it.
+//! Presence-binding validation, for both surfaces that carry one: a form
+//! mark's `data:` and any item's `visible:`.
+//!
+//! What can be checked before params exist is the same for both — the key
+//! must resolve (as a scalar, or scoped to a `repeat` element like a table
+//! column), an `equals`-less binding must target a boolean field, and an
+//! `equals` literal must be one the field can actually carry. Only the
+//! DIAGNOSTIC CODES differ, because each message names what the fault
+//! costs ("mark not drawn" vs "item not shown"), so the walk is shared and
+//! the codes are a parameter.
 
 use super::equals::{equals_fault, reads_as_boolean, resolve_target, EqualsFault, EqualsTarget};
 use crate::catalog::Catalog;
 use crate::params::resolve_path;
-use crate::template::{Body, CheckboxItem, EllipseItem, Item, MarkBinding, Template, TextItem};
+use crate::template::{
+    BindingScope, Body, CheckboxItem, EllipseItem, EqualsValue, Item, MarkBinding, Template,
+    TextItem,
+};
 use serde_json::Value;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 
-pub(super) fn check_marks(
+/// The three faults a presence binding can carry, in the reporting
+/// surface's own vocabulary. Two sets exist: a form mark's and an item's
+/// `visible:`; a third surface would add a third const, not a branch.
+struct FaultCodes {
+    not_boolean: Code,
+    type_mismatch: Code,
+    not_declared: Code,
+}
+
+/// A form mark's `data:` — "mark not drawn".
+const MARK: FaultCodes = FaultCodes {
+    not_boolean: Code::MarkBindingNotBoolean,
+    type_mismatch: Code::MarkEqualsTypeMismatch,
+    not_declared: Code::MarkEqualsNotDeclared,
+};
+
+/// An item's `visible:` — "item not shown".
+const VISIBLE: FaultCodes = FaultCodes {
+    not_boolean: Code::VisibleNotBoolean,
+    type_mismatch: Code::VisibleTypeMismatch,
+    not_declared: Code::VisibleEqualsNotDeclared,
+};
+
+pub(super) fn check_presence(
     template: &Template,
     catalog: Option<&Catalog>,
     params: Option<&Value>,
     diags: &mut Diagnostics,
 ) {
-    let mut cx = MarkCtx {
+    let mut cx = PresenceCtx {
         catalog,
         params,
         diags,
@@ -34,18 +66,30 @@ pub(super) fn check_marks(
     }
 }
 
-struct MarkCtx<'a> {
+struct PresenceCtx<'a> {
     catalog: Option<&'a Catalog>,
     params: Option<&'a Value>,
     diags: &'a mut Diagnostics,
 }
 
-impl<'a> MarkCtx<'a> {
+impl<'a> PresenceCtx<'a> {
     /// Walks items tracking the enclosing `repeat` array group (`None` at
     /// document scope), descending into containers and repeat cells.
     fn walk(&mut self, items: &[Item], array: Option<&str>, prefix: &str) {
         for (i, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{i}]");
+            // Every item may carry `visible:`, whatever its type — checked
+            // before the type-specific arms, which cover only the marks.
+            if let Some(v) = item.visible() {
+                self.check_presence_binding(
+                    &v.key,
+                    v.equals.as_ref(),
+                    v.scope(),
+                    array,
+                    &format!("{path}.visible"),
+                    &VISIBLE,
+                );
+            }
             match item {
                 Item::Ellipse(EllipseItem {
                     data: Some(binding),
@@ -102,30 +146,65 @@ impl<'a> MarkCtx<'a> {
         }
     }
 
-    /// Checks a mark binding's key exists (in the scalar catalog or the
-    /// enclosing array group), that params carry it (scalar scope), that
-    /// an `equals`-less binding targets a boolean field, and that an
-    /// `equals` literal is one the field can actually carry.
+    /// A form mark's binding, reported under the mark codes.
     fn check_binding(&mut self, binding: &MarkBinding, array: Option<&str>, path: &str) {
-        let target = self.lookup(&binding.key, array, path);
+        self.check_presence_binding(
+            &binding.key,
+            binding.equals.as_ref(),
+            binding.scope(),
+            array,
+            path,
+            &MARK,
+        );
+    }
+
+    /// Checks a presence binding's key exists (in the scalar catalog or
+    /// the enclosing array group), that params carry it (scalar scope),
+    /// that an `equals`-less binding targets a boolean field, and that an
+    /// `equals` literal is one the field can actually carry.
+    ///
+    /// `codes` is the reporting surface's vocabulary — the checks are
+    /// identical for a form mark and an item's `visible:`, only the
+    /// consequence each message states differs.
+    fn check_presence_binding(
+        &mut self,
+        key: &str,
+        equals: Option<&EqualsValue>,
+        scope: BindingScope,
+        array: Option<&str>,
+        path: &str,
+        codes: &FaultCodes,
+    ) {
+        // `scope: document` reads TOP-LEVEL params even inside a `repeat`
+        // cell — the escape a page-global flag needs, and the one layout has
+        // always honoured. Resolving such a key against the enclosing array
+        // group instead finds nothing and reports `unknown_data_key`, an
+        // ERROR, over a perfectly correct template. Every other binding walk
+        // folds the scope the same way (`bindings/cell.rs`,
+        // `bindings/entry.rs`, `tables.rs`).
+        let array = match scope {
+            BindingScope::Document => None,
+            BindingScope::Element => array,
+        };
+        let target = self.lookup(key, array, path);
         if array.is_none() {
             if let Some(params) = self.params {
-                if resolve_path(params, &binding.key).is_none() {
+                if resolve_path(params, key).is_none() {
                     self.diags.push(
                         Diagnostic::new(Code::MissingData)
                             .arg("scope", "")
-                            .arg("key", &binding.key)
+                            .arg("key", key)
                             .with_path(path.to_string()),
                     );
                 }
             }
         }
         let Some(target) = target else { return };
-        let Some(equals) = &binding.equals else {
+        let Some(equals) = equals else {
             if !reads_as_boolean(&target) {
                 self.diags.push(
-                    Diagnostic::new(Code::MarkBindingNotBoolean)
-                        .arg("key", &binding.key)
+                    Diagnostic::new(codes.not_boolean)
+                        .arg("key", key)
                         .with_path(path.to_string()),
                 );
             }
@@ -134,13 +213,13 @@ impl<'a> MarkCtx<'a> {
         // The literal is never echoed — the key names the field, exactly
         // as the params-side `enum` check does.
         let code = match equals_fault(&target, equals) {
-            Some(EqualsFault::Kind) => Code::MarkEqualsTypeMismatch,
-            Some(EqualsFault::NotDeclared) => Code::MarkEqualsNotDeclared,
+            Some(EqualsFault::Kind) => codes.type_mismatch,
+            Some(EqualsFault::NotDeclared) => codes.not_declared,
             None => return,
         };
         self.diags.push(
             Diagnostic::new(code)
-                .arg("key", &binding.key)
+                .arg("key", key)
                 .with_path(path.to_string()),
         );
     }

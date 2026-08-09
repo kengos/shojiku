@@ -99,6 +99,39 @@ export function readRowConditions(entries: readonly unknown[]): readonly RowCond
 /** Which value control the picked field gets: its declared `enum` when it has
  * one, no control at all for a boolean (the wire then omits `equals`), else
  * free entry. */
+/** Whether repointing at a new field must CLEAR the authored `equals`.
+ *
+ * Shared by both presence surfaces (a table row condition and an item's
+ * `visible:`), because the failure is the same on each: an `equals` the new
+ * field's control cannot DISPLAY is an invisible disagreement between the
+ * panel and the wire.
+ *
+ * - a boolean-form field renders no value control at all, and a kept `equals`
+ *   would still override the boolean read;
+ * - an enum-form field renders a `<select>`, which falls back to "unset" when
+ *   no option matches — the screen then says unset while the file says
+ *   otherwise;
+ * - free entry shows whatever is there, so nothing goes stale.
+ */
+export function equalsGoesStale(
+  hasEquals: boolean,
+  equals: string,
+  newFieldType: string,
+  newFieldEnums: readonly string[],
+): boolean {
+  if (!hasEquals) {
+    return false;
+  }
+  switch (valueFormFor(newFieldType, newFieldEnums)) {
+    case 'boolean':
+      return true;
+    case 'enum':
+      return !newFieldEnums.includes(equals);
+    default:
+      return false;
+  }
+}
+
 export function valueFormFor(type: string, enumValues: readonly string[]): ConditionValueForm {
   if (enumValues.length > 0) {
     return 'enum';

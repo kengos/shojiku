@@ -10,6 +10,7 @@
 use shojiku_core::{GridTrack, Item, TrackSpec};
 
 use super::super::flex::FlexKind;
+use super::super::visibility::Visibility;
 use super::super::{Basis, Ctx};
 use super::span::{CellSpan, Occupancy};
 use super::tracks::FrRows;
@@ -27,6 +28,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     pub(super) fn plan_cells<'i>(
         &mut self,
         items: &'i [Item],
+        visibility: &[Visibility],
         cols: usize,
         direction: shojiku_core::FlexDirection,
         rows_count: usize,
@@ -34,6 +36,11 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let mut occupancy = Occupancy::new(cols);
         let mut out = Vec::new();
         for (i, child) in items.iter().enumerate() {
+            // A collapsed child occupies no cell — otherwise the grid
+            // keeps a hole where it would have been.
+            if visibility[i].is_collapsed() {
+                continue;
+            }
             let Some(kind) = FlexKind::of(child) else {
                 continue;
             };
