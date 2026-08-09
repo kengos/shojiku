@@ -711,3 +711,24 @@ conversation says so. Both halves of that have shipped here.
   printing the file count it read first). Probing for NULs needs perl,
   not `grep $'\x00'` — bash truncates that pattern to empty and the
   grep then matches every line.
+- **The byte can land where you typed an ORDINARY character, in a file
+  that has nothing to do with control characters — and then it hides the
+  file from the PR DIFF, not just from grep.** Both narrowings above are
+  too generous: it is not only the ESCAPE that carries the risk (a
+  plainly-typed space came back as `0x00` twice in a row, in the same
+  string literal), and the candidate set is not just files that match or
+  describe control characters (this one joined two strings to build a
+  dedup key). Treat ANY file written through a tool call as a candidate.
+  The consequence nobody had paid for yet is the expensive one: git
+  classifies the file as binary, so `git show --stat` prints
+  `<file> | Bin 0 -> N bytes` and **the file never renders in the pull
+  request at all** — GitHub says "Binary file not shown". A reviewer can
+  approve a change having been shown none of its central logic, which is
+  precisely what happened: a 182-line module, the whole subject of its
+  PR, went up unreadable and only a review reading the working tree
+  instead of the diff caught it. Two guards, both cheap:
+  **check `git diff --stat` for `Bin` before opening a PR** (the tell is
+  unmissable once you look for it), and prefer a construction with no
+  separator character to get wrong — `JSON.stringify([a, b])` rather
+  than joining on a delimiter, which is the right answer anyway when the
+  parts are document-derived and could contain that delimiter.
