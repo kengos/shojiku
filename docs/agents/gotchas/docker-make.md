@@ -180,6 +180,18 @@ the lock stays held, and `ps` on the make pid still answers alive — so a
 run you believe you cancelled goes on owning the tree. Kill the CONTAINER
 first, then the make chain:
 
+**A foreground TIMEOUT lands you here without your deciding anything** —
+it is the third way in, after an interactive Ctrl-C and a deliberate
+cancel, and the only one that arrives unannounced. An agent harness caps
+a foreground command (10 minutes for the Bash tool; some sessions far
+less), and when it fires the make pid dies while the CONTAINER carries
+on: `ps -p <pid>` then says dead, the lock says held, and the two checks
+below disagree — which is exactly the state the "test the holder is
+dead" rule exists for. **`make test:gui` is the routine offender**
+(vitest + coverage across both gui packages runs several minutes), so
+background it from the start rather than learning this by losing a run
+and re-running it.
+
 ```sh
 docker ps -q | xargs -r docker inspect \
   --format '{{.Name}} | {{range .Mounts}}{{.Source}} {{end}}' | grep <repo path>
