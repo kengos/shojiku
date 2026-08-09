@@ -211,6 +211,10 @@ lists name the destructured stable fields, never `editor` itself.
 - `hooks/useTemplateCap.ts` — the session's template-size cap: seeded
   `max(persisted cap, source byte size)`, raised via the image headroom
   prompt.
+- `hooks/useAdvisories.ts` — the GUI's own advisories (drawn-text
+  collisions; model in
+  [gui-designer-panel.md](gui-designer-panel.md) § Diagnostics), memoized
+  over the LAST-GOOD inspect and gated on `inspect.text_metrics`.
 - `hooks/useDocDerived.ts` — shared read-only indexes memoized on the
   text: `treeView` (nullable), `styleUsage`, `styleFloor`.
 - `hooks/useHostNotify.ts` — report `text` through `onChange` after every

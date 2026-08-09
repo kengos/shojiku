@@ -804,6 +804,8 @@ export const zhCn: LanguageCatalog = {
     'diagnostics.empty': '没有问题。',
     'diagnostics.fix': '修正',
     'diagnostics.fixTip': '移除导致此警告的键（可撤销）。',
+    'diagnostics.advisory': '检查',
+    'diagnostics.textCollision': '第 {page} 页中 `{a}` 与 `{b}` 的文字重叠。',
     'severity.error': '错误',
     'severity.warning': '警告',
     'severity.info': '信息',

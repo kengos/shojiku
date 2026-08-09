@@ -15,6 +15,21 @@ platform binaries.
 
 ### Added
 
+- **The Designer tells you when text has landed on other text.** Change a
+  document's page size and the parts pinned in points stay exactly where
+  they were, while anything sized `100%` grows with the sheet — so a
+  centred heading can drift across a block of details that never moved.
+  Nothing was wrong with the document, so the engine reports nothing and
+  the diagnostics panel said "no problems" while the two overlapped on
+  screen. It now lists the items whose printed text collides, and
+  clicking one selects it on the canvas. It reads the text the engine
+  actually drew rather than the boxes it drew into: boxes routinely
+  overlap in a perfectly good document — a full-width heading's box
+  spans whatever is pinned inside it — so the boxes cannot tell a broken
+  page from a working one, and the printed lines can. Deliberate overlaps
+  stay quiet, since a stamp over a rule or a watermark behind a paragraph
+  is not text meeting text.
+
 - **A line's endpoints can be edited in the Designer.** A `line` is
   positioned by its two endpoints rather than a box, and nothing in the
   property panel could author them — so a line placed by the cut-here

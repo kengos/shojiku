@@ -101,6 +101,7 @@ export function Designer(props: DesignerProps) {
       <div data-tour={TOUR_ANCHORS.diagnostics}>
         <DiagnosticsPanel
           diagnostics={w.diagnostics}
+          advisories={w.advisories}
           onSelect={w.editor.select}
           read={w.editor.read}
           onApplyFix={w.applyDiagnosticFix}

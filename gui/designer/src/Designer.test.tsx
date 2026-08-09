@@ -14,6 +14,7 @@ import {
   ABS_VARIED,
   outcome,
   outcomeAbs,
+  outcomeColliding,
   outcomeStacked,
   outcomeWith,
   SOURCE,
@@ -31,6 +32,35 @@ describe('Designer', () => {
     // Clicking save with no onSave handler and a clean validate must not throw.
     saveViaReview();
     await waitFor(() => expect(transport.validate).toHaveBeenCalled());
+  });
+
+  describe('layout advisories', () => {
+    it('reports text landing on text, on a document the engine passes cleanly', async () => {
+      const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeColliding()) });
+      draw(transport);
+      // The engine emitted no diagnostics for this document — the advisory is
+      // the Designer's own reading of the box index.
+      expect(
+        await screen.findByText('Text in `title` and `meta` overlaps on page 1.'),
+      ).toBeDefined();
+      expect(screen.queryByText('No problems.')).toBeNull();
+    });
+
+    it('stays silent against an engine that does not report text metrics', async () => {
+      const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeColliding()) });
+      draw(transport, { capabilities: ['style.border'] });
+      await waitFor(() => expect(transport.renderRaw).toHaveBeenCalled());
+      expect(screen.queryByText('Text in `title` and `meta` overlaps on page 1.')).toBeNull();
+      expect(screen.getByText('No problems.')).toBeDefined();
+    });
+
+    it('reports it when the engine does advertise text metrics', async () => {
+      const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeColliding()) });
+      draw(transport, { capabilities: ['inspect.text_metrics'] });
+      expect(
+        await screen.findByText('Text in `title` and `meta` overlaps on page 1.'),
+      ).toBeDefined();
+    });
   });
 
   it('surfaces injected file actions and a host entry in the File menu', () => {

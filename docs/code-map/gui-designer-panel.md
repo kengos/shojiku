@@ -449,7 +449,47 @@ read side, never the reverse.
 - `diagnostics/DiagnosticsPanel.tsx` — localized rows; a `path`-carrying
   row is a button reusing selection to highlight on canvas; a
   mechanically-fixable row renders a sibling fix button →
-  `onApplyFix(ops)` (one `applyAll`).
+  `onApplyFix(ops)` (one `applyAll`). It shows TWO kinds: the engine's
+  `diagnostics`, and the GUI's own `advisories` below them. The empty
+  state requires BOTH to be empty.
+- `diagnostics/collisions.ts` — pure: which items' DRAWN TEXT lands on
+  another item's, from the box index alone. `findTextCollisions(boxes)`
+  compares each drawn line's own rectangle (`x‥x+width` ×
+  `emTop‥emBottom`, and the axis-swapped `emLeft‥emRight` × `y‥y+height`
+  for vertical writing), never the border box — a full-width heading's
+  BOX legitimately spans items pinned inside it, so box overlap is
+  normal in a correct document and carries no signal, while the drawn
+  line separates the authored page size from a widened one. Abutting em
+  bands do not count, and neither does a DEGENERATE line (the engine
+  emits a zero-width `LineMetric` for a blank line inside a paragraph,
+  where nothing is drawn) — hence the intersection-LENGTH form of the
+  overlap test rather than four edge comparisons, which also makes an
+  inverted rectangle fail safe.
+  **Two items sharing a path are never compared, which is a structural
+  blind spot worth knowing**: an item laid out repeatedly (a `repeat`
+  cell child, one box per element) carries ONE path across every
+  placement, so row 1's cell overrunning row 2's is invisible here —
+  reporting it would read "`price` overlaps `price`". The same rule is
+  what stops a wrapped paragraph colliding with its own stacked lines.
+  Because those placements interleave on the page, the dedup key is
+  order-NORMALIZED (JSON over the sorted pair — a separator character
+  could be one an author put in a path) or the same pair reports twice.
+  Bounded on three axes: lines per page (applied to the LINE LIST, since
+  one item can wrap to arbitrarily many), pairs compared per document
+  (the collision cap short-circuits only after a hit, so a long CLEAN
+  document is the worst case), and collisions reported. Hostile /
+  non-finite geometry degrades to no collision; pairs dedupe through a
+  `Set`, never a plain-object table — the paths are document-derived.
+  Known false positive: a stamp or watermark authored as a TEXT item
+  over body text is text-against-text and will be reported.
+- `diagnostics/AdvisoryRow.tsx` — one advisory row: its own filled-accent
+  badge (a GUI reading, NOT an engine `code` — that namespace stays the
+  engine's; deliberately not the `info` severity's outline, since the two
+  kinds share one list) and a click selecting the first of the two items.
+- The model's types and `findTextCollisions` are on the package's public
+  surface (`exports/panels.ts`) beside `DiagnosticsPanelProps` — a host
+  mounting the panel itself must be able to type the prop and build the
+  list without reimplementing the rule.
 - `diagnostics/fixModel.ts` — pure quick-fix registry: `fixFor(diag,
   read)` over a `Map` keyed by wire diagnostic code (a forged
   `code:'constructor'` must miss); each builder emits a `removeKey`

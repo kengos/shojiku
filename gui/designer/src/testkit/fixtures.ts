@@ -41,6 +41,46 @@ export function outcomeWith(
   };
 }
 
+/** A render outcome whose two text items' DRAWN lines overlap — the shape a
+ * widened sheet produces when a centred full-width heading re-centres on top
+ * of neighbours pinned in pt. Their BOXES are identical in every outcome
+ * above; only the line metrics tell the two situations apart. */
+export function outcomeColliding(): RenderOutcome {
+  const line = (x: number) => ({
+    lines: [{ x, width: 80, baseline: 60, capTop: 43, emTop: 41, emBottom: 63 }],
+  });
+  return {
+    ok: true,
+    pages: [{ width: 8, height: 8, rgba: new Uint8Array(8 * 8 * 4) }],
+    inspect: {
+      engine: { version: '0', capabilities: [], builtinLocales: [] },
+      document: {},
+      boxes: {
+        pages: [
+          [
+            {
+              path: 'sections.body.items[0]',
+              id: 'title',
+              border: BOX,
+              content: BOX,
+              text: line(380),
+            },
+            {
+              path: 'sections.body.items[1]',
+              id: 'meta',
+              border: BOX,
+              content: BOX,
+              text: line(430),
+            },
+          ],
+        ],
+      },
+      margin: [0, 0, 0, 0],
+    },
+    diagnostics: { items: [] },
+  };
+}
+
 /** A three-item flow body for the canvas reorder tests. */
 export const THREE_ITEMS = [
   'sections:',
