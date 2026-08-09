@@ -617,6 +617,37 @@ Both halves of that have bitten here.
   file /tmp/backup` first and `cp` back after; git's undo verbs are for
   committed history, not for a two-minute experiment on live work.
 
+## A background watcher's silence is not a result
+
+A background task that finishes notifies you. A task whose exit
+condition never fires does not — it keeps running, and nothing in the
+conversation says so. Both halves of that have shipped here.
+
+- **A `while ! grep -q …; do sleep 30; done` spun for three and a half
+  hours** after the run it was watching had finished, because the
+  anchored pattern never matched the actual bytes — the line's `FAIL`
+  carries a terminal colour escape. It cost nothing and it was
+  invisible; it was
+  found because the user asked. **Validate a grep pattern against the
+  ACTUAL bytes of the output** (escapes, colour codes, `\r`), never
+  against what the line looks like on screen — and prefer a condition
+  that cannot silently never-fire, e.g. a job's own `conclusion` over a
+  grep of its log.
+- **A watcher also dies with the session that started it, and reports to
+  nobody.** A poll waiting for a Maven Central repo1 mirror sync was
+  never heard from again; the sync had in fact landed, and the state
+  went unrecorded until someone re-asked the URL directly. So: **no
+  report is not "not yet" — it is no information at all.** Two rules
+  follow. Record any background watcher where a later reader can
+  reconcile it against reality, with its STOP CONDITION written down and
+  not just its command (a row naming only the command cannot show that
+  the condition never fired). And when you actually need the answer,
+  **re-ask the source** — one `curl`/`gh` call now beats waiting to be
+  told by something that may already be dead.
+- The reconciliation, at any cleanup:
+  `ps aux | grep -E "[t]ail -f|[g]make|[c]laude -p"`. A process with no
+  record, or a record with no process, is the finding.
+
 ## Binary-classified files: the grep blind spot
 
 - **A zero-hit grep over a NARROWED path is evidence about the path, not
