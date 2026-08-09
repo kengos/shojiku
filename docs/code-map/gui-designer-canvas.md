@@ -177,7 +177,8 @@ hostile geometry degrades to null before it can reach an op.
 - `canvas/manipulate.ts` — the pure CLASSIFICATION model:
   `manipulationFor` → move | reorder | `{kind:'fixed', reason}` (the
   chip/refusal vocabulary). Exports the untrusted-node read guards
-  `record` + `baseLength` the plan/handle models share.
+  `record` + `baseLength` the plan/handle models share; the `noBox`
+  refusal reads `panel/itemView.ts`'s shared `BOXLESS_TYPES`.
 - `canvas/plan.ts` — the plan VOCABULARY + shared commit math:
   `SnapOptions`/`ManipulationPlan`/`MIN_SIZE_PT`,
   `GRID_STEPS`/`DEFAULT_GRID_STEP`/`normalizeGridStep` (the

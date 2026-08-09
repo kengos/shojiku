@@ -583,6 +583,7 @@ export const zhCn: LanguageCatalog = {
     'panel.tab.content': '内容',
     'panel.tab.style': '样式',
     'panel.tab.box': '版面',
+    'panel.noEditable': '该元素没有可编辑的属性。',
     'panel.effective.label': '生效值',
     'panel.effective.jump': '前往文档设置',
     'panel.doc.localeCurrency': '地区与货币',

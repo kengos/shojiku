@@ -18,7 +18,7 @@ import { BoxSection } from './BoxSection';
 import { BORDERABLE_TYPES } from './borderTypes';
 import { ContentSection } from './ContentSection';
 import type { ItemPanelProps } from './itemPanelProps';
-import type { ItemView } from './itemView';
+import { BOXLESS_TYPES, type ItemView } from './itemView';
 import { StyleSection } from './StyleSection';
 
 export type PanelTab = 'content' | 'style' | 'box';
@@ -42,8 +42,11 @@ const CONTENT_TAB_TYPES = new Set([
  * end). */
 const STYLED_TYPES: ReadonlySet<string> = new Set([...BORDERABLE_TYPES, 'line']);
 
-/** The tabs that apply to an item, in fixed content→decoration→placement order. `box` is always
- * present (every placed item has a box), so the result is never empty. */
+/** The tabs that apply to an item, in fixed content→decoration→placement order.
+ * Box-less types are excluded from the placement tab — the engine rejects a
+ * `box:` key on them as a parse error, so offering the fields would write a
+ * key that breaks the document. `page_break` ends up with NO tabs (it takes
+ * only `id`); the panel renders a placeholder for that. */
 export function applicableTabs(view: ItemView): PanelTab[] {
   const tabs: PanelTab[] = [];
   if (CONTENT_TAB_TYPES.has(view.type)) {
@@ -52,7 +55,9 @@ export function applicableTabs(view: ItemView): PanelTab[] {
   if (STYLED_TYPES.has(view.type)) {
     tabs.push('style');
   }
-  tabs.push('box');
+  if (!BOXLESS_TYPES.has(view.type)) {
+    tabs.push('box');
+  }
   return tabs;
 }
 
@@ -82,8 +87,14 @@ export function ItemPanel(props: ItemPanelProps) {
       <BoxSection {...props} />
     );
 
-  // A single-tab item (box-only: line, and other pure-geometry items) skips the
-  // tablist chrome — a lone tab is noise.
+  // A type with NO applicable tab (`page_break` — nothing but `id` on the
+  // wire) states that plainly instead of offering fields that would write
+  // invalid keys.
+  if (tabs.length === 0) {
+    return <p className="m-0 p-3 text-muted text-sm">{t('panel.noEditable')}</p>;
+  }
+  // A single-tab item (a `line`'s stroke, and other one-surface types) skips
+  // the tablist chrome — a lone tab is noise.
   if (tabs.length === 1) {
     return <div className="p-3">{panelFor(tabs[0])}</div>;
   }

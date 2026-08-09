@@ -778,13 +778,17 @@ describe('PropertyPanel', () => {
     expect(controller.apply).not.toHaveBeenCalled();
   });
 
-  it('renders only the box section for a type with nothing to edit', () => {
+  it('states plainly that a page_break has nothing to edit', () => {
+    // `page_break` takes only `id` on the wire, so every field the panel could
+    // show would author a key the engine rejects — including the box fields
+    // this panel used to offer.
     const controller = makeController({ [PATH]: { type: 'page_break' } });
     draw(<PropertyPanel controller={controller} path={PATH} />);
     expect(screen.queryByRole('heading', { name: 'Style' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Content' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Image' })).toBeNull();
-    expect(screen.getByRole('heading', { name: 'Box' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Box' })).toBeNull();
+    expect(screen.getByText('This element has no editable properties.')).toBeDefined();
   });
 
   it('gives a line a 装飾 tab carrying its own stroke controls', () => {
@@ -801,18 +805,15 @@ describe('PropertyPanel', () => {
     expect(screen.queryByLabelText('Corner radius')).toBeNull();
   });
 
-  it('edits a line box coordinate from the 配置 tab', () => {
+  it('offers a line NO 配置 tab — a `box:` key on a line is a parse error', () => {
+    // A `line` draws from `from`/`to` and its wire struct is
+    // `deny_unknown_fields`, so a `box.x` the panel wrote broke the document.
+    // The tab is gone; only the stroke controls remain.
     const controller = makeController({ [PATH]: { type: 'line', box: {} } });
     draw(<PropertyPanel controller={controller} path={PATH} />);
-    // A line now opens on its 装飾 tab, so reach the box fields explicitly.
-    openTab('Layout');
-    fireEvent.blur(screen.getByLabelText('X'), { target: { value: '5' } });
-    expect(controller.apply).toHaveBeenCalledWith({
-      op: 'setScalar',
-      path: PATH,
-      keys: ['box', 'x'],
-      value: 5,
-    });
+    expect(screen.queryAllByRole('tab')).toEqual([]);
+    expect(screen.queryByLabelText('X')).toBeNull();
+    expect(screen.getByLabelText('Line width')).toBeDefined();
   });
 });
 

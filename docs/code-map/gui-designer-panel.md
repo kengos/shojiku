@@ -120,7 +120,11 @@ read side, never the reverse.
 - `panel/itemView.ts` — the READ side: `readItemView` → `ItemView`
   (incl. `dataScope`, `pageFormat`), `display`/`record` narrowings,
   `registryNames`, `BOX_AXES`, `imageSourceSummary` (format + KiB — the
-  raw `src` never reaches a field).
+  raw `src` never reaches a field). Also the ONE home for **`BOXLESS_TYPES`**
+  (`line`/`page_break` — the types whose wire struct takes no `box:` at
+  all): `ItemPanel`'s tab gate, `placementModel`'s classifier and
+  `canvas/manipulate`'s `noBox` refusal all consult this set instead of
+  each keeping their own type list.
 - `panel/styleFieldSpecs.ts` — the style keys the panel edits, as data
   (`STYLE_FIELDS`: widget kind + enum options copied from
   `engine/core/src/style/enums.rs`). A no-import leaf shared by item
@@ -192,7 +196,13 @@ read side, never the reverse.
   Designer's `navigateDefaults`.
 - `panel/ItemPanel.tsx` — the content/decoration/placement tab SHELL only
   (`applicableTabs`; only applicable tabs render; active tab clamped on
-  type change). Tab bodies live beside it: `ContentSection.tsx` (per-type
+  type change). **The placement tab is withheld from BOX-LESS types**
+  (`itemView.ts`'s `BOXLESS_TYPES` — `line`/`page_break`; both wire
+  structs are `deny_unknown_fields` and take no `box:`, so offering the
+  fields authored a parse error). `line` therefore renders its stroke
+  editor alone (single-tab, no tablist chrome) and `page_break` has NO
+  applicable tab and renders the `panel.noEditable` placeholder. Tab
+  bodies live beside it: `ContentSection.tsx` (per-type
   routing + the text/data pair; image/page-number surfaces in
   `contentParts.tsx`), `StyleSection.tsx` (+`StyleTabFields.tsx`),
   `BoxSection.tsx` (+`boxFields.tsx`); shared prop contract in
