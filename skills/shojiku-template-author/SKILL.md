@@ -94,6 +94,15 @@ reddens on the first render.
 
 ## Wire gotchas the reference doesn't make obvious
 
+- **A code panel indents with U+00A0, not spaces.** The text layer drops
+  ordinary leading spaces, so a YAML sample pasted into a showcase panel
+  renders flush left with its structure gone. Every existing panel in
+  `examples/dev/layout-showcase` already uses non-breaking spaces for the
+  indent — the trap is well known, but the RECIPE is only visible by reading
+  the bytes of one (`repr()` a line, or any editor that shows them), never by
+  looking at the file. Copy the indentation from a neighbouring panel rather
+  than typing it.
+
 - `page.size`: named presets `A3`/`A4`/`A5`, `B4`/`B5` (JIS),
   `Letter`/`Legal`/`Tabloid`, or custom `{ w: "420mm", h: "297mm" }`.
   Physical units (`mm`/`cm`/`in`/`pt`) are strings; bare numbers are pt.

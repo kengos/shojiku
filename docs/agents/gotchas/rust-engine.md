@@ -308,3 +308,32 @@
 - Tests locate repo fixtures via
   `PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../packs")` (or
   `../../examples`); keep that pattern.
+
+## A `.rs` file that nothing `mod`s is invisible to EVERY gate
+
+An abandoned refactor leaves a file behind; `git add -A` commits it. Nothing
+catches it:
+
+- it is **not compiled**, so clippy says nothing — not even `dead_code`;
+- **coverage counts no lines** in it, so the 100% gate is unaffected;
+- it carries a `//!` header and is under 300 lines, so `make budget` passes it.
+
+A split that was tried one way and finished another shipped a 133-line file
+holding stale duplicate definitions of three wire types — one of which put a
+field in a DIFFERENT position than the live struct, so reviving it would have
+silently changed serialization order. A fresh reviewer found it; no gate could
+have.
+
+The failure it sets up is the expensive part: the next author greps
+`struct ImageItem`, opens the dead copy, edits it, and everything builds and
+passes while the wire does not change.
+
+Sweep for it by asking which files no `mod`/`#[path]` declares:
+
+```sh
+# a file is reachable if something declares it as a module or names it by path
+```
+
+Exclude the cargo-DISCOVERED ones or the sweep cries wolf: `src/bin/*.rs`,
+`fuzz/fuzz_targets/*.rs`, `examples/*.rs` and each crate's `lib`/`main`/`mod`
+are reached by cargo, not by a `mod` line.
