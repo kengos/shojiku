@@ -440,6 +440,7 @@ export const fil: LanguageCatalog = {
     'panel.tab.content': 'Nilalaman',
     'panel.tab.style': 'Estilo',
     'panel.tab.box': 'Layout',
+    'panel.noEditable': 'Walang mae-edit na property ang elementong ito.',
     'panel.effective.label': 'Epektibo',
     'panel.effective.jump': 'Mga setting ng dokumento',
     'panel.doc.localeCurrency': 'Lokal at pera',

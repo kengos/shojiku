@@ -7,6 +7,7 @@
 // throw, alias bombs, garbage shapes) classifies as fixed.
 
 import type { ReadFn } from '@shojiku/designer-core';
+import { BOXLESS_TYPES } from '../panel/itemView';
 import { seqPosition } from '../tree/reorder';
 import { type ReorderContext, reorderContext } from './dnd';
 import { type AuthoredLength, ptLength, readLength } from './lengths';
@@ -103,7 +104,7 @@ export function manipulationFor(read: ReadFn, path: string): Manipulation {
   if (owner === undefined || child === undefined) {
     return fixed('unknown');
   }
-  if (child.type === 'line' || child.type === 'page_break') {
+  if (typeof child.type === 'string' && BOXLESS_TYPES.has(child.type)) {
     return fixed('noBox');
   }
   const box = record(child.box) ?? {};

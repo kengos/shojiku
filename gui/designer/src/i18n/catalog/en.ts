@@ -633,6 +633,7 @@ export const en: LanguageCatalog = {
     'panel.tab.content': 'Content',
     'panel.tab.style': 'Style',
     'panel.tab.box': 'Layout',
+    'panel.noEditable': 'This element has no editable properties.',
     'panel.effective.label': 'Effective',
     'panel.effective.jump': 'Document settings',
     'panel.doc.localeCurrency': 'Locale & currency',

@@ -423,6 +423,7 @@ export const hi: LanguageCatalog = {
     'panel.tab.content': 'सामग्री',
     'panel.tab.style': 'शैली',
     'panel.tab.box': 'लेआउट',
+    'panel.noEditable': 'इस तत्व में संपादन योग्य गुण नहीं हैं।',
     'panel.effective.label': 'प्रभावी',
     'panel.effective.jump': 'दस्तावेज़ सेटिंग्स',
     'panel.doc.localeCurrency': 'लोकेल और मुद्रा',

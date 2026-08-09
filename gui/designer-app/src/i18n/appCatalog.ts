@@ -31,7 +31,8 @@ const APP_CHROME_EN: Readonly<Record<string, string>> = {
   'app.loading.engine': 'Preparing engine',
   'app.loading.fonts': 'Loading fonts',
   'app.loading.render': 'Preparing preview',
-  'app.loading.failed': 'This template could not be prepared. Reload the page to try again.',
+  'app.loading.failed':
+    'This template could not be prepared. Go back and try again, or reload the page.',
   'app.loading.failedShort': 'Engine unavailable',
   'app.openError': 'Could not open that file.',
   'app.addFont': 'Add font…',
@@ -102,7 +103,8 @@ const APP_CHROME_JA: Readonly<Record<string, string>> = {
   'app.loading.engine': 'エンジンを準備',
   'app.loading.fonts': 'フォントを読み込み',
   'app.loading.render': 'プレビューを準備',
-  'app.loading.failed': 'テンプレートを準備できませんでした。ページを再読み込みしてください。',
+  'app.loading.failed':
+    'テンプレートを準備できませんでした。戻ってやり直すか、ページを再読み込みしてください。',
   'app.loading.failedShort': 'エンジン読み込み失敗',
   'app.openError': 'ファイルを開けませんでした。',
   'app.addFont': 'フォントを追加…',

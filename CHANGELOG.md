@@ -13,6 +13,23 @@ platform binaries.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Designer no longer offers layout fields on items that cannot take
+  them.** A `line` draws between two points and a `page_break` carries
+  nothing but an id — neither accepts a `box:` — but the property panel
+  showed both a placement tab anyway, and typing a value into it wrote a
+  key the engine rejects, breaking the document you were editing. A line
+  now opens straight on its stroke controls, and a page break says
+  plainly that it has nothing to edit.
+- **A template that fails to open is no longer a dead end.** If the
+  engine or a font pack could not be fetched, the Designer reported the
+  failure on the loading panel and left you there with no way out but a
+  page reload. The panel now carries a way back to the template list —
+  during the wait as well as after a failure, so a load that is simply
+  taking too long can be abandoned too. Backing out is final: an open
+  that finishes afterwards no longer drags you into the editor you left.
+
 ## [0.2.0] - 2026-08-08
 
 ### Added

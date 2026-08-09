@@ -652,6 +652,7 @@ export const ja: LanguageCatalog = {
     'panel.tab.content': '内容',
     'panel.tab.style': '装飾',
     'panel.tab.box': '配置',
+    'panel.noEditable': 'この要素には編集できるプロパティがありません。',
     'panel.effective.label': '実効値',
     'panel.effective.jump': '文書設定へ',
     'panel.doc.localeCurrency': 'ロケール・通貨',

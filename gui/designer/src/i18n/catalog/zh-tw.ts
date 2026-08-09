@@ -584,6 +584,7 @@ export const zhTw: LanguageCatalog = {
     'panel.tab.content': '內容',
     'panel.tab.style': '樣式',
     'panel.tab.box': '版面',
+    'panel.noEditable': '此元素沒有可編輯的屬性。',
     'panel.effective.label': '生效值',
     'panel.effective.jump': '前往文件設定',
     'panel.doc.localeCurrency': '地區與貨幣',

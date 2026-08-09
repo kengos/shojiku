@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { EditorController } from '../editor/useEditor';
+import { I18nProvider } from '../i18n/context';
 import { applicableTabs } from './ItemPanel';
 import { readItemView } from './itemView';
+import { PropertyPanel } from './PropertyPanel';
 
 /** The tab set for one wire item type. `applicableTabs` is the panel's TYPE
  * GATE: a kind missing from it has no editing surface at all, which is how an
@@ -22,10 +26,18 @@ describe('applicableTabs', () => {
     expect(tabsOf({ type: 'rect' })).toEqual(['style', 'box']);
   });
 
-  it('gives a line a 装飾 tab — its stroke must be reachable', () => {
-    // A `line` is not a boxed item, but the insert menu creates dashed lines
-    // and an insertable kind with no editing surface is a dead end.
-    expect(tabsOf({ type: 'line' })).toContain('style');
+  it('gives a line ONLY the 装飾 tab — its stroke must be reachable, its box must not', () => {
+    // A `line` is not a boxed item: the insert menu creates dashed lines, so
+    // the stroke needs an editing surface — but a `box:` key on a line is an
+    // engine parse error (`deny_unknown_fields`; it draws from `from`/`to`),
+    // so the placement tab must NOT be offered.
+    expect(tabsOf({ type: 'line' })).toEqual(['style']);
+  });
+
+  it('gives a page_break NO tabs — the wire takes only `id`', () => {
+    // Every field the panel could show would write a key the engine rejects;
+    // the panel renders a placeholder for the empty set instead.
+    expect(tabsOf({ type: 'page_break' })).toEqual([]);
   });
 
   it('gives a qr_code a 内容 tab, so its URL can be changed', () => {
@@ -40,9 +52,57 @@ describe('applicableTabs', () => {
     expect(tabsOf({ type: 'list' })).toContain('content');
   });
 
-  it('always offers 配置, whatever the type', () => {
-    for (const type of ['text', 'rect', 'line', 'qr_code', 'image', 'page_number']) {
+  it('offers 配置 to every boxed type', () => {
+    for (const type of ['text', 'rect', 'qr_code', 'image', 'page_number', 'table', 'container']) {
       expect(tabsOf({ type })).toContain('box');
     }
+  });
+});
+
+/** A minimal controller over a fixed read map — the BoxSection suite's shape. */
+function makeController(reads: Record<string, unknown>): EditorController {
+  return {
+    text: '',
+    revision: 0,
+    selection: null,
+    canUndo: false,
+    canRedo: false,
+    apply: vi.fn(() => ({ ok: true as const })),
+    applyAll: vi.fn(() => ({ ok: true as const })),
+    read: (path: string) => reads[path],
+    undo: vi.fn(),
+    redo: vi.fn(),
+    select: vi.fn(),
+    clearSelection: vi.fn(),
+    setMaxBytes: vi.fn(),
+    subscribe: vi.fn(() => () => {}),
+    replaceDocument: vi.fn(),
+  };
+}
+
+const PATH = 'sections.body.items[0]';
+
+function drawPanel(item: Record<string, unknown>) {
+  return render(
+    <I18nProvider locale="en">
+      <PropertyPanel controller={makeController({ [PATH]: item })} path={PATH} />
+    </I18nProvider>,
+  );
+}
+
+describe('ItemPanel — box-less types', () => {
+  it('renders the no-editable placeholder for a page_break, and no tabs', () => {
+    drawPanel({ type: 'page_break' });
+    expect(screen.getByText('This element has no editable properties.')).toBeTruthy();
+    expect(screen.queryAllByRole('tab')).toEqual([]);
+  });
+
+  it('renders a line straight into its stroke editor, no tablist chrome', () => {
+    drawPanel({ type: 'line', style: {} });
+    // The single applicable tab (装飾) renders without tabs; the stroke
+    // cluster's field label proves the body is the style section.
+    expect(screen.queryAllByRole('tab')).toEqual([]);
+    expect(screen.getByText('Line')).toBeTruthy();
+    expect(screen.queryByText('This element has no editable properties.')).toBeNull();
   });
 });

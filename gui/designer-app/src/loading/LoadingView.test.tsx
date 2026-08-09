@@ -1,14 +1,14 @@
 import { I18nProvider } from '@shojiku/designer';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { APP_CATALOG } from '../i18n/appCatalog';
 import { LoadingView } from './LoadingView';
 import type { LoadPhase } from './phase';
 
-function renderView(phase: LoadPhase, locale = 'en-US'): void {
+function renderView(phase: LoadPhase, locale = 'en-US', onBack?: () => void): void {
   render(
     <I18nProvider locale={locale} catalog={APP_CATALOG}>
-      <LoadingView name="Receipt" phase={phase} />
+      <LoadingView name="Receipt" phase={phase} onBack={onBack} />
     </I18nProvider>,
   );
 }
@@ -76,10 +76,33 @@ describe('LoadingView', () => {
   it('replaces the bar with the failure and its remedy', () => {
     renderView({ kind: 'failed', stage: 'engine' });
     expect(
-      screen.getByText('This template could not be prepared. Reload the page to try again.'),
+      screen.getByText(
+        'This template could not be prepared. Go back and try again, or reload the page.',
+      ),
     ).toBeTruthy();
     expect(screen.queryByRole('progressbar')).toBeNull();
     expect(rowsWithIcon()).toEqual([true, false, false]);
+  });
+
+  // The escape hatch: present during a LIVE load as well as on failure — a
+  // hung transfer needs the same way out as a failed one.
+  it('offers the back action while loading and on failure, when wired', () => {
+    const onBack = vi.fn();
+    renderView({ kind: 'fonts', bytes: { loaded: 1, total: 2 } }, 'en-US', onBack);
+    fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }));
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers the back action on the failed state too', () => {
+    const onBack = vi.fn();
+    renderView({ kind: 'failed', stage: 'fonts' }, 'en-US', onBack);
+    fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }));
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders no back action when none is wired', () => {
+    renderView({ kind: 'fonts', bytes: { loaded: 1, total: 2 } });
+    expect(screen.queryByRole('button', { name: 'Back to templates' })).toBeNull();
   });
 
   it('renders the stage names in the active UI locale', () => {

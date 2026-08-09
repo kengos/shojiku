@@ -15,6 +15,13 @@ export type ContentMode = 'text' | 'data';
 export const BOX_AXES = ['x', 'y', 'w', 'h'] as const;
 export type BoxAxis = (typeof BOX_AXES)[number];
 
+/** The wire types that take NO `box:` key at all (`line` draws from
+ * `from`/`to` points, `page_break` takes only `id`) — the engine rejects the
+ * key as a parse error (`deny_unknown_fields`). The ONE home for that rule:
+ * the placement tab, the placement classifier, and canvas manipulation all
+ * consult this set rather than keeping their own copies. */
+export const BOXLESS_TYPES: ReadonlySet<string> = new Set(['line', 'page_break']);
+
 export interface ItemView {
   readonly type: string;
   readonly hasText: boolean;

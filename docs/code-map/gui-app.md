@@ -243,12 +243,18 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
 - `app/App.tsx` — `I18nProvider` + `AppShell` branching on
   `services.remote` (mounted → `MountedApp`, else `StandaloneBody`);
   owns theme preference + the header's open-document context.
-  `app/StandaloneBody.tsx` — the standalone body (catalog → draft prompt
-  → editor), the sibling of the mounted one; engine prepared PER
-  preset-open keyed on `engineLocale`, with the open's reported step held
-  beside the view so the staged `LoadingView` describes the wait — and a
-  refusal CAUGHT into a failed step (it was an unhandled rejection and a
-  panel that span forever). `app/AppHeader.tsx` — the
+  `app/StandaloneBody.tsx` — the standalone body's RENDER TREE (catalog →
+  draft prompt → editor), the sibling of the mounted one;
+  `app/standaloneNav.ts` — its view vocabulary + open flow
+  (`useStandaloneNav`), split the way `MountedApp`/`mountedNav` are:
+  engine prepared PER preset-open keyed on `engineLocale`, with the
+  open's reported step held beside the view so the staged `LoadingView`
+  describes the wait, EVERY step of the open (including `injectAssets`
+  and the draft read) inside the try so a refusal becomes a failed step
+  rather than an unhandled rejection, and an **open GENERATION** counter
+  bumped by each open and by cancel and re-checked after every await —
+  so a cancelled open's late settling, in either direction, cannot pull
+  the user back out of the catalog. `app/AppHeader.tsx` — the
   gdoc-style header (brand icon, theme/language icon menus over the
   designer `Menu`'s icon-trigger variant); `app/EditableTitle.tsx` — the
   click-to-rename title: uncontrolled input seeded once, BLUR as the
@@ -267,15 +273,20 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   freshness via pure `app/freshness.ts` + the inline restore-CONFIRM face
   that replaces a row — never one-click destructive.
 - `app/MountedApp.tsx` — the mounted body's RENDER TREE: project list →
-  template list → editor; a `loading` view with an `opening` name is a
-  document open and gets the staged `LoadingView`, while a plain remote
-  list read (no stages to report) keeps the one-liner; definitions editable via the data-item editor
+  template list → editor; an `opening` view is a document open and gets
+  the staged `LoadingView`, while a plain `loading` (a remote list read,
+  no stages to report) keeps the one-liner; definitions editable via the data-item editor
   (edit ops re-apply over the live host base; explicit save via
   `saveDefinitions` after the template save). `app/mountedNav.ts` — the
   view vocabulary + the remote reads (`useMountedNav`): open = parallel
   load + engine prep, then draft check; back re-fetches the project;
   every read carries its own `retry` closure, so the error view
-  re-enters exactly the read that failed. `app/MountedLists.tsx` — the
+  re-enters exactly the read that failed. A document open is its OWN view
+  kind (`opening`, carrying the name and the project it came `from`)
+  rather than a `loading` with a nullable name — so `cancelOpen(from)`
+  always has somewhere to return and no unreachable "cancelled with
+  nothing to go back to" branch exists; it shares `standaloneNav`'s open
+  GENERATION guard against a cancelled open settling late. `app/MountedLists.tsx` — the
   two list views over one `EntryList` + the localized error state.
 - `EditorScreen.tsx` + `app/editorWiring.ts` — the per-document
   ASSEMBLY, split composer/render-tree the way `designer` splits
