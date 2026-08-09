@@ -116,6 +116,45 @@ a broken regex. Use `$(?![\s\S])` for end-of-input under the `m` flag.
   which is the intended behaviour — the point of the gate is that the site
   restates nothing.
 
+## The reference-demo suite goes red BY DESIGN when a release re-pins the engine
+
+`site/src/integration/referenceDemos.test.ts` renders every reference
+demo on TWO engines — the RELEASED build the site serves
+(`site/.data/wasm`) and HEAD (`engine/wasm/pkg`) — and a demo declares
+in its `expect.json` the capability `requires` its wire needs, so a page
+documenting syntax newer than the pinned engine degrades to a static
+listing instead of showing a parse error.
+
+Release step 2b re-pins `site/.data/wasm` to the new build. At that
+moment every `requires` the release satisfies becomes a leftover: the
+page would keep showing its static fallback under a notice saying the
+syntax is newer than this engine, which is now a lie. The suite asserts
+exactly that and fails with
+
+```
+these demos declare `requires` the served engine satisfies — a re-pin landed; drop them
+```
+
+**This is the tripwire working, not a broken suite.** Recovery is to
+delete the named declarations from those `expect.json` files, on the
+re-pin PR itself. Do not re-pin and defer this; the failure is the only
+thing that finds the stale declarations.
+
+Two neighbouring assertions are worth knowing before you read a red run
+here as something else:
+
+- **An all-gated set still fails** (`names.length - gated.length > 0`) —
+  if nothing runs on the served engine, the pin is stale or broken. New
+  syntax can never produce that state.
+- **There is no lower bound on the declared keys.** Right after a re-pin
+  the healthy state is that no demo declares anything, and it stays
+  healthy until a page documents syntax newer than the pinned engine
+  again.
+- A red run whose message is instead `engine/wasm/pkg does not publish
+  these keys` is a stale HEAD build, not a typo: `make site-build`
+  stages the RELEASED engine into `engine/wasm/pkg`, so re-run
+  `make wasm`.
+
 ## A green Pages check on the merge commit is not "production serves it"
 
 The site rule already says the deploy is asynchronous, so a check read
