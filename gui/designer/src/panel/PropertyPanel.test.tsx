@@ -805,15 +805,20 @@ describe('PropertyPanel', () => {
     expect(screen.queryByLabelText('Corner radius')).toBeNull();
   });
 
-  it('offers a line NO 配置 tab — a `box:` key on a line is a parse error', () => {
+  it('edits a line ENDPOINT from the 配置 tab, never a box key', () => {
     // A `line` draws from `from`/`to` and its wire struct is
-    // `deny_unknown_fields`, so a `box.x` the panel wrote broke the document.
-    // The tab is gone; only the stroke controls remain.
-    const controller = makeController({ [PATH]: { type: 'line', box: {} } });
+    // `deny_unknown_fields`, so the `box.x` this tab used to write broke the
+    // document. The tab now authors the endpoint the user actually meant.
+    const controller = makeController({
+      [PATH]: { type: 'line', from: { x: 0, y: 2 }, to: { x: 100, y: 2 } },
+    });
     draw(<PropertyPanel controller={controller} path={PATH} />);
-    expect(screen.queryAllByRole('tab')).toEqual([]);
+    openTab('Layout');
     expect(screen.queryByLabelText('X')).toBeNull();
-    expect(screen.getByLabelText('Line width')).toBeDefined();
+    fireEvent.blur(screen.getByLabelText('Start X'), { target: { value: '5' } });
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path: PATH, keys: ['from', 'x'], value: 5 },
+    ]);
   });
 });
 

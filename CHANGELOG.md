@@ -13,6 +13,18 @@ platform binaries.
 
 ## [Unreleased]
 
+### Added
+
+- **A line's endpoints can be edited in the Designer.** A `line` is
+  positioned by its two endpoints rather than a box, and nothing in the
+  property panel could author them — so a line placed by the cut-here
+  scaffold could be restyled but never moved. Its placement tab now
+  carries the four endpoint fields. They take what the engine takes: a
+  plain number is points, or write `100%` to reach the parent's edge. A
+  value outside that is refused rather than written, since both
+  endpoints are required and a rejected one would stop the document
+  parsing.
+
 ### Fixed
 
 - **The Designer no longer offers layout fields on items that cannot take

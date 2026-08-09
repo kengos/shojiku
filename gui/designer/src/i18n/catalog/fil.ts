@@ -441,6 +441,13 @@ export const fil: LanguageCatalog = {
     'panel.tab.style': 'Estilo',
     'panel.tab.box': 'Layout',
     'panel.noEditable': 'Walang mae-edit na property ang elementong ito.',
+    'panel.line.points': 'Mga dulo',
+    'panel.line.fromX': 'Simula X',
+    'panel.line.fromY': 'Simula Y',
+    'panel.line.toX': 'Dulo X',
+    'panel.line.toY': 'Dulo Y',
+    'panel.line.pointsHint':
+      'Nakabatay sa magulang. Ang purong numero ay points; maaari ring isulat ang 100% para maabot ang gilid ng magulang.',
     'panel.effective.label': 'Epektibo',
     'panel.effective.jump': 'Mga setting ng dokumento',
     'panel.doc.localeCurrency': 'Lokal at pera',

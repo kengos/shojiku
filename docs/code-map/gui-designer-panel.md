@@ -97,6 +97,16 @@ read side, never the reverse.
 - `panel/LineStyleEditor.tsx` — the line cluster for a `line` item
   (width/colour/keyword picker, capability-gated) — exists because the
   cut-here-line scaffold can CREATE a line.
+- `panel/linePoints.ts` + `panel/LinePointsEditor.tsx` — the line's
+  GEOMETRY, which is its `from`/`to` endpoints rather than a box (a
+  `box:` key on a line is an engine parse error, and
+  `canvas/manipulate` refuses to drag one, so these four fields are the
+  ONLY way to move a line). `readLinePoints` shows a value only if it
+  could write it back; `linePointOps` mirrors the engine's own length
+  grammar (bare number = pt, else a `%`/`pt`/`mm`/`cm`/`in`/`em`/`rem`
+  suffix) and REFUSES anything outside it — both endpoints are required
+  on the wire (`PointSpec { x, y }`), so there is no key-removal state
+  and an empty entry writes nothing.
 - `panel/BorderEditor.tsx` — the Excel-style border editor shared by the
   decoration tab + toolbar popover; keyed by path at each host so the pen
   resets on selection change. The SHELL only: pen state, the
@@ -200,7 +210,8 @@ read side, never the reverse.
   (`itemView.ts`'s `BOXLESS_TYPES` — `line`/`page_break`; both wire
   structs are `deny_unknown_fields` and take no `box:`, so offering the
   fields authored a parse error). `line` therefore renders its stroke
-  editor alone (single-tab, no tablist chrome) and `page_break` has NO
+  editor PLUS a placement tab whose body is the ENDPOINT editor rather
+  than the box fields (`POINT_PLACED_TYPES`), while `page_break` has NO
   applicable tab and renders the `panel.noEditable` placeholder. Tab
   bodies live beside it: `ContentSection.tsx` (per-type
   routing + the text/data pair; image/page-number surfaces in

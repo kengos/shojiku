@@ -634,6 +634,13 @@ export const en: LanguageCatalog = {
     'panel.tab.style': 'Style',
     'panel.tab.box': 'Layout',
     'panel.noEditable': 'This element has no editable properties.',
+    'panel.line.points': 'Endpoints',
+    'panel.line.fromX': 'Start X',
+    'panel.line.fromY': 'Start Y',
+    'panel.line.toX': 'End X',
+    'panel.line.toY': 'End Y',
+    'panel.line.pointsHint':
+      'Relative to the parent. A plain number is points; you can also write 100% to reach the parent’s edge.',
     'panel.effective.label': 'Effective',
     'panel.effective.jump': 'Document settings',
     'panel.doc.localeCurrency': 'Locale & currency',

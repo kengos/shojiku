@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
@@ -26,12 +26,11 @@ describe('applicableTabs', () => {
     expect(tabsOf({ type: 'rect' })).toEqual(['style', 'box']);
   });
 
-  it('gives a line ONLY the 装飾 tab — its stroke must be reachable, its box must not', () => {
-    // A `line` is not a boxed item: the insert menu creates dashed lines, so
-    // the stroke needs an editing surface — but a `box:` key on a line is an
-    // engine parse error (`deny_unknown_fields`; it draws from `from`/`to`),
-    // so the placement tab must NOT be offered.
-    expect(tabsOf({ type: 'line' })).toEqual(['style']);
+  it('gives a line 装飾 + 配置 — its placement tab is the ENDPOINTS, not a box', () => {
+    // A `box:` key on a line is an engine parse error (it draws from
+    // `from`/`to`), so the placement tab must never carry the box fields —
+    // but a line does have a position, and it is the only way to move one.
+    expect(tabsOf({ type: 'line' })).toEqual(['style', 'box']);
   });
 
   it('gives a page_break NO tabs — the wire takes only `id`', () => {
@@ -97,12 +96,13 @@ describe('ItemPanel — box-less types', () => {
     expect(screen.queryAllByRole('tab')).toEqual([]);
   });
 
-  it('renders a line straight into its stroke editor, no tablist chrome', () => {
-    drawPanel({ type: 'line', style: {} });
-    // The single applicable tab (装飾) renders without tabs; the stroke
-    // cluster's field label proves the body is the style section.
-    expect(screen.queryAllByRole('tab')).toEqual([]);
-    expect(screen.getByText('Line')).toBeTruthy();
-    expect(screen.queryByText('This element has no editable properties.')).toBeNull();
+  it('gives a line a placement tab carrying the endpoint fields, not the box fields', () => {
+    drawPanel({ type: 'line', from: { x: 0, y: 2 }, to: { x: '100%', y: 2 }, style: {} });
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    expect(screen.getByLabelText('Start X')).toBeTruthy();
+    expect(screen.getByLabelText('End X')).toBeTruthy();
+    // The box fields must be absent — authoring one is a parse error.
+    expect(screen.queryByLabelText('X')).toBeNull();
+    expect(screen.queryByLabelText('W')).toBeNull();
   });
 });
