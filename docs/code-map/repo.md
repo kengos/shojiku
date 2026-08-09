@@ -195,7 +195,11 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   report the same one); capability keys can.
   Structure: `src/lib/` = the tested pure modules (gallery.yml
   parse/validate, font-tier subset manifests, README-gallery
-  render/splice, llms renderers, `engineClient` — the site's OWN thin
+  render/splice, `sbomCounts` — the tech page's SBOM sentence rendered
+  from the committed `sbom/*.cdx.json` in BOTH locales from one set of
+  numbers, spliced between `sbom:generated` markers (they were
+  hand-transcribed before, and two of the three counts were wrong on both
+  pages at once), llms renderers, `engineClient` — the site's OWN thin
   glue over the raw `engine/wasm` pkg (deliberately NOT
   `@shojiku/designer`'s transport; keeps the package standalone),
   playground knob→template generation, `seo.ts` = `pagePath`/`twinPaths`/
@@ -240,9 +244,10 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   the reference projection + demo staging;
   25 MiB Pages cap asserted). It is what `pnpm dev` runs first, too —
   without it a dev server has no reference routes; `scripts/refresh-data.ts` = the COMMITTED
-  halves, in three modes: default (`make site-data`) regenerates ONLY the
-  README gallery section between the `gallery:generated` markers;
-  `--check` (`make site-check`) compares both halves; `--release-wasm`
+  halves, in three modes: default (`make site-data`) regenerates the
+  README gallery section between the `gallery:generated` markers AND the
+  two tech pages' SBOM bullet between the `sbom:generated` ones;
+  `--check` (`make site-check`) compares them all; `--release-wasm`
   (`make site-wasm-release`) is the RELEASE-TIME re-pin.
   **`site/.data/wasm` holds a RELEASED engine build, not HEAD's** — it is
   what Pages serves, so a visitor's playground can never be ahead of the
@@ -322,10 +327,24 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   split cannot inject files. Derives the file list from the ROOT, so a
   fourth licence is a failure rather than a silent omission, and refuses a
   run that matched no files at all.
-  + `generate-sbom.sh` (`make sbom` —
-  syft-in-Docker CycloneDX inventories committed under `sbom/`;
-  regenerate + commit whenever a lockfile changes; no byte-compare
-  gate) + codegen (`gen-locale-builtins.py` — authoring-time CLDR
+  + `generate-sbom.sh` (`make sbom` — syft-in-Docker CycloneDX
+  inventories committed under `sbom/`; regenerate + commit whenever a
+  lockfile changes. Scans `file:<lockfile>`, never the DIRECTORY: a
+  `dir:` scan walks `engine/target/`, picks up the lockfile copies cargo
+  leaves under `target/package/` plus the build binaries, and on a
+  genuinely built tree returns 1757 components against the lockfile's 255
+  — making the artifact depend on what the host last built. Owns the
+  lockfile→
+  inventory MAP, `--list` prints it, and a row may name `-` plus a reason
+  instead of an inventory)
+  `check-sbom.sh` — `make sbom-check`, CI job "sbom": regenerates through
+  that same script into a scratch dir and compares byte-for-byte with
+  `timestamp`/`serialNumber` masked (the only two fields syft moves for
+  an unchanged lockfile), and asserts the map's lockfile set equals the
+  one git tracks. Self-tests the comparator against a three-case fixture
+  first — one of which differs ONLY in the masked fields, so a mask that
+  became a blindfold fails rather than passing everything.
+  + codegen (`gen-locale-builtins.py` — authoring-time CLDR
   fetch, ONE emitter for builtins AND packs; `gen-uax50.py` —
   authoring-time pinned Unicode fetch → the UAX#50 table in
   `engine/layout`).

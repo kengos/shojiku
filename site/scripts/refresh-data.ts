@@ -21,6 +21,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { join } from "node:path";
 import { parseGallery } from "../src/lib/gallery.ts";
 import { renderReadmeGallery, spliceReadme } from "../src/lib/readme.ts";
+import { INVENTORIES, countComponents, renderEn, renderJa, spliceSection } from "../src/lib/sbomCounts.ts";
 import {
   checkWasmSource,
   parseWasmSource,
@@ -82,6 +83,20 @@ const entries = parseGallery(readFileSync(join(ROOT, "examples", "gallery.yml"),
 const readmePath = join(ROOT, "README.md");
 if (mode !== "release-wasm") {
   settle(readmePath, Buffer.from(spliceReadme(readFileSync(readmePath, "utf8"), renderReadmeGallery(entries))));
+}
+
+// 1b. The tech page's SBOM sentence, from the committed inventories. Both
+// locales, from one set of numbers — they were transcribed by hand before, and
+// two of the three were wrong on both pages at once.
+if (mode !== "release-wasm") {
+  const counts = INVENTORIES.map((name) => ({
+    name,
+    components: countComponents(readFileSync(join(ROOT, "sbom", `${name}.cdx.json`), "utf8")),
+  }));
+  for (const [rel, render] of [["tech.md", renderEn], ["ja/tech.md", renderJa]] as const) {
+    const path = join(SITE, rel);
+    settle(path, Buffer.from(spliceSection(readFileSync(path, "utf8"), render(counts), rel)));
+  }
 }
 
 // 2. The committed engine, against the release it records.

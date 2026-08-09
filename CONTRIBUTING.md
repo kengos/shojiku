@@ -153,6 +153,21 @@ otherwise move past on its own, so drop it once the parent widens.
 These write files; they check nothing. Follow them with the scope's
 `verify:`.
 
+A moved lockfile also moves the committed CycloneDX inventory that
+describes it, so regenerate and commit that in the same change:
+
+```bash
+make sbom
+```
+
+`make sbom-check` reds until you do. It regenerates from the lockfiles
+into a scratch directory and compares — so it also fails if the
+inventories were generated from something other than the lockfile. Every
+committed lockfile must appear in the map at the top of
+`scripts/generate-sbom.sh`, either with an inventory name or with `-` and
+the reason it ships in nothing; a new one that appears in neither fails
+the gate rather than going quietly uninventoried.
+
 ## Before you open a pull request
 
 1. `make verify` is green. That is the merge bar.
@@ -161,7 +176,8 @@ These write files; they check nothing. Follow them with the scope's
    crates, modules, or boundaries move, and the relevant reference page
    under [docs/engine/](docs/engine/README.md) for authorable syntax.
 3. Bundled example outputs are refreshed (`make examples`) if your
-   change alters what they render.
+   change alters what they render, and the SBOMs are refreshed
+   (`make sbom`) if it moved a lockfile.
 
 > **CI runs the same `make` targets you just ran**, in the same pinned
 > containers — engine, gui, wasm, docker, and every SDK across each of

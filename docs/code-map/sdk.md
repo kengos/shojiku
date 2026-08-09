@@ -10,8 +10,9 @@ reference decisions: `docs/agents/sdk.md` § The decisions the reference froze.
 
 All seven are built. Directory names are load-bearing elsewhere: `sdk/js` is
 the node one (`scripts/generate-sbom.sh`, `verify:sdk:js`,
-`docs/guidelines.md`), `dotnet` is c#. The SBOM script gates on a LOCKFILE,
-not the directory — `sdk/js` has one, so it is scanned; `sdk/php` and
+`docs/guidelines.md`), `dotnet` is c#. The SBOM script scans the LOCKFILE
+itself, never the directory (a directory scan inventories build output) —
+`sdk/js` has one and carries a row in that script's map; `sdk/php` and
 `sdk/go` deliberately have none (no dependencies to lock, and a
 dependency-free Go module has no `go.sum` at all).
 
@@ -360,8 +361,8 @@ are only where node differs.
   consumers' resolution) is true for Bundler and false for npm, which
   ignores a dependency's lockfile entirely. So `pnpm-lock.yaml` is
   committed and reviewed, which is also what turns the SBOM on for this
-  package — `scripts/generate-sbom.sh` gates on a LOCKFILE, which is why
-  `sdk/php` and `sdk/go` are correctly skipped and this one is not.
+  package — `scripts/generate-sbom.sh` maps LOCKFILES to inventories, which
+  is why `sdk/php` and `sdk/go` are correctly absent and this one is not.
 - **"Optional" means ABSENT, not unreadable — a recorded deviation from
   the reference.** Ruby probes `is_file?` before reading an optional
   `definitions.yml`, which reports a directory-where-a-file-belongs as

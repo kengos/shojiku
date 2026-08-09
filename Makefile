@@ -18,6 +18,8 @@
 #   Apply fixes
 #     make fmt-fix              rustfmt          make gui-format   biome
 #     make examples             re-render the committed example outputs
+#     make sbom                 re-generate the committed SBOMs after a lockfile
+#                               moves (sbom-check reds until you do)
 #     make lock:<scope>         re-resolve a lockfile after a manifest edit —
 #                               every gate is --locked / --frozen-lockfile and
 #                               refuses until you do. scope = engine | gui |
@@ -79,6 +81,10 @@ endif
 #   examples-check    -> job "examples"  (committed outputs == fresh render,
 #                                         plus skills/*/template == its example,
 #                                         plus no space/tab-indented block scalar)
+#   sbom-check        -> job "sbom"      (each committed sbom/*.cdx.json still
+#                                         describes its lockfile, and every
+#                                         committed lockfile is either
+#                                         inventoried or declared not to be)
 #   wasm              -> job "wasm"      (build wasm32 bindings + size budget)
 #   sdk-ruby          -> job "sdk-ruby"  (rubocop, rspec at 100% coverage, gem
 #                                         build/install; engine library injected
@@ -176,7 +182,19 @@ endif
 RUST_VERSION := 1.97.1
 RUST_IMAGE   := rust:$(RUST_VERSION)-slim-bookworm
 TRIVY_IMAGE  := aquasec/trivy:latest
-SYFT_IMAGE   := anchore/syft:latest
+# Pinned to a DIGEST, and the pin is load-bearing: `make sbom-check` compares
+# the committed inventories against a fresh scan byte-for-byte, so a floating
+# tag would red the gate on a tree nobody touched the day anchore changes a
+# cataloger. (`latest` had already moved to v1.50.0 while the committed files
+# recorded 1.46.0.) The digest, not just the tag, because a tag is mutable and
+# this image GENERATES a supply-chain artifact: tag-only would leave the
+# generator itself substitutable, which is the same class of gap the rest of
+# this change closes. Same form as the distroless runtime base in
+# docker/Dockerfile. Dependabot cannot parse a Makefile, so bumping it is
+# manual — as with RUST_VERSION. TRIVY_IMAGE above stays floating on purpose:
+# a scanner's value IS a fresh vulnerability database, and it feeds no
+# committed artifact.
+SYFT_IMAGE   := anchore/syft:v1.46.0@sha256:473a60e3a58e29aca3aedb3e99e787bb4ef273917e44d10fcbea4330a07320bb
 # Parallel-session isolation. Image tags, container names and host ports are
 # GLOBAL to the docker daemon — a second worktree building the same tag retags
 # the first session's image out from under it, and a fixed container name lets
@@ -359,7 +377,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         sdk-go sdk-go-test sdk-go-lint \
         gui gui-budget gui-lint gui-test gui-format gui-e2e gui-shot \
         normalize-examples \
-        gui-serve gui-dev sbom clean cache-clean images-clean
+        gui-serve gui-dev sbom sbom-check clean cache-clean images-clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z0-9_\\:-]+:.*## ' $(MAKEFILE_LIST) \
@@ -373,7 +391,7 @@ help: ## Show this help
 # `coverage`: it is a full wasm32 build rather than a lint, so it does not
 # belong before the tests — but a size-budget crossing used to be discovered
 # only after paying for the single most expensive step in the run.
-verify: rust wasm coverage deny reference-check examples-check napi gui site site-check sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
+verify: rust wasm coverage deny reference-check examples-check sbom-check napi gui site site-check sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
 	@echo "\n✅ verify passed — every CI gate is green locally. Safe to push."
 
 ## ---- <verb>:<scope> — "did it work?" entry points ----------------------
@@ -1801,8 +1819,12 @@ site-dev: ## VitePress dev server in Docker (http://localhost:5174, Ctrl-C stops
 
 ## ---- sbom ---------------------------------------------------------------
 
-sbom: ## Regenerate CycloneDX SBOMs under sbom/ (engine, gui, sdk/js when present)
+sbom: ## Regenerate the committed CycloneDX SBOMs under sbom/ from the lockfiles
 	@SYFT_IMAGE=$(SYFT_IMAGE) scripts/generate-sbom.sh
+
+sbom-check: ## Fail if a committed SBOM drifts from its lockfile, or a lockfile is undeclared
+	@echo "== sbom check =="
+	@SYFT_IMAGE=$(SYFT_IMAGE) ./scripts/check-sbom.sh
 
 ## ---- housekeeping ------------------------------------------------------
 

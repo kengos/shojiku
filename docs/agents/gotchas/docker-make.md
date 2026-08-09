@@ -149,11 +149,35 @@ So after any rebase, and before any squash, run
 meant to touch. Restore the rest with
 `git checkout origin/main -- <paths>`.
 
-The SBOM case needs one more judgement, because `make sbom` legitimately
-has to run when a lockfile moves: regenerate, then commit ONLY the
-inventory whose lockfile YOU changed. The others' churn is your machine's
-build state — one cycle saw `sbom/gui.cdx.json` lose four components on a
-change that touched no gui dependency at all.
+The SBOM case USED to need one more judgement, and the reason it no
+longer does is worth keeping. `make sbom` legitimately has to run when a
+lockfile moves, and the advice was: regenerate, then commit ONLY the
+inventory whose lockfile YOU changed, because the others' churn is your
+machine's build state — one cycle saw `sbom/gui.cdx.json` lose four
+components on a change that touched no gui dependency at all.
+
+That churn was a defect, not a fact of life. The generator scanned the
+DIRECTORY, so syft walked `engine/target/` and catalogued the lockfile
+copies cargo leaves under `target/package/` — 17 of them on a working
+checkout — plus the build binaries. Measured on a genuinely built tree:
+**1757 components** (1728 library, 24 file, 5 application) and 1054
+`dependencies` entries, where scanning the lockfile alone yields 255
+components (its 254 crates plus the file itself) and 161 entries. Beware
+the tidy-looking number here: planting ONE lockfile copy doubles the
+inventory exactly, to 510, and it is tempting to quote that controlled
+figure as what a real tree does. It is the floor, not the observation.
+It now scans `file:<lockfile>`, so the output
+depends on the lockfile alone and `make sbom-check` compares the
+committed bytes against a fresh run. Regenerating on a dirty tree is
+safe; what remains is only the fresh `timestamp`/`serialNumber` on every
+file, which the gate masks and you can leave or revert as you like.
+
+The general lesson survives its instance: **a gate recipe that writes
+files is a rebase hazard**, and one whose output depends on the tree's
+build state is also a source of diffs nobody can review. When you meet
+one, ask whether the churn is inherent or a bug — this one had been
+written down as inherent for long enough that two separate queue items
+described its symptoms rather than its cause.
 
 ## Never run two gates at once
 
