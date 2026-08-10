@@ -399,8 +399,10 @@ read side, never the reverse.
     no `orientation_ignored` lingers)/`orientationOp`/`customDimOp`/
     `customUnitOps`. A builder DECLINES with a null op or a dropped
     batch entry rather than authoring something the model would refuse.
-- `panel/PageSetup.tsx` — the form (size select with locale-preferred
-  optgroup, orientation, live proportional thumbnail); embeds
+- `panel/PageSetup.tsx` — the form (size select with a locale-preferred
+  optgroup and an "other sizes" one holding what the first does not — the
+  two used to OVERLAP, listing a locale size twice; orientation; live
+  proportional thumbnail); embeds
   `MarginEditor` and, in custom mode, `CustomSizeFields`.
 - `panel/CustomSizeFields.tsx` — the custom `{ w, h }` + shared unit
   cluster: value-keyed uncontrolled inputs that commit on blur ONLY when
@@ -442,19 +444,18 @@ read side, never the reverse.
   free text; `seedMode` keeps the unset option + placeholder fallback).
 - `panel/DocumentDefaults.tsx` — the shell over the two unrelated halves
   of `defaults:`: it gates each on the engine's capabilities and renders
-  the half its `section` prop names (the document-settings view supplies
-  the heading), or the standalone stacked form when it names neither.
+  the half its REQUIRED `section` prop names (the document-settings view
+  supplies the heading). A headed standalone stacked form for a host
+  wanting both at once was removed — nothing ever rendered it.
   - `panel/DefaultsLocaleFields.tsx` — the document settings half:
     locale/currency combos, each with a what-this-pick-DOES line
     (`localeFacts`) read through the tag the ENGINE resolves to.
   - `panel/DefaultsStyleFields.tsx` — the cascade-root half: one field
     renderer (color as `ColorSwatchPicker`, everything else
     `StyleFieldInput`; engine fallbacks as placeholders from
-    `engineDefaults.ts` `ENGINE_STYLE_DEFAULTS`) laid out in TWO
-    arrangements — `DefaultsStyleSection` (the `STYLE_ROWS` grid,
-    drift-guarded, with the intro line and the recommended body-size
-    one-click hint) and `DefaultsStyleList` (flat, for the standalone
-    form).
+    `engineDefaults.ts` `ENGINE_STYLE_DEFAULTS`) in ONE arrangement,
+    `DefaultsStyleSection` (the `STYLE_ROWS` grid, drift-guarded, with
+    the intro line and the recommended body-size one-click hint).
 - `panel/localeFacts.ts` — what a locale/currency pick DOES, as data —
   copied from the defining files (`engine/formatter` builtins +
   `packs/locale/`) and pinned by a drift-guard test; composes samples
@@ -533,4 +534,8 @@ read side, never the reverse.
   `code:'constructor'` must miss); each builder emits a `removeKey`
   batch dropping the offending key(s), `null` when nothing concrete is
   removable (no dead button). Hostile reads and stale paths degrade to
-  no-op.
+  no-op. **`unused_binding` is the one entry whose `diag.path` is not the
+  node it edits** — the engine addresses the DECLARATION
+  (`<item>.bindings.<name>`), so the item path is derived by stripping
+  that suffix BY LENGTH using `args.name`, never by splitting at the last
+  `.` (a binding name may legally contain dots).

@@ -8,6 +8,8 @@
 // knowledge — it only presents the palette and reports the chosen value.
 
 import { usePopover } from '../hooks/usePopover';
+import { useI18n } from '../i18n/context';
+import { swatchName } from './swatchNames';
 import { TipBubble } from './TipBubble';
 
 /** A curated `#rrggbb` swatch palette (neutral business colors). The custom
@@ -60,6 +62,7 @@ export function ColorSwatchPicker({
   clearLabel,
 }: ColorSwatchPickerProps) {
   const { open, setOpen, rootRef } = usePopover();
+  const { t } = useI18n();
   const chip = isHexColor(value) ? value : undefined;
   // The native picker seeds from the current color (or black) and commits only
   // on a change FROM that seed, so opening the popover and tabbing through the
@@ -97,7 +100,7 @@ export function ColorSwatchPicker({
                 type="button"
                 role="menuitem"
                 className="size-5 cursor-pointer rounded-[2px] border border-border"
-                aria-label={swatch}
+                aria-label={swatchName(swatch, t)}
                 style={{ backgroundColor: swatch }}
                 onClick={() => commit(swatch)}
               />

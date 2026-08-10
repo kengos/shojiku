@@ -9,6 +9,8 @@ const MIME: Record<ImageKind, string> = {
   png: 'image/png',
   jpeg: 'image/jpeg',
   svg: 'image/svg+xml',
+  gif: 'image/gif',
+  webp: 'image/webp',
 };
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';

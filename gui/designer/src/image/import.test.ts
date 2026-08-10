@@ -1,12 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
+import { composeDataUri } from './dataUri';
 import { type ImageCodec, importImageFile } from './import';
 import { DEFAULT_IMAGE_BUDGETS, type ImageBudgets } from './model';
 
 const PNG_HEADER = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const GIF_HEADER = [0x47, 0x49, 0x46, 0x38, 0x39, 0x61];
 
 function pngOf(byteLength: number): Uint8Array {
   const bytes = new Uint8Array(byteLength).fill(0x00);
   bytes.set(PNG_HEADER, 0);
+  return bytes;
+}
+
+function gifOf(byteLength: number): Uint8Array {
+  const bytes = new Uint8Array(byteLength).fill(0x00);
+  bytes.set(GIF_HEADER, 0);
   return bytes;
 }
 
@@ -174,6 +182,52 @@ describe('importImageFile', () => {
     expect(await importImageFile(blob, codec, budgets)).toEqual({
       ok: false,
       reason: 'too_large',
+    });
+  });
+
+  it('carries a GIF through VERBATIM, never through the re-encoder', async () => {
+    const bytes = gifOf(500);
+    const reencode = vi.fn(async () => new Uint8Array([0x89]));
+    const codec = fakeCodec({
+      read: async () => bytes,
+      probe: async () => ({ w: 120, h: 80 }),
+      reencode,
+    });
+    expect(await importImageFile(blob, codec, budgets)).toEqual({
+      ok: true,
+      kind: 'gif',
+      src: composeDataUri('gif', bytes),
+      intrinsic: { w: 120, h: 80 },
+      downscaled: false,
+    });
+    // The whole point of the verbatim path: the animation survives because
+    // nothing re-encoded it.
+    expect(reencode).not.toHaveBeenCalled();
+  });
+
+  it('refuses an over-budget GIF instead of quietly converting it', async () => {
+    const reencode = vi.fn(async () => pngOf(100));
+    const codec = fakeCodec({
+      read: async () => gifOf(5000),
+      probe: async () => ({ w: 4000, h: 2000 }),
+      reencode,
+    });
+    expect(await importImageFile(blob, codec, budgets)).toEqual({
+      ok: false,
+      reason: 'too_large',
+    });
+    expect(reencode).not.toHaveBeenCalled();
+  });
+
+  it('refuses a file whose DECLARED type is an image but whose bytes are not', async () => {
+    // The clipboard and the file picker both hand over a declared MIME; only
+    // the bytes decide, so an HTML payload named `.png` never reaches a canvas.
+    const codec = fakeCodec({
+      read: async () => new TextEncoder().encode('<html><body>not an image</body></html>'),
+    });
+    expect(await importImageFile(blob, codec, budgets)).toEqual({
+      ok: false,
+      reason: 'unsupported_format',
     });
   });
 });

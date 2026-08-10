@@ -35,7 +35,11 @@ tooltip replaces it — gated by `ui/chromeConvention.test.ts`).
   at `en` (hasOwn-guarded, length-capped, garbage → `['en']`).
 - `i18n/render.ts` — pure `translate` + `renderDiagnostic` (walk the
   chain PER KEY; engine `message` is the fallback, never parsed; the
-  ORIGINAL tag drives number grouping).
+  ORIGINAL tag drives number grouping) + `variantKey`: a diagnostic whose
+  ARGS distinguish a case its one engine code cannot may refine to
+  `<code>.<variant>`, tried before the bare code (today: an EMPTY
+  `unknown_data_key` key, where the generic wording echoes the empty key
+  back). Wording only — the engine wire is untouched.
 - `i18n/context.tsx` — `I18nProvider`/`useI18n` (`locale`, resolved
   `language`, `t`, `describe`).
 - `i18n/registry.test.ts` — node env: reads
@@ -275,7 +279,11 @@ is Tailwind utilities over the `--sj-*` tokens.
   point (Headless UI's Menu is trigger-anchored).
 - `ui/ColorSwatchPicker.tsx` — curated swatches + native color input,
   no hand-typed hex; document colors pass `isHexColor` before the chip
-  preview; the caller owns the op.
+  preview; the caller owns the op. A swatch button carries no visible
+  text, so `ui/swatchNames.ts` (`swatchName`, a real `Map` — the lookup
+  value can come from a document) supplies its accessible NAME; an
+  unnamed value keeps its hex, and a drift-guard pins the table against
+  `SWATCHES`.
 - `ui/TipBubble.tsx` — the gdoc-style instant tooltip (~300ms CSS,
   decorative, width-BOUNDED — a label may interpolate a hostile style
   name; `data-sj-tip` is the test hook).

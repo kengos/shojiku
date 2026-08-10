@@ -107,6 +107,25 @@ function fixIgnoredStyleKeys(path: string, diag: Diagnostic, read: ReadNode): re
   return listed.length === 0 ? null : removePresent(read, path, ['style'], listed);
 }
 
+/** An unused `bindings:` declaration → drop it. Unlike every other fix here,
+ * the diagnostic's `path` addresses the DECLARATION (`<item>.bindings.<name>`),
+ * not the node the key hangs off, so the item path has to be derived.
+ *
+ * It is derived by stripping the suffix BY LENGTH, never by splitting at the
+ * last `.`: a binding name may legally contain dots (the interpolation charset
+ * is alphanumerics, `_` and `.`), so `a.b` would otherwise strip one segment
+ * and address the wrong node. A path that does not end in the declaration the
+ * diagnostic names is forged or stale, and yields no fix. */
+function fixUnusedBinding(path: string, diag: Diagnostic, read: ReadNode): readonly Op[] | null {
+  const name = diag.args.name;
+  if (typeof name !== 'string' || name.length === 0) return null;
+  const suffix = `.bindings.${name}`;
+  if (!path.endsWith(suffix)) return null;
+  const itemPath = path.slice(0, -suffix.length);
+  if (itemPath.length === 0) return null;
+  return removePresent(read, itemPath, ['bindings'], [name]);
+}
+
 /** The code → fix table. A `Map`, so an unknown/hostile `code` misses cleanly. */
 const FIXES: ReadonlyMap<string, FixBuilder> = new Map<string, FixBuilder>([
   ['orientation_ignored', fixOrientation],
@@ -122,6 +141,7 @@ const FIXES: ReadonlyMap<string, FixBuilder> = new Map<string, FixBuilder>([
   ],
   ['shape_style_ignored', pathFix(fixIgnoredStyleKeys)],
   ['ignored_span_style', pathFix(fixIgnoredStyleKeys)],
+  ['unused_binding', pathFix(fixUnusedBinding)],
 ]);
 
 /** The op batch that resolves `diag`, or `null` when it has no mechanical fix

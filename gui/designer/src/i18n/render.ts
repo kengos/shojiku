@@ -54,11 +54,31 @@ export function translate(
   return lookup(catalog, ['en'], 'chrome', key) ?? template;
 }
 
+/** A refined catalog key for diagnostics whose ARGS distinguish a case the one
+ * engine code cannot: `<code>.<variant>`, tried before the bare code. The
+ * engine wire is untouched — a variant is a WORDING decision, which is the
+ * React side's to make.
+ *
+ * One rule today. `unknown_data_key` is the message the panel shows while a
+ * data-binding field sits empty (clearing the field deliberately keeps the key
+ * present-but-empty so the problem stays visible), and the generic wording then
+ * echoes the empty key back: "data key `` is not declared in …". What the user
+ * needs there is to be told to pick a key.
+ *
+ * Returns `null` when no variant applies, so the ordinary lookup runs. */
+export function variantKey(diag: Diagnostic): string | null {
+  if (diag.code === 'unknown_data_key' && diag.args.key === '') {
+    return 'unknown_data_key.empty';
+  }
+  return null;
+}
+
 /** Render a diagnostic's human message from `code` + `args` through the chain.
- * The engine's English `message` is the fallback when no catalog language in the
- * chain carries the code (an append-only newer code, or a partial catalog) or
- * the localized template references an arg the diagnostic did not carry — NEVER
- * the raw template, and the engine `message` is never parsed. `origin` is not
+ * A [`variantKey`] refinement is tried first, then the bare code. The engine's
+ * English `message` is the fallback when no catalog language in the chain
+ * carries either (an append-only newer code, or a partial catalog) or the
+ * localized template references an arg the diagnostic did not carry — NEVER the
+ * raw template, and the engine `message` is never parsed. `origin` is not
  * consulted here (a GUI hides it). */
 export function renderDiagnostic(
   diag: Diagnostic,
@@ -66,11 +86,15 @@ export function renderDiagnostic(
   chain: readonly string[],
   formatLocale: string,
 ): string {
-  const template = lookup(catalog, chain, 'diagnostics', diag.code);
-  if (template !== undefined) {
-    const formatted = formatMessage(template, diag.args, formatLocale);
-    if (formatted !== null) {
-      return formatted;
+  const variant = variantKey(diag);
+  const keys = variant === null ? [diag.code] : [variant, diag.code];
+  for (const key of keys) {
+    const template = lookup(catalog, chain, 'diagnostics', key);
+    if (template !== undefined) {
+      const formatted = formatMessage(template, diag.args, formatLocale);
+      if (formatted !== null) {
+        return formatted;
+      }
     }
   }
   return diag.message;

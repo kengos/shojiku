@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Diagnostic } from '../engine/types';
 import type { Catalog } from './catalog';
 import { DEFAULT_CATALOG } from './catalog';
-import { renderDiagnostic, translate } from './render';
+import { renderDiagnostic, translate, variantKey } from './render';
 
 function diag(partial: Partial<Diagnostic> & Pick<Diagnostic, 'code'>): Diagnostic {
   return {
@@ -172,5 +172,55 @@ describe('catalog integrity', () => {
         expect(template.length, `${lang}/${key}`).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe('variantKey', () => {
+  it('refines unknown_data_key to its empty-key variant', () => {
+    expect(variantKey(diag({ code: 'unknown_data_key', args: { key: '' } }))).toBe(
+      'unknown_data_key.empty',
+    );
+  });
+
+  it('does not refine a REAL key, another code, or a non-string arg', () => {
+    expect(variantKey(diag({ code: 'unknown_data_key', args: { key: 'total' } }))).toBeNull();
+    expect(variantKey(diag({ code: 'missing_data', args: { key: '' } }))).toBeNull();
+    expect(variantKey(diag({ code: 'unknown_data_key', args: { key: 0 } }))).toBeNull();
+    expect(variantKey(diag({ code: 'unknown_data_key' }))).toBeNull();
+  });
+});
+
+describe('renderDiagnostic — the empty data key', () => {
+  it('says what to DO instead of echoing an empty key back', () => {
+    // Clearing a data-binding field deliberately leaves the key present but
+    // empty, so the problem stays visible — and the generic wording then read
+    // "data key `` is not declared in …", which names nothing and asks for
+    // nothing.
+    const d = diag({ code: 'unknown_data_key', args: { key: '', source: 'definitions' } });
+    expect(renderDiagnostic(d, DEFAULT_CATALOG, ['en'], 'en')).toBe(
+      'pick a data field for this item (its data key is empty)',
+    );
+    expect(renderDiagnostic(d, DEFAULT_CATALOG, ['ja', 'en'], 'ja')).toContain('データキーが空');
+  });
+
+  it('keeps the ordinary wording for a real key', () => {
+    const d = diag({ code: 'unknown_data_key', args: { key: 'total', source: 'definitions' } });
+    expect(renderDiagnostic(d, DEFAULT_CATALOG, ['en'], 'en')).toBe(
+      'data key `total` is not declared in definitions',
+    );
+  });
+
+  it('falls back to the bare code when no language carries the variant', () => {
+    const catalog: Catalog = {
+      ...DEFAULT_CATALOG,
+      en: {
+        ...DEFAULT_CATALOG.en,
+        diagnostics: { unknown_data_key: 'data key `{key}` is not declared in {source}' },
+      },
+    };
+    const d = diag({ code: 'unknown_data_key', args: { key: '', source: 'definitions' } });
+    expect(renderDiagnostic(d, catalog, ['en'], 'en')).toBe(
+      'data key `` is not declared in definitions',
+    );
   });
 });

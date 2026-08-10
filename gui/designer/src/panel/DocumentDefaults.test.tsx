@@ -7,30 +7,40 @@ import { DocumentDefaults } from './DocumentDefaults';
 import { localeFacts } from './localeFacts';
 
 /** A real-editor harness: applying an op mutates the document and re-renders, so
- * tests assert the serialized doc, not a spy. */
+ * tests assert the serialized doc, not a spy.
+ *
+ * `section` mirrors the product surface, which renders ONE half at a time and
+ * supplies its own heading. `'both'` (the default here) mounts both halves side
+ * by side — the arrangement a test wants when it is checking that the two are
+ * independent, and the only reason this harness composes rather than passes a
+ * prop through. */
 function Harness({
   source,
   fontFamilies,
   capabilities,
   defaultFontFamily,
-  section,
+  section = 'both',
 }: {
   readonly source: string;
   readonly fontFamilies?: readonly string[];
   readonly capabilities?: readonly string[];
   readonly defaultFontFamily?: string;
-  readonly section?: 'locale' | 'style';
+  readonly section?: 'locale' | 'style' | 'both';
 }) {
   const editor = useEditor(source);
+  const halves = section === 'both' ? (['locale', 'style'] as const) : ([section] as const);
   return (
     <I18nProvider locale="en">
-      <DocumentDefaults
-        controller={editor}
-        fontFamilies={fontFamilies}
-        capabilities={capabilities}
-        defaultFontFamily={defaultFontFamily}
-        section={section}
-      />
+      {halves.map((half) => (
+        <DocumentDefaults
+          key={half}
+          controller={editor}
+          fontFamilies={fontFamilies}
+          capabilities={capabilities}
+          defaultFontFamily={defaultFontFamily}
+          section={half}
+        />
+      ))}
       <button type="button" onClick={editor.undo}>
         undo
       </button>
@@ -112,8 +122,12 @@ describe('DocumentDefaults', () => {
   });
 
   it('renders nothing when the engine has neither defaults capability', () => {
-    render(<Harness source={BASE} capabilities={[]} />);
-    expect(screen.queryByText('Document defaults')).toBeNull();
+    // A newer Designer over a much older engine: both halves gate off, and the
+    // surface contributes no control at all rather than an empty frame.
+    const { container } = render(<Harness source={BASE} capabilities={[]} />);
+    expect(screen.queryByLabelText('Locale')).toBeNull();
+    expect(screen.queryByLabelText('Line height')).toBeNull();
+    expect(container.querySelector('input')).toBeNull();
   });
 
   it('authors a hostile locale value as inert escaped text (no code execution)', () => {
@@ -176,16 +190,10 @@ describe('DocumentDefaults', () => {
     });
   });
 
-  describe('the standalone stacked form (no section prop)', () => {
-    it('titles the style half with a REAL catalog string', () => {
-      // The section heading moved to a new key when 「既定の文字スタイル」 was
-      // retired; this branch kept calling the deleted one, and no assertion on
-      // the rendered heading existed to notice (the line was still covered).
-      render(<Harness source={BASE} />);
-      const heading = screen.getByRole('heading', { level: 4 });
-      expect(heading.textContent).toBe('Normal text');
-    });
-  });
+  // (The standalone stacked form this surface used to offer with no `section`
+  // is gone — no product surface ever rendered it. The heading string its one
+  // test guarded is asserted on the real surface, in `DocumentSettingsPage`'s
+  // own suite, by rendered text rather than by coverage.)
 
   describe('the field layout', () => {
     it('places every inherited style key exactly once', () => {
@@ -205,7 +213,7 @@ describe('DocumentDefaults', () => {
     it('is picked from a swatch, never typed as hex', () => {
       render(<Harness source={BASE} section="style" />);
       fireEvent.click(screen.getByRole('button', { name: 'Color' }));
-      fireEvent.click(screen.getByRole('menuitem', { name: '#b91c1c' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
       expect(doc()).toContain('color: "#b91c1c"');
     });
 

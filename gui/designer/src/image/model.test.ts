@@ -62,6 +62,35 @@ describe('importPlan', () => {
       quality: budgets.jpegQuality,
     });
   });
+
+  it('accepts a within-budget GIF or WebP', () => {
+    expect(importPlan('gif', 1000, { w: 100, h: 100 }, budgets)).toEqual({ action: 'accept' });
+    expect(importPlan('webp', 999, { w: 100, h: 100 }, budgets)).toEqual({ action: 'accept' });
+  });
+
+  it('REFUSES an over-budget GIF or WebP rather than downscaling it', () => {
+    // These two travel verbatim: a canvas cannot emit GIF at all, and
+    // re-encoding either would silently drop an animation. The refusal is the
+    // whole point — a `downscale` decision here would reach a re-encode that
+    // changes the format out from under the author.
+    for (const kind of ['gif', 'webp'] as const) {
+      expect(importPlan(kind, 5000, { w: 4000, h: 2000 }, budgets), kind).toEqual({
+        action: 'refuse',
+        reason: 'too_large',
+      });
+    }
+  });
+
+  it('still refuses an over-pixel-area GIF or WebP before the byte check', () => {
+    expect(importPlan('gif', 500, { w: 20000, h: 20000 }, budgets)).toEqual({
+      action: 'refuse',
+      reason: 'dimensions',
+    });
+    expect(importPlan('webp', 500, null, budgets)).toEqual({
+      action: 'refuse',
+      reason: 'decode_failed',
+    });
+  });
 });
 
 describe('defaultBox', () => {

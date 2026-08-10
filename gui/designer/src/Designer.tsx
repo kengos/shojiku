@@ -47,7 +47,7 @@ export function Designer(props: DesignerProps) {
       <input
         ref={w.image.fileInputRef}
         type="file"
-        accept="image/png,image/jpeg,image/svg+xml"
+        accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
         hidden
         onChange={w.image.onFilePicked}
       />

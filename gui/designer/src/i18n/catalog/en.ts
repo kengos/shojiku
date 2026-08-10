@@ -11,6 +11,7 @@ export const en: LanguageCatalog = {
     parse_error: 'failed to parse {what} at `{path}`: {detail}',
     non_finite_number: '{what} contains non-finite numbers (NaN/Infinity), which are not allowed',
     unknown_data_key: 'data key `{key}` is not declared in {source}',
+    'unknown_data_key.empty': 'pick a data field for this item (its data key is empty)',
     unknown_format: 'format `{format}` is not declared for `{key}`',
     missing_data: 'params do not contain {scope}`{key}`',
     unused_binding:
@@ -421,8 +422,9 @@ export const en: LanguageCatalog = {
     'panel.image.summary': '{format} · about {kib, number} KB',
     'panel.image.replace': 'Replace image…',
     'panel.field.fit': 'Fit mode',
-    'image.notice.unsupported_format': 'That file type is not supported (PNG, JPEG, or SVG).',
-    'image.notice.too_large': 'The image is too large, even after shrinking.',
+    'image.notice.unsupported_format':
+      'That file type is not supported (PNG, JPEG, SVG, GIF, or WebP).',
+    'image.notice.too_large': 'This image is too large to embed.',
     'image.notice.svg_too_large': 'This SVG is too large to embed.',
     'image.notice.dimensions': 'The image dimensions are too large.',
     'image.notice.decode_failed': 'The image could not be read.',
@@ -681,7 +683,7 @@ export const en: LanguageCatalog = {
     'pageSetup.title': 'Page setup',
     'pageSetup.size': 'Size',
     'pageSetup.localeSizes': 'Common sizes',
-    'pageSetup.allSizes': 'All sizes',
+    'pageSetup.otherSizes': 'Other sizes',
     'pageSetup.custom': 'Custom…',
     'pageSetup.width': 'Width',
     'pageSetup.height': 'Height',
@@ -698,7 +700,6 @@ export const en: LanguageCatalog = {
     'pageSetup.margin.right': 'Right',
     'pageSetup.margin.bottom': 'Bottom',
     'pageSetup.margin.left': 'Left',
-    'defaults.title': 'Document defaults',
     'defaults.locale': 'Locale',
     'defaults.localeHint':
       "The preview doesn't follow this — it's the fallback for CLI / MCP rendering.",
@@ -899,5 +900,19 @@ export const en: LanguageCatalog = {
     'severity.error': 'Error',
     'severity.warning': 'Warning',
     'severity.info': 'Info',
+    // Curated swatch names — a swatch button has no visible text, so this IS
+    // its accessible name (a raw hex is not one a screen-reader user can act on).
+    'color.black': 'Black',
+    'color.grayDark': 'Dark gray',
+    'color.gray': 'Gray',
+    'color.grayLight': 'Light gray',
+    'color.grayPale': 'Pale gray',
+    'color.white': 'White',
+    'color.red': 'Red',
+    'color.orange': 'Orange',
+    'color.amber': 'Amber',
+    'color.green': 'Green',
+    'color.blue': 'Blue',
+    'color.purple': 'Purple',
   },
 };

@@ -6,10 +6,10 @@
 // selection) — no body-wide revision remount, which would drop an in-progress
 // sibling edit.
 //
-// Two arrangements over the SAME field renderer, because the two hosts differ:
-// `DefaultsStyleSection` is the document-settings section (rowed, with the
-// intro line and the recommended-size hint), `DefaultsStyleList` the flat list
-// the standalone stacked form stacks under its own heading.
+// One arrangement — `DefaultsStyleSection`, the document-settings section
+// (rowed, with the intro line and the recommended-size hint). A second, flat
+// arrangement existed for a standalone stacked form that no product surface
+// ever rendered.
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
@@ -137,13 +137,6 @@ function useStyleField({ controller, fontFamilies, defaultFontFamily }: Defaults
         onCommit={(v) => dispatch(defaultStyleOp(spec, v))}
       />
     );
-}
-
-/** The flat list: every inherited key in declaration order, no chrome of its
- * own (the standalone stacked form supplies the heading). */
-export function DefaultsStyleList(props: DefaultsStyleFieldsProps) {
-  const styleField = useStyleField(props);
-  return <>{INHERITED_STYLE_FIELDS.map(styleField)}</>;
 }
 
 /** The document-settings section: the same fields laid out in rows, introduced

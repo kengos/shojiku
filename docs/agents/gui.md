@@ -255,8 +255,10 @@ definitions
   v1 covers the "inert/ignored key" family — `orientation_ignored`,
   `ignored_column_key`, `grid_key_ignored`, `layout_key_on_leaf`,
   `table_pagination_key_ignored`, `shape_style_ignored`, `ignored_span_style`
-  — and shows the button only when a concrete removable key is present (no
-  dead buttons). Fixes needing a chosen value (default-size codes) or a pick
+  — plus `unused_binding`, whose declaration is removable the same way (the
+  one entry whose diagnostic path addresses the DECLARATION rather than the
+  node the key hangs off, so the item path is derived). The button shows
+  only when a concrete removable key is present (no dead buttons). Fixes needing a chosen value (default-size codes) or a pick
   between two resolutions (`image_source_conflict`) are out of v1.
 
 ## Boundary: GUI never renders PDF itself
