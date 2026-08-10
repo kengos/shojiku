@@ -766,6 +766,7 @@ export const en: LanguageCatalog = {
     'chips.insert': 'Insert a data field',
     'chips.section.row': "This row's data",
     'chips.section.document': 'Document data',
+    'chips.replace': 'Replace {field}',
     'picker.open': 'Choose a data field',
     'picker.search': 'Search data fields',
     'picker.empty': 'No data fields to choose from.',

@@ -34,7 +34,10 @@ export interface PickerPopoverProps {
    * as "no fields" rather than as a query that matched nothing. */
   readonly offered: number;
   readonly sections: readonly PickerSection[];
-  readonly onPickRow: (key: string, documentScoped: boolean) => void;
+  /** The picked ROW itself, not just its key: every consumer needs the row's
+   * label/sample anyway, and handing back a key made each of them look it
+   * back up through a lookup that could not fail. */
+  readonly onPickRow: (option: PickerOption, documentScoped: boolean) => void;
   /** The create-data-field tail; absent = no tail. */
   readonly onCreate?: () => void;
 }
@@ -77,7 +80,7 @@ export function PickerPopover({
                   type="button"
                   role="menuitem"
                   className={PICKER_ROW}
-                  onClick={() => onPickRow(option.key, section.doc)}
+                  onClick={() => onPickRow(option, section.doc)}
                 >
                   <span className="font-semibold">{option.label}</span>
                   {/* Wraps as a whole rather than breaking the type label

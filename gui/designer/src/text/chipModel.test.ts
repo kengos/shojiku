@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   buildEditorNodes,
   CHIP_WIRE_ATTR,
+  chipFormatOf,
+  chipLabelOf,
   chipMetaMap,
   chipSpan,
   chipWire,
+  chipWireWithFormat,
   serializeEditor,
 } from './chipModel';
 import { MAX_TEXT_EXPRS } from './interpolate';
@@ -48,6 +51,70 @@ describe('chipWire', () => {
     expect(chipWire('')).toBeNull();
     expect(chipWire('a}b')).toBeNull();
     expect(chipWire('a:b')).toBeNull();
+  });
+});
+
+describe('chipFormatOf', () => {
+  it('reads the format out of a formatted expression', () => {
+    expect(chipFormatOf('{total:currency}')).toBe('currency');
+  });
+
+  it('answers null for an expression carrying no format', () => {
+    expect(chipFormatOf('{total}')).toBeNull();
+  });
+
+  it('answers null for a missing attribute', () => {
+    expect(chipFormatOf(null)).toBeNull();
+  });
+
+  it('refuses a hand-crafted attribute that is not exactly one expression', () => {
+    // The attribute is document-derived: it is read back through the ONE
+    // parser rather than trusted, so a slice holding two expressions, an
+    // unterminated one, or plain literal text yields no format to splice on.
+    expect(chipFormatOf('{a:x}{b:y}')).toBeNull();
+    expect(chipFormatOf('{a:x')).toBeNull();
+    expect(chipFormatOf('literal')).toBeNull();
+    expect(chipFormatOf('')).toBeNull();
+  });
+});
+
+describe('chipWireWithFormat', () => {
+  it('returns the bare slice unchanged when there is no format to carry', () => {
+    expect(chipWireWithFormat('{total}', null)).toBe('{total}');
+  });
+
+  it('composes a slice that reads back as exactly that key and format', () => {
+    const wire = chipWireWithFormat('{total}', 'currency');
+    expect(wire).toBe('{total:currency}');
+    expect(chipFormatOf(wire)).toBe('currency');
+  });
+
+  it('degrades to the bare slice when the format cannot round-trip', () => {
+    // A format the grammar cannot carry must never be spliced in: `}` would
+    // close the expression early and turn the author's following text into
+    // wire they never wrote.
+    expect(chipWireWithFormat('{total}', 'a}b')).toBe('{total}');
+    expect(chipWireWithFormat('{total}', 'a b')).toBe('{total}');
+    expect(chipWireWithFormat('{total}', '')).toBe('{total}');
+  });
+});
+
+describe('chipLabelOf', () => {
+  it('reads the bound field label a chip displays', () => {
+    expect(chipLabelOf('{customer.name}', META)).toBe('顧客名');
+  });
+
+  it('falls back to the name itself for a key the metadata does not know', () => {
+    expect(chipLabelOf('{missing.key}', META)).toBe('missing.key');
+  });
+
+  it('is empty for a slice that is not one expression', () => {
+    expect(chipLabelOf(null, META)).toBe('');
+    expect(chipLabelOf('literal', META)).toBe('');
+  });
+
+  it('never resolves a prototype name through the metadata map', () => {
+    expect(chipLabelOf('{constructor}', META)).toBe('constructor');
   });
 });
 

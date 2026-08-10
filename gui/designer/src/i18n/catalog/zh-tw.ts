@@ -708,6 +708,7 @@ export const zhTw: LanguageCatalog = {
     'chips.insert': '插入資料欄位',
     'chips.section.row': '本列的資料',
     'chips.section.document': '文件的資料',
+    'chips.replace': '替換{field}',
     'picker.open': '選擇資料欄位',
     'picker.search': '搜尋資料欄位',
     'picker.empty': '沒有可選的資料欄位。',

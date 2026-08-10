@@ -86,8 +86,12 @@ describe('InsertFieldMenu', () => {
     expect(screen.getByText("This row's data")).toBeDefined();
     expect(screen.getByText('Document data')).toBeDefined();
     // The document row is offered even though the row scope cannot reach it
-    // with the bare grammar — the declaration is what makes it expressible.
-    fireEvent.click(screen.getByRole('menuitem', { name: /店舗名/ }));
+    // with the bare grammar — the declaration is what makes it expressible,
+    // and the row carries the same scope badge the property panel's picker
+    // draws (both render through `panel/PickerPopover`).
+    const row = screen.getByRole('menuitem', { name: /店舗名/ });
+    expect(row.textContent).toContain('Document');
+    fireEvent.click(row);
     expect(onInsert).toHaveBeenCalledWith(DOCUMENT_OPTIONS[0], true);
   });
 
@@ -119,6 +123,30 @@ describe('InsertFieldMenu', () => {
     expect(screen.getAllByRole('menuitem')).toHaveLength(1);
     expect(screen.queryByText("This row's data")).toBeNull();
     expect(screen.getByText('Document data')).toBeDefined();
+  });
+
+  it('clears the query on a dismissal that is not a pick', () => {
+    // Escape and an outside pointer used to leave the filter set, so the next
+    // open showed a narrowed list with nothing on screen saying why.
+    draw(context());
+    open();
+    fireEvent.change(screen.getByLabelText('Search data fields'), { target: { value: 'tot' } });
+    expect(screen.getAllByRole('menuitem')).toHaveLength(1);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    open();
+    expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+  });
+
+  it('leaves the popover positioned against the enclosing menu row, not the trigger', () => {
+    // The wrapper must NOT be a positioning context: both triggers share one
+    // row, and each popover resolves against that row so it spans the field's
+    // width instead of one button's.
+    const { container } = render(
+      <I18nProvider locale="en">
+        <InsertFieldMenu chips={context()} onInsert={vi.fn()} />
+      </I18nProvider>,
+    );
+    expect(container.firstElementChild?.className).not.toContain('relative');
   });
 
   it('shows the no-matches state when the query excludes everything', () => {

@@ -15,6 +15,21 @@ platform binaries.
 
 ### Added
 
+- **A data field placed in text can now be swapped for another one
+  without retyping the sentence.** In the Designer, a `{customer.name}`
+  chip could only be changed by deleting it and inserting a replacement
+  from the field menu — fine for a bare placeholder, tedious for a line
+  like "Dear {customer.name}, your order {order.code} shipped", where the
+  wrong field is surrounded by wording you would rather not touch.
+  Clicking a chip now selects it, and a control naming the field it
+  stands for offers the same list of fields; picking one repoints the
+  chip where it sits. Everything around it is left exactly as authored,
+  including the chip's own display format — so a `{total:currency}`
+  pointed at a different amount is still a currency. If the field being
+  dropped needed a named binding to be reachable at all, that binding
+  goes with it, and the replacement brings its own; both land in the
+  single step that Undo reverses.
+
 - **Any item can now be shown or hidden by the data.** Add
   `visible: { key: status, equals: approved }` to a text block, an image,
   a table — anything — and it draws only when the params say so. An

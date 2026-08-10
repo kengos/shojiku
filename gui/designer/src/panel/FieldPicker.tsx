@@ -136,7 +136,8 @@ export function FieldPicker({
     },
   ].filter((section) => section.rows.length > 0);
   const bound = [...options, ...documentOptions].find((option) => option.key === value);
-  const commitPick = (key: string, documentScoped: boolean) => {
+  const commitPick = (option: PickerOption, documentScoped: boolean) => {
+    const key = option.key;
     setOpen(false);
     setQuery('');
     if (onPick === undefined) {

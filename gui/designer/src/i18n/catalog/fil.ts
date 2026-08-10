@@ -574,6 +574,7 @@ export const fil: LanguageCatalog = {
     'chips.insert': 'Maglagay ng data field',
     'chips.section.row': 'Data ng row na ito',
     'chips.section.document': 'Data ng dokumento',
+    'chips.replace': 'Palitan ang {field}',
     'picker.open': 'Pumili ng data field',
     'picker.search': 'Maghanap ng data fields',
     'picker.empty': 'Walang mapagpipiliang data field.',

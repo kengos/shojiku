@@ -190,10 +190,13 @@ read side, never the reverse.
   name / localized type / live sample, the popover row's three facts
   shown WITHOUT opening it, absent for a key no offer matches), the
   offer derivation and what a pick COMMITS; row-scoped pickers split row/document sections (free entry
-  never re-scopes). `panel/PickerPopover.tsx` — the open popover: search,
-  the three offer states, the rows (label / key / localized type / sample
-  / document badge) and the optional `onCreateField` tail (workshop mode,
-  document scope only).
+  never re-scopes). `panel/PickerPopover.tsx` — the open popover, shared
+  with the chip editor's field menus (`text/FieldMenuButton`) so the two
+  surfaces cannot drift into two looks: search, the three offer states,
+  the rows (label / key / localized type / sample / document badge) and
+  the optional `onCreateField` tail (workshop mode, document scope only;
+  the chip menus pass none). A pick hands back the OPTION, not just its
+  key — every consumer needs the row's label/sample anyway.
 - `panel/FormatPicker.tsx` — the `data.format` editor: free entry +
   popover of `formatOptions`; shown only once a data key is picked.
 
