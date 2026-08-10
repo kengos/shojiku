@@ -110,6 +110,18 @@ jobs:
           target: deny
           key: deny
 
+  sbom:
+    # The committed CycloneDX inventories are machine-read supply-chain
+    # artifacts, so a stale one is invisible to every other gate AND to human
+    # review — nobody diffs a 280KB minified JSON. This regenerates them from
+    # the lockfiles and compares, which is also what keeps the generator from
+    # silently going back to inventorying build output.
+    name: sbom (inventories match their lockfiles)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: make sbom-check
+
   wasm:
     name: wasm (build + size budget)
     runs-on: ubuntu-latest

@@ -62,6 +62,15 @@ emit "examples:" "$(pick '^MISMATCH examples/')"
 # only the count, not which template and which line.
 emit "text indent:" "$(pick '^(examples|skills)/.*: block scalar ')"
 
+# sbom-check: one line per offending path — DRIFT for an inventory that no
+# longer describes its lockfile, UNMAPPED/MISSING for a lockfile the map does
+# not agree with. Without this the failure falls back to the tail, which shows
+# the count and the "run make sbom" hint but never which inventory moved. The
+# self-test line matters even more: it means the DETECTOR broke, not the tree.
+# (These start uppercase, so the pnpm-prefix stripper in the normalisation
+# above — which matches a lowercase `<package> <script>: ` — cannot eat them.)
+emit "sbom:" "$(pick '^SBOM (DRIFT|UNMAPPED|MISSING|ORPHAN) |^FAIL sbom self-test|^FAIL: (found no committed lockfile|compared no inventory)')"
+
 # wasm: the budget assertion prints the measured sizes and then which of the
 # two budgets was crossed. Both lines matter — the sizes are the delta you act
 # on, "over budget" alone does not say by how much. NOTE the size line is

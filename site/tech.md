@@ -38,10 +38,13 @@ The supply chain is checked too.
 - [cargo-deny](https://github.com/kengos/shojiku/blob/main/engine/deny.toml)
   checks advisories and licenses, with **zero advisory ignores**. A
   dependency that needs an ignore to pass is not adopted
+<!-- sbom:generated:start (regenerate with `make site-data`) -->
 - **A CycloneDX SBOM is committed to the repository**
-  ([sbom/](https://github.com/kengos/shojiku/tree/main/sbom)): currently
-  235 components for the engine, 258 for the gui, 127 for sdk-js,
-  regenerated whenever a lockfile changes
+  ([sbom/](https://github.com/kengos/shojiku/tree/main/sbom)): currently 255 components for the engine, 243 for the gui, 127 for sdk-js. Each is generated from the
+  lockfile itself and records that lockfile's sha256, so you can check
+  which resolution it describes — and CI fails if a lockfile moves
+  without its inventory catching up
+<!-- sbom:generated:end -->
 - On the npm side, pnpm's `minimumReleaseAge` is set to **7 days**. A
   package published less than 7 days ago fails to install at all, so a
   compromised release cannot slip in before it gets pulled. postinstall
