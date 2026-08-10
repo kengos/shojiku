@@ -698,6 +698,21 @@ conversation says so. Both halves of that have shipped here.
   short is this, not a miscount. A "dead" conclusion needs two tools or
   an opened file; and dynamically COMPOSED keys
   (`` `palette.type.${name}` ``) never appear verbatim in any grep.
+- **You can CREATE one by writing a byte-oriented fixture, and no gate
+  objects.** Every entry above is about DETECTING a binary-classified
+  file; this is the authoring side. A WebP sniff test whose RIFF length
+  field was typed as literal NUL bytes rather than as escapes turned the
+  whole test file binary from that moment on. The bytes were correct, so
+  vitest passed, and fmt / lint / coverage have no opinion about a NUL —
+  meanwhile the file left `grep -rn` and `git diff`'s content view
+  entirely, and `git diff --stat` reported it as `Bin <n> -> <m> bytes`.
+  It surfaced only because a later step enumerated that suite's test
+  titles FROM THE DIFF and this file contributed none. The risk is
+  highest in exactly the tests that need such bytes — magic numbers,
+  length fields, separators — so spell them as escapes (`\u0000`) or
+  build them with a byte array, and treat "a file I just edited shows no
+  diff content" as this until proven otherwise (`git diff --numstat`
+  prints `-` in both columns for it).
 - **A PIPE hides it completely**: `git show <rev>:<file> | grep …` has
   no filename to report, so grep prints NOTHING — not even "Binary file
   matches" — and an empty result reads as "that line is gone".
