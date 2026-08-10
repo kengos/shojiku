@@ -56,6 +56,19 @@ check whose empty output read as "all covered").
   occurrences. Match whole comment LINES
   (`^[[:space:]]*(///|//!|//)`, plus a trailing ` // `) and search the
   full line; a comment line has no non-comment content to protect against.
+- **The CONFIRMING command is the one nobody audits, and its defaults are
+  where a rename survives.** Two in one cycle, both used as proof that a
+  cleanup was complete, both silent for a reason that has nothing to do
+  with the tree. `grep -rn "edge"` came back empty over files that still
+  said `dependency-EDGE` — a case-sensitive default answering a
+  case-insensitive question, so add `-i` whenever the token could be
+  shouted in a comment or a constant. And `ls sbom/` showed three clean
+  files while a leaked `.engine.cdx.json.tmp` sat beside them, because
+  `ls` hides dotfiles: use `ls -A`, or better, ask git
+  (`git status --porcelain <dir>`), which is the question you actually
+  meant — "would this get committed?". A confirming command that returns
+  nothing has two readings, and the boring one is that you asked it
+  wrong.
 - **zsh also refuses an unquoted GLOB it cannot match, so the command
   never runs.** `grep -rn 'Foo {' engine --include=*.rs` dies with
   `(eval):1: no matches found: --include=*.rs` — zsh expands the
@@ -307,6 +320,23 @@ check whose empty output read as "all covered").
 
 ## Counts and structural claims in prose
 
+- **A POSITIVE CONTROL measures the floor, not the phenomenon — and a tidy
+  multiple is the tell that you are quoting one.** To prove a directory
+  scan was inventorying build output, a cycle planted ONE copy of a
+  lockfile under `target/` and measured 510 components and 322 dependency
+  entries against the lockfile's 255 and 161. Both numbers are exactly
+  double, because one copy is exactly one copy — and they shipped into the
+  public `CHANGELOG.md`, into a gotchas file, and into a commit message as
+  what "a tree with a populated `engine/target/`" produces. A real built
+  tree (17 lockfile copies, plus the binaries) gives **1757**, so the
+  defect was understated 3.4×. The synthetic figure is the right tool for
+  proving a MECHANISM exists and the wrong one for describing its SIZE.
+  Before a controlled number reaches prose, either re-measure the real
+  condition or label the number as the control it is. A zero-context
+  reviewer caught this one; the author had read the sentence many times.
+  The same reasoning retires any generalization drawn from the control:
+  "the fake `.exe` was not catalogued" was true of a 5-byte stub and false
+  of the real tree, which reports five `application` components.
 - **A "now X, rather than Y" contrast asserts something about the PREVIOUS
   state, and only `git show <base>:<path>` can check it.** The claim reads
   as a description of your own change, so it never reaches the grep pass a
