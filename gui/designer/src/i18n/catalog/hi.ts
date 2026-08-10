@@ -547,6 +547,7 @@ export const hi: LanguageCatalog = {
     'chips.insert': 'डेटा फ़ील्ड डालें',
     'chips.section.row': 'इस पंक्ति का डेटा',
     'chips.section.document': 'दस्तावेज़ का डेटा',
+    'chips.replace': '{field} बदलें',
     'picker.open': 'डेटा फ़ील्ड चुनें',
     'picker.search': 'डेटा फ़ील्ड खोजें',
     'picker.empty': 'चुनने के लिए कोई डेटा फ़ील्ड नहीं।',

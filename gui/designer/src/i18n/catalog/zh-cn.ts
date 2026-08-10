@@ -707,6 +707,7 @@ export const zhCn: LanguageCatalog = {
     'chips.insert': '插入数据字段',
     'chips.section.row': '本行的数据',
     'chips.section.document': '文档的数据',
+    'chips.replace': '替换{field}',
     'picker.open': '选择数据字段',
     'picker.search': '搜索数据字段',
     'picker.empty': '没有可选的数据字段。',

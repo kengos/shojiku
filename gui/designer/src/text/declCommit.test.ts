@@ -217,6 +217,76 @@ describe('commitOps', () => {
     });
     expect(ops).toEqual([{ op: 'removeKey', path: ITEM, keys: ['text'] }]);
   });
+
+  // Re-picking a chip's field is a plain text edit to this layer: the wire the
+  // old chip stood for goes, the new one arrives. Nothing about a REPLACE is
+  // special-cased below — these pin that the shipped batch already carries it,
+  // because that is the half of the feature with no new code to break.
+  describe('a chip whose field was re-picked in place', () => {
+    it('prunes the declaration the replaced chip orphaned', () => {
+      const ops = commitOps({
+        read,
+        path: ITEM,
+        oldText: '{f1} と {total}',
+        newText: '{tax} と {total}',
+        pending: [],
+      });
+      expect(ops).toEqual([
+        { op: 'setScalar', path: ITEM, keys: ['text'], value: '{tax} と {total}' },
+        { op: 'removeKey', path: ITEM, keys: ['bindings', 'f1'] },
+      ]);
+    });
+
+    it('stages the new declaration and prunes the old one in ONE batch', () => {
+      const ops = commitOps({
+        read,
+        path: ITEM,
+        oldText: '{f1} と {total}',
+        newText: '{f2} と {total}',
+        pending: [{ name: 'f2', key: '住所', scope: null }],
+      });
+      expect(ops).toEqual([
+        { op: 'setScalar', path: ITEM, keys: ['text'], value: '{f2} と {total}' },
+        { op: 'putValue', path: ITEM, keys: ['bindings', 'f2'], value: { key: '住所' } },
+        { op: 'removeKey', path: ITEM, keys: ['bindings', 'f1'] },
+      ]);
+    });
+
+    it('leaves a declaration another surface of the item still references', () => {
+      const withLink = readOf({
+        [ITEM]: {
+          type: 'text',
+          text: '{f1} と {total}',
+          bindings: { f1: { key: '品名' } },
+          link: { url: 'https://example.test/{f1}' },
+        },
+      });
+      const ops = commitOps({
+        read: withLink,
+        path: ITEM,
+        oldText: '{f1} と {total}',
+        newText: '{tax} と {total}',
+        pending: [],
+      });
+      expect(ops).toEqual([
+        { op: 'setScalar', path: ITEM, keys: ['text'], value: '{tax} と {total}' },
+      ]);
+    });
+
+    it('prunes nothing past the display-side expression cap', () => {
+      // The GUI stops READING expressions at the cap; the engine has no such
+      // bound, so a name this layer can no longer see is still live wire.
+      const many = Array.from({ length: MAX_TEXT_EXPRS + 1 }, (_, i) => `{k${i}}`).join('');
+      const ops = commitOps({
+        read,
+        path: ITEM,
+        oldText: `{f1}${many}`,
+        newText: `{tax}${many}`,
+        pending: [],
+      });
+      expect(ops.filter((op) => op.op === 'removeKey')).toEqual([]);
+    });
+  });
 });
 
 describe('the ops a commit produces against a real document', () => {

@@ -182,6 +182,12 @@ resolved style.
   spans, DOM-API-built), `serializeEditor` (never more wire than
   visible text), `chipWire(key)` — the ONE charset gate (round-trips
   through the ONE parser; the engine charset is never restated).
+  Reading a chip's stored slice back goes through that same parser rather
+  than trusting the attribute (it is document-derived): `chipFormatOf` /
+  `chipLabelOf` answer nothing for a slice that is not exactly one
+  expression, and `chipWireWithFormat` PROVES a re-composed
+  `{name:format}` by parsing it back, degrading to the bare slice so a
+  crafted format cannot close the expression early.
 - Named binding declarations are THREE pure modules over the `bindings:`
   wire — two rules shape all three: **minimal wire** (a declaration is
   authored only where the bare grammar cannot say it) and **one parser**
@@ -210,14 +216,32 @@ resolved style.
   a click on unselectable content inside a contenteditable is answered by
   the browser with NOTHING (no focus, no caret), so the editor places the
   caret at the pill's nearer edge itself.
-- `text/InsertFieldMenu.tsx` — the insert-a-field popover over the same
-  `PickerOption` rows as the binding picker; with `canDeclare` every
-  field is offerable + a row-scoped item gains the document-scope
-  section; offerability settled BEFORE the search filter; explicit
-  `aria-label` on the trigger.
+- The editor's two field menus are ONE component under two triggers, over
+  ONE offer rule and ONE popover — so inserting a chip and re-picking a
+  selected chip's field cannot drift apart in what they show:
+  - `text/fieldMenuModel.ts` — the pure offer derivation: offerability
+    (with `canDeclare` every field is offerable, else the interpolation
+    charset filters), the document-scope SECTION (row scope + `canDeclare`
+    only — at document scope the two lists are the same rows), and the
+    search filter. Offerability settles BEFORE the filter, so "nothing
+    offered" and "nothing matched" stay distinguishable. i18n-free:
+    sections carry their heading KEY.
+  - `text/FieldMenuButton.tsx` — trigger + `panel/PickerPopover` (the
+    SAME popover the property panel's binding picker draws). Its
+    `ariaLabel` is explicit because the panel wraps the whole editor in a
+    `<label>`, which would otherwise name every button inside it.
+  - `text/InsertFieldMenu.tsx` — that button under the insert trigger.
+  - `text/ChipFieldMenus.tsx` — both menus plus the pick→plan→DOM
+    wiring, kept out of `TextEditor` so that component stays the
+    seeding/commit shell. A replace needs no declaration machinery of its
+    own: `declCommit`'s batch already prunes the name it orphaned.
 - `text/editorHandlers.ts` — keyboard, pointer + text-ingress behavior:
-  `handleEditorMouseDown` (a click on a chip focuses the editor and lands
-  the caret beside it),
+  `handleEditorMouseDown` (a click on a chip focuses the editor, lands
+  the caret beside it, and RETURNS that chip as the selected one — a pill
+  is unselectable, so it cannot ride the caret's selection),
+  `replaceChipAt` (swaps a selected chip for a picked field, carrying the
+  expression's `:format` across; re-validates the node against the live
+  editor first, since paste/drop/erosion restructure it in between),
   `handleEditorKeyDown` (⌘Enter commit, plain `\n` Enter, Escape cancel
   with stopPropagation, ⌘B/I/U preventDefaulted, atomic chip erosion),
   `insertPlainTextAt` (the ONE ingress paste/drop/Enter share — a

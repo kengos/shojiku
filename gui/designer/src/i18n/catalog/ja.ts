@@ -785,6 +785,7 @@ export const ja: LanguageCatalog = {
     'chips.insert': 'データ項目を挿入',
     'chips.section.row': 'この行のデータ',
     'chips.section.document': '文書のデータ',
+    'chips.replace': '{field}を差し替え',
     'picker.open': 'データ項目から選ぶ',
     'picker.search': 'データ項目を検索',
     'picker.empty': '選べるデータ項目はありません。',

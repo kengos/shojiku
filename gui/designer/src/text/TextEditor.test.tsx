@@ -430,4 +430,257 @@ describe('clicking a chip', () => {
     // native caret placement, which is exactly the path being left alone).
     expect(document.activeElement).toBe(before);
   });
+
+  it('marks the clicked chip as the selected one', () => {
+    const { chip } = pill('{customer.name} 様');
+    fireEvent.mouseDown(chip, { clientX: 135 });
+    expect(chip.classList.contains('sj-chip--selected')).toBe(true);
+  });
+
+  it('clears the selection when the next click lands on ordinary text', () => {
+    const { editor, chip } = pill('{customer.name} 様');
+    fireEvent.mouseDown(chip, { clientX: 135 });
+    fireEvent.mouseDown(editor, { clientX: 300 });
+    expect(chip.classList.contains('sj-chip--selected')).toBe(false);
+  });
+});
+
+describe('re-picking a selected chip', () => {
+  /** Seed, then select the chip the way a click does. */
+  function selectChip(value: string, over: Partial<ChipContext> = {}) {
+    const onCommit = vi.fn();
+    render(
+      <I18nProvider locale="en">
+        <TextEditor
+          value={value}
+          onCommit={onCommit}
+          ariaLabel="Text"
+          chips={{ ...CHIPS, ...over }}
+        />
+      </I18nProvider>,
+    );
+    const el = screen.getByRole('textbox');
+    const chip = el.querySelector(`[${CHIP_WIRE_ATTR}]`);
+    if (!(chip instanceof HTMLElement)) {
+      throw new Error('the chip is seeded');
+    }
+    chip.getBoundingClientRect = () => ({ left: 100, width: 40, top: 0, height: 20 }) as DOMRect;
+    fireEvent.mouseDown(chip, { clientX: 135 });
+    return { el, chip, onCommit };
+  }
+
+  function replaceTrigger(name: RegExp) {
+    return screen.getByRole('button', { name });
+  }
+
+  it('offers no replace control until a chip is selected', () => {
+    drawWithChips({ value: '{customer.name} 様' });
+    expect(screen.queryByRole('button', { name: /^Replace/ })).toBeNull();
+  });
+
+  it('names the ACTION in an instant tooltip on BOTH triggers', () => {
+    // Neither visible label states its action: the replace trigger reads as the
+    // bound field's name (a noun) and the insert trigger is icon-only. The
+    // bubble is the convention for both — never a native `title`.
+    selectChip('{customer.name} 様');
+    const replace = replaceTrigger(/^Replace 顧客名/);
+    expect(replace.querySelector('[data-sj-tip]')?.textContent).toBe('Replace 顧客名');
+    const insert = screen.getByRole('button', { name: 'Insert a data field' });
+    expect(insert.querySelector('[data-sj-tip]')?.textContent).toBe('Insert a data field');
+    expect(insert.getAttribute('title')).toBeNull();
+    // Icon-only, so the two triggers fit the panel's field on one row.
+    expect(insert.querySelector('svg')).not.toBeNull();
+  });
+
+  it('names the selected chip on the trigger', () => {
+    selectChip('{customer.name} 様');
+    // The trigger says which binding it would repoint — the same label the
+    // pill beside it shows.
+    expect(replaceTrigger(/^Replace 顧客名/).textContent).toContain('顧客名');
+  });
+
+  it('swaps the binding in place, keeping the surrounding text', () => {
+    const { el, onCommit } = selectChip('宛先: {customer.name} 様');
+    fireEvent.click(replaceTrigger(/^Replace 顧客名/));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Total/ }));
+    fireEvent.blur(el.parentElement as HTMLElement);
+    expect(onCommit).toHaveBeenCalledWith('宛先: {total} 様', []);
+  });
+
+  it('re-picking the SAME field authors nothing and mints no undo step', () => {
+    const { el, onCommit } = selectChip('宛先: {customer.name} 様');
+    fireEvent.click(replaceTrigger(/^Replace 顧客名/));
+    fireEvent.click(screen.getByRole('menuitem', { name: /顧客名/ }));
+    fireEvent.blur(el.parentElement as HTMLElement);
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it('drops the selection once the replace lands', () => {
+    selectChip('{customer.name} 様');
+    fireEvent.click(replaceTrigger(/^Replace 顧客名/));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Total/ }));
+    // The node the trigger named is gone from the document.
+    expect(screen.queryByRole('button', { name: /^Replace/ })).toBeNull();
+  });
+
+  it('stages a declaration when the picked field needs one', () => {
+    const { el, onCommit } = selectChip('{customer.name} 様', {
+      options: [...OPTIONS, UNSAFE],
+      documentOptions: [...OPTIONS, UNSAFE],
+    });
+    fireEvent.click(replaceTrigger(/^Replace 顧客名/));
+    fireEvent.click(screen.getByRole('menuitem', { name: /品名/ }));
+    fireEvent.blur(el.parentElement as HTMLElement);
+    expect(onCommit).toHaveBeenCalledWith('{f1} 様', [{ name: 'f1', key: '品名', scope: null }]);
+  });
+
+  it('offers the same rows the insert menu does', () => {
+    selectChip('{customer.name} 様');
+    fireEvent.click(screen.getByRole('button', { name: 'Insert a data field' }));
+    const inserting = screen.getAllByRole('menuitem').map((row) => row.textContent);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.click(replaceTrigger(/^Replace 顧客名/));
+    expect(screen.getAllByRole('menuitem').map((row) => row.textContent)).toEqual(inserting);
+  });
+
+  it('withholds a charset-unsafe field from an engine that cannot declare', () => {
+    selectChip('{customer.name} 様', {
+      canDeclare: false,
+      options: [...OPTIONS, UNSAFE],
+      documentOptions: [...OPTIONS, UNSAFE],
+    });
+    fireEvent.click(replaceTrigger(/^Replace 顧客名/));
+    expect(screen.queryByRole('menuitem', { name: /品名/ })).toBeNull();
+  });
+
+  it('offers it once the engine understands declarations', () => {
+    selectChip('{customer.name} 様', {
+      options: [...OPTIONS, UNSAFE],
+      documentOptions: [...OPTIONS, UNSAFE],
+    });
+    fireEvent.click(replaceTrigger(/^Replace 顧客名/));
+    expect(screen.getByRole('menuitem', { name: /品名/ })).toBeDefined();
+  });
+
+  it('drops the selection when the chip is eroded away under it', () => {
+    // Backspace removes a chip atomically, so the node the trigger names can
+    // leave the document between selecting and picking.
+    const { el, chip } = selectChip('{customer.name}');
+    caretAt(el, 1);
+    fireEvent.keyDown(el, { key: 'Backspace' });
+    expect(el.contains(chip)).toBe(false);
+    expect(screen.queryByRole('button', { name: /^Replace/ })).toBeNull();
+  });
+
+  it('puts both triggers on ONE row, so selecting a chip does not add a line', () => {
+    // A second block row under the insert button pushed the whole panel down on
+    // every click in the field; the row is also the positioning context both
+    // popovers resolve against, so each still spans the field's width.
+    const { el } = selectChip('{customer.name} 様');
+    const row = el.parentElement?.querySelector('.relative.flex');
+    expect(row?.className).toContain('flex');
+    expect(row?.querySelectorAll('button')).toHaveLength(2);
+  });
+
+  it('drops the selection when a NATIVE edit detaches the chip', () => {
+    // `keydown` fires BEFORE the browser applies its default action, so a
+    // recheck there cannot see a chip that typing-over-a-selection, a cut or a
+    // native undo removes. `input` fires after the edit and is what closes it —
+    // otherwise the trigger stays, naming a field the text no longer has, and
+    // picking from it silently does nothing.
+    const { el, chip } = selectChip('{customer.name} 様');
+    expect(screen.getByRole('button', { name: /^Replace 顧客名/ })).toBeDefined();
+    chip.remove();
+    fireEvent.input(el);
+    expect(screen.queryByRole('button', { name: /^Replace/ })).toBeNull();
+  });
+
+  it('drops the selection when a paste replaces the chip', () => {
+    // Our own Range surgery fires no `input`, so the paste handler says so
+    // itself.
+    const { el, chip } = selectChip('{customer.name} 様');
+    chip.remove();
+    fireEvent.paste(el, { clipboardData: { getData: () => 'x' } });
+    expect(screen.queryByRole('button', { name: /^Replace/ })).toBeNull();
+  });
+
+  it('drops the selection when a drop replaces the chip', () => {
+    const { el, chip } = selectChip('{customer.name} 様');
+    chip.remove();
+    fireEvent.drop(el, { dataTransfer: { getData: () => 'x' } });
+    expect(screen.queryByRole('button', { name: /^Replace/ })).toBeNull();
+  });
+
+  it('writes nothing and stages nothing when the target left between opening and picking', () => {
+    // Planning STAGES a declaration, so a replace that cannot land must not
+    // plan at all — otherwise the minted name is burned on a chip nobody wrote.
+    const { el, chip, onCommit } = selectChip('{customer.name} 様', {
+      options: [...OPTIONS, UNSAFE],
+      documentOptions: [...OPTIONS, UNSAFE],
+    });
+    fireEvent.click(replaceTrigger(/^Replace 顧客名/));
+    chip.remove();
+    fireEvent.click(screen.getByRole('menuitem', { name: /品名/ }));
+    el.appendChild(document.createTextNode('!'));
+    fireEvent.blur(el.parentElement as HTMLElement);
+    // The text loses the chip (it was removed) and gains the typed character —
+    // and carries NO staged declaration for the pick that never landed.
+    expect(onCommit).toHaveBeenCalledWith(' 様!', []);
+    expect(screen.queryByRole('button', { name: /^Replace/ })).toBeNull();
+  });
+
+  it('keeps the selection through a keystroke that does not remove the chip', () => {
+    const { el } = selectChip('{customer.name} 様');
+    fireEvent.keyDown(el, { key: 'a' });
+    expect(screen.getByRole('button', { name: /^Replace 顧客名/ })).toBeDefined();
+  });
+
+  it('re-points at a field whose key is a prototype name, with no pollution', () => {
+    // `__proto__` is a legal YAML key, so it reaches here as an ordinary field
+    // key: every table it is looked up in is a real Map, never a plain object.
+    const hostile: PickerOption = {
+      key: '__proto__',
+      label: 'Proto',
+      type: 'string',
+      sample: '',
+      enumValues: [],
+    };
+    const { el, onCommit } = selectChip('{customer.name} 様', {
+      options: [...OPTIONS, hostile],
+      documentOptions: [...OPTIONS, hostile],
+    });
+    fireEvent.click(replaceTrigger(/^Replace 顧客名/));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Proto/ }));
+    fireEvent.blur(el.parentElement as HTMLElement);
+    expect(onCommit).toHaveBeenCalledWith('{__proto__} 様', []);
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
+  it('renders a brace-carrying field label verbatim without breaking the trigger name', () => {
+    // The label is document data reaching an ICU message as an ARG — arg
+    // values are emitted as text and never re-scanned, so a `{…}` in one
+    // cannot inject a second placeholder.
+    const braced: PickerOption = {
+      key: 'braced',
+      label: 'A {customer.name} label',
+      type: 'string',
+      sample: '',
+      enumValues: [],
+    };
+    render(
+      <I18nProvider locale="ja">
+        <TextEditor
+          value="{braced}"
+          onCommit={() => {}}
+          ariaLabel="Text"
+          chips={{ ...CHIPS, options: [braced], documentOptions: [braced] }}
+        />
+      </I18nProvider>,
+    );
+    const el = screen.getByRole('textbox');
+    const chip = el.querySelector(`[${CHIP_WIRE_ATTR}]`) as HTMLElement;
+    chip.getBoundingClientRect = () => ({ left: 100, width: 40, top: 0, height: 20 }) as DOMRect;
+    fireEvent.mouseDown(chip, { clientX: 135 });
+    expect(screen.getByRole('button', { name: 'A {customer.name} labelを差し替え' })).toBeDefined();
+  });
 });

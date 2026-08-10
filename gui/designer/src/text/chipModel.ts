@@ -8,7 +8,7 @@
 // chip metadata lives in a real `Map` (binding keys are hostile strings like
 // `__proto__`; a plain-object table would walk the prototype).
 
-import { parseRawSegments } from './interpolate';
+import { parseRawSegments, type RawSegment } from './interpolate';
 
 /** What a chip displays for a known key: the field's label and its bounded
  * sample display string (both from the binding picker's options, which
@@ -24,6 +24,11 @@ export interface ChipMeta {
 export const CHIP_WIRE_ATTR = 'data-sj-wire';
 
 export const CHIP_CLASS = 'sj-chip';
+
+/** Marks the chip the field menus are pointed at. Applied to the live node
+ * rather than rendered, because the editor's content is imperative DOM React
+ * never reconciles. */
+export const CHIP_SELECTED_CLASS = 'sj-chip--selected';
 
 /** The shape a chip's metadata is indexed from — the binding picker's rows,
  * named so the declaration model can consume the same contract. */
@@ -56,6 +61,53 @@ export function chipWire(key: string): string | null {
   const segments = parseRawSegments(raw);
   const only = segments.length === 1 ? segments[0] : undefined;
   return only !== undefined && only.kind === 'expr' && only.key === key ? raw : null;
+}
+
+/** The single expression a chip's stored wire slice stands for, or `undefined`
+ * when the slice is not exactly one of them. The attribute is document-derived,
+ * so it is read back through the ONE parser rather than trusted: a hand-crafted
+ * `data-sj-wire` holding two expressions, an unterminated one, or a plain
+ * literal all answer `undefined`. `null` in is answered too, so a caller can
+ * hand `getAttribute` straight through. */
+function oneChipExpr(raw: string | null): Extract<RawSegment, { kind: 'expr' }> | undefined {
+  if (raw === null) {
+    return undefined;
+  }
+  const segments = parseRawSegments(raw);
+  const only = segments.length === 1 ? segments[0] : undefined;
+  return only !== undefined && only.kind === 'expr' ? only : undefined;
+}
+
+/** The format inside a chip's stored wire slice — `null` when the slice is not
+ * exactly one expression, or carries no format. */
+export function chipFormatOf(raw: string | null): string | null {
+  return oneChipExpr(raw)?.format ?? null;
+}
+
+/** What a chip's pill READS for a stored wire slice: the bound field's label
+ * when the metadata knows the name, else the name itself — the same fallback
+ * `chipSpan` paints, so a control naming the selected chip says exactly what
+ * the pill beside it says. Empty for a slice that is not one expression. */
+export function chipLabelOf(raw: string | null, meta: ReadonlyMap<string, ChipMeta>): string {
+  const expr = oneChipExpr(raw);
+  if (expr === undefined) {
+    return '';
+  }
+  return meta.get(expr.key)?.label ?? expr.key;
+}
+
+/** `wire` (a slice a plan already proved writable, `{name}`) re-expressed
+ * carrying `format`. Composed and then PROVEN by reading it back through the
+ * ONE parser: a format the grammar cannot carry degrades to the bare slice
+ * rather than being spliced in, so a crafted format can never close the
+ * expression early and turn the author's following text into wire they never
+ * wrote. Total — the proven input is the fallback. */
+export function chipWireWithFormat(wire: string, format: string | null): string {
+  if (format === null) {
+    return wire;
+  }
+  const raw = `${wire.slice(0, -1)}:${format}}`;
+  return chipFormatOf(raw) === format ? raw : wire;
 }
 
 /** Build one atomic chip span for an expression: non-editable, labeled with
