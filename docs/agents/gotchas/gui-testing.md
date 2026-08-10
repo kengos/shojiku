@@ -37,6 +37,17 @@
   right-click use `fireEvent.contextMenu(el, { clientX, clientY })` (it
   act-wraps AND preserves coordinates); reserve raw dispatch for events
   whose init fields RTL drops, wrapped in `act()` when state changes.
+- **`clipboardData` is the third member of that family.** A window-level
+  paste handler cannot be driven with `fireEvent.paste(el, {
+  clipboardData })` — jsdom builds a bare `Event` and the init field is
+  dropped, so the handler reads `undefined` and returns early while the
+  test reports whatever the early return does. Dispatch a real
+  `new Event('paste', { bubbles: true, cancelable: true })` with
+  `Object.defineProperty(event, 'clipboardData', { value: { files } })`,
+  and assert `event.defaultPrevented` — for a handler whose contract
+  includes NOT consuming some pastes, that flag is the only observable,
+  since "nothing happened" is indistinguishable from "the handler never
+  ran".
 - **Headless UI's anchored popovers construct a `ResizeObserver` on
   open** — the no-op shim must live in the vitest setup of EVERY package
   whose tests open one, not just the package that defines the component
