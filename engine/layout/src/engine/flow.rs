@@ -62,7 +62,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             // drew — the only way its reserved height (a wrapped block, an
             // auto-height container, a paginated table) is exactly right.
             let mark = (visibility[index] == Visibility::Hidden)
-                .then(|| visibility::draw_mark(&layouter.pages));
+                .then(|| visibility::draw_mark(&layouter.pages, self.pending_anchors.len()));
             let item_mark = self.enter_item(format!("items[{index}]"));
             match item {
                 Item::Text(text) => {
@@ -138,7 +138,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
             self.leave_item(item_mark);
             if let Some(mark) = mark {
-                visibility::blank_since(&mut layouter.pages, &mark);
+                visibility::blank_since(&mut layouter.pages, &mark, &mut self.pending_anchors);
             }
         }
         self.leave_item(body_mark);
@@ -214,7 +214,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
             Item::Ellipse(e) => {
                 if let Some(atom) = self.ellipse_atom(e, basis) {
-                    let dy = self.resolve_y(e.box_.y, basis).unwrap_or(0.0);
+                    let dy = self
+                        .resolve_y(e.box_.clone().unwrap_or_default().y, basis)
+                        .unwrap_or(0.0);
                     self.emit_placed(page, atom, dy, basis);
                 }
             }

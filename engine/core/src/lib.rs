@@ -35,9 +35,9 @@ pub use definitions::{
 pub use edges::{EdgeSpec, EdgeValue};
 pub use error::CoreError;
 pub use geometry::{
-    AlignItems, BoxSpec, BoxType, FlexBasis, FlexDirection, GridTrack, JustifyContent, OptBox,
-    Orientation, PageMargin, PageSize, PageSpec, PointSpec, TrackSpec, MAX_GRID_TRACKS,
-    MAX_PAGE_PT,
+    AlignItems, AnchorEdge, AnchorOffset, AnchorPoint, BoxSpec, BoxType, FlexBasis, FlexDirection,
+    GridTrack, JustifyContent, OptBox, Orientation, PageMargin, PageSize, PageSpec, PointSpec,
+    TrackSpec, MAX_GRID_TRACKS, MAX_PAGE_PT,
 };
 pub use interpolate::{parse_segments, Segment};
 pub use length::{FontRel, Length, PhysicalUnit, DEFAULT_FONT_SIZE_PT};

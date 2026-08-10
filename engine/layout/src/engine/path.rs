@@ -6,6 +6,28 @@
 use crate::boxes::{BoxRect, PlacedBox};
 use shojiku_layout_box::ResolvedBox;
 
+/// A placement from an explicit rectangle — the deferred anchored marks,
+/// whose geometry comes from another item's placement rather than from a
+/// resolved box of their own.
+pub(super) fn placed_box_rect(
+    path: &str,
+    id: Option<&str>,
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+) -> PlacedBox {
+    let rect = BoxRect { x, y, w, h };
+    PlacedBox {
+        path: path.to_string(),
+        id: id.map(str::to_string),
+        border: rect,
+        content: rect,
+        text: None,
+        hidden: false,
+    }
+}
+
 /// Builds a `line` item's placement: the endpoint bounding box (content
 /// == border, like `rect`). Axis-aligned lines report a zero-thickness
 /// box — honest segment geometry; the stroke inks `width/2` beyond it,

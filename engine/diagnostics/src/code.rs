@@ -239,6 +239,13 @@ diagnostic_codes! {
     VisibleEqualsNotDeclared = "visible_equals_not_declared", Warning, Data, "`{key}` declares an `enum` that does not list this `equals` value; the item can never be shown";
     VisibleTypeMismatch = "visible_type_mismatch", Warning, Data, "`{key}` value type differs from `equals`; item not shown";
     VisibleValueNotBool = "visible_value_not_bool", Warning, Data, "`{key}` is not a boolean; item not shown";
+    // A `line` endpoint anchored to another item (`from: { item: … }`).
+    // Every one of these draws NOTHING rather than guessing a position:
+    // a leader line to the wrong place is worse than an absent one, and
+    // each message names the id it was looking for.
+    AnchorUnknownTarget = "anchor_unknown_target", Warning, Layout, "no item has `id: {item}`; the anchored item is not drawn";
+    AnchorCrossPage = "anchor_cross_page", Warning, Layout, "the anchored endpoints land on different pages; the line is not drawn";
+    AnchorAmbiguousTarget = "anchor_ambiguous_target", Warning, Layout, "`id: {item}` is placed more than once on this page; the anchored item uses the first placement";
 }
 
 #[cfg(test)]

@@ -74,16 +74,23 @@ pub(in crate::engine) fn blank(atom: Atom) -> Atom {
 /// ones (a split text block, a table, a `repeat`) push straight into the
 /// pages and hand back nothing — so hiding those needs a before/after
 /// mark rather than a value to transform.
-pub(in crate::engine) struct DrawMark(Vec<(usize, usize)>);
+pub(in crate::engine) struct DrawMark {
+    pages: Vec<(usize, usize)>,
+    /// How many anchored lines were deferred before this item was placed.
+    /// A deferred line never rides the atom blanking transforms, so it is
+    /// hidden HERE or not at all — see [`super::anchor`].
+    anchors: usize,
+}
 
 /// Records the current draw state of every page.
-pub(in crate::engine) fn draw_mark(pages: &[PageBuild]) -> DrawMark {
-    DrawMark(
-        pages
+pub(in crate::engine) fn draw_mark(pages: &[PageBuild], anchors: usize) -> DrawMark {
+    DrawMark {
+        pages: pages
             .iter()
             .map(|p| (p.items.len(), p.boxes.len()))
             .collect(),
-    )
+        anchors,
+    }
 }
 
 /// Blanks everything drawn since `mark`: the drawn primitives are
@@ -93,9 +100,20 @@ pub(in crate::engine) fn draw_mark(pages: &[PageBuild]) -> DrawMark {
 /// would have occupied, and for a paginating item that is measured in
 /// pages — dropping them would be the `collapse:` behaviour, which the
 /// author did not ask for.
-pub(in crate::engine) fn blank_since(pages: &mut [PageBuild], mark: &DrawMark) {
+pub(in crate::engine) fn blank_since(
+    pages: &mut [PageBuild],
+    mark: &DrawMark,
+    anchors: &mut [super::anchor::PendingAnchor],
+) {
+    // Deferred lines are STAMPED rather than dropped, which is what makes
+    // a hidden anchored line report where it would have drawn — the same
+    // contract the placements below get.
+    let from = mark.anchors.min(anchors.len());
+    for pending in &mut anchors[from..] {
+        pending.hidden = true;
+    }
     for (index, page) in pages.iter_mut().enumerate() {
-        let (items, boxes) = mark.0.get(index).copied().unwrap_or((0, 0));
+        let (items, boxes) = mark.pages.get(index).copied().unwrap_or((0, 0));
         page.items.truncate(items);
         // Every write path into a page is a push/extend, so a page's box
         // count cannot SHRINK between the mark and here. The clamp is

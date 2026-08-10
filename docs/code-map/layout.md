@@ -54,7 +54,28 @@ Wire types stay in core; content measurement stays in layout.
   `engine::layout` is unchanged. Spec: `docs/engine/layout-model.md`.
 - `engine/path.rs` — `placed_box(path, id, rb, w, h)`: the ONE
   structural-path placement builder every atom calls (id-less items
-  included).
+  included). Plus `line_placed_box` (endpoint bounding box) and
+  `placed_box_rect` (an explicit rectangle — the deferred anchored marks,
+  whose geometry comes from another item's placement).
+- `engine/anchor.rs` (+ `anchor/band.rs`, `anchor/resolve.rs`) — cross-item
+  anchoring. An `item:` on a `line` endpoint, or `anchor:` on an
+  `ellipse`, makes that item ABSOLUTELY POSITIONED (CSS anchor
+  positioning requires it): the walk draws nothing, reserves nothing, and
+  pushes one `PendingAnchor` onto `Ctx.pending_anchors`; `assemble.rs`
+  drains them after the per-page loop, so the box index they read is
+  already in sheet coordinates and anchored items paint LAST on their
+  page. The page is the TARGET's page, which is what makes
+  `anchor_cross_page` precise. `band.rs` reads the target's inked band
+  from `PlacedBox.text` (`Lines`/`Columns`), falling back to the border
+  box; an unsized oval takes that band plus `BAND_PAD_FRACTION` clearance,
+  the deferred analogue of the text `mark:` overlay's `DEFAULT_PAD_EM`.
+  An `offset` is capped against `MAX_RESOLVED_PT` here — it is the one
+  endpoint value that never passes through `resolve_x`/`_y`.
+  **`Ctx.pending_anchors` is parked by `begin_measure`/`end_measure`**: a
+  throwaway measure pass (flex cross-size, table row, grid cell) would
+  otherwise leave a record behind and the item would be drawn twice. Hidden (`visible:`) deferred items are STAMPED by
+  `visibility::blank_since` rather than dropped — a deferred item never
+  rides the atom that blanking transforms.
 - `engine/translate.rs` — whole-item y/x shifts, recursing into clip groups.
 - `engine/resolve.rs` — thin `Ctx` bridges to layout-box; page-margin
   resolution; `resolved_chain` (the font-resolution funnel); the layered
@@ -133,7 +154,8 @@ Wire types stay in core; content measurement stays in layout.
   (`flex_child_atom` + the parked `measure_row_cross`), split from `flex.rs`
   for the line budget.
 - `engine/atoms.rs` — rect/image/line atoms (rect routes through
-  `push_decoration`); margins fold into every atom via
+  `push_decoration`; an anchored line returns an EMPTY atom and defers to
+  `engine/anchor.rs`); margins fold into every atom via
   `with_vertical_margin`, so flow/absolute/container placement space them
   identically. `fit_size` is the shared `object-fit` math (also used by
   `engine/table/content.rs`'s image cells); BOTH sites wrap the shape in

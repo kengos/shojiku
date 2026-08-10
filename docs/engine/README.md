@@ -126,7 +126,7 @@ below uses:
 | --- | --- | --- | --- |
 | `text` | static / interpolated / bound text; rich `spans:` | F A B C cell | [text.md](text.md) |
 | `rect` | rectangle (border/fill) | F A B C cell | [rect.md](rect.md) |
-| `line` | stroked segment; `Length` endpoints (`to: { x: "100%" }`) | F A B C cell | [line.md](line.md) |
+| `line` | stroked segment; `Length` endpoints (`to: { x: "100%" }`) or an anchor to another item (`to: { item: total }`) | F A B C cell | [line.md](line.md) |
 | `image` | PNG/JPEG/GIF/WebP/SVG asset | F A B C cell | [image.md](image.md) |
 | `qr_code` | layout-time vector QR | F A B C cell | [qr_code.md](qr_code.md) |
 | `list` | one line per array entry + overflow clamp | F A B C cell | [list.md](list.md) |
@@ -136,7 +136,7 @@ below uses:
 | `repeat_flow` | flowing card list, one card per element | F only | [repeat_flow.md](repeat_flow.md) |
 | `page_break` | start a fresh page | F only | [page_break.md](page_break.md) |
 | `char_grid` | manuscript-paper / workbook character cells (+ruby) | F A B C cell | [char_grid.md](char_grid.md) |
-| `ellipse` | box-inscribed oval; circled-option mark or decoration | F A B C cell | [form_marks.md](form_marks.md) |
+| `ellipse` | box-inscribed oval, or `anchor:` to circle another item's glyph band; circled-option mark or decoration | F A B C cell | [form_marks.md](form_marks.md) |
 | `checkbox` | always-drawn frame + params-driven check | F A B C cell | [form_marks.md](form_marks.md) |
 | `page_number` | `{page} / {pages}` | B only | [page_number.md](page_number.md) |
 

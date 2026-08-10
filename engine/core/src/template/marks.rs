@@ -31,8 +31,20 @@ pub struct EllipseItem {
     /// Params-conditional presence; unset draws unconditionally.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub visible: Option<VisibleBinding>,
-    #[serde(rename = "box")]
-    pub box_: OptBox,
+    /// Optional since an anchored ellipse takes its geometry from the
+    /// item it circles; unanchored and unsized still warns
+    /// (`mark_missing_size`) rather than guessing a size.
+    #[serde(rename = "box", default, skip_serializing_if = "Option::is_none")]
+    pub box_: Option<OptBox>,
+    /// Circles another item instead of standing on its own coordinates:
+    /// the ellipse CENTRES on that item's glyph band (its text metrics —
+    /// the inked band, not the padded box), or on its border box when it
+    /// has no text. `box.w`/`box.h` still size it; unsized, it takes the
+    /// band's own extent, which is the "circle this answer" case forms
+    /// are full of. `box.x`/`box.y` are not read — the anchor decides
+    /// where it sits.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub anchor: Option<String>,
     /// Presence binding; `None` = always draw.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub data: Option<MarkBinding>,

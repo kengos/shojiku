@@ -63,11 +63,11 @@ fn blank_since_strips_only_what_was_added_after_the_mark() {
         items: vec![rect()],
         boxes: vec![placed("items[0]")],
     }];
-    let mark = draw_mark(&pages);
+    let mark = draw_mark(&pages, 0);
     pages[0].items.push(rect());
     pages[0].boxes.push(placed("items[1]"));
 
-    blank_since(&mut pages, &mark);
+    blank_since(&mut pages, &mark, &mut []);
 
     assert_eq!(pages[0].items.len(), 1, "the earlier sibling still draws");
     assert!(!pages[0].boxes[0].hidden, "and is not stamped hidden");
@@ -80,14 +80,14 @@ fn blank_since_keeps_pages_a_hidden_item_opened() {
     // and for such an item that is measured in pages. Dropping them would
     // be `collapse:`, which this author did not ask for.
     let mut pages = vec![PageBuild::default()];
-    let mark = draw_mark(&pages);
+    let mark = draw_mark(&pages, 0);
     pages[0].items.push(rect());
     pages.push(PageBuild {
         items: vec![rect()],
         boxes: vec![placed("items[0]")],
     });
 
-    blank_since(&mut pages, &mark);
+    blank_since(&mut pages, &mark, &mut []);
 
     assert_eq!(pages.len(), 2, "the second page stays");
     assert!(pages[0].items.is_empty());
@@ -96,4 +96,41 @@ fn blank_since_keeps_pages_a_hidden_item_opened() {
         "a page past the mark blanks whole"
     );
     assert!(pages[1].boxes[0].hidden);
+}
+
+#[test]
+fn blank_since_stamps_deferred_anchors_instead_of_dropping_them() {
+    // A deferred anchored item never rides the atom that blanking
+    // transforms, so hiding it happens HERE or not at all — and it is
+    // STAMPED, not dropped, because a hidden item still reports where it
+    // would have drawn.
+    let pending = |path: &str| super::super::anchor::PendingAnchor {
+        kind: super::super::anchor::PendingKind::Ellipse(super::super::anchor::PendingEllipse {
+            target: "t".to_string(),
+            paint: super::super::marks::ShapePaint {
+                width: 1.0,
+                stroke: None,
+                stroke_color: (0.0, 0.0, 0.0),
+                fill: None,
+                opacity: 1.0,
+            },
+            size: (None, None),
+            drawn: true,
+        }),
+        path: path.to_string(),
+        id: None,
+        hidden: false,
+    };
+    let mut anchors = vec![pending("items[0]"), pending("items[1]")];
+    let mut pages = vec![PageBuild::default()];
+    // Marked with ONE anchor already deferred: only what comes after is hidden.
+    let mark = draw_mark(&pages, 1);
+
+    blank_since(&mut pages, &mark, &mut anchors);
+
+    assert!(!anchors[0].hidden, "the earlier anchor is untouched");
+    assert!(
+        anchors[1].hidden,
+        "the one placed after the mark is stamped"
+    );
 }

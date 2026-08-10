@@ -151,4 +151,14 @@ pub(super) const KEYS: &[&str] = &[
     // reject the key outright (`deny_unknown_fields`), so a GUI must gate
     // the control on this rather than write it hopefully.
     "item.visible",
+    // A `line` endpoint anchors to another item by id
+    // (`to: { item: total, edge: left, offset: { x: 4 } }`) instead of
+    // naming coordinates. The line becomes absolutely positioned and
+    // resolves against the finished page. Older engines reject the key
+    // (`deny_unknown_fields`), and there is no coordinate the GUI could
+    // write instead, so the control must be gated on this.
+    "line.anchor",
+    // An `ellipse` circles another item (`anchor: <id>`), centring on its
+    // glyph band. Same gate, same reason.
+    "ellipse.anchor",
 ];

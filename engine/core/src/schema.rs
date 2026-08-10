@@ -32,6 +32,7 @@ use schemars::{json_schema, JsonSchema, Schema, SchemaGenerator};
 mod border;
 mod edges;
 mod length;
+mod point;
 mod value;
 
 #[cfg(test)]

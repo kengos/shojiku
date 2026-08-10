@@ -14,6 +14,7 @@
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { useState } from 'react';
 import { useI18n } from '../i18n/context';
+import { anchorTargets, readItemId } from './anchorTargets';
 import { BoxSection } from './BoxSection';
 import { BORDERABLE_TYPES } from './borderTypes';
 import { ContentSection } from './ContentSection';
@@ -98,6 +99,11 @@ export function ItemPanel(props: ItemPanelProps) {
         view={readLinePoints(props.controller.read, props.path)}
         path={props.path}
         controller={props.controller}
+        capabilities={props.capabilities}
+        targets={anchorTargets(
+          props.geometry?.boxes.pages,
+          readItemId(props.controller.read, props.path),
+        )}
       />
     ) : (
       <BoxSection {...props} />

@@ -43,6 +43,9 @@ pub(super) struct Measured {
     families: std::collections::HashSet<String>,
     formats: std::collections::HashSet<String>,
     row_conditions: std::collections::HashSet<String>,
+    /// How many deferred anchors existed before the pass — see
+    /// [`Ctx::begin_measure`].
+    anchors: usize,
 }
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -65,6 +68,11 @@ impl<'a, 'b> Ctx<'a, 'b> {
             families: std::mem::take(&mut self.warned_families),
             formats: std::mem::take(&mut self.warned_formats),
             row_conditions: std::mem::take(&mut self.warned_row_conditions),
+            // Deferred anchors are walk-global and drained once, at the end
+            // of `layout()` — so one pushed by a THROWAWAY pass would be
+            // drawn for real. Parked by LENGTH rather than by value: a
+            // measure pass only ever appends.
+            anchors: self.pending_anchors.len(),
         }
     }
 
@@ -74,6 +82,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         self.warned_families = parked.families;
         self.warned_formats = parked.formats;
         self.warned_row_conditions = parked.row_conditions;
+        self.pending_anchors.truncate(parked.anchors);
     }
 
     /// Lays out one slot-filling cell, data-scoped to `scope`, with its

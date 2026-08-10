@@ -3,10 +3,11 @@
 //! clipped to it whatever the fit), and line.
 
 use crate::tree::{ClipShape, ImageShape, LayoutItem, LineShape};
-use shojiku_core::{BorderStyleKind, ImageFit, ImageItem, RectItem};
+use shojiku_core::{BorderStyleKind, ImageFit, ImageItem, Length, RectItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_image::asset_key;
 
+use super::anchor::{PendingAnchor, PendingEnd, PendingKind, PendingLine};
 use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx};
 
 /// Splits a `double` line into the two parallel strokes CSS draws: each a
@@ -15,7 +16,7 @@ use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx};
 /// stroke would). The offset is along the line's NORMAL, so a diagonal
 /// `line` doubles correctly rather than only an axis-aligned one; a
 /// zero-length line has no normal and stays a single stroke.
-fn double_lines(stroke: &LineShape) -> Vec<LayoutItem> {
+pub(in crate::engine) fn double_lines(stroke: &LineShape) -> Vec<LayoutItem> {
     let (dx, dy) = (stroke.x2 - stroke.x1, stroke.y2 - stroke.y1);
     let len = dx.hypot(dy);
     let third = stroke.width / 3.0;
@@ -206,13 +207,33 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// auto-height parent, or a hostile value past the resolve cap —
     /// falls back to 0 having already warned.
     pub(super) fn line_atom(&mut self, line: &shojiku_core::LineItem, basis: &Basis) -> Atom {
-        let x1 = basis.x + self.resolve_x(Some(line.from.x), basis).unwrap_or(0.0);
-        let x2 = basis.x + self.resolve_x(Some(line.to.x), basis).unwrap_or(0.0);
-        let y1 = self.resolve_y(Some(line.from.y), basis).unwrap_or(0.0);
-        let y2 = self.resolve_y(Some(line.to.y), basis).unwrap_or(0.0);
+        // An anchored endpoint names a placement this walk has not made
+        // yet, so the whole line becomes absolutely positioned: no height,
+        // no stroke, one deferred record page assembly resolves. The
+        // coordinate half of a MIXED line is deferred UNRESOLVED — its
+        // basis is the margin box of whichever page the anchor selects.
+        let anchored = line.from.anchor().is_some() || line.to.anchor().is_some();
+        // Resolved ONLY for a fully-authored line. An anchored one must not
+        // resolve its coordinate half here: the diagnostic that half can
+        // raise (`percent_of_auto`) would then be emitted twice, once
+        // against the wrong basis.
+        let (x1, y1, x2, y2) = if anchored {
+            (0.0, 0.0, 0.0, 0.0)
+        } else {
+            let (fx, fy) = line.from.xy().unwrap_or((Length::Pt(0.0), Length::Pt(0.0)));
+            let (tx, ty) = line.to.xy().unwrap_or((Length::Pt(0.0), Length::Pt(0.0)));
+            (
+                basis.x + self.resolve_x(Some(fx), basis).unwrap_or(0.0),
+                self.resolve_y(Some(fy), basis).unwrap_or(0.0),
+                basis.x + self.resolve_x(Some(tx), basis).unwrap_or(0.0),
+                self.resolve_y(Some(ty), basis).unwrap_or(0.0),
+            )
+        };
         // The reserved height floors at 0: a line whose endpoints both sit
         // ABOVE its origin would otherwise reserve a negative height and
-        // walk the flow cursor backwards over already-placed content.
+        // walk the flow cursor backwards over already-placed content. An
+        // anchored line reserves 0 by the same rule — its endpoints are
+        // unknown here, so there is no height to reserve.
         let height = y1.max(y2).max(0.0);
         // Guarded BEFORE it is consumed, so the dash pattern and the
         // `double` split both derive from the clamped width.
@@ -227,7 +248,30 @@ impl<'a, 'b> Ctx<'a, 'b> {
             opacity: self.sane_opacity(line.style.opacity.unwrap_or(1.0)),
             dash: super::decoration::dash_pattern(line.style.style(), width),
         };
-        let items = if line.style.style() == BorderStyleKind::Double {
+        let double = line.style.style() == BorderStyleKind::Double;
+        if anchored {
+            // Absolutely positioned: nothing is drawn and no placement is
+            // reported HERE — both are produced by the drain, from the
+            // target's page, in that page's coordinates.
+            self.pending_anchors.push(PendingAnchor {
+                kind: PendingKind::Line(PendingLine {
+                    from: PendingEnd::of(&line.from),
+                    to: PendingEnd::of(&line.to),
+                    stroke,
+                    double,
+                }),
+                path: self.current_path(),
+                id: line.id.clone(),
+                hidden: false,
+            });
+            return Atom {
+                height: 0.0,
+                items: Vec::new(),
+                boxes: Vec::new(),
+                rb: None,
+            };
+        }
+        let items = if double {
             double_lines(&stroke)
         } else {
             vec![LayoutItem::Line(stroke)]

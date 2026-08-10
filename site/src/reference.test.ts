@@ -95,7 +95,7 @@ describe("the front-matter and the catalog agree", () => {
 
   it("claims every catalog shape exactly once", () => {
     const defs = Object.keys(catalog.$defs).sort();
-    expect(defs).toHaveLength(82);
+    expect(defs).toHaveLength(84);
     expect([...claimed].sort()).toEqual(defs);
   });
 

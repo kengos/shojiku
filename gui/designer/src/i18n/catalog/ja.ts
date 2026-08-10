@@ -48,6 +48,10 @@ export const ja: LanguageCatalog = {
       '`{key}` の `enum` にこの `equals` の値がありません。この項目は決して表示されません',
     visible_type_mismatch: '`{key}` の値の型が `equals` と異なります。項目は表示されません',
     visible_value_not_bool: '`{key}` は真偽値ではありません。項目は表示されません',
+    anchor_unknown_target: '`id: {item}` の項目がありません。アンカーした項目は描画されません',
+    anchor_cross_page: 'アンカー先が別々のページにあります。線は描画されません',
+    anchor_ambiguous_target:
+      '`id: {item}` はこのページに複数配置されています。アンカーした項目は最初の配置を使います',
     row_condition_not_boolean:
       '`{key}` は真偽値フィールドではありません。`equals` のない行条件には真偽値が必要です',
     row_condition_type_mismatch:
@@ -534,6 +538,7 @@ export const ja: LanguageCatalog = {
     'canvas.place.grid': 'グリッド配置 — 位置はトラックが決定',
     'canvas.place.repeat': '繰り返しの一部 — 編集は全件に反映',
     'canvas.place.noBox': 'ボックスなし — プロパティパネルで編集',
+    'canvas.place.anchored': '囲んでいる項目に追従します',
     'canvas.place.relative': '相対単位 (%/em) — プロパティパネルで編集',
     'canvas.place.flowPositioned': 'フロー配置 (x/y指定) — 位置はプロパティパネルで編集',
     'canvas.place.section': 'セクション — 設定はプロパティパネルで',
@@ -680,6 +685,14 @@ export const ja: LanguageCatalog = {
     'panel.line.fromY': '始点 Y',
     'panel.line.toX': '終点 X',
     'panel.line.toY': '終点 Y',
+    'panel.line.fromItem': '始点の項目',
+    'panel.line.fromEdge': '始点の位置',
+    'panel.line.toItem': '終点の項目',
+    'panel.line.toEdge': '終点の位置',
+    'panel.line.useAnchor': '項目に合わせる',
+    'panel.line.pickItem': '項目を選ぶ…',
+    'panel.line.edgeCenter': '中央（既定）',
+    'panel.line.useCoordinates': '座標で指定する',
     'panel.line.pointsHint':
       '親からの相対位置です。数値だけならポイント、100% と書けば親の端まで届きます。',
     'panel.effective.label': '実効値',

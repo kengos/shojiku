@@ -72,10 +72,16 @@ injected at parse). The template model splits along CSS lines.
   (`PageSize` presets | custom `{w,h}`, `PageSpec`/`Orientation`;
   `dimensions_pt()` swaps a NAMED size on landscape, no-op + warn flag for
   custom sizes). `geometry/box_model.rs` — `BoxSpec`/`OptBox` (margin/
-  padding, flex keys, min/max bounds, `flexGrow`, `columnSpan`/`rowSpan`)/
-  `PointSpec` (`{ x, y }`, the `line` endpoint — both axes are full
-  `Length`s, so a bare number is still pt and `"100%"` reaches the edge
-  of whatever box the line sits in; only `LineItem` uses it).
+  padding, flex keys, min/max bounds, `flexGrow`, `columnSpan`/`rowSpan`).
+  `geometry/point_spec.rs` — `PointSpec`, the `line` endpoint (only
+  `LineItem` uses it): a two-arm enum, `Xy { x, y }` (both axes full
+  `Length`s, so a bare number is pt and `"100%"` reaches the edge of
+  whatever box the line sits in) or `Anchor(AnchorPoint { item, edge,
+  offset })`. HAND `Deserialize` over an all-optional
+  `deny_unknown_fields` helper, because serde's untagged path would stop
+  naming the offending key; per-variant `Serialize` keeps both authored
+  forms byte-exact. `schema/point.rs` states the two arms rather than
+  forwarding the permissive helper.
   `geometry/page_margin.rs` — `PageMargin` (bare | per-side |
   legacy array, authored form round-trips; the margin box is the
   coordinate origin). `geometry/flex.rs` — flex wire enums (`BoxType`/

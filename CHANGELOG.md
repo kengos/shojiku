@@ -30,6 +30,18 @@ platform binaries.
   goes with it, and the replacement brings its own; both land in the
   single step that Undo reverses.
 
+- **A line can now point at another item, and an oval can circle one.**
+  Give a `line` endpoint `to: { item: total_box, edge: left }` instead of
+  coordinates and it follows that item wherever the layout puts it —
+  handy for leader lines and callouts, which used to need coordinates
+  re-measured by hand every time the content above them changed. An
+  `ellipse` gains `anchor: <id>`, which centres it on that item's text
+  rather than on its box, so circling an answer no longer needs per-font
+  tuning. Following CSS anchor positioning, an anchored item is drawn on
+  the page its target landed on and paints over the content there. When
+  the target cannot be found, nothing is drawn and a warning says which
+  id was missing.
+
 - **Any item can now be shown or hidden by the data.** Add
   `visible: { key: status, equals: approved }` to a text block, an image,
   a table — anything — and it draws only when the params say so. An
