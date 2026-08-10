@@ -783,3 +783,48 @@ conversation says so. Both halves of that have shipped here.
   the defect is safe, so the next reader stops looking. Any comment
   containing "no way to", "has no handle on", "cannot" gets the same grep a
   doc claim would.
+
+## A backgrounded watcher's exit code is the WRAPPER's, not the command's
+
+`gh pr checks --watch` exits 8 when a check fails. Wrap it to record that —
+
+```sh
+gh pr checks 121 --watch > ci.log 2>&1; echo "GH_EXIT=$?" >> ci.log
+```
+
+— and the SHELL's exit code becomes the `echo`'s, which is 0 whatever `gh`
+did. A harness that reports "completed (exit code 0)" is reporting the
+wrapper. One cycle read that notice as "CI is green" and said so to the user;
+three checks had failed, and the log's own `GH_EXIT=1` line said so.
+
+**Judge a PR by asking GitHub, never by the watcher's completion:**
+
+```sh
+gh pr view <n> --json mergeStateStatus,statusCheckRollup \
+  -q '.mergeStateStatus, ([.statusCheckRollup[] | select(.conclusion != "SUCCESS" and .conclusion != "NEUTRAL")] | length)'
+```
+
+## A CONFLICTING PR reports ONE green check and the watcher exits 0
+
+When a PR conflicts, `pull_request` has no merge commit to build, so no
+Actions job runs at all. Only the non-Actions integrations report — here a
+single Cloudflare Pages check — and `--watch` sits on that one green line and
+exits 0. It is indistinguishable from "everything passed" unless you look at
+the count or at `mergeStateStatus` (`DIRTY` / `CONFLICTING`).
+
+Same shape, different cause, as the `paths-ignore` case already in the cycle
+skill: **fewer checks than the diff deserves is the signal.** Read
+`mergeStateStatus` before believing a green watcher.
+
+## `-c commit.gpgsign=false` silently fails the merge bar
+
+`main`'s ruleset requires `required_signatures`, and the repo config already
+sets `commit.gpgsign true`. Overriding it per-commit (a habit from
+environments where signing prompts) produces a PR that passes all 33 checks
+and still reports `mergeStateStatus: BLOCKED` with an EMPTY `reviewDecision` —
+which reads as "waiting for a review", not "unsigned".
+
+`git log --format='%h %G? %s'` shows the truth: `N` for unsigned, `G` for a
+good signature. The fix is `git commit --amend -S` (the agent usually has the
+key unlocked already) and a force-push; the tree is unchanged, so CI simply
+re-certifies the same content.

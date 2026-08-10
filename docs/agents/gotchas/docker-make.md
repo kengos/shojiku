@@ -580,3 +580,44 @@ carries no output from the command the job was supposed to run.
 `gh run rerun <run-id> --failed` re-runs only the failed jobs. Do that
 rather than merging over it; a flake and a real break look the same in the
 checks list, and only the log tells them apart.
+
+## `make examples` does not run the examples GATE
+
+`examples` re-renders the bundled outputs. `examples-check` re-renders AND
+compares, and it runs `scripts/check-example-text-indent.sh` — the gate for
+block scalars indented with ordinary spaces. The two are different targets
+with almost the same name, and CI runs the second one.
+
+Authoring a showcase code panel and then running `make examples` therefore
+reports success over a panel that will render FLUSH LEFT: the wrap tokenizer
+folds a leading space run the way CSS does, so the indentation is dropped at
+draw time. Nothing in the render says so, and the preview PNG is the only
+other place it shows.
+
+The trap it hides behind is that the authoring rule (indent with U+00A0) IS
+catalogued — in `skills/shojiku-template-author` § Wire gotchas — so a cycle
+can route to it correctly, obey it partially, and still ship, because the
+gate that would have caught the miss was never run.
+
+**After touching any bundled template, run `examples-check`, not `examples`.**
+The same holds for the other verify-only targets: a `make <thing>` that
+PRODUCES an artifact is rarely the target that JUDGES it.
+
+## A gate can be green over a diff that reverts a neighbour's commit
+
+After a mid-cycle rebase, one cycle's diff deleted 47 lines across three
+`docs/` files it had never edited — another branch's Phase E write-backs,
+which had landed on `main` while it was in review. `budget`, `lint`, `test`,
+`coverage`, `examples-check` and `verify:site` were all green over it: no gate
+asks whether a diff undoes someone else's work.
+
+The check that finds it is a set comparison, not a reading:
+
+```sh
+comm -12 <(git diff --name-only origin/main..HEAD | sort) \
+         <(git diff --name-only <old-base>..origin/main | sort)
+```
+
+Every file in BOTH lists is one your branch and `main` both changed —
+legitimate for the files you meant to touch, and a silent revert for the rest.
+Restore those with `git checkout origin/main -- <paths>`.
