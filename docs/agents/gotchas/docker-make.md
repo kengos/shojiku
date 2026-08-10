@@ -90,6 +90,25 @@ hello-world` — and if the tiny pull also stalls, stop debugging the image and
 was unblocked by a Docker Desktop update alone, with no change to the
 Dockerfile that appeared to be failing.
 
+**When you only need to PIN an image, you may not need the pull at all.**
+Pinning a floating tag to a version stalled twice here for ~9 minutes on a
+28 MB image, with the tag confirmed to exist. The pull was never the
+question — the question was whether the cached image IS that version, and
+the registry answers it in one second:
+
+```sh
+docker inspect anchore/syft:latest --format '{{index .RepoDigests 0}}'
+curl -s https://hub.docker.com/v2/repositories/anchore/syft/tags/v1.46.0 \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['digest'])"
+```
+
+Equal digests mean the cached image is byte-identical to the tag, so every
+measurement already taken under `:latest` was a measurement of the pin, and
+`docker tag <cached> <repo>:<version>` makes local runs work while CI pulls
+normally. That comparison also produced the fact that justified the pin:
+`latest` had already moved to v1.50.0 while the committed artifacts recorded
+1.46.0.
+
 One thing worth ruling out first, because it looks identical: a pull of a tag
 that does not exist also hangs silently. Check the tag before blaming the
 daemon —
