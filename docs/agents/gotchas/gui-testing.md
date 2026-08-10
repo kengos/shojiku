@@ -114,6 +114,16 @@
   THROUGH the callback instead (`isEnd(parent, index)`, called as
   `isEnd(drag.parent, …)`), so the guarantee stays where the narrowing
   is and no dead leg exists to cover.
+  **Read a dead leg as a SIGNATURE smell, not a coverage chore** — the
+  remedy is almost always to change what the function TAKES so the
+  guarantee travels with the value, and it improves the API. Two in one
+  cycle: a `chipWireFor(name, format)` that had to re-prove the name was
+  writable (two unreachable legs, because every caller passes a name a
+  planner already proved) became `chipWireWithFormat(provenWire, format)`
+  — TOTAL, with only the format left to check; and an optional
+  `tooltip?` prop went dead the moment both call sites passed one, so it
+  became required and the ternary disappeared. Reaching for a
+  `/* v8 ignore */` on either would have preserved a worse signature.
 - **A guard that MOVES in a refactor carries its `/* v8 ignore */` along
   — and the inherited justification is often stale.** The ignore reads as
   pre-existing and unquestioned, so it silently satisfies any negative-case
