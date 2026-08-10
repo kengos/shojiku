@@ -322,7 +322,7 @@ describe('RowConditionsSection — style controls', () => {
     const controller = section([{ when: { key: 'kind' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
     fireEvent.click(screen.getByRole('button', { name: 'Background' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: '#1d4ed8' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Blue' }));
     expect(controller.apply).toHaveBeenCalledTimes(1);
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
@@ -336,7 +336,7 @@ describe('RowConditionsSection — style controls', () => {
     const controller = section([{ when: { key: 'kind' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
     fireEvent.click(screen.getByRole('button', { name: 'Color' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: '#1d4ed8' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Blue' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: `${TABLE}.row.conditionalStyles[0]`,

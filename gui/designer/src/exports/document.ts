@@ -12,6 +12,7 @@ export {
   type ImageBudgets,
   type ImageKind,
   type ImportRefusal,
+  type ProbeKind,
 } from '../image/model';
 // Reusable-block library types + the restore-time sanitizer (a host persists the
 // app-global block library and hands it back through `DesignerProps.blocks`).

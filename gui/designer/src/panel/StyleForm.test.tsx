@@ -115,7 +115,7 @@ describe('StyleForm — create', () => {
     const trigger = screen.getByRole('button', { name: 'Color' });
     expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
     fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole('menuitem', { name: '#000000' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Black' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(controller.applyAll).toHaveBeenCalledWith([
       { op: 'putValue', keys: ['styles', 'note'], value: {} },

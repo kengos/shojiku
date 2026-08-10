@@ -96,7 +96,7 @@ describe('LineStyleEditor', () => {
   it('authors a picked colour and clears it again', () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Line color' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: '#b91c1c' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
     expect(doc()).toMatch(/color:\s*['"]#b91c1c['"]/);
     fireEvent.click(screen.getByRole('button', { name: 'Line color' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Clear' }));

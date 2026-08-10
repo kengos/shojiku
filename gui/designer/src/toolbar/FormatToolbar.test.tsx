@@ -485,7 +485,7 @@ describe('FormatToolbar — color popover', () => {
     render(<Harness source={TEXT_SRC} />);
     fireEvent.click(screen.getByRole('button', { name: 'Text color' }));
     expect(screen.getByRole('menu')).toBeTruthy();
-    fireEvent.click(screen.getByRole('menuitem', { name: '#b91c1c' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
     expect(doc()).toMatch(/color:\s*['"]#b91c1c['"]/);
     expect(screen.queryByRole('menu')).toBeNull();
   });
@@ -559,7 +559,7 @@ describe('FormatToolbar — color popover', () => {
   it('writes fill (backgroundColor) for a rect color control', () => {
     render(<Harness source={RECT_SRC} />);
     fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: '#1d4ed8' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Blue' }));
     expect(doc()).toMatch(/backgroundColor:\s*['"]#1d4ed8['"]/);
   });
 });

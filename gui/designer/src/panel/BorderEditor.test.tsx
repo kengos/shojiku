@@ -132,7 +132,7 @@ describe('BorderEditor — diagram', () => {
   it('applies a picked pen color to a preset', () => {
     render(<Harness source={RECT} />);
     fireEvent.click(screen.getByRole('button', { name: 'Line color' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: '#b45309' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Amber' }));
     fireEvent.click(screen.getByRole('button', { name: 'All sides' }));
     expect(doc()).toContain('borderColor: "#b45309"');
   });

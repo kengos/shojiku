@@ -144,6 +144,33 @@ describe('DiagnosticsPanel', () => {
       ]);
     });
 
+    it('offers the fix on an unused binding declaration', () => {
+      // The declaration a hand-written (or AI-written) document orphaned: the
+      // panel reaches the registry entry, so the row is actionable rather than
+      // a warning the user has to find in the file themselves.
+      const onApplyFix = vi.fn();
+      const unused: Diagnostic = {
+        severity: 'warning',
+        code: 'unused_binding',
+        category: 'data',
+        message: 'binding declaration `who` is not used',
+        args: { name: 'who' },
+        path: 'sections.body.items[0].bindings.who',
+      };
+      draw(
+        <DiagnosticsPanel
+          diagnostics={[unused]}
+          onSelect={vi.fn()}
+          read={() => ({ bindings: { who: { key: 'customer.name' } } })}
+          onApplyFix={onApplyFix}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: '直す' }));
+      expect(onApplyFix).toHaveBeenCalledWith([
+        { op: 'removeKey', path: 'sections.body.items[0]', keys: ['bindings', 'who'] },
+      ]);
+    });
+
     it('gives the 直す button an instant-tooltip label (never a native title)', () => {
       const { container } = draw(
         <DiagnosticsPanel

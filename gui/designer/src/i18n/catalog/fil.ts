@@ -215,8 +215,8 @@ export const fil: LanguageCatalog = {
     'panel.image.replace': 'Palitan ang larawan…',
     'panel.field.fit': 'Paraan ng pagkasya',
     'image.notice.unsupported_format':
-      'Hindi suportado ang uri ng file na iyon (PNG, JPEG, o SVG).',
-    'image.notice.too_large': 'Masyadong malaki ang larawan, kahit na pinaliit.',
+      'Hindi suportado ang uri ng file na iyon (PNG, JPEG, SVG, GIF, o WebP).',
+    'image.notice.too_large': 'Masyadong malaki ang larawang ito para i-embed.',
     'image.notice.svg_too_large': 'Masyadong malaki ang SVG na ito para i-embed.',
     'image.notice.dimensions': 'Masyadong malaki ang mga sukat ng larawan.',
     'image.notice.decode_failed': 'Hindi mabasa ang larawan.',
@@ -482,7 +482,7 @@ export const fil: LanguageCatalog = {
     'pageSetup.title': 'Setup ng pahina',
     'pageSetup.size': 'Sukat',
     'pageSetup.localeSizes': 'Karaniwang sukat',
-    'pageSetup.allSizes': 'Lahat ng sukat',
+    'pageSetup.otherSizes': 'Iba pang sukat',
     'pageSetup.custom': 'Pasadya…',
     'pageSetup.width': 'Lapad',
     'pageSetup.height': 'Taas',
@@ -499,7 +499,6 @@ export const fil: LanguageCatalog = {
     'pageSetup.margin.right': 'Kanan',
     'pageSetup.margin.bottom': 'Ibaba',
     'pageSetup.margin.left': 'Kaliwa',
-    'defaults.title': 'Mga default ng dokumento',
     'defaults.locale': 'Locale',
     'defaults.localeHint':
       'Hindi ito sinusunod ng preview — ito ang fallback para sa CLI / MCP rendering.',
@@ -704,5 +703,19 @@ export const fil: LanguageCatalog = {
     'severity.error': 'Error',
     'severity.warning': 'Babala',
     'severity.info': 'Impormasyon',
+    // Curated swatch names — a swatch button has no visible text, so this IS
+    // its accessible name (a raw hex is not one a screen-reader user can act on).
+    'color.black': 'Itim',
+    'color.grayDark': 'Madilim na abo',
+    'color.gray': 'Abo',
+    'color.grayLight': 'Mapusyaw na abo',
+    'color.grayPale': 'Bahagyang abo',
+    'color.white': 'Puti',
+    'color.red': 'Pula',
+    'color.orange': 'Kahel',
+    'color.amber': 'Ambar',
+    'color.green': 'Berde',
+    'color.blue': 'Asul',
+    'color.purple': 'Lila',
   },
 };

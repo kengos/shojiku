@@ -149,14 +149,25 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
 - `image/model.ts` — pure, DOM-free: `importPlan`
   (accept/downscale/refuse — SVG never rasterized, over-pixel refused
   before any canvas), `fitDimensions`, `defaultBox` (px → pt at 96 dpi,
-  clamped to content width), `DEFAULT_IMAGE_BUDGETS`. Its three leaves:
-  `image/sniff.ts` (`sniffImage` — magic bytes + the SVG root-element
-  scan, MIME never trusted), `image/dataUri.ts` (`composeDataUri` over a
+  clamped to content width), `DEFAULT_IMAGE_BUDGETS`. **GIF and WebP
+  travel VERBATIM** — a canvas cannot emit GIF and re-encoding either
+  would silently drop an animation — so an over-budget one is REFUSED
+  (`too_large`) where a png/jpeg would be downscaled; `RasterKind` means
+  "re-encodable" and stays png/jpeg, while the wider `ProbeKind` is what
+  the codec can measure. Its four leaves:
+  `image/sniff.ts` (`sniffImage` — magic bytes, both GIF signatures in
+  full and WebP's RIFF FORM tag, + the SVG root-element scan; MIME never
+  trusted), `image/clipboard.ts` (`imageFileFromClipboard` — the
+  defensive walk to a pasted `files[0]`; no MIME filter, since the sniff
+  decides and a "no file" answer is what lets the caller leave a text
+  paste alone), `image/dataUri.ts` (`composeDataUri` over a
   hand-rolled base64 — no `fromCharCode` spread to overflow on a
   multi-megabyte image), `image/capacity.ts`
   (`headroom`/`projectImport` — the pre-op cap gate — plus `nextCapStep`/
   `CAP_STEPS`).
-- `image/import.ts` — the `ImageCodec` host-injection contract +
+- `image/import.ts` — the `ImageCodec` host-injection contract
+  (`probe` takes a `ProbeKind`, so a host measures GIF/WebP too;
+  `reencode` stays `RasterKind` and is never called for them) +
   `importImageFile` orchestration returning typed outcomes (never
   throws; the real browser codec lives in
   `designer-app/src/browser/imageCodec.ts`, coverage-excluded — jsdom

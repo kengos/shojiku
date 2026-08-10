@@ -15,6 +15,26 @@ platform binaries.
 
 ### Added
 
+- **An image on the clipboard can be pasted straight onto the page.** In
+  the Designer, adding a screenshot or a logo meant saving it to a file
+  first and then picking that file. Pressing ⌘V / Ctrl+V anywhere outside
+  a text field now imports it through the same path as the file picker —
+  same size limits, same notices, same single Undo step. Pasting inside a
+  text field still pastes text, and a paste that carries no image is left
+  alone, so the Insert menu's "paste data" flow is unaffected.
+
+- **GIF and WebP images can now be placed.** The engine already drew
+  both; the Designer accepted only PNG, JPEG and SVG. They are embedded
+  exactly as supplied rather than re-encoded, so an animated GIF stays
+  animated — which also means one over the size limit is refused rather
+  than shrunk, since shrinking it would quietly change what it is.
+
+- **A binding declaration nothing uses can be removed in one click.** The
+  warning already said which declaration was orphaned; the diagnostics
+  row now carries the same "Fix" button the other mechanical warnings
+  have. Mostly of use on a document written by hand or by an AI — the
+  Designer's own editing already cleans up after itself.
+
 - **A data field placed in text can now be swapped for another one
   without retyping the sentence.** In the Designer, a `{customer.name}`
   chip could only be changed by deleting it and inserting a replacement
@@ -83,6 +103,20 @@ platform binaries.
   value outside that is refused rather than written, since both
   endpoints are required and a rejected one would stop the document
   parsing.
+
+### Changed
+
+- **Colour swatches announce a colour name instead of a hex code.** A
+  screen reader read the fill and text-colour palettes as "#b91c1c";
+  they now say "Red".
+
+- **The page-size list stops offering the same size twice.** The common
+  sizes for your locale were repeated in the full list below them, with
+  nothing to tell the two entries apart.
+
+- **Clearing a data field says what to do about it.** The message read
+  "data key `` is not declared in definitions", echoing the empty key
+  back; it now asks you to pick a field.
 
 ### Fixed
 

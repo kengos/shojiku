@@ -10,8 +10,10 @@ import { shortcutAction } from '../shortcuts';
 import { seqPosition } from '../tree/reorder';
 import { nextSelectionAfterRemove, seqLength } from '../tree/selection';
 
-/** Whether a keyboard event target is an editable element whose native
- * in-field undo must win over the document-level shortcut. */
+/** Whether an event target is an editable element whose NATIVE handling must
+ * win over a document-level one — the in-field undo against the undo shortcut,
+ * and the in-field text paste against the clipboard image import. Any new
+ * window-level handler that would consume a user's typing belongs behind it. */
 export function isEditableTarget(target: EventTarget | null): boolean {
   return (
     target instanceof HTMLInputElement ||

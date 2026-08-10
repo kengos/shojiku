@@ -233,14 +233,21 @@ lists name the destructured stable fields, never `editor` itself.
 - `hooks/usePaletteDrag.ts` — palette drag-to-bind/scaffold: `useDrag`
   machine, live-rect hit test (`pageHitAt`), `planPaletteDrop` →
   `insertIndicator`, drop = ONE `insertItem` at the plan's path + select.
-- `hooks/useImageImport.ts` — menu entry, canvas file drop, and panel
-  replace route ONE pipeline: size gate → `insertItem`/`setScalar`;
+- `hooks/useImageImport.ts` — menu entry, canvas file drop, clipboard
+  paste and panel replace route ONE pipeline: size gate →
+  `insertItem`/`setScalar`;
   notices ride the topbar `<output>`; `applyRaisedCap`; returns
   `hasImageItem`/`nextCap`. The React wiring only — what the import DOES
   is `hooks/imageImportRun.ts` (`runImageImport` over an explicit
   `ImageImportContext`: the pre-op cap gate, then the op; `textBytes` is
   the RENDER-time size, deliberately not an accessor — plus
   `dropInsertTarget`, where a canvas file drop lands).
+- `hooks/usePasteImage.ts` — the window-level `paste` route into that same
+  pipeline, and the guard ORDER that makes it safe: no codec → inert; an
+  editable target → the platform's own paste keeps the event; a paste
+  carrying no file → NOT consumed (`preventDefault` fires only once a file
+  is in hand, so the insert menu's clipboard-TEXT import and every
+  ordinary text paste are untouched).
 - `hooks/useInsertActions.ts` — plain element insert (band-aware), the
   insert-menu gates (`insertGroups` — a capability-less row is ABSENT
   rather than broken; `canDeclare`), and the four scaffold hooks over one

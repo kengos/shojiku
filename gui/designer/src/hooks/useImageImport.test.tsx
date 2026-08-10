@@ -71,6 +71,16 @@ describe('Designer image import', () => {
     expect(screen.getByText(/Template size/)).toBeTruthy();
   });
 
+  it('offers every accepted format in the file picker', () => {
+    // The picker's filter and the byte sniffer must name the same set — a
+    // format the sniffer accepts but the dialog filters out is unreachable.
+    const { container } = draw(makeTransport(), { imageCodec: fakeCodec() });
+    const accept = fileInput(container).getAttribute('accept') ?? '';
+    for (const mime of ['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'image/webp']) {
+      expect(accept.split(','), mime).toContain(mime);
+    }
+  });
+
   it('shows the downscale notice when an over-budget raster is shrunk', async () => {
     const codec = fakeCodec({
       read: async () => pngBytes(4000),
@@ -91,7 +101,7 @@ describe('Designer image import', () => {
     const { container } = draw(makeTransport(), { imageCodec: codec, onChange });
     pickImage(container);
     expect(
-      await screen.findByText('That file type is not supported (PNG, JPEG, or SVG).'),
+      await screen.findByText('That file type is not supported (PNG, JPEG, SVG, GIF, or WebP).'),
     ).toBeTruthy();
     expect(onChange).not.toHaveBeenCalled();
   });
@@ -352,5 +362,107 @@ describe('Designer image import', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Redo' }));
     await waitFor(() => expect(String(onChange.mock.calls.at(-1)?.[0])).toContain('type: image'));
+  });
+
+  describe('paste', () => {
+    /** jsdom's `ClipboardEvent` carries no `clipboardData` through RTL's
+     * `fireEvent` (the same init-field gap as drop/pointer events), so dispatch
+     * a real event and define the clipboard on it. Returns the event so a test
+     * can ask whether the handler consumed it. */
+    function pasteOn(target: EventTarget, files: File[] | null): Event {
+      const event = new Event('paste', { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'clipboardData', {
+        value: files === null ? null : { files },
+      });
+      target.dispatchEvent(event);
+      return event;
+    }
+
+    it('imports an image pasted anywhere outside a text field', async () => {
+      const onChange = vi.fn();
+      draw(makeTransport(), { imageCodec: fakeCodec(), onChange });
+      const event = pasteOn(document.body, [imageFile()]);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      const doc = String(onChange.mock.calls.at(-1)?.[0]);
+      expect(doc).toContain('type: image');
+      expect(doc).toContain('data:image/png;base64,');
+      // The event is ours once a file is in hand.
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    it('leaves a paste inside a text field to the platform', async () => {
+      const onChange = vi.fn();
+      const { container } = draw(makeTransport(), { imageCodec: fakeCodec(), onChange });
+      const field = document.createElement('input');
+      container.append(field);
+      const event = pasteOn(field, [imageFile()]);
+      // Nothing imported — and, just as load-bearing, the event was NOT
+      // consumed, so the user's own text paste still happens.
+      expect(event.defaultPrevented).toBe(false);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('leaves a paste carrying no file alone', async () => {
+      const onChange = vi.fn();
+      draw(makeTransport(), { imageCodec: fakeCodec(), onChange });
+      // A text paste, and an event with no clipboard at all: the insert menu's
+      // own clipboard-TEXT import still means what it always did.
+      expect(pasteOn(document.body, []).defaultPrevented).toBe(false);
+      expect(pasteOn(document.body, null).defaultPrevented).toBe(false);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('stays inert when the host injected no image codec', async () => {
+      const onChange = vi.fn();
+      draw(makeTransport(), { onChange });
+      expect(pasteOn(document.body, [imageFile()]).defaultPrevented).toBe(false);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('imports only the FIRST file of a multi-file paste', async () => {
+      const onChange = vi.fn();
+      const read = vi.fn(async () => pngBytes(32));
+      draw(makeTransport(), { imageCodec: fakeCodec({ read }), onChange });
+      pasteOn(document.body, [imageFile('a.png'), imageFile('b.png'), imageFile('c.png')]);
+      await waitFor(() => expect(onChange).toHaveBeenCalled());
+      expect(read).toHaveBeenCalledTimes(1);
+    });
+
+    it('runs the template-size gate on a pasted image too, before any op', async () => {
+      // The paste route reaches the document through the same pre-op cap gate
+      // as the picker — asserted HERE rather than left to the picker's own
+      // test, because "it shares the pipeline" is exactly the reasoning that
+      // ships an ungated second entry point.
+      const onChange = vi.fn();
+      const codec = fakeCodec({
+        read: async () => pngBytes(1_600_000),
+        probe: async () => ({ w: 80, h: 80 }),
+      });
+      draw(makeTransport(), { imageCodec: codec, imageBudgets: LOOSE_BUDGETS, onChange });
+      pasteOn(document.body, [imageFile()]);
+      expect(
+        await screen.findByText('Adding this image would exceed the template size limit.'),
+      ).toBeTruthy();
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('refuses a pasted over-budget GIF instead of converting it', async () => {
+      const onChange = vi.fn();
+      const gif = new Uint8Array(4000);
+      gif.set([0x47, 0x49, 0x46, 0x38, 0x39, 0x61], 0);
+      const reencode = vi.fn(async () => pngBytes(16));
+      draw(makeTransport(), {
+        imageCodec: fakeCodec({ read: async () => gif, reencode }),
+        imageBudgets: { ...LOOSE_BUDGETS, maxImageBytes: 1000 },
+        onChange,
+      });
+      pasteOn(document.body, [imageFile('anim.gif')]);
+      expect(await screen.findByText('This image is too large to embed.')).toBeTruthy();
+      expect(reencode).not.toHaveBeenCalled();
+      expect(onChange).not.toHaveBeenCalled();
+    });
   });
 });
