@@ -35,6 +35,23 @@ line / which cause**.
 
 ## Open
 
+- [ ] `make_issue_quiet_last_step_lags_the_failure` — **When**: `make
+      quiet T=gui-test` (also `test:gui`) fails on the vitest COVERAGE
+      thresholds. **Not detected by**: the wrapper's own summary, which
+      reported `last step : == wasm build (size-budgeted) ==` and then
+      printed a "where it broke" excerpt showing `raw=5197977 bytes
+      gzip=2015702 bytes (budget raw<=8388608 gzip<=3145728)` — two
+      numbers COMFORTABLY INSIDE their budget, presented as the failure.
+      The wasm step had succeeded; the real failure was four ERROR lines
+      about branch/line coverage much further down. A reader who trusts
+      the excerpt starts debugging a wasm size budget that is fine.
+      **Recovered by**: `grep "designer test:" .make-logs/last-error.log`
+      and reading the `% Branch` column for the file under 100. The
+      `last step` marker seems to record the last `== step ==` HEADING
+      emitted rather than the step that actually exited non-zero, so any
+      gate whose failure comes from a sub-command after the final heading
+      is mis-attributed the same way.
+
 - [ ] `make_issue_biome_info_outranks_the_error` — **When**: `make
       lint:gui` fails on a real Biome FORMAT error while `gui/biome.json`
       also emits an informational diagnostic (today: its `$schema` pins
