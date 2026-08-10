@@ -183,3 +183,43 @@ fn a_checkbox_may_omit_its_box_entirely_for_auto_sizing() {
     let b = c.box_.expect("box");
     assert!(b.w.is_none() && b.h.is_none());
 }
+
+#[test]
+fn an_ellipse_parses_an_anchor_and_stays_unchanged_without_one() {
+    let Item::Ellipse(e) = item("type: ellipse\nanchor: total\nbox: { w: 40, h: 20 }") else {
+        panic!("ellipse");
+    };
+    assert_eq!(e.anchor.as_deref(), Some("total"));
+    // Absent behaves exactly as before: the key is None and never emitted.
+    let Item::Ellipse(e) = item("type: ellipse\nbox: { x: 1, y: 2, w: 40, h: 20 }") else {
+        panic!("ellipse");
+    };
+    assert!(e.anchor.is_none());
+    let yaml = serde_yaml::to_string(&e).expect("serialize");
+    assert!(!yaml.contains("anchor"), "injected anchor: {yaml}");
+}
+
+#[test]
+fn an_ellipse_may_now_omit_its_box_because_an_anchor_supplies_the_geometry() {
+    // The wire WIDENED here: `box` used to be required. An anchored
+    // ellipse takes its geometry from the item it circles, so the key is
+    // optional — and an unanchored, unsized one is still accepted at
+    // parse and left for layout to refuse with `mark_missing_size`.
+    let Item::Ellipse(e) = item("type: ellipse\nanchor: total") else {
+        panic!("ellipse");
+    };
+    assert!(e.box_.is_none());
+    let Item::Ellipse(e) = item("type: ellipse") else {
+        panic!("ellipse");
+    };
+    assert!(e.box_.is_none() && e.anchor.is_none());
+    // An omitted box is not serialized back as an empty map.
+    let yaml = serde_yaml::to_string(&e).expect("serialize");
+    assert!(!yaml.contains("box"), "injected box: {yaml}");
+}
+
+#[test]
+fn an_ellipses_anchor_must_be_a_scalar_and_the_key_must_be_spelled_right() {
+    assert!(serde_yaml::from_str::<Item>("type: ellipse\nanchor: { item: a }").is_err());
+    assert!(serde_yaml::from_str::<Item>("type: ellipse\nanchors: total").is_err());
+}

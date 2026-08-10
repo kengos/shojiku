@@ -47,6 +47,10 @@ export const en: LanguageCatalog = {
       '`{key}` declares an `enum` that does not list this `equals` value; the item can never be shown',
     visible_type_mismatch: '`{key}` value type differs from `equals`; item not shown',
     visible_value_not_bool: '`{key}` is not a boolean; item not shown',
+    anchor_unknown_target: 'no item has `id: {item}`; the anchored item is not drawn',
+    anchor_cross_page: 'the anchored endpoints land on different pages; the line is not drawn',
+    anchor_ambiguous_target:
+      '`id: {item}` is placed more than once on this page; the anchored item uses the first placement',
     row_condition_not_boolean:
       '`{key}` is not a boolean field; a row condition without `equals` expects one',
     row_condition_type_mismatch: '`{key}` value type differs from `equals`; row style not applied',
@@ -513,6 +517,7 @@ export const en: LanguageCatalog = {
     'canvas.place.grid': 'Grid cell — position set by the tracks',
     'canvas.place.repeat': 'Repeating part — edits affect every instance',
     'canvas.place.noBox': 'No box — edit in the properties panel',
+    'canvas.place.anchored': 'Follows the item it circles',
     'canvas.place.relative': 'Relative units (%/em) — edit in the properties panel',
     'canvas.place.flowPositioned': 'Flow-placed with x/y — edit position in the properties panel',
     'canvas.place.section': 'Section — settings in the properties panel',
@@ -660,6 +665,14 @@ export const en: LanguageCatalog = {
     'panel.line.fromY': 'Start Y',
     'panel.line.toX': 'End X',
     'panel.line.toY': 'End Y',
+    'panel.line.fromItem': 'Start at item',
+    'panel.line.fromEdge': 'Start edge',
+    'panel.line.toItem': 'End at item',
+    'panel.line.toEdge': 'End edge',
+    'panel.line.useAnchor': 'Attach to an item',
+    'panel.line.pickItem': 'Choose an item…',
+    'panel.line.edgeCenter': 'Centre (default)',
+    'panel.line.useCoordinates': 'Use coordinates',
     'panel.line.pointsHint':
       'Relative to the parent. A plain number is points; you can also write 100% to reach the parent’s edge.',
     'panel.effective.label': 'Effective',

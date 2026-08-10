@@ -20,6 +20,30 @@
         }
       ]
     },
+    "AnchorEdge": {
+      "enum": [
+        "top",
+        "right",
+        "bottom",
+        "left",
+        "center"
+      ],
+      "type": "string"
+    },
+    "AnchorOffset": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "format": "double",
+          "type": "number"
+        },
+        "y": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
     "Band": {
       "additionalProperties": false,
       "properties": {
@@ -1871,8 +1895,21 @@
         {
           "additionalProperties": false,
           "properties": {
+            "anchor": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "box": {
-              "$ref": "#/$defs/OptBox"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "data": {
               "anyOf": [
@@ -1915,8 +1952,7 @@
             }
           },
           "required": [
-            "type",
-            "box"
+            "type"
           ],
           "type": "object"
         },
@@ -2492,20 +2528,42 @@
       "type": "object"
     },
     "PointSpec": {
-      "additionalProperties": false,
-      "properties": {
-        "x": {
-          "$ref": "#/$defs/Length"
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "$ref": "#/$defs/Length"
+            },
+            "y": {
+              "$ref": "#/$defs/Length"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "type": "object"
         },
-        "y": {
-          "$ref": "#/$defs/Length"
+        {
+          "additionalProperties": false,
+          "properties": {
+            "edge": {
+              "$ref": "#/$defs/AnchorEdge"
+            },
+            "item": {
+              "type": "string"
+            },
+            "offset": {
+              "$ref": "#/$defs/AnchorOffset"
+            }
+          },
+          "required": [
+            "item"
+          ],
+          "type": "object"
         }
-      },
-      "required": [
-        "x",
-        "y"
-      ],
-      "type": "object"
+      ]
     },
     "Repeat": {
       "enum": [

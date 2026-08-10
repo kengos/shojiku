@@ -166,6 +166,9 @@ inline:
 | `reflow_budget_exhausted` | warning | too many nested boxes needing a second placement (auto-height `stretch` rows, `flexGrow` columns, `fr`-over-auto grids); the innermost children keep their content size |
 | `cut_marks_clipped` | warning | `cutMarks` have no room outside the grid on a sheet side; those ticks are omitted |
 | `header_group_span_clamped` | warning | `headerGroups` spans exceed the table's columns |
+| `anchor_unknown_target` | warning | a `line` endpoint or an `ellipse` names an `id:` no item carries; the anchored item is not drawn ([line.md](line.md)) |
+| `anchor_cross_page` | warning | a line's two anchored endpoints land on different pages; the line is not drawn |
+| `anchor_ambiguous_target` | warning | the anchored id is placed more than once on the page (a `repeat` element, a duplicate id); the FIRST placement in document order is used |
 
 ## Layout — content & data
 

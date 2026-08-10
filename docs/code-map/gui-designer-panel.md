@@ -104,9 +104,21 @@ read side, never the reverse.
   ONLY way to move a line). `readLinePoints` shows a value only if it
   could write it back; `linePointOps` mirrors the engine's own length
   grammar (bare number = pt, else a `%`/`pt`/`mm`/`cm`/`in`/`em`/`rem`
-  suffix) and REFUSES anything outside it — both endpoints are required
-  on the wire (`PointSpec { x, y }`), so there is no key-removal state
-  and an empty entry writes nothing.
+  suffix) and REFUSES anything outside it — a coordinate endpoint's two
+  axes are both required on the wire, so there is no key-removal state
+  and an empty entry writes nothing. The ANCHORED arm
+  (`{ item, edge? }`, capability `line.anchor`) is rendered from the WIRE
+  — `isAnchored` reads whether the endpoint carries `item`, never a UI
+  mode flag, so an externally-authored document displays honestly — and
+  `lineArmOps` switches arms in ONE transactional op list (one undo step,
+  never the mixed shape the engine rejects), dropping only the keys the
+  document actually carries because removing an absent key refuses the
+  whole batch. Both anchored values PICK from closed sets — the five edge
+  keywords, and `panel/anchorTargets.ts`, which reads the placed ids out of the box
+  index so the list is exactly what the engine can resolve (an id with no
+  placement would only produce `anchor_unknown_target`). Attaching
+  picks its target in the same action: switching first would write
+  `item: ''` and the line would vanish before the user chose anything.
 - `panel/BorderEditor.tsx` — the Excel-style border editor shared by the
   decoration tab + toolbar popover; keyed by path at each host so the pen
   resets on selection change. The SHELL only: pen state, the

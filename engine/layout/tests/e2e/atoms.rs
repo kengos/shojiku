@@ -2,6 +2,9 @@
 //! sizing and color diagnostics; image fit and clipping in `image`.
 
 mod image;
+mod line_anchor;
+mod line_anchor_guards;
+mod line_anchor_targets;
 mod line_length;
 mod line_style;
 

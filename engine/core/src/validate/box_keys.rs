@@ -30,7 +30,7 @@ pub(super) fn check_box_keys(template: &Template, diags: &mut Diagnostics) {
             Item::Container(c) => (None, c.box_.as_ref()),
             Item::Repeat(r) => (None, r.cell.box_.as_ref()),
             Item::RepeatFlow(rf) => (None, rf.item.box_.as_ref()),
-            Item::Ellipse(e) => (Some(&e.box_), None),
+            Item::Ellipse(e) => (e.box_.as_ref(), None),
             Item::Checkbox(c) => (c.box_.as_ref(), None),
             Item::Line(_) | Item::Table(_) | Item::PageBreak(_) => (None, None),
         };

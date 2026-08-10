@@ -199,6 +199,15 @@ Pipeline: `Template/Definitions → Bundle → Layout → Render → Preview →
   width is only decided at layout time (the rirekisho name field). Bare
   numbers stay pt and round-trip as bare numbers. Capability key
   `line.length`.
+- **Cross-item anchoring**: a `line` endpoint takes
+  `{ item, edge?, offset? }` instead of coordinates, and an `ellipse`
+  takes `anchor: <id>` to circle another item's glyph band. Following CSS
+  anchor positioning, an anchored item is absolutely positioned: it
+  reserves no space, is drawn on the page its TARGET landed on, and
+  paints after that page's in-flow content. Unresolvable anchors draw
+  nothing and say why (`anchor_unknown_target` / `anchor_cross_page` /
+  `anchor_ambiguous_target`). Capability keys `line.anchor`,
+  `ellipse.anchor`. Spec: [line](line.md), [form_marks](form_marks.md).
 
 **Core invariant: everything resolves to absolute pt at layout time** —
 the `tree.rs` renderer contract never changes for layout features.

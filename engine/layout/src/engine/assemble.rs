@@ -42,6 +42,7 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
         flow_text: false,
         ruby_anchors: Vec::new(),
         split_chrome: crate::engine::text::SplitChrome::default(),
+        pending_anchors: Vec::new(),
     };
     let (page_width, page_height) = input.template.page.dimensions_pt();
     if input.template.page.orientation_ignored() {
@@ -81,13 +82,18 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
                 }
                 // Absolutely placed, so hiding and collapsing look the same
                 // on the page; only the reported `PlacedBox` differs.
-                let mark = (visibility[i] == Visibility::Hidden)
-                    .then(|| visibility::draw_mark(std::slice::from_ref(&page)));
+                let mark = (visibility[i] == Visibility::Hidden).then(|| {
+                    visibility::draw_mark(std::slice::from_ref(&page), ctx.pending_anchors.len())
+                });
                 let item_mark = ctx.enter_item(format!("items[{i}]"));
                 ctx.place_absolute_item(item, &page_basis, &mut page);
                 ctx.leave_item(item_mark);
                 if let Some(mark) = mark {
-                    visibility::blank_since(std::slice::from_mut(&mut page), &mark);
+                    visibility::blank_since(
+                        std::slice::from_mut(&mut page),
+                        &mark,
+                        &mut ctx.pending_anchors,
+                    );
                 }
             }
             ctx.leave_item(body_mark);
@@ -98,6 +104,7 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
     let total = body_pages.len();
     let mut pages = Vec::with_capacity(total);
     let mut box_pages = Vec::with_capacity(total);
+    let mut built: Vec<PageBuild> = Vec::with_capacity(total);
     for (index, mut body_page) in body_pages.into_iter().enumerate() {
         let page_no = index + 1;
         let mut items = Vec::new();
@@ -124,8 +131,16 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
                 translate_boxes(&boxes, margin[0]),
             )
         };
-        pages.push(LayoutPage { items });
-        box_pages.push(boxes);
+        built.push(PageBuild { items, boxes });
+    }
+    // Anchored lines resolve here, against every finished page at once:
+    // an anchored endpoint is drawn on the page its TARGET landed on, not
+    // on the page the walk happened to be building. Sheet coordinates —
+    // the margin translate above has already run.
+    ctx.drain_anchors(&mut built, &page_basis, margin[0]);
+    for page in built {
+        pages.push(LayoutPage { items: page.items });
+        box_pages.push(page.boxes);
     }
 
     // The re-flow budget is reported here, after the whole walk, because

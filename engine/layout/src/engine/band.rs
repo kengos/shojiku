@@ -29,8 +29,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
             // A band item is absolutely placed, so hiding and collapsing
             // look identical on the page; they differ only in whether a
             // `PlacedBox` is reported for the Designer to ghost.
-            let mark = (visibility[i] == Visibility::Hidden)
-                .then(|| visibility::draw_mark(std::slice::from_ref(&out)));
+            let mark = (visibility[i] == Visibility::Hidden).then(|| {
+                visibility::draw_mark(std::slice::from_ref(&out), self.pending_anchors.len())
+            });
             let item_mark = self.enter_item(format!("items[{i}]"));
             // Every arm builds an atom and hands it to `emit_placed`, the
             // one tail that translates it onto the page AND checks the
@@ -106,7 +107,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 }
                 Item::Ellipse(e) => {
                     if let Some(atom) = self.ellipse_atom(e, basis) {
-                        let dy = self.resolve_y(e.box_.y, basis).unwrap_or(0.0);
+                        let dy = self
+                            .resolve_y(e.box_.clone().unwrap_or_default().y, basis)
+                            .unwrap_or(0.0);
                         self.emit_placed(&mut out, atom, dy, basis);
                     }
                 }
@@ -139,7 +142,11 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
             self.leave_item(item_mark);
             if let Some(mark) = mark {
-                visibility::blank_since(std::slice::from_mut(&mut out), &mark);
+                visibility::blank_since(
+                    std::slice::from_mut(&mut out),
+                    &mark,
+                    &mut self.pending_anchors,
+                );
             }
         }
         self.leave_item(band_mark);

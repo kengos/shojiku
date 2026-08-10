@@ -44,6 +44,36 @@ above the box center, so the oval needs per-font pixel-tuning. Use the
 text-anchored [`mark:`](#text-anchored-circle-mark-on-text) below, which
 auto-centers on the glyphs.
 
+### `anchor:` — circling an item you cannot author `mark:` on
+
+`mark:` is authored on the text item itself. When the thing to circle is
+NOT yours to edit that way — a `rect`, a table cell's label, a text item
+whose circle must be a separate conditionally-drawn item — an `ellipse`
+can name it by `id:` instead:
+
+```yaml
+- { type: text, id: chosen, text: "Express", box: { x: 20, y: 40, w: 80, h: 16 } }
+- { type: ellipse, anchor: chosen, data: { key: express } }
+```
+
+It centres on the target's **glyph band** (the inked extent from its text
+metrics) — not on its padded box — and, unsized, takes that band plus 0.4
+of its height as clearance on every side. The clearance is the point: an
+oval on the band's exact extent is widest at mid-height, so its arcs cross
+the glyphs and it reads as a strikethrough. (The text `mark:` overlay pads
+by the same fraction of the font size, for the same reason.) A target with
+no text metrics — a `rect`, an image, a QR — falls back to its border box,
+padded the same way.
+
+Like an anchored [`line`](line.md) endpoint, this makes the ellipse
+absolutely positioned: it reserves no space, it is drawn on the page its
+TARGET landed on, and it paints after that page's in-flow content.
+`box.w`/`box.h` still SIZE it (centred on the same band, clearance
+included in the default only); `box.x`/`box.y` are not read — the anchor
+decides where it sits, and the Designer therefore refuses to drag an
+anchored ellipse rather than writing coordinates the engine ignores. Prefer `mark:` when the
+text is yours to author on; reach for `anchor:` when it is not.
+
 ## Text-anchored circle (`mark:` on text)
 
 A `mark:` on a **text item** overlays an oval that auto-centers on the
@@ -172,8 +202,16 @@ glyphs).
 
 ## Limitations
 
-- An `ellipse` needs a positive `box.w`/`box.h`; only a `checkbox` may omit
-  them and auto-size (`mark_missing_size`).
+- An `ellipse` needs a positive `box.w`/`box.h`; only a `checkbox`, or an
+  `ellipse` with `anchor:`, may omit them (`mark_missing_size`).
+- An anchored `ellipse` is not draggable on the canvas, and there is no
+  Designer field for `anchor:` yet — it is authored in the file. Its
+  clearance is not authorable either: give an explicit `box.w`/`box.h` to
+  override the default size.
+- An anchored `ellipse` ignores `box.x`/`box.y`, resolves to the FIRST
+  placement of that id on the page (`anchor_ambiguous_target` when there
+  is more than one), and draws nothing when the id is unknown
+  (`anchor_unknown_target`).
 - Per-side `borderWidth` is reduced to the top side
   (`shape_border_sides_ignored`), and a radius is refused
   (`border_radius_ignored`).
@@ -190,6 +228,8 @@ glyphs).
 | Code | Severity | Meaning |
 | --- | --- | --- |
 | `mark_missing_size` | warning | `box.w`/`box.h` absent or non-positive; skipped |
+| `anchor_unknown_target` | warning | no item carries the `anchor:` id; nothing drawn |
+| `anchor_ambiguous_target` | warning | the id is placed more than once on the page; the first placement wins |
 | `mark_content_conflict` | warning | checkbox sets both `checked` and `data` (`data` wins) |
 | `mark_equals_type_mismatch` | warning | value type differs from `equals`; not drawn. With definitions, the DECLARED type is checked the same way at validate |
 | `mark_equals_not_declared` | warning | the `equals` literal is outside the field's declared `enum` — a mark that can never be drawn |
@@ -199,7 +239,7 @@ glyphs).
 | `shape_style_ignored` | warning | (validation) text/box keys on a mark's inline `style` have no effect |
 | `shape_border_sides_ignored` | warning | a per-side `borderWidth` map on a mark reduced to the top side |
 
-Capability keys: `ellipse`, `checkbox`, `text.mark`,
+Capability keys: `ellipse`, `ellipse.anchor`, `checkbox`, `text.mark`,
 `checkbox.auto_size`, `inspect.text_metrics`, `style.shapes.unified`.
 
 ## See also

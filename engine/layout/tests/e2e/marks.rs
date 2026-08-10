@@ -20,6 +20,7 @@ sections:
 }
 
 mod auto_size;
+mod ellipse_anchor;
 mod guards;
 mod placement;
 mod predicate;

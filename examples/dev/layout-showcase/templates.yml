@@ -2019,3 +2019,57 @@ sections:
                   # equals なし → 真偽値として読む
                   # 配列の値なら contains（複数選択）
                   # page_break に付ければ「条件つき改ページ」
+
+      - { type: page_break }
+
+      # ------------------------------------------------ anchor
+      - type: text
+        text: "15. anchor — 他の item を指す線と、囲む楕円"
+        styleNames: [ h2 ]
+
+      - type: text
+        styleNames: [ body ]
+        text: "端点に座標ではなく相手の id を書くと、線はその item の置かれた場所を追う。CSS の anchor positioning と同じく絶対配置になり、場所を取らず、相手が載ったページの最前面に描かれる。ellipse の anchor: は箱ではなく字面（グリフ帯）に中心を合わせるので、フォントごとの微調整が要らない。"
+
+      - type: container
+        box: { direction: row, gap: 12 }
+        items:
+          - type: container
+            box: { flexBasis: 0, flexGrow: 1, padding: 8, h: 112 }
+            styleNames: [ panel ]
+            items:
+              - { type: text, text: "引き出し線と囲み", styleNames: [ caption ] }
+              - type: text
+                id: anchor_note
+                box: { x: 8, y: 30, w: 52, h: 16 }
+                text: "内税です"
+                style: { fontSize: 10, color: "#c92a2a" }
+              - type: text
+                id: anchor_total
+                box: { x: 150, y: 66, w: 80, h: 18 }
+                text: "合計 12,800"
+                style: { fontSize: 11 }
+              # 両端とも id: 相手が動けば線も動く。座標を測り直さない。
+              - type: line
+                from: { item: anchor_note, edge: right }
+                to: { item: anchor_total, edge: left, offset: { x: -4 } }
+                style: { width: 0.6, color: "#c92a2a" }
+              # 箱ではなく字面に中心を合わせるので、はみ出さない。
+              - { type: ellipse, anchor: anchor_total, style: { borderColor: "#c92a2a", borderWidth: 0.8 } }
+          - type: container
+            box: { padding: 8, flexBasis: 0, flexGrow: 1 }
+            styleNames: [ codePanel ]
+            items:
+              - type: text
+                styleNames: [ code ]
+                text: |-
+                  - type: line
+                    from: { item: anchor_note, edge: right }
+                    to: { item: anchor_total, edge: left }
+                  - type: ellipse
+                    anchor: anchor_total
+                  # edge 既定は center（top/right/bottom/left/center）
+                  # offset: { x, y } は pt でずらす
+                  # 片側だけ座標にすると、その座標は
+                  #   ページの余白ボックス基準（絶対配置なので）
+                  # 相手が見つからない → 描かず anchor_unknown_target

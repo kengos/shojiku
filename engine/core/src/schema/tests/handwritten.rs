@@ -9,7 +9,7 @@
 use super::{pin, schema_of};
 use crate::{
     BorderColor, BorderStyle, BorderStyleKind, BorderWidth, EdgeValue, EnumEntry, EqualsValue,
-    PageMargin, TextCombineUpright, TrackSpec,
+    PageMargin, PointSpec, TextCombineUpright, TrackSpec,
 };
 
 #[test]
@@ -105,4 +105,32 @@ fn enum_entry_takes_the_labeled_object_or_a_bare_scalar() {
         // An object goes to the labeled form, which is deny_unknown_fields.
         &["{ value: shipped, labell: x }", "{ a: 1 }"],
     );
+}
+
+#[test]
+fn a_point_takes_coordinates_or_an_anchor_but_never_a_mix() {
+    pin::<PointSpec>(
+        &[
+            "{ x: 0, y: 0 }",
+            "{ x: \"50%\", y: \"2em\" }",
+            "{ item: total }",
+            "{ item: total, edge: left, offset: { x: 4, y: -2 } }",
+        ],
+        // The two arms are exclusive, both are complete-or-nothing, and an
+        // unknown key is refused BY NAME — the guarantee the untagged enum
+        // would have cost.
+        &[
+            "{ x: 0, item: total }",
+            "{ x: 0 }",
+            "{}",
+            "{ item: total, edge: centre }",
+            "{ x: 0, y: 0, z: 1 }",
+        ],
+    );
+    // The schema states the two arms rather than forwarding the permissive
+    // helper the parser reads through.
+    let schema = schema_of::<PointSpec>();
+    let arms = schema["oneOf"].as_array().expect("two arms");
+    assert_eq!(arms.len(), 2);
+    assert_eq!(arms[1]["required"][0], "item");
 }
