@@ -544,3 +544,20 @@ ever see — when the version has NOT moved but the bytes have, since same
 version + different build is by definition a build nobody released. A
 mid-cycle `make site-wasm-release` therefore fails loudly instead of
 silently re-pointing the site at HEAD.
+
+## A CI job that dies at exit 125 is an image pull, not your change
+
+`docker: read tcp …: connection reset by peer` followed by
+`make: *** [...] Error 125` is the Docker CLI failing to PULL, after a
+couple of minutes of `Retrying in N seconds` lines. Exit 125 is docker
+itself refusing, before your command ever runs.
+
+It reads as a red gate on whichever job drew the short straw, which is
+usually one your diff cannot reach — an engine/gui change failing
+`install proof — dotnet`. Two signals separate it from a real failure:
+the same check passed on an earlier run of an identical tree, and the log
+carries no output from the command the job was supposed to run.
+
+`gh run rerun <run-id> --failed` re-runs only the failed jobs. Do that
+rather than merging over it; a flake and a real break look the same in the
+checks list, and only the log tells them apart.

@@ -732,3 +732,24 @@ conversation says so. Both halves of that have shipped here.
   separator character to get wrong — `JSON.stringify([a, b])` rather
   than joining on a delimiter, which is the right answer anyway when the
   parts are document-derived and could contain that delimiter.
+
+## Claims that live outside prose
+
+- **A limitation you are RETIRING is written in the retired sentence's
+  words, not in the new feature's.** Shipping `visible:` made
+  `page_break.md`'s "no keys beyond `id`: … and no conditional break" false.
+  The subject sweep for the new spellings (`visible`, `collapse`) hit 33 and
+  24 doc files respectively and did not surface it, because the stale
+  sentence contains neither word. Grep the CLAIM being retired
+  ("conditional", "not supported", "cannot"), not the key that retires it —
+  by definition the new key appears nowhere yet, which is exactly why a
+  sweep keyed on it reads clean.
+- **A CODE COMMENT asserting a limitation is a falsifiable claim, and it is
+  the one nobody greps.** A panel shipped with "the panel has no handle on
+  the enclosing array from a selected child … so the gap is a narrower
+  picker, never a wrong write." A helper doing precisely that existed and was
+  used by five other files, and the write really was wrong. Both halves were
+  checkable in one grep. The comment is worse than silence: it explains why
+  the defect is safe, so the next reader stops looking. Any comment
+  containing "no way to", "has no handle on", "cannot" gets the same grep a
+  doc claim would.
