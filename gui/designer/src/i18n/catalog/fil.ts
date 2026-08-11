@@ -170,6 +170,7 @@ export const fil: LanguageCatalog = {
     'panel.layout.shrinkConfirm.confirm': 'Tanggalin',
     'panel.layout.shrinkConfirm.cancel': 'Kanselahin',
     'contextMenu.wrap': 'Igrupo sa isang container',
+    'contextMenu.border': 'Mga border…',
     'insert.group.reuseBlock': 'Mga nagagamit-muling block',
     'insert.saveBlock': 'I-save ang napili bilang block…',
     'insert.saveBlock.needsSelection': 'Pumili muna ng isang elemento',

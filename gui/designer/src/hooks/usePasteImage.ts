@@ -9,7 +9,7 @@ import { imageFileFromClipboard } from '../image/clipboard';
 import type { ImageCodec } from '../image/import';
 import type { InsertTarget } from '../insert/model';
 import type { ImageAction } from './imageImportRun';
-import { isEditableTarget } from './useSelectionOps';
+import { isEditableTarget } from './useSelectionShortcuts';
 
 export interface PasteImageOptions {
   /** Absent = the host injected no codec; the paste route stays inert, exactly

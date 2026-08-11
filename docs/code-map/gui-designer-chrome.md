@@ -275,8 +275,21 @@ is Tailwind utilities over the `--sj-*` tokens.
   `size` prop: `default` 460px / `roomy` 560px / `wide` 900px.
 - `ui/Offcanvas.tsx` — Modal's bottom-anchored sibling with a light
   scrim (the column sheet's frame).
-- `ui/ContextMenu.tsx` — hand-rolled fixed `role="menu"` at the click
-  point (Headless UI's Menu is trigger-anchored).
+- `ui/AnchoredSurface.tsx` — the pointer-anchored surface BOTH the context
+  menu and the border popover sit in: fixed `role="menu"` at the click
+  point, Escape (capture + stopPropagation, so the window-level deselect
+  never also fires) / outside-pointerdown dismissal, and the viewport
+  clamp. The element is held in STATE, not a ref (the clamp needs a
+  render, and a state-held node is null on unmount); `role` is a LITERAL
+  because the a11y lint reads it statically. There is no closed state —
+  the caller decides whether it exists.
+- `ui/anchorPosition.ts` — pure `clampToViewport` + `ANCHOR_MARGIN_PX`: a
+  surface hanging off the right/bottom edge is pulled back; one larger
+  than the viewport pins to the margin rather than off the near edge.
+- `ui/ContextMenu.tsx` — the menu itself over `AnchoredSurface`
+  (Headless UI's Menu is trigger-anchored, hence hand-rolled):
+  `role="menuitem"` buttons, first-row focus on open, roving arrows.
+  Labels are CHROME text, never document content.
 - `ui/ColorSwatchPicker.tsx` — curated swatches + native color input,
   no hand-typed hex; document colors pass `isHexColor` before the chip
   preview; the caller owns the op. A swatch button carries no visible
