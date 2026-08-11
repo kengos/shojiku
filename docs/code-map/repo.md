@@ -151,7 +151,7 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
 
 - `docker/` — the runtime image.
 - `site/` — the public site (Cloudflare Pages): a STANDALONE pnpm project
-  (not a gui/ workspace member), VitePress, ten nav pages + the index
+  (not a gui/ workspace member), VitePress, eleven nav pages + the index
   ×2 locales (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per
   `shojiku-copywriter`'s vendored prose standard, EN derived), PLUS the
   projected reference. It is the reader-facing home for the reference —
@@ -159,7 +159,15 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   and the list of which docs pages are projected live in
   [../architecture.md](../architecture.md) § Where a doc paragraph goes.
   **The reference (`/reference/**`, `/ja/reference/**`)**: every
-  `docs/engine/*.md` becomes one route, generated into `site/reference/`
+  `docs/engine/*.md` becomes one route EXCEPT the repo-only
+  `features.md` (`reference.ts` § `REPO_ONLY` — the capability record is
+  development history, not authorable syntax; it is not routed, not
+  staged raw and not inlined in llms-full, and `referenceStems()` is the
+  single filter all three readers use: `assemble-data.ts`, `config.mts`
+  and the gates. A `docs/engine/` page links to it as
+  `](../engine/features.md)`, which the outlink rewrite absolutises and
+  round-trips; `bareRepoOnlyLinks` fails the gate on the sibling form).
+  Routes are generated into `site/reference/`
   and `site/ja/reference/` (both GITIGNORED — nobody edits them) by
   `assemble-data.ts`. `README.md` is the landing (`index`, full width);
   each page gains a provenance strip and a live demo. Each source page
@@ -170,16 +178,19 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   ORDER comes from the catalog's own item list, so nobody maintains a
   second taxonomy. Four groups under `templates.yml` (root · item · item
   keys · layout modes), `definitions.yml`, and five Concepts — exactly the
-  31 feature pages. A page missing its front-matter FAILS the build.
+  32 feature pages. A page missing its front-matter FAILS the build.
   The projection makes exactly FOUR reversible edits to a body (links
   leaving `docs/engine/` → absolute repo URLs; `README.md` → the landing;
   inline code holding `{{` → `v-pre`, since Vue reads a double brace as an
   interpolation; the generated blocks between `<!-- rf:begin/end -->`
   markers) and `src/reference.test.ts` undoes all four and demands the
   source body BYTE FOR BYTE — so a fifth edit is a red gate. It also holds
-  the route total (33, not `> 0`), the catalog↔front-matter bijection (81
+  BOTH totals, not `> 0` (34 source files, 33 routed — pinning only one
+  would let a `REPO_ONLY` addition shrink the site silently), the
+  catalog↔front-matter bijection (84
   shapes claimed exactly once), tree coverage, the internalised-outlink
-  negative sweep, and the Limitations claims (every code named on a
+  negative sweep, the bare-sibling sweep over the repo-only pages, and
+  the Limitations claims (every code named on a
   `## Limitations` section must exist in `docs/engine/diagnostics.md`).
   **The demos** (`src/demos/<page>/`, one per feature page:
   `templates.yml` + optional `params.json`/`definitions.yml`/`expect.json`)
@@ -234,9 +245,11 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   build-time pure-Node assembly (public/data wasm+tiered fonts+live
   examples, gallery previews, brand renders, llms.txt/llms-full.txt —
   which inlines the reference's AUTHORING pages, bodies only, so an agent
-  asking about `flex` has it; `features.md` is the one page left out
-  (`src/lib/reference.ts` § `LLMS_FULL_OMIT`): it is the decision log
-  rather than authorable syntax, and a THIRD of the payload. llms.txt's
+  asking about `flex` has it. `features.md` is absent because it is not a
+  reference page at all (§ `REPO_ONLY`) — it is the decision log rather
+  than authorable syntax, and at ~148 KB it would be a THIRD of the
+  payload; llms.txt names it under Repository truth so an agent that
+  wants it still knows where it is. llms.txt's
   Site list is `SITE_PAGES` in `src/lib/llms.ts`, hand-ordered to follow
   the nav, and `checkSitePages()` fails the build when it and `site/*.md`
   drift apart in either direction — an entry with no file renders as a

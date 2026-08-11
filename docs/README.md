@@ -74,6 +74,9 @@ Reference shelf (all audiences):
 
 - [engine/features.md](engine/features.md) — the implemented-capability
   inventory and the decision log (the *why* behind the reference).
+  Repository-only: it is the one `docs/engine/` page the site does not
+  render, because it records development history rather than authorable
+  syntax. The reader-facing counterpart is the site's Features page.
 - [migration-thinreports.md](migration-thinreports.md) — migrating a legacy
   Thinreports report by visual regeneration, worked end to end over a bundled
   before/after pair (evaluator- and contributor-facing).

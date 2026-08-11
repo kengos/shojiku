@@ -25,10 +25,12 @@ capabilities` prints the key list, and each page notes its capability
 keys. Template authors targeting one engine build can ignore them —
 they exist so GUIs/SDKs can gate features across engine versions.
 
-The development-facing companion [features.md](features.md) carries the
+The development-facing companion [features.md](../engine/features.md) carries the
 implemented-capability inventory and the decision log — *that* a feature
 exists and why it is shaped that way; the pages here carry only *how to
-author it*.
+author it*. It lives in the repository only and is not part of this
+rendered reference; the reader-facing tour of what the engine does is the
+site's own [Features](https://shojiku.pages.dev/features) page.
 
 ## A minimal template
 

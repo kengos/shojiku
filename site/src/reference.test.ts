@@ -5,13 +5,15 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  bareRepoOnlyLinks,
   landingIndex,
-  llmsFullPages,
   NON_FEATURE,
   projectPage,
   projectedBody,
   readPage,
   REFERENCE_LOCALES,
+  referenceStems,
+  REPO_ONLY,
   SOURCE_DIR,
   type ReferencePage,
 } from "./lib/reference.ts";
@@ -21,7 +23,8 @@ import { DEMO_DIR } from "./lib/demos.ts";
 const REPO = new URL("../../", import.meta.url);
 const at = (p: string): string => fileURLToPath(new URL(p, REPO));
 
-const stems = readdirSync(at(SOURCE_DIR)).filter((f) => f.endsWith(".md")).map((f) => f.slice(0, -3)).sort();
+const sourceFiles = readdirSync(at(SOURCE_DIR)).filter((f) => f.endsWith(".md")).map((f) => f.slice(0, -3)).sort();
+const stems = referenceStems(readdirSync(at(SOURCE_DIR)));
 const pages: ReferencePage[] = stems.map((s) => readPage(s, readFileSync(at(`${SOURCE_DIR}${s}.md`), "utf8")));
 const catalog = JSON.parse(readFileSync(at("engine/authoring/reference/catalog.schema.json"), "utf8")) as {
   $defs: Record<string, unknown>;
@@ -29,15 +32,23 @@ const catalog = JSON.parse(readFileSync(at("engine/authoring/reference/catalog.s
 const features = stems.filter((s) => !(NON_FEATURE as readonly string[]).includes(s));
 
 describe("every reference page has a route", () => {
-  // The real total, not `> 0`: a projection that silently drops a page is
-  // exactly what a greater-than-zero assertion cannot see.
-  it("routes all 34 source files, in both locales", () => {
-    expect(stems).toHaveLength(34);
+  // The real totals, not `> 0`: a projection that silently drops a page is
+  // exactly what a greater-than-zero assertion cannot see. The two counts
+  // differ by the repo-only files, and BOTH are pinned — otherwise adding a
+  // stem to REPO_ONLY would silently shrink the site by one page.
+  it("routes every reference page but the repo-only ones, in both locales", () => {
+    expect(sourceFiles).toHaveLength(34);
+    expect(REPO_ONLY).toHaveLength(1);
+    expect(stems).toHaveLength(33);
     expect(features).toHaveLength(32);
     expect(REFERENCE_LOCALES).toHaveLength(2);
     const routes = pages.map((p) => (p.stem === "README" ? "index" : p.stem));
-    expect(new Set(routes).size).toBe(34);
+    expect(new Set(routes).size).toBe(33);
     expect(routes).toContain("index");
+  });
+
+  it("routes no repo-only page", () => {
+    for (const stem of REPO_ONLY) expect(stems).not.toContain(stem);
   });
 
   it("gives every feature page a demo, and no demo an orphan page", () => {
@@ -45,13 +56,33 @@ describe("every reference page has a route", () => {
   });
 });
 
+describe("nothing links a repo-only page as a site route", () => {
+  // `features.md` is not routed, so a sibling `](features.md)` in a projected
+  // page is a VitePress dead link — a build failure whose message names the
+  // rendered route, not the source line to fix. This says the fix instead:
+  // write `](../engine/features.md)`, which edit 1 turns into a repository
+  // URL and edit 1's inverse restores byte for byte.
+  it.each(pages.map((p) => [p.stem, p] as const))("%s links it as ../engine/, not as a sibling", (stem, page) => {
+    expect(bareRepoOnlyLinks(page.body), `${stem}: rewrite as ](../engine/<stem>.md)`).toEqual([]);
+  });
+
+  it("catches the spelling it exists to catch", () => {
+    // A positive control: an empty result must mean "no offenders", not "the
+    // pattern never matches". Both the bare and the anchored form are caught,
+    // and the correct `../` spelling is left alone.
+    expect(bareRepoOnlyLinks("see [x](features.md) here")).toEqual(["features"]);
+    expect(bareRepoOnlyLinks("see [x](features.md#decision-log)")).toEqual(["features"]);
+    expect(bareRepoOnlyLinks("see [x](../engine/features.md)")).toEqual([]);
+    expect(bareRepoOnlyLinks("see [x](box.md) and [y](README.md)")).toEqual([]);
+  });
+});
+
 describe("what llms-full.txt inlines", () => {
-  // features.md is the decision log — a third of the payload (146,877 of
-  // 442,505 bytes) that an agent asking how to write `flex` never reads.
-  // README.md is the index and MUST stay, which is why LLMS_FULL_OMIT is its
-  // own list rather than a reuse of NON_FEATURE.
-  it("carries all 34 pages but features.md", () => {
-    const inlined = llmsFullPages(pages).map((p) => p.stem);
+  // Every page the site renders, which is now the same set: `features.md`
+  // is not a reference page at all, so it is not inlined, routed or staged
+  // — one exclusion instead of the three special cases this used to need.
+  it("carries every reference page", () => {
+    const inlined = pages.map((p) => p.stem);
     expect(inlined).toHaveLength(33);
     expect(inlined).not.toContain("features");
     expect(inlined).toContain("README");

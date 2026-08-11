@@ -27,6 +27,7 @@ export interface SitePage {
 export const SITE_PAGES: readonly SitePage[] = [
   { stem: "index", title: "Shojiku" },
   { stem: "concept", title: "Concept" },
+  { stem: "features", title: "Features" },
   { stem: "gallery", title: "Gallery" },
   { stem: "tutorials", title: "Production tutorials" },
   { stem: "playground", title: "Playground" },
@@ -68,9 +69,12 @@ export function renderLlmsTxt(pages: readonly SitePage[]): string {
     `- [Template reference](${RAW}/docs/engine/README.md)`,
     `- [Diagnostics registry](${RAW}/docs/engine/diagnostics.md)`,
     "  (both are rendered on this site under /reference/, one route per page,",
-    "  each page's own markdown at /data/reference/<page>.md; llms-full.txt",
-    "  below inlines every one of them except features.md, which records why",
-    "  the engine is shaped as it is rather than how to author it)",
+    "  each page's own markdown at /data/reference/<page>.md, and llms-full.txt",
+    "  below inlines every one of them)",
+    `- [Capability record](${RAW}/docs/engine/features.md)`,
+    "  (what shipped and why it is shaped that way, as opposed to how to author",
+    "  it. Repository-only: it is not rendered on this site and is not inlined",
+    "  below, so fetch it directly. The reader-facing tour is /features.md)",
     `- [Quickstart](${RAW}/docs/quickstart.md)`,
     `- [Architecture](${RAW}/docs/architecture.md)`,
     `- [Thinreports migration](${RAW}/docs/migration-thinreports.md)`,
@@ -87,8 +91,9 @@ export interface FullDoc {
 /** llms-full.txt: the shared preamble, the gallery index (generated from
  * gallery.yml), then the repo docs the caller passes — concatenated verbatim,
  * separated by labeled rules so an agent can navigate. `assemble-data.ts`
- * passes the reference's AUTHORING pages (every docs/engine/ page except
- * features.md, bodies only) plus the quickstart, so an agent that needs
+ * passes the reference's AUTHORING pages (every page the site routes, which
+ * excludes the repo-only capability record, bodies only) plus the quickstart,
+ * so an agent that needs
  * `flex` has it here rather than having to fetch a second file. This renderer
  * still takes whatever list it is given. */
 export function renderLlmsFull(

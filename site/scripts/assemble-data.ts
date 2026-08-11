@@ -10,7 +10,7 @@ import { parseGallery } from "../src/lib/gallery.ts";
 import { MAX_FILE_BYTES, subsetManifest, TIERS } from "../src/lib/fonts.ts";
 import { checkSitePages, renderLlmsFull, renderLlmsTxt, SITE_PAGES } from "../src/lib/llms.ts";
 import { DEMO_DIR } from "../src/lib/demos.ts";
-import { landingIndex, llmsFullPages, projectPage, readPage, REFERENCE_LOCALES, SOURCE_DIR } from "../src/lib/reference.ts";
+import { landingIndex, projectPage, readPage, REFERENCE_LOCALES, referenceStems, SOURCE_DIR } from "../src/lib/reference.ts";
 
 const SITE = join(import.meta.dirname, "..");
 const ROOT = join(SITE, "..");
@@ -83,7 +83,7 @@ for (const dir of LIVE) {
 // The reference pages, read once: step 5 inlines their bodies and step 6
 // projects them into routes.
 const srcDir = join(ROOT, SOURCE_DIR);
-const stems = readdirSync(srcDir).filter((f) => f.endsWith(".md")).map((f) => f.slice(0, -3)).sort();
+const stems = referenceStems(readdirSync(srcDir));
 const refPages = stems.map((s) => readPage(s, readFileSync(join(srcDir, `${s}.md`), "utf8")));
 const demoNames = new Set(readdirSync(join(ROOT, DEMO_DIR)));
 
@@ -92,8 +92,9 @@ const demoNames = new Set(readdirSync(join(ROOT, DEMO_DIR)));
 //    an agent asking about `flex` used to get the index and have to fetch the
 //    rest. Bodies only — the `reference:` front-matter is projection metadata,
 //    not documentation, and would read as authorable syntax. `features.md` is
-//    left out (src/lib/reference.ts § LLMS_FULL_OMIT): it is the decision log,
-//    and a third of the payload.
+//    never read at all: `referenceStems` drops it as repo-only, so the
+//    decision log (a third of the payload) is not inlined, routed or staged
+//    (src/lib/reference.ts § REPO_ONLY).
 //    The Site list is checked against the pages that really exist rather than
 //    trusted — an entry with no file is a 404 an agent follows.
 checkSitePages(readdirSync(SITE).filter((f) => f.endsWith(".md")).map((f) => f.slice(0, -3)));
@@ -103,7 +104,7 @@ putText(
     readFileSync(join(SITE, "src", "llms-preamble.md"), "utf8"),
     gallery,
     [
-      ...llmsFullPages(refPages).map((p) => ({ label: `${SOURCE_DIR}${p.stem}.md — ${p.meta.summary}`, text: p.body })),
+      ...refPages.map((p) => ({ label: `${SOURCE_DIR}${p.stem}.md — ${p.meta.summary}`, text: p.body })),
       { label: "docs/quickstart.md", text: readFileSync(join(ROOT, "docs", "quickstart.md"), "utf8") },
     ],
   ),

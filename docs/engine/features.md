@@ -1,10 +1,3 @@
----
-reference:
-  group: appendix
-  order: 1
-  summary: "What the engine can do today — shipped capabilities and the decisions behind them."
----
-
 # Engine features (implemented)
 
 What the Shojiku engine (`engine/`) can do **today**. This is the record of
