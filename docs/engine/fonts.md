@@ -75,7 +75,7 @@ change.
 | --- | --- |
 | `zh-TW` | `uses: [noto-sans-tc, noto-sans-mono]`, TWD default (CLDR `$` — the local dollar), `y年M月d日` patterns, weekday short names. |
 | `zh-CN` | `uses: [noto-sans-sc, noto-sans-mono]`, CNY default (`¥`), `y年M月d日` patterns, weekday short names. |
-| `hi-IN` | `uses: [noto-sans-devanagari, noto-sans, noto-sans-mono]`, `fallback: [noto-sans]` for Latin, INR default (`₹`), `d MMM y` patterns. Groups digits in 3s, not lakh/crore — see [features.md](features.md) § Locale data. |
+| `hi-IN` | `uses: [noto-sans-devanagari, noto-sans, noto-sans-mono]`, `fallback: [noto-sans]` for Latin, INR default (`₹`), `d MMM y` patterns. Groups digits in 3s, not lakh/crore — see [features.md](../engine/features.md) § Locale data. |
 | `fil-PH` | `uses: [noto-sans, noto-sans-mono]` (Latin script — no font of its own), PHP default (`₱`), `MMM d, y` patterns. |
 | `th-TH` | `uses: [noto-sans-thai, noto-sans, noto-sans-mono]`, `fallback: [noto-sans]` for Latin, THB default (`฿`), `d MMM y` patterns. Dates carry the **Buddhist era**: the pack declares one open-ended era, so `y` renders 2026 CE as 2569 BE and `yyyy` stays Gregorian (the `gregorian` variant). Thai also wraps at word boundaries — see [text.md](text.md) § Wrapping & line breaking. |
 

@@ -39,32 +39,63 @@ export const REFERENCE_LOCALES = [
   },
 ] as const;
 
-/** The stems that are NOT feature pages: the landing and the capability
- * record. Both are still routed — a reader following a repo link to either
- * must land somewhere. */
-export const NON_FEATURE = ["README", "features"] as const;
-
-/** What llms-full.txt does NOT inline. `features.md` is the
- * implemented-capability inventory and the decision log — docs/engine/README.md
- * says so itself: it records "*that* a feature exists and why it is shaped that
- * way; the pages here carry only *how to author it*". It is also a THIRD of
- * the payload (146,877 of 442,505 bytes), which an agent asking how to write
- * `flex` pays for and never reads. The landing stays: it is the index, and
- * `NON_FEATURE` would drop it too, which is why this list is its own.
+/** `docs/engine/` holds one file that is not a reference page:
+ * `features.md`, the implemented-capability inventory and decision log.
+ * docs/engine/README.md draws the line itself — that file records *that* a
+ * feature exists and why it is shaped that way, while the pages here carry
+ * only *how to author it*. It is a development record, so the site does not
+ * render it: no route, no raw copy under /data/reference/, no llms-full
+ * inline, no sidebar entry, no demo and no Limitations section owed.
  *
- * It stays fully reachable — routed at /reference/features, served raw at
- * /data/reference/features.md, and linked from the reference index. */
-const LLMS_FULL_OMIT = ["features"] as const;
+ * It stays at `docs/engine/features.md` because docs/ paths do not move —
+ * seven published SDK releases freeze blob URLs into this directory and a
+ * GitHub blob URL cannot be redirected (architecture.md § Where a doc
+ * paragraph goes). Readers reach it through the repository.
+ *
+ * A docs/engine/ page linking to it writes `](../engine/features.md)`, NOT
+ * the bare sibling `](features.md)`: the `../` spelling is what edit 1 turns
+ * into a repository URL, and it round-trips back byte for byte, so the drift
+ * gate still holds. A bare sibling link asks VitePress for a route that no
+ * longer exists — `bareRepoOnlyLinks` names the fix before the build has to. */
+export const REPO_ONLY = ["features"] as const;
 
-export function llmsFullPages(pages: readonly ReferencePage[]): ReferencePage[] {
-  return pages.filter((p) => !(LLMS_FULL_OMIT as readonly string[]).includes(p.stem));
+/** The reference pages, from a listing of `docs/engine/`. One definition,
+ * read by the build and by every gate, so a file can never be routed by one
+ * and ignored by another. */
+export function referenceStems(files: readonly string[]): string[] {
+  return files
+    .filter((f) => f.endsWith(".md"))
+    .map((f) => f.slice(0, -3))
+    .filter((s) => !(REPO_ONLY as readonly string[]).includes(s))
+    .sort();
 }
 
-/** Where a page sits in the sidebar. `index` and `appendix` are routed but
- * are not tree entries (the landing, and the shipped-capability record). */
-export type Group = "index" | "appendix" | "root" | "item" | "item-keys" | "layout" | "definitions" | "concept";
+// Both sibling spellings VitePress would resolve to a route — `features.md`
+// and `./features.md`. Only `../` is exempt, because that is the form the
+// outlink rewrite absolutises.
+const BARE_SIBLING = /\]\((?!\.\.\/)(?:\.\/)?([a-z0-9_-]+)\.md(?:#[^)]*)?\)/gi;
 
-const GROUPS = new Set<Group>(["index", "appendix", "root", "item", "item-keys", "layout", "definitions", "concept"]);
+/** Every repo-only page a body links to as a bare sibling — the spelling that
+ * would become a dead route. Returns the offending stems, so the gate can say
+ * which link to rewrite rather than leaving a VitePress dead-link error to be
+ * traced back by hand. */
+export function bareRepoOnlyLinks(body: string): string[] {
+  const found = new Set<string>();
+  for (const m of body.matchAll(BARE_SIBLING)) {
+    if ((REPO_ONLY as readonly string[]).includes(m[1]!)) found.add(m[1]!);
+  }
+  return [...found].sort();
+}
+
+/** The stems that are NOT feature pages. Just the landing: it is the index,
+ * so it is routed but is not a tree entry. */
+export const NON_FEATURE = ["README"] as const;
+
+/** Where a page sits in the sidebar. `index` is routed but is not a tree
+ * entry (the landing IS the tree). */
+export type Group = "index" | "root" | "item" | "item-keys" | "layout" | "definitions" | "concept";
+
+const GROUPS = new Set<Group>(["index", "root", "item", "item-keys", "layout", "definitions", "concept"]);
 
 export interface ReferenceMeta {
   group: Group;

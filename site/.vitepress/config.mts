@@ -2,10 +2,10 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { defineConfig } from "vitepress";
 import { headTags, isJapanese } from "../src/lib/seo.ts";
-import { readPage, REFERENCE_LOCALES, SOURCE_DIR } from "../src/lib/reference.ts";
+import { readPage, REFERENCE_LOCALES, referenceStems, SOURCE_DIR } from "../src/lib/reference.ts";
 import { buildSidebar } from "../src/lib/referenceNav.ts";
 
-// The public site: ten nav pages plus the index, English canonical with a /ja
+// The public site: eleven nav pages plus the index, English canonical with a /ja
 // twin per page. Reference documentation is SOURCED in docs/engine/ and this
 // site restates nothing: `scripts/assemble-data.ts` PROJECTS those files into
 // site/reference/ (gitignored) and the sidebar below is derived from the same
@@ -15,10 +15,9 @@ import { buildSidebar } from "../src/lib/referenceNav.ts";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const CATALOG = JSON.parse(readFileSync(join(ROOT, "engine/authoring/reference/catalog.schema.json"), "utf8")) as unknown;
-const REFERENCE_PAGES = readdirSync(join(ROOT, SOURCE_DIR))
-  .filter((f) => f.endsWith(".md"))
-  .sort()
-  .map((f) => readPage(f.slice(0, -3), readFileSync(join(ROOT, SOURCE_DIR, f), "utf8")));
+const REFERENCE_PAGES = referenceStems(readdirSync(join(ROOT, SOURCE_DIR))).map((s) =>
+  readPage(s, readFileSync(join(ROOT, SOURCE_DIR, `${s}.md`), "utf8")),
+);
 
 // One sidebar per locale, keyed by the route prefix VitePress matches on.
 const REFERENCE_SIDEBAR = Object.fromEntries(
@@ -94,6 +93,7 @@ export default defineConfig({
       themeConfig: {
         nav: [
           { text: "Concept", link: "/concept", activeMatch: "^/concept" },
+          { text: "Features", link: "/features", activeMatch: "^/features" },
           { text: "Gallery", link: "/gallery", activeMatch: "^/gallery" },
           { text: "Tutorials", link: "/tutorials", activeMatch: "^/tutorials" },
           { text: "Playground", link: "/playground", activeMatch: "^/playground" },
@@ -113,6 +113,7 @@ export default defineConfig({
       themeConfig: {
         nav: [
           { text: "コンセプト", link: "/ja/concept", activeMatch: "^/ja/concept" },
+          { text: "機能", link: "/ja/features", activeMatch: "^/ja/features" },
           { text: "ギャラリー", link: "/ja/gallery", activeMatch: "^/ja/gallery" },
           { text: "チュートリアル", link: "/ja/tutorials", activeMatch: "^/ja/tutorials" },
           { text: "プレイグラウンド", link: "/ja/playground", activeMatch: "^/ja/playground" },

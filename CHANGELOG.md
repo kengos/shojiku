@@ -15,6 +15,28 @@ platform binaries.
 
 ### Added
 
+- **The site has a Features page written for people.** What the engine
+  can do was only readable as `docs/engine/features.md`, a 2,300-line
+  development record that answers "why is it shaped this way" for
+  contributors and AI agents. It was also rendered as a reference page,
+  where a reader looking for "can it do vertical Japanese, and can it
+  sign a PDF" had to mine it for the answer. The new `/features` page
+  (and its `/ja` twin) walks through the document kinds, layout,
+  typesetting, data binding, fonts, output and signing, with a link into
+  the reference for each, and it states the limits as plainly as the
+  capabilities.
+
+### Changed
+
+- **`docs/engine/features.md` is no longer rendered on the site.** It
+  stays exactly where it is in the repository, and every link to it keeps
+  working; it is simply no longer one of the reference's routes, since it
+  records development history rather than authorable syntax. Its raw copy
+  under `/data/reference/` is gone with the route, and `llms.txt` now
+  names the file under Repository truth so anyone who wants the decision
+  log knows where it lives. (`llms-full.txt` never inlined it, and is
+  unchanged.)
+
 - **More warnings can now be fixed in one click, and a fix can offer a
   choice.** The diagnostics panel could only ever offer "remove the key
   that causes this", so the warnings people actually get stuck on had no
