@@ -678,6 +678,19 @@ conversation says so. Both halves of that have shipped here.
   `ps aux | grep -E "[t]ail -f|[g]make|[c]laude -p"`. A process with no
   record, or a record with no process, is the finding.
 
+## A substring assertion needs a fixture the substring can only come from
+
+- **`not.toContain('data:')` over a fixture whose value IS a `data:` URI
+  tests the fixture, not the code.** A quick-fix test asserting that the
+  `data:` KEY had been removed used an image whose `src` was
+  `"data:image/png;base64,…"`, so the substring survived every correct
+  removal and the case went red against working code. The same family as
+  a `grep "it("` that also bills `emit(`/`edit(`: before writing a
+  contains/not-contains assertion, ask where else in the fixture that
+  sequence of characters can appear, and pick a fixture where the answer
+  is nowhere (here: `src: logo.png`). A structural read is better still
+  when one is available.
+
 ## Binary-classified files: the grep blind spot
 
 - **A zero-hit grep over a NARROWED path is evidence about the path, not
