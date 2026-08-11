@@ -115,6 +115,18 @@ a broken regex. Use `$(?![\s\S])` for end-of-input under the `m` flag.
   them. Adding a transform without its inverse reds `src/reference.test.ts`,
   which is the intended behaviour — the point of the gate is that the site
   restates nothing.
+- **THREE places enumerate `docs/engine/`, and the test suite can only see
+  two of them.** `scripts/assemble-data.ts` and the gates both import from
+  `src/lib/reference.ts`; `.vitepress/config.mts` builds its OWN listing for
+  the sidebar. A change to which files are reference pages that updates the
+  first two leaves `config.mts` reading the directory raw — and because the
+  suite goes through the shared helper, **every test stays green and only
+  `make site-build` fails**, on a config-load error (`no reference:
+  front-matter`) that names the file rather than the reader. Route any such
+  change through one exported filter (`referenceStems()`) and grep
+  `SOURCE_DIR` for the readers before believing a green `make site`. The
+  general form: a VitePress config is a build-time reader that no vitest run
+  imports, so "the tests pass" is not evidence about it.
 
 ## The reference-demo suite goes red BY DESIGN when a release re-pins the engine
 
