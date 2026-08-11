@@ -259,7 +259,7 @@ describe('Designer', () => {
     expect(screen.getByLabelText('Text')).toBeDefined();
   });
 
-  it('applies a diagnostics quick-fix as one undoable op when 直す is clicked', async () => {
+  it('applies a diagnostics quick-fix as one undoable op when 修正 is clicked', async () => {
     const source = [
       'version: 0.1.0',
       'sections:',

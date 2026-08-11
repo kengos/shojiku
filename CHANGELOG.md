@@ -15,6 +15,21 @@ platform binaries.
 
 ### Added
 
+- **More warnings can now be fixed in one click, and a fix can offer a
+  choice.** The diagnostics panel could only ever offer "remove the key
+  that causes this", so the warnings people actually get stuck on had no
+  button at all. Three kinds join it. An image that sets both `src` and
+  `data` now offers two buttons — keep one or keep the other — because
+  only you know which source is the real one; they are labelled by what
+  SURVIVES, not by what gets dropped. A shape with no size (`rect`,
+  `image`, `qr_code`, an ellipse or checkbox) can be given one, and only
+  the dimension that is actually missing is written, so a rect you
+  already gave a width to keeps it. And an item hanging off the right
+  edge can be pulled back by exactly the amount the warning reports.
+  A fix that writes a value says which value in its own label — you
+  never press a button to find out what number it chose — and every one
+  of them is still a single Undo away, as before.
+
 - **An image on the clipboard can be pasted straight onto the page.** In
   the Designer, adding a screenshot or a logo meant saving it to a file
   first and then picking that file. Pressing ⌘V / Ctrl+V anywhere outside
@@ -105,6 +120,10 @@ platform binaries.
   parsing.
 
 ### Changed
+
+- **The fix button reads 「修正」 in Japanese** (it said 「直す」). The
+  Chinese catalogues already said 修正 for the same button, and the rest
+  of the Japanese interface labels its buttons the same way.
 
 - **Colour swatches announce a colour name instead of a hex code.** A
   screen reader read the fill and text-colour palettes as "#b91c1c";

@@ -1,5 +1,5 @@
 // Diagnostics quick-fix registry: a frequent diagnostic whose fix is
-// MECHANICAL becomes a one-click "直す". Each fix is a named `removeKey` patch-op
+// MECHANICAL becomes a one-click "修正". Each fix is a named patch-op
 // (or a batch of them) so AI parity holds — the GUI authors nothing the op layer
 // cannot, and one `applyAll` batch is one undo step. The registry is keyed by
 // the engine's stable diagnostic `code` through a real `Map`, NEVER a
@@ -10,12 +10,37 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { Diagnostic } from '../engine/types';
+import { fixMissingSize, fixOverflowWidth, fixSourceConflict } from './fixWrites';
 
 /** Reads a materialized node by structural path (`Editor.read`); display-only. */
 export type ReadNode = (path: string) => unknown;
 
-/** Builds the ops resolving one diagnostic, or `null` when nothing is removable. */
-type FixBuilder = (diag: Diagnostic, read: ReadNode) => readonly Op[] | null;
+/** One way to resolve a diagnostic: what it does (a chrome key, plus the ICU
+ * args a value-writing label needs) and the ops that do it. One `applyAll`
+ * batch is one undo step, whichever candidate the author picks. */
+export interface FixCandidate {
+  readonly labelKey: string;
+  readonly labelArgs?: Readonly<Record<string, string | number>>;
+  readonly ops: readonly Op[];
+}
+
+/** The label a removal carries: the message already says what goes away, so the
+ * button only has to name the action. */
+const REMOVE_LABEL = 'diagnostics.fix';
+
+/** Builds the candidate resolutions for one diagnostic, or `null` when there
+ * are none. */
+type FixBuilder = (diag: Diagnostic, read: ReadNode) => readonly FixCandidate[] | null;
+
+/** Wraps a removal builder as the single candidate it has always been. */
+function removal(
+  build: (path: string, diag: Diagnostic, read: ReadNode) => readonly Op[] | null,
+): (path: string, diag: Diagnostic, read: ReadNode) => readonly FixCandidate[] | null {
+  return (path, diag, read) => {
+    const ops = build(path, diag, read);
+    return ops === null ? null : [{ labelKey: REMOVE_LABEL, ops }];
+  };
+}
 
 /** The layout keys that lay out nothing on a leaf item box (`layout_key_on_leaf`
  * fires when any is present; `has_layout_keys` = these plus the grid keys). */
@@ -52,7 +77,7 @@ function asMap(node: unknown): Record<string, unknown> | null {
 /** Wraps a fix that needs the diagnostic's structural path, returning `null`
  * when it carries none (the guard lives here once, not in every builder). */
 function pathFix(
-  build: (path: string, diag: Diagnostic, read: ReadNode) => readonly Op[] | null,
+  build: (path: string, diag: Diagnostic, read: ReadNode) => readonly FixCandidate[] | null,
 ): FixBuilder {
   return (diag, read) => (typeof diag.path === 'string' ? build(diag.path, diag, read) : null);
 }
@@ -82,10 +107,10 @@ function removePresent(
 
 /** `orientation: landscape` ignored on a custom page size → drop the root
  * `page.orientation` key (the diagnostic is pathless; the key is root-global). */
-function fixOrientation(_diag: Diagnostic, read: ReadNode): readonly Op[] | null {
+function fixOrientation(_diag: Diagnostic, read: ReadNode): readonly FixCandidate[] | null {
   const page = asMap(read('page'));
   if (page === null || !Object.hasOwn(page, 'orientation')) return null;
-  return [{ op: 'removeKey', keys: ['page', 'orientation'] }];
+  return [{ labelKey: REMOVE_LABEL, ops: [{ op: 'removeKey', keys: ['page', 'orientation'] }] }];
 }
 
 /** Grid keys without `type: grid` → drop the present ones at whichever box
@@ -129,24 +154,43 @@ function fixUnusedBinding(path: string, diag: Diagnostic, read: ReadNode): reado
 /** The code → fix table. A `Map`, so an unknown/hostile `code` misses cleanly. */
 const FIXES: ReadonlyMap<string, FixBuilder> = new Map<string, FixBuilder>([
   ['orientation_ignored', fixOrientation],
-  ['ignored_column_key', pathFix((path, _diag, read) => removePresent(read, path, [], ['fit']))],
+  [
+    'ignored_column_key',
+    pathFix(removal((path, _diag, read) => removePresent(read, path, [], ['fit']))),
+  ],
   [
     'layout_key_on_leaf',
-    pathFix((path, _diag, read) => removePresent(read, path, ['box'], LEAF_LAYOUT_KEYS)),
+    pathFix(removal((path, _diag, read) => removePresent(read, path, ['box'], LEAF_LAYOUT_KEYS))),
   ],
-  ['grid_key_ignored', pathFix(fixGridKeys)],
+  ['grid_key_ignored', pathFix(removal(fixGridKeys))],
   [
     'table_pagination_key_ignored',
-    pathFix((path, _diag, read) => removePresent(read, path, [], PAGINATION_KEYS)),
+    pathFix(removal((path, _diag, read) => removePresent(read, path, [], PAGINATION_KEYS))),
   ],
-  ['shape_style_ignored', pathFix(fixIgnoredStyleKeys)],
-  ['ignored_span_style', pathFix(fixIgnoredStyleKeys)],
-  ['unused_binding', pathFix(fixUnusedBinding)],
+  ['shape_style_ignored', pathFix(removal(fixIgnoredStyleKeys))],
+  ['ignored_span_style', pathFix(removal(fixIgnoredStyleKeys))],
+  ['unused_binding', pathFix(removal(fixUnusedBinding))],
+  // Two candidates: the author picks which source survives.
+  ['image_source_conflict', pathFix(fixSourceConflict)],
+  // One candidate that WRITES a size — the four shapes that draw nothing
+  // without one (`mark_missing_size` covers ellipse AND checkbox).
+  ['rect_missing_size', pathFix(fixMissingSize)],
+  ['image_missing_size', pathFix(fixMissingSize)],
+  ['qr_missing_size', pathFix(fixMissingSize)],
+  ['mark_missing_size', pathFix(fixMissingSize)],
+  // One candidate that shrinks the item back inside what it overflowed. Only
+  // the codes carrying an `over` amount: `flex_row_overflow` reports a ROW's
+  // children collectively needing more room than the box, so there is no single
+  // width to shrink and no honest fix of this shape.
+  ['flow_item_overflow', pathFix(fixOverflowWidth)],
+  ['sheet_overflow', pathFix(fixOverflowWidth)],
+  ['child_overflow', pathFix(fixOverflowWidth)],
 ]);
 
-/** The op batch that resolves `diag`, or `null` when it has no mechanical fix
- * (unknown code, or nothing concrete to remove in the current document). */
-export function fixFor(diag: Diagnostic, read: ReadNode): readonly Op[] | null {
+/** The candidate resolutions for `diag` — one button each — or `null` when it
+ * has no mechanical fix (unknown code, or nothing concrete to do in the current
+ * document). */
+export function fixFor(diag: Diagnostic, read: ReadNode): readonly FixCandidate[] | null {
   const builder = FIXES.get(diag.code);
   return builder ? builder(diag, read) : null;
 }

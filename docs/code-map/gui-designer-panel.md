@@ -529,12 +529,21 @@ read side, never the reverse.
   surface (`exports/panels.ts`) beside `DiagnosticsPanelProps` — a host
   mounting the panel itself must be able to type the prop and build the
   list without reimplementing the rule.
-- `diagnostics/fixModel.ts` — pure quick-fix registry: `fixFor(diag,
-  read)` over a `Map` keyed by wire diagnostic code (a forged
-  `code:'constructor'` must miss); each builder emits a `removeKey`
-  batch dropping the offending key(s), `null` when nothing concrete is
-  removable (no dead button). Hostile reads and stale paths degrade to
-  no-op. **`unused_binding` is the one entry whose `diag.path` is not the
+- `diagnostics/fixModel.ts` — pure quick-fix registry: `fixFor(diag, read)`
+  over a `Map` keyed by wire diagnostic code (a forged `code:'constructor'`
+  must miss), returning the CANDIDATE resolutions — `{labelKey, labelArgs?,
+  ops}[]` — or `null` when there are none (no dead button). One candidate is
+  one button; `image_source_conflict` is the only code today with two, since
+  only the author knows which source to keep. Hostile reads and stale paths
+  degrade to no-op.
+  - `diagnostics/fixWrites.ts` — the builders that WRITE a value rather than
+    removing a key, split out because the obligation differs: a write puts a
+    number the author never typed into the document, so the candidate carries
+    that number and the button's label names it (nothing is authored that the
+    label did not say). Covers the four missing-size codes (only the ABSENT
+    dimension is written, at 100pt) and the overflow shrink (`box.w` minus the
+    reported `over`). Every one returns `null` rather than computing on a
+    non-finite arg, a percentage width, or a result that would be ≤ 0. **`unused_binding` is the one entry whose `diag.path` is not the
   node it edits** — the engine addresses the DECLARATION
   (`<item>.bindings.<name>`), so the item path is derived by stripping
   that suffix BY LENGTH using `args.name`, never by splitting at the last
