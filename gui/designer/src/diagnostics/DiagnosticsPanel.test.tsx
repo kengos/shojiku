@@ -128,7 +128,7 @@ describe('DiagnosticsPanel', () => {
     // A read that resolves the fixable node to one carrying a removable box key.
     const readGap: ReadNode = () => ({ box: { gap: 4 } });
 
-    it('renders a 直す button for a fixable diagnostic and applies the ops on click', () => {
+    it('renders a 修正 button for a fixable diagnostic and applies the ops on click', () => {
       const onApplyFix = vi.fn();
       draw(
         <DiagnosticsPanel
@@ -138,7 +138,7 @@ describe('DiagnosticsPanel', () => {
           onApplyFix={onApplyFix}
         />,
       );
-      fireEvent.click(screen.getByRole('button', { name: '直す' }));
+      fireEvent.click(screen.getByRole('button', { name: '修正' }));
       expect(onApplyFix).toHaveBeenCalledWith([
         { op: 'removeKey', path: 'sections.body.items[0]', keys: ['box', 'gap'] },
       ]);
@@ -165,13 +165,71 @@ describe('DiagnosticsPanel', () => {
           onApplyFix={onApplyFix}
         />,
       );
-      fireEvent.click(screen.getByRole('button', { name: '直す' }));
+      fireEvent.click(screen.getByRole('button', { name: '修正' }));
       expect(onApplyFix).toHaveBeenCalledWith([
         { op: 'removeKey', path: 'sections.body.items[0]', keys: ['bindings', 'who'] },
       ]);
     });
 
-    it('gives the 直す button an instant-tooltip label (never a native title)', () => {
+    it('renders one button PER candidate, each applying its own ops', () => {
+      // Two equally valid answers: only the author knows which source to keep,
+      // so both are offered rather than one being picked for them.
+      const onApplyFix = vi.fn();
+      const conflict: Diagnostic = {
+        severity: 'error',
+        code: 'image_source_conflict',
+        category: 'data',
+        message: 'image items must set either src or data',
+        args: {},
+        path: 'sections.body.items[0]',
+      };
+      draw(
+        <DiagnosticsPanel
+          diagnostics={[conflict]}
+          onSelect={vi.fn()}
+          read={() => ({ src: 'data:image/png;base64,AA==', data: { key: 'logo' } })}
+          onApplyFix={onApplyFix}
+        />,
+      );
+      // Clicking the SECOND button must apply the SECOND batch — asserting only
+      // that "something fired" would pass with both buttons wired to one fix.
+      fireEvent.click(screen.getByRole('button', { name: 'data を残す' }));
+      expect(onApplyFix).toHaveBeenCalledWith([
+        { op: 'removeKey', path: 'sections.body.items[0]', keys: ['src'] },
+      ]);
+      fireEvent.click(screen.getByRole('button', { name: 'src を残す' }));
+      expect(onApplyFix).toHaveBeenLastCalledWith([
+        { op: 'removeKey', path: 'sections.body.items[0]', keys: ['data'] },
+      ]);
+      // EACH button carries its own instant tooltip, and neither reaches for a
+      // native `title` — the chrome convention holds per button, not per row.
+      expect(document.querySelectorAll('[data-sj-tip]').length).toBe(2);
+      expect(document.querySelector('[title]')).toBeNull();
+    });
+
+    it('names the value a rewrite will author, rather than just the action', () => {
+      // A removal is fully described by the message; a write puts a number the
+      // author never typed into their document, so the button carries it.
+      const overflow: Diagnostic = {
+        severity: 'warning',
+        code: 'flow_item_overflow',
+        category: 'layout',
+        message: 'item overflows the flow region',
+        args: { over: 41.3, avail: 451 },
+        path: 'sections.body.items[0]',
+      };
+      draw(
+        <DiagnosticsPanel
+          diagnostics={[overflow]}
+          onSelect={vi.fn()}
+          read={() => ({ type: 'rect', box: { w: 500, h: 20 } })}
+          onApplyFix={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('button', { name: '幅を 458.7pt に縮める' })).toBeTruthy();
+    });
+
+    it('gives the 修正 button an instant-tooltip label (never a native title)', () => {
       const { container } = draw(
         <DiagnosticsPanel
           diagnostics={[fixable]}
@@ -186,7 +244,7 @@ describe('DiagnosticsPanel', () => {
       expect(container.querySelector('[title]')).toBeNull();
     });
 
-    it('shows the 直す button on a pathless-but-fixable diagnostic (orientation)', () => {
+    it('shows the 修正 button on a pathless-but-fixable diagnostic (orientation)', () => {
       const orientation: Diagnostic = {
         severity: 'warning',
         code: 'orientation_ignored',
@@ -202,10 +260,10 @@ describe('DiagnosticsPanel', () => {
           onApplyFix={vi.fn()}
         />,
       );
-      expect(screen.getByRole('button', { name: '直す' })).toBeDefined();
+      expect(screen.getByRole('button', { name: '修正' })).toBeDefined();
     });
 
-    it('renders no 直す button when the diagnostic has no mechanical fix', () => {
+    it('renders no 修正 button when the diagnostic has no mechanical fix', () => {
       draw(
         <DiagnosticsPanel
           diagnostics={[withPath]}
@@ -214,7 +272,7 @@ describe('DiagnosticsPanel', () => {
           onApplyFix={vi.fn()}
         />,
       );
-      expect(screen.queryByRole('button', { name: '直す' })).toBeNull();
+      expect(screen.queryByRole('button', { name: '修正' })).toBeNull();
     });
   });
 

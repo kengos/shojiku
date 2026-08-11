@@ -7,10 +7,12 @@
 // location). The diagnostics must come from the SAME render outcome the canvas
 // is showing, so a click resolves against current geometry.
 //
-// A diagnostic whose fix is MECHANICAL gets a "直す" button beside it —
-// `fixModel.fixFor` builds a `removeKey` op batch (one undo step) when a concrete
-// removable key exists, and returns null otherwise so no dead button appears.
-// The button is a sibling of the select target, never nested inside it.
+// A diagnostic whose fix is MECHANICAL gets a button beside it — `fixModel.fixFor`
+// returns the candidate resolutions (one op batch each, one undo step each), or
+// null so no dead button appears. Most diagnostics have exactly one candidate and
+// render exactly one button; a diagnostic with two equally valid answers (keep
+// `src` vs keep `data`) renders both, because only the author knows which.
+// The buttons are siblings of the select target, never nested inside it.
 
 import type { Op } from '@shojiku/designer-core';
 import type { Diagnostic, Severity } from '../engine/types';
@@ -85,18 +87,21 @@ function DiagnosticRow({
       ) : (
         <div className={DIAG_ROW}>{body}</div>
       )}
-      {fix !== null ? (
-        <span className="group/tip relative shrink-0">
+      {/* One button per candidate resolution, side by side. Widths are
+          deliberately not equalised: a shared width pads the short labels and
+          truncates the long localized ones. */}
+      {fix?.map((candidate) => (
+        <span className="group/tip relative shrink-0" key={candidate.labelKey}>
           <button
             type="button"
             className={`${BTN_SM} shrink-0 whitespace-nowrap text-xs`}
-            onClick={() => onApplyFix(fix)}
+            onClick={() => onApplyFix(candidate.ops)}
           >
-            {t('diagnostics.fix')}
+            {t(candidate.labelKey, candidate.labelArgs)}
           </button>
           <TipBubble text={t('diagnostics.fixTip')} />
         </span>
-      ) : null}
+      ))}
     </li>
   );
 }

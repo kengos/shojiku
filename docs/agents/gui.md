@@ -250,16 +250,26 @@ definitions
   warnings, accessibility warnings) — the GUI displays these, it does not
   invent its own separate validation logic that can drift from the engine.
   A diagnostic whose fix is MECHANICAL carries a one-click fix action
-  (shipped): a code-keyed registry maps the diagnostic to a `removeKey`
-  patch-op batch (one undo step, AI parity) that drops the offending key(s).
-  v1 covers the "inert/ignored key" family — `orientation_ignored`,
-  `ignored_column_key`, `grid_key_ignored`, `layout_key_on_leaf`,
-  `table_pagination_key_ignored`, `shape_style_ignored`, `ignored_span_style`
-  — plus `unused_binding`, whose declaration is removable the same way (the
-  one entry whose diagnostic path addresses the DECLARATION rather than the
-  node the key hangs off, so the item path is derived). The button shows
-  only when a concrete removable key is present (no dead buttons). Fixes needing a chosen value (default-size codes) or a pick
-  between two resolutions (`image_source_conflict`) are out of v1.
+  (shipped): a code-keyed registry maps the diagnostic to a LIST of candidate
+  resolutions, each an op batch applied as one `applyAll` (one undo step, AI
+  parity). One candidate renders as one button; two render as two, side by
+  side. A candidate is offered only when it has something concrete to do — no
+  dead buttons.
+  - **Removals** (the button says only the action, since the message already
+    says what goes away): `orientation_ignored`, `ignored_column_key`,
+    `grid_key_ignored`, `layout_key_on_leaf`, `table_pagination_key_ignored`,
+    `shape_style_ignored`, `ignored_span_style`, and `unused_binding` — the
+    one entry whose diagnostic path addresses the DECLARATION rather than the
+    node the key hangs off, so the item path is derived.
+  - **A choice**: `image_source_conflict` offers two candidates, labelled by
+    what SURVIVES (`keep src` / `keep data`), never by what is dropped.
+  - **Value rewrites**, where the value is the decision and the button
+    therefore NAMES it: the four missing-size codes (`rect_`/`image_`/`qr_`/
+    `mark_missing_size`) author the absent dimension(s) only, and
+    `flow_item_overflow` / `sheet_overflow` / `child_overflow` shrink `box.w`
+    by exactly the reported excess. `flex_row_overflow` is deliberately
+    excluded: it reports a ROW's children collectively needing more room, so
+    there is no single width to shrink.
 
 ## Boundary: GUI never renders PDF itself
 
