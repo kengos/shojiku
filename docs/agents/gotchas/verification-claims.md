@@ -320,6 +320,25 @@ check whose empty output read as "all covered").
 
 ## Counts and structural claims in prose
 
+- **A benefit your change is CREDITED with may already have been true.** A
+  removal invites you to attribute every good consequence of the thing being
+  gone to the act of removing it. One cycle took `docs/engine/features.md`
+  off the site and wrote, in the changelog, the code map and the commit
+  message, that this "cut `llms-full.txt` from about 442 KB to about 322 KB".
+  It cut nothing: a separate `LLMS_FULL_OMIT` list had been excluding that
+  file from llms-full for some time, so the payload was byte-identical before
+  and after, and the real effects were the route, the raw copy under
+  `/data/reference/`, and collapsing three special cases into one. Every gate
+  was green — no gate reads a changelog. The check is one question per
+  claimed benefit: **would this already be true on `main`?** Answer it by
+  reading the pre-change code path, not by reasoning about the feature.
+- **A number you INHERITED from a comment is not a number you measured.**
+  The 442,505 figure above was copied out of an existing source comment,
+  which had gone stale as the file grew (`features.md` was 148,522 bytes by
+  then, so the total could never have been 442 KB). Copying it felt like
+  citing the repository. Re-measure any figure you are about to restate,
+  especially one that "the code already says" — a comment is prose, and
+  prose is exactly what nothing checks.
 - **A POSITIVE CONTROL measures the floor, not the phenomenon — and a tidy
   multiple is the tell that you are quoting one.** To prove a directory
   scan was inventorying build output, a cycle planted ONE copy of a
@@ -824,6 +843,17 @@ gh pr checks 121 --watch > ci.log 2>&1; echo "GH_EXIT=$?" >> ci.log
 did. A harness that reports "completed (exit code 0)" is reporting the
 wrapper. One cycle read that notice as "CI is green" and said so to the user;
 three checks had failed, and the log's own `GH_EXIT=1` line said so.
+
+**A PIPE does the same thing, and a backgrounded one is worse.** CLAUDE.md
+already forbids piping a gate (`make … | tail`) because the pipeline reports
+the LAST command's status. In the foreground that costs you a glance at the
+output; backgrounded, the harness announces *"completed (exit code 0)"* as a
+task result, which reads as a verdict rather than as a shell artifact. One
+cycle backgrounded `gmake quiet T=site 2>&1 | tail -20`, was told it had
+completed successfully, and the gate had exited 2 with a failing test — the
+`FAIL` line was sitting in the captured output the whole time. Run gates
+unpiped, and when a background task reports success, read its log before
+repeating the claim.
 
 **Judge a PR by asking GitHub, never by the watcher's completion:**
 
