@@ -204,6 +204,16 @@
   something. Deleting the suppression is the wrong fix: it retires the
   rule for that element forever. Name the handlers one by one at the call
   site (`onClick={bg.onClick}` …) and keep the suppression meaningful.
+  **The same blindness applies to `role` itself: passing it as a PROP
+  makes the element static.** A shared surface parameterised as
+  `role={role}` — even when the prop's type is the single literal
+  `'menu'` — trips `a11y/noStaticElementInteractions` on its `onKeyDown`
+  AND `a11y/useAriaPropsSupportedByRole` on the `aria-orientation`
+  beside it, because the rule resolves the role from the JSX text, not
+  from the type. Both diagnostics name the element and neither names the
+  cause. Keep `role` (and the aria attributes whose validity depends on
+  it) as literals in the JSX; if two callers genuinely need different
+  roles, that is two components, not one prop.
 - **`biome lint --only=<rule>` force-runs the rule with DEFAULT options
   and ignores `overrides`** — it is a "run this rule everywhere" probe,
   not a preview of the configured gate. A waiver list built from

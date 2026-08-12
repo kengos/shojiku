@@ -40,6 +40,14 @@ make a *correct* change look broken:
   tree: `make -C /absolute/path/to/worktree <target>` (`-C` sets `$(CURDIR)`,
   so the docker mount follows correctly). The same reset is why a script
   that opens a bare filename edits the primary checkout's copy.
+  **It is not only the gates.** Every target is affected, and the ones
+  that are NOT gates hide it better, because they print no PASS/FAIL line
+  to be wrong about: a bare `make gui-serve` builds and serves the
+  PRIMARY checkout, so a hands-on browser pass judges `main` and the
+  feature under review is simply absent — which reads as a broken build
+  or a broken feature, not as the wrong tree. Anything that serves,
+  screenshots or renders (`gui-serve`, `gui-dev`, `gui-shot`,
+  `examples`) needs the same `-C`.
 
 - **mixing mounts corrupts the cache**: building under an engine-mounted
   layout once bakes a wrong `CARGO_MANIFEST_DIR` into the cached e2e
