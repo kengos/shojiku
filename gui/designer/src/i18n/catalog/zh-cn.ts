@@ -334,6 +334,7 @@ export const zhCn: LanguageCatalog = {
     'panel.layout.shrinkConfirm.confirm': '删除',
     'panel.layout.shrinkConfirm.cancel': '取消',
     'contextMenu.wrap': '组合到容器中',
+    'contextMenu.border': '边框…',
     'insert.group.reuseBlock': '可重复使用块',
     'insert.saveBlock': '将所选保存为块…',
     'insert.saveBlock.needsSelection': '请先选择一个元素',

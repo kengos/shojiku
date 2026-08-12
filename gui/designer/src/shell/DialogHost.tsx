@@ -85,7 +85,12 @@ export function DialogHost({
         selection={selection}
       />
       <TutorialSurfaces tutorial={tutorial} />
-      <BlockSurfaces blocks={blocks} selectionOps={selectionOps} read={read} />
+      <BlockSurfaces
+        blocks={blocks}
+        selectionOps={selectionOps}
+        editor={editor}
+        capabilities={capabilities}
+      />
       <ShortcutsDialog open={shortcutsOpen} onClose={dialogs.closeShortcuts} />
       {pdfBytes !== null && onDownloadPdf !== undefined ? (
         <PdfPreviewModal

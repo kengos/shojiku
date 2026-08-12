@@ -262,7 +262,13 @@ describe('Designer container insert + marks', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('right-click on an unwrappable node (a table column) opens no menu', async () => {
+  // This used to assert an EMPTY menu on a table column, back when wrap and
+  // save-as-block were the only rows: a column is unwrappable and carries no
+  // savable snippet, so nothing rendered. It still offers no wrap row — but a
+  // column IS a sequence entry, so the duplicate/delete rows apply to it, and
+  // the delete row issues exactly the `removeItem` the column editor's own
+  // delete button does.
+  it('right-click on a table column offers the sequence rows but never wrap', async () => {
     const source = [
       'sections:',
       '  body:',
@@ -277,12 +283,17 @@ describe('Designer container insert + marks', () => {
       '',
     ].join('\n');
     draw(makeTransport(), { source });
-    // The tree exposes the column row; right-click selects but offers nothing.
+    // The tree exposes the column row; right-click selects it and opens the menu.
     fireEvent.contextMenu(screen.getByRole('button', { name: /品目/ }), {
       clientX: 5,
       clientY: 5,
     });
-    expect(screen.queryByRole('menu')).toBeNull();
+    const menu = screen.getByRole('menu');
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Duplicate', 'Delete']);
   });
 
   it('marks a selected container on canvas: dashed outline, slot guides, kind chip', async () => {

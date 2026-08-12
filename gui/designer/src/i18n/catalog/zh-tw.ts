@@ -334,6 +334,7 @@ export const zhTw: LanguageCatalog = {
     'panel.layout.shrinkConfirm.confirm': '刪除',
     'panel.layout.shrinkConfirm.cancel': '取消',
     'contextMenu.wrap': '組合成容器',
+    'contextMenu.border': '框線…',
     'insert.group.reuseBlock': '可重複使用區塊',
     'insert.saveBlock': '將選取儲存為區塊…',
     'insert.saveBlock.needsSelection': '請先選取一個元素',

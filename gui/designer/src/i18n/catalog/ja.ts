@@ -398,6 +398,7 @@ export const ja: LanguageCatalog = {
     'panel.layout.shrinkConfirm.confirm': '削除する',
     'panel.layout.shrinkConfirm.cancel': 'キャンセル',
     'contextMenu.wrap': 'コンテナにまとめる',
+    'contextMenu.border': '枠線…',
     'insert.group.reuseBlock': '再利用ブロック',
     'insert.saveBlock': '選択をブロックとして保存…',
     'insert.saveBlock.needsSelection': '先に要素を1つ選択',

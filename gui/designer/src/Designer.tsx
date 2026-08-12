@@ -27,7 +27,7 @@ import { useDesignerWiring } from './wiring';
 // wiring that uses them; re-exported here because they are part of this
 // module's public surface.
 export { contentHeightPt, contentWidthPt } from './hooks/geometry';
-export { isEditableTarget } from './hooks/useSelectionOps';
+export { isEditableTarget } from './hooks/useSelectionShortcuts';
 export type { DesignerProps };
 export { bandOf };
 

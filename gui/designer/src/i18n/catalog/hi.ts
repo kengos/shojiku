@@ -162,6 +162,7 @@ export const hi: LanguageCatalog = {
     'panel.layout.shrinkConfirm.confirm': 'हटाएं',
     'panel.layout.shrinkConfirm.cancel': 'रद्द करें',
     'contextMenu.wrap': 'कंटेनर में समूहित करें',
+    'contextMenu.border': 'बॉर्डर…',
     'insert.group.reuseBlock': 'पुन: प्रयोज्य ब्लॉक',
     'insert.saveBlock': 'चयन को ब्लॉक के रूप में सहेजें…',
     'insert.saveBlock.needsSelection': 'पहले एक तत्व चुनें',

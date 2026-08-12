@@ -378,6 +378,7 @@ export const en: LanguageCatalog = {
     'panel.layout.shrinkConfirm.confirm': 'Remove',
     'panel.layout.shrinkConfirm.cancel': 'Cancel',
     'contextMenu.wrap': 'Group into a container',
+    'contextMenu.border': 'Borders…',
     'insert.group.reuseBlock': 'Reusable blocks',
     'insert.saveBlock': 'Save selection as block…',
     'insert.saveBlock.needsSelection': 'Select one element first',

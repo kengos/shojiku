@@ -15,6 +15,16 @@ platform binaries.
 
 ### Added
 
+- **Right-clicking an element in the Designer now offers duplicate,
+  delete and borders.** The menu previously carried only "group into a
+  container" and "save as block", so the two most frequent actions on a
+  selected element were reachable by keyboard or through the Edit menu
+  but not where the pointer already was. Borders opens the same editor
+  the format toolbar and the decoration tab use, at the click point. Rows
+  that do not apply to what you clicked are absent rather than greyed
+  out, and every one of them still has its keyboard and menu path — the
+  menu is a shortcut, never the only way through.
+
 - **The site has a Features page written for people.** What the engine
   can do was only readable as `docs/engine/features.md`, a 2,300-line
   development record that answers "why is it shaped this way" for
