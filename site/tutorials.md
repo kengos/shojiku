@@ -1,11 +1,11 @@
 ---
-title: Tutorials
+title: "From a first PDF to a production release"
 description: "From rendering one PDF to baking a template into a Docker image and shipping it. Every command is transcribed from something CI actually runs."
 ---
 
 # Tutorials — from a first PDF to a production release
 
-This page runs in a straight line from rendering one PDF to baking your
+This page runs in a straight line from rendering one PDF out of a YAML template to baking your
 template into a Docker image and shipping it. Every command is transcribed
 from something CI actually runs.
 

@@ -86,10 +86,22 @@ export default defineConfig({
   // hero action) to force a real page load. src/designer-link.test.ts pins it.
   ignoreDeadLinks: [/^\/designer\//],
 
+  // The `<title>` suffix, per locale. It carries the positioning, which is what
+  // lets each page's own title stay a plain name instead of growing into a
+  // description. The claim it repeats: the engine is a Rust BINARY, so PHP,
+  // Ruby and the other five SDK languages all reach the same one — a
+  // consequence of "Rust" that the word alone does not convey to a reader.
+  // Deliberately NOT 多言語 or 「言語を問わず」: this site also documents locale
+  // packs for HUMAN languages, so 開発言語 is the word that cannot be misread.
+  // The English half keeps "callable", which is idiomatic there; the Japanese
+  // says 使える, because 呼べる is the literal shape of "callable" rather than
+  // how the sentence would be written in Japanese first.
+  // A page opts out with `titleTemplate: false` in its own frontmatter.
   locales: {
     root: {
       label: "English",
       lang: "en",
+      titleTemplate: "Shojiku — call it from any language",
       themeConfig: {
         nav: [
           { text: "Concept", link: "/concept", activeMatch: "^/concept" },
@@ -109,6 +121,7 @@ export default defineConfig({
     ja: {
       label: "日本語",
       lang: "ja",
+      titleTemplate: "好きな開発言語から使える帳票エンジン shojiku",
       description: DESCRIPTION_JA,
       themeConfig: {
         nav: [

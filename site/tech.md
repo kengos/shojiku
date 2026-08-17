@@ -1,5 +1,5 @@
 ---
-title: Tech
+title: "Technology, licensing and the security model"
 description: "The security policy, the licensing, and how the Rust engine and the Designer are built — the technical ground a team checks before adopting."
 ---
 
