@@ -44,9 +44,24 @@ name: SBOM sync
 # an App was chosen over a long-lived PAT (see also RA1: the repo is moving
 # the other registries OFF long-lived tokens, not onto more of them).
 #
-# TERMINATION is structural rather than a guard: the commit re-fires
-# `synchronize`, that run regenerates, finds nothing changed — `make sbom`
-# is idempotent — commits nothing, and stops.
+# TERMINATION depends on the job comparing against the PR'S OWN inventory,
+# and that is the subtle part. The commit re-fires `synchronize`; the next
+# run must then find nothing changed and stop.
+#
+# It did not, the first time this ran for real. The claim "termination is
+# structural" was written here and it was WRONG: the checkout is of BASE, so
+# `sbom/` on disk was MAIN's inventory, and regenerating from the head's
+# lockfile always differed from it — that difference is the entire reason the
+# PR needs syncing. So every run committed, every commit re-fired the
+# trigger, and the job never once looked at what it had already written. It
+# ran 19 times on one PR before being disabled by hand.
+#
+# Two things close it, and BOTH are needed. The lockfile step also takes the
+# head's copy of each inventory it is about to regenerate, so `make sbom` has
+# the PR's own bytes to preserve against. And the regenerate step diffs
+# against a snapshot taken before the run rather than against `git`, since
+# git measures from base and would report those head-sourced files as
+# modified no matter what was decided.
 
 on:
   pull_request_target:
@@ -192,6 +207,29 @@ jobs:
             exit 0
           fi
           sed 's/^/  /' /tmp/touched.txt
+
+          # CIRCUIT BREAKER. Everything above is reasoning about why this job
+          # converges; this is the thing that holds when the reasoning is
+          # wrong. It has been wrong once — a run that could not see its own
+          # output committed 19 times to one PR and stopped only because a
+          # human disabled the workflow.
+          #
+          # A correct run leaves exactly one of these commits (two if the
+          # branch legitimately moved again), so three is already impossible
+          # without a defect. Refusing here costs a red-ish log line on a PR
+          # that was going to need a human anyway; not refusing costs an
+          # unbounded commit stream that nothing else in this repository would
+          # notice.
+          mine=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$NUMBER/commits" \
+            --jq '[.[] | select(.author.login == "shojiku-sbom-sync[bot]")] | length' \
+            | awk '{s+=$1} END {print s+0}')
+          echo "sync commits already on this branch: $mine"
+          if [ "$mine" -ge 3 ]; then
+            echo "refusing: $mine sync commits are already on #$NUMBER — this job is looping, not converging." >&2
+            echo "  Disable the workflow, find the defect, then \`@dependabot recreate\` to get a clean branch." >&2
+            exit 1
+          fi
+
           echo "proceed=true" >>"$GITHUB_OUTPUT"
 
       # DATA, not code: only the lockfiles the guard just approved, by
@@ -211,14 +249,43 @@ jobs:
           HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
         run: |
           set -eu
-          while read -r lock; do
-            echo "taking $lock from $HEAD_SHA"
-            gh api "repos/$GITHUB_REPOSITORY/contents/$lock?ref=$HEAD_SHA" \
-              --header 'Accept: application/vnd.github.raw' >"$lock"
-            [ -s "$lock" ] || {
-              echo "refusing: $lock came back empty at $HEAD_SHA" >&2
+          take() { # <repo-relative path>
+            echo "taking $1 from $HEAD_SHA"
+            gh api "repos/$GITHUB_REPOSITORY/contents/$1?ref=$HEAD_SHA" \
+              --header 'Accept: application/vnd.github.raw' >"$1"
+            [ -s "$1" ] || {
+              echo "refusing: $1 came back empty at $HEAD_SHA" >&2
               exit 1
             }
+          }
+
+          while read -r lock; do
+            take "$lock"
+
+            # AND the inventory that describes it. This is what makes the job
+            # CONVERGE, and leaving it out is not a missing nicety — it is an
+            # infinite loop, observed in production for 19 commits before the
+            # workflow was disabled by hand.
+            #
+            # The checkout is of BASE, so sbom/ on disk is MAIN's inventory.
+            # Regenerating from the head's lockfile and comparing against that
+            # always reports a change — that difference is the very reason the
+            # PR needs syncing — so the job committed, the commit fired
+            # `synchronize`, the next run read main's inventory again, and it
+            # never once looked at what it had already written. Taking the
+            # head's copy is what lets `make sbom` PRESERVE on the second pass
+            # and report nothing to commit.
+            #
+            # Only for the ecosystems whose lockfile we took. The others keep
+            # base's lockfile AND base's inventory, which agree, so they
+            # preserve — pulling the head's copies of those would re-commit a
+            # stale branch's older inventories over main's.
+            name=$(scripts/generate-sbom.sh --list | awk -v l="$lock" '$1 == l {print $2}')
+            [ -n "$name" ] && [ "$name" != "-" ] || {
+              echo "refusing: $lock has no inventory name in the map" >&2
+              exit 1
+            }
+            take "sbom/$name.cdx.json"
           done </tmp/touched.txt
           git status --porcelain
 
@@ -227,20 +294,33 @@ jobs:
         id: sbom
         run: |
           set -eu
+          # Snapshot what is on disk BEFORE regenerating, and diff against
+          # THAT — not against git.
+          #
+          # `git diff` is the wrong instrument here and would reintroduce the
+          # loop this job was disabled for. The checkout is of BASE, and the
+          # previous step deliberately overwrote some inventories with the
+          # HEAD's copies, so git reports those as modified no matter what
+          # `make sbom` decides. The question being asked is not "does this
+          # differ from main" — it is "did regenerating change anything from
+          # what the PR already has", and only a before/after byte comparison
+          # answers it.
+          before=$(mktemp -d)
+          cp sbom/*.cdx.json "$before/"
+
           make sbom
-          # Only sbom/ is offered to the commit. The lockfiles in the tree
-          # are the head's already — committing them back would be a no-op
-          # at best and a revert of a concurrent push at worst.
-          git diff --name-only -- sbom/ >/tmp/moved.txt
+
+          : >/tmp/moved.txt
+          for f in sbom/*.cdx.json; do
+            cmp -s "$f" "$before/$(basename "$f")" || echo "$f" >>/tmp/moved.txt
+          done
           moved=$(wc -l </tmp/moved.txt | tr -d ' ')
           echo "inventories that moved: $moved"
           sed 's/^/  /' /tmp/moved.txt
           if [ "$moved" -eq 0 ]; then
             echo "nothing to commit — the committed inventories already describe these lockfiles"
-            echo "moved=0" >>"$GITHUB_OUTPUT"
-          else
-            echo "moved=$moved" >>"$GITHUB_OUTPUT"
           fi
+          echo "moved=$moved" >>"$GITHUB_OUTPUT"
 
       # Absent secrets SKIP rather than fail, matching how publish-packages
       # treats SPLIT_REPO_TOKEN: a fork, or this repo before the App is
