@@ -3,6 +3,7 @@
 // result. Composed in that ORDER on purpose — zoom feeds the render scale, and
 // Fit measures the last-good page the render produced.
 
+import type { PageMargin } from '../canvas/marginGuide';
 import { cssFactor, renderScale } from '../canvas/zoom';
 import type { EngineTransport } from '../engine/transport';
 import type { BoxIndex, RawPage } from '../engine/types';
@@ -41,6 +42,12 @@ export interface PreviewSession {
   /** The last-good pages — never blanked while a failing edit re-renders. */
   readonly pages: readonly RawPage[];
   readonly boxes: BoxIndex;
+  /** The last-good render's RESOLVED page margins — the canvas paints them as
+   * the margin-box guide. `null` before the first render, or when the outcome
+   * carried no inspect envelope. Unlike {@link boxes} this keeps its null (an
+   * "empty" margin has no meaningful stand-in, and the guide's own model
+   * refuses one anyway). */
+  readonly margin: PageMargin | null;
 }
 
 export function usePreviewSession({
@@ -74,5 +81,6 @@ export function usePreviewSession({
     fresh: preview.rendered !== null && preview.rendered === preview.revision,
     pages: preview.lastGood?.pages ?? [],
     boxes: preview.lastGood?.inspect?.boxes ?? EMPTY_BOXES,
+    margin: preview.lastGood?.inspect?.margin ?? null,
   };
 }

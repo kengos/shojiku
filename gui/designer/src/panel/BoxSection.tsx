@@ -12,6 +12,7 @@ import { BOX_AXES, type BoxAxis } from './itemView';
 import { LayoutSection } from './LayoutSection';
 import { containerLayoutFor, parentContainerOf } from './layoutModel';
 import { ParentContainerCard } from './ParentContainerCard';
+import { HelpfulHeading } from './panelHelpers';
 import { resolvePlacement } from './placementGeometry';
 import { placementFor } from './placementModel';
 
@@ -36,6 +37,23 @@ export function BoxSection(props: ItemPanelProps) {
       : parentLayout !== null
         ? t('panel.layout.itemPlacement')
         : t('panel.section.box');
+  // The `?` on this tab, and WHICH frame it names. `x`/`y` are an offset from the
+  // PARENT BOX ORIGIN (docs/engine/box.md), which is the margin box only for a
+  // band or absolute-body child (`coordinate`) and for a flow child's x — there
+  // the canvas guide IS the rectangle the numbers start from, and the sheet is
+  // what warns. A container child (`pinnable`) and a sub-template item (`plain`)
+  // measure from their container instead, and `child_overflow` warns against it,
+  // so telling them the margin rectangle is their origin would re-create this
+  // cycle's own misconception one nesting level down — with a drawn rectangle
+  // now reinforcing it.
+  const pageFramed = placement.kind === 'coordinate' || placement.kind === 'flow';
+  const heading = (
+    <HelpfulHeading
+      title={sectionTitle}
+      topic={pageFramed ? 'placement' : 'placementChild'}
+      onOpenGlossary={props.onOpenGlossary}
+    />
+  );
   const parentCard =
     parentPath !== null && parentLayout !== null ? (
       <ParentContainerCard
@@ -92,7 +110,7 @@ export function BoxSection(props: ItemPanelProps) {
       <div>
         {parentCard}
         <section>
-          <h3 className={SECTION_TITLE}>{sectionTitle}</h3>
+          {heading}
           <div className="grid grid-cols-2 gap-2">
             {BOX_AXES.map((axis) => editableAxis(axis, undefined))}
           </div>
@@ -107,7 +125,7 @@ export function BoxSection(props: ItemPanelProps) {
     <div>
       {parentCard}
       <section>
-        <h3 className={SECTION_TITLE}>{sectionTitle}</h3>
+        {heading}
         {placement.kind === 'pinnable' ? (
           <PlacementSegment
             placement={placement}

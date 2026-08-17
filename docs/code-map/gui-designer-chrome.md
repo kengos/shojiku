@@ -141,7 +141,8 @@ resolved style.
   presentational; `onMore` → glossary).
 - `help/ShortcutsDialog.tsx` + `shortcutsModel.ts` (`shortcutRows(mac)`
   mirrors `shortcuts.ts`); `help/GlossaryDialog.tsx` + `glossaryModel.ts`
-  (`GLOSSARY_TERMS`). Both Modals off the Help menu, keys in all six
+  (`GLOSSARY_TERMS` — data field, margin box, snap grid, style, default,
+  interpolation). Both Modals off the Help menu, keys in all six
   catalogs.
 
 ## Popover state

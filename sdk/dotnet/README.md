@@ -1,6 +1,6 @@
 # Shojiku for .NET
 
-.NET bindings for [Shojiku](https://shojiku.kengos.jp) — a document engine that
+.NET bindings for [Shojiku](https://shojiku.pages.dev) — a document engine that
 turns a YAML template plus your data into a deterministic PDF.
 
 ## Install

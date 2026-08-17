@@ -228,3 +228,37 @@ describe('DesignerCanvas — palette-drop threading', () => {
     expect(reported.get(1)).toBeNull();
   });
 });
+
+describe('DesignerCanvas margin-box guide', () => {
+  it('paints the guide on EVERY page, not just the first', () => {
+    // One page geometry per document (no per-section page setup), so every
+    // page has the same origin — a guide on page 1 alone leaves the rest
+    // unexplained.
+    const { container } = render(
+      <DesignerCanvas
+        pages={[page(200, 200), page(200, 200), page(200, 200)]}
+        boxes={{ pages: [] }}
+        scale={1}
+        selectedPath={null}
+        onSelect={() => {}}
+        onDeselect={() => {}}
+        margin={[10, 10, 10, 10]}
+      />,
+    );
+    expect(container.querySelectorAll('.sj-margin-guide')).toHaveLength(3);
+  });
+
+  it('paints none when the host passes no margins', () => {
+    const { container } = render(
+      <DesignerCanvas
+        pages={[page(200, 200)]}
+        boxes={{ pages: [] }}
+        scale={1}
+        selectedPath={null}
+        onSelect={() => {}}
+        onDeselect={() => {}}
+      />,
+    );
+    expect(container.querySelector('.sj-margin-guide')).toBeNull();
+  });
+});

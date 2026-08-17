@@ -17,6 +17,7 @@ import type { ContainerMark } from './ContainerMarkVisual';
 import type { IndicatorLine } from './dropPlan';
 import { scaleRect } from './geometry';
 import { InlineTextEditor } from './InlineTextEditor';
+import type { PageMargin } from './marginGuide';
 import type { CanvasManipulate } from './overlayDragModel';
 import { PageUnderlay } from './PageUnderlay';
 
@@ -76,6 +77,11 @@ export interface DesignerCanvasProps {
   readonly containerMarks?: readonly ContainerMark[];
   /** Right-click on a box: open the context menu at the pointer (viewport px). */
   readonly onContextMenu?: (path: string, x: number, y: number) => void;
+  /** The engine's resolved page margins — painted as the margin-box guide on
+   * EVERY page: the page geometry is one per document (there is no per-section
+   * page setup), so every page has the same origin and a guide on page 1 alone
+   * would leave later pages unexplained. */
+  readonly margin?: PageMargin | null;
 }
 
 const NO_BOXES: readonly PlacedBox[] = [];
@@ -99,6 +105,7 @@ export function DesignerCanvas({
   insertIndicator = null,
   containerMarks,
   onContextMenu,
+  margin,
 }: DesignerCanvasProps) {
   return (
     <div
@@ -149,6 +156,7 @@ export function DesignerCanvas({
               }
               containerMarks={containerMarks}
               onContextMenu={onContextMenu}
+              margin={margin}
             />
             {inlineEdit !== undefined && editingBox !== undefined ? (
               <InlineTextEditor

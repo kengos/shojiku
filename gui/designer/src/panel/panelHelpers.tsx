@@ -12,19 +12,27 @@ import type { ItemPanelProps } from './itemPanelProps';
 import { bindingPickOps } from './model';
 import { bindingScopeFor, type PickerOption, scopeAuthorable } from './pickerModel';
 
-/** A section heading with a contextual `?` help popover beside it. The two
- * genuinely-confusing panel concepts (fixed-text-vs-data, and the
- * default/inherited/style cascade) each get one; "learn more" opens the glossary. */
+/** Which panel concept a `?` explains. Each value is also the catalog SEGMENT
+ * (`help.<topic>.title` / `.body`), so adding a topic is adding its two strings
+ * rather than another branch here. */
+export type HelpTopic = 'content' | 'style' | 'placement' | 'placementChild';
+
+/** A section heading with a contextual `?` help popover beside it. The three
+ * genuinely-confusing panel concepts (fixed-text-vs-data, the
+ * default/inherited/style cascade, and where coordinates are measured FROM) each
+ * get one; "learn more" opens the glossary. */
 export function HelpfulHeading({
   title,
   topic,
   onOpenGlossary,
 }: {
   readonly title: string;
-  readonly topic: 'content' | 'style';
+  readonly topic: HelpTopic;
   readonly onOpenGlossary?: () => void;
 }) {
   const { t } = useI18n();
+  const titleKey = `help.${topic}.title` as const;
+  const bodyKey = `help.${topic}.body` as const;
   return (
     // `SECTION_TITLE` carries the section's bottom margin, and inside a centred
     // flex line that margin sits within the line box: it pushed the heading text
@@ -34,9 +42,9 @@ export function HelpfulHeading({
     <div className="mb-2 flex items-center gap-1 [&>h3]:mb-0">
       <h3 className={SECTION_TITLE}>{title}</h3>
       <HelpHint
-        label={t(topic === 'content' ? 'help.content.title' : 'help.style.title')}
-        title={t(topic === 'content' ? 'help.content.title' : 'help.style.title')}
-        body={t(topic === 'content' ? 'help.content.body' : 'help.style.body')}
+        label={t(titleKey)}
+        title={t(titleKey)}
+        body={t(bodyKey)}
         onMore={onOpenGlossary}
         moreLabel={t('help.more')}
       />

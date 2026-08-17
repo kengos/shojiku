@@ -326,6 +326,12 @@ export const ja: LanguageCatalog = {
     'help.style.title': '値はどこから来るか',
     'help.style.body':
       '装飾を空欄にしても表示されます。適用したスタイルや書類の既定値を継承するためです。各項目の下のヒントに、実際に使われる値とその出どころが表示されます。',
+    'help.placementChild.title': '座標の起点',
+    'help.placementChild.body':
+      'X と Y は、この要素が入っているコンテナの左上を起点として測ります。',
+    'help.placement.title': '座標の起点',
+    'help.placement.body':
+      'X と Y は、ページ余白の内側の領域の左上を起点として測ります（ページ上に枠線で示されている範囲です）。マイナスの値を指定すれば意図的に余白側へはみ出せます。問題として報告されるのは、用紙からはみ出した内容だけです。',
     'help.grid.title': 'グリッド(吸着)',
     'help.grid.body':
       'キャンバスでのドラッグやサイズ変更の位置がこの刻みに吸着し、↑↓ボタンの増減幅にもなります。エディタの設定であり、テンプレートには保存されません。',
@@ -339,6 +345,9 @@ export const ja: LanguageCatalog = {
     'glossary.field.term': 'データ項目',
     'glossary.field.def':
       '顧客名や合計などデータ内の名前付きの値で、固定テキストの代わりにテキストや画像の項目に表示できます。',
+    'glossary.marginBox.term': '余白の内側の領域',
+    'glossary.marginBox.def':
+      'ページ余白の内側の領域で、キャンバス上に枠線で示されます。バンドや絶対配置の要素の X と Y はここが起点で、幅いっぱいの要素はこの範囲を埋めます。コンテナの中に入っている要素は、そのコンテナの左上が起点になり、はみ出しも用紙ではなくコンテナに対して報告されます。',
     'glossary.grid.term': 'グリッド(吸着)',
     'glossary.grid.def':
       'ドラッグやサイズ変更のときに位置が揃うよう吸着する見えないグリッドです。刻みの変更やオフはツールバーからできます。文書そのものは変わりません。',
@@ -677,7 +686,8 @@ export const ja: LanguageCatalog = {
       '縦の位置は上から順に積み重なって自動で決まり、ここでは変えられません。',
     'panel.placement.hint.flowIgnoredY':
       'この要素にはYが指定されていますが、流し込みの中では無視されます。',
-    'panel.placement.caption.coordinate': 'この領域では、左上を原点とした座標で位置を指定します。',
+    'panel.placement.caption.coordinate':
+      'この領域では、ページ余白の内側の左上を原点とした座標で位置を指定します。',
     'panel.tab.content': '内容',
     'panel.tab.style': '装飾',
     'panel.tab.box': '配置',

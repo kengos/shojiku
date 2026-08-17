@@ -182,7 +182,7 @@ verification, browse/fetch UI) is unbuilt.
 **Product story (decided):** the AI-agent authoring workflow (MCP/CLI +
 the template-author playbook) leads the product story — the README
 pitches agents first; the Designer (hosted at
-shojiku.kengos.jp/designer) is the second entrance and carries the
+shojiku.pages.dev/designer) is the second entrance and carries the
 non-engineer story.
 
 **Non-goals (v1):** SaaS/accounts, font-upload UI (the user's OWN font

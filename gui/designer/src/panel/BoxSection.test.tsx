@@ -295,7 +295,7 @@ describe('BoxSection — flow / coordinate / plain', () => {
     );
     openLayout();
     expect(screen.queryByRole('group', { name: 'Placement' })).toBeNull();
-    expect(screen.getByText(/coordinates/)).toBeTruthy();
+    expect(screen.getByText(/measured from the top-left corner/)).toBeTruthy();
     // Unset coordinates state their meaning (0) as placeholders.
     expect((screen.getByLabelText('X') as HTMLInputElement).placeholder).toBe('0');
     expect((screen.getByLabelText('Y') as HTMLInputElement).placeholder).toBe('0');
@@ -316,7 +316,7 @@ describe('BoxSection — flow / coordinate / plain', () => {
     );
     openLayout();
     expect(screen.queryByRole('group', { name: 'Placement' })).toBeNull();
-    expect(screen.getByText(/coordinates/)).toBeTruthy();
+    expect(screen.getByText(/measured from the top-left corner/)).toBeTruthy();
     expect((screen.getByLabelText('X') as HTMLInputElement).placeholder).toBe('0');
   });
 
@@ -380,5 +380,121 @@ describe('BoxSection — w/h seed guard', () => {
       path: CHILD,
       keys: ['box', 'w'],
     });
+  });
+});
+
+describe('BoxSection — the placement `?` help', () => {
+  const bandReads = {
+    'sections.header': { items: [] },
+    'sections.header.items[0]': { type: 'text', text: 'hi', style: {}, box: {} },
+  };
+
+  it('offers the `?` and explains where coordinates are measured FROM', () => {
+    draw(
+      <PropertyPanel
+        controller={makeController(bandReads)}
+        path="sections.header.items[0]"
+        geometry={geo([])}
+      />,
+    );
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: 'Where coordinates start' }));
+    // The origin half and the why-no-warning half — the two sides of the
+    // misconception this cycle exists for.
+    expect(screen.getByText(/the outlined rectangle on the page/)).toBeTruthy();
+    expect(screen.getByText(/leaves the paper/)).toBeTruthy();
+    // A band child IS margin-box framed — the guide the canvas draws is exactly
+    // the rectangle its numbers start from, so this arm may say so.
+    expect(screen.queryByText(/container this element sits in/)).toBeNull();
+  });
+
+  it('names the CONTAINER frame — not the page — on the plain arm', () => {
+    // `x`/`y` are an offset from the PARENT BOX ORIGIN (docs/engine/box.md).
+    // A sub-template item measures from its cell, so telling it the margin
+    // rectangle is its origin would re-create this cycle's own misconception one
+    // nesting level down — and the canvas now DRAWS that rectangle.
+    const path = 'sections.body.items[0].cell.items[0]';
+    draw(
+      <PropertyPanel
+        controller={makeController({ [path]: { type: 'text', text: 'hi', style: {}, box: {} } })}
+        path={path}
+        geometry={geo([])}
+        // This arm's copy DEFERS the rest to the glossary, so the link is
+        // load-bearing here in a way it is not for the page-framed arm.
+        onOpenGlossary={() => {}}
+      />,
+    );
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: 'Where coordinates start' }));
+    expect(screen.getByText(/container this element sits in/)).toBeTruthy();
+    // It must NOT claim the margin frame — that is the defect this arm exists
+    // to avoid, and the canvas is drawing that rectangle right now.
+    expect(screen.queryByText(/inside the page margins/)).toBeNull();
+    // One sentence: the rest (why the drawn rectangle is not this element's
+    // frame, and which bound reports it) lives behind "learn more".
+    expect(screen.getByRole('button', { name: 'Learn more' })).toBeTruthy();
+  });
+
+  it('names the CONTAINER frame for a container child (pinnable) too', () => {
+    const reads = {
+      'sections.body.items[0]': { type: 'container', box: { type: 'flex' }, items: [] },
+      'sections.body.items[0].items[0]': { type: 'text', text: 'hi', style: {}, box: {} },
+    };
+    draw(
+      <PropertyPanel
+        controller={makeController(reads)}
+        path="sections.body.items[0].items[0]"
+        geometry={geo([])}
+      />,
+    );
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: 'Where coordinates start' }));
+    expect(screen.getByText(/container this element sits in/)).toBeTruthy();
+  });
+
+  it('offers "learn more" only when the host can open the glossary', () => {
+    const onOpenGlossary = vi.fn();
+    const view = draw(
+      <PropertyPanel
+        controller={makeController(bandReads)}
+        path="sections.header.items[0]"
+        geometry={geo([])}
+        onOpenGlossary={onOpenGlossary}
+      />,
+    );
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: 'Where coordinates start' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Learn more' }));
+    expect(onOpenGlossary).toHaveBeenCalled();
+    view.unmount();
+
+    draw(
+      <PropertyPanel
+        controller={makeController(bandReads)}
+        path="sections.header.items[0]"
+        geometry={geo([])}
+      />,
+    );
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: 'Where coordinates start' }));
+    expect(screen.queryByRole('button', { name: 'Learn more' })).toBeNull();
+  });
+
+  it('names the MARGIN box in the coordinate caption, not a bare corner', () => {
+    // The shipped copy used to say "measured from the top-left corner", which
+    // reads as the PAPER corner and is the wrong frame.
+    draw(
+      <PropertyPanel
+        controller={makeController(bandReads)}
+        path="sections.header.items[0]"
+        geometry={geo([])}
+      />,
+    );
+    openLayout();
+    expect(
+      screen.getByText(
+        'Here the position is set by coordinates, measured from the top-left corner of the area inside the page margins.',
+      ),
+    ).toBeTruthy();
   });
 });

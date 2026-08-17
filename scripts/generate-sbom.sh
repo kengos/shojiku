@@ -63,7 +63,7 @@ sbom_map() {
 engine/Cargo.lock engine
 gui/pnpm-lock.yaml gui
 sdk/js/pnpm-lock.yaml sdk-js
-site/pnpm-lock.yaml - the homepage is not a published package: its dependencies build shojiku.kengos.jp and ship in nothing a user installs
+site/pnpm-lock.yaml - the homepage is not a published package: its dependencies build shojiku.pages.dev and ship in nothing a user installs
 MAP
 }
 

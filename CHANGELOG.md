@@ -15,6 +15,18 @@ platform binaries.
 
 ### Added
 
+- **The Designer now outlines the page's margin box on the canvas, and the
+  Layout tab explains it.** Coordinates are measured from the corner of the
+  area inside the page margins, not from the paper corner — so an element you
+  place at X 0, Y 0 lands a margin's width in from the edge, and nothing on
+  screen said why. That rectangle is now drawn on every page (dashed, so it
+  cannot be mistaken for something in your document) with its corner marked
+  `0,0`, and the Layout tab carries a `?` that says where coordinates start and
+  why placing something outside the margins is allowed and reported as fine —
+  only content that leaves the paper is a problem. The glossary gained an entry
+  for the margin box. A document with no margins at all shows no outline: there
+  the margin box already is the sheet.
+
 - **Right-clicking an element in the Designer now offers duplicate,
   delete and borders.** The menu previously carried only "group into a
   container" and "save as block", so the two most frequent actions on a
@@ -37,16 +49,6 @@ platform binaries.
   capabilities.
 
 ### Changed
-
-- **The site now lives at
-  [shojiku.kengos.jp](https://shojiku.kengos.jp).** It was served from a
-  Cloudflare Pages subdomain, which search engines treat as a free shared
-  host carrying none of its own standing — a handicap worth shedding
-  before the site builds any. The READMEs, the docs and every package's
-  homepage field point at the new host. The old `shojiku.pages.dev`
-  keeps working and redirects there: a published package's metadata
-  cannot be rewritten after the fact, so every release up to this one
-  still names it.
 
 - **The committed SBOMs now describe the latest release rather than the
   latest commit.** The CycloneDX inventories under `sbom/` are refreshed

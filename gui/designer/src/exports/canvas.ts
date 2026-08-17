@@ -55,6 +55,13 @@ export {
   manipulationFor,
   type ReorderPlace,
 } from '../canvas/manipulate';
+// The page margin box as canvas geometry — where `x: 0` / `y: 0` actually start.
+export {
+  type MarginGuide,
+  marginGuide,
+  ORIGIN_MARKER_PX,
+  type PageMargin,
+} from '../canvas/marginGuide';
 export type { CanvasManipulate } from '../canvas/overlayDragModel';
 export { clientToPagePt } from '../canvas/overlayGeometry';
 export { PageUnderlay, type PageUnderlayProps } from '../canvas/PageUnderlay';

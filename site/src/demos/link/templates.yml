@@ -9,13 +9,13 @@ sections:
       - type: text
         box: { w: "100%" }
         text: The whole line is one annotation
-        link: { url: https://shojiku.kengos.jp }
+        link: { url: https://shojiku.pages.dev }
         style: { fontSize: 12, color: "#1a3c6e", textDecoration: underline }
       - type: text
         box: { w: "100%" }
         spans:
           - { text: "or just " }
-          - { text: one span, link: { url: https://shojiku.kengos.jp }, style: { color: "#1a3c6e", textDecoration: underline } }
+          - { text: one span, link: { url: https://shojiku.pages.dev }, style: { color: "#1a3c6e", textDecoration: underline } }
           - { text: " inside a sentence." }
         style: { fontSize: 12 }
       - type: text

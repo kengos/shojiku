@@ -6,7 +6,7 @@
   "packageManager": "pnpm@11.15.1",
   "license": "MIT OR Apache-2.0 OR BSD-3-Clause",
   "author": "kengos",
-  "homepage": "https://shojiku.kengos.jp",
+  "homepage": "https://shojiku.pages.dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kengos/shojiku.git",
