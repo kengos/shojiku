@@ -332,6 +332,9 @@ export const ja: LanguageCatalog = {
     'help.placement.title': '座標の起点',
     'help.placement.body':
       'X と Y は、ページ余白の内側の領域の左上を起点として測ります（ページ上に枠線で示されている範囲です）。マイナスの値を指定すれば意図的に余白側へはみ出せます。問題として報告されるのは、用紙からはみ出した内容だけです。',
+    'help.border.title': '枠線の付け方',
+    'help.border.body':
+      'まず下のペン（太さ・色・種類）を決めてから、付けたい辺をクリックします。表計算ソフトの罫線ツールと同じ順序です。すでにペンと同じ設定になっている辺をクリックすると、その辺は外れます。',
     'help.grid.title': 'グリッド(吸着)',
     'help.grid.body':
       'キャンバスでのドラッグやサイズ変更の位置がこの刻みに吸着し、↑↓ボタンの増減幅にもなります。エディタの設定であり、テンプレートには保存されません。',
@@ -625,7 +628,6 @@ export const ja: LanguageCatalog = {
     'panel.rowConditions.collapse': 'この条件を閉じる',
     'panel.rowConditions.unset': '未設定',
     'panel.rowConditions.styleNames': '名前付きスタイル {count} 件も適用されます',
-    'border.penHint': '辺をクリックして付け外し。下のペンで線を設定します。',
     'border.fromStyle': '枠線はスタイル「{name}」由来',
     'border.tableNote': '表では外枠のみに描かれます。',
     'border.penWidth': '線の太さ',

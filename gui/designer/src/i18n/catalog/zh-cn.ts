@@ -268,6 +268,9 @@ export const zhCn: LanguageCatalog = {
     'help.placement.title': '坐标的起点',
     'help.placement.body':
       'X 和 Y 从页边距内侧区域的左上角开始计算（画布上用虚线框标出的范围）。负值可以有意伸入页边距；只有超出纸张的内容才会被报告为问题。',
+    'help.border.title': '如何设置边框',
+    'help.border.body':
+      '先设定下方的画笔（粗细、颜色、线型），再点击要加边框的边——顺序与表格软件的边框工具相同。点击已经与画笔一致的边，则会移除该边。',
     'help.grid.title': '吸附网格',
     'help.grid.body':
       '在画布上拖动或调整大小时,位置会吸附到此间距,箭头按钮也以此为增减单位。这是编辑器设置,不会存入模板。',
@@ -552,7 +555,6 @@ export const zhCn: LanguageCatalog = {
     'panel.rowConditions.collapse': '收起此条件',
     'panel.rowConditions.unset': '未设置',
     'panel.rowConditions.styleNames': '还会应用 {count} 个具名样式',
-    'border.penHint': '点击边缘可添加或移除;下方的画笔设置线条。',
     'border.fromStyle': '边框来自样式“{name}”',
     'border.tableNote': '在表格上仅绘制外边框。',
     'border.penWidth': '线条宽度',

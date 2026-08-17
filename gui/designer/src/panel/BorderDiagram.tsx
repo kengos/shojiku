@@ -4,6 +4,7 @@
 // deciding what a click authors is `borderOps`' job, threaded in as `onEdge`.
 
 import type { ReactNode } from 'react';
+import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { isHexColor } from '../ui/ColorSwatchPicker';
 import { SIDES, type Side } from './borderSides';
@@ -129,7 +130,20 @@ export function BorderDiagram({ view, isTable, onEdge }: BorderDiagramProps) {
         ))}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="m-0 mb-1 text-sm text-muted">{t('border.penHint')}</p>
+        {/* The whole explanation — the ACTION (click an edge) and the ORDER
+          (pen first, spreadsheet-style) — lives in this one `?`; there is no
+          always-visible hint line, which is a line back in a cramped panel.
+          It lives here rather than beside the section heading so all THREE
+          hosts of this editor get it (decoration tab, canvas context menu,
+          format toolbar). No "learn more": this component is presentational
+          and is handed no glossary opener, like the content heading's hint. */}
+        <div className="mb-1 flex justify-end">
+          <HelpHint
+            label={t('help.border.title')}
+            title={t('help.border.title')}
+            body={t('help.border.body')}
+          />
+        </div>
         {view.width.origin === 'style' ? (
           <p className="m-0 text-sm text-muted">
             {t('border.fromStyle', { name: view.width.styleName })}

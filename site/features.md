@@ -1,5 +1,5 @@
 ---
-title: "Feature list, with a page behind each one"
+title: Features
 description: "What Shojiku can make and what it will not do: document kinds, layout, typesetting, fonts, and signing, each with a rendered example behind it."
 ---
 

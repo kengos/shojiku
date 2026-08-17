@@ -1,5 +1,5 @@
 ---
-title: "Where Thinreports hurt, and what changed"
+title: Concept
 description: "The six things years of running Thinreports left us watching for, and the structure Shojiku chose so that none of them needs watching."
 ---
 

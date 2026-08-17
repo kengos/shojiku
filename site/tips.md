@@ -1,5 +1,5 @@
 ---
-title: "Uses outside business documents"
+title: Tips
 description: "Using Shojiku outside work: turn a page from a Japanese recipe site into a printable booklet in your own language."
 ---
 

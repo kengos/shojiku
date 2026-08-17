@@ -1,5 +1,5 @@
 ---
-title: "Setting up a language other than Japanese or English"
+title: Other languages
 description: "Two languages are compiled into the engine. Chinese, Hindi, Filipino and Thai arrive as locale packs — a file you point the engine at. How to load one, and where the typesetting itself changes."
 ---
 

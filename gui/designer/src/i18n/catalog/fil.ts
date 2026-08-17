@@ -102,6 +102,9 @@ export const fil: LanguageCatalog = {
     'help.placement.title': 'Saan nagsisimula ang mga coordinate',
     'help.placement.body':
       'Sinusukat ang X at Y mula sa itaas-kaliwang sulok ng lugar sa loob ng mga margin ng pahina — ang nakabalangkas na parihaba sa pahina. Sinadya ang mga negatibong halaga para umabot sa margin, at ang nilalamang lumalabas sa papel lang ang iniuulat na problema.',
+    'help.border.title': 'Paano maglagay ng border',
+    'help.border.body':
+      'Itakda muna ang pen sa ibaba — ang kapal, kulay at uri ng linya — pagkatapos ay i-click ang mga gilid na nais mong lagyan, katulad ng border tool sa spreadsheet. Ang pag-click sa gilid na tugma na sa pen ay nag-aalis nito.',
     'help.grid.title': 'Snap grid',
     'help.grid.body':
       'Ang pag-drag at pag-resize sa canvas ay dumidikit sa step na ito, at ito rin ang laki ng galaw ng mga arrow button. Setting lang ito ng editor — hindi ito naisasama sa template.',
@@ -402,8 +405,6 @@ export const fil: LanguageCatalog = {
     'panel.rowConditions.collapse': 'Isara ang kondisyong ito',
     'panel.rowConditions.unset': 'hindi nakatakda',
     'panel.rowConditions.styleNames': 'Nag-a-apply din ng {count} named style',
-    'border.penHint':
-      'I-click ang gilid para idagdag o alisin; ang pen sa ibaba ang nagtatakda ng linya.',
     'border.fromStyle': 'Border mula sa style na "{name}"',
     'border.tableNote': 'Sa talahanayan, ang panlabas na frame lang ang iginuguhit nito.',
     'border.penWidth': 'Lapad ng linya',
