@@ -8,7 +8,7 @@ sections:
     items:
       - type: qr_code
         box: { w: 90, h: 90 }
-        text: https://shojiku.pages.dev
+        text: https://shojiku.kengos.jp
         errorCorrection: medium
       - type: text
         box: { w: "100%" }

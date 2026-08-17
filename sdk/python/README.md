@@ -1,6 +1,6 @@
 # Shojiku for Python
 
-Python bindings for [Shojiku](https://shojiku.pages.dev) — a document engine that
+Python bindings for [Shojiku](https://shojiku.kengos.jp) — a document engine that
 turns a YAML template plus your data into a deterministic PDF, then signs
 and verifies the result.
 

@@ -2,7 +2,7 @@
 // PDF, and signs and verifies the result.
 //
 // The gallery, the tutorials, and a playground that renders in your browser
-// are at https://shojiku.pages.dev.
+// are at https://shojiku.kengos.jp.
 //
 // Three things to know before reading any of it.
 //
