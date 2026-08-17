@@ -1,4 +1,21 @@
 version: 2
+
+# A PR THAT MOVES AN INVENTORIED LOCKFILE IS FIXED FOR YOU. `engine/Cargo.lock`,
+# `gui/pnpm-lock.yaml` and `sdk/js/pnpm-lock.yaml` each have a committed
+# CycloneDX inventory under `sbom/`, and `make sbom-check` (CI job "sbom")
+# reds when one drifts. Dependabot cannot regenerate them — a workflow it
+# triggers gets a read-only token and cannot read repository secrets — so
+# every such PR used to arrive red and stay red until a human ran
+# `make sbom` on the branch. `.github/workflows/sbom-sync.yml` now does
+# that and commits the result.
+#
+# It refuses any PR that touches anything but manifests and lockfiles, which
+# is deliberate and covers two ecosystems below: `github-actions` PRs edit
+# `.github/workflows/**` and `docker` PRs edit Dockerfiles. Neither moves a
+# lockfile, so neither has an SBOM to be stale — nothing is owed there.
+# `site/pnpm-lock.yaml` is mapped `-` (not inventoried), so site PRs never
+# needed it either. When the workflow declines a PR it says which path
+# disqualified it; the fallback is always `make sbom` on the branch.
 updates:
   - package-ecosystem: cargo
     directory: /engine

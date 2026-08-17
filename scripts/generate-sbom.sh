@@ -28,11 +28,18 @@
 # own sha256 into metadata.component, so the SBOM says which input it
 # describes.
 #
-# Output carries a fresh `timestamp` and `serialNumber` on every run, so
-# byte-identity across runs is not expected. Those two fields are the
-# ONLY ones that move for an unchanged lockfile — everything else,
-# bom-refs included, is stable — which is what lets check-sbom.sh compare
-# the rest byte-for-byte.
+# syft stamps a fresh `timestamp` and `serialNumber` on every run. Those two
+# fields are the ONLY ones that move for an unchanged lockfile — everything
+# else, bom-refs included, is stable — which is what lets check-sbom.sh
+# compare the rest byte-for-byte.
+#
+# THIS SCRIPT IS IDEMPOTENT because of that. When the inventory it just
+# produced says the same thing as the one already committed, it keeps the
+# committed bytes rather than restamping them (`sbom_place` in
+# scripts/sbom-lib.sh, which also owns the comparison the checker uses). So
+# a run over an unchanged tree leaves `git status` clean, and a change to
+# ONE ecosystem's lockfile produces a ONE-file diff instead of dirtying
+# every inventory with timestamp churn that has to be reverted by hand.
 #
 # Usage: generate-sbom.sh [OUT_DIR]   write the inventories to OUT_DIR
 #        generate-sbom.sh --list      print the lockfile map, one row per line
@@ -40,6 +47,9 @@ set -eu
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SYFT_IMAGE="${SYFT_IMAGE:-anchore/syft:v1.46.0}"
+
+# shellcheck source=scripts/sbom-lib.sh
+. "$REPO_ROOT/scripts/sbom-lib.sh"
 
 # The map: one row per COMMITTED lockfile, "<lockfile> <inventory-name>".
 # An inventory name of "-" means deliberately NOT inventoried, and the
@@ -99,7 +109,18 @@ generate() {
 		rm -f "$scratch"
 		exit 1
 	}
-	mv "$scratch" "$OUT_DIR/$name.cdx.json"
+	# `preserved` keeps the committed bytes when only the volatile fields
+	# moved; see sbom_place. Printing which happened is the whole readout a
+	# caller gets — `make sbom` saying "preserved" for two of three
+	# inventories is how you know the third is the real delta.
+	#
+	# NOT `echo "$name: $(sbom_place …)"`. sbom_place aborts on a mask that
+	# has stopped being unique, and inside a command substitution that
+	# `exit` kills only the subshell: the substitution yields empty, `echo`
+	# succeeds, and the guard that exists to stop this script writing drift
+	# into the tree would be swallowed by the line that reports it.
+	printf '%s: ' "$name"
+	sbom_place "$scratch" "$OUT_DIR/$name.cdx.json"
 }
 
 sbom_map | while read -r lock name _rest; do
