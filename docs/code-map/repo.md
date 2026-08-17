@@ -349,14 +349,40 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   — making the artifact depend on what the host last built. Owns the
   lockfile→
   inventory MAP, `--list` prints it, and a row may name `-` plus a reason
-  instead of an inventory)
+  instead of an inventory. IDEMPOTENT via `sbom_place`: an inventory
+  whose content is unchanged keeps its committed bytes instead of being
+  restamped, so a one-ecosystem bump is a one-file diff and a re-run over
+  a clean tree leaves it clean. Prints `preserved`/`written` per row)
+  `sbom-lib.sh` — sourced by BOTH of the others, and the single
+  definition of "these two inventories say the same thing": the
+  `timestamp`/`serialNumber` mask, the comparison, and the arity
+  assertion that stops the mask growing into a blindfold. Shared because
+  the generator uses it to decide what to PRESERVE and the checker to
+  decide what is DRIFT — two scripts disagreeing about that would write
+  drift into the tree and then certify it green.
   `check-sbom.sh` — `make sbom-check`, CI job "sbom": regenerates through
-  that same script into a scratch dir and compares byte-for-byte with
-  `timestamp`/`serialNumber` masked (the only two fields syft moves for
-  an unchanged lockfile), and asserts the map's lockfile set equals the
-  one git tracks. Self-tests the comparator against a three-case fixture
-  first — one of which differs ONLY in the masked fields, so a mask that
-  became a blindfold fails rather than passing everything.
+  the generator into a scratch dir (where preservation is inert, there
+  being no file to preserve) and compares through that shared predicate,
+  and asserts the map's lockfile set equals the one git tracks. Two
+  self-tests run first: the comparator over a four-case fixture — one
+  case differing ONLY in the masked fields, so a mask that became a
+  blindfold fails rather than passing everything, and one RENAME at the
+  same version, without which widening the mask to `"name"` would go
+  unnoticed — and `sbom_place` over all three of its states
+  (preserve / overwrite / no destination), because it is the half that
+  WRITES and an over-eager preserve rule is this pair's fail-open shape.
+  The third member of the cluster lives outside `scripts/`:
+  `.github/workflows/sbom-sync.yml` runs `make sbom` on DEPENDABOT PRs and
+  commits the result, because dependabot moves lockfiles and cannot
+  regenerate the inventories itself — without it every bump to an
+  inventoried lockfile is red on arrival, permanently. It is
+  `pull_request_target` (the only context where repository secrets are
+  readable on a dependabot PR) but never executes PR-authored code: base
+  checkout, lockfiles taken by explicit path through the contents API, and
+  a fail-closed refusal unless every changed path is a manifest or a
+  lockfile. Commits through GraphQL `createCommitOnBranch` (`main` requires
+  signed commits) with a GitHub App installation token (a `GITHUB_TOKEN`
+  push starts no CI run, so the PR would end green at an unchecked sha).
   + codegen (`gen-locale-builtins.py` — authoring-time CLDR
   fetch, ONE emitter for builtins AND packs; `gen-uax50.py` —
   authoring-time pinned Unicode fetch → the UAX#50 table in

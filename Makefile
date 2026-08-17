@@ -85,6 +85,12 @@ endif
 #                                         describes its lockfile, and every
 #                                         committed lockfile is either
 #                                         inventoried or declared not to be)
+#   sbom              -> sbom-sync.yml   (NOT a ci.yml job: the one target CI
+#                                         runs to WRITE. Dependabot cannot run
+#                                         it, so that workflow runs it on
+#                                         dependabot PRs and commits the result,
+#                                         which is what keeps the job above from
+#                                         redding every lockfile bump forever)
 #   wasm              -> job "wasm"      (build wasm32 bindings + size budget)
 #   sdk-ruby          -> job "sdk-ruby"  (rubocop, rspec at 100% coverage, gem
 #                                         build/install; engine library injected
@@ -1819,7 +1825,7 @@ site-dev: ## VitePress dev server in Docker (http://localhost:5174, Ctrl-C stops
 
 ## ---- sbom ---------------------------------------------------------------
 
-sbom: ## Regenerate the committed CycloneDX SBOMs under sbom/ from the lockfiles
+sbom: ## Regenerate the committed CycloneDX SBOMs from the lockfiles (idempotent)
 	@SYFT_IMAGE=$(SYFT_IMAGE) scripts/generate-sbom.sh
 
 sbom-check: ## Fail if a committed SBOM drifts from its lockfile, or a lockfile is undeclared
