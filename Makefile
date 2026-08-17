@@ -247,7 +247,7 @@ WASM_E2E_IMAGE := shojiku-wasm-e2e:$(WORK_TAG)
 
 # Node image for the gui/ workspace gates (typecheck + lint + coverage). The
 # host has no Node toolchain either — like Rust, every gui gate runs in Docker.
-NODE_IMAGE := node:24-bookworm-slim
+NODE_IMAGE := node:26-bookworm-slim
 
 # The node SDK's gates run on the package's FLOOR (docs/agents/sdk.md), not on
 # the newest release: a package that only works on the latest node has not

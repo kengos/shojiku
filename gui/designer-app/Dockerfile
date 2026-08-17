@@ -17,7 +17,7 @@ RUN cargo build -p shojiku-wasm --profile wasm-release --target wasm32-unknown-u
 RUN wasm-bindgen --target web --out-dir /out/pkg \
       target/wasm32-unknown-unknown/wasm-release/shojiku_wasm.wasm
 
-FROM node:24-bookworm-slim AS app
+FROM node:26-bookworm-slim AS app
 # pnpm, at the version `packageManager` in gui/package.json declares — the
 # Makefile reads it out of that file and passes it here, so the declaration
 # stays the single source of truth. Installed directly rather than through
