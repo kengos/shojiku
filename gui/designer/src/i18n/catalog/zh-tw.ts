@@ -268,6 +268,9 @@ export const zhTw: LanguageCatalog = {
     'help.placement.title': '座標的起點',
     'help.placement.body':
       'X 與 Y 從頁面邊界內側區域的左上角開始計算（畫布上以虛線框標示的範圍）。負值可刻意延伸到邊界內；只有超出紙張的內容才會被回報為問題。',
+    'help.border.title': '如何設定框線',
+    'help.border.body':
+      '先設定下方的筆（粗細、顏色、線型），再點擊要加框線的邊——順序與試算表的框線工具相同。點擊已經與筆一致的邊，則會移除該邊。',
     'help.grid.title': '吸附格線',
     'help.grid.body':
       '在畫布上拖曳或調整大小時,位置會吸附到此間距,箭頭按鈕也以此為增減單位。這是編輯器設定,不會存入範本。',
@@ -552,7 +555,6 @@ export const zhTw: LanguageCatalog = {
     'panel.rowConditions.collapse': '收合此條件',
     'panel.rowConditions.unset': '未設定',
     'panel.rowConditions.styleNames': '也會套用 {count} 個具名樣式',
-    'border.penHint': '點按邊緣可新增或移除；下方的筆刷設定線條。',
     'border.fromStyle': '框線來自樣式「{name}」',
     'border.tableNote': '在表格上僅繪製外框。',
     'border.penWidth': '線條寬度',

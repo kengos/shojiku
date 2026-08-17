@@ -15,6 +15,16 @@ platform binaries.
 
 ### Added
 
+- **The border editor explains the order it works in, and its controls line
+  up again.** Setting a border is pen-then-edges — pick the width, colour and
+  line type, then click the edges you want them on, the way a spreadsheet's
+  border tool works — and clicking an edge that already matches the pen removes
+  that edge. None of that was written down; a `?` now carries the whole
+  explanation, in all three places the border editor appears, replacing the
+  one-line hint that only described the click. The pen's three controls had also
+  drifted out of alignment (their labels sat on different baselines and the
+  width box was too narrow to show its own value beside the `pt` badge).
+
 - **The Designer now outlines the page's margin box on the canvas, and the
   Layout tab explains it.** Coordinates are measured from the corner of the
   area inside the page margins, not from the paper corner — so an element you

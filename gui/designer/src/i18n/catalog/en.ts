@@ -310,6 +310,9 @@ export const en: LanguageCatalog = {
     'help.placement.title': 'Where coordinates start',
     'help.placement.body':
       'X and Y are measured from the top-left corner of the area inside the page margins — the outlined rectangle on the page. Negative values reach into the margin on purpose, and only content that leaves the paper is reported as a problem.',
+    'help.border.title': 'Setting a border',
+    'help.border.body':
+      'Set the pen first — the width, colour and line type — then click the edges you want it on, the way a spreadsheet border tool works. Clicking an edge that already matches the pen removes that edge instead.',
     'help.grid.title': 'Snap grid',
     'help.grid.body':
       'Dragging and resizing on the canvas snaps positions to this step, and the arrow steppers move by it. An editor setting only — it is never saved into the template.',
@@ -604,7 +607,6 @@ export const en: LanguageCatalog = {
     'panel.rowConditions.collapse': 'Close this condition',
     'panel.rowConditions.unset': 'not set',
     'panel.rowConditions.styleNames': 'Also applies {count} named style(s)',
-    'border.penHint': 'Click an edge to add or remove it; the pen below sets the line.',
     'border.fromStyle': 'Border from style "{name}"',
     'border.tableNote': 'On a table this draws the outer frame only.',
     'border.penWidth': 'Line width',

@@ -1,5 +1,5 @@
 ---
-title: "Tips"
+title: Tips
 description: "Shojikuの、仕事以外の使い道。レシピサイトのページを、台所に置ける印刷向きのPDFに組み直します。"
 ---
 

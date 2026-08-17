@@ -365,3 +365,38 @@ describe('BorderEditor — patterned styles and corner radius', () => {
     expect(dashArrays).toEqual(['3 3', '3 3', '3 3', '3 3']);
   });
 });
+
+describe('BorderEditor — the pen row and its `?`', () => {
+  it('explains the pen-then-edge ORDER, and the edge-clears rule', () => {
+    render(<Harness source={RECT} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Setting a border' }));
+    // The Excel model: the pen is set first, the edges are clicked after.
+    expect(screen.getByText(/Set the pen first/)).toBeTruthy();
+    // Pinned against `borderOps`: "an edge exactly matching the pen clears".
+    expect(screen.getByText(/already matches the pen removes that edge/)).toBeTruthy();
+  });
+
+  it('carries the ACTION too — there is no always-visible hint any more', () => {
+    // The hint line was folded into this `?` to give a cramped panel its line
+    // back, so the popover is now the ONLY place that says an edge is clickable.
+    render(<Harness source={RECT} />);
+    expect(screen.queryByText(/Click an edge to add or remove it/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Setting a border' }));
+    expect(screen.getByText(/click the edges you want it on/)).toBeTruthy();
+  });
+
+  it('gives all three pen labels the SAME label treatment', () => {
+    // The row bottom-aligned three columns whose label markup differed, so the
+    // labels landed on different baselines. One shared class is the fix, and
+    // the thing a future edit would silently undo.
+    const { container } = render(<Harness source={RECT} />);
+    for (const name of ['Line width', 'Line color', 'Line type']) {
+      const label = [...container.querySelectorAll('label, span')].find(
+        (el) => el.textContent === name,
+      );
+      expect(label, name).toBeTruthy();
+      expect(label?.className, name).toContain('mb-0.5');
+      expect(label?.className, name).toContain('text-sm');
+    }
+  });
+});

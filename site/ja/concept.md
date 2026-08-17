@@ -1,5 +1,5 @@
 ---
-title: "コンセプト"
+title: コンセプト
 description: "Thinreportsを長年運用して残った六つの注意点と、そのどれにも注意しなくて済むようにShojikuが選び直した構造の話。"
 ---
 

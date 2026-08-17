@@ -128,11 +128,21 @@ read side, never the reverse.
   - `panel/BorderDiagram.tsx` — the 96×64 paper diagram: per-edge SVG
     painting the effective line (real dash pattern, a second offset
     stroke for `double`, a faint dotted placeholder when off) + the four
-    hit buttons + the pen/named-style/table hints. It reports WHICH edge
-    was clicked (`onEdge`); it knows nothing about ops.
+    hit buttons + the named-style/table notes, and the `?` carrying the
+    WHOLE explanation — that an edge is clickable, and that the order is
+    pen-then-edges. There is no always-visible hint line (it was folded in
+    to give a cramped panel its line back), so this popover is the only
+    place the edge-click affordance is stated. It lives HERE rather than
+    at the section heading so all three hosts of the editor carry it —
+    decoration tab, canvas context menu, format toolbar. It reports WHICH
+    edge was clicked (`onEdge`); it knows nothing about ops.
   - `panel/BorderPen.tsx` — the pen row (width stepper / colour /
     line-style select) and the two line-style capability gates. Editor
-    state only — nothing here writes the document.
+    state only — nothing here writes the document. All three columns are
+    top-aligned and take the SAME `FIELD_LABEL`: the row used to bottom-align
+    them while only the stepper carried its own `mb-2`, and only the stepper's
+    label went through the shared class, so the three labels sat on different
+    baselines (pinned by a test).
   - `panel/BorderRadiusField.tsx` — the corner-rounding field: commits
     through `radiusOps` (authored unit preserved) and steps only on a
     bare numeral or an empty field.

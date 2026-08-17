@@ -6,6 +6,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useI18n } from '../i18n/context';
 import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
+import { FIELD_LABEL } from '../ui/chrome';
 import {
   BORDER_STYLE_VALUES,
   type BorderStyleValue,
@@ -44,8 +45,15 @@ export function BorderPen({ pen, setPen, capabilities }: BorderPenProps) {
   };
 
   return (
-    <div className="flex flex-wrap items-end gap-2">
-      <div className="w-24">
+    // `items-start`, not `items-end`: `StepperField`'s root carries its own
+    // `mb-2`, so bottom-aligning floated the width column 8px above the other
+    // two and the three labels landed on different baselines. Tops align, and
+    // all three labels go through the SAME `FIELD_LABEL` — the two here used to
+    // be hand-rolled spans with `gap-0.5`, which is the other half of the drift.
+    <div className="flex flex-wrap items-start gap-2">
+      {/* Wide enough for the value AND the `pt` badge the input reserves 44px
+        for; at `w-24` the editable text area was ~26px and read as broken. */}
+      <div className="w-28">
         <StepperField
           label={t('border.penWidth')}
           value={String(pen.width)}
@@ -55,8 +63,8 @@ export function BorderPen({ pen, setPen, capabilities }: BorderPenProps) {
           onStep={stepWidth}
         />
       </div>
-      <div className="flex flex-col gap-0.5">
-        <span className="text-sm text-muted">{t('border.penColor')}</span>
+      <div>
+        <span className={FIELD_LABEL}>{t('border.penColor')}</span>
         <ColorSwatchPicker
           label={t('border.penColor')}
           value={pen.color}
@@ -67,10 +75,12 @@ export function BorderPen({ pen, setPen, capabilities }: BorderPenProps) {
         />
       </div>
       {styleControl ? (
-        <label className="flex flex-col gap-0.5">
-          <span className="text-sm text-muted">{t('border.penStyle')}</span>
+        // `min-w-0 flex-1`: the select takes the rest of the row and SHRINKS
+        // rather than overflowing the ~255px panel.
+        <label className="block min-w-0 flex-1">
+          <span className={FIELD_LABEL}>{t('border.penStyle')}</span>
           <select
-            className="h-8 rounded-md border border-border bg-surface px-1 text-sm text-text"
+            className="h-8 w-full min-w-0 rounded-md border border-border bg-surface px-1 text-sm text-text"
             value={pen.style}
             onChange={(event) => {
               // Capture synchronously — `currentTarget` is null inside the

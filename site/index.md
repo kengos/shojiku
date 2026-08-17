@@ -1,6 +1,6 @@
 ---
 layout: home
-title: "Invoice and receipt PDFs from a YAML template"
+title: Shojiku
 hero:
   tagline: Invoices, receipts, application forms, manuscript paper. A Rust engine that turns a YAML template and your JSON data into a PDF.
   actions:
@@ -39,14 +39,6 @@ There are three places worth touching. `margin: 24` under `page` moves the whole
 The Japanese sample loads the Japanese fonts (about 9 MB) at the press of a button. This is running in your browser, but the CLI, Docker and the SDKs produce the same PDF from the same input.
 
 <ClientOnly><LiveRenderer /></ClientOnly>
-
-## Why it is shaped this way
-
-The author used [Thinreports](https://github.com/thinreports) templates for years. It served its purpose, and there were six things that had to be watched for as long as it ran. All six come back to how the format was structured.
-
-Shojiku picked a structure where none of the six needs watching. That is why the template is YAML, and why the usable keys are listed up front in `definitions.yml`.
-
-[Concept](/concept) names all six.
 
 ## Architecture
 
