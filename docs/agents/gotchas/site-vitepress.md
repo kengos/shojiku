@@ -189,3 +189,54 @@ disagrees. Two things separate it from the failure it resembles:
   ticks. Both directions matter: a page that has not rebuilt yet still
   contains the old wording, so `new=0 old=1` names the state exactly, while
   `new=0` alone cannot tell "not deployed" from "I grepped the wrong string".
+
+## `_redirects` matches PATHS only — a host rule redirects the site to itself
+
+Moving the site to a new host wants a 301 from the old one, and
+`site/public/_redirects` looks like exactly where that belongs: the file
+deploys with the site, so the redirect would be version-controlled and
+reviewable instead of living in a dashboard. Cloudflare Pages does not
+support it — its documentation lists domain-level redirects as unsupported,
+and the source column is a PATH, never a full URL.
+
+The trap is that the rule does not merely fail to work. Written the obvious
+way:
+
+```
+/*  https://<new-host>/:splat  301
+```
+
+the pattern matches on path, so it also matches every request to the NEW
+host and redirects it to itself. A rule meant to forward the old host takes
+the live site down with an infinite redirect, and nothing in the repo's
+gates can see it: `_redirects` has no schema, no test, and the file is inert
+until it is deployed.
+
+The redirect is account-level Cloudflare work (Bulk Redirects, or a Worker
+route bound to the old hostname), not repo content. It is also seldom
+urgent: once the canonical points at the new host, search engines
+consolidate there without it, so its real job is preserving links that
+already exist — a published package's homepage field naming the old host,
+which cannot be rewritten after the fact.
+
+### Bringing the new host up: `dig` resolves it, `curl` does not
+
+Not a site fault and not a propagation delay — it is the local stub
+resolver holding a NEGATIVE cache entry from before the record existed.
+`dig` queries a nameserver directly and never sees that cache, which is why
+the two disagree. Verify through it with
+
+```sh
+curl -sI --resolve <host>:443:<edge-ip> https://<host>/
+```
+
+taking the IP from `dig +short @1.1.1.1 <cname-target> A`. Note that a
+`dig +short … A` on a CNAME'd name prints the CNAME on the first line and
+the addresses after it, so a `head -1` picks up a hostname where the next
+command wants an address.
+
+A TLS handshake failure (`alert 40`) against a brand-new custom domain is
+the certificate not yet issued, not a misconfiguration — Cloudflare serves
+the name before the dashboard flips it to Active, so the dashboard is the
+last thing to believe, and a 200 carrying the site's own `<title>` is the
+first.
