@@ -29,13 +29,13 @@ unsettled rather than rejected, so it is worth proposing.
   the template reference: one MDN-style page per feature (items, box
   model, styles, tables, repeats, …) with syntax, defaults, diagnostics,
   and the render commands. **To read rather than to edit, use
-  <https://shojiku.pages.dev/reference/>**: the same files, rendered with
+  <https://shojiku.kengos.jp/reference/>**: the same files, rendered with
   a key-level sidebar and a live demo per page that renders in your
   browser. These files stay the source — the site restates nothing. The
   reference is the "what can I write?" surface, and the source material
   for MCP tool responses. Two facts up front:
   **the GUI Designer is live at
-  <https://shojiku.pages.dev/designer/>** (templates are plain YAML
+  <https://shojiku.kengos.jp/designer/>** (templates are plain YAML
   files the Designer round-trips; the root README's "Running the GUI
   locally" section shows how to serve your own copy), and the
   practical authoring path for non-engineers is to have an AI agent

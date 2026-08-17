@@ -4,7 +4,7 @@
 
 **Write YAML. Get PDFs. Built for AI agents.**
 
-[shojiku.pages.dev](https://shojiku.pages.dev) — the gallery, the
+[shojiku.kengos.jp](https://shojiku.kengos.jp) — the gallery, the
 tutorials, and a playground that renders in your browser.
 
 > [!IMPORTANT]
@@ -220,7 +220,7 @@ Template / Definitions
 ```
 
 Form layout expressed as reviewable YAML, a GUI designer *(live at
-[shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/) —
+[shojiku.kengos.jp/designer](https://shojiku.kengos.jp/designer/) —
 it renders in your browser, nothing is uploaded)*, a stable CLI
 *(shipped)*, SDKs *(built for all seven languages, Ruby as the reference
 implementation)*, and an electronic signature/trust pipeline *(built: CLI
@@ -281,7 +281,7 @@ locale's standard size — A4 or Letter), not a document sample.
   inventory.
 - **The Designer** — a browser GUI that round-trips the same YAML the
   engine reads, never its own format — is live at
-  [shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/) and
+  [shojiku.kengos.jp/designer](https://shojiku.kengos.jp/designer/) and
   also runs locally ([below](#running-the-gui-locally)). It renders in
   the browser, so nothing you open there is uploaded.
 - **The SDKs** for seven languages are built, and each installs from its
@@ -299,7 +299,7 @@ to do:
   the template reference: one MDN-style page per feature (items, box
   model, styles, tables, repeats, …) with syntax, defaults, and
   diagnostics. The Designer app is live at
-  [shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/), and
+  [shojiku.kengos.jp/designer](https://shojiku.kengos.jp/designer/), and
   [Running the GUI locally](#running-the-gui-locally) covers the local
   route; non-engineers typically have an AI agent author the YAML
   ([skills/shojiku-template-author/](skills/shojiku-template-author/SKILL.md),
@@ -403,7 +403,7 @@ check-your-work workflow; the common ones:
 The Designer ships as a static app (`gui/designer-app`): a locale-keyed
 preset catalog opening into the full editor (canvas preview, property
 panel, diagnostics, undo/redo, file open/export). It is live at
-[shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/); the
+[shojiku.kengos.jp/designer](https://shojiku.kengos.jp/designer/); the
 ways to run your own copy:
 
 - **`make gui-serve`** builds the complete app image (WASM engine + Vite

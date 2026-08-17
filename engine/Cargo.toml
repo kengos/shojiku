@@ -35,7 +35,7 @@ publish = true
 # the product's own site, `repository` the checkout. Every published crate
 # inherits both.
 repository = "https://github.com/kengos/shojiku"
-homepage = "https://shojiku.pages.dev"
+homepage = "https://shojiku.kengos.jp"
 
 [workspace.lints.clippy]
 # Anti-bloat gate (pairs with scripts/check-line-budget.sh): a function

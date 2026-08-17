@@ -25,9 +25,12 @@ const REFERENCE_SIDEBAR = Object.fromEntries(
 );
 
 // The origin the site is served from. It is baked into the sitemap's <loc>s,
-// every canonical and every social-card URL, so it moves the day a custom
-// domain replaces the Pages subdomain — and nothing else here depends on it.
-const HOSTNAME = "https://shojiku.pages.dev";
+// every canonical and every social-card URL, so moving the site is this one
+// line — nothing else here depends on it. The Pages subdomain it replaced
+// stays alive behind a redirect rather than being retired: a published
+// package's metadata cannot be rewritten, so every release up to this one
+// still points its homepage field at the old host.
+const HOSTNAME = "https://shojiku.kengos.jp";
 
 // Per-locale fallback for a page that declares no description of its own.
 // Without the ja one, a Japanese page inherits the English sentence.

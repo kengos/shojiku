@@ -38,6 +38,16 @@ platform binaries.
 
 ### Changed
 
+- **The site now lives at
+  [shojiku.kengos.jp](https://shojiku.kengos.jp).** It was served from a
+  Cloudflare Pages subdomain, which search engines treat as a free shared
+  host carrying none of its own standing — a handicap worth shedding
+  before the site builds any. The READMEs, the docs and every package's
+  homepage field point at the new host. The old `shojiku.pages.dev`
+  keeps working and redirects there: a published package's metadata
+  cannot be rewritten after the fact, so every release up to this one
+  still names it.
+
 - **The committed SBOMs now describe the latest release rather than the
   latest commit.** The CycloneDX inventories under `sbom/` are refreshed
   as part of each release, so between releases they can lag the
