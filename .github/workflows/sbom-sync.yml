@@ -158,7 +158,19 @@ jobs:
           fi
           sed 's/^/  /' /tmp/changed.txt
 
-          disallowed=$(grep -Ev '(^|/)(Cargo\.(lock|toml)|pnpm-lock\.yaml|package\.json)$' /tmp/changed.txt || true)
+          # `sbom/*.cdx.json` is on the list because it is THIS WORKFLOW'S OWN
+          # OUTPUT. Without it, the first sync puts a path on the branch that
+          # the next run then refuses — so the intended termination ("nothing
+          # changed, commit nothing, stop") was unreachable, and a branch
+          # needing a SECOND refresh would sit red forever. Found by running
+          # it: the guard declined a real PR naming `sbom/gui.cdx.json` as the
+          # single disqualifying path.
+          #
+          # It widens nothing that matters. These files are generated data,
+          # never executed, and the paths this job WRITES come from the base
+          # checkout's lockfile map — never from a PR-supplied filename — so
+          # admitting them to the read-side allowlist cannot steer a write.
+          disallowed=$(grep -Ev '(^sbom/[A-Za-z0-9._-]+\.cdx\.json|(^|/)(Cargo\.(lock|toml)|pnpm-lock\.yaml|package\.json))$' /tmp/changed.txt || true)
           if [ -n "$disallowed" ]; then
             echo "not syncing: the PR touches paths outside the manifest/lockfile allowlist:"
             printf '%s\n' "$disallowed" | sed 's/^/  /'
