@@ -29,7 +29,7 @@ updates:
   # must move together. All three directories are listed so none is silently
   # left behind (before this, only /docker was tracked and the other two were
   # hand-synced). Of the non-rust base images here, only two are bumpable:
-  # `node:24-bookworm-slim` (tag carries a version) and the digest-pinned
+  # `node:26-bookworm-slim` (tag carries a version) and the digest-pinned
   # distroless runtime ref. `nginx:alpine` (×2) is a FLOATING tag with no
   # version to compare, so dependabot will never open a PR for it — pin it to
   # `nginx:<X.Y>-alpine` if you want those tracked.
@@ -54,14 +54,37 @@ updates:
   # `engine/wasm`'s toolchain, and the wasm-bindgen pin set, which has to
   # match the wasm-bindgen-cli the wasm gate installs.
   #
-  # NODE HAS THE SAME SPLIT, in miniature. A `node:` bump PR touches only
-  # `gui/designer-app/Dockerfile`; the pins dependabot cannot see are
-  # `Makefile` (`NODE_IMAGE`, which drives the local gui gates) and
-  # `gui/package.json` (`engines.node`). Sync all three, or the gates run a
-  # different Node than the image ships. Node also tracks LTS here
-  # deliberately (22 → 24 was chosen as LTS), so an even-numbered major that
-  # is still "Current" is a POLICY decision, not a routine bump — check
-  # nodejs.org/en/about/previous-releases before merging one.
+  # NODE HAS THE SAME SPLIT, in miniature — and it is FIVE pins, not three.
+  # A `node:` bump PR touches only `gui/designer-app/Dockerfile`; the ones
+  # dependabot cannot see are:
+  #   - Makefile                        -> NODE_IMAGE (drives the gui AND site
+  #                                        gates — grep it, it is not gui-only)
+  #   - gui/package.json                -> engines.node
+  #   - site/package.json               -> engines.node
+  #   - .devcontainer/devcontainer.json -> image
+  # Sync all five, or the gates run a different Node than the image ships.
+  #
+  # The last two were missing from this list and both went a full major
+  # behind unnoticed. The devcontainer is invisible twice over — no directory
+  # below covers `.devcontainer`, and the docker ecosystem could not parse a
+  # devcontainer.json even if one did. The `site` one hid behind this very
+  # comment calling NODE_IMAGE "the local gui gates": it drives the site
+  # gates too, so site's floor is a claim those gates stop testing the moment
+  # the image moves past it. Find them by SWEEPING (`node:2[0-9]` and
+  # `">=2[0-9]"`) rather than by reading this list — the list is what was
+  # wrong both times.
+  #
+  # Two node pins here are deliberately NOT part of that set. `Makefile`'s
+  # `NODE_FLOOR_IMAGE` is the node SDK's declared FLOOR (docs/agents/sdk.md:
+  # a package that only works on the latest node has not actually supported
+  # the version it claims), and `examples/deploy/node/Dockerfile` shows a
+  # user what a deployment looks like. Neither follows the gui image.
+  #
+  # Node tracks LTS here deliberately, so an even-numbered major that is
+  # still "Current" is a POLICY decision, not a routine bump — check
+  # nodejs.org/en/about/previous-releases before merging one. The 24 → 26
+  # bump was taken as a deliberate exception with v26 still in its Current
+  # phase; the rule stands for the next one.
   - package-ecosystem: docker
     directories:
       - /docker

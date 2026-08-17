@@ -7,7 +7,7 @@
   //   pnpm --filter @shojiku/designer-app assemble   # once per wasm/pack change
   //   pnpm --filter @shojiku/designer-app dev        # Vite dev server (HMR)
   "name": "shojiku-gui",
-  "image": "node:24-bookworm",
+  "image": "node:26-bookworm",
   "forwardPorts": [5173],
   "mounts": ["source=shojiku-pnpm,target=/pnpm-store,type=volume"],
   "containerEnv": { "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0" },
