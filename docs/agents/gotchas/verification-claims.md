@@ -15,6 +15,14 @@ regex renumbering the TODO queue also renumbered an unrelated list
 further down), and skipping (an `if yaml:` import guard skipped a whole
 check whose empty output read as "all covered").
 
+- **A zero can also come from the SHELL, before grep ever sees your
+  pattern.** `grep -c 'verdict=$(sbom_place'` returned 0 against a file
+  containing three of them, because the pattern passed through an outer
+  shell that ate the `$(`. Nothing errored; the count was simply a lie
+  about a file open in the next pane. When a zero contradicts something you
+  believe, re-ask it a DIFFERENT way before believing it — `grep -F` for a
+  literal, and print the matching lines rather than counting them, so the
+  answer carries its own evidence. (Both re-asks agreed on 3.)
 - **The proving count must be of the INPUTS, not of the matches** — a
   match count of 0 is ambiguous between "clean" and "the sweep saw
   nothing". A security sweep over a shell variable of space-separated
@@ -320,6 +328,19 @@ check whose empty output read as "all covered").
 
 ## Counts and structural claims in prose
 
+- **The correction you write for a wrong count is itself a count.** A
+  `dependabot.yml` comment listed THREE node version pins; a sweep found
+  five. The fix written for it said FOUR — the negative sweep for the old
+  value (`">=24"`) then turned up a fifth in `site/package.json`, hidden
+  behind that same comment describing the shared `NODE_IMAGE` variable as
+  driving "the local gui gates" when it drives the site gates too. Writing a
+  correction is the moment of maximum certainty and minimum re-measuring,
+  which is exactly when a list is enumerated from the thing you just read
+  instead of from the tree. Re-run the sweep against the NEW sentence before
+  shipping it. Better still, notice when the artifact should not be a list
+  at all: this one now tells the reader to sweep (`node:2[0-9]`,
+  `">=2[0-9]"`) rather than to trust the enumeration, because the
+  enumeration was what was wrong both times.
 - **A benefit your change is CREDITED with may already have been true.** A
   removal invites you to attribute every good consequence of the thing being
   gone to the act of removing it. One cycle took `docs/engine/features.md`

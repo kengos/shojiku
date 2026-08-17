@@ -35,6 +35,7 @@
 | run a bulk edit/rename/sweep, or write a count/claim into a doc, commit message, or review | [verification-claims.md](verification-claims.md) |
 | touch `site/` — VitePress config, `assemble-data.ts`, or any markdown the reference projection carries onto the site | [site-vitepress.md](site-vitepress.md) |
 | bump the version, run a release, or judge whether a registry actually carries it | [release-publish.md](release-publish.md) |
+| touch a dependabot PR, or write a workflow that commits to the branch that triggered it | [github-automation.md](github-automation.md) |
 
 Coverage-gate diagnosis for the Rust workspace stays in its own skill
 (`shojiku-coverage`); the gui-side coverage traps are in
