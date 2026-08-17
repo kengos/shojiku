@@ -168,6 +168,18 @@ committed lockfile must appear in the map at the top of
 the reason it ships in nothing; a new one that appears in neither fails
 the gate rather than going quietly uninventoried.
 
+`make sbom` is **idempotent**: an inventory whose contents have not
+changed keeps its committed bytes rather than being restamped with a new
+timestamp. So it is safe to run when you are not sure whether you need
+it, and a bump to one ecosystem produces a one-file diff instead of
+dirtying all of them. The run prints `preserved` or `written` per
+inventory, which is how you see which one actually moved.
+
+You do not need to run it on a **dependabot** PR: `.github/workflows/sbom-sync.yml`
+regenerates and commits the inventories there itself. If that workflow
+declines — it refuses any PR touching anything but manifests and
+lockfiles — its log says why, and the fix is this command on the branch.
+
 ## Before you open a pull request
 
 1. `make verify` is green. That is the merge bar.
