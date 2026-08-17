@@ -20,6 +20,30 @@
         }
       ]
     },
+    "AnchorEdge": {
+      "enum": [
+        "top",
+        "right",
+        "bottom",
+        "left",
+        "center"
+      ],
+      "type": "string"
+    },
+    "AnchorOffset": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "format": "double",
+          "type": "number"
+        },
+        "y": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
     "Band": {
       "additionalProperties": false,
       "properties": {
@@ -462,6 +486,16 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VisibleBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "type": "object"
@@ -1046,6 +1080,16 @@
             "type": {
               "const": "text",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1077,6 +1121,16 @@
             "type": {
               "const": "rect",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1106,6 +1160,16 @@
             "type": {
               "const": "line",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1215,6 +1279,16 @@
             "type": {
               "const": "table",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1261,6 +1335,16 @@
             "type": {
               "const": "page_number",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1341,6 +1425,16 @@
             "type": {
               "const": "image",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1385,6 +1479,16 @@
             "type": {
               "const": "container",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1429,6 +1533,16 @@
             "type": {
               "const": "repeat",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1466,6 +1580,16 @@
             "type": {
               "const": "repeat_flow",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1538,6 +1662,16 @@
             "type": {
               "const": "qr_code",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1597,6 +1731,16 @@
             "type": {
               "const": "list",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1617,6 +1761,16 @@
             "type": {
               "const": "page_break",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1711,6 +1865,16 @@
               "const": "char_grid",
               "type": "string"
             },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "writingMode": {
               "anyOf": [
                 {
@@ -1731,8 +1895,21 @@
         {
           "additionalProperties": false,
           "properties": {
+            "anchor": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "box": {
-              "$ref": "#/$defs/OptBox"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OptBox"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "data": {
               "anyOf": [
@@ -1762,11 +1939,20 @@
             "type": {
               "const": "ellipse",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
-            "type",
-            "box"
+            "type"
           ],
           "type": "object"
         },
@@ -1817,6 +2003,16 @@
             "type": {
               "const": "checkbox",
               "type": "string"
+            },
+            "visible": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/VisibleBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -2332,20 +2528,42 @@
       "type": "object"
     },
     "PointSpec": {
-      "additionalProperties": false,
-      "properties": {
-        "x": {
-          "$ref": "#/$defs/Length"
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "$ref": "#/$defs/Length"
+            },
+            "y": {
+              "$ref": "#/$defs/Length"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "type": "object"
         },
-        "y": {
-          "$ref": "#/$defs/Length"
+        {
+          "additionalProperties": false,
+          "properties": {
+            "edge": {
+              "$ref": "#/$defs/AnchorEdge"
+            },
+            "item": {
+              "type": "string"
+            },
+            "offset": {
+              "$ref": "#/$defs/AnchorOffset"
+            }
+          },
+          "required": [
+            "item"
+          ],
+          "type": "object"
         }
-      },
-      "required": [
-        "x",
-        "y"
-      ],
-      "type": "object"
+      ]
     },
     "Repeat": {
       "enum": [
@@ -3184,6 +3402,44 @@
         "bottom"
       ],
       "type": "string"
+    },
+    "VisibleBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "collapse": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "equals": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EqualsValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "key": {
+          "type": "string"
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BindingScope"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "type": "object"
     },
     "WritingMode": {
       "oneOf": [

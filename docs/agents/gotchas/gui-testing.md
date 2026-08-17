@@ -37,6 +37,17 @@
   right-click use `fireEvent.contextMenu(el, { clientX, clientY })` (it
   act-wraps AND preserves coordinates); reserve raw dispatch for events
   whose init fields RTL drops, wrapped in `act()` when state changes.
+- **`clipboardData` is the third member of that family.** A window-level
+  paste handler cannot be driven with `fireEvent.paste(el, {
+  clipboardData })` — jsdom builds a bare `Event` and the init field is
+  dropped, so the handler reads `undefined` and returns early while the
+  test reports whatever the early return does. Dispatch a real
+  `new Event('paste', { bubbles: true, cancelable: true })` with
+  `Object.defineProperty(event, 'clipboardData', { value: { files } })`,
+  and assert `event.defaultPrevented` — for a handler whose contract
+  includes NOT consuming some pastes, that flag is the only observable,
+  since "nothing happened" is indistinguishable from "the handler never
+  ran".
 - **Headless UI's anchored popovers construct a `ResizeObserver` on
   open** — the no-op shim must live in the vitest setup of EVERY package
   whose tests open one, not just the package that defines the component
@@ -114,6 +125,16 @@
   THROUGH the callback instead (`isEnd(parent, index)`, called as
   `isEnd(drag.parent, …)`), so the guarantee stays where the narrowing
   is and no dead leg exists to cover.
+  **Read a dead leg as a SIGNATURE smell, not a coverage chore** — the
+  remedy is almost always to change what the function TAKES so the
+  guarantee travels with the value, and it improves the API. Two in one
+  cycle: a `chipWireFor(name, format)` that had to re-prove the name was
+  writable (two unreachable legs, because every caller passes a name a
+  planner already proved) became `chipWireWithFormat(provenWire, format)`
+  — TOTAL, with only the format left to check; and an optional
+  `tooltip?` prop went dead the moment both call sites passed one, so it
+  became required and the ternary disappeared. Reaching for a
+  `/* v8 ignore */` on either would have preserved a worse signature.
 - **A guard that MOVES in a refactor carries its `/* v8 ignore */` along
   — and the inherited justification is often stale.** The ignore reads as
   pre-existing and unquestioned, so it silently satisfies any negative-case

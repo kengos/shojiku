@@ -54,7 +54,28 @@ Wire types stay in core; content measurement stays in layout.
   `engine::layout` is unchanged. Spec: `docs/engine/layout-model.md`.
 - `engine/path.rs` — `placed_box(path, id, rb, w, h)`: the ONE
   structural-path placement builder every atom calls (id-less items
-  included).
+  included). Plus `line_placed_box` (endpoint bounding box) and
+  `placed_box_rect` (an explicit rectangle — the deferred anchored marks,
+  whose geometry comes from another item's placement).
+- `engine/anchor.rs` (+ `anchor/band.rs`, `anchor/resolve.rs`) — cross-item
+  anchoring. An `item:` on a `line` endpoint, or `anchor:` on an
+  `ellipse`, makes that item ABSOLUTELY POSITIONED (CSS anchor
+  positioning requires it): the walk draws nothing, reserves nothing, and
+  pushes one `PendingAnchor` onto `Ctx.pending_anchors`; `assemble.rs`
+  drains them after the per-page loop, so the box index they read is
+  already in sheet coordinates and anchored items paint LAST on their
+  page. The page is the TARGET's page, which is what makes
+  `anchor_cross_page` precise. `band.rs` reads the target's inked band
+  from `PlacedBox.text` (`Lines`/`Columns`), falling back to the border
+  box; an unsized oval takes that band plus `BAND_PAD_FRACTION` clearance,
+  the deferred analogue of the text `mark:` overlay's `DEFAULT_PAD_EM`.
+  An `offset` is capped against `MAX_RESOLVED_PT` here — it is the one
+  endpoint value that never passes through `resolve_x`/`_y`.
+  **`Ctx.pending_anchors` is parked by `begin_measure`/`end_measure`**: a
+  throwaway measure pass (flex cross-size, table row, grid cell) would
+  otherwise leave a record behind and the item would be drawn twice. Hidden (`visible:`) deferred items are STAMPED by
+  `visibility::blank_since` rather than dropped — a deferred item never
+  rides the atom that blanking transforms.
 - `engine/translate.rs` — whole-item y/x shifts, recursing into clip groups.
 - `engine/resolve.rs` — thin `Ctx` bridges to layout-box; page-margin
   resolution; `resolved_chain` (the font-resolution funnel); the layered
@@ -76,6 +97,21 @@ Wire types stay in core; content measurement stays in layout.
 - `engine/sheet.rs` — `emit_placed`, the ONE tail EVERY band and
   absolute-body arm goes through (translate onto the page + the
   sheet-edge check). No arm emits by hand, `line` included.
+- `engine/visibility.rs` — `visible:` at layout time: `Visibility`
+  (`Draw`/`Hidden`/`Collapsed`) computed ONCE per child list by
+  `child_visibility` (the predicate's array path is O(params length) and its
+  faults are pushed at evaluation, so a second pass would double both cost and
+  diagnostics). Hiding has two mechanisms because the walks differ: `blank`/
+  `blank_if` strip an ATOM the flex/grid walks hand back, while `draw_mark`/
+  `blank_since` bracket the walks whose arms push straight into the pages and
+  return nothing (a split text block, a table, a `repeat`) — pages a hidden
+  item opened stay, since it still reserves what it would have occupied. A
+  `page_break` whose predicate fails is always `Collapsed`: it reserves no box,
+  so "reserve the box, paint nothing" has nothing to mean for it.
+  Every placement walk consults the verdict — flow (whose gap accounting keys
+  off "has something been placed", not document position), band, absolute body,
+  `flex.rs`'s `kinds` pre-pass AND its loop, and `grid.rs`'s `n_grid` +
+  `plan_cells`.
 - `engine/overflow.rs` — the horizontal-overflow POLICY, all three bounds
   in one file so they read against each other. Each emits its OWN
   number-only code (`sheet_overflow` / `child_overflow` /
@@ -114,8 +150,12 @@ Wire types stay in core; content measurement stays in layout.
   keyword→interval table, floored); `decoration/radius.rs`
   (`corner_radius`/`resolve_corners` — `borderRadius` → `Corners`, per-axis
   `%`, hostile values → square; `warn_radius_ignored` shared reporter).
+- `engine/flex/child.rs` — placing and measuring ONE flex/grid child
+  (`flex_child_atom` + the parked `measure_row_cross`), split from `flex.rs`
+  for the line budget.
 - `engine/atoms.rs` — rect/image/line atoms (rect routes through
-  `push_decoration`); margins fold into every atom via
+  `push_decoration`; an anchored line returns an EMPTY atom and defers to
+  `engine/anchor.rs`); margins fold into every atom via
   `with_vertical_margin`, so flow/absolute/container placement space them
   identically. `fit_size` is the shared `object-fit` math (also used by
   `engine/table/content.rs`'s image cells); BOTH sites wrap the shape in
@@ -402,7 +442,10 @@ Wire types stay in core; content measurement stays in layout.
   `PlacedBox.path` = the always-present structural address in the
   validate-diagnostic grammar; `id` = the optional authored alias;
   `PlacedBox.text` = the two-form (horizontal lines / vertical columns)
-  metrics wire.
+  metrics wire; `PlacedBox.hidden` = the item's `visible:` predicate did not
+  hold and it reserved its box without painting, so an editor can ghost it
+  (skip-serialized, so the wire is byte-unchanged for a document that
+  authors no `visible:`; a COLLAPSED item emits no `PlacedBox` at all).
 - `tree.rs` — **`LayoutDocument`: the ONLY layout↔renderer contract**.
   Carries `metadata: DocumentMetadata` (`tree/meta.rs` — resolved title/
   description/keywords/language/authors + `DEFAULT_DOCUMENT_TITLE`; the

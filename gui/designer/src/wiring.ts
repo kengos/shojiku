@@ -10,6 +10,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { useCallback } from 'react';
+import { useAdvisories } from './hooks/useAdvisories';
 import { useBlocks } from './hooks/useBlocks';
 import { useCanvasWiring } from './hooks/useCanvasWiring';
 import { useChromeDialogs } from './hooks/useChromeDialogs';
@@ -110,6 +111,9 @@ export function useDesignerWiring(props: DesignerProps): DesignerWiring {
   });
 
   const dialogs = useChromeDialogs();
+  // Pure derivation over the last-good inspect (no effect), so its position in
+  // the call order carries no behavior.
+  const advisories = useAdvisories(preview, capabilities);
   const save = useSaveFlow({
     transport,
     text: editor.text,
@@ -164,6 +168,7 @@ export function useDesignerWiring(props: DesignerProps): DesignerWiring {
     // errors must show); the canvas paints the retained last-good pages, so an
     // invalid mid-edit document never blanks the page.
     diagnostics: preview.outcome?.diagnostics.items ?? [],
+    advisories,
     applyDiagnosticFix,
     handleParamsChange,
     // The host configuration resolved ONCE (defaults applied here and nowhere

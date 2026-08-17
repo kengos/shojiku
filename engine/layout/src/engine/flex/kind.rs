@@ -42,7 +42,7 @@ impl<'i> FlexKind<'i> {
             Item::List(l) if no_xy(l.box_.as_ref()) => Some(FlexKind::List(l)),
             Item::CharGrid(g) if no_xy(g.box_.as_ref()) => Some(FlexKind::CharGrid(g)),
             Item::Table(t) if no_xy(t.box_.as_ref()) => Some(FlexKind::Table(t)),
-            Item::Ellipse(e) if no_xy(Some(&e.box_)) => Some(FlexKind::Ellipse(e)),
+            Item::Ellipse(e) if no_xy(e.box_.as_ref()) => Some(FlexKind::Ellipse(e)),
             Item::Checkbox(c) if no_xy(c.box_.as_ref()) => Some(FlexKind::Checkbox(c)),
             _ => None,
         }
@@ -59,7 +59,7 @@ impl<'i> FlexKind<'i> {
             FlexKind::List(l) => l.box_.clone().unwrap_or_default(),
             FlexKind::CharGrid(g) => g.box_.clone().unwrap_or_default(),
             FlexKind::Table(t) => t.box_.clone().unwrap_or_default(),
-            FlexKind::Ellipse(e) => e.box_.clone(),
+            FlexKind::Ellipse(e) => e.box_.clone().unwrap_or_default(),
             FlexKind::Checkbox(c) => c.box_.clone().unwrap_or_default(),
         }
     }

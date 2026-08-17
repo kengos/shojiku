@@ -6,6 +6,7 @@ use crate::length::Length;
 use crate::style::Style;
 use serde::{Deserialize, Serialize};
 
+use super::visibility::VisibleBinding;
 use super::{Binding, Item};
 
 /// Maximum container nesting depth. Untrusted templates drive the layout
@@ -24,6 +25,9 @@ pub const MAX_CONTAINER_DEPTH: usize = 32;
 pub struct ContainerItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Params-conditional presence; unset draws unconditionally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible: Option<VisibleBinding>,
     #[serde(rename = "box", default, skip_serializing_if = "Option::is_none")]
     pub box_: Option<OptBox>,
     /// Inherited style for all descendants (CSS cascade). Only the
@@ -62,6 +66,9 @@ pub const MAX_IMPOSITION_PER_PAGE: usize = 64;
 pub struct RepeatItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Params-conditional presence; unset draws unconditionally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible: Option<VisibleBinding>,
     /// The array params key; one cell is emitted per element, in order.
     pub data: Binding,
     /// Whether the grid forces a fresh page before it starts (default) or

@@ -13,6 +13,7 @@ use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize};
 
 use super::binding::BindingScope;
+use super::visibility::VisibleBinding;
 
 /// A box-inscribed ellipse. With no `data:` it always draws (decoration —
 /// e.g. a stroked oval circling the chosen payment method on a form); with `data:`
@@ -27,8 +28,23 @@ use super::binding::BindingScope;
 pub struct EllipseItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
-    #[serde(rename = "box")]
-    pub box_: OptBox,
+    /// Params-conditional presence; unset draws unconditionally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible: Option<VisibleBinding>,
+    /// Optional since an anchored ellipse takes its geometry from the
+    /// item it circles; unanchored and unsized still warns
+    /// (`mark_missing_size`) rather than guessing a size.
+    #[serde(rename = "box", default, skip_serializing_if = "Option::is_none")]
+    pub box_: Option<OptBox>,
+    /// Circles another item instead of standing on its own coordinates:
+    /// the ellipse CENTRES on that item's glyph band (its text metrics —
+    /// the inked band, not the padded box), or on its border box when it
+    /// has no text. `box.w`/`box.h` still size it; unsized, it takes the
+    /// band's own extent, which is the "circle this answer" case forms
+    /// are full of. `box.x`/`box.y` are not read — the anchor decides
+    /// where it sits.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub anchor: Option<String>,
     /// Presence binding; `None` = always draw.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub data: Option<MarkBinding>,
@@ -48,6 +64,9 @@ pub struct EllipseItem {
 pub struct CheckboxItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Params-conditional presence; unset draws unconditionally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible: Option<VisibleBinding>,
     /// Frame box; may be omitted entirely — the frame then defaults to the
     /// inherited font's cap-height square (a label-matched checkbox). An
     /// omitted `w`/`h` inside a present `box:` (e.g. for placement) falls

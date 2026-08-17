@@ -48,7 +48,14 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   box-index/diagnostic paths; a table's `headerGroups` get leaf nodes
   ahead of its columns, the order the table draws them; hostile posture:
   never throws, degrades to
-  null, depth/node budgets → `truncated`). Its two neighbours split off
+  null, depth/node budgets → `truncated`). A node carries `conditional`
+  when its item authors a `visible:` binding — the tree never EVALUATES the
+  predicate (that is the engine's answer, arriving as the preview), it only
+  reports that one exists, which is what explains a COLLAPSED item whose row
+  highlights nothing on canvas because it emits no placed box.
+  `tree/nodeFields.ts` holds the pure field readers the node builders share
+  (`record`/`pickLabel`/`bindingKey` + `MAX_LABEL_CHARS`), split out for the
+  line budget — nothing there walks or recurses. Its two neighbours split off
   what happens to a BUILT tree: `tree/reorder.ts` (what a drag decides —
   `RowRect`/`dropIndexFor`/`seqPosition`/`moveOpFor` + the `MoveItemOp`
   shape) and `tree/selection.ts` (where the selection sits and goes —
@@ -161,10 +168,24 @@ REQUIRED-only (no `?:`/defaults) so the split added no new branch legs.
   field, paste, container picker).
 - `shell/TutorialSurfaces.tsx` — `TutorialDialog` + `CoachOverlay`.
 - `shell/BlockSurfaces.tsx` — block save/manage dialogs + the right-click
-  `ui/ContextMenu.tsx` (hand-rolled pointer-anchored `role="menu"`; items:
-  wrap-in-container (`wrapSelected`, gated by `isWrappablePath`) and
-  save-as-block when armed — both ACCELERATORS only; keyboard
-  paths exist in the placement tab / Insert menu).
+  `ui/ContextMenu.tsx` and the border popover it can open. A shell: it
+  turns each row KIND into its chrome label and its action, nothing more.
+  Every row is an ACCELERATOR — duplicate/delete also ship as Edit-menu
+  rows and window shortcuts, wrap on the placement tab, border on the
+  format toolbar, save-as-block in the Insert menu.
+- `shell/contextMenuRows.ts` — pure: WHICH rows apply to one path, in
+  menu order (`duplicate`/`delete` on a sequence entry, `wrap` when
+  `isWrappablePath`, `border` via `borderableView`, `saveBlock` when the
+  host armed blocks). A row that does not apply is ABSENT, never
+  disabled. The save-block row CARRIES its snippet, captured while the
+  model has it narrowed. `readNodeAt` degrades a throwing read to
+  `undefined`; `borderableView` is the ONE border rule, shared with the
+  popover so the row and what it opens cannot disagree.
+- `shell/BorderPopover.tsx` — the third host of the shared
+  `panel/BorderEditor` (after the decoration tab and
+  `toolbar/BorderControl`), over `ui/AnchoredSurface`. Re-derives its
+  target every render and renders nothing once it is gone — an undo
+  while it is open must not feed the editor a ghost path.
 - `shell/ReviewSurfaces.tsx` — `SaveReviewModal` (save/export), the
   copilot dialog + its review modal (confirm re-checks `text === baseline`).
 
@@ -211,6 +232,10 @@ lists name the destructured stable fields, never `editor` itself.
 - `hooks/useTemplateCap.ts` — the session's template-size cap: seeded
   `max(persisted cap, source byte size)`, raised via the image headroom
   prompt.
+- `hooks/useAdvisories.ts` — the GUI's own advisories (drawn-text
+  collisions; model in
+  [gui-designer-panel.md](gui-designer-panel.md) § Diagnostics), memoized
+  over the LAST-GOOD inspect and gated on `inspect.text_metrics`.
 - `hooks/useDocDerived.ts` — shared read-only indexes memoized on the
   text: `treeView` (nullable), `styleUsage`, `styleFloor`.
 - `hooks/useHostNotify.ts` — report `text` through `onChange` after every
@@ -222,14 +247,21 @@ lists name the destructured stable fields, never `editor` itself.
 - `hooks/usePaletteDrag.ts` — palette drag-to-bind/scaffold: `useDrag`
   machine, live-rect hit test (`pageHitAt`), `planPaletteDrop` →
   `insertIndicator`, drop = ONE `insertItem` at the plan's path + select.
-- `hooks/useImageImport.ts` — menu entry, canvas file drop, and panel
-  replace route ONE pipeline: size gate → `insertItem`/`setScalar`;
+- `hooks/useImageImport.ts` — menu entry, canvas file drop, clipboard
+  paste and panel replace route ONE pipeline: size gate →
+  `insertItem`/`setScalar`;
   notices ride the topbar `<output>`; `applyRaisedCap`; returns
   `hasImageItem`/`nextCap`. The React wiring only — what the import DOES
   is `hooks/imageImportRun.ts` (`runImageImport` over an explicit
   `ImageImportContext`: the pre-op cap gate, then the op; `textBytes` is
   the RENDER-time size, deliberately not an accessor — plus
   `dropInsertTarget`, where a canvas file drop lands).
+- `hooks/usePasteImage.ts` — the window-level `paste` route into that same
+  pipeline, and the guard ORDER that makes it safe: no codec → inert; an
+  editable target → the platform's own paste keeps the event; a paste
+  carrying no file → NOT consumed (`preventDefault` fires only once a file
+  is in hand, so the insert menu's clipboard-TEXT import and every
+  ordinary text paste are untouched).
 - `hooks/useInsertActions.ts` — plain element insert (band-aware), the
   insert-menu gates (`insertGroups` — a capability-less row is ABSENT
   rather than broken; `canDeclare`), and the four scaffold hooks over one
@@ -248,10 +280,15 @@ lists name the destructured stable fields, never `editor` itself.
 - `hooks/useBlocks.ts` — reusable-block library: `blocks` prop is the
   host-owned app-global list; pure `insert/blockModel`; `insertBlock` is
   a plain band-aware `insertItem` (AI parity).
-- `hooks/useSelectionOps.ts` — `deleteSelected` (selects the surviving
-  neighbour)/`duplicateSelected`/`wrapSelected`, context-menu anchor, the
-  window keydown effect over pure `shortcuts.ts` — all guarded by
-  `isEditableTarget` (exported here).
+- `hooks/useSelectionOps.ts` — `deleteAt`/`duplicateAt` (PATH-scoped: the
+  right-click menu acts on the path it was opened at, never on whatever
+  the selection has become), `deleteSelected`/`duplicateSelected` as the
+  selection-scoped wrappers the keyboard and the Edit menu use, plus
+  `wrapSelected` and the context-menu anchor. A delete selects the
+  surviving neighbour.
+- `hooks/useSelectionShortcuts.ts` — the window keydown effect over pure
+  `shortcuts.ts`, guarded by `isEditableTarget` (exported here, and
+  re-exported from `Designer.tsx`).
 - `hooks/useInlineEdit.ts` — double-click a static-text box → the shared
   `TextEditor` over its content rect (same chip context as the panel);
   commit = ONE `applyAll` of `text/declModel` `commitOps`.

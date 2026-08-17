@@ -151,7 +151,7 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
 
 - `docker/` — the runtime image.
 - `site/` — the public site (Cloudflare Pages): a STANDALONE pnpm project
-  (not a gui/ workspace member), VitePress, ten nav pages + the index
+  (not a gui/ workspace member), VitePress, eleven nav pages + the index
   ×2 locales (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per
   `shojiku-copywriter`'s vendored prose standard, EN derived), PLUS the
   projected reference. It is the reader-facing home for the reference —
@@ -159,7 +159,15 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   and the list of which docs pages are projected live in
   [../architecture.md](../architecture.md) § Where a doc paragraph goes.
   **The reference (`/reference/**`, `/ja/reference/**`)**: every
-  `docs/engine/*.md` becomes one route, generated into `site/reference/`
+  `docs/engine/*.md` becomes one route EXCEPT the repo-only
+  `features.md` (`reference.ts` § `REPO_ONLY` — the capability record is
+  development history, not authorable syntax; it is not routed, not
+  staged raw and not inlined in llms-full, and `referenceStems()` is the
+  single filter all three readers use: `assemble-data.ts`, `config.mts`
+  and the gates. A `docs/engine/` page links to it as
+  `](../engine/features.md)`, which the outlink rewrite absolutises and
+  round-trips; `bareRepoOnlyLinks` fails the gate on the sibling form).
+  Routes are generated into `site/reference/`
   and `site/ja/reference/` (both GITIGNORED — nobody edits them) by
   `assemble-data.ts`. `README.md` is the landing (`index`, full width);
   each page gains a provenance strip and a live demo. Each source page
@@ -170,16 +178,19 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   ORDER comes from the catalog's own item list, so nobody maintains a
   second taxonomy. Four groups under `templates.yml` (root · item · item
   keys · layout modes), `definitions.yml`, and five Concepts — exactly the
-  31 feature pages. A page missing its front-matter FAILS the build.
+  32 feature pages. A page missing its front-matter FAILS the build.
   The projection makes exactly FOUR reversible edits to a body (links
   leaving `docs/engine/` → absolute repo URLs; `README.md` → the landing;
   inline code holding `{{` → `v-pre`, since Vue reads a double brace as an
   interpolation; the generated blocks between `<!-- rf:begin/end -->`
   markers) and `src/reference.test.ts` undoes all four and demands the
   source body BYTE FOR BYTE — so a fifth edit is a red gate. It also holds
-  the route total (33, not `> 0`), the catalog↔front-matter bijection (81
+  BOTH totals, not `> 0` (34 source files, 33 routed — pinning only one
+  would let a `REPO_ONLY` addition shrink the site silently), the
+  catalog↔front-matter bijection (84
   shapes claimed exactly once), tree coverage, the internalised-outlink
-  negative sweep, and the Limitations claims (every code named on a
+  negative sweep, the bare-sibling sweep over the repo-only pages, and
+  the Limitations claims (every code named on a
   `## Limitations` section must exist in `docs/engine/diagnostics.md`).
   **The demos** (`src/demos/<page>/`, one per feature page:
   `templates.yml` + optional `params.json`/`definitions.yml`/`expect.json`)
@@ -195,7 +206,11 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   report the same one); capability keys can.
   Structure: `src/lib/` = the tested pure modules (gallery.yml
   parse/validate, font-tier subset manifests, README-gallery
-  render/splice, llms renderers, `engineClient` — the site's OWN thin
+  render/splice, `sbomCounts` — the tech page's SBOM sentence rendered
+  from the committed `sbom/*.cdx.json` in BOTH locales from one set of
+  numbers, spliced between `sbom:generated` markers (they were
+  hand-transcribed before, and two of the three counts were wrong on both
+  pages at once), llms renderers, `engineClient` — the site's OWN thin
   glue over the raw `engine/wasm` pkg (deliberately NOT
   `@shojiku/designer`'s transport; keeps the package standalone),
   playground knob→template generation, `seo.ts` = `pagePath`/`twinPaths`/
@@ -230,9 +245,11 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   build-time pure-Node assembly (public/data wasm+tiered fonts+live
   examples, gallery previews, brand renders, llms.txt/llms-full.txt —
   which inlines the reference's AUTHORING pages, bodies only, so an agent
-  asking about `flex` has it; `features.md` is the one page left out
-  (`src/lib/reference.ts` § `LLMS_FULL_OMIT`): it is the decision log
-  rather than authorable syntax, and a THIRD of the payload. llms.txt's
+  asking about `flex` has it. `features.md` is absent because it is not a
+  reference page at all (§ `REPO_ONLY`) — it is the decision log rather
+  than authorable syntax, and at ~148 KB it would be a THIRD of the
+  payload; llms.txt names it under Repository truth so an agent that
+  wants it still knows where it is. llms.txt's
   Site list is `SITE_PAGES` in `src/lib/llms.ts`, hand-ordered to follow
   the nav, and `checkSitePages()` fails the build when it and `site/*.md`
   drift apart in either direction — an entry with no file renders as a
@@ -240,9 +257,10 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   the reference projection + demo staging;
   25 MiB Pages cap asserted). It is what `pnpm dev` runs first, too —
   without it a dev server has no reference routes; `scripts/refresh-data.ts` = the COMMITTED
-  halves, in three modes: default (`make site-data`) regenerates ONLY the
-  README gallery section between the `gallery:generated` markers;
-  `--check` (`make site-check`) compares both halves; `--release-wasm`
+  halves, in three modes: default (`make site-data`) regenerates the
+  README gallery section between the `gallery:generated` markers AND the
+  two tech pages' SBOM bullet between the `sbom:generated` ones;
+  `--check` (`make site-check`) compares them all; `--release-wasm`
   (`make site-wasm-release`) is the RELEASE-TIME re-pin.
   **`site/.data/wasm` holds a RELEASED engine build, not HEAD's** — it is
   what Pages serves, so a visitor's playground can never be ahead of the
@@ -322,10 +340,50 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   split cannot inject files. Derives the file list from the ROOT, so a
   fourth licence is a failure rather than a silent omission, and refuses a
   run that matched no files at all.
-  + `generate-sbom.sh` (`make sbom` —
-  syft-in-Docker CycloneDX inventories committed under `sbom/`;
-  regenerate + commit whenever a lockfile changes; no byte-compare
-  gate) + codegen (`gen-locale-builtins.py` — authoring-time CLDR
+  + `generate-sbom.sh` (`make sbom` — syft-in-Docker CycloneDX
+  inventories committed under `sbom/`; regenerate + commit whenever a
+  lockfile changes. Scans `file:<lockfile>`, never the DIRECTORY: a
+  `dir:` scan walks `engine/target/`, picks up the lockfile copies cargo
+  leaves under `target/package/` plus the build binaries, and on a
+  genuinely built tree returns 1757 components against the lockfile's 255
+  — making the artifact depend on what the host last built. Owns the
+  lockfile→
+  inventory MAP, `--list` prints it, and a row may name `-` plus a reason
+  instead of an inventory. IDEMPOTENT via `sbom_place`: an inventory
+  whose content is unchanged keeps its committed bytes instead of being
+  restamped, so a one-ecosystem bump is a one-file diff and a re-run over
+  a clean tree leaves it clean. Prints `preserved`/`written` per row)
+  `sbom-lib.sh` — sourced by BOTH of the others, and the single
+  definition of "these two inventories say the same thing": the
+  `timestamp`/`serialNumber` mask, the comparison, and the arity
+  assertion that stops the mask growing into a blindfold. Shared because
+  the generator uses it to decide what to PRESERVE and the checker to
+  decide what is DRIFT — two scripts disagreeing about that would write
+  drift into the tree and then certify it green.
+  `check-sbom.sh` — `make sbom-check`, CI job "sbom": regenerates through
+  the generator into a scratch dir (where preservation is inert, there
+  being no file to preserve) and compares through that shared predicate,
+  and asserts the map's lockfile set equals the one git tracks. Two
+  self-tests run first: the comparator over a four-case fixture — one
+  case differing ONLY in the masked fields, so a mask that became a
+  blindfold fails rather than passing everything, and one RENAME at the
+  same version, without which widening the mask to `"name"` would go
+  unnoticed — and `sbom_place` over all three of its states
+  (preserve / overwrite / no destination), because it is the half that
+  WRITES and an over-eager preserve rule is this pair's fail-open shape.
+  The third member of the cluster lives outside `scripts/`:
+  `.github/workflows/sbom-sync.yml` runs `make sbom` on DEPENDABOT PRs and
+  commits the result, because dependabot moves lockfiles and cannot
+  regenerate the inventories itself — without it every bump to an
+  inventoried lockfile is red on arrival, permanently. It is
+  `pull_request_target` (the only context where repository secrets are
+  readable on a dependabot PR) but never executes PR-authored code: base
+  checkout, lockfiles taken by explicit path through the contents API, and
+  a fail-closed refusal unless every changed path is a manifest or a
+  lockfile. Commits through GraphQL `createCommitOnBranch` (`main` requires
+  signed commits) with a GitHub App installation token (a `GITHUB_TOKEN`
+  push starts no CI run, so the PR would end green at an unchecked sha).
+  + codegen (`gen-locale-builtins.py` — authoring-time CLDR
   fetch, ONE emitter for builtins AND packs; `gen-uax50.py` —
   authoring-time pinned Unicode fetch → the UAX#50 table in
   `engine/layout`).

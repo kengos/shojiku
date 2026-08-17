@@ -208,3 +208,22 @@ describe('manipulationFor', () => {
     });
   });
 });
+
+describe('an anchored ellipse', () => {
+  it('is fixed, because its position comes from the item it circles', () => {
+    // It HAS a placement (the drain reports one), so without this rule it
+    // would classify as an ordinary absolute box and the drag would commit
+    // `box.x`/`box.y` — keys the engine never reads for an anchored mark.
+    const read = docRead({
+      'sections.body': { type: 'absolute' },
+      'sections.body.items[0]': { type: 'ellipse', anchor: 'answer' },
+      'sections.body.items[1]': { type: 'ellipse', box: { x: 5, y: 5, w: 10, h: 10 } },
+    });
+    expect(manipulationFor(read, 'sections.body.items[0]')).toEqual({
+      kind: 'fixed',
+      reason: 'anchored',
+    });
+    // …and an ordinary ellipse is untouched by the rule.
+    expect(manipulationFor(read, 'sections.body.items[1]').kind).toBe('move');
+  });
+});

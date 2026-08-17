@@ -1,19 +1,24 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../i18n/context';
 import { ColorSwatchPicker, isHexColor, SWATCHES } from './ColorSwatchPicker';
 
+/** The picker reads the catalog for its swatch names, so it mounts under a
+ * provider like every other localized surface. */
 function draw(props: Partial<Parameters<typeof ColorSwatchPicker>[0]> = {}) {
   const onCommit = vi.fn();
   render(
-    <ColorSwatchPicker
-      label="Fill"
-      value=""
-      onCommit={onCommit}
-      triggerClassName="trigger"
-      customLabel="Custom"
-      clearLabel="Clear"
-      {...props}
-    />,
+    <I18nProvider locale="en">
+      <ColorSwatchPicker
+        label="Fill"
+        value=""
+        onCommit={onCommit}
+        triggerClassName="trigger"
+        customLabel="Custom"
+        clearLabel="Clear"
+        {...props}
+      />
+    </I18nProvider>,
   );
   return { onCommit };
 }
@@ -36,12 +41,26 @@ describe('ColorSwatchPicker', () => {
     expect(chip.style.backgroundColor).toBe('');
   });
 
+  it('announces each swatch by colour NAME, never by its raw hex', () => {
+    // A swatch button carries no visible text, so its `aria-label` is its whole
+    // accessible name — and `#b91c1c` is not one a screen-reader user can act
+    // on. Every offered swatch must be named, not just the one clicked below.
+    draw();
+    fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
+    const names = screen.getAllByRole('menuitem').map((el) => el.getAttribute('aria-label'));
+    for (const swatch of SWATCHES) {
+      expect(names, swatch).not.toContain(swatch);
+    }
+    expect(names).toContain('Red');
+    expect(names).toContain('Black');
+  });
+
   it('commits a swatch and closes', () => {
     const { onCommit } = draw();
     fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: '#b91c1c' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
     expect(onCommit).toHaveBeenCalledWith('#b91c1c');
-    expect(screen.queryByRole('menuitem', { name: '#b91c1c' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Red' })).toBeNull();
   });
 
   it('commits a changed native color but never a phantom re-seed', () => {

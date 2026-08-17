@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { PageSetup } from './PageSetup';
+import { PAGE_SIZE_NAMES } from './pageSizes';
 
 function makeController(
   page: unknown,
@@ -48,8 +49,10 @@ describe('PageSetup', () => {
   it('omits the locale group for an unrecognized locale', () => {
     const { container } = draw(<PageSetup controller={makeController(undefined)} />, 'de-DE');
     expect(container.querySelector('optgroup[label="Common sizes"]')).toBeNull();
-    // The full engine list is always present.
-    expect(container.querySelector('optgroup[label="All sizes"]')).not.toBeNull();
+    // The full engine list is always present — under the "other sizes" heading,
+    // which is what the second group holds once the common ones are hoisted out
+    // of it (with no common group, "other" is simply everything).
+    expect(container.querySelector('optgroup[label="Other sizes"]')).not.toBeNull();
   });
 
   it('surfaces an unknown loaded size as its own option', () => {
@@ -160,5 +163,45 @@ describe('PageSetup', () => {
   it('labels the size thumbnail with the current dimensions', () => {
     draw(<PageSetup controller={makeController({ size: 'A4' })} />);
     expect(screen.getByText('210 × 297 mm')).toBeDefined();
+  });
+});
+
+describe('PageSetup — the size list offers each size exactly once', () => {
+  /** Every `<option>` value in the size select, groups flattened. */
+  function sizeOptions(container: HTMLElement): string[] {
+    const select = screen.getByLabelText('Size') as HTMLSelectElement;
+    void container;
+    return Array.from(select.querySelectorAll('option'), (o) => o.getAttribute('value') ?? '');
+  }
+
+  it('lists a locale-preferred size ONCE, not in both groups', () => {
+    // The two groups used to overlap: an en-US user saw `Letter` under "Common
+    // sizes" and again under "All sizes", with nothing to tell the two entries
+    // apart — a worse answer to "which do I pick" than a shorter second list.
+    const { container } = draw(<PageSetup controller={makeController(undefined)} />, 'en-US');
+    const values = sizeOptions(container);
+    expect(values.filter((v) => v === 'Letter')).toEqual(['Letter']);
+    expect(values.filter((v) => v === 'A4')).toEqual(['A4']);
+  });
+
+  it('drops no size from the list while deduplicating', () => {
+    // The dedup removes a DUPLICATE, never a choice: everything the registry
+    // knows is still reachable, plus the custom entry.
+    const { container } = draw(<PageSetup controller={makeController(undefined)} />, 'en-US');
+    const values = sizeOptions(container);
+    for (const name of PAGE_SIZE_NAMES) {
+      expect(values, name).toContain(name);
+    }
+    expect(new Set(values).size).toBe(values.length);
+  });
+
+  it('offers a single ungrouped list for a locale with no preferred sizes', () => {
+    const { container } = draw(<PageSetup controller={makeController(undefined)} />, 'zz');
+    expect(container.querySelector('optgroup[label="Common sizes"]')).toBeNull();
+    const values = sizeOptions(container);
+    expect(new Set(values).size).toBe(values.length);
+    for (const name of PAGE_SIZE_NAMES) {
+      expect(values, name).toContain(name);
+    }
   });
 });

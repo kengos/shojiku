@@ -22,6 +22,7 @@ mod shapes;
 mod spans;
 mod structure;
 mod tables;
+mod visibility;
 
 use super::*;
 use crate::definitions::parse_definitions;

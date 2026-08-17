@@ -39,19 +39,23 @@ export function MountedApp({
   onHeaderDocChange,
 }: MountedAppProps) {
   const { t } = useI18n();
-  const { view, setView, step, listProjects, openProject, openTemplate } = useMountedNav(
-    services,
-    remote,
-  );
+  const { view, setView, step, listProjects, openProject, openTemplate, cancelOpen } =
+    useMountedNav(services, remote);
 
-  if (view.kind === 'loading') {
+  if (view.kind === 'opening') {
     // A document open goes through the same staged view as a standalone preset
-    // open; a plain list read has no stages to report, so it keeps the one-liner.
-    return view.opening !== null ? (
-      <LoadingView name={view.opening} phase={phaseOf(engineLoad, step)} />
-    ) : (
-      <p className="m-0 p-4 text-muted">{t('mounted.loading')}</p>
+    // open, escape hatch included — it returns to the project the open came from.
+    return (
+      <LoadingView
+        name={view.name}
+        phase={phaseOf(engineLoad, step)}
+        onBack={() => cancelOpen(view.from)}
+      />
     );
+  }
+  if (view.kind === 'loading') {
+    // A plain list read has no stages to report, so it keeps the one-liner.
+    return <p className="m-0 p-4 text-muted">{t('mounted.loading')}</p>;
   }
   if (view.kind === 'error') {
     return <MountedError onRetry={view.retry} />;

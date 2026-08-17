@@ -324,8 +324,9 @@ below and still leave for the repository.
   `shojiku://reference/<page>` and `docs/engine/<page>.md#<key>` name
   the same thing three ways ([agents/engine.md](agents/engine.md) § The
   key catalog).
-- **Which pages are projected.** Projected: `docs/engine/**` (BUILT),
-  `quickstart.md`, `architecture.md`, `migration-thinreports.md`,
+- **Which pages are projected.** Projected: `docs/engine/**` (BUILT)
+  except `engine/features.md`, `quickstart.md`, `architecture.md`,
+  `migration-thinreports.md`,
   `from-source.md`, `designer-mount.md`, `designer-hooks.md` (those six
   are decided but not yet routed — links to them still leave for the
   repository). Never
@@ -335,6 +336,20 @@ below and still leave for the repository.
   site rather than being copied onto it. Together those two lists are
   every `docs/*.md`; a new top-level page joins one of them in the same
   change that adds it.
+- **`engine/features.md` is the one repo-only page inside a projected
+  directory.** It records *that* a capability shipped and why it is
+  shaped that way, which is development history rather than authorable
+  syntax, and at its size it dominated both the reference's page set and
+  the llms-full payload while answering none of the questions a reader
+  of that reference is asking. The site's reader-facing counterpart is
+  the `/features` pitch page, which is written on the site and has no
+  `docs/` source, like the other pitch pages. The exclusion lives in one
+  place, `site/src/lib/reference.ts` § `REPO_ONLY`, which every reader of
+  the directory goes through (the build, the VitePress config, the
+  gates). A `docs/engine/` page that links to it writes
+  `](../engine/features.md)`, the spelling the outlink rewrite turns
+  into a repository URL; a bare sibling link would ask for a route that
+  does not exist.
 - **`docs/` is not deleted, and its paths do not move.** Three things
   depend on them resolving: every one of the seven SDK READMEs links
   `blob/main/docs/engine/README.md`, and all seven are already

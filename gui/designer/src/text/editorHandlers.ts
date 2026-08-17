@@ -9,7 +9,13 @@
 // with plain-text insertion at the caret.
 
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { type ChipMeta, chipSpan } from './chipModel';
+import {
+  CHIP_WIRE_ATTR,
+  type ChipMeta,
+  chipFormatOf,
+  chipSpan,
+  chipWireWithFormat,
+} from './chipModel';
 import type { ChipInsert } from './declMint';
 import {
   adjacentChip,
@@ -48,20 +54,57 @@ export function insertChipAt(
   restoreCaret(sel, range);
 }
 
+/** Swap `chip` for one standing for the planned pick, keeping the expression's
+ * `:format` — a replace repoints the binding, and a chip's format has no other
+ * author in the Designer, so dropping it would destroy hand-authored wire.
+ *
+ * The node was selected renders ago, so it is re-validated against the LIVE
+ * editor first: paste, drop and atomic erosion all restructure the content in
+ * between, and mutating a detached node would swallow the user's pick in
+ * silence. The format written into the span is read back OUT of the composed
+ * wire, so a format the grammar could not carry cannot leave the pill showing
+ * a badge the wire does not have. */
+export function replaceChipAt(
+  el: HTMLElement,
+  chip: Element,
+  plan: ChipInsert,
+  picked: ChipMeta,
+  meta: ReadonlyMap<string, ChipMeta>,
+): void {
+  if (!el.contains(chip)) {
+    return;
+  }
+  const wire = chipWireWithFormat(plan.wire, chipFormatOf(chip.getAttribute(CHIP_WIRE_ATTR)));
+  const spanMeta = new Map(meta);
+  spanMeta.set(plan.name, picked);
+  const span = chipSpan(el.ownerDocument, wire, plan.name, chipFormatOf(wire), spanMeta);
+  chip.replaceWith(span);
+  el.focus();
+  const range = el.ownerDocument.createRange();
+  range.setStartAfter(span);
+  range.collapse(true);
+  restoreCaret(document.getSelection(), range);
+}
+
 /** Clicking a chip has to land the caret beside it. A chip is `user-select:
  * none` (so a drag across the field never selects half a label), and the
  * browser answers a click on unselectable content inside a contenteditable by
  * doing NOTHING: no focus, no caret. Since the pill is the widest target in a
- * short field, that read as "the field will not take the cursor". */
-export function handleEditorMouseDown(event: MouseEvent<HTMLDivElement>): void {
+ * short field, that read as "the field will not take the cursor".
+ *
+ * Returns the chip the click landed on, which the host holds as the SELECTED
+ * one (a chip is unselectable, so it cannot ride the caret's own selection);
+ * `null` for a click on ordinary text, which therefore deselects. */
+export function handleEditorMouseDown(event: MouseEvent<HTMLDivElement>): Element | null {
   const el = event.currentTarget;
   const chip = chipFromTarget(el, event.target);
   if (chip === null) {
-    return;
+    return null;
   }
   event.preventDefault();
   el.focus();
   caretBesideChip(chip, event.clientX, document.getSelection());
+  return chip;
 }
 
 export interface EditorKeyHandlers {

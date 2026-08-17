@@ -9,6 +9,7 @@
 //! positioning bases (`Basis`), the atom primitive, and the page
 //! assembly in [`layout`]. Each concern lives in a child module.
 
+mod anchor;
 mod assemble;
 mod atoms;
 mod band;
@@ -36,6 +37,7 @@ mod sheet;
 mod table;
 mod text;
 mod translate;
+mod visibility;
 
 pub use assemble::layout;
 
@@ -171,6 +173,11 @@ struct Ctx<'a, 'b> {
     /// [`Self::ruby_anchors`]: reset before each direct-flow text build,
     /// stale (and unread) everywhere else.
     split_chrome: text::SplitChrome,
+    /// Lines whose endpoints name another item (`from: { item: … }`).
+    /// Anchoring makes a line absolutely positioned, so the walk removes
+    /// it from the flow entirely and page assembly draws it against the
+    /// finished box index — see [`anchor`].
+    pending_anchors: Vec<anchor::PendingAnchor>,
 }
 
 impl Ctx<'_, '_> {
@@ -245,7 +252,7 @@ struct Atom {
 /// The id-less placement builders shared by every atom; child modules
 /// reach them via `super::placed_box` / `super::line_placed_box`
 /// (descendants see this private use).
-use path::{line_placed_box, placed_box};
+use path::{line_placed_box, placed_box, placed_box_rect};
 
 /// Grows an atom by its vertical margins: items shift down by the top
 /// margin and the reserved height gains both, so every placement context

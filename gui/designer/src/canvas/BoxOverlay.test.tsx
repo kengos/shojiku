@@ -1368,3 +1368,57 @@ describe('BoxOverlay multi-select + marquee', () => {
     expect(onMarquee).not.toHaveBeenCalled();
   });
 });
+
+describe('a conditionally hidden item', () => {
+  const hidden = { ...box('ghost', 0, 0, 40, 20), hidden: true };
+
+  function drawWith(selectedPath: string | null) {
+    return render(
+      <BoxOverlay
+        boxes={[hidden]}
+        scale={1}
+        width={100}
+        height={100}
+        selectedPath={selectedPath}
+        onSelect={() => {}}
+        onDeselect={() => {}}
+      />,
+    );
+  }
+
+  it('is ghosted with a dashed outline so the empty region is explained', () => {
+    // The item reserved its box and painted nothing; without a mark the
+    // canvas shows an unexplained gap.
+    const { container } = drawWith(null);
+    const rect = container.querySelector('rect.sj-box');
+    expect(rect?.getAttribute('stroke-dasharray')).toBe('3 3');
+    expect(rect?.classList.contains('sj-box--hidden')).toBe(true);
+  });
+
+  it('is still selectable, and the selection stroke wins over the ghost', () => {
+    const { container } = drawWith('ghost');
+    const rect = container.querySelector('rect.sj-box');
+    // Selected: the solid selection stroke, no dashes competing with it.
+    expect(rect?.getAttribute('stroke-dasharray')).toBeNull();
+    expect(rect?.getAttribute('stroke-width')).toBe('1.5');
+    // …and the class stays, so a stylesheet can still theme it.
+    expect(rect?.classList.contains('sj-box--hidden')).toBe(true);
+  });
+
+  it('leaves an ordinary box unghosted', () => {
+    const { container } = render(
+      <BoxOverlay
+        boxes={[box('plain', 0, 0, 10, 10)]}
+        scale={1}
+        width={100}
+        height={100}
+        selectedPath={null}
+        onSelect={() => {}}
+        onDeselect={() => {}}
+      />,
+    );
+    const rect = container.querySelector('rect.sj-box');
+    expect(rect?.getAttribute('stroke-dasharray')).toBeNull();
+    expect(rect?.classList.contains('sj-box--hidden')).toBe(false);
+  });
+});

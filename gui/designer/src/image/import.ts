@@ -12,6 +12,7 @@ import {
   type ImageKind,
   type ImportRefusal,
   importPlan,
+  type ProbeKind,
   type RasterKind,
   sniffImage,
 } from './model';
@@ -23,8 +24,11 @@ export interface ImageCodec {
   /** The file's raw bytes. */
   read(file: Blob): Promise<Uint8Array>;
   /** Intrinsic pixel dimensions of a raster, or `null` if it cannot be decoded
-   * (a truncated/corrupt file that still sniffed as png/jpeg). */
-  probe(bytes: Uint8Array, kind: RasterKind): Promise<{ w: number; h: number } | null>;
+   * (a truncated/corrupt file that still sniffed as a known format). Accepts
+   * every measurable kind, GIF and WebP included — browsers decode both, and
+   * the default draw box needs their pixel size even though `reencode` can
+   * never be asked for one. */
+  probe(bytes: Uint8Array, kind: ProbeKind): Promise<{ w: number; h: number } | null>;
   /** Re-encode a raster downscaled to `target` at `quality`, keeping the format,
    * or `null` on any failure. */
   reencode(
@@ -84,7 +88,7 @@ export async function importImageFile(
 
 async function importRaster(
   bytes: Uint8Array,
-  kind: RasterKind,
+  kind: ProbeKind,
   codec: ImageCodec,
   budgets: ImageBudgets,
 ): Promise<ImportOutcome> {

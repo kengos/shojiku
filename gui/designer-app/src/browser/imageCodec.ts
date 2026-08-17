@@ -6,9 +6,14 @@
 
 import type { ImageCodec } from '@shojiku/designer';
 
-const RASTER_MIME: Record<'png' | 'jpeg', string> = {
+// Every kind `probe` can be asked about. GIF and WebP are measurable here (the
+// browser decodes both) even though `reencode` is only ever asked for a
+// png/jpeg — those two travel verbatim.
+const PROBE_MIME: Record<'png' | 'jpeg' | 'gif' | 'webp', string> = {
   png: 'image/png',
   jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
 };
 
 /** Decode raster bytes into an `HTMLImageElement`, or `null` if the browser
@@ -37,11 +42,11 @@ export const browserImageCodec: ImageCodec = {
     return new Uint8Array(await file.arrayBuffer());
   },
   async probe(bytes, kind) {
-    const img = await loadRasterImage(bytes, RASTER_MIME[kind]);
+    const img = await loadRasterImage(bytes, PROBE_MIME[kind]);
     return img === null ? null : { w: img.naturalWidth, h: img.naturalHeight };
   },
   async reencode(bytes, kind, target, quality) {
-    const img = await loadRasterImage(bytes, RASTER_MIME[kind]);
+    const img = await loadRasterImage(bytes, PROBE_MIME[kind]);
     if (img === null) {
       return null;
     }
@@ -54,7 +59,7 @@ export const browserImageCodec: ImageCodec = {
     }
     ctx.drawImage(img, 0, 0, target.w, target.h);
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((result) => resolve(result), RASTER_MIME[kind], quality);
+      canvas.toBlob((result) => resolve(result), PROBE_MIME[kind], quality);
     });
     return blob === null ? null : new Uint8Array(await blob.arrayBuffer());
   },

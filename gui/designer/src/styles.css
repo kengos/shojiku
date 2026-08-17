@@ -162,6 +162,18 @@
   line-height: 1.25;
   user-select: none;
   white-space: nowrap;
+  /* A pill is clickable — it selects the chip so its field can be re-picked.
+   * The surrounding literal text keeps the editor's own `text` cursor, so the
+   * change of cursor is the only thing that says a chip is a control. */
+  cursor: pointer;
+}
+
+/* The chip the field menus are pointed at. An outline rather than a border
+ * swap: a border would re-measure the pill and shift the line it sits on
+ * every time the selection moves. */
+.sj-chip--selected {
+  outline: 2px solid var(--sj-accent);
+  outline-offset: 1px;
 }
 
 .sj-chip-label {

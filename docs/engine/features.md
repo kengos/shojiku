@@ -1,10 +1,3 @@
----
-reference:
-  group: appendix
-  order: 1
-  summary: "What the engine can do today — shipped capabilities and the decisions behind them."
----
-
 # Engine features (implemented)
 
 What the Shojiku engine (`engine/`) can do **today**. This is the record of
@@ -199,6 +192,15 @@ Pipeline: `Template/Definitions → Bundle → Layout → Render → Preview →
   width is only decided at layout time (the rirekisho name field). Bare
   numbers stay pt and round-trip as bare numbers. Capability key
   `line.length`.
+- **Cross-item anchoring**: a `line` endpoint takes
+  `{ item, edge?, offset? }` instead of coordinates, and an `ellipse`
+  takes `anchor: <id>` to circle another item's glyph band. Following CSS
+  anchor positioning, an anchored item is absolutely positioned: it
+  reserves no space, is drawn on the page its TARGET landed on, and
+  paints after that page's in-flow content. Unresolvable anchors draw
+  nothing and say why (`anchor_unknown_target` / `anchor_cross_page` /
+  `anchor_ambiguous_target`). Capability keys `line.anchor`,
+  `ellipse.anchor`. Spec: [line](line.md), [form_marks](form_marks.md).
 
 **Core invariant: everything resolves to absolute pt at layout time** —
 the `tree.rs` renderer contract never changes for layout features.
@@ -1044,6 +1046,22 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **`type: checkbox`**: an always-drawn stroked frame (chrome) plus a
   check mark (an open round-stroked polyline) drawn when `checked: true`
   or `data:` matches (`data` wins over `checked`).
+- **Params-conditional item presence `visible: { key, equals?, scope?, collapse? }`**
+  on EVERY item type: the form-mark predicate above, generalized to the whole
+  item vocabulary (type-strict equality, array-contains multi-select, a bare
+  key read as a boolean, `scope: document` escape). Unset `collapse` reserves
+  the item's box and paints nothing — the form-mark posture, so a
+  blank↔filled params pair never shifts layout; `collapse: true` removes the
+  box from layout and its siblings close up over it, taking the flow gap and
+  the grid cell with it. Hiding is not inherited in the CSS sense and does not
+  need to be: there is no force-visible spelling, so a hidden item hides its
+  whole subtree exactly as the inherited rule would. On a `page_break` the two
+  are the same thing — it reserves no box — which is what makes a conditional
+  page break authorable. Four warnings (`visible_not_boolean`,
+  `visible_equals_not_declared`, `visible_type_mismatch`,
+  `visible_value_not_bool`) mirror the mark's, each leaving the item unshown.
+  `inspect` marks a hidden item's placement `hidden` so an editor can ghost
+  it; a collapsed item has no placement to report.
 - **Presence binding `data: { key, equals }`** (scope-aware like text):
   `equals` set = type-strict equality (`"2"` ≠ `2`); an **array** value
   is multi-select (draws when it *contains* `equals`); `equals` omitted =

@@ -13,11 +13,13 @@ mod box_model;
 mod flex;
 pub(crate) mod grid;
 mod page_margin;
+mod point_spec;
 
-pub use box_model::{BoxSpec, OptBox, PointSpec};
+pub use box_model::{BoxSpec, OptBox};
 pub use flex::{AlignItems, BoxType, FlexBasis, FlexDirection, JustifyContent};
 pub use grid::{GridTrack, TrackSpec, MAX_GRID_TRACKS};
 pub use page_margin::PageMargin;
+pub use point_spec::{AnchorEdge, AnchorOffset, AnchorPoint, PointSpec};
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]

@@ -56,6 +56,19 @@ check whose empty output read as "all covered").
   occurrences. Match whole comment LINES
   (`^[[:space:]]*(///|//!|//)`, plus a trailing ` // `) and search the
   full line; a comment line has no non-comment content to protect against.
+- **The CONFIRMING command is the one nobody audits, and its defaults are
+  where a rename survives.** Two in one cycle, both used as proof that a
+  cleanup was complete, both silent for a reason that has nothing to do
+  with the tree. `grep -rn "edge"` came back empty over files that still
+  said `dependency-EDGE` — a case-sensitive default answering a
+  case-insensitive question, so add `-i` whenever the token could be
+  shouted in a comment or a constant. And `ls sbom/` showed three clean
+  files while a leaked `.engine.cdx.json.tmp` sat beside them, because
+  `ls` hides dotfiles: use `ls -A`, or better, ask git
+  (`git status --porcelain <dir>`), which is the question you actually
+  meant — "would this get committed?". A confirming command that returns
+  nothing has two readings, and the boring one is that you asked it
+  wrong.
 - **zsh also refuses an unquoted GLOB it cannot match, so the command
   never runs.** `grep -rn 'Foo {' engine --include=*.rs` dies with
   `(eval):1: no matches found: --include=*.rs` — zsh expands the
@@ -307,6 +320,42 @@ check whose empty output read as "all covered").
 
 ## Counts and structural claims in prose
 
+- **A benefit your change is CREDITED with may already have been true.** A
+  removal invites you to attribute every good consequence of the thing being
+  gone to the act of removing it. One cycle took `docs/engine/features.md`
+  off the site and wrote, in the changelog, the code map and the commit
+  message, that this "cut `llms-full.txt` from about 442 KB to about 322 KB".
+  It cut nothing: a separate `LLMS_FULL_OMIT` list had been excluding that
+  file from llms-full for some time, so the payload was byte-identical before
+  and after, and the real effects were the route, the raw copy under
+  `/data/reference/`, and collapsing three special cases into one. Every gate
+  was green — no gate reads a changelog. The check is one question per
+  claimed benefit: **would this already be true on `main`?** Answer it by
+  reading the pre-change code path, not by reasoning about the feature.
+- **A number you INHERITED from a comment is not a number you measured.**
+  The 442,505 figure above was copied out of an existing source comment,
+  which had gone stale as the file grew (`features.md` was 148,522 bytes by
+  then, so the total could never have been 442 KB). Copying it felt like
+  citing the repository. Re-measure any figure you are about to restate,
+  especially one that "the code already says" — a comment is prose, and
+  prose is exactly what nothing checks.
+- **A POSITIVE CONTROL measures the floor, not the phenomenon — and a tidy
+  multiple is the tell that you are quoting one.** To prove a directory
+  scan was inventorying build output, a cycle planted ONE copy of a
+  lockfile under `target/` and measured 510 components and 322 dependency
+  entries against the lockfile's 255 and 161. Both numbers are exactly
+  double, because one copy is exactly one copy — and they shipped into the
+  public `CHANGELOG.md`, into a gotchas file, and into a commit message as
+  what "a tree with a populated `engine/target/`" produces. A real built
+  tree (17 lockfile copies, plus the binaries) gives **1757**, so the
+  defect was understated 3.4×. The synthetic figure is the right tool for
+  proving a MECHANISM exists and the wrong one for describing its SIZE.
+  Before a controlled number reaches prose, either re-measure the real
+  condition or label the number as the control it is. A zero-context
+  reviewer caught this one; the author had read the sentence many times.
+  The same reasoning retires any generalization drawn from the control:
+  "the fake `.exe` was not catalogued" was true of a 5-byte stub and false
+  of the real tree, which reports five `application` components.
 - **A "now X, rather than Y" contrast asserts something about the PREVIOUS
   state, and only `git show <base>:<path>` can check it.** The claim reads
   as a description of your own change, so it never reaches the grep pass a
@@ -617,6 +666,50 @@ Both halves of that have bitten here.
   file /tmp/backup` first and `cp` back after; git's undo verbs are for
   committed history, not for a two-minute experiment on live work.
 
+## A background watcher's silence is not a result
+
+A background task that finishes notifies you. A task whose exit
+condition never fires does not — it keeps running, and nothing in the
+conversation says so. Both halves of that have shipped here.
+
+- **A `while ! grep -q …; do sleep 30; done` spun for three and a half
+  hours** after the run it was watching had finished, because the
+  anchored pattern never matched the actual bytes — the line's `FAIL`
+  carries a terminal colour escape. It cost nothing and it was
+  invisible; it was
+  found because the user asked. **Validate a grep pattern against the
+  ACTUAL bytes of the output** (escapes, colour codes, `\r`), never
+  against what the line looks like on screen — and prefer a condition
+  that cannot silently never-fire, e.g. a job's own `conclusion` over a
+  grep of its log.
+- **A watcher also dies with the session that started it, and reports to
+  nobody.** A poll waiting for a Maven Central repo1 mirror sync was
+  never heard from again; the sync had in fact landed, and the state
+  went unrecorded until someone re-asked the URL directly. So: **no
+  report is not "not yet" — it is no information at all.** Two rules
+  follow. Record any background watcher where a later reader can
+  reconcile it against reality, with its STOP CONDITION written down and
+  not just its command (a row naming only the command cannot show that
+  the condition never fired). And when you actually need the answer,
+  **re-ask the source** — one `curl`/`gh` call now beats waiting to be
+  told by something that may already be dead.
+- The reconciliation, at any cleanup:
+  `ps aux | grep -E "[t]ail -f|[g]make|[c]laude -p"`. A process with no
+  record, or a record with no process, is the finding.
+
+## A substring assertion needs a fixture the substring can only come from
+
+- **`not.toContain('data:')` over a fixture whose value IS a `data:` URI
+  tests the fixture, not the code.** A quick-fix test asserting that the
+  `data:` KEY had been removed used an image whose `src` was
+  `"data:image/png;base64,…"`, so the substring survived every correct
+  removal and the case went red against working code. The same family as
+  a `grep "it("` that also bills `emit(`/`edit(`: before writing a
+  contains/not-contains assertion, ask where else in the fixture that
+  sequence of characters can appear, and pick a fixture where the answer
+  is nowhere (here: `src: logo.png`). A structural read is better still
+  when one is available.
+
 ## Binary-classified files: the grep blind spot
 
 - **A zero-hit grep over a NARROWED path is evidence about the path, not
@@ -637,6 +730,21 @@ Both halves of that have bitten here.
   short is this, not a miscount. A "dead" conclusion needs two tools or
   an opened file; and dynamically COMPOSED keys
   (`` `palette.type.${name}` ``) never appear verbatim in any grep.
+- **You can CREATE one by writing a byte-oriented fixture, and no gate
+  objects.** Every entry above is about DETECTING a binary-classified
+  file; this is the authoring side. A WebP sniff test whose RIFF length
+  field was typed as literal NUL bytes rather than as escapes turned the
+  whole test file binary from that moment on. The bytes were correct, so
+  vitest passed, and fmt / lint / coverage have no opinion about a NUL —
+  meanwhile the file left `grep -rn` and `git diff`'s content view
+  entirely, and `git diff --stat` reported it as `Bin <n> -> <m> bytes`.
+  It surfaced only because a later step enumerated that suite's test
+  titles FROM THE DIFF and this file contributed none. The risk is
+  highest in exactly the tests that need such bytes — magic numbers,
+  length fields, separators — so spell them as escapes (`\u0000`) or
+  build them with a byte array, and treat "a file I just edited shows no
+  diff content" as this until proven otherwise (`git diff --numstat`
+  prints `-` in both columns for it).
 - **A PIPE hides it completely**: `git show <rev>:<file> | grep …` has
   no filename to report, so grep prints NOTHING — not even "Binary file
   matches" — and an empty result reads as "that line is gone".
@@ -680,3 +788,101 @@ Both halves of that have bitten here.
   printing the file count it read first). Probing for NULs needs perl,
   not `grep $'\x00'` — bash truncates that pattern to empty and the
   grep then matches every line.
+- **The byte can land where you typed an ORDINARY character, in a file
+  that has nothing to do with control characters — and then it hides the
+  file from the PR DIFF, not just from grep.** Both narrowings above are
+  too generous: it is not only the ESCAPE that carries the risk (a
+  plainly-typed space came back as `0x00` twice in a row, in the same
+  string literal), and the candidate set is not just files that match or
+  describe control characters (this one joined two strings to build a
+  dedup key). Treat ANY file written through a tool call as a candidate.
+  The consequence nobody had paid for yet is the expensive one: git
+  classifies the file as binary, so `git show --stat` prints
+  `<file> | Bin 0 -> N bytes` and **the file never renders in the pull
+  request at all** — GitHub says "Binary file not shown". A reviewer can
+  approve a change having been shown none of its central logic, which is
+  precisely what happened: a 182-line module, the whole subject of its
+  PR, went up unreadable and only a review reading the working tree
+  instead of the diff caught it. Two guards, both cheap:
+  **check `git diff --stat` for `Bin` before opening a PR** (the tell is
+  unmissable once you look for it), and prefer a construction with no
+  separator character to get wrong — `JSON.stringify([a, b])` rather
+  than joining on a delimiter, which is the right answer anyway when the
+  parts are document-derived and could contain that delimiter.
+
+## Claims that live outside prose
+
+- **A limitation you are RETIRING is written in the retired sentence's
+  words, not in the new feature's.** Shipping `visible:` made
+  `page_break.md`'s "no keys beyond `id`: … and no conditional break" false.
+  The subject sweep for the new spellings (`visible`, `collapse`) hit 33 and
+  24 doc files respectively and did not surface it, because the stale
+  sentence contains neither word. Grep the CLAIM being retired
+  ("conditional", "not supported", "cannot"), not the key that retires it —
+  by definition the new key appears nowhere yet, which is exactly why a
+  sweep keyed on it reads clean.
+- **A CODE COMMENT asserting a limitation is a falsifiable claim, and it is
+  the one nobody greps.** A panel shipped with "the panel has no handle on
+  the enclosing array from a selected child … so the gap is a narrower
+  picker, never a wrong write." A helper doing precisely that existed and was
+  used by five other files, and the write really was wrong. Both halves were
+  checkable in one grep. The comment is worse than silence: it explains why
+  the defect is safe, so the next reader stops looking. Any comment
+  containing "no way to", "has no handle on", "cannot" gets the same grep a
+  doc claim would.
+
+## A backgrounded watcher's exit code is the WRAPPER's, not the command's
+
+`gh pr checks --watch` exits 8 when a check fails. Wrap it to record that —
+
+```sh
+gh pr checks 121 --watch > ci.log 2>&1; echo "GH_EXIT=$?" >> ci.log
+```
+
+— and the SHELL's exit code becomes the `echo`'s, which is 0 whatever `gh`
+did. A harness that reports "completed (exit code 0)" is reporting the
+wrapper. One cycle read that notice as "CI is green" and said so to the user;
+three checks had failed, and the log's own `GH_EXIT=1` line said so.
+
+**A PIPE does the same thing, and a backgrounded one is worse.** CLAUDE.md
+already forbids piping a gate (`make … | tail`) because the pipeline reports
+the LAST command's status. In the foreground that costs you a glance at the
+output; backgrounded, the harness announces *"completed (exit code 0)"* as a
+task result, which reads as a verdict rather than as a shell artifact. One
+cycle backgrounded `gmake quiet T=site 2>&1 | tail -20`, was told it had
+completed successfully, and the gate had exited 2 with a failing test — the
+`FAIL` line was sitting in the captured output the whole time. Run gates
+unpiped, and when a background task reports success, read its log before
+repeating the claim.
+
+**Judge a PR by asking GitHub, never by the watcher's completion:**
+
+```sh
+gh pr view <n> --json mergeStateStatus,statusCheckRollup \
+  -q '.mergeStateStatus, ([.statusCheckRollup[] | select(.conclusion != "SUCCESS" and .conclusion != "NEUTRAL")] | length)'
+```
+
+## A CONFLICTING PR reports ONE green check and the watcher exits 0
+
+When a PR conflicts, `pull_request` has no merge commit to build, so no
+Actions job runs at all. Only the non-Actions integrations report — here a
+single Cloudflare Pages check — and `--watch` sits on that one green line and
+exits 0. It is indistinguishable from "everything passed" unless you look at
+the count or at `mergeStateStatus` (`DIRTY` / `CONFLICTING`).
+
+Same shape, different cause, as the `paths-ignore` case already in the cycle
+skill: **fewer checks than the diff deserves is the signal.** Read
+`mergeStateStatus` before believing a green watcher.
+
+## `-c commit.gpgsign=false` silently fails the merge bar
+
+`main`'s ruleset requires `required_signatures`, and the repo config already
+sets `commit.gpgsign true`. Overriding it per-commit (a habit from
+environments where signing prompts) produces a PR that passes all 33 checks
+and still reports `mergeStateStatus: BLOCKED` with an EMPTY `reviewDecision` —
+which reads as "waiting for a review", not "unsigned".
+
+`git log --format='%h %G? %s'` shows the truth: `N` for unsigned, `G` for a
+good signature. The fix is `git commit --amend -S` (the agent usually has the
+key unlocked already) and a force-push; the tree is unchanged, so CI simply
+re-certifies the same content.

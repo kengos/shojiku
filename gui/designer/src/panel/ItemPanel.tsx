@@ -14,12 +14,18 @@
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { useState } from 'react';
 import { useI18n } from '../i18n/context';
+import { anchorTargets, readItemId } from './anchorTargets';
 import { BoxSection } from './BoxSection';
 import { BORDERABLE_TYPES } from './borderTypes';
 import { ContentSection } from './ContentSection';
 import type { ItemPanelProps } from './itemPanelProps';
-import type { ItemView } from './itemView';
+import { hasCapability } from './itemPanelProps';
+import { BOXLESS_TYPES, type ItemView } from './itemView';
+import { LinePointsEditor } from './LinePointsEditor';
+import { readLinePoints } from './linePoints';
+import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
 import { StyleSection } from './StyleSection';
+import { VisibilitySection } from './VisibilitySection';
 
 export type PanelTab = 'content' | 'style' | 'box';
 
@@ -42,8 +48,16 @@ const CONTENT_TAB_TYPES = new Set([
  * end). */
 const STYLED_TYPES: ReadonlySet<string> = new Set([...BORDERABLE_TYPES, 'line']);
 
-/** The tabs that apply to an item, in fixed content→decoration→placement order. `box` is always
- * present (every placed item has a box), so the result is never empty. */
+/** Types whose placement tab is NOT the box fields. A `line` has a position
+ * (its two endpoints) but no `box:` — the engine rejects that key as a parse
+ * error — so its placement tab carries the points editor instead. */
+const POINT_PLACED_TYPES: ReadonlySet<string> = new Set(['line']);
+
+/** The tabs that apply to an item, in fixed content→decoration→placement
+ * order. A type gets the placement tab when it has a position the panel can
+ * author — a box, or (for `line`) endpoints. `page_break` has neither and
+ * ends up with NO tabs at all (it takes only `id`); the panel renders a
+ * placeholder for that. */
 export function applicableTabs(view: ItemView): PanelTab[] {
   const tabs: PanelTab[] = [];
   if (CONTENT_TAB_TYPES.has(view.type)) {
@@ -52,7 +66,9 @@ export function applicableTabs(view: ItemView): PanelTab[] {
   if (STYLED_TYPES.has(view.type)) {
     tabs.push('style');
   }
-  tabs.push('box');
+  if (!BOXLESS_TYPES.has(view.type) || POINT_PLACED_TYPES.has(view.type)) {
+    tabs.push('box');
+  }
   return tabs;
 }
 
@@ -78,18 +94,82 @@ export function ItemPanel(props: ItemPanelProps) {
       <ContentSection {...props} />
     ) : tab === 'style' ? (
       <StyleSection {...props} />
+    ) : POINT_PLACED_TYPES.has(view.type) ? (
+      <LinePointsEditor
+        view={readLinePoints(props.controller.read, props.path)}
+        path={props.path}
+        controller={props.controller}
+        capabilities={props.capabilities}
+        targets={anchorTargets(
+          props.geometry?.boxes.pages,
+          readItemId(props.controller.read, props.path),
+        )}
+      />
     ) : (
       <BoxSection {...props} />
     );
 
-  // A single-tab item (box-only: line, and other pure-geometry items) skips the
-  // tablist chrome — a lone tab is noise.
+  // `visible:` applies to EVERY item type and is none of the three tab
+  // concerns — it decides whether the item is there at all — so it sits above
+  // the tablist rather than inside a tab. Gated on the engine capability: an
+  // older engine parse-REJECTS the key, so the control must not be offered
+  // hopefully.
+  //
+  // The picker follows the item's OWN data scope, derived from its path like
+  // every other row-scoped surface: inside a `repeat` cell the fields offered
+  // are the bound element's, with the top-level ones as a labeled second
+  // section that writes `scope: document` when picked. Offering document
+  // fields at element scope would author a key that resolves to nothing —
+  // the item then vanishes silently, or reports an undeclared key.
+  const enclosing = bindingScopeFor(props.controller.read, props.path);
+  const documentFields = pickerOptions(props.paletteGroups, null, props.params);
+  const scopeArmed = enclosing !== null && scopeAuthorable(props.capabilities);
+  const visibility = hasCapability(props.capabilities, 'item.visible') ? (
+    <VisibilitySection
+      path={props.path}
+      controller={props.controller}
+      options={
+        enclosing === null
+          ? documentFields
+          : scopeArmed
+            ? pickerOptions(props.paletteGroups, enclosing, props.params)
+            : // No `scope:` to author, so both scopes go in one flat list
+              // rather than offering a section that cannot be committed.
+              [...pickerOptions(props.paletteGroups, enclosing, props.params), ...documentFields]
+      }
+      documentOptions={scopeArmed ? documentFields : undefined}
+      itemType={view.type}
+    />
+  ) : null;
+
+  // A type with no applicable TAB (`page_break` — nothing but `id` and
+  // `visible:` on the wire) still has the presence binding to edit, which is
+  // exactly what a conditional page break is. Only when there is nothing at
+  // all does the panel say so.
+  if (tabs.length === 0) {
+    return (
+      <div className="p-3">
+        {visibility}
+        {visibility === null ? (
+          <p className="m-0 text-muted text-sm">{t('panel.noEditable')}</p>
+        ) : null}
+      </div>
+    );
+  }
+  // A single-tab item (a `line`'s stroke, and other one-surface types) skips
+  // the tablist chrome — a lone tab is noise.
   if (tabs.length === 1) {
-    return <div className="p-3">{panelFor(tabs[0])}</div>;
+    return (
+      <div className="p-3">
+        {visibility}
+        {panelFor(tabs[0])}
+      </div>
+    );
   }
 
   return (
     <TabGroup selectedIndex={selected} onChange={(next) => setActive(tabs[next])}>
+      {visibility === null ? null : <div className="px-3 pt-3">{visibility}</div>}
       <TabList className="flex gap-1 border-b border-border px-3 pt-2">
         {tabs.map((tab) => (
           <Tab

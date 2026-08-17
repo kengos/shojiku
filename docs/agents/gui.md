@@ -250,14 +250,26 @@ definitions
   warnings, accessibility warnings) — the GUI displays these, it does not
   invent its own separate validation logic that can drift from the engine.
   A diagnostic whose fix is MECHANICAL carries a one-click fix action
-  (shipped): a code-keyed registry maps the diagnostic to a `removeKey`
-  patch-op batch (one undo step, AI parity) that drops the offending key(s).
-  v1 covers the "inert/ignored key" family — `orientation_ignored`,
-  `ignored_column_key`, `grid_key_ignored`, `layout_key_on_leaf`,
-  `table_pagination_key_ignored`, `shape_style_ignored`, `ignored_span_style`
-  — and shows the button only when a concrete removable key is present (no
-  dead buttons). Fixes needing a chosen value (default-size codes) or a pick
-  between two resolutions (`image_source_conflict`) are out of v1.
+  (shipped): a code-keyed registry maps the diagnostic to a LIST of candidate
+  resolutions, each an op batch applied as one `applyAll` (one undo step, AI
+  parity). One candidate renders as one button; two render as two, side by
+  side. A candidate is offered only when it has something concrete to do — no
+  dead buttons.
+  - **Removals** (the button says only the action, since the message already
+    says what goes away): `orientation_ignored`, `ignored_column_key`,
+    `grid_key_ignored`, `layout_key_on_leaf`, `table_pagination_key_ignored`,
+    `shape_style_ignored`, `ignored_span_style`, and `unused_binding` — the
+    one entry whose diagnostic path addresses the DECLARATION rather than the
+    node the key hangs off, so the item path is derived.
+  - **A choice**: `image_source_conflict` offers two candidates, labelled by
+    what SURVIVES (`keep src` / `keep data`), never by what is dropped.
+  - **Value rewrites**, where the value is the decision and the button
+    therefore NAMES it: the four missing-size codes (`rect_`/`image_`/`qr_`/
+    `mark_missing_size`) author the absent dimension(s) only, and
+    `flow_item_overflow` / `sheet_overflow` / `child_overflow` shrink `box.w`
+    by exactly the reported excess. `flex_row_overflow` is deliberately
+    excluded: it reports a ROW's children collectively needing more room, so
+    there is no single width to shrink.
 
 ## Boundary: GUI never renders PDF itself
 
@@ -574,7 +586,12 @@ chips**: inside the shared text editor (the panel field AND the canvas
 double-click overlay — one component), a `{key}` / `{key:format}`
 expression renders as an atomic labeled chip (field label from the
 binding-picker options, wire + sample as tooltip); chips are inserted
-from an in-editor field picker, deleted atomically, and the chip layer
+from an in-editor field picker, deleted atomically, and RE-PICKED in
+place — clicking a chip selects it (a pill is `user-select: none`, so
+the selection is its own, not the caret's) and a trigger naming the
+bound field opens the same picker rows, swapping the binding while the
+surrounding text and the expression's `:format` stay exactly as
+authored. The chip layer
 is display-only — the wire text underneath is untouched (serialization
 is the identity for untouched content, and hand-typed raw syntax stays
 the expert path, becoming a chip on the next open). The picker offers
@@ -585,7 +602,10 @@ insert as a chip over a declared ASCII name while the declaration carries
 the real key and `scope`. A declaration is written ONLY where the bare
 form falls short (minimal wire), the text and the declarations it
 references commit as ONE batch (one undo step), deleting the chip removes
-the declaration the same way, and the whole authoring half is gated on
+the declaration the same way — and so does re-picking its field, which
+needs no mechanism of its own: the commit batch already drops a declared
+name the old text referenced and the new one does not (unless another
+surface of the item still does) — and the whole authoring half is gated on
 `binding.declarations` — READING one always labels its chip, so an
 externally authored document still says which field a chip stands for.
 

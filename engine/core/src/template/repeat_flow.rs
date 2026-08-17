@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::length::Length;
 
+use super::visibility::VisibleBinding;
 use super::{Binding, ContainerItem};
 
 /// Data-driven flow repeat: lays one `item` card per element of a `data`
@@ -21,6 +22,9 @@ use super::{Binding, ContainerItem};
 pub struct RepeatFlowItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Params-conditional presence; unset draws unconditionally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visible: Option<VisibleBinding>,
     /// The array params key; one card is emitted per element, in order.
     pub data: Binding,
     /// Vertical gap between cards; resolves against the flow-region

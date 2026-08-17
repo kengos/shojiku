@@ -778,13 +778,18 @@ describe('PropertyPanel', () => {
     expect(controller.apply).not.toHaveBeenCalled();
   });
 
-  it('renders only the box section for a type with nothing to edit', () => {
+  it('offers a page_break only its presence binding — no field that would be invalid', () => {
+    // `page_break` takes only `id` and `visible:` on the wire, so every OTHER
+    // field the panel could show would author a key the engine rejects —
+    // including the box fields this panel used to offer. The presence binding
+    // is the exception, and it is what makes a conditional break authorable.
     const controller = makeController({ [PATH]: { type: 'page_break' } });
     draw(<PropertyPanel controller={controller} path={PATH} />);
     expect(screen.queryByRole('heading', { name: 'Style' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Content' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Image' })).toBeNull();
-    expect(screen.getByRole('heading', { name: 'Box' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Box' })).toBeNull();
+    expect(screen.getByText('Show only when…')).toBeDefined();
   });
 
   it('gives a line a 装飾 tab carrying its own stroke controls', () => {
@@ -801,18 +806,20 @@ describe('PropertyPanel', () => {
     expect(screen.queryByLabelText('Corner radius')).toBeNull();
   });
 
-  it('edits a line box coordinate from the 配置 tab', () => {
-    const controller = makeController({ [PATH]: { type: 'line', box: {} } });
-    draw(<PropertyPanel controller={controller} path={PATH} />);
-    // A line now opens on its 装飾 tab, so reach the box fields explicitly.
-    openTab('Layout');
-    fireEvent.blur(screen.getByLabelText('X'), { target: { value: '5' } });
-    expect(controller.apply).toHaveBeenCalledWith({
-      op: 'setScalar',
-      path: PATH,
-      keys: ['box', 'x'],
-      value: 5,
+  it('edits a line ENDPOINT from the 配置 tab, never a box key', () => {
+    // A `line` draws from `from`/`to` and its wire struct is
+    // `deny_unknown_fields`, so the `box.x` this tab used to write broke the
+    // document. The tab now authors the endpoint the user actually meant.
+    const controller = makeController({
+      [PATH]: { type: 'line', from: { x: 0, y: 2 }, to: { x: 100, y: 2 } },
     });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    openTab('Layout');
+    expect(screen.queryByLabelText('X')).toBeNull();
+    fireEvent.blur(screen.getByLabelText('Start X'), { target: { value: '5' } });
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path: PATH, keys: ['from', 'x'], value: 5 },
+    ]);
   });
 });
 
@@ -1124,7 +1131,7 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
     // A rect's first tab is 装飾. Fill + border show; no typography fields.
     expect(screen.queryByLabelText('Font size')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Background' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: '#1d4ed8' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Blue' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,
@@ -1138,7 +1145,7 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
     draw(<PropertyPanel controller={controller} path={PATH} />);
     openTab('Style');
     fireEvent.click(screen.getByRole('button', { name: 'Color' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: '#b91c1c' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,

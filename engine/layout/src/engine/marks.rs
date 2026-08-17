@@ -11,6 +11,7 @@ mod presence;
 #[cfg(test)]
 mod tests;
 
+use super::anchor::{PendingAnchor, PendingEllipse, PendingKind};
 use crate::tree::{LayoutItem, PathShape, RectShape};
 use shojiku_core::{CheckboxItem, EllipseItem, Length, OptBox, Style};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
@@ -30,6 +31,7 @@ const DEFAULT_MARK_STROKE_PT: f64 = 1.0;
 
 /// A shape's resolved paint: one uniform stroke + fill + alpha, reduced
 /// from the unified [`Style`] by [`Ctx::shape_paint`].
+#[derive(Debug, Clone)]
 pub(in crate::engine) struct ShapePaint {
     /// Uniform stroke width (pt); `0` = no stroke.
     pub width: f64,
@@ -62,11 +64,40 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// reserved. Styled by the unified `Style` via [`Ctx::shape_paint`]
     /// (1pt outline default, uniform border).
     pub(super) fn ellipse_atom(&mut self, e: &EllipseItem, basis: &Basis) -> Option<Atom> {
-        let (rb, w, h) = self.mark_box(&e.box_, basis, None)?;
         let draw = match &e.data {
             None => true,
             Some(binding) => self.mark_drawn(binding),
         };
+        // Circling another item defers the whole geometry: the band it
+        // centres on is only known once that item is placed. Absolutely
+        // positioned for the same reason a line's anchor is, so it takes
+        // no space here and `box.w`/`box.h` survive only as a size.
+        if let Some(target) = &e.anchor {
+            let paint = self.shape_paint(&e.style_names, &e.style, "ellipse");
+            let b = e.box_.clone().unwrap_or_default();
+            let size = (
+                b.w.and_then(|l| self.resolve_x(Some(l), basis)),
+                b.h.and_then(|l| self.resolve_y(Some(l), basis)),
+            );
+            self.pending_anchors.push(PendingAnchor {
+                kind: PendingKind::Ellipse(PendingEllipse {
+                    target: target.clone(),
+                    paint,
+                    size,
+                    drawn: draw,
+                }),
+                path: self.current_path(),
+                id: e.id.clone(),
+                hidden: false,
+            });
+            return Some(Atom {
+                height: 0.0,
+                items: Vec::new(),
+                boxes: Vec::new(),
+                rb: None,
+            });
+        }
+        let (rb, w, h) = self.mark_box(&e.box_.clone().unwrap_or_default(), basis, None)?;
         let mut items = Vec::new();
         if draw {
             let paint = self.shape_paint(&e.style_names, &e.style, "ellipse");

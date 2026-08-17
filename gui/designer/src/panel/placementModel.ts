@@ -17,6 +17,7 @@
 
 import type { Op, ReadFn } from '@shojiku/designer-core';
 import { seqPosition } from '../tree/reorder';
+import { BOXLESS_TYPES } from './itemView';
 
 const ITEMS_SUFFIX = '.items';
 // A path inside a repeating sub-template (`table` columns / `cell:` /
@@ -82,7 +83,7 @@ export function placementFor(read: ReadFn, path: string): Placement {
   if (child === undefined || owner === undefined) {
     return plain;
   }
-  if (child.type === 'line' || child.type === 'page_break') {
+  if (typeof child.type === 'string' && BOXLESS_TYPES.has(child.type)) {
     return plain;
   }
   const box = record(child.box) ?? {};

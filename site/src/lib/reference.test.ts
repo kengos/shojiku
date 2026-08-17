@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  bareRepoOnlyLinks,
   block,
   demoAnchor,
   guardMustaches,
@@ -16,6 +17,8 @@ import {
   rewriteIndexLinks,
   rewriteOutlinks,
   SOURCE_DIR,
+  referenceStems,
+  REPO_ONLY,
   splitFrontMatter,
   stripInjected,
   unguardMustaches,
@@ -247,9 +250,53 @@ describe("landingIndex", () => {
     expect(out).not.toContain("README");
   });
 
-  it("skips both non-feature pages", () => {
-    expect(NON_FEATURE).toEqual(["README", "features"]);
-    expect(landingIndex([mk("features", "x")], "/reference/")).not.toContain("features");
+  it("skips the landing, the one page that is not a feature", () => {
+    expect(NON_FEATURE).toEqual(["README"]);
+    expect(landingIndex([mk("README", "the index")], "/reference/")).not.toContain("README");
+  });
+});
+
+describe("the repo-only pages", () => {
+  it("names features.md, and nothing else", () => {
+    expect(REPO_ONLY).toEqual(["features"]);
+  });
+
+  it("drops them from the stem list, keeps every other page, and sorts", () => {
+    expect(referenceStems(["text.md", "features.md", "README.md", "box.md"])).toEqual(["README", "box", "text"]);
+  });
+
+  it("ignores non-markdown entries", () => {
+    // The directory is read raw, so a stray file must not become a route.
+    expect(referenceStems(["text.md", "notes.txt", ".DS_Store"])).toEqual(["text"]);
+  });
+
+  it("finds a bare sibling link to a repo-only page", () => {
+    expect(bareRepoOnlyLinks("see [the log](features.md) for why")).toEqual(["features"]);
+  });
+
+  it("finds one carrying an anchor", () => {
+    expect(bareRepoOnlyLinks("[x](features.md#decision-log)")).toEqual(["features"]);
+  });
+
+  it("finds the ./ spelling, which VitePress resolves the same way", () => {
+    expect(bareRepoOnlyLinks("[x](./features.md)")).toEqual(["features"]);
+  });
+
+  it("reports each offending stem once, however many times it is linked", () => {
+    expect(bareRepoOnlyLinks("[a](features.md) [b](features.md) [c](features.md#x)")).toEqual(["features"]);
+  });
+
+  it("passes the ../ spelling, which is what the outlink rewrite handles", () => {
+    expect(bareRepoOnlyLinks("[x](../engine/features.md)")).toEqual([]);
+    expect(bareRepoOnlyLinks("[x](../../README.md)")).toEqual([]);
+  });
+
+  it("passes sibling links to pages that ARE routed", () => {
+    expect(bareRepoOnlyLinks("[a](box.md) [b](README.md) [c](repeat_flow.md)")).toEqual([]);
+  });
+
+  it("passes a body with no links at all", () => {
+    expect(bareRepoOnlyLinks("# A page\n\nProse with `features.md` named in code.")).toEqual([]);
   });
 });
 

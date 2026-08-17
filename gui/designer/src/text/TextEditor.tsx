@@ -5,10 +5,14 @@
 // the editable div EMPTY and never reconciles its content), everything else is
 // verbatim text nodes, so serialization is an identity recomposition and a
 // bare tab-through never rewrites the document. Chips are created only at
-// seed time and by picker insertion — hand-typed syntax stays plain text until
+// seed time and by the field menus (inserting one, or re-picking a selected
+// one's field in place) — hand-typed syntax stays plain text until
 // the next commit reseeds (the expert path, and no DOM restructuring can hit a
-// live IME composition). Commits on blur leaving the whole editor (moving into
-// the insert menu is not a commit) or ⌘/Ctrl+Enter, only on a CHANGED value;
+// live IME composition). A click marks the chip it lands on as SELECTED, which
+// is what the replace menu acts on: a chip is `user-select: none`, so it can
+// never ride the caret's own selection. Commits on blur leaving the whole
+// editor (moving into either field menu is not a commit) or ⌘/Ctrl+Enter,
+// only on a CHANGED value;
 // Enter inserts a newline; paste is plain-text only; Escape cancels without
 // committing when the host provides `onCancel` (the canvas overlay).
 //
@@ -16,18 +20,12 @@
 // component owns seeding, the commit decision and the staged declarations.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChipFieldMenus } from './ChipFieldMenus';
 import type { ChipContext } from './chipContext';
-import { buildEditorNodes, type ChipMeta, serializeEditor } from './chipModel';
-import { planChipInsert } from './declMint';
+import { buildEditorNodes, CHIP_SELECTED_CLASS, type ChipMeta, serializeEditor } from './chipModel';
 import { chipMetaFor, type PendingDecl } from './declModel';
 import { selectAllContent } from './editorDom';
-import {
-  handleEditorKeyDown,
-  handleEditorMouseDown,
-  insertChipAt,
-  insertPlainTextAt,
-} from './editorHandlers';
-import { InsertFieldMenu } from './InsertFieldMenu';
+import { handleEditorKeyDown, handleEditorMouseDown, insertPlainTextAt } from './editorHandlers';
 
 export interface TextEditorProps {
   readonly value: string;
@@ -67,6 +65,10 @@ export function TextEditor({
   // (the seed is one-shot, so this list never needs clearing: a commit that
   // changes the text reseeds the field by remounting it).
   const [pending, setPending] = useState<readonly PendingDecl[]>([]);
+  // The clicked chip, which the field menus re-pick. Held as the node itself:
+  // a chip is `user-select: none`, so the caret's own selection can never
+  // stand for it.
+  const [selected, setSelected] = useState<Element | null>(null);
   const meta = useMemo(
     () =>
       chips === undefined
@@ -93,11 +95,30 @@ export function TextEditor({
   }, []);
 
   useEffect(() => {
+    if (selected === null) {
+      return;
+    }
+    selected.classList.add(CHIP_SELECTED_CLASS);
+    return () => selected.classList.remove(CHIP_SELECTED_CLASS);
+  }, [selected]);
+
+  useEffect(() => {
     if (autoFocus && editorEl !== null) {
       editorEl.focus();
       selectAllContent(editorEl, document.getSelection());
     }
   }, [autoFocus, editorEl]);
+
+  // The selected chip can leave the document under us, and `keydown` is too
+  // early to see it: the browser applies its default action AFTER the handler
+  // returns, so typing over a selection that spans the pill, a cut, or a native
+  // undo all detach it later. `input` fires after the edit and covers those; our
+  // own Range surgery (atomic erosion, paste, drop) fires no `input` at all and
+  // calls this directly. Identity-preserving, so the still-attached case costs
+  // no re-render.
+  const dropDetachedSelection = (el: HTMLElement) => {
+    setSelected((chip) => (chip !== null && !el.contains(chip) ? null : chip));
+  };
 
   const commitFrom = (el: HTMLElement) => {
     const next = serializeEditor(el);
@@ -143,8 +164,14 @@ export function TextEditor({
         // Editing hosts are natively tab-focusable; the explicit index states
         // it for tooling that cannot see contentEditable implies it.
         tabIndex={0}
-        onKeyDown={(event) => handleEditorKeyDown(event, { commit: commitFrom, cancel })}
-        onMouseDown={handleEditorMouseDown}
+        onKeyDown={(event) => {
+          handleEditorKeyDown(event, { commit: commitFrom, cancel });
+          // Catches only the erosion this handler performs itself; the native
+          // paths are `onInput`'s job.
+          dropDetachedSelection(event.currentTarget);
+        }}
+        onInput={(event) => dropDetachedSelection(event.currentTarget)}
+        onMouseDown={(event) => setSelected(handleEditorMouseDown(event))}
         onDrop={(event) => {
           // Same posture as paste: dropped content inserts as plain text only
           // — native HTML drop would mint live elements.
@@ -153,6 +180,7 @@ export function TextEditor({
           if (text !== '') {
             insertPlainTextAt(event.currentTarget, text);
           }
+          dropDetachedSelection(event.currentTarget);
         }}
         onPaste={(event) => {
           // Plain text only — pasted HTML must never become editor nodes.
@@ -161,26 +189,18 @@ export function TextEditor({
           if (text !== '') {
             insertPlainTextAt(event.currentTarget, text);
           }
+          dropDetachedSelection(event.currentTarget);
         }}
       />
       {chips !== undefined && editorEl !== null ? (
-        <InsertFieldMenu
+        <ChipFieldMenus
           chips={chips}
-          onInsert={(option, documentScoped) => {
-            const plan = planChipInsert(option.key, documentScoped, {
-              scope: chips.scope,
-              declared: chips.declared,
-              pending,
-              text: serializeEditor(editorEl),
-              offeredKeys: [...chips.options, ...chips.documentOptions].map((row) => row.key),
-              otherNames: chips.otherNames,
-            });
-            const decl = plan.decl;
-            if (decl !== null) {
-              setPending((staged) => [...staged, decl]);
-            }
-            insertChipAt(editorEl, plan, { label: option.label, sample: option.sample }, meta);
+          editor={{ el: editorEl, meta, selected }}
+          staging={{
+            pending,
+            onStage: (decl) => setPending((staged) => [...staged, decl]),
           }}
+          onReplaced={() => setSelected(null)}
         />
       ) : null}
     </div>

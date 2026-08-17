@@ -17,11 +17,13 @@ function editorRead(ed: Editor): ReadNode {
 
 /** Applies `fixFor` through a real Editor and returns the resulting text plus a
  * one-step-undo probe, so every positive case proves round-trip + single undo. */
-function apply(template: string, d: Diagnostic): { text: string; undone: string } {
+function apply(template: string, d: Diagnostic, pick = 0): { text: string; undone: string } {
   const ed = Editor.create(template);
-  const ops = fixFor(d, editorRead(ed));
-  if (ops === null) throw new Error('expected a fix');
-  expect(ed.applyAll(ops).ok).toBe(true);
+  const candidates = fixFor(d, editorRead(ed));
+  if (candidates === null) throw new Error('expected a fix');
+  const chosen = candidates[pick];
+  if (chosen === undefined) throw new Error(`no candidate at ${pick}`);
+  expect(ed.applyAll(chosen.ops).ok).toBe(true);
   const text = ed.text();
   expect(ed.undo()).toBe(true); // ONE undo step reverts the whole batch
   return { text, undone: ed.text() };
@@ -211,20 +213,142 @@ describe('fixFor — no fix / hostile input', () => {
   });
 });
 
+describe('fixFor — unused_binding', () => {
+  const T =
+    'sections:\n  body:\n    items:\n      - type: text\n        text: hi\n        bindings:\n          who: { key: customer.name }\n';
+
+  it('drops the declaration the diagnostic names, leaving the item', () => {
+    const { text, undone } = apply(
+      T,
+      diag('unused_binding', {
+        path: 'sections.body.items[0].bindings.who',
+        args: { name: 'who' },
+      }),
+    );
+    expect(text).not.toContain('who');
+    expect(text).toContain('text: hi');
+    expect(undone).toBe(T);
+  });
+
+  it('drops a DOTTED declaration name whole, not one dot-segment of it', () => {
+    // A binding name may legally contain `.` (the interpolation charset is
+    // alphanumerics, `_` and `.`), so deriving the item path by splitting at the
+    // last dot would address `…bindings` and remove the wrong thing — or, worse,
+    // find `b` absent and silently offer no fix on a real problem.
+    const dotted =
+      'sections:\n  body:\n    items:\n      - type: text\n        text: hi\n        bindings:\n          ? a.b\n          : { key: customer.name }\n';
+    const { text } = apply(
+      dotted,
+      diag('unused_binding', {
+        path: 'sections.body.items[0].bindings.a.b',
+        args: { name: 'a.b' },
+      }),
+    );
+    expect(text).not.toContain('a.b');
+    expect(text).toContain('text: hi');
+  });
+
+  it('keeps a SIBLING declaration that is still used', () => {
+    const two =
+      'sections:\n  body:\n    items:\n      - type: text\n        text: "{used}"\n        bindings:\n          used: { key: a }\n          spare: { key: b }\n';
+    const { text } = apply(
+      two,
+      diag('unused_binding', {
+        path: 'sections.body.items[0].bindings.spare',
+        args: { name: 'spare' },
+      }),
+    );
+    expect(text).not.toContain('spare');
+    expect(text).toContain('used: { key: a }');
+  });
+
+  it('is null when the path does not end in the declaration it names', () => {
+    const ed = Editor.create(T);
+    // A forged or stale path: the derivation must refuse rather than strip a
+    // suffix that is not there and address whatever node results.
+    for (const path of [
+      'sections.body.items[0]',
+      'sections.body.items[0].bindings.other',
+      '.bindings.who',
+    ]) {
+      expect(
+        fixFor(diag('unused_binding', { path, args: { name: 'who' } }), editorRead(ed)),
+        path,
+      ).toBeNull();
+    }
+  });
+
+  it('is null when the diagnostic carries no usable name', () => {
+    const ed = Editor.create(T);
+    const path = 'sections.body.items[0].bindings.who';
+    expect(fixFor(diag('unused_binding', { path }), editorRead(ed))).toBeNull();
+    expect(fixFor(diag('unused_binding', { path, args: { name: 7 } }), editorRead(ed))).toBeNull();
+    expect(fixFor(diag('unused_binding', { path, args: { name: '' } }), editorRead(ed))).toBeNull();
+  });
+
+  it('is null when the declaration is already gone (no dead button)', () => {
+    const ed = Editor.create(
+      'sections:\n  body:\n    items:\n      - type: text\n        text: hi\n',
+    );
+    expect(
+      fixFor(
+        diag('unused_binding', {
+          path: 'sections.body.items[0].bindings.who',
+          args: { name: 'who' },
+        }),
+        editorRead(ed),
+      ),
+    ).toBeNull();
+  });
+});
+
 describe('fixFor — stale path is refuse-safe (no partial edit)', () => {
   it('an op built then invalidated is rejected, leaving the text byte-exact', () => {
     const T =
       'sections:\n  body:\n    items:\n      - type: text\n        text: hi\n        box:\n          gap: 4\n';
     const ed = Editor.create(T);
-    const ops = fixFor(
+    const candidates = fixFor(
       diag('layout_key_on_leaf', { path: 'sections.body.items[0]' }),
       editorRead(ed),
     );
-    if (ops === null) throw new Error('expected a fix');
+    if (candidates === null) throw new Error('expected a fix');
     // The user removes the key first; the stale fix now targets an absent key.
     ed.applyAll([{ op: 'removeKey', path: 'sections.body.items[0]', keys: ['box', 'gap'] }]);
     const before = ed.text();
-    expect(ed.applyAll(ops).ok).toBe(false);
+    expect(ed.applyAll(candidates[0].ops).ok).toBe(false);
     expect(ed.text()).toBe(before); // rolled back, no partial mutation
+  });
+});
+
+describe('the candidate shape — what makes today\u2019s rows unchanged', () => {
+  // The claim behind "one candidate renders exactly as it always did" is a
+  // NON-EVENT: a removal that grew a second candidate, or lost its label key,
+  // would still pass every case above, since they all read `candidates[0]`.
+  const CASES: readonly [string, string, string][] = [
+    ['orientation_ignored', 'page:\n  width: 200mm\n  orientation: landscape\n', ''],
+    [
+      'layout_key_on_leaf',
+      'sections:\n  body:\n    items:\n      - type: text\n        text: hi\n        box:\n          gap: 4\n',
+      'sections.body.items[0]',
+    ],
+    [
+      'unused_binding',
+      'sections:\n  body:\n    items:\n      - type: text\n        text: hi\n        bindings:\n          who: { key: a }\n',
+      'sections.body.items[0].bindings.who',
+    ],
+  ];
+
+  it('gives every REMOVAL exactly one candidate, labelled by the action alone', () => {
+    for (const [code, template, path] of CASES) {
+      const ed = Editor.create(template);
+      const candidates = fixFor(
+        diag(code, { path: path === '' ? undefined : path, args: { name: 'who' } }),
+        editorRead(ed),
+      );
+      expect(candidates?.length, code).toBe(1);
+      expect(candidates?.[0].labelKey, code).toBe('diagnostics.fix');
+      // A removal carries no label args: the message already says what goes.
+      expect(candidates?.[0].labelArgs, code).toBeUndefined();
+    }
   });
 });

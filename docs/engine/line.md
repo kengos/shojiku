@@ -2,7 +2,7 @@
 reference:
   group: item
   keys: [line]
-  shapes: [LineStyle, PointSpec]
+  shapes: [LineStyle, PointSpec, AnchorEdge, AnchorOffset]
   summary: "A stroked segment between two points — no box, its own style shape."
 ---
 
@@ -41,6 +41,38 @@ vocabulary.
     style: dashed         # solid (default) | dashed | dotted | double
 ```
 
+### Anchored to another item
+
+An endpoint can name another item's `id:` instead of coordinates, and the
+line then runs to wherever that item ends up:
+
+```yaml
+- type: line
+  from: { x: 0, y: 40 }
+  to: { item: total_box, edge: left, offset: { x: -4 } }
+```
+
+This is CSS anchor positioning, and it carries CSS's consequences —
+stated here rather than left to be discovered:
+
+- **The line becomes absolutely positioned.** It reserves no height
+  wherever it is authored, and it **paints after** everything else on its
+  page (CSS 2.1 Appendix E paints positioned content above in-flow
+  content). A leader line therefore crosses over the content it points
+  at, not under it.
+- **It is drawn on the page its TARGET landed on**, not on the page the
+  surrounding section happened to be building.
+- A **mixed** endpoint pair — one coordinate, one anchor — resolves the
+  coordinate half against the **page margin box**, the same rule an
+  absolutely-placed line already follows.
+- `edge` is OPTIONAL here, defaulting to `center`. CSS makes
+  `<anchor-side>` mandatory because `anchor()` answers a one-axis inset
+  question; a line endpoint is a point — both axes at once — so there is
+  no axis to make the side mandatory for.
+
+An endpoint is one arm or the other, never a mix: `{ x: 0, item: total }`
+is a parse error naming both keys.
+
 A dashed cut-here guide is one item:
 
 ```yaml
@@ -54,7 +86,10 @@ A dashed cut-here guide is one item:
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
-| `from` / `to` | `{ x, y }` ([`Length`](length.md) each) | required | Endpoints relative to the parent origin (margin box / flow region / container **content** box). `x` resolves against that box's width, `y` against its height; a bare number is pt. A `%` `y` under an auto-height parent has no basis — it warns `percent_of_auto` and drops to 0, like every other vertical `%`. |
+| `from` / `to` | `{ x, y }` ([`Length`](length.md) each) **or** `{ item, edge?, offset? }` | required | Endpoints relative to the parent origin (margin box / flow region / container **content** box). `x` resolves against that box's width, `y` against its height; a bare number is pt. A `%` `y` under an auto-height parent has no basis — it warns `percent_of_auto` and drops to 0, like every other vertical `%`. |
+| `from.item` / `to.item` | string (another item's `id:`) | — | Anchors this endpoint to that item's placement. Makes the whole line absolutely positioned; see above. No item with that id warns `anchor_unknown_target` and nothing is drawn. |
+| `from.edge` / `to.edge` | `top` \| `right` \| `bottom` \| `left` \| `center` | `center` | Which point of the target's border box to land on — the `<anchor-side>` subset CSS Anchor Positioning Level 1 defines. |
+| `from.offset` / `to.offset` | `{ x, y }` (pt numbers) | `{ x: 0, y: 0 }` | Shifts the resolved point. Either axis may be omitted. |
 | `style.width` | number (pt) | `1` | Stroke width. Capped 0..=1000 pt — it shares `borderWidth`'s bound, since both reach the renderers' stroke math directly. A negative, non-finite, or over-cap width warns `invalid_line_width` and strokes at the 1 pt default (unlike `borderWidth`, whose `0` legitimately means "no border", a `line` that strokes nothing draws nothing). An authored `0` passes through undiagnosed. |
 | `style.color` | `#rrggbb` | black | Stroke color. |
 | `style.opacity` | number `0..=1` | `1` | Paint alpha for the stroke. Out-of-range warns `invalid_opacity` and draws opaque. |
@@ -94,7 +129,8 @@ In the `inspect` box index a line reports its **endpoint bounding box**
 `width/2` beyond it, and hit-test tolerance is the overlay's job).
 
 Capability keys: `line`, `line.style`, `line.length` (the `Length`
-endpoints — an older engine rejects the string form on `from`/`to`).
+endpoints — an older engine rejects the string form on `from`/`to`),
+`line.anchor` (the `{ item, edge?, offset? }` endpoint arm).
 
 ## Limitations
 
@@ -110,6 +146,16 @@ endpoints — an older engine rejects the string form on `from`/`to`).
   stroke.
 - In a band or an absolute body, endpoints past the sheet warn
   (`sheet_overflow`).
+- An anchored endpoint resolves to the **first** placement of that id on
+  the page; a second placement of the same id there warns
+  (`anchor_ambiguous_target`). Two anchored endpoints whose targets land
+  on different pages draw nothing (`anchor_cross_page`).
+- Ids are not checked for uniqueness, and a line anchored to its own `id:`
+  resolves to nothing (`anchor_unknown_target`) — an anchored item is
+  never itself an anchor target, because the index is built from the
+  pages as laid out.
+- There is no drag-to-attach on the canvas yet: the Designer edits the
+  anchor as fields, not by dropping an endpoint onto a target.
 
 ## See also
 

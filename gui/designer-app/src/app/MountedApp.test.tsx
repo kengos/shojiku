@@ -8,7 +8,7 @@ import {
   type TemplateStore,
   useI18n,
 } from '@shojiku/designer';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FontSource } from '../engine/fontSource';
@@ -306,6 +306,90 @@ describe('MountedApp editor flow', () => {
       release?.();
     });
     expect(await screen.findByRole('button', { name: 'File' })).toBeTruthy();
+  });
+
+  // The staged view's escape hatch: cancel returns to the already-loaded
+  // template list without a refetch, and the open settling afterwards must
+  // stay a no-op.
+  it('cancels a live template open back to the list; late progress and resolve are inert', async () => {
+    let report: ((bytes: { loaded: number; total?: number }) => void) | undefined;
+    let release: (() => void) | undefined;
+    const services = makeServices({
+      prepareEngine: vi.fn(async (_locale: string, onProgress) => {
+        report = onProgress;
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        return makePrep();
+      }),
+    });
+    renderMounted(services, fakeRemote());
+    fireEvent.click(await screen.findByRole('button', { name: 'Invoices' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Monthly invoice' }));
+    expect(await screen.findByRole('heading', { name: 'Monthly invoice' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }));
+    expect(await screen.findByRole('button', { name: 'Monthly invoice' })).toBeTruthy();
+    // The abandoned transfer keeps reporting — it must not resurrect the panel.
+    act(() => {
+      report?.({ loaded: 1_000, total: 2_000 });
+    });
+    expect(screen.queryByRole('heading', { name: 'Monthly invoice' })).toBeNull();
+    await act(async () => {
+      release?.();
+    });
+    // Still the template list — the settled open opened nothing.
+    expect(screen.getByRole('button', { name: 'Monthly invoice' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'File' })).toBeNull();
+  });
+
+  it('cancels a live template open; a late reject shows no error view', async () => {
+    let refuse: ((reason: Error) => void) | undefined;
+    const services = makeServices({
+      prepareEngine: vi.fn(async () => {
+        await new Promise<never>((_resolve, reject) => {
+          refuse = reject;
+        });
+        return makePrep();
+      }),
+    });
+    renderMounted(services, fakeRemote());
+    fireEvent.click(await screen.findByRole('button', { name: 'Invoices' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Monthly invoice' }));
+    expect(await screen.findByRole('heading', { name: 'Monthly invoice' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }));
+    await act(async () => {
+      refuse?.(new Error('late pack 404'));
+    });
+    expect(screen.getByRole('button', { name: 'Monthly invoice' })).toBeTruthy();
+    expect(screen.queryByText('Could not reach the server.')).toBeNull();
+  });
+
+  // The LAST await in the open flow: the document and the engine are both in,
+  // and only the draft read is outstanding. Cancelling there still returns to
+  // the template list.
+  it('cancels between the document load and the draft read', async () => {
+    let release: ((draft: null) => void) | undefined;
+    const services = makeServices();
+    vi.spyOn(services.drafts, 'load').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    renderMounted(services, fakeRemote());
+    fireEvent.click(await screen.findByRole('button', { name: 'Invoices' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Monthly invoice' }));
+    await waitFor(() => {
+      expect(services.drafts.load).toHaveBeenCalled();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }));
+    await act(async () => {
+      release?.(null);
+    });
+    expect(screen.getByRole('button', { name: 'Monthly invoice' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'File' })).toBeNull();
   });
 
   // A project/template LIST read waits on the host, not on the engine — it has

@@ -27,7 +27,7 @@ import { useDesignerWiring } from './wiring';
 // wiring that uses them; re-exported here because they are part of this
 // module's public surface.
 export { contentHeightPt, contentWidthPt } from './hooks/geometry';
-export { isEditableTarget } from './hooks/useSelectionOps';
+export { isEditableTarget } from './hooks/useSelectionShortcuts';
 export type { DesignerProps };
 export { bandOf };
 
@@ -47,7 +47,7 @@ export function Designer(props: DesignerProps) {
       <input
         ref={w.image.fileInputRef}
         type="file"
-        accept="image/png,image/jpeg,image/svg+xml"
+        accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
         hidden
         onChange={w.image.onFilePicked}
       />
@@ -101,6 +101,7 @@ export function Designer(props: DesignerProps) {
       <div data-tour={TOUR_ANCHORS.diagnostics}>
         <DiagnosticsPanel
           diagnostics={w.diagnostics}
+          advisories={w.advisories}
           onSelect={w.editor.select}
           read={w.editor.read}
           onApplyFix={w.applyDiagnosticFix}

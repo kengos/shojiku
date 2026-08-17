@@ -13,6 +13,200 @@ platform binaries.
 
 ## [Unreleased]
 
+### Added
+
+- **Right-clicking an element in the Designer now offers duplicate,
+  delete and borders.** The menu previously carried only "group into a
+  container" and "save as block", so the two most frequent actions on a
+  selected element were reachable by keyboard or through the Edit menu
+  but not where the pointer already was. Borders opens the same editor
+  the format toolbar and the decoration tab use, at the click point. Rows
+  that do not apply to what you clicked are absent rather than greyed
+  out, and every one of them still has its keyboard and menu path — the
+  menu is a shortcut, never the only way through.
+
+- **The site has a Features page written for people.** What the engine
+  can do was only readable as `docs/engine/features.md`, a 2,300-line
+  development record that answers "why is it shaped this way" for
+  contributors and AI agents. It was also rendered as a reference page,
+  where a reader looking for "can it do vertical Japanese, and can it
+  sign a PDF" had to mine it for the answer. The new `/features` page
+  (and its `/ja` twin) walks through the document kinds, layout,
+  typesetting, data binding, fonts, output and signing, with a link into
+  the reference for each, and it states the limits as plainly as the
+  capabilities.
+
+### Changed
+
+- **`docs/engine/features.md` is no longer rendered on the site.** It
+  stays exactly where it is in the repository, and every link to it keeps
+  working; it is simply no longer one of the reference's routes, since it
+  records development history rather than authorable syntax. Its raw copy
+  under `/data/reference/` is gone with the route, and `llms.txt` now
+  names the file under Repository truth so anyone who wants the decision
+  log knows where it lives. (`llms-full.txt` never inlined it, and is
+  unchanged.)
+
+- **More warnings can now be fixed in one click, and a fix can offer a
+  choice.** The diagnostics panel could only ever offer "remove the key
+  that causes this", so the warnings people actually get stuck on had no
+  button at all. Three kinds join it. An image that sets both `src` and
+  `data` now offers two buttons — keep one or keep the other — because
+  only you know which source is the real one; they are labelled by what
+  SURVIVES, not by what gets dropped. A shape with no size (`rect`,
+  `image`, `qr_code`, an ellipse or checkbox) can be given one, and only
+  the dimension that is actually missing is written, so a rect you
+  already gave a width to keeps it. And an item hanging off the right
+  edge can be pulled back by exactly the amount the warning reports.
+  A fix that writes a value says which value in its own label — you
+  never press a button to find out what number it chose — and every one
+  of them is still a single Undo away, as before.
+
+- **An image on the clipboard can be pasted straight onto the page.** In
+  the Designer, adding a screenshot or a logo meant saving it to a file
+  first and then picking that file. Pressing ⌘V / Ctrl+V anywhere outside
+  a text field now imports it through the same path as the file picker —
+  same size limits, same notices, same single Undo step. Pasting inside a
+  text field still pastes text, and a paste that carries no image is left
+  alone, so the Insert menu's "paste data" flow is unaffected.
+
+- **GIF and WebP images can now be placed.** The engine already drew
+  both; the Designer accepted only PNG, JPEG and SVG. They are embedded
+  exactly as supplied rather than re-encoded, so an animated GIF stays
+  animated — which also means one over the size limit is refused rather
+  than shrunk, since shrinking it would quietly change what it is.
+
+- **A binding declaration nothing uses can be removed in one click.** The
+  warning already said which declaration was orphaned; the diagnostics
+  row now carries the same "Fix" button the other mechanical warnings
+  have. Mostly of use on a document written by hand or by an AI — the
+  Designer's own editing already cleans up after itself.
+
+- **A data field placed in text can now be swapped for another one
+  without retyping the sentence.** In the Designer, a `{customer.name}`
+  chip could only be changed by deleting it and inserting a replacement
+  from the field menu — fine for a bare placeholder, tedious for a line
+  like "Dear {customer.name}, your order {order.code} shipped", where the
+  wrong field is surrounded by wording you would rather not touch.
+  Clicking a chip now selects it, and a control naming the field it
+  stands for offers the same list of fields; picking one repoints the
+  chip where it sits. Everything around it is left exactly as authored,
+  including the chip's own display format — so a `{total:currency}`
+  pointed at a different amount is still a currency. If the field being
+  dropped needed a named binding to be reachable at all, that binding
+  goes with it, and the replacement brings its own; both land in the
+  single step that Undo reverses.
+
+- **A line can now point at another item, and an oval can circle one.**
+  Give a `line` endpoint `to: { item: total_box, edge: left }` instead of
+  coordinates and it follows that item wherever the layout puts it —
+  handy for leader lines and callouts, which used to need coordinates
+  re-measured by hand every time the content above them changed. An
+  `ellipse` gains `anchor: <id>`, which centres it on that item's text
+  rather than on its box, so circling an answer no longer needs per-font
+  tuning. Following CSS anchor positioning, an anchored item is drawn on
+  the page its target landed on and paints over the content there. When
+  the target cannot be found, nothing is drawn and a warning says which
+  id was missing.
+
+- **Any item can now be shown or hidden by the data.** Add
+  `visible: { key: status, equals: approved }` to a text block, an image,
+  a table — anything — and it draws only when the params say so. An
+  approved stamp that appears on approved orders and nowhere else, a
+  paragraph that belongs only to one kind of customer, a page break that
+  happens only for long documents: each is one key on the item that needs
+  it, rather than a second template. The predicate is the one the form
+  marks already use, unchanged — a plain value, a list to mean "any of
+  these", or a bare key read as a yes/no — so there is nothing new to
+  learn and a wrong literal is still reported before you render.
+  By default a hidden item keeps its space, exactly as a blank form field
+  does today, so a document does not reshuffle depending on the data.
+  Adding `collapse: true` says the opposite: take the item out of the
+  layout entirely and let everything after it close up, gaps and grid
+  cells included. The two match CSS `visibility: hidden` and
+  `display: none`, and hiding an item hides everything inside it.
+
+- **The Designer tells you when text has landed on other text.** Change a
+  document's page size and the parts pinned in points stay exactly where
+  they were, while anything sized `100%` grows with the sheet — so a
+  centred heading can drift across a block of details that never moved.
+  Nothing was wrong with the document, so the engine reports nothing and
+  the diagnostics panel said "no problems" while the two overlapped on
+  screen. It now lists the items whose printed text collides, and
+  clicking one selects it on the canvas. It reads the text the engine
+  actually drew rather than the boxes it drew into: boxes routinely
+  overlap in a perfectly good document — a full-width heading's box
+  spans whatever is pinned inside it — so the boxes cannot tell a broken
+  page from a working one, and the printed lines can. Deliberate overlaps
+  stay quiet, since a stamp over a rule or a watermark behind a paragraph
+  is not text meeting text.
+
+- **A line's endpoints can be edited in the Designer.** A `line` is
+  positioned by its two endpoints rather than a box, and nothing in the
+  property panel could author them — so a line placed by the cut-here
+  scaffold could be restyled but never moved. Its placement tab now
+  carries the four endpoint fields. They take what the engine takes: a
+  plain number is points, or write `100%` to reach the parent's edge. A
+  value outside that is refused rather than written, since both
+  endpoints are required and a rejected one would stop the document
+  parsing.
+
+### Changed
+
+- **The fix button reads 「修正」 in Japanese** (it said 「直す」). The
+  Chinese catalogues already said 修正 for the same button, and the rest
+  of the Japanese interface labels its buttons the same way.
+
+- **Colour swatches announce a colour name instead of a hex code.** A
+  screen reader read the fill and text-colour palettes as "#b91c1c";
+  they now say "Red".
+
+- **The page-size list stops offering the same size twice.** The common
+  sizes for your locale were repeated in the full list below them, with
+  nothing to tell the two entries apart.
+
+- **Clearing a data field says what to do about it.** The message read
+  "data key `` is not declared in definitions", echoing the empty key
+  back; it now asks you to pick a field.
+
+### Fixed
+
+- **A form mark reading a page-global flag no longer reports a false error.**
+  A `data: { key: …, scope: document }` binding inside a repeated block is the
+  documented way to let one top-level field tick a mark in every row — but
+  checking it looked the key up among the row's own fields, found nothing, and
+  reported it as an undeclared data key. The document rendered correctly the
+  whole time; only the check was wrong, which is the worse way round, because
+  it puts a red error on a file that has nothing wrong with it.
+
+- **The Designer no longer offers layout fields on items that cannot take
+  them.** A `line` draws between two points and a `page_break` carries
+  nothing but an id — neither accepts a `box:` — but the property panel
+  showed both a placement tab anyway, and typing a value into it wrote a
+  key the engine rejects, breaking the document you were editing. A line
+  now opens straight on its stroke controls, and a page break says
+  plainly that it has nothing to edit.
+- **A template that fails to open is no longer a dead end.** If the
+  engine or a font pack could not be fetched, the Designer reported the
+  failure on the loading panel and left you there with no way out but a
+  page reload. The panel now carries a way back to the template list —
+  during the wait as well as after a failure, so a load that is simply
+  taking too long can be abandoned too. Backing out is final: an open
+  that finishes afterwards no longer drags you into the editor you left.
+- **The published dependency inventories now describe the dependencies,
+  and only those.** The CycloneDX SBOMs under `sbom/` are what a
+  vulnerability scanner reads to decide what this project depends on.
+  They were generated by scanning each component's whole DIRECTORY, so on
+  a machine that had built the engine, syft also found the lockfile
+  copies cargo leaves under `target/` and inventoried them as real
+  dependencies — 1757 components where the lockfile lists 254. The
+  inventory therefore depended on what the host had last compiled, which
+  is the one thing an inventory may not do. They are now generated from
+  the lockfile alone, and each records the sha256 of the lockfile it
+  describes, so it is checkable which resolution it came from. A new
+  check refuses a release whose committed inventory has fallen behind its
+  lockfile, or a lockfile nobody has decided to inventory.
+
 ## [0.2.0] - 2026-08-08
 
 ### Added

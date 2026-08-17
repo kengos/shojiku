@@ -6,7 +6,7 @@
 // `MountedApp.tsx` renders whichever view this reports.
 
 import type { Op, ProjectDetail, ProjectSummary, TemplateEntry } from '@shojiku/designer';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { InstalledFont } from '../fonts/library';
 import type { OpenStep } from '../loading/phase';
 import type { Draft } from '../persistence/draftEnvelope';
@@ -30,11 +30,13 @@ export interface OpenDoc {
 }
 
 export type MountedView =
-  /** A wait. `opening` names the template when this is a document OPEN (which
-   * waits on the engine module and its font packs, and gets the staged loading
-   * view); it is null for a plain remote list read, which waits on the host and
-   * has no stages to report. */
-  | { readonly kind: 'loading'; readonly opening: string | null }
+  /** A plain remote LIST read: it waits on the host, has no stages to report,
+   * and keeps the one-liner. */
+  | { readonly kind: 'loading' }
+  /** A document OPEN: it waits on the engine module and its font packs, so it
+   * gets the staged view — named by the template, and carrying the project it
+   * came `from`, which is where cancelling returns (no refetch). */
+  | { readonly kind: 'opening'; readonly name: string; readonly from: ProjectDetail }
   | { readonly kind: 'error'; readonly retry: () => void }
   | { readonly kind: 'projects'; readonly projects: readonly ProjectSummary[] }
   | { readonly kind: 'project'; readonly detail: ProjectDetail }
@@ -55,19 +57,24 @@ export interface MountedNav {
   readonly view: MountedView;
   readonly setView: (view: MountedView) => void;
   /** What the in-flight template open has reported (font bytes, then prepared).
-   * Only meaningful while `view` is a `loading` with an `opening` name. */
+   * Only meaningful while `view` is `opening`. */
   readonly step: OpenStep | null;
   readonly listProjects: () => void;
   readonly openProject: (id: string) => void;
   readonly openTemplate: (detail: ProjectDetail, entry: TemplateEntry) => Promise<void>;
+  /** Leave an in-flight document open for the project it came from, with the
+   * open's late settling (resolve or reject) turned into a no-op. The caller
+   * is the `opening` view, which carries that project — so there is no
+   * "cancelled with nothing to return to" state to handle. */
+  readonly cancelOpen: (from: ProjectDetail) => void;
 }
 
 export function useMountedNav(services: AppServices, remote: RemoteServices): MountedNav {
-  const [view, setView] = useState<MountedView>({ kind: 'loading', opening: null });
+  const [view, setView] = useState<MountedView>({ kind: 'loading' });
   const [step, setStep] = useState<OpenStep | null>(null);
 
   const listProjects = () => {
-    setView({ kind: 'loading', opening: null });
+    setView({ kind: 'loading' });
     remote.projects.listProjects().then(
       (projects) => setView({ kind: 'projects', projects }),
       () => setView({ kind: 'error', retry: listProjects }),
@@ -81,24 +88,36 @@ export function useMountedNav(services: AppServices, remote: RemoteServices): Mo
   }, []);
 
   const openProject = (id: string) => {
-    setView({ kind: 'loading', opening: null });
+    setView({ kind: 'loading' });
     remote.projects.loadProject(id).then(
       (detail) => setView({ kind: 'project', detail }),
       () => setView({ kind: 'error', retry: () => openProject(id) }),
     );
   };
 
+  // The open GENERATION: bumped by every document open and by cancel, checked
+  // after every await, so a cancelled open's late settling cannot pull the
+  // user back out of the template list they returned to.
+  const openSeq = useRef(0);
+
   const openTemplate = async (detail: ProjectDetail, entry: TemplateEntry) => {
+    const seq = ++openSeq.current;
+    const current = () => seq === openSeq.current;
     setStep(null);
-    setView({ kind: 'loading', opening: entry.name });
+    setView({ kind: 'opening', name: entry.name, from: detail });
     const key = docKey(detail.id, entry.id);
     try {
       const [doc, prep] = await Promise.all([
         remote.store.load(key),
-        services.prepareEngine(entry.engineLocale ?? DEFAULT_ENGINE_LOCALE, (bytes) =>
-          setStep({ kind: 'fonts', bytes }),
-        ),
+        services.prepareEngine(entry.engineLocale ?? DEFAULT_ENGINE_LOCALE, (bytes) => {
+          if (current()) {
+            setStep({ kind: 'fonts', bytes });
+          }
+        }),
       ]);
+      if (!current()) {
+        return;
+      }
       setStep({ kind: 'prepared' });
       if (doc === null) {
         setView({ kind: 'error', retry: () => void openTemplate(detail, entry) });
@@ -122,6 +141,9 @@ export function useMountedNav(services: AppServices, remote: RemoteServices): Mo
         docRev: doc.rev,
       };
       const draft = await services.drafts.load(key);
+      if (!current()) {
+        return;
+      }
       if (draft !== null) {
         setView({ kind: 'draft', open, draft });
       } else {
@@ -134,9 +156,18 @@ export function useMountedNav(services: AppServices, remote: RemoteServices): Mo
         });
       }
     } catch {
-      setView({ kind: 'error', retry: () => void openTemplate(detail, entry) });
+      if (current()) {
+        setView({ kind: 'error', retry: () => void openTemplate(detail, entry) });
+      }
     }
   };
 
-  return { view, setView, step, listProjects, openProject, openTemplate };
+  const cancelOpen = (from: ProjectDetail) => {
+    openSeq.current++;
+    setStep(null);
+    // The project detail is already in hand — no refetch for a cancel.
+    setView({ kind: 'project', detail: from });
+  };
+
+  return { view, setView, step, listProjects, openProject, openTemplate, cancelOpen };
 }

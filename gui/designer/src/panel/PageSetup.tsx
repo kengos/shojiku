@@ -36,6 +36,11 @@ export function PageSetup({ controller, titled = true }: PageSetupProps) {
   const view = readPageView(controller.read('page'));
 
   const localeSizes = localeInfo(locale)?.pageSizes ?? [];
+  // The second group is the sizes the locale group does NOT already offer. The
+  // two groups used to overlap — a en-US user saw `Letter` twice, once under
+  // each heading, with nothing to tell the two entries apart — and a duplicated
+  // option is a worse answer to "which one do I pick" than a shorter list.
+  const otherSizes = PAGE_SIZE_NAMES.filter((name) => !localeSizes.includes(name));
   // A loaded template can carry a size the GUI does not know (an invalid
   // hand-authored value the engine reports separately); surface it as its own
   // option so the controlled select always has a matching value to show.
@@ -64,8 +69,8 @@ export function PageSetup({ controller, titled = true }: PageSetupProps) {
                 ))}
               </optgroup>
             ) : null}
-            <optgroup label={t('pageSetup.allSizes')}>
-              {PAGE_SIZE_NAMES.map((name) => (
+            <optgroup label={t('pageSetup.otherSizes')}>
+              {otherSizes.map((name) => (
                 <option key={name} value={name}>
                   {name}
                 </option>

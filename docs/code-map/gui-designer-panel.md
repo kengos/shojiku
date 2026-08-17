@@ -97,6 +97,28 @@ read side, never the reverse.
 - `panel/LineStyleEditor.tsx` — the line cluster for a `line` item
   (width/colour/keyword picker, capability-gated) — exists because the
   cut-here-line scaffold can CREATE a line.
+- `panel/linePoints.ts` + `panel/LinePointsEditor.tsx` — the line's
+  GEOMETRY, which is its `from`/`to` endpoints rather than a box (a
+  `box:` key on a line is an engine parse error, and
+  `canvas/manipulate` refuses to drag one, so these four fields are the
+  ONLY way to move a line). `readLinePoints` shows a value only if it
+  could write it back; `linePointOps` mirrors the engine's own length
+  grammar (bare number = pt, else a `%`/`pt`/`mm`/`cm`/`in`/`em`/`rem`
+  suffix) and REFUSES anything outside it — a coordinate endpoint's two
+  axes are both required on the wire, so there is no key-removal state
+  and an empty entry writes nothing. The ANCHORED arm
+  (`{ item, edge? }`, capability `line.anchor`) is rendered from the WIRE
+  — `isAnchored` reads whether the endpoint carries `item`, never a UI
+  mode flag, so an externally-authored document displays honestly — and
+  `lineArmOps` switches arms in ONE transactional op list (one undo step,
+  never the mixed shape the engine rejects), dropping only the keys the
+  document actually carries because removing an absent key refuses the
+  whole batch. Both anchored values PICK from closed sets — the five edge
+  keywords, and `panel/anchorTargets.ts`, which reads the placed ids out of the box
+  index so the list is exactly what the engine can resolve (an id with no
+  placement would only produce `anchor_unknown_target`). Attaching
+  picks its target in the same action: switching first would write
+  `item: ''` and the line would vanish before the user chose anything.
 - `panel/BorderEditor.tsx` — the Excel-style border editor shared by the
   decoration tab + toolbar popover; keyed by path at each host so the pen
   resets on selection change. The SHELL only: pen state, the
@@ -120,7 +142,11 @@ read side, never the reverse.
 - `panel/itemView.ts` — the READ side: `readItemView` → `ItemView`
   (incl. `dataScope`, `pageFormat`), `display`/`record` narrowings,
   `registryNames`, `BOX_AXES`, `imageSourceSummary` (format + KiB — the
-  raw `src` never reaches a field).
+  raw `src` never reaches a field). Also the ONE home for **`BOXLESS_TYPES`**
+  (`line`/`page_break` — the types whose wire struct takes no `box:` at
+  all): `ItemPanel`'s tab gate, `placementModel`'s classifier and
+  `canvas/manipulate`'s `noBox` refusal all consult this set instead of
+  each keeping their own type list.
 - `panel/styleFieldSpecs.ts` — the style keys the panel edits, as data
   (`STYLE_FIELDS`: widget kind + enum options copied from
   `engine/core/src/style/enums.rs`). A no-import leaf shared by item
@@ -176,10 +202,13 @@ read side, never the reverse.
   name / localized type / live sample, the popover row's three facts
   shown WITHOUT opening it, absent for a key no offer matches), the
   offer derivation and what a pick COMMITS; row-scoped pickers split row/document sections (free entry
-  never re-scopes). `panel/PickerPopover.tsx` — the open popover: search,
-  the three offer states, the rows (label / key / localized type / sample
-  / document badge) and the optional `onCreateField` tail (workshop mode,
-  document scope only).
+  never re-scopes). `panel/PickerPopover.tsx` — the open popover, shared
+  with the chip editor's field menus (`text/FieldMenuButton`) so the two
+  surfaces cannot drift into two looks: search, the three offer states,
+  the rows (label / key / localized type / sample / document badge) and
+  the optional `onCreateField` tail (workshop mode, document scope only;
+  the chip menus pass none). A pick hands back the OPTION, not just its
+  key — every consumer needs the row's label/sample anyway.
 - `panel/FormatPicker.tsx` — the `data.format` editor: free entry +
   popover of `formatOptions`; shown only once a data key is picked.
 
@@ -192,7 +221,14 @@ read side, never the reverse.
   Designer's `navigateDefaults`.
 - `panel/ItemPanel.tsx` — the content/decoration/placement tab SHELL only
   (`applicableTabs`; only applicable tabs render; active tab clamped on
-  type change). Tab bodies live beside it: `ContentSection.tsx` (per-type
+  type change). **The placement tab is withheld from BOX-LESS types**
+  (`itemView.ts`'s `BOXLESS_TYPES` — `line`/`page_break`; both wire
+  structs are `deny_unknown_fields` and take no `box:`, so offering the
+  fields authored a parse error). `line` therefore renders its stroke
+  editor PLUS a placement tab whose body is the ENDPOINT editor rather
+  than the box fields (`POINT_PLACED_TYPES`), while `page_break` has NO
+  applicable tab and renders the `panel.noEditable` placeholder. Tab
+  bodies live beside it: `ContentSection.tsx` (per-type
   routing + the text/data pair; image/page-number surfaces in
   `contentParts.tsx`), `StyleSection.tsx` (+`StyleTabFields.tsx`),
   `BoxSection.tsx` (+`boxFields.tsx`); shared prop contract in
@@ -285,6 +321,29 @@ read side, never the reverse.
   touches only its own leaf (a rule the user never opened must not move
   in the diff); the FIRST rule seeds the list with `putValue`. Numeric
   fields get NUMBER literals — the engine predicate is type-strict.
+- `panel/VisibilitySection.tsx` — an item's `visible:` presence binding,
+  rendered ABOVE the content/decoration/placement tabs because it applies to
+  every item type and is none of those concerns. It is also what gives
+  `page_break` an editing surface at all (the wire takes only `id` and
+  `visible:`), which is what a conditional page break is. Gated on the
+  `item.visible` capability — an older engine parse-rejects the key. The
+  field picker follows the item's OWN data scope, derived from its path by
+  `bindingScopeFor` like every other row-scoped surface: inside a `repeat`
+  cell it offers the bound element's fields, with the top-level ones as a
+  labeled second section that writes `scope: document` **in the same op
+  batch** when picked. Offering document fields at element scope would author
+  a key resolving to nothing — the item then vanishes with no diagnostic, or
+  reports an undeclared one.
+  `panel/visibilityModel.ts` (pure, READ) — `readVisible` → the row, or
+  `null` when the item authors none / authors a non-map; re-exports
+  `valueFormFor` so the two presence surfaces cannot disagree about which
+  field type earns which control. `panel/visibilityOps.ts` (pure, WRITE) —
+  `visible:` is a MAP, so every edit is a leaf `setScalar`/`removeKey`;
+  clearing `collapse` REMOVES the key (unset never serializes) and a repoint
+  reconciles a stale `equals` AND the data scope in the same batch (one undo
+  step). A `page_break` gets no collapse control at all: the engine always
+  removes one whose predicate fails, so the choice has nothing to choose
+  between and the default's copy would state the opposite.
 - `panel/TableColumnSheet.tsx` — the same per-column editing transposed
   horizontally in a bottom `ui/Offcanvas.tsx` sheet (columns as strips;
   header drag-reorder or Alt+←/→, ONE `moveItem` each; reuses the same
@@ -340,8 +399,10 @@ read side, never the reverse.
     no `orientation_ignored` lingers)/`orientationOp`/`customDimOp`/
     `customUnitOps`. A builder DECLINES with a null op or a dropped
     batch entry rather than authoring something the model would refuse.
-- `panel/PageSetup.tsx` — the form (size select with locale-preferred
-  optgroup, orientation, live proportional thumbnail); embeds
+- `panel/PageSetup.tsx` — the form (size select with a locale-preferred
+  optgroup and an "other sizes" one holding what the first does not — the
+  two used to OVERLAP, listing a locale size twice; orientation; live
+  proportional thumbnail); embeds
   `MarginEditor` and, in custom mode, `CustomSizeFields`.
 - `panel/CustomSizeFields.tsx` — the custom `{ w, h }` + shared unit
   cluster: value-keyed uncontrolled inputs that commit on blur ONLY when
@@ -383,19 +444,18 @@ read side, never the reverse.
   free text; `seedMode` keeps the unset option + placeholder fallback).
 - `panel/DocumentDefaults.tsx` — the shell over the two unrelated halves
   of `defaults:`: it gates each on the engine's capabilities and renders
-  the half its `section` prop names (the document-settings view supplies
-  the heading), or the standalone stacked form when it names neither.
+  the half its REQUIRED `section` prop names (the document-settings view
+  supplies the heading). A headed standalone stacked form for a host
+  wanting both at once was removed — nothing ever rendered it.
   - `panel/DefaultsLocaleFields.tsx` — the document settings half:
     locale/currency combos, each with a what-this-pick-DOES line
     (`localeFacts`) read through the tag the ENGINE resolves to.
   - `panel/DefaultsStyleFields.tsx` — the cascade-root half: one field
     renderer (color as `ColorSwatchPicker`, everything else
     `StyleFieldInput`; engine fallbacks as placeholders from
-    `engineDefaults.ts` `ENGINE_STYLE_DEFAULTS`) laid out in TWO
-    arrangements — `DefaultsStyleSection` (the `STYLE_ROWS` grid,
-    drift-guarded, with the intro line and the recommended body-size
-    one-click hint) and `DefaultsStyleList` (flat, for the standalone
-    form).
+    `engineDefaults.ts` `ENGINE_STYLE_DEFAULTS`) in ONE arrangement,
+    `DefaultsStyleSection` (the `STYLE_ROWS` grid, drift-guarded, with
+    the intro line and the recommended body-size one-click hint).
 - `panel/localeFacts.ts` — what a locale/currency pick DOES, as data —
   copied from the defining files (`engine/formatter` builtins +
   `packs/locale/`) and pinned by a drift-guard test; composes samples
@@ -428,10 +488,63 @@ read side, never the reverse.
 - `diagnostics/DiagnosticsPanel.tsx` — localized rows; a `path`-carrying
   row is a button reusing selection to highlight on canvas; a
   mechanically-fixable row renders a sibling fix button →
-  `onApplyFix(ops)` (one `applyAll`).
-- `diagnostics/fixModel.ts` — pure quick-fix registry: `fixFor(diag,
-  read)` over a `Map` keyed by wire diagnostic code (a forged
-  `code:'constructor'` must miss); each builder emits a `removeKey`
-  batch dropping the offending key(s), `null` when nothing concrete is
-  removable (no dead button). Hostile reads and stale paths degrade to
-  no-op.
+  `onApplyFix(ops)` (one `applyAll`). It shows TWO kinds: the engine's
+  `diagnostics`, and the GUI's own `advisories` below them. The empty
+  state requires BOTH to be empty.
+- `diagnostics/collisions.ts` — pure: which items' DRAWN TEXT lands on
+  another item's, from the box index alone. `findTextCollisions(boxes)`
+  compares each drawn line's own rectangle (`x‥x+width` ×
+  `emTop‥emBottom`, and the axis-swapped `emLeft‥emRight` × `y‥y+height`
+  for vertical writing), never the border box — a full-width heading's
+  BOX legitimately spans items pinned inside it, so box overlap is
+  normal in a correct document and carries no signal, while the drawn
+  line separates the authored page size from a widened one. Abutting em
+  bands do not count, and neither does a DEGENERATE line (the engine
+  emits a zero-width `LineMetric` for a blank line inside a paragraph,
+  where nothing is drawn) — hence the intersection-LENGTH form of the
+  overlap test rather than four edge comparisons, which also makes an
+  inverted rectangle fail safe.
+  **Two items sharing a path are never compared, which is a structural
+  blind spot worth knowing**: an item laid out repeatedly (a `repeat`
+  cell child, one box per element) carries ONE path across every
+  placement, so row 1's cell overrunning row 2's is invisible here —
+  reporting it would read "`price` overlaps `price`". The same rule is
+  what stops a wrapped paragraph colliding with its own stacked lines.
+  Because those placements interleave on the page, the dedup key is
+  order-NORMALIZED (JSON over the sorted pair — a separator character
+  could be one an author put in a path) or the same pair reports twice.
+  Bounded on three axes: lines per page (applied to the LINE LIST, since
+  one item can wrap to arbitrarily many), pairs compared per document
+  (the collision cap short-circuits only after a hit, so a long CLEAN
+  document is the worst case), and collisions reported. Hostile /
+  non-finite geometry degrades to no collision; pairs dedupe through a
+  `Set`, never a plain-object table — the paths are document-derived.
+  Known false positive: a stamp or watermark authored as a TEXT item
+  over body text is text-against-text and will be reported.
+- `diagnostics/AdvisoryRow.tsx` — one advisory row: its own filled-accent
+  badge (a GUI reading, NOT an engine `code` — that namespace stays the
+  engine's; deliberately not the `info` severity's outline, since the two
+  kinds share one list) and a click selecting the first of the two items.
+- The model's types and `findTextCollisions` are on the package's public
+  surface (`exports/panels.ts`) beside `DiagnosticsPanelProps` — a host
+  mounting the panel itself must be able to type the prop and build the
+  list without reimplementing the rule.
+- `diagnostics/fixModel.ts` — pure quick-fix registry: `fixFor(diag, read)`
+  over a `Map` keyed by wire diagnostic code (a forged `code:'constructor'`
+  must miss), returning the CANDIDATE resolutions — `{labelKey, labelArgs?,
+  ops}[]` — or `null` when there are none (no dead button). One candidate is
+  one button; `image_source_conflict` is the only code today with two, since
+  only the author knows which source to keep. Hostile reads and stale paths
+  degrade to no-op.
+  - `diagnostics/fixWrites.ts` — the builders that WRITE a value rather than
+    removing a key, split out because the obligation differs: a write puts a
+    number the author never typed into the document, so the candidate carries
+    that number and the button's label names it (nothing is authored that the
+    label did not say). Covers the four missing-size codes (only the ABSENT
+    dimension is written, at 100pt) and the overflow shrink (`box.w` minus the
+    reported `over`). Every one returns `null` rather than computing on a
+    non-finite arg, a percentage width, or a result that would be ≤ 0. **`unused_binding` is the one entry whose `diag.path` is not the
+  node it edits** — the engine addresses the DECLARATION
+  (`<item>.bindings.<name>`), so the item path is derived by stripping
+  that suffix BY LENGTH using `args.name`, never by splitting at the last
+  `.` (a binding name may legally contain dots).

@@ -246,7 +246,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
             Item::Ellipse(e) => {
                 let atom = self.ellipse_atom(e, inner)?;
-                let dy = self.resolve_y(e.box_.y, inner).unwrap_or(0.0);
+                let dy = self
+                    .resolve_y(e.box_.as_ref().and_then(|b| b.y), inner)
+                    .unwrap_or(0.0);
                 Some((atom, dy))
             }
             Item::Checkbox(c) => {

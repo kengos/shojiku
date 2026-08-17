@@ -253,7 +253,9 @@ describe('App navigation', () => {
     expect(screen.getByRole('status').textContent).toBe('Engine unavailable');
     fireEvent.click(screen.getByRole('button', { name: /Receipt/ }));
     expect(
-      await screen.findByText('This template could not be prepared. Reload the page to try again.'),
+      await screen.findByText(
+        'This template could not be prepared. Go back and try again, or reload the page.',
+      ),
     ).toBeTruthy();
     expect(screen.queryByRole('progressbar')).toBeNull();
   });
@@ -268,7 +270,9 @@ describe('App navigation', () => {
     render(<App services={services} />);
     fireEvent.click(screen.getByRole('button', { name: /Receipt/ }));
     expect(
-      await screen.findByText('This template could not be prepared. Reload the page to try again.'),
+      await screen.findByText(
+        'This template could not be prepared. Go back and try again, or reload the page.',
+      ),
     ).toBeTruthy();
     // The module DID arrive, so only the fonts stage carries the warning.
     expect(screen.queryByRole('progressbar')).toBeNull();
@@ -277,6 +281,116 @@ describe('App navigation', () => {
       true,
       false,
     ]);
+  });
+
+  it('backs out of a failed open to the catalog', async () => {
+    const services = makeServices({
+      prepareEngine: vi.fn(() => Promise.reject(new Error('pack 404'))),
+    });
+    render(<App services={services} />);
+    fireEvent.click(screen.getByRole('button', { name: /Receipt/ }));
+    expect(
+      await screen.findByText(
+        'This template could not be prepared. Go back and try again, or reload the page.',
+      ),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }));
+    expect(screen.getByText('Choose a template')).toBeTruthy();
+  });
+
+  // The escape hatch is not only for failures: a load that hangs (or that the
+  // user regrets) can be backed out of — and the open settling AFTERWARDS, in
+  // either direction, must not yank the user back in.
+  it('cancels a live open; late progress and a late resolve stay no-ops', async () => {
+    let report: ((bytes: { loaded: number; total?: number }) => void) | undefined;
+    let release: (() => void) | undefined;
+    const services = makeServices({
+      prepareEngine: vi.fn(async (_locale: string, onProgress) => {
+        report = onProgress;
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        return makePrep();
+      }),
+    });
+    render(<App services={services} />);
+    fireEvent.click(screen.getByRole('button', { name: /Receipt/ }));
+    expect(await screen.findByRole('heading', { name: 'Receipt' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }));
+    expect(screen.getByText('Choose a template')).toBeTruthy();
+    // The abandoned transfer keeps reporting — it must not resurrect the panel.
+    act(() => {
+      report?.({ loaded: 1_000, total: 2_000 });
+    });
+    expect(screen.getByText('Choose a template')).toBeTruthy();
+    await act(async () => {
+      release?.();
+    });
+    // Still the catalog — no editor, no loading panel.
+    expect(screen.getByText('Choose a template')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'File' })).toBeNull();
+  });
+
+  it('cancels a live open; a late reject raises no failed banner', async () => {
+    let refuse: ((reason: Error) => void) | undefined;
+    const services = makeServices({
+      prepareEngine: vi.fn(async () => {
+        await new Promise<never>((_resolve, reject) => {
+          refuse = reject;
+        });
+        return makePrep();
+      }),
+    });
+    render(<App services={services} />);
+    fireEvent.click(screen.getByRole('button', { name: /Receipt/ }));
+    expect(await screen.findByRole('heading', { name: 'Receipt' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }));
+    await act(async () => {
+      refuse?.(new Error('late pack 404'));
+    });
+    expect(screen.getByText('Choose a template')).toBeTruthy();
+    expect(screen.queryByText(/could not be prepared/)).toBeNull();
+  });
+
+  // The LAST await in the open flow: the engine is prepared and the assets are
+  // in, and only the draft read is outstanding. Cancelling there must still
+  // land in the catalog rather than the editor.
+  it('cancels between engine prep and the draft read', async () => {
+    let release: ((draft: null) => void) | undefined;
+    const services = makeServices();
+    vi.spyOn(services.drafts, 'load').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    render(<App services={services} />);
+    fireEvent.click(screen.getByRole('button', { name: /Receipt/ }));
+    // Wait until the prep has settled and the draft read is the only thing left.
+    await waitFor(() => {
+      expect(services.drafts.load).toHaveBeenCalled();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }));
+    await act(async () => {
+      release?.(null);
+    });
+    expect(screen.getByText('Choose a template')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'File' })).toBeNull();
+  });
+
+  it('reports a refusal from asset injection like any other open failure', async () => {
+    const prep = makePrep();
+    (prep.injectAssets as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error('hostile asset');
+    });
+    const services = makeServices({ prepareEngine: vi.fn(async () => prep) });
+    render(<App services={services} />);
+    fireEvent.click(screen.getByRole('button', { name: /Receipt/ }));
+    expect(
+      await screen.findByText(
+        'This template could not be prepared. Go back and try again, or reload the page.',
+      ),
+    ).toBeTruthy();
   });
 
   it('injects the loaded preset assets exactly once, before the editor mounts', async () => {

@@ -74,6 +74,7 @@ impl Fragments {
                     border: rect,
                     content: rect,
                     text: None,
+                    hidden: false,
                 });
             }
         }

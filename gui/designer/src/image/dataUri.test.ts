@@ -14,6 +14,11 @@ describe('composeDataUri', () => {
     expect(composeDataUri('svg', utf8('M'))).toBe('data:image/svg+xml;base64,TQ==');
   });
 
+  it('carries the right MIME for the verbatim kinds', () => {
+    expect(composeDataUri('gif', utf8('Man'))).toBe('data:image/gif;base64,TWFu');
+    expect(composeDataUri('webp', utf8('Man'))).toBe('data:image/webp;base64,TWFu');
+  });
+
   it('encodes a ~1 MiB payload without a stack overflow', () => {
     const big = new Uint8Array(1024 * 1024).fill(0x41);
     const uri = composeDataUri('png', big);

@@ -115,6 +115,57 @@ a broken regex. Use `$(?![\s\S])` for end-of-input under the `m` flag.
   them. Adding a transform without its inverse reds `src/reference.test.ts`,
   which is the intended behaviour — the point of the gate is that the site
   restates nothing.
+- **THREE places enumerate `docs/engine/`, and the test suite can only see
+  two of them.** `scripts/assemble-data.ts` and the gates both import from
+  `src/lib/reference.ts`; `.vitepress/config.mts` builds its OWN listing for
+  the sidebar. A change to which files are reference pages that updates the
+  first two leaves `config.mts` reading the directory raw — and because the
+  suite goes through the shared helper, **every test stays green and only
+  `make site-build` fails**, on a config-load error (`no reference:
+  front-matter`) that names the file rather than the reader. Route any such
+  change through one exported filter (`referenceStems()`) and grep
+  `SOURCE_DIR` for the readers before believing a green `make site`. The
+  general form: a VitePress config is a build-time reader that no vitest run
+  imports, so "the tests pass" is not evidence about it.
+
+## The reference-demo suite goes red BY DESIGN when a release re-pins the engine
+
+`site/src/integration/referenceDemos.test.ts` renders every reference
+demo on TWO engines — the RELEASED build the site serves
+(`site/.data/wasm`) and HEAD (`engine/wasm/pkg`) — and a demo declares
+in its `expect.json` the capability `requires` its wire needs, so a page
+documenting syntax newer than the pinned engine degrades to a static
+listing instead of showing a parse error.
+
+Release step 2b re-pins `site/.data/wasm` to the new build. At that
+moment every `requires` the release satisfies becomes a leftover: the
+page would keep showing its static fallback under a notice saying the
+syntax is newer than this engine, which is now a lie. The suite asserts
+exactly that and fails with
+
+```
+these demos declare `requires` the served engine satisfies — a re-pin landed; drop them
+```
+
+**This is the tripwire working, not a broken suite.** Recovery is to
+delete the named declarations from those `expect.json` files, on the
+re-pin PR itself. Do not re-pin and defer this; the failure is the only
+thing that finds the stale declarations.
+
+Two neighbouring assertions are worth knowing before you read a red run
+here as something else:
+
+- **An all-gated set still fails** (`names.length - gated.length > 0`) —
+  if nothing runs on the served engine, the pin is stale or broken. New
+  syntax can never produce that state.
+- **There is no lower bound on the declared keys.** Right after a re-pin
+  the healthy state is that no demo declares anything, and it stays
+  healthy until a page documents syntax newer than the pinned engine
+  again.
+- A red run whose message is instead `engine/wasm/pkg does not publish
+  these keys` is a stale HEAD build, not a typo: `make site-build`
+  stages the RELEASED engine into `engine/wasm/pkg`, so re-run
+  `make wasm`.
 
 ## A green Pages check on the merge commit is not "production serves it"
 

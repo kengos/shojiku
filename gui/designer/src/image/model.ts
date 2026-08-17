@@ -10,9 +10,11 @@
 // string (never DOM-parsed here — the engine's subset parser is the render-time
 // sanitizer); a raster is size- and pixel-bounded before any canvas allocation.
 
-import type { ImageKind, RasterKind } from './sniff';
+import { type ImageKind, isVerbatimKind, type RasterKind } from './sniff';
 
-export type { ImageKind, RasterKind } from './sniff';
+export type { ImageKind, ProbeKind, RasterKind } from './sniff';
+// `isVerbatimKind` is deliberately NOT re-exported: `importPlan` below is its
+// only caller, and it reads it straight from `./sniff`.
 export { sniffImage } from './sniff';
 
 /** Why an import was refused (each maps to a localized notice). */
@@ -74,10 +76,14 @@ export function fitDimensions(
 }
 
 /** Decide what to do with a sniffed image. SVG is never rasterized (over budget
- * → refuse); a raster over the byte budget is downscaled (longest edge capped),
- * and an over-pixel-area raster is refused before any canvas is built. A raster
- * whose dimensions could not be probed (`intrinsic === null`) is a decode
- * failure. */
+ * → refuse); a png/jpeg over the byte budget is downscaled (longest edge
+ * capped), and an over-pixel-area raster is refused before any canvas is built.
+ * A raster whose dimensions could not be probed (`intrinsic === null`) is a
+ * decode failure.
+ *
+ * GIF and WebP travel VERBATIM, so an over-budget one is refused rather than
+ * downscaled: a canvas cannot emit GIF at all, and re-encoding either format
+ * would silently drop an animation the author chose to place. */
 export function importPlan(
   kind: ImageKind,
   byteLength: number,
@@ -97,6 +103,9 @@ export function importPlan(
   }
   if (byteLength <= budgets.maxImageBytes) {
     return { action: 'accept' };
+  }
+  if (isVerbatimKind(kind)) {
+    return { action: 'refuse', reason: 'too_large' };
   }
   return {
     action: 'downscale',

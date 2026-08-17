@@ -49,7 +49,7 @@ export function RowConditionsSection({
   // no value control), so the model reconciles a stale `equals` into the
   // same batch. Always dispatched via applyAll: a batch is transactional
   // and lands as ONE undo step whether it carries one op or two.
-  const repoint = (index: number, key: string, hasEquals: boolean) => {
+  const repoint = (index: number, key: string, hasEquals: boolean, equals: string) => {
     const picked = options.find((o) => o.key === key);
     controller.applyAll(
       repointRuleOps(
@@ -60,6 +60,7 @@ export function RowConditionsSection({
         picked?.type ?? '',
         picked?.enumValues ?? [],
         hasEquals,
+        equals,
       ),
     );
   };
@@ -85,7 +86,7 @@ export function RowConditionsSection({
                 dispatch(removeRuleOp(path, entries, index));
                 setOpenIndex(null);
               }}
-              onKeyChange={(key) => repoint(index, key, rule.hasEquals)}
+              onKeyChange={(key) => repoint(index, key, rule.hasEquals, rule.equals)}
               onEqualsChange={(value, fieldType) =>
                 dispatch(setRuleEqualsOp(path, entries, index, value, fieldType))
               }

@@ -25,10 +25,12 @@ capabilities` prints the key list, and each page notes its capability
 keys. Template authors targeting one engine build can ignore them —
 they exist so GUIs/SDKs can gate features across engine versions.
 
-The development-facing companion [features.md](features.md) carries the
+The development-facing companion [features.md](../engine/features.md) carries the
 implemented-capability inventory and the decision log — *that* a feature
 exists and why it is shaped that way; the pages here carry only *how to
-author it*.
+author it*. It lives in the repository only and is not part of this
+rendered reference; the reader-facing tour of what the engine does is the
+site's own [Features](https://shojiku.pages.dev/features) page.
 
 ## A minimal template
 
@@ -126,7 +128,7 @@ below uses:
 | --- | --- | --- | --- |
 | `text` | static / interpolated / bound text; rich `spans:` | F A B C cell | [text.md](text.md) |
 | `rect` | rectangle (border/fill) | F A B C cell | [rect.md](rect.md) |
-| `line` | stroked segment; `Length` endpoints (`to: { x: "100%" }`) | F A B C cell | [line.md](line.md) |
+| `line` | stroked segment; `Length` endpoints (`to: { x: "100%" }`) or an anchor to another item (`to: { item: total }`) | F A B C cell | [line.md](line.md) |
 | `image` | PNG/JPEG/GIF/WebP/SVG asset | F A B C cell | [image.md](image.md) |
 | `qr_code` | layout-time vector QR | F A B C cell | [qr_code.md](qr_code.md) |
 | `list` | one line per array entry + overflow clamp | F A B C cell | [list.md](list.md) |
@@ -136,9 +138,13 @@ below uses:
 | `repeat_flow` | flowing card list, one card per element | F only | [repeat_flow.md](repeat_flow.md) |
 | `page_break` | start a fresh page | F only | [page_break.md](page_break.md) |
 | `char_grid` | manuscript-paper / workbook character cells (+ruby) | F A B C cell | [char_grid.md](char_grid.md) |
-| `ellipse` | box-inscribed oval; circled-option mark or decoration | F A B C cell | [form_marks.md](form_marks.md) |
+| `ellipse` | box-inscribed oval, or `anchor:` to circle another item's glyph band; circled-option mark or decoration | F A B C cell | [form_marks.md](form_marks.md) |
 | `checkbox` | always-drawn frame + params-driven check | F A B C cell | [form_marks.md](form_marks.md) |
 | `page_number` | `{page} / {pages}` | B only | [page_number.md](page_number.md) |
+
+Every type in this table also takes **`visible:`**, which binds whether the
+item is shown to a params field — reserving its box by default, or removing
+it from layout with `collapse: true`. See [visible.md](visible.md).
 
 Disallowed placements warn and skip (never a hard failure) — codes in
 [diagnostics.md](diagnostics.md).
@@ -161,6 +167,7 @@ Disallowed placements warn and skip (never a hard failure) — codes in
 | [vertical_text.md](vertical_text.md) | `writingMode: vertical_rl` / `textOrientation` — vertical text (plain, spans, list, table cells, page_number) |
 | [link.md](link.md) | `link: { url }` hyperlinks on text/image/spans → PDF annotations |
 | [data-binding.md](data-binding.md) | `data:` bindings, `{key:format}` interpolation, `bindings:` named declarations, params, format types |
+| [visible.md](visible.md) | `visible:` — show an item only for some data; the reserve-box default and the `collapse: true` opt-in |
 | [definitions.md](definitions.md) | `definitions.yml`: the OpenAPI-shaped schema (properties/items, `format` hints, constraints, display variants, params validation) |
 | [fonts.md](fonts.md) | locales, lang packs, valid `fontFamily` face ids |
 | [layout-model.md](layout-model.md) | the resolve invariant, box tree, caps, box index |

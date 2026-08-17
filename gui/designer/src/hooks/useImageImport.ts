@@ -1,5 +1,5 @@
-// Image import: the menu file-pick, the canvas file drop, and the panel's
-// replace button share ONE pipeline. A transient notice (downscaled / refused
+// Image import: the menu file-pick, the canvas file drop, a clipboard paste and
+// the panel's replace button share ONE pipeline. A transient notice (downscaled / refused
 // reason / over-cap) rides the topbar status region; the raise prompt offers the
 // next cap step. The size gate runs BEFORE the op — ops never re-check the cap,
 // and undo/redo must stay able to re-parse. What the import DOES to the document
@@ -16,6 +16,7 @@ import { resolveInsertTarget } from '../insert/model';
 import type { LastGoodPreview } from '../preview/reducer';
 import type { PageHit } from './geometry';
 import { dropInsertTarget, type ImageAction, runImageImport } from './imageImportRun';
+import { usePasteImage } from './usePasteImage';
 
 export interface ImageImportOptions {
   readonly imageCodec: ImageCodec | undefined;
@@ -147,6 +148,10 @@ export function useImageImport({
     },
     [imageCodec, pageHitAt, read, selection, runImport],
   );
+
+  // The clipboard route into the same pipeline (guards + listener live there).
+  const insertTarget = useCallback(() => resolveInsertTarget(read, selection), [read, selection]);
+  usePasteImage({ imageCodec, insertTarget, runImport });
 
   // Apply a raised template-size cap (`next`, already resolved to a step): tell
   // the editor (so re-parses accept the larger document), update local state,

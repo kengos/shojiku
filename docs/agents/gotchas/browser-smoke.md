@@ -129,6 +129,26 @@
   known-good drag paths ignore them — don't debug the feature): use the
   pane's real `left_click_drag`, converting CSS-pixel rects to the
   screenshot space (CSS × reported-width ÷ `innerWidth`).
+  **That conversion is for every coordinate action, not just drags** —
+  a `hover` and a `left_click` need it too, and eyeballing the rendered
+  image instead is off by exactly the 2× (one hover aimed that way landed
+  on the field above the control and reported no tooltip, which reads as
+  the feature being broken).
+- **`innerWidth` reads `0` while the Browser pane is not fronted, which
+  silently poisons that conversion.** The formula then yields a small
+  garbage coordinate (`shotX` 54 where the answer was 677) and the click
+  lands somewhere plausible-looking, so nothing announces the error.
+  `screenshot` fronts the pane — take one FIRST, then measure rects; a
+  `javascript_tool` probe that returns `vw: 0` is the tell.
+- **Verifying a coordinate with `elementFromPoint` must assert the SAME
+  NODE, not merely the right KIND of node.** After scrolling a container
+  to bring a row into view, a rect read can still be stale, and a check
+  that only asks "is this point over a menu row?" passes while pointing
+  at the row above: one picker click was verified that way, landed on the
+  neighbouring row, and produced a legitimate no-op that read as the
+  feature doing nothing. Take `document.elementFromPoint(x, y)`,
+  `.closest('<the row selector>')`, and compare it by IDENTITY with the
+  element whose rect you measured (`owner === target`) before clicking.
 - On a dev-only page `read_page` can return an empty `0x0` tree and
   coordinate clicks merely scroll — drive state with `javascript_tool`:
   query the real button and `.click()` it. A React state change from

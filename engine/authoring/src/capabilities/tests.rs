@@ -25,6 +25,11 @@ fn engine_info_reports_version_capabilities_and_locales() {
     assert!(info.capabilities.contains(&"box.flexBasis"));
     // Data-driven table row layers (`row.conditionalStyles`).
     assert!(info.capabilities.contains(&"table.row.conditionalStyles"));
+    assert!(info.capabilities.contains(&"item.visible"));
+    // Cross-item anchoring, pinned per item type: a GUI gates the `line`
+    // endpoint picker and the `ellipse` annotation separately.
+    assert!(info.capabilities.contains(&"line.anchor"));
+    assert!(info.capabilities.contains(&"ellipse.anchor"));
     // Border decoration: the patterned borderStyle keywords, corner
     // rounding, and the `line` item's own stroke pattern. Each is pinned
     // individually — the registry's structural tests pass whether or not

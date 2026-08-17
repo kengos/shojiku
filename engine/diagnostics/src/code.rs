@@ -231,6 +231,21 @@ diagnostic_codes! {
     FlowItemOverflow = "flow_item_overflow", Warning, Layout, "item reaches {over}pt past the right edge of the {avail}pt flow region and renders off-sheet";
     FlexRowOverflow = "flex_row_overflow", Warning, Layout, "row children need {needed}pt but the content box is only {avail}pt wide; the row overflows";
     VerticalTextOverflow = "vertical_text_overflow", Warning, Layout, "vertical text needs {columns} columns ({needed}pt) but the box is {avail}pt wide";
+    // An item's `visible:` presence binding. The same four faults the form
+    // marks and table row conditions each carry, under this surface's own
+    // codes: every message names what the fault COSTS ("item not shown"),
+    // and a shared code could not say that for three different surfaces.
+    VisibleNotBoolean = "visible_not_boolean", Warning, Data, "`{key}` is not a boolean field; a `visible` binding without `equals` expects one";
+    VisibleEqualsNotDeclared = "visible_equals_not_declared", Warning, Data, "`{key}` declares an `enum` that does not list this `equals` value; the item can never be shown";
+    VisibleTypeMismatch = "visible_type_mismatch", Warning, Data, "`{key}` value type differs from `equals`; item not shown";
+    VisibleValueNotBool = "visible_value_not_bool", Warning, Data, "`{key}` is not a boolean; item not shown";
+    // A `line` endpoint anchored to another item (`from: { item: … }`).
+    // Every one of these draws NOTHING rather than guessing a position:
+    // a leader line to the wrong place is worse than an absent one, and
+    // each message names the id it was looking for.
+    AnchorUnknownTarget = "anchor_unknown_target", Warning, Layout, "no item has `id: {item}`; the anchored item is not drawn";
+    AnchorCrossPage = "anchor_cross_page", Warning, Layout, "the anchored endpoints land on different pages; the line is not drawn";
+    AnchorAmbiguousTarget = "anchor_ambiguous_target", Warning, Layout, "`id: {item}` is placed more than once on this page; the anchored item uses the first placement";
 }
 
 #[cfg(test)]

@@ -1,30 +1,14 @@
-// Selection-scoped document operations and the window keyboard shortcuts that
-// reach them: delete / duplicate the selected sequence item, wrap it in a
-// container, and the right-click context menu that offers the same actions as
-// accelerators.
+// Selection-scoped document operations: delete / duplicate a sequence item,
+// wrap it in a container, and the right-click context menu that offers the same
+// actions as accelerators. The window keyboard shortcuts that reach the same
+// ops live in `useSelectionShortcuts`.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { wrapInContainerOps } from '../insert/wrap';
-import { shortcutAction } from '../shortcuts';
 import { seqPosition } from '../tree/reorder';
 import { nextSelectionAfterRemove, seqLength } from '../tree/selection';
-
-/** Whether a keyboard event target is an editable element whose native
- * in-field undo must win over the document-level shortcut. */
-export function isEditableTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    // `=== true` also normalizes jsdom, where a non-editable element's
-    // `isContentEditable` is undefined rather than false — and jsdom never
-    // sets it at all, so the attribute lookup is the branch that actually
-    // fires there (a chip span's `contenteditable="false"` still resolves to
-    // its editing host through `closest`).
-    (target instanceof HTMLElement &&
-      (target.isContentEditable === true || target.closest('[contenteditable="true"]') !== null))
-  );
-}
+import { useSelectionShortcuts } from './useSelectionShortcuts';
 
 export interface SelectionOpsOptions {
   readonly editor: EditorController;
@@ -38,6 +22,10 @@ export interface SelectionOpsOptions {
 }
 
 export interface SelectionOps {
+  /** Remove the item at `path` (the context menu's row; the keyboard and the
+   * Edit menu reach it through `deleteSelected`). */
+  readonly deleteAt: (path: string) => void;
+  readonly duplicateAt: (path: string) => void;
   readonly deleteSelected: () => void;
   readonly duplicateSelected: () => void;
   readonly wrapSelected: (path: string) => void;
@@ -80,98 +68,70 @@ export function useSelectionOps({
     [read, applyAll, select],
   );
 
-  // Delete removes the selected sequence item; ⌘/Ctrl+D duplicates it. Both act
-  // only on a sequence-addressed selection (`…items[n]`) — a section root or
-  // nothing selected is a no-op, and an op-layer rejection changes nothing.
-  // After a delete the selection travels to the surviving neighbour (or the
-  // enclosing node when the sequence empties) so the panel does not snap back to
-  // page setup — the user keeps their place.
-  const deleteSelected = useCallback(() => {
-    const pos = selection === null ? null : seqPosition(selection);
-    if (pos === null) {
-      return;
-    }
-    // Read the sequence length BEFORE the removal (a hostile/alias-bomb read
-    // degrades to a plain deselect, never a crash).
-    const lengthBefore = seqLength(read, pos.parent);
-    if (!apply({ op: 'removeItem', path: pos.parent, index: pos.index }).ok) {
-      return;
-    }
-    const next = nextSelectionAfterRemove(pos.parent, pos.index, lengthBefore);
-    if (next === null) {
-      clearSelection();
-    } else {
-      select(next);
-    }
-  }, [selection, read, apply, select, clearSelection]);
-  const duplicateSelected = useCallback(() => {
-    const pos = selection === null ? null : seqPosition(selection);
-    if (pos !== null && apply({ op: 'duplicateItem', path: pos.parent, index: pos.index }).ok) {
-      select(`${pos.parent}[${pos.index + 1}]`);
-    }
-  }, [selection, apply, select]);
-
-  // Document shortcuts: undo/redo (⌘/Ctrl+Z, ⇧⌘/Ctrl+Z), Delete/Backspace,
-  // ⌘/Ctrl+D duplicate, Escape-to-deselect. Inside an editable element every
-  // shortcut is left to the field — hijacking undo/delete there would discard
-  // the user's uncommitted typing AND revert the previous committed op in one
-  // keystroke, and an Escape usually means "cancel this field" (undo is a trust
-  // feature; never overreach). The key→action map is the pure `shortcutAction`.
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      if (isEditableTarget(event.target)) {
+  // Delete removes a sequence item; ⌘/Ctrl+D duplicates it. Both act only on a
+  // sequence-addressed path (`…items[n]`) — a section root is a no-op, and an
+  // op-layer rejection changes nothing. After a delete the selection travels to
+  // the surviving neighbour (or the enclosing node when the sequence empties) so
+  // the panel does not snap back to page setup — the user keeps their place.
+  // Both are PATH-scoped, with the selection-scoped pair below as the wrappers
+  // the keyboard and the Edit menu use: the right-click menu acts on the path it
+  // was opened at, never on whatever the selection happens to be by then.
+  const deleteAt = useCallback(
+    (path: string) => {
+      const pos = seqPosition(path);
+      if (pos === null) {
         return;
       }
-      const action = shortcutAction({
-        key: event.key,
-        meta: event.metaKey,
-        ctrl: event.ctrlKey,
-        shift: event.shiftKey,
-      });
-      if (action === null) {
+      // Read the sequence length BEFORE the removal (a hostile/alias-bomb read
+      // degrades to a plain deselect, never a crash).
+      const lengthBefore = seqLength(read, pos.parent);
+      if (!apply({ op: 'removeItem', path: pos.parent, index: pos.index }).ok) {
         return;
       }
-      if (action === 'deselect') {
-        // Escape closes the document view first (its own dismissal), before
-        // falling through to canvas deselect. The editable-target guard above
-        // means Escape inside a field never reaches here.
-        if (docViewOpenRef.current) {
-          closeDocView();
-          return;
-        }
-        if (dataViewOpenRef.current) {
-          closeDataView();
-          return;
-        }
-        deselectClearing();
-        return;
-      }
-      event.preventDefault();
-      if (action === 'undo') {
-        undo();
-      } else if (action === 'redo') {
-        redo();
-      } else if (action === 'duplicate') {
-        duplicateSelected();
+      const next = nextSelectionAfterRemove(pos.parent, pos.index, lengthBefore);
+      if (next === null) {
+        clearSelection();
       } else {
-        deleteSelected();
+        select(next);
       }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [
+    },
+    [read, apply, select, clearSelection],
+  );
+  const duplicateAt = useCallback(
+    (path: string) => {
+      const pos = seqPosition(path);
+      if (pos !== null && apply({ op: 'duplicateItem', path: pos.parent, index: pos.index }).ok) {
+        select(`${pos.parent}[${pos.index + 1}]`);
+      }
+    },
+    [apply, select],
+  );
+  const deleteSelected = useCallback(() => {
+    if (selection !== null) {
+      deleteAt(selection);
+    }
+  }, [selection, deleteAt]);
+  const duplicateSelected = useCallback(() => {
+    if (selection !== null) {
+      duplicateAt(selection);
+    }
+  }, [selection, duplicateAt]);
+
+  useSelectionShortcuts({
     undo,
     redo,
-    deselectClearing,
     deleteSelected,
     duplicateSelected,
+    deselectClearing,
     docViewOpenRef,
     dataViewOpenRef,
     closeDocView,
     closeDataView,
-  ]);
+  });
 
   return {
+    deleteAt,
+    duplicateAt,
     deleteSelected,
     duplicateSelected,
     wrapSelected,

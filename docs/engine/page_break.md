@@ -8,7 +8,8 @@ reference:
 # `type: page_break`
 
 An explicit page break: the next flow item starts on a fresh page. A
-bare item — no `box`, no `style`; just the type (and an optional `id`).
+bare item — no `box`, no `style`; just the type, an optional `id`, and
+`visible:` to make the break conditional.
 
 ## Syntax
 
@@ -26,6 +27,13 @@ bare item — no `box`, no `style`; just the type (and an optional `id`).
 - A break at the top of an **untouched page is a no-op**, so consecutive
   breaks collapse and blank pages are never generated (CSS forced-break
   collapsing).
+- **Conditional**: `visible:` decides whether the break happens. A break
+  paints nothing and reserves no box, so `collapse` makes no difference to it
+  — a predicate that does not hold simply means no break.
+  ```yaml
+  - type: page_break
+    visible: { key: order.long_form }
+  ```
 - The 500-page cap applies as usual.
 
 Capability key: `page_break`.
@@ -35,12 +43,13 @@ Capability key: `page_break`.
 - Flow bodies only. In a band, an absolute body or a container it is skipped
   (`page_break_in_band`, `page_break_in_absolute_body`,
   `page_break_in_container`).
-- No keys beyond `id`: no break-before/after on other items, and no
-  conditional break.
+- No break-before/after on OTHER items: a break is its own item in the flow,
+  not a property of its neighbours.
 - It cannot force a blank page — a break with nothing after it produces no
   page.
 
 ## See also
 
 - [flow.md](flow.md) — pagination semantics
+- [visible.md](visible.md) — the `visible:` predicate that makes a break conditional
 - [table.md](table.md) `keepTogether` / [repeat_flow.md](repeat_flow.md) — structure-owned break control

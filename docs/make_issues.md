@@ -35,6 +35,40 @@ line / which cause**.
 
 ## Open
 
+- [ ] `make_issue_quiet_last_step_lags_the_failure` — **When**: `make
+      quiet T=gui-test` (also `test:gui`) fails on the vitest COVERAGE
+      thresholds. **Not detected by**: the wrapper's own summary, which
+      reported `last step : == wasm build (size-budgeted) ==` and then
+      printed a "where it broke" excerpt showing `raw=5197977 bytes
+      gzip=2015702 bytes (budget raw<=8388608 gzip<=3145728)` — two
+      numbers COMFORTABLY INSIDE their budget, presented as the failure.
+      The wasm step had succeeded; the real failure was four ERROR lines
+      about branch/line coverage much further down. A reader who trusts
+      the excerpt starts debugging a wasm size budget that is fine.
+      **Recovered by**: `grep "designer test:" .make-logs/last-error.log`
+      and reading the `% Branch` column for the file under 100. The
+      `last step` marker seems to record the last `== step ==` HEADING
+      emitted rather than the step that actually exited non-zero, so any
+      gate whose failure comes from a sub-command after the final heading
+      is mis-attributed the same way.
+
+- [ ] `make_issue_biome_info_outranks_the_error` — **When**: `make
+      lint:gui` fails on a real Biome FORMAT error while `gui/biome.json`
+      also emits an informational diagnostic (today: its `$schema` pins
+      2.5.5 while `package.json` floats `^2.5.6`, so every run carries a
+      "configuration schema version does not match" info). **Not detected
+      by**: the culprit extractor takes Biome's FIRST diagnostic block,
+      and Biome prints the `i` info before the `×` error — so "where it
+      broke" named `biome.json:2:14`, a file the change never touched,
+      and said nothing about the file that actually failed.
+      **Recovered by**: `grep -n "×" .make-logs/gui-lint.log`, which
+      finds the real diagnostic ~20 lines further down. The fix is
+      probably to rank `×` blocks above `i` blocks in the matcher rather
+      than taking the first; note that a green run also prints "Found 1
+      info", so the info cannot simply be treated as failure evidence.
+      *(Separately worth someone's deliberate one-liner: bump that
+      `$schema` to match the declared dependency and the info disappears.
+      Left out of the cycle that found it — an unrelated file.)*
 - [ ] `make_issue_trivy_no_package` — **When**: `make docker-scan` fails
       on a fixable CVE. **Not detected by**: no matcher; Trivy's summary
       line carries only a count and its table is too wide for the tail.

@@ -21,6 +21,7 @@ use crate::tree::LayoutItem;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::flex::{emit_slots, h_auto_margin, FlexKind, Slot};
+use super::visibility::{self, Visibility};
 use super::{Atom, Basis, Ctx};
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -31,6 +32,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     pub(super) fn layout_grid_children(
         &mut self,
         items: &[Item],
+        visibility: &[Visibility],
         inner: &Basis,
         b: &OptBox,
         depth: usize,
@@ -57,7 +59,11 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // knowable from the spec without any size, which is what breaks
         // the circle.
         let cols = cells::spec_columns(b.columns.as_ref());
-        let n_grid = items.iter().filter(|i| FlexKind::of(i).is_some()).count();
+        let n_grid = items
+            .iter()
+            .zip(visibility)
+            .filter(|(i, v)| !v.is_collapsed() && FlexKind::of(i).is_some())
+            .count();
         // Row spans can reach past the count-derived bound; an explicit
         // track list keeps every authored row regardless of child count.
         let explicit_len = match b.rows.as_ref() {
@@ -65,7 +71,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             _ => 0,
         };
         let rows_count = n_grid.div_ceil(cols).max(1).max(explicit_len);
-        let cell_plan = self.plan_cells(items, cols, direction, rows_count);
+        let cell_plan = self.plan_cells(items, visibility, cols, direction, rows_count);
         let auto_widths =
             self.auto_column_widths(&cell_plan, b.columns.as_ref(), inner, cols, depth);
         let col_ws = self.column_tracks(b.columns.as_ref(), inner.w, col_gap, &auto_widths);
@@ -113,6 +119,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let mut cells: Vec<CellSpan> = Vec::new();
         let mut plan_idx = 0;
         for (i, child) in items.iter().enumerate() {
+            if visibility[i].is_collapsed() {
+                continue;
+            }
+            let hidden = visibility[i] == Visibility::Hidden;
             let mark = self.enter_item(format!("items[{i}]"));
             match FlexKind::of(child) {
                 Some(kind) => {
@@ -147,14 +157,17 @@ impl<'a, 'b> Ctx<'a, 'b> {
                         // was placed in spills over its neighbour.
                         self.check_track_width(&atom, &basis, cell.cols);
                         // Horizontal auto margins act within the cell run.
-                        slots.push(Slot::Flex(h_auto_margin(atom, &basis)));
+                        slots.push(Slot::Flex(visibility::blank_if(
+                            h_auto_margin(atom, &basis),
+                            hidden,
+                        )));
                         cells.push(cell);
                     }
                 }
                 None => {
                     if let Some((atom, dy)) = self.absolute_child_atom(child, inner, depth) {
                         self.check_child_right(&atom, inner, clipped);
-                        slots.push(Slot::Abs(atom, dy));
+                        slots.push(Slot::Abs(visibility::blank_if(atom, hidden), dy));
                     }
                 }
             }

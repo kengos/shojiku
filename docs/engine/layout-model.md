@@ -143,7 +143,7 @@ exhausted. Details: [text.md](text.md).
 ## Phasing
 
 The capability inventory and the reasoning behind each feature live in
-[features.md](features.md).
+[features.md](../engine/features.md).
 
 ## Limitations
 

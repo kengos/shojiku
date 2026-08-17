@@ -40,6 +40,14 @@ make a *correct* change look broken:
   tree: `make -C /absolute/path/to/worktree <target>` (`-C` sets `$(CURDIR)`,
   so the docker mount follows correctly). The same reset is why a script
   that opens a bare filename edits the primary checkout's copy.
+  **It is not only the gates.** Every target is affected, and the ones
+  that are NOT gates hide it better, because they print no PASS/FAIL line
+  to be wrong about: a bare `make gui-serve` builds and serves the
+  PRIMARY checkout, so a hands-on browser pass judges `main` and the
+  feature under review is simply absent — which reads as a broken build
+  or a broken feature, not as the wrong tree. Anything that serves,
+  screenshots or renders (`gui-serve`, `gui-dev`, `gui-shot`,
+  `examples`) needs the same `-C`.
 
 - **mixing mounts corrupts the cache**: building under an engine-mounted
   layout once bakes a wrong `CARGO_MANIFEST_DIR` into the cached e2e
@@ -89,6 +97,25 @@ hello-world` — and if the tiny pull also stalls, stop debugging the image and
 **restart or update Docker Desktop**. One stage lost ~25 minutes to this and
 was unblocked by a Docker Desktop update alone, with no change to the
 Dockerfile that appeared to be failing.
+
+**When you only need to PIN an image, you may not need the pull at all.**
+Pinning a floating tag to a version stalled twice here for ~9 minutes on a
+28 MB image, with the tag confirmed to exist. The pull was never the
+question — the question was whether the cached image IS that version, and
+the registry answers it in one second:
+
+```sh
+docker inspect anchore/syft:latest --format '{{index .RepoDigests 0}}'
+curl -s https://hub.docker.com/v2/repositories/anchore/syft/tags/v1.46.0 \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['digest'])"
+```
+
+Equal digests mean the cached image is byte-identical to the tag, so every
+measurement already taken under `:latest` was a measurement of the pin, and
+`docker tag <cached> <repo>:<version>` makes local runs work while CI pulls
+normally. That comparison also produced the fact that justified the pin:
+`latest` had already moved to v1.50.0 while the committed artifacts recorded
+1.46.0.
 
 One thing worth ruling out first, because it looks identical: a pull of a tag
 that does not exist also hangs silently. Check the tag before blaming the
@@ -149,11 +176,35 @@ So after any rebase, and before any squash, run
 meant to touch. Restore the rest with
 `git checkout origin/main -- <paths>`.
 
-The SBOM case needs one more judgement, because `make sbom` legitimately
-has to run when a lockfile moves: regenerate, then commit ONLY the
-inventory whose lockfile YOU changed. The others' churn is your machine's
-build state — one cycle saw `sbom/gui.cdx.json` lose four components on a
-change that touched no gui dependency at all.
+The SBOM case USED to need one more judgement, and the reason it no
+longer does is worth keeping. `make sbom` legitimately has to run when a
+lockfile moves, and the advice was: regenerate, then commit ONLY the
+inventory whose lockfile YOU changed, because the others' churn is your
+machine's build state — one cycle saw `sbom/gui.cdx.json` lose four
+components on a change that touched no gui dependency at all.
+
+That churn was a defect, not a fact of life. The generator scanned the
+DIRECTORY, so syft walked `engine/target/` and catalogued the lockfile
+copies cargo leaves under `target/package/` — 17 of them on a working
+checkout — plus the build binaries. Measured on a genuinely built tree:
+**1757 components** (1728 library, 24 file, 5 application) and 1054
+`dependencies` entries, where scanning the lockfile alone yields 255
+components (its 254 crates plus the file itself) and 161 entries. Beware
+the tidy-looking number here: planting ONE lockfile copy doubles the
+inventory exactly, to 510, and it is tempting to quote that controlled
+figure as what a real tree does. It is the floor, not the observation.
+It now scans `file:<lockfile>`, so the output
+depends on the lockfile alone and `make sbom-check` compares the
+committed bytes against a fresh run. Regenerating on a dirty tree is
+safe; what remains is only the fresh `timestamp`/`serialNumber` on every
+file, which the gate masks and you can leave or revert as you like.
+
+The general lesson survives its instance: **a gate recipe that writes
+files is a rebase hazard**, and one whose output depends on the tree's
+build state is also a source of diffs nobody can review. When you meet
+one, ask whether the churn is inherent or a bug — this one had been
+written down as inherent for long enough that two separate queue items
+described its symptoms rather than its cause.
 
 ## Never run two gates at once
 
@@ -179,6 +230,18 @@ reach the `docker run` under the recipe: the container keeps compiling,
 the lock stays held, and `ps` on the make pid still answers alive — so a
 run you believe you cancelled goes on owning the tree. Kill the CONTAINER
 first, then the make chain:
+
+**A foreground TIMEOUT lands you here without your deciding anything** —
+it is the third way in, after an interactive Ctrl-C and a deliberate
+cancel, and the only one that arrives unannounced. An agent harness caps
+a foreground command (10 minutes for the Bash tool; some sessions far
+less), and when it fires the make pid dies while the CONTAINER carries
+on: `ps -p <pid>` then says dead, the lock says held, and the two checks
+below disagree — which is exactly the state the "test the holder is
+dead" rule exists for. **`make test:gui` is the routine offender**
+(vitest + coverage across both gui packages runs several minutes), so
+background it from the start rather than learning this by losing a run
+and re-running it.
 
 ```sh
 docker ps -q | xargs -r docker inspect \
@@ -508,3 +571,61 @@ ever see — when the version has NOT moved but the bytes have, since same
 version + different build is by definition a build nobody released. A
 mid-cycle `make site-wasm-release` therefore fails loudly instead of
 silently re-pointing the site at HEAD.
+
+## A CI job that dies at exit 125 is an image pull, not your change
+
+`docker: read tcp …: connection reset by peer` followed by
+`make: *** [...] Error 125` is the Docker CLI failing to PULL, after a
+couple of minutes of `Retrying in N seconds` lines. Exit 125 is docker
+itself refusing, before your command ever runs.
+
+It reads as a red gate on whichever job drew the short straw, which is
+usually one your diff cannot reach — an engine/gui change failing
+`install proof — dotnet`. Two signals separate it from a real failure:
+the same check passed on an earlier run of an identical tree, and the log
+carries no output from the command the job was supposed to run.
+
+`gh run rerun <run-id> --failed` re-runs only the failed jobs. Do that
+rather than merging over it; a flake and a real break look the same in the
+checks list, and only the log tells them apart.
+
+## `make examples` does not run the examples GATE
+
+`examples` re-renders the bundled outputs. `examples-check` re-renders AND
+compares, and it runs `scripts/check-example-text-indent.sh` — the gate for
+block scalars indented with ordinary spaces. The two are different targets
+with almost the same name, and CI runs the second one.
+
+Authoring a showcase code panel and then running `make examples` therefore
+reports success over a panel that will render FLUSH LEFT: the wrap tokenizer
+folds a leading space run the way CSS does, so the indentation is dropped at
+draw time. Nothing in the render says so, and the preview PNG is the only
+other place it shows.
+
+The trap it hides behind is that the authoring rule (indent with U+00A0) IS
+catalogued — in `skills/shojiku-template-author` § Wire gotchas — so a cycle
+can route to it correctly, obey it partially, and still ship, because the
+gate that would have caught the miss was never run.
+
+**After touching any bundled template, run `examples-check`, not `examples`.**
+The same holds for the other verify-only targets: a `make <thing>` that
+PRODUCES an artifact is rarely the target that JUDGES it.
+
+## A gate can be green over a diff that reverts a neighbour's commit
+
+After a mid-cycle rebase, one cycle's diff deleted 47 lines across three
+`docs/` files it had never edited — another branch's Phase E write-backs,
+which had landed on `main` while it was in review. `budget`, `lint`, `test`,
+`coverage`, `examples-check` and `verify:site` were all green over it: no gate
+asks whether a diff undoes someone else's work.
+
+The check that finds it is a set comparison, not a reading:
+
+```sh
+comm -12 <(git diff --name-only origin/main..HEAD | sort) \
+         <(git diff --name-only <old-base>..origin/main | sort)
+```
+
+Every file in BOTH lists is one your branch and `main` both changed —
+legitimate for the files you meant to touch, and a silent revert for the rest.
+Restore those with `git checkout origin/main -- <paths>`.

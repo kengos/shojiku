@@ -8,6 +8,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { CSSProperties } from 'react';
+import type { TextCollision } from './diagnostics/collisions';
 import type { Diagnostic } from './engine/types';
 import type { useBlocks } from './hooks/useBlocks';
 import type { CanvasWiring } from './hooks/useCanvasWiring';
@@ -42,6 +43,8 @@ export interface DesignerWiring extends CanvasWiring {
   readonly tutorial: ReturnType<typeof useTutorialWiring>;
   readonly themeStyle: CSSProperties;
   readonly diagnostics: readonly Diagnostic[];
+  /** What the Designer noticed that the engine is legitimately quiet about. */
+  readonly advisories: readonly TextCollision[];
   readonly applyDiagnosticFix: (ops: readonly Op[]) => void;
   readonly handleParamsChange: (next: string) => void;
   /** The host configuration with every default resolved in the composer only —

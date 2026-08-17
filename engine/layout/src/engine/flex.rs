@@ -19,6 +19,9 @@ use crate::boxes::PlacedBox;
 use crate::tree::LayoutItem;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
+mod child;
+
+use super::visibility::{self, Visibility};
 use super::{Atom, Basis, Ctx};
 
 pub(in crate::engine) use kind::FlexKind;
@@ -77,10 +80,22 @@ impl<'a, 'b> Ctx<'a, 'b> {
         depth: usize,
         clipped: bool,
     ) -> (Vec<LayoutItem>, Vec<PlacedBox>, f64) {
+        // Asked ONCE for the whole child list and handed to whichever walk
+        // runs: the predicate's array-contains path is O(params array
+        // length) and its faults are reported at evaluation, so a second
+        // pass would double both the cost and the diagnostics.
+        let visibility = self.child_visibility(items);
         // `box.type: grid` takes the static-grid walk; everything else
         // (unset or `flex`) is flex-like.
         if parent_box.type_ == Some(shojiku_core::BoxType::Grid) {
-            return self.layout_grid_children(items, inner, parent_box, depth, clipped);
+            return self.layout_grid_children(
+                items,
+                &visibility,
+                inner,
+                parent_box,
+                depth,
+                clipped,
+            );
         }
         let spec = FlexSpec::of(parent_box);
         // Grid spans are inert outside `box.type: grid`; a span key
@@ -105,9 +120,13 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // knows its width. Column: the main size is the height, which a
         // child computes for itself — so the plan only has something to
         // say when `flexGrow` is authored, and returns `None` otherwise.
+        // A collapsed child leaves the plan as well as the walk, which is
+        // what gives its siblings the space back: in a row `plan_row`
+        // divides the width among the survivors only.
         let kinds: Vec<(usize, FlexKind)> = items
             .iter()
             .enumerate()
+            .filter(|(i, _)| !visibility[*i].is_collapsed())
             .filter_map(|(i, c)| FlexKind::of(c).map(|k| (i, k)))
             .collect();
         let row = spec.direction == FlexDirection::Row;
@@ -151,6 +170,13 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let mut slots = Vec::new();
         let mut flex_idx = 0;
         for (i, child) in items.iter().enumerate() {
+            // Skipped BEFORE the classification: a collapsed child that
+            // fell through to `FlexKind::of`'s `None` arm would be placed
+            // absolutely after all.
+            if visibility[i].is_collapsed() {
+                continue;
+            }
+            let hidden = visibility[i] == Visibility::Hidden;
             let mark = self.enter_item(format!("items[{i}]"));
             match FlexKind::of(child) {
                 Some(kind) => {
@@ -169,13 +195,16 @@ impl<'a, 'b> Ctx<'a, 'b> {
                         if spec.direction == FlexDirection::Column {
                             self.check_child_right(&atom, inner, clipped);
                         }
-                        slots.push(Slot::Flex(atom));
+                        // Checked first, then blanked: a hidden item still
+                        // occupies its box, so an overflow it causes is
+                        // real and worth reporting.
+                        slots.push(Slot::Flex(visibility::blank_if(atom, hidden)));
                     }
                 }
                 None => {
                     if let Some((atom, dy)) = self.absolute_child_atom(child, inner, depth) {
                         self.check_child_right(&atom, inner, clipped);
-                        slots.push(Slot::Abs(atom, dy));
+                        slots.push(Slot::Abs(visibility::blank_if(atom, hidden), dy));
                     }
                 }
             }
@@ -198,31 +227,6 @@ impl<'a, 'b> Ctx<'a, 'b> {
 
         // Pass 3: emit in document order with the computed shifts.
         emit_slots(&slots, &offs)
-    }
-
-    /// The cross size of an auto-height row: the tallest child's OUTER
-    /// height (vertical margins are already folded into every atom).
-    /// Runs parked — this placement is thrown away, and only the one
-    /// that follows describes what the author gets.
-    ///
-    /// Takes the already-classified `kinds` rather than the raw items:
-    /// `bases` is indexed by flex-child position, so re-deriving the
-    /// classification here would mean re-deriving that alignment too.
-    fn measure_row_cross(
-        &mut self,
-        kinds: &[(usize, FlexKind)],
-        bases: &[Basis],
-        depth: usize,
-    ) -> f64 {
-        let parked = self.begin_measure();
-        let mut cross = 0.0_f64;
-        for (i, (_, kind)) in kinds.iter().enumerate() {
-            if let Some(atom) = self.flex_child_atom(*kind, &bases[i], depth) {
-                cross = cross.max(atom.height);
-            }
-        }
-        self.end_measure(parked);
-        cross
     }
 
     /// Sanitizes an authored `flexGrow` weight: a negative or non-finite
@@ -265,32 +269,5 @@ impl<'a, 'b> Ctx<'a, 'b> {
         self.reflow_budget = 0;
         self.reflow_exhausted = true;
         false
-    }
-
-    /// Lays out one flex/grid child against its assigned basis (the
-    /// parent content box in a column; the planned slot in a row; the
-    /// cell in a grid).
-    pub(super) fn flex_child_atom(
-        &mut self,
-        kind: FlexKind,
-        basis: &Basis,
-        depth: usize,
-    ) -> Option<Atom> {
-        match kind {
-            FlexKind::Text(text) => Some(self.text_atom(text, basis)),
-            FlexKind::Rect(rect) => self.rect_atom(rect, basis),
-            FlexKind::Image(image) => self.guarded_image_atom(image, basis),
-            FlexKind::Container(container) => self.container_atom(container, basis, depth + 1),
-            FlexKind::QrCode(qr) => self.qr_atom(qr, basis),
-            FlexKind::List(list) => self.list_atom(list, basis),
-            // A boxed char_grid draws one sheet (band semantics: no
-            // pagination; overflow warns and drops).
-            FlexKind::CharGrid(grid) => self.char_grid_atom(grid, basis),
-            // A boxed table is one bounded block (no pagination; cell
-            // scope gates it).
-            FlexKind::Table(table) => self.guarded_table_atom(table, basis),
-            FlexKind::Ellipse(e) => self.ellipse_atom(e, basis),
-            FlexKind::Checkbox(c) => self.checkbox_atom(c, basis),
-        }
     }
 }

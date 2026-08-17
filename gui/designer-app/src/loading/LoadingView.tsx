@@ -10,7 +10,7 @@
 
 import { useI18n } from '@shojiku/designer';
 import { Check, TriangleAlert } from 'lucide-react';
-import { APP_BANNER } from '../app/chrome';
+import { APP_BANNER, APP_BUTTON } from '../app/chrome';
 import { ProgressBar } from './ProgressBar';
 import {
   activeStage,
@@ -34,6 +34,10 @@ export interface LoadingViewProps {
   readonly name: string;
   /** Where the wait currently is. */
   readonly phase: LoadPhase;
+  /** Leave the wait: cancel a live open, or back out of a failed one. Always
+   * visible when wired — a load that hangs without failing needs the same
+   * escape as one that fails. */
+  readonly onBack?: () => void;
 }
 
 /** The stage's leading mark. Done and failed carry a real icon; the active and
@@ -61,7 +65,7 @@ function StageMark({ state }: { readonly state: StageState }) {
   );
 }
 
-export function LoadingView({ name, phase }: LoadingViewProps) {
+export function LoadingView({ name, phase, onBack }: LoadingViewProps) {
   const { t } = useI18n();
   const reading = phaseReading(phase);
   const stages = stageViews(phase);
@@ -105,6 +109,13 @@ export function LoadingView({ name, phase }: LoadingViewProps) {
             ) : null}
           </>
         )}
+        {onBack !== undefined ? (
+          <div className="mt-4 flex justify-end">
+            <button type="button" className={APP_BUTTON} onClick={onBack}>
+              {t('app.back')}
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

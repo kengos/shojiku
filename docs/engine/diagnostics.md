@@ -166,6 +166,9 @@ inline:
 | `reflow_budget_exhausted` | warning | too many nested boxes needing a second placement (auto-height `stretch` rows, `flexGrow` columns, `fr`-over-auto grids); the innermost children keep their content size |
 | `cut_marks_clipped` | warning | `cutMarks` have no room outside the grid on a sheet side; those ticks are omitted |
 | `header_group_span_clamped` | warning | `headerGroups` spans exceed the table's columns |
+| `anchor_unknown_target` | warning | a `line` endpoint or an `ellipse` names an `id:` no item carries; the anchored item is not drawn ([line.md](line.md)) |
+| `anchor_cross_page` | warning | a line's two anchored endpoints land on different pages; the line is not drawn |
+| `anchor_ambiguous_target` | warning | the anchored id is placed more than once on the page (a `repeat` element, a duplicate id); the FIRST placement in document order is used |
 
 ## Layout — content & data
 
@@ -195,6 +198,10 @@ inline:
 | `row_condition_type_mismatch` | a row's value type differs from a `conditionalStyles` entry's `equals`; the layer is not applied. Also raised at validate against the DECLARED field type |
 | `row_condition_equals_not_declared` | a `conditionalStyles` entry's `equals` literal is outside the field's declared `enum`, so the layer can never apply |
 | `row_condition_value_not_bool` | a row's value is not a boolean under an `equals`-less `conditionalStyles` entry; the layer is not applied |
+| `visible_not_boolean` | an item's `visible:` field is declared non-boolean and the binding has no `equals`, so the item can never be shown |
+| `visible_equals_not_declared` | an item's `visible.equals` literal is outside the field's declared `enum`, so the item can never be shown |
+| `visible_type_mismatch` | an item's params value type differs from its `visible.equals`; not shown. Also raised at validate against the DECLARED field type |
+| `visible_value_not_bool` | an `equals`-less `visible:` binding's value is not a boolean; not shown |
 | `qr_content_too_long` / `qr_module_too_small` | QR content over 1 KiB (skipped) / modules under 1 pt (drawn) |
 | `unsupported_link_scheme` / `link_url_too_long` / `empty_link_url` | resolved `link.url` outside http/https/mailto/tel (or control chars) / over 2048 bytes / empty — the link is dropped, the item still renders |
 | `document_metadata_control_chars` / `document_metadata_too_long` / `invalid_document_language` | a resolved `document:` value carries control characters / is over its byte cap (2048, or 64 for `language`) / is not a `[A-Za-z0-9-]` language tag — that field is not written to the PDF and is NOT replaced by its fallback |

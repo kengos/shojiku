@@ -7,6 +7,7 @@
 // throw, alias bombs, garbage shapes) classifies as fixed.
 
 import type { ReadFn } from '@shojiku/designer-core';
+import { BOXLESS_TYPES } from '../panel/itemView';
 import { seqPosition } from '../tree/reorder';
 import { type ReorderContext, reorderContext } from './dnd';
 import { type AuthoredLength, ptLength, readLength } from './lengths';
@@ -20,6 +21,7 @@ export type FixedReason =
   | 'grid'
   | 'repeat'
   | 'noBox'
+  | 'anchored'
   | 'relative'
   | 'flowPositioned'
   | 'section'
@@ -103,8 +105,16 @@ export function manipulationFor(read: ReadFn, path: string): Manipulation {
   if (owner === undefined || child === undefined) {
     return fixed('unknown');
   }
-  if (child.type === 'line' || child.type === 'page_break') {
+  if (typeof child.type === 'string' && BOXLESS_TYPES.has(child.type)) {
     return fixed('noBox');
+  }
+  // An anchored `ellipse` HAS a placement — the drain reports one — but its
+  // position comes from the item it circles, and the engine never reads its
+  // `box.x`/`box.y`. Dragging it would commit two keys the engine ignores
+  // and the oval would snap back: the same dead end a `line` without the
+  // endpoint editor had.
+  if (child.type === 'ellipse' && typeof child.anchor === 'string') {
+    return fixed('anchored');
   }
   const box = record(child.box) ?? {};
   const hasXY = box.x !== undefined || box.y !== undefined;

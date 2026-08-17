@@ -7,20 +7,28 @@
 // location). The diagnostics must come from the SAME render outcome the canvas
 // is showing, so a click resolves against current geometry.
 //
-// A diagnostic whose fix is MECHANICAL gets a "直す" button beside it —
-// `fixModel.fixFor` builds a `removeKey` op batch (one undo step) when a concrete
-// removable key exists, and returns null otherwise so no dead button appears.
-// The button is a sibling of the select target, never nested inside it.
+// A diagnostic whose fix is MECHANICAL gets a button beside it — `fixModel.fixFor`
+// returns the candidate resolutions (one op batch each, one undo step each), or
+// null so no dead button appears. Most diagnostics have exactly one candidate and
+// render exactly one button; a diagnostic with two equally valid answers (keep
+// `src` vs keep `data`) renders both, because only the author knows which.
+// The buttons are siblings of the select target, never nested inside it.
 
 import type { Op } from '@shojiku/designer-core';
 import type { Diagnostic, Severity } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { BTN_SM } from '../ui/chrome';
 import { TipBubble } from '../ui/TipBubble';
+import { AdvisoryRow } from './AdvisoryRow';
+import type { TextCollision } from './collisions';
 import { fixFor, type ReadNode } from './fixModel';
 
 export interface DiagnosticsPanelProps {
   readonly diagnostics: readonly Diagnostic[];
+  /** GUI-derived advisories — things the engine is deliberately silent about
+   * because they are legal (text landing on other text). Kept separate from
+   * `diagnostics` so the engine's `code` namespace stays the engine's. */
+  readonly advisories?: readonly TextCollision[];
   readonly onSelect: (path: string) => void;
   /** Reads a materialized node by path — the fix builders inspect the document
    * to find which keys are actually removable. Display-only (never written). */
@@ -79,35 +87,43 @@ function DiagnosticRow({
       ) : (
         <div className={DIAG_ROW}>{body}</div>
       )}
-      {fix !== null ? (
-        <span className="group/tip relative shrink-0">
+      {/* One button per candidate resolution, side by side. Widths are
+          deliberately not equalised: a shared width pads the short labels and
+          truncates the long localized ones. */}
+      {fix?.map((candidate) => (
+        <span className="group/tip relative shrink-0" key={candidate.labelKey}>
           <button
             type="button"
             className={`${BTN_SM} shrink-0 whitespace-nowrap text-xs`}
-            onClick={() => onApplyFix(fix)}
+            onClick={() => onApplyFix(candidate.ops)}
           >
-            {t('diagnostics.fix')}
+            {t(candidate.labelKey, candidate.labelArgs)}
           </button>
           <TipBubble text={t('diagnostics.fixTip')} />
         </span>
-      ) : null}
+      ))}
     </li>
   );
 }
 
 export function DiagnosticsPanel({
   diagnostics,
+  advisories = [],
   onSelect,
   read,
   onApplyFix,
 }: DiagnosticsPanelProps) {
   const { t } = useI18n();
+  // "No problems." must mean BOTH lists are empty — the whole point of the
+  // advisories is that a document the engine passes cleanly can still have
+  // text sitting on top of text.
+  const empty = diagnostics.length === 0 && advisories.length === 0;
   return (
     <section
       className="max-h-[132px] overflow-y-auto border-t border-border bg-chrome px-3 py-2 text-sm"
       aria-label={t('diagnostics.title')}
     >
-      {diagnostics.length === 0 ? (
+      {empty ? (
         <p className="m-0 text-muted">{t('diagnostics.empty')}</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
@@ -118,6 +134,13 @@ export function DiagnosticsPanel({
               onSelect={onSelect}
               read={read}
               onApplyFix={onApplyFix}
+            />
+          ))}
+          {advisories.map((collision) => (
+            <AdvisoryRow
+              key={`${collision.page}:${collision.a.path}:${collision.b.path}`}
+              collision={collision}
+              onSelect={onSelect}
             />
           ))}
         </ul>

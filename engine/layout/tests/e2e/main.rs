@@ -43,3 +43,4 @@ mod table;
 mod text;
 mod text_metrics;
 mod units;
+mod visibility;

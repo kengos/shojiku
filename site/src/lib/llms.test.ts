@@ -41,7 +41,7 @@ describe("SITE_PAGES matches the pages that actually exist", () => {
   // never listed (an agent handed llms.txt could not find it), while
   // `/reference/` was listed with no file behind it.
   it("lists exactly the site/*.md files", () => {
-    expect(siteStems.length).toBe(10);
+    expect(siteStems.length).toBe(11);
     expect([...SITE_PAGES].map((p) => p.stem).sort()).toEqual(siteStems);
     expect(() => checkSitePages(siteStems)).not.toThrow();
   });

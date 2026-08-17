@@ -30,6 +30,7 @@ mod spans;
 mod table;
 #[cfg(test)]
 mod tests;
+mod visibility;
 
 pub use formats::{
     FormatDefaults, FormatRef, InlineFormat, NamedFormat, NamedFormatKind, TemplateDefaults,
@@ -56,6 +57,7 @@ pub use table::{
     Column, ColumnType, EmptyBehavior, HeaderGroup, RowConditionalStyle, RowSpec, TableHeaderSpec,
     TableItem, MAX_ROW_CONDITIONAL_STYLES,
 };
+pub use visibility::VisibleBinding;
 
 /// Top-level template document. Unknown keys are parse errors and unset
 /// fields never serialize — the file round-trips as authored.
@@ -245,6 +247,28 @@ impl Item {
             Item::CharGrid(i) => i.id.as_deref(),
             Item::Ellipse(i) => i.id.as_deref(),
             Item::Checkbox(i) => i.id.as_deref(),
+        }
+    }
+
+    /// The item's params-conditional presence binding, if it authored one.
+    /// `None` — the overwhelming majority — draws unconditionally.
+    pub fn visible(&self) -> Option<&VisibleBinding> {
+        match self {
+            Item::Text(i) => i.visible.as_ref(),
+            Item::Rect(i) => i.visible.as_ref(),
+            Item::Line(i) => i.visible.as_ref(),
+            Item::Table(i) => i.visible.as_ref(),
+            Item::PageNumber(i) => i.visible.as_ref(),
+            Item::Image(i) => i.visible.as_ref(),
+            Item::Container(i) => i.visible.as_ref(),
+            Item::Repeat(i) => i.visible.as_ref(),
+            Item::RepeatFlow(i) => i.visible.as_ref(),
+            Item::QrCode(i) => i.visible.as_ref(),
+            Item::List(i) => i.visible.as_ref(),
+            Item::PageBreak(i) => i.visible.as_ref(),
+            Item::CharGrid(i) => i.visible.as_ref(),
+            Item::Ellipse(i) => i.visible.as_ref(),
+            Item::Checkbox(i) => i.visible.as_ref(),
         }
     }
 }
