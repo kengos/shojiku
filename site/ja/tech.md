@@ -22,7 +22,7 @@ description: "セキュリティ方針、ライセンス、Rust製エンジン�
 
 - [cargo-deny](https://github.com/kengos/shojiku/blob/main/engine/deny.toml)でアドバイザリとライセンスを検査していて、**アドバイザリのignoreはゼロ**です。除外設定（ignore）を足さないと検査を通らない依存は、採用しません
 <!-- sbom:generated:start (regenerate with `make site-data`) -->
-- **CycloneDX SBOMをリポジトリにコミット**しています（[sbom/](https://github.com/kengos/shojiku/tree/main/sbom)）。現在はengine 255 / gui 243 / sdk-js 127コンポーネントです。ロックファイル自体をスキャンして生成し、そのロックファイルのsha256を記録しているので、どの解決結果を写したものかが後から確かめられます。ロックファイルが動いたのにSBOMが追いついていなければCIが落ちます
+- **CycloneDX SBOMをリポジトリにコミット**しています（[sbom/](https://github.com/kengos/shojiku/tree/main/sbom)）。engine 255 / gui 243 / sdk-js 127コンポーネントです。ロックファイル自体をスキャンして生成し、そのロックファイルのsha256を記録しているので、どの解決結果を写したものかが後から確かめられます。更新はリリースごとなので、リリース間の依存の動きはまだ入っていないことがあります
 <!-- sbom:generated:end -->
 - npm側は、pnpmの`minimumReleaseAge`を**7日**に設定しています。公開から7日未満のパッケージはインストール自体が失敗するので、不正なリリースが公開されても、取り下げられる前にインストールしてしまうことを防げます。postinstallスクリプトは明示的な許可リスト制です
 

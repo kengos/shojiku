@@ -18,8 +18,9 @@
 #   Apply fixes
 #     make fmt-fix              rustfmt          make gui-format   biome
 #     make examples             re-render the committed example outputs
-#     make sbom                 re-generate the committed SBOMs after a lockfile
-#                               moves (sbom-check reds until you do)
+#     make sbom                 re-generate the committed SBOMs from the
+#                               lockfiles. RELEASE-TIME: the inventories
+#                               describe the last release, not every commit
 #     make lock:<scope>         re-resolve a lockfile after a manifest edit —
 #                               every gate is --locked / --frozen-lockfile and
 #                               refuses until you do. scope = engine | gui |
@@ -81,16 +82,16 @@ endif
 #   examples-check    -> job "examples"  (committed outputs == fresh render,
 #                                         plus skills/*/template == its example,
 #                                         plus no space/tab-indented block scalar)
-#   sbom-check        -> job "sbom"      (each committed sbom/*.cdx.json still
-#                                         describes its lockfile, and every
+#   sbom-lint         -> job "sbom"      (the detector still detects, and every
 #                                         committed lockfile is either
-#                                         inventoried or declared not to be)
-#   sbom              -> sbom-sync.yml   (NOT a ci.yml job: the one target CI
-#                                         runs to WRITE. Dependabot cannot run
-#                                         it, so that workflow runs it on
-#                                         dependabot PRs and commits the result,
-#                                         which is what keeps the job above from
-#                                         redding every lockfile bump forever)
+#                                         inventoried or declared not to be.
+#                                         No Docker, seconds)
+#   sbom-check        -> NO ci.yml job   (drift against the lockfiles. An SBOM
+#                                         describes a RELEASE, so this runs at
+#                                         release time — see the release
+#                                         checklist — rather than reddening
+#                                         every dependabot PR that moves a
+#                                         lockfile, which dependabot cannot fix)
 #   wasm              -> job "wasm"      (build wasm32 bindings + size budget)
 #   sdk-ruby          -> job "sdk-ruby"  (rubocop, rspec at 100% coverage, gem
 #                                         build/install; engine library injected
@@ -383,7 +384,7 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         sdk-go sdk-go-test sdk-go-lint \
         gui gui-budget gui-lint gui-test gui-format gui-e2e gui-shot \
         normalize-examples \
-        gui-serve gui-dev sbom sbom-check clean cache-clean images-clean
+        gui-serve gui-dev sbom sbom-lint sbom-check clean cache-clean images-clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z0-9_\\:-]+:.*## ' $(MAKEFILE_LIST) \
@@ -397,7 +398,7 @@ help: ## Show this help
 # `coverage`: it is a full wasm32 build rather than a lint, so it does not
 # belong before the tests — but a size-budget crossing used to be discovered
 # only after paying for the single most expensive step in the run.
-verify: rust wasm coverage deny reference-check examples-check sbom-check napi gui site site-check sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
+verify: rust wasm coverage deny reference-check examples-check sbom-lint napi gui site site-check sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
 	@echo "\n✅ verify passed — every CI gate is green locally. Safe to push."
 
 ## ---- <verb>:<scope> — "did it work?" entry points ----------------------
@@ -1828,7 +1829,11 @@ site-dev: ## VitePress dev server in Docker (http://localhost:5174, Ctrl-C stops
 sbom: ## Regenerate the committed CycloneDX SBOMs from the lockfiles (idempotent)
 	@SYFT_IMAGE=$(SYFT_IMAGE) scripts/generate-sbom.sh
 
-sbom-check: ## Fail if a committed SBOM drifts from its lockfile, or a lockfile is undeclared
+sbom-lint: ## Self-test the SBOM detector and check every lockfile is declared (no Docker)
+	@echo "== sbom lint =="
+	@./scripts/check-sbom.sh --lint
+
+sbom-check: ## Fail if a committed SBOM drifts from its lockfile (release-time; see sbom-lint)
 	@echo "== sbom check =="
 	@SYFT_IMAGE=$(SYFT_IMAGE) ./scripts/check-sbom.sh
 

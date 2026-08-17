@@ -48,10 +48,10 @@ export function renderEn(counts: readonly SbomCount[]): string {
     .join(", ");
   return [
     `- **A CycloneDX SBOM is committed to the repository**`,
-    `  ([sbom/](${REPO_SBOM})): currently ${list}. Each is generated from the`,
-    `  lockfile itself and records that lockfile's sha256, so you can check`,
-    `  which resolution it describes — and CI fails if a lockfile moves`,
-    `  without its inventory catching up`,
+    `  ([sbom/](${REPO_SBOM})): ${list}. Each is generated from the lockfile`,
+    `  itself and records that lockfile's sha256, so you can check exactly`,
+    `  which resolution it describes. They are refreshed at each release, so`,
+    `  between releases they can lag the lockfiles`,
   ].join("\n");
 }
 
@@ -66,9 +66,9 @@ export function renderJa(counts: readonly SbomCount[]): string {
   const list = counts.map((c) => `${c.name} ${c.components}`).join(" / ");
   return (
     `- **CycloneDX SBOMをリポジトリにコミット**しています（[sbom/](${REPO_SBOM})）。` +
-    `現在は${list}コンポーネントです。ロックファイル自体をスキャンして生成し、` +
+    `${list}コンポーネントです。ロックファイル自体をスキャンして生成し、` +
     `そのロックファイルのsha256を記録しているので、どの解決結果を写したものかが後から確かめられます。` +
-    `ロックファイルが動いたのにSBOMが追いついていなければCIが落ちます`
+    `更新はリリースごとなので、リリース間の依存の動きはまだ入っていないことがあります`
   );
 }
 

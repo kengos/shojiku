@@ -38,6 +38,18 @@ platform binaries.
 
 ### Changed
 
+- **The committed SBOMs now describe the latest release rather than the
+  latest commit.** The CycloneDX inventories under `sbom/` are refreshed
+  as part of each release, so between releases they can lag the
+  lockfiles. Nothing about them became less checkable: each is generated
+  from a lockfile and records that lockfile's sha256, so you can always
+  tell exactly which dependency resolution an inventory describes — and
+  the tech page now states the release cadence instead of implying the
+  two are held together commit by commit. The old rule asked every commit
+  to carry a matching inventory, which is stricter than what an SBOM is a
+  statement about, and it made routine dependency updates fail on arrival
+  for no reader's benefit.
+
 - **`docs/engine/features.md` is no longer rendered on the site.** It
   stays exactly where it is in the repository, and every link to it keeps
   working; it is simply no longer one of the reference's routes, since it

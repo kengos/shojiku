@@ -10,6 +10,16 @@
 > reasoning about a fixed point, and that reasoning is not checkable by
 > any gate in this repository.** Every entry below is something that
 > reported success, or reported nothing at all, while being wrong.
+>
+> **How the case that produced this file was actually closed, since it is
+> the most useful lesson in it:** not by fixing the automation. The
+> workflow was deleted and the REQUIREMENT was removed — drift between a
+> lockfile and its committed SBOM is now checked at release, because an
+> SBOM describes a released artifact and nothing consumes "the
+> dependencies of main at commit abc123". The per-commit rule had been
+> stricter than the artifact's own contract, and every line below is the
+> cost of not having asked that first. Before building an automation to
+> satisfy a gate, ask whether the gate is asking for the right thing.
 
 ## A dependabot PR cannot fix itself, and the reason is two hard rules
 

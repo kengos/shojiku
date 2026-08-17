@@ -53,7 +53,17 @@ describe("renderEn", () => {
 
   it("states what the generation guarantees, not just the numbers", () => {
     expect(renderEn(counts)).toContain("records that lockfile's sha256");
-    expect(renderEn(counts)).toContain("CI fails if a lockfile moves");
+    expect(renderEn(counts)).toContain("refreshed at each release");
+  });
+
+  // The page used to promise "CI fails if a lockfile moves without its
+  // inventory catching up". That stopped being true when the drift check
+  // moved to release time, and a claim that a GATE protects the reader is
+  // the worst kind to leave standing — it tells them not to check. Asserted
+  // as an absence so it cannot drift back in.
+  it("does not claim CI keeps the inventories in step with the lockfiles", () => {
+    expect(renderEn(counts)).not.toContain("CI fails");
+    expect(renderJa(counts)).not.toContain("CIが落ちます");
   });
 });
 
@@ -64,6 +74,10 @@ describe("renderJa", () => {
 
   it("says the sha256 is the LOCKFILE's, not the recorded components'", () => {
     expect(renderJa(counts)).toContain("そのロックファイルのsha256を記録");
+  });
+
+  it("says the inventories are refreshed per release, so staleness is stated rather than hidden", () => {
+    expect(renderJa(counts)).toContain("更新はリリースごと");
   });
 
   it("does not call the SBOM 在庫, a dictionary rendering nobody uses for one", () => {

@@ -111,16 +111,22 @@ jobs:
           key: deny
 
   sbom:
-    # The committed CycloneDX inventories are machine-read supply-chain
-    # artifacts, so a stale one is invisible to every other gate AND to human
-    # review — nobody diffs a 280KB minified JSON. This regenerates them from
-    # the lockfiles and compares, which is also what keeps the generator from
-    # silently going back to inventorying build output.
-    name: sbom (inventories match their lockfiles)
+    # NOT the drift check. `make sbom-check` — do the committed inventories
+    # still describe their lockfiles — is a RELEASE-time gate: an SBOM is a
+    # statement about a release, and requiring every commit to carry a
+    # matching one made every dependabot lockfile bump red on arrival with
+    # no way for dependabot to fix it.
+    #
+    # What runs here is the half that does not go stale as lockfiles move:
+    # the detector's own self-tests, and the assertion that every committed
+    # lockfile is either inventoried or declared not to be — so a new
+    # ecosystem still cannot arrive uninventoried in silence. No Docker,
+    # seconds.
+    name: sbom (detector self-test + every lockfile declared)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: make sbom-check
+      - run: make sbom-lint
 
   wasm:
     name: wasm (build + size budget)
