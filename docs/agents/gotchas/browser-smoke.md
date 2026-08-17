@@ -113,6 +113,18 @@
   target ? '' : 'none')`) so the part you want sits at 0, shoot, restore.
   Reviewing a multi-state mock is where this bites, because the whole
   point is one tall page holding every state.
+  **`resize_window` to a TALL viewport can wedge the pane past every
+  documented recovery.** Sizing to 1000x1400 to fit more of such a mock
+  left every subsequent screenshot flat-background — through
+  `tabs_select`, through a same-origin `navigate`, through closing the
+  other tab, and through `resize_window` back to the `desktop` preset —
+  while `javascript_tool` kept reporting a healthy DOM at the expected
+  scroll offset. What recovered it was a fresh `preview_start` (a NEW
+  tab) at a modest viewport; the wedged tab never came back. So: keep the
+  viewport near the pane's natural size, and when you want 1:1 pixels for
+  a perception call, size DOWN to ~800 wide rather than up — the
+  screenshot is downscaled to 800px regardless, so a large viewport buys
+  nothing but the wedge.
 - **Editing a file the pane is displaying REPLACES the tab with a
   `file://` view of it**, silently dropping the `http://localhost:<port>`
   page you were testing — and you cannot `navigate` back, because a
