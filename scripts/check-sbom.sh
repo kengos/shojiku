@@ -238,6 +238,32 @@ if [ -s "$tmp/unmapped" ] || [ -s "$tmp/missing" ] || [ -s "$tmp/orphan" ]; then
 	exit 1
 fi
 
+# ---- everything above is the LINT; the drift check is release-time -----
+# `--lint` stops here. What it has just run — the two self-tests and the
+# lockfile map — is everything that does NOT go stale as lockfiles move:
+# whether this detector still detects, and whether every committed lockfile
+# has been decided about. Both are seconds and need no Docker, so they stay
+# in the per-PR matrix.
+#
+# What follows is the DRIFT check, and it is deliberately NOT a per-PR gate
+# any more. An SBOM is a statement about a RELEASE — "these are the
+# dependencies of v0.3.0" — and nobody consumes "the dependencies of main at
+# commit abc123". Requiring every commit to carry a matching inventory was
+# stricter than the artifact's own contract, and the cost was real: every
+# dependabot PR that moved a lockfile arrived red and stayed red, because
+# dependabot cannot regenerate them. So drift is checked when it means
+# something, at release, where `make sbom` is run and its output committed.
+#
+# The consequence to keep in mind rather than hide: between releases, the
+# committed inventories describe the lockfiles as of the last release. The
+# site's tech page says so in as many words instead of claiming CI holds
+# them together.
+if [ "${1:-}" = "--lint" ]; then
+	echo "lint ok: the detector self-tests pass and every lockfile is accounted for"
+	echo "(drift against the lockfiles is checked by \`make sbom-check\` at release time)"
+	exit 0
+fi
+
 # ---- the committed inventories still describe their lockfiles ----------
 echo "== sbom regenerate =="
 "$GEN" "$tmp/fresh" >/dev/null

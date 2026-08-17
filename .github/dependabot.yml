@@ -1,21 +1,25 @@
 version: 2
 
-# A PR THAT MOVES AN INVENTORIED LOCKFILE IS FIXED FOR YOU. `engine/Cargo.lock`,
-# `gui/pnpm-lock.yaml` and `sdk/js/pnpm-lock.yaml` each have a committed
-# CycloneDX inventory under `sbom/`, and `make sbom-check` (CI job "sbom")
-# reds when one drifts. Dependabot cannot regenerate them — a workflow it
-# triggers gets a read-only token and cannot read repository secrets — so
-# every such PR used to arrive red and stay red until a human ran
-# `make sbom` on the branch. `.github/workflows/sbom-sync.yml` now does
-# that and commits the result.
+# A LOCKFILE BUMP OWES THE SBOMs NOTHING. The committed CycloneDX inventories
+# under `sbom/` describe the last RELEASE, not every commit, so a PR here that
+# moves `engine/Cargo.lock`, `gui/pnpm-lock.yaml` or `sdk/js/pnpm-lock.yaml`
+# needs no inventory refresh and CI does not ask for one.
 #
-# It refuses any PR that touches anything but manifests and lockfiles, which
-# is deliberate and covers two ecosystems below: `github-actions` PRs edit
-# `.github/workflows/**` and `docker` PRs edit Dockerfiles. Neither moves a
-# lockfile, so neither has an SBOM to be stale — nothing is owed there.
-# `site/pnpm-lock.yaml` is mapped `-` (not inventoried), so site PRs never
-# needed it either. When the workflow declines a PR it says which path
-# disqualified it; the fallback is always `make sbom` on the branch.
+# That was not always true, and the history is worth one paragraph because the
+# obvious fix is a trap. Drift used to be a per-PR gate, dependabot cannot run
+# `make sbom` (a workflow it triggers gets a read-only token and cannot read
+# repository secrets), so every such PR arrived red and stayed red. The fix
+# attempted first was a workflow that regenerated and committed the inventories
+# onto these branches with a GitHub App token; it LOOPED in production — 19
+# commits on one PR — and two fixes did not settle it. What actually settled it
+# was noticing the requirement was wrong: an SBOM is a statement about a
+# released artifact, and nobody consumes "the dependencies of main at commit
+# abc123". `make sbom` now runs at release. The trap catalogue is
+# docs/agents/gotchas/github-automation.md.
+#
+# What CI still checks per PR is `make sbom-lint` — the detector's self-tests
+# and the rule that every committed lockfile is either inventoried or declared
+# not to be. So a bump is free, but ADDING a lockfile still needs a map row.
 updates:
   - package-ecosystem: cargo
     directory: /engine

@@ -153,32 +153,33 @@ otherwise move past on its own, so drop it once the parent widens.
 These write files; they check nothing. Follow them with the scope's
 `verify:`.
 
-A moved lockfile also moves the committed CycloneDX inventory that
-describes it, so regenerate and commit that in the same change:
+**Moving a lockfile does not oblige you to touch the SBOMs.** The
+committed CycloneDX inventories under `sbom/` describe the last RELEASE,
+not every commit — an SBOM is a statement about a released artifact, and
+requiring each commit to carry a matching one made every dependency-bump
+PR red on arrival for no reader's benefit. `make sbom` is run and its
+output committed as part of the release, where `make sbom-check` verifies
+it.
+
+What CI does check on your PR is `make sbom-lint`: the detector's own
+self-tests, plus the rule that every committed lockfile appears in the map
+at the top of `scripts/generate-sbom.sh` — either with an inventory name,
+or with `-` and the reason it ships in nothing. **So adding a lockfile
+does need you.** One that appears in neither fails the gate rather than
+going quietly uninventoried.
+
+If you want to refresh the inventories anyway, it is one command and it is
+safe:
 
 ```bash
 make sbom
 ```
 
-`make sbom-check` reds until you do. It regenerates from the lockfiles
-into a scratch directory and compares — so it also fails if the
-inventories were generated from something other than the lockfile. Every
-committed lockfile must appear in the map at the top of
-`scripts/generate-sbom.sh`, either with an inventory name or with `-` and
-the reason it ships in nothing; a new one that appears in neither fails
-the gate rather than going quietly uninventoried.
-
-`make sbom` is **idempotent**: an inventory whose contents have not
-changed keeps its committed bytes rather than being restamped with a new
-timestamp. So it is safe to run when you are not sure whether you need
-it, and a bump to one ecosystem produces a one-file diff instead of
-dirtying all of them. The run prints `preserved` or `written` per
-inventory, which is how you see which one actually moved.
-
-You do not need to run it on a **dependabot** PR: `.github/workflows/sbom-sync.yml`
-regenerates and commits the inventories there itself. If that workflow
-declines — it refuses any PR touching anything but manifests and
-lockfiles — its log says why, and the fix is this command on the branch.
+It is **idempotent**: an inventory whose contents have not changed keeps
+its committed bytes rather than being restamped with a new timestamp, so a
+bump to one ecosystem produces a one-file diff instead of dirtying all of
+them. The run prints `preserved` or `written` per inventory, which is how
+you see which one actually moved.
 
 ## Before you open a pull request
 
@@ -188,8 +189,9 @@ lockfiles — its log says why, and the fix is this command on the branch.
    crates, modules, or boundaries move, and the relevant reference page
    under [docs/engine/](docs/engine/README.md) for authorable syntax.
 3. Bundled example outputs are refreshed (`make examples`) if your
-   change alters what they render, and the SBOMs are refreshed
-   (`make sbom`) if it moved a lockfile.
+   change alters what they render. The SBOMs are not your job — they are
+   refreshed at release — but a lockfile you ADDED needs a row in the map
+   in `scripts/generate-sbom.sh`.
 
 > **CI runs the same `make` targets you just ran**, in the same pinned
 > containers — engine, gui, wasm, docker, and every SDK across each of
