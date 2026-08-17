@@ -304,6 +304,12 @@ export const en: LanguageCatalog = {
     'help.style.title': 'Where a value comes from',
     'help.style.body':
       'A blank decoration control still renders — it inherits from an applied style or the document default. The hint under each field shows the effective value and its source.',
+    'help.placementChild.title': 'Where coordinates start',
+    'help.placementChild.body':
+      'X and Y are measured from the top-left corner of the container this element sits in.',
+    'help.placement.title': 'Where coordinates start',
+    'help.placement.body':
+      'X and Y are measured from the top-left corner of the area inside the page margins — the outlined rectangle on the page. Negative values reach into the margin on purpose, and only content that leaves the paper is reported as a problem.',
     'help.grid.title': 'Snap grid',
     'help.grid.body':
       'Dragging and resizing on the canvas snaps positions to this step, and the arrow steppers move by it. An editor setting only — it is never saved into the template.',
@@ -317,6 +323,9 @@ export const en: LanguageCatalog = {
     'glossary.field.term': 'Data field',
     'glossary.field.def':
       'A named value from your data, such as a customer name or total, that a text or image item shows instead of fixed text.',
+    'glossary.marginBox.term': 'Margin box',
+    'glossary.marginBox.def':
+      'The area inside the page margins, outlined on the canvas — where X and Y start counting from for a band or absolutely-placed element, and what a full-width item fills. An element sitting inside a container counts from the top-left of that container instead, and it is the container, not the paper, that reports it for overrunning.',
     'glossary.grid.term': 'Snap grid',
     'glossary.grid.def':
       'The invisible grid the canvas snaps to while you drag or resize, keeping items aligned. Set the step (or turn it off) in the toolbar; it never changes the document itself.',
@@ -658,7 +667,7 @@ export const en: LanguageCatalog = {
     'panel.placement.hint.flowIgnoredY':
       'This item has a Y value, but it is ignored while it stacks in the flow.',
     'panel.placement.caption.coordinate':
-      'Here the position is set by coordinates, measured from the top-left corner.',
+      'Here the position is set by coordinates, measured from the top-left corner of the area inside the page margins.',
     'panel.tab.content': 'Content',
     'panel.tab.style': 'Style',
     'panel.tab.box': 'Layout',

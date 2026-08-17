@@ -6,8 +6,9 @@
 // string-built SVG), so document-derived paths are React-escaped attributes.
 //
 // This file is the ASSEMBLY: the <svg> element, one `useOverlayDrag` call, and
-// the LAYER ORDER — grid under the interactive layer, every other decoration
-// over it. What is painted comes from the pure `overlayLayers`; what empty
+// the LAYER ORDER — the paper anatomy (grid, margin-box guide) under the
+// interactive layer, every other decoration over it. What is painted comes from
+// the pure `overlayLayers`; what empty
 // space does from `overlayBackground`; the clickable rects and their resize
 // handles from `OverlayBoxLayer`; the decorations from `OverlayShapes` /
 // `OverlayGestureShapes`; and all slot/plan math from the pure
@@ -17,9 +18,10 @@ import { useCallback, useId, useRef } from 'react';
 import type { BoxRect, PlacedBox } from '../engine/types';
 import { type ContainerMark, ContainerMarkVisual } from './ContainerMarkVisual';
 import type { IndicatorLine } from './dropPlan';
+import { marginGuide, type PageMargin } from './marginGuide';
 import { OverlayBoxLayer } from './OverlayBoxLayer';
 import { DropLine, GhostRect, GuideLines, InsertRects, MarqueeRect } from './OverlayGestureShapes';
-import { GroupFrame, OverlayGrid } from './OverlayShapes';
+import { GroupFrame, MarginGuideShape, OverlayGrid } from './OverlayShapes';
 import { overlayBackground } from './overlayBackground';
 import type { CanvasManipulate } from './overlayDragModel';
 import { overlayLayers } from './overlayLayers';
@@ -76,6 +78,10 @@ export interface BoxOverlayProps {
   /** Right-click on a box: open the context menu at the pointer (viewport px).
    * Absent = the browser's native menu (no override). */
   readonly onContextMenu?: (path: string, x: number, y: number) => void;
+  /** The engine's RESOLVED page margins (`inspect.margin`, `[t,r,b,l]` pt) —
+   * painted as the margin-box guide, which is where `x: 0` / `y: 0` start.
+   * Absent = no guide (unchanged behavior for a host that passes none). */
+  readonly margin?: PageMargin | null;
 }
 
 export function BoxOverlay({
@@ -96,6 +102,7 @@ export function BoxOverlay({
   insertRects = EMPTY_RECTS,
   containerMarks = EMPTY_MARKS,
   onContextMenu,
+  margin = null,
 }: BoxOverlayProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   // One callback ref keeps the internal ref current AND reports the element
@@ -138,6 +145,9 @@ export function BoxOverlay({
   // The reorder indicator and an external (palette-drop) one share the
   // rendering; at most one exists at a time.
   const dropLine = indicator ?? insertLine;
+  // Paper anatomy, not a gesture — derived every render like the grid, and
+  // painted with it beneath the interactive layer.
+  const guide = marginGuide(margin, scale, width, height);
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: a background click clears the selection; the keyboard equivalent is the window-level Escape handler in Designer (a focusable full-page backdrop would only clutter the tab order).
@@ -170,6 +180,7 @@ export function BoxOverlay({
           patternId={patternId}
         />
       ) : null}
+      {guide !== null ? <MarginGuideShape guide={guide} /> : null}
       <OverlayBoxLayer
         boxes={layers.ordered}
         scale={scale}

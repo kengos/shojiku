@@ -12,6 +12,7 @@ export interface GlossaryEntry {
 
 export const GLOSSARY_TERMS: readonly GlossaryEntry[] = [
   { term: 'glossary.field.term', def: 'glossary.field.def' },
+  { term: 'glossary.marginBox.term', def: 'glossary.marginBox.def' },
   { term: 'glossary.grid.term', def: 'glossary.grid.def' },
   { term: 'glossary.style.term', def: 'glossary.style.def' },
   { term: 'glossary.default.term', def: 'glossary.default.def' },

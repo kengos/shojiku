@@ -233,14 +233,28 @@ read side, never the reverse.
   `contentParts.tsx`), `StyleSection.tsx` (+`StyleTabFields.tsx`),
   `BoxSection.tsx` (+`boxFields.tsx`); shared prop contract in
   `itemPanelProps.ts` (`ItemPanelProps` + `hasCapability`); shared
-  helpers in `panelHelpers.tsx` (`HelpfulHeading`, `chipsFor`,
+  helpers in `panelHelpers.tsx` (`HelpfulHeading` over the `HelpTopic`
+  vocabulary — `content`/`style`/`placement`/`placementChild`, each value
+  also the catalog SEGMENT `help.<topic>.title`/`.body`, so a topic is two
+  strings rather than another branch; `chipsFor`,
   `documentScopeCreateField`, `scopePickerProps`) — no section imports
   another for a helper.
   - The static-text content field is the shared `text/TextEditor` chip
     editor over the SAME `text/chipContext.ts` context the canvas
     overlay uses; commit = `text/declModel` `commitOps` via `applyAll`.
   - The placement tab composes PARENT-FIRST (`ParentContainerCard`, then the
-    item's own placement, then a container's own `LayoutSection`) and is
+    item's own placement, then a container's own `LayoutSection`). Its
+    heading is a `HelpfulHeading` in BOTH arms (plain and classified), but
+    WHICH FRAME it names follows the placement kind: `x`/`y` are an offset
+    from the PARENT BOX ORIGIN (`docs/engine/box.md`), which is the margin
+    box only for a band / absolute-body child and for a flow child's x —
+    those get `placement` (the rectangle `canvas/marginGuide` outlines is
+    literally where their numbers start, and the SHEET is what warns).
+    A container child and a sub-template item measure from their container
+    and are bounded by `child_overflow`, so they get `placementChild`,
+    which names the container and explicitly disowns the drawn rectangle.
+    One topic for all four would re-create the very misconception the guide
+    exists to remove, one nesting level down. It is
     placement-mode-aware via a pure pair split by SOURCE OF TRUTH —
     `panel/placementModel.ts` reads/authors the DOCUMENT (so it stays
     correct when a render fails) and `panel/placementGeometry.ts` needs

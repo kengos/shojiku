@@ -53,13 +53,16 @@ hostile geometry degrades to null before it can reach an op.
   `paintPage` RGBA→canvas (no-op without a 2D ctx).
   `canvas/PageUnderlay.tsx` — callback-ref canvas paint.
 - `canvas/BoxOverlay.tsx` — the overlay ASSEMBLY: the `<svg>` element,
-  ONE `useOverlayDrag` call, and the LAYER ORDER (grid under the
-  interactive layer, every other decoration over it). JSX-only —
+  ONE `useOverlayDrag` call, and the LAYER ORDER (the paper anatomy —
+  grid, margin-box guide — under the interactive layer, every other
+  decoration over it). JSX-only —
   document-derived paths are React-escaped (pinned by a hostile-path
   test). `svgRef` reports the SVG (the palette drag hit-tests through
   it); `insertLine` vs `insertRects` are the two mutually-exclusive
   external insertion indicators. `BoxOverlayProps` is the host-facing
-  surface (re-exported from the package index) — deliberately flat.
+  surface (re-exported from the package index) — deliberately flat; its
+  optional `margin` paints the margin-box guide (absent = no guide, so an
+  existing host is unchanged).
   The background handlers are named one by one rather than spread: a
   spread hides `onClick` from the a11y lint and would silently retire
   the element's `useKeyWithClickEvents` suppression.
@@ -126,8 +129,27 @@ hostile geometry degrades to null before it can reach an op.
   movable box (filtered by `resizableHandle`; `OverlayBoxLayer`'s JSX
   holds the narrowing).
 - `canvas/OverlayShapes.tsx` — the overlay's STATE shapes: the grid
-  pattern (fed by `manipulate.grid`) and the multi-selection group frame
-  (fed by `groupBounds`).
+  pattern (fed by `manipulate.grid`), the multi-selection group frame
+  (fed by `groupBounds`), and `MarginGuideShape` (fed by `marginGuide`) —
+  the page's margin box, DASHED because nothing the engine draws is
+  dashed, so it can never be read as document ink; both its strokes are
+  FIXED values rather than `--sj-text`/`--sj-accent`, since it is drawn
+  on the engine-rendered paper, which is pixels and stays white in either
+  colour scheme. `.sj-grid-line` now follows the same rule for the same
+  reason — it was `--sj-text` at 8% on that same paper, so the snap grid
+  faded out in dark chrome; both are the `#1f1a17` `OverlayGrid`'s inline
+  fallback already used, and the stylesheet was the half that diverged.
+- `canvas/marginGuide.ts` — pure: the margin box as canvas geometry.
+  `marginGuide(margin, scale, width, height)` turns the engine's RESOLVED
+  `inspect.margin` (`[t,r,b,l]` pt, post-clamp) into the px rect the
+  overlay paints, plus whether the top band has room for the `0,0` origin
+  marker (`ORIGIN_MARKER_PX`). It exists because the coordinate origin IS
+  the margin box (`docs/engine/page.md`) while an absolutely placed item
+  is bounded by the SHEET — two invisible rectangles, one that the
+  numbers are measured from and one that the warnings are. `null` (paint
+  nothing) covers hostile/degenerate input AND the deliberate case of
+  every side `0`, which is the sheet-absolute escape hatch: there the
+  margin box already is the sheet.
 - `canvas/OverlayGestureShapes.tsx` — the overlay's GESTURE shapes, each
   fed by a live drag machine or the external palette-drag props: ghost,
   guides, drop line, insert rects, marquee.
@@ -137,7 +159,9 @@ hostile geometry degrades to null before it can reach an op.
 - `canvas/ContainerMarkVisual.tsx` — `ContainerMark {path, label}` +
   its dashed outline / slot guides / kind chip (chip labels are CHROME
   strings, never document-derived).
-- `canvas/DesignerCanvas.tsx` — per-page underlay+overlay stack;
+- `canvas/DesignerCanvas.tsx` — per-page underlay+overlay stack; passes
+  `margin` to EVERY page (one page geometry per document, so every page
+  shares the origin);
   applies the zoom `cssFactor` transform; slots the `InlineTextEditor`;
   threads reorder/multi-select wiring, `pageSvgRef` + `insertIndicator`
   (palette drop), and `pageRef` (the page-nav rail measures through it).

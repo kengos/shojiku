@@ -30,7 +30,7 @@ implemented-capability inventory and the decision log — *that* a feature
 exists and why it is shaped that way; the pages here carry only *how to
 author it*. It lives in the repository only and is not part of this
 rendered reference; the reader-facing tour of what the engine does is the
-site's own [Features](https://shojiku.kengos.jp/features) page.
+site's own [Features](https://shojiku.pages.dev/features) page.
 
 ## A minimal template
 

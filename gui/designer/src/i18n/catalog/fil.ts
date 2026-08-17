@@ -96,6 +96,12 @@ export const fil: LanguageCatalog = {
     'help.style.title': 'Saan nagmumula ang halaga',
     'help.style.body':
       'Lumalabas pa rin ang blangkong kontrol ng dekorasyon — minana nito ang inilapat na estilo o ang default ng dokumento. Ipinapakita ng pahiwatig sa ilalim ng bawat field ang epektibong halaga at pinagmulan nito.',
+    'help.placementChild.title': 'Saan nagsisimula ang mga coordinate',
+    'help.placementChild.body':
+      'Sinusukat ang X at Y mula sa itaas-kaliwang sulok ng lalagyan kung saan nakalagay ang elementong ito.',
+    'help.placement.title': 'Saan nagsisimula ang mga coordinate',
+    'help.placement.body':
+      'Sinusukat ang X at Y mula sa itaas-kaliwang sulok ng lugar sa loob ng mga margin ng pahina — ang nakabalangkas na parihaba sa pahina. Sinadya ang mga negatibong halaga para umabot sa margin, at ang nilalamang lumalabas sa papel lang ang iniuulat na problema.',
     'help.grid.title': 'Snap grid',
     'help.grid.body':
       'Ang pag-drag at pag-resize sa canvas ay dumidikit sa step na ito, at ito rin ang laki ng galaw ng mga arrow button. Setting lang ito ng editor — hindi ito naisasama sa template.',
@@ -109,6 +115,9 @@ export const fil: LanguageCatalog = {
     'glossary.field.term': 'Data field',
     'glossary.field.def':
       'Isang pinangalanang halaga mula sa iyong datos (tulad ng pangalan ng customer o kabuuan) na ipinapakita ng teksto o larawan sa halip na nakapirmeng teksto.',
+    'glossary.marginBox.term': 'Lugar sa loob ng margin',
+    'glossary.marginBox.def':
+      'Ang lugar sa loob ng mga margin ng pahina, nakabalangkas sa canvas. Dito nagsisimula ang bilang ng X at Y para sa isang band o absolutong nakalagay na elemento, at ito ang pinupuno ng isang buong-lapad na item. Ang elementong nasa loob ng isang lalagyan ay nagbibilang mula sa itaas-kaliwa ng lalagyang iyon, at ang lalagyan — hindi ang papel — ang nag-uulat kapag lumampas ito.',
     'glossary.grid.term': 'Snap grid',
     'glossary.grid.def':
       'Ang hindi nakikitang grid na dinidikitan ng mga item habang nagda-drag o nagre-resize, para manatiling nakahanay. Baguhin ang step (o i-off) sa toolbar; hindi nito binabago ang dokumento.',
@@ -457,7 +466,7 @@ export const fil: LanguageCatalog = {
     'panel.placement.hint.flowIgnoredY':
       'May Y na halaga ang item na ito, ngunit hindi ito pinapansin habang nasa flow.',
     'panel.placement.caption.coordinate':
-      'Dito, itinatakda ang posisyon sa pamamagitan ng mga coordinate, sinusukat mula sa itaas-kaliwang sulok.',
+      'Dito, itinatakda ang posisyon sa pamamagitan ng mga coordinate, sinusukat mula sa itaas-kaliwang sulok ng lugar sa loob ng mga margin ng pahina.',
     'panel.tab.content': 'Nilalaman',
     'panel.tab.style': 'Estilo',
     'panel.tab.box': 'Layout',

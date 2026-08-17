@@ -1,6 +1,6 @@
 # Shojiku for PHP
 
-PHP bindings for [Shojiku](https://shojiku.kengos.jp) — a document engine that
+PHP bindings for [Shojiku](https://shojiku.pages.dev) — a document engine that
 turns a YAML template plus your data into a deterministic PDF. The package is
 pure PHP and renders nothing on its own: it drives the `shojiku` command-line
 binary, which you install separately.

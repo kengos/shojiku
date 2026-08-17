@@ -5,7 +5,10 @@
 // needs a render to have happened, and degrades to `null` when it has not.
 //
 // Coordinates are parent-content-relative for a `pinnable` child (the form the
-// pin writes back) and page-origin otherwise; sizes are the resolved border box.
+// pin writes back), MARGIN-BOX-relative for a `coordinate` one (the frame the
+// engine itself uses, and the rectangle `canvas/marginGuide` outlines), and
+// raw page-origin for a `flow` child's display-only y; sizes are the resolved
+// border box.
 
 import type { ReadFn } from '@shojiku/designer-core';
 import { formatLength, readLength } from '../canvas/lengths';

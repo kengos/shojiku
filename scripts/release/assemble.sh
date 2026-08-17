@@ -174,7 +174,7 @@ assemble_npm() {
   "name": "$npmpkg",
   "version": "$VERSION",
   "description": "Shojiku engine addon for $slug",
-  "homepage": "https://shojiku.kengos.jp",
+  "homepage": "https://shojiku.pages.dev",
   "repository": { "type": "git", "url": "git+https://github.com/kengos/shojiku.git" },
   "license": "MIT OR Apache-2.0 OR BSD-3-Clause",
   "files": ["shojiku.node"],

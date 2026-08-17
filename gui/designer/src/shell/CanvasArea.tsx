@@ -64,7 +64,7 @@ export function CanvasArea({
   const { read, apply, applyAll, select, selection } = editor;
   const { selectClearing, setRefused } = multi;
   const { gridStep } = prefs;
-  const { pages, boxes, renderedScale, cssFactor, canvasRefCallback, preview } = session;
+  const { pages, boxes, margin, renderedScale, cssFactor, canvasRefCallback, preview } = session;
   const { status: previewStatus, error: previewError } = preview;
 
   const manipulate = useMemo<CanvasManipulate>(
@@ -121,6 +121,7 @@ export function CanvasArea({
             insertIndicator={drag.insertIndicator}
             containerMarks={marks.containerMarks}
             onContextMenu={onContextMenu}
+            margin={margin}
             inlineEdit={
               inline.editing === null
                 ? undefined

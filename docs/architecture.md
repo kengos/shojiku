@@ -196,7 +196,7 @@ shojiku/
   gui/         React Designer pnpm workspace — document core, canvas,
                property panel + diagnostics, and the standalone
                preset-catalog app shell (live at
-               shojiku.kengos.jp/designer)
+               shojiku.pages.dev/designer)
   sdk/         Thin language wrappers (python, js, ruby, dotnet, php,
                java, go) — never reimplement the layout engine. All
                seven are built: ruby is the reference the other six

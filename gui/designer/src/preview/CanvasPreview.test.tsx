@@ -191,3 +191,31 @@ describe('CanvasPreview', () => {
     expect(view.container.querySelector('[role="alert"]')).toBeNull();
   });
 });
+
+describe('CanvasPreview margin-box guide', () => {
+  it('threads the resolved margins through to the canvas', async () => {
+    vi.useFakeTimers();
+    // The shared fixture uses `margin: [0,0,0,0]`, which is the sheet-absolute
+    // escape hatch and deliberately paints nothing — so this needs real margins.
+    const withMargins: RenderOutcome = {
+      ...okOutcome(),
+      pages: [{ width: 200, height: 200, rgba: new Uint8Array(200 * 200 * 4) }],
+      inspect: { ...inspect(), margin: [25, 25, 25, 25] },
+    };
+    const { container } = renderPreview(transportWith(vi.fn().mockResolvedValue(withMargins)));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DEFAULT_DEBOUNCE_MS);
+    });
+    expect(container.querySelector('.sj-margin-guide')).not.toBeNull();
+  });
+
+  it('paints no guide when an ok outcome carries no inspect envelope', async () => {
+    vi.useFakeTimers();
+    const noInspect: RenderOutcome = { ...okOutcome(), inspect: null };
+    const { container } = renderPreview(transportWith(vi.fn().mockResolvedValue(noInspect)));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DEFAULT_DEBOUNCE_MS);
+    });
+    expect(container.querySelector('.sj-margin-guide')).toBeNull();
+  });
+});

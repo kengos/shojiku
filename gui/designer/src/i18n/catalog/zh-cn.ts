@@ -263,6 +263,11 @@ export const zhCn: LanguageCatalog = {
     'help.style.title': '值来自哪里',
     'help.style.body':
       '留空的装饰控件仍会显示，因为它会继承所应用的样式或文档默认值。每个字段下方的提示会显示实际生效的值及其来源。',
+    'help.placementChild.title': '坐标的起点',
+    'help.placementChild.body': 'X 和 Y 从该元素所在容器的左上角开始计算。',
+    'help.placement.title': '坐标的起点',
+    'help.placement.body':
+      'X 和 Y 从页边距内侧区域的左上角开始计算（画布上用虚线框标出的范围）。负值可以有意伸入页边距；只有超出纸张的内容才会被报告为问题。',
     'help.grid.title': '吸附网格',
     'help.grid.body':
       '在画布上拖动或调整大小时,位置会吸附到此间距,箭头按钮也以此为增减单位。这是编辑器设置,不会存入模板。',
@@ -276,6 +281,9 @@ export const zhCn: LanguageCatalog = {
     'glossary.field.term': '数据字段',
     'glossary.field.def':
       '数据中带名称的值（如客户名称或合计），可让文本或图像项目显示它，而不是固定文本。',
+    'glossary.marginBox.term': '页边距内区域',
+    'glossary.marginBox.def':
+      '页边距以内的区域，在画布上以虚线框标出。区块或绝对定位元素的 X 和 Y 从这里开始计算，整宽元素也填满这个范围。位于容器内的元素则从该容器的左上角开始计算，超出时也是相对容器而非纸张报告的。',
     'glossary.grid.term': '吸附网格',
     'glossary.grid.def':
       '拖动或调整大小时让位置自动对齐的隐形网格。可在工具栏调整间距或关闭;不会改变文档本身。',
@@ -602,7 +610,7 @@ export const zhCn: LanguageCatalog = {
     'panel.placement.hint.pinned': '切换为“自动”可解除固定，让容器重新排列。',
     'panel.placement.hint.flowY': '垂直位置由自上而下的堆叠自动决定，无法在此更改。',
     'panel.placement.hint.flowIgnoredY': '该元素设置了 Y 值，但在流式排列中会被忽略。',
-    'panel.placement.caption.coordinate': '此区域按坐标定位，以左上角为原点。',
+    'panel.placement.caption.coordinate': '此区域按坐标定位，以页边距内侧区域的左上角为原点。',
     'panel.tab.content': '内容',
     'panel.tab.style': '样式',
     'panel.tab.box': '版面',

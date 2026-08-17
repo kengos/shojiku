@@ -263,6 +263,11 @@ export const zhTw: LanguageCatalog = {
     'help.style.title': '值來自哪裡',
     'help.style.body':
       '留空的裝飾控制項仍會顯示，因為它會繼承所套用的樣式或文件預設值。每個欄位下方的提示會顯示實際生效的值及其來源。',
+    'help.placementChild.title': '座標的起點',
+    'help.placementChild.body': 'X 與 Y 從此元素所在容器的左上角開始計算。',
+    'help.placement.title': '座標的起點',
+    'help.placement.body':
+      'X 與 Y 從頁面邊界內側區域的左上角開始計算（畫布上以虛線框標示的範圍）。負值可刻意延伸到邊界內；只有超出紙張的內容才會被回報為問題。',
     'help.grid.title': '吸附格線',
     'help.grid.body':
       '在畫布上拖曳或調整大小時,位置會吸附到此間距,箭頭按鈕也以此為增減單位。這是編輯器設定,不會存入範本。',
@@ -276,6 +281,9 @@ export const zhTw: LanguageCatalog = {
     'glossary.field.term': '資料欄位',
     'glossary.field.def':
       '資料中具名稱的值（如客戶名稱或合計），可讓文字或圖片項目顯示它，而非固定文字。',
+    'glossary.marginBox.term': '邊界內區域',
+    'glossary.marginBox.def':
+      '頁面邊界以內的區域，在畫布上以虛線框標示。區塊或絕對定位元素的 X 與 Y 從這裡開始計算，整寬元素也填滿這個範圍。位於容器內的元素則從該容器的左上角開始計算，超出時也是相對容器而非紙張回報的。',
     'glossary.grid.term': '吸附格線',
     'glossary.grid.def':
       '拖曳或調整大小時讓位置自動對齊的隱形格線。可在工具列調整間距或關閉;不會改變文件本身。',
@@ -603,7 +611,7 @@ export const zhTw: LanguageCatalog = {
     'panel.placement.hint.pinned': '切換為「自動」可解除固定，讓容器重新排列。',
     'panel.placement.hint.flowY': '垂直位置由上而下堆疊自動決定，無法在此變更。',
     'panel.placement.hint.flowIgnoredY': '此元素設定了 Y 值，但在流動排列中會被忽略。',
-    'panel.placement.caption.coordinate': '此區域以座標定位，並以左上角為原點。',
+    'panel.placement.caption.coordinate': '此區域以座標定位，並以頁面邊界內側區域的左上角為原點。',
     'panel.tab.content': '內容',
     'panel.tab.style': '樣式',
     'panel.tab.box': '版面',

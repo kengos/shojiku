@@ -3,7 +3,7 @@
     "description": "Deterministic PDF documents from a YAML template plus your data",
     "type": "library",
     "keywords": ["pdf", "invoice", "receipt", "template", "document"],
-    "homepage": "https://shojiku.kengos.jp",
+    "homepage": "https://shojiku.pages.dev",
     "license": ["MIT", "Apache-2.0", "BSD-3-Clause"],
     "authors": [
         {

@@ -1422,3 +1422,75 @@ describe('a conditionally hidden item', () => {
     expect(rect?.classList.contains('sj-box--hidden')).toBe(false);
   });
 });
+
+describe('BoxOverlay margin-box guide', () => {
+  const guided = (extra: { margin?: readonly [number, number, number, number] | null }) =>
+    render(
+      <BoxOverlay
+        boxes={[box('a', 0, 0, 100, 100)]}
+        scale={1}
+        width={200}
+        height={200}
+        selectedPath={null}
+        onSelect={() => {}}
+        onDeselect={() => {}}
+        {...extra}
+      />,
+    );
+
+  it('paints the guide UNDER the interactive layer', () => {
+    const { container } = guided({ margin: [10, 10, 10, 10] });
+    const painted = [...container.querySelectorAll('rect')];
+    const guideIndex = painted.findIndex((r) => r.classList.contains('sj-margin-guide'));
+    const firstBox = painted.findIndex((r) => r.classList.contains('sj-box'));
+    expect(guideIndex).toBeGreaterThanOrEqual(0);
+    // SVG paints in document order, so "under" means "earlier".
+    expect(guideIndex).toBeLessThan(firstBox);
+  });
+
+  it('paints no guide without margins — the unchanged host default', () => {
+    expect(guided({}).container.querySelector('.sj-margin-guide')).toBeNull();
+    expect(guided({ margin: null }).container.querySelector('.sj-margin-guide')).toBeNull();
+  });
+
+  it('coexists with the snap grid', () => {
+    const manipulate = makeManipulate({ grid: 8 });
+    const { container } = render(
+      <BoxOverlay
+        boxes={[box('a', 0, 0, 100, 100)]}
+        scale={1}
+        width={200}
+        height={200}
+        selectedPath={null}
+        onSelect={() => {}}
+        onDeselect={() => {}}
+        manipulate={manipulate}
+        margin={[10, 10, 10, 10]}
+      />,
+    );
+    expect(container.querySelector('.sj-grid')).not.toBeNull();
+    expect(container.querySelector('.sj-margin-guide')).not.toBeNull();
+  });
+
+  it('never takes a click from the box beneath it', () => {
+    const onSelect = vi.fn();
+    const { container } = render(
+      <BoxOverlay
+        boxes={[box('a', 0, 0, 100, 100)]}
+        scale={1}
+        width={200}
+        height={200}
+        selectedPath={null}
+        onSelect={onSelect}
+        onDeselect={() => {}}
+        margin={[10, 10, 10, 10]}
+      />,
+    );
+    // The guide spans the same region as the box; a click there must reach it.
+    fireEvent.click(container.querySelector('rect.sj-box') as SVGRectElement);
+    expect(onSelect).toHaveBeenCalledWith('a');
+    // And the guide itself is inert.
+    const group = container.querySelector('.sj-margin-guide')?.parentElement;
+    expect(group?.getAttribute('style')).toContain('pointer-events: none');
+  });
+});

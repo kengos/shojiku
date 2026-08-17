@@ -41,6 +41,7 @@ export function CanvasPreview(props: CanvasPreviewProps) {
         <DesignerCanvas
           pages={state.lastGood.pages}
           boxes={state.lastGood.inspect?.boxes ?? EMPTY_BOXES}
+          margin={state.lastGood.inspect?.margin ?? null}
           scale={scale}
           selectedPath={selectedPath}
           onSelect={onSelect}

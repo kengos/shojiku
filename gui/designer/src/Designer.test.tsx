@@ -1571,3 +1571,66 @@ describe('Designer absolute manipulation', () => {
     ).not.toContain('sj-place-chip--refused');
   });
 });
+
+describe('Designer — the margin-box guide reaches the canvas', () => {
+  // The shipped path, end to end: the engine's resolved `inspect.margin` →
+  // `usePreviewSession.margin` → `CanvasArea` → `DesignerCanvas` → each page's
+  // `BoxOverlay`. The pure model and every component are unit-tested; this is
+  // the one case that would fail if any link in the THREAD were dropped.
+  const withMargins = (): RenderOutcome => {
+    const base = outcomeWith(['sections.body.items[0]']);
+    return {
+      ...base,
+      pages: [{ width: 200, height: 200, rgba: new Uint8Array(200 * 200 * 4) }],
+      // `outcomeWith` ships `margin: [0,0,0,0]` — the sheet-absolute escape
+      // hatch, which deliberately paints nothing — so this needs real margins.
+      inspect: base.inspect === null ? null : { ...base.inspect, margin: [25, 25, 25, 25] },
+    };
+  };
+
+  it('outlines the margin box once a render lands', async () => {
+    const transport = makeTransport({ renderRaw: vi.fn(async () => withMargins()) });
+    const { container } = draw(transport);
+    await waitFor(() => expect(container.querySelector('.sj-margin-guide')).not.toBeNull());
+    // …with the origin corner named, which is the half that teaches.
+    expect(container.querySelector('text.sj-margin-origin-text')?.textContent).toBe('0,0');
+  });
+
+  it('outlines nothing on a document with no margins at all', async () => {
+    // `margin: 0` IS the sheet-absolute escape hatch: the margin box already is
+    // the sheet, so there is no invisible rectangle to reveal.
+    const transport = makeTransport({
+      renderRaw: vi.fn(async () => outcomeWith(['sections.body.items[0]'])),
+    });
+    const { container } = draw(transport);
+    await waitFor(() => expect(container.querySelector('canvas')).not.toBeNull());
+    expect(container.querySelector('.sj-margin-guide')).toBeNull();
+  });
+
+  it('outlines nothing when an ok render carries NO inspect envelope', async () => {
+    // The session's `preview.lastGood?.inspect?.margin ?? null` null leg, walked
+    // through the REAL hook. The all-zero-margin case above cannot stand in for
+    // it: `marginGuide` refuses all-zero by design, so that assertion passes
+    // whether or not the hook exposes anything, and coverage sees the line run
+    // either way.
+    const noInspect = (): RenderOutcome => ({
+      ...withMargins(),
+      inspect: null,
+    });
+    const transport = makeTransport({ renderRaw: vi.fn(async () => noInspect()) });
+    const { container } = draw(transport);
+    await waitFor(() => expect(container.querySelector('canvas')).not.toBeNull());
+    expect(container.querySelector('.sj-margin-guide')).toBeNull();
+  });
+
+  it('outlines nothing before the first render lands', async () => {
+    // `preview.lastGood?` — the other clause of the same requirement: there is
+    // no last-good preview yet, so there is no margin to expose.
+    const transport = makeTransport({
+      renderRaw: vi.fn(() => new Promise<RenderOutcome>(() => {})),
+    });
+    const { container } = draw(transport);
+    expect(container.querySelector('canvas')).toBeNull();
+    expect(container.querySelector('.sj-margin-guide')).toBeNull();
+  });
+});

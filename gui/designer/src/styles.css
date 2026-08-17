@@ -91,9 +91,34 @@
   stroke-opacity: 0.9;
 }
 
+/* Fixed ink rather than `--sj-text`, for the same reason as the margin guide
+   below: the grid is drawn ON the engine-rendered paper, which is pixels rather
+   than chrome and stays white in either scheme, so a text-toned stroke went
+   near-white at 8% in dark and the grid effectively disappeared. This value is
+   the one `OverlayGrid`'s inline fallback already used — the stylesheet was the
+   half that diverged. */
 .sj-grid-line {
-  stroke: var(--sj-text);
+  stroke: #1f1a17;
   stroke-opacity: 0.08;
+}
+
+/* The page margin box — the rectangle `x: 0` / `y: 0` are measured from — and
+   its origin marker. Both are drawn ON the engine-rendered paper, which is
+   pixels rather than chrome and so stays white in either colour scheme. That is
+   why these are FIXED values and not `--sj-text` / `--sj-accent`: a text-toned
+   stroke would flip to near-white in dark chrome and vanish against the page.
+   `.sj-grid-line` above now follows the same rule for the same reason — it did
+   not, and the snap grid was fading out in dark chrome as a result. */
+.sj-margin-guide {
+  stroke: #1f1a17;
+}
+
+.sj-margin-origin {
+  stroke: #c2402a;
+}
+
+.sj-margin-origin-text {
+  fill: #c2402a;
 }
 
 /* Preview dims while a fresh render is in flight (the last-good page stays up). */
