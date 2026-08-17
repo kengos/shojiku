@@ -115,7 +115,7 @@ svgtypes = "0.16"
 # (deny.toml only WARNS on duplicates, and the wasm size budget is the real
 # guard). Re-unify when harfrust moves to read-fonts 0.42+; until then this
 # tracks upstream, which is where the font-parsing hardening lands.
-skrifa = "0.45"
+skrifa = "0.46"
 # HarfBuzz text shaping ported to Rust (HarfBuzz org): kerning, ligatures,
 # and complex-script shaping behind the layout font seam. MIT, no unsafe,
 # and font parsing rides read-fonts (^0.41, its own copy since skrifa 0.45) —
