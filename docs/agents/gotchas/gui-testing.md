@@ -21,6 +21,16 @@
   stylesheet must inline its paint defaults: an unstyled `<rect>` fills
   BLACK** (use `fill="transparent"`, not `none`, to stay
   click-targetable); defer true geometry to the Playwright golden path.
+- **jsdom's CSSOM normalizes an inline colour to `rgb(...)`, which makes a
+  hex-based NEGATIVE assertion unfailable.**
+  `expect(el.getAttribute('style')).not.toContain('#dddddd')` passes whatever
+  the component paints, because the attribute can only ever read
+  `background-color: rgb(221, 221, 221)`. One shipped as the designated guard
+  for a change's headline claim with its own refutation three lines away in
+  the same file — a sibling asserting `toContain('rgb(0, 170, 0)')`. Assert
+  the positive shape instead (the exact normalized value, or that the style
+  attribute carries no colour at all), and falsify any `not.toContain` over a
+  style attribute once by hand before trusting it.
 - **jsdom has no PointerEvent, and RTL's fallback silently drops the
   fields a drag handler reads** (`pointerId`, `clientY`, `isPrimary` —
   the bare `Event` constructor ignores them). Shim a MouseEvent-based
