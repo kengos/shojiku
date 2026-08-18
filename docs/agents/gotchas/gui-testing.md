@@ -234,6 +234,17 @@
 - **Playwright `getByLabel('X')` is substring + case-insensitive**:
   'Size' also matches a "Re**size p**anel" splitter — anchor with a
   regex (`getByLabel(/^Size/)`) or `exact: true`.
+- **A `<fieldset>`-based control answers to role `group`, not `radiogroup`.**
+  The shared `Segmented` primitive is a fieldset + sr-only legend + visually
+  hidden radio inputs (so "1 of 3" comes free), which means
+  `getAllByRole('radiogroup', { name: … })` finds nothing while the individual
+  `radio`s query fine — a failure that reads as "the control did not render".
+  Query the group as `group` and the options as `radio`. Its option LABELS are
+  whatever the call site passes: a second copy of the control that hands raw
+  wire words (`'left'`) instead of `t('style.value.textAlign.left')` answers to
+  `'left'`, not `'Left'` — which is a finding about the duplicate control, not
+  about the query.
+
 - **Positional role queries (`getAllByRole('combobox')[0]`) are fragile
   across chrome additions** — one new `<select>` in a shared component
   shifts every downstream test that indexed by position. Query by
