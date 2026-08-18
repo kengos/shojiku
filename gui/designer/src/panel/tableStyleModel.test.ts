@@ -54,24 +54,6 @@ describe('readTableStyle', () => {
     expect(view.zebra).toBe('#f6f8fa');
   });
 
-  it('resolves an unset header fill to the engine floor, as a default-origin value', () => {
-    const view = readTableStyle({ type: 'table' });
-    expect(view.headerFill).toEqual({
-      value: TABLE_HEADER_FILL,
-      cascade: TABLE_HEADER_FILL,
-      own: '',
-      origin: 'engine',
-      styleName: '',
-    });
-  });
-
-  it('reports an authored header fill as the item’s OWN value, so no default line shows', () => {
-    const view = readTableStyle({ header: { style: { backgroundColor: '#dbe7ff' } } });
-    expect(view.headerFill.own).toBe('#dbe7ff');
-    expect(view.headerFill.origin).toBe('own');
-    expect(view.headerFill.value).toBe('#dbe7ff');
-  });
-
   it('reads zebra as off when the overlay is absent and on when it carries a fill', () => {
     expect(readTableStyle({ type: 'table' }).zebra).toBe('');
     expect(readTableStyle({ row: { alternateStyle: {} } }).zebra).toBe('');
@@ -112,7 +94,6 @@ describe('readTableStyle', () => {
       expect(view.row).toEqual(EMPTY);
       expect(view.zebra).toBe('');
       expect(view.ineffectiveFill).toBe('');
-      expect(view.headerFill.value).toBe(TABLE_HEADER_FILL);
     }
   });
 });

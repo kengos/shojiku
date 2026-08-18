@@ -27,9 +27,10 @@ import { BorderControl } from './BorderControl';
 import { ColorControl } from './ColorControl';
 import { effectiveStyles } from './effective';
 import { Sep } from './fmtChrome';
-import { alignedValue, alignOp, formatContext, readToolbar, type ToolbarModel } from './model';
+import { alignOp, formatContext, readToolbar, type ToolbarModel } from './model';
 import { StylePicker } from './StylePicker';
 import { TypographyGroup } from './TypographyGroup';
+import { alignedValue } from './wire';
 
 export interface FormatToolbarProps {
   readonly controller: EditorController;

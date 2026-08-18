@@ -330,8 +330,9 @@ read side, never the reverse.
 - `panel/ColumnForm.tsx` — the single-column form a canvas click on a
   `…columns[n]` cell opens: label/binding/format/width (scope via
   `bindingScopeFor`), then the column's OWN cell style — the same
-  `TableBandFields` at `columns[n].style`, which is how a money column becomes
-  right-aligned. It says so: a column's `textAlign`/`verticalAlign` also wins
+  `TableBandFields` at `columns[n].style`, over `cascadeContext(read, path,
+  floor)` (a column has a path, so its row band and table come for free), which
+  is how a money column becomes right-aligned. It says so: a column's `textAlign`/`verticalAlign` also wins
   for that column's own header LABEL over the header row's
   ([table.md](../engine/table.md)).
 - `panel/groupModel.ts` — pure model for table `headerGroups` editing
@@ -384,12 +385,47 @@ conditional rules the next section owns).
   banding) and `TableStyleGallery` (the thumbnails). FIGURES, not renders — the
   canvas carries the real engine preview — drawn over a fixed paper-white ground
   in BOTH schemes, because the page they depict is paper.
+- `panel/bandCascade.ts` (pure) — the cascade CONTEXT of a table's bands.
+  `header`/`row` are map keys under the table item, not indices, so there is no
+  path to hand `cascadeContext`: `bandContext(tableCtx, owner)` composes it
+  instead — the band's own `style`/`styleNames` as the item, the TABLE pushed in
+  as the innermost ancestor, which is the engine's own arrangement
+  (`engine/layout/src/engine/table/atom.rs` sets the inherited context to the
+  table's computed style around both the header atom and every row atom).
+  `readBandCascades(read, tablePath, floor?)` reads both bands in one pass;
+  `ruleContext(tableCtx, rule)` is TWO applications of `bandContext` — a
+  row-condition rule is one more layer over the body band, which is literally
+  what `apply_row_conditions` does, and `alternateStyle` is deliberately not in
+  the stack (the zebra applies to every other row and the card shows one value);
+  `bandInk(ctx)` is what the MINIATURE draws (effective, not authored);
+  `documentOrigin(eff)` is the badge predicate. A column needs none of this —
+  it has a path, so `toolbar/cascade` already puts the row band and the table
+  under it. `backgroundColor` travels none of these ANCESTOR layers (it does not
+  inherit): a cell looks like it carries the row band's fill because the row
+  band PAINTS beneath it, and the panel must not report paint order as a
+  cascade. Two riders: a named style is not an ancestor, so a `styleNames`
+  background is document-made and does earn its line; and a row-condition RULE
+  genuinely does inherit the band's background (`apply_row_conditions` overlays
+  onto the resolved row style), which this module does NOT express yet — the
+  header note carries why.
 - `panel/TableBandFields.tsx` — the four controls one styled band carries
   (alignment, background, text colour, bold), rendered for the header band, the
   body band and (from `ColumnForm`) one column's cells: the same four `Style`
-  properties, only the caller's key path differs. Exports `AlignSegment`, the
-  ONE alignment control — the band editors, the single-column form, the column
-  sheet's per-column row and nothing else.
+  properties, only the caller's key path differs (`{ctx, path, keys}`). Every
+  control shows its CASCADE-EFFECTIVE state — the toolbar's semantics, so a
+  column whose row band is bold shows a CHECKED box — and therefore authors
+  through `toolbar/wire`; a control rendering an inherited value over a raw
+  set/clear either does nothing when clicked or makes the value jump. Origin is
+  told twice over by weight: a value the DOCUMENT made (named style / ancestor /
+  `defaults.style`) gets the shared `OriginBadge` LINE, a value the ENGINE floor
+  made gets a decorative hover bubble, because `textAlign`/`color`/`fontWeight`
+  always resolve and a line apiece would be permanent chrome saying nothing. The
+  header band's floor FILL is the deliberate exception and keeps its line —
+  `#ededed` is a grey nobody authored. FOUR hosts render it: the header band,
+  the body band, a column's cells (`ColumnForm`) and one row-condition rule
+  (`RuleControls`). Exports `AlignSegment` for the ONE place that needs the
+  alignment control alone — the column sheet's per-column row
+  (`TableColumnCells`).
 - `panel/RowConditions.tsx` — the table's row-conditional-styles section
   (decoration tab, `table.row.conditionalStyles`-gated): the rule list shell —
   add, remove, open-one-at-a-time, and the repoint reconciliation (a
@@ -400,10 +436,17 @@ conditional rules the next section owns).
   from the WIRE (`hasEquals`), remove/expand buttons, and the chips or
   the body), `ruleStyleChips.tsx` (the collapsed card's
   applied-style chips; colours as swatch dots), `RuleControls.tsx` (the
-  expanded body: alignment/bold/background/text-color over a row-scope
-  `FieldPicker`; `styleNames` reported, not edited), `ruleInputs.tsx`
+  expanded body: a row-scope `FieldPicker` + value control, then the SHARED
+  `TableBandFields` at the rule entry's `style.*` over `ruleContext` — a rule is
+  one more layer over the body band, so it gets the same four controls, the same
+  cascade-effective display and the same minimal-wire ops rather than a fourth
+  copy of any of them; `styleNames` reported, not edited). It takes the entry
+  PATH, not its index: the caller rendered the rule from the list it read, so no
+  range guard is re-proved here — which is why the dedicated rule-style op
+  builder is gone. `ruleInputs.tsx`
   (its leaf inputs — the value control is enum select / nothing (clean
-  boolean) / free entry, plus the labeled swatch row).
+  boolean) / free entry, plus the labeled swatch row, which takes an optional
+  origin hint).
 - `panel/rowConditionsModel.ts` (pure, READ) — `readRawEntries`/
   `readRowConditions`/`valueFormFor`; a hostile entry still yields a row
   so indices stay true, and a hostile display string is truncated.
@@ -445,9 +488,14 @@ conditional rules the next section owns).
   it is showing its own effect. Parts:
   `useColumnHeaderDrag.ts` (the header reorder machine),
   `TableColumnCells.tsx` (the cell parts incl. the sample row over
-  `displaySample`), `columnSheetData.ts` (what the sheet READS — picker options,
-  the per-column format rows, the sample value — split out so the sheet file
-  stays the row layout).
+  `displaySample`, and `ColumnAlignRow` — the alignment row itself, which lives
+  there because the sheet file is the grid layout and nothing else),
+  `columnSheetData.ts` (what the sheet READS — picker options, the per-column
+  format rows, the sample value, and `alignFor(index)`, each column's
+  cascade-effective `textAlign`, so the sheet and `ColumnForm` agree about the
+  same key rather than the panel contradicting itself; no floor is threaded
+  there, since the sheet shows no origin and the floor changes only an origin
+  LABEL).
 - `panel/DocumentSettingsPage.tsx` — the fullscreen document view
   (page/size/defaults/styles/locale), opened by the whole-document tree row /
   File menu / origin jumps: the page shell — header, the three-column

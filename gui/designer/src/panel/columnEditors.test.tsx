@@ -434,6 +434,35 @@ describe('ColumnForm', () => {
     );
   }
 
+  // Same key, same answer as the column SHEET: a column under a right-aligned
+  // row band is right-aligned in both surfaces, or the panel contradicts itself
+  // rather than the document. The cascade needs no composing here — a column has
+  // a path, so `toolbar/cascade` already puts the row band and the table under it.
+  it('shows the alignment and weight the row band gives the column', () => {
+    const controller = makeController({
+      [TABLE]: { ...TABLE_NODE, row: { style: { textAlign: 'right', fontWeight: 'bold' } } },
+      [COLUMN_PATH]: { label: '品名', data: { key: 'name' } },
+    });
+    form(controller);
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Right' }).checked).toBe(true);
+    expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Bold' }).checked).toBe(true);
+  });
+
+  it('authors the minimal wire against that cascade', () => {
+    const controller = makeController({
+      [TABLE]: { ...TABLE_NODE, row: { style: { fontWeight: 'bold' } } },
+      [COLUMN_PATH]: { label: '品名', data: { key: 'name' } },
+    });
+    form(controller);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Bold' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: COLUMN_PATH,
+      keys: ['style', 'fontWeight'],
+      value: 'normal',
+    });
+  });
+
   it('an unchanged label blur dispatches nothing (tab-through safe)', () => {
     const controller = makeController({ [TABLE]: TABLE_NODE });
     form(controller);

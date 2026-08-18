@@ -39,6 +39,27 @@ const TABLE_NODE = {
 
 const PARAMS = '{"rows": [{"name": "アルパカ社", "qty": 3}]}';
 
+/** The real `Editor.read` answers ANY structural path, and a column's cascade is
+ * read at its own (`…columns[n]`). A stub answering only the table's would make
+ * every column read as empty — a fixture limitation the panel would then be
+ * blamed for. Drill the fixture the same way. */
+function readAt(node: unknown, path: string): unknown {
+  if (!path.startsWith(TABLE)) {
+    return undefined;
+  }
+  let cursor: unknown = node;
+  for (const step of path
+    .slice(TABLE.length)
+    .split(/[.[\]]/)
+    .filter((s) => s !== '')) {
+    if (typeof cursor !== 'object' || cursor === null) {
+      return undefined;
+    }
+    cursor = (cursor as Record<string, unknown>)[step];
+  }
+  return cursor;
+}
+
 function makeController(node: unknown): EditorController {
   return {
     text: '',
@@ -48,7 +69,7 @@ function makeController(node: unknown): EditorController {
     canRedo: false,
     apply: vi.fn(() => ({ ok: true as const })),
     applyAll: vi.fn(() => ({ ok: true as const })),
-    read: (path: string) => (path === TABLE ? node : undefined),
+    read: (path: string) => readAt(node, path),
     undo: vi.fn(),
     redo: vi.fn(),
     select: vi.fn(),
@@ -365,6 +386,35 @@ describe('TableColumnSheet — per-column alignment', () => {
       .getAllByRole<HTMLInputElement>('radio', { name: 'Right' })
       .map((radio) => radio.checked);
     expect(picked).toEqual([false, true]);
+  });
+
+  // The sheet and the single-column form edit the SAME key; showing different
+  // active options in the two would be the panel contradicting itself rather
+  // than the document.
+  it('shows what a column RENDERS with, not only what it authors', () => {
+    sheet(
+      makeController({
+        ...TABLE_NODE,
+        row: { style: { textAlign: 'right' } },
+        columns: [{ label: '品名', data: { key: 'name' } }],
+      }),
+    );
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Right' }).checked).toBe(true);
+  });
+
+  it('reverts an own key when the pick matches what the row band supplies', () => {
+    const controller = makeController({
+      ...TABLE_NODE,
+      row: { style: { textAlign: 'right' } },
+      columns: [{ label: '品名', data: { key: 'name' }, style: { textAlign: 'center' } }],
+    });
+    sheet(controller);
+    fireEvent.click(screen.getByRole('radio', { name: 'Right' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: `${COLUMNS}[0]`,
+      keys: ['style', 'textAlign'],
+    });
   });
 
   it('authors the pick at THAT column’s style, leaving its siblings alone', () => {

@@ -4,7 +4,14 @@
 // stays the row layout and nothing else — the sheet grew a per-column alignment
 // row and the derivation was the half that was not about laying out cells.
 //
-// Every rule here is the sheet's existing behaviour, moved verbatim: row-relative
+// It also resolves each column's CASCADE-EFFECTIVE alignment, because the sheet
+// and the single-column form edit the same `columns[n].style.textAlign` and must
+// agree about it: a column under a right-aligned row band is right-aligned in
+// both, or the panel contradicts itself rather than the document. No floor is
+// threaded — the sheet shows no origin, and the floor changes only an origin
+// LABEL, never the shown value or the op.
+//
+// Every other rule here is the sheet's existing behaviour, moved verbatim: row-relative
 // options resolve through the TABLE's own binding (an unbound table offers no row
 // fields, so the wrong document-scope fields never leak in), the document-scope
 // escape appears only when the engine can express it, and a `cell:`/unbound
@@ -13,6 +20,8 @@
 import type { ReadFn } from '@shojiku/designer-core';
 import type { PaletteGroup } from '../palette/model';
 import { parseParams } from '../sample/model';
+import { cascadeContext } from '../toolbar/cascade';
+import { type EffectiveValue, effectiveValueIn } from '../toolbar/effective';
 import type { ColumnRow } from './columnsModel';
 import { formatOptions } from './formatModel';
 import { registryNames } from './itemView';
@@ -20,6 +29,8 @@ import { type PickerOption, pickerOptions, sampleValueFor, scopeAuthorable } fro
 
 export interface ColumnSheetDataOptions {
   readonly read: ReadFn;
+  /** The table's structural path — the root of each column's own path. */
+  readonly tablePath: string;
   /** The table's own `data.key` — `''` for an unbound table. */
   readonly dataKey: string;
   readonly groups: readonly PaletteGroup[] | null;
@@ -36,10 +47,13 @@ export interface ColumnSheetData {
   readonly documentOptions: readonly PickerOption[] | undefined;
   readonly formatRowsFor: (key: string) => ReturnType<typeof formatOptions>;
   readonly sampleFor: (column: ColumnRow) => unknown;
+  /** Column `index`'s cascade-effective `textAlign` — its own key over the row
+   * band, the table, and whatever they sit on. */
+  readonly alignFor: (index: number) => EffectiveValue;
 }
 
 export function columnSheetData(options: ColumnSheetDataOptions): ColumnSheetData {
-  const { read, dataKey, groups, params, capabilities } = options;
+  const { read, tablePath, dataKey, groups, params, capabilities } = options;
   const rowScoped = dataKey !== '';
   const rowOptions = rowScoped ? pickerOptions(groups, dataKey, params) : [];
   const documentOptions =
@@ -50,6 +64,8 @@ export function columnSheetData(options: ColumnSheetDataOptions): ColumnSheetDat
     rowScoped,
     rowOptions,
     documentOptions,
+    alignFor: (index: number) =>
+      effectiveValueIn(cascadeContext(read, `${tablePath}.columns[${index}]`), 'textAlign'),
     formatRowsFor: (key: string) =>
       formatOptions(
         formatRegistry,

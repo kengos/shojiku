@@ -62,10 +62,17 @@ resolved style.
   `{value, cascade, own, origin, styleName}`; the engine-default floor
   (`buildStyleFloor`) sits below `defaults.style` for inherited keys. A
   bounded GUI-side mirror of the engine cascade (docs/engine/style.md).
+- `toolbar/wire.ts` — the minimal-wire DECISIONS every cascade-aware control
+  authors through, keyed by a full `keys` array rather than a style key:
+  `toggleWire` / `alignWire` / `comboWire` (+ `alignedValue`). Array-keyed
+  because a table BAND's properties do not live at `style.*` — the header row's
+  sit at `header.style.*`, the body row's at `row.style.*` — so the toolbar and
+  the band/column editors share ONE copy of the rule instead of two. Never
+  author what the cascade already yields; `normal` appears only as a cascade
+  override, never as a default restated. `null` = dispatch nothing.
 - `toolbar/model.ts` — pure toolbar model: `readToolbar` (the
-  selection-context control set keyed off `BORDERABLE_TYPES`) + op
-  builders that author the MINIMAL wire over the cascade (toggling
-  toward what the cascade already yields just removes the own key);
+  selection-context control set keyed off `BORDERABLE_TYPES`) + the op
+  builders, which are `toolbar/wire`'s decisions aimed at `style.*`;
   `formatContext(…)` — the toolbar's derived-value context built once
   at the root; enum values drift-guarded against `STYLE_FIELDS`.
 - `toolbar/FormatToolbar.tsx` — the SHELL (+ `FormatToolbarProps`):

@@ -1,12 +1,14 @@
+import type { Op } from '@shojiku/designer-core';
 import { Editor } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
+import type { EffectiveValue } from '../toolbar/effective';
+import { comboWire } from '../toolbar/wire';
 import {
   addRuleOp,
   removeRuleOp,
   repointRuleOps,
   setRuleEqualsOp,
   setRuleKeyOp,
-  setRuleStyleOp,
 } from './rowConditionOps';
 import { readRawEntries } from './rowConditionsModel';
 
@@ -107,20 +109,6 @@ describe('op builders', () => {
     expect(setRuleEqualsOp(TABLE, ONE, 0, ' -3 ', 'number')).toMatchObject({ value: -3 });
   });
 
-  it('sets and clears one style property', () => {
-    expect(setRuleStyleOp(TABLE, ONE, 0, 'textAlign', 'center')).toEqual({
-      op: 'setScalar',
-      path: `${TABLE}.row.conditionalStyles[0]`,
-      keys: ['style', 'textAlign'],
-      value: 'center',
-    });
-    expect(setRuleStyleOp(TABLE, ONE, 0, 'textAlign', null)).toEqual({
-      op: 'removeKey',
-      path: `${TABLE}.row.conditionalStyles[0]`,
-      keys: ['style', 'textAlign'],
-    });
-  });
-
   it('repointing composes a batch: key alone, or key + equals removal for boolean', () => {
     const withEquals = [{ when: { key: 'kind', equals: 'heading' } }];
     // Non-boolean target, equals present → key only (the value control
@@ -166,7 +154,6 @@ describe('op builders', () => {
     expect(removeRuleOp(TABLE, ONE, -1)).toBeNull();
     expect(setRuleKeyOp(TABLE, ONE, 5, 'b')).toBeNull();
     expect(setRuleEqualsOp(TABLE, ONE, -1, 'x')).toBeNull();
-    expect(setRuleStyleOp(TABLE, ONE, 9, 'textAlign', 'center')).toBeNull();
   });
 });
 
@@ -207,9 +194,24 @@ describe('over a real document', () => {
     return ed;
   }
 
+  /** The op a rule's style control now authors: `toolbar/wire` at the entry
+   * path. The dedicated builder is gone — a rule's four controls ARE the shared
+   * band fields — so these round-trip cases drive the same wire the panel does.
+   * The index is not range-guarded any more because it never travels: the caller
+   * renders the rule from the list it read, so the path is proven by
+   * construction. */
+  function ruleStyleOp(index: number, eff: Partial<EffectiveValue>, raw: string): Op | null {
+    return comboWire(
+      `${TABLE}.row.conditionalStyles[${index}]`,
+      ['style', raw === '' ? 'textAlign' : 'fontWeight'],
+      { value: '', cascade: '', own: '', origin: 'unset', styleName: '', ...eff },
+      raw,
+      false,
+    );
+  }
+
   it('applies an edit as ONE undo step that reverts byte-exact', () => {
-    const entries = readRawEntries((path) => Editor.create(SOURCE).read(path), TABLE);
-    const ed = edited(setRuleStyleOp(TABLE, entries, 0, 'fontWeight', 'bold'));
+    const ed = edited(ruleStyleOp(0, {}, 'bold'));
     expect(ed.text()).toContain('fontWeight: bold');
     expect(ed.canUndo()).toBe(true);
     ed.undo();
@@ -219,8 +221,7 @@ describe('over a real document', () => {
   it('leaves the OTHER rules and the keys around the list byte-exact', () => {
     // The whole point of addressing one entry: a rule the user never opened
     // must not move in the diff.
-    const entries = readRawEntries((path) => Editor.create(SOURCE).read(path), TABLE);
-    const text = edited(setRuleStyleOp(TABLE, entries, 0, 'fontWeight', 'bold')).text();
+    const text = edited(ruleStyleOp(0, {}, 'bold')).text();
     expect(text).toContain('- when: { key: other, equals: end }');
     expect(text).toContain('style: { textAlign: right }');
     expect(text).toContain('cellPadding: 4');
@@ -231,8 +232,7 @@ describe('over a real document', () => {
   });
 
   it('clearing the last style property leaves no empty style map', () => {
-    const entries = readRawEntries((path) => Editor.create(SOURCE).read(path), TABLE);
-    const text = edited(setRuleStyleOp(TABLE, entries, 1, 'textAlign', null)).text();
+    const text = edited(ruleStyleOp(1, { own: 'right' }, '')).text();
     expect(text).toContain('- when: { key: other, equals: end }');
     expect(text).not.toContain('style: {}');
   });

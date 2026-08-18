@@ -356,7 +356,7 @@ export const fil: LanguageCatalog = {
     'toolbar.color.custom': 'Custom',
     'toolbar.color.clear': 'I-clear',
     'toolbar.origin.style': 'Mula sa istilong "{name}"',
-    'toolbar.origin.inherited': 'Minana mula sa container',
+    'toolbar.origin.inherited': 'Minana mula sa antas sa itaas',
     'toolbar.origin.default': 'Mula sa mga default ng dokumento',
     'toolbar.border': 'Border',
     'align.title': 'Pantayin at ipamahagi',

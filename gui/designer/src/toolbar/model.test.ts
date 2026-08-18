@@ -3,7 +3,6 @@ import { readItemView } from '../panel/itemView';
 import { type EffectiveStyles, type EffectiveValue, TOOLBAR_STYLE_KEYS } from './effective';
 import {
   ALIGN_VALUES,
-  alignedValue,
   alignOp,
   BOLD_VALUE,
   colorOp,
@@ -16,6 +15,7 @@ import {
   readToolbar,
   styleEnumOptions,
 } from './model';
+import { alignWire, comboWire, toggleWire } from './wire';
 
 const P = 'sections.body.items[0]';
 
@@ -121,10 +121,27 @@ describe('readToolbar applicability', () => {
   });
 });
 
-describe('alignedValue', () => {
-  it('normalizes unset to the engine default left', () => {
-    expect(alignedValue('')).toBe('left');
-    expect(alignedValue('right')).toBe('right');
+// The toolbar's builders are `toolbar/wire`'s decisions aimed at `style.*` —
+// the SAME rule the table's band and column editors author through at their own
+// key paths. Pinned so the two can never grow separate answers.
+describe('the toolbar builders delegate to the shared wire', () => {
+  const eff = ev({ value: 'right', cascade: 'right', own: 'center' });
+
+  it('aims alignOp at style.textAlign', () => {
+    expect(alignOp(P, eff, 'right')).toEqual(alignWire(P, ['style', 'textAlign'], eff, 'right'));
+  });
+
+  it('aims fontWeightOp at style.fontWeight', () => {
+    const bold = ev({ value: 'bold', cascade: 'bold' });
+    expect(fontWeightOp(P, bold, false)).toEqual(
+      toggleWire(P, ['style', 'fontWeight'], bold, BOLD_VALUE, false),
+    );
+  });
+
+  it('aims colorOp at the key it is given', () => {
+    expect(colorOp(P, 'backgroundColor', eff, '#c00000')).toEqual(
+      comboWire(P, ['style', 'backgroundColor'], eff, '#c00000', false),
+    );
   });
 });
 

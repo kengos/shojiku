@@ -7,7 +7,7 @@ import { TableStyleSection } from './TableStyleSection';
 
 const PATH = 'sections.body.items[0]';
 
-function makeController(node: unknown): EditorController {
+function makeController(node: unknown, rest: Record<string, unknown> = {}): EditorController {
   return {
     text: '',
     revision: 0,
@@ -16,7 +16,7 @@ function makeController(node: unknown): EditorController {
     canRedo: false,
     apply: vi.fn(() => ({ ok: true as const })),
     applyAll: vi.fn(() => ({ ok: true as const })),
-    read: (path: string) => (path === PATH ? node : undefined),
+    read: (path: string) => (path === PATH ? node : rest[path]),
     undo: vi.fn(),
     redo: vi.fn(),
     select: vi.fn(),
@@ -35,9 +35,14 @@ function draw(element: ReactElement) {
  * This is not a convenience: appearance editing is expected to move into a modal
  * sheet, and the section must already be mountable outside the property panel
  * for that to be a change of render site rather than a rewrite. */
-function section(node: unknown, capabilities: readonly string[] | undefined = undefined) {
-  const controller = makeController(node);
-  draw(<TableStyleSection context={{ path: PATH, controller, capabilities }} />);
+function section(
+  node: unknown,
+  capabilities: readonly string[] | undefined = undefined,
+  rest: Record<string, unknown> = {},
+  floor?: Readonly<Record<string, unknown>>,
+) {
+  const controller = makeController(node, rest);
+  draw(<TableStyleSection context={{ path: PATH, controller, capabilities, floor }} />);
   return controller;
 }
 
@@ -325,5 +330,43 @@ describe('TableStyleSection', () => {
       name: 'Preview of the table banding',
     });
     expect(mini.querySelector('th')?.style.color).toBe('rgb(43, 39, 36)');
+  });
+});
+
+describe('TableStyleSection — the miniature draws the PAGE, the gallery reads the WIRE', () => {
+  it('carries an inherited ink into the miniature', () => {
+    section(TABLE, undefined, { defaults: { style: { color: '#00aa00', fontWeight: 'bold' } } });
+    const header = screen.getByRole('columnheader', { name: 'A' });
+    expect(header.getAttribute('style')).toContain('rgb(0, 170, 0)');
+    expect(header.getAttribute('style')).toContain('font-weight: 700');
+  });
+
+  // A preset describes what it AUTHORS. If an inherited colour could make one
+  // read as active, clicking it would author nothing and the gallery would lie.
+  it('does not let an inherited ink make a preset read as active', () => {
+    section(TABLE, undefined, { defaults: { style: { color: '#ffffff' } } });
+    const active = screen
+      .getAllByRole('button', { pressed: true })
+      .map((button) => button.textContent);
+    expect(active).toEqual(['Plain']);
+  });
+
+  it('opens the detail with the bands intact and authors nothing by rendering', () => {
+    const controller = section(TABLE, undefined, { defaults: { style: { color: '#00aa00' } } });
+    openDetail();
+    expect(screen.getAllByRole('group', { name: 'Text alignment' })).toHaveLength(2);
+    expect(controller.apply).not.toHaveBeenCalled();
+    expect(controller.applyAll).not.toHaveBeenCalled();
+  });
+
+  it('still clears the LAST band property with a key removal, pruning the map', () => {
+    const controller = section({ ...TABLE, row: { style: { fontWeight: 'bold' } } });
+    openDetail();
+    fireEvent.click(screen.getAllByRole('checkbox', { name: 'Bold' })[1]);
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: PATH,
+      keys: ['row', 'style', 'fontWeight'],
+    });
   });
 });

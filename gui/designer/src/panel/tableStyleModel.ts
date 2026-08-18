@@ -1,5 +1,7 @@
-// Pure model for a table's ROW-BAND styling, read from the materialized table
-// node: the header row (`header.style`), the body rows (`row.style`), the zebra
+// Pure model for a table's ROW-BAND styling as the WIRE carries it, read from the
+// materialized table node. Authored values only — what a band RESOLVES to is
+// `panel/bandCascade`'s job, and the preset gallery needs the wire precisely
+// because a preset describes what it AUTHORS. Read from the header row (`header.style`), the body rows (`row.style`), the zebra
 // overlay (`row.alternateStyle`), and the item's own `style.backgroundColor` —
 // which a table DOES NOT PAINT (the engine asserts it: an authored table fill
 // produces no rect), so the panel reports it as ineffective rather than offering
@@ -10,8 +12,6 @@
 // throwing — the panel-wide posture. Colours are reported VERBATIM (so an
 // externally-authored hostile value stays visible and clearable); whether one may
 // reach an inline style is `isHexColor`'s decision at the render site.
-
-import type { EffectiveValue } from '../toolbar/effective';
 
 /** The engine's header fill when no header style sets one
  * (`engine/layout/src/engine/table.rs` `TABLE_HEADER_FILL`). Mirrored here so an
@@ -29,11 +29,6 @@ export type BandView = Readonly<Record<BandProperty, string>>;
 
 export interface TableStyleView {
   readonly header: BandView;
-  /** The header fill the page will show — the authored value, else the engine
-   * floor — packaged as the same `EffectiveValue` the item style fields use, so
-   * the unset state renders through the shared `OriginBadge` instead of as a
-   * blank swatch. */
-  readonly headerFill: EffectiveValue;
   readonly row: BandView;
   /** `row.alternateStyle.backgroundColor` — `''` = zebra off. */
   readonly zebra: string;
@@ -68,31 +63,12 @@ export function readBand(owner: unknown): BandView {
   };
 }
 
-/** The header fill as an effective value: authored → `own`, otherwise the engine
- * floor with the `engine` origin, which `OriginBadge` renders as the default line
- * with no jump (there is no authored place to visit). */
-function headerFillOf(band: BandView): EffectiveValue {
-  const own = band.backgroundColor;
-  if (own !== '') {
-    return { value: own, cascade: TABLE_HEADER_FILL, own, origin: 'own', styleName: '' };
-  }
-  return {
-    value: TABLE_HEADER_FILL,
-    cascade: TABLE_HEADER_FILL,
-    own: '',
-    origin: 'engine',
-    styleName: '',
-  };
-}
-
 /** The whole section's view of one table node. */
 export function readTableStyle(tableNode: unknown): TableStyleView {
   const table = record(tableNode);
-  const header = readBand(table?.header);
   const rowSpec = record(table?.row);
   return {
-    header,
-    headerFill: headerFillOf(header),
+    header: readBand(table?.header),
     row: readBand(rowSpec),
     zebra: text(record(rowSpec?.alternateStyle)?.backgroundColor),
     ineffectiveFill: text(record(table?.style)?.backgroundColor),

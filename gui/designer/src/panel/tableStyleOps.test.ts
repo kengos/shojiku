@@ -1,5 +1,7 @@
+import type { Op } from '@shojiku/designer-core';
 import { Editor } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
+import { toggleWire } from '../toolbar/wire';
 import {
   bandStyleOp,
   clearIneffectiveFillOp,
@@ -103,6 +105,37 @@ describe('zebraToggleOp', () => {
     expect(session.apply(zebraToggleOp(TABLE, '')).ok).toBe(true);
     expect(session.text()).toContain('alternateStyle');
     expect(session.apply(zebraToggleOp(TABLE, DEFAULT_ZEBRA_FILL)).ok).toBe(true);
+    expect(session.text()).toBe(before);
+  });
+
+  // The BAND editors no longer dispatch `bandStyleOp` — they author through
+  // `toolbar/wire` at the band's key path — so the round-trip proof has to drive
+  // the shipped path, not the retired one. Same fixture, same claim.
+  it('round-trips a band property through the wire the editors actually use', () => {
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: table',
+      '        data: { key: rows }',
+      '        columns:',
+      '          - { label: 品名, data: { key: name } }',
+      '',
+    ].join('\n');
+    const session = Editor.create(source);
+    const before = session.text();
+    const keys = ['header', 'style', 'fontWeight'];
+    const unset = { value: '', cascade: '', own: '', origin: 'unset' as const, styleName: '' };
+    const on = toggleWire(TABLE, keys, unset, 'bold', true);
+    expect(on).not.toBeNull();
+    expect(session.apply(on as Op).ok).toBe(true);
+    expect(session.text()).toContain('fontWeight: bold');
+    // Off with an own key present drops it rather than restating the default, and
+    // the emptied `header:` map goes with it.
+    const off = toggleWire(TABLE, keys, { ...unset, value: 'bold', own: 'bold' }, 'bold', false);
+    expect(off).not.toBeNull();
+    expect(session.apply(off as Op).ok).toBe(true);
     expect(session.text()).toBe(before);
   });
 

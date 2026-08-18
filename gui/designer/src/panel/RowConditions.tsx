@@ -11,17 +11,13 @@ import type { Op } from '@shojiku/designer-core';
 import { useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
+import { cascadeContext } from '../toolbar/cascade';
 import { BTN_SM, SECTION_TITLE } from '../ui/chrome';
+import { ruleContext } from './bandCascade';
 import { applyPanelOp } from './model';
 import type { PickerOption } from './pickerModel';
 import { RuleCard } from './RuleCard';
-import {
-  addRuleOp,
-  removeRuleOp,
-  repointRuleOps,
-  setRuleEqualsOp,
-  setRuleStyleOp,
-} from './rowConditionOps';
+import { addRuleOp, removeRuleOp, repointRuleOps, setRuleEqualsOp } from './rowConditionOps';
 import { readRowConditions } from './rowConditionsModel';
 
 export interface RowConditionsSectionProps {
@@ -33,6 +29,8 @@ export interface RowConditionsSectionProps {
   readonly entries: readonly unknown[];
   /** The row-scope binding options (the table's own array group). */
   readonly options: readonly PickerOption[];
+  /** The engine-default floor for the rule style cascade. */
+  readonly floor?: Readonly<Record<string, unknown>>;
 }
 
 export function RowConditionsSection({
@@ -40,10 +38,14 @@ export function RowConditionsSection({
   controller,
   entries,
   options,
+  floor,
 }: RowConditionsSectionProps) {
   const { t } = useI18n();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const rules = readRowConditions(entries);
+  // Read ONCE for the whole list: every rule sits on the same body band and the
+  // same table, so the layers below them are shared.
+  const tableCtx = cascadeContext(controller.read, path, floor);
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   // Repointing can change which controls render (a boolean-form field has
   // no value control), so the model reconciles a stale `equals` into the
@@ -90,9 +92,9 @@ export function RowConditionsSection({
               onEqualsChange={(value, fieldType) =>
                 dispatch(setRuleEqualsOp(path, entries, index, value, fieldType))
               }
-              onStyleChange={(property, value) =>
-                dispatch(setRuleStyleOp(path, entries, index, property, value))
-              }
+              ctx={ruleContext(tableCtx, entries[index])}
+              path={`${path}.row.conditionalStyles[${index}]`}
+              onOp={dispatch}
             />
           ))}
         </ul>
