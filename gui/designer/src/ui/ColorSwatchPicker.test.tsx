@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
-import { ColorSwatchPicker, isHexColor, SWATCHES } from './ColorSwatchPicker';
+import { ColorSwatchPicker, SWATCHES } from './ColorSwatchPicker';
+import { isHexColor } from './chipContrast';
 
 /** The picker reads the catalog for its swatch names, so it mounts under a
  * provider like every other localized surface. */
@@ -119,5 +120,83 @@ describe('color data', () => {
     ]) {
       expect(isHexColor(bad)).toBe(false);
     }
+  });
+});
+
+describe('the chip’s contrast ring', () => {
+  // The ring is a change to the SHARED picker, so it reaches the format
+  // toolbar's text colour and fill, the border pen and the document defaults —
+  // not only the table styling that prompted it.
+  it('rings a dark colour in light so it reads on the dark chrome', () => {
+    render(
+      <I18nProvider locale="en">
+        <ColorSwatchPicker
+          label="Color"
+          value="#000000"
+          onCommit={vi.fn()}
+          triggerClassName="t"
+          customLabel="Custom"
+          clearLabel="Clear"
+        />
+      </I18nProvider>,
+    );
+    const chip = screen.getByRole('button', { name: 'Color' }).querySelector('span');
+    expect(chip?.style.boxShadow).toBe('inset 0 0 0 1px rgba(255, 255, 255, 0.55)');
+  });
+
+  it('rings a light colour in dark so it reads on the light chrome', () => {
+    render(
+      <I18nProvider locale="en">
+        <ColorSwatchPicker
+          label="Color"
+          value="#ffffff"
+          onCommit={vi.fn()}
+          triggerClassName="t"
+          customLabel="Custom"
+          clearLabel="Clear"
+        />
+      </I18nProvider>,
+    );
+    const chip = screen.getByRole('button', { name: 'Color' }).querySelector('span');
+    expect(chip?.style.boxShadow).toBe('inset 0 0 0 1px rgba(0, 0, 0, 0.45)');
+  });
+
+  it('draws no ring and no fill for a value that is not a colour', () => {
+    render(
+      <I18nProvider locale="en">
+        <ColorSwatchPicker
+          label="Color"
+          value="url(javascript:alert(1))"
+          onCommit={vi.fn()}
+          triggerClassName="t"
+          customLabel="Custom"
+          clearLabel="Clear"
+        />
+      </I18nProvider>,
+    );
+    const chip = screen.getByRole('button', { name: 'Color' }).querySelector('span');
+    expect(chip?.style.boxShadow).toBe('');
+    expect(chip?.style.backgroundColor).toBe('');
+  });
+  it('rings the PALETTE swatches too, both ends of it', () => {
+    // The criterion is "every colour chip", and the palette carries #ffffff and
+    // #000000 — the same two values the trigger chip needed the ring for.
+    render(
+      <I18nProvider locale="en">
+        <ColorSwatchPicker
+          label="Color"
+          value=""
+          onCommit={vi.fn()}
+          triggerClassName="t"
+          customLabel="Custom"
+          clearLabel="Clear"
+        />
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Color' }));
+    const white = screen.getByRole('menuitem', { name: 'White' });
+    const black = screen.getByRole('menuitem', { name: 'Black' });
+    expect(white.style.boxShadow).toBe('inset 0 0 0 1px rgba(0, 0, 0, 0.45)');
+    expect(black.style.boxShadow).toBe('inset 0 0 0 1px rgba(255, 255, 255, 0.55)');
   });
 });

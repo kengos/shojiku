@@ -1005,3 +1005,109 @@ function FormatToolbarProbe() {
   const editor = useEditor(TEXT_SRC);
   return <FormatToolbar controller={editor} path={PATH} usage={buildStyleUsage(editor.text)} />;
 }
+
+describe('FormatToolbar — a selected table column', () => {
+  // A column is not an item and its `type` is an OPTIONAL default, so the
+  // toolbar used to appear for a column that spelled `type: text` out and
+  // vanish for one that relied on the default — the same column either way,
+  // keyed on a value that changes nothing about what is drawn.
+  const TABLE_SRC = `sections:
+  body:
+    type: flow
+    items:
+      - type: table
+        data: { key: rows }
+        columns:
+          - { label: 品名, data: { key: name } }
+          - { label: 金額, data: { key: amount } }
+`;
+  const COLUMN = 'sections.body.items[0].columns[1]';
+
+  it('formats a column that omits `type`, which is what the scaffold emits', () => {
+    render(<Harness source={TABLE_SRC} path={COLUMN} />);
+    expect(screen.getByRole('button', { name: 'Bold' })).not.toBeNull();
+  });
+
+  it('authors an alignment at that column’s own style', () => {
+    render(<Harness source={TABLE_SRC} path={COLUMN} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Alignment' }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Align right' }));
+    expect(doc()).toContain('textAlign: right');
+    // The sibling column is untouched.
+    expect(doc()).toContain('{ label: 品名, data: { key: name } }');
+  });
+
+  it('authors bold at that column’s own style', () => {
+    render(<Harness source={TABLE_SRC} path={COLUMN} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Bold' }));
+    expect(doc()).toContain('fontWeight: bold');
+  });
+
+  it('reads the ROW BAND as the column’s cascade, not as unset', () => {
+    // The engine resolves a body cell over `resolve_row_style(&table.row, …)`
+    // — `row.style` over the table's own style — and `textAlign` is inherited.
+    // Without those layers the toolbar showed Left active on a right-aligned
+    // cell, and clicking Left did nothing at all: `alignOp` reads a click on the
+    // ACTIVE option as revert-to-cascade, and the cascade read empty.
+    const banded = TABLE_SRC.replace(
+      '        data: { key: rows }',
+      '        data: { key: rows }\n        row:\n          style: { textAlign: right }',
+    );
+    render(<Harness source={banded} path={COLUMN} />);
+    expect(screen.getByRole('button', { name: 'Alignment' }).getAttribute('data-align')).toBe(
+      'right',
+    );
+  });
+
+  it('drops a column’s own alignment that merely restates the row band', () => {
+    const banded = TABLE_SRC.replace(
+      '        data: { key: rows }',
+      '        data: { key: rows }\n        row:\n          style: { textAlign: right }',
+    ).replace(
+      '          - { label: 金額, data: { key: amount } }',
+      '          - label: 金額\n            data: { key: amount }\n            style: { textAlign: right }',
+    );
+    render(<Harness source={banded} path={COLUMN} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Alignment' }));
+    // Two `textAlign`s to start with: the row band's and the column's.
+    expect(doc().match(/textAlign/g)).toHaveLength(2);
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Align right' }));
+    // The cascade already yields `right`, so the COLUMN's own key is redundant
+    // and goes — the row band's stays, which is what makes the cell still right.
+    expect(doc().match(/textAlign/g)).toHaveLength(1);
+    expect(doc()).toContain('style: { textAlign: right }');
+  });
+
+  it('authors a column alignment that DIFFERS from the row band', () => {
+    const banded = TABLE_SRC.replace(
+      '        data: { key: rows }',
+      '        data: { key: rows }\n        row:\n          style: { textAlign: right }',
+    );
+    render(<Harness source={banded} path={COLUMN} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Alignment' }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Align left' }));
+    expect(doc()).toContain('textAlign: left');
+  });
+
+  it('authors a column TEXT COLOUR at the column’s own style', () => {
+    render(<Harness source={TABLE_SRC} path={COLUMN} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Text color' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+    expect(doc()).toContain('color: "#b91c1c"');
+  });
+
+  it('reverts the column to the cascade when the ACTIVE alignment is clicked again', () => {
+    // The toolbar's shipped contract: clicking the active option is the
+    // revert-to-cascade toggle, so the column's own key goes away rather than
+    // being restated. Pinned at the column path because that path is new.
+    const aligned = TABLE_SRC.replace(
+      '          - { label: 金額, data: { key: amount } }',
+      '          - label: 金額\n            data: { key: amount }\n            style: { textAlign: right }',
+    );
+    render(<Harness source={aligned} path={COLUMN} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Alignment' }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Align right' }));
+    expect(doc()).not.toContain('textAlign');
+    expect(doc()).toContain('data: { key: amount }');
+  });
+});

@@ -10,6 +10,7 @@
 // is own-property-guarded — never a prototype walk.
 
 import { formatPath, parsePath, type ReadFn } from '@shojiku/designer-core';
+import { columnPathInfo } from '../panel/columnsModel';
 import { display } from '../panel/itemView';
 
 export function record(value: unknown): Record<string, unknown> | undefined {
@@ -67,16 +68,47 @@ export function levelValue(
   return namedValue(item, registry, key)?.value ?? '';
 }
 
-/** The `container`-typed ancestor items of `path`, innermost first. A path
- * that does not parse contributes none (the item layers still resolve). */
-function containerAncestors(read: ReadFn, path: string): Record<string, unknown>[] {
+/** The layers a TABLE COLUMN sits on, innermost first. A column is not an item,
+ * and the engine's cascade for one of its body cells is not the item cascade:
+ * `prepare.rs` resolves each cell over `resolve_row_style(&table.row, …)`, which
+ * is `row.style`/`row.styleNames` over the TABLE's own style — and the table's
+ * inherited properties do cascade into cells
+ * (`table_style_cascades_inherited_properties_but_not_background`).
+ *
+ * Without these two layers the toolbar reads a column's cascade as empty, so an
+ * alignment the row band supplies shows as unset and `alignOp`'s
+ * clicking-the-active-option-reverts rule fires on the wrong option: it either
+ * does nothing at all or removes an own key and lets the value JUMP. Both were
+ * reachable the moment the body-band editor gave `row.style` a GUI.
+ *
+ * `alternateStyle` and `conditionalStyles` are deliberately NOT layers here: they
+ * apply to some rows and not others, and the toolbar shows one value. */
+function columnLayers(read: ReadFn, path: string): Record<string, unknown>[] {
+  const info = columnPathInfo(path);
+  if (info === null) {
+    return [];
+  }
+  const table = readRecord(read, info.tablePath);
+  if (table === undefined) {
+    return [];
+  }
+  const rowSpec = record(table.row);
+  const rowLayer =
+    rowSpec === undefined ? undefined : { style: rowSpec.style, styleNames: rowSpec.styleNames };
+  return rowLayer === undefined ? [table] : [rowLayer, table];
+}
+
+/** The ancestor LAYERS of `path`, innermost first: a table column's row band and
+ * its table (see `columnLayers`), then the `container`-typed ancestor items. A
+ * path that does not parse contributes none (the item layers still resolve). */
+function ancestorLayers(read: ReadFn, path: string): Record<string, unknown>[] {
   let segments: ReturnType<typeof parsePath>;
   try {
     segments = parsePath(path);
   } catch {
     return [];
   }
-  const out: Record<string, unknown>[] = [];
+  const out: Record<string, unknown>[] = columnLayers(read, path);
   for (let k = segments.length - 2; k > 0; k--) {
     if (segments[k].kind !== 'index') {
       continue;
@@ -105,7 +137,8 @@ export interface CascadeContext {
 }
 
 /** Gather the cascade layers for the item at `path` (own item, styles registry,
- * `defaults.style`, `container` ancestors, and the engine-default `floor`). A
+ * `defaults.style`, the ancestor layers — a table column's row band and table,
+ * then `container` ancestors — and the engine-default `floor`). A
  * hostile/absent layer resolves to an empty map — the per-key resolver then
  * reads it as unset, never a crash. `floor` is an own-property map keyed by
  * style key (hostile registry/pack strings never reach it — the Designer builds
@@ -119,7 +152,7 @@ export function cascadeContext(
     item: readRecord(read, path) ?? {},
     registry: readRecord(read, 'styles') ?? {},
     defaults: record(readRecord(read, 'defaults')?.style) ?? {},
-    ancestors: containerAncestors(read, path),
+    ancestors: ancestorLayers(read, path),
     floor,
   };
 }

@@ -5,6 +5,7 @@ import {
   columnPathInfo,
   moveColumnOp,
   readColumnsView,
+  readSelectionView,
   removeColumnOp,
 } from './columnsModel';
 
@@ -42,12 +43,36 @@ const TABLE = 'sections.body.items[0]';
 describe('readColumnsView', () => {
   it('reads label / key / width / format display / cell flag per column, indices true', () => {
     expect(readColumnsView(editor().read(TABLE))).toEqual([
-      { label: '品名', key: 'name', width: '', format: '', scope: '', hasCell: false },
-      { label: '金額', key: 'amount', width: '15%', format: 'symbol', scope: '', hasCell: false },
-      { label: '幅数値', key: 'n', width: '90', format: '', scope: '', hasCell: false },
-      { label: '明細', key: '', width: '', format: '', scope: '', hasCell: true },
+      {
+        label: '品名',
+        key: 'name',
+        width: '',
+        format: '',
+        scope: '',
+        hasCell: false,
+        textAlign: '',
+      },
+      {
+        label: '金額',
+        key: 'amount',
+        width: '15%',
+        format: 'symbol',
+        scope: '',
+        hasCell: false,
+        textAlign: '',
+      },
+      {
+        label: '幅数値',
+        key: 'n',
+        width: '90',
+        format: '',
+        scope: '',
+        hasCell: false,
+        textAlign: '',
+      },
+      { label: '明細', key: '', width: '', format: '', scope: '', hasCell: true, textAlign: '' },
       // A hostile non-map entry still yields a row so indices stay true.
-      { label: '', key: '', width: '', format: '', scope: '', hasCell: false },
+      { label: '', key: '', width: '', format: '', scope: '', hasCell: false, textAlign: '' },
     ]);
   });
 
@@ -69,7 +94,7 @@ describe('readColumnsView', () => {
 
   it('drops a non-finite width to the empty display form', () => {
     expect(readColumnsView({ columns: [{ width: Number.NaN }] })).toEqual([
-      { label: '', key: '', width: '', format: '', scope: '', hasCell: false },
+      { label: '', key: '', width: '', format: '', scope: '', hasCell: false, textAlign: '' },
     ]);
   });
 });
@@ -101,6 +126,7 @@ describe('column ops', () => {
       format: '',
       scope: '',
       hasCell: false,
+      textAlign: '',
     });
   });
 
@@ -143,5 +169,59 @@ describe('readColumnsView — column binding scope', () => {
       ],
     });
     expect(rows?.map((row) => row.scope)).toEqual(['document', '', '', '']);
+  });
+});
+
+describe('readColumnsView — the column’s own alignment', () => {
+  it('reads an authored textAlign off the column style', () => {
+    const rows = readColumnsView({ columns: [{ style: { textAlign: 'right' } }] });
+    expect(rows?.[0].textAlign).toBe('right');
+  });
+
+  it('reads it as unset when the style is absent, not a map, or not a string', () => {
+    for (const column of [
+      {},
+      { style: 'right' },
+      { style: ['right'] },
+      { style: { textAlign: 3 } },
+    ]) {
+      expect(readColumnsView({ columns: [column] })?.[0].textAlign).toBe('');
+    }
+  });
+});
+
+describe('readSelectionView', () => {
+  const COLUMN = `${TABLE}.columns[0]`;
+
+  it('formats a column that omits the optional `type` key, like the text it defaults to', () => {
+    // The defect this closes: `readItemView` requires a string `type`, so the
+    // toolbar appeared for a column that spelled `type: text` out and vanished
+    // for one that relied on the default — the same column either way.
+    const view = readSelectionView({ label: '金額', data: { key: 'amount' } }, COLUMN);
+    expect(view?.type).toBe('text');
+  });
+
+  it('keeps a column’s AUTHORED type, so an image column still reads as an image', () => {
+    const view = readSelectionView({ type: 'image', data: { key: 'logo' } }, COLUMN);
+    expect(view?.type).toBe('image');
+  });
+
+  it('leaves a non-column path to the ordinary item read', () => {
+    expect(readSelectionView({ type: 'text' }, TABLE)?.type).toBe('text');
+    expect(readSelectionView({ label: 'no type here' }, TABLE)).toBeNull();
+  });
+
+  it('formats nothing for a column entry that is not a map', () => {
+    // The op layer would refuse a write into a scalar, and an offered control
+    // that does nothing is worse than an absent one.
+    for (const hostile of ['a string', 7, ['a', 'b'], null]) {
+      expect(readSelectionView(hostile, COLUMN)).toBeNull();
+    }
+  });
+
+  it('treats a `__proto__` key in the document as inert data', () => {
+    const hostile = JSON.parse('{"label":"x","__proto__":{"polluted":true}}');
+    expect(readSelectionView(hostile, COLUMN)?.type).toBe('text');
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });
 });

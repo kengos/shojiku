@@ -12,12 +12,10 @@ import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
-import { parseParams } from '../sample/model';
-import { type ColumnRow, readColumnsView } from './columnsModel';
+import { columnSheetData } from './columnSheetData';
+import { readColumnsView } from './columnsModel';
 import { FieldPicker } from './FieldPicker';
 import { FormatPicker } from './FormatPicker';
-import { formatOptions } from './formatModel';
-import { registryNames } from './itemView';
 import {
   applyPanelOp,
   bindingKeyOp,
@@ -26,7 +24,7 @@ import {
   lengthOp,
   plainTextOp,
 } from './model';
-import { pickerOptions, sampleValueFor, scopeAuthorable } from './pickerModel';
+import { AlignSegment } from './TableBandFields';
 import {
   ColumnHeaderRow,
   ColumnLabelCell,
@@ -62,30 +60,13 @@ export function TableColumnSheet({
   const { t } = useI18n();
   const columns = readColumnsView(controller.read(tablePath)) ?? [];
   const columnsPath = `${tablePath}.columns`;
-  // Row-relative options resolve through the table's own binding (an unbound
-  // table offers no row fields — free entry remains, the wrong document-scope
-  // fields never leak in). Sample values sample the same row scope.
-  const rowScoped = dataKey !== '';
-  const rowOptions = rowScoped ? pickerOptions(groups, dataKey, params) : [];
-  // The same document-scope escape the vertical section offers: a value that
-  // belongs to the whole document rather than the row.
-  const documentOptions =
-    rowScoped && scopeAuthorable(capabilities) ? pickerOptions(groups, null, params) : undefined;
-  const sampleRoot = parseParams(params);
-  const formatRegistry = registryNames(controller.read('formats'));
-  const columnFormatRows = (key: string) =>
-    formatOptions(
-      formatRegistry,
-      rowOptions.find((option) => option.key === key)?.type,
-      capabilities,
-    );
-
-  // A `cell:`/unbound column, or an unbound table, has no row value to preview.
-  const sampleFor = (column: ColumnRow) =>
-    column.hasCell || column.key === '' || !rowScoped
-      ? undefined
-      : sampleValueFor(sampleRoot, dataKey, column.key);
-
+  const { rowScoped, rowOptions, documentOptions, formatRowsFor, sampleFor } = columnSheetData({
+    read: controller.read,
+    dataKey,
+    groups,
+    params,
+    capabilities,
+  });
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   const headerDrag = useColumnHeaderDrag(tablePath, columns.length, dispatch);
 
@@ -183,17 +164,37 @@ export function TableColumnSheet({
             key={`f${index}`}
             label={t('panel.field.format')}
             value={column.format}
-            options={columnFormatRows(column.key)}
+            options={formatRowsFor(column.key)}
             onCommit={(v) => dispatch(formatOp(`${columnsPath}[${index}]`, v))}
           />
         ),
       )}
 
-      {/* Read-only sample-data preview row. */}
+      {/* Alignment row — the one style property worth comparing ACROSS columns
+          (a money column right, a quantity column centred), which is what this
+          transposed sheet is for. The rest of a column's styling lives in the
+          single-column form. */}
+      <RowLabel>{t('panel.field.textAlign')}</RowLabel>
+      {columns.map((column, index) => (
+        <AlignSegment
+          // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — the control is controlled by its own value, so it re-renders in place when a reorder swaps the data at this position
+          key={`a${index}`}
+          value={column.textAlign}
+          onChange={(next) =>
+            dispatch(plainTextOp(`${columnsPath}[${index}]`, ['style', 'textAlign'], next))
+          }
+        />
+      ))}
+
+      {/* Read-only sample-data preview row, drawn under the alignment above it. */}
       <RowLabel>{t('sheet.columns.sample')}</RowLabel>
       {columns.map((column, index) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — read-only, so it re-renders in place when a reorder swaps the data at this position
-        <ColumnSampleCell key={`s${index}`} value={sampleFor(column)} />
+        <ColumnSampleCell
+          // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — read-only, so it re-renders in place when a reorder swaps the data at this position
+          key={`s${index}`}
+          value={sampleFor(column)}
+          textAlign={column.textAlign}
+        />
       ))}
     </div>
   );

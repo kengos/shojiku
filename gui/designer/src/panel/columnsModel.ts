@@ -10,6 +10,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { formatPath, parsePath } from '@shojiku/designer-core';
+import { type ItemView, readItemView } from './itemView';
 
 export interface ColumnRow {
   /** The header label ('' when unset/not a string). */
@@ -28,6 +29,9 @@ export interface ColumnRow {
   /** A `cell:` column — its content is a sub-template, so the binding
    * editor is hidden (label/width/order still edit). */
   readonly hasCell: boolean;
+  /** The column's own `style.textAlign` ('' when unset) — the property the
+   * column sheet compares across columns, and the one a money column needs. */
+  readonly textAlign: string;
 }
 
 function displayLength(value: unknown): string {
@@ -58,6 +62,7 @@ export function readColumnsView(tableNode: unknown): readonly ColumnRow[] | null
     const key = data?.key;
     const format = data?.format;
     const scope = data?.scope;
+    const align = record(column?.style)?.textAlign;
     return {
       label: typeof label === 'string' ? label : '',
       key: typeof key === 'string' ? key : '',
@@ -65,6 +70,7 @@ export function readColumnsView(tableNode: unknown): readonly ColumnRow[] | null
       format: typeof format === 'string' ? format : '',
       scope: typeof scope === 'string' ? scope : '',
       hasCell: record(column?.cell) !== undefined,
+      textAlign: typeof align === 'string' ? align : '',
     };
   });
 }
@@ -116,4 +122,23 @@ export function removeColumnOp(tablePath: string, index: number): Op {
  * `moveItem` expects (adjacent swaps need no adjustment). */
 export function moveColumnOp(tablePath: string, from: number, to: number): Op {
   return { op: 'moveItem', path: `${tablePath}.columns`, from, to };
+}
+
+/** The `ItemView` a selected node presents to the FORMAT toolbar. A table column
+ * is not an item and carries no `type` key unless its author wrote one, so
+ * `readItemView` reports it as unformattable — which made the toolbar appear for
+ * a column that spells out `type: text` and vanish for one that relies on the
+ * default, the same column either way. A column's default type IS `text`, so it
+ * is supplied here and every column formats alike. A column that is not a map at
+ * all still gets nothing: the op layer would refuse the write, and an offered
+ * control that does nothing is worse than an absent one. */
+export function readSelectionView(raw: unknown, path: string): ItemView | null {
+  const view = readItemView(raw);
+  if (view !== null || columnPathInfo(path) === null) {
+    return view;
+  }
+  const column = record(raw);
+  // Spread + literal key, never assignment: a `__proto__` key in the document
+  // stays inert data rather than reaching the prototype setter.
+  return column === undefined ? null : readItemView({ ...column, type: 'text' });
 }

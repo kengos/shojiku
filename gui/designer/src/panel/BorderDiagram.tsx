@@ -6,7 +6,7 @@
 import type { ReactNode } from 'react';
 import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
-import { isHexColor } from '../ui/ColorSwatchPicker';
+import { isHexColor } from '../ui/chipContrast';
 import { SIDES, type Side } from './borderSides';
 import type { BorderView } from './borderTypes';
 

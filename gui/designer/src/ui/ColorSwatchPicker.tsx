@@ -9,6 +9,7 @@
 
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
+import { chipRing, isHexColor } from './chipContrast';
 import { swatchName } from './swatchNames';
 import { TipBubble } from './TipBubble';
 
@@ -29,12 +30,6 @@ export const SWATCHES: readonly string[] = [
   '#1d4ed8',
   '#6d28d9',
 ];
-
-/** A strict 6-digit `#rrggbb` guard: a document-derived color reaches a swatch
- * preview's inline style ONLY through this. */
-export function isHexColor(value: string): boolean {
-  return /^#[0-9a-fA-F]{6}$/.test(value);
-}
 
 export interface ColorSwatchPickerProps {
   /** The trigger's accessible name. */
@@ -85,7 +80,12 @@ export function ColorSwatchPicker({
       >
         <span
           className="sj-color-chip block size-3.5 rounded-[2px] border border-border bg-bg"
-          style={chip === undefined ? undefined : { backgroundColor: chip }}
+          // The ring is what keeps a black chip visible on the dark chrome and a
+          // white one on the light chrome. Both members take the RAW `value`, not
+          // the narrowed `chip`: `chipRing` owns the not-a-colour case itself, so a
+          // hostile string yields no ring and no fill, and React drops an
+          // `undefined` style member.
+          style={{ backgroundColor: chip, boxShadow: chipRing(value) }}
         />
       </button>
       {open ? (
@@ -101,7 +101,10 @@ export function ColorSwatchPicker({
                 role="menuitem"
                 className="size-5 cursor-pointer rounded-[2px] border border-border"
                 aria-label={swatchName(swatch, t)}
-                style={{ backgroundColor: swatch }}
+                // The palette carries both `#ffffff` and `#000000`, so the same
+                // ring the trigger chip draws is what keeps each end of it
+                // visible against the popover's own surface.
+                style={{ backgroundColor: swatch, boxShadow: chipRing(swatch) }}
                 onClick={() => commit(swatch)}
               />
             ))}

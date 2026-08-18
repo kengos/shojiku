@@ -1,6 +1,11 @@
 // The single-column form a canvas column selection (`…columns[n]`) opens:
-// label, binding, format, width — the column identity the user just clicked,
-// without hunting the parent table in the tree.
+// label, binding, format, width, and the column's own cell styling — the column
+// identity the user just clicked, without hunting the parent table in the tree.
+//
+// The styling half is the SAME four controls the table's header and body bands
+// carry (`TableBandFields`), pointed at `columns[n].style` instead. That is the
+// per-cell layer a business form actually needs: a money column right-aligned,
+// a quantity column centred.
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
@@ -13,6 +18,8 @@ import { Field, TextField } from './fields';
 import { registryNames } from './itemView';
 import { lengthOp, plainTextOp } from './model';
 import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
+import { TableBandFields } from './TableBandFields';
+import { readBand } from './tableStyleModel';
 
 export interface ColumnFormProps {
   readonly controller: EditorController;
@@ -88,6 +95,18 @@ export function ColumnForm({
               }
             }}
           />
+        </section>
+        <section className="mb-4">
+          <h3 className={SECTION_TITLE}>{t('panel.column.style')}</h3>
+          <TableBandFields
+            band={readBand(controller.read(path))}
+            onChange={(property, value) => dispatch(plainTextOp(path, ['style', property], value))}
+          />
+          {/* Not decoration trivia: a column's own alignment also wins for its
+              header LABEL over whatever the header row sets
+              (docs/engine/table.md), so the control reaches two places and the
+              panel has to say which. */}
+          <p className="m-0 mt-1 text-muted text-sm">{t('panel.column.styleHint')}</p>
         </section>
       </div>
     </aside>

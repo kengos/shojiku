@@ -281,15 +281,34 @@ read side, never the reverse.
     control); unset w/h seed resolved sizes into dimmed steppers.
   - The decoration tab covers every `BORDERABLE_TYPES` item: typography
     steppers (text only) + the fill-and-border cluster (fill swatch +
-    `BorderEditor` + text-color swatch). Each unset style field carries
+    `BorderEditor` + text-color swatch). A **table** is the exception on the
+    fill: the engine paints no `style.backgroundColor` on one (asserted in
+    `engine/layout/tests/e2e/table/style.rs`), so the swatch is withheld
+    unless the document already carries one — in which case the table-style
+    section below reports it as ineffective and offers to clear it, rather
+    than hiding a key the panel could then never remove. Each unset style field carries
     a `panel/OriginBadge.tsx` effective-value hint (resolved value +
     origin default/style/inherited + a to-document-settings jump; the engine-floor
     origin shows no jump).
 - `panel/TableColumnsSection.tsx` — the columns section for a selected
   table: source rebinding via the array-group picker, then per-column
   label / ▲▼ reorder / delete / label-only add — each ONE op over
-  `panel/columnsModel.ts` (`readColumnsView`/`columnPathInfo`/
-  `addColumnOp`/`removeColumnOp`/`moveColumnOp`).
+  `panel/columnsModel.ts` (`readColumnsView` — whose row carries the column's
+  own `style.textAlign` for the sheet's comparison row —
+  `columnPathInfo`/`addColumnOp`/`removeColumnOp`/`moveColumnOp`, plus
+  **`readSelectionView`**: the view the FORMAT TOOLBAR resolves a selection
+  through. `readItemView` requires a string `type`, which a column carries only
+  when its author spelled the default out — so the toolbar used to appear for
+  `type: text` columns and vanish for the ones the scaffold emits, the same
+  column either way. A column's default type IS `text`, supplied here (spread +
+  literal key, so a document `__proto__` stays inert data); a column that is not
+  a map still gets nothing, since the op layer would refuse the write). Because
+  the view reads as a `text` item, the column's bar carries the full text control
+  set — typography, the style picker (`styleNames` is a real column key) and the
+  item border control — not only the alignment the change was motivated by;
+  `toolbar/cascade.ts` supplies the layers that make those values TRUE for a cell
+  (`row.style` over the table's own style, mirroring the engine's
+  `resolve_row_style`), which a `container`-only ancestor walk did not.
 - `panel/sourceScope.ts` — the source-picker wiring shared by the table
   section and `IterableSourceSection` (props + a commit callback, not a
   pure model): `sourceOptions` (the TOP-LEVEL array groups as picker
@@ -310,7 +329,11 @@ read side, never the reverse.
   kind stays editable.
 - `panel/ColumnForm.tsx` — the single-column form a canvas click on a
   `…columns[n]` cell opens: label/binding/format/width (scope via
-  `bindingScopeFor`).
+  `bindingScopeFor`), then the column's OWN cell style — the same
+  `TableBandFields` at `columns[n].style`, which is how a money column becomes
+  right-aligned. It says so: a column's `textAlign`/`verticalAlign` also wins
+  for that column's own header LABEL over the header row's
+  ([table.md](../engine/table.md)).
 - `panel/groupModel.ts` — pure model for table `headerGroups` editing
   (columnsModel's sibling): `readGroupsView` (hostile-tolerant
   `{label, span}` rows, indices true), `groupPathInfo` (trailing
@@ -323,6 +346,50 @@ read side, never the reverse.
   `…headerGroups[n]` cell opens: label (blur-commit) + span
   (`StepperField` stepping from the RESOLVED coverage) + a hint naming
   the covered columns via `formatList` (impact scope before the edit).
+The table's BAND styling is a shell + two pure modules + a data module, ordered
+the way the engine layers the bands (grid → header → body base → zebra → the
+conditional rules the next section owns).
+
+- `panel/tableStyleModel.ts` (pure, READ) — `readBand` (one band's four
+  properties out of whatever sits at `<owner>.style`; a non-map band or style
+  degrades to unset) and `readTableStyle` → `{header, headerFill, row, zebra,
+  ineffectiveFill}`. `headerFill` is packaged as the same `EffectiveValue` the
+  item style fields use, so an UNSET header fill renders through the shared
+  `OriginBadge` as the engine floor `#ededed` rather than as a blank swatch;
+  `TABLE_HEADER_FILL` mirrors `engine/layout/src/engine/table.rs` and a
+  drift-guard test reads that file. Colours are reported VERBATIM — the render
+  site decides what may become CSS.
+- `panel/tableStyleOps.ts` (pure, WRITE) — `bandStyleOp` (one leaf
+  `setScalar`/`removeKey` at `header.style.*` / `row.style.*` /
+  `row.alternateStyle.*`, over `plainTextOp` so "empty clears" has one home),
+  `zebraToggleOp` (takes the CURRENT value, not a desired on/off — the
+  checkbox's state is derived from that value, so a boolean would create a
+  can't-happen leg; it is therefore total), `clearIneffectiveFillOp`. Removing
+  the last band property prunes the emptied maps, so a band edited and cleared
+  round-trips byte-identical (pinned over a real `Editor`).
+- `panel/tableStylePresets.ts` — Excel's table-style gallery as six looks over
+  a FIXED owned key set (header fill/colour/weight, zebra fill, grid width).
+  Applying one authors what it declares and REMOVES the owned keys it does not,
+  in one batch; anything outside that set (a hand-set alignment, a row colour)
+  is never touched. `matchPreset` derives the active entry from the WIRE each
+  render, so the gallery holds no selection state. Lookup is a `Map`, never a
+  plain-object index — a preset id is a string from a click handler, and a
+  `Record` lookup would answer `constructor` with an inherited function.
+- `panel/TableStyleSection.tsx` — the shell. It takes a `TableStyleContext
+  {path, controller, capabilities}` of its OWN rather than `ItemPanelProps`,
+  and assumes nothing about the panel's ~255px column: appearance editing is
+  expected to move into a modal sheet, and a test mounts the section standalone
+  so that move stays a change of render site. Capability-gated on `table.style`.
+- `panel/TableStyleGallery.tsx` — the two pictures: `TableMiniature` (the live
+  banding) and `TableStyleGallery` (the thumbnails). FIGURES, not renders — the
+  canvas carries the real engine preview — drawn over a fixed paper-white ground
+  in BOTH schemes, because the page they depict is paper.
+- `panel/TableBandFields.tsx` — the four controls one styled band carries
+  (alignment, background, text colour, bold), rendered for the header band, the
+  body band and (from `ColumnForm`) one column's cells: the same four `Style`
+  properties, only the caller's key path differs. Exports `AlignSegment`, the
+  ONE alignment control — the band editors, the single-column form, the column
+  sheet's per-column row and nothing else.
 - `panel/RowConditions.tsx` — the table's row-conditional-styles section
   (decoration tab, `table.row.conditionalStyles`-gated): the rule list shell —
   add, remove, open-one-at-a-time, and the repoint reconciliation (a
@@ -371,10 +438,16 @@ read side, never the reverse.
 - `panel/TableColumnSheet.tsx` — the same per-column editing transposed
   horizontally in a bottom `ui/Offcanvas.tsx` sheet (columns as strips;
   header drag-reorder or Alt+←/→, ONE `moveItem` each; reuses the same
-  pickers/models as the vertical section). Parts:
+  pickers/models as the vertical section). It carries ONE style row —
+  alignment, via the shared `AlignSegment` — because comparing columns is what
+  this transposed view is for; the rest of a column's styling lives in
+  `ColumnForm`. The existing sample row renders under the pick, so the row above
+  it is showing its own effect. Parts:
   `useColumnHeaderDrag.ts` (the header reorder machine),
   `TableColumnCells.tsx` (the cell parts incl. the sample row over
-  `displaySample`).
+  `displaySample`), `columnSheetData.ts` (what the sheet READS — picker options,
+  the per-column format rows, the sample value — split out so the sheet file
+  stays the row layout).
 - `panel/DocumentSettingsPage.tsx` — the fullscreen document view
   (page/size/defaults/styles/locale), opened by the whole-document tree row /
   File menu / origin jumps: the page shell — header, the three-column

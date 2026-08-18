@@ -298,6 +298,16 @@ is Tailwind utilities over the `--sj-*` tokens.
   value can come from a document) supplies its accessible NAME; an
   unnamed value keeps its hex, and a drift-guard pins the table against
   `SWATCHES`.
+- `ui/chipContrast.ts` — what a colour VALUE is, and how a chip painted in
+  one stays visible: `isHexColor` (the guard every document-derived colour
+  passes before reaching an inline style — it lives here, not beside the
+  picker, because it is a property of the value) plus `relativeLuminance`
+  and `chipRing`. The chip sits on chrome that is light in one scheme and
+  dark in the other, so a fixed token border loses one end of the range at
+  each; the ring is derived from the chip's OWN WCAG luminance instead
+  (light chip → dark hairline, dark chip → light one), which needs no theme
+  branch and no new token. `chipRing` is total: a non-colour gets no ring,
+  which is also the unset chip's state.
 - `ui/TipBubble.tsx` — the gdoc-style instant tooltip (~300ms CSS,
   decorative, width-BOUNDED — a label may interpolate a hostile style
   name; `data-sj-tip` is the test hook).

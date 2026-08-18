@@ -87,6 +87,36 @@ describe('RowConditionsSection', () => {
     }
   });
 
+  it('rings the collapsed card’s colour dots, like every other colour chip', () => {
+    section([{ when: { key: 'kind' }, style: { backgroundColor: '#ffffff', color: '#000000' } }]);
+    const dots = [...document.querySelectorAll('span.size-2\\.5')] as HTMLElement[];
+    expect(dots.map((d) => d.style.boxShadow)).toEqual([
+      'inset 0 0 0 1px rgba(0, 0, 0, 0.45)',
+      'inset 0 0 0 1px rgba(255, 255, 255, 0.55)',
+    ]);
+  });
+
+  it('paints no dot for a colour the guard refuses, and no ring either', () => {
+    // The value comes from an untrusted template; the two guards must agree, or
+    // a named CSS colour would paint a dot with no outline.
+    section([{ when: { key: 'kind' }, style: { backgroundColor: 'url(javascript:alert(1))' } }]);
+    const dots = [...document.querySelectorAll('span.size-2\\.5')] as HTMLElement[];
+    expect(dots).toHaveLength(1);
+    expect(dots[0].style.backgroundColor).toBe('');
+    expect(dots[0].style.boxShadow).toBe('');
+  });
+
+  it('labels its four style controls with the SHARED field vocabulary', () => {
+    // These labels moved to the generic `panel.field.*` keys when the table's
+    // band editor started using the same four properties — one wording wherever
+    // they are edited. A covered line rendering a dead key is invisible to every
+    // gate, so the strings are asserted, not just the render.
+    section([{ when: { key: 'kind', equals: 'heading' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is heading' }));
+    expect(screen.getByRole('group', { name: 'Text alignment' })).not.toBeNull();
+    expect(screen.getByRole('checkbox', { name: 'Bold' })).not.toBeNull();
+  });
+
   it('shows no chips for a rule that sets no style yet', () => {
     section([{ when: { key: 'kind', equals: 'heading' } }]);
     expect(screen.queryByText('Center')).toBeNull();

@@ -101,7 +101,7 @@ describe('DocumentDefaults', () => {
     fireEvent.blur(screen.getByLabelText('Font size'), { target: { value: '12' } });
     expect(doc()).toContain('fontSize: 12');
     // A select field (textAlign) authors its enum value verbatim.
-    fireEvent.change(screen.getByLabelText('Align'), { target: { value: 'center' } });
+    fireEvent.change(screen.getByLabelText('Text alignment'), { target: { value: 'center' } });
     expect(doc()).toContain('textAlign: center');
     // fontFamily is a datalist combo when host families are supplied.
     expect(screen.getByLabelText('Font family').getAttribute('list')).toBe('sj-defaults-family');
@@ -200,7 +200,14 @@ describe('DocumentDefaults', () => {
       // A new inherited key must be PLACED in the row layout — the section
       // renders from the layout, so an unplaced key would vanish silently.
       render(<Harness source={BASE} section="style" />);
-      const labels = ['Font size', 'Line height', 'Font family', 'Weight', 'Style', 'Align'];
+      const labels = [
+        'Font size',
+        'Line height',
+        'Font family',
+        'Weight',
+        'Style',
+        'Text alignment',
+      ];
       for (const label of labels) {
         expect(screen.getAllByLabelText(label).length).toBe(1);
       }
@@ -270,7 +277,7 @@ describe('DocumentDefaults', () => {
       for (const [label, fallback] of [
         ['Weight', 'Regular'],
         ['Style', 'Upright'],
-        ['Align', 'Left'],
+        ['Text alignment', 'Left'],
       ]) {
         const select = screen.getByLabelText(label) as HTMLSelectElement;
         expect(select.value).toBe('');

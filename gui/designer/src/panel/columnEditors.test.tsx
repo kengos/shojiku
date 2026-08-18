@@ -413,7 +413,15 @@ describe('ColumnForm', () => {
 
   function form(
     controller: EditorController,
-    column = { label: '品名', key: 'name', width: '15%', format: '', scope: '', hasCell: false },
+    column = {
+      label: '品名',
+      key: 'name',
+      width: '15%',
+      format: '',
+      scope: '',
+      hasCell: false,
+      textAlign: '',
+    },
   ) {
     return draw(
       <ColumnForm
@@ -475,7 +483,15 @@ describe('ColumnForm', () => {
 
   it('hides the binding picker for a cell column', () => {
     const controller = makeController({ [TABLE]: TABLE_NODE });
-    form(controller, { label: '明細', key: '', width: '', format: '', scope: '', hasCell: true });
+    form(controller, {
+      label: '明細',
+      key: '',
+      width: '',
+      format: '',
+      scope: '',
+      hasCell: true,
+      textAlign: '',
+    });
     expect(screen.queryByLabelText('Data key')).toBeNull();
   });
 
@@ -488,6 +504,7 @@ describe('ColumnForm', () => {
       format: '',
       scope: '',
       hasCell: false,
+      textAlign: '',
     });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
     fireEvent.click(screen.getByRole('menuitem', { name: /Currency symbol/ }));
@@ -501,8 +518,89 @@ describe('ColumnForm', () => {
 
   it('hides the format picker for an unbound column', () => {
     const controller = makeController({ [TABLE]: TABLE_NODE });
-    form(controller, { label: '新', key: '', width: '', format: '', scope: '', hasCell: false });
+    form(controller, {
+      label: '新',
+      key: '',
+      width: '',
+      format: '',
+      scope: '',
+      hasCell: false,
+      textAlign: '',
+    });
     expect(screen.queryByLabelText('Format')).toBeNull();
+  });
+
+  describe('the column’s own cell style', () => {
+    it('authors an alignment at the column’s style, which is what a money column needs', () => {
+      const controller = makeController({ [TABLE]: TABLE_NODE, [COLUMN_PATH]: {} });
+      form(controller);
+      fireEvent.click(screen.getByRole('radio', { name: 'Right' }));
+      expect(controller.apply).toHaveBeenCalledWith({
+        op: 'setScalar',
+        path: COLUMN_PATH,
+        keys: ['style', 'textAlign'],
+        value: 'right',
+      });
+    });
+
+    it('authors a fill from the swatch palette', () => {
+      const controller = makeController({ [TABLE]: TABLE_NODE, [COLUMN_PATH]: {} });
+      form(controller);
+      fireEvent.click(screen.getByRole('button', { name: 'Background' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+      expect(controller.apply).toHaveBeenCalledWith({
+        op: 'setScalar',
+        path: COLUMN_PATH,
+        keys: ['style', 'backgroundColor'],
+        value: '#b91c1c',
+      });
+    });
+
+    it('authors a TEXT COLOUR at the column’s style', () => {
+      const controller = makeController({ [TABLE]: TABLE_NODE, [COLUMN_PATH]: {} });
+      form(controller);
+      fireEvent.click(screen.getByRole('button', { name: 'Color' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+      expect(controller.apply).toHaveBeenCalledWith({
+        op: 'setScalar',
+        path: COLUMN_PATH,
+        keys: ['style', 'color'],
+        value: '#b91c1c',
+      });
+    });
+
+    it('clears a style property rather than authoring an engine default', () => {
+      const controller = makeController({
+        [TABLE]: TABLE_NODE,
+        [COLUMN_PATH]: { style: { fontWeight: 'bold' } },
+      });
+      form(controller);
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Bold' }));
+      expect(controller.apply).toHaveBeenCalledWith({
+        op: 'removeKey',
+        path: COLUMN_PATH,
+        keys: ['style', 'fontWeight'],
+      });
+    });
+
+    it('seeds the controls from the column’s authored style', () => {
+      const controller = makeController({
+        [TABLE]: TABLE_NODE,
+        [COLUMN_PATH]: { style: { textAlign: 'center', fontWeight: 'bold' } },
+      });
+      form(controller);
+      expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Center' }).checked).toBe(true);
+      expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Bold' }).checked).toBe(true);
+    });
+
+    it('says the alignment also wins for this column’s own header label', () => {
+      // Not decoration trivia: the engine gives a column's `textAlign` precedence
+      // over the header row's for that column's LABEL, so the control reaches two
+      // places and the form has to say which.
+      const controller = makeController({ [TABLE]: TABLE_NODE, [COLUMN_PATH]: {} });
+      form(controller);
+      expect(screen.getByText(/wins over the header row/)).not.toBeNull();
+    });
   });
 });
 
@@ -615,6 +713,7 @@ describe('column editors — binding scope', () => {
           format: '',
           scope: 'document',
           hasCell: false,
+          textAlign: '',
         }}
         groups={SCOPED_GROUPS}
         params="{}"
@@ -642,7 +741,15 @@ describe('column editors — binding scope', () => {
       <ColumnForm
         controller={controller}
         path={columnPath}
-        column={{ label: '品名', key: '', width: '', format: '', scope: '', hasCell: false }}
+        column={{
+          label: '品名',
+          key: '',
+          width: '',
+          format: '',
+          scope: '',
+          hasCell: false,
+          textAlign: '',
+        }}
         groups={SCOPED_GROUPS}
         params="{}"
       />,
@@ -670,7 +777,15 @@ describe('column editors — binding scope', () => {
       <ColumnForm
         controller={controller}
         path={columnPath}
-        column={{ label: '品名', key: 'name', width: '', format: '', scope: '', hasCell: false }}
+        column={{
+          label: '品名',
+          key: 'name',
+          width: '',
+          format: '',
+          scope: '',
+          hasCell: false,
+          textAlign: '',
+        }}
         groups={SCOPED_GROUPS}
         params="{}"
         capabilities={['other.capability']}

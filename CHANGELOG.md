@@ -15,6 +15,26 @@ platform binaries.
 
 ### Added
 
+- **Tables can be styled in the Designer: a heading-row fill, banded rows, and
+  per-column alignment.** A tinted heading row and striped body rows are how a
+  business form is expected to look, and neither was reachable — the panel's
+  fill and border controls only ever reached the element's own style. The table
+  now has a *Table style* section on its Decoration tab: a live miniature of the
+  banding, six one-click looks to pick from, a Banded rows checkbox, and — folded
+  away, since most tables never need it — background, text colour, bold and
+  alignment for the heading row and for the body rows separately. Picking a look
+  is a single undo step and touches only the keys that look owns; anything you
+  set by hand stays.
+
+- **A table column can be aligned.** Right-aligning an amount column or centring
+  a quantity column had no control anywhere, and whether the format toolbar
+  responded to a selected column depended on whether the template happened to
+  spell out a default the column did not need. Clicking a cell now opens the
+  column's own style — alignment, background, text colour, bold — the column
+  sheet gained an alignment row so columns can be lined up against each other,
+  and the toolbar now works on every column rather than some of them. A column's
+  alignment also applies to its own heading, which the panel now says.
+
 - **The border editor explains the order it works in, and its controls line
   up again.** Setting a border is pen-then-edges — pick the width, colour and
   line type, then click the edges you want them on, the way a spreadsheet's
@@ -59,6 +79,24 @@ platform binaries.
   capabilities.
 
 ### Changed
+
+- **Colour swatches stay visible in both themes.** A black swatch disappeared
+  into the dark chrome and a white or pale one disappeared into the light
+  chrome. Every colour chip in the Designer — the toolbar's text colour and
+  fill, the border pen, the document's default colour, and the new table
+  controls — now draws a hairline outline chosen from the colour's own
+  brightness, so the swatch reads as a swatch whichever theme you are in.
+
+- **The alignment field is called the same thing everywhere.** The row-condition
+  editor, the new table controls and the Document settings → Defaults form all
+  used to name it differently; they now share one label (English "Text
+  alignment", 日本語「文字配置」), which changes the wording on the Defaults form
+  in every language.
+
+- **A table no longer offers a fill control that does nothing.** Setting a
+  background on a table itself was never drawn on the page. The control is gone
+  for tables; if a template already carries such a fill, the panel shows it,
+  says it is not drawn, and offers to remove it.
 
 - **The committed SBOMs now describe the latest release rather than the
   latest commit.** The CycloneDX inventories under `sbom/` are refreshed
