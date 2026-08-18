@@ -23,6 +23,8 @@ import { pickerOptions } from './pickerModel';
 import { RowConditionsSection } from './RowConditions';
 import { readRawEntries } from './rowConditionsModel';
 import { PanelColorField, TypographyFields } from './StyleTabFields';
+import { TableStyleSection } from './TableStyleSection';
+import { readTableStyle } from './tableStyleModel';
 
 export function StyleSection(props: ItemPanelProps) {
   const { t } = useI18n();
@@ -36,6 +38,14 @@ export function StyleSection(props: ItemPanelProps) {
   // The fill/border cluster decorates a BORDER BOX; `line` has a decoration tab
   // but no box (its stroke is its own shape, edited below).
   const boxed = BORDERABLE_TYPES.has(view.type);
+  // A TABLE paints no `style.backgroundColor` — the engine asserts it — so the
+  // fill swatch would author a key nothing draws. It is withheld unless the
+  // document already carries one, in which case the table-style section below
+  // shows it as ineffective and offers to clear it: hiding an authored key
+  // outright would leave it invisible and unremovable in the panel.
+  const isTable = view.type === 'table';
+  const showFill =
+    boxed && (!isTable || readTableStyle(controller.read(path)).ineffectiveFill !== '');
   return (
     <section>
       <HelpfulHeading
@@ -65,7 +75,7 @@ export function StyleSection(props: ItemPanelProps) {
           onNavigate={onNavigateDefaults}
         />
       ) : null}
-      {boxed && hasCapability(capabilities, 'style.backgroundColor') ? (
+      {showFill && hasCapability(capabilities, 'style.backgroundColor') ? (
         <PanelColorField
           label={t('panel.field.backgroundColor')}
           styleKey="backgroundColor"
@@ -101,7 +111,8 @@ export function StyleSection(props: ItemPanelProps) {
           capabilities={capabilities}
         />
       ) : null}
-      {view.type === 'table' && hasCapability(capabilities, 'table.row.conditionalStyles') ? (
+      {isTable ? <TableStyleSection context={{ path, controller, capabilities }} /> : null}
+      {isTable && hasCapability(capabilities, 'table.row.conditionalStyles') ? (
         <RowConditionsSection
           path={path}
           controller={controller}

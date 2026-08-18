@@ -19,7 +19,7 @@
 import { useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
-import { readItemView } from '../panel/itemView';
+import { readSelectionView } from '../panel/columnsModel';
 import { StyleCaptureModal } from '../styles/StyleCaptureModal';
 import type { StyleUsage } from '../styles/usage';
 import { AlignControl } from './AlignControl';
@@ -77,7 +77,9 @@ export function FormatToolbar({
   // A selection pointing at a removed/undone node reads as undefined — treat it
   // like no selection (an empty bar), not a formatting target.
   const raw = path === null ? undefined : controller.read(path);
-  const view = raw === undefined ? null : readItemView(raw);
+  // Column-aware: a table column formats like the text item it defaults to,
+  // whether or not it spells its `type` out.
+  const view = raw === undefined || path === null ? null : readSelectionView(raw, path);
   const eff = path === null || view === null ? null : effectiveStyles(controller.read, path, floor);
   const model: ToolbarModel | null = eff === null ? null : readToolbar(view, eff);
 

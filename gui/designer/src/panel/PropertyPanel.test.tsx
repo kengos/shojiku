@@ -1201,8 +1201,65 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
     );
     openTab('Style');
     expect(screen.queryByRole('button', { name: '+ Add a row condition' })).toBeNull();
-    // The rest of the 装飾 tab still renders.
+    // The rest of the 装飾 tab still renders. The handle is the border label,
+    // not the fill swatch: a TABLE gets no fill swatch (the engine paints none),
+    // which the test below is about.
+    expect(screen.getByText('Border')).not.toBeNull();
+  });
+
+  it('offers a table no fill swatch — the engine paints none on a table', () => {
+    // `style.backgroundColor` on a table is authorable and inert: the layout
+    // crate asserts no fill is drawn. Offering the swatch would author a key
+    // nothing renders, so the decoration tab withholds it and the table-style
+    // section owns the fills that DO paint.
+    const controller = makeController({
+      [PATH]: { type: 'table', data: { key: 'rows' }, columns: [{ data: { key: 'a' } }] },
+    });
+    draw(
+      <PropertyPanel
+        controller={controller}
+        path={PATH}
+        capabilities={['style.backgroundColor', 'style.border']}
+      />,
+    );
+    openTab('Style');
+    expect(screen.queryByRole('button', { name: 'Background' })).toBeNull();
+  });
+
+  it('still offers the fill swatch on a non-table boxed item', () => {
+    const controller = makeController({ [PATH]: { type: 'rect', box: { w: 10, h: 10 } } });
+    draw(
+      <PropertyPanel
+        controller={controller}
+        path={PATH}
+        capabilities={['style.backgroundColor', 'style.border']}
+      />,
+    );
+    openTab('Style');
     expect(screen.getByRole('button', { name: 'Background' })).not.toBeNull();
+  });
+
+  it('shows a table’s already-authored fill as ineffective, with a way to clear it', () => {
+    // Withholding the control must not hide an EXTERNALLY authored key: it would
+    // then be invisible and unremovable in the panel. It is shown as ineffective
+    // instead — the row-conditions posture (render from the wire, keep a stale
+    // key clearable).
+    const controller = makeController({
+      [PATH]: {
+        type: 'table',
+        data: { key: 'rows' },
+        columns: [{ data: { key: 'a' } }],
+        style: { backgroundColor: '#00ff00' },
+      },
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} capabilities={['table.style']} />);
+    openTab('Style');
+    fireEvent.click(screen.getByRole('button', { name: 'Remove the fill' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: PATH,
+      keys: ['style', 'backgroundColor'],
+    });
   });
 
   it('offers no row fields on a table with no bound source', () => {

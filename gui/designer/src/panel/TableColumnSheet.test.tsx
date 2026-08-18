@@ -347,3 +347,70 @@ describe('TableColumnSheet — binding scope', () => {
     expect(screen.queryByText('Document data')).toBeNull();
   });
 });
+
+describe('TableColumnSheet — per-column alignment', () => {
+  it('renders one alignment control per column, seeded from the wire', () => {
+    sheet(
+      makeController({
+        ...TABLE_NODE,
+        columns: [
+          { label: '品名', data: { key: 'name' } },
+          { label: '金額', data: { key: 'qty' }, style: { textAlign: 'right' } },
+        ],
+      }),
+    );
+    const groups = screen.getAllByRole('group', { name: 'Text alignment' });
+    expect(groups).toHaveLength(2);
+    const picked = screen
+      .getAllByRole<HTMLInputElement>('radio', { name: 'Right' })
+      .map((radio) => radio.checked);
+    expect(picked).toEqual([false, true]);
+  });
+
+  it('authors the pick at THAT column’s style, leaving its siblings alone', () => {
+    const controller = makeController({
+      ...TABLE_NODE,
+      columns: [
+        { label: '品名', data: { key: 'name' } },
+        { label: '金額', data: { key: 'qty' } },
+      ],
+    });
+    sheet(controller);
+    fireEvent.click(screen.getAllByRole('radio', { name: 'Right' })[1]);
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${COLUMNS}[1]`,
+      keys: ['style', 'textAlign'],
+      value: 'right',
+    });
+  });
+
+  it('draws the sample row under the alignment it is showing', () => {
+    // The sheet's job is comparing columns; the existing sample row doubles as
+    // the preview of the row above it, which is why alignment belongs here.
+    const { container } = sheet(
+      makeController({
+        ...TABLE_NODE,
+        columns: [
+          { label: '品名', data: { key: 'name' } },
+          { label: '数量', data: { key: 'qty' }, style: { textAlign: 'right' } },
+        ],
+      }),
+    );
+    const samples = Array.from(container.querySelectorAll('output'));
+    expect(samples[0].style.textAlign).toBe('');
+    expect(samples[1].style.textAlign).toBe('right');
+  });
+
+  it('ignores an alignment keyword the engine does not have', () => {
+    // `TextAlign` is three keywords; a document carrying `justify` (or anything
+    // else) must not reach the DOM as a style.
+    const { container } = sheet(
+      makeController({
+        ...TABLE_NODE,
+        columns: [{ label: '品名', data: { key: 'name' }, style: { textAlign: 'justify' } }],
+      }),
+    );
+    expect(container.querySelector('output')?.style.textAlign).toBe('');
+  });
+});

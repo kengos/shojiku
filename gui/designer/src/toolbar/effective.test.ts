@@ -227,3 +227,45 @@ describe('effectiveStyles — engine-default floor', () => {
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });
 });
+
+describe('a table column’s cascade layers', () => {
+  // A column is not an item: the engine resolves a body cell over `row.style`
+  // over the TABLE's own style, and neither is a `container` ancestor, so the
+  // layer gathering has to know about them by name. Without these layers the
+  // toolbar read a right-aligned column as unset and its revert-on-active rule
+  // fired on the wrong option.
+  const COLUMN = 'sections.body.items[0].columns[1]';
+  const TABLE_PATH = 'sections.body.items[0]';
+
+  it('reads the row band and the table as layers below the column', () => {
+    const read = readOf({
+      [COLUMN]: { label: '金額' },
+      [TABLE_PATH]: {
+        type: 'table',
+        style: { color: '#111111' },
+        row: { style: { textAlign: 'right' } },
+      },
+    });
+    const eff = effectiveStyles(read, COLUMN);
+    expect(eff.textAlign.value).toBe('right');
+    expect(eff.color.value).toBe('#111111');
+  });
+
+  it('reads the table alone when it carries no row band', () => {
+    const read = readOf({
+      [COLUMN]: { label: '金額' },
+      [TABLE_PATH]: { type: 'table', style: { textAlign: 'center' } },
+    });
+    expect(effectiveStyles(read, COLUMN).textAlign.value).toBe('center');
+  });
+
+  it('contributes no layer when the owning table is unreadable', () => {
+    const read = readOf({ [COLUMN]: { label: '金額' } });
+    expect(effectiveStyles(read, COLUMN).textAlign.value).toBe('');
+  });
+
+  it('leaves a non-column path resolving exactly as before', () => {
+    const read = readOf({ [TABLE_PATH]: { type: 'table', style: { textAlign: 'right' } } });
+    expect(effectiveStyles(read, TABLE_PATH).textAlign.value).toBe('right');
+  });
+});

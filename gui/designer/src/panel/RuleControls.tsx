@@ -1,20 +1,19 @@
 // The EXPANDED body of one row-condition rule: what the rule matches (field +
 // value) and the four style properties this editor owns — alignment, bold,
-// background, text color. Every other key an entry carries (`styleNames`, a
+// background, text color. The alignment control is the SHARED `AlignSegment`
+// (one control wherever a `textAlign` is picked), not a fourth copy of it. Its four labels are the GENERIC `panel.field.*` ones,
+// shared with the table's band editor and the named-style form: the same four
+// properties named the same way wherever they are edited. Every other key an entry carries (`styleNames`, a
 // style property with no control here) is carried through untouched by the
 // model, so the body reports them rather than pretending they are absent.
 
 import { useI18n } from '../i18n/context';
 import { FIELD_LABEL } from '../ui/chrome';
-import { IconAlignCenter, IconAlignLeft, IconAlignRight } from '../ui/icons';
-import { Segmented } from '../ui/Segmented';
 import { FieldPicker } from './FieldPicker';
 import type { PickerOption } from './pickerModel';
 import { type RowConditionRow, valueFormFor } from './rowConditionsModel';
 import { SwatchRow, ValueControl } from './ruleInputs';
-
-/** The alignments this editor offers. */
-const ALIGNMENTS = ['left', 'center', 'right'] as const;
+import { AlignSegment } from './TableBandFields';
 
 export interface RuleControlsProps {
   readonly rule: RowConditionRow;
@@ -51,17 +50,9 @@ export function RuleControls({
         onChange={(value) => onEqualsChange(value, picked?.type ?? '')}
       />
       <div>
-        <span className={FIELD_LABEL}>{t('panel.rowConditions.align')}</span>
-        <Segmented
-          ariaLabel={t('panel.rowConditions.align')}
+        <span className={FIELD_LABEL}>{t('panel.field.textAlign')}</span>
+        <AlignSegment
           value={rule.textAlign}
-          options={ALIGNMENTS.map((value) => ({
-            value,
-            label: t(`style.value.textAlign.${value}`),
-            icon: alignIcon(value),
-          }))}
-          // A native radio fires no change for the already-checked
-          // option, so a pick is always a NEW alignment.
           onChange={(value) => onStyleChange('textAlign', value)}
         />
       </div>
@@ -73,7 +64,7 @@ export function RuleControls({
             onStyleChange('fontWeight', event.currentTarget.checked ? 'bold' : null)
           }
         />
-        {t('panel.rowConditions.bold')}
+        {t('panel.field.bold')}
       </label>
       <SwatchRow
         label={t('panel.field.backgroundColor')}
@@ -94,11 +85,4 @@ export function RuleControls({
       ) : null}
     </div>
   );
-}
-
-function alignIcon(value: (typeof ALIGNMENTS)[number]) {
-  if (value === 'left') {
-    return <IconAlignLeft size={15} />;
-  }
-  return value === 'center' ? <IconAlignCenter size={15} /> : <IconAlignRight size={15} />;
 }

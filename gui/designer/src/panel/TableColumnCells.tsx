@@ -1,5 +1,7 @@
 // The column sheet's cell parts: the row-heading cell, the placeholder cell a
-// `cell:`/unbound column shows, and the two raw-input cells (label, width).
+// `cell:`/unbound column shows, and the two raw-input cells (label, width). The
+// per-column alignment row uses the SHARED `AlignSegment` directly — one control
+// wherever a `textAlign` is picked.
 // Each editable cell is value-keyed by its OWN value at the call site, so a
 // commit in one cell never discards an in-progress edit in another.
 
@@ -44,13 +46,31 @@ export function ColumnHeaderRow({ columns, drag, reorderLabel }: ColumnHeaderRow
   );
 }
 
-/** The read-only sample-data preview cell. */
-export function ColumnSampleCell({ value }: { readonly value: unknown }) {
+/** The read-only sample-data preview cell. It renders under the column's own
+ * `textAlign` so the alignment row above it is showing its own effect — the
+ * cheapest possible preview, and the reason the alignment row belongs in this
+ * sheet rather than only in the single-column form. */
+export function ColumnSampleCell({
+  value,
+  textAlign,
+}: {
+  readonly value: unknown;
+  readonly textAlign?: string;
+}) {
   return (
-    <output className="truncate rounded-md border border-transparent px-2 py-1 text-sm text-muted">
+    <output
+      className="truncate rounded-md border border-transparent px-2 py-1 text-sm text-muted"
+      style={{ textAlign: alignStyle(textAlign) }}
+    >
       {displaySample(value)}
     </output>
   );
+}
+
+/** The engine's three `TextAlign` keywords are the only values that reach a
+ * style; anything else a document carries is ignored rather than passed on. */
+function alignStyle(value: string | undefined): 'left' | 'center' | 'right' | undefined {
+  return value === 'left' || value === 'center' || value === 'right' ? value : undefined;
 }
 
 /** The sample cell's display string: primitives verbatim, structured values as
