@@ -10,19 +10,24 @@
 // should then move by changing WHERE it is rendered and nothing else. A test
 // mounts it standalone to keep that true.
 
+import type { Op } from '@shojiku/designer-core';
 import { useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { BTN_SM, FIELD_LABEL, SECTION_TITLE } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
+import { bandInk, headerFillOf, readBandCascades } from './bandCascade';
 import { hasCapability } from './itemPanelProps';
+import { applyPanelOp } from './model';
 import { TableBandFields } from './TableBandFields';
 import { TableMiniature, TableStyleGallery } from './TableStyleGallery';
-import type { BandProperty } from './tableStyleModel';
-import { readTableStyle } from './tableStyleModel';
-import type { Band } from './tableStyleOps';
-import { bandStyleOp, clearIneffectiveFillOp, zebraToggleOp } from './tableStyleOps';
+import { readTableStyle, TABLE_HEADER_FILL } from './tableStyleModel';
+import { clearIneffectiveFillOp, zebraToggleOp } from './tableStyleOps';
 import { matchPreset, presetOps } from './tableStylePresets';
+
+/** The key paths the two bands own under the table item. */
+const HEADER_KEYS = ['header', 'style'] as const;
+const ROW_KEYS = ['row', 'style'] as const;
 
 /** Everything the section needs, and nothing about where it is hosted. */
 export interface TableStyleContext {
@@ -30,6 +35,11 @@ export interface TableStyleContext {
   readonly path: string;
   readonly controller: EditorController;
   readonly capabilities: readonly string[] | undefined;
+  /** The engine-default floor, so an unset inherited band property resolves to
+   * the value the page really carries. Optional: the section mounts standalone
+   * in tests and the floor only changes an origin LABEL, never the shown value
+   * or the op. */
+  readonly floor?: Readonly<Record<string, unknown>>;
 }
 
 /** The authored grid width as a display string — the one owned key that lives on
@@ -55,7 +65,7 @@ function gridWidthOf(raw: unknown): string {
 
 export function TableStyleSection({ context }: { readonly context: TableStyleContext }) {
   const { t } = useI18n();
-  const { path, controller, capabilities } = context;
+  const { path, controller, capabilities, floor } = context;
   const [open, setOpen] = useState(false);
   if (!hasCapability(capabilities, 'table.style')) {
     return null;
@@ -63,10 +73,14 @@ export function TableStyleSection({ context }: { readonly context: TableStyleCon
   const raw = controller.read(path);
   const view = readTableStyle(raw);
   const gridWidth = gridWidthOf(raw);
+  // The gallery reads the WIRE, not the cascade: a preset describes what it
+  // AUTHORS, so a colour the table inherits must not make one read as active.
   const active = matchPreset(view, gridWidth);
-  const edit = (band: Band) => (property: BandProperty, value: string) => {
-    controller.apply(bandStyleOp(path, band, property, value));
-  };
+  const bands = readBandCascades(controller.read, path, floor);
+  const headerInk = bandInk(bands.header);
+  const rowInk = bandInk(bands.row);
+  const headerFill = headerFillOf(bands.header, TABLE_HEADER_FILL);
+  const onOp = (op: Op | null) => applyPanelOp(controller, op);
   return (
     <section className="mb-3">
       <h4 className={SECTION_TITLE}>{t('panel.tableStyle.title')}</h4>
@@ -83,12 +97,12 @@ export function TableStyleSection({ context }: { readonly context: TableStyleCon
         </div>
       )}
       <TableMiniature
-        headerFill={view.headerFill.value}
-        headerColor={view.header.color}
-        headerBold={view.header.fontWeight === 'bold'}
+        headerFill={headerFill.value}
+        headerColor={headerInk.color}
+        headerBold={headerInk.bold}
         zebra={view.zebra}
-        rowFill={view.row.backgroundColor}
-        rowColor={view.row.color}
+        rowFill={rowInk.fill}
+        rowColor={rowInk.color}
         gridless={gridWidth === '0'}
       />
       <TableStyleGallery
@@ -130,14 +144,16 @@ export function TableStyleSection({ context }: { readonly context: TableStyleCon
             {t('panel.tableStyle.headerBand')}
           </p>
           <TableBandFields
-            band={view.header}
-            backgroundEffective={view.headerFill}
-            onChange={edit('header')}
+            ctx={bands.header}
+            path={path}
+            keys={HEADER_KEYS}
+            headerFill={headerFill}
+            onOp={onOp}
           />
           <p className={`${FIELD_LABEL} mt-3 font-semibold text-text`}>
             {t('panel.tableStyle.bodyBand')}
           </p>
-          <TableBandFields band={view.row} onChange={edit('row')} />
+          <TableBandFields ctx={bands.row} path={path} keys={ROW_KEYS} onOp={onOp} />
         </div>
       ) : null}
     </section>

@@ -1,14 +1,54 @@
 // The column sheet's cell parts: the row-heading cell, the placeholder cell a
-// `cell:`/unbound column shows, and the two raw-input cells (label, width). The
-// per-column alignment row uses the SHARED `AlignSegment` directly — one control
-// wherever a `textAlign` is picked.
+// `cell:`/unbound column shows, the two raw-input cells (label, width), and the
+// per-column alignment ROW — the SHARED `AlignSegment` over each column's
+// cascade-effective value, one control wherever a `textAlign` is picked. The row
+// lives here rather than in the sheet because the sheet is the grid layout and
+// nothing else, and because resolving a cascade per column would not fit its
+// budget.
 // Each editable cell is value-keyed by its OWN value at the call site, so a
 // commit in one cell never discards an in-progress edit in another.
 
+import type { Op } from '@shojiku/designer-core';
+import type { EffectiveValue } from '../toolbar/effective';
+import { alignedValue, alignWire } from '../toolbar/wire';
 import { INPUT } from '../ui/chrome';
 import type { ColumnRow } from './columnsModel';
 import { UnitBadge, unitIsImplicit } from './fields';
+import { AlignSegment } from './TableBandFields';
 import type { ColumnHeaderDrag } from './useColumnHeaderDrag';
+
+/** A column's own alignment key path, under the column itself. */
+const ALIGN_KEYS = ['style', 'textAlign'] as const;
+
+export interface ColumnAlignRowProps {
+  readonly columns: readonly ColumnRow[];
+  /** `<table>.columns` — each cell's own path is this plus its index. */
+  readonly columnsPath: string;
+  readonly alignFor: (index: number) => EffectiveValue;
+  readonly onOp: (op: Op | null) => void;
+}
+
+/** The per-column alignment row: bare cells (a fragment adds no DOM node), so
+ * they stay direct children of the sheet's grid. Each segment shows what the
+ * column RENDERS with and authors the minimal wire over it — picking the value
+ * the row band already supplies authors nothing. */
+export function ColumnAlignRow({ columns, columnsPath, alignFor, onOp }: ColumnAlignRowProps) {
+  return (
+    <>
+      {columns.map((_column, index) => {
+        const eff = alignFor(index);
+        return (
+          <AlignSegment
+            // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — the control is controlled by its own value, so it re-renders in place when a reorder swaps the data at this position
+            key={`a${index}`}
+            value={alignedValue(eff.value)}
+            onChange={(next) => onOp(alignWire(`${columnsPath}[${index}]`, ALIGN_KEYS, eff, next))}
+          />
+        );
+      })}
+    </>
+  );
+}
 
 export interface ColumnHeaderRowProps {
   readonly columns: readonly ColumnRow[];

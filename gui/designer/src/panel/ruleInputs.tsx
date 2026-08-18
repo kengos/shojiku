@@ -4,6 +4,7 @@
 import { useI18n } from '../i18n/context';
 import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
 import { FIELD_LABEL, PANEL_SWATCH_TRIGGER } from '../ui/chrome';
+import { TipBubble } from '../ui/TipBubble';
 import { Field } from './fields';
 import type { valueFormFor } from './rowConditionsModel';
 
@@ -72,16 +73,24 @@ export function ValueControl({
 export function SwatchRow({
   label,
   value,
+  hint,
   onCommit,
 }: {
   readonly label: string;
   readonly value: string;
+  /** Where a CASCADED value comes from, as the gdoc-style hover bubble. Used
+   * where the origin is the engine floor and a badge line would be noise; the
+   * bubble is decorative, so the control keeps its own accessible name. */
+  readonly hint?: string;
   readonly onCommit: (value: string) => void;
 }) {
   const { t } = useI18n();
   return (
     <div className="flex items-center gap-2">
-      <span className={`${FIELD_LABEL} mb-0 flex-1`}>{label}</span>
+      <span className={`${FIELD_LABEL} group/tip relative mb-0 flex-1`}>
+        {label}
+        {hint === undefined ? null : <TipBubble text={hint} />}
+      </span>
       <ColorSwatchPicker
         label={label}
         value={value}

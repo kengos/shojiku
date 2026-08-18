@@ -136,6 +136,7 @@ export function PropertyPanel({
           groups={paletteGroups}
           params={params}
           capabilities={capabilities}
+          floor={floor}
         />
       );
     }

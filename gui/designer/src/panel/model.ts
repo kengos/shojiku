@@ -27,7 +27,7 @@ function lengthValue(raw: string): number | string {
 
 /** A length/text field edit: an empty value clears the key (removeKey), a bare
  * number authors a number, otherwise a string (units preserved). */
-export function lengthOp(path: string | undefined, keys: string[], raw: string): Op {
+export function lengthOp(path: string | undefined, keys: readonly string[], raw: string): Op {
   return raw.trim() === ''
     ? { op: 'removeKey', path, keys }
     : { op: 'setScalar', path, keys, value: lengthValue(raw) };
@@ -35,7 +35,11 @@ export function lengthOp(path: string | undefined, keys: string[], raw: string):
 
 /** A strict-number field edit (e.g. lineHeight): empty clears; a non-finite
  * value returns `null` so the caller dispatches nothing. */
-export function numberOp(path: string | undefined, keys: string[], raw: string): Op | null {
+export function numberOp(
+  path: string | undefined,
+  keys: readonly string[],
+  raw: string,
+): Op | null {
   if (raw.trim() === '') {
     return { op: 'removeKey', path, keys };
   }
@@ -51,7 +55,7 @@ export function numberOp(path: string | undefined, keys: string[], raw: string):
  * mid-render race from authoring a hostile delta. */
 export function stepValueOp(
   path: string | undefined,
-  keys: string[],
+  keys: readonly string[],
   current: string,
   dir: number,
   step: number,
@@ -78,7 +82,7 @@ export function applyPanelOp(controller: { apply(op: Op): unknown }, op: Op | nu
 /** A string-valued field edit (static text, an enum select, a color): empty
  * clears the key, otherwise the value is authored verbatim as a string (never
  * coerced to a number — `"12"` static text stays a string). */
-export function plainTextOp(path: string | undefined, keys: string[], raw: string): Op {
+export function plainTextOp(path: string | undefined, keys: readonly string[], raw: string): Op {
   return raw === '' ? { op: 'removeKey', path, keys } : { op: 'setScalar', path, keys, value: raw };
 }
 

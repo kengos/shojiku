@@ -212,7 +212,7 @@ sections:
     const italic = screen.getByRole('button', { name: 'Italic' });
     expect(italic.getAttribute('aria-pressed')).toBe('true');
     expect(italic.parentElement?.querySelector('.sj-tip')?.textContent).toBe(
-      'Italic — Inherited from a container',
+      'Italic — Inherited from the level above',
     );
   });
 

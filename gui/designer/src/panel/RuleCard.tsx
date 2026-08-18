@@ -2,7 +2,9 @@
 // opening the card ("when <field> is <value>"), the applied-style chips
 // while collapsed, and the editor body while open.
 
+import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
+import type { CascadeContext } from '../toolbar/cascade';
 import { IconButton } from '../ui/Button';
 import { IconChevronDown, IconTrash } from '../ui/icons';
 import type { PickerOption } from './pickerModel';
@@ -15,11 +17,15 @@ export interface RuleCardProps {
   readonly index: number;
   readonly open: boolean;
   readonly options: readonly PickerOption[];
+  /** The rule's cascade context and its entry path, threaded straight through
+   * to the shared style controls. */
+  readonly ctx: CascadeContext;
+  readonly path: string;
   readonly onToggle: () => void;
   readonly onRemove: () => void;
   readonly onKeyChange: (key: string) => void;
   readonly onEqualsChange: (value: string | null, fieldType: string) => void;
-  readonly onStyleChange: (property: string, value: string | null) => void;
+  readonly onOp: (op: Op | null) => void;
 }
 
 /** One rule: the summary line plus, when open, its controls. */
@@ -28,11 +34,13 @@ export function RuleCard({
   index,
   open,
   options,
+  ctx,
+  path,
   onToggle,
   onRemove,
   onKeyChange,
   onEqualsChange,
-  onStyleChange,
+  onOp,
 }: RuleCardProps) {
   const { t } = useI18n();
   const picked = options.find((o) => o.key === rule.key);
@@ -68,9 +76,11 @@ export function RuleCard({
           rule={rule}
           options={options}
           picked={picked}
+          ctx={ctx}
+          path={path}
           onKeyChange={onKeyChange}
           onEqualsChange={onEqualsChange}
-          onStyleChange={onStyleChange}
+          onOp={onOp}
         />
       ) : null}
       <span className="sr-only">{`${index + 1}`}</span>

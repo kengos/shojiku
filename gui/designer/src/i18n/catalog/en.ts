@@ -562,7 +562,7 @@ export const en: LanguageCatalog = {
     'toolbar.color.custom': 'Custom',
     'toolbar.color.clear': 'Clear',
     'toolbar.origin.style': 'From style "{name}"',
-    'toolbar.origin.inherited': 'Inherited from a container',
+    'toolbar.origin.inherited': 'Inherited from the level above',
     'toolbar.origin.default': 'From document defaults',
     'toolbar.border': 'Border',
     'align.title': 'Align and distribute',

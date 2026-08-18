@@ -11,10 +11,10 @@ import { readRadius } from '../panel/borderRadius';
 import { BORDERABLE_TYPES, type BorderView, type RadiusView } from '../panel/borderTypes';
 import { hasCapability } from '../panel/itemPanelProps';
 import { type ItemView, registryNames } from '../panel/itemView';
-import { lengthOp, plainTextOp } from '../panel/model';
 import { STYLE_FIELDS } from '../panel/styleFieldSpecs';
 import { capturableStyleProps, updateTargetName } from '../styles/captureModel';
 import type { EffectiveStyles, EffectiveValue } from './effective';
+import { alignWire, comboWire, toggleWire } from './wire';
 
 /** The alignment values the toolbar offers. Mirrors the engine `TextAlign`
  * enum; pinned against `STYLE_FIELDS` by a unit test so it cannot drift from
@@ -133,77 +133,39 @@ export function formatContext(options: {
   };
 }
 
-/** The minimal wire that moves an on/off style toward the toggled state: when
- * the below-own cascade already yields the target, the own key just goes away
- * (or nothing happens if it never existed); otherwise the own key authors the
- * target — `normal` appears ONLY as a cascade override, never as a default
- * restated. `null` = dispatch nothing. */
-function toggleWire(
-  path: string,
-  key: string,
-  eff: EffectiveValue,
-  onValue: string,
-  next: boolean,
-): Op | null {
-  const cascadeOn = eff.cascade === onValue;
-  if (cascadeOn === next) {
-    return eff.own === '' ? null : { op: 'removeKey', path, keys: ['style', key] };
-  }
-  return { op: 'setScalar', path, keys: ['style', key], value: next ? onValue : 'normal' };
+/** The toolbar's own-style key path for `key`. Every builder below is the same
+ * `toolbar/wire` decision aimed at `style.*`; the band and column editors aim
+ * the identical decisions at their own key paths. */
+function styleKeys(key: string): readonly string[] {
+  return ['style', key];
 }
 
 /** Toggle `fontWeight` toward `next` (minimal wire over the cascade). */
 export function fontWeightOp(path: string, eff: EffectiveValue, next: boolean): Op | null {
-  return toggleWire(path, 'fontWeight', eff, BOLD_VALUE, next);
+  return toggleWire(path, styleKeys('fontWeight'), eff, BOLD_VALUE, next);
 }
 
 /** Toggle `fontStyle` toward `next` (minimal wire over the cascade). */
 export function fontStyleOp(path: string, eff: EffectiveValue, next: boolean): Op | null {
-  return toggleWire(path, 'fontStyle', eff, ITALIC_VALUE, next);
-}
-
-/** The alignment a resolution means on canvas (`''` = the engine default). */
-export function alignedValue(value: string): string {
-  return value === '' ? 'left' : value;
+  return toggleWire(path, styleKeys('fontStyle'), eff, ITALIC_VALUE, next);
 }
 
 /** Click alignment `value`: clicking the active one reverts to the cascade
  * (drops the own key); otherwise author the minimal wire — nothing when the
  * cascade already yields it, an own key when it does not. */
 export function alignOp(path: string, eff: EffectiveValue, value: AlignValue): Op | null {
-  const keys = ['style', 'textAlign'];
-  const active = alignedValue(eff.value);
-  if (value === active || value === alignedValue(eff.cascade)) {
-    return eff.own === '' ? null : { op: 'removeKey', path, keys };
-  }
-  return { op: 'setScalar', path, keys, value };
-}
-
-/** Commit a combo value over the effective seed: empty falls back to the
- * cascade (drops the own key; nothing when none exists), anything else
- * authors the own key through the shared panel builders. */
-function comboCommit(
-  path: string,
-  keys: string[],
-  eff: EffectiveValue,
-  raw: string,
-  length: boolean,
-): Op | null {
-  if (raw.trim() === '' && eff.own === '') {
-    return null;
-  }
-  return length ? lengthOp(path, keys, raw) : plainTextOp(path, keys, raw);
+  return alignWire(path, styleKeys('textAlign'), eff, value);
 }
 
 /** Set `fontFamily`; `''` clears the own key (back to the cascade). */
 export function fontFamilyOp(path: string, eff: EffectiveValue, raw: string): Op | null {
-  return comboCommit(path, ['style', 'fontFamily'], eff, raw, false);
+  return comboWire(path, styleKeys('fontFamily'), eff, raw, false);
 }
 
 /** Set `fontSize` (a bare number authors a number, a unit string a string,
  * empty clears — the panel's length policy, reused verbatim). */
 export function fontSizeOp(path: string, eff: EffectiveValue, raw: string): Op | null {
-  return comboCommit(path, ['style', 'fontSize'], eff, raw, true);
+  return comboWire(path, styleKeys('fontSize'), eff, raw, true);
 }
 
 /** Set the color at `key`; `''` clears the own key (back to the cascade). */
@@ -213,7 +175,7 @@ export function colorOp(
   eff: EffectiveValue,
   value: string,
 ): Op | null {
-  return comboCommit(path, ['style', key], eff, value, false);
+  return comboWire(path, styleKeys(key), eff, value, false);
 }
 
 /** The `textAlign` options as the engine spells them — for the drift-guard

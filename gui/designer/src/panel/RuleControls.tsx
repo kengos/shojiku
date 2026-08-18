@@ -1,37 +1,53 @@
 // The EXPANDED body of one row-condition rule: what the rule matches (field +
 // value) and the four style properties this editor owns — alignment, bold,
-// background, text color. The alignment control is the SHARED `AlignSegment`
-// (one control wherever a `textAlign` is picked), not a fourth copy of it. Its four labels are the GENERIC `panel.field.*` ones,
-// shared with the table's band editor and the named-style form: the same four
-// properties named the same way wherever they are edited. Every other key an entry carries (`styleNames`, a
-// style property with no control here) is carried through untouched by the
-// model, so the body reports them rather than pretending they are absent.
+// background, text color. Those four ARE `TableBandFields`, the same component
+// the header band, the body band and a column's cells render: a rule is one more
+// layer over the body row, so it gets the same controls, the same
+// cascade-effective display and the same minimal-wire ops rather than a fourth
+// copy of any of them. What it shows is what the rows this rule MATCHES render
+// with — its own style over the body band over the table. Every other key an
+// entry carries (`styleNames`, a style property with no control here) is carried
+// through untouched by the model, so the body reports them rather than
+// pretending they are absent.
 
+import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
-import { FIELD_LABEL } from '../ui/chrome';
+import type { CascadeContext } from '../toolbar/cascade';
 import { FieldPicker } from './FieldPicker';
 import type { PickerOption } from './pickerModel';
 import { type RowConditionRow, valueFormFor } from './rowConditionsModel';
-import { SwatchRow, ValueControl } from './ruleInputs';
-import { AlignSegment } from './TableBandFields';
+import { ValueControl } from './ruleInputs';
+import { TableBandFields } from './TableBandFields';
+
+/** A rule's own style sits at `style.*` under the rule entry itself. */
+const RULE_STYLE_KEYS = ['style'] as const;
 
 export interface RuleControlsProps {
   readonly rule: RowConditionRow;
   readonly options: readonly PickerOption[];
   /** The option the rule's field resolves to (undefined = an unknown key). */
   readonly picked: PickerOption | undefined;
+  /** The rule's cascade context — its own style over the body band over the
+   * table (`panel/bandCascade` § ruleContext). */
+  readonly ctx: CascadeContext;
+  /** The rule entry's structural path (`…row.conditionalStyles[n]`). The INDEX
+   * is proven in range by the caller having rendered this rule from the list,
+   * so the path travels instead of the index and no guard is re-proved here. */
+  readonly path: string;
   readonly onKeyChange: (key: string) => void;
   readonly onEqualsChange: (value: string | null, fieldType: string) => void;
-  readonly onStyleChange: (property: string, value: string | null) => void;
+  readonly onOp: (op: Op | null) => void;
 }
 
 export function RuleControls({
   rule,
   options,
   picked,
+  ctx,
+  path,
   onKeyChange,
   onEqualsChange,
-  onStyleChange,
+  onOp,
 }: RuleControlsProps) {
   const { t } = useI18n();
   const form = valueFormFor(picked?.type ?? '', picked?.enumValues ?? []);
@@ -50,32 +66,8 @@ export function RuleControls({
         onChange={(value) => onEqualsChange(value, picked?.type ?? '')}
       />
       <div>
-        <span className={FIELD_LABEL}>{t('panel.field.textAlign')}</span>
-        <AlignSegment
-          value={rule.textAlign}
-          onChange={(value) => onStyleChange('textAlign', value)}
-        />
+        <TableBandFields ctx={ctx} path={path} keys={RULE_STYLE_KEYS} onOp={onOp} />
       </div>
-      <label className="flex items-center gap-1.5 text-sm text-text">
-        <input
-          type="checkbox"
-          checked={rule.bold}
-          onChange={(event) =>
-            onStyleChange('fontWeight', event.currentTarget.checked ? 'bold' : null)
-          }
-        />
-        {t('panel.field.bold')}
-      </label>
-      <SwatchRow
-        label={t('panel.field.backgroundColor')}
-        value={rule.backgroundColor}
-        onCommit={(value) => onStyleChange('backgroundColor', value === '' ? null : value)}
-      />
-      <SwatchRow
-        label={t('panel.field.color')}
-        value={rule.color}
-        onCommit={(value) => onStyleChange('color', value === '' ? null : value)}
-      />
       {rule.styleNameCount > 0 ? (
         // Named styles ride along untouched; say so rather than leaving
         // the rule looking like it carries only what is editable here.

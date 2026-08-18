@@ -21,7 +21,10 @@ const OPTIONS: readonly PickerOption[] = [
   { key: 'qty', label: '数量', type: 'number', sample: '3', enumValues: [] },
 ];
 
-function makeController(apply = vi.fn(() => ({ ok: true as const }))): EditorController {
+function makeController(
+  apply = vi.fn(() => ({ ok: true as const })),
+  reads: Record<string, unknown> = {},
+): EditorController {
   return {
     text: '',
     revision: 0,
@@ -30,7 +33,7 @@ function makeController(apply = vi.fn(() => ({ ok: true as const }))): EditorCon
     canRedo: false,
     apply,
     applyAll: vi.fn(() => ({ ok: true as const })),
-    read: () => undefined,
+    read: (path: string) => reads[path],
     undo: vi.fn(),
     redo: vi.fn(),
     select: vi.fn(),
@@ -45,16 +48,26 @@ function draw(node: ReactElement) {
   return render(<I18nProvider locale="en">{node}</I18nProvider>);
 }
 
-function section(entries: readonly unknown[], controller = makeController()) {
+function section(
+  entries: readonly unknown[],
+  controller = makeController(),
+  floor?: Readonly<Record<string, unknown>>,
+) {
   draw(
     <RowConditionsSection
       path={TABLE}
       controller={controller}
       entries={entries}
       options={OPTIONS}
+      floor={floor}
     />,
   );
   return controller;
+}
+
+/** Open the one rule the fixture carries. */
+function openRule(name: string) {
+  fireEvent.click(screen.getByRole('button', { name }));
 }
 
 describe('RowConditionsSection', () => {
@@ -399,15 +412,30 @@ describe('RowConditionsSection — style controls', () => {
     });
   });
 
-  it('switches an alignment to the newly picked one', () => {
+  // Picking LEFT with nothing below it does not author `textAlign: left` — the
+  // cascade already yields left, so the minimal wire is to drop the own key.
+  // (Behaviour CHANGE: the rule cards used to restate the default here, which is
+  // what the header/body/column editors were fixed not to do.)
+  it('reverts rather than restating the default when the pick is what the cascade gives', () => {
     const controller = section([{ when: { key: 'kind' }, style: { textAlign: 'right' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Left' }));
     expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['style', 'textAlign'],
+    });
+  });
+
+  it('switches an alignment to the newly picked one', () => {
+    const controller = section([{ when: { key: 'kind' }, style: { textAlign: 'right' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Center' }));
+    expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: `${TABLE}.row.conditionalStyles[0]`,
       keys: ['style', 'textAlign'],
-      value: 'left',
+      value: 'center',
     });
   });
 
@@ -482,5 +510,74 @@ describe('RowConditionsSection — style controls', () => {
       keys: ['when', 'equals'],
       value: 'end',
     });
+  });
+});
+
+// A rule is one more LAYER over the body row, so its controls are the shared
+// band fields over `rule → row band → table` and it inherits the same
+// cascade-aware behaviour the header/body/column editors got. `alternateStyle`
+// is deliberately not in that stack: the zebra applies to every other row, and
+// the card shows one value.
+describe('RowConditionsSection — a rule sits on the body band', () => {
+  const TABLE_NODE = {
+    type: 'table',
+    style: { textAlign: 'center' },
+    row: { style: { fontWeight: 'bold' }, alternateStyle: { fontWeight: 'normal' } },
+  };
+  const RULE = [{ when: { key: 'kind', equals: 'heading' } }];
+
+  function withTable(entries: readonly unknown[] = RULE) {
+    const controller = makeController(
+      vi.fn(() => ({ ok: true as const })),
+      {
+        [TABLE]: TABLE_NODE,
+      },
+    );
+    section(entries, controller);
+    openRule('When 行種別 is heading');
+    return controller;
+  }
+
+  it('shows what the matching rows render with, not only what the rule authors', () => {
+    withTable();
+    expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Bold' }).checked).toBe(true);
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Center' }).checked).toBe(true);
+  });
+
+  it('authors the override that actually turns an inherited bold off', () => {
+    const controller = withTable();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Bold' }));
+    expect(controller.apply).toHaveBeenCalledTimes(1);
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['style', 'fontWeight'],
+      value: 'normal',
+    });
+  });
+
+  it('lets the rule’s own value beat the band’s, and reverts to it on re-pick', () => {
+    const controller = withTable([
+      { when: { key: 'kind', equals: 'heading' }, style: { textAlign: 'right' } },
+    ]);
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Right' }).checked).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: 'Center' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['style', 'textAlign'],
+    });
+  });
+
+  // Two inherited values here, so two lines: the alignment the TABLE supplies
+  // and the weight the row BAND does.
+  it('narrates where the inherited values came from', () => {
+    withTable();
+    expect(
+      screen.queryAllByText('Effective').map((label) => label.closest('p')?.textContent ?? ''),
+    ).toEqual([
+      'Effective center·Inherited from the level above',
+      'Effective bold·Inherited from the level above',
+    ]);
   });
 });

@@ -43,7 +43,7 @@ describe('OriginBadge', () => {
       { value: '12pt', cascade: '12pt', own: '', origin: 'inherited', styleName: '' },
       onNavigate,
     );
-    expect(screen.getByText('Inherited from a container')).toBeTruthy();
+    expect(screen.getByText('Inherited from the level above')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Document settings' }));
     expect(onNavigate).toHaveBeenCalledWith('defaults');
   });

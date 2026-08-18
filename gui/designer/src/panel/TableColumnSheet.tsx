@@ -24,8 +24,8 @@ import {
   lengthOp,
   plainTextOp,
 } from './model';
-import { AlignSegment } from './TableBandFields';
 import {
+  ColumnAlignRow,
   ColumnHeaderRow,
   ColumnLabelCell,
   ColumnSampleCell,
@@ -60,13 +60,15 @@ export function TableColumnSheet({
   const { t } = useI18n();
   const columns = readColumnsView(controller.read(tablePath)) ?? [];
   const columnsPath = `${tablePath}.columns`;
-  const { rowScoped, rowOptions, documentOptions, formatRowsFor, sampleFor } = columnSheetData({
-    read: controller.read,
-    dataKey,
-    groups,
-    params,
-    capabilities,
-  });
+  const { rowScoped, rowOptions, documentOptions, formatRowsFor, sampleFor, alignFor } =
+    columnSheetData({
+      read: controller.read,
+      tablePath,
+      dataKey,
+      groups,
+      params,
+      capabilities,
+    });
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   const headerDrag = useColumnHeaderDrag(tablePath, columns.length, dispatch);
 
@@ -175,16 +177,12 @@ export function TableColumnSheet({
           transposed sheet is for. The rest of a column's styling lives in the
           single-column form. */}
       <RowLabel>{t('panel.field.textAlign')}</RowLabel>
-      {columns.map((column, index) => (
-        <AlignSegment
-          // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — the control is controlled by its own value, so it re-renders in place when a reorder swaps the data at this position
-          key={`a${index}`}
-          value={column.textAlign}
-          onChange={(next) =>
-            dispatch(plainTextOp(`${columnsPath}[${index}]`, ['style', 'textAlign'], next))
-          }
-        />
-      ))}
+      <ColumnAlignRow
+        columns={columns}
+        columnsPath={columnsPath}
+        alignFor={alignFor}
+        onOp={dispatch}
+      />
 
       {/* Read-only sample-data preview row, drawn under the alignment above it. */}
       <RowLabel>{t('sheet.columns.sample')}</RowLabel>

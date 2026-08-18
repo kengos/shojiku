@@ -111,11 +111,14 @@ export function StyleSection(props: ItemPanelProps) {
           capabilities={capabilities}
         />
       ) : null}
-      {isTable ? <TableStyleSection context={{ path, controller, capabilities }} /> : null}
+      {isTable ? (
+        <TableStyleSection context={{ path, controller, capabilities, floor: props.floor }} />
+      ) : null}
       {isTable && hasCapability(capabilities, 'table.row.conditionalStyles') ? (
         <RowConditionsSection
           path={path}
           controller={controller}
+          floor={props.floor}
           entries={readRawEntries(controller.read, path)}
           options={
             view.dataKey === ''

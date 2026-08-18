@@ -636,19 +636,41 @@ data-source section (rebind the array; a list also edits its per-entry
 text template, cleared = entries print directly) — every kind the
 scaffold creates stays editable in the panel.
 
-The **format toolbar shows cascade-EFFECTIVE values** (decided design
-for the toggle-state-vs-effective-style question): B/I/align/family/
+**Every style control shows the cascade-EFFECTIVE value** (decided design
+for the toggle-state-vs-effective-style question), the toolbar first and
+now the table's band and per-column style editors too: B/I/align/family/
 size/color reflect what the item actually renders with — own style →
-named styles (later wins) → `container` ancestors (inherited keys) →
-`defaults.style` — resolved GUI-side over the document by
+named styles (later wins) → ancestors (inherited keys) → `defaults.style`
+→ the engine floor — resolved GUI-side over the document by
 `toolbar/cascade.ts` + `toolbar/effective.ts` (layer gathering and
 per-key resolution — a bounded mirror of the engine cascade; swap the
 pair out if inspect ever carries resolved style), with a "from style
-『name』 / inherited / from defaults" origin hint on the control. Ops
-stay minimal-wire: toggling toward a state the below-own cascade
-already yields just REMOVES the own key; `normal` (or an explicit
-alignment) is authored ONLY as a cascade override — the toolbar never
-restates engine defaults into the wire.
+『name』 / inherited / from defaults" origin hint on the control. The
+ancestor layer is the `container` chain for an item; for a table COLUMN it
+is the row band and then the table, a table's own header/body BANDS sit
+directly on the table, and a row-CONDITION rule sits on the body band — the
+engine's arrangement, composed rather than looked up because `header`/`row`
+are map keys with no structural path. `alternateStyle` (the zebra) is
+deliberately in none of these stacks: it applies to every other row, and a
+control shows one value.
+A control that shows a cascaded value must author over one, so the ops are
+shared rather than reimplemented per surface (`toolbar/wire.ts`, keyed by a
+full key path): toggling toward a state the below-own cascade already
+yields just REMOVES the own key; `normal` (or an explicit alignment) is
+authored ONLY as a cascade override — nothing restates engine defaults into
+the wire. **A non-inherited property gets no cascade display from an ANCESTOR
+layer.** A table cell looks like it carries its row band's
+`backgroundColor` because the row band PAINTS beneath it; that is paint
+order, and reporting it as a cascade would offer a revert that reverts
+nothing. A named style is not an ancestor, so a `backgroundColor` arriving
+through `styleNames` IS document-made and does earn its origin line.
+**One real cascade of a non-inherited property is known and not yet
+shown**: `apply_row_conditions` overlays a matching row-condition rule onto
+the already-resolved row style instead of starting from the initial values,
+so a body band's `backgroundColor` survives into the rule and paints the
+matching rows, while the rule card's swatch reads blank. Expressing it needs
+a per-context inherited-key set that also stops after the first ancestor —
+a design question, not a wiring one.
 
 The **border editor + swatch pickers** shipped (gdoc/Excel-style): an
 Excel-style diagram whose four edges are click targets, plus a
@@ -1047,7 +1069,14 @@ map ([gui-designer](../code-map/gui-designer.md) /
   every default-showing control shows the RESOLVED effective value with an
   origin badge (default / style "name" / inherited) and — when that origin is
   AUTHORED in the document — a jump into the
-  document-settings view. Effective-value resolution generalizes the
+  document-settings view. Where a surface is DENSE — the table's band and
+  per-column style editors, four controls in a ~255px column, three of them
+  always resolving to something — the badge LINE is reserved for a value the
+  DOCUMENT made and the engine floor carries its origin as the hover bubble
+  instead; a line apiece for `left` / `#000000` / `normal` would be permanent
+  chrome saying nothing. The one floor value that keeps its line is a table
+  heading row's fill, because a grey nobody authored is a surprise the others
+  are not. Effective-value resolution generalizes the
   format toolbar's cascade mirror (`toolbar/effective.ts`) — one
   bounded mirror of the engine cascade, never two — and now floors an
   unset inherited key to its real engine default so a control

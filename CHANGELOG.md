@@ -13,6 +13,21 @@ platform binaries.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A table's style controls now show what the page actually does, not just what
+  that one band spells out.** A column sitting in a bold row band showed an
+  unchecked Bold box; a body row taking its colour from the document defaults
+  showed no colour at all — the panel was contradicting the document. The
+  heading-row, body-row and per-column style controls, and the column sheet's
+  alignment row, now show the value the cell renders with, and say where it came
+  from when the document is what set it. Clicking a value the band already
+  supplies leaves the file alone instead of writing a key that changes nothing,
+  and switching one off writes the override that actually turns it off. The
+  Table style miniature follows the same values, so a colour a table inherits
+  reaches the preview. A row-condition rule's own four controls behave the same
+  way, since a rule is one more layer over the body row.
+
 ### Added
 
 - **Tables can be styled in the Designer: a heading-row fill, banded rows, and

@@ -6,20 +6,28 @@
 // carry (`TableBandFields`), pointed at `columns[n].style` instead. That is the
 // per-cell layer a business form actually needs: a money column right-aligned,
 // a quantity column centred.
+//
+// A column HAS a structural path, so its cascade needs no composing: the shared
+// `cascadeContext` already puts the row band and the table under it
+// (`toolbar/cascade` § columnLayers), which is what makes a bold row band show
+// a checked Bold box here instead of an unchecked one.
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
+import { cascadeContext } from '../toolbar/cascade';
 import { INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
 import { ColumnBindingFields } from './ColumnBindingFields';
 import type { ColumnRow } from './columnsModel';
 import { Field, TextField } from './fields';
 import { registryNames } from './itemView';
-import { lengthOp, plainTextOp } from './model';
+import { applyPanelOp, lengthOp, plainTextOp } from './model';
 import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
 import { TableBandFields } from './TableBandFields';
-import { readBand } from './tableStyleModel';
+
+/** A column's own cell style sits at `style.*` under the column itself. */
+const COLUMN_STYLE_KEYS = ['style'] as const;
 
 export interface ColumnFormProps {
   readonly controller: EditorController;
@@ -31,6 +39,9 @@ export interface ColumnFormProps {
   /** The engine capability keys — gates the number-field currency variants
    * in the format suggestions (undefined = show). */
   readonly capabilities?: readonly string[];
+  /** The engine-default floor for the cell-style cascade (unset inherited
+   * property → its real engine default). */
+  readonly floor?: Readonly<Record<string, unknown>>;
 }
 
 export function ColumnForm({
@@ -40,6 +51,7 @@ export function ColumnForm({
   groups,
   params,
   capabilities,
+  floor,
 }: ColumnFormProps) {
   const { t } = useI18n();
   const scope = bindingScopeFor(controller.read, path);
@@ -99,8 +111,10 @@ export function ColumnForm({
         <section className="mb-4">
           <h3 className={SECTION_TITLE}>{t('panel.column.style')}</h3>
           <TableBandFields
-            band={readBand(controller.read(path))}
-            onChange={(property, value) => dispatch(plainTextOp(path, ['style', property], value))}
+            ctx={cascadeContext(controller.read, path, floor)}
+            path={path}
+            keys={COLUMN_STYLE_KEYS}
+            onOp={(op) => applyPanelOp(controller, op)}
           />
           {/* Not decoration trivia: a column's own alignment also wins for its
               header LABEL over whatever the header row sets

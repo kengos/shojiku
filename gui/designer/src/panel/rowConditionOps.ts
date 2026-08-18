@@ -142,23 +142,3 @@ function literal(value: string, fieldType: string): ScalarValue {
   const parsed = Number(value.trim());
   return value.trim() !== '' && Number.isFinite(parsed) ? parsed : value;
 }
-
-/** Sets (or, with `null`/`''`, clears) one style property of a rule.
- * Clearing the last one leaves no empty `style` map — `removeKey` prunes a
- * map its removal emptied. */
-export function setRuleStyleOp(
-  tablePath: string,
-  entries: readonly unknown[],
-  index: number,
-  property: string,
-  value: string | null,
-): Op | null {
-  if (!inRange(entries, index)) {
-    return null;
-  }
-  const path = entryPath(tablePath, index);
-  if (value === null || value === '') {
-    return { op: 'removeKey', path, keys: ['style', property] };
-  }
-  return { op: 'setScalar', path, keys: ['style', property], value };
-}
