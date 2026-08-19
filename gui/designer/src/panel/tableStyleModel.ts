@@ -35,6 +35,10 @@ export interface TableStyleView {
   /** The table's own `style.backgroundColor`, which paints nothing. `''` = none
    * authored, which is the case where the panel shows no fill control at all. */
   readonly ineffectiveFill: string;
+  /** `header.visuallyHidden` — the row paints nothing while its labels stay in
+   * the PDF's text layer. Read from the WIRE, so a document that authored it
+   * outside the Designer shows the control in the right state. */
+  readonly hiddenHeader: boolean;
 }
 
 const EMPTY_BAND: BandView = { textAlign: '', backgroundColor: '', color: '', fontWeight: '' };
@@ -72,5 +76,8 @@ export function readTableStyle(tableNode: unknown): TableStyleView {
     row: readBand(rowSpec),
     zebra: text(record(rowSpec?.alternateStyle)?.backgroundColor),
     ineffectiveFill: text(record(table?.style)?.backgroundColor),
+    // Strictly `true`: a hostile document can put anything here, and only the
+    // boolean the engine acts on may light the control up.
+    hiddenHeader: record(table?.header)?.visuallyHidden === true,
   };
 }

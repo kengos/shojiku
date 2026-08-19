@@ -382,6 +382,10 @@ export const hi: LanguageCatalog = {
     'panel.tableStyle.title': 'तालिका शैली',
     'panel.tableStyle.preview': 'तालिका की पट्टियों का पूर्वावलोकन',
     'panel.tableStyle.zebra': 'एक पंक्ति छोड़कर रंग',
+    'panel.tableStyle.hiddenHeader': 'पृष्ठ पर शीर्षक पंक्ति न दिखाएँ',
+    'help.hiddenHeader.title': 'केवल मशीनें पढ़ने वाली शीर्षक पंक्ति',
+    'help.hiddenHeader.body':
+      'यह पंक्ति बिल्कुल नहीं खींची जाती, पर स्तंभों के नाम PDF के भीतर पाठ के रूप में बने रहते हैं। व्यक्ति केवल मान पढ़ता है, जबकि स्क्रीन रीडर, खोज या AI यह जान पाते हैं कि हर स्तंभ क्या है।',
     'panel.tableStyle.detail': 'विस्तृत स्वरूपण',
     'panel.tableStyle.headerBand': 'शीर्ष पंक्ति',
     'panel.tableStyle.bodyBand': 'मुख्य पंक्तियाँ',

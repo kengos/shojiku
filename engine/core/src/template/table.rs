@@ -144,8 +144,8 @@ pub enum EmptyBehavior {
     Reserve,
 }
 
-/// Header-row overrides: height and style (its `backgroundColor` replaces
-/// the default header fill).
+/// Header-row overrides: height, style (its `backgroundColor` replaces
+/// the default header fill), and whether the row paints at all.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -156,4 +156,18 @@ pub struct TableHeaderSpec {
     pub style_names: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub style: Option<Style>,
+    /// Draw the header row invisibly: the labels stay in the PDF's text
+    /// (extractable by a reader, a screen reader or an AI) while nothing
+    /// about the row is painted — no glyphs, no band fill, no grid ruling.
+    /// The row KEEPS ITS HEIGHT; this is "invisible", not "absent", so the
+    /// labels never collide with the first data row.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visually_hidden: Option<bool>,
+}
+
+impl TableHeaderSpec {
+    /// Effective `visuallyHidden` (default false).
+    pub fn visually_hidden(&self) -> bool {
+        self.visually_hidden.unwrap_or(false)
+    }
 }

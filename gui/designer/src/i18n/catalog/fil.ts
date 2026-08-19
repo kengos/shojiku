@@ -402,6 +402,10 @@ export const fil: LanguageCatalog = {
     'panel.tableStyle.title': 'Estilo ng talahanayan',
     'panel.tableStyle.preview': 'Preview ng mga banda ng talahanayan',
     'panel.tableStyle.zebra': 'Salit-salit na kulay ng hanay',
+    'panel.tableStyle.hiddenHeader': 'Huwag ipakita ang hilera ng pamagat sa pahina',
+    'help.hiddenHeader.title': 'Hilera ng pamagat na mga makina lang ang nakakabasa',
+    'help.hiddenHeader.body':
+      'Hindi iginuguhit ang hilera, pero nananatili sa loob ng PDF bilang teksto ang mga pangalan ng haligi. Ang tao ay nagbabasa ng mga halaga; nauunawaan pa rin ng screen reader, paghahanap o AI kung ano ang bawat haligi.',
     'panel.tableStyle.detail': 'Detalyadong pormat',
     'panel.tableStyle.headerBand': 'Hanay ng pamagat',
     'panel.tableStyle.bodyBand': 'Mga hanay ng nilalaman',

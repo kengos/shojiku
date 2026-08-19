@@ -625,6 +625,10 @@ export const ja: LanguageCatalog = {
     'panel.tableStyle.title': '表のスタイル',
     'panel.tableStyle.preview': '表の帯のプレビュー',
     'panel.tableStyle.zebra': '縞模様（行）',
+    'panel.tableStyle.hiddenHeader': '見出し行を紙面に表示しない',
+    'help.hiddenHeader.title': '機械だけが読む見出し行',
+    'help.hiddenHeader.body':
+      '行そのものは描かれませんが、列の名前は PDF の中にテキストとして残ります。人は値だけを読み、読み上げソフトや検索、AI は各列が何かを知ることができます。',
     'panel.tableStyle.detail': '詳細な書式',
     'panel.tableStyle.headerBand': 'ヘッダー行',
     'panel.tableStyle.bodyBand': '本文の行',

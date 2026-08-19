@@ -881,6 +881,15 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   education/employment heading-row case; qr/image cells never merge).
   Explicit body rowspan/colspan is deliberately out of scope: rows are
   data-driven.
+- **A visually hidden header row**: `header.visuallyHidden` paints nothing —
+  no label glyphs, no band fill, no grid ruling — while the labels stay in the
+  PDF's **text layer**, so an extractor, a screen reader or an AI can still
+  read what each column means where a human infers it from the cell contents.
+  The row keeps its height (invisible, not absent) and a `headerGroups` row
+  hides with it. It is a paint alpha of 0, not PDF text rendering mode 3:
+  `krilla` exposes no rendering-mode control, while paint alpha is a mechanism
+  both backends already carry, so neither renderer changed. Capability key
+  `table.header.visuallyHidden`.
 - **Header labels interpolate**: a column `label` and a `headerGroups`
   `label` run through the same resolver every other text-bearing item
   uses, against **top-level** params (header chrome is document-level,

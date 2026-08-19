@@ -12,6 +12,7 @@ mod container_cell;
 mod frame;
 mod geom;
 mod header_labels;
+mod hidden_header;
 mod placement;
 mod rows;
 mod span;

@@ -15,6 +15,13 @@ platform binaries.
 
 ### Added
 
+- A table's header row can be drawn invisibly with
+  `header: { visuallyHidden: true }`. Nothing about the row is painted — no
+  label text, no band fill, no grid ruling — but the column labels stay in the
+  PDF's text layer, so anything reading the file (an extractor, a screen
+  reader, an AI) can still tell what each column means while a person reads the
+  cells. The row keeps its height, and a `headerGroups` row hides with it.
+
 - **Manuscript-paper items are editable in the Designer.** A `char_grid`
   previously had no content surface and no way to change its grid, so a
   manuscript-paper template opened from the gallery could not be rebound,

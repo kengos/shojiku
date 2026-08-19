@@ -306,7 +306,9 @@ Wire types stay in core; content measurement stays in layout.
   `table/rows/cell.rs` (`cell:` columns:
   `measure_cell`/`cell_container` — the cell fills the column rectangle;
   `cellPadding` does not inset it),
-  `table/span.rs` (spanning header groups + `merge_empty`),
+  `table/span.rs` (spanning header groups + `merge_empty`; a
+  `header.visuallyHidden` table hides this row too — it is header chrome
+  that repeats with the labels),
   `table/content.rs` (`cell_qr`/`cell_image`), `table/style.rs`
   (grid-border fold, zebra, `cell_valign`/`label_valign` — the authored
   fold that tells "unset" from "resolved to the initial value";

@@ -5,6 +5,7 @@ mod decoration;
 mod docs;
 mod fonts;
 mod images;
+mod invisible;
 mod links;
 mod marks;
 mod metadata;
