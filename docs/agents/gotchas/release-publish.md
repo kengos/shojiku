@@ -41,24 +41,31 @@ QUESTION, which no amount of "use the registry as arbiter" prevents.
   publish log, count the skips against expectation before reading the
   final line.
 
-## `proof-published-*` take LATEST by default — a bare run certifies the OLD release
+## `proof-published-*` used to take LATEST by default — a bare run certified the OLD release
 
 `make proof-published[-<lang>]` asks the REGISTRY copy to render
-`receipt-ja` in a clean container. Run bare, the scripts install
-whatever the registry calls latest; `SHOJIKU_VERSION=x.y.z` is what pins
-one. So during the v0.2.0 run six of them went green against 0.1.0 —
-true statements, about the previous release, in a log that reads as
-proof of this one.
+`receipt-ja` in a clean container. They USED to install whatever the
+registry called latest when run bare, so during the v0.2.0 run six of
+them went green against 0.1.0 — true statements, about the previous
+release, in a log that reads as proof of this one.
 
-- **Always run them pinned**: `SHOJIKU_VERSION=<the version you are
-  shipping> gmake -C <tree> proof-published`. An unpinned green during a
-  release is not a weaker claim, it is a claim about a different subject.
-- The tell is not in the PASS line. It is in the install step's own
-  output naming the version — read that, or pin and stop reading.
-- `published-java.sh` is the exception that proves the rule: it
-  hardcodes a default (`${SHOJIKU_VERSION:-<version>}`), so it fails
-  loudly on a bump instead of quietly certifying the old release — and
-  that is how the stale literals below were found at all.
+**Fixed at the source rather than left as a habit.** `common.sh` now
+resolves ONE `PROOF_VERSION` for all seven: `SHOJIKU_VERSION` if set,
+otherwise the tree's own `[workspace.package]` version. So a bare run
+asks about the version you are SHIPPING and fails loudly when it is not
+published yet, which is the honest answer. `published-java.sh` had
+always behaved this way — via a hardcoded literal that was itself a site
+going stale — and that is how the stale literals below were found at
+all; the behaviour is now shared and the literal is gone.
+
+What the incident leaves behind, because the shape outlives this fix:
+
+- **An existence check defaults to the answer that already passes.**
+  "Latest" during a release is the previous release; "the crate exists"
+  during a version bump is the previous version. Whenever a check has a
+  default, ask which release that default describes.
+- The tell was never in the PASS line. It is in the install step's own
+  output naming the version — every proof still prints it.
 
 ## Version literals live in more places than the Versioning list
 
@@ -76,17 +83,69 @@ are exactly the ones nothing derives:
 - `scripts/install-proof/java.sh`, `js.sh`, `published-java.sh`.
 - `sdk/java/README.md`'s install snippets (six of them) and the other
   install commands in the READMEs and tutorials, en and ja.
+- `examples/deploy/java/pom.xml` and `examples/deploy/dotnet/Renderer.csproj`
+  — the deploy RECIPES, proved only by the on-demand `make proof-deploy`,
+  so nothing in CI reads them.
+- `sdk/js/src/version.ts` — a `VERSION` constant the package re-exports
+  from `index.ts`, so a stale one is user-visible: the published 0.2.0
+  npm package reported `0.1.0`.
 
 A first sweep that covered the tracked docs and the workflow file still
 left the four `scripts/` sites, and only CI's java proof — looking for
-`shojiku-0.1.0.jar` — found them, one PR later.
+`shojiku-0.1.0.jar` — found them, one PR later. **The last two entries
+above were still stale a whole release later**, which is the fact that
+matters: this section already existed, said the right thing, and did not
+close the hole. A list a human has to re-read is not a gate.
 
-**Recovery, and the check worth running before calling a bump done:
-grep the PREVIOUS version across the tree.** After bumping, the old
-number should survive only in `CHANGELOG.md`, in prose that is genuinely
-about history, and in lockfile/SBOM records of published artifacts. Any
-other hit is a bug. That single grep finds every site above at once, and
-it does not care whether the Versioning list is complete.
+**So there is a gate now: `make version-check` (CI job `versions`).**
+Every place naming a release coordinate must equal `[workspace.package]`,
+checked by structural rules that scan the WHOLE tree per ecosystem rather
+than a list of known files — precisely because "the list was incomplete"
+is the bug. It found both of the stale sites above on its first run.
+
+Two things to know when it is the gate talking to you:
+
+- **A rule carries a measured MINIMUM hit count**, so `VERSION UNDERCOUNT
+  <rule>` means a rule stopped matching, not that a literal is wrong.
+  That fires when a site is legitimately deleted (lower the floor) or when
+  a file's shape changed under the rule (fix the rule).
+- **The gate's own blind spot is a SHAPE no rule names, and neither of its
+  self-defences can see one.** The undercount floors notice a rule that
+  stops matching; the fixture seeds one case per EXISTING rule. A
+  coordinate no rule ever matched is invisible to both by construction.
+  This is not hypothetical: a fresh review falsified the "cannot fail
+  open" claim in one command by staling
+  `scripts/install-proof/js.sh:40` — a `"version"` key in a package
+  manifest the proof writes in a heredoc, which the v0.2.0 release
+  commit had itself bumped — and the gate printed "every release
+  coordinate agrees" over it. Covered now by `json-version`. Read the
+  rule list as the set of shapes someone has thought of, never as the
+  set of coordinates that exist.
+- **A version inside a shell default expansion**
+  (`${SHOJIKU_VERSION:-0.2.0}`) is still unseen, because the literal is
+  a fallback rather than a coordinate. There are none left in the tree.
+- **`gui/*` package manifests and `legacy/` artifacts are skipped by
+  PATH, not by the inline token** — JSON cannot carry a comment, so
+  `version-check-exempt:` is unusable in a manifest. The `gui/*`
+  packages are deliberately `0.0.0` and unpublished.
+- **`site/.data/wasm-source.json` IS checked** (decided while building
+  the gate). The homepage's pinned engine moves with the workspace
+  version on the same release-prep PR — bump and changelog first, then
+  step 2b's re-pin — so on `main` they always agree, and the one thing
+  nothing else catches is step 2b being SKIPPED, which leaves the site
+  serving the previous release while the docs advertise the new one.
+  The cost is that a release-prep PR reds here between the bump push and
+  the re-pin push. That red is the bump reporting itself unfinished, not
+  a broken gate.
+
+**The manual complement, for a shape no rule has yet: grep the PREVIOUS
+version across the tree.** After bumping, the old number should survive
+only in `CHANGELOG.md`, in prose genuinely about history, and in
+lockfile/SBOM records of published artifacts. Note this is noisier than
+it sounds — a template's own `version:` document key is unrelated to the
+release and 158 tracked files carry the previous number for that reason,
+which is exactly why the gate enumerates SHAPES instead of grepping a
+number.
 
 ## Maven Central: two steps the procedure does not run for you
 

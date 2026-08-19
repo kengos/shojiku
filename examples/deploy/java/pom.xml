@@ -11,7 +11,7 @@
     <dependency>
       <groupId>jp.kengos</groupId>
       <artifactId>shojiku</artifactId>
-      <version>0.1.0</version>
+      <version>0.2.0</version>
     </dependency>
     <!-- The engine payload for the platform you RUN on. This line is the
          documented shape (like Netty/LWJGL), not a workaround: pick
@@ -19,7 +19,7 @@
     <dependency>
       <groupId>jp.kengos</groupId>
       <artifactId>shojiku</artifactId>
-      <version>0.1.0</version>
+      <version>0.2.0</version>
       <classifier>linux-x64</classifier>
     </dependency>
   </dependencies>

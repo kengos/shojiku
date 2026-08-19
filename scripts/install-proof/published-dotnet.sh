@@ -37,14 +37,14 @@ if (!result.Success)
 File.WriteAllBytes("/w/out.pdf", result.Artifact!.Bytes);
 CS
 
-docker run --rm -e VER="${SHOJIKU_VERSION:-}" -v "$WORK:/w" \
+docker run --rm -e VER="$PROOF_VERSION" -v "$WORK:/w" \
   -v "$ROOT/examples/business:/ex:ro" -v "$ROOT/packs:/packs:ro" \
   "$IMG" sh -euc '
   export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
   mkdir /consumer && cd /consumer
   dotnet new console -o . >/dev/null
   rm -f Program.cs && cp /w/Program.cs Program.cs
-  if [ -n "$VER" ]; then dotnet add package Shojiku -v "$VER"; else dotnet add package Shojiku; fi
+  dotnet add package Shojiku -v "$VER"
   # The native asset is RID-scoped, so name what restore actually laid down —
   # a package that resolves but carries no runtimes/ entry loads nothing.
   find ~/.nuget/packages/shojiku -path "*runtimes*" -name "*shojiku_capi*" -printf "native asset: %P\n" 2>/dev/null || true

@@ -82,6 +82,11 @@ endif
 #   examples-check    -> job "examples"  (committed outputs == fresh render,
 #                                         plus skills/*/template == its example,
 #                                         plus no space/tab-indented block scalar)
+#   version-check     -> job "versions" (every release coordinate — cargo pins,
+#                                         maven/nuget/npm deps, artifact names,
+#                                         the per-language version constants —
+#                                         equals [workspace.package]. No Docker,
+#                                         seconds)
 #   sbom-lint         -> job "sbom"      (the detector still detects, and every
 #                                         committed lockfile is either
 #                                         inventoried or declared not to be.
@@ -384,7 +389,8 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         sdk-go sdk-go-test sdk-go-lint \
         gui gui-budget gui-lint gui-test gui-format gui-e2e gui-shot \
         normalize-examples \
-        gui-serve gui-dev sbom sbom-lint sbom-check clean cache-clean images-clean
+        gui-serve gui-dev sbom sbom-lint sbom-check version-check \
+        clean cache-clean images-clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z0-9_\\:-]+:.*## ' $(MAKEFILE_LIST) \
@@ -398,7 +404,7 @@ help: ## Show this help
 # `coverage`: it is a full wasm32 build rather than a lint, so it does not
 # belong before the tests — but a size-budget crossing used to be discovered
 # only after paying for the single most expensive step in the run.
-verify: rust wasm coverage deny reference-check examples-check sbom-lint napi gui site site-check sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
+verify: rust wasm coverage deny reference-check examples-check sbom-lint version-check napi gui site site-check sdk-ruby sdk-python sdk-dotnet sdk-java sdk-js sdk-php sdk-go docker ## Full local CI mirror; green == safe to push
 	@echo "\n✅ verify passed — every CI gate is green locally. Safe to push."
 
 ## ---- <verb>:<scope> — "did it work?" entry points ----------------------
@@ -1273,8 +1279,13 @@ proof: proof-python proof-ruby proof-dotnet proof-java proof-js proof-php proof-
 # PUBLISHED-install proofs: the same question asked of the REGISTRY copy
 # instead of a package built here. They take no artifact prerequisite — the
 # point is that nothing local is involved — and they only mean anything once
-# the version is actually published. SHOJIKU_VERSION=x.y.z pins one;
-# unset takes whatever the registry calls latest. go is the one language with
+# the version is actually published. SHOJIKU_VERSION=x.y.z pins one; unset takes
+# THIS TREE's own [workspace.package] version (resolved once in
+# scripts/install-proof/common.sh), so a bare run asks about the version being
+# shipped and fails loudly when it is not published yet. It used to take
+# whatever the registry called latest, which during a release is the PREVIOUS
+# release — six proofs once went green that way and read as proof of the new
+# one. go is the one language with
 # no arm here and needs none: its publish IS a repo tag, so there is no
 # registry copy that could differ from the tree. php takes BOTH of its halves
 # from publish channels — the composer package from Packagist and the CLI from
@@ -1828,6 +1839,10 @@ site-dev: ## VitePress dev server in Docker (http://localhost:5174, Ctrl-C stops
 
 sbom: ## Regenerate the committed CycloneDX SBOMs from the lockfiles (idempotent)
 	@SYFT_IMAGE=$(SYFT_IMAGE) scripts/generate-sbom.sh
+
+version-check: ## Fail if a release coordinate disagrees with the workspace version (no Docker)
+	@echo "== version check =="
+	@./scripts/check-versions.sh
 
 sbom-lint: ## Self-test the SBOM detector and check every lockfile is declared (no Docker)
 	@echo "== sbom lint =="

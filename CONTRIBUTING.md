@@ -181,6 +181,30 @@ bump to one ecosystem produces a one-file diff instead of dirtying all of
 them. The run prints `preserved` or `written` per inventory, which is how
 you see which one actually moved.
 
+### Version literals
+
+`make version-check` (CI job `versions`, no Docker, seconds) asserts that
+every place naming a shojiku release coordinate — a cargo path-dep pin, a
+maven dependency on `jp.kengos`, a `PackageReference Include="Shojiku"`,
+the npm version, each SDK's version constant, a `shojiku-<semver>` archive
+name in an install snippet — equals `[workspace.package]` in
+`engine/Cargo.toml`. Only a release bump normally moves these, so most
+changes never meet this gate.
+
+Two ways an ordinary change can:
+
+- `VERSION DRIFT` — you added an install snippet or a dependency pinning
+  some other version. Use the workspace version.
+- `VERSION UNDERCOUNT <rule>` — you REMOVED one of the places a rule
+  counts (deleting an example, dropping a snippet). Each rule declares the
+  number of hits it is known to produce, so that a rule which silently
+  stops matching fails instead of reporting a clean tree. Lower that
+  rule's floor in `scripts/check-versions.sh` in the same change.
+
+A line that names a version for a reason that is genuinely historical
+takes `version-check-exempt: <reason>`, the same shape as
+`line-budget-exempt`.
+
 ## Before you open a pull request
 
 1. `make verify` is green. That is the merge bar.

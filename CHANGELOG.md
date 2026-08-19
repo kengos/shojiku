@@ -57,6 +57,18 @@ platform binaries.
 
 ### Fixed
 
+- **The npm package reported the wrong version.** `import { VERSION } from
+  'shojiku'` returned `0.1.0` from the 0.2.0 package: the constant is written
+  by hand in its own file and the 0.2.0 bump missed it, while
+  `package.json` — the version npm itself serves — was correct. Only the
+  exported constant was wrong, so nothing resolved or installed the wrong
+  package; code that reports the SDK version in a log or a user agent did.
+
+- **The java deploy recipe installed the previous release.**
+  `examples/deploy/java/pom.xml` still asked Maven Central for 0.1.0 after
+  0.2.0 shipped, so anyone starting from that recipe got the older engine.
+  Its dotnet sibling was already correct.
+
 - **Manuscript paper takes a display format and a blank-form placeholder
   again.** Both controls were withheld from a `char_grid` on the grounds that
   the item type does not carry those keys — but they are written on the

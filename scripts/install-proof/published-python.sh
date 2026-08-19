@@ -8,7 +8,7 @@
 . "$(dirname "$0")/common.sh"
 
 IMG="python:${PYTHON_VER:-3.11}-slim-bookworm"
-SPEC="shojiku${SHOJIKU_VERSION:+==$SHOJIKU_VERSION}"
+SPEC="shojiku==$PROOF_VERSION"
 
 echo "== published-install proof (python, $IMG, $SPEC) =="
 
