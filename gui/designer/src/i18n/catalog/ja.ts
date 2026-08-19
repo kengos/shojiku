@@ -628,13 +628,15 @@ export const ja: LanguageCatalog = {
     'panel.tableStyle.hiddenHeader': '見出し行を紙面に表示しない',
     'help.hiddenHeader.title': '機械だけが読む見出し行',
     'help.hiddenHeader.body':
-      '行そのものは描かれませんが、列の名前は PDF の中にテキストとして残ります。人は値だけを読み、読み上げソフトや検索、AI は各列が何かを知ることができます。',
+      '行そのものは描かれませんが、列の名前は PDF の中にテキストとして残ります。人は値だけを読み、テキスト抽出や検索、AI は各列が何かを知ることができます。',
     'panel.tableStyle.detail': '詳細な書式',
     'panel.tableStyle.headerBand': 'ヘッダー行',
     'panel.tableStyle.bodyBand': '本文の行',
     'panel.tableStyle.fillIgnored':
       'この塗りつぶしは表には描画されません。行を塗るときは下の「表のスタイル」を使ってください。',
     'panel.tableStyle.fillClear': '塗りつぶしを消す',
+    'panel.tableStyle.headerHiddenIgnored':
+      '見出し行は紙面に表示されないため、以下の設定はどれも描画されません。設定は保持され、チェックを外すと元に戻ります。',
     'panel.tableStyle.preset.plain': '標準',
     'panel.tableStyle.preset.striped': '縞模様',
     'panel.tableStyle.preset.darkHeader': '濃色見出し',
@@ -705,7 +707,7 @@ export const ja: LanguageCatalog = {
     'panel.charGrid.mode.horizontal_tb': '横書き',
     'panel.charGrid.mode.vertical_rl': '縦書き',
     'panel.charGrid.hint':
-      '描かれる大きさは上の幅ではなくマスで決まります。マスの大きさを空にすると、この項目の幅から自動で計算されます。',
+      'マスの大きさが指定されている間は、描かれる大きさは上の幅ではなくマスで決まります。マスの大きさを空にすると、逆にこの項目の幅からマスが計算されます。',
     'stepper.relativeUnit': 'パーセントやemの値は段階調整できません。直接入力してください。',
     'panel.box.h': '高さ',
     'panel.placement.label': '配置',

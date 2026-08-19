@@ -182,6 +182,49 @@ fn header_groups_and_merge_empty_cells_parse_and_round_trip() {
 }
 
 #[test]
+fn visually_hidden_parses_defaults_and_round_trips() {
+    // The accessor's `false` arm is exercised HERE, in core's own test binary:
+    // its only library caller lives in `shojiku-layout`, so without this the
+    // line is covered only in the copy linked into that crate's tests.
+    let plain = parse_table("        data: { key: rows }\n        columns: []\n");
+    assert!(plain.header.is_none());
+    let shown = parse_table(concat!(
+        "        data: { key: rows }\n",
+        "        header: { visuallyHidden: false }\n",
+        "        columns: []\n",
+    ));
+    assert!(!shown.header.as_ref().expect("header").visually_hidden());
+    let hidden = parse_table(concat!(
+        "        data: { key: rows }\n",
+        "        header: { visuallyHidden: true }\n",
+        "        columns: []\n",
+    ));
+    assert!(hidden.header.as_ref().expect("header").visually_hidden());
+    // An authored key round-trips; an ABSENT one serializes nothing, which is
+    // what makes an untouched document byte-identical.
+    let yaml = serde_yaml::to_string(&hidden).expect("yaml");
+    assert!(yaml.contains("visuallyHidden: true"), "got: {yaml}");
+    let yaml = serde_yaml::to_string(&plain).expect("yaml");
+    assert!(!yaml.contains("visuallyHidden"), "got: {yaml}");
+}
+
+#[test]
+fn visually_hidden_rejects_a_non_boolean() {
+    // The wire is `Option<bool>`, not "anything truthy": a string or a number
+    // must fail to parse rather than resolve to a silent `false`.
+    for bad in ["\"true\"", "1", "[]"] {
+        let err = parse_template(&table_yaml(&format!(
+            "        data: {{ key: rows }}\n        header: {{ visuallyHidden: {bad} }}\n        columns: []\n"
+        )))
+        .expect_err("a non-boolean must fail");
+        // serde names the TYPE mismatch, not the key: "invalid type: string
+        // \"true\", expected a boolean". That phrase is the claim worth
+        // pinning — a truthy string must not resolve to `true`.
+        assert!(err.to_string().contains("expected a boolean"), "got: {err}");
+    }
+}
+
+#[test]
 fn header_group_rejects_unknown_keys_and_missing_span() {
     let err = parse_template(&table_yaml(
         "        data: { key: rows }\n        headerGroups:\n          - { label: a, span: 1, zzz: 1 }\n        columns: []\n",

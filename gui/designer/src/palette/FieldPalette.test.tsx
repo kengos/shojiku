@@ -81,12 +81,12 @@ describe('FieldPalette', () => {
     expect(onOpenEditor).toHaveBeenCalledOnce();
   });
 
-  it('renders groups and fields with label, key, type, description, sample, usage', () => {
+  it('renders groups and fields with label, key, type, sample, usage', () => {
     draw();
     expect(screen.getByText('Receipt')).toBeDefined();
+    // The GROUP description stays inline — one per group, not one per row.
     expect(screen.getByText('Header fields.')).toBeDefined();
     expect(screen.getByText('Number')).toBeDefined();
-    expect(screen.getByText('The issued receipt number.')).toBeDefined();
     expect(screen.getByText('receipt.number')).toBeDefined();
     // Both `string` fields display the localized type label.
     expect(screen.getAllByText('Text').length).toBe(2);
@@ -95,6 +95,23 @@ describe('FieldPalette', () => {
     // The unbound field reads unused; an unknown type displays verbatim.
     expect(screen.getByText('Unused')).toBeDefined();
     expect(screen.getByText('mystery_type')).toBeDefined();
+  });
+
+  it("folds a FIELD's description into a `?`, closed until asked", () => {
+    draw();
+    // Inline it cost ~5 lines of a ~215px row on a real shipped example and
+    // pushed the usage badge out of view; the data-item editor's own field row
+    // (`data/ItemListRow.tsx`) already folds the same value this way.
+    expect(screen.queryByText('The issued receipt number.')).toBeNull();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Description' })[0]);
+    expect(screen.getByText('The issued receipt number.')).toBeDefined();
+  });
+
+  it('gives a field with no description no `?` at all', () => {
+    draw();
+    // One `?` for the one described field — an empty description must not
+    // leave a dead affordance on every other row.
+    expect(screen.getAllByRole('button', { name: 'Description' }).length).toBe(1);
   });
 
   it('marks the array group as repeating', () => {

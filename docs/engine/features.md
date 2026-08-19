@@ -883,8 +883,10 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   data-driven.
 - **A visually hidden header row**: `header.visuallyHidden` paints nothing —
   no label glyphs, no band fill, no grid ruling — while the labels stay in the
-  PDF's **text layer**, so an extractor, a screen reader or an AI can still
-  read what each column means where a human infers it from the cell contents.
+  PDF's **text layer**, so a text extractor, a search index or an AI can
+  still read what each column means where a human infers it from the cell
+  contents (the engine emits no tagged PDF, so this is a text layer, not a
+  structure tree a screen reader can navigate).
   The row keeps its height (invisible, not absent) and a `headerGroups` row
   hides with it. It is a paint alpha of 0, not PDF text rendering mode 3:
   `krilla` exposes no rendering-mode control, while paint alpha is a mechanism

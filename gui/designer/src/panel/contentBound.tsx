@@ -2,11 +2,14 @@
 // and the two options that ride a binding — the display format and the
 // placeholder shown when the value is missing.
 //
-// Split out of `ContentSection.tsx` (which sits at the executable-line cap) and
-// kept as its own leaf because the two options are NOT universal: a `char_grid`
-// binds a value like a text item does, but `CharGridItem` is
-// `deny_unknown_fields` and carries neither `format` nor `placeholder`, so
-// offering them there would author wire the engine refuses.
+// Split out of `ContentSection.tsx`, which sits at the executable-line cap.
+//
+// Both options live on the BINDING — `formatOp`/`placeholderOp` write
+// `data.format`/`data.placeholder`, not item-root keys — so every data-bound
+// type takes them, `char_grid` included: its `data:` is the same `Binding`,
+// and `resolve_content` passes both straight through. (`CharGridItem` being
+// `deny_unknown_fields` says nothing about this; it governs the item root,
+// which is not where these are written.)
 
 import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
@@ -25,15 +28,12 @@ export function BoundContent({
   chips,
   bindingOptions,
   formatRows,
-  wireTakesBindingOptions,
   dispatch,
 }: {
   readonly props: ItemPanelProps;
   readonly chips: ChipContext;
   readonly bindingOptions: readonly PickerOption[];
   readonly formatRows: readonly FormatOption[];
-  /** Whether this item type takes `format`/`placeholder` at all. */
-  readonly wireTakesBindingOptions: boolean;
   readonly dispatch: (op: Op | null) => void;
 }) {
   const { t } = useI18n();
@@ -52,7 +52,7 @@ export function BoundContent({
       />
       {/* The format field appears only once a data key is picked:
           a format on an unbound key is inert noise. */}
-      {view.dataKey !== '' && wireTakesBindingOptions ? (
+      {view.dataKey !== '' ? (
         <FormatPicker
           label={t('panel.field.format')}
           value={view.format}
@@ -60,7 +60,7 @@ export function BoundContent({
           onCommit={(v) => dispatch(formatOp(path, v))}
         />
       ) : null}
-      {wireTakesBindingOptions && hasCapability(capabilities, 'binding.placeholder') ? (
+      {hasCapability(capabilities, 'binding.placeholder') ? (
         <TextField
           label={t('panel.field.placeholder')}
           value={view.placeholder}

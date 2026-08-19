@@ -13,22 +13,17 @@
 import type { Op } from '@shojiku/designer-core';
 import { useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
-import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { BTN_SM, FIELD_LABEL, SECTION_TITLE } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
 import { bandInk, headerFillOf, readBandCascades } from './bandCascade';
+import { HiddenHeaderField } from './HiddenHeaderField';
 import { hasCapability } from './itemPanelProps';
 import { applyPanelOp } from './model';
 import { TableBandFields } from './TableBandFields';
 import { TableMiniature, TableStyleGallery } from './TableStyleGallery';
 import { readTableStyle, TABLE_HEADER_FILL } from './tableStyleModel';
-import {
-  clearIneffectiveFillOp,
-  HIDDEN_HEADER_CAPABILITY,
-  hiddenHeaderToggleOp,
-  zebraToggleOp,
-} from './tableStyleOps';
+import { clearIneffectiveFillOp, zebraToggleOp } from './tableStyleOps';
 import { matchPreset, presetOps } from './tableStylePresets';
 
 /** The key paths the two bands own under the table item. */
@@ -110,6 +105,7 @@ export function TableStyleSection({ context }: { readonly context: TableStyleCon
         rowFill={rowInk.fill}
         rowColor={rowInk.color}
         gridless={gridWidth === '0'}
+        hiddenHeader={view.hiddenHeader}
       />
       <TableStyleGallery
         active={active}
@@ -149,25 +145,12 @@ export function TableStyleSection({ context }: { readonly context: TableStyleCon
           <p className={`${FIELD_LABEL} font-semibold text-text`}>
             {t('panel.tableStyle.headerBand')}
           </p>
-          {/* Excel's 「header row」 checkbox, honestly: Shojiku's header row
-              always exists, so an OFF state can now mean "present to a reader,
-              absent to the eye" instead of "painted white". Gated — an older
-              engine parse-rejects the key outright. */}
-          {hasCapability(capabilities, HIDDEN_HEADER_CAPABILITY) ? (
-            <label className="mb-2 flex items-center gap-1.5 text-sm text-text">
-              <input
-                type="checkbox"
-                checked={view.hiddenHeader}
-                onChange={() => controller.apply(hiddenHeaderToggleOp(path, view.hiddenHeader))}
-              />
-              {t('panel.tableStyle.hiddenHeader')}
-              <HelpHint
-                label={t('help.hiddenHeader.title')}
-                title={t('help.hiddenHeader.title')}
-                body={t('help.hiddenHeader.body')}
-              />
-            </label>
-          ) : null}
+          <HiddenHeaderField
+            path={path}
+            hidden={view.hiddenHeader}
+            capabilities={capabilities}
+            onOp={(op) => controller.apply(op)}
+          />
           <TableBandFields
             ctx={bands.header}
             path={path}

@@ -18,8 +18,8 @@ platform binaries.
 - A table's header row can be drawn invisibly with
   `header: { visuallyHidden: true }`. Nothing about the row is painted — no
   label text, no band fill, no grid ruling — but the column labels stay in the
-  PDF's text layer, so anything reading the file (an extractor, a screen
-  reader, an AI) can still tell what each column means while a person reads the
+  PDF's text layer, so anything reading the file (a text extractor, a search
+  index, an AI) can still tell what each column means while a person reads the
   cells. The row keeps its height, and a `headerGroups` row hides with it.
 
 - **Manuscript-paper items are editable in the Designer.** A `char_grid`
@@ -36,6 +36,32 @@ platform binaries.
   sample text meant hunting for it a second time in the editor's own list.
 
 ### Fixed
+
+- **Manuscript paper takes a display format and a blank-form placeholder
+  again.** Both controls were withheld from a `char_grid` on the grounds that
+  the item type does not carry those keys — but they are written on the
+  BINDING (`data.format` / `data.placeholder`), which a `char_grid` carries
+  and resolves exactly as a text item does. A template binding a placeholder
+  for a blank manuscript sheet could not see or clear it in the Designer.
+- **The manuscript grid's steppers no longer look available when they are
+  not.** A cell size, line gap or cell gap written as `5%` or `0.4em` is legal
+  and the engine resolves it, but the panel cannot step a relative unit by
+  points — the arrows now grey out and say why, the same as the width field.
+- **The manuscript-grid hint no longer contradicts itself.** It said the drawn
+  size never comes from the width field, and then told the author to clear the
+  cell size — which is precisely the state in which it does.
+- **A hidden header row looks hidden in the table-style preview.** Ticking
+  「hide the header row on the page」 left the little preview above it painting
+  a full header band, and left the header fill, text colour and weight fields
+  offered as though they still drew something. The preview now shows the row
+  ink-free but full height, and the fields say they are not drawn while the
+  row is hidden.
+- **A data field's description no longer crowds the field palette.** It moves
+  into the same `?` the data-item editor already uses for it, so a long
+  description cannot push a row's usage badge out of view.
+- **The steppers' "percent or em" explanation is only shown for percent and
+  em.** It also fired on a value the panel simply could not read — `auto`, a
+  stray space, a typo — telling the author their typo was a relative unit.
 
 - **The width field says why its steppers are unavailable.** A width of `100%`
   or `2em` is a perfectly good value the engine resolves at layout, but not one

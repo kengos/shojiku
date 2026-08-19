@@ -607,13 +607,15 @@ export const en: LanguageCatalog = {
     'panel.tableStyle.hiddenHeader': 'Hide the header row on the page',
     'help.hiddenHeader.title': 'A header row that only machines read',
     'help.hiddenHeader.body':
-      'The row is not drawn at all, but the column names stay inside the PDF as text. A person reads the values; a screen reader, a search index or an AI can still tell what each column is.',
+      'The row is not drawn at all, but the column names stay inside the PDF as text. A person reads the values; a text extractor, a search index or an AI can still tell what each column is.',
     'panel.tableStyle.detail': 'Detailed formatting',
     'panel.tableStyle.headerBand': 'Header row',
     'panel.tableStyle.bodyBand': 'Body rows',
     'panel.tableStyle.fillIgnored':
       'This fill is not drawn on a table. Use the table style below to shade rows.',
     'panel.tableStyle.fillClear': 'Remove the fill',
+    'panel.tableStyle.headerHiddenIgnored':
+      'The header row is hidden on the page, so none of the settings below are drawn. They are kept, and come back when you untick it.',
     'panel.tableStyle.preset.plain': 'Plain',
     'panel.tableStyle.preset.striped': 'Banded',
     'panel.tableStyle.preset.darkHeader': 'Dark header',
@@ -684,7 +686,7 @@ export const en: LanguageCatalog = {
     'panel.charGrid.mode.horizontal_tb': 'Horizontal',
     'panel.charGrid.mode.vertical_rl': 'Vertical',
     'panel.charGrid.hint':
-      'The drawn size comes from the cells, not from the width above. Clear the cell size to have it derived from the width of this item instead.',
+      'While a cell size is set, the drawn size comes from the cells, not from the width above. Clear the cell size and the cells are derived from this item\u2019s width instead.',
     'stepper.relativeUnit': 'Values in percent or em cannot be stepped. Type the value instead.',
     'panel.box.h': 'Height',
     'panel.placement.label': 'Placement',

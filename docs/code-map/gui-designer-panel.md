@@ -84,13 +84,6 @@ spelling, so the border cluster's per-side model must not reach it.
   box — an unset cell side shows `auto` (derived), an unset gap shows `0`
   (the wire default). Capability-gated on `char_grid`.
 
-- `panel/charGrid.ts` / `panel/CharGridSection.tsx` — the `char_grid` grid
-  editor (counts / cell size / gaps / `writingMode`), rendered under the box
-  fields because `box.w` is NOT what sizes manuscript paper. `countOp` is
-  deliberately NOT the shared `numberOp`: `charsPerLine`/`lines` are REQUIRED
-  non-`Option` `usize` on the wire, so an empty value authors NOTHING rather
-  than clearing the key. Gated on the `char_grid` capability.
-
 ## Decoration tab — borders + fill
 
 The border cluster is five pure modules; the write side depends on the
@@ -281,9 +274,11 @@ read side, never the reverse.
   routing + the text/data pair; image/page-number surfaces in
   `contentParts.tsx`, the bound-mode half in `contentBound.tsx`
   (`BoundContent` — the data-key picker plus the two options that ride a
-  binding, `format` and `placeholder`, which are NOT universal: a
-  `char_grid` binds a value like a text item but `CharGridItem` is
-  `deny_unknown_fields` and carries neither key)), `StyleSection.tsx`
+  binding, `format` and `placeholder`. Both live on the BINDING
+  (`data.format`/`data.placeholder`), not at the item root, so every
+  data-bound type takes them — a `char_grid` included, whose `data:` is the
+  same `Binding` and whose content resolves through the same
+  `resolve_content`)), `StyleSection.tsx`
   (+`StyleTabFields.tsx`),
   `BoxSection.tsx` (+`boxFields.tsx`, +`CharGridSection.tsx`); shared prop contract in
   `itemPanelProps.ts` (`ItemPanelProps` + `hasCapability`); shared
@@ -398,7 +393,8 @@ conditional rules the next section owns).
 - `panel/tableStyleModel.ts` (pure, READ) — `readBand` (one band's four
   properties out of whatever sits at `<owner>.style`; a non-map band or style
   degrades to unset) and `readTableStyle` → `{header, headerFill, row, zebra,
-  ineffectiveFill}`. `headerFill` is packaged as the same `EffectiveValue` the
+  ineffectiveFill, hiddenHeader}` (`hiddenHeader` reads `=== true`, so a
+  document putting `"true"`/`1`/`{}` there cannot light the control up). `headerFill` is packaged as the same `EffectiveValue` the
   item style fields use, so an UNSET header fill renders through the shared
   `OriginBadge` as the engine floor `#ededed` rather than as a blank swatch;
   `TABLE_HEADER_FILL` mirrors `engine/layout/src/engine/table.rs` and a
@@ -409,7 +405,11 @@ conditional rules the next section owns).
   `row.alternateStyle.*`, over `plainTextOp` so "empty clears" has one home),
   `zebraToggleOp` (takes the CURRENT value, not a desired on/off — the
   checkbox's state is derived from that value, so a boolean would create a
-  can't-happen leg; it is therefore total), `clearIneffectiveFillOp`. Removing
+  can't-happen leg; it is therefore total), `clearIneffectiveFillOp`, and
+  `hiddenHeaderToggleOp` + `HIDDEN_HEADER_CAPABILITY`
+  (`table.header.visuallyHidden`) — the toggle takes the CURRENT value for the
+  same reason `zebraToggleOp` does, and unticking REMOVES the key rather than
+  writing `false`. Removing
   the last band property prunes the emptied maps, so a band edited and cleared
   round-trips byte-identical (pinned over a real `Editor`).
 - `panel/tableStylePresets.ts` — Excel's table-style gallery as six looks over
@@ -424,9 +424,22 @@ conditional rules the next section owns).
   {path, controller, capabilities}` of its OWN rather than `ItemPanelProps`,
   and assumes nothing about the panel's ~255px column: appearance editing is
   expected to move into a modal sheet, and a test mounts the section standalone
-  so that move stays a change of render site. Capability-gated on `table.style`.
+  so that move stays a change of render site. Capability-gated on `table.style`,
+  with a SECOND gate nested inside it: the 「hide the header row」 checkbox needs
+  `table.header.visuallyHidden`, which an older engine parse-rejects outright.
+- `panel/HiddenHeaderField.tsx` — the 「hide the header row on the page」
+  checkbox plus the note that keeps the header band honest. Its own leaf
+  because the two are one idea and the band fields BELOW them are what the
+  idea makes ineffective. The CHECKBOX is capability-gated
+  (`table.header.visuallyHidden`; an older engine parse-rejects the key), the
+  NOTE is gated on the authored value instead — a document can carry the key
+  against an engine that would not offer it. The fields stay editable: the
+  engine paints none of them while the row is hidden, but disabling would hide
+  values the document really carries.
 - `panel/TableStyleGallery.tsx` — the two pictures: `TableMiniature` (the live
-  banding) and `TableStyleGallery` (the thumbnails). FIGURES, not renders — the
+  banding — it takes `hiddenHeader` and draws the header row ink-free but
+  full-height, because a miniature that kept painting the band would contradict
+  the checkbox directly above it) and `TableStyleGallery` (the thumbnails). FIGURES, not renders — the
   canvas carries the real engine preview — drawn over a fixed paper-white ground
   in BOTH schemes, because the page they depict is paper.
 - `panel/bandCascade.ts` (pure) — the cascade CONTEXT of a table's bands.

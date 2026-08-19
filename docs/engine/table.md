@@ -206,9 +206,13 @@ Row keys live under `row:` (`minHeight` / `height` / `style` /
   (`#ededed`).
 - `header.visuallyHidden` (bool, default `false`): the header row paints
   **nothing** — no label glyphs, no band fill, no grid ruling — while the
-  labels stay in the PDF's **text layer**, so a reader, a screen reader or an
-  AI can still tell what each column means and a human infers from the cell
-  contents. The row **keeps its height** (invisible, not absent), and a
+  labels stay in the PDF's **text layer**, so a text extractor, a search
+  index or an AI can still tell what each column means while a human infers it
+  from the cell contents. The text layer is not a structure tree: the engine
+  emits no tagged PDF, so a screen reader gets the labels as flowing text
+  with no header-to-column association. The table's own OUTER frame is not the
+  row's and still draws across the strip. The row **keeps its height**
+  (invisible, not absent), and a
   `headerGroups` row is hidden with it, since it is header chrome that repeats
   with the header. Implemented as a paint alpha of 0 rather than PDF text
   rendering mode 3 — `krilla` exposes no rendering-mode control, and paint

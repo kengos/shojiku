@@ -3,6 +3,7 @@
 // bound item on the canvas. Dispatches no document ops — a click hands paths
 // up to the shared selection, a drag hands a payload up to the Designer.
 
+import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { IconButton } from '../ui/Button';
 import { IconGear } from '../ui/icons';
@@ -101,9 +102,6 @@ export function FieldRow({ field, paths, onPick, group, drag, onEdit }: FieldRow
         <code className="text-sm">{field.key}</code>
         <span>{typeLabelKey !== undefined ? t(typeLabelKey) : field.type}</span>
       </span>
-      {field.description !== '' ? (
-        <span className="text-sm text-muted [overflow-wrap:anywhere]">{field.description}</span>
-      ) : null}
       {field.sample !== '' ? (
         <span className="text-sm text-muted italic [overflow-wrap:anywhere]">{field.sample}</span>
       ) : null}
@@ -113,17 +111,38 @@ export function FieldRow({ field, paths, onPick, group, drag, onEdit }: FieldRow
   // Draggable rows show a grab cursor (and disable touch scrolling); the bound
   // button is otherwise a pointer. Choosing one cursor avoids a utility clash.
   const cursor = drag !== undefined ? 'cursor-grab touch-none' : '';
-  // The gear is a SIBLING of the row, never inside it: a bound row IS a
-  // `<button>`, and a button inside a button is invalid HTML (the data-item
-  // list row already settled this shape for its help hint). Icon-only at
-  // ~30px, because the palette row measures ~215px and does not fit a second
-  // text control beside the field name.
+  // Both affordances are SIBLINGS of the row, never inside it: a bound row IS
+  // a `<button>`, and a button inside a button is invalid HTML (the data-item
+  // list row already settled this shape for its help hint). Icon-only, because
+  // the palette row measures ~215px and does not fit a second text control
+  // beside the field name.
+  // The description folds into a `?` rather than sitting inline: the palette is
+  // a SCANNING surface and a `description` is author-supplied prose of any
+  // length (a shipped genkoyoshi example carries 68 characters, ~5 lines in a
+  // ~215px row), so inline it pushes the usage badge off the fold and buries
+  // the next field. `data/ItemListRow.tsx` — the same field row in the
+  // data-item editor — already made exactly this choice; this makes the two
+  // agree. The full text stays readable there, and editable in `DefinitionForm`.
+  const describe =
+    field.description === '' ? null : (
+      <HelpHint label={t('data.field.description')} body={field.description} />
+    );
   const gear =
     onEdit === undefined ? null : (
-      <span className="shrink-0 pt-1">
-        <IconButton label={t('palette.editField')} variant="ghost" onClick={onEdit}>
-          <IconGear />
-        </IconButton>
+      <IconButton label={t('palette.editField')} variant="ghost" onClick={onEdit}>
+        <IconGear />
+      </IconButton>
+    );
+  // ONE centred row for both affordances, not a wrapper each. `HelpHint` is
+  // 18px everywhere and `IconButton` is 36px, and each is right on its own —
+  // but this is the first row where the two sit side by side, so anchoring
+  // them independently put their optical centres 7px apart. `items-center`
+  // is what makes a small control and a large one read as a pair.
+  const affordances =
+    describe === null && gear === null ? null : (
+      <span className="flex shrink-0 items-center pt-1">
+        {describe}
+        {gear}
       </span>
     );
   return (
@@ -147,7 +166,7 @@ export function FieldRow({ field, paths, onPick, group, drag, onEdit }: FieldRow
           {body}
         </div>
       )}
-      {gear}
+      {affordances}
     </li>
   );
 }

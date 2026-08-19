@@ -555,13 +555,15 @@ export const zhCn: LanguageCatalog = {
     'panel.tableStyle.hiddenHeader': '不在页面上显示标题行',
     'help.hiddenHeader.title': '只有机器读得到的标题行',
     'help.hiddenHeader.body':
-      '这一行完全不会绘制，但列名仍以文字保留在 PDF 中。人只看数值，而朗读软件、搜索或 AI 依然知道每一列是什么。',
+      '这一行完全不会绘制，但列名仍以文字保留在 PDF 中。人只看数值，而文本提取、搜索或 AI 依然知道每一列是什么。',
     'panel.tableStyle.detail': '详细格式',
     'panel.tableStyle.headerBand': '标题行',
     'panel.tableStyle.bodyBand': '正文行',
     'panel.tableStyle.fillIgnored':
       '此填充不会绘制在表格上。要给行上色，请使用下面的「表格样式」。',
     'panel.tableStyle.fillClear': '删除填充',
+    'panel.tableStyle.headerHiddenIgnored':
+      '表头行不在页面上显示，因此以下设置都不会绘制。设置会保留，取消勾选后即可恢复。',
     'panel.tableStyle.preset.plain': '标准',
     'panel.tableStyle.preset.striped': '镶边',
     'panel.tableStyle.preset.darkHeader': '深色标题',
@@ -632,7 +634,7 @@ export const zhCn: LanguageCatalog = {
     'panel.charGrid.mode.horizontal_tb': '横排',
     'panel.charGrid.mode.vertical_rl': '竖排',
     'panel.charGrid.hint':
-      '实际绘制的大小取决于格子，而非上方的宽度。将格子大小清空，即改由该项目的宽度自动算出。',
+      '在设定了格子大小时，实际绘制的大小取决于格子，而非上方的宽度。将格子大小清空后，反过来由该项目的宽度算出格子。',
     'stepper.relativeUnit': '百分比或 em 的值无法逐步调整，请直接输入。',
     'panel.box.h': '高',
     'panel.placement.label': '位置',

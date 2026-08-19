@@ -172,6 +172,33 @@ describe('CharGridSection', () => {
     });
   });
 
+  it('greys the ▲▼ on a RELATIVE grid length and says why', () => {
+    // `cellSize: 5%` is legal wire — `CharGridSpec.cell_size` is an
+    // `Option<Length>` and `Length` carries `Percent`/`Em`/`Rem` — but the
+    // panel cannot step it by points, so `stepValueOp` returns null. Gated on
+    // "non-empty" the buttons rendered ENABLED and did nothing, which is the
+    // defect the width field was fixed for.
+    draw({ ...GRID, grid: { ...GRID.grid, cellSize: '5%' } }, undefined, 6);
+    openLayout();
+    const cell = screen.getByLabelText('Cell size') as HTMLInputElement;
+    expect(cell.value).toBe('5%');
+    expect((stepButton('Cell size', 'Increase') as HTMLButtonElement).disabled).toBe(true);
+    const row = cell.parentElement?.parentElement as HTMLElement;
+    expect(within(row).getByText(/cannot be stepped/)).not.toBeNull();
+  });
+
+  it('greys the ▲▼ on a GARBAGE grid length without calling it a relative unit', () => {
+    // The distinction C2 exists for: unsteppable is not the same as "percent
+    // or em", and telling this author their typo is a relative unit
+    // contradicts the engine's own `invalid_length` diagnostic.
+    draw({ ...GRID, grid: { ...GRID.grid, cellSize: '9mmm' } }, undefined, 6);
+    openLayout();
+    const cell = screen.getByLabelText('Cell size') as HTMLInputElement;
+    expect((stepButton('Cell size', 'Increase') as HTMLButtonElement).disabled).toBe(true);
+    const row = cell.parentElement?.parentElement as HTMLElement;
+    expect(within(row).queryByText(/cannot be stepped/)).toBeNull();
+  });
+
   it('falls back to a 1pt step when the canvas grid is off', () => {
     const controller = draw({ ...GRID, grid: { charsPerLine: 20, lines: 10, charGap: 4 } });
     openLayout();
@@ -207,13 +234,14 @@ describe('char_grid panel tabs', () => {
     expect(screen.queryByRole('tab', { name: 'Style' })).toBeNull();
   });
 
-  it('offers the binding on the content tab but NOT format or placeholder', () => {
+  it('offers the binding AND its format and placeholder on the content tab', () => {
     draw(GRID);
     fireEvent.click(screen.getByRole('tab', { name: 'Content' }));
     expect(screen.getByLabelText('Data key')).not.toBeNull();
-    // `CharGridItem` is `deny_unknown_fields` and carries neither key, so
-    // offering them would author wire the engine refuses.
-    expect(screen.queryByLabelText('Format')).toBeNull();
-    expect(screen.queryByLabelText('Blank placeholder')).toBeNull();
+    // Both ride the BINDING (`data.format` / `data.placeholder`), which a
+    // `char_grid` carries like any other data-bound item — `deny_unknown_fields`
+    // on `CharGridItem` governs the item ROOT, which is not where these land.
+    expect(screen.getByLabelText('Format')).not.toBeNull();
+    expect(screen.getByLabelText('Blank placeholder')).not.toBeNull();
   });
 });

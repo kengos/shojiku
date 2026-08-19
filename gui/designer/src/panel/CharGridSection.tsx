@@ -8,6 +8,7 @@
 // is geometry, not a content mode.
 
 import type { Op } from '@shojiku/designer-core';
+import { isRelativeLength, readLength } from '../canvas/lengths';
 import { useI18n } from '../i18n/context';
 import { SECTION_TITLE } from '../ui/chrome';
 import { Segmented } from '../ui/Segmented';
@@ -70,7 +71,14 @@ export function CharGridSection({
             key={key}
             label={t(`panel.charGrid.${key}`)}
             value={view[key]}
-            canStep={view[key] !== ''}
+            // The SAME steppability test the box fields use
+            // (`boxFields.tsx`): a value the panel cannot read as an absolute
+            // length cannot be stepped by points either, and `stepValueOp`
+            // would return `null`. Gating on "non-empty" instead left the ▲▼
+            // enabled and inert over a legal `5%` or `0.4em` — the very defect
+            // the width field was fixed for.
+            canStep={readLength(view[key]) !== null}
+            stepHint={isRelativeLength(view[key]) ? t('stepper.relativeUnit') : undefined}
             unit="pt"
             // Both OPTIONAL keys state what their unset value means, the way
             // the placement tab's coordinates do: an unset cell side is

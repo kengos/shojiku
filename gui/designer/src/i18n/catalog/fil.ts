@@ -405,13 +405,15 @@ export const fil: LanguageCatalog = {
     'panel.tableStyle.hiddenHeader': 'Huwag ipakita ang hilera ng pamagat sa pahina',
     'help.hiddenHeader.title': 'Hilera ng pamagat na mga makina lang ang nakakabasa',
     'help.hiddenHeader.body':
-      'Hindi iginuguhit ang hilera, pero nananatili sa loob ng PDF bilang teksto ang mga pangalan ng haligi. Ang tao ay nagbabasa ng mga halaga; nauunawaan pa rin ng screen reader, paghahanap o AI kung ano ang bawat haligi.',
+      'Hindi iginuguhit ang hilera, pero nananatili sa loob ng PDF bilang teksto ang mga pangalan ng haligi. Ang tao ay nagbabasa ng mga halaga; nauunawaan pa rin ng pagkuha ng teksto, paghahanap o AI kung ano ang bawat haligi.',
     'panel.tableStyle.detail': 'Detalyadong pormat',
     'panel.tableStyle.headerBand': 'Hanay ng pamagat',
     'panel.tableStyle.bodyBand': 'Mga hanay ng nilalaman',
     'panel.tableStyle.fillIgnored':
       'Hindi iginuguhit ang fill na ito sa talahanayan. Gamitin ang estilo ng talahanayan sa ibaba para kulayan ang mga hanay.',
     'panel.tableStyle.fillClear': 'Alisin ang fill',
+    'panel.tableStyle.headerHiddenIgnored':
+      'Nakatago sa pahina ang hilera ng pamagat, kaya wala sa mga setting sa ibaba ang iginuguhit. Nananatili ang mga ito at babalik kapag inalis mo ang tsek.',
     'panel.tableStyle.preset.plain': 'Payak',
     'panel.tableStyle.preset.striped': 'May banda',
     'panel.tableStyle.preset.darkHeader': 'Madilim na pamagat',
@@ -482,7 +484,7 @@ export const fil: LanguageCatalog = {
     'panel.charGrid.mode.horizontal_tb': 'Pahalang',
     'panel.charGrid.mode.vertical_rl': 'Patayo',
     'panel.charGrid.hint':
-      'Ang laking iginuguhit ay nagmumula sa mga kahon, hindi sa lapad sa itaas. Alisin ang laki ng kahon para kunin ito mula sa lapad ng item na ito.',
+      'Habang may nakatakdang laki ng kahon, ang laking iginuguhit ay nagmumula sa mga kahon, hindi sa lapad sa itaas. Alisin ang laki ng kahon at ang mga kahon naman ang kukunin mula sa lapad ng item na ito.',
     'stepper.relativeUnit':
       'Hindi maaaring i-step ang mga halagang porsyento o em. I-type ang halaga nang direkta.',
     'panel.box.h': 'Taas',
