@@ -106,6 +106,7 @@ export function EditorBody({
           onContextMenu={selectionOps.openContextMenu}
           onOpenDocument={() => views.openDocView()}
           onOpenDataEditor={views.openDataView}
+          onOpenDataField={views.openDataField}
         />
       )}
       {fullscreen ? (

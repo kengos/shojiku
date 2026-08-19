@@ -13,7 +13,36 @@ platform binaries.
 
 ## [Unreleased]
 
+### Added
+
+- **Manuscript-paper items are editable in the Designer.** A `char_grid`
+  previously had no content surface and no way to change its grid, so a
+  manuscript-paper template opened from the gallery could not be rebound,
+  retyped, or resized. It now carries a content tab (the bound field or static
+  text) and a 「manuscript grid」 section on the placement tab — cells per line,
+  lines, cell size, line gap, cell gap and the writing direction. The section
+  also says the thing that was costing people the most time: the drawn size
+  comes from the CELLS, not from the width field above it, and clearing the cell
+  size derives it from the item's width instead.
+- **A gear on each data field opens the data-item editor already on that
+  field.** Previously the only gear was on the tab header, so finding a field's
+  sample text meant hunting for it a second time in the editor's own list.
+
 ### Fixed
+
+- **The width field says why its steppers are unavailable.** A width of `100%`
+  or `2em` is a perfectly good value the engine resolves at layout, but not one
+  the ▲▼ can step by points — and they simply went quiet, which read as the
+  field breaking. They now carry a note explaining it.
+- **The sample-value section no longer prints its own label twice.** The heading
+  says 「sample value」 once; the editor under it is named after the field, the
+  way an array field's rows always were. A `?` beside the heading explains what
+  the data is for — a preview placeholder, not the value your documents will
+  actually carry.
+- **The bundled manuscript-paper examples name their field properly.** The ruby
+  notation reference had been packed into the field's NAME, where it read as
+  gibberish; it moved to the description, which the Designer already shows in
+  its own right.
 
 - **A table's style controls now show what the page actually does, not just what
   that one band spells out.** A column sitting in a bold row band showed an

@@ -5,6 +5,7 @@
 // the document view.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { FieldTarget } from '../palette/model';
 import type { DocSection } from '../panel/docSections';
 import type { DefaultsSection } from '../panel/OriginBadge';
 
@@ -25,7 +26,16 @@ export interface DocViews {
   readonly dataViewOpenRef: { readonly current: boolean };
   readonly openDocView: (section?: DocSection) => void;
   readonly closeDocView: () => void;
+  /** The data field the editor should open ON, when it was entered from a
+   * field's own gear; null when entered from the tab header or the File menu
+   * (the no-selection surface, which is today's behaviour). */
+  readonly dataFocus: FieldTarget | null;
   readonly openDataView: () => void;
+  /** Open the data-item editor ALREADY on this field. Deliberately a second
+   * function rather than an optional parameter on `openDataView`: that one is
+   * wired straight to a menubar entry and a prop typed `() => void`, so
+   * widening it would let a click EVENT arrive where a target is expected. */
+  readonly openDataField: (target: FieldTarget) => void;
   readonly closeDataView: () => void;
   /** A style field's origin hint jumps into the view at the owning section
    * (`defaults`/`styles` are both `DocSection`s). */
@@ -47,6 +57,7 @@ export function useDocViews({ selection, clearSelection }: DocViewsOptions): Doc
   // The fullscreen data-item editor — mutually exclusive with the document view
   // (opening one closes the other); both take over the whole editor area.
   const [dataViewOpen, setDataViewOpen] = useState(false);
+  const [dataFocus, setDataFocus] = useState<FieldTarget | null>(null);
   const dataViewOpenRef = useRef(dataViewOpen);
   dataViewOpenRef.current = dataViewOpen;
   const openDocView = useCallback(
@@ -65,8 +76,20 @@ export function useDocViews({ selection, clearSelection }: DocViewsOptions): Doc
   const openDataView = useCallback(() => {
     clearSelection();
     setDocViewOpen(false);
+    // Entered without a field: clear any target a previous gear jump left, or
+    // the File-menu entry would re-open on whatever was picked last.
+    setDataFocus(null);
     setDataViewOpen(true);
   }, [clearSelection]);
+  const openDataField = useCallback(
+    (target: FieldTarget) => {
+      clearSelection();
+      setDocViewOpen(false);
+      setDataFocus(target);
+      setDataViewOpen(true);
+    },
+    [clearSelection],
+  );
   const closeDataView = useCallback(() => setDataViewOpen(false), []);
   const navigateDefaults = useCallback(
     (section: DefaultsSection) => openDocView(section),
@@ -92,7 +115,9 @@ export function useDocViews({ selection, clearSelection }: DocViewsOptions): Doc
     dataViewOpenRef,
     openDocView,
     closeDocView,
+    dataFocus,
     openDataView,
+    openDataField,
     closeDataView,
     navigateDefaults,
   };

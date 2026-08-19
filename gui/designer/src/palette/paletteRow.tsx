@@ -4,6 +4,8 @@
 // up to the shared selection, a drag hands a payload up to the Designer.
 
 import { useI18n } from '../i18n/context';
+import { IconButton } from '../ui/Button';
+import { IconGear } from '../ui/icons';
 import type { PaletteDragPayload } from './dragSnippet';
 import type { PaletteField } from './model';
 
@@ -62,9 +64,12 @@ interface FieldRowProps {
   readonly group: string | null;
   /** Drag wiring for this row; absent = not draggable. */
   readonly drag?: PaletteDrag;
+  /** Open the fullscreen data-item editor on THIS field. Absent = no gear (the
+   * affordance is disarmed by the missing callback, like every other one). */
+  readonly onEdit?: () => void;
 }
 
-export function FieldRow({ field, paths, onPick, group, drag }: FieldRowProps) {
+export function FieldRow({ field, paths, onPick, group, drag, onEdit }: FieldRowProps) {
   const { t } = useI18n();
   const typeLabelKey = TYPE_LABEL_KEYS.get(field.type);
   // The pointer handlers arm a Designer-owned drag; a plain click (below the
@@ -89,7 +94,9 @@ export function FieldRow({ field, paths, onPick, group, drag }: FieldRowProps) {
   const unused = paths.length === 0;
   const body = (
     <>
-      <span className={unused ? 'font-semibold text-muted' : 'font-semibold'}>{field.label}</span>
+      <span className={`[overflow-wrap:anywhere] font-semibold${unused ? ' text-muted' : ''}`}>
+        {field.label}
+      </span>
       <span className="flex items-baseline gap-2 text-sm text-muted">
         <code className="text-sm">{field.key}</code>
         <span>{typeLabelKey !== undefined ? t(typeLabelKey) : field.type}</span>
@@ -106,8 +113,21 @@ export function FieldRow({ field, paths, onPick, group, drag }: FieldRowProps) {
   // Draggable rows show a grab cursor (and disable touch scrolling); the bound
   // button is otherwise a pointer. Choosing one cursor avoids a utility clash.
   const cursor = drag !== undefined ? 'cursor-grab touch-none' : '';
+  // The gear is a SIBLING of the row, never inside it: a bound row IS a
+  // `<button>`, and a button inside a button is invalid HTML (the data-item
+  // list row already settled this shape for its help hint). Icon-only at
+  // ~30px, because the palette row measures ~215px and does not fit a second
+  // text control beside the field name.
+  const gear =
+    onEdit === undefined ? null : (
+      <span className="shrink-0 pt-1">
+        <IconButton label={t('palette.editField')} variant="ghost" onClick={onEdit}>
+          <IconGear />
+        </IconButton>
+      </span>
+    );
   return (
-    <li>
+    <li className="flex items-start">
       {paths.length > 0 ? (
         <button
           type="button"
@@ -127,6 +147,7 @@ export function FieldRow({ field, paths, onPick, group, drag }: FieldRowProps) {
           {body}
         </div>
       )}
+      {gear}
     </li>
   );
 }

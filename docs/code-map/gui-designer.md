@@ -304,7 +304,11 @@ lists name the destructured stable fields, never `editor` itself.
 - `hooks/useDocViews.ts` — the two fullscreen views + their mutual
   exclusion (opening clears selection; later selection closes; Escape via
   live open refs); `docFocus` scroll-to-origin jump; renders
-  `DataEditorView` over effective definitions + active params.
+  `DataEditorView` over effective definitions + active params. TWO data
+  entry points, not one widened: `openDataView()` (menu / tab gear —
+  clears `dataFocus`, so it always lands on the no-selection surface) and
+  `openDataField(target)` (a palette row's gear), whose `dataFocus`
+  becomes the view's `initialSelection`.
 - `hooks/useContainerMarks.ts` — selection + hovered-card highlight →
   `BoxOverlay` `containerMarks` with `containerKindLabel` chips.
 - `hooks/usePdfAction.ts` — render the real PDF via the engine; gated on

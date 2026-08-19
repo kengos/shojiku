@@ -5,6 +5,7 @@
 import { useId } from 'react';
 import { useI18n } from '../i18n/context';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
+import { TipBubble } from '../ui/TipBubble';
 import { badgeText } from './fields';
 
 export interface StepperFieldProps {
@@ -28,6 +29,11 @@ export interface StepperFieldProps {
   /** Placeholder for an empty field whose unset meaning is a known value
    * (an unauthored coordinate means 0). Omit for none. */
   readonly placeholder?: string;
+  /** Why the ▲▼ are unavailable, shown as their hover bubble while `canStep`
+   * is false. The CALLER owns this string because only it knows which of the
+   * several unsteppable states this field is in — a message naming percent and
+   * em would be a lie over an empty or garbage value. Omit for no bubble. */
+  readonly stepHint?: string;
 }
 
 /** A numeric/length field with ▲▼ steppers. The input keeps the plain
@@ -45,6 +51,7 @@ export function StepperField({
   tag,
   unit,
   placeholder,
+  stepHint,
 }: StepperFieldProps) {
   // An empty field shows its placeholder, so the unit belongs to THAT text.
   const badge = badgeText(unit, value === '' ? (placeholder ?? '') : value, tag);
@@ -89,7 +96,13 @@ export function StepperField({
             </span>
           )}
         </span>
-        <span className="flex shrink-0 flex-col">
+        {/* The bubble rides the COLUMN, not the buttons: a disabled button is
+          an unreliable hover target, and the explanation is about the pair. */}
+        <span
+          className={`flex shrink-0 flex-col${
+            !canStep && stepHint !== undefined ? ' group/tip relative' : ''
+          }`}
+        >
           <button
             type="button"
             className={`${stepBtn} rounded-t-md`}
@@ -108,6 +121,7 @@ export function StepperField({
           >
             ▼
           </button>
+          {!canStep && stepHint !== undefined ? <TipBubble text={stepHint} /> : null}
         </span>
       </span>
     </span>

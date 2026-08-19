@@ -34,6 +34,13 @@ export type PanelTab = 'content' | 'style' | 'box';
 const CONTENT_TAB_TYPES = new Set([
   'text',
   'qr_code',
+  // Its content is a text item's (static text with `{key}`, or one bound
+  // value) — and without this it had NO content surface at all, so a preset's
+  // manuscript paper could not be rebound or retyped anywhere in the Designer.
+  // It stays OUT of `STYLED_TYPES`: a char_grid's `borderWidth` is the GRID
+  // RULING width, not a border box, so the border cluster's per-side model
+  // would author a different property under the same spelling.
+  'char_grid',
   'table',
   'repeat_flow',
   'list',

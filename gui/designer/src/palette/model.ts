@@ -16,6 +16,15 @@ import type { EnumOption } from './fieldDisplay';
 import { clip, record, text } from './fieldDisplay';
 import { arrayGroup, collectFields, leafField } from './schemaWalk';
 
+/** Which data field a jump into the fullscreen data-item editor should open
+ * on: the owning group's id plus the field's key. Lives here because both ends
+ * of that jump address a field the way this module models one — the palette
+ * row that offers it and the editor that resolves it. */
+export interface FieldTarget {
+  readonly group: string;
+  readonly key: string;
+}
+
 export interface PaletteField {
   readonly key: string;
   readonly label: string;

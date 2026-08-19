@@ -236,7 +236,7 @@ properties:
     // The strings appear as literal TEXT (list row, form seeds, sample value)…
     expect(screen.getAllByText(hostile).length).toBeGreaterThan(0);
     expect((screen.getByLabelText('表示ラベル') as HTMLInputElement).value).toBe(hostile);
-    expect((screen.getByLabelText('サンプル値') as HTMLTextAreaElement).value).toBe(hostile);
+    expect((screen.getByLabelText(hostile) as HTMLTextAreaElement).value).toBe(hostile);
     // …and no element was ever minted from them.
     expect(container.querySelector('img')).toBeNull();
   });
@@ -246,7 +246,7 @@ describe('DataEditorView sample editing', () => {
   it('edits a string value in the roomy textarea', () => {
     const { mocks } = draw();
     selectField('表示タイトル');
-    const area = screen.getByLabelText('サンプル値') as HTMLTextAreaElement;
+    const area = screen.getByLabelText('表示タイトル') as HTMLTextAreaElement;
     expect(area.tagName).toBe('TEXTAREA');
     expect(area.value).toBe('こんにちは');
     fireEvent.change(area, { target: { value: 'さようなら' } });
@@ -257,14 +257,14 @@ describe('DataEditorView sample editing', () => {
   it('a same-value blur authors nothing', () => {
     const { mocks } = draw();
     selectField('表示タイトル');
-    fireEvent.blur(screen.getByLabelText('サンプル値'));
+    fireEvent.blur(screen.getByLabelText('表示タイトル'));
     expect(mocks.onParamsChange).not.toHaveBeenCalled();
   });
 
   it('edits a number value', () => {
     const { mocks } = draw();
     selectField('amount');
-    const input = screen.getByLabelText('サンプル値') as HTMLInputElement;
+    const input = screen.getByLabelText('amount') as HTMLInputElement;
     fireEvent.change(input, { target: { value: '250' } });
     fireEvent.blur(input);
     expect(JSON.parse(mocks.onParamsChange.mock.calls[0][0]).amount).toBe(250);
@@ -273,7 +273,7 @@ describe('DataEditorView sample editing', () => {
   it('edits a boolean value via the checkbox', () => {
     const { mocks } = draw();
     selectField('active');
-    const box = screen.getByLabelText('サンプル値') as HTMLInputElement;
+    const box = screen.getByLabelText('active') as HTMLInputElement;
     expect(box.type).toBe('checkbox');
     fireEvent.click(box);
     expect(JSON.parse(mocks.onParamsChange.mock.calls[0][0]).active).toBe(false);
@@ -282,7 +282,7 @@ describe('DataEditorView sample editing', () => {
   it('edits a date value', () => {
     const { mocks } = draw();
     selectField('when');
-    const input = screen.getByLabelText('サンプル値') as HTMLInputElement;
+    const input = screen.getByLabelText('when') as HTMLInputElement;
     expect(input.type).toBe('date');
     fireEvent.change(input, { target: { value: '2025-06-07' } });
     fireEvent.blur(input);
@@ -292,7 +292,7 @@ describe('DataEditorView sample editing', () => {
   it('edits a datetime value, recomposing the offset', () => {
     const { mocks } = draw();
     selectField('ts');
-    const input = screen.getByLabelText('サンプル値') as HTMLInputElement;
+    const input = screen.getByLabelText('ts') as HTMLInputElement;
     expect(input.type).toBe('datetime-local');
     fireEvent.change(input, { target: { value: '2024-01-02T05:06' } });
     fireEvent.blur(input);
@@ -302,7 +302,7 @@ describe('DataEditorView sample editing', () => {
   it('a blank datetime blur authors nothing', () => {
     const { mocks } = draw();
     selectField('ts');
-    const input = screen.getByLabelText('サンプル値') as HTMLInputElement;
+    const input = screen.getByLabelText('ts') as HTMLInputElement;
     fireEvent.change(input, { target: { value: '' } });
     fireEvent.blur(input);
     expect(mocks.onParamsChange).not.toHaveBeenCalled();
@@ -329,13 +329,13 @@ describe('DataEditorView sample editing', () => {
     // The 型 picker seeds to string for an unset type.
     expect((screen.getByLabelText('型') as HTMLSelectElement).value).toBe('string');
     // Its sample widget is the string textarea.
-    expect((screen.getByLabelText('サンプル値') as HTMLElement).tagName).toBe('TEXTAREA');
+    expect((screen.getByLabelText('素の項目') as HTMLElement).tagName).toBe('TEXTAREA');
   });
 
   it('a minute-precision datetime needs no seconds step', () => {
     draw();
     selectField('ts2');
-    const input = screen.getByLabelText('サンプル値') as HTMLInputElement;
+    const input = screen.getByLabelText('ts2') as HTMLInputElement;
     expect(input.type).toBe('datetime-local');
     expect(input.step).toBe('');
   });
@@ -343,7 +343,7 @@ describe('DataEditorView sample editing', () => {
   it('a same-value number blur (after coercion) authors nothing', () => {
     const { mocks } = draw();
     selectField('amount');
-    const input = screen.getByLabelText('サンプル値') as HTMLInputElement;
+    const input = screen.getByLabelText('amount') as HTMLInputElement;
     // '100.0' differs as a string but coerces to the current 100.
     fireEvent.change(input, { target: { value: '100.0' } });
     fireEvent.blur(input);
@@ -353,7 +353,7 @@ describe('DataEditorView sample editing', () => {
   it('an unchanged number blur authors nothing', () => {
     const { mocks } = draw();
     selectField('amount');
-    fireEvent.blur(screen.getByLabelText('サンプル値'));
+    fireEvent.blur(screen.getByLabelText('amount'));
     expect(mocks.onParamsChange).not.toHaveBeenCalled();
   });
 
@@ -372,7 +372,7 @@ properties:
 `;
     const { mocks } = draw({ definitions: defs, params: '{}' });
     selectField('memo');
-    const area = screen.getByLabelText('サンプル値') as HTMLTextAreaElement;
+    const area = screen.getByLabelText('memo') as HTMLTextAreaElement;
     fireEvent.change(area, { target: { value: 'first' } });
     fireEvent.blur(area);
     expect(JSON.parse(mocks.onParamsChange.mock.calls[0][0]).memo).toBe('first');
@@ -413,7 +413,7 @@ properties:
   it('a labeled enum renders a select of labels with the raw-value caption', () => {
     drawEnum({ status: 'backorder' });
     selectField('入荷状況');
-    const select = screen.getByLabelText('サンプル値') as HTMLSelectElement;
+    const select = screen.getByLabelText('入荷状況') as HTMLSelectElement;
     expect(select.tagName).toBe('SELECT');
     expect(Array.from(select.options).map((o) => o.textContent)).toEqual([
       '入荷済み',
@@ -426,7 +426,7 @@ properties:
   it('an unlabeled enum renders its values as the options, with no caption', () => {
     drawEnum({ kind: 'section' });
     selectField('区切り種別');
-    const select = screen.getByLabelText('サンプル値') as HTMLSelectElement;
+    const select = screen.getByLabelText('区切り種別') as HTMLSelectElement;
     expect(Array.from(select.options).map((o) => o.textContent)).toEqual(['section', 'end']);
     expect(screen.queryByText(/params の値/)).toBeNull();
   });
@@ -434,7 +434,7 @@ properties:
   it('picking an option commits the VALUE, not the label', () => {
     const { mocks } = drawEnum({ status: 'backorder' });
     selectField('入荷状況');
-    fireEvent.change(screen.getByLabelText('サンプル値'), { target: { value: 'arrived' } });
+    fireEvent.change(screen.getByLabelText('入荷状況'), { target: { value: 'arrived' } });
     expect(mocks.onParamsChange).toHaveBeenCalledTimes(1);
     const written = JSON.parse(mocks.onParamsChange.mock.calls[0][0] as string);
     expect(written.status).toBe('arrived');
@@ -443,14 +443,14 @@ properties:
   it('a same-value change commits nothing', () => {
     const { mocks } = drawEnum({ status: 'backorder' });
     selectField('入荷状況');
-    fireEvent.change(screen.getByLabelText('サンプル値'), { target: { value: 'backorder' } });
+    fireEvent.change(screen.getByLabelText('入荷状況'), { target: { value: 'backorder' } });
     expect(mocks.onParamsChange).not.toHaveBeenCalled();
   });
 
   it('an out-of-enum current value stays visible, warned, and pickable-away-from', () => {
     const { mocks } = drawEnum({ status: 'canceld' });
     selectField('入荷状況');
-    const select = screen.getByLabelText('サンプル値') as HTMLSelectElement;
+    const select = screen.getByLabelText('入荷状況') as HTMLSelectElement;
     expect(select.value).toBe('canceld');
     expect(Array.from(select.options).map((o) => o.value)).toEqual([
       'arrived',
@@ -478,7 +478,7 @@ properties:
   it('read-only shows the label with the machine value beside it', () => {
     drawEnum({ status: 'backorder' }, { sampleDataReadOnly: true });
     selectField('入荷状況');
-    expect(screen.queryByLabelText('サンプル値')).toBeNull();
+    expect(screen.queryByLabelText('入荷状況')).toBeNull();
     expect(screen.getByText('（入荷待ち）')).not.toBeNull();
     expect(screen.getByText('backorder')).not.toBeNull();
   });
@@ -497,7 +497,7 @@ ${values}
 `;
     draw({ definitions: defs, params: JSON.stringify({ big: 'v1' }) });
     selectField('大きな集合');
-    const field = screen.getByLabelText('サンプル値');
+    const field = screen.getByLabelText('大きな集合');
     expect(field.tagName).toBe('TEXTAREA');
   });
 });
@@ -507,7 +507,7 @@ describe('DataEditorView read-only sample', () => {
     draw({ sampleDataReadOnly: true });
     expect(screen.getByText(/エンジニアが管理/)).not.toBeNull();
     selectField('表示タイトル');
-    expect(screen.queryByLabelText('サンプル値')).toBeNull();
+    expect(screen.queryByLabelText('表示タイトル')).toBeNull();
     expect(screen.getByText('こんにちは')).not.toBeNull();
   });
 
@@ -740,5 +740,71 @@ describe('DataEditorView selection resolution', () => {
     );
     expect(screen.queryByLabelText('表示ラベル')).toBeNull();
     expect(screen.getByText(/左の一覧から項目を選ぶと/)).not.toBeNull();
+  });
+});
+
+describe('DataEditorView — opening ON a field', () => {
+  it('seeds the selection from initialSelection', () => {
+    draw({ initialSelection: { group: '', key: 'title' } });
+    // The detail pane is showing that field, not the pick-one-on-the-left hint.
+    expect((screen.getByLabelText('表示ラベル') as HTMLInputElement).value).toBe('表示タイトル');
+    expect(screen.queryByText(/左の一覧から項目を選ぶと/)).toBeNull();
+  });
+
+  it('reaches a field inside an array group', () => {
+    draw({ initialSelection: { group: 'items', key: 'name' } });
+    expect(screen.getByLabelText('表示ラベル')).not.toBeNull();
+  });
+
+  it('selects nothing for a target the definitions do not carry', () => {
+    // A stale target (the field was renamed away between the click and the
+    // open) must land on the no-selection surface, never throw.
+    draw({ initialSelection: { group: '', key: 'gone' } });
+    expect(screen.getByText(/左の一覧から項目を選ぶと/)).not.toBeNull();
+  });
+
+  it('leaves a __proto__ target inert', () => {
+    draw({ initialSelection: { group: '__proto__', key: '__proto__' } });
+    expect(screen.getByText(/左の一覧から項目を選ぶと/)).not.toBeNull();
+  });
+
+  it('opens with nothing selected when no target is given', () => {
+    draw();
+    expect(screen.getByText(/左の一覧から項目を選ぶと/)).not.toBeNull();
+  });
+});
+
+describe('DataEditorView — the sample-value section', () => {
+  it('says 「サンプル値」 exactly once, and names the input after the field', () => {
+    draw();
+    selectField('表示タイトル');
+    // The heading titles the section; the widget under it says which FIELD it
+    // belongs to (the array branch always did). Before this they were the same
+    // string, stacked.
+    expect(screen.getAllByText('サンプル値')).toHaveLength(1);
+    expect(screen.getByLabelText('表示タイトル')).not.toBeNull();
+  });
+
+  it('explains what a sample value IS', () => {
+    draw();
+    selectField('表示タイトル');
+    fireEvent.click(screen.getByRole('button', { name: 'サンプル値とは' }));
+    expect(screen.getByText(/実際に発行するときに差し込まれる値ではありません/)).not.toBeNull();
+  });
+
+  it('keeps the heading and its explanation on a read-only host', () => {
+    // The sentence is about what the DATA is, so it stays true where the
+    // values are the engineer's and cannot be edited here.
+    draw({ sampleDataReadOnly: true });
+    selectField('表示タイトル');
+    expect(screen.getAllByText('サンプル値')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'サンプル値とは' })).not.toBeNull();
+  });
+
+  it('still renders one input per row for an array field', () => {
+    draw();
+    // 明細 is the array GROUP; its one field is `name`.
+    selectField('name');
+    expect(screen.getAllByLabelText('name')).toHaveLength(2);
   });
 });

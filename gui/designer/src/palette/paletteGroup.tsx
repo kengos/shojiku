@@ -11,6 +11,8 @@ interface GroupSectionProps {
   readonly usage: UsageIndex;
   readonly onPick: (id: string, paths: readonly string[]) => void;
   readonly drag?: PaletteDrag;
+  /** Open the data-item editor on one of this group's fields; absent = no gears. */
+  readonly onEditField?: (key: string) => void;
   /** The display label of the group whose ROWS carry this one, when they do.
    * A nested source shows its own title like any other group, so without
    * this the reader cannot tell 「内容品」 (per order) from a top-level list
@@ -18,7 +20,14 @@ interface GroupSectionProps {
   readonly parentLabel?: string;
 }
 
-export function GroupSection({ group, usage, onPick, drag, parentLabel }: GroupSectionProps) {
+export function GroupSection({
+  group,
+  usage,
+  onPick,
+  drag,
+  onEditField,
+  parentLabel,
+}: GroupSectionProps) {
   const { t } = useI18n();
   const sourcePaths = groupUsage(usage, group);
   // Top-level scalar fields gather into one unlabeled group; the model keeps
@@ -99,6 +108,9 @@ export function GroupSection({ group, usage, onPick, drag, parentLabel }: GroupS
             // such cell to drop into (its own source cannot be bound at
             // document scope), so its rows alone stay display-only.
             drag={group.rowScope === undefined ? drag : undefined}
+            // The row takes a bound no-arg callback: it knows nothing about
+            // group ids, and the group is what can name its own field.
+            onEdit={onEditField === undefined ? undefined : () => onEditField(field.key)}
           />
         ))}
       </ul>

@@ -9,28 +9,16 @@ import { useI18n } from '../i18n/context';
 import { commitOps } from '../text/declCommit';
 import { TextEditor } from '../text/TextEditor';
 import { INPUT } from '../ui/chrome';
+import { CHAR_GRID_TYPE } from './charGrid';
+import { BoundContent } from './contentBound';
 import { ImageContent, PageNumberContent } from './contentParts';
-import { FieldPicker } from './FieldPicker';
-import { FormatPicker } from './FormatPicker';
-import { Field, FieldGroup, TextField } from './fields';
+import { Field, FieldGroup } from './fields';
 import { formatOptions } from './formatModel';
 import { IterableSourceSection } from './IterableSourceSection';
-import { hasCapability, type ItemPanelProps } from './itemPanelProps';
+import type { ItemPanelProps } from './itemPanelProps';
 import { type ContentMode, registryNames } from './itemView';
-import {
-  applyPanelOp,
-  bindingKeyOp,
-  formatOp,
-  placeholderOp,
-  switchContentOps,
-  textAsBinding,
-} from './model';
-import {
-  chipsFor,
-  documentScopeCreateField,
-  HelpfulHeading,
-  scopePickerProps,
-} from './panelHelpers';
+import { applyPanelOp, switchContentOps, textAsBinding } from './model';
+import { chipsFor, HelpfulHeading } from './panelHelpers';
 import { TableColumnsSection } from './TableColumnsSection';
 
 export function ContentSection(props: ItemPanelProps) {
@@ -78,7 +66,11 @@ export function ContentSection(props: ItemPanelProps) {
   if (view.type === 'page_number') {
     return <PageNumberContent {...props} />;
   }
-  // text / qr_code: the content-mode pair.
+  // `CharGridItem` is `deny_unknown_fields` and carries NEITHER `format` NOR
+  // `placeholder`, so offering either would author wire the engine refuses —
+  // the content pair is all a char_grid can take here.
+  const wireTakesBindingOptions = view.type !== CHAR_GRID_TYPE;
+  // text / qr_code / char_grid: the content-mode pair.
   const formatRows = formatOptions(
     registryNames(controller.read('formats')),
     bindingOptions.find((option) => option.key === view.dataKey)?.type,
@@ -137,33 +129,14 @@ export function ContentSection(props: ItemPanelProps) {
           />
         </FieldGroup>
       ) : (
-        <>
-          <FieldPicker
-            label={t('panel.field.dataKey')}
-            value={view.dataKey}
-            options={bindingOptions}
-            onCommit={(v) => dispatch(bindingKeyOp(path, v))}
-            onCreateField={documentScopeCreateField(props)}
-            {...scopePickerProps(props, chips)}
-          />
-          {/* The format field appears only once a data key is picked:
-              a format on an unbound key is inert noise. */}
-          {view.dataKey !== '' ? (
-            <FormatPicker
-              label={t('panel.field.format')}
-              value={view.format}
-              options={formatRows}
-              onCommit={(v) => dispatch(formatOp(path, v))}
-            />
-          ) : null}
-          {hasCapability(capabilities, 'binding.placeholder') ? (
-            <TextField
-              label={t('panel.field.placeholder')}
-              value={view.placeholder}
-              onCommit={(v) => dispatch(placeholderOp(path, v))}
-            />
-          ) : null}
-        </>
+        <BoundContent
+          props={props}
+          chips={chips}
+          bindingOptions={bindingOptions}
+          formatRows={formatRows}
+          wireTakesBindingOptions={wireTakesBindingOptions}
+          dispatch={dispatch}
+        />
       )}
     </section>
   );

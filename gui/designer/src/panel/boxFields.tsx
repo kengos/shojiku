@@ -41,6 +41,13 @@ export function BoxAxisField({
   const { t } = useI18n();
   const seeded = authored === '' && seed !== null && seed !== undefined;
   const value = authored !== '' ? authored : seeded ? String(seed) : '';
+  // A RELATIVE length (`100%`, `2em`) is a legal box value the engine resolves
+  // at layout, but it is not one the panel can step by points — and
+  // `canvas/lengths` deliberately refuses to read it, because rewriting it into
+  // points would throw away the authoring intent the canvas drag also honours.
+  // So the ▲▼ go quiet; without this they went quiet SILENTLY, which is what
+  // made a width edit feel broken.
+  const relative = value !== '' && readLength(value) === null;
   const keys = ['box', axis];
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   return (
@@ -53,6 +60,7 @@ export function BoxAxisField({
       // An empty editable COORDINATE means 0 to the engine (w/h mean auto-size,
       // so they stay placeholder-less) — state it instead of a blank box.
       placeholder={value === '' && (axis === 'x' || axis === 'y') ? '0' : undefined}
+      stepHint={relative ? t('stepper.relativeUnit') : undefined}
       onCommit={(v) => dispatch(lengthOp(path, keys, v))}
       onStep={(dir) => dispatch(stepValueOp(path, keys, value, dir, step, 'length'))}
     />
