@@ -202,3 +202,33 @@
   `grep -ac <new wire spelling> engine/wasm/pkg/shojiku_wasm_bg.wasm` —
   **`-a` is load-bearing** (plain grep on a binary reads exactly like a
   genuine absence).
+
+## Driving the app from `javascript_tool`: synthetic events mostly do NOT reach React
+
+Setting an input's value through the native setter and dispatching
+`new Event('blur')` makes the field LOOK changed — the DOM value is really
+different and the placeholder really appears — while React's handler never
+runs, so **no op is dispatched and the document is untouched**. React attaches
+its listeners at the root and listens for `focusout`, not `blur` (which does
+not bubble), and it tracks the value node so a raw setter is invisible to it.
+
+A width edit was "committed" this way and then measured: the canvas geometry
+had not moved, which read as the engine ignoring the key. It had simply never
+been authored.
+
+- Drive real interactions through the input tool (`triple_click` → type →
+  `Tab`), not through scripted events, whenever the result is a DOCUMENT
+  change you intend to measure.
+- Confirm an edit actually landed before measuring anything downstream: the
+  **undo button becoming enabled** is the cheapest proof that an op reached the
+  editor.
+- `javascript_tool` stays excellent for READING (geometry, computed styles,
+  the accessibility tree) and for clicking real elements via `.click()`, which
+  does dispatch a genuine event.
+
+**And check what you clicked.** A selector written as "the button whose
+`aria-label` contains 戻" matched 「元に戻す」 (undo) rather than 「キャンバスに戻る」.
+Nothing failed loudly. After any scripted click on a control you picked by
+substring, verify the state you expected — here, undo and redo both being
+disabled is what proved the stray click had been a no-op.
+

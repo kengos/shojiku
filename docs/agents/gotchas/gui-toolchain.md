@@ -406,3 +406,27 @@
   leftover set is EXACTLY the known-functional occurrences — not
   "zero". `make gui` catches a renamed test `querySelector`, but NOT a
   corrupted URL literal inside an assertion string.
+
+## A tool bump that leaves its CONFIG's `$schema` behind reddens the gate before any source is read
+
+`gui/biome.json` pinned `https://biomejs.dev/schemas/2.5.5/schema.json` while
+`package.json` required `^2.5.7` and the lockfile carried 2.5.7. Biome fails
+**deserialising its own config**, so the diagnostic names `biome.json:2:14` and
+not one line of the code under change — and because `lint` runs with
+`--error-on-warnings`, the version-mismatch notice is fatal.
+
+Two things make this expensive to meet mid-cycle:
+
+- **It is nobody's diff.** A dependabot bump moves the dependency and the
+  lockfile; the `$schema` URL is a string in a config file no bump touches. So
+  `main` sits red on the gui lint gate with no PR obviously responsible, and
+  the next cycle to run `lint:gui` inherits it.
+- **It reads as your breakage.** The gate goes red on the run right after your
+  first edit. The tell is the LOCATION: a failure inside `biome.json` happens
+  before any source file is parsed, so it cannot be caused by a source change.
+
+Fix is the one-line `$schema` bump to match the resolved CLI. When bumping a
+formatter/linter deliberately, grep its config for a version-bearing `$schema`
+in the same change. A tool whose config carries its own version number has two
+places to update, and only one of them is a dependency.
+
