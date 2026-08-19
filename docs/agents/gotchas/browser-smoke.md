@@ -63,6 +63,19 @@
 
 ## Driving the Browser pane
 
+- **A screenshot taken away from the top of a tall page comes back
+  BLANK** — a flat fill of the page background, with no error. Fronting
+  the tab does not fix it, `zoom` cannot crop (it returns the full
+  screenshot), and the DOM says the content is right there: a
+  `javascript_tool` read of `scrollY` and the intersecting sections
+  reports exactly what you expect to see. The fix is to stop scrolling:
+  `resize_window` the viewport TALL enough that the region you want sits
+  in the first screenful, then screenshot at `scrollY === 0`. For a page
+  taller than any sane viewport, hide the sections above the one you
+  want (`display:none` via `javascript_tool`) and shoot the top again —
+  crude, but it is the only shape that reliably captures a lower
+  section. Budget for this whenever a self-check involves a long mock
+  page.
 - **Open a localhost server with `preview_start {url}`, never a plain
   `navigate`** — a bare navigate to a localhost origin is policy-blocked;
   `preview_start` reaches it and returns the `tabId`. Once open, a

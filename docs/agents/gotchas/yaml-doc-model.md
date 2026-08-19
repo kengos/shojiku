@@ -35,6 +35,29 @@
   glob test asserting `serialize(parse(src)) === src` is the permanent
   gate).
 
+## Anchor ORDER survives an op only if the op checks it
+
+- **Moving a node can leave an anchor defined AFTER something that
+  aliases it, and the document is then unsaveable.** `eemeli/yaml`
+  verifies alias order at stringify time and throws `Unresolved alias
+  (the anchor must be set before the alias)` — and the app's one
+  serializer is a bare `doc.toString()`, so the damage surfaces as a
+  crashing SAVE, arbitrarily later, from an op that reported `ok`. It
+  bites in BOTH directions: sinking a definition below its user, and
+  lifting a user above its definition.
+- **Use the library as the oracle; a boundary heuristic gets it wrong.**
+  The tempting rule — refuse when the moved subtree's anchors cross its
+  own boundary — refuses the ORDINARY shape (a shared top-level
+  `anchors:` block aliased throughout, which is safe to move around) and
+  is still only an approximation of document order. Splice, ask
+  `toString()` whether it still writes out, and roll the splice back on
+  a throw. Gate that on the moved node touching anchors at all (a walk
+  for `Alias` nodes and `.anchor`), so the common case pays nothing —
+  no bundled template uses anchors, so it never runs in practice.
+- Same family as the `renameKey` anchor rule below: an op that reports
+  success can still hand the next `toString()` a document it cannot
+  write.
+
 ## Map mutation
 
 - `map.set(newKey, …)` **APPENDS** at the map's end — a "creates `page:`

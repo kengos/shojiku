@@ -5,6 +5,41 @@
 > falsifiable claim in prose is grepped before it ships.** This file is
 > the failure catalog behind that rule.
 
+## "That is not possible" is a CLAIM, and the cheapest one to check
+
+Declaring a requirement unsatisfiable retires it with no test and no
+record — which is the same outcome as forgetting it, except it looks
+deliberate. One cycle recorded "the path grammar is canonical, there IS
+only one spelling" and dropped a requirement asking for two spellings of
+one path; the parser is twelve lines, matches `\[\d+\]` and converts
+with `Number`, so `items[01]` and `items[1]` really are two spellings —
+exactly the case the code's identity check existed for. A fresh reviewer
+found it by reading the file.
+
+Before writing "not applicable" or "not possible" about the system's own
+behaviour, open the code that would have to be true. The belief is
+always about something small enough to read.
+
+## A scripted edit's anchor text MOVES when a formatter runs
+
+`str.replace` returns the string unchanged when the pattern is absent —
+so an edit scripted against text a formatter has since reflowed lands
+nowhere and reports nothing. It surfaces far away: an import rewrite that
+silently no-opped produced `X is not defined` in a TEST run, not an error
+at the edit. Two habits:
+
+- **assert every scripted replacement landed** (`assert old in s`) —
+  including the ones you are confident about, since the confident ones
+  are written from memory of the file rather than from the file;
+- **re-read the target after any formatter pass** before scripting
+  against it (`{ A, b }` becomes `{ type A, b }`, arguments re-wrap at
+  the line limit).
+
+And remember `str.replace` in Python replaces EVERY occurrence: one test
+helper's closing block matched a sibling helper too, adding a prop to
+both and type-erroring in the one that did not take it. Count first
+(`s.count(old) == 1`) when the pattern is generic.
+
 ## A broken MEASUREMENT looks exactly like a broken SYSTEM
 
 When a probe you just wrote reports that the system is broken, the first
