@@ -552,6 +552,10 @@ export const zhCn: LanguageCatalog = {
     'panel.tableStyle.title': '表格样式',
     'panel.tableStyle.preview': '表格条纹预览',
     'panel.tableStyle.zebra': '镶边行',
+    'panel.tableStyle.hiddenHeader': '不在页面上显示标题行',
+    'help.hiddenHeader.title': '只有机器读得到的标题行',
+    'help.hiddenHeader.body':
+      '这一行完全不会绘制，但列名仍以文字保留在 PDF 中。人只看数值，而朗读软件、搜索或 AI 依然知道每一列是什么。',
     'panel.tableStyle.detail': '详细格式',
     'panel.tableStyle.headerBand': '标题行',
     'panel.tableStyle.bodyBand': '正文行',

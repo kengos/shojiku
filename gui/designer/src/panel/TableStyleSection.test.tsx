@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
@@ -368,5 +368,78 @@ describe('TableStyleSection — the miniature draws the PAGE, the gallery reads 
       path: PATH,
       keys: ['row', 'style', 'fontWeight'],
     });
+  });
+});
+
+describe('TableStyleSection — the invisible header row', () => {
+  const NAME = 'Hide the header row on the page';
+
+  it('is ABSENT when the engine lacks the capability', () => {
+    // An older engine parse-REJECTS `header.visuallyHidden`, so a hopeful
+    // checkbox would break the document the moment it was ticked.
+    section(TABLE, ['table.style']);
+    openDetail();
+    expect(screen.queryByRole('checkbox', { name: NAME })).toBeNull();
+  });
+
+  it('is PRESENT when the capability list carries the key', () => {
+    section(TABLE, ['table.style', 'table.header.visuallyHidden']);
+    openDetail();
+    expect(screen.getByRole('checkbox', { name: NAME })).not.toBeNull();
+  });
+
+  it('authors the key when ticked', () => {
+    const controller = section(TABLE, ['table.style', 'table.header.visuallyHidden']);
+    openDetail();
+    fireEvent.click(screen.getByRole('checkbox', { name: NAME }));
+    expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'setScalar',
+      path: PATH,
+      keys: ['header', 'visuallyHidden'],
+      value: true,
+    });
+  });
+
+  it('REMOVES the key when unticked, rather than writing false', () => {
+    // An unset key already means false, and the op layer prunes the `header:`
+    // map when this was its last entry — so the document returns to the shape
+    // it had before the checkbox was ever touched.
+    const controller = section({ ...TABLE, header: { visuallyHidden: true } }, [
+      'table.style',
+      'table.header.visuallyHidden',
+    ]);
+    openDetail();
+    const box = screen.getByRole('checkbox', { name: NAME }) as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    fireEvent.click(box);
+    expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'removeKey',
+      path: PATH,
+      keys: ['header', 'visuallyHidden'],
+    });
+  });
+
+  it('reads its state from the WIRE, so an externally-authored document shows it', () => {
+    section({ ...TABLE, header: { visuallyHidden: true } }, [
+      'table.style',
+      'table.header.visuallyHidden',
+    ]);
+    openDetail();
+    expect((screen.getByRole('checkbox', { name: NAME }) as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('stays OFF for a hostile non-boolean value', () => {
+    // Only the boolean the engine acts on may light the control up.
+    for (const hostile of ['true', 1, {}, []]) {
+      section({ ...TABLE, header: { visuallyHidden: hostile } }, [
+        'table.style',
+        'table.header.visuallyHidden',
+      ]);
+      openDetail();
+      expect((screen.getByRole('checkbox', { name: NAME }) as HTMLInputElement).checked).toBe(
+        false,
+      );
+      cleanup();
+    }
   });
 });

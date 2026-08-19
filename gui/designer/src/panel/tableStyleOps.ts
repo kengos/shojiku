@@ -54,6 +54,22 @@ export function zebraToggleOp(tablePath: string, current: string): Op {
     : bandStyleOp(tablePath, 'zebra', 'backgroundColor', '');
 }
 
+/** The capability an engine needs before the invisible-header control is
+ * offered: an older one parse-REJECTS the key (`TableHeaderSpec` is
+ * deny_unknown_fields), so a hopeful checkbox would break the document. */
+export const HIDDEN_HEADER_CAPABILITY = 'table.header.visuallyHidden';
+
+/** Toggle `header.visuallyHidden`. Turning it OFF removes the key rather than
+ * writing `false` — an unset key already means it, and the op layer prunes the
+ * `header:` map when this was its last entry, so a document that never had one
+ * returns byte-identical. */
+export function hiddenHeaderToggleOp(tablePath: string, current: boolean): Op {
+  const keys = ['header', 'visuallyHidden'];
+  return current
+    ? { op: 'removeKey', path: tablePath, keys }
+    : { op: 'setScalar', path: tablePath, keys, value: true };
+}
+
 /** Drop the table's own `style.backgroundColor` — the fill the engine never
  * paints. Leaves the rest of `style` (the grid `borderWidth`/`borderColor`)
  * alone; the op layer prunes `style:` only if this was its last key. */

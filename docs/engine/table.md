@@ -204,6 +204,16 @@ Row keys live under `row:` (`minHeight` / `height` / `style` /
 - `header.height` (Length): fixes the header row.
   `header.style.backgroundColor` replaces the default header fill
   (`#ededed`).
+- `header.visuallyHidden` (bool, default `false`): the header row paints
+  **nothing** — no label glyphs, no band fill, no grid ruling — while the
+  labels stay in the PDF's **text layer**, so a reader, a screen reader or an
+  AI can still tell what each column means and a human infers from the cell
+  contents. The row **keeps its height** (invisible, not absent), and a
+  `headerGroups` row is hidden with it, since it is header chrome that repeats
+  with the header. Implemented as a paint alpha of 0 rather than PDF text
+  rendering mode 3 — `krilla` exposes no rendering-mode control, and paint
+  alpha is one mechanism both backends already carry. Capability key:
+  `table.header.visuallyHidden`.
 - **Vertical alignment** defaults to `middle` in every table row, and an
   authored `verticalAlign` wins wherever it is written: on a column (for
   its body cells AND its own label), on `header.style` (every label in

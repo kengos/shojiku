@@ -84,6 +84,9 @@ krilla = { version = "0.8", default-features = false }
 # only ever see RectShapes.
 qrcodegen = "1.8"
 base64 = "0.23"
+# Test-only: reading back a rendered PDF's content stream. Already in the
+# tree via krilla and png, so this adds no new supply-chain surface.
+flate2 = "1"
 # JSON Schema derive for the key catalog (shojiku-core `schema` feature,
 # non-default). `default-features = false` + the two features named
 # explicitly keeps the optional integrations (chrono/url/uuid/indexmap/…)

@@ -552,6 +552,10 @@ export const zhTw: LanguageCatalog = {
     'panel.tableStyle.title': '表格樣式',
     'panel.tableStyle.preview': '表格條紋預覽',
     'panel.tableStyle.zebra': '鑲邊列',
+    'panel.tableStyle.hiddenHeader': '不在頁面上顯示標題列',
+    'help.hiddenHeader.title': '只有機器讀得到的標題列',
+    'help.hiddenHeader.body':
+      '這一列完全不會繪製，但欄位名稱仍以文字保留在 PDF 中。人只看數值，而朗讀軟體、搜尋或 AI 依然知道每一欄是什麼。',
     'panel.tableStyle.detail': '詳細格式',
     'panel.tableStyle.headerBand': '標題列',
     'panel.tableStyle.bodyBand': '內文列',

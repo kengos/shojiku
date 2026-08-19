@@ -84,6 +84,13 @@ spelling, so the border cluster's per-side model must not reach it.
   box — an unset cell side shows `auto` (derived), an unset gap shows `0`
   (the wire default). Capability-gated on `char_grid`.
 
+- `panel/charGrid.ts` / `panel/CharGridSection.tsx` — the `char_grid` grid
+  editor (counts / cell size / gaps / `writingMode`), rendered under the box
+  fields because `box.w` is NOT what sizes manuscript paper. `countOp` is
+  deliberately NOT the shared `numberOp`: `charsPerLine`/`lines` are REQUIRED
+  non-`Option` `usize` on the wire, so an empty value authors NOTHING rather
+  than clearing the key. Gated on the `char_grid` capability.
+
 ## Decoration tab — borders + fill
 
 The border cluster is five pure modules; the write side depends on the

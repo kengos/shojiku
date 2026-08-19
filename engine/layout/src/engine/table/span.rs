@@ -29,6 +29,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         if table.header_groups.is_empty() {
             return None;
         }
+        let hidden = table.header.as_ref().is_some_and(|h| h.visually_hidden());
         let mut cells = Vec::new();
         let mut col = 0;
         for (index, group) in table.header_groups.iter().enumerate() {
@@ -53,6 +54,14 @@ impl<'a, 'b> Ctx<'a, 'b> {
             // style IS the band's and would double-paint per cell.
             let mut computed = self.resolve_style(&group.style_names, &group.style);
             computed.vertical_align = self.cell_valign(&group.style_names, &group.style);
+            if hidden {
+                // A group carries its OWN fill/border, which the row band
+                // cannot switch off for it — so the cell itself goes fully
+                // transparent, taking its text with it.
+                computed.opacity = 0.0;
+                computed.background_color = None;
+                computed.border_widths = [0.0; 4];
+            }
             let label = self.header_label(group.label.as_deref());
             cells.push(Cell {
                 width: frame.widths[col..end].iter().sum(),
@@ -67,6 +76,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
             cells.push(Cell {
                 width: frame.widths[col..].iter().sum(),
                 content: CellContent::Text(String::new()),
+                // No `hidden` branch here: this filler has empty content and
+                // an empty style, so it paints nothing either way — the row
+                // band and the grid stroke are what `hidden` switches off,
+                // and `row_atom` owns both.
                 computed: self.resolve_style(&[], &shojiku_core::Style::default()),
                 id: None,
                 // No group covers this trailing region, so it is layout's own
@@ -78,7 +91,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
         if decor.background_color.is_none() {
             decor.background_color = Some(TABLE_HEADER_FILL.to_string());
         }
-        Some(self.row_atom(frame, frame.geom.header_fixed, &cells, &decor))
+        // The spanning row is header chrome: it repeats WITH the header and
+        // draws above the labels, so hiding the header must hide it too —
+        // leaving it painted would show a lone grey band over nothing.
+        Some(self.row_atom(frame, frame.geom.header_fixed, &cells, &decor, hidden))
     }
 }
 

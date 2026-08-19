@@ -33,6 +33,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             ),
             None => (&[][..], &default_style),
         };
+        let hidden = table.header.as_ref().is_some_and(|h| h.visually_hidden());
         let mut decor = self.resolve_style(names, inline);
         if decor.background_color.is_none() {
             decor.background_color = Some(TABLE_HEADER_FILL.to_string());
@@ -55,6 +56,12 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 // carry only text so the fill is not painted per cell.
                 computed.background_color = None;
                 computed.border_widths = [0.0; 4];
+                if hidden {
+                    // Paint alpha 0 — krilla still writes the glyph-showing
+                    // operators, so the label remains extractable text
+                    // (`render-pdf/src/tests/invisible.rs` measures this).
+                    computed.opacity = 0.0;
+                }
                 computed.vertical_align =
                     self.label_valign((names, inline), (&column.style_names, &column.style));
                 if let Some(align) = column.style.text_align {
@@ -71,7 +78,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 }
             })
             .collect();
-        Some(self.row_atom(frame, frame.geom.header_fixed, &cells, &decor))
+        Some(self.row_atom(frame, frame.geom.header_fixed, &cells, &decor, hidden))
     }
 
     /// One body row: zebra-aware row style, cells resolved under the
@@ -123,7 +130,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         } else {
             cells
         };
-        self.row_atom(frame, frame.geom.fixed, &cells, &row_style)
+        self.row_atom(frame, frame.geom.fixed, &cells, &row_style, false)
     }
 
     /// What one column contributes to a row: its `cell:` sub-template

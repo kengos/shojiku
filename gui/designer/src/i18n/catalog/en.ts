@@ -604,6 +604,10 @@ export const en: LanguageCatalog = {
     'panel.tableStyle.title': 'Table style',
     'panel.tableStyle.preview': 'Preview of the table banding',
     'panel.tableStyle.zebra': 'Banded rows',
+    'panel.tableStyle.hiddenHeader': 'Hide the header row on the page',
+    'help.hiddenHeader.title': 'A header row that only machines read',
+    'help.hiddenHeader.body':
+      'The row is not drawn at all, but the column names stay inside the PDF as text. A person reads the values; a screen reader, a search index or an AI can still tell what each column is.',
     'panel.tableStyle.detail': 'Detailed formatting',
     'panel.tableStyle.headerBand': 'Header row',
     'panel.tableStyle.bodyBand': 'Body rows',

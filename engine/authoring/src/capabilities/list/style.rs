@@ -135,6 +135,10 @@ pub(super) const KEYS: &[&str] = &[
     "grid.span",
     "table.headerGroups",
     "table.mergeEmptyCells",
+    // `header.visuallyHidden`: the header row (and its spanning group row)
+    // paints nothing while its labels stay in the PDF's text layer. Older
+    // engines parse-reject the key (`TableHeaderSpec` is deny_unknown_fields).
+    "table.header.visuallyHidden",
     // Non-text columns: column `type: qr_code | image` (per-element
     // cell assets, `dyn:<array>[<i>].<key>`, policy-gated + capped).
     "table.column.type",

@@ -85,6 +85,9 @@ fn engine_info_reports_version_capabilities_and_locales() {
     // structural tests pass whether or not a given key is present.
     assert!(info.capabilities.contains(&"diagnostics.layout.path"));
     assert!(info.capabilities.contains(&"table.headerGroups.style.fill"));
+    // Pinned individually: the registry's structural tests (composition,
+    // dedup) all pass without this key ever being asserted.
+    assert!(info.capabilities.contains(&"table.header.visuallyHidden"));
     assert!(info
         .capabilities
         .contains(&"table.header.style.verticalAlign"));

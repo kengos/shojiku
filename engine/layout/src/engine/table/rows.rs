@@ -92,6 +92,12 @@ impl<'a, 'b> Ctx<'a, 'b> {
         fixed: Option<f64>,
         cells: &[Cell],
         decor: &ComputedStyle,
+        // A visually-hidden header row: it occupies its height and its cell
+        // TEXT is still emitted (that is the whole point — the labels stay
+        // extractable), but nothing about it is painted. The band decoration
+        // and the grid stroke are the two things `decor` alone cannot switch
+        // off, because the stroke comes from the table frame, not the row.
+        hidden: bool,
     ) -> Atom {
         let (region_x, grid) = (frame.x, &frame.grid);
         let (min_h, padding) = (frame.geom.min, frame.geom.padding);
@@ -107,7 +113,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // cells, then each cell's content, whose own decoration (column
         // fills/borders) covers the full cell.
         let mut items = Vec::new();
-        self.push_decoration(&mut items, decor, region_x, total_w, row_h);
+        if !hidden {
+            self.push_decoration(&mut items, decor, region_x, total_w, row_h);
+        }
         let mut boxes = Vec::new();
         // An authored cell is addressable as `<table>.<its own address>`
         // (one box per cell per row — a repeated path, like a repeat cell
@@ -188,7 +196,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             cx += cell.width;
         }
 
-        if grid.width > 0.0 {
+        if grid.width > 0.0 && !hidden {
             items.push(LayoutItem::Rect(RectShape {
                 x: region_x,
                 y: 0.0,
