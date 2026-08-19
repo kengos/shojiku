@@ -9,7 +9,6 @@ import { useI18n } from '../i18n/context';
 import { commitOps } from '../text/declCommit';
 import { TextEditor } from '../text/TextEditor';
 import { INPUT } from '../ui/chrome';
-import { CHAR_GRID_TYPE } from './charGrid';
 import { BoundContent } from './contentBound';
 import { ImageContent, PageNumberContent } from './contentParts';
 import { Field, FieldGroup } from './fields';
@@ -66,10 +65,6 @@ export function ContentSection(props: ItemPanelProps) {
   if (view.type === 'page_number') {
     return <PageNumberContent {...props} />;
   }
-  // `CharGridItem` is `deny_unknown_fields` and carries NEITHER `format` NOR
-  // `placeholder`, so offering either would author wire the engine refuses —
-  // the content pair is all a char_grid can take here.
-  const wireTakesBindingOptions = view.type !== CHAR_GRID_TYPE;
   // text / qr_code / char_grid: the content-mode pair.
   const formatRows = formatOptions(
     registryNames(controller.read('formats')),
@@ -134,7 +129,6 @@ export function ContentSection(props: ItemPanelProps) {
           chips={chips}
           bindingOptions={bindingOptions}
           formatRows={formatRows}
-          wireTakesBindingOptions={wireTakesBindingOptions}
           dispatch={dispatch}
         />
       )}

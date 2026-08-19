@@ -36,12 +36,20 @@ the other. Clip groups are depth-capped and fail closed in both.
   stroked with `round_stroke`; clip groups via `push_clip_path`/`pop`.
 - `paint.rs` — **`svg_fill`**: `SvgPaint` → krilla `Fill`, solid +
   linear/radial gradients.
-- `tests/invisible.rs` — the measurement `header.visuallyHidden` stands on:
-  text at paint alpha 0 still reaches the content stream as EXTRACTABLE text
-  (`BT`/`Tf`/`TJ`), krilla expresses the alpha as an ExtGState `ca 0`, and the
-  operator COUNT matches an opaque render. krilla exposes no text rendering
-  mode, so alpha is the mechanism; these tests are why that is a fact rather
-  than an inference. Inflates the streams with the `flate2` dev-dependency.
+- `tests/invisible.rs` — HALF the measurement `header.visuallyHidden` stands
+  on. These probes render a plain `text` item at `style.opacity: 0` and never a
+  table: they pin that text at paint alpha 0 still reaches the content stream
+  as EXTRACTABLE text (`BT`/`Tf`/`TJ`), that krilla expresses the alpha as an
+  ExtGState `ca 0` an opaque render does not carry, and that the operator COUNT
+  matches an opaque render. The OTHER half — that a hidden header's label
+  actually resolves to alpha 0 — is `layout/tests/e2e/table/hidden_header.rs`;
+  the feature is proven by the two together, not by either alone. krilla
+  exposes no text rendering mode, so alpha is the mechanism; these tests are
+  why that is a fact rather than an inference. Inflates the streams with the
+  `flate2` dev-dependency, admitting only PAGE CONTENT streams — krilla writes
+  font programs under a dictionary identical to a content stream's, and an
+  sfnt subset can carry the literal bytes `BT`/`Tf`/`TJ`, so "it inflated" is
+  not a sufficient test and the positive controls would pass on font data.
 - `text.rs` — glyph drawing per `RunView` (plain implicit run or rich
   span runs): fallback-chain glyphs grouped into per-face segments, per-
   run fill/stroke/skew/decoration; `map_glyphs`/`em_advance`/

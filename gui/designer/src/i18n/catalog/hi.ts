@@ -385,13 +385,15 @@ export const hi: LanguageCatalog = {
     'panel.tableStyle.hiddenHeader': 'पृष्ठ पर शीर्षक पंक्ति न दिखाएँ',
     'help.hiddenHeader.title': 'केवल मशीनें पढ़ने वाली शीर्षक पंक्ति',
     'help.hiddenHeader.body':
-      'यह पंक्ति बिल्कुल नहीं खींची जाती, पर स्तंभों के नाम PDF के भीतर पाठ के रूप में बने रहते हैं। व्यक्ति केवल मान पढ़ता है, जबकि स्क्रीन रीडर, खोज या AI यह जान पाते हैं कि हर स्तंभ क्या है।',
+      'यह पंक्ति बिल्कुल नहीं खींची जाती, पर स्तंभों के नाम PDF के भीतर पाठ के रूप में बने रहते हैं। व्यक्ति केवल मान पढ़ता है, जबकि पाठ निष्कर्षण, खोज या AI यह जान पाते हैं कि हर स्तंभ क्या है।',
     'panel.tableStyle.detail': 'विस्तृत स्वरूपण',
     'panel.tableStyle.headerBand': 'शीर्ष पंक्ति',
     'panel.tableStyle.bodyBand': 'मुख्य पंक्तियाँ',
     'panel.tableStyle.fillIgnored':
       'यह भराव तालिका पर नहीं बनता। पंक्तियाँ रंगने के लिए नीचे दी गई तालिका शैली का उपयोग करें।',
     'panel.tableStyle.fillClear': 'भराव हटाएँ',
+    'panel.tableStyle.headerHiddenIgnored':
+      'शीर्ष पंक्ति पृष्ठ पर नहीं दिखती, इसलिए नीचे दी गई कोई भी सेटिंग नहीं बनती। सेटिंग सुरक्षित रहती हैं और टिक हटाने पर लौट आती हैं।',
     'panel.tableStyle.preset.plain': 'सादा',
     'panel.tableStyle.preset.striped': 'धारीदार',
     'panel.tableStyle.preset.darkHeader': 'गहरा शीर्ष',
@@ -462,7 +464,7 @@ export const hi: LanguageCatalog = {
     'panel.charGrid.mode.horizontal_tb': 'क्षैतिज',
     'panel.charGrid.mode.vertical_rl': 'ऊर्ध्वाधर',
     'panel.charGrid.hint':
-      'खींचा गया आकार खानों से तय होता है, ऊपर दी गई चौड़ाई से नहीं। खाने का आकार खाली छोड़ने पर वह इसी आइटम की चौड़ाई से अपने आप निकाला जाता है।',
+      'जब तक खाने का आकार दिया गया है, खींचा गया आकार खानों से तय होता है, ऊपर दी गई चौड़ाई से नहीं। खाने का आकार खाली छोड़ने पर उलटे खाने इसी आइटम की चौड़ाई से निकाले जाते हैं।',
     'stepper.relativeUnit': 'प्रतिशत या em वाले मान चरणबद्ध नहीं बदले जा सकते। उन्हें सीधे टाइप करें।',
     'panel.box.h': 'ऊँचाई',
     'panel.placement.label': 'स्थिति',

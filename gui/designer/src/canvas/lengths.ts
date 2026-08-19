@@ -39,6 +39,15 @@ const NUMBER_DECIMALS = 2;
  * be `<signed numeral><absolute unit?>` (a unitless numeral string commits
  * back as a canonical number). `null` for anything else — relative units,
  * garbage, non-finite, maps/arrays. */
+/** Whether a value is a RELATIVE length (`100%`, `2em`, `1.5rem`) — legal wire
+ * the engine resolves at layout, but not something the panel can step by
+ * points. Distinct from "`readLength` refused it": that is also true of an
+ * empty field and of garbage (`auto`, `12 mm`, a typo), and telling THOSE
+ * authors their value is a percent or em is a lie about their own document. */
+export function isRelativeLength(value: string): boolean {
+  return /^-?\d+(?:\.\d+)?(?:%|r?em)$/.test(value.trim());
+}
+
 export function readLength(value: unknown): AuthoredLength | null {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? { pt: value, unit: null } : null;

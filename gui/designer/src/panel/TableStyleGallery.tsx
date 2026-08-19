@@ -35,6 +35,12 @@ export interface TableMiniatureProps {
   readonly rowFill: string;
   readonly rowColor: string;
   readonly gridless: boolean;
+  /** `header.visuallyHidden`: the header row keeps its HEIGHT and loses all
+   * its ink — no band fill, no rule, no visible label. Without this the
+   * miniature painted a full header band directly above the checkbox that
+   * hides it, which is the one place a figure must not disagree with the
+   * control beside it. */
+  readonly hiddenHeader: boolean;
 }
 
 const SAMPLE_ROWS = ['1', '2', '3'];
@@ -65,10 +71,15 @@ export function TableMiniature(props: TableMiniatureProps) {
                 scope="col"
                 style={{
                   ...cell,
-                  background: paint(props.headerFill, '#ededed'),
+                  // Ink-free but NOT collapsed: the label keeps its box (and
+                  // so the row keeps its height), exactly as the engine
+                  // resolves it — `visibility: hidden`, never `display: none`.
+                  border: props.hiddenHeader ? 'none' : cell.border,
+                  background: props.hiddenHeader ? PAPER : paint(props.headerFill, '#ededed'),
                   color: paint(props.headerColor, INK),
                   fontWeight: props.headerBold ? 700 : 400,
                   textAlign: 'left',
+                  visibility: props.hiddenHeader ? 'hidden' : undefined,
                 }}
               >
                 {column}

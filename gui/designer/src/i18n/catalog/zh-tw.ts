@@ -555,13 +555,15 @@ export const zhTw: LanguageCatalog = {
     'panel.tableStyle.hiddenHeader': '不在頁面上顯示標題列',
     'help.hiddenHeader.title': '只有機器讀得到的標題列',
     'help.hiddenHeader.body':
-      '這一列完全不會繪製，但欄位名稱仍以文字保留在 PDF 中。人只看數值，而朗讀軟體、搜尋或 AI 依然知道每一欄是什麼。',
+      '這一列完全不會繪製，但欄位名稱仍以文字保留在 PDF 中。人只看數值，而文字擷取、搜尋或 AI 依然知道每一欄是什麼。',
     'panel.tableStyle.detail': '詳細格式',
     'panel.tableStyle.headerBand': '標題列',
     'panel.tableStyle.bodyBand': '內文列',
     'panel.tableStyle.fillIgnored':
       '此填滿不會繪製在表格上。要為列上色，請使用下面的「表格樣式」。',
     'panel.tableStyle.fillClear': '移除填滿',
+    'panel.tableStyle.headerHiddenIgnored':
+      '標題列不會顯示在頁面上，因此以下設定都不會繪製。設定會保留，取消勾選後即可恢復。',
     'panel.tableStyle.preset.plain': '標準',
     'panel.tableStyle.preset.striped': '鑲邊',
     'panel.tableStyle.preset.darkHeader': '深色標題',
@@ -632,7 +634,7 @@ export const zhTw: LanguageCatalog = {
     'panel.charGrid.mode.horizontal_tb': '橫書',
     'panel.charGrid.mode.vertical_rl': '直書',
     'panel.charGrid.hint':
-      '實際繪製的大小取決於格子，而非上方的寬度。將格子大小清空，即改由這個項目的寬度自動算出。',
+      '在設定了格子大小時，實際繪製的大小取決於格子，而非上方的寬度。將格子大小清空後，反過來由這個項目的寬度算出格子。',
     'stepper.relativeUnit': '百分比或 em 的值無法逐步調整，請直接輸入。',
     'panel.box.h': '高',
     'panel.placement.label': '位置',

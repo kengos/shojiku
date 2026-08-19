@@ -521,6 +521,22 @@ describe('BoxSection — a relative width', () => {
     expect(within(row).getByText(/cannot be stepped/)).not.toBeNull();
   });
 
+  it('shows no such bubble for a value it simply cannot read', () => {
+    // `StepperField`'s own prop doc says the caller owns this string because
+    // "a message naming percent and em would be a lie over an empty or garbage
+    // value". `auto` is legal-looking, unreadable by `canvas/lengths`, and not
+    // a relative unit — so the ▲▼ are unavailable and say nothing.
+    draw(<PropertyPanel controller={makeController(flowReads({ w: 'auto' }))} path={FLOW} />);
+    openLayout();
+    const width = screen.getByLabelText('Width') as HTMLInputElement;
+    expect(width.value).toBe('auto');
+    const row = width.parentElement?.parentElement as HTMLElement;
+    expect(
+      (within(row).getByRole('button', { name: 'Increase' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(within(row).queryByText(/cannot be stepped/)).toBeNull();
+  });
+
   it('shows no such bubble for a plain pt value', () => {
     draw(<PropertyPanel controller={makeController(flowReads({ w: 120 }))} path={FLOW} />);
     openLayout();

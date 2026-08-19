@@ -4,7 +4,7 @@
 // and a container's own child-layout section.
 
 import type { Op } from '@shojiku/designer-core';
-import { readLength } from '../canvas/lengths';
+import { isRelativeLength, readLength } from '../canvas/lengths';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { FIELD_LABEL } from '../ui/chrome';
@@ -47,7 +47,10 @@ export function BoxAxisField({
   // points would throw away the authoring intent the canvas drag also honours.
   // So the ▲▼ go quiet; without this they went quiet SILENTLY, which is what
   // made a width edit feel broken.
-  const relative = value !== '' && readLength(value) === null;
+  // ONLY an actual relative unit gets the percent/em explanation. `readLength`
+  // also refuses garbage (`auto`, `12 mm`, a typo), and naming percent and em
+  // over those would contradict the engine's own `invalid_length` diagnostic.
+  const relative = isRelativeLength(value);
   const keys = ['box', axis];
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   return (

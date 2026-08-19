@@ -13,9 +13,22 @@ use super::*;
 use flate2::read::ZlibDecoder;
 use std::io::Read;
 
-/// Every Flate-compressed stream in the PDF, decompressed. Uncompressed
-/// streams are skipped: krilla compresses content streams, and the ones that
-/// fail to inflate are the raw binary payloads (fonts, images).
+/// Every Flate-compressed PAGE CONTENT stream in the PDF, decompressed.
+///
+/// "It inflated" is NOT a sufficient test, and the stream DICTIONARY cannot
+/// help: krilla Flate-compresses the embedded font programs and the CMaps
+/// too, and writes them under a dictionary byte-identical to a content
+/// stream's (`<</Length N/Filter/FlateDecode>>` — no `/Length1`, no
+/// `/Subtype`, no `/Type`). An sfnt subset can carry the literal bytes `BT`,
+/// `Tf` and `TJ`, which would satisfy the "text was drawn" probe below on
+/// FONT DATA alone — measured over the 43 committed example PDFs, two font
+/// subsets do exactly that by themselves.
+///
+/// So the discriminator is the inflated CONTENT: a content stream is PDF
+/// operators (printable ASCII and whitespace), a font program is binary
+/// (`\x00\x01\x00\x00`) and a CMap is PostScript (`%!PS`). Over those 43
+/// PDFs this admits 80 of 288 inflated streams, none of them a font or a
+/// CMap, and never leaves a PDF with none.
 fn content_streams(bytes: &[u8]) -> Vec<Vec<u8>> {
     let mut out = Vec::new();
     let mut cursor = 0usize;
@@ -33,7 +46,7 @@ fn content_streams(bytes: &[u8]) -> Vec<Vec<u8>> {
         };
         let raw = &bytes[at..at + end];
         let mut buf = Vec::new();
-        if ZlibDecoder::new(raw).read_to_end(&mut buf).is_ok() {
+        if ZlibDecoder::new(raw).read_to_end(&mut buf).is_ok() && is_content(&buf) {
             out.push(buf);
         }
         // Past the whole `endstream` keyword: `find` for "stream" would
@@ -43,6 +56,16 @@ fn content_streams(bytes: &[u8]) -> Vec<Vec<u8>> {
         cursor = at + end + b"endstream".len();
     }
     out
+}
+
+/// Whether an inflated stream is a page CONTENT stream rather than an
+/// embedded font program or a CMap — see [`content_streams`] for why the
+/// dictionary cannot answer this.
+fn is_content(stream: &[u8]) -> bool {
+    !stream.starts_with(b"%!PS")
+        && stream
+            .iter()
+            .all(|b| matches!(b, 0x20..=0x7e | b'\t' | b'\n' | b'\r'))
 }
 
 fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
@@ -106,9 +129,11 @@ fn zero_opacity_is_expressed_as_a_ca_zero_graphics_state() {
     );
     // …and an opaque render must NOT carry one, or the assertion above would
     // pass for reasons unrelated to the opacity we authored.
+    // Both spellings the assertion above ACCEPTS must be ruled out here, or
+    // the control is narrower than the claim it guards.
     let opaque = render_at("1");
     assert!(
-        !contains(&opaque, b"/ca 0>>"),
+        !contains(&opaque, b"/ca 0>>") && !contains(&opaque, b"/ca 0 "),
         "an opaque render should need no alpha graphics state"
     );
 }
