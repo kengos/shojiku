@@ -9,7 +9,8 @@
 // cached handler set would act on a stale one.
 
 import type { MouseEvent, PointerEvent } from 'react';
-import type { CanvasManipulate, MarqueeTask } from './overlayDragModel';
+import type { CanvasManipulate } from './overlayDragModel';
+import type { MarqueeTask } from './overlayMarquee';
 import type { UseDrag } from './useDrag';
 
 export interface OverlayBackgroundContext {

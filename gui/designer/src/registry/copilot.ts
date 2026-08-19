@@ -95,7 +95,11 @@ Operations:
 - {"op":"insertItem","path":"…items","index":n,"value":object} — insert one item (JSON shape,
   e.g. {"type":"text","text":"…","box":{"x":0,"y":0,"w":120,"h":16}}) at index 0..=length.
 - {"op":"removeItem","path":"…items","index":n} — remove one item.
-- {"op":"moveItem","path":"…items","from":n,"to":n} — reorder within the same sequence.
+- {"op":"moveItem","path":"…items","from":n,"to":n,"toPath"?:"…items"} — move one item.
+  Without "toPath" it reorders within "path"; with one it moves the item into that
+  sequence instead, keeping the item's own comments and anchors. Either way "to" is the
+  index in the DESTINATION after the item is lifted out (cross-sequence it may equal the
+  destination length, to append). An item may not move into its own subtree.
 - {"op":"duplicateItem","path":"…items","index":n} — duplicate one item in place.
 
 Values are plain JSON (finite numbers, plain maps); never YAML text or anchors.

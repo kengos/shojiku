@@ -6,23 +6,20 @@ const P = 'sections.body.items[0]';
 
 /** The editor callbacks the factory closes over, with per-call spies and a
  * configurable ok/refused outcome for each of the two write paths. */
-function wiring(over: { readonly applyOk?: boolean; readonly applyAllOk?: boolean } = {}) {
+function wiring(over: { readonly applyAllOk?: boolean } = {}) {
   const read = (path: string): unknown => ({ path });
-  const apply = vi.fn((_op: Op) => ({ ok: over.applyOk ?? true }));
   const applyAll = vi.fn((_ops: readonly Op[]) => ({ ok: over.applyAllOk ?? true }));
   const select = vi.fn((_path: string) => {});
   const selectClearing = vi.fn((_path: string) => {});
   const setRefused = vi.fn((_reason: string | null) => {});
   const manipulate = canvasManipulate({
     read: read as never,
-    apply: apply as never,
     applyAll: applyAll as never,
-    select,
     selectClearing: selectClearing as never,
     setRefused: setRefused as never,
     grid: 8,
   });
-  return { manipulate, apply, applyAll, select, selectClearing, setRefused, read };
+  return { manipulate, applyAll, select, selectClearing, setRefused, read };
 }
 
 const moveOp = { op: 'moveItem', path: 'sections.body.items', from: 0, to: 2 } as unknown as Op & {
@@ -31,18 +28,31 @@ const moveOp = { op: 'moveItem', path: 'sections.body.items', from: 0, to: 2 } a
 };
 
 describe('canvasManipulate reorder', () => {
-  it('applies ONE op and lets the selection travel to the drop index', () => {
+  it('applies ONE batch and lets the selection travel to the drop path', () => {
     const w = wiring();
-    w.manipulate.onReorder?.(moveOp as never);
-    expect(w.apply).toHaveBeenCalledTimes(1);
-    expect(w.select).toHaveBeenCalledWith('sections.body.items[2]');
+    w.manipulate.onReorder([moveOp], 'sections.body.items[2]');
+    expect(w.applyAll).toHaveBeenCalledTimes(1);
+    expect(w.applyAll).toHaveBeenCalledWith([moveOp]);
+    expect(w.selectClearing).toHaveBeenCalledWith('sections.body.items[2]');
   });
 
-  it('moves no selection when the op layer refuses the reorder', () => {
-    const w = wiring({ applyOk: false });
-    w.manipulate.onReorder?.(moveOp as never);
-    expect(w.apply).toHaveBeenCalledTimes(1);
-    expect(w.select).not.toHaveBeenCalled();
+  it('moves no selection when the op layer refuses the batch', () => {
+    const w = wiring({ applyAllOk: false });
+    w.manipulate.onReorder([moveOp], 'sections.body.items[2]');
+    expect(w.applyAll).toHaveBeenCalledTimes(1);
+    expect(w.selectClearing).not.toHaveBeenCalled();
+  });
+
+  it('carries a CROSS-PARENT batch — the box keys then the move — as one step', () => {
+    const w = wiring();
+    const ops = [
+      { op: 'removeKey', path: 'sections.body.items[0]', keys: ['box', 'x'] },
+      { op: 'moveItem', path: 'sections.body.items', from: 0, to: 0, toPath: 'x.items' },
+    ] as unknown as Op[];
+    w.manipulate.onReorder(ops, 'x.items[0]');
+    expect(w.applyAll).toHaveBeenCalledTimes(1);
+    expect(w.applyAll).toHaveBeenCalledWith(ops);
+    expect(w.selectClearing).toHaveBeenCalledWith('x.items[0]');
   });
 });
 
@@ -53,7 +63,6 @@ describe('canvasManipulate move/resize/nudge', () => {
     w.manipulate.onApply?.(P, ops);
     expect(w.applyAll).toHaveBeenCalledTimes(1);
     expect(w.applyAll).toHaveBeenCalledWith(ops);
-    expect(w.apply).not.toHaveBeenCalled();
   });
 
   it('selects the manipulated item, since the drag consumes the trailing click', () => {

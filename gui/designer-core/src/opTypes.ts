@@ -15,7 +15,9 @@
 // styles-registry surface renames `styles.<name>` via `renameKey` and creates
 // `styles.<name>: {}` via `putValue`. The sequence ops
 // (`moveItem`/`duplicateItem`/`insertItem`/`removeItem`) keep a required
-// `path`: the root is a map, never a sequence.
+// `path`: the root is a map, never a sequence. `moveItem` alone may name a
+// SECOND sequence (`toPath`) — the cross-parent move, which splices the node
+// itself so the moved subtree keeps its comments and aliases.
 
 export type ScalarValue = string | number | boolean;
 
@@ -54,7 +56,18 @@ export type Op =
       readonly keys: readonly string[];
       readonly value: SnippetValue;
     }
-  | { readonly op: 'moveItem'; readonly path: string; readonly from: number; readonly to: number }
+  | {
+      readonly op: 'moveItem';
+      readonly path: string;
+      readonly from: number;
+      readonly to: number;
+      /** The sequence the element moves INTO. Absent (or naming the same
+       * sequence) reorders inside `path`. `to` always means the index in the
+       * destination AFTER the source removal, so same-sequence it is the
+       * post-splice index and cross-sequence the plain insertion index —
+       * which, like `insertItem`, admits `length` to append. */
+      readonly toPath?: string;
+    }
   | { readonly op: 'duplicateItem'; readonly path: string; readonly index: number }
   | {
       readonly op: 'insertItem';

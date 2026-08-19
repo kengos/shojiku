@@ -46,12 +46,34 @@ const FLOW_BOXES = [
   placed('sections.body.items[2]', 0, 80, 100, 30),
 ];
 
+// A flow body whose second item is a container — the cross-parent destination.
+const NEST_DOC = {
+  'sections.body': { type: 'flow', items: [{}, {}] },
+  'sections.body.items[0]': { type: 'rect', box: { x: 0, y: 0, w: 100, h: 30 } },
+  'sections.body.items[1]': { type: 'container', items: [{}] },
+  'sections.body.items[1].items': [{}],
+  'sections.body.items[1].items[0]': { type: 'text', text: 'inner' },
+};
+const NEST_BOXES = [
+  placed('sections.body.items[0]', 0, 0, 100, 30),
+  placed('sections.body.items[1]', 0, 40, 100, 60),
+  placed('sections.body.items[1].items[0]', 5, 45, 90, 20),
+];
+
 function wiring(doc: Record<string, unknown>): CanvasManipulate {
   return { read: docRead(doc), onReorder: vi.fn(), onApply: vi.fn(), onRefused: vi.fn(), grid: 0 };
 }
 
 function context(doc: Record<string, unknown>, boxes: readonly PlacedBox[]): OverlayDragContext {
-  return { svgRef: { current: null }, boxes, scale: 1, width: 100, manipulate: wiring(doc) };
+  return {
+    svgRef: { current: null },
+    boxes,
+    scale: 1,
+    width: 100,
+    page: { width: 100, height: 200 },
+    margin: null,
+    manipulate: wiring(doc),
+  };
 }
 
 function session(payload: DragTask, start: DragPoint, point: DragPoint): DragSession<DragTask> {
@@ -137,6 +159,33 @@ describe('dragVisual', () => {
     // The ghost is the dragged box's own rect, offset by the pointer travel.
     expect(visual.ghost).toEqual({ x: 0, y: 50, w: 100, h: 30 });
     expect(visual.guides).toEqual([]);
+  });
+
+  it('paints nothing when the dragged box has no rect on this page', () => {
+    expect(
+      dragVisual(
+        context(ABS_DOC, []),
+        session(
+          { mode: 'move', path: 'sections.body.items[0]', startX: 0, startY: 0 },
+          { x: 0, y: 0 },
+          { x: 10, y: 10 },
+        ),
+      ),
+    ).toBe(NO_DRAG_VISUAL);
+  });
+
+  it('outlines the receiving owner when a MOVE drag enters another parent', () => {
+    const visual = dragVisual(
+      context({ ...NEST_DOC, 'sections.body': { type: 'absolute' } }, NEST_BOXES),
+      session(
+        { mode: 'move', path: 'sections.body.items[0]', startX: 0, startY: 0 },
+        { x: 0, y: 0 },
+        { x: 50, y: 90 },
+      ),
+    );
+    expect(visual.region).toEqual({ x: 0, y: 40, w: 100, h: 60 });
+    expect(visual.indicator).not.toBeNull();
+    expect(visual.ghost).toEqual({ x: 50, y: 90, w: 100, h: 30 });
   });
 
   it('paints nothing when a reorder no longer resolves to a drop plan', () => {

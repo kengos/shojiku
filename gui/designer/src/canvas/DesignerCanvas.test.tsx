@@ -171,12 +171,10 @@ describe('DesignerCanvas', () => {
     fireEvent.pointerDown(target, { pointerId: 1, isPrimary: true, clientX: 50, clientY: 10 });
     fireEvent.pointerMove(target, { pointerId: 1, clientX: 50, clientY: 120 });
     fireEvent.pointerUp(target, { pointerId: 1, clientX: 50, clientY: 120 });
-    expect(onReorder).toHaveBeenCalledWith({
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 2,
-      to: 3,
-    });
+    expect(onReorder).toHaveBeenCalledWith(
+      [{ op: 'moveItem', path: 'sections.body.items', from: 2, to: 3 }],
+      'sections.body.items[3]',
+    );
   });
 });
 

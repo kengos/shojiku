@@ -48,7 +48,9 @@ files and `e2e/` excluded, with NO waiver list.
 - `ops.ts` — the op layer's ENTRY POINT + public surface. **Named patch
   operations are the ONLY edit path**, each a serializable `Op` value
   for AI parity: `setScalar`/`setStrings`/`removeKey`/`renameKey`/
-  `putValue`/`moveItem`/`duplicateItem`/`insertItem`/`removeItem`.
+  `putValue`/`moveItem`/`duplicateItem`/`insertItem`/`removeItem`
+  (`moveItem` alone may name a SECOND sequence, `toPath` — the
+  cross-parent move).
   `applyOp` dispatches by what an op ADDRESSES — the five MAP-KEY ops to
   `keyOps.ts`, the four SEQUENCE ops to `seqOps.ts` — and validates
   fully BEFORE mutating, so a failure returns a typed `OpResult` with no
@@ -72,7 +74,8 @@ files and `e2e/` excluded, with NO waiver list.
   key path, validated by the SAME snippet checker, then composed via
   `doc.createNode` (the styles-registry create-empty-style form).
 - `seqOps.ts` — the four sequence ops (required `path`; the root is a
-  map, never a seq). **`insertItem`** `{path, index, value}`: `value` is
+  map, never a seq); the `moveItem` arm delegates to `seqMove.ts`.
+  **`insertItem`** `{path, index, value}`: `value` is
   a plain JSON-shaped `SnippetValue` — never YAML text (no second
   grammar, no alias/anchor surface); a MISSING final `items`-like key on
   an existing map auto-creates an empty seq, deferred until index
@@ -81,6 +84,28 @@ files and `e2e/` excluded, with NO waiver list.
   as `items: [ … ]`; a non-empty flow seq keeps its form.
   **`removeItem`** splices one element; an emptied seq is KEPT
   (`items: []`), never pruned.
+- `seqMove.ts` — `moveItem`, the ONE op that can address TWO sequences.
+  Without `toPath` it reorders inside `path`; with one it SPLICES the
+  node into that sequence instead, so the moved subtree keeps its
+  comments, quoting and anchors — which a `removeItem`+`insertItem`
+  pair cannot, since `insertItem` takes a plain JSON snippet. ONE index
+  rule covers both: `to` is the index in the DESTINATION after the
+  source removal (same-seq the post-splice index; cross-seq the plain
+  insertion index, admitting `length` to append, and clearing the flow
+  flag of an empty destination exactly as `insertItem` does). Refuses
+  before any splice, so a failure is byte-exact: a bad path/kind/index,
+  and `invalid_value` when `toPath` lies INSIDE the moved node (the
+  node would contain itself). ONE refusal is decided AFTER the splice and
+  rolled back: a move touching ANCHORS is verified by asking the library
+  to stringify — `eemeli/yaml` checks alias order there and throws, and
+  `serializeTemplate` is a bare `toString()`, so the result would be a
+  crashing SAVE rather than a diagnostic. That oracle is exact where a
+  boundary heuristic is not (a shared top-level `anchors:` block aliased
+  throughout is perfectly safe to move around), and it costs nothing for
+  a node carrying no anchors — which is every bundled template.
+  The containment walk needs no budget — a
+  parsed document is a TREE (an alias is a leaf node, not a back-edge),
+  and this check is what keeps it one.
 - `snippet.ts` — what a snippet VALUE is, refused without reading the
   document: depth/node caps (`MAX_SNIPPET_DEPTH` also terminates cyclic
   hostile values, `MAX_SNIPPET_NODES`), finite scalars only,
@@ -131,7 +156,8 @@ files and `e2e/` excluded, with NO waiver list.
   `serializeTemplate` fixed point.
 
 Tests are sibling-per-module (`keyOps.test.ts` = the five map-key ops,
-`seqOps.test.ts` = the four sequence ops, `snippet.test.ts` =
+`seqOps.test.ts` = the four sequence ops, `seqMove.test.ts` = what a
+SECOND sequence brings to `moveItem`, `snippet.test.ts` =
 `isSnippetValue`, `history.test.ts` = `trimHistory`, `ops.test.ts` =
 dispatch + the root-addressed form), all exercised through `applyOp` —
 `opTarget.ts`/`opCreate.ts`/`opTypes.ts` have no separate public surface

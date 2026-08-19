@@ -61,7 +61,7 @@ export function CanvasArea({
   // Locals, not property reads: memo dependencies must be the stable callback
   // fields (never the per-render bundle), and control-flow narrowing follows a
   // local binding.
-  const { read, apply, applyAll, select, selection } = editor;
+  const { read, applyAll, selection } = editor;
   const { selectClearing, setRefused } = multi;
   const { gridStep } = prefs;
   const { pages, boxes, margin, renderedScale, cssFactor, canvasRefCallback, preview } = session;
@@ -71,14 +71,12 @@ export function CanvasArea({
     () =>
       canvasManipulate({
         read,
-        apply,
         applyAll,
-        select,
         selectClearing,
         setRefused,
         grid: gridStep,
       }),
-    [read, apply, applyAll, select, selectClearing, gridStep, setRefused],
+    [read, applyAll, selectClearing, gridStep, setRefused],
   );
 
   const pageCount = pages.length;
@@ -122,6 +120,7 @@ export function CanvasArea({
             containerMarks={marks.containerMarks}
             onContextMenu={onContextMenu}
             margin={margin}
+            dropWarning={t('canvas.drop.clearsPosition')}
             inlineEdit={
               inline.editing === null
                 ? undefined

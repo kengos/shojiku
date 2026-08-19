@@ -21,6 +21,8 @@ import { planDrop } from '../canvas/dropPlan';
 import { manipulationFor } from '../canvas/manipulate';
 import { planMove } from '../canvas/planMove';
 import { planResize } from '../canvas/planResize';
+import { reparentOps } from '../canvas/reparent';
+import { planReparent } from '../canvas/reparentTarget';
 import { applyDefinitionOps, readDefinitionField, titleOp } from '../data/definitionsEdit';
 import { type EngineTransport, TransportError } from '../engine/transport';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
@@ -686,6 +688,119 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     // The moved item's authored id now lays out at the destination path.
     const movedBox = outcome.inspect?.boxes.pages[0]?.find((b) => b.id === 'store_name');
     expect(movedBox?.path).toBe('sections.body.items[1]');
+  });
+
+  it('reparents into a container through the shared model against real geometry', async () => {
+    const doc = [
+      'version: 0.1.0',
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: text',
+      '        id: loose',
+      '        text: loose',
+      '      - type: container',
+      '        id: shelf',
+      '        box: { direction: column }',
+      '        items:',
+      '          - type: text',
+      '            text: inside',
+      '',
+    ].join('\n');
+    const editor = Editor.create(doc);
+    const read = (path: string) => editor.read(path);
+    const before = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+    const pageBoxes = before.inspect?.boxes.pages[0] ?? [];
+    const shelf = pageBoxes.find((b) => b.id === 'shelf');
+    if (shelf === undefined) throw new Error('container box missing');
+    // Aim at the real container's own rect — the whole point is that the
+    // owner-under-pointer rule is asked over geometry the ENGINE produced.
+    const plan = planReparent(
+      read,
+      pageBoxes,
+      { x: shelf.border.x + shelf.border.w / 2, y: shelf.border.y + shelf.border.h - 1 },
+      { width: before.pages[0].width / 2, height: before.pages[0].height / 2 },
+      before.inspect?.margin ?? null,
+    );
+    expect(plan?.target.receiver.items).toBe('sections.body.items[1].items');
+    if (plan == null) throw new Error('plan missing');
+    const ops = reparentOps(
+      read,
+      'sections.body.items[0]',
+      plan.target,
+      before.inspect?.margin ?? null,
+    );
+    if (ops === null) throw new Error('ops missing');
+    expect(editor.applyAll(ops).ok).toBe(true);
+    const after = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+    expect(after.diagnostics.items.filter((d) => d.severity === 'error')).toHaveLength(0);
+    // The engine now lays the moved item out INSIDE the container's box.
+    const moved = after.inspect?.boxes.pages[0]?.find((b) => b.id === 'loose');
+    const shelfAfter = after.inspect?.boxes.pages[0]?.find((b) => b.id === 'shelf');
+    if (moved === undefined || shelfAfter === undefined) throw new Error('boxes missing');
+    expect(moved.path.startsWith('sections.body.items[0].items[')).toBe(true);
+    expect(moved.border.y).toBeGreaterThanOrEqual(shelfAfter.border.y);
+    expect(moved.border.y + moved.border.h).toBeLessThanOrEqual(
+      shelfAfter.border.y + shelfAfter.border.h + 0.01,
+    );
+  });
+
+  it('writes band coordinates against the engine own resolved margin box', async () => {
+    const doc = [
+      'version: 0.1.0',
+      'page: { size: A4, margin: 25 }',
+      'sections:',
+      '  header:',
+      '    height: 60',
+      '    items:',
+      '      - type: text',
+      '        id: banner',
+      '        text: banner',
+      '        box: { x: 0, y: 0, w: 200, h: 14 }',
+      '  body:',
+      '    type: flow',
+      '    box: { x: 0, y: 70, w: "100%", h: 600 }',
+      '    items:',
+      '      - type: text',
+      '        id: loose',
+      '        text: loose',
+      '',
+    ].join('\n');
+    const editor = Editor.create(doc);
+    const read = (path: string) => editor.read(path);
+    const before = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+    const margin = before.inspect?.margin ?? null;
+    if (margin === null) throw new Error('margin missing');
+    // D5: a band child and an absolute-body child author against the MARGIN
+    // box, which is a claim about `engine/layout`'s own page basis — pinned
+    // here rather than only in a hand-written fixture.
+    const page = { width: before.pages[0].width / 2, height: before.pages[0].height / 2 };
+    const drop = { x: margin[3] + 40, y: margin[0] + 20 };
+    const plan = planReparent(read, before.inspect?.boxes.pages[0] ?? [], drop, page, margin);
+    expect(plan?.target.receiver.items).toBe('sections.header.items');
+    if (plan == null) throw new Error('plan missing');
+    const ops = reparentOps(read, 'sections.body.items[0]', plan.target, margin);
+    expect(ops).toContainEqual({
+      op: 'setScalar',
+      path: 'sections.body.items[0]',
+      keys: ['box', 'x'],
+      value: 40,
+    });
+    expect(ops).toContainEqual({
+      op: 'setScalar',
+      path: 'sections.body.items[0]',
+      keys: ['box', 'y'],
+      value: 20,
+    });
+    if (ops === null) throw new Error('ops missing');
+    expect(editor.applyAll(ops).ok).toBe(true);
+    const after = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+    expect(after.diagnostics.items.filter((d) => d.severity === 'error')).toHaveLength(0);
+    // The engine lays it out exactly where the drop point was.
+    const moved = after.inspect?.boxes.pages[0]?.find((b) => b.id === 'loose');
+    expect(moved?.border.x).toBeCloseTo(drop.x, 5);
+    expect(moved?.border.y).toBeCloseTo(drop.y, 5);
   });
 
   it('drag-moves an absolute item through the manipulate model against real geometry', async () => {

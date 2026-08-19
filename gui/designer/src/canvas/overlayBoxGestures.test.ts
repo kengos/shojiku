@@ -179,7 +179,7 @@ describe('applyBoxKeyPlan', () => {
     const manipulate = wiring(FLOW_DOC);
     const op = { op: 'moveItem', path: 'sections.body.items', from: 1, to: 2 } as const;
     applyBoxKeyPlan({ kind: 'reorder', op }, 'sections.body.items[1]', manipulate);
-    expect(manipulate.onReorder).toHaveBeenCalledWith(op);
+    expect(manipulate.onReorder).toHaveBeenCalledWith([op], 'sections.body.items[2]');
     expect(manipulate.onApply).not.toHaveBeenCalled();
 
     const ops = [

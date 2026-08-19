@@ -1,37 +1,46 @@
-// The layer tree's row-reorder gesture: a pointer drag among the row's OWN
-// siblings — the drop slot is computed from the sibling rects only, so a drag
-// can never reparent — plus its Alt+↑/↓ keyboard equivalent. Both emit ONE
-// designer-core `moveItem` op (AI parity) and the selection travels with the
-// moved row; an op-layer rejection changes nothing.
+// The layer tree's row-drag gesture: a pointer drag over the VISIBLE rows —
+// its vertical position picks the gap, its horizontal position picks which
+// parent that gap means — plus its Alt+↑/↓ keyboard equivalent, which stays
+// within the row's own parent. Every drop is ONE transactional batch (AI
+// parity, one undo step) and the selection travels with the moved row; an
+// op-layer rejection changes nothing.
 //
-// The pure model (slot math, op construction) lives in `reorder.ts`; what a drag
-// IS while it runs — its state, the live sibling rects, the per-row drop-
-// indicator marks — is `rowDrag.ts`. This hook is the pointer + keyboard state
-// machine over the two.
+// The pure models are `reorder.ts` (same-parent slot math + op) and
+// `rowDrop.ts` (which gap, and which of its meanings); what a drag IS while it
+// runs — its state, the live row rects, the per-row drop-indicator marks, the
+// ops a release commits — is `rowDrag.ts`. This hook is the pointer + keyboard
+// state machine over them.
 
-import type { Op, OpResult } from '@shojiku/designer-core';
+import type { Op, OpResult, ReadFn } from '@shojiku/designer-core';
 import { type PointerEvent, useEffect, useRef, useState } from 'react';
 import { DRAG_THRESHOLD_PX } from '../canvas/useDrag';
 import type { TreeNode } from './model';
-import { dropIndexFor, moveOpFor, seqPosition } from './reorder';
+import { seqPosition } from './reorder';
 import {
-  applyMove,
+  acceptsFor,
+  applyDrop,
   type DragState,
   type RowDragMarks,
   type RowRefs,
   rowDragMarks,
+  rowDropOps,
   siblingEnd,
-  siblingRects,
+  visibleRows,
 } from './rowDrag';
+import { rowDropAt } from './rowDrop';
 
 export type { RowDragMarks } from './rowDrag';
 
 export interface RowReorderOptions {
-  /** Dispatches the `moveItem` op — the editor's `apply`. */
-  readonly apply: (op: Op) => OpResult;
+  /** Dispatches a drop as ONE transactional batch — the editor's `applyAll`. */
+  readonly applyAll: (ops: readonly Op[]) => OpResult;
+  /** The document read the drop model classifies destinations over. */
+  readonly read: ReadFn;
   readonly onSelect: (path: string) => void;
-  /** The live row elements by path — the sibling rects are measured off them. */
+  /** The live row elements by path — the row rects are measured off them. */
   readonly rowRefs: RowRefs;
+  /** The paths the tree currently shows, in the order it shows them. */
+  readonly order: readonly string[];
 }
 
 export interface RowReorder {
@@ -47,7 +56,13 @@ export interface RowReorder {
   readonly marksFor: (node: TreeNode) => RowDragMarks;
 }
 
-export function useRowReorder({ apply, onSelect, rowRefs }: RowReorderOptions): RowReorder {
+export function useRowReorder({
+  applyAll,
+  read,
+  onSelect,
+  rowRefs,
+  order,
+}: RowReorderOptions): RowReorder {
   const [drag, setDrag] = useState<DragState | null>(null);
   // A completed drag must not fire the row's click-to-select.
   const suppressClick = useRef(false);
@@ -84,7 +99,7 @@ export function useRowReorder({ apply, onSelect, rowRefs }: RowReorderOptions): 
       pointerId: event.pointerId,
       startY: event.clientY,
       started: false,
-      slot: position.index,
+      drop: null,
     });
   };
 
@@ -95,8 +110,12 @@ export function useRowReorder({ apply, onSelect, rowRefs }: RowReorderOptions): 
     if (!drag.started && Math.abs(event.clientY - drag.startY) < DRAG_THRESHOLD_PX) {
       return;
     }
-    const slot = dropIndexFor(siblingRects(rowRefs, drag.parent), event.clientY);
-    setDrag({ ...drag, started: true, slot });
+    const drop = rowDropAt(
+      visibleRows(rowRefs, order),
+      { x: event.clientX, y: event.clientY },
+      acceptsFor(read, drag.path, drag.parent),
+    );
+    setDrag({ ...drag, started: true, drop });
   };
 
   const onPointerUp = (event: PointerEvent<HTMLElement>) => {
@@ -105,9 +124,9 @@ export function useRowReorder({ apply, onSelect, rowRefs }: RowReorderOptions): 
     }
     if (drag.started) {
       suppressClick.current = true;
-      const op = moveOpFor(drag.parent, drag.from, drag.slot);
-      if (op !== null) {
-        applyMove(apply, onSelect, op);
+      const committed = drag.drop === null ? null : rowDropOps(read, drag, drag.drop);
+      if (committed !== null) {
+        applyDrop(applyAll, onSelect, committed.ops, committed.selectPath);
       }
     }
     setDrag(null);
@@ -131,12 +150,12 @@ export function useRowReorder({ apply, onSelect, rowRefs }: RowReorderOptions): 
     if (to >= 0) {
       // An out-of-range `to` (last row moving down) is rejected by the op
       // layer with the document untouched — no sibling count needed here.
-      applyMove(apply, onSelect, {
-        op: 'moveItem',
-        path: position.parent,
-        from: position.index,
-        to,
-      });
+      applyDrop(
+        applyAll,
+        onSelect,
+        [{ op: 'moveItem', path: position.parent, from: position.index, to }],
+        `${position.parent}[${to}]`,
+      );
     }
   };
 

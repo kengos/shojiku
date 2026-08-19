@@ -529,6 +529,8 @@ export const en: LanguageCatalog = {
     'canvas.place.positioned': 'Positioned (x/y) — drag to move',
     'canvas.place.flow': 'Flow — drag to reorder',
     'canvas.place.flex': 'Flex — drag to reorder',
+    'canvas.drop.clearsPosition':
+      'Position (x/y) will be dropped — the container decides where it sits',
     'canvas.place.grid': 'Grid cell — position set by the tracks',
     'canvas.place.repeat': 'Repeating part — edits affect every instance',
     'canvas.place.noBox': 'No box — edit in the properties panel',

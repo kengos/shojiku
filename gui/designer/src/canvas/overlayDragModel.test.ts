@@ -4,7 +4,6 @@ import type { PlacedBox } from '../engine/types';
 import {
   type CanvasManipulate,
   commitDrag,
-  commitMarquee,
   type OverlayDragContext,
   reorderContextFor,
   snapOptionsFor,
@@ -53,6 +52,20 @@ const FLOW_BOXES = [
   placed('sections.body.items[2]', 0, 80, 100, 30),
 ];
 
+// A flow body whose last item is a container — the cross-parent destination.
+const NEST_DOC = {
+  'sections.body': { type: 'flow', items: [{}, {}] },
+  'sections.body.items[0]': { type: 'text', text: 'a' },
+  'sections.body.items[1]': { type: 'container', items: [{}] },
+  'sections.body.items[1].items': [{}],
+  'sections.body.items[1].items[0]': { type: 'text', text: 'inner' },
+};
+const NEST_BOXES = [
+  placed('sections.body.items[0]', 0, 0, 100, 30),
+  placed('sections.body.items[1]', 0, 40, 100, 60),
+  placed('sections.body.items[1].items[0]', 5, 45, 90, 20),
+];
+
 /** An element whose bounding rect the coordinate conversions read. */
 const measurable = (left: number, top: number, width: number) => ({
   getBoundingClientRect: () => ({ left, top, width }),
@@ -79,6 +92,8 @@ function context(
     boxes,
     scale: 1,
     width: 100,
+    page: { width: 100, height: 200 },
+    margin: null,
     manipulate,
   };
 }
@@ -110,6 +125,8 @@ describe('snapOptionsFor', () => {
       boxes: ABS_BOXES,
       scale: 1,
       width: 100,
+      page: { width: 100, height: 200 },
+      margin: null,
       manipulate: wiring(ABS_DOC, 0),
     };
     expect(snapOptionsFor(ctx, { x: 0, y: 0 }).threshold).toBe(6);
@@ -231,12 +248,52 @@ describe('commitDrag', () => {
       { x: 0, y: 200 },
       vi.fn(),
     );
-    expect(manipulate.onReorder).toHaveBeenCalledWith({
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 0,
-      to: 2,
-    });
+    expect(manipulate.onReorder).toHaveBeenCalledWith(
+      [{ op: 'moveItem', path: 'sections.body.items', from: 0, to: 2 }],
+      'sections.body.items[2]',
+    );
+  });
+
+  it('commits a CROSS-PARENT drop as the shared reparent batch', () => {
+    const manipulate = wiring(NEST_DOC);
+    commitDrag(
+      context(manipulate, NEST_BOXES),
+      { mode: 'reorder', path: 'sections.body.items[0]' },
+      { x: 50, y: 90 },
+      vi.fn(),
+    );
+    expect(manipulate.onReorder).toHaveBeenCalledWith(
+      [
+        {
+          op: 'moveItem',
+          path: 'sections.body.items',
+          from: 0,
+          to: 1,
+          toPath: 'sections.body.items[1].items',
+        },
+      ],
+      // Lifting items[0] out drops the container to items[0], so the moved
+      // item lands there — not at the pre-move spelling items[1].
+      'sections.body.items[0].items[1]',
+    );
+  });
+
+  it('never turns a RESIZE into a reparent, however far the handle travels', () => {
+    // A resize's pointer is a HANDLE, and leaving the item's own box is what
+    // resizing looks like — so the owner under it says nothing about where the
+    // item belongs. Here the south handle is dragged down into the container
+    // below; the release must still be a resize.
+    const manipulate = wiring({ ...NEST_DOC, 'sections.body': { type: 'absolute' } });
+    commitDrag(
+      context(manipulate, NEST_BOXES),
+      { mode: 'resize', path: 'sections.body.items[0]', handle: 's', startX: 50, startY: 30 },
+      { x: 50, y: 90 },
+      vi.fn(),
+    );
+    expect(manipulate.onReorder).not.toHaveBeenCalled();
+    expect(manipulate.onApply).toHaveBeenCalledWith('sections.body.items[0]', [
+      { op: 'setScalar', path: 'sections.body.items[0]', keys: ['box', 'h'], value: 90 },
+    ]);
   });
 
   it('treats a reorder back onto its own slot as a click', () => {
@@ -250,32 +307,5 @@ describe('commitDrag', () => {
     );
     expect(manipulate.onReorder).not.toHaveBeenCalled();
     expect(onSelect).toHaveBeenCalledWith('sections.body.items[0]');
-  });
-});
-
-describe('commitMarquee', () => {
-  it('reports the movable items the swept rect intersects, with the additive flag', () => {
-    const onMarquee = vi.fn();
-    commitMarquee(
-      context(wiring(ABS_DOC), ABS_BOXES),
-      { startX: -5, startY: -5, additive: true },
-      { x: 200, y: 200 },
-      onMarquee,
-    );
-    expect(onMarquee).toHaveBeenCalledWith(
-      ['sections.body.items[0]', 'sections.body.items[1]'],
-      true,
-    );
-  });
-
-  it('reports an empty selection when the band misses every box', () => {
-    const onMarquee = vi.fn();
-    commitMarquee(
-      context(wiring(ABS_DOC), ABS_BOXES),
-      { startX: 500, startY: 500, additive: false },
-      { x: 600, y: 600 },
-      onMarquee,
-    );
-    expect(onMarquee).toHaveBeenCalledWith([], false);
   });
 });

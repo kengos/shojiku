@@ -549,6 +549,7 @@ export const ja: LanguageCatalog = {
     'canvas.place.positioned': '位置指定 (x/y) — ドラッグで移動',
     'canvas.place.flow': 'フロー配置 — ドラッグで並べ替え',
     'canvas.place.flex': 'フレックス配置 — ドラッグで並べ替え',
+    'canvas.drop.clearsPosition': '座標 (x/y) は外れます — コンテナが位置を決めます',
     'canvas.place.grid': 'グリッド配置 — 位置はトラックが決定',
     'canvas.place.repeat': '繰り返しの一部 — 編集は全件に反映',
     'canvas.place.noBox': 'ボックスなし — プロパティパネルで編集',

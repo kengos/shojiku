@@ -15,6 +15,26 @@ platform binaries.
 
 ### Added
 
+- **Items can be dragged into a different parent in the Designer.** Until now
+  both the canvas and the layer tree could only reorder an item among its own
+  siblings, so moving something into or out of a container meant deleting it
+  and building it again. Now a canvas drag lands in whatever container is under
+  the pointer — it outlines while you hover it, with the insertion line drawn
+  inside — and a layer-tree drag lands wherever the drop line sits, which you
+  aim by moving left or right as well as up and down, one indent step per
+  nesting level. The flow body, flex containers, the absolute body and the
+  header/footer bands can all receive an item; a grid container and a
+  repeating cell template cannot, and neither can a destination where the item
+  would not lay out at all (a page number outside a band, for example), so the
+  drop is refused rather than leaving the item somewhere it would silently
+  vanish. Moving into a container drops the item's `x`/`y` — the container
+  decides its position from then on, and the canvas says so before you let go;
+  moving into a band or an absolute body writes them from where you dropped it.
+  The whole move is one undo step, and the item keeps its own comments and
+  YAML anchors — a move that would leave an anchor defined after something
+  that refers to it is refused instead, since that document could not be
+  saved.
+
 - A table's header row can be drawn invisibly with
   `header: { visuallyHidden: true }`. Nothing about the row is painted — no
   label text, no band fill, no grid ruling — but the column labels stay in the

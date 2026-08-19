@@ -2,7 +2,8 @@ import type { ReadFn } from '@shojiku/designer-core';
 import type { MouseEvent, PointerEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { overlayBackground } from './overlayBackground';
-import type { CanvasManipulate, MarqueeTask } from './overlayDragModel';
+import type { CanvasManipulate } from './overlayDragModel';
+import type { MarqueeTask } from './overlayMarquee';
 import type { UseDrag } from './useDrag';
 
 const read: ReadFn = () => undefined;

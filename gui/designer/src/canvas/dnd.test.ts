@@ -1,7 +1,7 @@
 import type { ReadFn } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
 import type { PlacedBox } from '../engine/types';
-import { reorderContext, siblingRects } from './dnd';
+import { receiverFor, reorderContext, siblingRects, typeFitsOwner } from './dnd';
 
 /** A read function over a flat path → materialized-value table. */
 function readOf(doc: Record<string, unknown>): ReadFn {
@@ -197,5 +197,101 @@ describe('siblingRects', () => {
       parent,
     );
     expect(rects).toEqual([]);
+  });
+});
+
+describe('typeFitsOwner', () => {
+  it('lets a page_number lay out only in a band', () => {
+    expect(typeFitsOwner('page_number', 'band')).toBe(true);
+    for (const owner of ['flow', 'absoluteBody', 'container'] as const) {
+      expect(typeFitsOwner('page_number', owner)).toBe(false);
+    }
+  });
+
+  it('lets the flow-only kinds lay out only in the flow body', () => {
+    for (const type of ['repeat', 'repeat_flow', 'page_break']) {
+      expect(typeFitsOwner(type, 'flow')).toBe(true);
+      for (const owner of ['band', 'absoluteBody', 'container'] as const) {
+        expect(typeFitsOwner(type, owner)).toBe(false);
+      }
+    }
+  });
+
+  it('fits an unrestricted, typeless or malformed item anywhere', () => {
+    for (const type of ['text', 'table', undefined, 7, null]) {
+      expect(typeFitsOwner(type, 'container')).toBe(true);
+    }
+  });
+});
+
+const RECEIVER_DOC: Record<string, unknown> = {
+  'sections.header': { height: 40, items: [{}] },
+  'sections.footer': { height: 20, items: [] },
+  'sections.body': { type: 'flow', items: [{}, {}, {}, {}] },
+  'sections.body.items[0]': { type: 'container', items: [{}] },
+  'sections.body.items[1]': { type: 'container', box: { direction: 'row' }, items: [] },
+  'sections.body.items[2]': { type: 'container', box: { type: 'grid' }, items: [] },
+  'sections.body.items[3]': { type: 'text', text: 'leaf' },
+  'sections.body.items[0].cell': { items: [] },
+};
+
+describe('receiverFor', () => {
+  it('takes the flow body as an ordered owner stacking on y', () => {
+    expect(receiverFor(readOf(RECEIVER_DOC), 'sections.body')).toEqual({
+      items: 'sections.body.items',
+      placement: { owner: 'flow', axis: 'y' },
+    });
+  });
+
+  it('takes an absolute body as a coordinate-placed owner', () => {
+    const read = readOf({ 'sections.body': { type: 'absolute', items: [] } });
+    expect(receiverFor(read, 'sections.body')?.placement).toEqual({
+      owner: 'absoluteBody',
+      axis: null,
+    });
+  });
+
+  it('takes both bands as coordinate-placed owners', () => {
+    for (const band of ['header', 'footer']) {
+      expect(receiverFor(readOf(RECEIVER_DOC), `sections.${band}`)).toEqual({
+        items: `sections.${band}.items`,
+        placement: { owner: 'band', axis: null },
+      });
+    }
+  });
+
+  it('takes a flex container, on the axis its direction names', () => {
+    const read = readOf(RECEIVER_DOC);
+    expect(receiverFor(read, 'sections.body.items[0]')?.placement).toEqual({
+      owner: 'container',
+      axis: 'y',
+    });
+    expect(receiverFor(read, 'sections.body.items[1]')?.placement).toEqual({
+      owner: 'container',
+      axis: 'x',
+    });
+  });
+
+  it('refuses a grid container, a leaf item and a malformed body', () => {
+    const read = readOf(RECEIVER_DOC);
+    expect(receiverFor(read, 'sections.body.items[2]')).toBeNull();
+    expect(receiverFor(read, 'sections.body.items[3]')).toBeNull();
+    expect(receiverFor(readOf({ 'sections.body': { type: 'grid' } }), 'sections.body')).toBeNull();
+  });
+
+  it('refuses a sub-template owner, whatever it holds', () => {
+    const read = readOf(RECEIVER_DOC);
+    expect(receiverFor(read, 'sections.body.items[0].cell')).toBeNull();
+    expect(receiverFor(read, 'sections.body.items[0].item')).toBeNull();
+    expect(receiverFor(read, 'sections.body.items[0].columns[0]')).toBeNull();
+  });
+
+  it('refuses a missing node and a document the materializer throws on', () => {
+    expect(receiverFor(readOf({}), 'sections.body')).toBeNull();
+    expect(
+      receiverFor(() => {
+        throw new Error('alias bomb');
+      }, 'sections.body'),
+    ).toBeNull();
   });
 });

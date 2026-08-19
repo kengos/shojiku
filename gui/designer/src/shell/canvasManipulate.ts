@@ -10,33 +10,38 @@ import type { MultiSelect } from '../hooks/useMultiSelect';
 
 export interface CanvasManipulateOptions {
   readonly read: EditorController['read'];
-  readonly apply: EditorController['apply'];
   readonly applyAll: EditorController['applyAll'];
-  readonly select: EditorController['select'];
   readonly selectClearing: MultiSelect['selectClearing'];
   readonly setRefused: MultiSelect['setRefused'];
   readonly grid: number;
 }
 
-/** Build the overlay's manipulation wiring. A reorder drop is ONE `moveItem`
- * (selection travels with the item); a move/resize/nudge is ONE transactional
- * `applyAll` batch = one undo step (the path — and so the selection — never
- * changes); a refused drag surfaces its reason in the placement chip. An
- * op-layer rejection changes nothing. */
+/** Build the overlay's manipulation wiring. A drop that CHANGES the item's
+ * path — a same-parent reorder or a cross-parent move — is ONE transactional
+ * `applyAll` batch and the selection travels with the item; a
+ * move/resize/nudge is the same one batch with the path unchanged; a refused
+ * drag surfaces its reason in the placement chip. An op-layer rejection
+ * changes nothing. */
 export function canvasManipulate({
   read,
-  apply,
   applyAll,
-  select,
   selectClearing,
   setRefused,
   grid,
 }: CanvasManipulateOptions): CanvasManipulate {
   return {
     read,
-    onReorder: (op) => {
-      if (apply(op).ok) {
-        select(`${op.path}[${op.to}]`);
+    onReorder: (ops, selectPath) => {
+      // ONE transactional batch: a same-parent reorder is a single `moveItem`,
+      // a cross-parent one is the `box` keys the crossing invalidates plus the
+      // `moveItem` — either way one undo step, and the selection follows the
+      // item to wherever it landed.
+      // `selectClearing`, not `select`: every path in the multi-selection is
+      // an INDEX, and a move renumbers the siblings it passes — so after any
+      // commit here the other members name different items than the user
+      // picked, and the align toolbar would act on the wrong pair.
+      if (applyAll(ops).ok) {
+        selectClearing(selectPath);
       }
     },
     onApply: (path, ops) => {

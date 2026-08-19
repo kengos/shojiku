@@ -9,11 +9,12 @@
 // `useRowReorder`, and the walking / slot math / op construction stay in the
 // pure `model.ts`.
 
-import type { Op, OpResult } from '@shojiku/designer-core';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Op, OpResult, ReadFn } from '@shojiku/designer-core';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../i18n/context';
 import { IconDocument } from '../ui/icons';
 import type { TreeView } from './model';
+import { visiblePaths } from './rowDrop';
 import { breadcrumbChain } from './selection';
 import { TreeRow } from './TreeRow';
 import { useRowReorder } from './useRowReorder';
@@ -23,8 +24,12 @@ export interface LayerTreeProps {
   readonly view: TreeView | null;
   readonly selection: string | null;
   readonly onSelect: (path: string) => void;
-  /** Dispatches a `moveItem` op — the editor's `apply`. */
-  readonly apply: (op: Op) => OpResult;
+  /** Dispatches a drop as ONE transactional batch — the editor's `applyAll`.
+   * A same-parent reorder is one `moveItem`; a cross-parent one adds the
+   * `box` keys the crossing invalidates. */
+  readonly applyAll: (ops: readonly Op[]) => OpResult;
+  /** The document read the drop model classifies destinations over. */
+  readonly read: ReadFn;
   /** Right-click on a row: open the context menu at the pointer (viewport px).
    * Absent = the browser's native menu (no override). */
   readonly onContextMenu?: (path: string, x: number, y: number) => void;
@@ -37,7 +42,8 @@ export function LayerTree({
   view,
   selection,
   onSelect,
-  apply,
+  applyAll,
+  read,
   onContextMenu,
   onOpenDocument,
 }: LayerTreeProps) {
@@ -83,7 +89,11 @@ export function LayerTree({
 
   // Called AFTER the reveal effect above: this hook owns the Escape-cancel
   // effect, which ran after the reveal before the split too.
-  const reorder = useRowReorder({ apply, onSelect, rowRefs });
+  // The rows the drag measures against: what the tree SHOWS, in its own
+  // order, so a gap between a nested last child and the row after it can be
+  // read as either parent.
+  const order = useMemo(() => visiblePaths(view, collapsed), [view, collapsed]);
+  const reorder = useRowReorder({ applyAll, read, onSelect, rowRefs, order });
 
   // The whole-document node: a FIXED header row above the outline (never part of
   // the draggable/collapsible tree, no indent), always present — including a

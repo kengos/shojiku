@@ -480,6 +480,7 @@ export const zhTw: LanguageCatalog = {
     'canvas.place.positioned': '指定位置 (x/y) — 拖曳移動',
     'canvas.place.flow': '流式排列 — 拖曳重新排序',
     'canvas.place.flex': '彈性排列 — 拖曳重新排序',
+    'canvas.drop.clearsPosition': '座標 (x/y) 會被移除 — 位置由容器決定',
     'canvas.place.grid': '網格排列 — 位置由軌道決定',
     'canvas.place.repeat': '重複範本的一部分 — 編輯會影響所有項目',
     'canvas.place.noBox': '無框 — 請在屬性面板編輯',
