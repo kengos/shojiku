@@ -148,3 +148,28 @@ describe('Designer — the fullscreen document-settings view', () => {
     expect(screen.getByLabelText('Text')).toBeTruthy();
   });
 });
+
+describe('Designer — opening the data editor ON a field', () => {
+  const withData = JSON.stringify({ title: 'Hi' });
+
+  it('lands on the field whose gear was clicked, not on the pick-one hint', async () => {
+    draw(makeTransport(), { params: withData });
+    await waitFor(() => screen.getByRole('button', { name: 'sections.body.items[0]' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Data fields' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit this data field' })[0]);
+    expect(screen.getByLabelText('Display label')).not.toBeNull();
+    expect(screen.queryByText(/Select a data field on the left/)).toBeNull();
+  });
+
+  it('clears a previous gear target, so the File-menu entry opens with nothing selected', async () => {
+    draw(makeTransport(), { params: withData });
+    await waitFor(() => screen.getByRole('button', { name: 'sections.body.items[0]' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Data fields' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit this data field' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Back to canvas' }));
+    // Re-entering from the menu is the no-selection surface; a stale target
+    // would silently re-open on whatever was picked last.
+    pickMenu('File', 'Edit data fields…');
+    expect(screen.getByText(/Select a data field on the left/)).not.toBeNull();
+  });
+});

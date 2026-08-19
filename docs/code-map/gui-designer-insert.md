@@ -47,7 +47,10 @@ succeeded.
   Depth- and count-bounded.
 - `palette/model.ts` — the palette's view types (`PaletteField`,
   `PaletteGroup`, whose `rowScope` names the group whose ROWS carry this
-  one) + `readDefinitionsView`: the `properties` tree → groups, `null`
+  one; `FieldTarget {group, key}` — the jump a row's gear hands up, and
+  the pair `data/editorModel`'s `selectionKey` resolves on the other
+  side, so an object group's own id travels beside the DOTTED full key)
+  + `readDefinitionsView`: the `properties` tree → groups, `null`
   for anything unparseable/oversized/the retired v1 `groups:` form; +
   `rowScopeLabel` (the parent's display label for the heading badge,
   falling back to the parent id). The widely-imported surface of the
@@ -70,13 +73,21 @@ succeeded.
   RegExp; a group-level hit keeps the whole group.
 - `palette/FieldPalette.tsx` — the read-only grouped/searchable panel
   shell (search box, empty state, the definitions→usage correlation it
-  hands down); dispatches ZERO ops itself.
+  hands down); dispatches ZERO ops itself. Two SEPARATE editor entry
+  points: `onOpenEditor` (the header gear, no target — it is wired
+  straight to a click handler, so widening it would put a MouseEvent
+  where a target belongs) and `onOpenField` (a row's gear, carrying a
+  `FieldTarget`). A `?` beside the heading says which part of a row is
+  the display label and which the data key — one hint for the list rather
+  than a label per part, because the row measures ~215px.
 - `palette/paletteRow.tsx` — one field row + its chrome: the `PaletteDrag`
   wiring type, the localized type label (exported `TYPE_LABEL_KEYS`,
   shared with `panel/FieldPicker`, `text/InsertFieldMenu` and
   `data/ItemListRow`), the
   used/unused badge; a used field's click cycles bound placements via
-  the shared selection.
+  the shared selection. The per-field gear (`onEdit`) is a SIBLING of the
+  row, never inside it — a bound row IS a `<button>` and a
+  button-in-button is invalid HTML (the `data/ItemListRow` shape).
 - `palette/paletteGroup.tsx` — one group section: its heading (an ARRAY
   group's heading drags to drop the group's default iterable scaffold)
   and the rows under it.
@@ -318,7 +329,10 @@ the panes never import each other.
 
 - `data/DataEditorView.tsx` — the shell (document-settings mould: whole editor
   area, own back control, Escape closes): owns the selection
-  (`selectionKey`-addressed, re-resolved per render), the derived
+  (`selectionKey`-addressed, re-resolved per render; `initialSelection`
+  seeds it ONCE on mount — the view is unmounted whenever it is not open,
+  so every entry re-seeds, and a stale/hostile target simply resolves to
+  nothing), the derived
   view/usage memos, and the two commit paths (`commitSample` →
   `onParamsChange`; `dispatchDefEdit` → `onDefinitionEdit(op)`);
   `sampleDataReadOnly` renders sample values as text.
@@ -333,7 +347,11 @@ the panes never import each other.
   (IME-guarded Enter).
 - `data/DetailPane.tsx` — the right pane for ONE field: definition form
   + sample value(s) (array-group fields render one per row with
-  add/remove). STATELESS, not keyed by selection — each uncontrolled
+  add/remove). The 「sample value」 heading is the section's ONE label —
+  the widget under it is named after the FIELD in both branches — and
+  carries the `?` saying the data is preview-only placeholder, a sentence
+  that has to hold in every arm the pane classifies (scalar / array,
+  editable / read-only mounted host). STATELESS, not keyed by selection — each uncontrolled
   input is keyed by its own value; a control added here needs the same
   value-key.
 - `data/DefinitionForm.tsx` — display label / type / format (the shared

@@ -9,6 +9,7 @@ import type { PaletteDragWiring } from '../hooks/usePaletteDrag';
 import type { TutorialWiring } from '../hooks/useTutorialWiring';
 import { useI18n } from '../i18n/context';
 import { FieldPalette } from '../palette/FieldPalette';
+import type { FieldTarget } from '../palette/model';
 import { Sidebar, type SidebarTab } from '../sidebar/Sidebar';
 import { MAX_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH } from '../sidebar/width';
 import { LayerTree } from '../tree/LayerTree';
@@ -30,6 +31,8 @@ export interface SidePaneProps {
   readonly onContextMenu: (path: string, x: number, y: number) => void;
   readonly onOpenDocument: () => void;
   readonly onOpenDataEditor: () => void;
+  /** Open that editor on one field — the palette row's gear. */
+  readonly onOpenDataField: (target: FieldTarget) => void;
 }
 
 export function SidePane({
@@ -42,6 +45,7 @@ export function SidePane({
   onContextMenu,
   onOpenDocument,
   onOpenDataEditor,
+  onOpenDataField,
 }: SidePaneProps) {
   const { t } = useI18n();
 
@@ -92,6 +96,7 @@ export function SidePane({
           onSelect={editor.select}
           drag={paletteDrag}
           onOpenEditor={onOpenDataEditor}
+          onOpenField={onOpenDataField}
         />
       ),
     });

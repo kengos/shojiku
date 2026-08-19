@@ -87,7 +87,7 @@ describe('Designer sample data', () => {
     expect(screen.getByText('Sample data is managed by the engineer.')).not.toBeNull();
     selectDataField('Title');
     // No sample-value INPUT; the value is shown as read-only text instead.
-    expect(screen.queryByLabelText('Sample value')).toBeNull();
+    expect(screen.queryByLabelText('Title')).toBeNull();
     expect(screen.getByText('Hi')).not.toBeNull();
   });
 
@@ -115,7 +115,7 @@ describe('Designer sample data', () => {
     fireEvent.blur(input);
     // A blur without an edit recommits the same text — no new undo entry.
     // (Re-query: the value-keyed input remounts on its own commit.)
-    fireEvent.blur(screen.getByLabelText('Sample value'));
+    fireEvent.blur(screen.getByLabelText('title'));
     fireEvent.click(screen.getByText('Undo edit'));
     expect((screen.getByText('Undo edit') as HTMLButtonElement).disabled).toBe(true);
   });
@@ -285,7 +285,7 @@ describe('Designer sample data', () => {
     // Now edit ANOTHER field's sample value — the workshop stub re-infers from
     // the new params, and the definition edit re-applies on top.
     selectDataField('other');
-    const value = screen.getByLabelText('Sample value') as HTMLTextAreaElement;
+    const value = screen.getByLabelText('other') as HTMLTextAreaElement;
     fireEvent.change(value, { target: { value: 'fresh' } });
     fireEvent.blur(value);
     const reported = onDefinitionsChange.mock.calls.at(-1)?.[0] as string;
@@ -447,13 +447,13 @@ describe('Designer sample-variant switching', () => {
     const { container } = draw(makeTransport(), { sampleSet: TWO });
     openDataEditor();
     selectDataField('title');
-    expect((screen.getByLabelText('Sample value') as HTMLTextAreaElement).value).toBe('A');
+    expect((screen.getByLabelText('title') as HTMLTextAreaElement).value).toBe('A');
     const select = topbarVariant(container);
     if (select === null) {
       throw new Error('missing switcher');
     }
     fireEvent.change(select, { target: { value: 'blank' } });
-    expect((screen.getByLabelText('Sample value') as HTMLTextAreaElement).value).toBe('B');
+    expect((screen.getByLabelText('title') as HTMLTextAreaElement).value).toBe('B');
   });
 
   it('edits the active variant only and fires both sample callbacks', () => {
@@ -462,7 +462,7 @@ describe('Designer sample-variant switching', () => {
     draw(makeTransport(), { sampleSet: TWO, onSampleSetChange, onParamsChange });
     openDataEditor();
     selectDataField('title');
-    const input = screen.getByLabelText('Sample value') as HTMLTextAreaElement;
+    const input = screen.getByLabelText('title') as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: 'X' } });
     fireEvent.blur(input);
     expect(JSON.parse(onParamsChange.mock.calls[0][0]).title).toBe('X');
@@ -476,7 +476,7 @@ describe('Designer sample-variant switching', () => {
     const { container } = draw(makeTransport(), { sampleSet: TWO });
     openDataEditor();
     selectDataField('title');
-    const input = screen.getByLabelText('Sample value') as HTMLTextAreaElement;
+    const input = screen.getByLabelText('title') as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: 'X' } });
     fireEvent.blur(input);
     // The edit armed the panel-local undo.
@@ -494,7 +494,7 @@ describe('Designer sample-variant switching', () => {
     draw(makeTransport(), { sampleSet: TWO });
     openDataEditor();
     selectDataField('title');
-    const input = screen.getByLabelText('Sample value') as HTMLTextAreaElement;
+    const input = screen.getByLabelText('title') as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: 'X' } });
     fireEvent.blur(input);
     expect((screen.getByText('Undo edit') as HTMLButtonElement).disabled).toBe(false);

@@ -8,6 +8,7 @@
 // keeps definitions editable while the engineer-owned params are not).
 
 import type { Op } from '@shojiku/designer-core';
+import type { FieldTarget } from '../palette/model';
 import type { ValueSynth } from '../sample/synth';
 import type { VariantControls } from './VariantBar';
 
@@ -48,5 +49,11 @@ export interface DataEditorViewProps {
   /** The template's `formats:` registry names, for the format picker. */
   readonly formatRegistry?: readonly string[];
   readonly capabilities?: readonly string[];
+  /** Open with this field already selected (entered from its own gear). The
+   * view mounts fresh every time it opens — `EditorBody` swaps the whole grid
+   * out — so this seeds the selection once and the user is free to navigate
+   * away afterwards. A target naming a field the definitions do not carry
+   * simply selects nothing. */
+  readonly initialSelection?: FieldTarget;
   readonly onClose: () => void;
 }

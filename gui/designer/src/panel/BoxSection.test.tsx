@@ -4,7 +4,7 @@
 // point. A mock controller pins op-dispatch assertions; a real `useEditor`
 // harness proves the single-undo-step round trip.
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
@@ -496,5 +496,39 @@ describe('BoxSection — the placement `?` help', () => {
         'Here the position is set by coordinates, measured from the top-left corner of the area inside the page margins.',
       ),
     ).toBeTruthy();
+  });
+});
+
+describe('BoxSection — a relative width', () => {
+  const FLOW = 'sections.body.items[0]';
+  function flowReads(box: Record<string, unknown>): Record<string, unknown> {
+    return { [FLOW]: { type: 'text', text: 'hi', style: {}, box } };
+  }
+
+  it('says WHY the ▲▼ are unavailable on a percent value', () => {
+    // `100%` is a legal box width the engine resolves at layout, but not one
+    // the panel can step by points — and `canvas/lengths` refuses to read it
+    // because rewriting it into points would throw the authoring intent away.
+    // Before this the buttons just went quiet, which read as a broken field.
+    draw(<PropertyPanel controller={makeController(flowReads({ w: '100%' }))} path={FLOW} />);
+    openLayout();
+    const width = screen.getByLabelText('Width') as HTMLInputElement;
+    expect(width.value).toBe('100%');
+    const row = width.parentElement?.parentElement as HTMLElement;
+    expect(
+      (within(row).getByRole('button', { name: 'Increase' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(within(row).getByText(/cannot be stepped/)).not.toBeNull();
+  });
+
+  it('shows no such bubble for a plain pt value', () => {
+    draw(<PropertyPanel controller={makeController(flowReads({ w: 120 }))} path={FLOW} />);
+    openLayout();
+    const width = screen.getByLabelText('Width') as HTMLInputElement;
+    const row = width.parentElement?.parentElement as HTMLElement;
+    expect(
+      (within(row).getByRole('button', { name: 'Increase' }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+    expect(within(row).queryByText(/cannot be stepped/)).toBeNull();
   });
 });

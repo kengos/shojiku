@@ -14,6 +14,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { ReactNode } from 'react';
+import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import type { PaletteField, PaletteGroup } from '../palette/model';
 import type { SampleKind, SamplePath } from '../sample/model';
@@ -70,7 +71,7 @@ export function DetailPane({
     sampleSection = canEditSample ? (
       <ValueField
         key={value}
-        label={t('data.sampleValue')}
+        label={field.label}
         kind={kind}
         value={value}
         engineLocale={engineLocale}
@@ -134,7 +135,20 @@ export function DetailPane({
         onDefEdit={onDefEdit}
       />
       <section className="flex flex-col gap-2">
-        <h3 className={SECTION_TITLE}>{t('data.sampleValue')}</h3>
+        {/* The heading is the section's ONE 「sample value」 label — the value
+          widget below names itself after the FIELD (as the array branch always
+          did), so the two no longer read as the same label twice. The `?` says
+          what this data IS; the sentence must hold in every arm this pane
+          renders (scalar / array, editable / read-only mounted host), so it
+          describes the data's ROLE and never the editing affordance. */}
+        <div className="flex items-center gap-1">
+          <h3 className={`${SECTION_TITLE} mb-0`}>{t('data.sampleValue')}</h3>
+          <HelpHint
+            label={t('help.sampleValue.title')}
+            title={t('help.sampleValue.title')}
+            body={t('help.sampleValue.body')}
+          />
+        </div>
         {sampleSection}
       </section>
     </>

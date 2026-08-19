@@ -70,7 +70,9 @@ export function openDataField(label: string): HTMLElement {
     throw new Error(`no data-field row for ${label}`);
   }
   fireEvent.click(row);
-  return screen.getByLabelText('Sample value');
+  // Named after the FIELD, not after the section: the 「sample value」 heading
+  // titles the section once and the widget says which field it belongs to.
+  return screen.getByLabelText(label);
 }
 
 /** Edit the page size — a convenient document edit. The size control lives in

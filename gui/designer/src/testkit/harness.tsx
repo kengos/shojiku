@@ -74,9 +74,12 @@ export function selectDataField(label: string) {
   }
   fireEvent.click(row);
 }
-/** Open the editor, select the field, and return its sample-value control. */
+/** Open the editor, select the field, and return its sample-value control. The
+ * control is named after the FIELD, not after the section: the 「sample value」
+ * heading titles the section once, and the widget under it says which field it
+ * belongs to (the array branch always did this; the scalar branch now matches). */
 export function openSampleValue(label = 'title'): HTMLElement {
   openDataEditor();
   selectDataField(label);
-  return screen.getByLabelText('Sample value');
+  return screen.getByLabelText(label);
 }

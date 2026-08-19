@@ -7,7 +7,10 @@
 import { useI18n } from '../i18n/context';
 import { BTN_SM, SECTION_TITLE } from '../ui/chrome';
 import { BoxAxisDisplay, BoxAxisField, BoxHint, PlacementSegment } from './boxFields';
+import { CharGridSection } from './CharGridSection';
+import { CHAR_GRID_CAPABILITY, CHAR_GRID_TYPE, readCharGrid } from './charGrid';
 import type { ItemPanelProps } from './itemPanelProps';
+import { hasCapability } from './itemPanelProps';
 import { BOX_AXES, type BoxAxis } from './itemView';
 import { LayoutSection } from './LayoutSection';
 import { containerLayoutFor, parentContainerOf } from './layoutModel';
@@ -71,6 +74,19 @@ export function BoxSection(props: ItemPanelProps) {
         <LayoutSection controller={controller} path={path} layout={ownLayout} />
       </section>
     ) : null;
+  // Manuscript paper is sized by its CELLS, not by `box.w` — so the controls
+  // that actually resize it sit directly under the box fields, on the tab an
+  // author reaches for when they want it bigger. Gated: an engine without the
+  // capability parse-rejects a char_grid outright.
+  const charGrid =
+    view.type === CHAR_GRID_TYPE && hasCapability(props.capabilities, CHAR_GRID_CAPABILITY) ? (
+      <CharGridSection
+        view={readCharGrid(controller.read, path)}
+        controller={controller}
+        path={path}
+        gridStep={gridStep}
+      />
+    ) : null;
   // The keyboard-reachable wrap-in-container (the canvas/tree right-click's
   // companion): wrap this item in a new container. Present only when the
   // Designer passed the handler (a wrappable, item-list selection).
@@ -115,6 +131,7 @@ export function BoxSection(props: ItemPanelProps) {
             {BOX_AXES.map((axis) => editableAxis(axis, undefined))}
           </div>
         </section>
+        {charGrid}
         {childLayout}
         {wrapAction}
       </div>
@@ -153,6 +170,7 @@ export function BoxSection(props: ItemPanelProps) {
         </div>
         <BoxHint placement={placement} />
       </section>
+      {charGrid}
       {childLayout}
       {wrapAction}
     </div>

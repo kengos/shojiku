@@ -3,4 +3,5 @@ type: object
 properties:
   manuscript:
     type: string
-    title: 本文（青空文庫ルビ記法・|基《よみ》）
+    title: 本文
+    description: 青空文庫のルビ記法が使えます。《》の直前の漢字列にルビが付き（吾輩《わがはい》）、｜で範囲を明示することもできます（｜昨日《きのう》）。

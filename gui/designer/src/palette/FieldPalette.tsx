@@ -14,6 +14,7 @@
 // nothing, does nothing) everywhere else.
 
 import { useMemo, useState } from 'react';
+import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
 import { IconButton } from '../ui/Button';
@@ -21,6 +22,7 @@ import { INPUT, SECTION_TITLE } from '../ui/chrome';
 import { IconGear } from '../ui/icons';
 import { readBindings } from './bindings';
 import { filterGroups } from './filter';
+import type { FieldTarget } from './model';
 import { readDefinitionsView, rowScopeLabel } from './model';
 import { GroupSection } from './paletteGroup';
 import type { PaletteDrag } from './paletteRow';
@@ -40,6 +42,11 @@ export interface FieldPaletteProps {
   /** Open the fullscreen data-item editor (definitions + sample) — the gear in
    * this tab's header. Absent = no gear (a host without the editor). */
   readonly onOpenEditor?: () => void;
+  /** Open that editor ALREADY on one field — the per-row gear. Kept separate
+   * from `onOpenEditor`, which is wired straight to a click handler and would
+   * otherwise receive the MouseEvent where a target belongs. Absent = no
+   * per-row gears. */
+  readonly onOpenField?: (target: FieldTarget) => void;
 }
 
 export function FieldPalette({
@@ -48,6 +55,7 @@ export function FieldPalette({
   onSelect,
   drag,
   onOpenEditor,
+  onOpenField,
 }: FieldPaletteProps) {
   const { t } = useI18n();
   const [query, setQuery] = useState('');
@@ -67,7 +75,16 @@ export function FieldPalette({
   return (
     <section className="min-w-0 p-3" aria-label={t('palette.title')}>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className={`${SECTION_TITLE} mb-0`}>{t('palette.title')}</h2>
+        <div className="flex min-w-0 items-center gap-1">
+          <h2 className={`${SECTION_TITLE} mb-0`}>{t('palette.title')}</h2>
+          {/* One hint for the whole list rather than a label per part: the row
+            is ~215px and does not fit a second text element beside the name. */}
+          <HelpHint
+            label={t('help.dataFields.title')}
+            title={t('help.dataFields.title')}
+            body={t('help.dataFields.body')}
+          />
+        </div>
         {onOpenEditor !== undefined ? (
           <span data-tour={TOUR_ANCHORS.dataEditorGear}>
             <IconButton label={t('data.gear')} variant="ghost" onClick={onOpenEditor}>
@@ -96,6 +113,9 @@ export function FieldPalette({
             usage={usage}
             onPick={pick}
             drag={drag}
+            onEditField={
+              onOpenField === undefined ? undefined : (key) => onOpenField({ group: group.id, key })
+            }
             parentLabel={rowScopeLabel(groups, group)}
           />
         ))

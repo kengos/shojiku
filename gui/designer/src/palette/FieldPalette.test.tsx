@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
 import { FieldPalette } from './FieldPalette';
@@ -400,5 +400,60 @@ describe('FieldPalette — drag-to-bind wiring', () => {
     const { onSelect } = draw({ drag });
     fireEvent.click(screen.getByRole('button', { name: /Number/ }));
     expect(onSelect).toHaveBeenCalledWith('sections.body.items[0]');
+  });
+});
+
+describe('FieldPalette — the per-field gear', () => {
+  it('renders no gears without the handler, one per field with it', () => {
+    draw();
+    expect(screen.queryAllByRole('button', { name: 'Edit this data field' })).toHaveLength(0);
+    draw({ onOpenField: vi.fn() });
+    expect(screen.getAllByRole('button', { name: 'Edit this data field' }).length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it('hands up the owning group id and the field key', () => {
+    const onOpenField = vi.fn();
+    draw({ onOpenField });
+    // `Number` lives under the `receipt` object group. The palette flattens
+    // object groups to DOTTED FULL keys while the group keeps its own id, and
+    // the pair is exactly what `selectionKey` addresses on the editor side —
+    // so the jump round-trips.
+    const row = screen.getByText('Number').closest('li');
+    if (row === null) {
+      throw new Error('no row for Number');
+    }
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit this data field' }));
+    expect(onOpenField).toHaveBeenCalledExactlyOnceWith({
+      group: 'receipt',
+      key: 'receipt.number',
+    });
+  });
+
+  it('keeps the gear OUTSIDE the row button — a button inside a button is invalid HTML', () => {
+    draw({ onOpenField: vi.fn() });
+    const row = screen.getByText('Number').closest('li');
+    if (row === null) {
+      throw new Error('no row for Number');
+    }
+    const gear = within(row).getByRole('button', { name: 'Edit this data field' });
+    const rowButton = within(row)
+      .getAllByRole('button')
+      .find((b) => b !== gear && (b.textContent ?? '').includes('Number'));
+    expect(rowButton).toBeDefined();
+    expect(rowButton?.contains(gear)).toBe(false);
+  });
+
+  it('explains which part of a row is the name and which the key', () => {
+    draw();
+    fireEvent.click(screen.getByRole('button', { name: 'How to read a row' }));
+    expect(screen.getByText(/monospaced text under it is the data key/)).not.toBeNull();
+  });
+
+  it('lets a long display label wrap instead of overflowing the column', () => {
+    draw();
+    const label = screen.getByText('Number');
+    expect(label.className).toContain('[overflow-wrap:anywhere]');
   });
 });

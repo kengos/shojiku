@@ -83,6 +83,7 @@ export function FullscreenView({
       onUndoDefinition={defs.undoDefinition}
       formatRegistry={registryNames(editor.read('formats'))}
       capabilities={capabilities}
+      initialSelection={views.dataFocus ?? undefined}
       onClose={views.closeDataView}
     />
   );

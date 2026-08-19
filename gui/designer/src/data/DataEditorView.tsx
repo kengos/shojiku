@@ -52,10 +52,19 @@ export function DataEditorView({
   onUndoDefinition,
   formatRegistry = [],
   capabilities,
+  initialSelection,
   onClose,
 }: DataEditorViewProps) {
   const { t } = useI18n();
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  // Seeded once, on mount: the view is unmounted whenever it is not open, so
+  // every entry re-runs this. The key is RESOLVED against the live groups by
+  // the memo below, so a stale or hostile target lands on the no-selection
+  // surface rather than erroring.
+  const [selectedKey, setSelectedKey] = useState<string | null>(() =>
+    initialSelection === undefined
+      ? null
+      : selectionKey(initialSelection.group, initialSelection.key),
+  );
 
   const groups = useMemo(() => readDefinitionsView(definitions) ?? [], [definitions]);
   const usage = useMemo(() => buildUsage(readBindings(templateText)), [templateText]);

@@ -57,6 +57,33 @@ The child-layout surface is a shell + one module per control cluster.
   the same shell for the parent: select-parent jump + hover canvas
   highlight.
 
+## Placement tab — the char_grid grid
+
+`char_grid` is in `CONTENT_TAB_TYPES` and deliberately NOT in
+`STYLED_TYPES`/`BORDERABLE_TYPES`: its `borderWidth` is the GRID RULING
+width (`0` turns the ruling off), a different property under the same
+spelling, so the border cluster's per-side model must not reach it.
+
+- `panel/charGrid.ts` — the pure read/write model. `readCharGrid` (a
+  non-map `grid`, a container where a scalar belongs, or a throwing read
+  all degrade to unset; an unknown `writingMode` is NOT echoed back as
+  selected). `countOp`/`countStepOp`/`countSteppable` are NOT the shared
+  `numberOp`: `CharGridSpec.chars_per_line`/`.lines` are REQUIRED,
+  non-`Option` `usize`, so "empty clears the key" would author a template
+  the engine cannot parse — empty, non-integer, `< 1` and past
+  `MAX_GRID_COUNT` (4096, the layout cell cap) all author NOTHING, and
+  the step guard exists because `Number('')` is `0`, not `NaN`.
+  `gridLengthOp` keeps the optional keys' clear-on-empty (clearing
+  `cellSize` is what returns it to the derived size); `writingModeOp`
+  never authors the engine default.
+- `panel/CharGridSection.tsx` — the 「manuscript grid」 section, rendered
+  in the PLACEMENT tab under the box fields (that is where an author goes
+  to change how big the thing is, and for a char_grid `box.w` is not the
+  control that does it). Counts step by one whole cell, never by the
+  canvas grid; lengths step by the canvas grid. No field is a bare empty
+  box — an unset cell side shows `auto` (derived), an unset gap shows `0`
+  (the wire default). Capability-gated on `char_grid`.
+
 ## Decoration tab — borders + fill
 
 The border cluster is five pure modules; the write side depends on the
@@ -194,7 +221,12 @@ read side, never the reverse.
 - `panel/StepperField.tsx` — length/number input + ▲▼ (one step op per
   click = one undo step; commit-on-blur changed-guard; optional `tag`
   suffix badge with explicit htmlFor/id association; no key-repeat — an
-  op remounts the panel body).
+  op remounts the panel body). `stepHint` is the bubble shown while
+  `canStep` is FALSE, and the CALLER owns the string: only it knows which
+  unsteppable state the field is in (a relative unit, empty, garbage, a
+  count below 1), so a message naming `%`/`em` would be a lie over the
+  others. The bubble rides the ▲▼ COLUMN, not the buttons — a disabled
+  button is an unreliable hover target.
 - `panel/SeededField.tsx` — the document-settings style field whose
   UNSET state reads as unset (empty box, engine fallback as
   PLACEHOLDER; empty commits nothing, clearing an authored value does).
@@ -240,8 +272,13 @@ read side, never the reverse.
   applicable tab and renders the `panel.noEditable` placeholder. Tab
   bodies live beside it: `ContentSection.tsx` (per-type
   routing + the text/data pair; image/page-number surfaces in
-  `contentParts.tsx`), `StyleSection.tsx` (+`StyleTabFields.tsx`),
-  `BoxSection.tsx` (+`boxFields.tsx`); shared prop contract in
+  `contentParts.tsx`, the bound-mode half in `contentBound.tsx`
+  (`BoundContent` — the data-key picker plus the two options that ride a
+  binding, `format` and `placeholder`, which are NOT universal: a
+  `char_grid` binds a value like a text item but `CharGridItem` is
+  `deny_unknown_fields` and carries neither key)), `StyleSection.tsx`
+  (+`StyleTabFields.tsx`),
+  `BoxSection.tsx` (+`boxFields.tsx`, +`CharGridSection.tsx`); shared prop contract in
   `itemPanelProps.ts` (`ItemPanelProps` + `hasCapability`); shared
   helpers in `panelHelpers.tsx` (`HelpfulHeading` over the `HelpTopic`
   vocabulary — `content`/`style`/`placement`/`placementChild`, each value
