@@ -5,6 +5,47 @@
 > falsifiable claim in prose is grepped before it ships.** This file is
 > the failure catalog behind that rule.
 
+## A broken MEASUREMENT looks exactly like a broken SYSTEM
+
+When a probe you just wrote reports that the system is broken, the first
+suspect is the probe. Nothing distinguishes the two readings except a control
+you decided to put in.
+
+A probe rendered a PDF twice — text at opacity 0 and the same text opaque —
+to establish whether a fully transparent fill still emits extractable glyphs.
+It reported **zero** text-showing operators for the transparent render, which
+reads as a decisive engine finding: the feature standing on that mechanism is
+impossible. It was wrong. Its stream scanner searched for `stream` and matched
+inside `end`**`stream`**, desynchronising after the first hit — so it found
+nothing in *any* PDF. The line that caught it was the control:
+
+```rust
+let opaque = count(&render_at("1"));
+assert!(opaque > 0, "the opaque control drew no text");
+```
+
+The opaque render obviously draws text. When THAT assertion failed, the
+conclusion flipped from "the engine drops the glyphs" to "my scanner is
+broken", and the fix was one line. Without it the cycle would have recorded a
+false blocking finding against the engine — and a plausible one, since the
+whole point of the probe was that the answer was unknown.
+
+Two habits:
+
+- **Every probe of an unknown gets a companion measurement of a KNOWN.** Not a
+  second assertion about the unknown — a case whose answer you would bet on.
+  Cheap: usually the same call with one argument changed.
+- **A zero from a scanner you wrote this hour is a claim about the SCANNER
+  until a control says otherwise.** This is the sweep rules below, one level
+  out: they cover a grep over files, this covers a parser over bytes, and the
+  failure mode is identical — the tool silently saw nothing and the result
+  reads as evidence about the subject.
+
+Related, from the same probe: **searching for a delimiter that is a SUBSTRING
+of its own terminator desynchronises the scan** (`stream` inside `endstream`,
+`if` inside `endif`, `<b>` inside `</b>`). Advance the cursor past the whole
+terminator, and prefer a real anchored match over a bare substring search.
+
 ## Bulk edits and sweeps
 
 Every shape of a silent sweep fails green: matching nothing (a
