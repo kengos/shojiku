@@ -1,9 +1,10 @@
-import type { Op, OpResult } from '@shojiku/designer-core';
+import { type Op, type OpResult, parseTemplate, readTemplate } from '@shojiku/designer-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
 import { LayerTree } from './LayerTree';
 import { buildTree, type TreeView } from './model';
+import { ROW_INDENT_PX } from './rowDrop';
 
 const TEMPLATE = [
   'sections:',
@@ -29,17 +30,33 @@ const TEMPLATE = [
 
 const VIEW = buildTree(TEMPLATE);
 
+/** The same document the view was built from, as the drop model reads it —
+ * `readNode` semantics over the parsed template. */
+const PARSED = readTemplate(parseTemplate(TEMPLATE)) as Record<string, unknown>;
+const DOC_READ = (path: string): unknown => {
+  let node: unknown = PARSED;
+  for (const segment of path.split(/\.|\[|\]\.?/).filter((part) => part !== '')) {
+    if (node === null || typeof node !== 'object') {
+      return undefined;
+    }
+    node = (node as Record<string, unknown>)[segment];
+  }
+  return node;
+};
+
 interface DrawOptions {
   readonly view?: TreeView | null;
   readonly selection?: string | null;
   readonly onSelect?: (path: string) => void;
-  readonly apply?: (op: Op) => OpResult;
+  readonly applyAll?: (ops: readonly Op[]) => OpResult;
+  readonly read?: (path: string) => unknown;
   readonly onOpenDocument?: () => void;
 }
 
 function draw(options: DrawOptions = {}) {
   const onSelect = options.onSelect ?? vi.fn();
-  const apply = options.apply ?? vi.fn((_op: Op): OpResult => ({ ok: true }));
+  const applyAll = options.applyAll ?? vi.fn((_ops: readonly Op[]): OpResult => ({ ok: true }));
+  const read = options.read ?? DOC_READ;
   const onOpenDocument = options.onOpenDocument ?? vi.fn();
   const view = options.view === undefined ? VIEW : options.view;
   const utils = render(
@@ -48,27 +65,53 @@ function draw(options: DrawOptions = {}) {
         view={view}
         selection={options.selection ?? null}
         onSelect={onSelect}
-        apply={apply}
+        applyAll={applyAll}
+        read={read}
         onOpenDocument={onOpenDocument}
       />
     </I18nProvider>,
   );
-  return { ...utils, onSelect, apply, onOpenDocument };
+  return { ...utils, onSelect, applyAll, read, onOpenDocument };
 }
 
 function row(name: string): HTMLElement {
   return screen.getByRole('button', { name });
 }
 
-/** Stub sibling row geometry (jsdom has no layout): stacked 20px rows. */
-function stackRows(names: readonly string[]): void {
-  names.forEach((name, index) => {
-    row(name).getBoundingClientRect = () => ({ top: index * 20, height: 20 }) as DOMRect;
+/** Stub the WHOLE visible tree's geometry (jsdom has no layout): 20px rows
+ * stacked in tree order, indented one `ROW_INDENT_PX` per nesting level. The
+ * drag reads every visible row now, not just the dragged row's siblings, so a
+ * partial stub would leave the rest at jsdom's all-zero rect. */
+const LAYOUT: readonly (readonly [string, number])[] = [
+  ['Header', 0],
+  ['Title', 1],
+  ['Body', 0],
+  ['First', 1],
+  ['Second', 1],
+  ['wrap', 1],
+  ['Inner', 2],
+];
+
+function stackRows(): void {
+  LAYOUT.forEach(([name, level], index) => {
+    row(name).getBoundingClientRect = () =>
+      ({ top: index * 20, height: 20, left: level * ROW_INDENT_PX }) as DOMRect;
   });
 }
 
 function startDrag(name: string, pointerId = 1): void {
   fireEvent.pointerDown(row(name), { pointerId, clientY: 10, isPrimary: true });
+}
+
+/** Move the active drag to a row-stack y, at an x that names the indent level
+ * the drop should be read at. */
+function dragTo(name: string, clientY: number, level: number, pointerId = 1): void {
+  fireEvent.pointerMove(row(name), {
+    pointerId,
+    clientY,
+    clientX: level * ROW_INDENT_PX,
+    isPrimary: true,
+  });
 }
 
 describe('LayerTree', () => {
@@ -143,7 +186,8 @@ describe('LayerTree', () => {
           view={VIEW}
           selection="sections.body.items[2].items[0]"
           onSelect={vi.fn()}
-          apply={vi.fn((_op: Op): OpResult => ({ ok: true }))}
+          applyAll={vi.fn((_ops: readonly Op[]): OpResult => ({ ok: true }))}
+          read={DOC_READ}
           onOpenDocument={vi.fn()}
         />
       </I18nProvider>,
@@ -153,168 +197,206 @@ describe('LayerTree', () => {
   });
 
   it('moves a row up with Alt+ArrowUp and keeps the selection on it', () => {
-    const { onSelect, apply } = draw();
+    const { onSelect, applyAll } = draw();
     fireEvent.keyDown(row('Second'), { key: 'ArrowUp', altKey: true });
-    expect(apply).toHaveBeenCalledWith({
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 1,
-      to: 0,
-    });
+    expect(applyAll).toHaveBeenCalledWith([
+      { op: 'moveItem', path: 'sections.body.items', from: 1, to: 0 },
+    ]);
     expect(onSelect).toHaveBeenCalledWith('sections.body.items[0]');
   });
 
   it('moves a row down with Alt+ArrowDown', () => {
-    const { apply } = draw();
+    const { applyAll } = draw();
     fireEvent.keyDown(row('First'), { key: 'ArrowDown', altKey: true });
-    expect(apply).toHaveBeenCalledWith({
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 0,
-      to: 1,
-    });
+    expect(applyAll).toHaveBeenCalledWith([
+      { op: 'moveItem', path: 'sections.body.items', from: 0, to: 1 },
+    ]);
   });
 
   it('does not emit a move above the first row or on a section row', () => {
-    const { apply } = draw();
+    const { applyAll } = draw();
     fireEvent.keyDown(row('First'), { key: 'ArrowUp', altKey: true });
     fireEvent.keyDown(row('Body'), { key: 'ArrowUp', altKey: true });
-    expect(apply).not.toHaveBeenCalled();
+    expect(applyAll).not.toHaveBeenCalled();
   });
 
   it('leaves the selection alone when the op layer rejects a move', () => {
-    const apply = vi.fn(
-      (_op: Op): OpResult => ({
+    const applyAll = vi.fn(
+      (_ops: readonly Op[]): OpResult => ({
         ok: false,
         error: { code: 'index_out_of_range', message: 'out of range' },
       }),
     );
-    const { onSelect } = draw({ apply });
+    const { onSelect } = draw({ applyAll });
     fireEvent.keyDown(row('Inner'), { key: 'ArrowDown', altKey: true });
-    expect(apply).toHaveBeenCalled();
+    expect(applyAll).toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('drag-reorders within the parent sequence as one moveItem', () => {
-    const { onSelect, apply } = draw();
-    stackRows(['First', 'Second', 'wrap']);
+    const { onSelect, applyAll } = draw();
+    stackRows();
     startDrag('First');
-    fireEvent.pointerMove(row('First'), { pointerId: 1, clientY: 58, isPrimary: true });
+    // Past the last row, at the OUTER indent: the shallow reading of that
+    // gap, which is the body's own tail.
+    dragTo('First', 135, 0);
     expect(document.querySelector('.sj-tree-row--drop-after')).not.toBeNull();
     expect(document.querySelector('.sj-tree-row--dragging')).not.toBeNull();
-    fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 58 });
-    expect(apply).toHaveBeenCalledWith({
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 0,
-      to: 2,
-    });
+    fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 135 });
+    expect(applyAll).toHaveBeenCalledWith([
+      { op: 'moveItem', path: 'sections.body.items', from: 0, to: 2 },
+    ]);
     expect(onSelect).toHaveBeenCalledWith('sections.body.items[2]');
     // The drag swallowed the click that follows the pointer sequence.
     fireEvent.click(row('First'));
     expect(onSelect).not.toHaveBeenCalledWith('sections.body.items[0]');
   });
 
+  it('reads the SAME gap at the inner indent as a move INTO the container', () => {
+    const { onSelect, applyAll } = draw();
+    stackRows();
+    startDrag('First');
+    dragTo('First', 135, 2);
+    fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 135 });
+    expect(applyAll).toHaveBeenCalledWith([
+      {
+        op: 'moveItem',
+        path: 'sections.body.items',
+        from: 0,
+        to: 1,
+        toPath: 'sections.body.items[2].items',
+      },
+    ]);
+    // Lifting items[0] out drops the container from items[2] to items[1].
+    expect(onSelect).toHaveBeenCalledWith('sections.body.items[1].items[1]');
+  });
+
   it('shows the before-line on the row under the active slot', () => {
     draw();
-    stackRows(['First', 'Second', 'wrap']);
+    stackRows();
     startDrag('wrap');
-    fireEvent.pointerMove(row('wrap'), { pointerId: 1, clientY: 2, isPrimary: true });
+    // Between the body section row and its first item: the one reading is
+    // "first item of the body".
+    dragTo('wrap', 65, 1);
     const marked = document.querySelector('.sj-tree-row--drop-before');
     expect(marked?.textContent).toContain('First');
   });
 
   it('treats a drop back onto the origin slot as no edit', () => {
-    const { apply } = draw();
-    stackRows(['First', 'Second', 'wrap']);
+    const { applyAll } = draw();
+    stackRows();
     startDrag('Second');
-    fireEvent.pointerMove(row('Second'), { pointerId: 1, clientY: 30, isPrimary: true });
-    fireEvent.pointerUp(row('Second'), { pointerId: 1, clientY: 30 });
-    expect(apply).not.toHaveBeenCalled();
+    dragTo('Second', 85, 1);
+    fireEvent.pointerUp(row('Second'), { pointerId: 1, clientY: 85 });
+    expect(applyAll).not.toHaveBeenCalled();
+  });
+
+  it('releases as a no-op where nothing can take the row', () => {
+    const { onSelect, applyAll } = draw();
+    stackRows();
+    startDrag('First');
+    // Above the first row there is no item list — the section root is not a
+    // sequence entry — so the drag resolves to no drop at all.
+    dragTo('First', -5, 0);
+    expect(document.querySelector('.sj-tree-row--drop-before')).toBeNull();
+    fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: -5 });
+    expect(applyAll).not.toHaveBeenCalled();
+    // The drag still swallowed its trailing click.
+    fireEvent.click(row('First'));
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('stays a click below the drag threshold', () => {
-    const { onSelect, apply } = draw();
-    stackRows(['First', 'Second', 'wrap']);
+    const { onSelect, applyAll } = draw();
+    stackRows();
     startDrag('First');
-    fireEvent.pointerMove(row('First'), { pointerId: 1, clientY: 11, isPrimary: true });
+    dragTo('First', 11, 1);
     fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 11 });
     fireEvent.click(row('First'));
-    expect(apply).not.toHaveBeenCalled();
+    expect(applyAll).not.toHaveBeenCalled();
     expect(onSelect).toHaveBeenCalledWith('sections.body.items[0]');
   });
 
   it('cancels an active drag on Escape without touching the selection', () => {
-    const { onSelect, apply } = draw();
+    const { onSelect, applyAll } = draw();
     const outer = vi.fn();
     window.addEventListener('keydown', outer);
-    stackRows(['First', 'Second', 'wrap']);
+    stackRows();
     startDrag('First');
-    fireEvent.pointerMove(row('First'), { pointerId: 1, clientY: 45, isPrimary: true });
+    dragTo('First', 135, 0);
     fireEvent.keyDown(row('First'), { key: 'Escape' });
     // The capture-phase cancel stopped the Designer-level bubble listener.
     expect(outer).not.toHaveBeenCalled();
     fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 45 });
-    expect(apply).not.toHaveBeenCalled();
+    expect(applyAll).not.toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
     window.removeEventListener('keydown', outer);
   });
 
-  it('keeps a drag inside its own parent even when the pointer leaves it', () => {
-    const { apply } = draw();
-    row('Title').getBoundingClientRect = () => ({ top: 0, height: 20 }) as DOMRect;
+  it('carries a row OUT of the header band into a body container', () => {
+    const { onSelect, applyAll } = draw();
+    stackRows();
     startDrag('Title');
-    fireEvent.pointerMove(row('Title'), { pointerId: 1, clientY: 300, isPrimary: true });
-    fireEvent.pointerUp(row('Title'), { pointerId: 1, clientY: 300 });
-    // The only header row's slots collapse to its own position: no op, and
-    // never a reparent into the body rows the pointer crossed.
-    expect(apply).not.toHaveBeenCalled();
+    dragTo('Title', 135, 2);
+    fireEvent.pointerUp(row('Title'), { pointerId: 1, clientY: 135 });
+    // The band item authors no coordinates, so nothing is cleared — the batch
+    // is the move alone, and the tree passes no drop point.
+    expect(applyAll).toHaveBeenCalledWith([
+      {
+        op: 'moveItem',
+        path: 'sections.header.items',
+        from: 0,
+        to: 1,
+        toPath: 'sections.body.items[2].items',
+      },
+    ]);
+    expect(onSelect).toHaveBeenCalledWith('sections.body.items[2].items[1]');
   });
 
   it('captures the pointer when the platform supports it', () => {
-    const { apply } = draw();
-    stackRows(['First', 'Second', 'wrap']);
+    const { applyAll } = draw();
+    stackRows();
     const capture = vi.fn();
     row('First').setPointerCapture = capture;
     startDrag('First');
     expect(capture).toHaveBeenCalledWith(1);
     fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 10 });
-    expect(apply).not.toHaveBeenCalled();
+    expect(applyAll).not.toHaveBeenCalled();
   });
 
   it('never starts a drag from a section row', () => {
-    const { apply } = draw();
+    const { applyAll } = draw();
     fireEvent.pointerDown(row('Body'), { pointerId: 1, clientY: 10, isPrimary: true });
     fireEvent.pointerMove(row('Body'), { pointerId: 1, clientY: 90, isPrimary: true });
     fireEvent.pointerUp(row('Body'), { pointerId: 1, clientY: 90 });
-    expect(apply).not.toHaveBeenCalled();
+    expect(applyAll).not.toHaveBeenCalled();
     expect(document.querySelector('.sj-tree-row--dragging')).toBeNull();
   });
 
   it('ignores non-Escape keys while dragging', () => {
-    const { apply } = draw();
-    stackRows(['First', 'Second', 'wrap']);
+    const { applyAll } = draw();
+    stackRows();
     startDrag('First');
-    fireEvent.pointerMove(row('First'), { pointerId: 1, clientY: 45, isPrimary: true });
+    dragTo('First', 135, 0);
     fireEvent.keyDown(row('First'), { key: 'a' });
     expect(document.querySelector('.sj-tree-row--dragging')).not.toBeNull();
-    fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 45 });
-    expect(apply).toHaveBeenCalled();
+    fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 135 });
+    expect(applyAll).toHaveBeenCalled();
   });
 
   it('ignores non-primary presses, foreign pointer ids, and pointer cancel', () => {
-    const { apply } = draw();
-    stackRows(['First', 'Second', 'wrap']);
+    const { applyAll } = draw();
+    stackRows();
     fireEvent.pointerDown(row('First'), { pointerId: 1, clientY: 10, isPrimary: false });
-    fireEvent.pointerMove(row('First'), { pointerId: 1, clientY: 58, isPrimary: false });
-    fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 58 });
-    expect(apply).not.toHaveBeenCalled();
+    fireEvent.pointerMove(row('First'), { pointerId: 1, clientY: 135, isPrimary: false });
+    fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 135 });
+    expect(applyAll).not.toHaveBeenCalled();
     startDrag('First', 2);
-    fireEvent.pointerMove(row('First'), { pointerId: 9, clientY: 58 });
-    fireEvent.pointerUp(row('First'), { pointerId: 9, clientY: 58 });
+    fireEvent.pointerMove(row('First'), { pointerId: 9, clientY: 135 });
+    fireEvent.pointerUp(row('First'), { pointerId: 9, clientY: 135 });
     fireEvent.pointerCancel(row('First'), { pointerId: 2 });
-    fireEvent.pointerUp(row('First'), { pointerId: 2, clientY: 58 });
-    expect(apply).not.toHaveBeenCalled();
+    fireEvent.pointerUp(row('First'), { pointerId: 2, clientY: 135 });
+    expect(applyAll).not.toHaveBeenCalled();
   });
 
   it('shows the empty state for a null or empty view', () => {
@@ -354,7 +436,8 @@ describe('LayerTree', () => {
           view={VIEW}
           selection={null}
           onSelect={onSelect}
-          apply={vi.fn((_op: Op): OpResult => ({ ok: true }))}
+          applyAll={vi.fn((_ops: readonly Op[]): OpResult => ({ ok: true }))}
+          read={DOC_READ}
           onContextMenu={onContextMenu}
           onOpenDocument={vi.fn()}
         />
@@ -418,13 +501,13 @@ describe('LayerTree — the 全体 document root row', () => {
   });
 
   it('does not start a drag from the root row (it is not a tree row)', () => {
-    const { apply } = draw();
+    const { applyAll } = draw();
     const button = row('Document');
     fireEvent.pointerDown(button, { pointerId: 9, clientY: 5, isPrimary: true });
     fireEvent.pointerMove(button, { pointerId: 9, clientY: 80 });
     fireEvent.pointerUp(button, { pointerId: 9, clientY: 80 });
     // No moveItem op — the row carries no drag handlers.
-    expect(apply).not.toHaveBeenCalled();
+    expect(applyAll).not.toHaveBeenCalled();
   });
 
   it('has no context-menu handler on the root row', () => {
@@ -435,7 +518,8 @@ describe('LayerTree — the 全体 document root row', () => {
           view={VIEW}
           selection={null}
           onSelect={vi.fn()}
-          apply={vi.fn((_op: Op): OpResult => ({ ok: true }))}
+          applyAll={vi.fn((_ops: readonly Op[]): OpResult => ({ ok: true }))}
+          read={DOC_READ}
           onContextMenu={onContextMenu}
           onOpenDocument={vi.fn()}
         />

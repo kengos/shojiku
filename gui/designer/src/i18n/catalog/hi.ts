@@ -309,6 +309,7 @@ export const hi: LanguageCatalog = {
     'canvas.place.positioned': 'निर्दिष्ट स्थिति (x/y) — खींचकर स्थानांतरित करें',
     'canvas.place.flow': 'फ़्लो — खींचकर क्रम बदलें',
     'canvas.place.flex': 'फ़्लेक्स — खींचकर क्रम बदलें',
+    'canvas.drop.clearsPosition': 'स्थिति (x/y) हट जाएगी — जगह कंटेनर तय करेगा',
     'canvas.place.grid': 'ग्रिड सेल — स्थिति ट्रैक तय करते हैं',
     'canvas.place.repeat': 'दोहराए जाने वाला भाग — संपादन सभी पर लागू होता है',
     'canvas.place.noBox': 'बॉक्स नहीं — गुण पैनल में संपादित करें',

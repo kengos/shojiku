@@ -392,6 +392,41 @@ describe('selection travels with undo/redo', () => {
     expect(ed.selection()).toBe('sections.body.items[1]');
   });
 
+  it('undoes a CROSS-SEQUENCE move byte-exactly, restoring BOTH sequences', () => {
+    const source = [
+      'sections:',
+      '  body:',
+      '    items:',
+      '      - type: text',
+      '        text: 領収書',
+      '      - type: container',
+      '        items:',
+      '          - type: text',
+      '            text: inner',
+      '',
+    ].join('\n');
+    const ed = Editor.create(source);
+    ed.select('sections.body.items[0]');
+    expect(
+      ed.apply({
+        op: 'moveItem',
+        path: 'sections.body.items',
+        from: 0,
+        to: 1,
+        toPath: 'sections.body.items[1].items',
+      }).ok,
+    ).toBe(true);
+    ed.select('sections.body.items[0].items[1]');
+    expect(ed.text()).not.toBe(source);
+    expect(ed.undo()).toBe(true);
+    // Both the sequence it left and the one it joined are back, byte-exactly,
+    // and the selection is where the user was before the move.
+    expect(ed.text()).toBe(source);
+    expect(ed.selection()).toBe('sections.body.items[0]');
+    expect(ed.redo()).toBe(true);
+    expect(ed.selection()).toBe('sections.body.items[0].items[1]');
+  });
+
   it('re-selects an inserted item on redo of an undone insert', () => {
     const ed = Editor.create(ITEMS);
     ed.select('sections.body.items[0]');

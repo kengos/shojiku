@@ -323,6 +323,8 @@ export const fil: LanguageCatalog = {
     'canvas.place.positioned': 'Nakapuwesto (x/y) — i-drag para ilipat',
     'canvas.place.flow': 'Flow — i-drag para muling ayusin',
     'canvas.place.flex': 'Flex — i-drag para muling ayusin',
+    'canvas.drop.clearsPosition':
+      'Maaalis ang posisyon (x/y) — ang lalagyan ang magpapasya kung saan ito mapupunta',
     'canvas.place.grid': 'Grid cell — ang posisyon ay itinakda ng mga track',
     'canvas.place.repeat': 'Bahagi ng inuulit — ang pag-edit ay para sa lahat',
     'canvas.place.noBox': 'Walang box — i-edit sa properties panel',

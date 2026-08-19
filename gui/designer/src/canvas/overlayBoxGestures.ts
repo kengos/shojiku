@@ -101,7 +101,9 @@ export function applyBoxKeyPlan(
     return;
   }
   if (plan.kind === 'reorder') {
-    manipulate.onReorder(plan.op);
+    // Alt+Arrow stays within the item's own parent, so its destination path is
+    // simply the new index in the same sequence.
+    manipulate.onReorder([plan.op], `${plan.op.path}[${plan.op.to}]`);
     return;
   }
   manipulate.onApply(path, plan.ops);

@@ -713,12 +713,23 @@ key → authored id → localized type name; unknown wire types verbatim).
 Selection is two-way through the ONE shared path selection: row click
 selects; a selection arriving from canvas/diagnostics/palette expands
 its ancestors and scrolls the row into view. Rows drag-reorder within
-their OWN parent sequence only (pointer-events list reorder with a
-4px threshold, Escape cancels, drop-slot math pure and unit-tested;
-Alt+↑/↓ is the keyboard equivalent) — every reorder is ONE `moveItem`
-(AI parity, single undo step); cross-parent moves (reparenting) are
-supported from NEITHER surface yet — an open question for the
-direct-manipulation track. A breadcrumb bar above the canvas shows the selected node's
+their own parent sequence AND into a different one (pointer-events list
+reorder with a 4px threshold, Escape cancels, drop-slot math pure and
+unit-tested; Alt+↑/↓ is the keyboard equivalent and stays within the
+row's own parent) — every drop is ONE transactional batch (AI parity,
+single undo step). A gap between a deeply nested last row and the
+shallow row after it means several things at once — "after the child,
+inside its container" and "after the container", and every ancestor
+level between — so the pointer's HORIZONTAL position picks which, one
+indent step per level out from the deepest reading (the file-tree rule,
+and the only place the tree reads an x at all). A container showing NO
+children — empty, or collapsed — has no gap of its own, so "inside it"
+is offered as the deepest reading of the gap that follows its row;
+without that the canvas could fill a fresh container and the tree, which
+is the surface someone reaches for when the box is small or off-screen,
+never could. The tree carries
+no page geometry, so a row dropped into a coordinate-placed owner keeps
+its own `box` keys rather than gaining new ones. A breadcrumb bar above the canvas shows the selected node's
 ancestor chain (crumb click = select that ancestor; constant height so
 selecting never shifts the canvas). Hostile documents degrade, never
 throw: depth cap 32, node budget 1024 with a localized truncation
@@ -745,10 +756,61 @@ single undo step), the selection travels with the moved item, and the
 overlay recomputes all drag geometry from the CURRENT inspect boxes
 every render, so a mid-drag edit degrades the drag to a visual no-op —
 stale geometry never produces a move. Alt+↑/← and Alt+↓/→ on a
-focused box are the keyboard equivalent. Same-parent reorder only, on
-the page where the drag starts; the drag pipeline is pinned against
-the real engine (plan a drop from real inspect geometry → apply → the
-moved item's `id` lays out at the destination path).
+focused box are the keyboard equivalent, and stay within the item's own
+parent. The drag pipeline is pinned against the real engine (plan a
+drop from real inspect geometry → apply → the moved item's `id` lays
+out at the destination path).
+
+**Cross-parent moves (reparenting)** shipped on BOTH surfaces over one
+shared model (`designer`'s `canvas/reparent.ts` — what a move MEANS —
+plus `canvas/reparentTarget.ts` for where a canvas pointer lands), so
+the canvas and the layer tree can never disagree about it. On canvas
+the destination is the INNERMOST owner under the pointer (the rule
+`palette/cellTarget` already used) — except inside a band's declared
+strip, which is checked FIRST and wins outright, so a container sitting
+in a header receives the BAND rather than itself. It is outlined while
+the drag hovers it, with the insertion line drawn INSIDE an order-placed
+one. What may
+RECEIVE an item: the flow body and flex containers (order-placed), and
+the absolute body plus the header/footer bands (coordinate-placed). What
+may not: a grid container (its tracks decide), and the `cell`/`item`/
+`columns` sub-templates (one authored node drawn many times, so no drop
+point means anything). A destination that cannot lay the item type out
+at all — `page_number` outside a band, `repeat`/`repeat_flow`/
+`page_break` outside the flow body — refuses rather than authoring a
+document that renders nothing where the item used to be.
+
+Crossing between the two placement worlds is the part that edits keys.
+Into an ORDER-placed owner an authored `box.x`/`box.y` is dropped, for
+two different reasons: in the flow BODY it is the `flowPositioned` dead
+end the engine does not read, while a CONTAINER does honour it (the
+`absolute_child_atom` escape hatch every pre-flex template uses) and the
+clearing is a deliberate choice — the numbers were measured against a
+different parent's origin, so keeping them would land the item somewhere
+it was not dropped, and putting something inside a container is a request
+to let the container place it. Either way it is the one value-destroying
+thing a drop does, so the canvas says it BEFORE the release — a chip above the receiver it would enter, shown only when the
+batch actually carries the clearing ops, so it never cries wolf over an
+item that authored no coordinates to lose. Into a COORDINATE-placed one the drop point is
+written as `box.x`/`box.y` against the MARGIN BOX — the engine builds
+the header band, the body and the footer band from one page basis, so
+all three share that origin. A band's own region is not in `inspect`
+(it has no box of its own); what the document states is
+`sections.<band>.height`, which is the extent every bundled template
+lays its `body.box` out around, so that is the region here too — a band
+declaring no height is simply not a canvas drop target, and the tree
+still reaches it. The move itself is ONE `moveItem` carrying a
+destination sequence (`toPath`), which splices the NODE, so the moved
+subtree keeps its comments, its quoting and its anchors; the batch is
+those box-key edits then that move, applied as one `applyAll`. A move
+whose result could not be SERIALIZED is refused rather than committed:
+`eemeli/yaml` verifies alias order at stringify time, so an item that
+would end up with an anchor defined after something aliasing it would
+otherwise turn every later save into a throw. The op splices, asks the
+library whether the document still writes out, and rolls the splice back
+if it does not — an exact test, where a boundary heuristic would refuse
+the ordinary shape (a shared `anchors:` block at the top, aliased
+throughout).
 
 **Absolute drag/resize + grid snap** shipped, extending the same DnD
 substrate: an absolutely placed item — an absolute-body child, a
@@ -928,7 +990,9 @@ Decisions made and recorded here:
 - **`designer-core` is pure TS** (no React): the template held as an
   `eemeli/yaml` CST `Document`, edits expressed only as named patch operations
   (`setScalar` / `setStrings` / `removeKey` / `moveItem` / `duplicateItem` /
-  `insertItem` / `removeItem`,
+  `insertItem` / `removeItem`, `moveItem` alone naming a SECOND sequence
+  (`toPath`) for a cross-parent move, which splices the node rather than
+  re-composing it, so comments and anchors survive;
   the scalar/strings/remove-key ops taking an OPTIONAL `path` — absent reaches
   the document root map; `insertItem` takes its subtree as a plain
   JSON-shaped value composed into the CST — never YAML text, so no second

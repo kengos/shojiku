@@ -9,7 +9,7 @@
 import type { ReadFn } from '@shojiku/designer-core';
 import { BOXLESS_TYPES } from '../panel/itemView';
 import { seqPosition } from '../tree/reorder';
-import { type ReorderContext, reorderContext } from './dnd';
+import { type ReorderContext, reorderContext, SUB_TEMPLATE_RE } from './dnd';
 import { type AuthoredLength, ptLength, readLength } from './lengths';
 
 /** Where a movable item gets its position from (the chip wording). */
@@ -41,11 +41,6 @@ export type Manipulation =
   | { readonly kind: 'fixed'; readonly reason: FixedReason };
 
 const ITEMS_SUFFIX = '.items';
-
-// A path inside a repeating sub-template (`table` columns / `cell:` /
-// `repeat_flow` `item:`): its geometry repeats per data element, so a single
-// box cannot be moved — edits affect every instance.
-const SUB_TEMPLATE_RE = /\.columns\[|\.cell\.|\.item\./;
 
 /** Narrow an untrusted materialized value to a plain object, or `undefined`.
  * The ONE guard every document read in this area goes through — exported for
@@ -83,6 +78,8 @@ function movable(place: MovablePlace, box: Record<string, unknown>): Manipulatio
  * hostile documents (a read throw, alias bombs, garbage shapes) classify as
  * fixed. */
 export function manipulationFor(read: ReadFn, path: string): Manipulation {
+  // Its geometry repeats per data element, so a single box cannot be moved —
+  // an edit would affect every instance.
   if (SUB_TEMPLATE_RE.test(path)) {
     return fixed('repeat');
   }

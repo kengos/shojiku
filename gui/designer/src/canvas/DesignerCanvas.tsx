@@ -82,6 +82,9 @@ export interface DesignerCanvasProps {
    * page setup), so every page has the same origin and a guide on page 1 alone
    * would leave later pages unexplained. */
   readonly margin?: PageMargin | null;
+  /** Passed straight through to every page's overlay — the localized sentence
+   * shown while a drop would DROP the dragged item's authored `x`/`y`. */
+  readonly dropWarning?: string;
 }
 
 const NO_BOXES: readonly PlacedBox[] = [];
@@ -106,6 +109,7 @@ export function DesignerCanvas({
   containerMarks,
   onContextMenu,
   margin,
+  dropWarning,
 }: DesignerCanvasProps) {
   return (
     <div
@@ -157,6 +161,7 @@ export function DesignerCanvas({
               containerMarks={containerMarks}
               onContextMenu={onContextMenu}
               margin={margin}
+              dropWarning={dropWarning}
             />
             {inlineEdit !== undefined && editingBox !== undefined ? (
               <InlineTextEditor

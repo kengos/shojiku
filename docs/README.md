@@ -112,7 +112,7 @@ for when they land.
 | Doc | Scope |
 | --- | --- |
 | [agents/engine.md](agents/engine.md) | `engine/` — Rust core, layout, render, formatter, diagnostics, CLI |
-| [agents/gui.md](agents/gui.md) | `gui/` — React/TypeScript Designer *(built: document core, canvas incl. flow/flex drag reorder + zoom + inline text edit, layer tree/breadcrumb, property panel + format toolbar + defaults/styles registry, diagnostics, field palette, preset-catalog app shell, mounted-host persistence seam)* |
+| [agents/gui.md](agents/gui.md) | `gui/` — React/TypeScript Designer *(built: document core, canvas incl. flow/flex drag reorder + cross-parent moves + zoom + inline text edit, layer tree/breadcrumb, property panel + format toolbar + defaults/styles registry, diagnostics, field palette, preset-catalog app shell, mounted-host persistence seam)* |
 | [agents/sdk.md](agents/sdk.md) | `sdk/` — Python, Node, Ruby, .NET, PHP, Java, Go wrappers *(all seven built: Ruby is the reference implementation and the other six mirror it)* |
 | [agents/lang.md](agents/lang.md) | locale data — builtin CLDR packs in `engine/formatter` (ja-JP/en-US) + the shipped `packs/locale/` packs every other locale uses, `packs/fonts/` |
 | [agents/plugins.md](agents/plugins.md) | `plugins/` — formatters, signers, data sources *(not built yet)* |

@@ -20,7 +20,8 @@ import { type ContainerMark, ContainerMarkVisual } from './ContainerMarkVisual';
 import type { IndicatorLine } from './dropPlan';
 import { marginGuide, type PageMargin } from './marginGuide';
 import { OverlayBoxLayer } from './OverlayBoxLayer';
-import { DropLine, GhostRect, GuideLines, InsertRects, MarqueeRect } from './OverlayGestureShapes';
+import { DropIndicators } from './OverlayDropShapes';
+import { GhostRect, GuideLines, MarqueeRect } from './OverlayGestureShapes';
 import { GroupFrame, MarginGuideShape, OverlayGrid } from './OverlayShapes';
 import { overlayBackground } from './overlayBackground';
 import type { CanvasManipulate } from './overlayDragModel';
@@ -82,6 +83,10 @@ export interface BoxOverlayProps {
    * painted as the margin-box guide, which is where `x: 0` / `y: 0` start.
    * Absent = no guide (unchanged behavior for a host that passes none). */
   readonly margin?: PageMargin | null;
+  /** The localized sentence shown while a drop would DROP the dragged item's
+   * authored `x`/`y`. Absent = say nothing (this component carries no i18n of
+   * its own — the host resolves its own copy). */
+  readonly dropWarning?: string;
 }
 
 export function BoxOverlay({
@@ -103,6 +108,7 @@ export function BoxOverlay({
   containerMarks = EMPTY_MARKS,
   onContextMenu,
   margin = null,
+  dropWarning,
 }: BoxOverlayProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   // One callback ref keeps the internal ref current AND reports the element
@@ -122,15 +128,18 @@ export function BoxOverlay({
   const scrolledTo = useRef<string | null>(null);
   const patternId = `sj-grid-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
 
-  const { drag, marquee, dragPath, indicator, ghostPx, guides, marqueePx } = useOverlayDrag({
-    svgRef,
-    boxes,
-    scale,
-    width,
-    manipulate,
-    onSelect,
-    onMarquee,
-  });
+  const { drag, marquee, dragPath, indicator, ghostPx, guides, marqueePx, region, clearsPosition } =
+    useOverlayDrag({
+      svgRef,
+      boxes,
+      scale,
+      width,
+      height,
+      margin,
+      manipulate,
+      onSelect,
+      onMarquee,
+    });
   const layers = overlayLayers({
     boxes,
     scale,
@@ -142,9 +151,6 @@ export function BoxOverlay({
   });
   const background = overlayBackground({ marquee, manipulate, onMarquee, onDeselect });
 
-  // The reorder indicator and an external (palette-drop) one share the
-  // rendering; at most one exists at a time.
-  const dropLine = indicator ?? insertLine;
   // Paper anatomy, not a gesture — derived every render like the grid, and
   // painted with it beneath the interactive layer.
   const guide = marginGuide(margin, scale, width, height);
@@ -197,8 +203,16 @@ export function BoxOverlay({
       />
       {ghostPx !== null ? <GhostRect rect={ghostPx} /> : null}
       <GuideLines guides={guides} scale={scale} />
-      {dropLine !== null ? <DropLine line={dropLine} scale={scale} /> : null}
-      <InsertRects rects={insertRects} scale={scale} />
+      <DropIndicators
+        region={region}
+        // The reorder indicator and an external (palette-drop) one share the
+        // rendering; at most one exists at a time.
+        line={indicator ?? insertLine}
+        insertRects={insertRects}
+        warning={clearsPosition ? dropWarning : undefined}
+        ghost={ghostPx}
+        scale={scale}
+      />
       {layers.groupBox !== null ? <GroupFrame rect={layers.groupBox} /> : null}
       {marqueePx !== null ? <MarqueeRect rect={marqueePx} /> : null}
       {containerMarks.map((mark) => (

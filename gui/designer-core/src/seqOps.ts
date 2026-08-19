@@ -7,6 +7,7 @@ import type { Document, Node } from 'yaml';
 import { resolveSeqForInsert } from './opCreate';
 import { inRange, resolveSeq } from './opTarget';
 import { clip, fail, OK, type Op, type OpResult } from './opTypes';
+import { applyMoveItem } from './seqMove';
 import { checkSnippetValue } from './snippet';
 
 /** The ops addressing a sequence element. */
@@ -15,22 +16,9 @@ export type SeqOp = Extract<Op, { op: 'moveItem' | 'duplicateItem' | 'insertItem
 /** Apply one sequence op in place. */
 export function applySeqOp(doc: Document, op: SeqOp): OpResult {
   switch (op.op) {
-    case 'moveItem': {
-      const resolved = resolveSeq(doc, op.path);
-      if (!resolved.ok) {
-        return resolved;
-      }
-      const { items } = resolved.seq;
-      if (!inRange(op.from, items.length) || !inRange(op.to, items.length)) {
-        return fail(
-          'index_out_of_range',
-          `move ${op.from}->${op.to} out of range for ${clip(op.path)}`,
-        );
-      }
-      const [node] = items.splice(op.from, 1);
-      items.splice(op.to, 0, node);
-      return OK;
-    }
+    case 'moveItem':
+      // The one op that can address two sequences — see `seqMove.ts`.
+      return applyMoveItem(doc, op);
     case 'duplicateItem': {
       const resolved = resolveSeq(doc, op.path);
       if (!resolved.ok) {

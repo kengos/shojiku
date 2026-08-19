@@ -480,6 +480,7 @@ export const zhCn: LanguageCatalog = {
     'canvas.place.positioned': '指定位置 (x/y) — 拖拽移动',
     'canvas.place.flow': '流式排列 — 拖拽重新排序',
     'canvas.place.flex': '弹性排列 — 拖拽重新排序',
+    'canvas.drop.clearsPosition': '坐标 (x/y) 会被移除 — 位置由容器决定',
     'canvas.place.grid': '网格排列 — 位置由轨道决定',
     'canvas.place.repeat': '重复模板的一部分 — 编辑会影响所有项目',
     'canvas.place.noBox': '无框 — 请在属性面板编辑',

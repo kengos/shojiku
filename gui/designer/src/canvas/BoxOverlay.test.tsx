@@ -393,6 +393,7 @@ function renderReorder(
     boxes?: readonly PlacedBox[];
     onSelect?: (path: string) => void;
     read?: ReadFn;
+    dropWarning?: string;
   } = {},
 ) {
   const manipulate = makeManipulate({
@@ -409,6 +410,7 @@ function renderReorder(
       onSelect={over.onSelect ?? (() => {})}
       onDeselect={() => {}}
       manipulate={manipulate}
+      dropWarning={over.dropWarning}
     />,
   );
 }
@@ -432,7 +434,82 @@ const dropAt = (path: string, y: number) => {
   fireEvent.pointerUp(rectFor(path), { pointerId: 1, clientX: 50, clientY: y });
 };
 
+// The same stack with a container last, so a drag can enter another parent.
+const NEST_BOXES = [
+  box('sections.body.items[0]', 0, 0, 100, 30),
+  box('sections.body.items[1]', 0, 40, 100, 60),
+  box('sections.body.items[1].items[0]', 5, 45, 90, 20),
+];
+const NEST_DOC: Record<string, unknown> = {
+  'sections.body': { type: 'flow' },
+  'sections.body.items[0]': { type: 'text' },
+  'sections.body.items[1]': { type: 'container' },
+  'sections.body.items[1].items': [{}],
+  'sections.body.items[1].items[0]': { type: 'text' },
+};
+
 describe('BoxOverlay drag reorder', () => {
+  it('warns before a drop that would DROP the item own coordinates', () => {
+    // An ABSOLUTE body: its children carry x/y, which a container would take
+    // over — the one value-destroying thing a drop does.
+    const { container } = renderReorder(() => {}, {
+      boxes: NEST_BOXES,
+      read: docRead({
+        ...NEST_DOC,
+        'sections.body': { type: 'absolute' },
+        'sections.body.items[0]': { type: 'text', box: { x: 0, y: 0, w: 100, h: 30 } },
+      }),
+      dropWarning: '座標 (x/y) は外れます',
+    });
+    startDrag('sections.body.items[0]', 10);
+    dragTo('sections.body.items[0]', 90);
+    expect(container.querySelector('text')?.textContent).toBe('座標 (x/y) は外れます');
+  });
+
+  it('warns for a drop into the flow BODY, which has no outline to hang it on', () => {
+    // The receiver with no box of its own: a band item dragged down onto the
+    // body loses its coordinates exactly like one dropped into a container.
+    const { container } = renderReorder(() => {}, {
+      boxes: [
+        box('sections.header.items[0]', 0, 0, 100, 20),
+        box('sections.body.items[0]', 0, 40, 100, 30),
+      ],
+      read: docRead({
+        'sections.body': { type: 'flow' },
+        'sections.header': {},
+        'sections.header.items[0]': { type: 'text', box: { x: 0, y: 0, w: 100, h: 20 } },
+        'sections.body.items[0]': { type: 'text' },
+      }),
+      dropWarning: '座標 (x/y) は外れます',
+    });
+    startDrag('sections.header.items[0]', 5);
+    dragTo('sections.header.items[0]', 60);
+    expect(container.querySelector('.sj-drop-cell')).toBeNull();
+    expect(container.querySelector('.sj-drop-warning')).not.toBeNull();
+  });
+
+  it('says nothing when the dragged item authored no coordinates to lose', () => {
+    const { container } = renderReorder(() => {}, {
+      boxes: NEST_BOXES,
+      read: docRead(NEST_DOC),
+      dropWarning: '座標 (x/y) は外れます',
+    });
+    startDrag('sections.body.items[0]', 10);
+    dragTo('sections.body.items[0]', 90);
+    expect(container.querySelector('.sj-drop-warning')).toBeNull();
+  });
+
+  it('outlines the receiving owner while a drag hovers another parent', () => {
+    const { container } = renderReorder(() => {}, {
+      boxes: NEST_BOXES,
+      read: docRead(NEST_DOC),
+    });
+    expect(container.querySelector('.sj-drop-cell')).toBeNull();
+    startDrag('sections.body.items[0]', 10);
+    dragTo('sections.body.items[0]', 90);
+    expect(container.querySelector('.sj-drop-cell')).not.toBeNull();
+  });
+
   it('renders the ghost, indicator, and dragging state during a drag', () => {
     const { container } = renderReorder();
     startDrag('sections.body.items[0]', 10);
@@ -467,12 +544,10 @@ describe('BoxOverlay drag reorder', () => {
     dragTo('sections.body.items[0]', 120);
     dropAt('sections.body.items[0]', 120);
     expect(onReorder).toHaveBeenCalledTimes(1);
-    expect(onReorder).toHaveBeenCalledWith({
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 0,
-      to: 2,
-    });
+    expect(onReorder).toHaveBeenCalledWith(
+      [{ op: 'moveItem', path: 'sections.body.items', from: 0, to: 2 }],
+      'sections.body.items[2]',
+    );
     // The trailing click of the completed drag must not re-select the old
     // path — it may now address a different item.
     fireEvent.click(rectFor('sections.body.items[0]'));
@@ -628,38 +703,34 @@ describe('BoxOverlay drag reorder', () => {
     const onReorder = vi.fn();
     renderReorder(onReorder);
     fireEvent.keyDown(rectFor('sections.body.items[1]'), { key: 'ArrowUp', altKey: true });
-    expect(onReorder).toHaveBeenNthCalledWith(1, {
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 1,
-      to: 0,
-    });
+    expect(onReorder).toHaveBeenNthCalledWith(
+      1,
+      [{ op: 'moveItem', path: 'sections.body.items', from: 1, to: 0 }],
+      'sections.body.items[0]',
+    );
     fireEvent.keyDown(rectFor('sections.body.items[2]'), { key: 'ArrowLeft', altKey: true });
-    expect(onReorder).toHaveBeenNthCalledWith(2, {
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 2,
-      to: 1,
-    });
+    expect(onReorder).toHaveBeenNthCalledWith(
+      2,
+      [{ op: 'moveItem', path: 'sections.body.items', from: 2, to: 1 }],
+      'sections.body.items[1]',
+    );
   });
 
   it('moves the item down with Alt+ArrowDown and Alt+ArrowRight', () => {
     const onReorder = vi.fn();
     renderReorder(onReorder);
     fireEvent.keyDown(rectFor('sections.body.items[0]'), { key: 'ArrowDown', altKey: true });
-    expect(onReorder).toHaveBeenNthCalledWith(1, {
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 0,
-      to: 1,
-    });
+    expect(onReorder).toHaveBeenNthCalledWith(
+      1,
+      [{ op: 'moveItem', path: 'sections.body.items', from: 0, to: 1 }],
+      'sections.body.items[1]',
+    );
     fireEvent.keyDown(rectFor('sections.body.items[1]'), { key: 'ArrowRight', altKey: true });
-    expect(onReorder).toHaveBeenNthCalledWith(2, {
-      op: 'moveItem',
-      path: 'sections.body.items',
-      from: 1,
-      to: 2,
-    });
+    expect(onReorder).toHaveBeenNthCalledWith(
+      2,
+      [{ op: 'moveItem', path: 'sections.body.items', from: 1, to: 2 }],
+      'sections.body.items[2]',
+    );
   });
 
   it('treats Alt+ArrowUp on the first item as a no-op', () => {
@@ -714,6 +785,7 @@ function renderAbsolute(
     selectedPath?: string | null;
     read?: ReadFn;
     boxes?: readonly PlacedBox[];
+    dropWarning?: string;
   } = {},
 ) {
   const manipulate = makeManipulate({
@@ -732,6 +804,7 @@ function renderAbsolute(
       onSelect={over.onSelect ?? (() => {})}
       onDeselect={() => {}}
       manipulate={manipulate}
+      dropWarning={over.dropWarning}
     />,
   );
 }

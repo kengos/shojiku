@@ -59,7 +59,9 @@ hostile geometry degrades to null before it can reach an op.
   document-derived paths are React-escaped (pinned by a hostile-path
   test). `svgRef` reports the SVG (the palette drag hit-tests through
   it); `insertLine` vs `insertRects` are the two mutually-exclusive
-  external insertion indicators. `BoxOverlayProps` is the host-facing
+  external insertion indicators; the drag's OWN receiving-owner outline
+  reuses the `insertRects` shape, painted under the insertion line so
+  the line stays the answer to "where exactly". `BoxOverlayProps` is the host-facing
   surface (re-exported from the package index) — deliberately flat; its
   optional `margin` paints the margin-box guide (absent = no guide, so an
   existing host is unchanged).
@@ -90,10 +92,17 @@ hostile geometry degrades to null before it can reach an op.
   so zoom factors out; unmeasurable → ratio 1), `clientDeltaToPt`,
   `handleCenter`/`boxCursor`/`arrowDelta`, `groupBounds` (null below
   two DISTINCT paths — repeat fragments count once).
+- `canvas/overlayMarquee.ts` — the rubber band's model, kept apart from
+  the box drag for the same reason it has its own `useDrag` machine: it
+  SELECTS and never edits, and shares nothing with the box drag but the
+  context bundle and the pointer conversion. `MarqueeTask` +
+  `commitMarquee`.
 - `canvas/useOverlayDrag.ts` — the overlay's pointer WIRING only: the
   box drag machine (move/resize/reorder/refused) + the marquee on its
   OWN `useDrag` instance, the once-per-session refusal report, and the
-  page-pt → overlay-px scaling of what it returns. What a release
+  page-pt → overlay-px scaling of what it returns. Takes the page in PT
+  and the resolved margins, which is what the band regions are measured
+  from (`BoxOverlay` divides its px dimensions by the render scale). What a release
   commits and what a live drag paints are `overlayDragModel` /
   `overlayDragVisual`.
 - `canvas/overlayDragModel.ts` — the drag's pure model: the
@@ -101,11 +110,19 @@ hostile geometry degrades to null before it can reach an op.
   gesture payloads, the `OverlayDragContext` bundle every computation is
   asked over (it carries the SVG **ref**, not the element — every
   pointer conversion must read the LIVE rect at drop time),
-  `snapOptionsFor`, `reorderContextFor`, and the `commitDrag` /
-  `commitMarquee` releases. A commit that produced no change selects the
-  pressed item instead (the drag machine suppressed the trailing click).
+  `snapOptionsFor`, `reorderContextFor`, `reparentAt`, and the
+  `commitDrag` release (the marquee's is `overlayMarquee`). Every release asks
+  `reparentAt` FIRST — a drop over a different parent is a reparent
+  whichever gesture armed the drag, and its `null` for the own-parent
+  case is what hands the release back to the shipped reorder/move
+  paths. `onReorder` therefore takes a BATCH plus the path the item
+  ended up at. A commit that produced no change selects the pressed item
+  instead (the drag machine suppressed the trailing click).
 - `canvas/overlayDragVisual.ts` — `dragVisual` → `DragVisual`
-  {dragPath, indicator, ghost (page pt), guides}, recomputed from the
+  {dragPath, indicator, ghost (page pt), guides, region — the receiving
+  owner of a cross-parent drop — and `clearsPosition`, read off the
+  batch's own `removeKey` ops so the warning is honest rather than a
+  blanket "entering a container"}, recomputed from the
   CURRENT context every render (a mid-drag edit degrades to a visual
   no-op, never a stale-geometry op); `NO_DRAG_VISUAL` is the
   paints-nothing value (idle / below threshold / refused / no plan).
@@ -153,6 +170,13 @@ hostile geometry degrades to null before it can reach an op.
 - `canvas/OverlayGestureShapes.tsx` — the overlay's GESTURE shapes, each
   fed by a live drag machine or the external palette-drag props: ghost,
   guides, drop line, insert rects, marquee.
+- `canvas/OverlayDropShapes.tsx` — `DropIndicators`, the four layers that
+  answer "where would this land, and at what cost": the receiving owner's
+  outline, the insertion line inside it, the palette drag's cell rects,
+  and the warning chip a drop that would CLEAR the item's authored
+  `x`/`y` carries. The only gesture shape with TEXT — a localized
+  sentence the host resolves and passes down (`BoxOverlay` carries no
+  i18n of its own, like the container-mark chip).
   Both shape modules are `pointer-events: none` with NO ARIA at all, and
   each piece takes resolved non-null geometry — the caller's JSX decides
   existence.
@@ -190,10 +214,40 @@ hostile geometry degrades to null before it can reach an op.
 
 ## Direct manipulation (pure models + the pointer machine)
 
-- `canvas/dnd.ts` — the DnD substrate's ELIGIBILITY half:
-  `reorderContext` (drag eligibility + axis from the document; refusals
-  incl. grid, sub-templates, authored x/y) and `siblingRects`
-  (duplicated index → null, since repeat fragments share paths).
+- `canvas/dnd.ts` — the DnD substrate's ELIGIBILITY half, on both sides:
+  what may LEAVE (`reorderContext` — drag eligibility + axis from the
+  document; refusals incl. grid, sub-templates, authored x/y) and what
+  may RECEIVE (`ownerPlacement` → the four `OwnerKind`s and the slot
+  axis, `typeFitsOwner` — the engine's own placement rules, so a move
+  cannot leave an item somewhere it would warn-and-skip, and
+  `receiverFor`). Plus `siblingRects` (duplicated index → null, since
+  repeat fragments share paths) and `SUB_TEMPLATE_RE`, shared with
+  `manipulate`.
+- `canvas/reparent.ts` — the cross-parent move as OPS, and the one model
+  BOTH surfaces share (the layer tree asks it the same question). ONE
+  `moveItem` carrying `toPath`, preceded by whatever `box` keys the
+  crossing invalidates: entering an order-placed owner CLEARS an
+  authored `x`/`y` — a CHOICE, not a no-op, since only the flow body
+  ignores them and a container honours them (see `reparent.ts`) —
+  entering a coordinate-placed one WRITES them from the drop point
+  against the margin box (the origin a band child and an absolute-body child share —
+  `assemble.rs` builds all three sections from one page basis), in the
+  item's own authored form and only where the value changes. Every
+  refusal is a `null`: a non-sequence or sub-template source, the
+  item's OWN parent (the shipped reorder path owns that), a destination
+  inside the moved item, a type the destination cannot lay out, a
+  hostile index, a read that throws.
+- `canvas/reparentTarget.ts` — where a canvas cross-parent drop LANDS:
+  `bandRegion` (the band's own rect is not in `inspect`, so its region
+  is the `sections.<band>.height` the DOCUMENT declares, taken from the
+  top of the margin box for a header and the bottom for a footer — the
+  shape `insert/bandPlacement` already places a fresh band item by),
+  `receiverUnder` (bands FIRST — a declared band strip wins outright, so a
+  container inside a header is not reachable this way — then innermost-hit
+  over the boxes per the `cellUnder` rule, then the body), and `planReparent` → the target
+  plus what the overlay paints (the receiving owner's outline, and the
+  insertion line inside an order-placed one). Slot math is the shipped
+  `dropPlan` one, never a second implementation.
 - `canvas/dropPlan.ts` — the DROP half: `dropSlotFor` (list space) /
   `slotToDocIndex` (document space — a page may show a sparse run) /
   `indicatorLine`, and `planDrop` (`{op: MoveItemOp|null, line,

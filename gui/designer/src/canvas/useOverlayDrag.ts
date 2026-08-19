@@ -6,22 +6,23 @@
 // this hook only owns the machines, the once-per-session refusal report, and
 // the page-pt → overlay-px scaling of what it hands back.
 
-import { type RefObject, useCallback, useEffect, useRef } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { BoxRect, PlacedBox } from '../engine/types';
 import type { IndicatorLine } from './dropPlan';
 import { scaleRect } from './geometry';
 import type { GuideLine } from './guides';
+import type { PageMargin } from './marginGuide';
 import { marqueeRect } from './marquee';
 import {
   type CanvasManipulate,
   commitDrag,
-  commitMarquee,
   type DragTask,
-  type MarqueeTask,
   type OverlayDragContext,
 } from './overlayDragModel';
 import { dragVisual, NO_DRAG_VISUAL } from './overlayDragVisual';
 import { clientToPagePt } from './overlayGeometry';
+import { commitMarquee, type MarqueeTask } from './overlayMarquee';
+import type { PageSize } from './reparentTarget';
 import { type DragPoint, type UseDrag, useDrag } from './useDrag';
 
 export interface OverlayDragOptions {
@@ -30,6 +31,11 @@ export interface OverlayDragOptions {
   readonly boxes: readonly PlacedBox[];
   readonly scale: number;
   readonly width: number;
+  /** The overlay's own height in px — with `width` and `scale` it gives the
+   * page in PT, which is what the band regions a cross-parent drop can land
+   * in are measured from. */
+  readonly height: number;
+  readonly margin: PageMargin | null;
   readonly manipulate: CanvasManipulate | undefined;
   readonly onSelect: (path: string) => void;
   readonly onMarquee: ((paths: readonly string[], additive: boolean) => void) | undefined;
@@ -50,6 +56,12 @@ export interface OverlayDrag {
   readonly guides: readonly GuideLine[];
   /** The active rubber-band rect, already scaled to overlay px. */
   readonly marqueePx: BoxRect | null;
+  /** The receiving owner a cross-parent drop would enter, in page pt (the
+   * shared outline shape scales it). Null unless the pointer is over a
+   * DIFFERENT parent than the dragged item's own. */
+  readonly region: BoxRect | null;
+  /** This drop would DROP the dragged item's authored `x`/`y`. */
+  readonly clearsPosition: boolean;
 }
 
 export function useOverlayDrag({
@@ -57,10 +69,18 @@ export function useOverlayDrag({
   boxes,
   scale,
   width,
+  height,
+  margin,
   manipulate,
   onSelect,
   onMarquee,
 }: OverlayDragOptions): OverlayDrag {
+  // `width`/`height` arrive in overlay PIXELS; the band regions a cross-parent
+  // drop lands in are authored in pt, like the margins.
+  const page: PageSize = useMemo(
+    () => ({ width: width / scale, height: height / scale }),
+    [width, height, scale],
+  );
   const onDrop = useCallback(
     (task: DragTask, point: DragPoint) => {
       // The wiring may have been withdrawn mid-drag (a prop change); the
@@ -68,9 +88,9 @@ export function useOverlayDrag({
       if (manipulate === undefined) {
         return;
       }
-      commitDrag({ svgRef, boxes, scale, width, manipulate }, task, point, onSelect);
+      commitDrag({ svgRef, boxes, scale, width, page, margin, manipulate }, task, point, onSelect);
     },
-    [manipulate, boxes, width, scale, onSelect, svgRef],
+    [manipulate, boxes, width, scale, page, margin, onSelect, svgRef],
   );
   const drag = useDrag<DragTask>(onDrop);
 
@@ -82,9 +102,14 @@ export function useOverlayDrag({
       if (manipulate === undefined || onMarquee === undefined) {
         return;
       }
-      commitMarquee({ svgRef, boxes, scale, width, manipulate }, task, point, onMarquee);
+      commitMarquee(
+        { svgRef, boxes, scale, width, page, margin, manipulate },
+        task,
+        point,
+        onMarquee,
+      );
     },
-    [manipulate, boxes, width, scale, onMarquee, svgRef],
+    [manipulate, boxes, width, scale, page, margin, onMarquee, svgRef],
   );
   const marquee = useDrag<MarqueeTask>(onMarqueeDrop);
 
@@ -112,7 +137,7 @@ export function useOverlayDrag({
   // captured at drag start). All null when idle, below the threshold, or when
   // the drag stopped being valid.
   const context: OverlayDragContext | null =
-    manipulate === undefined ? null : { svgRef, boxes, scale, width, manipulate };
+    manipulate === undefined ? null : { svgRef, boxes, scale, width, page, margin, manipulate };
   const visual =
     session?.started === true && context !== null ? dragVisual(context, session) : NO_DRAG_VISUAL;
 
@@ -134,5 +159,7 @@ export function useOverlayDrag({
     ghostPx: visual.ghost === null ? null : scaleRect(visual.ghost, scale),
     guides: visual.guides,
     marqueePx: marqueeBox === null ? null : scaleRect(marqueeBox, scale),
+    region: visual.region,
+    clearsPosition: visual.clearsPosition,
   };
 }

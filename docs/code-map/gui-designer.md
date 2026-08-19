@@ -72,15 +72,31 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
 - `tree/TreeRow.tsx` — one row, recursing: twisty, kind mark, label,
   click/right-click/Alt+↑↓/collapse keys; registers in the shared
   `rowRefs` map.
-- `tree/useRowReorder.ts` — the row-reorder gesture (pointer state machine
-  + Alt+↑/↓): drop among OWN siblings only (a drag can never reparent),
-  capture-phase Escape cancel, one `moveItem`, selection travels;
+- `tree/useRowReorder.ts` — the row-drag gesture (pointer state machine
+  + Alt+↑/↓): the pointer drags over ALL visible rows, so a drop may
+  leave the row's own parent; Alt+arrow stays inside it. Capture-phase
+  Escape cancel, ONE transactional batch, selection travels;
   `marksFor(node)` = the per-row drop-indicator derivation.
-- `tree/rowDrag.ts` — what a row drag IS while it runs: `DragState`,
-  `applyMove` (the op + the travelling selection), the live
-  `siblingRects`/`siblingEnd` read off the `rowRefs` map at the moment
-  they are needed (never captured at render time), and the pure
-  `rowDragMarks` the hook's `marksFor` delegates to.
+- `tree/rowDrag.ts` — what a row drag IS while it runs: `DragState`
+  (carrying the resolved `RowSlot`), `applyDrop` (the batch + the
+  travelling selection), `visibleRows`/`siblingEnd` read off the
+  `rowRefs` map at the moment they are needed (never captured at render
+  time), `acceptsFor` (the destination predicate handed to the drop
+  model, so an indicator can only point at a legal drop), `rowDropOps`
+  (same-parent = one `moveItem`; cross-parent = the shared
+  `canvas/reparent` batch), and the pure `rowDragMarks` the hook's
+  `marksFor` delegates to.
+- `tree/rowDrop.ts` — where a row drag LANDS: `visiblePaths` (what the
+  tree shows, in its own order), `ROW_INDENT_PX` (12, `TreeRow`'s
+  `pl-3` — the unit the horizontal position is read in), and
+  `rowDropAt`. The vertical position picks the GAP; the horizontal one
+  picks which of that gap's meanings was intended, walking the ancestor
+  chain out of the PATHS (so no depth bookkeeping travels with the
+  rows). The DEEPEST reading is "inside the row above" when that row can
+  receive items and shows no children (empty or collapsed) — the tree's
+  only way to fill a container the canvas can drop into — else "after it
+  among its siblings"; never shallower than the row after the gap, and
+  every candidate is filtered through the caller's `accepts`.
 - `tree/Breadcrumb.tsx` — the ancestor chain above the canvas;
   constant-height bar.
 
@@ -153,8 +169,10 @@ REQUIRED-only (no `?:`/defaults) so the split added no new branch legs.
   + pdf/image notices + the over-cap raise button. Renders CATALOG keys
   only, never document content.
 - `shell/canvasManipulate.ts` — the overlay's manipulation wiring as a
-  pure factory: reorder drop = ONE `moveItem`; move/resize/nudge = ONE
-  `applyAll` batch = one undo step; a refused drag sets the chip state.
+  pure factory: every drop that changes an item's PATH (a same-parent
+  reorder, a cross-parent move) and every move/resize/nudge is ONE
+  `applyAll` batch = one undo step, with the selection travelling to
+  wherever the item landed; a refused drag sets the chip state.
 - `shell/EditorBody.tsx` — the main grid + fullscreen switch (pane ·
   canvas · panel, or `FullscreenView` full-width).
 - `shell/PanelColumn.tsx` — the right column: `PropertyPanel` over the

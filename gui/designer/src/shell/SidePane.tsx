@@ -75,7 +75,8 @@ export function SidePane({
           view={treeView}
           selection={editor.selection}
           onSelect={editor.select}
-          apply={editor.apply}
+          applyAll={editor.applyAll}
+          read={editor.read}
           onContextMenu={onContextMenu}
           onOpenDocument={onOpenDocument}
         />
