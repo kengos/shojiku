@@ -46,6 +46,58 @@ of its own terminator desynchronises the scan** (`stream` inside `endstream`,
 `if` inside `endif`, `<b>` inside `</b>`). Advance the cursor past the whole
 terminator, and prefer a real anchored match over a bare substring search.
 
+### The control must be able to FAIL — "non-empty" usually cannot
+
+That fix left the probe green and still measuring nothing, because the
+controls it added were satisfiable by the wrong data. The scanner returned
+every Flate stream that inflated, on the stated grounds that binary payloads
+fail to inflate. They do not: the PDF writer compresses the embedded FONT
+programs too, and writes them under a dictionary byte-identical to a content
+stream's — `<</Length N/Filter/FlateDecode>>`, no `/Length1`, no `/Subtype` —
+so no dictionary rule can separate them. An sfnt subset happens to contain the
+literal bytes `BT`, `Tf` and `TJ`: measured over the repo's 43 committed
+example PDFs, **two font programs each satisfy the "text was drawn" predicate
+by themselves**. So both controls — `assert!(!streams.is_empty())` and
+`assert!(opaque > 0)` — could pass on font bytes while the feature under test
+was entirely broken.
+
+The rule the first incident produced ("every probe of an unknown carries a
+companion measurement of a known") is necessary and not sufficient. Add:
+
+- **State what the control would have to see to FAIL, and check that thing is
+  reachable.** "At least one stream inflated" is true of any PDF ever written,
+  so it discriminates nothing. A control that cannot distinguish the subject
+  from its neighbours is decoration.
+- **Select by a property that actually separates the classes, and verify the
+  separation over a corpus you already have.** Here the discriminator was the
+  inflated CONTENT, not the dictionary: content streams are PDF operators
+  (printable ASCII), font programs are binary, CMaps are PostScript. Validated
+  over the same 43 PDFs it admits 80 of 288 streams, zero fonts, zero CMaps,
+  and never leaves a PDF with none — three numbers that make the claim
+  checkable instead of plausible.
+- **A reviewer's proposed fix is a hypothesis.** This one was found by a fresh
+  review that also proposed the dictionary rule; adopting it verbatim would
+  have shipped a filter that filtered nothing. One measurement against a real
+  render refuted it. Re-measure the fix, not just the finding.
+
+### An assertion on an error message you have not read is not a test
+
+A new wire test pinned that a non-boolean is REJECTED and asserted the error
+names the key:
+
+```rust
+assert!(err.to_string().contains("visuallyHidden"), "got: {err}");
+```
+
+serde names the TYPE, not the key: *invalid type: string "true", expected a
+boolean*. The test failed on its first real run — cheap here, because a gate
+ran it. The habit that avoids it: when asserting on a message, read the
+message first (run the case, print it), then pin the phrase that carries the
+CLAIM (`expected a boolean` — a truthy string must not resolve to `true`)
+rather than the phrase you assume is in it. A substring assertion on unread
+output is the same class as a grep whose pattern was never validated against
+the actual bytes.
+
 ## Bulk edits and sweeps
 
 Every shape of a silent sweep fails green: matching nothing (a
