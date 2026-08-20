@@ -503,6 +503,43 @@ fresh worktree they refuse with a named remedy ("run `make site` once in
 this tree") instead of running — they used to die inside Node with a
 bare `ERR_MODULE_NOT_FOUND: Cannot find package 'yaml'` naming nothing.
 
+## `.git` is a FILE in a worktree, so `[ -d .git ]` silently changes behaviour
+
+In a linked git worktree `.git` is not a directory — it is a small regular
+file holding a `gitdir:` pointer. So the near-universal idiom
+
+```sh
+if [ -d .git ]; then git ls-files; else find . -type f; fi
+```
+
+takes the WRONG branch in every worktree, and takes it in silence: there is
+no error, only a different answer. A repo gate shipped this way and its
+scan quietly degraded to a filesystem walk — reading `engine/target/`,
+`node_modules/` and untracked files — while printing "scanned N **tracked**
+files". The tell was numeric and easy to miss: the count drifted between
+runs with no commit in between, which a tracked-file listing cannot do.
+
+Three reasons this is worse here than elsewhere:
+
+- **Every cycle in this repo runs in a worktree** (it is an unconditional
+  rule), while **CI checks out a normal clone**. So the branch that runs
+  locally is the one that never runs in CI, and vice versa — the exact
+  local/CI asymmetry the rest of this file exists to prevent. Every test
+  and every sabotage run locally exercised the branch CI does not.
+- A walk reaches files no one authored, where a per-line rule can match
+  freely and an inline `<gate>-exempt:` waiver cannot be applied.
+- The failure is invisible to the gate's own self-tests, which run over a
+  fixture directory that is not a git repo at all and therefore always
+  took the `find` branch by design.
+
+**Ask git, don't sniff the filesystem** — `git -C "$root" rev-parse
+--is-inside-work-tree` — and better still, do not detect at all: pass the
+lister in as a parameter, because sniffing is what broke. Related: `git
+ls-files` C-QUOTES a path with non-ASCII bytes under `core.quotePath`, whose
+DEFAULT is true and is what CI's fresh checkout gets, so `[ -f "$path" ]`
+then fails and the file drops out of the scan. Use `git -c
+core.quotePath=false ls-files`, and count what you skip.
+
 ## The Pages build swaps `engine/wasm/pkg` — the make recipe restores it
 
 `site/scripts/build-pages.sh` stages the committed `site/.data/wasm` into
