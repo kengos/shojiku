@@ -14,6 +14,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
+import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
 import { cascadeContext } from '../toolbar/cascade';
@@ -39,6 +40,8 @@ export interface ColumnFormProps {
   /** The engine capability keys — gates the number-field currency variants
    * in the format suggestions (undefined = show). */
   readonly capabilities?: readonly string[];
+  /** The engine's format catalog — what each pickable spelling RENDERS. */
+  readonly formatCatalog?: FormatCatalog | null;
   /** The engine-default floor for the cell-style cascade (unset inherited
    * property → its real engine default). */
   readonly floor?: Readonly<Record<string, unknown>>;
@@ -51,6 +54,7 @@ export function ColumnForm({
   groups,
   params,
   capabilities,
+  formatCatalog = null,
   floor,
 }: ColumnFormProps) {
   const { t } = useI18n();
@@ -91,6 +95,7 @@ export function ColumnForm({
             rowScoped={rowScoped}
             formatRegistry={registryNames(controller.read('formats'))}
             capabilities={capabilities}
+            formatCatalog={formatCatalog}
           />
           {/* `TextField` (explicit htmlFor/id) rather than the wrapping-label
               `Field`: the unit badge's text would otherwise fold into the

@@ -10,6 +10,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
+import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import type { ColumnRow } from './columnsModel';
 import { FieldPicker } from './FieldPicker';
@@ -36,6 +37,9 @@ export interface ColumnBindingFieldsProps {
   /** The engine capability keys — gates the number-field currency variants in
    * the format suggestions (undefined = show). */
   readonly capabilities: readonly string[] | undefined;
+  /** The engine's format catalog — what each pickable spelling RENDERS.
+   * `null` before the first answer: the picker then lists spellings alone. */
+  readonly formatCatalog: FormatCatalog | null;
 }
 
 export function ColumnBindingFields({
@@ -47,6 +51,7 @@ export function ColumnBindingFields({
   rowScoped,
   formatRegistry,
   capabilities,
+  formatCatalog,
 }: ColumnBindingFieldsProps) {
   const { t } = useI18n();
   const dispatch = (op: Op) => {
@@ -80,6 +85,7 @@ export function ColumnBindingFields({
             formatRegistry,
             options.find((option) => option.key === column.key)?.type,
             capabilities,
+            formatCatalog,
           )}
           onCommit={(v) => dispatch(formatOp(path, v))}
         />

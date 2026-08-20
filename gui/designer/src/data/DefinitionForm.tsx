@@ -8,15 +8,15 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
-import { FormatPicker } from '../panel/FormatPicker';
 import { Field } from '../panel/fields';
-import { formatOptions } from '../panel/formatModel';
 import { FIELD_LABEL, INPUT, SECTION_TITLE } from '../ui/chrome';
 import {
   DEFINITION_TYPES,
   type DefinitionField,
   descriptionOp,
   formatOp,
+  isSemanticFormat,
+  semanticFormats,
   titleOp,
   typeOp,
 } from './definitionsEdit';
@@ -26,19 +26,10 @@ export interface DefinitionFormProps {
   readonly keysPath: readonly string[];
   readonly def: DefinitionField;
   readonly editable: boolean;
-  readonly formatRegistry: readonly string[];
-  readonly capabilities?: readonly string[];
   readonly onDefEdit: (op: Op | null) => void;
 }
 
-export function DefinitionForm({
-  keysPath,
-  def,
-  editable,
-  formatRegistry,
-  capabilities,
-  onDefEdit,
-}: DefinitionFormProps) {
+export function DefinitionForm({ keysPath, def, editable, onDefEdit }: DefinitionFormProps) {
   const { t } = useI18n();
   return (
     <section className="flex flex-col gap-3">
@@ -68,22 +59,38 @@ export function DefinitionForm({
           ))}
         </select>
       </div>
-      {editable ? (
-        <FormatPicker
-          label={t('data.field.format')}
+      <div>
+        <span className={FIELD_LABEL}>{t('data.field.format')}</span>
+        {/* The SEMANTIC format — the data type refiner, not the display
+            variant. The values that REFINE the type are a closed set the
+            engine's `(type, format)` table decides, so this is a select
+            over what actually applies rather than a picker over display
+            variants and `formats:` names (which this key ignores). How a
+            value LOOKS is chosen per placement, or once for the whole
+            document under 表示形式.
+
+            The wire vocabulary itself is OPEN, though (`schema.rs`: an
+            unknown value is a generation hint such as `person-name` and
+            leaves the base type untouched) — so an authored value outside
+            the set gets its own option and is shown verbatim. Dropping it
+            into the not-set row would tell the author the field represents
+            nothing, and the next edit would overwrite the hint silently. */}
+        <select
+          className={INPUT}
+          aria-label={t('data.field.format')}
+          disabled={!editable}
           value={def.format}
-          options={formatOptions(
-            formatRegistry,
-            def.type === '' ? undefined : def.type,
-            capabilities,
-          )}
-          onCommit={(spelling) => onDefEdit(formatOp(keysPath, def.format, spelling))}
-        />
-      ) : (
-        <Field label={t('data.field.format')}>
-          <input type="text" defaultValue={def.format} readOnly />
-        </Field>
-      )}
+          onChange={(event) => onDefEdit(formatOp(keysPath, def.format, event.currentTarget.value))}
+        >
+          <option value="">{t('data.field.formatNone')}</option>
+          {semanticFormats(def.type === '' ? 'string' : def.type).map((option) => (
+            <option key={option} value={option}>
+              {t(`data.semanticFormat.${option}`)}
+            </option>
+          ))}
+          {isSemanticFormat(def) ? null : <option value={def.format}>{def.format}</option>}
+        </select>
+      </div>
       <Field label={t('data.field.description')}>
         <textarea
           key={def.description}

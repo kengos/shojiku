@@ -42,6 +42,7 @@ export function ContentSection(props: ItemPanelProps) {
         groups={props.paletteGroups}
         params={props.params}
         capabilities={capabilities}
+        formatCatalog={props.formatCatalog}
         onOpenSheet={props.onOpenColumnSheet}
       />
     );
@@ -70,6 +71,7 @@ export function ContentSection(props: ItemPanelProps) {
     registryNames(controller.read('formats')),
     bindingOptions.find((option) => option.key === view.dataKey)?.type,
     capabilities,
+    props.formatCatalog ?? null,
   );
   return (
     <section>

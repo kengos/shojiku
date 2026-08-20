@@ -14,6 +14,7 @@
 //! surface advertises one identical key set instead of each re-deriving it.
 
 mod capabilities;
+mod formats;
 #[cfg(feature = "fs")]
 pub mod fs;
 mod inspect;
@@ -27,6 +28,10 @@ mod sources;
 mod test_support;
 
 pub use capabilities::{engine_info, run_capabilities, EngineInfo, CAPABILITIES};
+pub use formats::{
+    format_catalog, FormatCatalog, FormatOrigin, FormatTypeEntry, FormatVariant, PatternProbe,
+    ProbeRefusal, ProbeResult, MAX_PROBES, MAX_PROBE_PATTERN,
+};
 pub use inspect::{inspect_envelope, inspect_json, InspectEnvelope};
 pub use locale::{load_pack, resolve_locale_id, valid_locale_id, LocaleError};
 pub use prepare::{prepare, AssetsInput, PrepareCtx, Prepared};

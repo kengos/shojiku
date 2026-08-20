@@ -58,6 +58,11 @@ pub enum CliError {
     },
     #[error("output `{0}` needs a `{{page}}` placeholder for multi-page previews")]
     OutputPatternRequired(String),
+    /// A `--probe` value the caller spelled wrong. Echoed back because the
+    /// caller wrote it and the mistake is usually visible in it; bounded and
+    /// control-stripped by the shared echo guard at the display boundary.
+    #[error("`--probe` wants `<type>:<pattern>` with type `date` or `datetime`, got `{0}`")]
+    BadProbe(String),
     /// The engine refused the document. The diagnostics were printed to
     /// stderr when it happened and are carried here as well, because
     /// stderr prose cannot express a diagnostic's `code` or its typed
@@ -124,6 +129,7 @@ impl CliError {
             // for, how to spell the output pattern.
             CliError::PageOutOfRange { .. }
             | CliError::OutputPatternRequired(_)
+            | CliError::BadProbe(_)
             | CliError::Serialize(_)
             | CliError::Output { .. }
             | CliError::PassphraseVariableUnset { .. }
@@ -174,7 +180,9 @@ impl CliError {
             // request it will not act on: the two subprocess SDKs map the same
             // strings the other five already do.
             CliError::Cms(_) => "certificate",
-            CliError::Algorithm | CliError::EmptySignature => "invalid_request",
+            CliError::Algorithm | CliError::EmptySignature | CliError::BadProbe(_) => {
+                "invalid_request"
+            }
             CliError::Key(_) => "key",
             CliError::Verify(_) => "verify",
             CliError::Passphrase(_) => "passphrase",

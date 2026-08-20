@@ -71,6 +71,9 @@ fn detail_args_are_sanitized_through_argvalue() {
         WasmError::Locale(hostile.into()),
         WasmError::Fonts(hostile.into()),
         WasmError::Render(hostile.into()),
+        // The probe detail is a serde/parse message over a string the CALLER
+        // supplied, so it is the most directly attacker-shaped of the four.
+        WasmError::BadProbes(hostile.into()),
     ] {
         let args = err.args();
         assert_eq!(args, vec![("detail", ArgValue::text(hostile))]);

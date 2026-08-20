@@ -43,6 +43,10 @@ pub enum Command {
         #[command(subcommand)]
         command: FontCommand,
     },
+    /// Print the format catalog as JSON: the display variants each field
+    /// type can pick, what each renders, and previews of patterns that are
+    /// not authored yet. The Designer reads the same catalog.
+    Formats(FormatsArgs),
     /// Print this engine's version and machine-readable capability list
     /// as JSON (for GUI/SDK feature gating; needs no inputs).
     Capabilities,
@@ -53,6 +57,7 @@ mod commands;
 mod error;
 mod external;
 mod font;
+mod formats;
 mod report;
 mod sign;
 #[cfg(test)]
@@ -60,9 +65,9 @@ mod tests;
 mod verify;
 
 pub use args::{
-    AssetModeArg, FontAddArgs, FontCommand, FontStyleArg, FontWeightArg, PreviewArgs, RenderArgs,
-    RenderishArgs, ReportArg, SignArgs, SignCompleteArgs, SignPrepareArgs, ValidateArgs,
-    VerifyArgs,
+    AssetModeArg, FontAddArgs, FontCommand, FontStyleArg, FontWeightArg, FormatsArgs, PreviewArgs,
+    RenderArgs, RenderishArgs, ReportArg, SignArgs, SignCompleteArgs, SignPrepareArgs,
+    ValidateArgs, VerifyArgs,
 };
 pub use commands::{
     report_diagnostics, resolve_preview_output, run_inspect, run_preview, run_render, run_validate,
@@ -71,6 +76,7 @@ pub use commands::{
 pub use error::{CliError, FailureClass};
 pub use external::{run_sign_complete, run_sign_prepare, Prepared};
 pub use font::{run_font_add, AddedFace, FontPackError};
+pub use formats::run_formats;
 pub use report::Report;
 pub use sign::run_sign;
 pub use verify::run_verify;

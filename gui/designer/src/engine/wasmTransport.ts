@@ -8,6 +8,7 @@
 //     guarded field by field in `wasmResponse.ts`.
 
 import { throwFields } from './errors';
+import { toFormatCatalog } from './formatCatalogResponse';
 import { type EngineTransport, TransportError } from './transport';
 import { toDiagnostics, toOutcome, toPdfOutcome } from './wasmResponse';
 
@@ -25,10 +26,18 @@ export interface WasmEngine {
   ): unknown;
   /** Present only on an engine advertising `wasm.render.pdf`. */
   renderPdf?(template: string, params: string, definitions: string | null | undefined): unknown;
+  /** Present only on an engine advertising `format.catalog`. Probes cross as
+   * a JSON string — the engine parses them, so the shapes it accepts are
+   * decided in ONE place rather than mirrored here. */
+  formatCatalog?(template: string, probes: string): string;
 }
 
 /** Build an `EngineTransport` over a prepared wasm `Engine`. */
 export function createWasmTransport(engine: WasmEngine): EngineTransport {
+  // Captured once so the presence check NARROWS it: calling through
+  // `engine.formatCatalog?.()` inside the closure would leave an
+  // unreachable undefined arm behind the guard that already excluded it.
+  const askCatalog = engine.formatCatalog;
   return {
     async validate(template, params, definitions) {
       let json: string;
@@ -56,9 +65,23 @@ export function createWasmTransport(engine: WasmEngine): EngineTransport {
       }
       return toOutcome(raw);
     },
-    // Presence mirrors the engine's: an older module without `renderPdf` (or a
+    // Presence mirrors the engine's: an older module without the method (or a
     // future non-wasm transport) leaves the key undefined, which is exactly
     // what the Designer's feature gate reads.
+    ...(askCatalog !== undefined
+      ? {
+          async formatCatalog(template, probes) {
+            let json: string;
+            try {
+              json = askCatalog.call(engine, template, JSON.stringify(probes));
+            } catch (cause) {
+              const { message, code, args } = throwFields(cause);
+              throw new TransportError(message, { code, args });
+            }
+            return toFormatCatalog(json);
+          },
+        }
+      : {}),
     ...(typeof engine.renderPdf === 'function'
       ? {
           async renderPdf(template, params, definitions) {

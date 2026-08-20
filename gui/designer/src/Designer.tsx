@@ -95,6 +95,7 @@ export function Designer(props: DesignerProps) {
         uiEvent={w.tutorial.uiEvent}
         session={w.session}
         host={w.host}
+        maxBytes={w.cap.maxBytes}
         dialogs={w.dialogs}
         onParamsChange={w.handleParamsChange}
       />
@@ -118,6 +119,7 @@ export function Designer(props: DesignerProps) {
         save={w.save}
         copilot={w.copilot}
         pdf={w.pdf}
+        derived={w.derived}
         host={w.host}
         onDownloadPdf={props.menuActions?.onDownloadPdf}
         dialogs={w.dialogs}

@@ -232,3 +232,38 @@ fn builtin_en_money_goldens() {
         "JOD 5.000"
     );
 }
+
+#[test]
+fn a_token_at_the_pattern_end_does_not_match_a_longer_one() {
+    // The pattern ends in a single `d`, so the longer `dd` must not match
+    // past the end of the input. A matcher that overran would zero-pad,
+    // which is what discriminates this case from a passing one.
+    let pack = LangPack::from_yaml_str("id: xx-XX\ndateFormats:\n  default: d\n").expect("pack");
+    let out = fmt(
+        &json!("2026-07-05"),
+        Some(&spec(FieldType::Date)),
+        None,
+        &pack,
+    );
+    assert_eq!(out, "5");
+}
+
+#[test]
+fn a_long_repeat_run_renders_every_token() {
+    // Degenerate repeat run. Rendering is linear in pattern length, so all
+    // 200 tokens are emitted; the spelling this replaced re-collected the
+    // remaining pattern at every position, which is quadratic over input a
+    // template controls.
+    let pattern = "dd".repeat(200);
+    let pack = LangPack::from_yaml_str(&format!(
+        "id: xx-XX\ndateFormats:\n  default: \"{pattern}\"\n"
+    ))
+    .expect("pack");
+    let out = fmt(
+        &json!("2026-07-05"),
+        Some(&spec(FieldType::Date)),
+        None,
+        &pack,
+    );
+    assert_eq!(out, "05".repeat(200));
+}

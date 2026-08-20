@@ -200,16 +200,65 @@ describe('DataEditorView definition editing', () => {
     });
   });
 
-  it('edits the format through the FormatPicker', () => {
+  it('edits the semantic format from the closed set', () => {
+    // This case used to type `symbol` — a DISPLAY variant — into the semantic
+    // `format:` key and assert it was written. That write did nothing: the
+    // engine's `(type, format)` table does not know `symbol`, and an
+    // unrecognised value is treated as a generation hint and never warns. The
+    // control now offers only what the table accepts, and the old assertion is
+    // kept below as the thing that must no longer be possible.
     const { mocks } = draw();
     selectField('amount');
-    const input = screen.getByLabelText('表示形式') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: 'symbol' } });
-    fireEvent.blur(input);
+    const select = screen.getByLabelText('表すもの') as HTMLSelectElement;
+    // Not `currency`: the fixture already declares it, and the op builder
+    // returns null when nothing changed — so that value would prove nothing.
+    fireEvent.change(select, { target: { value: 'percentage' } });
     expect(mocks.onDefinitionEdit).toHaveBeenCalledWith({
       op: 'setScalar',
       keys: ['properties', 'amount', 'format'],
-      value: 'symbol',
+      value: 'percentage',
+    });
+  });
+
+  it('does not offer a display variant for the semantic format key', () => {
+    draw();
+    selectField('amount');
+    const select = screen.getByLabelText('表すもの') as HTMLSelectElement;
+    const offered = [...select.options].map((o) => o.value);
+    expect(offered).not.toContain('symbol');
+    expect(offered).not.toContain('wareki');
+    expect(offered).toEqual(['', 'currency', 'percentage', 'quantity']);
+  });
+
+  it('shows an open-vocabulary format verbatim instead of reporting it unset', () => {
+    // `format:` is an OPEN vocabulary (`schema.rs`): a value outside the
+    // refiner table is a generation hint that leaves the base type alone.
+    // A closed select would match no option and fall to the not-set row, so
+    // the editor would tell the author the field represents nothing — and
+    // the next change to the control would overwrite the hint for good.
+    draw({
+      definitions: `type: object
+properties:
+  customer:
+    type: string
+    format: person-name
+`,
+    });
+    selectField('customer');
+    const select = screen.getByLabelText('表すもの') as HTMLSelectElement;
+    expect(select.value).toBe('person-name');
+    expect([...select.options].map((o) => o.value)).toContain('person-name');
+  });
+
+  it('clears the semantic format back to the bare type', () => {
+    const { mocks } = draw();
+    selectField('amount');
+    const select = screen.getByLabelText('表すもの') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'currency' } });
+    fireEvent.change(select, { target: { value: '' } });
+    expect(mocks.onDefinitionEdit).toHaveBeenLastCalledWith({
+      op: 'removeKey',
+      keys: ['properties', 'amount', 'format'],
     });
   });
 

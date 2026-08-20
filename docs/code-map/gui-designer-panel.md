@@ -189,12 +189,33 @@ read side, never the reverse.
   `engine/core/src/style/enums.rs`). A no-import leaf shared by item
   panel / defaults / registry / capture / format toolbar.
 - `panel/formatModel.ts` — `formatOptions`: registry names first, then
-  the closed builtin spellings per display type (localized labels +
-  `FORMAT_SAMPLES`); own-property-guarded; currency variants
-  capability-gated. The engine stays the validator. A TEXT field offers
-  NO builtin (naming `date` on one overrides the type and the engine
-  then fails to parse the value as a date — that is an error, not a
-  format); its registry names still show, and typing stays open.
+  the closed builtin spellings per display type (localized labels);
+  own-property-guarded; currency variants capability-gated. **Every
+  SAMPLE comes from the engine's format catalog** — the hand-written
+  table this module used to own is gone, because a sample the GUI
+  computed could drift from what the page shows. Also
+  `variantOptions` (a `defaults.formats` row's vocabulary — the catalog's
+  own list for that type, MINUS `default`, which the picker's leading
+  clear-the-key row already offers), `isFixedType` (the engine's answer to
+  "does this type have a real choice") and `variantSamples`. The engine
+  stays the validator. A TEXT field offers NO builtin (naming `date` on
+  one overrides the type and the engine then fails to parse the value as
+  a date — that is an error, not a format); its registry names still
+  show, and typing stays open.
+- `panel/formatLabels.ts` — pure: wire spelling → chrome-catalog key for
+  the KNOWN variants, and origin → group-heading key. A closed
+  own-property-guarded table, never an interpolated
+  `format.label.${spelling}`: a registry name is document-derived. A
+  spelling the table does not carry displays as its BARE WIRE SPELLING
+  (user decision), which is how a newer locale pack's variant and every
+  author-defined name are shown.
+- `panel/FormatOptionList.tsx` — the rows inside a format picker's
+  popover, shared by the binding-level picker and the defaults rows. Its
+  one job beyond rendering is the ORIGIN GROUPING: a heading above each
+  run of options, so a document's own `formats:` entry is visibly a
+  different KIND from a locale variant (only the former breaks on
+  rename). Headings appear only where the origin CHANGES and only when
+  the engine answered, so a single-origin list stays flat.
 - `panel/model.ts` — the WRITE side: `applyPanelOp` (the shared dispatch
   guard) + op builders `lengthOp`/`numberOp`/`plainTextOp` (item-scoped
   or root-addressed)/`bindingKeyOp`/`bindingPickOps` (a document pick
@@ -252,7 +273,8 @@ read side, never the reverse.
   the chip menus pass none). A pick hands back the OPTION, not just its
   key — every consumer needs the row's label/sample anyway.
 - `panel/FormatPicker.tsx` — the `data.format` editor: free entry +
-  popover of `formatOptions`; shown only once a data key is picked.
+  popover of `formatOptions` rendered through `FormatOptionList`; shown
+  only once a data key is picked.
 
 ## The router + per-item tabs
 
@@ -547,6 +569,10 @@ conditional rules the next section owns).
   `TableColumnCells.tsx` (the cell parts incl. the sample row over
   `displaySample`, and `ColumnAlignRow` — the alignment row itself, which lives
   there because the sheet file is the grid layout and nothing else),
+  `ColumnSheetBindingRows.tsx` (the data-key and format rows — the only two
+  whose cell is conditional on the column's KIND: a `cell:` column's content
+  is a sub-template, so it has no binding and no format, and both show a
+  muted placeholder there rather than an empty grid cell),
   `columnSheetData.ts` (what the sheet READS — picker options, the per-column
   format rows, the sample value, and `alignFor(index)`, each column's
   cascade-effective `textAlign`, so the sheet and `ColumnForm` agree about the
@@ -554,11 +580,16 @@ conditional rules the next section owns).
   there, since the sheet shows no origin and the floor changes only an origin
   LABEL).
 - `panel/DocumentSettingsPage.tsx` — the fullscreen document view
-  (page/size/defaults/styles/locale), opened by the whole-document tree row /
-  File menu / origin jumps: the page shell — header, the three-column
-  layout, the `sectionBody` switch, and the preview aside via
-  `canvas/PageUnderlay`; a nonce-keyed `focus` selects a jumped-to
-  section. Its parts:
+  (page/size/defaults/styles/locale/formats), opened by the whole-document
+  tree row / File menu / origin jumps: the page shell — header, the
+  three-column layout, which sections the rail LISTS, and the preview
+  aside via `canvas/PageUnderlay`; a nonce-keyed `focus` selects a
+  jumped-to section. Its parts:
+  - `panel/DocSectionBody.tsx` — WHICH surface each section shows. Split
+    from the page so the page owns navigation and this owns the
+    section→component map; a section's own capability gate lives here,
+    because the 表示形式 section has TWO gated halves and either alone is
+    still worth opening.
   - `panel/docSections.ts` — pure section vocabulary: `DocSection` (also
     the jump-target type `hooks/useDocViews.ts` speaks), `SECTION_ORDER`,
     `SECTION_TITLE_KEYS`, and `sectionSummaries` (one line per rail row,
@@ -658,6 +689,38 @@ conditional rules the next section owns).
     `engineDefaults.ts` `ENGINE_STYLE_DEFAULTS`) in ONE arrangement,
     `DefaultsStyleSection` (the `STYLE_ROWS` grid, drift-guarded, with
     the intro line and the recommended body-size one-click hint).
+- `panel/DefaultsFormatFields.tsx` — the 表示形式 section's per-type half
+  (`defaults.formats`): one `panel/FormatDefaultRow.tsx` per type, live
+  over `controller.read('defaults')`. A row has TWO shapes and the
+  asymmetry is deliberate — `date`/`datetime`/`currency` get a picker
+  (the dated pair also a pattern surface), while `number`/`percentage`/
+  `quantity` show what they render and offer NO control, because the
+  engine has no named variants for them in v1 and any pick would only
+  warn. Which shape a type takes is the ENGINE's answer
+  (`FormatTypeEntry.fixed`), never a list kept in step here. An unset row
+  reads 「ロケール既定」 with the sample the engine actually produces.
+- `panel/formatDefaultsModel.ts` — pure: `readFormatDefaultsView` (each
+  slot as `unset` | `name` | `inline`; garbage reads as UNSET),
+  `formatDefaultNameOp` (empty CLEARS — an absent name IS the locale
+  default) and `formatDefaultPatternOp`. The pattern op returns **`null`
+  on an empty pattern**: `InlineFormat.pattern` is a required wire field,
+  so the panel's usual "empty clears the key" would author a template the
+  ENGINE CANNOT PARSE — a failure no gate reports, because the op
+  succeeds and the YAML stays valid. An inline slot is edited at its own
+  `pattern` key (`setScalar`, so the map's comments survive); any other
+  slot is replaced whole, which is how the untagged `FormatRef` union
+  switches arms.
+- `panel/PatternField.tsx` (+ `hooks/usePatternPreview.ts`) — writing a
+  date/datetime pattern, built the other way round from a text field
+  because picking is safe and typing is dangerous: the TOKENS come first
+  as chips each showing THEIR OWN rendered output and inserting
+  themselves at the caret, with the raw string under them (editable —
+  user decision: read-only would strand every pattern an existing
+  document holds). One probe call answers the whole surface (the pattern
+  first, then one per token); nothing here formats.
+- `panel/formatSummary.ts` — pure: the 表示形式 rail row's one-liner. It
+  NAMES the first set type rather than only counting, so the rail answers
+  "is the date format set here?" without opening the section.
 - `panel/localeFacts.ts` — what a locale/currency pick DOES, as data —
   copied from the defining files (`engine/formatter` builtins +
   `packs/locale/`) and pinned by a drift-guard test; composes samples
@@ -673,9 +736,24 @@ conditional rules the next section owns).
   `panel/StyleRow.tsx` is what ONE row offers: the face = the name in
   its OWN style (`styles/preview`) + usage count / edit invitation, the
   overflow `Menu`, and the active `RowMode` body (inline rename
-  `NameForm` / two-step delete confirm) — its six callbacks arrive as
-  one `StyleRowActions` bundle, and it decides nothing about the
-  document.
+  `RegistryNameForm` / two-step delete confirm) — its six callbacks
+  arrive as one `StyleRowActions` bundle, and it decides nothing about
+  the document.
+- `panel/RegistryNameForm.tsx` — the inline rename form both registries'
+  rows open. Shared because they rename identically; the operation
+  differs in what it REWRITES, not in how the name is taken.
+- `panel/FormatsManager.tsx` — the `formats:` registry CRUD section,
+  mirroring `StylesManager` shape for shape so an author who has learnt
+  one registry surface has learnt both: the registry read, the one
+  `run(plan)` gate, and which `FormatForm` Modal is mounted.
+  `panel/FormatRow.tsx` is one row — name, wire kind, what the engine
+  RENDERS for it (falling back to the raw pattern with no catalog), the
+  reference count, and the overflow menu.
+- `panel/FormatForm.tsx` — the unified Create/Edit entry form over
+  `ui/Modal`: local draft, then ONE `applyAll`. Create authors the whole
+  entry as a single `putValue` (the wire's `type` and `pattern` are both
+  required, so the registry never briefly holds an entry the engine
+  refuses to parse); an edit writes only the CHANGED keys.
 - `panel/StyleForm.tsx` — what the unified Create/Update style form
   COMMITS, over `ui/Modal`: local DRAFT, then ONE `applyAll`; live
   `stylePreview` chip. Its two leaves: `panel/StyleNameField.tsx` (the

@@ -73,6 +73,25 @@ maps.
 Capability keys: `template.defaults`, `template.defaults.document`
 (locale + currency), `template.formats`.
 
+## Discovering what a type can be set to
+
+The variant names differ per locale pack, and a document's own `formats:`
+entries add to them — so the set is not something an author can be
+expected to know. `shojiku formats` answers it for a given
+(template, locale) pair: every pickable spelling per field type, where it
+comes from (`builtin` / `pack` / `registry`), and **what it actually
+renders**, against fixed exemplar values the engine owns.
+`--probe <type>:<pattern>` previews a pattern the document does not
+contain yet.
+
+Types with no named variants at all (`number`, `percentage`, `quantity`
+in v1) come back marked `fixed`, carrying only `default` — an editor shows
+what they render and offers no control, because any other pick would only
+warn.
+
+The samples are the engine's own formatter output, so a tool that shows
+them cannot drift from the page. Capability key: `format.catalog`.
+
 ## Limitations
 
 - A `formats:` entry that shadows a builtin variant name is ignored

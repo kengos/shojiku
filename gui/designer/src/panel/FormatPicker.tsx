@@ -2,16 +2,19 @@
 // the wire-spelling datalist. The free-text input keeps the expert path (commit
 // on blur on a CHANGED value — a typo surfaces as a live engine diagnostic),
 // and a popover offers the pickable formats with LOCALIZED labels, the wire
-// spelling, and an illustrative sample rendering; picking one commits ONE op.
+// spelling, and what the ENGINE renders for it; picking one commits ONE op.
 // Picking is safe, typing is dangerous: picking is the primary path, typing stays
-// possible for a registry name the picker does not enumerate. The samples are
-// illustrative (the engine is the live validator/renderer, not the GUI).
+// possible for a registry name the picker does not enumerate. The samples come
+// from the engine's format catalog — the GUI never formats, and the same
+// catalog's `origin` is what lets `FormatOptionList` head each run of options
+// with where its spellings come from.
 
 import { useId } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
-import { INPUT, PICKER_POPOVER, PICKER_ROW, PICKER_TOGGLE } from '../ui/chrome';
+import { INPUT, PICKER_POPOVER, PICKER_TOGGLE } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
+import { FormatOptionList } from './FormatOptionList';
 import { SideButtonField } from './fields';
 import type { FormatOption } from './formatModel';
 
@@ -64,36 +67,15 @@ export function FormatPicker({ label, value, options, onCommit }: FormatPickerPr
       </SideButtonField>
       {open ? (
         <div role="menu" className={PICKER_POPOVER}>
-          {options.length === 0 ? (
-            <p className="m-0 px-2 py-1 text-sm text-muted">{t('format.empty')}</p>
-          ) : (
-            options.map((option) => (
-              <button
-                key={option.spelling}
-                type="button"
-                role="menuitem"
-                className={PICKER_ROW}
-                onClick={() => {
-                  setOpen(false);
-                  if (option.spelling !== value) {
-                    onCommit(option.spelling);
-                  }
-                }}
-              >
-                <span className="flex items-baseline gap-2">
-                  <span className="font-semibold">
-                    {option.labelKey !== undefined ? t(option.labelKey) : option.spelling}
-                  </span>
-                  <code className="text-sm text-muted">{option.spelling}</code>
-                </span>
-                {option.sample !== '' ? (
-                  <span className="text-sm text-muted italic [overflow-wrap:anywhere]">
-                    {option.sample}
-                  </span>
-                ) : null}
-              </button>
-            ))
-          )}
+          <FormatOptionList
+            options={options}
+            onPick={(spelling) => {
+              setOpen(false);
+              if (spelling !== value) {
+                onCommit(spelling);
+              }
+            }}
+          />
         </div>
       ) : null}
     </div>

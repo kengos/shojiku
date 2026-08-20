@@ -81,8 +81,8 @@ pub(super) fn render_datetime_pattern(
             i += 1;
             continue;
         }
-        let rest: String = chars[i..].iter().collect();
-        match TOKENS.iter().find(|token| rest.starts_with(**token)) {
+        let rest = &chars[i..];
+        match TOKENS.iter().find(|token| starts_with_token(rest, token)) {
             Some(token) => {
                 out.push_str(&render_token(token, odt, pack));
                 i += token.len();
@@ -94,6 +94,26 @@ pub(super) fn render_datetime_pattern(
         }
     }
     out
+}
+
+/// Whether `rest` begins with `token`'s characters.
+///
+/// Allocation-free on purpose. The previous spelling collected `rest`
+/// into a fresh `String` at every position, which made pattern rendering
+/// **O(n^2) in pattern length** — and patterns are untrusted
+/// (`InlineFormat.pattern` and `NamedFormat.pattern` are plain required
+/// strings a template may author at any length, and this path runs at
+/// RENDER time, not just at authoring time). Rendering is linear now, so a
+/// long pattern costs what a long literal run of template text costs and
+/// needs no cap of its own; the caller-supplied patterns that are NOT
+/// bounded by the template size cap are bounded where they enter
+/// (`shojiku_authoring`'s format-catalog probes).
+///
+/// [`TOKENS`] is all-ASCII, which is also what lets the caller advance by
+/// `token.len()` over a `char` slice.
+fn starts_with_token(rest: &[char], token: &str) -> bool {
+    let mut rest = rest.iter();
+    token.chars().all(|t| rest.next() == Some(&t))
 }
 
 pub(super) fn render_token(token: &str, odt: &OffsetDateTime, pack: &LangPack) -> String {

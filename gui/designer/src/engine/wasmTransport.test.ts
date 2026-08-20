@@ -260,3 +260,69 @@ describe('createWasmTransport.renderPdf', () => {
     expect((error as TransportError).code).toBe('fonts_not_loaded');
   });
 });
+
+const CATALOG_JSON = JSON.stringify({
+  types: [
+    {
+      fieldType: 'date',
+      fixed: false,
+      variants: [{ spelling: 'wareki', origin: 'pack', samples: ['令和8年11月3日'] }],
+    },
+  ],
+  probes: [{ sample: '2026.11.03', warning: null, refused: null }],
+});
+
+describe('createWasmTransport.formatCatalog', () => {
+  it('is ABSENT when the engine has no such method', () => {
+    // The feature gate the Designer reads is presence, never a version sniff —
+    // the same rule `renderPdf` already follows.
+    const transport = createWasmTransport(engineReturning(validRaw()));
+    expect(transport.formatCatalog).toBeUndefined();
+  });
+
+  it('is present when the engine exposes it, and parses the answer', async () => {
+    const engine: WasmEngine = {
+      ...engineReturning(validRaw()),
+      formatCatalog: () => CATALOG_JSON,
+    };
+    const transport = createWasmTransport(engine);
+    const catalog = await transport.formatCatalog?.('t', []);
+    expect(catalog?.types[0].variants[0].samples).toEqual(['令和8年11月3日']);
+    expect(catalog?.probes[0].sample).toBe('2026.11.03');
+  });
+
+  it('hands the probes to the engine as JSON', async () => {
+    // The engine parses them, so the accepted shapes are decided in ONE place
+    // rather than mirrored on this side.
+    const formatCatalog = vi.fn(() => CATALOG_JSON);
+    const transport = createWasmTransport({ ...engineReturning(validRaw()), formatCatalog });
+    await transport.formatCatalog?.('the template', [{ fieldType: 'date', pattern: 'yyyy' }]);
+    expect(formatCatalog).toHaveBeenCalledWith(
+      'the template',
+      JSON.stringify([{ fieldType: 'date', pattern: 'yyyy' }]),
+    );
+  });
+
+  it('turns an engine throw into a TransportError carrying its typed code', async () => {
+    const engine: WasmEngine = {
+      ...engineReturning(validRaw()),
+      formatCatalog: () => {
+        throw Object.assign(new Error('no locale set'), { code: 'locale_not_set', args: {} });
+      },
+    };
+    const transport = createWasmTransport(engine);
+    await expect(transport.formatCatalog?.('t', [])).rejects.toBeInstanceOf(TransportError);
+    await expect(transport.formatCatalog?.('t', [])).rejects.toMatchObject({
+      code: 'locale_not_set',
+    });
+  });
+
+  it('turns a malformed answer into a TransportError', async () => {
+    const engine: WasmEngine = {
+      ...engineReturning(validRaw()),
+      formatCatalog: () => '{"types":"nope","probes":[]}',
+    };
+    const transport = createWasmTransport(engine);
+    await expect(transport.formatCatalog?.('t', [])).rejects.toBeInstanceOf(TransportError);
+  });
+});

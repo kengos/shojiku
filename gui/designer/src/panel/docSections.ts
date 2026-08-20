@@ -6,6 +6,7 @@ import type { EditorController } from '../editor/useEditor';
 import { readDefaultsView } from './defaultsModel';
 import { readDocumentMetaView } from './documentMetaModel';
 import { ENGINE_STYLE_DEFAULTS } from './engineDefaults';
+import { formatSectionSummary } from './formatSummary';
 import { readPageView, sizeLabel } from './pageSetupModel';
 import type { Translate } from './styleLabels';
 import { readStylesView } from './stylesModel';
@@ -15,13 +16,18 @@ import { readStylesView } from './stylesModel';
  * `defaults` is the document's base text — the base-text section, the same words the
  * format toolbar's style picker already uses for "no named style applied", so
  * the two surfaces name one thing once. */
-export type DocSection = 'page' | 'defaults' | 'styles' | 'locale' | 'metadata';
+export type DocSection = 'page' | 'defaults' | 'styles' | 'locale' | 'formats' | 'metadata';
 
+/** `formats` sits directly after `locale` because the two are read together:
+ * what the format section can OFFER is downstream of the locale (和暦 comes
+ * from the ja-JP pack) and of `defaults.currency` (which symbol a currency
+ * variant shows). */
 export const SECTION_ORDER: readonly DocSection[] = [
   'page',
   'defaults',
   'styles',
   'locale',
+  'formats',
   'metadata',
 ];
 
@@ -30,6 +36,7 @@ export const SECTION_TITLE_KEYS: Readonly<Record<DocSection, string>> = {
   defaults: 'defaults.textSection',
   styles: 'styles.title',
   locale: 'panel.doc.localeCurrency',
+  formats: 'formats.title',
   metadata: 'docMeta.title',
 };
 
@@ -50,6 +57,7 @@ export function sectionSummaries(
     defaults: family === '' ? t('defaults.sizeOnly', { size }) : `${size}pt ${family}`,
     styles: t('styles.count', { n: readStylesView(controller.read('styles')).length }),
     locale: [defaults.locale, defaults.currency].filter((v) => v !== '').join(' · '),
+    formats: formatSectionSummary(controller.read('defaults'), controller.read('formats'), t),
     // The title is what a reader's Properties panel shows first, so it is
     // the honest one-liner for this section.
     metadata: meta.title === '' ? t('docMeta.unset') : meta.title,

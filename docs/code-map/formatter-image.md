@@ -28,6 +28,10 @@ the manifest wire's key list) lives in `docs/engine/`
   renderer (token inventory is APPEND-ONLY; the list itself is in
   data-binding.md); `'…'` quoting with `''` escape (unterminated
   degrades); name tables and the era tokens resolve through the pack.
+  Token matching is `starts_with_token` over the char slice — never a
+  fresh `String` per iteration, which made the renderer O(n²) in pattern
+  length on a path a TEMPLATE reaches (patterns are unbounded up to the
+  template size cap, and the caller is on the RENDER path).
 - `format/money.rs` — the three currency variants (bare | `symbol` |
   `name`); precision chain field → pack → the compiled CLDR fractions
   table. `format_quantity` = semantic key → plural word + `unitFormat`

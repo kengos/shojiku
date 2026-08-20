@@ -255,7 +255,20 @@ lists name the destructured stable fields, never `editor` itself.
   [gui-designer-panel.md](gui-designer-panel.md) § Diagnostics), memoized
   over the LAST-GOOD inspect and gated on `inspect.text_metrics`.
 - `hooks/useDocDerived.ts` — shared read-only indexes memoized on the
-  text: `treeView` (nullable), `styleUsage`, `styleFloor`.
+  text: `treeView` (nullable), `styleUsage`, `formatUsage`, `styleFloor`
+  — plus `formats`, the ENGINE's format catalog. That one is not a pure
+  derivation (it is an engine answer, so `null` until it arrives and
+  permanently on a transport that cannot answer) but lives here because
+  it is keyed on the document and consumed by the same surfaces.
+- `hooks/useFormatCatalog.ts` — asks the engine for the catalog, keyed on
+  the document SLICE it depends on (`formats/catalogKey.ts` — the
+  `formats:` and `defaults:` blocks, textually, so a body keystroke costs
+  no engine call and a document that does not parse still produces a
+  key). Keeps the last good catalog when a later ask fails, drops an
+  answer that arrives after the key moved on, and probes against the LIVE
+  text through a ref rather than the text the callback closed over.
+  A transport with no `formatCatalog` simply leaves it `null` — a
+  capability gate by PRESENCE, never a version sniff.
 - `hooks/useHostNotify.ts` — report `text` through `onChange` after every
   edit that CHANGES it (handler in a ref).
 - `hooks/useMultiSelect.ts` — canvas multi-select + align/distribute

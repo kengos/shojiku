@@ -17,11 +17,14 @@ hostile geometry degrades to null before it can reach an op.
 ## Engine transport seam
 
 - `engine/types.ts` — type-only mirrors of the wasm response shapes
-  (`RawPage`/`PlacedBox`/`BoxIndex`/`InspectEnvelope`/`Diagnostic`,
-  engine serde names; coverage-excluded).
+  (`RawPage`/`PlacedBox`/`BoxIndex`/`InspectEnvelope`/`Diagnostic`/
+  `FormatCatalog` & friends, engine serde names; coverage-excluded).
 - `engine/transport.ts` — `EngineTransport`, the host-injection seam:
   `validate` + `renderRaw(…, {scale, pageIndex?}) → RenderOutcome` + the
-  OPTIONAL `renderPdf` (absent = the Designer hides the action); async
+  OPTIONAL `renderPdf` (absent = the Designer hides the action) and the
+  OPTIONAL `formatCatalog(text, probes)` (absent = the pickers list
+  spellings with no samples) — presence + capability, never a version
+  sniff; async
   so a Worker/server transport slots in; `TransportError` (never an
   uncaught throw; carries a typed engine `code`/`args` when present).
 - `engine/wasmTransport.ts` — `createWasmTransport(engine)` over a
@@ -32,6 +35,12 @@ hostile geometry degrades to null before it can reach an op.
   fractional page dimension or an RGBA buffer that does not match its
   declared area becomes a `TransportError` here, not an `ImageData`
   blow-up mid-commit.
+- `engine/formatCatalogResponse.ts` — a full RUNTIME guard over the
+  catalog response, not merely a TS type: a TS type is compile-time only,
+  and the spellings in this response are author-derived AND become
+  authored values the moment one is picked. Closed-set fields match
+  against a real array rather than an object table, so a prototype name
+  never resolves to an inherited value.
 - `engine/errors.ts` — `errorText` + `throwFields` (guarded typed-throw
   extraction).
 

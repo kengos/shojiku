@@ -1,8 +1,14 @@
 // What a `defaults.locale` / `defaults.currency` pick actually DOES, as data the
 // locale section can show: the engine's own date pattern, digit separators and
 // default currency for every engine-resolvable locale, plus one illustrative
-// rendering of each (the `FORMAT_SAMPLES` precedent — an example the reader can
-// recognize beats a pattern they have to decode).
+// rendering of each, because an example the reader can recognize beats a
+// pattern they have to decode.
+//
+// This module is now the LAST place the Designer composes an illustrative
+// sample itself. The format picker's hand-written table is gone — those samples
+// come from the engine's format catalog — and the same is worth doing here: the
+// engine can render a locale's own date and money against its exemplar values,
+// which would retire the drift-guard below with it.
 //
 // The pattern / separator / currency fields are the ENGINE's, copied from the
 // packs that define them (`engine/formatter/src/lang/builtin/*.yml` for the two

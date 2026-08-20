@@ -44,6 +44,12 @@ pub enum WasmError {
         /// The number of pages the document has.
         total: usize,
     },
+    /// The probe list handed to `format_catalog` is not the expected JSON
+    /// (`[{ fieldType, pattern }]`), or names a field type that has no
+    /// pattern form. Refused rather than defaulted — the typo-safety rule
+    /// the whole wire follows.
+    #[error("bad format probes: {0}")]
+    BadProbes(String),
     /// An all-pages raw render would exceed the page cap; the uncompressed
     /// pages would accumulate in the host heap. Select a page instead.
     #[error("document has {total} pages (over the {cap}-page raw cap); pass a page index")]
@@ -70,6 +76,7 @@ impl WasmError {
             WasmError::Render(_) => "render_error",
             WasmError::PageOutOfRange { .. } => "page_out_of_range",
             WasmError::TooManyRawPages { .. } => "too_many_raw_pages",
+            WasmError::BadProbes(_) => "bad_probes",
         }
     }
 
@@ -80,7 +87,10 @@ impl WasmError {
     pub fn args(&self) -> Vec<(&'static str, ArgValue)> {
         match self {
             WasmError::LocaleNotSet | WasmError::FontsNotLoaded => Vec::new(),
-            WasmError::Locale(detail) | WasmError::Fonts(detail) | WasmError::Render(detail) => {
+            WasmError::Locale(detail)
+            | WasmError::Fonts(detail)
+            | WasmError::Render(detail)
+            | WasmError::BadProbes(detail) => {
                 vec![("detail", ArgValue::text(detail))]
             }
             WasmError::UnknownFontPack(pack) => vec![("pack", ArgValue::text(pack))],

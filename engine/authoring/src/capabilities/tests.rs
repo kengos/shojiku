@@ -12,6 +12,10 @@ fn engine_info_reports_version_capabilities_and_locales() {
     assert!(info.capabilities.contains(&"style.textCombineUpright.all"));
     // Number→currency coercion via a `symbol`/`name` format pick.
     assert!(info.capabilities.contains(&"format.currency.coerce"));
+    // The format-catalog query. Pinned individually because the registry's
+    // structural tests (composition, dedup) pass without any given key
+    // ever being asserted.
+    assert!(info.capabilities.contains(&"format.catalog"));
     // Grid `fr` track weights (leftover distribution) and `auto` COLUMN
     // tracks (sized to the widest cell placed in the track). Each is
     // pinned individually — the registry's structural tests pass whether

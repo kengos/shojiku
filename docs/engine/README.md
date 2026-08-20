@@ -64,6 +64,10 @@ shojiku preview --templates templates.yml --params params.json \
 # The resolved layout tree + box index as JSON (GUI/AI surface)
 shojiku inspect --templates templates.yml --params params.json
 
+# Which display variants each field type can take, and what each RENDERS
+shojiku formats --templates templates.yml --lang ja-JP
+#   --probe date:'yyyy年M月d日'   previews a pattern before you author it
+
 # This build's feature keys (no inputs needed)
 shojiku capabilities
 ```

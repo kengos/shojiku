@@ -8,46 +8,46 @@
 import { type PdfOutcome, type RenderOutcome, TransportError } from './transport';
 import type { Diagnostic, Diagnostics, InspectEnvelope, RawPage } from './types';
 
-function fail(what: string): never {
+export function fail(what: string): never {
   throw new TransportError(what);
 }
 
-function asRecord(v: unknown, what: string): Record<string, unknown> {
+export function asRecord(v: unknown, what: string): Record<string, unknown> {
   if (typeof v !== 'object' || v === null) {
     fail(`${what}: expected an object`);
   }
   return v as Record<string, unknown>;
 }
 
-function asNumber(v: unknown, what: string): number {
+export function asNumber(v: unknown, what: string): number {
   if (typeof v !== 'number') {
     fail(`${what}: expected a number`);
   }
   return v;
 }
 
-function asBoolean(v: unknown, what: string): boolean {
+export function asBoolean(v: unknown, what: string): boolean {
   if (typeof v !== 'boolean') {
     fail(`${what}: expected a boolean`);
   }
   return v;
 }
 
-function asString(v: unknown, what: string): string {
+export function asString(v: unknown, what: string): string {
   if (typeof v !== 'string') {
     fail(`${what}: expected a string`);
   }
   return v;
 }
 
-function asArray(v: unknown, what: string): unknown[] {
+export function asArray(v: unknown, what: string): unknown[] {
   if (!Array.isArray(v)) {
     fail(`${what}: expected an array`);
   }
   return v;
 }
 
-function parseJson(source: string, what: string): unknown {
+export function parseJson(source: string, what: string): unknown {
   try {
     return JSON.parse(source);
   } catch {

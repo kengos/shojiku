@@ -181,6 +181,29 @@ resolved style.
   names, addressable}` is the op-addressable identity (rename/delete
   refuse on `!addressable` or `truncated` — the half-rename hazard);
   depth/node caps; real `Map`.
+- `formats/` — the `formats:` registry's domain model, laid out
+  deliberately parallel to the styles one above. `model.ts`
+  (`readFormatsView`, `MAX_FORMATS`, `RESERVED_FORMAT_NAMES` mirroring
+  `FieldType::from_name`, the ordered `FORMAT_DEFAULT_TYPES`), `plan.ts`
+  (the refusal vocabulary; four of its messages point at the
+  `styles.error.*` catalog keys on purpose — they are worded about the
+  DOCUMENT and the rewrite, not about styles), `fieldOps.ts`
+  (create/edit; an EMPTY pattern is a refusal, never a write — the wire
+  field is required and authoring without it produces a template the
+  engine cannot parse) and `refOps.ts` (rename/delete, one transactional
+  batch, refused whole).
+- `formats/usage.ts` — `buildFormatUsage(text)` → `FormatUsage {refs,
+  truncated}`. TWO roots, which is what makes it differ from the style
+  walk it otherwise mirrors: every binding's `format:` under `sections`
+  (matched GENERICALLY — `Binding.format` is the only `format:` string in
+  the template wire, so this reaches items, spans, table columns, char
+  grids and the `bindings:` map, and stays complete when a new binding
+  position ships), AND `defaults.formats.<type>`, which sits outside
+  `sections` entirely and is root-addressed. An inline `{ pattern }`
+  default is a definition rather than a reference and is skipped.
+  A registry name can also be named by definitions' `displayFormat:`, in
+  a file this walk is not given; those references are simply not
+  rewritten — the same silence a style name's unreachable ones get.
 
 ## Text editing (interpolation chips)
 

@@ -862,8 +862,17 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   one-template invariant now holds for typed text bindings, not just form
   marks and geometry — the `examples/forms/rirekisho-ja` blank ↔ filled-sample pair
   proves it. Capability key `binding.placeholder`.
+- **A format catalog an editor can ask for**, rather than a table it keeps
+  in step by hand: every pickable spelling per field type, its origin
+  (`builtin` / `pack` / `registry`), and **what it renders** — produced by
+  the formatter against fixed exemplar values the engine owns, through the
+  same dispatch a real binding takes. Types with no named variants come
+  back marked `fixed`. A `probes` list previews patterns the document does
+  not contain yet, degrading (never erroring) on a bad one, with count and
+  length caps of their own. Reached as `shojiku formats`, and from the
+  browser through the wasm binding. Capability key `format.catalog`.
 - **Capability surface**: `format.patterns.cldr`,
-  `format.currency.variants`, `format.units.semantic`,
+  `format.currency.variants`, `format.units.semantic`, `format.catalog`,
   `template.defaults`, `template.defaults.document`, `template.formats`,
   `binding.placeholder`.
 
@@ -1327,7 +1336,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 
 ### Authoring surface (`engine/authoring`)
 - **One shared lib layer** behind every host. The
-  `validate`/`prepare`/`preview`/`inspect`/`capabilities` operations —
+  `validate`/`prepare`/`preview`/`inspect`/`format_catalog`/`capabilities`
+  operations —
   and the `CAPABILITIES`/`EngineInfo` list — live in `engine/authoring`;
   the CLI, the MCP server, the WASM bindings, the C ABI library and the
   N-API addon are thin wrappers over the *same* layer, so no surface
@@ -1345,8 +1355,11 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   — or the full diagnostics list on any error.
 
 ### CLI (`engine/cli`)
-- `render` / `validate` / `inspect` / `preview` / `sign` / `verify` /
-  `capabilities`; signing flags (`--key`, `--cert`, `--passphrase-env` —
+- `render` / `validate` / `inspect` / `preview` / `formats` / `sign` /
+  `verify` / `capabilities`; `formats` takes an OPTIONAL `--templates`
+  (the locale's own vocabulary is useful without a document) and a
+  repeatable `--probe <type>:<pattern>`, split at the FIRST colon only
+  because a pattern routinely contains one; signing flags (`--key`, `--cert`, `--passphrase-env` —
   and deliberately no flag carrying the passphrase itself, since `argv`
   is readable by other processes); verification's required, repeatable
   `--anchor`; asset flags (`--assets-dir`, `--asset-mode`, `--allow/deny-dynamic-image`);

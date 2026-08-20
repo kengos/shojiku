@@ -22,7 +22,8 @@
 import { useEffect, useState } from 'react';
 import { PageUnderlay } from '../canvas/PageUnderlay';
 import type { EditorController } from '../editor/useEditor';
-import type { RawPage } from '../engine/types';
+import type { FormatCatalog, PatternProbe, ProbeResult, RawPage } from '../engine/types';
+import type { FormatUsage } from '../formats/usage';
 import { useI18n } from '../i18n/context';
 import type { StyleUsage } from '../styles/usage';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
@@ -30,9 +31,8 @@ import { IconButton } from '../ui/Button';
 import { SECTION_TITLE } from '../ui/chrome';
 import { IconClose } from '../ui/icons';
 import { BaseTextPreview } from './BaseTextPreview';
+import { DocSectionBody } from './DocSectionBody';
 import { DocSectionRail } from './DocSectionRail';
-import { DocumentDefaults } from './DocumentDefaults';
-import { DocumentMetaFields } from './DocumentMetaFields';
 import {
   type DocSection,
   SECTION_ORDER,
@@ -40,8 +40,6 @@ import {
   sectionSummaries,
 } from './docSections';
 import { hasCapability } from './itemPanelProps';
-import { PageSetup } from './PageSetup';
-import { StylesManager } from './StylesManager';
 
 export interface DocumentSettingsPageProps {
   readonly controller: EditorController;
@@ -50,6 +48,19 @@ export interface DocumentSettingsPageProps {
   /** The locale's default font face — seeded into the default-style family. */
   readonly defaultFontFamily?: string;
   readonly styleUsage?: StyleUsage | null;
+  /** The format-reference index, for the registry section's impact scope and
+   * its rename/delete rewrites. `null` (an unmaterialized document) makes both
+   * refuse rather than rewrite against no reference data. */
+  readonly formatUsage?: FormatUsage | null;
+  /** The engine's format catalog — every variant the document may pick and what
+   * each one renders. `null` before the first answer, and permanently on a
+   * transport that cannot answer; the section degrades rather than blanking. */
+  readonly formatCatalog?: FormatCatalog | null;
+  /** Preview a pattern that is not authored yet. */
+  readonly probeFormat?: (probes: readonly PatternProbe[]) => Promise<readonly ProbeResult[]>;
+  /** The session's template-size cap. The registry rename grows the document
+   * by the name delta at every reference, so it measures before applying. */
+  readonly maxBytes: number;
   /** The engine's last-good rendered pages (the live preview; the pane shrinks
    * them via CSS, so no render scale is needed). Empty → a "no preview yet"
    * note (a document that has never rendered). */
@@ -60,12 +71,21 @@ export interface DocumentSettingsPageProps {
   readonly onClose: () => void;
 }
 
+/** A host that supplied no probe: every preview resolves empty, so the pattern
+ * surface shows the pattern with no sample rather than branching on
+ * availability at every call site. */
+const NO_PROBE = async (): Promise<readonly ProbeResult[]> => [];
+
 export function DocumentSettingsPage({
   controller,
   fontFamilies = [],
   capabilities,
   defaultFontFamily,
   styleUsage = null,
+  formatUsage = null,
+  formatCatalog = null,
+  probeFormat = NO_PROBE,
+  maxBytes,
   pages,
   focus,
   onClose,
@@ -89,44 +109,17 @@ export function DocumentSettingsPage({
   // A section whose engine capability is missing is not listed at all — an
   // empty rail row that opens onto nothing is worse than no row.
   const showMetadata = hasCapability(capabilities, 'template.document.metadata');
-  const sections = SECTION_ORDER.filter((section) => section !== 'metadata' || showMetadata);
-
-  const sectionBody = (section: DocSection) => {
-    switch (section) {
-      case 'page':
-        return <PageSetup controller={controller} titled={false} />;
-      case 'metadata':
-        return <DocumentMetaFields controller={controller} />;
-      case 'defaults':
-        return (
-          <DocumentDefaults
-            controller={controller}
-            fontFamilies={fontFamilies}
-            capabilities={capabilities}
-            defaultFontFamily={defaultFontFamily}
-            section="style"
-          />
-        );
-      case 'styles':
-        return (
-          <StylesManager
-            controller={controller}
-            fontFamilies={fontFamilies}
-            usage={styleUsage}
-            titled={false}
-          />
-        );
-      default:
-        return (
-          <DocumentDefaults
-            controller={controller}
-            fontFamilies={fontFamilies}
-            capabilities={capabilities}
-            section="locale"
-          />
-        );
+  // The 表示形式 section holds two capability-gated halves; it is listed only
+  // when at least one of them would render, because an empty rail row that
+  // opens onto nothing is worse than no row.
+  const showDefaults = hasCapability(capabilities, 'template.defaults');
+  const showRegistry = hasCapability(capabilities, 'template.formats');
+  const sections = SECTION_ORDER.filter((section) => {
+    if (section === 'metadata') {
+      return showMetadata;
     }
-  };
+    return section !== 'formats' || showDefaults || showRegistry;
+  });
 
   return (
     <section
@@ -157,7 +150,20 @@ export function DocumentSettingsPage({
           <div className="mx-auto max-w-[520px]">
             <section>
               <h3 className={SECTION_TITLE}>{t(SECTION_TITLE_KEYS[current])}</h3>
-              {sectionBody(current)}
+              <DocSectionBody
+                section={current}
+                controller={controller}
+                fontFamilies={fontFamilies}
+                capabilities={capabilities}
+                defaultFontFamily={defaultFontFamily}
+                styleUsage={styleUsage}
+                formatUsage={formatUsage}
+                formatCatalog={formatCatalog}
+                probeFormat={probeFormat}
+                showDefaults={showDefaults}
+                showRegistry={showRegistry}
+                maxBytes={maxBytes}
+              />
             </section>
           </div>
         </div>

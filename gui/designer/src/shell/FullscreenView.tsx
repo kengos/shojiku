@@ -16,7 +16,6 @@ import type { PreviewSession } from '../hooks/usePreviewSession';
 import type { SampleData } from '../hooks/useSampleData';
 import type { HostConfig } from '../hostConfig';
 import { DocumentSettingsPage } from '../panel/DocumentSettingsPage';
-import { registryNames } from '../panel/itemView';
 import { canUndoSample } from '../sample/history';
 
 export interface FullscreenViewProps {
@@ -27,6 +26,8 @@ export interface FullscreenViewProps {
   readonly derived: DocDerived;
   readonly session: PreviewSession;
   readonly host: HostConfig;
+  /** The session's template-size cap (`useTemplateCap`). */
+  readonly maxBytes: number;
   readonly onParamsChange: (params: string) => void;
 }
 
@@ -38,6 +39,7 @@ export function FullscreenView({
   derived,
   session,
   host,
+  maxBytes,
   onParamsChange,
 }: FullscreenViewProps) {
   // Locals, not property reads: narrowing follows a local binding, and the
@@ -54,6 +56,10 @@ export function FullscreenView({
         capabilities={capabilities}
         defaultFontFamily={defaultFontFamily}
         styleUsage={derived.styleUsage}
+        formatUsage={derived.formatUsage}
+        formatCatalog={derived.formats.catalog}
+        probeFormat={derived.formats.probe}
+        maxBytes={maxBytes}
         pages={session.pages}
         focus={docFocus ?? undefined}
         onClose={views.closeDocView}
@@ -81,8 +87,6 @@ export function FullscreenView({
       onUndo={sample.undoSample}
       canUndoDefinition={canUndoDefs(defs.defsHistory)}
       onUndoDefinition={defs.undoDefinition}
-      formatRegistry={registryNames(editor.read('formats'))}
-      capabilities={capabilities}
       initialSelection={views.dataFocus ?? undefined}
       onClose={views.closeDataView}
     />
