@@ -808,6 +808,26 @@ Both halves of that have bitten here.
   line is enough (`+ auto_sum` → `+ auto_sum * 0.0`), and it is the
   difference between "my test passes" and "my test tests". Do this
   BEFORE committing, while the neutralization is trivial to undo.
+- **A control that FAILS is telling you the PROBE is broken — and a probe
+  that changes nothing looks exactly like a fix that works.** The
+  companion-control rule above says a control must be able to fail; the
+  other half is that when it DOES fail, the experiment is void rather
+  than informative. Three probes in one sitting, each a different way for
+  the mechanism to be wrong while the output looked like an answer:
+  a sabotaged COPY of a script run from `/tmp`, which resolved its repo
+  root elsewhere and died before reaching the thing under test (red, for
+  the wrong reason); the same copy moved INSIDE the repo, where the
+  scanner it belonged to then scanned it, so the control went red too;
+  and a sabotage written `[ "$f" = X ] && false || cmd`, which still runs
+  `cmd` — `A && false || B` always reaches `B` — so the gate stayed green
+  having been changed in no way, and "the fix works" was about to be
+  concluded from a probe that did nothing. Run the control every time,
+  expect it to PASS, and treat a red control as "measure the measurement"
+  rather than as a second finding. Prefer sabotaging the real file in
+  place and restoring it (with a copy, per the next bullet) over
+  experimenting on a duplicate, which changes the path and can change
+  what the tool under test sees.
+
 - **Undo the experiment with a COPY, never with git.** `git checkout
   <path>` restores the file from HEAD, which silently deletes every
   uncommitted change in it — a whole feature's wiring vanished that way,
