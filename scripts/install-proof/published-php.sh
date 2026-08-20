@@ -15,19 +15,13 @@ IMG="php:${PHP_VER:-8.3}-cli-bookworm"
 
 # The release asset's filename carries the version, so `latest` has to be
 # resolved to a tag before anything can be downloaded.
-# Downloaded to a FILE rather than piped: a pipeline reports only the last
-# command's status, so `curl | sed` would turn a failed fetch into an empty
-# version and `curl | tar` a truncated archive into a confusing tar error.
-VER="${SHOJIKU_VERSION:-}"
-if [ -z "$VER" ]; then
-  curl -fsSL -o "$WORK/latest.json" \
-    https://api.github.com/repos/kengos/shojiku/releases/latest
-  VER=$(sed -n 's/.*"tag_name"[^"]*"v\{0,1\}\([^"]*\)".*/\1/p' "$WORK/latest.json" | head -1)
-  [ -n "$VER" ] || {
-    echo "published-php: no tag_name in the latest-release response" >&2
-    exit 1
-  }
-fi
+# Both halves — the composer package and the CLI archive from the GitHub
+# Release — are asked about ONE version, resolved in common.sh. This used to
+# discover "latest" from the releases API when unset; that answered a question
+# nobody has during a release, and the archive download below still keeps its
+# fetch-to-a-FILE discipline (a pipeline reports only the last command's
+# status, so `curl | tar` turns a truncated archive into a confusing tar error).
+VER="$PROOF_VERSION"
 
 # The container runs the host's architecture, so the archive has to match it —
 # an x64 binary mounted into an arm64 container fails to exec, with an error

@@ -29,12 +29,12 @@ if (!result.success) {
 writeFileSync("/w/out.pdf", result.artifact.bytes);
 MJS
 
-docker run --rm -e VER="${SHOJIKU_VERSION:-}" -v "$WORK:/w" \
+docker run --rm -e VER="$PROOF_VERSION" -v "$WORK:/w" \
   -v "$ROOT/examples/business:/ex:ro" -v "$ROOT/packs:/packs:ro" \
   "$IMG" sh -euc '
   mkdir /consumer && cd /consumer
   npm init -y >/dev/null
-  npm install --no-audit --no-fund "shojiku${VER:+@$VER}" >/dev/null
+  npm install --no-audit --no-fund "shojiku@$VER" >/dev/null
   # The optional platform package is the whole point: list what npm actually
   # pulled, because a missing one installs silently and fails at load.
   npm ls --all --depth=1 2>/dev/null | grep -E "shojiku" || true

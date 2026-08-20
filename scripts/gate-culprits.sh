@@ -71,6 +71,12 @@ emit "text indent:" "$(pick '^(examples|skills)/.*: block scalar ')"
 # above — which matches a lowercase `<package> <script>: ` — cannot eat them.)
 emit "sbom:" "$(pick '^SBOM (DRIFT|UNMAPPED|MISSING|ORPHAN) |^FAIL sbom self-test|^FAIL: (found no committed lockfile|compared no inventory)')"
 
+# version-check: one DRIFT line per disagreeing coordinate (naming the rule,
+# the file and both versions) and one UNDERCOUNT line per rule that has stopped
+# matching. The self-test's own FAIL lines matter too — they mean the detector
+# broke, which is a different problem from a stale literal.
+emit "versions:" "$(pick '^VERSION (DRIFT|UNDERCOUNT) |^FAIL versions|^ *(check-versions:|Bump it,)')"
+
 # wasm: the budget assertion prints the measured sizes and then which of the
 # two budgets was crossed. Both lines matter — the sizes are the delta you act
 # on, "over budget" alone does not say by how much. NOTE the size line is

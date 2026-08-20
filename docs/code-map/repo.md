@@ -318,6 +318,17 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   works); that copy is byte-gated against
   `examples/lifestyle/recipe-booklet-en/`).
 - `scripts/` — repo gates (`check-line-budget.sh`,
+  `check-versions.sh` — `make version-check`, CI job `versions`: every
+  place naming a shojiku RELEASE COORDINATE (cargo path-dep pins, maven
+  dependencies by groupId, `PackageReference Include="Shojiku"`, the npm
+  version, the four per-language version constants, `shojiku-<semver>`
+  artifact filenames, release download URLs, the assembly's `VERSION=`)
+  must equal `[workspace.package]`. The rules are TREE-WIDE and
+  structural rather than a list of known files, because the failure it
+  exists for IS an incomplete list; each carries a measured MINIMUM hit
+  count so a rule that silently stops matching fails instead of reading
+  clean, and a self-test runs the real scanner over a known-bad fixture
+  (one case per rule, both escape hatches) before the tree is touched.
   `check-gui-line-budget.sh`, `check-skill-template-sync.sh` — the
   first step of `make examples-check`: a skill's bundled
   `template/*.yml` must be byte-identical to the example it came from,
@@ -420,7 +431,11 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   consuming runtime.
   `published-*.sh` (`make proof-published[-<lang>]`) asks the same question
   of the REGISTRY copy and takes no local artifact at all; go needs none,
-  since its publish IS a repo tag. `published-php.sh` is the one drawing on
+  since its publish IS a repo tag. All seven ask about ONE version,
+  resolved in `common.sh` as `SHOJIKU_VERSION` or else the tree's own
+  `[workspace.package]` — never the registry's "latest", which during a
+  release means the PREVIOUS release and made a bare run a true statement
+  about the wrong subject. `published-php.sh` is the one drawing on
   two publish channels — the composer package from Packagist and the CLI
   from the GitHub Release, archive chosen by `uname -m` — because that
   package drives a binary rather than carrying one.

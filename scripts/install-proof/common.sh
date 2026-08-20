@@ -39,6 +39,28 @@ scrub() {
 }
 trap scrub EXIT INT TERM
 
+# THE VERSION A PUBLISHED PROOF ASKS ABOUT. `SHOJIKU_VERSION=x.y.z` pins one;
+# otherwise it is the version THIS TREE SHIPS, read from the same
+# `[workspace.package]` that `make version-check` treats as the truth.
+#
+# It used to default to whatever the registry called "latest", and that made a
+# bare run a true statement about the WRONG SUBJECT: during the release that
+# introduced this, six proofs went green against the previous release and read
+# as proof of the new one. Defaulting to the tree's own version instead means a
+# bare run fails loudly on a bump — which is the honest answer, because the
+# version being shipped genuinely is not published yet. `published-java.sh`
+# already behaved this way (with a hardcoded literal, itself a site that went
+# stale); this generalizes it and removes the literal.
+workspace_version() {
+  awk '/^\[workspace\.package\]/{w=1;next} /^\[/{w=0} w && /^version[ \t]*=/{gsub(/[^0-9.]/,"");print;exit}' \
+    "$ROOT/engine/Cargo.toml"
+}
+PROOF_VERSION="${SHOJIKU_VERSION:-$(workspace_version)}"
+[ -n "$PROOF_VERSION" ] || {
+  echo "install-proof: could not read [workspace.package] version from engine/Cargo.toml" >&2
+  exit 1
+}
+
 require_artifact() {
   # $1 = path, $2 = the make target that produces it
   [ -e "$1" ] || {

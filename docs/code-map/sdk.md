@@ -489,7 +489,10 @@ both subprocess SDKs script.
   host-arch binary into the gitignored `dist/cli/local/` — the subprocess
   transport's `capi-lib`. `make proof-published-php` is the registry-side
   proof: it installs from Packagist, takes the CLI from the GitHub Release,
-  and renders the same 29433 bytes every other published proof does.
+  and renders the same bytes every other published proof does — the claim
+  is byte-identity with the committed `examples/business/receipt-ja/output.pdf`,
+  not a literal, because the literal that used to stand here went stale the
+  next time that example was re-rendered.
 
 ## sdk/go — the second SUBPROCESS mirror, and the last stage
 

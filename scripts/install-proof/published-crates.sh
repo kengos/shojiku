@@ -9,7 +9,7 @@
 . "$(dirname "$0")/common.sh"
 
 IMG="rust:${RUST_VER:-1.97.1}-slim-bookworm"
-SPEC="${SHOJIKU_VERSION:+--version $SHOJIKU_VERSION}"
+SPEC="--version $PROOF_VERSION"
 
 echo "== published-install proof (rust, $IMG) =="
 

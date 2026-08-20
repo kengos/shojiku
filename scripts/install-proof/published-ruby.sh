@@ -25,10 +25,10 @@ end
 File.binwrite("/w/out.pdf", result.artifact.bytes)
 RB
 
-docker run --rm -e VER="${SHOJIKU_VERSION:-}" -v "$WORK:/w" \
+docker run --rm -e VER="$PROOF_VERSION" -v "$WORK:/w" \
   -v "$ROOT/examples/business:/ex:ro" -v "$ROOT/packs:/packs:ro" \
   "$IMG" sh -euc '
-  if [ -n "$VER" ]; then gem install -N shojiku -v "$VER"; else gem install -N shojiku; fi
+  gem install -N shojiku -v "$VER"
   # Which gem resolved matters: the plain `ruby` platform gem carries no
   # payload, so a mis-tagged platform gem installs and then fails to render.
   gem list -d shojiku | head -5
