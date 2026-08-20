@@ -6,10 +6,13 @@ import { FORMAT_CATALOG as CATALOG } from '../testkit/formatCatalog';
 import { formatOptions, isFixedType, variantOptions, variantSamples } from './formatModel';
 
 describe('formatOptions', () => {
-  it('offers registry names first (label-less), then labeled builtins', () => {
+  it('withholds a registry name the bound type cannot pick', () => {
+    // `tax` is a `formats:` entry, and every v1 registry entry is a date or a
+    // datetime pattern — so the catalog lists none of them under `currency`,
+    // and picking one on a money binding renders the bare amount plus an
+    // `unknown_format_variant` warning. It used to head this very list.
     const rows = formatOptions(['tax'], 'currency', undefined, CATALOG);
     expect(rows).toEqual([
-      { spelling: 'tax', labelKey: undefined, samples: [], origin: 'registry' },
       {
         spelling: 'symbol',
         labelKey: 'format.label.symbol',
@@ -205,12 +208,148 @@ describe('formatOptions', () => {
   });
 
   it('does not resolve a prototype name through an inherited property', () => {
-    // A registry name is an attacker string; the lookup walks real arrays so
-    // `constructor` can never resolve to an inherited value.
+    // A registry name is an attacker string; both the sample lookup and the
+    // pickability filter walk real arrays, so `constructor` can never resolve
+    // to an inherited value — it is simply a name the catalog does not list.
     for (const hostile of ['constructor', '__proto__', 'toString']) {
-      const rows = formatOptions([hostile], 'date', undefined, CATALOG);
-      expect(rows.find((r) => r.spelling === hostile)?.samples).toEqual([]);
+      expect(formatOptions([hostile], 'date', undefined, CATALOG)).toEqual([
+        {
+          spelling: 'datetime',
+          labelKey: 'format.label.datetime',
+          samples: ['2026-11-03 14:05'],
+          origin: 'builtin',
+        },
+      ]);
+      // The other arm: with no catalog to filter by, the same name is offered
+      // and still carries nothing inherited.
+      const kept = formatOptions([hostile], 'date');
+      expect(kept[0]).toEqual({
+        spelling: hostile,
+        labelKey: undefined,
+        samples: [],
+        origin: undefined,
+      });
     }
+  });
+});
+
+describe('formatOptions — the registry names a type may actually pick', () => {
+  it('keeps a registry name the catalog lists for the bound type', () => {
+    // The filter is not a blanket removal: `stamp` is a date pattern on a date
+    // field, which is exactly the pairing `kind_matches` admits.
+    expect(formatOptions(['stamp'], 'date', undefined, CATALOG).map((r) => r.spelling)).toEqual([
+      'stamp',
+      'datetime',
+    ]);
+  });
+
+  it('withholds a DATE entry from a datetime field', () => {
+    // The two kinds are not interchangeable — `render_dated` finds a registry
+    // name before the pack, so a date pattern picked on a datetime binding
+    // renders the wrong SHAPE rather than warning. The engine lists `stamp`
+    // under `date` only, and this reads that answer.
+    expect(formatOptions(['stamp'], 'datetime', undefined, CATALOG).map((r) => r.spelling)).toEqual(
+      ['date'],
+    );
+  });
+
+  it('offers a TEXT field none of them, with the catalog present', () => {
+    // `string` has no format layer at all, so the catalog carries no entry for
+    // it and the honest answer is none. A pick there is not even wrong out
+    // loud: with no declared `enum` labels the text arm has no variants, so an
+    // authored name is silently INERT (with labels it degrades to the label and
+    // warns). Typing one stays possible — the picker's input is free text.
+    expect(formatOptions(['mask_tel'], 'string', undefined, CATALOG)).toEqual([]);
+  });
+
+  it('offers every name when the engine supplied no catalog', () => {
+    // Nothing to filter WITH, on either a type that could pick one or a type
+    // that could not. The documented fallback: an older engine, or a host
+    // whose transport omits the query.
+    expect(formatOptions(['tax'], 'currency').map((r) => r.spelling)).toEqual([
+      'tax',
+      'symbol',
+      'name',
+    ]);
+    expect(formatOptions(['mask_tel'], 'string').map((r) => r.spelling)).toEqual(['mask_tel']);
+  });
+
+  it('offers every name when the bound type is unresolved', () => {
+    // Field types come from `definitions`, so a document without them resolves
+    // none — the common state, not an edge case. There is no type to filter by.
+    expect(
+      formatOptions(['tax', 'stamp'], undefined, undefined, CATALOG).map((r) => r.spelling),
+    ).toEqual(['tax', 'stamp', 'currency', 'date', 'datetime', 'percentage', 'quantity']);
+  });
+
+  it('offers every name when the type read as the empty string', () => {
+    // The palette's OTHER spelling of unresolved: `displayType` returns `''`
+    // for any non-string `type:`, which includes a field declared with no
+    // `type:` at all — an ordinary definitions shape, not a hostile one. It
+    // means "could not read this", exactly as `undefined` does, and the builtin
+    // table already treats the two alike.
+    expect(formatOptions(['tax'], '', undefined, CATALOG).map((r) => r.spelling)).toEqual([
+      'tax',
+      'currency',
+      'date',
+      'datetime',
+      'percentage',
+      'quantity',
+    ]);
+  });
+
+  it('withholds every name when the catalog carries no entry for the type', () => {
+    // A catalog that answers partially has ANSWERED: an absent type entry is
+    // read as "nothing pickable here", never as "filter disabled". Narrower is
+    // the safe direction — the free-text input still commits any spelling.
+    const SPARSE: FormatCatalog = {
+      types: [{ fieldType: 'currency', fixed: false, variants: [] }],
+      probes: [],
+    };
+    expect(formatOptions(['stamp'], 'date', undefined, SPARSE).map((r) => r.spelling)).toEqual([
+      'datetime',
+    ]);
+  });
+
+  it('reads the catalog as a FILTER, never as a source of names', () => {
+    // The document's list is what gets walked. A catalog naming `stamp` cannot
+    // put it in a picker for a document that does not declare it, and a
+    // document name the catalog does not list does not survive either.
+    expect(formatOptions(['other'], 'date', undefined, CATALOG).map((r) => r.spelling)).toEqual([
+      'datetime',
+    ]);
+  });
+
+  it('does not file a builtin-origin spelling as the document’s own entry', () => {
+    // `reserved_format_name` reserves the nine field-TYPE names only, so a
+    // `formats:` entry may legally be spelled `symbol` — and currency dispatch
+    // matches that name in `money.rs` without ever consulting the registry. So
+    // the catalog attributes it to the engine, and it is offered as the BUILTIN
+    // row it really is (label and sample), not as a bare registry row.
+    const rows = formatOptions(['symbol'], 'currency', undefined, CATALOG);
+    expect(rows.map((r) => r.spelling)).toEqual(['symbol', 'name']);
+    expect(rows[0].labelKey).toBe('format.label.symbol');
+    expect(rows[0].samples).toEqual(['¥1,234,568']);
+  });
+
+  it('keeps the authored order and lists a repeat once', () => {
+    const TWO: FormatCatalog = {
+      types: [
+        {
+          fieldType: 'date',
+          fixed: false,
+          variants: [
+            { spelling: 'era', origin: 'registry', samples: ['令和8年'] },
+            { spelling: 'stamp', origin: 'registry', samples: ['2026.11.03'] },
+          ],
+        },
+      ],
+      probes: [],
+    };
+    // The catalog sorts its own names; the picker shows the author's order.
+    expect(
+      formatOptions(['stamp', 'era', 'stamp'], 'date', undefined, TWO).map((r) => r.spelling),
+    ).toEqual(['stamp', 'era', 'datetime']);
   });
 });
 

@@ -36,6 +36,17 @@ describe('FormatPicker', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
+  it('shows an authored spelling the picker no longer offers', () => {
+    // The offer list is type-filtered, so a legally authored name can sit
+    // outside it — a registry entry left on a binding whose field was later
+    // re-typed, or one typed by hand. The input is free text and shows it
+    // verbatim: narrowing what is OFFERED must never rewrite what is AUTHORED.
+    draw('stamp', OPTIONS.slice(1));
+    expect((screen.getByLabelText('Format') as HTMLInputElement).value).toBe('stamp');
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
+    expect(screen.getByRole('menu').textContent).not.toContain('stamp');
+  });
+
   it('opens a popover with localized label, wire spelling, and sample per builtin row', () => {
     draw('', OPTIONS);
     fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));

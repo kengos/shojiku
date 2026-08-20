@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
+import { FORMAT_CATALOG } from '../testkit/formatCatalog';
 import { TableColumnSheet } from './TableColumnSheet';
 
 const TABLE = 'sections.body.items[0]';
@@ -166,6 +167,53 @@ describe('TableColumnSheet', () => {
       keys: ['data', 'format'],
       value: 'currency',
     });
+  });
+
+  it('type-filters a bound column’s format names, given a catalog', () => {
+    // The THIRD entry point into the format picker (the offcanvas sheet), and
+    // the one whose `formatCatalog` prop is optional and defaults to `null` —
+    // the value that means "filter disabled". A host or a refactor dropping the
+    // prop would revert the filter here with no type error and no red test.
+    // `qty` is number-typed and `tax` is a date-pattern registry entry, so the
+    // engine lists none of the registry under `number`.
+    const node = {
+      type: 'table',
+      data: { key: 'rows' },
+      columns: [{ label: '数量', data: { key: 'qty' } }],
+    };
+    const controller = makeController(node);
+    controller.read = (path: string) => (path === 'formats' ? { tax: {} } : readAt(node, path));
+    const spellings = () =>
+      screen.getAllByRole('menuitem').map((row) => row.querySelector('code')?.textContent);
+    const withCatalog = draw(
+      <TableColumnSheet
+        controller={controller}
+        tablePath={TABLE}
+        dataKey="rows"
+        groups={GROUPS}
+        params={PARAMS}
+        formatCatalog={FORMAT_CATALOG}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
+    // No `capabilities` passed, so the bundled engine's currency coercion is
+    // assumed and `symbol`/`name` ride beside `currency` — the builtin half is
+    // untouched by this filter, which only decides the registry half.
+    const BUILTINS = ['currency', 'symbol', 'name', 'percentage', 'quantity'];
+    expect(spellings()).toEqual(BUILTINS);
+    withCatalog.unmount();
+    // Without one there is nothing to filter by, and the same column offers it.
+    draw(
+      <TableColumnSheet
+        controller={controller}
+        tablePath={TABLE}
+        dataKey="rows"
+        groups={GROUPS}
+        params={PARAMS}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
+    expect(spellings()).toEqual(['tax', ...BUILTINS]);
   });
 
   it('hides the format control on cell and unbound columns', () => {

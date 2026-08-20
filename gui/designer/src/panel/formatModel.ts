@@ -105,6 +105,53 @@ function resolvedType(spelling: string, fieldType: string | undefined): string |
   return fieldType;
 }
 
+/** Which of the document's `formats:` registry names this field may PICK.
+ *
+ * The engine already answers this. A registry entry declares a KIND (`date` or
+ * `datetime` — the only two v1 has), and the catalog lists it under a type only
+ * where the two agree (`kind_matches`, `engine/authoring/src/formats/variants.rs`).
+ * Offering the rest offered a pick that WARNS on a currency field
+ * (`unknown_format_variant`) and, on a text field with no declared `enum`
+ * labels, is silently INERT — that arm has no variants of its own, so the name
+ * is neither honoured nor complained about (`engine/formatter/src/format/text.rs`;
+ * WITH labels the same pick degrades to the label and does warn). The document-settings picker has read the catalog since it shipped;
+ * this is the binding-level picker catching up to it.
+ *
+ * Two states have nothing to filter WITH, and both keep the full list: no
+ * catalog (an older engine, a host whose transport omits the query), and an
+ * unresolved field type — types come from `definitions`, so a document without
+ * them resolves none, which makes that the common state rather than an edge.
+ * Unresolved has TWO spellings and they mean the same thing: `undefined` when
+ * no offer matches the bound key, and `''` when one does and its type could not
+ * be read — `displayType` mints that for any non-string `type:`, a field
+ * declared with no `type:` at all included. The builtin table already treats
+ * them alike (neither is an own property, so both fall to the generic set).
+ * Otherwise the catalog IS the vocabulary, including for the types it carries
+ * no entry for at all (`string`/`boolean`/`image` have no format layer), where
+ * the honest answer is none.
+ *
+ * The DOCUMENT's list is what gets walked, with the catalog consulted per name:
+ * that keeps the authored order, and it means a catalog naming an entry the
+ * document does not hold can never add a row to a picker. `origin` is read too,
+ * not just presence — a name the engine attributes to the pack or to its own
+ * builtins (a `formats:` entry spelled `symbol`, which `reserved_format_name`
+ * permits) is not the document's registry entry, and it is still offered by the
+ * builtin row below, with its label and its sample.
+ *
+ * Arrays, never object indexing: a registry name is a document-derived string.
+ */
+function pickableRegistry(
+  registry: readonly string[],
+  catalog: FormatCatalog | null,
+  fieldType: string | undefined,
+): readonly string[] {
+  if (catalog === null || fieldType === undefined || fieldType === '') {
+    return registry;
+  }
+  const listed = catalog.types.find((t) => t.fieldType === fieldType)?.variants ?? [];
+  return registry.filter((n) => listed.some((v) => v.spelling === n && v.origin === 'registry'));
+}
+
 /** One row the format picker offers. A `labelKey` (the localized name) and a
  * `sample` are present only for the closed builtin spellings; a registry
  * (author-defined `formats:`) name is offered by its wire `spelling` alone. */
@@ -123,11 +170,13 @@ export interface FormatOption {
 }
 
 /** The rows the format picker shows: the template's `formats:` registry names
- * first (author-defined), then the builtin spellings the engine accepts for the
- * bound field's display type — each with a localized label and, when the engine
- * supplied a catalog, what it actually renders. The engine stays the validator
- * (an inapplicable name warns live); this list only keeps the wire spellings
- * out of the user's head.
+ * first (author-defined, and filtered to the ones this field's type may
+ * actually pick — see `pickableRegistry`), then the builtin spellings the
+ * engine accepts for the bound field's display type — each with a localized
+ * label and, when the engine supplied a catalog, what it actually renders. The
+ * engine stays the validator (a name typed by hand still warns live); this list
+ * only keeps the wire spellings out of the user's head, and no longer offers a
+ * pick that could only produce a diagnostic.
  *
  * A hostile `fieldType` (`__proto__`) resolves to the generic set via the
  * own-property guard, never an inherited table entry. `capabilities` gates the
@@ -150,7 +199,7 @@ export function formatOptions(
       : GENERIC_FORMAT_SUGGESTIONS;
   const seen = new Set<string>();
   const out: FormatOption[] = [];
-  for (const spelling of registry) {
+  for (const spelling of pickableRegistry(registry, catalog, fieldType)) {
     if (!seen.has(spelling)) {
       seen.add(spelling);
       out.push({

@@ -85,6 +85,18 @@ platform binaries.
 
 ### Fixed
 
+- **The Designer's format picker no longer offers a format the field cannot
+  use.** A template's `formats:` entries were listed on every binding whatever
+  it was bound to, so a date pattern turned up in the menu for a money field,
+  and picking it printed the bare amount with a warning instead of the format
+  you asked for. On a text field the same pick was quieter and worse: unless
+  the field declares a set of choices, nothing happened at all and nothing said
+  so. The menu now lists only the entries the engine will actually honour for
+  that field's type, read from the same engine answer the document-settings
+  pickers have read since they shipped. The box beside the menu is still free
+  text, so a spelling the menu does not list can still be typed, and a format
+  already written into a template is left exactly as it is.
+
 - **A very long date pattern no longer slows a render to a crawl.** The
   pattern renderer copied the remaining pattern on every character it read,
   which made rendering quadratic in the pattern's length, so a template

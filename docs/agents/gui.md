@@ -324,9 +324,10 @@ property-panel + diagnostics work shipped: named ops
 that address a leaf by a `path` + a map-key `keys` path (auto-creating /
 pruning intermediate maps) plus `setStrings` and a transactional
 `applyAll`; the property panel (content text/data binding, style +
-`styleNames` registry picker, the localized format picker (registry
-names + type-aware suggestions with live samples; the original registry
-datalist became its expert free-entry path), box numerics),
+`styleNames` registry picker, the localized format picker (type-aware
+throughout — the registry names as well as the builtin suggestions — with
+live samples; the original registry datalist became its expert free-entry
+path), box numerics),
 each edit a named op; the diagnostics panel rendering `code` + typed
 `args` through a **per-language catalog resolved from a BCP 47 tag** (an
 in-repo `formatMessage` subset, no dependency; the English entries
