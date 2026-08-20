@@ -54,6 +54,14 @@ CommonMark-correct scan sees one code span covering both lines. It also
 rendered a stray space inside the identifier on GitHub, so reflowing the
 source to keep the span on one line is the right fix rather than a workaround.
 
+**No scope gate catches this: `make verify:site` is tsc / vitest / the data
+check, and none of them compiles the page as a Vue template.** The only step
+that does is `site-build` — the Pages build, which in CI is a step of the
+`site` job rather than anything `verify:site` runs. So a cycle that finishes
+its docs slice on the scope gate ships a page that cannot build, and learns it
+from CI ~40 seconds in. Finish a `docs/engine/**` change on
+`make quiet T=site-build` as well.
+
 **How it was actually found: bisect against `make site-build`.** The Vue
 transform fails in under a second, so truncating the file (`head -N`) and
 rebuilding is cheap — 1200 clean, 2050 red, 1900 clean, 2024 red — and lands
