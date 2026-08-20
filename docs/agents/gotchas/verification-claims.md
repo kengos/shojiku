@@ -1055,3 +1055,71 @@ which reads as "waiting for a review", not "unsigned".
 good signature. The fix is `git commit --amend -S` (the agent usually has the
 key unlocked already) and a force-push; the tree is unchanged, so CI simply
 re-certifies the same content.
+
+## A discovery grep piped through `head` becomes evidence for the wrong thing
+
+The pipe is added to keep the output readable and then quietly decides the
+conclusion. `grep -rli <term> . | head -10` filled its ten lines from
+directories sorting earlier in the walk and cut every `gui/designer/src` hit,
+which is how "the Designer does not model `definitions.yml`" got written down.
+The real count was 74 files, and one of them was a whole definitions editor.
+
+The existing entries in this file cover a sweep that matches NOTHING and one
+that matches too much. This is the third shape: a sweep that matched correctly
+and was then TRUNCATED before you read it.
+
+The rule is the same one that governs every other bulk claim here — **print
+the count before you look at the lines**:
+
+```sh
+grep -rli "$term" . | wc -l        # the claim rests on THIS
+grep -rli "$term" . | head -10     # this is just for reading
+```
+
+If the count is larger than the window, say so, or narrow by PATH rather than
+by `head`. A capped sweep is only safe when you already know the total.
+
+## `python3 -c "…"` runs backticks inside the double-quoted program
+
+The shell expands `` ` `` inside double quotes before python ever sees the
+string, so a program that inserts markdown containing an inline code span has
+its backticked word replaced by the output of running that word as a command —
+usually empty, sometimes an error. One such edit silently landed a `\:` where
+`` `code:` `` was intended, while the rest of the edit succeeded and the exit
+status stayed 0.
+
+This file already carries the apostrophe-in-a-single-quoted-program variant.
+It is the same trap through the other quote, and the same fix answers both:
+
+```sh
+python3 - <<'PY'      # the quoted heredoc — the shell expands NOTHING
+...program...
+PY
+```
+
+Use the quoted heredoc for every scripted edit, not just the ones that look
+like they need it. The failure is silent by construction: the file changes,
+just not the way you wrote.
+
+## A component EXTRACTION takes everything BETWEEN its anchors, not just them
+
+Slicing a block out of a file by naming its first and last line is a
+line-RANGE operation, and a range contains whatever happens to sit inside it.
+Extracting the two binding rows from a table column sheet — anchored on the
+data-key row's comment and the alignment row's — also took the WIDTH row
+between them, silently deleting a feature.
+
+Every test still passed, because the tests exercised the extracted component
+and the rows that remained. The only tell was `noUnusedImports` firing on the
+now-orphaned `ColumnWidthCell`, which reads like an import-tidy warning rather
+than "a feature is gone".
+
+Before cutting a range, **list what it CONTAINS**, not what it starts and ends
+with:
+
+```sh
+sed -n '<start>,<end>p' <file> | grep -nE '^\s*(//|<[A-Z]|const |function )'
+```
+
+and diff the extracted piece's element list against that. An import that goes
+unused after a refactor is a missing-feature alarm, never a lint nit.
