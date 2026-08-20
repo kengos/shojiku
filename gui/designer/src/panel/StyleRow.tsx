@@ -11,12 +11,12 @@
 // reaches the DOM as escaped text, and its look only ever through the CSSOM
 // object props `stylePreview` returns, never string-built CSS.
 
-import { type FormEvent, useState } from 'react';
 import { useI18n } from '../i18n/context';
 import { PREVIEW_CHIP, stylePreview } from '../styles/preview';
-import { BTN_SM, INPUT } from '../ui/chrome';
+import { BTN_SM } from '../ui/chrome';
 import { IconMore } from '../ui/icons';
 import { Menu } from '../ui/Menu';
+import { RegistryNameForm } from './RegistryNameForm';
 import type { StyleEntry } from './stylesModel';
 
 /** The inline row-menu flow open on a row (rename / delete-confirm). Field
@@ -92,13 +92,13 @@ export function StyleRow({ entry, usageCount, active, actions }: StyleRowProps) 
       </div>
 
       {active === 'rename' ? (
-        <NameForm
+        <RegistryNameForm
           initial={entry.name}
           submitLabel={t('styles.rename')}
+          cancelLabel={t('styles.cancel')}
           placeholder={t('styles.namePlaceholder')}
           onSubmit={actions.submitRename}
           onCancel={actions.closeRow}
-          cancelLabel={t('styles.cancel')}
         />
       ) : null}
 
@@ -116,55 +116,5 @@ export function StyleRow({ entry, usageCount, active, actions }: StyleRowProps) 
         </div>
       ) : null}
     </li>
-  );
-}
-
-/** A single-field name form (rename): a controlled input committing on submit
- * (Enter or the button), with a cancel. The controlled value holds keystrokes
- * without re-serializing the document; the instance unmounts when its row
- * closes, so it reseeds on the next open. */
-function NameForm({
-  initial,
-  submitLabel,
-  placeholder,
-  onSubmit,
-  onCancel,
-  cancelLabel,
-}: {
-  readonly initial: string;
-  readonly submitLabel: string;
-  readonly placeholder: string;
-  readonly onSubmit: (value: string) => void;
-  readonly onCancel: () => void;
-  readonly cancelLabel: string;
-}) {
-  const [value, setValue] = useState(initial);
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    onSubmit(value);
-  };
-  // Stacked, not one flex row: a `w-full` input beside the buttons squeezed the
-  // submit label into a mid-word wrap at the widths the document-settings
-  // section rail leaves. Input full-width above, buttons in their own row below
-  // (each `shrink-0 whitespace-nowrap`, so a label never wraps).
-  return (
-    <form className="mt-1 flex flex-col gap-1" onSubmit={submit}>
-      <input
-        type="text"
-        className={INPUT}
-        value={value}
-        placeholder={placeholder}
-        aria-label={placeholder}
-        onChange={(event) => setValue(event.currentTarget.value)}
-      />
-      <div className="flex items-center gap-1">
-        <button type="submit" className={`${BTN_SM} shrink-0 whitespace-nowrap`}>
-          {submitLabel}
-        </button>
-        <button type="button" className={`${BTN_SM} shrink-0 whitespace-nowrap`} onClick={onCancel}>
-          {cancelLabel}
-        </button>
-      </div>
-    </form>
   );
 }

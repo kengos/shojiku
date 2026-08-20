@@ -54,6 +54,8 @@ export interface EditorBodyProps {
   readonly session: PreviewSession;
   /** The resolved host configuration (defaults already applied). */
   readonly host: HostConfig;
+  /** The session's template-size cap (`useTemplateCap`). */
+  readonly maxBytes: number;
   /** The Designer-local dialog flags. */
   readonly dialogs: ChromeDialogs;
   readonly onParamsChange: (params: string) => void;
@@ -78,6 +80,7 @@ export function EditorBody({
   uiEvent,
   session,
   host,
+  maxBytes,
   dialogs,
   onParamsChange,
 }: EditorBodyProps) {
@@ -118,6 +121,7 @@ export function EditorBody({
           derived={derived}
           session={session}
           host={host}
+          maxBytes={maxBytes}
           onParamsChange={onParamsChange}
         />
       ) : (

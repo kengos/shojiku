@@ -164,6 +164,10 @@ fn run(cli: Cli) -> Result<(), CliError> {
             }
             Ok(())
         }
+        Command::Formats(args) => {
+            println!("{}", shojiku_cli::run_formats(&args)?);
+            Ok(())
+        }
         Command::Capabilities => {
             println!("{}", run_capabilities()?);
             Ok(())

@@ -10,27 +10,19 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
+import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
+import { ColumnSheetBindingRows } from './ColumnSheetBindingRows';
 import { columnSheetData } from './columnSheetData';
 import { readColumnsView } from './columnsModel';
-import { FieldPicker } from './FieldPicker';
-import { FormatPicker } from './FormatPicker';
-import {
-  applyPanelOp,
-  bindingKeyOp,
-  bindingPickOps,
-  formatOp,
-  lengthOp,
-  plainTextOp,
-} from './model';
+import { applyPanelOp, lengthOp, plainTextOp } from './model';
 import {
   ColumnAlignRow,
   ColumnHeaderRow,
   ColumnLabelCell,
   ColumnSampleCell,
   ColumnWidthCell,
-  MutedCell,
   RowLabel,
 } from './TableColumnCells';
 import { useColumnHeaderDrag } from './useColumnHeaderDrag';
@@ -47,6 +39,8 @@ export interface TableColumnSheetProps {
   /** The engine capability keys — gates the number-field currency variants
    * in the format suggestions and the binding-scope escape (undefined = show). */
   readonly capabilities?: readonly string[];
+  /** The engine's format catalog — what each pickable spelling RENDERS. */
+  readonly formatCatalog?: FormatCatalog | null;
 }
 
 export function TableColumnSheet({
@@ -56,19 +50,21 @@ export function TableColumnSheet({
   groups,
   params,
   capabilities,
+  formatCatalog = null,
 }: TableColumnSheetProps) {
   const { t } = useI18n();
   const columns = readColumnsView(controller.read(tablePath)) ?? [];
   const columnsPath = `${tablePath}.columns`;
-  const { rowScoped, rowOptions, documentOptions, formatRowsFor, sampleFor, alignFor } =
-    columnSheetData({
-      read: controller.read,
-      tablePath,
-      dataKey,
-      groups,
-      params,
-      capabilities,
-    });
+  const sheet = columnSheetData({
+    read: controller.read,
+    tablePath,
+    dataKey,
+    groups,
+    params,
+    capabilities,
+    formatCatalog,
+  });
+  const { sampleFor, alignFor } = sheet;
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   const headerDrag = useColumnHeaderDrag(tablePath, columns.length, dispatch);
 
@@ -106,39 +102,6 @@ export function TableColumnSheet({
         />
       ))}
 
-      {/* Data-key row (a `cell:` column's content is a sub-template — no binding). */}
-      <RowLabel>{t('panel.field.dataKey')}</RowLabel>
-      {columns.map((column, index) =>
-        column.hasCell ? (
-          // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — read-only or self-reseeding internally, so it re-renders in place when a reorder swaps the data at this position
-          <MutedCell key={`k${index}`} />
-        ) : (
-          <FieldPicker
-            // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — read-only or self-reseeding internally, so it re-renders in place when a reorder swaps the data at this position
-            key={`k${index}`}
-            label={t('panel.field.dataKey')}
-            value={column.key}
-            options={rowOptions}
-            documentOptions={documentOptions}
-            scope={rowScoped ? column.scope : undefined}
-            onCommit={(v) => dispatch(bindingKeyOp(`${columnsPath}[${index}]`, v))}
-            onPick={
-              rowScoped
-                ? (key, documentScoped) =>
-                    controller.applyAll(
-                      bindingPickOps(
-                        controller.read,
-                        `${columnsPath}[${index}]`,
-                        key,
-                        documentScoped,
-                      ),
-                    )
-                : undefined
-            }
-          />
-        ),
-      )}
-
       {/* Width row. */}
       <RowLabel>{t('panel.column.width')}</RowLabel>
       {columns.map((column, index) => (
@@ -153,24 +116,13 @@ export function TableColumnSheet({
         />
       ))}
 
-      {/* Format row — only a bound, non-cell column (a format on an
-          unbound column is inert noise). */}
-      <RowLabel>{t('panel.field.format')}</RowLabel>
-      {columns.map((column, index) =>
-        column.hasCell || column.key === '' ? (
-          // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — read-only or self-reseeding internally, so it re-renders in place when a reorder swaps the data at this position
-          <MutedCell key={`f${index}`} />
-        ) : (
-          <FormatPicker
-            // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — read-only or self-reseeding internally, so it re-renders in place when a reorder swaps the data at this position
-            key={`f${index}`}
-            label={t('panel.field.format')}
-            value={column.format}
-            options={formatRowsFor(column.key)}
-            onCommit={(v) => dispatch(formatOp(`${columnsPath}[${index}]`, v))}
-          />
-        ),
-      )}
+      <ColumnSheetBindingRows
+        controller={controller}
+        columns={columns}
+        columnsPath={columnsPath}
+        data={sheet}
+        dispatch={dispatch}
+      />
 
       {/* Alignment row — the one style property worth comparing ACROSS columns
           (a money column right, a quantity column centred), which is what this

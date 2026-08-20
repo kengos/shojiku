@@ -20,6 +20,7 @@
 //! past the document, an uncapped raw all-pages request).
 
 mod error;
+mod formats;
 mod render;
 mod session;
 
@@ -27,6 +28,7 @@ mod session;
 mod shim;
 
 pub use error::WasmError;
+pub use formats::parse_probes;
 pub use render::{PageFormat, Pages, PdfOutcome, RenderOutcome};
 pub use session::{FaceFile, Session};
 

@@ -9,6 +9,7 @@ mod echo;
 mod external;
 mod fetch;
 mod font;
+mod formats;
 mod outputs;
 mod report;
 mod sign;

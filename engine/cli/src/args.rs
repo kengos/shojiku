@@ -45,6 +45,29 @@ pub struct ValidateArgs {
     pub params: Option<PathBuf>,
 }
 
+/// `shojiku formats` — the format catalog.
+#[derive(Debug, clap::Args)]
+pub struct FormatsArgs {
+    /// The template whose `formats:` registry and `defaults:` the catalog
+    /// reflects. Optional: without one the catalog is the locale's own
+    /// vocabulary plus the engine's builtins.
+    #[arg(long)]
+    pub templates: Option<PathBuf>,
+    /// Locale id, e.g. `ja-JP`. Defaults to the template `defaults.locale`,
+    /// then ja-JP.
+    #[arg(long)]
+    pub lang: Option<String>,
+    /// Locale pack search dir (repeatable, earlier wins).
+    #[arg(long)]
+    pub locale_dir: Vec<PathBuf>,
+    /// Preview a pattern that is not authored yet (repeatable), spelled
+    /// `<type>:<pattern>` — e.g. `--probe 'date:yyyy年M月d日'`. Split at the
+    /// FIRST colon, so `datetime:HH:mm` works. Only `date` and `datetime`
+    /// have a pattern form.
+    #[arg(long = "probe", value_name = "TYPE:PATTERN")]
+    pub probe: Vec<String>,
+}
+
 #[derive(Debug, Args)]
 pub struct RenderishArgs {
     #[arg(long)]

@@ -5,6 +5,7 @@
 // components.
 
 import type { EditorController } from '../editor/useEditor';
+import type { FormatCatalog } from '../engine/types';
 import type { PaletteGroup } from '../palette/model';
 import type { ItemView } from './itemView';
 import type { DefaultsSection } from './OriginBadge';
@@ -16,6 +17,10 @@ export interface ItemPanelProps {
   readonly view: ItemView;
   readonly fontFamilies: readonly string[];
   readonly capabilities?: readonly string[];
+  /** The engine's format catalog — what each pickable spelling actually
+   * RENDERS. `null` before the first answer, and permanently on a transport
+   * that cannot answer: the picker then lists spellings with no samples. */
+  readonly formatCatalog?: FormatCatalog | null;
   /** The engine-default floor (docs/engine/style.md) — an unset inherited style
    * key resolves to its real engine default (the default origin), so a font-less title's
    * size hint shows `10` instead of blank. Threaded to the cascade mirror. */

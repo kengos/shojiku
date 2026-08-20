@@ -10,6 +10,7 @@ import type { Blocks } from '../hooks/useBlocks';
 import type { ChromeDialogs } from '../hooks/useChromeDialogs';
 import type { Copilot } from '../hooks/useCopilot';
 import type { DefinitionsOwnership } from '../hooks/useDefinitionsOwnership';
+import type { DocDerived } from '../hooks/useDocDerived';
 import type { InsertActions } from '../hooks/useInsertActions';
 import type { PdfAction } from '../hooks/usePdfAction';
 import type { SampleData } from '../hooks/useSampleData';
@@ -38,6 +39,9 @@ export interface DialogHostProps {
   readonly save: SaveFlow;
   readonly copilot: Copilot;
   readonly pdf: PdfAction;
+  /** The document derivations — the column sheet reads the format catalog
+   * from here so its pickers show what each spelling renders. */
+  readonly derived: DocDerived;
   /** The resolved host configuration (defaults already applied). */
   readonly host: HostConfig;
   readonly onDownloadPdf: ((pdf: Uint8Array) => void) | undefined;
@@ -56,6 +60,7 @@ export function DialogHost({
   save,
   copilot,
   pdf,
+  derived,
   host,
   onDownloadPdf,
   dialogs,
@@ -116,6 +121,7 @@ export function DialogHost({
             groups={defs.paletteGroups}
             params={sample.params}
             capabilities={capabilities}
+            formatCatalog={derived.formats.catalog}
           />
         </Offcanvas>
       ) : null}

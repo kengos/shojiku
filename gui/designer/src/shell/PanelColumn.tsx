@@ -80,6 +80,7 @@ export function PanelColumn({
       path={selection}
       fontFamilies={host.fontFamilies}
       capabilities={host.capabilities}
+      formatCatalog={derived.formats.catalog}
       floor={derived.styleFloor}
       definitions={defs.effectiveDefinitions}
       params={sample.params}

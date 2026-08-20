@@ -400,10 +400,28 @@ the selection's drift (per-prop writes, so the entry's non-style-field props
 survive byte-intact), showing the impact count before applying. Both open a
 modal over `ui/Modal` that captures only string/number scalars (a per-side
 border map stays inline) and renders every document value as escaped text.
-Deferred to a **second phase (user decision)**: `defaults.formats`
-(per-type format defaults) and the named `formats:` registry — pattern
-editing must not become a free-typing surface, so it needs its own picker
-design.
+The **表示形式 section** is the second registry surface, and it answers
+`defaults.formats` (per-type document defaults) and the named `formats:`
+registry in one place. Its rule is that the GUI never formats: every
+sample on it — a picker row's, an unset row's "this is what happens if
+you leave it", a registry row's, and the live line under a pattern being
+typed — is the ENGINE's own output, asked for through the format catalog
+(`format.catalog`). The hand-written sample table the panel used to carry
+is gone, because a sample the GUI computed could drift from the page.
+
+Two shapes of row, and the asymmetry is the honest part: `date`,
+`datetime` and `currency` have real named variants and get a picker
+(the dated pair also a pattern surface), while `number`, `percentage` and
+`quantity` have none in v1 — any pick but `default` warns — so they show
+what they render and offer NO control. A control that can only produce a
+warning is worse than an absent one, and which shape a type takes is the
+engine's answer (`FormatTypeEntry.fixed`), never a list kept in step here.
+
+Pattern editing did not become a free-typing surface: the TOKENS lead, as
+chips each showing their own rendered output and inserting themselves at
+the caret, with the raw string beneath them. The raw string stays editable
+(user decision) — read-only would remove the typing risk structurally but
+strand every pattern an existing document already holds.
 
 The **`designer-app` standalone shell** is the MVP author→preview→export
 loop and the first shipping form: a locale-keyed **preset catalog**

@@ -35,6 +35,34 @@ platform binaries.
   that refers to it is refused instead, since that document could not be
   saved.
 
+- **A place to say what a date looks like, and to name a format once.** The
+  engine has accepted document-wide format defaults (`defaults.formats`) and a
+  named `formats:` registry since v0.2, but the Designer had no way to author
+  either — you edited the YAML by hand or set the format on every field. The
+  document settings view gains a display-formats section covering both: pick
+  how dates, times and money look throughout the document, and register a
+  pattern under a name so a field can just say `format: closing`.
+
+  Every sample on that screen comes from the engine rather than from a table
+  the editor keeps by hand. A picker row shows what the variant actually
+  renders; an unset row shows what happens if you leave it alone; a pattern
+  you are typing is previewed line by line as you type it, and each token you
+  can insert shows its own output — so you press 「火曜日」 rather than
+  remember that `EEEE` spells a weekday, typing the literal 年 / 月 / 日
+  between presses. Number, percentage and quantity have no variants to choose
+  from yet, so they show what they render and offer no control rather than a
+  menu whose every entry would be refused.
+
+  Renaming or deleting a registered format rewrites every place that names it
+  — bound fields and the per-type defaults alike — in a single step you can
+  undo in one go, and refuses the whole operation rather than half-doing it
+  when the document is too large to walk safely.
+
+  New: the `shojiku formats` command answers the same question outside the
+  Designer — which display variants each field type can take for a given
+  template and locale, and what each one renders. `--probe date:'yyyy年M月d日'`
+  previews a pattern before you author it.
+
 - A table's header row can be drawn invisibly with
   `header: { visuallyHidden: true }`. Nothing about the row is painted — no
   label text, no band fill, no grid ruling — but the column labels stay in the
@@ -56,6 +84,12 @@ platform binaries.
   sample text meant hunting for it a second time in the editor's own list.
 
 ### Fixed
+
+- **A very long date pattern no longer slows a render to a crawl.** The
+  pattern renderer copied the remaining pattern on every character it read,
+  which made rendering quadratic in the pattern's length, so a template
+  carrying a large pattern could stall a render. Patterns now match in place,
+  and a pattern sent for preview is length-capped as well.
 
 - **The npm package reported the wrong version.** `import { VERSION } from
   'shojiku'` returned `0.1.0` from the 0.2.0 package: the constant is written

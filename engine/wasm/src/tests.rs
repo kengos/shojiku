@@ -3,6 +3,7 @@
 //! covered by the browser e2e, not here.
 
 mod error_ops;
+mod format_ops;
 mod pdf_ops;
 mod render_ops;
 mod session_ops;

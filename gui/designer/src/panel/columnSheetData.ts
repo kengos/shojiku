@@ -18,6 +18,7 @@
 // column has no row value to preview.
 
 import type { ReadFn } from '@shojiku/designer-core';
+import type { FormatCatalog } from '../engine/types';
 import type { PaletteGroup } from '../palette/model';
 import { parseParams } from '../sample/model';
 import { cascadeContext } from '../toolbar/cascade';
@@ -36,6 +37,8 @@ export interface ColumnSheetDataOptions {
   readonly groups: readonly PaletteGroup[] | null;
   readonly params: string;
   readonly capabilities: readonly string[] | undefined;
+  /** The engine's format catalog — what each pickable spelling RENDERS. */
+  readonly formatCatalog: FormatCatalog | null;
 }
 
 export interface ColumnSheetData {
@@ -53,7 +56,7 @@ export interface ColumnSheetData {
 }
 
 export function columnSheetData(options: ColumnSheetDataOptions): ColumnSheetData {
-  const { read, tablePath, dataKey, groups, params, capabilities } = options;
+  const { read, tablePath, dataKey, groups, params, capabilities, formatCatalog } = options;
   const rowScoped = dataKey !== '';
   const rowOptions = rowScoped ? pickerOptions(groups, dataKey, params) : [];
   const documentOptions =
@@ -71,6 +74,7 @@ export function columnSheetData(options: ColumnSheetDataOptions): ColumnSheetDat
         formatRegistry,
         rowOptions.find((option) => option.key === key)?.type,
         capabilities,
+        formatCatalog,
       ),
     sampleFor: (column: ColumnRow) =>
       column.hasCell || column.key === '' || !rowScoped

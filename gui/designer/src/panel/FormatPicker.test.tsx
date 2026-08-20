@@ -5,9 +5,19 @@ import { FormatPicker } from './FormatPicker';
 import type { FormatOption } from './formatModel';
 
 const OPTIONS: readonly FormatOption[] = [
-  { spelling: 'tax', labelKey: undefined, sample: '' },
-  { spelling: 'symbol', labelKey: 'format.label.symbol', sample: '¥300,000' },
-  { spelling: 'name', labelKey: 'format.label.name', sample: '300,000 JPY' },
+  { spelling: 'tax', labelKey: undefined, samples: [], origin: 'registry' },
+  {
+    spelling: 'symbol',
+    labelKey: 'format.label.symbol',
+    samples: ['¥1,234,568'],
+    origin: 'builtin',
+  },
+  {
+    spelling: 'name',
+    labelKey: 'format.label.name',
+    samples: ['1,234,568 JPY'],
+    origin: 'builtin',
+  },
 ];
 
 function draw(value: string, options: readonly FormatOption[], onCommit = vi.fn()) {
@@ -32,7 +42,7 @@ describe('FormatPicker', () => {
     const menu = screen.getByRole('menu');
     expect(menu.textContent).toContain('Currency symbol');
     expect(menu.textContent).toContain('symbol');
-    expect(menu.textContent).toContain('¥300,000');
+    expect(menu.textContent).toContain('¥1,234,568');
     // A registry name (no labelKey) shows its wire spelling as the label.
     expect(menu.textContent).toContain('tax');
   });

@@ -47,8 +47,6 @@ export interface DataEditorViewProps {
   readonly canUndoDefinition?: boolean;
   readonly onUndoDefinition?: () => void;
   /** The template's `formats:` registry names, for the format picker. */
-  readonly formatRegistry?: readonly string[];
-  readonly capabilities?: readonly string[];
   /** Open with this field already selected (entered from its own gear). The
    * view mounts fresh every time it opens — `EditorBody` swaps the whole grid
    * out — so this seeds the selection once and the user is free to navigate

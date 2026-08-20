@@ -40,6 +40,23 @@ impl Engine {
         crate::capabilities().map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
+    /// The format catalog for a template source: the pickable display
+    /// variants per field type, each with an engine-rendered sample against
+    /// fixed exemplar values, plus one result per requested pattern probe.
+    ///
+    /// `probes` is a JSON array (`[{ fieldType, pattern }]`); pass `"[]"` for
+    /// none. A template that does not parse still answers — the catalog
+    /// drops the document's registry names and keeps the locale's own.
+    #[wasm_bindgen(js_name = formatCatalog)]
+    pub fn format_catalog(&self, template: String, probes: String) -> Result<String, JsValue> {
+        let probes = crate::parse_probes(&probes).map_err(throw)?;
+        let catalog = self
+            .inner
+            .format_catalog(&template, &probes)
+            .map_err(throw)?;
+        to_json(&catalog)
+    }
+
     /// Resolves and stores the locale pack (builtin id, with an optional
     /// overlay/standalone YAML string).
     #[wasm_bindgen(js_name = setLocale)]

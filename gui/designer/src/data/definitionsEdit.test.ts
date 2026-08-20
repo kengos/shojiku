@@ -8,6 +8,7 @@ import {
   fieldKeysPath,
   formatOp,
   readDefinitionField,
+  semanticFormats,
   titleOp,
   typeOp,
 } from './definitionsEdit';
@@ -292,5 +293,26 @@ describe('coalesceDefsEdit', () => {
     // by its own shape and appends without replacing the keyed edit.
     const keyless = { op: 'moveItem', path: 'x', from: 0, to: 1 } as const;
     expect(coalesceDefsEdit([keyed], keyless)).toEqual([keyed, keyless]);
+  });
+});
+
+describe('semanticFormats', () => {
+  it('offers the date/image refinements for a string and the money ones for a number', () => {
+    expect(semanticFormats('string')).toEqual(['date', 'date-time', 'image']);
+    expect(semanticFormats('number')).toEqual(['currency', 'percentage', 'quantity']);
+    expect(semanticFormats('integer')).toEqual(['currency', 'percentage', 'quantity']);
+  });
+
+  it('offers nothing for a boolean, which no semantic format refines', () => {
+    expect(semanticFormats('boolean')).toEqual([]);
+  });
+
+  it('offers nothing for a type it cannot resolve', () => {
+    // The type is a document-derived string: an unknown one gets the empty
+    // set, and a prototype name must not reach an inherited table entry.
+    expect(semanticFormats('array')).toEqual([]);
+    for (const hostile of ['constructor', '__proto__', 'toString', 'valueOf']) {
+      expect(semanticFormats(hostile), hostile).toEqual([]);
+    }
   });
 });

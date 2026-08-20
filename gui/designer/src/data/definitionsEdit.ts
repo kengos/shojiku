@@ -20,6 +20,44 @@ import type { PaletteGroup } from '../palette/model';
 export const DEFINITION_TYPES = ['string', 'number', 'integer', 'boolean'] as const;
 export type DefinitionType = (typeof DEFINITION_TYPES)[number];
 
+/** The SEMANTIC `format:` values a definitions field may declare, per base
+ * type.
+ *
+ * `format:` on a definitions field is the data-semantic type refiner — it
+ * feeds the engine's `(type, format)` table (`Schema::mapped`) and decides
+ * which formatter the field renders through. It is NOT the display variant:
+ * that is `displayFormat:`, a placement `format:`, or `defaults.formats`.
+ *
+ * The engine's table is closed, and an unrecognised value is treated as a
+ * generation hint and NEVER warns — so offering a display variant or a
+ * `formats:` registry name here would give the author a control that writes a
+ * key and silently does nothing.
+ */
+export const SEMANTIC_FORMATS: Readonly<Record<DefinitionType, readonly string[]>> = {
+  string: ['date', 'date-time', 'image'],
+  number: ['currency', 'percentage', 'quantity'],
+  integer: ['currency', 'percentage', 'quantity'],
+  // No semantic format refines a boolean.
+  boolean: [],
+};
+
+/** The semantic formats for a field whose declared type the panel cannot
+ * resolve. Looked up own-property-guarded — the type is a document-derived
+ * string, so a prototype name must not reach an inherited entry. */
+export function semanticFormats(type: string): readonly string[] {
+  return Object.hasOwn(SEMANTIC_FORMATS, type) ? SEMANTIC_FORMATS[type as DefinitionType] : [];
+}
+
+/** Whether the field's authored `format:` is one the type-refiner select
+ * already offers. The wire vocabulary is OPEN — an unknown value is a
+ * generation hint that leaves the base type alone — so a `false` here means
+ * the editor must show the authored value rather than the not-set row. An
+ * empty format is `true`: the not-set row is exactly what it means. */
+export function isSemanticFormat(def: DefinitionField): boolean {
+  const offered = semanticFormats(def.type === '' ? 'string' : def.type);
+  return def.format === '' || offered.includes(def.format);
+}
+
 function record(value: unknown): Record<string, unknown> | undefined {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)

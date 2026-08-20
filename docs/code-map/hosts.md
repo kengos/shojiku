@@ -37,6 +37,25 @@ false`), no clap.
   `document.metadata`, so the hosts pass the tree and nothing else.)
 - `inspect.rs` — `InspectEnvelope { engine, document, boxes, margin }` +
   `inspect_json`.
+- `formats.rs` (+ `formats/{variants,probe,exemplar}.rs`) — the FORMAT
+  CATALOG: `format_catalog(Option<&Template>, &LangPack, &[PatternProbe])`
+  → `FormatCatalog { types: [FormatTypeEntry { field_type, fixed,
+  variants: [FormatVariant { spelling, origin, samples }] }], probes }`.
+  Deliberately NOT part of `inspect`: a catalog is a function of (pack,
+  registry) rather than of a laid-out document, and a probe describes a
+  pattern the document does not contain yet, which `inspect` cannot report
+  by construction. The template is OPTIONAL because a live editor's
+  document is invalid for much of the time somebody is typing in it.
+  `exemplar.rs` holds the fixed sample values — chosen to DISCRIMINATE
+  what they illustrate (8 significant digits separate uniform-3 grouping
+  from lakh/crore; the instant is after noon and carries a weekday and an
+  era-bearing year; percentage is a FRACTION; quantity samples both plural
+  arms). `probe.rs` bounds the caller-supplied list (`MAX_PROBES`,
+  `MAX_PROBE_PATTERN`). Echoed NAMES are guarded one file over, in
+  `variants.rs` — `pickable()` is the whole rule, and it OMITS a name
+  that would not survive the echo guard rather than offering a clipped
+  or stripped spelling, because a catalog entry is re-authored back as
+  `format: <spelling>` and a sanitized one would be a dangling reference.
 - `preview.rs` — `preview_pages` (PNG per page) + `preview_raw` (RGBA)
   + the single-page `preview_page{,_raw}` (CLI `--page` / MCP `page` /
   WASM `pageIndex` rasterize ONE page).
@@ -98,7 +117,7 @@ so layout/render/sign/verify stay socket-free.
 ## engine/cli — thin wrapper over authoring
 
 - `lib.rs` — the crate root is now the command TABLE alone
-  (`render`/`validate`/`inspect`/`preview`/`sign`/`sign-prepare`/
+  (`render`/`validate`/`inspect`/`preview`/`formats`/`sign`/`sign-prepare`/
   `sign-complete`/`verify`/`font add`/`capabilities`) plus the module
   wiring and re-exports; `main.rs` thin.
   `VerificationFailed` carries an exit status only, and
@@ -122,6 +141,11 @@ so layout/render/sign/verify stay socket-free.
   rather than a table here, and the finishing half goes through
   `PresignedSigner` + `sign_document` — the same writer the local-key path
   uses, so the external route cannot drift from it.
+- `formats.rs` — `shojiku formats`: the catalog as JSON. `--templates` is
+  OPTIONAL (the locale's vocabulary is useful with no document; a NAMED
+  file that cannot be read is still an error, which is a different case),
+  and `--probe <type>:<pattern>` splits at the FIRST colon only, because a
+  pattern routinely contains one (`datetime:HH:mm`).
 - `font.rs` (+ `font/{ids,write}.rs`, `font/tests/hostile.rs`) — the only
   command that writes to paths it DERIVES rather than paths the caller
   named (`--output`, `--report`): `font add` turns a licensed font file
@@ -266,6 +290,13 @@ target-gated).
   preview load returning absent `uses` pack ids the host lazily
   fetches + re-injects on `missing_glyph` OR `unknown_font_family`),
   injected asset byte map.
+- `formats.rs` — the format catalog's pure core, INCLUDING the probe-list
+  parser. The parser lives here rather than in the shim because the shim is
+  never compiled by host clippy/test/coverage, and a parser is not
+  marshalling: putting it there would have shipped it unexercised by every
+  host gate. It refuses (`deny_unknown_fields`, an unknown type name, a
+  type with no pattern form) rather than defaulting, and sanitizes the
+  echoed type name; `WasmError::BadProbes` is its host-misuse error.
 - `error.rs` — `WasmError` = host-API misuse ONLY (document problems
   are diagnostics, never thrown), carrying a stable snake_case `code()`
   + typed `args()` (control-stripped/clipped) — an append-only registry
@@ -283,7 +314,7 @@ target-gated).
   fontPacksNeeded / fontFilesNeeded / fontFacesNeeded / addFontPack /
   addFontFile / loadFonts / loadFontsSubset / addAssetFile / validate /
   renderPng / renderRaw (one arg order surface-wide: template, params,
-  definitions, scale, pageIndex?) / renderPdf; a `WasmError` becomes a
+  definitions, scale, pageIndex?) / renderPdf / formatCatalog; a `WasmError` becomes a
   thrown JS Error carrying `code` + typed `args`.
 - Built via `make wasm` (Docker: wasm32 target + pinned wasm-bindgen +
   pinned `wasm-opt -Oz` + `wasm-release` profile → `engine/wasm/pkg`,

@@ -10,6 +10,7 @@
 
 import { useMemo } from 'react';
 import type { EditorController } from '../editor/useEditor';
+import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { readDefinitionsView } from '../palette/model';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
@@ -31,6 +32,10 @@ export interface PropertyPanelProps {
   /** The engine's capability keys — a field whose wire feature the engine lacks
    * is hidden (undefined = show every field). Never version-sniff. */
   readonly capabilities?: readonly string[];
+  /** The engine's format catalog — what each pickable spelling actually
+   * RENDERS. `null` before the first answer, and permanently on a transport
+   * that cannot answer: the picker then lists spellings with no samples. */
+  readonly formatCatalog?: FormatCatalog | null;
   /** The engine-default floor for the cascade mirror (unset inherited style →
    * its real engine default, shown with the default-origin badge). Threaded to the item panel. */
   readonly floor?: Readonly<Record<string, unknown>>;
@@ -72,6 +77,7 @@ export function PropertyPanel({
   path,
   fontFamilies = [],
   capabilities,
+  formatCatalog = null,
   floor,
   definitions,
   params = '',
@@ -136,6 +142,7 @@ export function PropertyPanel({
           groups={paletteGroups}
           params={params}
           capabilities={capabilities}
+          formatCatalog={formatCatalog}
           floor={floor}
         />
       );
@@ -174,6 +181,7 @@ export function PropertyPanel({
         view={view}
         fontFamilies={fontFamilies}
         capabilities={capabilities}
+        formatCatalog={formatCatalog}
         floor={floor}
         paletteGroups={paletteGroups}
         params={params}

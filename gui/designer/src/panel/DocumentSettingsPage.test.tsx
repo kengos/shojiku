@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { useEditor } from '../editor/useEditor';
 import type { RawPage } from '../engine/types';
+import { buildFormatUsage } from '../formats/usage';
 import { I18nProvider } from '../i18n/context';
 import { buildStyleUsage } from '../styles/usage';
+import { FORMAT_CATALOG, fakeProbe } from '../testkit/formatCatalog';
 import { DocumentSettingsPage } from './DocumentSettingsPage';
 import type { DocSection } from './docSections';
 
@@ -17,6 +19,8 @@ function Harness({
   pages = [],
   defaultFontFamily,
   capabilities,
+  withCatalog = true,
+  noProbe = false,
   focus,
   onClose = vi.fn(),
 }: {
@@ -24,6 +28,10 @@ function Harness({
   readonly pages?: readonly RawPage[];
   readonly defaultFontFamily?: string;
   readonly capabilities?: readonly string[];
+  /** Omit the catalog to exercise the no-engine-answer degradation. */
+  readonly withCatalog?: boolean;
+  /** Omit the probe entirely — a host that supplied none. */
+  readonly noProbe?: boolean;
   readonly focus?: { readonly section: DocSection; readonly nonce: number };
   readonly onClose?: () => void;
 }) {
@@ -33,6 +41,10 @@ function Harness({
       <DocumentSettingsPage
         controller={editor}
         styleUsage={buildStyleUsage(editor.text)}
+        formatUsage={buildFormatUsage(editor.text)}
+        formatCatalog={withCatalog ? FORMAT_CATALOG : null}
+        probeFormat={noProbe ? undefined : fakeProbe()}
+        maxBytes={2_000_000}
         defaultFontFamily={defaultFontFamily}
         capabilities={capabilities}
         pages={pages}
@@ -58,6 +70,7 @@ describe('DocumentSettingsPage', () => {
       'Normal text',
       'Styles',
       'Locale & currency',
+      'Display formats',
       'Document properties',
     ]) {
       expect(screen.getByRole('button', { name: new RegExp(`^${name}`) })).toBeTruthy();
@@ -119,6 +132,62 @@ describe('DocumentSettingsPage', () => {
     render(<Harness capabilities={[]} />);
     expect(screen.queryByRole('button', { name: /^Document properties/ })).toBeNull();
     expect(screen.getByRole('button', { name: /^Page setup/ })).toBeTruthy();
+  });
+
+  it('gates the display-formats section on EITHER of its two capabilities', () => {
+    // Both halves gated off: no row at all.
+    const none = render(<Harness capabilities={[]} />);
+    expect(screen.queryByRole('button', { name: /^Display formats/ })).toBeNull();
+    none.unmount();
+
+    // Only the per-type defaults: the row exists and opens onto that half
+    // alone — the registry's own heading is absent.
+    const defaultsOnly = render(<Harness capabilities={['template.defaults']} />);
+    openSection('Display formats');
+    expect(screen.getByRole('button', { name: 'Choose the Date format' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'New format' })).toBeNull();
+    defaultsOnly.unmount();
+
+    // Only the registry: the mirror image.
+    const registryOnly = render(<Harness capabilities={['template.formats']} />);
+    openSection('Display formats');
+    expect(screen.getByRole('button', { name: 'New format' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Choose the Date format' })).toBeNull();
+    registryOnly.unmount();
+
+    // Both: both halves.
+    render(<Harness capabilities={['template.defaults', 'template.formats']} />);
+    openSection('Display formats');
+    expect(screen.getByRole('button', { name: 'Choose the Date format' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'New format' })).toBeTruthy();
+  });
+
+  it('summarizes the display formats in the rail, and degrades without a catalog', () => {
+    const unset = render(<Harness />);
+    expect(screen.getByRole('button', { name: /^Display formats/ }).textContent).toContain(
+      'All locale defaults',
+    );
+    unset.unmount();
+
+    render(
+      <Harness source={`defaults:\n  formats:\n    date: wareki\n${BASE}`} withCatalog={false} />,
+    );
+    const rail = screen.getByRole('button', { name: /^Display formats/ });
+    expect(rail.textContent).toContain('Japanese era');
+    // No engine answer: the row still shows what the document holds.
+    openSection('Display formats');
+    expect(screen.getByText('Japanese era')).toBeTruthy();
+  });
+
+  it('still offers the pattern surface when the host supplied no probe', async () => {
+    // Every preview then resolves empty and the field shows the prompt — the
+    // surface degrades rather than branching on availability at each call.
+    render(<Harness noProbe />);
+    openSection('Display formats');
+    fireEvent.click(screen.getByRole('button', { name: 'Choose the Date format' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Write a pattern…' }));
+    expect(await screen.findByLabelText('Pattern')).toBeTruthy();
+    expect(screen.getByText('Press a token above, or type a pattern.')).toBeTruthy();
   });
 
   it('summarizes an unset base text by size alone (no family to name)', () => {

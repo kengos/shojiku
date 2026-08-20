@@ -143,6 +143,26 @@ describe('wasm transport against the real engine (receipt-us)', () => {
     expect(outcome.pages).toHaveLength(1);
   });
 
+  it('asks the real engine for the format catalog, probes included', async () => {
+    // The seam's OTHER half. Host Rust gates never compile the shim
+    // (`cfg(target_arch = "wasm32")`), so nothing but a real call proves the
+    // binding marshals: the probe list crosses as JSON into a camelCase
+    // `deny_unknown_fields` struct, and a rename on either side would leave
+    // every gate green while the pattern preview threw on the first keystroke.
+    const ask = transport.formatCatalog;
+    expect(ask).toBeDefined();
+    const catalog = await ask?.(template(), [{ fieldType: 'date', pattern: 'yyyy' }]);
+    // The types come back described and RENDERED — the whole reason the
+    // Designer asks the engine instead of keeping a sample table by hand.
+    const date = catalog?.types.find((t) => t.fieldType === 'date');
+    expect(date?.variants.length).toBeGreaterThan(0);
+    expect(date?.variants[0].samples[0]).not.toBe('');
+    // The probe survived the crossing and was rendered, not refused.
+    expect(catalog?.probes).toHaveLength(1);
+    expect(catalog?.probes[0].refused).toBeNull();
+    expect(catalog?.probes[0].sample).toMatch(/^\d{4}$/);
+  });
+
   it('validate returns a diagnostics envelope', async () => {
     const diagnostics = await transport.validate(template(), params(), definitions());
     expect(Array.isArray(diagnostics.items)).toBe(true);

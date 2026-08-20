@@ -79,7 +79,7 @@ export function useCanvasWiring(
     params: sample.params,
     definitions: defs.definitionsForEngine,
   });
-  const derived = useDocDerived(editor.text, defaultFontFamily);
+  const derived = useDocDerived(editor.text, defaultFontFamily, transport);
 
   return { nav, drag, image, inline, pdf, derived };
 }

@@ -5,7 +5,15 @@
 // path. The interface is async so a Worker transport slots in without touching
 // callers (the WASM adapter resolves synchronously).
 
-import type { ArgValue, Diagnostics, InspectEnvelope, RawPage, WasmErrorCode } from './types';
+import type {
+  ArgValue,
+  Diagnostics,
+  FormatCatalog,
+  InspectEnvelope,
+  PatternProbe,
+  RawPage,
+  WasmErrorCode,
+} from './types';
 
 /** A render outcome: pages to paint, the inspect envelope to overlay, and the
  * diagnostics to surface. `ok: false` means parse/validate failed — `pages` is
@@ -52,6 +60,13 @@ export interface EngineTransport {
     params: string,
     definitions: string | undefined,
   ): Promise<PdfOutcome>;
+  /** The format catalog: the pickable display variants per field type, each
+   * with an engine-rendered sample, plus one result per requested pattern
+   * probe. OPTIONAL for the same reason `renderPdf` is — a transport over an
+   * engine without the `format.catalog` capability omits it, and the panel
+   * falls back to offering wire spellings with no samples. Presence, never a
+   * version sniff. */
+  formatCatalog?(template: string, probes: readonly PatternProbe[]): Promise<FormatCatalog>;
 }
 
 /** A transport-level failure: an engine host-misuse throw (e.g. rendering

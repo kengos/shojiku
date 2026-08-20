@@ -224,4 +224,11 @@ pub(super) const KEYS: &[&str] = &[
     // value winning over the header's, as `textAlign` already does for
     // labels. Older engines center every header/group label regardless.
     "table.header.style.verticalAlign",
+    // The format CATALOG query: the pickable display variants per field
+    // type with an engine-rendered sample of each (against fixed exemplar
+    // values), plus previews of patterns the document does not carry yet.
+    // An editor gates its format pickers on this rather than shipping its
+    // own sample table; older engines expose no such query, so a consumer
+    // falls back to offering wire spellings with no sample.
+    "format.catalog",
 ];

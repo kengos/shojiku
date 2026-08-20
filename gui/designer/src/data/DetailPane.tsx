@@ -32,8 +32,6 @@ export interface DetailPaneProps {
   readonly editable: boolean;
   readonly canEditSample: boolean;
   readonly engineLocale?: string;
-  readonly formatRegistry: readonly string[];
-  readonly capabilities?: readonly string[];
   readonly onDefEdit: (op: Op | null) => void;
   readonly onCommitSample: (path: SamplePath, kind: SampleKind, raw: string) => void;
   readonly onAddRow: () => void;
@@ -50,8 +48,6 @@ export function DetailPane({
   editable,
   canEditSample,
   engineLocale,
-  formatRegistry,
-  capabilities,
   onDefEdit,
   onCommitSample,
   onAddRow,
@@ -126,14 +122,7 @@ export function DetailPane({
 
   return (
     <>
-      <DefinitionForm
-        keysPath={keysPath}
-        def={def}
-        editable={editable}
-        formatRegistry={formatRegistry}
-        capabilities={capabilities}
-        onDefEdit={onDefEdit}
-      />
+      <DefinitionForm keysPath={keysPath} def={def} editable={editable} onDefEdit={onDefEdit} />
       <section className="flex flex-col gap-2">
         {/* The heading is the section's ONE 「sample value」 label — the value
           widget below names itself after the FIELD (as the array branch always

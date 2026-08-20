@@ -124,3 +124,53 @@ export type WasmErrorCode =
   | 'render_error'
   | 'page_out_of_range'
   | 'too_many_raw_pages';
+
+/** Where a format variant's spelling comes from. Mirrors the engine's
+ * `FormatOrigin` (`engine/authoring/src/formats.rs`). The distinction is
+ * load-bearing for the panel: only a `registry` name is the document's own,
+ * so only it breaks when the registry is renamed. */
+export type FormatOrigin = 'builtin' | 'pack' | 'registry';
+
+/** One pickable format variant with what it renders for THIS document. The
+ * samples come from the engine — the GUI never formats. */
+export interface FormatVariant {
+  readonly spelling: string;
+  readonly origin: FormatOrigin;
+  /** One entry for every type but `quantity`, which is plural-aware and so
+   * samples both arms. */
+  readonly samples: readonly string[];
+}
+
+/** One field type's pickable vocabulary. `fixed` marks the types that have
+ * no named variants at all (`number` / `percentage` / `quantity`), where the
+ * panel shows the rendering and offers no control. */
+export interface FormatTypeEntry {
+  readonly fieldType: string;
+  readonly fixed: boolean;
+  readonly variants: readonly FormatVariant[];
+}
+
+/** Why a pattern probe was not run. */
+export type ProbeRefusal = 'patternTooLong' | 'tooManyProbes';
+
+/** What one pattern probe rendered, or why it was refused. `warning` is the
+ * engine's ENGLISH default — the engine never translates, so a consumer with
+ * a catalog renders its own. */
+export interface ProbeResult {
+  readonly sample: string;
+  readonly warning: string | null;
+  readonly refused: ProbeRefusal | null;
+}
+
+/** The format catalog for one (template, locale) pair. */
+export interface FormatCatalog {
+  readonly types: readonly FormatTypeEntry[];
+  readonly probes: readonly ProbeResult[];
+}
+
+/** A pattern the panel wants previewed before it is authored. Only `date`
+ * and `datetime` have a pattern form. */
+export interface PatternProbe {
+  readonly fieldType: 'date' | 'datetime';
+  readonly pattern: string;
+}

@@ -50,8 +50,6 @@ export function DataEditorView({
   onUndo,
   canUndoDefinition = false,
   onUndoDefinition,
-  formatRegistry = [],
-  capabilities,
   initialSelection,
   onClose,
 }: DataEditorViewProps) {
@@ -164,8 +162,6 @@ export function DataEditorView({
                 editable={editable}
                 canEditSample={canEditSample}
                 engineLocale={engineLocale}
-                formatRegistry={formatRegistry}
-                capabilities={capabilities}
                 onDefEdit={dispatchDefEdit}
                 onCommitSample={commitSample}
                 onAddRow={() => onParamsChange(addSampleRow(params, [selected.group.id]))}

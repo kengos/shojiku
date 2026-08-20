@@ -6,6 +6,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
+import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
 import { BTN_SM, INPUT, SECTION_TITLE } from '../ui/chrome';
@@ -31,6 +32,8 @@ export interface TableColumnsSectionProps {
   /** The engine capability keys — gates the number-field currency variants
    * in the format suggestions and the binding-scope escape (undefined = show). */
   readonly capabilities?: readonly string[];
+  /** The engine's format catalog — what each pickable spelling RENDERS. */
+  readonly formatCatalog?: FormatCatalog | null;
   /** Open the horizontal column-editor sheet. Absent = no opener. */
   readonly onOpenSheet?: () => void;
 }
@@ -43,6 +46,7 @@ export function TableColumnsSection({
   groups,
   params,
   capabilities,
+  formatCatalog = null,
   onOpenSheet,
 }: TableColumnsSectionProps) {
   const { t } = useI18n();
@@ -138,6 +142,7 @@ export function TableColumnsSection({
               documentOptions={documentOptions}
               rowScoped={rowScoped}
               formatRegistry={formatRegistry}
+              formatCatalog={formatCatalog}
               capabilities={capabilities}
             />
           </li>
