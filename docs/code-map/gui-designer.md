@@ -427,5 +427,4 @@ services/props; nothing in the component reads the singleton.
   the canvas dnd pipeline over real inspect geometry, zoomed render
   scale, and the page-setup size table against the engine.
 - `vitest.setup.ts` — jsdom RTL setup: auto-cleanup, `ImageData`/
-  `getContext` shims, the `PointerEvent` shim (see
-  `docs/agents/gotchas/gui-testing.md`).
+  `getContext` shims, the `PointerEvent` shim.

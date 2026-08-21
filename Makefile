@@ -179,13 +179,20 @@ endif
 # Neither shortcut buys anything: `quiet` already gives you one line, the full
 # log at a known path, and the true exit code.
 #
-# The traps you cannot read off this file — mount drift, a docker daemon that
-# answers `docker version` and still pulls nothing, base-image pull timeouts,
-# how to actually cancel a gate, scoped gui/fuzz iteration recipes — live in
-# docs/agents/gotchas/docker-make.md. Read it before debugging a confusing gate
-# failure cold; most such symptoms are catalogued there rather than being a
-# defect in your change. Point-of-use notes on the targets below repeat only the
-# trap each one can spring, not that file's contents.
+# A confusing failure explains ITSELF — you should never have to go and read a
+# separate catalogue to find out what a gate's output meant. Every FAIL block
+# carries three things: which TREE it ran over (the drift that otherwise goes
+# green), WHERE it broke (scripts/gate-culprits.sh names the file), and WHAT IT
+# IS (scripts/gate-diagnose.sh names the cause and prints the command that fixes
+# it — a registry flake to re-run, a lockfile to re-resolve, an output to
+# re-render). The same block is kept at .make-logs/last-error.log.
+#
+# What that leaves is the questions a failure raises rather than answers, and
+# each of those is a command rather than a paragraph: `make investigate:tree`
+# (which tree do gates run over from here?), `investigate:docker` (a daemon that
+# answers `docker version` can still pull nothing), `investigate:gates` (what is
+# running, and how do I stop it?), `investigate:coverage`, `investigate:render`,
+# `investigate:pins`. See mk/investigate.mk.
 #
 # `make <gate> JOBS=N` caps parallelism (cargo --jobs / Vitest --maxWorkers) for
 # a machine that `make verify` would otherwise thrash.
@@ -237,8 +244,8 @@ SDK_SUFFIX := $(if $(filter-out local,$(WORK_TAG)),-$(WORK_TAG))
 # Cancelling a gate started from an AGENT HARNESS is not Ctrl-C: `kill -INT` on
 # the top-level make does not reach the `docker run` under the recipe, so the
 # container keeps compiling and the lock stays held while `ps` says the make is
-# alive. Kill the CONTAINER first (find it by its repo-path mount), then the
-# make chain — recipe in docs/agents/gotchas/docker-make.md.
+# alive. Kill the CONTAINER first, then the make chain — `make investigate:gates`
+# prints both, and the commands to stop them.
 GATE_LOCK  := scripts/gate-lock.sh
 
 IMAGE        := shojiku-ci:$(WORK_TAG)
@@ -280,6 +287,21 @@ NODE_FLOOR_IMAGE := node:22-bookworm-slim
 #     treating it as an outstanding failure.
 LOG_DIR   := .make-logs
 ERROR_LOG := $(LOG_DIR)/last-error.log
+
+# Which TREE did that PASS/FAIL describe? Every gate line says so, because this
+# is the one way to drift that has no other tell. A cwd drift into a non-repo
+# announces itself (`No rule to make target`); a drift into the PRIMARY CHECKOUT
+# does not — it has a Makefile, a full source tree and a warm engine/target, so
+# the gate runs to completion and prints PASS for main while you believe you
+# gated your branch. An agent harness that resets cwd between tool calls makes
+# that the DEFAULT outcome for a worktree session, not an accident. The fix is
+# `make -C /abs/path/to/worktree <target>`; this line is what makes forgetting
+# it visible instead of silent. It also covers the non-gate targets, which hide
+# it better because they print no PASS line to be wrong about: a bare
+# `make gui-serve` serves the primary checkout, and the feature under review is
+# simply absent.
+TREE_ID = $(notdir $(CURDIR))@$(shell git -C $(CURDIR) symbolic-ref --quiet --short HEAD 2>/dev/null \
+	|| git -C $(CURDIR) rev-parse --short HEAD 2>/dev/null || echo '?')
 
 # Parallelism cap for the heavy gates: `make verify JOBS=4`. Unset (the default)
 # lets each tool use every core, which is what you want on a big machine and is
@@ -346,7 +368,10 @@ WASM_MAX_GZIP := 3145728
 #     binary — it keeps failing after you fix the mount until you force a
 #     rebuild.
 #   * keep the mount IDENTICAL across runs. Mixing mounts corrupts the shared
-#     cache; symptoms and recovery are in docs/agents/gotchas/docker-make.md.
+#     cache, and the symptom outlives the fix: the stale test binary keeps
+#     failing under a CORRECT mount. Recovery is to re-bake the path —
+#     `touch engine/layout/tests/e2e/main.rs` for one suite, or
+#     `docker volume rm shojiku-cargo` to start the cache over.
 CARGO_VOLUME  ?= shojiku-cargo
 PNPM_VOLUME   ?= shojiku-pnpm
 RUSTUP_VOLUME ?= shojiku-rustup
@@ -358,6 +383,11 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 	$(RUST_IMAGE) sh -euc
 
 .DEFAULT_GOAL := help
+
+# The investigation surface. Not gates — they print state, they check nothing —
+# so they live in their own file, and `make help` still lists them because it
+# reads $(MAKEFILE_LIST). See mk/investigate.mk for why they exist at all.
+include mk/investigate.mk
 .PHONY: proof proof-python proof-ruby proof-dotnet proof-java proof-js \
         proof-php proof-go
 .PHONY: proof-published proof-published-python proof-published-ruby \
@@ -393,9 +423,9 @@ CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
         clean cache-clean images-clean
 
 help: ## Show this help
-	@grep -E '^[a-zA-Z0-9_\\:-]+:.*## ' $(MAKEFILE_LIST) \
+	@grep -hE '^[a-zA-Z0-9_\\:-]+:.*## ' $(MAKEFILE_LIST) \
 		| sed -E 's/^([a-zA-Z0-9_\\:-]+):[^#]*## /\1\t/; s/\\//g' \
-		| awk -F'\t' '{printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
+		| awk -F'\t' '{printf "  \033[36m%-24s\033[0m %s\n", $$1, $$2}'
 
 ## ---- push gate ---------------------------------------------------------
 
@@ -551,20 +581,26 @@ quiet: ## Run ANY target this way: make quiet T=gui (same PASS/FAIL + real exit 
 		if [ -f "$(ERROR_LOG)" ] && head -1 "$(ERROR_LOG)" | grep -qx "# FAILED: $(T)"; then \
 			rm -f "$(ERROR_LOG)"; \
 		fi; \
-		printf '\033[32mPASS\033[0m %s — full log (%s lines): %s\n' \
-			'$(T)' "$$(wc -l < "$$log" | tr -d ' ')" "$$log"; \
+		printf '\033[32mPASS\033[0m %s  [%s] — full log (%s lines): %s\n' \
+			'$(T)' '$(TREE_ID)' "$$(wc -l < "$$log" | tr -d ' ')" "$$log"; \
 	else \
 		code=$$?; \
 		step=$$(grep -E '^== ' "$$log" | tail -1); \
 		culprits=$$(scripts/gate-culprits.sh "$$log"); \
+		diagnosis=$$(scripts/gate-diagnose.sh "$$log"); \
 		{ echo "# FAILED: $(T)"; \
+		  echo "# tree: $(TREE_ID) ($(CURDIR))"; \
 		  echo "# exit $$code at $$(date '+%Y-%m-%d %H:%M:%S')"; \
 		  echo "# last step: $${step:-(none reported)}"; \
 		  echo "# full log: $$log"; \
+		  if [ -n "$$diagnosis" ]; then echo; echo "# diagnosis:"; echo "$$diagnosis" | sed 's/^/#   /'; fi; \
 		  if [ -n "$$culprits" ]; then echo; echo "# where:"; echo "$$culprits" | sed 's/^/#   /'; fi; \
 		  echo; cat "$$log"; } > "$(ERROR_LOG)"; \
-		printf '\033[31mFAIL\033[0m %s (exit %s)\n  last step : %s\n  error log : %s  <- always this path\n  full log  : %s\n' \
-			'$(T)' "$$code" "$${step:-(none reported)}" "$(ERROR_LOG)" "$$log"; \
+		printf '\033[31mFAIL\033[0m %s  [%s] (exit %s)\n  last step : %s\n  error log : %s  <- always this path\n  full log  : %s\n' \
+			'$(T)' '$(TREE_ID)' "$$code" "$${step:-(none reported)}" "$(ERROR_LOG)" "$$log"; \
+		if [ -n "$$diagnosis" ]; then \
+			printf -- '--- what this is ---\n%s\n' "$$diagnosis"; \
+		fi; \
 		if [ -n "$$culprits" ]; then \
 			printf -- '--- where it broke ---\n%s\n' "$$culprits"; \
 		else \
@@ -683,8 +719,8 @@ fmt-fix: ## cargo fmt (apply formatting)
 # dies with "cannot update the lock file ... because --locked was passed".
 # Without a target for it the only way forward is a hand-built `docker run`
 # reproducing CARGO_IN_DOCKER's mount and both cache volumes by hand — which
-# is exactly the mount discipline docs/agents/gotchas/docker-make.md calls
-# the single biggest time-sink in this repo.
+# is exactly the mount discipline CARGO_IN_DOCKER above exists to encode, and
+# getting it wrong is the single biggest time-sink in this repository.
 #
 # `cargo metadata` resolves and writes the lockfile without compiling
 # anything, so this is seconds rather than a build. It updates only what the
@@ -1640,9 +1676,10 @@ PNPM_VERSION_SDK := $(shell sed -n 's/.*"packageManager": *"pnpm@\([^"]*\)".*/\1
 # install under a different base image leaves another platform's native
 # bindings there and the next run dies with `Cannot find module
 # './rolldown-binding.<platform>.node'`, which reads exactly like a broken
-# dependency tree rather than an image mismatch. The full scoped-iteration
-# recipe (and why COREPACK_ENABLE_DOWNLOAD_PROMPT=0 is load-bearing) is in
-# docs/agents/gotchas/docker-make.md; re-run `make gui` before committing.
+# dependency tree rather than an image mismatch. Do not improvise the scoped
+# run: `make test:gui F=<pattern>` is it, and it already carries this recipe
+# (COREPACK_ENABLE_DOWNLOAD_PROMPT=0 included — without it corepack blocks on a
+# download prompt no one is there to answer). Re-run `make gui` before committing.
 PNPM_IN_DOCKER = $(GATE_LOCK) docker run --rm \
 	-v "$(CURDIR):/repo" -w /repo/gui \
 	-v "$(PNPM_VOLUME):/pnpm-store" \

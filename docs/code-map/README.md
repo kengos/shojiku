@@ -39,7 +39,7 @@ matching submodule when the wire widens").
 | — | diagnostic-code enumerations → `docs/engine/diagnostics.md` |
 | — | CSS/Unicode/spec behavior → `docs/engine/` (layout-model + feature pages) |
 | — | rationale & history → `docs/engine/features.md` § Decision log |
-| — | incident-derived traps → `docs/agents/gotchas/` |
+| — | incident-derived traps → nowhere in the repo (local working set, like work-item codes) |
 | — | work-item codes & dates → nowhere (forward-looking set only) |
 
 ## Register
@@ -49,8 +49,7 @@ matching submodule when the wire widens").
 - Relative markdown links must resolve from the map's own directory.
 - A structural claim in a map ("these modules never import each other")
   is a falsifiable claim: prove it with the grep before writing it, and
-  re-prove it whenever a change touches its subject
-  (`docs/agents/gotchas/verification-claims.md`).
+  re-prove it whenever a change touches its subject.
 - A claim that a gate/test enforces something names the command that
   holds it; never assert protection that does not exist.
 
