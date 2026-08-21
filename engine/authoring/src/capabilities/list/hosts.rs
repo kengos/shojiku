@@ -49,6 +49,17 @@ pub(super) const KEYS: &[&str] = &[
     // listChanged). Read-only and additive — the server still never writes
     // a file. A client can gate on this instead of probing for the tools.
     "mcp.examples",
+    // The format catalog on the MCP surface (`format_catalog`): the display
+    // variants a document may pick per field type, each with an
+    // engine-rendered sample, plus previews of patterns it does not carry
+    // yet. Every argument is optional — with no template the answer is the
+    // locale's own vocabulary, which is what an author who has not written a
+    // document yet needs — and the response carries PARSE diagnostics beside
+    // the catalog, so an unparseable template says why its registry half is
+    // empty instead of reporting nothing. Gated separately from
+    // `format.catalog` (which reports the QUERY exists at all): a client
+    // reaching the engine over stdio needs to know THIS host exposes it.
+    "mcp.formats",
     // The browser/Workers WASM bindings (`shojiku-wasm`): the same authoring
     // ops (validate / render / inspect / capabilities) wrapped for JS, with
     // bytes-first injected fonts/assets/locale packs and a three-part render

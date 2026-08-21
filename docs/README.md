@@ -49,8 +49,8 @@ unsettled rather than rejected, so it is worth proposing.
   are the **CLI (and its Docker image)** — `shojiku render` as a
   subprocess; see the render commands in [engine/](engine/README.md) —
   plus the **stdio MCP server** (`shojiku-mcp`: validate /
-  render_preview / inspect_layout / capabilities, and list_examples /
-  get_example over the bundled examples, for AI-agent
+  render_preview / inspect_layout / capabilities / format_catalog, and
+  list_examples / get_example over the bundled examples, for AI-agent
   authoring; [agents/mcp.md](agents/mcp.md)) and the **browser WASM
   bindings** (`engine/wasm`, the Designer's preview transport — a JS
   host injects fonts/assets and renders client-side).
@@ -119,6 +119,7 @@ for when they land.
 | [agents/mcp.md](agents/mcp.md) | `engine/mcp` — AI/MCP tool surface (core server shipped) |
 | [agents/signing.md](agents/signing.md) | `engine/signing`, `engine/verify` — electronic signature & trust *(built: sign, verify, and the hardening pass — bounded errors, fuzz targets)* |
 | [agents/verification.md](agents/verification.md) | **how correctness is established at all** — a claim comes from a `make` target, never a hand-built equivalent; where inspection ends and checking begins; what to do when the command you need does not exist. Read before claiming anything works |
+| [agents/gotchas/](agents/gotchas/README.md) | **AI-only** incident-derived trap catalogs (toolchain, testing, smokes, verification) — consulted before building / when stuck; the rest of `agents/` keeps the standards, these keep the stumbles |
 
 ## Ground rules that apply everywhere
 

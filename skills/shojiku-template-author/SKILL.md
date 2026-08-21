@@ -233,6 +233,17 @@ reddens on the first render.
   definitions type. A `formats:` registry defines reusable named
   date/datetime patterns (`stamp: { type: date, pattern: "yyyy.MM.dd" }`);
   per-placement pattern strings do not exist — reference by name.
+  **Do not guess a variant spelling — ask.** The names differ per locale
+  pack and a document's own `formats:` entries add to them, so
+  `format_catalog` (MCP) / `shojiku formats` (CLI) is the authority: it
+  answers every pickable spelling per field type, where it comes from
+  (`builtin` / `pack` / `registry`), and what each one actually renders.
+  A `probes` entry previews a pattern before you author it. Types with no
+  named variants at all (`number`, `percentage`, `quantity`) come back
+  marked `fixed`: naming a VARIANT on one warns and renders the plain form.
+  A type name is not a variant — `format: currency` on a number is a type
+  OVERRIDE, and so is the `symbol`/`name` money pick above; both change what
+  the value is rendered as and neither warns.
 - **`format: quantity` prints the locale's COUNTER WORD, not a bare
   number** — under ja-JP a `6` renders `6点`. So a literal 点/個/行 in the
   surrounding text doubles it (`{count} 点` → `61点 点`), and a count that
@@ -361,6 +372,7 @@ migrator/debugger skills reference this section, they never restate it.
   | `render_preview` | `templatePath`, `paramsPath` | `definitionsPath`, `lang`, `scale` (default 2.0), `page` (1-based), the asset knobs | one PNG per page, then diagnostics JSON |
   | `inspect_layout` | `templatePath`, `paramsPath` | `definitionsPath`, `lang`, the asset knobs | inspect envelope (engine info + layout tree + path-addressed boxes + margins), then diagnostics JSON |
   | `capabilities` | — | — | engine version + capability-key list |
+  | `format_catalog` | — | `templatePath` (or inline `template`), `lang`, `probes` (`[{fieldType, pattern}]`, ≤16) | the pickable spellings per field type with a rendered sample of each, then diagnostics JSON |
   | `list_examples` | — | — | the bundled catalog: each entry's `shojiku://example/...` URI, title, what it exercises, file names, size |
   | `get_example` | `uri` | — | that entry's source files together (append `/<file>` to the URI for one file) |
 
@@ -403,14 +415,17 @@ migrator/debugger skills reference this section, they never restate it.
   shojiku preview --templates templates.yml --params params.json --output "preview-{page}.png" --scale 2
   # resolved geometry: layout tree + path-addressed boxes for every item
   shojiku inspect --templates templates.yml --params params.json
+  # which display variants each field type can take, and what each RENDERS
+  shojiku formats --templates templates.yml --lang ja-JP --probe date:'yyyy年M月d日'
   # final PDF
   shojiku render --templates templates.yml --params params.json --output out.pdf
   ```
 
   Locale (`--lang <id>` / MCP `lang`) applies to the **rendering**
   commands — `preview`, `inspect`, `render` (and MCP `render_preview` /
-  `inspect_layout`); `validate` takes NO locale (validation does not
-  format). Builtin ids `ja-JP`/`en-US`, a bare `ja` picks its unique
+  `inspect_layout`) — and to `formats` / `format_catalog`, whose whole
+  answer is locale-dependent; `validate` takes NO locale (validation does
+  not format). Builtin ids `ja-JP`/`en-US`, a bare `ja` picks its unique
   builtin, else it falls to `defaults.locale` then `ja-JP`. Under Docker
   the CLI finds `./packs/` from the working dir; otherwise point it with
   `--font-dir`/`--locale-dir` or `$SHOJIKU_FONT_DIR`/`$SHOJIKU_LOCALE_DIR`.

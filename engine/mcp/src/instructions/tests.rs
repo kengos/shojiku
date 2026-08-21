@@ -26,6 +26,14 @@ fn points_at_the_example_surface() {
 }
 
 #[test]
+fn points_at_the_format_vocabulary() {
+    // The one surface an author reaches for while WRITING a value rather
+    // than after breaking one; without the signpost it is discoverable only
+    // by reading `tools/list` closely.
+    assert!(INSTRUCTIONS.contains("format_catalog"));
+}
+
+#[test]
 fn carries_the_staleness_rule() {
     // The one instruction that keeps the other surfaces from being
     // bypassed: the running engine is the authority, not recall.

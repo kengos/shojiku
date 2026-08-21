@@ -63,6 +63,17 @@ platform binaries.
   template and locale, and what each one renders. `--probe date:'yyyy年M月d日'`
   previews a pattern before you author it.
 
+- **An AI agent can ask the same question.** That vocabulary reached the
+  command line and the Designer but not the MCP server, so an agent authoring
+  through it guessed a `format:` spelling and learned from the warning. The
+  server gains a `format_catalog` tool answering the same question — every
+  pickable spelling per field type, where it comes from, what
+  this engine renders for it, and a preview of a pattern you have not authored
+  yet. Every argument is optional: with no template at all it answers the
+  locale's own vocabulary, which is what you need before there is a document
+  to pass it. A template that does not parse still gets an answer, with the
+  parse error beside it, so an empty registry half is never left unexplained.
+
 - A table's header row can be drawn invisibly with
   `header: { visuallyHidden: true }`. Nothing about the row is painted — no
   label text, no band fill, no grid ruling — but the column labels stay in the

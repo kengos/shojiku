@@ -2,10 +2,15 @@
 //! every tool answers with, and the in-band failure mapping. Descriptors
 //! (names + JSON schemas) live in `tools/schema.rs`; the shared
 //! source→layout pipeline in `tools/pipeline.rs` (its argument halves in
-//! `tools/sources.rs` and `tools/assets.rs`).
+//! `tools/sources.rs` and `tools/assets.rs`). `tools/formats.rs` is the only
+//! tool that loads a locale pack WITHOUT a font store: `pipeline.rs` is
+//! the one other `load_locale_pack` caller and it builds a `FontStore` on
+//! the next line, while `validate` and the example tools need no pack at
+//! all.
 
 pub(crate) mod assets;
 pub(crate) mod examples;
+pub(crate) mod formats;
 pub(crate) mod inspect;
 pub(crate) mod pipeline;
 pub(crate) mod preview;
@@ -25,7 +30,7 @@ use serde_json::{json, Value};
 /// protocol-level `(code, message)` error for a malformed request.
 pub(crate) type ToolOutcome = Result<Value, (i64, String)>;
 
-/// `tools/list` result: the four authoring tools plus the two that read
+/// `tools/list` result: the five authoring tools plus the two that read
 /// the bundled examples.
 pub(crate) fn list() -> Value {
     json!({ "tools": schema::descriptors() })
@@ -50,6 +55,7 @@ pub(crate) fn call(args: &ServerArgs, params: &Value) -> ToolOutcome {
         "capabilities" => Ok(capabilities_result()),
         "list_examples" => examples::list(&arguments),
         "get_example" => examples::get(&arguments),
+        "format_catalog" => formats::run(args, &arguments),
         other => Err((INVALID_PARAMS, format!("unknown tool: {}", clip(other)))),
     }
 }

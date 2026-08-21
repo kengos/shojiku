@@ -1,6 +1,6 @@
 [package]
 name = "shojiku-mcp"
-description = "Shojiku MCP server: validate / render_preview / inspect_layout / capabilities tools over stdio"
+description = "Shojiku MCP server: validate / render_preview / inspect_layout / capabilities / format_catalog tools over stdio, plus the bundled-example read surface"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

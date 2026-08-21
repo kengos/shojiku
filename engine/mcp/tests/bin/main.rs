@@ -29,6 +29,8 @@ fn initialize_list_and_capabilities_over_stdio() {
                 "\n",
                 r#"{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"uri":"shojiku://example/presets/blank-a4/templates.yml"}}"#,
                 "\n",
+                r#"{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"format_catalog","arguments":{"lang":"ja-JP"}}}"#,
+                "\n",
             )
             .as_bytes(),
         )
@@ -42,7 +44,7 @@ fn initialize_list_and_capabilities_over_stdio() {
         .lines()
         .map(|line| serde_json::from_str(line).expect("response JSON"))
         .collect();
-    assert_eq!(lines.len(), 5);
+    assert_eq!(lines.len(), 6);
     assert_eq!(lines[0]["result"]["serverInfo"]["name"], "shojiku-mcp");
     // The guidance a client feeds the model, and the resources capability,
     // both ride the real handshake.
@@ -53,7 +55,7 @@ fn initialize_list_and_capabilities_over_stdio() {
     assert!(lines[0]["result"]["capabilities"]["resources"].is_object());
     assert_eq!(
         lines[1]["result"]["tools"].as_array().expect("tools").len(),
-        6
+        7
     );
     let caps = lines[2]["result"]["content"][0]["text"]
         .as_str()
@@ -72,6 +74,15 @@ fn initialize_list_and_capabilities_over_stdio() {
         .as_str()
         .expect("source text");
     assert!(source.contains("sections:"), "served a real templates.yml");
+    // The format vocabulary answers with no document at all — reachable
+    // through the shipped binary, not only through the dispatcher.
+    let catalog: serde_json::Value = serde_json::from_str(
+        lines[5]["result"]["content"][0]["text"]
+            .as_str()
+            .expect("catalog text"),
+    )
+    .expect("catalog JSON");
+    assert_eq!(catalog["types"].as_array().expect("types").len(), 6);
 }
 
 /// A client with no shared filesystem: the whole document travels inline in

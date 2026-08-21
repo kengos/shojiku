@@ -69,9 +69,17 @@ pub struct FormatVariant {
 pub struct FormatTypeEntry {
     /// The type's wire spelling (`date`, `currency`, …).
     pub field_type: String,
-    /// Whether the type has a real choice. `number`, `percentage` and
-    /// `quantity` have no named variants in v1 — any pick but `default`
-    /// warns — so an editor shows what they render and offers no control.
+    /// Whether the type has a real choice of VARIANT. `number`,
+    /// `percentage` and `quantity` have none in v1 — naming a variant on
+    /// one warns and renders the plain form — so an editor shows what they
+    /// render and offers no variant control.
+    ///
+    /// It does NOT mean nothing may be authored there. A `format:` value
+    /// naming a field TYPE is an override rather than a variant
+    /// (`format.rs` clears the variant and re-types the value), and
+    /// `symbol`/`name` on a number promotes it to currency; neither warns.
+    /// They are absent from the number ENTRY because this lists a type's
+    /// variants — `symbol`/`name` are listed, under `currency`.
     pub fixed: bool,
     pub variants: Vec<FormatVariant>,
 }
