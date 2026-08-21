@@ -16,11 +16,11 @@ GUI (TypeScript, `gui/`): the React Designer — a pnpm workspace (Node
 `designer-app → designer → designer-core`. Toolchain: TypeScript
 `strict`, **Biome** (one stack for lint + format, NOT ESLint/Prettier),
 Vitest with 100%×4 coverage thresholds; all gates run in Docker via
-**`make gui`** (in `make verify`) — no host Node toolchain, mirroring
+**`make gui:verify`** (in `make verify`) — no host Node toolchain, mirroring
 the Rust/wasm gates. Two length gates, RuboCop-style (rule on, explicit
-waiver list, burn it down): per FILE, `make gui-budget`
+waiver list, burn it down): per FILE, `make gui:budget`
 (`scripts/check-gui-line-budget.sh`, pure POSIX sh + awk, runs FIRST in
-`make gui` on the host) caps every non-test `.ts`/`.tsx` at **150
+`make gui:verify` on the host) caps every non-test `.ts`/`.tsx` at **150
 executable lines** — blank lines and comments do not count, so
 documenting a file costs no budget — with an in-file
 `line-budget-exempt: <reason>` waiver (the same token the engine budget

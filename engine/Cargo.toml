@@ -3,7 +3,7 @@ resolver = "2"
 # `fuzz/` is a crate, deliberately not a member: it is nightly-only
 # (libFuzzer), links a sanitizer runtime, and ships nowhere. Keeping it out
 # means `cargo test --workspace`, `cargo llvm-cov --workspace` and
-# `cargo deny` all stay describing what actually ships. `make fuzz` is the
+# `cargo deny` all stay describing what actually ships. `make engine:fuzz` is the
 # only thing that builds it.
 exclude = ["fuzz"]
 members = [
@@ -47,7 +47,7 @@ too_many_lines = "warn"
 # `unexpected_cfgs` stays clean under clippy -D warnings.
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(coverage)"] }
 
-# Size-tuned profile for the WASM bindings (Makefile `wasm` target builds
+# Size-tuned profile for the WASM bindings (Makefile `engine:wasm` builds
 # `--profile wasm-release`); the CLI/MCP release builds stay untouched.
 [profile.wasm-release]
 inherits = "release"
@@ -132,7 +132,7 @@ harfrust = "0.12"
 # `default-features = false` drops `auto`; `new_lstm` is named explicitly so a
 # future ICU4X redefinition of "the best available data" cannot silently move
 # the build onto the dictionary. That matters because it is the WASM budget's
-# whole story, measured against `make wasm`'s own size line:
+# whole story, measured against `make engine:wasm`'s own size line:
 #
 #   baseline      raw 4,798,116  gzip 1,688,577
 #   + LSTM        raw 5,170,236  gzip 2,004,699   (+372 KB / +316 KB)

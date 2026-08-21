@@ -455,7 +455,7 @@ The deploy artifact is a static `dist/` (Vite build + a site-assembly step
 that chunks any font face over the 25 MiB Cloudflare Pages file cap into
 `.partNN` pieces the app reassembles); `public/_headers` sets a same-origin
 CSP. The lazy loop is pinned against the real engine in a node integration
-test, and a `make gui-e2e` Playwright golden path exercises the browser
+test, and a `make gui:e2e` Playwright golden path exercises the browser
 loop.
 
 The **first-load experience** shipped as **catalog-first boot**: the engine
@@ -928,12 +928,12 @@ Decisions made and recorded here:
 - **Package manager: pnpm 11** (workspace), Node 24 LTS, both pinned
   (`packageManager`, `engines`, and the Docker image pins — Makefile `NODE_IMAGE`, the designer-app Dockerfile, the devcontainer). `pnpm-lock.yaml` is committed
   (it is not matched by the global `*.lock` ignore, so no `-f` needed).
-- **All gates run in Docker via `make gui`** (typecheck + Biome + Vitest
-  coverage), and `make gui` is part of `make verify` — the host has no Node
+- **All gates run in Docker via `make gui:verify`** (typecheck + Biome + Vitest
+  coverage), and `make gui:verify` is part of `make verify` — the host has no Node
   toolchain, mirroring the Rust/wasm gates. Its one host-side step runs
   FIRST and needs no toolchain: the per-file line budget (below).
 - **File and function length are both gated, RuboCop-style** (rule on,
-  explicit waiver list, burn it down). Per FILE: `make gui-budget`
+  explicit waiver list, burn it down). Per FILE: `make gui:budget`
   (`scripts/check-gui-line-budget.sh`, pure POSIX sh + awk) caps every
   non-test `.ts`/`.tsx` under `gui/` at **150 executable lines** — blank
   lines and comments (`//`, `/* … */`, JSX `{/* … */}`) do not count, so
@@ -1064,8 +1064,8 @@ Decisions made and recorded here:
   normalize:examples` rewrites every `examples/*/*/templates.yml` to the fixed
   point, and the `designer-core` round-trip suite globs them and asserts
   `serialize(parse(src)) === src` — so a new or edited example that skips
-  normalization reds `make gui`. Normalization is semantics-neutral (only flow
-  spacing / blank-line runs change), so `make examples-check` stays byte-green.
+  normalization reds `make gui:verify`. Normalization is semantics-neutral (only flow
+  spacing / blank-line runs change), so `make examples:check` stays byte-green.
 
 ## Designer chrome redesign (shipped)
 
@@ -1258,25 +1258,25 @@ map ([gui-designer](../code-map/gui-designer.md) /
 
 Formatting/style and coverage follow the general rules in
 [../guidelines.md](../guidelines.md); the wired gates all run inside
-`make gui` (in `make verify`). What's specific to `gui/`:
+`make gui:verify` (in `make verify`). What's specific to `gui/`:
 
 - **Biome** (`biome check` — format + lint in one) must run clean, zero
   diagnostics; the adopted stack, replacing ESLint + Prettier (never mix
   both stacks in a package)
 - **Per-file line budget** — 150 executable lines, waiver token
-  `line-budget-exempt:` (see the decision above); runs first in `make gui`
+  `line-budget-exempt:` (see the decision above); runs first in `make gui:verify`
 - `tsc --noEmit` with `strict: true` must pass
 - **Vitest** (adopted) unit tests for pure state logic — reducers,
   document ops, the preview state machine, and the field-palette model
   (the definitions view + used-in-template correlation)
 - `vitest run --coverage` with `thresholds` set to `100` in
-  `vitest.config.ts`, enforced in `make gui`
+  `vitest.config.ts`, enforced in `make gui:verify`
 - Component tests (React Testing Library) for Canvas/Property
   Panel/Diagnostics interactions, plus at least one integration test
   against the real WASM engine (never a mock)
 - End-to-end tests (Playwright) for the golden path (open preset →
-  tweak → preview → export) — wired as **`make gui-e2e`** (Playwright in
-  Docker over the built + assembled app), on-demand like `make wasm-e2e`,
+  tweak → preview → export) — wired as **`make gui:e2e`** (Playwright in
+  Docker over the built + assembled app), on-demand like `make engine:wasm-e2e`,
   NOT part of `make verify`
 - Accessibility: run axe (or equivalent) against rendered GUI screens —
   **not yet wired in CI (aspirational, do not assume it gates)**; a11y

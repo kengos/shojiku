@@ -5,7 +5,7 @@
 # the "more" list. `preview`/`preview2` name committed render outputs inside
 # the entry's dir; two previews render side by side (the blank↔filled pairs).
 #
-# Regenerate the consumers with `make site-data` (hash-gated by site-check).
+# Regenerate the consumers with `make site:data` (hash-gated by site:check).
 entries:
   - dir: business/invoice-ja
     featured: true

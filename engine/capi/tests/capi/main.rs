@@ -29,7 +29,7 @@ fn repo_path(relative: &str) -> PathBuf {
 }
 
 /// The request envelope for one bundled example, pointing at the repository's
-/// own packs — the same inputs `make examples` renders with.
+/// own packs — the same inputs `make examples:render` renders with.
 fn example_request(example: &str) -> Vec<u8> {
     let dir = repo_path("examples/business").join(example);
     let read =

@@ -1,5 +1,5 @@
 // Dev-only Vite middleware serving the assembled `dist/data/` tree at /data,
-// so `vite dev` (make gui-dev) fetches the same catalog/presets/fonts/wasm
+// so `vite dev` (make gui:dev) fetches the same catalog/presets/fonts/wasm
 // files the built site serves statically. Production builds never load this
 // (`apply: 'serve'`); the assembled tree ships inside dist/. A miss inside
 // /data answers 404 (never the SPA index.html fallback, which would hand the

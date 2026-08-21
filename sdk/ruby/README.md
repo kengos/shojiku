@@ -314,7 +314,7 @@ do not cover, or for working against an engine you changed. Build it from
 a clone:
 
 ```bash
-make capi-lib
+make engine:capi-lib
 ```
 
 It lands in `dist/capi/local/`; point `SHOJIKU_LIBRARY` at it, or pass
@@ -325,10 +325,10 @@ It lands in `dist/capi/local/`; point `SHOJIKU_LIBRARY` at it, or pass
 Every gate runs in a container — no Ruby toolchain needed locally:
 
 ```bash
-make verify:sdk:ruby
+make sdk:ruby:verify
 ```
 
-`make test:sdk:ruby` and `make lint:sdk:ruby` are the faster slices.
+`make sdk:ruby:test` and `make sdk:ruby:lint` are the faster slices.
 
 ## Requirements
 

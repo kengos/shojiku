@@ -97,7 +97,7 @@ Try the bundled example:
 shojiku render --templates examples/business/receipt-ja/templates.yml \
   --params examples/business/receipt-ja/params.json \
   --definitions examples/business/receipt-ja/definitions.yml --output receipt.pdf
-# or via the Docker image (`make docker-build` builds the local
+# or via the Docker image (`make docker:build` builds the local
 # `shojiku-ci:local` tag; its default command renders exactly this example):
 docker run --rm shojiku-ci:local > receipt.pdf
 # your own files: mount them and pass normal CLI arguments
@@ -248,7 +248,7 @@ does not include them; the snippets on each feature page are the
 self-contained fallback. Each example directory commits its **rendered
 output** (`output.pdf` + `preview-<n>.png`) next to the sources, so you
 can see what a template produces without rendering anything;
-`make examples` regenerates them all. The set (gallery order and
+`make examples:render` regenerates them all. The set (gallery order and
 one-line pitches: README.md § Gallery):
 [`examples/business/invoice-ja`](../../examples/business/invoice-ja) (a multi-page A4 invoice:
 paginating table with repeating header, pre-computed totals, QR + link;

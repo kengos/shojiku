@@ -55,7 +55,7 @@ sbom_same_ignoring_volatile() { # <label> <a> <b>
 # the same thing — then keep <dest>'s existing bytes and drop <fresh>.
 # Prints `preserved` or `written`.
 #
-# This is what makes `make sbom` IDEMPOTENT. Without it every run rewrites
+# This is what makes `make sbom:generate` IDEMPOTENT. Without it every run rewrites
 # every inventory with a new timestamp and serialNumber, so a change to one
 # ecosystem's lockfile dirties all of them and the real one-file delta is
 # buried in churn. That used to be a hand step in the release checklist

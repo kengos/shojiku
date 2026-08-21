@@ -24,7 +24,7 @@ shojiku-capi = { workspace = true }
 # The N-API shim, behind a non-default feature. `cargo test`/`clippy`/
 # `llvm-cov --workspace` build the default feature set, so the marshalling
 # glue never enters the host gates' surface — the same containment
-# engine/wasm gets from `cfg(target_arch = "wasm32")`. `make napi` is what
+# engine/wasm gets from `cfg(target_arch = "wasm32")`. `make engine:napi` is what
 # builds (and lints) it with the feature on.
 #
 # `napi` keeps its DEFAULT features on purpose: they are `napi4` +

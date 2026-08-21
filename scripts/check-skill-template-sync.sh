@@ -5,14 +5,14 @@
 # A product-facing skill under skills/ may ship a ready-made template so
 # it still works when installed standalone (`npx skills add …`), outside
 # a Shojiku checkout. That copy is the one a user's agent runs — and it
-# is the copy no gate would otherwise look at, because `make examples`
+# is the copy no gate would otherwise look at, because `make examples:render`
 # only renders examples/. Keeping the two byte-identical means the
 # rendered-and-hash-checked example IS the proof for the shipped copy.
 #
 # Same shape as the README gallery: one source of truth, a generated
 # consumer, and a gate that refuses drift. Fix a failure by copying the
 # example's file over the skill's — the example is the source, since it
-# is what `make examples` renders.
+# is what `make examples:render` renders.
 #
 # Usage: check-skill-template-sync.sh
 set -euo pipefail

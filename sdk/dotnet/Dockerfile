@@ -1,11 +1,11 @@
 # The .NET SDK's gate environment.
 #
-# Nobody needs the .NET SDK installed to work on this package: `make sdk-dotnet`
+# Nobody needs the .NET SDK installed to work on this package: `make sdk:dotnet:verify`
 # builds and runs this image, exactly as the Rust, Node, Ruby and Python gates
 # run in theirs.
 #
 # The engine library is INJECTED as a pre-compiled artifact (built once by
-# `make capi-lib` through the pinned Rust image) rather than compiled from Rust
+# `make engine:capi-lib` through the pinned Rust image) rather than compiled from Rust
 # source here. Seven language images each building the engine would make the
 # gate grid unusable.
 #
@@ -29,7 +29,7 @@
 # leaves 10 the only line the support policy admits.
 # The language version is a build ARG so one Dockerfile serves the whole
 # supported range; the default is the FLOOR from docs/agents/sdk.md, which is
-# what a bare `make sdk-dotnet` gates on.
+# what a bare `make sdk:dotnet:verify` gates on.
 ARG DOTNET_VERSION=10.0
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-noble
 

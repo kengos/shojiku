@@ -9,8 +9,8 @@ name: Release artifacts
 # for, not something that happens to you.
 #
 # WHY THREE BUILD STYLES. The linux and windows-mingw targets come from the
-# same pinned Docker cross-build a contributor runs (`make capi-dist
-# cli-dist`) — CI adds nothing but the runner. The macOS targets CANNOT come
+# same pinned Docker cross-build a contributor runs (`make engine:capi-dist
+# engine:cli-dist`) — CI adds nothing but the runner. The macOS targets CANNOT come
 # from a container (Apple's toolchain does not run in linux Docker), and the
 # maintainer's machine deliberately has no local cargo, so the macOS runner
 # is the decided source of those two; same for the napi addon on Windows,
@@ -24,6 +24,8 @@ env:
   # Keep in sync with Makefile RUST_VERSION / ci.yml / docker/Dockerfile.
   RUST_VERSION: "1.97.1"
   CARGO_TERM_COLOR: always
+  # Gates are quiet by default; a CI log wants the raw output (see ci.yml).
+  V: 1
 
 jobs:
   linux-and-mingw:
@@ -36,7 +38,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/engine-cache
         with:
-          target: capi-dist cli-dist
+          target: engine:capi-dist engine:cli-dist
           key: release-dist
       - uses: actions/upload-artifact@v7
         with:
@@ -48,7 +50,7 @@ jobs:
 
   napi-linux:
     # The addon per linux arch, natively on each runner through the pinned
-    # container (`make napi` is host-arch by design).
+    # container (`make engine:napi` is host-arch by design).
     name: napi addon (linux ${{ matrix.slug }})
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -61,7 +63,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/engine-cache
         with:
-          target: napi
+          target: engine:napi
           key: release-napi-${{ matrix.slug }}
       - uses: actions/upload-artifact@v7
         with:

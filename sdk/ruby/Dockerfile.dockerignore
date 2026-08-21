@@ -14,6 +14,6 @@
 !sdk/ruby/shojiku.gemspec
 !sdk/ruby/lib/shojiku/version.rb
 
-# The pre-compiled engine library, built by `make capi-lib`. Gitignored, and
+# The pre-compiled engine library, built by `make engine:capi-lib`. Gitignored, and
 # the root ignore file never mentioned it because nothing else needs it.
 !dist/capi/local

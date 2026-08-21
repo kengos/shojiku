@@ -82,7 +82,7 @@ false`), no clap.
   `src/bin/reference-gen.rs` — `[[bin]]` with `required-features =
   ["schema"]`, so a default build never compiles it.
   Artifact: `reference/catalog.schema.json` (81 named shapes).
-  Gates: `make reference-data` regenerates, `make reference-check` runs
+  Gates: `make reference:generate` regenerates, `make reference:check` runs
   the schema tests **and** the drift comparison — the comparison alone is
   an idempotence claim and would protect a wrong artifact just as well.
   The tests over the artifact's own properties read `CATALOG` and so run
@@ -340,10 +340,10 @@ target-gated).
   renderPng / renderRaw (one arg order surface-wide: template, params,
   definitions, scale, pageIndex?) / renderPdf / formatCatalog; a `WasmError` becomes a
   thrown JS Error carrying `code` + typed `args`.
-- Built via `make wasm` (Docker: wasm32 target + pinned wasm-bindgen +
+- Built via `make engine:wasm` (Docker: wasm32 target + pinned wasm-bindgen +
   pinned `wasm-opt -Oz` + `wasm-release` profile → `engine/wasm/pkg`,
   size-budgeted; in `make verify`). Browser golden path in
-  `engine/wasm/e2e/` (Playwright, `make wasm-e2e`, on-demand).
+  `engine/wasm/e2e/` (Playwright, `make engine:wasm-e2e`, on-demand).
 
 ## engine/capi — the shared C ABI cdylib
 
@@ -460,7 +460,7 @@ per SDK covers both.
   one document and must produce the SAME BYTES as a single-threaded call, so
   both halves of the claim (no shared mutable state; determinism is not a
   single-threaded property) ship executed.
-- Built via `make capi-dist` (Docker, on-demand — not in `verify`): release
+- Built via `make engine:capi-dist` (Docker, on-demand — not in `verify`): release
   cdylibs for linux x64/arm64 + windows x64-gnu with cross toolchains, plus
   `SHA256SUMS`, into the gitignored `dist/capi/`. darwin needs a macOS
   runner and is produced at release time.
@@ -502,6 +502,6 @@ self-register`.
   operations, the two-level split both ways, hostile non-UTF-8 request bytes,
   and a byte-identity check against the capi path — the node SDK's determinism
   claim, made checkable.
-- Built via `make napi` (Docker: `--features shim` → `dist/napi/local/
+- Built via `make engine:napi` (Docker: `--features shim` → `dist/napi/local/
   shojiku.node`, then LOADED under the node floor image to prove the artifact
   is what node thinks it is). In `make verify`.

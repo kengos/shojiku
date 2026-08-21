@@ -1,9 +1,9 @@
 // The provenance pin for the browser engine the site serves. `site/.data/wasm`
 // holds a RELEASED build, and `site/.data/wasm-source.json` records which
-// release it is plus each file's sha256. `make site-check` verifies the
+// release it is plus each file's sha256. `make site:check` verifies the
 // committed bytes against that RECORD — it never rebuilds, so the check says
 // the same thing on every host architecture, and the only way to move the
-// site's engine is `make site-wasm-release`, which points it at another
+// site's engine is `make site:wasm-release`, which points it at another
 // released build. The alternative (comparing against a fresh local build) is
 // what made the homepage track unreleased code.
 import { createHash } from "node:crypto";
@@ -114,7 +114,7 @@ function samePins(a: Record<string, string>, b: Record<string, string>): boolean
 
 /**
  * Why a re-pin must NOT happen, or undefined to proceed. `make
- * site-wasm-release` is release-time only, and the two ways to run it at the
+ * site:wasm-release` is release-time only, and the two ways to run it at the
  * wrong moment are both mechanical:
  *
  * - the version being pinned to is not released yet — the refresh would put
@@ -123,7 +123,7 @@ function samePins(a: Record<string, string>, b: Record<string, string>): boolean
  * - the version has NOT moved but the bytes have — same version, different
  *   build is by definition a build that was never released.
  *
- * The second is the one a mid-cycle `make site-wasm-release` would hit, and
+ * The second is the one a mid-cycle `make site:wasm-release` would hit, and
  * no hash or version check downstream can see it, because the recorded
  * version stays legitimately released.
  */

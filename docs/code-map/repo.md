@@ -114,20 +114,20 @@ What each example PROVES (one line each):
 `examples/gallery.yml` — the ONE gallery source (dir + title/blurb
 en/ja + preview names, `featured:` marks the README-table set): the
 README "Gallery" section (generated between `gallery:generated`
-markers by `make site-data`), `/gallery` and `/ja/gallery` all render
+markers by `make site:data`), `/gallery` and `/ja/gallery` all render
 from it — never edit those surfaces by hand.
 
 `examples/deploy/<lang>/` — the production-packaging recipes the site's
 tutorial pages TRANSCLUDE (python/ruby/node/dotnet/java: Dockerfile +
 render program; python pulls params from SQLite built at image build).
 Excluded from every render/preset glob (no preset.yml, not in
-render-examples.sh); proven by `make proof-deploy`
+render-examples.sh); proven by `make proof:deploy`
 (`scripts/install-proof/deploy-*.sh` — stages the receipt-ja example +
 packs/ as the vendored app, builds against the PUBLIC registries;
 network-dependent, on demand, never in `make verify`).
 
 Each example commits its rendered `output.pdf` + `preview-<n>.png`
-(`make examples` regenerates; the list lives in
+(`make examples:render` regenerates; the list lives in
 `scripts/render-examples.sh`). `params-<variant>.json` files beside
 `params.json` render `output-<variant>.pdf` etc. from the SAME
 templates (auto-discovered, byte-checked). An example that is ALSO a
@@ -143,9 +143,9 @@ Go are all built and mirror it. Read that file before touching anything
 under `sdk/`.
 
 The binary the in-process ones load is `engine/capi`
-(`docs/code-map/hosts.md`), built for a gate by `make capi-lib` and for
-release by `make capi-dist`. The subprocess ones run the `shojiku` CLI
-instead — `make cli-bin` for a gate, `make cli-dist` for release.
+(`docs/code-map/hosts.md`), built for a gate by `make engine:capi-lib` and for
+release by `make engine:capi-dist`. The subprocess ones run the `shojiku` CLI
+instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release.
 
 ## docker/, docs/, site/, skills/, scripts/
 
@@ -257,11 +257,11 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   the reference projection + demo staging;
   25 MiB Pages cap asserted). It is what `pnpm dev` runs first, too —
   without it a dev server has no reference routes; `scripts/refresh-data.ts` = the COMMITTED
-  halves, in three modes: default (`make site-data`) regenerates the
+  halves, in three modes: default (`make site:data`) regenerates the
   README gallery section between the `gallery:generated` markers AND the
   two tech pages' SBOM bullet between the `sbom:generated` ones;
-  `--check` (`make site-check`) compares them all; `--release-wasm`
-  (`make site-wasm-release`) is the RELEASE-TIME re-pin.
+  `--check` (`make site:check`) compares them all; `--release-wasm`
+  (`make site:wasm-release`) is the RELEASE-TIME re-pin.
   **`site/.data/wasm` holds a RELEASED engine build, not HEAD's** — it is
   what Pages serves, so a visitor's playground can never be ahead of the
   package they install. The check pins it by the sha256 digests in
@@ -283,11 +283,11 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   default, so a Japanese page never inherits the English sentence).
   `public/robots.txt` replaces Cloudflare's managed file: its Content
   Signals preamble VERBATIM (no signal expressed — that is a policy
-  decision) plus the crawl grant and the `Sitemap:` line. Gates: `make site` /
-  `site-check` / `site-build` (+ `verify:site` grid entry, CI job
-  `site`; `site-docs.yml` runs `verify:site` again on PRs touching
+  decision) plus the crawl grant and the `Sitemap:` line. Gates: `make site:verify` /
+  `site:check` / `site:build` (CI job
+  `site`; `site-docs.yml` runs `site:verify` again on PRs touching
   `docs/engine/**` / `CHANGELOG.md` / `README.md`, which `ci.yml`
-  ignores); `make site-wasm-release` is release-only and in no gate. Font tiers: immediate = noto-sans Regular+Bold (~1.2 MB),
+  ignores); `make site:wasm-release` is release-only and in no gate. Font tiers: immediate = noto-sans Regular+Bold (~1.2 MB),
   lazy-ja = BIZ UDP pair (~8.9 MB — ja-JP's default family);
   ipamj-anything stays static-PNG only (45 MB > the 25 MiB cap).
 - `docs/` — the doc set (`docs/engine/` = the per-feature template
@@ -316,12 +316,23 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   (`template/*.yml`, so a standalone `npx skills add` install still
   works); that copy is byte-gated against
   `examples/lifestyle/recipe-booklet-en/`).
-- `mk/` — Makefile includes. `investigate.mk` = the `investigate:<thing>`
-  surface (tree / last-error / docker / coverage / render / gates / pins).
-  NOT gates: they print state and check nothing, which is why they are a
-  separate file; `make help` still lists them via `$(MAKEFILE_LIST)`.
+- `mk/` — Makefile includes, ONE FILE PER SCOPE: `engine.mk`, `gui.mk`,
+  `site.mk`, `sdk.mk`, `docker.mk`, `proof.mk`. Each holds both halves of
+  its jobs — the public `<scope>:<job>` wrapper and the private
+  `_<scope>-<job>` target carrying the recipe — and `make make:check`
+  refuses a target filed under the wrong one. The root `Makefile` keeps
+  the sanctioned-commands header, the shared variables, `help` / `quiet` /
+  `verify`, and the gates belonging to no single scope (`reference:*`,
+  `examples:*`, `sbom:*`, `version:check`, `clean*`, `make:check`).
+  `investigate.mk` = the `investigate:<thing>` surface (tree /
+  last-error / docker / gates / pins). NOT gates: they print state and
+  check nothing, which is why they are a separate file; `make help`
+  still lists everything via `$(MAKEFILE_LIST)`.
+  Verbosity is a FLAG, not a second name: every gate is quiet by default
+  and `V=1` gives the raw output, so a job never has two spellings that
+  differ by one punctuation mark.
 - `scripts/` — repo gates (`check-line-budget.sh`,
-  `check-versions.sh` — `make version-check`, CI job `versions`: every
+  `check-versions.sh` — `make version:check`, CI job `versions`: every
   place naming a shojiku RELEASE COORDINATE (cargo path-dep pins, maven
   dependencies by groupId, `PackageReference Include="Shojiku"`, the npm
   version, the four per-language version constants, `shojiku-<semver>`
@@ -335,11 +346,26 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   `gate-diagnose.sh` — the failure READER beside `gate-culprits.sh`:
   culprits answer WHICH FILE, diagnose answers WHY and prints the command
   that fixes it (flake -> re-run one gate; `--locked` refusal ->
-  `make lock:<scope>`; example drift -> `make examples`). Both normalise
+  `make <scope>:lock`; example drift -> `make examples:render`). Both normalise
   ANSI + the `pnpm -r` package prefix first, and both are validated by
   inducing a real failure, never by reading the regex.
+  `check-make-namespace.sh` — `make make:check`, the invariant over the
+  target surface itself (CI job `versions`, no Docker): a target defined in
+  `mk/<x>.mk` belongs to scope `<x>`, a public target is colon-named or
+  one of five allowlisted bare names, every `$(call gate,…)` names a
+  defined internal and labels itself correctly, and every `make <target>`
+  named in code ANYWHERE in the tracked tree — a backtick span, a shell
+  fence, a yaml `run:`/`target:`, including a name a CI matrix builds by
+  interpolation — is a target that EXISTS. That last rule is the only
+  thing in the repo that can catch a doc teaching a command that was
+  renamed away, and it reads every tracked file rather than a chosen set
+  of extensions (Dockerfiles, Rust and TypeScript doc comments, `.toml`,
+  `.json` and `.gitignore` all carry these commands). Self-tested over
+  `scripts/fixtures/make-namespace/` (one seeded violation per rule plus
+  a waived line that must not count) before it reads the real tree, with
+  a `make-namespace-exempt: <reason>` per-line hatch.
   `check-gui-line-budget.sh`, `check-skill-template-sync.sh` — the
-  first step of `make examples-check`: a skill's bundled
+  first step of `make examples:check`: a skill's bundled
   `template/*.yml` must be byte-identical to the example it came from,
   so the rendered+hash-checked example is the proof for the copy that
   ships standalone; the example is the source, the skill the copy;
@@ -354,13 +380,13 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   comment on the opener line, same shape as `line-budget-exempt`. It
   self-tests against a known-bad fixture before scanning, so a detector
   that stopped detecting fails instead of reporting OK)
-  `check-php-licenses.sh` — first step of `make sdk-php`: `sdk/php` keeps
+  `check-php-licenses.sh` — first step of `make sdk:php:verify`: `sdk/php` keeps
   its OWN copy of the root `LICENSE-*` set, because the php package is
   published from a subtree-split repository whose root is `sdk/php` and a
   split cannot inject files. Derives the file list from the ROOT, so a
   fourth licence is a failure rather than a silent omission, and refuses a
   run that matched no files at all.
-  + `generate-sbom.sh` (`make sbom` — syft-in-Docker CycloneDX
+  + `generate-sbom.sh` (`make sbom:generate` — syft-in-Docker CycloneDX
   inventories committed under `sbom/`; regenerate + commit whenever a
   lockfile changes. Scans `file:<lockfile>`, never the DIRECTORY: a
   `dir:` scan walks `engine/target/`, picks up the lockfile copies cargo
@@ -381,7 +407,7 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   decide what is DRIFT — two scripts disagreeing about that would write
   drift into the tree and then certify it green.
   `check-sbom.sh` — TWO gates in one script, split by `--lint`.
-  **`make sbom-lint` (CI job "sbom", no Docker, seconds)** runs everything
+  **`make sbom:lint` (CI job "sbom", no Docker, seconds)** runs everything
   that does not go stale as lockfiles move: two self-tests, plus the
   assertion that the map's lockfile set equals the one git tracks, so a
   new ecosystem cannot arrive uninventoried in silence. The self-tests are
@@ -392,7 +418,7 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   all three of its states (preserve / overwrite / no destination), because
   it is the half that WRITES and an over-eager preserve rule is this
   pair's fail-open shape.
-  **`make sbom-check` (the full run, NO ci.yml job)** adds the drift
+  **`make sbom:check` (the full run, NO ci.yml job)** adds the drift
   comparison: regenerate through the generator into a scratch dir (where
   preservation is inert, there being no file to preserve) and compare
   through the shared predicate. It is a RELEASE-time gate — the committed
@@ -426,7 +452,7 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   tags that already exist here, the derived repo cannot serve a version
   this one has not released.
 - `scripts/install-proof/` — the seven per-language install proofs
-  (`make proof-<lang>` / `make proof`; CI job `install-proof`): embed
+  (`make proof:<lang>` / `make proof`; CI job `install-proof`): embed
   the host-arch payload the way a release does, build the REAL package
   (wheel / platform gem / RID nupkg / classifier jar / npm platform
   package / composer / go module), install it into a clean
@@ -438,7 +464,8 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   (RID / platform package / classifier) derives from `uname -m` — an
   arm64 payload filed under linux-x64 is correctly refused by the
   consuming runtime.
-  `published-*.sh` (`make proof-published[-<lang>]`) asks the same question
+  `published-*.sh` (`make proof:published` for all seven, or
+  `make proof:published:<lang>` for one) asks the same question
   of the REGISTRY copy and takes no local artifact at all; go needs none,
   since its publish IS a repo tag. All seven ask about ONE version,
   resolved in `common.sh` as `SHOJIKU_VERSION` or else the tree's own

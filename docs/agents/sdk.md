@@ -1,14 +1,14 @@
 # SDK Policy (`sdk/`)
 
 > **Status: all seven SDKs are built.** `sdk/ruby` is a working gem with its
-> own gate (`make verify:sdk:ruby`) and is the **reference implementation** —
+> own gate (`make sdk:ruby:verify`) and is the **reference implementation** —
 > every interface-shape question in a later SDK is answered by reading it, not
-> by re-deciding. `sdk/python` (`make verify:sdk:python`) is the first mirror
-> of it; `sdk/dotnet` (`make verify:sdk:dotnet`) and `sdk/java`
-> (`make verify:sdk:java`) are the next two; `sdk/js`
-> (`make verify:sdk:js`) is the fifth — the only one whose transport is a
+> by re-deciding. `sdk/python` (`make sdk:python:verify`) is the first mirror
+> of it; `sdk/dotnet` (`make sdk:dotnet:verify`) and `sdk/java`
+> (`make sdk:java:verify`) are the next two; `sdk/js`
+> (`make sdk:js:verify`) is the fifth — the only one whose transport is a
 > native addon rather than the shared cdylib — and `sdk/php`
-> (`make verify:sdk:php`) and `sdk/go` (`make verify:sdk:go`) are the two
+> (`make sdk:php:verify`) and `sdk/go` (`make sdk:go:verify`) are the two
 > whose transport is a CLI SUBPROCESS. Where each ecosystem's
 > idiom legitimately differs is recorded in
 > [../code-map/sdk.md](../code-map/sdk.md), one section per language.
@@ -714,13 +714,13 @@ Two things every stage's image must get right:
 Each stage builds its image beside the package it gates, and adds that
 language's `verify:sdk:<lang>` target to the gate grid at the same time.
 the reference stage did both: `sdk/ruby/Dockerfile` with its sidecar ignore file, and
-`verify:sdk:ruby` / `test:sdk:ruby` / `lint:sdk:ruby` beside the
+`sdk:ruby:verify` / `sdk:ruby:test` / `sdk:ruby:lint` beside the
 engine/gui/docker scopes; the python stage, and then the .NET and JVM stage for two languages at once, did
-the same. `make capi-lib` is the shared half — it builds
+the same. `make engine:capi-lib` is the shared half — it builds
 the HOST-architecture cdylib once, through the pinned Rust image, into
 the gitignored `dist/capi/local/`, and every later SDK image copies from
 there rather than adding a Rust build of its own. The subprocess SDKs have
-the same half under a different artifact: `make cli-bin` builds the
+the same half under a different artifact: `make engine:cli-bin` builds the
 host-architecture `shojiku` BINARY into `dist/cli/local/`, which
 `sdk/php/Dockerfile` and `sdk/go/Dockerfile` both copy to
 `/opt/shojiku/bin` and point `SHOJIKU_BIN` at.
@@ -747,7 +747,7 @@ classifier jar at 100% line coverage — its tests exercised an exploded
 directory, the shipped shape is an archive — and that class of defect is
 invisible to every per-language gate by construction.
 
-`scripts/install-proof/<lang>.sh` (`make proof-<lang>`, all seven under
+`scripts/install-proof/<lang>.sh` (`make proof:<lang>`, all seven under
 `make proof`, CI job `install-proof`) closes it: embed the host-arch
 payload the way the release does, build the REAL package, install it
 into a clean floor-version container with no injected engine and no
@@ -797,7 +797,7 @@ place:
   it names the monorepo as the development home) and a copy of the licence
   set, gated against drift by `scripts/check-php-licenses.sh`.
 
-`make proof-published-php` is the arm that proves it, and it is the only
+`make proof:published:php` is the arm that proves it, and it is the only
 proof drawing on two publish channels — the composer package from
 Packagist, the CLI from the GitHub Release — because this package drives
 a binary rather than carrying one.

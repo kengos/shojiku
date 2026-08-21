@@ -2,7 +2,7 @@
 //!
 //! Thin on purpose: the generation itself lives in
 //! [`shojiku_authoring::reference`] so the tests can call it without running
-//! a binary. `make reference-data` runs this; `make reference-check`
+//! a binary. `make reference:generate` runs this; `make reference:check`
 //! regenerates in memory and fails on any difference from what is committed.
 //!
 //! The output path is a COMPILE-TIME constant built from

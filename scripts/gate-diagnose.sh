@@ -89,24 +89,34 @@ fi
 # scope.
 if has 'the lock file .* needs to be updated|ERR_PNPM_OUTDATED_LOCKFILE|frozen-lockfile|--locked'; then
 	say "REMEDY — a manifest moved and its lockfile was not re-resolved." \
-		"make lock:engine | lock:gui | lock:site | lock:sdk:js   (pick the scope that failed)" \
+		"make engine:lock | gui:lock | site:lock | sdk:js:lock   (pick the scope that failed)" \
 		"engine additionally needs: git add engine/Cargo.lock"
 fi
 
 if has '^MISMATCH examples/'; then
 	say "REMEDY — a committed example output no longer matches what the engine renders." \
-		"Intended?  make examples   then commit the re-rendered files." \
+		"Intended?  make examples:render   then commit the re-rendered files." \
 		"Not intended? the diff changed rendering — that is the finding."
 fi
 
 if has '^SBOM (DRIFT|UNMAPPED|MISSING|ORPHAN) '; then
 	say "REMEDY — an SBOM inventory no longer describes its lockfile." \
-		"make sbom   then commit the regenerated inventories."
+		"make sbom:generate   then commit the regenerated inventories."
 fi
 
-if has 'reference-check|catalog\.schema\.json|KEY CATALOG (DRIFT|MISSING)'; then
+if has 'reference[:-]check|catalog\.schema\.json|KEY CATALOG (DRIFT|MISSING)'; then
 	say "REMEDY — the key catalog drifted from the parser." \
-		"make reference-data   then commit the regenerated catalog."
+		"make reference:generate   then commit the regenerated catalog."
+fi
+
+# Every gate is named <scope>:<job> now. The old verb-first and dash-named
+# spellings are DELETED rather than aliased, so muscle memory and any doc that
+# escaped the rename land here, on an error that names no remedy at all.
+if has "No rule to make target"; then
+	say "REMEDY — that target does not exist. Gate names are <scope>:<job>," \
+		"scope first: engine:lint, gui:verify, sdk:ruby:verify, site:build." \
+		"make help   lists all of them. Add V=1 to any of them for raw output." \
+		"If a DOC sent you here, make make:check will name the file."
 fi
 
 if has '^VERSION (DRIFT|UNDERCOUNT) '; then
@@ -126,7 +136,7 @@ fi
 # non-zero. Without this the reader sees a bare failure and no line to act on.
 if has 'error: .*fail-under|--fail-under-lines|^UNCOVERED '; then
 	say "REMEDY — the 100% line-coverage gate tripped." \
-		"make investigate:coverage   lists the uncovered lines AND the ones covered" \
+		"make engine:coverage-why   lists the uncovered lines AND the ones covered" \
 		"in only ONE of a crate's two copies (its own test binary vs the copy linked" \
 		"into dependents) — the second kind is invisible in a per-crate run."
 fi
@@ -143,7 +153,7 @@ fi
 
 if has 'biome|lint/(a11y|suspicious|correctness|style)/'; then
 	say "REMEDY — biome findings. Formatting-only ones fix themselves:" \
-		"make gui-format   (rust equivalent: make fmt-fix)"
+		"make gui:format   (rust equivalent: make engine:format)"
 fi
 
 exit 0

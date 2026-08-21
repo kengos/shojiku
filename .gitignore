@@ -16,14 +16,14 @@ target/
 # Full gate logs written by `make quiet T=<target>`
 /.make-logs/
 
-# Release artifacts built by `make capi-dist` / `make cli-dist` (the cdylib
+# Release artifacts built by `make engine:capi-dist` / `make engine:cli-dist` (the cdylib
 # and CLI platform matrices + their checksums). Built on demand and published
 # from a release run, never
 # committed — a binary in the tree is a binary nobody can review.
 /dist/
 
 # SDK build/gate artifacts. Coverage reports and built gems/wheels are outputs
-# of `make sdk-ruby` / `make sdk-python`, and a lockfile in a LIBRARY pins its
+# of `make sdk:ruby:verify` / `make sdk:python:verify`, and a lockfile in a LIBRARY pins its
 # consumers' resolution — a library resolves against the application's
 # environment, not its own.
 sdk/*/coverage/
@@ -42,7 +42,7 @@ __pycache__/
 # A pnpm run with no global store configured writes one here.
 /.pnpm-store/
 
-# Fuzzing (`make fuzz`). The committed corpus under engine/fuzz/corpus is
+# Fuzzing (`make engine:fuzz`). The committed corpus under engine/fuzz/corpus is
 # curated by hand and stays; everything a run PRODUCES is local:
 #   - `generated-` seeds embed a freshly generated certificate, and the
 #     signing track forbids committed key material,
@@ -76,5 +76,5 @@ sdk/php/.phpunit.cache/
 sdk/php/.php-cs-fixer.cache
 sdk/php/vendor/
 
-# `make gui-shot` output — screenshots of the running Designer, for looking at
+# `make gui:shot` output — screenshots of the running Designer, for looking at
 .shots/

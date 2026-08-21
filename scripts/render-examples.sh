@@ -9,11 +9,11 @@
 # sidecar naming its locale (see `render_params`).
 #
 # Default: write the outputs into each examples/<name>/ directory
-#          (this is what `make examples` runs).
+#          (this is what `make examples:render` runs).
 # --check: render into a temp dir and byte-compare against the committed
 #          outputs; any mismatch, missing, or stale file fails. Rendering
 #          is deterministic (same input + engine => same bytes), so a
-#          diff means rendered output changed without `make examples`
+#          diff means rendered output changed without `make examples:render`
 #          being re-run (CI job "examples" runs this).
 #
 # Usage: render-examples.sh [--check] [path/to/shojiku]
@@ -127,7 +127,7 @@ for ex in $EXAMPLES; do
       [ -e "$f" ] || continue
       name="$(basename "$f")"
       if ! cmp -s "$f" "$d/$name"; then
-        echo "MISMATCH examples/$ex/$name — re-run 'make examples' and commit the refreshed outputs"
+        echo "MISMATCH examples/$ex/$name — re-run 'make examples:render' and commit the refreshed outputs"
         fail=1
       fi
     done
@@ -135,7 +135,7 @@ for ex in $EXAMPLES; do
       [ -e "$f" ] || continue
       name="$(basename "$f")"
       if [ ! -f "$tmp/$ex/$name" ]; then
-        echo "STALE examples/$ex/$name — no longer produced; re-run 'make examples'"
+        echo "STALE examples/$ex/$name — no longer produced; re-run 'make examples:render'"
         fail=1
       fi
     done

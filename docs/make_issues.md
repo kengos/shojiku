@@ -37,7 +37,7 @@ file is only for output that could not answer **which file / which line
 ## Open
 
 - [ ] `make_issue_quiet_last_step_lags_the_failure` — **When**: `make
-      quiet T=gui-test` (also `test:gui`) fails on the vitest COVERAGE
+      quiet T=gui:test` (also `gui:test`) fails on the vitest COVERAGE
       thresholds. **Not detected by**: the wrapper's own summary, which
       reported `last step : == wasm build (size-budgeted) ==` and then
       printed a "where it broke" excerpt showing `raw=5197977 bytes
@@ -62,7 +62,7 @@ file is only for output that could not answer **which file / which line
       be closed without inducing the real gui coverage failure.
 
 - [ ] `make_issue_biome_info_outranks_the_error` — **When**: `make
-      lint:gui` fails on a real Biome FORMAT error while `gui/biome.json`
+      gui:lint` fails on a real Biome FORMAT error while `gui/biome.json`
       also emits an informational diagnostic (today: its `$schema` pins
       2.5.5 while `package.json` floats `^2.5.6`, so every run carries a
       "configuration schema version does not match" info). **Not detected
@@ -70,7 +70,7 @@ file is only for output that could not answer **which file / which line
       and Biome prints the `i` info before the `×` error — so "where it
       broke" named `biome.json:2:14`, a file the change never touched,
       and said nothing about the file that actually failed.
-      **Recovered by**: `grep -n "×" .make-logs/gui-lint.log`, which
+      **Recovered by**: `grep -n "×" .make-logs/gui_lint.log`, which
       finds the real diagnostic ~20 lines further down. The fix is
       probably to rank `×` blocks above `i` blocks in the matcher rather
       than taking the first; note that a green run also prints "Found 1
@@ -78,10 +78,10 @@ file is only for output that could not answer **which file / which line
       *(Separately worth someone's deliberate one-liner: bump that
       `$schema` to match the declared dependency and the info disappears.
       Left out of the cycle that found it — an unrelated file.)*
-- [ ] `make_issue_trivy_no_package` — **When**: `make docker-scan` fails
+- [ ] `make_issue_trivy_no_package` — **When**: `make docker:scan` fails
       on a fixable CVE. **Not detected by**: no matcher; Trivy's summary
       line carries only a count and its table is too wide for the tail.
-      **Recovered by**: reading the table rows in `.make-logs/docker.log`.
+      **Recovered by**: reading the table rows in `.make-logs/docker_scan.log`.
       *(Left open on purpose: the other four in this drain were closed
       against real induced failures, and a fixable CVE cannot be induced
       on demand — a matcher written against an imagined table format
@@ -93,7 +93,7 @@ file is only for output that could not answer **which file / which line
 - [x] `make_issue_coverage_reports_stale_lines_on_a_build_failure` —
       coverage-why.sh reprinted the PREVIOUS run's uncovered list when a
       test failed to COMPILE (no fresh lcov written). Fixed by `rm -f
-      lcov.info` at the top of the `coverage` recipe, so a no-report
+      lcov.info` at the top of the `engine:coverage` recipe, so a no-report
       failure is distinguishable from a stale report, plus a
       coverage-why.sh message for the missing-file case that points at
       the rustc error in the gate log. Validated by planting a
@@ -104,10 +104,10 @@ file is only for output that could not answer **which file / which line
       now reach `last-error.log`. Validated by corrupting a committed
       preview PNG and running the gate.
 - [x] `make_issue_wasm_budget_no_delta` — matcher added for the size
-      line + the over-budget verdict. Two fixes rode along: `wasm`
-      moved ahead of `coverage` in `make verify` (a budget crossing no
+      line + the over-budget verdict. Two fixes rode along: `engine:wasm`
+      moved ahead of `engine:coverage` in `make verify` (a budget crossing no
       longer costs the most expensive step to discover; it stays after
-      `rust` because it is a full wasm32 build, not a lint), and the
+      `engine:lint` because it is a full wasm32 build, not a lint), and the
       matcher matches the size line WITHOUT its `wasm size: ` prefix —
       the pnpm-prefix normaliser eats it, found only because the
       matcher was validated against the real log.
@@ -120,7 +120,7 @@ file is only for output that could not answer **which file / which line
 - [x] `make_issue_coverage_names_nothing` — `cargo llvm-cov` prints
       NOTHING when it trips `--fail-under-lines`, so a coverage failure
       named no file at all. Fixed by `scripts/coverage-why.sh` +
-      `make coverage-why`, auto-run when `coverage` fails.
+      `make engine:coverage-why`, auto-run when `engine:coverage` fails.
 - [x] `make_issue_vitest_prefix_defeats_matcher` — the first culprit
       extractor matched nothing on a real Vitest failure: `pnpm -r`
       prefixes every line with `<package> <script>: ` and wraps it in

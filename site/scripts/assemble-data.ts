@@ -36,7 +36,7 @@ for (const area of ["data", "gallery", "brand", "llms.txt", "llms-full.txt"]) {
 // 1. The wasm engine (committed under .data, re-pinned only by a release).
 const wasmSrc = join(SITE, ".data", "wasm");
 if (!existsSync(wasmSrc)) {
-  throw new Error("site/.data/wasm is missing — it is committed; restore it from git, or re-pin with `make site-wasm-release`");
+  throw new Error("site/.data/wasm is missing — it is committed; restore it from git, or re-pin with `make site:wasm-release`");
 }
 const wasmFiles = readdirSync(wasmSrc).sort();
 if (wasmFiles.length === 0) throw new Error("site/.data/wasm is empty");
@@ -55,7 +55,7 @@ for (const t of TIERS) {
 }
 
 // 3. Gallery previews + the brand renders (all engine outputs, committed
-//    under examples/ and hash-gated by `make examples-check`).
+//    under examples/ and hash-gated by `make examples:check`).
 const gallery = parseGallery(readFileSync(join(ROOT, "examples", "gallery.yml"), "utf8"));
 for (const e of gallery) {
   const slug = e.dir.replace("/", "-");

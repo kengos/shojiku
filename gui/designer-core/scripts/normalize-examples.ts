@@ -5,7 +5,7 @@
 //
 // Semantics-neutral: parse -> serialize preserves comments and key order; only
 // flow-collection spacing (`[x]` -> `[ x ]`) and blank-line runs normalize, so
-// rendered output is unchanged and `make examples-check` stays byte-green. The
+// rendered output is unchanged and `make examples:check` stays byte-green. The
 // enforcing gate is the fixed-point suite (`roundtrip.test.ts`); this script is
 // the one-shot that gets a drifted file back onto the fixed point.
 

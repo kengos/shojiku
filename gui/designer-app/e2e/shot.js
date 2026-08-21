@@ -7,7 +7,7 @@
 // the author, and for a zero-context reader asked "does this look broken?").
 // The golden-path assertions live in `tests/golden.spec.js`.
 //
-// Runs inside the repo's Playwright image against a running `make gui-dev`;
+// Runs inside the repo's Playwright image against a running `make gui:dev`;
 // `run-shot.sh` is the wrapper that knows how to reach it.
 // `@playwright/test` rather than `playwright`: it is the dependency this
 // directory already declares (and the one `npm install` puts in place here).

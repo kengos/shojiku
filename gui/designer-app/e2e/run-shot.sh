@@ -1,6 +1,6 @@
 #!/bin/sh
 # Screenshot the running Designer dev server into `.shots/` (gitignored).
-# Run from the repository root, with `make gui-dev` already up in another
+# Run from the repository root, with `make gui:dev` already up in another
 # terminal:  sh gui/designer-app/e2e/run-shot.sh
 #
 # Two traps this wrapper exists to absorb:
@@ -28,6 +28,6 @@ docker run --rm \
   "$PLAYWRIGHT_IMAGE" \
   sh -euc 'HOST=$(getent ahostsv4 host.docker.internal | awk "{print \$1; exit}"); \
     curl -fso /dev/null "http://$HOST:$PORT/" \
-      || { echo "no dev server on $PORT — run \`make gui-dev\` first" >&2; exit 1; }; \
+      || { echo "no dev server on $PORT — run \`make gui:dev\` first" >&2; exit 1; }; \
     npm install --no-audit --no-fund >/dev/null 2>&1; \
     BASE_URL="http://$HOST:$PORT" node shot.js'

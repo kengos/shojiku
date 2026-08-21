@@ -1,6 +1,6 @@
 //! The two claims that need the generator: drift, and determinism.
 //!
-//! These are what `make reference-check` exists for. They are feature-gated
+//! These are what `make reference:check` exists for. They are feature-gated
 //! because the derive is — a default build links none of schemars — so the
 //! workspace coverage gate never sees them, which is exactly why the
 //! artifact's own properties are pinned in the sibling file instead.
@@ -15,7 +15,7 @@ fn the_committed_catalog_matches_a_fresh_generation() {
     assert!(
         fresh == CATALOG,
         "the committed catalog is {} bytes and the parser now yields {} — \
-         run `make reference-data` and commit the result",
+         run `make reference:generate` and commit the result",
         CATALOG.len(),
         fresh.len(),
     );

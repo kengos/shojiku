@@ -1,9 +1,9 @@
 # The Node SDK's gate environment.
 #
-# Nobody needs Node installed to work on this package: `make sdk-js` builds and
+# Nobody needs Node installed to work on this package: `make sdk:js:verify` builds and
 # runs this image, exactly as the Rust and gui gates run in theirs.
 #
-# The engine is INJECTED as a pre-compiled artifact (built once by `make napi`
+# The engine is INJECTED as a pre-compiled artifact (built once by `make engine:napi`
 # through the pinned Rust image) rather than compiled from Rust source here.
 # Seven language images each building the engine would make the gate grid
 # unusable. Note WHICH artifact: node is the one SDK that does not load the
@@ -24,7 +24,7 @@
 # supported the version it claims.
 # The language version is a build ARG so one Dockerfile serves the whole
 # supported range; the default is the FLOOR from docs/agents/sdk.md, which is
-# what a bare `make sdk-js` gates on.
+# what a bare `make sdk:js:verify` gates on.
 ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-bookworm-slim
 

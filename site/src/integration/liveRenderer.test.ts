@@ -1,7 +1,7 @@
 // @vitest-environment node
 //
 // The REAL-wasm proof: the site's engine glue drives the actual
-// `make wasm` build over the actual tier subsets — receipt-us renders
+// `make engine:wasm` build over the actual tier subsets — receipt-us renders
 // warning-free on the immediate tier alone, receipt-ja needs the ja tier
 // (the gate) and renders clean once injected, and both playground demos
 // render. The pkg is imported dynamically so tsc never binds the gitignored
@@ -26,7 +26,7 @@ let mod: WasmModule;
 
 beforeAll(async () => {
   if (!existsSync(fileURLToPath(PKG_WASM))) {
-    throw new Error("engine/wasm/pkg is missing — run `make wasm` before the site tests");
+    throw new Error("engine/wasm/pkg is missing — run `make engine:wasm` before the site tests");
   }
   mod = (await import(/* @vite-ignore */ PKG_JS.href)) as unknown as WasmModule;
   mod.initSync({ module: readFileSync(fileURLToPath(PKG_WASM)) });

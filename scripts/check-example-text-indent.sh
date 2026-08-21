@@ -10,7 +10,7 @@
 # is stated in docs/engine/text.md.
 #
 # Nothing else catches it. The template still parses, the render emits no
-# diagnostic, and `make examples` stays green on the wrong-looking page —
+# diagnostic, and `make examples:render` stays green on the wrong-looking page —
 # only a human reading the preview PNG sees it. Eight of the layout
 # showcase's forty-four code panels shipped that way, which is what this
 # gate exists to stop.

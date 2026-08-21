@@ -6,7 +6,7 @@
 . "$(dirname "$0")/common.sh"
 
 IMG="php:${PHP_VER:-8.3}-cli-bookworm"
-require_artifact "$CLI_BIN" cli-bin
+require_artifact "$CLI_BIN" engine:cli-bin
 
 echo "== install proof (php, $IMG) =="
 

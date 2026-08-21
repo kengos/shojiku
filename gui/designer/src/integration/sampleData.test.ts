@@ -5,7 +5,7 @@
 // definitions schema validate with zero `params_*` diagnostics, and a
 // blank-start document (sample data built with the model's edit primitives +
 // an inferred definitions stub) both validates clean AND renders. Loads the
-// `make wasm` pkg exactly as the other integration suites do.
+// `make engine:wasm` pkg exactly as the other integration suites do.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -39,7 +39,7 @@ const fontFile = (packId: string, name: string) =>
 
 async function loadModule(): Promise<WasmModule> {
   if (!existsSync(fileURLToPath(PKG_WASM))) {
-    throw new Error('engine/wasm/pkg is missing — run `make wasm` before the gui gates');
+    throw new Error('engine/wasm/pkg is missing — run `make engine:wasm` before the gui gates');
   }
   const mod = (await import(PKG_JS.href)) as unknown as WasmModule;
   mod.initSync({ module: readFileSync(fileURLToPath(PKG_WASM)) });

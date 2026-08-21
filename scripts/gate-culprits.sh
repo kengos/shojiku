@@ -48,24 +48,24 @@ emit "line budget:" "$(pick 'line-budget\([a-z]+\): (FAIL|[0-9])|exceeds')"
 
 # coverage: cargo-llvm-cov prints NO message at all when it trips the
 # --fail-under-lines threshold — it just exits non-zero — so there is nothing to
-# match on. The `coverage` target appends scripts/coverage-why.sh output to the
+# match on. The `engine:coverage` target appends scripts/coverage-why.sh output to
 # log for exactly this reason; lift that block out.
 emit "coverage:" "$(pick '^(UNCOVERED|COVERED IN ONE COPY ONLY) |^  [a-z].*\.rs:[0-9]' 30)"
 
-# examples-check: render-examples.sh prints one MISMATCH line per drifted file.
+# examples:check: render-examples.sh prints one MISMATCH line per drifted file.
 # Without this the failure falls back to the tail, which shows the comparison's
 # exit rather than WHICH example drifted.
 emit "examples:" "$(pick '^MISMATCH examples/')"
 
-# examples-check, second step: the block-scalar indent check prints one
+# examples:check, second step: the block-scalar indent check prints one
 # `path:line: ...` per offending line. Same reason as above — the tail shows
 # only the count, not which template and which line.
 emit "text indent:" "$(pick '^(examples|skills)/.*: block scalar ')"
 
-# sbom-check: one line per offending path — DRIFT for an inventory that no
+# sbom:check: one line per offending path — DRIFT for an inventory that no
 # longer describes its lockfile, UNMAPPED/MISSING for a lockfile the map does
 # not agree with. Without this the failure falls back to the tail, which shows
-# the count and the "run make sbom" hint but never which inventory moved. The
+# the count and the "run make sbom:generate" hint but never which inventory moved. The
 # self-test line matters even more: it means the DETECTOR broke, not the tree.
 # (These start uppercase, so the pnpm-prefix stripper in the normalisation
 # above — which matches a lowercase `<package> <script>: ` — cannot eat them.)
@@ -85,7 +85,7 @@ emit "versions:" "$(pick '^VERSION (DRIFT|UNDERCOUNT) |^FAIL versions|^ *(check-
 # it (found by running this against the real log, which is why matchers are
 # validated that way and never by reading the regex).
 #
-# GATED on an actual crossing. `make wasm` prints its size line on every run,
+# GATED on an actual crossing. `make engine:wasm` prints its size line on every run,
 # including a PASSING one, so matching the size alone made any failure ELSEWHERE
 # in a compound gate report two numbers comfortably inside their budgets as
 # "where it broke" — a reader who trusts the excerpt debugs a size budget that

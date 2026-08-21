@@ -45,7 +45,7 @@ interface WasmModule {
 
 async function loadModule(): Promise<WasmModule> {
   if (!existsSync(fileURLToPath(PKG_WASM))) {
-    throw new Error('engine/wasm/pkg is missing — run `make wasm` before the gui gates');
+    throw new Error('engine/wasm/pkg is missing — run `make engine:wasm` before the gui gates');
   }
   const mod = (await import(PKG_JS.href)) as unknown as WasmModule;
   mod.initSync({ module: readFileSync(fileURLToPath(PKG_WASM)) });

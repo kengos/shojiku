@@ -7,16 +7,16 @@ version: 2
 #
 # That was not always true, and the history is worth one paragraph because the
 # obvious fix is a trap. Drift used to be a per-PR gate, dependabot cannot run
-# `make sbom` (a workflow it triggers gets a read-only token and cannot read
+# `make sbom:generate` (a workflow it triggers gets a read-only token and cannot read
 # repository secrets), so every such PR arrived red and stayed red. The fix
 # attempted first was a workflow that regenerated and committed the inventories
 # onto these branches with a GitHub App token; it LOOPED in production — 19
 # commits on one PR — and two fixes did not settle it. What actually settled it
 # was noticing the requirement was wrong: an SBOM is a statement about a
 # released artifact, and nobody consumes "the dependencies of main at commit
-# abc123". `make sbom` now runs at release.
+# abc123". `make sbom:generate` now runs at release.
 #
-# What CI still checks per PR is `make sbom-lint` — the detector's self-tests
+# What CI still checks per PR is `make sbom:lint` — the detector's self-tests
 # and the rule that every committed lockfile is either inventoried or declared
 # not to be. So a bump is free, but ADDING a lockfile still needs a map row.
 updates:
@@ -114,7 +114,7 @@ updates:
   #
   # `cooldown` is set to match `minimumReleaseAge` in gui/pnpm-workspace.yaml
   # (7 days). Without it the two fight: dependabot opened PRs within hours of a
-  # release, and `make gui` then failed them with
+  # release, and `make gui:verify` then failed them with
   # ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION until the packages aged out — a PR
   # that is red on arrival and silently turns green days later. KEEP THE TWO
   # NUMBERS IN SYNC; lowering only this one brings the red-on-arrival back.

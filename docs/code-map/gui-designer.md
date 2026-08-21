@@ -16,7 +16,7 @@
 > behavior detail lives in the code's own headers.
 
 Workspace preamble (pnpm workspace, three packages `designer-app → designer →
-designer-core`, Biome + Vitest 100%×4, gates via `make gui` in Docker):
+designer-core`, Biome + Vitest 100%×4, gates via `make gui:verify` in Docker):
 [gui-core.md](gui-core.md).
 
 `gui/designer/` — **the embeddable React component**: a live view of one
@@ -420,7 +420,7 @@ services/props; nothing in the component reads the singleton.
   Coverage-excluded (`vitest.config.ts` `src/testkit/**`), but still
   budget-counted and typechecked/linted like any non-test source.
 - `src/integration/wasm.test.ts` — real-engine integration (node env,
-  never a mock): dynamic-imports the `make wasm` pkg + injects
+  never a mock): dynamic-imports the `make engine:wasm` pkg + injects
   en-US/noto-sans bytes; exercises op → re-render → re-validate, the
   save-block trigger, the layer-tree grammar-identity pin (every engine
   box path addressable in `buildTree`), reorder/duplicate re-renders,

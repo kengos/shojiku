@@ -41,7 +41,7 @@ trap scrub EXIT INT TERM
 
 # THE VERSION A PUBLISHED PROOF ASKS ABOUT. `SHOJIKU_VERSION=x.y.z` pins one;
 # otherwise it is the version THIS TREE SHIPS, read from the same
-# `[workspace.package]` that `make version-check` treats as the truth.
+# `[workspace.package]` that `make version:check` treats as the truth.
 #
 # It used to default to whatever the registry called "latest", and that made a
 # bare run a true statement about the WRONG SUBJECT: during the release that

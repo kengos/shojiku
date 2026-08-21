@@ -43,7 +43,7 @@ beforeAll(async () => {
   for (const [which, base] of Object.entries(BUILDS) as [keyof typeof BUILDS, URL][]) {
     const wasm = new URL("shojiku_wasm_bg.wasm", base);
     if (!existsSync(fileURLToPath(wasm))) {
-      throw new Error(`${fileURLToPath(base)} is missing — run \`make wasm\` before the site tests`);
+      throw new Error(`${fileURLToPath(base)} is missing — run \`make engine:wasm\` before the site tests`);
     }
     const m = (await import(/* @vite-ignore */ new URL("shojiku_wasm.js", base).href)) as unknown as WasmModule;
     m.initSync({ module: readFileSync(fileURLToPath(wasm)) });
@@ -117,12 +117,12 @@ describe("the reference demos cover the reference", () => {
     // page degrades to its static form forever and no other check notices.
     const declared = [...new Set(names.flatMap((n) => requiredCapabilities(load(n).expect)))].sort();
     // The likeliest cause is NOT a typo, so the message says so: `make
-    // site-build` stages the RELEASED engine into engine/wasm/pkg, and every
+    // site:build` stages the RELEASED engine into engine/wasm/pkg, and every
     // gated demo then fails here and below with a parse error that looks like
     // a broken demo rather than a stale build.
     expect(
       declared.filter((k) => !keys.head.includes(k)),
-      "engine/wasm/pkg does not publish these keys — if `make site-build` ran since the last `make wasm`, it replaced pkg with the RELEASED engine; re-run `make wasm`",
+      "engine/wasm/pkg does not publish these keys — if `make site:build` ran since the last `make engine:wasm`, it replaced pkg with the RELEASED engine; re-run `make engine:wasm`",
     ).toEqual([]);
     // No lower bound on declared.length: right after a re-pin no demo
     // declares anything, and that is the healthy state until a page

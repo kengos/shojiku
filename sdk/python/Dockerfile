@@ -1,11 +1,11 @@
 # The Python SDK's gate environment.
 #
-# Nobody needs Python installed to work on this package: `make sdk-python`
+# Nobody needs Python installed to work on this package: `make sdk:python:verify`
 # builds and runs this image, exactly as the Rust, Node and Ruby gates run in
 # theirs.
 #
 # The engine library is INJECTED as a pre-compiled artifact (built once by
-# `make capi-lib` through the pinned Rust image) rather than compiled from Rust
+# `make engine:capi-lib` through the pinned Rust image) rather than compiled from Rust
 # source here. Seven language images each building the engine would make the
 # gate grid unusable.
 #
@@ -23,7 +23,7 @@
 # actually supported the version it claims.
 # The language version is a build ARG so one Dockerfile serves the whole
 # supported range; the default is the FLOOR from docs/agents/sdk.md, which is
-# what a bare `make sdk-python` gates on.
+# what a bare `make sdk:python:verify` gates on.
 ARG PYTHON_VERSION=3.11
 FROM python:${PYTHON_VERSION}-slim-bookworm
 
@@ -51,7 +51,7 @@ RUN pip install --no-cache-dir \
       "build==1.3.0"
 
 # Imported from the source tree rather than installed: the gate mounts the
-# repository, and `make sdk-python` builds and installs the WHEEL separately in
+# repository, and `make sdk:python:verify` builds and installs the WHEEL separately in
 # a scratch directory to prove that path too.
 ENV PYTHONPATH=/repo/sdk/python/src
 ENV PYTHONDONTWRITEBYTECODE=1

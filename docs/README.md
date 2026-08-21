@@ -63,7 +63,7 @@ unsettled rather than rejected, so it is worth proposing.
   boundaries read [architecture.md](architecture.md).
 - **Contributing to the engine?** Start at
   [CONTRIBUTING.md](../CONTRIBUTING.md) for the practical loop — what to
-  install (Docker and `make`, nothing else), the `<verb>:<scope>`
+  install (Docker and `make`, nothing else), the `<scope>:<job>`
   commands that check your work, where a failed gate lands, and the PR
   bar. Then read [architecture.md](architecture.md) — system overview,
   core concepts, repo layout, cross-cutting principles — and the

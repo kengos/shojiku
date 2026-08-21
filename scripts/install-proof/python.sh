@@ -4,7 +4,7 @@
 . "$(dirname "$0")/common.sh"
 
 IMG="python:${PYTHON_VER:-3.11}-slim-bookworm"
-require_artifact "$CAPI_LIB" capi-lib
+require_artifact "$CAPI_LIB" engine:capi-lib
 
 echo "== install proof (python, $IMG) =="
 

@@ -201,7 +201,7 @@ The exact rules (auto-fetch via pinned `url:`, fallback chains) are in
 
 Once the template is right, bake the app, the templates and the packs
 into one image. These are the real recipe files for all five languages —
-the same files `make proof-deploy` builds and renders against the public
+the same files `make proof:deploy` builds and renders against the public
 registries.
 
 ::: code-group

@@ -8,7 +8,7 @@ description: >
 
 inputs:
   target:
-    description: The make target to run, e.g. "coverage" or "sdk-ruby".
+    description: The make target to run, e.g. "engine:coverage" or "sdk:ruby:verify".
     required: true
   key:
     description: >

@@ -14,6 +14,6 @@
 !sdk/js/pnpm-lock.yaml
 !sdk/js/pnpm-workspace.yaml
 
-# The pre-compiled engine addon, built by `make napi`. Gitignored, and the root
+# The pre-compiled engine addon, built by `make engine:napi`. Gitignored, and the root
 # ignore file never mentioned it because nothing else needs it.
 !dist/napi/local

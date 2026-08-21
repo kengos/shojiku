@@ -74,7 +74,7 @@ pub fn generate() -> String {
         "title": "Shojiku authorable wire",
         "description": "Per-key facts of the Shojiku template and definitions \
                         wire, derived from the parser. Regenerate with \
-                        `make reference-data`; `make reference-check` fails \
+                        `make reference:generate`; `make reference:check` fails \
                         on drift.",
         "type": "object",
         "properties": {

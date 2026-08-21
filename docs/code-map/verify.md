@@ -138,9 +138,9 @@
   an empty anchor set short-circuits before any parser runs, so a target
   without one fuzzes nothing. `examples/seed.rs` writes the seeds that may
   NOT be committed (a signed document embeds a certificate): run by
-  `make fuzz` before fuzzing, gitignored, and the reason a mutating fuzzer
+  `make engine:fuzz` before fuzzing, gitignored, and the reason a mutating fuzzer
   reaches the container parsers at all. Committed seeds are structural only.
-  Driven by `make fuzz` (`FUZZ_TARGET`, `FUZZ_SECS`), deliberately outside
+  Driven by `make engine:fuzz` (`FUZZ_TARGET`, `FUZZ_SECS`), deliberately outside
   `make verify` — the gates run the corpus REPLAY instead.
 
 - `engine/verify/src/testkit.rs` (+ `testkit/keys.rs`, `#[cfg(test)]`) —

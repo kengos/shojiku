@@ -9,7 +9,7 @@ the architect). Policy: `docs/agents/sdk.md`. Staged queue + the frozen
 reference decisions: `docs/agents/sdk.md` § The decisions the reference froze.
 
 All seven are built. Directory names are load-bearing elsewhere: `sdk/js` is
-the node one (`scripts/generate-sbom.sh`, `verify:sdk:js`,
+the node one (`scripts/generate-sbom.sh`, `sdk:js:verify`,
 `docs/guidelines.md`), `dotnet` is c#. The SBOM script scans the LOCKFILE
 itself, never the directory (a directory scan inventories build output) —
 `sdk/js` has one and carries a row in that script's map; `sdk/php` and
@@ -141,9 +141,9 @@ contract behind it.
   ignore file REPLACES the root `.dockerignore` (which excludes `sdk`), and
   the engine library is COPYed in pre-built to `/opt/shojiku/lib` — outside
   `/repo`, or the gate's mount would hide it.
-- Gates: `make verify:sdk:ruby` (rubocop + rspec at 100% + gem
-  build/install), `test:sdk:ruby`, `lint:sdk:ruby`; `sdk-ruby` is in
-  `make verify`. `make capi-lib` builds the host-arch cdylib into
+- Gates: `make sdk:ruby:verify` (rubocop + rspec at 100% + gem
+  build/install), `sdk:ruby:test`, `sdk:ruby:lint`; `sdk:ruby:verify` is in
+  `make verify`. `make engine:capi-lib` builds the host-arch cdylib into
   `dist/capi/local/` (gitignored) that every SDK image copies from.
 
 ## sdk/python — the first mirror of the reference
@@ -197,9 +197,9 @@ where python differs.
   the `/repo` mount). Runs on the 3.11 FLOOR. The wheel is built and installed
   in a scratch dir with `PYTHONPATH` cleared, so the source tree cannot satisfy
   the import and pass a broken artifact.
-- Gates: `make verify:sdk:python` (ruff format+check, mypy strict, pytest at
-  100%, wheel build/install/import), `test:sdk:python`, `lint:sdk:python`;
-  `sdk-python` is in `make verify`. Packaging is hatchling — pure python, with
+- Gates: `make sdk:python:verify` (ruff format+check, mypy strict, pytest at
+  100%, wheel build/install/import), `sdk:python:test`, `sdk:python:lint`;
+  `sdk:python:verify` is in `make verify`. Packaging is hatchling — pure python, with
   the prebuilt cdylib riding as package data in the platform wheels.
 
 ## sdk/dotnet — the .NET mirror
@@ -249,9 +249,9 @@ map above for what each MEANS.
   base is `mcr.microsoft.com/dotnet/sdk:10.0-noble`: **Microsoft ships no
   Debian-based .NET 10 image**, and glibc's backward compatibility makes a
   bookworm-built cdylib load on noble (only the reverse would fail).
-- Gates: `make verify:sdk:dotnet` (`dotnet format --verify-no-changes`, xunit at
-  100% via coverlet, `dotnet pack` in a scratch dir), `test:sdk:dotnet`,
-  `lint:sdk:dotnet`; `sdk-dotnet` is in `make verify`. Zero package references —
+- Gates: `make sdk:dotnet:verify` (`dotnet format --verify-no-changes`, xunit at
+  100% via coverlet, `dotnet pack` in a scratch dir), `sdk:dotnet:test`,
+  `sdk:dotnet:lint`; `sdk:dotnet:verify` is in `make verify`. Zero package references —
   the transport is in the framework.
 
 ## sdk/java — the JVM mirror
@@ -307,9 +307,9 @@ bound lifecycle and module split as ruby.
   layer runs the WHOLE `verify` lifecycle once over a throwaway test, because
   `dependency:go-offline` does not fetch surefire's test-framework PROVIDER
   (surefire picks it at TEST time) and the gate runs `mvn -o`.
-- Gates: `make verify:sdk:java` (`mvn -B -o verify`, which IS the full bar here
-  — spotless, compiler lint, junit, jacoco, all three jars), `test:sdk:java`,
-  `lint:sdk:java`; `sdk-java` is in `make verify`.
+- Gates: `make sdk:java:verify` (`mvn -B -o verify`, which IS the full bar here
+  — spotless, compiler lint, junit, jacoco, all three jars), `sdk:java:test`,
+  `sdk:java:lint`; `sdk:java:verify` is in `make verify`.
 
 ## sdk/js — the node mirror, and the only non-cdylib transport
 
@@ -390,11 +390,11 @@ are only where node differs.
   linked in as a real `node_modules` at run time (ESM resolution does not
   consult `NODE_PATH`), and `verifyDepsBeforeRun: false` stops pnpm 11 trying
   to PURGE that linked store before every script.
-- Gates: `make verify:sdk:js` (biome + tsc + vitest at 100% + pack/install of
-  the real tarball into a scratch dir), `test:sdk:js`, `lint:sdk:js`,
-  `sdk-js-format`; `sdk-js` and `napi` are both in `make verify`. `make napi`
+- Gates: `make sdk:js:verify` (biome + tsc + vitest at 100% + pack/install of
+  the real tarball into a scratch dir), `sdk:js:test`, `sdk:js:lint`,
+  `sdk:js:format`; `sdk:js:verify` and `engine:napi` are both in `make verify`. `make engine:napi`
   builds the host-arch addon into the gitignored `dist/napi/local/`, which is
-  the image's source — the addon's `capi-lib` equivalent.
+  the image's source — the addon's `engine:capi-lib` equivalent.
 
 ## sdk/php — the first SUBPROCESS mirror
 
@@ -481,13 +481,13 @@ both subprocess SDKs script.
   ONLY tags that already exist here, so it cannot serve a version the
   monorepo has not released. `composer.json` has no `version` field: the tag
   is the version.
-- Gates: `make verify:sdk:php` (the licence-copy check, php-cs-fixer,
+- Gates: `make sdk:php:verify` (the licence-copy check, php-cs-fixer,
   phpstan, phpunit at 100%,
   `composer validate --strict`, and an install of the package from its own
-  artifact through a `path` repository with packagist OFF), `test:sdk:php`,
-  `lint:sdk:php`; `sdk-php` is in `make verify`. `make cli-bin` builds the
+  artifact through a `path` repository with packagist OFF), `sdk:php:test`,
+  `sdk:php:lint`; `sdk:php:verify` is in `make verify`. `make engine:cli-bin` builds the
   host-arch binary into the gitignored `dist/cli/local/` — the subprocess
-  transport's `capi-lib`. `make proof-published-php` is the registry-side
+  transport's `engine:capi-lib`. `make proof:published:php` is the registry-side
   proof: it installs from Packagist, takes the CLI from the GitHub Release,
   and renders the same bytes every other published proof does — the claim
   is byte-identity with the committed `examples/business/receipt-ja/output.pdf`,
@@ -557,8 +557,8 @@ both subprocess SDKs script.
   the standard set plus revive and misspell; gosec is deliberately off (G204
   fires on every subprocess with a variable argv, which is the package's
   whole job).
-- Gates: `make verify:sdk:go` (gofmt, `go vet`, golangci-lint, `go test -race`
+- Gates: `make sdk:go:verify` (gofmt, `go vet`, golangci-lint, `go test -race`
   at 100% STATEMENT coverage asserted by a shell step outside the module, and
   a build of the package from a scratch module through a `replace` directive
-  with `GOPROXY=off`), `test:sdk:go`, `lint:sdk:go`; `sdk-go` is in
-  `make verify`, over the same `make cli-bin` binary php uses.
+  with `GOPROXY=off`), `sdk:go:test`, `sdk:go:lint`; `sdk:go:verify` is in
+  `make verify`, over the same `make engine:cli-bin` binary php uses.

@@ -3,7 +3,7 @@
 One Dockerfile per published SDK: install Shojiku from the public
 registry, vendor the template + font/locale packs into the image, render
 at container start. The homepage's tutorial pages transclude THESE files
-(never hand-copied snippets), and `make proof-deploy` runs each recipe
+(never hand-copied snippets), and `make proof:deploy` runs each recipe
 against the real registry (network-dependent, so on demand — the same
 doctrine as the published-install proofs).
 

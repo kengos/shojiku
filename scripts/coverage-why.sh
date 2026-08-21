@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Point at the lines that failed the 100% coverage gate.
 #
-# Reads the lcov.info `make coverage` already wrote — it does NOT re-run the
+# Reads the lcov.info `make engine:coverage` already wrote — it does NOT re-run the
 # gate, so this is instant. `cargo llvm-cov` is invoked with --lcov, which
 # writes the machine-readable report to a file and prints no per-file table, so
 # a failing run otherwise says only "below the threshold" with no file named.
@@ -15,7 +15,7 @@ set -euo pipefail
 
 LCOV="${1:-engine/lcov.info}"
 
-# `make coverage` deletes the report before it runs, so "absent" here is
+# `make engine:coverage` deletes the report before it runs, so "absent" here is
 # informative rather than an inconvenience: the gate got far enough to try, and
 # produced nothing. That is what a test that DOES NOT COMPILE looks like, and
 # it is the case this message exists for — the alternative was reading a stale
@@ -24,13 +24,13 @@ if [ ! -f "$LCOV" ]; then
 	cat >&2 <<-MSG
 		coverage-why: no $LCOV — the run wrote no report.
 
-		  If 'make coverage' just failed, it failed BEFORE measuring anything.
+		  If 'make engine:coverage' just failed, it failed BEFORE measuring anything.
 		  The usual cause is a test that does not compile, and the real message
 		  is the rustc error in the gate log:
 
-		    grep -n 'error\[' .make-logs/coverage.log
+		    grep -n 'error\[' .make-logs/engine_coverage.log
 
-		  If you have not run the gate yet, run 'make coverage' — it writes the
+		  If you have not run the gate yet, run 'make engine:coverage' — it writes the
 		  report this script reads.
 	MSG
 	exit 2
