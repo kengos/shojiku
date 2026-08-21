@@ -43,19 +43,29 @@ export function overlayInsertMenu(): HTMLElement {
   return within(root).getByRole('button', { name: 'Insert a data field' });
 }
 
+/** The menubar entry's accessible name, tolerating the HIG ellipsis: a label
+ * that opens a view ends in `…` (gui/STYLE.md § Actions), while the review
+ * pane's own confirm button — the same word — does not. Matching
+ * `^<item>…?$` lets every call site keep naming the bare action. */
+function menuItemName(item: string): RegExp {
+  return new RegExp(`^${item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}…?$`);
+}
+
 /** Pick a menubar item: open its top-level menu, then click the entry. Save,
  * open, export etc. moved from standalone buttons into the menubar. */
 export function pickMenu(menu: string, item: string) {
   fireEvent.click(screen.getByRole('button', { name: menu }));
-  fireEvent.click(screen.getByRole('menuitem', { name: item }));
+  fireEvent.click(screen.getByRole('menuitem', { name: menuItemName(item) }));
 }
 
 // Save/Export now open the review pane first; confirming it proceeds
 // with the actual save/export. This inlines the menu open + confirm (never via
 // `pickMenu`, so a bulk edit over its literal cannot catch this helper's body).
+// The two labels are deliberately DIFFERENT: the menu row promises a view
+// (`Save…`), the review pane's confirm acts (`Save`).
 export function saveViaReview() {
   fireEvent.click(screen.getByRole('button', { name: 'File' }));
-  fireEvent.click(screen.getByRole('menuitem', { name: 'Save' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Save…' }));
   fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 }
 

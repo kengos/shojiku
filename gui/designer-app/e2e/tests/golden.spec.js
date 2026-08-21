@@ -39,13 +39,15 @@ test('open a preset, preview it client-side, and export', async ({ page }) => {
   await expect.poll(() => preview.getAttribute('width'), { timeout: 30000 }).not.toBe(widthBefore);
 
   // Export (a File-menu entry) downloads the edited template YAML. It routes
-  // through the save/export REVIEW pane first, whose confirm button carries the
-  // same label — the download only starts after that confirm.
+  // through the save/export REVIEW pane first. The two labels differ by exactly
+  // the HIG ellipsis (gui/STYLE.md § Actions): the menu row PROMISES a view
+  // (`Export…`), the review pane's confirm ACTS (`Export`) — so both are
+  // matched exactly here rather than leaning on substring matching.
   await page.getByRole('button', { name: 'File' }).click();
-  await page.getByRole('menuitem', { name: 'Export' }).click();
+  await page.getByRole('menuitem', { name: 'Export…', exact: true }).click();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Export' }).click(),
+    page.getByRole('button', { name: 'Export', exact: true }).click(),
   ]);
   expect(download.suggestedFilename()).toContain('templates.yml');
 

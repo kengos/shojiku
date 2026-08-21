@@ -10,7 +10,8 @@
 
 import { useId, useState } from 'react';
 import { useI18n } from '../i18n/context';
-import { BTN, BTN_SM, INPUT } from '../ui/chrome';
+import { Button } from '../ui/Button';
+import { INPUT } from '../ui/chrome';
 import { Modal } from '../ui/Modal';
 
 /** What a run resolved to: ok (the Designer opened the review pane and closed
@@ -59,17 +60,17 @@ export function CopilotDialog({ onClose, onRun }: CopilotDialogProps) {
       closeLabel={t('help.close')}
       footer={
         <>
-          <button type="button" className={`${BTN_SM} whitespace-nowrap`} onClick={onClose}>
+          <Button className="whitespace-nowrap" onClick={onClose}>
             {t('review.cancel')}
-          </button>
-          <button
-            type="button"
-            className={`${BTN} whitespace-nowrap`}
+          </Button>
+          <Button
+            variant="primary"
+            className="whitespace-nowrap"
             disabled={busy || trimmed === ''}
             onClick={() => void submit()}
           >
             {busy ? t('copilot.busy') : t('copilot.run')}
-          </button>
+          </Button>
         </>
       }
     >

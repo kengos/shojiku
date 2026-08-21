@@ -790,7 +790,7 @@ describe('PropertyPanel', () => {
     expect(screen.queryByRole('heading', { name: 'Content' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Image' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Box' })).toBeNull();
-    expect(screen.getByText('Show only when…')).toBeDefined();
+    expect(screen.getByText('When to show')).toBeDefined();
   });
 
   it('gives a line a 装飾 tab carrying its own stroke controls', () => {

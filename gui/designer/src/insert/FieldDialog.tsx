@@ -11,7 +11,8 @@ import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n/context';
 import type { SampleScalar } from '../sample/model';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
-import { BTN_SM, INPUT } from '../ui/chrome';
+import { Button } from '../ui/Button';
+import { INPUT } from '../ui/chrome';
 import { Modal } from '../ui/Modal';
 import {
   confirmField,
@@ -71,16 +72,10 @@ export function FieldDialog({ onConfirm, onClose }: FieldDialogProps) {
       closeLabel={t('help.close')}
       footer={
         <>
-          <button type="button" className={BTN_SM} onClick={onClose}>
-            {t('iterable.cancel')}
-          </button>
-          <button
-            type="button"
-            className="cursor-pointer rounded-md border border-accent bg-accent px-2 py-1 font-semibold text-on-accent"
-            onClick={confirm}
-          >
+          <Button onClick={onClose}>{t('iterable.cancel')}</Button>
+          <Button variant="primary" onClick={confirm}>
             {t('field.create')}
-          </button>
+          </Button>
         </>
       }
     >

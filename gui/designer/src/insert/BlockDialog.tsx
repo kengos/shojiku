@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { useI18n } from '../i18n/context';
+import { Button } from '../ui/Button';
 import { INPUT } from '../ui/chrome';
 import { Modal } from '../ui/Modal';
 import type { BlockRefusal } from './blockModel';
@@ -34,20 +35,10 @@ export function BlockDialog({ onConfirm, onClose }: BlockDialogProps) {
       closeLabel={t('help.close')}
       footer={
         <>
-          <button
-            type="button"
-            className="cursor-pointer rounded-md border border-border bg-surface px-2 py-1 text-text enabled:hover:border-muted"
-            onClick={onClose}
-          >
-            {t('block.cancel')}
-          </button>
-          <button
-            type="button"
-            className="cursor-pointer rounded-md border border-accent bg-accent px-2 py-1 font-semibold text-on-accent"
-            onClick={confirm}
-          >
+          <Button onClick={onClose}>{t('block.cancel')}</Button>
+          <Button variant="primary" onClick={confirm}>
             {t('block.save')}
-          </button>
+          </Button>
         </>
       }
     >

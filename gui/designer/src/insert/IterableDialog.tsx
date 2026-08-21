@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
-import { BTN_SM } from '../ui/chrome';
+import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { IterableCreateForm, type IterableDraft } from './iterableCreateForm';
 import { confirmChoice, type IterableChoice, type IterableRefusal } from './iterableModel';
@@ -72,16 +72,10 @@ export function IterableDialog({ groups, workshop, onConfirm, onClose }: Iterabl
       closeLabel={t('help.close')}
       footer={
         <>
-          <button type="button" className={BTN_SM} onClick={onClose}>
-            {t('iterable.cancel')}
-          </button>
-          <button
-            type="button"
-            className="cursor-pointer rounded-md border border-accent bg-accent px-2 py-1 font-semibold text-on-accent"
-            onClick={confirm}
-          >
+          <Button onClick={onClose}>{t('iterable.cancel')}</Button>
+          <Button variant="primary" onClick={confirm}>
             {t('iterable.insert')}
-          </button>
+          </Button>
         </>
       }
     >

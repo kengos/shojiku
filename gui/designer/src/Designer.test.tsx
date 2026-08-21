@@ -807,7 +807,13 @@ describe('Designer', () => {
     const blank = ['sections:', '  body:', '    type: flow', '    items: []', ''].join('\n');
     draw(makeTransport(), { source: blank, onChange });
     expect(screen.getByText('Start by placing some text.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Add text' }));
+    // The DOCUMENTED exception to "a canvas screen carries no primary"
+    // (gui/STYLE.md § Actions): in an empty state this CTA is the only thing on
+    // the work surface, so it is that screen's primary. Pinned here because
+    // nothing else can see it — the source gate only ranks dialog FOOTERS.
+    const cta = screen.getByRole('button', { name: 'Add text' });
+    expect(cta.dataset.variant).toBe('primary');
+    fireEvent.click(cta);
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith(expect.stringContaining('text: Text')),
     );

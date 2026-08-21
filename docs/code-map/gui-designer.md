@@ -415,10 +415,15 @@ services/props; nothing in the component reads the singleton.
   page nav, blocks, pdf); `Designer.test.tsx` keeps the core suite
   (mount, menubar, editing, save/export review, canvas manipulation).
 - `src/testkit/` — the shared substrate those suites import:
-  `fixtures.ts` (tiny sources + fake render outcomes) and `harness.tsx`
-  (`draw` mount over a mock transport + menubar/data-editor helpers).
-  Coverage-excluded (`vitest.config.ts` `src/testkit/**`), but still
-  budget-counted and typechecked/linted like any non-test source.
+  `fixtures.ts` (tiny sources + fake render outcomes), `harness.tsx`
+  (`draw` mount over a mock transport + menubar/data-editor helpers — its
+  `pickMenu` matches a menu row as `^<item>…?$`, so a call site names the bare
+  action while the shipped label carries the HIG ellipsis) and `sourceWalk.ts`
+  (the ONE walker behind every convention gate: `sourceFiles`/`codeLines`/
+  `nearestOpenTag`/`hits` over both packages' sources — its nearest-tag helper
+  reads a generic type argument as a tag, so a rule that must exempt a module
+  exempts it BY PATH). Coverage-excluded (`vitest.config.ts` `src/testkit/**`),
+  but still budget-counted and typechecked/linted like any non-test source.
 - `src/integration/wasm.test.ts` — real-engine integration (node env,
   never a mock): dynamic-imports the `make engine:wasm` pkg + injects
   en-US/noto-sans bytes; exercises op → re-render → re-validate, the

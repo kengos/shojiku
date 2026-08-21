@@ -1248,6 +1248,25 @@ map ([gui-designer](../code-map/gui-designer.md) /
   drag-to-bind stays bare (declared `displayFormat` is the engineer's
   channel), and the format picker offers `symbol`/`name` on number
   fields (capability-gated).
+- **Action vocabulary** (settled against a named shelf, not taste): how an
+  action LOOKS follows **Material Design 3**'s emphasis hierarchy — one primary
+  per screen, filled > outlined > text — and what its label PROMISES follows
+  the **Apple HIG** ellipsis rule. A dialog is a screen, so its footer carries
+  exactly one `Button variant="primary"`; the work surface (toolbar, property
+  panel, menubar, layer tree) is a set of PEERS and carries none, the single
+  documented exception being an empty-state CTA, which is the only thing on its
+  screen. The filled accent is minted once, in `ui/Button.tsx`. A label ending
+  in `…` opens a view and asks for more (`Save…` / `Export…` open the review
+  pane, whose own confirm reads `Save` / `Export` and acts), the set of keys
+  carrying it is identical in every catalog because the ellipsis is a property
+  of the ACTION rather than of the language, and no heading may carry one. The
+  operational how-to is [`gui/STYLE.md`](../../gui/STYLE.md) § Actions. What
+  is GATED: the filled accent is minted once, every dialog footer ranks exactly
+  one primary, the ellipsis key set matches across catalogs, and no heading
+  (dialog titles included) carries one. What is NOT, and is a design-time read
+  like the accent-AREA rule: that the work surface carries no primary — no gate
+  reads a control's surface, so adding a filled button to the toolbar would
+  pass every check.
 - **Delivery mode** (user decision, completed): the redesign was built
   on the long-lived feature branch `feat/gui-redesign` with stacked
   PRs; the workspace gates were allowed red mid-track on that branch,
@@ -1265,6 +1284,14 @@ Formatting/style and coverage follow the general rules in
   both stacks in a package)
 - **Per-file line budget** — 150 executable lines, waiver token
   `line-budget-exempt:` (see the decision above); runs first in `make gui:verify`
+- **The convention gates** — `ui/chromeConvention.test.ts` (no native `title=`
+  tooltip, no text character standing in for an icon),
+  `ui/actionConvention.test.ts` (the filled accent is minted once; every dialog
+  footer is built from `Button` and ranks exactly one primary) and
+  `i18n/ellipsis.test.ts` (the ellipsis key set is identical across catalogs;
+  no heading carries one). All three WALK THE PACKAGE SOURCE off disk rather
+  than rendering, because a component test can only pin the primitives it
+  happens to mount — the shared walker is `testkit/sourceWalk.ts`
 - `tsc --noEmit` with `strict: true` must pass
 - **Vitest** (adopted) unit tests for pure state logic — reducers,
   document ops, the preview state machine, and the field-palette model

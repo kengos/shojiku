@@ -21,6 +21,7 @@ import type { PreviewSession } from '../hooks/usePreviewSession';
 import { useI18n } from '../i18n/context';
 import { hasNoBodyItems } from '../insert/model';
 import type { TreeView } from '../tree/model';
+import { Button } from '../ui/Button';
 import { CanvasTopbar } from './CanvasTopbar';
 import { canvasManipulate } from './canvasManipulate';
 
@@ -145,13 +146,14 @@ export function CanvasArea({
           {hasNoBodyItems(read) ? (
             <div className="absolute top-24 left-1/2 w-fit max-w-[80%] -translate-x-1/2 rounded-md border border-dashed border-border bg-surface px-4 py-3 text-center text-text shadow-[0_4px_12px_rgb(0_0_0/0.12)]">
               <p className="m-0 mb-2">{t('canvas.empty')}</p>
-              <button
-                type="button"
-                className="cursor-pointer rounded-md border border-accent bg-accent px-3 py-1 text-on-accent"
-                onClick={() => inserts.insert('text')}
-              >
+              {/* The one filled control on the WORK SURFACE, and the documented
+                  exception to "a canvas screen carries no primary": in an empty
+                  state it is the only thing on the page, so it IS that screen's
+                  primary. gui/STYLE.md § Actions carries the rule and this
+                  exception; `Designer.test.tsx` pins it. */}
+              <Button variant="primary" onClick={() => inserts.insert('text')}>
                 {t('canvas.emptyAction')}
-              </button>
+              </Button>
             </div>
           ) : null}
         </div>

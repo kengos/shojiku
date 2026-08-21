@@ -82,6 +82,7 @@ export function TutorialDialog({
             {labels.restart}
           </Button>
           <Button
+            variant="primary"
             onClick={() => onStart(resume === null ? 0 : resume.chapter)}
             data-testid="tutorial-resume"
           >

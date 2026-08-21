@@ -96,6 +96,26 @@ platform binaries.
 
 ### Changed
 
+- **Designer buttons now say which one is the main action, and which labels
+  open something.** A dialog's confirming button — Insert, Create, Save,
+  Register, Propose edits, and the confirm on the save/export review — is
+  filled, its cancel sits beside it as a plain outlined button, and there is
+  exactly one filled button per dialog. Seven dialog footers previously drew
+  their confirming action as an outlined button — five of them merely a size
+  larger than the cancel beside it, one with no cancel at all — so nothing on
+  those screens said where to go; four others painted the same fill by hand, which drifted from the shared
+  one. Editing chrome — the toolbar, the property
+  panel, the menubar, the layer tree — deliberately stays unfilled, because
+  those are peers rather than one main action; the empty canvas keeps its
+  filled *Add text*, which is the only thing on the page at that moment.
+  Separately, **File ▸ Save and File ▸ Export now read `Save…` and `Export…`**:
+  both open the review pane before anything is written, and the trailing
+  ellipsis is the long-standing convention for a label that opens something
+  rather than acting at once. The review pane's own confirm still reads
+  `Save` / `Export`, because pressing it does act. One section heading that
+  had picked up the same ellipsis in English and Filipino — while reading as
+  an ordinary heading in the other four languages — has lost it. No template,
+  parameter or produced file changes.
 - **Every `make` gate reads scope-first, and each job has exactly one name.**
   The commands that check your work were spelled verb-first (`lint:engine`,
   `verify:sdk:ruby`) and most of them had a second, verbose twin one

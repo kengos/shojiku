@@ -185,7 +185,7 @@ export const zhCn: LanguageCatalog = {
     cell_image_assets_capped: '每个元素的单元格图片超过上限 {max}；其余已跳过',
   },
   chrome: {
-    'app.save': '保存',
+    'app.save': '保存…',
     'app.undo': '撤销',
     'app.redo': '重做',
     'app.saveBlocked': '请先解决下方的错误再保存。',
@@ -223,7 +223,7 @@ export const zhCn: LanguageCatalog = {
     'menu.file': '文件',
     'menu.edit': '编辑',
     'menu.open': '打开…',
-    'menu.export': '导出',
+    'menu.export': '导出…',
     'menu.pdf': '下载为 PDF…',
     'pdf.title': 'PDF 预览',
     'pdf.help': '这是最终的 PDF，与命令行渲染出的字节完全一致。',

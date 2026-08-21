@@ -16,9 +16,9 @@ function diag(partial: Partial<Diagnostic> & Pick<Diagnostic, 'code'>): Diagnost
 
 describe('translate (chrome)', () => {
   it('renders a known chrome key from the first language in the chain', () => {
-    expect(translate(DEFAULT_CATALOG, ['ja', 'en'], 'app.save', 'ja')).toBe('保存');
-    expect(translate(DEFAULT_CATALOG, ['zh-tw', 'en'], 'app.save', 'zh-TW')).toBe('儲存');
-    expect(translate(DEFAULT_CATALOG, ['en'], 'app.save', 'en')).toBe('Save');
+    expect(translate(DEFAULT_CATALOG, ['ja', 'en'], 'app.save', 'ja')).toBe('保存…');
+    expect(translate(DEFAULT_CATALOG, ['zh-tw', 'en'], 'app.save', 'zh-TW')).toBe('儲存…');
+    expect(translate(DEFAULT_CATALOG, ['en'], 'app.save', 'en')).toBe('Save…');
   });
 
   it('falls through per key to English for a language missing that key', () => {
@@ -34,7 +34,7 @@ describe('translate (chrome)', () => {
 
   it('skips a chain language that is absent from the catalog', () => {
     // de-DE resolves to ['de-de', 'de', 'en']; neither de entry exists.
-    expect(translate(DEFAULT_CATALOG, ['de-de', 'de', 'en'], 'app.save', 'de-DE')).toBe('Save');
+    expect(translate(DEFAULT_CATALOG, ['de-de', 'de', 'en'], 'app.save', 'de-DE')).toBe('Save…');
   });
 
   it('renders an unknown key as the key itself', () => {

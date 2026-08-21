@@ -293,7 +293,10 @@ Headless UI owns behavior (focus trap, keyboard, ARIA, portal); the LOOK
 is Tailwind utilities over the `--sj-*` tokens.
 
 - `ui/Button.tsx` — `Button`/`IconButton` (`data-variant` is the test
-  hook; `IconButton.label` = aria-label + TipBubble).
+  hook; `IconButton.label` = aria-label + TipBubble). **The only place the
+  filled accent is minted** — `VARIANT.primary` — which is what makes the
+  Material 3 hierarchy (primary=filled / default=outlined / ghost=text)
+  gateable; `ui/actionConvention.test.ts` refuses a hand-rolled copy.
 - `ui/Select.tsx` — over Headless UI Listbox (display label separate
   from wire value).
 - `ui/Menu.tsx` — data-driven grouped entries + headings; text or icon
@@ -351,7 +354,27 @@ is Tailwind utilities over the `--sj-*` tokens.
   on native `title=` or a text character standing in for an icon
   (comments blanked; `i18n/catalog/` exempt; the one documented
   exception — the app header's document-title button — lives in
-  designer-app).
+  designer-app). Walks via `testkit/sourceWalk.ts`.
+- `ui/actionConvention.test.ts` — the node-env ACTION gate (gui/STYLE.md
+  § Actions): the filled accent (`bg-accent` + `text-on-accent`, UNPREFIXED —
+  a `data-checked:`/`aria-pressed:` accent is toggle state, a filled `<span>`
+  is a badge) is composed on no `<button>` outside `ui/Button.tsx`; every
+  `<Modal>`/`<Offcanvas>` `footer={…}` slice — brace-balanced out of the
+  comment-blanked source — is built from `Button` and holds EXACTLY ONE
+  `variant="primary"` (Material 3: one primary per screen). The pattern carries
+  its own positive control and both exclusions are pinned. SCOPE, because a gate
+  that does not name its blind spots reads as covering more than it does: it
+  ranks FOOTERS, so a dialog whose confirming action sits in the body (today
+  only the restore-points dialog) is not seen; and NOTHING gates "the work
+  surface carries no primary" — no walker knows which surface a control sits on.
+  All three gates walk BOTH packages' sources.
+- `i18n/ellipsis.test.ts` — the node-env ELLIPSIS gate (Apple HIG): the set of
+  chrome keys whose value ENDS in `…` is identical across all six catalogs (the
+  ellipsis is a property of the ACTION, not the language), and no `<h1>`–`<h6>`
+  heading renders one. Keys on "ends with", never "contains" — a gate that
+  flagged quoted prose would be relaxed into uselessness. A progress or
+  placeholder `…` (`Saving…`) is exempt from the HIG reading by being neither
+  a control nor a heading, and parity still covers it.
 - `ui/chrome.ts` — the shared chrome className strings (anything a
   SECOND surface needs moves here; a bare `<select>`/`<input>` breaks
   the dark scheme — reach for these).

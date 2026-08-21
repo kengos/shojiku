@@ -9,7 +9,7 @@ import type { LanguageCatalog } from './types';
 export const fil: LanguageCatalog = {
   diagnostics: {},
   chrome: {
-    'app.save': 'I-save',
+    'app.save': 'I-save…',
     'app.undo': 'I-undo',
     'app.redo': 'I-redo',
     'app.saveBlocked': 'Ayusin ang mga error sa ibaba bago mag-save.',
@@ -53,7 +53,7 @@ export const fil: LanguageCatalog = {
     'menu.file': 'File',
     'menu.edit': 'I-edit',
     'menu.open': 'Buksan…',
-    'menu.export': 'I-export',
+    'menu.export': 'I-export…',
     'menu.pdf': 'I-download bilang PDF…',
     'pdf.title': 'Preview ng PDF',
     'pdf.help': 'Ito ang tapos nang PDF — mismong mga byte na ginagawa ng command-line renderer.',
@@ -376,7 +376,7 @@ export const fil: LanguageCatalog = {
     'tree.conditional':
       'Lumalabas lang kapag tumugma ang data — maaaring wala ito sa pahina ngayon.',
     'tree.conditional.badge': 'kung',
-    'panel.visible.title': 'Ipakita lamang kapag…',
+    'panel.visible.title': 'Kailan ipapakita',
     'panel.visible.hint':
       'Palaging lumalabas ang item na ito. Iugnay ito sa isang field para lumabas lang sa ilang data.',
     'panel.visible.add': 'Gawing may kondisyon',
