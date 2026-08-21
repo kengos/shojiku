@@ -1,5 +1,5 @@
 //! Round trips through every document entry point, against the bundled
-//! receipt — the same sources `make examples` renders.
+//! receipt — the same sources `make examples:render` renders.
 
 use super::*;
 

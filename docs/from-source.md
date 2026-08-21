@@ -51,10 +51,10 @@ container:
 ```bash
 git clone https://github.com/kengos/shojiku.git
 cd shojiku
-make docker-build     # tags the result `shojiku-ci:local`
+make docker:build     # tags the result `shojiku-ci:local`
 ```
 
-`make docker-render` then renders the bundled example through that image
+`make docker:render` then renders the bundled example through that image
 and asserts the result is a PDF, which is the one-command check that
 what you built works. Substitute `shojiku-ci:local` for
 `ghcr.io/kengos/shojiku:edge` anywhere in the quickstart.

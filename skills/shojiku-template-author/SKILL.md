@@ -77,7 +77,7 @@ definitions file's structure, not the template.
 
 **Trap**: supplying BOTH definitions and params turns on params-vs-schema
 validation (`params_*` warnings: required/type/range/enum/unknown keys).
-The Shojiku repo's bundled-example gate (`make examples` — repo
+The Shojiku repo's bundled-example gate (`make examples:render` — repo
 contributors only; irrelevant when authoring outside the repo) is
 WARNING-clean — so a bundled example's schema
 must cover every params key it ships and declare list-like row values
@@ -89,7 +89,7 @@ truthfully (`type: array`, not a scalar lie). Blank variants are safe:
 undeclared key + its sub-fields → `unknown_data_key`), but a `list`
 data key is NOT — so adding a table to a showcase needs its array
 property declared, while a list over the same data would render without
-one. Declare the property when you add the table, or `make examples`
+one. Declare the property when you add the table, or `make examples:render`
 reddens on the first render.
 
 ## Wire gotchas the reference doesn't make obvious
@@ -135,12 +135,12 @@ reddens on the first render.
   ordinary spaces.** A `text: |-` block scalar strips the common leading
   indent, and the text layer then drops the remaining ordinary leading
   spaces, so a code sample written with real spaces renders **flush
-  left** — the render emits no diagnostic and `make examples` stays
+  left** — the render emits no diagnostic and `make examples:render` stays
   green, so for a long time only the preview showed it and eight of the
   showcase's forty-four panels shipped that way. **Tabs collapse
   identically** — the wrap tokenizer folds a tab into the same space run
   — so an editor's auto-indent inside a block scalar is the same bug.
-  `make examples-check` now refuses both forms
+  `make examples:check` now refuses both forms
   (`scripts/check-example-text-indent.sh`, which reports the offending
   `path:line`), but the gate only fires under `examples/` and `skills/`
   — nothing catches it in a template you author elsewhere, so the
@@ -208,13 +208,13 @@ reddens on the first render.
   src` test over every `examples/**/templates.yml`). The form that bites
   a hand-authored block is the FLOW SEQUENCE: the canonical spelling has
   inner spaces — `[ a, b ]`, not `[a, b]` — which is also what the
-  Designer writes. `make examples` stays green either way; only the gui
+  Designer writes. `make examples:render` stays green either way; only the gui
   gate catches it, so match the spacing of the neighbouring
   `styleNames: [ meta ]` lines when adding a list to an example. **A
   TRAILING BLANK LINE fails the same gate the same way** — the serializer
   emits exactly one final newline, so a section appended with one `\n`
   too many reds `roundtrip.test.ts` with a diff whose entire content is a
-  bare `-`. `make examples` passes it happily; end the file with exactly
+  bare `-`. `make examples:render` passes it happily; end the file with exactly
   one newline.
 - Custom `page.size` + `orientation` **double-swap** without warning: a
   landscape custom size (`w` > `h`) plus `orientation: landscape` flips
@@ -300,7 +300,7 @@ reddens on the first render.
   so `currency: USD` renders `$6` under ja-JP).
 - **Engine SVG subset has no rounded corners**: a `rx`/`ry` on `<rect>`
   draws square and warns `svg_unsupported` — which reddens
-  `make examples`. Author example assets without `rx` (and without
+  `make examples:render`. Author example assets without `rx` (and without
   `<text>`, which the subset also lacks).
 - Since the same engine version, a fixed-width flex row that exceeds its
   parent warns `flex_row_overflow` and a definite-width flow item past

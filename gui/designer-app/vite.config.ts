@@ -7,7 +7,7 @@ import { devDataPlugin } from './scripts/dev-data-plugin.ts';
 // `dist-assets/` (wasm pkg + font packs + presets + catalog.json, produced by
 // scripts/assemble-site.ts) are copied verbatim into the static output; the app
 // fetches them at runtime, so nothing engine-shaped is bundled into JS. In dev
-// (`make gui-dev`) devDataPlugin serves the assembled dist/data/ tree at /data.
+// (`make gui:dev`) devDataPlugin serves the assembled dist/data/ tree at /data.
 export default defineConfig({
   plugins: [react(), tailwindcss(), devDataPlugin()],
   // Relative asset URLs so the SAME build serves at the domain root
@@ -16,7 +16,7 @@ export default defineConfig({
   publicDir: 'public',
   server: {
     watch: {
-      // The dev server watches the whole repo, so a `make gui` coverage run
+      // The dev server watches the whole repo, so a `make gui:verify` coverage run
       // mid-session rewrites thousands of files under `gui/*/coverage/` and
       // the resulting HMR reload storm wedges the app mount — a blank screen
       // with no console error, cleared only by restarting the container.

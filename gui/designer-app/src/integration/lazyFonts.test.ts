@@ -9,7 +9,7 @@
 //
 // The pkg is imported DYNAMICALLY (a non-literal specifier) so tsc never binds
 // the app package to the gitignored `engine/wasm/pkg`; a missing pkg fails fast
-// with a "run `make wasm`" message.
+// with a "run `make engine:wasm`" message.
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -46,7 +46,7 @@ interface WasmModule {
 
 async function loadModule(): Promise<WasmModule> {
   if (!existsSync(fileURLToPath(PKG_WASM))) {
-    throw new Error('engine/wasm/pkg is missing — run `make wasm` before the gui gates');
+    throw new Error('engine/wasm/pkg is missing — run `make engine:wasm` before the gui gates');
   }
   const mod = (await import(PKG_JS.href)) as unknown as WasmModule;
   mod.initSync({ module: readFileSync(fileURLToPath(PKG_WASM)) });

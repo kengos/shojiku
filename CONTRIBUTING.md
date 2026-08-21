@@ -12,52 +12,63 @@ target.
 Checking a *result* and debugging a *failure* are different jobs, and
 they use different commands.
 
-To check a result, use the `<verb>:<scope>` grid. Each prints **one
-PASS/FAIL line** and exits with the gate's **real exit code**:
+To check a result, use the `<scope>:<job>` grid — scope first, so the
+table reads down a column. Each prints **one PASS/FAIL line** and exits
+with the gate's **real exit code**:
 
 | | `engine` | `gui` | `site` | `docker` |
 | --- | --- | --- | --- | --- |
-| `budget:` | `make budget:engine` | `make budget:gui` | — | — |
-| `lint:` | `make lint:engine` | `make lint:gui` | `make lint:site` | — |
-| `test:` | `make test:engine` | `make test:gui` | `make test:site` | — |
-| `verify:` | `make verify:engine` | `make verify:gui` | `make verify:site` | `make verify:docker` |
+| `:budget` | `make engine:budget` | `make gui:budget` | — | — |
+| `:lint` | `make engine:lint` | `make gui:lint` | `make site:lint` | — |
+| `:test` | `make engine:test` | `make gui:test` | `make site:test` | — |
+| `:verify` | `make engine:verify` | `make gui:verify` | `make site:verify` | `make docker:verify` |
 
 The `sdk` scope nests one level further, one entry per language, because
-each has its own toolchain and container: `make verify:sdk:ruby`,
-`make verify:sdk:python`, `make verify:sdk:dotnet`,
-`make verify:sdk:java`, `make verify:sdk:js`, `make verify:sdk:php` and
-`make verify:sdk:go` — all seven, each with its `test:` and `lint:`
+each has its own toolchain and container: `make sdk:ruby:verify`,
+`make sdk:python:verify`, `make sdk:dotnet:verify`,
+`make sdk:java:verify`, `make sdk:js:verify`, `make sdk:php:verify` and
+`make sdk:go:verify` — all seven, each with its `test:` and `lint:`
 slices.
 
-- **`verify:<scope>`** is that scope's whole bar — budget + lint + tests
+- **`<scope>:verify`** is that scope's whole bar — budget + lint + tests
   plus whatever else the scope needs (100% coverage, cargo-deny, the
   key-catalog drift gate, example byte-compare and the WASM build for
   `engine`). It is the slow,
   conclusive one.
-- **`budget:` / `lint:` / `test:`** are the fast slices to iterate on.
+- **`:budget` / `:lint` / `:test`** are the fast slices to iterate on.
+- **Every job has exactly ONE name, and it is quiet by default.** Add
+  `V=1` — `make gui:verify V=1` — for the raw output when you are
+  reading it to debug rather than asking whether it passed. There is no
+  second, verbose spelling of a target to pick between.
 - **`make verify`** is every scope at once: the full CI mirror, and the
   bar a change must clear before it ships.
-- **`make quiet T=<target>`** gives any other target the same treatment.
+- **`make quiet T=<target>`** gives anything that is not already a gate
+  the same treatment.
+- **`make make:check`** is the gate over this surface itself: it refuses
+  a target filed under the wrong `mk/<scope>.mk`, a public target with no
+  scope, and — the reason it exists — any tracked file naming a `make`
+  target that does not exist. It reads every tracked file, so a command
+  spelled in a Dockerfile or a doc comment counts too.
 
 A few targets are deliberately **on-demand** rather than part of
 `verify`, because they cost minutes and answer a question most changes
-do not raise: `make wasm-e2e` and `make gui-e2e` (browser golden
-paths), `make fuzz` (below), and the two cross-build targets. `make capi-dist`
+do not raise: `make engine:wasm-e2e` and `make gui:e2e` (browser golden
+paths), `make engine:fuzz` (below), and the two cross-build targets. `make engine:capi-dist`
 cross-builds
 the C ABI cdylib for the
 platform matrix the FFI SDKs ship (linux x64/arm64, windows x64-gnu)
 into the gitignored `dist/capi/` with a `SHA256SUMS` beside it;
-`make cli-dist` does the same for the `shojiku` BINARY, over the same
+`make engine:cli-dist` does the same for the `shojiku` BINARY, over the same
 matrix into `dist/cli/` — those are the prebuilt CLIs a GitHub Release
 offers, which the subprocess SDKs tell users to install and which
 neither of them ever downloads on its own. Not to
-be confused with `make capi-lib` and `make cli-bin`, which are NOT
+be confused with `make engine:capi-lib` and `make engine:cli-bin`, which are NOT
 on-demand: they build the single host-architecture cdylib the FFI SDKs'
 gate containers load and the host-architecture `shojiku` binary the
 SUBPROCESS ones run, and every `sdk:<lang>` target depends on one of
 them. macOS
 artifacts need a macOS runner and are produced at release time. (The
-ordinary `make test` gate still LINKS the cdylib once in dev profile —
+ordinary `make engine:test` gate still LINKS the cdylib once in dev profile —
 `cargo test` alone only builds the rlib, and the shared library is the
 crate's actual deliverable — so only the cross matrix is on-demand.)
 
@@ -68,10 +79,10 @@ the signature-container decoders — have libFuzzer targets in
 `engine/fuzz`:
 
 ```bash
-make fuzz FUZZ_TARGET=cms_container FUZZ_SECS=600
+make engine:fuzz FUZZ_TARGET=cms_container FUZZ_SECS=600
 ```
 
-`make fuzz` with no arguments runs every target for a minute each. It is
+`make engine:fuzz` with no arguments runs every target for a minute each. It is
 deliberately outside `make verify`: fuzzing has no natural end. What the
 gates run instead is the corpus **replay** — every committed seed through
 the same entry points — so the targets cannot rot between runs.
@@ -95,8 +106,8 @@ time, and the last `== step ==` the run reached — so that one file
 answers "where did it fall over?" without re-running anything. When the
 failure is one the repository has met before, the same block also names
 **what it is** and prints the command that fixes it: a registry flake to
-re-run, a lockfile to re-resolve with `make lock:<scope>`, an example
-output to re-render with `make examples`. The file is cleared
+re-run, a lockfile to re-resolve with `make <scope>:lock`, an example
+output to re-render with `make examples:render`. The file is cleared
 automatically when that same target next passes. Per-target logs sit
 beside it (`.make-logs/<target>.log`); the whole directory is
 gitignored.
@@ -120,8 +131,8 @@ rather than a document:
 | `make investigate:docker` | is the daemon healthy — and can it actually pull? (a daemon that answers `docker version` can still pull nothing) |
 | `make investigate:gates` | what is running, and how to cancel it (Ctrl-C does not reach the container) |
 | `make investigate:last-error` | re-read the last failure with its diagnosis |
-| `make investigate:coverage` | which lines failed the 100% coverage gate |
-| `make investigate:render` | render one template with the pack directories already correct |
+| `make engine:coverage-why` | which lines failed the 100% coverage gate |
+| `make engine:render` | render one template with the pack directories already correct |
 | `make investigate:pins` | are the cached images the pinned versions, or something that moved |
 
 `make help` lists them beside the gates.
@@ -138,7 +149,7 @@ it.
 ### Do not pipe a gate to `tail`
 
 ```bash
-make gui | tail -40     # WRONG
+make gui:verify | tail -40     # WRONG
 ```
 
 A shell pipeline reports the **last** command's status, so this exits
@@ -154,19 +165,19 @@ manifest edit is not finished until the lockfile catches up. Two verbs,
 over the four lockfiles — `engine`, `gui`, `site`, `sdk:js`:
 
 ```bash
-make lock:gui
+make gui:lock
 ```
 
 re-resolves after you edited a `package.json` or `Cargo.toml`; anything
 that already satisfies its range stays put. And:
 
 ```bash
-make update:gui
+make gui:update
 ```
 
 bumps to the newest release each range still allows. That one moves
 dependencies you did not name, so read the lockfile diff before
-committing it. `make lock` on its own is the engine scope, as it always
+committing it. `make engine:lock` on its own is the engine scope, as it always
 was; engine changes stage `engine/Cargo.lock` normally — an old note
 said a global gitignore hides it and `git add -f` is needed, which was
 a misread of `*.log` in the global excludes.
@@ -186,11 +197,11 @@ These write files; they check nothing. Follow them with the scope's
 committed CycloneDX inventories under `sbom/` describe the last RELEASE,
 not every commit — an SBOM is a statement about a released artifact, and
 requiring each commit to carry a matching one made every dependency-bump
-PR red on arrival for no reader's benefit. `make sbom` is run and its
-output committed as part of the release, where `make sbom-check` verifies
+PR red on arrival for no reader's benefit. `make sbom:generate` is run and its
+output committed as part of the release, where `make sbom:check` verifies
 it.
 
-What CI does check on your PR is `make sbom-lint`: the detector's own
+What CI does check on your PR is `make sbom:lint`: the detector's own
 self-tests, plus the rule that every committed lockfile appears in the map
 at the top of `scripts/generate-sbom.sh` — either with an inventory name,
 or with `-` and the reason it ships in nothing. **So adding a lockfile
@@ -201,7 +212,7 @@ If you want to refresh the inventories anyway, it is one command and it is
 safe:
 
 ```bash
-make sbom
+make sbom:generate
 ```
 
 It is **idempotent**: an inventory whose contents have not changed keeps
@@ -212,7 +223,7 @@ you see which one actually moved.
 
 ### Version literals
 
-`make version-check` (CI job `versions`, no Docker, seconds) asserts that
+`make version:check` (CI job `versions`, no Docker, seconds) asserts that
 every place naming a shojiku release coordinate — a cargo path-dep pin, a
 maven dependency on `jp.kengos`, a `PackageReference Include="Shojiku"`,
 the npm version, each SDK's version constant, a `shojiku-<semver>` archive
@@ -241,7 +252,7 @@ takes `version-check-exempt: <reason>`, the same shape as
    the code map under [docs/code-map/](docs/code-map/README.md) whenever
    crates, modules, or boundaries move, and the relevant reference page
    under [docs/engine/](docs/engine/README.md) for authorable syntax.
-3. Bundled example outputs are refreshed (`make examples`) if your
+3. Bundled example outputs are refreshed (`make examples:render`) if your
    change alters what they render. The SBOMs are not your job — they are
    refreshed at release — but a lockfile you ADDED needs a row in the map
    in `scripts/generate-sbom.sh`.

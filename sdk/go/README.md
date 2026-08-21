@@ -185,10 +185,10 @@ Go 1.25 or newer, and the `shojiku` binary installed as described above.
 Gates run in a container, so no Go toolchain is needed locally:
 
 ```bash
-make verify:sdk:go
+make sdk:go:verify
 ```
 
-`make test:sdk:go` and `make lint:sdk:go` are the faster slices.
+`make sdk:go:test` and `make sdk:go:lint` are the faster slices.
 
 ## Documentation
 

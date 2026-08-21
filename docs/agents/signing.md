@@ -13,7 +13,7 @@
 > [../code-map/verify.md](../code-map/verify.md)). The hardening stage has
 > landed too: the bounded-error rule is a compile-time assertion, and the
 > parsers that read attacker-chosen bytes have fuzz targets in
-> `engine/fuzz` (`make fuzz`, with the committed corpus replayed by the
+> `engine/fuzz` (`make engine:fuzz`, with the committed corpus replayed by the
 > ordinary test gates).
 
 ## Principle
@@ -381,7 +381,7 @@ assurance, which is precisely the trust the signing story is selling.
   live in `engine/fuzz` (outside the workspace: nightly + libFuzzer) and
   cover the shared document reader, the whole verifier, the `/Contents`
   window decoder, the CMS container decoder and the anchor loader.
-  `make fuzz` runs them on demand; the committed corpus is replayed by
+  `make engine:fuzz` runs them on demand; the committed corpus is replayed by
   the ordinary tests so the targets cannot rot, and a crash becomes a
   corpus file rather than a story. Seeds that would embed a certificate
   are generated at fuzz time — nothing key-shaped is committed.

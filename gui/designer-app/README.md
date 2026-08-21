@@ -15,7 +15,7 @@ lives in dependency-injected modules that carry the 100%×4 coverage gate.
 The deploy artifact is `dist/`, produced in two steps from the repository root:
 
 ```sh
-make wasm                                   # build engine/wasm/pkg (once)
+make engine:wasm                                   # build engine/wasm/pkg (once)
 pnpm --filter @shojiku/designer-app build   # vite build -> dist/ (app JS + _headers)
 pnpm --filter @shojiku/designer-app assemble  # -> dist/data/ (catalog, fonts, presets, pkg)
 ```
@@ -34,10 +34,10 @@ pnpm --filter @shojiku/designer-app assemble  # -> dist/data/ (catalog, fonts, p
 
 ## Test
 
-`make gui` runs the workspace gates (typecheck + Biome + Vitest 100%×4),
+`make gui:verify` runs the workspace gates (typecheck + Biome + Vitest 100%×4),
 including this package's real-engine integration test (the lazy font-fetch loop
 against `engine/wasm/pkg`). The browser golden path is on-demand:
 
 ```sh
-make gui-e2e   # Playwright in Docker: open preset -> preview -> export
+make gui:e2e   # Playwright in Docker: open preset -> preview -> export
 ```

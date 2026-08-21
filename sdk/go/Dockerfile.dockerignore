@@ -11,6 +11,6 @@
 # gate's /repo mount, so a change to a .go file never invalidates a layer.
 *
 
-# The pre-compiled engine binary, built by `make cli-bin`. Gitignored, and the
+# The pre-compiled engine binary, built by `make engine:cli-bin`. Gitignored, and the
 # root ignore file never mentioned it because nothing else needs it.
 !dist/cli/local

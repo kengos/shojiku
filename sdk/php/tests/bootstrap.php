@@ -10,7 +10,7 @@ declare(strict_types=1);
  * no dependencies for this package because it HAS none, and running
  * `composer install` on the mounted repository to produce an autoloader would
  * write into the source tree. That the real, composer-generated autoloader
- * works is proved separately, by the packaging step in `make sdk-php`, which
+ * works is proved separately, by the packaging step in `make sdk:php:verify`, which
  * installs the package from its own artifact into a scratch directory.
  */
 

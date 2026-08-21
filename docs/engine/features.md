@@ -1326,7 +1326,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   the shared document reader, the whole verifier, the `/Contents` window
   decoder, the CMS container decoder and the anchor loader. They live in
   `engine/fuzz`, outside the workspace (nightly + libFuzzer), and run on
-  demand via `make fuzz`; the gates run the committed corpus through the
+  demand via `make engine:fuzz`; the gates run the committed corpus through the
   same entry points instead, so the targets cannot rot and any crash
   found becomes a regression file. Seeds that would embed a certificate
   are generated at fuzz time, never committed — this repository holds no
@@ -1394,7 +1394,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   signed document. Neither verb takes a key or a passphrase: what gets
   signed is the CMS signed attributes, and the certificate and the
   signature are both public. This is what the two subprocess SDKs drive.
-- Prebuilt binaries come from `make cli-dist` (on-demand): release CLIs
+- Prebuilt binaries come from `make engine:cli-dist` (on-demand): release CLIs
   for linux x64/arm64 and windows x64-gnu plus `SHA256SUMS`, the
   artifacts a GitHub Release offers. macOS builds need a macOS runner
   and are produced at release time. No SDK ever downloads one.
@@ -1446,7 +1446,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   is behind a non-default `shim` cargo feature, which keeps the
   marshalling glue out of the workspace test/coverage surface exactly as
   `engine/wasm`'s wasm-bindgen shim is kept out by its target gate;
-  `make napi` builds it and loads the result under the node floor.
+  `make engine:napi` builds it and loads the result under the node floor.
 - **`shojiku_verify`** takes the signed PDF and required PEM trust
   anchors — there is no fallback to the machine's trust store, because
   the verifier never consults one. `success` is the VERDICT, so a caller
@@ -1488,7 +1488,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   passphrase crossing `sign` as separate byte arguments — key material
   is read in place and never copied. No network surface: a font pack
   that is missing is a failure, never a download.
-- Artifacts come from `make capi-dist` (on-demand): release cdylibs for
+- Artifacts come from `make engine:capi-dist` (on-demand): release cdylibs for
   linux x64/arm64 and windows x64-gnu plus `SHA256SUMS`. macOS builds
   need a macOS runner and are produced at release time.
 - Capability key `capi.abi`, so a consumer reading engine info from any
@@ -1587,7 +1587,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 ### Build / CI / security posture
 - Pure-Rust workspace, single static binary, clean WASM story.
 - **Anti-bloat gate**: every `.rs` ≤300 lines hard with a first-line
-  `//!` role header (`make budget`); function length via
+  `//!` role header (`make engine:budget`); function length via
   `clippy::too_many_lines` (150).
 - `cargo deny` (advisories/licenses/bans/sources, **zero ignores**, run
   with `--all-features` so a feature-gated optional dependency cannot
@@ -1596,8 +1596,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **Key catalog + drift gate**: the per-key facts of the authorable wire
   are derived from the parser as a JSON Schema document, committed at
   `engine/authoring/reference/catalog.schema.json` and embedded as
-  `shojiku_authoring::reference::CATALOG`. `make reference-data`
-  regenerates it; `make reference-check` fails on drift and runs the
+  `shojiku_authoring::reference::CATALOG`. `make reference:generate`
+  regenerates it; `make reference:check` fails on drift and runs the
   schema tests with it. The derive lives behind `engine/core`'s
   non-default `schema` feature, so no shipped binary links it. The
   document carries structure only — per-key prose is a separate,
@@ -1719,7 +1719,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   params wrap differently in the browser preview than on the CLI, which
   is the one thing the engine promises never to do. So the choice was
   ship it everywhere or nowhere, and the size question decided it —
-  measured against `make wasm`'s own budget line, the LSTM model costs
+  measured against `make engine:wasm`'s own budget line, the LSTM model costs
   +372 KB raw / +316 KB gzip (62% / 64% of budget) where the exact
   dictionary costs +1.8 MB / +883 KB (79% / 82%). The LSTM's arithmetic
   is reproducible across targets: its only float dependency routes every
@@ -1824,7 +1824,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   an asset key. Preview has an encode-free **raw-RGBA form** beside PNG
   (`render_raw`/`preview_raw`, capability `preview.raw`): un-premultiplied
   RGBA the canvas paints via `ImageData`, skipping the PNG encode that
-  was ~78% of the spike's render time. Size (`make wasm`, `wasm-release`
+  was ~78% of the spike's render time. Size (`make engine:wasm`, `wasm-release`
   profile — opt-level=s + fat LTO, then `wasm-opt -Oz`): **4.67 MB raw /
   1.63 MB gzip**, budget-gated (≤5.5 MiB / ≤1.6 MiB); the budget has been
   raised twice, once for engine feature growth and once for the PDF
@@ -1836,8 +1836,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   4.07 MB raw / 1.28 MB gzip, instantiate ~150 ms, parse 39 ms + layout
   ~25 ms + PNG encode ~230 ms, font payload 8.9 MB injected in ~6 ms.
   Capability keys: `wasm.bindings` (the host surface) + `preview.raw`.
-  A browser golden-path e2e (`make wasm-e2e`, Playwright in Docker) is
-  on-demand, not in `verify`; `make wasm` (build + size budget) IS in
+  A browser golden-path e2e (`make engine:wasm-e2e`, Playwright in Docker) is
+  on-demand, not in `verify`; `make engine:wasm` (build + size budget) IS in
   `verify`.
 - **Typed host-misuse errors (capability `wasm.errors.typed`).** The
   surface's host-misuse throws (no locale, fonts not loaded, a stale
@@ -1890,7 +1890,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   sha256 against the committed `output.pdf`: **byte-identical**, ~38 ms
   with the full ja font set injected. krilla compiles for
   `wasm32-unknown-unknown` unmodified; its cost is paid by adding
-  **`wasm-opt -Oz`** to `make wasm` (which also cut the pre-PDF module by
+  **`wasm-opt -Oz`** to `make engine:wasm` (which also cut the pre-PDF module by
   37% raw / 11% gzip) plus a gzip-budget raise 1.5 → 1.6 MiB — net
   transfer 1.39 MB → 1.63 MB. Browser-side, a PDF is rendered only after
   the FULL font set is loaded (the preview's lenient subset load would

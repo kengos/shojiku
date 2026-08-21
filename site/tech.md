@@ -24,7 +24,7 @@ parsed as untrusted input.
 - A template resolving outside the template root is refused
   (`template_escapes_root`). Params-bound dynamic images pass only when
   the host's policy (allow/deny lists) explicitly permits them
-- The parsers are fuzzed with libFuzzer (`make fuzz`). Inputs that ever
+- The parsers are fuzzed with libFuzzer (`make engine:fuzz`). Inputs that ever
   crashed are kept, and replayed on every run to prevent regressions
 
 **The verification report also states what it did not check.** It
@@ -38,7 +38,7 @@ The supply chain is checked too.
 - [cargo-deny](https://github.com/kengos/shojiku/blob/main/engine/deny.toml)
   checks advisories and licenses, with **zero advisory ignores**. A
   dependency that needs an ignore to pass is not adopted
-<!-- sbom:generated:start (regenerate with `make site-data`) -->
+<!-- sbom:generated:start (regenerate with `make site:data`) -->
 - **A CycloneDX SBOM is committed to the repository**
   ([sbom/](https://github.com/kengos/shojiku/tree/main/sbom)): 255 components for the engine, 243 for the gui, 127 for sdk-js. Each is generated from the lockfile
   itself and records that lockfile's sha256, so you can check exactly

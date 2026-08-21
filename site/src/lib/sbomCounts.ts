@@ -5,10 +5,10 @@
 // The numbers had been transcribed by hand, in two locales, and two of the
 // three were wrong: the page advertised 235 components for the engine and 258
 // for the gui where the artifacts held 255 and 243. Nothing could catch it,
-// because no gate reads prose. Generating the sentence makes `make site-check`
+// because no gate reads prose. Generating the sentence makes `make site:check`
 // the thing that catches it.
 
-export const START = "<!-- sbom:generated:start (regenerate with `make site-data`) -->";
+export const START = "<!-- sbom:generated:start (regenerate with `make site:data`) -->";
 export const END = "<!-- sbom:generated:end -->";
 
 /** One committed inventory: its display name and how many components it records. */

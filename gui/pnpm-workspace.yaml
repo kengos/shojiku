@@ -18,7 +18,7 @@ onlyBuiltDependencies:
 # yanked before anything here installs it.
 #
 # IT ALSO GATES INSTALLATION, not just resolution. `pnpm install` — INCLUDING
-# `--frozen-lockfile`, what `make gui`/`make verify` run — re-verifies every
+# `--frozen-lockfile`, what `make gui:verify`/`make verify` run — re-verifies every
 # lockfile entry against the cutoff and fails with
 # ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION. So a dependabot PR whose packages are
 # younger than the window REDS THE GATE until they age out; that is the guard
@@ -41,10 +41,10 @@ minimumReleaseAgeExclude: []
 # range (jsdom's on undici, vite's on postcss) is already satisfied by the
 # lockfile, so pnpm keeps the resolved version and the fix never arrives.
 # `pnpm audit --fix=override` writes the entries below; a plain
-# `make lock:gui` then applies them.
+# `make gui:lock` then applies them.
 #
 # EACH ENTRY IS TEMPORARY. It exists only until the parent widens its own
-# range past the patched version — drop it then and re-run `make lock:gui`,
+# range past the patched version — drop it then and re-run `make gui:lock`,
 # because a stale override silently pins a dependency the tree would
 # otherwise have moved past on its own.
 #

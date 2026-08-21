@@ -3,7 +3,7 @@
 // (engine/core/src/geometry.rs) so the size thumbnail can draw without a render
 // round-trip; that duplication is pinned against the real engine in the wasm
 // integration suite (render each named size, assert the page pixel dims), so a
-// drift reds `make gui` rather than shipping. The unit constants are physics
+// drift reds `make gui:verify` rather than shipping. The unit constants are physics
 // (1in = 72pt, 1mm = 72/25.4pt), not engine grammar — the GUI composes a wire
 // length string from a number + unit and never parses one back.
 

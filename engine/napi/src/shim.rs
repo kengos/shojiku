@@ -2,7 +2,7 @@
 //!
 //! Compiled ONLY with the `shim` feature, which no workspace gate turns on,
 //! so the marshalling glue stays out of the host test/clippy/coverage surface
-//! exactly as `engine/wasm`'s wasm-bindgen shim does. `make napi` builds it
+//! exactly as `engine/wasm`'s wasm-bindgen shim does. `make engine:napi` builds it
 //! with the feature on and runs clippy over it in the same step.
 //!
 //! Two shapes and the reasons for them:

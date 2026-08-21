@@ -2,7 +2,7 @@
 # Fails if a committed SBOM under sbom/ no longer describes its lockfile,
 # or if a lockfile exists that nobody has decided about.
 #
-# Nothing else in the repo can see either problem. `make deny` reads
+# Nothing else in the repo can see either problem. `make engine:deny` reads
 # Cargo.toml, the lint and test gates never open sbom/, and the
 # inventories are machine-read artifacts a human does not diff — so a
 # stale one is invisible until someone downstream trusts it. That makes
@@ -49,7 +49,7 @@ trap 'rm -rf "$tmp"' EXIT
 # would read as "drift", which is the right colour for the wrong reason —
 # and it hides two real cases, a typo in a self-test fixture path (the case
 # silently stops running while the total still adds up) and a committed
-# inventory left at 0 bytes by an interrupted `make sbom`. Two empty files
+# inventory left at 0 bytes by an interrupted `make sbom:generate`. Two empty files
 # even compare EQUAL, so that one could fail open.
 #
 # The other way this comparison can mean nothing — a mask that has grown
@@ -121,7 +121,7 @@ fi
 echo "self-test ok: 3 of 4 fixtures drift, as expected"
 
 # ---- self-test: the GENERATOR's preservation ---------------------------
-# `sbom_place` is what makes `make sbom` idempotent, and it is the one
+# `sbom_place` is what makes `make sbom:generate` idempotent, and it is the one
 # place in this pair that WRITES. It therefore has the fail-open shape
 # this whole gate exists to prevent: a preserve rule that is too eager
 # keeps a stale inventory in the tree, and because the committed file then
@@ -252,7 +252,7 @@ fi
 # stricter than the artifact's own contract, and the cost was real: every
 # dependabot PR that moved a lockfile arrived red and stayed red, because
 # dependabot cannot regenerate them. So drift is checked when it means
-# something, at release, where `make sbom` is run and its output committed.
+# something, at release, where `make sbom:generate` is run and its output committed.
 #
 # The consequence to keep in mind rather than hide: between releases, the
 # committed inventories describe the lockfiles as of the last release. The
@@ -260,7 +260,7 @@ fi
 # them together.
 if [ "${1:-}" = "--lint" ]; then
 	echo "lint ok: the detector self-tests pass and every lockfile is accounted for"
-	echo "(drift against the lockfiles is checked by \`make sbom-check\` at release time)"
+	echo "(drift against the lockfiles is checked by \`make sbom:check\` at release time)"
 	exit 0
 fi
 
@@ -297,7 +297,7 @@ if [ "$checked" -eq 0 ]; then
 fi
 if [ "$drifted" -ne 0 ]; then
 	echo "$drifted of $checked committed inventories no longer describe their lockfile." >&2
-	echo "Run \`make sbom\` and commit the result in the same change as the lockfile." >&2
+	echo "Run \`make sbom:generate\` and commit the result in the same change as the lockfile." >&2
 	exit 1
 fi
 echo "$checked inventories match their lockfiles"

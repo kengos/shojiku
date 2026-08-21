@@ -6,7 +6,7 @@ name: Site (docs-only changes)
 # because the site READS them:
 #
 #   docs/engine/**   projected onto /reference/ and into llms-full.txt, and
-#                    `make site` reads those files LIVE. What it asserts is
+#                    `make site:verify` reads those files LIVE. What it asserts is
 #                    structural, not a snapshot: every page declares its
 #                    `reference:` front-matter, the page set and the demo set
 #                    correspond, and the link rewrites round-trip losslessly.
@@ -16,7 +16,7 @@ name: Site (docs-only changes)
 #                    by doing exactly that and watching it fail.
 #   CHANGELOG.md     `site/src/lib/wasmSource.ts` parses its `## [x.y.z]`
 #                    headings to decide which engine versions are RELEASED;
-#                    `make site-check` refuses a pin the changelog does not
+#                    `make site:check` refuses a pin the changelog does not
 #                    list
 #   README.md        `site/scripts/refresh-data.ts` reads it for the generated
 #                    gallery section
@@ -35,14 +35,18 @@ name: Site (docs-only changes)
 # starts and there is nothing running to read the message. Markers can only
 # ever SKIP (`[skip ci]`), never start.
 #
-# `site-build` is deliberately absent — it is the one step that needs the wasm
+# `site:build` is deliberately absent — it is the one step that needs the wasm
 # artifact, and Cloudflare Pages already builds the site on every PR including
-# the docs-only ones. That check is not this repo's `make site-build`, so it
+# the docs-only ones. That check is not this repo's `make site:build`, so it
 # proves the build rather than the target; the tsc/vitest/data half is what
 # nothing else was running.
 # The two path lists are duplicated rather than shared through a YAML anchor:
 # GitHub's workflow parser is not plain YAML and anchors are not something to
 # find out about from a run that silently did not fire. Keep them identical.
+# Gates are quiet by default; a CI log wants the raw output (see ci.yml).
+env:
+  V: 1
+
 on:
   push:
     branches: [main]
@@ -69,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # The same target a contributor runs, like every other job in this repo:
-      # `make verify:site` is `site` + `site-check`. Neither needs
+      # `make site:verify` is the site gates plus `site:check`. Neither needs
       # engine/wasm/pkg — the real-wasm suite loads the RELEASED build committed
       # under site/.data/wasm — so this job builds no Rust at all.
-      - run: make verify:site
+      - run: make site:verify

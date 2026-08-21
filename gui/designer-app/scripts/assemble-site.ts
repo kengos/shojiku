@@ -24,7 +24,7 @@ import { assemblePresets } from './assemblePresets.ts';
 
 function main(): void {
   if (!existsSync(PKG)) {
-    throw new Error(`${PKG} missing — run \`make wasm\` before assembling the site`);
+    throw new Error(`${PKG} missing — run \`make engine:wasm\` before assembling the site`);
   }
   ensureDir(OUT);
   const presets = assemblePresets();

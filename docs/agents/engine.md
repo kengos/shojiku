@@ -67,8 +67,8 @@ catalog the agent trusts is worse than none once it lies.
 
 **Format: JSON Schema, derived from the parser.** Not a bespoke
 `availables` shape. An agent reads an OpenAPI document correctly because
-it is imitating a format it has seen constantly, and the properties that
-make that work are the ones being copied — node-local `description`,
+it is imitating a format it has seen constantly, and the properties
+that make that work are the ones being copied — node-local `description`,
 closed enumeration (so absence is information), constraints in machine
 form, an example per shape, named `$ref` shapes, and `oneOf` with a
 discriminator for a tagged union, which is exactly what the item `type:`
@@ -97,7 +97,7 @@ made non-optional — and it had been leaving the Node addon's own
 dependencies unchecked for as long as they existed.
 
 The embedded bytes were the other thing to measure rather than assume.
-Measured: **zero**. `make wasm` reports the same raw and gzip size with
+Measured: **zero**. `make engine:wasm` reports the same raw and gzip size with
 the catalog embedded as without it, because `CATALOG` is a `const` that
 nothing in that build references and the linker strips it. It will cost
 its bytes at the stage that serves it, which is where the number is
@@ -151,7 +151,7 @@ honest (regenerate, then fail on drift):
 
 - **built** — the artifact regenerates from the parser and matches what
   is committed; a key added without regenerating is a red gate, not a
-  silent lie. `make reference-data` regenerates, `make reference-check`
+  silent lie. `make reference:generate` regenerates, `make reference:check`
   fails on drift. That target also runs the schema tests, because the
   drift comparison on its own is an *idempotence* claim: it protects a
   wrong artifact exactly as faithfully as a right one.

@@ -1,8 +1,8 @@
 {
   // GUI-editing container for the gui/ pnpm workspace: Node 24 + the same
-  // pnpm store volume the `make gui*` targets mount, so the node_modules
+  // pnpm store volume the `make gui:verify*` targets mount, so the node_modules
   // symlinks one side installs stay valid for the other. Engine artifacts
-  // still build on the HOST (`make wasm` — needs docker); inside, run:
+  // still build on the HOST (`make engine:wasm` — needs docker); inside, run:
   //   cd gui
   //   pnpm --filter @shojiku/designer-app assemble   # once per wasm/pack change
   //   pnpm --filter @shojiku/designer-app dev        # Vite dev server (HMR)

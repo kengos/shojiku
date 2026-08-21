@@ -1,10 +1,10 @@
 # The Ruby SDK's gate environment.
 #
-# Nobody needs Ruby installed to work on this package: `make sdk-ruby` builds
+# Nobody needs Ruby installed to work on this package: `make sdk:ruby:verify` builds
 # and runs this image, exactly as the Rust and Node gates run in theirs.
 #
 # The engine library is INJECTED as a pre-compiled artifact (built once by
-# `make capi-lib` through the pinned Rust image) rather than compiled from
+# `make engine:capi-lib` through the pinned Rust image) rather than compiled from
 # Rust source here. Seven language images each building the engine would make
 # the gate grid unusable.
 #
@@ -22,7 +22,7 @@
 # actually supported the version it claims.
 # The language version is a build ARG so one Dockerfile serves the whole
 # supported range; the default is the FLOOR from docs/agents/sdk.md, which is
-# what a bare `make sdk-ruby` gates on.
+# what a bare `make sdk:ruby:verify` gates on.
 ARG RUBY_VERSION=3.3
 FROM ruby:${RUBY_VERSION}-slim-bookworm
 

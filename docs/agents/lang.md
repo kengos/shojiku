@@ -154,7 +154,7 @@ formatter.
 ## Mandatory lint/test gates
 
 Locale data is consumed by the Rust `engine/formatter` crate, so it
-inherits the Rust gates from [engine.md](engine.md) (`make rust`, tests,
+inherits the Rust gates from [engine.md](engine.md) (`make engine:lint`, tests,
 100% workspace coverage — see [../guidelines.md](../guidelines.md)),
 plus:
 

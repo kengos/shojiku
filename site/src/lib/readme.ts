@@ -4,7 +4,7 @@
 // the no-transcription rule true there.
 import type { GalleryEntry } from "./gallery.ts";
 
-export const START = "<!-- gallery:generated:start (edit examples/gallery.yml, then `make site-data`) -->";
+export const START = "<!-- gallery:generated:start (edit examples/gallery.yml, then `make site:data`) -->";
 export const END = "<!-- gallery:generated:end -->";
 
 function cell(e: GalleryEntry): string {

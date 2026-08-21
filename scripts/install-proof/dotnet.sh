@@ -5,7 +5,7 @@
 . "$(dirname "$0")/common.sh"
 
 IMG="mcr.microsoft.com/dotnet/sdk:${DOTNET_VER:-10.0}-noble"
-require_artifact "$CAPI_LIB" capi-lib
+require_artifact "$CAPI_LIB" engine:capi-lib
 
 echo "== install proof (dotnet, $IMG) =="
 

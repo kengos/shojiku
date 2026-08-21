@@ -1,9 +1,9 @@
 // The committed halves of the site's generated inputs, in three modes:
 //
-//   `make site-data`          (default)        the README gallery section,
+//   `make site:data`          (default)        the README gallery section,
 //                                              generated from examples/gallery.yml
-//   `make site-check`         (--check)        both halves, compared not written
-//   `make site-wasm-release`  (--release-wasm) RELEASE TIME ONLY: point
+//   `make site:check`         (--check)        both halves, compared not written
+//   `make site:wasm-release`  (--release-wasm) RELEASE TIME ONLY: point
 //                                              site/.data/wasm at a released build
 //
 // The wasm half is deliberately NOT part of the routine refresh. site/.data/wasm
@@ -121,7 +121,7 @@ if (mode === "check") {
 if (mode === "release-wasm") {
   const pkg = join(ROOT, "engine", "wasm", "pkg");
   const files = readdirSync(pkg).sort();
-  if (files.length === 0) throw new Error("engine/wasm/pkg is empty — run `make wasm` first");
+  if (files.length === 0) throw new Error("engine/wasm/pkg is empty — run `make engine:wasm` first");
   const next: WasmSource = {
     version: workspacePackageVersion(readFileSync(join(ROOT, "engine", "Cargo.toml"), "utf8")),
     files: Object.fromEntries(files.map((f) => [f, sha256(readFileSync(join(pkg, f)))])),

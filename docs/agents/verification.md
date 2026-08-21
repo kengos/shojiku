@@ -22,7 +22,7 @@ its edge is, and what to do when the command you want is missing.
   discipline; an incantation re-derives four of those from memory each
   time, and mount drift is the single biggest documented time-sink in
   this repo.
-- **Never wrap a gate.** Not in a pipe (`make gui | tail -40` reports
+- **Never wrap a gate.** Not in a pipe (`make gui:verify | tail -40` reports
   *tail's* status, so it exits 0 over a failed gate), not in a redirect
   plus `; echo $?` (same trap, suffix form — the exit code you read is
   `echo`'s), not in `make -n` (make EXECUTES recipe lines containing
@@ -60,9 +60,9 @@ gap in the grid, and filling it is cheap:
 Both narrowing flags came from this route, after a cycle in which the
 gap got filled with hand-typed `docker run`s instead:
 
-- `make test:gui F=<file pattern>` — coverage dropped, since one file
+- `make gui:test F=<file pattern>` — coverage dropped, since one file
   cannot meet a workspace threshold;
-- `make test:engine P=<crate> F=<name filter>` — ~30 s against a crate
+- `make engine:test P=<crate> F=<name filter>` — ~30 s against a crate
   where the workspace run is ~4 min. It prints
   `capi cdylib link SKIPPED (narrowed run)` so the narrowed result can
   never be mistaken for the full one.
@@ -76,14 +76,14 @@ before claiming the tests pass.
 **User decision: the routine pre-PR step is no longer a local full run.**
 CI is a strict SUPERSET of `make verify` — every prerequisite of that
 target has a CI job running the same `make` target in the same pinned
-container, and CI additionally runs `site-build`, the SDK version matrix
-(local runs one version per language) and the `proof-<lang>` install
+container, and CI additionally runs `site:build`, the SDK version matrix
+(local runs one version per language) and the `proof:<lang>` install
 checks. A green CI therefore says everything a green local mirror would
 and more, in parallel minutes instead of ~20 serial ones.
 
-What stays local is the `<verb>:<scope>` grid, **coverage included**:
-`budget:` / `lint:` / `test:` while iterating, `verify:engine` /
-`verify:gui` / `quiet T=coverage` before pushing. Coverage earns its
+What stays local is the `<scope>:<job>` grid, **coverage included**:
+`engine:budget` / `engine:lint` / `engine:test` while iterating,
+`engine:verify` / `gui:verify` / `engine:coverage` before pushing. Coverage earns its
 place because it is the one gate whose failure demands NEW TESTS rather
 than a fix — discovering that through a push-and-wait loop is the
 expensive way to learn it.
@@ -103,10 +103,13 @@ Re-running a mirror for a change that cannot reach a gate is waste, not
 rigor — and it trains you to treat the gate as ceremony.
 
 - Changes no gate reads: Makefile **comments**, `docs/agents/**`, this
-  file. Nothing parses them; verify stays valid. Prove it by grep if you
+  file. Nothing parses them; verify stays valid. One exception worth
+  knowing: `make make:check` DOES read EVERY tracked file — Dockerfiles and
+  doc comments included — for the make-target names they spell in code, so a
+  doc edit that names a command is checkable in seconds. Prove it by grep if you
   are unsure — that is inspection, and it is free.
 - Changes that reach exactly one scope: re-run **that** scope
-  (`verify:gui`, `test:engine`), not the whole mirror.
+  (`gui:verify`, `engine:test`), not the whole mirror.
 - Changes to a gate's own recipe, or to code any gate compiles: the
   mirror is back on the table.
 

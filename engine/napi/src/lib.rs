@@ -27,7 +27,7 @@
 //! The shim itself lives behind the non-default `shim` feature, so the
 //! workspace test, clippy and coverage gates never compile the N-API glue —
 //! the same containment `engine/wasm` gets from `cfg(target_arch = "wasm32")`.
-//! `make napi` builds and lints it with the feature on.
+//! `make engine:napi` builds and lints it with the feature on.
 
 mod call;
 mod outcome;

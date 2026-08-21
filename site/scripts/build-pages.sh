@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The Cloudflare Pages build (also `make site-build` locally, inside the
+# The Cloudflare Pages build (also `make site:build` locally, inside the
 # pinned Node image): pure Node — the wasm engine comes from the COMMITTED
 # site/.data/wasm — a RELEASED engine build, never a Rust build. Produces
 # site/.vitepress/dist with the
@@ -16,7 +16,7 @@ ROOT="$(cd "$SITE/.." && pwd)"
 command -v pnpm >/dev/null 2>&1 || npm install -g pnpm@11.15.1
 
 # 1. The designer-app's assemble reads engine/wasm/pkg, which is gitignored —
-#    stage the committed copy there (hash-pinned by `make site-check` against
+#    stage the committed copy there (hash-pinned by `make site:check` against
 #    site/.data/wasm-source.json).
 mkdir -p "$ROOT/engine/wasm/pkg"
 cp "$SITE/.data/wasm/"* "$ROOT/engine/wasm/pkg/"

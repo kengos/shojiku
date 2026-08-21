@@ -94,6 +94,28 @@ platform binaries.
   field.** Previously the only gear was on the tab header, so finding a field's
   sample text meant hunting for it a second time in the editor's own list.
 
+### Changed
+
+- **Every `make` gate reads scope-first, and each job has exactly one name.**
+  The commands that check your work were spelled verb-first (`lint:engine`,
+  `verify:sdk:ruby`) and most of them had a second, verbose twin one
+  punctuation mark away (`gui-lint` beside `lint:gui`) — so the grid did not
+  read down a column, and the two spellings of one job were easy to pick
+  wrong. They are now `engine:lint`, `sdk:ruby:verify`, `gui:lint`: scope
+  first, outside-in, colons all the way. Verbosity became a flag rather than a
+  name — every gate prints one PASS/FAIL line by default, and `V=1`
+  (`make gui:verify V=1`) gives the raw output while you debug. The old
+  spellings are gone rather than aliased, and `make help` is the full
+  inventory. Contributors and CI both move with them; nothing about the
+  published packages changes.
+- **The 1900-line Makefile is split one file per scope** — `mk/engine.mk`,
+  `mk/gui.mk`, `mk/site.mk`, `mk/sdk.mk`, `mk/docker.mk`, `mk/proof.mk` — with
+  the root file keeping the shared machinery and the gates that belong to no
+  single scope. A new gate, `make make:check`, keeps it that way: it refuses a
+  target filed under the wrong scope, and — the reason it exists — any
+  tracked file naming a `make` target that does not exist, a CI matrix's
+  interpolated name included.
+
 ### Fixed
 
 - **The Designer's format picker no longer offers a format the field cannot

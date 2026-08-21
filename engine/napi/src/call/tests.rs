@@ -31,7 +31,7 @@ fn envelope(value: serde_json::Value) -> Vec<u8> {
 }
 
 /// The envelope for one bundled example, pointing at the repository's own
-/// packs — the same inputs `make examples` renders with.
+/// packs — the same inputs `make examples:render` renders with.
 fn example_request(example: &str) -> Vec<u8> {
     let dir = repo_path("examples/business").join(example);
     let read =

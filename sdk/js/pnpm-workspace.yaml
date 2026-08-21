@@ -20,7 +20,7 @@ minimumReleaseAge: 10080
 # Transitive advisory pin, the same shape gui/pnpm-workspace.yaml carries and
 # for the same reason: postcss arrives under vite, whose range the lockfile
 # already satisfies, so `pnpm update` never reaches it. TEMPORARY — drop it
-# once vite's own range moves past the patched version, then `make lock:sdk:js`.
+# once vite's own range moves past the patched version, then `make sdk:js:lock`.
 overrides:
   postcss@<=8.5.22: ^8.5.23
 

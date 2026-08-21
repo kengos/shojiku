@@ -1,7 +1,7 @@
 //! Near-e2e suite: signing documents this engine really rendered.
 //!
 //! The fixtures are the committed `examples/*/output.pdf` files — the same
-//! bytes `make examples-check` pins — because the shapes a signer meets in
+//! bytes `make examples:check` pins — because the shapes a signer meets in
 //! practice (compressed streams, link annotations, several pages) are exactly
 //! what a synthetic fixture leaves out.
 //!

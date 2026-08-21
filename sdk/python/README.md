@@ -295,11 +295,11 @@ Nobody needs Python installed to work on this package — the gates run in a
 container, like every other gate in this repository:
 
 ```bash
-make verify:sdk:python
+make sdk:python:verify
 ```
 
-`test:sdk:python` and `lint:sdk:python` are the faster slices. The engine
-library is injected already compiled; `make capi-lib` builds it.
+`sdk:python:test` and `sdk:python:lint` are the faster slices. The engine
+library is injected already compiled; `make engine:capi-lib` builds it.
 
 ## Requirements
 

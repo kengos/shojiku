@@ -236,7 +236,7 @@ resolve in the repository source, not in a docs-only copy). Where an example
 ships multiple `params-*.json`, every output comes from the **same
 template** with different data:
 
-<!-- gallery:generated:start (edit examples/gallery.yml, then `make site-data`) -->
+<!-- gallery:generated:start (edit examples/gallery.yml, then `make site:data`) -->
 |  |  |
 | :---: | :---: |
 | [<img src="examples/business/invoice-ja/preview-1.png" width="420" alt="Invoice (ja)">](examples/business/invoice-ja/)<br>**Invoice (ja)** — 22 line items paginate with a repeating table header, per-tax-rate totals, QR + link; `params-short.json` renders a 3-item single page from the same template. | [<img src="examples/typography/novel-ja/preview-2.png" width="420" alt="Vertical short story, paperback style (ja)">](examples/typography/novel-ja/)<br>**Vertical short story, paperback style (ja)** — Run, Melos! (excerpt): vertical columns paginate with their ruby, strict kinsoku + hanging punctuation, tate-chu-yoko in the colophon, vertical page numbers. |
@@ -389,14 +389,14 @@ check-your-work workflow; the common ones:
 | Command | What it does |
 | --- | --- |
 | `make verify` | Full local CI mirror — line budget, fmt, clippy, tests, 100% coverage, cargo-deny, example byte-compare, WASM build, GUI gates, Docker build + Trivy. Green == safe to push. |
-| `make verify:engine` / `verify:gui` / `verify:docker` | One scope's whole bar. Prints a single PASS/FAIL line and exits with the gate's real code |
-| `make lint:gui` / `test:gui` / `budget:gui` | Fast slices of a scope (same for `:engine`) — iterate on these, conclude with `verify:` |
+| `make engine:verify` / `gui:verify` / `docker:verify` | One scope's whole bar. Prints a single PASS/FAIL line and exits with the gate's real code |
+| `make gui:lint` / `gui:test` / `gui:budget` | Fast slices of a scope (same for `:engine`) — iterate on these, conclude with `verify:` |
 | `cat .make-logs/last-error.log` | Where any failed gate lands, headed with the target, exit code and the step it died at |
-| `make test` / `make coverage` | Rust workspace tests / 100%-line coverage gate |
-| `make gui` | GUI workspace gates: `tsc` typecheck + Biome lint + Vitest coverage, in a `node:24` container |
-| `make wasm` | Build the browser WASM engine bindings (`engine/wasm/pkg`) + size budget |
-| `make examples` | Re-render every bundled example's committed PDF/PNG |
-| `make docker-build` / `make docker-render` | Build the runtime image (`shojiku-ci:local`) / render the bundled example through it — the published image is [ghcr.io/kengos/shojiku:edge](https://github.com/kengos/shojiku/pkgs/container/shojiku) ([from source](docs/from-source.md)) |
+| `make engine:test` / `make engine:coverage` | Rust workspace tests / 100%-line coverage gate |
+| `make gui:verify` | GUI workspace gates: `tsc` typecheck + Biome lint + Vitest coverage, in a `node:24` container |
+| `make engine:wasm` | Build the browser WASM engine bindings (`engine/wasm/pkg`) + size budget |
+| `make examples:render` | Re-render every bundled example's committed PDF/PNG |
+| `make docker:build` / `make docker:render` | Build the runtime image (`shojiku-ci:local`) / render the bundled example through it — the published image is [ghcr.io/kengos/shojiku:edge](https://github.com/kengos/shojiku/pkgs/container/shojiku) ([from source](docs/from-source.md)) |
 
 ### Running the GUI locally
 
@@ -406,22 +406,22 @@ panel, diagnostics, undo/redo, file open/export). It is live at
 [shojiku.pages.dev/designer](https://shojiku.pages.dev/designer/); the
 ways to run your own copy:
 
-- **`make gui-serve`** builds the complete app image (WASM engine + Vite
+- **`make gui:serve`** builds the complete app image (WASM engine + Vite
   build + assembled presets/fonts/locale packs — `gui/designer-app/Dockerfile`)
   and serves it with `docker run` at `http://localhost:8788/` (override
   with `GUI_SERVE_PORT=…`) — the production-shaped way to check the app.
-- **`make gui-dev`** runs the Vite dev server (hot reload) in Docker at
+- **`make gui:dev`** runs the Vite dev server (hot reload) in Docker at
   `http://localhost:5173/` for iterating on `gui/` code; it builds the
   WASM engine first if `engine/wasm/pkg` is missing and assembles the
   runtime `data/` tree the dev server serves. A matching
   `.devcontainer/` exists for editor-integrated work (same pnpm store;
-  engine artifacts still build on the host via `make wasm`).
-- **`make gui-e2e`** builds the same app image and runs the Playwright
+  engine artifacts still build on the host via `make engine:wasm`).
+- **`make gui:e2e`** builds the same app image and runs the Playwright
   golden path against it (on-demand, not part of `make verify`).
-- **`make gui`** runs the GUI gates (typecheck + lint + Vitest, including
+- **`make gui:verify`** runs the GUI gates (typecheck + lint + Vitest, including
   real-engine integration tests that render through the WASM bindings —
   never a mock) in Docker.
-- **`make wasm-e2e`** is the engine-only browser golden path: it
+- **`make engine:wasm-e2e`** is the engine-only browser golden path: it
   instantiates the WASM engine, injects fonts, and paints rendered pages
   to a `<canvas>` (Playwright in Docker, on-demand — not part of
   `make verify`).

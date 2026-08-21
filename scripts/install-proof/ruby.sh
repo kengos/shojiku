@@ -5,7 +5,7 @@
 . "$(dirname "$0")/common.sh"
 
 IMG="ruby:${RUBY_VER:-3.3}-slim-bookworm"
-require_artifact "$CAPI_LIB" capi-lib
+require_artifact "$CAPI_LIB" engine:capi-lib
 
 echo "== install proof (ruby, $IMG) =="
 

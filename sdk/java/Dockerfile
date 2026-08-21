@@ -1,11 +1,11 @@
 # The Java SDK's gate environment.
 #
-# Nobody needs a JDK or Maven installed to work on this package: `make sdk-java`
+# Nobody needs a JDK or Maven installed to work on this package: `make sdk:java:verify`
 # builds and runs this image, exactly as the Rust, Node, Ruby, Python and .NET
 # gates run in theirs.
 #
 # The engine library is INJECTED as a pre-compiled artifact (built once by
-# `make capi-lib` through the pinned Rust image) rather than compiled from Rust
+# `make engine:capi-lib` through the pinned Rust image) rather than compiled from Rust
 # source here. Seven language images each building the engine would make the
 # gate grid unusable.
 #
@@ -25,7 +25,7 @@
 # enterprise and systems-integrator segment actually runs.
 # The language version is a build ARG so one Dockerfile serves the whole
 # supported range; the default is the FLOOR from docs/agents/sdk.md, which is
-# what a bare `make sdk-java` gates on.
+# what a bare `make sdk:java:verify` gates on.
 ARG JAVA_VERSION=21
 FROM maven:3.9-eclipse-temurin-${JAVA_VERSION}
 

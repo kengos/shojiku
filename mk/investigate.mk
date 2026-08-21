@@ -67,27 +67,6 @@ investigate\:docker: ## Daemon healthy AND able to pull? (a daemon that answers 
 		printf '  ok — a real pull completed.\n'; \
 	fi
 
-investigate\:coverage: ## Which lines failed the 100% coverage gate (reads the last report; no re-run)
-	@$(MAKE) --no-print-directory coverage-why
-
-investigate\:render: ## Render one template with the pack dirs already right: TPL=<file.yml> [PARAMS=<file.json>]
-	@if [ -z "$(TPL)" ]; then \
-		echo 'usage: make investigate:render TPL=examples/business/invoice-ja/template.yml [PARAMS=…/params.json]' >&2; \
-		echo '  A hand-run CLI has NO default pack directory — only this target passes one,' >&2; \
-		echo '  which is why an ad-hoc `cargo run -p shojiku-cli` dies with `font pack not found`.' >&2; \
-		exit 2; \
-	fi
-	@$(CARGO_IN_DOCKER) 'cargo build --release -p shojiku-cli'
-	@$(GATE_LOCK) docker run --rm \
-		-v "$(CURDIR):/repo" -w /repo \
-		-e SHOJIKU_FONT_DIR=/repo/packs/fonts \
-		-e SHOJIKU_LOCALE_DIR=/repo/packs/locale \
-		$(RUST_IMAGE) ./engine/target/release/shojiku render \
-			--template "$(TPL)" \
-			$(if $(PARAMS),--params "$(PARAMS)",) \
-			--output /repo/.make-logs/investigate-render.pdf
-	@printf 'wrote .make-logs/investigate-render.pdf\n'
-
 investigate\:gates: ## Is another gate running in this tree, and who holds the lock?
 	@lock="$(CURDIR)/.make-logs/gates"; \
 	if [ -d "$$lock" ] && [ -n "$$(ls -A "$$lock" 2>/dev/null)" ]; then \

@@ -2,13 +2,13 @@
 # Regenerates the committed CycloneDX SBOMs under sbom/ — one per
 # dependency-bearing component that is PUBLISHED. Runs syft through Docker
 # like every other gate (no local toolchain). Regenerate whenever a
-# lockfile changes (`make sbom`) and commit the result in the same change;
-# `make sbom-check` (scripts/check-sbom.sh) then holds the two together.
+# lockfile changes (`make sbom:generate`) and commit the result in the same change;
+# `make sbom:check` (scripts/check-sbom.sh) then holds the two together.
 #
 # Scope: these are dependency INVENTORIES (purl + version per component,
 # for vulnerability tooling and supply-chain transparency). Lockfiles
 # carry no license metadata, so per-component license fields are mostly
-# absent — license COMPLIANCE is gated separately (`make deny` for the
+# absent — license COMPLIANCE is gated separately (`make engine:deny` for the
 # engine; bundled font licenses ship in packs/fonts/<pack>/).
 #
 # WHY IT SCANS A FILE AND NOT A DIRECTORY. syft's `dir:` scan walks
@@ -96,7 +96,7 @@ generate() {
 	# Write to scratch and move into place. A redirect straight onto the
 	# destination truncates it BEFORE docker runs, so an interrupted or
 	# failing scan leaves the committed inventory at 0 bytes — and
-	# `make sbom` is the command CONTRIBUTING tells people to run after a
+	# `make sbom:generate` is the command CONTRIBUTING tells people to run after a
 	# lockfile moves, so that empty file is one `git add` from shipping.
 	scratch="$SCRATCH_DIR/$name.cdx.json"
 	docker run --rm -v "$REPO_ROOT:/repo:ro" "$SYFT_IMAGE" \
@@ -111,7 +111,7 @@ generate() {
 	}
 	# `preserved` keeps the committed bytes when only the volatile fields
 	# moved; see sbom_place. Printing which happened is the whole readout a
-	# caller gets — `make sbom` saying "preserved" for two of three
+	# caller gets — `make sbom:generate` saying "preserved" for two of three
 	# inventories is how you know the third is the real delta.
 	#
 	# NOT `echo "$name: $(sbom_place …)"`. sbom_place aborts on a mask that

@@ -8,7 +8,7 @@
 . "$(dirname "$0")/common.sh"
 
 IMG="golang:${GO_VER:-1.25}-bookworm"
-require_artifact "$CLI_BIN" cli-bin
+require_artifact "$CLI_BIN" engine:cli-bin
 
 echo "== install proof (go, $IMG) =="
 

@@ -1,7 +1,7 @@
 # Self-contained serving image for the standalone Designer app: builds the
 # wasm module, builds + assembles the app, and serves the static output
 # (index + JS + the data/ tree: catalog, fonts, presets, wasm pkg). Used by
-# `make gui-serve` (local run) and the `make gui-e2e` golden path.
+# `make gui:serve` (local run) and the `make gui:e2e` golden path.
 # Build context = the REPOSITORY ROOT:
 #   docker build -f gui/designer-app/Dockerfile -t shojiku-designer-app:local .
 #   docker run --rm -p 8788:80 shojiku-designer-app:local

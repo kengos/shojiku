@@ -19,7 +19,7 @@ minimumReleaseAgeExclude: []
 # gui/pnpm-workspace.yaml (where the full rationale lives): `pnpm update`
 # cannot reach a transitive dep whose parent range is already satisfied, so
 # each entry pins past the advisory until the parent (vitepress) widens its
-# own range — drop it then and re-run `make lock:site`. Neither version is
+# own range — drop it then and re-run `make site:lock`. Neither version is
 # young enough to need a minimumReleaseAgeExclude entry.
 overrides:
   vite@<=6.4.2: ^6.4.3

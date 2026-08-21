@@ -1,14 +1,14 @@
 // @vitest-environment node
 //
 // The one integration test against the REAL wasm engine (never a mock): it
-// loads the `engine/wasm/pkg` module (the `make wasm` artifact, gitignored),
+// loads the `engine/wasm/pkg` module (the `make engine:wasm` artifact, gitignored),
 // injects the en-US locale + its font packs bytes-first, and drives the browser
 // transport end to end on the receipt-us example. This is the parity evidence
 // that the GUI's transport calls the same engine `shojiku render` does.
 //
 // The pkg is imported DYNAMICALLY (a non-literal specifier) so tsc never binds
 // the GUI package to the gitignored artifact; a missing pkg fails fast here with
-// a "run `make wasm`" message rather than a cryptic module-resolution error.
+// a "run `make engine:wasm`" message rather than a cryptic module-resolution error.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -86,7 +86,7 @@ const exampleFile = (name: string) =>
 
 async function loadModule(): Promise<WasmModule> {
   if (!existsSync(fileURLToPath(PKG_WASM))) {
-    throw new Error('engine/wasm/pkg is missing — run `make wasm` before the gui gates');
+    throw new Error('engine/wasm/pkg is missing — run `make engine:wasm` before the gui gates');
   }
   const mod = (await import(PKG_JS.href)) as unknown as WasmModule;
   mod.initSync({ module: readFileSync(fileURLToPath(PKG_WASM)) });

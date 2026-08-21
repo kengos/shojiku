@@ -166,10 +166,10 @@ Development happens in the
 `sdk/php`. Gates run in a container, so no PHP toolchain is needed locally:
 
 ```bash
-make verify:sdk:php
+make sdk:php:verify
 ```
 
-`make test:sdk:php` and `make lint:sdk:php` are the faster slices.
+`make sdk:php:test` and `make sdk:php:lint` are the faster slices.
 
 ## Documentation
 

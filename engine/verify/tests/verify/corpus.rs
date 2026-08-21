@@ -47,7 +47,7 @@ fn every_verify_document_seed_is_judged_or_refused() {
     let seeds = corpus("verify_document");
     assert!(seeds.len() >= 2, "the committed verifier seeds are missing");
     for seed in seeds {
-        // No verdict is asserted: after `make fuzz` has seeded the directory
+        // No verdict is asserted: after `make engine:fuzz` has seeded the directory
         // one of these IS a validly signed document. What is being proven is
         // that every seed is answered rather than crashed on.
         let _ = verify_document(&seed, &anchors);

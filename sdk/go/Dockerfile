@@ -1,11 +1,11 @@
 # The Go SDK's gate environment.
 #
-# Nobody needs Go installed to work on this package: `make sdk-go` builds and
+# Nobody needs Go installed to work on this package: `make sdk:go:verify` builds and
 # runs this image, exactly as the Rust, Node, Ruby, Python, .NET, Java and PHP
 # gates run in theirs.
 #
 # The engine is INJECTED as a pre-compiled artifact — here the `shojiku`
-# BINARY, built once by `make cli-bin` through the pinned Rust image, because
+# BINARY, built once by `make engine:cli-bin` through the pinned Rust image, because
 # this SDK's transport is a subprocess rather than a linked library. Seven
 # language images each building the engine would make the gate grid unusable.
 #
@@ -26,7 +26,7 @@
 # it, and pins the floor instead.
 # The language version is a build ARG so one Dockerfile serves the whole
 # supported range; the default is the FLOOR from docs/agents/sdk.md, which is
-# what a bare `make sdk-go` gates on.
+# what a bare `make sdk:go:verify` gates on.
 ARG GO_VERSION=1.25
 FROM golang:${GO_VERSION}-bookworm
 

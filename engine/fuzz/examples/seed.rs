@@ -3,7 +3,7 @@
 //! A signed document embeds a certificate, and the signing track forbids
 //! committed key material — so the inputs that actually reach the
 //! interesting code (a real signature dictionary, a real CMS container) have
-//! to be produced at fuzz time instead. `make fuzz` runs this first.
+//! to be produced at fuzz time instead. `make engine:fuzz` runs this first.
 //!
 //! Everything written here is prefixed `generated-` and gitignored; the
 //! committed seeds beside them are structural only. Without this step a

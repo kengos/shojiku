@@ -3462,7 +3462,7 @@
   },
   "$id": "https://shojiku.pages.dev/reference/catalog.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Per-key facts of the Shojiku template and definitions wire, derived from the parser. Regenerate with `make reference-data`; `make reference-check` fails on drift.",
+  "description": "Per-key facts of the Shojiku template and definitions wire, derived from the parser. Regenerate with `make reference:generate`; `make reference:check` fails on drift.",
   "properties": {
     "definitions": {
       "$ref": "#/$defs/Definitions"
