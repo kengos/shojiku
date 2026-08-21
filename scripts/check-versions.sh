@@ -39,8 +39,6 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # entry is a hole.
 #
 #   CHANGELOG.md           every past release is named here, by definition.
-#   docs/agents/gotchas/   the incident catalog quotes the stale literals that
-#                          caused the incidents (`shojiku-0.1.0.jar`).
 #   sbom/                  inventories describe a RELEASED artifact, so they
 #                          legitimately lag the working tree.
 #   *lock*                 resolver output, not an authored coordinate.
@@ -50,7 +48,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 #                          the detector works, so excluding it costs nothing.
 is_excluded() {
   case "$1" in
-    CHANGELOG.md|docs/agents/gotchas/*|sbom/*) return 0 ;;
+    CHANGELOG.md|sbom/*) return 0 ;;
     scripts/check-versions.sh) return 0 ;;
     *.lock|*lock.json|*lock.yaml|*.lock.json) return 0 ;;
     *) return 1 ;;
@@ -319,7 +317,7 @@ trap 'rm -rf "$TMP"' EXIT
 # ---------------------------------------------------------------------------
 self_test() {
   fx="$TMP/fixture"
-  mkdir -p "$fx/engine" "$fx/sdk/js" "$fx/gui" "$fx/scripts/release" "$fx/docs/agents/gotchas" "$fx/sbom"
+  mkdir -p "$fx/engine" "$fx/sdk/js" "$fx/gui" "$fx/scripts/release" "$fx/sbom"
 
   printf '[workspace.package]\nversion = "9.9.9"\nedition = "2021"\n' > "$fx/engine/Cargo.toml"
   printf 'shojiku-core = { path = "core", version = "9.9.9" }\n' >> "$fx/engine/Cargo.toml"
@@ -350,7 +348,6 @@ XML
   # The two escape hatches: an exempt LINE and an excluded PATH. Both must
   # produce no hit, or the hatch is decorative.
   printf 'tar xzf shojiku-1.1.1.tar.gz  # version-check-exempt: the hatch itself\n' > "$fx/exempt.md"
-  printf 'tar xzf shojiku-1.1.1.tar.gz\n' > "$fx/docs/agents/gotchas/history.md"
   # One case per exclusion CLASS, not one per list. A broken exclusion is a
   # false RED rather than a fail-open, but nothing else would notice it.
   printf 'shojiku-1.1.1.gem released\n' > "$fx/CHANGELOG.md"

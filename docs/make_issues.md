@@ -28,10 +28,11 @@ commit messages or PR bodies.
 
 Not for this file: "the gate was slow", or a misread on your part. An
 *environmental* trap — a flake, a stale Docker volume, a corrupted
-target dir — goes to
-[agents/gotchas/docker-make.md](agents/gotchas/docker-make.md) instead.
-This file is only for output that could not answer **which file / which
-line / which cause**.
+target dir — is not a gate-output gap at all: `scripts/gate-diagnose.sh`
+already names the common ones in the FAIL block, and
+`make investigate:docker` / `investigate:gates` answer the rest. This
+file is only for output that could not answer **which file / which line
+/ which cause**.
 
 ## Open
 
@@ -51,6 +52,14 @@ line / which cause**.
       emitted rather than the step that actually exited non-zero, so any
       gate whose failure comes from a sub-command after the final heading
       is mis-attributed the same way.
+      **Half fixed; the entry stays open.** The misleading wasm excerpt is
+      gone — `gate-culprits.sh` emits its wasm section only when the log
+      actually carries an `over budget` line, so a PASSING wasm step
+      inside a compound gate no longer presents two in-budget numbers as
+      the failure (reproduced against a committed real `wasm.log`, and
+      re-checked both ways against it). What remains is the `last step`
+      marker itself and the missing vitest COVERAGE matcher; neither can
+      be closed without inducing the real gui coverage failure.
 
 - [ ] `make_issue_biome_info_outranks_the_error` — **When**: `make
       lint:gui` fails on a real Biome FORMAT error while `gui/biome.json`

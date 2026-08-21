@@ -14,8 +14,7 @@ version: 2
 # commits on one PR — and two fixes did not settle it. What actually settled it
 # was noticing the requirement was wrong: an SBOM is a statement about a
 # released artifact, and nobody consumes "the dependencies of main at commit
-# abc123". `make sbom` now runs at release. The trap catalogue is
-# docs/agents/gotchas/github-automation.md.
+# abc123". `make sbom` now runs at release.
 #
 # What CI still checks per PR is `make sbom-lint` — the detector's self-tests
 # and the rule that every committed lockfile is either inventoried or declared
