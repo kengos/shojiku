@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
+import { FORMAT_CATALOG } from '../testkit/formatCatalog';
 import { ColumnForm } from './ColumnForm';
 import { IterableSourceSection } from './IterableSourceSection';
 import { TableColumnsSection } from './TableColumnsSection';
@@ -259,6 +260,47 @@ describe('TableColumnsSection', () => {
       keys: ['data', 'format'],
       value: 'name',
     });
+  });
+
+  it('type-filters a bound column’s format names, given a catalog', () => {
+    // A second entry point into the same picker model, so it gets the gate
+    // asserted HERE — "it calls the same function" is not the bar. `amount` is
+    // currency-typed and `tax` is a date-pattern registry entry, so the engine
+    // lists none of the registry under `currency`.
+    const node = {
+      type: 'table',
+      data: { key: 'rows' },
+      columns: [{ label: '金額', data: { key: 'amount' } }],
+    };
+    const spellings = () =>
+      screen.getAllByRole('menuitem').map((row) => row.querySelector('code')?.textContent);
+    const withCatalog = draw(
+      <TableColumnsSection
+        controller={makeController({ [TABLE]: node, formats: { tax: {} } })}
+        tablePath={TABLE}
+        dataKey="rows"
+        dataScope=""
+        groups={GROUPS}
+        params='{"rows":[{"amount":300000}]}'
+        formatCatalog={FORMAT_CATALOG}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
+    expect(spellings()).toEqual(['symbol', 'name']);
+    withCatalog.unmount();
+    // Without one there is nothing to filter by, and the same column offers it.
+    draw(
+      <TableColumnsSection
+        controller={makeController({ [TABLE]: node, formats: { tax: {} } })}
+        tablePath={TABLE}
+        dataKey="rows"
+        dataScope=""
+        groups={GROUPS}
+        params='{"rows":[{"amount":300000}]}'
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
+    expect(spellings()).toEqual(['tax', 'symbol', 'name']);
   });
 
   it('renders an addable empty section when the table has no columns array', () => {

@@ -193,15 +193,32 @@ read side, never the reverse.
   own-property-guarded; currency variants capability-gated. **Every
   SAMPLE comes from the engine's format catalog** — the hand-written
   table this module used to own is gone, because a sample the GUI
-  computed could drift from what the page shows. Also
+  computed could drift from what the page shows. **The registry half is
+  type-filtered through that same catalog** (`pickableRegistry`): a
+  `formats:` entry declares a KIND, and the engine lists it under a type
+  only where the two agree, so a date pattern is no longer offered on a
+  money field (where the pick warns) or on a text one, where a field with no
+  declared `enum` labels ignores it SILENTLY — that arm has no variants of its
+  own (a labelled field does warn). The DOCUMENT's list is
+  what gets walked and the catalog only says yes or no, so a catalog can
+  never add a name the document does not declare; `origin` is read too, so
+  a `formats:` entry legally spelled `symbol` shows on a CURRENCY binding as
+  the builtin row it really is there (`money.rs` matches that name without
+  consulting the registry), while on a date binding the same entry is the
+  registry reference it really is there. Two states have nothing to filter
+  with and keep the full list: no catalog, and an unresolved field type (types
+  come from `definitions`, so a document without them resolves none).
+  Typing stays open either way — the picker's input is free text, so
+  narrowing what is OFFERED never rewrites what is AUTHORED. Also
   `variantOptions` (a `defaults.formats` row's vocabulary — the catalog's
   own list for that type, MINUS `default`, which the picker's leading
   clear-the-key row already offers), `isFixedType` (the engine's answer to
   "does this type have a real choice") and `variantSamples`. The engine
-  stays the validator. A TEXT field offers NO builtin (naming `date` on
-  one overrides the type and the engine then fails to parse the value as
-  a date — that is an error, not a format); its registry names still
-  show, and typing stays open.
+  stays the validator. A TEXT field offers NO builtin either (naming
+  `date` on one overrides the type and the engine then fails to parse the
+  value as a date — that is an error, not a format), so wherever the engine
+  answered its picker is empty and the spelling is typed; with no catalog it
+  still lists the document's names, as the paragraph above says.
 - `panel/formatLabels.ts` — pure: wire spelling → chrome-catalog key for
   the KNOWN variants, and origin → group-heading key. A closed
   own-property-guarded table, never an interpolated

@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { FORMAT_CATALOG } from '../testkit/formatCatalog';
 import { PropertyPanel } from './PropertyPanel';
 
 function makeController(
@@ -904,8 +905,69 @@ describe('PropertyPanel — binding field picker', () => {
     );
     // Registry name first, then the currency variants for the currency-typed
     // binding (localized labels come from the catalog; the wire spelling shows
-    // in the `<code>`).
+    // in the `<code>`). No catalog is passed here, so nothing is filtered —
+    // which is the documented fallback, and the reason the two tests below
+    // exist: this one stays green whether or not the filter works.
     expect(spellings).toEqual(['tax', 'symbol', 'name']);
+  });
+
+  it('drops a registry name a currency binding cannot pick, given a catalog', () => {
+    // The THREADING is what this pins, not the model function: the panel must
+    // hand its `formatCatalog` to `formatOptions`, or the picker goes on
+    // offering a date pattern on a money field — where the pick renders the
+    // bare amount and warns.
+    const moneyDefs = [
+      'properties:',
+      '  total:',
+      '    type: number',
+      '    format: currency',
+      '    title: 合計',
+      '',
+    ].join('\n');
+    const { container } = draw(
+      <PropertyPanel
+        controller={makeController({
+          [PATH]: { type: 'text', data: { key: 'total' } },
+          formats: { tax: {} },
+        })}
+        path={PATH}
+        definitions={moneyDefs}
+        formatCatalog={FORMAT_CATALOG}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
+    expect(
+      Array.from(container.querySelectorAll('[role="menuitem"] code')).map((c) => c.textContent),
+    ).toEqual(['symbol', 'name']);
+  });
+
+  it('keeps a registry name a date binding CAN pick, given a catalog', () => {
+    // The positive arm of the same threading — the filter is not a blanket
+    // removal, and a date pattern on a date field is the pairing the engine
+    // admits.
+    const dateDefs = [
+      'properties:',
+      '  issued:',
+      '    type: string',
+      '    format: date',
+      '    title: 発行日',
+      '',
+    ].join('\n');
+    const { container } = draw(
+      <PropertyPanel
+        controller={makeController({
+          [PATH]: { type: 'text', data: { key: 'issued' } },
+          formats: { stamp: {} },
+        })}
+        path={PATH}
+        definitions={dateDefs}
+        formatCatalog={FORMAT_CATALOG}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
+    expect(
+      Array.from(container.querySelectorAll('[role="menuitem"] code')).map((c) => c.textContent),
+    ).toEqual(['stamp', 'datetime']);
   });
 
   it('hides the format field until a data key is picked', () => {
