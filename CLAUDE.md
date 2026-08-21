@@ -46,7 +46,7 @@ its concern (component docs reference them rather than restating):
 | where a feature BELONGS; which boundary must not move | [docs/architecture.md](docs/architecture.md) (the constitution) + [docs/agents/`<area>`.md](docs/agents/) for the component |
 | the style / lint / 100%-coverage bar, in any language | [docs/guidelines.md](docs/guidelines.md) |
 | how correctness is ESTABLISHED at all — and why you may not invent a check | [docs/agents/verification.md](docs/agents/verification.md) + the allowlist at `head -30 Makefile` |
-| what already cost someone a loop (toolchain, tests, smokes, counts) | [docs/agents/gotchas/](docs/agents/gotchas/README.md) — routing table in its README |
+| a gate failed and you do not recognise the failure | **the FAIL block itself** — it names the TREE it ran over, WHERE it broke and WHAT IT IS, and prints the command that fixes it; kept at `.make-logs/last-error.log`. The follow-up questions are commands too: `make investigate:tree` / `:docker` / `:gates` / `:coverage` / `:render` / `:pins` (`make help`) |
 | what is BUILT vs merely DECIDED | [docs/engine/features.md](docs/engine/features.md) vs `docs/agents/<area>.md` |
 
 Working order for a change: **code map → rulebooks → build → the

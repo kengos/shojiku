@@ -131,8 +131,7 @@ injected at parse). The template model splits along CSS lines.
   which is what keeps every downstream recursive walk stack-safe — stated
   at `validate/collect.rs::check_container_depth`, pinned by a model
   test; do not re-file "unbounded walk recursion" as a hardening item.**
-  Internally-tagged enums truncate the error path to the enum boundary
-  (see `docs/agents/gotchas/rust-engine.md`).
+  Internally-tagged enums truncate the error path to the enum boundary.
 - `params.rs` — params parse + `resolve_path` dotted lookup + `is_blank`
   (the shared absent/null/`""` predicate placeholders key off).
 - `catalog.rs` — the schema tree flattens to dotted-key lookup tables
