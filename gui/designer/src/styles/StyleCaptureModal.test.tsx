@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
@@ -208,5 +208,26 @@ describe('StyleCaptureModal — update', () => {
   it('treats a usage index without the target as zero impact', () => {
     renderUpdate({ usage: { refs: new Map(), truncated: false } });
     expect(screen.queryByText(/Affects/)).toBeNull();
+  });
+});
+
+// The RENDERED counterpart to `ui/actionConvention.test.ts`: that gate reads the
+// SOURCE and proves each footer names exactly one primary, which is a claim
+// about the JSX. This proves the prop actually reaches the DOM on THIS dialog's
+// confirming action — Material 3's emphasis hierarchy is only real once the
+// element carries it. `data-variant` is the documented hook; never assert the
+// utility classes.
+describe('StyleCaptureModal — emphasis (Material 3: one primary per screen)', () => {
+  it('paints its confirming action as the primary, and its dismissal as a peer', () => {
+    renderCreate();
+    expect(screen.getByRole('button', { name: 'Register' }).dataset.variant).toBe('primary');
+    cleanup();
+    // This component renders TWO footers; the source gate ranks each, so each
+    // needs its own rendered proof.
+    renderUpdate();
+    expect(screen.getByRole('button', { name: 'Update' }).dataset.variant).toBe('primary');
+    expect(screen.getByRole('button', { name: 'Save as new style' }).dataset.variant).toBe(
+      'default',
+    );
   });
 });

@@ -185,7 +185,7 @@ export const zhTw: LanguageCatalog = {
     cell_image_assets_capped: '每個元素的儲存格影像超過上限 {max}；其餘已略過',
   },
   chrome: {
-    'app.save': '儲存',
+    'app.save': '儲存…',
     'app.undo': '復原',
     'app.redo': '重做',
     'app.saveBlocked': '請先解決下方的錯誤再儲存。',
@@ -223,7 +223,7 @@ export const zhTw: LanguageCatalog = {
     'menu.file': '檔案',
     'menu.edit': '編輯',
     'menu.open': '開啟…',
-    'menu.export': '匯出',
+    'menu.export': '匯出…',
     'menu.pdf': '下載為 PDF…',
     'pdf.title': 'PDF 預覽',
     'pdf.help': '這是最終的 PDF，與命令列算繪出的位元組完全相同。',

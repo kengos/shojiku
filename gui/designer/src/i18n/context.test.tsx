@@ -21,7 +21,7 @@ describe('useI18n', () => {
     const { result } = renderHook(() => useI18n(), { wrapper: wrap('ja-JP') });
     expect(result.current.locale).toBe('ja-JP');
     expect(result.current.language).toBe('ja');
-    expect(result.current.t('app.save')).toBe('保存');
+    expect(result.current.t('app.save')).toBe('保存…');
     const text = result.current.describe({
       severity: 'warning',
       code: 'rect_missing_size',
@@ -35,13 +35,13 @@ describe('useI18n', () => {
   it('renders a script-aliased tag through its Chinese catalog', () => {
     const { result } = renderHook(() => useI18n(), { wrapper: wrap('zh-Hant-TW') });
     expect(result.current.language).toBe('zh-tw');
-    expect(result.current.t('app.save')).toBe('儲存');
+    expect(result.current.t('app.save')).toBe('儲存…');
   });
 
   it('degrades an unsupported tag to English', () => {
     const { result } = renderHook(() => useI18n(), { wrapper: wrap('de-DE') });
     expect(result.current.language).toBe('en');
-    expect(result.current.t('app.save')).toBe('Save');
+    expect(result.current.t('app.save')).toBe('Save…');
   });
 
   it('uses an injected catalog override', () => {

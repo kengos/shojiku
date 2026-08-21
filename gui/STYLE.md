@@ -155,6 +155,86 @@ lose. Write a dedicated string for the variant instead. State variants
 (`hover:`, `aria-pressed:`, `data-*:`) are safe — the attribute selector raises
 specificity.
 
+## Actions: emphasis and the ellipsis
+
+Chrome is copied, never invented, and "copied" means from a NAMED source. Two
+external rules govern how an action looks and what its label promises; both are
+enforced by `designer/src/ui/actionConvention.test.ts` and
+`designer/src/i18n/ellipsis.test.ts`, which walk the package source — so a
+violation is a red gate, not a review finding.
+
+### Emphasis — Material Design 3
+
+One primary action per screen; **filled > outlined > text**. M3 names the two
+failure modes explicitly: the same high-emphasis style on every action, and
+treating the three tiers as interchangeable cosmetics. Our `Button` variants
+map `primary`=filled, `default`=outlined, `ghost`=text (there is no
+filled-tonal tier).
+<https://m3.material.io/components/all-buttons>
+
+- **A dialog is a screen**: its footer's confirming action is
+  `<Button variant="primary">` and its dismissing action is `<Button>` — or
+  `ghost` for a tertiary that is neither (the tutorial's *Clear progress*, the
+  PDF preview's *Close*). Exactly one primary per footer, gated.
+- **The work surface carries no primary** — a rule no gate can hold, because
+  nothing reads which SURFACE a control sits on; it is a design-time read, like
+  the accent-area rule below. A toolbar, a property panel, a
+  menubar and the layer tree are PEER sets: the action you leave a canvas app
+  with (Share / Download) is the only thing Docs, Figma and Canva ever fill,
+  and electing an editing tool as primary is an argument with no answer. This
+  is why the panel's `BTN`/`BTN_SM` rows below are not `Button`s and should not
+  become them — they are peers by design, not un-migrated code.
+  - **What the gate does NOT rank**: it reads `footer={…}` props, so a dialog
+    that places its confirming action in the BODY is outside it. Exactly one
+    does today — the restore-points dialog, whose capture button sits beside
+    its name input — and it is also the one place the app can currently show
+    TWO fills at once, because arming a row's restore renders a second primary
+    inside the same dialog. That is pre-existing and not in this change's
+    scope; it is recorded rather than left for the next reader to discover.
+  - **The one documented exception** is an EMPTY STATE. `shell/CanvasArea.tsx`
+    fills its *Add text* CTA because, with no body items, it is the only thing
+    on the page — so it is that screen's primary rather than one voice among
+    peers. `Designer.test.tsx` pins it, since the source gate ranks footers
+    only.
+- **The filled accent is minted in exactly one place**, `ui/Button.tsx`'s
+  `primary` variant. Hand-rolling `bg-accent … text-on-accent` onto a
+  `<button>` is what made `grep 'variant="primary"'` under-report the real
+  emphasis surface by more than half; the gate now refuses it. A STATE-prefixed
+  accent (`aria-pressed:bg-accent`, `data-checked:bg-accent`) is a toggle
+  indicator, not emphasis, and a filled `<span>` is a badge — neither is this
+  rule's business, and both exclusions are pinned by their own tests.
+- **Accent-coloured TEXT over a wide area behaves as a fill in peripheral
+  vision** (measured: the tutorial hint, `text-accent underline` on
+  `bg-chrome`, was the only thing a blurred first glance detected in the whole
+  editor). So a salience judgement is about the AREA wearing the accent, not
+  about `bg-*` alone. This one is a design-time read, not a gate.
+
+### The ellipsis — Apple HIG
+
+A control whose label ends in `…` opens another view and asks for more before
+it proceeds; one without it acts immediately. The dialog's TITLE then matches
+the label that opened it, minus the ellipsis.
+<https://developer.apple.com/design/human-interface-guidelines/components/menus-and-actions/buttons/>
+
+- The File menu's `Save…` / `Export…` promise the review pane; that pane's own
+  confirm is `Save` / `Export` and ACTS. They are deliberately different keys
+  (`app.save` / `menu.export` vs `review.confirm.save` / `review.confirm.export`),
+  and the golden-path e2e matches both exactly rather than by substring.
+- **The ellipsis is a property of the ACTION, not of the language**, so the set
+  of chrome keys whose value ends in `…` is identical in every catalog — gated.
+  A label that carried it in en and fil while reading as a noun phrase in
+  ja/zh/hi is how this was first found.
+- **It therefore belongs on a control and nowhere else.** No `<h1>`–`<h6>`
+  heading may render an ellipsis label — gated. That same key was a section
+  `<h3>`, promising a dialog no heading can open.
+- **Not every trailing `…` is a control label.** A progress or placeholder
+  string (`Saving…`, `Paste here…`) uses it in its ordinary sense and is
+  exempt from the HIG reading — which is why the gate keys on PARITY and on
+  HEADINGS rather than trying to classify a key as a control.
+- Still open, and deliberately not fixed here: the title-matches-label half is
+  unmet for several pairs (*Container…* opens "Insert a container"; *Download
+  as PDF…* opens "PDF preview"). That is copy work across six catalogs.
+
 ## Toolbar chrome: reuse the rail parts
 
 Format-toolbar surfaces (the slim-toolbar clusters, and any future one) reuse

@@ -191,11 +191,19 @@ function renderMounted(services: AppServices, remote: RemoteServices) {
 
 /** Pick a Designer menubar item: Save (and the file actions) moved from
  * standalone buttons into the File menu. */
+/** The menubar entry's accessible name, tolerating the HIG ellipsis: a label
+ * that opens a view ends in `…` (gui/STYLE.md § Actions), while the review
+ * pane's own confirm button — the same word — does not. Matching
+ * `^<item>…?$` lets every call site keep naming the bare action. */
+function menuItemName(item: string): RegExp {
+  return new RegExp(`^${item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}…?$`);
+}
+
 function pickMenu(menu: string, item: string) {
   fireEvent.click(screen.getByRole('button', { name: menu }));
-  fireEvent.click(screen.getByRole('menuitem', { name: item }));
-  // Save/Export open a review pane first; its confirm button carries the
-  // same label, so confirm it to reach the actual save/export.
+  fireEvent.click(screen.getByRole('menuitem', { name: menuItemName(item) }));
+  // Save/Export open a review pane first; its confirm button is the SAME word
+  // without the ellipsis, so confirm it to reach the actual save/export.
   if (item === 'Save' || item === 'Export') {
     fireEvent.click(screen.getByRole('button', { name: item }));
   }
@@ -435,7 +443,7 @@ describe('MountedApp editor flow', () => {
     const remote = fakeRemote();
     await openMonthly(makeServices(), remote);
     fireEvent.click(await screen.findByRole('button', { name: 'File' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Save' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Save…' }));
     // Confirm the review pane to reach the provider save.
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Saved.')).toBeTruthy();

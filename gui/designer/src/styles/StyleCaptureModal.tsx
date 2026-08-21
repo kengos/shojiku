@@ -15,7 +15,8 @@ import { useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { REFUSAL_MESSAGE_KEY, type StyleOpPlan, type StyleOpRefusal } from '../panel/stylePlan';
-import { BTN, BTN_SM, INPUT } from '../ui/chrome';
+import { Button } from '../ui/Button';
+import { INPUT } from '../ui/chrome';
 import { Modal } from '../ui/Modal';
 import { CapturedStyleView } from './CapturedStyleView';
 import { captureStyleOps, updateStyleOps } from './captureModel';
@@ -78,16 +79,10 @@ export function StyleCaptureModal(props: StyleCaptureModalProps) {
         closeLabel={t('styles.cancel')}
         footer={
           <>
-            <button type="button" className={BTN_SM} onClick={() => setShowCreate(true)}>
-              {t('styleCapture.saveAsInstead')}
-            </button>
-            <button
-              type="button"
-              className={BTN}
-              onClick={() => run(updateStyleOps(path, target, captured))}
-            >
+            <Button onClick={() => setShowCreate(true)}>{t('styleCapture.saveAsInstead')}</Button>
+            <Button variant="primary" onClick={() => run(updateStyleOps(path, target, captured))}>
               {t('styleCapture.update')}
-            </button>
+            </Button>
           </>
         }
       >
@@ -109,9 +104,9 @@ export function StyleCaptureModal(props: StyleCaptureModalProps) {
       title={t('styleCapture.createTitle')}
       closeLabel={t('styles.cancel')}
       footer={
-        <button type="button" className={BTN} onClick={submitCreate}>
+        <Button variant="primary" onClick={submitCreate}>
           {t('styleCapture.save')}
-        </button>
+        </Button>
       }
     >
       {noticeEl}

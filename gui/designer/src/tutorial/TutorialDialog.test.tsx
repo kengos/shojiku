@@ -165,3 +165,17 @@ describe('TutorialDialog', () => {
     expect(screen.getByText(/your own document is never changed/)).toBeTruthy();
   });
 });
+
+// The RENDERED counterpart to `ui/actionConvention.test.ts`: that gate reads the
+// SOURCE and proves each footer names exactly one primary, which is a claim
+// about the JSX. This proves the prop actually reaches the DOM on THIS dialog's
+// confirming action — Material 3's emphasis hierarchy is only real once the
+// element carries it. `data-variant` is the documented hook; never assert the
+// utility classes.
+describe('TutorialDialog — emphasis (Material 3: one primary per screen)', () => {
+  it('paints its confirming action as the primary, and its dismissal as a peer', () => {
+    draw({ completed: [], dismissed: false });
+    expect(screen.getByTestId('tutorial-resume').dataset.variant).toBe('primary');
+    expect(screen.getByRole('button', { name: 'Clear progress' }).dataset.variant).toBe('ghost');
+  });
+});

@@ -13,7 +13,7 @@
 
 import { useMemo } from 'react';
 import { useI18n } from '../i18n/context';
-import { BTN, BTN_SM } from '../ui/chrome';
+import { Button } from '../ui/Button';
 import { IconCheck } from '../ui/icons';
 import { Modal } from '../ui/Modal';
 import { computeLineDiff, type DiffRow } from './diffModel';
@@ -117,12 +117,12 @@ export function SaveReviewModal({
       closeLabel={t('help.close')}
       footer={
         <>
-          <button type="button" className={`${BTN_SM} whitespace-nowrap`} onClick={onClose}>
+          <Button className="whitespace-nowrap" onClick={onClose}>
             {t('review.cancel')}
-          </button>
-          <button type="button" className={`${BTN} whitespace-nowrap`} onClick={onConfirm}>
+          </Button>
+          <Button variant="primary" className="whitespace-nowrap" onClick={onConfirm}>
             {t(keys.confirm)}
-          </button>
+          </Button>
         </>
       }
     >

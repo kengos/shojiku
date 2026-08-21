@@ -100,7 +100,7 @@ describe('ItemPanel — box-less types', () => {
     // panel used to say the type had nothing editable at all.
     drawPanel({ type: 'page_break' });
     expect(screen.queryAllByRole('tab')).toEqual([]);
-    expect(screen.getByText('Show only when…')).toBeTruthy();
+    expect(screen.getByText('When to show')).toBeTruthy();
     expect(screen.queryByText('This element has no editable properties.')).toBeNull();
   });
 
@@ -109,7 +109,7 @@ describe('ItemPanel — box-less types', () => {
     // and a page_break then genuinely has nothing to edit again.
     drawPanel({ type: 'page_break' }, ['text']);
     expect(screen.getByText('This element has no editable properties.')).toBeTruthy();
-    expect(screen.queryByText('Show only when…')).toBeNull();
+    expect(screen.queryByText('When to show')).toBeNull();
   });
 
   it('gives a line a placement tab carrying the endpoint fields, not the box fields', () => {
@@ -126,18 +126,18 @@ describe('ItemPanel — box-less types', () => {
 describe('ItemPanel — the `visible:` capability gate', () => {
   it('offers the presence binding when the engine carries the key', () => {
     drawPanel({ type: 'text', text: 'x' }, ['item.visible']);
-    expect(screen.getByText('Show only when…')).toBeTruthy();
+    expect(screen.getByText('When to show')).toBeTruthy();
   });
 
   it('withholds it when the engine does not', () => {
     // A gate that fails OPEN would write a key the engine rejects at parse.
     drawPanel({ type: 'text', text: 'x' }, ['text']);
-    expect(screen.queryByText('Show only when…')).toBeNull();
+    expect(screen.queryByText('When to show')).toBeNull();
   });
 
   it('offers it when no capability list is known (the bundled engine)', () => {
     drawPanel({ type: 'text', text: 'x' });
-    expect(screen.getByText('Show only when…')).toBeTruthy();
+    expect(screen.getByText('When to show')).toBeTruthy();
   });
 });
 
@@ -161,13 +161,13 @@ describe('ItemPanel — `visible:` inside a row scope', () => {
     // offering top-level fields at element scope would author a key that
     // resolves to nothing and hides the item with no diagnostic.
     drawInCell();
-    expect(screen.getByText('Show only when…')).toBeTruthy();
+    expect(screen.getByText('When to show')).toBeTruthy();
   });
 
   it('still offers it when the engine cannot author a binding scope', () => {
     // Without `binding.scope` there is no second section to commit, so both
     // scopes go in one flat list rather than a section that cannot be picked.
     drawInCell(['item.visible']);
-    expect(screen.getByText('Show only when…')).toBeTruthy();
+    expect(screen.getByText('When to show')).toBeTruthy();
   });
 });

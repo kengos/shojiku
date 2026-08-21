@@ -48,11 +48,19 @@ export function renderEditor(ui: HeaderReportingElement) {
 
 /** Pick a Designer menubar item: the file actions (open / export / add-font /
  * save / back) moved from standalone buttons into the File menu. */
+/** The menubar entry's accessible name, tolerating the HIG ellipsis: a label
+ * that opens a view ends in `…` (gui/STYLE.md § Actions), while the review
+ * pane's own confirm button — the same word — does not. Matching
+ * `^<item>…?$` lets every call site keep naming the bare action. */
+function menuItemName(item: string): RegExp {
+  return new RegExp(`^${item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}…?$`);
+}
+
 export function pickMenu(menu: string, item: string) {
   fireEvent.click(screen.getByRole('button', { name: menu }));
-  fireEvent.click(screen.getByRole('menuitem', { name: item }));
-  // Save/Export open a review pane first; its confirm button carries the
-  // same label, so confirm it to reach the actual save/export.
+  fireEvent.click(screen.getByRole('menuitem', { name: menuItemName(item) }));
+  // Save/Export open a review pane first; its confirm button is the SAME word
+  // without the ellipsis, so confirm it to reach the actual save/export.
   if (item === 'Save' || item === 'Export') {
     fireEvent.click(screen.getByRole('button', { name: item }));
   }

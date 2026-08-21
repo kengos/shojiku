@@ -100,7 +100,7 @@ export const COPY_JA: Record<string, string> = {
   'ch8.sample':
     'データ項目の編集画面でサンプルデータを一度差し替えて、全体が追従することを確認します。',
   'ch8.export':
-    '「ファイル」→「書き出す」で、テンプレート（templates.yml）とサンプルデータを書き出します。ここまで GUI で組んだものが、そのまま読める YAML のファイルです。PDF が要るときは「PDF形式でダウンロード…」です。',
+    '「ファイル」→「書き出す…」で、テンプレート（templates.yml）とサンプルデータを書き出します。ここまで GUI で組んだものが、そのまま読める YAML のファイルです。PDF が要るときは「PDF形式でダウンロード…」です。',
   'ch8.done':
     'これで完成です。作った請求書は、自分のテンプレートの出発点として使えます。お疲れさまでした。',
   // Topic-specific steps (the reused steps show their course sentence via copyId).

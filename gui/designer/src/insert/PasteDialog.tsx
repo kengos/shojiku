@@ -8,7 +8,7 @@
 
 import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n/context';
-import { BTN_SM } from '../ui/chrome';
+import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import type { PasteRefusal } from './paste';
 import { analyzeColumns } from './pasteColumns';
@@ -52,17 +52,10 @@ export function PasteDialog({ onConfirm, onClose }: PasteDialogProps) {
       size="roomy"
       footer={
         <>
-          <button type="button" className={BTN_SM} onClick={onClose}>
-            {t('paste.cancel')}
-          </button>
-          <button
-            type="button"
-            className="cursor-pointer rounded-md border border-accent bg-accent px-2 py-1 font-semibold text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!parsed.ok}
-            onClick={confirm}
-          >
+          <Button onClick={onClose}>{t('paste.cancel')}</Button>
+          <Button variant="primary" disabled={!parsed.ok} onClick={confirm}>
             {t('paste.insert')}
-          </button>
+          </Button>
         </>
       }
     >

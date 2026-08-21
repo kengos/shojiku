@@ -221,7 +221,7 @@ export const en: LanguageCatalog = {
     cell_image_assets_capped: 'per-element cell images exceed the {max} cap; the rest are skipped',
   },
   chrome: {
-    'app.save': 'Save',
+    'app.save': 'Save…',
     'app.undo': 'Undo',
     'app.redo': 'Redo',
     'app.saveBlocked': 'Fix the errors below before saving.',
@@ -262,7 +262,7 @@ export const en: LanguageCatalog = {
     'menu.file': 'File',
     'menu.edit': 'Edit',
     'menu.open': 'Open…',
-    'menu.export': 'Export',
+    'menu.export': 'Export…',
     'menu.pdf': 'Download as PDF…',
     'pdf.title': 'PDF preview',
     'pdf.help': 'This is the finished PDF — the same bytes the command-line renderer produces.',
@@ -581,7 +581,7 @@ export const en: LanguageCatalog = {
     'panel.field.line': 'Line',
     'tree.conditional': 'Shown only when the data matches — it may not be on the page right now.',
     'tree.conditional.badge': 'if',
-    'panel.visible.title': 'Show only when…',
+    'panel.visible.title': 'When to show',
     'panel.visible.hint':
       'This item always draws. Bind it to a field to show it only for some data.',
     'panel.visible.add': 'Show conditionally',

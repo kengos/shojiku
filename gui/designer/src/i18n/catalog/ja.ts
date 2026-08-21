@@ -242,7 +242,7 @@ export const ja: LanguageCatalog = {
       '要素ごとのセル画像が上限 {max} を超えています。残りはスキップされました',
   },
   chrome: {
-    'app.save': '保存',
+    'app.save': '保存…',
     'app.undo': '元に戻す',
     'app.redo': 'やり直す',
     'app.saveBlocked': '保存する前に下のエラーを解消してください。',
@@ -283,7 +283,7 @@ export const ja: LanguageCatalog = {
     'menu.file': 'ファイル',
     'menu.edit': '編集',
     'menu.open': '開く…',
-    'menu.export': '書き出す',
+    'menu.export': '書き出す…',
     'menu.pdf': 'PDF形式でダウンロード…',
     'pdf.title': 'PDFプレビュー',
     'pdf.help': '完成したPDFです。コマンドラインで出力されるものと同じバイト列です。',

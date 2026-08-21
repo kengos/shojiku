@@ -17,7 +17,8 @@ import { createFormatOps, updateFormatOps } from '../formats/fieldOps';
 import { editableKind, FORMAT_KINDS } from '../formats/model';
 import { type FormatOpRefusal, REFUSAL_MESSAGE_KEY } from '../formats/plan';
 import { useI18n } from '../i18n/context';
-import { BTN, BTN_SM, FIELD_LABEL, SELECT_SM } from '../ui/chrome';
+import { Button } from '../ui/Button';
+import { FIELD_LABEL, SELECT_SM } from '../ui/chrome';
 import { Modal } from '../ui/Modal';
 import { PatternField } from './PatternField';
 
@@ -76,12 +77,10 @@ export function FormatForm(props: FormatFormProps) {
       closeLabel={t('help.close')}
       footer={
         <>
-          <button type="button" className={BTN_SM} onClick={onClose}>
-            {t('styles.cancel')}
-          </button>
-          <button type="button" className={BTN} onClick={submit}>
+          <Button onClick={onClose}>{t('styles.cancel')}</Button>
+          <Button variant="primary" onClick={submit}>
             {t('styles.save')}
-          </button>
+          </Button>
         </>
       }
     >

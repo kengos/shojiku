@@ -9,7 +9,7 @@ import type { LanguageCatalog } from './types';
 export const hi: LanguageCatalog = {
   diagnostics: {},
   chrome: {
-    'app.save': 'सहेजें',
+    'app.save': 'सहेजें…',
     'app.undo': 'पूर्ववत करें',
     'app.redo': 'फिर से करें',
     'app.saveBlocked': 'सहेजने से पहले नीचे दी गई त्रुटियाँ ठीक करें।',
@@ -47,7 +47,7 @@ export const hi: LanguageCatalog = {
     'menu.file': 'फ़ाइल',
     'menu.edit': 'संपादन',
     'menu.open': 'खोलें…',
-    'menu.export': 'निर्यात',
+    'menu.export': 'निर्यात…',
     'menu.pdf': 'PDF के रूप में डाउनलोड करें…',
     'pdf.title': 'PDF पूर्वावलोकन',
     'pdf.help': 'यह तैयार PDF है — कमांड-लाइन रेंडरर जो बाइट्स बनाता है, बिल्कुल वही।',
