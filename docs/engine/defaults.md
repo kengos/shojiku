@@ -77,17 +77,28 @@ Capability keys: `template.defaults`, `template.defaults.document`
 
 The variant names differ per locale pack, and a document's own `formats:`
 entries add to them — so the set is not something an author can be
-expected to know. `shojiku formats` answers it for a given
-(template, locale) pair: every pickable spelling per field type, where it
-comes from (`builtin` / `pack` / `registry`), and **what it actually
-renders**, against fixed exemplar values the engine owns.
-`--probe <type>:<pattern>` previews a pattern the document does not
-contain yet.
+expected to know. The engine answers it for a given (template, locale)
+pair: every pickable spelling per field type, where it comes from
+(`builtin` / `pack` / `registry`), and **what it actually renders**,
+against fixed exemplar values the engine owns. A probe previews a pattern
+the document does not contain yet.
+
+All three hosts ask the same question: the `shojiku formats` command
+(`--probe <type>:<pattern>`), the `format_catalog` MCP tool
+(`probes: [{ fieldType, pattern }]`), and the wasm binding the Designer's
+format picker reads.
 
 Types with no named variants at all (`number`, `percentage`, `quantity`
 in v1) come back marked `fixed`, carrying only `default` — an editor shows
-what they render and offers no control, because any other pick would only
-warn.
+what they render and offers no VARIANT control, because naming a variant on
+one warns and renders the plain form.
+
+A type name is not a variant, so `fixed` does not mean "nothing may be
+picked here". `format: currency` on a number is a type OVERRIDE — the value
+renders as that type instead — and so is the `symbol`/`name` money pick
+described above; neither warns. They are absent from the NUMBER row because
+this catalog lists a type's variants, and those two are variants of
+`currency`, where the catalog does list them.
 
 The samples are the engine's own formatter output, so a tool that shows
 them cannot drift from the page. Capability key: `format.catalog`.

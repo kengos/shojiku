@@ -90,41 +90,12 @@ The failing run is written to a fixed path:
 cat .make-logs/last-error.log
 ```
 
-It opens with the target, the **tree it ran over**, the exit code, the
-time, and the last `== step ==` the run reached — so that one file
-answers "where did it fall over?" without re-running anything. When the
-failure is one the repository has met before, the same block also names
-**what it is** and prints the command that fixes it: a registry flake to
-re-run, a lockfile to re-resolve with `make lock:<scope>`, an example
-output to re-render with `make examples`. The file is cleared
+It opens with the target, the exit code, the time, and the last
+`== step ==` the run reached — so that one file answers "where did it
+fall over?" without re-running anything. The file is cleared
 automatically when that same target next passes. Per-target logs sit
 beside it (`.make-logs/<target>.log`); the whole directory is
 gitignored.
-
-The tree line is worth reading rather than skipping. Every gate names the
-checkout it ran over, because that is the one mistake with no other
-symptom: run from the wrong directory, a gate finds a Makefile, a full
-source tree and a warm cache, and prints **PASS for the wrong branch**.
-If the name is not the tree you are working in, re-run it as
-`make -C /path/to/your/tree <target>`.
-
-### Asking the build a question
-
-Not everything is a gate. `make investigate:<thing>` answers the
-questions a failure raises rather than settles — each one a command
-rather than a document:
-
-| | |
-| --- | --- |
-| `make investigate:tree` | which checkout do gates run over from here, and what else is checked out |
-| `make investigate:docker` | is the daemon healthy — and can it actually pull? (a daemon that answers `docker version` can still pull nothing) |
-| `make investigate:gates` | what is running, and how to cancel it (Ctrl-C does not reach the container) |
-| `make investigate:last-error` | re-read the last failure with its diagnosis |
-| `make investigate:coverage` | which lines failed the 100% coverage gate |
-| `make investigate:render` | render one template with the pack directories already correct |
-| `make investigate:pins` | are the cached images the pinned versions, or something that moved |
-
-`make help` lists them beside the gates.
 
 ### If the failure does not tell you *what* failed
 

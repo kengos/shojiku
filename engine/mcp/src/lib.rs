@@ -3,12 +3,12 @@
 //! A hand-rolled JSON-RPC 2.0 loop (newline-delimited, no async runtime —
 //! a deliberate zero-new-dependency choice) exposing the shared authoring
 //! surface (`shojiku-authoring`) as MCP tools: `validate` /
-//! `render_preview` / `inspect_layout` / `capabilities`. Every template
-//! tool response carries diagnostics alongside its payload (preview
-//! images, inspect envelope) so an AI client never receives an image
-//! alone; the layout tree/boxes for a preview are retrievable via
-//! `inspect_layout` with the same inputs. `main.rs` stays thin;
-//! everything testable lives here.
+//! `render_preview` / `inspect_layout` / `capabilities` / `format_catalog`.
+//! Every template tool response carries diagnostics alongside its payload
+//! (preview images, inspect envelope, the format catalog) so an AI client
+//! never receives a payload without its reasons; the layout tree/boxes for
+//! a preview are retrievable via `inspect_layout` with the same inputs.
+//! `main.rs` stays thin; everything testable lives here.
 
 use clap::Parser;
 use std::path::PathBuf;
@@ -33,7 +33,7 @@ pub use server::serve;
 #[derive(Debug, Parser)]
 #[command(
     name = "shojiku-mcp",
-    about = "Shojiku MCP server over stdio (validate / render_preview / inspect_layout / capabilities)",
+    about = "Shojiku MCP server over stdio (validate / render_preview / inspect_layout / capabilities / format_catalog)",
     version
 )]
 pub struct ServerArgs {

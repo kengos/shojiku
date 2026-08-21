@@ -42,6 +42,13 @@ always riding along; `assets?` = the `assetsDir` / `assetMode` /
   -> inspect envelope (engine info / layout tree / boxes / margins)
   + diagnostics`
 - `capabilities() -> engine version + capability keys + builtin locales`
+- `format_catalog(template?, lang?, probes?) -> the pickable display
+  variants per field type with an engine-rendered sample of each, plus one
+  result per probed pattern + diagnostics`. Every argument is optional —
+  a catalog is a function of (locale pack, template registry), and an
+  author who has not written a document yet still needs the vocabulary.
+  Its diagnostics are PARSE-only, so an unparseable template says why its
+  registry half is empty rather than reporting nothing.
 - `list_examples() -> the bundled catalog (URI, title, what it exercises,
   file names, size) + how to fetch one`
 - `get_example(uri) -> that entry's source files (or one named file)`

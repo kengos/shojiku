@@ -23,7 +23,8 @@ fn tools_list_pins_the_descriptor_contract() {
             "inspect_layout",
             "capabilities",
             "list_examples",
-            "get_example"
+            "get_example",
+            "format_catalog"
         ]
     );
     for tool in tools {
@@ -175,7 +176,12 @@ fn the_inline_form_answers_the_same_bundle() {
 
 /// Every template tool answers diagnostics last (and preview an image).
 fn assert_bundle_over(arguments: &Value) {
-    for tool in ["validate", "render_preview", "inspect_layout"] {
+    for tool in [
+        "validate",
+        "render_preview",
+        "inspect_layout",
+        "format_catalog",
+    ] {
         let result = call_tool(tool, arguments.clone()).expect(tool);
         assert_eq!(result["isError"], false, "{tool}: {result}");
         let parts = content(&result);

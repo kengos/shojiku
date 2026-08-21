@@ -869,8 +869,9 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   same dispatch a real binding takes. Types with no named variants come
   back marked `fixed`. A `probes` list previews patterns the document does
   not contain yet, degrading (never erroring) on a bad one, with count and
-  length caps of their own. Reached as `shojiku formats`, and from the
-  browser through the wasm binding. Capability key `format.catalog`.
+  length caps of their own. Reached from all three hosts — `shojiku
+  formats`, the `format_catalog` MCP tool, and the browser's wasm binding.
+  Capability key `format.catalog`.
 - **Capability surface**: `format.patterns.cldr`,
   `format.currency.variants`, `format.units.semantic`, `format.catalog`,
   `template.defaults`, `template.defaults.document`, `template.formats`,
@@ -1498,8 +1499,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **`shojiku-mcp`**: a stdio MCP server (newline-delimited JSON-RPC 2.0,
   hand-rolled — no async runtime) exposing the
   authoring surface as tools: `validate` / `render_preview` /
-  `inspect_layout` / `capabilities`, plus the read surface's
-  `list_examples` / `get_example`. Capability key `mcp.stdio`; the
+  `inspect_layout` / `capabilities` / `format_catalog`, plus the read
+  surface's `list_examples` / `get_example`. Capability key `mcp.stdio`; the
   binary ships in the Docker image
   (`docker run -i --entrypoint shojiku-mcp`).
 - **The server says what it is for, at `initialize`.** The result carries
@@ -1554,6 +1555,18 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   are mutually exclusive (invalid params), and an inline payload is
   capped at 512 KiB per argument, independent of the transport's own
   frame cap. Optional `lang`/`scale`/`page` are unchanged.
+- **The format vocabulary is a tool** (`mcp.formats`): `format_catalog`
+  answers the display variants a document may pick per field type, each
+  with what this engine renders for it, plus previews of patterns the
+  document does not carry yet (`probes`, a `{ fieldType, pattern }` list —
+  structured objects rather than the CLI's `<type>:<pattern>` string,
+  because a JSON client composes JSON). Every argument is optional: with no
+  template the answer is the locale's own vocabulary, which is what an
+  author who has not written a document yet needs, so the descriptor
+  carries no `required` at all. An unparseable template still answers a
+  catalog, with a `parse_error` diagnostic beside it — a registry-free half
+  with no reason given reads as "the registry does not work". Those
+  diagnostics are PARSE-only; `validate` is what checks a document.
 - **Asset policy is per call** (`mcp.asset_policy`), mirroring the CLI:
   `assetsDir` picks the bundled-asset root, `assetMode`
   (`open` | `bundled-only`) with the `allowDynamicImage`/

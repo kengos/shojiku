@@ -40,6 +40,11 @@ understood without the definitions its bindings name. The layout showcase \
 entry is the syntax exerciser: most of the authorable surface in one \
 document.
 
+Before writing a `format:` value on a date, currency or number field, call \
+format_catalog: it lists the display variants this locale and this document \
+can pick, each with what the engine actually renders for it, and previews a \
+pattern you have not authored yet. Guessing a spelling costs a round trip.
+
 On what you think you know: whatever you recall about Shojiku's syntax is \
 either absent from your training data or older than this build. The engine \
 you are talking to is the authority. Ask capabilities for the feature keys \

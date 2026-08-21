@@ -13,9 +13,9 @@ agent can iterate on its own: write, then check.
 ## Register the MCP server
 
 `shojiku-mcp` is a stdio server with `validate` / `render_preview` /
-`inspect_layout` / `capabilities`, plus `list_examples` / `get_example`
-for reading the bundled documents, shipped in the same Docker image as the
-CLI. In Claude Code, one command registers it:
+`inspect_layout` / `capabilities` / `format_catalog`, plus `list_examples`
+/ `get_example` for reading the bundled documents, shipped in the same
+Docker image as the CLI. In Claude Code, one command registers it:
 
 ```bash
 claude mcp add shojiku -- \
@@ -51,7 +51,8 @@ checking the mapping against the engine's `params_*` diagnostics.
 1. `list_examples` — find the bundled document closest to the job, and
    `get_example` to read its source
 2. Declare the data items in `definitions.yml`
-3. Write `templates.yml`
+3. Write `templates.yml` — `format_catalog` lists the display variants a
+   date or money field can take, and what each one renders
 4. `validate` — mistakes come back as diagnostic codes
 5. `render_preview` — look at the page PNGs
 6. `inspect_layout` — read the resolved layout back

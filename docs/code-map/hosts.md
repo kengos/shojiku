@@ -265,14 +265,38 @@ host over authoring.
   target comes back in-band as `isError` rather than as a protocol
   fault, unlike the resource spelling). `tools/schema.rs` — the pinned tool
   descriptors (`validate`/`render_preview` (page cap without `page`)/
-  `inspect_layout`/`capabilities`/`list_examples`/`get_example`);
-  inline/path either-or rides
-  `allOf`+`anyOf`. `tools/sources.rs` — `Source` Path|Inline (`<name>`
+  `inspect_layout`/`capabilities`/`list_examples`/`get_example`/
+  `format_catalog`); inline/path either-or rides
+  `allOf`+`anyOf`. `format_catalog` is the only descriptor that TAKES
+  arguments and requires none of them — no `allOf`, no `required` —
+  because a catalog answers without a document (`capabilities` and
+  `list_examples` also declare neither, but they accept no arguments at
+  all). `tools/sources.rs` — `Source` Path|Inline (`<name>`
   XOR `<name>Path`, `MAX_INLINE_BYTES` per-argument cap).
   `tools/assets.rs` — `AssetArgs` → `AssetPolicy` + root (capped id
   lists). `tools/pipeline.rs` — args → `prepare_from` (validation gate
   BEFORE pack/font loading — CLI-parity precedence). Per-tool impls in
-  `tools/{validate,preview,inspect}.rs`. Every template tool response
+  `tools/{validate,preview,inspect}.rs`. `tools/formats.rs` (+
+  `formats/tests/{catalog,probes,refusals}.rs`) — `format_catalog`, the
+  THIRD host over `shojiku_authoring::format_catalog` (the CLI and the
+  wasm binding are the other two; `engine/capi` does not expose it). It
+  is the only tool that loads a locale pack WITHOUT a font store —
+  `pipeline.rs` is the one other `load_locale_pack` caller and builds a
+  `FontStore` on the next line, while `validate` and the example tools
+  need no pack at all — and the only one outside `pipeline.rs` that
+  turns a source into a parsed document. A catalog is a function of
+  (locale pack, template registry), so no params are read and no fonts
+  are loaded. It parses the template ITSELF rather than through
+  `load_sources`, because an unparseable one must still answer the
+  pack-and-builtins catalog — with the `parse_error` beside it, since a
+  registry-free half and no reason given reads as "the registry does not
+  work"; those diagnostics are PARSE-only, never a second `validate`.
+  Its probe list arrives as `{ fieldType, pattern }` objects (the wasm
+  host's shape, not the CLI's `<type>:<pattern>` string): the COUNT cap
+  refuses the call as invalid params — the descriptor declares
+  `maxItems`, so an over-long list is a wrong-shaped argument — while an
+  over-long PATTERN rides through to the engine's per-probe `refused`,
+  which names WHICH probe. Every template tool response
   carries diagnostics (docs/agents/mcp.md bundle principle); binary e2e
   in `tests/bin/`.
 

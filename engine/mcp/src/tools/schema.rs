@@ -5,6 +5,7 @@
 use super::assets::MAX_ASSET_IDS;
 use super::sources::MAX_INLINE_BYTES;
 use serde_json::{json, Value};
+use shojiku_authoring::{MAX_PROBES, MAX_PROBE_PATTERN};
 
 /// The `tools/list` descriptor array.
 pub(crate) fn descriptors() -> Value {
@@ -88,7 +89,52 @@ pub(crate) fn descriptors() -> Value {
                 "required": ["uri"],
             },
         },
+        {
+            "name": "format_catalog",
+            "description": "Which display variants a document may pick per field type (date / datetime / currency / number / percentage / quantity), each with what this engine actually renders for it, plus previews of patterns the document does not carry yet. Ask this before writing a `format:` value instead of guessing a spelling. Every argument is optional: with no template you get the locale's own vocabulary, and passing one adds that document's `formats:` registry entries. The diagnostics part reports PARSE problems only — validate is what checks a document.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template": inline_prop("templates.yml source (optional: adds the document's own `formats:` registry entries)"),
+                    "templatePath": path_prop("Path to templates.yml (optional: adds the document's own `formats:` registry entries)"),
+                    "lang": lang_prop(),
+                    "probes": probes_prop(),
+                },
+            },
+        },
     ])
+}
+
+/// The pattern-probe list: patterns previewed before they are authored.
+///
+/// The COUNT cap is a schema constraint (`maxItems`) because the server
+/// really does refuse past it. The LENGTH cap deliberately is NOT: an
+/// over-long pattern is accepted and answered as `refused` in its own slot,
+/// so declaring `maxLength` would tell a validating client not to send the
+/// one input that reaches that answer. It rides the description instead.
+fn probes_prop() -> Value {
+    json!({
+        "type": "array",
+        "maxItems": MAX_PROBES,
+        "description": format!(
+            "Patterns to preview before authoring them. Each renders through the same dispatch and the same exemplar value the catalog's own samples use. A pattern over {MAX_PROBE_PATTERN} characters is not rejected — it comes back as `refused: \"patternTooLong\"` in that probe's own slot, so a list of several says WHICH one was too long."
+        ),
+        "items": {
+            "type": "object",
+            "properties": {
+                "fieldType": {
+                    "type": "string",
+                    "enum": ["date", "datetime"],
+                    "description": "The only two field types that have a pattern form",
+                },
+                "pattern": {
+                    "type": "string",
+                    "description": "A pattern in the engine's date grammar, e.g. `yyyy年M月d日(E)`",
+                },
+            },
+            "required": ["fieldType", "pattern"],
+        },
+    })
 }
 
 /// The example-reference property: the exact URI shape, since a wrong

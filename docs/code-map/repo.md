@@ -293,7 +293,8 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
 - `docs/` — the doc set (`docs/engine/` = the per-feature template
   reference; `docs/migration-thinreports.md` = the worked migration
   walkthrough; `docs/mockups/` = per-design-session handoff artifacts,
-  deleted once shipped — currently empty).
+  deleted once shipped — currently empty; `docs/agents/gotchas/` = the
+  incident-derived trap catalogs, routed by their own README).
 - **Top-level `skills/`** — the product-facing AI skills, kept OUT of
   `docs/` so `npx skills add <owner>/shojiku` discovers them (flat
   `skills/<name>/SKILL.md`, `name`+`description` frontmatter — these are
@@ -316,10 +317,6 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   (`template/*.yml`, so a standalone `npx skills add` install still
   works); that copy is byte-gated against
   `examples/lifestyle/recipe-booklet-en/`).
-- `mk/` — Makefile includes. `investigate.mk` = the `investigate:<thing>`
-  surface (tree / last-error / docker / coverage / render / gates / pins).
-  NOT gates: they print state and check nothing, which is why they are a
-  separate file; `make help` still lists them via `$(MAKEFILE_LIST)`.
 - `scripts/` — repo gates (`check-line-budget.sh`,
   `check-versions.sh` — `make version-check`, CI job `versions`: every
   place naming a shojiku RELEASE COORDINATE (cargo path-dep pins, maven
@@ -332,12 +329,6 @@ instead — `make cli-bin` for a gate, `make cli-dist` for release.
   count so a rule that silently stops matching fails instead of reading
   clean, and a self-test runs the real scanner over a known-bad fixture
   (one case per rule, both escape hatches) before the tree is touched.
-  `gate-diagnose.sh` — the failure READER beside `gate-culprits.sh`:
-  culprits answer WHICH FILE, diagnose answers WHY and prints the command
-  that fixes it (flake -> re-run one gate; `--locked` refusal ->
-  `make lock:<scope>`; example drift -> `make examples`). Both normalise
-  ANSI + the `pnpm -r` package prefix first, and both are validated by
-  inducing a real failure, never by reading the regex.
   `check-gui-line-budget.sh`, `check-skill-template-sync.sh` — the
   first step of `make examples-check`: a skill's bundled
   `template/*.yml` must be byte-identical to the example it came from,

@@ -84,16 +84,7 @@ emit "versions:" "$(pick '^VERSION (DRIFT|UNDERCOUNT) |^FAIL versions|^ *(check-
 # normalisation above reads "wasm size: " as "<package> <script>: " and eats
 # it (found by running this against the real log, which is why matchers are
 # validated that way and never by reading the regex).
-#
-# GATED on an actual crossing. `make wasm` prints its size line on every run,
-# including a PASSING one, so matching the size alone made any failure ELSEWHERE
-# in a compound gate report two numbers comfortably inside their budgets as
-# "where it broke" — a reader who trusts the excerpt debugs a size budget that
-# is fine (make_issue_quiet_last_step_lags_the_failure; reproduced against the
-# committed real log, not against the regex). No crossing, no wasm section.
-if printf '%s\n' "$norm" | grep -qE '^(raw|gzip) over budget$'; then
-	emit "wasm budget:" "$(pick '^raw=[0-9]+ bytes gzip=|^(raw|gzip) over budget$')"
-fi
+emit "wasm budget:" "$(pick '^raw=[0-9]+ bytes gzip=|^(raw|gzip) over budget$')"
 
 # cargo deny: line-level grep cannot work here — warning blocks (duplicate
 # crates under multiple-versions="warn") carry the SAME "┌─"/"├ crate vX" line
