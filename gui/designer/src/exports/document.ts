@@ -85,3 +85,7 @@ export { readSampleView } from '../sample/view';
 export { type ChipContext, chipContextFor } from '../text/chipContext';
 export type { Declaration, PendingDecl } from '../text/declModel';
 export { TextEditor, type TextEditorProps } from '../text/TextEditor';
+// `TextEditorProps.onDraft` is typed by this; every other non-primitive in that
+// interface is exported beside the component, and a host that cannot NAME the
+// handler type cannot type a wrapper's prop or store one.
+export type { DraftListener } from '../text/useDraftReporter';

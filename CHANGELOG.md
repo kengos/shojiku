@@ -138,6 +138,29 @@ platform binaries.
 
 ### Fixed
 
+- **Typing into the Designer's text field now shows on the page as you type.**
+  The field wrote its edit to the document only when you left it, so the page
+  beside it kept showing the old words — a newly placed item still reading
+  "Text" while you typed a heading into the panel. Two people trying the
+  Designer for the first time read that as the app being broken: one retyped
+  the same heading several times, the other assumed nothing had saved. The page
+  now re-renders from what is in the field, through the real engine, so what
+  you see while typing is what the document will hold; nothing is written until
+  you leave the field, so undo still takes back the whole edit in one step and
+  saving or exporting mid-edit still writes the text you actually committed.
+  A Japanese, Chinese or other composed entry updates the page when you confirm
+  the conversion rather than mid-conversion.
+
+  While you are converting Japanese or Chinese text, pressing Enter to accept the
+  conversion no longer inserts a line break into the field instead — the editor
+  now stands aside for the whole conversion, as every other field in the app
+  already did.
+
+  Leaving the field a way that is not a click elsewhere now keeps your text too:
+  switching the panel's tab, or selecting something else, used to throw the
+  edit away because the field was removed from the page before it could be
+  written.
+
 - **The Designer's format picker no longer offers a format the field cannot
   use.** A template's `formats:` entries were listed on every binding whatever
   it was bound to, so a date pattern turned up in the menu for a money field,

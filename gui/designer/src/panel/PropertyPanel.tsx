@@ -8,6 +8,7 @@
 // `controller.read(path)` every render, so an edit → op → re-serialize → re-read
 // shows the new value.
 
+import type { Op } from '@shojiku/designer-core';
 import { useMemo } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import type { FormatCatalog } from '../engine/types';
@@ -15,10 +16,7 @@ import { useI18n } from '../i18n/context';
 import { readDefinitionsView } from '../palette/model';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
 import { BTN, PANEL, PANEL_FLUSH } from '../ui/chrome';
-import { ColumnForm } from './ColumnForm';
-import { columnPathInfo, readColumnsView } from './columnsModel';
-import { GroupForm } from './GroupForm';
-import { groupPathInfo, readGroupsView } from './groupModel';
+import { CellPanel } from './CellPanel';
 import { ItemPanel } from './ItemPanel';
 import { readItemView } from './itemView';
 import type { DefaultsSection } from './OriginBadge';
@@ -70,6 +68,9 @@ export interface PropertyPanelProps {
   /** wrap-in-container — wrap the selected item in a new container (the
    * right-click's keyboard companion); present only for a wrappable selection. */
   readonly onWrap?: (path: string) => void;
+  /** Publish the text field's in-progress edit so the canvas can render it
+   * before commit (`null` withdraws). See `hooks/useDraftPreview`. */
+  readonly onTextDraft?: (ops: readonly Op[] | null) => void;
 }
 
 export function PropertyPanel({
@@ -92,6 +93,7 @@ export function PropertyPanel({
   onSelectPath,
   onHighlight,
   onWrap,
+  onTextDraft,
 }: PropertyPanelProps) {
   const { t } = useI18n();
 
@@ -125,51 +127,16 @@ export function PropertyPanel({
 
   const view = readItemView(raw);
   if (view === null) {
-    // Neither a table column nor a header group has a `type:` of its own, but a
-    // canvas click on either cell selects its structural path — give each the
-    // form for what was actually clicked.
-    const columnInfo = columnPathInfo(path);
-    const column =
-      columnInfo === null
-        ? undefined
-        : readColumnsView(controller.read(columnInfo.tablePath))?.[columnInfo.index];
-    if (column !== undefined) {
-      return (
-        <ColumnForm
-          controller={controller}
-          path={path}
-          column={column}
-          groups={paletteGroups}
-          params={params}
-          capabilities={capabilities}
-          formatCatalog={formatCatalog}
-          floor={floor}
-        />
-      );
-    }
-    const groupInfo = groupPathInfo(path);
-    if (groupInfo !== null) {
-      // An absent/hostile `headerGroups` list reads as no rows, so an
-      // out-of-range index falls through to the unsupported card either way.
-      const rows = readGroupsView(controller.read(groupInfo.tablePath)) ?? [];
-      const group = rows[groupInfo.index];
-      if (group !== undefined) {
-        return (
-          <GroupForm
-            controller={controller}
-            path={path}
-            tablePath={groupInfo.tablePath}
-            index={groupInfo.index}
-            group={group}
-            groups={rows}
-          />
-        );
-      }
-    }
     return (
-      <aside data-tour={TOUR_ANCHORS.panel} className={PANEL} aria-label={t('panel.title')}>
-        <p className="m-0 text-muted">{t('panel.unsupported')}</p>
-      </aside>
+      <CellPanel
+        controller={controller}
+        path={path}
+        groups={paletteGroups}
+        params={params}
+        capabilities={capabilities}
+        formatCatalog={formatCatalog}
+        floor={floor}
+      />
     );
   }
 
@@ -195,6 +162,7 @@ export function PropertyPanel({
         onSelectPath={onSelectPath}
         onHighlight={onHighlight}
         onWrap={onWrap}
+        onTextDraft={onTextDraft}
       />
     </aside>
   );

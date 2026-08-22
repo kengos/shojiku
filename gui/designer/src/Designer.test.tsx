@@ -1640,3 +1640,118 @@ describe('Designer — the margin-box guide reaches the canvas', () => {
     expect(container.querySelector('.sj-margin-guide')).toBeNull();
   });
 });
+
+describe('Designer — the canvas shows an edit before it is committed', () => {
+  const AT = 'sections.body.items[0]';
+
+  /** Select the seeded text item and return the panel's text field. */
+  async function selectAndField() {
+    fireEvent.click(await screen.findByRole('button', { name: AT }));
+    return screen.getByLabelText('Text');
+  }
+
+  it('renders the pending text WITHOUT authoring anything', async () => {
+    const onChange = vi.fn();
+    const transport = makeTransport();
+    draw(transport, { onChange });
+    const field = await selectAndField();
+    field.textContent = 'world';
+    fireEvent.input(field);
+
+    await waitFor(() =>
+      expect(transport.renderRaw).toHaveBeenCalledWith(
+        expect.stringContaining('text: world'),
+        expect.anything(),
+        undefined,
+        expect.anything(),
+      ),
+    );
+    // The three non-events. Coverage cannot see any of them: a behaviour that
+    // writes nothing leaves no line uncovered by its absence.
+    expect(onChange).not.toHaveBeenCalled();
+    expect((screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(field.textContent).toBe('world');
+  });
+
+  it('commits exactly one undo step when the field is finally left', async () => {
+    const onChange = vi.fn();
+    const transport = makeTransport();
+    draw(transport, { onChange });
+    const field = await selectAndField();
+    field.textContent = 'world';
+    fireEvent.input(field);
+    fireEvent.blur(field);
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    expect(onChange).toHaveBeenCalledWith(expect.stringContaining('text: world'));
+    expect((screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
+  });
+
+  it('SAVES the committed text, never the draft', async () => {
+    // Reachable in a real browser through the keyboard save, which commits no
+    // blur: the field keeps focus and the draft stands.
+    const transport = makeTransport();
+    const onSave = vi.fn();
+    draw(transport, { onSave });
+    const field = await selectAndField();
+    field.textContent = 'world';
+    fireEvent.input(field);
+    // Wait for the DRAFT render specifically. `toHaveBeenCalled()` is satisfied
+    // by the mount render, so saving there would prove nothing: with no draft
+    // standing, the assertion below holds for an implementation that leaks the
+    // draft into save just as well as for one that does not.
+    await waitFor(() =>
+      expect(transport.renderRaw).toHaveBeenCalledWith(
+        expect.stringContaining('text: world'),
+        expect.anything(),
+        undefined,
+        expect.anything(),
+      ),
+    );
+    saveViaReview();
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    expect(onSave).toHaveBeenCalledWith(expect.stringContaining('text: hello'));
+    expect(onSave).not.toHaveBeenCalledWith(expect.stringContaining('text: world'));
+  });
+
+  it('keeps the edit when the panel TAB changes mid-typing', async () => {
+    // Found by driving the real app: the tab switch unmounts the field with no
+    // blur, so the canvas showed the pending text and then took it back.
+    const onChange = vi.fn();
+    const transport = makeTransport();
+    draw(transport, { onChange });
+    const field = await selectAndField();
+    field.textContent = 'world';
+    fireEvent.input(field);
+    fireEvent.click(screen.getByRole('tab', { name: 'Style' }));
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith(expect.stringContaining('text: world')),
+    );
+  });
+
+  it('withdraws the draft when the selection moves off the item — by COMMITTING it', async () => {
+    // A deselection unmounts the field with no blur. The draft is withdrawn
+    // either way (the canvas must never keep rendering a dead item's pending
+    // text); what it is withdrawn INTO is the committed edit, not a revert.
+    const onChange = vi.fn();
+    const transport = makeTransport();
+    draw(transport, { onChange });
+    const field = await selectAndField();
+    field.textContent = 'world';
+    fireEvent.input(field);
+    await waitFor(() =>
+      expect(transport.renderRaw).toHaveBeenCalledWith(
+        expect.stringContaining('text: world'),
+        expect.anything(),
+        undefined,
+        expect.anything(),
+      ),
+    );
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith(expect.stringContaining('text: world')),
+    );
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+});

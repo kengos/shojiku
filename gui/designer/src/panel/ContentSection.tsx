@@ -123,6 +123,22 @@ export function ContentSection(props: ItemPanelProps) {
                 }),
               )
             }
+            // The draft goes through the SAME `commitOps` the commit does, so
+            // what the canvas shows while typing cannot drift from what blur
+            // will write — a staged chip's declaration included.
+            onDraft={(draft) =>
+              props.onTextDraft?.(
+                draft === null
+                  ? null
+                  : commitOps({
+                      read: controller.read,
+                      path,
+                      oldText: view.text,
+                      newText: draft.value,
+                      pending: draft.declarations,
+                    }),
+              )
+            }
           />
         </FieldGroup>
       ) : (

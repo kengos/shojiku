@@ -3,6 +3,7 @@
 // result. Composed in that ORDER on purpose — zoom feeds the render scale, and
 // Fit measures the last-good page the render produced.
 
+import type { Op } from '@shojiku/designer-core';
 import type { PageMargin } from '../canvas/marginGuide';
 import { cssFactor, renderScale } from '../canvas/zoom';
 import type { EngineTransport } from '../engine/transport';
@@ -10,6 +11,7 @@ import type { BoxIndex, RawPage } from '../engine/types';
 import type { PreviewState } from '../preview/reducer';
 import { usePreview } from '../preview/usePreview';
 import { useAutoFit } from './useAutoFit';
+import { useDraftPreview } from './useDraftPreview';
 import { useZoom } from './useZoom';
 
 /** The stable empty box index (no render yet, or a render without inspect). */
@@ -24,6 +26,10 @@ export interface PreviewSessionOptions {
    * and would only inject `empty_definitions`/`unknown_data_key` noise. */
   readonly definitions: string | undefined;
   readonly baseScale: number;
+  /** The session's template-size cap — a draft is derived by re-parsing the
+   * committed text, which must happen under the SAME bound or a legally
+   * oversized document stops previewing the moment it is edited. */
+  readonly maxBytes: number;
 }
 
 export interface PreviewSession {
@@ -37,8 +43,15 @@ export interface PreviewSession {
   readonly renderedScale: number;
   /** The interim CSS transform that gives zoom instant feedback. */
   readonly cssFactor: number;
-  /** Whether the shown render corresponds to the LIVE document. */
+  /** Whether the shown render corresponds to the LIVE COMMITTED document. A
+   * draft render is never fresh: `panel/boxFields` gates the placement pin on
+   * this, and pinning a measurement taken from text the user never committed
+   * would author numbers off a document that does not exist. */
   readonly fresh: boolean;
+  /** Publish an in-progress edit as ops so the canvas shows it, or `null` to
+   * withdraw it. The ops are applied to a THROWAWAY document — see
+   * `preview/draftTemplate`. */
+  readonly setDraftOps: (ops: readonly Op[] | null) => void;
   /** The last-good pages — never blanked while a failing edit re-renders. */
   readonly pages: readonly RawPage[];
   readonly boxes: BoxIndex;
@@ -56,10 +69,19 @@ export function usePreviewSession({
   params,
   definitions,
   baseScale,
+  maxBytes,
 }: PreviewSessionOptions): PreviewSession {
   const zoomState = useZoom();
   const target = renderScale(baseScale, zoomState.zoom);
-  const preview = usePreview(transport, text, { params, definitions, scale: target });
+  const draft = useDraftPreview(text, maxBytes);
+  const preview = usePreview(transport, draft.text, {
+    params,
+    definitions,
+    scale: target,
+    // The draft has already waited out its own debounce before it reaches here,
+    // so waiting again would double the delay the reader feels for nothing.
+    ...(draft.drafting ? { debounceMs: 0 } : {}),
+  });
   const renderedScale = preview.renderedScale ?? target;
   const onFit = useAutoFit({
     lastGood: preview.lastGood,
@@ -78,7 +100,8 @@ export function usePreviewSession({
     onFit,
     renderedScale,
     cssFactor: cssFactor(baseScale, zoomState.zoom, renderedScale),
-    fresh: preview.rendered !== null && preview.rendered === preview.revision,
+    fresh: !draft.drafting && preview.rendered !== null && preview.rendered === preview.revision,
+    setDraftOps: draft.setDraftOps,
     pages: preview.lastGood?.pages ?? [],
     boxes: preview.lastGood?.inspect?.boxes ?? EMPTY_BOXES,
     margin: preview.lastGood?.inspect?.margin ?? null,
