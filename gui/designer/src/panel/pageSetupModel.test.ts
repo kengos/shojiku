@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readPageView, sizeLabel } from './pageSetupModel';
+import { pageSummary, readPageView, sizeLabel } from './pageSetupModel';
 
 describe('readPageView', () => {
   it('treats a missing page key as the default A4 portrait', () => {
@@ -147,5 +147,40 @@ describe('sizeLabel', () => {
   it('shows a placeholder for an empty custom dimension', () => {
     expect(sizeLabel(readPageView({ size: { w: 'x', h: '13in' } }))).toBe('? × 13 in');
     expect(sizeLabel(readPageView({ size: { w: '8in', h: 'y' } }))).toBe('8 × ? in');
+  });
+});
+
+describe('pageSummary', () => {
+  it('names a metric size and its millimetres', () => {
+    expect(pageSummary(readPageView({ size: 'A4' }))).toBe('A4 — 210 × 297 mm');
+  });
+
+  it('names a North-American size in inches', () => {
+    expect(pageSummary(readPageView({ size: 'Letter' }))).toBe('Letter — 8.5 × 11 in');
+  });
+
+  it('follows the orientation the document authored', () => {
+    expect(pageSummary(readPageView({ size: 'B5', orientation: 'landscape' }))).toBe(
+      'B5 — 257 × 182 mm',
+    );
+  });
+
+  it('describes an untouched document as the A4 it renders at', () => {
+    expect(pageSummary(readPageView(undefined))).toBe('A4 — 210 × 297 mm');
+  });
+
+  // A custom size has no name to give, so the dimensions ARE the description.
+  it('gives a custom size its authored dimensions alone', () => {
+    expect(pageSummary(readPageView({ size: { w: '80mm', h: '200mm' } }))).toBe('80 × 200 mm');
+  });
+
+  // The reassurance surface must stay silent rather than name a page it is
+  // guessing at — these are the documents whose size this build cannot read.
+  it.each([
+    ['a size spelling this build does not know', { size: 'A9' }],
+    ['a custom size whose dimensions do not parse', { size: { w: 'wide', h: 'tall' } }],
+    ['a custom size missing a dimension', { size: { w: '80mm' } }],
+  ])('says nothing for %s', (_case, page) => {
+    expect(pageSummary(readPageView(page))).toBeNull();
   });
 });

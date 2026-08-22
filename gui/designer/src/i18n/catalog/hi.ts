@@ -51,6 +51,7 @@ export const hi: LanguageCatalog = {
     'menu.pdf': 'PDF के रूप में डाउनलोड करें…',
     'pdf.title': 'PDF पूर्वावलोकन',
     'pdf.help': 'यह तैयार PDF है — कमांड-लाइन रेंडरर जो बाइट्स बनाता है, बिल्कुल वही।',
+    'pdf.pageSize': 'पेज का आकार: {size}',
     'pdf.download': 'डाउनलोड करें',
     'pdf.close': 'बंद करें',
     'pdf.frameTitle': 'दस्तावेज़ का PDF पूर्वावलोकन',
@@ -105,6 +106,7 @@ export const hi: LanguageCatalog = {
     'shortcuts.action.duplicate': 'चयन की प्रतिलिपि',
     'shortcuts.action.delete': 'चयन हटाएँ',
     'shortcuts.action.deselect': 'चयन साफ़ करें',
+    'shortcuts.action.reorder': 'लेयर को ऊपर या नीचे ले जाएँ',
     'glossary.title': 'शब्दावली',
     'glossary.field.term': 'डेटा फ़ील्ड',
     'glossary.field.def':
@@ -122,6 +124,9 @@ export const hi: LanguageCatalog = {
     'glossary.default.def':
       'जब आप कोई नियंत्रण खाली छोड़ते हैं तो आइटम जो मान उपयोग करता है, जो लागू शैली या दस्तावेज़ सेटिंग से लिया जाता है।',
     'glossary.interpolation.term': 'डेटा प्लेसहोल्डर',
+    'glossary.units.term': 'इकाइयाँ',
+    'glossary.units.def':
+      'बिना इकाई लिखा गया माप पॉइंट में होता है (1 pt = 1/72 इंच)। mm, cm, in, em (फ़ॉन्ट आकार का गुणक) या rem भी लिखे जा सकते हैं, और % वहाँ जहाँ मापने का कोई आधार हो — अपने-आप आकार तय करने वाले पैरेंट पर % छोड़ दिया जाता है।',
     'glossary.interpolation.def':
       'टेक्स्ट आइटम के भीतर दोहरे कर्ली ब्रैकेट में डेटा कुंजी लिखकर बनाया गया चिह्न, जो दस्तावेज़ बनने पर संबंधित मान से बदल जाता है।',
     'title.saving': 'सहेजा जा रहा है…',
@@ -467,6 +472,7 @@ export const hi: LanguageCatalog = {
     'panel.charGrid.hint':
       'जब तक खाने का आकार दिया गया है, खींचा गया आकार खानों से तय होता है, ऊपर दी गई चौड़ाई से नहीं। खाने का आकार खाली छोड़ने पर उलटे खाने इसी आइटम की चौड़ाई से निकाले जाते हैं।',
     'stepper.relativeUnit': 'प्रतिशत या em वाले मान चरणबद्ध नहीं बदले जा सकते। उन्हें सीधे टाइप करें।',
+    'stepper.unitHint': 'mm, cm, in भी',
     'panel.box.h': 'ऊँचाई',
     'panel.placement.label': 'स्थिति',
     'panel.placement.mode.auto': 'स्वतः',
@@ -732,6 +738,10 @@ export const hi: LanguageCatalog = {
     'sample.variant.error.cannotRemove': 'यह वैरिएंट हटाया नहीं जा सकता।',
     'tree.empty': 'दिखाने के लिए कोई आइटम नहीं।',
     'tree.truncated': 'बड़ा दस्तावेज़ — कुछ आइटम छिपाए गए हैं।',
+    'tree.dragHint': 'खींचकर क्रम या समूह बदलें।',
+    'help.reorder.title': 'लेयर का क्रम और समूह बदलना',
+    'help.reorder.body':
+      'पंक्ति को ऊपर-नीचे खींचने पर क्रम बदलता है और दाएँ-बाएँ खींचने पर वह किसी समूह में जाती या उससे बाहर आती है। Alt+↑ और Alt+↓ उसी समूह के भीतर क्रम बदलते हैं।',
     'tree.documentRoot': 'दस्तावेज़',
     'menu.documentSettings': 'दस्तावेज़ सेटिंग…',
     'docSettings.title': 'दस्तावेज़ सेटिंग',

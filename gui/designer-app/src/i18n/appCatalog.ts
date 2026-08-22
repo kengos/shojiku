@@ -10,7 +10,12 @@ import { type Catalog, DEFAULT_CATALOG, type LanguageCatalog } from '@shojiku/de
 const APP_CHROME_EN: Readonly<Record<string, string>> = {
   'catalog.title': 'Choose a template',
   'catalog.empty': 'No templates for this language yet.',
-  'app.localeLabel': 'Language',
+  // The language control's accessible name. It SHOWS the current language, and
+  // WCAG 2.5.3 wants the name to contain the visible text so a speech-input
+  // user can say what they see — hence the value, as an ICU arg rather than a
+  // string concatenated at the call site. There is no bare-label variant: it
+  // had no consumer left once this one existed.
+  'app.localeLabelWith': 'Language: {name}',
   'app.themeLabel': 'Theme',
   'app.themeAuto': 'Auto',
   'app.themeLight': 'Light',
@@ -85,7 +90,7 @@ const APP_CHROME_EN: Readonly<Record<string, string>> = {
 const APP_CHROME_JA: Readonly<Record<string, string>> = {
   'catalog.title': 'テンプレートを選ぶ',
   'catalog.empty': 'この言語のテンプレートはまだありません。',
-  'app.localeLabel': '言語',
+  'app.localeLabelWith': '言語: {name}',
   'app.themeLabel': 'テーマ',
   'app.themeAuto': '自動',
   'app.themeLight': 'ライト',

@@ -25,6 +25,12 @@ export interface CatalogPreset {
    * them as `assets/<name>`); the app fetches and injects them at
    * preset-open. Omitted when the preset bundles no assets. */
   readonly assets?: readonly string[];
+  /** Whether the preset ships a `definitions.yml`. Present and `true` only
+   * then: the app asks for that file ONLY when this says it exists, because a
+   * fetch that 404s logs a console error the app cannot suppress — the blank
+   * presets carry no definitions, so every blank start used to open with a
+   * red console line that reads exactly like a broken build. */
+  readonly definitions?: boolean;
   /** Sample-data variants beyond the default `params.json` (filled sample / blank …).
    * Each is fetched from `params-<id>.json` and shown in the preview's variant
    * switcher under its localized `name`. Omitted when the preset ships only the

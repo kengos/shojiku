@@ -67,7 +67,11 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   label).
 - `tree/LayerTree.tsx` — the outline panel frame: the fixed whole-document
   document-root row, collapse state, incoming-selection reveal, truncation
-  notice. `useRowReorder` is called AFTER the reveal effect (that order is
+  notice, and the gesture hint at the foot (rows only) — one line plus a
+  `HelpHint` naming the drag's HORIZONTAL meaning and the Alt+↑/↓ chord.
+  Cross-parent drag shipped with no entry point and a walkthrough found it
+  by accident; no `tree.*` string had mentioned dragging at all.
+  `useRowReorder` is called AFTER the reveal effect (that order is
   the contract).
 - `tree/TreeRow.tsx` — one row, recursing: twisty, kind mark, label,
   click/right-click/Alt+↑↓/collapse keys; registers in the shared
@@ -182,6 +186,10 @@ REQUIRED-only (no `?:`/defaults) so the split added no new branch legs.
   branch (either takes the whole editor area).
 - `shell/DialogHost.tsx` — every modal/overlay/popup, open-flag driven
   (shortcuts/glossary, `PdfPreviewModal`, the `Offcanvas` column sheet).
+  The preview's `pageLabel` comes from `usePdfAction`, snapshotted WITH the
+  bytes: a focus trap holds FOCUS, not the window-level keydown listener,
+  so ⌘Z reaches the document while the modal is open and a live read would
+  relabel the bytes with a page they were not rendered at.
 - `shell/InsertDialogs.tsx` — the insert scaffolds' dialogs (iterable,
   field, paste, container picker).
 - `shell/TutorialSurfaces.tsx` — `TutorialDialog` + `CoachOverlay`.

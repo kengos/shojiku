@@ -11,6 +11,7 @@ import type { EditorController } from '../editor/useEditor';
 import { useEditor } from '../editor/useEditor';
 import type { BoxRect, PlacedBox } from '../engine/types';
 import { I18nProvider } from '../i18n/context';
+import { unitHintsFor } from '../testkit/unitHint';
 import { PropertyPanel } from './PropertyPanel';
 import type { PlacementGeometry } from './placementGeometry';
 
@@ -546,5 +547,23 @@ describe('BoxSection — a relative width', () => {
       (within(row).getByRole('button', { name: 'Increase' }) as HTMLButtonElement).disabled,
     ).toBe(false);
     expect(within(row).queryByText(/cannot be stepped/)).toBeNull();
+  });
+});
+
+// The unit affordance (`stepper.unitHint`) is OPT-IN per field, because the
+// WIRE decides: a key typed `Length` takes `25mm`, a key typed `number (pt)`
+// does not. So each site that offers it is pinned at the site — an optional
+// prop whose default is the disabled value can otherwise be dropped in a
+// refactor with no type error, no lint and no red test.
+
+describe('BoxSection unit affordance', () => {
+  it('invites another unit on a box coordinate', () => {
+    const reads = {
+      'sections.body': { type: 'flow' },
+      'sections.body.items[0]': { type: 'text', text: 'hi', style: {}, box: { x: 30 } },
+    };
+    draw(<PropertyPanel controller={makeController(reads)} path="sections.body.items[0]" />);
+    openLayout();
+    expect(unitHintsFor('X').length).toBeGreaterThan(0);
   });
 });

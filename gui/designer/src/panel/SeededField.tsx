@@ -5,7 +5,8 @@
 
 import { useId } from 'react';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
-import { badgeText, UnitBadge } from './fields';
+import { TipBubble } from '../ui/TipBubble';
+import { badgeText, showsUnitHint, UnitBadge } from './fields';
 
 export interface SeededFieldProps {
   readonly label: string;
@@ -23,6 +24,9 @@ export interface SeededFieldProps {
   readonly listId?: string;
   /** The unit a BARE value carries (`'pt'`). See `StepperFieldProps.unit`. */
   readonly unit?: string;
+  /** The badge's hover bubble naming the other units the key takes. See
+   * `showsUnitHint`. */
+  readonly unitHint?: string;
   readonly onCommit: (value: string) => void;
 }
 
@@ -41,19 +45,22 @@ export function SeededField({
   options,
   listId,
   unit,
+  unitHint,
   onCommit,
 }: SeededFieldProps) {
   const id = useId();
   const hint = seed !== undefined && seed !== '' ? seed : placeholder;
   // An unset field shows the fallback as its placeholder, so the unit belongs
   // to that text — 「10」 is as unreadable in a placeholder as in a value.
-  const badge = badgeText(unit, authored === '' ? (hint ?? '') : authored);
+  const shown = authored === '' ? (hint ?? '') : authored;
+  const badge = badgeText(unit, shown);
+  const unitBubble = showsUnitHint(unit, shown, unitHint) ? unitHint : undefined;
   return (
     <span className="mb-2 block">
       <label htmlFor={id} className={FIELD_LABEL}>
         {label}
       </label>
-      <span className="relative flex min-w-0">
+      <span className={`relative flex min-w-0${unitBubble === undefined ? '' : ' group/tip'}`}>
         <input
           key={authored}
           id={id}
@@ -74,6 +81,7 @@ export function SeededField({
           }}
         />
         {badge === undefined ? null : <UnitBadge text={badge} />}
+        {unitBubble === undefined ? null : <TipBubble text={unitBubble} />}
         {options !== undefined && listId !== undefined ? (
           <datalist id={listId}>
             {options.map((option) => (

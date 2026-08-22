@@ -64,6 +64,7 @@ export function LayoutSection({ controller, path, layout }: LayoutSectionProps) 
         value={layout.gap}
         placeholder="0"
         unit="pt"
+        unitHint={t('stepper.unitHint')}
         canStep={readLength(gapBase) !== null}
         onCommit={(value) => dispatch(gapOp(path, value))}
         onStep={(dir) => dispatch(gapStepOp(path, layout.gap, dir, GAP_STEP_PT))}

@@ -14,6 +14,7 @@ import { isSafeAssetName } from '../assets/paths.ts';
 export {
   buildCatalog,
   MAX_PRESET_VARIANTS,
+  presetWithFiles,
   resolvePresetBuckets,
   validateAssetNames,
   validatePreset,

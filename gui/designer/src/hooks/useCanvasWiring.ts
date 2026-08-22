@@ -4,7 +4,9 @@
 // `useHostNotify` effect keeps its position between the inline editor and the
 // PDF action, so effect order is unchanged.
 
+import { useCallback } from 'react';
 import { DEFAULT_IMAGE_BUDGETS } from '../image/model';
+import { pageSummary, readPageView } from '../panel/pageSetupModel';
 import type { DesignerProps } from '../props';
 import { useDocDerived } from './useDocDerived';
 import type { DocumentCore } from './useDocumentCore';
@@ -78,6 +80,11 @@ export function useCanvasWiring(
     text: editor.text,
     params: sample.params,
     definitions: defs.definitionsForEngine,
+    // Read at RENDER time, not at display time: the preview's page line must
+    // describe the bytes it is shown beside, and the document can still move
+    // behind an open modal (the window-level undo is guarded against editable
+    // targets only, and a modal's close button is not one).
+    readPageLabel: useCallback(() => pageSummary(readPageView(editor.read('page'))), [editor.read]),
   });
   const derived = useDocDerived(editor.text, defaultFontFamily, transport);
 

@@ -4,7 +4,7 @@ import type { Mock } from 'vitest';
 import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
 import { SelectField } from './choiceFields';
-import { TextField } from './fields';
+import { showsUnitHint, TextField } from './fields';
 import { SeededField } from './SeededField';
 import { StepperField } from './StepperField';
 
@@ -345,5 +345,105 @@ describe('SelectField', () => {
     expect(labels).toEqual(['(none)', '<normal>', '<bold>']);
     fireEvent.change(screen.getByLabelText('Weight'), { target: { value: 'bold' } });
     expect(onCommit).toHaveBeenCalledWith('bold');
+  });
+});
+
+describe('showsUnitHint', () => {
+  const HINT = 'Type mm, cm, in, em or rem.';
+
+  it('shows the hint on a bare value in a unit-bearing field', () => {
+    expect(showsUnitHint('pt', '12', HINT)).toBe(true);
+  });
+
+  // Each of the three conditions rules out a REAL field in this panel, so
+  // each gets its own case rather than one "returns false" catch-all.
+  it('withholds it where the caller passed none — the border pen, whose key is a plain number', () => {
+    expect(showsUnitHint('pt', '12', undefined)).toBe(false);
+  });
+
+  it('withholds it on a unitless field — a ratio like line height', () => {
+    expect(showsUnitHint(undefined, '1.5', HINT)).toBe(false);
+  });
+
+  it.each([
+    ['a value that spells its own unit', '12mm'],
+    ['a percentage', '50%'],
+    ['an em value', '0.4em'],
+    ['an empty field with no placeholder', ''],
+    ['garbage', 'auto'],
+  ])('withholds it for %s — there is no invisible pt to explain', (_case, shown) => {
+    expect(showsUnitHint('pt', shown, HINT)).toBe(false);
+  });
+});
+
+describe('the unit hint in a rendered field', () => {
+  function drawHinted(value: string, unitHint?: string) {
+    return render(
+      <I18nProvider locale="en">
+        <StepperField
+          label="X"
+          value={value}
+          canStep
+          unit="pt"
+          unitHint={unitHint}
+          onCommit={vi.fn()}
+          onStep={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+  }
+
+  it('rides the field, not the badge — the badge is pointer-events-none and cannot be hovered', () => {
+    const { container } = drawHinted('12', 'Type mm, cm, in, em or rem.');
+    const bubble = container.querySelector('[data-sj-tip]');
+    expect(bubble?.textContent).toBe('Type mm, cm, in, em or rem.');
+    // The hover target is the input's own wrapper.
+    expect(container.querySelector('.group\\/tip')).not.toBeNull();
+  });
+
+  it('renders no bubble without a hint', () => {
+    const { container } = drawHinted('12');
+    expect(container.querySelector('[data-sj-tip]')).toBeNull();
+  });
+
+  it('renders no bubble on a value that states its own unit', () => {
+    const { container } = drawHinted('12mm', 'Type mm, cm, in, em or rem.');
+    expect(container.querySelector('[data-sj-tip]')).toBeNull();
+  });
+
+  it('carries it on a plain TextField too (the column width)', () => {
+    const { container } = render(
+      <I18nProvider locale="en">
+        <TextField
+          label="Column width"
+          value="120"
+          unit="pt"
+          unitHint="Type mm, cm, in, em or rem."
+          onCommit={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+    expect(container.querySelector('[data-sj-tip]')?.textContent).toBe(
+      'Type mm, cm, in, em or rem.',
+    );
+  });
+
+  it('carries it on a SeededField too (the document default font size)', () => {
+    const { container } = render(
+      <I18nProvider locale="en">
+        <SeededField
+          label="Font size"
+          authored=""
+          seed="10"
+          unit="pt"
+          unitHint="Type mm, cm, in, em or rem."
+          onCommit={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+    // The seed sits in the PLACEHOLDER, so the unit belongs to that text.
+    expect(container.querySelector('[data-sj-tip]')?.textContent).toBe(
+      'Type mm, cm, in, em or rem.',
+    );
   });
 });

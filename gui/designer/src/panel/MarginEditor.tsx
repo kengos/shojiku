@@ -60,7 +60,10 @@ export function MarginEditor({ controller }: MarginEditorProps) {
 
       {view.mode === 'uniform' ? (
         // A NUMBER input can only hold a bare value, so the unit is always
-        // implicit here — the badge is unconditional. Explicit htmlFor/id, not
+        // implicit here — the badge is unconditional, and this field gets NO
+        // unit hint: the browser will not accept `25mm` in a number input, so
+        // inviting it would be a lie. The per-side fields below are text
+        // inputs and do carry the invitation. Explicit htmlFor/id, not
         // the wrapping-label `Field`: the badge's text would otherwise fold
         // into the computed label (the all-sides label would otherwise read with a fused "pt").
         <span className="mb-2 block">
@@ -96,6 +99,7 @@ export function MarginEditor({ controller }: MarginEditorProps) {
               label={t(`pageSetup.margin.${side}`)}
               value={view.sides[side]}
               unit="pt"
+              unitHint={t('stepper.unitHint')}
               onCommit={(value) =>
                 value === view.sides[side] ? undefined : dispatch(perSideOp(view, side, value))
               }

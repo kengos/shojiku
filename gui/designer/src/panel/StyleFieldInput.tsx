@@ -44,6 +44,9 @@ export interface StyleFieldInputProps {
   /** The unit a BARE value carries (`'pt'` on a length field) — shown in the
    * field's suffix badge while the value/placeholder is a bare numeral. */
   readonly unit?: string;
+  /** The badge's hover bubble naming the other units the key takes. Passed
+   * through to the seeded field; inert on a select or a plain text field. */
+  readonly unitHint?: string;
   /** Wire spelling → display label for an enum option (localized). Absent → the
    * wire spelling is shown as-is (every non-defaults surface today). */
   readonly optionLabel?: (option: string) => string;
@@ -61,6 +64,7 @@ export function StyleFieldInput({
   seed,
   placeholder,
   unit,
+  unitHint,
   optionLabel,
 }: StyleFieldInputProps) {
   if (spec.kind === 'select') {
@@ -83,6 +87,7 @@ export function StyleFieldInput({
         seed={seed}
         placeholder={placeholder}
         unit={unit}
+        unitHint={unitHint}
         options={spec.key === 'fontFamily' && fontFamilies.length > 0 ? fontFamilies : undefined}
         listId={spec.key === 'fontFamily' && fontFamilies.length > 0 ? familyListId : undefined}
         onCommit={onCommit}

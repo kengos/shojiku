@@ -237,7 +237,7 @@ describe('AppHeader language control', () => {
   it('lists the locales with the current one checked and reports a pick', () => {
     const onLocaleChange = vi.fn();
     renderHeader(header({ locale: 'en-US', onLocaleChange }));
-    fireEvent.click(screen.getByRole('button', { name: 'Language' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Language:/ }));
     const current = screen.getByRole('menuitem', { name: 'English (US)' });
     expect(current.querySelector('svg')).not.toBeNull();
     const ja = screen.getByRole('menuitem', { name: '日本語' });
@@ -253,5 +253,59 @@ describe('AppHeader security', () => {
     const { container } = renderHeader(header({ doc: hostile }));
     expect(screen.getByText('<img src=x onerror=alert(1)>{{customer.name}}')).toBeTruthy();
     expect(container.querySelector('img')).toBeNull();
+  });
+});
+
+describe('AppHeader language control', () => {
+  // Both foveal-vision walkthroughs reached for the language switch and got
+  // the theme menu: two 36px monochrome glyphs, theme first. The control now
+  // says which language it is on, and comes first.
+  it('shows the current language in its own name', () => {
+    renderHeader(header({ locale: 'ja-JP' }));
+    expect(screen.getByRole('button', { name: /^Language:/ }).textContent).toContain('日本語');
+  });
+
+  it('follows the locale it is given', () => {
+    const { rerender } = renderHeader(header({ locale: 'ja-JP' }));
+    rerender(header({ locale: 'en-US' }));
+    expect(screen.getByRole('button', { name: /^Language:/ }).textContent).toContain(
+      'English (US)',
+    );
+  });
+
+  // ORDER, not presence: putting the sought control first is half the fix, and
+  // a test asserting both exist would pass with them the wrong way round.
+  it('places language before theme', () => {
+    const { container } = renderHeader(header());
+    const names = [...container.querySelectorAll('button[aria-label]')].map((b) =>
+      b.getAttribute('aria-label'),
+    );
+    // The language control's name carries the current value after it, so match
+    // the prefix rather than the whole name.
+    const language = names.findIndex((n) => n?.startsWith('Language'));
+    expect(language).toBeGreaterThanOrEqual(0);
+    expect(language).toBeLessThan(names.indexOf('Theme'));
+  });
+
+  // The tag comes back from a stored preference, so it can name a language
+  // this build does not carry — or be junk.
+  it.each([
+    ['an unknown tag', 'xx-YY', 'xx-YY'],
+    [
+      'a prototype name (the registry lookup must not answer with an inherited member)',
+      'constructor',
+      'constructor',
+    ],
+  ])('falls back to showing %s itself', (_case, locale, shown) => {
+    renderHeader(header({ locale }));
+    expect(screen.getByRole('button', { name: /^Language:/ }).textContent).toContain(shown);
+  });
+
+  it('still opens its menu and reports the picked language', () => {
+    const onLocaleChange = vi.fn();
+    renderHeader(header({ locale: 'en-US', onLocaleChange }));
+    fireEvent.click(screen.getByRole('button', { name: /^Language:/ }));
+    fireEvent.click(screen.getByRole('menuitem', { name: '日本語' }));
+    expect(onLocaleChange).toHaveBeenCalledWith('ja-JP');
   });
 });

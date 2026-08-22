@@ -146,6 +146,21 @@ export function readPageView(raw: unknown): PageView {
   return { mode: 'named', sizeName: name, orientation, hasSizeKey, hasOrientation, dims };
 }
 
+/** The page a render was made at, as one phrase: the size's own name plus its
+ * real dimensions (`A4 — 210 × 297 mm`), or the dimensions alone for a custom
+ * size, which has no name to give.
+ *
+ * `null` when this build cannot describe the page — an unrecognized `page.size`
+ * spelling, or a custom size whose dimensions do not parse. A surface that
+ * exists to REASSURE must then say nothing rather than name a page it is
+ * guessing at. */
+export function pageSummary(view: PageView): string | null {
+  if (view.dims === null) {
+    return null;
+  }
+  return view.mode === 'custom' ? sizeLabel(view) : `${view.sizeName} — ${sizeLabel(view)}`;
+}
+
 /** A human dimension label for the thumbnail: the entered custom values with
  * their unit, or the named size's oriented dimensions in its conventional unit. */
 export function sizeLabel(view: PageView): string {

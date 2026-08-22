@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { unitHintsFor } from '../testkit/unitHint';
 import { LayoutSection } from './LayoutSection';
 import { containerLayoutFor } from './layoutModel';
 import { ParentContainerCard } from './ParentContainerCard';
@@ -395,5 +396,17 @@ describe('ParentContainerCard', () => {
     fireEvent.mouseEnter(card as HTMLElement);
     fireEvent.click(screen.getByText('Select parent'));
     fireEvent.mouseLeave(card as HTMLElement);
+  });
+});
+
+// The unit affordance (`stepper.unitHint`) is OPT-IN per field, because the
+// WIRE decides which keys take `25mm`. Pinned AT the site: an optional prop
+// whose default is the disabled value can be dropped in a refactor with no
+// type error, no lint and no red test.
+
+describe('LayoutSection unit affordance', () => {
+  it('invites another unit on the gap', () => {
+    drawSection(rowController({ direction: 'row', gap: 8 }));
+    expect(unitHintsFor('Spacing').length).toBeGreaterThan(0);
   });
 });

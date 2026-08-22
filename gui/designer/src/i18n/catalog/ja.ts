@@ -287,6 +287,7 @@ export const ja: LanguageCatalog = {
     'menu.pdf': 'PDF形式でダウンロード…',
     'pdf.title': 'PDFプレビュー',
     'pdf.help': '完成したPDFです。コマンドラインで出力されるものと同じバイト列です。',
+    'pdf.pageSize': '用紙サイズ: {size}',
     'pdf.download': 'ダウンロード',
     'pdf.close': '閉じる',
     'pdf.frameTitle': '書類のPDFプレビュー',
@@ -344,6 +345,7 @@ export const ja: LanguageCatalog = {
     'shortcuts.action.duplicate': '選択を複製',
     'shortcuts.action.delete': '選択を削除',
     'shortcuts.action.deselect': '選択を解除',
+    'shortcuts.action.reorder': 'レイヤーを上下に移動',
     'glossary.title': '用語集',
     'glossary.field.term': 'データ項目',
     'glossary.field.def':
@@ -361,6 +363,9 @@ export const ja: LanguageCatalog = {
     'glossary.default.def':
       '項目のコントロールを空欄にしたときに使う値で、適用したスタイルや書類の設定から取られます。',
     'glossary.interpolation.term': '差し込み',
+    'glossary.units.term': '単位',
+    'glossary.units.def':
+      '単位を書かない数値はポイントです(1pt = 1/72インチ)。mm / cm / in / em(文字サイズの倍数)/ rem も使えます。% は基準になる大きさがあるときだけ有効で、自動で大きさが決まる親に対する % は無視されます。',
     'glossary.interpolation.def':
       'テキスト項目の中に二重の波かっこでデータのキーを書いておくと、書き出し時にその値へ置き換わります。',
     'title.saving': '保存中…',
@@ -710,6 +715,7 @@ export const ja: LanguageCatalog = {
     'panel.charGrid.hint':
       'マスの大きさが指定されている間は、描かれる大きさは上の幅ではなくマスで決まります。マスの大きさを空にすると、逆にこの項目の幅からマスが計算されます。',
     'stepper.relativeUnit': 'パーセントやemの値は段階調整できません。直接入力してください。',
+    'stepper.unitHint': 'mm・cm・in も可',
     'panel.box.h': '高さ',
     'panel.placement.label': '配置',
     'panel.placement.mode.auto': '自動',
@@ -977,6 +983,10 @@ export const ja: LanguageCatalog = {
     'sample.variant.error.cannotRemove': 'このバリアントは削除できません。',
     'tree.empty': '表示できる項目がありません。',
     'tree.truncated': '大きなドキュメントのため一部の項目を省略しています。',
+    'tree.dragHint': 'ドラッグで並べ替え・グループ移動。',
+    'help.reorder.title': 'レイヤーの並べ替えとグループ移動',
+    'help.reorder.body':
+      '行を上下にドラッグすると並び順が変わり、左右にドラッグするとグループへの出し入れになります。Alt+↑ / Alt+↓ は今いるグループの中だけで並べ替えます。',
     'tree.documentRoot': '全体',
     'menu.documentSettings': '文書設定…',
     'docSettings.title': '文書設定',

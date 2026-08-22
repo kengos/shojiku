@@ -128,6 +128,7 @@ function useStyleField({ controller, fontFamilies, defaultFontFamily }: Defaults
         seedMode
         seed={seedFor(spec.key, defaultFontFamily)}
         unit={spec.kind === 'length' ? 'pt' : undefined}
+        unitHint={t('stepper.unitHint')}
         placeholder={
           spec.key === 'fontFamily' && defaultFontFamily === undefined
             ? t('defaults.familyPlaceholder')

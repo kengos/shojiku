@@ -19,7 +19,8 @@ in which order) over one module per browser surface — `browser/io.ts`
 (the two fetch readers, the file-picker dialog, the download trigger),
 `browser/imageCodec.ts` (the `<img>`/`<canvas>` `ImageCodec`),
 `browser/dataSources.ts` (`makeLoadPreset` over the assembled `data/`
-tree + the `config.json` mount probe), `browser/enginePrep.ts`
+tree + the `config.json` mount probe; it asks for `definitions.yml` only
+when the catalog entry declares one, via `wantsDefinitions`), `browser/enginePrep.ts`
 (`makePrepareEngine`: await the module promise → `pickerCapable` →
 boot → lazy loader → the capability-gated `FontController`;
 `makeSpecimen`), `browser/moduleFetch.ts` (`fetchWasmModule`: the
@@ -158,7 +159,10 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
 
 - `catalog/catalog.ts` — `catalogFor`/`presetDisplayName` (per-locale
   derivation over the boot-collected `PresetContribution` list; a
-  preset surfaces only for its own language tags).
+  preset surfaces only for its own language tags) + `wantsDefinitions`
+  — whether to ASK for `definitions.yml` at open, `=== true` and never
+  truthiness, since `catalog.json` is fetched at runtime and the field's
+  type is a compile-time claim about a file this code does not produce.
 - `catalog/CatalogView.tsx` — localized cards (pre-guarded thumbnails).
 - `catalog/blankCatalog.test.ts` — the blank-preset cross-check GATE
   over the real `examples/*/*/preset.yml`: every registry locale
@@ -211,8 +215,20 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   (accessor-read per mount, validated/clamped — user-writable storage
   never reaches a CSS var) + `tutorialStore()` (raw string on purpose —
   only the component knows real step ids).
-- `files.ts` — size-capped `openText` + sanitized export filenames
-  (`buildExport`/`buildPdfExport` — stem guard collapses dot runs).
+- `files.ts` — size-capped `openText` + sanitized export filenames, over
+  TWO stem rules because the two inputs differ: `safeStem` narrows a
+  build-validated preset ID to `[a-z0-9._-]` (`buildExport`), while
+  `safeDocumentStem` (`buildPdfExport`) keeps a USER-authored document
+  name and strips only what is dangerous — C0/C1 controls, the invisible
+  formatting characters, path separators, the punctuation Windows refuses —
+  then
+  caps by UTF-8 BYTES on a code-point boundary. The ASCII-only rule it
+  replaces failed silently: `領収書` downloaded as `template.pdf` and
+  `白紙 (A4)` as `a4.pdf`, on a product shipping ja/zh/hi. The bidi range
+  matters only once non-ASCII is admitted — U+202E reverses how the rest
+  of the name displays, which is the classic download-name spoof. ZWNJ and
+  ZWJ are the deliberate exception and are KEPT: zero-width, but meaningful
+  in Devanagari and in emoji sequences.
 
 ## App composition (`src/app/`, `src/i18n/`, `src/theme/`)
 
@@ -255,8 +271,15 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   bumped by each open and by cancel and re-checked after every await —
   so a cancelled open's late settling, in either direction, cannot pull
   the user back out of the catalog. `app/AppHeader.tsx` — the
-  gdoc-style header (brand icon, theme/language icon menus over the
-  designer `Menu`'s icon-trigger variant); `app/EditableTitle.tsx` — the
+  gdoc-style header (brand icon, then LANGUAGE and theme over the
+  designer `Menu`'s icon-trigger variant; language comes first and
+  carries its own name as `triggerText`, because two 36px monochrome
+  glyphs are indistinguishable at low acuity and both foveal-vision
+  walkthroughs reached for the language switch and opened the theme
+  menu. Its accessible name is `app.localeLabelWith` — `Language: 日本語`,
+  the visible value INSIDE the name, because WCAG 2.5.3 asks that a
+  speech-input user be able to say what they see; `gui:e2e` matches the
+  prefix); `app/EditableTitle.tsx` — the
   click-to-rename title: uncontrolled input seeded once, BLUR as the
   single exit with Enter/Escape driving it, both ignored mid-IME
   composition.
@@ -340,7 +363,12 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   `src/build/presetManifest.ts` — what a preset DECLARES, validated:
   `validatePreset` incl. variants, `validateAssetNames`,
   `resolvePresetBuckets` (leaf dir = catalog id, bucket collisions
-  rejected), `buildCatalog`. Driven by `scripts/assemble-site.ts` (the
+  rejected), `buildCatalog`, plus `presetWithFiles` — the two facts only
+  the FILESYSTEM knows (which assets it bundles, whether it carries a
+  `definitions.yml`), kept pure and out of the copy loop because the
+  assembly script itself runs in no gate. The seven blank presets carry
+  no definitions, so without that flag every blank start logged a 404
+  the app could catch but not un-log. Driven by `scripts/assemble-site.ts` (the
   DRIVER) over `scripts/assembleIo.ts` (the resolved paths + the two fs
   primitives), `scripts/assemblePresets.ts` (the preset copy) and
   `scripts/assembleAssets.ts` (font chunks, locale packs, the wasm pkg)

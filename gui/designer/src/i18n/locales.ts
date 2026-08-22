@@ -124,6 +124,11 @@ export function localeInfo(tag: string): LocaleInfo | undefined {
   if (direct !== undefined) {
     return direct;
   }
-  const aliased = ALIASES[lower];
+  // `hasOwn`, not a bare index: the tag is an attacker string (it arrives from
+  // a stored preference or a host), and a plain-object lookup answers
+  // `constructor`/`toString` with an INHERITED member. Nothing downstream could
+  // be fooled by that today — the `find` below misses — but a table indexed by
+  // untrusted input is guarded at the lookup, not by what happens to follow it.
+  const aliased = Object.hasOwn(ALIASES, lower) ? ALIASES[lower] : undefined;
   return aliased === undefined ? undefined : LOCALES.find((locale) => locale.messages === aliased);
 }

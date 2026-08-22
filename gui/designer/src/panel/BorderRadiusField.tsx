@@ -46,6 +46,7 @@ export function BorderRadiusField({ radius, path, dispatch }: BorderRadiusFieldP
           label={t('border.radius')}
           value={radius.effective}
           unit="pt"
+          unitHint={t('stepper.unitHint')}
           placeholder="0"
           canStep={isSteppable(radius.effective)}
           onCommit={(next) => dispatch(radiusOps(path, radius, next))}

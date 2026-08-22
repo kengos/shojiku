@@ -564,3 +564,45 @@ describe('a conditionally shown item', () => {
     expect(screen.getByText(/Shown only when the data matches/)).toBeTruthy();
   });
 });
+
+describe('LayerTree gesture hint', () => {
+  const HINT = 'Drag rows to reorder or regroup.';
+
+  // GD9 shipped cross-parent drag and a walkthrough found it BY ACCIDENT:
+  // nothing on screen said a row could be dragged to change its owner, and no
+  // `tree.*` or `sidebar.*` string mentioned dragging at all.
+  it('says what a row can do', () => {
+    draw();
+    expect(screen.getByText(HINT)).toBeTruthy();
+  });
+
+  // The horizontal half of the gesture is the part the walkthrough could not
+  // guess, so it is the part the detail has to carry.
+  it('explains regrouping and the keyboard chord behind its help hint', () => {
+    draw();
+    fireEvent.click(screen.getByRole('button', { name: 'Moving and regrouping layers' }));
+    const body = screen.getByText(/drag it sideways/i);
+    expect(body.textContent).toContain('into or out of a group');
+    expect(body.textContent).toContain('Alt+↑');
+  });
+
+  it.each([
+    ['a document with nothing in it', { roots: [], truncated: false }],
+    ['no view at all', null],
+  ])('says nothing about dragging for %s', (_case, view) => {
+    draw({ view });
+    expect(screen.queryByText(HINT)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Moving and regrouping layers' })).toBeNull();
+  });
+
+  // A BLANK document: one root (the body section) and nothing inside it.
+  // Sections do not move, so nothing here can be dragged anywhere — a hint
+  // would be describing a gesture that does nothing. Found by opening the
+  // real app on the blank preset; the shipped fixtures all have items.
+  it('says nothing while the only rows are sections with nothing in them', () => {
+    const empty = VIEW?.roots.map((node) => ({ ...node, children: [] })) ?? [];
+    draw({ view: { roots: empty, truncated: false } });
+    expect(empty.length).toBeGreaterThan(0);
+    expect(screen.queryByText(HINT)).toBeNull();
+  });
+});

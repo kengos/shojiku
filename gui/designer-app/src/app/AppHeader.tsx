@@ -1,15 +1,21 @@
 // The app-shell header: a Google-Docs-style stack on the left (the open
-// document's name over the small brand line) and right-aligned icon controls
-// for theme (auto / light / dark) and language. The document name + save
+// document's name over the small brand line) and right-aligned controls for
+// language and theme (auto / light / dark). The document name + save
 // status arrive as `doc` (the editor screen reports them up through the app
 // shell); a list / catalog view passes `null` and the header shows the brand
 // alone. When `doc.onRename` is present (an open editor document), the title is
 // click-to-rename (Google-Docs style); a catalog / list view reports no doc, so
 // there is nothing to rename. Theme + language are single-choice menus (the
-// current value checked), replacing the old text `<select>`s. The
-// click-to-rename title itself is `EditableTitle.tsx`.
+// current value checked), replacing the old text `<select>`s. Language comes
+// FIRST and states its own value: two 36px monochrome glyphs side by side are
+// indistinguishable at low acuity, and both foveal-vision walkthroughs reached
+// for the language switch and opened the theme menu instead. Its accessible
+// name carries the value INSIDE it (`Language: 日本語`), because WCAG 2.5.3
+// asks that a speech-input user be able to operate a control by saying what is
+// written on it.
+// The click-to-rename title itself is `EditableTitle.tsx`.
 
-import { LOCALES, Menu, type SaveStatus, useI18n } from '@shojiku/designer';
+import { LOCALES, localeInfo, Menu, type SaveStatus, useI18n } from '@shojiku/designer';
 import { FileText, Globe, type LucideIcon, Monitor, Moon, Sun } from 'lucide-react';
 import { EngineLoadStatus } from '../loading/EngineLoadBar';
 import type { ModuleLoad } from '../loading/moduleLoad';
@@ -63,6 +69,10 @@ export function AppHeader({
 }: AppHeaderProps) {
   const { t } = useI18n();
   const ThemeIcon = THEME_ICON[themePref];
+  // The language's own name, which is what a reader hunting for it recognizes.
+  // A tag the registry does not know (a stored preference from an older build)
+  // shows the tag itself rather than nothing.
+  const localeName = localeInfo(locale)?.label ?? locale;
   const themeGroups = [
     {
       entries: [
@@ -99,6 +109,16 @@ export function AppHeader({
       </div>
       <EngineLoadStatus load={engineLoad} />
       <Menu
+        // The name CONTAINS the visible language name (WCAG 2.5.3 "Label in
+        // Name"): the trigger shows 日本語, so "click 日本語" has to operate it.
+        label={t('app.localeLabelWith', { name: localeName })}
+        trigger={<Globe aria-hidden size={18} />}
+        triggerText={localeName}
+        groups={localeGroups}
+        checkedId={locale}
+        onSelect={onLocaleChange}
+      />
+      <Menu
         label={t('app.themeLabel')}
         trigger={<ThemeIcon aria-hidden size={18} />}
         groups={themeGroups}
@@ -106,13 +126,6 @@ export function AppHeader({
         // The menu offers only the three ThemePreference ids, so the id handed
         // back is always a valid preference.
         onSelect={(id) => onThemeChange(id as ThemePreference)}
-      />
-      <Menu
-        label={t('app.localeLabel')}
-        trigger={<Globe aria-hidden size={18} />}
-        groups={localeGroups}
-        checkedId={locale}
-        onSelect={onLocaleChange}
       />
     </header>
   );

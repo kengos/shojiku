@@ -266,6 +266,7 @@ export const en: LanguageCatalog = {
     'menu.pdf': 'Download as PDF…',
     'pdf.title': 'PDF preview',
     'pdf.help': 'This is the finished PDF — the same bytes the command-line renderer produces.',
+    'pdf.pageSize': 'Page size: {size}',
     'pdf.download': 'Download',
     'pdf.close': 'Close',
     'pdf.frameTitle': 'PDF preview of the document',
@@ -322,6 +323,7 @@ export const en: LanguageCatalog = {
     'shortcuts.action.duplicate': 'Duplicate selection',
     'shortcuts.action.delete': 'Delete selection',
     'shortcuts.action.deselect': 'Clear selection',
+    'shortcuts.action.reorder': 'Move a layer up or down',
     'glossary.title': 'Glossary',
     'glossary.field.term': 'Data field',
     'glossary.field.def':
@@ -339,6 +341,9 @@ export const en: LanguageCatalog = {
     'glossary.default.def':
       'The value an item uses when you leave a control blank, taken from an applied style or the document settings.',
     'glossary.interpolation.term': 'Data placeholder',
+    'glossary.units.term': 'Units',
+    'glossary.units.def':
+      'A size written with no unit is in points (1 pt = 1/72 inch). You can also type mm, cm, in, em (multiples of the font size) or rem, and % wherever there is a size to measure against — a % of a parent that sizes itself is dropped.',
     'glossary.interpolation.def':
       'A marker inside a text item, written with a data key in double curly braces, replaced with the matching value when the document renders.',
     'title.saving': 'Saving…',
@@ -690,6 +695,7 @@ export const en: LanguageCatalog = {
     'panel.charGrid.hint':
       'While a cell size is set, the drawn size comes from the cells, not from the width above. Clear the cell size and the cells are derived from this item\u2019s width instead.',
     'stepper.relativeUnit': 'Values in percent or em cannot be stepped. Type the value instead.',
+    'stepper.unitHint': 'mm, cm, in too',
     'panel.box.h': 'Height',
     'panel.placement.label': 'Placement',
     'panel.placement.mode.auto': 'Auto',
@@ -961,6 +967,10 @@ export const en: LanguageCatalog = {
     'sample.variant.error.cannotRemove': 'This variant cannot be deleted.',
     'tree.empty': 'No items to show.',
     'tree.truncated': 'Large document — some items are hidden.',
+    'tree.dragHint': 'Drag rows to reorder or regroup.',
+    'help.reorder.title': 'Moving and regrouping layers',
+    'help.reorder.body':
+      'Drag a row up or down to reorder it; drag it sideways to move it into or out of a group. Alt+↑ and Alt+↓ reorder it within the group it is already in.',
     'tree.documentRoot': 'Document',
     'menu.documentSettings': 'Document settings…',
     'docSettings.title': 'Document settings',

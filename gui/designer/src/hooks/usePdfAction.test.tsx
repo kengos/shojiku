@@ -133,3 +133,71 @@ describe('the PDF action', () => {
     await screen.findByText('The PDF could not be rendered. Check your connection and try again.');
   });
 });
+
+describe('the PDF preview names the page it rendered', () => {
+  const PDF_CAP = ['wasm.render.pdf'];
+  const pdfOutcome = () => ({
+    ok: true,
+    pdf: new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+    diagnostics: { items: [] },
+  });
+
+  const withPage = (size: string) =>
+    [
+      'version: 0.1.0',
+      'page:',
+      `  size: ${size}`,
+      'sections:',
+      '  body:',
+      '    items:',
+      '      - type: text',
+      '        text: hello',
+      '',
+    ].join('\n');
+
+  function preview(source: string) {
+    draw(makeTransport({ renderPdf: vi.fn(async () => pdfOutcome()) }), {
+      source,
+      capabilities: PDF_CAP,
+      menuActions: { onDownloadPdf: vi.fn() },
+    });
+    pickMenu('File', 'Download as PDF…');
+    return screen.findByRole('button', { name: 'Download' });
+  }
+
+  // The walkthrough this exists for: the page was changed to B5, the preview
+  // rendered 182×257mm correctly, and the document's NAME still said A4 —
+  // which was the only size stated anywhere on screen.
+  it('says B5 for a document whose page is B5', async () => {
+    await preview(withPage('B5'));
+    expect(screen.getByText('Page size: B5 — 182 × 257 mm')).toBeTruthy();
+  });
+
+  it('says A4 for a document whose page is A4', async () => {
+    await preview(withPage('A4'));
+    expect(screen.getByText('Page size: A4 — 210 × 297 mm')).toBeTruthy();
+  });
+
+  // A size spelling this build cannot describe: the line is absent rather than
+  // a guess, on the one surface whose whole job is reassurance.
+  it('says nothing for a page size it cannot describe', async () => {
+    await preview(withPage('A9'));
+    expect(screen.queryByText(/Page size/)).toBeNull();
+  });
+
+  // The label is snapshotted WITH the bytes, so an edit behind the open modal
+  // cannot relabel them. A focus trap holds FOCUS, not the window-level
+  // keydown listener, and the modal's close button is not an editable target —
+  // so ⌘Z genuinely reaches the document from here. A live read would then
+  // show the undone page beside bytes rendered from the other one, which is
+  // this feature's own defect turned inside out.
+  it('keeps naming the page the bytes were rendered at when the document moves behind it', async () => {
+    await preview(withPage('B5'));
+    expect(screen.getByText('Page size: B5 — 182 × 257 mm')).toBeTruthy();
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+    // Whatever the undo did to the document, the bytes on screen are still B5.
+    expect(screen.getByText('Page size: B5 — 182 × 257 mm')).toBeTruthy();
+    expect(screen.queryByText(/A4/)).toBeNull();
+  });
+});

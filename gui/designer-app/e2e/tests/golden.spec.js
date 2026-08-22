@@ -103,7 +103,9 @@ test('open a shipped-locale preset whose pack and CJK font are fetched', async (
   // Switch the UI to Traditional Chinese (the language switcher is a menu
   // button now); the catalog is strictly per-locale, so the zh-TW receipt
   // appears only under it.
-  await page.getByRole('button', { name: 'Language' }).click();
+  // The control's accessible name carries the CURRENT language after it
+  // (WCAG 2.5.3), so match the prefix rather than the whole name.
+  await page.getByRole('button', { name: /^Language:/ }).click();
   await page.getByRole('menuitem', { name: '繁體中文' }).click();
   const card = page.getByRole('button').filter({ hasText: '收據' }).first();
   await expect(card).toBeVisible({ timeout: 30000 });

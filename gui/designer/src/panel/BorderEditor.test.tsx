@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { unitHintsFor } from '../testkit/unitHint';
 import { BorderEditor } from './BorderEditor';
 import { readBorder } from './borderModel';
 import { readRadius } from './borderRadius';
@@ -398,5 +399,26 @@ describe('BorderEditor — the pen row and its `?`', () => {
       expect(label?.className, name).toContain('mb-0.5');
       expect(label?.className, name).toContain('text-sm');
     }
+  });
+});
+
+// The unit affordance (`stepper.unitHint`) is OPT-IN per field, because the
+// WIRE decides: a key typed `Length` takes `25mm`, a key typed `number (pt)`
+// does not. So each site that offers it is pinned at the site — an optional
+// prop whose default is the disabled value can otherwise be dropped in a
+// refactor with no type error, no lint and no red test.
+
+describe('BorderEditor unit affordance', () => {
+  it('invites another unit on the corner radius, whose key takes a length string', () => {
+    render(<Harness source={RECT} />);
+    expect(unitHintsFor('Corner radius').length).toBeGreaterThan(0);
+  });
+
+  // `borderWidth` is `number (pt)` in the wire, and `commitWidth` drops a
+  // non-finite value — so `2mm` here is silently ignored. This field wearing
+  // the same `pt` badge is exactly why the affordance is opt-in.
+  it('does NOT invite one on the pen width, whose key is a plain number', () => {
+    render(<Harness source={RECT} />);
+    expect(unitHintsFor('Line width')).toHaveLength(0);
   });
 });

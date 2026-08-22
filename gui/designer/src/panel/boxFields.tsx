@@ -60,6 +60,7 @@ export function BoxAxisField({
       canStep={readLength(value) !== null}
       tag={seeded ? t('panel.placement.autoTag') : undefined}
       unit="pt"
+      unitHint={t('stepper.unitHint')}
       // An empty editable COORDINATE means 0 to the engine (w/h mean auto-size,
       // so they stay placeholder-less) — state it instead of a blank box.
       placeholder={value === '' && (axis === 'x' || axis === 'y') ? '0' : undefined}
