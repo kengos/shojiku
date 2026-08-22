@@ -52,6 +52,36 @@ describe('the PDF action', () => {
     expect(onDownloadPdf).toHaveBeenCalledWith(expect.any(Uint8Array));
   });
 
+  it('renders from the COMMITTED text while a panel edit is still in progress', async () => {
+    // The keyboard/menu route commits no blur, so the field keeps focus and its
+    // draft stands. A draft that reached this call would export text the reader
+    // never committed.
+    const renderPdf = vi.fn(async () => pdfOutcome());
+    const transport = makeTransport({ renderPdf });
+    draw(transport, {
+      capabilities: PDF_CAP,
+      menuActions: { onDownloadPdf: vi.fn() },
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'sections.body.items[0]' }));
+    const field = screen.getByLabelText('Text');
+    field.textContent = 'world';
+    fireEvent.input(field);
+    // The draft is DEBOUNCED, so exporting immediately would export from a
+    // state where no draft exists — an assertion that holds for every
+    // implementation, including one that leaks the draft into the export.
+    await waitFor(() =>
+      expect(transport.renderRaw).toHaveBeenCalledWith(
+        expect.stringContaining('text: world'),
+        expect.anything(),
+        undefined,
+        expect.anything(),
+      ),
+    );
+    pickMenu('File', 'Download as PDF…');
+    await screen.findByRole('button', { name: 'Download' });
+    expect(renderPdf).toHaveBeenCalledWith(SOURCE, '{}', undefined);
+  });
+
   it('is offered to a host that passes no capability list at all', async () => {
     draw(makeTransport({ renderPdf: vi.fn(async () => pdfOutcome()) }), {
       menuActions: { onDownloadPdf: vi.fn() },

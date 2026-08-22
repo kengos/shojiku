@@ -26,6 +26,23 @@ test('open a preset, preview it client-side, and export', async ({ page }) => {
   const canvas = page.locator('canvas').first();
   await expect(canvas).toBeVisible({ timeout: 30000 });
 
+  // The panel's text field shows its edit on the CANVAS as it is typed, with no
+  // blur and no commit. jsdom has no canvas or layout backend, so this is the
+  // only place the deliverable is observable at all: a unit test can assert the
+  // transport was CALLED with the pending template, never that the page moved.
+  // `items[1]` is the receipt's static-text line (`items[0]` is data-bound, so
+  // its panel shows the binding picker rather than a text field).
+  await page.getByRole('button', { name: 'sections.body.items[1]', exact: true }).click();
+  const textField = page.getByRole('textbox', { name: 'Text' });
+  await expect(textField).toBeVisible({ timeout: 30000 });
+  const painted = () => canvas.evaluate((el) => el.toDataURL());
+  const beforeTyping = await painted();
+  await textField.click();
+  await textField.pressSequentially('CANARY');
+  await expect.poll(painted, { timeout: 30000 }).not.toBe(beforeTyping);
+  // Still focused: nothing committed, and the document was never edited.
+  await expect(textField).toBeFocused();
+
   // Tweak: page setup lives in the fullscreen document-settings view now,
   // reached from the 「全体」 layer-tree root row. Open it, change the page size,
   // and the live preview re-renders at the new dimensions (the receipt-us preset

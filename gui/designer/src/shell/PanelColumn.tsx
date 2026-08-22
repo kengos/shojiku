@@ -97,6 +97,7 @@ export function PanelColumn({
       onWrap={
         selection !== null && isWrappablePath(selection) ? selectionOps.wrapSelected : undefined
       }
+      onTextDraft={session.setDraftOps}
     />
   );
 }

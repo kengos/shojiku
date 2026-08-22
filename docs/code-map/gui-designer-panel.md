@@ -14,7 +14,14 @@ indices stay true); every edit dispatches named designer-core ops (a
 multi-part edit is ONE `applyAll` = one undo step); enum vocabularies are
 copied from the engine wire (drift-guard tests, never guessed from CSS);
 free-text/number inputs are uncontrolled, commit-on-blur with a
-changed-guard, KEYED BY VALUE; capability gates are "undefined = show"
+changed-guard, KEYED BY VALUE — with ONE exception, the static-text chip
+editor: besides reporting its in-progress edit so the canvas can render it
+before commit (which authors nothing — see `ContentSection` below), it also
+commits on UNMOUNT, which no other panel field does. Leaving that field is not
+always a blur: a tab switch or a selection change removes it while it still
+holds focus, and the browser fires no blur for that, so without the unmount
+path the reader's typing was discarded (`gui-designer-chrome.md` carries the
+mechanism); capability gates are "undefined = show"
 (the bundled engine has the feature), never version sniffs.
 
 ## Placement tab — placement + container layout
@@ -295,8 +302,16 @@ read side, never the reverse.
 
 ## The router + per-item tabs
 
+- `panel/CellPanel.tsx` — the panel for a selection with no `type:` of its
+  own. Neither a table COLUMN nor a header GROUP is an item, but a canvas
+  click on either cell selects its structural path, so this routes to the
+  form for what was actually clicked and falls through to the unsupported
+  card when the path resolves to neither. A sibling router to
+  `PropertyPanel`, not a section: the sections all take `ItemPanelProps`,
+  and a cell has no `ItemView` to build one from.
 - `panel/PropertyPanel.tsx` — the thin router: item → `ItemPanel`,
-  `…columns[n]` → `ColumnForm`, `…headerGroups[n]` → `GroupForm`,
+  anything with no `type:` of its own → `CellPanel` (which picks
+  `ColumnForm` / `GroupForm` / the unsupported card),
   none/ghost → the no-selection hint card
   (with an open-document-settings CTA); the origin jump wires through
   Designer's `navigateDefaults`.
@@ -330,6 +345,11 @@ read side, never the reverse.
   - The static-text content field is the shared `text/TextEditor` chip
     editor over the SAME `text/chipContext.ts` context the canvas
     overlay uses; commit = `text/declModel` `commitOps` via `applyAll`.
+    Its `onDraft` runs through that SAME `commitOps`, handing the ops up
+    as `onTextDraft` (→ `usePreviewSession.setDraftOps`), so what the
+    canvas shows while typing cannot drift from what blur will write — a
+    staged chip's declaration included. Nothing is authored: the ops are
+    applied to a throwaway document (`preview/draftTemplate`).
   - The placement tab composes PARENT-FIRST (`ParentContainerCard`, then the
     item's own placement, then a container's own `LayoutSection`). Its
     heading is a `HelpfulHeading` in BOTH arms (plain and classified), but

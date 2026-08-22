@@ -684,3 +684,177 @@ describe('re-picking a selected chip', () => {
     expect(screen.getByRole('button', { name: 'A {customer.name} labelを差し替え' })).toBeDefined();
   });
 });
+
+describe('TextEditor — the in-progress draft', () => {
+  it('publishes the edit as it is typed, before any commit', () => {
+    const onDraft = vi.fn();
+    const onCommit = vi.fn();
+    render(<TextEditor value="hello" onCommit={onCommit} onDraft={onDraft} ariaLabel="Text" />);
+    editor().appendChild(document.createTextNode(' world'));
+    fireEvent.input(editor());
+    expect(onDraft).toHaveBeenCalledWith({ value: 'hello world', declarations: [] });
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it('publishes NOTHING mid-IME-composition, then exactly one on compositionend', () => {
+    // The case the whole guard exists for: without it a Japanese reader watches
+    // `りょうしゅうしょ` render on the way to `領収書`. jsdom defaults
+    // `isComposing` to false, so this is only testable by driving the
+    // composition events themselves.
+    const onDraft = vi.fn();
+    render(<TextEditor value="" onCommit={() => {}} onDraft={onDraft} ariaLabel="Text" />);
+    fireEvent.compositionStart(editor());
+    for (const step of ['り', 'りょ', 'りょうしゅうしょ']) {
+      editor().textContent = step;
+      fireEvent.input(editor());
+    }
+    expect(onDraft).not.toHaveBeenCalled();
+    editor().textContent = '領収書';
+    fireEvent.compositionEnd(editor());
+    expect(onDraft).toHaveBeenCalledTimes(1);
+    expect(onDraft).toHaveBeenCalledWith({ value: '領収書', declarations: [] });
+  });
+
+  it('resumes publishing after the composition closes', () => {
+    const onDraft = vi.fn();
+    render(<TextEditor value="" onCommit={() => {}} onDraft={onDraft} ariaLabel="Text" />);
+    fireEvent.compositionStart(editor());
+    fireEvent.compositionEnd(editor());
+    onDraft.mockClear();
+    editor().textContent = 'a';
+    fireEvent.input(editor());
+    expect(onDraft).toHaveBeenCalledWith({ value: 'a', declarations: [] });
+  });
+
+  it('withdraws the draft BEFORE the commit lands, on blur', () => {
+    const calls: string[] = [];
+    render(
+      <TextEditor
+        value="a"
+        onCommit={() => calls.push('commit')}
+        onDraft={(draft) => calls.push(draft === null ? 'withdraw' : 'publish')}
+        ariaLabel="Text"
+      />,
+    );
+    editor().appendChild(document.createTextNode('b'));
+    fireEvent.input(editor());
+    fireEvent.blur(editor());
+    expect(calls).toEqual(['publish', 'withdraw', 'commit']);
+  });
+
+  it('withdraws on a blur that commits nothing, so no draft outlives the edit', () => {
+    const onDraft = vi.fn();
+    const onCommit = vi.fn();
+    render(<TextEditor value="a" onCommit={onCommit} onDraft={onDraft} ariaLabel="Text" />);
+    fireEvent.blur(editor());
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(onDraft).toHaveBeenCalledWith(null);
+  });
+
+  it('withdraws on Escape and still commits nothing', () => {
+    const onDraft = vi.fn();
+    const onCommit = vi.fn();
+    render(
+      <TextEditor
+        value="a"
+        onCommit={onCommit}
+        onCancel={() => {}}
+        onDraft={onDraft}
+        ariaLabel="Text"
+      />,
+    );
+    editor().appendChild(document.createTextNode('b'));
+    fireEvent.input(editor());
+    onDraft.mockClear();
+    fireEvent.keyDown(editor(), { key: 'Escape' });
+    expect(onDraft).toHaveBeenCalledWith(null);
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it('COMMITS the pending edit when the field is taken away without a blur', () => {
+    // A panel tab switch (or a selection change) unmounts the field while it
+    // still holds focus, and the browser fires no blur for a node removed under
+    // the caret — so before this the reader's typing was simply discarded.
+    const onCommit = vi.fn();
+    const view = render(<TextEditor value="a" onCommit={onCommit} ariaLabel="Text" />);
+    editor().appendChild(document.createTextNode('b'));
+    view.unmount();
+    expect(onCommit).toHaveBeenCalledWith('ab', []);
+  });
+
+  it('does not commit a SECOND time when a blur already committed', () => {
+    // The host reseeds the field on its new value, so the committed instance
+    // unmounts moments later — a repeat here would mint a second undo step for
+    // one edit.
+    const onCommit = vi.fn();
+    const view = render(<TextEditor value="a" onCommit={onCommit} ariaLabel="Text" />);
+    editor().appendChild(document.createTextNode('b'));
+    fireEvent.blur(editor());
+    expect(onCommit).toHaveBeenCalledTimes(1);
+    view.unmount();
+    expect(onCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('never commits on the way out of a CANCELLED edit', () => {
+    const onCommit = vi.fn();
+    const view = render(
+      <TextEditor value="a" onCommit={onCommit} onCancel={() => {}} ariaLabel="Text" />,
+    );
+    editor().appendChild(document.createTextNode('b'));
+    fireEvent.keyDown(editor(), { key: 'Escape' });
+    view.unmount();
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it('withdraws on unmount — a selection change takes the field with it', () => {
+    const onDraft = vi.fn();
+    const view = render(
+      <TextEditor value="a" onCommit={() => {}} onDraft={onDraft} ariaLabel="Text" />,
+    );
+    editor().appendChild(document.createTextNode('b'));
+    fireEvent.input(editor());
+    onDraft.mockClear();
+    view.unmount();
+    expect(onDraft).toHaveBeenCalledWith(null);
+  });
+
+  it('publishes a paste and a drop, which fire no input event of their own', () => {
+    const onDraft = vi.fn();
+    render(<TextEditor value="" onCommit={() => {}} onDraft={onDraft} ariaLabel="Text" />);
+    caretAt(editor(), 0);
+    fireEvent.paste(editor(), { clipboardData: { getData: () => 'pasted' } });
+    expect(onDraft).toHaveBeenLastCalledWith({ value: 'pasted', declarations: [] });
+  });
+
+  it('acts on NO key while an IME conversion is open', () => {
+    // A Japanese reader pressing Enter to CONFIRM a conversion must not have it
+    // turned into a newline (which would also cancel the conversion). jsdom
+    // defaults `isComposing` to false, so this is only visible by setting it —
+    // no ASCII smoke and no other test in this file can see a regression here.
+    const onCommit = vi.fn();
+    render(<TextEditor value="" onCommit={onCommit} ariaLabel="Text" />);
+    editor().textContent = 'りょうしゅうしょ';
+    fireEvent.keyDown(editor(), { key: 'Enter', isComposing: true });
+    expect(editor().textContent).toBe('りょうしゅうしょ');
+    fireEvent.keyDown(editor(), { key: 'Enter', metaKey: true, isComposing: true });
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it('inserts the newline once the composition has closed', () => {
+    render(<TextEditor value="" onCommit={() => {}} ariaLabel="Text" />);
+    editor().textContent = '領収書';
+    caretAt(editor().childNodes[0] ?? editor(), 3);
+    fireEvent.keyDown(editor(), { key: 'Enter' });
+    expect(editor().textContent).toBe('領収書\n');
+  });
+
+  it('does nothing at all without the prop — every other host is unchanged', () => {
+    const onCommit = vi.fn();
+    render(<TextEditor value="a" onCommit={onCommit} ariaLabel="Text" />);
+    editor().appendChild(document.createTextNode('b'));
+    fireEvent.input(editor());
+    fireEvent.compositionEnd(editor());
+    fireEvent.blur(editor());
+    expect(onCommit).toHaveBeenCalledWith('ab', []);
+  });
+});

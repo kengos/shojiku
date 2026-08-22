@@ -4,6 +4,7 @@
 // its own parent. Nothing here renders — the shell and its sections are the
 // components.
 
+import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
 import type { FormatCatalog } from '../engine/types';
 import type { PaletteGroup } from '../palette/model';
@@ -51,6 +52,10 @@ export interface ItemPanelProps {
   /** Highlight a container's outline+chip on canvas (parent-card hover);
    * `null` clears. */
   readonly onHighlight?: (path: string | null) => void;
+  /** Publish the text field's IN-PROGRESS edit as ops so the canvas can render
+   * it before it is committed, or `null` to withdraw it. The ops are applied to
+   * a throwaway document (`preview/draftTemplate`), never to the session. */
+  readonly onTextDraft?: (ops: readonly Op[] | null) => void;
   /** wrap-in-container — wrap this item in a new container. The
    * keyboard-reachable companion to the canvas/tree right-click; present only
    * when the selection is wrappable (an item-list entry). */

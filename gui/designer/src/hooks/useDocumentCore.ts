@@ -72,6 +72,7 @@ export function useDocumentCore({
     params: sample.params,
     definitions: defs.definitionsForEngine,
     baseScale: scale,
+    maxBytes: cap.maxBytes,
   });
   const themeStyle = useMemo(
     // React's CSSProperties type has no index for custom properties; the

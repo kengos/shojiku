@@ -116,16 +116,46 @@ export interface EditorKeyHandlers {
   readonly cancel?: () => void;
 }
 
+/** The ONE plain-text ingress both a PASTE and a DROP go through: the native
+ * event is refused (HTML would mint live elements inside the editor), the
+ * plain-text flavor is inserted at the caret, and `after` runs over the
+ * resulting surface — the selection re-check and the draft publish, neither of
+ * which any `input` event would deliver, since this is Range surgery. */
+export function handleTextIngress(
+  el: HTMLDivElement,
+  event: { preventDefault: () => void },
+  text: string,
+  after: (el: HTMLDivElement) => void,
+): void {
+  event.preventDefault();
+  if (text !== '') {
+    insertPlainTextAt(el, text);
+  }
+  after(el);
+}
+
 /** The editor's keydown behavior: ⌘/Ctrl+Enter commits, Enter inserts a
  * newline (`white-space: pre-wrap` renders it), Escape cancels when the host
  * offers it, the native formatting shortcuts are blocked, and Backspace/Delete
  * erode an adjacent chip ATOMICALLY — the whole expression goes, never a
- * character of its label. */
+ * character of its label.
+ *
+ * Enter is guarded on the IME composition: a Japanese/Chinese reader pressing
+ * Enter to CONFIRM a conversion must not have that Enter turned into a newline
+ * (and the conversion cancelled) — the same guard every other Enter-acting
+ * surface in the Designer carries.
+ */
 export function handleEditorKeyDown(
   event: KeyboardEvent<HTMLDivElement>,
   handlers: EditorKeyHandlers,
 ): void {
   const el = event.currentTarget;
+  if (event.nativeEvent.isComposing) {
+    // An IME conversion is open: every key belongs to the composition, not to
+    // us. jsdom defaults this to false, so only an explicit `isComposing: true`
+    // keydown test can see a regression here.
+    return;
+  }
   if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
     event.preventDefault();
     handlers.commit(el);

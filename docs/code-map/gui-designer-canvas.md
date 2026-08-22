@@ -53,6 +53,15 @@ hostile geometry degrades to null before it can reach an op.
   LATEST outcome.
 - `preview/usePreview.ts` — the debounced loop (bump revision → debounce
   `renderRaw` → dispatch tagged with its scale).
+- `preview/draftTemplate.ts` — the UNCOMMITTED-edit overlay: the ops of an
+  edit in progress applied to a THROWAWAY `Editor` over the committed
+  source, serialized. Total — a refused batch, an unparseable source, or a
+  result over the caller's byte cap all answer `null` and the loop renders
+  the COMMITTED text. The size check lives here or nowhere: `applyAll`
+  enforces no bound, and only a re-parse does, which a successful batch
+  never performs. The session's document, its undo history and every
+  save/export path are untouched (all read the editor's own text). Distinct
+  from `designer-app`'s persisted "draft", which is the unsaved DOCUMENT.
 - `preview/context.tsx` — `EngineProvider`/`useEngineTransport`.
 - `preview/CanvasPreview.tsx` — context + loop + canvas assembly.
 

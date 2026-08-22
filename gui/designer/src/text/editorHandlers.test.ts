@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildEditorNodes, CHIP_WIRE_ATTR, chipMetaMap, serializeEditor } from './chipModel';
 import type { ChipInsert } from './declMint';
-import { replaceChipAt } from './editorHandlers';
+import { handleTextIngress, replaceChipAt } from './editorHandlers';
 
 const META = chipMetaMap([
   { key: 'customer.name', label: '顧客名', sample: '山田太郎' },
@@ -92,5 +92,43 @@ describe('replaceChipAt', () => {
     expect(range?.collapsed).toBe(true);
     expect(range?.startContainer).toBe(root);
     expect(range?.startOffset).toBe(1);
+  });
+});
+
+describe('handleTextIngress', () => {
+  it('refuses the native event and inserts the plain text at the caret', () => {
+    const el = document.createElement('div');
+    el.appendChild(document.createTextNode('ab'));
+    document.body.appendChild(el);
+    const range = document.createRange();
+    const first = el.firstChild;
+    if (first === null) {
+      throw new Error('the fixture has a text node');
+    }
+    range.setStart(first, 1);
+    range.collapse(true);
+    const sel = document.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+    const preventDefault = vi.fn();
+    const after = vi.fn();
+    handleTextIngress(el, { preventDefault }, 'X', after);
+    expect(preventDefault).toHaveBeenCalled();
+    expect(el.textContent).toBe('aXb');
+    expect(after).toHaveBeenCalledWith(el);
+  });
+
+  it('still refuses the native event when the payload is empty, and still runs the after-step', () => {
+    // The refusal is unconditional on purpose: a dropped HTML flavour with no
+    // plain-text sibling must not reach the editor as live elements. The
+    // after-step runs either way so a caller cannot be left with a stale draft.
+    const el = document.createElement('div');
+    el.appendChild(document.createTextNode('ab'));
+    const preventDefault = vi.fn();
+    const after = vi.fn();
+    handleTextIngress(el, { preventDefault }, '', after);
+    expect(preventDefault).toHaveBeenCalled();
+    expect(el.textContent).toBe('ab');
+    expect(after).toHaveBeenCalledWith(el);
   });
 });

@@ -24,8 +24,9 @@ import { ChipFieldMenus } from './ChipFieldMenus';
 import type { ChipContext } from './chipContext';
 import { buildEditorNodes, CHIP_SELECTED_CLASS, type ChipMeta, serializeEditor } from './chipModel';
 import { chipMetaFor, type PendingDecl } from './declModel';
+import { EditorSurface } from './EditorSurface';
 import { selectAllContent } from './editorDom';
-import { handleEditorKeyDown, handleEditorMouseDown, insertPlainTextAt } from './editorHandlers';
+import { type DraftListener, useDraftReporter } from './useDraftReporter';
 
 export interface TextEditorProps {
   readonly value: string;
@@ -46,6 +47,16 @@ export interface TextEditorProps {
   /** Present when the host can offer binding fields: chips label themselves
    * from its rows and declarations, and the insert menu appears. */
   readonly chips?: ChipContext;
+  /** Report the edit IN PROGRESS, so a host can show it before it is committed
+   * — `null` withdraws it (commit, cancel, unmount). The property panel needs
+   * this because the canvas is its only confirmation channel: without it a
+   * reader types and nothing on screen moves until blur, which two independent
+   * walkthroughs read as "the app is broken". Omitting the prop means no draft
+   * is reported — but it does NOT opt out of the commit-on-unmount below, which
+   * is unconditional and changed behaviour for every host. Never fired mid-IME-composition —
+   * a Japanese reader would otherwise watch `りょうしゅうしょ` render on the way
+   * to `領収書` — one is fired on `compositionend` instead. */
+  readonly onDraft?: DraftListener;
 }
 
 export function TextEditor({
@@ -56,11 +67,17 @@ export function TextEditor({
   autoFocus = false,
   className = 'sj-text-editor',
   chips,
+  onDraft,
 }: TextEditorProps) {
   const [editorEl, setEditorEl] = useState<HTMLDivElement | null>(null);
   // A cancel unmounts the canvas overlay, and the unmount fires a blur — this
   // flag makes that trailing blur skip the commit so Escape never writes.
   const cancelled = useRef(false);
+  // Set once this instance has committed, so the exit path cannot repeat it.
+  const committed = useRef(false);
+  // The exit behaviour, re-pointed every render so the one-shot unmount effect
+  // runs the CURRENT closure (value, pending and the editor element all move).
+  const exitRef = useRef<(() => void) | null>(null);
   // Declarations minted by picks in THIS session, handed to the host at commit
   // (the seed is one-shot, so this list never needs clearing: a commit that
   // changes the text reseeds the field by remounting it).
@@ -79,6 +96,8 @@ export function TextEditor({
 
   // Seeding data rides refs so the callback ref can stay identity-stable
   // (an inline ref re-attaches every render); the content seeds exactly once.
+  const draft = useDraftReporter(onDraft, pending);
+
   const seedValue = useRef(value);
   seedValue.current = value;
   const seedMeta = useRef(meta);
@@ -121,17 +140,38 @@ export function TextEditor({
   };
 
   const commitFrom = (el: HTMLElement) => {
+    // Unconditional, and BEFORE the commit: a blur with no change still ends
+    // the draft, and the host must drop the overlay before the real edit lands.
+    draft.withdraw();
     const next = serializeEditor(el);
     if (next !== value) {
+      committed.current = true;
       onCommit(next, pending);
     }
   };
+
+  // Leaving the field is not always a BLUR. Switching the property panel's tab,
+  // or moving the selection, unmounts this component while it still holds
+  // focus — and the browser fires no blur for a node removed under the caret,
+  // so without this the reader's typing is simply discarded. The flags make it
+  // exactly-once: a commit that already fired (blur, ⌘Enter — after which the
+  // host remounts the field on its new value) must not fire again as a second
+  // undo step, and a cancelled edit must never commit at all.
+  exitRef.current = () => {
+    if (cancelled.current || committed.current || editorEl === null) {
+      draft.withdraw();
+      return;
+    }
+    commitFrom(editorEl);
+  };
+  useEffect(() => () => exitRef.current?.(), []);
 
   const cancel =
     onCancel === undefined
       ? undefined
       : () => {
           cancelled.current = true;
+          draft.withdraw();
           onCancel();
         };
 
@@ -153,44 +193,15 @@ export function TextEditor({
         commitFrom(editorEl);
       }}
     >
-      {/* biome-ignore lint/a11y/useSemanticElements: rich-text editing host — input/textarea cannot host inline markup; contentEditable + role=textbox is the standard shape. */}
-      <div
-        ref={seedRef}
-        role="textbox"
-        aria-multiline="true"
-        aria-label={ariaLabel}
+      <EditorSurface
+        seedRef={seedRef}
+        ariaLabel={ariaLabel}
         className={className}
-        contentEditable
-        // Editing hosts are natively tab-focusable; the explicit index states
-        // it for tooling that cannot see contentEditable implies it.
-        tabIndex={0}
-        onKeyDown={(event) => {
-          handleEditorKeyDown(event, { commit: commitFrom, cancel });
-          // Catches only the erosion this handler performs itself; the native
-          // paths are `onInput`'s job.
-          dropDetachedSelection(event.currentTarget);
-        }}
-        onInput={(event) => dropDetachedSelection(event.currentTarget)}
-        onMouseDown={(event) => setSelected(handleEditorMouseDown(event))}
-        onDrop={(event) => {
-          // Same posture as paste: dropped content inserts as plain text only
-          // — native HTML drop would mint live elements.
-          event.preventDefault();
-          const text = event.dataTransfer.getData('text/plain');
-          if (text !== '') {
-            insertPlainTextAt(event.currentTarget, text);
-          }
-          dropDetachedSelection(event.currentTarget);
-        }}
-        onPaste={(event) => {
-          // Plain text only — pasted HTML must never become editor nodes.
-          event.preventDefault();
-          const text = event.clipboardData.getData('text/plain');
-          if (text !== '') {
-            insertPlainTextAt(event.currentTarget, text);
-          }
-          dropDetachedSelection(event.currentTarget);
-        }}
+        commit={commitFrom}
+        cancel={cancel}
+        onSelectChip={setSelected}
+        onDetachCheck={dropDetachedSelection}
+        draft={draft}
       />
       {chips !== undefined && editorEl !== null ? (
         <ChipFieldMenus

@@ -244,9 +244,32 @@ lists name the destructured stable fields, never `editor` itself.
   state, never in the template: `renderScale` + instant `cssFactor`,
   ⌘/Ctrl+wheel via a non-passive native listener through a callback ref;
   auto-fit measures the last-good page on demand, one-shot initial fit.
-- `hooks/usePreviewSession.ts` — composes zoom → preview → auto-fit;
-  returns `renderedScale`/`cssFactor`/`fresh`/`pages` (last-good, never
-  blanked)/`boxes`.
+- `hooks/usePreviewSession.ts` — composes zoom → DRAFT → preview →
+  auto-fit; returns `renderedScale`/`cssFactor`/`fresh`/`pages`
+  (last-good, never blanked)/`boxes`/`setDraftOps`. `fresh` means the
+  render is of the live COMMITTED document, so a draft render is never
+  fresh — that is what keeps a geometry-derived action (today the
+  placement pin) from authoring numbers measured off text nobody
+  committed. Takes the session `maxBytes`: a draft re-parses the
+  committed text, and under a different bound a legally oversized
+  document would stop previewing the moment it was edited.
+- `hooks/useDraftPreview.ts` — the draft state: the ops of an edit the
+  document has not accepted, and the template string they produce
+  (`preview/draftTemplate`). An edit that cannot be derived, or that
+  reproduces the committed text exactly, is NO draft — the loop then
+  renders the committed text and the session stays fresh. **Publishing
+  is debounced, withdrawing is not**: a derivation costs a full re-parse
+  (~55ms on the largest bundled example, ~32ms of it the parse), so
+  running one per keystroke would block the main thread on exactly the
+  documents worth editing — and every derivation but the last is thrown
+  away by the render debounce anyway. An edit that has ENDED must stop
+  rendering at once, so a withdrawal skips the timer. Because the ops
+  have already settled by the time they reach the loop,
+  `usePreviewSession` asks for the draft render with no further debounce.
+  **Not the app's "draft"**: `designer-app/src/persistence` uses that word
+  for the unsaved DOCUMENT it persists between sessions (reached through
+  `onChange`, which carries the committed `editor.text`). This one never
+  leaves the render loop.
 - `hooks/useTemplateCap.ts` — the session's template-size cap: seeded
   `max(persisted cap, source byte size)`, raised via the image headroom
   prompt.

@@ -270,7 +270,15 @@ resolved style.
     wiring, kept out of `TextEditor` so that component stays the
     seeding/commit shell. A replace needs no declaration machinery of its
     own: `declCommit`'s batch already prunes the name it orphaned.
-- `text/editorHandlers.ts` — keyboard, pointer + text-ingress behavior:
+- `text/editorHandlers.ts` — keyboard, pointer + text-ingress behavior. Every
+  key is ignored while an IME composition is open, so an Enter that CONFIRMS a
+  conversion is not turned into a newline — the guard every other Enter-acting
+  surface in the Designer carries, pinned here by an explicit
+  `isComposing: true` keydown test (jsdom defaults it false, so nothing else
+  can see a regression). Also carries
+  incl. `handleTextIngress` (the ONE plain-text ingress a paste and a drop
+  share: refuse the native event, insert the plain flavor, then run the
+  caller's after-step over the result):
   `handleEditorMouseDown` (a click on a chip focuses the editor, lands
   the caret beside it, and RETURNS that chip as the selected one — a pill
   is unselectable, so it cannot ride the caret's selection),
@@ -284,8 +292,36 @@ resolved style.
 - `text/TextEditor.tsx` — the ONE text-editing component (contenteditable
   chip editor; content seeded imperatively ONCE from `buildEditorNodes`
   — hand-typed `{key}` stays plain until commit reseeds, IME-safe;
-  commit on blur leaving the whole root, changed-serialization only;
-  `onCommit(text, declarations)` hands both to the host).
+  commit on blur leaving the whole root OR on UNMOUNT, changed-serialization
+  only; `onCommit(text, declarations)` hands both to the host). Leaving the
+  field is not always a blur — a panel tab switch or a selection change removes
+  the node while it still holds focus, and the browser fires no blur for that,
+  so the exit path is what stops the reader's typing being discarded. Made
+  exactly-once by two flags: `cancelled` (Escape never commits) and `committed`
+  (a blur/⌘Enter that already fired must not repeat as a second undo step —
+  the host reseeds the field on its new value, so the committed instance
+  unmounts moments later). The optional
+  `onDraft` reports the edit IN PROGRESS (`null` withdraws: commit,
+  cancel, unmount) — the property panel's only confirmation channel is
+  the canvas, so without it a reader types and nothing on screen moves
+  until blur. Omitting it leaves the component's behaviour exactly as it
+  was for the DRAFT — but not for the commit: the unmount path below is
+  unconditional, so the canvas overlay host (which passes no `onDraft`) also
+  gained it.
+- `text/EditorSurface.tsx` — the contenteditable element itself and its
+  seven handlers, split out so `TextEditor` stays the seeding /
+  commit-decision / staged-declaration shell. Every DOM-mutating path
+  here is Range surgery (atomic chip erosion, Enter's newline, paste,
+  drop) and so fires no `input` event: each drives the detached-chip
+  re-check and the draft publish itself. A commit or a cancel ENDS the
+  edit and is never followed by a publish.
+- `text/useDraftReporter.ts` — the draft callbacks; it publishes and withdraws
+  and does NOT decide what an unmount means (that is a commit decision, and it
+  belongs to the component that owns the value). An IME composition is
+  tracked as a FLAG rather than read off the event (`isComposing` needs a
+  cast on React's synthetic event, and jsdom leaves such boolean DOM
+  getters `undefined`, so a test would pass over a broken guard); the
+  listener rides a ref so withdraw-on-unmount can be a one-shot effect.
 
 ## Shared UI primitives (`ui/`)
 
