@@ -882,5 +882,13 @@ checkout.
 
 SDK versions move in lockstep with the engine's workspace version while
 everything is pre-1.0, and all seven publish together at the first
-public release. Once a bundle format exists, each SDK's README documents
-the bundle-format compatibility its version tracks.
+public release. **The lockstep does not end at 1.0** — it is what makes
+the engine's version number readable from any of the seven languages.
+From 1.0 that number carries the freeze in
+[architecture.md](../architecture.md) § What 1.0 freezes: major breaks a
+frozen surface, minor is additive, patch leaves every frozen surface
+where it was. The lifecycle contract this page records — § The decisions
+the reference froze — is one of the frozen surfaces, and so is the CLI
+contract the subprocess SDKs script. Once a bundle format exists, each
+SDK's README documents the bundle-format compatibility its version
+tracks.

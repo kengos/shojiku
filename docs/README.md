@@ -66,7 +66,8 @@ unsettled rather than rejected, so it is worth proposing.
   install (Docker and `make`, nothing else), the `<scope>:<job>`
   commands that check your work, where a failed gate lands, and the PR
   bar. Then read [architecture.md](architecture.md) — system overview,
-  core concepts, repo layout, cross-cutting principles — and the
+  core concepts, repo layout, cross-cutting principles, and what 1.0
+  freezes — and the
   [agents/](#agent-policies) policy for the area you touch plus
   [guidelines.md](guidelines.md).
 

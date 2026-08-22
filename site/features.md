@@ -53,7 +53,7 @@ The engine never looks at the fonts installed on the machine. That is deliberate
 
 ## Output and verification
 
-Output is PDF, plus PNG for previews. The same input renders byte-for-byte identical PDFs on any machine at any time; even the metadata that would normally carry a timestamp is derived from the input.
+Output is PDF, plus PNG for previews. The same input, on the same engine version, renders byte-for-byte identical PDFs on any machine — even the metadata that would normally carry a timestamp is derived from the input. Across versions it is a different promise: a release may fix a layout bug or correct a locale pattern, and the page changes with it.
 
 Signing and verification are in the same engine. A verification report states what was checked and also what was *not*. A signature whose byte range fails to cover the whole document is reported as tampering even when the signature itself validates. Rendering, signing and verifying make no network calls.
 
