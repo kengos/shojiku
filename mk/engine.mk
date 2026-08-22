@@ -497,6 +497,7 @@ _engine-cli-bin:
 # mutating fuzzer would otherwise never reach. Deliberately out of `verify`:
 # fuzzing has no natural end, so a gate would either be useless (a few
 # seconds) or unbearable. What CI runs instead is the corpus REPLAY in
+# engine/core's and engine/formatter's `fuzz_corpus` suites, and
 # engine/verify's tests — every committed seed through the same entry points.
 #
 # engine/fuzz is outside the workspace (nightly + libFuzzer + a sanitizer
@@ -505,6 +506,8 @@ _engine-cli-bin:
 # persist in the named volumes except g++, which is a per-run apt install.
 #
 #   make engine:fuzz                           every target, 60s each
+#   make engine:fuzz FUZZ_GROUP=wire           the authored-input doors only
+#   make engine:fuzz FUZZ_GROUP=sign           the PDF/CMS parsers only
 #   make engine:fuzz FUZZ_TARGET=cms_container one target
 #   make engine:fuzz FUZZ_SECS=600             longer runs
 #
@@ -534,11 +537,33 @@ _engine-cli-bin:
 # that turned a 20-second budget into a six-minute run that looked exactly
 # like a hang. It persists across runs like the cargo/rustup volumes do;
 # `docker volume rm shojiku-fuzz-corpus` starts over.
-FUZZ_TARGETS := pdf_document verify_document contents_window cms_container trust_anchors
+# Targets come in GROUPS, because the set has outgrown one run: at the
+# default 60s each, all of them is over ten minutes, which is a long time to
+# wait to fuzz the one door you just changed. `FUZZ_GROUP` names a group,
+# `FUZZ_TARGET` still names a single target and wins over both.
+FUZZ_SIGN_TARGETS := pdf_document verify_document contents_window cms_container trust_anchors
+FUZZ_WIRE_TARGETS := core_template core_params core_definitions core_ruby \
+                     formatter_langpack formatter_fontpack
+FUZZ_TARGETS      := $(FUZZ_SIGN_TARGETS) $(FUZZ_WIRE_TARGETS)
+FUZZ_GROUP   ?=
 FUZZ_TARGET  ?=
 FUZZ_SECS    ?= 60
 
-engine\:fuzz: ## Fuzz the sign/verify parsers (nightly+libFuzzer; FUZZ_TARGET=<name> FUZZ_SECS=<n>)
+# sign = the parsers that read a PDF nobody vetted; wire = the authored-input
+# doors (template/params/definitions/ruby + the two pack manifests). An
+# unknown group name is a typo, and silently fuzzing NOTHING is the worst
+# possible answer to one, so it is refused.
+ifeq ($(FUZZ_GROUP),sign)
+FUZZ_SELECTED := $(FUZZ_SIGN_TARGETS)
+else ifeq ($(FUZZ_GROUP),wire)
+FUZZ_SELECTED := $(FUZZ_WIRE_TARGETS)
+else ifeq ($(FUZZ_GROUP),)
+FUZZ_SELECTED := $(FUZZ_TARGETS)
+else
+$(error unknown FUZZ_GROUP `$(FUZZ_GROUP)`: expected `sign` or `wire`)
+endif
+
+engine\:fuzz: ## Fuzz the untrusted-input parsers (nightly+libFuzzer; FUZZ_GROUP=sign|wire FUZZ_TARGET=<name>)
 	@$(call gate,_engine-fuzz,engine:fuzz)
 
 _engine-fuzz:
@@ -555,7 +580,7 @@ _engine-fuzz:
 		rustup toolchain install nightly --profile minimal >/dev/null 2>&1; \
 		command -v cargo-fuzz >/dev/null 2>&1 || cargo install cargo-fuzz --locked; \
 		cargo +nightly run --example seed; \
-		for target in $(if $(FUZZ_TARGET),$(FUZZ_TARGET),$(FUZZ_TARGETS)); do \
+		for target in $(if $(FUZZ_TARGET),$(FUZZ_TARGET),$(FUZZ_SELECTED)); do \
 			echo "== fuzz $$target =="; \
 			mkdir -p /fuzz-corpus/$$target; \
 			status=0; \

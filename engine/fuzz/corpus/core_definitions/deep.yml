@@ -1,0 +1,62 @@
+type: object
+properties:
+  a:
+    type: object
+    properties:
+    a:
+      type: object
+      properties:
+      a:
+        type: object
+        properties:
+        a:
+          type: object
+          properties:
+          a:
+            type: object
+            properties:
+            a:
+              type: object
+              properties:
+              a:
+                type: object
+                properties:
+                a:
+                  type: object
+                  properties:
+                  a:
+                    type: object
+                    properties:
+                    a:
+                      type: object
+                      properties:
+                      a:
+                        type: object
+                        properties:
+                        a:
+                          type: object
+                          properties:
+                          a:
+                            type: object
+                            properties:
+                            a:
+                              type: object
+                              properties:
+                              a:
+                                type: object
+                                properties:
+                                a:
+                                  type: object
+                                  properties:
+                                  a:
+                                    type: object
+                                    properties:
+                                    a:
+                                      type: object
+                                      properties:
+                                      a:
+                                        type: object
+                                        properties:
+                                        a:
+                                          type: object
+                                          properties:

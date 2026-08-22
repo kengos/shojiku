@@ -143,7 +143,23 @@ impl PackManifest {
     /// Parses a `manifest.yml`'s text. The inverse of [`Self::to_yaml`],
     /// here so a generator round-trips through the same pair the resolver
     /// parses with instead of carrying its own YAML dependency.
+    ///
+    /// Oversize input is refused unread, on the same bound every other pack
+    /// door uses — a manifest arrives from a host exactly the way a locale
+    /// pack does. The refusal is reported as a parse failure because this
+    /// signature returns `serde_yaml::Error`; the callers that own a richer
+    /// error type check the bound themselves before calling in.
     pub fn from_yaml(text: &str) -> Result<Self, serde_yaml::Error> {
+        if text.len() > shojiku_core::MAX_INPUT_BYTES {
+            // serde_yaml has no public error constructor, so produce one by
+            // deserializing a value the target type cannot accept. The
+            // message names the bound rather than quoting the manifest.
+            return Err(serde::de::Error::custom(format!(
+                "font pack manifest is {} bytes, over the {}-byte input cap",
+                text.len(),
+                shojiku_core::MAX_INPUT_BYTES
+            )));
+        }
         serde_yaml::from_str(text)
     }
 

@@ -132,16 +132,36 @@
 - `engine/fuzz/` — the libFuzzer crate, **outside the engine workspace**
   (`exclude = ["fuzz"]`; nightly + a sanitizer runtime + a C++ compiler for
   libFuzzer itself, and it ships nowhere, so `cargo test`/`llvm-cov`/`deny`
-  should all keep describing what does). Five targets: `pdf_document`,
-  `verify_document`, `contents_window`, `cms_container`, `trust_anchors`.
+  should all keep describing what does). ELEVEN targets in two groups.
+  **sign** — `pdf_document`, `verify_document`, `contents_window`,
+  `cms_container`, `trust_anchors` — reads bytes out of a PDF nobody vetted.
+  **wire** — `core_template`, `core_params`, `core_definitions`,
+  `core_ruby`, `formatter_langpack`, `formatter_fontpack` — reads authored
+  TEXT: each decodes UTF-8 and discards the rest, because every one of those
+  doors takes a `&str`, so fuzzing the bytes would measure the decoder.
+  Each wire target also touches the step AFTER the parse — a parse that
+  succeeds and a tree that is then walked are different code: `validate`
+  for the template, path resolution for params, the catalog flatten for
+  definitions, the segment walk for ruby, the pack accessors for the locale
+  pack, and `resolve_face_bytes` for the font pack (deliberately, not
+  `face_specs`: only the resolver runs the path-confinement check the
+  traversal seed is for).
   `src/lib.rs` generates the anchors a verifier needs, once per process —
   an empty anchor set short-circuits before any parser runs, so a target
   without one fuzzes nothing. `examples/seed.rs` writes the seeds that may
   NOT be committed (a signed document embeds a certificate): run by
   `make engine:fuzz` before fuzzing, gitignored, and the reason a mutating fuzzer
   reaches the container parsers at all. Committed seeds are structural only.
-  Driven by `make engine:fuzz` (`FUZZ_TARGET`, `FUZZ_SECS`), deliberately outside
-  `make verify` — the gates run the corpus REPLAY instead.
+  Driven by `make engine:fuzz` (`FUZZ_GROUP=sign|wire`, `FUZZ_TARGET`,
+  `FUZZ_SECS`), deliberately outside `make verify` — the gates run the corpus
+  REPLAY instead: `engine/core/tests/fuzz_corpus/` and
+  `engine/formatter/tests/fuzz_corpus/` for the wire group, engine/verify's
+  two suites for the sign group. Every replay suite asserts its corpus is
+  NON-EMPTY; the six WIRE ones additionally assert that at least one seed
+  actually parses (for ruby, which cannot fail, that at least one seed
+  SEGMENTS) — without that second half a suite is green over a directory of
+  garbage it never really read. The three sign-group tests predate this and
+  assert seed counts only.
 
 - `engine/verify/src/testkit.rs` (+ `testkit/keys.rs`, `#[cfg(test)]`) —
   minimal signable documents, `layout()` (reads a signed document's

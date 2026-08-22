@@ -1159,6 +1159,22 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   becomes an optional lookup alias on top (geometry is identical with or
   without it). The renderer contract never sees the sidecar. Capability
   key `inspect.boxes.all_items`.
+- **An input-size bound on every authored-wire door** (16 MiB,
+  `shojiku_core::MAX_INPUT_BYTES`): templates, params, definitions, locale
+  packs — both the plain door and the builtin-overlay arm — and all four
+  places a font-pack manifest is parsed. Refused BEFORE the parse, since a
+  located parse error needs a second pass over the source and a bound applied
+  afterwards would already have paid for the first. The error names the two
+  numbers and quotes none of the input; it rides the existing `parse_error`
+  code rather than minting one, because a refused input never became a
+  document. 16 MiB is twice the Designer's documented 8 MiB template ceiling,
+  so no legal document approaches it; the MCP surface keeps its own tighter
+  512 KiB inline cap. **What this does NOT bound is YAML alias
+  amplification**: serde_yaml's repetition budget is `events.len() * 100`, so
+  it scales with the input — a document inside the cap can still expand to
+  order 10^8 nodes. Nesting depth IS bounded (the parser refuses past 128,
+  which is what makes the recursive finiteness walk safe). The amplification
+  half is a known, written-down exposure rather than a closed one.
 - **`shojiku capabilities`**: `{ version, capabilities }` JSON with no
   inputs; the key list is the GUI's feature gate. **Every
   wire-format/output-surface widening appends a key in the same PR.**

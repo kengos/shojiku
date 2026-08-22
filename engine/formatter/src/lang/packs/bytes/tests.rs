@@ -243,3 +243,17 @@ fn subset_ignores_an_injected_pack_the_locale_does_not_use() {
     assert_eq!(ids, ["a"]);
     assert!(out.missing.is_empty());
 }
+
+#[test]
+fn an_oversize_injected_manifest_is_refused_before_the_parse() {
+    // The bytes-first path: this string crosses the boundary from a WASM or
+    // MCP host exactly the way a locale overlay does.
+    let big = format!("{ONE}{}", "#".repeat(shojiku_core::MAX_INPUT_BYTES));
+    let err = resolve_face_bytes(&locale("[a]"), vec![pack("a", &big, &[("a.ttf", b"x")])])
+        .expect_err("must refuse");
+    let PackError::ParseInjected { detail, .. } = &err else { panic!("wrong variant: {err:?}") };
+    assert!(detail.as_str().contains("input cap"), "detail: {detail}");
+    // Positive control: the same pack under the cap resolves.
+    resolve_face_bytes(&locale("[a]"), vec![pack("a", ONE, &[("a.ttf", b"x")])])
+        .expect("a small manifest resolves");
+}

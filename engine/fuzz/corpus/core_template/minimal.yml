@@ -1,0 +1,6 @@
+page: { size: A4 }
+sections:
+  body:
+    type: flow
+    box: { x: 0, y: 0, w: 100, h: 100 }
+    items: []

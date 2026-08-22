@@ -134,8 +134,11 @@ fn resolve_pack(
     seen: &mut HashSet<String>,
     out: &mut Vec<FaceBytes>,
 ) -> Result<(), PackError> {
-    let manifest: PackManifest =
-        serde_yaml::from_str(&inj.manifest).map_err(|err| PackError::ParseInjected {
+    // Through `from_yaml`, not `serde_yaml::from_str`: that is the one door
+    // carrying the input-size bound, and this string crosses the boundary
+    // from a WASM or MCP host exactly the way a locale overlay does.
+    let manifest =
+        PackManifest::from_yaml(&inj.manifest).map_err(|err| PackError::ParseInjected {
             pack: Echo::from(pack_id),
             detail: Echo::from(err.to_string()),
         })?;

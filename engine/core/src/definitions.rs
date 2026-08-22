@@ -58,6 +58,13 @@ pub struct Definitions {
 /// path (see [`crate::parse`]), enforces the schema caps, and answers the
 /// retired v1 `groups` form with a migration hint.
 pub fn parse_definitions(input: &str) -> Result<Definitions, CoreError> {
+    // The size bound is checked HERE as well as inside `parse_checked`,
+    // because the error arm below reaches for `v1_form_hint`, which parses
+    // the whole input again with no bound of its own. Without this line the
+    // cap changes which error this door returns and nothing else: a 500 MB
+    // document is still materialized into a `serde_yaml::Value` before the
+    // refusal comes back.
+    crate::yaml_guard::ensure_bounded_size(input, "definitions")?;
     let defs: Definitions = match crate::parse::parse_checked(input, "definitions") {
         Ok(defs) => defs,
         Err(e) => return Err(v1_form_hint(input).unwrap_or(e)),
