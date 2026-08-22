@@ -149,7 +149,19 @@ hostile geometry degrades to null before it can reach an op.
   select, right-click menu, double-click edit, per-kind cursors,
   once-per-selection `scrollIntoView`). Paint inlined as the
   no-stylesheet fallback — `fill="transparent"` (not `none`) keeps it
-  hit-testable.
+  hit-testable. It is the ONE reader of `PlacedBox.hidden` that paints
+  (the layer tree and hit-testing ignore the flag): an unselected hidden
+  box gets the GHOST — a dashed 1px outline at 0.4 opacity — plus the
+  unstyled `sj-box--hidden` class as a host hook. The flag has two engine
+  causes (a `visible:` predicate that did not hold, and a
+  `header.visuallyHidden` header's cells) and it is an ENUMERATION, not a
+  predicate — do not reason "this reserves a box and paints nothing, so it
+  must be stamped". Two cases that are not: an authored `opacity: 0` (the
+  author's paint choice, so the flag means "is not there", not "looks
+  faint") and an unmatched `data:` mark, which reserves its box by design
+  and reports `hidden: false` today. This side needs no
+  capability gate for either cause: an older engine omits the field,
+  which reads as `undefined` and simply draws no ghost.
 - `canvas/overlayBoxGestures.ts` — pure: what a gesture on one box
   MEANS, decided from the document. `boxKeyPlan` → `BoxKeyPlan | null`
   (`reorder` / `apply` / `consume` / `edit` / `select`); `null` = the key

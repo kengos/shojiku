@@ -1442,7 +1442,7 @@ describe('BoxOverlay multi-select + marquee', () => {
   });
 });
 
-describe('a conditionally hidden item', () => {
+describe('a box the document hides (a `visible:` predicate, or a hidden table header)', () => {
   const hidden = { ...box('ghost', 0, 0, 40, 20), hidden: true };
 
   function drawWith(selectedPath: string | null) {

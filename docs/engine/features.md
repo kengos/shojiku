@@ -902,6 +902,19 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   `krilla` exposes no rendering-mode control, while paint alpha is a mechanism
   both backends already carry, so neither renderer changed. Capability key
   `table.header.visuallyHidden`.
+- **A hidden header says so in the box index**: those cell placements (the
+  label row and any `headerGroups` row) arrive `hidden: true`, which is the
+  flag's SECOND cause beside a `visible:` predicate that did not hold, so
+  its meaning is now an enumeration of two rather than one. Deliberately
+  NOT a general "reserves a box and paints nothing" predicate: an authored
+  `opacity: 0` is the author's own paint choice rather than structure, and
+  an unmatched `data:` mark reserves its box by design and stays
+  unstamped — widening to cover that is defensible and is not what this
+  change does. Without it the Designer drew nothing over a strip that
+  still occupies its height, which reads as a layout hole rather than as a
+  hidden header. Documents authoring neither cause are wire-byte-identical
+  (the field is skipped when false). Capability key
+  `table.header.hidden_boxes`.
 - **Header labels interpolate**: a column `label` and a `headerGroups`
   `label` run through the same resolver every other text-bearing item
   uses, against **top-level** params (header chrome is document-level,

@@ -191,6 +191,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     cell.width,
                     row_h,
                     padding,
+                    hidden,
                 ));
             }
             cx += cell.width;
@@ -238,8 +239,19 @@ impl<'a, 'b> Ctx<'a, 'b> {
 /// A cell placement (one per authored cell per row): border box = the
 /// cell, content box = the cell inset by the cell padding. `path` is the
 /// cell's structural address (`columns[n]` or `headerGroups[n]`); `id` its
-/// authored column `id:` if any (a header group authors none).
-fn cell_box(path: &str, id: Option<&str>, x: f64, w: f64, h: f64, padding: f64) -> PlacedBox {
+/// authored column `id:` if any (a header group authors none). `hidden`
+/// rides the row: a `header.visuallyHidden` row's cells reserve their
+/// geometry while nothing a human sees paints there, which is the second
+/// cause `PlacedBox.hidden` reports.
+fn cell_box(
+    path: &str,
+    id: Option<&str>,
+    x: f64,
+    w: f64,
+    h: f64,
+    padding: f64,
+    hidden: bool,
+) -> PlacedBox {
     PlacedBox {
         path: path.to_string(),
         id: id.map(str::to_string),
@@ -251,6 +263,6 @@ fn cell_box(path: &str, id: Option<&str>, x: f64, w: f64, h: f64, padding: f64) 
             h: (h - padding * 2.0).max(0.0),
         },
         text: None,
-        hidden: false,
+        hidden,
     }
 }

@@ -61,12 +61,15 @@ export interface PlacedBox {
   readonly border: BoxRect;
   readonly content: BoxRect;
   readonly text?: TextMetrics;
-  /** The item's `visible:` predicate did not hold and it reserved its box
-   * without painting. The geometry is real — this is where the item WOULD
-   * have drawn — so the canvas ghosts it rather than showing an unexplained
-   * gap. A COLLAPSED item emits no box at all, so it is reachable from the
-   * layer tree rather than the canvas. Absent on every engine that predates
-   * the key, and on every item that authors no `visible:`. */
+  /** The box is reserved and the DOCUMENT decided nothing would paint there.
+   * Two causes, not one: the item's `visible:` predicate did not hold, or the
+   * box belongs to a `header.visuallyHidden` table header. An authored
+   * `opacity: 0` is NOT one of them — that is the author's own paint choice,
+   * so do not ghost a merely faint item. The geometry is real — this is where
+   * the item WOULD have drawn — so the canvas ghosts it rather than showing an
+   * unexplained gap. A COLLAPSED item emits no box at all, so it is reachable
+   * from the layer tree rather than the canvas. Absent on every engine that
+   * predates the key, and on every document that triggers neither cause. */
   readonly hidden?: boolean;
 }
 
