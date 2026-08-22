@@ -9,6 +9,7 @@ import {
   packTier,
   partNames,
   planFace,
+  presetWithFiles,
   resolvePresetBuckets,
   validateAssetNames,
   validatePreset,
@@ -282,5 +283,39 @@ describe('buildLocaleIndex', () => {
 
   it('fails the build on an unsafe file name', () => {
     expect(() => buildLocaleIndex(['../../etc/passwd.yml'])).toThrow(/unsafe file name/);
+  });
+});
+
+describe('presetWithFiles', () => {
+  const base = {
+    id: 'blank-a4',
+    locales: ['ja'],
+    engineLocale: 'ja-JP',
+    name: { ja: '白紙' },
+    thumbnail: 'preview-1.png',
+  };
+
+  it('flags a preset that ships definitions', () => {
+    expect(presetWithFiles(base, [], true)).toEqual({ ...base, definitions: true });
+  });
+
+  // Omitted rather than `false`: the emitted catalog stays the size it was,
+  // and the runtime reads absence and `false` the same way.
+  it('leaves the flag off a preset that ships none', () => {
+    expect(presetWithFiles(base, [], false)).toEqual(base);
+    expect('definitions' in presetWithFiles(base, [], false)).toBe(false);
+  });
+
+  it('carries the asset list independently of the definitions flag', () => {
+    expect(presetWithFiles(base, ['logo.svg'], false)).toEqual({ ...base, assets: ['logo.svg'] });
+    expect(presetWithFiles(base, ['logo.svg'], true)).toEqual({
+      ...base,
+      assets: ['logo.svg'],
+      definitions: true,
+    });
+  });
+
+  it('omits an empty asset list', () => {
+    expect('assets' in presetWithFiles(base, [], true)).toBe(false);
   });
 });

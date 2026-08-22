@@ -6,7 +6,7 @@ import { useId } from 'react';
 import { useI18n } from '../i18n/context';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import { TipBubble } from '../ui/TipBubble';
-import { badgeText } from './fields';
+import { badgeText, showsUnitHint, UnitBadge } from './fields';
 
 export interface StepperFieldProps {
   readonly label: string;
@@ -26,6 +26,11 @@ export interface StepperFieldProps {
    * `50%` value states its unit itself. Omit on a unitless number (a ratio
    * like lineHeight or flexGrow). */
   readonly unit?: string;
+  /** What ELSE this field's key accepts (`mm`, `cm`, `in`, `em`, `rem`), shown
+   * as the badge's hover bubble while the implicit `pt` is on screen. Opt-in:
+   * the WIRE decides, and not every field wearing a `pt` badge takes a length
+   * string — see `showsUnitHint`. */
+  readonly unitHint?: string;
   /** Placeholder for an empty field whose unset meaning is a known value
    * (an unauthored coordinate means 0). Omit for none. */
   readonly placeholder?: string;
@@ -50,11 +55,14 @@ export function StepperField({
   canStep,
   tag,
   unit,
+  unitHint,
   placeholder,
   stepHint,
 }: StepperFieldProps) {
   // An empty field shows its placeholder, so the unit belongs to THAT text.
-  const badge = badgeText(unit, value === '' ? (placeholder ?? '') : value, tag);
+  const shown = value === '' ? (placeholder ?? '') : value;
+  const badge = badgeText(unit, shown, tag);
+  const hint = showsUnitHint(unit, shown, unitHint) ? unitHint : undefined;
   const { t } = useI18n();
   // Explicit htmlFor/id association (not a wrapping label): the optional tag
   // badge sits inside the input wrapper, and inside a WRAPPING label its text
@@ -71,7 +79,7 @@ export function StepperField({
         {label}
       </label>
       <span className="flex items-stretch gap-1">
-        <span className="relative flex min-w-0 flex-1">
+        <span className={`relative flex min-w-0 flex-1${hint === undefined ? '' : ' group/tip'}`}>
           <input
             key={value}
             id={id}
@@ -87,14 +95,11 @@ export function StepperField({
               }
             }}
           />
-          {badge === undefined ? null : (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute top-1/2 right-1.5 -translate-y-1/2 rounded border border-border px-1 text-[10px] leading-tight text-muted"
-            >
-              {badge}
-            </span>
-          )}
+          {/* The SHARED badge primitive, not a second copy of its classes:
+            the two drifted apart once already, and the hover bubble below has
+            to sit on the same element in both fields. */}
+          {badge === undefined ? null : <UnitBadge text={badge} />}
+          {hint === undefined ? null : <TipBubble text={hint} />}
         </span>
         {/* The bubble rides the COLUMN, not the buttons: a disabled button is
           an unreliable hover target, and the explanation is about the pair. */}

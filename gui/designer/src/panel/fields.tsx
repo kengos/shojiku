@@ -19,6 +19,7 @@
 
 import { type ReactNode, useId } from 'react';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
+import { TipBubble } from '../ui/TipBubble';
 
 export interface FieldProps {
   readonly label: string;
@@ -92,11 +93,16 @@ export interface TextFieldProps {
   readonly placeholder?: string;
   /** The unit a BARE value carries (`'pt'`). See `StepperFieldProps.unit`. */
   readonly unit?: string;
+  /** What ELSE this field's key accepts, shown as the badge's hover bubble.
+   * See `showsUnitHint` — opt-in, because the wire decides. */
+  readonly unitHint?: string;
 }
 
-export function TextField({ label, value, onCommit, placeholder, unit }: TextFieldProps) {
+export function TextField({ label, value, onCommit, placeholder, unit, unitHint }: TextFieldProps) {
   const id = useId();
-  const badge = badgeText(unit, value === '' ? (placeholder ?? '') : value);
+  const shown = value === '' ? (placeholder ?? '') : value;
+  const badge = badgeText(unit, shown);
+  const hint = showsUnitHint(unit, shown, unitHint) ? unitHint : undefined;
   return (
     // Explicit htmlFor/id, not a wrapping label: the badge's text would
     // otherwise fold into the computed label (see StepperField).
@@ -104,7 +110,7 @@ export function TextField({ label, value, onCommit, placeholder, unit }: TextFie
       <label htmlFor={id} className={FIELD_LABEL}>
         {label}
       </label>
-      <span className="relative flex min-w-0">
+      <span className={`relative flex min-w-0${hint === undefined ? '' : ' group/tip'}`}>
         <input
           key={value}
           id={id}
@@ -115,6 +121,7 @@ export function TextField({ label, value, onCommit, placeholder, unit }: TextFie
           onBlur={(event) => onCommit(event.currentTarget.value)}
         />
         {badge === undefined ? null : <UnitBadge text={badge} />}
+        {hint === undefined ? null : <TipBubble text={hint} />}
       </span>
     </span>
   );
@@ -144,6 +151,23 @@ const BARE_NUMERAL = /^\s*-?\d+(?:\.\d+)?\s*$/;
  * shared widgets. */
 export function unitIsImplicit(shown: string): boolean {
   return BARE_NUMERAL.test(shown);
+}
+
+/** Whether a unit-bearing field shows its unit HINT — the bubble inviting the
+ * reader to type another unit.
+ *
+ * Three conditions, and each rules out a real field in this panel. The caller
+ * must have passed one: `borderWidth` is `number (pt)` in the wire, not a
+ * `Length`, so the border pen deliberately passes NONE and a `2mm` there is
+ * dropped by its own commit guard. The field must carry a unit at all: a ratio
+ * (`lineHeight`) has none. And the shown value must be the BARE numeral whose
+ * `pt` is invisible — a value already spelling `12mm` needs no invitation. */
+export function showsUnitHint(
+  unit: string | undefined,
+  shown: string,
+  hint: string | undefined,
+): boolean {
+  return hint !== undefined && unit !== undefined && unitIsImplicit(shown);
 }
 
 /** The badge text for a unit-bearing field: the implicit unit, the caller's own

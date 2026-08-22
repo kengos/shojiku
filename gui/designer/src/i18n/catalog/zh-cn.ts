@@ -227,6 +227,7 @@ export const zhCn: LanguageCatalog = {
     'menu.pdf': '下载为 PDF…',
     'pdf.title': 'PDF 预览',
     'pdf.help': '这是最终的 PDF，与命令行渲染出的字节完全一致。',
+    'pdf.pageSize': '纸张大小：{size}',
     'pdf.download': '下载',
     'pdf.close': '关闭',
     'pdf.frameTitle': '文档的 PDF 预览',
@@ -280,6 +281,7 @@ export const zhCn: LanguageCatalog = {
     'shortcuts.action.duplicate': '复制所选',
     'shortcuts.action.delete': '删除所选',
     'shortcuts.action.deselect': '取消选择',
+    'shortcuts.action.reorder': '将图层上移或下移',
     'glossary.title': '术语表',
     'glossary.field.term': '数据字段',
     'glossary.field.def':
@@ -296,6 +298,9 @@ export const zhCn: LanguageCatalog = {
     'glossary.default.term': '默认值',
     'glossary.default.def': '当你将控件留空时项目所用的值，取自所应用的样式或文档设置。',
     'glossary.interpolation.term': '数据占位符',
+    'glossary.units.term': '单位',
+    'glossary.units.def':
+      '没有写单位的数值以磅 (pt) 计算 (1 pt = 1/72 英寸)。也可以输入 mm、cm、in、em (字号的倍数) 或 rem；% 只在有可参照的大小时才有效，对自行决定大小的上层元素使用 % 会被忽略。',
     'glossary.interpolation.def':
       '在文本项目中用双大括号包住数据键写下的标记，导出时会替换为对应的值。',
     'title.saving': '保存中…',
@@ -637,6 +642,7 @@ export const zhCn: LanguageCatalog = {
     'panel.charGrid.hint':
       '在设定了格子大小时，实际绘制的大小取决于格子，而非上方的宽度。将格子大小清空后，反过来由该项目的宽度算出格子。',
     'stepper.relativeUnit': '百分比或 em 的值无法逐步调整，请直接输入。',
+    'stepper.unitHint': 'mm、cm、in 亦可',
     'panel.box.h': '高',
     'panel.placement.label': '位置',
     'panel.placement.mode.auto': '自动',
@@ -893,6 +899,10 @@ export const zhCn: LanguageCatalog = {
     'sample.variant.error.cannotRemove': '无法删除这个变体。',
     'tree.empty': '没有可显示的项目。',
     'tree.truncated': '文档过大，部分项目已隐藏。',
+    'tree.dragHint': '拖动可重新排序或移动分组。',
+    'help.reorder.title': '重新排序与移动分组',
+    'help.reorder.body':
+      '上下拖动行可改变顺序，左右拖动则会移入或移出分组。Alt+↑ 和 Alt+↓ 只在当前分组内重新排序。',
     'tree.documentRoot': '整个文档',
     'menu.documentSettings': '文档设置…',
     'docSettings.title': '文档设置',

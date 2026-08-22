@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { FORMAT_CATALOG } from '../testkit/formatCatalog';
+import { unitHintsFor } from '../testkit/unitHint';
 import { PropertyPanel } from './PropertyPanel';
 
 function makeController(
@@ -1570,5 +1571,36 @@ describe('PropertyPanel — data-binding scope', () => {
       keys: ['data', 'key'],
       value: 'store.name',
     });
+  });
+});
+
+// The unit affordance (`stepper.unitHint`) is OPT-IN per field, because the
+// WIRE decides which keys take `25mm`. Pinned AT the site: an optional prop
+// whose default is the disabled value can be dropped in a refactor with no
+// type error, no lint and no red test.
+
+describe('the item style tab unit affordance', () => {
+  it('invites another unit on a bare font size', () => {
+    const controller = makeController({
+      [PATH]: { type: 'text', text: 'hi', style: { fontSize: 24 } },
+      styles: {},
+      formats: {},
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    openTab('Style');
+    expect(unitHintsFor('Font size').length).toBeGreaterThan(0);
+  });
+
+  // `lineHeight` is a RATIO — no unit at all, so no badge and nothing to
+  // invite. The middle condition of `showsUnitHint`.
+  it('says nothing about units on a unitless ratio', () => {
+    const controller = makeController({
+      [PATH]: { type: 'text', text: 'hi', style: { lineHeight: 1.5 } },
+      styles: {},
+      formats: {},
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    openTab('Style');
+    expect(unitHintsFor('Line height')).toHaveLength(0);
   });
 });

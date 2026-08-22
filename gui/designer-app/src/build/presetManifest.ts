@@ -87,6 +87,24 @@ export function validatePreset(id: string, raw: unknown): CatalogPreset {
   return variants === null ? preset : { ...preset, variants };
 }
 
+/** The catalog entry for a preset once the assembly has LOOKED at its
+ * directory: the manifest-declared fields plus the two facts only the
+ * filesystem knows — which asset files it bundles, and whether it carries a
+ * `definitions.yml`. Both are omitted when false/empty so the emitted catalog
+ * stays as small as it was.
+ *
+ * Pure, and separate from the copying loop that calls it, because the
+ * assembly script itself runs in NO gate (`make gui:verify` never invokes it),
+ * so a decision left inline there is a decision nothing checks. */
+export function presetWithFiles(
+  preset: CatalogPreset,
+  assets: readonly string[],
+  hasDefinitions: boolean,
+): CatalogPreset {
+  const withAssets = assets.length > 0 ? { ...preset, assets } : preset;
+  return hasDefinitions ? { ...withAssets, definitions: true } : withAssets;
+}
+
 /** Validate a preset's optional `variants` list. Absent → `null` (no variants).
  * Each entry needs a lowercase-safe id (the runtime fetches `params-<id>.json`,
  * so a name the fetch couldn't reproduce must fail the build) and a non-empty

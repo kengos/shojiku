@@ -21,6 +21,10 @@ export interface PdfPreviewModalProps {
    * anchor itself — file writing (and naming) is a host concern, the same seam
    * the YAML export rides. */
   readonly onDownload: () => void;
+  /** The page these bytes were rendered at (`A4 — 210 × 297 mm`). Absent when
+   * the document's size cannot be described, and then nothing is shown: a
+   * reassurance surface may not guess. */
+  readonly pageLabel?: string;
 }
 
 /** The object URL for `pdf`, revoked on change/unmount. `null` until bytes
@@ -44,7 +48,13 @@ function useBlobUrl(pdf: Uint8Array | null): string | null {
   return url;
 }
 
-export function PdfPreviewModal({ open, onClose, pdf, onDownload }: PdfPreviewModalProps) {
+export function PdfPreviewModal({
+  open,
+  onClose,
+  pdf,
+  onDownload,
+  pageLabel,
+}: PdfPreviewModalProps) {
   const { t } = useI18n();
   // The URL's life is the component's: the Designer mounts this only while it
   // holds bytes and unmounts it on close, so there is no closed-but-holding
@@ -69,6 +79,13 @@ export function PdfPreviewModal({ open, onClose, pdf, onDownload }: PdfPreviewMo
       }
     >
       <p className="m-0 text-sm text-muted">{t('pdf.help')}</p>
+      {/* The page the ENGINE actually rendered. A document name carries its
+        size by convention (`Blank (A4)`) and does not follow a page-size
+        change, so the name was the only thing on screen saying what size this
+        is — and after a change to B5 it was saying the wrong thing. */}
+      {pageLabel === undefined ? null : (
+        <p className="m-0 text-sm text-muted">{t('pdf.pageSize', { size: pageLabel })}</p>
+      )}
       {url === null ? (
         <p className="m-0 text-sm text-muted">{t('pdf.unavailable')}</p>
       ) : (

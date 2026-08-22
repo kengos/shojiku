@@ -11,6 +11,7 @@ import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { unitHintsFor } from '../testkit/unitHint';
 import { PropertyPanel } from './PropertyPanel';
 
 const P = 'sections.body.items[0]';
@@ -243,5 +244,21 @@ describe('char_grid panel tabs', () => {
     // on `CharGridItem` governs the item ROOT, which is not where these land.
     expect(screen.getByLabelText('Format')).not.toBeNull();
     expect(screen.getByLabelText('Blank placeholder')).not.toBeNull();
+  });
+});
+
+// The unit affordance (`stepper.unitHint`) is OPT-IN per field, because the
+// WIRE decides which keys take `25mm`. Pinned AT the site: an optional prop
+// whose default is the disabled value can be dropped in a refactor with no
+// type error, no lint and no red test.
+
+describe('CharGridSection unit affordance', () => {
+  // A BARE cellSize on purpose: the shipped fixture authors `9mm`, which
+  // spells its own unit — no badge, and so no invitation to change it. The
+  // affordance exists for the value whose `pt` is invisible.
+  it('invites another unit on a bare cell size', () => {
+    draw({ ...GRID, grid: { ...GRID.grid, cellSize: 24 } });
+    openLayout();
+    expect(unitHintsFor('Cell size').length).toBeGreaterThan(0);
   });
 });

@@ -11,6 +11,7 @@
 
 import type { Op, OpResult, ReadFn } from '@shojiku/designer-core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { IconDocument } from '../ui/icons';
 import type { TreeView } from './model';
@@ -147,6 +148,30 @@ export function LayerTree({
           </ul>
           {view.truncated ? (
             <p className="mx-1 my-2 text-sm text-muted">{t('tree.truncated')}</p>
+          ) : null}
+          {/* What the rows DO, which nothing else on screen said. Cross-parent
+            drag and the Alt+↑/↓ chord both shipped with no entry point: one
+            walkthrough found the drag by accident and wrote that nothing
+            announced it.
+            Shown only once the sentence is TRUE — it promises reordering AND
+            regrouping, so one item under one section is not enough: there is
+            no sibling to reorder against and nothing to regroup into. Two
+            movable items somewhere is the weakest document where at least one
+            of the two gestures does something.
+            `items-start`, not `items-center`: the sidebar is ~145px wide, so
+            this text wraps, and centering left the `?` floating 20px below the
+            line it belongs to (measured in the browser — jsdom has no layout).
+            A `div`, not a `p` — the hint's popover is a div and may not nest
+            inside a paragraph. */}
+          {view.roots.reduce((n, node) => n + node.children.length, 0) > 1 ? (
+            <div className="mx-1 mt-2 flex items-start gap-1 text-sm text-muted">
+              <span>{t('tree.dragHint')}</span>
+              <HelpHint
+                label={t('help.reorder.title')}
+                title={t('help.reorder.title')}
+                body={t('help.reorder.body')}
+              />
+            </div>
           ) : null}
         </>
       )}

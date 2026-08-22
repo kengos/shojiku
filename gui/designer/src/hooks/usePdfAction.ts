@@ -20,10 +20,23 @@ export interface PdfActionOptions {
   /** What the engine validates/renders against (the engineer definitions with
    * edits folded in, or undefined blank-start). */
   readonly definitions: string | undefined;
+  /** Describe the page the document is CURRENTLY set to (`A4 — 210 × 297 mm`),
+   * or `null` when this build cannot. Read once, at the moment the bytes are
+   * produced — see `pdfPageLabel`. */
+  readonly readPageLabel: () => string | null;
 }
 
 export interface PdfAction {
   readonly pdfBytes: Uint8Array | null;
+  /** The page the CURRENT `pdfBytes` were rendered at — snapshotted with them,
+   * never re-read while the preview is open.
+   *
+   * The window-level undo (`useSelectionShortcuts`) is guarded only against
+   * EDITABLE targets, and a modal's close button is not one — so ⌘Z reaches
+   * the document while the preview is open, and a live read would relabel the
+   * bytes on screen with a page they were not rendered at. That is the exact
+   * defect this label exists to fix, inverted. */
+  readonly pdfPageLabel: string | null;
   readonly pdfOpen: boolean;
   readonly pdfNotice: string | null;
   /** Undefined = the action is unsupported (the menu entry stays absent). */
@@ -38,8 +51,10 @@ export function usePdfAction({
   text,
   params,
   definitions,
+  readPageLabel,
 }: PdfActionOptions): PdfAction {
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
+  const [pdfPageLabel, setPdfPageLabel] = useState<string | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [pdfNotice, setPdfNotice] = useState<string | null>(null);
   const renderPdf = transport.renderPdf;
@@ -64,6 +79,9 @@ export function usePdfAction({
         }
         setPdfNotice(null);
         setPdfBytes(outcome.pdf);
+        // Read the page HERE, beside the bytes it belongs to — the two are one
+        // snapshot from now until the modal closes.
+        setPdfPageLabel(readPageLabel());
         setPdfOpen(true);
       } catch {
         // A transport failure (a font pack that could not be fetched, an
@@ -72,14 +90,15 @@ export function usePdfAction({
         setPdfNotice('pdf.notice.error');
       }
     };
-  }, [pdfSupported, renderPdf, text, params, definitions]);
+  }, [pdfSupported, renderPdf, text, params, definitions, readPageLabel]);
 
   // Closing drops the bytes with the modal, so the blob URL its effect holds is
   // revoked and the document does not linger in memory.
   const closePdf = useCallback(() => {
     setPdfOpen(false);
     setPdfBytes(null);
+    setPdfPageLabel(null);
   }, []);
 
-  return { pdfBytes, pdfOpen, pdfNotice, openPdf, closePdf };
+  return { pdfBytes, pdfPageLabel, pdfOpen, pdfNotice, openPdf, closePdf };
 }

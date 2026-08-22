@@ -96,6 +96,21 @@ platform binaries.
 
 ### Changed
 
+- **Three things the Designer could do but never said it could.** A layer-tree
+  row has been draggable into another group since cross-parent moves shipped,
+  and nothing on screen said so — one walkthrough found the gesture by
+  accident. The tree now carries a line saying what a row does, with a `?`
+  explaining that dragging sideways is what changes which group an item belongs
+  to, and the keyboard equivalent (Alt+↑ / Alt+↓) has joined the shortcuts
+  list. Any length field accepts `25mm` where it shows points, which was
+  documented in exactly one sentence beside the corner-radius control; the
+  nine fields where that is true now say so on hover — and the three where it
+  is NOT stay quiet, because a plain number, a number-only input and a ratio
+  do not take a unit however similar they look. The glossary explains the full
+  set, including the ones a hover bubble has no room for. And the language switch, previously a grey globe beside an
+  equally grey theme icon — both walkthroughs reached for it and opened the
+  theme menu — now shows the current language in its own name and comes first.
+
 - **Designer buttons now say which one is the main action, and which labels
   open something.** A dialog's confirming button — Insert, Create, Save,
   Register, Propose edits, and the confirm on the save/export review — is
@@ -160,6 +175,37 @@ platform binaries.
   switching the panel's tab, or selecting something else, used to throw the
   edit away because the field was removed from the page before it could be
   written.
+
+- **A PDF downloaded from the Designer keeps the name you gave the document.**
+  The download name was reduced to ASCII letters and digits before it reached
+  your filesystem, which is fine for `Invoice` and destroys a name written in
+  Japanese, Chinese or Hindi: 「領収書」 arrived as `template.pdf`, and
+  「白紙 (A4)」 as `a4.pdf` — the only part of the name that survived was the
+  paper size. Names now keep their own script, and only what is genuinely
+  unsafe in a file name is removed: control characters, the invisible
+  formatting characters — among them the direction marks that can make a file
+  appear to have a different extension than it has — path separators, and the
+  punctuation Windows refuses. The two zero-width characters that carry meaning
+  in Devanagari and in emoji are kept.
+  A very long name is shortened to the 251 bytes a filesystem leaves for one
+  name once `.pdf` is accounted for — by BYTES rather than by characters,
+  because a 120-character Japanese title is around 360 of them and would
+  otherwise produce a name that cannot be written. An English title of the
+  same length is untouched, as it always was.
+
+- **The PDF preview says which page size it rendered.** Changing the page to
+  B5 and previewing showed a correctly-sized B5 page while the document was
+  still called "Blank (A4)" — the name carries the size by convention and does
+  not follow the setting, so the only size stated on screen was the wrong one.
+  The preview now names the page it actually rendered, dimensions included,
+  beneath the preview itself.
+
+- **Opening a blank template no longer logs a missing-file error.** The app
+  asked every template for an optional `definitions.yml` and let the miss pass
+  quietly — but the browser still recorded the failed request, so starting from
+  a blank document, which is where a first-time user starts, opened with what
+  looked like a broken build in the console. The app now asks only when the
+  template actually ships one.
 
 - **The Designer's format picker no longer offers a format the field cannot
   use.** A template's `formats:` entries were listed on every binding whatever

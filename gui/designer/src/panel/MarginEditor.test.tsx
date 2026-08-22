@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { unitHintsFor } from '../testkit/unitHint';
 import { MarginEditor } from './MarginEditor';
 
 function makeController(
@@ -117,5 +118,26 @@ describe('MarginEditor', () => {
     draw(<MarginEditor controller={controller} />);
     fireEvent.blur(screen.getByLabelText('Left'), { target: { value: 'garbage' } });
     expect(controller.applyAll).not.toHaveBeenCalled();
+  });
+});
+
+// The unit affordance (`stepper.unitHint`) is OPT-IN per field, because the
+// WIRE decides: a key typed `Length` takes `25mm`, a key typed `number (pt)`
+// does not. So each site that offers it is pinned at the site — an optional
+// prop whose default is the disabled value can otherwise be dropped in a
+// refactor with no type error, no lint and no red test.
+
+describe('MarginEditor unit affordance', () => {
+  it('invites another unit on a per-side margin', () => {
+    draw(<MarginEditor controller={makeController(perSideMap)} />);
+    expect(unitHintsFor('Top').length).toBeGreaterThan(0);
+  });
+
+  // The uniform field is a raw `<input type="number">`: the browser will not
+  // accept `25mm` there at all, so the absence of the invitation is the
+  // truthful state, not a missed site.
+  it('does NOT invite one on the uniform field, which cannot hold a unit', () => {
+    draw(<MarginEditor controller={makeController(undefined)} />);
+    expect(unitHintsFor('All sides')).toHaveLength(0);
   });
 });

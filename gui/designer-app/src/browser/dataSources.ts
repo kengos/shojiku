@@ -8,6 +8,7 @@ import { parseMountConfig } from '../app/config';
 import type { PresetFiles } from '../app/services';
 import type { Catalog } from '../assets/manifest';
 import { isSafeAssetName } from '../assets/paths';
+import { wantsDefinitions } from '../catalog/catalog';
 import { loadPresetAssets } from '../engine/assetSource';
 import { loadPresetVariants } from '../engine/variantSource';
 import { HttpStore } from '../persistence/http';
@@ -31,7 +32,12 @@ export function makeLoadPreset(
     const [source, params, definitions, assets, variants] = await Promise.all([
       fetchText(`${base}templates.yml`),
       fetchText(`${base}params.json`),
-      fetchText(`${base}definitions.yml`).catch(() => undefined),
+      // Ask only when the catalog says the file is there. `.catch` handles a
+      // miss, but it cannot un-log the browser's own 404 — and the presets
+      // with no definitions are the BLANK ones, i.e. every first-time start.
+      wantsDefinitions(entry)
+        ? fetchText(`${base}definitions.yml`).catch(() => undefined)
+        : Promise.resolve(undefined),
       loadPresetAssets({ fetchBytes, base: dataBase }, id, assetNames),
       loadPresetVariants({ fetchText, base: dataBase }, id, variantDecls),
     ]);

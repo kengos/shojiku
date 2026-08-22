@@ -5,6 +5,7 @@ import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
 import { FORMAT_CATALOG } from '../testkit/formatCatalog';
+import { UNIT_HINT_EN } from '../testkit/unitHint';
 import { TableColumnSheet } from './TableColumnSheet';
 
 const TABLE = 'sections.body.items[0]';
@@ -510,5 +511,35 @@ describe('TableColumnSheet — per-column alignment', () => {
       }),
     );
     expect(container.querySelector('output')?.style.textAlign).toBe('');
+  });
+});
+
+// The SHEET writes column width through the same `lengthOp(path, ['width'])`
+// the column FORM does, so it takes `25mm` just as readily — but it renders
+// its own input rather than going through `StepperField`/`TextField`, so a
+// sweep for the `unit=` PROP cannot see it. It was missed exactly that way.
+describe('the column sheet unit affordance', () => {
+  const hintsIn = (root: ParentNode) =>
+    [...root.querySelectorAll('[data-sj-tip]')].filter((el) => el.textContent === UNIT_HINT_EN);
+
+  it('invites another unit on a bare width, like the column form does', () => {
+    const { container } = sheet(makeController(TABLE_NODE));
+    expect(hintsIn(container).length).toBeGreaterThan(0);
+  });
+
+  it('says nothing on a column with no width authored', () => {
+    // The badge — and the invitation riding it — appear only while there is an
+    // invisible `pt` to explain. An unauthored width shows neither.
+    sheet(makeController(TABLE_NODE));
+    const cells = screen.getAllByLabelText('Column width') as HTMLInputElement[];
+    const bare = cells.filter((c) => c.value === '40');
+    const empty = cells.filter((c) => c.value === '');
+    // Both arms present, so neither assertion below is vacuous.
+    expect(bare).toHaveLength(1);
+    expect(empty.length).toBeGreaterThan(0);
+    for (const cell of empty) {
+      const wrapper = cell.parentElement;
+      expect(wrapper === null ? ['unreached'] : hintsIn(wrapper)).toHaveLength(0);
+    }
   });
 });

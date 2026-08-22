@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { LOCALES } from '../i18n/locales';
+import { unitHintsFor } from '../testkit/unitHint';
 import { DocumentDefaults } from './DocumentDefaults';
 import { localeFacts } from './localeFacts';
 
@@ -421,5 +422,17 @@ describe('DocumentDefaults', () => {
       );
       expect(screen.queryByLabelText('Line height')).toBeNull();
     });
+  });
+});
+
+// The unit affordance (`stepper.unitHint`) is OPT-IN per field, because the
+// WIRE decides which keys take `25mm`. Pinned AT the site: an optional prop
+// whose default is the disabled value can be dropped in a refactor with no
+// type error, no lint and no red test.
+
+describe('DocumentDefaults unit affordance', () => {
+  it('invites another unit on the default font size', () => {
+    render(<Harness source={BASE} fontFamilies={['gf-lato']} />);
+    expect(unitHintsFor('Font size').length).toBeGreaterThan(0);
   });
 });

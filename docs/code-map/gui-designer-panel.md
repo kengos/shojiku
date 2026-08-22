@@ -262,7 +262,31 @@ read side, never the reverse.
   past the editor to the insert-a-field button beside it: clicking the
   text pressed that button instead of placing a caret),
   `TextField`, `UnitBadge` + `unitIsImplicit`/`badgeText` (the implicit
-  `pt` badge shows only while the text is a bare numeral).
+  `pt` badge shows only while the text is a bare numeral) and
+  `showsUnitHint` — whether the field invites ANOTHER unit, which is
+  OPT-IN per site because the WIRE decides. NINE fields carry it (box
+  coordinates, corner radius, column width in BOTH the form and the
+  sheet, per-side margins, flex/grid gap, char-grid cell size + line gap,
+  and `fontSize` on both style surfaces); three deliberately do NOT, each
+  for its own reason: the border PEN's width is `borderWidth`, `number (pt)` in the
+  wire and dropped by its own commit guard; the UNIFORM margin is an
+  `<input type="number">`, which the browser will not let hold `25mm`;
+  and a unitless ratio (`lineHeight`) has no badge to hang it on. The
+  bubble rides the input's WRAPPER, not the badge — the badge is
+  `pointer-events-none` and cannot be hovered. Eight sites reach it
+  through the shared fields' `unitHint` prop; the NINTH,
+  `TableColumnCells`'s `ColumnWidthCell`, renders its own input and its own
+  `UnitBadge`, so a sweep for the `unit=` PROP does not see it — it was
+  missed exactly that way, and it writes the same `lengthOp(path,
+  ['width'])` as the column form. Its text is deliberately
+  TERSE (`mm, cm, in too`): measured in the real app, a centred `TipBubble`
+  on a LEFT-column panel field has 123px before the panel column's
+  `overflow-y: auto` clips it, and a sentence needed 325px — it was the
+  only truncating tooltip in the Designer. The bubble sits beside the `pt`
+  badge, so naming alternatives is its whole job; `em`, `rem`, `%` and the
+  caveats (`%` resolves against a different axis per field and drops with
+  `percent_of_auto` under an auto-height parent) live in the glossary's
+  `units` term and in `border.radiusHint`, which have room for them.
 - `panel/StepperField.tsx` — length/number input + ▲▼ (one step op per
   click = one undo step; commit-on-blur changed-guard; optional `tag`
   suffix badge with explicit htmlFor/id association; no key-repeat — an
@@ -663,7 +687,10 @@ conditional rules the next section owns).
   the surface READS from what an edit WRITES:
   - `panel/pageSetupModel.ts` — the READ side: `PageView`/`CustomDims`/
     `Orientation`, `readPageView` (named vs custom `{ w, h }`, mixed-unit
-    seeds re-expressed in one shared display unit) and `sizeLabel`.
+    seeds re-expressed in one shared display unit), `sizeLabel` and
+    `pageSummary` — the size's NAME plus its dimensions, or `null` when
+    this build cannot describe the page; the PDF preview shows it, and a
+    reassurance surface may not guess.
   - `panel/pageSetupOps.ts` — the WRITE side, every key a literal path:
     `selectSizeOp` (named→custom clears orientation+size in one batch so
     no `orientation_ignored` lingers)/`orientationOp`/`customDimOp`/

@@ -137,6 +137,7 @@ export function TypographyFields({
                 value={value}
                 canStep={readLength(value) !== null}
                 unit={kind === 'number' ? undefined : 'pt'}
+                unitHint={t('stepper.unitHint')}
                 onCommit={(v) =>
                   dispatch(kind === 'number' ? numberOp(path, keys, v) : lengthOp(path, keys, v))
                 }

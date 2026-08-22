@@ -58,6 +58,10 @@ export function BorderPen({ pen, setPen, capabilities }: BorderPenProps) {
           label={t('border.penWidth')}
           value={String(pen.width)}
           unit="pt"
+          // Deliberately NO `unitHint`: every other `pt` field in the panel
+          // authors a wire `Length` and takes `2mm`, but `borderWidth` is
+          // `number (pt)` — `commitWidth` below drops a non-finite value, so a
+          // unit string here is silently ignored. Inviting one would be a lie.
           canStep
           onCommit={commitWidth}
           onStep={stepWidth}

@@ -106,6 +106,7 @@ export function ColumnForm({
             label={t('panel.column.width')}
             value={column.width}
             unit="pt"
+            unitHint={t('stepper.unitHint')}
             onCommit={(value) => {
               if (value !== column.width) {
                 dispatch(lengthOp(path, ['width'], value));

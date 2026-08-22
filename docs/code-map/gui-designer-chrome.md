@@ -147,9 +147,12 @@ resolved style.
 - `help/HelpHint.tsx` — a `?` popover beside a confusing control (pure
   presentational; `onMore` → glossary).
 - `help/ShortcutsDialog.tsx` + `shortcutsModel.ts` (`shortcutRows(mac)`
-  mirrors `shortcuts.ts`); `help/GlossaryDialog.tsx` + `glossaryModel.ts`
+  mirrors `shortcuts.ts` — plus ONE row that is not window-level, the
+  layer tree's Alt+↑/↓ reorder chord, listed because a keyboard path
+  nothing names is a keyboard path nobody finds);
+  `help/GlossaryDialog.tsx` + `glossaryModel.ts`
   (`GLOSSARY_TERMS` — data field, margin box, snap grid, style, default,
-  interpolation). Both Modals off the Help menu, keys in all six
+  interpolation, units). Both Modals off the Help menu, keys in all six
   catalogs.
 
 ## Popover state
@@ -337,6 +340,11 @@ is Tailwind utilities over the `--sj-*` tokens.
   from wire value).
 - `ui/Menu.tsx` — data-driven grouped entries + headings; text or icon
   trigger (icon form gets a TipBubble); `checkedId` for single-choice.
+  An icon trigger may also carry `triggerText`, the control's current
+  VALUE beside the glyph (the header's language name), while `label`
+  stays the accessible name — two icon controls side by side are
+  indistinguishable at low acuity, and the name has to keep naming the
+  ACTION when the visible text is a noun.
 - `ui/Switch.tsx` — over Headless UI Switch.
 - `ui/Segmented.tsx` — the mutually-exclusive pill as a NATIVE radio
   group (fieldset + sr-only inputs, `has-*` variants).

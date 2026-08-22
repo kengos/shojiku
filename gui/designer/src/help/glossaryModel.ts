@@ -17,4 +17,5 @@ export const GLOSSARY_TERMS: readonly GlossaryEntry[] = [
   { term: 'glossary.style.term', def: 'glossary.style.def' },
   { term: 'glossary.default.term', def: 'glossary.default.def' },
   { term: 'glossary.interpolation.term', def: 'glossary.interpolation.def' },
+  { term: 'glossary.units.term', def: 'glossary.units.def' },
 ];

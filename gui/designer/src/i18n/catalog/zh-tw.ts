@@ -227,6 +227,7 @@ export const zhTw: LanguageCatalog = {
     'menu.pdf': '下載為 PDF…',
     'pdf.title': 'PDF 預覽',
     'pdf.help': '這是最終的 PDF，與命令列算繪出的位元組完全相同。',
+    'pdf.pageSize': '紙張大小：{size}',
     'pdf.download': '下載',
     'pdf.close': '關閉',
     'pdf.frameTitle': '文件的 PDF 預覽',
@@ -280,6 +281,7 @@ export const zhTw: LanguageCatalog = {
     'shortcuts.action.duplicate': '複製所選',
     'shortcuts.action.delete': '刪除所選',
     'shortcuts.action.deselect': '取消選取',
+    'shortcuts.action.reorder': '將圖層上移或下移',
     'glossary.title': '詞彙表',
     'glossary.field.term': '資料欄位',
     'glossary.field.def':
@@ -296,6 +298,9 @@ export const zhTw: LanguageCatalog = {
     'glossary.default.term': '預設值',
     'glossary.default.def': '當你將控制項留空時項目所用的值，取自所套用的樣式或文件設定。',
     'glossary.interpolation.term': '資料佔位符',
+    'glossary.units.term': '單位',
+    'glossary.units.def':
+      '沒有寫單位的數值以點 (pt) 計算 (1 pt = 1/72 英吋)。也可以輸入 mm、cm、in、em (字級的倍數) 或 rem；% 只在有可依據的大小時才有效，對自行決定大小的上層元素使用 % 會被忽略。',
     'glossary.interpolation.def':
       '在文字項目中用雙大括號包住資料鍵寫下的標記，匯出時會替換為對應的值。',
     'title.saving': '儲存中…',
@@ -637,6 +642,7 @@ export const zhTw: LanguageCatalog = {
     'panel.charGrid.hint':
       '在設定了格子大小時，實際繪製的大小取決於格子，而非上方的寬度。將格子大小清空後，反過來由這個項目的寬度算出格子。',
     'stepper.relativeUnit': '百分比或 em 的值無法逐步調整，請直接輸入。',
+    'stepper.unitHint': 'mm、cm、in 亦可',
     'panel.box.h': '高',
     'panel.placement.label': '位置',
     'panel.placement.mode.auto': '自動',
@@ -894,6 +900,10 @@ export const zhTw: LanguageCatalog = {
     'sample.variant.error.cannotRemove': '無法刪除這個變體。',
     'tree.empty': '沒有可顯示的項目。',
     'tree.truncated': '文件過大，部分項目已隱藏。',
+    'tree.dragHint': '拖曳可重新排序或移動群組。',
+    'help.reorder.title': '重新排序與移動群組',
+    'help.reorder.body':
+      '上下拖曳列可改變順序，左右拖曳則會移入或移出群組。Alt+↑ 與 Alt+↓ 只在目前的群組內重新排序。',
     'tree.documentRoot': '整份文件',
     'menu.documentSettings': '文件設定…',
     'docSettings.title': '文件設定',

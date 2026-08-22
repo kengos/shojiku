@@ -453,7 +453,7 @@ describe('App navigation', () => {
   it('persists a locale change and re-derives the catalog', () => {
     const services = makeServices();
     render(<App services={services} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Language' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Language:/ }));
     fireEvent.click(screen.getByRole('menuitem', { name: '日本語' }));
     expect(services.persistLocale).toHaveBeenCalledWith('ja-JP');
     expect(screen.getByText('原稿用紙')).toBeTruthy();

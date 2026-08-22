@@ -80,6 +80,7 @@ export function CharGridSection({
             canStep={readLength(view[key]) !== null}
             stepHint={isRelativeLength(view[key]) ? t('stepper.relativeUnit') : undefined}
             unit="pt"
+            unitHint={t('stepper.unitHint')}
             // Both OPTIONAL keys state what their unset value means, the way
             // the placement tab's coordinates do: an unset cell side is
             // DERIVED (from the item's own width), an unset gap is 0. The

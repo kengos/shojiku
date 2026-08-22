@@ -11,7 +11,12 @@ import { parse } from 'yaml';
 import type { CatalogPreset } from '../src/assets/manifest';
 // `.ts` extensions: node runs this script under type stripping (no bundler), so
 // the runtime import of the pure logic needs the explicit extension.
-import { resolvePresetBuckets, validateAssetNames, validatePreset } from '../src/build/assemble.ts';
+import {
+  presetWithFiles,
+  resolvePresetBuckets,
+  validateAssetNames,
+  validatePreset,
+} from '../src/build/assemble.ts';
 import { copyFile, EXAMPLES, ensureDir, OUT, PRESET_FILES } from './assembleIo.ts';
 
 /** Every bundled preset as `{ id, dir }` — the IO half of the two-level
@@ -69,10 +74,10 @@ export function assemblePresets(): CatalogPreset[] {
       for (const name of assetNames) {
         copyFile(join(assetsDir, name), join(assetsOut, name));
       }
-      presets.push({ ...preset, assets: assetNames });
-    } else {
-      presets.push(preset);
     }
+    // The catalog says whether `definitions.yml` is there, so the runtime can
+    // ask for it only when it exists; the copy loop above already skips it.
+    presets.push(presetWithFiles(preset, assetNames, existsSync(join(dir, 'definitions.yml'))));
   }
   return presets;
 }

@@ -10,15 +10,15 @@
 
 /// <reference types="node" />
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { LOCALES } from '@shojiku/designer';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { appPresetContributions } from '../app/hookup';
 import type { Catalog, CatalogPreset } from '../assets/manifest';
-import { buildCatalog, validatePreset } from '../build/assemble';
-import { catalogFor } from './catalog';
+import { buildCatalog, presetWithFiles, validatePreset } from '../build/assemble';
+import { catalogFor, wantsDefinitions } from './catalog';
 
 // src/catalog/ -> repo root is four levels up.
 const EXAMPLES = fileURLToPath(new URL('../../../../examples/', import.meta.url));
@@ -116,5 +116,50 @@ describe('locale-keyed blank presets', () => {
     for (const id of bundled) {
       expect(surfaced.has(id), id).toBe(true);
     }
+  });
+});
+
+// The `definitions` flag decides whether the app REQUESTS `definitions.yml` at
+// open, so the two ends of that decision (`presetWithFiles` writes it,
+// `wantsDefinitions` reads it) are each unit-tested — but the thing that can
+// silently break the feature is the GLUE between them, the filesystem probe in
+// `scripts/assemblePresets.ts`, and no gate runs that script at all.
+//
+// So this walks the real bundled tree the way the assembly does and pins the
+// flag against the FILE, in both directions. It is a cross-check gate like the
+// blank-preset one above, and it carries its own positive control: without the
+// counts below, a probe that answered `false` for everything would still pass
+// the "blank presets ask for nothing" half — which is the only half the live
+// walkthrough could observe.
+describe('the definitions flag matches the tree', () => {
+  const rows = [...PRESET_DIRS]
+    .filter(([, dir]) => existsSync(`${dir}/preset.yml`))
+    .map(([id, dir]) => ({
+      id,
+      hasFile: existsSync(`${dir}/definitions.yml`),
+      entry: presetWithFiles(
+        validatePreset(id, parse(readFileSync(`${dir}/preset.yml`, 'utf8'))),
+        [],
+        existsSync(`${dir}/definitions.yml`),
+      ),
+    }));
+
+  it('asks for the file exactly when the preset ships one', () => {
+    for (const { id, hasFile, entry } of rows) {
+      expect(wantsDefinitions(entry), `${id} ships definitions: ${hasFile}`).toBe(hasFile);
+    }
+  });
+
+  // The positive control. A probe stuck at `false` would make the app stop
+  // fetching definitions for every preset that HAS them — a silent loss of the
+  // field palette, invisible to the "no 404 on a blank preset" observation.
+  it('finds presets on BOTH sides, so neither answer is vacuous', () => {
+    const withDefs = rows.filter((r) => r.hasFile);
+    const without = rows.filter((r) => !r.hasFile);
+    expect(withDefs.length).toBeGreaterThan(1);
+    expect(without.length).toBeGreaterThan(1);
+    // Every preset with no definitions is a BLANK one — which is why the
+    // console error fired on precisely the first-time-user path.
+    expect(without.every((r) => r.id.startsWith('blank-'))).toBe(true);
   });
 });

@@ -5,6 +5,17 @@
 
 import { type PresetContribution, resolveChain } from '@shojiku/designer';
 
+/** Whether a preset's `definitions.yml` should be FETCHED at open.
+ *
+ * `=== true`, never truthiness: `catalog.json` is fetched at runtime, and the
+ * TypeScript type on the field is a compile-time claim about a file this code
+ * does not produce. A hand-edited or stale catalog carrying `"yes"` must read
+ * as "do not ask" rather than as "ask" — the fetch is skippable precisely
+ * because a preset without the file is legal. */
+export function wantsDefinitions(preset: { readonly definitions?: boolean } | undefined): boolean {
+  return preset?.definitions === true;
+}
+
 /** A preset ready to render in the catalog view: the contribution plus its
  * display name resolved for the active locale. */
 export interface CatalogEntry {

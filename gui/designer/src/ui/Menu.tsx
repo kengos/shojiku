@@ -7,8 +7,12 @@
 //
 // Two trigger forms: the default text + chevron button, and — when `trigger`
 // is given — a compact icon button (the header's theme / language controls),
-// with `label` as its accessible name. `checkedId` marks the current choice in
-// a single-choice menu (a checkmark on the matching entry).
+// with `label` as its accessible name. An icon trigger may also carry
+// `triggerText`, the control's current VALUE beside the glyph (the language
+// name); `label` stays the accessible name and the tooltip, so what the button
+// SAYS and what it is CALLED never have to be the same string. `checkedId`
+// marks the current choice in a single-choice menu (a checkmark on the
+// matching entry).
 
 import {
   Menu as HeadlessMenu,
@@ -44,6 +48,11 @@ export interface MenuProps {
   /** Icon content for a compact icon trigger; omit for the text + chevron
    * form. When present, `label` becomes the button's accessible name. */
   readonly trigger?: ReactNode;
+  /** Visible text beside an icon `trigger` — the control's current value, so a
+   * low-acuity glance can tell two icon controls apart by more than their
+   * glyphs. Bounded (`truncate`): the value can be an unrecognized locale tag
+   * read back from a stored preference. Ignored without `trigger`. */
+  readonly triggerText?: string;
   /** The current choice in a single-choice menu — the matching entry shows a
    * checkmark. Omit for an action menu (no entry is "current"). */
   readonly checkedId?: string;
@@ -53,17 +62,34 @@ const TEXT_TRIGGER =
   'inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-surface px-4 py-2 text-text transition-colors hover:border-muted data-open:border-muted';
 const ICON_TRIGGER =
   'inline-flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-surface p-2 text-text transition-colors hover:border-muted data-open:border-muted';
+// The same rail as the icon form — `h-9` FIXED, not `min-h-9`: a text line box
+// is taller than the 18px glyph, so a minimum let this trigger grow to 41px
+// beside a 36px sibling. Measured in the browser; jsdom reports no geometry.
+const VALUE_TRIGGER =
+  'inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border bg-surface px-2.5 text-text transition-colors hover:border-muted data-open:border-muted';
 
-export function Menu({ label, groups, onSelect, trigger, checkedId }: MenuProps) {
+export function Menu({ label, groups, onSelect, trigger, triggerText, checkedId }: MenuProps) {
   return (
     <HeadlessMenu>
       {trigger !== undefined ? (
-        // The icon trigger has no visible text, so `label` is both its
-        // accessible name and its tooltip — the instant bubble, never native
-        // `title`. The text trigger already shows its label and gets none.
+        // `label` is the accessible name and the tooltip — the instant bubble,
+        // never native `title`. It keeps naming the ACTION even when
+        // `triggerText` shows the current value, which is a noun and would
+        // otherwise leave the control unnamed. The text trigger below already
+        // shows its label and gets no bubble.
         <span className="group/tip relative inline-flex">
-          <MenuButton className={ICON_TRIGGER} aria-label={label}>
+          <MenuButton
+            className={triggerText === undefined ? ICON_TRIGGER : VALUE_TRIGGER}
+            aria-label={label}
+          >
             {trigger}
+            {triggerText === undefined ? null : (
+              // `max-w-44` (176px) clears the widest SHIPPED label —
+              // `English (Philippines)` measures 162px — while `truncate`
+              // still bounds a tag read back from a stored preference, which
+              // has no length of its own.
+              <span className="max-w-44 truncate">{triggerText}</span>
+            )}
           </MenuButton>
           <TipBubble text={label} />
         </span>

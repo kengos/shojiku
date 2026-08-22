@@ -5,6 +5,7 @@ import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
 import { FORMAT_CATALOG } from '../testkit/formatCatalog';
+import { unitHintsFor } from '../testkit/unitHint';
 import { ColumnForm } from './ColumnForm';
 import { IterableSourceSection } from './IterableSourceSection';
 import { TableColumnsSection } from './TableColumnsSection';
@@ -476,6 +477,21 @@ describe('ColumnForm', () => {
     );
   }
 
+  // A bare width: the shipped fixture uses `15%`, which states its own unit,
+  // so the badge — and the invitation that rides it — are both absent there.
+  it('invites another unit on a bare column width', () => {
+    form(makeController({}), {
+      label: '品名',
+      key: 'name',
+      width: '120',
+      format: '',
+      scope: '',
+      hasCell: false,
+      textAlign: '',
+    });
+    expect(unitHintsFor('Column width').length).toBeGreaterThan(0);
+  });
+
   // Same key, same answer as the column SHEET: a column under a right-aligned
   // row band is right-aligned in both surfaces, or the panel contradicts itself
   // rather than the document. The cascade needs no composing here — a column has
@@ -945,3 +961,8 @@ describe('column editors — binding scope', () => {
     expect(screen.getByRole('menuitem', { name: /明細/ })).toBeTruthy();
   });
 });
+
+// The unit affordance (`stepper.unitHint`) is OPT-IN per field, because the
+// WIRE decides which keys take `25mm`. Pinned AT the site: an optional prop
+// whose default is the disabled value can be dropped in a refactor with no
+// type error, no lint and no red test.

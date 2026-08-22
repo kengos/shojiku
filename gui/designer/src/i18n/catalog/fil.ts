@@ -57,6 +57,7 @@ export const fil: LanguageCatalog = {
     'menu.pdf': 'I-download bilang PDF…',
     'pdf.title': 'Preview ng PDF',
     'pdf.help': 'Ito ang tapos nang PDF — mismong mga byte na ginagawa ng command-line renderer.',
+    'pdf.pageSize': 'Laki ng pahina: {size}',
     'pdf.download': 'I-download',
     'pdf.close': 'Isara',
     'pdf.frameTitle': 'Preview ng PDF ng dokumento',
@@ -114,6 +115,7 @@ export const fil: LanguageCatalog = {
     'shortcuts.action.duplicate': 'Doblehin ang pinili',
     'shortcuts.action.delete': 'Burahin ang pinili',
     'shortcuts.action.deselect': 'Alisin ang pagpili',
+    'shortcuts.action.reorder': 'Ilipat ang layer pataas o pababa',
     'glossary.title': 'Glosaryo',
     'glossary.field.term': 'Data field',
     'glossary.field.def':
@@ -131,6 +133,9 @@ export const fil: LanguageCatalog = {
     'glossary.default.def':
       'Ang halagang ginagamit ng item kapag iniwan mong blangko ang isang kontrol, kinukuha mula sa inilapat na estilo o mga setting ng dokumento.',
     'glossary.interpolation.term': 'Panandang datos',
+    'glossary.units.term': 'Mga yunit',
+    'glossary.units.def':
+      'Ang sukat na walang nakasulat na yunit ay nasa puntos (1 pt = 1/72 pulgada). Maaari ding mag-type ng mm, cm, in, em (multiplo ng laki ng font) o rem, at ng % kung may sinusukatan ito — hindi ipinapatupad ang % kapag ang parent mismo ang nagtatakda ng sarili nitong laki.',
     'glossary.interpolation.def':
       'Isang marka sa loob ng teksto, na isinulat gamit ang key ng datos sa dobleng kulot na bracket, na pinapalitan ng katugmang halaga kapag na-render ang dokumento.',
     'title.saving': 'Nagse-save…',
@@ -489,6 +494,7 @@ export const fil: LanguageCatalog = {
       'Habang may nakatakdang laki ng kahon, ang laking iginuguhit ay nagmumula sa mga kahon, hindi sa lapad sa itaas. Alisin ang laki ng kahon at ang mga kahon naman ang kukunin mula sa lapad ng item na ito.',
     'stepper.relativeUnit':
       'Hindi maaaring i-step ang mga halagang porsyento o em. I-type ang halaga nang direkta.',
+    'stepper.unitHint': 'mm, cm, in din',
     'panel.box.h': 'Taas',
     'panel.placement.label': 'Posisyon',
     'panel.placement.mode.auto': 'Awto',
@@ -765,6 +771,10 @@ export const fil: LanguageCatalog = {
     'sample.variant.error.cannotRemove': 'Hindi maaaring burahin ang variant na ito.',
     'tree.empty': 'Walang item na maipapakita.',
     'tree.truncated': 'Malaking dokumento — may mga item na nakatago.',
+    'tree.dragHint': 'I-drag para muling ayusin o i-grupo.',
+    'help.reorder.title': 'Paglipat at pag-grupo ng mga layer',
+    'help.reorder.body':
+      'I-drag pataas o pababa ang row para baguhin ang pagkakasunod; i-drag ito pakaliwa o pakanan para ilipat papasok o palabas ng isang grupo. Ang Alt+↑ at Alt+↓ ay nagsasaayos sa loob ng kasalukuyang grupo.',
     'tree.documentRoot': 'Dokumento',
     'menu.documentSettings': 'Mga setting ng dokumento…',
     'docSettings.title': 'Mga setting ng dokumento',

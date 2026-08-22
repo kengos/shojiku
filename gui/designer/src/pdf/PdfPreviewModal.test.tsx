@@ -85,3 +85,22 @@ describe('PdfPreviewModal', () => {
     expect(screen.queryByTitle('PDF preview of the document')).toBeNull();
   });
 });
+
+describe('PdfPreviewModal page line', () => {
+  // A walkthrough changed the page to B5, saw the preview render 182×257mm
+  // correctly, and still doubted it — because the only size named anywhere on
+  // screen was the document's NAME, which carries `(A4)` by convention and
+  // does not follow a page-size change.
+  it('names the page these bytes were rendered at', () => {
+    show({ pageLabel: 'B5 — 182 × 257 mm' });
+    expect(screen.getByText('Page size: B5 — 182 × 257 mm')).toBeTruthy();
+  });
+
+  // A surface whose whole job is reassurance may not guess: with no label the
+  // line is absent, not empty and not a placeholder.
+  it('says nothing about the page when it cannot describe it', () => {
+    const { container } = show();
+    expect(screen.queryByText(/Page size/)).toBeNull();
+    expect(container.textContent).not.toContain('Page size');
+  });
+});

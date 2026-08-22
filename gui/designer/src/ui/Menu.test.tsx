@@ -136,3 +136,49 @@ describe('Menu', () => {
     expect(screen.getByRole('menu').querySelectorAll('[aria-current="true"]').length).toBe(1);
   });
 });
+
+describe('Menu with a value beside the icon', () => {
+  const icon = <span data-testid="glyph" />;
+
+  // The header's language control: the visible text is the current VALUE (a
+  // noun), so the accessible name has to keep naming the ACTION. `gui:e2e`
+  // finds this control by that name, and an aria-label wins over content.
+  it('shows the value while `label` stays the accessible name', () => {
+    render(
+      <Menu
+        label="Language"
+        trigger={icon}
+        triggerText="日本語"
+        groups={GROUPS}
+        onSelect={vi.fn()}
+      />,
+    );
+    const trigger = screen.getByRole('button', { name: 'Language' });
+    expect(trigger.textContent).toContain('日本語');
+    expect(screen.getByTestId('glyph')).toBeTruthy();
+  });
+
+  it('renders the glyph alone when no value is given', () => {
+    render(<Menu label="Theme" trigger={icon} groups={GROUPS} onSelect={vi.fn()} />);
+    const trigger = screen.getByRole('button', { name: 'Theme' });
+    expect(trigger.textContent).toBe('');
+    expect(screen.getByTestId('glyph')).toBeTruthy();
+  });
+
+  // A stored preference can name a language this build does not know, and a
+  // display label has no length bound of its own.
+  it('bounds the value it shows', () => {
+    render(
+      <Menu
+        label="Language"
+        trigger={icon}
+        triggerText={'x'.repeat(400)}
+        groups={GROUPS}
+        onSelect={vi.fn()}
+      />,
+    );
+    const value = screen.getByRole('button', { name: 'Language' }).querySelector('span.truncate');
+    expect(value).not.toBeNull();
+    expect(value?.className).toContain('max-w-44');
+  });
+});

@@ -103,6 +103,10 @@ export function DialogHost({
           onClose={pdf.closePdf}
           pdf={pdfBytes}
           onDownload={() => onDownloadPdf(pdfBytes)}
+          // Snapshotted with the bytes by `usePdfAction`, never read here: a
+          // focus trap holds FOCUS, not the window keydown listener behind it,
+          // so ⌘Z still reaches the document while this modal is open.
+          pageLabel={pdf.pdfPageLabel ?? undefined}
         />
       ) : null}
       <GlossaryDialog open={glossaryOpen} onClose={dialogs.closeGlossary} />
