@@ -100,6 +100,12 @@ pub(super) const KEYS: &[&str] = &[
     "table.style",
     "table.keepTogether",
     "table.boxes",
+    // A `header.visuallyHidden` header's cell placements (label row and
+    // `headerGroups` row alike) carry `hidden: true` in the box index, so
+    // a Designer can ghost the strip instead of drawing nothing there.
+    // Older engines report the cells with the flag absent, which reads as
+    // an ordinary painted header.
+    "table.header.hidden_boxes",
     // Data-driven row layers: `row.conditionalStyles` entries whose
     // `when: { key, equals? }` predicate reads the ROW element, applied
     // over the base and zebra layers. Older engines reject the key.

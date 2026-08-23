@@ -216,8 +216,12 @@ Row keys live under `row:` (`minHeight` / `height` / `style` /
   `headerGroups` row is hidden with it, since it is header chrome that repeats
   with the header. Implemented as a paint alpha of 0 rather than PDF text
   rendering mode 3 — `krilla` exposes no rendering-mode control, and paint
-  alpha is one mechanism both backends already carry. Capability key:
-  `table.header.visuallyHidden`.
+  alpha is one mechanism both backends already carry. In the box index the
+  hidden header's cell placements (the label row and any `headerGroups`
+  row) carry `hidden: true`, so an editor can ghost the strip instead of
+  drawing nothing over a region that still occupies its height. Capability
+  keys: `table.header.visuallyHidden`, and
+  `table.header.hidden_boxes` for the box-index half.
 - **Vertical alignment** defaults to `middle` in every table row, and an
   authored `verticalAlign` wins wherever it is written: on a column (for
   its body cells AND its own label), on `header.style` (every label in

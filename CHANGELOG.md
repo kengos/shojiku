@@ -170,6 +170,21 @@ platform binaries.
   same engine version" instead.
 
 ### Fixed
+- **A hidden table header no longer looks like a hole in the page.** A table
+  can hide its header row — the labels stay in the PDF's text layer while
+  nothing paints — and the Designer had no way to tell that strip apart from
+  empty space, because the box index reported those cells exactly like painted
+  ones. It now marks them the way it already marks an item hidden by its
+  `visible:` condition, so the canvas draws its faint dashed outline over the
+  header instead of leaving a gap the author cannot explain, on every page the
+  header repeats on. The flag's meaning widened with it, from one cause to
+  exactly two — and to two, not to a general rule about anything that
+  reserves space without painting. An `opacity: 0` you wrote yourself is
+  deliberately not one of them, because that is your own paint choice rather
+  than the document's structure; nor is a mark whose data does not match,
+  which holds its space on purpose so a blank form and a filled one lay out
+  identically. Documents that trigger neither cause are unchanged, byte for
+  byte.
 
 - **Typing into the Designer's text field now shows on the page as you type.**
   The field wrote its edit to the document only when you left it, so the page

@@ -50,15 +50,32 @@ pub struct PlacedBox {
     /// line, in the same coordinates as `border`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<TextMetrics>,
-    /// The item's `visible:` predicate did not hold and it reserved its
-    /// box without painting (the `visibility: hidden` default). The
-    /// geometry is real — this is where the item WOULD have drawn — so a
-    /// Designer can ghost it rather than showing an unexplained gap. A
+    /// The box is reserved and the DOCUMENT decided nothing would paint
+    /// there. Exactly two causes stamp it, and it is an enumeration
+    /// rather than a predicate:
+    ///
+    /// 1. the item's `visible:` predicate did not hold (the
+    ///    `visibility: hidden` default);
+    /// 2. the box belongs to a `header.visuallyHidden` table header —
+    ///    whose labels ARE emitted, at `opacity: 0`, to stay extractable,
+    ///    while its band decoration and grid ruling are suppressed.
+    ///
+    /// Two things that also reserve a box without painting are NOT
+    /// stamped, for different reasons. An authored `opacity: 0` style is
+    /// the author's own paint choice rather than structure. An unmatched
+    /// `data:` mark (`engine/marks.rs` — an `ellipse`/`checkbox` whose
+    /// binding does not match) reserves its box by design so the
+    /// blank↔filled workflow never shifts layout; that IS the same
+    /// category as `visible:` and stamping it would be a reasonable
+    /// widening, but it is not one this field makes today.
+    ///
+    /// The geometry is real — this is where the box WOULD have drawn — so
+    /// a Designer can ghost it rather than showing an unexplained gap. A
     /// COLLAPSED item emits no `PlacedBox` at all: it has no position to
     /// report.
     ///
     /// Skipped when false, so the wire is byte-unchanged for every
-    /// document that authors no `visible:`.
+    /// document that triggers neither cause.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub hidden: bool,
 }

@@ -95,6 +95,10 @@ fn engine_info_reports_version_capabilities_and_locales() {
     // Pinned individually: the registry's structural tests (composition,
     // dedup) all pass without this key ever being asserted.
     assert!(info.capabilities.contains(&"table.header.visuallyHidden"));
+    // …and that such a header's cell boxes carry `hidden: true`. Pinned
+    // individually for the same reason: the structural tests pass whether
+    // or not any given key is present.
+    assert!(info.capabilities.contains(&"table.header.hidden_boxes"));
     assert!(info
         .capabilities
         .contains(&"table.header.style.verticalAlign"));

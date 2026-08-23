@@ -84,12 +84,13 @@ export function OverlayBox({
   // suppresses both (it draws its own dashed outline).
   const primaryStroke = selected && !marked;
   const multiStroke = !selected && !marked && inMultiSelection;
-  // A `visible:` item whose predicate does not hold under the current sample
-  // data reserved its box and painted nothing. Without a mark the canvas shows
-  // an unexplained empty region, so an unselected hidden box carries a faint
-  // dashed outline — enough to say "something lives here, the data is hiding
-  // it" without competing with the selection stroke. A COLLAPSED item has no
-  // box at all and is reachable from the layer tree instead.
+  // The box is reserved but nothing a human sees paints there — a `visible:`
+  // item whose predicate does not hold under the current sample data, or a
+  // `header.visuallyHidden` table header's cell. Without a mark the canvas
+  // shows an unexplained empty region, so an unselected hidden box carries a
+  // faint dashed outline — enough to say "something lives here" without
+  // competing with the selection stroke. A COLLAPSED item has no box at all
+  // and is reachable from the layer tree instead.
   const ghost = box.hidden === true && !primaryStroke && !multiStroke && !marked;
   return (
     // biome-ignore lint/a11y/useSemanticElements: a native button cannot be SVG geometry; the rect carries the button role for the overlay.

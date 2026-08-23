@@ -308,7 +308,8 @@ Wire types stay in core; content measurement stays in layout.
   `cellPadding` does not inset it),
   `table/span.rs` (spanning header groups + `merge_empty`; a
   `header.visuallyHidden` table hides this row too — it is header chrome
-  that repeats with the labels),
+  that repeats with the labels, and its cell placements are stamped
+  `hidden` alongside the label row's),
   `table/content.rs` (`cell_qr`/`cell_image`), `table/style.rs`
   (grid-border fold, zebra, `cell_valign`/`label_valign` — the authored
   fold that tells "unset" from "resolved to the initial value";
@@ -444,10 +445,19 @@ Wire types stay in core; content measurement stays in layout.
   `PlacedBox.path` = the always-present structural address in the
   validate-diagnostic grammar; `id` = the optional authored alias;
   `PlacedBox.text` = the two-form (horizontal lines / vertical columns)
-  metrics wire; `PlacedBox.hidden` = the item's `visible:` predicate did not
-  hold and it reserved its box without painting, so an editor can ghost it
-  (skip-serialized, so the wire is byte-unchanged for a document that
-  authors no `visible:`; a COLLAPSED item emits no `PlacedBox` at all).
+  metrics wire; `PlacedBox.hidden` = the box is reserved and the DOCUMENT
+  decided nothing would paint there, so an editor can ghost it. An
+  ENUMERATION of exactly two causes, not a predicate: the item's
+  `visible:` predicate did not hold, or the box belongs to a
+  `header.visuallyHidden` table header (whose labels ARE emitted, at
+  `opacity: 0`, to stay extractable — `table/rows.rs` threads the row's
+  `hidden` into `cell_box`). Two other reserve-without-painting cases are
+  NOT stamped: an authored `opacity: 0` (the author's paint choice, not
+  structure) and an unmatched `data:` mark (`engine/marks.rs` — same
+  category as `visible:`, and a defensible future widening, but not one
+  the field makes today). (Skip-serialized, so the wire is byte-unchanged
+  for a document that triggers neither; a COLLAPSED item emits no
+  `PlacedBox` at all.)
 - `tree.rs` — **`LayoutDocument`: the ONLY layout↔renderer contract**.
   Carries `metadata: DocumentMetadata` (`tree/meta.rs` — resolved title/
   description/keywords/language/authors + `DEFAULT_DOCUMENT_TITLE`; the
