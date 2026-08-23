@@ -125,7 +125,8 @@ injected at parse). The template model splits along CSS lines.
   structural-key checks as Located errors (incl. labeled entries need a
   scalar `value`).
 - `parse.rs` — two-pass typed parse shared by template/definitions:
-  pass 1 `Value` + `ensure_finite`, pass 2 `serde_path_to_error` →
+  `ensure_bounded_size` first, then pass 1 `Value` + `ensure_finite`,
+  pass 2 `serde_path_to_error` →
   `CoreError::Located` (path + line/column). **serde_yaml's own
   ~128-frame recursion limit bounds tree depth into a clean parse error,
   which is what keeps every downstream recursive walk stack-safe — stated
@@ -252,10 +253,31 @@ injected at parse). The template model splits along CSS lines.
   format-name checks + pattern-on-non-dated. `validate/box_keys.rs` —
   context-inert authoring keys (flex/grid keys on leaves, grid keys
   without `type: grid`, table pagination keys off-flow).
-- `yaml_guard.rs` — rejects non-finite numbers; no size caps (string
-  inputs must bound what they echo). `error.rs` — `CoreError` incl.
+- `yaml_guard.rs` — the two checks every parse door runs first, in order:
+  **`ensure_bounded_size`** (`MAX_INPUT_BYTES` = 16 MiB, refused before
+  either parse — a host has still READ the file; what is skipped is building
+  a document out of it —
+  it sits ahead of both passes because `parse_checked` reads the source
+  twice; `parse_definitions` calls it a SECOND time of its own, because its
+  error arm reaches for `v1_form_hint`, which re-parses the whole input
+  unbounded) then `ensure_finite`. The size bound is a memory/time bound,
+  and the two neighbouring limits it is easy to conflate with it are worth
+  keeping straight. **Depth holds**: serde_yaml refuses past 128, which is
+  what makes `has_non_finite`'s unbounded recursion safe by construction,
+  and a test here pins it because nothing in this crate enforces it.
+  **Alias amplification does NOT hold, and this cap does not close it**:
+  the repetition budget is `events.len() * 100`, so it SCALES with the
+  input — measured, a 197-byte bomb tops out at 2,351 nodes while the same
+  document padded to 400 KB reaches 2,545,689 (~6 nodes per source byte),
+  so a document inside the 16 MiB cap can still expand to order 10^8.
+  Closing that needs a bound on alias RESOLUTIONS, which lives inside the
+  parser; the Designer holds the browser side with its own
+  `MAX_ALIAS_COUNT`. It is a documented exposure, not a closed one — do not
+  re-file it as done. `error.rs` — `CoreError` incl.
   `Located` (echoed path/message clipped; fields map into typed
-  diagnostic args).
+  diagnostic args) and `TooLarge` (numbers only, never any of the input;
+  maps onto the existing `parse_error` code rather than minting one — a
+  refused input never became a document).
 
 ## engine/diagnostics — the structured-diagnostic type + registry
 

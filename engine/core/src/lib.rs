@@ -64,3 +64,4 @@ pub use template::{
     MAX_FORMATS, MAX_IMPOSITION_PER_PAGE, MAX_ROW_CONDITIONAL_STYLES, MAX_RUBY_ENTRIES, MAX_SPANS,
 };
 pub use validate::validate;
+pub use yaml_guard::MAX_INPUT_BYTES;

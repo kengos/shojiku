@@ -74,15 +74,21 @@ crate's actual deliverable — so only the cross matrix is on-demand.)
 
 ### Fuzzing (on demand, not a gate)
 
-The parsers that read attacker-chosen bytes — the shared PDF reader and
-the signature-container decoders — have libFuzzer targets in
-`engine/fuzz`:
+The parsers that read input nobody vetted have libFuzzer targets in
+`engine/fuzz`, in two groups: **sign** — the shared PDF reader and the
+signature-container decoders — and **wire** — the authored-input doors
+(template, params, definitions, the aozora-ruby scanner, and the locale
+and font pack manifests).
 
 ```bash
-make engine:fuzz FUZZ_TARGET=cms_container FUZZ_SECS=600
+make engine:fuzz FUZZ_GROUP=wire                          one group
+make engine:fuzz FUZZ_TARGET=cms_container FUZZ_SECS=600  one target, longer
 ```
 
-`make engine:fuzz` with no arguments runs every target for a minute each. It is
+`make engine:fuzz` with no arguments runs every target for a minute each,
+which is now over ten minutes — reach for `FUZZ_GROUP` when you have
+changed one side. A `FUZZ_GROUP` that names neither group is refused
+rather than quietly fuzzing nothing. It is
 deliberately outside `make verify`: fuzzing has no natural end. What the
 gates run instead is the corpus **replay** — every committed seed through
 the same entry points — so the targets cannot rot between runs.

@@ -1,0 +1,20 @@
+version: 1
+license: OFL-1.1
+redistributable: true
+faces:
+  - id: biz-udp-gothic
+    file: BIZUDPGothic-Regular.ttf
+    sha256: 258d7156c165f2ff774b6efee637c22c3b950de0d8a10e501137061bc8085d01
+  - id: biz-udp-gothic-bold
+    file: BIZUDPGothic-Bold.ttf
+    sha256: 30eba52fc837e8b62c97d4b82e6706583149fb7294e3712dd71a655eaea80a90
+    family: biz-udp-gothic
+    weight: bold
+  - id: biz-ud-gothic
+    file: BIZUDGothic-Regular.ttf
+    sha256: 7d2b48d84ef4e65c9f85bcf65fb1fb41c92b134be641fab6a7141d597c9a92b0
+  - id: biz-ud-gothic-bold
+    file: BIZUDGothic-Bold.ttf
+    sha256: c686d1b05b36d98473d98f67e74e96048a5ad6695de143111b8328b78900006e
+    family: biz-ud-gothic
+    weight: bold

@@ -19,6 +19,15 @@ pub enum CoreError {
     Json(Echo),
     #[error("{0} contains non-finite numbers (NaN/Infinity), which are not allowed")]
     NonFinite(&'static str),
+    /// The input was refused unread for its SIZE. Both fields are numbers
+    /// by construction — a refusal must not quote back a document nobody
+    /// vetted, and at this point nothing about it has been parsed anyway.
+    #[error("{what} is {bytes} bytes, over the {limit}-byte input cap")]
+    TooLarge {
+        what: &'static str,
+        bytes: usize,
+        limit: usize,
+    },
     /// A structural parse failure located to a field path. `path`
     /// (`sections.body.items[3].columns[0]`) plus the 1-based `line`/
     /// `column` pinpoint the offending key — `serde_yaml::from_value`
@@ -108,6 +117,19 @@ impl CoreError {
             }
             CoreError::NonFinite(what) => {
                 Diagnostic::new(DiagnosticCode::NonFiniteNumber).arg("what", *what)
+            }
+            // A refused-for-size input never became a document, so this is
+            // the same class as any other parse refusal and takes the same
+            // code — no new one is minted for it. `detail` carries the two
+            // numbers and nothing from the input.
+            CoreError::TooLarge { what, bytes, limit } => {
+                Diagnostic::new(DiagnosticCode::ParseError)
+                    .arg("what", *what)
+                    .arg("path", "")
+                    .arg(
+                        "detail",
+                        format!("{bytes} bytes, over the {limit}-byte cap"),
+                    )
             }
             CoreError::Parse(detail) | CoreError::Json(detail) => {
                 Diagnostic::new(DiagnosticCode::ParseError)

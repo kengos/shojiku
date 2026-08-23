@@ -1,6 +1,7 @@
 //! Parsing and round-trip serialization of the template document.
 
 use super::*;
+use crate::{CoreError, MAX_INPUT_BYTES};
 
 const SAMPLE: &str = r#"
 version: 0.1.0
@@ -244,4 +245,37 @@ sections:
       - type: hologram
 "#;
     assert!(parse_template(bad).is_err());
+}
+
+/// One test per door, so a cap added to `parse_checked` and forgotten at a
+/// door that bypasses it cannot pass unnoticed.
+#[test]
+fn an_oversize_template_is_refused_before_either_parse() {
+    // The fixture is BOTH oversize and syntactically broken. If the size
+    // check ran after the YAML parse we would get `Parse`; getting
+    // `TooLarge` is what proves the bound sits ahead of the reads — and
+    // `parse_checked` reads the source TWICE, so a bound applied later
+    // would already have paid the cost it exists to avoid.
+    let oversize = format!("sections: [unterminated\n{}", "#".repeat(MAX_INPUT_BYTES));
+    let err = parse_template(&oversize).expect_err("must refuse");
+    assert!(
+        matches!(
+            err,
+            CoreError::TooLarge {
+                what: "template",
+                ..
+            }
+        ),
+        "got: {err:?}"
+    );
+}
+
+#[test]
+fn a_template_at_the_cap_is_still_parsed() {
+    // The other half of the boundary: the admitted maximum must WORK, not
+    // merely avoid the refusal.
+    let doc = "page: { size: A4 }\nsections:\n  body:\n    type: flow\n    box: { x: 0, y: 0, w: 100, h: 100 }\n    items: []\n";
+    let template = format!("{doc}{}", "#".repeat(MAX_INPUT_BYTES - doc.len()));
+    assert_eq!(template.len(), MAX_INPUT_BYTES);
+    parse_template(&template).expect("the admitted maximum must parse");
 }

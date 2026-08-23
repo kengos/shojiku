@@ -96,6 +96,23 @@ platform binaries.
 
 ### Changed
 
+- **A single enormous document is now refused instead of parsed.** Templates,
+  params, definitions and locale packs had no size limit at all: hand one of
+  them a 500 MB file and the engine would read it — twice, since a located
+  parse error needs a second pass over the source. Anything over 16 MB is now
+  refused before it is parsed at all — a host still reads the file, but the
+  engine no longer builds a document out of it — with an error saying how big
+  it was and what the limit is, and nothing of the file quoted back. That covers every door a host
+  can reach: the three document doors, both arms of the locale-pack door, and
+  all four places a font-pack manifest is parsed — including the one a browser
+  hands straight to `addFontPack`. 16 MB is twice the
+  Designer's documented template ceiling, so no real document comes near it;
+  the MCP server keeps its own, much tighter inline limit. Everything under
+  the limit behaves exactly as before. This is a bound on the cost of a large
+  document, and not a fix for YAML alias amplification: that limit belongs to
+  the YAML parser and scales with the input, so it stays a known exposure —
+  written down in the engine rather than implied away.
+
 - **Three things the Designer could do but never said it could.** A layer-tree
   row has been draggable into another group since cross-parent moves shipped,
   and nothing on screen said so — one walkthrough found the gesture by

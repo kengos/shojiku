@@ -22,12 +22,16 @@
 use crate::error::CoreError;
 use serde::de::DeserializeOwned;
 
-/// Parses `input` into `T`, rejecting non-finite numbers first and
-/// returning a located [`CoreError`] on any structural failure.
+/// Parses `input` into `T`, refusing an oversize input unread, rejecting
+/// non-finite numbers next, and returning a located [`CoreError`] on any
+/// structural failure. The size check sits ahead of BOTH parses — this
+/// function reads the source twice, so a bound applied afterwards would
+/// already have paid the cost it exists to avoid.
 pub(crate) fn parse_checked<T: DeserializeOwned>(
     input: &str,
     what: &'static str,
 ) -> Result<T, CoreError> {
+    crate::yaml_guard::ensure_bounded_size(input, what)?;
     let raw: serde_yaml::Value = serde_yaml::from_str(input)?;
     crate::yaml_guard::ensure_finite(&raw, what)?;
     let de = serde_yaml::Deserializer::from_str(input);

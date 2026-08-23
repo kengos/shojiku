@@ -34,6 +34,12 @@ pub enum LangPackError {
     Io { path: Echo, source: std::io::Error },
     #[error("failed to parse locale pack: {0}")]
     Parse(Echo),
+    /// Refused unread for its size, on the same bound the core wire doors
+    /// use. A pack is data a host supplies, and every pack door goes
+    /// through `ensure_pack_size` — the locale pack, the builtin overlay,
+    /// and all four font-pack manifest sites.
+    #[error("locale pack is {bytes} bytes, over the {limit}-byte input cap")]
+    TooLarge { bytes: usize, limit: usize },
 }
 
 impl From<serde_yaml::Error> for LangPackError {
@@ -111,9 +117,28 @@ fn default_percent_format() -> String {
     "{amount}%".to_string()
 }
 
+/// Refuses host-supplied pack text over `shojiku_core::MAX_INPUT_BYTES`,
+/// unread. Shared by every pack door — the locale pack, the builtin
+/// OVERLAY, and the font-pack manifest — so the bound is read from one
+/// place rather than compared at four call sites that can drift apart.
+pub(crate) fn ensure_pack_size(input: &str) -> Result<(), LangPackError> {
+    if input.len() > shojiku_core::MAX_INPUT_BYTES {
+        return Err(LangPackError::TooLarge {
+            bytes: input.len(),
+            limit: shojiku_core::MAX_INPUT_BYTES,
+        });
+    }
+    Ok(())
+}
+
 impl LangPack {
     /// Parses a pack from YAML content (without a base directory).
+    ///
+    /// Refuses an oversize input unread, on the same bound the core wire
+    /// doors use (`shojiku_core::MAX_INPUT_BYTES`) — a pack arrives from a
+    /// host the same way a template does.
     pub fn from_yaml_str(input: &str) -> Result<Self, LangPackError> {
+        ensure_pack_size(input)?;
         Ok(serde_yaml::from_str(input)?)
     }
 

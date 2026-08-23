@@ -142,9 +142,12 @@ endif
 #
 #   verify            -> ALL of the above. Green verify == safe to push.
 #   engine:wasm-e2e   -> on-demand browser golden path (Playwright), NOT in verify.
-#   engine:fuzz       -> on-demand libFuzzer over the sign/verify parsers, NOT in
-#                        verify (the gates run the corpus REPLAY instead, in
-#                        engine/verify's tests).
+#   engine:fuzz       -> on-demand libFuzzer over the untrusted-input parsers,
+#                        NOT in verify. Two groups (FUZZ_GROUP=sign|wire): the
+#                        PDF/CMS readers, and the authored-wire doors. The
+#                        gates run the corpus REPLAY instead — engine/verify's
+#                        tests plus engine/core's and engine/formatter's
+#                        `fuzz_corpus` suites.
 #   gui:e2e           -> on-demand Designer-app golden path (Playwright), NOT in verify.
 #
 # NOTE: `engine:wasm` is in `verify` because a size-budget crossing is cheap to

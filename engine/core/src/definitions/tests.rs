@@ -4,6 +4,7 @@
 
 mod caps;
 mod mapping;
+mod size;
 
 use super::*;
 

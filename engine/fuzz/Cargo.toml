@@ -20,6 +20,8 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
+shojiku-core = { path = "../core" }
+shojiku-formatter = { path = "../formatter" }
 shojiku-signing = { path = "../signing" }
 shojiku-verify = { path = "../verify" }
 
@@ -75,6 +77,50 @@ bench = false
 [[bin]]
 name = "trust_anchors"
 path = "fuzz_targets/trust_anchors.rs"
+test = false
+doc = false
+bench = false
+
+# The authored-wire doors. Every one takes a `&str`, so its target decodes
+# UTF-8 and discards the rest — fuzzing the decoder is not the point.
+[[bin]]
+name = "core_template"
+path = "fuzz_targets/core_template.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "core_params"
+path = "fuzz_targets/core_params.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "core_definitions"
+path = "fuzz_targets/core_definitions.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "core_ruby"
+path = "fuzz_targets/core_ruby.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "formatter_langpack"
+path = "fuzz_targets/formatter_langpack.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "formatter_fontpack"
+path = "fuzz_targets/formatter_fontpack.rs"
 test = false
 doc = false
 bench = false

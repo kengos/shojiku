@@ -48,7 +48,14 @@ the manifest wire's key list) lives in `docs/engine/`
 - `lang.rs` — **`LangPack`** wire: month/weekday/dayPeriod name tables,
   `unit_format`/`percent_format` layouts, `eras: Vec<EraSpec>` +
   `era_year_one` + `era_for()`; locale-fonts accessors
-  `font_pack_ids()`/`default_font()`/`font_fallback()`.
+  `font_pack_ids()`/`default_font()`/`font_fallback()`. **every pack door
+  refuses an oversize input unread** on the core bound
+  (`shojiku_core::MAX_INPUT_BYTES`, read rather than re-declared) through
+  the shared `ensure_pack_size` — `LangPackError::TooLarge`. That is
+  `from_yaml_str` AND the builtin OVERLAY arm, which does not go through it
+  and is the arm every host takes for a builtin id (`ja-JP` is the default,
+  reachable from a browser via `set_locale`). A pack is host-supplied data,
+  so it is parsed under the same posture as a template.
 - `lang/specs.rs` — pack value specs: **`NumberSpec`** (separators +
   group sizes; the Indian `#,##,##0` rule is pack DATA, not code),
   **`CurrencySpec`** (symbol/name + formats + optional precision),
@@ -67,7 +74,12 @@ the manifest wire's key list) lives in `docs/engine/`
   date→era lookup.
 - `lang/fonts.rs` — pack-manifest + locale-fonts wire.
   **`PackManifest`** (`packs/fonts/<pack>/manifest.yml`; camelCase,
-  `deny_unknown`) with **`to_yaml`/`from_yaml`** kept BESIDE the wire
+  `deny_unknown`) — the manifest wire is bounded at ALL FOUR of its parse
+  sites, not just the public one: `from_yaml`, filesystem pack resolution
+  (`packs.rs`), the injected bytes-first path (`packs/bytes.rs`) and the
+  wasm session's own re-parse (`add_font_pack` takes the string from JS).
+  Each reports the refusal in its own error type — with
+  **`to_yaml`/`from_yaml`** kept BESIDE the wire
   type so a generator (`shojiku font add`) round-trips through the same
   pair the resolver parses with (`to_yaml` infallible by construction —
   only shapes serde_yaml cannot refuse). **`FontFaceDecl`** (`id`/`file`/

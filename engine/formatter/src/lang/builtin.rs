@@ -91,6 +91,13 @@ impl LangPack {
         let pack = match overlay {
             None => Self::from_yaml_str(yaml)?,
             Some(overlay) => {
+                // The OVERLAY is host-supplied and takes this arm instead of
+                // the capped `from_yaml_str` — and for a builtin id (`ja-JP`
+                // is the default) this is the arm every host reaches, so a
+                // cap only on the non-builtin path would guard the rarer
+                // case. `yaml` itself is compiled into the binary and needs
+                // no bound.
+                crate::lang::ensure_pack_size(overlay)?;
                 let mut base: Value = serde_yaml::from_str(yaml)?;
                 deep_merge(&mut base, serde_yaml::from_str(overlay)?);
                 serde_yaml::from_value(base)?

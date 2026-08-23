@@ -157,3 +157,23 @@ fn a_symlinked_pack_directory_is_refused() {
         "{err}"
     );
 }
+
+#[test]
+fn an_oversize_manifest_on_disk_is_refused_before_the_parse() {
+    // A font dir is whatever the caller pointed at, so a manifest on disk is
+    // host-supplied data under the same bound as an injected one.
+    let root = tmp("oversize-manifest");
+    let big = format!(
+        "version: 1\nlicense: X\nfaces: []\n{}",
+        "#".repeat(shojiku_core::MAX_INPUT_BYTES)
+    );
+    write_pack(&root, "a", &big);
+    let dirs = [root.clone()];
+    let err = resolve_face_specs(&locale("[a]"), &dirs).expect_err("must refuse");
+    let PackError::Parse { detail, .. } = &err else { panic!("wrong variant: {err:?}") };
+    assert!(detail.as_str().contains("input cap"), "detail: {detail}");
+    // Positive control: the same pack UNDER the cap resolves, so the refusal
+    // is the bound and not a broken fixture.
+    write_pack(&root, "a", "version: 1\nlicense: X\nfaces: []\n");
+    resolve_face_specs(&locale("[a]"), &dirs).expect("a small manifest resolves");
+}

@@ -126,3 +126,81 @@ fn lang_pack_errors_bound_their_echoed_path_and_parse_detail() {
         );
     }
 }
+
+#[test]
+fn an_oversize_locale_pack_is_refused_before_the_parse() {
+    // The fourth door, and the one in another crate — it reads the bound
+    // from `shojiku_core` rather than carrying a second copy of the number.
+    let oversize = format!(
+        "id: [unterminated\n{}",
+        "#".repeat(shojiku_core::MAX_INPUT_BYTES)
+    );
+    let err = LangPack::from_yaml_str(&oversize).expect_err("must refuse");
+    // `matches!` rather than a let-else: the else arm's `panic!` is a line
+    // no passing test can reach, and the 100%-lines gate counts test code
+    // too. (This one happens to fit on one line today, which hides the
+    // problem until rustfmt splits it.)
+    assert!(
+        matches!(
+            err,
+            LangPackError::TooLarge { bytes, limit }
+                if bytes == oversize.len() && limit == shojiku_core::MAX_INPUT_BYTES
+        ),
+        "got: {err:?}"
+    );
+    // The refusal quotes none of the pack.
+    assert!(!err.to_string().contains("unterminated"));
+}
+
+#[test]
+fn a_locale_pack_at_the_cap_is_still_parsed() {
+    let doc = "id: en\n";
+    let pack = format!(
+        "{doc}{}",
+        "#".repeat(shojiku_core::MAX_INPUT_BYTES - doc.len())
+    );
+    assert_eq!(pack.len(), shojiku_core::MAX_INPUT_BYTES);
+    assert_eq!(LangPack::from_yaml_str(&pack).expect("parse").id, "en");
+}
+
+#[test]
+fn an_oversize_builtin_overlay_is_refused() {
+    // The overlay arm of `LangPack::builtin` does NOT go through
+    // `from_yaml_str`, and for a builtin id it is the arm every host takes —
+    // so a cap only on the other path would guard the rarer case. Reachable
+    // straight from a browser host via `set_locale(id, overlay)`.
+    let overlay = format!("id: ja-JP\n{}", "#".repeat(shojiku_core::MAX_INPUT_BYTES));
+    let err = LangPack::builtin("ja-JP", Some(&overlay)).expect_err("must refuse");
+    assert!(
+        matches!(err, LangPackError::TooLarge { .. }),
+        "got: {err:?}"
+    );
+    // Positive control: a small overlay on the same id still merges, so the
+    // refusal above is the cap and not a broken builtin lookup.
+    let ok = LangPack::builtin("ja-JP", Some("currencyDefault: USD\n"))
+        .expect("a small overlay merges")
+        .expect("ja-JP is a builtin");
+    assert_eq!(ok.currency_default.as_deref(), Some("USD"));
+}
+
+#[test]
+fn an_oversize_font_pack_manifest_is_refused() {
+    // The manifest wire this change also fuzzes. `from_yaml` is the public
+    // door; the three other sites carry the same bound with their own error
+    // types (filesystem resolution, injected packs, and the wasm session).
+    let doc = "version: 1\nlicense: OFL-1.1\nfaces: []\n";
+    let manifest = format!("{doc}{}", "#".repeat(shojiku_core::MAX_INPUT_BYTES));
+    let err = PackManifest::from_yaml(&manifest).expect_err("must refuse");
+    assert!(err.to_string().contains("input cap"), "got: {err}");
+    // Positive control: at the cap it still parses, so the refusal above is
+    // the bound and not a manifest the type could never accept.
+    let at_cap = format!(
+        "{doc}{}",
+        "#".repeat(shojiku_core::MAX_INPUT_BYTES - doc.len())
+    );
+    assert_eq!(at_cap.len(), shojiku_core::MAX_INPUT_BYTES);
+    assert_eq!(
+        PackManifest::from_yaml(&at_cap).expect("parses").license,
+        "OFL-1.1"
+    );
+}
