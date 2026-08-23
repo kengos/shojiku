@@ -151,6 +151,24 @@ platform binaries.
   tracked file naming a `make` target that does not exist, a CI matrix's
   interpolated name included.
 
+- **What 1.0 will freeze is written down.** The README has warned that this is
+  pre-1.0 software since the first release, and the one thing it never said was
+  what changes when that warning goes away. The architecture doc now names the
+  surfaces 1.0 promises to hold still — the authored wire (templates, params,
+  definitions), the diagnostics registry, capability keys, the C ABI, the CLI
+  contract the SDKs script, the SDK lifecycle contract, the MCP tool surface and
+  the WASM boundary the browser calls — each with the rule it may change under,
+  and the meaning that gives major, minor and patch from then on. It is equally explicit about what 1.0 will not
+  promise, which is the half that gets assumed: rendered bytes are not
+  identical between versions (determinism means same version, same inputs, same
+  bytes, and a 1.x may still fix a layout bug), the Rust crate APIs stay
+  unfrozen, the Designer versions on its own, and a wrong locale pattern
+  remains a bug to correct. None of this declares 1.0 — it writes the promise
+  down before it is made, so it can be argued with while that is still cheap.
+  The features page said in both languages that the same input renders identical
+  bytes "at any time", which is the reading this now rules out; it says "on the
+  same engine version" instead.
+
 ### Fixed
 
 - **Typing into the Designer's text field now shows on the page as you type.**

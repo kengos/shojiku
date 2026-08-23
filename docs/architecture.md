@@ -363,6 +363,122 @@ below and still leave for the repository.
   English-only apart from locale data. An untranslated page serves the
   English body under a notice rather than 404ing.
 
+## What 1.0 freezes
+
+Nothing here declares 1.0. This section says what the number will mean
+when it is declared, so the promise is written down before it is made
+rather than reconstructed afterwards. Until then the pre-1.0 posture in
+the [README](../README.md) stands for the three surfaces it names — the
+authored wire, the CLI and the Rust crate APIs — and everything below is
+posture rather than promise. Some of it is already stated without a
+pre-1.0 caveat (the diagnostics registry and the C ABI both say so on
+their own pages); 1.0 is what makes the whole list binding at once.
+
+At 1.0 the surfaces below stop moving. About half already carry the rule
+in question somewhere in this repository, and 1.0 turns that posture into
+a promise; where a page is cited it is the normative home and the line
+here is a summary of it, so if the two seem to disagree the cited page is
+the one that is right. Where nothing is cited — capability keys and the
+MCP tool surface — this section is the home, and saying so is the point:
+a citation to a page that carries no such rule would send a reader
+somewhere the tie-break above then decides in favour of.
+
+1. **The authored wire** — templates, params and definitions. Every
+   document that parses at 1.0 keeps parsing, with the same meaning,
+   through every 1.x. Change is additive: new keys, new enum variants,
+   new item types. The enumeration of record for templates and
+   definitions is not prose here but the key catalog, which
+   `make reference:check` holds against the real parser
+   ([agents/engine.md](agents/engine.md) § The key catalog) — so the
+   promise cannot drift away from what the parser actually accepts, which
+   is the failure a freeze written as a key list would invite. Params
+   have no such artifact and need none: their shape is whatever a
+   document's own `definitions` declares, so freezing definitions freezes
+   them.
+2. **The diagnostics registry** — codes and their per-code arg keys,
+   append-only, a retired code staying listed rather than deleted
+   ([engine/diagnostics.md](engine/diagnostics.md)).
+3. **Capability keys** — append-only, which this section is the first
+   page to say outright. A key that has shipped answers the same question
+   forever; a different answer needs a different key. That is what lets a
+   consumer feature-detect against an engine older than itself, which is
+   the whole point of shipping the list at all.
+4. **The C ABI** — the signatures in `engine/capi/include/shojiku.h`, the
+   numeric status constants (`SHOJIKU_OK` … `SHOJIKU_ERR_PANIC`), and the
+   request/result envelope they carry. The constants are named
+   deliberately: the FFI SDKs branch on the NUMBERS, so a renumbered
+   `#define` leaves every signature identical and mistranslates a failure
+   class in several languages at once. New operations and new request keys
+   are appended without moving `shojiku_abi_version()`, which is the rule
+   the header itself states; mapping a bump of it onto 2.0 is this
+   section's addition.
+5. **The CLI contract the SDKs script** — the verbs, the flags, the
+   `--report` envelope and the EXIT STATUS the subprocess SDKs consume
+   ([agents/sdk.md](agents/sdk.md) § Subprocess transport mechanics
+   documents the envelope and the failure classes). Flags may be added; a
+   verb's output shape is not rearranged under a caller that is parsing
+   it. This is the one frozen surface with no machine-readable
+   enumeration of record — the cited section describes the envelope, not
+   the verb and flag set — which makes it the first place a freeze would
+   drift, and a gate over it is worth having before 1.0 is declared.
+6. **The SDK lifecycle contract** — the result and trace shape, the
+   template-root hardening, and the ownership rules that the Ruby
+   reference settled and the other six mirror ([agents/sdk.md](agents/sdk.md)
+   § The decisions the reference froze).
+7. **The MCP tool surface** — tool names and their `inputSchema`,
+   append-only. Like capability keys, this section is the home for that
+   rule: [agents/mcp.md](agents/mcp.md) documents the tool surface but
+   states no stability posture for it. Tracking the Model Context
+   Protocol's own revisions is exempt: when the specification moves, the
+   server follows it.
+8. **The WASM boundary** — the exported function names the browser host
+   calls, the request/result envelope they carry, and the
+   `WasmError::code()` registry, which is already append-only
+   ([engine/features.md](engine/features.md) — a host branches on the
+   code, never on the message, so a code that changed meaning would break
+   a recovery path silently). This is the embedding surface a reader can
+   use with no toolchain at all, and the Designer's own preview transport
+   rides it.
+
+### What 1.0 does not promise
+
+A freeze that lists only what it covers gets read as covering
+everything, so the exclusions carry the same weight as the list above.
+
+- **Rendered bytes are not identical across versions.** Determinism
+  means same version, same inputs, same bytes — a reproducibility
+  property, not a compatibility one. A 1.x may change what a page looks
+  like: a layout fix, a shaping or kerning correction, a corrected
+  locale pattern. `make examples:check` compares the committed example
+  outputs against a fresh render, so a change like that reddens a gate
+  and has to be re-rendered deliberately rather than shipping quietly.
+- **The Rust crate APIs are not frozen.** The ways to reach the engine
+  are the ones frozen above — the seven SDKs, the C ABI, the CLI (which
+  is also what the Docker image runs), the WASM boundary and the MCP
+  server. The crates published to crates.io are how those are built
+  rather than another surface beside them, and freezing them would turn
+  every internal refactor into a major version.
+- **The Designer is outside it.** 1.0 is the engine's number; `gui/*` is
+  unpublished and versions on its own.
+- **Locale pack data may be corrected.** A wrong CLDR pattern or era
+  boundary is a bug, and fixing it changes output for the locale that
+  had it wrong. That is intended, and it is why pack data is data rather
+  than contract.
+
+### What the version numbers then mean
+
+Inside 1.x: **major** is a break of any surface above and is therefore
+what 2.0 is for; **minor** is additive — a new key, a new capability, a
+new operation; **patch** is a fix that leaves every frozen surface where
+it was. The SDKs keep moving in lockstep with the engine's workspace
+version, which is what makes the engine's 1.0 a number a caller can read
+from any of the seven languages.
+
+Writing this section down is not the whole condition for declaring 1.0.
+The hardening behind it has to be done as well, because a freeze is as
+much a claim about what hostile input cannot do as about which keys
+parse.
+
 ## Sequencing
 
 The roadmap is not published. What has shipped is
