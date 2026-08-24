@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
 import { LayerTree } from './LayerTree';
 import { buildTree, type TreeView } from './model';
-import { ROW_INDENT_PX } from './rowDrop';
+import { ROW_INDENT_PX, visiblePaths } from './rowDrop';
+import { breadcrumbChain } from './selection';
 
 const TEMPLATE = [
   'sections:',
@@ -604,5 +605,77 @@ describe('LayerTree gesture hint', () => {
     draw({ view: { roots: empty, truncated: false } });
     expect(empty.length).toBeGreaterThan(0);
     expect(screen.queryByText(HINT)).toBeNull();
+  });
+});
+
+describe('bands the document does not have', () => {
+  const BODY_ONLY = 'sections:\n  body:\n    type: flow\n    items: []\n';
+
+  /** The tree's rows, in the order they are rendered — the placeholders have
+   * to land in `sections:` order, not merely be present somewhere. */
+  function rowNames(): string[] {
+    return screen
+      .getAllByRole('button')
+      .map((button) => button.textContent ?? '')
+      .filter((text) => text !== '');
+  }
+
+  it('offers a placeholder for each absent band, in the slot it would occupy', () => {
+    draw({ view: buildTree(BODY_ONLY) });
+    const names = rowNames();
+    const header = names.findIndex((name) => name.startsWith('Header'));
+    const body = names.findIndex((name) => name.startsWith('Body'));
+    const footer = names.findIndex((name) => name.startsWith('Footer'));
+    expect(header).toBeGreaterThanOrEqual(0);
+    expect(header).toBeLessThan(body);
+    expect(body).toBeLessThan(footer);
+  });
+
+  it('says the band has nothing in it rather than naming an action', () => {
+    draw({ view: buildTree(BODY_ONLY) });
+    expect(screen.getAllByText('Nothing in it yet')).toHaveLength(2);
+  });
+
+  it('shows no placeholder for a band the document already authors', () => {
+    // The fixture has a header and no footer.
+    draw();
+    expect(screen.getAllByText('Nothing in it yet')).toHaveLength(1);
+  });
+
+  it('creates the band as ONE op and selects it', () => {
+    const { applyAll, onSelect } = draw({ view: buildTree(BODY_ONLY), read: () => undefined });
+    fireEvent.click(screen.getByRole('button', { name: /^Footer/ }));
+    expect(applyAll).toHaveBeenCalledWith([
+      {
+        op: 'putValue',
+        keys: ['sections', 'footer'],
+        value: { repeat: 'every_page', height: 40, items: [] },
+      },
+    ]);
+    expect(onSelect).toHaveBeenCalledWith('sections.footer');
+  });
+
+  it('is CHROME, not a node: a placeholder never joins the drag-hint count', () => {
+    // One movable item and two placeholders. The hint promises reordering and
+    // regrouping, so a single item must not light it up just because two extra
+    // rows are on screen.
+    const oneItem =
+      'sections:\n  body:\n    type: flow\n    items:\n      - type: text\n        text: Only\n';
+    draw({ view: buildTree(oneItem) });
+    expect(screen.getAllByText('Nothing in it yet')).toHaveLength(2);
+    expect(screen.queryByText('Drag rows to reorder or regroup.')).toBeNull();
+  });
+
+  it('is CHROME, not a node: a placeholder is in no structural walk', () => {
+    // The three walks a fake `TreeNode` would have leaked into.
+    const view = buildTree(BODY_ONLY);
+    expect(visiblePaths(view, new Set())).toEqual(['sections.body']);
+    expect(breadcrumbChain(view, 'sections.footer')).toEqual([]);
+    expect(view?.roots.map((node) => node.path)).toEqual(['sections.body']);
+  });
+
+  it('offers no placeholder over an empty or unreadable tree', () => {
+    draw({ view: null });
+    expect(screen.queryByText('Nothing in it yet')).toBeNull();
   });
 });

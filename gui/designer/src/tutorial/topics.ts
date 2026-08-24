@@ -103,11 +103,10 @@ const TABLE = topic('topic-table', CHAPTER_SEEDS.ch1, [
 // Footers & page numbers — chapter 6, on a practice document with an empty
 // footer + an existing page number.
 const FOOTER = topic('topic-footer', TOPIC_SEEDS.footer, [
-  reuse(
-    'topic-footer.select',
-    'ch6.selectFooter',
-    step('', sidebar(), { selection: { pathPrefix: 'sections.footer' } }),
-  ),
+  // Its own sentence, not a `reuse`: chapter 6 now CREATES the footer (the
+  // seed has none), while this topic's practice document already has one — so
+  // there is no course step left saying "select it".
+  step('topic-footer.select', sidebar(), { selection: { pathPrefix: 'sections.footer' } }),
   reuse(
     'topic-footer.text',
     'ch6.insertText',

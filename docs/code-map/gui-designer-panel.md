@@ -327,12 +327,28 @@ read side, never the reverse.
 ## The router + per-item tabs
 
 - `panel/CellPanel.tsx` — the panel for a selection with no `type:` of its
-  own. Neither a table COLUMN nor a header GROUP is an item, but a canvas
-  click on either cell selects its structural path, so this routes to the
+  own. Neither a table COLUMN, a header GROUP nor a header/footer BAND is
+  an item, but selecting one (a canvas click on a cell, a layer-tree click
+  on a band) hands over its structural path, so this routes to the
   form for what was actually clicked and falls through to the unsupported
-  card when the path resolves to neither. A sibling router to
+  card when the path resolves to none of them. A sibling router to
   `PropertyPanel`, not a section: the sections all take `ItemPanelProps`,
-  and a cell has no `ItemView` to build one from.
+  and a cell has no `ItemView` to build one from. The BAND arm is tried
+  first — an exact two-segment string match, no document read.
+- `panel/bandModel.ts` (pure) — one section band's two properties:
+  `BAND_REPEATS` (the engine's four `Repeat` modes, snake_case, in
+  declaration order), `readBandView` (own-property reads; a non-map band,
+  a wrong-typed value or an inherited entry degrades to unset, and an
+  UNKNOWN authored mode is reported verbatim rather than normalized away),
+  `effectiveRepeat` (an absent `repeat:` means the engine's `every_page`),
+  `bandRepeatOp` (null — no op, no undo step — when the pick is the mode
+  already on screen, INCLUDING an unset band's implicit default, or is
+  outside the closed set) and `bandHeightOp` (`numberOp`: `Band.height` is
+  a plain number, so no unit strings).
+- `panel/BandForm.tsx` — the form itself: the repeat select (a document's
+  unknown mode keeps its own option) + a `StepperField` height in pt. The
+  ONLY surface that edits a band's `repeat`/`height`; before it existed
+  even the bundled presets that author a band could not change either.
 - `panel/PropertyPanel.tsx` — the thin router: item → `ItemPanel`,
   anything with no `type:` of its own → `CellPanel` (which picks
   `ColumnForm` / `GroupForm` / the unsupported card),

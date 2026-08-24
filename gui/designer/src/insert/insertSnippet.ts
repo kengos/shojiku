@@ -28,7 +28,11 @@ export function insertSnippet(
     case 'pageNumber':
       // No `format` key: the engine's own `{page} / {pages}` is the default,
       // and authoring it would put a value in the file the user never chose.
-      return { type: 'page_number', box: { w: '100%', h: 14 } };
+      // No `h`: 14pt is smaller than the line box of the blank presets' own
+      // default text (10.5pt at the engine's 1.4 line height = 14.7pt), so a
+      // fixed height made the first page number a reader inserts warn. It
+      // auto-sizes like any other text-shaped item.
+      return { type: 'page_number', box: { w: '100%' } };
   }
 }
 

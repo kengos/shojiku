@@ -111,15 +111,48 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
 - `insert/insertMenu.ts` — `InsertKind`/`MenuEntry`/`InsertGroup` +
   `insertMenuGroups` (the menu's entry-class structure; only populated
   groups render, capability-less rows absent, band-only rows disabled
-  with a reason).
+  with a reason). The `band` entry class is UNCONDITIONAL (no
+  capability, host or schema gate — the two section bands have been in
+  the wire since 0.1.0) and sits directly under the element group, next
+  to the `page_number` row whose disabled reason names it; its rows are
+  bare NOUNS with no `…`, like every other immediately-acting row.
+  NOTE: `InsertGroup.labelKey` is structure only — `Menubar.tsx` renders
+  groups as divider-separated blocks and shows no group heading.
 - `insert/insertSnippet.ts` — `insertSnippet(kind, …)` (per-type default
   snippets — rect carries `borderWidth: 1` because a style-less rect
   draws nothing; the cut-here-line snippet is a container + dashed `line`
   sized from the FLOORED content width), `CutLineText`,
   `DEFAULT_CUT_LINE_PT`.
+- `insert/bandGeometry.ts` — WHICH margin-box height a band insert places
+  against: `documentContentHeightPt` (read off the document's own
+  `page.size`/`orientation`/`margin` through `readPageView` + `readMarginView`
+  — exact, and available before any render; `null` for a percent margin or an
+  unrecognized size rather than a guess) and `bandBoxHeightPt` (render first
+  — it reports what the engine actually laid out — document second, `NaN`
+  last, which `bandInsertY` already reads as "unknown" and answers with the
+  top of the box). The render-only reader answers a flat 792 with no
+  last-good preview, which is A4-at-margin-25 exactly: right by coincidence
+  on the five A4 blank presets and 50pt too large on the two Letter ones,
+  where a footer item's line box ran off the sheet and rendered invisibly.
 - `insert/bandPlacement.ts` — `requiresBand`/`bandInsertY`/`bandPlaced`:
   band children are coordinate-placed against the page margin box,
   height floored.
+- `insert/bandCreate.ts` — CREATING a band (`sections.header` /
+  `sections.footer`), which nothing in the deterministic UI did before:
+  `BAND_NAMES`, `BAND_LABEL_KEYS` (ONE catalog key per band, shared by
+  the insert menu, the layer tree and the panel heading — the
+  `TYPE_LABEL_KEYS` precedent), `bandPath`/`bandFromPath` (exact match,
+  so a path INSIDE a band is not one), `bandExists` (a non-map band
+  reads as PRESENT — overwriting it would destroy authored content),
+  `bandCreateOp` (ONE `putValue` of exactly `{repeat, height, items}` —
+  `Band` is `deny_unknown_fields`, and two of the three are
+  load-bearing: without `items: []` an insert falls through to the body,
+  without a positive `height` the band is not a canvas drop target),
+  `bandActivateOps` and `activateBand`. Activation is IDEMPOTENT —
+  absent: create then select; present: select only, authoring nothing
+  and minting no undo step — which is what lets the menu row and the
+  tree row be the same word in both states instead of appearing,
+  disappearing or greying out.
 - `insert/model.ts` — where an insert lands: `BODY_ITEMS_PATH`,
   `InsertTarget`, `resolveInsertTarget` (selection with an `items` list
   → inside; else after the nearest `items`-keyed ancestor; else body

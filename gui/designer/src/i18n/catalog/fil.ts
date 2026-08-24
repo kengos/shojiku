@@ -74,7 +74,17 @@ export const fil: LanguageCatalog = {
     'menu.delete': 'Tanggalin',
     'menu.help': 'Tulong',
     'insert.pageNumber': 'Numero ng pahina',
-    'insert.pageNumber.bandOnly': 'Sa loob lamang ng header o footer band',
+    'insert.pageNumber.bandOnly': 'Magagamit kapag nagdagdag ka ng header o footer',
+    'insert.group.band': 'Header at footer',
+    'tree.band.empty': 'Wala pang laman',
+    'panel.band.repeat': 'Lumalabas sa',
+    'panel.band.repeat.every_page': 'Bawat pahina',
+    'panel.band.repeat.first_page': 'Unang pahina lang',
+    'panel.band.repeat.except_first_page': 'Lahat maliban sa unang pahina',
+    'panel.band.repeat.last_page': 'Huling pahina lang',
+    'panel.band.height': 'Taas',
+    'panel.band.heightHint':
+      'Tinatayang taas ng band. Ang mga item sa loob ay nakalagay ayon sa page coordinates.',
     'panel.pageFormat': 'Pattern',
     'panel.pageFormat.hint':
       "Gamitin ang '{'page'}' para sa pahinang ito at '{'pages'}' para sa kabuuan. Ang ibang teksto ay lilitaw nang buo.",

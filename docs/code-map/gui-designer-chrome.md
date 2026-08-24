@@ -393,7 +393,11 @@ is Tailwind utilities over the `--sj-*` tokens.
 - `ui/icons.tsx` — the hand-drawn inline-SVG icon set (`currentColor`,
   aria-hidden; hand-drawn is a consequence, not a rule — the line is in
   `gui/STYLE.md` § Icons). Carries the chrome marks + the layer tree's
-  per-item-type marks, drawn for distinguishability at 14px.
+  per-item-type marks, drawn for distinguishability at 14px. The three
+  section marks (`IconSectionHeader` / `IconSection` / `IconSectionFooter`)
+  are deliberately one FAMILY — same page outline, filled band at top /
+  middle / bottom — so the mark says WHICH section without a letter that
+  would only work in English.
 - `ui/chromeConvention.test.ts` — the node-env convention GATE: fails
   on native `title=` or a text character standing in for an icon
   (comments blanked; `i18n/catalog/` exempt; the one documented

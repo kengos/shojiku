@@ -17,6 +17,7 @@ function baseWiring(over: Partial<MenubarWiring> = {}): MenubarWiring {
     onDocumentSettings: vi.fn(),
     onDataEditor: vi.fn(),
     bandTarget: false,
+    onBand: vi.fn(),
     onTutorial: vi.fn(),
     hostEntries: [],
     onUndo: vi.fn(),
@@ -320,6 +321,7 @@ describe('buildMenubar', () => {
     const onField = vi.fn();
     const onImage = vi.fn();
     const onPaste = vi.fn();
+    const onBand = vi.fn();
     const columns = buildMenubar(
       t,
       baseWiring({
@@ -330,6 +332,7 @@ describe('buildMenubar', () => {
         onField,
         onImage,
         onPaste,
+        onBand,
       }),
     );
     const groups = columns[2].groups;
@@ -344,12 +347,20 @@ describe('buildMenubar', () => {
     // The always-present paste entry (last in the element group) → onPaste.
     groups[0].at(-1)?.run();
     expect(onPaste).toHaveBeenCalledOnce();
+    // The band group sits right under the elements, next to the page-number
+    // row whose disabled reason names it: header, then footer.
+    expect(groups[1].map((item) => item.label)).toEqual([
+      'tree.section.header',
+      'tree.section.footer',
+    ]);
+    groups[1][1].run();
+    expect(onBand).toHaveBeenCalledWith('footer');
     // Data-field group → onField; list-data → onIterable; image → onImage.
-    groups[1][0].run();
-    expect(onField).toHaveBeenCalledOnce();
     groups[2][0].run();
-    expect(onIterable).toHaveBeenCalledOnce();
+    expect(onField).toHaveBeenCalledOnce();
     groups[3][0].run();
+    expect(onIterable).toHaveBeenCalledOnce();
+    groups[4][0].run();
     expect(onImage).toHaveBeenCalledOnce();
   });
 });

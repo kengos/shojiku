@@ -7,6 +7,7 @@
 import type { SnippetValue } from '@shojiku/designer-core';
 import { useCallback, useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
+import { bandBoxHeightPt } from '../insert/bandGeometry';
 import { bandInsertY, bandPlaced } from '../insert/bandPlacement';
 import {
   addBlock,
@@ -17,7 +18,7 @@ import {
 } from '../insert/blockModel';
 import { resolveInsertTarget } from '../insert/model';
 import type { LastGoodPreview } from '../preview/reducer';
-import { bandOf, contentHeightPt } from './geometry';
+import { bandOf } from './geometry';
 
 /** The stable empty block library (a host with the feature off / no saved blocks). */
 const EMPTY_BLOCKS: readonly SavedBlock[] = [];
@@ -113,7 +114,7 @@ export function useBlocks({
         value:
           band === null
             ? block.value
-            : bandPlaced(block.value, bandInsertY(band, contentHeightPt(previewRef.current))),
+            : bandPlaced(block.value, bandInsertY(band, bandBoxHeightPt(previewRef.current, read))),
       });
       if (result.ok) {
         select(`${target.path}[${target.index}]`);

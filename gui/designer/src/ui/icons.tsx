@@ -360,6 +360,29 @@ export function IconSection(props: IconProps) {
   );
 }
 
+/** The same page with its filled band at the TOP — a header. The three section
+ * marks are one family: identical page outline, band where that section
+ * actually prints. Position carries the meaning rather than a letter, because
+ * the initial of "header" is only an H in one of the six shipped locales. */
+export function IconSectionHeader(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.4}>
+      <rect x="3" y="1.5" width="10" height="13" rx="1.2" />
+      <path d="M3 2.6h10v2.6H3z" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
+/** The same page with its filled band at the BOTTOM — a footer. */
+export function IconSectionFooter(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.4}>
+      <rect x="3" y="1.5" width="10" height="13" rx="1.2" />
+      <path d="M3 10.8h10v2.6H3z" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
 /** A capital T on its baseline — a text item. */
 export function IconText(props: IconProps) {
   return (

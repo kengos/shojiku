@@ -163,7 +163,15 @@ const CHAPTERS: readonly TutorialChapter[] = [
     id: 'ch6',
     seed: CHAPTER_SEEDS.ch6,
     steps: [
-      step('ch6.selectFooter', sidebar(), { selection: { pathPrefix: 'sections.footer' } }),
+      // The chapter's own dead end, repaired: the seed authors no footer, and
+      // the tree shows no row for a section the document lacks — so the old
+      // "select the footer" step could never be satisfied. The placeholder row
+      // is now what the reader presses, which teaches the affordance instead
+      // of presupposing its result. Selecting is what creating DOES, so this
+      // replaces the select step rather than sitting in front of it.
+      step('ch6.createFooter', sidebar(), {
+        ops: [{ op: 'putValue', keys: ['sections', 'footer'] }],
+      }),
       step('ch6.insertText', menu(TOUR_ANCHORS.menuInsert), {
         ops: [{ op: 'insertItem', pathPrefix: 'sections.footer' }],
       }),

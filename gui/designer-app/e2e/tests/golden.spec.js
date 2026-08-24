@@ -43,6 +43,19 @@ test('open a preset, preview it client-side, and export', async ({ page }) => {
   // Still focused: nothing committed, and the document was never edited.
   await expect(textField).toBeFocused();
 
+  // Bands: this preset authors neither, so the Structure tab lists a
+  // placeholder row for each. Pressing one creates the band and selects it,
+  // which is what arms the band-only page-number row — the whole point of the
+  // affordance. Then the page repaints with the number on it. jsdom cannot see
+  // any of this: only here does a real engine re-render over a created band.
+  const beforeBand = await painted();
+  await page.getByRole('button', { name: /^Footer/ }).click();
+  await page.getByRole('button', { name: 'Insert' }).click();
+  const pageNumber = page.getByRole('menuitem', { name: /Page number/ });
+  await expect(pageNumber).not.toHaveAttribute('aria-disabled', 'true');
+  await pageNumber.click();
+  await expect.poll(painted, { timeout: 30000 }).not.toBe(beforeBand);
+
   // Tweak: page setup lives in the fullscreen document-settings view now,
   // reached from the 「全体」 layer-tree root row. Open it, change the page size,
   // and the live preview re-renders at the new dimensions (the receipt-us preset

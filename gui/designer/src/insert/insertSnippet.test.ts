@@ -43,10 +43,14 @@ describe('insertSnippet', () => {
     expect(snippet.items[1]).toMatchObject({ to: { x: DEFAULT_CUT_LINE_PT, y: 2 } });
   });
 
-  it('scaffolds a page number with no format key — the engine default is the value', () => {
+  it('scaffolds a page number with no format key and no height', () => {
+    // No `format`: the engine's own default is the value. No `h` either — a
+    // definite height is what `text_overflow` measures against, and 14pt was
+    // shorter than the line the blank presets' 10.5pt default text draws, so
+    // the first page number a reader inserted warned.
     expect(insertSnippet('pageNumber', '')).toEqual({
       type: 'page_number',
-      box: { w: '100%', h: 14 },
+      box: { w: '100%' },
     });
   });
 });

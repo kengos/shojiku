@@ -14,6 +14,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { IconDocument } from '../ui/icons';
+import { BandPlaceholderRow } from './BandPlaceholderRow';
+import { missingBands } from './bandGhosts';
 import type { TreeView } from './model';
 import { visiblePaths } from './rowDrop';
 import { breadcrumbChain } from './selection';
@@ -94,6 +96,7 @@ export function LayerTree({
   // order, so a gap between a nested last child and the row after it can be
   // read as either parent.
   const order = useMemo(() => visiblePaths(view, collapsed), [view, collapsed]);
+  const absent = useMemo(() => missingBands(view), [view]);
   const reorder = useRowReorder({ applyAll, read, onSelect, rowRefs, order });
 
   // The whole-document node: a FIXED header row above the outline (never part of
@@ -130,7 +133,19 @@ export function LayerTree({
         <p className="mx-1 my-2 text-sm text-muted">{t('tree.empty')}</p>
       ) : (
         <>
+          {/* A band the document lacks gets a placeholder row in the slot it
+              would occupy — header above the sections, footer below them, which
+              is `sections:` order. They are chrome, so they live OUTSIDE the
+              `roots` list every structural walk reads. */}
           <ul className="m-0 list-none p-0">
+            {absent.includes('header') ? (
+              <BandPlaceholderRow
+                band="header"
+                read={read}
+                applyAll={applyAll}
+                onSelect={onSelect}
+              />
+            ) : null}
             {view.roots.map((node) => (
               <TreeRow
                 key={node.path}
@@ -145,6 +160,14 @@ export function LayerTree({
                 scrolledTo={scrolledTo}
               />
             ))}
+            {absent.includes('footer') ? (
+              <BandPlaceholderRow
+                band="footer"
+                read={read}
+                applyAll={applyAll}
+                onSelect={onSelect}
+              />
+            ) : null}
           </ul>
           {view.truncated ? (
             <p className="mx-1 my-2 text-sm text-muted">{t('tree.truncated')}</p>
