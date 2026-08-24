@@ -25,6 +25,9 @@ export function insertItems(
         disabled: blocked,
       };
     }
+    if (entry.kind === 'band') {
+      return { label: t(entry.labelKey), run: () => w.onBand(entry.band) };
+    }
     if (entry.kind === 'container') {
       return { label: t(entry.labelKey), run: w.onContainer };
     }

@@ -1,8 +1,9 @@
 // The panel for a selection that has no `type:` of its own. Neither a table
-// COLUMN nor a header GROUP is an item, but a canvas click on either cell
-// selects its structural path — so this routes to the form for what was
-// actually clicked, and falls through to the unsupported card when the path
-// resolves to neither (an out-of-range index, a hostile list).
+// COLUMN, a header GROUP nor a header/footer BAND is an item, but selecting
+// one (a canvas click on a cell, a layer-tree click on a band) hands over its
+// structural path — so this routes to the form for what was actually clicked,
+// and falls through to the unsupported card when the path resolves to none of
+// them (an out-of-range index, a hostile list).
 //
 // It is a sibling router to `PropertyPanel`, not a section: the sections all
 // take `ItemPanelProps`, and a cell has no `ItemView` to build one from.
@@ -10,9 +11,11 @@
 import type { EditorController } from '../editor/useEditor';
 import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { bandFromPath } from '../insert/bandCreate';
 import type { PaletteGroup } from '../palette/model';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
 import { PANEL } from '../ui/chrome';
+import { BandForm } from './BandForm';
 import { ColumnForm } from './ColumnForm';
 import { columnPathInfo, readColumnsView } from './columnsModel';
 import { GroupForm } from './GroupForm';
@@ -38,6 +41,11 @@ export function CellPanel({
   floor,
 }: CellPanelProps) {
   const { t } = useI18n();
+  // Cheapest recognizer first: an exact two-segment string match, no read.
+  const band = bandFromPath(path);
+  if (band !== null) {
+    return <BandForm controller={controller} path={path} band={band} />;
+  }
   const columnInfo = columnPathInfo(path);
   const column =
     columnInfo === null

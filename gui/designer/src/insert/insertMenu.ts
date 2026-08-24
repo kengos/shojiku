@@ -4,6 +4,8 @@
 // What each entry INSERTS lives in `insertSnippet.ts`, where it LANDS in
 // `model.ts` — this module only decides what the menu offers.
 
+import { BAND_LABEL_KEYS, BAND_NAMES, type BandName } from './bandCreate';
+
 export type InsertKind = 'text' | 'rect' | 'qrCode' | 'pageNumber' | 'cutLine';
 
 /** One menu row: a default-snippet element insert, the container-picker intent
@@ -23,7 +25,12 @@ export type MenuEntry =
   // NAME is the label, user data), and the manage intent.
   | { readonly kind: 'saveBlock'; readonly labelKey: string }
   | { readonly kind: 'block'; readonly blockId: string; readonly name: string }
-  | { readonly kind: 'manageBlock'; readonly labelKey: string };
+  | { readonly kind: 'manageBlock'; readonly labelKey: string }
+  // A repeating band: create it if the document lacks it, select it either
+  // way. Deliberately NOT gated on absence — the row is the same word in both
+  // states, so it never appears, disappears or greys out (Google Docs'
+  // Insert → Headers & footers behaves the same).
+  | { readonly kind: 'band'; readonly band: BandName; readonly labelKey: string };
 
 export interface InsertGroup {
   readonly labelKey: string;
@@ -71,6 +78,15 @@ export function insertMenuGroups(
       ],
     },
   ];
+  // Always armed: a band needs no schema, no host injection and no engine
+  // capability — `sections.header` / `sections.footer` have been in the wire
+  // since 0.1.0, and until now nothing in the UI wrote them.
+  groups.push({
+    labelKey: 'insert.group.band',
+    entries: BAND_NAMES.map(
+      (band) => ({ kind: 'band', band, labelKey: BAND_LABEL_KEYS[band] }) as const,
+    ),
+  });
   if (fieldArmed) {
     groups.push({
       labelKey: 'insert.group.field',

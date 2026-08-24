@@ -68,8 +68,8 @@ export const COPY_EN: Record<string, string> = {
   'ch5.ratio': 'Set the ratio to 3:1, so the right slot takes a quarter and the total sits right.',
   'ch5.bold':
     'Make the total bold. A one-off look like this is fine to set directly, without naming a style.',
-  'ch6.selectFooter':
-    'A band printed at the same place on every page is a footer (bottom) or header (top) — select the footer in the Structure tab on the left.',
+  'ch6.createFooter':
+    'A band printed at the same place on every page is a footer (bottom) or header (top). The Structure tab on the left already lists a footer with nothing in it — press it to create one.',
   'ch6.insertText': 'Insert → Text places the company name in the band.',
   'ch6.place':
     'A band prints at the same spot on every page, so you give it coordinates — set X to 24 and Y to 762 (the area inside the margins is 794pt tall, so 762 sits just above the bottom edge).',
@@ -89,6 +89,8 @@ export const COPY_EN: Record<string, string> = {
   'ch8.done':
     'That is the whole flow. The invoice you built makes a fine starting point for your own template.',
   // Topic-specific steps (reused steps show their course sentence via copyId).
+  'topic-footer.select':
+    'A band printed at the same place on every page is a footer (bottom) or header (top) — select the footer in the Structure tab on the left.',
   'topic-containers.grid':
     'Click the 3-columns-by-2-rows cell in the grid. You get a table-like container with six slots.',
   'topic-containers.columns': 'Set Columns to 4 in the right panel. One more slot appears across.',

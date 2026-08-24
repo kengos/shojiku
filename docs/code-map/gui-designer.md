@@ -64,9 +64,29 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
 - `tree/labels.ts` — kind → localized chrome key; exports `SECTION_PREFIX`.
 - `tree/kindIcons.ts` — `kindIcon(kind)` → the row's decorative type mark
   (real SVG, never text chars — a row's `textContent` is exactly its
-  label).
+  label). The three document sections are ONE FAMILY, not one mark:
+  identical page outline, band drawn where that section actually prints
+  (top / middle / bottom). Position carries it rather than a letter —
+  the initial of "header" is only an H in one of the six shipped
+  locales. An unknown `section:*` falls back to the body mark.
+- `tree/bandGhosts.ts` (pure) — `missingBands(view)`: which section bands
+  the document does NOT author, read off the BUILT tree, in `sections:`
+  order. An unparseable tree and one with no sections at all both yield
+  none — the second because `Sections.body` is required on the wire, so
+  offering a header beside a missing body would author a document the
+  engine refuses.
+- `tree/BandPlaceholderRow.tsx` — the row for a band the document lacks:
+  the band's own name and mark over a muted second line saying it has
+  nothing in it (two lines because the pane narrows to 180px — the
+  `data/ItemListRow` shape), pressing it runs `activateBand`. **CHROME,
+  not a document node**: it never enters `TreeView.roots`, so it stays
+  out of `visiblePaths`, the drag order, the breadcrumb chain and the
+  count the drag hint is gated on — which is why it is its own component
+  rather than a synthetic `TreeNode`.
 - `tree/LayerTree.tsx` — the outline panel frame: the fixed whole-document
-  document-root row, collapse state, incoming-selection reveal, truncation
+  document-root row, the band placeholders in their positional slots
+  (header above the sections, footer below — `sections:` order, so no
+  ordering work), collapse state, incoming-selection reveal, truncation
   notice, and the gesture hint at the foot (rows only) — one line plus a
   `HelpHint` naming the drag's HORIZONTAL meaning and the Alt+↑/↓ chord.
   Cross-parent drag shipped with no entry point and a walkthrough found it

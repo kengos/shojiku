@@ -13,8 +13,9 @@ import type { TreeNode } from './model';
 import type { RowReorder } from './useRowReorder';
 
 /** The expand/collapse toggle (and its leaf placeholder) — a fixed-width gutter
- * before the row label. */
-const TREE_TOGGLE =
+ * before the row label. Shared with the band-placeholder row, which has no
+ * toggle of its own but must line its label up with these. */
+export const TREE_TOGGLE =
   'inline-flex w-[18px] shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-sm text-muted';
 
 export interface TreeRowProps {

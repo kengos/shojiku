@@ -15,6 +15,21 @@ platform binaries.
 
 ### Added
 
+- **The Designer can now add a header or footer to a document that has
+  none.** Every blank start ships without either, and nothing in the editor
+  ever created one — so the page-number row sat greyed out with no way to
+  satisfy it, and the tutorial's footer chapter asked you to select a footer
+  its practice document did not have. Insert now carries a Header and a
+  Footer row, and the Structure tab lists the missing band as a row saying it
+  has nothing in it; either one creates the band and selects it, in a single
+  step you can undo. A band that already exists is simply selected, so the
+  rows never grey out or disappear.
+- **A header or footer's height and which pages it prints on are editable.**
+  Selecting the band opens a form for its two properties — every page, the
+  first page only, everything but the first page, or the last page only, plus
+  the band height. Neither could be changed anywhere in the editor before,
+  not even in the bundled templates that ship with a band.
+
 - **Items can be dragged into a different parent in the Designer.** Until now
   both the canvas and the layer tree could only reorder an item among its own
   siblings, so moving something into or out of a container meant deleting it
@@ -95,6 +110,29 @@ platform binaries.
   sample text meant hunting for it a second time in the editor's own list.
 
 ### Changed
+
+- **A footer placed before the first render lands on the page on Letter.**
+  Positioning an item in a band used the last render to find the bottom of the
+  page, and fell back to a fixed number when nothing had rendered yet — the
+  number being A4's, which every A4 template got right by coincidence and every
+  Letter one got wrong by half an inch, putting the item off the paper where it
+  simply did not appear. The page size and margins the document itself declares
+  are used now, so the answer is exact before anything has rendered; when they
+  cannot be resolved the item goes to the top of the band rather than to a
+  guessed position.
+
+- **An item placed in a header or footer no longer gets a fixed height.**
+  A band insert authored a 14pt-tall box, which is shorter than the line the
+  blank templates' own default text draws (10.5pt) — so the first page number
+  you added to a footer warned that the text did not fit, on every document
+  that starts blank. Text-shaped items now size to their text, the way they
+  already do in the body; rectangles, QR codes and images keep the size they
+  come with, since those need one.
+
+- **Each document section has its own mark in the Structure tab.** The
+  header, body and footer shared one icon, which said only "a section" —
+  the same thing the label beside it already said. They now share a page
+  outline with the band drawn where that section actually prints.
 
 - **A single enormous document is now refused instead of parsed.** Templates,
   params, definitions and locale packs had no size limit at all: hand one of

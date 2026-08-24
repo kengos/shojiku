@@ -27,9 +27,18 @@ export function bandInsertY(band: 'header' | 'footer', marginBoxHeight: number):
 }
 
 /** The band-placed form of a snippet: the same item, plus the coordinates a
- * band requires. A body insert keeps its box-less flow form. */
+ * band requires. A body insert keeps its box-less flow form.
+ *
+ * It supplies a WIDTH but no height. A definite `h` is what `text_overflow`
+ * measures against, so a fixed default is a promise about the document's font
+ * that this module cannot keep: at the blank presets' 10.5pt over the engine's
+ * 1.4 line height the line box is 14.7pt, and every band insert on a
+ * blank-start document warned. The types that genuinely REQUIRE a height —
+ * `rect`, `qr_code`, `image` — carry their own in their snippet, so they are
+ * unaffected; the text-shaped ones auto-size, exactly as they do in the flow
+ * body. */
 export function bandPlaced(snippet: SnippetValue, y: number): SnippetValue {
   const item = snippet as Record<string, unknown>;
   const box = (item.box ?? {}) as Record<string, unknown>;
-  return { ...item, box: { w: '100%', h: 16, ...box, x: 0, y } } as SnippetValue;
+  return { ...item, box: { w: '100%', ...box, x: 0, y } } as SnippetValue;
 }

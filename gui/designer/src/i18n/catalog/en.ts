@@ -282,7 +282,17 @@ export const en: LanguageCatalog = {
     'menu.delete': 'Delete',
     'menu.help': 'Help',
     'insert.pageNumber': 'Page number',
-    'insert.pageNumber.bandOnly': 'Only inside a header or footer band',
+    'insert.pageNumber.bandOnly': 'available once you add a header or footer',
+    'insert.group.band': 'Header & footer',
+    'tree.band.empty': 'Nothing in it yet',
+    'panel.band.repeat': 'Prints on',
+    'panel.band.repeat.every_page': 'Every page',
+    'panel.band.repeat.first_page': 'First page only',
+    'panel.band.repeat.except_first_page': 'All but the first page',
+    'panel.band.repeat.last_page': 'Last page only',
+    'panel.band.height': 'Height',
+    'panel.band.heightHint':
+      'Nominal height of the band. Items inside are placed by page coordinates.',
     'panel.pageFormat': 'Pattern',
     'panel.pageFormat.hint':
       "Use '{'page'}' for this page and '{'pages'}' for the total. Any other text prints as written.",

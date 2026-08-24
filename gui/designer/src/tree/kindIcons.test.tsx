@@ -30,10 +30,16 @@ describe('kindIcon', () => {
     expect(new Set(icons).size).toBe(KNOWN_KINDS.length);
   });
 
-  it('marks every document section with the one section icon', () => {
-    expect(kindIcon('section:body')).toBe(kindIcon('section:header'));
-    expect(kindIcon('section:footer')).toBe(kindIcon('section:body'));
+  it('gives each document section its own mark', () => {
+    // All three used to share one mark, which made the icon say only "a
+    // section" — exactly what the label beside it already said.
+    const marks = ['section:header', 'section:body', 'section:footer'].map(kindIcon);
+    expect(new Set(marks).size).toBe(3);
     expect(kindIcon('section:body')).not.toBe(kindIcon('text'));
+  });
+
+  it('falls back to the generic section mark for a section it does not know', () => {
+    expect(kindIcon('section:sidenote')).toBe(kindIcon('section:body'));
   });
 
   it('shares the generic mark between the wire generic kind and an unknown one', () => {

@@ -6,15 +6,41 @@
 
 import { parseTemplate } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
-import { TOUR_ANCHOR_IDS } from './anchors';
+import { bandCreateOp } from '../insert/bandCreate';
+import { TOUR_ANCHOR_IDS, TOUR_ANCHORS } from './anchors';
 import { CHAPTER_TITLES_EN, COPY_EN } from './copy.en';
 import { CHAPTER_TITLES_JA, COPY_JA } from './copy.ja';
 import { COURSE } from './course';
-import { courseSteps, isUiEvent } from './model';
+import { courseSteps, isUiEvent, stepDone } from './model';
 import { PRACTICE_PARAMS } from './seeds';
 import { TOPICS } from './topics';
+import type { TutorialChapter, TutorialStep } from './types';
 
 const STEPS = courseSteps(COURSE);
+
+/** The section a step WAITS on, or `null` when it waits on something else. */
+function selectionSection(step: TutorialStep): string | null {
+  const done = step.done;
+  if (!('selection' in done)) {
+    return null;
+  }
+  return /^sections\.([a-z_]+)/.exec(done.selection.pathPrefix)?.[1] ?? null;
+}
+
+/** Every section a chapter can actually have: what its seed authors, plus what
+ * its own steps create as they run. */
+function reachableSections(chapter: TutorialChapter): ReadonlySet<string> {
+  const seeded = [...chapter.seed.matchAll(/^ {2}([a-z_]+):/gm)].map((m) => m[1]);
+  const made = chapter.steps.flatMap((step) =>
+    'ops' in step.done
+      ? step.done.ops
+          .filter((pred) => pred.op === 'putValue' && pred.keys?.[0] === 'sections')
+          .map((pred) => pred.keys?.[1])
+          .filter((name): name is string => name !== undefined)
+      : [],
+  );
+  return new Set([...seeded, ...made]);
+}
 
 describe('the course structure', () => {
   it('runs the nine chapters of the script, blank page through export', () => {
@@ -101,6 +127,86 @@ describe('every step points at something real', () => {
 });
 
 describe('the practice documents', () => {
+  it('never asks the reader to select a section the chapter cannot have', () => {
+    // ch6 shipped exactly this bug: its copy said to select the footer in the
+    // Structure tab, its seed authored none, and the tree omits an absent
+    // section — so the step could never complete and the chapter dead-ended.
+    // A selection-gated step must name a section the seed AUTHORS, or one an
+    // EARLIER step in the same chapter creates.
+    //
+    // Every unit is swept, not just the course: repairing ch6 removed the last
+    // selection-gated step from COURSE, so a course-only sweep would visit no
+    // assertion at all and could not fail. `visited` is the sentinel that says
+    // the rule reached something; `reachableSections` holds the logic, so the
+    // known-bad case below exercises the SAME code the sweep runs.
+    let visited = 0;
+    for (const unit of [COURSE, ...TOPICS]) {
+      for (const chapter of unit.chapters) {
+        for (const step of chapter.steps) {
+          const section = selectionSection(step);
+          if (section !== null) {
+            visited += 1;
+            expect(
+              reachableSections(chapter).has(section),
+              `${step.id} waits on sections.${section}`,
+            ).toBe(true);
+          }
+        }
+      }
+    }
+    expect(visited).toBeGreaterThan(0);
+  });
+
+  it("ch6's first step is satisfied by the op the affordance actually dispatches", () => {
+    // The chapter is only repaired if the REAL op completes the step — the
+    // rule above proves the section is reachable, not that pressing the
+    // control advances the reader. `bandCreateOp` is what both entry points
+    // dispatch, so feed exactly that.
+    const ch6 = COURSE.chapters.find((chapter) => chapter.id === 'ch6');
+    const first = ch6?.steps[0];
+    expect(first?.id).toBe('ch6.createFooter');
+    expect(stepDone(first as TutorialStep, { kind: 'ops', ops: [bandCreateOp('footer')] })).toBe(
+      true,
+    );
+    // ...and NOT by creating the other band.
+    expect(stepDone(first as TutorialStep, { kind: 'ops', ops: [bandCreateOp('header')] })).toBe(
+      false,
+    );
+  });
+
+  it('the rule REJECTS a chapter that waits on a section it never has', () => {
+    // The self-test: without it the sweep above passes by visiting nothing
+    // interesting, and nothing would ever say the check works. This is ch6 as
+    // it actually shipped — a footer-less seed plus a select-the-footer step.
+    const broken = {
+      id: 'ch-broken',
+      seed: 'sections:\n  body:\n    type: flow\n    items: []\n',
+      steps: [
+        {
+          id: 'ch-broken.select',
+          anchor: { kind: 'sidebar', selector: TOUR_ANCHORS.sidebarTabs },
+          done: { selection: { pathPrefix: 'sections.footer' } },
+        },
+      ],
+    } as const;
+    expect(selectionSection(broken.steps[0])).toBe('footer');
+    expect(reachableSections(broken).has('footer')).toBe(false);
+
+    // ...and ACCEPTS it once an earlier step creates the band.
+    const repaired = {
+      ...broken,
+      steps: [
+        {
+          id: 'ch-broken.create',
+          anchor: { kind: 'sidebar', selector: TOUR_ANCHORS.sidebarTabs },
+          done: { ops: [{ op: 'putValue', keys: ['sections', 'footer'] }] },
+        },
+        ...broken.steps,
+      ],
+    } as const;
+    expect(reachableSections(repaired).has('footer')).toBe(true);
+  });
+
   it('parses every chapter seed as a template', () => {
     for (const chapter of COURSE.chapters) {
       expect(() => parseTemplate(chapter.seed)).not.toThrow();

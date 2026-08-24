@@ -24,6 +24,8 @@ import {
   IconRepeat,
   IconRepeatFlow,
   IconSection,
+  IconSectionFooter,
+  IconSectionHeader,
   IconTable,
   IconText,
 } from '../ui/icons';
@@ -54,10 +56,20 @@ const KIND_ICONS: ReadonlyMap<string, KindIcon> = new Map<string, KindIcon>([
   ['header_group', IconHeaderGroup],
 ]);
 
+/** The two bands' own marks; `body` falls through to the generic section mark,
+ * which is already a page with its band in the middle. */
+const SECTION_ICONS: ReadonlyMap<string, KindIcon> = new Map<string, KindIcon>([
+  ['header', IconSectionHeader],
+  ['footer', IconSectionFooter],
+]);
+
 /** The icon component for a node's kind. */
 export function kindIcon(kind: string): KindIcon {
   if (kind.startsWith(SECTION_PREFIX)) {
-    return IconSection;
+    // One page outline, three band positions: top / middle / bottom, the same
+    // place that section actually prints. All three used to share the body
+    // mark, so the icon said only "a section" — which the label already said.
+    return SECTION_ICONS.get(kind.slice(SECTION_PREFIX.length)) ?? IconSection;
   }
   return KIND_ICONS.get(kind) ?? IconItem;
 }

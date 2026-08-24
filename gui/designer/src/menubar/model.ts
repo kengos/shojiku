@@ -9,6 +9,7 @@
 // prototype-walk surface) — that validation is `hostEntries.ts`, and the
 // per-entry-kind insert dispatch is `insertItems.ts`.
 
+import type { BandName } from '../insert/bandCreate';
 import type { InsertGroup, InsertKind } from '../insert/insertMenu';
 import type { HostMenuEntry } from './hostEntries';
 import { insertItems } from './insertItems';
@@ -83,6 +84,9 @@ export interface MenubarWiring {
   readonly onField: () => void;
   readonly onImage: () => void;
   readonly onPaste: () => void;
+  /** Activate a repeating band: create it when the document lacks it, and
+   * select it either way. Always present — no capability or host gate. */
+  readonly onBand: (band: BandName) => void;
   /** Reusable blocks — save the selection as a block (disabled without a savable
    * selection), insert a saved block by id, open the manage dialog. Present only
    * when the host armed block persistence (the group is otherwise not built). */

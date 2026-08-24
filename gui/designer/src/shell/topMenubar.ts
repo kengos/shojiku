@@ -20,6 +20,7 @@ import type { SaveFlow } from '../hooks/useSaveFlow';
 import type { SelectionOps } from '../hooks/useSelectionOps';
 import type { TutorialWiring } from '../hooks/useTutorialWiring';
 import { useI18n } from '../i18n/context';
+import { activateBand } from '../insert/bandCreate';
 import { blockInsertGroup } from '../insert/blockModel';
 import type { InsertGroup } from '../insert/insertMenu';
 import { resolveInsertTarget } from '../insert/model';
@@ -119,6 +120,7 @@ export function useMenubarColumns(options: MenubarColumnsOptions): MenuColumn[] 
     },
     onImage: image.onImageInsert,
     onPaste: () => inserts.setPasteOpen(true),
+    onBand: (band) => activateBand(band, editor.read, editor.applyAll, editor.select),
     onShortcuts: dialogs.openShortcuts,
     onGlossary: dialogs.openGlossary,
     onTutorial: tutorial.openTutorial,

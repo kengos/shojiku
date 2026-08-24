@@ -9,6 +9,7 @@
 import { useCallback, useRef } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import type { I18n } from '../i18n/context';
+import { bandBoxHeightPt } from '../insert/bandGeometry';
 import { bandInsertY, bandPlaced } from '../insert/bandPlacement';
 import type { FieldChoice, FieldRefusal } from '../insert/fieldModel';
 import { type InsertGroup, type InsertKind, insertMenuGroups } from '../insert/insertMenu';
@@ -25,7 +26,7 @@ import type { PaletteGroup } from '../palette/model';
 import type { LastGoodPreview } from '../preview/reducer';
 import type { ValueSynth } from '../sample/synth';
 import type { SampleSet } from '../sample/variants';
-import { bandOf, contentHeightPt, contentWidthPt } from './geometry';
+import { bandOf, contentWidthPt } from './geometry';
 import type { InsertContext } from './insertContext';
 import { useContainerInsert } from './useContainerInsert';
 import { useFieldInsert } from './useFieldInsert';
@@ -137,7 +138,7 @@ export function useInsertActions({
         value:
           band === null
             ? snippet
-            : bandPlaced(snippet, bandInsertY(band, contentHeightPt(previewRef.current))),
+            : bandPlaced(snippet, bandInsertY(band, bandBoxHeightPt(previewRef.current, read))),
       });
       if (result.ok) {
         select(`${target.path}[${target.index}]`);
