@@ -15,10 +15,17 @@
 // styles registry restates a whole array. Deleting leaves the referring binding
 // with NO format, which renders the field's own default: the entry is gone, so
 // there is nothing truthful to leave behind.
+//
+// A CHIP reference (`{key:closing}` inside interpolated text) is the one shape
+// that does not fit that: the name sits inside a longer string, so both
+// operations restate the whole string with just that expression rewritten —
+// `{key:newName}` for a rename, a bare `{key}` for a delete, which strips the
+// pick exactly as removing a `format:` key does.
 
 import { MAX_BATCH_OPS, type Op } from '@shojiku/designer-core';
 
-import { RESERVED_FORMAT_NAMES } from './model';
+import { rewriteChipFormat } from './chipRefs';
+import { AMBIGUOUS_FORMAT_NAMES, RESERVED_FORMAT_NAMES } from './model';
 import { type FormatOpPlan, refuse } from './plan';
 import type { FormatRef, FormatUsage } from './usage';
 
@@ -40,20 +47,48 @@ function utf8Bytes(value: string): number {
   return new TextEncoder().encode(value).length;
 }
 
-/** The op rewriting one reference to `name` (absent `path` = the document root
+/** What one reference reads after a rename: the bare new name, or — for a chip
+ * reference — the whole interpolated string with just that expression
+ * rewritten. */
+function renameValue(ref: FormatRef, oldName: string, newName: string): string {
+  return ref.text === undefined ? newName : rewriteChipFormat(ref.text, oldName, newName);
+}
+
+/** The op applying one reference's new value (absent `path` = the document root
  * — the `defaults.formats.<type>` references). */
-function writeRef(ref: FormatRef, name: string): Op {
+function scalarOp(ref: FormatRef, value: string): Op {
   return ref.path === undefined
-    ? { op: 'setScalar', keys: ref.keys, value: name }
-    : { op: 'setScalar', path: ref.path, keys: ref.keys, value: name };
+    ? { op: 'setScalar', keys: ref.keys, value }
+    : { op: 'setScalar', path: ref.path, keys: ref.keys, value };
 }
 
 /** The op clearing one reference (a delete strips the name rather than leaving
- * a dangling one). */
-function clearRef(ref: FormatRef): Op {
+ * a dangling one) — a key removal, or a chip reference's rewritten text. */
+function clearRef(ref: FormatRef, oldName: string): Op {
+  if (ref.text !== undefined) {
+    return scalarOp(ref, rewriteChipFormat(ref.text, oldName, null));
+  }
   return ref.path === undefined
     ? { op: 'removeKey', keys: ref.keys }
     : { op: 'removeKey', path: ref.path, keys: ref.keys };
+}
+
+/** How many bytes the rename adds across the registry key and every reference.
+ * A chip reference is measured by rewriting it, since the name appears inside a
+ * longer string and may appear MORE THAN ONCE in it. A document pushed past the
+ * cap would fail to re-parse on the next undo, so the rename is refused rather
+ * than applied and regretted — nothing downstream re-checks the bytes
+ * (`Editor.applyAll` bounds the op COUNT). */
+function renameDelta(refs: readonly FormatRef[], oldName: string, newName: string): number {
+  const nameDelta = utf8Bytes(newName) - utf8Bytes(oldName);
+  let total = nameDelta;
+  for (const ref of refs) {
+    total +=
+      ref.text === undefined
+        ? nameDelta
+        : utf8Bytes(renameValue(ref, oldName, newName)) - utf8Bytes(ref.text);
+  }
+  return total;
 }
 
 /** The refs a rewrite must touch, or the refusal that stops it before any op is
@@ -77,8 +112,9 @@ function guardRefs(usage: FormatUsage, name: string): Guarded {
 }
 
 /** Plan a rename: the registry key AND every reference, in one batch. Refused
- * whole on an empty / duplicate / reserved target, a truncated usage walk, a
- * non-addressable reference, an over-cap batch, or a result that would not fit
+ * whole on an empty / duplicate / reserved / ambiguous target, a truncated
+ * usage walk, a non-addressable reference, an over-cap batch, or a result that
+ * would not fit
  * the session's template-size cap. `existingNames` includes the source name, so
  * renaming to the same name refuses as a duplicate (a no-op). */
 export function renameFormatOps(
@@ -97,20 +133,19 @@ export function renameFormatOps(
   if (RESERVED_FORMAT_NAMES.includes(newName)) {
     return refuse('reserved_name');
   }
+  if (AMBIGUOUS_FORMAT_NAMES.includes(newName)) {
+    return refuse('ambiguous_name');
+  }
   const guarded = guardRefs(usage, oldName);
   if (!guarded.ok) {
     return guarded.plan;
   }
-  // The registry key plus every reference each grow by the name delta. A
-  // document pushed past the cap would fail to re-parse on the next undo, so
-  // the rename is refused rather than applied and regretted.
-  const delta = utf8Bytes(newName) - utf8Bytes(oldName);
-  if (budget.textBytes + delta * (1 + guarded.refs.length) > budget.maxBytes) {
+  if (budget.textBytes + renameDelta(guarded.refs, oldName, newName) > budget.maxBytes) {
     return refuse('document_too_large');
   }
   const ops: Op[] = [{ op: 'renameKey', keys: ['formats', oldName], to: newName }];
   for (const ref of guarded.refs) {
-    ops.push(writeRef(ref, newName));
+    ops.push(scalarOp(ref, renameValue(ref, oldName, newName)));
   }
   return { ok: true, ops };
 }
@@ -124,7 +159,7 @@ export function deleteFormatOps(name: string, usage: FormatUsage): FormatOpPlan 
   }
   const ops: Op[] = [{ op: 'removeKey', keys: ['formats', name] }];
   for (const ref of guarded.refs) {
-    ops.push(clearRef(ref));
+    ops.push(clearRef(ref, name));
   }
   return { ok: true, ops };
 }

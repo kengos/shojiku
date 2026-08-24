@@ -418,6 +418,22 @@ what they render and offer NO control. A control that can only produce a
 warning is worse than an absent one, and which shape a type takes is the
 engine's answer (`FormatTypeEntry.fixed`), never a list kept in step here.
 
+What counts as a REFERENCE to a registry entry is decided structurally, not
+by spelling. A `formats:` entry is `date`/`datetime`-kind only and the engine
+consults the registry in exactly one place — the dated arms of format
+dispatch — so the registry is reachable from a dated binding and nothing
+else: `format: symbol` on a currency binding names that currency's builtin
+symbol variant, and a rename of an entry called `symbol` must leave it alone.
+A table of builtin spellings was rejected for the rule, because it would have
+to track `money.rs`, `text.rs`, `format.rs` and every locale pack. The
+corollary matters as much: a dated binding's reference IS one even when its
+name shadows a pack variant, so under-rewriting is the worse failure — where
+the definitions cannot resolve a key, the reference is rewritten. The same
+rule filters `{key:format}` written inside interpolated text, which reaches
+the identical dispatch, and the GUI additionally refuses to MINT an entry
+named `default`/`symbol`/`name`/`value`: the engine accepts such a template,
+but authoring one lets a document say a word that means two things.
+
 Pattern editing did not become a free-typing surface: the TOKENS lead, as
 chips each showing their own rendered output and inserting themselves at
 the caret, with the raw string beneath them. The raw string stays editable

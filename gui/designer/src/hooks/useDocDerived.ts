@@ -14,6 +14,7 @@ import { useMemo } from 'react';
 import type { EngineTransport } from '../engine/transport';
 import { formatCatalogKey } from '../formats/catalogKey';
 import { buildFormatUsage, type FormatUsage } from '../formats/usage';
+import type { PaletteGroup } from '../palette/model';
 import { buildStyleFloor } from '../panel/engineDefaults';
 import { buildStyleUsage, type StyleUsage } from '../styles/usage';
 import { buildTree, type TreeView } from '../tree/model';
@@ -26,7 +27,9 @@ export interface DocDerived {
   /** Name → reference paths, for a named style's impact scope. */
   readonly styleUsage: StyleUsage | null;
   /** Name → reference paths for a named FORMAT: the registry section's impact
-   * scope, and what a rename/delete rewrites. */
+   * scope, and what a rename/delete rewrites. Filtered by the definitions —
+   * a `format:` on a non-dated binding is a builtin variant pick, never a
+   * registry reference. */
   readonly formatUsage: FormatUsage | null;
   /** The engine's format catalog for this document, plus the pattern probe. */
   readonly formats: FormatCatalogState;
@@ -39,10 +42,14 @@ export function useDocDerived(
   text: string,
   defaultFontFamily: string | undefined,
   transport: EngineTransport,
+  paletteGroups: readonly PaletteGroup[] | null,
 ): DocDerived {
   const treeView = useMemo(() => buildTree(text), [text]);
   const styleUsage = useMemo(() => buildStyleUsage(text), [text]);
-  const formatUsage = useMemo(() => buildFormatUsage(text), [text]);
+  // The definitions decide which bindings are DATED, and only a dated binding
+  // can reach the registry — without them a `format: symbol` on a currency
+  // field would read as a reference to an entry called `symbol`.
+  const formatUsage = useMemo(() => buildFormatUsage(text, paletteGroups), [text, paletteGroups]);
   const styleFloor = useMemo(() => buildStyleFloor(defaultFontFamily), [defaultFontFamily]);
   // Keyed on the catalog-relevant SLICE, so a body keystroke costs no engine
   // call while a format-default edit costs exactly one.

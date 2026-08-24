@@ -15,6 +15,15 @@ const BINDING: FormatRef = {
 };
 const DEFAULTS: FormatRef = { keys: ['defaults', 'formats', 'date'], addressable: true };
 
+/** A chip reference: the name sits inside a longer interpolated string, so the
+ * rewrite restates the whole string rather than the name alone. */
+const CHIP: FormatRef = {
+  path: 'sections.body.items[1]',
+  keys: ['text'],
+  addressable: true,
+  text: 'Due {order.when:closing} / {order.when:closing}',
+};
+
 /** A budget with room to spare — the size guard is exercised on its own. */
 const ROOMY = { textBytes: 1_000, maxBytes: 2_000_000 };
 
@@ -47,7 +56,7 @@ describe('renameFormatOps', () => {
     expect(plan.ok && plan.ops).toHaveLength(1);
   });
 
-  it('refuses an empty, duplicate or RESERVED target', () => {
+  it('refuses an empty, duplicate, RESERVED or AMBIGUOUS target', () => {
     const u = usage({});
     expect(renameFormatOps('a', '', ['a'], u, ROOMY)).toEqual({ ok: false, reason: 'empty_name' });
     expect(renameFormatOps('a', 'b', ['a', 'b'], u, ROOMY)).toEqual({
@@ -64,6 +73,14 @@ describe('renameFormatOps', () => {
       ok: false,
       reason: 'reserved_name',
     });
+    // A builtin variant spelling on another type CAN be reached, but the
+    // document would then carry one word meaning two things.
+    for (const name of ['default', 'symbol', 'name', 'value']) {
+      expect(renameFormatOps('a', name, ['a'], u, ROOMY)).toEqual({
+        ok: false,
+        reason: 'ambiguous_name',
+      });
+    }
   });
 
   it('refuses WHOLE on a truncated walk, a non-addressable ref, or an over-cap batch', () => {
@@ -154,6 +171,107 @@ describe('deleteFormatOps', () => {
     expect(deleteFormatOps('a', usage({ a: many }))).toEqual({
       ok: false,
       reason: 'batch_too_large',
+    });
+  });
+});
+
+describe('chip references', () => {
+  it('renames EVERY occurrence inside the string, in one setScalar', () => {
+    const plan = renameFormatOps(
+      'closing',
+      'cutoff',
+      ['closing'],
+      usage({ closing: [CHIP] }),
+      ROOMY,
+    );
+    expect(plan).toEqual({
+      ok: true,
+      ops: [
+        { op: 'renameKey', keys: ['formats', 'closing'], to: 'cutoff' },
+        {
+          op: 'setScalar',
+          path: 'sections.body.items[1]',
+          keys: ['text'],
+          value: 'Due {order.when:cutoff} / {order.when:cutoff}',
+        },
+      ],
+    });
+  });
+
+  it('STRIPS the pick on a delete rather than removing the text key', () => {
+    // `removeKey` here would delete the whole `text:` — the reference is a
+    // fragment of a longer string, not a key of its own.
+    const plan = deleteFormatOps('closing', usage({ closing: [CHIP] }));
+    expect(plan).toEqual({
+      ok: true,
+      ops: [
+        { op: 'removeKey', keys: ['formats', 'closing'] },
+        {
+          op: 'setScalar',
+          path: 'sections.body.items[1]',
+          keys: ['text'],
+          value: 'Due {order.when} / {order.when}',
+        },
+      ],
+    });
+  });
+
+  it('measures the size delta per OCCURRENCE, not per reference', () => {
+    // The chip fixture names `closing` twice, so a +7-byte rename grows the
+    // document by 7 (the registry key) + 14 (the two occurrences) = 21 — a
+    // per-reference formula would have budgeted 14 and overflowed the cap.
+    const base = 1_000;
+    const tight = { textBytes: base, maxBytes: base + 20 };
+    expect(
+      renameFormatOps('closing', 'closingXXXXXXX', ['closing'], usage({ closing: [CHIP] }), tight),
+    ).toEqual({ ok: false, reason: 'document_too_large' });
+    const roomy = { textBytes: base, maxBytes: base + 21 };
+    expect(
+      renameFormatOps('closing', 'closingXXXXXXX', ['closing'], usage({ closing: [CHIP] }), roomy)
+        .ok,
+    ).toBe(true);
+  });
+
+  it('refuses whole when a chip reference is non-addressable', () => {
+    const stuck = { ...CHIP, addressable: false };
+    expect(
+      renameFormatOps('closing', 'cutoff', ['closing'], usage({ closing: [stuck] }), ROOMY),
+    ).toEqual({ ok: false, reason: 'unaddressable_ref' });
+    expect(deleteFormatOps('closing', usage({ closing: [stuck] }))).toEqual({
+      ok: false,
+      reason: 'unaddressable_ref',
+    });
+  });
+
+  it('rewrites a chip reference in the `document:` block', () => {
+    // The shape the walk really emits for the metadata block: `document:` is
+    // the map, the field is the drill. (A chip ref is never ROOT-addressed —
+    // only `defaults.formats.<type>` is, and that one carries no text.)
+    const meta: FormatRef = {
+      path: 'document',
+      keys: ['title'],
+      addressable: true,
+      text: 'Invoice {order.when:closing}',
+    };
+    const plan = renameFormatOps(
+      'closing',
+      'cutoff',
+      ['closing'],
+      usage({ closing: [meta] }),
+      ROOMY,
+    );
+    expect(plan.ok && plan.ops[1]).toEqual({
+      op: 'setScalar',
+      path: 'document',
+      keys: ['title'],
+      value: 'Invoice {order.when:cutoff}',
+    });
+    const removal = deleteFormatOps('closing', usage({ closing: [meta] }));
+    expect(removal.ok && removal.ops[1]).toEqual({
+      op: 'setScalar',
+      path: 'document',
+      keys: ['title'],
+      value: 'Invoice {order.when}',
     });
   });
 });

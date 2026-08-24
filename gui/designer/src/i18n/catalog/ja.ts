@@ -594,6 +594,7 @@ export const ja: LanguageCatalog = {
     'toolbar.sizeUp': 'フォントサイズを大きく',
     'toolbar.sizeDown': 'フォントサイズを小さく',
     'toolbar.styles.usage': '{n, number}箇所で使用中',
+    'toolbar.styles.usageOne': '{n, number}箇所で使用中',
     'toolbar.color.custom': 'カスタム',
     'toolbar.color.clear': 'クリア',
     'toolbar.origin.style': 'スタイル「{name}」由来',
@@ -912,6 +913,8 @@ export const ja: LanguageCatalog = {
     'formats.summaryMany': '{type}={value} ほか{others, number}件 · 書式{registry, number}個',
     'formats.error.emptyName': '書式名を入力してください。',
     'formats.error.reservedName': 'その名前はデータ型の名前なので、書式名には使えません。',
+    'formats.error.ambiguousName':
+      'その名前は他のデータ型の組み込み書式名と同じなので、書式名にすると紛らわしくなります。',
     'formats.error.tooMany': '書式の上限（256個）に達しています。',
     'formats.error.documentTooLarge': 'その名前に変更すると、文書がサイズ上限を超えてしまいます。',
     'formats.error.emptyPattern': 'パターンを入力してください。空のままでは保存できません。',

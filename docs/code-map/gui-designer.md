@@ -307,7 +307,11 @@ lists name the destructured stable fields, never `editor` itself.
   over the LAST-GOOD inspect and gated on `inspect.text_metrics`.
 - `hooks/useDocDerived.ts` — shared read-only indexes memoized on the
   text: `treeView` (nullable), `styleUsage`, `formatUsage`, `styleFloor`
-  — plus `formats`, the ENGINE's format catalog. That one is not a pure
+  — plus `formats`, the ENGINE's format catalog. `formatUsage` also takes
+  the palette groups (`defs.paletteGroups`, passed through from
+  `useCanvasWiring`), because only the DEFINITIONS can say which bindings
+  are dated and therefore which `format:` values reach the registry at
+  all. That one is not a pure
   derivation (it is an engine answer, so `null` until it arrives and
   permanently on a transport that cannot answer) but lives here because
   it is keyed on the document and consumed by the same surfaces.

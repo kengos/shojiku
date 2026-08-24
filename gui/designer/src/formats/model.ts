@@ -47,6 +47,20 @@ export const RESERVED_FORMAT_NAMES: readonly string[] = [
   'image',
 ];
 
+/** Names that are a BUILTIN format spelling on some other field type
+ * (`format: symbol` on a currency binding, `format: value` on an enum-labelled
+ * string, `format: default` on any fixed type). The engine accepts such a
+ * registry entry — a dated binding reaches it perfectly well — but the document
+ * then carries one word meaning two things, which is what made a rename rewrite
+ * the wrong references in the first place. The usage walk now tells them apart
+ * structurally; refusing the name at MINT is the other half, so a new document
+ * never acquires the ambiguity.
+ *
+ * Mirrors the variant spellings in `engine/formatter/src/format/money.rs`
+ * (`default` / `symbol` / `name`) and `format/text.rs` (`value`). Unlike
+ * `RESERVED_FORMAT_NAMES` this is the GUI's own caution, not an engine rule. */
+export const AMBIGUOUS_FORMAT_NAMES: readonly string[] = ['default', 'symbol', 'name', 'value'];
+
 /** One registry entry, as the surface displays it. `kind` is the RAW wire
  * spelling rather than a narrowed union: an entry whose `type:` is neither
  * `date` nor `datetime` does not parse, but the document is invalid for much of
