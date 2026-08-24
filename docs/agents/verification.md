@@ -117,6 +117,23 @@ Saying "verify was green before these three comment edits, and no gate
 reads comments" is a stronger claim than a second green run, because it
 names *why*.
 
+**The inverse has no such defence: a green earned WHILE you were editing
+never stood at all.** Everything above is about edits made *after* a run;
+a run overlapped by edits is a different animal, because it measured a
+tree that no longer exists and never existed as a whole. The gate lock
+does not save you — it serializes gates, not editors — so a long run
+started before a fix and read after it reports PASS over a mixture of the
+two trees, and nothing in the output says so. It is the most expensive
+kind of green, because it arrives exactly when you are ready to believe
+it. Treat the last edit, not the last command, as the thing a green run
+is about: if a file changed after the run began, the run is void, and
+saying "it passed" is a claim about no tree at all.
+
+Two habits keep it cheap. Start a long gate only when you have nothing
+further to change, and when you do change something mid-run, say so out
+loud in the record rather than letting the PASS line stand for the new
+tree.
+
 ## Where this is written down
 
 | Home | Holds |
