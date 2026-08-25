@@ -591,7 +591,7 @@ sections:
     fireEvent.click(screen.getByRole('button', { name: 'Styles' }));
     const heading = screen.getByRole('menuitemcheckbox', { name: /heading/ });
     expect(heading.getAttribute('aria-checked')).toBe('true');
-    expect(heading.textContent).toContain('Used in 1 places');
+    expect(heading.textContent).toContain('Used in 1 place');
     const unused = screen.getByRole('menuitemcheckbox', { name: /unused/ });
     expect(unused.getAttribute('aria-checked')).toBe('false');
     expect(unused.textContent).not.toContain('Used in');

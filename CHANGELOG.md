@@ -225,6 +225,45 @@ platform binaries.
   same engine version" instead.
 
 ### Fixed
+- **Renaming a named format no longer rewrites places that were never
+  referring to it.** `symbol`, `name`, `value` and `default` are built-in
+  format names on other field types — `format: symbol` on a money field asks
+  for ¥, not for a registry entry — but the Designer matched references by
+  spelling alone. So registering a date format called `symbol` and then
+  renaming it also rewrote every money field spelling it, and
+  `defaults.formats.currency` with them, silently changing how amounts
+  displayed; deleting the entry stripped those keys outright. The editor now
+  decides what a reference IS from the field's declared type rather than from
+  the word: a named format can only be reached from a date or datetime field,
+  so nothing else is touched, and the "used in N places" count says how many
+  places would really change. A name that shadows a locale's own variant is
+  still a real reference on a date field and is still rewritten. Where the
+  data dictionary cannot answer — no definitions loaded, or a key it does not
+  declare — the old behaviour stands and the reference is rewritten, since a
+  visible over-rewrite beats a name left dangling.
+
+- **A rename now reaches formats written inside text.** `{issued:closing}` in
+  a text item, a link URL, a QR code, a table header label or the document
+  title picks a named format exactly as a field's `format:` does, and none of
+  them were being rewritten — so a rename left those spots naming an entry
+  that no longer existed, and the page fell back to the default form with a
+  warning. They are rewritten now, in the same single undo step as everything
+  else, and a delete strips the format from them rather than the text around
+  it.
+
+- **The Designer refuses to create or rename a format into one of those
+  ambiguous names.** Nothing stopped you calling an entry `symbol` in the
+  first place, which is what made the document able to say one word meaning
+  two things. It now says so and writes nothing, so a new document never
+  acquires the ambiguity. (The engine still accepts such a template; this is
+  the editor declining to author one.)
+
+- **"Used in 1 places" now reads "Used in 1 place".** The reference count
+  shown on a named style and a named format had one wording for every number.
+  It was easy to miss while counts were usually plural; the fix above makes a
+  count of one common, so it is fixed here rather than filed. Languages
+  without a plural distinction are unaffected.
+
 - **A hidden table header no longer looks like a hole in the page.** A table
   can hide its header row — the labels stay in the PDF's text layer while
   nothing paints — and the Designer had no way to tell that strip apart from

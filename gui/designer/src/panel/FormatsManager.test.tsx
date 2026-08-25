@@ -3,24 +3,30 @@ import { describe, expect, it } from 'vitest';
 import { useEditor } from '../editor/useEditor';
 import { buildFormatUsage } from '../formats/usage';
 import { I18nProvider } from '../i18n/context';
+import { readDefinitionsView } from '../palette/model';
 import { FORMAT_CATALOG, fakeProbe } from '../testkit/formatCatalog';
 import { FormatsManager } from './FormatsManager';
 
 function Harness({
   source,
+  definitions,
   usageNull = false,
   maxBytes = 2_000_000,
 }: {
   readonly source: string;
+  /** Definitions text: what tells the usage walk which bindings are DATED, and
+   * so which `format:` values are registry references at all. */
+  readonly definitions?: string;
   readonly usageNull?: boolean;
   readonly maxBytes?: number;
 }) {
   const editor = useEditor(source);
+  const groups = definitions === undefined ? null : readDefinitionsView(definitions);
   return (
     <I18nProvider locale="en">
       <FormatsManager
         controller={editor}
-        usage={usageNull ? null : buildFormatUsage(editor.text)}
+        usage={usageNull ? null : buildFormatUsage(editor.text, groups)}
         catalog={FORMAT_CATALOG}
         probe={fakeProbe()}
         maxBytes={maxBytes}
@@ -239,5 +245,123 @@ describe('FormatsManager', () => {
     await pickRowAction(rows()[0], 'Delete');
     await waitFor(() => expect(doc()).not.toContain('__proto__'));
     expect(({} as Record<string, unknown>).type).toBeUndefined();
+  });
+});
+
+describe('FormatsManager — a registry name that collides with a builtin spelling', () => {
+  // The defect this suite pins: `symbol` is the currency's builtin variant AND
+  // (here) a registry entry name. Before the dated-binding filter, renaming the
+  // entry rewrote the currency binding and `defaults.formats.currency` too,
+  // silently changing how money displayed — and DELETING it stripped their
+  // `format:` keys outright.
+  const DEFINITIONS = [
+    'type: object',
+    'properties:',
+    '  order:',
+    '    type: object',
+    '    properties:',
+    '      when: { type: string, format: date }',
+    '      total: { type: number, format: currency }',
+    '',
+  ].join('\n');
+
+  const COLLIDING = [
+    'formats:',
+    '  symbol: { type: date, pattern: "yyyy.MM.dd" }',
+    'defaults:',
+    '  formats:',
+    '    currency: symbol',
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - { type: text, text: a, data: { key: order.when, format: symbol } }',
+    '      - { type: text, text: b, data: { key: order.total, format: symbol } }',
+    '      - { type: text, text: "paid {order.when:symbol}" }',
+    '      - { type: text, text: "due {order.total:symbol}" }',
+    '',
+  ].join('\n');
+
+  /** The two lines that must survive byte-identically: the currency binding and
+   * the currency default, neither of which can reach the registry. */
+  const CURRENCY_BINDING = 'data: { key: order.total, format: symbol }';
+  const CURRENCY_DEFAULT = 'currency: symbol';
+  const CURRENCY_CHIP = 'due {order.total:symbol}';
+
+  it('counts only the references that can actually REACH the registry', () => {
+    render(<Harness source={COLLIDING} definitions={DEFINITIONS} />);
+    // Four sites spell `symbol`; only the two on the DATE field are references
+    // — the dated binding and the dated chip.
+    expect(within(rows()[0]).getByText('Used in 2 places')).toBeTruthy();
+  });
+
+  it('renames the dated references and leaves the currency ones byte-identical', async () => {
+    render(<Harness source={COLLIDING} definitions={DEFINITIONS} />);
+    await pickRowAction(rows()[0], 'Rename');
+    fireEvent.change(screen.getByLabelText('Format name'), { target: { value: 'stamp' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+    await waitFor(() => expect(doc()).toContain('stamp:'));
+    expect(doc()).toContain('data: { key: order.when, format: stamp }');
+    expect(doc()).toContain('paid {order.when:stamp}');
+    // The currency sites are untouched — the whole point of the fix.
+    expect(doc()).toContain(CURRENCY_BINDING);
+    expect(doc()).toContain(CURRENCY_DEFAULT);
+    expect(doc()).toContain(CURRENCY_CHIP);
+    // ONE undo step puts every rewritten site back.
+    fireEvent.click(screen.getByTestId('undo'));
+    await waitFor(() => expect(doc()).toBe(COLLIDING));
+  });
+
+  it('clears the dated references on DELETE and leaves the currency ones alone', async () => {
+    render(<Harness source={COLLIDING} definitions={DEFINITIONS} />);
+    await pickRowAction(rows()[0], 'Delete');
+    fireEvent.click(within(rows()[0]).getByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(doc()).not.toContain('symbol: { type: date'));
+    // The dated binding loses its format key; the dated chip loses its pick.
+    expect(doc()).toContain('data: { key: order.when }');
+    expect(doc()).toContain('paid {order.when}');
+    // The currency sites keep theirs — deleting the entry says nothing about
+    // the currency's own `symbol` variant.
+    expect(doc()).toContain(CURRENCY_BINDING);
+    expect(doc()).toContain(CURRENCY_DEFAULT);
+    expect(doc()).toContain(CURRENCY_CHIP);
+    fireEvent.click(screen.getByTestId('undo'));
+    await waitFor(() => expect(doc()).toBe(COLLIDING));
+  });
+
+  it('still rewrites EVERY site when there are no definitions to resolve against', async () => {
+    // Without definitions nothing is resolvable, so the walk records every
+    // site — over-rewriting, which is today's behaviour and visible, rather
+    // than under-rewriting, which leaves a dangling name.
+    render(<Harness source={COLLIDING} />);
+    expect(within(rows()[0]).getByText('Used in 4 places')).toBeTruthy();
+  });
+
+  it('REFUSES to mint a name that is a builtin variant spelling', async () => {
+    render(<Harness source={BARE} />);
+    fireEvent.click(screen.getByRole('button', { name: 'New format' }));
+    fireEvent.change(screen.getByLabelText('Format name'), { target: { value: 'symbol' } });
+    fireEvent.change(screen.getByLabelText('Pattern'), { target: { value: 'y' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(
+      await screen.findByText(
+        'That word already names a built-in format on another field type, so it would be ambiguous here.',
+      ),
+    ).toBeTruthy();
+    expect(doc()).not.toContain('symbol');
+  });
+
+  it('REFUSES a rename INTO such a name, changing nothing', async () => {
+    render(<Harness source={REGISTERED} />);
+    const before = doc();
+    await pickRowAction(rows()[0], 'Rename');
+    fireEvent.change(screen.getByLabelText('Format name'), { target: { value: 'value' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+    expect(
+      await screen.findByText(
+        'That word already names a built-in format on another field type, so it would be ambiguous here.',
+      ),
+    ).toBeTruthy();
+    expect(doc()).toBe(before);
   });
 });

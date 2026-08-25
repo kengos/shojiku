@@ -103,7 +103,7 @@ describe('StylesManager', () => {
 
   it('shows a usage count on a used style and an edit invitation on an unused one', () => {
     render(<Harness source={STYLED} />);
-    expect(within(rows()[0]).getByText('Used in 1 places')).toBeTruthy();
+    expect(within(rows()[0]).getByText('Used in 1 place')).toBeTruthy();
     expect(within(rows()[0]).queryByText('Click to edit')).toBeNull();
     expect(within(rows()[1]).getByText('Click to edit')).toBeTruthy();
     expect(within(rows()[1]).queryByText(/Used in/)).toBeNull();
@@ -174,7 +174,7 @@ describe('StylesManager', () => {
     await pickRowAction(rows()[0], 'heading', 'Delete');
     // The confirm shows the impact count first.
     const confirm = rows()[0].querySelector('.sj-style-confirm') as HTMLElement;
-    expect(within(confirm).getByText(/Used in 1 places/)).toBeTruthy();
+    expect(within(confirm).getByText(/Used in 1 place/)).toBeTruthy();
     // Cancel changes nothing.
     fireEvent.click(within(confirm).getByText('Cancel'));
     expect(doc()).toBe(before);

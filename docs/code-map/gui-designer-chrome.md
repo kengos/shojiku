@@ -23,6 +23,14 @@ tooltip replaces it — gated by `ui/chromeConvention.test.ts`).
   never re-scanned; missing arg → null so the caller falls back) +
   `formatList` (locale-aware "and" list join over `Intl.ListFormat`,
   hostile-tag fallback to `en` — for chrome naming a SET of things).
+  The subset has NO `plural` arm, deliberately; a count string picks its
+  own key instead (see `i18n/usageLabel.ts`), which is enough while every
+  shipped language distinguishes at most one-from-other. A locale with
+  more plural categories is the moment to grow the formatter.
+- `i18n/usageLabel.ts` — `usageLabel(t, count)`: the "used in N places"
+  line, choosing `toolbar.styles.usageOne` vs `toolbar.styles.usage`.
+  Shared by both registry rows and the style picker so the rule lives
+  once rather than as a ternary per call site.
 - `i18n/catalog/` — one module per language (`en`/`ja`/`zh-tw`/`zh-cn`
   FULL — diagnostics + chrome; `hi`/`fil` chrome-only with per-key
   English diagnostic fallback). `i18n/catalog.ts` — `DEFAULT_CATALOG`
@@ -187,7 +195,10 @@ resolved style.
 - `formats/` — the `formats:` registry's domain model, laid out
   deliberately parallel to the styles one above. `model.ts`
   (`readFormatsView`, `MAX_FORMATS`, `RESERVED_FORMAT_NAMES` mirroring
-  `FieldType::from_name`, the ordered `FORMAT_DEFAULT_TYPES`), `plan.ts`
+  `FieldType::from_name`, `AMBIGUOUS_FORMAT_NAMES` — the GUI's own refusal
+  of `default`/`symbol`/`name`/`value`, which the engine ACCEPTS as entry
+  names but which then mean two things in one document, the ordered
+  `FORMAT_DEFAULT_TYPES`), `plan.ts`
   (the refusal vocabulary; four of its messages point at the
   `styles.error.*` catalog keys on purpose — they are worded about the
   DOCUMENT and the rewrite, not about styles), `fieldOps.ts`
@@ -195,18 +206,62 @@ resolved style.
   field is required and authoring without it produces a template the
   engine cannot parse) and `refOps.ts` (rename/delete, one transactional
   batch, refused whole).
-- `formats/usage.ts` — `buildFormatUsage(text)` → `FormatUsage {refs,
-  truncated}`. TWO roots, which is what makes it differ from the style
-  walk it otherwise mirrors: every binding's `format:` under `sections`
-  (matched GENERICALLY — `Binding.format` is the only `format:` string in
-  the template wire, so this reaches items, spans, table columns, char
-  grids and the `bindings:` map, and stays complete when a new binding
-  position ships), AND `defaults.formats.<type>`, which sits outside
-  `sections` entirely and is root-addressed. An inline `{ pattern }`
-  default is a definition rather than a reference and is skipped.
-  A registry name can also be named by definitions' `displayFormat:`, in
-  a file this walk is not given; those references are simply not
-  rewritten — the same silence a style name's unreachable ones get.
+- `formats/usage.ts` — `buildFormatUsage(text, paletteGroups)` →
+  `FormatUsage {refs, truncated}`, plus the `FormatRef` shape. THREE
+  roots, which is what makes it differ from the style walk it otherwise
+  mirrors: every binding's `format:` under `sections` (matched
+  GENERICALLY — `Binding.format` is the only `format:` the REGISTRY is
+  reachable from, so this reaches items, spans, table columns, char grids
+  and the `bindings:` map, and stays complete when a new binding position
+  ships; the wire's one other `format:`, `PageNumberItem.format`, is a
+  page-number TEMPLATE and is skipped by type), EVERY string
+  under `sections` and under
+  `document:` (`{key:closing}` reaches the same dispatch, so a rename
+  that skipped it would half-apply) — every string rather than every
+  INTERPOLATED one, since enumerating the dozen-odd surfaces the engine
+  interpolates would go stale, and the dated filter is what keeps a
+  brace-carrying literal that is NOT interpolated (`Binding.placeholder`,
+  a table's `overflow_text`) from being rewritten in practice — AND
+  `defaults.formats.<type>`, which
+  sits outside `sections` entirely and is root-addressed — only its
+  `date`/`datetime` slots, the other four naming a per-type builtin pick.
+  An inline `{ pattern }` default is a definition rather than a reference
+  and is skipped. A registry name can also be named by definitions'
+  `displayFormat:`, in a file this walk is not given; those references
+  are simply not rewritten — the same silence a style name's unreachable
+  ones get.
+- `formats/usageWalk.ts` — the recursive half: the per-node visit plus
+  the two pieces of CONTEXT a reference needs, the enclosing row scope
+  (opened by an array source under `columns`/`cell`/`item`) and the
+  item's `bindings:` declaration map (served to every string beneath it,
+  spans included, as the engine does).
+- `formats/datedBinding.ts` — WHICH references are references at all.
+  A `formats:` entry is `date`/`datetime`-kind only and the engine
+  consults the registry solely in the dated arms of format dispatch, so
+  the registry is reachable from a DATED binding and nothing else: a
+  `format: symbol` on a currency binding names that currency's builtin
+  symbol variant, never an entry called `symbol`. Filtering by that
+  STRUCTURAL rule rather than by a table of builtin spellings is
+  deliberate — a spelling table would have to track `money.rs`,
+  `text.rs`, `format.rs` and every locale pack. An UNRESOLVABLE type (no
+  definitions, an undeclared key) records the reference: over-rewriting
+  is today's visible behaviour, under-rewriting leaves a dangling name.
+  The corollary the tests pin positively: an entry whose name shadows a
+  locale-PACK variant is a real reference from a dated binding and must
+  keep being rewritten. The engine agrees INDEPENDENTLY at the picker
+  layer — `engine/authoring/src/formats/variants.rs` adds registry names
+  to a type's pickable spellings only for `Date | Datetime`, and
+  `kind_matches` even keeps a `datetime` entry off a `date` field — so
+  the usage walk was the last place in the system still matching a
+  registry reference by SPELLING. `datedChip` is the chip-side
+  companion: an interpolated name can resolve at more than one
+  (key, scope) pair, so it answers from the whole candidate set and
+  records unless every pair that resolves says non-dated.
+- `formats/chipRefs.ts` — the `{key:format}` half: `chipFormats` reads a
+  string's format-picking expressions (flagging one at `MAX_TEXT_EXPRS`,
+  where the GUI parser stops and the engine does not, so the rewrite
+  refuses instead), `rewriteChipFormat` restates the whole string with
+  just that name changed — or stripped to a bare `{key}` on a delete.
 
 ## Text editing (interpolation chips)
 

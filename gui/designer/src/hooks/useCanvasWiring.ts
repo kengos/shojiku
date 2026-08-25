@@ -86,7 +86,7 @@ export function useCanvasWiring(
     // targets only, and a modal's close button is not one).
     readPageLabel: useCallback(() => pageSummary(readPageView(editor.read('page'))), [editor.read]),
   });
-  const derived = useDocDerived(editor.text, defaultFontFamily, transport);
+  const derived = useDocDerived(editor.text, defaultFontFamily, transport, defs.paletteGroups);
 
   return { nav, drag, image, inline, pdf, derived };
 }

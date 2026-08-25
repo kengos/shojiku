@@ -576,6 +576,7 @@ export const en: LanguageCatalog = {
     'toolbar.sizeUp': 'Increase font size',
     'toolbar.sizeDown': 'Decrease font size',
     'toolbar.styles.usage': 'Used in {n, number} places',
+    'toolbar.styles.usageOne': 'Used in {n, number} place',
     'toolbar.color.custom': 'Custom',
     'toolbar.color.clear': 'Clear',
     'toolbar.origin.style': 'From style "{name}"',
@@ -896,6 +897,8 @@ export const en: LanguageCatalog = {
       '{type} = {value} and {others, number} more · {registry, number} formats',
     'formats.error.emptyName': 'Enter a format name.',
     'formats.error.reservedName': 'That is a field type name, so it cannot name a format.',
+    'formats.error.ambiguousName':
+      'That word already names a built-in format on another field type, so it would be ambiguous here.',
     'formats.error.tooMany': 'The format limit (256) is reached.',
     'formats.error.documentTooLarge':
       'Renaming to that name would push the document past its size limit.',

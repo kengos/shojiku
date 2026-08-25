@@ -11,6 +11,7 @@
 import type { EditorController } from '../editor/useEditor';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
+import { usageLabel } from '../i18n/usageLabel';
 import type { ItemView } from '../panel/itemView';
 import { styleNamesOp, toggleStyleName } from '../panel/model';
 import { readStylesView } from '../panel/stylesModel';
@@ -112,7 +113,7 @@ export function StylePicker({
                 </span>
                 {count > 0 ? (
                   <span className="shrink-0 whitespace-nowrap text-sm text-muted">
-                    {t('toolbar.styles.usage', { n: count })}
+                    {usageLabel(t, count)}
                   </span>
                 ) : null}
               </button>

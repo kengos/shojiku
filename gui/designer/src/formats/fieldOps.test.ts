@@ -27,6 +27,12 @@ describe('createFormatOps', () => {
       ok: false,
       reason: 'duplicate_name',
     });
+    for (const name of ['default', 'symbol', 'name', 'value']) {
+      expect(createFormatOps(name, 'date', 'y', [])).toEqual({
+        ok: false,
+        reason: 'ambiguous_name',
+      });
+    }
     expect(createFormatOps('image', 'date', 'y', [])).toEqual({
       ok: false,
       reason: 'reserved_name',

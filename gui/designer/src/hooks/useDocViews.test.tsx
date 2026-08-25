@@ -173,3 +173,44 @@ describe('Designer — opening the data editor ON a field', () => {
     expect(screen.getByText(/Select a data field on the left/)).not.toBeNull();
   });
 });
+
+describe('Designer — the definitions reach the format-reference walk', () => {
+  // The unit suites prove the RULE; this proves the WIRING. Only the
+  // definitions can say which bindings are dated, and they arrive as a
+  // Designer prop — so a rename judged over `paletteGroups: null` would
+  // silently fall back to rewriting every spelling, with every other test
+  // still green.
+  const DEFINITIONS = [
+    'type: object',
+    'properties:',
+    '  order:',
+    '    type: object',
+    '    properties:',
+    '      when: { type: string, format: date }',
+    '      total: { type: number, format: currency }',
+    '',
+  ].join('\n');
+
+  const COLLIDING = [
+    'version: 0.1.0',
+    'formats:',
+    '  symbol: { type: date, pattern: "yyyy.MM.dd" }',
+    'sections:',
+    '  body:',
+    '    items:',
+    '      - { type: text, data: { key: order.when, format: symbol } }',
+    '      - { type: text, data: { key: order.total, format: symbol } }',
+    '',
+  ].join('\n');
+
+  it('counts only the DATED reference once the definitions are threaded in', async () => {
+    draw(makeTransport(), { source: COLLIDING, definitions: DEFINITIONS });
+    await waitFor(() => screen.getByRole('button', { name: 'sections.body.items[0]' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Document' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Display formats/ }));
+    // Two sites spell `symbol`; only the one on the DATE field is a reference.
+    // Without the prop reaching the walk this row would read "Used in 2
+    // places".
+    expect(await screen.findByText('Used in 1 place')).toBeTruthy();
+  });
+});

@@ -105,9 +105,13 @@ them cannot drift from the page. Capability key: `format.catalog`.
 
 ## Limitations
 
-- A `formats:` entry that shadows a builtin variant name is ignored
-  (`reserved_format_name`), and the registry is capped at 256 entries
-  (`too_many_formats`).
+- A `formats:` entry named after a FIELD TYPE — `currency`, `date` and the
+  rest of the nine — is an error (`reserved_format_name`): such a name is a
+  type override in format dispatch, so the entry could never be reached. The
+  registry is capped at 256 entries (`too_many_formats`).
+- An entry that shadows a locale-pack VARIANT name is the opposite case — it is
+  honoured, and wins over the pack's own variant of that name on a
+  `date`/`datetime` field.
 - Inline `{ pattern }` defaults apply to `date`/`datetime` only; on another
   type the default form renders (`format_pattern_ignored`).
 - A variant name that exists in no pack renders the default form

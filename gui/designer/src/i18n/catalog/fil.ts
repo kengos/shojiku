@@ -370,6 +370,7 @@ export const fil: LanguageCatalog = {
     'toolbar.sizeUp': 'Palakihin ang laki ng font',
     'toolbar.sizeDown': 'Paliitin ang laki ng font',
     'toolbar.styles.usage': 'Ginamit sa {n, number} na lugar',
+    'toolbar.styles.usageOne': 'Ginamit sa {n, number} na lugar',
     'toolbar.color.custom': 'Custom',
     'toolbar.color.clear': 'I-clear',
     'toolbar.origin.style': 'Mula sa istilong "{name}"',
@@ -698,6 +699,8 @@ export const fil: LanguageCatalog = {
     'formats.error.emptyName': 'Maglagay ng pangalan ng pormat.',
     'formats.error.reservedName':
       'Pangalan iyan ng uri ng field, kaya hindi ito maaaring maging pangalan ng pormat.',
+    'formats.error.ambiguousName':
+      'Pangalan na iyan ng built-in na pormat sa ibang uri ng field, kaya magiging malabo dito.',
     'formats.error.tooMany': 'Naabot na ang limitasyong 256 na pormat.',
     'formats.error.documentTooLarge':
       'Lalagpas sa laki-limitasyon ang dokumento kung papalitan ng pangalang iyon.',

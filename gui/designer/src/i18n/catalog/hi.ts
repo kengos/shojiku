@@ -354,6 +354,7 @@ export const hi: LanguageCatalog = {
     'toolbar.sizeUp': 'फ़ॉन्ट आकार बढ़ाएँ',
     'toolbar.sizeDown': 'फ़ॉन्ट आकार घटाएँ',
     'toolbar.styles.usage': '{n, number} स्थानों पर प्रयुक्त',
+    'toolbar.styles.usageOne': '{n, number} स्थान पर प्रयुक्त',
     'toolbar.color.custom': 'कस्टम',
     'toolbar.color.clear': 'साफ़ करें',
     'toolbar.origin.style': 'शैली "{name}" से',
@@ -667,6 +668,8 @@ export const hi: LanguageCatalog = {
     'formats.summaryMany': '{type} = {value} और {others, number} अन्य · {registry, number} प्रारूप',
     'formats.error.emptyName': 'प्रारूप का नाम दर्ज करें।',
     'formats.error.reservedName': 'यह एक फ़ील्ड-प्रकार का नाम है, इसलिए प्रारूप का नाम नहीं बन सकता।',
+    'formats.error.ambiguousName':
+      'यह शब्द किसी अन्य फ़ील्ड-प्रकार के अंतर्निहित प्रारूप का नाम है, इसलिए यहाँ अस्पष्ट होगा।',
     'formats.error.tooMany': 'प्रारूपों की सीमा (256) पूरी हो गई है।',
     'formats.error.documentTooLarge': 'उस नाम में बदलने पर दस्तावेज़ अपनी आकार-सीमा पार कर जाएगा।',
     'formats.error.emptyPattern': 'पैटर्न दर्ज करें — इसके बिना प्रारूप सहेजा नहीं जा सकता।',

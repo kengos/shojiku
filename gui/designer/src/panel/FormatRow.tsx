@@ -12,6 +12,7 @@
 
 import type { FormatEntry } from '../formats/model';
 import { useI18n } from '../i18n/context';
+import { usageLabel } from '../i18n/usageLabel';
 import { BTN_SM } from '../ui/chrome';
 import { IconMore } from '../ui/icons';
 import { Menu } from '../ui/Menu';
@@ -58,7 +59,7 @@ export function FormatRow({ entry, usageCount, samples, active, actions }: Forma
             {samples.length > 0 ? samples.join(' / ') : entry.pattern}
           </span>
           <span className="ml-auto shrink-0 text-sm text-muted">
-            {usageCount > 0 ? t('toolbar.styles.usage', { n: usageCount }) : t('palette.unused')}
+            {usageCount > 0 ? usageLabel(t, usageCount) : t('palette.unused')}
           </span>
         </button>
         <Menu
@@ -99,7 +100,7 @@ export function FormatRow({ entry, usageCount, samples, active, actions }: Forma
               field's own default renders. Saying the count first is the
               shared-edit rule: impact scope before the irreversible click. */}
           <span className="flex-1 text-sm">
-            {t('formats.deleteConfirm')} {t('toolbar.styles.usage', { n: usageCount })}
+            {t('formats.deleteConfirm')} {usageLabel(t, usageCount)}
           </span>
           <button type="button" className={BTN_SM} onClick={actions.submitDelete}>
             {t('styles.confirm')}

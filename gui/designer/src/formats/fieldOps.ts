@@ -12,13 +12,13 @@
 // the break is one layer down. So an empty pattern is a refusal, never a write.
 
 import type { Op } from '@shojiku/designer-core';
-import { editableKind, MAX_FORMATS, RESERVED_FORMAT_NAMES } from './model';
+import { AMBIGUOUS_FORMAT_NAMES, editableKind, MAX_FORMATS, RESERVED_FORMAT_NAMES } from './model';
 import { type FormatOpPlan, refuse } from './plan';
 
 /** Plan a create: author the whole entry — name, kind and pattern — as ONE
  * `putValue`, so the registry never briefly holds a half-written entry the
- * engine would refuse to parse. Refused on an empty / duplicate / reserved
- * name, an over-cap registry, or an empty pattern. */
+ * engine would refuse to parse. Refused on an empty / duplicate / reserved /
+ * ambiguous name, an over-cap registry, or an empty pattern. */
 export function createFormatOps(
   name: string,
   kind: string,
@@ -33,6 +33,9 @@ export function createFormatOps(
   }
   if (RESERVED_FORMAT_NAMES.includes(name)) {
     return refuse('reserved_name');
+  }
+  if (AMBIGUOUS_FORMAT_NAMES.includes(name)) {
+    return refuse('ambiguous_name');
   }
   if (existingNames.length >= MAX_FORMATS) {
     return refuse('too_many_formats');
