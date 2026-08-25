@@ -701,6 +701,12 @@ platform binaries.
   is already 40pt, a keyword typed with stray spaces — used to leave your
   version on screen while the document held the rewritten one. Now the field
   shows you what was actually kept.
+- **The same fix reaches the data editor's sample values.** Clearing a
+  date-and-time sample writes nothing — there is no blank value to store — and
+  the box used to sit empty over a sample that was still there. Typing `100.0`
+  into a number sample stored `100` while the box kept showing `100.0`. Both
+  now show what was kept, and tabbing through a date-and-time field no longer
+  rewrites the sample it just read.
 
 ## [0.2.0] - 2026-08-08
 

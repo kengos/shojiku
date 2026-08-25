@@ -348,13 +348,20 @@ describe('DataEditorView sample editing', () => {
     expect(JSON.parse(mocks.onParamsChange.mock.calls[0][0]).ts).toContain('+09:00');
   });
 
-  it('a blank datetime blur authors nothing', () => {
+  it('a blank datetime blur authors nothing, and takes the blank back', () => {
+    // Authoring nothing and SHOWING nothing are two different failures, and
+    // only the second is visible to the person editing. There is no blank RFC
+    // 3339 value to write, so the sample does not move — which means the call
+    // site's `key={value}` cannot reseed the field and only the nonce can.
     const { mocks } = draw();
     selectField('ts');
-    const input = screen.getByLabelText('ts') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: '' } });
-    fireEvent.blur(input);
+    const field = () => screen.getByLabelText('ts') as HTMLInputElement;
+    const before = field().value;
+    expect(before).not.toBe('');
+    fireEvent.change(field(), { target: { value: '' } });
+    fireEvent.blur(field());
     expect(mocks.onParamsChange).not.toHaveBeenCalled();
+    expect(field().value).toBe(before);
   });
 
   it('edits array-group rows and adds/removes a row', () => {
