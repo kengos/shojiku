@@ -4,7 +4,9 @@
 // named op per edit (AI parity, no direct mutation). The controls are the shared
 // value-keyed widgets, so each self-reseeds when its own value changes (undo,
 // selection) — no body-wide revision remount, which would drop an in-progress
-// sibling edit.
+// sibling edit. They also reseed after a commit that authors NOTHING: the
+// number-kind spec (line height) builds through `numberOp`, which writes no
+// op for a non-finite entry, and the value alone cannot express that.
 //
 // One arrangement — `DefaultsStyleSection`, the document-settings section
 // (rowed, with the intro line and the recommended-size hint). A second, flat

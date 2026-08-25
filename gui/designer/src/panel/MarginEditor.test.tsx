@@ -141,3 +141,71 @@ describe('MarginEditor unit affordance', () => {
     expect(unitHintsFor('All sides')).toHaveLength(0);
   });
 });
+
+// Both margin inputs refuse via a null batch — the uniform one hand-rolled,
+// the per-side ones through the shared `TextField`. The two paths are covered
+// separately because only one of them goes through the widget.
+
+describe('MarginEditor refusal snap-back', () => {
+  const uniform = () => screen.getByLabelText('All sides') as HTMLInputElement;
+
+  for (const typed of ['abc', '-5', '10mm', '']) {
+    it(`snaps the uniform margin back and authors nothing for ${JSON.stringify(typed)}`, () => {
+      const controller = makeController({ margin: 25 });
+      draw(<MarginEditor controller={controller} />);
+      fireEvent.blur(uniform(), { target: { value: typed } });
+      expect(controller.applyAll).not.toHaveBeenCalled();
+      expect(uniform().value).toBe('25');
+    });
+  }
+
+  it('leaves the uniform input in place on an UNCHANGED blur', () => {
+    // An unchanged blur is not a refusal — remounting would drop focus for
+    // nothing, and detach any reference the caller holds.
+    const controller = makeController({ margin: 25 });
+    draw(<MarginEditor controller={controller} />);
+    const before = uniform();
+    fireEvent.blur(before, { target: { value: '25' } });
+    expect(controller.applyAll).not.toHaveBeenCalled();
+    expect(uniform()).toBe(before);
+  });
+
+  for (const typed of ['abc', '-1', 'x'.repeat(40)]) {
+    it(`snaps a per-side margin back for ${JSON.stringify(typed)}`, () => {
+      // `perSideMap` already backs the per-side form, so the editor opens in
+      // that mode — no switch to clear out of the way first.
+      const controller = makeController(perSideMap);
+      draw(<MarginEditor controller={controller} />);
+      const top = () => screen.getByLabelText('Top') as HTMLInputElement;
+      fireEvent.blur(top(), { target: { value: typed } });
+      expect(controller.applyAll).not.toHaveBeenCalled();
+      expect(top().value).toBe('10');
+    });
+  }
+
+  it('ACCEPTS a unit string per side, which the uniform field refuses', () => {
+    // The two fields do not share a grammar: `page.margin` as a scalar is a
+    // bare pt number (a unit there is an engine parse error), while a per-side
+    // value takes `3cm`. A snap-back that ignored the difference would look
+    // like the panel rejecting a perfectly authorable margin.
+    const controller = makeController(perSideMap);
+    draw(<MarginEditor controller={controller} />);
+    fireEvent.blur(screen.getByLabelText('Top'), { target: { value: '3cm' } });
+    expect(controller.applyAll).toHaveBeenCalledOnce();
+  });
+
+  it('refuses a unit string in the UNIFORM field and takes it back', () => {
+    const controller = makeController({ margin: 25 });
+    draw(<MarginEditor controller={controller} />);
+    fireEvent.blur(screen.getByLabelText('All sides'), { target: { value: '3cm' } });
+    expect(controller.applyAll).not.toHaveBeenCalled();
+    expect((screen.getByLabelText('All sides') as HTMLInputElement).value).toBe('25');
+  });
+
+  it('still commits an acceptable per-side value', () => {
+    const controller = makeController(perSideMap);
+    draw(<MarginEditor controller={controller} />);
+    fireEvent.blur(screen.getByLabelText('Top'), { target: { value: '18' } });
+    expect(controller.applyAll).toHaveBeenCalledOnce();
+  });
+});

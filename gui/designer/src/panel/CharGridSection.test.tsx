@@ -10,6 +10,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
+import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { unitHintsFor } from '../testkit/unitHint';
 import { PropertyPanel } from './PropertyPanel';
@@ -132,6 +133,10 @@ describe('CharGridSection', () => {
     fireEvent.change(lines, { target: { value: '' } });
     fireEvent.blur(lines);
     expect(controller.apply).not.toHaveBeenCalled();
+    // …and the cleared field does not KEEP the blank on screen: authoring
+    // nothing and showing nothing are two different failures, and only the
+    // second is visible to the person typing.
+    expect((screen.getByLabelText('Lines') as HTMLInputElement).value).toBe('10');
   });
 
   it('clears the cell size, returning it to the derived width', () => {
@@ -260,5 +265,136 @@ describe('CharGridSection unit affordance', () => {
     draw({ ...GRID, grid: { ...GRID.grid, cellSize: 24 } });
     openLayout();
     expect(unitHintsFor('Cell size').length).toBeGreaterThan(0);
+  });
+});
+
+// Every refusal class of `countOp`, at the field the item was filed against.
+// A refused commit authors nothing (it always did) AND now takes the rejected
+// text back off the screen (it did not).
+//
+// Driven through the REAL editor, not the mock controller the rest of this
+// file uses, and that is load-bearing. Against a mock the document never
+// moves, so the field reseeds to the fixture value after EVERY blur and a
+// "snaps back to 20" assertion cannot fail — it would hold just as well for an
+// implementation that accepted the garbage. Only a live document makes the
+// accepted case show a DIFFERENT value, which is what gives the refused case
+// its contrast.
+
+const LIVE_GRID = `sections:
+  body:
+    type: flow
+    items:
+      - type: char_grid
+        data: { key: manuscript }
+        grid: { charsPerLine: 20, lines: 10 }
+`;
+
+function LiveHarness() {
+  const editor = useEditor(LIVE_GRID);
+  return (
+    <I18nProvider locale="en">
+      <PropertyPanel controller={editor} path={P} />
+      <pre data-testid="doc">{editor.text}</pre>
+      <button type="button" data-testid="undo" onClick={editor.undo}>
+        undo
+      </button>
+    </I18nProvider>
+  );
+}
+
+const liveDoc = () => screen.getByTestId('doc').textContent ?? '';
+const cellsField = () => screen.getByLabelText('Cells per line') as HTMLInputElement;
+
+describe('CharGridSection refusal snap-back', () => {
+  const REFUSED: readonly (readonly [string, string])[] = [
+    ['empty', ''],
+    ['non-integer', 'abc'],
+    ['a fraction', '2.5'],
+    ['below the floor', '0'],
+    ['past the layout cap', '4097'],
+  ];
+
+  for (const [label, typed] of REFUSED) {
+    it(`snaps back and authors nothing for ${label}`, () => {
+      render(<LiveHarness />);
+      openLayout();
+      const before = liveDoc();
+      fireEvent.change(cellsField(), { target: { value: typed } });
+      fireEvent.blur(cellsField());
+      expect(liveDoc()).toBe(before);
+      expect(cellsField().value).toBe('20');
+    });
+  }
+
+  it('shows the NEW value for an accepted count — the contrast the refusals need', () => {
+    render(<LiveHarness />);
+    openLayout();
+    fireEvent.change(cellsField(), { target: { value: '24' } });
+    fireEvent.blur(cellsField());
+    expect(liveDoc()).toContain('charsPerLine: 24');
+    expect(cellsField().value).toBe('24');
+  });
+
+  it('mints no undo step for a refused count', () => {
+    render(<LiveHarness />);
+    openLayout();
+    const before = liveDoc();
+    fireEvent.change(cellsField(), { target: { value: '0' } });
+    fireEvent.blur(cellsField());
+    fireEvent.click(screen.getByTestId('undo'));
+    expect(liveDoc()).toBe(before);
+  });
+
+  it('keeps the value at the cap itself, which is accepted rather than refused', () => {
+    render(<LiveHarness />);
+    openLayout();
+    fireEvent.change(cellsField(), { target: { value: '4096' } });
+    fireEvent.blur(cellsField());
+    expect(liveDoc()).toContain('charsPerLine: 4096');
+    expect(cellsField().value).toBe('4096');
+  });
+
+  it('reseeds a REFUSED field without disturbing a sibling being typed into', () => {
+    // The nonce is per-field, so one field taking its text back must not throw
+    // away what is half-typed next to it.
+    render(<LiveHarness />);
+    openLayout();
+    const lines = screen.getByLabelText('Lines') as HTMLInputElement;
+    fireEvent.change(lines, { target: { value: '77' } });
+    const cells = screen.getByLabelText('Cells per line') as HTMLInputElement;
+    fireEvent.change(cells, { target: { value: '0' } });
+    fireEvent.blur(cells);
+    expect((screen.getByLabelText('Cells per line') as HTMLInputElement).value).toBe('20');
+    expect((screen.getByLabelText('Lines') as HTMLInputElement).value).toBe('77');
+  });
+
+  it('steps from the COMMITTED value after a refusal, with the ▲ still clickable', () => {
+    // The nonce rides the inner input, never the widget: keying the whole
+    // StepperField would unmount the ▲ between its mousedown and mouseup and
+    // the click would never land. Typing garbage first is what makes the
+    // preceding blur a refusal, so this is the ordering that pins it.
+    render(<LiveHarness />);
+    openLayout();
+    fireEvent.change(cellsField(), { target: { value: 'abc' } });
+    fireEvent.blur(cellsField());
+    fireEvent.click(stepButton('Cells per line', 'Increase'));
+    expect(liveDoc()).toContain('charsPerLine: 21');
+  });
+
+  it('does not reseed a grid LENGTH, which clears rather than refusing', () => {
+    // `gridLengthOp` never returns null — an empty cell size is a real edit
+    // (it hands the key back to the engine). Asserting the non-reseed keeps a
+    // future "make everything reseed" change from turning a clear into a
+    // silent revert.
+    const controller = draw({ ...GRID, grid: { ...GRID.grid, cellSize: '9mm' } });
+    openLayout();
+    const cell = screen.getByLabelText('Cell size') as HTMLInputElement;
+    fireEvent.change(cell, { target: { value: '' } });
+    fireEvent.blur(cell);
+    expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'removeKey',
+      path: P,
+      keys: ['grid', 'cellSize'],
+    });
   });
 });

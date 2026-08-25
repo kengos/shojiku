@@ -74,3 +74,42 @@ describe('StringListField', () => {
     expect(onCommit).not.toHaveBeenCalled();
   });
 });
+
+// `metaListOp` TRIMS every entry, so a padded commit authors the list it
+// already had: the value in the key cannot move, and the padding would stay on
+// screen. This is the same defect as a refused number, arriving through
+// normalisation rather than rejection.
+
+describe('StringListField reseed after a trimming commit', () => {
+  it('takes back the padding when the commit trims to the entry already held', () => {
+    renderField(['alpaca']);
+    const row = () => screen.getAllByLabelText('Keywords')[0] as HTMLInputElement;
+    fireEvent.blur(row(), { target: { value: '  alpaca  ' } });
+    expect(row().value).toBe('alpaca');
+  });
+
+  it('still shows a genuinely changed entry', () => {
+    renderField(['alpaca']);
+    const row = () => screen.getAllByLabelText('Keywords')[0] as HTMLInputElement;
+    fireEvent.blur(row(), { target: { value: 'vicuna' } });
+    // The parent owns the list, so the fixture does not move; what matters is
+    // that the commit reached it with the typed text.
+    expect(row().value).toBe('alpaca');
+  });
+
+  it('reseeds ONE row without disturbing another being typed into', () => {
+    renderField(['alpaca', 'llama']);
+    const rows = () => screen.getAllByLabelText('Keywords') as HTMLInputElement[];
+    fireEvent.change(rows()[1], { target: { value: 'half-typed' } });
+    fireEvent.blur(rows()[0], { target: { value: '  alpaca  ' } });
+    expect(rows()[0].value).toBe('alpaca');
+    expect(rows()[1].value).toBe('half-typed');
+  });
+
+  it('leaves a row in place on an unchanged blur', () => {
+    renderField(['alpaca']);
+    const before = screen.getAllByLabelText('Keywords')[0];
+    fireEvent.blur(before, { target: { value: 'alpaca' } });
+    expect(screen.getAllByLabelText('Keywords')[0]).toBe(before);
+  });
+});

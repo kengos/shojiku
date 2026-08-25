@@ -138,3 +138,70 @@ describe('LinePointsEditor — the anchored arm', () => {
     expect(screen.getAllByLabelText('Attach to an item').length).toBe(2);
   });
 });
+
+// The refusal path here is the awkward one, and the reason the reseed is keyed
+// on the BUILDER rather than on anything the controller reports: a refused
+// point returns an EMPTY batch, and `applyAll([])` answers ok and bumps the
+// revision. Both of the obvious signals therefore read a refusal as a success.
+
+describe('LinePointsEditor refusal snap-back', () => {
+  const REFUSED = ['', 'abc', '10pt%', 'x'.repeat(40)];
+
+  for (const typed of REFUSED) {
+    it(`snaps back and leaves the document untouched for ${JSON.stringify(typed.slice(0, 12))}`, () => {
+      render(<Harness source={COORDS} />);
+      const before = doc();
+      const field = () => screen.getByLabelText('End X') as HTMLInputElement;
+      fireEvent.blur(field(), { target: { value: typed } });
+      expect(doc()).toBe(before);
+      expect(field().value).toBe('40');
+    });
+  }
+
+  it('reseeds even though the refusal path reports ok and bumps the revision', () => {
+    // If the fix were keyed on `BatchResult.ok` or on the revision counter,
+    // this case would look like a landed edit and the field would keep `abc`.
+    render(<Harness source={COORDS} />);
+    const before = doc();
+    fireEvent.blur(screen.getByLabelText('End X'), { target: { value: 'abc' } });
+    expect((screen.getByLabelText('End X') as HTMLInputElement).value).toBe('40');
+    // The document is the proof that nothing was authored despite the ok.
+    expect(doc()).toBe(before);
+  });
+
+  it('mints NO undo step for a refused point', () => {
+    render(<Harness source={COORDS} />);
+    const before = doc();
+    fireEvent.blur(screen.getByLabelText('End X'), { target: { value: 'abc' } });
+    fireEvent.click(screen.getByTestId('undo'));
+    // An undo after a refusal must not walk back a real earlier edit — there
+    // was nothing on the stack to pop, so the document is unchanged.
+    expect(doc()).toBe(before);
+  });
+
+  it('still commits an acceptable coordinate, so the snap-back is not blanket', () => {
+    render(<Harness source={COORDS} />);
+    fireEvent.blur(screen.getByLabelText('End X'), { target: { value: '55' } });
+    expect(doc()).toMatch(/to: \{ x: 55/);
+    expect((screen.getByLabelText('End X') as HTMLInputElement).value).toBe('55');
+  });
+
+  it('leaves the input in place on a bare blur that changes nothing', () => {
+    // `linePointOps` returns an empty batch for UNCHANGED as well as for
+    // invalid, so without the changed-guard a tab-through would remount the
+    // field — dropping focus, and detaching any reference held to it.
+    render(<Harness source={COORDS} />);
+    const before = screen.getByLabelText('End X');
+    fireEvent.blur(before, { target: { value: '40' } });
+    expect(screen.getByLabelText('End X')).toBe(before);
+  });
+
+  it('reseeds ONE endpoint without disturbing the sibling being typed into', () => {
+    render(<Harness source={COORDS} />);
+    const startX = screen.getByLabelText('Start X') as HTMLInputElement;
+    fireEvent.change(startX, { target: { value: '17' } });
+    fireEvent.blur(screen.getByLabelText('End X'), { target: { value: 'abc' } });
+    expect((screen.getByLabelText('End X') as HTMLInputElement).value).toBe('40');
+    expect((screen.getByLabelText('Start X') as HTMLInputElement).value).toBe('17');
+  });
+});

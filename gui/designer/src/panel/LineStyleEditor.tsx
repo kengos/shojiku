@@ -15,6 +15,7 @@ import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
 import { FIELD_LABEL, SELECT_SM } from '../ui/chrome';
 import { BORDER_STYLE_VALUES, type BorderStyleValue, PATTERNED_BORDER_STYLES } from './borderTypes';
 import { type LineStyleView, lineStyleOps } from './lineModel';
+import { useReseedKey } from './useReseedKey';
 
 export interface LineStyleEditorProps {
   readonly view: LineStyleView;
@@ -25,6 +26,7 @@ export interface LineStyleEditorProps {
 
 export function LineStyleEditor({ view, path, controller, capabilities }: LineStyleEditorProps) {
   const { t } = useI18n();
+  const [widthKey, reseedWidth] = useReseedKey(view.width);
   // An older engine parse-rejects every `style:` keyword on a line, so the
   // whole picker is gated — not just the patterned options.
   const styleControl = capabilities === undefined || capabilities.includes('line.style');
@@ -42,15 +44,25 @@ export function LineStyleEditor({ view, path, controller, capabilities }: LineSt
           <span className="text-sm text-muted">{t('border.penWidth')}</span>
           <input
             // Value-keyed so undo / a selection change reseeds the field while
-            // a sibling commit leaves in-progress typing alone.
-            key={view.width}
+            // a sibling commit leaves in-progress typing alone; plus a refusal
+            // nonce, since a refused width leaves the value untouched.
+            key={widthKey}
             type="text"
             className="h-8 w-20 rounded-md border border-border bg-surface px-1 text-sm text-text"
             defaultValue={view.width}
             placeholder="1"
-            onBlur={(event) =>
-              controller.applyAll(lineStyleOps(path, view, { width: event.currentTarget.value }))
-            }
+            onBlur={(event) => {
+              const typed = event.currentTarget.value;
+              if (typed === view.width) {
+                return;
+              }
+              // Reseed after ANY committing blur — see `PointField` for why
+              // neither the batch result nor its emptiness is the right signal.
+              // A CLAMPED width (over the cap) lands without moving the value,
+              // and would otherwise leave the typed number on screen.
+              controller.applyAll(lineStyleOps(path, view, { width: typed }));
+              reseedWidth();
+            }}
           />
         </label>
         <div className="flex flex-col gap-0.5">

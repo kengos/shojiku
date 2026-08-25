@@ -436,3 +436,56 @@ describe('DocumentDefaults unit affordance', () => {
     expect(unitHintsFor('Font size').length).toBeGreaterThan(0);
   });
 });
+
+// `SeededField` is the seventeenth refusing site, and the one a sweep of the
+// WIDGETS misses: its own blur handler carries an unchanged-guard, not a
+// refusal, so it looks inert until you follow its CONSUMER. Document settings
+// renders every non-colour spec through it, and the number-kind spec (line
+// height) builds through `numberOp`, which returns null for a non-finite entry.
+
+describe('DocumentDefaults style field refusal snap-back', () => {
+  const AUTHORED = `defaults:\n  style:\n    lineHeight: 1.5\n${BASE}`;
+  const lineHeight = () => screen.getByLabelText('Line height') as HTMLInputElement;
+
+  for (const typed of ['abc', '1.2.3']) {
+    it(`snaps the line height back and authors nothing for ${JSON.stringify(typed)}`, () => {
+      render(<Harness source={AUTHORED} section="style" />);
+      const before = doc();
+      fireEvent.blur(lineHeight(), { target: { value: typed } });
+      expect(doc()).toBe(before);
+      expect(lineHeight().value).toBe('1.5');
+    });
+  }
+
+  it('still CLEARS an authored line height, which is a real edit', () => {
+    // An empty value hands the key back to the engine default. Snapping back
+    // here would make the field impossible to unset.
+    render(<Harness source={AUTHORED} section="style" />);
+    fireEvent.blur(lineHeight(), { target: { value: '' } });
+    expect(doc()).not.toContain('lineHeight');
+  });
+
+  it('still commits an acceptable line height', () => {
+    render(<Harness source={AUTHORED} section="style" />);
+    fireEvent.blur(lineHeight(), { target: { value: '1.8' } });
+    expect(doc()).toContain('lineHeight: 1.8');
+  });
+
+  it('mints no undo step for a refused line height', () => {
+    render(<Harness source={AUTHORED} section="style" />);
+    const before = doc();
+    fireEvent.blur(lineHeight(), { target: { value: 'abc' } });
+    fireEvent.click(screen.getByRole('button', { name: 'undo' }));
+    expect(doc()).toBe(before);
+  });
+
+  it('leaves an UNSET field empty on a bare blur rather than seeding it', () => {
+    // The unset state is an empty box over a placeholder; a reseed that
+    // wrote the seed in would claim the document authored a value it did not.
+    render(<Harness source={BASE} section="style" />);
+    const before = doc();
+    fireEvent.blur(lineHeight());
+    expect(doc()).toBe(before);
+    expect(lineHeight().value).toBe('');
+  });
+});

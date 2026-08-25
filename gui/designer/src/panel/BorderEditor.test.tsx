@@ -128,6 +128,47 @@ describe('BorderEditor — diagram', () => {
     fireEvent.blur(width);
     fireEvent.click(screen.getByRole('button', { name: 'All sides' }));
     expect(doc()).toContain('borderWidth: 1');
+    // …and the rejected text does not stay in the box over a pen that is
+    // still 1pt. The pen is local state, so nothing else would have reseeded.
+    expect((screen.getByLabelText('Line width') as HTMLInputElement).value).toBe('1');
+  });
+
+  it('takes the entry back when the pen clamp lands on the width ALREADY set', () => {
+    // Set the pen to its floor, then clear the box: `Number('')` is 0, which
+    // clamps back to the same 0.5. The commit lands, the value does not move,
+    // and the box must not be left blank over a 0.5pt pen.
+    render(<Harness source={RECT} />);
+    const width = () => screen.getByLabelText('Line width') as HTMLInputElement;
+    width().value = '0.1';
+    fireEvent.blur(width());
+    expect(width().value).toBe('0.5');
+    width().value = '';
+    fireEvent.blur(width());
+    expect(width().value).toBe('0.5');
+  });
+
+  it('CLAMPS an out-of-range pen width rather than refusing it', () => {
+    // A clamp is a commit — the value lands at the bound and the field shows
+    // where it landed. Reading it as a refusal would hide the clamp entirely.
+    render(<Harness source={RECT} />);
+    const width = screen.getByLabelText('Line width') as HTMLInputElement;
+    width.value = '99999';
+    fireEvent.blur(width);
+    fireEvent.click(screen.getByRole('button', { name: 'All sides' }));
+    expect(doc()).toContain('borderWidth: 1000');
+    expect((screen.getByLabelText('Line width') as HTMLInputElement).value).toBe('1000');
+  });
+
+  it('steps the pen from the committed width after a refused entry', () => {
+    // Pins the inner-input key: keying the whole StepperField on the nonce
+    // would unmount the ▲ between mousedown and mouseup.
+    render(<Harness source={RECT} />);
+    const width = screen.getByLabelText('Line width') as HTMLInputElement;
+    width.value = 'abc';
+    fireEvent.blur(width);
+    fireEvent.click(within(penWidthField()).getByRole('button', { name: 'Increase' }));
+    fireEvent.click(screen.getByRole('button', { name: 'All sides' }));
+    expect(doc()).toContain('borderWidth: 1.5');
   });
 
   it('applies a picked pen color to a preset', () => {

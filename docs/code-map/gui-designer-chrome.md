@@ -95,7 +95,12 @@ resolved style.
   `ToggleButton`).
 - `toolbar/TypographyGroup.tsx` — family + size field (change-guarded
   commit-on-blur, ±1pt steppers, no datalist) + B/I (`aria-pressed`
-  from EFFECTIVE state).
+  from EFFECTIVE state). The size box is hand-rolled rather than a
+  `panel/StepperField`, so it carries the reseed wiring itself
+  (`panel/useReseedKey`): `comboWire` authors nothing for a cleared box over an
+  INHERITED size — there is no own key to remove — and the typed blank used to
+  sit there over a page still rendering at the cascade's size. Being outside
+  `panel/` is why a panel-scoped sweep of that defect did not reach it.
 - `toolbar/FamilyControl.tsx` — a `menuitemradio` dropdown over host
   `fontFamilies` ∪ the current value + an `onAddFont` tail row.
 - `toolbar/AlignControl.tsx` — gdoc-style dropdown whose trigger shows

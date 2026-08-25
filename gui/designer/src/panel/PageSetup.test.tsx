@@ -127,6 +127,9 @@ describe('PageSetup', () => {
     draw(<PageSetup controller={controller} />);
     fireEvent.blur(screen.getByLabelText('Width'), { target: { value: '' } });
     expect(controller.apply).not.toHaveBeenCalled();
+    // …and the emptied field goes back to the authored width rather than
+    // sitting blank over a page that is still 8.5in wide.
+    expect((screen.getByLabelText('Width') as HTMLInputElement).value).toBe('8.5');
   });
 
   it('reinterprets both dimensions when the unit changes', () => {
@@ -203,5 +206,53 @@ describe('PageSetup — the size list offers each size exactly once', () => {
     for (const name of PAGE_SIZE_NAMES) {
       expect(values, name).toContain(name);
     }
+  });
+});
+
+// The two custom-dimension inputs are hand-rolled (they carry their own unit
+// select), so each needed the reseed wiring individually.
+
+describe('PageSetup custom dimension refusal snap-back', () => {
+  const CUSTOM = { size: { w: '8.5in', h: '13in' } };
+
+  for (const typed of ['abc', '-3', '']) {
+    it(`snaps the width back and authors nothing for ${JSON.stringify(typed)}`, () => {
+      const controller = makeController(CUSTOM);
+      draw(<PageSetup controller={controller} />);
+      const width = () => screen.getByLabelText('Width') as HTMLInputElement;
+      fireEvent.blur(width(), { target: { value: typed } });
+      expect(controller.apply).not.toHaveBeenCalled();
+      expect(width().value).toBe('8.5');
+    });
+
+    it(`snaps the height back and authors nothing for ${JSON.stringify(typed)}`, () => {
+      const controller = makeController(CUSTOM);
+      draw(<PageSetup controller={controller} />);
+      const height = () => screen.getByLabelText('Height') as HTMLInputElement;
+      fireEvent.blur(height(), { target: { value: typed } });
+      expect(controller.apply).not.toHaveBeenCalled();
+      expect(height().value).toBe('13');
+    });
+  }
+
+  it('reseeds ONE dimension without disturbing the other', () => {
+    const controller = makeController(CUSTOM);
+    draw(<PageSetup controller={controller} />);
+    const height = screen.getByLabelText('Height') as HTMLInputElement;
+    fireEvent.change(height, { target: { value: '19' } });
+    fireEvent.blur(screen.getByLabelText('Width'), { target: { value: 'abc' } });
+    expect((screen.getByLabelText('Width') as HTMLInputElement).value).toBe('8.5');
+    expect((screen.getByLabelText('Height') as HTMLInputElement).value).toBe('19');
+  });
+
+  it('leaves both inputs in place on an unchanged tab-through', () => {
+    // The mixed-unit case the existing test guards, now also asserting that
+    // the nodes survive: a remount here would drop focus on every tab.
+    const controller = makeController({ size: { w: '8.5in', h: '200mm' } });
+    draw(<PageSetup controller={controller} />);
+    const width = screen.getByLabelText('Width');
+    fireEvent.blur(width, { target: { value: '8.5' } });
+    expect(screen.getByLabelText('Width')).toBe(width);
+    expect(controller.apply).not.toHaveBeenCalled();
   });
 });

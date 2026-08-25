@@ -125,12 +125,20 @@ describe('GroupForm', () => {
   it('authors nothing for an emptied or unauthorable span (the key is required)', () => {
     const controller = makeController({ [TABLE]: TABLE_NODE });
     form(controller);
-    const span = screen.getByLabelText('Span (columns)');
-    fireEvent.blur(span, { target: { value: '' } });
-    fireEvent.blur(span, { target: { value: '0' } });
-    fireEvent.blur(span, { target: { value: '2.5' } });
+    // Re-queried every time, NOT captured once: a refusal now remounts the
+    // input, so a held reference would be detached from the second blur on and
+    // the rest of the cases would pass without ever reaching the handler.
+    const span = () => screen.getByLabelText('Span (columns)') as HTMLInputElement;
+    const refuse = (value: string) => {
+      fireEvent.blur(span(), { target: { value } });
+      // Each refusal also takes its text back, leaving the authored span.
+      expect(span().value).toBe('3');
+    };
+    refuse('');
+    refuse('0');
+    refuse('2.5');
     // Past the six columns the engine would clamp it anyway.
-    fireEvent.blur(span, { target: { value: '9' } });
+    refuse('9');
     expect(controller.apply).not.toHaveBeenCalled();
   });
 

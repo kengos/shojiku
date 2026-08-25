@@ -315,6 +315,67 @@ describe('LayoutSection (grid)', () => {
     fireEvent.blur(screen.getByLabelText('Rows'), { target: { value: '   ' } });
     expect(controller.applyAll).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).toBeNull();
+    // …and neither field is left blank over a grid that is still 2×2. This was
+    // the partial-seed gap: the nonce here only ever bumped on the
+    // confirm-modal path, never on the field's own refusals.
+    expect((screen.getByLabelText('Columns') as HTMLInputElement).value).toBe('2');
+    expect((screen.getByLabelText('Rows') as HTMLInputElement).value).toBe('2');
+  });
+
+  describe('grid count refusal snap-back', () => {
+    it('snaps back a non-finite count', () => {
+      const controller = gridController(['a', 'b', 'c', 'd']);
+      drawSection(controller);
+      const cols = () => screen.getByLabelText('Columns') as HTMLInputElement;
+      fireEvent.blur(cols(), { target: { value: 'abc' } });
+      expect(controller.applyAll).not.toHaveBeenCalled();
+      expect(cols().value).toBe('2');
+    });
+
+    it('takes back a count that ROUNDS to the current one (an empty plan)', () => {
+      // `2.4` rounds to 2, the grid is already 2 columns, so the plan is empty
+      // and nothing is dispatched — a commit that "succeeded" without moving
+      // the value. The entry must still come off the screen.
+      const controller = gridController(['a', 'b', 'c', 'd']);
+      drawSection(controller);
+      const cols = () => screen.getByLabelText('Columns') as HTMLInputElement;
+      fireEvent.blur(cols(), { target: { value: '2.4' } });
+      expect(controller.applyAll).not.toHaveBeenCalled();
+      expect(cols().value).toBe('2');
+    });
+
+    it('still reseeds after a TYPED shrink is cancelled at the confirm', () => {
+      // The pre-existing case the partial `seed` nonce covered. It needs no
+      // nonce of its own any more: the blur already reseeded the field before
+      // the confirm was answered.
+      const controller = gridController(['a', 'b', 'c', 'd']);
+      drawSection(controller);
+      fireEvent.blur(screen.getByLabelText('Columns'), { target: { value: '1' } });
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      fireEvent.click(screen.getByText('Cancel'));
+      expect(controller.applyAll).not.toHaveBeenCalled();
+      expect((screen.getByLabelText('Columns') as HTMLInputElement).value).toBe('2');
+    });
+
+    it('leaves the ▲▼ clickable after a cancelled shrink', () => {
+      // Keying the whole StepperField on a nonce would remount the buttons.
+      // Stepping right after a cancel is what proves they are still wired.
+      const controller = gridController(['a', 'b', 'c', 'd']);
+      drawSection(controller);
+      fireEvent.blur(screen.getByLabelText('Columns'), { target: { value: '1' } });
+      fireEvent.click(screen.getByText('Cancel'));
+      fireEvent.click(stepButtons('Columns').up);
+      expect(controller.applyAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves a count input in place on a bare blur', () => {
+      const controller = gridController(['a', 'b', 'c', 'd']);
+      drawSection(controller);
+      const before = screen.getByLabelText('Columns');
+      fireEvent.blur(before, { target: { value: '2' } });
+      expect(screen.getByLabelText('Columns')).toBe(before);
+      expect(controller.applyAll).not.toHaveBeenCalled();
+    });
   });
 
   it('Escape dismisses the confirm without dispatching (the Modal onClose path)', () => {
@@ -408,5 +469,101 @@ describe('LayoutSection unit affordance', () => {
   it('invites another unit on the gap', () => {
     drawSection(rowController({ direction: 'row', gap: 8 }));
     expect(unitHintsFor('Spacing').length).toBeGreaterThan(0);
+  });
+});
+
+// The two refusing controls of the layout section, and the distinction that
+// matters at both: a CLAMP is a commit (the value lands, at the bound) while a
+// refusal authors nothing. Only the second snaps the field back.
+
+describe('LayoutSection refusal snap-back', () => {
+  // These run against the mock controller, so the DISPLAYED value cannot
+  // distinguish a refusal from an acceptance (the fixture never moves and the
+  // field reseeds to it either way). The load-bearing assertion in each case
+  // is therefore `apply` — the displayed value is a companion check. The
+  // contrast that actually fires lives in `CharGridSection.test.tsx`, which
+  // drives the real editor.
+  const gap = () => screen.getByLabelText('Spacing') as HTMLInputElement;
+
+  for (const typed of ['abc', '50%', '2em', '999999pt']) {
+    it(`snaps the gap back and authors nothing for ${JSON.stringify(typed)}`, () => {
+      const controller = rowController({ direction: 'row', gap: 8 });
+      drawSection(controller);
+      fireEvent.change(gap(), { target: { value: typed } });
+      fireEvent.blur(gap());
+      expect(controller.apply).not.toHaveBeenCalled();
+      expect(gap().value).toBe('8');
+    });
+  }
+
+  it('CLAMPS a negative gap to 0 rather than refusing, so the field is not snapped back', () => {
+    const controller = rowController({ direction: 'row', gap: 8 });
+    drawSection(controller);
+    fireEvent.change(gap(), { target: { value: '-4' } });
+    fireEvent.blur(gap());
+    expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'setScalar',
+      path: PATH,
+      keys: ['box', 'gap'],
+      value: 0,
+    });
+  });
+
+  it('takes the entry back when the clamp lands on the value ALREADY committed', () => {
+    // The case that "did the commit land?" cannot answer. `-4` clamps to 0
+    // and the gap is already 0, so the op applies, the document does not
+    // move, and a landed/refused signal would leave `-4` sitting there — the
+    // exact defect this change exists to remove, in the one shape where the
+    // commit succeeds.
+    const controller = rowController({ direction: 'row', gap: 0 });
+    drawSection(controller);
+    fireEvent.change(gap(), { target: { value: '-4' } });
+    fireEvent.blur(gap());
+    expect(gap().value).toBe('0');
+  });
+
+  it('treats an EMPTY gap as a clear, not a refusal', () => {
+    // Only the dispatched op is asserted. Against this mock controller the
+    // document never moves, so the field reseeds to the fixture `8` whatever
+    // the commit did — an assertion on the displayed value here could not
+    // fail, and would say nothing about the clear.
+    const controller = rowController({ direction: 'row', gap: 8 });
+    drawSection(controller);
+    fireEvent.change(gap(), { target: { value: '' } });
+    fireEvent.blur(gap());
+    expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'removeKey',
+      path: PATH,
+      keys: ['box', 'gap'],
+    });
+  });
+
+  it('snaps a refused ratio back, per child, without touching its sibling', () => {
+    const controller = rowController({ direction: 'row' }, [
+      { type: 'text', box: { flexGrow: 2 } },
+      { type: 'text', box: { flexGrow: 3 } },
+    ]);
+    drawSection(controller);
+    const first = () => screen.getByLabelText('Ratio 1') as HTMLInputElement;
+    const second = () => screen.getByLabelText('Ratio 2') as HTMLInputElement;
+    fireEvent.change(second(), { target: { value: '7' } });
+    fireEvent.change(first(), { target: { value: 'abc' } });
+    fireEvent.blur(first());
+    expect(controller.apply).not.toHaveBeenCalled();
+    expect(first().value).toBe('2');
+    // The nonce is per-input, so the sibling keeps what is half-typed in it.
+    expect(second().value).toBe('7');
+  });
+
+  it('leaves a ratio input in place on a bare blur', () => {
+    const controller = rowController({ direction: 'row' }, [
+      { type: 'text', box: { flexGrow: 2 } },
+      { type: 'text', box: { flexGrow: 3 } },
+    ]);
+    drawSection(controller);
+    const before = screen.getByLabelText('Ratio 1');
+    fireEvent.blur(before);
+    expect(screen.getByLabelText('Ratio 1')).toBe(before);
+    expect(controller.apply).not.toHaveBeenCalled();
   });
 });

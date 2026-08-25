@@ -103,3 +103,46 @@ describe('LineStyleEditor', () => {
     expect(doc()).not.toContain('#b91c1c');
   });
 });
+
+// Same empty-batch refusal shape as the point editor, and the same reason the
+// result cannot be the signal.
+
+describe('LineStyleEditor width refusal snap-back', () => {
+  for (const typed of ['abc', '-1', '2pt']) {
+    it(`snaps back and authors nothing for ${JSON.stringify(typed)}`, () => {
+      render(<Harness />);
+      const before = doc();
+      const width = () => screen.getByLabelText('Line width') as HTMLInputElement;
+      fireEvent.blur(width(), { target: { value: typed } });
+      expect(doc()).toBe(before);
+      expect(width().value).toBe('0.8');
+    });
+  }
+
+  it('CLAMPS an over-cap width to the cap rather than refusing it', () => {
+    render(<Harness />);
+    fireEvent.blur(screen.getByLabelText('Line width'), { target: { value: '99999' } });
+    expect(doc()).not.toContain('99999');
+    expect(doc()).toMatch(/width:/);
+  });
+
+  it('takes the entry back when the clamp lands on the width ALREADY committed', () => {
+    // Blur twice at the cap: the second commit lands, changes nothing, and
+    // must still clear `99999` off the screen. Keying the reseed on whether
+    // the commit succeeded would leave it there.
+    render(<Harness />);
+    const width = () => screen.getByLabelText('Line width') as HTMLInputElement;
+    fireEvent.blur(width(), { target: { value: '99999' } });
+    const capped = width().value;
+    fireEvent.blur(width(), { target: { value: '99999' } });
+    expect(width().value).toBe(capped);
+  });
+
+  it('mints no undo step for a refused width', () => {
+    render(<Harness />);
+    const before = doc();
+    fireEvent.blur(screen.getByLabelText('Line width'), { target: { value: 'abc' } });
+    fireEvent.click(screen.getByTestId('undo'));
+    expect(doc()).toBe(before);
+  });
+});

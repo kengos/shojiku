@@ -7,6 +7,7 @@ import { useI18n } from '../i18n/context';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import { TipBubble } from '../ui/TipBubble';
 import { badgeText, showsUnitHint, UnitBadge } from './fields';
+import { useReseedKey } from './useReseedKey';
 
 export interface StepperFieldProps {
   readonly label: string;
@@ -69,6 +70,10 @@ export function StepperField({
   // would join the computed label ("Width" would read "WidthAuto", breaking
   // by-name queries and screen-reader output).
   const id = useId();
+  // Value-keyed as before, PLUS a nonce for the case the value cannot express:
+  // a refused commit leaves the value untouched, so only the nonce moves. It
+  // rides the inner input, never this component — see `useReseedKey`.
+  const [inputKey, reseed] = useReseedKey(value);
   // Each button fills half the input's height (items-stretch + flex-1), so the
   // ▲▼ column always lines up with the input box exactly.
   const stepBtn =
@@ -81,7 +86,7 @@ export function StepperField({
       <span className="flex items-stretch gap-1">
         <span className={`relative flex min-w-0 flex-1${hint === undefined ? '' : ' group/tip'}`}>
           <input
-            key={value}
+            key={inputKey}
             id={id}
             type="text"
             className={`${INPUT} w-full min-w-0 ${badge === undefined ? '' : 'pr-11'} ${
@@ -90,8 +95,14 @@ export function StepperField({
             defaultValue={value}
             placeholder={placeholder}
             onBlur={(event) => {
+              // Reseed after ANY committing blur, not only a refused one. The
+              // field's job is to show what the document holds, and asking the
+              // caller "did it land?" answers a different question: a commit
+              // that CLAMPS to the value already committed lands, changes
+              // nothing, and would leave the rejected text on screen.
               if (event.currentTarget.value !== value) {
                 onCommit(event.currentTarget.value);
+                reseed();
               }
             }}
           />

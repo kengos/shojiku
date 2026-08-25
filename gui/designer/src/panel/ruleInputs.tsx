@@ -7,6 +7,7 @@ import { FIELD_LABEL, PANEL_SWATCH_TRIGGER } from '../ui/chrome';
 import { TipBubble } from '../ui/TipBubble';
 import { Field } from './fields';
 import type { valueFormFor } from './rowConditionsModel';
+import { useReseedKey } from './useReseedKey';
 
 /** The `equals` state this control renders — the two fields both presence
  * surfaces share. Typed structurally rather than as one surface's row so a
@@ -54,15 +55,36 @@ export function ValueControl({
       </Field>
     );
   }
+  return <EqualsInput fieldLabel={fieldLabel} rule={rule} onChange={onChange} />;
+}
+
+/** The free-text `equals` entry. Its own component so the reseed hook sits
+ * above the early returns the picker arms take.
+ *
+ * The nonce is needed because the commit NORMALISES rather than refusing:
+ * `setVisibleEqualsOp` always authors, but `literal()` runs a numeric field's
+ * entry through `Number(value.trim())`, so ` 40.0 ` over an `equals: 40` rule
+ * writes 40 and the value in the key never moves. */
+function EqualsInput({
+  fieldLabel,
+  rule,
+  onChange,
+}: {
+  readonly fieldLabel: string;
+  readonly rule: EqualsState;
+  readonly onChange: (value: string | null) => void;
+}) {
+  const [inputKey, reseed] = useReseedKey(rule.equals);
   return (
     <Field label={fieldLabel}>
       <input
-        key={rule.equals}
+        key={inputKey}
         type="text"
         defaultValue={rule.equals}
         onBlur={(event) => {
           if (event.currentTarget.value !== rule.equals) {
             onChange(event.currentTarget.value);
+            reseed();
           }
         }}
       />
