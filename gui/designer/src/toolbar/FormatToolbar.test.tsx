@@ -1111,3 +1111,59 @@ describe('FormatToolbar — a selected table column', () => {
     expect(doc()).toContain('data: { key: amount }');
   });
 });
+
+// The toolbar size box carries the same commit-on-blur blind spot as the
+// panel's fields, and it is the control the panel fix was modelled on (gdoc's
+// own size box reverts silently). It sits outside `panel/`, which is why a
+// panel-scoped sweep of the defect did not reach it.
+
+describe('FormatToolbar — font size refusal snap-back', () => {
+  const UNSET = `sections:
+  body:
+    type: flow
+    items:
+      - { type: text, text: hi }
+`;
+  const size = () => screen.getByLabelText('Font size') as HTMLInputElement;
+
+  it('takes back a cleared size over an INHERITED value, which authors nothing', () => {
+    // `comboWire` refuses when the box is emptied on an item with no own
+    // fontSize: there is no key to remove, so nothing is authored — and the
+    // blank used to stay on screen over a page still rendering at 10pt.
+    render(<Harness source={UNSET} floor={{ fontSize: '10', fontFamily: 'biz-udp-gothic' }} />);
+    const before = doc();
+    fireEvent.blur(size(), { target: { value: '   ' } });
+    expect(doc()).toBe(before);
+    expect(size().value).toBe('10');
+  });
+
+  it('leaves the box alone on a tab-through that changes nothing', () => {
+    render(<Harness source={TEXT_SRC} />);
+    const before = size();
+    fireEvent.blur(before, { target: { value: '20' } });
+    expect(size()).toBe(before);
+  });
+
+  it('still clears an OWN size, which is a real edit rather than a refusal', () => {
+    // An OWN `fontSize` on the item, not one inherited from a style — those
+    // are the two sides of `comboWire`'s guard, and only the inherited side
+    // refuses. Snapping back here would silently undo a real clear.
+    const OWN = `sections:
+  body:
+    type: flow
+    items:
+      - { type: text, text: hi, style: { fontSize: 14 } }
+`;
+    render(<Harness source={OWN} />);
+    expect(size().value).toBe('14');
+    fireEvent.blur(size(), { target: { value: '' } });
+    expect(doc()).not.toContain('fontSize: 14');
+  });
+
+  it('steps from the committed size after a refused entry', () => {
+    render(<Harness source={UNSET} floor={{ fontSize: '10', fontFamily: 'biz-udp-gothic' }} />);
+    fireEvent.blur(size(), { target: { value: '  ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Increase font size' }));
+    expect(doc()).toContain('fontSize: 11');
+  });
+});

@@ -20,6 +20,7 @@
 import { type ReactNode, useId } from 'react';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import { TipBubble } from '../ui/TipBubble';
+import { useReseedKey } from './useReseedKey';
 
 export interface FieldProps {
   readonly label: string;
@@ -103,6 +104,7 @@ export function TextField({ label, value, onCommit, placeholder, unit, unitHint 
   const shown = value === '' ? (placeholder ?? '') : value;
   const badge = badgeText(unit, shown);
   const hint = showsUnitHint(unit, shown, unitHint) ? unitHint : undefined;
+  const [inputKey, reseed] = useReseedKey(value);
   return (
     // Explicit htmlFor/id, not a wrapping label: the badge's text would
     // otherwise fold into the computed label (see StepperField).
@@ -112,13 +114,23 @@ export function TextField({ label, value, onCommit, placeholder, unit, unitHint 
       </label>
       <span className={`relative flex min-w-0${hint === undefined ? '' : ' group/tip'}`}>
         <input
-          key={value}
+          key={inputKey}
           id={id}
           type="text"
           className={`${INPUT} w-full min-w-0 ${badge === undefined ? '' : 'pr-9'}`}
           defaultValue={value}
           placeholder={placeholder}
-          onBlur={(event) => onCommit(event.currentTarget.value)}
+          // Unlike `StepperField` this widget has no changed-guard of its own
+          // (callers that need one apply it), so the reseed is conditioned on
+          // the text actually DIFFERING — an unchanged blur has nothing to
+          // take back and must not remount the input.
+          onBlur={(event) => {
+            const typed = event.currentTarget.value;
+            onCommit(typed);
+            if (typed !== value) {
+              reseed();
+            }
+          }}
         />
         {badge === undefined ? null : <UnitBadge text={badge} />}
         {hint === undefined ? null : <TipBubble text={hint} />}

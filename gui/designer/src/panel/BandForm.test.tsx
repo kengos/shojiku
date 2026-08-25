@@ -161,3 +161,40 @@ describe('CellPanel routing', () => {
     expect(screen.queryByRole('combobox')).toBeNull();
   });
 });
+
+// The band height is a `StepperField` over `numberOp`, so it refuses a
+// non-finite entry. This site did not exist when the fix was scoped — it
+// arrived with the band-insert work — and is covered here because the shared
+// widget covers it, not because anyone wired it up individually.
+
+describe('BandForm height refusal', () => {
+  // Mock controller: the fixture never moves, so the DISPLAYED value cannot
+  // tell a refusal from an acceptance here (the field reseeds to `40` either
+  // way). `apply` is the load-bearing assertion; the contrast that really
+  // fires lives in `CharGridSection.test.tsx`, over the real editor.
+  it('snaps a non-finite height back to the authored one, authoring nothing', () => {
+    const controller = form(AUTHORED);
+    const input = screen.getByLabelText('Height');
+    fireEvent.change(input, { target: { value: 'tall' } });
+    fireEvent.blur(input);
+    expect(controller.apply).not.toHaveBeenCalled();
+    expect((screen.getByLabelText('Height') as HTMLInputElement).value).toBe('40');
+  });
+
+  it('still treats an EMPTY height as a clear, not a refusal', () => {
+    // `numberOp` removes the key rather than returning null here, so an empty
+    // entry is a real edit and must reach the document. Only the op is
+    // asserted: against the mock the field reseeds to the fixture `40`
+    // whatever the commit did, so a check on the displayed value would be
+    // measuring the fixture rather than the clear.
+    const controller = form(AUTHORED);
+    const input = screen.getByLabelText('Height');
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.blur(input);
+    expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'removeKey',
+      path: PATH,
+      keys: ['height'],
+    });
+  });
+});

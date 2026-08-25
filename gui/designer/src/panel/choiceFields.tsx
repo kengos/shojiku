@@ -6,7 +6,12 @@
 // CONTROLLED and commit on change — a discrete pick is already the value.
 // `ComboField` still accepts free text, so it stays UNCONTROLLED like
 // `TextField`: `defaultValue` + commit-on-blur, keyed by value so it reseeds on
-// its own external change and not on a sibling's commit.
+// its own external change and not on a sibling's commit. It does NOT carry
+// `TextField`'s reseed nonce, and does not need one — every `ComboField`
+// consumer stores the typed string VERBATIM, whether as an op (`plainTextOp`,
+// via the locale/currency/metadata/style-tab callers) or into a local draft
+// (`StyleFormFields` builds no op at all). Nothing here normalises, so the
+// value in the key always moves with the entry.
 
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import { Field } from './fields';

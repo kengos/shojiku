@@ -20,8 +20,8 @@ import {
   type LinePointsView,
   lineAnchorOps,
   lineArmOps,
-  linePointOps,
 } from './linePoints';
+import { PointField } from './PointField';
 
 export interface LinePointsEditorProps {
   readonly view: LinePointsView;
@@ -35,14 +35,6 @@ export interface LinePointsEditorProps {
    * nothing. */
   readonly targets?: readonly string[];
 }
-
-/** Field → its label key, spelled out so every rendered key is greppable. */
-const FIELD_LABELS: Readonly<Record<LinePointField, string>> = {
-  'from.x': 'panel.line.fromX',
-  'from.y': 'panel.line.fromY',
-  'to.x': 'panel.line.toX',
-  'to.y': 'panel.line.toY',
-};
 
 /** The anchored arm's labels, spelled out for the same greppability. */
 const ANCHOR_LABELS: Readonly<Record<LineAnchorField, string>> = {
@@ -65,20 +57,7 @@ export function LinePointsEditor({
   // withheld rather than offered hopefully.
   const canAnchor = hasCapability(capabilities, 'line.anchor');
   const field = (name: LinePointField) => (
-    <label className="flex flex-col gap-0.5" key={name}>
-      <span className="text-sm text-muted">{t(FIELD_LABELS[name])}</span>
-      <input
-        // Value-keyed so undo or a selection change reseeds the field, while a
-        // sibling commit leaves in-progress typing alone.
-        key={view[name]}
-        type="text"
-        className="h-8 w-20 rounded-md border border-border bg-surface px-1 text-sm text-text"
-        defaultValue={view[name]}
-        onBlur={(event) =>
-          controller.applyAll(linePointOps(path, view, name, event.currentTarget.value))
-        }
-      />
-    </label>
+    <PointField key={name} name={name} view={view} path={path} controller={controller} />
   );
 
   // Both anchored values are CLOSED sets — five keywords, and the ids the

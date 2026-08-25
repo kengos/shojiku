@@ -22,6 +22,7 @@ import {
   readMarginView,
   uniformMarginOp,
 } from './marginModel';
+import { useReseedKey } from './useReseedKey';
 
 export interface MarginEditorProps {
   readonly controller: EditorController;
@@ -31,6 +32,7 @@ export function MarginEditor({ controller }: MarginEditorProps) {
   const { t } = useI18n();
   const uniformId = useId();
   const view = readMarginView(controller.read('page'));
+  const [uniformKey, reseedUniform] = useReseedKey(view.uniform);
 
   const dispatch = (ops: Op[] | null): void => {
     if (ops !== null) {
@@ -72,18 +74,20 @@ export function MarginEditor({ controller }: MarginEditorProps) {
           </label>
           <span className="relative flex min-w-0">
             <input
-              key={view.uniform}
+              key={uniformKey}
               id={uniformId}
               type="number"
               className={`${INPUT} w-full min-w-0 pr-9`}
               min="0"
               step="any"
               defaultValue={view.uniform}
-              onBlur={(event) =>
-                event.currentTarget.value === view.uniform
-                  ? undefined
-                  : dispatch(uniformMarginOp(event.currentTarget.value))
-              }
+              onBlur={(event) => {
+                const typed = event.currentTarget.value;
+                if (typed !== view.uniform) {
+                  dispatch(uniformMarginOp(typed));
+                  reseedUniform();
+                }
+              }}
             />
             <UnitBadge text="pt" />
           </span>

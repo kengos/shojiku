@@ -633,16 +633,19 @@ describe('PropertyPanel', () => {
       [PATH]: { type: 'text', data: { key: 'birth_date', placeholder: '既存' } },
     });
     draw(<PropertyPanel controller={controller} path={PATH} />);
-    const field = screen.getByLabelText('Blank placeholder') as HTMLInputElement;
-    expect(field.value).toBe('既存');
-    fireEvent.blur(field, { target: { value: '　年　月　日' } });
+    // Re-queried between blurs, NOT captured once: a committing blur reseeds
+    // the input, so a held reference is detached from the second blur on and
+    // the clear below would never reach the handler.
+    const field = () => screen.getByLabelText('Blank placeholder') as HTMLInputElement;
+    expect(field().value).toBe('既存');
+    fireEvent.blur(field(), { target: { value: '　年　月　日' } });
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,
       keys: ['data', 'placeholder'],
       value: '　年　月　日',
     });
-    fireEvent.blur(field, { target: { value: '' } });
+    fireEvent.blur(field(), { target: { value: '' } });
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'removeKey',
       path: PATH,

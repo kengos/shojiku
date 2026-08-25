@@ -28,10 +28,6 @@ export function GridSteppers({
   const { t } = useI18n();
   const defaultText = t('insert.defaultText');
   const [pending, setPending] = useState<readonly Op[] | null>(null);
-  // Bumped whenever a confirm is resolved, so a TYPED-then-cancelled shrink
-  // reseeds the uncontrolled stepper back to the real count (a ▲▼ step never
-  // mutates the input text, so only the typed path needs this).
-  const [seed, setSeed] = useState(0);
 
   const run = (plan: GridPlan) => {
     if (plan.ops.length === 0) {
@@ -48,11 +44,15 @@ export function GridSteppers({
       controller.applyAll(ops);
     }
     setPending(null);
-    setSeed((s) => s + 1);
   };
   const commit = (build: (n: number) => GridPlan) => (raw: string) => {
     // A cleared field is a non-commit, not a count: `Number('')` is 0, which
-    // would clamp to 1 and silently collapse the grid on a mere blur.
+    // would clamp to 1 and silently collapse the grid on a mere blur. Nothing
+    // here needs to report that: `StepperField` reseeds after every committing
+    // blur, so an entry this drops — or one that merely ROUNDS to the current
+    // count, leaving an empty plan — comes off the screen either way. That is
+    // also why the typed-then-CANCELLED shrink no longer needs a nonce of its
+    // own: the blur reseeded the field before the confirm was ever answered.
     const trimmed = raw.trim();
     if (trimmed === '') {
       return;
@@ -69,7 +69,6 @@ export function GridSteppers({
     <>
       <div className="mb-2 grid grid-cols-2 gap-2">
         <StepperField
-          key={`cols-${columns}-${seed}`}
           label={t('panel.layout.columns')}
           value={String(columns)}
           canStep
@@ -77,7 +76,6 @@ export function GridSteppers({
           onStep={(dir) => run(colsPlan(columns + dir))}
         />
         <StepperField
-          key={`rows-${rows}-${seed}`}
           label={t('panel.layout.rows')}
           value={String(rows)}
           canStep

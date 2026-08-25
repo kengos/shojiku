@@ -14,7 +14,25 @@ indices stay true); every edit dispatches named designer-core ops (a
 multi-part edit is ONE `applyAll` = one undo step); enum vocabularies are
 copied from the engine wire (drift-guard tests, never guessed from CSS);
 free-text/number inputs are uncontrolled, commit-on-blur with a
-changed-guard, KEYED BY VALUE — with ONE exception, the static-text chip
+changed-guard, keyed by value. **A field whose commit can fail to MOVE that
+value additionally carries a reseed nonce** (`useReseedKey`), bumped after
+every committing blur — otherwise the entry the commit did not take stays on
+screen over a document that never changed. The rule is deliberately not
+"reseed on refusal": the widgets ask nothing about how the commit went,
+because a commit can LAND and still leave the value alone. A CLAMP does
+exactly that (a negative gap to 0, an over-cap pen width), and so does
+NORMALISATION (`lengthOp` running `40.0` through `Number`, `metaListOp`
+trimming, `literal()` coercing a numeric `equals`); a landed/refused signal
+strands the entry in every one of those cases. `OpResult.ok` and the revision
+counter are wrong twice over, since `applyAll([])` reports ok and bumps the
+revision for a commit that authored nothing. The only guard is the CHANGED
+guard: an unchanged blur reseeds nothing, so a tab-through never remounts.
+**The nonce is NOT ambient**: it comes with `StepperField` / `TextField` /
+`SeededField`, and a hand-rolled input must wire `useReseedKey` itself (the
+seven that do are listed at their entries below). Inputs whose builder authors
+the typed string VERBATIM need none — the value moves with the entry, which is
+why `ComboField`, `contentParts` and `IterableSourceSection` carry no nonce.
+With ONE exception to the commit-on-blur posture itself, the static-text chip
 editor: besides reporting its in-progress edit so the canvas can render it
 before commit (which authors nothing — see `ContentSection` below), it also
 commits on UNMOUNT, which no other panel field does. Leaving that field is not
@@ -54,12 +72,17 @@ The child-layout surface is a shell + one module per control cluster.
   shows, the direction `Segmented` + add-slot only a NON-grid container
   shows, and the per-mode branch that picks a cluster.
 - `panel/GridSteppers.tsx` — the grid column/row cluster over `gridStructure`
-  plans, with the content-drop confirm Modal (a typed-then-cancelled
-  shrink reseeds the uncontrolled stepper).
+  plans, with the content-drop confirm Modal. Its non-commits — an emptied
+  field, a non-finite count, a typed count that rounds to the current one, and
+  a typed shrink the confirm then CANCELS — all reseed the stepper, because the
+  blur reseeds unconditionally. It used to carry a partial `seed` nonce of its
+  own that bumped only on the confirm path; that was the precedent the shared
+  mechanism generalized, and it is gone.
 - `panel/AlignRow.tsx` — the alignment icon row (a re-pick of the active
   value authors nothing).
 - `panel/RatioRow.tsx` — the row-mode ratio inputs + the fixed-width chip for a
-  width-authoring child.
+  width-authoring child. Each weight input is its own `RatioInput` component
+  so its reseed hook has a fixed home (the slot list is variable-length).
 - `panel/ParentContainerCard.tsx` — the parent-first tinted card hosting
   the same shell for the parent: select-parent jump + hover canvas
   highlight.
@@ -131,7 +154,8 @@ read side, never the reverse.
 - `panel/LineStyleEditor.tsx` — the line cluster for a `line` item
   (width/colour/keyword picker, capability-gated) — exists because the
   cut-here-line scaffold can CREATE a line.
-- `panel/linePoints.ts` + `panel/LinePointsEditor.tsx` — the line's
+- `panel/linePoints.ts` + `panel/LinePointsEditor.tsx` + `panel/PointField.tsx`
+  — the line's
   GEOMETRY, which is its `from`/`to` endpoints rather than a box (a
   `box:` key on a line is an engine parse error, and
   `canvas/manipulate` refuses to drag one, so these four fields are the
@@ -140,7 +164,10 @@ read side, never the reverse.
   grammar (bare number = pt, else a `%`/`pt`/`mm`/`cm`/`in`/`em`/`rem`
   suffix) and REFUSES anything outside it — a coordinate endpoint's two
   axes are both required on the wire, so there is no key-removal state
-  and an empty entry writes nothing. The ANCHORED arm
+  and an empty entry writes nothing — `PointField` takes that rejected entry
+  back off the screen by reseeding after every committing blur, which is also
+  why it does not consult the apply result: that reports ok and bumps the
+  revision for `[]`. The ANCHORED arm
   (`{ item, edge? }`, capability `line.anchor`) is rendered from the WIRE
   — `isAnchored` reads whether the endpoint carries `item`, never a UI
   mode flag, so an externally-authored document displays honestly — and
@@ -240,6 +267,15 @@ read side, never the reverse.
   different KIND from a locale variant (only the former breaks on
   rename). Headings appear only where the origin CHANGES and only when
   the engine answered, so a single-origin list stays flat.
+- `panel/StringListField.tsx` — the metadata list rows. Each row is its own
+  `ListEntryInput` so the reseed hook has a fixed home (the rows are a
+  variable-length map): `metaListOp` TRIMS, so `"  alpaca  "` over `alpaca`
+  authors the same list and only the nonce can clear the padding.
+- `panel/useReseedKey.ts` — `[key, reseed]` for an uncontrolled
+  commit-on-blur input: the committed value plus a reseed nonce, with the
+  nonce LEADING so `<nonce>#<value>` has an unambiguous split point (a
+  trailing counter lets `("20#1", 0)` and `("20", 1)` collide and silently skip
+  a reseed). Read the panel-wide posture above for when a field bumps it.
 - `panel/model.ts` — the WRITE side: `applyPanelOp` (the shared dispatch
   guard) + op builders `lengthOp`/`numberOp`/`plainTextOp` (item-scoped
   or root-addressed)/`bindingKeyOp`/`bindingPickOps` (a document pick
@@ -278,7 +314,10 @@ read side, never the reverse.
   `TableColumnCells`'s `ColumnWidthCell`, renders its own input and its own
   `UnitBadge`, so a sweep for the `unit=` PROP does not see it — it was
   missed exactly that way, and it writes the same `lengthOp(path,
-  ['width'])` as the column form. Its text is deliberately
+  ['width'])` as the column form. A widget-shaped sweep missed it a SECOND
+  time over the reseed nonce, for the same reason: both sheet cells now carry
+  their own `useReseedKey`, because their caller keys them by a value that a
+  normalising commit does not move. Its text is deliberately
   TERSE (`mm, cm, in too`): measured in the real app, a centred `TipBubble`
   on a LEFT-column panel field has 123px before the panel column's
   `overflow-y: auto` clips it, and a sentence needed 325px — it was the
@@ -288,7 +327,11 @@ read side, never the reverse.
   `percent_of_auto` under an auto-height parent) live in the glossary's
   `units` term and in `border.radiusHint`, which have room for them.
 - `panel/StepperField.tsx` — length/number input + ▲▼ (one step op per
-  click = one undo step; commit-on-blur changed-guard; optional `tag`
+  click = one undo step; a commit-on-blur changed-guard that reseeds the input
+  from the document after every committing blur, so anything the commit did
+  not take is snapped back; the nonce rides the INNER input, never this component,
+  because remounting the widget between the ▲'s mousedown and mouseup
+  destroys the button mid-click; optional `tag`
   suffix badge with explicit htmlFor/id association; no key-repeat — an
   op remounts the panel body). `stepHint` is the bubble shown while
   `canStep` is FALSE, and the CALLER owns the string: only it knows which
@@ -602,7 +645,10 @@ conditional rules the next section owns).
   builder is gone. `ruleInputs.tsx`
   (its leaf inputs — the value control is enum select / nothing (clean
   boolean) / free entry, plus the labeled swatch row, which takes an optional
-  origin hint).
+  origin hint). The free-entry arm is its own `EqualsInput` carrying a
+  `useReseedKey`: the commit never refuses, but `literal()` coerces a numeric
+  field's entry through `Number`, so ` 40.0 ` over an `equals: 40` rule
+  authors 40 and the value in the key does not move.
 - `panel/rowConditionsModel.ts` (pure, READ) — `readRawEntries`/
   `readRowConditions`/`valueFormFor`; a hostile entry still yields a row
   so indices stay true, and a hostile display string is truncated.
@@ -718,10 +764,11 @@ conditional rules the next section owns).
   proportional thumbnail); embeds
   `MarginEditor` and, in custom mode, `CustomSizeFields`.
 - `panel/CustomSizeFields.tsx` — the custom `{ w, h }` + shared unit
-  cluster: value-keyed uncontrolled inputs that commit on blur ONLY when
-  the value changed (the displayed numeral can be a unit-converted view
-  of the wire, so a blur-through would rewrite what the user never
-  touched).
+  cluster: uncontrolled inputs keyed by value PLUS a reseed nonce, that
+  commit on blur ONLY when the value changed (the displayed numeral can be
+  a unit-converted view of the wire, so a blur-through would rewrite what
+  the user never touched) and reseed from the document afterwards, so a
+  `composeDimension` that authors nothing does not leave the entry on screen.
 - `panel/marginModel.ts` — pure page-margin model (`readMarginView`
   uniform/perSide/legacy-array; mode-switch ops seed all four sides;
   per-side values carried VERBATIM, no unit conversion).

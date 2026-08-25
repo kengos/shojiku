@@ -9,6 +9,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
+import { useReseedKey } from '../panel/useReseedKey';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
 import { TipBubble } from '../ui/TipBubble';
 import { FamilyControl } from './FamilyControl';
@@ -32,6 +33,7 @@ export function TypographyGroup({
   // ±1pt per click, floored at 1, rounded to one decimal so a fractional size
   // (10.5) steps cleanly.
   const sizeEff = model.eff.fontSize;
+  const [sizeKey, reseedSize] = useReseedKey(sizeEff.value);
   const sizeNum = /^\d+(\.\d+)?$/.test(sizeEff.value) ? Number(sizeEff.value) : null;
   const stepSize = (dir: 1 | -1) =>
     sizeNum === null
@@ -66,15 +68,20 @@ export function TypographyGroup({
           via the −/+ buttons, free entry stays. */}
       <span className="group/tip relative inline-flex">
         <input
-          key={sizeEff.value}
+          key={sizeKey}
           className="h-8 w-14 rounded-md border border-border bg-bg px-1 text-center text-sm text-text"
           type="text"
           data-tour={TOUR_ANCHORS.toolbarFontSize}
           aria-label={t('toolbar.fontSize')}
           defaultValue={sizeEff.value}
           onBlur={(event) => {
-            if (event.currentTarget.value !== sizeEff.value) {
-              dispatch(fontSizeOp(path, sizeEff, event.currentTarget.value));
+            const typed = event.currentTarget.value;
+            // `fontSizeOp` authors nothing when the box is cleared on a field
+            // with no own value — clearing an inherited size has no key to
+            // remove — so the typed whitespace has to be taken back.
+            if (typed !== sizeEff.value) {
+              dispatch(fontSizeOp(path, sizeEff, typed));
+              reseedSize();
             }
           }}
         />

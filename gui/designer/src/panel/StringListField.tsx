@@ -14,6 +14,7 @@ import { useId } from 'react';
 import { IconButton } from '../ui/Button';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import { IconTrash } from '../ui/icons';
+import { useReseedKey } from './useReseedKey';
 
 export interface StringListFieldProps {
   readonly label: string;
@@ -26,6 +27,49 @@ export interface StringListFieldProps {
   readonly max: number;
   readonly onCommit: (index: number, value: string) => void;
   readonly onRemove: (index: number) => void;
+}
+
+/** One list row. Its own component so the reseed hook has a fixed home — the
+ * rows are a variable-length map, and a hook cannot be called from inside one.
+ *
+ * The nonce matters here because `metaListOp` TRIMS every entry: committing
+ * `"  alpaca  "` over `alpaca` authors the same list, so the value in the key
+ * never moves and the padded text would stay on screen. */
+function ListEntryInput({
+  entry,
+  index,
+  labelledBy,
+  placeholder,
+  onCommit,
+}: {
+  readonly entry: string;
+  readonly index: number;
+  readonly labelledBy: string;
+  readonly placeholder?: string;
+  readonly onCommit: (index: number, value: string) => void;
+}) {
+  const [inputKey, reseed] = useReseedKey(entry);
+  return (
+    <input
+      key={inputKey}
+      type="text"
+      aria-labelledby={labelledBy}
+      className={`${INPUT} min-w-0 flex-1`}
+      defaultValue={entry}
+      placeholder={placeholder}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+          event.currentTarget.blur();
+        }
+      }}
+      onBlur={(event) => {
+        if (event.currentTarget.value !== entry) {
+          onCommit(index, event.currentTarget.value);
+          reseed();
+        }
+      }}
+    />
+  );
 }
 
 export function StringListField({
@@ -51,23 +95,12 @@ export function StringListField({
           key={`${id}-row-${index}`}
           className="mb-1 flex min-w-0 items-stretch gap-1"
         >
-          <input
-            key={entry}
-            type="text"
-            aria-labelledby={`${id}-label`}
-            className={`${INPUT} min-w-0 flex-1`}
-            defaultValue={entry}
+          <ListEntryInput
+            entry={entry}
+            index={index}
+            labelledBy={`${id}-label`}
             placeholder={index === entries.length ? addPlaceholder : undefined}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
-                event.currentTarget.blur();
-              }
-            }}
-            onBlur={(event) => {
-              if (event.currentTarget.value !== entry) {
-                onCommit(index, event.currentTarget.value);
-              }
-            }}
+            onCommit={onCommit}
           />
           {index === entries.length ? null : (
             <IconButton label={removeLabel} variant="ghost" onClick={() => onRemove(index)}>

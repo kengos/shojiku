@@ -17,14 +17,8 @@ import { ColumnSheetBindingRows } from './ColumnSheetBindingRows';
 import { columnSheetData } from './columnSheetData';
 import { readColumnsView } from './columnsModel';
 import { applyPanelOp, lengthOp, plainTextOp } from './model';
-import {
-  ColumnAlignRow,
-  ColumnHeaderRow,
-  ColumnLabelCell,
-  ColumnSampleCell,
-  ColumnWidthCell,
-  RowLabel,
-} from './TableColumnCells';
+import { ColumnAlignRow, ColumnHeaderRow, ColumnSampleCell, RowLabel } from './TableColumnCells';
+import { ColumnLabelCell, ColumnWidthCell } from './TableTextCells';
 import { useColumnHeaderDrag } from './useColumnHeaderDrag';
 
 export interface TableColumnSheetProps {

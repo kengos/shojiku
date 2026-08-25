@@ -7,6 +7,7 @@ import { useId } from 'react';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import { TipBubble } from '../ui/TipBubble';
 import { badgeText, showsUnitHint, UnitBadge } from './fields';
+import { useReseedKey } from './useReseedKey';
 
 export interface SeededFieldProps {
   readonly label: string;
@@ -55,6 +56,7 @@ export function SeededField({
   const shown = authored === '' ? (hint ?? '') : authored;
   const badge = badgeText(unit, shown);
   const unitBubble = showsUnitHint(unit, shown, unitHint) ? unitHint : undefined;
+  const [inputKey, reseed] = useReseedKey(authored);
   return (
     <span className="mb-2 block">
       <label htmlFor={id} className={FIELD_LABEL}>
@@ -62,7 +64,7 @@ export function SeededField({
       </label>
       <span className={`relative flex min-w-0${unitBubble === undefined ? '' : ' group/tip'}`}>
         <input
-          key={authored}
+          key={inputKey}
           id={id}
           type="text"
           className={`${INPUT} w-full min-w-0 ${badge === undefined ? '' : 'pr-9'}`}
@@ -78,6 +80,11 @@ export function SeededField({
               return;
             }
             onCommit(next);
+            // Reseed unconditionally: the number-kind spec on this surface
+            // (line height) authors nothing for a non-finite entry, and a
+            // commit that LANDS without moving the value would otherwise
+            // leave the typed text in place.
+            reseed();
           }}
         />
         {badge === undefined ? null : <UnitBadge text={badge} />}

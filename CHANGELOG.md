@@ -683,6 +683,25 @@ platform binaries.
   check refuses a release whose committed inventory has fallen behind its
   lockfile, or a lockfile nobody has decided to inventory.
 
+### Fixed
+
+- **A number the Designer will not accept no longer stays in the box.**
+  Typing something a field cannot take — a blank cells-per-line, a
+  fractional column span, a page margin in the wrong form — was correctly
+  refused, but the panel left the rejected text sitting there. The document
+  still held the old value, the canvas still drew it, and nothing said the
+  edit had been thrown away; the number on screen simply disagreed with the
+  page for as long as you left it. Every such field now snaps back to the
+  value that is actually in the document, so what you read is what the
+  template says. This covers every commit-on-blur field in the property panel,
+  document settings, page setup and the toolbar, and a rejected edit still
+  authors nothing and still adds no undo step. It also covers the quieter
+  version of the same problem: an entry the Designer ACCEPTS but rewrites — a
+  negative gap clamped to zero, an oversized pen width, `40.0` where the column
+  is already 40pt, a keyword typed with stray spaces — used to leave your
+  version on screen while the document held the rewritten one. Now the field
+  shows you what was actually kept.
+
 ## [0.2.0] - 2026-08-08
 
 ### Added
