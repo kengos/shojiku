@@ -9,11 +9,17 @@
 // prints for each value: picking is safe where typing a machine value is not.
 // Every input is uncontrolled + commit-on-blur + changed-guard, keyed by its
 // value at the call site so an external change (variant switch, undo) reseeds it
-// while a sibling edit survives.
+// while a sibling edit survives — PLUS a reseed nonce, because the call site's
+// key cannot see a commit that does not MOVE the value. Two kinds here do
+// exactly that: a cleared `datetime` authors nothing (there is no blank RFC
+// 3339 value to write), and a `number` goes through `coerceSampleValue`, which
+// runs `Number(raw)` — so `40.0` over a 40 authors 40. Without the nonce the
+// entry the editor did not take stays on screen. See `panel/useReseedKey`.
 
 import { useI18n } from '../i18n/context';
 import type { EnumOption } from '../palette/fieldDisplay';
 import { Field } from '../panel/fields';
+import { useReseedKey } from '../panel/useReseedKey';
 import {
   composeDateTime,
   needsSecondsStep,
@@ -50,6 +56,9 @@ export function ValueField({
   compact,
   onCommit,
 }: ValueFieldProps) {
+  // Above every early return: only one widget renders per kind, so they share
+  // the one nonce.
+  const [inputKey, reseed] = useReseedKey(value);
   if (options !== undefined && offerable(options)) {
     return (
       <EnumValueField
@@ -77,14 +86,30 @@ export function ValueField({
     return (
       <Field label={label}>
         <input
+          key={inputKey}
           type="datetime-local"
           step={needsSecondsStep(split.wallClock) ? 1 : undefined}
           defaultValue={split.wallClock}
           onBlur={(event) => {
             const wall = event.currentTarget.value;
-            if (wall !== '') {
-              onCommit(composeDateTime(wall, split.offset, representativeOffset(engineLocale)));
+            // A CLEARED datetime authors nothing — there is no blank RFC 3339
+            // value to write — so only the nonce can put the sample back.
+            if (wall === '') {
+              reseed();
+              return;
             }
+            // Compare the COMPOSED wire value, not the two wall-clock strings:
+            // this input shows a converted view of the wire, and the browser
+            // is free to spell it differently (jsdom hands back
+            // `…T05:06:07.000` for a value authored `…T05:06:07`). Only the
+            // composed form answers "would this move the document?", and
+            // without it a bare tab-through re-authored the sample.
+            const next = composeDateTime(wall, split.offset, representativeOffset(engineLocale));
+            if (next === value) {
+              return;
+            }
+            onCommit(next);
+            reseed();
           }}
         />
       </Field>
@@ -94,11 +119,13 @@ export function ValueField({
     return (
       <Field label={label}>
         <textarea
+          key={inputKey}
           className={`${INPUT} min-h-[9rem] resize-y font-mono leading-relaxed`}
           defaultValue={value}
           onBlur={(event) => {
             if (event.currentTarget.value !== value) {
               onCommit(event.currentTarget.value);
+              reseed();
             }
           }}
         />
@@ -108,11 +135,13 @@ export function ValueField({
   return (
     <Field label={label}>
       <input
+        key={inputKey}
         type={kind === 'date' ? 'date' : 'number'}
         defaultValue={value}
         onBlur={(event) => {
           if (event.currentTarget.value !== value) {
             onCommit(event.currentTarget.value);
+            reseed();
           }
         }}
       />

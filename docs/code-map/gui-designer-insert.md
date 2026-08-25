@@ -392,7 +392,16 @@ the panes never import each other.
   `onDefinitionEdit`.
 - `data/ValueField.tsx` — the sample-value widgets per kind (roomy
   textarea for strings — the genkoyoshi body-text case; compact widgets else;
-  uncontrolled + commit-on-blur + value-keyed). A field with declared
+  uncontrolled + commit-on-blur, keyed by the CALLER's `key={value}` plus its
+  own reseed nonce — `panel/useReseedKey`). The nonce is what the caller's key
+  cannot provide: two kinds commit without MOVING the value, so the entry the
+  editor did not take would stay on screen. A cleared `datetime` authors
+  nothing (there is no blank RFC 3339 value), and a `number` goes through
+  `coerceSampleValue`, which runs `Number(raw)` — `100.0` over a 100 authors
+  100. The datetime blur compares the COMPOSED wire value rather than the two
+  wall-clock strings, because the input shows a converted view the browser may
+  spell differently (jsdom returns `…T05:06:07.000` for a value authored
+  `…T05:06:07`); before that, every bare tab-through re-authored the sample. A field with declared
   `enum` members routes to `data/enumValue.tsx` — the labeled select
   (options show labels, the raw-value caption sits beneath, an
   out-of-enum current value stays visible + warned, a SATURATED list
