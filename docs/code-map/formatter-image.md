@@ -19,14 +19,31 @@ the manifest wire's key list) lives in `docs/engine/`
   variant, FormatContext, pack) → Formatted { text, warning }`.
   Precedence chain placement ← `Field.format` ← template
   `defaults.formats[type]` ← pack default via `effective()`/`Pick`; a
-  placement variant naming a TYPE overrides the type; a `symbol`/`name`
+  placement variant naming a TYPE overrides the type — EXCEPT on a
+  date/datetime field, where a name the pack or the `formats:` registry
+  declares is a VARIANT and wins (`dated::declares`); a `symbol`/`name`
   pick on a Number coerces it to Currency keeping the variant
   (placement-pick-only, `format.currency.coerce`). `FormatContext`
   carries the template's `FormatDefaults` + `formats:` registry +
   `currency` doc-default code.
+- `format/dated.rs` — everything that depends on the dated TABLES:
+  `tables()` (a datetime reads `datetimeFormats` then `dateFormats`, a
+  date reads `dateFormats`, each with the engine's own fallback pattern),
+  `render()` (inline pattern → registry → tables → default+warning), and
+  `declares()` — the guard the dispatch consults before the type-override
+  check. `declares` and `render` must AGREE: it returns true for exactly
+  the names `render` finds a pattern for, or the override steals a pick
+  the renderer was ready to honour. That was the defect (`format: date`
+  on a datetime field re-typed the value instead of reaching the pack's
+  `datetimeFormats.date`, visible only in ja-JP, where the two patterns
+  differ).
 - `format/datetime.rs` — date/datetime parse + the CLDR-subset pattern
-  renderer (token inventory is APPEND-ONLY; the list itself is in
-  data-binding.md); `'…'` quoting with `''` escape (unterminated
+  renderer. The token inventory is APPEND-ONLY (the list is published in
+  data-binding.md) and is now exported as `shojiku_formatter::PATTERN_TOKENS`
+  — `shojiku_authoring` walks it to prove every token DISCRIMINATES the two
+  exemplars `drops_time` compares, so a token added later that renders alike
+  for both (fractional seconds, a zone token while the pair shares an offset)
+  reds instead of silently going unmeasured; `'…'` quoting with `''` escape (unterminated
   degrades); name tables and the era tokens resolve through the pack.
   Token matching is `starts_with_token` over the char slice — never a
   fresh `String` per iteration, which made the renderer O(n²) in pattern

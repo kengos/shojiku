@@ -2,6 +2,8 @@
 //! grammar, and the format-precedence chain.
 
 mod coerce;
+mod dated_pick;
+mod dated_registry;
 mod dates;
 mod defaults;
 mod grammar;

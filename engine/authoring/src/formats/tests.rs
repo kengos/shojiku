@@ -7,8 +7,9 @@
 //! it is shown to explain.
 
 use super::*;
-use shojiku_core::parse_template;
-use shojiku_formatter::LangPack;
+use serde_json::json;
+use shojiku_core::{parse_template, FormatDefaults, FormatRef, InlineFormat};
+use shojiku_formatter::{FormatContext, LangPack};
 
 fn ja() -> LangPack {
     LangPack::builtin("ja-JP", None)

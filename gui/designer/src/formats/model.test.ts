@@ -52,9 +52,12 @@ describe('readFormatsView', () => {
 
 describe('the wire constants this model mirrors', () => {
   it('reserves exactly the nine FieldType names', () => {
-    // Drift guard for `FieldType::from_name` — a registry entry named after a
-    // field type could never be reached, and the engine errors
-    // (`reserved_format_name`) rather than silently ignoring it.
+    // Drift guard for `FieldType::from_name` — the engine errors
+    // (`reserved_format_name`) on a registry entry named after a field type
+    // rather than silently ignoring it. The refusal is CONSERVATIVE now, not
+    // forced: on a date/datetime field such a name IS reachable (it beats the
+    // type override), but it would still be unreachable on the other seven
+    // types, so the whole set stays refused.
     expect([...RESERVED_FORMAT_NAMES].sort()).toEqual([
       'boolean',
       'currency',

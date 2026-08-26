@@ -32,9 +32,18 @@ export const FORMAT_DEFAULT_TYPES: readonly string[] = [
 ];
 
 /** Names the engine REFUSES as registry entries (`reserved_format_name`): a
- * field-type name is a type OVERRIDE in format dispatch, so an entry by that
- * name could never be reached. Mirrors `FieldType::from_name`
- * (`engine/core/src/definitions/schema.rs`) — a drift-guard test pins the set. */
+ * field-type name is a type OVERRIDE in format dispatch.
+ *
+ * The refusal is CONSERVATIVE rather than forced. It used to rest on such a
+ * name being unreachable, and on a date/datetime field that is no longer true
+ * — there a pack- or registry-declared name beats the override
+ * (`format.dated.declared_first`, `engine/formatter/src/format/dated.rs`). It
+ * stands because the name would still be unreachable on the other seven
+ * types, and an entry that works on two while silently re-typing the value on
+ * the rest is worse than one refused outright.
+ *
+ * Mirrors `FieldType::from_name` (`engine/core/src/definitions/schema.rs`) —
+ * a drift-guard test pins the set. */
 export const RESERVED_FORMAT_NAMES: readonly string[] = [
   'string',
   'number',

@@ -811,6 +811,7 @@ export const zhTw: LanguageCatalog = {
     'format.variant.warekiCompact': '日本年號（精簡）',
     'format.variant.gregorian': '西元年',
     'format.variant.dateOnly': '僅日期',
+    'format.dropsTime': '不含時間',
     'format.origin.registry': '本文件的格式',
     'format.origin.pack': '來自地區設定',
     'format.origin.builtin': '內建',

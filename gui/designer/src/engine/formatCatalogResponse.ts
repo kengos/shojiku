@@ -47,17 +47,33 @@ function toVariant(raw: unknown, what: string): FormatVariant {
     samples: asArray(v.samples, `${what}.samples`).map((s, n) =>
       asString(s, `${what}.samples[${n}]`),
     ),
+    dropsTime: asBoolean(v.dropsTime, `${what}.dropsTime`),
   };
 }
 
 function toTypeEntry(raw: unknown, what: string): FormatTypeEntry {
   const t = asRecord(raw, what);
+  const variants = asArray(t.variants, `${what}.variants`).map((v, n) =>
+    toVariant(v, `${what}.variants[${n}]`),
+  );
+  // A spelling appears at most ONCE per type — the engine dedupes as it builds
+  // the list (`variants::spellings`). The panel leans on that: `formatOptions`
+  // merges these rows with no dedupe guard of its own, and each becomes a React
+  // list key. A host-injected engine that repeated one would produce duplicate
+  // rows under a duplicate key, so the seam refuses the shape here rather than
+  // letting a wrong value reach the picker — the same posture as every other
+  // check in this module.
+  const seen = new Set<string>();
+  for (const v of variants) {
+    if (seen.has(v.spelling)) {
+      fail(`${what}.variants: \`${v.spelling}\` is listed twice`);
+    }
+    seen.add(v.spelling);
+  }
   return {
     fieldType: asString(t.fieldType, `${what}.fieldType`),
     fixed: asBoolean(t.fixed, `${what}.fixed`),
-    variants: asArray(t.variants, `${what}.variants`).map((v, n) =>
-      toVariant(v, `${what}.variants[${n}]`),
-    ),
+    variants,
   };
 }
 

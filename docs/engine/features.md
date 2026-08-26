@@ -867,13 +867,19 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   (`builtin` / `pack` / `registry`), and **what it renders** — produced by
   the formatter against fixed exemplar values the engine owns, through the
   same dispatch a real binding takes. Types with no named variants come
-  back marked `fixed`. A `probes` list previews patterns the document does
+  back marked `fixed`. A variant that discards the time — a date-table
+  name resolved on a datetime slot, or a datetime pattern the pack wrote
+  without time tokens — comes back marked `dropsTime`, MEASURED by
+  rendering the exemplar at two times of day rather than tabulated from
+  spellings, so it holds for a third-party pack and for the document's own
+  `formats:` entries. A `probes` list previews patterns the document does
   not contain yet, degrading (never erroring) on a bad one, with count and
   length caps of their own. Reached from all three hosts — `shojiku
   formats`, the `format_catalog` MCP tool, and the browser's wasm binding.
   Capability key `format.catalog`.
 - **Capability surface**: `format.patterns.cldr`,
   `format.currency.variants`, `format.units.semantic`, `format.catalog`,
+  `format.catalog.dropsTime`, `format.dated.declared_first`,
   `template.defaults`, `template.defaults.document`, `template.formats`,
   `binding.placeholder`.
 

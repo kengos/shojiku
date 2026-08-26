@@ -15,6 +15,18 @@ platform binaries.
 
 ### Added
 
+- **The Designer offers a date field's locale variants, and says which ones
+  drop the time.** The format picker on a binding listed a fixed set of
+  spellings the editor carried in its own table, so a locale pack's own
+  vocabulary — 和暦 on a Japanese date field — could be typed but never
+  chosen; it was already offered on the document-defaults picker, which reads
+  the engine's catalog. That picker now reads the same catalog, so a pack
+  shipped after the editor was built is pickable without an editor change.
+  A datetime field also resolves date-only patterns, which are honoured
+  silently and simply stop showing the time; those rows now carry a
+  「時刻なし」 mark, and the engine reports the fact by rendering each variant
+  at two times of day rather than keeping a list of which spellings mean what.
+
 - **The Designer can now add a header or footer to a document that has
   none.** Every blank start ships without either, and nothing in the editor
   ever created one — so the page-number row sat greyed out with no way to
@@ -225,6 +237,20 @@ platform binaries.
   same engine version" instead.
 
 ### Fixed
+- **A locale pack's own date format is reachable by the name it was given.**
+  A `format:` pick that happens to be spelled like a field type — `date` is
+  both — was read as re-typing the field before anything looked at the locale
+  pack, so a pack's `datetimeFormats.date` could never be selected under its
+  own name. On a Japanese document that meant picking 「日付のみ」 on a datetime
+  field rendered `2026/11/03(火)`, the plain date default, instead of the
+  pack's `2026年11月3日(火)`; the label promised one thing and the page showed
+  another, with no warning anywhere. A pick on a date or datetime field now
+  consults the locale pack and the document's `formats:` registry first, and
+  only a name neither of them declares changes the field's type. **Documents
+  affected**: any that picks `format: date` on a datetime field under a pack
+  whose `datetimeFormats.date` differs from its `dateFormats.default` — of the
+  seven packs that ships, only ja-JP does, which is why this went unnoticed.
+
 - **The property panel tells a keyboard user where a table band's formatting
   came from.** The little "from document defaults" bubble on a band's
   alignment, colour and bold controls only ever appeared on hover, so it was

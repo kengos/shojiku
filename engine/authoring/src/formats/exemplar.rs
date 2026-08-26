@@ -22,6 +22,27 @@ use shojiku_core::{FieldSpec, FieldType};
 /// render the same text and the 12-hour tokens look broken.
 pub(super) const DATED: &str = "2026-11-03T14:05:00+09:00";
 
+/// The dated exemplar's TWIN: the same day at a different time of day.
+///
+/// It exists to answer one question by measurement — does this variant
+/// still show the time? Every time token renders differently between the
+/// two (`H` 14/9, `HH` 14/09, `h` 2/9, `hh` 02/09, `mm` 05/38, `ss`
+/// 00/47, and `a` across noon) while every DATE token renders the same,
+/// so two identical samples mean no time token survived the pattern.
+/// Keep both on the same day and on opposite sides of noon, or that
+/// inference stops holding.
+///
+/// **The same-offset pairing is a LIMIT, not a requirement to preserve.**
+/// [`TOKENS`](super::super::format::datetime) is an append-only contract,
+/// and the inference reads "no time token survived" off two renders — so a
+/// time-derived token that renders IDENTICALLY for both instants would be
+/// invisible to it: fractional seconds (both `.000`) and the zone tokens
+/// (both `+09:00`, because these two share an offset). None of those tokens
+/// exists today. If one is ever added, this pair has to move with it — pick
+/// instants that differ in the new token as well — rather than the pair
+/// being treated as fixed and the new token silently going unmeasured.
+pub(super) const DATED_OTHER_TIME: &str = "2026-11-03T09:38:47+09:00";
+
 /// Eight significant digits, so uniform three-digit grouping
 /// (`12,345,678.9`) and the CLDR lakh/crore sizes (`1,23,45,678.9`)
 /// render differently.

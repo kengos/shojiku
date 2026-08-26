@@ -9,6 +9,15 @@ fn every_declared_spelling_renders_without_a_degradation() {
     // The positive half of the two-sided check. A variant the catalog
     // offers must format cleanly; one that warned would be a picker
     // offering a live diagnostic.
+    //
+    // Re-reasoned for the dated-pick change rather than re-baselined: it
+    // is the same invariant, and it now says MORE. `date` on a datetime
+    // slot used to satisfy this by being consumed as a type OVERRIDE —
+    // clean, but rendering the date default rather than the pack pattern
+    // the catalog had just claimed as its sample. It satisfies it now by
+    // actually resolving the pack's `datetimeFormats.date`. Clean was
+    // never the whole property; clean AND the thing the catalog said it
+    // would render is, and the goldens are what pin the second half.
     let template = empty_template();
     let pack = ja();
     let ctx = FormatContext {

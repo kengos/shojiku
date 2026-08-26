@@ -5,6 +5,7 @@
 
 use super::exemplar;
 use super::{FormatOrigin, FormatTypeEntry, FormatVariant, CURRENCY_VARIANTS};
+use serde_json::{json, Value};
 use shojiku_core::{FieldType, NamedFormat, NamedFormatKind, Template};
 use shojiku_diagnostics::{sanitize, MAX_ECHO};
 use shojiku_formatter::{format_value, FormatContext, LangPack};
@@ -27,6 +28,7 @@ pub(super) fn type_entry(
             .into_iter()
             .map(|(spelling, origin)| FormatVariant {
                 samples: render(field_type, Some(&spelling), pack, ctx),
+                drops_time: drops_time(field_type, &spelling, pack, ctx),
                 spelling,
                 origin,
             })
@@ -126,16 +128,57 @@ fn render(
     pack: &LangPack,
     ctx: &FormatContext,
 ) -> Vec<String> {
-    let spec = exemplar::spec(field_type);
     exemplar::values(field_type)
         .iter()
-        .map(|value| {
-            format_value(value, Some(&spec), variant, *ctx, pack)
-                .map(|f| f.text)
-                // The exemplars are engine constants of the right shape, so
-                // a parse failure is unreachable from here; an empty sample
-                // is still the honest answer if one ever is not.
-                .unwrap_or_default()
-        })
+        .map(|value| render_one(value, field_type, variant, pack, ctx))
         .collect()
+}
+
+/// One value through one variant, as the type's own exemplar spec.
+fn render_one(
+    value: &Value,
+    field_type: FieldType,
+    variant: Option<&str>,
+    pack: &LangPack,
+    ctx: &FormatContext,
+) -> String {
+    let spec = exemplar::spec(field_type);
+    format_value(value, Some(&spec), variant, *ctx, pack)
+        .map(|f| f.text)
+        // The exemplars are engine constants of the right shape, so a parse
+        // failure is unreachable from here; an empty sample is still the
+        // honest answer if one ever is not.
+        .unwrap_or_default()
+}
+
+/// Whether this variant renders a datetime WITHOUT its time.
+///
+/// A datetime slot resolves the pack's DATE table after its own, so a
+/// date-table name (`compact`, `wareki-compact`) is offered there and
+/// renders date-only — and so does a datetime-table entry the pack
+/// authored with no time tokens (every shipped pack's `datetimeFormats.date`
+/// is exactly that). Both discard part of the value, so the catalog says
+/// so rather than leaving an editor to infer it by eye from the sample.
+///
+/// **Measured, not tabulated**: the variant renders the exemplar and its
+/// same-day twin at a different time, and identical output means no time
+/// token survived (see [`exemplar::DATED_OTHER_TIME`]). That answers for a
+/// third-party pack and for an author's own `formats:` entry too, which a
+/// hand-written list of spellings could not — and it cannot drift from the
+/// dispatch, because it IS the dispatch.
+///
+/// False for every other type: only a datetime carries a time to lose.
+fn drops_time(field_type: FieldType, spelling: &str, pack: &LangPack, ctx: &FormatContext) -> bool {
+    if field_type != FieldType::Datetime {
+        return false;
+    }
+    let pick = Some(spelling);
+    render_one(&json!(exemplar::DATED), field_type, pick, pack, ctx)
+        == render_one(
+            &json!(exemplar::DATED_OTHER_TIME),
+            field_type,
+            pick,
+            pack,
+            ctx,
+        )
 }

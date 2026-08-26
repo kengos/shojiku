@@ -76,6 +76,18 @@ pub(super) fn check_scalar_binding(
             Some(spec) => {
                 field_placeholder = spec.placeholder.as_deref();
                 if let Some(format) = format {
+                    // A type name exempts the pick from the declared-set
+                    // check because it is an OVERRIDE rather than a variant.
+                    // On a DATE/DATETIME field that reason no longer holds —
+                    // there a pack- or registry-declared name wins over the
+                    // override (`format.dated.declared_first`). The exemption
+                    // stays anyway, and deliberately: on a dated field the
+                    // name may resolve to a PACK variant, and validate never
+                    // sees a pack (`docs/agents/lang.md`), so it cannot tell
+                    // a real pack variant from a typo. Narrowing it here
+                    // would warn `unknown_format` on picks that render
+                    // perfectly — the diagnostic is unchanged by this, in
+                    // both directions, and was equally quiet before.
                     let is_type_override = FieldType::from_name(format).is_some();
                     let declared =
                         spec.formats.is_empty() || spec.formats.iter().any(|f| f == format);

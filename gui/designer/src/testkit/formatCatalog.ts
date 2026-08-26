@@ -6,6 +6,14 @@
 // values): the currency and number rows differ, `wareki` differs from the
 // pack default, and `quantity` carries both plural arms. A fixture whose
 // samples all read alike would let a lookup bug pass.
+//
+// The `datetime` entry mirrors what the real ja-JP pack produces, including
+// the three variants the engine reports as `dropsTime`: a datetime slot
+// resolves the pack's DATE table after its own, so `compact` and
+// `wareki-compact` are offered there and render date-only — as does `date`,
+// whose own `datetimeFormats` pattern carries no time. It used to hold
+// `default` alone, which was too thin to prove either the picker's merge of
+// the catalog's variants or the date-only note beside them.
 import type { FormatCatalog, ProbeRefusal, ProbeResult } from '../engine/types';
 
 export const FORMAT_CATALOG: FormatCatalog = {
@@ -14,39 +22,59 @@ export const FORMAT_CATALOG: FormatCatalog = {
       fieldType: 'date',
       fixed: false,
       variants: [
-        { spelling: 'stamp', origin: 'registry', samples: ['2026.11.03'] },
-        { spelling: 'default', origin: 'pack', samples: ['2026年11月3日'] },
-        { spelling: 'wareki', origin: 'pack', samples: ['令和8年11月3日'] },
+        { spelling: 'stamp', origin: 'registry', samples: ['2026.11.03'], dropsTime: false },
+        { spelling: 'default', origin: 'pack', samples: ['2026年11月3日'], dropsTime: false },
+        { spelling: 'wareki', origin: 'pack', samples: ['令和8年11月3日'], dropsTime: false },
       ],
     },
     {
       fieldType: 'datetime',
       fixed: false,
-      variants: [{ spelling: 'default', origin: 'pack', samples: ['2026-11-03 14:05'] }],
+      variants: [
+        { spelling: 'date', origin: 'pack', samples: ['2026年11月3日(火)'], dropsTime: true },
+        {
+          spelling: 'default',
+          origin: 'pack',
+          samples: ['2026/11/03(火) 14:05'],
+          dropsTime: false,
+        },
+        {
+          spelling: 'wareki',
+          origin: 'pack',
+          samples: ['令和8年11月3日 14:05'],
+          dropsTime: false,
+        },
+        { spelling: 'compact', origin: 'pack', samples: ['2026/11/03'], dropsTime: true },
+        { spelling: 'wareki-compact', origin: 'pack', samples: ['R8.11.3'], dropsTime: true },
+      ],
     },
     {
       fieldType: 'currency',
       fixed: false,
       variants: [
-        { spelling: 'default', origin: 'builtin', samples: ['1,234,568'] },
-        { spelling: 'symbol', origin: 'builtin', samples: ['¥1,234,568'] },
-        { spelling: 'name', origin: 'builtin', samples: ['1,234,568 JPY'] },
+        { spelling: 'default', origin: 'builtin', samples: ['1,234,568'], dropsTime: false },
+        { spelling: 'symbol', origin: 'builtin', samples: ['¥1,234,568'], dropsTime: false },
+        { spelling: 'name', origin: 'builtin', samples: ['1,234,568 JPY'], dropsTime: false },
       ],
     },
     {
       fieldType: 'number',
       fixed: true,
-      variants: [{ spelling: 'default', origin: 'builtin', samples: ['12,345,678.9'] }],
+      variants: [
+        { spelling: 'default', origin: 'builtin', samples: ['12,345,678.9'], dropsTime: false },
+      ],
     },
     {
       fieldType: 'percentage',
       fixed: true,
-      variants: [{ spelling: 'default', origin: 'builtin', samples: ['12.34%'] }],
+      variants: [{ spelling: 'default', origin: 'builtin', samples: ['12.34%'], dropsTime: false }],
     },
     {
       fieldType: 'quantity',
       fixed: true,
-      variants: [{ spelling: 'default', origin: 'builtin', samples: ['1点', '12,345点'] }],
+      variants: [
+        { spelling: 'default', origin: 'builtin', samples: ['1点', '12,345点'], dropsTime: false },
+      ],
     },
   ],
   probes: [],

@@ -15,6 +15,7 @@
 // list every spelling — with no sample beside them.
 
 import type { FormatCatalog, FormatOrigin } from '../engine/types';
+import { catalogVariants, originOf, pickableRegistry, sampleFor } from './formatCatalogReads';
 import { variantLabelKey } from './formatLabels';
 
 /** Builtin format spellings worth suggesting per bound-field display type
@@ -61,97 +62,6 @@ const NUMBER_COERCE_SUGGESTIONS: readonly string[] = [
   'quantity',
 ];
 
-/** Finds what a spelling RENDERS, in the engine's own words.
- *
- * Two shapes resolve differently, and conflating them is the bug this
- * function exists to avoid. A spelling that names a TYPE (`currency` offered
- * on a number field) is a type OVERRIDE — the engine re-types the value — so
- * its sample is that type's own default rendering. Anything else is a VARIANT
- * of the bound field's type (`symbol` on a currency field, a `formats:`
- * registry name on a date field), so it is looked up under that type.
- *
- * Both lookups walk real arrays rather than indexing an object table: the
- * spelling can be a document-derived registry name, and a prototype name
- * (`constructor`, `__proto__`) must never resolve to an inherited value.
- */
-function sampleFor(
-  catalog: FormatCatalog | null,
-  spelling: string,
-  fieldType: string | undefined,
-): readonly string[] {
-  if (catalog === null) {
-    return [];
-  }
-  const asType = catalog.types.find((t) => t.fieldType === spelling);
-  if (asType !== undefined) {
-    return asType.variants.find((v) => v.spelling === 'default')?.samples ?? [];
-  }
-  const own = catalog.types.find((t) => t.fieldType === resolvedType(spelling, fieldType));
-  return own?.variants.find((v) => v.spelling === spelling)?.samples ?? [];
-}
-
-/** The type a variant spelling actually resolves under.
- *
- * Normally the bound field's own — but `symbol`/`name` on a NUMBER field
- * COERCE the value to currency (`format.currency.coerce`, mirrored from
- * `engine/formatter/src/format.rs`), so their samples live under `currency`
- * and looking them up under `number` finds nothing. That is the whole point
- * of offering them there: money display without definitions.
- */
-function resolvedType(spelling: string, fieldType: string | undefined): string | undefined {
-  if (fieldType === 'number' && (spelling === 'symbol' || spelling === 'name')) {
-    return 'currency';
-  }
-  return fieldType;
-}
-
-/** Which of the document's `formats:` registry names this field may PICK.
- *
- * The engine already answers this. A registry entry declares a KIND (`date` or
- * `datetime` — the only two v1 has), and the catalog lists it under a type only
- * where the two agree (`kind_matches`, `engine/authoring/src/formats/variants.rs`).
- * Offering the rest offered a pick that WARNS on a currency field
- * (`unknown_format_variant`) and, on a text field with no declared `enum`
- * labels, is silently INERT — that arm has no variants of its own, so the name
- * is neither honoured nor complained about (`engine/formatter/src/format/text.rs`;
- * WITH labels the same pick degrades to the label and does warn). The document-settings picker has read the catalog since it shipped;
- * this is the binding-level picker catching up to it.
- *
- * Two states have nothing to filter WITH, and both keep the full list: no
- * catalog (an older engine, a host whose transport omits the query), and an
- * unresolved field type — types come from `definitions`, so a document without
- * them resolves none, which makes that the common state rather than an edge.
- * Unresolved has TWO spellings and they mean the same thing: `undefined` when
- * no offer matches the bound key, and `''` when one does and its type could not
- * be read — `displayType` mints that for any non-string `type:`, a field
- * declared with no `type:` at all included. The builtin table already treats
- * them alike (neither is an own property, so both fall to the generic set).
- * Otherwise the catalog IS the vocabulary, including for the types it carries
- * no entry for at all (`string`/`boolean`/`image` have no format layer), where
- * the honest answer is none.
- *
- * The DOCUMENT's list is what gets walked, with the catalog consulted per name:
- * that keeps the authored order, and it means a catalog naming an entry the
- * document does not hold can never add a row to a picker. `origin` is read too,
- * not just presence — a name the engine attributes to the pack or to its own
- * builtins (a `formats:` entry spelled `symbol`, which `reserved_format_name`
- * permits) is not the document's registry entry, and it is still offered by the
- * builtin row below, with its label and its sample.
- *
- * Arrays, never object indexing: a registry name is a document-derived string.
- */
-function pickableRegistry(
-  registry: readonly string[],
-  catalog: FormatCatalog | null,
-  fieldType: string | undefined,
-): readonly string[] {
-  if (catalog === null || fieldType === undefined || fieldType === '') {
-    return registry;
-  }
-  const listed = catalog.types.find((t) => t.fieldType === fieldType)?.variants ?? [];
-  return registry.filter((n) => listed.some((v) => v.spelling === n && v.origin === 'registry'));
-}
-
 /** One row the format picker offers. A `labelKey` (the localized name) and a
  * `sample` are present only for the closed builtin spellings; a registry
  * (author-defined `formats:`) name is offered by its wire `spelling` alone. */
@@ -167,6 +77,12 @@ export interface FormatOption {
   /** Where the spelling comes from, for the picker's origin headings.
    * `undefined` without a catalog. */
   readonly origin: FormatOrigin | undefined;
+  /** Whether picking this DISCARDS the time part of the value — the engine's
+   * own measurement, carried through so the row can say so. A row the catalog
+   * did not describe (an engine with no catalog, or a curated override the
+   * catalog does not list) reports `false`: not known to drop the time, the
+   * same posture as the empty samples beside it. */
+  readonly dropsTime: boolean;
 }
 
 /** The rows the format picker shows: the template's `formats:` registry names
@@ -207,8 +123,29 @@ export function formatOptions(
         labelKey: undefined,
         samples: sampleFor(catalog, spelling, fieldType),
         origin: catalog === null ? undefined : 'registry',
+        dropsTime: false,
       });
     }
+  }
+  // No `seen` GUARD here, only a `seen` write: these rows cannot collide with
+  // the registry rows above. `pickableRegistry` admits exactly the spellings
+  // the catalog attributes to `registry`, and `catalogVariants` excludes
+  // exactly those — and where there is no catalog to attribute anything,
+  // `catalogVariants` is empty. A guard would be a branch no input can take.
+  // The write still matters: it is what lets a curated override row below
+  // dedupe away when the pack already declared that spelling.
+  for (const variant of catalogVariants(catalog, fieldType)) {
+    seen.add(variant.spelling);
+    out.push({
+      spelling: variant.spelling,
+      // A closed own-property-guarded table, never `format.label.${…}`: a
+      // pack spelling is pack-derived text and must not be spliced into a
+      // catalog key. An unlabelled one shows as its bare wire spelling.
+      labelKey: variantLabelKey(variant.spelling),
+      samples: variant.samples,
+      origin: variant.origin,
+      dropsTime: variant.dropsTime,
+    });
   }
   for (const spelling of builtins) {
     if (!seen.has(spelling)) {
@@ -221,29 +158,30 @@ export function formatOptions(
         labelKey: `format.label.${spelling}`,
         samples: sampleFor(catalog, spelling, fieldType),
         origin: originOf(catalog, spelling, fieldType),
+        dropsTime: overrideDropsTime(spelling, fieldType),
       });
     }
   }
   return out;
 }
 
-/** A builtin suggestion's origin, as the catalog reports it. A type-override
- * spelling is the engine's own vocabulary; a variant carries whatever layer
- * defined it, which is how a pack-declared variant is told apart from one the
- * engine ships. */
-function originOf(
-  catalog: FormatCatalog | null,
-  spelling: string,
-  fieldType: string | undefined,
-): FormatOrigin | undefined {
-  if (catalog === null) {
-    return undefined;
-  }
-  if (catalog.types.some((t) => t.fieldType === spelling)) {
-    return 'builtin';
-  }
-  const own = catalog.types.find((t) => t.fieldType === resolvedType(spelling, fieldType));
-  return own?.variants.find((v) => v.spelling === spelling)?.origin ?? 'builtin';
+/** Whether a curated TYPE-OVERRIDE row discards the time.
+ *
+ * The catalog answers this for every variant it describes, and those rows win
+ * the dedupe above — so this only speaks for an override the catalog did NOT
+ * describe: a pack that declares no `datetimeFormats.date`, or an engine too
+ * old to answer at all. `date` on a datetime field re-types the value to a
+ * date, which has no time by construction, so the loss is knowable here
+ * without asking anyone.
+ *
+ * It stays FALSE where the bound type is unresolved (a document with no
+ * `definitions`, which `formatCatalogReads` notes is the common state rather
+ * than an edge): the generic row set offers `date` without anything saying
+ * the value is a datetime, so nothing here knows a time exists to lose. That
+ * is a real hole in "no silent time-drop is offered without a mark", and it
+ * is the reason the claim is scoped to a field whose type is known. */
+function overrideDropsTime(spelling: string, fieldType: string | undefined): boolean {
+  return fieldType === 'datetime' && spelling === 'date';
 }
 
 /** The rows a `defaults.formats.<type>` picker offers: the catalog's OWN
@@ -272,6 +210,7 @@ export function variantOptions(catalog: FormatCatalog | null, fieldType: string)
       labelKey: variantLabelKey(variant.spelling),
       samples: variant.samples,
       origin: variant.origin,
+      dropsTime: variant.dropsTime,
     }));
 }
 

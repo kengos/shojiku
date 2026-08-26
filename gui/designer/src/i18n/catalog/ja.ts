@@ -891,6 +891,7 @@ export const ja: LanguageCatalog = {
     'format.variant.warekiCompact': '和暦（短縮）',
     'format.variant.gregorian': '西暦',
     'format.variant.dateOnly': '日付のみ',
+    'format.dropsTime': '時刻なし',
     'format.origin.registry': 'この文書の書式',
     'format.origin.pack': 'ロケールの書式',
     'format.origin.builtin': '組み込み',

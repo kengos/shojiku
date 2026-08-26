@@ -874,6 +874,7 @@ export const en: LanguageCatalog = {
     'format.variant.warekiCompact': 'Japanese era, compact',
     'format.variant.gregorian': 'Gregorian year',
     'format.variant.dateOnly': 'Date only',
+    'format.dropsTime': 'No time',
     'format.origin.registry': 'Formats in this document',
     'format.origin.pack': 'From the locale',
     'format.origin.builtin': 'Built in',

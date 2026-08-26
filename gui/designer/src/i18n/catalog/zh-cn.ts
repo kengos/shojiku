@@ -810,6 +810,7 @@ export const zhCn: LanguageCatalog = {
     'format.variant.warekiCompact': '日本年号（精简）',
     'format.variant.gregorian': '公历年',
     'format.variant.dateOnly': '仅日期',
+    'format.dropsTime': '无时间',
     'format.origin.registry': '本文档的格式',
     'format.origin.pack': '来自区域设置',
     'format.origin.builtin': '内置',

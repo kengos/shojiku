@@ -43,7 +43,7 @@ pub(super) fn parse_datetime(value: &Value) -> Result<OffsetDateTime, FormatErro
 /// `y`/`G`/`GG` are the era set (CLDR japanese-calendar semantics with a
 /// Gregorian fallback); `MMM`/`MMMM`/`EEEE`/`a`/`h`/`hh` are the pattern-grammar
 /// additions that let real CLDR skeleton patterns hold.
-const TOKENS: &[&str] = &[
+pub const TOKENS: &[&str] = &[
     "yyyy", "y", "MMMM", "MMM", "MM", "M", "dd", "d", "EEEE", "E", "HH", "H", "hh", "h", "mm",
     "ss", "a", "GG", "G",
 ];
