@@ -48,4 +48,42 @@ describe('Segmented', () => {
     render(<Segmented ariaLabel="Placement" value="auto" options={options} onChange={vi.fn()} />);
     expect(screen.getByText('Auto tip')).toBeTruthy();
   });
+
+  it('describes the group AND every focusable radio when given an id', () => {
+    // The focusable elements are the sr-only radios; a description on the
+    // group container alone is announced far less reliably.
+    const { container } = render(
+      <Segmented
+        value="a"
+        options={[
+          { value: 'a', label: 'A' },
+          { value: 'b', label: 'B' },
+        ]}
+        onChange={() => undefined}
+        ariaLabel="Mode"
+        describedBy="hint-1"
+      />,
+    );
+    expect(container.querySelector('fieldset')?.getAttribute('aria-describedby')).toBe('hint-1');
+    const radios = [...container.querySelectorAll('input[type=radio]')];
+    expect(radios).toHaveLength(2);
+    for (const radio of radios) {
+      expect(radio.getAttribute('aria-describedby')).toBe('hint-1');
+    }
+  });
+
+  it('leaves aria-describedby off entirely when no hint is given', () => {
+    const { container } = render(
+      <Segmented
+        value="a"
+        options={[{ value: 'a', label: 'A' }]}
+        onChange={() => undefined}
+        ariaLabel="Mode"
+      />,
+    );
+    expect(container.querySelector('fieldset')?.getAttribute('aria-describedby')).toBeNull();
+    expect(
+      container.querySelector('input[type=radio]')?.getAttribute('aria-describedby'),
+    ).toBeNull();
+  });
 });

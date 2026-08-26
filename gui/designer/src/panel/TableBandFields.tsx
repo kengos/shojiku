@@ -15,9 +15,12 @@
 // Where that value came from is told twice over, by weight:
 //   - the DOCUMENT made it (a named style, an ancestor, `defaults.style`) → the
 //     shared `OriginBadge` line, the decoration tab's own idiom;
-//   - the ENGINE floor made it → a hover bubble on the label. `textAlign`,
-//     `color` and `fontWeight` always resolve to something, so a line apiece
-//     would be permanent chrome on every band saying nothing.
+//   - the ENGINE floor made it → a hover bubble over the whole FIELD, and the
+//     control's `aria-describedby`. `textAlign`, `color` and `fontWeight`
+//     always resolve to something, so a line apiece would be permanent chrome
+//     on every band saying nothing — and for the same reason the origin is a
+//     DESCRIPTION rather than part of the control's name, which a screen
+//     reader re-reads on every visit.
 // The header band's floor FILL is the deliberate exception and keeps its line:
 // `#ededed` is a grey nobody authored and nobody expects, unlike `left`.
 //
@@ -26,6 +29,7 @@
 // with three baselines and a stray margin.
 
 import type { Op } from '@shojiku/designer-core';
+import { useId } from 'react';
 import type { I18n } from '../i18n/context';
 import { useI18n } from '../i18n/context';
 import type { CascadeContext } from '../toolbar/cascade';
@@ -68,15 +72,19 @@ export interface TableBandFieldsProps {
  * control, one vocabulary, one set of glyphs, wherever a `textAlign` is picked. */
 export function AlignSegment({
   value,
+  describedBy,
   onChange,
 }: {
   readonly value: string;
+  /** The id of the field's origin bubble, where there is one to point at. */
+  readonly describedBy?: string;
   readonly onChange: (value: string) => void;
 }) {
   const { t } = useI18n();
   return (
     <Segmented
       ariaLabel={t('panel.field.textAlign')}
+      describedBy={describedBy}
       value={value}
       options={ALIGNMENTS.map((option) => ({
         value: option,
@@ -99,12 +107,20 @@ export function TableBandFields({ ctx, path, keys, headerFill, onOp }: TableBand
   const color = effectiveValueIn(ctx, 'color');
   const weight = effectiveValueIn(ctx, 'fontWeight');
   const boldHint = floorHint(t, weight);
+  const alignHint = floorHint(t, align);
+  const ids = useId();
+  const alignHintId = `${ids}align`;
+  const boldHintId = `${ids}bold`;
   return (
     <>
-      <div className="mb-2">
-        <HintLabel label={t('panel.field.textAlign')} hint={floorHint(t, align)} />
+      {/* The hover group is the FIELD, so pointing at the control shows the
+          origin; the bubble still hangs off the label span, the only `relative`
+          box in the row. */}
+      <div className="group/tip mb-2">
+        <HintLabel label={t('panel.field.textAlign')} hint={alignHint} hintId={alignHintId} />
         <AlignSegment
           value={alignedValue(align.value)}
+          describedBy={alignHint === undefined ? undefined : alignHintId}
           onChange={(value) => onOp(alignWire(path, at('textAlign'), align, value))}
         />
         <OriginLine effective={align} />
@@ -132,19 +148,30 @@ export function TableBandFields({ ctx, path, keys, headerFill, onOp }: TableBand
         onCommit={(value) => onOp(comboWire(path, at('color'), color, value, false))}
       />
       <OriginLine effective={color} />
-      <label className="group/tip relative mt-1 flex w-fit items-center gap-1.5 text-sm text-text">
-        <input
-          type="checkbox"
-          checked={weight.value === BOLD_VALUE}
-          onChange={(event) =>
-            onOp(
-              toggleWire(path, at('fontWeight'), weight, BOLD_VALUE, event.currentTarget.checked),
-            )
-          }
-        />
-        {t('panel.field.bold')}
-        {boldHint === undefined ? null : <TipBubble text={boldHint} />}
-      </label>
+      {/* The bubble is a SIBLING of the label, never inside it. A `<label>`
+          wrapping its input gives the control its name from the label's text
+          CONTENT, so a bubble in there — no longer `aria-hidden`, because it is
+          now a description — would be read as part of the name after all
+          ("BoldFrom document defaults"), which is the exact thing describing it
+          separately exists to avoid. */}
+      <div className="group/tip relative mt-1 w-fit">
+        <label className="flex items-center gap-1.5 text-sm text-text">
+          <input
+            type="checkbox"
+            checked={weight.value === BOLD_VALUE}
+            aria-describedby={boldHint === undefined ? undefined : boldHintId}
+            onChange={(event) =>
+              onOp(
+                toggleWire(path, at('fontWeight'), weight, BOLD_VALUE, event.currentTarget.checked),
+              )
+            }
+          />
+          {t('panel.field.bold')}
+        </label>
+        {boldHint === undefined ? null : (
+          <TipBubble text={boldHint} id={boldHintId} align="start" />
+        )}
+      </div>
       <OriginLine effective={weight} />
     </>
   );
@@ -156,15 +183,25 @@ function OriginLine({ effective }: { readonly effective: EffectiveValue }) {
 }
 
 /** A field label carrying the engine-floor origin as the gdoc-style bubble.
- * Decorative, like every origin hint — the control keeps its own name. */
-function HintLabel({ label, hint }: { readonly label: string; readonly hint: string | undefined }) {
+ * The bubble is DESCRIBED by the control (`hintId`) rather than folded into
+ * its name; the hover group lives on the field wrapper, so the bubble shows
+ * for the control as well as for the label. */
+function HintLabel({
+  label,
+  hint,
+  hintId,
+}: {
+  readonly label: string;
+  readonly hint: string | undefined;
+  readonly hintId: string;
+}) {
   if (hint === undefined) {
     return <span className={FIELD_LABEL}>{label}</span>;
   }
   return (
-    <span className={`${FIELD_LABEL} group/tip relative w-fit`}>
+    <span className={`${FIELD_LABEL} relative w-fit`}>
       {label}
-      <TipBubble text={hint} />
+      <TipBubble text={hint} id={hintId} align="start" />
     </span>
   );
 }

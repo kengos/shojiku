@@ -225,6 +225,39 @@ platform binaries.
   same engine version" instead.
 
 ### Fixed
+- **The property panel tells a keyboard user where a table band's formatting
+  came from.** The little "from document defaults" bubble on a band's
+  alignment, colour and bold controls only ever appeared on hover, so it was
+  invisible to anyone not using a mouse — and on two of the three it appeared
+  only when you hovered the LABEL, not the control the value belongs to.
+  Pointing anywhere in the row now shows it, and each control carries the
+  origin as its description, so a screen reader reads it too.
+
+- **A row condition no longer looks like it does nothing.** A rule that sets no
+  formatting of its own showed an empty strip while its opened card showed Bold
+  and Center ticked — both true, since the card shows what the matching rows
+  actually render, but nothing said so. The strip now names itself as what the
+  rule ADDS, and says outright when a rule adds nothing — counting every way a
+  rule can add something, including a named style, an explicit "not bold", and
+  the formatting properties the panel does not draw a control for.
+
+- **「Hide the header row on the page」 has moved out from under 「Detailed
+  formatting」** and sits beside the banded-rows switch, where a table-level
+  setting is looked for. The note explaining that the header band's fields stop
+  being drawn stays with those fields, inside the disclosure.
+
+- **A long data key in the field palette wraps instead of painting out of the
+  row.** A key comes from your definitions file verbatim, so nothing bounded
+  its width; the display label and the sample value beside it have always
+  wrapped. A very long one is now shortened for display as well, so a single
+  row cannot bury the rest of the list; dragging and picking still use the
+  whole key.
+
+- **A date pattern too long to preview now says so.** The engine declines to
+  render a preview past a length limit, and the Designer showed the "press a
+  token above, or type a pattern" prompt instead — to someone who had just
+  typed several hundred characters.
+
 - **Renaming a named format no longer rewrites places that were never
   referring to it.** `symbol`, `name`, `value` and `default` are built-in
   format names on other field types — `format: symbol` on a money field asks

@@ -34,6 +34,9 @@ export const SWATCHES: readonly string[] = [
 export interface ColorSwatchPickerProps {
   /** The trigger's accessible name. */
   readonly label: string;
+  /** The id of an element describing the trigger — a caller's hover hint that
+   * belongs in the DESCRIPTION channel rather than in the name. */
+  readonly describedBy?: string;
   /** The effective color (`''` = unset — the chip renders the paper token). */
   readonly value: string;
   /** Commit a chosen color; `''` clears (reverts to the cascade/default). */
@@ -49,6 +52,7 @@ export interface ColorSwatchPickerProps {
 
 export function ColorSwatchPicker({
   label,
+  describedBy,
   value,
   onCommit,
   triggerClassName,
@@ -76,6 +80,7 @@ export function ColorSwatchPicker({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label}
+        aria-describedby={describedBy}
         onClick={() => setOpen((v) => !v)}
       >
         <span

@@ -130,10 +130,85 @@ describe('RowConditionsSection', () => {
     expect(screen.getByRole('checkbox', { name: 'Bold' })).not.toBeNull();
   });
 
-  it('shows no chips for a rule that sets no style yet', () => {
+  // GUI-4. The strip and the opened card answer two different questions — what
+  // this rule ADDS, and what the matching rows RENDER with — and only the
+  // second was ever labelled. A rule that adds nothing rendered as an absence,
+  // which reads as "nothing happens here" right up until you open the card and
+  // find Bold and Center checked (both inherited from the body band). The two
+  // tests below are that exact pair, and the one at the foot of this file is
+  // its other half.
+  it('says a rule adds nothing, rather than showing an unexplained blank', () => {
     section([{ when: { key: 'kind', equals: 'heading' } }]);
+    expect(screen.getByText('Adds no formatting of its own')).not.toBeNull();
     expect(screen.queryByText('Center')).toBeNull();
     expect(screen.queryByText('Bold')).toBeNull();
+  });
+
+  it('describes a rule control with its origin — the fourth band-editor host', () => {
+    // `TableBandFields` renders in four places; a rule card is the one that is
+    // not a table band. The origin rides the DESCRIPTION here as it does in the
+    // bands, and only for a value the ENGINE floor supplied — a value the
+    // document made earns the badge LINE instead, which is why this fixture
+    // authors nothing above the rule.
+    section([{ when: { key: 'kind', equals: 'heading' } }], makeController(), {
+      textAlign: 'left',
+      color: '#000000',
+      fontWeight: 'normal',
+    });
+    openRule('When 行種別 is heading');
+    const box = screen.getByRole('checkbox', { name: 'Bold' });
+    const id = box.getAttribute('aria-describedby');
+    expect(id).not.toBeNull();
+    expect(document.getElementById(id as string)?.textContent).toBe('From document defaults');
+  });
+
+  it('counts a NAMED STYLE as something the rule adds, so "adds nothing" stays true', () => {
+    // A names-only rule carries no `style.*` key, and `styleNames` was reported
+    // only inside the opened card — so without its own chip the strip would
+    // claim the rule adds nothing while the card said it applies one.
+    section([{ when: { key: 'kind', equals: 'heading' }, styleNames: ['emphasis'] }]);
+    expect(screen.queryByText('Adds no formatting of its own')).toBeNull();
+    expect(screen.getByText('Adds')).not.toBeNull();
+    expect(screen.getByText('Named style ×1')).not.toBeNull();
+  });
+
+  it('does not call a rule empty when it un-ticks Bold — the Designer authors that', () => {
+    // `toggleWire` writes `fontWeight: normal` when you un-tick Bold over a
+    // band that IS bold: a real edit, and the only reason such a rule exists.
+    // Read through a `=== 'bold'` boolean it was indistinguishable from an
+    // unset weight, so the strip called the rule empty one click after the
+    // user acted — the GUI-4 contradiction restated backwards, in words.
+    section([{ when: { key: 'kind', equals: 'heading' }, style: { fontWeight: 'normal' } }]);
+    expect(screen.queryByText('Adds no formatting of its own')).toBeNull();
+    expect(screen.getByText('Not bold')).not.toBeNull();
+  });
+
+  it('does not call a rule empty for the ~20 Style keys the panel does not model', () => {
+    // `Style` carries two dozen properties and this panel renders four, so
+    // "adds nothing" cannot be decided from the chips. An externally-authored
+    // template carrying `fontSize` is the ordinary case, not a hostile one.
+    section([{ when: { key: 'kind', equals: 'heading' }, style: { fontSize: 14, opacity: 0.5 } }]);
+    expect(screen.queryByText('Adds no formatting of its own')).toBeNull();
+    expect(screen.getByText('Other ×2')).not.toBeNull();
+  });
+
+  it('counts only the UNMODELLED remainder, so a rendered key is not double-reported', () => {
+    section([
+      {
+        when: { key: 'kind', equals: 'heading' },
+        style: { textAlign: 'center', fontSize: 14 },
+      },
+    ]);
+    expect(screen.getByText('Center')).not.toBeNull();
+    expect(screen.getByText('Other ×1')).not.toBeNull();
+  });
+
+  it('labels the chips as what the rule ADDS, not as what the row renders', () => {
+    section([{ when: { key: 'kind' }, style: { textAlign: 'center', fontWeight: 'bold' } }]);
+    expect(screen.getByText('Adds')).not.toBeNull();
+    expect(screen.getByText('Center')).not.toBeNull();
+    expect(screen.getByText('Bold')).not.toBeNull();
+    expect(screen.queryByText('Adds no formatting of its own')).toBeNull();
   });
 
   it('hides the chips while the rule is open (its controls show the same)', () => {
@@ -537,6 +612,16 @@ describe('RowConditionsSection — a rule sits on the body band', () => {
     openRule('When 行種別 is heading');
     return controller;
   }
+
+  it('is the same rule the collapsed strip called empty — and both now say so', () => {
+    // The smoking gun, in one place: collapsed, this rule adds nothing; opened,
+    // the controls show Bold and Center, because that is what the ROWS render.
+    // Neither statement is wrong; before this they were merely unlabelled.
+    withTable();
+    expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Bold' }).checked).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Close this condition' }));
+    expect(screen.getByText('Adds no formatting of its own')).not.toBeNull();
+  });
 
   it('shows what the matching rows render with, not only what the rule authors', () => {
     withTable();

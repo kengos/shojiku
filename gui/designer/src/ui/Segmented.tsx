@@ -32,6 +32,12 @@ export interface SegmentedProps {
   readonly onChange: (value: string) => void;
   /** The group's accessible name (the sr-only legend). */
   readonly ariaLabel: string;
+  /** The id of an element describing the group — where a caller has a hint
+   * that belongs in the DESCRIPTION channel rather than in the name. It rides
+   * the fieldset AND every radio: the focusable elements here are the sr-only
+   * inputs, and a description on a `role="group"` container alone is announced
+   * far less reliably than one on the control that has focus. */
+  readonly describedBy?: string;
 }
 
 const SEG_LABEL =
@@ -39,16 +45,20 @@ const SEG_LABEL =
 
 /** A full-width segmented radio group. One `onChange` per pick; a native radio
  * fires no change for a re-pick of the checked option or a disabled one. */
-export function Segmented({ value, options, onChange, ariaLabel }: SegmentedProps) {
+export function Segmented({ value, options, onChange, ariaLabel, describedBy }: SegmentedProps) {
   const name = useId();
   return (
-    <fieldset className="mb-2 flex overflow-hidden rounded-md border border-border p-0">
+    <fieldset
+      aria-describedby={describedBy}
+      className="mb-2 flex overflow-hidden rounded-md border border-border p-0"
+    >
       <legend className="sr-only">{ariaLabel}</legend>
       {options.map((option) => (
         <label key={option.value} className={SEG_LABEL}>
           <input
             type="radio"
             name={name}
+            aria-describedby={describedBy}
             className="sr-only"
             checked={option.value === value}
             disabled={option.disabled}

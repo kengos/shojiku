@@ -373,24 +373,67 @@ describe('TableStyleSection — the miniature draws the PAGE, the gallery reads 
 
 describe('TableStyleSection — the invisible header row', () => {
   const NAME = 'Hide the header row on the page';
+  const NOTE = 'The header row is hidden on the page, so none of the settings below are drawn';
+
+  // GUI-7. This switch used to live inside 「Detailed formatting」, one
+  // disclosure down, while the zebra switch — its exact peer — sat at the top.
+  // Every test below therefore opened the disclosure first; none of them do
+  // now, and that deletion IS the assertion.
+  it('is reachable WITHOUT opening the detail, beside the zebra switch', () => {
+    section(TABLE, ['table.style', 'table.header.visuallyHidden']);
+    expect(
+      screen.queryByRole('button', { name: /Detailed formatting/ })?.getAttribute('aria-expanded'),
+    ).toBe('false');
+    expect(screen.getByRole('checkbox', { name: NAME })).not.toBeNull();
+  });
+
+  it('leaves the zebra switch alone when the engine lacks the capability', () => {
+    // The row is ABSENT rather than disabled, and its absence must not take
+    // its neighbour with it.
+    section(TABLE, ['table.style']);
+    expect(screen.queryByRole('checkbox', { name: NAME })).toBeNull();
+    expect(screen.getByRole('checkbox', { name: 'Banded rows' })).not.toBeNull();
+  });
+
+  it('authors nothing by being moved', () => {
+    // A pure relocation: rendering the section must still emit no op.
+    const controller = section(TABLE, ['table.style', 'table.header.visuallyHidden']);
+    expect(controller.apply).not.toHaveBeenCalled();
+  });
+
+  it('keeps the NOTE beside the band fields it is about, inside the detail', () => {
+    // The other end of the same idea, and the reason the split is a split: the
+    // note names the header band's fields, so a reader has to be able to see
+    // them. Hidden while the disclosure is closed, present once it is open.
+    section({ ...TABLE, header: { visuallyHidden: true } }, [
+      'table.style',
+      'table.header.visuallyHidden',
+    ]);
+    expect(screen.queryByText(new RegExp(NOTE))).toBeNull();
+    openDetail();
+    expect(screen.getByText(new RegExp(NOTE))).not.toBeNull();
+  });
+
+  it('shows no note while the header row is NOT hidden', () => {
+    section(TABLE, ['table.style', 'table.header.visuallyHidden']);
+    openDetail();
+    expect(screen.queryByText(new RegExp(NOTE))).toBeNull();
+  });
 
   it('is ABSENT when the engine lacks the capability', () => {
     // An older engine parse-REJECTS `header.visuallyHidden`, so a hopeful
     // checkbox would break the document the moment it was ticked.
     section(TABLE, ['table.style']);
-    openDetail();
     expect(screen.queryByRole('checkbox', { name: NAME })).toBeNull();
   });
 
   it('is PRESENT when the capability list carries the key', () => {
     section(TABLE, ['table.style', 'table.header.visuallyHidden']);
-    openDetail();
     expect(screen.getByRole('checkbox', { name: NAME })).not.toBeNull();
   });
 
   it('authors the key when ticked', () => {
     const controller = section(TABLE, ['table.style', 'table.header.visuallyHidden']);
-    openDetail();
     fireEvent.click(screen.getByRole('checkbox', { name: NAME }));
     expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
       op: 'setScalar',
@@ -408,7 +451,6 @@ describe('TableStyleSection — the invisible header row', () => {
       'table.style',
       'table.header.visuallyHidden',
     ]);
-    openDetail();
     const box = screen.getByRole('checkbox', { name: NAME }) as HTMLInputElement;
     expect(box.checked).toBe(true);
     fireEvent.click(box);
@@ -424,7 +466,6 @@ describe('TableStyleSection — the invisible header row', () => {
       'table.style',
       'table.header.visuallyHidden',
     ]);
-    openDetail();
     expect((screen.getByRole('checkbox', { name: NAME }) as HTMLInputElement).checked).toBe(true);
   });
 
@@ -435,7 +476,6 @@ describe('TableStyleSection — the invisible header row', () => {
         'table.style',
         'table.header.visuallyHidden',
       ]);
-      openDetail();
       expect((screen.getByRole('checkbox', { name: NAME }) as HTMLInputElement).checked).toBe(
         false,
       );

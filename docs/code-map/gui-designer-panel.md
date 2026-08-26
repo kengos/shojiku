@@ -569,10 +569,13 @@ conditional rules the next section owns).
   so that move stays a change of render site. Capability-gated on `table.style`,
   with a SECOND gate nested inside it: the 「hide the header row」 checkbox needs
   `table.header.visuallyHidden`, which an older engine parse-rejects outright.
-- `panel/HiddenHeaderField.tsx` — the 「hide the header row on the page」
-  checkbox plus the note that keeps the header band honest. Its own leaf
-  because the two are one idea and the band fields BELOW them are what the
-  idea makes ineffective. The CHECKBOX is capability-gated
+- `panel/HiddenHeaderField.tsx` — TWO exports, because one idea has two
+  ends: `HiddenHeaderToggle`, the 「hide the header row on the page」 checkbox,
+  which `TableStyleSection` renders TOP-LEVEL beside the zebra switch (its
+  peer — both are table-level decisions, and Excel puts this one at the top),
+  and `HiddenHeaderNote`, the note that keeps the header band honest, which
+  stays INSIDE the disclosure beside the band fields it names. The CHECKBOX is
+  capability-gated
   (`table.header.visuallyHidden`; an older engine parse-rejects the key), the
   NOTE is gated on the authored value instead — a document can carry the key
   against an engine that would not offer it. The fields stay editable: the
@@ -617,7 +620,11 @@ conditional rules the next section owns).
   set/clear either does nothing when clicked or makes the value jump. Origin is
   told twice over by weight: a value the DOCUMENT made (named style / ancestor /
   `defaults.style`) gets the shared `OriginBadge` LINE, a value the ENGINE floor
-  made gets a decorative hover bubble, because `textAlign`/`color`/`fontWeight`
+  made gets a hover bubble that is ALSO the control's `aria-describedby` target
+  (the hover group is the whole FIELD, so pointing at the control shows it, and
+  the origin is a DESCRIPTION rather than part of the name — a name is re-read
+  on every visit, and these three always resolve), because
+  `textAlign`/`color`/`fontWeight`
   always resolve and a line apiece would be permanent chrome saying nothing. The
   header band's floor FILL is the deliberate exception and keeps its line —
   `#ededed` is a grey nobody authored. FOUR hosts render it: the header band,
@@ -634,7 +641,18 @@ conditional rules the next section owns).
   `RuleCard.tsx` (one rule's card — the always-visible summary line read
   from the WIRE (`hasEquals`), remove/expand buttons, and the chips or
   the body), `ruleStyleChips.tsx` (the collapsed card's
-  applied-style chips; colours as swatch dots), `RuleControls.tsx` (the
+  applied-style chips; colours as swatch dots — the strip is LABELLED as what
+  the rule ADDS and says so outright when it adds nothing, because the opened
+  card answers the different question of what the matching ROWS render, and an
+  unlabelled empty strip beside a card showing checked controls read as a
+  contradiction. "Adds nothing" is a claim, and this panel models FOUR of
+  `Style`'s two dozen properties — so the sentence is decided from the WIRE
+  (`styleKeyCount` + `styleNameCount` on `RowConditionRow`), never from whether
+  any chip was produced. The three ways a rule adds something without earning
+  one of the four: `styleNames`; `fontWeight: normal`, which the Designer
+  itself authors on an un-tick over a bold band (hence the RAW `fontWeight`
+  rather than a `bold` boolean); and the ~20 unmodelled properties, which earn
+  a counted remainder chip), `RuleControls.tsx` (the
   expanded body: a row-scope `FieldPicker` + value control, then the SHARED
   `TableBandFields` at the rule entry's `style.*` over `ruleContext` — a rule is
   one more layer over the body band, so it gets the same four controls, the same
@@ -844,7 +862,13 @@ conditional rules the next section owns).
   themselves at the caret, with the raw string under them (editable —
   user decision: read-only would strand every pattern an existing
   document holds). One probe call answers the whole surface (the pattern
-  first, then one per token); nothing here formats.
+  first, then one per token); nothing here formats. THREE preview states, not
+  two: a probe the engine REFUSED (a pattern past its length cap) comes back
+  with an empty sample, so without its own branch it reads as "nothing typed
+  yet" — the hook carries `refused` through and the field renders the house
+  error `<output>` instead of the prompt. Any refusal reads as too-long, which
+  holds only while the probe list stays under the engine's `MAX_PROBES`
+  (pinned by a test); the copy carries no number, so the cap has one home.
 - `panel/formatSummary.ts` — pure: the 表示形式 rail row's one-liner. It
   NAMES the first set type rather than only counting, so the rail answers
   "is the date format set here?" without opening the section.

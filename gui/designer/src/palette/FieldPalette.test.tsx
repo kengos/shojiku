@@ -473,4 +473,36 @@ describe('FieldPalette — the per-field gear', () => {
     const label = screen.getByText('Number');
     expect(label.className).toContain('[overflow-wrap:anywhere]');
   });
+
+  // The label above and the sample below have always wrapped; the two spans
+  // BETWEEN them did not. The KEY is the one that cannot be bounded —
+  // `leafField` clips a title but passes a property path through verbatim, so a
+  // definitions file decides how wide this row wants to be. jsdom lays nothing
+  // out, so the class is the evidence a unit test can offer; the real wrap is
+  // confirmed in a browser.
+  it('lets a long data KEY wrap instead of painting out of the row', () => {
+    draw();
+    const key = screen.getByText('receipt.number');
+    expect(key.tagName).toBe('CODE');
+    expect(key.className).toContain('[overflow-wrap:anywhere]');
+  });
+
+  it('CLIPS a hostile key for display while the pick still carries it whole', () => {
+    // Wrapping alone traded a row that painted sideways for a row thousands of
+    // lines tall — which buries the rest of the palette just as effectively.
+    // The key is the one string here `leafField` does not bound.
+    const key = 'receipt.' + 'x'.repeat(400);
+    draw({ definitions: DEFINITIONS.replace('      number:', `      ${'x'.repeat(400)}:`) });
+    expect(screen.queryByText(key)).toBeNull();
+    const shown = screen.getByText(/^receipt\.x+…$/);
+    expect(shown.textContent?.length).toBeLessThanOrEqual(121);
+  });
+
+  it('lets the type name beside the key wrap too', () => {
+    // An UNKNOWN type shows verbatim rather than through the closed label map,
+    // so this span is document-derived as well — clipped, but still long
+    // enough to overflow a ~215px row on its own.
+    draw();
+    expect(screen.getByText('mystery_type').className).toContain('[overflow-wrap:anywhere]');
+  });
 });

@@ -10,6 +10,39 @@ describe('TipBubble', () => {
     expect(tip?.textContent).toBe('Undo');
   });
 
+  // The `id` is the ONE opt-in, and it turns on both channels together: the
+  // bubble becomes readable by assistive tech AND reveals on keyboard focus.
+  // The negative half matters more than the positive one — a decorative bubble
+  // that revealed on focus would sit open over the rows below for as long as a
+  // text input is being typed into, and four panel primitives wrap an input in
+  // the tip group.
+  it('becomes a DESCRIPTION target when given an id, and reveals on focus', () => {
+    const { container } = render(<TipBubble text="From document defaults" id="origin-1" />);
+    const tip = container.querySelector('[data-sj-tip]') as HTMLElement;
+    expect(tip.id).toBe('origin-1');
+    expect(tip.getAttribute('aria-hidden')).toBeNull();
+    expect(tip.className).toContain('group-focus-within/tip:opacity-100');
+  });
+
+  it('stays hover-only while it is decorative, so no tooltip parks over a field', () => {
+    const { container } = render(<TipBubble text="Undo" />);
+    const tip = container.querySelector('[data-sj-tip]') as HTMLElement;
+    expect(tip.className).toContain('group-hover/tip:opacity-100');
+    expect(tip.className).not.toContain('group-focus-within');
+  });
+
+  it('anchors at the start when asked, for a narrow control near a clipping edge', () => {
+    const centred = render(<TipBubble text="x" />).container.querySelector(
+      '[data-sj-tip]',
+    ) as HTMLElement;
+    expect(centred.className).toContain('-translate-x-1/2');
+    const started = render(<TipBubble text="x" align="start" />).container.querySelector(
+      '[data-sj-tip]',
+    ) as HTMLElement;
+    expect(started.className).toContain('left-0');
+    expect(started.className).not.toContain('-translate-x-1/2');
+  });
+
   it('renders document-derived text inertly, never as markup', () => {
     const { container } = render(<TipBubble text="<img src=x onerror=alert(1)>" />);
     const tip = container.querySelector('[data-sj-tip]');

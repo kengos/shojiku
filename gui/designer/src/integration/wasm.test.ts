@@ -163,6 +163,27 @@ describe('wasm transport against the real engine (receipt-us)', () => {
     expect(catalog?.probes[0].sample).toMatch(/^\d{4}$/);
   });
 
+  it('brings a REFUSAL across the seam under its own spelling', async () => {
+    // The half the case above cannot prove. The panel's refusal branch turns on
+    // one string surviving this crossing: `ProbeRefusal::PatternTooLong` has to
+    // serialize as exactly `patternTooLong` and be admitted by the closed
+    // `REFUSALS` set in `engine/formatCatalogResponse.ts`. A rename on either
+    // side leaves the Rust enum test, the hand-written JSON fixture and all
+    // eleven `PatternField` unit tests green, while `asMember` throws,
+    // `toFormatCatalog` rejects, `useFormatCatalog`'s probe swallows it into
+    // `[]`, and the surface silently falls back to the empty-pattern prompt —
+    // which is precisely the bug the refusal branch exists to remove.
+    const ask = transport.formatCatalog;
+    // One character past `MAX_PROBE_PATTERN` (256, `engine/authoring/src/formats.rs`),
+    // counted in CHARS by the engine. Well under the shim's own probe-count cap.
+    const catalog = await ask?.(template(), [{ fieldType: 'date', pattern: 'y'.repeat(257) }]);
+    expect(catalog?.probes).toHaveLength(1);
+    expect(catalog?.probes[0].refused).toBe('patternTooLong');
+    // Refused means NOT rendered — the empty sample is what made this
+    // indistinguishable from an unwritten pattern in the first place.
+    expect(catalog?.probes[0].sample).toBe('');
+  });
+
   it('validate returns a diagnostics envelope', async () => {
     const diagnostics = await transport.validate(template(), params(), definitions());
     expect(Array.isArray(diagnostics.items)).toBe(true);

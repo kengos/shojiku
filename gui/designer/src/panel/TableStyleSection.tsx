@@ -17,7 +17,7 @@ import { useI18n } from '../i18n/context';
 import { BTN_SM, FIELD_LABEL, SECTION_TITLE } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
 import { bandInk, headerFillOf, readBandCascades } from './bandCascade';
-import { HiddenHeaderField } from './HiddenHeaderField';
+import { HiddenHeaderNote, HiddenHeaderToggle } from './HiddenHeaderField';
 import { hasCapability } from './itemPanelProps';
 import { applyPanelOp } from './model';
 import { TableBandFields } from './TableBandFields';
@@ -124,6 +124,15 @@ export function TableStyleSection({ context }: { readonly context: TableStyleCon
         />
         {t('panel.tableStyle.zebra')}
       </label>
+      {/* The peer of the zebra switch, not a detail of the header band: both
+          are table-level decisions an author looks for without opening
+          anything. */}
+      <HiddenHeaderToggle
+        path={path}
+        hidden={view.hiddenHeader}
+        capabilities={capabilities}
+        onOp={(op) => controller.apply(op)}
+      />
       <button
         type="button"
         className="mb-1 flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-muted text-sm"
@@ -145,12 +154,7 @@ export function TableStyleSection({ context }: { readonly context: TableStyleCon
           <p className={`${FIELD_LABEL} font-semibold text-text`}>
             {t('panel.tableStyle.headerBand')}
           </p>
-          <HiddenHeaderField
-            path={path}
-            hidden={view.hiddenHeader}
-            capabilities={capabilities}
-            onOp={(op) => controller.apply(op)}
-          />
+          <HiddenHeaderNote hidden={view.hiddenHeader} />
           <TableBandFields
             ctx={bands.header}
             path={path}

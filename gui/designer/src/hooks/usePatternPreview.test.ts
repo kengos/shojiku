@@ -54,7 +54,7 @@ describe('usePatternPreview', () => {
     };
     const { result } = renderHook(() => usePatternPreview('date', 'y', probe));
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(result.current).toEqual({ sample: '', warning: null, tokens: [] });
+    expect(result.current).toEqual({ sample: '', warning: null, tokens: [], refused: null });
   });
 
   it('drops an answer that arrives after the pattern moved on', async () => {
@@ -79,10 +79,41 @@ describe('usePatternPreview', () => {
     expect(result.current.sample).toBe('<yyyy>');
   });
 
+  it('carries a REFUSAL through, so an empty sample is not read as an empty pattern', async () => {
+    // The engine refuses a pattern past its length cap and mints the refusal
+    // with an empty sample. A hook that dropped `refused` would hand the
+    // surface a result indistinguishable from "nothing typed yet".
+    const probe = async (probes: readonly PatternProbe[]) =>
+      answer(probes).map((r, index) =>
+        index === 0 ? { sample: '', warning: null, refused: 'patternTooLong' as const } : r,
+      );
+    const { result } = renderHook(() => usePatternPreview('date', 'y'.repeat(300), probe));
+    await waitFor(() => expect(result.current.refused).toBe('patternTooLong'));
+    expect(result.current.sample).toBe('');
+    // The token chips still answer — each is its own short probe.
+    expect(result.current.tokens).toHaveLength(PATTERN_TOKENS.length);
+  });
+
+  it('reports no refusal for an ordinary answer', async () => {
+    const probe = async (probes: readonly PatternProbe[]) => answer(probes);
+    const { result } = renderHook(() => usePatternPreview('date', 'yyyy', probe));
+    await waitFor(() => expect(result.current.sample).toBe('<yyyy>'));
+    expect(result.current.refused).toBeNull();
+  });
+
   it('offers only tokens the engine’s own table carries', () => {
     // Longest-match: every spelling here must be the one that actually matches
     // (a bare `d` would be shadowed by `dd` in a `dd` pattern, not the reverse).
     expect(PATTERN_TOKENS).toEqual(['yyyy', 'MM', 'MMMM', 'dd', 'EEEE', 'GG', 'a', 'HH', 'mm']);
     expect(new Set(PATTERN_TOKENS).size).toBe(PATTERN_TOKENS.length);
+  });
+
+  it('asks for fewer probes than the engine will run, so only LENGTH can refuse', () => {
+    // `PatternField` reads any refusal as "too long". That is only honest while
+    // this surface cannot reach the engine's OTHER refusal, `tooManyProbes` —
+    // which is `MAX_PROBES` in `engine/authoring`, 16 at the time of writing.
+    // Growing the chip row past that cap would make the message a lie, and this
+    // is the line that would go red first.
+    expect(PATTERN_TOKENS.length + 1).toBeLessThan(16);
   });
 });
