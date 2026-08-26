@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
-import { fakeProbe } from '../testkit/formatCatalog';
+import { fakeProbe, refusingProbe } from '../testkit/formatCatalog';
 import { PatternField } from './PatternField';
 
 function draw(over: Partial<Parameters<typeof PatternField>[0]> = {}) {
@@ -99,5 +99,30 @@ describe('PatternField', () => {
   it('shows the engine’s warning verbatim — the engine never translates', async () => {
     draw({ value: "yyyy'", probe: fakeProbe(undefined, 'unterminated quote') });
     expect(await screen.findByText('unterminated quote')).toBeTruthy();
+  });
+
+  // The defect this pair exists for: a refusal arrives with an EMPTY sample, so
+  // the two states are indistinguishable to a surface that reads only `sample`.
+  // The prompt is the twin the fix has to keep telling apart, which is why the
+  // empty-pattern case above stays exactly as it was.
+  it('says the pattern was refused instead of asking for one that is already there', async () => {
+    draw({ value: 'y'.repeat(300), probe: refusingProbe() });
+    expect(await screen.findByText('This pattern is too long to preview.')).toBeTruthy();
+    expect(screen.queryByText('Press a token above, or type a pattern.')).toBeNull();
+    // ...and it does not pretend to have rendered anything either.
+    expect(screen.queryByText('With the sample value:')).toBeNull();
+  });
+
+  it('carries no NUMBER in the refusal, so the cap lives in one place', async () => {
+    draw({ value: 'y'.repeat(300), probe: refusingProbe() });
+    const message = await screen.findByText('This pattern is too long to preview.');
+    expect(message.textContent).not.toMatch(/\d/);
+  });
+
+  it('still offers the token chips while the pattern itself is refused', async () => {
+    // Each token is its own short probe, so the way OUT of the refusal — press a
+    // token, or edit the field — is still on screen.
+    draw({ value: 'y'.repeat(300), probe: refusingProbe() });
+    expect(await screen.findByRole('button', { name: 'Insert yyyy' })).toBeTruthy();
   });
 });

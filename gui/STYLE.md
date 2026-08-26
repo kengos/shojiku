@@ -254,8 +254,27 @@ re-inventing them:
   and `HelpHint` each ship their own bubble, so a call site gets it for free
   and passes only `label`. For a one-off control, wrap it in
   `group/tip relative`; dropdowns render the bubble only while closed, and
-  rows inside dropdowns get bubbles too. The bubble is `aria-hidden` and the
-  accessible NAME stays on the control — never move a name into a bubble.
+  rows inside dropdowns get bubbles too. The accessible NAME stays on the
+  control — never move a name into a bubble, and never append to a name
+  something a bubble is saying: a name is re-read on every visit, so a hint
+  that is always present becomes chrome in the audio channel exactly as a
+  permanent line would in the visual one. The bubble is `aria-hidden` by
+  DEFAULT, which makes it mouse-only; where the hint is worth having without a
+  mouse, give the bubble an `id` and point the control's `aria-describedby` at
+  it — and put `group/tip` on the whole FIELD rather than on the label, or
+  hovering the control the hint is ABOUT shows nothing. The `id` is the single
+  opt-in and turns on both channels: `TipBubble` drops its own `aria-hidden`
+  AND starts revealing on keyboard focus. It is deliberately opt-in rather
+  than the default, because of one category: **any tip group wrapping a
+  focusable TEXT FIELD**, where a reveal-on-focus parks a tooltip over the rows
+  below for as long as the user types. Known instances — examples, not the
+  definition — are `StepperField`, `SeededField`, `fields.tsx`,
+  `TableTextCells` and `toolbar/TypographyGroup`'s font-size box; the last
+  carries an `originHint`, so it is the likeliest next opt-in and the one where
+  the trade-off must be re-judged rather than assumed. A bubble near a scroller's left edge also
+  wants `align="start"`: centred, it is wider than the control it explains and
+  the property panel clips the first characters off. The band editors' origin
+  hints are the worked example of all three.
   The bubble is width-bounded, because a label may interpolate a
   document-derived name.
   **Constraint to know**: the bubble is `absolute` inside its wrapper, so a

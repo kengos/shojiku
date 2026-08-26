@@ -6,6 +6,7 @@ import {
   bandStyleOp,
   clearIneffectiveFillOp,
   DEFAULT_ZEBRA_FILL,
+  hiddenHeaderToggleOp,
   zebraToggleOp,
 } from './tableStyleOps';
 
@@ -203,6 +204,53 @@ describe('what a clear leaves BEHIND (proven over a real document)', () => {
     expect(session.apply(clearIneffectiveFillOp(TABLE)).ok).toBe(true);
     expect(session.text()).toContain('borderWidth: 2');
     expect(session.text()).not.toContain('#00ff00');
+  });
+});
+
+describe('hiddenHeaderToggleOp', () => {
+  // The component tests drive this through a `vi.fn()`, which proves the op's
+  // SHAPE and nothing about what the document does with it. Pruning is the
+  // whole claim here, and only a real Editor can answer it.
+  const SOURCE = [
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - type: table',
+    '        data: { key: rows }',
+    '        columns:',
+    '          - { label: 品名, data: { key: name } }',
+    '',
+  ].join('\n');
+
+  it('round-trips over a REAL document: on then off is byte-identical', () => {
+    // The fixture starts with NO `header:` at all, which is the state the
+    // round-trip has to return to — seeding `visuallyHidden: false` would
+    // instead prove that `false` survives, and the engine drops an explicit
+    // `false` on re-serialize anyway.
+    const session = Editor.create(SOURCE);
+    const before = session.text();
+    expect(session.apply(hiddenHeaderToggleOp(TABLE, false)).ok).toBe(true);
+    expect(session.text()).toContain('visuallyHidden: true');
+    expect(session.apply(hiddenHeaderToggleOp(TABLE, true)).ok).toBe(true);
+    expect(session.text()).toBe(before);
+    expect(session.text()).not.toContain('header');
+  });
+
+  it('leaves a SIBLING header key standing when the hidden flag is removed', () => {
+    // Pruning is only interesting when something must NOT be pruned: the
+    // `header:` map goes only when the removal emptied it.
+    const session = Editor.create(
+      SOURCE.replace(
+        '        columns:',
+        "        header: { style: { backgroundColor: '#dbe7ff' } }\n        columns:",
+      ),
+    );
+    expect(session.apply(hiddenHeaderToggleOp(TABLE, false)).ok).toBe(true);
+    expect(session.text()).toContain('visuallyHidden: true');
+    expect(session.apply(hiddenHeaderToggleOp(TABLE, true)).ok).toBe(true);
+    expect(session.text()).not.toContain('visuallyHidden');
+    expect(session.text()).toContain('#dbe7ff');
   });
 });
 

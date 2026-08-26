@@ -22,8 +22,12 @@ export interface RowConditionRow {
   readonly hasEquals: boolean;
   /** `style.textAlign` ('' when unset). */
   readonly textAlign: string;
-  /** Whether `style.fontWeight` is `bold`. */
-  readonly bold: boolean;
+  /** `style.fontWeight` ('' when unset). Kept as the RAW value rather than a
+   * `bold` boolean: the Designer authors `normal` explicitly when you un-tick
+   * Bold over a band that is bold, and a boolean cannot tell that apart from
+   * an unset weight — which is how the collapsed strip came to call such a
+   * rule empty. */
+  readonly fontWeight: string;
   /** `style.backgroundColor` ('' when unset). */
   readonly backgroundColor: string;
   /** `style.color` ('' when unset). */
@@ -31,6 +35,12 @@ export interface RowConditionRow {
   /** How many `styleNames` the entry carries — the editor does not edit them,
    * so the row reports them instead of hiding them. */
   readonly styleNameCount: number;
+  /** How many keys the entry's `style` map carries IN TOTAL — including the
+   * ~20 `Style` properties this panel does not model. Whether a rule adds
+   * anything is a question about the wire, not about the four fields the
+   * editor happens to render, so the "adds nothing" sentence is decided from
+   * this rather than from the chips. */
+  readonly styleKeyCount: number;
 }
 
 /** Longest display string a hostile document can put in a row. */
@@ -88,10 +98,11 @@ export function readRowConditions(entries: readonly unknown[]): readonly RowCond
       equals: displayScalar(when?.equals),
       hasEquals: when !== undefined && when.equals !== undefined && when.equals !== null,
       textAlign: text(style?.textAlign),
-      bold: style?.fontWeight === 'bold',
+      fontWeight: text(style?.fontWeight),
       backgroundColor: text(style?.backgroundColor),
       color: text(style?.color),
       styleNameCount: Array.isArray(names) ? names.length : 0,
+      styleKeyCount: style === undefined ? 0 : Object.keys(style).length,
     };
   });
 }

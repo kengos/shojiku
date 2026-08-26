@@ -1,6 +1,7 @@
 // The leaf inputs one row-condition rule's editor composes: the value control
 // the picked field earns, and a labeled colour swatch row.
 
+import { useId } from 'react';
 import { useI18n } from '../i18n/context';
 import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
 import { FIELD_LABEL, PANEL_SWATCH_TRIGGER } from '../ui/chrome';
@@ -101,20 +102,28 @@ export function SwatchRow({
   readonly label: string;
   readonly value: string;
   /** Where a CASCADED value comes from, as the gdoc-style hover bubble. Used
-   * where the origin is the engine floor and a badge line would be noise; the
-   * bubble is decorative, so the control keeps its own accessible name. */
+   * where the origin is the engine floor and a badge line would be noise. The
+   * control keeps its own accessible name and DESCRIBES itself with the
+   * bubble, so the origin reaches a keyboard user without being re-read on
+   * every visit. */
   readonly hint?: string;
   readonly onCommit: (value: string) => void;
 }) {
   const { t } = useI18n();
+  const hintId = useId();
+  // The hover group is the whole ROW, not the label: the origin explains the
+  // CONTROL, so pointing at the swatch has to be enough to see it. The bubble
+  // still hangs off the label span (the only `relative` box here), which is
+  // where it has always been drawn.
   return (
-    <div className="flex items-center gap-2">
-      <span className={`${FIELD_LABEL} group/tip relative mb-0 flex-1`}>
+    <div className="group/tip flex items-center gap-2">
+      <span className={`${FIELD_LABEL} relative mb-0 flex-1`}>
         {label}
-        {hint === undefined ? null : <TipBubble text={hint} />}
+        {hint === undefined ? null : <TipBubble text={hint} id={hintId} align="start" />}
       </span>
       <ColorSwatchPicker
         label={label}
+        describedBy={hint === undefined ? undefined : hintId}
         value={value}
         onCommit={onCommit}
         triggerClassName={PANEL_SWATCH_TRIGGER}

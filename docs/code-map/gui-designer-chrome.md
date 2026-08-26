@@ -407,7 +407,8 @@ is Tailwind utilities over the `--sj-*` tokens.
   ACTION when the visible text is a noun.
 - `ui/Switch.tsx` — over Headless UI Switch.
 - `ui/Segmented.tsx` — the mutually-exclusive pill as a NATIVE radio
-  group (fieldset + sr-only inputs, `has-*` variants).
+  group (fieldset + sr-only inputs, `has-*` variants); optional
+  `describedBy` puts a caller's hint on the GROUP as a description.
 - `ui/Modal.tsx` — over Headless UI Dialog (`transition` prop; jsdom
   keeps it mounted through exit — close tests assert the WIRING);
   `size` prop: `default` 460px / `roomy` 560px / `wide` 900px.
@@ -434,7 +435,8 @@ is Tailwind utilities over the `--sj-*` tokens.
   text, so `ui/swatchNames.ts` (`swatchName`, a real `Map` — the lookup
   value can come from a document) supplies its accessible NAME; an
   unnamed value keeps its hex, and a drift-guard pins the table against
-  `SWATCHES`.
+  `SWATCHES`. Optional `describedBy` describes the trigger without touching
+  that name.
 - `ui/chipContrast.ts` — what a colour VALUE is, and how a chip painted in
   one stays visible: `isHexColor` (the guard every document-derived colour
   passes before reaching an inline style — it lives here, not beside the
@@ -446,8 +448,16 @@ is Tailwind utilities over the `--sj-*` tokens.
   branch and no new token. `chipRing` is total: a non-colour gets no ring,
   which is also the unset chip's state.
 - `ui/TipBubble.tsx` — the gdoc-style instant tooltip (~300ms CSS,
-  decorative, width-BOUNDED — a label may interpolate a hostile style
-  name; `data-sj-tip` is the test hook).
+  width-BOUNDED — a label may interpolate a hostile style name;
+  `data-sj-tip` is the test hook). Decorative (`aria-hidden`) by DEFAULT;
+  given an `id` it drops that, becomes somebody's `aria-describedby` target
+  AND starts revealing on keyboard focus — one opt-in, both channels, which
+  is how a hover-only hint reaches a keyboard user without being welded into
+  a control's name. Opt-in rather than default because of one CATEGORY — any
+  tip group wrapping a focusable text field (the panel's field primitives, and
+  `toolbar/TypographyGroup`'s size box) — where reveal-on-focus would park a
+  tooltip over the rows below while the user types. `align="start"` anchors
+  it left for a narrow control near the property panel's clipping edge.
 - `ui/ResizeHandle.tsx` — the WAI-ARIA window splitter (semantics-free;
   caller owns state; pointer capture guarded for jsdom).
 - `ui/icons.tsx` — the hand-drawn inline-SVG icon set (`currentColor`,

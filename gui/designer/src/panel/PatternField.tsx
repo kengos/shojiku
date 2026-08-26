@@ -106,15 +106,36 @@ export function PatternField({
           }
         }}
       />
-      <p className="mt-0.5 mb-0 text-sm text-muted">
-        {preview.sample.length > 0 ? (
-          <>
-            {t('format.pattern.preview')} <span className="text-text italic">{preview.sample}</span>
-          </>
-        ) : (
-          t('format.pattern.previewEmpty')
-        )}
-      </p>
+      {/* Three states, not two. A REFUSED probe comes back with an empty
+          sample, so without its own branch it falls into the "nothing typed
+          yet" prompt and tells an author who has just typed a very long
+          pattern to type one. The refusal is not a degradation of the render —
+          nothing was rendered — so it replaces the preview line rather than
+          sitting under it.
+
+          Any refusal reads as too-long here on purpose: the surface probes the
+          pattern plus `PATTERN_TOKENS`, which is well under the engine's probe
+          cap, so `tooManyProbes` cannot arise from it (pinned by a test). A
+          two-arm switch would carry a permanently unreachable branch instead
+          of a checked assumption. The copy carries no NUMBER — the cap belongs
+          to the engine, and a figure repeated here would be a second copy of
+          it with nothing keeping the two equal. */}
+      {preview.refused === null ? (
+        <p className="mt-0.5 mb-0 text-sm text-muted">
+          {preview.sample.length > 0 ? (
+            <>
+              {t('format.pattern.preview')}{' '}
+              <span className="text-text italic">{preview.sample}</span>
+            </>
+          ) : (
+            t('format.pattern.previewEmpty')
+          )}
+        </p>
+      ) : (
+        <output className="mt-0.5 block rounded-md bg-error-bg px-2 py-0.5 text-sm text-error-text">
+          {t('format.pattern.refused')}
+        </output>
+      )}
       {preview.warning === null ? null : (
         <output className="mt-0.5 block rounded-md bg-error-bg px-2 py-0.5 text-sm text-error-text">
           {preview.warning}

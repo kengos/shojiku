@@ -84,7 +84,13 @@ succeeded.
   wiring type, the localized type label (exported `TYPE_LABEL_KEYS`,
   shared with `panel/FieldPicker`, `text/InsertFieldMenu` and
   `data/ItemListRow`), the
-  used/unused badge; a used field's click cycles bound placements via
+  used/unused badge. Every text span in the row wraps
+  (`[overflow-wrap:anywhere]`) and every one is bounded: the KEY needed both,
+  since `leafField` clips a title, a type and a sample but passes a property
+  path through verbatim — unwrapped it painted out of the ~215px row, and
+  wrapped-but-unclipped it would bury the list under one row instead, so the
+  display goes through `clip()` while the drag payload and the pick op keep
+  the whole key; a used field's click cycles bound placements via
   the shared selection. The per-field gear (`onEdit`) is a SIBLING of the
   row, never inside it — a bound row IS a `<button>` and a
   button-in-button is invalid HTML (the `data/ItemListRow` shape).

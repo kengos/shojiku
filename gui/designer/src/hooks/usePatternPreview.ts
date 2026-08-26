@@ -11,9 +11,15 @@
 // fixed exemplar instant. A transport that cannot answer yields empty strings
 // and the surface simply shows the pattern with no preview, exactly as it does
 // before the first answer arrives.
+//
+// A REFUSAL is not that case and must not read as it. The engine declines to
+// probe a pattern past its length cap, and the refusal arrives with an empty
+// sample by construction — so without carrying it through, an over-long
+// pattern is indistinguishable from an empty one and the surface tells an
+// author who has typed 300 characters to type something.
 
 import { useEffect, useState } from 'react';
-import type { PatternProbe, ProbeResult } from '../engine/types';
+import type { PatternProbe, ProbeRefusal, ProbeResult } from '../engine/types';
 
 /** The tokens offered as chips, in reading order (a date, then a time). Each is
  * a member of the engine's own token table (`engine/formatter`'s `TOKENS`); the
@@ -44,9 +50,13 @@ export interface PatternPreview {
   readonly warning: string | null;
   /** Each token's own output, aligned with `PATTERN_TOKENS`. */
   readonly tokens: readonly TokenSample[];
+  /** Why the engine declined to run the pattern probe, when it did. A refusal
+   * yields an empty `sample`, so a reader that ignores this cannot tell a
+   * refused pattern from an unwritten one. */
+  readonly refused: ProbeRefusal | null;
 }
 
-const EMPTY: PatternPreview = { sample: '', warning: null, tokens: [] };
+const EMPTY: PatternPreview = { sample: '', warning: null, tokens: [], refused: null };
 
 type Probe = (probes: readonly PatternProbe[]) => Promise<readonly ProbeResult[]>;
 
@@ -73,6 +83,7 @@ export function usePatternPreview(
         setPreview({
           sample: results[0].sample,
           warning: results[0].warning,
+          refused: results[0].refused,
           tokens: PATTERN_TOKENS.map((token, index) => ({
             token,
             sample: results[index + 1].sample,

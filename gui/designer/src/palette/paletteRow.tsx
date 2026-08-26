@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/context';
 import { IconButton } from '../ui/Button';
 import { IconGear } from '../ui/icons';
 import type { PaletteDragPayload } from './dragSnippet';
+import { clip } from './fieldDisplay';
 import type { PaletteField } from './model';
 
 /** The palette side of the Designer-owned drag: `begin` arms a drag with the
@@ -98,9 +99,20 @@ export function FieldRow({ field, paths, onPick, group, drag, onEdit }: FieldRow
       <span className={`[overflow-wrap:anywhere] font-semibold${unused ? ' text-muted' : ''}`}>
         {field.label}
       </span>
+      {/* Both halves wrap, and the KEY is also CLIPPED for display. It is the
+          one string in this row that reached the DOM uncapped — `leafField`
+          clips a title, a type and a sample, never a property path — so a long
+          one painted straight out of the ~215px row. Wrapping alone would have
+          traded that for the opposite failure: an unbounded key wraps to
+          thousands of lines and buries the rest of the palette. `clip()` is
+          this directory's own vocabulary (`caps.ts`), and the FULL key still
+          goes to the drag payload and the pick op below — only the display is
+          bounded. */}
       <span className="flex items-baseline gap-2 text-sm text-muted">
-        <code className="text-sm">{field.key}</code>
-        <span>{typeLabelKey !== undefined ? t(typeLabelKey) : field.type}</span>
+        <code className="text-sm [overflow-wrap:anywhere]">{clip(field.key)}</code>
+        <span className="[overflow-wrap:anywhere]">
+          {typeLabelKey !== undefined ? t(typeLabelKey) : field.type}
+        </span>
       </span>
       {field.sample !== '' ? (
         <span className="text-sm text-muted italic [overflow-wrap:anywhere]">{field.sample}</span>

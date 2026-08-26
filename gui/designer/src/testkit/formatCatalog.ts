@@ -6,7 +6,7 @@
 // values): the currency and number rows differ, `wareki` differs from the
 // pack default, and `quantity` carries both plural arms. A fixture whose
 // samples all read alike would let a lookup bug pass.
-import type { FormatCatalog, ProbeResult } from '../engine/types';
+import type { FormatCatalog, ProbeRefusal, ProbeResult } from '../engine/types';
 
 export const FORMAT_CATALOG: FormatCatalog = {
   types: [
@@ -60,4 +60,19 @@ export function fakeProbe(
 ) {
   return async (probes: readonly { readonly pattern: string }[]): Promise<readonly ProbeResult[]> =>
     probes.map((probe) => ({ sample: render(probe.pattern), warning, refused: null }));
+}
+
+/** A probe that answers like the engine when the PATTERN is refused: the
+ * pattern's own slot carries the refusal and nothing else — an empty sample and
+ * no warning, exactly what `formats/probe.rs` mints — while the token chips
+ * still answer, because each token is its own short probe well under the cap.
+ * Refusing every slot instead would let a surface pass that reads the refusal
+ * off a CHIP. */
+export function refusingProbe(refused: ProbeRefusal = 'patternTooLong') {
+  return async (probes: readonly { readonly pattern: string }[]): Promise<readonly ProbeResult[]> =>
+    probes.map((probe, index) =>
+      index === 0
+        ? { sample: '', warning: null, refused }
+        : { sample: `[${probe.pattern}]`, warning: null, refused: null },
+    );
 }

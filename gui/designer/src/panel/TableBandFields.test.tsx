@@ -1,5 +1,5 @@
 import type { Op, ReadFn } from '@shojiku/designer-core';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
 import { cascadeContext } from '../toolbar/cascade';
@@ -239,13 +239,118 @@ describe('TableBandFields — where the value came from', () => {
   it('renders NO line for an engine-floor value, only the hover hint', () => {
     band(docWith({ type: 'table' }), 'row');
     expect(originLines()).toEqual([]);
-    // One decorative bubble per always-resolving property: alignment, colour,
-    // bold. They are what a LINE apiece would have cost the panel.
+    // One bubble per always-resolving property: alignment, colour, bold. They
+    // are what a LINE apiece would have cost the panel.
     const hints = screen.getAllByText('From document defaults');
     expect(hints).toHaveLength(3);
+    // SPEC CHANGE: these used to be `aria-hidden`, which made the origin
+    // mouse-only. Each is now the DESCRIPTION of the control it explains, so it
+    // has to stay readable — and each therefore carries an id.
     for (const hint of hints) {
-      expect(hint.getAttribute('aria-hidden')).toBe('true');
+      expect(hint.getAttribute('aria-hidden')).toBeNull();
+      expect(hint.id).not.toBe('');
     }
+  });
+
+  // GUI-2. The bubble said where a value came from and said it only to a mouse,
+  // and for two of the three it did not even do that: the hover group sat on the
+  // LABEL, so pointing at the control showed nothing.
+  describe('the origin reaches a keyboard, and the CONTROL shows it', () => {
+    /** The element the given control points at with `aria-describedby`. */
+    function description(control: Element) {
+      const id = control.getAttribute('aria-describedby');
+      return id === null ? null : document.getElementById(id);
+    }
+
+    it('describes all three floor-valued controls with their own origin', () => {
+      band(docWith({ type: 'table' }), 'row');
+      const controls = [
+        screen.getByRole('group', { name: 'Text alignment' }),
+        screen.getByRole('button', { name: 'Color' }),
+        boldBox(),
+      ];
+      for (const control of controls) {
+        expect(description(control)?.textContent).toBe('From document defaults');
+      }
+    });
+
+    it('keeps the control NAMES clean — the origin is a description, not a name', () => {
+      // A name is re-read on every visit, and these three values always
+      // resolve, so folding the origin into the name would rebuild in audio
+      // exactly the permanent chrome the visible-line rule rejects.
+      band(docWith({ type: 'table' }), 'row');
+      expect(screen.getByRole('group', { name: 'Text alignment' })).not.toBeNull();
+      expect(screen.getByRole('button', { name: 'Color' })).not.toBeNull();
+      expect(boldBox()).not.toBeNull();
+    });
+
+    it('describes nothing when the value was authored HERE', () => {
+      band(
+        docWith({
+          type: 'table',
+          row: { style: { color: '#c00000', textAlign: 'right', fontWeight: 'bold' } },
+        }),
+        'row',
+      );
+      for (const control of [
+        screen.getByRole('group', { name: 'Text alignment' }),
+        screen.getByRole('button', { name: 'Color' }),
+        boldBox(),
+      ]) {
+        expect(control.getAttribute('aria-describedby')).toBeNull();
+      }
+    });
+
+    it('puts the hover group on the FIELD, so the control shows the bubble too', () => {
+      // The defect: two of the three groups wrapped only the label, so hovering
+      // the thing whose value you are asking about produced nothing.
+      band(docWith({ type: 'table' }), 'row');
+      for (const control of [
+        screen.getByRole('group', { name: 'Text alignment' }),
+        screen.getByRole('button', { name: 'Color' }),
+        boldBox(),
+      ]) {
+        const bubble = document.getElementById(
+          control.getAttribute('aria-describedby') as string,
+        ) as HTMLElement;
+        const group = bubble.closest('.group\\/tip');
+        expect(group).not.toBeNull();
+        expect(group?.contains(control)).toBe(true);
+      }
+    });
+
+    it('reveals the bubble on keyboard FOCUS as well as hover', () => {
+      // Without this the description reaches a screen reader and nothing
+      // reaches a sighted keyboard user, who has no way to summon a
+      // hover-only bubble at all.
+      band(docWith({ type: 'table' }), 'row');
+      const bubble = screen.getAllByText('From document defaults')[0];
+      expect(bubble.className).toContain('group-hover/tip:opacity-100');
+      expect(bubble.className).toContain('group-focus-within/tip:opacity-100');
+    });
+
+    it('describes the control in EVERY host the band editors have', () => {
+      // One component, four render sites: the header band, the body band, a
+      // column's cells, and a row-condition rule (covered beside the rule
+      // card's own tests). The header band is the one that differs — it passes
+      // a `headerFill` — so a per-host check is not merely the same assertion
+      // three times.
+      for (const owner of ['header', 'row', 'column'] as const) {
+        band(docWith({ type: 'table' }), owner, owner === 'header' ? { headerFill: true } : {});
+        for (const control of [screen.getByRole('group', { name: 'Text alignment' }), boldBox()]) {
+          const id = control.getAttribute('aria-describedby');
+          expect(id, `${owner}: no description`).not.toBeNull();
+          expect(document.getElementById(id as string)?.textContent).toBe('From document defaults');
+        }
+        cleanup();
+      }
+    });
+
+    it('authors nothing by describing anything', () => {
+      // GUI-2 is chrome: no wire moved, so a render must still emit no op.
+      const onOp = band(docWith({ type: 'table' }), 'row');
+      expect(onOp).not.toHaveBeenCalled();
+    });
   });
 
   it('renders no line and no hint for values authored HERE', () => {

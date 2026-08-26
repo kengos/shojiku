@@ -199,4 +199,17 @@ describe('the chip’s contrast ring', () => {
     expect(white.style.boxShadow).toBe('inset 0 0 0 1px rgba(0, 0, 0, 0.45)');
     expect(black.style.boxShadow).toBe('inset 0 0 0 1px rgba(255, 255, 255, 0.55)');
   });
+
+  it('describes its trigger when given an id, without touching the NAME', () => {
+    draw({ describedBy: 'origin-hint' });
+    const trigger = screen.getByRole('button', { name: 'Fill' });
+    expect(trigger.getAttribute('aria-describedby')).toBe('origin-hint');
+  });
+
+  it('leaves aria-describedby off when no hint is given', () => {
+    draw();
+    expect(
+      screen.getByRole('button', { name: 'Fill' }).getAttribute('aria-describedby'),
+    ).toBeNull();
+  });
 });

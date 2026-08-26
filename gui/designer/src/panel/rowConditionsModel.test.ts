@@ -46,10 +46,11 @@ describe('readRowConditions', () => {
         equals: 'heading',
         hasEquals: true,
         textAlign: 'center',
-        bold: true,
+        fontWeight: 'bold',
         backgroundColor: '#dbe7ff',
         color: '#222222',
         styleNameCount: 2,
+        styleKeyCount: 4,
       },
     ]);
   });
@@ -73,7 +74,10 @@ describe('readRowConditions', () => {
     const rows = readRowConditions([null, 'nope', { when: 5, style: [] }, { when: { key: 7 } }]);
     expect(rows).toHaveLength(4);
     expect(rows.every((r) => r.key === '')).toBe(true);
-    expect(rows.every((r) => r.bold === false)).toBe(true);
+    expect(rows.every((r) => r.fontWeight === '')).toBe(true);
+    // A `style` that is not a map contributes no keys — the count is about the
+    // wire, so a hostile shape must not inflate it into a false "adds something".
+    expect(rows.every((r) => r.styleKeyCount === 0)).toBe(true);
   });
 
   it('clips an overlong display string', () => {
@@ -99,5 +103,20 @@ describe('valueFormFor', () => {
 
   it('prefers the enum even on a boolean field that declares one', () => {
     expect(valueFormFor('boolean', ['true', 'false'])).toBe('enum');
+  });
+
+  it('keeps fontWeight RAW, so an explicit `normal` is not read as unset', () => {
+    // The Designer authors `normal` when Bold is un-ticked over a bold band.
+    const [row] = readRowConditions([{ when: { key: 'k' }, style: { fontWeight: 'normal' } }]);
+    expect(row.fontWeight).toBe('normal');
+    expect(row.styleKeyCount).toBe(1);
+  });
+
+  it('counts style keys the panel does not model, own properties only', () => {
+    const [row] = readRowConditions([
+      { when: { key: 'k' }, style: { fontSize: 14, opacity: 0.5, textAlign: 'center' } },
+    ]);
+    expect(row.styleKeyCount).toBe(3);
+    expect(row.textAlign).toBe('center');
   });
 });
