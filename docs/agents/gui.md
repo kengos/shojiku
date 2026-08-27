@@ -349,9 +349,20 @@ root, reaching `page.*` which the structural grammar cannot spell), and
 the canvas grew deselection (empty-overlay click + window-level Escape,
 editable-guarded) so the surface is reachable. The named sizes' pt
 dimensions + custom unit composition are pinned against the real engine
-in the wasm integration test. The rich format picker (engine-rendered
-samples, merged variant list) stays on the `gui-enablers` discovery
-surface.
+in the wasm integration test. The rich format picker has since shipped in
+full: engine-rendered samples first, and now the MERGED variant list —
+a binding's picker unions the format catalog's own variants for the bound
+type into the curated type-override rows, so a locale pack's vocabulary
+(和暦 on a ja date field) is pickable there rather than only on the
+document-defaults picker. The union is deliberately one-sided: the
+catalog is a NAME source for the pack/builtin half only, and stays a pure
+FILTER over the document's own `formats:` list, so it can never put a
+registry name in a picker for a document that does not declare one.
+A variant the engine marks as discarding the TIME (`dropsTime` — a
+date-table name resolved on a datetime slot, honoured and silent) carries
+a date-only chip on its row; the engine measures that rather than the GUI
+tabulating which spellings mean what, which is the same rule as the
+samples.
 
 The **document-defaults & styles-registry surface** shipped in the
 document-settings view (below page setup): a

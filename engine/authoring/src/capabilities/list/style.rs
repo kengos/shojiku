@@ -237,4 +237,21 @@ pub(super) const KEYS: &[&str] = &[
     // own sample table; older engines expose no such query, so a consumer
     // falls back to offering wire spellings with no sample.
     "format.catalog",
+    // A `format:` pick on a DATE/DATETIME field resolves against the locale
+    // pack and the document's `formats:` registry BEFORE the type-override
+    // check, so a pack may name a variant after a field type and still have
+    // it reached — `format: date` on a datetime field is the pack's own
+    // `datetimeFormats.date`. Only a name neither declares re-types the
+    // value. Older engines take the override first, so the same document
+    // renders the DATE DEFAULT there; visible wherever a pack's
+    // `datetimeFormats.date` differs from its `dateFormats.default`.
+    "format.dated.declared_first",
+    // Each catalog variant carries `dropsTime`: whether picking it discards
+    // the time part of the value (a date-table name resolved on a datetime
+    // slot, or a datetime pattern the pack wrote without time tokens). The
+    // engine MEASURES it by rendering the variant at two times of day, so it
+    // holds for a third-party pack too. Older engines omit the field
+    // entirely, and a consumer that requires it must gate on this key rather
+    // than rejecting the whole catalog.
+    "format.catalog.dropsTime",
 ];

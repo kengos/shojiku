@@ -68,7 +68,8 @@ describe('renameFormatOps', () => {
       ok: false,
       reason: 'duplicate_name',
     });
-    // A field-type name could never be reached as a registry entry.
+    // A field-type name is refused as a registry entry — conservatively:
+    // reachable on a dated field, unreachable on the other seven types.
     expect(renameFormatOps('a', 'currency', ['a'], u, ROOMY)).toEqual({
       ok: false,
       reason: 'reserved_name',

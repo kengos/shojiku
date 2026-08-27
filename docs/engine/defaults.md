@@ -96,18 +96,34 @@ one warns and renders the plain form.
 A type name is not a variant, so `fixed` does not mean "nothing may be
 picked here". `format: currency` on a number is a type OVERRIDE — the value
 renders as that type instead — and so is the `symbol`/`name` money pick
-described above; neither warns. They are absent from the NUMBER row because
+described above; neither warns. On a DATE or DATETIME field the override
+yields to a name the locale pack or the `formats:` registry declares, so
+`format: date` there is the pack's own `datetimeFormats.date` variant
+rather than a re-typing. They are absent from the NUMBER row because
 this catalog lists a type's variants, and those two are variants of
 `currency`, where the catalog does list them.
 
 The samples are the engine's own formatter output, so a tool that shows
-them cannot drift from the page. Capability key: `format.catalog`.
+them cannot drift from the page. A datetime variant that renders no time —
+a date-table name resolved on a datetime slot, or a datetime pattern with
+no time tokens — is marked `dropsTime`, measured the same way (the engine
+renders it at two times of day and compares) rather than listed by
+spelling. Capability keys: `format.catalog` for the query itself, and
+`format.catalog.dropsTime` for that field — an older engine answers the
+query without it, so a consumer that needs the mark gates on the second
+key rather than rejecting the whole catalog.
 
 ## Limitations
 
 - A `formats:` entry named after a FIELD TYPE — `currency`, `date` and the
-  rest of the nine — is an error (`reserved_format_name`): such a name is a
-  type override in format dispatch, so the entry could never be reached. The
+  rest of the nine — is an error (`reserved_format_name`). The refusal is
+  now CONSERVATIVE rather than forced: it was justified by such a name
+  being a type override in dispatch, so the entry could never be reached,
+  and on a date/datetime field that is no longer true — a declared name
+  beats the override there, registry entries included. It stays refused
+  because the name would still be unreachable on every OTHER type, and a
+  registry entry that works on two types and silently re-types the value
+  on the rest is worse than one that is refused outright. The
   registry is capped at 256 entries (`too_many_formats`).
 - An entry that shadows a locale-pack VARIANT name is the opposite case — it is
   honoured, and wins over the pack's own variant of that name on a

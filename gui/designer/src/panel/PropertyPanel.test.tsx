@@ -971,7 +971,7 @@ describe('PropertyPanel — binding field picker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
     expect(
       Array.from(container.querySelectorAll('[role="menuitem"] code')).map((c) => c.textContent),
-    ).toEqual(['stamp', 'datetime']);
+    ).toEqual(['stamp', 'wareki', 'datetime']);
   });
 
   it('hides the format field until a data key is picked', () => {

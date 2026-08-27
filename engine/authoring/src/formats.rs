@@ -61,6 +61,19 @@ pub struct FormatVariant {
     /// The rendered sample(s). One entry for every type but `quantity`,
     /// which is plural-aware and therefore samples both arms.
     pub samples: Vec<String>,
+    /// Whether picking this variant DISCARDS the time part of the value.
+    ///
+    /// Only a `datetime` entry ever sets it: a datetime resolves the pack's
+    /// date table after its own, so date-table names are offered on a
+    /// datetime slot and render date-only — as does a datetime-table entry
+    /// the pack authored with no time tokens. The pick is honoured and warns
+    /// about nothing, which is exactly why it needs saying: an editor shows
+    /// the variant as date-only instead of letting the loss pass unread.
+    ///
+    /// It is MEASURED against the exemplar rather than tabulated from
+    /// spellings, so it holds for a third-party pack and for the document's
+    /// own `formats:` entries (`drops_time`, `variants.rs`).
+    pub drops_time: bool,
 }
 
 /// One field type's pickable vocabulary.
@@ -78,6 +91,9 @@ pub struct FormatTypeEntry {
     /// naming a field TYPE is an override rather than a variant
     /// (`format.rs` clears the variant and re-types the value), and
     /// `symbol`/`name` on a number promotes it to currency; neither warns.
+    /// The override yields on a DATED field to a name the pack or the
+    /// document's registry declares — `date` on a datetime field is the
+    /// pack's `datetimeFormats.date`, not a re-typing (`dated::declares`).
     /// They are absent from the number ENTRY because this lists a type's
     /// variants — `symbol`/`name` are listed, under `currency`.
     pub fixed: bool,

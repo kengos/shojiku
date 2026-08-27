@@ -7,7 +7,12 @@ import { describe, expect, it } from 'vitest';
 import { toFormatCatalog } from './formatCatalogResponse';
 import { TransportError } from './transport';
 
-const VARIANT = { spelling: 'wareki', origin: 'pack', samples: ['令和8年11月3日'] };
+const VARIANT = {
+  spelling: 'wareki',
+  origin: 'pack',
+  samples: ['令和8年11月3日'],
+  dropsTime: false,
+};
 const TYPE = { fieldType: 'date', fixed: false, variants: [VARIANT] };
 const PROBE = { sample: '2026.11.03', warning: null, refused: null };
 
@@ -48,7 +53,14 @@ describe('toFormatCatalog', () => {
           {
             fieldType: 'quantity',
             fixed: true,
-            variants: [{ spelling: 'default', origin: 'builtin', samples: ['1点', '12,345点'] }],
+            variants: [
+              {
+                spelling: 'default',
+                origin: 'builtin',
+                samples: ['1点', '12,345点'],
+                dropsTime: false,
+              },
+            ],
           },
         ],
         probes: [],
@@ -68,6 +80,23 @@ describe('toFormatCatalog', () => {
     ['a type entry that is not an object', json({ types: ['date'], probes: [] })],
     ['a non-string fieldType', json({ types: [{ ...TYPE, fieldType: 1 }], probes: [] })],
     ['a non-boolean fixed', json({ types: [{ ...TYPE, fixed: 'no' }], probes: [] })],
+    [
+      // A wrong `dropsTime` is the shape that matters here: read loosely, a
+      // truthy string would mark every variant date-only and a missing key
+      // would mark none — and neither shows up as an error anywhere, it just
+      // makes the picker say the wrong thing about the value.
+      'a non-boolean dropsTime',
+      json({ types: [{ ...TYPE, variants: [{ ...VARIANT, dropsTime: 'yes' }] }], probes: [] }),
+    ],
+    [
+      'an absent dropsTime',
+      json({
+        types: [
+          { ...TYPE, variants: [{ spelling: 'wareki', origin: 'pack', samples: ['令和8年'] }] },
+        ],
+        probes: [],
+      }),
+    ],
     ['variants that are not an array', json({ types: [{ ...TYPE, variants: 1 }], probes: [] })],
     [
       'a non-string spelling',
@@ -85,6 +114,26 @@ describe('toFormatCatalog', () => {
     ['a non-string warning', json({ types: [], probes: [{ ...PROBE, warning: 1 }] })],
   ])('refuses %s', (_what, source) => {
     expect(() => toFormatCatalog(source)).toThrow(TransportError);
+  });
+
+  it('refuses a spelling repeated inside one type entry', () => {
+    // `formatOptions` merges these rows with no dedupe guard of its own — the
+    // registry and catalog sources are disjoint by construction — and each
+    // spelling becomes a React list key. A host-injected engine that repeated
+    // one would produce duplicate rows under a duplicate key, so the shape is
+    // refused at the seam rather than reaching the picker. The engine itself
+    // dedupes as it builds the list (`variants::spellings`), so this can only
+    // arrive from a transport that is not the bundled engine.
+    const source = json({
+      types: [
+        {
+          ...TYPE,
+          variants: [VARIANT, { ...VARIANT, samples: ['令和8年'] }],
+        },
+      ],
+      probes: [],
+    });
+    expect(() => toFormatCatalog(source)).toThrow(/listed twice/);
   });
 
   it('refuses an origin outside the closed set', () => {

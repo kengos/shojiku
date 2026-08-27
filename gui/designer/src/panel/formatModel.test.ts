@@ -18,12 +18,14 @@ describe('formatOptions', () => {
         labelKey: 'format.label.symbol',
         samples: ['¥1,234,568'],
         origin: 'builtin',
+        dropsTime: false,
       },
       {
         spelling: 'name',
         labelKey: 'format.label.name',
         samples: ['1,234,568 JPY'],
         origin: 'builtin',
+        dropsTime: false,
       },
     ]);
   });
@@ -38,30 +40,35 @@ describe('formatOptions', () => {
         labelKey: 'format.label.currency',
         samples: ['1,234,568'],
         origin: 'builtin',
+        dropsTime: false,
       },
       {
         spelling: 'symbol',
         labelKey: 'format.label.symbol',
         samples: ['¥1,234,568'],
         origin: 'builtin',
+        dropsTime: false,
       },
       {
         spelling: 'name',
         labelKey: 'format.label.name',
         samples: ['1,234,568 JPY'],
         origin: 'builtin',
+        dropsTime: false,
       },
       {
         spelling: 'percentage',
         labelKey: 'format.label.percentage',
         samples: ['12.34%'],
         origin: 'builtin',
+        dropsTime: false,
       },
       {
         spelling: 'quantity',
         labelKey: 'format.label.quantity',
         samples: ['1点', '12,345点'],
         origin: 'builtin',
+        dropsTime: false,
       },
     ]);
   });
@@ -121,6 +128,7 @@ describe('formatOptions', () => {
       labelKey: undefined,
       samples: [],
       origin: undefined,
+      dropsTime: false,
     });
     expect(rows.map((r) => r.spelling)).toEqual([
       'currency',
@@ -146,6 +154,7 @@ describe('formatOptions', () => {
       labelKey: undefined,
       samples: [],
       origin: undefined,
+      dropsTime: false,
     });
   });
 
@@ -155,13 +164,83 @@ describe('formatOptions', () => {
     // hand-written table in this module, and now protects the LOOKUP — a new
     // builtin suggestion the catalog cannot answer for reds here rather than
     // shipping a blank row.
+    //
+    // SCOPED to the rows whose LABEL this module is responsible for. A pack
+    // or registry row legitimately has no label key — a spelling
+    // `formatLabels` does not carry displays as its BARE WIRE SPELLING (user
+    // decision), which is how a locale pack shipped after this build shows up
+    // at all. Asserting over the merged list would pass on the fixture and
+    // red the day a pack ships a variant nobody has translated, punishing the
+    // exact case the rule exists to allow.
+    //
+    // The predicate is `origin === 'builtin'`, which is NOT the same set as
+    // "the curated override rows": the catalog also reports `builtin` for
+    // variants the ENGINE owns (`symbol`/`name` under currency), and those
+    // ride this filter too. That is fine while every one of them is in
+    // `LABEL_KEY` — but an engine that ships a new builtin-origin variant
+    // nobody has translated would red here, which is the same punishment the
+    // scoping exists to avoid, one layer in. If that happens, narrow to the
+    // curated table rather than widening `LABEL_KEY` on the engine's
+    // schedule.
     const types = ['currency', 'number', 'string', 'date', 'datetime', 'boolean', undefined];
+    let checked = 0;
     for (const t of types) {
-      for (const row of formatOptions([], t, undefined, CATALOG)) {
+      const curated = formatOptions([], t, undefined, CATALOG).filter(
+        (row) => row.origin === 'builtin',
+      );
+      for (const row of curated) {
         expect(row.labelKey, `label for ${row.spelling}`).toBeDefined();
         expect(row.samples, `sample for ${row.spelling}`).not.toHaveLength(0);
+        checked += 1;
       }
     }
+    // A positive control on the FILTER: scoping it must not quietly reduce the
+    // guard to inspecting nothing. Counted across the whole loop rather than
+    // per type, because a type can legitimately contribute zero — see the
+    // datetime case below.
+    expect(checked).toBeGreaterThan(10);
+  });
+
+  it('lets the pack absorb a type-override row that names one of its variants', () => {
+    // The picker-side consequence of the engine fix, and the reason the drift
+    // guard above counts across the loop instead of per type. `datetime`'s
+    // only curated suggestion is `date` — offered as a type OVERRIDE, back
+    // when that is what it did. The ja pack declares `datetimeFormats.date`,
+    // so the row now arrives from the catalog as a PACK variant and the
+    // curated one dedupes away: same spelling in the picker, different
+    // meaning in the file, and grouped under the locale heading where it
+    // belongs. Nothing is lost — a pack that declares no `date` still gets the
+    // override row (the SPARSE case below).
+    const rows = formatOptions([], 'datetime', undefined, CATALOG);
+    expect(rows.find((r) => r.spelling === 'date')?.origin).toBe('pack');
+    expect(rows.filter((r) => r.origin === 'builtin')).toEqual([]);
+  });
+
+  it('shows an unlabelled pack variant as its bare wire spelling', () => {
+    // The case the drift guard above is scoped AROUND, asserted directly: the
+    // engine may ship a variant this build has never heard of, and the rule is
+    // that it appears — as written, with no label key — rather than being
+    // dropped or rendered as a raw catalog key.
+    const NOVEL: FormatCatalog = {
+      types: [
+        {
+          fieldType: 'date',
+          fixed: false,
+          variants: [
+            { spelling: 'minguo', origin: 'pack', samples: ['民國115年11月3日'], dropsTime: false },
+          ],
+        },
+      ],
+      probes: [],
+    };
+    const row = formatOptions([], 'date', undefined, NOVEL).find((r) => r.spelling === 'minguo');
+    expect(row).toEqual({
+      spelling: 'minguo',
+      labelKey: undefined,
+      samples: ['民國115年11月3日'],
+      origin: 'pack',
+      dropsTime: false,
+    });
   });
 
   it('leaves the samples empty when the engine supplied no catalog', () => {
@@ -212,12 +291,22 @@ describe('formatOptions', () => {
     // pickability filter walk real arrays, so `constructor` can never resolve
     // to an inherited value — it is simply a name the catalog does not list.
     for (const hostile of ['constructor', '__proto__', 'toString']) {
+      // The pack row rides in front of the override row (registry → locale →
+      // builtin); what matters here is that the hostile name is in NEITHER.
       expect(formatOptions([hostile], 'date', undefined, CATALOG)).toEqual([
+        {
+          spelling: 'wareki',
+          labelKey: 'format.variant.wareki',
+          samples: ['令和8年11月3日'],
+          origin: 'pack',
+          dropsTime: false,
+        },
         {
           spelling: 'datetime',
           labelKey: 'format.label.datetime',
-          samples: ['2026-11-03 14:05'],
+          samples: ['2026/11/03(火) 14:05'],
           origin: 'builtin',
+          dropsTime: false,
         },
       ]);
       // The other arm: with no catalog to filter by, the same name is offered
@@ -228,6 +317,7 @@ describe('formatOptions', () => {
         labelKey: undefined,
         samples: [],
         origin: undefined,
+        dropsTime: false,
       });
     }
   });
@@ -239,6 +329,7 @@ describe('formatOptions — the registry names a type may actually pick', () => 
     // field, which is exactly the pairing `kind_matches` admits.
     expect(formatOptions(['stamp'], 'date', undefined, CATALOG).map((r) => r.spelling)).toEqual([
       'stamp',
+      'wareki',
       'datetime',
     ]);
   });
@@ -248,9 +339,13 @@ describe('formatOptions — the registry names a type may actually pick', () => 
     // name before the pack, so a date pattern picked on a datetime binding
     // renders the wrong SHAPE rather than warning. The engine lists `stamp`
     // under `date` only, and this reads that answer.
-    expect(formatOptions(['stamp'], 'datetime', undefined, CATALOG).map((r) => r.spelling)).toEqual(
-      ['date'],
-    );
+    const rows = formatOptions(['stamp'], 'datetime', undefined, CATALOG).map((r) => r.spelling);
+    expect(rows).not.toContain('stamp');
+    // What IS offered is the pack's own datetime vocabulary. `date` heads it
+    // as a PACK variant now, not as the type-override row the curated table
+    // used to supply — which is the whole of what the engine-side fix bought
+    // this picker: the row means the pack's `datetimeFormats.date`.
+    expect(rows).toEqual(['date', 'wareki', 'compact', 'wareki-compact']);
   });
 
   it('offers a TEXT field none of them, with the catalog present', () => {
@@ -311,13 +406,149 @@ describe('formatOptions — the registry names a type may actually pick', () => 
     ]);
   });
 
-  it('reads the catalog as a FILTER, never as a source of names', () => {
-    // The document's list is what gets walked. A catalog naming `stamp` cannot
-    // put it in a picker for a document that does not declare it, and a
-    // document name the catalog does not list does not survive either.
+  it('reads the catalog as a FILTER for REGISTRY names, never as a source', () => {
+    // This invariant used to cover the whole picker: the catalog could only
+    // ever remove a row. It is now scoped to the registry half, because the
+    // pack/builtin half is exactly what the catalog was made a name source
+    // FOR (see the wareki case below) — and the scoping is the load-bearing
+    // part, not a weakening. `stamp` is a registry name the catalog lists and
+    // this document does not declare, and it must still not appear; `other`
+    // is the reverse, a document name the catalog does not list, and it must
+    // not survive either. `wareki` beside them is the pack row, which the
+    // catalog now legitimately supplies.
     expect(formatOptions(['other'], 'date', undefined, CATALOG).map((r) => r.spelling)).toEqual([
+      'wareki',
       'datetime',
     ]);
+  });
+
+  it('agrees with the defaults picker about the pack’s variants', () => {
+    // The two pickers used to DIVERGE on the same fixture, and that divergence
+    // was the whole report of this defect: `variantOptions(CATALOG, 'date')`
+    // answered `stamp, wareki` while `formatOptions(['stamp'], 'date', …)`
+    // answered `stamp, datetime` — the document-settings surface knew about
+    // 和暦 and the binding panel did not. They read the same catalog now, so
+    // every pack/registry variant one offers, the other offers too. The
+    // binding picker keeps its EXTRA rows (the type overrides), which the
+    // catalog knows nothing about — that asymmetry is the design, not drift.
+    const defaults = variantOptions(CATALOG, 'date').map((r) => r.spelling);
+    const binding = formatOptions(['stamp'], 'date', undefined, CATALOG).map((r) => r.spelling);
+    expect(defaults).toEqual(['stamp', 'wareki']);
+    for (const spelling of defaults) {
+      expect(binding, `${spelling} is offered on a binding too`).toContain(spelling);
+    }
+    expect(binding.filter((s) => !defaults.includes(s))).toEqual(['datetime']);
+  });
+
+  it('offers the locale pack’s own variants on a bound field', () => {
+    // ENGINE-GUI-3: `wareki` is declared by the ja-JP pack, so no curated
+    // table in the panel could know about it — before this, a date binding's
+    // picker simply had no 和暦 row, while the document-defaults picker (which
+    // has read the catalog since it shipped) did. It arrives with the pack's
+    // own label, the engine's sample, and a `pack` origin so the popover
+    // groups it under the locale heading rather than among the builtins.
+    const rows = formatOptions([], 'date', undefined, CATALOG);
+    const wareki = rows.find((r) => r.spelling === 'wareki');
+    expect(wareki).toEqual({
+      spelling: 'wareki',
+      labelKey: 'format.variant.wareki',
+      samples: ['令和8年11月3日'],
+      origin: 'pack',
+      dropsTime: false,
+    });
+    // Ahead of the type-override rows, so the picker reads
+    // registry → locale → builtin.
+    expect(rows.map((r) => r.spelling)).toEqual(['wareki', 'datetime']);
+  });
+
+  it('leaves `default` out of the merged rows', () => {
+    // Every type entry carries `default`, and the panel's empty state already
+    // means "no pick" — authoring `format: default` only says it again in the
+    // file. `variantOptions` drops it for the same reason.
+    expect(formatOptions([], 'datetime', undefined, CATALOG).map((r) => r.spelling)).not.toContain(
+      'default',
+    );
+  });
+
+  it('never offers the same spelling twice, from whichever source', () => {
+    // The merge drops rows in from three places, and the catalog loop carries
+    // no dedupe GUARD — it cannot collide with the registry rows, because
+    // `pickableRegistry` admits exactly the spellings the catalog calls
+    // `registry` and `catalogVariants` excludes exactly those. That is an
+    // invariant of two functions rather than of one, so it is pinned HERE, at
+    // the output, where a change to either would show up.
+    //
+    // The document declares `wareki` — legal, since only the nine TYPE names
+    // are reserved — so the same spelling is live on both sides at once.
+    const rows = formatOptions(['wareki', 'stamp'], 'date', undefined, CATALOG);
+    const spellings = rows.map((r) => r.spelling);
+    expect(new Set(spellings).size).toBe(spellings.length);
+    // And the catalog decides which SOURCE wins: it attributes `wareki` to the
+    // pack, not to this document, so the row is the pack's — with the pack's
+    // label and sample, under the locale heading.
+    expect(rows.find((r) => r.spelling === 'wareki')?.origin).toBe('pack');
+  });
+
+  it('does not let the catalog introduce a registry name of its own', () => {
+    // The other side of the scoping above, stated positively: `stamp` is
+    // `registry`-origin in the catalog, so the merge must skip it even though
+    // it sits in the very variant list the pack rows come from. A catalog that
+    // could add a registry row would put a name in the picker that the
+    // document does not declare — and picking it would author a dangling
+    // reference.
+    expect(formatOptions([], 'date', undefined, CATALOG).map((r) => r.spelling)).not.toContain(
+      'stamp',
+    );
+  });
+
+  it('marks the datetime rows that silently drop the time', () => {
+    // D2a. A datetime resolves the pack's DATE table after its own, so
+    // `compact` and `wareki-compact` are offered here and render date-only —
+    // as does `date`, whose own datetime pattern carries no time. All three
+    // are honoured and warn about nothing, so the picker is the only place
+    // the loss can be read.
+    const rows = formatOptions([], 'datetime', undefined, CATALOG);
+    expect(rows.filter((r) => r.dropsTime).map((r) => r.spelling)).toEqual([
+      'date',
+      'compact',
+      'wareki-compact',
+    ]);
+    // And the ones that keep it are not marked — a blanket true would read
+    // the same in the picker as no information at all.
+    expect(rows.filter((r) => !r.dropsTime).map((r) => r.spelling)).toEqual(['wareki']);
+  });
+
+  it('marks a type-override row that drops the time even with no catalog', () => {
+    // The catalog answers for every variant it describes, so this speaks only
+    // for an override it did NOT describe — a pack declaring no
+    // `datetimeFormats.date`, or an engine too old to answer. `date` on a
+    // datetime field re-types the value to a date, which carries no time, so
+    // the loss is knowable without asking anyone. This test used to assert the
+    // opposite; the review was right that pinning it left the acceptance
+    // criterion ("no silent time-drop is OFFERED without a mark") broken.
+    const rows = formatOptions([], 'datetime', undefined, null);
+    expect(rows.find((r) => r.spelling === 'date')?.dropsTime).toBe(true);
+  });
+
+  it('claims no time loss where the bound type is unknown', () => {
+    // The half that stays honest-by-silence, and the reason the criterion is
+    // scoped to a resolved type. With no `definitions` the generic set offers
+    // `date` without anything establishing that the value IS a datetime, so
+    // nothing here knows a time exists to lose. Marking it would be a guess.
+    expect(formatOptions([], undefined, undefined, null).every((r) => !r.dropsTime)).toBe(true);
+    expect(formatOptions([], '', undefined, null).every((r) => !r.dropsTime)).toBe(true);
+  });
+
+  it('reports no time loss for a non-dated row the catalog does not describe', () => {
+    // The documented fallback: with no catalog answer there is no measurement,
+    // and the row says "not known to drop the time" — the same posture as the
+    // empty samples and undefined origin beside it.
+    const NO_DATE: FormatCatalog = {
+      types: [{ fieldType: 'currency', fixed: false, variants: [] }],
+      probes: [],
+    };
+    expect(formatOptions([], 'date', undefined, null).every((r) => !r.dropsTime)).toBe(true);
+    expect(formatOptions([], 'date', undefined, NO_DATE).every((r) => !r.dropsTime)).toBe(true);
   });
 
   it('does not file a builtin-origin spelling as the document’s own entry', () => {
@@ -339,8 +570,8 @@ describe('formatOptions — the registry names a type may actually pick', () => 
           fieldType: 'date',
           fixed: false,
           variants: [
-            { spelling: 'era', origin: 'registry', samples: ['令和8年'] },
-            { spelling: 'stamp', origin: 'registry', samples: ['2026.11.03'] },
+            { spelling: 'era', origin: 'registry', samples: ['令和8年'], dropsTime: false },
+            { spelling: 'stamp', origin: 'registry', samples: ['2026.11.03'], dropsTime: false },
           ],
         },
       ],
@@ -401,12 +632,14 @@ describe('variantOptions — the defaults-row picker vocabulary', () => {
         labelKey: undefined,
         samples: ['2026.11.03'],
         origin: 'registry',
+        dropsTime: false,
       },
       {
         spelling: 'wareki',
         labelKey: 'format.variant.wareki',
         samples: ['令和8年11月3日'],
         origin: 'pack',
+        dropsTime: false,
       },
     ]);
   });

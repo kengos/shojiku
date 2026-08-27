@@ -7,13 +7,15 @@
 //! currency / unit) come back as a [`FormatWarning`] beside the text,
 //! never as a failure: rendering proceeds on the default form.
 
+mod dated;
 mod datetime;
 mod money;
 mod number;
 mod text;
 
 use crate::lang::LangPack;
-use datetime::{parse_datetime, parse_simple_date, render_datetime_pattern};
+pub use datetime::TOKENS as PATTERN_TOKENS;
+use datetime::{parse_datetime, parse_simple_date};
 use number::format_number;
 use serde_json::Value;
 use shojiku_core::{FieldSpec, FieldType, FormatDefaults, FormatRef, NamedFormat};
@@ -141,7 +143,12 @@ pub fn format_value(
         .map(|s| s.field_type)
         .unwrap_or_else(|| infer_type(value));
     let mut variant = variant;
-    if let Some(v) = variant {
+    // A pick on a DATED field names a pack/registry variant before it names
+    // a type: `format: date` on a datetime field must reach the pack's own
+    // `datetimeFormats.date`, not re-type the value and render the date
+    // default under a label that promised the pack's pattern. Every name no
+    // pack or registry declares still overrides, on every type.
+    if let Some(v) = variant.filter(|v| !dated::declares(v, field_type, &ctx, pack)) {
         if let Some(overridden) = FieldType::from_name(v) {
             field_type = overridden;
             variant = None;
@@ -172,27 +179,9 @@ pub fn format_value(
             let n = as_f64(value)?;
             Ok(money::format_currency(n, spec, ctx.currency, pick, pack))
         }
-        FieldType::Datetime => {
+        FieldType::Datetime | FieldType::Date => {
             let odt = parse_datetime(value)?;
-            Ok(render_dated(
-                pick,
-                &odt,
-                &ctx,
-                pack,
-                &[&pack.datetime_formats, &pack.date_formats],
-                "yyyy-MM-dd HH:mm",
-            ))
-        }
-        FieldType::Date => {
-            let odt = parse_datetime(value)?;
-            Ok(render_dated(
-                pick,
-                &odt,
-                &ctx,
-                pack,
-                &[&pack.date_formats],
-                "yyyy-MM-dd",
-            ))
+            Ok(dated::render(pick, &odt, &ctx, pack, field_type))
         }
         FieldType::Quantity => {
             let n = as_f64(value)?;
@@ -219,53 +208,6 @@ fn no_variant_warning(pick: Option<Pick>) -> Option<FormatWarning> {
         None | Some(Pick::Name("default")) => None,
         Some(Pick::Name(n)) => Some(FormatWarning::UnknownVariant(money::clip(n))),
         Some(Pick::Pattern(_)) => Some(FormatWarning::IgnoredPattern),
-    }
-}
-
-/// Renders a date/datetime through the pick: an inline pattern renders
-/// directly; a name looks up the `formats:` registry then the pack maps
-/// in order; an unknown name degrades to the default with a warning.
-fn render_dated(
-    pick: Option<Pick>,
-    odt: &OffsetDateTime,
-    ctx: &FormatContext,
-    pack: &LangPack,
-    maps: &[&BTreeMap<String, String>],
-    engine_default: &str,
-) -> Formatted {
-    // Eager lookups (cheap map gets): late-bound `||` thunks here become
-    // per-binary uncovered instantiations under the 100% coverage gate.
-    let default_pattern = maps
-        .iter()
-        .find_map(|m| m.get("default"))
-        .map(String::as_str)
-        .unwrap_or(engine_default);
-    let (pattern, warning) = match &pick {
-        Some(Pick::Pattern(p)) => (*p, None),
-        Some(Pick::Name(name)) => {
-            // A match, not `.map(...)`: a consumer whose registry lookup
-            // always misses would leave the `.map` closure instantiation
-            // at 0 under the per-binary 100% coverage gate.
-            #[allow(clippy::manual_map)]
-            let named = match ctx.named.and_then(|m| m.get(*name)) {
-                Some(n) => Some(n.pattern.as_str()),
-                None => None,
-            };
-            let from_pack = maps.iter().find_map(|m| m.get(*name)).map(String::as_str);
-            match named.or(from_pack) {
-                Some(p) => (p, None),
-                None if *name == "default" => (default_pattern, None),
-                None => (
-                    default_pattern,
-                    Some(FormatWarning::UnknownVariant(money::clip(name))),
-                ),
-            }
-        }
-        None => (default_pattern, None),
-    };
-    Formatted {
-        text: render_datetime_pattern(pattern, odt, pack),
-        warning,
     }
 }
 

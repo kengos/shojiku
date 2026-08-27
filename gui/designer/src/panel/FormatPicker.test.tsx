@@ -5,18 +5,20 @@ import { FormatPicker } from './FormatPicker';
 import type { FormatOption } from './formatModel';
 
 const OPTIONS: readonly FormatOption[] = [
-  { spelling: 'tax', labelKey: undefined, samples: [], origin: 'registry' },
+  { spelling: 'tax', labelKey: undefined, samples: [], origin: 'registry', dropsTime: false },
   {
     spelling: 'symbol',
     labelKey: 'format.label.symbol',
     samples: ['¥1,234,568'],
     origin: 'builtin',
+    dropsTime: false,
   },
   {
     spelling: 'name',
     labelKey: 'format.label.name',
     samples: ['1,234,568 JPY'],
     origin: 'builtin',
+    dropsTime: false,
   },
 ];
 
@@ -56,6 +58,36 @@ describe('FormatPicker', () => {
     expect(menu.textContent).toContain('¥1,234,568');
     // A registry name (no labelKey) shows its wire spelling as the label.
     expect(menu.textContent).toContain('tax');
+  });
+
+  it('marks a row that drops the time, and only that row', () => {
+    // D2a, at the surface. `compact` on a datetime binding is honoured and
+    // warns about nothing — the time just stops being shown — so the picker is
+    // the last place a reader can learn it. The mark has to be ON THE ROW: a
+    // banner over the whole list would say it about the rows that keep the
+    // time too, which reads the same as saying nothing.
+    const DATED: readonly FormatOption[] = [
+      {
+        spelling: 'compact',
+        labelKey: 'format.variant.compact',
+        samples: ['2026/11/03'],
+        origin: 'pack',
+        dropsTime: true,
+      },
+      {
+        spelling: 'wareki',
+        labelKey: 'format.variant.wareki',
+        samples: ['令和8年11月3日 14:05'],
+        origin: 'pack',
+        dropsTime: false,
+      },
+    ];
+    draw('', DATED);
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
+    expect(screen.getByRole('menuitem', { name: /Compact/ }).textContent).toContain('No time');
+    expect(screen.getByRole('menuitem', { name: /Japanese era/ }).textContent).not.toContain(
+      'No time',
+    );
   });
 
   it('commits a picked spelling and closes the popover', () => {

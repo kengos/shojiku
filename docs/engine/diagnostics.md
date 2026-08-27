@@ -116,7 +116,7 @@ inline:
 | `mark_content_conflict` | warning | checkbox sets both `checked` and `data` (`data` wins) |
 | `mark_binding_not_boolean` | warning | an `equals`-less mark binding targets a non-boolean field |
 | `row_condition_not_boolean` | warning | an `equals`-less `row.conditionalStyles` entry targets a non-boolean field |
-| `reserved_format_name` | error | a `formats:` registry entry is named after a FIELD TYPE (`currency`, `date`, …), so it could never be reached |
+| `reserved_format_name` | error | a `formats:` registry entry is named after a FIELD TYPE (`currency`, `date`, …); such a name is a type override on every type but `date`/`datetime`, so the entry would be unreachable almost everywhere |
 | `too_many_formats` | warning | `formats:` registry over the 256-entry cap; extras ignored |
 | `too_many_row_conditions` | warning | a table's `row.conditionalStyles` over the 16-entry cap; extras ignored |
 | `too_many_bindings` | warning | an item's `bindings:` over the 256-entry cap; advisory only — every declaration still resolves |

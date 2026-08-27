@@ -266,7 +266,9 @@ const CATALOG_JSON = JSON.stringify({
     {
       fieldType: 'date',
       fixed: false,
-      variants: [{ spelling: 'wareki', origin: 'pack', samples: ['令和8年11月3日'] }],
+      variants: [
+        { spelling: 'wareki', origin: 'pack', samples: ['令和8年11月3日'], dropsTime: false },
+      ],
     },
   ],
   probes: [{ sample: '2026.11.03', warning: null, refused: null }],

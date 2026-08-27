@@ -40,7 +40,20 @@ false`), no clap.
 - `formats.rs` (+ `formats/{variants,probe,exemplar}.rs`) — the FORMAT
   CATALOG: `format_catalog(Option<&Template>, &LangPack, &[PatternProbe])`
   → `FormatCatalog { types: [FormatTypeEntry { field_type, fixed,
-  variants: [FormatVariant { spelling, origin, samples }] }], probes }`.
+  variants: [FormatVariant { spelling, origin, samples, drops_time }] }],
+  probes }`. `drops_time` marks a variant that discards the TIME — a
+  date-table name resolved on a datetime slot, or a datetime pattern the
+  pack wrote without time tokens. It is MEASURED, not tabulated from
+  spellings: the variant renders the exemplar and its same-day twin at a
+  different time (`exemplar::DATED_OTHER_TIME`), and equal output means no
+  time token survived — which answers for a third-party pack and for the
+  document's own `formats:` entries, as a spelling list could not — both
+  pinned (`drops_time_answers_for_the_documents_own_registry_entries`). The
+  inference has ONE precondition, guarded rather than assumed: every token in
+  `shojiku_formatter::PATTERN_TOKENS` must render differently for the two
+  exemplars or across days, so a token added later that moves under neither
+  cannot silently escape the measurement
+  (`every_pattern_token_is_visible_to_the_two_exemplars`).
   Deliberately NOT part of `inspect`: a catalog is a function of (pack,
   registry) rather than of a laid-out document, and a probe describes a
   pattern the document does not contain yet, which `inspect` cannot report

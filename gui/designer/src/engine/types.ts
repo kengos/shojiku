@@ -142,6 +142,13 @@ export interface FormatVariant {
   /** One entry for every type but `quantity`, which is plural-aware and so
    * samples both arms. */
   readonly samples: readonly string[];
+  /** Whether picking this variant DISCARDS the time part of the value — only
+   * ever true on the `datetime` entry, where the pack's date table is
+   * resolved after its own and a date-only pattern is offered and honoured
+   * without warning. The engine MEASURES it (it renders the exemplar at two
+   * times of day and compares), so it holds for a third-party pack and for
+   * the document's own `formats:` entries. */
+  readonly dropsTime: boolean;
 }
 
 /** One field type's pickable vocabulary. `fixed` marks the types that have

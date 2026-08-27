@@ -15,8 +15,14 @@ pub(super) fn check_formats(template: &Template, diags: &mut Diagnostics) {
     }
     for name in template.formats.keys() {
         // Type names are reserved: `format: currency` is a type override
-        // (format dispatch), so a registry entry by that name could never
-        // be reached.
+        // (format dispatch), so a registry entry by that name would be
+        // unreachable. That is no longer true on a DATE/DATETIME field —
+        // there a declared name beats the override, registry entries
+        // included (`formatter`'s `dated::declares`) — so the refusal is now
+        // conservative rather than forced. It stands because the name would
+        // still be unreachable on every other type, and an entry that works
+        // on two types while silently re-typing the value on the rest is
+        // worse than one refused outright.
         if FieldType::from_name(name).is_some() {
             diags.push(
                 Diagnostic::new(Code::ReservedFormatName)

@@ -223,11 +223,26 @@ read side, never the reverse.
   `engine/core/src/style/enums.rs`). A no-import leaf shared by item
   panel / defaults / registry / capture / format toolbar.
 - `panel/formatModel.ts` — `formatOptions`: registry names first, then
-  the closed builtin spellings per display type (localized labels);
+  **the catalog's own variants for the bound type** (`catalogVariants`),
+  then the closed builtin spellings per display type (localized labels);
   own-property-guarded; currency variants capability-gated. **Every
   SAMPLE comes from the engine's format catalog** — the hand-written
   table this module used to own is gone, because a sample the GUI
-  computed could drift from what the page shows. **The registry half is
+  computed could drift from what the page shows. The catalog is now a
+  NAME source too, for the pack/builtin half only: a locale pack's own
+  vocabulary (`wareki` on a ja date binding) was previously unreachable
+  from an item panel, because a curated table here cannot know what a
+  pack declares. Registry rows are excluded from that union on purpose —
+  for those the catalog stays a pure FILTER over the document's list, so
+  it can still never add a row for an entry the document does not
+  declare. `default` is left out of the union (the empty state already
+  means "no pick"). `FormatOption.dropsTime` rides through from the
+  catalog. A row the catalog did NOT describe reports false, with one
+  knowable exception the criterion depends on: the curated `date` override on
+  a `datetime` field re-types the value to a date, which has no time, so it is
+  marked without asking anyone (`overrideDropsTime`). Where the bound type is
+  unresolved nothing knows a time exists to lose, and the mark stays off. **The
+  registry half is
   type-filtered through that same catalog** (`pickableRegistry`): a
   `formats:` entry declares a KIND, and the engine lists it under a type
   only where the two agree, so a date pattern is no longer offered on a
@@ -253,6 +268,22 @@ read side, never the reverse.
   value as a date — that is an error, not a format), so wherever the engine
   answered its picker is empty and the spelling is typed; with no catalog it
   still lists the document's names, as the paragraph above says.
+- `panel/formatCatalogReads.ts` — the catalog lookups `formatOptions` needs,
+  split out of `formatModel.ts` for the line budget. NOT a shared seam, and
+  the entry says so because the name invites the assumption: every export has
+  exactly one caller. The document-defaults side (`variantOptions` /
+  `isFixedType` / `variantSamples`) reads the catalog with its own inline
+  `types.find(…)` and cannot route through here without importing
+  `FormatOption` back and making the pair circular. `sampleFor` (a
+  spelling that names a TYPE is an override, so its sample is that type's
+  own `default` rendering; anything else is a variant OF the bound type),
+  `resolvedType` (the `symbol`/`name`-on-a-number coercion, mirrored from
+  `format.rs`), `pickableRegistry` (the document's list, FILTERED by the
+  catalog), `catalogVariants` (the catalog's pack/builtin variants as a
+  NAME source, registry rows and `default` excluded) and `originOf`. Every
+  lookup walks real ARRAYS — a spelling can be a document-derived registry
+  name, so `constructor`/`__proto__` must never resolve to an inherited
+  value.
 - `panel/formatLabels.ts` — pure: wire spelling → chrome-catalog key for
   the KNOWN variants, and origin → group-heading key. A closed
   own-property-guarded table, never an interpolated
@@ -266,7 +297,12 @@ read side, never the reverse.
   run of options, so a document's own `formats:` entry is visibly a
   different KIND from a locale variant (only the former breaks on
   rename). Headings appear only where the origin CHANGES and only when
-  the engine answered, so a single-origin list stays flat.
+  the engine answered, so a single-origin list stays flat. A row whose
+  variant the engine marks `dropsTime` carries the date-only chip
+  (`format.dropsTime`) in the panel's existing neutral badge idiom: the
+  pick is honoured and warns about nothing, the sample shows the RESULT
+  but not that anything was lost, and the picker is the last place the
+  loss can be read.
 - `panel/StringListField.tsx` — the metadata list rows. Each row is its own
   `ListEntryInput` so the reseed hook has a fixed home (the rows are a
   variable-length map): `metaListOp` TRIMS, so `"  alpaca  "` over `alpaca`

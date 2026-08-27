@@ -22,8 +22,10 @@ fn en() -> LangPack {
 }
 
 /// Every (type, variant) → sample the catalog emits, as `type/spelling=sample`
-/// lines, sorted. One assertion covering the whole surface: a variant that
-/// appears, disappears, or renders differently all show up as a diff.
+/// lines, sorted, with ` [date-only]` on the variants the catalog reports as
+/// discarding the time. One assertion covering the whole surface: a variant
+/// that appears, disappears, renders differently, or changes what it says
+/// about the time all show up as a diff.
 fn golden(pack: &LangPack) -> Vec<String> {
     let template = empty_template();
     let cat = format_catalog(Some(&template), pack, &[]);
@@ -31,9 +33,15 @@ fn golden(pack: &LangPack) -> Vec<String> {
         .types
         .iter()
         .flat_map(|t| {
-            t.variants
-                .iter()
-                .map(move |v| format!("{}/{}={}", t.field_type, v.spelling, v.samples.join(" / ")))
+            t.variants.iter().map(move |v| {
+                format!(
+                    "{}/{}={}{}",
+                    t.field_type,
+                    v.spelling,
+                    v.samples.join(" / "),
+                    if v.drops_time { " [date-only]" } else { "" }
+                )
+            })
         })
         .collect();
     out.sort();
@@ -42,11 +50,22 @@ fn golden(pack: &LangPack) -> Vec<String> {
 
 #[test]
 fn ja_jp_emits_every_variant_it_declares() {
-    // `datetime/date` renders the DATE default rather than the pack's own
-    // `datetimeFormats.date` pattern: `date` is a field-TYPE name, so format
-    // dispatch takes it as a type override before any pack lookup. The pack
-    // key is therefore unreachable under its own name — a pre-existing
-    // shadowing the catalog reports faithfully rather than hides.
+    // `datetime/date` is the line this pack exists to pin. `date` is also a
+    // field-TYPE name, and dispatch used to read it as a type override before
+    // any pack lookup — so the pack's own `datetimeFormats.date` was
+    // unreachable under its own name and the row rendered the DATE default
+    // (`2026/11/03(火)`) under a label promising the pack's pattern. A dated
+    // pick now consults the pack first, so the authored pattern wins. ja-JP is
+    // the only shipped pack where that is VISIBLE: in the other six,
+    // `datetimeFormats.date` and `dateFormats.default` happen to be the same
+    // pattern, which is why the shadowing survived (see the en-US golden,
+    // whose samples are unmoved by the same fix).
+    //
+    // `[date-only]` marks what the catalog measures rather than tabulates: the
+    // variant renders the same at two different times of day, so no time
+    // token survives it. A datetime slot resolves the pack's DATE table after
+    // its own, so `compact` and `wareki-compact` are offered here and drop the
+    // time silently — as does `date`, whose own pattern carries none.
     assert_eq!(
         golden(&ja()),
         vec![
@@ -58,12 +77,12 @@ fn ja_jp_emits_every_variant_it_declares() {
             "date/long=2026年11月3日(火)",
             "date/wareki-compact=R8.11.3",
             "date/wareki=令和8年11月3日",
-            "datetime/compact=2026/11/03",
-            "datetime/date=2026/11/03(火)",
+            "datetime/compact=2026/11/03 [date-only]",
+            "datetime/date=2026年11月3日(火) [date-only]",
             "datetime/default=2026/11/03(火) 14:05",
             "datetime/ja=2026年11月3日(火) 14:05",
             "datetime/long=2026年11月3日(火) 14:05",
-            "datetime/wareki-compact=R8.11.3",
+            "datetime/wareki-compact=R8.11.3 [date-only]",
             "datetime/wareki=令和8年11月3日 14:05",
             "number/default=12,345,678.9",
             "percentage/default=12.34%",
@@ -77,6 +96,12 @@ fn en_us_offers_its_own_vocabulary_and_no_wareki() {
     // The second builtin is the proof that the vocabulary comes from the PACK
     // rather than from a table here: no `wareki`, a different `compact`, and
     // a currency default that is not the yen.
+    //
+    // It is also the control on the dated-pick fix: en-US declares
+    // `datetimeFormats.date` too, but as the SAME pattern its `dateFormats`
+    // defaults to, so reaching the pack key instead of re-typing the field
+    // moves nothing here. Every sample below is unchanged by that fix; only
+    // the `[date-only]` marks are new.
     assert_eq!(
         golden(&en()),
         vec![
@@ -86,8 +111,8 @@ fn en_us_offers_its_own_vocabulary_and_no_wareki() {
             "date/compact=11/03/2026",
             "date/default=Nov 3, 2026",
             "date/long=Tuesday, November 3, 2026",
-            "datetime/compact=11/03/2026",
-            "datetime/date=Nov 3, 2026",
+            "datetime/compact=11/03/2026 [date-only]",
+            "datetime/date=Nov 3, 2026 [date-only]",
             "datetime/default=Nov 3, 2026, 2:05 PM",
             "datetime/long=Tuesday, November 3, 2026, 2:05 PM",
             "number/default=12,345,678.9",

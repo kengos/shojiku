@@ -646,6 +646,7 @@ export const hi: LanguageCatalog = {
     'format.variant.warekiCompact': 'जापानी युग, संक्षिप्त',
     'format.variant.gregorian': 'ग्रेगोरियन वर्ष',
     'format.variant.dateOnly': 'केवल तिथि',
+    'format.dropsTime': 'समय नहीं',
     'format.origin.registry': 'इस दस्तावेज़ के प्रारूप',
     'format.origin.pack': 'लोकेल से',
     'format.origin.builtin': 'अंतर्निहित',

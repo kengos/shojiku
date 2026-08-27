@@ -224,13 +224,28 @@ all `x`/`y`/`w`/`h` are template-owned.
 The `format` variant (or `{key:format}`) selects how a value renders:
 
 - **A field type name** overrides the type entirely: `string`, `number`,
-  `currency`, `datetime`, `date`, `quantity`, `percentage`. Type names
-  are reserved — a `formats:` registry entry cannot use one.
+  `currency`, `datetime`, `date`, `quantity`, `percentage`, `boolean`,
+  `image`. Type names are reserved — a `formats:` registry entry cannot
+  use one.
+  On a **date or datetime** field the override yields to a name the
+  locale pack or the document's `formats:` registry declares. `format:
+  date` on a datetime field is the pack's own `datetimeFormats.date`
+  pattern, not a re-typing of the field; only a name nothing declares
+  overrides there. That is what leaves a pack free to name a variant
+  after a type — and it is a change to what an existing document
+  renders wherever a pack's `datetimeFormats.date` differs from its
+  `dateFormats.default`. Capability key: `format.dated.declared_first`;
+  an older engine takes the override first and renders the date default.
 - **A named variant**: a template `formats:` registry name, a lang-pack
   pattern name (`ja`, `long`, `wareki`), or a currency variant
   (`default` / `symbol` / `name`). Lookup order: registry → pack.
   An unknown variant renders the default form and warns
   (`unknown_format_variant`).
+  A **datetime** field reads `datetimeFormats` first and `dateFormats`
+  after it, so a date-table name resolves there too and renders the
+  value **without its time** — no warning, because the pick was
+  honoured. The format catalog marks every such variant, so an editor
+  can say so before the pick rather than leaving it to be noticed.
 - **`symbol`/`name` on a plain number** promote the value to the
   currency type with that variant (the code rides the
   `defaults.currency` chain), so a money display needs no definitions

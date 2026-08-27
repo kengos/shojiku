@@ -676,6 +676,7 @@ export const fil: LanguageCatalog = {
     'format.variant.warekiCompact': 'Panahong Hapones, maikli',
     'format.variant.gregorian': 'Taóng Gregorian',
     'format.variant.dateOnly': 'Petsa lamang',
+    'format.dropsTime': 'Walang oras',
     'format.origin.registry': 'Mga pormat sa dokumentong ito',
     'format.origin.pack': 'Mula sa locale',
     'format.origin.builtin': 'Nakapaloob',

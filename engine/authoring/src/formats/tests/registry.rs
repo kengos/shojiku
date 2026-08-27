@@ -6,6 +6,42 @@ use shojiku_diagnostics::MAX_ECHO;
 // ── the registry ─────────────────────────────────────────────────────────
 
 #[test]
+fn drops_time_answers_for_the_documents_own_registry_entries() {
+    // `drops_time` is MEASURED (the variant is rendered at two times of day
+    // and compared) rather than tabulated from spellings, and the whole
+    // reason for choosing that over a which-pack-table-supplied-it rule is
+    // that it answers for names the engine ships no knowledge of — a
+    // third-party pack's, and the DOCUMENT's own `formats:` entries.
+    //
+    // That claim is stated in six places and, until this test, was exercised
+    // by nothing: both goldens run on `empty_template()`, so no registry
+    // entry ever reached the measurement. Line coverage is blind to the gap
+    // by construction — the goldens drive `drops_time` to 100%.
+    //
+    // Two datetime-kind entries, identical but for their time tokens.
+    let template = template(
+        "formats:\n           filed: { type: datetime, pattern: \"yyyy.MM.dd HH:mm\" }\n           filed_day: { type: datetime, pattern: \"yyyy.MM.dd\" }\n",
+    );
+    let cat = catalog(&template);
+    let dropped = |name: &str| -> bool {
+        entry(&cat, "datetime")
+            .variants
+            .iter()
+            .find(|v| v.spelling == name)
+            .expect("registry entry is offered")
+            .drops_time
+    };
+    assert!(
+        dropped("filed_day"),
+        "an author's own time-less datetime pattern must be reported date-only"
+    );
+    assert!(
+        !dropped("filed"),
+        "an author's own pattern that keeps the time must not be marked"
+    );
+}
+
+#[test]
 fn a_registry_entry_is_offered_under_its_own_kind_only() {
     // `render_dated` looks a name up in the registry BEFORE the pack, so
     // offering a datetime entry under `date` would author a pick that

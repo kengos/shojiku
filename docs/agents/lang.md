@@ -125,6 +125,18 @@ formatter.
 - The render path stays network-free: CLDR is fetched only by the
   codegen script at authoring time, and the generated YAML is checked
   in.
+- **A pack may name a variant after a field type, and there is no
+  reserved-name guard on pack keys.** The `formats:` REGISTRY has one
+  (`reserved_format_name`); packs deliberately do not, and the reason is
+  measured rather than assumed: every one of the seven shipped packs
+  declares `datetimeFormats.date`, so a load-time refusal would reject
+  the whole fleet. There is also no pack diagnostic channel to report it
+  through — `validate` never sees a pack. So the collision is resolved at
+  the READ end instead: on a date/datetime field a pack- or
+  registry-declared name is a variant and beats the type override
+  (`dated::declares`, `engine/formatter/src/format/dated.rs`). A pack
+  author may therefore use a type name freely; what they must not expect
+  is for it to override a TYPE, which was never a pack's job.
 
 ## Adding a new locale — checklist
 
