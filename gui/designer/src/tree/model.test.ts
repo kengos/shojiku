@@ -134,6 +134,82 @@ describe('buildTree', () => {
     expect(body?.children[3]?.label).toBeNull();
   });
 
+  it('shows a MULTI-LINE text as its first line plus a break marker', () => {
+    // A row renders `white-space: nowrap`, which collapses a `\n` to a space:
+    // a three-line address used to arrive as one space-joined string, with
+    // nothing saying it had been shortened.
+    const view = buildTree(
+      [
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - type: text',
+        '        text: |-',
+        '          東京都渋谷区1-2-3',
+        '          シブヤビル 5F',
+        '          〒150-0001',
+        '',
+      ].join('\n'),
+    );
+    expect(view?.roots[0]?.children[0]?.label).toBe('東京都渋谷区1-2-3 ⏎…');
+  });
+
+  it('marks a value whose ONLY break is a trailing one', () => {
+    // The engine reads that break, so the page really does carry a second
+    // line — the row must not claim the value is single-line.
+    const view = buildTree(
+      [
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - type: text',
+        '        text: "one\\n"',
+        '',
+      ].join('\n'),
+    );
+    expect(view?.roots[0]?.children[0]?.label).toBe('one ⏎…');
+  });
+
+  it('keeps the break marker when the FIRST line is itself too long to show', () => {
+    // Clipping last would cut off the very thing that says the label is
+    // partial — the case a long Japanese address hits first.
+    const first = 'あ'.repeat(MAX_LABEL_CHARS * 2);
+    const view = buildTree(
+      [
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - type: text',
+        `        text: "${first}\\nsecond"`,
+        '',
+      ].join('\n'),
+    );
+    const label = view?.roots[0]?.children[0]?.label ?? '';
+    expect(label.endsWith(' ⏎…')).toBe(true);
+    expect(label.length).toBeLessThanOrEqual(MAX_LABEL_CHARS);
+    expect(label).toContain('…');
+  });
+
+  it('labels a value that is ONLY breaks with the marker alone', () => {
+    // There is no readable line to promote, so the marker is the whole label —
+    // it still says the value is multi-line, which is the only true thing left.
+    const view = buildTree(
+      [
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - type: text',
+        '        text: "\\n  \\n"',
+        '',
+      ].join('\n'),
+    );
+    expect(view?.roots[0]?.children[0]?.label).toBe(' ⏎…');
+  });
+
   it('prefers text over binding key and id on one item', () => {
     const view = buildTree(
       [

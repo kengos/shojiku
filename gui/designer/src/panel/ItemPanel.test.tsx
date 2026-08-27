@@ -93,6 +93,32 @@ function drawPanel(item: Record<string, unknown>, capabilities?: readonly string
   );
 }
 
+describe('the text field says which keys it takes', () => {
+  it('describes the editor with the key hint, without lengthening its name', () => {
+    // The hint is out of sight until the field has focus (CSS), so a screen
+    // reader is the ONLY reader it must reach unconditionally — as a
+    // DESCRIPTION. Put in the naming element instead, it would be read out on
+    // every reference to the field.
+    drawPanel({ type: 'text', text: 'one' });
+    const editor = screen.getByRole('textbox', { name: 'Text' });
+    const described = editor.getAttribute('aria-describedby');
+    expect(described).not.toBeNull();
+    const hint = document.getElementById(described ?? '');
+    // The modifier is rendered per platform from ONE model (jsdom is not a Mac
+    // user agent, so this is the non-Mac spelling); the catalogs carry `{mod}`
+    // and no glyph, so a Windows reader is never shown a Command key.
+    expect(hint?.textContent).toBe('Enter for a line break · Ctrl+Enter to finish');
+  });
+
+  it('gives the editor room for two lines', () => {
+    // One line high was most of why a reader concluded the field could not
+    // hold a break at all.
+    drawPanel({ type: 'text', text: 'one' });
+    const editor = screen.getByRole('textbox', { name: 'Text' });
+    expect(editor.className).toContain('min-h-[3.6em]');
+  });
+});
+
 describe('ItemPanel — box-less types', () => {
   it('gives a page_break the presence binding and still no tabs', () => {
     // The wire takes only `id` and `visible:`, so there is no TAB to show —

@@ -278,7 +278,11 @@ resolved style.
 - `text/chipModel.ts` — pure chip model: `chipMetaMap` (real `Map`),
   `buildEditorNodes` (raw segments → text nodes + atomic labeled chip
   spans, DOM-API-built), `serializeEditor` (never more wire than
-  visible text), `chipWire(key)` — the ONE charset gate (round-trips
+  visible text — and it carries LINE structure: a `<div>`/`<p>`/`<li>`
+  contributes the break it displays, while a lone `<br>` inside one is the
+  browser's empty-line placeholder and contributes none. That is what makes it
+  safe to leave plain Enter to the browser, which is the only way the caret can
+  rest after a break at the end of a value), `chipWire(key)` — the ONE charset gate (round-trips
   through the ONE parser; the engine charset is never restated).
   Reading a chip's stored slice back goes through that same parser rather
   than trusting the attribute (it is document-derived): `chipFormatOf` /
@@ -335,7 +339,8 @@ resolved style.
     own: `declCommit`'s batch already prunes the name it orphaned.
 - `text/editorHandlers.ts` — keyboard, pointer + text-ingress behavior. Every
   key is ignored while an IME composition is open, so an Enter that CONFIRMS a
-  conversion is not turned into a newline — the guard every other Enter-acting
+  conversion reaches the browser's own IME handling rather than a key this file
+  acts on — the guard every other Enter-acting
   surface in the Designer carries, pinned here by an explicit
   `isComposing: true` keydown test (jsdom defaults it false, so nothing else
   can see a regression). Also carries
@@ -348,9 +353,14 @@ resolved style.
   `replaceChipAt` (swaps a selected chip for a picked field, carrying the
   expression's `:format` across; re-validates the node against the live
   editor first, since paste/drop/erosion restructure it in between),
-  `handleEditorKeyDown` (⌘Enter commit, plain `\n` Enter, Escape cancel
-  with stopPropagation, ⌘B/I/U preventDefaulted, atomic chip erosion),
-  `insertPlainTextAt` (the ONE ingress paste/drop/Enter share — a
+  `handleEditorKeyDown` (⌘Enter commit, Escape cancel
+  with stopPropagation, ⌘B/I/U preventDefaulted, atomic chip erosion —
+  **plain Enter is NOT handled**: answering it with a `\n` node left the caret
+  unable to rest after a break at the end of a value, so the next character
+  landed on the previous line, and every other spelling behaved the same way
+  because the cause is the missing content, not the representation. The
+  browser's own Enter mints a line container the serializer reads),
+  `insertPlainTextAt` (the ONE ingress paste and drop share — a
   native HTML drop would mint live elements), `insertChipAt`.
 - `text/TextEditor.tsx` — the ONE text-editing component (contenteditable
   chip editor; content seeded imperatively ONCE from `buildEditorNodes`
@@ -374,9 +384,10 @@ resolved style.
 - `text/EditorSurface.tsx` — the contenteditable element itself and its
   seven handlers, split out so `TextEditor` stays the seeding /
   commit-decision / staged-declaration shell. Every DOM-mutating path
-  here is Range surgery (atomic chip erosion, Enter's newline, paste,
+  here is Range surgery (atomic chip erosion, paste,
   drop) and so fires no `input` event: each drives the detached-chip
-  re-check and the draft publish itself. A commit or a cancel ENDS the
+  re-check and the draft publish itself. Enter is not among them — the browser
+  applies it and fires a real `input`. A commit or a cancel ENDS the
   edit and is never followed by a publish.
 - `text/useDraftReporter.ts` — the draft callbacks; it publishes and withdraws
   and does NOT decide what an unmount means (that is a commit decision, and it

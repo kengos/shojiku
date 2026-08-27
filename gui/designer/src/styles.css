@@ -129,7 +129,8 @@
 
 /* ---- the shared contenteditable chip editor ---- */
 
-/* pre-wrap renders the "\n" text nodes the editor inserts for Enter. */
+/* pre-wrap renders the "\n" text nodes a SEEDED value and a paste carry.
+ * (Enter itself is the browser's now, and mints line elements instead.) */
 .sj-text-editor {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -139,6 +140,36 @@
 .sj-text-editor:focus {
   outline: 2px solid var(--sj-accent);
   outline-offset: -1px;
+}
+
+/* A trailing "\n" paints NOTHING in a contenteditable: the browser gives the
+ * empty last line no height, so the first Enter pressed at the end of a value
+ * moves the caret nowhere visible and reads as a key that does not work. A
+ * zero-width character on the last line gives it height.
+ *
+ * It is a PSEUDO-element on purpose. Serialization walks `childNodes`, so a
+ * filler that is not a node cannot reach the wire — the alternative, a real
+ * text node, would have to be recognised and skipped at every read, and the
+ * day one read forgot, the character would be saved into the document. */
+.sj-text-editor::after {
+  content: "\200b";
+}
+
+/* The panel's text field and its key hint. The hint is in the document for a
+ * screen reader (`aria-describedby`) but out of sight until the field has
+ * focus, so it costs no vertical room in a narrow panel while a reader is
+ * looking at anything else. `visibility` rather than `display`, so revealing
+ * it cannot reflow the panel under the pointer. */
+.sj-text-field .sj-text-hint {
+  margin: var(--sj-space-1) 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--sj-muted);
+  visibility: hidden;
+}
+
+.sj-text-field:focus-within .sj-text-hint {
+  visibility: visible;
 }
 
 /* The canvas overlay variant: the editor fills the box it is pinned over, with

@@ -155,29 +155,79 @@ export function buildEditorNodes(
   );
 }
 
+/** Elements a browser mints to END A LINE inside a contenteditable, rather than
+ * to decorate one. Nothing here is built by this file and none of it can arrive
+ * by paste or drop (both are forced through the plain-text ingress) — these
+ * appear only when the BROWSER restructures the content itself. The reader
+ * pressing ENTER is by far the commonest producer; a native undo, dictation and
+ * the DOM an IME leaves behind on composition end are the rest. The list is
+ * short on purpose; an element not on it is decorative and contributes only its
+ * text, exactly as before. */
+const LINE_ENDING_TAGS: ReadonlySet<string> = new Set(['DIV', 'P', 'LI']);
+
 /** Serialize the editor DOM back to wire text: text nodes verbatim, a chip
  * contributes its stored wire slice, `<br>` reads as a newline, and any
  * other element (nothing we build; paste is plain-text-only) degrades to its
  * serialized children — a foreign node can never contribute more wire than
- * its visible text. */
+ * its visible text.
+ *
+ * Degrading is not the same as flattening. A browser-minted `<div>` per line
+ * SHOWS as separate lines, so dropping its boundary silently joined the
+ * reader's lines back together — a value that looked right in the field and
+ * saved wrong. Such an element therefore contributes the break it displays,
+ * suppressed at the very start where there is no preceding line to end.
+ *
+ * A `<br>` in FINAL position is the opposite case and contributes nothing: it
+ * is the placeholder a browser adds so an empty last line has somewhere to put
+ * the caret, and HTML gives it no height of its own. Counting it as a break
+ * made the value GROW: the editor seeds `a\n`, the browser adds its
+ * placeholder, the next commit writes `a\n\n`, and each reseed adds another —
+ * an unbounded loop that re-rendered the document on every turn. */
 export function serializeEditor(root: Node): string {
+  return walkEditor(root, { started: false });
+}
+
+/** `started` says whether a LINE has been begun yet, and it is shared across the
+ * whole walk. A line container ends the line before it, so it emits a break
+ * unless it opens the content — but "opens the content" is not the same as
+ * "nothing written yet": an EMPTY container writes nothing while still being a
+ * line, and testing the output instead swallowed the break of whichever
+ * container came after it. A value opening with a blank line lost that line
+ * silently, which is the same class of loss this file exists to close. Sharing
+ * the flag through the recursion is also what gets a container nested inside a
+ * non-container right (`<ul><li>`). */
+function walkEditor(root: Node, state: { started: boolean }): string {
+  const children = Array.from(root.childNodes);
+  const last = children[children.length - 1];
+  if (last instanceof Element && last.tagName === 'BR') {
+    children.pop();
+  }
   let out = '';
-  for (const node of Array.from(root.childNodes)) {
+  for (const node of children) {
     if (node instanceof Text) {
       out += node.data;
+      state.started = true;
       continue;
     }
     if (node instanceof Element) {
       const wire = node.getAttribute(CHIP_WIRE_ATTR);
       if (wire !== null) {
         out += wire;
+        state.started = true;
         continue;
       }
       if (node.tagName === 'BR') {
         out += '\n';
+        state.started = true;
         continue;
       }
-      out += serializeEditor(node);
+      if (LINE_ENDING_TAGS.has(node.tagName)) {
+        if (state.started) {
+          out += '\n';
+        }
+        state.started = true;
+      }
+      out += walkEditor(node, state);
     }
   }
   return out;

@@ -54,8 +54,12 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   reports that one exists, which is what explains a COLLAPSED item whose row
   highlights nothing on canvas because it emits no placed box.
   `tree/nodeFields.ts` holds the pure field readers the node builders share
-  (`record`/`pickLabel`/`bindingKey` + `MAX_LABEL_CHARS`), split out for the
-  line budget — nothing there walks or recurses. Its two neighbours split off
+  (`record`/`pickLabel`/`labelLine`/`bindingKey` + `MAX_LABEL_CHARS`), split
+  out for the line budget — nothing there walks or recurses. `labelLine` is
+  what keeps a MULTI-LINE value readable in a `nowrap` row: the first line plus
+  a ` ⏎…` marker, the marker appended after clipping against a budget that pays
+  for both it and the ellipsis. The row and the breadcrumb share `nodeLabel`,
+  so both surfaces get it from the one place. Its two neighbours split off
   what happens to a BUILT tree: `tree/reorder.ts` (what a drag decides —
   `RowRect`/`dropIndexFor`/`seqPosition`/`moveOpFor` + the `MoveItemOp`
   shape) and `tree/selection.ts` (where the selection sits and goes —

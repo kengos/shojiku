@@ -682,6 +682,7 @@ export const en: LanguageCatalog = {
     'panel.contentMode.text': 'Static text',
     'panel.contentMode.data': 'Data binding',
     'panel.field.text': 'Text',
+    'panel.field.text.keys': 'Enter for a line break · {mod}Enter to finish',
     'panel.field.dataKey': 'Data key',
     'panel.field.format': 'Format',
     'panel.field.placeholder': 'Blank placeholder',

@@ -31,7 +31,33 @@ function draw(selection: string | null, onSelect = vi.fn()) {
   return onSelect;
 }
 
+const MULTILINE_VIEW = buildTree(
+  [
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - type: text',
+    '        text: |-',
+    '          東京都渋谷区1-2-3',
+    '          シブヤビル 5F',
+    '',
+  ].join('\n'),
+);
+
 describe('Breadcrumb', () => {
+  it('shortens a multi-line label the same way the tree row does', () => {
+    // The crumb and the row read the SAME `nodeLabel`, so the flattening has
+    // one home; this pins that the breadcrumb really is on the other end of it.
+    render(
+      <I18nProvider locale="en">
+        <Breadcrumb view={MULTILINE_VIEW} selection="sections.body.items[0]" onSelect={vi.fn()} />
+      </I18nProvider>,
+    );
+    const crumbs = screen.getAllByRole('button').map((el) => el.textContent);
+    expect(crumbs).toEqual(['Body', '東京都渋谷区1-2-3 ⏎…']);
+  });
+
   it('renders the ancestor chain of the selection', () => {
     draw('sections.body.items[0].columns[0].cell.items[0]');
     const crumbs = screen.getAllByRole('button').map((el) => el.textContent);
