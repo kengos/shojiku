@@ -1,12 +1,15 @@
 // The chip editor's keyboard and text-ingress handling, lifted out of
 // `text/TextEditor` so the component stays the seeding/commit shell.
 //
-// Every path here exists because a contenteditable's NATIVE behavior would
-// author markup the wire cannot carry: Enter would mint `<div>`/`<br>`
-// structure, ⌘/Ctrl+B|I|U would mint `<b>`/`<i>` elements, and a paste or drop
-// of HTML would mint live elements outright (an `<img onerror=…>` dragged from
-// a hostile page would execute in the host origin). All of them are replaced
-// with plain-text insertion at the caret.
+// Most paths here exist because a contenteditable's NATIVE behavior would
+// author markup the wire cannot carry: ⌘/Ctrl+B|I|U would mint `<b>`/`<i>`
+// elements, and a paste or drop of HTML would mint live elements outright (an
+// `<img onerror=…>` dragged from a hostile page would execute in the host
+// origin). Both are replaced with plain-text insertion at the caret.
+//
+// Enter is the exception, and deliberately so: the `<div>`/`<br>` structure it
+// mints is LINE structure, which the wire does carry and the serializer now
+// reads. See `handleEditorKeyDown` for why intercepting it could not work.
 
 import type { KeyboardEvent, MouseEvent } from 'react';
 import {
@@ -134,16 +137,35 @@ export function handleTextIngress(
   after(el);
 }
 
-/** The editor's keydown behavior: ⌘/Ctrl+Enter commits, Enter inserts a
- * newline (`white-space: pre-wrap` renders it), Escape cancels when the host
- * offers it, the native formatting shortcuts are blocked, and Backspace/Delete
- * erode an adjacent chip ATOMICALLY — the whole expression goes, never a
- * character of its label.
+/** The editor's keydown behavior: ⌘/Ctrl+Enter commits, Escape cancels when the
+ * host offers it, the native formatting shortcuts are blocked, and
+ * Backspace/Delete erode an adjacent chip ATOMICALLY — the whole expression
+ * goes, never a character of its label.
  *
- * Enter is guarded on the IME composition: a Japanese/Chinese reader pressing
- * Enter to CONFIRM a conversion must not have that Enter turned into a newline
- * (and the conversion cancelled) — the same guard every other Enter-acting
- * surface in the Designer carries.
+ * **Plain Enter is left to the browser.** It used to be intercepted and
+ * answered with a `\n` text node, to keep the content plain text — but a caret
+ * cannot REST after a break at the end of a value: with no editable content
+ * behind it the browser normalises the caret back before the break, and the
+ * next character lands on the line the reader was trying to leave. Typing
+ * `line1` Enter `line2` produced `line1line2`, which is what "the field cannot
+ * author a line break" actually looked like. Every representation tried
+ * (a `\n` node, the caret placed inside it, a `<br>`, a `<br>` kept after the
+ * break) behaved identically, because the cause is the missing content, not the
+ * spelling. The browser's own Enter has no such trouble: it mints a line
+ * container and puts the caret INSIDE it, and `serializeEditor` reads that
+ * container as the break it displays. So the fix is to stop answering the key.
+ *
+ * That is only safe because the serializer carries line structure: a
+ * `<div>`/`<p>`/`<li>` contributes its break, and a lone `<br>` inside one is
+ * read as the empty-line placeholder it is rather than a second break. The
+ * OTHER ingress paths stay locked down — paste and drop are still forced
+ * through the plain-text route, which is where hostile markup would arrive.
+ * Enter restructures content that is already in the document and can introduce
+ * no markup of its own.
+ *
+ * The IME guard above still covers this key: a Japanese/Chinese reader pressing
+ * Enter to CONFIRM a conversion now reaches the browser's native handling,
+ * which is exactly what should service it.
  */
 export function handleEditorKeyDown(
   event: KeyboardEvent<HTMLDivElement>,
@@ -159,11 +181,6 @@ export function handleEditorKeyDown(
   if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
     event.preventDefault();
     handlers.commit(el);
-    return;
-  }
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    insertPlainTextAt(el, '\n');
     return;
   }
   if (event.key === 'Escape' && handlers.cancel !== undefined) {

@@ -628,6 +628,7 @@ export const zhTw: LanguageCatalog = {
     'panel.contentMode.text': '固定文字',
     'panel.contentMode.data': '資料繫結',
     'panel.field.text': '文字',
+    'panel.field.text.keys': 'Enter 換行 · {mod}Enter 完成',
     'panel.field.dataKey': '資料鍵',
     'panel.field.format': '格式',
     'panel.field.placeholder': '空白時顯示',

@@ -15,6 +15,21 @@ platform binaries.
 
 ### Added
 
+- **A line break typed into the Designer's text field now stays where you put
+  it.** Pressing Enter at the end of a value inserted the break, but the caret
+  could not rest after it, so the next thing you typed landed back on the line
+  you were trying to leave: `line1` Enter `line2` came out as `line1line2`.
+  Enter is now left to the browser, whose own line handling has no such
+  trouble, and the editor reads back whatever line structure it produces.
+- **A multi-line value is saved as a block literal.** The same field used to be
+  written one of two ways depending on what happened to be inside it: an
+  ordinary address became a plain YAML scalar whose blank lines WERE the line
+  breaks, while one interpolation or one colon made it a `|-` block. Deleting
+  what looked like a stray blank line in the first form silently joined two
+  lines together. Every multi-line value now takes the block form, where the
+  breaks are visible as breaks. Values a block literal cannot spell — one
+  carrying a carriage return — still fall back to a quoted form.
+
 - **The Designer offers a date field's locale variants, and says which ones
   drop the time.** The format picker on a binding listed a fixed set of
   spellings the editor carried in its own table, so a locale pack's own
@@ -237,6 +252,16 @@ platform binaries.
   same engine version" instead.
 
 ### Fixed
+
+- **The layer tree and the breadcrumb no longer squash a multi-line value into
+  one line.** A three-line address showed as its lines joined by single
+  spaces, which read as a typo with nothing to say the label had been
+  shortened. A row now shows the first line followed by a `⏎…` marker.
+- **A line break the browser made for you is no longer swallowed on save.**
+  When a native undo, dictation, or an IME left the field's lines wrapped in
+  their own elements rather than separated by plain breaks, saving joined them
+  back together — the field showed three lines and the file kept one, and
+  nothing reported it.
 - **A locale pack's own date format is reachable by the name it was given.**
   A `format:` pick that happens to be spelled like a field type — `date` is
   both — was read as re-typing the field before anything looked at the locale

@@ -701,6 +701,7 @@ export const ja: LanguageCatalog = {
     'panel.contentMode.text': '固定テキスト',
     'panel.contentMode.data': 'データ連携',
     'panel.field.text': 'テキスト',
+    'panel.field.text.keys': 'Enter で改行 · {mod}Enter で確定',
     'panel.field.dataKey': 'データキー',
     'panel.field.format': 'フォーマット',
     'panel.field.placeholder': '空欄時の表示',

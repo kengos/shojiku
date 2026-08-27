@@ -17,8 +17,16 @@ export interface ShortcutRow {
 
 /** The five window-level shortcuts plus the layer tree's reorder chord, with
  * platform-appropriate chord glyphs. */
+/** The chord's modifier glyph for a platform — `⌘` on macOS, `Ctrl+` elsewhere.
+ * Exported so any OTHER surface naming a chord (the text field's key hint)
+ * spells it the same way this dialog does; a second copy would drift, and the
+ * two are two menus apart. */
+export function modifierGlyph(mac: boolean): string {
+  return mac ? '⌘' : 'Ctrl+';
+}
+
 export function shortcutRows(mac: boolean): ShortcutRow[] {
-  const mod = mac ? '⌘' : 'Ctrl+';
+  const mod = modifierGlyph(mac);
   const shift = mac ? '⇧' : 'Shift+';
   const del = mac ? '⌫' : 'Delete';
   const alt = mac ? '⌥' : 'Alt+';

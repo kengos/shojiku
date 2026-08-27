@@ -118,7 +118,15 @@ files and `e2e/` excluded, with NO waiver list.
   `resolveSeq`/`checkKeys`/`walkIntermediates`/`findPairByKey` (matches
   both parsed-Scalar and op-created raw-string keys).
 - `opCreate.ts` — the resolvers that CREATE a missing target:
-  `setLeaf`'s intermediate maps, the deferred sequence auto-create.
+  `setLeaf`'s intermediate maps, the deferred sequence auto-create. Its
+  `writeLeaf` also decides the FORM of a written scalar: a string carrying a
+  `\n` is authored as a BLOCK LITERAL rather than left to the serializer's
+  per-value choice, which otherwise gives an ordinary multi-line address a
+  plain scalar whose blank lines are its line breaks (deleting one silently
+  joins two lines) and a `|-` block to any value holding an interpolation or a
+  colon. Naming the type replaces the value node, so the old one's comments and
+  ANCHOR are copied across; `yaml` falls back to a quoted form for a value no
+  block can spell.
 - `opTypes.ts` — the wire vocabulary (`Op`/`OpError`/`OpResult`) + the
   clip/fail primitives.
 - `path.ts` — the structural **path grammar** shared with the engine box

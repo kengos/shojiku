@@ -200,12 +200,149 @@ describe('serializeEditor', () => {
     expect(serializeEditor(root)).toBe('a\nb');
   });
 
-  it('degrades a foreign element to its serialized children (no wire injection)', () => {
+  it('degrades a DECORATIVE foreign element to its children, joined (no wire injection)', () => {
+    // A <span> shows inline, so it ends no line and adds no break.
     const root = editorOf('a');
     const foreign = document.createElement('span');
     foreign.textContent = 'visible';
     root.appendChild(foreign);
     expect(serializeEditor(root)).toBe('avisible');
+  });
+
+  it('reads a browser-minted <div> per line as the lines it displays', () => {
+    // The shape a native undo or a composition end leaves behind in Chrome and
+    // Safari. It USED to serialize as 'onetwothree' — the field showed three
+    // lines and the file was saved with one, which no gate could see.
+    const root = editorOf('one');
+    for (const line of ['two', 'three']) {
+      const div = document.createElement('div');
+      div.textContent = line;
+      root.appendChild(div);
+    }
+    expect(serializeEditor(root)).toBe('one\ntwo\nthree');
+  });
+
+  it('reads a <p> the same way', () => {
+    const root = editorOf('one');
+    const p = document.createElement('p');
+    p.textContent = 'two';
+    root.append(p);
+    expect(serializeEditor(root)).toBe('one\ntwo');
+  });
+
+  it('reads list items through the list that holds them', () => {
+    // An <li> only ever arrives inside a <ul>/<ol>, which is NOT itself a line
+    // container — so a fixture that appends the <li> straight to the root
+    // proves nothing about the shape a browser can actually produce.
+    const root = editorOf('one');
+    const list = document.createElement('ul');
+    for (const line of ['a', 'b']) {
+      const li = document.createElement('li');
+      li.textContent = line;
+      list.appendChild(li);
+    }
+    root.appendChild(list);
+    expect(serializeEditor(root)).toBe('one\na\nb');
+  });
+
+  it('keeps a leading EMPTY line', () => {
+    // An empty line container writes nothing, so asking "has anything been
+    // written yet?" answered NO at the second container too and swallowed its
+    // break: a value opening with a blank line lost that line on every commit,
+    // silently, which is the defect class this file exists to close.
+    const root = document.createElement('div');
+    const blank = document.createElement('div');
+    blank.appendChild(document.createElement('br'));
+    root.appendChild(blank);
+    for (const line of ['two', 'three']) {
+      const div = document.createElement('div');
+      div.textContent = line;
+      root.appendChild(div);
+    }
+    expect(serializeEditor(root)).toBe('\ntwo\nthree');
+  });
+
+  it('keeps SEVERAL leading empty lines', () => {
+    const root = document.createElement('div');
+    for (let i = 0; i < 2; i++) {
+      const blank = document.createElement('div');
+      blank.appendChild(document.createElement('br'));
+      root.appendChild(blank);
+    }
+    const div = document.createElement('div');
+    div.textContent = 'b';
+    root.appendChild(div);
+    expect(serializeEditor(root)).toBe('\n\nb');
+  });
+
+  it("reads a <div><br></div> as ONE break — the browser's empty-line placeholder", () => {
+    // What Chromium leaves after Enter at the end of a value the reader has not
+    // typed into yet. The <div> already ends the line; counting its lone <br>
+    // as a second break would add a blank line on every such Enter.
+    const root = editorOf('one');
+    const div = document.createElement('div');
+    div.appendChild(document.createElement('br'));
+    root.appendChild(div);
+    expect(serializeEditor(root)).toBe('one\n');
+  });
+
+  it('still reads a <br> that shares its container as a real break', () => {
+    const root = editorOf('one');
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode('two'));
+    div.appendChild(document.createElement('br'));
+    div.appendChild(document.createTextNode('three'));
+    root.appendChild(div);
+    expect(serializeEditor(root)).toBe('one\ntwo\nthree');
+  });
+
+  it('does not GROW a value that already ends in a break', () => {
+    // The browser appends a placeholder <br> so the empty last line can hold a
+    // caret. Reading it as a break made every seed → commit → reseed turn add
+    // one more: the value grew without bound and re-rendered the document each
+    // time, which showed as the app pinning a core rather than as a wrong
+    // string. This is the regression that costs the most to rediscover.
+    let value = 'a\n';
+    for (let turn = 0; turn < 3; turn++) {
+      const root = document.createElement('div');
+      for (const node of buildEditorNodes(document, value, META)) {
+        root.appendChild(node);
+      }
+      root.appendChild(document.createElement('br'));
+      value = serializeEditor(root);
+      expect(value).toBe('a\n');
+    }
+  });
+
+  it('keeps a break the reader authored before the placeholder', () => {
+    // `a<br><br>` is how a browser spells "a, then an empty line": the first
+    // <br> is the reader's break, the second is the placeholder.
+    const root = editorOf('a');
+    root.appendChild(document.createElement('br'));
+    root.appendChild(document.createElement('br'));
+    expect(serializeEditor(root)).toBe('a\n');
+  });
+
+  it('adds no LEADING break when the content opens with a line container', () => {
+    // Chrome wraps every line including the first once the reader has typed a
+    // break; a break before the first line would prepend a blank one on every
+    // reopen, growing the value each time.
+    const root = document.createElement('div');
+    for (const line of ['one', 'two']) {
+      const div = document.createElement('div');
+      div.textContent = line;
+      root.appendChild(div);
+    }
+    expect(serializeEditor(root)).toBe('one\ntwo');
+  });
+
+  it('keeps a chip whole inside a line container', () => {
+    const root = editorOf('one');
+    const div = document.createElement('div');
+    div.appendChild(chipSpan(document, '{k}', 'k', null, META));
+    div.appendChild(document.createTextNode(' 様'));
+    root.appendChild(div);
+    expect(serializeEditor(root)).toBe('one\n{k} 様');
   });
 
   it('reads the wire attribute from a chip nested inside a foreign element', () => {

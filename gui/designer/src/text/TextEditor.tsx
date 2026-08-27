@@ -13,8 +13,10 @@
 // never ride the caret's own selection. Commits on blur leaving the whole
 // editor (moving into either field menu is not a commit) or ⌘/Ctrl+Enter,
 // only on a CHANGED value;
-// Enter inserts a newline; paste is plain-text only; Escape cancels without
-// committing when the host provides `onCancel` (the canvas overlay).
+// Enter is the BROWSER's (it mints line structure the serializer reads — see
+// `editorHandlers.handleEditorKeyDown`); paste is plain-text only; Escape
+// cancels without committing when the host provides `onCancel` (the canvas
+// overlay).
 //
 // The keyboard/ingress behavior itself lives in `text/editorHandlers`; this
 // component owns seeding, the commit decision and the staged declarations.
@@ -40,6 +42,11 @@ export interface TextEditorProps {
   /** Accessible name for the editable surface. The panel's `<label>` wrapper
    * cannot name a contenteditable div, so pass it there too. */
   readonly ariaLabel?: string;
+  /** Id of the element describing the surface — the panel's key hint, which is
+   * revealed visually on focus. Passed as a DESCRIPTION rather than rendered
+   * into the name, so it reaches a screen reader at the moment it is useful
+   * without lengthening what every reference to the field announces. */
+  readonly ariaDescribedBy?: string;
   /** Focus (and select-all) on mount — the canvas overlay opens ready to type;
    * the panel field does not steal focus. */
   readonly autoFocus?: boolean;
@@ -64,6 +71,7 @@ export function TextEditor({
   onCommit,
   onCancel,
   ariaLabel,
+  ariaDescribedBy,
   autoFocus = false,
   className = 'sj-text-editor',
   chips,
@@ -196,6 +204,7 @@ export function TextEditor({
       <EditorSurface
         seedRef={seedRef}
         ariaLabel={ariaLabel}
+        ariaDescribedBy={ariaDescribedBy}
         className={className}
         commit={commitFrom}
         cancel={cancel}

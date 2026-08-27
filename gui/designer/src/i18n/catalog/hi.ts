@@ -458,6 +458,7 @@ export const hi: LanguageCatalog = {
     'panel.contentMode.text': 'स्थिर पाठ',
     'panel.contentMode.data': 'डेटा बाइंडिंग',
     'panel.field.text': 'पाठ',
+    'panel.field.text.keys': 'नई पंक्ति के लिए Enter · पूरा करने के लिए {mod}Enter',
     'panel.field.dataKey': 'डेटा कुंजी',
     'panel.field.format': 'प्रारूप',
     'panel.field.placeholder': 'रिक्त प्लेसहोल्डर',

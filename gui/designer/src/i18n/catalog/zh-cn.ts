@@ -628,6 +628,7 @@ export const zhCn: LanguageCatalog = {
     'panel.contentMode.text': '固定文本',
     'panel.contentMode.data': '数据绑定',
     'panel.field.text': '文本',
+    'panel.field.text.keys': 'Enter 换行 · {mod}Enter 完成',
     'panel.field.dataKey': '数据键',
     'panel.field.format': '格式',
     'panel.field.placeholder': '空白时显示',

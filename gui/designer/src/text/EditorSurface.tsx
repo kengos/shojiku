@@ -3,9 +3,10 @@
 // Split out of `TextEditor`, which stays the seeding / commit-decision /
 // staged-declaration shell — this file is the ingress, nothing else.
 //
-// Every DOM-mutating path here is Range surgery (atomic chip erosion, Enter's
-// newline, paste, drop), which fires no `input` event, so each one drives the
-// detached-chip re-check and the draft publish itself.
+// Every DOM-mutating path here is Range surgery (atomic chip erosion, paste,
+// drop), which fires no `input` event, so each one drives the detached-chip
+// re-check and the draft publish itself. Enter is NOT among them — the browser
+// applies it and fires a real `input`, which the handler below already serves.
 
 import type { KeyboardEvent } from 'react';
 import { handleEditorKeyDown, handleEditorMouseDown, handleTextIngress } from './editorHandlers';
@@ -14,6 +15,7 @@ import type { DraftReporter } from './useDraftReporter';
 export interface EditorSurfaceProps {
   readonly seedRef: (el: HTMLDivElement | null) => void;
   readonly ariaLabel?: string;
+  readonly ariaDescribedBy?: string;
   readonly className: string;
   readonly commit: (el: HTMLElement) => void;
   /** Present only on the canvas overlay — Escape closes without committing. */
@@ -26,6 +28,7 @@ export interface EditorSurfaceProps {
 export function EditorSurface({
   seedRef,
   ariaLabel,
+  ariaDescribedBy,
   className,
   commit,
   cancel,
@@ -71,6 +74,7 @@ export function EditorSurface({
       role="textbox"
       aria-multiline="true"
       aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
       className={className}
       contentEditable
       // Editing hosts are natively tab-focusable; the explicit index states it

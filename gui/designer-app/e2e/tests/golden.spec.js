@@ -1,6 +1,7 @@
 // The app golden path: open the standalone shell, pick a preset from the
 // catalog, let the embedded Designer boot the engine + paint a preview, and
 // export the template — asserting the loop held with no console/page errors.
+const { readFileSync } = require('node:fs');
 const { test, expect } = require('@playwright/test');
 
 test('open a preset, preview it client-side, and export', async ({ page }) => {
@@ -43,6 +44,20 @@ test('open a preset, preview it client-side, and export', async ({ page }) => {
   // Still focused: nothing committed, and the document was never edited.
   await expect(textField).toBeFocused();
 
+  // A LINE BREAK, authored the way a reader authors one: Enter at the END of
+  // the value, then keep typing. That is the case that used to fail — the break
+  // went in, but the next character landed back on the previous line — and it
+  // is invisible to jsdom, which implements no contenteditable editing and so
+  // cannot tell a caret that moved from one that did not.
+  const beforeBreak = await painted();
+  await textField.press('Enter');
+  await textField.pressSequentially('SECOND');
+  await expect.poll(painted, { timeout: 30000 }).not.toBe(beforeBreak);
+  // Ctrl+Enter commits — the second half of what the field's key hint promises,
+  // exercised here rather than merely rendered.
+  await textField.press('Control+Enter');
+  await expect(textField).not.toBeFocused();
+
   // Bands: this preset authors neither, so the Structure tab lists a
   // placeholder row for each. Pressing one creates the band and selects it,
   // which is what arms the band-only page-number row — the whole point of the
@@ -80,6 +95,20 @@ test('open a preset, preview it client-side, and export', async ({ page }) => {
     page.getByRole('button', { name: 'Export', exact: true }).click(),
   ]);
   expect(download.suggestedFilename()).toContain('templates.yml');
+
+  // The break survived the whole loop — panel keystroke, document op,
+  // serializer, file. The LOAD-BEARING assertion is the second one: before the
+  // Enter fix this value came out `{store.phone}CANARYSECOND` on one line, so
+  // that pattern is the only thing here that would have failed. The block-form
+  // check is a guard, not a proof — this value holds an interpolation, and such
+  // a value already took `|-` before the block-literal change existed; the
+  // change itself is pinned in `designer-core/src/multilineText.test.ts`.
+  const exported = readFileSync(await download.path(), 'utf8');
+  // Two LINEAR patterns rather than one spanning match: a `(\s+.*\n)*`
+  // between them backtracks catastrophically over a file this size when it
+  // does not match, which reads as a hung run rather than a failed assertion.
+  expect(exported).toContain('text: |-\n');
+  expect(exported).toMatch(/CANARY\n\s+SECOND\n/);
 
   // The real deliverable: the engine renders the PDF client-side, the preview
   // shows it, and the download hands over the same bytes. This is the only

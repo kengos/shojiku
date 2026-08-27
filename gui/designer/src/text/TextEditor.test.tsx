@@ -127,7 +127,13 @@ describe('TextEditor', () => {
     expect(onCommit).toHaveBeenCalledWith('abc', []);
   });
 
-  it('inserts a newline on plain Enter instead of committing', () => {
+  it('leaves plain Enter to the browser, and does not commit on it', () => {
+    // Enter is no longer answered here: a caret cannot rest after a break we
+    // insert at the end of a value, so the next character landed on the
+    // previous line (see `editorHandlers.handleEditorKeyDown`). jsdom
+    // implements no contenteditable editing at all, so what a real browser then
+    // does is proven by the app e2e; what THIS asserts is the half that is
+    // still ours — Enter is not a commit, and nothing is written until blur.
     const onCommit = vi.fn();
     render(<TextEditor value="ab" onCommit={onCommit} ariaLabel="Text" />);
     const text = editor().firstChild;
@@ -135,21 +141,57 @@ describe('TextEditor', () => {
       throw new Error('seeded text missing');
     }
     caretAt(text, 1);
+    const before = editor().innerHTML;
     fireEvent.keyDown(editor(), { key: 'Enter' });
     expect(onCommit).not.toHaveBeenCalled();
-    // A plain "\n" text node, never browser-minted <div>/<br> structure.
-    expect(editor().querySelector('div, br')).toBeNull();
+    // Untouched by US — the default action is the browser's to apply.
+    expect(editor().innerHTML).toBe(before);
     fireEvent.blur(editor());
-    expect(onCommit).toHaveBeenCalledWith('a\nb', []);
+    expect(onCommit).not.toHaveBeenCalled();
   });
 
-  it('appends a newline when Enter arrives with no caret in the editor', () => {
+  it('takes a pasted multi-line value verbatim', () => {
     const onCommit = vi.fn();
-    render(<TextEditor value="ab" onCommit={onCommit} ariaLabel="Text" />);
-    document.getSelection()?.removeAllRanges();
-    fireEvent.keyDown(editor(), { key: 'Enter' });
+    render(<TextEditor value="" onCommit={onCommit} ariaLabel="Text" />);
+    fireEvent.paste(editor(), {
+      clipboardData: { getData: () => '東京都渋谷区1-2-3\nシブヤビル 5F\n〒150-0001' },
+    });
     fireEvent.blur(editor());
-    expect(onCommit).toHaveBeenCalledWith('ab\n', []);
+    expect(onCommit).toHaveBeenCalledWith('東京都渋谷区1-2-3\nシブヤビル 5F\n〒150-0001', []);
+  });
+
+  it('commits NOTHING while a multi-line value is being typed', () => {
+    // The field is two lines high and grows with its content, both in CSS
+    // alone. Were any of that done by remounting, each growth step would fire
+    // the commit-on-unmount path and mint an undo step per line.
+    const onCommit = vi.fn();
+    render(<TextEditor value="one" onCommit={onCommit} ariaLabel="Text" />);
+    for (const line of ['two', 'three', 'four']) {
+      // The DOM Chromium leaves after Enter-then-type: a line container per
+      // new line. Built here directly, since jsdom applies no default action.
+      const div = document.createElement('div');
+      div.textContent = line;
+      editor().appendChild(div);
+      fireEvent.input(editor());
+    }
+    expect(onCommit).not.toHaveBeenCalled();
+    fireEvent.blur(editor());
+    expect(onCommit).toHaveBeenCalledTimes(1);
+    expect(onCommit).toHaveBeenCalledWith('one\ntwo\nthree\nfour', []);
+  });
+
+  it('commits ONE break for an Enter the reader has not typed into yet', () => {
+    // Chromium's Enter at the end of a value leaves `<div><br></div>`: the
+    // container ends the line, and the <br> only keeps the now-empty line
+    // visible. Reading that <br> as a second break would add a blank line to
+    // the document on every such Enter.
+    const onCommit = vi.fn();
+    render(<TextEditor value="one" onCommit={onCommit} ariaLabel="Text" />);
+    const div = document.createElement('div');
+    div.appendChild(document.createElement('br'));
+    editor().appendChild(div);
+    fireEvent.blur(editor());
+    expect(onCommit).toHaveBeenCalledWith('one\n', []);
   });
 
   it('cancels on Escape without committing, and the trailing blur stays silent', () => {
@@ -827,10 +869,10 @@ describe('TextEditor — the in-progress draft', () => {
   });
 
   it('acts on NO key while an IME conversion is open', () => {
-    // A Japanese reader pressing Enter to CONFIRM a conversion must not have it
-    // turned into a newline (which would also cancel the conversion). jsdom
-    // defaults `isComposing` to false, so this is only visible by setting it —
-    // no ASCII smoke and no other test in this file can see a regression here.
+    // A Japanese reader pressing Enter to CONFIRM a conversion must reach the
+    // browser's own IME handling, never a key this file acts on. jsdom defaults
+    // `isComposing` to false, so this is only visible by setting it — no ASCII
+    // smoke and no other test in this file can see a regression here.
     const onCommit = vi.fn();
     render(<TextEditor value="" onCommit={onCommit} ariaLabel="Text" />);
     editor().textContent = 'りょうしゅうしょ';
@@ -840,12 +882,16 @@ describe('TextEditor — the in-progress draft', () => {
     expect(onCommit).not.toHaveBeenCalled();
   });
 
-  it('inserts the newline once the composition has closed', () => {
-    render(<TextEditor value="" onCommit={() => {}} ariaLabel="Text" />);
+  it('stops swallowing keys once the composition has closed', () => {
+    // The guard is a gate on the WHOLE handler, so the check that it opens
+    // again is that a key it owns acts: ⌘Enter commits after the conversion.
+    const onCommit = vi.fn();
+    render(<TextEditor value="" onCommit={onCommit} ariaLabel="Text" />);
     editor().textContent = '領収書';
-    caretAt(editor().childNodes[0] ?? editor(), 3);
-    fireEvent.keyDown(editor(), { key: 'Enter' });
-    expect(editor().textContent).toBe('領収書\n');
+    fireEvent.keyDown(editor(), { key: 'Enter', metaKey: true, isComposing: true });
+    expect(onCommit).not.toHaveBeenCalled();
+    fireEvent.keyDown(editor(), { key: 'Enter', metaKey: true });
+    expect(onCommit).toHaveBeenCalledWith('領収書', []);
   });
 
   it('does nothing at all without the prop — every other host is unchanged', () => {

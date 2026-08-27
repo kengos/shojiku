@@ -480,6 +480,7 @@ export const fil: LanguageCatalog = {
     'panel.contentMode.text': 'Nakapirming teksto',
     'panel.contentMode.data': 'Data binding',
     'panel.field.text': 'Teksto',
+    'panel.field.text.keys': 'Enter para sa bagong linya · {mod}Enter para tapusin',
     'panel.field.dataKey': 'Data key',
     'panel.field.format': 'Format',
     'panel.field.placeholder': 'Placeholder kapag blangko',
