@@ -15,6 +15,16 @@ platform binaries.
 
 ### Added
 
+- **A manuscript-paper item's ruling, ruby size and line-break rules can now be
+  edited.** The bundled genkoyoshi templates set a ruling colour that nothing in
+  the Designer could change, and the ruling width, the ruby size and the
+  line-break rule had no control at all — the only way to reach any of them was
+  to edit the file by hand. The width and the ruby size are pickable from a menu
+  as well as typed, and each numeric choice shows what it does: a rule drawn at
+  that width, text set at that size. Turning the ruling off is one of those
+  choices rather than a number to guess — leaving the width unset draws the
+  standard 0.5pt ruling, and choosing "no ruling" draws none.
+
 - **The Designer's colour picker now names every colour, and says which one you
   are pointing at.** The palette is laid out as hue columns against darkness
   rows, with the hue named above each column and the step beside each row, and a

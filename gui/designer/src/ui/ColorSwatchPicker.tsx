@@ -7,60 +7,11 @@
 // minimal-wire op vs a panel plainTextOp), so this widget carries no wire
 // knowledge — it only presents the palette and reports the chosen value.
 
-import { useCallback, useState } from 'react';
 import { usePopover } from '../hooks/usePopover';
+import { placementClasses, usePopoverPlacement } from '../hooks/usePopoverPlacement';
 import { chipPaint, isHexColor } from './chipContrast';
 import { SwatchGrid } from './SwatchGrid';
 import { TipBubble } from './TipBubble';
-
-/** Where the popover hangs relative to its trigger. The hue × darkness grid is both
- * taller and wider than the flat palette it replaced (a row of shade labels, a column
- * gutter naming the step), so a colour control low in the property panel opened one
- * that ran off the bottom of the window, and a control near the panel's right edge
- * one that ran off the side. The popover is positioned out of the panel's flow, so
- * neither is reachable by scrolling.
- *
- * The popover also takes `w-max`: an absolutely positioned box shrink-to-fits
- * against its containing block, which here is the ~40px trigger wrapper, so it
- * settled at MIN-content and squeezed every hue column back to the swatch width —
- * the column headers wrapped to one character per line again, with the inline
- * template applied and correct. */
-const BELOW = 'top-[calc(100%+var(--sj-space-1))]';
-const ABOVE = 'bottom-[calc(100%+var(--sj-space-1))]';
-const FROM_LEFT = 'left-0';
-const FROM_RIGHT = 'right-0';
-
-/** Which way the popover opens on each axis. */
-export interface Placement {
-  readonly up: boolean;
-  readonly toLeft: boolean;
-}
-
-const DEFAULT_PLACEMENT: Placement = { up: false, toLeft: false };
-
-/** Where to hang a popover of `size` off a trigger at `anchor`, inside `view`.
- *
- * Both inputs are independent of the answer: the anchor is the trigger, which does
- * not move, and the size is the popover's own extent, which is the same whichever
- * way it hangs. Deriving the placement from the popover's CURRENT rect instead reads
- * a position the previous answer already produced, so the flip is decided against a
- * box that has already been moved and lands wherever the render order happens to put
- * it — it measured correctly and still came out unflipped in the running app.
- *
- * An axis flips only when the default side overflows AND the other side has room: on
- * a window too small for either, the near edge stays put and the max-height scrolls,
- * which beats moving the overflow off the top or the left where nothing can reach
- * it. */
-export function placeIn(
-  anchor: { top: number; bottom: number; left: number; right: number },
-  size: { width: number; height: number },
-  view: { width: number; height: number },
-): Placement {
-  return {
-    up: anchor.bottom + size.height > view.height && anchor.top - size.height > 0,
-    toLeft: anchor.left + size.width > view.width && anchor.right - size.width > 0,
-  };
-}
 
 export interface ColorSwatchPickerProps {
   /** The trigger's accessible name. */
@@ -92,29 +43,7 @@ export function ColorSwatchPicker({
   clearLabel,
 }: ColorSwatchPickerProps) {
   const { open, setOpen, rootRef } = usePopover();
-  const [placement, setPlacement] = useState<Placement>(DEFAULT_PLACEMENT);
-  // Measured through a CALLBACK ref rather than an effect: it runs with the element
-  // on mount and with `null` on unmount, so the closed state is a real transition
-  // rather than a branch nothing ever takes. The popover's own OFFSET size is used,
-  // not its rect, so the reading does not depend on where this same computation put
-  // it a moment ago.
-  const placeRef = useCallback(
-    (el: HTMLDivElement | null) => {
-      const anchor = rootRef.current;
-      if (el === null || anchor === null) {
-        setPlacement(DEFAULT_PLACEMENT);
-        return;
-      }
-      setPlacement(
-        placeIn(
-          anchor.getBoundingClientRect(),
-          { width: el.offsetWidth, height: el.offsetHeight },
-          { width: window.innerWidth, height: window.innerHeight },
-        ),
-      );
-    },
-    [rootRef],
-  );
+  const { placement, placeRef } = usePopoverPlacement(rootRef);
   const chip = isHexColor(value) ? value : undefined;
   // The native picker seeds from the current color (or black) and commits only
   // on a change FROM that seed, so opening the popover and tabbing through the
@@ -159,7 +88,7 @@ export function ColorSwatchPicker({
         <div
           role="menu"
           ref={placeRef}
-          className={`absolute ${placement.toLeft ? FROM_RIGHT : FROM_LEFT} ${placement.up ? ABOVE : BELOW} z-10 w-max max-h-[calc(100vh-2rem)] overflow-y-auto rounded-md border border-border bg-surface p-2 shadow-[0_4px_12px_rgb(0_0_0/0.15)]`}
+          className={`absolute ${placementClasses(placement)} z-10 w-max max-h-[calc(100vh-2rem)] overflow-y-auto rounded-md border border-border bg-surface p-2 shadow-[0_4px_12px_rgb(0_0_0/0.15)]`}
         >
           <SwatchGrid onPick={commit} value={value} />
           <label className="mt-2 flex items-center justify-between gap-2 text-sm text-muted">

@@ -9,6 +9,7 @@ import { BTN_SM, SECTION_TITLE } from '../ui/chrome';
 import { BoxAxisDisplay, BoxAxisField, BoxHint, PlacementSegment } from './boxFields';
 import { CharGridSection } from './CharGridSection';
 import { CHAR_GRID_CAPABILITY, CHAR_GRID_TYPE, readCharGrid } from './charGrid';
+import { readCharGridInk } from './charGridInk';
 import type { ItemPanelProps } from './itemPanelProps';
 import { hasCapability } from './itemPanelProps';
 import { BOX_AXES, type BoxAxis } from './itemView';
@@ -82,6 +83,7 @@ export function BoxSection(props: ItemPanelProps) {
     view.type === CHAR_GRID_TYPE && hasCapability(props.capabilities, CHAR_GRID_CAPABILITY) ? (
       <CharGridSection
         view={readCharGrid(controller.read, path)}
+        ink={readCharGridInk(controller.read, path)}
         controller={controller}
         path={path}
         gridStep={gridStep}
