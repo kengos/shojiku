@@ -10,6 +10,7 @@ import { useI18n } from '../i18n/context';
 import { commitOps } from '../text/declCommit';
 import { TextEditor } from '../text/TextEditor';
 import { INPUT } from '../ui/chrome';
+import { CharGridMarkupField } from './CharGridMarkupField';
 import { BoundContent } from './contentBound';
 import { ImageContent, PageNumberContent } from './contentParts';
 import { Field, FieldGroup } from './fields';
@@ -170,6 +171,10 @@ export function ContentSection(props: ItemPanelProps) {
           dispatch={dispatch}
         />
       )}
+      {/* char_grid only, and only against an engine that has the grammar. It
+          interprets the CONTENT above, so it sits under it rather than with the
+          grid geometry on the placement tab. */}
+      <CharGridMarkupField {...props} />
     </section>
   );
 }

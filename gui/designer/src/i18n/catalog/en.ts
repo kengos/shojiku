@@ -323,10 +323,22 @@ export const en: LanguageCatalog = {
       'X and Y are measured from the top-left corner of the area inside the page margins — the outlined rectangle on the page. Negative values reach into the margin on purpose, and only content that leaves the paper is reported as a problem.',
     'help.border.title': 'Setting a border',
     'help.border.body':
-      'Set the pen first — the width, colour and line type — then click the edges you want it on, the way a spreadsheet border tool works. Clicking an edge that already matches the pen removes that edge instead.',
+      'Set the pen first — the width, color and line type — then click the edges you want it on, the way a spreadsheet border tool works. Clicking an edge that already matches the pen removes that edge instead.',
     'help.grid.title': 'Snap grid',
     'help.grid.body':
       'Dragging and resizing on the canvas snaps positions to this step, and the arrow steppers move by it. An editor setting only — it is never saved into the template.',
+    'help.rulingWidth.title': 'The lines that draw the cells',
+    'help.rulingWidth.body':
+      'How thick the lines between the manuscript cells are. Left unset they are drawn at 0.5pt; choosing 0 removes them.',
+    'help.rubySize.title': 'The reading printed beside a kanji',
+    'help.rubySize.body':
+      'How large the furigana is. Left unset, the engine draws it at 0.4 of the cell.',
+    'help.kinsoku.title': 'Characters that may not open a line',
+    'help.kinsoku.body':
+      'Keeps a line from starting with 。 or 」 by pulling the character back onto the line before it. School standard is what Japanese schoolbooks use; None fills the cells in order and lets punctuation land anywhere.',
+    'help.styleNames.title': 'Styles defined once, applied here',
+    'help.styleNames.body':
+      'Applies a style registered on the document to this item. With more than one ticked the one added last wins, and a value set on the item itself beats all of them.',
     'shortcuts.title': 'Keyboard shortcuts',
     'shortcuts.action.undo': 'Undo',
     'shortcuts.action.redo': 'Redo',
@@ -712,18 +724,22 @@ export const en: LanguageCatalog = {
     'panel.charGrid.hint':
       'While a cell size is set, the drawn size comes from the cells, not from the width above. Clear the cell size and the cells are derived from this item\u2019s width instead.',
     'panel.charGrid.rulingWidth': 'Ruling width',
-    'panel.charGrid.rulingColor': 'Ruling colour',
-    'panel.charGrid.rulingDefault': 'default',
+    'panel.charGrid.rulingColor': 'Ruling color',
+    'panel.charGrid.rulingDefault': 'leave unset',
     'panel.charGrid.rulingOff': 'no ruling',
     'panel.charGrid.rulingThick': 'thick',
     'panel.charGrid.rulingOffHint': 'Unset draws a 0.5pt ruling; 0 draws none.',
     'panel.charGrid.rulingFromStyle': 'From the named style “{name}”',
     'panel.charGrid.rubySize': 'Ruby size',
     'panel.charGrid.rubySizeAuto': 'auto',
+    'panel.charGrid.rubyDefault': '0.4 × the cell',
     'panel.charGrid.rubySample': 'かんじ',
     'panel.charGrid.kinsoku': 'Line-break rules',
     'panel.charGrid.kinsoku.school': 'School standard',
     'panel.charGrid.kinsoku.none': 'None',
+    'panel.charGrid.markup': 'Read ruby notation in the content',
+    'panel.charGrid.markupSafety':
+      'While this is off, 《》 and ［＃…］ print as the characters they are. Turning it on makes those marks meaningful in bound data too.',
     'stepper.relativeUnit': 'Values in percent or em cannot be stepped. Type the value instead.',
     'stepper.unitHint': 'mm, cm, in too',
     'panel.box.h': 'Height',
@@ -1069,7 +1085,8 @@ export const en: LanguageCatalog = {
     'color.axis.shade': 'Shade',
     'color.axis.step': '{step}/{of}',
     'color.axis.neutral': 'Neutral',
-    'color.readout.idle': 'Point at a colour to read its name',
+    'color.readout.idle': 'Point at a color to read its name',
+    'color.unset': 'Not set',
     'combo.open': 'Choose a value for {field}',
   },
 };

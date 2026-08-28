@@ -13,6 +13,7 @@
 // (`StyleFormFields` builds no op at all). Nothing here normalises, so the
 // value in the key always moves with the entry.
 
+import type { ReactNode } from 'react';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import { Field } from './fields';
 
@@ -87,6 +88,10 @@ export function SelectField({
 
 export interface CheckboxListProps {
   readonly label: string;
+  /** An optional `?` rendered beside the legend, for a group whose NAME does not
+   * let a reader infer what it does. Passed in rather than resolved here: this
+   * widget carries no catalog knowledge, and only some of its callers need one. */
+  readonly help?: ReactNode;
   readonly options: readonly string[];
   readonly selected: readonly string[];
   readonly emptyLabel: string;
@@ -99,14 +104,25 @@ export interface CheckboxListProps {
 // nesting labels is invalid HTML that breaks label association.
 export function CheckboxList({
   label,
+  help,
   options,
   selected,
   emptyLabel,
   onToggle,
 }: CheckboxListProps) {
   return (
-    <fieldset className="mb-2 block border-0 p-0">
-      <legend className={FIELD_LABEL}>{label}</legend>
+    // The group is named by `aria-label`, not by its legend, and that is what
+    // makes the `?` safe to put ON the legend line: a `<fieldset>`'s accessible
+    // name is otherwise its legend's whole SUBTREE, so a nested help button
+    // would fold its own name into the group's ("Styles" becoming "Styles
+    // What a named style is"). `aria-label` wins over the legend in the name
+    // computation, so the group keeps the label verbatim whether or not a
+    // caller passes help. The legend stays for the visible heading.
+    <fieldset className="mb-2 block border-0 p-0" aria-label={label}>
+      <legend className={`${FIELD_LABEL} flex items-center gap-1`}>
+        {label}
+        {help}
+      </legend>
       {options.length === 0 ? (
         <span className="m-0 text-muted">{emptyLabel}</span>
       ) : (

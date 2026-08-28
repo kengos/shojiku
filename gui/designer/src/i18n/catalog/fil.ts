@@ -119,6 +119,18 @@ export const fil: LanguageCatalog = {
     'help.grid.title': 'Snap grid',
     'help.grid.body':
       'Ang pag-drag at pag-resize sa canvas ay dumidikit sa step na ito, at ito rin ang laki ng galaw ng mga arrow button. Setting lang ito ng editor — hindi ito naisasama sa template.',
+    'help.rulingWidth.title': 'Ang mga guhit na bumubuo ng kahon',
+    'help.rulingWidth.body':
+      'Kapal ng mga guhit sa pagitan ng mga kahon ng manuskrito. Kapag walang halaga, iginuguhit ang mga ito sa 0.5pt; ang 0 ay nag-aalis ng mga ito.',
+    'help.rubySize.title': 'Ang basa sa tabi ng isang kanji',
+    'help.rubySize.body':
+      'Laki ng furigana. Kapag walang halaga, iginuguhit ito ng engine sa 0.4 ng kahon.',
+    'help.kinsoku.title': 'Mga karakter na hindi puwedeng magbukas ng linya',
+    'help.kinsoku.body':
+      'Pinipigilan ang linya na magsimula sa 。 o 」 sa pamamagitan ng paghila ng karakter pabalik sa naunang linya. Ang pamantayan ng paaralan ang ginagamit ng mga aklat-aralin sa Hapon; ang Wala ay pumupuno ng mga kahon nang sunod-sunod.',
+    'help.styleNames.title': 'Minsang itinakda, dito ipinapataw',
+    'help.styleNames.body':
+      'Ipinapataw sa item na ito ang istilong nakarehistro sa dokumento. Kapag mahigit isa ang naka-tik, ang huling idinagdag ang mananaig, at ang halagang direktang nakatakda sa item ang tumatalo sa lahat.',
     'shortcuts.title': 'Mga keyboard shortcut',
     'shortcuts.action.undo': 'I-undo',
     'shortcuts.action.redo': 'I-redo',
@@ -511,17 +523,21 @@ export const fil: LanguageCatalog = {
       'Habang may nakatakdang laki ng kahon, ang laking iginuguhit ay nagmumula sa mga kahon, hindi sa lapad sa itaas. Alisin ang laki ng kahon at ang mga kahon naman ang kukunin mula sa lapad ng item na ito.',
     'panel.charGrid.rulingWidth': 'Kapal ng guhit',
     'panel.charGrid.rulingColor': 'Kulay ng guhit',
-    'panel.charGrid.rulingDefault': 'default',
+    'panel.charGrid.rulingDefault': 'iwang walang halaga',
     'panel.charGrid.rulingOff': 'walang guhit',
     'panel.charGrid.rulingThick': 'makapal',
     'panel.charGrid.rulingOffHint': 'Kapag walang halaga, 0.5pt; ang 0 ay walang guhit.',
     'panel.charGrid.rulingFromStyle': 'Mula sa istilong “{name}”',
     'panel.charGrid.rubySize': 'Laki ng ruby',
     'panel.charGrid.rubySizeAuto': 'awto',
+    'panel.charGrid.rubyDefault': '0.4 ng kahon',
     'panel.charGrid.rubySample': 'かんじ',
     'panel.charGrid.kinsoku': 'Panuntunan sa paghati',
     'panel.charGrid.kinsoku.school': 'Pamantayan ng paaralan',
     'panel.charGrid.kinsoku.none': 'Wala',
+    'panel.charGrid.markup': 'Basahin ang ruby notation sa nilalaman',
+    'panel.charGrid.markupSafety':
+      'Habang naka-off, ang 《》 at ［＃…］ ay naililimbag bilang mismong mga karakter. Kapag binuksan, may kahulugan na rin ang mga markang iyon sa naka-bind na datos.',
     'stepper.relativeUnit':
       'Hindi maaaring i-step ang mga halagang porsyento o em. I-type ang halaga nang direkta.',
     'stepper.unitHint': 'mm, cm, in din',
@@ -874,6 +890,7 @@ export const fil: LanguageCatalog = {
     'color.axis.step': '{step}/{of}',
     'color.axis.neutral': 'Neutral',
     'color.readout.idle': 'Ituro ang kulay para mabasa ang pangalan',
+    'color.unset': 'Walang halaga',
     'combo.open': 'Pumili ng halaga para sa {field}',
   },
 };

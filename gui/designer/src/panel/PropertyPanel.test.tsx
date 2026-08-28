@@ -1192,6 +1192,30 @@ describe('PropertyPanel — effective-value hints + document-settings jump', () 
 });
 
 describe('PropertyPanel — 塗り・枠線 cluster', () => {
+  it('names the fill and text colours beside their chips, with the palette closed', () => {
+    // The whole point of the readout: a closed picker's chip is the entire
+    // state of the field, and a reader who cannot tell two swatches apart had
+    // to open the palette to find out — every time. These two are the colours
+    // such a reader touches in ordinary work.
+    const controller = makeController({
+      [PATH]: { type: 'text', style: { color: '#b91c1c', backgroundColor: '#15803d' } },
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    openTab('Style');
+    expect(screen.getByText('Red, shade 4 of 5')).toBeTruthy();
+    expect(screen.getByText('#b91c1c')).toBeTruthy();
+    expect(screen.getByText('Green, shade 4 of 5')).toBeTruthy();
+    expect(screen.getByText('#15803d')).toBeTruthy();
+  });
+
+  it('says a colour field is unset rather than leaving the chip to speak for itself', () => {
+    const controller = makeController({ [PATH]: { type: 'text', style: {} } });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    openTab('Style');
+    // Both PanelColorField mounts, and nothing claiming a colour is there.
+    expect(screen.getAllByText('Not set').length).toBeGreaterThanOrEqual(2);
+  });
+
   it('authors a fill color from the panel swatch (no hand-typed hex)', () => {
     const controller = makeController({ [PATH]: { type: 'rect', style: {}, box: { w: 50 } } });
     draw(<PropertyPanel controller={controller} path={PATH} />);

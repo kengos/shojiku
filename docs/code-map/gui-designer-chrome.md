@@ -481,6 +481,18 @@ is Tailwind utilities over the `--sj-*` tokens.
   and not thirty-six; a value outside the palette keeps its hex. The drift
   guard asserts the RULE reaches every swatch, and that every key it can
   emit resolves in every language.
+- `ui/SwatchValueLabel.tsx` — the `name · #hex` line a FIELD renders beside
+  its chip, so the popover does not have to be opened to learn what is set.
+  It lives beside the field rather than inside `ColorSwatchPicker` because
+  the trigger chrome is caller-owned and ranges from a toolbar icon button
+  (no room) to a panel swatch (room); the widget presents a value, and where
+  a name fits is the caller's question. It reuses `swatchName`, so the closed
+  field, the popover readout and each swatch's accessible name are one
+  derivation. Nothing clips here, unlike the readout: this returns early
+  unless the value passes `isHexColor`, so the string it renders is seven
+  characters or a catalog name — a clip would be a branch no input can take.
+  Mounted on the char_grid ruling colour first; the other colour fields
+  follow.
 - `ui/chipContrast.ts` — what a colour VALUE is, and how a chip painted in
   one stays visible: `isHexColor` (the guard every document-derived colour
   passes before reaching an inline style — it lives here, not beside the

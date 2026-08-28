@@ -113,7 +113,7 @@ describe('SwatchGrid', () => {
 
   it('says so when there is nothing to name', () => {
     draw();
-    expect(readout().textContent).toContain('Point at a colour');
+    expect(readout().textContent).toContain('Point at a color');
   });
 
   it('names a neutral without a darkness step', () => {

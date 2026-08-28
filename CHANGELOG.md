@@ -15,6 +15,32 @@ platform binaries.
 
 ### Added
 
+- **A manuscript-paper item can now be given a named style, and told whether to
+  read ruby notation.** Neither had a control: `styleNames` decides where the
+  item's font size, ruling width and cell alignment come from, and its only
+  picker lived on a tab this item type does not get. The ruby switch sits with
+  the content it interprets, and says what turning it on means — while it is off,
+  `《》` and `［＃…］` print as the characters they are, and turning it on makes
+  those marks meaningful in data bound from params too.
+
+- **A colour field now says which colour is in it without being opened.** The
+  swatch alone told you the field existed, not what was set, so a reader who
+  cannot tell two swatches apart had to open the palette every time. The name and
+  the code sit beside the chip. This ships on the text colour, the fill colour
+  and the manuscript-grid ruling colour; the border pen, the line stroke, the
+  table band rows, the named-style form, the defaults page and the format
+  toolbar follow.
+
+- Manuscript paper still has no control of its own for the characters' ink
+  colour or their font family, which is a narrower gap than before rather than
+  a new one: both can now be applied through a named style from the panel.
+
+- **The manuscript-grid controls explain themselves.** Ruling width, ruby size,
+  line-break rules and styles each carry a `?` with a two-sentence explanation in
+  the reader's language — what an unset ruling draws, what the line-break rule
+  moves, which named style wins when two are applied. `Cell size` deliberately
+  has none: the name already says it.
+
 - **A manuscript-paper item's ruling, ruby size and line-break rules can now be
   edited.** The bundled genkoyoshi templates set a ruling colour that nothing in
   the Designer could change, and the ruling width, the ruby size and the

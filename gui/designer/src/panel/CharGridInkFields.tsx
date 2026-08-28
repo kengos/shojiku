@@ -13,6 +13,7 @@ import { useI18n } from '../i18n/context';
 import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
 import { FIELD_LABEL, PANEL_SWATCH_TRIGGER } from '../ui/chrome';
 import { Select } from '../ui/Select';
+import { SwatchValueLabel } from '../ui/SwatchValueLabel';
 import {
   type CharGridInkView,
   KINSOKU_MODES,
@@ -25,6 +26,7 @@ import {
   rulingWidthOp,
 } from './charGridInk';
 import { NumericComboField } from './NumericComboField';
+import { FieldHelp } from './panelHelpers';
 
 /** A rule drawn at `pt`, so a width row shows what it does rather than only what it
  * is called. Clamped for DISPLAY so a legal but absurd width cannot push the row out
@@ -58,6 +60,7 @@ export function CharGridInkFields({
     <div className="mt-3 grid grid-cols-2 gap-2">
       <NumericComboField
         label={t('panel.charGrid.rulingWidth')}
+        help={<FieldHelp topic="rulingWidth" />}
         value={ink.rulingWidth}
         // An unset width is the engine's 0.5pt, so the placeholder says so
         // rather than leaving the field blank and unexplained.
@@ -86,17 +89,23 @@ export function CharGridInkFields({
       />
       <div className="mb-2">
         <span className={FIELD_LABEL}>{t('panel.charGrid.rulingColor')}</span>
-        <ColorSwatchPicker
-          label={t('panel.charGrid.rulingColor')}
-          value={ink.rulingColor}
-          triggerClassName={PANEL_SWATCH_TRIGGER}
-          customLabel={t('toolbar.color.custom')}
-          clearLabel={t('toolbar.color.clear')}
-          onCommit={(next) => dispatch(rulingColorOp(path, next))}
-        />
+        {/* The chip and the words it stands for, on one row. The chip alone says
+            which FIELD this is and nothing about what is in it. */}
+        <div className="flex min-w-0 items-center gap-1.5">
+          <ColorSwatchPicker
+            label={t('panel.charGrid.rulingColor')}
+            value={ink.rulingColor}
+            triggerClassName={PANEL_SWATCH_TRIGGER}
+            customLabel={t('toolbar.color.custom')}
+            clearLabel={t('toolbar.color.clear')}
+            onCommit={(next) => dispatch(rulingColorOp(path, next))}
+          />
+          <SwatchValueLabel value={ink.rulingColor} />
+        </div>
       </div>
       <NumericComboField
         label={t('panel.charGrid.rubySize')}
+        help={<FieldHelp topic="rubySize" />}
         value={ink.rubySize}
         placeholder={t('panel.charGrid.rubySizeAuto')}
         unit="pt"
@@ -104,7 +113,12 @@ export function CharGridInkFields({
           {
             value: '',
             label: t('panel.charGrid.rubySizeAuto'),
-            note: t('panel.charGrid.rulingDefault'),
+            // Its OWN note, not the width row's. The two rows do the same thing
+            // to the wire (they remove the key), but they mean different values:
+            // an unset width is 0.5pt and an unset ruby size is 0.4 of the cell,
+            // and reusing one string made the ruby row say 「既定」 against
+            // 「自動」 with nothing to say what the default is.
+            note: t('panel.charGrid.rubyDefault'),
           },
           ...RUBY_SIZE_PRESETS.map((preset) => ({
             value: preset,
@@ -118,7 +132,10 @@ export function CharGridInkFields({
         onCommit={(raw) => dispatch(rubySizeOp(path, raw))}
       />
       <div className="mb-2">
-        <span className={FIELD_LABEL}>{t('panel.charGrid.kinsoku')}</span>
+        <span className={`${FIELD_LABEL} flex items-center gap-1`}>
+          {t('panel.charGrid.kinsoku')}
+          <FieldHelp topic="kinsoku" />
+        </span>
         <Select
           label={t('panel.charGrid.kinsoku')}
           value={ink.kinsoku}
