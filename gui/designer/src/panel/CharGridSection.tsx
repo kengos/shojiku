@@ -12,6 +12,7 @@ import { isRelativeLength, readLength } from '../canvas/lengths';
 import { useI18n } from '../i18n/context';
 import { SECTION_TITLE } from '../ui/chrome';
 import { Segmented } from '../ui/Segmented';
+import { CharGridInkFields } from './CharGridInkFields';
 import {
   type CharGridView,
   countOp,
@@ -24,6 +25,7 @@ import {
   type WritingMode,
   writingModeOp,
 } from './charGrid';
+import type { CharGridInkView } from './charGridInk';
 import type { ItemPanelProps } from './itemPanelProps';
 import { applyPanelOp, stepValueOp } from './model';
 import { StepperField } from './StepperField';
@@ -38,11 +40,13 @@ const GAP_PLACEHOLDER = '0';
 
 export function CharGridSection({
   view,
+  ink,
   controller,
   path,
   gridStep,
 }: {
   readonly view: CharGridView;
+  readonly ink: CharGridInkView;
   readonly controller: ItemPanelProps['controller'];
   readonly path: string;
   readonly gridStep: number;
@@ -108,6 +112,7 @@ export function CharGridSection({
         }))}
         onChange={(next) => dispatch(writingModeOp(path, next as WritingMode))}
       />
+      <CharGridInkFields ink={ink} dispatch={dispatch} path={path} />
       <p className="mt-1 text-[11px] leading-relaxed text-muted">{t('panel.charGrid.hint')}</p>
     </section>
   );

@@ -112,7 +112,42 @@ spelling, so the border cluster's per-side model must not reach it.
   control that does it). Counts step by one whole cell, never by the
   canvas grid; lengths step by the canvas grid. No field is a bare empty
   box — an unset cell side shows `auto` (derived), an unset gap shows `0`
-  (the wire default). Capability-gated on `char_grid`.
+  (the wire default). Capability-gated on `char_grid`. The INK half is a
+  sibling component, not more lines here — see below.
+- `panel/charGridInk.ts` — the ruling / ruby / kinsoku model, split from
+  `charGrid.ts` because it reads a different place on the wire: the ruling
+  is a STYLE property (`style.borderWidth` / `style.borderColor`) a named
+  style can also supply, not part of the item's `grid` map. Written against
+  three engine facts, each read from the source and each deciding what an op
+  may author: `push_grid_rects` takes `grid_border.unwrap_or(0.5)` and
+  returns early on `width <= 0.0`, so an ABSENT key is a 0.5pt ruling and an
+  explicit `0` is none; the width is a scalar or a per-side map's TOP side
+  (`bw.uniform().unwrap_or_else(|| bw.sides()[0])`, colour
+  `border_colors[0]`), so the read goes through `borderModel`'s primitives
+  rather than the generic cascade, which flattens a map to unset and would
+  report a set ruling as blank; and `authored()` consults `styleNames`
+  (later name wins) then the item's own style and NOTHING below — no
+  defaults, no inheritance — so a control here must not badge an effective
+  value from anywhere else. An over-cap width (`MAX_STROKE_WIDTH_PT` 1000)
+  authors nothing rather than a value the engine answers with a diagnostic
+  and ignores. **Empty CLEARS the width**: an absent key IS the documented
+  default, so clearing returns the ruling to it, and without that an
+  authored width could never be undone except by retyping `0.5`.
+- `panel/CharGridInkFields.tsx` — those four controls. The width and the
+  ruby size are `NumericComboField`s whose rows carry a SAMPLE (a rule at
+  that width, text at that size) and a NOTE, which is how `0` becomes a
+  labelled "no ruling" choice instead of a magic number an author has to
+  know to type. The ruling colour is the shared `ColorSwatchPicker`.
+- `panel/NumericComboField.tsx` — type a value, or open the ▼ and pick a
+  common one; the word-processor font-size box, shaped like `FormatPicker`.
+  NOT a `StepperField` with a menu: stepping walks a value you already have,
+  while this reaches one you cannot spell — a field has either, never both.
+  Typing commits on blur, a row commits on click, both through one callback,
+  and neither commits when the value did not change. Enter commits by
+  blurring and is guarded on `isComposing`, or an IME confirming a
+  conversion would write a half-composed value. The input reseeds on every
+  commit so a value the model REFUSED does not linger as though accepted.
+  The caller owns what empty means, because that differs per key.
 
 ## Decoration tab — borders + fill
 

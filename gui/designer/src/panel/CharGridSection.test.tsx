@@ -398,3 +398,260 @@ describe('CharGridSection refusal snap-back', () => {
     });
   });
 });
+
+// The INK controls (`CharGridInkFields`), driven through the same real panel. They
+// are the item's whole reason for existing: a genkoyoshi preset authors a ruling, a
+// ruby size and a markup mode, and until now none of them had a control at all.
+describe('CharGridSection — the ruling, ruby and kinsoku controls', () => {
+  const RULING = { ...GRID, style: { borderWidth: 1, borderColor: '#b91c1c' }, rubySize: 6 };
+
+  it('seeds every ink control from the document', () => {
+    draw(RULING);
+    openLayout();
+    expect((screen.getByLabelText('Ruling width') as HTMLInputElement).value).toBe('1');
+    expect((screen.getByLabelText('Ruby size') as HTMLInputElement).value).toBe('6');
+    expect(screen.getByRole('button', { name: 'Ruling colour' })).not.toBeNull();
+  });
+
+  it('says what an UNSET ruling width means, rather than leaving the field blank', () => {
+    // The 0-vs-unset asymmetry is the whole of D2: an absent key draws 0.5pt and
+    // an explicit 0 draws nothing. A blank field with no placeholder says neither.
+    draw(GRID);
+    openLayout();
+    const width = screen.getByLabelText('Ruling width') as HTMLInputElement;
+    expect(width.value).toBe('');
+    expect(width.placeholder).toBe('0.5');
+    expect(screen.getByText(/0 draws none/)).not.toBeNull();
+  });
+
+  it('authors a typed ruling width', () => {
+    const controller = draw(GRID);
+    openLayout();
+    fireEvent.blur(screen.getByLabelText('Ruling width'), { target: { value: '2' } });
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: P,
+      keys: ['style', 'borderWidth'],
+      value: 2,
+    });
+  });
+
+  it('turns the ruling OFF from the menu, with no typing at all', () => {
+    // D2's decision, end to end: `0` is a labelled row rather than a magic number
+    // the author has to know to type.
+    const controller = draw(GRID);
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: /Choose a value for Ruling width/ }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /no ruling/ }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: P,
+      keys: ['style', 'borderWidth'],
+      value: 0,
+    });
+  });
+
+  it('returns the width to its default from the menu, by REMOVING the key', () => {
+    const controller = draw(RULING);
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: /Choose a value for Ruling width/ }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /default/ }));
+    const op = (controller.apply as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(JSON.stringify(op)).toContain('remove');
+  });
+
+  it('names the style a ruling width came from, when the item does not author it', () => {
+    // The engine's `authored()` looks at `styleNames` before the item's own style,
+    // so a width can be in effect that this item never wrote. Saying so is the
+    // difference between "unset" and "set somewhere you are not looking".
+    const controller = makeController({ ...GRID, styleNames: ['genkou'] });
+    controller.read = (path: string) =>
+      path === P
+        ? { ...GRID, styleNames: ['genkou'] }
+        : path === 'styles'
+          ? { genkou: { borderWidth: 0.25 } }
+          : undefined;
+    render(
+      <I18nProvider locale="en">
+        <PropertyPanel controller={controller} path={P} gridStep={0} />
+      </I18nProvider>,
+    );
+    openLayout();
+    expect((screen.getByLabelText('Ruling width') as HTMLInputElement).value).toBe('0.25');
+    expect(screen.getByText(/genkou/)).not.toBeNull();
+    expect(screen.queryByText(/0 draws none/)).toBeNull();
+  });
+
+  it('authors a ruby size picked from the menu', () => {
+    const controller = draw(GRID);
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: /Choose a value for Ruby size/ }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^6/ }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: P,
+      keys: ['rubySize'],
+      value: 6,
+    });
+  });
+
+  it('authors a kinsoku change, and never authors the default', () => {
+    const controller = draw(GRID);
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: 'Line-break rules' }));
+    fireEvent.click(screen.getByRole('option', { name: 'None' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: P,
+      keys: ['kinsoku'],
+      value: 'none',
+    });
+  });
+
+  it('authors a ruling colour picked from the shared palette', () => {
+    const controller = draw(GRID);
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: 'Ruling colour' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Red, shade 4 of 5' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: P,
+      keys: ['style', 'borderColor'],
+      value: '#b91c1c',
+    });
+  });
+
+  it('shows a ruling colour authored as a per-side MAP, which the cascade reads as unset', () => {
+    // The engine takes the map's top side for a grid. Reading through the generic
+    // cascade instead would report this set colour as blank.
+    draw({ ...GRID, style: { borderColor: { top: '#15803d' } } });
+    openLayout();
+    const chip = screen
+      .getByRole('button', { name: 'Ruling colour' })
+      .querySelector('.sj-color-chip') as HTMLElement;
+    expect(chip.style.backgroundColor).toBe('rgb(21, 128, 61)');
+  });
+});
+
+// The ink ops over a REAL editor. Every assertion above runs against a mock
+// controller and checks an `apply(...)` payload, which cannot see what the document
+// actually becomes — and the wire is where these ops can go wrong: `borderWidth` is a
+// bare pt number with no string form, so authoring text there is a serde type error
+// rather than a diagnostic the engine degrades past. A mock records the op and says
+// nothing about its shape on the page.
+const LIVE_INK = `sections:
+  body:
+    type: flow
+    items:
+      - type: char_grid
+        data: { key: manuscript }
+        grid: { charsPerLine: 20, lines: 10 }
+        style: { fontFamily: ipamj-mincho, borderColor: "#a8674f" }
+`;
+
+function LiveInkHarness() {
+  const editor = useEditor(LIVE_INK);
+  return (
+    <I18nProvider locale="en">
+      <PropertyPanel controller={editor} path={P} />
+      <pre data-testid="doc">{editor.text}</pre>
+    </I18nProvider>
+  );
+}
+
+describe('CharGridSection — the ink ops over a real document', () => {
+  const doc = () => screen.getByTestId('doc').textContent ?? '';
+
+  it('authors a typed width as a NUMBER, never as the text that was typed', () => {
+    // `.5` is the likeliest keystroke that `Number()` accepts and the length
+    // builder's own regex does not — it would have been written as the string
+    // `".5"`, and `BorderWidth` has no `visit_str` at all.
+    render(<LiveInkHarness />);
+    openLayout();
+    fireEvent.blur(screen.getByLabelText('Ruling width'), { target: { value: '.5' } });
+    expect(doc()).toContain('borderWidth: 0.5');
+    // Scoped to the width's own value: the fixture quotes `borderColor` legitimately,
+    // so a document-wide quote check would pass for the wrong reason.
+    expect(doc()).not.toMatch(/borderWidth:\s*['"]/);
+  });
+
+  it('authors every accepted width as a number, for the whole gap between the two gates', () => {
+    for (const [typed, written] of [
+      ['.5', '0.5'],
+      ['5.', '5'],
+      ['+1', '1'],
+      ['1e3', '1000'],
+    ] as const) {
+      const { unmount } = render(<LiveInkHarness />);
+      openLayout();
+      fireEvent.blur(screen.getByLabelText('Ruling width'), { target: { value: typed } });
+      expect(doc(), typed).toContain(`borderWidth: ${written}`);
+      unmount();
+    }
+  });
+
+  it('leaves the item’s other style keys byte-exact when the ruling changes', () => {
+    // The genkoyoshi items carry `fontFamily` and `borderColor` in the same `style`
+    // map these ops write into.
+    render(<LiveInkHarness />);
+    openLayout();
+    fireEvent.blur(screen.getByLabelText('Ruling width'), { target: { value: '1' } });
+    expect(doc()).toContain('fontFamily: ipamj-mincho');
+    expect(doc()).toContain('borderColor: "#a8674f"');
+    expect(doc()).toContain('charsPerLine: 20');
+  });
+
+  it('REFUSES an over-cap width and writes nothing, and the field snaps back', () => {
+    // Against a mock this cannot fail — the fixture never moves either way. Only a
+    // live document makes the accepted case show a different value.
+    render(<LiveInkHarness />);
+    openLayout();
+    fireEvent.blur(screen.getByLabelText('Ruling width'), { target: { value: '99999' } });
+    expect(doc()).not.toContain('borderWidth');
+    expect(doc()).toContain('borderColor');
+    expect((screen.getByLabelText('Ruling width') as HTMLInputElement).value).toBe('');
+  });
+
+  it('removes the key when the width is cleared, rather than authoring the default', () => {
+    render(<LiveInkHarness />);
+    openLayout();
+    fireEvent.blur(screen.getByLabelText('Ruling width'), { target: { value: '2' } });
+    expect(doc()).toContain('borderWidth: 2');
+    fireEvent.blur(screen.getByLabelText('Ruling width'), { target: { value: '' } });
+    expect(doc()).not.toContain('borderWidth: 2');
+    expect(doc()).not.toContain('borderWidth: 0.5');
+  });
+
+  it('authors a ruby size and a kinsoku change on the item, not inside its style', () => {
+    render(<LiveInkHarness />);
+    openLayout();
+    fireEvent.blur(screen.getByLabelText('Ruby size'), { target: { value: '6' } });
+    expect(doc()).toContain('rubySize: 6');
+    fireEvent.click(screen.getByRole('button', { name: 'Line-break rules' }));
+    fireEvent.click(screen.getByRole('option', { name: 'None' }));
+    expect(doc()).toContain('kinsoku: none');
+  });
+
+  it('reads an own per-side map as the engine does, and does NOT fall through to the style', () => {
+    // `authored()` replaces by key PRESENCE: an own `borderWidth` of any shape wins
+    // and the named styles are never consulted. A map with no `top` gives
+    // `sides()[0] = 0`, so the engine draws NO ruling — a panel that fell through on
+    // an empty display would show the style's `2` and name it, contradicting the
+    // canvas beside it.
+    const controller = makeController(null);
+    controller.read = (path: string) =>
+      path === P
+        ? { ...GRID, styleNames: ['frame'], style: { borderWidth: { bottom: 1 } } }
+        : path === 'styles'
+          ? { frame: { borderWidth: 2 } }
+          : undefined;
+    render(
+      <I18nProvider locale="en">
+        <PropertyPanel controller={controller} path={P} gridStep={0} />
+      </I18nProvider>,
+    );
+    openLayout();
+    expect((screen.getByLabelText('Ruling width') as HTMLInputElement).value).toBe('');
+    expect(screen.queryByText(/frame/)).toBeNull();
+  });
+});

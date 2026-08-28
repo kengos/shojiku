@@ -509,6 +509,19 @@ export const fil: LanguageCatalog = {
     'panel.charGrid.mode.vertical_rl': 'Patayo',
     'panel.charGrid.hint':
       'Habang may nakatakdang laki ng kahon, ang laking iginuguhit ay nagmumula sa mga kahon, hindi sa lapad sa itaas. Alisin ang laki ng kahon at ang mga kahon naman ang kukunin mula sa lapad ng item na ito.',
+    'panel.charGrid.rulingWidth': 'Kapal ng guhit',
+    'panel.charGrid.rulingColor': 'Kulay ng guhit',
+    'panel.charGrid.rulingDefault': 'default',
+    'panel.charGrid.rulingOff': 'walang guhit',
+    'panel.charGrid.rulingThick': 'makapal',
+    'panel.charGrid.rulingOffHint': 'Kapag walang halaga, 0.5pt; ang 0 ay walang guhit.',
+    'panel.charGrid.rulingFromStyle': 'Mula sa istilong “{name}”',
+    'panel.charGrid.rubySize': 'Laki ng ruby',
+    'panel.charGrid.rubySizeAuto': 'awto',
+    'panel.charGrid.rubySample': 'かんじ',
+    'panel.charGrid.kinsoku': 'Panuntunan sa paghati',
+    'panel.charGrid.kinsoku.school': 'Pamantayan ng paaralan',
+    'panel.charGrid.kinsoku.none': 'Wala',
     'stepper.relativeUnit':
       'Hindi maaaring i-step ang mga halagang porsyento o em. I-type ang halaga nang direkta.',
     'stepper.unitHint': 'mm, cm, in din',
@@ -861,5 +874,6 @@ export const fil: LanguageCatalog = {
     'color.axis.step': '{step}/{of}',
     'color.axis.neutral': 'Neutral',
     'color.readout.idle': 'Ituro ang kulay para mabasa ang pangalan',
+    'combo.open': 'Pumili ng halaga para sa {field}',
   },
 };

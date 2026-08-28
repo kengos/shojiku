@@ -453,7 +453,10 @@ is Tailwind utilities over the `--sj-*` tokens.
   against a box a previous answer already moved. An axis flips only when the
   default side overflows AND the other has room; otherwise the max-height
   scrolls. The popover takes `w-max`, or shrink-to-fit against the ~40px
-  trigger wrapper squeezes every column back to the swatch width.
+  trigger wrapper squeezes every column back to the swatch width. That
+  placement now lives in `hooks/usePopoverPlacement.ts` — hoisted out when a
+  second popover (the panel's numeric combo) needed it, since any panel
+  popover taller than a couple of rows has the same problem.
 - `ui/swatchPalette.ts` — the palette as a STRUCTURE, not a flat list:
   `HUE_COLUMNS` (six hues × `SHADE_STEPS` shades, lightest first),
   `NEUTRALS`, and `swatchPlace` over a real `Map` (the lookup value can come
