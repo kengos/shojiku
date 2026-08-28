@@ -1,10 +1,14 @@
 // The decoration tab: the item's OWN style keys. It composes the typography rows and
 // the colour swatches (`StyleTabFields.tsx`) with the border editor, a `line`
-// item's stroke editor, a table's row-condition rules, and the named-style
-// checkbox list. Every boxed item gets this tab (fill + border); `text`
+// item's stroke editor, a table's row-condition rules, and the
+// named-style picker. Every boxed item gets this tab (fill + border); `text`
 // additionally gets the typography fields.
+//
+// The named-style picker is a SHARED leaf (`StyleNamesPicker`) rather than a
+// block inlined here: `char_grid` has no decoration tab and needs the same
+// control on its placement tab, and a second copy would be two things to keep
+// in agreement.
 
-import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
 import { cascadeContext } from '../toolbar/cascade';
 import { FIELD_LABEL } from '../ui/chrome';
@@ -12,16 +16,14 @@ import { BorderEditor } from './BorderEditor';
 import { readBorder } from './borderModel';
 import { readRadius } from './borderRadius';
 import { BORDER_STYLE_VALUES, BORDERABLE_TYPES } from './borderTypes';
-import { CheckboxList } from './choiceFields';
 import { hasCapability, type ItemPanelProps } from './itemPanelProps';
-import { registryNames } from './itemView';
 import { LineStyleEditor } from './LineStyleEditor';
 import { readLineStyle } from './lineModel';
-import { applyPanelOp, styleNamesOp, toggleStyleName } from './model';
-import { HelpfulHeading } from './panelHelpers';
+import { FieldHelp, HelpfulHeading } from './panelHelpers';
 import { pickerOptions } from './pickerModel';
 import { RowConditionsSection } from './RowConditions';
 import { readRawEntries } from './rowConditionsModel';
+import { StyleNamesPicker } from './StyleNamesPicker';
 import { PanelColorField, TypographyFields } from './StyleTabFields';
 import { TableStyleSection } from './TableStyleSection';
 import { readTableStyle } from './tableStyleModel';
@@ -29,11 +31,7 @@ import { readTableStyle } from './tableStyleModel';
 export function StyleSection(props: ItemPanelProps) {
   const { t } = useI18n();
   const { controller, path, view, fontFamilies, capabilities, onNavigateDefaults } = props;
-  const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   const ctx = cascadeContext(controller.read, path, props.floor);
-  const styleNameOptions = Array.from(
-    new Set([...registryNames(controller.read('styles')), ...view.styleNames]),
-  );
   const isText = view.type === 'text';
   // The fill/border cluster decorates a BORDER BOX; `line` has a decoration tab
   // but no box (its stroke is its own shape, edited below).
@@ -127,14 +125,14 @@ export function StyleSection(props: ItemPanelProps) {
           }
         />
       ) : null}
-      <CheckboxList
-        label={t('panel.field.styleNames')}
-        options={styleNameOptions}
-        selected={view.styleNames}
-        emptyLabel={t('panel.field.formatNone')}
-        onToggle={(name, on) =>
-          dispatch(styleNamesOp(path, toggleStyleName(view.styleNames, name, on)))
-        }
+      {/* The same `?` the char_grid placement tab gives this control. It is one
+          group with one label, and 「Styles」 is exactly as inscrutable here as
+          there — the criterion is the field's NAME, not which tab it sits on. */}
+      <StyleNamesPicker
+        controller={controller}
+        path={path}
+        styleNames={view.styleNames}
+        help={<FieldHelp topic="styleNames" />}
       />
     </section>
   );

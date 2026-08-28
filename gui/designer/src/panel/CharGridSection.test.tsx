@@ -6,7 +6,7 @@
 // decoration set, so a preset's manuscript paper had no content surface at all
 // and no way to change the one thing that decides its drawn size.
 
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
@@ -410,7 +410,7 @@ describe('CharGridSection — the ruling, ruby and kinsoku controls', () => {
     openLayout();
     expect((screen.getByLabelText('Ruling width') as HTMLInputElement).value).toBe('1');
     expect((screen.getByLabelText('Ruby size') as HTMLInputElement).value).toBe('6');
-    expect(screen.getByRole('button', { name: 'Ruling colour' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Ruling color' })).not.toBeNull();
   });
 
   it('says what an UNSET ruling width means, rather than leaving the field blank', () => {
@@ -455,9 +455,54 @@ describe('CharGridSection — the ruling, ruby and kinsoku controls', () => {
     const controller = draw(RULING);
     openLayout();
     fireEvent.click(screen.getByRole('button', { name: /Choose a value for Ruling width/ }));
-    fireEvent.click(screen.getByRole('menuitem', { name: /default/ }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /leave unset/ }));
     const op = (controller.apply as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(JSON.stringify(op)).toContain('remove');
+  });
+
+  it('distinguishes TYPING the default from PICKING the row that clears it', () => {
+    // C8. Both land on 0.5pt, and until the row was relabelled both read as the
+    // same choice: typing `0.5` AUTHORS `borderWidth: 0.5`, while the row hands
+    // the key back to the engine. Both are defensible — the typed one is the
+    // expert path, the row is the minimal-wire one — so the row's own label is
+    // what has to say which is which, and this pins the pair on ONE value so a
+    // later edit cannot quietly make them the same op.
+    const typed = draw(RULING);
+    openLayout();
+    fireEvent.blur(screen.getByLabelText('Ruling width'), { target: { value: '0.5' } });
+    expect(typed.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: P,
+      keys: ['style', 'borderWidth'],
+      value: 0.5,
+    });
+    cleanup();
+    const picked = draw(RULING);
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: /Choose a value for Ruling width/ }));
+    // The row is LABELLED by what picking it does, not by the value it lands on.
+    fireEvent.click(screen.getByRole('menuitem', { name: /leave unset/ }));
+    expect(picked.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'removeKey',
+      path: P,
+      keys: ['style', 'borderWidth'],
+    });
+  });
+
+  it('gives the width and the ruby rows DIFFERENT notes for their unset value', () => {
+    // Both rows remove their key, but they mean different values — an unset
+    // ruling is 0.5pt and an unset ruby size is 0.4 of the cell. One string
+    // served both and read as 「自動 既定」 on the ruby row, saying nothing about
+    // what the default is. Pinned so the reuse cannot come back.
+    draw(GRID);
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: /Choose a value for Ruling width/ }));
+    const widthNote = screen.getByRole('menuitem', { name: /^0\.5/ }).textContent ?? '';
+    fireEvent.click(screen.getByRole('button', { name: /Choose a value for Ruby size/ }));
+    const rubyNote = screen.getByRole('menuitem', { name: /^auto/ }).textContent ?? '';
+    expect(widthNote).toContain('leave unset');
+    expect(rubyNote).toContain('0.4 × the cell');
+    expect(widthNote).not.toBe(rubyNote);
   });
 
   it('names the style a ruling width came from, when the item does not author it', () => {
@@ -478,7 +523,10 @@ describe('CharGridSection — the ruling, ruby and kinsoku controls', () => {
     );
     openLayout();
     expect((screen.getByLabelText('Ruling width') as HTMLInputElement).value).toBe('0.25');
-    expect(screen.getByText(/genkou/)).not.toBeNull();
+    // The HINT line, not any occurrence of the name: the styles picker below now
+    // renders `genkou` as a checkbox label too, so a bare /genkou/ matches twice
+    // and would pass even if the origin line had disappeared.
+    expect(screen.getByText('From the named style “genkou”')).not.toBeNull();
     expect(screen.queryByText(/0 draws none/)).toBeNull();
   });
 
@@ -511,7 +559,7 @@ describe('CharGridSection — the ruling, ruby and kinsoku controls', () => {
   it('authors a ruling colour picked from the shared palette', () => {
     const controller = draw(GRID);
     openLayout();
-    fireEvent.click(screen.getByRole('button', { name: 'Ruling colour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ruling color' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Red, shade 4 of 5' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
@@ -527,7 +575,7 @@ describe('CharGridSection — the ruling, ruby and kinsoku controls', () => {
     draw({ ...GRID, style: { borderColor: { top: '#15803d' } } });
     openLayout();
     const chip = screen
-      .getByRole('button', { name: 'Ruling colour' })
+      .getByRole('button', { name: 'Ruling color' })
       .querySelector('.sj-color-chip') as HTMLElement;
     expect(chip.style.backgroundColor).toBe('rgb(21, 128, 61)');
   });
@@ -652,6 +700,403 @@ describe('CharGridSection — the ink ops over a real document', () => {
     );
     openLayout();
     expect((screen.getByLabelText('Ruling width') as HTMLInputElement).value).toBe('');
-    expect(screen.queryByText(/frame/)).toBeNull();
+    // No ORIGIN line. `frame` still appears as a styles checkbox — that is the
+    // picker doing its job, and asserting on the bare name would now be asserting
+    // the picker is absent.
+    expect(screen.queryByText(/From the named style/)).toBeNull();
+  });
+});
+
+// M10 — the `?` on the fields whose NAME does not carry their meaning. The list is
+// a criterion, not a taste: a reader with little IT background cannot infer what
+// 「ruling width」 does from those two words, and cannot infer 「kinsoku」 at all.
+// `Cell size` is deliberately excluded — its name says it, and the non-obvious part
+// of its BEHAVIOUR is already in the section's own hint line.
+describe('CharGridSection field help', () => {
+  const HELPED: readonly (readonly [string, string])[] = [
+    ['ruling width', 'The lines that draw the cells'],
+    ['ruby size', 'The reading printed beside a kanji'],
+    ['kinsoku', 'Characters that may not open a line'],
+    ['styleNames', 'Styles defined once, applied here'],
+  ];
+
+  for (const [field, title] of HELPED) {
+    it(`offers a ? on ${field}`, () => {
+      draw(GRID);
+      openLayout();
+      expect(screen.getByRole('button', { name: title })).not.toBeNull();
+    });
+  }
+
+  it('explains the field when the ? is opened, rather than only naming it', () => {
+    // The title and the body are two catalog keys. A component wired to the right
+    // title and the wrong body segment renders the KEY as its own text, and nothing
+    // else in the suite would see it.
+    draw(GRID);
+    openLayout();
+    fireEvent.click(screen.getByRole('button', { name: 'Characters that may not open a line' }));
+    expect(screen.getByText(/pulling the character back onto the line before it/)).not.toBeNull();
+  });
+
+  it('gives Cell size NO ?, leaving only its steppers', () => {
+    draw(GRID);
+    openLayout();
+    const row = screen.getByLabelText('Cell size').parentElement?.parentElement as HTMLElement;
+    // Exactly the two steppers and nothing else. Counting is what makes this a
+    // real negative: asserting "no button called X" passes for any X.
+    expect(within(row).getAllByRole('button')).toHaveLength(2);
+    expect(within(row).getByRole('button', { name: 'Increase' })).not.toBeNull();
+    expect(within(row).getByRole('button', { name: 'Decrease' })).not.toBeNull();
+  });
+});
+
+// M11 — `styleNames` reaches a type with no decoration tab. The engine honours it on
+// a char_grid (it is where `fontSize`/`borderWidth`/`textAlign` resolve from), and
+// before this the only picker lived on a tab this type does not get.
+describe('CharGridSection named styles', () => {
+  function withStyles(node: unknown, styles: unknown): EditorController {
+    const controller = makeController(node);
+    controller.read = (path: string) =>
+      path === P ? node : path === 'styles' ? styles : undefined;
+    render(
+      <I18nProvider locale="en">
+        <PropertyPanel controller={controller} path={P} gridStep={0} />
+      </I18nProvider>,
+    );
+    return controller;
+  }
+
+  it('offers the registry names on the PLACEMENT tab, ticked as the item authors them', () => {
+    withStyles({ ...GRID, styleNames: ['genkou'] }, { genkou: {}, plain: {} });
+    openLayout();
+    expect((screen.getByRole('checkbox', { name: 'genkou' }) as HTMLInputElement).checked).toBe(
+      true,
+    );
+    expect((screen.getByRole('checkbox', { name: 'plain' }) as HTMLInputElement).checked).toBe(
+      false,
+    );
+  });
+
+  it('authors a style pick from that tab', () => {
+    const controller = withStyles({ ...GRID, styleNames: ['genkou'] }, { genkou: {}, plain: {} });
+    openLayout();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'plain' }));
+    expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'setStrings',
+      path: P,
+      keys: ['styleNames'],
+      values: ['genkou', 'plain'],
+    });
+  });
+
+  it('sits at the FOOT of the section, after the ink controls', () => {
+    // M11's clause, and a green run says nothing about it: the picker could
+    // render first and every other assertion here would still pass. It belongs
+    // last because it is the widest-reaching control in the section — what it
+    // ticks decides where the fields above it resolve from.
+    withStyles(GRID, { genkou: {} });
+    openLayout();
+    const group = screen.getByRole('group', { name: 'Styles' });
+    const section = group.closest('section') as HTMLElement;
+    const blocks = [...section.children];
+    // The hint paragraph is the section's last child; the picker is the last
+    // CONTROL before it.
+    expect(blocks.indexOf(group)).toBe(blocks.length - 2);
+    expect(section.lastElementChild?.textContent).toContain('the drawn size comes from the cells');
+  });
+
+  it('names the group by its label even with the ? beside it', () => {
+    withStyles(GRID, { genkou: {} });
+    openLayout();
+    expect(screen.getByRole('group', { name: 'Styles' })).not.toBeNull();
+  });
+});
+
+// M12 — the ruling colour sits beside the ruling width, not in a column of its own.
+// The two are one decision (how the grid is inked) and the section is a two-column
+// grid; a layout that separated them would be green on every other assertion here.
+describe('CharGridSection ink layout', () => {
+  it('puts the ruling colour immediately after the ruling width, in one row', () => {
+    draw(GRID);
+    openLayout();
+    // input → the relative wrapper → the flex row → the field block
+    const widthBlock = screen.getByLabelText('Ruling width').parentElement?.parentElement
+      ?.parentElement as HTMLElement;
+    const next = widthBlock.nextElementSibling as HTMLElement;
+    expect(within(next).getByRole('button', { name: 'Ruling color' })).not.toBeNull();
+    expect(widthBlock.parentElement?.className).toContain('grid-cols-2');
+  });
+});
+
+// M7 — what colour is set, in words, with the popover CLOSED. Carried over from
+// #190, where it was dropped: the trigger chrome is caller-owned, so the line
+// belongs to the field rather than to the shared widget.
+describe('CharGridSection ruling colour readout', () => {
+  it('names the authored colour beside the chip, without opening the palette', () => {
+    draw({ ...GRID, style: { borderColor: '#15803d' } });
+    openLayout();
+    expect(screen.getByText('Green, shade 4 of 5')).not.toBeNull();
+    expect(screen.getByText('#15803d')).not.toBeNull();
+  });
+
+  it('says the colour is unset rather than leaving the chip to speak for itself', () => {
+    draw(GRID);
+    openLayout();
+    expect(screen.getByText('Not set')).not.toBeNull();
+  });
+
+  it('reads a per-side MAP the same way the chip paints it', () => {
+    // The engine takes the top side for a grid, and the chip already follows that.
+    // A readout reading through the generic cascade would call this set colour
+    // unset while the square beside it showed green.
+    draw({ ...GRID, style: { borderColor: { top: '#15803d' } } });
+    openLayout();
+    expect(screen.getByText('Green, shade 4 of 5')).not.toBeNull();
+  });
+});
+
+// C4 — the negative the section was built around, pinned rather than left to
+// structure. `authored()` consults `styleNames` and the item's own style and stops:
+// no document defaults, no inheritance. A control that badged a defaults value here
+// would report a width the engine does not use for this item.
+describe('CharGridSection origin honesty', () => {
+  it('stays UNSET against a document default, and names no origin', () => {
+    const controller = makeController(GRID);
+    controller.read = (path: string) =>
+      path === P
+        ? GRID
+        : path === 'defaults'
+          ? { style: { borderWidth: 3, borderColor: '#b91c1c' } }
+          : undefined;
+    render(
+      <I18nProvider locale="en">
+        <PropertyPanel controller={controller} path={P} gridStep={0} />
+      </I18nProvider>,
+    );
+    openLayout();
+    const width = screen.getByLabelText('Ruling width') as HTMLInputElement;
+    expect(width.value).toBe('');
+    // The colour is unset too, and both say so rather than showing the default.
+    expect(screen.getByText('Not set')).not.toBeNull();
+    // Nothing in the ink block claims the value came from anywhere. Scoped to that
+    // block on purpose: the styles picker below renders its own '(default)' for an
+    // empty registry, and a page-wide negative would be answered by that string
+    // instead of by the absence this case is about.
+    const ink = width.parentElement?.parentElement?.parentElement?.parentElement as HTMLElement;
+    expect(within(ink).queryByText(/From the named style/)).toBeNull();
+    expect(within(ink).queryByText(/inherited/i)).toBeNull();
+    expect(within(ink).queryByText(/default/i)).toBeNull();
+  });
+});
+
+// M13 — the ruby/markup switch, on the CONTENT tab because it decides what the
+// content MEANS. Double-gated: the type carries the key, and an engine without the
+// grammar rejects the value.
+describe('char_grid markup toggle', () => {
+  const openContent = () => fireEvent.click(screen.getByRole('tab', { name: 'Content' }));
+  const LABEL = 'Read ruby notation in the content';
+
+  it('is offered on the content tab, off for a document that does not author it', () => {
+    draw(GRID, ['char_grid', 'char_grid.markup.aozora']);
+    openContent();
+    expect((screen.getByRole('checkbox', { name: LABEL }) as HTMLInputElement).checked).toBe(false);
+  });
+
+  it('is ON for the genkoyoshi shape — the preset that authors it', () => {
+    draw({ ...GRID, markup: 'aozora' }, ['char_grid', 'char_grid.markup.aozora']);
+    openContent();
+    expect((screen.getByRole('checkbox', { name: LABEL }) as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('says what turning it on does to bound data', () => {
+    // The engine's posture is that user data is never interpreted by default. The
+    // one control that opts out of that says what it is opting out of.
+    draw(GRID, ['char_grid', 'char_grid.markup.aozora']);
+    openContent();
+    expect(screen.getByText(/makes those marks meaningful in bound data/)).not.toBeNull();
+  });
+
+  it('puts the safety sentence BELOW the toggle, not above it', () => {
+    // The clause M13 actually carries. A sentence rendered above the control it
+    // qualifies is read before the reader knows what it is about, and every
+    // other assertion in this block passes either way.
+    draw(GRID, ['char_grid', 'char_grid.markup.aozora']);
+    openContent();
+    const box = screen.getByRole('checkbox', { name: LABEL });
+    const label = box.closest('label') as HTMLElement;
+    const block = box.closest('div') as HTMLElement;
+    const copy = screen.getByText(/makes those marks meaningful in bound data/);
+    expect(block.contains(copy)).toBe(true);
+    // FOLLOWING, not merely "present": the sentence qualifies the control, and
+    // a reader who meets it first does not yet know what it is about.
+    expect(label.compareDocumentPosition(copy) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('authors the one legal value when switched on', () => {
+    const controller = draw(GRID, ['char_grid', 'char_grid.markup.aozora']);
+    openContent();
+    fireEvent.click(screen.getByRole('checkbox', { name: LABEL }));
+    expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'setScalar',
+      path: P,
+      keys: ['markup'],
+      value: 'aozora',
+    });
+  });
+
+  it('REMOVES the key when switched off, never authoring a third value', () => {
+    const controller = draw({ ...GRID, markup: 'aozora' }, [
+      'char_grid',
+      'char_grid.markup.aozora',
+    ]);
+    openContent();
+    fireEvent.click(screen.getByRole('checkbox', { name: LABEL }));
+    expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
+      op: 'removeKey',
+      path: P,
+      keys: ['markup'],
+    });
+  });
+
+  it('is ABSENT against an engine without the aozora grammar', () => {
+    // Present with the base capability but not the markup one — the on/off pair
+    // that proves the gate is the markup key and not the section's.
+    draw(GRID, ['char_grid']);
+    openContent();
+    expect(screen.queryByRole('checkbox', { name: LABEL })).toBeNull();
+  });
+
+  it('is ABSENT on a type that has no such key', () => {
+    draw({ type: 'text', text: 'hi' }, ['char_grid', 'char_grid.markup.aozora']);
+    fireEvent.click(screen.getByRole('tab', { name: 'Content' }));
+    expect(screen.queryByRole('checkbox', { name: LABEL })).toBeNull();
+  });
+});
+
+// The markup switch over a REAL document. A mock records the op and says nothing
+// about the bytes; `markup` is a serde enum with one variant, so the shape of what
+// is written is the thing that can break.
+const LIVE_MARKUP = `sections:
+  body:
+    type: flow
+    items:
+      - type: char_grid
+        data: { key: manuscript }
+        grid: { charsPerLine: 20, lines: 10 }
+        rubySize: 6
+`;
+
+function MarkupHarness() {
+  const editor = useEditor(LIVE_MARKUP);
+  return (
+    <I18nProvider locale="en">
+      <PropertyPanel
+        controller={editor}
+        path={P}
+        capabilities={['char_grid', 'char_grid.markup.aozora']}
+      />
+      <pre data-testid="doc">{editor.text}</pre>
+    </I18nProvider>
+  );
+}
+
+describe('char_grid markup over a live document', () => {
+  const LABEL = 'Read ruby notation in the content';
+  const toggle = () => screen.getByRole('checkbox', { name: LABEL }) as HTMLInputElement;
+
+  it('writes the bare enum spelling, not a quoted string or a map', () => {
+    render(<MarkupHarness />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Content' }));
+    fireEvent.click(toggle());
+    expect(screen.getByTestId('doc').textContent).toContain('markup: aozora');
+  });
+
+  it('round-trips to the SAME bytes when switched off and on again', () => {
+    // A non-event: two edits that cancel must leave the file byte-identical, or the
+    // author who changed their mind has a diff to explain. Nothing about coverage
+    // can see this — neither direction leaves a line uncovered.
+    render(<MarkupHarness />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Content' }));
+    const before = screen.getByTestId('doc').textContent ?? '';
+    fireEvent.click(toggle());
+    fireEvent.click(toggle());
+    expect(screen.getByTestId('doc').textContent).toBe(before);
+  });
+
+  it('leaves the item’s other keys byte-exact', () => {
+    render(<MarkupHarness />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Content' }));
+    fireEvent.click(toggle());
+    const doc = screen.getByTestId('doc').textContent ?? '';
+    expect(doc).toContain('grid: { charsPerLine: 20, lines: 10 }');
+    expect(doc).toContain('rubySize: 6');
+    expect(doc).toContain('data: { key: manuscript }');
+  });
+});
+
+// B1 — the `styleNames` writes over a REAL document. Every assertion above runs
+// against a mock and checks an `apply()` payload, which cannot see what the file
+// becomes — the exact gap #191 was pulled up on. This is also the first time
+// `setStrings` lands at a char_grid item ROOT, beside the flow-style maps
+// (`grid`, `data`) that a re-serialization would rewrite.
+const LIVE_STYLED = `styles:
+  genkou: { borderWidth: 0.25 }
+  plain: { borderColor: "#15803d" }
+sections:
+  body:
+    type: flow
+    items:
+      - type: char_grid
+        data: { key: manuscript }
+        grid: { charsPerLine: 20, lines: 10 }
+        markup: aozora
+        rubySize: 6
+`;
+
+function StyledHarness() {
+  const editor = useEditor(LIVE_STYLED);
+  return (
+    <I18nProvider locale="en">
+      <PropertyPanel controller={editor} path={P} capabilities={['char_grid']} />
+      <pre data-testid="doc">{editor.text}</pre>
+    </I18nProvider>
+  );
+}
+
+describe('char_grid named styles over a live document', () => {
+  const tick = (name: string) =>
+    fireEvent.click(screen.getByRole('checkbox', { name }) as HTMLInputElement);
+
+  it('writes the names in the order they were ticked — the order the engine reads', () => {
+    // `authored()` takes the LAST matching name, so this sequence is meaning,
+    // not presentation. The list itself renders in registry order, which is a
+    // different thing and is pinned separately.
+    render(<StyledHarness />);
+    openLayout();
+    tick('plain');
+    tick('genkou');
+    expect(screen.getByTestId('doc').textContent).toContain('styleNames: [ plain, genkou ]');
+  });
+
+  it('round-trips to the SAME bytes when the last name is unticked', () => {
+    // A non-event: `setStrings` then `removeKey` must leave no residue — not an
+    // empty `styleNames: []`, and not a re-flowed sibling.
+    render(<StyledHarness />);
+    openLayout();
+    const before = screen.getByTestId('doc').textContent ?? '';
+    tick('genkou');
+    tick('genkou');
+    expect(screen.getByTestId('doc').textContent).toBe(before);
+  });
+
+  it('leaves the item’s other keys byte-exact', () => {
+    render(<StyledHarness />);
+    openLayout();
+    tick('genkou');
+    const doc = screen.getByTestId('doc').textContent ?? '';
+    expect(doc).toContain('grid: { charsPerLine: 20, lines: 10 }');
+    expect(doc).toContain('data: { key: manuscript }');
+    expect(doc).toContain('markup: aozora');
+    expect(doc).toContain('rubySize: 6');
   });
 });

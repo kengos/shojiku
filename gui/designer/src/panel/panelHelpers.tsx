@@ -17,6 +17,24 @@ import { bindingScopeFor, type PickerOption, scopeAuthorable } from './pickerMod
  * rather than another branch here. */
 export type HelpTopic = 'content' | 'style' | 'placement' | 'placementChild';
 
+/** Which FIELD carries a `?`. The criterion is the user's: a field whose NAME
+ * does not let a reader with little IT background infer what it does. `Cell
+ * size` is deliberately absent — its name is self-evident, and the non-obvious
+ * part of its BEHAVIOUR is already carried by the section's own hint line. Each
+ * value is the catalog segment, exactly as `HelpTopic` is. */
+export type FieldHelpTopic = 'rulingWidth' | 'rubySize' | 'kinsoku' | 'styleNames';
+
+/** The `?` for one field, as opposed to `HelpfulHeading`'s for a whole section.
+ * It renders the icon alone: the field's own label is right beside it, so a
+ * repeated title in the trigger would be noise for a screen reader. */
+export function FieldHelp({ topic }: { readonly topic: FieldHelpTopic }) {
+  const { t } = useI18n();
+  const titleKey = `help.${topic}.title` as const;
+  return (
+    <HelpHint label={t(titleKey)} title={t(titleKey)} body={t(`help.${topic}.body` as const)} />
+  );
+}
+
 /** A section heading with a contextual `?` help popover beside it. The three
  * genuinely-confusing panel concepts (fixed-text-vs-data, the
  * default/inherited/style cascade, and where coordinates are measured FROM) each

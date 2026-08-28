@@ -109,6 +109,17 @@ export const hi: LanguageCatalog = {
     'help.grid.title': 'स्नैप ग्रिड',
     'help.grid.body':
       'कैनवास पर खींचने या आकार बदलने पर स्थिति इस स्टेप पर स्नैप होती है, और तीर बटन इसी मात्रा से बदलते हैं। यह केवल संपादक की सेटिंग है — टेम्पलेट में सहेजी नहीं जाती।',
+    'help.rulingWidth.title': 'खाने बनाने वाली रेखाएँ',
+    'help.rulingWidth.body':
+      'पांडुलिपि खानों के बीच की रेखाओं की मोटाई। अनसेट रहने पर ये 0.5pt पर खिंचती हैं; 0 चुनने पर हटा दी जाती हैं।',
+    'help.rubySize.title': 'कांजी के साथ छपने वाला उच्चारण',
+    'help.rubySize.body': 'फ़ुरिगाना का आकार। अनसेट रहने पर इंजन इसे खाने के 0.4 गुना पर खींचता है।',
+    'help.kinsoku.title': 'वे अक्षर जो पंक्ति शुरू नहीं कर सकते',
+    'help.kinsoku.body':
+      'पंक्ति को 。 या 」 से शुरू होने से रोकता है और उस अक्षर को पिछली पंक्ति में खींच लेता है। विद्यालय मानक वही है जो जापानी पाठ्यपुस्तकें बरतती हैं; “कोई नहीं” खाने क्रम से भरता है।',
+    'help.styleNames.title': 'एक बार तय शैली, यहाँ लागू',
+    'help.styleNames.body':
+      'दस्तावेज़ में दर्ज शैली को इस आइटम पर लागू करता है। एक से अधिक चुनने पर सबसे बाद में जोड़ी गई जीतती है, और आइटम पर सीधे रखा मान उन सबसे ऊपर रहता है।',
     'shortcuts.title': 'कीबोर्ड शॉर्टकट',
     'shortcuts.action.undo': 'पूर्ववत करें',
     'shortcuts.action.redo': 'फिर से करें',
@@ -489,17 +500,21 @@ export const hi: LanguageCatalog = {
       'जब तक खाने का आकार दिया गया है, खींचा गया आकार खानों से तय होता है, ऊपर दी गई चौड़ाई से नहीं। खाने का आकार खाली छोड़ने पर उलटे खाने इसी आइटम की चौड़ाई से निकाले जाते हैं।',
     'panel.charGrid.rulingWidth': 'रेखा की मोटाई',
     'panel.charGrid.rulingColor': 'रेखा का रंग',
-    'panel.charGrid.rulingDefault': 'डिफ़ॉल्ट',
+    'panel.charGrid.rulingDefault': 'अनसेट छोड़ें',
     'panel.charGrid.rulingOff': 'कोई रेखा नहीं',
     'panel.charGrid.rulingThick': 'मोटा',
     'panel.charGrid.rulingOffHint': 'अनसेट पर 0.5pt; 0 पर कोई रेखा नहीं।',
     'panel.charGrid.rulingFromStyle': 'नामित शैली “{name}” से',
     'panel.charGrid.rubySize': 'रूबी आकार',
     'panel.charGrid.rubySizeAuto': 'स्वतः',
+    'panel.charGrid.rubyDefault': 'खाने का 0.4 गुना',
     'panel.charGrid.rubySample': 'かんじ',
     'panel.charGrid.kinsoku': 'पंक्ति-विराम नियम',
     'panel.charGrid.kinsoku.school': 'विद्यालय मानक',
     'panel.charGrid.kinsoku.none': 'कोई नहीं',
+    'panel.charGrid.markup': 'सामग्री में रूबी नोटेशन पढ़ें',
+    'panel.charGrid.markupSafety':
+      'बंद रहने पर 《》 और ［＃…］ वैसे ही अक्षरों की तरह छपते हैं। चालू करने पर जुड़े हुए डेटा में भी ये चिह्न नोटेशन बन जाते हैं।',
     'stepper.relativeUnit': 'प्रतिशत या em वाले मान चरणबद्ध नहीं बदले जा सकते। उन्हें सीधे टाइप करें।',
     'stepper.unitHint': 'mm, cm, in भी',
     'panel.box.h': 'ऊँचाई',
@@ -840,6 +855,7 @@ export const hi: LanguageCatalog = {
     'color.axis.step': '{step}/{of}',
     'color.axis.neutral': 'तटस्थ',
     'color.readout.idle': 'नाम पढ़ने के लिए किसी रंग पर ले जाएँ',
+    'color.unset': 'सेट नहीं',
     'combo.open': '{field} के लिए मान चुनें',
   },
 };

@@ -14,6 +14,7 @@ import type { cascadeContext } from '../toolbar/cascade';
 import { effectiveValueIn } from '../toolbar/effective';
 import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
 import { FIELD_LABEL, PANEL_SWATCH_TRIGGER } from '../ui/chrome';
+import { SwatchValueLabel } from '../ui/SwatchValueLabel';
 import { ComboField, SelectField } from './choiceFields';
 import { TextField } from './fields';
 import { applyPanelOp, lengthOp, numberOp, plainTextOp, stepValueOp } from './model';
@@ -56,14 +57,21 @@ export function PanelColorField({
   return (
     <div className="mb-2">
       <span className={FIELD_LABEL}>{label}</span>
-      <ColorSwatchPicker
-        label={label}
-        value={effective.value}
-        onCommit={(v) => controller.apply(plainTextOp(path, ['style', styleKey], v))}
-        triggerClassName={PANEL_SWATCH_TRIGGER}
-        customLabel={t('toolbar.color.custom')}
-        clearLabel={t('toolbar.color.clear')}
-      />
+      {/* The chip and the words for it, on one row. A closed picker's chip is
+          the whole state of the field, so a reader who cannot tell two swatches
+          apart had to open the palette to learn what is set — every time. This
+          is the field colour and the fill, the two a reader touches most. */}
+      <div className="flex min-w-0 items-center gap-1.5">
+        <ColorSwatchPicker
+          label={label}
+          value={effective.value}
+          onCommit={(v) => controller.apply(plainTextOp(path, ['style', styleKey], v))}
+          triggerClassName={PANEL_SWATCH_TRIGGER}
+          customLabel={t('toolbar.color.custom')}
+          clearLabel={t('toolbar.color.clear')}
+        />
+        <SwatchValueLabel value={effective.value} />
+      </div>
       <OriginBadge effective={effective} onNavigate={onNavigate} />
     </div>
   );

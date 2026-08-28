@@ -28,7 +28,9 @@ import {
 import type { CharGridInkView } from './charGridInk';
 import type { ItemPanelProps } from './itemPanelProps';
 import { applyPanelOp, stepValueOp } from './model';
+import { FieldHelp } from './panelHelpers';
 import { StepperField } from './StepperField';
+import { StyleNamesPicker } from './StyleNamesPicker';
 
 /** The stepper increment for a cell/line COUNT — always one whole cell, never
  * the canvas grid step (a 6pt grid would step the cell count by six). */
@@ -44,12 +46,16 @@ export function CharGridSection({
   controller,
   path,
   gridStep,
+  styleNames,
 }: {
   readonly view: CharGridView;
   readonly ink: CharGridInkView;
   readonly controller: ItemPanelProps['controller'];
   readonly path: string;
   readonly gridStep: number;
+  /** The item's authored `styleNames`. Threaded through here rather than
+   * rendered by `BoxSection`, which sits at the executable-line cap. */
+  readonly styleNames: readonly string[];
 }) {
   const { t } = useI18n();
   const step = gridStep > 0 ? gridStep : FALLBACK_STEP_PT;
@@ -113,6 +119,17 @@ export function CharGridSection({
         onChange={(next) => dispatch(writingModeOp(path, next as WritingMode))}
       />
       <CharGridInkFields ink={ink} dispatch={dispatch} path={path} />
+      {/* The named styles this item applies. It belongs to the SAME documented
+          exception D1 opened for the ruling: a char_grid has no decoration tab,
+          and `styleNames` is where its `fontSize`/`borderWidth`/`textAlign`
+          resolve from — style-shaped, not content. Folding it into that one
+          exception keeps one exception rather than two. */}
+      <StyleNamesPicker
+        controller={controller}
+        path={path}
+        styleNames={styleNames}
+        help={<FieldHelp topic="styleNames" />}
+      />
       <p className="mt-1 text-[11px] leading-relaxed text-muted">{t('panel.charGrid.hint')}</p>
     </section>
   );

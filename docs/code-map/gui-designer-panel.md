@@ -113,7 +113,13 @@ spelling, so the border cluster's per-side model must not reach it.
   canvas grid; lengths step by the canvas grid. No field is a bare empty
   box — an unset cell side shows `auto` (derived), an unset gap shows `0`
   (the wire default). Capability-gated on `char_grid`. The INK half is a
-  sibling component, not more lines here — see below.
+  sibling component, not more lines here — see below. It also mounts the
+  shared `StyleNamesPicker` at its foot: that is the SAME documented
+  exception the ruling colour rides (a char_grid has no decoration tab, and
+  `styleNames` is where its `fontSize`/`borderWidth`/`textAlign` resolve
+  from), so the section carries one exception rather than two. `styleNames`
+  is threaded in as a prop because `BoxSection.tsx` sits at the
+  executable-line cap and this file has headroom.
 - `panel/charGridInk.ts` — the ruling / ruby / kinsoku model, split from
   `charGrid.ts` because it reads a different place on the wire: the ruling
   is a STYLE property (`style.borderWidth` / `style.borderColor`) a named
@@ -137,7 +143,21 @@ spelling, so the border cluster's per-side model must not reach it.
   ruby size are `NumericComboField`s whose rows carry a SAMPLE (a rule at
   that width, text at that size) and a NOTE, which is how `0` becomes a
   labelled "no ruling" choice instead of a magic number an author has to
-  know to type. The ruling colour is the shared `ColorSwatchPicker`.
+  know to type. The width's `''` row and the ruby size's `auto` row carry
+  DIFFERENT notes even though both remove the key — they mean different
+  values (0.5pt vs 0.4 of the cell), and one string for both said 「既定」
+  against 「自動」 with nothing to say what the default was. The ruling
+  colour is the shared `ColorSwatchPicker` plus `ui/SwatchValueLabel`,
+  which is what says WHICH colour is set while the popover is closed.
+  **Two keys the bundled genkoyoshi templates author are still unreachable
+  from the panel**, and neither has a control anywhere: `style.color` — the
+  CHARACTERS' ink, a different property from the ruling colour beside it —
+  and `style.fontFamily`. `TypographyFields` is `isText`-gated and this type
+  gets no decoration tab, so `PanelColorField` never mounts for it, and
+  `toolbarModel` returns `null` for any type outside `BORDERABLE_TYPES`, so
+  the format toolbar is not a fallback either. The one path that IS open is
+  indirect: a named style carrying either key can be ticked from the
+  `StyleNamesPicker` below. Direct fields for both are queued, not forgotten.
 - `panel/NumericComboField.tsx` — type a value, or open the ▼ and pick a
   common one; the word-processor font-size box, shaped like `FormatPicker`.
   NOT a `StepperField` with a menu: stepping walks a value you already have,
@@ -415,7 +435,27 @@ read side, never the reverse.
   PLACEHOLDER; empty commits nothing, clearing an authored value does).
 - `panel/choiceFields.tsx` — the choice widgets: `SelectField` +
   `CheckboxList` (controlled, commit-on-CHANGE) vs `ComboField`
-  (free-text + datalist, uncontrolled commit-on-blur).
+  (free-text + datalist, uncontrolled commit-on-blur). `CheckboxList`
+  names its `<fieldset>` by `aria-label` rather than leaving it to the
+  legend: a fieldset is otherwise named by its legend's whole SUBTREE, so
+  the optional `help` node it renders there would fold its own accessible
+  name into the group's.
+- `panel/StyleNamesPicker.tsx` — the named-style multi-select, as one leaf
+  over `CheckboxList`. Lifted out of `StyleSection` so a type with no
+  decoration tab can mount it (char_grid does, on its placement tab)
+  without a second copy. Options are the registry's names UNION the ones
+  the item already carries, so a name deleted from the registry still
+  renders ticked and can be removed; a plain OWN-VALUE read, with no
+  cascade and no origin badge, because `authored()` looks nowhere else.
+- `panel/charGridMarkup.ts` + `panel/CharGridMarkupField.tsx` — the
+  content-interpretation switch (`markup: aozora`), on the CONTENT tab
+  because it decides what the bound text MEANS. `Markup` has exactly one
+  variant and the item holds it as an `Option`, so "off" is key ABSENCE and
+  the control is a toggle, never a three-state select; an unrecognised
+  markup value reads as OFF rather than as a half-on toggle whose off path
+  would delete a key the document meant. The component carries BOTH its
+  gates (the item type and `char_grid.markup.aozora`) so `ContentSection`,
+  nine executable lines under the cap, grows by an import and a mount.
 - `panel/pickerModel.ts` — pure binding-picker model: `bindingScopeFor`
   (the enclosing row scope; unparseable → document scope),
   `pickerOptions` (rows with live sample values via `sampleValueFor`,
@@ -493,7 +533,12 @@ read side, never the reverse.
   helpers in `panelHelpers.tsx` (`HelpfulHeading` over the `HelpTopic`
   vocabulary — `content`/`style`/`placement`/`placementChild`, each value
   also the catalog SEGMENT `help.<topic>.title`/`.body`, so a topic is two
-  strings rather than another branch; `chipsFor`,
+  strings rather than another branch; `FieldHelp` over the parallel
+  `FieldHelpTopic` vocabulary — `rulingWidth`/`rubySize`/`kinsoku`/
+  `styleNames` — for the `?` on ONE field rather than a section heading,
+  attached on the criterion that the field's NAME does not let a reader
+  with little IT background infer what it does (`Cell size` is excluded
+  by that criterion, not by oversight); `chipsFor`,
   `documentScopeCreateField`, `scopePickerProps`) — no section imports
   another for a helper.
   - The static-text content field is the shared `text/TextEditor` chip

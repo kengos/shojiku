@@ -87,6 +87,7 @@ export function BoxSection(props: ItemPanelProps) {
         controller={controller}
         path={path}
         gridStep={gridStep}
+        styleNames={view.styleNames}
       />
     ) : null;
   // The keyboard-reachable wrap-in-container (the canvas/tree right-click's

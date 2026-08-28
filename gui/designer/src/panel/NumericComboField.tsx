@@ -50,6 +50,9 @@ export interface NumericComboFieldProps {
   readonly onCommit: (raw: string) => void;
   /** An optional line under the field — an origin, or what unset means. */
   readonly hint?: string;
+  /** An optional `?` beside the label, for a field whose NAME does not let a
+   * reader infer what it does. */
+  readonly help?: ReactNode;
 }
 
 export function NumericComboField({
@@ -60,6 +63,7 @@ export function NumericComboField({
   presets,
   onCommit,
   hint,
+  help,
 }: NumericComboFieldProps) {
   const { t } = useI18n();
   const { open, setOpen, rootRef } = usePopover();
@@ -92,9 +96,15 @@ export function NumericComboField({
       {/* The input carries in-field chrome (the unit pill), so the label is
           associated by id rather than by wrapping — a wrapping label folds any
           suffix chrome into the control's accessible name. */}
-      <label className={FIELD_LABEL} htmlFor={`combo-${label}`}>
-        {label}
-      </label>
+      {/* The `?` is a SIBLING of the label, never inside it: a `<label>`'s text
+          content becomes the input's accessible name, so a nested help button
+          would both rename the field and hand its own clicks to the input. */}
+      <div className="flex items-center gap-1">
+        <label className={FIELD_LABEL} htmlFor={`combo-${label}`}>
+          {label}
+        </label>
+        {help}
+      </div>
       <div className="relative flex" ref={rootRef}>
         <div className="relative flex-1">
           <input
