@@ -5,6 +5,7 @@ import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
 import { FORMAT_CATALOG } from '../testkit/formatCatalog';
+import { swatchLabel } from '../testkit/swatchLabel';
 import { unitHintsFor } from '../testkit/unitHint';
 import { ColumnForm } from './ColumnForm';
 import { IterableSourceSection } from './IterableSourceSection';
@@ -634,7 +635,7 @@ describe('ColumnForm', () => {
       const controller = makeController({ [TABLE]: TABLE_NODE, [COLUMN_PATH]: {} });
       form(controller);
       fireEvent.click(screen.getByRole('button', { name: 'Background' }));
-      fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
       expect(controller.apply).toHaveBeenCalledWith({
         op: 'setScalar',
         path: COLUMN_PATH,
@@ -647,7 +648,7 @@ describe('ColumnForm', () => {
       const controller = makeController({ [TABLE]: TABLE_NODE, [COLUMN_PATH]: {} });
       form(controller);
       fireEvent.click(screen.getByRole('button', { name: 'Color' }));
-      fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
       expect(controller.apply).toHaveBeenCalledWith({
         op: 'setScalar',
         path: COLUMN_PATH,

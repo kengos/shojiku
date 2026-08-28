@@ -287,10 +287,14 @@ re-inventing them:
   The ONE exception, documented in place, is the app header's document-title
   button: its visible text IS its accessible name (WCAG label-in-name), so the
   rename hint rides `title` as an accessible DESCRIPTION.
-- **`ui/ColorSwatchPicker.tsx`** — the shared color popover (curated `SWATCHES`
-  grid + native `<input type=color>` + clear; the `isHexColor` guard). Used for
-  toolbar text-color/fill, the panel 塗り・枠線 cluster, and the border editor's
-  pen — the caller owns the op it builds, so no hand-typed hex anywhere.
+- **`ui/ColorSwatchPicker.tsx`** — the shared color popover: the `ui/SwatchGrid`
+  palette + native `<input type=color>` + clear, behind the `isHexColor` guard.
+  Used for toolbar text-color/fill, the panel 塗り・枠線 cluster, and the border
+  editor's pen — the caller owns the op it builds, so no hand-typed hex anywhere.
+  The palette is a hue × darkness STRUCTURE (`ui/swatchPalette.ts`), not a flat
+  list, so a reader who cannot distinguish the colours can reach one by counting
+  to a column and a row; `ui/SwatchGrid` renders the axis labels and the readout
+  line that names whatever is hovered or focused.
 - **`Sep`** — the thin vertical rule between clusters (gdoc grouping).
 - Dropdown triggers show the current value (style name, family, align glyph) +
   the shared `Caret`; icons come from `ui/icons.tsx`, never text glyphs —

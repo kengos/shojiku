@@ -440,24 +440,60 @@ is Tailwind utilities over the `--sj-*` tokens.
   (Headless UI's Menu is trigger-anchored, hence hand-rolled):
   `role="menuitem"` buttons, first-row focus on open, roving arrows.
   Labels are CHROME text, never document content.
-- `ui/ColorSwatchPicker.tsx` — curated swatches + native color input,
-  no hand-typed hex; document colors pass `isHexColor` before the chip
-  preview; the caller owns the op. A swatch button carries no visible
-  text, so `ui/swatchNames.ts` (`swatchName`, a real `Map` — the lookup
-  value can come from a document) supplies its accessible NAME; an
-  unnamed value keeps its hex, and a drift-guard pins the table against
-  `SWATCHES`. Optional `describedBy` describes the trigger without touching
-  that name.
+- `ui/ColorSwatchPicker.tsx` — the popover SHELL over `ui/SwatchGrid`, plus
+  the native custom-colour input and the clear row; no hand-typed hex;
+  document colors pass `isHexColor` before the chip preview; the caller owns
+  the op. Optional `describedBy` describes the trigger without touching its
+  name. Exports `placeIn(anchor, size, view)`, which decides which way the
+  popover hangs: the grid is taller and wider than the flat palette it
+  replaced, so it ran off the bottom of the window from a control low in the
+  panel and off the side from one near its right edge. Both inputs are
+  independent of the answer (the trigger does not move; the popover's extent
+  is the same either way) — reading the popover's own rect instead decides
+  against a box a previous answer already moved. An axis flips only when the
+  default side overflows AND the other has room; otherwise the max-height
+  scrolls. The popover takes `w-max`, or shrink-to-fit against the ~40px
+  trigger wrapper squeezes every column back to the swatch width.
+- `ui/swatchPalette.ts` — the palette as a STRUCTURE, not a flat list:
+  `HUE_COLUMNS` (six hues × `SHADE_STEPS` shades, lightest first),
+  `NEUTRALS`, and `swatchPlace` over a real `Map` (the lookup value can come
+  from a document). Position carries the information — a column is a hue, a
+  row a darkness step — so a reader who cannot distinguish the colours
+  reaches one by counting rather than by looking. The NEUTRAL row is the
+  exception: it shares the hue columns' template, so it sits under headers
+  that do not name it, and each neutral is named outright instead of by a
+  step. The previous flat palette
+  is contained exactly: its neutrals are the neutral row and its hues the
+  `BASE_STEP` row, pinned by a test, so no authored colour disappeared.
+- `ui/SwatchGrid.tsx` — that palette rendered with hue names as column
+  headers, the step beside each row, and a `<output>` readout naming
+  whatever is hovered OR focused (`name · #hex`), falling back to the
+  committed colour. Focus is served as well as hover so the keyboard path is
+  not the degraded one. Its grid template is an INLINE style: `minmax()`
+  nested inside `repeat()` generates no Tailwind rule, and the silently
+  missing class left the columns at the swatch width.
+- `ui/swatchNames.ts` — `swatchName` DERIVES the accessible name from that
+  position (hue key + darkness step through `color.shade`) rather than
+  looking it up per hex, which is why a 36-swatch grid costs one chrome key
+  and not thirty-six; a value outside the palette keeps its hex. The drift
+  guard asserts the RULE reaches every swatch, and that every key it can
+  emit resolves in every language.
 - `ui/chipContrast.ts` — what a colour VALUE is, and how a chip painted in
   one stays visible: `isHexColor` (the guard every document-derived colour
   passes before reaching an inline style — it lives here, not beside the
-  picker, because it is a property of the value) plus `relativeLuminance`
-  and `chipRing`. The chip sits on chrome that is light in one scheme and
-  dark in the other, so a fixed token border loses one end of the range at
-  each; the ring is derived from the chip's OWN WCAG luminance instead
-  (light chip → dark hairline, dark chip → light one), which needs no theme
-  branch and no new token. `chipRing` is total: a non-colour gets no ring,
-  which is also the unset chip's state.
+  picker, because it is a property of the value), `relativeLuminance`,
+  `chipRing`, and `chipPaint`, which is what call sites use. The chip sits on
+  chrome that is light in one scheme and dark in the other, so a fixed token
+  border loses one end of the range at each; the ring is derived from the
+  chip's OWN WCAG luminance instead (light chip → dark hairline, dark chip →
+  light one), which needs no theme branch and no new token. A chip with NO
+  colour has no luminance to derive one from, and the token border it used to
+  rely on does not carry it — on the dark surface the old fill and that border
+  both sit near 1.18, i.e. invisible, which is the state every colour field
+  starts in and what a scalar-or-map wire value reads as. `chipPaint` gives it
+  a chequerboard plus a mid-grey outline that clears 3:1 against both
+  surfaces, and returns fill and outline together so the two guards a call
+  site used to keep in agreement cannot disagree.
 - `ui/TipBubble.tsx` — the gdoc-style instant tooltip (~300ms CSS,
   width-BOUNDED — a label may interpolate a hostile style name;
   `data-sj-tip` is the test hook). Decorative (`aria-hidden`) by DEFAULT;

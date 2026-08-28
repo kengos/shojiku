@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { swatchLabel } from '../testkit/swatchLabel';
 import type { PickerOption } from './pickerModel';
 import { RowConditionsSection } from './RowConditions';
 
@@ -109,14 +110,16 @@ describe('RowConditionsSection', () => {
     ]);
   });
 
-  it('paints no dot for a colour the guard refuses, and no ring either', () => {
-    // The value comes from an untrusted template; the two guards must agree, or
-    // a named CSS colour would paint a dot with no outline.
+  it('paints no colour for one the guard refuses, and marks the dot as unset', () => {
+    // The value comes from an untrusted template, so it must reach no inline
+    // colour. It used to reach no OUTLINE either, which left the dot invisible on
+    // the dark surface — indistinguishable from a colour too dark to make out.
+    // One call now decides both, so the two can no longer disagree.
     section([{ when: { key: 'kind' }, style: { backgroundColor: 'url(javascript:alert(1))' } }]);
     const dots = [...document.querySelectorAll('span.size-2\\.5')] as HTMLElement[];
     expect(dots).toHaveLength(1);
     expect(dots[0].style.backgroundColor).toBe('');
-    expect(dots[0].style.boxShadow).toBe('');
+    expect(dots[0].style.boxShadow).toBe('inset 0 0 0 1px rgba(128, 128, 128, 0.9)');
   });
 
   it('labels its four style controls with the SHARED field vocabulary', () => {
@@ -440,7 +443,7 @@ describe('RowConditionsSection — style controls', () => {
     const controller = section([{ when: { key: 'kind' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
     fireEvent.click(screen.getByRole('button', { name: 'Background' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Blue' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#1d4ed8') }));
     expect(controller.apply).toHaveBeenCalledTimes(1);
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
@@ -454,7 +457,7 @@ describe('RowConditionsSection — style controls', () => {
     const controller = section([{ when: { key: 'kind' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
     fireEvent.click(screen.getByRole('button', { name: 'Color' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Blue' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#1d4ed8') }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: `${TABLE}.row.conditionalStyles[0]`,

@@ -1,39 +1,31 @@
-// What a curated swatch is CALLED. A swatch button carries no visible text, so
-// its `aria-label` is its whole accessible name — and a raw `#b91c1c` is not a
-// name a screen-reader user can act on. This maps each palette entry to a
-// chrome key naming the colour; anything outside the palette (the native custom
-// picker's value, a document-derived colour) keeps its hex, which is the only
-// honest thing to say about an arbitrary value.
+// What a curated swatch is CALLED, and the reason it is called anything at all: a
+// swatch button carries no visible text, so a raw `#b91c1c` is not a name anyone can
+// act on — not a screen-reader user, and not a sighted reader who cannot tell the
+// swatch apart from its neighbour. The name is shown as well as announced (the grid's
+// readout line), so this is the one place both channels are served from.
 //
-// A real `Map`, never a plain-object table: the lookup key is a string that can
-// reach here from a document, so `constructor` / `__proto__` must MISS rather
-// than walk the prototype to an inherited value.
+// The name is DERIVED from where the swatch sits (`swatchPalette`), not looked up per
+// colour: a hue column plus a darkness step. That is what lets a 36-swatch grid cost
+// one chrome key instead of thirty-six, and it means a name can never drift out of
+// agreement with the position the grid renders it at. Anything outside the palette
+// keeps its hex, which is the only honest thing to say about an arbitrary value.
 
-/** Palette hex → the chrome key naming that colour. Keyed to the `SWATCHES`
- * list in `ColorSwatchPicker` (a unit test pins the two against each other). */
-const SWATCH_NAME_KEYS: ReadonlyMap<string, string> = new Map([
-  ['#000000', 'color.black'],
-  ['#374151', 'color.grayDark'],
-  ['#6b7280', 'color.gray'],
-  ['#9ca3af', 'color.grayLight'],
-  ['#d1d5db', 'color.grayPale'],
-  ['#ffffff', 'color.white'],
-  ['#b91c1c', 'color.red'],
-  ['#c2410c', 'color.orange'],
-  ['#b45309', 'color.amber'],
-  ['#15803d', 'color.green'],
-  ['#1d4ed8', 'color.blue'],
-  ['#6d28d9', 'color.purple'],
-]);
+import type { I18n } from '../i18n/context';
+import { SHADE_STEPS, swatchPlace } from './swatchPalette';
 
-/** The accessible name for a colour value: the localized palette name when the
- * value is one of the curated swatches, else the value itself. */
-export function swatchName(value: string, t: (key: string) => string): string {
-  const key = SWATCH_NAME_KEYS.get(value);
-  return key === undefined ? value : t(key);
-}
-
-/** The palette entries this module names — the drift guard reads it. */
-export function namedSwatches(): readonly string[] {
-  return [...SWATCH_NAME_KEYS.keys()];
+/** The localized name for a colour value: a palette colour's derived name, else the
+ * value itself. The step reaches the catalog as an ARG rather than being pasted on,
+ * so a locale orders the words however it reads best. */
+export function swatchName(value: string, t: I18n['t']): string {
+  const place = swatchPlace(value);
+  if (place === undefined) {
+    return value;
+  }
+  const hue = t(place.nameKey);
+  if (place.step === undefined) {
+    return hue;
+  }
+  // `of` travels as an arg rather than being written into each locale's string, so
+  // the scale is stated in one place and a locale cannot fall out of step with it.
+  return t('color.shade', { color: hue, step: place.step, of: SHADE_STEPS });
 }

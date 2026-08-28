@@ -983,5 +983,10 @@ export const zhTw: LanguageCatalog = {
     'color.green': '綠色',
     'color.blue': '藍色',
     'color.purple': '紫色',
+    'color.shade': '{color}·深淺 {step}/{of}',
+    'color.axis.shade': '深淺',
+    'color.axis.step': '{step}/{of}',
+    'color.axis.neutral': '中性色',
+    'color.readout.idle': '指向顏色即可讀出名稱',
   },
 };

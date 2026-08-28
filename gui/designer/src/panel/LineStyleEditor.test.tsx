@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { swatchLabel } from '../testkit/swatchLabel';
 import { BORDER_STYLE_VALUES } from './borderTypes';
 import { LineStyleEditor } from './LineStyleEditor';
 import { readLineStyle } from './lineModel';
@@ -96,7 +97,7 @@ describe('LineStyleEditor', () => {
   it('authors a picked colour and clears it again', () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Line color' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
     expect(doc()).toMatch(/color:\s*['"]#b91c1c['"]/);
     fireEvent.click(screen.getByRole('button', { name: 'Line color' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Clear' }));

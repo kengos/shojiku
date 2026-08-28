@@ -27,7 +27,7 @@
 
 import type { ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
-import { chipRing, isHexColor } from '../ui/chipContrast';
+import { chipPaint } from '../ui/chipContrast';
 import type { RowConditionRow } from './rowConditionsModel';
 
 /** One chip per style property the rule sets. Colors show as a swatch dot (a
@@ -90,16 +90,13 @@ function Chip({ label, swatch }: { readonly label: string; readonly swatch?: str
       {swatch === undefined ? null : (
         <span
           className="size-2.5 rounded-[3px] border border-border"
-          // Narrowed FIRST, like every other site that paints a document
-          // colour: the value comes from a `conditionalStyles` entry in an
-          // untrusted template, and the two guards must agree — painting a
+          // One call, like every other site that paints a document colour: the
+          // value comes from a `conditionalStyles` entry in an untrusted template,
+          // and a narrowing plus a separate ring lookup could disagree — painting a
           // named CSS colour the ring cannot classify would leave a dot with no
-          // outline. Same ring as every other chip: a dot this small otherwise
-          // disappears into whichever scheme matches it.
-          style={{
-            backgroundColor: isHexColor(swatch) ? swatch : undefined,
-            boxShadow: chipRing(swatch),
-          }}
+          // outline. A dot this small otherwise disappears into whichever scheme
+          // matches it.
+          style={chipPaint(swatch)}
         />
       )}
       {label}

@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
-import { ColorSwatchPicker, SWATCHES } from './ColorSwatchPicker';
+import { ColorSwatchPicker, placeIn } from './ColorSwatchPicker';
 import { isHexColor } from './chipContrast';
+import { paletteSwatches } from './swatchPalette';
 
 /** The picker reads the catalog for its swatch names, so it mounts under a
  * provider like every other localized surface. */
@@ -24,6 +25,22 @@ function draw(props: Partial<Parameters<typeof ColorSwatchPicker>[0]> = {}) {
   return { onCommit };
 }
 
+/** Stub what the placement reads: the ANCHOR's position (a rect) and the POPOVER's
+ * size (offset metrics). jsdom lays nothing out, so both are zero without this —
+ * which is the "everything fits" case, and no flip would ever be exercised. */
+function stubLayout(anchor: Partial<DOMRect>, size: { width: number; height: number }) {
+  const rect = vi
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockReturnValue({ top: 100, bottom: 128, left: 100, right: 140, ...anchor } as DOMRect);
+  const w = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(size.width);
+  const h = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(size.height);
+  return () => {
+    rect.mockRestore();
+    w.mockRestore();
+    h.mockRestore();
+  };
+}
+
 describe('ColorSwatchPicker', () => {
   it('renders the chip in the effective color and opens the palette', () => {
     draw({ value: '#123456' });
@@ -31,7 +48,7 @@ describe('ColorSwatchPicker', () => {
     const chip = trigger.querySelector('.sj-color-chip') as HTMLElement;
     expect(chip.style.backgroundColor).not.toBe('');
     fireEvent.click(trigger);
-    expect(screen.getAllByRole('menuitem').length).toBeGreaterThan(SWATCHES.length - 1);
+    expect(screen.getAllByRole('menuitem').length).toBeGreaterThan(paletteSwatches().length - 1);
   });
 
   it('renders a neutral chip for a hostile / non-hex color (no inline paint)', () => {
@@ -49,19 +66,21 @@ describe('ColorSwatchPicker', () => {
     draw();
     fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
     const names = screen.getAllByRole('menuitem').map((el) => el.getAttribute('aria-label'));
-    for (const swatch of SWATCHES) {
+    for (const swatch of paletteSwatches()) {
       expect(names, swatch).not.toContain(swatch);
     }
-    expect(names).toContain('Red');
+    // A neutral is named outright; a hue carries its darkness step, because five
+    // swatches in a column would otherwise announce the same name.
     expect(names).toContain('Black');
+    expect(names).toContain('Red, shade 4 of 5');
   });
 
   it('commits a swatch and closes', () => {
     const { onCommit } = draw();
     fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Red, shade 4 of 5' }));
     expect(onCommit).toHaveBeenCalledWith('#b91c1c');
-    expect(screen.queryByRole('menuitem', { name: 'Red' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Red, shade 4 of 5' })).toBeNull();
   });
 
   it('commits a changed native color but never a phantom re-seed', () => {
@@ -101,7 +120,7 @@ describe('ColorSwatchPicker', () => {
 
 describe('color data', () => {
   it('every swatch is a valid 6-digit hex color', () => {
-    for (const swatch of SWATCHES) {
+    for (const swatch of paletteSwatches()) {
       expect(swatch).toMatch(/^#[0-9a-f]{6}$/i);
     }
   });
@@ -161,7 +180,12 @@ describe('the chip’s contrast ring', () => {
     expect(chip?.style.boxShadow).toBe('inset 0 0 0 1px rgba(0, 0, 0, 0.45)');
   });
 
-  it('draws no ring and no fill for a value that is not a colour', () => {
+  it('draws no fill for a value that is not a colour, and outlines it anyway', () => {
+    // It used to draw no ring either, on the reasoning that the token border
+    // followed the theme. It does not: on the dark surface that border sits at
+    // 1.19 contrast, so the chip was invisible in exactly the state every colour
+    // field starts in. The unset treatment is luminance-independent because there
+    // is no colour here to measure.
     render(
       <I18nProvider locale="en">
         <ColorSwatchPicker
@@ -175,8 +199,9 @@ describe('the chip’s contrast ring', () => {
       </I18nProvider>,
     );
     const chip = screen.getByRole('button', { name: 'Color' }).querySelector('span');
-    expect(chip?.style.boxShadow).toBe('');
     expect(chip?.style.backgroundColor).toBe('');
+    expect(chip?.style.boxShadow).toBe('inset 0 0 0 1px rgba(128, 128, 128, 0.9)');
+    expect(chip?.style.backgroundImage).toContain('linear-gradient');
   });
   it('rings the PALETTE swatches too, both ends of it', () => {
     // The criterion is "every colour chip", and the palette carries #ffffff and
@@ -200,6 +225,46 @@ describe('the chip’s contrast ring', () => {
     expect(black.style.boxShadow).toBe('inset 0 0 0 1px rgba(255, 255, 255, 0.55)');
   });
 
+  it('hangs the palette BELOW the trigger when it fits', () => {
+    // jsdom measures every rect as zero, which is the "fits" case: nothing can
+    // overflow a viewport it has no height against.
+    draw();
+    fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
+    const menu = screen.getByRole('menu');
+    expect(menu.className).toContain('top-[calc(100%+var(--sj-space-1))]');
+    expect(menu.className).not.toContain('bottom-[calc(100%+var(--sj-space-1))]');
+  });
+
+  it('flips the palette ABOVE the trigger rather than off the bottom of the window', () => {
+    // The hue × darkness grid is several times taller than the flat palette it
+    // replaced, so a colour control low in the property panel opened one that ran
+    // past the viewport — measured at 212px off-screen in the running app, with
+    // every gate green.
+    const restore = stubLayout({ top: 590, bottom: 618 }, { width: 202, height: 311 });
+    try {
+      draw();
+      fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
+      expect(screen.getByRole('menu').className).toContain('bottom-[calc(100%+var(--sj-space-1))]');
+    } finally {
+      restore();
+    }
+  });
+
+  it('anchors the palette to the trigger’s RIGHT edge rather than off the side', () => {
+    // The other half of the same regression: the grid gained a label gutter, so a
+    // colour control near the property panel's right edge put it 55px off-screen.
+    const restore = stubLayout({ left: 900, right: 940 }, { width: 202, height: 311 });
+    try {
+      draw();
+      fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
+      const menu = screen.getByRole('menu');
+      expect(menu.className).toContain('right-0');
+      expect(menu.className).not.toContain('left-0');
+    } finally {
+      restore();
+    }
+  });
+
   it('describes its trigger when given an id, without touching the NAME', () => {
     draw({ describedBy: 'origin-hint' });
     const trigger = screen.getByRole('button', { name: 'Fill' });
@@ -211,5 +276,63 @@ describe('the chip’s contrast ring', () => {
     expect(
       screen.getByRole('button', { name: 'Fill' }).getAttribute('aria-describedby'),
     ).toBeNull();
+  });
+});
+
+describe('placeIn', () => {
+  // The grid is both taller and wider than the flat palette it replaced, so both
+  // axes can overflow — and each is flipped only when the OTHER side has room. A
+  // window too small for either keeps the near edge put and lets the max-height
+  // scroll, because moving the overflow to the top or the left hides the palette
+  // just as completely.
+  //
+  // Both inputs are independent of the answer: the ANCHOR is the trigger, which does
+  // not move, and the SIZE is the popover's extent, which is the same either way.
+  // The first version read the popover's own rect and so decided against a box a
+  // previous answer had already moved — it measured correctly and still came out
+  // unflipped in the running Designer.
+  const VIEW = { width: 1280, height: 720 };
+  const SIZE = { width: 202, height: 311 };
+  const at = (over: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>) => ({
+    top: 100,
+    bottom: 128,
+    left: 100,
+    right: 140,
+    ...over,
+  });
+
+  it('keeps both axes at their default when the popover fits', () => {
+    expect(placeIn(at({}), SIZE, VIEW)).toEqual({ up: false, toLeft: false });
+  });
+
+  it('flips UP when hanging below would overflow and there is room above', () => {
+    // The trigger position measured in the running Designer, where the palette ran
+    // 212px past the fold.
+    expect(placeIn(at({ top: 590, bottom: 618 }), SIZE, VIEW).up).toBe(true);
+  });
+
+  it('stays DOWN when flipping up would only move the overflow to the top', () => {
+    // A trigger near the TOP of a window shorter than the popover: neither side
+    // fits, so the max-height scrolls instead of the palette hiding upward.
+    expect(placeIn(at({ top: 40, bottom: 68 }), SIZE, { width: 1280, height: 300 }).up).toBe(false);
+  });
+
+  it('flips LEFT when hanging right would overflow and there is room that side', () => {
+    // Also measured in the running Designer: a colour control near the property
+    // panel's right edge put the palette 55px off the side.
+    expect(placeIn(at({ left: 1133, right: 1173 }), SIZE, VIEW).toLeft).toBe(true);
+  });
+
+  it('stays anchored LEFT when flipping would only move the overflow to the side', () => {
+    expect(placeIn(at({ left: 100, right: 140 }), { width: 1300, height: 311 }, VIEW).toLeft).toBe(
+      false,
+    );
+  });
+
+  it('flips BOTH axes at once when a corner overflows', () => {
+    expect(placeIn(at({ top: 590, bottom: 618, left: 1133, right: 1173 }), SIZE, VIEW)).toEqual({
+      up: true,
+      toLeft: true,
+    });
   });
 });

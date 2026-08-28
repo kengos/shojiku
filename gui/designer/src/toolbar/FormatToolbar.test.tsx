@@ -5,6 +5,7 @@ import type { EditorController } from '../editor/useEditor';
 import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { buildStyleUsage } from '../styles/usage';
+import { swatchLabel } from '../testkit/swatchLabel';
 import { FormatToolbar } from './FormatToolbar';
 
 const PATH = 'sections.body.items[0]';
@@ -485,7 +486,7 @@ describe('FormatToolbar — color popover', () => {
     render(<Harness source={TEXT_SRC} />);
     fireEvent.click(screen.getByRole('button', { name: 'Text color' }));
     expect(screen.getByRole('menu')).toBeTruthy();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
     expect(doc()).toMatch(/color:\s*['"]#b91c1c['"]/);
     expect(screen.queryByRole('menu')).toBeNull();
   });
@@ -559,7 +560,7 @@ describe('FormatToolbar — color popover', () => {
   it('writes fill (backgroundColor) for a rect color control', () => {
     render(<Harness source={RECT_SRC} />);
     fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Blue' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#1d4ed8') }));
     expect(doc()).toMatch(/backgroundColor:\s*['"]#1d4ed8['"]/);
   });
 });
@@ -1092,7 +1093,7 @@ describe('FormatToolbar — a selected table column', () => {
   it('authors a column TEXT COLOUR at the column’s own style', () => {
     render(<Harness source={TABLE_SRC} path={COLUMN} />);
     fireEvent.click(screen.getByRole('button', { name: 'Text color' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
     expect(doc()).toContain('color: "#b91c1c"');
   });
 

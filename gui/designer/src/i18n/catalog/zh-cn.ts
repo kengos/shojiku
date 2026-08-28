@@ -982,5 +982,10 @@ export const zhCn: LanguageCatalog = {
     'color.green': '绿色',
     'color.blue': '蓝色',
     'color.purple': '紫色',
+    'color.shade': '{color}·深浅 {step}/{of}',
+    'color.axis.shade': '深浅',
+    'color.axis.step': '{step}/{of}',
+    'color.axis.neutral': '中性色',
+    'color.readout.idle': '指向颜色即可读出名称',
   },
 };

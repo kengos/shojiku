@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { LOCALES } from '../i18n/locales';
+import { swatchLabel } from '../testkit/swatchLabel';
 import { unitHintsFor } from '../testkit/unitHint';
 import { DocumentDefaults } from './DocumentDefaults';
 import { localeFacts } from './localeFacts';
@@ -221,7 +222,7 @@ describe('DocumentDefaults', () => {
     it('is picked from a swatch, never typed as hex', () => {
       render(<Harness source={BASE} section="style" />);
       fireEvent.click(screen.getByRole('button', { name: 'Color' }));
-      fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
       expect(doc()).toContain('color: "#b91c1c"');
     });
 
