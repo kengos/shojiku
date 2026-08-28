@@ -1067,5 +1067,10 @@ export const ja: LanguageCatalog = {
     'color.green': '緑',
     'color.blue': '青',
     'color.purple': '紫',
+    'color.shade': '{color}・濃さ {step}/{of}',
+    'color.axis.shade': '濃さ',
+    'color.axis.step': '{step}/{of}',
+    'color.axis.neutral': '無彩色',
+    'color.readout.idle': '色を指すと名前が出ます',
   },
 };

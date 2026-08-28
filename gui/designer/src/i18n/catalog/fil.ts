@@ -856,5 +856,10 @@ export const fil: LanguageCatalog = {
     'color.green': 'Berde',
     'color.blue': 'Asul',
     'color.purple': 'Lila',
+    'color.shade': '{color}, lalim {step}/{of}',
+    'color.axis.shade': 'Lalim',
+    'color.axis.step': '{step}/{of}',
+    'color.axis.neutral': 'Neutral',
+    'color.readout.idle': 'Ituro ang kulay para mabasa ang pangalan',
   },
 };

@@ -822,5 +822,10 @@ export const hi: LanguageCatalog = {
     'color.green': 'हरा',
     'color.blue': 'नीला',
     'color.purple': 'बैंगनी',
+    'color.shade': '{color}, शेड {step}/{of}',
+    'color.axis.shade': 'शेड',
+    'color.axis.step': '{step}/{of}',
+    'color.axis.neutral': 'तटस्थ',
+    'color.readout.idle': 'नाम पढ़ने के लिए किसी रंग पर ले जाएँ',
   },
 };

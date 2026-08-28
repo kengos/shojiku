@@ -15,6 +15,16 @@ platform binaries.
 
 ### Added
 
+- **The Designer's colour picker now names every colour, and says which one you
+  are pointing at.** The palette is laid out as hue columns against darkness
+  rows, with the hue named above each column and the step beside each row, and a
+  line under the grid reads out the colour under the pointer — or under the
+  keyboard focus — by name and by code. Picking a colour no longer depends on
+  being able to tell it from the one beside it. The palette also grew from
+  twelve colours to thirty-six; the previous twelve are all still in it, at the
+  same values, so nothing an existing template authored has moved.
+
+
 - **A line break typed into the Designer's text field now stays where you put
   it.** Pressing Enter at the end of a value inserted the break, but the caret
   could not rest after it, so the next thing you typed landed back on the line
@@ -252,6 +262,19 @@ platform binaries.
   same engine version" instead.
 
 ### Fixed
+
+- **A colour field that is not set is now visible in dark mode.** It was drawn
+  as a plain square in the page colour with a hairline border, both of which sit
+  at about 1.2 contrast against the dark panel — invisible, and indistinguishable
+  from a colour too dark to make out. It now carries a chequerboard and an
+  outline that reads against either theme. This is the state every colour field
+  starts in, so it affected all of them: fills, text colours, table bands, rule
+  chips, line stroke colours, the named-style form, the border pen and the
+  document defaults.
+- **The colour palette no longer opens off the edge of the window.** A colour
+  control low in the property panel, or near its right edge, opened a palette
+  that ran past the bottom or the side of the window with no way to scroll to
+  it. It now opens upward or leftward when there is not room the other way.
 
 - **The layer tree and the breadcrumb no longer squash a multi-line value into
   one line.** A three-line address showed as its lines joined by single

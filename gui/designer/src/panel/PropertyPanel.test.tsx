@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { FORMAT_CATALOG } from '../testkit/formatCatalog';
+import { swatchLabel } from '../testkit/swatchLabel';
 import { unitHintsFor } from '../testkit/unitHint';
 import { PropertyPanel } from './PropertyPanel';
 
@@ -1197,7 +1198,7 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
     // A rect's first tab is 装飾. Fill + border show; no typography fields.
     expect(screen.queryByLabelText('Font size')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Background' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Blue' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#1d4ed8') }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,
@@ -1211,7 +1212,7 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
     draw(<PropertyPanel controller={controller} path={PATH} />);
     openTab('Style');
     fireEvent.click(screen.getByRole('button', { name: 'Color' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,

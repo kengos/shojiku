@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { swatchLabel } from '../testkit/swatchLabel';
 import { unitHintsFor } from '../testkit/unitHint';
 import { BorderEditor } from './BorderEditor';
 import { readBorder } from './borderModel';
@@ -174,7 +175,7 @@ describe('BorderEditor — diagram', () => {
   it('applies a picked pen color to a preset', () => {
     render(<Harness source={RECT} />);
     fireEvent.click(screen.getByRole('button', { name: 'Line color' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Amber' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b45309') }));
     fireEvent.click(screen.getByRole('button', { name: 'All sides' }));
     expect(doc()).toContain('borderColor: "#b45309"');
   });

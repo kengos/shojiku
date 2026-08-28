@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { swatchLabel } from '../testkit/swatchLabel';
 import { TableStyleSection } from './TableStyleSection';
 
 const PATH = 'sections.body.items[0]';
@@ -263,7 +264,7 @@ describe('TableStyleSection', () => {
     const controller = section(TABLE);
     openDetail();
     fireEvent.click(screen.getAllByRole('button', { name: 'Background' })[0]);
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,
@@ -276,7 +277,7 @@ describe('TableStyleSection', () => {
     const controller = section(TABLE);
     openDetail();
     fireEvent.click(screen.getAllByRole('button', { name: 'Color' })[1]);
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,

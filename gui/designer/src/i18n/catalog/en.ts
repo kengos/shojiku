@@ -1052,5 +1052,10 @@ export const en: LanguageCatalog = {
     'color.green': 'Green',
     'color.blue': 'Blue',
     'color.purple': 'Purple',
+    'color.shade': '{color}, shade {step} of {of}',
+    'color.axis.shade': 'Shade',
+    'color.axis.step': '{step}/{of}',
+    'color.axis.neutral': 'Neutral',
+    'color.readout.idle': 'Point at a colour to read its name',
   },
 };
