@@ -75,6 +75,18 @@ file is only for output that could not answer **which file / which line
       probably to rank `×` blocks above `i` blocks in the matcher rather
       than taking the first; note that a green run also prints "Found 1
       info", so the info cannot simply be treated as failure evidence.
+      **A worse variant of the same defect, seen since**: the extractor
+      does not check whether Biome FAILED AT ALL. A `gui:verify` run whose
+      only failure was one vitest case still printed
+      `REMEDY — biome findings … make gui:format` and named a
+      `lint/style/useTemplate` info in a file the change never touched —
+      while Biome's own footer said `Found 1 info.` and it had exited 0.
+      A reader following that REMEDY runs a formatter over a red test. So
+      the ranking fix is not enough on its own: the matcher has to
+      establish that a tool actually failed before offering its remedy,
+      and Biome's footer (`Found N error` present vs absent) is the
+      available signal. Both halves were caught the same way —
+      `grep "Found .* error"` on the full log.
       *(Separately worth someone's deliberate one-liner: bump that
       `$schema` to match the declared dependency and the info disappears.
       Left out of the cycle that found it — an unrelated file.)*
