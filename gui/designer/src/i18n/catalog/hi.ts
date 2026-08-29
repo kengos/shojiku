@@ -683,6 +683,7 @@ export const hi: LanguageCatalog = {
     'format.pattern.preview': 'नमूना मान के साथ:',
     'format.pattern.previewEmpty': 'ऊपर कोई टोकन दबाएँ, या पैटर्न लिखें।',
     'format.pattern.refused': 'यह पैटर्न पूर्वावलोकन के लिए बहुत लंबा है।',
+    'format.pattern.unavailable': 'पूर्वावलोकन और टोकन बटन उपलब्ध नहीं हैं।',
     'formats.title': 'प्रदर्शन प्रारूप',
     'formats.defaultsIntro':
       'पूरे दस्तावेज़ में हर प्रकार का मान कैसा दिखे। कोई एक आइटम इसे फिर भी बदल सकता है।',

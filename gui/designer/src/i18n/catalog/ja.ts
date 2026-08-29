@@ -928,6 +928,7 @@ export const ja: LanguageCatalog = {
     'format.pattern.preview': 'この見本値だと',
     'format.pattern.previewEmpty': '上のトークンを押すか、パターンを入力してください。',
     'format.pattern.refused': 'このパターンは長すぎるためプレビューできません。',
+    'format.pattern.unavailable': 'プレビューとトークンのボタンを表示できません。',
     'formats.title': '表示形式',
     'formats.defaultsIntro':
       'データの種類ごとに、文書全体での見え方を決めます。個々の要素で上書きできます。',

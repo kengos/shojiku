@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
-import { fakeProbe, refusingProbe } from '../testkit/formatCatalog';
+import { deadProbe, fakeProbe, refusingProbe } from '../testkit/formatCatalog';
 import { PatternField } from './PatternField';
 
 function draw(over: Partial<Parameters<typeof PatternField>[0]> = {}) {
@@ -94,6 +94,22 @@ describe('PatternField', () => {
   it('prompts rather than showing a blank preview line for an empty pattern', async () => {
     draw({ probe: fakeProbe((pattern) => (pattern === '' ? '' : `[${pattern}]`)) });
     expect(await screen.findByText('Press a token above, or type a pattern.')).toBeTruthy();
+    // The prompt is honest here BECAUSE the chips are on screen to press.
+    expect(screen.queryByText('The preview and the token buttons are unavailable.')).toBeNull();
+  });
+
+  it('says the preview is unavailable when the engine cannot answer at all', async () => {
+    // The bug this state exists for: with no chips above and nothing the field
+    // can render, the empty-pattern prompt was telling an author to press
+    // buttons that are not there. The standalone app was in exactly this state
+    // for the whole life of the feature.
+    draw({ value: 'yyyy.MM.dd', probe: deadProbe() });
+    expect(
+      await screen.findByText('The preview and the token buttons are unavailable.'),
+    ).toBeTruthy();
+    expect(screen.queryByText('Press a token above, or type a pattern.')).toBeNull();
+    expect(screen.queryByText('With the sample value:')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Insert yyyy' })).toBeNull();
   });
 
   it('shows the engine’s warning verbatim — the engine never translates', async () => {
@@ -111,6 +127,9 @@ describe('PatternField', () => {
     expect(screen.queryByText('Press a token above, or type a pattern.')).toBeNull();
     // ...and it does not pretend to have rendered anything either.
     expect(screen.queryByText('With the sample value:')).toBeNull();
+    // Nor does it read as an engine that never answered: a refusal IS an
+    // answer, and the way out of it (edit the pattern, press a chip) is real.
+    expect(screen.queryByText('The preview and the token buttons are unavailable.')).toBeNull();
   });
 
   it('carries no NUMBER in the refusal, so the cap lives in one place', async () => {

@@ -847,6 +847,7 @@ export const zhTw: LanguageCatalog = {
     'format.pattern.preview': '以範例值顯示為',
     'format.pattern.previewEmpty': '點選上方的標記，或直接輸入格式字串。',
     'format.pattern.refused': '此格式字串過長，無法預覽。',
+    'format.pattern.unavailable': '無法顯示預覽與標記按鈕。',
     'formats.title': '顯示格式',
     'formats.defaultsIntro': '設定每種資料在整份文件中的呈現方式。個別元素仍可覆寫。',
     'formats.registryTitle': '具名格式',

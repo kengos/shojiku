@@ -23,6 +23,7 @@
 import {
   type Diagnostics,
   type EngineTransport,
+  type PatternProbe,
   type PdfOutcome,
   type RenderOptions,
   type RenderOutcome,
@@ -151,14 +152,41 @@ export class LazyFontLoader {
 /** Wrap an inner transport so each render observes its diagnostics and, when the
  * lazy packs finish loading, calls `onUpgraded` (the app swaps transport
  * identity to re-render). The wrapper never blocks the render it returns — the
- * upgrade runs in the background. */
+ * upgrade runs in the background.
+ *
+ * **Everything this wrapper does not WRAP passes through**, which is why the
+ * body opens by spreading `inner` rather than by listing its members. An
+ * enumerated forwarder over an interface with OPTIONAL members is invisible to
+ * line coverage — a method it forgets has no line to leave uncovered — and this
+ * one forgot `formatCatalog` for its whole life: the standalone app therefore
+ * shipped with no format catalog and no pattern probe at all, so every picker
+ * lost its engine-rendered samples, a locale pack's own variants were
+ * unreachable, and the pattern field's token chips and live preview never
+ * appeared. The spread makes forwarding the default for the object-literal
+ * transports this repository builds.
+ *
+ * A member still needs naming here for either of TWO reasons, and the second is
+ * the one that is easy to forget: when the wrapper has something to ADD to it,
+ * and when it must survive a class-shaped inner transport. A spread copies OWN
+ * properties, so an implementation whose methods sit on a prototype gets
+ * nothing from it — `validate` and `renderRaw` are delegated explicitly for
+ * that reason, and `renderPdf` and `formatCatalog` each get a presence-mirrored
+ * named arm. So the spread is a floor, not a guarantee: a NEW optional method
+ * left to it alone would reach every transport here and none that is
+ * class-shaped, which is how this wrapper lost `formatCatalog` in the first
+ * place. */
 export function createLazyFontTransport(params: {
   readonly inner: EngineTransport;
   readonly loader: LazyFontLoader;
   readonly onUpgraded: () => void;
 }): EngineTransport {
   const { inner, loader, onUpgraded } = params;
+  // Captured once so the presence check NARROWS it — calling through
+  // `inner.formatCatalog?.()` inside the closure would leave an unreachable
+  // undefined arm behind the guard that already excluded it.
+  const askCatalog = inner.formatCatalog;
   return {
+    ...inner,
     validate: (template, p, definitions) => inner.validate(template, p, definitions),
     renderRaw: async (
       template: string,
@@ -207,6 +235,17 @@ export function createLazyFontTransport(params: {
               definitions,
             );
           },
+        }
+      : {}),
+    // A catalog query is not a render: nothing to observe, no fonts to wait
+    // for. The lazy loop has nothing to add, so this is a pass-through — named
+    // anyway so it survives an inner transport whose methods live on a
+    // prototype, where the spread above copies nothing. Presence mirrors the
+    // inner transport's, exactly as `renderPdf` does.
+    ...(askCatalog !== undefined
+      ? {
+          formatCatalog: (template: string, probes: readonly PatternProbe[]) =>
+            askCatalog.call(inner, template, probes),
         }
       : {}),
   };

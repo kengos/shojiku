@@ -1,6 +1,8 @@
 import {
   type Diagnostics,
   type EngineTransport,
+  type FormatCatalog,
+  type PatternProbe,
   type RenderOutcome,
   TransportError,
 } from '@shojiku/designer';
@@ -409,5 +411,127 @@ describe('the PDF path waits for the full font set', () => {
     expect(loader.status).toBe('upgraded');
     expect(outcome?.ok).toBe(true);
     expect(inner.renderPdf).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('createLazyFontTransport — what it does NOT wrap still passes through', () => {
+  const okRender = (): RenderOutcome => ({
+    ok: true,
+    pages: [],
+    inspect: null,
+    diagnostics: clean,
+  });
+  const catalog: FormatCatalog = {
+    types: [
+      {
+        fieldType: 'date',
+        fixed: false,
+        variants: [
+          { spelling: 'default', origin: 'builtin', samples: ['2026-07-05'], dropsTime: false },
+        ],
+      },
+    ],
+    probes: [{ sample: '2026', warning: null, refused: null }],
+  };
+
+  function idleLoader(): LazyFontLoader {
+    return new LazyFontLoader({
+      engine: fakeEngine(),
+      fonts: fakeFonts(),
+      packIds: () => [],
+      absentPackIds: [],
+    });
+  }
+
+  function catalogInner(): EngineTransport {
+    return {
+      validate: vi.fn(async () => clean),
+      renderRaw: vi.fn(async () => okRender()),
+      formatCatalog: vi.fn(async (_template: string, _probes: readonly PatternProbe[]) => catalog),
+    };
+  }
+
+  // The defect this suite exists for: the wrapper enumerated its members, so
+  // `formatCatalog` was never forwarded and the standalone app ran with no
+  // catalog and no pattern probe at all — every picker lost its samples and the
+  // pattern field's chips never appeared. A MISSING optional method leaves no
+  // line uncovered, so the 100% gate was green over it for the feature's whole
+  // life.
+  it('forwards formatCatalog to the inner transport', async () => {
+    const inner = catalogInner();
+    const transport = createLazyFontTransport({
+      inner,
+      loader: idleLoader(),
+      onUpgraded: vi.fn(),
+    });
+    const probes: readonly PatternProbe[] = [{ fieldType: 'date', pattern: 'yyyy' }];
+    const answer = await transport.formatCatalog?.('t', probes);
+    expect(inner.formatCatalog).toHaveBeenCalledWith('t', probes);
+    expect(answer?.probes[0].sample).toBe('2026');
+  });
+
+  it('is absent when the inner transport cannot answer a format catalog', () => {
+    const transport = createLazyFontTransport({
+      inner: { validate: vi.fn(async () => clean), renderRaw: vi.fn(async () => okRender()) },
+      loader: idleLoader(),
+      onUpgraded: vi.fn(),
+    });
+    expect(transport.formatCatalog).toBeUndefined();
+  });
+
+  // Discriminates the EXPLICIT arm from the spread: a spread copies own
+  // properties, so a class-shaped host transport — methods on the prototype —
+  // is served only by the named delegations. Without the explicit arm this
+  // fails while the test above still passes.
+  it('forwards a formatCatalog that lives on the inner transport PROTOTYPE', async () => {
+    class ClassTransport {
+      validate = vi.fn(async () => clean);
+      renderRaw = vi.fn(async () => okRender());
+      formatCatalog(_template: string, _probes: readonly PatternProbe[]): Promise<FormatCatalog> {
+        return Promise.resolve(catalog);
+      }
+    }
+    const inner: EngineTransport = new ClassTransport();
+    expect(Object.hasOwn(inner, 'formatCatalog')).toBe(false);
+    const transport = createLazyFontTransport({
+      inner,
+      loader: idleLoader(),
+      onUpgraded: vi.fn(),
+    });
+    const answer = await transport.formatCatalog?.('t', []);
+    expect(answer?.types[0].fieldType).toBe('date');
+  });
+
+  // The structural half of the fix, pinned so nobody re-hand-rolls the literal:
+  // a member the wrapper knows nothing about rides through. That is what makes
+  // the NEXT optional method on `EngineTransport` reach the app without an edit
+  // here.
+  it('passes through a member the wrapper knows nothing about', async () => {
+    const future = vi.fn(async () => 'answered');
+    const inner = { ...catalogInner(), future } as unknown as EngineTransport;
+    const transport = createLazyFontTransport({
+      inner,
+      loader: idleLoader(),
+      onUpgraded: vi.fn(),
+    });
+    const reached = (transport as unknown as { future?: () => Promise<string> }).future;
+    expect(await reached?.()).toBe('answered');
+  });
+
+  // The spread is `CreateDataProperty`, never `[[Set]]`, so an own `__proto__`
+  // on a hostile host-injected transport becomes an ordinary own key rather
+  // than mutating the wrapper's prototype. The literal form must come from
+  // JSON: `{ __proto__: … }` in test SOURCE sets the prototype instead.
+  it('does not let a hostile inner transport pollute the prototype', () => {
+    const hostile = JSON.parse('{"__proto__":{"polluted":"yes"}}') as Record<string, unknown>;
+    const inner = Object.assign(hostile, catalogInner()) as unknown as EngineTransport;
+    const transport = createLazyFontTransport({
+      inner,
+      loader: idleLoader(),
+      onUpgraded: vi.fn(),
+    });
+    expect(transport).toBeDefined();
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(Object.getPrototypeOf(transport)).toBe(Object.prototype);
   });
 });

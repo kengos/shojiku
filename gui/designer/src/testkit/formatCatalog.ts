@@ -104,3 +104,13 @@ export function refusingProbe(refused: ProbeRefusal = 'patternTooLong') {
         : { sample: `[${probe.pattern}]`, warning: null, refused: null },
     );
 }
+
+/** A probe that cannot ANSWER — the shape `useFormatCatalog` produces over a
+ * transport with no `formatCatalog` at all, which is what the standalone app
+ * ran on until the lazy-font wrapper started forwarding the query. An empty
+ * list is shorter than the probe list, so nothing can be read out of it: the
+ * surface has no chips and no preview, and must say so rather than fall into
+ * the prompt asking for a pattern. */
+export function deadProbe() {
+  return async (): Promise<readonly ProbeResult[]> => [];
+}
