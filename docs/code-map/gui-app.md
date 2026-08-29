@@ -71,7 +71,18 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   `ensureLoaded()` (the FORCED load the PDF path takes — a failed load
   REFUSES the render, never a silently degraded PDF) +
   `createLazyFontTransport` (an upgrade swaps transport identity → the
-  preview re-renders).
+  preview re-renders). That wrapper **spreads the inner transport and
+  overrides only what it WRAPS** — it enumerated its members once, forgot
+  `formatCatalog`, and the shipped app therefore ran with no format catalog
+  and no pattern probe at all (samples gone from every picker, a pack's own
+  date variants unreachable, the pattern field's chips and preview line
+  never drawn); a forwarder that omits an OPTIONAL member leaves no line for
+  coverage to fail on. **The spread is a floor, not a guarantee**: it copies
+  OWN properties, so it carries nothing for a class-shaped inner transport.
+  `validate`/`renderRaw` are delegated explicitly and `renderPdf`/
+  `formatCatalog` each get a presence-mirrored NAMED arm for exactly that
+  reason — so a new optional method left to the spread alone would reach
+  every transport built here and no prototype-shaped one. Name it.
 
 ## Google-Fonts picker (`src/fonts/` — all 100%-covered, zero new deps)
 

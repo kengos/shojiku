@@ -714,6 +714,7 @@ export const fil: LanguageCatalog = {
     'format.pattern.preview': 'Sa halimbawang halaga:',
     'format.pattern.previewEmpty': 'Pindutin ang isang token sa itaas, o mag-type ng pattern.',
     'format.pattern.refused': 'Masyadong mahaba ang pattern na ito para i-preview.',
+    'format.pattern.unavailable': 'Hindi available ang preview at ang mga token button.',
     'formats.title': 'Mga pormat ng pagpapakita',
     'formats.defaultsIntro':
       'Kung paano lumalabas ang bawat uri ng halaga sa buong dokumento. Maaari pa rin itong palitan ng isang item.',

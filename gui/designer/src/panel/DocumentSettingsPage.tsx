@@ -71,9 +71,9 @@ export interface DocumentSettingsPageProps {
   readonly onClose: () => void;
 }
 
-/** A host that supplied no probe: every preview resolves empty, so the pattern
- * surface shows the pattern with no sample rather than branching on
- * availability at every call site. */
+/** A host that supplied no probe: every probe resolves to an EMPTY list, which
+ * the pattern surface reads as "could not answer" and says so, rather than
+ * every call site branching on availability. */
 const NO_PROBE = async (): Promise<readonly ProbeResult[]> => [];
 
 export function DocumentSettingsPage({

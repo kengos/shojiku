@@ -299,6 +299,24 @@ platform binaries.
 
 ### Fixed
 
+- **The format pickers show their engine-rendered samples again, and the date
+  pattern editor has its token buttons back.** In the standalone app the
+  Designer was running without the engine's format catalog entirely: every
+  picker offered bare wire spellings with no example beside them, a locale
+  pack's own date variants (Japanese `wareki` among them) could not be reached
+  from a binding's panel at all, and the pattern field under 文書設定 →
+  表示形式 showed neither the token buttons nor the live preview line for any
+  input. The catalog was reaching the browser correctly; the app's font-loading
+  transport wrapper simply listed the engine calls it passed on and had never
+  been told about this one. It now passes on everything it does not itself
+  handle, so an engine call added later is far less likely to be dropped the
+  same way.
+
+- **A pattern field that cannot preview says so, instead of asking for a
+  pattern that is already typed.** When the editor gets no answer from the
+  engine it showed “Press a token above, or type a pattern.” — with no tokens
+  above and typing changing nothing. That state now has its own line.
+
 - **A colour field that is not set is now visible in dark mode.** It was drawn
   as a plain square in the page colour with a hairline border, both of which sit
   at about 1.2 contrast against the dark panel — invisible, and indistinguishable

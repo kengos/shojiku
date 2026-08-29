@@ -106,7 +106,7 @@ export function PatternField({
           }
         }}
       />
-      {/* Three states, not two. A REFUSED probe comes back with an empty
+      {/* Four states, not two. A REFUSED probe comes back with an empty
           sample, so without its own branch it falls into the "nothing typed
           yet" prompt and tells an author who has just typed a very long
           pattern to type one. The refusal is not a degradation of the render —
@@ -119,10 +119,20 @@ export function PatternField({
           two-arm switch would carry a permanently unreachable branch instead
           of a checked assumption. The copy carries no NUMBER — the cap belongs
           to the engine, and a figure repeated here would be a second copy of
-          it with nothing keeping the two equal. */}
+          it with nothing keeping the two equal.
+
+          The fourth is UNAVAILABLE — the probe answered nothing at all, so
+          there are no chips above and typing changes nothing. It reads as
+          information rather than as an error: a transport without the catalog
+          query is a documented degraded state, not a fault. What it must not
+          do is fall into the empty prompt, which would tell an author to press
+          token buttons that are not on screen. It is checked BEFORE the
+          sample and AFTER the refusal — a refusal is an answer. */}
       {preview.refused === null ? (
         <p className="mt-0.5 mb-0 text-sm text-muted">
-          {preview.sample.length > 0 ? (
+          {preview.unavailable ? (
+            t('format.pattern.unavailable')
+          ) : preview.sample.length > 0 ? (
             <>
               {t('format.pattern.preview')}{' '}
               <span className="text-text italic">{preview.sample}</span>

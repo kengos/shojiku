@@ -179,15 +179,32 @@ describe('DocumentSettingsPage', () => {
     expect(screen.getByText('Japanese era')).toBeTruthy();
   });
 
-  it('still offers the pattern surface when the host supplied no probe', async () => {
-    // Every preview then resolves empty and the field shows the prompt — the
-    // surface degrades rather than branching on availability at each call.
+  it('offers the pattern surface, and SAYS it cannot preview, with no probe', async () => {
+    // The field still renders — the surface degrades rather than branching on
+    // availability at each call — but it no longer shows the prompt. This test
+    // used to assert that it did, with a comment calling it the degraded
+    // behaviour; the prompt reads "Press a token above, or type a pattern",
+    // and with no probe there are no tokens above and typing changes nothing.
+    // That is the state the standalone app was permanently in, so the honest
+    // line is what the assertion pins now.
+    //
+    // `probeFormat` stays optional and still defaults to a probe that answers
+    // nothing — but NOT for the reason it would be tempting to write down. This
+    // page is exported from no barrel and has one consumer
+    // (`shell/FullscreenView`), which always passes `derived.formats.probe`;
+    // `useFormatCatalog` always returns that as a function. So the degraded
+    // case reaches this surface through the TRANSPORT, never through an omitted
+    // prop, and `NO_PROBE` is reachable only from this harness. The default
+    // stays because it keeps the answer-less state expressible in a test
+    // without a fake transport, and because omitting the prop is now VISIBLE
+    // rather than silent.
     render(<Harness noProbe />);
     openSection('Display formats');
     fireEvent.click(screen.getByRole('button', { name: 'Choose the Date format' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Write a pattern…' }));
     expect(await screen.findByLabelText('Pattern')).toBeTruthy();
-    expect(screen.getByText('Press a token above, or type a pattern.')).toBeTruthy();
+    expect(screen.getByText('The preview and the token buttons are unavailable.')).toBeTruthy();
+    expect(screen.queryByText('Press a token above, or type a pattern.')).toBeNull();
   });
 
   it('summarizes an unset base text by size alone (no family to name)', () => {

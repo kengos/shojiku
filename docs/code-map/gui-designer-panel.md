@@ -978,11 +978,18 @@ conditional rules the next section owns).
   themselves at the caret, with the raw string under them (editable —
   user decision: read-only would strand every pattern an existing
   document holds). One probe call answers the whole surface (the pattern
-  first, then one per token); nothing here formats. THREE preview states, not
+  first, then one per token); nothing here formats. FOUR preview states, not
   two: a probe the engine REFUSED (a pattern past its length cap) comes back
   with an empty sample, so without its own branch it reads as "nothing typed
   yet" — the hook carries `refused` through and the field renders the house
-  error `<output>` instead of the prompt. Any refusal reads as too-long, which
+  error `<output>` instead of the prompt. The fourth is `unavailable` — the
+  probe could not ANSWER, by either of TWO routes the hook handles separately:
+  an answer SHORTER than the probe list (what a transport with no
+  `formatCatalog` produces, since `useFormatCatalog` swallows that to `[]`), and
+  a REJECTED probe promise, which the `probe` prop can deliver because it is a
+  host seam — each has its own leg and its own test. It renders as its own muted
+  line, because with no chips on screen the prompt was telling an author to
+  press buttons that are not there. Any refusal reads as too-long, which
   holds only while the probe list stays under the engine's `MAX_PROBES`
   (pinned by a test); the copy carries no number, so the cap has one home.
 - `panel/formatSummary.ts` — pure: the 表示形式 rail row's one-liner. It

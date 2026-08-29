@@ -38,23 +38,81 @@ describe('usePatternPreview', () => {
     await waitFor(() => expect(result.current.sample).toBe('<yyyy>'));
   });
 
-  it('ignores a SHORT answer rather than reading past its end', async () => {
+  it('reports a SHORT answer as UNAVAILABLE rather than reading past its end', async () => {
     // A transport that answered fewer probes than were asked would otherwise
-    // index into undefined; the surface keeps its previous preview.
+    // index into undefined. `[]` is the exact shape a transport with no
+    // `formatCatalog` produces, so this state is what the surface reads to
+    // tell "the engine did not answer" apart from "you have not typed
+    // anything" — the two were indistinguishable, and the whole point of the
+    // chips is that they are visible.
     const probe = async () => [{ sample: 'partial', warning: null, refused: null }];
     const { result } = renderHook(() => usePatternPreview('date', 'y', probe));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitFor(() => expect(result.current.unavailable).toBe(true));
     expect(result.current.sample).toBe('');
     expect(result.current.tokens).toEqual([]);
   });
 
-  it('survives a rejecting probe with no preview', async () => {
+  it('reports a REJECTING probe as unavailable', async () => {
+    // The seam's other failure mode. The catalog hook's own probe swallows a
+    // throw into `[]`, but `probe` is a host-injectable prop and a rejection
+    // leaves the surface just as answerless.
     const probe = async () => {
       throw new Error('transport down');
     };
     const { result } = renderHook(() => usePatternPreview('date', 'y', probe));
+    await waitFor(() => expect(result.current.unavailable).toBe(true));
+    expect(result.current).toEqual({
+      sample: '',
+      warning: null,
+      tokens: [],
+      refused: null,
+      unavailable: true,
+    });
+  });
+
+  it('drops a REJECTION that arrives after the pattern moved on', async () => {
+    // The twin of the stale-answer case below, on the failure path. It is
+    // reachable for the same reasons: the field unmounts when its modal closes,
+    // and the app swaps transport identity when a font finishes installing —
+    // either way an in-flight query can reject over a surface that has already
+    // been answered, and reporting it would blank a working preview.
+    let reject: ((reason: Error) => void) | undefined;
+    const probe = async (probes: readonly PatternProbe[]) => {
+      if (probes[0].pattern === 'y') {
+        await new Promise<never>((_resolve, no) => {
+          reject = no;
+        });
+      }
+      return answer(probes);
+    };
+    const { rerender, result } = renderHook(
+      ({ pattern }: { pattern: string }) => usePatternPreview('date', pattern, probe),
+      { initialProps: { pattern: 'y' } },
+    );
+    rerender({ pattern: 'yyyy' });
+    await waitFor(() => expect(result.current.sample).toBe('<yyyy>'));
+    reject?.(new Error('transport down'));
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(result.current).toEqual({ sample: '', warning: null, tokens: [], refused: null });
+    expect(result.current.unavailable).toBe(false);
+    expect(result.current.sample).toBe('<yyyy>');
+  });
+
+  it('clears unavailable once a complete answer arrives', async () => {
+    // Both directions, because the app really produces this: installing a font
+    // swaps the transport identity, so a session that started answerless can
+    // start answering (and the flag must not be stuck true), and the reverse.
+    const dead = async () => [];
+    const live = async (probes: readonly PatternProbe[]) => answer(probes);
+    const { rerender, result } = renderHook(
+      ({ probe }: { probe: (p: readonly PatternProbe[]) => Promise<ProbeResult[]> }) =>
+        usePatternPreview('date', 'yyyy', probe),
+      { initialProps: { probe: dead as (p: readonly PatternProbe[]) => Promise<ProbeResult[]> } },
+    );
+    await waitFor(() => expect(result.current.unavailable).toBe(true));
+    rerender({ probe: live });
+    await waitFor(() => expect(result.current.sample).toBe('<yyyy>'));
+    expect(result.current.unavailable).toBe(false);
+    expect(result.current.tokens).toHaveLength(PATTERN_TOKENS.length);
   });
 
   it('drops an answer that arrives after the pattern moved on', async () => {

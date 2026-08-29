@@ -846,6 +846,7 @@ export const zhCn: LanguageCatalog = {
     'format.pattern.preview': '按示例值显示为',
     'format.pattern.previewEmpty': '点击上方的标记，或直接输入格式串。',
     'format.pattern.refused': '该格式串过长，无法预览。',
+    'format.pattern.unavailable': '无法显示预览和标记按钮。',
     'formats.title': '显示格式',
     'formats.defaultsIntro': '设定每类数据在整个文档中的显示方式。单个元素仍可覆盖。',
     'formats.registryTitle': '命名格式',

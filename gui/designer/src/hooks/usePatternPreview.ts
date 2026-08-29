@@ -8,9 +8,11 @@
 //
 // The GUI never formats, so there is no local token table producing these
 // strings — every one of them is `shojiku_formatter` rendering the engine's own
-// fixed exemplar instant. A transport that cannot answer yields empty strings
-// and the surface simply shows the pattern with no preview, exactly as it does
-// before the first answer arrives.
+// fixed exemplar instant. A transport that cannot answer is its OWN state
+// (`unavailable`), deliberately not the same as the moment before the first
+// answer arrives: both show no preview, but only one of them can be fixed by
+// typing, and the surface must not tell an author to press token buttons that
+// are not on screen.
 //
 // A REFUSAL is not that case and must not read as it. The engine declines to
 // probe a pattern past its length cap, and the refusal arrives with an empty
@@ -54,9 +56,23 @@ export interface PatternPreview {
    * yields an empty `sample`, so a reader that ignores this cannot tell a
    * refused pattern from an unwritten one. */
   readonly refused: ProbeRefusal | null;
+  /** The probe could not ANSWER — a transport with no `formatCatalog`, or one
+   * whose query failed. Distinct from a refusal (which is an answer) and from
+   * an unwritten pattern (which renders as an empty sample): all three produce
+   * no preview, and a surface that shows one prompt for all of them tells an
+   * author to press token buttons that are not there. */
+  readonly unavailable: boolean;
 }
 
-const EMPTY: PatternPreview = { sample: '', warning: null, tokens: [], refused: null };
+const EMPTY: PatternPreview = {
+  sample: '',
+  warning: null,
+  tokens: [],
+  refused: null,
+  unavailable: false,
+};
+
+const UNAVAILABLE: PatternPreview = { ...EMPTY, unavailable: true };
 
 type Probe = (probes: readonly PatternProbe[]) => Promise<readonly ProbeResult[]>;
 
@@ -77,20 +93,36 @@ export function usePatternPreview(
     ];
     probe(probes)
       .then((results) => {
-        if (!live || results.length < probes.length) {
+        if (!live) {
+          return;
+        }
+        // A SHORT answer is the shape a probe that cannot answer takes: the
+        // catalog hook returns `[]` both for a transport without
+        // `formatCatalog` and for a query that threw. Reporting it as its own
+        // state is what keeps "the engine did not answer" out of the
+        // "you have not typed anything" prompt.
+        if (results.length < probes.length) {
+          setPreview(UNAVAILABLE);
           return;
         }
         setPreview({
           sample: results[0].sample,
           warning: results[0].warning,
           refused: results[0].refused,
+          unavailable: false,
           tokens: PATTERN_TOKENS.map((token, index) => ({
             token,
             sample: results[index + 1].sample,
           })),
         });
       })
-      .catch(() => undefined);
+      // The catalog hook's own probe never rejects, but the prop is a host
+      // seam: a rejected query is the same answer-less state as a short one.
+      .catch(() => {
+        if (live) {
+          setPreview(UNAVAILABLE);
+        }
+      });
     return () => {
       live = false;
     };

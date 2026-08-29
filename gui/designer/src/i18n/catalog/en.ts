@@ -912,6 +912,7 @@ export const en: LanguageCatalog = {
     'format.pattern.preview': 'With the sample value:',
     'format.pattern.previewEmpty': 'Press a token above, or type a pattern.',
     'format.pattern.refused': 'This pattern is too long to preview.',
+    'format.pattern.unavailable': 'The preview and the token buttons are unavailable.',
     'formats.title': 'Display formats',
     'formats.defaultsIntro':
       'How each kind of value looks throughout the document. An individual item can still override it.',

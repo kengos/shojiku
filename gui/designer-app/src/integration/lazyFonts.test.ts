@@ -20,7 +20,12 @@ import type { FontFile, FontIndex, FontPack } from '../assets/manifest';
 import { LAZY_THRESHOLD } from '../build/assemble';
 import { bootEngine } from '../engine/boot';
 import { type FontSource, makeFontSource } from '../engine/fontSource';
-import { LazyFontLoader, MISSING_GLYPH, UNKNOWN_FONT_FAMILY } from '../engine/lazyFonts';
+import {
+  createLazyFontTransport,
+  LazyFontLoader,
+  MISSING_GLYPH,
+  UNKNOWN_FONT_FAMILY,
+} from '../engine/lazyFonts';
 import type { WasmFullEngine } from '../engine/wasmModule';
 
 // src/integration/ -> repo root is four levels up.
@@ -344,5 +349,55 @@ describe('lazy upgrade fires on a preset-authored lazy-tier fontFamily', () => {
     expect(loader.status).toBe('idle');
     // The typo triggered ZERO additional fetches beyond boot.
     expect(fonts.fetches).toBe(afterBoot);
+  });
+});
+
+describe('the WRAPPED transport the app actually hands the Designer', () => {
+  // The gate asserted at the entry point the app uses, which is the one thing
+  // that was missing. `createWasmTransport` is proven against the real engine
+  // by the designer package's own integration suite — but the app never gives
+  // the Designer that transport: `useFontInstall` wraps it in
+  // `createLazyFontTransport` first. The wrapper enumerated its members and
+  // forgot `formatCatalog`, so the shipped app had no format catalog and no
+  // pattern probe at all. Every gate stayed green, because a method that is
+  // never written leaves no line uncovered.
+  it('answers a format-catalog probe against the real engine', async () => {
+    const engine = new wasmModule.Engine();
+    const capabilities = (
+      JSON.parse(wasmModule.Engine.capabilities()) as { capabilities: string[] }
+    ).capabilities;
+    const fonts = makeFontSource({
+      fetchText: fetchTextNode,
+      fetchBytes: fetchBytesNode,
+      base: PACKS_BASE,
+      index,
+    });
+    const { absentPackIds, packIds } = await bootEngine({
+      engine,
+      capabilities,
+      localeTag: 'ja-JP',
+      index,
+      fonts,
+    });
+    const loader = new LazyFontLoader({ engine, fonts, packIds: () => packIds, absentPackIds });
+    const transport = createLazyFontTransport({
+      inner: createWasmTransport(engine),
+      loader,
+      onUpgraded: () => undefined,
+    });
+
+    expect(transport.formatCatalog).toBeDefined();
+    const catalog = await transport.formatCatalog?.(template, [
+      { fieldType: 'date', pattern: 'yyyy.MM.dd' },
+    ]);
+    // The chips are the point of the surface, and they are the catalog's types
+    // rendered by the engine — an empty sample here is the shipped bug.
+    const date = catalog?.types.find((t) => t.fieldType === 'date');
+    expect(date?.variants.length).toBeGreaterThan(0);
+    expect(date?.variants[0].samples[0]).not.toBe('');
+    // And the probe itself: rendered, not refused, not swallowed into `[]`.
+    expect(catalog?.probes).toHaveLength(1);
+    expect(catalog?.probes[0].refused).toBeNull();
+    expect(catalog?.probes[0].sample).toMatch(/^\d{4}\.\d{2}\.\d{2}$/);
   });
 });
