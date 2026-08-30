@@ -5,6 +5,12 @@
 // EditorScreen. Chrome is the shared Modal/Button/IconButton primitives over the
 // `--sj-*` tokens. This file owns the dialog shell + the CAPTURE row; the saved
 // points themselves are `SnapshotList.tsx`.
+//
+// The dialog has no Modal footer — its capture control belongs beside the name
+// input it commits — so the footer-ranking gate cannot rank it, and the ONE
+// FILL rule is held here at runtime instead — the capture button's variant
+// below, pinned by `SnapshotDialog.test.tsx`. `actionConvention.test.ts` pins
+// the two buttons as the sanctioned out-of-footer primaries.
 
 import { Button, Modal, useI18n } from '@shojiku/designer';
 import { useEffect, useState } from 'react';
@@ -92,7 +98,18 @@ export function SnapshotDialog({
             }
           }}
         />
-        <Button variant="primary" disabled={!canCapture} onClick={submit}>
+        {/* One filled action at a time (Material 3: one primary per screen).
+            Arming a row's restore makes THAT the decision in front of the
+            reader — it replaces the working copy — so this steps down to
+            outlined for exactly that span. Emphasis only: still enabled, still
+            captures. Written inline rather than behind a const because
+            `actionConvention.test.ts` walks the source for the token on a
+            `variant=`, and an indirection would hide it. */}
+        <Button
+          variant={confirmId === null ? 'primary' : 'default'}
+          disabled={!canCapture}
+          onClick={submit}
+        >
           {t('snapshot.capture')}
         </Button>
       </div>

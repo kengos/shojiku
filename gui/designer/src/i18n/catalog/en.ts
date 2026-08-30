@@ -306,7 +306,7 @@ export const en: LanguageCatalog = {
     'tutorial.exit': 'Leave the tutorial',
     'tutorial.hint': 'New here? Take the guided tour.',
     'tutorial.hintDismiss': 'Dismiss',
-    'menu.help.tutorial': 'Tutorial',
+    'menu.help.tutorial': 'Tutorial…',
     'help.close': 'Close',
     'help.more': 'Learn more',
     'help.content.title': 'Fixed text vs. data',

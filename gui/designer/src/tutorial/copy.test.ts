@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { chapterTitle, courseCopy, stepCopy, topicSubtitle } from './copy';
+import { CHAPTER_TITLES_EN, COPY_EN, TOPIC_SUBTITLES_EN, TOPIC_TITLES_EN } from './copy.en';
+import { CHAPTER_TITLES_JA, COPY_JA, TOPIC_SUBTITLES_JA, TOPIC_TITLES_JA } from './copy.ja';
 
 describe('courseCopy', () => {
   it('speaks Japanese to a Japanese Designer', () => {
@@ -49,5 +51,44 @@ describe('lookups are own-property only', () => {
   it('merges chapter and topic titles into one lookup', () => {
     expect(chapterTitle(courseCopy('en'), 'topic-table')).toBe('Tables (list data)');
     expect(courseCopy('ja').launcher.sectionTopics).toContain('トピック');
+  });
+});
+
+// The course QUOTES menu labels ("Insert → Container", 「挿入」→「コンテナ」),
+// and several of those labels end in an ellipsis on screen. Documentation
+// convention — the Microsoft Writing Style Guide and Google's developer
+// documentation style guide agree — is to omit it when CITING a command in
+// prose: the ellipsis is a property of the control as rendered, not of the name
+// as quoted. English had always done this; Japanese had not, which is the only
+// way the two files ever disagreed.
+//
+// Each language keeps its own delimiter (「」 is the sole device Japanese has
+// for marking a label boundary in run-on kana/kanji; English gets it free from
+// capitalisation and the arrow) — that part is convention, not divergence.
+describe('the course cites a label without its ellipsis', () => {
+  const values = [
+    CHAPTER_TITLES_EN,
+    CHAPTER_TITLES_JA,
+    COPY_EN,
+    COPY_JA,
+    TOPIC_TITLES_EN,
+    TOPIC_TITLES_JA,
+    TOPIC_SUBTITLES_EN,
+    TOPIC_SUBTITLES_JA,
+  ].flatMap((table) => Object.entries(table));
+
+  it('reads the whole course (the guard is never silently empty)', () => {
+    expect(values.length).toBeGreaterThan(150);
+  });
+
+  it('would catch one (the positive control for an expected-empty sweep)', () => {
+    expect('「コンテナ…」を開きます。'.includes('…')).toBe(true);
+  });
+
+  it('carries no ellipsis in either language', () => {
+    // Blunt on purpose, like the sibling ellipsis gate: classifying a string as
+    // a citation is guesswork, and the course has no genuine elision to protect.
+    // If prose ever wants one, that is the moment to narrow this — not before.
+    expect(values.filter(([, value]) => value.includes('…')).map(([key]) => key)).toEqual([]);
   });
 });

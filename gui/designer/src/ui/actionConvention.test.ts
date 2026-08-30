@@ -12,16 +12,24 @@
 //      EXACTLY ONE primary (Material 3: one primary per screen; filled >
 //      outlined > text, and never as interchangeable cosmetics). Six of
 //      thirteen footers painted their confirming action as a merely-larger
-//      outlined button, including the confirm for both Save and Export.
+//      outlined button, including the confirm for both Save and Export;
 //
-// Neither rule is visible to tsc, Biome, or a render test: every violating file
-// was valid TSX that rendered a working button.
+//   3. a primary lives ONLY in a dialog footer — the WORK SURFACE (toolbar,
+//      menubar, property panel, layer tree, canvas) carries none. Rule 2 ranks
+//      what is inside a `footer={…}`; nothing ranked what is outside one, so a
+//      filled button added to the toolbar or the panel passed every check.
+//      This is that complement, pinned against an exact list of sanctioned
+//      out-of-footer primaries.
+//
+// None of the three is visible to tsc, Biome, or a render test: every violating
+// file was valid TSX that rendered a working button.
 
 import { describe, expect, it } from 'vitest';
 import {
   APP_SRC,
   codeLines,
   DESIGNER_SRC,
+  GUI_ROOT,
   hits,
   nearestOpenTag,
   sourceFiles,
@@ -138,11 +146,8 @@ describe('the filled accent is minted in one place', () => {
 });
 
 // SCOPE, stated because a gate that does not name its blind spot reads as
-// covering more than it does: this ranks `footer={…}` props. A dialog placing
-// its confirming action in the BODY is not seen — today that is the
-// restore-points dialog, which is also where two fills can appear at once (its
-// capture button plus an armed row's restore). Pre-existing; gui/STYLE.md
-// § Actions carries the note.
+// covering more than it does: this describe ranks what is INSIDE a `footer={…}`
+// prop. What sits outside one is rule 3's business, below.
 describe('a dialog footer ranks its actions', () => {
   it('finds every dialog footer (the guard is never silently empty)', () => {
     const footers = everyFooter();
@@ -163,5 +168,137 @@ describe('a dialog footer ranks its actions', () => {
       .map(([file, slice]) => [file, slice.split('variant="primary"').length - 1] as const)
       .filter(([, count]) => count !== 1);
     expect(wrong).toEqual([]);
+  });
+});
+
+/** A primary as it is actually AUTHORED — the literal prop, and the prop whose
+ * expression selects it (the restore-points capture button steps down while a
+ * row's restore is armed). A rule about a visual role has to enumerate every
+ * spelling of that role, not the one it was written against.
+ *
+ * A single-quoted JSX attribute (`variant='primary'`) is not matched, and that
+ * is safe in both directions: Biome's `jsxQuoteStyle` defaults to double, so
+ * the spelling cannot survive `gui:lint`, and if it somehow did, rule 3b below
+ * would report it as a token off a `variant=` — this fails CLOSED, never open. */
+const PRIMARY_VARIANT = /\bvariant=(?:"primary"|\{[^}]*['"]primary['"])/;
+
+/** The bare emphasis TOKEN. Rule 3b below requires every one of these to sit on
+ * a `variant=`, so hiding the fill behind an indirection (`const e = … ?
+ * 'primary' : …`) cannot make it invisible to `PRIMARY_VARIANT`. */
+const PRIMARY_TOKEN = /['"]primary['"]/;
+
+/** The `'primary'` tokens that are not an emphasis at all: the variant UNION
+ * that defines the word, and the font-pack TIER, which is a homonym (a pack is
+ * primary- or lazy-tier). Exact `path:line`, so the homonym is declared rather
+ * than pattern-excluded. */
+const NOT_AN_EMPHASIS = [
+  'designer/src/ui/Button.tsx:11',
+  'designer-app/src/assets/manifest.ts:66',
+  'designer-app/src/build/assemble.ts:49',
+  'designer-app/src/engine/boot.ts:119',
+];
+
+/** The primaries that deliberately sit OUTSIDE a dialog footer, as exact
+ * `path:line` — the same form as the chrome gate's one sanctioned `title=`, so
+ * the rule reads as "exactly these", never as a loosened pattern.
+ *
+ *  - the EMPTY-STATE CTA: with no body items it is the only thing on the page,
+ *    so it is that screen's primary rather than one voice among peers;
+ *  - the RESTORE-POINTS dialog, which has no `footer` at all — its capture
+ *    control belongs beside the name input it commits. Its one-fill-at-a-time
+ *    rule is runtime state (arming a row's restore steps the capture button
+ *    down), which no source walk can see; `SnapshotDialog.test.tsx` pins it.
+ */
+const OUTSIDE_A_FOOTER = [
+  'designer/src/shell/CanvasArea.tsx:154',
+  'designer-app/src/app/SnapshotDialog.tsx:109',
+  'designer-app/src/app/SnapshotList.tsx:66',
+];
+
+/** The line indices of `file` that fall inside some `footer={…}` prop body,
+ * brace-balanced over the COMMENT-BLANKED source. Line-keyed rather than
+ * offset-keyed so it composes with `hits`, which reports `path:line`. */
+function footerLines(file: string): Set<number> {
+  const lines = codeLines(file);
+  const text = lines.join('\n');
+  const covered = new Set<number>();
+  for (const match of text.matchAll(/\bfooter=\{/g)) {
+    const open = (match.index ?? 0) + match[0].length - 1;
+    let depth = 0;
+    let i = open;
+    while (i < text.length) {
+      if (text[i] === '{') depth += 1;
+      if (text[i] === '}') {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+      i += 1;
+    }
+    const from = text.slice(0, open).split('\n').length - 1;
+    const to = text.slice(0, i).split('\n').length - 1;
+    for (let line = from; line <= to; line += 1) covered.add(line);
+  }
+  return covered;
+}
+
+const footerLineCache = new Map<string, Set<number>>();
+
+function outsideAFooter(_lines: string[], index: number, file: string): boolean {
+  let covered = footerLineCache.get(file);
+  if (covered === undefined) {
+    covered = footerLines(file);
+    footerLineCache.set(file, covered);
+  }
+  return !covered.has(index);
+}
+
+describe('a primary lives only in a dialog footer', () => {
+  it('recognises every spelling of the prop, and only the prop', () => {
+    // The positive control for an otherwise expected-EMPTY sweep: a broken
+    // pattern and a clean tree are the same green.
+    expect(PRIMARY_VARIANT.test('<Button variant="primary" onClick={x}>')).toBe(true);
+    expect(PRIMARY_VARIANT.test("variant={confirmId === null ? 'primary' : 'default'}")).toBe(true);
+    expect(PRIMARY_VARIANT.test('<Button variant="default" onClick={x}>')).toBe(false);
+  });
+
+  it('finds the primaries at all (the guard is never silently empty)', () => {
+    expect(hits(ROOTS, PRIMARY_VARIANT).length).toBeGreaterThanOrEqual(15);
+  });
+
+  it('does not report a primary that IS in a footer', () => {
+    // The positive control for `footerLines` itself — an expected-empty sweep
+    // over an always-true predicate would pass just as green.
+    const inFooter = hits(
+      ROOTS,
+      PRIMARY_VARIANT,
+      (lines, index, file) => !outsideAFooter(lines, index, file),
+    );
+    expect(inFooter.some((h) => h.includes('review/SaveReviewModal.tsx:'))).toBe(true);
+  });
+
+  it('places every primary outside a footer on the sanctioned list', () => {
+    expect(hits(ROOTS, PRIMARY_VARIANT, outsideAFooter)).toEqual(OUTSIDE_A_FOOTER);
+  });
+
+  it('keeps that list honest — each entry still carries a primary', () => {
+    // Without this an exception decays into an alibi: the line moves, the rule
+    // still passes, and the list now sanctions something that is not there.
+    for (const entry of OUTSIDE_A_FOOTER) {
+      const [path, line] = entry.split(':');
+      const source = codeLines(`${GUI_ROOT}${path}`);
+      expect(PRIMARY_VARIANT.test(source[Number(line) - 1] ?? ''), entry).toBe(true);
+    }
+  });
+
+  it('hides no primary behind an indirection', () => {
+    // Rule 3b: the emphasis token appears on a `variant=` or on the declared
+    // homonym list. A `const e = cond ? 'primary' : 'default'` read three lines
+    // above the JSX would otherwise be invisible to `PRIMARY_VARIANT`.
+    const stray = hits(
+      ROOTS,
+      PRIMARY_TOKEN,
+      (lines, index) => !PRIMARY_VARIANT.test(lines[index] ?? ''),
+    );
+    expect(stray).toEqual(NOT_AN_EMPHASIS);
   });
 });

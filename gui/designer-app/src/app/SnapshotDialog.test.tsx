@@ -168,3 +168,77 @@ describe('SnapshotDialog', () => {
     expect(screen.getByText('alpha')).not.toBeNull();
   });
 });
+
+// Material 3 gives a screen ONE filled action, and this dialog has two candidates
+// — the standing capture button and, once a row's restore is armed, that row's
+// confirm. Which one is filled is runtime state, so no source walk can rank it
+// (`actionConvention.test.ts` pins both lines as sanctioned out-of-footer
+// primaries and defers the ranking here). Every assertion below counts the fills
+// in the whole dialog rather than checking one button, because the defect this
+// replaces was not a wrong button — it was two right ones at the same time.
+describe('SnapshotDialog emphasis: one fill at a time', () => {
+  const filled = () => document.querySelectorAll('[data-variant="primary"]');
+  const capture = () => screen.getByRole('button', { name: 'Save point' }) as HTMLButtonElement;
+
+  it('fills the capture button while no restore is armed', () => {
+    renderDialog({ snapshots: [snap({ id: 'a', name: 'alpha' })] });
+    expect(capture().dataset.variant).toBe('primary');
+    expect(filled()).toHaveLength(1);
+  });
+
+  it('moves the fill to an armed restore, and only there', () => {
+    renderDialog({ snapshots: [snap({ id: 'a', name: 'alpha' })] });
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+    // (i) the standing control steps down…
+    expect(capture().dataset.variant).toBe('default');
+    // …(ii) and the decision in front of the reader takes the fill.
+    expect((screen.getByRole('button', { name: 'Restore' }) as HTMLElement).dataset.variant).toBe(
+      'primary',
+    );
+    expect(filled()).toHaveLength(1);
+  });
+
+  it('gives the fill back when the confirm is cancelled', () => {
+    renderDialog({ snapshots: [snap({ id: 'a', name: 'alpha' })] });
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(capture().dataset.variant).toBe('primary');
+    expect(filled()).toHaveLength(1);
+  });
+
+  it('gives the fill back when the restore is performed', () => {
+    // The other exit from the armed state: `restore()` clears the confirm id
+    // before handing off, so the dialog is never left demoted with nothing armed.
+    renderDialog({ snapshots: [snap({ id: 'a', name: 'alpha' })], onRestore: vi.fn() });
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+    expect(capture().dataset.variant).toBe('primary');
+    expect(filled()).toHaveLength(1);
+  });
+
+  it('demotes emphasis only — the capture button still works while armed', () => {
+    const onCapture = vi.fn();
+    renderDialog({ snapshots: [snap({ id: 'a', name: 'alpha' })], onCapture });
+    fireEvent.change(screen.getByLabelText('Restore point name'), { target: { value: 'kept' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+    expect(capture().dataset.variant).toBe('default');
+    expect(capture().disabled).toBe(false);
+    fireEvent.click(capture());
+    expect(onCapture).toHaveBeenCalledWith('kept');
+  });
+
+  it('renders a hostile point name as text, and it changes no emphasis', () => {
+    // The name is user data reaching the confirm card as a React child, not
+    // through `t()` — so markup stays literal and a brace pair is not an ICU
+    // placeholder. Pinned here because the armed card is where the name first
+    // gained a second rendering site.
+    const hostile = '<img src=x onerror=1>{n}';
+    renderDialog({ snapshots: [snap({ id: 'a', name: hostile })] });
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+    expect(
+      screen.getByText(new RegExp(hostile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),
+    ).not.toBeNull();
+    expect(document.querySelector('img')).toBeNull();
+    expect(filled()).toHaveLength(1);
+  });
+});

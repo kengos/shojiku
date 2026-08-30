@@ -327,7 +327,7 @@ export const ja: LanguageCatalog = {
     'tutorial.exit': 'チュートリアルを終える',
     'tutorial.hint': 'はじめてですか? 通しコースで一周できます。',
     'tutorial.hintDismiss': '閉じる',
-    'menu.help.tutorial': 'チュートリアル',
+    'menu.help.tutorial': 'チュートリアル…',
     'help.close': '閉じる',
     'help.more': '詳しく見る',
     'help.content.title': '固定テキストとデータ',

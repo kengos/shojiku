@@ -264,7 +264,7 @@ export const zhTw: LanguageCatalog = {
     'tutorial.exit': '結束教學',
     'tutorial.hint': '第一次使用嗎? 可以先走一遍課程。',
     'tutorial.hintDismiss': '關閉',
-    'menu.help.tutorial': '教學',
+    'menu.help.tutorial': '教學…',
     'help.close': '關閉',
     'help.more': '瞭解更多',
     'help.content.title': '固定文字與資料',

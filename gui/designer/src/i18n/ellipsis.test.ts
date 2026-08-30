@@ -42,6 +42,26 @@ function ellipsisKeys(lang: string): string[] {
     .sort();
 }
 
+/** Every chrome key NAMED as a title, whether or not a source line shows it.
+ *
+ * The walk below sees a LITERAL `title={t('key')}`. Six sites reach a
+ * `Modal`/`HelpHint` title through a VARIABLE instead and are invisible to any
+ * line-based walker: `labels.title` (the tutorial launcher, whose bare
+ * `tutorial.title` is what makes `Tutorial…` → "Tutorial" the HIG pair),
+ * `currentStep.title` (the coach mark), the composed
+ * `` t(`help.${topic}.title`) `` at two sites, `t(keys.title)` (the review
+ * pane) and `sectionTitle` (the box section). The `.title` NAMING CONVENTION
+ * covers all of them at once — 44 keys today, none carrying an ellipsis, so
+ * this is a rule that ships green rather than a repair.
+ *
+ * The two openers that double as their own dialog's title — `shortcuts.title`
+ * and `glossary.title` — are in this set deliberately: gui/STYLE.md § Actions
+ * says giving either an ellipsis costs a key split, and this is the gate that
+ * would say so. */
+function titleConventionKeys(): string[] {
+  return Object.keys(DEFAULT_CATALOG.en.chrome).filter((key) => key.endsWith('.title'));
+}
+
 /** Every chrome key rendered as a heading, across BOTH packages:
  *
  *  - the single-line `<hN …>{t('key')}` shape the panel uses throughout;
@@ -54,7 +74,7 @@ function ellipsisKeys(lang: string): string[] {
  *    (it is a plain exported const).
  */
 function headingKeys(): string[] {
-  const found = new Set<string>(Object.values(SECTION_TITLE_KEYS));
+  const found = new Set<string>([...Object.values(SECTION_TITLE_KEYS), ...titleConventionKeys()]);
   for (const root of [DESIGNER_SRC, APP_SRC]) {
     for (const file of sourceFiles(root)) {
       for (const line of codeLines(file)) {
@@ -93,6 +113,18 @@ describe('no heading promises a view', () => {
     const keys = headingKeys();
     expect(keys.length).toBeGreaterThanOrEqual(20);
     expect(keys).toContain('panel.visible.title');
+  });
+
+  it('covers the titles that arrive through a variable', () => {
+    // The source walk cannot follow `labels.title` or a composed
+    // `` `help.${topic}.title` ``; the naming convention is what does. Pinned
+    // by NAME, because an expected-empty offender sweep passes just as green
+    // whether these keys are in the set or not.
+    const keys = headingKeys();
+    expect(titleConventionKeys().length).toBeGreaterThanOrEqual(40);
+    expect(keys).toContain('tutorial.title');
+    expect(keys).toContain('help.content.title');
+    expect(keys).toContain('review.save.title');
   });
 
   it('renders no ellipsis label as a heading, in any language', () => {
