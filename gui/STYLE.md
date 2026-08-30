@@ -176,26 +176,42 @@ filled-tonal tier).
   `<Button variant="primary">` and its dismissing action is `<Button>` — or
   `ghost` for a tertiary that is neither (the tutorial's *Clear progress*, the
   PDF preview's *Close*). Exactly one primary per footer, gated.
-- **The work surface carries no primary** — a rule no gate can hold, because
-  nothing reads which SURFACE a control sits on; it is a design-time read, like
-  the accent-area rule below. A toolbar, a property panel, a
+- **The work surface carries no primary.** A toolbar, a property panel, a
   menubar and the layer tree are PEER sets: the action you leave a canvas app
   with (Share / Download) is the only thing Docs, Figma and Canva ever fill,
   and electing an editing tool as primary is an argument with no answer. This
   is why the panel's `BTN`/`BTN_SM` rows below are not `Button`s and should not
   become them — they are peers by design, not un-migrated code.
-  - **What the gate does NOT rank**: it reads `footer={…}` props, so a dialog
-    that places its confirming action in the BODY is outside it. Exactly one
-    does today — the restore-points dialog, whose capture button sits beside
-    its name input — and it is also the one place the app can currently show
-    TWO fills at once, because arming a row's restore renders a second primary
-    inside the same dialog. That is pre-existing and not in this change's
-    scope; it is recorded rather than left for the next reader to discover.
-  - **The one documented exception** is an EMPTY STATE. `shell/CanvasArea.tsx`
-    fills its *Add text* CTA because, with no body items, it is the only thing
-    on the page — so it is that screen's primary rather than one voice among
-    peers. `Designer.test.tsx` pins it, since the source gate ranks footers
-    only.
+  - **This is gated, in both directions.** Every footer carries exactly one
+    primary, and every primary is inside a footer — bar an exact, self-checking
+    list of sanctioned exceptions. Ranking footers alone left the complement
+    unwatched, so a filled button added to a work surface passed every check;
+    it is now a red gate rather than a design-time read. (Keying the rule on
+    the DIRECTORY instead would have been wrong on arrival: three of the
+    thirteen footers live under `panel/`.)
+  - **Two surfaces sit outside a footer** (three lines), each pinned by
+    `path:line`. The first is an EMPTY STATE: `shell/CanvasArea.tsx` fills its
+    *Add text* CTA because, with no body items, it is the only thing on the
+    page — that screen's primary rather than one voice among peers
+    (`Designer.test.tsx` pins that it renders). The second
+    is the RESTORE-POINTS dialog, which has no footer at all: its capture
+    control belongs beside the name input it commits. That dialog holds the
+    one-fill rule at RUNTIME instead — arming a row's restore makes that row
+    the decision in front of the reader, so the standing capture button steps
+    down to outlined for exactly that span and takes the fill back on cancel
+    or on restore. Emphasis only; the button stays enabled.
+    `SnapshotDialog.test.tsx` counts the fills in both states, because the
+    defect this replaced was not a wrong button but two right ones at once.
+    The other way round — demoting the armed row's restore and leaving the
+    capture button filled — was rejected: it would leave a DESTRUCTIVE
+    confirm's affirmative and its cancel looking identical, and put the one
+    fill on a control that is not the decision being asked.
+  - **A primary may not hide behind an indirection.** The gate reads the
+    emphasis token on a `variant=`, and also refuses that token anywhere else
+    in the two packages except a declared list — today the `ButtonVariant`
+    union and the font-pack TIER, which is a homonym. A
+    `const emphasis = … ? 'primary' : …` read three lines above the JSX would
+    otherwise be invisible to it.
 - **The filled accent is minted in exactly one place**, `ui/Button.tsx`'s
   `primary` variant. Hand-rolling `bg-accent … text-on-accent` onto a
   `<button>` is what made `grep 'variant="primary"'` under-report the real
@@ -231,6 +247,24 @@ the label that opened it, minus the ellipsis.
   string (`Saving…`, `Paste here…`) uses it in its ordinary sense and is
   exempt from the HIG reading — which is why the gate keys on PARITY and on
   HEADINGS rather than trying to classify a key as a control.
+- **An opener earns the ellipsis by ASKING, not by opening.** Apple's wording
+  is "requires additional input", so a view that merely SHOWS something takes
+  none: *Keyboard shortcuts* and *Glossary* are terminal reference views and
+  are correctly bare, while *Tutorial…* opens a launcher that asks which
+  chapter to start — the same shape that gives *Container…* its ellipsis. The
+  split is also what the gates allow: `shortcuts.title` and `glossary.title`
+  are ONE key doing two jobs (the menu label AND the dialog `title=`), so an
+  ellipsis on either would break the no-heading rule above and cost a key
+  split; `menu.help.tutorial` is a label only.
+- **A label QUOTED IN PROSE drops its ellipsis.** The in-app course cites menu
+  paths ("Insert → Container", 「挿入」→「コンテナ」); the Microsoft Writing
+  Style Guide and Google's developer documentation style guide both omit the
+  trailing ellipsis when citing a command, because it belongs to the control as
+  rendered rather than to the name. Gated by `tutorial/copy.test.ts` over both
+  languages. Each language keeps its own delimiter — 「」 is the only device
+  Japanese has for marking a label boundary in run-on kana/kanji, and English
+  gets that free from capitalisation and the arrow — so the quoting difference
+  between the two files is convention, not drift.
 - Still open, and deliberately not fixed here: the title-matches-label half is
   unmet for several pairs (*Container…* opens "Insert a container"; *Download
   as PDF…* opens "PDF preview"). That is copy work across six catalogs.

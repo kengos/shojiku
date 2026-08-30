@@ -184,6 +184,16 @@ platform binaries.
 
 ### Changed
 
+- **The Help menu's *Tutorial* row now reads *Tutorial…*.** The ellipsis is the
+  promise that a row will ask you something rather than act — the launcher asks
+  which chapter to start from. Its two neighbours, *Keyboard shortcuts* and
+  *Glossary*, only show you something and stay bare.
+
+- **The Japanese tutorial quotes menu labels without their trailing ellipsis**,
+  as the English one always has: 「挿入」→「コンテナ」 rather than
+  「挿入」→「コンテナ…」. The ellipsis belongs to the button you press, not to
+  the name of it in a sentence about it.
+
 - **A footer placed before the first render lands on the page on Letter.**
   Positioning an item in a band used the last render to find the bottom of the
   page, and fell back to a fixed number when nothing had rendered yet — the
@@ -298,6 +308,14 @@ platform binaries.
   same engine version" instead.
 
 ### Fixed
+
+- **The restore-points dialog no longer shows two filled buttons at once.**
+  Arming a saved point's restore left the standing *Save point* button filled
+  beside the confirm's own filled *Restore*, so at the moment the dialog was
+  asking whether to replace your current work, two controls were competing for
+  the eye and neither was clearly the answer. While a restore is armed, the
+  capture button now steps down to an outlined one — it still works, it just
+  stops shouting — and takes its emphasis back when you cancel or restore.
 
 - **The format pickers show their engine-rendered samples again, and the date
   pattern editor has its token buttons back.** In the standalone app the

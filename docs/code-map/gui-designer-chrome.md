@@ -542,17 +542,31 @@ is Tailwind utilities over the `--sj-*` tokens.
   `<Modal>`/`<Offcanvas>` `footer={…}` slice — brace-balanced out of the
   comment-blanked source — is built from `Button` and holds EXACTLY ONE
   `variant="primary"` (Material 3: one primary per screen). The pattern carries
-  its own positive control and both exclusions are pinned. SCOPE, because a gate
-  that does not name its blind spots reads as covering more than it does: it
-  ranks FOOTERS, so a dialog whose confirming action sits in the body (today
-  only the restore-points dialog) is not seen; and NOTHING gates "the work
-  surface carries no primary" — no walker knows which surface a control sits on.
+  its own positive control and both exclusions are pinned. It also holds the
+  COMPLEMENT — every primary is INSIDE a footer, bar an exact self-checking
+  `path:line` list (the empty-state CTA; the footer-less restore-points
+  dialog's two buttons) — so a filled button added to a work surface is a red
+  gate rather than a design-time read; the rule is keyed on footer MEMBERSHIP,
+  not on the directory, because three of the thirteen footers live under
+  `panel/`. A third clause refuses the emphasis token anywhere but a
+  `variant=`, so an indirection cannot hide a fill; the four declared non-uses
+  are the `ButtonVariant` union and the font-pack TIER homonym. What stays
+  UNGATED is which of the restore-points dialog's two buttons is filled — that
+  is runtime state, pinned by `designer-app`'s `SnapshotDialog.test.tsx`.
   All three gates walk BOTH packages' sources.
 - `i18n/ellipsis.test.ts` — the node-env ELLIPSIS gate (Apple HIG): the set of
   chrome keys whose value ENDS in `…` is identical across all six catalogs (the
   ellipsis is a property of the ACTION, not the language), and no `<h1>`–`<h6>`
-  heading renders one. Keys on "ends with", never "contains" — a gate that
-  flagged quoted prose would be relaxed into uselessness. A progress or
+  heading renders one — which is also why an opener whose key doubles as its
+  dialog's `title=` (`shortcuts.title`, `glossary.title`) cannot take one
+  without a key split. The heading set is seeded three ways, because a
+  line-based walker sees only the LITERAL `title={t('key')}`: the source walk,
+  the doc-settings rail's imported table, and the `.title` NAMING CONVENTION
+  over the catalog — the last is what reaches the six titles that arrive
+  through a variable (`labels.title`, `currentStep.title`, a composed
+  `` t(`help.${topic}.title`) ``, `t(keys.title)`, `sectionTitle`). Keys on
+  "ends with", never "contains" — a gate that flagged quoted prose would be
+  relaxed into uselessness. A progress or
   placeholder `…` (`Saving…`) is exempt from the HIG reading by being neither
   a control nor a heading, and parity still covers it.
 - `ui/chrome.ts` — the shared chrome className strings (anything a

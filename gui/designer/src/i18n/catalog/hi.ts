@@ -89,7 +89,7 @@ export const hi: LanguageCatalog = {
     'tutorial.exit': 'ट्यूटोरियल छोड़ें',
     'tutorial.hint': 'पहली बार? निर्देशित कोर्स लें।',
     'tutorial.hintDismiss': 'बंद करें',
-    'menu.help.tutorial': 'ट्यूटोरियल',
+    'menu.help.tutorial': 'ट्यूटोरियल…',
     'help.close': 'बंद करें',
     'help.more': 'और जानें',
     'help.content.title': 'स्थिर टेक्स्ट बनाम डेटा',

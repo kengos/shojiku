@@ -5,6 +5,11 @@
 // owned by the dialog (a closed dialog forgets it). Freshness renders through
 // `Intl.RelativeTimeFormat`, so no catalog strings (or ICU brace traps) are
 // needed for it.
+//
+// The armed row's restore is the dialog's one FILL while it is armed — the
+// standing capture control steps down for exactly that span (see
+// `SnapshotDialog`). The cancel beside it stays outlined so the safe and the
+// destructive choice are never two identical buttons.
 
 import { Button, IconButton, IconTrash, useI18n } from '@shojiku/designer';
 import { useMemo } from 'react';

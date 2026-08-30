@@ -1289,11 +1289,18 @@ map ([gui-designer](../code-map/gui-designer.md) /
   of the ACTION rather than of the language, and no heading may carry one. The
   operational how-to is [`gui/STYLE.md`](../../gui/STYLE.md) § Actions. What
   is GATED: the filled accent is minted once, every dialog footer ranks exactly
-  one primary, the ellipsis key set matches across catalogs, and no heading
-  (dialog titles included) carries one. What is NOT, and is a design-time read
-  like the accent-AREA rule: that the work surface carries no primary — no gate
-  reads a control's surface, so adding a filled button to the toolbar would
-  pass every check.
+  one primary AND every primary is inside a footer (bar an exact, self-checking
+  list — the empty-state CTA and the footer-less restore-points dialog), the
+  emphasis token appears on no `variant=`-less line, the ellipsis key set
+  matches across catalogs, and no heading (dialog titles included) carries one.
+  So a filled button added to the toolbar is now a red gate. What is NOT gated,
+  and stays a design-time read like the accent-AREA rule: which of two
+  candidates a dialog fills when that depends on runtime state — the
+  restore-points dialog steps its capture button down while a row's restore is
+  armed, and only a component test can see it. An opener earns its `…` by
+  ASKING (the tutorial launcher's chapter picker), not merely by opening
+  (Keyboard shortcuts, Glossary); and a label CITED in prose drops the `…`
+  altogether, per the Microsoft and Google documentation style guides.
 - **Delivery mode** (user decision, completed): the redesign was built
   on the long-lived feature branch `feat/gui-redesign` with stacked
   PRs; the workspace gates were allowed red mid-track on that branch,
@@ -1314,7 +1321,8 @@ Formatting/style and coverage follow the general rules in
 - **The convention gates** — `ui/chromeConvention.test.ts` (no native `title=`
   tooltip, no text character standing in for an icon),
   `ui/actionConvention.test.ts` (the filled accent is minted once; every dialog
-  footer is built from `Button` and ranks exactly one primary) and
+  footer is built from `Button` and ranks exactly one primary; and every
+  primary is inside a footer bar a pinned list) and
   `i18n/ellipsis.test.ts` (the ellipsis key set is identical across catalogs;
   no heading carries one). All three WALK THE PACKAGE SOURCE off disk rather
   than rendering, because a component test can only pin the primitives it

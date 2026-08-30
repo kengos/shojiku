@@ -98,7 +98,7 @@ export const fil: LanguageCatalog = {
     'tutorial.exit': 'Lisanin ang tutorial',
     'tutorial.hint': 'Bago ka ba rito? Subukan ang gabay na kurso.',
     'tutorial.hintDismiss': 'Isara',
-    'menu.help.tutorial': 'Tutorial',
+    'menu.help.tutorial': 'Tutorial…',
     'help.close': 'Isara',
     'help.more': 'Matuto pa',
     'help.content.title': 'Nakapirmeng teksto vs. datos',

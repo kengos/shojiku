@@ -128,7 +128,9 @@ describe('Designer', () => {
   it('keeps the rest of the Help menu beside it', () => {
     draw(makeTransport());
     fireEvent.click(screen.getByRole('button', { name: 'Help' }));
-    expect(screen.getByRole('menuitem', { name: 'Tutorial' })).toBeTruthy();
+    // `Tutorial…` promises the launcher's chapter picker; the two beside it open
+    // terminal reference views and stay bare (gui/STYLE.md § Actions).
+    expect(screen.getByRole('menuitem', { name: 'Tutorial…' })).toBeTruthy();
     expect(screen.getByRole('menuitem', { name: 'Keyboard shortcuts' })).toBeTruthy();
     expect(screen.getByRole('menuitem', { name: 'Glossary' })).toBeTruthy();
   });

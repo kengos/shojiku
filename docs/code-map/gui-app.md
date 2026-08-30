@@ -305,7 +305,12 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   CAPTURE row (pure over props; the confirm selection is owned here so a
   closed dialog forgets it). `app/SnapshotList.tsx` — the saved points:
   freshness via pure `app/freshness.ts` + the inline restore-CONFIRM face
-  that replaces a row — never one-click destructive.
+  that replaces a row — never one-click destructive. The dialog has no Modal
+  footer, so it holds Material 3's ONE FILL rule at runtime instead: arming a
+  row's restore steps the capture button down to outlined for exactly that
+  span (emphasis only — it stays enabled). `SnapshotDialog.test.tsx` counts
+  the fills in both states; `designer`'s `ui/actionConvention.test.ts` pins
+  both lines as the sanctioned out-of-footer primaries.
 - `app/MountedApp.tsx` — the mounted body's RENDER TREE: project list →
   template list → editor; an `opening` view is a document open and gets
   the staged `LoadingView`, while a plain `loading` (a remote list read,

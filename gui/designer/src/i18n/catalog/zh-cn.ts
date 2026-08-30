@@ -264,7 +264,7 @@ export const zhCn: LanguageCatalog = {
     'tutorial.exit': '结束教程',
     'tutorial.hint': '第一次使用吗? 可以先走一遍课程。',
     'tutorial.hintDismiss': '关闭',
-    'menu.help.tutorial': '教程',
+    'menu.help.tutorial': '教程…',
     'help.close': '关闭',
     'help.more': '了解更多',
     'help.content.title': '固定文本与数据',
