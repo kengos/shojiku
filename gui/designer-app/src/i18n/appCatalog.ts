@@ -40,7 +40,6 @@ const APP_CHROME_EN: Readonly<Record<string, string>> = {
     'This template could not be prepared. Go back and try again, or reload the page.',
   'app.loading.failedShort': 'Engine unavailable',
   'app.openError': 'Could not open that file.',
-  'app.addFont': 'Add font…',
   'app.fontInstallError': 'That font could not be added. Check your connection and try again.',
   'app.synthError':
     'Sample-data generation is using basic values (the richer generator could not load).',
@@ -59,7 +58,7 @@ const APP_CHROME_EN: Readonly<Record<string, string>> = {
   'mounted.projectsEmpty': 'No projects yet.',
   'mounted.templatesEmpty': 'This project has no templates yet.',
   'mounted.backToProjects': 'Back to projects',
-  'fontPicker.title': 'Add a font',
+  'fontPicker.title': 'Add font',
   'fontPicker.close': 'Close',
   'fontPicker.search': 'Search',
   'fontPicker.subset': 'Writing system',
@@ -112,7 +111,6 @@ const APP_CHROME_JA: Readonly<Record<string, string>> = {
     'テンプレートを準備できませんでした。戻ってやり直すか、ページを再読み込みしてください。',
   'app.loading.failedShort': 'エンジン読み込み失敗',
   'app.openError': 'ファイルを開けませんでした。',
-  'app.addFont': 'フォントを追加…',
   'app.fontInstallError': 'フォントを追加できませんでした。通信環境を確認して再度お試しください。',
   'app.synthError':
     'サンプルデータは簡易な値で生成しています（高度な生成機能を読み込めませんでした）。',

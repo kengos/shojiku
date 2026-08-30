@@ -47,7 +47,7 @@ export function ItemListPane({
   return (
     <nav
       className="flex w-[300px] shrink-0 flex-col gap-2 overflow-y-auto border-r border-border bg-chrome p-3"
-      aria-label={t('data.editorTitle')}
+      aria-label={t('data.listLabel')}
     >
       <input
         type="search"

@@ -184,6 +184,16 @@ platform binaries.
 
 ### Changed
 
+- **A dialog now carries the name of the thing you clicked to open it.** Ten
+  pairs disagreed: *Container…* opened "Insert a container", *Download as
+  PDF…* opened "PDF preview", *Edit data fields…* opened a screen titled
+  "Data fields" — the same words as the sidebar tab beside it — and both
+  *Save selection as block…* and *Save as block…* opened one modal that could
+  not be named after either. The two block labels are now the same label, the
+  style-update dialog names the style it is about to overwrite, and the rest
+  take the wording of the row that opened them. In every language, not only
+  English.
+
 - **The Help menu's *Tutorial* row now reads *Tutorial…*.** The ellipsis is the
   promise that a row will ask you something rather than act — the launcher asks
   which chapter to start from. Its two neighbours, *Keyboard shortcuts* and

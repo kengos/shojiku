@@ -11,14 +11,14 @@ describe('Designer — reusable blocks', () => {
   it('omits the reusable-block group when the host did not arm persistence', () => {
     draw(makeTransport(), { source: THREE_ITEMS });
     openInsert();
-    expect(screen.queryByRole('menuitem', { name: /Save selection as block/ })).toBeNull();
-    expect(screen.queryByRole('menuitem', { name: 'Manage blocks…' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /Save as reusable block/ })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Manage reusable blocks…' })).toBeNull();
   });
 
   it('shows the save row disabled with a reason when nothing is selected', () => {
     draw(makeTransport(), { source: THREE_ITEMS, onBlocksChange: vi.fn() });
     openInsert();
-    const save = screen.getByRole('menuitem', { name: /Save selection as block/ });
+    const save = screen.getByRole('menuitem', { name: /Save as reusable block/ });
     expect(save.textContent).toContain('Select one element first');
   });
 
@@ -27,7 +27,7 @@ describe('Designer — reusable blocks', () => {
     draw(makeTransport(), { source: THREE_ITEMS, onBlocksChange });
     fireEvent.click(screen.getByRole('button', { name: /second/ }));
     openInsert();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Save selection as block…' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Save as reusable block…' }));
     fireEvent.change(screen.getByLabelText('Block name'), { target: { value: '見出し' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(onBlocksChange).toHaveBeenCalledWith([
@@ -41,7 +41,7 @@ describe('Designer — reusable blocks', () => {
     draw(makeTransport(), { source: THREE_ITEMS, onBlocksChange, blocks });
     fireEvent.click(screen.getByRole('button', { name: /second/ }));
     openInsert();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Save selection as block…' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Save as reusable block…' }));
     fireEvent.change(screen.getByLabelText('Block name'), { target: { value: '見出し' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(screen.getByText('A block with this name already exists.')).toBeTruthy();
@@ -63,7 +63,7 @@ describe('Designer — reusable blocks', () => {
     const blocks = [{ id: 'block-1', name: '社判', value: { type: 'text', text: 'x' } }];
     draw(makeTransport(), { source: THREE_ITEMS, onBlocksChange, blocks });
     openInsert();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Manage blocks…' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Manage reusable blocks…' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete?' }));
     expect(onBlocksChange).toHaveBeenCalledWith([]);
@@ -74,7 +74,7 @@ describe('Designer — reusable blocks', () => {
     draw(makeTransport(), { source: THREE_ITEMS, onBlocksChange });
     fireEvent.click(screen.getByRole('button', { name: /second/ }));
     openInsert();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Save selection as block…' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Save as reusable block…' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('heading', { name: 'Save as reusable block' })).toBeNull();
     expect(onBlocksChange).not.toHaveBeenCalled();
@@ -84,7 +84,7 @@ describe('Designer — reusable blocks', () => {
     const blocks = [{ id: 'block-1', name: '社判', value: { type: 'text', text: 'x' } }];
     draw(makeTransport(), { source: THREE_ITEMS, onBlocksChange: vi.fn(), blocks });
     openInsert();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Manage blocks…' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Manage reusable blocks…' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('heading', { name: 'Manage reusable blocks' })).toBeNull();
   });
@@ -95,7 +95,7 @@ describe('Designer — reusable blocks', () => {
       clientX: 10,
       clientY: 20,
     });
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Save as block…' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Save as reusable block…' }));
     expect(screen.getByRole('heading', { name: 'Save as reusable block' })).toBeTruthy();
   });
 
@@ -105,7 +105,7 @@ describe('Designer — reusable blocks', () => {
       clientX: 10,
       clientY: 20,
     });
-    expect(screen.queryByRole('menuitem', { name: 'Save as block…' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Save as reusable block…' })).toBeNull();
   });
 
   it('commits nothing when a block insert is refused by the op layer', () => {
@@ -152,7 +152,7 @@ describe('Designer — reusable blocks', () => {
     fireEvent.click(screen.getByRole('button', { name: paths[0] }));
     fireEvent.click(screen.getByRole('button', { name: paths[1] }), { shiftKey: true });
     openInsert();
-    const save = screen.getByRole('menuitem', { name: /Save selection as block/ });
+    const save = screen.getByRole('menuitem', { name: /Save as reusable block/ });
     expect(save.textContent).toContain('Select one element first');
   });
 });
