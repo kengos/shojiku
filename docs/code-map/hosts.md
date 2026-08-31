@@ -37,7 +37,7 @@ false`), no clap.
   `document.metadata`, so the hosts pass the tree and nothing else.)
 - `inspect.rs` — `InspectEnvelope { engine, document, boxes, margin }` +
   `inspect_json`.
-- `formats.rs` (+ `formats/{variants,probe,exemplar}.rs`) — the FORMAT
+- `formats.rs` (+ `formats/{variants,probe,exemplar,facts}.rs`) — the FORMAT
   CATALOG: `format_catalog(Option<&Template>, &LangPack, &[PatternProbe])`
   → `FormatCatalog { types: [FormatTypeEntry { field_type, fixed,
   variants: [FormatVariant { spelling, origin, samples, drops_time }] }],
@@ -54,6 +54,22 @@ false`), no clap.
   exemplars or across days, so a token added later that moves under neither
   cannot silently escape the measurement
   (`every_pattern_token_is_visible_to_the_two_exemplars`).
+  `formats/facts.rs` is the catalog's sibling query, over the same
+  exemplars and the same dispatch (`variants::render_one`, `pub(super)`
+  precisely so there is one door): `locale_facts(Option<&Template>,
+  &LangPack)` → `LocaleFacts { id, date, number, currency_default,
+  amount }` — what picking a `defaults.locale` / `defaults.currency` DOES,
+  as rendered samples rather than as pattern strings. Samples render at NO
+  variant, which is what a bare `{key}` binding resolves, and through the
+  DOCUMENT's own chain — so an undeclared document's amount carries the
+  fraction digits and no symbol (`symbol`/`name` are per-placement
+  variants), while one whose `defaults.formats.currency` names a variant
+  gets that variant, which is what its page prints. An agreement test pins
+  the undeclared case against the catalog's `default` row, and a second
+  pins the declared one. `currency_default` is EMPTY when the pack declares none —
+  the engine reports the absence, and a consumer decides what to say. It
+  answers for a pack the caller loads itself, so a host can describe a
+  locale it is not rendering through. Capability key `locale.facts`.
   Deliberately NOT part of `inspect`: a catalog is a function of (pack,
   registry) rather than of a laid-out document, and a probe describes a
   pattern the document does not contain yet, which `inspect` cannot report
@@ -328,7 +344,14 @@ target-gated).
   fetches + re-injects on `missing_glyph` OR `unknown_font_family`),
   injected asset byte map.
 - `formats.rs` — the format catalog's pure core, INCLUDING the probe-list
-  parser. The parser lives here rather than in the shim because the shim is
+  parser, plus `Session::locale_facts(template_src, locale_id, overlay)`.
+  That one takes `&self` and touches NO session state: it `load_pack`s the
+  named locale from the host's own pack text and discards it, so the panel
+  can explain the tag the DOCUMENT declares while the preview keeps
+  rendering the tag `set_locale` stored. An id that resolves to neither a
+  builtin nor the overlay is a `WasmError::Locale` refusal — the id is
+  author-typed, so its echo rides the same clip/control-strip guard as
+  every other host-misuse detail. The parser lives here rather than in the shim because the shim is
   never compiled by host clippy/test/coverage, and a parser is not
   marshalling: putting it there would have shipped it unexercised by every
   host gate. It refuses (`deny_unknown_fields`, an unknown type name, a
@@ -351,7 +374,8 @@ target-gated).
   fontPacksNeeded / fontFilesNeeded / fontFacesNeeded / addFontPack /
   addFontFile / loadFonts / loadFontsSubset / addAssetFile / validate /
   renderPng / renderRaw (one arg order surface-wide: template, params,
-  definitions, scale, pageIndex?) / renderPdf / formatCatalog; a `WasmError` becomes a
+  definitions, scale, pageIndex?) / renderPdf / formatCatalog /
+  localeFacts; a `WasmError` becomes a
   thrown JS Error carrying `code` + typed `args`.
 - Built via `make engine:wasm` (Docker: wasm32 target + pinned wasm-bindgen +
   pinned `wasm-opt -Oz` + `wasm-release` profile → `engine/wasm/pkg`,

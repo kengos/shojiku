@@ -135,7 +135,11 @@ fn render(
 }
 
 /// One value through one variant, as the type's own exemplar spec.
-fn render_one(
+///
+/// `pub(super)` because the locale facts (`facts.rs`) render the same
+/// exemplars through it: the one dispatch has one caller-facing door here,
+/// so a second surface cannot grow a second formatter.
+pub(super) fn render_one(
     value: &Value,
     field_type: FieldType,
     variant: Option<&str>,

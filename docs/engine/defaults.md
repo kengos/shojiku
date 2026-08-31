@@ -113,6 +113,19 @@ spelling. Capability keys: `format.catalog` for the query itself, and
 query without it, so a consumer that needs the mark gates on the second
 key rather than rejecting the whole catalog.
 
+A second query answers the question this page's own keys raise — what does
+picking THIS locale, or THIS currency, actually do? It reports the resolved
+pack's id, a rendered date, a rendered number, the ISO code an amount takes
+when `defaults.currency` is unset, and a rendered amount at whichever
+currency the document names. The samples come from the same formatter the
+page uses, so a tool showing them cannot drift, and they follow the
+document's own chain: with nothing declared the amount carries the
+currency's fraction digits and no symbol (`symbol` and `name` are variants
+a placement picks), while a `defaults.formats.currency` naming one is
+honoured — the sample then shows what the page will print. The
+caller supplies the locale pack, so an editor can explain a locale it is
+not currently rendering through. Capability key `locale.facts`.
+
 ## Limitations
 
 - A `formats:` entry named after a FIELD TYPE — `currency`, `date` and the

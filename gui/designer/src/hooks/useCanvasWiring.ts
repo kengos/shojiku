@@ -5,7 +5,9 @@
 // PDF action, so effect order is unchanged.
 
 import { useCallback } from 'react';
+import { engineLocaleFor } from '../i18n/locales';
 import { DEFAULT_IMAGE_BUDGETS } from '../image/model';
+import { readDefaultsView } from '../panel/defaultsModel';
 import { pageSummary, readPageView } from '../panel/pageSetupModel';
 import type { DesignerProps } from '../props';
 import { useDocDerived } from './useDocDerived';
@@ -86,7 +88,17 @@ export function useCanvasWiring(
     // targets only, and a modal's close button is not one).
     readPageLabel: useCallback(() => pageSummary(readPageView(editor.read('page'))), [editor.read]),
   });
-  const derived = useDocDerived(editor.text, defaultFontFamily, transport, defs.paletteGroups);
+  const derived = useDocDerived({
+    text: editor.text,
+    defaultFontFamily,
+    transport,
+    paletteGroups: defs.paletteGroups,
+    // Resolved HERE, where the chrome registry is in scope: the derivation
+    // layer asks the engine about a tag the engine can answer for, so a
+    // regional English has already become the locale the engine has.
+    localeTag: engineLocaleFor(readDefaultsView(editor.read('defaults')).locale),
+    localePacks: props.localePacks,
+  });
 
   return { nav, drag, image, inline, pdf, derived };
 }

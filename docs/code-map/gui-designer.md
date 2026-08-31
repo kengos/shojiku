@@ -311,7 +311,17 @@ lists name the destructured stable fields, never `editor` itself.
   over the LAST-GOOD inspect and gated on `inspect.text_metrics`.
 - `hooks/useDocDerived.ts` — shared read-only indexes memoized on the
   text: `treeView` (nullable), `styleUsage`, `formatUsage`, `styleFloor`
-  — plus `formats`, the ENGINE's format catalog. `formatUsage` also takes
+  — plus the two ENGINE answers, `formats` (the format catalog) and
+  `localeFacts` (what the document's `defaults.locale` pick DOES). Takes
+  ONE input bundle. The two engine answers share the catalog KEY, because
+  `defaults.locale` and `defaults.currency` both live in the slice it
+  names. `localeTag` arrives already resolved to a tag the ENGINE can
+  answer for (`i18n/locales.ts` `engineLocaleFor`, applied in
+  `useCanvasWiring` where the chrome registry is in scope), and
+  `localePacks` is the host's pack source
+  (`hooks/useLocaleFacts.ts` — one call per (tag, slice), a bounded
+  memory keyed by a tag that is user input, and an answer shown only
+  while it still describes the tag on screen). `formatUsage` also takes
   the palette groups (`defs.paletteGroups`, passed through from
   `useCanvasWiring`), because only the DEFINITIONS can say which bindings
   are dated and therefore which `format:` values reach the registry at

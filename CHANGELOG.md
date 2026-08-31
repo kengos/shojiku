@@ -15,6 +15,16 @@ platform binaries.
 
 ### Added
 
+- **The document-settings panel now explains a locale pick with the engine's
+  own output.** It used to carry its own table of per-locale example strings —
+  a date, a grouped number, an amount — copied from the locale packs by hand
+  and kept honest by a test. Those examples are now rendered by the engine
+  through the same path a bound field takes, so they cannot drift from what the
+  page prints, and a locale the preview is not running can still be described.
+  A new `localeFacts` query answers it, reported by the capability key
+  `locale.facts`; an engine without it leaves the panel explaining nothing
+  rather than guessing.
+
 - **A manuscript-paper item can now be given a named style, and told whether to
   read ruby notation.** Neither had a control: `styleNames` decides where the
   item's font size, ruling width and cell alignment come from, and its only

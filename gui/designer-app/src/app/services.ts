@@ -153,6 +153,12 @@ export interface AppServices {
     engineLocale: string,
     onProgress?: (progress: ByteProgress) => void,
   ) => Promise<EnginePrep>;
+  /** Where a locale PACK's text comes from, so the Designer's document-settings
+   * panel can ask the engine what a `defaults.locale` pick DOES — including
+   * for a locale this session is not rendering through. `null` from
+   * `overlayFor` means the engine has a builtin for the tag; a tag this
+   * deployment ships no pack for simply goes unexplained. */
+  readonly localePacks: { overlayFor(tag: string): Promise<string | null> };
   /** Fetch the Google-Fonts catalog snapshot (memoized by the host). Absent →
    * the font picker is not offered. */
   readonly loadFontCatalog?: () => Promise<FontCatalog>;

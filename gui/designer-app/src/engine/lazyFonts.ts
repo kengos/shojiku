@@ -170,8 +170,8 @@ export class LazyFontLoader {
  * and when it must survive a class-shaped inner transport. A spread copies OWN
  * properties, so an implementation whose methods sit on a prototype gets
  * nothing from it — `validate` and `renderRaw` are delegated explicitly for
- * that reason, and `renderPdf` and `formatCatalog` each get a presence-mirrored
- * named arm. So the spread is a floor, not a guarantee: a NEW optional method
+ * that reason, and `renderPdf`, `formatCatalog` and `localeFacts` each get a
+ * presence-mirrored named arm. So the spread is a floor, not a guarantee: a NEW optional method
  * left to it alone would reach every transport here and none that is
  * class-shaped, which is how this wrapper lost `formatCatalog` in the first
  * place. */
@@ -185,6 +185,7 @@ export function createLazyFontTransport(params: {
   // `inner.formatCatalog?.()` inside the closure would leave an unreachable
   // undefined arm behind the guard that already excluded it.
   const askCatalog = inner.formatCatalog;
+  const askFacts = inner.localeFacts;
   return {
     ...inner,
     validate: (template, p, definitions) => inner.validate(template, p, definitions),
@@ -246,6 +247,15 @@ export function createLazyFontTransport(params: {
       ? {
           formatCatalog: (template: string, probes: readonly PatternProbe[]) =>
             askCatalog.call(inner, template, probes),
+        }
+      : {}),
+    // Same reasoning as the catalog: a locale query renders nothing and waits
+    // for no font, so there is nothing to add — and it is named anyway, for
+    // the prototype-shaped inner transport the spread cannot reach.
+    ...(askFacts !== undefined
+      ? {
+          localeFacts: (template: string, localeId: string, overlay?: string) =>
+            askFacts.call(inner, template, localeId, overlay),
         }
       : {}),
   };

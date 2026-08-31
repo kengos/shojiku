@@ -58,6 +58,7 @@ export function FullscreenView({
         styleUsage={derived.styleUsage}
         formatUsage={derived.formatUsage}
         formatCatalog={derived.formats.catalog}
+        localeFacts={derived.localeFacts}
         probeFormat={derived.formats.probe}
         maxBytes={maxBytes}
         pages={session.pages}

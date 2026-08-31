@@ -261,7 +261,10 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   watchable `moduleLoad` source + the progress-reporting
   `prepareEngine(locale, onProgress?)` (catalog-first boot renders before
   the module is in, so the transfer is OBSERVED here rather than awaited
-  ahead of the app), optional
+  ahead of the app), `localePacks` (the SAME `LocaleSource` the engine
+  boot uses, handed to the Designer so its document-settings panel can ask
+  the engine what a `defaults.locale` pick does — including for a locale
+  this session is not rendering through), optional
   `copilot`/`remote` (remote present = mounted mode), optional
   `loadFontCatalog`/`specimen`/`loadSynth` (the faker-backed synth —
   `src/sample/fakerSynth.ts`, seeded determinism, money fields

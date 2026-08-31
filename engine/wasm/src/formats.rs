@@ -10,7 +10,9 @@
 use crate::error::WasmError;
 use crate::session::Session;
 use serde::Deserialize;
-use shojiku_authoring::{format_catalog, FormatCatalog, PatternProbe, MAX_PROBES};
+use shojiku_authoring::{
+    format_catalog, load_pack, locale_facts, FormatCatalog, LocaleFacts, PatternProbe, MAX_PROBES,
+};
 use shojiku_core::{parse_template, FieldType};
 
 /// One probe as a host sends it: `{ "fieldType": "date", "pattern": "…" }`.
@@ -79,5 +81,31 @@ impl Session {
         let pack = self.pack.as_ref().ok_or(WasmError::LocaleNotSet)?;
         let template = parse_template(template_src).ok();
         Ok(format_catalog(template.as_ref(), pack, probes))
+    }
+
+    /// The locale facts for `locale_id` — what picking it does to a date, a
+    /// number and an amount — under `template_src`'s own `defaults.currency`.
+    ///
+    /// The pack is loaded from `overlay` HERE and thrown away; the session's
+    /// own pack is neither read nor replaced. That is the point: a Designer's
+    /// locale panel explains the tag the DOCUMENT declares, and the preview
+    /// deliberately renders through the tag the host set at boot, so the two
+    /// are routinely different. Making this borrow the session's pack would
+    /// answer the wrong question, and making it `set_locale` would move the
+    /// preview under the reader.
+    ///
+    /// `overlay` is what `set_locale` takes: `None` resolves a builtin, and a
+    /// non-builtin id needs the pack text the host holds. An id that resolves
+    /// to neither is refused rather than guessed — a `defaults.locale` is
+    /// author-typed, so the miss is ordinary, not exceptional.
+    pub fn locale_facts(
+        &self,
+        template_src: &str,
+        locale_id: &str,
+        overlay: Option<&str>,
+    ) -> Result<LocaleFacts, WasmError> {
+        let pack = load_pack(locale_id, overlay).map_err(|e| WasmError::Locale(e.to_string()))?;
+        let template = parse_template(template_src).ok();
+        Ok(locale_facts(template.as_ref(), &pack))
     }
 }

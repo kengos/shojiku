@@ -10,6 +10,7 @@ import type {
   Diagnostics,
   FormatCatalog,
   InspectEnvelope,
+  LocaleFacts,
   PatternProbe,
   RawPage,
   WasmErrorCode,
@@ -67,6 +68,20 @@ export interface EngineTransport {
    * falls back to offering wire spellings with no samples. Presence, never a
    * version sniff. */
   formatCatalog?(template: string, probes: readonly PatternProbe[]): Promise<FormatCatalog>;
+  /** What picking `localeId` does to a date, a number and an amount, under
+   * this template's own `defaults.currency`.
+   *
+   * `overlay` is the locale pack's YAML — the host holds it, because which
+   * packs a deployment ships is a host fact; `undefined` asks for a builtin.
+   * The engine loads it for this call alone and never touches the locale the
+   * session renders through, which is deliberately a DIFFERENT one: a
+   * document's `defaults.locale` is the CLI/MCP render fallback, and a panel
+   * explaining it must be able to describe a locale the preview is not using.
+   *
+   * OPTIONAL for the same reason `formatCatalog` is — an engine without the
+   * `locale.facts` capability omits it and the panel explains nothing rather
+   * than guessing. Presence, never a version sniff. */
+  localeFacts?(template: string, localeId: string, overlay?: string): Promise<LocaleFacts>;
 }
 
 /** A transport-level failure: an engine host-misuse throw (e.g. rendering

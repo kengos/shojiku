@@ -10,6 +10,7 @@
 // wanted both at once; nothing ever asked for it.
 
 import type { EditorController } from '../editor/useEditor';
+import type { LocaleFacts } from '../engine/types';
 import { DefaultsLocaleFields } from './DefaultsLocaleFields';
 import { DefaultsStyleSection } from './DefaultsStyleFields';
 import { hasCapability } from './itemPanelProps';
@@ -22,6 +23,10 @@ export interface DocumentDefaultsProps {
    * seeded into the unset family field. Absent → that field shows a localized
    * placeholder instead of a seed value. */
   readonly defaultFontFamily?: string;
+  /** What the picked `defaults.locale` DOES, as the engine's own rendered
+   * samples — `null` (the default) claims nothing about the pick, which is
+   * also what an engine without the `locale.facts` query leaves behind. */
+  readonly localeFacts?: LocaleFacts | null;
   /** Which half to render — the caller supplies the heading, so no internal
    * `<h3>`/`<h4>` chrome: `'locale'` = the locale + currency controls,
    * `'style'` = the inherited-style defaults. */
@@ -36,12 +41,13 @@ export function DocumentDefaults({
   fontFamilies = [],
   capabilities,
   defaultFontFamily,
+  localeFacts = null,
   section,
 }: DocumentDefaultsProps) {
   if (section === 'locale') {
     return hasCapability(capabilities, 'template.defaults.document') ? (
       <div>
-        <DefaultsLocaleFields controller={controller} />
+        <DefaultsLocaleFields controller={controller} facts={localeFacts} />
       </div>
     ) : null;
   }

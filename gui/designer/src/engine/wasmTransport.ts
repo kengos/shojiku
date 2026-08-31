@@ -9,6 +9,7 @@
 
 import { throwFields } from './errors';
 import { toFormatCatalog } from './formatCatalogResponse';
+import { toLocaleFacts } from './localeFactsResponse';
 import { type EngineTransport, TransportError } from './transport';
 import { toDiagnostics, toOutcome, toPdfOutcome } from './wasmResponse';
 
@@ -30,6 +31,10 @@ export interface WasmEngine {
    * a JSON string — the engine parses them, so the shapes it accepts are
    * decided in ONE place rather than mirrored here. */
   formatCatalog?(template: string, probes: string): string;
+  /** Present only on an engine advertising `locale.facts`. The pack text
+   * crosses as-is; the engine parses it, so a host never needs a second
+   * grammar for a locale pack. */
+  localeFacts?(template: string, localeId: string, overlay?: string | null): string;
 }
 
 /** Build an `EngineTransport` over a prepared wasm `Engine`. */
@@ -38,6 +43,7 @@ export function createWasmTransport(engine: WasmEngine): EngineTransport {
   // `engine.formatCatalog?.()` inside the closure would leave an
   // unreachable undefined arm behind the guard that already excluded it.
   const askCatalog = engine.formatCatalog;
+  const askFacts = engine.localeFacts;
   return {
     async validate(template, params, definitions) {
       let json: string;
@@ -79,6 +85,20 @@ export function createWasmTransport(engine: WasmEngine): EngineTransport {
               throw new TransportError(message, { code, args });
             }
             return toFormatCatalog(json);
+          },
+        }
+      : {}),
+    ...(askFacts !== undefined
+      ? {
+          async localeFacts(template, localeId, overlay) {
+            let json: string;
+            try {
+              json = askFacts.call(engine, template, localeId, overlay ?? null);
+            } catch (cause) {
+              const { message, code, args } = throwFields(cause);
+              throw new TransportError(message, { code, args });
+            }
+            return toLocaleFacts(json);
           },
         }
       : {}),

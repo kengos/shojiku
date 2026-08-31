@@ -57,6 +57,27 @@ impl Engine {
         to_json(&catalog)
     }
 
+    /// What picking `localeId` would do to a date, a number and an amount,
+    /// under this template's own `defaults.currency`.
+    ///
+    /// Answers for a locale the session is NOT rendering through — it loads
+    /// the pack from `overlay` and discards it, leaving `setLocale`'s pack
+    /// untouched — because a document's `defaults.locale` is a CLI/MCP render
+    /// fallback rather than the tag the preview runs.
+    #[wasm_bindgen(js_name = localeFacts)]
+    pub fn locale_facts(
+        &self,
+        template: String,
+        locale_id: String,
+        overlay: Option<String>,
+    ) -> Result<String, JsValue> {
+        let facts = self
+            .inner
+            .locale_facts(&template, &locale_id, overlay.as_deref())
+            .map_err(throw)?;
+        to_json(&facts)
+    }
+
     /// Resolves and stores the locale pack (builtin id, with an optional
     /// overlay/standalone YAML string).
     #[wasm_bindgen(js_name = setLocale)]

@@ -2,6 +2,7 @@ import {
   type Diagnostics,
   type EngineTransport,
   type FormatCatalog,
+  type LocaleFacts,
   type PatternProbe,
   type RenderOutcome,
   TransportError,
@@ -500,6 +501,66 @@ describe('createLazyFontTransport — what it does NOT wrap still passes through
     });
     const answer = await transport.formatCatalog?.('t', []);
     expect(answer?.types[0].fieldType).toBe('date');
+  });
+
+  // Same three-way pin for `localeFacts`, because the same class of defect is
+  // available to it: an optional method the wrapper forgets leaves no line
+  // uncovered, so the standalone app would simply explain no locale pick with
+  // every gate green.
+  it('forwards localeFacts to the inner transport', async () => {
+    const facts = {
+      id: 'ja-JP',
+      date: '2026/11/03(\u706b)',
+      number: '12,345,678.9',
+      currencyDefault: 'JPY',
+      amount: '1,234,568',
+    };
+    const inner: EngineTransport = {
+      validate: vi.fn(async () => clean),
+      renderRaw: vi.fn(async () => okRender()),
+      localeFacts: vi.fn(async () => facts),
+    };
+    const transport = createLazyFontTransport({
+      inner,
+      loader: idleLoader(),
+      onUpgraded: vi.fn(),
+    });
+    const answer = await transport.localeFacts?.('t', 'ja-JP', 'id: ja-JP\n');
+    expect(inner.localeFacts).toHaveBeenCalledWith('t', 'ja-JP', 'id: ja-JP\n');
+    expect(answer?.currencyDefault).toBe('JPY');
+  });
+
+  it('is absent when the inner transport cannot answer locale facts', () => {
+    const transport = createLazyFontTransport({
+      inner: { validate: vi.fn(async () => clean), renderRaw: vi.fn(async () => okRender()) },
+      loader: idleLoader(),
+      onUpgraded: vi.fn(),
+    });
+    expect(transport.localeFacts).toBeUndefined();
+  });
+
+  it('forwards a localeFacts that lives on the inner transport PROTOTYPE', async () => {
+    class ClassTransport {
+      validate = vi.fn(async () => clean);
+      renderRaw = vi.fn(async () => okRender());
+      localeFacts(_t: string, id: string): Promise<LocaleFacts> {
+        return Promise.resolve({
+          id,
+          date: 'd',
+          number: 'n',
+          currencyDefault: 'JPY',
+          amount: 'a',
+        });
+      }
+    }
+    const inner: EngineTransport = new ClassTransport();
+    expect(Object.hasOwn(inner, 'localeFacts')).toBe(false);
+    const transport = createLazyFontTransport({
+      inner,
+      loader: idleLoader(),
+      onUpgraded: vi.fn(),
+    });
+    expect((await transport.localeFacts?.('t', 'zh-TW'))?.id).toBe('zh-TW');
   });
 
   // The structural half of the fix, pinned so nobody re-hand-rolls the literal:

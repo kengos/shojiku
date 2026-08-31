@@ -254,4 +254,14 @@ pub(super) const KEYS: &[&str] = &[
     // entirely, and a consumer that requires it must gate on this key rather
     // than rejecting the whole catalog.
     "format.catalog.dropsTime",
+    // The locale FACTS query: what a document's `defaults.locale` /
+    // `defaults.currency` pick does to a date, a number and an amount, as
+    // engine-rendered samples plus the pack's own default currency code.
+    // Filed beside the catalog because it is the same promise one question
+    // wider — an editor explains a locale pick with the engine's output
+    // instead of a table of its own — and it answers for a locale the host
+    // is NOT rendering through, which the catalog cannot. Older engines
+    // expose no such query, so a consumer explains nothing rather than
+    // guessing.
+    "locale.facts",
 ];

@@ -137,6 +137,9 @@ async function main(): Promise<void> {
     copilot: boot.copilot,
     moduleLoad,
     prepareEngine: makePrepareEngine({ wasm, index, locales, google, bootFonts }),
+    // The same source the engine boot uses, handed to the Designer so the
+    // locale panel can ask about a tag this session is not rendering through.
+    localePacks: locales,
     loadFontCatalog,
     specimen: makeSpecimen(google),
     loadSynth: (engineLocale) => loadFakerSynth(engineLocale, loadFakerModule),

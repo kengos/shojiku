@@ -942,8 +942,16 @@ conditional rules the next section owns).
   supplies the heading). A headed standalone stacked form for a host
   wanting both at once was removed — nothing ever rendered it.
   - `panel/DefaultsLocaleFields.tsx` — the document settings half:
-    locale/currency combos, each with a what-this-pick-DOES line
-    (`localeFacts`) read through the tag the ENGINE resolves to.
+    locale/currency combos, each with a what-this-pick-DOES line whose
+    every value is the ENGINE's rendered sample, arriving as the `facts`
+    prop (`hooks/useLocaleFacts`). Nothing here formats. Each line is
+    gated on what IT needs: the locale line NAMES the default currency
+    code, so a pack declaring none (reported as an empty code) loses that
+    sentence while the amount line stays. `facts === null` — no answer
+    yet, an engine without `locale.facts`, an unresolvable tag, a pack
+    this host does not ship — claims nothing. The picker's option list is
+    the chrome registry plus `i18n/locales.ts` `ENGINE_ONLY_LOCALES`
+    (engine-resolvable locales with no Designer chrome: `th-TH`).
   - `panel/DefaultsStyleFields.tsx` — the cascade-root half: one field
     renderer (color as `ColorSwatchPicker`, everything else
     `StyleFieldInput`; engine fallbacks as placeholders from
@@ -995,10 +1003,6 @@ conditional rules the next section owns).
 - `panel/formatSummary.ts` — pure: the 表示形式 rail row's one-liner. It
   NAMES the first set type rather than only counting, so the rail answers
   "is the date format set here?" without opening the section.
-- `panel/localeFacts.ts` — what a locale/currency pick DOES, as data —
-  copied from the defining files (`engine/formatter` builtins +
-  `packs/locale/`) and pinned by a drift-guard test; composes samples
-  from the engine's separators, never formats.
 - `panel/styleLabels.ts` — pure: `styleOptionLabel` (wire spelling →
   localized wording; degrades to the spelling) + `unsetLabel`; pinned
   against every `STYLE_FIELDS` enum option.

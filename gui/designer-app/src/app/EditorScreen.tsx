@@ -81,6 +81,7 @@ export function EditorScreen(props: EditorScreenProps) {
           templateMaxBytes={services.templateMaxBytes()}
           onTemplateMaxBytesChange={services.persistTemplateMaxBytes}
           imageCodec={services.imageCodec}
+          localePacks={services.localePacks}
           onChange={w.actions.handleChange}
           onSampleSetChange={w.actions.handleSampleSetChange}
           onDefinitionsChange={w.actions.handleDefinitionsChange}
