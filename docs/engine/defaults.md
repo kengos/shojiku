@@ -26,12 +26,14 @@ defaults:
     currency: symbol                             # ¥9,000 everywhere
 ```
 
+<!-- rf:table:start defaults#defaults (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Meaning |
 | --- | --- |
 | `locale` | Document locale id (BCP 47, e.g. `ja-JP`). The CLI's fallback for picking the locale pack when `--lang` is absent (`--lang` > `defaults.locale` > `ja-JP`). Drives dates, currency display, grouping separators, and units. |
 | `currency` | Document currency **code** (ISO 4217, e.g. `JPY`). The middle of the currency fallback chain: the field's `currency:` → `defaults.currency` → the pack's `currencyDefault` → `JPY`. Lets currency bindings stay a bare `{key}` with no per-field code. |
 | `style` | The cascade **root style**. Inherited properties ([style.md](style.md)) flow into every item; the `rem` root follows this style's computed `fontSize` (engine default 10pt when unset — see [length.md](length.md)). |
 | `formats` | Per-type format defaults: `date` / `datetime` / `number` / `currency` / `percentage` / `quantity`, each a variant-name string **or** an inline `{ pattern: … }` map. Unknown type keys are parse errors. |
+<!-- rf:table:end -->
 
 > `locale` and `currency` were top-level `definitions.yml` keys in
 > earlier engines; they now live here, the single home for document

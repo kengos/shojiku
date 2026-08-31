@@ -35,11 +35,13 @@ for an outline, `backgroundColor` for a fill.
 
 ## Keys
 
+<!-- rf:table:start rect#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `box` | map | required | Position and size ([box.md](box.md)); margins work, padding is ignored. |
 | `styleNames` | list | — | Named styles from the `styles:` registry, layered below the inline `style`. |
 | `style.*` | [Style](style.md) decoration subset | — | `backgroundColor`, `borderWidth`, `borderColor`, `borderStyle`, `borderRadius`, `opacity`. A side draws iff its computed width > 0. Text keys are inert and warn `shape_style_ignored`. |
+<!-- rf:table:end -->
 
 The retired shape-style spelling `fillColor` is a located parse error —
 use `backgroundColor`. Engines without the `style.shapes.unified`

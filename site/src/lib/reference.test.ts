@@ -20,6 +20,8 @@ import {
   referenceStems,
   REPO_ONLY,
   splitFrontMatter,
+  hasGeneratedTables,
+  list,
   stripInjected,
   unguardMustaches,
   type ReferencePage,
@@ -125,6 +127,45 @@ describe("injected blocks", () => {
     const text = `head${block("<Thing />")}tail`;
     expect(text).toContain("<Thing />");
     expect(stripInjected(text)).toBe("headtail");
+  });
+
+  it("leaves the ENGINE's table markers alone", () => {
+    // The two marker pairs must not be the same one. `stripInjected` runs
+    // before the byte-for-byte drift comparison, so if it removed the
+    // engine's generated tables they would vanish from the projected body and
+    // the round-trip gate would red — on every page that has one.
+    const table = "<!-- rf:table:start box#keys (generated) -->\n| K |\n<!-- rf:table:end -->";
+    const text = `head${block("<Thing />")}${table}tail`;
+    const stripped = stripInjected(text);
+    expect(stripped).not.toContain("<Thing />");
+    expect(stripped).toContain("rf:table:start");
+    expect(stripped).toContain("| K |");
+    expect(stripped).toContain("rf:table:end");
+  });
+});
+
+describe("list", () => {
+  it("reads naturally at one, two and three parts", () => {
+    expect(list(["a"])).toBe("a");
+    expect(list(["a", "b"])).toBe("a and b");
+    expect(list(["a", "b", "c"])).toBe("a, b and c");
+  });
+
+  it("is empty for no parts", () => {
+    // The caller has its own sentence for that case; this must not invent one.
+    expect(list([])).toBe("");
+  });
+});
+
+describe("hasGeneratedTables", () => {
+  it("detects a page carrying an engine-generated table", () => {
+    expect(hasGeneratedTables("intro\n<!-- rf:table:start box#keys (generated) -->\n")).toBe(true);
+  });
+
+  it("is false for a page with none", () => {
+    // A positive control sits above; without it an implementation that always
+    // returned false would pass this one alone.
+    expect(hasGeneratedTables("intro\n| Key | Type |\n")).toBe(false);
   });
 });
 
@@ -359,6 +400,19 @@ describe("the provenance strip names what THIS page generates", () => {
 
   it("says sidebar and demo on an ordinary feature page", () => {
     expect(projectPage(page, { source: "s", demo: "text" })).toContain('parts="the sidebar and the demo below."');
+  });
+
+  it("names the tables on a page that carries them", () => {
+    const withTable = readPage(
+      "text",
+      `${FM}\n# T\n\nintro\n\n## Keys\n\n<!-- rf:table:start text#keys (generated) -->\n| K |\n<!-- rf:table:end -->\n`,
+    );
+    // Three parts, so the list reads with commas — "a and b and c" is what
+    // the bare join produced, and it shipped to the preview deployment before
+    // anyone read the rendered sentence.
+    expect(projectPage(withTable, { source: "s", demo: "text" })).toContain(
+      'parts="the sidebar, the tables and the demo below."',
+    );
   });
 
   it("says only the sidebar when the page has no demo", () => {

@@ -211,6 +211,21 @@ export function unguardMustaches(text: string): string {
   return text.replace(UNMUSTACHE, "$1");
 }
 
+/** The engine writes each generated table between its own markers, inside the
+ * REPO file — `docs/engine/*.md` is read on GitHub too, so a table injected at
+ * projection time would exist only on the site.
+ *
+ * Deliberately NOT this module's `rf:begin` pair: `stripInjected` removes that
+ * one before the drift comparison, so a generated table wearing it would
+ * vanish from the projected body and red the round-trip gate. */
+const TABLE_MARKER = "<!-- rf:table:start ";
+
+/** Whether a page carries engine-generated tables, so the provenance strip
+ * can say so without a second list to keep in sync. */
+export function hasGeneratedTables(body: string): boolean {
+  return body.includes(TABLE_MARKER);
+}
+
 const OPEN = "<!-- rf:begin -->";
 const CLOSE = "<!-- rf:end -->";
 const BLOCK = new RegExp(`\\n\\n${OPEN}\\n\\n[\\s\\S]*?\\n\\n${CLOSE}\\n\\n`, "g");
@@ -279,6 +294,15 @@ export function demoAnchor(body: string): number {
   return next?.index ?? body.length;
 }
 
+/** `a`, `a and b`, `a, b and c`. A bare `join(" and ")` was fine while a page
+ * could only generate two things; the third one made every strip read "the
+ * sidebar and the tables and the demo below". Visible only on the rendered
+ * page — no gate reads a sentence. */
+export function list(parts: readonly string[]): string {
+  if (parts.length <= 1) return parts[0] ?? "";
+  return `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)!}`;
+}
+
 export interface ProjectOptions {
   /** The repo-relative source path, for the provenance strip. */
   source: string;
@@ -305,10 +329,11 @@ export function projectPage(page: ReferencePage, opts: ProjectOptions): string {
   // (it IS the tree) and no demo, so the generic sentence was false there.
   const parts = [
     ...(opts.landing === true ? [] : ["the sidebar"]),
+    ...(hasGeneratedTables(page.body) ? ["the tables"] : []),
     ...(opts.demo === undefined ? [] : ["the demo below"]),
     ...(opts.extra === undefined ? [] : ["the page index below"]),
   ];
-  const generated = parts.length === 0 ? "nothing — this page is the file, as it is." : `${parts.join(" and ")}.`;
+  const generated = parts.length === 0 ? "nothing — this page is the file, as it is." : `${list(parts)}.`;
   const strip = block(
     [
       ...(opts.notice === undefined ? [] : [`> ${opts.notice}`]),

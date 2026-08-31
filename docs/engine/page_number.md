@@ -31,10 +31,12 @@ sections:
 
 ## Keys
 
+<!-- rf:table:start page_number#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `format` | string | `"{page} / {pages}"` | `{page}` = current page (1-based), `{pages}` = total. Other text passes through (`- {page} -`, `p.{page}`). |
 | `box` / `style` / `styleNames` | | | Usual text forms ([style.md](style.md)). |
+<!-- rf:table:end -->
 
 Combine with the band's `repeat` mode (`every_page` /
 `except_first_page` / …) to control which pages show it.

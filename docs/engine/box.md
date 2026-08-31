@@ -44,11 +44,13 @@ box:
 
 ## Position & size
 
+<!-- rf:table:start box#position-size (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Omitted means | Description |
 | --- | --- | --- | --- |
 | `x`, `y` | [Length](length.md) | 0 | Offset from the parent box origin. In a **flow**, `y` is ignored (the cursor owns it) and `x` offsets within the flow region. Authoring `x` or `y` on a container child opts it out of flex placement (see [flex.md](flex.md)). |
 | `w` | Length | fill parent width minus horizontal margins | `%` resolves against the parent width. |
 | `h` | Length | **auto height** — grows to content (lowest child bottom for containers, wrapped text height for text) | `%` resolves against the parent height. A definite `h` activates `textOverflow` policies on text. |
+<!-- rf:table:end -->
 
 ## Min/max bounds
 

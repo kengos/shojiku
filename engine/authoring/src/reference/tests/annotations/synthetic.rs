@@ -90,6 +90,12 @@ fn every_problem_says_which_node_and_why() {
 
 #[test]
 fn a_malformed_annotation_file_returns_an_error_rather_than_panicking() {
-    assert!(crate::reference::annotations::parse("Box: [not, prose]").is_err());
-    assert!(crate::reference::annotations::parse("Box: prose enough to pass").is_ok());
+    let parse = crate::reference::annotations::parse;
+    // The file is a flat map of node to PROSE; a sequence is not prose, and
+    // neither is a map. An earlier draft of this cycle widened the value to
+    // `string | map` with `#[serde(untagged)]`, which silently ACCEPTED the
+    // sequence — the widening is gone, and this is what says so.
+    assert!(parse("Box: [not, prose]").is_err());
+    assert!(parse("Box:\n  text: a map is not prose\n").is_err());
+    assert!(parse("Box: prose enough to pass").is_ok());
 }

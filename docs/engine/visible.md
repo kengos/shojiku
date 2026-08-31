@@ -26,12 +26,14 @@ SPACE the item leaves behind.
 
 ## The predicate
 
+<!-- rf:table:start visible#the-predicate (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Meaning |
 | --- | --- |
 | `key` | the params field to read (dotted paths allowed) — **required** |
 | `equals` | a string, number or boolean the value must equal. Omitted: the value is read as a boolean and the item shows when it is `true` |
 | `scope` | `element` (default) or `document` — which data the key resolves against inside a `repeat` cell |
 | `collapse` | `true` removes the item from layout instead of reserving its box |
+<!-- rf:table:end -->
 
 Equality is **type-strict**: `equals: "2"` never matches a numeric `2`. An
 **array** value is a multi-select — the item shows when the array *contains*

@@ -28,6 +28,7 @@ diagnostic); a non-empty `spans` wins over both (warns
   style: { fontSize: 9, textAlign: right, textOverflow: ellipsis }
 ```
 
+<!-- rf:table:start text#syntax (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Description |
 | --- | --- | --- |
 | `text` | string | Static content with `{key}` / `{key:format}` interpolation ([data-binding.md](data-binding.md)); `{{` escapes a literal `{`. |
@@ -38,6 +39,7 @@ diagnostic); a non-empty `spans` wins over both (warns
 | `rubySize` | [length](length.md) | Ruby reading font size; unset = half the item's font size. |
 | `box` | map | See [box.md](box.md). `h` omitted = auto height (grows with the wrapped text); `w` omitted = fill. |
 | `style` / `styleNames` | | Full property set — see [style.md](style.md). |
+<!-- rf:table:end -->
 
 ## Inline rich text (`spans`)
 

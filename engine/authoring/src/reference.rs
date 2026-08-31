@@ -44,6 +44,14 @@ pub const ANNOTATIONS: &str = include_str!("../reference/annotations/en.yml");
 
 pub mod annotations;
 
+/// The generated reference tables' editorial half: which of a node's keys each
+/// page's table shows, how its rows group, and what its columns say. Authored
+/// because it cannot be derived, and held to the catalog by
+/// [`tables::audit`].
+pub const TABLES: &str = include_str!("../reference/tables.yml");
+
+pub mod tables;
+
 #[cfg(feature = "schema")]
 mod annotate;
 

@@ -13,7 +13,40 @@ platform binaries.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Nine diagnostic codes had no explanation on the rendered reference.** The
+  diagnostics page's placement-rules table declared two columns while nine of
+  its fourteen rows carried three — a half-finished edit — and a Markdown table
+  drops every cell past its header's count. So `grid_span_clamped`,
+  `span_outside_grid`, `grid_fr_no_basis`, `reflow_budget_exhausted`,
+  `cut_marks_clipped`, `header_group_span_clamped` and the three `anchor_*`
+  codes showed their severity and nothing else. The table now has the three
+  columns its rows were already using, and the five rows that never had a
+  severity have one.
+
 ### Added
+
+- **The reference's key and diagnostics tables are now checked against the
+  engine.** Thirty-five tables across twenty-four pages — every key table plus
+  the whole diagnostics registry — are assembled from a committed description
+  of each table and held to the parser's own catalog and the diagnostic-code
+  enum. What that buys a reader is what can no longer happen: on the pages whose
+  tables claim to be complete, a key added to the wire and to no table fails
+  the build by name; a table naming a key the wire no longer has fails the same
+  way, everywhere; and a row can no longer carry a cell the page silently
+  drops. Every one of the 157 diagnostic codes is now held to
+  appearing on the diagnostics page, which until now was a matter of
+  remembering.
+
+  Each severity column is read from the code registry rather than typed
+  alongside it, so a page and a real diagnostic cannot disagree about whether
+  something is an error or a warning. That is the one column whose VALUES the
+  engine supplies; every other cell is written by hand, deliberately, because a
+  description that says what a key does *on this page*, or a bound like `≥ 0`
+  that the parser enforces without recording it in the schema, is not something
+  the catalog can supply. Each page now says which of its parts are generated,
+  so it is visible which half you are reading.
 
 - **The key catalog now says what every key MEANS, not just what shape it
   is.** The machine-readable description of the authorable wire has carried

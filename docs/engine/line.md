@@ -84,6 +84,7 @@ A dashed cut-here guide is one item:
 
 ## Keys
 
+<!-- rf:table:start line#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `from` / `to` | `{ x, y }` ([`Length`](length.md) each) **or** `{ item, edge?, offset? }` | required | Endpoints relative to the parent origin (margin box / flow region / container **content** box). `x` resolves against that box's width, `y` against its height; a bare number is pt. A `%` `y` under an auto-height parent has no basis — it warns `percent_of_auto` and drops to 0, like every other vertical `%`. |
@@ -94,6 +95,7 @@ A dashed cut-here guide is one item:
 | `style.color` | `#rrggbb` | black | Stroke color. |
 | `style.opacity` | number `0..=1` | `1` | Paint alpha for the stroke. Out-of-range warns `invalid_opacity` and draws opaque. |
 | `style.style` | `solid` \| `dashed` \| `dotted` \| `double` | `solid` | Stroke pattern, sharing the border wire's keyword set ([style.md](style.md)). `dashed` paints three widths on and three off, `dotted` one and one. `double` draws two parallel lines a third of the width each, offset either side of the authored geometry along its normal — so a diagonal doubles correctly. Advertised as the `line.style` capability. |
+<!-- rf:table:end -->
 
 Unknown keys in `style:` are parse errors — `borderWidth` on a `line`
 is a typo pointing at `width`, not a silent no-op.

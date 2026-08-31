@@ -28,6 +28,7 @@ containers (flex or absolute placement).
 
 ## Keys
 
+<!-- rf:table:start qr_code#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `text` / `data` | | one required | Content, exactly like [text.md](text.md) — scope-aware, so per-element inside cells. |
@@ -35,6 +36,7 @@ containers (flex or absolute placement).
 | `box.w` / `box.h` | [Length](length.md) | required | The code draws **square** on the smaller content-box side, centered, with the ISO 18004 4-module quiet zone *inside* the box. |
 | `errorCorrection` | `low` \| `medium` \| `quartile` \| `high` | `medium` | Tolerated damage ~7/15/25/30%; higher levels need more modules for the same content. |
 | `style` / `styleNames` | | | Decoration only: `backgroundColor` paints under the modules (the usual white backing), plus `borderWidth`/`borderColor`. |
+<!-- rf:table:end -->
 
 ## Guards
 

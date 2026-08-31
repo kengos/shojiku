@@ -48,6 +48,7 @@ sections:
 
 ## Top-level keys
 
+<!-- rf:table:start template#top-level-keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
 | `version` | number or string | no | Author-owned version marker; the engine does not interpret it. `version: 1`, `1.5`, and `"2.0"` all parse and round-trip in the authored form (capability key `template.version.scalar`). |
@@ -58,6 +59,7 @@ sections:
 | `defaults` | map | no | Document presentation defaults: `style` (the cascade root; the rem root follows it) + `formats` (per-type format defaults). See [defaults.md](defaults.md). |
 | `formats` | map of name → format | no | Named format registry (date/datetime patterns), referenced via `format:`. Max 256 entries. See [defaults.md](defaults.md). |
 | `sections` | map | yes | `header` / `body` / `footer`. Only `body` is required. |
+<!-- rf:table:end -->
 
 ## Sections
 
@@ -79,6 +81,7 @@ Every entry in an `items:` array is a map with a `type:` discriminator.
 See the [item-type table in the reference index](README.md#item-types).
 Common keys shared by (almost) all items:
 
+<!-- rf:table:start template#items (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Description |
 | --- | --- | --- |
 | `type` | string | Required discriminator (`text`, `rect`, …). |
@@ -87,6 +90,7 @@ Common keys shared by (almost) all items:
 | `style` | map | Inline appearance properties. See [style.md](style.md). |
 | `styleNames` | array of string | Named styles from `styles:`, applied in listed order (later wins), below `style`. Max 16 per item. |
 | `link` | `{ url }` | Hyperlink → PDF annotation; text/image items (and rich spans) only. See [link.md](link.md). |
+<!-- rf:table:end -->
 
 Exceptions: `line` has `from`/`to` points instead of `box` and its own
 `style` shape; `rect` uses its own `style` shape ([rect.md](rect.md));

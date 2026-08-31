@@ -60,6 +60,34 @@ inside the template reference ([../engine/](../engine/) — the doc pages,
 not this crate tree). The scale is a few hundred nodes, not thousands,
 which is what makes one artifact practical.
 
+**What "renders that one source" means for the doc tables, precisely — and
+what it does NOT.** The tables in [../engine/](../engine/) are assembled from
+a committed description of each table (`reference/tables.yml`) and CHECKED
+against the catalog and the code registry. Measured on the committed spec:
+**81 of the 995 rendered cells (8.1%) take their value from the engine, and
+all 81 are the `Severity` column on 4 of the 35 tables. On the 28 key tables
+the figure is 0 of 648.** So the key tables' CELLS are authored, not derived;
+what the engine supplies there is the row SET, the column-count invariant, and
+the refusal when the two disagree.
+
+Say it that way rather than "generated from the catalog", which is the claim
+the `Generated` badge exists to prevent being made about hand-written prose.
+
+The prose being authored is a measured decision rather than an unfinished
+migration. Of the 129 description cells a catalog node can be resolved for,
+**none is identical** to the catalog's prose and 46 carry a cross-page link it
+has no equivalent for. The type cells are the same story; the exact count moves
+with the comparison method, so the durable statement is the REASON rather than
+a figure: a derived type cell cannot carry `length ≥ 0` or `count ≥ 1`, because
+a hand-written `Deserialize` enforces those at parse time and the schema never
+records them.
+Two kinds of thing account for it. Page CONTEXT — `box.md` says `y` is ignored
+in a flow because the cursor owns it, which is true of that page and not of the
+key. And CONSTRAINTS the schema has no room for: `length ≥ 0` and `integer ≥ 1`
+are enforced by a hand-written `Deserialize` at parse time, so they are not in
+the artifact to derive, and a derived cell would silently drop them. The
+FACTS / NARRATIVE line the annotation layer already draws is the same line.
+
 The reason it must be data rather than four prose copies is already
 visible: the Designer carries hand-copied style keys and hand-copied
 engine defaults, and nothing asserts either set against the parser. A
@@ -158,7 +186,7 @@ its own: the [../engine/](../engine/) page stem names a topic and
 `/reference/<page>` and `<page>.md#<key>` are the same spelling three
 ways.
 
-**Two gates, both required**, mirroring the one that keeps the gallery
+**Three gates, all required**, mirroring the one that keeps the gallery
 honest (regenerate, then fail on drift):
 
 - **built** — the artifact regenerates from the parser and matches what
@@ -167,6 +195,20 @@ honest (regenerate, then fail on drift):
   fails on drift. That target also runs the schema tests, because the
   drift comparison on its own is an *idempotence* claim: it protects a
   wrong artifact exactly as faithfully as a right one.
+- **rendered** — every generated table in [../engine/](../engine/) is
+  byte-for-byte what the generator would write; on the 22 nodes a
+  `coverage: full` table names, every key is shown or excused with a reason a
+  reader can check (203 of the catalog's 336 properties — the rest have no
+  table claiming completeness, and the annotation gate above is what guards
+  THEM); and every one of the 157 `DiagnosticCode` variants is documented by
+  at least one row. At LEAST
+  one: `not_an_array` and `container_depth_exceeded` are each raised at
+  validate time and again at layout time, and each section says its own
+  context-specific thing about them. Before this existed the reference's
+  completeness against the registry was diligence, not a gate — and the site
+  gate that checks Limitations claims was reading `diagnostics.md` AS the
+  registry, so a code the page failed to document was, to that gate, a code
+  that did not exist.
 - **complete** — every artifact node has an annotation and every
   annotation names a real node, so a key added to the wire arrives
   un-annotated and is named rather than shipping as a silent gap. The

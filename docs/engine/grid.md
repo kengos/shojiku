@@ -28,6 +28,7 @@ a flex stack. Grid is explicit-only: grid keys without `type: grid` warn
 
 ## Keys (on the container's `box`)
 
+<!-- rf:table:start grid#keys-on-the-container-s-box (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Values | Default | Description |
 | --- | --- | --- | --- |
 | `type` | `grid` | — | Required to activate grid placement. |
@@ -37,13 +38,16 @@ a flex stack. Grid is explicit-only: grid keys without `type: grid` warn
 | `direction` | `row` \| `column` | `row` | Fill order (CSS `grid-auto-flow` analog): `row` = row-major. |
 | `justifyContent` | flex values | `start` | Distributes leftover width across tracks (only meaningful for track lists — counts consume the axis). |
 | `alignItems` | flex values | `stretch` | Aligns children within their row (with vertical auto margins). |
+<!-- rf:table:end -->
 
 Child keys (on a grid child's `box`, like `flexGrow` in flex):
 
+<!-- rf:table:start grid#keys-on-the-container-s-box-2 (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Values | Default | Description |
 | --- | --- | --- | --- |
 | `columnSpan` | count ≥ 1 | 1 | How many column tracks the child spans; the cell run is the spanned widths plus the gaps between them. Clamped to the track count (`grid_span_clamped`). |
 | `rowSpan` | count ≥ 1 | 1 | How many row tracks the child spans; cells beneath are reserved. Clamped to 64 (`grid_span_clamped`). |
+<!-- rf:table:end -->
 
 ## Behavior
 

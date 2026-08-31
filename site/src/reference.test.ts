@@ -208,11 +208,19 @@ describe("every Limitations claim names a real diagnostic code", () => {
   // reader can check it. Each entry names the code that REPORTS it, and this
   // gate holds those names to the registry — a typo, or a code retired later,
   // fails here rather than sitting in prose nobody re-reads.
-  const registry = new Set<string>();
-  for (const line of readFileSync(at("docs/engine/diagnostics.md"), "utf8").split("\n")) {
-    if (!line.startsWith("| `")) continue;
-    for (const m of (line.split("|")[1] ?? "").matchAll(/`([a-z][a-z0-9_]+)`/g)) registry.add(m[1]!);
-  }
+  // The registry is the ENUM, not the markdown. This used to parse
+  // `diagnostics.md`'s first column and treat that as the set of real codes —
+  // so a code the page failed to document was, to this gate, a code that did
+  // not exist, and every Limitations claim naming it would have been reported
+  // as a typo. Reading `code.rs` is the same source `gui/`'s catalog gate
+  // reads, and the reference's own completeness against it is now an engine
+  // test (`reference::tables::tests::committed`).
+  const registry = new Set<string>(
+    [
+      ...readFileSync(at("engine/diagnostics/src/code.rs"), "utf8")
+        .matchAll(/=\s*"([a-z0-9_]+)",\s*(?:Error|Warning|Info),/g),
+    ].map((m) => m[1]!),
+  );
 
   /** Codes are always named inside parentheses; a backticked token with a dot,
    * colon or space is wire syntax (`box.w`, `overflow: hidden`), not a code. */
@@ -253,7 +261,9 @@ describe("every Limitations claim names a real diagnostic code", () => {
   });
 
   it("names only codes the registry defines", () => {
-    expect(registry.size).toBeGreaterThan(100);
+    // A positive control: an empty parse would make every assertion below
+    // vacuous. The registry is append-only, so a floor is the honest bound.
+    expect(registry.size).toBeGreaterThanOrEqual(157);
     const bad: string[] = [];
     for (const [stem, section] of sections) {
       for (const code of codesIn(section)) if (!registry.has(code)) bad.push(`${stem}: ${code}`);

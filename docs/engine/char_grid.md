@@ -30,6 +30,7 @@ Capability keys: `char_grid`, `char_grid.markup.aozora`,
 
 ## Keys
 
+<!-- rf:table:start char_grid#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Values | Default | Meaning |
 | --- | --- | --- | --- |
 | `text` / `data` | like a text item | — | Content: static text with `{key}` interpolation, or one bound value. Neither set warns `empty_char_grid_item`. An empty string draws a blank sheet (printable manuscript paper). |
@@ -44,6 +45,7 @@ Capability keys: `char_grid`, `char_grid.markup.aozora`,
 | `markup` | `aozora` | unset | Opt-in content markup: ruby (`《》`), the `［＃改ページ］` sheet break, the large-writing span notes, and the line-placement notes — see the sections below. Unset, every character (including `《》` and `［＃…］`) renders verbatim — bound user data is never interpreted by default. |
 | `rubySize` | length | 0.4 × cellSize | Ruby font size. Each reading is centered along its base run's extent (horizontal: above it; vertical: beside it) and shrinks to fit when longer — 4pt floor, past which `ruby_overflow` warns. A 2-char reading over a 1-cell base therefore shrinks to ~half a cell per char and stays centered on that cell. |
 | `box` / `style` / `styleNames` / `id` | common keys | — | `box.w` defaults to the full width; the grid is drawn from the content box's top-left. `id` lands in the box index per sheet page. |
+<!-- rf:table:end -->
 
 Style notes: authored `fontSize` sets the character size; unset it
 defaults to 0.7 × cellSize (inherited sizes are deliberately ignored —

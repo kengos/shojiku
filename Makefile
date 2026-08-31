@@ -551,7 +551,7 @@ quiet: ## Run ANY target this way: make quiet T=engine:test (same PASS/FAIL + ex
 # regenerates, the other fails on drift. Both build engine/core's non-default
 # `schema` feature, which is also the only place the hand-written JsonSchema
 # impls and their tests are compiled at all.
-reference\:generate: ## Regenerate the committed key catalog from the parser
+reference\:generate: ## Regenerate the key catalog AND the reference's generated tables
 	@echo "== reference data refresh =="
 	$(CARGO_IN_DOCKER) 'cargo run -p shojiku-authoring --bin reference-gen \
 		--features schema --locked $(CARGO_JOBS)'

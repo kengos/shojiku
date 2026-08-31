@@ -1657,6 +1657,21 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   node, and every closed value set naming all of its values — so a key
   added to the wire arrives un-annotated and is named rather than shipping
   as a silent gap (`docs/agents/engine.md` § The key catalog).
+- **The reference's tables are assembled from a spec and audited against
+  it.** 35 tables across 24 pages of `docs/engine/` — the 28 key tables and
+  `diagnostics.md`'s 7 — are written between markers by
+  `make reference:generate` from `engine/authoring/reference/tables.yml`,
+  which holds which keys a page shows, how rows group, the column headers
+  and the per-row prose. What the ENGINE supplies is the row set to check
+  against, the column-count invariant, and the `Severity` column: 81 of the
+  995 rendered cells take an engine value, all of them severity, and on the
+  28 key tables it is 0 of 648. A third gate holds the result:
+  every page is byte-for-byte what the generator would write, every key a
+  node has is shown or excused with a reason, and every one of the 157
+  diagnostic codes is documented by at least one row. Severity comes from
+  the registry, so a page and a real diagnostic cannot disagree. The prose
+  stays authored — measured, it says things the catalog does not carry
+  (page context, cross-page links, and parse-time bounds like `≥ 0`).
 - License: triple **MIT OR Apache-2.0 OR BSD-3-Clause**. Bundled
   examples (the full inventory + gallery order live in
   `docs/code-map/repo.md` and README.md § Gallery): business documents
