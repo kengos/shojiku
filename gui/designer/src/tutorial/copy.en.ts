@@ -103,7 +103,7 @@ export const COPY_EN: Record<string, string> = {
   'topic-binding.rechip':
     'Delete the date chip in "Date: {date}", then drag "date" back in. Chips mid-sentence can be removed and re-inserted.',
   'topic-table.paste':
-    'If you have a table in Excel, Insert → Paste table is a shortcut — it infers the columns from the copied cells.',
+    'If you have a table in Excel, Insert → Paste a table is a shortcut — it infers the columns from the copied cells.',
   'topic-placement.explain':
     'This document’s header holds three texts inside a container. The inner elements are positioned automatically (the Layout tab shows X/Y as grey "auto").',
   'topic-placement.pin':

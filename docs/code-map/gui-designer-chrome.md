@@ -53,6 +53,15 @@ tooltip replaces it — gated by `ui/chromeConvention.test.ts`).
 - `i18n/registry.test.ts` — node env: reads
   `engine/diagnostics/src/code.rs` and asserts every FULL language
   covers every wire code.
+- `i18n/ellipsis.test.ts` — node env: the HIG action gate (gui/STYLE.md
+  § Actions). Both halves — the ellipsis key set is IDENTICAL in every
+  catalog and never lands on a heading; and a dialog's title equals the
+  label that opened it, minus the ellipsis. The second half is a pair
+  table plus an exemption table carrying a REASON per key, whose union
+  must cover every ellipsis label (so a new one cannot go unclassified);
+  the review pane's exemption is self-checked against its confirm label.
+  The two pairs whose view the app titles are gated in
+  `designer-app`'s `i18n/appCatalog.test.ts` instead.
 
 ## Format toolbar
 

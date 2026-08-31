@@ -177,7 +177,7 @@ describe('EditorScreen', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'hi' }));
     fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Save selection as block…' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Save as reusable block…' }));
     fireEvent.change(screen.getByLabelText('Block name'), { target: { value: 'seal' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(svc.blocks.load().map((b) => b.name)).toEqual(['seal']);

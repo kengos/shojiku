@@ -75,7 +75,7 @@ export function StyleCaptureModal(props: StyleCaptureModalProps) {
       <Modal
         open={open}
         onClose={onClose}
-        title={t('styleCapture.updateTitle')}
+        title={t('styleCapture.updateTitle', { name: target })}
         closeLabel={t('styles.cancel')}
         footer={
           <>
@@ -87,7 +87,6 @@ export function StyleCaptureModal(props: StyleCaptureModalProps) {
         }
       >
         {noticeEl}
-        <p className="m-0 text-sm text-text">{t('styleCapture.updateTarget', { name: target })}</p>
         {count !== null && count > 0 ? (
           <p className="m-0 text-sm text-muted">{t('styleCapture.impact', { n: count })}</p>
         ) : null}

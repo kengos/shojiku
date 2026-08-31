@@ -114,6 +114,18 @@ function selectField(label: string) {
 }
 
 describe('DataEditorView list', () => {
+  it('names the view and the field list SEPARATELY', () => {
+    // One key used to label the region, the heading AND the inner `<nav>`. The
+    // heading has to match the menu row that opened it (`menu.dataEditor`,
+    // gui/STYLE.md § Actions), and that wording describes the VIEW — naming the
+    // field list "edit data fields" too would leave a landmark saying nothing
+    // about what it contains, and two landmarks sharing one accessible name.
+    draw();
+    expect(screen.getByRole('heading', { name: 'データ項目を編集' })).not.toBeNull();
+    expect(screen.getByRole('region', { name: 'データ項目を編集' })).not.toBeNull();
+    expect(screen.getByRole('navigation', { name: 'データ項目' })).not.toBeNull();
+  });
+
   it('lists the definition fields grouped, with a usage chip', () => {
     draw();
     const nav = screen.getByRole('navigation');

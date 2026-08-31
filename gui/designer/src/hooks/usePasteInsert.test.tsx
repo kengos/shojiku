@@ -8,7 +8,7 @@ import { draw, makeTransport } from '../testkit/harness';
 describe('Designer paste import', () => {
   function openPaste() {
     fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Paste table…' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Paste a table…' }));
     return screen.getByRole('dialog');
   }
 

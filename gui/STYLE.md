@@ -175,7 +175,7 @@ filled-tonal tier).
 - **A dialog is a screen**: its footer's confirming action is
   `<Button variant="primary">` and its dismissing action is `<Button>` — or
   `ghost` for a tertiary that is neither (the tutorial's *Clear progress*, the
-  PDF preview's *Close*). Exactly one primary per footer, gated.
+  PDF dialog's *Close*). Exactly one primary per footer, gated.
 - **The work surface carries no primary.** A toolbar, a property panel, a
   menubar and the layer tree are PEER sets: the action you leave a canvas app
   with (Share / Download) is the only thing Docs, Figma and Canva ever fill,
@@ -265,9 +265,45 @@ the label that opened it, minus the ellipsis.
   Japanese has for marking a label boundary in run-on kana/kanji, and English
   gets that free from capitalisation and the arrow — so the quoting difference
   between the two files is convention, not drift.
-- Still open, and deliberately not fixed here: the title-matches-label half is
-  unmet for several pairs (*Container…* opens "Insert a container"; *Download
-  as PDF…* opens "PDF preview"). That is copy work across six catalogs.
+- **The title-matches-label half is gated too, and by a table whose COMPLEMENT
+  is checked**: `designer/src/i18n/ellipsis.test.ts` pairs each opener key with
+  the title key of the view it opens and asserts equality in every catalog, and
+  every remaining ellipsis label must appear in an exemption list carrying its
+  reason. So a new `…` label cannot be added without deciding which it is. Two
+  pairs cross the package boundary — *Add font…* and *Restore points…* are
+  Designer labels whose views the APP titles — and are gated in
+  `designer-app/src/i18n/appCatalog.test.ts`, the only place that sees both
+  catalogs.
+- **Which side changes is a copy judgement**: the dialog title is where a
+  newcomer arrives with no surrounding context, so the more informative wording
+  wins — unless the label would then read redundantly in its menu group.
+  *Container…* sits among Text / Rectangle / QR code, so "Insert → Insert a
+  container" was the worse trade and the dialog took the label's name; the
+  block dialogs went the other way, because the context-menu row has no group
+  header to supply "reusable".
+- **What the pair gate does NOT watch**, so its green is not over-read: it
+  starts from labels that already carry an ellipsis, so a label that should
+  have one and does not is invisible to it. Running the *earns it by ASKING*
+  predicate above over the tree finds four today — *Ask AI*, *Edit in a
+  sheet*, *New style* and *New format*, each opening a view that asks for a
+  name or a prompt. Which labels earn the ellipsis is the first half's
+  question, decided per label here; four is what the predicate returned, not
+  a claim that there is no fifth. And the two app-titled
+  dialogs can only hold the pair in `en` and `ja`: the app catalog carries no
+  other locale, so a zh-tw reader meets 新增字型… over a dialog headed *Add
+  font*.
+- **One dialog, one label.** *Save selection as block…* and *Save as block…*
+  opened the same modal, which no title can match twice; the two labels are now
+  identical by decision, and the pair table is what says so. Japanese first
+  went the other way — both labels toward the bare 「ブロックとして保存」 —
+  which left the context-menu row, the surface the reason above says needs the
+  word, without it; it now reads 「再利用ブロックとして保存…」 like the other
+  five.
+- **The one interstitial exemption is self-checked.** *Save…* / *Export…* open
+  the review pane, titled for the review rather than for the action — so the
+  pair is honoured on the CONFIRMING button instead, and the gate asserts that
+  `review.confirm.save` really is *Save*. *Download as PDF…* looks like the
+  same shape and is not: its confirm is *Download*, so it titles its view.
 
 ## Toolbar chrome: reuse the rail parts
 

@@ -143,9 +143,11 @@ function renderUpdate(
   props: {
     readonly controller?: Partial<EditorController>;
     readonly usage?: StyleUsage | null;
+    readonly targetName?: string;
   } = {},
 ) {
   const controller = stubController(props.controller);
+  const targetName = props.targetName ?? 'base';
   const onClose = vi.fn();
   render(
     <I18nProvider locale="en">
@@ -156,10 +158,10 @@ function renderUpdate(
         controller={controller}
         path={PATH}
         captured={{ color: '#222222' }}
-        existingNames={['base']}
-        currentStyleNames={['base']}
-        targetName="base"
-        usage={props.usage === undefined ? usageWith('base', 2) : props.usage}
+        existingNames={[targetName]}
+        currentStyleNames={[targetName]}
+        targetName={targetName}
+        usage={props.usage === undefined ? usageWith(targetName, 2) : props.usage}
       />
     </I18nProvider>,
   );
@@ -169,7 +171,11 @@ function renderUpdate(
 describe('StyleCaptureModal — update', () => {
   it('names the target, shows the ICU impact count, and commits the update ops', () => {
     const { controller, onClose } = renderUpdate();
-    expect(screen.getByText('Update the style "base"')).toBeTruthy();
+    // The HIG pair: the dialog is titled with the label that opened it
+    // (`styleCapture.updateFrom`) minus its ellipsis, name included — which is
+    // why the body no longer repeats the name on a line of its own.
+    expect(screen.getByRole('heading', { name: 'Update "base" to match selection' })).toBeTruthy();
+    expect(screen.queryByText('Update the style "base"')).toBeNull();
     expect(screen.getByText('Affects 2 places')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Update' }));
@@ -193,6 +199,18 @@ describe('StyleCaptureModal — update', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(controller.applyAll).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders a hostile style name in the title as inert text', () => {
+    // A style name is document-derived — an attacker string — and the title is
+    // a NEW place it reaches. `formatMessage` never re-scans an interpolated
+    // arg, and `DialogTitle` takes a text child, so markup, a second
+    // placeholder and an unbalanced brace all land verbatim.
+    renderUpdate({ targetName: '<img src=x>{name}{{' });
+    expect(
+      screen.getByRole('heading', { name: 'Update "<img src=x>{name}{{" to match selection' }),
+    ).toBeTruthy();
+    expect(document.querySelector('img')).toBeNull();
   });
 
   it('omits the impact line when usage is null', () => {
