@@ -4,7 +4,8 @@
 //! THE ARTIFACT reads the embedded [`CATALOG`] bytes, so it runs in the
 //! default test suite and is covered by the workspace coverage gate.
 //! Only the two claims about REGENERATION need the `schema` feature, and
-//! those live at the bottom.
+//! those live at the bottom. The annotation layer's own gate is the
+//! `annotations` submodule, for the same reason: it reads embedded bytes.
 
 use super::CATALOG;
 use serde_json::Value;
@@ -33,27 +34,6 @@ fn refs(node: &Value, out: &mut Vec<String>) {
         }
         Value::Array(items) => items.iter().for_each(|item| refs(item, out)),
         _ => {}
-    }
-}
-
-/// Counts `description`/`title` used as a SCHEMA KEYWORD — i.e. with a
-/// string value. Three wire keys are literally NAMED `description`
-/// (`definitions.description`, `document.description`, a definitions field's
-/// own `description`), and those appear as property names with a subschema
-/// value; counting by key name alone reports them as prose.
-fn prose_nodes(node: &Value) -> usize {
-    match node {
-        Value::Object(map) => map
-            .iter()
-            .map(|(key, value)| {
-                let own = usize::from(
-                    matches!(key.as_str(), "description" | "title") && value.is_string(),
-                );
-                own + prose_nodes(value)
-            })
-            .sum(),
-        Value::Array(items) => items.iter().map(prose_nodes).sum(),
-        _ => 0,
     }
 }
 
@@ -203,18 +183,7 @@ fn a_closed_enum_lists_exactly_the_accepted_values() {
     assert!(serde_json::from_str::<shojiku_core::TextAlign>("\"justify\"").is_err());
 }
 
-/// The catalog carries STRUCTURE. Node-local prose belongs to the
-/// annotation layer — authored per locale and gated by "every node has an
-/// annotation" — and pre-filling it with Rust doc comments would make that
-/// gate pass vacuously against text nobody wrote for authors.
-#[test]
-fn no_developer_prose_survives_into_the_shapes() {
-    let doc = catalog();
-    assert_eq!(prose_nodes(&doc["$defs"]), 0);
-    // The document's own title/description are hand-written and stay.
-    assert!(doc["title"].is_string());
-    assert!(doc["description"].is_string());
-}
+mod annotations;
 
 #[cfg(feature = "schema")]
 mod regenerated;

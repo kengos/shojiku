@@ -17,10 +17,13 @@
 //! the schema derive, which lives behind the non-default `schema` feature —
 //! a default build and the WASM bundle link none of it.
 //!
-//! What is NOT here is prose. Node-local `description` is the annotation
-//! layer's job — authored per locale and merged at generation time — and it
-//! is a separate stage. This one delivers the structure and the gate that
-//! keeps it honest.
+//! **Prose is authored beside the schema, not lifted from it.** schemars would
+//! fill `description` from Rust doc comments for free, and taking the free
+//! version would have defeated the completeness gate before it was written —
+//! every node would arrive pre-annotated with engine-developer text nobody
+//! wrote for an author, in a register no second locale can carry. Generation
+//! strips them and merges [`ANNOTATIONS`] instead, and
+//! [`annotations::audit`] is what says the result is complete.
 
 /// Where the committed artifact lives. A compile-time constant rooted at
 /// `CARGO_MANIFEST_DIR`, so no caller-supplied value can steer a write.
@@ -29,6 +32,20 @@ pub const CATALOG_PATH: &str =
 
 /// The committed catalog document.
 pub const CATALOG: &str = include_str!("../reference/catalog.schema.json");
+
+/// The English annotation layer: the per-key prose merged into [`CATALOG`] as
+/// node-local `description` at generation time.
+///
+/// English only, and hard-wired rather than looked up: the engine serves
+/// English and does not translate, so a localized reference is the site's to
+/// render. The file sits in its own directory so a second locale is a file
+/// rather than a mechanism.
+pub const ANNOTATIONS: &str = include_str!("../reference/annotations/en.yml");
+
+pub mod annotations;
+
+#[cfg(feature = "schema")]
+mod annotate;
 
 #[cfg(feature = "schema")]
 mod generate;
