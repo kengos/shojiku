@@ -161,6 +161,7 @@ in a table column — same `ContainerItem`, same row scoping.
 
 ## Table keys
 
+<!-- rf:table:start table#table-keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `data` | `{ key }` | required | The array params key; one row per element. |
@@ -171,6 +172,7 @@ in a table column — same `ContainerItem`, same row scoping.
 | `emptyBehavior` | `collapse` \| `reserve` | `collapse` | Empty array: `collapse` hides the table entirely; `reserve` renders the header row only. |
 | `cellPadding` | number (pt) | `4` | Inner padding of every cell; negative clamps with `invalid_cell_padding`. |
 | `style` / `styleNames` | | | The grid stroke (`borderWidth`, table default **0.5 pt** — `0` removes the grid; `borderColor` default black) + inherited properties cascade into every cell. |
+<!-- rf:table:end -->
 
 Row keys live under `row:` (`minHeight` / `height` / `style` /
 `styleNames` / `alternateStyle` / `alternateStyleNames` /
@@ -178,6 +180,7 @@ Row keys live under `row:` (`minHeight` / `height` / `style` /
 
 ## Columns
 
+<!-- rf:table:start table#columns (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Description |
 | --- | --- | --- |
 | `label` | string | Header cell text (a `cell:` column's header is still a plain label). **Interpolates `{key}` like static text**, against **top-level** params — header chrome belongs to the document, not to any row — so `label: "{labels.amount}"` lets one template print its headings in whichever language the params carry. A label with no `{…}` resolves to itself. |
@@ -188,6 +191,7 @@ Row keys live under `row:` (`minHeight` / `height` / `style` /
 | `width` | [Length](length.md) | `%` of the flow region width; physical units work; omitted = an **equal share of the leftover** after the sized columns (all omitted = an even split). Negative → 0 with `invalid_column_width`. |
 | `style` / `styleNames` | | Cell styling: `backgroundColor`/border decorate the full cell; `textOverflow` becomes meaningful with fixed row heights. |
 | `id` | string | One box-index placement per cell (header included), content box inset by the cell padding. |
+<!-- rf:table:end -->
 
 ## Rows & header
 

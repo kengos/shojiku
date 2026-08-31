@@ -25,6 +25,7 @@ box is a fixed slot; in a flow an auto-height list simply grows.
 
 ## Keys
 
+<!-- rf:table:start list#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `data` | `{ key }` | required | The array to render — a params key, or inside a `repeat` cell / `repeat_flow` card a field of the bound element (scope-aware). `scope: document` reads the top-level array even from inside a cell — see [data-binding.md](data-binding.md#scope--the-escape-back-to-the-document). |
@@ -32,6 +33,7 @@ box is a fixed slot; in a flow an auto-height list simply grows.
 | `bindings` | map of name → binding | unset | Named declarations for the `{name}` interpolations in `text`. They resolve per ENTRY like `text` itself, unless one authors `scope: document` ([data-binding.md](data-binding.md#named-binding-declarations)). |
 | `overflowText` | string | `+{count}` | Template for the trailing overflow line; `{count}` = the number of entries that did **not** fit. |
 | `box` / `style` / `styleNames` | | | Usual forms; the text properties style every line. |
+<!-- rf:table:end -->
 
 ## Behavior
 

@@ -27,11 +27,13 @@ sections:
       - { type: text, text: "next page" }
 ```
 
+<!-- rf:table:start flow#syntax (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `box` | map | whole margin box | The region the flow occupies on every page, resolved against the page margin box (`%` works). |
 | `gap` | [Length](length.md) | 0 | Vertical gap between stacked items, additive with item margins (no collapse). `%` resolves against the flow-region height (matching `repeat_flow.gap`); negatives clamp to 0. |
 | `items` | array | `[]` | Laid out in order. |
+<!-- rf:table:end -->
 
 ## Behavior
 

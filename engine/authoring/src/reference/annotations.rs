@@ -202,7 +202,7 @@ fn discriminator(branch: &Value) -> Option<String> {
 pub fn audit(catalog: &Value, annotations: &BTreeMap<String, String>) -> Vec<Problem> {
     let mut problems = Vec::new();
     for node in nodes(catalog) {
-        match annotations.get(&node) {
+        match annotations.get(&node).map(String::as_str) {
             None => problems.push(Problem::Missing(node)),
             Some(text) if text.trim().is_empty() => problems.push(Problem::Blank(node)),
             Some(text) if text.trim().chars().count() < MIN_LEN => {

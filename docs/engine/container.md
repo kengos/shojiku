@@ -25,11 +25,13 @@ properties. Containers nest up to `MAX_CONTAINER_DEPTH` (32).
       text: "{amount.total_in_tax}−"
 ```
 
+<!-- rf:table:start container#syntax (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Description |
 | --- | --- | --- |
 | `box` | map | `w` omitted defaults to the parent width minus the x offset; `h` omitted = **auto height** (the lowest child bottom edge). Layout-mode keys (`type`/`direction`/`gap`/`alignItems`/`justifyContent`, grid tracks) select how children place — see [flex.md](flex.md) / [grid.md](grid.md). |
 | `style` / `styleNames` | | Decoration paints the container's own border box; the **inherited** properties cascade to all descendants ([style.md](style.md)). |
 | `items` | array | Children. Each child with no authored `box.x`/`box.y` is a flex/grid item; one with either is absolutely placed within the container. |
+<!-- rf:table:end -->
 
 ## Behavior
 

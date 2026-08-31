@@ -71,13 +71,16 @@ none of the codes below apply. `shojiku validate` surfaces the failure
 as a single diagnostic instead of an opaque error so a GUI can render it
 inline:
 
+<!-- rf:table:start diagnostics#parse-errors (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Code | Severity | Meaning |
 | --- | --- | --- |
 | `parse_error` | error | a structural parse failure, with `args` `what` (which artifact) + `path` (the field path, e.g. `sections.body`) + `detail` (the underlying message) + `line`/`column` when known. An error inside an internally-tagged item (`Body`/`Item`) truncates the path to the enum boundary and omits `line`/`column`, so the location is never over-promised |
 | `non_finite_number` | error | a `.nan`/`.inf`/overflowing number anywhere in the artifact (`args` `what`) |
+<!-- rf:table:end -->
 
 ## Validation (static, `shojiku validate`)
 
+<!-- rf:table:start diagnostics#validation-static-shojiku-validate (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Code | Severity | Meaning |
 | --- | --- | --- |
 | `unknown_data_key` | error | a binding key is not in definitions (scalar, column, cell, or card scope) |
@@ -122,9 +125,11 @@ inline:
 | `too_many_bindings` | warning | an item's `bindings:` over the 256-entry cap; advisory only — every declaration still resolves |
 | `too_many_document_entries` | warning | `document.keywords` / `document.authors` over the 64-entry cap; only the first 64 are written |
 | `container_depth_exceeded` | error | nesting > 32 (also enforced independently at layout) |
+<!-- rf:table:end -->
 
 ## Layout — geometry & resolution
 
+<!-- rf:table:start diagnostics#layout-geometry-resolution (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Code | Severity | Meaning |
 | --- | --- | --- |
 | `length_out_of_range` | warning | resolved length exceeds ±1e6 pt; default used |
@@ -150,16 +155,18 @@ inline:
 | `invalid_cell_size` | warning | `char_grid` cell size not positive and finite; item skipped |
 | `vertical_text_unsupported` | warning | `writingMode: vertical_rl` reached a text `mark:` (the circled-text overlay), whose glyph-band overlay is horizontal-only; the mark is skipped. Rich `spans` / `list` / table cells / `page_number` now render vertically. See [vertical_text.md](vertical_text.md) |
 | `vertical_style_ignored` | warning | registered but no longer emitted: the block-level knobs (`textOverflow`, `textDecoration`, `verticalAlign`, `textSpacingTrim`, `hangingPunctuation`) now apply on vertical blocks ([vertical_text.md](vertical_text.md)); the code stays for the append-only GUI catalog contract |
+<!-- rf:table:end -->
 
 ## Layout — placement rules
 
-| Code | Meaning |
-| --- | --- |
-| `table_in_cell` | `table` inside a `repeat` cell / `repeat_flow` card / a table column's `cell:`; skipped (everywhere else a table places as a bounded block — see [table.md](table.md)) |
-| `repeat_in_absolute_body` / `repeat_in_band` / `repeat_in_container` | `repeat` outside a flow body; skipped |
-| `repeat_flow_in_absolute_body` / `repeat_flow_in_band` / `repeat_flow_in_container` | `repeat_flow` outside a flow body; skipped |
-| `page_break_in_absolute_body` / `page_break_in_band` / `page_break_in_container` | `page_break` outside a flow body; skipped |
-| `page_number_in_body` / `page_number_in_container` | `page_number` outside a band; skipped |
+<!-- rf:table:start diagnostics#layout-placement-rules (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `table_in_cell` | warning | `table` inside a `repeat` cell / `repeat_flow` card / a table column's `cell:`; skipped (everywhere else a table places as a bounded block — see [table.md](table.md)) |
+| `repeat_in_absolute_body` / `repeat_in_band` / `repeat_in_container` | warning | `repeat` outside a flow body; skipped |
+| `repeat_flow_in_absolute_body` / `repeat_flow_in_band` / `repeat_flow_in_container` | warning | `repeat_flow` outside a flow body; skipped |
+| `page_break_in_absolute_body` / `page_break_in_band` / `page_break_in_container` | warning | `page_break` outside a flow body; skipped |
+| `page_number_in_body` / `page_number_in_container` | warning | `page_number` outside a band; skipped |
 | `grid_span_clamped` | warning | `columnSpan`/`rowSpan` beyond the axis; clamped |
 | `span_outside_grid` | warning | span keys on a child of a non-grid box; inert |
 | `grid_fr_no_basis` | warning | `fr` row tracks in an auto-height container; sized as auto rows |
@@ -169,9 +176,11 @@ inline:
 | `anchor_unknown_target` | warning | a `line` endpoint or an `ellipse` names an `id:` no item carries; the anchored item is not drawn ([line.md](line.md)) |
 | `anchor_cross_page` | warning | a line's two anchored endpoints land on different pages; the line is not drawn |
 | `anchor_ambiguous_target` | warning | the anchored id is placed more than once on the page (a `repeat` element, a duplicate id); the FIRST placement in document order is used |
+<!-- rf:table:end -->
 
 ## Layout — content & data
 
+<!-- rf:table:start diagnostics#layout-content-data (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Code | Meaning |
 | --- | --- |
 | `missing_data` (warning) / `not_an_array` (error) | params problems at a bound key; `missing_data` is suppressed when a binding/field `placeholder` covers a blank value (data-binding.md) |
@@ -208,9 +217,11 @@ inline:
 | `table_too_wide` | sized columns exceed the flow width |
 | `row_overflow` | a row overflows with `autoPageBreak: false` |
 | `invalid_column_width` / `invalid_row_height` / `invalid_cell_padding` | negative table geometry; clamped to 0 / treated as auto |
+<!-- rf:table:end -->
 
 ## Layout — style guards (hostile values)
 
+<!-- rf:table:start diagnostics#layout-style-guards-hostile-values (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Code | Fallback |
 | --- | --- |
 | `invalid_font_size` | 10 pt |
@@ -225,9 +236,11 @@ inline:
 | `border_radius_ignored` | square corners (a per-side/`double` border, a `table`, or a form mark cannot round) |
 | `invalid_opacity` | opaque (out-of-range / non-finite `opacity`; never invisible) |
 | `invalid_color` | default color (echo snippet-capped) |
+<!-- rf:table:end -->
 
 ## Assets (`prepare_assets`)
 
+<!-- rf:table:start diagnostics#assets-prepare-assets (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Code | Meaning |
 | --- | --- |
 | `missing_asset` / `assets_root_missing` / `asset_traversal` | bundled path absent / no assets root / path escapes the root |
@@ -236,6 +249,7 @@ inline:
 | `dynamic_image_denied` | params-bound image blocked by the asset policy |
 | `svg_unsupported` | SVG constructs outside the subset parser |
 | `cell_image_assets_capped` | per-element cell images (table columns + repeat/repeat_flow cells) over the shared 1000-load cap; the rest are skipped |
+<!-- rf:table:end -->
 
 ## Limitations
 

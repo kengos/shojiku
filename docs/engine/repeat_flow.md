@@ -33,11 +33,13 @@ paginate card-by-card. Flow-body only. Unknown keys are parse errors.
 
 ## Keys
 
+<!-- rf:table:start repeat_flow#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `data` | `{ key }` | required | The array params key. |
 | `gap` | [Length](length.md) | 0 | Between cards; negative clamps to 0, out-of-range drops with `length_out_of_range`. |
 | `item` | container | required | The per-element card, a [`container`](container.md): auto height by default (`box.h` fixes it), horizontal auto margins work, its `style`/`styleNames` cascade to children, and its decoration paints per instance. |
+<!-- rf:table:end -->
 
 ## Behavior
 

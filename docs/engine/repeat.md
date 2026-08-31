@@ -42,6 +42,7 @@ once (no per-instance field renaming). Flow-body only.
 
 ## Keys
 
+<!-- rf:table:start repeat#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `data` | `{ key }` | required | The array params key. |
@@ -52,6 +53,7 @@ once (no per-instance field renaming). Flow-body only.
 | `grid.columnGap` / `grid.rowGap` | [Length](length.md) | `gap` | Slot width = `(region_w − columnGap·(columns−1)) / columns`; height likewise. `%` resolves against the region width / height respectively. Negative gaps are 0 (CSS). |
 | `cutMarks` | boolean | `false` | Draw trim guides for the grid — see [Behavior](#behavior). |
 | `cell` | container | required | A [`container`](container.md) whose parent box is the slot. It **fills the slot by default** (definite height), so `%` and `verticalAlign` resolve against the slot; an explicit `cell.box` insets/resizes within it. |
+<!-- rf:table:end -->
 
 ## Behavior
 

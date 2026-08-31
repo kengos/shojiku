@@ -29,21 +29,25 @@ children **flex-like by default** — the layout-mode key lives on the box
 
 ## Keys (on the container's `box`)
 
+<!-- rf:table:start flex#keys-on-the-container-s-box (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Values | Default | Description |
 | --- | --- | --- | --- |
 | `direction` | `column` \| `row` | `column` | Main axis. `column` stacks; `row` sets children side by side. |
 | `gap` | [Length](length.md) | 0 | Main-axis gap between flex children (`%` of the main-axis content size; negative = 0). Absolutely placed children ignore it. |
 | `alignItems` | `stretch` \| `start` \| `center` \| `end` \| `baseline` | `stretch` | Cross-axis alignment. `stretch` fills an unset cross size: a child with no `w` fills a `column`'s width, and a child with no `h` **is resized to** a `row`'s cross size — the row's own height when it has one, otherwise its tallest child's (CSS Flexbox §9.4). A cross-axis `auto` margin opts a child out, since an `auto` margin beats alignment everywhere else here too. `baseline` aligns row children on their **first text baseline** — a child with no text (a mark, rect, image, or clipped box) synthesizes its baseline from its bottom edge, so a `checkbox` bottom sits exactly on its label's baseline (the natural look for label + mark rows; `center` centers *line boxes*, which reads as skew when the font carries large below-baseline space). In a column it behaves like `start` (the CSS fallback); cross-axis auto margins win over any alignment. |
 | `justifyContent` | `start` \| `center` \| `end` \| `space_between` \| `space_around` \| `space_evenly` | `start` | Main-axis distribution of free space when the container's main size is definite (an auto-height column has none, so it is inert there). Negative free space degrades the CSS way (`space_*` act like `start`). |
+<!-- rf:table:end -->
 
 Keys are camelCase, values snake_case — like every wire enum.
 
 ## Child key (on a flex item's own `box`)
 
+<!-- rf:table:start flex#child-key-on-a-flex-item-s-own-box (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Values | Default | Description |
 | --- | --- | --- | --- |
 | `flexGrow` | number ≥ 0 | 0 | The child's share of the **leftover** main-axis size, among children without an authored size on that axis (CSS `flex-grow`). `flexGrow: 2` next to `flexGrow: 1` takes ⅔ of what is left after every child's basis. The default is CSS's: nothing grows unless asked. |
 | `flexBasis` | `content` \| `0` | `content` | The main size such a child **starts from**, before `flexGrow` shares out the rest (CSS `flex-basis`). `content` is its max-content width — the width at which its text would not wrap. `0` starts it at nothing, so `flexGrow` divides the whole row: that is CSS's `flex: 1`, and it is what this engine used to do unconditionally. A length basis is deliberately not accepted — `w` already sizes a child. |
+<!-- rf:table:end -->
 
 Unlike the container keys above, these are **child** properties, so they
 are valid on a leaf box (a `text` without `w` sizes to its content).

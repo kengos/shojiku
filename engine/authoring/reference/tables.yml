@@ -1,0 +1,2204 @@
+# The generated reference tables' editorial half.
+#
+# Regenerate the tables themselves with `make reference:generate`;
+# `make reference:check` fails when a page and this file disagree.
+#
+# What lives here is only what the catalog cannot answer: which of a
+# node's keys a page shows, how its rows group, and what its columns
+# say. Which keys EXIST, and their prose, come from the catalog — and
+# `tables::audit` refuses a row naming a key the node does not have,
+# or a key the node has that this file neither shows nor excuses.
+
+"README#the-box-keys-at-a-glance":
+  page: README
+  node: OptBox
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Meaning"
+      from: authored
+    - header: "Page"
+      from: authored
+  rows:
+    - keys: ["x", "y"]
+      cells:
+        "Key": "`x` `y`"
+        "Meaning": "offset from the parent origin (authoring either opts a container child out of flex)"
+        "Page": "[box.md](box.md)"
+    - keys: ["w", "h"]
+      cells:
+        "Key": "`w` `h`"
+        "Meaning": "border-box size; omitted = fill width / auto height"
+        "Page": "[box.md](box.md)"
+    - keys: ["minWidth", "maxWidth", "minHeight", "maxHeight"]
+      cells:
+        "Key": "`minWidth` `maxWidth` `minHeight` `maxHeight`"
+        "Meaning": "CSS-order size clamps"
+        "Page": "[box.md](box.md)"
+    - keys: ["margin"]
+      cells:
+        "Key": "`margin`"
+        "Meaning": "outer spacing; per-side map; `auto` sides"
+        "Page": "[box.md](box.md)"
+    - keys: ["padding"]
+      cells:
+        "Key": "`padding`"
+        "Meaning": "inner spacing (non-negative)"
+        "Page": "[box.md](box.md)"
+    - keys: ["type"]
+      cells:
+        "Key": "`type`"
+        "Meaning": "child layout mode: `flex` (default) | `grid`"
+        "Page": "[flex.md](flex.md) / [grid.md](grid.md)"
+    - keys: ["direction", "gap", "alignItems", "justifyContent"]
+      cells:
+        "Key": "`direction` `gap` `alignItems` `justifyContent`"
+        "Meaning": "flex keys (grid reuses some)"
+        "Page": "[flex.md](flex.md)"
+    - keys: ["flexGrow"]
+      cells:
+        "Key": "`flexGrow`"
+        "Meaning": "child's weighted share of leftover row width"
+        "Page": "[flex.md](flex.md)"
+    - keys: ["columns", "rows", "columnGap", "rowGap"]
+      cells:
+        "Key": "`columns` `rows` `columnGap` `rowGap`"
+        "Meaning": "grid tracks & gaps"
+        "Page": "[grid.md](grid.md)"
+    - keys: ["columnSpan", "rowSpan"]
+      cells:
+        "Key": "`columnSpan` `rowSpan`"
+        "Meaning": "grid child's track span (≥ 1)"
+        "Page": "[grid.md](grid.md)"
+  omitted:
+    "flexBasis": "a flex-only key; documented on flex.md"
+
+"box#position-size":
+  page: box
+  node: BoxSpec
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Omitted means"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["x", "y"]
+      cells:
+        "Key": "`x`, `y`"
+        "Type": "[Length](length.md)"
+        "Omitted means": "0"
+        "Description": "Offset from the parent box origin. In a **flow**, `y` is ignored (the cursor owns it) and `x` offsets within the flow region. Authoring `x` or `y` on a container child opts it out of flex placement (see [flex.md](flex.md))."
+    - keys: ["w"]
+      cells:
+        "Key": "`w`"
+        "Type": "Length"
+        "Omitted means": "fill parent width minus horizontal margins"
+        "Description": "`%` resolves against the parent width."
+    - keys: ["h"]
+      cells:
+        "Key": "`h`"
+        "Type": "Length"
+        "Omitted means": "**auto height** — grows to content (lowest child bottom for containers, wrapped text height for text)"
+        "Description": "`%` resolves against the parent height. A definite `h` activates `textOverflow` policies on text."
+
+"char_grid#keys":
+  page: char_grid
+  node: Item.char_grid
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Values"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Meaning"
+      from: authored
+  rows:
+    - keys: ["text", "data"]
+      cells:
+        "Key": "`text` / `data`"
+        "Values": "like a text item"
+        "Default": "—"
+        "Meaning": "Content: static text with `{key}` interpolation, or one bound value. Neither set warns `empty_char_grid_item`. An empty string draws a blank sheet (printable manuscript paper)."
+    - keys: ["bindings"]
+      cells:
+        "Key": "`bindings`"
+        "Values": "map of name → binding"
+        "Default": "unset"
+        "Meaning": "Named declarations for this item's `{name}` interpolations — the option set the bare `{key}` grammar cannot carry, incl. a key outside `[A-Za-z0-9_.]` ([data-binding.md](data-binding.md#named-binding-declarations))."
+    - keys: ["grid"]
+      cells:
+        "Key": "`grid.charsPerLine`"
+        "Values": "integer ≥ 1"
+        "Default": "required"
+        "Meaning": "Cells per line."
+    - keys: ["grid"]
+      cells:
+        "Key": "`grid.lines`"
+        "Values": "integer ≥ 1"
+        "Default": "required"
+        "Meaning": "Lines per sheet. `charsPerLine × lines` is clamped to 4096 cells (`char_grid_clamped`)."
+    - keys: ["grid"]
+      cells:
+        "Key": "`grid.cellSize`"
+        "Values": "[length](length.md)"
+        "Default": "derived"
+        "Meaning": "Cell side (cells are square). Omitted: the content width divided by `charsPerLine` (horizontal) or `lines` (vertical), gaps subtracted. Non-positive warns `invalid_cell_size` and skips the item."
+    - keys: ["grid"]
+      cells:
+        "Key": "`grid.lineGap`"
+        "Values": "length ≥ 0"
+        "Default": "`0`"
+        "Meaning": "Space between lines — the ruby band. Ruby for the *first* line draws above (horizontal) / right of (vertical) the grid: reserve room with `box.padding` or leftover box width."
+    - keys: ["grid"]
+      cells:
+        "Key": "`grid.charGap`"
+        "Values": "length ≥ 0"
+        "Default": "`0`"
+        "Meaning": "Space between cells along a line (workbook-style separated boxes)."
+    - keys: ["writingMode"]
+      cells:
+        "Key": "`writingMode`"
+        "Values": "`horizontal_tb` | `vertical_rl`"
+        "Default": "`horizontal_tb`"
+        "Meaning": "`vertical_rl` runs lines top-to-bottom, columns right-to-left."
+    - keys: ["kinsoku"]
+      cells:
+        "Key": "`kinsoku`"
+        "Values": "`school` | `none`"
+        "Default": "`school`"
+        "Meaning": "See below."
+    - keys: ["markup"]
+      cells:
+        "Key": "`markup`"
+        "Values": "`aozora`"
+        "Default": "unset"
+        "Meaning": "Opt-in content markup: ruby (`《》`), the `［＃改ページ］` sheet break, the large-writing span notes, and the line-placement notes — see the sections below. Unset, every character (including `《》` and `［＃…］`) renders verbatim — bound user data is never interpreted by default."
+    - keys: ["rubySize"]
+      cells:
+        "Key": "`rubySize`"
+        "Values": "length"
+        "Default": "0.4 × cellSize"
+        "Meaning": "Ruby font size. Each reading is centered along its base run's extent (horizontal: above it; vertical: beside it) and shrinks to fit when longer — 4pt floor, past which `ruby_overflow` warns. A 2-char reading over a 1-cell base therefore shrinks to ~half a cell per char and stays centered on that cell."
+    - keys: ["box", "style", "styleNames", "id"]
+      cells:
+        "Key": "`box` / `style` / `styleNames` / `id`"
+        "Values": "common keys"
+        "Default": "—"
+        "Meaning": "`box.w` defaults to the full width; the grid is drawn from the content box's top-left. `id` lands in the box index per sheet page."
+  omitted:
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"container#syntax":
+  page: container
+  node: ContainerItem
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["box"]
+      cells:
+        "Key": "`box`"
+        "Type": "map"
+        "Description": "`w` omitted defaults to the parent width minus the x offset; `h` omitted = **auto height** (the lowest child bottom edge). Layout-mode keys (`type`/`direction`/`gap`/`alignItems`/`justifyContent`, grid tracks) select how children place — see [flex.md](flex.md) / [grid.md](grid.md)."
+    - keys: ["style", "styleNames"]
+      cells:
+        "Key": "`style` / `styleNames`"
+        "Type": ""
+        "Description": "Decoration paints the container's own border box; the **inherited** properties cascade to all descendants ([style.md](style.md))."
+    - keys: ["items"]
+      cells:
+        "Key": "`items`"
+        "Type": "array"
+        "Description": "Children. Each child with no authored `box.x`/`box.y` is a flex/grid item; one with either is absolutely placed within the container."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "visible": "item-common; documented on visible.md"
+
+"defaults#defaults":
+  page: defaults
+  node: TemplateDefaults
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Meaning"
+      from: authored
+  rows:
+    - keys: ["locale"]
+      cells:
+        "Key": "`locale`"
+        "Meaning": "Document locale id (BCP 47, e.g. `ja-JP`). The CLI's fallback for picking the locale pack when `--lang` is absent (`--lang` > `defaults.locale` > `ja-JP`). Drives dates, currency display, grouping separators, and units."
+    - keys: ["currency"]
+      cells:
+        "Key": "`currency`"
+        "Meaning": "Document currency **code** (ISO 4217, e.g. `JPY`). The middle of the currency fallback chain: the field's `currency:` → `defaults.currency` → the pack's `currencyDefault` → `JPY`. Lets currency bindings stay a bare `{key}` with no per-field code."
+    - keys: ["style"]
+      cells:
+        "Key": "`style`"
+        "Meaning": "The cascade **root style**. Inherited properties ([style.md](style.md)) flow into every item; the `rem` root follows this style's computed `fontSize` (engine default 10pt when unset — see [length.md](length.md))."
+    - keys: ["formats"]
+      cells:
+        "Key": "`formats`"
+        "Meaning": "Per-type format defaults: `date` / `datetime` / `number` / `currency` / `percentage` / `quantity`, each a variant-name string **or** an inline `{ pattern: … }` map. Unknown type keys are parse errors."
+
+"document#syntax":
+  page: document
+  node: DocumentMeta
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["title"]
+      cells:
+        "Key": "`title`"
+        "Type": "string"
+        "Description": "The document title. Unset → the template `name:`, then `Shojiku Document`."
+    - keys: ["description"]
+      cells:
+        "Key": "`description`"
+        "Type": "string"
+        "Description": "A short summary (the PDF `/Subject`)."
+    - keys: ["keywords"]
+      cells:
+        "Key": "`keywords`"
+        "Type": "list of strings"
+        "Description": "Search keywords. Max 64 entries."
+    - keys: ["language"]
+      cells:
+        "Key": "`language`"
+        "Type": "string"
+        "Description": "BCP 47 tag (`ja-JP`). Unset → `defaults.locale`."
+    - keys: ["authors"]
+      cells:
+        "Key": "`authors`"
+        "Type": "list of strings"
+        "Description": "Max 64 entries."
+
+"document#where-each-value-goes":
+  page: document
+  node: DocumentMeta
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "PDF `/Info`"
+      from: authored
+    - header: "XMP"
+      from: authored
+    - header: "Also"
+      from: authored
+  rows:
+    - keys: ["title"]
+      cells:
+        "Key": "`title`"
+        "PDF `/Info`": "`/Title`"
+        "XMP": "`dc:title`"
+        "Also": ""
+    - keys: ["description"]
+      cells:
+        "Key": "`description`"
+        "PDF `/Info`": "`/Subject`"
+        "XMP": "`dc:description`"
+        "Also": ""
+    - keys: ["keywords"]
+      cells:
+        "Key": "`keywords`"
+        "PDF `/Info`": "`/Keywords` (comma-joined)"
+        "XMP": "`pdf:Keywords`"
+        "Also": ""
+    - keys: ["authors"]
+      cells:
+        "Key": "`authors`"
+        "PDF `/Info`": "`/Author` (comma-joined)"
+        "XMP": "`dc:creator`"
+        "Also": ""
+    - keys: ["language"]
+      cells:
+        "Key": "`language`"
+        "PDF `/Info`": "—"
+        "XMP": "`dc:language`"
+        "Also": "the catalog `/Lang`, which is what assistive technology reads"
+
+"flex#child-key-on-a-flex-item-s-own-box":
+  page: flex
+  node: OptBox
+  coverage: subset
+  subset: "the one flex key a child carries; the rest of a child's box is on box.md"
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Values"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["flexGrow"]
+      cells:
+        "Key": "`flexGrow`"
+        "Values": "number ≥ 0"
+        "Default": "0"
+        "Description": "The child's share of the **leftover** main-axis size, among children without an authored size on that axis (CSS `flex-grow`). `flexGrow: 2` next to `flexGrow: 1` takes ⅔ of what is left after every child's basis. The default is CSS's: nothing grows unless asked."
+    - keys: ["flexBasis"]
+      cells:
+        "Key": "`flexBasis`"
+        "Values": "`content` | `0`"
+        "Default": "`content`"
+        "Description": "The main size such a child **starts from**, before `flexGrow` shares out the rest (CSS `flex-basis`). `content` is its max-content width — the width at which its text would not wrap. `0` starts it at nothing, so `flexGrow` divides the whole row: that is CSS's `flex: 1`, and it is what this engine used to do unconditionally. A length basis is deliberately not accepted — `w` already sizes a child."
+
+"flex#keys-on-the-container-s-box":
+  page: flex
+  node: OptBox
+  coverage: subset
+  subset: "the flex keys of a box; the grid keys are on grid.md and the geometry keys on box.md"
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Values"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["direction"]
+      cells:
+        "Key": "`direction`"
+        "Values": "`column` | `row`"
+        "Default": "`column`"
+        "Description": "Main axis. `column` stacks; `row` sets children side by side."
+    - keys: ["gap"]
+      cells:
+        "Key": "`gap`"
+        "Values": "[Length](length.md)"
+        "Default": "0"
+        "Description": "Main-axis gap between flex children (`%` of the main-axis content size; negative = 0). Absolutely placed children ignore it."
+    - keys: ["alignItems"]
+      cells:
+        "Key": "`alignItems`"
+        "Values": "`stretch` | `start` | `center` | `end` | `baseline`"
+        "Default": "`stretch`"
+        "Description": "Cross-axis alignment. `stretch` fills an unset cross size: a child with no `w` fills a `column`'s width, and a child with no `h` **is resized to** a `row`'s cross size — the row's own height when it has one, otherwise its tallest child's (CSS Flexbox §9.4). A cross-axis `auto` margin opts a child out, since an `auto` margin beats alignment everywhere else here too. `baseline` aligns row children on their **first text baseline** — a child with no text (a mark, rect, image, or clipped box) synthesizes its baseline from its bottom edge, so a `checkbox` bottom sits exactly on its label's baseline (the natural look for label + mark rows; `center` centers *line boxes*, which reads as skew when the font carries large below-baseline space). In a column it behaves like `start` (the CSS fallback); cross-axis auto margins win over any alignment."
+    - keys: ["justifyContent"]
+      cells:
+        "Key": "`justifyContent`"
+        "Values": "`start` | `center` | `end` | `space_between` | `space_around` | `space_evenly`"
+        "Default": "`start`"
+        "Description": "Main-axis distribution of free space when the container's main size is definite (an auto-height column has none, so it is inert there). Negative free space degrades the CSS way (`space_*` act like `start`)."
+
+"flow#syntax":
+  page: flow
+  node: Body.flow
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["box"]
+      cells:
+        "Key": "`box`"
+        "Type": "map"
+        "Default": "whole margin box"
+        "Description": "The region the flow occupies on every page, resolved against the page margin box (`%` works)."
+    - keys: ["gap"]
+      cells:
+        "Key": "`gap`"
+        "Type": "[Length](length.md)"
+        "Default": "0"
+        "Description": "Vertical gap between stacked items, additive with item margins (no collapse). `%` resolves against the flow-region height (matching `repeat_flow.gap`); negatives clamp to 0."
+    - keys: ["items"]
+      cells:
+        "Key": "`items`"
+        "Type": "array"
+        "Default": "`[]`"
+        "Description": "Laid out in order."
+  omitted:
+    "type": "the discriminator — it is this page's own heading"
+
+"grid#keys-on-the-container-s-box":
+  page: grid
+  node: OptBox
+  coverage: subset
+  subset: "the grid keys of a box; the flex keys are on flex.md and the geometry keys on box.md"
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Values"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["type"]
+      cells:
+        "Key": "`type`"
+        "Values": "`grid`"
+        "Default": "—"
+        "Description": "Required to activate grid placement."
+    - keys: ["columns"]
+      cells:
+        "Key": "`columns`"
+        "Values": "count | list of [Length](length.md)/`fr`/`auto`"
+        "Default": "1 column"
+        "Description": "Column tracks: a **count** (equal split of the content width minus gaps) or a **track list** (`[\"auto\", \"1fr\", \"30%\", 50]`, any Length, `fr` weight — see [`fr` weights](#fr-weights) — and/or `auto`, sized to the widest cell placed in the track)."
+    - keys: ["rows"]
+      cells:
+        "Key": "`rows`"
+        "Values": "count | list of Length/`fr`/`auto`"
+        "Default": "auto rows"
+        "Description": "A count needs a definite container height (auto-height degrades to auto rows with a diagnostic); rows beyond an explicit list are implicit — auto, sized by their tallest child. Writing `auto` in the list says exactly that, so `[\"auto\", \"1fr\"]` reads the way it looks. An `fr` row needs a definite height (auto-height degrades with `grid_fr_no_basis`)."
+    - keys: ["columnGap", "rowGap"]
+      cells:
+        "Key": "`columnGap` / `rowGap`"
+        "Values": "Length"
+        "Default": "0"
+        "Description": "Per-axis gaps; the flex `gap` doubles as the both-axes shorthand (specific keys win). Negative gaps are 0."
+    - keys: ["direction"]
+      cells:
+        "Key": "`direction`"
+        "Values": "`row` | `column`"
+        "Default": "`row`"
+        "Description": "Fill order (CSS `grid-auto-flow` analog): `row` = row-major."
+    - keys: ["justifyContent"]
+      cells:
+        "Key": "`justifyContent`"
+        "Values": "flex values"
+        "Default": "`start`"
+        "Description": "Distributes leftover width across tracks (only meaningful for track lists — counts consume the axis)."
+    - keys: ["alignItems"]
+      cells:
+        "Key": "`alignItems`"
+        "Values": "flex values"
+        "Default": "`stretch`"
+        "Description": "Aligns children within their row (with vertical auto margins)."
+
+"grid#keys-on-the-container-s-box-2":
+  page: grid
+  node: OptBox
+  coverage: subset
+  subset: "the two span keys a grid child carries; the rest of a child's box is on box.md"
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Values"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["columnSpan"]
+      cells:
+        "Key": "`columnSpan`"
+        "Values": "count ≥ 1"
+        "Default": "1"
+        "Description": "How many column tracks the child spans; the cell run is the spanned widths plus the gaps between them. Clamped to the track count (`grid_span_clamped`)."
+    - keys: ["rowSpan"]
+      cells:
+        "Key": "`rowSpan`"
+        "Values": "count ≥ 1"
+        "Default": "1"
+        "Description": "How many row tracks the child spans; cells beneath are reserved. Clamped to 64 (`grid_span_clamped`)."
+
+"image#keys":
+  page: image
+  node: Item.image
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["src"]
+      cells:
+        "Key": "`src`"
+        "Type": "string"
+        "Default": ""
+        "Description": "Bundled path, `data:` URI, or inline SVG. A path resolves against the **assets root** — `--assets-dir`, defaulting to **the template file's directory** (so `examples/business/receipt-ja/templates.yml` can say `src: assets/logo.svg`); paths escaping the root are rejected (`asset_traversal`). Remote URLs are recognized and rejected (`remote_asset_unsupported` — the render path has no network I/O, and unlike a font there is no `sha256` pin that would make fetching an image deterministic)."
+    - keys: ["data"]
+      cells:
+        "Key": "`data`"
+        "Type": "`{ key }`"
+        "Default": ""
+        "Description": "Dynamic source from params; the host's asset policy (open vs bundled-only, per-item allow/deny via CLI `--allow/deny-dynamic-image`) gates it."
+    - keys: ["bindings"]
+      cells:
+        "Key": "`bindings`"
+        "Type": "map of name → binding"
+        "Default": ""
+        "Description": "Named declarations for the `{name}` interpolations in this item's `link.url` ([data-binding.md](data-binding.md#named-binding-declarations))."
+    - keys: ["fit"]
+      cells:
+        "Key": "`fit`"
+        "Type": "`contain` | `cover` | `stretch` | `none`"
+        "Default": "`contain`"
+        "Description": "CSS `object-fit`, all centered. `contain` preserves aspect ratio inside the box (letterbox); `cover` preserves aspect ratio filling the box and crops the overflow; `stretch` fills the box exactly (distorting); `none` draws at the asset's intrinsic size (raster px at 72dpi / SVG viewBox units). `cover`/`none` clip anything past the content box — and an **SVG clips under every fit** (see below)."
+    - keys: ["box"]
+      cells:
+        "Key": "`box.w` / `box.h`"
+        "Type": "[Length](length.md)"
+        "Default": "required"
+        "Description": "The fit box (inset by padding)."
+    - keys: ["style", "styleNames"]
+      cells:
+        "Key": "`style` / `styleNames`"
+        "Type": ""
+        "Default": ""
+        "Description": "Decoration (`backgroundColor`, `borderWidth`/`borderColor`) plus **`opacity`** (see below); text properties are unused."
+    - keys: ["link"]
+      cells:
+        "Key": "`link`"
+        "Type": "`{ url }`"
+        "Default": ""
+        "Description": "Hyperlink over the draw box. See [link.md](link.md)."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"line#keys":
+  page: line
+  node: Item.line
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["from", "to"]
+      cells:
+        "Key": "`from` / `to`"
+        "Type": "`{ x, y }` ([`Length`](length.md) each) **or** `{ item, edge?, offset? }`"
+        "Default": "required"
+        "Description": "Endpoints relative to the parent origin (margin box / flow region / container **content** box). `x` resolves against that box's width, `y` against its height; a bare number is pt. A `%` `y` under an auto-height parent has no basis — it warns `percent_of_auto` and drops to 0, like every other vertical `%`."
+    - keys: ["from", "to"]
+      cells:
+        "Key": "`from.item` / `to.item`"
+        "Type": "string (another item's `id:`)"
+        "Default": "—"
+        "Description": "Anchors this endpoint to that item's placement. Makes the whole line absolutely positioned; see above. No item with that id warns `anchor_unknown_target` and nothing is drawn."
+    - keys: ["from", "to"]
+      cells:
+        "Key": "`from.edge` / `to.edge`"
+        "Type": "`top` | `right` | `bottom` | `left` | `center`"
+        "Default": "`center`"
+        "Description": "Which point of the target's border box to land on — the `<anchor-side>` subset CSS Anchor Positioning Level 1 defines."
+    - keys: ["from", "to"]
+      cells:
+        "Key": "`from.offset` / `to.offset`"
+        "Type": "`{ x, y }` (pt numbers)"
+        "Default": "`{ x: 0, y: 0 }`"
+        "Description": "Shifts the resolved point. Either axis may be omitted."
+    - keys: ["style"]
+      cells:
+        "Key": "`style.width`"
+        "Type": "number (pt)"
+        "Default": "`1`"
+        "Description": "Stroke width. Capped 0..=1000 pt — it shares `borderWidth`'s bound, since both reach the renderers' stroke math directly. A negative, non-finite, or over-cap width warns `invalid_line_width` and strokes at the 1 pt default (unlike `borderWidth`, whose `0` legitimately means \"no border\", a `line` that strokes nothing draws nothing). An authored `0` passes through undiagnosed."
+    - keys: ["style"]
+      cells:
+        "Key": "`style.color`"
+        "Type": "`#rrggbb`"
+        "Default": "black"
+        "Description": "Stroke color."
+    - keys: ["style"]
+      cells:
+        "Key": "`style.opacity`"
+        "Type": "number `0..=1`"
+        "Default": "`1`"
+        "Description": "Paint alpha for the stroke. Out-of-range warns `invalid_opacity` and draws opaque."
+    - keys: ["style"]
+      cells:
+        "Key": "`style.style`"
+        "Type": "`solid` | `dashed` | `dotted` | `double`"
+        "Default": "`solid`"
+        "Description": "Stroke pattern, sharing the border wire's keyword set ([style.md](style.md)). `dashed` paints three widths on and three off, `dotted` one and one. `double` draws two parallel lines a third of the width each, offset either side of the authored geometry along its normal — so a diagonal doubles correctly. Advertised as the `line.style` capability."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"list#keys":
+  page: list
+  node: Item.list
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["data"]
+      cells:
+        "Key": "`data`"
+        "Type": "`{ key }`"
+        "Default": "required"
+        "Description": "The array to render — a params key, or inside a `repeat` cell / `repeat_flow` card a field of the bound element (scope-aware). `scope: document` reads the top-level array even from inside a cell — see [data-binding.md](data-binding.md#scope--the-escape-back-to-the-document)."
+    - keys: ["text"]
+      cells:
+        "Key": "`text`"
+        "Type": "string"
+        "Default": "unset"
+        "Description": "Per-entry template with `{key}` interpolation against the entry object. The keys are the fields the array's `items:` schema declares, so a typo warns `unknown_data_key` at validate; each resolves through its declared field spec (display format, `placeholder`, `enum` label). Unset: scalar entries print directly (strings as-is, numbers in plain form — no locale formatting)."
+    - keys: ["bindings"]
+      cells:
+        "Key": "`bindings`"
+        "Type": "map of name → binding"
+        "Default": "unset"
+        "Description": "Named declarations for the `{name}` interpolations in `text`. They resolve per ENTRY like `text` itself, unless one authors `scope: document` ([data-binding.md](data-binding.md#named-binding-declarations))."
+    - keys: ["overflowText"]
+      cells:
+        "Key": "`overflowText`"
+        "Type": "string"
+        "Default": "`+{count}`"
+        "Description": "Template for the trailing overflow line; `{count}` = the number of entries that did **not** fit."
+    - keys: ["box", "style", "styleNames"]
+      cells:
+        "Key": "`box` / `style` / `styleNames`"
+        "Type": ""
+        "Default": ""
+        "Description": "Usual forms; the text properties style every line."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"page#keys":
+  page: page
+  node: PageSpec
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["size"]
+      cells:
+        "Key": "`size`"
+        "Type": "named | `{ w, h }`"
+        "Default": "`A4`"
+        "Description": "Named size or custom dimensions. Named presets (capability key `page.size.presets`): ISO A — `A3` 841.89 × 1190.55, `A4` 595.28 × 841.89, `A5` 419.53 × 595.28 pt; **JIS** B (the Japanese B series, not ISO B) — `B4` 728.5 × 1031.81 (257 × 364 mm), `B5` 515.91 × 728.5 (182 × 257 mm); North American — `Letter` 612 × 792, `Legal` 612 × 1008, `Tabloid` 792 × 1224 pt. Every named size gets the same default 25pt margin. Custom `w`/`h` are absolute [lengths](length.md) (bare pt or `mm`/`cm`/`in`; `%` is rejected — there is no parent to resolve against), positive, ≤ 14,400 pt per side (the PDF page limit, `MAX_PAGE_PT`)."
+    - keys: ["orientation"]
+      cells:
+        "Key": "`orientation`"
+        "Type": "`portrait` | `landscape`"
+        "Default": "`portrait`"
+        "Description": "Landscape swaps the two dimensions of a **named** size. It is a **no-op for a custom `{ w, h }`** — a custom size already states its dimensions literally, so `orientation` never double-swaps it; express the orientation in the dimensions. The combination `custom size + orientation: landscape` warns `orientation_ignored`."
+    - keys: ["margin"]
+      cells:
+        "Key": "`margin`"
+        "Type": "number | map | array"
+        "Default": "`25` (all sides)"
+        "Description": "Printable-area insets. **The all-sides form is a bare pt number only** — `margin: 15mm` (one value with a unit) is a parse error; for units use the per-side map (`{ top: \"15mm\", right: \"15mm\", bottom: \"15mm\", left: \"15mm\" }`). Sides accept every length unit; `%` resolves against the page **width** for all four sides (the CSS edge rule). **A per-side map specifies all four sides: an unset side is 0, not 25** — `margin: { top: 30 }` zeroes the other three. Negative sides, `auto`, wrong array lengths, and unknown map keys are parse errors. The authored form round-trips."
+
+"page_number#keys":
+  page: page_number
+  node: Item.page_number
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["format"]
+      cells:
+        "Key": "`format`"
+        "Type": "string"
+        "Default": "`\"{page} / {pages}\"`"
+        "Description": "`{page}` = current page (1-based), `{pages}` = total. Other text passes through (`- {page} -`, `p.{page}`)."
+    - keys: ["box", "style", "styleNames"]
+      cells:
+        "Key": "`box` / `style` / `styleNames`"
+        "Type": ""
+        "Default": ""
+        "Description": "Usual text forms ([style.md](style.md))."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"qr_code#keys":
+  page: qr_code
+  node: Item.qr_code
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["text", "data"]
+      cells:
+        "Key": "`text` / `data`"
+        "Type": ""
+        "Default": "one required"
+        "Description": "Content, exactly like [text.md](text.md) — scope-aware, so per-element inside cells."
+    - keys: ["bindings"]
+      cells:
+        "Key": "`bindings`"
+        "Type": "map of name → binding"
+        "Default": "unset"
+        "Description": "Named declarations for this item's `{name}` interpolations — the option set the bare `{key}` grammar cannot carry, incl. a key outside `[A-Za-z0-9_.]` ([data-binding.md](data-binding.md#named-binding-declarations))."
+    - keys: ["box"]
+      cells:
+        "Key": "`box.w` / `box.h`"
+        "Type": "[Length](length.md)"
+        "Default": "required"
+        "Description": "The code draws **square** on the smaller content-box side, centered, with the ISO 18004 4-module quiet zone *inside* the box."
+    - keys: ["errorCorrection"]
+      cells:
+        "Key": "`errorCorrection`"
+        "Type": "`low` | `medium` | `quartile` | `high`"
+        "Default": "`medium`"
+        "Description": "Tolerated damage ~7/15/25/30%; higher levels need more modules for the same content."
+    - keys: ["style", "styleNames"]
+      cells:
+        "Key": "`style` / `styleNames`"
+        "Type": ""
+        "Default": ""
+        "Description": "Decoration only: `backgroundColor` paints under the modules (the usual white backing), plus `borderWidth`/`borderColor`."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"rect#keys":
+  page: rect
+  node: Item.rect
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["box"]
+      cells:
+        "Key": "`box`"
+        "Type": "map"
+        "Default": "required"
+        "Description": "Position and size ([box.md](box.md)); margins work, padding is ignored."
+    - keys: ["styleNames"]
+      cells:
+        "Key": "`styleNames`"
+        "Type": "list"
+        "Default": "—"
+        "Description": "Named styles from the `styles:` registry, layered below the inline `style`."
+    - keys: ["style"]
+      cells:
+        "Key": "`style.*`"
+        "Type": "[Style](style.md) decoration subset"
+        "Default": "—"
+        "Description": "`backgroundColor`, `borderWidth`, `borderColor`, `borderStyle`, `borderRadius`, `opacity`. A side draws iff its computed width > 0. Text keys are inert and warn `shape_style_ignored`."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"repeat#keys":
+  page: repeat
+  node: Item.repeat
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["data"]
+      cells:
+        "Key": "`data`"
+        "Type": "`{ key }`"
+        "Default": "required"
+        "Description": "The array params key."
+    - keys: ["breakBefore"]
+      cells:
+        "Key": "`breakBefore`"
+        "Type": "`page` | `auto`"
+        "Default": "`page`"
+        "Description": "`page` aligns the grid to a fresh page. `auto` starts it at the flow cursor, so a title above the grid costs rows instead of a whole page — see [Behavior](#behavior)."
+    - keys: ["grid"]
+      cells:
+        "Key": "`grid.columns` / `grid.rows`"
+        "Type": "integer ≥ 1"
+        "Default": "`1` / `1`"
+        "Description": "Cells across/down per page. `columns × rows` clamps to `MAX_IMPOSITION_PER_PAGE` (64) with `imposition_grid_clamped`."
+    - keys: ["grid"]
+      cells:
+        "Key": "`grid.direction`"
+        "Type": "`row` | `column`"
+        "Default": "`row`"
+        "Description": "`row` fills left-to-right then wraps down; `column` top-to-bottom then wraps right."
+    - keys: ["grid"]
+      cells:
+        "Key": "`grid.gap`"
+        "Type": "[Length](length.md)"
+        "Default": "0"
+        "Description": "Both axes at once (the CSS shorthand, as on a [`box.type: grid`](grid.md) container). An axis key below wins over it."
+    - keys: ["grid"]
+      cells:
+        "Key": "`grid.columnGap` / `grid.rowGap`"
+        "Type": "[Length](length.md)"
+        "Default": "`gap`"
+        "Description": "Slot width = `(region_w − columnGap·(columns−1)) / columns`; height likewise. `%` resolves against the region width / height respectively. Negative gaps are 0 (CSS)."
+    - keys: ["cutMarks"]
+      cells:
+        "Key": "`cutMarks`"
+        "Type": "boolean"
+        "Default": "`false`"
+        "Description": "Draw trim guides for the grid — see [Behavior](#behavior)."
+    - keys: ["cell"]
+      cells:
+        "Key": "`cell`"
+        "Type": "container"
+        "Default": "required"
+        "Description": "A [`container`](container.md) whose parent box is the slot. It **fills the slot by default** (definite height), so `%` and `verticalAlign` resolve against the slot; an explicit `cell.box` insets/resizes within it."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"repeat_flow#keys":
+  page: repeat_flow
+  node: Item.repeat_flow
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["data"]
+      cells:
+        "Key": "`data`"
+        "Type": "`{ key }`"
+        "Default": "required"
+        "Description": "The array params key."
+    - keys: ["gap"]
+      cells:
+        "Key": "`gap`"
+        "Type": "[Length](length.md)"
+        "Default": "0"
+        "Description": "Between cards; negative clamps to 0, out-of-range drops with `length_out_of_range`."
+    - keys: ["item"]
+      cells:
+        "Key": "`item`"
+        "Type": "container"
+        "Default": "required"
+        "Description": "The per-element card, a [`container`](container.md): auto height by default (`box.h` fixes it), horizontal auto margins work, its `style`/`styleNames` cascade to children, and its decoration paints per instance."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"style#property-reference":
+  page: style
+  node: Style
+  coverage: full
+  columns:
+    - header: "Property"
+      from: authored
+    - header: "Type / values"
+      from: authored
+    - header: "Engine default"
+      from: authored
+    - header: "Inherited"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["fontSize"]
+      cells:
+        "Property": "`fontSize`"
+        "Type / values": "number (pt) or length string"
+        "Engine default": "`10`"
+        "Inherited": "yes"
+        "Description": "Strings take `pt`/`mm`/`cm`/`in`, `em`/`%` (of the *inherited* size — nested relative sizes multiply), or `rem` (of the engine default). Non-positive/non-finite computed values fall back with `invalid_font_size`; computed sizes over 1000 pt fall back with `font_size_out_of_range` (the cap pairs with `lineHeight`'s so the tallest admitted line box is the ±1,000,000 pt resolved-length cap)."
+    - keys: ["fontFamily"]
+      cells:
+        "Property": "`fontFamily`"
+        "Type / values": "string (face id from the lang pack)"
+        "Engine default": "pack default face"
+        "Inherited": "yes"
+        "Description": "Valid ids and the default: [fonts.md](fonts.md) (default `biz-udp-gothic`; also `biz-ud-gothic`, `ipamj-mincho`)."
+    - keys: ["fontWeight"]
+      cells:
+        "Property": "`fontWeight`"
+        "Type / values": "`normal` | `bold`"
+        "Engine default": "`normal`"
+        "Inherited": "yes"
+        "Description": "`bold` selects the family's real bold face when it ships one (the `biz-*-gothic` families do); otherwise it renders as synthetic emboldening (glyphs stroked in the text color, advances unchanged — CSS faux bold)."
+    - keys: ["fontStyle"]
+      cells:
+        "Property": "`fontStyle`"
+        "Type / values": "`normal` | `italic`"
+        "Engine default": "`normal`"
+        "Inherited": "yes"
+        "Description": "Synthetic baseline-anchored skew (~12°), advances unchanged."
+    - keys: ["letterSpacing"]
+      cells:
+        "Property": "`letterSpacing`"
+        "Type / values": "number (pt, negative allowed) or length string"
+        "Engine default": "`0`"
+        "Inherited": "yes"
+        "Description": "Strings take `pt`/`mm`/`cm`/`in` or `em`/`rem` (`em` = the item's own computed fontSize); `%` is a parse error (CSS letter-spacing has none). Added to every character advance; measurement, wrapping, alignment, and drawing share the one policy. Magnitude capped at ±1000 pt (`invalid_letter_spacing` → 0)."
+    - keys: ["lineHeight"]
+      cells:
+        "Property": "`lineHeight`"
+        "Type / values": "number (multiplier of fontSize)"
+        "Engine default": "`1.4`"
+        "Inherited": "yes"
+        "Description": "Non-positive/non-finite falls back with `invalid_line_height`; multipliers over 1000 fall back with `line_height_out_of_range`."
+    - keys: ["color"]
+      cells:
+        "Property": "`color`"
+        "Type / values": "`#rrggbb` string"
+        "Engine default": "black"
+        "Inherited": "yes"
+        "Description": "Text color."
+    - keys: ["textAlign"]
+      cells:
+        "Property": "`textAlign`"
+        "Type / values": "`left` | `center` | `right`"
+        "Engine default": "`left`"
+        "Inherited": "yes"
+        "Description": "On a vertical (`vertical_rl`) block the keyword names the line's end along the column (`right` = bottom). A `char_grid` honors it too — filling a partly filled line toward its end — but reads it from the ITEM only, never inherited ([char_grid.md](char_grid.md))."
+    - keys: ["verticalAlign"]
+      cells:
+        "Property": "`verticalAlign`"
+        "Type / values": "`top` | `middle` | `bottom`"
+        "Engine default": "`top`"
+        "Inherited": "no"
+        "Description": "Vertical alignment within the item's box (needs a definite `h`, or `minHeight` slack). On a vertical (`vertical_rl`) block it maps CSS-logically to the column-stack shift: `top` → right edge, `middle` → centered, `bottom` → left edge ([vertical_text.md](vertical_text.md))."
+    - keys: ["lineBreak"]
+      cells:
+        "Property": "`lineBreak`"
+        "Type / values": "`normal` | `strict` | `loose` | `anywhere`"
+        "Engine default": "`normal`"
+        "Inherited": "yes"
+        "Description": "CSS `line-break`. `normal`/`strict`/`loose` pick the CJK kinsoku strictness — `strict` also holds small kana/`ー`/`〜゠` off a line start, `loose` frees centered punctuation (`・：；！？`) and inseparables (`‥…`); `anywhere` breaks between any two characters with no kinsoku. Per-mode sets and migration: [text.md](text.md)."
+    - keys: ["textSpacingTrim"]
+      cells:
+        "Property": "`textSpacingTrim`"
+        "Type / values": "`space_all` | `normal` | `trim_start`"
+        "Engine default": "`space_all`"
+        "Inherited": "yes"
+        "Description": "Half-width punctuation (CSS `text-spacing-trim` subset). `space_all` (the default) trims nothing — output is unchanged. `normal` trims the internal space between two adjacent fullwidth punctuation glyphs (e.g. `」「`, `、」`) to half-width; `trim_start` also trims a fullwidth opening bracket at a line head (a column head on a vertical block — [vertical_text.md](vertical_text.md)). Engine-synthesized after shaping (works on every face, not font-feature dependent). A v1 subset — see [text.md](text.md)."
+    - keys: ["hangingPunctuation"]
+      cells:
+        "Property": "`hangingPunctuation`"
+        "Type / values": "`none` | `allow_end` | `force_end`"
+        "Engine default": "`none`"
+        "Inherited": "yes"
+        "Description": "Hanging punctuation (CSS `hanging-punctuation` subset). A line-terminating comma / full stop (`、。，．`) hangs past the end edge. `allow_end` hangs one that would otherwise wrap (keeping the line count down); `force_end` also excludes a *fitting* trailing comma from the alignment width so it hangs into the margin under center/right alignment. Plain text blocks in v1 (vertical columns hang on both the plain and `spans` paths — [vertical_text.md](vertical_text.md)). See [text.md](text.md)."
+    - keys: ["backgroundColor"]
+      cells:
+        "Property": "`backgroundColor`"
+        "Type / values": "`#rrggbb` string"
+        "Engine default": "none"
+        "Inherited": "no"
+        "Description": "Filled rectangle covering the border box, under the content. Honored on text-drawing items, `container`, `repeat` cells, `image`, and `qr_code` boxes."
+    - keys: ["borderWidth"]
+      cells:
+        "Property": "`borderWidth`"
+        "Type / values": "number (pt) | `{ top/right/bottom/left }` map"
+        "Engine default": "`0` (no border)"
+        "Inherited": "no"
+        "Description": "Border stroke over the border box, drawn iff a side's computed width > 0. The bare number is all four sides; the map is per side (unset side = 0; negative widths are parse errors). Does not change geometry (each side draws centered on the box edge). Capped 0..=1000 pt (`invalid_border_width`). On a `table` the map form draws the outer frame only ([table.md](table.md)). `rect` items use their own style shape instead."
+    - keys: ["borderColor"]
+      cells:
+        "Property": "`borderColor`"
+        "Type / values": "`#rrggbb` string | per-side map"
+        "Engine default": "black"
+        "Inherited": "no"
+        "Description": "Inert while the side's width is 0 — a named style can carry a palette color items opt into with a width."
+    - keys: ["borderStyle"]
+      cells:
+        "Property": "`borderStyle`"
+        "Type / values": "`solid` | `double` | `dashed` | `dotted` | per-side map"
+        "Engine default": "`solid`"
+        "Inherited": "no"
+        "Description": "`double` splits the side's width into two lines of a third each (CSS). `dashed` paints three stroke widths on and three off, `dotted` one and one; both intervals are floored at 0.25pt so a hair-thin border cannot explode the dash walk. A uniform border (one width, one colour, and any style except `double`) stays a single stroked rect carrying the pattern; a per-side or `double` border renders as filled bands per side, with each dashed/dotted side stroked as a centred line instead (corners overlap; paint order top/right/bottom/left)."
+    - keys: ["borderRadius"]
+      cells:
+        "Property": "`borderRadius`"
+        "Type / values": "number (pt) | length string"
+        "Engine default": "`0` (square)"
+        "Inherited": "no"
+        "Description": "Rounds the border box's corners (CSS `border-radius`, single value — no per-corner form). `%` resolves against BOTH axes independently, so `50%` is a circle on a square box and a full ellipse on an oblong one; an absolute radius too large to fit shrinks by ONE uniform factor (CSS overlapping-curves rule), which is what makes a big value a stadium (\"pill\") rather than an ellipse. Honored on a box whose border is uniform, and on its `backgroundColor` fill. A per-side or `double` border, a `table`, or a form mark warns `border_radius_ignored` and draws square corners; a negative or non-finite value warns `invalid_border_radius`. `overflow: hidden` clips to the rounded box."
+    - keys: ["textOverflow"]
+      cells:
+        "Property": "`textOverflow`"
+        "Type / values": "`visible` | `shrink` | `ellipsis` | `clip`"
+        "Engine default": "`visible`"
+        "Inherited": "no"
+        "Description": "What text does when it exceeds a **definite `box.h`** (auto-height boxes grow instead). On a vertical block the overflow axis is the box **width**, and a direct-flow `visible` overflow paginates by columns ([vertical_text.md](vertical_text.md)). See [text.md](text.md)."
+    - keys: ["overflow"]
+      cells:
+        "Property": "`overflow`"
+        "Type / values": "`visible` | `hidden`"
+        "Engine default": "`visible`"
+        "Inherited": "no"
+        "Description": "What a container-like box (`container`, `repeat` cell, `repeat_flow` card) does with children outside its border box. `hidden` clips children to the border box (decoration stays outside — it *is* the box) and suppresses `container_overflow`; an auto-height box still clips horizontally. Inert on other items (text uses `textOverflow: clip`)."
+    - keys: ["textDecoration"]
+      cells:
+        "Property": "`textDecoration`"
+        "Type / values": "`none` | `underline` | `line_through`"
+        "Engine default": "`none`"
+        "Inherited": "no"
+        "Description": "Decoration line on text (also `list` entries and table cells via the column style). Position/thickness come from the font's own metrics (post/OS2 tables, conventional fallback), drawn in the text color, sized to each line's measured width; follows `shrink` (computed at the final size) and pagination. On a vertical block it draws a SIDE band per column — underline right of the em cell (the JLREQ side-line convention), line-through on the column axis ([vertical_text.md](vertical_text.md)). Not inherited (matches CSS; decoration *propagation* is not modeled) — set it on the text item itself."
+    - keys: ["opacity"]
+      cells:
+        "Property": "`opacity`"
+        "Type / values": "number `0..=1`"
+        "Engine default": "`1`"
+        "Inherited": "no"
+        "Description": "Paint alpha for the item's own painting: text glyphs + decoration line, `backgroundColor` fill, and border stroke alike. **Per-item paint alpha, not CSS group compositing** — nested items don't multiply, and a container's opacity does not affect its children. `rect`/`line` items take `opacity` in their own style shapes. Out-of-range warns `invalid_opacity` and draws opaque. QR modules ignore it (scannability)."
+    - keys: ["writingMode"]
+      cells:
+        "Property": "`writingMode`"
+        "Type / values": "`horizontal_tb` | `vertical_rl`"
+        "Engine default": "`horizontal_tb`"
+        "Inherited": "yes"
+        "Description": "CSS `writing-mode` subset. `vertical_rl` turns a `type: text` item into a vertical block: characters fill top-to-bottom and columns lay out right-to-left. Honored on every text surface — plain text, rich `spans`, `list`, table text cells, `page_number`; a text `mark:` (the circled-text overlay) is the one warned fallback (`vertical_text_unsupported`). See [vertical_text.md](vertical_text.md)."
+    - keys: ["textOrientation"]
+      cells:
+        "Property": "`textOrientation`"
+        "Type / values": "`mixed` | `upright`"
+        "Engine default": "`mixed`"
+        "Inherited": "yes"
+        "Description": "CSS `text-orientation` subset; consulted only inside a vertical block. `mixed` keeps CJK/kana upright and rotates Latin/digits 90° clockwise; `upright` keeps every character upright. See [vertical_text.md](vertical_text.md)."
+    - keys: ["textCombineUpright"]
+      cells:
+        "Property": "`textCombineUpright`"
+        "Type / values": "`none` | `{ digits: 2..=4 }` | `all`"
+        "Engine default": "`none`"
+        "Inherited": "yes"
+        "Description": "Tate-chu-yoko (CSS `text-combine-upright` subset): `digits` makes runs of up to N consecutive ASCII digits share one upright cell of a vertical column; `all` combines the whole styled scope (meant for a short span) into one cell. Plain blocks, rich `spans` (per-span override), vertical `list` entries, and vertical [`char_grid`](char_grid.md) cells (digits only). Longer runs stay uncombined; out-of-range `digits` / unknown keywords are parse errors. Inert in horizontal text. See [vertical_text.md](vertical_text.md) § Tate-chu-yoko."
+
+"table#columns":
+  page: table
+  node: Column
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["label"]
+      cells:
+        "Key": "`label`"
+        "Type": "string"
+        "Description": "Header cell text (a `cell:` column's header is still a plain label). **Interpolates `{key}` like static text**, against **top-level** params — header chrome belongs to the document, not to any row — so `label: \"{labels.amount}\"` lets one template print its headings in whichever language the params carry. A label with no `{…}` resolves to itself."
+    - keys: ["data"]
+      cells:
+        "Key": "`data`"
+        "Type": "`{ key, format? }`"
+        "Description": "Row-relative binding ([data-binding.md](data-binding.md)); `scope: document` reads top-level params instead, so a column can show one document-wide value (a `type: image` column then loads one shared asset rather than one per row). Exclusive with `cell`; one of the two is required."
+    - keys: ["type"]
+      cells:
+        "Key": "`type`"
+        "Type": "`text` | `qr_code` | `image`"
+        "Description": "How the bound value renders (default `text`). `qr_code` encodes it at layout time; `image` loads it as a per-row asset — both scale to the row height and are detailed under [Spanning & non-text cells](#spanning--non-text-cells). Only meaningful with `data`."
+    - keys: ["fit"]
+      cells:
+        "Key": "`fit`"
+        "Type": "`contain` | `cover` | `stretch` | `none`"
+        "Description": "Object-fit for a `type: image` column (default `contain`; same semantics as the [image item](image.md)). On any other column it warns `ignored_column_key`."
+    - keys: ["cell"]
+      cells:
+        "Key": "`cell`"
+        "Type": "container"
+        "Description": "A per-row sub-template — see [Container cells](#container-cells). Exclusive with `data` / `type` / `fit`."
+    - keys: ["width"]
+      cells:
+        "Key": "`width`"
+        "Type": "[Length](length.md)"
+        "Description": "`%` of the flow region width; physical units work; omitted = an **equal share of the leftover** after the sized columns (all omitted = an even split). Negative → 0 with `invalid_column_width`."
+    - keys: ["style", "styleNames"]
+      cells:
+        "Key": "`style` / `styleNames`"
+        "Type": ""
+        "Description": "Cell styling: `backgroundColor`/border decorate the full cell; `textOverflow` becomes meaningful with fixed row heights."
+    - keys: ["id"]
+      cells:
+        "Key": "`id`"
+        "Type": "string"
+        "Description": "One box-index placement per cell (header included), content box inset by the cell padding."
+
+"table#table-keys":
+  page: table
+  node: Item.table
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Default"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["data"]
+      cells:
+        "Key": "`data`"
+        "Type": "`{ key }`"
+        "Default": "required"
+        "Description": "The array params key; one row per element."
+    - keys: ["columns"]
+      cells:
+        "Key": "`columns`"
+        "Type": "array"
+        "Default": "required"
+        "Description": "See below."
+    - keys: ["autoPageBreak"]
+      cells:
+        "Key": "`autoPageBreak`"
+        "Type": "bool"
+        "Default": "`true`"
+        "Description": "Rows that don't fit continue on the next page. `false`: overflowing rows warn `row_overflow`."
+    - keys: ["repeatHeader"]
+      cells:
+        "Key": "`repeatHeader`"
+        "Type": "bool"
+        "Default": "`true`"
+        "Description": "Redraw the header on continuation pages."
+    - keys: ["keepTogether"]
+      cells:
+        "Key": "`keepTogether`"
+        "Type": "bool"
+        "Default": "`false`"
+        "Description": "A table that would split but fits on one page breaks to a fresh page first; taller-than-a-page tables paginate as usual."
+    - keys: ["emptyBehavior"]
+      cells:
+        "Key": "`emptyBehavior`"
+        "Type": "`collapse` | `reserve`"
+        "Default": "`collapse`"
+        "Description": "Empty array: `collapse` hides the table entirely; `reserve` renders the header row only."
+    - keys: ["cellPadding"]
+      cells:
+        "Key": "`cellPadding`"
+        "Type": "number (pt)"
+        "Default": "`4`"
+        "Description": "Inner padding of every cell; negative clamps with `invalid_cell_padding`."
+    - keys: ["style", "styleNames"]
+      cells:
+        "Key": "`style` / `styleNames`"
+        "Type": ""
+        "Default": ""
+        "Description": "The grid stroke (`borderWidth`, table default **0.5 pt** — `0` removes the grid; `borderColor` default black) + inherited properties cascade into every cell."
+  omitted:
+    "box": "a table places as a bounded block; its geometry is on box.md"
+    "header": "the header row has its own section on this page"
+    "headerGroups": "documented in this page's header-groups section"
+    "id": "item-common; documented on template.md"
+    "mergeEmptyCells": "documented in this page's empty-cell section"
+    "row": "the row-level keys have their own section on this page"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"template#items":
+  page: template
+  node: Item
+  coverage: none
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["type"]
+      cells:
+        "Key": "`type`"
+        "Type": "string"
+        "Description": "Required discriminator (`text`, `rect`, …)."
+    - keys: ["id"]
+      cells:
+        "Key": "`id`"
+        "Type": "string"
+        "Description": "Optional stable id. Every item gets per-page resolved rectangles in the `inspect` box index (GUI overlays), addressed by structural `path`; an `id` adds a stable lookup alias on top."
+    - keys: ["box"]
+      cells:
+        "Key": "`box`"
+        "Type": "map"
+        "Description": "Geometry: position, size, margin/padding, min/max, layout mode. See [box.md](box.md)."
+    - keys: ["style"]
+      cells:
+        "Key": "`style`"
+        "Type": "map"
+        "Description": "Inline appearance properties. See [style.md](style.md)."
+    - keys: ["styleNames"]
+      cells:
+        "Key": "`styleNames`"
+        "Type": "array of string"
+        "Description": "Named styles from `styles:`, applied in listed order (later wins), below `style`. Max 16 per item."
+    - keys: ["link"]
+      cells:
+        "Key": "`link`"
+        "Type": "`{ url }`"
+        "Description": "Hyperlink → PDF annotation; text/image items (and rich spans) only. See [link.md](link.md)."
+
+"template#top-level-keys":
+  page: template
+  node: Template
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Required"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["version"]
+      cells:
+        "Key": "`version`"
+        "Type": "number or string"
+        "Required": "no"
+        "Description": "Author-owned version marker; the engine does not interpret it. `version: 1`, `1.5`, and `\"2.0\"` all parse and round-trip in the authored form (capability key `template.version.scalar`)."
+    - keys: ["name"]
+      cells:
+        "Key": "`name`"
+        "Type": "string"
+        "Required": "no"
+        "Description": "Template name."
+    - keys: ["document"]
+      cells:
+        "Key": "`document`"
+        "Type": "map"
+        "Required": "no"
+        "Description": "Document metadata written into the PDF's `/Info` dictionary and XMP: `title`, `description`, `keywords`, `language`, `authors`. Each value interpolates like static text. PDF only — PNG previews carry no metadata. See [document.md](document.md)."
+    - keys: ["page"]
+      cells:
+        "Key": "`page`"
+        "Type": "map"
+        "Required": "no"
+        "Description": "Page size, orientation, and margin. Defaults: A4 portrait, 25pt margin. See [page.md](page.md)."
+    - keys: ["styles"]
+      cells:
+        "Key": "`styles`"
+        "Type": "map of name → style"
+        "Required": "no"
+        "Description": "Named-style registry; items reference entries via `styleNames`. Max `MAX_STYLES` (256) entries. See [style.md](style.md)."
+    - keys: ["defaults"]
+      cells:
+        "Key": "`defaults`"
+        "Type": "map"
+        "Required": "no"
+        "Description": "Document presentation defaults: `style` (the cascade root; the rem root follows it) + `formats` (per-type format defaults). See [defaults.md](defaults.md)."
+    - keys: ["formats"]
+      cells:
+        "Key": "`formats`"
+        "Type": "map of name → format"
+        "Required": "no"
+        "Description": "Named format registry (date/datetime patterns), referenced via `format:`. Max 256 entries. See [defaults.md](defaults.md)."
+    - keys: ["sections"]
+      cells:
+        "Key": "`sections`"
+        "Type": "map"
+        "Required": "yes"
+        "Description": "`header` / `body` / `footer`. Only `body` is required."
+
+"text#syntax":
+  page: text
+  node: Item.text
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Type"
+      from: authored
+    - header: "Description"
+      from: authored
+  rows:
+    - keys: ["text"]
+      cells:
+        "Key": "`text`"
+        "Type": "string"
+        "Description": "Static content with `{key}` / `{key:format}` interpolation ([data-binding.md](data-binding.md)); `{{` escapes a literal `{`."
+    - keys: ["data"]
+      cells:
+        "Key": "`data`"
+        "Type": "`{ key, format? }`"
+        "Description": "A single bound params value, formatted per the [format rules](data-binding.md)."
+    - keys: ["bindings"]
+      cells:
+        "Key": "`bindings`"
+        "Type": "map of name → `{ key, format?, placeholder?, scope? }`"
+        "Description": "Named declarations for this item's `{name}` interpolations — the option set the bare `{key}` grammar cannot carry, incl. a key outside `[A-Za-z0-9_.]` ([data-binding.md](data-binding.md#named-binding-declarations))."
+    - keys: ["spans"]
+      cells:
+        "Key": "`spans`"
+        "Type": "list"
+        "Description": "Inline rich text (below): styled fragments drawn as one wrapped block."
+    - keys: ["ruby"]
+      cells:
+        "Key": "`ruby`"
+        "Type": "list of `{ base, text }`"
+        "Description": "Readings (furigana) — verbatim strings matched in order against the drawn text, drawn above the base runs (horizontal; § Ruby below) or beside them (vertical; [vertical_text.md](vertical_text.md) § Ruby). Plain and `spans` blocks alike."
+    - keys: ["rubySize"]
+      cells:
+        "Key": "`rubySize`"
+        "Type": "[length](length.md)"
+        "Description": "Ruby reading font size; unset = half the item's font size."
+    - keys: ["box"]
+      cells:
+        "Key": "`box`"
+        "Type": "map"
+        "Description": "See [box.md](box.md). `h` omitted = auto height (grows with the wrapped text); `w` omitted = fill."
+    - keys: ["style", "styleNames"]
+      cells:
+        "Key": "`style` / `styleNames`"
+        "Type": ""
+        "Description": "Full property set — see [style.md](style.md)."
+  omitted:
+    "id": "item-common; documented on template.md"
+    "link": "documented on link.md"
+    "mark": "documented in this page's form-mark section"
+    "type": "the discriminator — it is this page's own heading"
+    "visible": "item-common; documented on visible.md"
+
+"visible#the-predicate":
+  page: visible
+  node: VisibleBinding
+  coverage: full
+  columns:
+    - header: "Key"
+      from: authored
+    - header: "Meaning"
+      from: authored
+  rows:
+    - keys: ["key"]
+      cells:
+        "Key": "`key`"
+        "Meaning": "the params field to read (dotted paths allowed) — **required**"
+    - keys: ["equals"]
+      cells:
+        "Key": "`equals`"
+        "Meaning": "a string, number or boolean the value must equal. Omitted: the value is read as a boolean and the item shows when it is `true`"
+    - keys: ["scope"]
+      cells:
+        "Key": "`scope`"
+        "Meaning": "`element` (default) or `document` — which data the key resolves against inside a `repeat` cell"
+    - keys: ["collapse"]
+      cells:
+        "Key": "`collapse`"
+        "Meaning": "`true` removes the item from layout instead of reserving its box"
+
+"diagnostics#parse-errors":
+  page: diagnostics
+  source: diagnostics
+  columns:
+    - header: "Code"
+      from: key
+    - header: "Severity"
+      from: severity
+    - header: "Meaning"
+      from: authored
+  rows:
+    - keys: ["parse_error"]
+      cells:
+        "Code": "`parse_error`"
+        "Meaning": "a structural parse failure, with `args` `what` (which artifact) + `path` (the field path, e.g. `sections.body`) + `detail` (the underlying message) + `line`/`column` when known. An error inside an internally-tagged item (`Body`/`Item`) truncates the path to the enum boundary and omits `line`/`column`, so the location is never over-promised"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["non_finite_number"]
+      cells:
+        "Code": "`non_finite_number`"
+        "Meaning": "a `.nan`/`.inf`/overflowing number anywhere in the artifact (`args` `what`)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+
+"diagnostics#validation-static-shojiku-validate":
+  page: diagnostics
+  source: diagnostics
+  columns:
+    - header: "Code"
+      from: key
+    - header: "Severity"
+      from: severity
+    - header: "Meaning"
+      from: authored
+  rows:
+    - keys: ["unknown_data_key"]
+      cells:
+        "Code": "`unknown_data_key`"
+        "Meaning": "a binding key is not in definitions (scalar, column, cell, or card scope)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["empty_definitions"]
+      cells:
+        "Code": "`empty_definitions`"
+        "Meaning": "definitions was supplied but declares no properties; every binding will read as `unknown_data_key` (check the file's top-level structure)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["unknown_format"]
+      cells:
+        "Code": "`unknown_format`"
+        "Meaning": "a format variant not declared for the field"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["not_an_array"]
+      cells:
+        "Code": "`not_an_array`"
+        "Meaning": "a table/repeat/list source key is not an array property"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["interpolation_key_charset"]
+      cells:
+        "Code": "`interpolation_key_charset`"
+        "Meaning": "a `{…}` that looks like an intended key uses characters outside `[A-Za-z0-9_.]`, so it prints its own braces; declare a name under `bindings:` to reach the key"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["unused_binding"]
+      cells:
+        "Code": "`unused_binding`"
+        "Meaning": "a `bindings:` declaration that no string in the item references"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["binding_shadows_key"]
+      cells:
+        "Code": "`binding_shadows_key`"
+        "Meaning": "a declared name that also resolved at the ambient scope, redirected by the declaration (which wins); attaching options to the same key is silent"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_binding_name"]
+      cells:
+        "Code": "`invalid_binding_name`"
+        "Meaning": "a `bindings:` name outside the reference charset, so no `{name}` could reach it"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["definitions_format_ignored"]
+      cells:
+        "Code": "`definitions_format_ignored`"
+        "Meaning": "a known semantic `format` (`currency`, `date-time`, …) sits on a base type it does not apply to; the base type is used"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["definitions_enum_labels_ignored"]
+      cells:
+        "Code": "`definitions_enum_labels_ignored`"
+        "Meaning": "a labeled `enum` member (`{ value, label }`) on a field that is not plain text; its values render unlabeled"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["params_missing_required"]
+      cells:
+        "Code": "`params_missing_required`"
+        "Meaning": "a schema-`required` key is absent or `null` in params"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["params_type_mismatch"]
+      cells:
+        "Code": "`params_type_mismatch`"
+        "Meaning": "a params value's JSON type differs from the declared schema type (`integer` rejects fractional numbers)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["params_out_of_range"]
+      cells:
+        "Code": "`params_out_of_range`"
+        "Meaning": "a number violates the schema's `minimum`/`maximum`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["params_length_out_of_range"]
+      cells:
+        "Code": "`params_length_out_of_range`"
+        "Meaning": "a string violates `minLength`/`maxLength` (characters), or an array `minItems`/`maxItems`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["params_enum_mismatch"]
+      cells:
+        "Code": "`params_enum_mismatch`"
+        "Meaning": "a params value is not one of the schema's declared `enum` values"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["params_unknown_key"]
+      cells:
+        "Code": "`params_unknown_key`"
+        "Meaning": "a params key is not declared in definitions (the unknown subtree is not entered); location rides the `key` arg, never `path`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["image_source_conflict", "image_source_missing"]
+      cells:
+        "Code": "`image_source_conflict` / `image_source_missing`"
+        "Meaning": "both / neither of `src`+`data` on an image"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["column_content_conflict", "column_content_missing"]
+      cells:
+        "Code": "`column_content_conflict` / `column_content_missing`"
+        "Meaning": "both / neither of `data`+`cell` on a table column (`type`/`fit` beside `cell` conflict too); `cell` wins the render — see [table.md](table.md)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["undefined_style_name"]
+      cells:
+        "Code": "`undefined_style_name`"
+        "Meaning": "`styleNames` references a name not in `styles:`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["too_many_styles", "too_many_style_names"]
+      cells:
+        "Code": "`too_many_styles` / `too_many_style_names`"
+        "Meaning": "registry > 256 / name list > 16; extras ignored"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["span_content_conflict"]
+      cells:
+        "Code": "`span_content_conflict`"
+        "Meaning": "`spans` beside `text`/`data` (spans win), or a span with both `text` and `data` (data wins)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["empty_span"]
+      cells:
+        "Code": "`empty_span`"
+        "Meaning": "a span with neither `text` nor `data`; renders nothing"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["empty_ruby_entry"]
+      cells:
+        "Code": "`empty_ruby_entry`"
+        "Meaning": "a `ruby` entry with an empty `base` or `text`; entry skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["ruby_entry_too_long"]
+      cells:
+        "Code": "`ruby_entry_too_long`"
+        "Meaning": "a `ruby` entry whose `base` or `text` exceeds 64 characters; entry skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["too_many_spans"]
+      cells:
+        "Code": "`too_many_spans`"
+        "Meaning": "over the 256-span cap; extras dropped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["too_many_ruby_entries"]
+      cells:
+        "Code": "`too_many_ruby_entries`"
+        "Meaning": "over the 256 `ruby`-entries cap; only the first 256 apply"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["ignored_span_style"]
+      cells:
+        "Code": "`ignored_span_style`"
+        "Meaning": "span-inert style keys on a span's inline `style`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["shape_style_ignored"]
+      cells:
+        "Code": "`shape_style_ignored`"
+        "Meaning": "inert (text/box) keys on a shape item's (`rect`/`ellipse`/`checkbox`/`mark`) inline `style`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["shape_border_sides_ignored"]
+      cells:
+        "Code": "`shape_border_sides_ignored`"
+        "Meaning": "per-side `borderWidth` on `ellipse`/`checkbox`/`mark` reduced to the top side"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["layout_key_on_leaf"]
+      cells:
+        "Code": "`layout_key_on_leaf`"
+        "Meaning": "flex/grid keys on a non-container box"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["grid_key_ignored"]
+      cells:
+        "Code": "`grid_key_ignored`"
+        "Meaning": "grid keys without `box.type: grid`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["table_pagination_key_ignored"]
+      cells:
+        "Code": "`table_pagination_key_ignored`"
+        "Meaning": "pagination keys (`keepTogether`, `emptyBehavior` …) on a non-flow (bounded) table"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["ignored_column_key"]
+      cells:
+        "Code": "`ignored_column_key`"
+        "Meaning": "`fit` on a non-image table column"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["mark_content_conflict"]
+      cells:
+        "Code": "`mark_content_conflict`"
+        "Meaning": "checkbox sets both `checked` and `data` (`data` wins)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["mark_binding_not_boolean"]
+      cells:
+        "Code": "`mark_binding_not_boolean`"
+        "Meaning": "an `equals`-less mark binding targets a non-boolean field"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["row_condition_not_boolean"]
+      cells:
+        "Code": "`row_condition_not_boolean`"
+        "Meaning": "an `equals`-less `row.conditionalStyles` entry targets a non-boolean field"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["reserved_format_name"]
+      cells:
+        "Code": "`reserved_format_name`"
+        "Meaning": "a `formats:` registry entry is named after a FIELD TYPE (`currency`, `date`, …); such a name is a type override on every type but `date`/`datetime`, so the entry would be unreachable almost everywhere"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["too_many_formats"]
+      cells:
+        "Code": "`too_many_formats`"
+        "Meaning": "`formats:` registry over the 256-entry cap; extras ignored"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["too_many_row_conditions"]
+      cells:
+        "Code": "`too_many_row_conditions`"
+        "Meaning": "a table's `row.conditionalStyles` over the 16-entry cap; extras ignored"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["too_many_bindings"]
+      cells:
+        "Code": "`too_many_bindings`"
+        "Meaning": "an item's `bindings:` over the 256-entry cap; advisory only — every declaration still resolves"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["too_many_document_entries"]
+      cells:
+        "Code": "`too_many_document_entries`"
+        "Meaning": "`document.keywords` / `document.authors` over the 64-entry cap; only the first 64 are written"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["container_depth_exceeded"]
+      cells:
+        "Code": "`container_depth_exceeded`"
+        "Meaning": "nesting > 32 (also enforced independently at layout)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+
+"diagnostics#layout-geometry-resolution":
+  page: diagnostics
+  source: diagnostics
+  columns:
+    - header: "Code"
+      from: key
+    - header: "Severity"
+      from: severity
+    - header: "Meaning"
+      from: authored
+  rows:
+    - keys: ["length_out_of_range"]
+      cells:
+        "Code": "`length_out_of_range`"
+        "Meaning": "resolved length exceeds ±1e6 pt; default used"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["percent_of_auto"]
+      cells:
+        "Code": "`percent_of_auto`"
+        "Meaning": "`%` against an auto-height parent; value dropped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["page_margin_too_large"]
+      cells:
+        "Code": "`page_margin_too_large`"
+        "Meaning": "margins consume a page axis; that axis falls back to 0"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["orientation_ignored"]
+      cells:
+        "Code": "`orientation_ignored`"
+        "Meaning": "`orientation: landscape` on a custom `{ w, h }` page size is ignored; express the orientation in the dimensions"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["container_depth_exceeded"]
+      cells:
+        "Code": "`container_depth_exceeded`"
+        "Meaning": "nesting > 32; subtree skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["container_overflow"]
+      cells:
+        "Code": "`container_overflow`"
+        "Meaning": "content taller than a definite-`h` content box; suppressed by `overflow: hidden`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["section_overflow"]
+      cells:
+        "Code": "`section_overflow`"
+        "Meaning": "an unsplittable item is taller than the flow region"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["horizontal_overflow"]
+      cells:
+        "Code": "`horizontal_overflow`"
+        "Meaning": "**RETIRED — emitted by nothing.** It carried a whole English sentence in one free-text `detail` arg, which a translating consumer could only pass through. Every reason it covered now has its own number-carrying code (the five below). The entry remains because codes and arg keys are append-only"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["flow_item_overflow"]
+      cells:
+        "Code": "`flow_item_overflow`"
+        "Meaning": "a definite-width flow item reaches `over` pt past the right edge of the `avail` pt flow region and renders off-sheet"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["flex_row_overflow"]
+      cells:
+        "Code": "`flex_row_overflow`"
+        "Meaning": "a row's fixed children + gaps need `needed` pt but the parent content box is only `avail` pt wide; unsized children shrink instead and never warn, and `overflow: hidden` suppresses it"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["vertical_text_overflow"]
+      cells:
+        "Code": "`vertical_text_overflow`"
+        "Meaning": "a vertical text block needs `columns` columns (`needed` pt) but its box is `avail` pt wide. The flow paginator reads this code's PRESENCE as \"a policy already resolved this block's overflow\", so it places whole instead of paginating its columns"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["sheet_overflow"]
+      cells:
+        "Code": "`sheet_overflow`"
+        "Meaning": "a band / absolute-body item (a `line`'s endpoints included) reaches `over` pt past the right edge of the **sheet** and renders off-paper. The bound is the paper, not the margin box: reaching into the margins is a deliberate escape hatch, so only ink that leaves the sheet warns. Filling items never warn"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["child_overflow"]
+      cells:
+        "Code": "`child_overflow`"
+        "Meaning": "a column or `x`/`y`-positioned box child overflows its parent's `avail` pt content box by `over` pt. States the magnitude, never a side — cross-axis alignment runs after the check, and `alignItems: center`/`end` push the excess LEFT. Suppressed under `overflow: hidden`; a ROW child is reported once, by the row-level `flex_row_overflow`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["grid_column_overflow"]
+      cells:
+        "Code": "`grid_column_overflow`"
+        "Meaning": "a grid child (`child` pt) is wider than the `track` pt run of `span` column tracks it sits in, so it spills over its neighbour (an `auto` column sizes to its content; a fixed or `fr` one does not)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["page_overflow"]
+      cells:
+        "Code": "`page_overflow`"
+        "Meaning": "layout exceeded 500 pages; output truncated"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["grid_tracks_clamped"]
+      cells:
+        "Code": "`grid_tracks_clamped`"
+        "Meaning": "grid `columns`/`rows` outside 1..=64 tracks; clamped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["grid_cell_overflow"]
+      cells:
+        "Code": "`grid_cell_overflow`"
+        "Meaning": "grid child TALLER than its explicit row track; the `extent` arg says `row track` or `spanned rows` (auto rows grow instead of warning). The width axis is `grid_column_overflow` above"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["imposition_grid_clamped"]
+      cells:
+        "Code": "`imposition_grid_clamped`"
+        "Meaning": "`repeat` grid over 64 cells/page (or a zero axis); clamped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["char_grid_clamped"]
+      cells:
+        "Code": "`char_grid_clamped`"
+        "Meaning": "`char_grid` outside 1..=4096 cells/sheet; clamped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["char_grid_markup_clamped"]
+      cells:
+        "Code": "`char_grid_markup_clamped`"
+        "Meaning": "an aozora note asks for more cells than the grid holds (a large-writing scale > `min(columns, lines)`, an indent/raise past the line); clamped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_cell_size"]
+      cells:
+        "Code": "`invalid_cell_size`"
+        "Meaning": "`char_grid` cell size not positive and finite; item skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["vertical_text_unsupported"]
+      cells:
+        "Code": "`vertical_text_unsupported`"
+        "Meaning": "`writingMode: vertical_rl` reached a text `mark:` (the circled-text overlay), whose glyph-band overlay is horizontal-only; the mark is skipped. Rich `spans` / `list` / table cells / `page_number` now render vertically. See [vertical_text.md](vertical_text.md)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["vertical_style_ignored"]
+      cells:
+        "Code": "`vertical_style_ignored`"
+        "Meaning": "registered but no longer emitted: the block-level knobs (`textOverflow`, `textDecoration`, `verticalAlign`, `textSpacingTrim`, `hangingPunctuation`) now apply on vertical blocks ([vertical_text.md](vertical_text.md)); the code stays for the append-only GUI catalog contract"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+
+"diagnostics#layout-placement-rules":
+  page: diagnostics
+  source: diagnostics
+  columns:
+    - header: "Code"
+      from: key
+    - header: "Severity"
+      from: severity
+    - header: "Meaning"
+      from: authored
+  rows:
+    - keys: ["table_in_cell"]
+      cells:
+        "Code": "`table_in_cell`"
+        "Meaning": "`table` inside a `repeat` cell / `repeat_flow` card / a table column's `cell:`; skipped (everywhere else a table places as a bounded block — see [table.md](table.md))"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["repeat_in_absolute_body", "repeat_in_band", "repeat_in_container"]
+      cells:
+        "Code": "`repeat_in_absolute_body` / `repeat_in_band` / `repeat_in_container`"
+        "Meaning": "`repeat` outside a flow body; skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["repeat_flow_in_absolute_body", "repeat_flow_in_band", "repeat_flow_in_container"]
+      cells:
+        "Code": "`repeat_flow_in_absolute_body` / `repeat_flow_in_band` / `repeat_flow_in_container`"
+        "Meaning": "`repeat_flow` outside a flow body; skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["page_break_in_absolute_body", "page_break_in_band", "page_break_in_container"]
+      cells:
+        "Code": "`page_break_in_absolute_body` / `page_break_in_band` / `page_break_in_container`"
+        "Meaning": "`page_break` outside a flow body; skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["page_number_in_body", "page_number_in_container"]
+      cells:
+        "Code": "`page_number_in_body` / `page_number_in_container`"
+        "Meaning": "`page_number` outside a band; skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["grid_span_clamped"]
+      cells:
+        "Code": "`grid_span_clamped`"
+        "Meaning": "`columnSpan`/`rowSpan` beyond the axis; clamped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["span_outside_grid"]
+      cells:
+        "Code": "`span_outside_grid`"
+        "Meaning": "span keys on a child of a non-grid box; inert"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["grid_fr_no_basis"]
+      cells:
+        "Code": "`grid_fr_no_basis`"
+        "Meaning": "`fr` row tracks in an auto-height container; sized as auto rows"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["reflow_budget_exhausted"]
+      cells:
+        "Code": "`reflow_budget_exhausted`"
+        "Meaning": "too many nested boxes needing a second placement (auto-height `stretch` rows, `flexGrow` columns, `fr`-over-auto grids); the innermost children keep their content size"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["cut_marks_clipped"]
+      cells:
+        "Code": "`cut_marks_clipped`"
+        "Meaning": "`cutMarks` have no room outside the grid on a sheet side; those ticks are omitted"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["header_group_span_clamped"]
+      cells:
+        "Code": "`header_group_span_clamped`"
+        "Meaning": "`headerGroups` spans exceed the table's columns"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["anchor_unknown_target"]
+      cells:
+        "Code": "`anchor_unknown_target`"
+        "Meaning": "a `line` endpoint or an `ellipse` names an `id:` no item carries; the anchored item is not drawn ([line.md](line.md))"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["anchor_cross_page"]
+      cells:
+        "Code": "`anchor_cross_page`"
+        "Meaning": "a line's two anchored endpoints land on different pages; the line is not drawn"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["anchor_ambiguous_target"]
+      cells:
+        "Code": "`anchor_ambiguous_target`"
+        "Meaning": "the anchored id is placed more than once on the page (a `repeat` element, a duplicate id); the FIRST placement in document order is used"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+
+"diagnostics#layout-content-data":
+  page: diagnostics
+  source: diagnostics
+  columns:
+    - header: "Code"
+      from: key
+    - header: "Meaning"
+      from: authored
+  rows:
+    - keys: ["missing_data", "not_an_array"]
+      cells:
+        "Code": "`missing_data` (warning) / `not_an_array` (error)"
+        "Meaning": "params problems at a bound key; `missing_data` is suppressed when a binding/field `placeholder` covers a blank value (data-binding.md)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["format_error"]
+      cells:
+        "Code": "`format_error`"
+        "Meaning": "value cannot render as the requested type; suppressed for a blank value covered by a `placeholder`, but NOT for a present-but-invalid one"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["empty_text_item", "empty_qr_code_item", "empty_image_item", "empty_char_grid_item"]
+      cells:
+        "Code": "`empty_text_item` / `empty_qr_code_item` / `empty_image_item` / `empty_char_grid_item`"
+        "Meaning": "neither `text`/`src` nor `data` set"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["char_grid_overflow"]
+      cells:
+        "Code": "`char_grid_overflow`"
+        "Meaning": "content past a band/absolute `char_grid`'s single sheet; dropped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["ruby_markup_invalid"]
+      cells:
+        "Code": "`ruby_markup_invalid`"
+        "Meaning": "malformed aozora markup (unclosed `《`, empty reading, no base, over-cap, dangling `|`; a large-writing note whose `「…」` target is not just before it or asks for a scale < 2; a placement note off a line head or a second one on a line); rendered literally"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["aozora_note_ignored"]
+      cells:
+        "Code": "`aozora_note_ignored`"
+        "Meaning": "a `［＃…］` aozora note the engine does not act on (not a sheet break, a large-writing, or a placement note); rendered literally"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["ruby_overflow"]
+      cells:
+        "Code": "`ruby_overflow`"
+        "Meaning": "a reading overflows its base run even at the 4pt floor"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["ruby_base_not_found"]
+      cells:
+        "Code": "`ruby_base_not_found`"
+        "Meaning": "a `ruby` entry's `base` never occurs in the drawn text; reading skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["rect_missing_size", "image_missing_size", "qr_missing_size"]
+      cells:
+        "Code": "`rect_missing_size` / `image_missing_size` / `qr_missing_size`"
+        "Meaning": "required `box.w`/`box.h` absent"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["text_overflow"]
+      cells:
+        "Code": "`text_overflow`"
+        "Meaning": "wrapped text exceeds a definite `h` (`textOverflow: visible`, or `shrink` at its 4pt floor)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["span_overflow_unsupported"]
+      cells:
+        "Code": "`span_overflow_unsupported`"
+        "Meaning": "`textOverflow: shrink`/`ellipsis` on a rich (`spans:`) block; falls back to `visible`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["unknown_font_family"]
+      cells:
+        "Code": "`unknown_font_family`"
+        "Meaning": "`fontFamily` matches no loaded family; the default face is used (warns once per family)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["missing_glyph"]
+      cells:
+        "Code": "`missing_glyph`"
+        "Meaning": "characters the font cannot map (tofu); deduped per block"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["unknown_format_variant"]
+      cells:
+        "Code": "`unknown_format_variant`"
+        "Meaning": "a picked format variant exists nowhere; the default form rendered (deduped)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["unknown_currency"]
+      cells:
+        "Code": "`unknown_currency`"
+        "Meaning": "a currency code without display data; the code itself used as symbol/name"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["unknown_unit"]
+      cells:
+        "Code": "`unknown_unit`"
+        "Meaning": "a semantic unit key missing from the locale pack; rendered verbatim"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["format_pattern_ignored"]
+      cells:
+        "Code": "`format_pattern_ignored`"
+        "Meaning": "an inline `format: { pattern }` on a non-dated type; the default form rendered"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["mark_missing_size"]
+      cells:
+        "Code": "`mark_missing_size`"
+        "Meaning": "a form mark without a positive `box.w`/`box.h` (a checkbox may omit them — it auto-sizes; an `ellipse` may not); skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["mark_equals_type_mismatch"]
+      cells:
+        "Code": "`mark_equals_type_mismatch`"
+        "Meaning": "a mark's params value type differs from its `equals` literal; not drawn. Also raised at validate when the DECLARED field type differs, which no params value can satisfy"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["mark_equals_not_declared"]
+      cells:
+        "Code": "`mark_equals_not_declared`"
+        "Meaning": "a mark's `equals` literal is outside the field's declared `enum`, so the mark can never be drawn"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["mark_value_not_bool"]
+      cells:
+        "Code": "`mark_value_not_bool`"
+        "Meaning": "an `equals`-less mark binding's value is not a boolean; not drawn"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["row_condition_type_mismatch"]
+      cells:
+        "Code": "`row_condition_type_mismatch`"
+        "Meaning": "a row's value type differs from a `conditionalStyles` entry's `equals`; the layer is not applied. Also raised at validate against the DECLARED field type"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["row_condition_equals_not_declared"]
+      cells:
+        "Code": "`row_condition_equals_not_declared`"
+        "Meaning": "a `conditionalStyles` entry's `equals` literal is outside the field's declared `enum`, so the layer can never apply"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["row_condition_value_not_bool"]
+      cells:
+        "Code": "`row_condition_value_not_bool`"
+        "Meaning": "a row's value is not a boolean under an `equals`-less `conditionalStyles` entry; the layer is not applied"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["visible_not_boolean"]
+      cells:
+        "Code": "`visible_not_boolean`"
+        "Meaning": "an item's `visible:` field is declared non-boolean and the binding has no `equals`, so the item can never be shown"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["visible_equals_not_declared"]
+      cells:
+        "Code": "`visible_equals_not_declared`"
+        "Meaning": "an item's `visible.equals` literal is outside the field's declared `enum`, so the item can never be shown"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["visible_type_mismatch"]
+      cells:
+        "Code": "`visible_type_mismatch`"
+        "Meaning": "an item's params value type differs from its `visible.equals`; not shown. Also raised at validate against the DECLARED field type"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["visible_value_not_bool"]
+      cells:
+        "Code": "`visible_value_not_bool`"
+        "Meaning": "an `equals`-less `visible:` binding's value is not a boolean; not shown"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["qr_content_too_long", "qr_module_too_small"]
+      cells:
+        "Code": "`qr_content_too_long` / `qr_module_too_small`"
+        "Meaning": "QR content over 1 KiB (skipped) / modules under 1 pt (drawn)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["unsupported_link_scheme", "link_url_too_long", "empty_link_url"]
+      cells:
+        "Code": "`unsupported_link_scheme` / `link_url_too_long` / `empty_link_url`"
+        "Meaning": "resolved `link.url` outside http/https/mailto/tel (or control chars) / over 2048 bytes / empty — the link is dropped, the item still renders"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["document_metadata_control_chars", "document_metadata_too_long", "invalid_document_language"]
+      cells:
+        "Code": "`document_metadata_control_chars` / `document_metadata_too_long` / `invalid_document_language`"
+        "Meaning": "a resolved `document:` value carries control characters / is over its byte cap (2048, or 64 for `language`) / is not a `[A-Za-z0-9-]` language tag — that field is not written to the PDF and is NOT replaced by its fallback"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["table_too_wide"]
+      cells:
+        "Code": "`table_too_wide`"
+        "Meaning": "sized columns exceed the flow width"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["row_overflow"]
+      cells:
+        "Code": "`row_overflow`"
+        "Meaning": "a row overflows with `autoPageBreak: false`"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_column_width", "invalid_row_height", "invalid_cell_padding"]
+      cells:
+        "Code": "`invalid_column_width` / `invalid_row_height` / `invalid_cell_padding`"
+        "Meaning": "negative table geometry; clamped to 0 / treated as auto"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+
+"diagnostics#layout-style-guards-hostile-values":
+  page: diagnostics
+  source: diagnostics
+  columns:
+    - header: "Code"
+      from: key
+    - header: "Fallback"
+      from: authored
+  rows:
+    - keys: ["invalid_font_size"]
+      cells:
+        "Code": "`invalid_font_size`"
+        "Fallback": "10 pt"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["font_size_out_of_range"]
+      cells:
+        "Code": "`font_size_out_of_range`"
+        "Fallback": "10 pt (cap 1000 pt)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_line_height"]
+      cells:
+        "Code": "`invalid_line_height`"
+        "Fallback": "1.4"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["line_height_out_of_range"]
+      cells:
+        "Code": "`line_height_out_of_range`"
+        "Fallback": "1.4 (cap 1000×)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_letter_spacing"]
+      cells:
+        "Code": "`invalid_letter_spacing`"
+        "Fallback": "0 (magnitude cap ±1000 pt)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_flex_grow"]
+      cells:
+        "Code": "`invalid_flex_grow`"
+        "Fallback": "0 (negative / non-finite `flexGrow`)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_border_width"]
+      cells:
+        "Code": "`invalid_border_width`"
+        "Fallback": "no border (cap 0..=1000 pt)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_line_width"]
+      cells:
+        "Code": "`invalid_line_width`"
+        "Fallback": "1 pt, the `line` wire default (cap 0..=1000 pt)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_border_radius"]
+      cells:
+        "Code": "`invalid_border_radius`"
+        "Fallback": "square corners (a negative or non-finite radius)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["border_radius_ignored"]
+      cells:
+        "Code": "`border_radius_ignored`"
+        "Fallback": "square corners (a per-side/`double` border, a `table`, or a form mark cannot round)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_opacity"]
+      cells:
+        "Code": "`invalid_opacity`"
+        "Fallback": "opaque (out-of-range / non-finite `opacity`; never invisible)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_color"]
+      cells:
+        "Code": "`invalid_color`"
+        "Fallback": "default color (echo snippet-capped)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+
+"diagnostics#assets-prepare-assets":
+  page: diagnostics
+  source: diagnostics
+  columns:
+    - header: "Code"
+      from: key
+    - header: "Meaning"
+      from: authored
+  rows:
+    - keys: ["missing_asset", "assets_root_missing", "asset_traversal"]
+      cells:
+        "Code": "`missing_asset` / `assets_root_missing` / `asset_traversal`"
+        "Meaning": "bundled path absent / no assets root / path escapes the root"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["invalid_image_asset", "invalid_image_data"]
+      cells:
+        "Code": "`invalid_image_asset` (error) / `invalid_image_data` (warning)"
+        "Meaning": "undecodable static asset / dynamic data"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["remote_asset_unsupported"]
+      cells:
+        "Code": "`remote_asset_unsupported`"
+        "Meaning": "remote URL source; the render path has no network I/O"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["dynamic_image_denied"]
+      cells:
+        "Code": "`dynamic_image_denied`"
+        "Meaning": "params-bound image blocked by the asset policy"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["svg_unsupported"]
+      cells:
+        "Code": "`svg_unsupported`"
+        "Meaning": "SVG constructs outside the subset parser"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["cell_image_assets_capped"]
+      cells:
+        "Code": "`cell_image_assets_capped`"
+        "Meaning": "per-element cell images (table columns + repeat/repeat_flow cells) over the shared 1000-load cap; the rest are skipped"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"

@@ -40,6 +40,7 @@ never participates in geometry. See
 
 ## Property reference
 
+<!-- rf:table:start style#property-reference (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Property | Type / values | Engine default | Inherited | Description |
 | --- | --- | --- | --- | --- |
 | `fontSize` | number (pt) or length string | `10` | yes | Strings take `pt`/`mm`/`cm`/`in`, `em`/`%` (of the *inherited* size — nested relative sizes multiply), or `rem` (of the engine default). Non-positive/non-finite computed values fall back with `invalid_font_size`; computed sizes over 1000 pt fall back with `font_size_out_of_range` (the cap pairs with `lineHeight`'s so the tallest admitted line box is the ±1,000,000 pt resolved-length cap). |
@@ -66,6 +67,7 @@ never participates in geometry. See
 | `writingMode` | `horizontal_tb` \| `vertical_rl` | `horizontal_tb` | yes | CSS `writing-mode` subset. `vertical_rl` turns a `type: text` item into a vertical block: characters fill top-to-bottom and columns lay out right-to-left. Honored on every text surface — plain text, rich `spans`, `list`, table text cells, `page_number`; a text `mark:` (the circled-text overlay) is the one warned fallback (`vertical_text_unsupported`). See [vertical_text.md](vertical_text.md). |
 | `textOrientation` | `mixed` \| `upright` | `mixed` | yes | CSS `text-orientation` subset; consulted only inside a vertical block. `mixed` keeps CJK/kana upright and rotates Latin/digits 90° clockwise; `upright` keeps every character upright. See [vertical_text.md](vertical_text.md). |
 | `textCombineUpright` | `none` \| `{ digits: 2..=4 }` \| `all` | `none` | yes | Tate-chu-yoko (CSS `text-combine-upright` subset): `digits` makes runs of up to N consecutive ASCII digits share one upright cell of a vertical column; `all` combines the whole styled scope (meant for a short span) into one cell. Plain blocks, rich `spans` (per-span override), vertical `list` entries, and vertical [`char_grid`](char_grid.md) cells (digits only). Longer runs stay uncombined; out-of-range `digits` / unknown keywords are parse errors. Inert in horizontal text. See [vertical_text.md](vertical_text.md) § Tate-chu-yoko. |
+<!-- rf:table:end -->
 
 Colors are `#rrggbb` only; invalid colors warn `invalid_color` (echoes
 are snippet-capped — colors are untrusted input).

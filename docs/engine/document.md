@@ -31,6 +31,7 @@ document:
   authors: ['{issuer.name}']
 ```
 
+<!-- rf:table:start document#syntax (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Description |
 | --- | --- | --- |
 | `title` | string | The document title. Unset → the template `name:`, then `Shojiku Document`. |
@@ -38,6 +39,7 @@ document:
 | `keywords` | list of strings | Search keywords. Max 64 entries. |
 | `language` | string | BCP 47 tag (`ja-JP`). Unset → `defaults.locale`. |
 | `authors` | list of strings | Max 64 entries. |
+<!-- rf:table:end -->
 
 Every value takes `{key}` / `{key:format}` interpolation exactly like
 static text, resolved against top-level params. Unknown keys inside
@@ -50,6 +52,7 @@ key cannot be referenced from `document:`, and writing one warns
 
 ## Where each value goes
 
+<!-- rf:table:start document#where-each-value-goes (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | PDF `/Info` | XMP | Also |
 | --- | --- | --- | --- |
 | `title` | `/Title` | `dc:title` | |
@@ -57,6 +60,7 @@ key cannot be referenced from `document:`, and writing one warns
 | `keywords` | `/Keywords` (comma-joined) | `pdf:Keywords` | |
 | `authors` | `/Author` (comma-joined) | `dc:creator` | |
 | `language` | — | `dc:language` | the catalog `/Lang`, which is what assistive technology reads |
+<!-- rf:table:end -->
 
 ## Rules
 

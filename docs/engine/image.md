@@ -30,6 +30,7 @@ never sizes from image pixels).
 
 ## Keys
 
+<!-- rf:table:start image#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `src` | string | | Bundled path, `data:` URI, or inline SVG. A path resolves against the **assets root** — `--assets-dir`, defaulting to **the template file's directory** (so `examples/business/receipt-ja/templates.yml` can say `src: assets/logo.svg`); paths escaping the root are rejected (`asset_traversal`). Remote URLs are recognized and rejected (`remote_asset_unsupported` — the render path has no network I/O, and unlike a font there is no `sha256` pin that would make fetching an image deterministic). |
@@ -39,6 +40,7 @@ never sizes from image pixels).
 | `box.w` / `box.h` | [Length](length.md) | required | The fit box (inset by padding). |
 | `style` / `styleNames` | | | Decoration (`backgroundColor`, `borderWidth`/`borderColor`) plus **`opacity`** (see below); text properties are unused. |
 | `link` | `{ url }` | | Hyperlink over the draw box. See [link.md](link.md). |
+<!-- rf:table:end -->
 
 ## The box always holds
 

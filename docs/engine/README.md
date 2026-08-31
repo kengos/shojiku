@@ -179,6 +179,7 @@ Disallowed placements warn and skip (never a hard failure) — codes in
 
 ## The `box:` keys at a glance
 
+<!-- rf:table:start README#the-box-keys-at-a-glance (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Meaning | Page |
 | --- | --- | --- |
 | `x` `y` | offset from the parent origin (authoring either opts a container child out of flex) | [box.md](box.md) |
@@ -191,6 +192,7 @@ Disallowed placements warn and skip (never a hard failure) — codes in
 | `flexGrow` | child's weighted share of leftover row width | [flex.md](flex.md) |
 | `columns` `rows` `columnGap` `rowGap` | grid tracks & gaps | [grid.md](grid.md) |
 | `columnSpan` `rowSpan` | grid child's track span (≥ 1) | [grid.md](grid.md) |
+<!-- rf:table:end -->
 
 ## Style properties at a glance
 

@@ -26,11 +26,13 @@ page:
 
 ## Keys
 
+<!-- rf:table:start page#keys (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `size` | named \| `{ w, h }` | `A4` | Named size or custom dimensions. Named presets (capability key `page.size.presets`): ISO A — `A3` 841.89 × 1190.55, `A4` 595.28 × 841.89, `A5` 419.53 × 595.28 pt; **JIS** B (the Japanese B series, not ISO B) — `B4` 728.5 × 1031.81 (257 × 364 mm), `B5` 515.91 × 728.5 (182 × 257 mm); North American — `Letter` 612 × 792, `Legal` 612 × 1008, `Tabloid` 792 × 1224 pt. Every named size gets the same default 25pt margin. Custom `w`/`h` are absolute [lengths](length.md) (bare pt or `mm`/`cm`/`in`; `%` is rejected — there is no parent to resolve against), positive, ≤ 14,400 pt per side (the PDF page limit, `MAX_PAGE_PT`). |
 | `orientation` | `portrait` \| `landscape` | `portrait` | Landscape swaps the two dimensions of a **named** size. It is a **no-op for a custom `{ w, h }`** — a custom size already states its dimensions literally, so `orientation` never double-swaps it; express the orientation in the dimensions. The combination `custom size + orientation: landscape` warns `orientation_ignored`. |
 | `margin` | number \| map \| array | `25` (all sides) | Printable-area insets. **The all-sides form is a bare pt number only** — `margin: 15mm` (one value with a unit) is a parse error; for units use the per-side map (`{ top: "15mm", right: "15mm", bottom: "15mm", left: "15mm" }`). Sides accept every length unit; `%` resolves against the page **width** for all four sides (the CSS edge rule). **A per-side map specifies all four sides: an unset side is 0, not 25** — `margin: { top: 30 }` zeroes the other three. Negative sides, `auto`, wrong array lengths, and unknown map keys are parse errors. The authored form round-trips. |
+<!-- rf:table:end -->
 
 ## The margin box is the coordinate origin
 
