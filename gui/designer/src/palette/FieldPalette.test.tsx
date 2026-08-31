@@ -491,7 +491,7 @@ describe('FieldPalette — the per-field gear', () => {
     // Wrapping alone traded a row that painted sideways for a row thousands of
     // lines tall — which buries the rest of the palette just as effectively.
     // The key is the one string here `leafField` does not bound.
-    const key = 'receipt.' + 'x'.repeat(400);
+    const key = `receipt.${'x'.repeat(400)}`;
     draw({ definitions: DEFINITIONS.replace('      number:', `      ${'x'.repeat(400)}:`) });
     expect(screen.queryByText(key)).toBeNull();
     const shown = screen.getByText(/^receipt\.x+…$/);
