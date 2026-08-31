@@ -949,10 +949,13 @@ conditional rules the next section owns).
     code, so a pack declaring none (reported as an empty code) loses that
     sentence while the amount line stays. `facts === null` — no answer
     yet, an engine without `locale.facts`, an unresolvable tag, a pack
-    this host does not ship — claims nothing. The ONE exception is the
-    picker's substitution: a regional English is asked as `en-US`, so it is
-    always explained even though no host can render a document declaring
-    it (queued). The picker's option list is
+    this host does not ship — claims nothing, without exception: the tag
+    goes to the engine as authored. The picker offers the engine-RESOLVABLE
+    set (the chrome registry's `engineLocale` values, deduped, plus
+    `ENGINE_ONLY_LOCALES`), not the chrome tags, because `defaults.locale`
+    is a render fallback and `en-GB` authored a document the engine refuses.
+    When the pack that answered is not the tag on screen (`ja` → `ja-JP`,
+    the engine's only aliasing) the panel names it (`defaults.localePack`). The picker's option list is
     the chrome registry plus `i18n/locales.ts` `ENGINE_ONLY_LOCALES`
     (engine-resolvable locales with no Designer chrome: `th-TH`).
   - `panel/DefaultsStyleFields.tsx` — the cascade-root half: one field

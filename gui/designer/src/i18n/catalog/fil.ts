@@ -629,6 +629,7 @@ export const fil: LanguageCatalog = {
     'defaults.sizeOnly': '{size}pt',
     'defaults.localeFacts':
       'Ang petsa ay lumalabas na {date}, ang mga numero na {number}, at {currency} ang default na salapi.',
+    'defaults.localePack': 'Mula sa {pack} na pack.',
     'defaults.currencyFacts':
       'Lumalabas ang halaga na tulad ng {amount}. Mapipili sa bawat field kung simbolo o pangalan ng salapi ang ipapakita.',
     'defaults.currencyHint':

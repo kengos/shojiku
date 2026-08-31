@@ -65,20 +65,26 @@ describe('DocumentDefaults', () => {
     render(<Harness source={`defaults:\n  locale: ja-JP\n  currency: JPY\n${BASE}`} />);
     expect((screen.getByLabelText('Locale') as HTMLInputElement).value).toBe('ja-JP');
     expect((screen.getByLabelText('Currency') as HTMLInputElement).value).toBe('JPY');
-    // The locale datalist is the endonym registry's tags PLUS the engine
-    // locales that have no chrome catalog of their own. th-TH is the case
-    // that separates the two axes: it ships a locale pack (Buddhist era,
-    // baht, Thai month names) while the Designer's UI has no Thai, so it
-    // must be offered here and must NOT be in the chrome registry.
+    // The locale datalist is the ENGINE-resolvable set, not the chrome tags:
+    // this key is the CLI/MCP render fallback, so every option must be one a
+    // host can actually resolve. Five regional Englishes collapse onto en-US,
+    // and th-TH — a shipped pack with no Thai chrome — is the case that
+    // separates the two axes in the other direction.
     const options = Array.from(document.querySelectorAll('#sj-defaults-locale option'), (o) =>
       o.getAttribute('value'),
     );
-    expect(options.slice(0, LOCALES.length)).toEqual(LOCALES.map((l) => l.tag));
+    expect(options).toEqual([
+      ...new Set(LOCALES.map((l) => l.engineLocale)),
+      ...ENGINE_ONLY_LOCALES,
+    ]);
     expect(options).toContain('th-TH');
     expect(LOCALES.map((l) => l.tag)).not.toContain('th-TH');
-    // The extra tags are exactly the engine-only registry, in order — the
-    // picker's tail has ONE source, not a set derived from something else.
-    expect(options.slice(LOCALES.length)).toEqual([...ENGINE_ONLY_LOCALES]);
+    // The trap this replaced: en-GB is a chrome language and NOT an engine
+    // locale, so offering it authored a document every host refuses.
+    expect(LOCALES.map((l) => l.tag)).toContain('en-GB');
+    expect(options).not.toContain('en-GB');
+    // …and no option is a duplicate, since five entries share en-US.
+    expect(new Set(options).size).toBe(options.length);
     // The hint says the preview does not follow the locale.
     expect(screen.getByText(/preview doesn't follow/i)).toBeTruthy();
     // The inherited-subset style editor is present, backgroundColor is not.
@@ -471,6 +477,24 @@ describe('the what-this-pick-does lines', () => {
     expect(screen.getByText(/2026\/11\/03\(火\)/)).toBeTruthy();
     expect(screen.getByText(/12,345,678\.9/)).toBeTruthy();
     expect(screen.getByText(/1,234,568/)).toBeTruthy();
+  });
+
+  it('names the pack when it is not the tag on screen', () => {
+    // The engine widens a bare language (`ja` → `ja-JP`) — its only aliasing
+    // — and a document may carry any string. Saying which pack answered is
+    // what stops the reader assuming their own tag was understood.
+    render(
+      <Harness
+        source={`defaults:\n  locale: ja\n${BASE}`}
+        localeFacts={{ ...FACTS, id: 'ja-JP' }}
+      />,
+    );
+    expect(screen.getByText(/ja-JP pack/)).toBeTruthy();
+  });
+
+  it('says nothing about the pack when it IS the tag on screen', () => {
+    render(<Harness source={`defaults:\n  locale: ja-JP\n${BASE}`} localeFacts={FACTS} />);
+    expect(screen.queryByText(/pack/)).toBeNull();
   });
 
   it('claims nothing when the engine has not answered', () => {

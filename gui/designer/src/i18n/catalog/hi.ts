@@ -601,6 +601,7 @@ export const hi: LanguageCatalog = {
     'defaults.sizeOnly': '{size}pt',
     'defaults.localeFacts':
       'तारीख़ {date} और संख्याएँ {number} के रूप में छपती हैं; राशि का डिफ़ॉल्ट {currency} है।',
+    'defaults.localePack': '{pack} पैक से पढ़ा गया।',
     'defaults.currencyFacts':
       'राशि {amount} जैसी छपती है। चिह्न या मुद्रा का नाम हर फ़ील्ड के प्रदर्शन प्रारूप में चुना जा सकता है।',
     'defaults.currencyHint': 'चिह्न या मुद्रा का नाम हर फ़ील्ड के प्रदर्शन प्रारूप में चुना जा सकता है।',

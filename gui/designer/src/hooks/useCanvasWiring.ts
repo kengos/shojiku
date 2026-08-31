@@ -5,9 +5,9 @@
 // PDF action, so effect order is unchanged.
 
 import { useCallback } from 'react';
-import { engineLocaleFor } from '../i18n/locales';
 import { DEFAULT_IMAGE_BUDGETS } from '../image/model';
 import { readDefaultsView } from '../panel/defaultsModel';
+import { readFormatDefaultsView } from '../panel/formatDefaultsModel';
 import { pageSummary, readPageView } from '../panel/pageSetupModel';
 import type { DesignerProps } from '../props';
 import { useDocDerived } from './useDocDerived';
@@ -88,16 +88,23 @@ export function useCanvasWiring(
     // targets only, and a modal's close button is not one).
     readPageLabel: useCallback(() => pageSummary(readPageView(editor.read('page'))), [editor.read]),
   });
+  const defaults = readDefaultsView(editor.read('defaults'));
+  const formatDefaults = readFormatDefaultsView(editor.read('defaults'));
   const derived = useDocDerived({
     text: editor.text,
     defaultFontFamily,
     transport,
     paletteGroups: defs.paletteGroups,
-    // Resolved HERE, where the chrome registry is in scope, so the
-    // derivation layer asks about a tag the engine can answer for. The
-    // mapping is the DESIGNER's substitution, not an engine alias — see
-    // `engineLocaleFor`.
-    localeTag: engineLocaleFor(readDefaultsView(editor.read('defaults')).locale),
+    // The tag EXACTLY as the document authored it. Substituting one here is
+    // what let the panel explain a locale no host can render; the picker now
+    // offers only engine-resolvable tags, and what a reader types reaches the
+    // engine unchanged so the answer is about their document.
+    localeTag: defaults.locale,
+    // What the AMOUNT depends on, beyond the pack: the document's currency
+    // and its per-type currency default. Kept separate from the catalog key
+    // (which is the whole `defaults:`/`formats:` slice) so a font-size commit
+    // does not blank a line it cannot change.
+    currencyKey: JSON.stringify([defaults.currency, formatDefaults.currency]),
     localePacks: props.localePacks,
   });
 

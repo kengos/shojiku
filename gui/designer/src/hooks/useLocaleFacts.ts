@@ -32,17 +32,23 @@ export interface LocaleFactsOptions {
   /** The document slice the answer depends on, as a comparable string (the
    * same `defaults:`/`formats:` slice the format catalog is keyed on). */
   readonly key: string;
-  /** The engine-resolvable tag to explain — already substituted by the
-   * caller (`engineLocaleFor`), since the engine aliases nothing beyond a
-   * bare language. Empty = nothing picked. */
+  /** The tag to explain, EXACTLY as the document authored it. The engine is
+   * asked about the reader's own value; a tag it cannot resolve simply goes
+   * unexplained. Empty = nothing picked. */
   readonly tag: string;
+  /** What the AMOUNT depends on besides the pack — the document's currency
+   * and its per-type currency default — as a comparable string. Separate
+   * from `key` (the whole `defaults:` slice) so a font-size commit does not
+   * blank a line it cannot change. */
+  readonly currencyKey: string;
   /** Where the pack text comes from; a host that injects none gets builtins. */
   readonly localePacks: { overlayFor(tag: string): Promise<string | null> } | undefined;
 }
 
-/** One remembered answer, with the tag it describes. */
+/** One remembered answer, with the inputs it describes. */
 interface Answer {
   readonly tag: string;
+  readonly currencyKey: string;
   readonly facts: LocaleFacts;
 }
 
@@ -51,6 +57,7 @@ export function useLocaleFacts({
   text,
   key,
   tag,
+  currencyKey,
   localePacks,
 }: LocaleFactsOptions): LocaleFacts | null {
   const [answer, setAnswer] = useState<Answer | null>(null);
@@ -77,7 +84,7 @@ export function useLocaleFacts({
     const cacheKey = JSON.stringify([tag, key]);
     const remembered = cache.current.get(cacheKey);
     if (remembered !== undefined) {
-      setAnswer({ tag, facts: remembered });
+      setAnswer({ tag, currencyKey, facts: remembered });
       return;
     }
     let live = true;
@@ -96,7 +103,7 @@ export function useLocaleFacts({
           cache.current.clear();
         }
         cache.current.set(cacheKey, facts);
-        setAnswer({ tag, facts });
+        setAnswer({ tag, currencyKey, facts });
       })
       // A locale the host ships no pack for, a malformed pack, an engine that
       // refused: the panel explains nothing, exactly as it does for a tag the
@@ -105,11 +112,16 @@ export function useLocaleFacts({
     return () => {
       live = false;
     };
-  }, [transport, key, tag, localePacks]);
+  }, [transport, key, tag, currencyKey, localePacks]);
 
-  // Only ever the facts for the tag ON SCREEN. A previous locale's samples
+  // Only ever the facts for the inputs ON SCREEN. A previous locale's samples
   // under a newly picked tag would be a statement about the document that is
-  // simply false; an out-of-date AMOUNT for the same tag is last-good, the way
-  // the canvas keeps its last good pages.
-  return answer !== null && answer.tag === tag ? answer.facts : null;
+  // simply false — and so would a previous CURRENCY's amount sitting directly
+  // under the field that now reads something else, which is why the guard
+  // covers both rather than the tag alone. (The canvas's last-good pixels are
+  // not beside the control that contradicts them; these are.) A style edit
+  // moves neither, so nothing blanks for an input that cannot change it.
+  return answer !== null && answer.tag === tag && answer.currencyKey === currencyKey
+    ? answer.facts
+    : null;
 }

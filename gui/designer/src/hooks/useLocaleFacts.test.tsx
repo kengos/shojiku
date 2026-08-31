@@ -48,6 +48,7 @@ describe('useLocaleFacts', () => {
         key: 'k',
         tag: 'ja-JP',
         localePacks: builtinsOnly,
+        currencyKey: 'c',
       }),
     );
     await Promise.resolve();
@@ -57,7 +58,14 @@ describe('useLocaleFacts', () => {
   it('asks nothing when no locale is picked', async () => {
     const { transport, fn } = withFacts();
     renderHook(() =>
-      useLocaleFacts({ transport, text: 't', key: 'k', tag: '', localePacks: builtinsOnly }),
+      useLocaleFacts({
+        transport,
+        text: 't',
+        key: 'k',
+        tag: '',
+        currencyKey: 'c',
+        localePacks: builtinsOnly,
+      }),
     );
     await Promise.resolve();
     expect(fn).not.toHaveBeenCalled();
@@ -67,7 +75,14 @@ describe('useLocaleFacts', () => {
     const { transport, fn } = withFacts();
     const packs = { overlayFor: vi.fn(async () => 'id: th-TH\n') };
     const { result } = renderHook(() =>
-      useLocaleFacts({ transport, text: 'the doc', key: 'k', tag: 'th-TH', localePacks: packs }),
+      useLocaleFacts({
+        transport,
+        text: 'the doc',
+        key: 'k',
+        tag: 'th-TH',
+        currencyKey: 'c',
+        localePacks: packs,
+      }),
     );
     await waitFor(() => expect(result.current).not.toBeNull());
     expect(packs.overlayFor).toHaveBeenCalledWith('th-TH');
@@ -80,7 +95,14 @@ describe('useLocaleFacts', () => {
     // still answer, so the query is made with no overlay.
     const { transport, fn } = withFacts();
     const { result } = renderHook(() =>
-      useLocaleFacts({ transport, text: 't', key: 'k', tag: 'ja-JP', localePacks: undefined }),
+      useLocaleFacts({
+        transport,
+        text: 't',
+        key: 'k',
+        tag: 'ja-JP',
+        currencyKey: 'c',
+        localePacks: undefined,
+      }),
     );
     await waitFor(() => expect(result.current).not.toBeNull());
     expect(fn).toHaveBeenCalledWith('t', 'ja-JP', undefined);
@@ -96,7 +118,14 @@ describe('useLocaleFacts', () => {
     );
     const { transport } = withFacts(fn);
     const { result } = renderHook(() =>
-      useLocaleFacts({ transport, text: 't', key: 'k', tag: 'th-TH', localePacks: undefined }),
+      useLocaleFacts({
+        transport,
+        text: 't',
+        key: 'k',
+        tag: 'th-TH',
+        currencyKey: 'c',
+        localePacks: undefined,
+      }),
     );
     await waitFor(() => expect(fn).toHaveBeenCalledWith('t', 'th-TH', undefined));
     expect(result.current).toBeNull();
@@ -120,7 +149,14 @@ describe('useLocaleFacts', () => {
     const { transport } = withFacts(fn);
     const { result, rerender } = renderHook(
       (tag: string) =>
-        useLocaleFacts({ transport, text: 't', key: 'k', tag, localePacks: builtinsOnly }),
+        useLocaleFacts({
+          transport,
+          text: 't',
+          key: 'k',
+          tag,
+          currencyKey: 'c',
+          localePacks: builtinsOnly,
+        }),
       { initialProps: 'ja-JP' },
     );
     await waitFor(() => expect(result.current?.id).toBe('ja-JP'));
@@ -134,11 +170,70 @@ describe('useLocaleFacts', () => {
     await waitFor(() => expect(result.current?.id).toBe('en-US'));
   });
 
+  it('does not caption a new CURRENCY with the old currency’s amount', async () => {
+    // The same false sentence the tag guard refuses, one field down: a stale
+    // amount sits directly under the Currency control that now reads
+    // something else. Unlike the canvas's last-good pixels, the thing
+    // contradicting it is on screen beside it.
+    //
+    // Both inputs move together, because both derive from the same
+    // `defaults:` block — `currencyKey` is a NARROWING of `key`, never an
+    // independent axis, so varying one alone would be a shape the app cannot
+    // produce.
+    const { transport } = withFacts();
+    const { result, rerender } = renderHook(
+      (p: { key: string; currencyKey: string }) =>
+        useLocaleFacts({
+          transport,
+          text: 't',
+          key: p.key,
+          tag: 'ja-JP',
+          currencyKey: p.currencyKey,
+          localePacks: builtinsOnly,
+        }),
+      { initialProps: { key: 'currency: JPY', currencyKey: '["JPY"]' } },
+    );
+    await waitFor(() => expect(result.current?.id).toBe('ja-JP'));
+    rerender({ key: 'currency: USD', currencyKey: '["USD"]' });
+    expect(result.current).toBeNull();
+    await waitFor(() => expect(result.current?.id).toBe('ja-JP'));
+  });
+
+  it('keeps the lines through an edit that cannot change them', async () => {
+    // A font-size commit moves the catalog `key` (the whole `defaults:`
+    // slice) but neither the tag nor the currency, so nothing blanks — which
+    // is why the guard is not simply `key`.
+    const { transport, fn } = withFacts();
+    const { result, rerender } = renderHook(
+      (key: string) =>
+        useLocaleFacts({
+          transport,
+          text: 't',
+          key,
+          tag: 'ja-JP',
+          currencyKey: 'c',
+          localePacks: builtinsOnly,
+        }),
+      { initialProps: 'k1' },
+    );
+    await waitFor(() => expect(result.current?.id).toBe('ja-JP'));
+    rerender('k2');
+    expect(result.current?.id).toBe('ja-JP');
+    await waitFor(() => expect(fn).toHaveBeenCalledTimes(2));
+  });
+
   it('remembers an answer, so re-picking a locale costs no engine call', async () => {
     const { transport, fn } = withFacts();
     const { result, rerender } = renderHook(
       (tag: string) =>
-        useLocaleFacts({ transport, text: 't', key: 'k', tag, localePacks: builtinsOnly }),
+        useLocaleFacts({
+          transport,
+          text: 't',
+          key: 'k',
+          tag,
+          currencyKey: 'c',
+          localePacks: builtinsOnly,
+        }),
       { initialProps: 'ja-JP' },
     );
     await waitFor(() => expect(result.current?.id).toBe('ja-JP'));
@@ -157,7 +252,14 @@ describe('useLocaleFacts', () => {
     const { transport, fn } = withFacts();
     const { result, rerender } = renderHook(
       (p: { tag: string; key: string }) =>
-        useLocaleFacts({ transport, text: 't', key: p.key, tag: p.tag, localePacks: builtinsOnly }),
+        useLocaleFacts({
+          transport,
+          text: 't',
+          key: p.key,
+          tag: p.tag,
+          currencyKey: 'c',
+          localePacks: builtinsOnly,
+        }),
       { initialProps: { tag: 'a', key: 'b c' } },
     );
     await waitFor(() => expect(result.current?.id).toBe('a'));
@@ -172,7 +274,14 @@ describe('useLocaleFacts', () => {
     const { transport, fn } = withFacts();
     const { result, rerender } = renderHook(
       (tag: string) =>
-        useLocaleFacts({ transport, text: 't', key: 'k', tag, localePacks: builtinsOnly }),
+        useLocaleFacts({
+          transport,
+          text: 't',
+          key: 'k',
+          tag,
+          currencyKey: 'c',
+          localePacks: builtinsOnly,
+        }),
       { initialProps: 'tag-0' },
     );
     for (let n = 0; n <= MAX_CACHED_FACTS; n += 1) {
@@ -192,7 +301,14 @@ describe('useLocaleFacts', () => {
     const { transport, fn } = withFacts();
     const packs = { overlayFor: vi.fn(async () => Promise.reject(new Error('404'))) };
     const { result } = renderHook(() =>
-      useLocaleFacts({ transport, text: 't', key: 'k', tag: 'zz-ZZ', localePacks: packs }),
+      useLocaleFacts({
+        transport,
+        text: 't',
+        key: 'k',
+        tag: 'zz-ZZ',
+        currencyKey: 'c',
+        localePacks: packs,
+      }),
     );
     await Promise.resolve();
     await waitFor(() => expect(packs.overlayFor).toHaveBeenCalled());
@@ -206,7 +322,14 @@ describe('useLocaleFacts', () => {
     );
     const { transport } = withFacts(fn);
     const { result } = renderHook(() =>
-      useLocaleFacts({ transport, text: 't', key: 'k', tag: 'zz-ZZ', localePacks: builtinsOnly }),
+      useLocaleFacts({
+        transport,
+        text: 't',
+        key: 'k',
+        tag: 'zz-ZZ',
+        currencyKey: 'c',
+        localePacks: builtinsOnly,
+      }),
     );
     await waitFor(() => expect(fn).toHaveBeenCalled());
     expect(result.current).toBeNull();
@@ -226,7 +349,14 @@ describe('useLocaleFacts', () => {
     const { transport } = withFacts(fn);
     const { result, rerender } = renderHook(
       (key: string) =>
-        useLocaleFacts({ transport, text: 't', key, tag: 'ja-JP', localePacks: builtinsOnly }),
+        useLocaleFacts({
+          transport,
+          text: 't',
+          key,
+          tag: 'ja-JP',
+          currencyKey: 'c',
+          localePacks: builtinsOnly,
+        }),
       { initialProps: 'k1' },
     );
     await waitFor(() => expect(result.current?.id).toBe('ja-JP'));
@@ -250,7 +380,14 @@ describe('useLocaleFacts', () => {
     const { transport } = withFacts(fn);
     const { result, rerender } = renderHook(
       (tag: string) =>
-        useLocaleFacts({ transport, text: 't', key: 'k', tag, localePacks: builtinsOnly }),
+        useLocaleFacts({
+          transport,
+          text: 't',
+          key: 'k',
+          tag,
+          currencyKey: 'c',
+          localePacks: builtinsOnly,
+        }),
       { initialProps: 'slow' },
     );
     rerender('ja-JP');
@@ -277,7 +414,14 @@ describe('useLocaleFacts', () => {
     const { transport } = withFacts(fn);
     const { result, rerender } = renderHook(
       (key: string) =>
-        useLocaleFacts({ transport, text: 't', key, tag: 'ja-JP', localePacks: builtinsOnly }),
+        useLocaleFacts({
+          transport,
+          text: 't',
+          key,
+          tag: 'ja-JP',
+          currencyKey: 'c',
+          localePacks: builtinsOnly,
+        }),
       { initialProps: 'k1' },
     );
     await waitFor(() => expect(result.current?.id).toBe('ja-JP'));

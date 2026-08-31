@@ -830,6 +830,7 @@ export const en: LanguageCatalog = {
     'defaults.sizeOnly': '{size}pt',
     'defaults.localeFacts':
       'Dates print as {date}, numbers as {number}, and amounts default to {currency}.',
+    'defaults.localePack': 'Read from the {pack} pack.',
     'defaults.currencyFacts':
       'Amounts print like {amount}. Each bound field can then choose the symbol or the currency name.',
     'defaults.currencyHint': 'Each bound field can choose the symbol or the currency name.',

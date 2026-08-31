@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PAGE_SIZE_NAMES } from '../panel/pageSizes';
 import { DEFAULT_CATALOG } from './catalog';
-import { ALIASES, ENGINE_ONLY_LOCALES, engineLocaleFor, LOCALES, localeInfo } from './locales';
+import { ALIASES, ENGINE_ONLY_LOCALES, LOCALES, localeInfo } from './locales';
 import { resolveChain } from './resolve';
 
 // The exact engine named-size spellings (engine/core/src/geometry.rs).
@@ -109,36 +109,6 @@ describe('localeInfo lookup', () => {
   it('returns undefined for a tag naming no shipped locale', () => {
     expect(localeInfo('de-DE')).toBeUndefined();
     expect(localeInfo('')).toBeUndefined();
-  });
-});
-
-describe('engineLocaleFor', () => {
-  // The claim moved here from the panel, which used to do this lookup itself.
-  it('substitutes en-US for a regional English the engine holds no pack for', () => {
-    // This is the DESIGNER's substitution, not an engine alias. The engine's
-    // `canonical_id` widens a BARE language only (`en` → `en-US`), and the
-    // prefix arm needs the candidate to be longer than the input — `en-GB`
-    // and `en-US` are the same length — so `en-GB` resolves to nothing and
-    // no `en-gb.yml` pack ships. A CLI render of a document declaring it is
-    // refused outright; asking the engine about `en-GB` would answer
-    // nothing, which is why the Designer asks about the pack it substitutes.
-    expect(engineLocaleFor('en-GB')).toBe('en-US');
-    expect(engineLocaleFor('en-AU')).toBe('en-US');
-  });
-
-  it('leaves a locale that IS engine-resolvable alone', () => {
-    expect(engineLocaleFor('ja-JP')).toBe('ja-JP');
-    expect(engineLocaleFor('zh-TW')).toBe('zh-TW');
-  });
-
-  it('maps an unregistered or hostile tag to itself', () => {
-    // Mapping to itself is what makes the miss a MISS downstream: whatever
-    // asks about it gets nothing, rather than an answer about some other
-    // locale. A prototype name must not resolve through the registry either.
-    expect(engineLocaleFor('xx-YY')).toBe('xx-YY');
-    expect(engineLocaleFor('constructor')).toBe('constructor');
-    expect(engineLocaleFor('__proto__')).toBe('__proto__');
-    expect(engineLocaleFor('')).toBe('');
   });
 });
 
