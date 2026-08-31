@@ -32,8 +32,9 @@ export interface LocaleFactsOptions {
   /** The document slice the answer depends on, as a comparable string (the
    * same `defaults:`/`formats:` slice the format catalog is keyed on). */
   readonly key: string;
-  /** The ENGINE-resolvable tag to explain: a regional English has already
-   * become the locale the engine actually has. Empty = nothing picked. */
+  /** The engine-resolvable tag to explain — already substituted by the
+   * caller (`engineLocaleFor`), since the engine aliases nothing beyond a
+   * bare language. Empty = nothing picked. */
   readonly tag: string;
   /** Where the pack text comes from; a host that injects none gets builtins. */
   readonly localePacks: { overlayFor(tag: string): Promise<string | null> } | undefined;

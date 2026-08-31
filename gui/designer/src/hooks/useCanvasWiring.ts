@@ -93,9 +93,10 @@ export function useCanvasWiring(
     defaultFontFamily,
     transport,
     paletteGroups: defs.paletteGroups,
-    // Resolved HERE, where the chrome registry is in scope: the derivation
-    // layer asks the engine about a tag the engine can answer for, so a
-    // regional English has already become the locale the engine has.
+    // Resolved HERE, where the chrome registry is in scope, so the
+    // derivation layer asks about a tag the engine can answer for. The
+    // mapping is the DESIGNER's substitution, not an engine alias — see
+    // `engineLocaleFor`.
     localeTag: engineLocaleFor(readDefaultsView(editor.read('defaults')).locale),
     localePacks: props.localePacks,
   });

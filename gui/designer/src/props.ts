@@ -82,8 +82,10 @@ export interface DesignerProps {
    *
    * Which locale packs a deployment ships is a host fact — the standalone app
    * fetches them from its asset tree — and the engine needs the pack's bytes
-   * to answer for a locale it is not rendering through. `null` means "the
-   * engine has a builtin for this tag"; a rejection or an absent injection
+   * to answer for a locale it is not rendering through. `null` means "no pack
+   * to send" — a builtin needs none, and a tag this host ships nothing for
+   * gets the same answer with no reason attached, so the engine's own
+   * refusal is what distinguishes them. A rejection or an absent injection
    * means the panel explains nothing, which is the honest degradation.
    *
    * Injection point rather than a table here: the same reason fonts and the

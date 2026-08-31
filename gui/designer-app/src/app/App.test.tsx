@@ -117,8 +117,8 @@ function makeServices(overrides: Partial<AppServices> = {}): TestServices {
     loadFiles,
     moduleLoad: READY_MODULE,
     presets,
-    // Builtin-only: `null` is what a real source answers for a locale the
-    // engine already has, so the Designer's locale panel still works.
+    // Builtin-only: `null` is "no pack to send", which is what a real source
+    // answers for a builtin, so the Designer's locale panel still works.
     localePacks: { overlayFor: async () => null },
     initialLocale: 'en-US',
     persistLocale: vi.fn(),

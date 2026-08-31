@@ -141,8 +141,8 @@ export function services(overrides: Partial<AppServices> = {}): AppServices {
     snapshots: new SnapshotStore(memoryStorage()),
     now: () => 1_000_000,
     prepareEngine: vi.fn(),
-    // Builtin-only by default: `null` is what a real source answers for a tag
-    // the engine already has, so the Designer's locale panel still works.
+    // Builtin-only by default: `null` is "no pack to send", which is what a
+    // real source answers for a builtin, so the locale panel still works.
     localePacks: { overlayFor: async () => null },
     exportFile: vi.fn(),
     openFile: vi.fn(async () => null),

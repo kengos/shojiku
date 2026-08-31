@@ -431,7 +431,10 @@ because which packs a deployment ships is a host fact and because the panel
 must describe the tag the DOCUMENT declares, which is deliberately not the
 tag the preview renders through. An engine without the key, a tag it cannot
 resolve, or a pack this host does not ship all leave the panel explaining
-nothing rather than guessing. What the picker OFFERS stays a registry
+nothing rather than guessing — with one exception the picker creates: a
+regional English (`en-GB`, `en-AU`, …) is substituted to `en-US` before the
+ask, so it is explained by a pack the document does not name, and a CLI/MCP
+render of that document is refused. Disclosing the substitution is queued. What the picker OFFERS stays a registry
 question, not a formatting one: the chrome languages plus the
 engine-resolvable locales that have no chrome catalog.
 

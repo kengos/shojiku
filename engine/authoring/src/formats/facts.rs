@@ -31,8 +31,11 @@ use shojiku_formatter::{FormatContext, LangPack};
 #[serde(rename_all = "camelCase")]
 pub struct LocaleFacts {
     /// The resolved pack's OWN id, verbatim — the canonical spelling of what
-    /// was actually loaded, which a caller's requested tag need not be (a
-    /// regional English resolves to the locale the engine has).
+    /// was actually loaded, which a caller's requested tag need not be: a
+    /// bare language resolves to its builtin (`ja` → `ja-JP`), and a caller
+    /// that substitutes a tag before asking gets the tag it sent. The engine
+    /// aliases nothing else — a REGIONAL tag it holds no pack for is
+    /// refused, not widened to its language.
     pub id: String,
     /// The dated exemplar through this locale's default date rendering.
     pub date: String,

@@ -23,7 +23,10 @@ platform binaries.
   page prints, and a locale the preview is not running can still be described.
   A new `localeFacts` query answers it, reported by the capability key
   `locale.facts`; an engine without it leaves the panel explaining nothing
-  rather than guessing.
+  rather than guessing. A locale pack is now fetched once per locale rather
+  than once per settings edit, so editing an unrelated document default no
+  longer re-downloads it — and a brief network failure can no longer leave
+  the panel silent afterwards.
 
 - **A manuscript-paper item can now be given a named style, and told whether to
   read ruby notation.** Neither had a control: `styleNames` decides where the

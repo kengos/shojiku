@@ -65,8 +65,8 @@ false`), no clap.
   fraction digits and no symbol (`symbol`/`name` are per-placement
   variants), while one whose `defaults.formats.currency` names a variant
   gets that variant, which is what its page prints. An agreement test pins
-  the undeclared case against the catalog's `default` row, and a second
-  pins the declared one. `currency_default` is EMPTY when the pack declares none —
+  the UNDECLARED case against the catalog's `default` row; the declared case
+  is pinned by a literal, not by the catalog. `currency_default` is EMPTY when the pack declares none —
   the engine reports the absence, and a consumer decides what to say. It
   answers for a pack the caller loads itself, so a host can describe a
   locale it is not rendering through. Capability key `locale.facts`.
