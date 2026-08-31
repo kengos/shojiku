@@ -114,9 +114,14 @@ describe('localeInfo lookup', () => {
 
 describe('engineLocaleFor', () => {
   // The claim moved here from the panel, which used to do this lookup itself.
-  it('resolves a regional English to the locale the engine actually has', () => {
-    // en-GB ships no pack and has no builtin; the engine formats it as en-US,
-    // so an editor asking about the pick must ask about THAT.
+  it('substitutes en-US for a regional English the engine holds no pack for', () => {
+    // This is the DESIGNER's substitution, not an engine alias. The engine's
+    // `canonical_id` widens a BARE language only (`en` → `en-US`), and the
+    // prefix arm needs the candidate to be longer than the input — `en-GB`
+    // and `en-US` are the same length — so `en-GB` resolves to nothing and
+    // no `en-gb.yml` pack ships. A CLI render of a document declaring it is
+    // refused outright; asking the engine about `en-GB` would answer
+    // nothing, which is why the Designer asks about the pack it substitutes.
     expect(engineLocaleFor('en-GB')).toBe('en-US');
     expect(engineLocaleFor('en-AU')).toBe('en-US');
   });

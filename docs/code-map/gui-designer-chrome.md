@@ -42,8 +42,11 @@ tooltip replaces it — gated by `ui/chromeConvention.test.ts`).
   `ENGINE_ONLY_LOCALES` (engine-resolvable locales with NO chrome catalog
   — `th-TH` ships a pack but no Thai UI — so the `defaults.locale` picker
   offers them while the language menu does not) and `engineLocaleFor(tag)`
-  (the tag the engine actually formats through: `en-GB` → `en-US`;
-  an unregistered tag maps to itself, so a lookup simply misses).
+  — the tag the DESIGNER substitutes before asking the engine (`en-GB` →
+  `en-US`), NOT an engine alias: `canonical_id` widens a bare language only,
+  so `en-GB` resolves to nothing and a CLI render of a document declaring it
+  is refused. An unregistered tag maps to itself, so a lookup simply
+  misses.
 - `i18n/resolve.ts` — `resolveChain`: BCP 47 tag → ordered chain ending
   at `en` (hasOwn-guarded, length-capped, garbage → `['en']`).
 - `i18n/render.ts` — pure `translate` + `renderDiagnostic` (walk the

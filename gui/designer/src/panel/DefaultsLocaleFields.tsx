@@ -8,8 +8,15 @@
 // sample this file composed could drift from what the page prints, which is
 // exactly what a hand-written table of per-locale samples used to risk.
 // `facts === null` — no engine answer yet, an engine without the
-// `locale.facts` query, a tag it cannot resolve, or a pack this host does not
-// ship — means the lines are simply not shown; nothing is guessed.
+// `locale.facts` query, a tag the engine cannot resolve, or a pack this host
+// does not ship — means the lines are simply not shown; nothing is guessed.
+//
+// ONE case escapes that, and it is the picker's own doing rather than this
+// file's: the five regional-English tags are substituted to `en-US` by
+// `engineLocaleFor` before the ask, so they are always explained — while a
+// document declaring one is REFUSED by the CLI/MCP hosts, which hold no pack
+// for it. The lines are then true of the pack that answered and not of the
+// document. Disclosing that substitution is queued, not solved here.
 //
 // The preview does NOT follow `defaults.locale`: the WASM host sets the engine
 // locale explicitly at preset-open, so the key is only the CLI/MCP render

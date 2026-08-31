@@ -119,10 +119,16 @@ export const LOCALES: readonly LocaleInfo[] = [
  * is the engine's answer (`localeFacts`); this only says which picks exist. */
 export const ENGINE_ONLY_LOCALES: readonly string[] = ['th-TH'];
 
-/** The engine-RESOLVABLE tag an authored `defaults.locale` formats through: a
- * regional English (`en-GB`) resolves to the locale the engine actually has
- * (`en-US`). An unregistered or hostile tag maps to itself, so whatever asks
- * about it simply misses and nothing is claimed. */
+/** The tag the DESIGNER substitutes when it asks the engine about a locale.
+ *
+ * Not an engine alias — the engine has no aliasing layer. `canonical_id`
+ * matches case-insensitively and then on a unique BARE-LANGUAGE prefix, so
+ * `en` reaches `en-US` while `en-GB` (same length) reaches nothing, and no
+ * `en-gb.yml` pack ships; a CLI or MCP render of a document declaring
+ * `defaults.locale: en-GB` is REFUSED. This substitution is the Designer's
+ * own, and it is why a blank preset authors `en-US` rather than the chrome
+ * tag. An unregistered or hostile tag maps to itself, so whatever asks about
+ * it simply misses and nothing is claimed. */
 export function engineLocaleFor(tag: string): string {
   return LOCALES.find((locale) => locale.tag === tag)?.engineLocale ?? tag;
 }

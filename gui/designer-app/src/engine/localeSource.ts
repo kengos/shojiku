@@ -32,6 +32,14 @@ export function makeLocaleSource(deps: {
 }): LocaleSource {
   const { fetchText, base, index } = deps;
   const shipped = new Set(index.locales);
+  // A pack is a function of its ID alone, and the same one is now asked for
+  // repeatedly: the locale panel re-asks whenever the `defaults:` slice moves,
+  // which a font-size or line-height commit does. Without this, an unrelated
+  // style edit on a pack locale costs another GET for the same ~6 KB — and
+  // opens a window in which an offline or 5xx moment stops a panel that was
+  // explaining. Keyed by the guarded id, so a hostile tag never reaches it;
+  // bounded by the shipped index, which is a handful of entries.
+  const packs = new Map<string, Promise<string>>();
   return {
     async overlayFor(tag) {
       const id = tag.toLowerCase();
@@ -39,11 +47,23 @@ export function makeLocaleSource(deps: {
       if (!isSafeAssetName(id) || !shipped.has(id)) {
         return null;
       }
-      const text = await fetchText(`${base}locale/${id}.yml`);
-      if (text.length > MAX_LOCALE_BYTES) {
-        throw new Error(`locale pack ${id} exceeds the size cap`);
+      const cached = packs.get(id);
+      if (cached !== undefined) {
+        return cached;
       }
-      return text;
+      // The PROMISE is cached, not the text, so two panels asking at once
+      // share one request. A rejection is evicted, so a transient failure
+      // does not become permanent.
+      const pending = (async () => {
+        const text = await fetchText(`${base}locale/${id}.yml`);
+        if (text.length > MAX_LOCALE_BYTES) {
+          throw new Error(`locale pack ${id} exceeds the size cap`);
+        }
+        return text;
+      })();
+      packs.set(id, pending);
+      pending.catch(() => packs.delete(id));
+      return pending;
     },
   };
 }

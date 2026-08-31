@@ -371,8 +371,13 @@ describe('createWasmTransport.localeFacts', () => {
     };
     const transport = createWasmTransport(engine);
     await expect(transport.localeFacts?.('t', 'zz-ZZ')).rejects.toBeInstanceOf(TransportError);
+    // `args` is the load-bearing half HERE, unlike on the catalog: `detail`
+    // is where the engine's clipped, control-stripped echo of a hostile
+    // `defaults.locale` arrives, and the engine-side test proves the clip
+    // only up to the wasm boundary. This pins that it crosses intact.
     await expect(transport.localeFacts?.('t', 'zz-ZZ')).rejects.toMatchObject({
       code: 'locale_error',
+      args: { detail: 'nope' },
     });
   });
 

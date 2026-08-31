@@ -86,6 +86,22 @@ describe('useLocaleFacts', () => {
     expect(fn).toHaveBeenCalledWith('t', 'ja-JP', undefined);
   });
 
+  it('degrades on a PACK locale when the host injects no pack source', async () => {
+    // The other half of the no-injection host: a builtin answers (above),
+    // and a locale whose pack the host cannot supply is refused by the
+    // engine, so the panel explains nothing. Both arms, or the pair reads
+    // as though an absent injection were harmless.
+    const fn = vi.fn((_t: string, _id: string) =>
+      Promise.reject<LocaleFacts>(new Error('locale error')),
+    );
+    const { transport } = withFacts(fn);
+    const { result } = renderHook(() =>
+      useLocaleFacts({ transport, text: 't', key: 'k', tag: 'th-TH', localePacks: undefined }),
+    );
+    await waitFor(() => expect(fn).toHaveBeenCalledWith('t', 'th-TH', undefined));
+    expect(result.current).toBeNull();
+  });
+
   it('never captions one tag with another tag’s facts', async () => {
     // The load-bearing property. Between picking a new locale and the engine
     // answering, showing the previous locale's samples would be a statement
