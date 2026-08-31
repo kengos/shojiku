@@ -155,8 +155,12 @@ describe('DocumentDefaults', () => {
   //
   //   - the samples themselves      → `formats/tests/facts.rs` (per pack) and
   //                                   `integration/wasm.test.ts` (real engine)
-  //   - the tag resolution          → `i18n/locales.test.ts` (`engineLocaleFor`)
   //   - an unset / unresolvable tag → `hooks/useLocaleFacts.test.tsx`
+  //
+  // The regional-English case is no longer a RESOLUTION at all: the picker
+  // offers only engine-resolvable tags and nothing substitutes what it
+  // offers, so `en-GB` is simply not on the list (pinned in this file's
+  // first test) and a document carrying one goes unexplained.
   //
   // What is left HERE is the only part still the panel's: does it say what it
   // was handed, and does it stay quiet when it was handed nothing — the
