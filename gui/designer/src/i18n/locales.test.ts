@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PAGE_SIZE_NAMES } from '../panel/pageSizes';
 import { DEFAULT_CATALOG } from './catalog';
-import { ALIASES, LOCALES, localeInfo } from './locales';
+import { ALIASES, ENGINE_ONLY_LOCALES, engineLocaleFor, LOCALES, localeInfo } from './locales';
 import { resolveChain } from './resolve';
 
 // The exact engine named-size spellings (engine/core/src/geometry.rs).
@@ -109,5 +109,47 @@ describe('localeInfo lookup', () => {
   it('returns undefined for a tag naming no shipped locale', () => {
     expect(localeInfo('de-DE')).toBeUndefined();
     expect(localeInfo('')).toBeUndefined();
+  });
+});
+
+describe('engineLocaleFor', () => {
+  // The claim moved here from the panel, which used to do this lookup itself.
+  it('resolves a regional English to the locale the engine actually has', () => {
+    // en-GB ships no pack and has no builtin; the engine formats it as en-US,
+    // so an editor asking about the pick must ask about THAT.
+    expect(engineLocaleFor('en-GB')).toBe('en-US');
+    expect(engineLocaleFor('en-AU')).toBe('en-US');
+  });
+
+  it('leaves a locale that IS engine-resolvable alone', () => {
+    expect(engineLocaleFor('ja-JP')).toBe('ja-JP');
+    expect(engineLocaleFor('zh-TW')).toBe('zh-TW');
+  });
+
+  it('maps an unregistered or hostile tag to itself', () => {
+    // Mapping to itself is what makes the miss a MISS downstream: whatever
+    // asks about it gets nothing, rather than an answer about some other
+    // locale. A prototype name must not resolve through the registry either.
+    expect(engineLocaleFor('xx-YY')).toBe('xx-YY');
+    expect(engineLocaleFor('constructor')).toBe('constructor');
+    expect(engineLocaleFor('__proto__')).toBe('__proto__');
+    expect(engineLocaleFor('')).toBe('');
+  });
+});
+
+describe('ENGINE_ONLY_LOCALES', () => {
+  it('lists engine locales the Designer has no chrome for, and only those', () => {
+    // The two axes the `defaults.locale` picker joins. An entry that IS a
+    // chrome language would double the picker's row; a chrome language
+    // missing from `LOCALES` would be unreachable in the language menu.
+    for (const tag of ENGINE_ONLY_LOCALES) {
+      expect(
+        LOCALES.some((locale) => locale.tag === tag),
+        tag,
+      ).toBe(false);
+    }
+    // th-TH is the case that separates them: a shipped pack (Buddhist era,
+    // THB, Thai month names) with no Thai UI.
+    expect(ENGINE_ONLY_LOCALES).toContain('th-TH');
   });
 });

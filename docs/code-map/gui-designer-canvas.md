@@ -23,7 +23,12 @@ hostile geometry degrades to null before it can reach an op.
   `validate` + `renderRaw(…, {scale, pageIndex?}) → RenderOutcome` + the
   OPTIONAL `renderPdf` (absent = the Designer hides the action) and the
   OPTIONAL `formatCatalog(text, probes)` (absent = the pickers list
-  spellings with no samples) — presence + capability, never a version
+  spellings with no samples) and the OPTIONAL
+  `localeFacts(text, localeId, overlay?)` (absent = the document-settings
+  panel explains no locale pick). The pack TEXT is the host's — which
+  locale packs a deployment ships is a host fact — and the engine loads it
+  for that call alone, so the panel can describe a locale the preview is
+  not rendering through. Presence + capability, never a version
   sniff; async
   so a Worker/server transport slots in; `TransportError` (never an
   uncaught throw; carries a typed engine `code`/`args` when present).
@@ -41,6 +46,12 @@ hostile geometry degrades to null before it can reach an op.
   authored values the moment one is picked. Closed-set fields match
   against a real array rather than an object table, so a prototype name
   never resolves to an inherited value.
+- `engine/localeFactsResponse.ts` — the same RUNTIME guard for the
+  locale-facts response. Every field is a string the panel repeats to a
+  reader as a statement of fact about the document, so a wrong SHAPE
+  becomes a `TransportError` (the panel then explains nothing) rather than
+  reaching the page as `undefined`. An EMPTY `currencyDefault` is a real
+  answer — a pack declaring no default currency — not a malformed field.
 - `engine/errors.ts` — `errorText` + `throwFields` (guarded typed-throw
   extraction).
 

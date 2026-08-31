@@ -22,7 +22,13 @@
 import { useEffect, useState } from 'react';
 import { PageUnderlay } from '../canvas/PageUnderlay';
 import type { EditorController } from '../editor/useEditor';
-import type { FormatCatalog, PatternProbe, ProbeResult, RawPage } from '../engine/types';
+import type {
+  FormatCatalog,
+  LocaleFacts,
+  PatternProbe,
+  ProbeResult,
+  RawPage,
+} from '../engine/types';
 import type { FormatUsage } from '../formats/usage';
 import { useI18n } from '../i18n/context';
 import type { StyleUsage } from '../styles/usage';
@@ -56,6 +62,9 @@ export interface DocumentSettingsPageProps {
    * each one renders. `null` before the first answer, and permanently on a
    * transport that cannot answer; the section degrades rather than blanking. */
   readonly formatCatalog?: FormatCatalog | null;
+  /** What the picked `defaults.locale` DOES, as the engine's rendered samples.
+   * `null` — the default — means nothing is claimed about the pick. */
+  readonly localeFacts?: LocaleFacts | null;
   /** Preview a pattern that is not authored yet. */
   readonly probeFormat?: (probes: readonly PatternProbe[]) => Promise<readonly ProbeResult[]>;
   /** The session's template-size cap. The registry rename grows the document
@@ -84,6 +93,7 @@ export function DocumentSettingsPage({
   styleUsage = null,
   formatUsage = null,
   formatCatalog = null,
+  localeFacts = null,
   probeFormat = NO_PROBE,
   maxBytes,
   pages,
@@ -159,6 +169,7 @@ export function DocumentSettingsPage({
                 styleUsage={styleUsage}
                 formatUsage={formatUsage}
                 formatCatalog={formatCatalog}
+                localeFacts={localeFacts}
                 probeFormat={probeFormat}
                 showDefaults={showDefaults}
                 showRegistry={showRegistry}

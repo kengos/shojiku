@@ -117,6 +117,9 @@ function makeServices(overrides: Partial<AppServices> = {}): TestServices {
     loadFiles,
     moduleLoad: READY_MODULE,
     presets,
+    // Builtin-only: `null` is what a real source answers for a locale the
+    // engine already has, so the Designer's locale panel still works.
+    localePacks: { overlayFor: async () => null },
     initialLocale: 'en-US',
     persistLocale: vi.fn(),
     initialThemePref: 'auto',

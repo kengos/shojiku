@@ -877,11 +877,25 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   length caps of their own. Reached from all three hosts — `shojiku
   formats`, the `format_catalog` MCP tool, and the browser's wasm binding.
   Capability key `format.catalog`.
+- **Locale facts**: the catalog's sibling question — what picking a
+  `defaults.locale` / `defaults.currency` actually DOES. It answers with
+  the pack's own id, a rendered date, a rendered number long enough to show
+  the grouping RULE rather than only the separator, the ISO code an amount
+  takes when the document names none (EMPTY when the pack declares none),
+  and a rendered amount at the document's currency. Every sample is the
+  engine's own output through the same dispatch a bare binding takes, and
+  through the document's own chain: an undeclared document's amount carries
+  that currency's fraction digits and no symbol (the symbol and the currency
+  name are variants a placement picks per field), while a document whose
+  `defaults.formats.currency` names one gets that — what its page prints.
+  The caller supplies the locale pack, so a tool can describe a locale it
+  is not rendering through. Reached from the browser's wasm binding
+  (`localeFacts`). Capability key `locale.facts`.
 - **Capability surface**: `format.patterns.cldr`,
   `format.currency.variants`, `format.units.semantic`, `format.catalog`,
   `format.catalog.dropsTime`, `format.dated.declared_first`,
-  `template.defaults`, `template.defaults.document`, `template.formats`,
-  `binding.placeholder`.
+  `locale.facts`, `template.defaults`, `template.defaults.document`,
+  `template.formats`, `binding.placeholder`.
 
 ### Data-driven tables (`engine/core`, `engine/layout`)
 - Array-bound rows, per-column keys, repeating headers, pagination,

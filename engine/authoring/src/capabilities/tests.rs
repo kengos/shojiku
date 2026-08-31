@@ -16,6 +16,8 @@ fn engine_info_reports_version_capabilities_and_locales() {
     // structural tests (composition, dedup) pass without any given key
     // ever being asserted.
     assert!(info.capabilities.contains(&"format.catalog"));
+    // The locale-facts query, pinned for the same reason.
+    assert!(info.capabilities.contains(&"locale.facts"));
     // Grid `fr` track weights (leftover distribution) and `auto` COLUMN
     // tracks (sized to the widest cell placed in the track). Each is
     // pinned individually — the registry's structural tests pass whether

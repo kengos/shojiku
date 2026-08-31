@@ -38,7 +38,12 @@ tooltip replaces it — gated by `ui/chromeConvention.test.ts`).
 - `i18n/locales.ts` — `LOCALES` (`LocaleInfo { tag, label, messages,
   engineLocale, pageSizes }`) — the picker/page-setup source of truth;
   `pageSizes[0]` = the locale's standard size; `ALIASES` script map;
-  `localeInfo(tag)` lookup (miss = omit, never invent regional paper).
+  `localeInfo(tag)` lookup (miss = omit, never invent regional paper);
+  `ENGINE_ONLY_LOCALES` (engine-resolvable locales with NO chrome catalog
+  — `th-TH` ships a pack but no Thai UI — so the `defaults.locale` picker
+  offers them while the language menu does not) and `engineLocaleFor(tag)`
+  (the tag the engine actually formats through: `en-GB` → `en-US`;
+  an unregistered tag maps to itself, so a lookup simply misses).
 - `i18n/resolve.ts` — `resolveChain`: BCP 47 tag → ordered chain ending
   at `en` (hasOwn-guarded, length-capped, garbage → `['en']`).
 - `i18n/render.ts` — pure `translate` + `renderDiagnostic` (walk the

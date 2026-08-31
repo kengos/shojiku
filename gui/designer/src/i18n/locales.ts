@@ -105,6 +105,28 @@ export const LOCALES: readonly LocaleInfo[] = [
   },
 ];
 
+/** Engine-resolvable locales the Designer has NO chrome catalog for.
+ *
+ * Two independent axes meet in the `defaults.locale` picker: `LOCALES` is
+ * the CHROME registry — the languages the Designer's own UI is translated
+ * into — while a document formats through whatever locale the ENGINE can
+ * resolve, which is the two formatter builtins plus every shipped locale
+ * pack. Those sets overlap and neither contains the other: `th-TH` ships a
+ * pack (Buddhist era, THB, Thai month names) with no Thai chrome, so the
+ * picker must offer it and the language menu must not.
+ *
+ * A tag list, deliberately — not facts about the locale. What each pick DOES
+ * is the engine's answer (`localeFacts`); this only says which picks exist. */
+export const ENGINE_ONLY_LOCALES: readonly string[] = ['th-TH'];
+
+/** The engine-RESOLVABLE tag an authored `defaults.locale` formats through: a
+ * regional English (`en-GB`) resolves to the locale the engine actually has
+ * (`en-US`). An unregistered or hostile tag maps to itself, so whatever asks
+ * about it simply misses and nothing is claimed. */
+export function engineLocaleFor(tag: string): string {
+  return LOCALES.find((locale) => locale.tag === tag)?.engineLocale ?? tag;
+}
+
 /** Script-subtag aliases. Accept-Language sends `zh-Hant`/`zh-Hans` (script, no
  * region); without these they would fall past every Chinese catalog to English.
  * Keyed lowercase to match `resolveChain`'s normalization. */

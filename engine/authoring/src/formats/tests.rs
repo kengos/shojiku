@@ -54,6 +54,7 @@ fn sample_for(cat: &FormatCatalog, field_type: &str, spelling: &str) -> String {
 
 mod accepted;
 mod exemplars;
+mod facts;
 mod goldens;
 mod probes;
 mod registry;

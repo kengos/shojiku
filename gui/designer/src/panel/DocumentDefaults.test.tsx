@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useEditor } from '../editor/useEditor';
+import type { LocaleFacts } from '../engine/types';
 import { I18nProvider } from '../i18n/context';
-import { LOCALES } from '../i18n/locales';
+import { ENGINE_ONLY_LOCALES, LOCALES } from '../i18n/locales';
 import { swatchLabel } from '../testkit/swatchLabel';
 import { unitHintsFor } from '../testkit/unitHint';
 import { DocumentDefaults } from './DocumentDefaults';
-import { localeFacts } from './localeFacts';
 
 /** A real-editor harness: applying an op mutates the document and re-renders, so
  * tests assert the serialized doc, not a spy.
@@ -21,12 +21,14 @@ function Harness({
   fontFamilies,
   capabilities,
   defaultFontFamily,
+  localeFacts = null,
   section = 'both',
 }: {
   readonly source: string;
   readonly fontFamilies?: readonly string[];
   readonly capabilities?: readonly string[];
   readonly defaultFontFamily?: string;
+  readonly localeFacts?: LocaleFacts | null;
   readonly section?: 'locale' | 'style' | 'both';
 }) {
   const editor = useEditor(source);
@@ -40,6 +42,7 @@ function Harness({
           fontFamilies={fontFamilies}
           capabilities={capabilities}
           defaultFontFamily={defaultFontFamily}
+          localeFacts={localeFacts}
           section={half}
         />
       ))}
@@ -73,13 +76,9 @@ describe('DocumentDefaults', () => {
     expect(options.slice(0, LOCALES.length)).toEqual(LOCALES.map((l) => l.tag));
     expect(options).toContain('th-TH');
     expect(LOCALES.map((l) => l.tag)).not.toContain('th-TH');
-    // Every EXTRA tag can say what it does — that is the whole point of
-    // sourcing them from the facts table. (The chrome tags cannot be
-    // checked this way: `localeFacts` is keyed by the ENGINE locale, and a
-    // regional English like en-GB resolves to en-US before the lookup.)
-    for (const tag of options.slice(LOCALES.length)) {
-      expect(localeFacts(tag as string), tag as string).not.toBeNull();
-    }
+    // The extra tags are exactly the engine-only registry, in order — the
+    // picker's tail has ONE source, not a set derived from something else.
+    expect(options.slice(LOCALES.length)).toEqual([...ENGINE_ONLY_LOCALES]);
     // The hint says the preview does not follow the locale.
     expect(screen.getByText(/preview doesn't follow/i)).toBeTruthy();
     // The inherited-subset style editor is present, backgroundColor is not.
@@ -142,55 +141,20 @@ describe('DocumentDefaults', () => {
     expect(document.querySelector('script')).toBeNull();
   });
 
-  describe('what the locale and currency picks actually DO', () => {
-    it('reports the engine data behind the picked locale', () => {
-      render(<Harness source={`defaults:\n  locale: ja-JP\n  currency: JPY\n${BASE}`} />);
-      expect(
-        screen.getByText(/Dates print as 2026\/01\/05\(月\), numbers as 1,234,567\.5/),
-      ).toBeTruthy();
-      expect(screen.getByText(/amounts default to JPY/)).toBeTruthy();
-    });
-
-    it('shows a locale whose GROUPING differs, not just its separators', () => {
-      // hi-IN groups the Indian way (lakh/crore). The sample must carry
-      // enough digits to reveal that — at 1,234.5 it read identically to
-      // every other locale and the panel under-described the pick.
-      render(<Harness source={`defaults:\n  locale: hi-IN\n${BASE}`} />);
-      expect(screen.getByText(/numbers as 12,34,567\.5/)).toBeTruthy();
-    });
-
-    it('resolves a regional English through the locale the engine actually has', () => {
-      // en-GB has no pack of its own; the engine formats it as en-US, and the
-      // section must report THAT rather than nothing or a guess.
-      render(<Harness source={`defaults:\n  locale: en-GB\n${BASE}`} />);
-      expect(screen.getByText(/Dates print as Jan 5, 2026/)).toBeTruthy();
-    });
-
-    it('claims nothing about an unset locale', () => {
-      render(<Harness source={BASE} />);
-      expect(screen.queryByText(/Dates print as/)).toBeNull();
-      // …and the currency line degrades to the part that is still true.
-      expect(
-        screen.getByText('Each bound field can choose the symbol or the currency name.'),
-      ).toBeTruthy();
-    });
-
-    it('claims nothing about a hostile locale tag', () => {
-      render(<Harness source={`defaults:\n  locale: constructor\n${BASE}`} />);
-      expect(screen.queryByText(/Dates print as/)).toBeNull();
-    });
-
-    it('shows the amount shape for the picked currency', () => {
-      render(<Harness source={`defaults:\n  locale: ja-JP\n  currency: USD\n${BASE}`} />);
-      expect(screen.getByText(/Amounts print like 1,234\.00/)).toBeTruthy();
-    });
-
-    it('falls back to the locale default currency when none is picked', () => {
-      render(<Harness source={`defaults:\n  locale: ja-JP\n${BASE}`} />);
-      // JPY carries no decimals — the shape differs from the two-digit default.
-      expect(screen.getByText(/Amounts print like 1,234\./)).toBeTruthy();
-    });
-  });
+  // The seven cases that used to live here asserted the panel's OWN
+  // per-locale sample table — the Indian grouping, the Buddhist-ish date
+  // shape, the amount's fraction digits, the regional-English resolution.
+  // The panel composes none of that any more, so each claim moved to the
+  // layer that now owns it rather than being dropped:
+  //
+  //   - the samples themselves      → `formats/tests/facts.rs` (per pack) and
+  //                                   `integration/wasm.test.ts` (real engine)
+  //   - the tag resolution          → `i18n/locales.test.ts` (`engineLocaleFor`)
+  //   - an unset / unresolvable tag → `hooks/useLocaleFacts.test.tsx`
+  //
+  // What is left HERE is the only part still the panel's: does it say what it
+  // was handed, and does it stay quiet when it was handed nothing — the
+  // describe block at the foot of this file.
 
   // (The standalone stacked form this surface used to offer with no `section`
   // is gone — no product surface ever rendered it. The heading string its one
@@ -488,5 +452,49 @@ describe('DocumentDefaults style field refusal snap-back', () => {
     fireEvent.blur(lineHeight());
     expect(doc()).toBe(before);
     expect(lineHeight().value).toBe('');
+  });
+});
+
+describe('the what-this-pick-does lines', () => {
+  const FACTS: LocaleFacts = {
+    id: 'ja-JP',
+    date: '2026/11/03(火)',
+    number: '12,345,678.9',
+    currencyDefault: 'JPY',
+    amount: '1,234,568',
+  };
+
+  it('repeats the ENGINE\u2019s samples verbatim', () => {
+    render(<Harness source={`defaults:\n  locale: ja-JP\n${BASE}`} localeFacts={FACTS} />);
+    // Asserted on the rendered TEXT, not on the prop: the panel's whole job
+    // here is to say these values out loud, and nothing in it may format.
+    expect(screen.getByText(/2026\/11\/03\(火\)/)).toBeTruthy();
+    expect(screen.getByText(/12,345,678\.9/)).toBeTruthy();
+    expect(screen.getByText(/1,234,568/)).toBeTruthy();
+  });
+
+  it('claims nothing when the engine has not answered', () => {
+    // The gate BOTH ways: this is what a transport without `localeFacts`
+    // leaves behind, and an optional prop defaulting to `null` is a feature
+    // that can be switched off by omission.
+    render(<Harness source={`defaults:\n  locale: ja-JP\n${BASE}`} localeFacts={null} />);
+    expect(screen.queryByText(/2026/)).toBeNull();
+    expect(screen.queryByText(/12,345,678/)).toBeNull();
+    // The plain hint stands in for the amount sentence.
+    expect(screen.getByText(/Each bound field can choose/)).toBeTruthy();
+  });
+
+  it('drops only the currency-naming sentence for a pack with no default currency', () => {
+    // A third-party pack may declare none. The engine reports the absence as
+    // an empty code; the locale line NAMES that code, so it goes — while the
+    // amount line, which needs only the amount, stays.
+    render(
+      <Harness
+        source={`defaults:\n  locale: xx-YY\n${BASE}`}
+        localeFacts={{ ...FACTS, currencyDefault: '', amount: '1,234,567.89' }}
+      />,
+    );
+    expect(screen.queryByText(/2026\/11\/03/)).toBeNull();
+    expect(screen.getByText(/1,234,567\.89/)).toBeTruthy();
   });
 });

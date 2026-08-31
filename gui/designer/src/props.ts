@@ -77,6 +77,20 @@ export interface DesignerProps {
    * re-validated by designer-core at apply — a garbage op skips harmlessly. */
   readonly initialDefinitionsEdits?: readonly Op[];
   readonly scale?: number;
+  /** Where a locale PACK's text comes from, so the document-settings panel can
+   * say what a `defaults.locale` pick does.
+   *
+   * Which locale packs a deployment ships is a host fact — the standalone app
+   * fetches them from its asset tree — and the engine needs the pack's bytes
+   * to answer for a locale it is not rendering through. `null` means "the
+   * engine has a builtin for this tag"; a rejection or an absent injection
+   * means the panel explains nothing, which is the honest degradation.
+   *
+   * Injection point rather than a table here: the same reason fonts and the
+   * image codec are injected — another host resolves them differently. */
+  readonly localePacks?: {
+    overlayFor(tag: string): Promise<string | null>;
+  };
   /** Host-supplied `fontFamily` suggestions for the property panel (fonts the
    * host installed beyond the locale's bundled ones). */
   readonly fontFamilies?: readonly string[];

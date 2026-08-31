@@ -172,6 +172,27 @@ export interface ProbeResult {
   readonly refused: ProbeRefusal | null;
 }
 
+/** What picking a `defaults.locale` DOES, as the engine's own rendered output
+ * — the answer to `localeFacts`. The Designer composes none of it: a locale
+ * panel that explained a pick with strings of its own could drift from what
+ * the page prints, which is the defect this seam exists to remove. */
+export interface LocaleFacts {
+  /** The pack the engine actually resolved, by its OWN id — not necessarily
+   * the tag that was asked for. */
+  readonly id: string;
+  /** The engine's dated exemplar through this locale's default rendering. */
+  readonly date: string;
+  /** The number exemplar, long enough to show the grouping RULE rather than
+   * only the separator. */
+  readonly number: string;
+  /** The ISO code an amount takes when the document names none. EMPTY when
+   * the pack declares none — a caller then claims nothing about currency. */
+  readonly currencyDefault: string;
+  /** The currency exemplar at the document's own currency, or at the pack's
+   * default. It carries that currency's fraction digits. */
+  readonly amount: string;
+}
+
 /** The format catalog for one (template, locale) pair. */
 export interface FormatCatalog {
   readonly types: readonly FormatTypeEntry[];

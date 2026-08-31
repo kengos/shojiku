@@ -328,3 +328,61 @@ describe('createWasmTransport.formatCatalog', () => {
     await expect(transport.formatCatalog?.('t', [])).rejects.toBeInstanceOf(TransportError);
   });
 });
+
+const FACTS_JSON = JSON.stringify({
+  id: 'th-TH',
+  date: '3 \u0e1e.\u0e22. 2569',
+  number: '12,345,678.9',
+  currencyDefault: 'THB',
+  amount: '1,234,567.89',
+});
+
+describe('createWasmTransport.localeFacts', () => {
+  it('is ABSENT when the engine has no such method', () => {
+    // Presence, never a version sniff — the panel explains nothing against an
+    // engine without the `locale.facts` query.
+    expect(createWasmTransport(engineReturning(validRaw())).localeFacts).toBeUndefined();
+  });
+
+  it('hands the tag and the pack text to the engine and parses the answer', async () => {
+    const localeFacts = vi.fn(() => FACTS_JSON);
+    const transport = createWasmTransport({ ...engineReturning(validRaw()), localeFacts });
+    const facts = await transport.localeFacts?.('the template', 'th-TH', 'id: th-TH\n');
+    expect(localeFacts).toHaveBeenCalledWith('the template', 'th-TH', 'id: th-TH\n');
+    expect(facts?.date).toContain('2569');
+  });
+
+  it('sends null for a builtin locale, which needs no pack', async () => {
+    const localeFacts = vi.fn(() => FACTS_JSON);
+    const transport = createWasmTransport({ ...engineReturning(validRaw()), localeFacts });
+    await transport.localeFacts?.('t', 'ja-JP');
+    expect(localeFacts).toHaveBeenCalledWith('t', 'ja-JP', null);
+  });
+
+  it('turns an engine throw into a TransportError carrying its typed code', async () => {
+    const engine: WasmEngine = {
+      ...engineReturning(validRaw()),
+      localeFacts: () => {
+        throw Object.assign(new Error('locale error: nope'), {
+          code: 'locale_error',
+          args: { detail: 'nope' },
+        });
+      },
+    };
+    const transport = createWasmTransport(engine);
+    await expect(transport.localeFacts?.('t', 'zz-ZZ')).rejects.toBeInstanceOf(TransportError);
+    await expect(transport.localeFacts?.('t', 'zz-ZZ')).rejects.toMatchObject({
+      code: 'locale_error',
+    });
+  });
+
+  it('turns a malformed answer into a TransportError', async () => {
+    const engine: WasmEngine = {
+      ...engineReturning(validRaw()),
+      localeFacts: () => '{"id":7}',
+    };
+    await expect(createWasmTransport(engine).localeFacts?.('t', 'ja-JP')).rejects.toBeInstanceOf(
+      TransportError,
+    );
+  });
+});

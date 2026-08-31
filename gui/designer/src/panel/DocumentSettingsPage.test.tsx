@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { useEditor } from '../editor/useEditor';
-import type { RawPage } from '../engine/types';
+import type { LocaleFacts, RawPage } from '../engine/types';
 import { buildFormatUsage } from '../formats/usage';
 import { I18nProvider } from '../i18n/context';
 import { buildStyleUsage } from '../styles/usage';
@@ -22,6 +22,7 @@ function Harness({
   withCatalog = true,
   noProbe = false,
   focus,
+  localeFacts = null,
   onClose = vi.fn(),
 }: {
   readonly source?: string;
@@ -33,6 +34,7 @@ function Harness({
   /** Omit the probe entirely — a host that supplied none. */
   readonly noProbe?: boolean;
   readonly focus?: { readonly section: DocSection; readonly nonce: number };
+  readonly localeFacts?: LocaleFacts | null;
   readonly onClose?: () => void;
 }) {
   const editor = useEditor(source);
@@ -43,6 +45,7 @@ function Harness({
         styleUsage={buildStyleUsage(editor.text)}
         formatUsage={buildFormatUsage(editor.text)}
         formatCatalog={withCatalog ? FORMAT_CATALOG : null}
+        localeFacts={localeFacts}
         probeFormat={noProbe ? undefined : fakeProbe()}
         maxBytes={2_000_000}
         defaultFontFamily={defaultFontFamily}
@@ -306,5 +309,33 @@ describe('DocumentSettingsPage', () => {
       expect(input.value).toBe('');
       expect(input.getAttribute('placeholder')).toBe(fallback);
     }
+  });
+});
+
+describe('the locale facts reach the panel that shows them', () => {
+  // The THREADING, which no pure-model test can see: the engine's answer
+  // crosses four components to reach the sentence a reader gets, and a prop
+  // dropped anywhere along the way fails silently — the panel simply explains
+  // nothing, with every gate green. That is the shape of defect this whole
+  // change exists to remove one layer down, so it gets its own pin.
+  const FACTS: LocaleFacts = {
+    id: 'ja-JP',
+    date: '2026/11/03(火)',
+    number: '12,345,678.9',
+    currencyDefault: 'JPY',
+    amount: '1,234,568',
+  };
+
+  it('shows the engine’s samples once the section is open', () => {
+    render(<Harness source={`defaults:\n  locale: ja-JP\n${BASE}`} localeFacts={FACTS} />);
+    openSection('Locale & currency');
+    expect(screen.getByText(/2026\/11\/03\(火\)/)).toBeTruthy();
+    expect(screen.getByText(/1,234,568/)).toBeTruthy();
+  });
+
+  it('says nothing about the pick when the engine has not answered', () => {
+    render(<Harness source={`defaults:\n  locale: ja-JP\n${BASE}`} />);
+    openSection('Locale & currency');
+    expect(screen.queryByText(/2026/)).toBeNull();
   });
 });

@@ -421,6 +421,20 @@ typed — is the ENGINE's own output, asked for through the format catalog
 (`format.catalog`). The hand-written sample table the panel used to carry
 is gone, because a sample the GUI computed could drift from the page.
 
+The same rule now holds on the **document-settings locale section**, which
+was the last place the Designer composed an illustrative sample itself. Its
+what-this-pick-does lines read a `locale.facts` answer — a rendered date, a
+rendered number, the default currency code and a rendered amount — instead
+of a per-locale table copied from the pack files and held honest by a
+drift-guard test. That query takes the locale PACK's text from the host,
+because which packs a deployment ships is a host fact and because the panel
+must describe the tag the DOCUMENT declares, which is deliberately not the
+tag the preview renders through. An engine without the key, a tag it cannot
+resolve, or a pack this host does not ship all leave the panel explaining
+nothing rather than guessing. What the picker OFFERS stays a registry
+question, not a formatting one: the chrome languages plus the
+engine-resolvable locales that have no chrome catalog.
+
 Two shapes of row, and the asymmetry is the honest part: `date`,
 `datetime` and `currency` have real named variants and get a picker
 (the dated pair also a pattern surface), while `number`, `percentage` and

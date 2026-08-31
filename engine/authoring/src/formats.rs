@@ -14,10 +14,13 @@
 //! describe by construction.
 
 mod exemplar;
+mod facts;
 mod probe;
 #[cfg(test)]
 mod tests;
 mod variants;
+
+pub use facts::{locale_facts, LocaleFacts};
 
 use serde::Serialize;
 use shojiku_core::{FieldType, Template};

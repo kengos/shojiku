@@ -9,7 +9,7 @@
 // — is the page's, and reads the same two flags.
 
 import type { EditorController } from '../editor/useEditor';
-import type { FormatCatalog, PatternProbe, ProbeResult } from '../engine/types';
+import type { FormatCatalog, LocaleFacts, PatternProbe, ProbeResult } from '../engine/types';
 import type { FormatUsage } from '../formats/usage';
 import type { StyleUsage } from '../styles/usage';
 import { DefaultsFormatFields } from './DefaultsFormatFields';
@@ -29,6 +29,8 @@ export interface DocSectionBodyProps {
   readonly styleUsage: StyleUsage | null;
   readonly formatUsage: FormatUsage | null;
   readonly formatCatalog: FormatCatalog | null;
+  /** What the picked `defaults.locale` does, as the engine's own samples. */
+  readonly localeFacts: LocaleFacts | null;
   readonly probeFormat: (probes: readonly PatternProbe[]) => Promise<readonly ProbeResult[]>;
   /** `template.defaults` — the per-type format defaults half. */
   readonly showDefaults: boolean;
@@ -91,6 +93,7 @@ export function DocSectionBody(props: DocSectionBodyProps) {
           controller={controller}
           fontFamilies={fontFamilies}
           capabilities={capabilities}
+          localeFacts={props.localeFacts}
           section="locale"
         />
       );

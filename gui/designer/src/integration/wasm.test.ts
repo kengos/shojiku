@@ -121,6 +121,64 @@ beforeAll(async () => {
   transport = createWasmTransport(preparedEngine(wasmModule));
 });
 
+const localePack = (id: string) =>
+  readFileSync(fileURLToPath(new URL(`packs/locale/${id}.yml`, REPO)), 'utf8');
+
+describe('locale facts against the real engine', () => {
+  // The evidence that retiring the Designer's hand-copied sample table did not
+  // just move the copy: these strings are the ENGINE's, produced by the same
+  // dispatch a bound field takes. The session here is prepared for en-US, so
+  // every case also proves the query answers for a locale the preview is NOT
+  // rendering through — which is the ordinary case for this panel.
+  const doc = 'sections:\n  body:\n    type: flow\n    items: []\n';
+
+  it('answers for the session locale', async () => {
+    const facts = await transport.localeFacts?.(doc, 'en-US');
+    expect(facts?.id).toBe('en-US');
+    expect(facts?.currencyDefault).toBe('USD');
+    expect(facts?.date).toBe('Nov 3, 2026');
+  });
+
+  it('answers for a BUILTIN the session is not using', async () => {
+    const facts = await transport.localeFacts?.(doc, 'ja-JP');
+    expect(facts?.id).toBe('ja-JP');
+    expect(facts?.currencyDefault).toBe('JPY');
+    // JPY has no fraction digits where the session's USD has two.
+    expect(facts?.amount).toBe('1,234,568');
+  });
+
+  it('reports the Buddhist year for a PACK locale the host supplies', async () => {
+    // The sharpest of the two claims the deleted drift-guard made, now proven
+    // end to end: th-TH's pack carries an era table, so 2026 CE prints 2569.
+    const facts = await transport.localeFacts?.(doc, 'th-TH', localePack('th-th'));
+    expect(facts?.id).toBe('th-TH');
+    expect(facts?.date).toContain('2569');
+    expect(facts?.currencyDefault).toBe('THB');
+  });
+
+  it('groups the Indian way for hi-IN, and in threes for the rest', async () => {
+    // The other claim: a four-digit sample would read identically for both.
+    const hi = await transport.localeFacts?.(doc, 'hi-IN', localePack('hi-in'));
+    expect(hi?.number).toBe('1,23,45,678.9');
+    const en = await transport.localeFacts?.(doc, 'en-US');
+    expect(en?.number).toBe('12,345,678.9');
+  });
+
+  it('follows the DOCUMENT’s own currency', async () => {
+    const withJpy = `defaults:\n  currency: JPY\n${doc}`;
+    const facts = await transport.localeFacts?.(withJpy, 'en-US');
+    expect(facts?.currencyDefault).toBe('USD');
+    expect(facts?.amount).toBe('1,234,568');
+  });
+
+  it('refuses a locale the host supplied no pack for', async () => {
+    await expect(transport.localeFacts?.(doc, 'zz-ZZ')).rejects.toBeInstanceOf(TransportError);
+    await expect(transport.localeFacts?.(doc, 'zz-ZZ')).rejects.toMatchObject({
+      code: 'locale_error',
+    });
+  });
+});
+
 describe('wasm transport against the real engine (receipt-us)', () => {
   it('renders raw pages with a matching RGBA buffer and a path-addressed box index', async () => {
     const outcome = await transport.renderRaw(template(), params(), definitions(), { scale: 2 });
