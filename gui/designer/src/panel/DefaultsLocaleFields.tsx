@@ -10,13 +10,16 @@
 // `facts === null` — no engine answer yet, an engine without the
 // `locale.facts` query, a tag the engine cannot resolve, or a pack this host
 // does not ship — means the lines are simply not shown; nothing is guessed.
+// That holds without exception, because the tag goes to the engine EXACTLY as
+// the document authored it. The Designer used to substitute a regional
+// English (`en-GB` → `en-US`) before asking, which made the panel explain a
+// document no host can render; the picker no longer offers a tag the engine
+// cannot resolve, and nothing rewrites what it does offer.
 //
-// ONE case escapes that, and it is the picker's own doing rather than this
-// file's: the five regional-English tags are substituted to `en-US` by
-// `engineLocaleFor` before the ask, so they are always explained — while a
-// document declaring one is REFUSED by the CLI/MCP hosts, which hold no pack
-// for it. The lines are then true of the pack that answered and not of the
-// document. Disclosing that substitution is queued, not solved here.
+// The engine does widen a BARE language of its own accord (`ja` → `ja-JP`,
+// its only aliasing), and a document may carry any string. So when the pack
+// that answered is not the tag on screen, the panel says which pack it was
+// rather than letting the reader assume.
 //
 // The preview does NOT follow `defaults.locale`: the WASM host sets the engine
 // locale explicitly at preset-open, so the key is only the CLI/MCP render
@@ -33,13 +36,22 @@ import { ComboField } from './choiceFields';
 import { CURRENCY_SUGGESTIONS, currencyOp, localeOp, readDefaultsView } from './defaultsModel';
 import { applyPanelOp } from './model';
 
-/** What the `defaults.locale` picker offers: the Designer's own chrome
- * languages, then the engine-resolvable locales that have no chrome catalog
- * (`th-TH` ships a pack but no Thai UI). The two axes and why neither
- * contains the other are documented on `ENGINE_ONLY_LOCALES`. */
+/** What the `defaults.locale` picker offers: every locale the ENGINE can
+ * resolve, which is what this key is for — it is the render fallback the CLI
+ * and MCP hosts read, not a chrome setting.
+ *
+ * So it lists the chrome registry's `engineLocale` values (deduped: five
+ * regional Englishes collapse onto `en-US`) plus the engine locales with no
+ * chrome catalog at all (`th-TH` ships a pack but no Thai UI). It does NOT
+ * list the chrome TAGS: offering `en-GB` authored a document the engine
+ * refuses outright (`canonical_id` widens a bare language only, and no
+ * `en-gb.yml` ships), while this panel explained it through the `en-US` pack
+ * as though it were fine. Free entry through `ComboField` still preserves
+ * such a value if a document already carries one — the list narrowed, the
+ * wire did not. */
 const LOCALE_TAGS: readonly string[] = [
-  ...LOCALES.map((locale) => locale.tag),
-  ...ENGINE_ONLY_LOCALES.filter((tag) => !LOCALES.some((l) => l.tag === tag)),
+  ...new Set(LOCALES.map((locale) => locale.engineLocale)),
+  ...ENGINE_ONLY_LOCALES,
 ];
 
 export interface DefaultsLocaleFieldsProps {
@@ -74,6 +86,9 @@ export function DefaultsLocaleFields({ controller, facts }: DefaultsLocaleFields
             number: explained.number,
             currency: explained.currencyDefault,
           })}
+          {explained.id === view.locale
+            ? null
+            : ` ${t('defaults.localePack', { pack: explained.id })}`}
         </p>
       )}
       <p className="-mt-0.5 mb-2 text-sm text-muted">{t('defaults.localeHint')}</p>

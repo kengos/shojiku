@@ -28,9 +28,12 @@ export interface DocDerivedInput {
   readonly defaultFontFamily: string | undefined;
   readonly transport: EngineTransport;
   readonly paletteGroups: readonly PaletteGroup[] | null;
-  /** The ENGINE-resolvable tag the document's `defaults.locale` formats
-   * through — already mapped, so this file never learns the chrome registry. */
+  /** The document's `defaults.locale`, verbatim — the engine is asked about
+   * the reader's own value, never a substituted one. */
   readonly localeTag: string;
+  /** The currency inputs the amount sample depends on, as a comparable
+   * string; see `useLocaleFacts`. */
+  readonly currencyKey: string;
   /** Where a locale pack's text comes from, injected by the host. */
   readonly localePacks: DesignerProps['localePacks'];
 }
@@ -59,6 +62,7 @@ export interface DocDerived {
 
 export function useDocDerived(input: DocDerivedInput): DocDerived {
   const { text, defaultFontFamily, transport, paletteGroups, localeTag, localePacks } = input;
+  const { currencyKey } = input;
   const treeView = useMemo(() => buildTree(text), [text]);
   const styleUsage = useMemo(() => buildStyleUsage(text), [text]);
   // The definitions decide which bindings are DATED, and only a dated binding
@@ -72,6 +76,13 @@ export function useDocDerived(input: DocDerivedInput): DocDerived {
   // both inside it — so the two share the key.
   const key = useMemo(() => formatCatalogKey(text), [text]);
   const formats = useFormatCatalog({ transport, text, key });
-  const localeFacts = useLocaleFacts({ transport, text, key, tag: localeTag, localePacks });
+  const localeFacts = useLocaleFacts({
+    transport,
+    text,
+    key,
+    tag: localeTag,
+    currencyKey,
+    localePacks,
+  });
   return { treeView, styleUsage, formatUsage, styleFloor, formats, localeFacts };
 }

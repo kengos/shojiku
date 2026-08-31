@@ -766,6 +766,7 @@ export const zhTw: LanguageCatalog = {
     'defaults.sizeApply': '設為 {size}pt',
     'defaults.sizeOnly': '{size}pt',
     'defaults.localeFacts': '日期顯示為 {date}，數字顯示為 {number}，金額預設使用 {currency}。',
+    'defaults.localePack': '依據 {pack} 語言包。',
     'defaults.currencyFacts': '金額顯示為 {amount}。符號或貨幣名稱可在各欄位的顯示格式中選擇。',
     'defaults.currencyHint': '符號或貨幣名稱可在各欄位的顯示格式中選擇。',
     'style.value.fontWeight.normal': '標準',

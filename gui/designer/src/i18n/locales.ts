@@ -119,20 +119,6 @@ export const LOCALES: readonly LocaleInfo[] = [
  * is the engine's answer (`localeFacts`); this only says which picks exist. */
 export const ENGINE_ONLY_LOCALES: readonly string[] = ['th-TH'];
 
-/** The tag the DESIGNER substitutes when it asks the engine about a locale.
- *
- * Not an engine alias — the engine has no aliasing layer. `canonical_id`
- * matches case-insensitively and then on a unique BARE-LANGUAGE prefix, so
- * `en` reaches `en-US` while `en-GB` (same length) reaches nothing, and no
- * `en-gb.yml` pack ships; a CLI or MCP render of a document declaring
- * `defaults.locale: en-GB` is REFUSED. This substitution is the Designer's
- * own, and it is why a blank preset authors `en-US` rather than the chrome
- * tag. An unregistered or hostile tag maps to itself, so whatever asks about
- * it simply misses and nothing is claimed. */
-export function engineLocaleFor(tag: string): string {
-  return LOCALES.find((locale) => locale.tag === tag)?.engineLocale ?? tag;
-}
-
 /** Script-subtag aliases. Accept-Language sends `zh-Hant`/`zh-Hans` (script, no
  * region); without these they would fall past every Chinese catalog to English.
  * Keyed lowercase to match `resolveChain`'s normalization. */

@@ -846,6 +846,7 @@ export const ja: LanguageCatalog = {
     'defaults.sizeOnly': '{size}pt',
     'defaults.localeFacts':
       '日付は {date}、数値は {number} の形で出ます。金額の既定は {currency} です。',
+    'defaults.localePack': '{pack} のパックで読んでいます。',
     'defaults.currencyFacts':
       '金額は {amount} のように出ます。記号か通貨名かは、項目ごとの表示形式で選べます。',
     'defaults.currencyHint': '記号か通貨名かは、項目ごとの表示形式で選べます。',

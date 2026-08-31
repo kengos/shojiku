@@ -15,6 +15,16 @@ platform binaries.
 
 ### Added
 
+- **The locale picker no longer offers a locale that will not render.** It
+  listed the Designer's own interface languages, five of which — English (UK),
+  (Australia), (Canada), (India), (Philippines) — the engine holds no data
+  for: a document set to one of them failed to render outside the Designer,
+  while the settings panel described it as though it were fine. The list is now
+  the locales the engine can actually resolve. Typing a value by hand still
+  works, and a document that already carries one keeps it; when the data used
+  to describe a pick is not the value written in the file, the panel now says
+  which it was.
+
 - **The document-settings panel now explains a locale pick with the engine's
   own output.** It used to carry its own table of per-locale example strings —
   a date, a grouped number, an amount — copied from the locale packs by hand

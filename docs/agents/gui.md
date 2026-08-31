@@ -431,10 +431,14 @@ because which packs a deployment ships is a host fact and because the panel
 must describe the tag the DOCUMENT declares, which is deliberately not the
 tag the preview renders through. An engine without the key, a tag it cannot
 resolve, or a pack this host does not ship all leave the panel explaining
-nothing rather than guessing — with one exception the picker creates: a
-regional English (`en-GB`, `en-AU`, …) is substituted to `en-US` before the
-ask, so it is explained by a pack the document does not name, and a CLI/MCP
-render of that document is refused. Disclosing the substitution is queued. What the picker OFFERS stays a registry
+nothing rather than guessing — without exception, because the tag reaches the
+engine exactly as the document authored it. The picker offers the
+engine-RESOLVABLE set for the same reason: `defaults.locale` is the CLI/MCP
+render fallback, so offering a chrome tag like `en-GB` authored a document the
+engine refuses while this panel explained it through the `en-US` pack. Free
+entry still preserves such a value where a document already carries one, and
+when the pack that answered is not the tag on screen — the engine widens a
+bare `ja` to `ja-JP`, its only aliasing — the panel names the pack. What the picker OFFERS stays a registry
 question, not a formatting one: the chrome languages plus the
 engine-resolvable locales that have no chrome catalog.
 

@@ -765,6 +765,7 @@ export const zhCn: LanguageCatalog = {
     'defaults.sizeApply': '设为 {size}pt',
     'defaults.sizeOnly': '{size}pt',
     'defaults.localeFacts': '日期显示为 {date}，数字显示为 {number}，金额默认使用 {currency}。',
+    'defaults.localePack': '依据 {pack} 语言包。',
     'defaults.currencyFacts': '金额显示为 {amount}。符号或货币名称可在各字段的显示格式中选择。',
     'defaults.currencyHint': '符号或货币名称可在各字段的显示格式中选择。',
     'style.value.fontWeight.normal': '常规',
