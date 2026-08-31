@@ -15,6 +15,23 @@ platform binaries.
 
 ### Added
 
+- **The key catalog now says what every key MEANS, not just what shape it
+  is.** The machine-readable description of the authorable wire has carried
+  the structure — types, allowed values, which keys are required — since it
+  shipped, and nothing else: an agent reading it could see that `textOverflow`
+  takes four spellings without learning what any of them does. All 420 of its
+  nodes now carry prose, authored beside the schema and merged in as the
+  document's own `description` fields, so a tool that reads the catalog can
+  explain a key without a second source to go stale. Rust doc comments are
+  still stripped rather than reused: they are written for whoever maintains
+  the engine, in a different register from anything an author reads.
+
+  A gate keeps it complete. A key added to the wire without a description
+  fails the build by name, a description naming a key that no longer exists
+  fails the same way, and a description of a closed set of values — the
+  `left`/`center`/`right` kind — must name every one of them, which is what
+  stops the prose quietly describing more than the parser accepts.
+
 - **The locale picker no longer offers a locale that will not render.** It
   listed the Designer's own interface languages, five of which — English (UK),
   (Australia), (Canada), (India), (Philippines) — the engine holds no data

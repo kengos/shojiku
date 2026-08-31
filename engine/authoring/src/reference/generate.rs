@@ -66,7 +66,14 @@ pub fn generate() -> String {
 
     let template = generator.subschema_for::<Template>();
     let definitions = generator.subschema_for::<Definitions>();
-    let defs = generator.take_definitions(true);
+    let mut defs = generator.take_definitions(true);
+
+    // The annotation file is embedded, so a failure here is a developer error
+    // in a committed file rather than anything a caller can cause. Naming the
+    // command is what makes it recoverable.
+    let annotations = super::annotations::parse(super::ANNOTATIONS)
+        .expect("the committed annotation file is a flat map of node to prose");
+    super::annotate::merge(&mut defs, &annotations);
 
     let document = serde_json::json!({
         "$schema": "https://json-schema.org/draft/2020-12/schema",

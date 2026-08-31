@@ -49,7 +49,7 @@ advertises.)
   in `plugins/` (see agents/lang.md, agents/plugins.md) — `formatter`
   itself should stay generic.
 
-## The key catalog (the artifact and its gate are built; the prose layer is not)
+## The key catalog (built: the artifact, its prose layer, and both gates)
 
 The per-key facts of the authorable wire — key name, type, allowed
 values, default, the tagged union of item types — are held ONCE as
@@ -97,19 +97,31 @@ made non-optional — and it had been leaving the Node addon's own
 dependencies unchecked for as long as they existed.
 
 The embedded bytes were the other thing to measure rather than assume.
-Measured: **zero**. `make engine:wasm` reports the same raw and gzip size with
-the catalog embedded as without it, because `CATALOG` is a `const` that
-nothing in that build references and the linker strips it. It will cost
-its bytes at the stage that serves it, which is where the number is
-worth taking again.
+Measured: **zero**, and re-measured when the annotation layer took the pair
+to ~248 KB of static data. `CATALOG` and `ANNOTATIONS` are `const`s nothing
+in the WASM build references, so the linker strips them, and the evidence is
+better than a size comparison, which can only ever say the number did not
+move: the built `shojiku_wasm_bg.wasm` carries none of their distinctive
+strings — `Tate-chu-yoko` (annotation prose), `additionalProperties` and
+`Shojiku authorable wire` (JSON Schema, not wire).
+
+**Two ways to run that probe wrong, both paid for here.** Use
+`grep -a` (or `strings`): a plain `grep -c` over a `.wasm` classifies it as
+binary and reports 0 for a string that IS there, which quietly confirms
+whatever you hoped. And pick a string the CATALOG owns — `flexBasis` is a
+serde field name the wire derive embeds for parsing, so it is present in
+every build and proves nothing either way.
+
+It will cost its bytes at the stage that SERVES it, which is where the number
+is worth taking again.
 
 **Derived is not the same as accurate, and the difference is one-sided.**
-Fourteen wire types parse through a hand-written `Deserialize`, and for
+Fifteen wire types parse through a hand-written `Deserialize`, and for
 those the derive describes the RUST shape while the parser accepts
 something else. It fails toward being too WIDE — `flexBasis` derives as
 "any number or any string" and accepts `content` or `0` — which is the
 one direction that actively misleads, because it tells an agent to emit
-input the engine rejects. Those fourteen carry hand-written schemas in
+input the engine rejects. Those fifteen carry hand-written schemas in
 `engine/core/src/schema/`, each pinned by a test that feeds every form
 the schema declares through the real parser AND one form it excludes.
 Only the second clause can catch a too-wide schema, and it is the clause
@@ -155,21 +167,44 @@ honest (regenerate, then fail on drift):
   fails on drift. That target also runs the schema tests, because the
   drift comparison on its own is an *idempotence* claim: it protects a
   wrong artifact exactly as faithfully as a right one.
-- **not built** — every artifact node has an annotation and every
-  annotation names a real node. A key with no prose is therefore
-  *detectable*, which is what keeps the narrative layer honest as the
-  wire grows. It arrives with the annotation layer; there is nothing to
-  gate until prose exists.
+- **complete** — every artifact node has an annotation and every
+  annotation names a real node, so a key added to the wire arrives
+  un-annotated and is named rather than shipping as a silent gap. The
+  rule is a pure function (`shojiku_authoring::reference::annotations::audit`)
+  over the two committed files, checked in the DEFAULT test suite so the
+  workspace coverage run sees every refusal.
 
-Because the annotation layer has not landed, the shipped artifact carries
-**no node-local prose at all** — and that is deliberate rather than
-pending. schemars lifts Rust doc comments into `description` for free,
-and taking the free version would have defeated the second gate before it
-was written: every node would arrive pre-annotated with text nobody wrote
-for an author, so "every node has an annotation" would pass vacuously
-over engine-developer prose in the wrong register that cannot carry a
-second locale. Generation strips them. The empty slots are what make the
-next stage's absence measurable.
+Prose is authored beside the schema rather than lifted from it. schemars
+fills `description` from Rust doc comments for free, and taking the free
+version would have defeated the completeness gate before it was written:
+every node would arrive pre-annotated with text nobody wrote for an
+author, in a register no second locale can carry, so "every node has an
+annotation" would pass vacuously. Generation strips them and merges
+`reference/annotations/en.yml` instead — English only, because the engine
+does not translate and a localized reference is the site's to render.
+
+**A node is not the same as a named shape, and the difference is where the
+value is.** The wire's tagged unions are internally tagged, so schemars
+emits them as `oneOf` branches rather than named `$ref` shapes: the 15
+item types and the two body kinds — the keys an agent actually asks for —
+live only there. So the node grammar is a named shape, one of its
+properties, a DISCRIMINATED branch, and one of that branch's properties:
+`Style`, `Style.fontSize`, `Item.text`, `Item.text.data`. Two exclusions,
+both gate-pinned rather than trusted: a branch with no discriminator has no
+name to address it by — it is the alternative FORM of a value shape
+(`BorderColor`'s per-side map, `PageSize`'s `{ w, h }`, `PointSpec`'s anchor
+arm) — and its keys are described either by the parent shape's own prose or by
+the shape each one `$ref`s; and a branch's own `type` key IS the branch. The gate pins how many anonymous branches exist
+and how many keys they hold, so a discriminated one added later cannot
+slip through the same door.
+
+**A closed value set must have every value named in its prose.** A derived
+schema describes the Rust shape, so prose is where the accepted set gets
+stated — and prose that errs WIDE is the direction that misleads, because
+it teaches an agent to emit input the parser rejects. The gate enumerates
+the closed shapes from the artifact (a top-level `enum`, or a `oneOf`
+every branch of which is a `const`/`enum`) and fails on a description that
+omits one of its values.
 
 What splits which way: key name, type, default, allowed values, the CSS
 property mirrored, the effect on the resolved box, the diagnostics

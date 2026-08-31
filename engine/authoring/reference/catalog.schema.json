@@ -1,6 +1,7 @@
 {
   "$defs": {
     "AlignItems": {
+      "description": "Mirrors CSS `align-items`. `stretch` fills an unset cross size — a child with no width fills a column's width, and a child with no height is resized to a row's cross size. `start`, `center` and `end` place the child within the cross size instead. `baseline` aligns row children on their first text baseline, synthesizing one from the bottom edge for a child with no text, so a checkbox sits exactly on its label's baseline; in a column it behaves like `start`, the CSS fallback. A cross-axis auto margin wins over any of them.",
       "oneOf": [
         {
           "enum": [
@@ -21,6 +22,7 @@
       ]
     },
     "AnchorEdge": {
+      "description": "Which point of an anchored target's border box the endpoint lands on — the `<anchor-side>` subset CSS Anchor Positioning defines. `top`, `right`, `bottom` and `left` name the edges and `center` the middle, which is also the default: CSS makes the side mandatory because its function answers a one-axis inset question, while a line endpoint is a point in both axes at once.",
       "enum": [
         "top",
         "right",
@@ -32,12 +34,15 @@
     },
     "AnchorOffset": {
       "additionalProperties": false,
+      "description": "A shift applied to an anchored endpoint after the target's edge is resolved, in points. Either axis may be omitted.",
       "properties": {
         "x": {
+          "description": "Horizontal shift of the resolved anchor point, in points.",
           "format": "double",
           "type": "number"
         },
         "y": {
+          "description": "Vertical shift of the resolved anchor point, in points.",
           "format": "double",
           "type": "number"
         }
@@ -46,8 +51,10 @@
     },
     "Band": {
       "additionalProperties": false,
+      "description": "A header or footer band: absolutely positioned items repeated on the pages `repeat` selects. Coordinates resolve against the page margin box, so a band item's `y` is measured from the margin, not from the band. `page_number` items are valid only here.",
       "properties": {
         "height": {
+          "description": "The band's nominal height. Informational: items place at their own absolute coordinates and are not clipped to it.",
           "format": "double",
           "type": [
             "number",
@@ -55,6 +62,7 @@
           ]
         },
         "items": {
+          "description": "The band's items, each placed at its own coordinates.",
           "items": {
             "$ref": "#/$defs/Item"
           },
@@ -68,24 +76,29 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Which pages this band is drawn on. Defaults to `every_page`."
         }
       },
       "type": "object"
     },
     "Binding": {
       "additionalProperties": false,
+      "description": "One bound params value. The key is required; the rest choose how it is displayed, what stands in for a blank, and which data it resolves against.",
       "properties": {
         "format": {
+          "description": "The display variant to render this value with. It must be declared for the field, be an entry in the template's `formats:` registry, be one of the currency variants, be `value` on a field with enum display labels, or be a type override; anything else warns `unknown_format`.",
           "type": [
             "string",
             "null"
           ]
         },
         "key": {
+          "description": "The params key, as a dot-separated path. Required.",
           "type": "string"
         },
         "placeholder": {
+          "description": "Text drawn when the value is ABSENT, `null` or the empty string, instead of leaving the field empty and reporting it. This is the \"intentionally blank\" signal a fillable form needs, so one template renders both a blank form and a filled one from two params files. Drawn VERBATIM — never interpolated, and it bypasses the type formatter entirely. The placement's own wins over the field's declared one, and the empty string suppresses the diagnostic without drawing anything. A value that is present but unusable is a different case and still reports.",
           "type": [
             "string",
             "null"
@@ -99,7 +112,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Which data this binding resolves against. Defaults to `element` inside a table row, a repeat cell or a card, and to the top-level params everywhere else."
         }
       },
       "required": [
@@ -108,6 +122,7 @@
       "type": "object"
     },
     "BindingScope": {
+      "description": "Which data a binding resolves against. `element` is the bound array element — a table row, a repeat cell's element, a card's element — and is the default inside those constructs; `document` is the escape back to top-level params, which is what a page-global value like a store name needs.",
       "oneOf": [
         {
           "const": "element",
@@ -120,9 +135,11 @@
       ]
     },
     "Body": {
+      "description": "The document's main content, in one of two placement modes. `flow` stacks items top-down and paginates; `absolute` places them at their authored coordinates on page one only.",
       "oneOf": [
         {
           "additionalProperties": false,
+          "description": "A stacking body: items lay out top-down with `gap` between them and paginate across as many pages as they need.",
           "properties": {
             "box": {
               "anyOf": [
@@ -132,7 +149,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The flow region, resolved against the page margin box. Omitted means the whole margin box."
             },
             "gap": {
               "anyOf": [
@@ -142,9 +160,11 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The vertical space in points between stacked items."
             },
             "items": {
+              "description": "The items to stack, in document order.",
               "items": {
                 "$ref": "#/$defs/Item"
               },
@@ -162,8 +182,10 @@
         },
         {
           "additionalProperties": false,
+          "description": "A single-page body: items place at their authored coordinates with no pagination, and the margin box is their parent box.",
           "properties": {
             "items": {
+              "description": "The items to place, each at its own coordinates.",
               "items": {
                 "$ref": "#/$defs/Item"
               },
@@ -182,6 +204,7 @@
       ]
     },
     "BorderColor": {
+      "description": "A border colour: one `#rrggbb` string for all four sides, or a map naming `top`, `right`, `bottom` and `left` individually. An unset side in the map inherits nothing — it simply has no colour of its own.",
       "oneOf": [
         {
           "type": "string"
@@ -207,6 +230,7 @@
       ]
     },
     "BorderStyle": {
+      "description": "A border stroke pattern: one keyword for all four sides, or a map naming `top`, `right`, `bottom` and `left` individually.",
       "oneOf": [
         {
           "$ref": "#/$defs/BorderStyleKind"
@@ -232,6 +256,7 @@
       ]
     },
     "BorderStyleKind": {
+      "description": "One border stroke pattern. `solid` is a continuous line; `double` splits the side's width into two lines of a third each; `dashed` paints three stroke widths on and three off; `dotted` paints one and one. Dash intervals are floored at 0.25 pt so a hair-thin border cannot explode the dash walk.",
       "enum": [
         "solid",
         "double",
@@ -241,6 +266,7 @@
       "type": "string"
     },
     "BorderWidth": {
+      "description": "A border stroke width in points: one number for all four sides, or a map naming `top`, `right`, `bottom` and `left` individually, whose unset sides are 0.",
       "oneOf": [
         {
           "minimum": 0,
@@ -272,18 +298,23 @@
     },
     "BoxSpec": {
       "additionalProperties": false,
+      "description": "A fully specified rectangle — every side given, nothing inferred. The flow region uses it, where an omitted region means the whole margin box rather than a partly filled one.",
       "properties": {
         "h": {
-          "$ref": "#/$defs/Length"
+          "$ref": "#/$defs/Length",
+          "description": "The rectangle's height; `%` resolves against the parent height. Required — a `BoxSpec` states every side."
         },
         "w": {
-          "$ref": "#/$defs/Length"
+          "$ref": "#/$defs/Length",
+          "description": "The rectangle's width; `%` resolves against the parent width. Required — a `BoxSpec` states every side."
         },
         "x": {
-          "$ref": "#/$defs/Length"
+          "$ref": "#/$defs/Length",
+          "description": "Offset from the parent box's left edge. Required — a `BoxSpec` states every side."
         },
         "y": {
-          "$ref": "#/$defs/Length"
+          "$ref": "#/$defs/Length",
+          "description": "Offset from the parent box's top edge. Required — a `BoxSpec` states every side."
         }
       },
       "required": [
@@ -295,6 +326,7 @@
       "type": "object"
     },
     "BoxType": {
+      "description": "A box's layout mode for its children. `flex` is the default behaviour and need not be written; `grid` must be, because grid keys never imply the mode on their own.",
       "oneOf": [
         {
           "const": "flex",
@@ -307,6 +339,7 @@
       ]
     },
     "BreakBefore": {
+      "description": "Where an imposition grid starts. `page` aligns it to a fresh page, which is the default; `auto` starts it at the flow cursor, so a title above the grid costs rows rather than a whole page.",
       "oneOf": [
         {
           "const": "auto",
@@ -320,6 +353,7 @@
     },
     "CharGridSpec": {
       "additionalProperties": false,
+      "description": "A character grid's cell geometry. Cells are square, and the product of cells per line and lines is clamped to 4096 with `char_grid_clamped`.",
       "properties": {
         "cellSize": {
           "anyOf": [
@@ -329,7 +363,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The cell's side length. Omitted, it is derived from the content width divided by the cells per line — or by the lines, on a vertical grid — with the gaps subtracted. Non-positive warns `invalid_cell_size` and skips the item."
         },
         "charGap": {
           "anyOf": [
@@ -339,9 +374,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Space between cells along a line, which is what separates workbook-style boxes. Defaults to 0."
         },
         "charsPerLine": {
+          "description": "Cells per line. Required, and at least 1.",
           "format": "uint",
           "minimum": 0,
           "type": "integer"
@@ -354,9 +391,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Space between lines, which is the ruby band. Defaults to 0. Ruby for the FIRST line draws outside the grid, so reserve room with box padding or leftover box width."
         },
         "lines": {
+          "description": "Lines per sheet. Required, and at least 1.",
           "format": "uint",
           "minimum": 0,
           "type": "integer"
@@ -370,6 +409,7 @@
     },
     "Column": {
       "additionalProperties": false,
+      "description": "One table column: its header label, how its cells get their content, and its width and styling. A column takes exactly one of `data` and `cell` — authoring both warns `column_content_conflict` and the cell wins, authoring neither warns `column_content_missing`.",
       "properties": {
         "cell": {
           "anyOf": [
@@ -379,7 +419,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "A per-row sub-template drawn instead of a bound value: any items a container may hold, laid out with the CELL's own top-left as the coordinate origin. Bindings inside it are row-scoped, exactly like the column's own. Exclusive with `data`, `type` and `fit`."
         },
         "data": {
           "anyOf": [
@@ -389,7 +430,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "A binding read RELATIVE TO THE ROW element. `scope: document` reads top-level params instead, which lets a column show one document-wide value. Exclusive with `cell`."
         },
         "fit": {
           "anyOf": [
@@ -399,24 +441,29 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Object-fit for a `type: image` column, with the same meanings as the `image` item. Defaults to `contain`; `cover` and `none` overflow is clipped. On any other column it warns `ignored_column_key`."
         },
         "id": {
+          "description": "A stable name for this column, giving one box-index placement per cell — the header cell included — inset by the cell padding.",
           "type": [
             "string",
             "null"
           ]
         },
         "label": {
+          "description": "The header cell's text. Interpolates `{key}` like static text, but against TOP-LEVEL params rather than the row, because header chrome belongs to the document rather than to any row — so one template can print its headings in whichever language the params carry. A label with no braces resolves to itself.",
           "type": [
             "string",
             "null"
           ]
         },
         "style": {
-          "$ref": "#/$defs/Style"
+          "$ref": "#/$defs/Style",
+          "description": "This column's style layer, reaching its body cells and its own header label. `backgroundColor` and borders decorate the full cell; `textOverflow` becomes meaningful once the rows have a fixed height."
         },
         "styleNames": {
+          "description": "Named `styles:` entries layered under this column's inline style, in listed order.",
           "items": {
             "type": "string"
           },
@@ -430,7 +477,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "How the bound value renders. Defaults to `text`. Meaningful only beside `data`; on a `cell:` column it is a `column_content_conflict`."
         },
         "width": {
           "anyOf": [
@@ -440,12 +488,14 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The column's width. `%` resolves against the flow region width, and physical units work. Omitted means an equal share of whatever is left after the sized columns, so all-omitted is an even split. Negative becomes 0 with `invalid_column_width`; sized columns exceeding the flow width warn `table_too_wide`."
         }
       },
       "type": "object"
     },
     "ColumnType": {
+      "description": "How a bound column value renders. `text` draws it as text; `qr_code` encodes it at layout time; `image` loads it as a per-row asset. QR and image cells scale to the row height rather than driving it, so pair them with a fixed row height or let the text cells set it.",
       "enum": [
         "text",
         "qr_code",
@@ -455,6 +505,7 @@
     },
     "ContainerItem": {
       "additionalProperties": false,
+      "description": "A box that establishes an origin and a resolved size: its children position relative to it, resolve `%` against it, and receive its inherited style properties. The SAME struct serves four surfaces — a standalone `container` item, a `repeat` cell, a `repeat_flow` card and a table column's `cell:` — so its keys mean the same thing wherever it appears; what differs is the parent box it is placed against. Containers nest at most 32 deep.",
       "properties": {
         "box": {
           "anyOf": [
@@ -464,24 +515,29 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The container's geometry and the layout mode for its children. An omitted width defaults to the parent width minus the x offset; an omitted height is auto and grows to the lowest child bottom edge plus the vertical padding."
         },
         "id": {
+          "description": "A stable name for this container, adding a lookup alias beside its path in the `inspect` box index.",
           "type": [
             "string",
             "null"
           ]
         },
         "items": {
+          "description": "The children. One that authors neither `box.x` nor `box.y` is a flex or grid item; one that authors either is absolutely placed within the container.",
           "items": {
             "$ref": "#/$defs/Item"
           },
           "type": "array"
         },
         "style": {
-          "$ref": "#/$defs/Style"
+          "$ref": "#/$defs/Style",
+          "description": "This container's inline style. Its decoration paints the container's own border box, and its INHERITED properties cascade to every descendant."
         },
         "styleNames": {
+          "description": "Named `styles:` entries layered under this container's inline style, in listed order.",
           "items": {
             "type": "string"
           },
@@ -495,15 +551,18 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
         }
       },
       "type": "object"
     },
     "Definitions": {
       "additionalProperties": false,
+      "description": "The root of `definitions.yml`: an OpenAPI-style schema isomorphic to the params JSON, so the same nesting describes both. Not required to render — it enriches `validate` and tells the formatter a field's type instead of leaving it to guess from the JSON value. Advertised as the `definitions.schema` capability key.",
       "properties": {
         "description": {
+          "description": "Prose about the document's data as a whole, for authoring tools and human readers. Never rendered into a PDF.",
           "type": [
             "string",
             "null"
@@ -513,24 +572,29 @@
           "additionalProperties": {
             "$ref": "#/$defs/Schema"
           },
+          "description": "The declared top-level fields, keyed by params key. A property whose type is `object` is a field group; one whose type is `array` is the data source a `table`, `repeat`, `repeat_flow` or `list` binds. A file with no properties makes every binding read as unknown and reports `empty_definitions` once.",
           "type": "object"
         },
         "required": {
+          "description": "Top-level params keys that must be present and non-null. A violation warns `params_missing_required` during `validate` and does not stop the render.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "title": {
+          "description": "A display name for the document's data as a whole, used by authoring tools. Never rendered into a PDF.",
           "type": [
             "string",
             "null"
           ]
         },
         "type": {
-          "$ref": "#/$defs/SchemaType"
+          "$ref": "#/$defs/SchemaType",
+          "description": "The root schema's type. Required, and always `object` — a definitions file describes a params object, never a bare scalar or array at the top."
         },
         "version": {
+          "description": "The definitions wire version this file is authored against. Optional; the engine accepts the file either way and uses it only to report a mismatch.",
           "type": [
             "string",
             "null"
@@ -544,32 +608,38 @@
     },
     "DocumentMeta": {
       "additionalProperties": false,
+      "description": "What the file says it IS, as opposed to what it draws: the metadata that lands in the PDF's document properties, where a reader's panel shows it, a search index reads it and a screen reader announces the language. NOTHING here appears on the page, and PNG previews carry none of it. Every value interpolates `{key}` like static text, against top-level params. There is no `bindings:` map here, so an interpolation name must be inside the reference charset.",
       "properties": {
         "authors": {
+          "description": "Who the document is by. At most 64 entries.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "description": {
+          "description": "A short summary of the document, written to the PDF's subject field.",
           "type": [
             "string",
             "null"
           ]
         },
         "keywords": {
+          "description": "Search keywords. At most 64 entries.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "language": {
+          "description": "The document's language as a BCP 47 tag, which is what a screen reader announces. Unset, it falls back to `defaults.locale`.",
           "type": [
             "string",
             "null"
           ]
         },
         "title": {
+          "description": "The document title. Unset, it falls back to the template's `name:` and then to a generic default.",
           "type": [
             "string",
             "null"
@@ -579,6 +649,7 @@
       "type": "object"
     },
     "EcLevel": {
+      "description": "A QR code's error-correction level, tolerating roughly 7, 15, 25 and 30 percent damage respectively. `low`, `medium`, `quartile` and `high` are the ISO 18004 levels; a higher one needs more modules for the same content.",
       "enum": [
         "low",
         "medium",
@@ -589,6 +660,7 @@
     },
     "EdgeMapRepr": {
       "additionalProperties": false,
+      "description": "The per-side form of spacing. Each side is independent, and an unset one is 0.",
       "properties": {
         "bottom": {
           "anyOf": [
@@ -598,7 +670,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The bottom side's spacing. `%` resolves against the parent's WIDTH, not its height."
         },
         "left": {
           "anyOf": [
@@ -608,7 +681,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The left side's spacing. `%` resolves against the parent's width."
         },
         "right": {
           "anyOf": [
@@ -618,7 +692,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The right side's spacing. `%` resolves against the parent's width."
         },
         "top": {
           "anyOf": [
@@ -628,12 +703,14 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The top side's spacing. `%` resolves against the parent's WIDTH, as the CSS margin and padding rule says, so a vertical edge stays definite inside an auto-height container."
         }
       },
       "type": "object"
     },
     "EdgeSpec": {
+      "description": "Outer or inner spacing: one number for all four sides, or a map naming the sides individually. The map specifies ALL FOUR — an unset side is 0, not some inherited default. Only authored keys are written back.",
       "oneOf": [
         {
           "type": "number"
@@ -644,6 +721,7 @@
       ]
     },
     "EdgeValue": {
+      "description": "One side's spacing: a length, or `auto` on a margin. An auto margin absorbs the free space under flex placement and horizontally in a flow — left and right both auto centres the box, one auto pushes it to the opposite side — and resolves to 0 anywhere else. Padding takes no `auto` and no negative value.",
       "oneOf": [
         {
           "$ref": "#/$defs/Length"
@@ -654,6 +732,7 @@
       ]
     },
     "EmptyBehavior": {
+      "description": "What a table does when its bound array is empty. `collapse` hides the table entirely; `reserve` renders the header row only.",
       "oneOf": [
         {
           "const": "collapse",
@@ -666,6 +745,7 @@
       ]
     },
     "EnumEntry": {
+      "description": "One member of a declared value set: a `{ value, label }` pair, or a bare value taken verbatim. The parser branches on whether the member is a MAP, so the bare form is anything else — a string, a number, a boolean, `null` or an array. The two forms mix freely in one list, and a member with no label falls back to printing its value.",
       "oneOf": [
         {
           "$ref": "#/$defs/LabeledEnumValue"
@@ -682,6 +762,7 @@
       ]
     },
     "EqualsValue": {
+      "description": "The literal a presence predicate compares against: a string, a number or a boolean. Maps and sequences are parse errors, because the comparison is type-strict and there is nothing sensible to compare a container to.",
       "type": [
         "string",
         "number",
@@ -689,12 +770,14 @@
       ]
     },
     "FlexBasis": {
+      "description": "The main size a flex child starts from before `flexGrow` shares out the rest. `content` is its max-content width; the literal `0` starts it at nothing so `flexGrow` divides the whole row. Those two spellings are the whole set — a length is deliberately refused, because `w` already sizes a child.",
       "enum": [
         "content",
         0
       ]
     },
     "FlexDirection": {
+      "description": "The main axis of a flex container. `column` stacks children downward; `row` sets them side by side.",
       "oneOf": [
         {
           "const": "column",
@@ -707,6 +790,7 @@
       ]
     },
     "FontStyle": {
+      "description": "A font style keyword. `normal` is upright; `italic` is a synthetic baseline-anchored skew rather than a real italic face.",
       "enum": [
         "normal",
         "italic"
@@ -714,6 +798,7 @@
       "type": "string"
     },
     "FontWeight": {
+      "description": "A font weight keyword. `normal` is the regular face; `bold` selects a real bold face where the family ships one and synthesizes emboldening otherwise.",
       "enum": [
         "normal",
         "bold"
@@ -722,6 +807,7 @@
     },
     "FormatDefaults": {
       "additionalProperties": false,
+      "description": "The default display form for each engine field type. Each entry is a variant NAME or an inline pattern map. Inline patterns apply to dates and datetimes only; on another type validate warns `format_pattern_ignored` and the plain form renders.",
       "properties": {
         "currency": {
           "anyOf": [
@@ -731,7 +817,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The default display form for currency fields, which is where the symbol, code and name spellings are chosen once for the whole document."
         },
         "date": {
           "anyOf": [
@@ -741,7 +828,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The default display form for date fields."
         },
         "datetime": {
           "anyOf": [
@@ -751,7 +839,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The default display form for datetime fields."
         },
         "number": {
           "anyOf": [
@@ -761,7 +850,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The default display form for plain number fields."
         },
         "percentage": {
           "anyOf": [
@@ -771,7 +861,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The default display form for percentage fields. The bound value is the FRACTION and the formatter scales it, so 0.1 renders as 10%."
         },
         "quantity": {
           "anyOf": [
@@ -781,7 +872,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The default display form for quantity fields, whose unit words come from the locale pack rather than from the template."
         }
       },
       "type": "object"
@@ -794,15 +886,19 @@
         {
           "$ref": "#/$defs/InlineFormat"
         }
-      ]
+      ],
+      "description": "A format choice: a variant NAME the locale pack or the `formats:` registry declares, or an inline pattern map written in place. The name form stays a bare string when the template is written back and the map form stays a map."
     },
     "FormatVariant": {
       "additionalProperties": false,
+      "description": "One entry in a field's `displayFormats` list: the variant id a binding may pick, with the words an authoring tool shows for it.",
       "properties": {
         "id": {
+          "description": "Required. The variant id a binding's `format:` names. Must be a variant the engine can resolve for this field's type, or a name in the template's `formats:` registry.",
           "type": "string"
         },
         "label": {
+          "description": "The words an authoring tool shows for this variant. Never rendered into a PDF.",
           "type": [
             "string",
             "null"
@@ -815,6 +911,7 @@
       "type": "object"
     },
     "GridDirection": {
+      "description": "The order grid cells are filled in, the CSS `grid-auto-flow` analogue. `row` fills row-major; `column` fills column-major.",
       "oneOf": [
         {
           "const": "row",
@@ -828,6 +925,7 @@
     },
     "GridSpec": {
       "additionalProperties": false,
+      "description": "An imposition grid: cells across and down, the order they fill in, and the gaps between them. The slot width is the region width less the column gaps divided by the columns, and the height likewise.",
       "properties": {
         "columnGap": {
           "anyOf": [
@@ -837,9 +935,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The gap between columns, resolving `%` against the region width. Defaults to the `gap` shorthand; negative is 0, as in CSS."
         },
         "columns": {
+          "description": "Cells across per page; defaults to 1. Columns times rows clamps to 64 with `imposition_grid_clamped`.",
           "format": "uint",
           "minimum": 0,
           "type": [
@@ -855,7 +955,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The order cells fill in. Defaults to `row`."
         },
         "gap": {
           "anyOf": [
@@ -865,7 +966,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Both axes at once, the CSS shorthand. Defaults to 0; a per-axis key wins over it."
         },
         "rowGap": {
           "anyOf": [
@@ -875,9 +977,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The gap between rows, resolving `%` against the region height. Defaults to the `gap` shorthand; negative is 0, as in CSS."
         },
         "rows": {
+          "description": "Cells down per page; defaults to 1.",
           "format": "uint",
           "minimum": 0,
           "type": [
@@ -889,6 +993,7 @@
       "type": "object"
     },
     "GridTrack": {
+      "description": "One grid track: a fixed length, an `fr` weight taking a share of what is left after the fixed tracks and the gaps, or `auto`, sized to the widest or tallest cell placed in it. Weights must be finite and non-negative.",
       "oneOf": [
         {
           "type": "number"
@@ -907,6 +1012,7 @@
       ]
     },
     "HangingPunctuation": {
+      "description": "How a line-terminating comma or full stop may hang past the end edge. `none` never hangs; `allow_end` hangs one that would otherwise wrap, keeping the line count down; `force_end` also excludes a FITTING trailing comma from the alignment width, so it hangs into the margin under centre or right alignment.",
       "oneOf": [
         {
           "const": "none",
@@ -924,22 +1030,27 @@
     },
     "HeaderGroup": {
       "additionalProperties": false,
+      "description": "One cell of the spanning row above the column labels.",
       "properties": {
         "label": {
+          "description": "The group cell's text, interpolating `{key}` against top-level params exactly as a column label does.",
           "type": [
             "string",
             "null"
           ]
         },
         "span": {
+          "description": "Required. How many columns this group covers. Cumulative span past the column count is clamped with `header_group_span_clamped`.",
           "format": "uint",
           "minimum": 0,
           "type": "integer"
         },
         "style": {
-          "$ref": "#/$defs/Style"
+          "$ref": "#/$defs/Style",
+          "description": "This group's own style layer. Its text properties and its own `backgroundColor` and border paint over the group row's band, so each group can be tinted independently; a group that authors neither keeps the band's default fill."
         },
         "styleNames": {
+          "description": "Named `styles:` entries layered under this group's inline style, in listed order.",
           "items": {
             "type": "string"
           },
@@ -952,6 +1063,7 @@
       "type": "object"
     },
     "ImageFit": {
+      "description": "How an image is scaled into its box, mirroring CSS `object-fit`. `contain` preserves the aspect ratio inside the box and letterboxes; `cover` preserves it while filling the box and crops the overflow; `stretch` fills the box exactly and distorts; `none` draws at the asset's intrinsic size — raster pixels at 72 dpi, or SVG viewBox units.",
       "oneOf": [
         {
           "const": "contain",
@@ -973,8 +1085,10 @@
     },
     "InlineFormat": {
       "additionalProperties": false,
+      "description": "A format pattern written in place rather than named. Applies to dates and datetimes only.",
       "properties": {
         "pattern": {
+          "description": "Required. The pattern itself, in the engine's date pattern grammar.",
           "type": "string"
         }
       },
@@ -984,14 +1098,17 @@
       "type": "object"
     },
     "Item": {
+      "description": "One entry in an `items:` array, selected by its `type:` discriminator. Almost every item shares `id`, `box`, `style`, `styleNames` and `link`; the exceptions are `line`, which carries `from`/`to` points and its own style shape, and `page_break`, which takes only an id.",
       "oneOf": [
         {
           "additionalProperties": false,
+          "description": "Static, interpolated or bound text drawn as one wrapped block. Content comes from exactly one of `text`, `data` and `spans`; none of them warns `empty_text_item`. Where both `text` and `data` are set, `data` wins silently, and a non-empty `spans` wins over both with `span_content_conflict`.",
           "properties": {
             "bindings": {
               "additionalProperties": {
                 "$ref": "#/$defs/Binding"
               },
+              "description": "Named declarations for this item's `{name}` interpolations, carrying the options the bare `{key}` grammar cannot — a format, a placeholder, a document scope, or a key outside `[A-Za-z0-9_.]`.",
               "type": "object"
             },
             "box": {
@@ -1002,7 +1119,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The item's geometry. An omitted height is auto and grows with the wrapped text; an omitted width fills the parent."
             },
             "data": {
               "anyOf": [
@@ -1012,9 +1130,11 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "A single bound params value, drawn as the item's whole content and formatted by the field's own rules."
             },
             "id": {
+              "description": "A stable name for this item, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
@@ -1028,7 +1148,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "A hyperlink, written into the PDF as a link annotation over the item's box."
             },
             "mark": {
               "anyOf": [
@@ -1038,9 +1159,11 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "An oval overlaid on the item's glyph band, auto-centred and auto-sized to it — the \"circle the chosen option\" mark, with no hand-measured coordinates, so a font change never invalidates the fit. Paint-only: it never changes the text's reserved box, so a blank-versus-filled params pair cannot shift the layout. A multi-line label gets one oval spanning all its lines."
             },
             "ruby": {
+              "description": "Readings drawn above the base runs in horizontal writing, and beside them in vertical. Entries apply in listed order and non-overlapping against the DRAWN text; an unmatched base warns `ruby_base_not_found` and the later entries still apply. The line box never grows — this is a fixed-leading model — so give the line enough `lineHeight` for the band.",
               "items": {
                 "$ref": "#/$defs/RubyPair"
               },
@@ -1054,24 +1177,29 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The reading font size. Unset means half the item's font size. A reading longer than its base shrinks linearly to the run's width, with a 4 pt readability floor past which `ruby_overflow` warns."
             },
             "spans": {
+              "description": "Inline rich text: styled fragments concatenated in order with no separator and drawn as ONE wrapped block, so a Latin word crossing a fragment boundary still wraps as one word and kinsoku moves characters across the edges. At most 256 spans (`too_many_spans`); the rest are dropped.",
               "items": {
                 "$ref": "#/$defs/Span"
               },
               "type": "array"
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This item's inline appearance properties, the top layer of the cascade."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this item's inline style, in listed order. At most 16 per item.",
               "items": {
                 "type": "string"
               },
               "type": "array"
             },
             "text": {
+              "description": "Static content with `{key}` and `{key:format}` interpolation; `{{` escapes a literal brace. The bare `{key}` grammar admits `[A-Za-z0-9_.]` only — a key outside it needs a `bindings:` declaration.",
               "type": [
                 "string",
                 "null"
@@ -1089,7 +1217,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1099,20 +1228,25 @@
         },
         {
           "additionalProperties": false,
+          "description": "A rectangle: pure decoration painted by the unified style properties, with named styles like any other item. It has no content, so padding and the text-level style keys are ignored and inert ones warn `shape_style_ignored`. NOTHING DRAWS unless a style layer authors it — a bare rect is invisible, since there is no implicit default stroke. Width and height are required (`rect_missing_size`).",
           "properties": {
             "box": {
-              "$ref": "#/$defs/OptBox"
+              "$ref": "#/$defs/OptBox",
+              "description": "The rectangle's geometry. Width and height are required; padding is ignored, because there is no content to inset."
             },
             "id": {
+              "description": "A stable name for this item, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This rectangle's inline style — background, border and opacity. Text-level keys are inert and warn `shape_style_ignored`."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this rectangle's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
@@ -1130,7 +1264,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this rectangle is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1141,21 +1276,26 @@
         },
         {
           "additionalProperties": false,
+          "description": "A straight stroked segment between two points. A line has NO box: both endpoints resolve against the same parent origin as its sibling items, with `x` measured against that box's width and `y` against its height. That is what makes an underline under a flex child expressible — the child's real width is decided at layout time, so no point value could be written down while authoring, but `to: { x: \"100%\" }` reaches its edge.",
           "properties": {
             "from": {
-              "$ref": "#/$defs/PointSpec"
+              "$ref": "#/$defs/PointSpec",
+              "description": "Required. The segment's first endpoint: a coordinate pair, or an anchor naming another item."
             },
             "id": {
+              "description": "A stable name for this line, adding a lookup alias beside its path in the `inspect` box index, and the name another item's anchor can target.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "style": {
-              "$ref": "#/$defs/LineStyle"
+              "$ref": "#/$defs/LineStyle",
+              "description": "The line's own style shape — width, colour, opacity and stroke pattern, and nothing else. This is the one shape that did NOT converge onto the unified style, because a line is a stroke primitive with no box, so there is no cascade and no `styleNames`. Unknown keys are parse errors: `borderWidth` on a line is a typo pointing at `width`, not a silent no-op."
             },
             "to": {
-              "$ref": "#/$defs/PointSpec"
+              "$ref": "#/$defs/PointSpec",
+              "description": "Required. The segment's second endpoint: a coordinate pair, or an anchor naming another item."
             },
             "type": {
               "const": "line",
@@ -1169,7 +1309,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this line is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1181,8 +1322,10 @@
         },
         {
           "additionalProperties": false,
+          "description": "A data-driven table: one row per element of a bound array, and each column either binds a key relative to the row object or hosts a `cell:` sub-template. In the flow body it paginates row by row and repeats its header; placed anywhere else — a container child, an absolute body, a band, a grid cell — it renders as one bounded block that never paginates, and the pagination keys warn `table_pagination_key_ignored`. Not supported inside a cell (`table_in_cell`).",
           "properties": {
             "autoPageBreak": {
+              "description": "Whether rows that do not fit continue on the next page. Defaults to true; with false, an overflowing row warns `row_overflow`. Inert outside a flow body.",
               "type": [
                 "boolean",
                 "null"
@@ -1196,9 +1339,11 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The table's geometry. In the flow body it narrows the table horizontally — width, x offset, `auto` side margins to centre it — while y and height stay flow-owned. Everywhere else it places the table as one bounded block."
             },
             "cellPadding": {
+              "description": "Inner padding of every text, QR and image cell, in points. Defaults to 4. A container cell is inset by its own `cell.box.padding` instead. Negative clamps with `invalid_cell_padding`.",
               "format": "double",
               "type": [
                 "number",
@@ -1206,13 +1351,15 @@
               ]
             },
             "columns": {
+              "description": "The table's columns, in the order they are drawn. Required.",
               "items": {
                 "$ref": "#/$defs/Column"
               },
               "type": "array"
             },
             "data": {
-              "$ref": "#/$defs/Binding"
+              "$ref": "#/$defs/Binding",
+              "description": "The array params key, one row per element. Required. A source that is not an array warns `not_an_array`; an absent one warns `missing_data`."
             },
             "emptyBehavior": {
               "anyOf": [
@@ -1222,7 +1369,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "What an empty bound array produces. Defaults to `collapse`."
             },
             "header": {
               "anyOf": [
@@ -1232,45 +1380,54 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The header row's own height and styling."
             },
             "headerGroups": {
+              "description": "An optional spanning row drawn above the column labels, repeating with the header on every page. Cumulative span past the column count is clamped with `header_group_span_clamped`, and any uncovered columns become one unlabelled trailing cell.",
               "items": {
                 "$ref": "#/$defs/HeaderGroup"
               },
               "type": "array"
             },
             "id": {
+              "description": "A stable name for this table, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "keepTogether": {
+              "description": "Whether a table that would split, but would fit whole on one page, breaks to a fresh page first. Defaults to false. A table taller than a page paginates as usual either way. Inert outside a flow body.",
               "type": [
                 "boolean",
                 "null"
               ]
             },
             "mergeEmptyCells": {
+              "description": "Whether a run of empty text cells in a body row merges into the next non-empty cell to its right, so a section-heading row reads as one wide cell with correct rules. Trailing empties extend the last non-empty cell, and an all-empty row becomes one full-width cell. Defaults to false. Swallowed cells lose their column-`id` placement, and QR, image and `cell:` columns never merge.",
               "type": [
                 "boolean",
                 "null"
               ]
             },
             "repeatHeader": {
+              "description": "Whether the header row is redrawn on continuation pages. Defaults to true. Inert outside a flow body.",
               "type": [
                 "boolean",
                 "null"
               ]
             },
             "row": {
-              "$ref": "#/$defs/RowSpec"
+              "$ref": "#/$defs/RowSpec",
+              "description": "The body rows' height, styling, zebra layer and data-driven conditional layers."
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "The table's own style layer. `borderWidth` is the grid stroke — 0.5 pt by default, and 0 removes the grid — while the per-side map form draws an OUTER FRAME around each page fragment instead, leaving the inner grid at its default. Inherited properties cascade into every cell. `borderRadius` is refused with `border_radius_ignored`: a ruled grid cannot meet a curve."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this table's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
@@ -1288,7 +1445,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this table is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1300,6 +1458,7 @@
         },
         {
           "additionalProperties": false,
+          "description": "The current page number. BAND-ONLY: the page count is known only at assembly, and the bands are the per-page surface. In a body it warns `page_number_in_body` and in a container `page_number_in_container`, and is skipped either way. Pair it with the band's own `repeat` mode to choose which pages show it.",
           "properties": {
             "box": {
               "anyOf": [
@@ -1309,24 +1468,29 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The item's geometry. Bands share the margin-box origin with the body — there is no footer-local origin — so a footer number needs a `y` near the bottom of the margin box."
             },
             "format": {
+              "description": "The line's template, where `{page}` is the current one-based page and `{pages}` the total. Any other text passes through. Defaults to `{page} / {pages}`.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "id": {
+              "description": "A stable name for this item, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This item's inline style, in the usual text forms."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this item's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
@@ -1344,7 +1508,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this page number is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1354,11 +1519,13 @@
         },
         {
           "additionalProperties": false,
+          "description": "A raster or SVG image. The source is a template-time `src` or a params-bound `data`, and exactly one should be set. Width and height are REQUIRED — layout never sizes from the image's own pixels — and an image never paints outside its content box.",
           "properties": {
             "bindings": {
               "additionalProperties": {
                 "$ref": "#/$defs/Binding"
               },
+              "description": "Named declarations for the `{name}` interpolations in this item's link URL.",
               "type": "object"
             },
             "box": {
@@ -1369,7 +1536,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The item's geometry. The fit box is the content box, inset by the padding. The KEY is optional on the wire, but a width and height are not optional at layout: without them the item warns `image_missing_size` and is skipped, because layout never sizes from the image's own pixels."
             },
             "data": {
               "anyOf": [
@@ -1379,7 +1547,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "A params-bound source, gated by the host's asset policy — open or bundled-only, with per-item allow and deny lists."
             },
             "fit": {
               "anyOf": [
@@ -1389,9 +1558,11 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Mirrors CSS `object-fit`, always centred. Defaults to `contain`. `cover` and `none` clip anything past the content box, and an SVG clips under every fit because nothing stops a path being drawn outside its own viewBox."
             },
             "id": {
+              "description": "A stable name for this item, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
@@ -1405,18 +1576,22 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "A hyperlink over the drawn box, written into the PDF as a link annotation."
             },
             "src": {
+              "description": "A template-time source: a bundled path, a `data:` URI, or inline SVG markup. A path resolves against the ASSETS ROOT, which defaults to the template file's own directory; a path escaping the root is rejected with `asset_traversal`. A remote URL is recognized and rejected with `remote_asset_unsupported` — the render path has no network I/O, and unlike a font there is no hash pin that would make fetching an image deterministic.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This item's inline style. Decoration and opacity act; the text properties are unused."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this item's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
@@ -1434,7 +1609,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this image is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1444,6 +1620,7 @@
         },
         {
           "additionalProperties": false,
+          "description": "The standalone form of the container struct: a box that establishes an origin and a resolved size for its children and cascades its inherited style properties to them. In a flow it behaves like any other stacked item — `box.y` is ignored and an explicit height reserves exactly that, with taller content warning `container_overflow` unless the box opts into `overflow: hidden`. `page_number`, `repeat`, `repeat_flow` and `page_break` are not allowed inside one and skip with a warning; a `table` child IS allowed and renders as one bounded block.",
           "properties": {
             "box": {
               "anyOf": [
@@ -1453,24 +1630,29 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The container's geometry and the layout mode for its children. An omitted width defaults to the parent width minus the x offset; an omitted height is auto and grows to the lowest child bottom edge plus the vertical padding."
             },
             "id": {
+              "description": "A stable name for this container, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "items": {
+              "description": "The children. One that authors neither `box.x` nor `box.y` is a flex or grid item; one that authors either is absolutely placed within the container.",
               "items": {
                 "$ref": "#/$defs/Item"
               },
               "type": "array"
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This container's inline style. Its decoration paints the container's own border box, and its INHERITED properties cascade to every descendant."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this container's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
@@ -1488,7 +1670,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1498,6 +1681,7 @@
         },
         {
           "additionalProperties": false,
+          "description": "Imposition, or n-up: N instances of one cell laid onto each page, one per element of a bound array — four gift receipts on an A4 sheet. Each cell is data-scoped to its element, so the cell template is authored once with no per-instance field renaming. Flow-body only. Cells fill the grid, and when a page's grid is full the next cell starts a fresh page's grid.",
           "properties": {
             "breakBefore": {
               "anyOf": [
@@ -1507,24 +1691,30 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Where the grid starts. Defaults to `page`."
             },
             "cell": {
-              "$ref": "#/$defs/ContainerItem"
+              "$ref": "#/$defs/ContainerItem",
+              "description": "The per-element cell, a container whose parent box is the grid slot. Required. It FILLS the slot by default, which gives it a definite height, so `%` and `verticalAlign` inside it resolve against the slot; an explicit `cell.box` insets or resizes it within the slot."
             },
             "cutMarks": {
+              "description": "Whether trim guides are drawn just outside the grid, at its outer edges and at the centre of each interior gap. Defaults to false. Ticks reach OUTWARD so no ink lands on a cell, extend into the page margin and are clamped to the sheet; a side with no room outside the grid draws nothing there and warns `cut_marks_clipped`. Every page the grid occupies is marked, and the FULL grid is marked even on a partly filled last page, because the sheet is cut into the same pieces either way. The ticks are chrome — no id, and never in the box index.",
               "type": [
                 "boolean",
                 "null"
               ]
             },
             "data": {
-              "$ref": "#/$defs/Binding"
+              "$ref": "#/$defs/Binding",
+              "description": "The array params key, one cell per element in order. Required."
             },
             "grid": {
-              "$ref": "#/$defs/GridSpec"
+              "$ref": "#/$defs/GridSpec",
+              "description": "The imposition grid: how many cells across and down, the fill order, and the gaps between them."
             },
             "id": {
+              "description": "A stable name for this item, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
@@ -1542,7 +1732,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this imposition grid is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1554,9 +1745,11 @@
         },
         {
           "additionalProperties": false,
+          "description": "One auto-height card per element of a bound array, in normal flow — a vertical card list. Where `repeat` is the rigid n-up sheet, this is its flowing counterpart: cards start at the cursor, stack with `gap`, and paginate one card at a time. Flow-body only. A card is an ATOM, so one that does not fit moves whole to the next page and keep-together is inherent — there is no key for it. A card taller than the region warns `section_overflow`.",
           "properties": {
             "data": {
-              "$ref": "#/$defs/Binding"
+              "$ref": "#/$defs/Binding",
+              "description": "The array params key, one card per element in order. Required."
             },
             "gap": {
               "anyOf": [
@@ -1566,16 +1759,19 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The space between cards, resolving `%` against the region height. Defaults to 0; negative clamps to 0 and out-of-range drops with `length_out_of_range`."
             },
             "id": {
+              "description": "A stable name for this item, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "item": {
-              "$ref": "#/$defs/ContainerItem"
+              "$ref": "#/$defs/ContainerItem",
+              "description": "The per-element card, a container. Required. Auto height by default, with horizontal auto margins working, its style cascading to its children and its decoration painting once per instance."
             },
             "type": {
               "const": "repeat_flow",
@@ -1589,7 +1785,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this card list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1601,11 +1798,13 @@
         },
         {
           "additionalProperties": false,
+          "description": "A QR code encoded at LAYOUT TIME into vector module rectangles, so it needs no asset pipeline and works inside repeat cells with element-scoped bindings. The engine encodes whatever string it is given and reads no semantics into it. The encoded string is the FORMATTED value, like any text placement, so a field with enum display labels encodes its label — bind `format: value` to encode the machine value instead.",
           "properties": {
             "bindings": {
               "additionalProperties": {
                 "$ref": "#/$defs/Binding"
               },
+              "description": "Named declarations for this item's `{name}` interpolations, carrying the options the bare `{key}` grammar cannot.",
               "type": "object"
             },
             "box": {
@@ -1616,7 +1815,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The item's geometry. The code draws SQUARE on the smaller content-box side, centred, with the four-module quiet zone inside the box. The KEY is optional on the wire, but a width and height are not optional at layout: without them the item warns `qr_missing_size` and is skipped."
             },
             "data": {
               "anyOf": [
@@ -1626,7 +1826,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "One bound value as the code's content, scope-aware so it resolves per element inside a cell."
             },
             "errorCorrection": {
               "anyOf": [
@@ -1636,24 +1837,29 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "How much damage the code tolerates. Defaults to `medium`. A higher level needs more modules for the same content, and content is capped at 1 KiB (`qr_content_too_long`) because params are untrusted and modules fan out into tree items."
             },
             "id": {
+              "description": "A stable name for this item, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This item's inline style. Decoration only: `backgroundColor` paints under the modules, which is the usual white backing, plus the border keys."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this item's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
               "type": "array"
             },
             "text": {
+              "description": "Static content with `{key}` interpolation, exactly like a text item's.",
               "type": [
                 "string",
                 "null"
@@ -1671,7 +1877,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this code is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1681,11 +1888,13 @@
         },
         {
           "additionalProperties": false,
+          "description": "A bounded per-element list: an array field rendered one entry per line, clamping at the last fitting entry and ending with an overflow line when entries were cut. No pagination by design — inside a repeat cell the box is a fixed slot, and in a flow an auto-height list simply grows. One line per entry, never wrapped: an entry wider than the box takes the per-entry ellipsis instead. At most 1000 entries, and the capped ones still count into the overflow line's total.",
           "properties": {
             "bindings": {
               "additionalProperties": {
                 "$ref": "#/$defs/Binding"
               },
+              "description": "Named declarations for the `{name}` interpolations in `text`. They resolve per ENTRY like the template itself, unless one authors a document scope.",
               "type": "object"
             },
             "box": {
@@ -1696,33 +1905,40 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The item's geometry. A DEFINITE height is what activates the clamp: the list cuts at the last fitting entry minus one and appends the overflow line."
             },
             "data": {
-              "$ref": "#/$defs/Binding"
+              "$ref": "#/$defs/Binding",
+              "description": "The array to render: a params key, or — inside a repeat cell or a card — a field of the bound element. Required."
             },
             "id": {
+              "description": "A stable name for this item, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "overflowText": {
+              "description": "The template for the trailing overflow line, where `{count}` is the number of entries that did NOT fit. Defaults to `+{count}`.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This item's inline style; the text properties style every line."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this item's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
               "type": "array"
             },
             "text": {
+              "description": "A per-entry template, interpolating `{key}` against the ENTRY object. The keys are the fields the array's `items:` schema declares, so a typo warns `unknown_data_key` at validate, and each resolves through its declared field spec. Unset, scalar entries print directly — strings as they are and numbers in plain form, with no locale formatting.",
               "type": [
                 "string",
                 "null"
@@ -1740,7 +1956,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             }
           },
           "required": [
@@ -1751,8 +1968,10 @@
         },
         {
           "additionalProperties": false,
+          "description": "Forces the flow to continue on a new page. It takes only an id and a visibility predicate — there is nothing else to author.",
           "properties": {
             "id": {
+              "description": "A stable name for this break, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
@@ -1770,7 +1989,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this break happens. It generates no box either way, so the `collapse` choice makes no difference here."
             }
           },
           "required": [
@@ -1780,11 +2000,13 @@
         },
         {
           "additionalProperties": false,
+          "description": "One character per cell in a fixed grid: manuscript paper, kanji practice sheets and application-form entry boxes. The engine assigns the cells, including the school kinsoku hang-back, so the bound string stays verbatim in params. In a flow body, content past one sheet continues on FULL sheets on the following pages; everywhere else the item draws exactly one sheet and the overflow is dropped with `char_grid_overflow`.",
           "properties": {
             "bindings": {
               "additionalProperties": {
                 "$ref": "#/$defs/Binding"
               },
+              "description": "Named declarations for this item's `{name}` interpolations, carrying the options the bare `{key}` grammar cannot.",
               "type": "object"
             },
             "box": {
@@ -1795,7 +2017,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The item's geometry. The width defaults to the full parent width, and the grid is drawn from the content box's top-left."
             },
             "data": {
               "anyOf": [
@@ -1805,12 +2028,15 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "One bound value as the grid's content. Inside a repeat cell it binds element-scoped, so a card list can carry one grid per array element."
             },
             "grid": {
-              "$ref": "#/$defs/CharGridSpec"
+              "$ref": "#/$defs/CharGridSpec",
+              "description": "The cell geometry: how many cells per line, how many lines, and the sizes and gaps between them. Required."
             },
             "id": {
+              "description": "A stable name for this item, landing in the box index once per sheet page.",
               "type": [
                 "string",
                 "null"
@@ -1824,7 +2050,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Which line-breaking rule set assigns the cells."
             },
             "markup": {
               "anyOf": [
@@ -1834,7 +2061,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Opt-in content markup. Unset, EVERY character renders verbatim — including the notation's own delimiters — because bound user data is never interpreted by default."
             },
             "rubySize": {
               "anyOf": [
@@ -1844,18 +2072,22 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The reading font size; unset means 0.4 of the cell. A reading longer than its base shrinks to fit with a 4 pt floor, past which `ruby_overflow` warns."
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This item's inline appearance properties. Authored `fontSize` sets the character size and unset means 0.7 of the cell — inherited sizes are deliberately ignored, because cells are cell-relative. `borderWidth` is the GRID LINE width, 0.5 pt by default, and 0 turns the ruling off; `backgroundColor` fills the grid area and `color` paints the characters."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this item's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
               "type": "array"
             },
             "text": {
+              "description": "Static content with `{key}` interpolation. `\\n` starts a new line and `\\r` is ignored; an EMPTY STRING draws a blank sheet, which is how printable manuscript paper is authored. Neither this nor `data` warns `empty_char_grid_item`.",
               "type": [
                 "string",
                 "null"
@@ -1873,7 +2105,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
             },
             "writingMode": {
               "anyOf": [
@@ -1883,7 +2116,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether lines run left-to-right down the sheet or top-to-bottom with columns right-to-left."
             }
           },
           "required": [
@@ -1894,8 +2128,10 @@
         },
         {
           "additionalProperties": false,
+          "description": "A standalone oval mark for real forms — circling a printed choice. Its PRESENCE is content, driven by params, while its GEOMETRY is template-fixed: an unmatched mark still reserves its box, so a blank form and a filled one have the same layout. Unlike a rect, a mark whose layers author no border width keeps a 1 pt outline default, because a mark's visible outline is the point of it. A per-side border width warns `shape_border_sides_ignored`.",
           "properties": {
             "anchor": {
+              "description": "The id of another item this mark circles, so the oval follows whatever that item's placement turns out to be — the way to circle something you cannot author a text `mark:` on.",
               "type": [
                 "string",
                 "null"
@@ -1909,7 +2145,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The mark's geometry. The KEY is optional on the wire, but an absent or non-positive size warns `mark_missing_size` and the mark is skipped — an ellipse has no intrinsic size to fall back on."
             },
             "data": {
               "anyOf": [
@@ -1919,18 +2156,22 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The presence binding. Absent means always draw, which is decoration; with `equals` or read as a boolean, the mark draws only on a match. An unmatched mark still reserves its box."
             },
             "id": {
+              "description": "A stable name for this mark, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This mark's inline style, the decoration subset, with a 1 pt outline default when no layer authors a width. Inert text keys warn `shape_style_ignored`."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this mark's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
@@ -1948,7 +2189,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this mark is SHOWN. Distinct from `data:`, which decides whether the oval DRAWS while the box is reserved either way — `visible:` decides whether the item participates at all, and `collapse: true` takes its box out of layout."
             }
           },
           "required": [
@@ -1958,6 +2200,7 @@
         },
         {
           "additionalProperties": false,
+          "description": "A checkbox for real forms. The FRAME is chrome and always draws; the CHECK MARK is content, drawn when `checked: true` is authored or when `data:` matches, so an empty box is the blank-form state. Its geometry is template-fixed, so a blank form and a filled one have the same layout.",
           "properties": {
             "box": {
               "anyOf": [
@@ -1967,9 +2210,11 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The checkbox's geometry. The KEY is optional on the wire, and a checkbox AUTO-SIZES when it has none — unlike an ellipse, which warns `mark_missing_size` and is skipped."
             },
             "checked": {
+              "description": "A static tick. Authoring both this and `data:` warns `mark_content_conflict` and the binding wins.",
               "type": [
                 "boolean",
                 "null"
@@ -1983,18 +2228,22 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "The presence binding for the tick. With `equals` it draws on a match; without one, the value is read as a boolean and it draws when true."
             },
             "id": {
+              "description": "A stable name for this checkbox, adding a lookup alias beside its path in the `inspect` box index.",
               "type": [
                 "string",
                 "null"
               ]
             },
             "style": {
-              "$ref": "#/$defs/Style"
+              "$ref": "#/$defs/Style",
+              "description": "This checkbox's inline style, the decoration subset, with a 1 pt outline default when no layer authors a width. Inert text keys warn `shape_style_ignored`."
             },
             "styleNames": {
+              "description": "Named `styles:` entries layered under this checkbox's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
@@ -2012,7 +2261,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "description": "Whether this checkbox is SHOWN. Distinct from `checked` and `data:`, which decide whether the CHECK MARK draws inside a frame that is there either way — `visible:` decides whether the item participates at all, and `collapse: true` takes its box out of layout."
             }
           },
           "required": [
@@ -2023,6 +2273,7 @@
       ]
     },
     "JustifyContent": {
+      "description": "Mirrors CSS `justify-content` for distributing free main-axis space. `start`, `center` and `end` pack the children at one position; `space_between` puts the gaps between them only, `space_around` gives each child equal space on both sides, and `space_evenly` makes every gap equal including the ends. Under negative free space the `space_` values degrade to `start`, as CSS does.",
       "oneOf": [
         {
           "enum": [
@@ -2047,6 +2298,7 @@
       ]
     },
     "KinsokuMode": {
+      "description": "Which line-breaking rule set assigns a character grid's cells. `school` is the rule set used on genkoyoshi, where closing punctuation never starts a line and shares the previous line's last cell instead; `none` assigns cells strictly in order.",
       "oneOf": [
         {
           "const": "school",
@@ -2060,11 +2312,15 @@
     },
     "LabeledEnumValue": {
       "additionalProperties": false,
+      "description": "The pair form of an enum member, declaring the machine value and the words a text placement prints for it. Labels apply to plain text fields only — on any other field type they warn `definitions_enum_labels_ignored` and the values render unlabelled.",
       "properties": {
         "label": {
+          "description": "Required — the pair form exists to carry it. The words a text placement prints for this value. An empty string is authorable and renders empty — the VALUE is non-blank, so the blank-form placeholder does not fire.",
           "type": "string"
         },
-        "value": {}
+        "value": {
+          "description": "Required. The machine value params carry and validation matches on. Must be a scalar; a container here is a parse error."
+        }
       },
       "required": [
         "value",
@@ -2073,6 +2329,7 @@
       "type": "object"
     },
     "Length": {
+      "description": "Every geometry value. The canonical unit is the PDF point, so a bare number is points. A string may carry `pt`, `mm`, `cm` or `in`, all absolute and usable where no layout basis exists; `%` of the parent's resolved size along the same axis, except on margin and padding sides, which resolve against the parent's WIDTH on all four edges; `em`, multiples of the INHERITED font size, so an item's own inline size does not affect its own box lengths; or `rem`, multiples of the engine default size, which is a stable scale unit. `px` is deliberately not a template unit, and `fr` is not a length — it is a grid-track weight, so writing it where a length is expected is a parse error. A resolved length past a million points falls back to the key's default with `length_out_of_range`.",
       "oneOf": [
         {
           "type": "number"
@@ -2084,6 +2341,7 @@
       ]
     },
     "LineBreak": {
+      "description": "CJK line-breaking strictness. `normal` is the ordinary kinsoku set; `strict` additionally holds small kana and the prolonged-sound and wave marks off a line start; `loose` frees centred punctuation and inseparables; `anywhere` breaks between any two characters with no kinsoku at all.",
       "oneOf": [
         {
           "const": "normal",
@@ -2105,14 +2363,17 @@
     },
     "LineStyle": {
       "additionalProperties": false,
+      "description": "A line's own style shape. Deliberately narrow — a stroke primitive has no box to decorate and no text to inherit — and closed, so a key borrowed from the unified style is a located parse error.",
       "properties": {
         "color": {
+          "description": "The stroke colour as an `#rrggbb` string; defaults to black.",
           "type": [
             "string",
             "null"
           ]
         },
         "opacity": {
+          "description": "Paint alpha for the stroke, from 0 to 1; defaults to 1. Out of range warns `invalid_opacity` and draws opaque.",
           "format": "double",
           "type": [
             "number",
@@ -2127,9 +2388,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The stroke pattern, sharing the border wire's keyword set. `double` draws two parallel lines a third of the width each, offset either side of the authored geometry along its normal, so a diagonal doubles correctly."
         },
         "width": {
+          "description": "The stroke width in points; defaults to 1. Capped from 0 to 1000, the same bound border widths carry, since both reach the renderers' stroke maths directly. A negative, non-finite or over-cap value warns `invalid_line_width` and strokes at 1 pt — unlike a border, where 0 legitimately means no border, a line that strokes nothing draws nothing. An authored 0 passes through undiagnosed.",
           "format": "double",
           "type": [
             "number",
@@ -2141,8 +2404,10 @@
     },
     "Link": {
       "additionalProperties": false,
+      "description": "A clickable URL, emitted as a PDF link annotation over the item's drawn geometry. Always the object form — a bare string is a parse error — which reserves room for internal destinations later. PNG previews ignore links, having no annotation surface.",
       "properties": {
         "url": {
+          "description": "Required. The destination, interpolating `{key}` like static text.",
           "type": "string"
         }
       },
@@ -2153,6 +2418,7 @@
     },
     "MarkBinding": {
       "additionalProperties": false,
+      "description": "The presence predicate a form mark, a row condition or an item's `visible:` is driven by. Its key is read at the ambient scope unless it escapes to the document, and equality is type-strict.",
       "properties": {
         "equals": {
           "anyOf": [
@@ -2162,9 +2428,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The value the field must equal. Type-strict, so the string `\"2\"` never matches the number 2; an ARRAY value is a multi-select and matches when it contains this value. Omitted, the field is read as a boolean and the predicate holds when it is true."
         },
         "key": {
+          "description": "The params field to read, as a dotted path. Required.",
           "type": "string"
         },
         "scope": {
@@ -2175,7 +2443,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Which data the key resolves against inside a cell. `element` is the default; `document` reads top-level params, which a page-global flag needs."
         }
       },
       "required": [
@@ -2184,6 +2453,7 @@
       "type": "object"
     },
     "Markup": {
+      "description": "Opt-in content markup for a character grid. `aozora` reads Aozora Bunko notation — ruby readings, the sheet break, the large-writing span notes and the line-placement notes. Leaving the key unset is the only other choice, and renders every character verbatim.",
       "oneOf": [
         {
           "const": "aozora",
@@ -2193,12 +2463,15 @@
     },
     "NamedFormat": {
       "additionalProperties": false,
+      "description": "One entry in the template's `formats:` registry — a pattern given a name so placements can reference it, the format parallel of a named style. The registry is capped at 256 entries (`too_many_formats`), and a field-type name is reserved (`reserved_format_name`).",
       "properties": {
         "pattern": {
+          "description": "Required. The pattern itself, in the engine's date pattern grammar.",
           "type": "string"
         },
         "type": {
-          "$ref": "#/$defs/NamedFormatKind"
+          "$ref": "#/$defs/NamedFormatKind",
+          "description": "Required. Which field type this entry formats."
         }
       },
       "required": [
@@ -2208,6 +2481,7 @@
       "type": "object"
     },
     "NamedFormatKind": {
+      "description": "The field types a `formats:` registry entry may declare. `date` and `datetime` are the whole set in this version — a registry entry is a date pattern given a name, and the other field types have no pattern grammar to name.",
       "enum": [
         "date",
         "datetime"
@@ -2216,6 +2490,7 @@
     },
     "OptBox": {
       "additionalProperties": false,
+      "description": "The geometry map every boxed item carries: position, size, margin, padding, min/max bounds, and — on a box with children — the layout mode and its keys. Every key is optional, and an unset key is omitted when the template is written back rather than injected as a default.",
       "properties": {
         "alignItems": {
           "anyOf": [
@@ -2225,7 +2500,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `align-items`: cross-axis alignment of the children. `stretch`, the default, fills an unset cross size. A cross-axis `auto` margin opts a child out, since an auto margin beats alignment everywhere else here too."
         },
         "columnGap": {
           "anyOf": [
@@ -2235,9 +2511,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The space between grid column tracks, winning over the `gap` shorthand. Defaults to 0; negative becomes 0."
         },
         "columnSpan": {
+          "description": "How many grid column tracks this child spans; the cell run is the spanned widths plus the gaps between them. Defaults to 1 and clamps to the track count with `grid_span_clamped`. Outside a `type: grid` parent it warns `span_outside_grid` and is inert.",
           "format": "uint",
           "minimum": 0,
           "type": [
@@ -2253,7 +2531,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The grid's column tracks: a COUNT, which splits the content width equally after the gaps, or a track LIST mixing lengths, `fr` weights and `auto`, where an `auto` track is sized to the widest cell placed in it. Defaults to one column. Without `box.type: grid` it warns `grid_key_ignored`."
         },
         "direction": {
           "anyOf": [
@@ -2263,7 +2542,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Under flex, the main axis: `column` stacks children and `row` sets them side by side. Under grid, the fill order, the CSS `grid-auto-flow` analogue. Defaults to `column` under flex and `row` under grid."
         },
         "flexBasis": {
           "anyOf": [
@@ -2273,9 +2553,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `flex-basis`, narrowed to two spellings. The main size this child STARTS FROM before `flexGrow` shares out the rest. `content`, the default, is its max-content width — the width at which its text would not wrap; `0` starts it at nothing so `flexGrow` divides the whole row, which is CSS's `flex: 1`. A length basis is deliberately not accepted, because `w` already sizes a child. A row key: a column child's basis is its content height, which the engine measures rather than letting you name."
         },
         "flexGrow": {
+          "description": "Mirrors CSS `flex-grow`: this child's share of the LEFTOVER main-axis size, among the children with no authored size on that axis. Defaults to 0 — the CSS default, where nothing grows unless asked. A child key, so it is valid on a leaf; inert on a child with an authored main-axis size and under grid, where cells are track-sized. Works on both axes, each on its own main axis.",
           "format": "double",
           "type": [
             "number",
@@ -2290,7 +2572,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The main-axis space between flex children, and the both-axes shorthand under grid, where the per-axis keys win. `%` resolves against the main-axis content size; negative becomes 0. Defaults to 0. Absolutely placed children ignore it."
         },
         "h": {
           "anyOf": [
@@ -2300,7 +2583,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The border-box height; `%` resolves against the parent height. Omitted means AUTO height — the box grows to its content, which is the lowest child bottom for a container and the wrapped text height for text. A definite height is what activates the `textOverflow` policies on text."
         },
         "justifyContent": {
           "anyOf": [
@@ -2310,7 +2594,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `justify-content`: how leftover main-axis space is distributed, which needs a definite main size — an auto-height column has none, so it is inert there. Under grid it distributes leftover width across tracks, which is meaningful only for a track list. Defaults to `start`. Negative free space degrades the CSS way."
         },
         "margin": {
           "anyOf": [
@@ -2320,7 +2605,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Outer spacing: a bare number for all four sides, or a per-side map whose UNSET SIDES ARE 0 rather than inherited. `%` resolves against the parent's WIDTH on all four sides, the CSS margin rule, so vertical edges stay definite inside auto-height containers. Flow siblings space additively with `gap` — there is no margin collapse. Negative values are allowed; a side may also be `auto`, which absorbs free space under flex placement and horizontally in a flow, and resolves to 0 elsewhere. Positional shorthand strings are rejected with a pointer to the map form, and the bare string `auto` likewise."
         },
         "maxHeight": {
           "anyOf": [
@@ -2330,7 +2616,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "An upper bound on the border-box height. Shorter than the content it behaves like a too-short explicit height: the content overflows visually and does not warn, because the author set the bound."
         },
         "maxWidth": {
           "anyOf": [
@@ -2340,7 +2627,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "An upper bound on the border-box width, resolving `%` against the parent width. Loses to `minWidth` where the two conflict, as in CSS."
         },
         "minHeight": {
           "anyOf": [
@@ -2350,7 +2638,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "A lower bound on the border-box height. Taller than the content, it reserves the extra space for `verticalAlign` to distribute — and a flow text carries that reservation across a page split, leading the first fragment and trailing the last. A `%` bound against an auto-height parent drops with `percent_of_auto`."
         },
         "minWidth": {
           "anyOf": [
@@ -2360,7 +2649,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "A lower bound on the border-box width, resolving `%` against the parent width. Bounds clamp in CSS order — min wins over max wins over the size — so a minimum of 200 beside a maximum of 100 resolves to 200."
         },
         "padding": {
           "anyOf": [
@@ -2370,7 +2660,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Inner spacing, in the same forms as `margin` but without `auto` and without negative values. Insets the content WITHOUT growing the box, as border-box sizing implies: it narrows a text item's wrap width, a container's child basis, an image's fit box and a `repeat` cell. An auto height grows by the vertical padding; an explicit one does not, and content past the content box then warns. `rect` has no content and ignores it."
         },
         "rowGap": {
           "anyOf": [
@@ -2380,9 +2671,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The space between grid row tracks, winning over the `gap` shorthand. Defaults to 0; negative becomes 0."
         },
         "rowSpan": {
+          "description": "How many grid row tracks this child spans, reserving the cells beneath. Defaults to 1 and clamps to 64 with `grid_span_clamped`. Outside a `type: grid` parent it warns `span_outside_grid` and is inert.",
           "format": "uint",
           "minimum": 0,
           "type": [
@@ -2398,7 +2691,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The grid's row tracks, in the same forms as `columns`. Defaults to auto rows sized by their tallest child. A count needs a definite container height, and an auto-height container degrades to auto rows with a diagnostic; an `fr` row likewise degrades with `grid_fr_no_basis`. Rows past an explicit list are implicit and auto."
         },
         "type": {
           "anyOf": [
@@ -2408,7 +2702,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The layout mode for this box's children. Unset behaves like `flex`; `grid` is explicit-only, which is why grid keys never imply the mode on their own. Only meaningful on a box with children — on a leaf it warns `layout_key_on_leaf`."
         },
         "w": {
           "anyOf": [
@@ -2418,7 +2713,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The border-box width; `%` resolves against the parent width. Omitted means fill the parent width minus the horizontal margins."
         },
         "x": {
           "anyOf": [
@@ -2428,7 +2724,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Offset from the parent box's left edge; defaults to 0. In a flow it offsets within the flow region. Authoring it on a container child opts that child out of flex placement, which is the absolute escape hatch."
         },
         "y": {
           "anyOf": [
@@ -2438,12 +2735,14 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Offset from the parent box's top edge; defaults to 0. In a flow it is IGNORED — the cursor owns the vertical position. Authoring it on a container child opts that child out of flex placement."
         }
       },
       "type": "object"
     },
     "Orientation": {
+      "description": "The sheet's orientation. `portrait` is the default; `landscape` swaps the two dimensions of a named size and does nothing to a custom one.",
       "enum": [
         "portrait",
         "landscape"
@@ -2451,6 +2750,7 @@
       "type": "string"
     },
     "Overflow": {
+      "description": "What a container-like box does with children outside its border box. `visible` lets them paint outside and reports `container_overflow`; `hidden` clips them to the border box and suppresses that diagnostic.",
       "oneOf": [
         {
           "const": "visible",
@@ -2463,6 +2763,7 @@
       ]
     },
     "PageMargin": {
+      "description": "The printable-area insets: a bare point number for all four sides, a per-side map whose unset sides are 0, or the legacy top-right-bottom-left array. The authored form round-trips. Negative sides, `auto`, wrong array lengths and unknown map keys are all parse errors.",
       "oneOf": [
         {
           "type": "number"
@@ -2481,6 +2782,7 @@
       ]
     },
     "PageSize": {
+      "description": "A paper size: one of eight named presets, or a custom `{ w, h }` in absolute units. The names are the whole set — `A3`, `A4` and `A5` from ISO A; `B4` and `B5` from the JAPANESE JIS B series, which is not ISO B; and `Letter`, `Legal` and `Tabloid`. Anything else is a parse error, so a size this list does not carry has to be written as dimensions. Every named size gets the same 25 pt default margin.",
       "oneOf": [
         {
           "enum": [
@@ -2514,20 +2816,25 @@
     },
     "PageSpec": {
       "additionalProperties": false,
+      "description": "The sheet geometry for every page of the document. All three keys are optional, and the defaults are A4 portrait with a 25 pt margin on every side.",
       "properties": {
         "margin": {
-          "$ref": "#/$defs/PageMargin"
+          "$ref": "#/$defs/PageMargin",
+          "description": "The printable-area insets, and with them the coordinate origin: `x: 0` and `y: 0` mean the margin corner for the bands, both body kinds and the flow region. The all-sides form is a bare POINT number only — one value with a unit is a parse error, and units go in the per-side map, whose unset sides are 0 rather than 25. Sides resolve `%` against the page WIDTH on all four edges, the CSS rule. Margins that would consume a whole page axis fall back to 0 on that axis with `page_margin_too_large`, so the origin always has positive room. Absolute items may use NEGATIVE coordinates to reach into the margin, which is bleed and crop-mark territory."
         },
         "orientation": {
-          "$ref": "#/$defs/Orientation"
+          "$ref": "#/$defs/Orientation",
+          "description": "The sheet's orientation, which swaps the two dimensions of a NAMED size. Defaults to `portrait`. It is a no-op for a custom size, which already states its dimensions literally, so nothing is double-swapped; that combination warns `orientation_ignored`."
         },
         "size": {
-          "$ref": "#/$defs/PageSize"
+          "$ref": "#/$defs/PageSize",
+          "description": "The paper size: a named preset, or custom dimensions. Custom sides are absolute lengths — `%` is rejected, since there is no parent to resolve against — and each is capped at 14,400 pt, the PDF page limit."
         }
       },
       "type": "object"
     },
     "PointSpec": {
+      "description": "One endpoint of a line: either a coordinate pair resolved against the parent box, or an anchor naming another item's id. An endpoint is one arm or the other — naming both a coordinate and an item is a parse error.",
       "oneOf": [
         {
           "additionalProperties": false,
@@ -2566,6 +2873,7 @@
       ]
     },
     "Repeat": {
+      "description": "Which pages a band is drawn on. `every_page` draws it throughout; `first_page` and `last_page` draw it once at the respective end; and `except_first_page` draws it everywhere but the opening page, which is the cover-page convention.",
       "enum": [
         "every_page",
         "first_page",
@@ -2576,18 +2884,22 @@
     },
     "RowConditionalStyle": {
       "additionalProperties": false,
+      "description": "One data-driven row layer: a predicate over the row's own data, and the style to apply where it matches.",
       "properties": {
         "style": {
-          "$ref": "#/$defs/Style"
+          "$ref": "#/$defs/Style",
+          "description": "The style this layer applies. Inherited properties cascade into the row's cells; non-inherited ones decorate the row band. A column's own style still wins for its own cell."
         },
         "styleNames": {
+          "description": "Named `styles:` entries this layer applies, in listed order.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "when": {
-          "$ref": "#/$defs/MarkBinding"
+          "$ref": "#/$defs/MarkBinding",
+          "description": "Required. The predicate, read relative to the row element exactly like a column's binding. `equals` matches a scalar type-strictly, or an array value by contains; with no `equals` the value is read as a boolean and the entry applies when it is true. A missing key is SILENT, so a blank-form params set simply matches nothing."
         }
       },
       "required": [
@@ -2597,17 +2909,21 @@
     },
     "RowSpec": {
       "additionalProperties": false,
+      "description": "The body rows' height, styling and data-driven layers.",
       "properties": {
         "alternateStyle": {
-          "$ref": "#/$defs/Style"
+          "$ref": "#/$defs/Style",
+          "description": "A style layer overlaid on EVEN rows — the second, fourth and so on — which is the `nth-child(even)` analogue for zebra striping."
         },
         "alternateStyleNames": {
+          "description": "Named `styles:` entries layered under `alternateStyle`, in listed order.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "conditionalStyles": {
+          "description": "Data-driven layers applied in listed order AFTER the base and zebra layers, so a later entry wins over an earlier one and any of them wins over the zebra layer. At most 16 entries per table (`too_many_row_conditions`); every body row evaluates every entry.",
           "items": {
             "$ref": "#/$defs/RowConditionalStyle"
           },
@@ -2621,7 +2937,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "A fixed height for every body row, which is what activates the column-level `textOverflow` policies. `%` resolves against the region height; negative falls back to auto with `invalid_row_height`."
         },
         "minHeight": {
           "anyOf": [
@@ -2631,12 +2948,15 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The height an auto row grows from. Defaults to 24 pt."
         },
         "style": {
-          "$ref": "#/$defs/Style"
+          "$ref": "#/$defs/Style",
+          "description": "The base style layer for body rows. Inherited properties cascade into the cells; non-inherited ones decorate the row band."
         },
         "styleNames": {
+          "description": "Named `styles:` entries layered under the base row style, in listed order.",
           "items": {
             "type": "string"
           },
@@ -2647,11 +2967,14 @@
     },
     "RubyPair": {
       "additionalProperties": false,
+      "description": "One reading and the run it sits over. Both are matched verbatim against the DRAWN text rather than against the authored source, so an interpolated value can carry the base.",
       "properties": {
         "base": {
+          "description": "Required. The run of drawn text this reading belongs to, matched verbatim and in listed order. No match warns `ruby_base_not_found`.",
           "type": "string"
         },
         "text": {
+          "description": "Required. The reading drawn over the base run, centred on its shaped extent and split proportionally when the base wraps across lines.",
           "type": "string"
         }
       },
@@ -2663,32 +2986,38 @@
     },
     "Schema": {
       "additionalProperties": false,
+      "description": "One declared field, at any depth. The vocabulary is JSON Schema's, narrowed to what this engine consumes, plus the presentation keys an author needs — `displayFormat`, `displayFormats`, `placeholder` and `recommendedStyle`. Schemas nest at most 16 levels and declare at most 4096 nodes.",
       "properties": {
         "currency": {
+          "description": "The ISO currency code for a `format: currency` field, overriding the document's `defaults.currency` for this field alone.",
           "type": [
             "string",
             "null"
           ]
         },
         "description": {
+          "description": "Prose about this field, for authoring tools and human readers. Never rendered into a PDF.",
           "type": [
             "string",
             "null"
           ]
         },
         "displayFormat": {
+          "description": "The field's DEFAULT display variant, used when a placement picks none. The same names a binding's `format:` accepts.",
           "type": [
             "string",
             "null"
           ]
         },
         "displayFormats": {
+          "description": "The display variants declared for this field, which is the set a binding's `format:` may pick from and the list an authoring tool offers. A pick outside it — and outside the template's `formats:` registry, the currency variants, the `value` label escape and the type overrides — warns `unknown_format`.",
           "items": {
             "$ref": "#/$defs/FormatVariant"
           },
           "type": "array"
         },
         "enum": {
+          "description": "The declared value set. A member is a bare value, or a `{ value, label }` pair whose label is what a text placement PRINTS while params keep carrying the machine value. A value outside the set warns `params_enum_mismatch`, matched on the VALUE — labels never participate. At most 256 members, labelled or bare.",
           "items": {
             "$ref": "#/$defs/EnumEntry"
           },
@@ -2697,8 +3026,11 @@
             "null"
           ]
         },
-        "example": {},
+        "example": {
+          "description": "A sample value for this field, used by authoring tools to generate params. Any JSON value; it is never validated against the field's own constraints and never reaches a render."
+        },
         "format": {
+          "description": "A data-semantic hint, as an OPEN vocabulary. Known values — `date-time`, `date`, `image`, `currency`, `percentage`, `quantity` — refine how the engine formats the field. Unknown values are generation hints for authoring tools, leave the base type untouched and never warn. A known value on a base type it does not apply to keeps the base type and warns `definitions_format_ignored`.",
           "type": [
             "string",
             "null"
@@ -2712,9 +3044,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The schema of ONE ENTRY in this array field. A row's own array child is a data source in its own right, bound row-relatively, and nesting is not limited to one level."
         },
         "maxItems": {
+          "description": "The most entries this array field may carry. A violation warns `params_length_out_of_range`.",
           "format": "uint64",
           "minimum": 0,
           "type": [
@@ -2723,6 +3057,7 @@
           ]
         },
         "maxLength": {
+          "description": "The longest this string field may be, counted in CHARACTERS rather than bytes. A violation warns `params_length_out_of_range`.",
           "format": "uint64",
           "minimum": 0,
           "type": [
@@ -2731,6 +3066,7 @@
           ]
         },
         "maximum": {
+          "description": "The largest value this number field accepts. A violation warns `params_out_of_range` during `validate` and does not stop the render.",
           "format": "double",
           "type": [
             "number",
@@ -2738,6 +3074,7 @@
           ]
         },
         "minItems": {
+          "description": "The fewest entries this array field may carry. A violation warns `params_length_out_of_range`. An empty array is not blank, so it stays subject to this bound.",
           "format": "uint64",
           "minimum": 0,
           "type": [
@@ -2746,6 +3083,7 @@
           ]
         },
         "minLength": {
+          "description": "The shortest this string field may be, counted in CHARACTERS rather than bytes. A violation warns `params_length_out_of_range`.",
           "format": "uint64",
           "minimum": 0,
           "type": [
@@ -2754,6 +3092,7 @@
           ]
         },
         "minimum": {
+          "description": "The smallest value this number field accepts. A violation warns `params_out_of_range` during `validate` and does not stop the render.",
           "format": "double",
           "type": [
             "number",
@@ -2761,12 +3100,14 @@
           ]
         },
         "placeholder": {
+          "description": "Text drawn in place of a binding to this field when the value resolves blank — absent, `null` or the empty string. The blank-form convention: it makes a form print its ruled space rather than nothing.",
           "type": [
             "string",
             "null"
           ]
         },
         "precision": {
+          "description": "Decimal places for a numeric field, overriding the locale's own default for this field alone.",
           "format": "uint32",
           "minimum": 0,
           "type": [
@@ -2778,25 +3119,32 @@
           "additionalProperties": {
             "$ref": "#/$defs/Schema"
           },
+          "description": "This object field's declared children, keyed by params key.",
           "type": "object"
         },
-        "recommendedStyle": true,
+        "recommendedStyle": {
+          "description": "A style bag an authoring tool may apply when it places this field — the engineer's presentation hint, such as right-aligning an amount. Advisory: the engine never reads it at render time."
+        },
         "required": {
+          "description": "The child keys that must be present and non-null on this object. A violation warns `params_missing_required`.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "title": {
+          "description": "A display name for this field, shown in an authoring tool's field palette and used as a row's display name on an array's `items` schema. Never rendered into a PDF.",
           "type": [
             "string",
             "null"
           ]
         },
         "type": {
-          "$ref": "#/$defs/SchemaType"
+          "$ref": "#/$defs/SchemaType",
+          "description": "Required. The field's base type, from JSON Schema's vocabulary. Combined with `format` it selects the engine field type that decides how a bound value is formatted."
         },
         "unit": {
+          "description": "The SEMANTIC unit key for a `format: quantity` field. The display words live in the locale pack, so adding a locale never edits this file.",
           "type": [
             "string",
             "null"
@@ -2809,6 +3157,7 @@
       "type": "object"
     },
     "SchemaType": {
+      "description": "A field's base type, from JSON Schema's vocabulary. `string`, `number`, `integer`, `boolean`, `object` and `array` are the whole set; `integer` rejects a fractional params value where `number` accepts it.",
       "enum": [
         "string",
         "number",
@@ -2821,9 +3170,11 @@
     },
     "Sections": {
       "additionalProperties": false,
+      "description": "The three places content can live. Only `body` is required.",
       "properties": {
         "body": {
-          "$ref": "#/$defs/Body"
+          "$ref": "#/$defs/Body",
+          "description": "The document's main content, either a paginating `flow` or a single-page `absolute` placement. Required — there is exactly one body."
         },
         "footer": {
           "anyOf": [
@@ -2833,7 +3184,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "An optional band of absolutely positioned items drawn at the bottom of the pages its `repeat` selects. Same shape as the header."
         },
         "header": {
           "anyOf": [
@@ -2843,7 +3195,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "An optional band of absolutely positioned items drawn at the top of the pages its `repeat` selects. Coordinates resolve against the page margin box."
         }
       },
       "required": [
@@ -2853,6 +3206,7 @@
     },
     "Span": {
       "additionalProperties": false,
+      "description": "One fragment of inline rich text. Content follows the same rule as the item — `text` or `data` — and its style layers on top of the block's computed style. Only the text-run properties apply: font size, family, weight and style, letter spacing, colour and decoration. Anything else warns `ignored_span_style` and does nothing, because alignment, overflow, box decoration and line height stay block-level.",
       "properties": {
         "data": {
           "anyOf": [
@@ -2862,7 +3216,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "A single bound params value for this fragment."
         },
         "link": {
           "anyOf": [
@@ -2872,18 +3227,22 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "A hyperlink over this fragment alone, written into the PDF as a link annotation."
         },
         "style": {
-          "$ref": "#/$defs/Style"
+          "$ref": "#/$defs/Style",
+          "description": "This fragment's inline style, layered on the block's computed style. Only text-run properties act; the rest warn `ignored_span_style`."
         },
         "styleNames": {
+          "description": "Named `styles:` entries layered under this fragment's inline style, in listed order.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "text": {
+          "description": "Static content for this fragment, interpolating `{key}` like the item's own text.",
           "type": [
             "string",
             "null"
@@ -2894,8 +3253,10 @@
     },
     "Style": {
       "additionalProperties": false,
+      "description": "The appearance property bag every item may carry. Every property is optional; unset means inherit (for inherited properties) or the engine default. Three surfaces resolve per item in precedence order — engine default, inherited ancestor, named `styles:` entries in listed order, then the inline `style:`. Unknown keys are parse errors.",
       "properties": {
         "backgroundColor": {
+          "description": "A filled rectangle covering the border box, painted under the item's content. An `#rrggbb` string; not inherited, and unset paints nothing. Honoured on text-drawing items, `container`, `repeat` cells, `image` and `qr_code`.",
           "type": [
             "string",
             "null"
@@ -2909,7 +3270,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Border stroke colour, as one `#rrggbb` string or a per-side map. Inert while the side's width is 0, so a named style can carry a palette colour that items opt into by giving a width. Not inherited; defaults to black."
         },
         "borderRadius": {
           "anyOf": [
@@ -2919,7 +3281,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `border-radius`, as a single value for all four corners — there is no per-corner form. `%` resolves against both axes independently, so `50%` is a circle on a square box. An absolute radius too large to fit shrinks by one uniform factor, the CSS overlapping-curves rule, which is what makes a large value a stadium rather than an ellipse. Not inherited; defaults to 0. Refused with `border_radius_ignored` on a per-side or `double` border, a `table` and the form marks; negative or non-finite warns `invalid_border_radius`."
         },
         "borderStyle": {
           "anyOf": [
@@ -2929,7 +3292,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Border stroke pattern, as one keyword or a per-side map. `double` splits the side's width into two lines of a third each, as CSS does. Not inherited; defaults to `solid`."
         },
         "borderWidth": {
           "anyOf": [
@@ -2939,15 +3303,18 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Border stroke width over the border box, in points, as one number for all four sides or a per-side map whose unset sides are 0. A side draws only where its computed width is above 0. Does NOT change geometry — each side is drawn centred on the box edge. Not inherited; defaults to 0. Negative widths are parse errors; over 1000 pt falls back with `invalid_border_width`."
         },
         "color": {
+          "description": "Text colour as an `#rrggbb` string. Inherited; defaults to black. Any other spelling warns `invalid_color` and draws the default.",
           "type": [
             "string",
             "null"
           ]
         },
         "fontFamily": {
+          "description": "The face id to draw with, resolved against the loaded font packs. Inherited; defaults to the pack's own default face. An id no pack ships warns `unknown_font_family`.",
           "type": [
             "string",
             "null"
@@ -2961,7 +3328,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Text size, in points or as a length string. Strings take `pt`/`mm`/`cm`/`in`, `em`/`%` of the INHERITED size (nested relative sizes multiply), or `rem` of the engine default. Inherited; defaults to 10. Non-positive or non-finite falls back with `invalid_font_size`; over 1000 pt with `font_size_out_of_range`."
         },
         "fontStyle": {
           "anyOf": [
@@ -2971,7 +3339,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `font-style`, as a two-value subset. `italic` is a synthetic baseline-anchored skew of about 12 degrees with advances unchanged; no real italic face is selected. Inherited; defaults to `normal`."
         },
         "fontWeight": {
           "anyOf": [
@@ -2981,7 +3350,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `font-weight`, as a two-value subset. `bold` selects the family's real bold face when it ships one, otherwise synthetic emboldening — glyphs stroked in the text colour, advances unchanged. Inherited; defaults to `normal`."
         },
         "hangingPunctuation": {
           "anyOf": [
@@ -2991,7 +3361,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `hanging-punctuation`, as a subset over line-terminating commas and full stops. Lets such a character hang past the end edge rather than forcing a wrap. Inherited; defaults to `none`."
         },
         "letterSpacing": {
           "anyOf": [
@@ -3001,7 +3372,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `letter-spacing`. Added to every character advance, so measurement, wrapping, alignment and drawing share one policy. Points or a length string taking `pt`/`mm`/`cm`/`in` or `em`/`rem`, where `em` is the item's own computed size; `%` is a parse error, as in CSS. Negative values are allowed. Inherited; defaults to 0. Magnitude over 1000 pt falls back to 0 with `invalid_letter_spacing`."
         },
         "lineBreak": {
           "anyOf": [
@@ -3011,9 +3383,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `line-break`. `normal`, `strict` and `loose` pick the CJK kinsoku strictness; `anywhere` breaks between any two characters with no kinsoku at all. Inherited; defaults to `normal`."
         },
         "lineHeight": {
+          "description": "Mirrors CSS `line-height` in its unitless form: a multiplier of the computed font size, which sets the line box height. Inherited; defaults to 1.4. Non-positive or non-finite falls back with `invalid_line_height`; over 1000 with `line_height_out_of_range`.",
           "format": "double",
           "type": [
             "number",
@@ -3021,6 +3395,7 @@
           ]
         },
         "opacity": {
+          "description": "Paint alpha from 0 to 1 for the item's own painting — glyphs, decoration line, background fill and border stroke alike. Per-item alpha, NOT CSS group compositing: nested items do not multiply, and a container's opacity does not reach its children. QR modules ignore it, to protect scannability. Not inherited; defaults to 1. Out of range warns `invalid_opacity` and draws opaque.",
           "format": "double",
           "type": [
             "number",
@@ -3035,7 +3410,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `overflow`, deciding what a container-like box does with children outside its border box. `hidden` clips children to the border box and suppresses `container_overflow`; decoration stays outside, because it IS the box. Inert on items that are not container-like — text uses `textOverflow` instead. Not inherited; defaults to `visible`."
         },
         "textAlign": {
           "anyOf": [
@@ -3045,7 +3421,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `text-align`. On a vertical block the keyword names the line's end along the column, so `right` is the bottom. A `char_grid` honours it to fill a partly filled line toward its end, but reads it from the item only, never inherited. Inherited; defaults to `left`."
         },
         "textCombineUpright": {
           "anyOf": [
@@ -3055,7 +3432,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `text-combine-upright`, as a subset — tate-chu-yoko. `none` combines nothing; `{ digits: n }` with n from 2 to 4 makes runs of up to n consecutive ASCII digits share one upright cell of a vertical column; `all` combines the whole styled scope into one cell, which is meant for a short span. Longer runs stay uncombined; out-of-range digits and unknown keywords are parse errors. Inert in horizontal text. Inherited; defaults to `none`."
         },
         "textDecoration": {
           "anyOf": [
@@ -3065,7 +3443,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `text-decoration-line`, as a single-keyword subset. Position and thickness come from the font's own metrics, drawn in the text colour and sized to each measured line. Not inherited, matching CSS, since decoration PROPAGATION is not modelled — set it on the text item itself. Defaults to `none`."
         },
         "textOrientation": {
           "anyOf": [
@@ -3075,7 +3454,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `text-orientation`, as a subset, and is consulted only inside a vertical block. Inherited; defaults to `mixed`."
         },
         "textOverflow": {
           "anyOf": [
@@ -3085,7 +3465,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "What text does when it exceeds a DEFINITE box height; an auto-height box grows instead and never consults this. On a vertical block the overflow axis is the box width. Not inherited; defaults to `visible`."
         },
         "textSpacingTrim": {
           "anyOf": [
@@ -3095,7 +3476,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `text-spacing-trim`, as a subset. Trims the internal space between adjacent fullwidth punctuation glyphs to half-width. Synthesized after shaping, so it works on every face rather than depending on font features. Inherited; defaults to `space_all`, which trims nothing."
         },
         "verticalAlign": {
           "anyOf": [
@@ -3105,7 +3487,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Vertical alignment of content within the item's own box, which needs a definite height or `minHeight` slack to have room to act. On a vertical block it maps CSS-logically onto the column stack — top is the right edge, bottom the left. Not inherited; defaults to `top`."
         },
         "writingMode": {
           "anyOf": [
@@ -3115,13 +3498,15 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Mirrors CSS `writing-mode`, as a two-value subset. `vertical_rl` turns a text item into a vertical block — characters fill top to bottom and columns lay out right to left. Honoured on every text surface; a text `mark:` is the one warned fallback, `vertical_text_unsupported`. Inherited; defaults to `horizontal_tb`."
         }
       },
       "type": "object"
     },
     "TableHeaderSpec": {
       "additionalProperties": false,
+      "description": "The header row's height and styling. It is chrome rather than a bound element, so `row.conditionalStyles` never reaches it.",
       "properties": {
         "height": {
           "anyOf": [
@@ -3131,7 +3516,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "A fixed height for the header row."
         },
         "style": {
           "anyOf": [
@@ -3141,15 +3527,18 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The header row's style layer. Its `backgroundColor` replaces the default header fill."
         },
         "styleNames": {
+          "description": "Named `styles:` entries layered under the header's inline style, in listed order.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "visuallyHidden": {
+          "description": "Whether the header row paints nothing — no label glyphs, no band fill, no grid ruling — while the labels stay in the PDF's text layer, so an extractor, a search index or an AI can still tell what each column means. Defaults to false. The row KEEPS its height, and a `headerGroups` row is hidden with it. Not a structure tree: no tagged PDF is emitted, so a screen reader gets the labels as flowing text with no header-to-column association. The table's own outer frame is not the row's and still draws across the strip.",
           "type": [
             "boolean",
             "null"
@@ -3160,35 +3549,43 @@
     },
     "Template": {
       "additionalProperties": false,
+      "description": "One document's template file: page geometry, the optional named-style and format registries, the presentation defaults, and the sections whose items produce content. Every wire struct rejects unknown keys, so a typo is a located parse error rather than a silent \"unset\", and non-finite numbers are refused anywhere in the document.",
       "properties": {
         "defaults": {
-          "$ref": "#/$defs/TemplateDefaults"
+          "$ref": "#/$defs/TemplateDefaults",
+          "description": "The document's presentation defaults: the style cascade root, which the `rem` unit also follows, and the per-type format defaults."
         },
         "document": {
-          "$ref": "#/$defs/DocumentMeta"
+          "$ref": "#/$defs/DocumentMeta",
+          "description": "Metadata written into the PDF's `/Info` dictionary and XMP. PDF only: PNG previews carry no metadata."
         },
         "formats": {
           "additionalProperties": {
             "$ref": "#/$defs/NamedFormat"
           },
+          "description": "The named format registry a binding's `format:` may reference — date and datetime patterns given a name once and reused. At most 256 entries.",
           "type": "object"
         },
         "name": {
+          "description": "The template's own name. Informational — the engine never renders it.",
           "type": [
             "string",
             "null"
           ]
         },
         "page": {
-          "$ref": "#/$defs/PageSpec"
+          "$ref": "#/$defs/PageSpec",
+          "description": "Page size, orientation and margin. Omitted means A4 portrait with a 25 pt margin."
         },
         "sections": {
-          "$ref": "#/$defs/Sections"
+          "$ref": "#/$defs/Sections",
+          "description": "The document's content. Required."
         },
         "styles": {
           "additionalProperties": {
             "$ref": "#/$defs/Style"
           },
+          "description": "The named-style registry items reference through `styleNames`, the CSS-class analogue. At most 256 entries (`too_many_styles`); styles are flat, so one cannot reference another.",
           "type": "object"
         },
         "version": {
@@ -3199,7 +3596,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "An author-owned version marker. The engine records it and interprets nothing; a number or a string both parse and round-trip in the form they were written."
         }
       },
       "required": [
@@ -3209,8 +3607,10 @@
     },
     "TemplateDefaults": {
       "additionalProperties": false,
+      "description": "Document-wide presentation defaults, the CSS `:root` analogue. A placement binds its key; how a date or an amount LOOKS is decided once here, so changing a default changes every placement that did not override it. Every key is omitted when unset, so an untouched template writes back without this block.",
       "properties": {
         "currency": {
+          "description": "The document's currency CODE, as ISO 4217. The middle of the currency fallback chain — a field's own `currency:`, then this, then the pack's default, then `JPY` — which is what lets a currency binding stay a bare key with no per-field code.",
           "type": [
             "string",
             "null"
@@ -3224,9 +3624,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Per-type format defaults, one per engine field type. Unknown type keys are parse errors."
         },
         "locale": {
+          "description": "The document's locale id, as a BCP 47 tag. It selects the locale pack, which drives dates, currency display, grouping separators and units. On the CLI it is the fallback when `--lang` is absent.",
           "type": [
             "string",
             "null"
@@ -3240,12 +3642,14 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The cascade ROOT style. Inherited properties flow from here into every item, and the `rem` unit resolves against this style's computed font size, falling back to the engine's 10 pt when unset."
         }
       },
       "type": "object"
     },
     "TextAlign": {
+      "description": "Inline alignment within the line box. `left` and `right` name the block's start and end edges, and `center` splits the remaining space; on a vertical block those edges are the column's top and bottom.",
       "enum": [
         "left",
         "center",
@@ -3254,6 +3658,7 @@
       "type": "string"
     },
     "TextCombineUpright": {
+      "description": "Tate-chu-yoko: `none` combines nothing, `all` combines the whole styled scope into one upright cell, and the map form `{ digits: n }` combines runs of up to n consecutive ASCII digits, with n from 2 to 4.",
       "oneOf": [
         {
           "enum": [
@@ -3278,6 +3683,7 @@
       ]
     },
     "TextDecoration": {
+      "description": "A decoration line drawn on text. `none` draws nothing; `underline` draws below the baseline; `line_through` draws across the glyphs. On a vertical block an underline becomes the side line right of the em cell, following the JLREQ convention.",
       "oneOf": [
         {
           "const": "none",
@@ -3295,6 +3701,7 @@
     },
     "TextMark": {
       "additionalProperties": false,
+      "description": "The oval overlaid on a text item's glyph band. Its presence may be params-driven while its geometry stays derived from the glyphs, so an unmatched mark changes nothing about the layout.",
       "properties": {
         "data": {
           "anyOf": [
@@ -3304,7 +3711,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The presence binding. Absent means always draw, which is the pure-decoration case; with `equals` or as a boolean it draws only on a match."
         },
         "padding": {
           "anyOf": [
@@ -3314,12 +3722,15 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The clearance between the glyph band and the oval. Unset applies an em-proportional default with a perceptual OVERSHOOT baked in, since a round shape flush with the caps reads smaller than it is. A negative value clamps so the oval stays positive."
         },
         "style": {
-          "$ref": "#/$defs/Style"
+          "$ref": "#/$defs/Style",
+          "description": "The oval's decoration subset — border width and colour, background colour and opacity — with a 1 pt outline default when no layer authors a width."
         },
         "styleNames": {
+          "description": "Named `styles:` entries layered under the mark's inline style, in listed order.",
           "items": {
             "type": "string"
           },
@@ -3329,6 +3740,7 @@
       "type": "object"
     },
     "TextOrientation": {
+      "description": "How characters sit inside a vertical column. `mixed` keeps CJK and kana upright and rotates Latin and digits 90 degrees clockwise; `upright` keeps every character upright.",
       "oneOf": [
         {
           "const": "mixed",
@@ -3341,6 +3753,7 @@
       ]
     },
     "TextOverflow": {
+      "description": "What text does when it exceeds a definite box height. `visible` overflows and reports it; `shrink` reduces the computed font size until the content fits; `ellipsis` truncates and appends an ellipsis; `clip` cuts at the box edge with no marker.",
       "oneOf": [
         {
           "const": "visible",
@@ -3361,6 +3774,7 @@
       ]
     },
     "TextSpacingTrim": {
+      "description": "How the internal space around fullwidth punctuation is trimmed. `space_all` trims nothing, leaving output unchanged; `normal` trims the space between two adjacent fullwidth punctuation glyphs to half-width; `trim_start` also trims a fullwidth opening bracket sitting at a line head.",
       "oneOf": [
         {
           "const": "space_all",
@@ -3377,6 +3791,7 @@
       ]
     },
     "TrackSpec": {
+      "description": "A grid axis: a COUNT, which splits the content size equally after the gaps, or a LIST of tracks mixing lengths, `fr` weights and `auto`.",
       "oneOf": [
         {
           "minimum": 0,
@@ -3399,9 +3814,11 @@
         {
           "type": "string"
         }
-      ]
+      ],
+      "description": "An author-owned version marker: a number or a string, kept in the form it was written so the file round-trips. The engine does not interpret it."
     },
     "VerticalAlign": {
+      "description": "Block-axis alignment of content within the item's box. `top`, `middle` and `bottom` name the box's start, centre and end; on a vertical block they map CSS-logically onto the column stack, so `top` is the right edge.",
       "enum": [
         "top",
         "middle",
@@ -3411,8 +3828,10 @@
     },
     "VisibleBinding": {
       "additionalProperties": false,
+      "description": "The predicate deciding whether an item is shown, available on every item. It is the form-mark presence binding generalized to the whole item vocabulary — the same keys, the same truth table, the same diagnostics about a literal that can never match — plus a choice about the SPACE the item leaves behind. A key missing from params, or one that simply does not match, hides the item SILENTLY, so a blank form draws nothing and says nothing.",
       "properties": {
         "collapse": {
+          "description": "Whether a hidden item is removed from layout entirely rather than reserving its box. Defaults to false, the form-mark posture, where everything around the item stays exactly where it was so a blank-versus-filled params pair never shifts the layout by a point. True closes the siblings up over it and takes the separating gap with it.",
           "type": [
             "boolean",
             "null"
@@ -3426,9 +3845,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The value the field must equal for the item to show. Equality is TYPE-STRICT, so the string `\"2\"` never matches the number 2, and an array value is a multi-select — the item shows when the array CONTAINS this value, which is what a checkbox group's params look like. Omitted, the value is read as a boolean and the item shows when it is true."
         },
         "key": {
+          "description": "The params field to read, as a dotted path. Required.",
           "type": "string"
         },
         "scope": {
@@ -3439,7 +3860,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Which data the key resolves against inside a repeat cell. Defaults to `element`, so each element decides for itself; `document` is the escape a page-global flag needs."
         }
       },
       "required": [
@@ -3448,6 +3870,7 @@
       "type": "object"
     },
     "WritingMode": {
+      "description": "The block and inline directions of a text surface. `horizontal_tb` is the default — lines run left to right and stack downward. `vertical_rl` turns a text item into a vertical block: characters fill top to bottom and columns lay out right to left.",
       "oneOf": [
         {
           "const": "horizontal_tb",

@@ -172,7 +172,7 @@ injected at parse). The template model splits along CSS lines.
   `{top/right/bottom/left}` closed-map shape all three border properties
   parse by hand), and `sub::<T>` (a `$ref` into `$defs`). Every wire type
   in this crate carries `#[cfg_attr(feature = "schema",
-  derive(schemars::JsonSchema))]`; these files exist for the **14 types
+  derive(schemars::JsonSchema))]`; these files exist for the **15 types
   whose `Deserialize` is hand-written**, where the derive would describe
   the Rust shape instead of the accepted wire form. Living out of the wire
   files is what keeps `definitions/schema.rs`, `edges.rs` and

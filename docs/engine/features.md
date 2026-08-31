@@ -1649,8 +1649,14 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   regenerates it; `make reference:check` fails on drift and runs the
   schema tests with it. The derive lives behind `engine/core`'s
   non-default `schema` feature, so no shipped binary links it. The
-  document carries structure only — per-key prose is a separate,
-  unbuilt layer (`docs/agents/engine.md` § The key catalog).
+  document carries both halves: the derived structure, and the
+  **per-key prose** authored beside it in
+  `engine/authoring/reference/annotations/en.yml` and merged in as
+  node-local `description` at generation time. A second gate holds that
+  layer complete — every node annotated, every annotation naming a real
+  node, and every closed value set naming all of its values — so a key
+  added to the wire arrives un-annotated and is named rather than shipping
+  as a silent gap (`docs/agents/engine.md` § The key catalog).
 - License: triple **MIT OR Apache-2.0 OR BSD-3-Clause**. Bundled
   examples (the full inventory + gallery order live in
   `docs/code-map/repo.md` and README.md § Gallery): business documents

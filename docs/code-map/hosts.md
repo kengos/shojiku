@@ -102,15 +102,34 @@ false`), no clap.
   Docker builder both see it) and `CATALOG_PATH` (a compile-time constant
   from `CARGO_MANIFEST_DIR`; the generator takes no argument and reads no
   environment, so nothing a caller supplies steers a write).
+  `ANNOTATIONS` (`include_str!` of `reference/annotations/en.yml`, the
+  authored per-key prose; English only — the engine does not translate).
   `reference/generate.rs` (`schema` feature only) — two roots
   (`Template`, `Definitions`) into one `$defs`, `for_deserialize`, and the
   `StripDeveloperProse` transform that removes the `description`/`title`
-  schemars lifts out of Rust doc comments: node-local prose belongs to the
-  unbuilt annotation layer, and pre-filling it would make that layer's
-  "every node has an annotation" gate pass vacuously.
+  schemars lifts out of Rust doc comments, so the prose in the artifact is
+  the AUTHORED layer rather than developer text in the wrong register.
+  `reference/annotate.rs` (`schema` only) — merges the annotations onto
+  the nodes they name, by LOOKUP not by walking, so a mistyped key cannot
+  decorate an arbitrary subschema; it upgrades a boolean schema (`true`,
+  from `Option<serde_json::Value>`) to the equivalent `{}` so the node can
+  carry prose at all — `Schema.recommendedStyle` is the only one.
+  `reference/annotations.rs` (DEFAULT feature) — the rule the gate is:
+  `nodes()`, `branches()`, `anonymous_branches()`, `audit() -> Vec<Problem>`,
+  `parse()`, plus `annotations/closed.rs` (`closed_values`/`closed_union`,
+  the two spellings a closed value set reaches the catalog in).
   `src/bin/reference-gen.rs` — `[[bin]]` with `required-features =
   ["schema"]`, so a default build never compiles it.
-  Artifact: `reference/catalog.schema.json` (81 named shapes).
+  Artifact: `reference/catalog.schema.json` — 84 named shapes, and **420
+  annotatable NODES**, which is not the same set: the wire's tagged unions
+  are internally tagged, so schemars emits them as `oneOf` branches rather
+  than named shapes and the 15 item types plus the 2 body kinds live only
+  there. A node is a shape, one of its properties, a DISCRIMINATED branch,
+  or one of that branch's properties (`Item.text.data`). Excluded, both
+  pinned by the gate rather than trusted: the 7 anonymous branches and their
+  20 keys (no name to address them by; described by the parent's prose or by
+  the shape each key `$ref`s), and a branch's own `type` key, which IS the
+  branch.
   Gates: `make reference:generate` regenerates, `make reference:check` runs
   the schema tests **and** the drift comparison — the comparison alone is
   an idempotence claim and would protect a wrong artifact just as well.
