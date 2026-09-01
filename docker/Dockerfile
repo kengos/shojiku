@@ -11,6 +11,11 @@ COPY engine ./engine
 # into the runtime stage below. Removing this line fails the build with
 # `couldn't read .../examples/...` from inside a macro expansion.
 COPY examples ./examples
+# Same rule, second tree: `shojiku-mcp` embeds the authoring reference pages
+# (`docs/engine/*.md`) so `list_reference` / `get_reference` work with no
+# root path either. `docs/` is otherwise a docs-only directory, which is
+# exactly why this line is easy to drop — no Rust gate can see its absence.
+COPY docs/engine ./docs/engine
 WORKDIR /app/engine
 # --locked: the committed Cargo.lock is authoritative; fail the build
 # rather than silently resolving new dependency versions.

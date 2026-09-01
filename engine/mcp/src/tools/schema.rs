@@ -82,7 +82,7 @@ pub(crate) fn descriptors() -> Value {
         },
         {
             "name": "get_example",
-            "description": "Read one bundled example by its shojiku://example/<bucket>/<name> URI: returns its source files together (templates.yml with the definitions.yml its bindings need, and params.json). Append /<file> to read a single file. Same content as resources/read, for clients that do not fetch resources.",
+            "description": "Read one bundled example by its shojiku://example/<bucket>/<name> URI: returns its source files together (templates.yml with the definitions.yml its bindings need, and params.json). Append /<file> to read a single file. Same content as resources/read, for clients that do not fetch resources; a shojiku://reference/... URI is answered here too, since the URI names its own family.",
             "inputSchema": {
                 "type": "object",
                 "properties": { "uri": example_uri_prop() },
@@ -102,7 +102,30 @@ pub(crate) fn descriptors() -> Value {
                 },
             },
         },
+        {
+            "name": "list_reference",
+            "description": "List the authoring reference: one page per feature, each with its shojiku://reference/... URI, what it covers and which catalog shapes it documents. This is the syntax reference itself, not a document — read a page when you need to know which construct to pick or what keys it takes (needs no inputs).",
+            "inputSchema": { "type": "object", "properties": {} },
+        },
+        {
+            "name": "get_reference",
+            "description": "Read one reference page by its shojiku://reference/<page> URI: returns the page markdown (syntax, defaults, limitations) and its keys as a JSON Schema fragment. Append #<key> for that key on every shape of the page carrying it, each naming its owner — or #<Shape> / #<Shape>.<key> to narrow. The fragment's own $refs point outward: `#/$defs/<Name>` resolves at shojiku://reference/<page>#<Name>, and list_reference's `shapes` says which page owns which name. Same content as resources/read, for clients that do not fetch resources; a shojiku://example/... URI is answered here too, since the URI names its own family.",
+            "inputSchema": {
+                "type": "object",
+                "properties": { "uri": reference_uri_prop() },
+                "required": ["uri"],
+            },
+        },
     ])
+}
+
+/// The reference-page property: the exact URI shape, since a wrong guess
+/// costs a round trip.
+fn reference_uri_prop() -> Value {
+    json!({
+        "type": "string",
+        "description": "A page URI from list_reference: `shojiku://reference/<page>` for the whole page, or `shojiku://reference/<page>#<key>` for that key's catalog node on every shape of the page carrying it (`#<Shape>` / `#<Shape>.<key>` narrow when a key is on several shapes)",
+    })
 }
 
 /// The pattern-probe list: patterns previewed before they are authored.

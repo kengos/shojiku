@@ -1549,20 +1549,22 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   hand-rolled — no async runtime) exposing the
   authoring surface as tools: `validate` / `render_preview` /
   `inspect_layout` / `capabilities` / `format_catalog`, plus the read
-  surface's `list_examples` / `get_example`. Capability key `mcp.stdio`; the
+  surface's `list_examples` / `get_example` and `list_reference` /
+  `get_reference`. Capability key `mcp.stdio`; the
   binary ships in the Docker image
   (`docker run -i --entrypoint shojiku-mcp`).
 - **The server says what it is for, at `initialize`.** The result carries
   an `instructions` string — the three-file model, the
   validate → render_preview → inspect_layout loop, where the bundled
-  examples are, and the staleness rule (whatever the agent recalls about
+  examples and the syntax reference are, and the staleness rule (whatever the agent recalls about
   Shojiku syntax is absent from its training data or older than this
   build, so the running engine is the authority). An agent installed the
   advertised way has no `docs/` and no `skills/`; this is the only text
   it is guaranteed to see before it starts authoring.
 - **The bundled examples are readable over the wire** (`mcp.examples`).
-  32 entries — the 24 the product gallery lists, the syntax showcase, and
-  the 7 blank per-locale presets — addressed as
+  34 entries — the 25 the product gallery lists, 2 development documents
+  (the syntax showcase and the site's live-editor sample) and the 7 blank
+  per-locale presets — addressed as
   `shojiku://example/<bucket>/<name>`, with `…/<file>` for one source
   file. Discovery is a TOOL (`list_examples`: title, what each entry
   exercises, file names and sizes) because several MCP clients never pull
@@ -1583,6 +1585,52 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   the per-file bound is asserted over the compiled-in corpus at build
   time instead, so an oversized example fails the suite rather than
   shipping unreadable.
+- **The authoring reference is readable over the wire** (`mcp.reference`).
+  All 33 pages of [the reference](README.md) — every `docs/engine/*.md`
+  except this file — addressed as `shojiku://reference/<page>`, with
+  `<page>#<key>` for that key's catalog node on every shape of the page
+  carrying it. Discovery is a TOOL
+  (`list_reference`: title, group, what the page covers, the catalog
+  shapes it documents) for the same reason `list_examples` is one; the
+  fetch is either `resources/read` or the `get_reference` tool over the
+  same body of text. A page answers TWO parts: its markdown — the syntax
+  examples and the `## Limitations` the catalog cannot express — and the
+  page's keys as a JSON Schema fragment cut from the same key catalog the
+  site renders. The page→shape map is the page's own `reference:` front
+  matter, so nothing is maintained beside it, and a test asserts both that
+  the embedded set equals `docs/engine/` in both directions and that the
+  declared shapes are an exact partition of the catalog's 84 `$defs`.
+  This is what lets an agent with no checkout answer "which construct do I
+  pick" — an example shows one way to do one thing, and a `validate`
+  rejection can correct a wrong key inside a construct the agent already
+  reached but never tell it the construct exists.
+- **A key that sits on several shapes answers with all of them.** On five
+  pages a bare key is genuinely ambiguous (`table#style` is a property of
+  five of that page's seven shapes), so `#<key>` is an ENUMERATION: every
+  match on the page, each naming its owning shape. `#<Shape>` and
+  `#<Shape>.<key>` narrow. Picking one owner would be silently wrong, and
+  asking for disambiguation would cost a round trip.
+- **The schema fragment's `$ref`s point outward, and it says so.** Because
+  the page→shape map is an exact partition, a shape one node references is
+  owned by a DIFFERENT page — `box`'s `OptBox.w` points at `Length`, which
+  the `length` page owns — so no page can resolve its own pointers.
+  Inlining the closure is the wrong answer: it would copy one node into a
+  dozen pages and multiply the response size. Every fragment carries a
+  `$comment` instead, saying that `#/$defs/<Name>` resolves at
+  `shojiku://reference/<page>#<Name>`, and that `list_reference`'s
+  `shapes` is the table of which page owns which name. The same sentence
+  rides `howToRead` and the `get_reference` descriptor.
+- **The reference half is bounded at BUILD time, not by refusal.** The two
+  families bound different things. An over-cap example bundle has
+  somewhere else to send the client — its per-file URIs — so it is refused
+  at read time. A page has no such fallback, so refusing one would only
+  make it unreachable; its bound is asserted over the compiled-in corpus
+  instead, and over what a read actually ANSWERS (the markdown plus the
+  serialized schema half), not over the `.md` file. The reference bound is
+  96 KiB, above the examples' 64 KiB, and today's largest response is
+  `shojiku://reference/template` at ~68 KiB — a 6 KiB file that declares
+  eight shapes, `Item` among them, so the schema half is ten times the
+  prose.
 - **`resources` is declared bare** (`{}`): `resources/list` and
   `resources/read` are implemented, `subscribe` and `listChanged` are
   not, which MCP 2025-06-18 permits explicitly and which is honest — the

@@ -16,6 +16,7 @@ use std::process::ExitCode;
 
 mod examples;
 mod instructions;
+mod reference;
 mod resources;
 mod rpc;
 mod server;

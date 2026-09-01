@@ -1,6 +1,11 @@
 .git
 .claude
 docs
+# …except the authoring reference: `shojiku-mcp` embeds `docs/engine/*.md`
+# with `include_str!`, so the builder stage COPYs it and needs it in the
+# context. Un-ignoring is per-path and ORDER-SENSITIVE — this line must
+# stay after the `docs` above.
+!docs/engine
 gui
 sdk
 plugins

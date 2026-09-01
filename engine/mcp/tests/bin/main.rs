@@ -31,6 +31,8 @@ fn initialize_list_and_capabilities_over_stdio() {
                 "\n",
                 r#"{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"format_catalog","arguments":{"lang":"ja-JP"}}}"#,
                 "\n",
+                r#"{"jsonrpc":"2.0","id":7,"method":"resources/read","params":{"uri":"shojiku://reference/box#margin"}}"#,
+                "\n",
             )
             .as_bytes(),
         )
@@ -44,7 +46,7 @@ fn initialize_list_and_capabilities_over_stdio() {
         .lines()
         .map(|line| serde_json::from_str(line).expect("response JSON"))
         .collect();
-    assert_eq!(lines.len(), 6);
+    assert_eq!(lines.len(), 7);
     assert_eq!(lines[0]["result"]["serverInfo"]["name"], "shojiku-mcp");
     // The guidance a client feeds the model, and the resources capability,
     // both ride the real handshake.
@@ -55,20 +57,21 @@ fn initialize_list_and_capabilities_over_stdio() {
     assert!(lines[0]["result"]["capabilities"]["resources"].is_object());
     assert_eq!(
         lines[1]["result"]["tools"].as_array().expect("tools").len(),
-        7
+        9
     );
     let caps = lines[2]["result"]["content"][0]["text"]
         .as_str()
         .expect("capabilities text");
     assert!(caps.contains("mcp.stdio"));
-    // The bundled examples are listable and readable over real stdio — the
+    // Both read families are listable and readable over real stdio — the
     // whole point of the surface, proven through the shipped binary.
+    // 34 bundled examples + 33 reference pages.
     assert_eq!(
         lines[3]["result"]["resources"]
             .as_array()
             .expect("resources")
             .len(),
-        34
+        67
     );
     let source = lines[4]["result"]["contents"][0]["text"]
         .as_str()
@@ -83,6 +86,16 @@ fn initialize_list_and_capabilities_over_stdio() {
     )
     .expect("catalog JSON");
     assert_eq!(catalog["types"].as_array().expect("types").len(), 6);
+    // A reference node, addressed by key, through the shipped binary:
+    // `docs/engine/` really is compiled into this executable.
+    let node: serde_json::Value = serde_json::from_str(
+        lines[6]["result"]["contents"][0]["text"]
+            .as_str()
+            .expect("node text"),
+    )
+    .expect("node JSON");
+    assert_eq!(node["matches"][0]["shape"], "OptBox");
+    assert_eq!(node["matches"][0]["key"], "margin");
 }
 
 /// A client with no shared filesystem: the whole document travels inline in

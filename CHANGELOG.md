@@ -13,6 +13,28 @@ platform binaries.
 
 ## [Unreleased]
 
+### Added
+
+- **The syntax reference is on the MCP wire.** An agent installed the
+  advertised way — `docker pull` plus `claude mcp add` — has no checkout,
+  so until now it could see working examples and `validate`'s objections
+  but never the reference that says which construct to pick. All 33
+  reference pages are now served: `list_reference` for the index, and
+  `get_reference` (or `resources/read`) on
+  `shojiku://reference/<page>` for a page, which answers its markdown —
+  syntax, defaults, limitations — beside its keys as a JSON Schema
+  fragment from the same key catalog the site renders. Append `#<key>`
+  for that key's node on every shape of the page carrying it — where a
+  key sits on several shapes of one page (`table#style` is on five) every
+  match comes back, each naming its owner — and `#<Shape>` /
+  `#<Shape>.<key>` narrow. Each page documents the shapes it owns and no
+  others, so the fragment's `$ref`s point at other pages; it carries a
+  `$comment` saying that `#/$defs/<Name>` resolves at
+  `shojiku://reference/<page>#<Name>`, and `list_reference`'s `shapes`
+  says which page owns which name. Capability key `mcp.reference`.
+  `resources/list` now carries both families — 34 bundled examples and 33
+  reference pages.
+
 ### Fixed
 
 - **A line placed in a header or footer broke the document.** Band items are

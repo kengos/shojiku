@@ -9,7 +9,7 @@ Shojikuのテンプレートは、AIエージェントが読み書きできる�
 
 ## MCPサーバを登録する
 
-`shojiku-mcp`は、`validate` / `render_preview` / `inspect_layout` / `capabilities` / `format_catalog` に加えて、同梱サンプルを読むための `list_examples` / `get_example` を持つstdioサーバで、CLIと同じDockerイメージに入っています。Claude Codeでは、次のコマンドで登録できます。
+`shojiku-mcp`は、`validate` / `render_preview` / `inspect_layout` / `capabilities` / `format_catalog` に加えて、同梱サンプルを読むための `list_examples` / `get_example`、構文リファレンスそのものを読むための `list_reference` / `get_reference` を持つstdioサーバで、CLIと同じDockerイメージに入っています。Claude Codeでは、次のコマンドで登録できます。
 
 ```bash
 claude mcp add shojiku -- \
@@ -33,7 +33,7 @@ npx skills add kengos/shojiku
 
 1. `list_examples` — 目的に一番近い同梱サンプルを探し、`get_example`でそのソースを読む
 2. `definitions.yml`にデータ項目を宣言する
-3. `templates.yml`を書く — 日付や金額の表示バリアントに何が選べて、それぞれどう出るかは`format_catalog`が答える
+3. `templates.yml`を書く — どの構文を使うかは`list_reference`でページを探し`get_reference`で読む。日付や金額の表示バリアントに何が選べて、それぞれどう出るかは`format_catalog`が答える
 4. `validate` — 間違いが診断コードで返る
 5. `render_preview` — ページのPNGを確認する
 6. `inspect_layout` — 確定したレイアウトを読み返す

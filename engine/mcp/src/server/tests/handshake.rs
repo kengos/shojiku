@@ -23,6 +23,7 @@ fn initialize_negotiates_and_identifies_the_server() {
     let instructions = result["instructions"].as_str().expect("instructions");
     assert!(instructions.contains("templates.yml"));
     assert!(instructions.contains("list_examples"));
+    assert!(instructions.contains("list_reference"));
 }
 
 #[test]
@@ -34,15 +35,19 @@ fn resources_are_listed_and_readable_over_the_loop() {
         "\n",
         r#"{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"shojiku://example/nope/nope"}}"#,
         "\n",
+        r#"{"jsonrpc":"2.0","id":4,"method":"resources/read","params":{"uri":"shojiku://reference/box"}}"#,
+        "\n",
     );
     let responses = talk(input);
-    assert_eq!(responses.len(), 3);
+    assert_eq!(responses.len(), 4);
+    // Both families ride one listing: 34 bundled examples + 33 reference
+    // pages.
     assert_eq!(
         responses[0]["result"]["resources"]
             .as_array()
             .expect("resources")
             .len(),
-        34
+        67
     );
     assert_eq!(
         responses[1]["result"]["contents"]
@@ -57,6 +62,13 @@ fn resources_are_listed_and_readable_over_the_loop() {
         responses[2]["error"]["data"]["uri"],
         "shojiku://example/nope/nope"
     );
+    // The second family answers over the same loop: markdown then schema.
+    let page = responses[3]["result"]["contents"]
+        .as_array()
+        .expect("contents");
+    assert_eq!(page.len(), 2);
+    assert_eq!(page[0]["mimeType"], "text/markdown");
+    assert_eq!(page[1]["mimeType"], "application/schema+json");
 }
 
 #[test]

@@ -40,6 +40,12 @@ understood without the definitions its bindings name. The layout showcase \
 entry is the syntax exerciser: most of the authorable surface in one \
 document.
 
+The syntax reference is on this wire too. Call list_reference for the page \
+index — one page per feature — then get_reference on a page URI for its \
+markdown plus its keys as a JSON Schema fragment; append #<key> for every \
+shape on the page carrying it. Read a page to learn WHICH construct to \
+pick or what keys it takes; the examples show a working document.
+
 Before writing a `format:` value on a date, currency or number field, call \
 format_catalog: it lists the display variants this locale and this document \
 can pick, each with what the engine actually renders for it, and previews a \

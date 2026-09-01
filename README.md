@@ -153,7 +153,8 @@ install.
 there: where to get a first template to edit, how to see your changes,
 and how to register the stdio MCP server (`shojiku-mcp` — validate /
 render_preview / inspect_layout / capabilities / format_catalog, plus
-list_examples / get_example for the bundled examples) in Claude Code, Claude
+list_examples / get_example for the bundled examples and list_reference /
+get_reference for the syntax reference) in Claude Code, Claude
 Desktop, VS Code or Cursor.
 
 The agent-first loop in one line — register the server and ask:

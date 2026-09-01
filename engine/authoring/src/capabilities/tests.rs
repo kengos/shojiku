@@ -77,6 +77,9 @@ fn engine_info_reports_version_capabilities_and_locales() {
     // The format catalog as an MCP tool. Pinned individually: the registry's
     // structural tests pass whether or not any given key is present.
     assert!(info.capabilities.contains(&"mcp.formats"));
+    // The authoring reference as MCP resources + tools. Pinned individually
+    // for the same reason.
+    assert!(info.capabilities.contains(&"mcp.reference"));
     // The C ABI library the FFI SDKs load, and its two-call signing surface
     // for a key that lives outside the calling process.
     assert!(info.capabilities.contains(&"capi.abi"));

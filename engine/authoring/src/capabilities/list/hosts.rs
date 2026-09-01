@@ -60,6 +60,15 @@ pub(super) const KEYS: &[&str] = &[
     // `format.catalog` (which reports the QUERY exists at all): a client
     // reaching the engine over stdio needs to know THIS host exposes it.
     "mcp.formats",
+    // The authoring reference on the MCP wire: every reference page listed
+    // by `list_reference` and fetched by `get_reference` or `resources/read`
+    // over `shojiku://reference/<page>` URIs, a page answering with its
+    // markdown beside its keys as a JSON Schema fragment, and
+    // `#<key>` / `#<Shape>` / `#<Shape>.<key>` addressing one catalog node.
+    // Read-only and additive. An agent installed as a container has no
+    // checkout, so absent this key the reference is unreachable to it and
+    // the syntax has to be inferred from the examples and `validate`.
+    "mcp.reference",
     // The browser/Workers WASM bindings (`shojiku-wasm`): the same authoring
     // ops (validate / render / inspect / capabilities) wrapped for JS, with
     // bytes-first injected fonts/assets/locale packs and a three-part render
