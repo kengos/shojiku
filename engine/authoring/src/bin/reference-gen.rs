@@ -10,7 +10,14 @@
 //! Both output paths are COMPILE-TIME constants built from
 //! `CARGO_MANIFEST_DIR`: this binary takes no arguments and reads no
 //! environment, so nothing a caller supplies can steer where it writes.
+//!
+//! It also AUDITS what it cannot write, and it does so BEFORE it writes. The
+//! `## Diagnostics` sections the pages author themselves are held to this
+//! build's registries by [`shojiku_authoring::reference::pages`], so a page
+//! naming a diagnostic code that no longer exists stops the regeneration with
+//! the tree untouched rather than surfacing after a partial rewrite.
 
+use shojiku_authoring::reference::pages::{audit, Known};
 use shojiku_authoring::reference::tables::{page, pages, parse as parse_tables, Inputs, Registry};
 use shojiku_authoring::reference::{generate, CATALOG_PATH, TABLES};
 use shojiku_diagnostics::DiagnosticCode;
@@ -35,7 +42,15 @@ fn registry() -> Registry {
 }
 
 fn main() -> std::io::Result<()> {
-    // The catalog first: the table AUDIT is checked against it, so writing the
+    // The hand-written half FIRST, before a single byte is written. An audit
+    // that runs after the writes cannot refuse them: a failing run would exit
+    // non-zero over a half-regenerated tree. Auditing first is safe because
+    // the splice can never touch a byte this reads — no marker sits inside a
+    // `## Diagnostics` section, which `no_generated_table_sits_inside_a_hand_written_section`
+    // pins — and the vocabulary is compile-time regardless.
+    audit_pages()?;
+
+    // The catalog next: the table AUDIT is checked against it, so writing the
     // tables against a stale one would produce two artifacts that disagree.
     std::fs::write(CATALOG_PATH, generate())?;
     println!("wrote {CATALOG_PATH}");
@@ -65,5 +80,44 @@ fn main() -> std::io::Result<()> {
             }
         }
     }
+
+    Ok(())
+}
+
+/// Holds every page's HAND-WRITTEN `## Diagnostics` section to this build's
+/// registries. Called FIRST, before any write, so a page naming a diagnostic
+/// code, capability key or wire word the engine does not define stops
+/// `make reference:generate` with nothing written.
+fn audit_pages() -> std::io::Result<()> {
+    let mut paths: Vec<PathBuf> = std::fs::read_dir(DOCS)?
+        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+        .filter(|path| path.extension().is_some_and(|ext| ext == "md"))
+        .collect();
+    paths.sort();
+    let mut corpus: Vec<(String, String)> = Vec::with_capacity(paths.len());
+    for path in paths {
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default()
+            .to_owned();
+        corpus.push((name, std::fs::read_to_string(&path)?));
+    }
+    let borrowed: Vec<(&str, &str)> = corpus
+        .iter()
+        .map(|(name, text)| (name.as_str(), text.as_str()))
+        .collect();
+    let known = Known::of_this_build();
+    let (problems, census) = audit(&borrowed, &known.vocabulary());
+    if !problems.is_empty() {
+        for problem in &problems {
+            eprintln!("{problem}");
+        }
+        std::process::exit(1);
+    }
+    println!(
+        "audited {} hand-written diagnostics sections: {} table code claims, {} other in-section tokens",
+        census.sections, census.occurrences, census.checked
+    );
     Ok(())
 }
