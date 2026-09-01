@@ -187,6 +187,55 @@ false`), no clap.
   meanings did not render at all. A row now emits one cell per COLUMN by
   construction.
 
+  `reference/pages.rs` + `pages/` (DEFAULT feature) — the OTHER half of the
+  doc set, the one no spec assembles: the `## Diagnostics` sections the pages
+  write themselves. `audit(pages, &Vocabulary) -> (Vec<Problem>, Census)`, a
+  pure line scan (no regex crate, no filesystem, echo clipped at 64 chars) with
+  two rules. Column 1 of an in-section table must be a `DiagnosticCode`
+  (`Problem::UnknownCode`); every other backticked token in the section
+  carrying an UNDERSCORE must be a code, a `CAPABILITIES` key, or a catalog
+  word (`Problem::UnknownToken`). `pages.rs` holds the shape (`Problem`,
+  `Census`, `Vocabulary`, `audit`); `pages/scan.rs` the walk — section
+  boundaries, fences, column 1 vs the rest, the 64-char echo clip and the
+  `diagnostics-token-exempt:` waiver. `pages/vocabulary.rs` — `catalog_vocabulary`
+  (an ITERATIVE walk, so nothing recurses) and `Known::of_this_build()`, which
+  holds the three sets in ONE place so the drift test and `reference-gen`
+  cannot audit against different vocabularies.
+  Measured on the committed tree and pinned by `Census`: **34 pages, 23 with a
+  section, 22 with a table, 143 rows, 174 column-1 code occurrences, 134
+  distinct codes, 198 underscore-bearing in-section tokens** (174 of them in
+  column 1, **24** judged by the second rule), **0 waived**. The census is the
+  anti-vacuity half and is not decoration: an inert scan reports zero problems,
+  and only these numbers tell that apart from a clean tree.
+  Three lookups because two are not enough: **12** pages carry a
+  `Capability keys:` paragraph INSIDE the section, and on **4** of them it names
+  an underscore-bearing key nothing else defines (`image.fit.cover_none`,
+  `checkbox.auto_size`, `inspect.text_metrics`,
+  `style.borderStyle.dashed_dotted`, `style.lineBreak.strict_loose`) — so
+  registry ∪ catalog leaves a residue of 6 and registry ∪ capabilities leaves 0.
+  The catalog clause
+  covers no token today that the capability list does not — it is there for the
+  sentence that quotes a wire VALUE (19 catalog words carry an underscore), not
+  for the current residue.
+  **What it does NOT reach**, since a gate's scope is the thing its own tests
+  cannot tell you: the heading is matched EXACTLY (a renamed one drops out —
+  the pinned section count is what fails then, not silence); of the **198**
+  tokens the census pins, 174 are column-1 claims and 24 fall to the second
+  rule, so the single-word names beside them (`overflow`, `ellipse`,
+  `checkbox`) go unchecked by both and a mistyped one-word capability key is
+  not caught (no CODE hides there: every registry code has an underscore, and
+  a test says so); and **a code claim written as PROSE is held only to the
+  union**, so a page stating its codes in a sentence can name a real
+  capability key or wire value that is no diagnostic code and pass — a typo or
+  a rename is still caught, a collision is not.
+  **This is deliberately a second mechanism** checking a `Code` table against
+  the registry; the reason, and the measurement that the two never touch the
+  same bytes, are in [../agents/engine.md](../agents/engine.md) § The key
+  catalog. The whole CLASS is swept rather than assumed: all **29** `Code`
+  tables in `docs/engine/` are audited by exactly one of the two — 22 here, 7
+  by the spec on `diagnostics.md`, **0 by neither** — which is what stops a
+  table filed under a third heading from being guarded by nothing.
+
 ## engine/fetch — the host-side font fetch layer
 
 The FIRST and ONLY network code in the repo, and a host crate no engine

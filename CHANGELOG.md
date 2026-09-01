@@ -15,6 +15,20 @@ platform binaries.
 
 ### Added
 
+- **The reference's hand-written diagnostics sections are held to the
+  engine.** Twenty-two pages of the syntax reference carry a `Code | Meaning`
+  table under `## Diagnostics` that nothing generates — 174 code claims in
+  those tables — and a twenty-third states its codes as a sentence instead.
+  None of it was checked by anybody. A diagnostic renamed or retired could
+  leave any of them pointing at a code the engine no longer emits, and a
+  reader looking it up in `diagnostics.md` would find nothing there. Each of
+  the 174 table claims is now held to the code registry alone; every name the
+  same sections quote outside a table — the twenty-third page's codes among
+  them, plus capability keys and wire values — is held to the registry, the
+  capability list and the key catalog together, so a prose name that collides
+  with a capability key or a wire value still passes there. `make engine:test`
+  holds it, and `make reference:generate` audits before it writes, so a page
+  naming a stale code stops the run with the tree untouched.
 - **The syntax reference is on the MCP wire.** An agent installed the
   advertised way — `docker pull` plus `claude mcp add` — has no checkout,
   so until now it could see working examples and `validate`'s objections

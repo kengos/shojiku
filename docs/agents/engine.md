@@ -190,7 +190,7 @@ answers every catalog node on that page carrying the key — an
 ENUMERATION, because a bare key is genuinely ambiguous on five pages and
 picking one owner would be silently wrong.
 
-**Three gates, all required**, mirroring the one that keeps the gallery
+**Four gates, all required**, mirroring the one that keeps the gallery
 honest (regenerate, then fail on drift):
 
 - **built** — the artifact regenerates from the parser and matches what
@@ -219,6 +219,44 @@ honest (regenerate, then fail on drift):
   rule is a pure function (`shojiku_authoring::reference::annotations::audit`)
   over the two committed files, checked in the DEFAULT test suite so the
   workspace coverage run sees every refusal.
+- **hand-written** — the diagnostics sections the pages still write
+  THEMSELVES. Twenty-two pages carry a `Code` table under `## Diagnostics`
+  that no spec assembles, and a twenty-third (`char_grid.md`) states its
+  codes as a sentence with no table at all. Column 1 of those tables is a
+  CODE CLAIM and is held to `DiagnosticCode`; every other backticked token
+  in the section that carries an UNDERSCORE is held to the code registry,
+  the capability list, or the catalog's own vocabulary. The underscore is
+  what makes the second half exact without an allowlist: every registry
+  code contains one (asserted, so a code that ever arrives without one says
+  so), while the single-word wire vocabulary a sentence quotes —
+  `overflow`, `strict`, `hidden` — is excluded by shape.
+  `shojiku_authoring::reference::pages::audit` is the pure function, the
+  drift test in the DEFAULT suite is one caller, and `reference-gen` is the
+  other, and it audits BEFORE it writes, so `make reference:generate` stops on
+  a page carrying a stale name with the tree untouched. The CLASS is swept rather than assumed: all 29 `Code` tables
+  in [../engine/](../engine/) are audited by exactly one of the two mechanisms
+  — 22 here, 7 by the spec on `diagnostics.md`, none by neither — so a table
+  filed under a third heading fails rather than sitting unguarded.
+
+  **Why a SECOND mechanism checks a `Code` table against the registry, and
+  why that is not an oversight.** The `rendered` gate can only hold what a
+  spec ASSEMBLES: `tables.yml` has no audit-only mode — every table it
+  describes is also rendered and spliced, and an `authored` column requires
+  text on every row. Bringing these 22 in therefore means moving 143 rows of
+  page-scoped prose into a central YAML, and the great majority of those 134
+  codes say something on their page that `diagnostics.md` does not — 121 of
+  134 carry at least one page sentence the registry page does not, and 114 of
+  them share no sentence with it at all; the figure moves with the method,
+  which is
+  why the REASON is the durable statement here as it is for the description
+  cells above. That is a table migration in its own
+  right, not the gate this answers. The two are disjoint on the BYTES,
+  measured and test-pinned: no splice marker sits inside any
+  `## Diagnostics` section, so a table is audited by exactly one of them and
+  which one is decided by the presence of a marker rather than by judgement.
+  If the migration is ever done, the second half of this rule — the PROSE
+  claims, which are a whole page's diagnostics surface on `char_grid.md` —
+  still has no other home.
 
 Prose is authored beside the schema rather than lifted from it. schemars
 fills `description` from Rust doc comments for free, and taking the free

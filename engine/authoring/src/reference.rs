@@ -52,6 +52,14 @@ pub const TABLES: &str = include_str!("../reference/tables.yml");
 
 pub mod tables;
 
+/// The rule for the tables and prose the pages still write THEMSELVES.
+///
+/// [`tables`] can only hold what a spec assembles. Twenty-two pages carry a
+/// hand-written `Code` table under `## Diagnostics`, and a twenty-third states
+/// its codes as prose — none of which any spec renders. This is what holds
+/// those claims to `DiagnosticCode`, the capability list and the catalog.
+pub mod pages;
+
 #[cfg(feature = "schema")]
 mod annotate;
 
