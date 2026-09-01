@@ -6,6 +6,7 @@
 
 import type { SnippetValue } from '@shojiku/designer-core';
 import { useCallback, useState } from 'react';
+import { typeFitsOwner } from '../canvas/dnd';
 import type { EditorController } from '../editor/useEditor';
 import { bandBoxHeightPt } from '../insert/bandGeometry';
 import { bandInsertY, bandPlaced } from '../insert/bandPlacement';
@@ -107,6 +108,16 @@ export function useBlocks({
       }
       const target = resolveInsertTarget(read, selection);
       const band = bandOf(target.path);
+      // The menu already disables this row, and this is the second lock on the
+      // same door: a flow-only kind inside a band is a PARSE error, so the
+      // whole document stops rendering rather than one item misplacing. The
+      // two can only disagree when the selection MOVES between the menu being
+      // built and the row being clicked — the same build-vs-click race the
+      // lookup guard above covers, and not stageable in a single render.
+      /* v8 ignore next 3 -- unreachable while the row is disabled; guards the build-vs-click selection race, like the lookup miss above */
+      if (band !== null && !typeFitsOwner((block.value as Record<string, unknown>).type, 'band')) {
+        return;
+      }
       const result = apply({
         op: 'insertItem',
         path: target.path,

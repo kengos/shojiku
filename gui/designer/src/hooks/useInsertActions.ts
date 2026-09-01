@@ -106,15 +106,18 @@ export function useInsertActions({
   // Whether a scaffold may name a charset-unsafe field through a declaration
   // instead of degrading (an older engine parse-rejects `bindings:`).
   const canDeclare = capabilities === undefined || capabilities.includes('binding.declarations');
-  // The insert menu's element group. The cut-here line row needs the engine to
-  // understand `line`'s `style:` — against an older engine its snippet would
-  // be a parse error, so the row is absent rather than broken.
-  const insertGroups = insertMenuGroups(
-    iterableAvailable(paletteGroups, workshop),
-    hasImageCodec,
-    workshop,
-    capabilities === undefined || capabilities.includes('line.style'),
-  );
+  // The insert menu's element group. Both line rows are capability-gated —
+  // against an older engine their snippets would be parse errors rather than
+  // drawings, so each row is absent rather than broken: the cut-here rule needs
+  // `line`'s `style:`, and the plain rule needs a `Length` endpoint (it spans
+  // `100%` of whatever it sits in).
+  const insertGroups = insertMenuGroups({
+    iterable: iterableAvailable(paletteGroups, workshop),
+    image: hasImageCodec,
+    field: workshop,
+    cutLine: capabilities === undefined || capabilities.includes('line.style'),
+    line: capabilities === undefined || capabilities.includes('line.length'),
+  });
 
   // Insert a default snippet at the resolved target (into the selected
   // container, after the selected item, or appended to the body) and select

@@ -41,6 +41,40 @@ describe('page numbers and band inserts', () => {
     expect(written).toMatch(/page_number[\s\S]*x: 0[\s\S]*y: \d+/);
   });
 
+  it('offers the plain rule only when the engine advertises the Length endpoint', () => {
+    // The gate lives in this hook, not in `insertMenuGroups` — a mistyped
+    // capability key would leave the model correct and the row permanently
+    // absent, with every `insertMenu` test still green. On/off through the
+    // real prop is what pins the THREADING.
+    draw(makeTransport(), { capabilities: ['line', 'line.length'] });
+    fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+    expect(screen.getByRole('menuitem', { name: 'Line' })).toBeDefined();
+
+    draw(makeTransport(), { capabilities: ['line'] });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Insert' })[1]);
+    expect(screen.queryAllByRole('menuitem', { name: 'Line' })).toHaveLength(0);
+  });
+
+  it('places a rule in a band through its ENDPOINTS, authoring no box', () => {
+    // The end-to-end form of the parse-error class: `LineItem` has no `box`
+    // field, so the coordinates a band needs have to reach `from`/`to`.
+    const onChange = vi.fn();
+    draw(makeTransport(), { source: BAND_SOURCE, onChange });
+    fireEvent.click(screen.getByRole('button', { name: /Footer/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Line' }));
+    const written = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(written).toContain('type: line');
+    expect(written).not.toContain('box:');
+    // BOTH endpoints carry the same y, and it is the band offset plus the
+    // snippet's own 4pt — i.e. the offset reached the coordinates rather than
+    // being dropped. The footer offset is read off the document's own A4
+    // margin box (791pt floored, less the 32pt inset), with no render in the
+    // harness at all.
+    const ys = [...written.matchAll(/y: (\d+)/g)].map((m) => Number(m[1]));
+    expect(ys).toEqual([763, 763]);
+  });
+
   const BODY_ONLY = [
     'version: 0.1.0',
     'sections:',

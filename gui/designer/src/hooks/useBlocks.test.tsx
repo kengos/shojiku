@@ -2,6 +2,7 @@
 // (host-owned list, band-aware insertBlock, save/manage dialogs).
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import type { SavedBlock } from '../insert/blockModel';
 import { ABS_VARIED, outcomeAbs, THREE_ITEMS } from '../testkit/fixtures';
 import { draw, makeTransport } from '../testkit/harness';
 
@@ -142,6 +143,43 @@ describe('Designer — reusable blocks', () => {
     const written = onChange.mock.calls.at(-1)?.[0] as string;
     // Band children are coordinate-placed (x/y added); a body insert stays box-less.
     expect(written).toMatch(/seal[\s\S]*x: 0/);
+  });
+
+  it('refuses a FLOW-ONLY block into a band, in the hook and not only the menu', async () => {
+    // A `repeat`/`repeat_flow`/`page_break` inside a band is a PARSE error, so
+    // the whole document would stop rendering — not just that item. The menu
+    // disables the row, but a disabled row is a UI state and this is where the
+    // document would actually be written, so the guard lives here too.
+    const onChange = vi.fn<(t: string) => void>();
+    const source = [
+      'version: 0.1.0',
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: text',
+      '        text: hello',
+      '  footer:',
+      '    repeat: every_page',
+      '    items: []',
+      '',
+    ].join('\n');
+    const blocks: SavedBlock[] = [
+      { id: 'block-1', name: '明細', value: { type: 'repeat_flow', data: { key: 'rows' } } },
+      { id: 'block-2', name: '社判', value: { type: 'text', text: 'seal' } },
+    ];
+    draw(makeTransport(), { source, onBlocksChange: vi.fn(), blocks, onChange });
+    fireEvent.click(await screen.findByRole('button', { name: /Footer/ }));
+    openInsert();
+    // The row says why instead of acting…
+    const blocked = screen.getByRole('menuitem', { name: /明細/ });
+    expect(blocked.textContent).toContain('a header or footer cannot hold this block');
+    fireEvent.click(blocked);
+    expect(onChange).not.toHaveBeenCalled();
+    // …and the CONTROL: the ordinary block in the same library still inserts
+    // into the same band, so the refusal is about the kind, not the target.
+    fireEvent.click(screen.getByRole('menuitem', { name: '社判' }));
+    expect(onChange.mock.calls.at(-1)?.[0]).toMatch(/seal[\s\S]*x: 0/);
   });
 
   it('disables the save row while a multi-selection is active (wrap first)', async () => {

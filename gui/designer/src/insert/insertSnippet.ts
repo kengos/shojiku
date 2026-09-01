@@ -21,6 +21,16 @@ export function insertSnippet(
       return { type: 'text', text: defaultText };
     case 'cutLine':
       return cutLineSnippet(cutLine);
+    case 'line':
+      // No `style`: the engine's own 1 pt black stroke is already visible, so
+      // authoring one would put a value in the file the user never chose (the
+      // `page_number` `format` precedent). No `box` either — the engine rejects
+      // that key on a `line` outright.
+      return {
+        type: 'line',
+        from: { x: 0, y: RULE_Y_PT },
+        to: { x: '100%', y: RULE_Y_PT },
+      };
     case 'rect':
       return { type: 'rect', box: { w: 120, h: 60 }, style: { borderWidth: 1 } };
     case 'qrCode':
@@ -41,6 +51,19 @@ export function insertSnippet(
  * before the first paint still spans a sensible run. */
 export const DEFAULT_CUT_LINE_PT = 515;
 
+/** How far below the flow cursor a plain rule sits, in pt.
+ *
+ * Measured against the real engine rather than chosen: in a flow a `line`
+ * reserves its own vertical extent and is painted at the BOTTOM of what it
+ * reserves, so every point of `y` becomes air ABOVE the rule and none below it
+ * — the rule is always flush against whatever follows. No value gives it air
+ * on BOTH sides, so this is the least-bad one rather than a balanced one:
+ * probed at 0, 4, 8 and 12 pt, 0 touches the text above and reads as an
+ * underline of it, 8 and 12 open a gap above while still hugging what follows,
+ * and 4 is small enough that the preceding line box's own descent carries the
+ * separation. */
+export const RULE_Y_PT = 4;
+
 /** What a cut-here-line insert needs beyond the menu: the localized label to draw
  * and how wide the rule may run. */
 export interface CutLineText {
@@ -54,9 +77,15 @@ export interface CutLineText {
  * rule, wrapped in one container so it inserts, moves and undoes as a unit.
  *
  * The rule is a real `line` item (its `style: dashed` is the wire this entry
- * is gated on). `line` endpoints are plain pt numbers — no `%` — so the width
- * comes from the caller's render geometry rather than being authored as a
- * fraction. The mark is the localized WORD, not a ✂ glyph: U+2702 is absent
+ * is gated on). Its width comes from the caller's render geometry rather than
+ * from a `"100%"` endpoint — the endpoints DO take a full `Length` (that is
+ * the `line.length` capability the plain-rule row is gated on). That is a
+ * TRADE, not a preference: a pt run is the same length wherever the scaffold
+ * is moved to, and it goes stale on a page-size change and overflows inside a
+ * narrower container, which `"100%"` would not. It stays pt because nobody has
+ * reported the staleness and a committed test pins the floored width; the
+ * plain rule, which has no such history, takes the fraction.
+ * The mark is the localized WORD, not a ✂ glyph: U+2702 is absent
  * from every bundled face except the Chinese packs, so a scissors character
  * would print as tofu (and warn `missing_glyph`) in a Japanese document. */
 function cutLineSnippet(cut: CutLineText): SnippetValue {

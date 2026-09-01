@@ -11,7 +11,7 @@
 
 import type { KeyboardEvent, RefObject } from 'react';
 import type { PlacedBox } from '../engine/types';
-import { scaleRect } from './geometry';
+import { hitRect, scaleRect } from './geometry';
 import { applyBoxKeyPlan, boxDragTask, boxKeyPlan } from './overlayBoxGestures';
 import type { CanvasManipulate, DragTask } from './overlayDragModel';
 import { boxCursor } from './overlayGeometry';
@@ -58,7 +58,11 @@ export function OverlayBox({
   onContextMenu,
   scrolledTo,
 }: OverlayBoxProps) {
-  const r = scaleRect(box.border, scale);
+  // `hitRect`, not the raw scaled rect: a `line`'s placement box is
+  // zero-thickness when axis-aligned, and an SVG rect with a zero side is
+  // neither drawn nor clickable, so the rule would have no selection outline
+  // and could never be picked on the canvas.
+  const r = hitRect(scaleRect(box.border, scale));
   const select = () => onSelect(box.path);
   const onKeyDown = (event: KeyboardEvent<SVGRectElement>) => {
     const plan = boxKeyPlan(event.key, event.altKey, {

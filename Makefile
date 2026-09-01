@@ -205,7 +205,7 @@ endif
 # (which tree do gates run over from here?), `investigate:docker` (a daemon that
 # answers `docker version` can still pull nothing), `investigate:gates` (what is
 # running, and how do I stop it?), `engine:coverage-why`, `engine:render`,
-# `investigate:pins`. See mk/investigate.mk.
+# `engine:preview`, `investigate:pins`. See mk/investigate.mk.
 #
 # `make <gate> JOBS=N` caps parallelism (cargo --jobs / Vitest --maxWorkers) for
 # a machine that `make verify` would otherwise thrash.
@@ -454,7 +454,8 @@ include mk/investigate.mk
         engine\:capi-dist engine\:capi-lib engine\:cli-bin engine\:cli-dist \
         engine\:clippy engine\:coverage engine\:coverage-why engine\:deny \
         engine\:fmt engine\:format engine\:fuzz engine\:lint engine\:lock \
-        engine\:napi engine\:test engine\:update engine\:verify engine\:wasm \
+        engine\:napi engine\:preview engine\:render engine\:test engine\:update \
+        engine\:verify engine\:wasm \
         engine\:wasm-e2e examples\:check examples\:render gui\:budget gui\:dev \
         gui\:e2e gui\:format gui\:lint gui\:lock gui\:normalize-examples \
         gui\:serve gui\:shot gui\:test gui\:update gui\:verify help make\:check \

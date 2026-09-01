@@ -54,7 +54,15 @@ export function insertItems(
     }
     if (entry.kind === 'block') {
       // The label IS the block's user-chosen name (React-escaped text).
-      return { label: entry.name, run: () => w.onInsertBlock(entry.blockId) };
+      // A flow-only block inside a band does not parse — the document stops
+      // rendering entirely — so the row states the reason rather than acting,
+      // the same shape as the band-only page number above.
+      const blocked = entry.flowOnly && w.bandTarget;
+      return {
+        label: blocked ? `${entry.name} — ${t('insert.block.flowOnly')}` : entry.name,
+        run: () => w.onInsertBlock(entry.blockId),
+        disabled: blocked,
+      };
     }
     if (entry.kind === 'manageBlock') {
       return { label: t(entry.labelKey), run: w.onManageBlocks };
