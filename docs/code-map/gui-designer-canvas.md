@@ -78,7 +78,16 @@ hostile geometry degrades to null before it can reach an op.
 
 ## Paint + overlay
 
-- `canvas/geometry.ts` — `scaleRect` pt→px. `canvas/paint.ts` —
+- `canvas/geometry.ts` — `scaleRect` pt→px, plus `hitRect`/`MIN_HIT_PX`:
+  an overlay side that is EXACTLY zero grows to 6px about its own centre.
+  An axis-aligned `line` has a zero-thickness placement box by design and
+  the box index hands the hit tolerance to the overlay
+  (`docs/engine/line.md`); an SVG `rect` with a zero side is neither drawn
+  nor pointer-targetable, so without it a rule has no selection outline and
+  can never be clicked. Deliberately narrow — a merely TINY side is left
+  alone, since growing those would move every small item's outline. Only
+  `OverlayBox` uses it; ghosts, marquees and container marks stay on the
+  raw `scaleRect`. `canvas/paint.ts` —
   `paintPage` RGBA→canvas (no-op without a 2D ctx).
   `canvas/PageUnderlay.tsx` — callback-ref canvas paint.
 - `canvas/BoxOverlay.tsx` — the overlay ASSEMBLY: the `<svg>` element,
@@ -160,7 +169,8 @@ hostile geometry degrades to null before it can reach an op.
   select, right-click menu, double-click edit, per-kind cursors,
   once-per-selection `scrollIntoView`). Paint inlined as the
   no-stylesheet fallback — `fill="transparent"` (not `none`) keeps it
-  hit-testable. It is the ONE reader of `PlacedBox.hidden` that paints
+  hit-testable, and the rect comes through `hitRect` so a zero-thickness
+  one (a `line`) is still both. It is the ONE reader of `PlacedBox.hidden` that paints
   (the layer tree and hit-testing ignore the flag): an unselected hidden
   box gets the GHOST — a dashed 1px outline at 0.4 opacity — plus the
   unstyled `sj-box--hidden` class as a host hook. The flag has two engine
@@ -297,7 +307,9 @@ hostile geometry degrades to null before it can reach an op.
   `manipulationFor` → move | reorder | `{kind:'fixed', reason}` (the
   chip/refusal vocabulary). Exports the untrusted-node read guards
   `record` + `baseLength` the plan/handle models share; the `noBox`
-  refusal reads `panel/itemView.ts`'s shared `BOXLESS_TYPES`.
+  refusal reads `panel/itemView.ts`'s shared `BOXLESS_TYPES` — so the
+  plain-rule insert lands as an item the panel's endpoint fields are the
+  only way to move.
 - `canvas/plan.ts` — the plan VOCABULARY + shared commit math:
   `SnapOptions`/`ManipulationPlan`/`MIN_SIZE_PT`,
   `GRID_STEPS`/`DEFAULT_GRID_STEP`/`normalizeGridStep` (the

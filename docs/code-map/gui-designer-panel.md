@@ -207,8 +207,8 @@ read side, never the reverse.
   defaults; non-numeric width refused, over-cap width clamped to
   `MAX_STROKE_WIDTH` like the border pen).
 - `panel/LineStyleEditor.tsx` — the line cluster for a `line` item
-  (width/colour/keyword picker, capability-gated) — exists because the
-  cut-here-line scaffold can CREATE a line.
+  (width/colour/keyword picker, capability-gated) — reached from both
+  line inserts, the plain rule and the cut-here-line scaffold.
 - `panel/linePoints.ts` + `panel/LinePointsEditor.tsx` + `panel/PointField.tsx`
   — the line's
   GEOMETRY, which is its `from`/`to` endpoints rather than a box (a
@@ -270,9 +270,10 @@ read side, never the reverse.
   `registryNames`, `BOX_AXES`, `imageSourceSummary` (format + KiB — the
   raw `src` never reaches a field). Also the ONE home for **`BOXLESS_TYPES`**
   (`line`/`page_break` — the types whose wire struct takes no `box:` at
-  all): `ItemPanel`'s tab gate, `placementModel`'s classifier and
-  `canvas/manipulate`'s `noBox` refusal all consult this set instead of
-  each keeping their own type list.
+  all): `ItemPanel`'s tab gate, `placementModel`'s classifier,
+  `canvas/manipulate`'s `noBox` refusal and `insert/bandPlacement`'s
+  band-placement branch all consult this set instead of each keeping
+  their own type list.
 - `panel/styleFieldSpecs.ts` — the style keys the panel edits, as data
   (`STYLE_FIELDS`: widget kind + enum options copied from
   `engine/core/src/style/enums.rs`). A no-import leaf shared by item

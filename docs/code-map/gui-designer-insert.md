@@ -114,10 +114,16 @@ succeeded.
 The plain insert is four pure leaves — what the menu OFFERS, what each
 kind INSERTS, what a band REQUIRES, and where the result LANDS:
 
-- `insert/insertMenu.ts` — `InsertKind`/`MenuEntry`/`InsertGroup` +
-  `insertMenuGroups` (the menu's entry-class structure; only populated
-  groups render, capability-less rows absent, band-only rows disabled
-  with a reason). The `band` entry class is UNCONDITIONAL (no
+- `insert/insertMenu.ts` — `InsertKind`/`MenuEntry`/`InsertGroup`/
+  `InsertArming` + `insertMenuGroups(armed)` (the menu's entry-class
+  structure; only populated groups render, capability-less rows absent,
+  band-only rows disabled with a reason). The arming is a NAMED record,
+  not positional booleans — five bare `true`/`false` at a call site said
+  nothing about which row each armed. The two `line` rows gate on
+  DIFFERENT capabilities and so arm independently: the plain rule on
+  `line.length` (its snippet spans `100%`) and the cut-here scaffold on
+  `line.style` (its rule is dashed). The plain rule sits directly after
+  `rect`, which is what a reader flattens to a hairline without it. The `band` entry class is UNCONDITIONAL (no
   capability, host or schema gate — the two section bands have been in
   the wire since 0.1.0) and sits directly under the element group, next
   to the `page_number` row whose disabled reason names it; its rows are
@@ -128,7 +134,14 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
   snippets — rect carries `borderWidth: 1` because a style-less rect
   draws nothing; the cut-here-line snippet is a container + dashed `line`
   sized from the FLOORED content width), `CutLineText`,
-  `DEFAULT_CUT_LINE_PT`.
+  `DEFAULT_CUT_LINE_PT`, `RULE_Y_PT`. The plain rule authors neither
+  `style` (the engine's own 1 pt black is already visible) nor `box` (a
+  parse error on a `line`), and reaches its end with `x: "100%"` rather
+  than render geometry, so it follows whatever it is nested in.
+  `RULE_Y_PT` is MEASURED, not chosen: a flow line reserves its own
+  vertical extent and paints at the BOTTOM of it, so every point of `y`
+  is air ABOVE the rule and none below — 4 pt is the value that reads as
+  a rule rather than as an underline of the text above it.
 - `insert/bandGeometry.ts` — WHICH margin-box height a band insert places
   against: `documentContentHeightPt` (read off the document's own
   `page.size`/`orientation`/`margin` through `readPageView` + `readMarginView`
@@ -142,7 +155,15 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
   where a footer item's line box ran off the sheet and rendered invisibly.
 - `insert/bandPlacement.ts` — `requiresBand`/`bandInsertY`/`bandPlaced`:
   band children are coordinate-placed against the page margin box,
-  height floored.
+  height floored. A BOXLESS item (`panel/itemView`'s `BOXLESS_TYPES`)
+  is the exception and takes the offset in its OWN coordinates — a
+  `box:` on a `line` is an engine parse error, not a misplacement, and
+  shifting `from.y`/`to.y` is what puts a footer rule where footers
+  print. Only a plain numeric `y` shifts; an anchored endpoint has no
+  coordinate and a `Length` string would concatenate (`'50%' + 700`),
+  so both are returned as authored. The values are UNTRUSTED — the
+  other caller is `hooks/useBlocks`, which band-places user-saved
+  blocks restored from browser storage.
 - `insert/bandCreate.ts` — CREATING a band (`sections.header` /
   `sections.footer`), which nothing in the deterministic UI did before:
   `BAND_NAMES`, `BAND_LABEL_KEYS` (ONE catalog key per band, shared by
@@ -185,7 +206,14 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
   `addBlock`/`removeBlock` (caps, fresh ids), `sanitizeBlocks` (the
   restore guard over untrusted storage), `blockInsertGroup` (the
   reusable-blocks menu group; armed only when the host wires
-  `onBlocksChange`).
+  `onBlocksChange`). Each row carries `flowOnly`, read off `canvas/dnd`'s
+  `typeFitsOwner` — the ONE home for which owner a kind fits — so the
+  menubar can disable it inside a band. Unlike the band-only page number,
+  which merely warns in the wrong place, a `repeat`/`repeat_flow`/
+  `page_break` inside a band does NOT parse: the whole document stops
+  rendering. `hooks/useBlocks` re-checks the same predicate at insert time,
+  since a disabled row is a UI state and the two can disagree if the
+  selection moves between the menu being built and the row being clicked.
 - `insert/BlockDialog.tsx` / `insert/BlockManageDialog.tsx` — the
   save-as-block naming modal (IME-guarded Enter) and the manage modal
   (two-step per-row delete).

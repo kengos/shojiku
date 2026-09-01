@@ -373,6 +373,7 @@ export const en: LanguageCatalog = {
     'insert.group.element': 'Elements',
     'insert.text': 'Text',
     'insert.rect': 'Rectangle',
+    'insert.line': 'Line',
     'insert.qrCode': 'QR code',
     'insert.defaultText': 'Text',
     'insert.group.listData': 'List data',
@@ -422,6 +423,7 @@ export const en: LanguageCatalog = {
     'insert.saveBlock': 'Save as reusable block…',
     'insert.saveBlock.needsSelection': 'Select one element first',
     'insert.manageBlock': 'Manage reusable blocks…',
+    'insert.block.flowOnly': 'a header or footer cannot hold this block',
     'contextMenu.saveBlock': 'Save as reusable block…',
     'block.title': 'Save as reusable block',
     'block.hint':

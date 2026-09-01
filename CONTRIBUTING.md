@@ -138,7 +138,8 @@ rather than a document:
 | `make investigate:gates` | what is running, and how to cancel it (Ctrl-C does not reach the container) |
 | `make investigate:last-error` | re-read the last failure with its diagnosis |
 | `make engine:coverage-why` | which lines failed the 100% coverage gate |
-| `make engine:render` | render one template with the pack directories already correct |
+| `make engine:render` | render one template to PDF with the pack directories already correct |
+| `make engine:preview` | the same, to PNG — how to LOOK at a template without a browser |
 | `make investigate:pins` | are the cached images the pinned versions, or something that moved |
 
 `make help` lists them beside the gates.

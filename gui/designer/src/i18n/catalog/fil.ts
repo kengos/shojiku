@@ -165,6 +165,7 @@ export const fil: LanguageCatalog = {
     'insert.group.element': 'Mga elemento',
     'insert.text': 'Teksto',
     'insert.rect': 'Parihaba',
+    'insert.line': 'Linya',
     'insert.qrCode': 'QR code',
     'insert.defaultText': 'Teksto',
     'insert.group.listData': 'Data ng listahan',
@@ -214,6 +215,7 @@ export const fil: LanguageCatalog = {
     'insert.saveBlock': 'I-save bilang nagagamit-muling block…',
     'insert.saveBlock.needsSelection': 'Pumili muna ng isang elemento',
     'insert.manageBlock': 'Pamahalaan ang mga nagagamit-muling block…',
+    'insert.block.flowOnly': 'hindi kayang hawakan ng header o footer ang block na ito',
     'contextMenu.saveBlock': 'I-save bilang nagagamit-muling block…',
     'block.title': 'I-save bilang nagagamit-muling block',
     'block.hint':

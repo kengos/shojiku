@@ -15,11 +15,21 @@ export type ContentMode = 'text' | 'data';
 export const BOX_AXES = ['x', 'y', 'w', 'h'] as const;
 export type BoxAxis = (typeof BOX_AXES)[number];
 
-/** The wire types that take NO `box:` key at all (`line` draws from
- * `from`/`to` points, `page_break` takes only `id`) — the engine rejects the
- * key as a parse error (`deny_unknown_fields`). The ONE home for that rule:
- * the placement tab, the placement classifier, and canvas manipulation all
- * consult this set rather than keeping their own copies. */
+/** The types this app treats as having no `box:` — `line` draws from
+ * `from`/`to` points, `page_break` takes only `id`, and the engine rejects the
+ * key on either as a parse error (`deny_unknown_fields`). The ONE home for
+ * that: the placement tab, the placement classifier, canvas manipulation and
+ * the band placement of an insert all consult this set rather than each
+ * keeping its own type list.
+ *
+ * It is NOT the wire's full boxless list, and the difference is deliberate.
+ * Of the 15 `Item` variants, FOUR omit `box_`: these two plus `repeat` and
+ * `repeat_flow`. The repeaters are excluded because this set gates canvas
+ * MANIPULATION as well, where the boxless arm short-circuits before the
+ * reorder classification — adding them would take drag-reordering away from
+ * two types that legitimately have it in a flow body. Their real problem is
+ * that they are flow-body-only (`canvas/dnd`'s `FLOW_ONLY`), which is a
+ * different predicate and is enforced where it belongs. */
 export const BOXLESS_TYPES: ReadonlySet<string> = new Set(['line', 'page_break']);
 
 export interface ItemView {

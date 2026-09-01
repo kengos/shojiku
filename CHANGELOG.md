@@ -15,6 +15,32 @@ platform binaries.
 
 ### Fixed
 
+- **A line placed in a header or footer broke the document.** Band items are
+  positioned by coordinates, and the Designer supplied those by writing a box —
+  but a line has no box: it is two endpoints, and the engine rejects the key
+  outright. So a rule saved as a reusable block and then inserted into a header
+  produced ``unknown field `box` `` instead of a line. A line placed in a band now
+  takes the offset in its own endpoints, which also puts a footer rule down at
+  the foot of the page rather than at the top of the margin.
+- **A thin rule could not be selected on the canvas.** A line is two points, so
+  the box the Designer draws its selection outline in has no thickness — and a
+  zero-height outline is not drawn and cannot be clicked. Any line, including
+  the one inside a cut-here scaffold, was therefore invisible to the pointer:
+  reachable only from the layer tree. Zero-thickness outlines now get a small
+  band around what they mark, so a rule can be clicked and shows a selection
+  like anything else.
+- **A reusable block could break the whole document.** Blocks can hold any
+  element, but a list, a repeat or a page break only lays out in the body — and
+  inside a header or footer it is not a misplaced item, it stops the document
+  rendering at all. Those blocks are now greyed out with the reason while a
+  band is selected, instead of being offered.
+- **`make engine:render` could not render anything.** It passed `--template`
+  where the CLI takes `--templates`, and treated the required `--params` as
+  optional, so every invocation died on the argument parser. Its PNG sibling
+  `make engine:preview` is new beside it — until now the only command that
+  rasterized anything was the one that re-renders the committed examples, so
+  looking at a hand-written template meant opening the Designer in a browser.
+
 - **Nine diagnostic codes had no explanation on the rendered reference.** The
   diagnostics page's placement-rules table declared two columns while nine of
   its fourteen rows carried three — a half-finished edit — and a Markdown table
@@ -26,6 +52,15 @@ platform binaries.
   severity have one.
 
 ### Added
+
+- **The Designer can draw a line.** Insert ▸ Line puts a plain horizontal rule
+  in the document, next to Rectangle in the menu — which is what people were
+  reaching for instead, flattening a rectangle to a hairline to get a signature
+  line. The rule spans whatever it sits in rather than a fixed measurement, so
+  it still fits after a page-size change or after being nested in a column, and
+  its thickness, colour, dash pattern and both endpoints are editable in the
+  property panel. The dashed cut-here scaffold is unchanged and still its own
+  menu entry.
 
 - **The reference's key and diagnostics tables are now checked against the
   engine.** Thirty-five tables across twenty-four pages — every key table plus

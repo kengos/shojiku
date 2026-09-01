@@ -1,7 +1,7 @@
 // Tests for insertSnippet.ts — the per-kind diagnostics-free default
 // snippets (incl. the cut-line composite and the page-number band item).
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CUT_LINE_PT, insertSnippet } from './insertSnippet';
+import { DEFAULT_CUT_LINE_PT, insertSnippet, RULE_Y_PT } from './insertSnippet';
 
 describe('insertSnippet', () => {
   it('pins the probed diagnostics-free default per kind', () => {
@@ -15,6 +15,35 @@ describe('insertSnippet', () => {
       type: 'qr_code',
       box: { w: 60, h: 60 },
       text: 'https://example.com',
+    });
+  });
+
+  it('scaffolds a plain rule that spans its parent, with no style and no box', () => {
+    // `100%` rather than a pt run: the rule then follows whatever it is nested
+    // in, and needs no render geometry to be right before the first paint.
+    // The ABSENCE of the other two keys is the assertion — `toEqual` fails on
+    // an extra key, where `toMatchObject` would not. A `style` would author the
+    // engine's own 1 pt black; a `box` is a parse error on a `line`.
+    expect(insertSnippet('line', 'テキスト')).toEqual({
+      type: 'line',
+      from: { x: 0, y: RULE_Y_PT },
+      to: { x: '100%', y: RULE_Y_PT },
+    });
+    // The constant too, not only itself: asserting the snippet against
+    // `RULE_Y_PT` alone holds for any value it is ever changed to, and the
+    // value is a probe result about how the rule LOOKS.
+    expect(RULE_Y_PT).toBe(4);
+  });
+
+  it('does not let the cut-line argument reach any other kind', () => {
+    // Every kind takes the same third argument; only `cutLine` may read it.
+    const cut = { label: 'LEAK', width: 123 };
+    expect(insertSnippet('line', 'テキスト', cut)).toEqual(insertSnippet('line', 'テキスト'));
+    expect(insertSnippet('text', 'テキスト', cut)).toEqual({ type: 'text', text: 'テキスト' });
+    expect(insertSnippet('rect', '', cut)).toEqual({
+      type: 'rect',
+      box: { w: 120, h: 60 },
+      style: { borderWidth: 1 },
     });
   });
 

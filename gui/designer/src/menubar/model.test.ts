@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { insertMenuGroups } from '../insert/insertMenu';
+import { type InsertArming, insertMenuGroups } from '../insert/insertMenu';
 import {
   buildMenubar,
   MAX_HOST_MENU_ENTRIES,
@@ -8,6 +8,15 @@ import {
   type MenubarWiring,
   validateHostEntries,
 } from './model';
+
+/** Nothing armed — each call turns on only the rows its assertion is about. */
+const NO_ARMING: InsertArming = {
+  iterable: false,
+  image: false,
+  field: false,
+  cutLine: false,
+  line: false,
+};
 
 const t = (key: string) => key;
 
@@ -24,7 +33,7 @@ function baseWiring(over: Partial<MenubarWiring> = {}): MenubarWiring {
     canUndo: true,
     onRedo: vi.fn(),
     canRedo: true,
-    insert: insertMenuGroups(false, false, false, true),
+    insert: insertMenuGroups({ ...NO_ARMING, cutLine: true }),
     onInsertKind: vi.fn(),
     onContainer: vi.fn(),
     onIterable: vi.fn(),
@@ -155,7 +164,7 @@ describe('buildMenubar', () => {
 
   it('disables the page-number row outside a band, naming the reason', () => {
     const onInsertKind = vi.fn();
-    const groups = insertMenuGroups(false, false, false, true);
+    const groups = insertMenuGroups({ ...NO_ARMING, cutLine: true });
     const outside = buildMenubar(t, baseWiring({ insert: groups, onInsertKind }))[2].groups[0];
     const blocked = outside.find((i) => i.label.startsWith('insert.pageNumber'));
     expect(blocked?.disabled).toBe(true);
@@ -180,7 +189,7 @@ describe('buildMenubar', () => {
         labelKey: 'insert.group.reuseBlock',
         entries: [
           { kind: 'saveBlock', labelKey: 'insert.saveBlock' },
-          { kind: 'block', blockId: 'block-1', name: '社判＋住所' },
+          { kind: 'block', blockId: 'block-1', name: '社判＋住所', flowOnly: false },
           { kind: 'manageBlock', labelKey: 'insert.manageBlock' },
         ],
       },
@@ -203,6 +212,35 @@ describe('buildMenubar', () => {
 
     group[2].run();
     expect(onManageBlocks).toHaveBeenCalledOnce();
+  });
+
+  it('disables a FLOW-ONLY block inside a band, naming the reason', () => {
+    // Unlike the band-only page number, which merely warns in the wrong place,
+    // a `repeat`/`repeat_flow`/`page_break` inside a band does not parse — the
+    // whole document stops rendering — so the row must not act.
+    const insert = [
+      {
+        labelKey: 'insert.group.reuseBlock',
+        entries: [
+          { kind: 'saveBlock', labelKey: 'insert.saveBlock' },
+          { kind: 'block', blockId: 'b1', name: '明細ブロック', flowOnly: true },
+        ],
+      },
+    ] as const;
+    const onInsertBlock = vi.fn();
+    const inBand = buildMenubar(t, baseWiring({ insert, onInsertBlock, bandTarget: true }))[2]
+      .groups[0][1];
+    expect(inBand.disabled).toBe(true);
+    expect(inBand.label).toContain('insert.block.flowOnly');
+
+    // Outside a band the SAME block is an ordinary row — the flag alone never
+    // disables it, which is the control for the assertion above.
+    const outside = buildMenubar(t, baseWiring({ insert, onInsertBlock, bandTarget: false }))[2]
+      .groups[0][1];
+    expect(outside.disabled).toBe(false);
+    expect(outside.label).toBe('明細ブロック');
+    outside.run();
+    expect(onInsertBlock).toHaveBeenCalledWith('b1');
   });
 
   it('disables the save-block row without a savable selection, naming the reason', () => {
@@ -325,7 +363,13 @@ describe('buildMenubar', () => {
     const columns = buildMenubar(
       t,
       baseWiring({
-        insert: insertMenuGroups(true, true, true, true),
+        insert: insertMenuGroups({
+          iterable: true,
+          image: true,
+          field: true,
+          cutLine: true,
+          line: true,
+        }),
         onInsertKind,
         onContainer,
         onIterable,
@@ -336,9 +380,15 @@ describe('buildMenubar', () => {
       }),
     );
     const groups = columns[2].groups;
-    // Elements group: text/rect/qrCode dispatch onInsertKind with the kind.
+    // Elements group: text/rect/line/qrCode dispatch onInsertKind with the kind.
     groups[0][0].run();
     expect(onInsertKind).toHaveBeenCalledWith('text');
+    // The plain rule is an ordinary immediately-acting row: a bare noun, never
+    // disabled, dispatching its kind.
+    const lineItem = groups[0].find((item) => item.label === 'insert.line');
+    expect(lineItem?.disabled).toBe(false);
+    lineItem?.run();
+    expect(onInsertKind).toHaveBeenCalledWith('line');
     // The container entry (before paste) opens the picker.
     const containerItem = groups[0].find((item) => item.label === 'insert.container');
     expect(containerItem).toBeDefined();

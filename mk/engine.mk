@@ -592,9 +592,10 @@ _engine-fuzz:
 				|| exit $$status; \
 		done'
 
-engine\:render: ## Render one template with the pack dirs already right: TPL=<file.yml> [PARAMS=<file.json>]
-	@if [ -z "$(TPL)" ]; then \
-		echo 'usage: make engine:render TPL=examples/business/invoice-ja/template.yml [PARAMS=…/params.json]' >&2; \
+engine\:render: ## Render one template with the pack dirs already right: TPL=<file.yml> PARAMS=<file.json>
+	@if [ -z "$(TPL)" ] || [ -z "$(PARAMS)" ]; then \
+		echo 'usage: make engine:render TPL=examples/business/invoice-ja/templates.yml PARAMS=examples/business/invoice-ja/params.json' >&2; \
+		echo '  Both are required: `shojiku render` takes --templates and --params.' >&2; \
 		echo '  A hand-run CLI has NO default pack directory — only this target passes one,' >&2; \
 		echo '  which is why an ad-hoc `cargo run -p shojiku-cli` dies with `font pack not found`.' >&2; \
 		exit 2; \
@@ -605,7 +606,27 @@ engine\:render: ## Render one template with the pack dirs already right: TPL=<fi
 		-e SHOJIKU_FONT_DIR=/repo/packs/fonts \
 		-e SHOJIKU_LOCALE_DIR=/repo/packs/locale \
 		$(RUST_IMAGE) ./engine/target/release/shojiku render \
-			--template "$(TPL)" \
-			$(if $(PARAMS),--params "$(PARAMS)",) \
+			--templates "$(TPL)" \
+			--params "$(PARAMS)" \
 			--output /repo/.make-logs/engine-render.pdf
 	@printf 'wrote .make-logs/engine-render.pdf\n'
+
+engine\:preview: ## Rasterize one template to PNG so a human can LOOK at it: TPL=<file.yml> PARAMS=<file.json>
+	@if [ -z "$(TPL)" ] || [ -z "$(PARAMS)" ]; then \
+		echo 'usage: make engine:preview TPL=examples/business/invoice-ja/templates.yml PARAMS=examples/business/invoice-ja/params.json' >&2; \
+		echo '  The PNG sibling of engine:render, for looking at a template with no' >&2; \
+		echo '  browser in the loop: examples:render only rasterizes the COMMITTED' >&2; \
+		echo '  examples, and a PDF needs a viewer this repo does not ship.' >&2; \
+		exit 2; \
+	fi
+	@$(CARGO_IN_DOCKER) 'cargo build --release -p shojiku-cli'
+	@rm -f $(CURDIR)/.make-logs/engine-preview-*.png
+	@$(GATE_LOCK) docker run --rm \
+		-v "$(CURDIR):/repo" -w /repo \
+		-e SHOJIKU_FONT_DIR=/repo/packs/fonts \
+		-e SHOJIKU_LOCALE_DIR=/repo/packs/locale \
+		$(RUST_IMAGE) ./engine/target/release/shojiku preview \
+			--templates "$(TPL)" \
+			--params "$(PARAMS)" \
+			--output /repo/.make-logs/engine-preview-{page}.png
+	@ls .make-logs/engine-preview-*.png
