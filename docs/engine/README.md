@@ -14,11 +14,16 @@ the human- and machine-readable source for "what syntax exists"; keep it
 accurate against the code (see the curation rules in
 [../README.md](../README.md)).
 
-These pages are **not** on the MCP wire. An agent talking to
-`shojiku-mcp` gets the initialize `instructions`, the bundled examples
-(`list_examples` / `get_example` / `resources`), `capabilities`, and
-`validate`'s diagnostics — working documents and machine-checkable
-answers, not this reference. Serving the reference itself is open work.
+These pages are on the MCP wire. An agent talking to `shojiku-mcp` calls
+`list_reference` for this index and `get_reference` — or `resources/read`
+on `shojiku://reference/<page>` — for a page, which answers the markdown
+you are reading beside that page's keys as a JSON Schema fragment. Eleven
+pages, this index among them, document keys the catalog names no shape
+for; their schema half is an empty `$defs`, which is itself the answer —
+the prose half carries those keys. Append `#<key>` for that key on every
+shape of the page carrying it. So an agent with no checkout reads the
+reference itself, not only the bundled examples and `validate`'s
+diagnostics.
 
 Feature availability per engine build is machine-checkable: `shojiku
 capabilities` prints the key list, and each page notes its capability
@@ -245,9 +250,11 @@ preview loop) should also load the step-by-step playbook in
 (AI-only — written as instructions to the agent).
 
 Runnable examples live in the **repository source** (`examples/` at the
-repo root) — a docs-only distribution (e.g. what an MCP consumer sees)
-does not include them; the snippets on each feature page are the
-self-contained fallback. Each example directory commits its **rendered
+repo root); the snippets on each feature page are the self-contained
+fallback for a reader who has only these pages. An agent on the MCP
+wire is not such a reader — `list_examples` / `get_example` serve the
+full entries, the same way `list_reference` / `get_reference` serve
+this reference. Each example directory commits its **rendered
 output** (`output.pdf` + `preview-<n>.png`) next to the sources, so you
 can see what a template produces without rendering anything;
 `make examples:render` regenerates them all. The set (gallery order and

@@ -14,6 +14,7 @@ pub(crate) mod formats;
 pub(crate) mod inspect;
 pub(crate) mod pipeline;
 pub(crate) mod preview;
+pub(crate) mod reference;
 pub(crate) mod schema;
 pub(crate) mod sources;
 pub(crate) mod validate;
@@ -31,7 +32,7 @@ use serde_json::{json, Value};
 pub(crate) type ToolOutcome = Result<Value, (i64, String)>;
 
 /// `tools/list` result: the five authoring tools plus the two that read
-/// the bundled examples.
+/// the bundled examples and the two that read the authoring reference.
 pub(crate) fn list() -> Value {
     json!({ "tools": schema::descriptors() })
 }
@@ -56,6 +57,8 @@ pub(crate) fn call(args: &ServerArgs, params: &Value) -> ToolOutcome {
         "list_examples" => examples::list(&arguments),
         "get_example" => examples::get(&arguments),
         "format_catalog" => formats::run(args, &arguments),
+        "list_reference" => reference::list(&arguments),
+        "get_reference" => reference::get(&arguments),
         other => Err((INVALID_PARAMS, format!("unknown tool: {}", clip(other)))),
     }
 }

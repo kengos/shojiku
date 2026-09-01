@@ -26,6 +26,19 @@ fn points_at_the_example_surface() {
 }
 
 #[test]
+fn points_at_the_reference_surface() {
+    // An agent installed as a container has no checkout, so this is the
+    // only thing that tells it the syntax reference is reachable at all.
+    assert!(INSTRUCTIONS.contains("list_reference"));
+    assert!(INSTRUCTIONS.contains("get_reference"));
+    assert!(INSTRUCTIONS.contains("#<key>"));
+    // A fragment ENUMERATES: on five pages a bare key is a property of
+    // several shapes. The one text every agent is guaranteed to see must
+    // not describe it as a lookup that answers one node.
+    assert!(INSTRUCTIONS.contains("every shape"));
+}
+
+#[test]
 fn points_at_the_format_vocabulary() {
     // The one surface an author reaches for while WRITING a value rather
     // than after breaking one; without the signpost it is discoverable only
@@ -44,6 +57,10 @@ fn carries_the_staleness_rule() {
 
 #[test]
 fn stays_a_signpost_rather_than_a_manual() {
+    // Headroom is thin and deliberately so: 52 bytes as this ships, from
+    // 389 before the reference surface was named here. The pin is not a
+    // ceiling to be raised — the next surface added here shortens
+    // something else, which is the point of pinning it at all.
     assert!(
         INSTRUCTIONS.len() < 2500,
         "instructions grew to {} bytes — it is a signpost, not the reference",

@@ -149,7 +149,10 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
 
 ## docker/, docs/, site/, skills/, scripts/
 
-- `docker/` — the runtime image.
+- `docker/` — the runtime image. Two trees outside `engine/` are
+  COMPILE-time inputs of the builder stage because `shojiku-mcp`
+  `include_str!`s them (`COPY examples`, `COPY docs/engine`); dropping
+  either line breaks the image and no Rust gate can see it.
 - `site/` — the public site (Cloudflare Pages): a STANDALONE pnpm project
   (not a gui/ workspace member), VitePress, eleven nav pages + the index
   ×2 locales (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per

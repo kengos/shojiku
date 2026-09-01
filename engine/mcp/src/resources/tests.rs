@@ -18,12 +18,19 @@ fn err(uri: &str) -> RpcError {
 fn list_returns_every_catalog_entry() {
     let listed = list();
     let resources = listed["resources"].as_array().expect("array");
-    assert_eq!(resources.len(), 34);
+    // BOTH families, in one listing: 34 bundled examples and 33 reference
+    // pages. Counted per family rather than as one total, so a change that
+    // drops one family and grows the other cannot pass.
+    let family = |prefix: &str| {
+        resources
+            .iter()
+            .filter(|r| r["uri"].as_str().expect("uri").starts_with(prefix))
+            .count()
+    };
+    assert_eq!(family("shojiku://example/"), 34);
+    assert_eq!(family(crate::reference::uri::PREFIX), 33);
+    assert_eq!(resources.len(), 67, "nothing outside the two families");
     for resource in resources {
-        assert!(resource["uri"]
-            .as_str()
-            .expect("uri")
-            .starts_with("shojiku://example/"));
         assert!(!resource["name"].as_str().expect("name").is_empty());
         assert!(!resource["title"].as_str().expect("title").is_empty());
         assert!(!resource["description"]
@@ -45,10 +52,12 @@ fn listed_uris_are_unique_and_readable() {
         .collect();
     let unique: std::collections::BTreeSet<&&str> = uris.iter().collect();
     assert_eq!(unique.len(), uris.len(), "duplicate URIs in resources/list");
-    // Deterministic order, which `embed::ENTRIES` documents as by-id. The
-    // drift gate compares BTreeSets and is order-blind, so without this the
-    // documented ordering is unpinned — and a list that reshuffles between
-    // calls needlessly invalidates a client's prompt cache.
+    // Deterministic order, which `embed::ENTRIES` documents as by-id (and
+    // `reference::embed::PAGES` as by-stem; `example` sorts before
+    // `reference`, so the concatenation is ordered too). The drift gate
+    // compares BTreeSets and is order-blind, so without this the documented
+    // ordering is unpinned — and a list that reshuffles between calls
+    // needlessly invalidates a client's prompt cache.
     let mut sorted = uris.clone();
     sorted.sort_unstable();
     assert_eq!(uris, sorted, "resources/list must stay ordered by id");
@@ -199,7 +208,11 @@ fn a_hostile_uri_is_refused_as_malformed() {
             error.code, INVALID_PARAMS,
             "{hostile} should be refused as malformed"
         );
-        assert!(error.message.contains("not a Shojiku example URI"));
+        assert!(error.message.contains("not a Shojiku resource URI"));
+        // The refusal names BOTH families, so a client that guessed a
+        // scheme is not pushed toward the wrong one.
+        assert!(error.message.contains(uri::PREFIX));
+        assert!(error.message.contains(crate::reference::uri::PREFIX));
     }
 }
 

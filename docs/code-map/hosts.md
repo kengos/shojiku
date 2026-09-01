@@ -335,15 +335,17 @@ host over authoring.
   `tools/list`, `tools/call`, `resources/list`, `resources/read`;
   notifications never answered).
 - `instructions.rs` — the `INSTRUCTIONS` const returned at initialize:
-  three-file model, the authoring loop, the example surface, and the
-  staleness rule. A signpost, size-pinned by its tests.
+  three-file model, the authoring loop, the example surface, the
+  reference surface, and the staleness rule. A signpost, size-pinned by
+  its tests.
 - `examples.rs` — the bundled-example catalog: `SourceFile`,
   `CatalogEntry { id, title, description, files }`, `catalog()` (built
   once behind a `OnceLock`) and `find(id)`. Prose COMPOSES from
-  `examples/gallery.yml` (`include_str!` + serde_yaml) for the 24 listed
-  entries plus an `EXTRAS` table for the showcase and the 7 presets —
-  never a second copy of the gallery text. `examples/embed.rs` — the
-  compile-time `include_str!` table of all 32 entries' source files (the
+  `examples/gallery.yml` (`include_str!` + serde_yaml) for the 25 listed
+  entries plus an `EXTRAS` table for the 9 the gallery does not list (2
+  `dev/` + the 7 presets) — never a second copy of the gallery text.
+  `examples/embed.rs` — the
+  compile-time `include_str!` table of all 34 entries' source files (the
   one place that knows the repo layout); `examples/uri.rs` — the
   `shojiku://example/…` grammar, a closed charset that refuses `.`/`..`,
   `%`-escapes, control bytes and separators, so a reference NEVER becomes
@@ -351,10 +353,59 @@ host over authoring.
   embedded set is asserted equal to the real `examples/` directory in
   both directions, per-entry file lists included, plus the build-time
   per-file size bound.
-- `resources.rs` — `resources/list` (all 32 entries, complete, no
-  cursor) + `resources/read` (an entry's files together, or one named
-  file). `MAX_ENTRY_BYTES` 64 KiB caps a BUNDLE and refuses with the
-  per-file URIs rather than truncating; a named file is served whole.
+- `reference.rs` — the authoring-reference catalog: `Page { stem, group,
+  summary, shapes, title, body }`, `catalog()` (built once behind a
+  `OnceLock`) and `find(stem)`. `reference/embed.rs` — the compile-time
+  `include_str!` table of the 33 `docs/engine/*.md` pages
+  (`features.md` excluded; the one place that knows where the reference
+  lives, and what makes `docs/engine/` a COMPILE-time input — see the
+  `COPY docs/engine` line in `docker/Dockerfile` AND the `!docs/engine`
+  un-ignore that has to follow `docs` in `.dockerignore`, without which
+  the COPY has nothing to copy). **What it costs, measured on the shipped
+  image**: the 323 KB of markdown lands verbatim in `.rodata` (every page
+  found byte-for-byte in the binary; none in the `shojiku` CLI, which
+  embeds neither tree), making `shojiku-mcp` 9.8 MB — the reference is
+  3.1% of that binary and 0.19% of the 168 MB image. The build CONTEXT
+  pays 482 KB, the whole of `docs/engine` including the unembedded
+  `features.md`.
+  `reference/page.rs` — the `---`-fenced front-matter split + parse
+  (`group`, `summary`, `shapes`) and the H1; the page→shape map IS the
+  front matter, so there is no second artifact to drift, and an
+  unparseable page is DROPPED (the count gate then fails rather than the
+  catalog silently shrinking). `reference/uri.rs` — the
+  `shojiku://reference/<page>[#<fragment>]` grammar, the same closed
+  charset as the example one (maintained in two copies; `uri/tests.rs`
+  holds them EQUAL codepoint by codepoint, `#` excepted as the fragment
+  delimiter) plus a `MAX_FRAGMENT` bound of 64 against a longest real
+  selector of 30. `reference/nodes.rs` — resolution into
+  `shojiku_authoring::reference::CATALOG`: a page's `$defs` fragment, and
+  a selector's matches (a bare key ENUMERATES every owning shape —
+  `table#style` is on five — `#<Shape>` / `#<Shape>.<key>` narrow). The
+  fragment's `$ref`s point OUTWARD (the partition guarantees it), so
+  `REF_RESOLUTION` rides the document as `$comment` and the same sentence
+  rides `howToRead` and the `get_reference` descriptor. `reference/tests.rs`
+  holds the two DRIFT GATES — the embedded set against the real
+  `docs/engine/` directory both ways, and the declared shapes as an exact
+  PARTITION of the catalog's 84 `$defs` (asserted engine-side, not only in
+  the site's suite) — plus `MAX_REFERENCE_BYTES`, the family's own
+  build-time size bound, measured over what a read ANSWERS (body + schema
+  half) rather than over the `.md` file: 96 KiB, against a largest
+  response of ~68 KiB on `template`, whose 6 KiB of prose carry a 62 KiB
+  schema half.
+- `resources.rs` — `resources/list` (both families in one listing: 34
+  example entries + 33 reference pages, complete, no cursor) +
+  `resources/read`, which dispatches on the URI's own prefix. The example
+  half is here (an entry's files together, or one named file);
+  `MAX_ENTRY_BYTES` 64 KiB caps a BUNDLE and refuses with the
+  per-file URIs rather than truncating; a named file is served whole. The
+  reference half has no read-time cap and its own, larger BUILD-time one
+  (`MAX_REFERENCE_BYTES`, above) — a page has no per-file spelling to be
+  refused towards.
+  `resources/reference.rs` — the reference half: a page answers TWO parts
+  (`text/markdown` body byte-for-byte + `application/schema+json` `$defs`,
+  empty for the 11 pages that declare no shapes, so the contents array's
+  shape never depends on which page was asked for), a fragment answers
+  one `application/json` envelope naming each match's owning shape.
 - `tools.rs` — dispatcher + content parts (base64 PNG image parts +
   diagnostics JSON part; `failure_result` — in-band `isError` carries a
   message OR full diagnostics). `tools/examples.rs` — `list_examples`
@@ -364,12 +415,19 @@ host over authoring.
   fault, unlike the resource spelling). `tools/schema.rs` — the pinned tool
   descriptors (`validate`/`render_preview` (page cap without `page`)/
   `inspect_layout`/`capabilities`/`list_examples`/`get_example`/
-  `format_catalog`); inline/path either-or rides
+  `format_catalog`/`list_reference`/`get_reference`); inline/path either-or rides
   `allOf`+`anyOf`. `format_catalog` is the only descriptor that TAKES
   arguments and requires none of them — no `allOf`, no `required` —
-  because a catalog answers without a document (`capabilities` and
-  `list_examples` also declare neither, but they accept no arguments at
-  all). `tools/sources.rs` — `Source` Path|Inline (`<name>`
+  because a catalog answers without a document (`capabilities`,
+  `list_examples` and `list_reference` also declare neither, but they
+  accept no arguments at all). `tools/reference.rs` — `list_reference`
+  (the page index + how to fetch, how to address a key, and where an
+  outward `$ref` resolves) and `get_reference`, which delegates to
+  `resources::read` on the same terms `get_example` does. Because that
+  resolver dispatches on the URI's own PREFIX, each of the two get tools
+  also answers the other family's URI — kept deliberately (the URI is
+  unambiguous), said in both descriptors, pinned in both directions by
+  `tools/reference/tests.rs`. `tools/sources.rs` — `Source` Path|Inline (`<name>`
   XOR `<name>Path`, `MAX_INLINE_BYTES` per-argument cap).
   `tools/assets.rs` — `AssetArgs` → `AssetPolicy` + root (capped id
   lists). `tools/pipeline.rs` — args → `prepare_from` (validation gate

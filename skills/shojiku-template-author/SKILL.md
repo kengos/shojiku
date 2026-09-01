@@ -375,8 +375,10 @@ migrator/debugger skills reference this section, they never restate it.
   | `format_catalog` | — | `templatePath` (or inline `template`), `lang`, `probes` (`[{fieldType, pattern}]`, ≤16) | the pickable spellings per field type with a rendered sample of each, then diagnostics JSON |
   | `list_examples` | — | — | the bundled catalog: each entry's `shojiku://example/...` URI, title, what it exercises, file names, size |
   | `get_example` | `uri` | — | that entry's source files together (append `/<file>` to the URI for one file) |
+  | `list_reference` | — | — | the syntax reference index: each page's `shojiku://reference/...` URI, title, group, what it covers, the catalog shapes it documents |
+  | `get_reference` | `uri` | — | that page's markdown (syntax, defaults, limitations) + its keys as a JSON Schema fragment; `#<key>` returns that key's node on every shape of the page carrying it, `#<Shape>` / `#<Shape>.<key>` narrow |
 
-  **Start from a bundled example rather than a blank file.** The 32
+  **Start from a bundled example rather than a blank file.** The 34
   entries cover invoices, receipts, forms, labels, vertical typography
   and 7 blank per-locale page setups; `dev/layout-showcase` exercises
   most of the syntax in one document. An entry answers its
@@ -386,6 +388,14 @@ migrator/debugger skills reference this section, they never restate it.
   (`shojiku://example/dev/layout-showcase/templates.yml`) — the refusal
   message names the URIs. The same content is a `resources/read` away for
   clients that fetch resources.
+
+  **When the question is "which construct", read the reference page.** An
+  example shows one way to do one thing; `list_reference` is the index of
+  every feature, and `get_reference` on a page answers both halves — the
+  prose with its syntax examples and its `## Limitations`, and the same
+  page's keys as a JSON Schema fragment. `shojiku://reference/table#style`
+  answers every shape on that page carrying a `style` key, each naming
+  its owner, so an ambiguous key costs no round trip.
 
   Every `<name>Path` argument has an inline twin — `definitions` /
   `template` / `params` carrying the source TEXT — for a client that

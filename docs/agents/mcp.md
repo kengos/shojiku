@@ -9,9 +9,10 @@ with a per-call asset policy mirroring the CLI's;
 every template tool response carries its diagnostics, and
 the layout tree/boxes are retrievable via `inspect_layout` with the
 same inputs. The **read surface** is shipped too — `instructions` at
-initialize, and the bundled examples over `list_examples` /
-`get_example` / `resources` (below). The remaining tool surface below is
-future work.
+initialize, the bundled examples over `list_examples` / `get_example` /
+`resources`, and the authoring reference over `list_reference` /
+`get_reference` / `resources` (below). The remaining tool surface below
+is future work.
 
 ## Principle
 
@@ -52,17 +53,20 @@ always riding along; `assets?` = the `assetsDir` / `assetMode` /
 - `list_examples() -> the bundled catalog (URI, title, what it exercises,
   file names, size) + how to fetch one`
 - `get_example(uri) -> that entry's source files (or one named file)`
+- `list_reference() -> the reference page index (URI, title, group, what
+  it covers, the catalog shapes it documents) + how to fetch one`
+- `get_reference(uri) -> that page's markdown + its keys as a JSON Schema
+  fragment` — or the matching catalog node(s), for a `<page>#<key>` URI
 
 ## The read surface (`instructions` + resources)
 
 An agent installed the advertised way (`docker pull` + `claude mcp add`)
-has no `docs/` and no `skills/` — the image carries the binaries,
-`packs/` and `examples/` only. Two things close that gap, and both are
-part of the core surface rather than optional extras:
+has no `docs/` and no `skills/` on disk. Three things close that gap,
+and all are part of the core surface rather than optional extras:
 
 - **`instructions` in the `initialize` result** — the three-file model,
-  the validate → preview → inspect loop, where the examples are, and the
-  **staleness rule**: whatever the agent recalls about Shojiku syntax is
+  the validate → preview → inspect loop, where the examples and the
+  reference are, and the **staleness rule**: whatever the agent recalls about Shojiku syntax is
   absent from its training data or older than the running build, so the
   engine is the authority and `validate` settles disputes. It is a
   signpost, not a copy of the reference; keep it short.
@@ -72,36 +76,78 @@ part of the core surface rather than optional extras:
   catalog nobody reads closes nothing; the FETCH is a `resources/read`
   over `shojiku://example/<bucket>/<name>`, with `get_example` as a
   second entry point on the same body of text so a client without
-  resources support is not stranded. A second reference surface, and
-  any later one, rides this shape rather than re-deciding it.
+  resources support is not stranded. The reference half below rides this
+  shape rather than re-deciding it, and so does any later one.
+- **The authoring reference, listed then fetched**, on exactly that
+  shape: `list_reference` as the tool, `resources/read` over
+  `shojiku://reference/<page>` as the fetch, `get_reference` as its
+  second entry point. It is the surface that answers "which construct do
+  I pick", which no example and no `validate` rejection can: an objection
+  can correct a wrong key inside a construct the agent already reached,
+  never tell it the construct exists.
 
-Rules this surface must keep:
+Rules this surface must keep, in both halves:
+
+- **Never truncated — and each half says what it does instead.** A
+  silently truncated template or page is worse than none: the agent
+  cannot tell it is reading a fragment. The EXAMPLE half is bound by
+  REFUSAL, at read time: an over-cap bundle comes back refused with the
+  per-file URIs to use in its place, which is a refusal the client can
+  act on. A page has no per-file spelling to be sent to, so refusing one
+  would only make it unreachable — the REFERENCE half is bound at BUILD
+  time instead, over what a read actually answers (the markdown plus the
+  serialized schema half, not the `.md` file), so an oversized page fails
+  the suite rather than shipping. Its bound is deliberately the more
+  generous of the two, 96 KiB against the bundle's 64 KiB, because a
+  bundle must be read WHOLE to be usable while a page is a document read
+  once and worked from: today's largest response is
+  `reference/template` at ~68 KiB, past the bundle cap and inside its
+  own.
+- **The catalog is gated against the tree, not hand-trusted.** A catalog
+  the agent trusts is worse than none once it lies, so each half is
+  asserted equal to the real directory in both directions — `examples/`
+  for one, `docs/engine/` for the other — and the example prose composes
+  from `examples/gallery.yml` (the one gallery source) rather than
+  copying it.
+- **Read-only.** Writing files stays the agent's job (decided) — three
+  writers on one file is the thing this avoids.
+
+The example half adds:
 
 - **The entry is the unit.** A template read alone cannot be understood —
   `{customer.name}` means nothing without `definitions.yml` — so an entry
   answers its source files together. Not every entry has all three; the
   presets carry no definitions.
-- **Bound by refusal, never by truncation.** An over-cap entry is refused
-  with the per-file URIs to use instead. A silently truncated template is
-  worse than no template: the agent cannot tell it is reading a fragment.
-- **The catalog is gated against the tree, not hand-trusted.** Its prose
-  composes from `examples/gallery.yml` (the one gallery source) rather
-  than copying it, and a test asserts the served set equals the real
-  directory both ways. A catalog the agent trusts is worse than none once
-  it lies.
-- **Read-only.** Writing files stays the agent's job (decided) — three
-  writers on one file is the thing this avoids.
 
-**The reference is the next body of text to ride this shape, and the
-artifact it serves now EXISTS** (`agents/engine.md` § The key catalog):
-the per-key facts are one machine-readable artifact derived from the
-parser, JSON Schema shaped, committed and embedded in `engine/authoring`
-as `reference::CATALOG`, and addressed by the reference page stem —
-`shojiku://reference/<page>`, `<page>#<key>` for one key. So what is
-left open here is only *when* it is served, not what it looks like on
-the wire; when it ships, it is a list tool plus a `resources/read`, like
-the examples, and never a dump (the reference corpus is far past any
-single response's cap).
+The reference half adds:
+
+- **A page answers BOTH halves.** The key catalog
+  (`agents/engine.md` § The key catalog) carries the machine facts —
+  types, defaults, closed enumerations — and cannot carry a syntax
+  example or a `## Limitations` section, which is exactly what an agent
+  choosing between constructs reads. So the markdown rides beside the
+  schema fragment rather than being replaced by it.
+- **The page→shape map is the page's own front matter.** Embedding the
+  page embeds the map, so there is no second artifact and nothing to
+  drift; the exact partition of the catalog's `$defs` across the pages is
+  asserted engine-side, not only in the site's suite.
+- **A fragment is an ENUMERATION, not a lookup.** A bare key is genuinely
+  ambiguous on five pages, so `#<key>` answers with every match on that
+  page, each naming its owning shape, and `#<Shape>` / `#<Shape>.<key>`
+  narrow. Picking one owner would be silently wrong; asking the agent to
+  disambiguate costs a round trip.
+- **The schema fragment's `$ref`s point outward, and it says so.** The
+  partition is exact, so a shape one node references belongs to a
+  DIFFERENT page and no page can resolve its own pointers. Inlining the
+  closure is the wrong answer — it copies one node into a dozen pages and
+  multiplies the response — so the rule is stated instead, in the
+  document (`$comment`) and in the two places a client meets the surface
+  (`howToRead`, the `get_reference` descriptor): `#/$defs/<Name>`
+  resolves at `shojiku://reference/<page>#<Name>`, and `shapes` in the
+  listing is the owner table.
+- **Never a dump.** The corpus is far past any single response's cap, so
+  there is no "give me the reference" call — the index is a list, and a
+  page is a page.
 
 Future:
 

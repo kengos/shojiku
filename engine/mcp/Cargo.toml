@@ -1,18 +1,21 @@
 [package]
 name = "shojiku-mcp"
-description = "Shojiku MCP server: validate / render_preview / inspect_layout / capabilities / format_catalog tools over stdio, plus the bundled-example read surface"
+description = "Shojiku MCP server: validate / render_preview / inspect_layout / capabilities / format_catalog tools over stdio, plus the bundled-example and authoring-reference read surfaces"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 # NOT published to crates.io, unlike the rest of the workspace. This crate
-# embeds the repo-root `examples/` tree with `include_str!`, and
+# embeds the repo-root `examples/` tree AND `docs/engine/` with
+# `include_str!`, and
 # `cargo package` copies only files under the package root — so a published
 # tarball would omit them and fail to build. The MCP server is distributed
 # as the Docker image and the release binaries, which is the only route the
 # docs advertise (`docker pull` + `claude mcp add`); the crates.io surface
-# is `shojiku-cli` and `shojiku-authoring`. Serving the examples from the
+# is `shojiku-cli` and `shojiku-authoring`. Serving either tree from the
 # filesystem instead would trade this for a root path that differs between
-# the image and a checkout, plus a traversal surface — a worse deal.
+# the image and a checkout, plus a traversal surface — a worse deal. Both
+# trees are also COMPILE-time inputs of `docker/Dockerfile`'s builder
+# stage, which is why it carries a `COPY` for each.
 # `shojiku-mcp` 0.1.0 remains on crates.io; later versions do not.
 publish = false
 repository.workspace = true

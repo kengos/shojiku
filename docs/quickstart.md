@@ -124,7 +124,10 @@ agent (next section).
 
 `shojiku-mcp` is a stdio MCP server exposing `validate` /
 `render_preview` / `inspect_layout` / `capabilities` / `format_catalog`,
-plus `list_examples` / `get_example` over the bundled examples. It ships in
+plus `list_examples` / `get_example` over the bundled examples and
+`list_reference` / `get_reference` over the syntax reference — so an
+agent with no checkout can read both a working document and the page
+that says which construct to pick. It ships in
 the same image, and stdio is exactly what `docker run -i` gives you —
 for Claude Code:
 

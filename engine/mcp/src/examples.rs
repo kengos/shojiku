@@ -3,12 +3,13 @@
 //! catalog that gives each entry a human title and a line saying what it
 //! exercises.
 //!
-//! The catalog is COMPOSED, never transcribed. The 24 product entries take
+//! The catalog is COMPOSED, never transcribed. The 25 product entries take
 //! their title and blurb from the same `examples/gallery.yml` the README
-//! and the site generate from, so there is one source for that text; the 8
-//! authoring-only entries (the syntax showcase and the blank presets, which
-//! the product gallery deliberately does not list) carry their own short
-//! descriptions here. `tests.rs` pins the union against the real directory.
+//! and the site generate from, so there is one source for that text; the 9
+//! authoring-only entries (two `dev/` documents and the seven blank
+//! presets, which the product gallery deliberately does not list) carry
+//! their own short descriptions here. `tests.rs` pins the union against
+//! the real directory.
 
 pub(crate) mod embed;
 pub(crate) mod uri;
@@ -68,7 +69,7 @@ struct GalleryEntry {
     blurb_en: String,
 }
 
-/// The product gallery's own text, for the 24 entries it lists.
+/// The product gallery's own text, for the 25 entries it lists.
 const GALLERY_YML: &str = include_str!("../../../examples/gallery.yml");
 
 /// Titles and blurbs for the entries the product gallery does not list:

@@ -184,7 +184,11 @@ kept beside it.
 its own: the [../engine/](../engine/) page stem names a topic and
 `<page>#<key>` names a key, so `shojiku://reference/<page>`,
 `/reference/<page>` and `<page>.md#<key>` are the same spelling three
-ways.
+ways. The MCP surface serves that spelling (`mcp.md` § The read surface):
+a page answers its markdown beside its catalog shapes, and `#<key>`
+answers every catalog node on that page carrying the key — an
+ENUMERATION, because a bare key is genuinely ambiguous on five pages and
+picking one owner would be silently wrong.
 
 **Three gates, all required**, mirroring the one that keeps the gallery
 honest (regenerate, then fail on drift):
@@ -258,9 +262,11 @@ leaving the facts in prose produces the drift this exists to end.
 
 Two obligations follow for other components: the Designer's copied key
 lists and default values are asserted against the artifact rather than
-maintained beside it, and serving the reference on the MCP wire rides
-the list-then-fetch hybrid already decided for the bundled examples
-rather than re-deciding a transport.
+maintained beside it, and the MCP wire — which serves the reference now —
+rides the list-then-fetch hybrid already decided for the bundled examples
+rather than re-deciding a transport. That split is why an MCP page read
+answers BOTH halves: the catalog fragment carries the facts, and the page
+markdown carries the narrative the catalog is not allowed to hold.
 
 ## Boundaries — do not cross these
 

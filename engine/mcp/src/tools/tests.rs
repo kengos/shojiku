@@ -24,7 +24,9 @@ fn tools_list_pins_the_descriptor_contract() {
             "capabilities",
             "list_examples",
             "get_example",
-            "format_catalog"
+            "format_catalog",
+            "list_reference",
+            "get_reference"
         ]
     );
     for tool in tools {
@@ -107,6 +109,41 @@ fn tools_list_pins_the_descriptor_contract() {
         );
         assert_eq!(props["denyDynamicImage"]["items"]["type"], "string");
     }
+    // The two read surfaces are an APPEND-ONLY contract: a list tool that
+    // takes nothing, a fetch tool whose one argument is required. Pin both
+    // halves by name so a rename or a widened requirement is a visible
+    // client-visible change rather than a silent one.
+    let by_name = |name: &str| {
+        tools
+            .iter()
+            .find(|t| t["name"] == name)
+            .unwrap_or_else(|| panic!("{name} descriptor"))
+            .clone()
+    };
+    for list in ["list_examples", "list_reference"] {
+        let tool = by_name(list);
+        assert!(property_names(&tool).is_empty(), "{list} takes no inputs");
+        assert!(tool["inputSchema"]["required"].is_null());
+    }
+    for fetch in ["get_example", "get_reference"] {
+        let tool = by_name(fetch);
+        assert_eq!(property_names(&tool), ["uri"], "{fetch} takes one argument");
+        assert_eq!(tool["inputSchema"]["required"], json!(["uri"]));
+    }
+    // The URI shape rides the description, since a wrong guess costs a
+    // round trip: each fetch tool names its own family's grammar.
+    assert!(
+        by_name("get_example")["inputSchema"]["properties"]["uri"]["description"]
+            .as_str()
+            .expect("description")
+            .contains("shojiku://example/<bucket>/<name>")
+    );
+    assert!(
+        by_name("get_reference")["inputSchema"]["properties"]["uri"]["description"]
+            .as_str()
+            .expect("description")
+            .contains("shojiku://reference/<page>")
+    );
 }
 
 /// A tool descriptor's schema property names, sorted.

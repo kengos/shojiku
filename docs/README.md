@@ -49,8 +49,9 @@ unsettled rather than rejected, so it is worth proposing.
   are the **CLI (and its Docker image)** — `shojiku render` as a
   subprocess; see the render commands in [engine/](engine/README.md) —
   plus the **stdio MCP server** (`shojiku-mcp`: validate /
-  render_preview / inspect_layout / capabilities / format_catalog, and
-  list_examples / get_example over the bundled examples, for AI-agent
+  render_preview / inspect_layout / capabilities / format_catalog, plus
+  list_examples / get_example over the bundled examples and
+  list_reference / get_reference over this reference itself, for AI-agent
   authoring; [agents/mcp.md](agents/mcp.md)) and the **browser WASM
   bindings** (`engine/wasm`, the Designer's preview transport — a JS
   host injects fonts/assets and renders client-side).
