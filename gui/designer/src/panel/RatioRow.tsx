@@ -3,6 +3,13 @@
 // standing in for a child that authors its own width (outside the split). The
 // inputs are uncontrolled and commit on blur with a changed-guard, keyed by
 // VALUE PLUS A REFUSAL NONCE — the panel-wide free-text posture.
+//
+// These deliberately do NOT go through `StepperField`, the way most of the
+// panel's numeric fields do. A ratio is READ as a row — `2 : 3 : 1` — so each
+// weight is a bare `w-10` box between colons, with one label for the whole row;
+// the stepper renders a labelled full-width block with a ▲▼ column beside it,
+// and three of those would say the weights are three unrelated settings. The
+// chrome here is a one-off by design, not drift.
 
 import { Fragment } from 'react';
 import { useI18n } from '../i18n/context';

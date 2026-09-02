@@ -10,6 +10,7 @@
 // shown per-side and canonicalized to a map on the first edit.
 
 import type { Op } from '@shojiku/designer-core';
+import { stepNumeral } from './model';
 
 export type MarginMode = 'uniform' | 'perSide';
 export type MarginSide = 'top' | 'right' | 'bottom' | 'left';
@@ -144,6 +145,39 @@ export function uniformMarginOp(text: string): Op[] | null {
     return null;
   }
   return [{ op: 'setScalar', keys: ['page', 'margin'], value: Number(trimmed) }];
+}
+
+/** Whether the ▲▼ can move the uniform margin: the same bare-numeral test the
+ * typed commit passes through, so the buttons are offered exactly where typing
+ * the shown value would be accepted. */
+export function canStepUniformMargin(text: string): boolean {
+  return BARE_NUMERAL.test(text.trim());
+}
+
+/** The ops for one ▲▼ click on the uniform margin: step by one point, then
+ * re-author through `uniformMarginOp`.
+ *
+ * Going back through that builder is what keeps the two entry points honest:
+ * the generic `stepValueOp` the item fields use would author `-1` from a `0`
+ * margin, a value this field refuses from the keyboard.
+ *
+ * The floor is CLAMPED rather than declined, because `0` is a legal all-sides
+ * margin: ▼ from `0.5` reaches it, the way a native
+ * `<input type="number" min="0">` clamps at its minimum instead of going
+ * inert. Declining there would leave an enabled button that can never reach a
+ * value typing reaches fine. At the floor itself the clamp is a no-op and
+ * nothing is dispatched, so no undo entry is minted for a change that did not
+ * happen. */
+export function stepUniformMarginOp(text: string, dir: number): Op[] | null {
+  if (!canStepUniformMargin(text)) {
+    return null;
+  }
+  const next = stepNumeral(text, dir);
+  if (next === null) {
+    return null;
+  }
+  const clamped = Number(next) < 0 ? '0' : next;
+  return clamped === text.trim() ? null : uniformMarginOp(clamped);
 }
 
 /** The batch that switches to per-side: drop the existing `margin` (if any),

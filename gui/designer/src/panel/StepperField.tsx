@@ -75,7 +75,9 @@ export function StepperField({
   // rides the inner input, never this component — see `useReseedKey`.
   const [inputKey, reseed] = useReseedKey(value);
   // Each button fills half the input's height (items-stretch + flex-1), so the
-  // ▲▼ column always lines up with the input box exactly.
+  // ▲▼ column always lines up with the input box exactly. Only the OUTER corners
+  // are rounded: the column is flush against the input, so its left edge is the
+  // input's right edge and must stay square.
   const stepBtn =
     'flex flex-1 cursor-pointer items-center justify-center border border-border bg-chrome px-1.5 text-[9px] leading-none text-text disabled:cursor-default disabled:opacity-40';
   return (
@@ -83,13 +85,18 @@ export function StepperField({
       <label htmlFor={id} className={FIELD_LABEL}>
         {label}
       </label>
-      <span className="flex items-stretch gap-1">
+      {/* No gap: a stepper reads as ONE control, so the ▲▼ column sits flush
+        against the input (macOS/HIG, and the gdoc numeric field) rather than
+        floating 4px off it. The seam is one shared border — the input squares
+        its right corners, the column squares its left ones and pulls back a
+        pixel. */}
+      <span className="flex items-stretch">
         <span className={`relative flex min-w-0 flex-1${hint === undefined ? '' : ' group/tip'}`}>
           <input
             key={inputKey}
             id={id}
             type="text"
-            className={`${INPUT} w-full min-w-0 ${badge === undefined ? '' : 'pr-11'} ${
+            className={`${INPUT} w-full min-w-0 rounded-r-none ${badge === undefined ? '' : 'pr-11'} ${
               tag === undefined ? '' : 'text-muted'
             }`}
             defaultValue={value}
@@ -115,13 +122,13 @@ export function StepperField({
         {/* The bubble rides the COLUMN, not the buttons: a disabled button is
           an unreliable hover target, and the explanation is about the pair. */}
         <span
-          className={`flex shrink-0 flex-col${
+          className={`-ml-px flex shrink-0 flex-col${
             !canStep && stepHint !== undefined ? ' group/tip relative' : ''
           }`}
         >
           <button
             type="button"
-            className={`${stepBtn} rounded-t-md`}
+            className={`${stepBtn} rounded-tr-md`}
             aria-label={t('stepper.increment')}
             disabled={!canStep}
             onClick={() => onStep(1)}
@@ -130,7 +137,7 @@ export function StepperField({
           </button>
           <button
             type="button"
-            className={`${stepBtn} -mt-px rounded-b-md`}
+            className={`${stepBtn} -mt-px rounded-br-md`}
             aria-label={t('stepper.decrement')}
             disabled={!canStep}
             onClick={() => onStep(-1)}

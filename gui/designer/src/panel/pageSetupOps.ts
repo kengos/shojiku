@@ -9,6 +9,7 @@
 // rather than an op the document model would refuse.
 
 import type { Op } from '@shojiku/designer-core';
+import { stepNumeral } from './model';
 import type { CustomDims, Orientation, PageView } from './pageSetupModel';
 import type { SizeUnit } from './pageSizes';
 import {
@@ -77,6 +78,34 @@ export function orientationOp(view: PageView, next: Orientation): Op | null {
 export function customDimOp(field: 'w' | 'h', value: string, unit: SizeUnit): Op | null {
   const wire = composeDimension(value, unit);
   return wire === null ? null : { op: 'setScalar', keys: ['page', 'size', field], value: wire };
+}
+
+/** Whether the ▲▼ can move this dimension: the SAME test the typed commit
+ * passes through, so the buttons are offered exactly where a keyboard entry of
+ * the shown value would be accepted. The unit is irrelevant to the test — only
+ * the numeral is — so the check composes against `pt`. */
+export function canStepDimension(value: string): boolean {
+  return composeDimension(value, 'pt') !== null;
+}
+
+/** The op for one ▲▼ click on a custom dimension: step the DISPLAYED numeral by
+ * one of its own unit (the inputs and the unit select share that unit, so a
+ * point-sized step would be invisible under `mm` and enormous under `in`), then
+ * re-author through `customDimOp`.
+ *
+ * Going back through that builder is the point: the buttons then cannot reach a
+ * value typing the same thing would be refused for. Stepping the last unit off
+ * a `1` yields `0`, which `composeDimension` refuses. A dimension is a strictly
+ * positive length, so the floor DECLINES rather than clamping — unlike the
+ * all-sides margin, whose `0` is legal. `stepNumeral` declines separately when
+ * the numeral is too large for the step to move it. */
+export function stepCustomDimOp(field: 'w' | 'h', custom: CustomDims, dir: number): Op | null {
+  const current = custom[field];
+  if (!canStepDimension(current)) {
+    return null;
+  }
+  const next = stepNumeral(current, dir);
+  return next === null ? null : customDimOp(field, next, custom.unit);
 }
 
 /** The batch for a unit-select change: reinterpret both dimensions into the new

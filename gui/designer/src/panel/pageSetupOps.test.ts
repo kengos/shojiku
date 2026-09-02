@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { readPageView } from './pageSetupModel';
-import { customDimOp, customUnitOps, orientationOp, selectSizeOp } from './pageSetupOps';
+import {
+  canStepDimension,
+  customDimOp,
+  customUnitOps,
+  orientationOp,
+  selectSizeOp,
+  stepCustomDimOp,
+} from './pageSetupOps';
 
 describe('selectSizeOp', () => {
   it('overwrites the size with a chosen engine name', () => {
@@ -110,5 +117,103 @@ describe('customUnitOps', () => {
 
   it('produces no ops when neither dimension converts', () => {
     expect(customUnitOps({ w: '', h: '', unit: 'in' }, 'pt')).toEqual([]);
+  });
+});
+
+describe('canStepDimension', () => {
+  it('offers the buttons on a positive numeral', () => {
+    expect(canStepDimension('210')).toBe(true);
+    expect(canStepDimension('8.27')).toBe(true);
+  });
+
+  it('withholds them on the values the typed commit also refuses', () => {
+    // Each of these is a state `composeDimension` declines, so a stepper that
+    // stayed enabled would offer a button that cannot author anything.
+    expect(canStepDimension('')).toBe(false);
+    expect(canStepDimension('   ')).toBe(false);
+    expect(canStepDimension('0')).toBe(false);
+    expect(canStepDimension('-5')).toBe(false);
+    expect(canStepDimension('wide')).toBe(false);
+    expect(canStepDimension('12mm')).toBe(false);
+  });
+});
+
+describe('stepCustomDimOp', () => {
+  const mm = (w: string, h = '297'): { w: string; h: string; unit: 'mm' } => ({
+    w,
+    h,
+    unit: 'mm',
+  });
+
+  it('steps the width up by one of the DISPLAYED unit', () => {
+    expect(stepCustomDimOp('w', mm('210'), 1)).toEqual({
+      op: 'setScalar',
+      keys: ['page', 'size', 'w'],
+      value: '211mm',
+    });
+  });
+
+  it('steps the width down by one of the displayed unit', () => {
+    expect(stepCustomDimOp('w', mm('210'), -1)).toEqual({
+      op: 'setScalar',
+      keys: ['page', 'size', 'w'],
+      value: '209mm',
+    });
+  });
+
+  it('steps the height, not the width, when asked for it', () => {
+    expect(stepCustomDimOp('h', mm('210', '297'), 1)).toEqual({
+      op: 'setScalar',
+      keys: ['page', 'size', 'h'],
+      value: '298mm',
+    });
+  });
+
+  it('steps a fractional numeral without leaving binary-float noise behind', () => {
+    // 8.27 + 1 is 9.270000000000001 in binary floating point; the wire must
+    // carry the numeral a reader would have typed.
+    expect(stepCustomDimOp('w', { w: '8.27', h: '11.69', unit: 'in' }, 1)).toEqual({
+      op: 'setScalar',
+      keys: ['page', 'size', 'w'],
+      value: '9.27in',
+    });
+  });
+
+  it('authors nothing from an EMPTY field', () => {
+    // `Number('')` is 0, not NaN, so a numeric guard alone would step a cleared
+    // field up to 1.
+    expect(stepCustomDimOp('w', mm(''), 1)).toBeNull();
+  });
+
+  it('authors nothing from a garbage or unit-bearing value', () => {
+    expect(stepCustomDimOp('w', mm('wide'), 1)).toBeNull();
+    expect(stepCustomDimOp('w', mm('12mm'), 1)).toBeNull();
+  });
+
+  it('refuses to step BELOW the floor the typed field enforces', () => {
+    // A dimension of 0 is refused from the keyboard (`composeDimension` wants a
+    // positive numeral), so ▼ on a 1 must author nothing rather than reach a
+    // value that entry cannot.
+    expect(stepCustomDimOp('w', mm('1'), -1)).toBeNull();
+  });
+
+  it('keeps the precision the author typed, rather than rounding to 2 places', () => {
+    // The typed path accepts any plain decimal, so a third decimal is an
+    // ordinary authored value — not float noise to be rounded away. A fixed
+    // two-place rounding would author `211.13mm` here and silently discard the
+    // digit the author entered.
+    expect(stepCustomDimOp('w', mm('210.123456'), 1)).toEqual({
+      op: 'setScalar',
+      keys: ['page', 'size', 'w'],
+      value: '211.123456mm',
+    });
+  });
+
+  it('authors nothing when the numeral is too large for the step to move it', () => {
+    // Past 2^53 the `+ 1` is absorbed, so authoring the result would write back
+    // the value the document already had — an undo entry for nothing.
+    expect(stepCustomDimOp('w', mm(`1${'0'.repeat(20)}`), 1)).toBeNull();
+    // The same guard covers a numeral long enough to overflow to Infinity.
+    expect(stepCustomDimOp('w', mm('9'.repeat(400)), 1)).toBeNull();
   });
 });

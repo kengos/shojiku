@@ -70,6 +70,31 @@ export function stepValueOp(
     : lengthOp(path, keys, String(next));
 }
 
+/** Step a bare decimal numeral by `dir`, keeping the precision the author
+ * typed, or `null` when the step cannot MOVE the value.
+ *
+ * Rounding is only there to kill binary-float noise (`8.27 + 1` is
+ * `9.270000000000001`), so it runs at the operand's OWN decimal count. A fixed
+ * two places would round the operand's precision away as well: a hand-typed
+ * `25.375` margin — which the typed path accepts — would step to `26.38`
+ * rather than `26.375`, silently discarding a digit the author entered.
+ *
+ * The null case is the saturation plateau: past 2^53 the `+ dir` is absorbed,
+ * so the builder would author the value it was given — `applyAll` reports ok,
+ * the revision bumps, and the undo stack gains an entry for a change that did
+ * not happen. An overflow to a non-finite value lands here too, for the same
+ * reason. */
+export function stepNumeral(current: string, dir: number): string | null {
+  const trimmed = current.trim();
+  const value = Number(trimmed);
+  // `toFixed` throws past 100 digits and the callers' numerals are far
+  // shorter, so the count is capped rather than trusted: the margin's own
+  // regex admits an unbounded run of decimals.
+  const decimals = Math.min((trimmed.split('.')[1] ?? '').length, 20);
+  const next = Number((value + dir).toFixed(decimals));
+  return next === value ? null : String(next);
+}
+
 /** Apply a built op through the controller; `null` (a non-edit: an invalid
  * number, a no-op combo commit) dispatches nothing. Panels and the toolbar
  * share this guard instead of re-inlining it. */
