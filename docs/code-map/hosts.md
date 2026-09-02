@@ -145,7 +145,8 @@ false`), no clap.
   cross-page links, and constraints like `≥ 0` that the wire validates at
   parse time rather than in its schema.
   `src/bin/reference-gen.rs` — `[[bin]]` with `required-features =
-  ["schema"]`, so a default build never compiles it.
+  ["schema"]`, so a default build never compiles it. Wiring over
+  `reference::run` (below); it takes no arguments and reads no environment.
   Artifact: `reference/catalog.schema.json` — 84 named shapes, and **420
   annotatable NODES**, which is not the same set: the wire's tagged unions
   are internally tagged, so schemars emits them as `oneOf` branches rather
@@ -191,13 +192,23 @@ false`), no clap.
   doc set, the one no spec assembles: the `## Diagnostics` sections the pages
   write themselves. `audit(pages, &Vocabulary) -> (Vec<Problem>, Census)`, a
   pure line scan (no regex crate, no filesystem, echo clipped at 64 chars) with
-  two rules. Column 1 of an in-section table must be a `DiagnosticCode`
+  THREE rules. Column 1 of an in-section table must be a `DiagnosticCode`
   (`Problem::UnknownCode`); every other backticked token in the section
   carrying an UNDERSCORE must be a code, a `CAPABILITIES` key, or a catalog
-  word (`Problem::UnknownToken`). `pages.rs` holds the shape (`Problem`,
-  `Census`, `Vocabulary`, `audit`); `pages/scan.rs` the walk — section
-  boundaries, fences, column 1 vs the rest, the 64-char echo clip and the
-  `diagnostics-token-exempt:` waiver. `pages/vocabulary.rs` — `catalog_vocabulary`
+  word (`Problem::UnknownToken`); and OUTSIDE any section, a token spelled the
+  way a code is spelled must be one of those three or excused by name
+  (`Problem::CodeShaped`). `pages.rs` holds the shape (`Problem`,
+  `Census`, `Vocabulary`, `audit`, and the excusing pass); `pages/scan.rs` the
+  walk — section boundaries, fences, column 1 vs the rest, the 64-char echo
+  clip and the `diagnostics-token-exempt:` waiver; `pages/prose.rs` the third
+  rule's data — `OUTSIDE_THE_REFERENCE` (just `features.md`), the `EXCUSED`
+  list with a reason per name, and `code_shaped`, which is NARROWER than rule
+  2's bare underscore: lowercase ASCII words joined by single underscores, no
+  dots, so a DOTTED capability key and a `camelCase` wire key are out of reach
+  by shape — five undotted ones (`char_grid`, `page_break`, `page_number`,
+  `qr_code`, `repeat_flow`) ARE code-shaped and pass on the union lookup, not
+  on the shape. The per-line `diagnostics-token-exempt:` waiver is the second
+  rule's only; this rule's hatch is `EXCUSED`. `pages/vocabulary.rs` — `catalog_vocabulary`
   (an ITERATIVE walk, so nothing recurses) and `Known::of_this_build()`, which
   holds the three sets in ONE place so the drift test and `reference-gen`
   cannot audit against different vocabularies.
@@ -213,6 +224,16 @@ false`), no clap.
   `checkbox.auto_size`, `inspect.text_metrics`,
   `style.borderStyle.dashed_dotted`, `style.lineBreak.strict_loose`) — so
   registry ∪ catalog leaves a residue of 6 and registry ∪ capabilities leaves 0.
+  The THIRD rule is why `features.md` is named: measured over `docs/engine/`,
+  43 backticked code-shaped tokens are unknown to all three lookups and **35 of
+  them occur only there** (the other 8 are exactly the excused set below) — it is the capability and decision LOG, not a reference page,
+  and the MCP catalog already excludes it. Over the other 33 pages the rule
+  reads **666** backticked code-shaped names and **13 occurrences of 8 names** are
+  excused (`deny_unknown_fields`, five MCP tool names, `prepare_assets`, and
+  `font_embedding_restricted` — a `FontError` message tag whose two `fonts.md`
+  uses are what the rule was built for). `Census::excused_names` counts
+  DISTINCT excusals HIT and the drift test holds it equal to the list's
+  length, so an entry that stops being needed reds rather than masking.
   The catalog clause
   covers no token today that the capability list does not — it is there for the
   sentence that quotes a wire VALUE (19 catalog words carry an underscore), not
@@ -228,6 +249,12 @@ false`), no clap.
   union**, so a page stating its codes in a sentence can name a real
   capability key or wire value that is no diagnostic code and pass — a typo or
   a rename is still caught, a collision is not.
+  The THIRD rule's own blind spots, swept rather than assumed: it sees only
+  BACKTICKED runs, so an unbackticked `snake_case` word is out of reach;
+  fence tracking is ` ``` ` only, so a `~~~` block would be read as prose
+  (**0** in the corpus today, so this is latent, not live); and a 4-space
+  INDENTED code block is not a fence, so a sample inside one is judged as a
+  claim — a false POSITIVE, which reds a gate rather than passing a defect.
   **This is deliberately a second mechanism** checking a `Code` table against
   the registry; the reason, and the measurement that the two never touch the
   same bytes, are in [../agents/engine.md](../agents/engine.md) § The key
@@ -235,6 +262,36 @@ false`), no clap.
   tables in `docs/engine/` are audited by exactly one of the two — 22 here, 7
   by the spec on `diagnostics.md`, **0 by neither** — which is what stops a
   table filed under a third heading from being guarded by nothing.
+
+  `reference/run.rs` + `run/` (`schema` only) — what `reference-gen` DOES,
+  extracted so a test can drive it: `run(&Job { catalog, docs, tables })
+  -> Result<Outcome, Refusal>`. Two ordering claims, and only the first
+  previously held: the pages are audited BEFORE any write, AND every output is
+  computed before any is written (`tables::page` is pure), so a CONTENT refusal
+  leaves the tree byte-identical rather than half-regenerated. `Refusal::Io` is
+  outside that claim by design: a write failing midway leaves what it already
+  wrote, and nothing pretends otherwise. The binary
+  is now wiring — it builds the `Job` from the same compile-time
+  `CARGO_MANIFEST_DIR` constants and maps `Refusal` to stderr plus an exit
+  code — which matters because a `main` is outside every gate here
+  (`required-features` keeps it out of the coverage build and nothing runs
+  it), so an ordering asserted only there was asserted by nobody.
+  `Refusal`/`Outcome` carry rendered strings and flat counts rather than
+  `pages`/`tables` types: the binary only prints them, and keeping the
+  generator's signature independent of the two audit modules means widening a
+  `Problem` is not a change to this crate's published API. **Narrowing those
+  two modules to `pub(crate)` was tried and reverted** — measured, it turns 17
+  items into dead code (all of `tables/audit.rs`, five `Table` fields, the
+  splice markers, `catalog_vocabulary`, `Known::sizes`), because every one of
+  them serves a DEFAULT-suite drift test and `dead_code` does not count
+  `#[cfg(test)]` usage.
+
+  `reference/tables/registry.rs` (DEFAULT) — `registry()`, the code→severity
+  map, in ONE place for the reason `Known::of_this_build` gives for the
+  vocabulary. It was hand-built twice (the binary and the drift test) before
+  this existed. The severity WORD is an exhaustive match, so a new `Severity`
+  variant is a compile error and library code carries no `expect`; a test pins
+  each arm against what serde emits.
 
 ## engine/fetch — the host-side font fetch layer
 

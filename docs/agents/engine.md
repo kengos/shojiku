@@ -230,10 +230,41 @@ honest (regenerate, then fail on drift):
   code contains one (asserted, so a code that ever arrives without one says
   so), while the single-word wire vocabulary a sentence quotes —
   `overflow`, `strict`, `hidden` — is excluded by shape.
+  A THIRD rule reads the ordinary PROSE, outside any section, where a
+  BACKTICKED code-shaped name went unread until `fonts.md` was found
+  presenting a font-loading error tag as one, twice. Backticked is the
+  scope, not a shorthand: an unbackticked `snake_case` word in a sentence
+  is not presenting itself as an identifier and is out of reach, as it is
+  for the other two rules. Its shape is narrower than the
+  second's bare underscore — lowercase words joined by single underscores, no
+  dots — so a dotted capability key and a `camelCase` wire key are out of
+  reach by spelling. **Unlike the second rule it does carry a short named
+  list, and that is the honest cost of reading prose about the engine's own
+  API**: eight names over thirteen occurrences are legitimately not codes (a
+  serde attribute, five MCP tool names, a pipeline stage, and that font tag),
+  each excused with its reason. The list cannot rot into a blindfold: the
+  census counts DISTINCT excusals actually hit and the drift test holds that
+  equal to the list's length, so an entry that stops being needed reds.
+  `features.md` is out of the rule's scope, because it is the decision log
+  rather than a reference page and names Rust and C ABI symbols in that shape
+  by design — measured, **35 of the 43** unaccounted code-shaped tokens in the
+  doc set occur only there, the other 8 being the excused set, which is why widening the rule looked unviable
+  until that page was separated out.
+
   `shojiku_authoring::reference::pages::audit` is the pure function, the
   drift test in the DEFAULT suite is one caller, and `reference-gen` is the
   other, and it audits BEFORE it writes, so `make reference:generate` stops on
-  a page carrying a stale name with the tree untouched. The CLASS is swept rather than assumed: all 29 `Code` tables
+  a page carrying a stale name with the tree untouched. **That sentence used
+  to rest on nobody.** It was true of the audit and of nothing after it — an
+  unrenderable table still aborted the page loop part-way, leaving the
+  half-regenerated tree the rule exists to prevent — and the ordering itself
+  lived in the binary's `main`, which `required-features` keeps out of the
+  coverage build and which no test executes. Every output is now computed
+  before any is written, the ordering lives in `reference::run`, and
+  `make reference:check` drives it over a throwaway tree asserting both the
+  refusal and that nothing was written.
+
+  The CLASS is swept rather than assumed: all 29 `Code` tables
   in [../engine/](../engine/) are audited by exactly one of the two mechanisms
   — 22 here, 7 by the spec on `diagnostics.md`, none by neither — so a table
   filed under a third heading fails rather than sitting unguarded.

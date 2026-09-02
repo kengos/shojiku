@@ -147,8 +147,10 @@ faces:
 
 At load each file's **sha256 is verified** (a mismatch from
 tamper/corruption fails the load) and its OS/2 **`fsType` embedding
-rights** are checked — a restricted face is rejected (`font_embedding_restricted`)
-unless the manifest sets `embeddingAttested: true`. One license per pack:
+rights** are checked — a restricted face is rejected unless the manifest sets
+`embeddingAttested: true`. The load error is tagged `font_embedding_restricted`;
+that is a font-loader tag, not a diagnostic code, so it is not in
+[diagnostics.md](diagnostics.md). One license per pack:
 mixed-license fonts split into separate packs (so IPAmj Mincho is its own
 `ipamj-mincho` pack, not part of `biz-ud`).
 
@@ -200,8 +202,9 @@ licence in one pack, and a manifest already there that will not parse.
 A refusal writes nothing at all.
 
 **If the font's OS/2 `fsType` forbids embedding**, `font add` refuses it
-— the renderer would refuse it too (`font_embedding_restricted`), so the
-useful place to say so is before the pack exists. `--embedding-attested`
+— the renderer would refuse it too, with the same
+`font_embedding_restricted` tag, so the useful place to say so is before
+the pack exists. `--embedding-attested`
 asserts a separately held embedding licence and writes
 `embeddingAttested: true`; the run says on stderr that the guard no
 longer applies to that pack. There is no silent path between the two.

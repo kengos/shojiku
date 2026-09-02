@@ -9,7 +9,8 @@
 //! marker sits inside a `## Diagnostics` section — so a table is audited by
 //! exactly one of them.
 //!
-//! **Two rules, and the second is what reaches the prose.**
+//! **Three rules.** The first two read only inside the section; the third
+//! reads the ordinary prose around it.
 //!
 //! - Column 1 of a table inside the section is a CODE CLAIM: every backticked
 //!   token there must be in the diagnostic-code registry, and nothing laxer is
@@ -22,8 +23,15 @@
 //!   wire vocabulary a sentence legitimately quotes — `overflow`, `strict`,
 //!   `hidden` — is excluded by shape and needs no allowlist.
 //!
-//! **What the rules do NOT reach, said plainly.** Three things, and the third
-//! is a consequence of the design rather than of the scoping.
+//! - Outside any `## Diagnostics` section, a BACKTICKED token spelled the way
+//!   a code is spelled — lowercase words joined by single underscores, no dots
+//!   — must be one of the three, or be excused by name in [`prose`]. This is
+//!   what caught `fonts.md` presenting a font-loading error tag as a code
+//!   twice. `features.md` is out of its scope; [`prose`] says why.
+//!
+//! **What the rules do NOT reach, said plainly.** Three things about the first
+//! two, and the third is a consequence of the design rather than of the
+//! scoping; the third rule's own blind spots follow them.
 //!
 //! 1. The heading is matched EXACTLY, so a page that renames `## Diagnostics`
 //!    drops out of the audit — which is why the census pins the section count
@@ -44,6 +52,19 @@
 //!    need a way to tell a code claim from a wire quote inside a sentence,
 //!    which the underscore filter deliberately does not attempt.
 //!
+//! 4. **The third rule sees only BACKTICKED runs**, so an unbackticked
+//!    `snake_case` word in a sentence is out of reach; fence tracking is
+//!    ` ``` ` only, so a `~~~` block would be read as prose (0 in the corpus
+//!    today); a 4-space INDENTED block is not a fence, so a sample inside one
+//!    is judged as a claim — a false POSITIVE, which reds a gate rather than
+//!    passing a defect. And it accepts a token any of the THREE lookups knows,
+//!    so a capability key written as though it were a diagnostic code passes:
+//!    five capability keys (`char_grid`, `page_break`, `page_number`,
+//!    `qr_code`, `repeat_flow`) are code-shaped, and the union is what admits
+//!    them, not the shape. The per-line `diagnostics-token-exempt:` waiver is
+//!    the SECOND rule's only — this rule's escape hatch is [`prose::EXCUSED`],
+//!    which is global and by name.
+//!
 //! **Line-oriented, no regex crate, no new dependency.** The corpus is
 //! committed markdown read through a `CARGO_MANIFEST_DIR`-rooted path, so this
 //! is not the hostile-input posture — but the scan is one pass over the page's
@@ -53,6 +74,7 @@
 use std::collections::BTreeSet;
 use std::fmt;
 
+mod prose;
 mod scan;
 mod vocabulary;
 pub use vocabulary::{catalog_vocabulary, Known};
@@ -67,6 +89,11 @@ pub enum Problem {
     /// key and no word of the wire. The half a table-only rule cannot see:
     /// `char_grid.md` states nine codes as prose and has no table at all.
     UnknownToken { page: String, token: String },
+    /// A name in the page's ordinary prose, OUTSIDE any `## Diagnostics`
+    /// section, spelled exactly the way a diagnostic code is spelled and
+    /// defined by nothing. See [`prose`] for why this rule is narrower than
+    /// the second and which pages it reads.
+    CodeShaped { page: String, token: String },
 }
 
 impl fmt::Display for Problem {
@@ -78,6 +105,12 @@ impl fmt::Display for Problem {
             Self::UnknownToken { page, token } => write!(
                 f,
                 "{page}: `{token}` is no diagnostic code, capability key or wire word"
+            ),
+            Self::CodeShaped { page, token } => write!(
+                f,
+                "{page}: `{token}` is spelled like a diagnostic code and the engine \
+                 defines no such code, capability key or wire word — reword it, or \
+                 add it to the excused list with its reason"
             ),
         }
     }
@@ -105,13 +138,22 @@ pub struct Census {
     /// Distinct codes across every page.
     pub distinct: usize,
     /// Every underscore-bearing backticked token inside a section, column 1
-    /// included — the whole population the two rules divide between them.
+    /// included — the whole population the first two rules divide between them.
     pub tokens: usize,
     /// The second rule's own population: underscore-bearing tokens outside
     /// column 1, minus the exempted ones.
     pub checked: usize,
     /// Tokens skipped by a `diagnostics-token-exempt:` comment on their line.
     pub exempt: usize,
+    /// The THIRD rule's population: code-shaped tokens in the prose outside
+    /// any `## Diagnostics` section, on the pages that rule reads.
+    pub outside: usize,
+    /// Occurrences the third rule found and [`prose::EXCUSED`] accounted for.
+    pub excused: usize,
+    /// DISTINCT excused names actually hit. The drift test holds this equal to
+    /// the list's length, which is what makes a stale entry a red test rather
+    /// than a mask that quietly grows.
+    pub excused_names: usize,
 }
 
 /// The three closed sets a diagnostics section may name in code shape.
@@ -165,7 +207,33 @@ pub fn audit(pages: &[(&str, &str)], vocabulary: &Vocabulary<'_>) -> (Vec<Proble
         scan::page(name, text, vocabulary, &mut distinct, &mut census, &mut out);
     }
     census.distinct = distinct.len();
+    excuse_known_non_codes(&mut out, &mut census);
     (out, census)
+}
+
+/// How many names [`prose::EXCUSED`] holds — the number the drift test holds
+/// `Census::excused_names` equal to.
+#[cfg(test)]
+pub(crate) fn excused_len() -> usize {
+    prose::EXCUSED.len()
+}
+
+/// Drops the third rule's problems that [`prose::EXCUSED`] accounts for.
+///
+/// Done HERE rather than in the scan so `census.outside` stays the whole
+/// population the rule read, and so the distinct excused names can be counted
+/// — an excusal nothing hits is a mask, and the drift test refuses one.
+fn excuse_known_non_codes(out: &mut Vec<Problem>, census: &mut Census) {
+    let mut hit = BTreeSet::new();
+    out.retain(|problem| match problem {
+        Problem::CodeShaped { token, .. } if prose::is_excused(token) => {
+            hit.insert(token.clone());
+            census.excused += 1;
+            false
+        }
+        _ => true,
+    });
+    census.excused_names = hit.len();
 }
 
 #[cfg(test)]

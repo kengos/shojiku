@@ -61,6 +61,21 @@ fn every_hand_written_diagnostics_section_names_only_real_things() {
     assert_eq!(census.tokens, 198, "underscore-bearing in-section tokens");
     assert_eq!(census.checked, 24, "of which the second rule judged");
     assert_eq!(census.exempt, 0, "no line has needed a waiver yet");
+    // The third rule's own population, and the guard on its excused list.
+    // `excused_names` is DISTINCT names actually hit: holding it equal to the
+    // list's length is what turns an entry that has stopped being needed into
+    // a red test rather than a mask that quietly grows.
+    assert_eq!(census.outside, 666, "code-shaped names read in the prose");
+    assert_eq!(
+        census.excused, 13,
+        "of which the excused list accounted for"
+    );
+    assert_eq!(
+        census.excused_names,
+        crate::reference::pages::excused_len(),
+        "every excused name is still needed by the corpus — see \
+         `no_excused_name_is_stale`"
+    );
 
     let messages: Vec<String> = problems.iter().map(ToString::to_string).collect();
     assert!(
@@ -149,6 +164,32 @@ fn first_cell_is_code(line: &str) -> bool {
         .strip_prefix('|')
         .and_then(|cells| cells.split_once('|'))
         .is_some_and(|(first, _)| first.trim() == "Code")
+}
+
+/// Every name on the excused list is still EARNED by the corpus.
+///
+/// An excusal nothing hits is a mask: it silently accepts a name the rule
+/// would otherwise report. `excused_names` counts DISTINCT names actually hit
+/// and the hit set is a subset of the list, so equality with the list's length
+/// is exactly "no entry is dead".
+#[test]
+fn no_excused_name_is_stale() {
+    let corpus = corpus();
+    let borrowed: Vec<(&str, &str)> = corpus
+        .iter()
+        .map(|(name, text)| (name.as_str(), text.as_str()))
+        .collect();
+    let known = Known::of_this_build();
+    let (_, census) = audit(&borrowed, &known.vocabulary());
+
+    assert_eq!(
+        census.excused_names,
+        crate::reference::pages::excused_len(),
+        "an excused name no longer occurs in docs/engine/ — remove it from \
+         `prose::EXCUSED` rather than leaving it to mask a future real one"
+    );
+    // Not vacuous: the list is non-empty and every entry was reached.
+    assert!(census.excused_names > 0);
 }
 
 #[test]

@@ -69,5 +69,13 @@ mod generate;
 #[cfg(feature = "schema")]
 pub use generate::generate;
 
+/// What `reference-gen` does, as a function rather than as a `main`.
+///
+/// The binary is a wiring line over [`run::run`]; the audit-before-write
+/// ordering and the write-nothing-on-refusal rule live there, where a test can
+/// drive them over a fixture tree.
+#[cfg(feature = "schema")]
+pub mod run;
+
 #[cfg(test)]
 mod tests;
