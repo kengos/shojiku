@@ -4,9 +4,13 @@
 
 use super::{page, run};
 
+/// The tokens are underscore-bearing but NOT `code_shaped` (an uppercase
+/// word), which is what isolates the claim: this is about the second rule
+/// reading nothing outside its section, not about the third rule, which does
+/// read here and has its own file.
 #[test]
 fn a_page_with_no_diagnostics_section_contributes_nothing() {
-    let text = "# Title\n\n`no_such_code` in ordinary prose.\n\n## Other\n\n`also_missing`\n";
+    let text = "# Title\n\n`no_such_Code` in ordinary prose.\n\n## Other\n\n`also_Missing`\n";
     let (problems, census) = run(text);
     assert_eq!(problems, vec![]);
     assert_eq!(census.pages, 1);
@@ -15,7 +19,7 @@ fn a_page_with_no_diagnostics_section_contributes_nothing() {
 
 #[test]
 fn the_next_h2_ends_the_section() {
-    // `page` puts `tail_token` after a `## See also`; if the scan ran on it,
+    // `page` puts `tail_Token` after a `## See also`; if the scan ran on it,
     // it would be reported. Asserted here explicitly rather than relied on.
     let (problems, census) = run(&page("`real_code` is fine."));
     assert_eq!(problems, vec![]);
@@ -92,10 +96,13 @@ fn a_fence_that_opens_before_the_section_is_still_closed_inside_it() {
 
 #[test]
 fn a_second_diagnostics_section_on_one_page_is_read_and_counted_once_as_a_table() {
-    let text = "## Diagnostics\n\n`real_code`\n\n## Other\n\n`skipped_token`\n\n\
+    // `skipped_Token` carries an uppercase word so the THIRD rule, which does
+    // read between the sections, cannot report it either — leaving this a
+    // claim about the second rule's boundaries alone.
+    let text = "## Diagnostics\n\n`real_code`\n\n## Other\n\n`skipped_Token`\n\n\
                 ## Diagnostics\n\n| Code | Meaning |\n| --- | --- |\n| `other_code` | x |\n";
     let (problems, census) = run(text);
-    assert_eq!(problems, vec![], "`skipped_token` sits between the two");
+    assert_eq!(problems, vec![], "`skipped_Token` sits between the two");
     assert_eq!(census.sections, 2);
     assert_eq!(census.tables, 1, "tables counts PAGES that carry one");
     assert_eq!(census.rows, 1);

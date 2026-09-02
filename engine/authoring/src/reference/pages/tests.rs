@@ -7,6 +7,7 @@
 mod boundaries;
 mod committed;
 mod degenerate;
+mod prose;
 mod rules;
 mod vocabulary;
 
@@ -52,8 +53,14 @@ fn run(text: &str) -> (Vec<Problem>, Census) {
 /// Wraps a body in a page whose intro and tail BOTH carry an unknown
 /// underscore token outside the section — so every fixture doubles as a
 /// section-boundary control: if either leaks in, the test reports it.
+///
+/// The control tokens carry an UPPERCASE word on purpose. They have to be
+/// underscore-bearing to be a control for the second rule, and they must not
+/// be `code_shaped`, or the third rule would report them here and the two
+/// rules could no longer be told apart in these fixtures. `prose` covers the
+/// third rule on its own.
 fn page(body: &str) -> String {
-    format!("# Title\n\nintro `intro_token`\n\n## Diagnostics\n\n{body}\n\n## See also\n\ntail `tail_token`\n")
+    format!("# Title\n\nintro `intro_Token`\n\n## Diagnostics\n\n{body}\n\n## See also\n\ntail `tail_Token`\n")
 }
 
 /// The messages, so a test asserts what a reader would actually see.

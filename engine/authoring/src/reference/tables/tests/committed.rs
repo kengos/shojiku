@@ -9,7 +9,7 @@
 //! lives in the DEFAULT suite so `engine:test` and the coverage run both see
 //! it — not only `make reference:check`.
 
-use crate::reference::tables::{audit, page, pages, parse, Inputs, Registry};
+use crate::reference::tables::{audit, page, pages, parse, registry, Inputs};
 use crate::reference::{CATALOG, TABLES};
 use serde_json::Value;
 use shojiku_diagnostics::DiagnosticCode;
@@ -22,22 +22,6 @@ fn docs() -> PathBuf {
 
 fn catalog() -> Value {
     serde_json::from_str(CATALOG).expect("the committed catalog is valid JSON")
-}
-
-/// Every code the engine can emit, paired with the wire spelling of its
-/// severity — the same `snake_case` the JSON output uses, so the reference's
-/// column and a real diagnostic say the same word.
-fn registry() -> Registry {
-    DiagnosticCode::ALL
-        .iter()
-        .map(|code| {
-            let severity = serde_json::to_value(code.severity())
-                .ok()
-                .and_then(|v| v.as_str().map(str::to_owned))
-                .expect("Severity serializes as a string");
-            (code.as_str().to_owned(), severity)
-        })
-        .collect()
 }
 
 fn codes() -> BTreeSet<String> {

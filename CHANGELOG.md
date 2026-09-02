@@ -48,6 +48,33 @@ platform binaries.
   says which page owns which name. Capability key `mcp.reference`.
   `resources/list` now carries both families — 34 bundled examples and 33
   reference pages.
+- **A name in the reference's prose that is spelled like a diagnostic code is
+  now checked.** The first entry in this section — the one holding those
+  sections to the engine — reads only what sits under a page's
+  `## Diagnostics` heading, so a backticked code-shaped name anywhere else
+  went unread —
+  and `fonts.md` had two, for `font_embedding_restricted`, which is a tag in a
+  font-loading error message rather than a diagnostic code. A reader who met
+  it in a real failure and looked it up in `diagnostics.md` found nothing.
+  Every page but `features.md` — the decision log, which names Rust and C ABI
+  symbols in that shape by design — now has its ordinary prose read as well:
+  666 backticked code-shaped names, held to the same three lookups. The eight that are
+  legitimately not codes (a serde attribute, five MCP tool names, a pipeline
+  stage, and that font tag) are excused by name with a reason, and a test
+  requires every excusal to still be needed, so the list cannot quietly become
+  a blindfold. `fonts.md` now says what the tag is where it uses it.
+- **Regenerating the reference refuses as a whole, and something checks that.**
+  The first entry in this section says `make reference:generate` audits before
+  it writes. That
+  was true of the audit and of nothing after it: a page whose tables could not
+  be rendered still aborted part-way through the loop, leaving exactly the
+  half-regenerated tree the rule exists to prevent. Every output is now
+  computed before any is written, so a refusal of any kind — a stale code, an
+  unrenderable table, a spec that does not parse — leaves the tree
+  byte-identical. The claim itself was also unheld: the ordering lived in the
+  generator's `main`, which no test runs and no coverage build compiles. It
+  now lives in the library, where tests drive it over a throwaway tree and
+  assert both the refusal and that nothing was written.
 
 ### Fixed
 

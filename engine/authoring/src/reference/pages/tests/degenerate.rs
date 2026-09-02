@@ -104,13 +104,50 @@ fn every_problem_variant_renders_a_message_naming_the_page() {
             page: "b.md".to_owned(),
             token: "z_w".to_owned(),
         },
+        Problem::CodeShaped {
+            page: "c.md".to_owned(),
+            token: "p_q".to_owned(),
+        },
     ];
     assert_eq!(
         messages(&problems),
         vec![
             "a.md: the registry has no code `x_y`",
             "b.md: `z_w` is no diagnostic code, capability key or wire word",
+            "c.md: `p_q` is spelled like a diagnostic code and the engine defines \
+             no such code, capability key or wire word — reword it, or add it to \
+             the excused list with its reason",
         ]
     );
     assert!(format!("{:?}", problems[0]).contains("UnknownCode"));
+}
+
+/// The third rule reads OUTSIDE the section, which is most of a page, so its
+/// cost and its echo bound are worth pinning on hostile shapes rather than on
+/// the corpus. One pass, no backtracking, and a name quoted back is clipped at
+/// the same 64 chars the other two rules use.
+#[test]
+fn the_prose_rule_stays_linear_and_clips_what_it_quotes() {
+    let long = "a_".repeat(400) + "b";
+    let (problems, census) = run(&format!("# T\n\nprose `{long}`\n"));
+
+    assert_eq!(census.outside, 1, "one token, however long");
+    assert_eq!(problems.len(), 1);
+    let Problem::CodeShaped { token, .. } = &problems[0] else {
+        panic!("expected the prose rule: {problems:?}");
+    };
+    assert_eq!(token.chars().count(), 64, "clipped like every other echo");
+
+    // Many backticks on one line: the walk advances past each pair it finds
+    // and never re-scans, so this is linear rather than quadratic.
+    let many = "`a_b` ".repeat(500);
+    let (problems, census) = run(&format!("# T\n\n{many}\n"));
+    assert_eq!(census.outside, 500);
+    assert_eq!(problems.len(), 500, "each occurrence is its own claim");
+
+    // An UNTERMINATED backtick ends the scan of that line rather than running
+    // off it: the trailing text is not a token.
+    let (problems, census) = run("# T\n\nprose `a_b` and an open `c_d\n");
+    assert_eq!(census.outside, 1, "only the closed pair is a token");
+    assert_eq!(problems.len(), 1);
 }

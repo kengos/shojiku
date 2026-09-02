@@ -42,12 +42,14 @@
 
 mod audit;
 mod generate;
+mod registry;
 mod render;
 mod spec;
 mod splice;
 
 pub use audit::{audit, node_schema, Problem};
 pub use generate::{page, pages, Error, Inputs};
+pub use registry::registry;
 pub use render::{render, Missing, Registry};
 pub use spec::{parse, Cell, Column, Coverage, Row, Spec, Table};
 pub use splice::{splice, start_marker, SpliceError, CLOSE, OPEN};

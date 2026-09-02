@@ -8,6 +8,7 @@
 //! byte it has not just located, or backtracks — so the cost is linear in the
 //! page and a malformed page produces problems or nothing, never a panic.
 
+use super::prose;
 use super::{Census, Problem, Vocabulary};
 use std::collections::BTreeSet;
 
@@ -36,6 +37,7 @@ pub fn page(
     let mut inside = false;
     let mut fenced = false;
     let mut tabled = false;
+    let prose_scope = prose::in_scope(name);
     for line in text.lines() {
         // Fences FIRST, and tracked over the whole page: inside a fenced block
         // nothing is a heading and nothing is a table row, which is what stops
@@ -57,11 +59,20 @@ pub fn page(
             inside = line.trim_end() == "## Diagnostics";
             if inside {
                 census.sections += 1;
+                continue;
             }
+            // A heading is prose too: `## Assets (`prepare_assets`)` names a
+            // code-shaped token, and there is no reason the third rule should
+            // read the paragraph under it but not the line above.
+            elsewhere(name, line, vocabulary, census, out, prose_scope);
             continue;
         }
-        if inside && one(name, line, vocabulary, distinct, census, out) {
-            tabled = true;
+        if inside {
+            if one(name, line, vocabulary, distinct, census, out) {
+                tabled = true;
+            }
+        } else {
+            elsewhere(name, line, vocabulary, census, out, prose_scope);
         }
     }
     if tabled {
@@ -127,6 +138,37 @@ fn loose(
         census.checked += 1;
         if !vocabulary.knows(&token) {
             out.push(Problem::UnknownToken {
+                page: name.to_owned(),
+                token: clip(&token),
+            });
+        }
+    }
+}
+
+/// The THIRD rule over one line of ordinary prose: a name spelled the way a
+/// diagnostic code is spelled, outside any `## Diagnostics` section.
+///
+/// Excusing happens in [`super::audit`], not here, so the census counts the
+/// whole population this rule READ — the number that tells an inert scan from
+/// a clean tree — and a stale excusal is visible as a drop in distinct hits.
+fn elsewhere(
+    name: &str,
+    text: &str,
+    vocabulary: &Vocabulary<'_>,
+    census: &mut Census,
+    out: &mut Vec<Problem>,
+    in_scope: bool,
+) {
+    if !in_scope {
+        return;
+    }
+    for token in tokens(text) {
+        if !prose::code_shaped(&token) {
+            continue;
+        }
+        census.outside += 1;
+        if !vocabulary.knows(&token) {
+            out.push(Problem::CodeShaped {
                 page: name.to_owned(),
                 token: clip(&token),
             });
