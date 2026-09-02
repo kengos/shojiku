@@ -3,26 +3,28 @@
 // `page.margin`. A live view — it re-reads `controller.read('page')` each render
 // and every control dispatches a named `designer-core` op batch (AI parity). The
 // mode is wire-derived (a bare number = uniform, a `{ top… }` map = per-side),
-// mirroring the size named/custom split. Inputs are uncontrolled + keyed by their
-// own value, so each reseeds on its own external change without a body-wide
-// remount dropping an in-progress sibling entry (the property-panel remount fix).
+// mirroring the size named/custom split. Every input goes through a shared field
+// primitive, so each is uncontrolled and keyed by its own value plus a reseed
+// nonce — it reseeds on its own external change without a body-wide remount
+// dropping an in-progress sibling entry (the property-panel remount fix).
 
 import type { Op } from '@shojiku/designer-core';
-import { useId } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
-import { FIELD_LABEL, INPUT } from '../ui/chrome';
-import { Field, TextField, UnitBadge } from './fields';
+import { INPUT } from '../ui/chrome';
+import { Field, TextField } from './fields';
 import {
+  canStepUniformMargin,
   enterPerSideOps,
   enterUniformOps,
   MARGIN_SIDES,
   type MarginMode,
   perSideOp,
   readMarginView,
+  stepUniformMarginOp,
   uniformMarginOp,
 } from './marginModel';
-import { useReseedKey } from './useReseedKey';
+import { StepperField } from './StepperField';
 
 export interface MarginEditorProps {
   readonly controller: EditorController;
@@ -30,9 +32,7 @@ export interface MarginEditorProps {
 
 export function MarginEditor({ controller }: MarginEditorProps) {
   const { t } = useI18n();
-  const uniformId = useId();
   const view = readMarginView(controller.read('page'));
-  const [uniformKey, reseedUniform] = useReseedKey(view.uniform);
 
   const dispatch = (ops: Op[] | null): void => {
     if (ops !== null) {
@@ -61,37 +61,22 @@ export function MarginEditor({ controller }: MarginEditorProps) {
       </Field>
 
       {view.mode === 'uniform' ? (
-        // A NUMBER input can only hold a bare value, so the unit is always
-        // implicit here — the badge is unconditional, and this field gets NO
-        // unit hint: the browser will not accept `25mm` in a number input, so
-        // inviting it would be a lie. The per-side fields below are text
-        // inputs and do carry the invitation. Explicit htmlFor/id, not
-        // the wrapping-label `Field`: the badge's text would otherwise fold
-        // into the computed label (the all-sides label would otherwise read with a fused "pt").
-        <span className="mb-2 block">
-          <label htmlFor={uniformId} className={FIELD_LABEL}>
-            {t('pageSetup.marginAll')}
-          </label>
-          <span className="relative flex min-w-0">
-            <input
-              key={uniformKey}
-              id={uniformId}
-              type="number"
-              className={`${INPUT} w-full min-w-0 pr-9`}
-              min="0"
-              step="any"
-              defaultValue={view.uniform}
-              onBlur={(event) => {
-                const typed = event.currentTarget.value;
-                if (typed !== view.uniform) {
-                  dispatch(uniformMarginOp(typed));
-                  reseedUniform();
-                }
-              }}
-            />
-            <UnitBadge text="pt" />
-          </span>
-        </span>
+        // The all-sides form is a bare pt number, so the unit is always implicit
+        // and the badge unconditional — and this field gets NO unit hint. It is
+        // the WIRE that refuses `25mm` here (`uniformMarginOp` takes a bare
+        // numeral only, and a unit under `page.margin` is an engine parse error),
+        // so inviting one would be a lie. The per-side fields below are carried
+        // verbatim and do take the invitation. The ▲▼ step by a point and go back
+        // through the same builder the typed value does, so they cannot reach a
+        // negative margin the keyboard is refused.
+        <StepperField
+          label={t('pageSetup.marginAll')}
+          value={view.uniform}
+          unit="pt"
+          canStep={canStepUniformMargin(view.uniform)}
+          onCommit={(value) => dispatch(uniformMarginOp(value))}
+          onStep={(dir) => dispatch(stepUniformMarginOp(view.uniform, dir))}
+        />
       ) : (
         <div className="flex flex-wrap gap-2">
           {MARGIN_SIDES.map((side) => (

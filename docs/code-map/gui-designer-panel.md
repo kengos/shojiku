@@ -28,8 +28,11 @@ counter are wrong twice over, since `applyAll([])` reports ok and bumps the
 revision for a commit that authored nothing. The only guard is the CHANGED
 guard: an unchanged blur reseeds nothing, so a tab-through never remounts.
 **The nonce is NOT ambient**: it comes with `StepperField` / `TextField` /
-`SeededField`, and a hand-rolled input must wire `useReseedKey` itself (the
-seven that do are listed at their entries below). Inputs whose builder authors
+`SeededField`, and a hand-rolled input must wire `useReseedKey` itself. Most of
+the ones under `panel/` say so at their own entry below, but that is not a
+census in either direction: some entries are silent about it, callers outside
+`panel/` are described in the sibling maps, and nothing checks a list or a
+count. Grep `useReseedKey(` when you need the real set. Inputs whose builder authors
 the typed string VERBATIM need none — the value moves with the entry, which is
 why `ComboField`, `contentParts` and `IterableSourceSection` carry no nonce.
 With ONE exception to the commit-on-blur posture itself, the static-text chip
@@ -82,7 +85,15 @@ The child-layout surface is a shell + one module per control cluster.
   value authors nothing).
 - `panel/RatioRow.tsx` — the row-mode ratio inputs + the fixed-width chip for a
   width-authoring child. Each weight input is its own `RatioInput` component
-  so its reseed hook has a fixed home (the slot list is variable-length).
+  so its reseed hook has a fixed home (the slot list is variable-length). Its
+  weights stay hand-rolled rather than going through `StepperField`, and the
+  reason is the ROW: a ratio is read as `2 : 3 : 1`, so each weight is a bare
+  `w-10` box between colons under one shared label, where the stepper renders a
+  labelled full-width block with a ▲▼ column beside it. A one-off by design,
+  not drift. (It is not the only numeric input outside the stepper — the column
+  sheet's width cell, `PointField`'s line coordinates, `NumericComboField` and
+  the toolbar's font size are each hand-rolled or stepper-less for their own
+  stated reason.)
 - `panel/ParentContainerCard.tsx` — the parent-first tinted card hosting
   the same shell for the parent: select-parent jump + hover canvas
   highlight.
@@ -395,11 +406,16 @@ read side, never the reverse.
   OPT-IN per site because the WIRE decides. NINE fields carry it (box
   coordinates, corner radius, column width in BOTH the form and the
   sheet, per-side margins, flex/grid gap, char-grid cell size + line gap,
-  and `fontSize` on both style surfaces); three deliberately do NOT, each
-  for its own reason: the border PEN's width is `borderWidth`, `number (pt)` in the
-  wire and dropped by its own commit guard; the UNIFORM margin is an
-  `<input type="number">`, which the browser will not let hold `25mm`;
-  and a unitless ratio (`lineHeight`) has no badge to hang it on. The
+  and `fontSize` on both style surfaces); several deliberately do NOT, each
+  for its own reason — a band's height and the two custom PAGE dimensions
+  among them (the page cluster states its unit in the `<select>` one cell
+  away), and three whose reason is worth spelling out: the border PEN's width is `borderWidth`, `number (pt)` in the
+  wire and dropped by its own commit guard; the UNIFORM margin cannot hold
+  `25mm` because the WIRE refuses it there (`uniformMarginOp` takes a bare
+  numeral, and a unit under `page.margin` is an engine parse error) — the field
+  is an ordinary text input like every other stepper, so nothing in the browser
+  stops the typing; and a unitless ratio (`lineHeight`) has no badge to hang it
+  on. The
   bubble rides the input's WRAPPER, not the badge — the badge is
   `pointer-events-none` and cannot be hovered. Eight sites reach it
   through the shared fields' `unitHint` prop; the NINTH,
@@ -418,8 +434,12 @@ read side, never the reverse.
   caveats (`%` resolves against a different axis per field and drops with
   `percent_of_auto` under an auto-height parent) live in the glossary's
   `units` term and in `border.radiusHint`, which have room for them.
-- `panel/StepperField.tsx` — length/number input + ▲▼ (one step op per
-  click = one undo step; a commit-on-blur changed-guard that reseeds the input
+- `panel/StepperField.tsx` — length/number input + ▲▼, the numeric primitive
+  both the property panel and the document-settings page reach for (one step op
+  per click = one undo step; the column sits FLUSH against the input — no gap,
+  the input's right corners squared, the column pulled back a pixel so the pair
+  shares ONE border — because a spinner separated from its field reads as two
+  controls, which is what macOS/HIG and the gdoc numeric box both avoid; a commit-on-blur changed-guard that reseeds the input
   from the document after every committing blur, so anything the commit did
   not take is snapped back; the nonce rides the INNER input, never this component,
   because remounting the widget between the ▲'s mousedown and mouseup
@@ -891,7 +911,12 @@ conditional rules the next section owns).
   - `panel/pageSetupOps.ts` — the WRITE side, every key a literal path:
     `selectSizeOp` (named→custom clears orientation+size in one batch so
     no `orientation_ignored` lingers)/`orientationOp`/`customDimOp`/
-    `customUnitOps`. A builder DECLINES with a null op or a dropped
+    `customUnitOps`, plus the ▲▼ pair `canStepDimension`/`stepCustomDimOp` —
+    which steps by one of the DISPLAYED unit (the numerals and the unit select
+    share it, so a point-sized step would be invisible under `mm` and enormous
+    under `in`) and re-authors through `customDimOp`, so the buttons cannot
+    reach a value typing the same thing is refused for: ▼ on a `1` would give
+    the non-positive `0`, and nothing is dispatched. A builder DECLINES with a null op or a dropped
     batch entry rather than authoring something the model would refuse.
 - `panel/PageSetup.tsx` — the form (size select with a locale-preferred
   optgroup and an "other sizes" one holding what the first does not — the
@@ -899,16 +924,30 @@ conditional rules the next section owns).
   proportional thumbnail); embeds
   `MarginEditor` and, in custom mode, `CustomSizeFields`.
 - `panel/CustomSizeFields.tsx` — the custom `{ w, h }` + shared unit
-  cluster: uncontrolled inputs keyed by value PLUS a reseed nonce, that
-  commit on blur ONLY when the value changed (the displayed numeral can be
-  a unit-converted view of the wire, so a blur-through would rewrite what
-  the user never touched) and reseed from the document afterwards, so a
+  cluster. The two numerals are `StepperField`s, which is where the whole
+  commit discipline now lives: keyed by value PLUS a reseed nonce, committing
+  on blur ONLY when the value changed (the displayed numeral can be a
+  unit-converted view of the wire, so a blur-through would rewrite what the
+  user never touched) and reseeding from the document afterwards, so a
   `composeDimension` that authors nothing does not leave the entry on screen.
+  They were raw `<input type="number">`s, which meant the BROWSER drew a
+  spinner here while the rest of the panel drew the house one. They wear no
+  unit badge — the unit is the `shrink-0` select one cell away — and the row is
+  `items-start` so the three labels sit on one baseline.
 - `panel/marginModel.ts` — pure page-margin model (`readMarginView`
   uniform/perSide/legacy-array; mode-switch ops seed all four sides;
-  per-side values carried VERBATIM, no unit conversion).
+  per-side values carried VERBATIM, no unit conversion). The uniform ▲▼ pair
+  (`canStepUniformMargin`/`stepUniformMarginOp`) steps by a POINT and
+  re-authors through `uniformMarginOp` rather than through the shared
+  `stepValueOp` the item fields use: that one would author `-1` from a zero
+  margin, a value this field refuses from the keyboard. ▼ at the floor
+  dispatches nothing and the button stays enabled, as a native
+  `<input type="number" min="0">` does at its minimum.
 - `panel/MarginEditor.tsx` — the mode select + uniform or per-side
-  inputs; every control an `applyAll` batch.
+  inputs; every control an `applyAll` batch. The uniform field is a
+  `StepperField` carrying the unconditional `pt` badge (it was a raw
+  `<input type="number">` with a hand-rolled label and badge); the per-side
+  ones are `TextField`s, which is why only they take the unit invitation.
 
 ## Document defaults + named styles
 

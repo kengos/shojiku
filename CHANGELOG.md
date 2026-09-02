@@ -13,6 +13,22 @@ platform binaries.
 
 ## [Unreleased]
 
+### Changed
+
+- **The Designer's number fields now read as one control.** Every ▲▼ stepper
+  in the property panel floated four pixels
+  off the box it belongs to, so the pair read as an input and two unrelated
+  buttons rather than as a single spinner; the arrows now sit flush against
+  the field, sharing its border, the way a macOS stepper and a word
+  processor's numeric box do. Three fields did not have that stepper at all —
+  the custom page width and height, and the all-sides margin — because they
+  were plain browser number inputs, so the browser drew its own spinner on
+  them instead. They are now the same field as every other stepper: ▲▼ that step the page
+  dimensions by one of whatever unit is selected and the margin by a point,
+  each click a single undo step. The buttons author only what typing the same
+  value would be accepted for, so they stop at a zero-width page and at a
+  zero margin instead of stepping past them.
+
 ### Added
 
 - **The reference's hand-written diagnostics sections are held to the

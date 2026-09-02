@@ -3,10 +3,12 @@
 // `PageSetup` because it carries its own commit discipline rather than being
 // three more controls in the form.
 //
-// Uncontrolled number inputs commit on blur and are keyed by their own value
-// plus a refusal nonce, so each reseeds when THAT value changes (an undo, a
-// size switch, a unit re-expression) AND when its own commit is refused —
-// without a body-wide remount dropping an in-progress sibling.
+// The two numerals go through the shared `StepperField`, so they commit on blur,
+// reseed from the document afterwards (a `composeDimension` that authors nothing
+// does not leave the entry on screen), and carry the house ▲▼ — they used to be
+// raw `<input type="number">`s, so the browser drew its own spinner on them
+// instead. The unit lives in the select beside them, so the fields wear no unit
+// badge.
 
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
@@ -14,9 +16,9 @@ import { INPUT } from '../ui/chrome';
 import { Field } from './fields';
 import { applyPanelOp } from './model';
 import type { CustomDims } from './pageSetupModel';
-import { customDimOp, customUnitOps } from './pageSetupOps';
+import { canStepDimension, customDimOp, customUnitOps, stepCustomDimOp } from './pageSetupOps';
 import { SIZE_UNITS, type SizeUnit } from './pageSizes';
-import { useReseedKey } from './useReseedKey';
+import { StepperField } from './StepperField';
 
 export interface CustomSizeFieldsProps {
   readonly controller: EditorController;
@@ -25,66 +27,47 @@ export interface CustomSizeFieldsProps {
 
 export function CustomSizeFields({ controller, custom }: CustomSizeFieldsProps) {
   const { t } = useI18n();
-  const [wKey, reseedW] = useReseedKey(custom.w);
-  const [hKey, reseedH] = useReseedKey(custom.h);
+  // One dimension's field. `StepperField` owns the changed-guard and the reseed
+  // nonce, so the only thing left here is which key the two callbacks write.
+  const dimension = (field: 'w' | 'h', label: string) => (
+    <span className="min-w-0 flex-1">
+      <StepperField
+        label={label}
+        value={custom[field]}
+        canStep={canStepDimension(custom[field])}
+        onCommit={(value) => applyPanelOp(controller, customDimOp(field, value, custom.unit))}
+        onStep={(dir) => applyPanelOp(controller, stepCustomDimOp(field, custom, dir))}
+      />
+    </span>
+  );
+  // `items-start` because the three cells own their heights (`StepperField` and
+  // `Field` both carry `mb-2`, but only the steppers grow with a ▲▼ column), and
+  // the unit cell is `shrink-0` so the two numerals split whatever the select
+  // leaves rather than being squeezed by it.
   return (
-    <div className="flex gap-2">
-      <Field label={t('pageSetup.width')}>
-        <input
-          key={wKey}
-          type="number"
-          className={INPUT}
-          min="0"
-          step="any"
-          defaultValue={custom.w}
-          // Commit only a CHANGED value: the displayed numeral can be a
-          // unit-converted view of the wire (a mixed-unit authored size),
-          // so an unconditional blur-through write would rewrite the wire
-          // form the user never touched.
-          onBlur={(event) => {
-            const typed = event.currentTarget.value;
-            if (typed !== custom.w) {
-              applyPanelOp(controller, customDimOp('w', typed, custom.unit));
-              reseedW();
+    <div className="flex items-start gap-2">
+      {dimension('w', t('pageSetup.width'))}
+      {dimension('h', t('pageSetup.height'))}
+      <span className="shrink-0">
+        <Field label={t('pageSetup.unit')}>
+          <select
+            className={INPUT}
+            value={custom.unit}
+            onChange={(event) =>
+              controller.applyAll(
+                // The select offers only the four units, so the cast is total.
+                customUnitOps(custom, event.currentTarget.value as SizeUnit),
+              )
             }
-          }}
-        />
-      </Field>
-      <Field label={t('pageSetup.height')}>
-        <input
-          key={hKey}
-          type="number"
-          className={INPUT}
-          min="0"
-          step="any"
-          defaultValue={custom.h}
-          onBlur={(event) => {
-            const typed = event.currentTarget.value;
-            if (typed !== custom.h) {
-              applyPanelOp(controller, customDimOp('h', typed, custom.unit));
-              reseedH();
-            }
-          }}
-        />
-      </Field>
-      <Field label={t('pageSetup.unit')}>
-        <select
-          className={INPUT}
-          value={custom.unit}
-          onChange={(event) =>
-            controller.applyAll(
-              // The select offers only the four units, so the cast is total.
-              customUnitOps(custom, event.currentTarget.value as SizeUnit),
-            )
-          }
-        >
-          {SIZE_UNITS.map((unit) => (
-            <option key={unit} value={unit}>
-              {unit}
-            </option>
-          ))}
-        </select>
-      </Field>
+          >
+            {SIZE_UNITS.map((unit) => (
+              <option key={unit} value={unit}>
+                {unit}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </span>
     </div>
   );
 }

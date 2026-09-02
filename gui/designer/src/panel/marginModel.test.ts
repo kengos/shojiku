@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canStepUniformMargin,
   enterPerSideOps,
   enterUniformOps,
   MARGIN_SIDES,
   perSideOp,
   readMarginView,
+  stepUniformMarginOp,
   uniformMarginOp,
 } from './marginModel';
 
@@ -185,5 +187,83 @@ describe('perSideOp', () => {
     expect(perSideOp(view, 'top', '1234567890123')).toBeNull();
     expect(perSideOp(view, 'top', '  ')).toBeNull();
     expect(perSideOp(view, 'top', 'wat')).toBeNull();
+  });
+});
+
+describe('canStepUniformMargin', () => {
+  it('offers the buttons on a bare numeral, zero included', () => {
+    expect(canStepUniformMargin('25')).toBe(true);
+    expect(canStepUniformMargin('0')).toBe(true);
+    expect(canStepUniformMargin('0.5')).toBe(true);
+  });
+
+  it('withholds them where the typed commit is also refused', () => {
+    expect(canStepUniformMargin('')).toBe(false);
+    expect(canStepUniformMargin('  ')).toBe(false);
+    expect(canStepUniformMargin('25mm')).toBe(false);
+    expect(canStepUniformMargin('-5')).toBe(false);
+    expect(canStepUniformMargin('wide')).toBe(false);
+  });
+});
+
+describe('stepUniformMarginOp', () => {
+  it('steps the all-sides margin up by a point', () => {
+    expect(stepUniformMarginOp('25', 1)).toEqual([
+      { op: 'setScalar', keys: ['page', 'margin'], value: 26 },
+    ]);
+  });
+
+  it('steps it down by a point', () => {
+    expect(stepUniformMarginOp('25', -1)).toEqual([
+      { op: 'setScalar', keys: ['page', 'margin'], value: 24 },
+    ]);
+  });
+
+  it('steps a fractional margin without leaving binary-float noise behind', () => {
+    expect(stepUniformMarginOp('0.5', 1)).toEqual([
+      { op: 'setScalar', keys: ['page', 'margin'], value: 1.5 },
+    ]);
+  });
+
+  it('authors NOTHING stepping down from a zero margin', () => {
+    // The floor is the whole reason this builder exists rather than the generic
+    // `stepValueOp` the item fields use: that one would author -1 here, a value
+    // `uniformMarginOp` refuses from the keyboard. The button stays enabled and
+    // the document does not move, as a native number input's does at its
+    // minimum.
+    expect(stepUniformMarginOp('0', -1)).toBeNull();
+  });
+
+  it('CLAMPS to the legal zero from below one point, rather than going inert', () => {
+    // 0 is a legal all-sides margin, so ▼ from a fractional value must reach
+    // it. Declining here would leave an enabled button that can never author a
+    // value the keyboard authors fine.
+    expect(stepUniformMarginOp('0.5', -1)).toEqual([
+      { op: 'setScalar', keys: ['page', 'margin'], value: 0 },
+    ]);
+  });
+
+  it('keeps the precision the author typed, rather than rounding to 2 places', () => {
+    // `uniformMarginOp` accepts any plain decimal, so a third decimal is an
+    // ordinary authored value. A fixed two-place rounding would author 26.38
+    // here and discard a digit the author entered.
+    expect(stepUniformMarginOp('25.375', 1)).toEqual([
+      { op: 'setScalar', keys: ['page', 'margin'], value: 26.375 },
+    ]);
+  });
+
+  it('authors nothing when the numeral is too large for the step to move it', () => {
+    // Past 2^53 the `+ 1` is absorbed; authoring the result would mint an undo
+    // entry for a change that did not happen.
+    expect(stepUniformMarginOp(`1${'0'.repeat(20)}`, 1)).toBeNull();
+  });
+
+  it('authors nothing from an EMPTY field', () => {
+    // `Number('')` is 0, so a numeric guard alone would step a cleared field to 1.
+    expect(stepUniformMarginOp('', 1)).toBeNull();
+  });
+
+  it('authors nothing from a unit-bearing value, which this field cannot hold', () => {
+    expect(stepUniformMarginOp('25mm', 1)).toBeNull();
   });
 });

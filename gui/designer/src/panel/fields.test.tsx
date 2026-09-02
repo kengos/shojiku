@@ -57,6 +57,23 @@ describe('StepperField', () => {
     expect(onStep.mock.calls).toEqual([[1], [-1]]);
   });
 
+  it('sits the ▲▼ column FLUSH against the input, as one control', () => {
+    // The pair used to be separated by a 4px gap, which read as two controls.
+    // jsdom computes no geometry, so what is pinned here is the mechanism: no
+    // gap on the row, the input's right corners squared, and the column pulled
+    // back a pixel so the two share one border rather than stacking two.
+    draw({ value: '12', canStep: true });
+    const input = screen.getByLabelText('X');
+    const row = input.closest('span.flex.items-stretch');
+    if (row === null) {
+      throw new Error('no stepper row');
+    }
+    expect(row.className).not.toMatch(/\bgap-/);
+    expect(input.className).toContain('rounded-r-none');
+    const column = screen.getByRole('button', { name: 'Increase' }).parentElement;
+    expect(column?.className).toContain('-ml-px');
+  });
+
   it('disables the ▲▼ buttons when the value is not steppable', () => {
     const { onStep } = draw({ value: '50%', canStep: false });
     const up = screen.getByRole('button', { name: 'Increase' }) as HTMLButtonElement;

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
@@ -254,5 +254,54 @@ describe('PageSetup custom dimension refusal snap-back', () => {
     fireEvent.blur(width, { target: { value: '8.5' } });
     expect(screen.getByLabelText('Width')).toBe(width);
     expect(controller.apply).not.toHaveBeenCalled();
+  });
+});
+
+// The custom dimensions' ▲▼. `PageSetup` renders three steppers in custom mode
+// (width, height, and the margin editor's all-sides field), so each query is
+// scoped to the block that owns the named input rather than indexing a flat
+// `getAllByLabelText`, which would silently follow a reordering.
+describe('PageSetup custom dimension steppers', () => {
+  const custom = { size: { w: '210mm', h: '297mm' } };
+
+  function step(label: string, direction: 'Increase' | 'Decrease'): HTMLElement {
+    const field = screen.getByLabelText(label).closest('span.mb-2');
+    if (field === null) {
+      throw new Error(`no stepper block around ${label}`);
+    }
+    return within(field as HTMLElement).getByLabelText(direction);
+  }
+
+  it('steps the width by one of the displayed unit, as ONE op', () => {
+    const controller = makeController(custom);
+    draw(<PageSetup controller={controller} />);
+    fireEvent.click(step('Width', 'Increase'));
+    expect(controller.apply).toHaveBeenCalledTimes(1);
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      keys: ['page', 'size', 'w'],
+      value: '211mm',
+    });
+  });
+
+  it('steps the HEIGHT from its own buttons, not the width', () => {
+    const controller = makeController(custom);
+    draw(<PageSetup controller={controller} />);
+    fireEvent.click(step('Height', 'Decrease'));
+    expect(controller.apply).toHaveBeenCalledTimes(1);
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      keys: ['page', 'size', 'h'],
+      value: '296mm',
+    });
+  });
+
+  it('withholds the buttons on a dimension the wire left unreadable', () => {
+    // An unparseable `w` seeds an empty field: `composeDimension` refuses it, so
+    // offering the buttons would offer a control that cannot author anything.
+    const controller = makeController({ size: { w: 'wide', h: '297mm' } });
+    draw(<PageSetup controller={controller} />);
+    expect((step('Width', 'Increase') as HTMLButtonElement).disabled).toBe(true);
+    expect((step('Height', 'Increase') as HTMLButtonElement).disabled).toBe(false);
   });
 });

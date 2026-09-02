@@ -133,18 +133,19 @@ describe('MarginEditor unit affordance', () => {
     expect(unitHintsFor('Top').length).toBeGreaterThan(0);
   });
 
-  // The uniform field is a raw `<input type="number">`: the browser will not
-  // accept `25mm` there at all, so the absence of the invitation is the
-  // truthful state, not a missed site.
+  // Nothing in the browser stops `25mm` being typed here — the field is an
+  // ordinary text input like every other stepper. It is the WIRE that refuses
+  // it (`page.margin` takes a bare pt number), so the absence of the invitation
+  // is the truthful state, not a missed site.
   it('does NOT invite one on the uniform field, which cannot hold a unit', () => {
     draw(<MarginEditor controller={makeController(undefined)} />);
     expect(unitHintsFor('All sides')).toHaveLength(0);
   });
 });
 
-// Both margin inputs refuse via a null batch — the uniform one hand-rolled,
-// the per-side ones through the shared `TextField`. The two paths are covered
-// separately because only one of them goes through the widget.
+// Both margin inputs refuse via a null batch — the uniform one through
+// `StepperField`, the per-side ones through `TextField`. The two paths are
+// covered separately because the two widgets seed and reseed independently.
 
 describe('MarginEditor refusal snap-back', () => {
   const uniform = () => screen.getByLabelText('All sides') as HTMLInputElement;
@@ -207,5 +208,40 @@ describe('MarginEditor refusal snap-back', () => {
     draw(<MarginEditor controller={controller} />);
     fireEvent.blur(screen.getByLabelText('Top'), { target: { value: '18' } });
     expect(controller.applyAll).toHaveBeenCalledOnce();
+  });
+});
+
+// The uniform field's ▲▼. Its step builder deliberately does NOT go through the
+// generic `stepValueOp` the item fields use, so the floor is what these pin.
+
+describe('MarginEditor uniform steppers', () => {
+  const up = () => screen.getByLabelText('Increase');
+  const down = () => screen.getByLabelText('Decrease');
+
+  it('steps the all-sides margin up as ONE batch (one undo step)', () => {
+    const controller = makeController({ margin: 25 });
+    draw(<MarginEditor controller={controller} />);
+    fireEvent.click(up());
+    expect(controller.applyAll).toHaveBeenCalledTimes(1);
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', keys: ['page', 'margin'], value: 26 },
+    ]);
+  });
+
+  it('steps it down', () => {
+    const controller = makeController({ margin: 25 });
+    draw(<MarginEditor controller={controller} />);
+    fireEvent.click(down());
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', keys: ['page', 'margin'], value: 24 },
+    ]);
+  });
+
+  it('authors nothing stepping down from zero, with the button still offered', () => {
+    const controller = makeController({ margin: 0 });
+    draw(<MarginEditor controller={controller} />);
+    expect((down() as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(down());
+    expect(controller.applyAll).not.toHaveBeenCalled();
   });
 });
