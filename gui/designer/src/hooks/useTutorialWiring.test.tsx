@@ -76,10 +76,14 @@ describe('the tutorial', () => {
     draw(makeTransport(), {
       tutorialStore: { load: () => stored, save: (p) => save(p) },
     });
-    const hint = await screen.findByRole('button', { name: /New here/ });
+    // The invite is prose with a separate opener beside it — it used to be the
+    // whole sentence as an accent-coloured link, which read as the loudest thing
+    // in the editor (shell/TutorialHint.test.tsx pins the replacement).
+    const hint = await screen.findByText(/New here/);
+    expect(screen.getByRole('button', { name: 'Tutorial…' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(save).toHaveBeenCalledWith({ completed: [], dismissed: true });
-    await waitFor(() => expect(screen.queryByRole('button', { name: /New here/ })).toBeNull());
+    await waitFor(() => expect(screen.queryByText(/New here/)).toBeNull());
     expect(hint).toBeTruthy();
   });
 

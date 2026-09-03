@@ -1,18 +1,23 @@
 // @vitest-environment node
 //
-// The chrome-convention gate (gui/STYLE.md § Toolbar chrome). Two rules are
-// written down and both used to be violated in SHARED code, so every new
+// The chrome-convention gate (gui/STYLE.md § Toolbar chrome). Three rules are
+// written down and each used to be violated in SHARED code, so every new
 // consumer inherited the violation rather than introducing one:
 //
 //   1. an icon-only control conveys its tooltip through `TipBubble`, never the
 //      native `title` attribute (its OS-controlled ~1s delay reads as "no
 //      tooltip");
 //   2. a glyph on a control is a real SVG from `ui/icons.tsx`, never a text
-//      character.
+//      character;
+//   3. the thin rule between two toolbar groups is minted in `ui/Sep.tsx` and
+//      nowhere else. Four hand-rolled copies had drifted into two margin
+//      spellings, and only one of the four was `aria-hidden` — so the bar an
+//      author read to copy the convention from depended on which file they
+//      opened. Same shape as `actionConvention`'s rule 1 for the filled accent.
 //
 // A component test can only pin the primitives it happens to render; this walks
 // the whole package source so the NEXT surface cannot quietly reintroduce
-// either shape. The walker itself is `testkit/sourceWalk.ts`, shared with the
+// any of them. The walker itself is `testkit/sourceWalk.ts`, shared with the
 // action-convention and ellipsis gates.
 
 import { describe, expect, it } from 'vitest';
@@ -33,6 +38,18 @@ const ROOTS = [DESIGNER_SRC, APP_SRC];
  * pins it below. Kept as a constant so the rule reads as "exactly this one",
  * not as a loosened pattern. */
 const TITLE_AS_DESCRIPTION = 'designer-app/src/app/EditableTitle.tsx:106';
+
+/** The ONE file the toolbar group rule may be authored in. Kept as a constant
+ * for the same reason as the title exception above: the rule reads as "exactly
+ * this one", not as a pattern that happens to match little. The FILE, not a
+ * `file:line` — a hit list pinned to a line number turns every comment edit in
+ * `Sep.tsx` into a red gate, which is how a real rule gets relaxed. */
+const SEP_MINT_FILE = 'designer/src/ui/Sep.tsx';
+
+/** A `w-px` box tinted `bg-border` on one line IS the group rule; there is no
+ * other reason to author a one-pixel-wide tinted box. Both orders, because a
+ * class list has no canonical order. */
+const GROUP_RULE = /\bw-px\b.*\bbg-border\b|\bbg-border\b.*\bw-px\b/;
 
 /** True when the JSX element the line at `index` belongs to is a DOM element
  * (a lowercase tag) rather than a React component. `title` is a legitimate
@@ -84,6 +101,32 @@ describe('chrome conventions', () => {
     // preview frame would have to choose between two failing gates.
     const iframeTitles = hits(ROOTS, /(^|\s)title=/, (lines, index) => !onDomElement(lines, index));
     expect(iframeTitles.some((h) => h.includes('pdf/PdfPreviewModal.tsx:'))).toBe(true);
+  });
+
+  it('mints the toolbar group rule in exactly one file', () => {
+    const found = hits(ROOTS, GROUP_RULE);
+    // Exactly one authored rule, and it is `ui/Sep.tsx`'s. Asserting the COUNT
+    // as well as the file is what keeps a second copy from hiding beside the
+    // first.
+    expect(found).toHaveLength(1);
+    expect(found[0]?.startsWith(`${SEP_MINT_FILE}:`)).toBe(true);
+  });
+
+  it('reads a hand-rolled copy (the positive control for the sweep)', () => {
+    // The sweep asserts a ONE-element list, so a walk that reached nothing would
+    // fail loudly rather than pass. What still needs pinning is that the PATTERN
+    // recognises the shape it is policing: the two pre-extraction spellings
+    // (they differed in margin and in `aria-hidden`), plus a reversed class
+    // order, since a class list has none.
+    for (const handRolled of [
+      '<span className="mx-1 h-5 w-px shrink-0 bg-border" />',
+      '<span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-border" />',
+      '<span className="bg-border h-5 w-px" />',
+    ]) {
+      expect(GROUP_RULE.test(handRolled), handRolled).toBe(true);
+    }
+    // And that it does NOT sweep in an ordinary hairline border.
+    expect(GROUP_RULE.test('<div className="border-border border-b" />')).toBe(false);
   });
 
   it('draws control glyphs as SVG icons, never text characters', () => {

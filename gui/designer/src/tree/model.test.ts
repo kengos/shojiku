@@ -135,7 +135,8 @@ describe('buildTree', () => {
   });
 
   it('shows a MULTI-LINE text as its first line plus a break marker', () => {
-    // A row renders `white-space: nowrap`, which collapses a `\n` to a space:
+    // HTML collapses a `\n` to a space (the row wraps, but that is the default
+    // `normal` behaviour, not something the old nowrap caused):
     // a three-line address used to arrive as one space-joined string, with
     // nothing saying it had been shortened.
     const view = buildTree(

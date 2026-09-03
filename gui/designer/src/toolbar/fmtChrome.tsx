@@ -35,11 +35,6 @@ export function Caret() {
   return <IconChevronDown size={11} className="ml-1 shrink-0 text-muted" />;
 }
 
-/** The thin vertical rule between toolbar clusters (gdoc-style grouping). */
-export function Sep() {
-  return <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-border" />;
-}
-
 /** The "where this value comes from" hint for a control showing a cascade
  * value (a `title` tooltip + the same text for assistive tech); `undefined`
  * for an own/unset value — nothing to explain. */

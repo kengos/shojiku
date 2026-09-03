@@ -99,7 +99,16 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   the contract).
 - `tree/TreeRow.tsx` — one row, recursing: twisty, kind mark, label,
   click/right-click/Alt+↑↓/collapse keys; registers in the shared
-  `rowRefs` map.
+  `rowRefs` map. The label WRAPS (`line-clamp-3` +
+  `[overflow-wrap:anywhere]`), it does not ellipsize: a bound row's label is
+  the item's own text with its binding inline, so one nowrap line cut the
+  binding key — the part naming the field — off every such row at the 240px
+  default. Three is measured, not picked (two left the longer keys cut
+  mid-word); a sentence-length label stays clamped, since `MAX_LABEL_CHARS`
+  bounds the string and nothing bounds the height. The row's parts are
+  TOP-aligned with the mark in a one-line-high box: centring against the whole
+  block puts the mark beside the second line of a three-line row, so the marks
+  stop lining up down the tree.
 - `tree/useRowReorder.ts` — the row-drag gesture (pointer state machine
   + Alt+↑/↓): the pointer drags over ALL visible rows, so a drop may
   leave the row's own parent; Alt+arrow stays inside it. Capture-phase
@@ -180,13 +189,27 @@ effect. Convention, not a gate: keep
 REQUIRED-only (no `?:`/defaults) so the split added no new branch legs.
 
 - `shell/TopChrome.tsx` — the top stack: `Titlebar` + `Menubar` + tutorial
-  strip + `SlimToolbar`.
+  strip + `SlimToolbar`. The strip is muted PROSE plus an outlined opener
+  (never `primary` — the work surface's one sanctioned filled control is the
+  canvas empty-state CTA, and a first-run invite is not it), reusing
+  `menu.help.tutorial` so the HIG pair with `tutorial.title` holds on both
+  surfaces. It rendered the whole sentence as `text-accent underline`, and an
+  accent-wearing AREA reads as a fill in peripheral vision: at a blurred glance
+  the invite outranked the document.
 - `shell/topMenubar.ts` — `useMenubarColumns`: the `validateHostEntries`
   memo over the UNTRUSTED host entries, `buildMenubar`, `openExportReview`.
   Every item dispatches an existing op or host callback (AI parity).
-- `shell/SlimToolbar.tsx` — the slim `role=toolbar` row (undo/redo, grid,
-  variant/zoom/size indicator, `FormatToolbar`, `AlignToolbar`, copilot,
-  notice pills).
+- `shell/SlimToolbar.tsx` — the slim `role=toolbar` row: undo/redo,
+  `ViewControls`, `FormatToolbar`, `AlignToolbar`, copilot, notice pills.
+  Every CONTROL cluster after the first owns its LEADING `ui/Sep` rule, so a
+  cluster that renders nothing takes its rule with it and two rules can never
+  be adjacent (gdoc-parity grouping). The trailing notice pills are outside
+  that rule on purpose — alerts, not a control group.
+- `shell/ViewControls.tsx` — the view cluster: grid step + its `HelpHint`, the
+  sample-variant switch (>1 variant), zoom, and the capacity readout (host
+  codec + an image item). Split out of `SlimToolbar` for the line budget and
+  because the bar is an assembly of clusters; each conditional group carries
+  its own leading rule.
 - `shell/SidePane.tsx` — the left pane: collapsed rail ⇄ `Sidebar` tabs
   (layers always; data iff EFFECTIVE definitions) + `ResizeHandle`.
 - `shell/CanvasArea.tsx` — the center column: `CanvasTopbar`, `PageRail`
