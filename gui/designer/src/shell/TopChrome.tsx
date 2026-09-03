@@ -27,6 +27,7 @@ import type { RawHostMenuEntry } from '../menubar/model';
 import { type SaveStatus, Titlebar } from '../menubar/Titlebar';
 import type { DesignerProps } from '../props';
 import { IconButton } from '../ui/Button';
+import { BTN_SM } from '../ui/chrome';
 import { IconClose } from '../ui/icons';
 import { SlimToolbar } from './SlimToolbar';
 import { useMenubarColumns } from './topMenubar';
@@ -109,15 +110,22 @@ export function TopChrome({
       <Titlebar documentName={documentName} saveStatus={saveStatus} />
       <Menubar columns={menubarColumns} />
       {/* Offered, never imposed, and never floating: a strip in normal flow
-          under the menubar cannot cover the controls it is talking about. */}
+          under the menubar cannot cover the controls it is talking about.
+          It also has to stay QUIETER than the document. It used to render the
+          whole sentence as an accent-coloured underlined link, and an
+          accent-wearing AREA reads as a fill in peripheral vision — at a
+          blurred glance the invite was the most salient thing on screen, above
+          the page it was inviting you to edit. So the sentence is muted prose
+          and the action is an ordinary outlined button, not `primary` — the
+          work surface's one sanctioned filled control is the canvas
+          empty-state CTA, and a first-run invite is not it. Its label is
+          `menu.help.tutorial`, the same opener the Help menu uses, so the HIG
+          pair with `tutorial.title` holds on both. */}
       {tutorial.showTutorialHint ? (
-        <div className="flex items-center justify-between gap-2 border-border border-b bg-chrome px-3 py-1.5 text-sm">
-          <button
-            type="button"
-            className="cursor-pointer border-0 bg-transparent p-0 text-left text-accent underline"
-            onClick={tutorial.openTutorial}
-          >
-            {t('tutorial.hint')}
+        <div className="flex items-center gap-2 border-border border-b bg-chrome px-3 py-1.5 text-sm">
+          <p className="m-0 min-w-0 flex-1 text-muted">{t('tutorial.hint')}</p>
+          <button type="button" className={BTN_SM} onClick={tutorial.openTutorial}>
+            {t('menu.help.tutorial')}
           </button>
           <IconButton
             label={t('tutorial.hintDismiss')}

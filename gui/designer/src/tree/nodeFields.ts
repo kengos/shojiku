@@ -7,10 +7,12 @@
 /** Longest label a row shows before it is clipped. */
 export const MAX_LABEL_CHARS = 60;
 
-/** What a label says in place of the lines it is not showing. A row renders
- * `white-space: nowrap`, which collapses a `\n` to a SPACE — so a three-line
- * address used to arrive as one space-joined string that read like a typo,
- * with nothing to say the value had been shortened. */
+/** What a label says in place of the lines it is not showing. HTML collapses a
+ * `\n` to a SPACE, so a three-line address used to arrive as one space-joined
+ * string that read like a typo, with nothing to say the value had been
+ * shortened. (The row itself no longer sets `white-space: nowrap` — it wraps
+ * and clamps — but that changes nothing here: the collapse is the default
+ * `normal` behaviour, not something the old nowrap caused.) */
 const MORE_LINES = ' ⏎…';
 
 export function record(value: unknown): Record<string, unknown> | undefined {

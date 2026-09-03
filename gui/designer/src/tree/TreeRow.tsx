@@ -14,9 +14,19 @@ import type { RowReorder } from './useRowReorder';
 
 /** The expand/collapse toggle (and its leaf placeholder) — a fixed-width gutter
  * before the row label. Shared with the band-placeholder row, which has no
- * toggle of its own but must line its label up with these. */
+ * toggle of its own but must line its label up with these.
+ *
+ * `h-5` is one line box and `mt-1` is the label button's own `p-1`: the row
+ * TOP-aligns its parts, because a label wraps to one, two or three lines and
+ * centring against the whole block drifts the twisty down with it — beside the
+ * second line of a three-line row, while its neighbours keep theirs up top. A
+ * `container`/`repeat`/`table` row can carry both a twisty AND a wrapping bound
+ * label, so this is reachable, not theoretical. The margin is what keeps the
+ * twisty and the kind mark on ONE optical line: the mark lives inside the
+ * padded button and the twisty does not, so without it they sit 4px apart —
+ * measured live, on every row that has both. */
 export const TREE_TOGGLE =
-  'inline-flex w-[18px] shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-sm text-muted';
+  'mt-1 inline-flex h-5 w-[18px] shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-sm text-muted';
 
 export interface TreeRowProps {
   readonly node: TreeNode;
@@ -72,7 +82,7 @@ export function TreeRow({
       {/* The `--drop-*` marker classes are kept as test hooks; the accent line
           is a per-side border utility (the base border stays transparent). */}
       <div
-        className={`flex items-center rounded-md border-y-2 hover:bg-bg ${
+        className={`flex items-start rounded-md border-y-2 hover:bg-bg ${
           dropBefore ? 'sj-tree-row--drop-before border-t-accent' : 'border-t-transparent'
         } ${dropAfter ? 'sj-tree-row--drop-after border-b-accent' : 'border-b-transparent'}${
           isSelected ? ' bg-bg outline outline-1 outline-accent' : ''
@@ -100,7 +110,7 @@ export function TreeRow({
         )}
         <button
           type="button"
-          className="flex min-w-0 flex-1 cursor-pointer touch-none items-center gap-2 border-0 bg-transparent p-1 text-left text-text"
+          className="flex min-w-0 flex-1 cursor-pointer touch-none items-start gap-2 border-0 bg-transparent p-1 text-left text-text"
           aria-current={isSelected ? 'true' : undefined}
           ref={(el) => {
             if (el === null) {
@@ -130,15 +140,33 @@ export function TreeRow({
           onPointerUp={reorder.onPointerUp}
           onPointerCancel={reorder.onPointerCancel}
         >
+          {/* Top-aligned, not centred: a label wraps to one, two or three lines,
+              and centring the mark against the whole block puts it beside the
+              SECOND line on a three-line row while a two-line row keeps it up
+              top — so the marks stop lining up down the tree. `h-5` is the label's
+              own line box, which lands the mark on the first line at any height. */}
           <span
-            className="inline-flex w-[1.2em] shrink-0 justify-center text-muted"
+            className="inline-flex h-5 w-[1.2em] shrink-0 items-center justify-center text-muted"
             aria-hidden="true"
           >
             <KindIcon size={14} />
           </span>
-          <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-            {nodeLabel(node, t)}
-          </span>
+          {/* Wrapped, not clipped to one line. A bound row's label is the item's
+              own text with its binding inline (`納品番号 {delivery.number}`), and
+              on a single nowrap line the pane's 240px default cut the binding off
+              EVERY such row — the part that says which field the row is showing.
+              `anywhere` because a binding key carries no break opportunity of its
+              own. THREE lines, measured rather than picked: at the default width
+              that is what a short prefix plus one binding key takes, and two left
+              the longer keys still cut mid-word. A label that is a whole sentence
+              stays clamped — a tree row is an index, and the clamp is the ONLY
+              thing bounding the height: `MAX_LABEL_CHARS` bounds a
+              content-derived label, but `labels.ts`'s unknown-kind arm returns
+              an untrusted `type:` spelling verbatim. `[overflow-wrap:anywhere]`
+              follows `data/ItemListRow`; the clamp has no precedent here (the
+              band placeholder is the treatment this replaced) and is the only
+              `line-clamp` in the workspace. */}
+          <span className="line-clamp-3 [overflow-wrap:anywhere]">{nodeLabel(node, t)}</span>
           {node.conditional === true ? (
             // Whether this item draws depends on the data. Worth a mark
             // because a COLLAPSED one produces no box, so selecting its row
@@ -149,7 +177,7 @@ export function TreeRow({
             // `aria-label` is not allowed on a generic span — so the badge
             // shows a short token and carries its explanation as
             // screen-reader text.
-            <span className="ml-1 shrink-0 rounded-sm border border-border px-1 text-[10px] text-muted">
+            <span className="mt-0.5 ml-1 shrink-0 rounded-sm border border-border px-1 text-[10px] text-muted">
               <span className="sr-only">{t('tree.conditional')}</span>
               <span aria-hidden="true">{t('tree.conditional.badge')}</span>
             </span>

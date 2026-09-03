@@ -11,9 +11,10 @@ import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
 import { useReseedKey } from '../panel/useReseedKey';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
+import { Sep } from '../ui/Sep';
 import { TipBubble } from '../ui/TipBubble';
 import { FamilyControl } from './FamilyControl';
-import { FMT_BTN, hintTitle, originHint, Sep, ToggleButton } from './fmtChrome';
+import { FMT_BTN, hintTitle, originHint, ToggleButton } from './fmtChrome';
 import { fontFamilyOp, fontSizeOp, fontStyleOp, fontWeightOp, type ToolbarModel } from './model';
 
 export function TypographyGroup({

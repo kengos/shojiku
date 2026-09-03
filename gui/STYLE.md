@@ -365,15 +365,29 @@ re-inventing them:
   list, so a reader who cannot distinguish the colours can reach one by counting
   to a column and a row; `ui/SwatchGrid` renders the axis labels and the readout
   line that names whatever is hovered or focused.
-- **`Sep`** — the thin vertical rule between clusters (gdoc grouping).
+- **`ui/Sep.tsx`'s `Sep`** — the thin vertical rule between clusters (gdoc
+  grouping), minted there and nowhere else. **A CONTROL cluster owns its
+  LEADING rule**, so a cluster that renders nothing takes its rule with it and
+  two rules can never end up adjacent; the first cluster in a bar has none, and
+  a transient notice pill is an alert rather than a group, so it takes none
+  either. One place still does the opposite —
+  `toolbar/FormatToolbar.tsx`'s conditional style-picker group owns a TRAILING
+  rule — which is safe only because a control always follows it; it is the
+  shape this convention exists to forbid, and it is on the list to bring over.
+  Four
+  hand-rolled copies had drifted into two margin spellings with only one of
+  them `aria-hidden`, which is why this is now a gated rule rather than a
+  convention.
 - Dropdown triggers show the current value (style name, family, align glyph) +
   the shared `Caret`; icons come from `ui/icons.tsx`, never text glyphs —
   again package-wide, not toolbar-only (the layer tree's twisty and its
   per-item-type marks are icons for the same reason).
 
-**Both rules are enforced by a test**, not by review alone:
-`designer/src/ui/chromeConvention.test.ts` walks every source file in the
-package and fails on a native `title=` DOM attribute or a banned text glyph.
+**All three rules are enforced by a test**, not by review alone:
+`designer/src/ui/chromeConvention.test.ts` walks every non-test source file in
+BOTH packages (`designer/src` and `designer-app/src`) and fails on a native
+`title=` DOM attribute, a banned text glyph, or a group rule (`w-px` beside
+`bg-border`) authored outside `ui/Sep.tsx`.
 Adding a new mark character to a control means the guard's character set is
 incomplete — widen it in the same change rather than working around it.
 - Value fields must fit their widest realistic value (`10.5`); note Chrome

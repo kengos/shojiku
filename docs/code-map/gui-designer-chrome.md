@@ -109,8 +109,9 @@ resolved style.
   picker | family + size | B/I/color | border | align) on the `FMT_BTN`
   rail, popover dismiss via shared `hooks/usePopover.ts`.
 - `toolbar/fmtChrome.tsx` — cluster-shared chrome (`FMT_BTN`,
-  `FMT_POPOVER`, `MENU_ROW`, `Caret`/`Sep`, `originHint`/`hintTitle`,
-  `ToggleButton`).
+  `FMT_POPOVER`, `MENU_ROW`, `Caret`, `originHint`/`hintTitle`,
+  `ToggleButton`). The group rule it used to mint is now `ui/Sep`, shared with
+  the slim toolbar and the align cluster.
 - `toolbar/TypographyGroup.tsx` — family + size field (change-guarded
   commit-on-blur, ±1pt steppers, no datalist) + B/I (`aria-pressed`
   from EFFECTIVE state). The size box is hand-rolled rather than a
@@ -549,10 +550,17 @@ is Tailwind utilities over the `--sj-*` tokens.
   middle / bottom — so the mark says WHICH section without a letter that
   would only work in English.
 - `ui/chromeConvention.test.ts` — the node-env convention GATE: fails
-  on native `title=` or a text character standing in for an icon
-  (comments blanked; `i18n/catalog/` exempt; the one documented
-  exception — the app header's document-title button — lives in
-  designer-app). Walks via `testkit/sourceWalk.ts`.
+  on native `title=`, on a text character standing in for an icon, or on a
+  toolbar group rule (`w-px` beside `bg-border`) authored anywhere but
+  `ui/Sep.tsx` (comments blanked; `i18n/catalog/` exempt; two pinned
+  exceptions — the app header's document-title button, which lives in
+  designer-app, and `ui/Sep.tsx` itself as the rule's mint site). Walks BOTH
+  packages via `testkit/sourceWalk.ts`.
+- The three treatments in the layer tree's one column are a decision, not
+  drift: `tree/TreeRow.tsx` wraps and clamps (its label is document-derived and
+  can carry a binding key), while `tree/LayerTree.tsx`'s document-root row and
+  `tree/BandPlaceholderRow.tsx`'s two stacked lines stay nowrap+ellipsis — both
+  render static chrome strings that cannot overflow.
 - `ui/actionConvention.test.ts` — the node-env ACTION gate (gui/STYLE.md
   § Actions): the filled accent (`bg-accent` + `text-on-accent`, UNPREFIXED —
   a `data-checked:`/`aria-pressed:` accent is toggle state, a filled `<span>`
@@ -590,6 +598,12 @@ is Tailwind utilities over the `--sj-*` tokens.
 - `ui/chrome.ts` — the shared chrome className strings (anything a
   SECOND surface needs moves here; a bare `<select>`/`<input>` breaks
   the dark scheme — reach for these).
+- `ui/Sep.tsx` — `Sep`: the thin rule between two toolbar groups, minted HERE
+  and nowhere else (`chromeConvention` walks the source for it, the way
+  `actionConvention` does for the filled accent). Four hand-rolled copies had
+  drifted into two margin spellings with one of the four `aria-hidden`. The
+  convention it carries: a GROUP owns its LEADING rule, so an absent group
+  cannot leave two rules adjacent, and the first group in a bar has none.
 
 ## Theme substrate (`src/theme/`)
 

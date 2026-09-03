@@ -19,6 +19,7 @@ import {
   IconObjDistributeH,
   IconObjDistributeV,
 } from '../ui/icons';
+import { Sep } from '../ui/Sep';
 
 export interface AlignToolbarProps {
   /** How many movable items the actions would act on (the selection's movable
@@ -27,8 +28,6 @@ export interface AlignToolbarProps {
   readonly onAlign: (kind: AlignKind) => void;
   readonly onDistribute: (kind: DistributeKind) => void;
 }
-
-const SEP = <span className="mx-1 h-5 w-px shrink-0 bg-border" />;
 
 /** The six align actions in the gdoc order (three horizontal, three vertical). */
 const ALIGNS: readonly { kind: AlignKind; key: string; Icon: typeof IconObjAlignLeft }[] = [
@@ -63,7 +62,7 @@ export function AlignToolbar({ count, onAlign, onDistribute }: AlignToolbarProps
       aria-label={t('align.title')}
       data-sj-align-cluster=""
     >
-      {SEP}
+      <Sep />
       <span className="shrink-0 whitespace-nowrap px-1 text-sm text-muted">
         {t('align.selected', { n: count })}
       </span>
@@ -72,7 +71,7 @@ export function AlignToolbar({ count, onAlign, onDistribute }: AlignToolbarProps
           <Icon />
         </IconButton>
       ))}
-      {SEP}
+      <Sep />
       {DISTRIBUTES.map(({ kind, key, Icon }) => (
         <IconButton
           key={kind}

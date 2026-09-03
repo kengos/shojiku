@@ -15,6 +15,23 @@ platform binaries.
 
 ### Changed
 
+- **The Designer reads better at a glance.** Three things were competing for
+  the eye in the wrong order. In the layer tree, a row showing a bound value
+  put the item's text and its binding on one line that could not wrap, so on
+  the delivery-note template every such row was cut mid-key — `納品番号
+  {delivery.n…` — and the whole point of the row, which field it shows, was
+  the part that got cut. Those labels now wrap to as many as three lines, so
+  ten of that template's fifteen bound rows read in full where none did
+  before; a label that is a whole sentence is still shortened, because a tree
+  row is an index. The first-run invite under the menubar rendered its whole
+  sentence as a coloured, underlined link, which made it the loudest thing on
+  a screen whose subject is the document: it is now ordinary quiet text with
+  an ordinary button beside it. And the toolbar's VIEW controls — grid, sample
+  data, zoom and the capacity readout — ran together as one band with no rule
+  between them, while the format and align clusters beside them were divided
+  normally; each of those view groups now has its own rule, and a group that is
+  not showing takes its rule with it.
+
 - **The Designer's number fields now read as one control.** Every ▲▼ stepper
   in the property panel floated four pixels
   off the box it belongs to, so the pair read as an input and two unrelated
