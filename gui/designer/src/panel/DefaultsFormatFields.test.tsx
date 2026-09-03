@@ -188,3 +188,20 @@ describe('DefaultsFormatFields', () => {
     expect(doc()).toContain('pattern: yyyy');
   });
 });
+
+// The row's ▼ is the OTHER half of the panel's button rule (`fields.tsx`): it
+// acts on the ROW rather than filling an input, so it keeps every corner and
+// every border. Pinned because the flush chrome is one shared constant away —
+// a sweep that flushed `PICKER_TOGGLE` itself drew this button as a
+// three-sided open box, and no gate in the repo reads CSS.
+describe('the row ▼ is not part of a control', () => {
+  it('keeps all four borders and corners, unlike a picker input pair', () => {
+    render(<Harness source={BARE} />);
+    const toggle = screen.getByRole('button', { name: 'Choose the Date format' });
+    expect(toggle.className).not.toContain('rounded-l-none');
+    expect(toggle.className).not.toContain('border-l-0');
+    expect(toggle.className).toContain('rounded-md');
+    // …and it stands apart, the way the list row's trash does.
+    expect(toggle.parentElement?.className).toMatch(/\bgap-2\b/);
+  });
+});

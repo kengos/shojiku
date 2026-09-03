@@ -106,7 +106,7 @@ describe('BorderEditor — diagram', () => {
     // Bump the pen width to 2, switch to double. The editor hosts more than
     // one stepper (the radius field is the other), and every StepperField's
     // ▲ carries the same generic name — so scope the query to this field.
-    fireEvent.click(within(penWidthField()).getByRole('button', { name: 'Increase' }));
+    fireEvent.click(within(penWidthField()).getByRole('button', { name: 'Increase Line width' }));
     fireEvent.change(screen.getByLabelText('Line type'), { target: { value: 'double' } });
     fireEvent.click(screen.getByRole('button', { name: 'All sides' }));
     expect(doc()).toContain('borderWidth: 1.5');
@@ -167,7 +167,7 @@ describe('BorderEditor — diagram', () => {
     const width = screen.getByLabelText('Line width') as HTMLInputElement;
     width.value = 'abc';
     fireEvent.blur(width);
-    fireEvent.click(within(penWidthField()).getByRole('button', { name: 'Increase' }));
+    fireEvent.click(within(penWidthField()).getByRole('button', { name: 'Increase Line width' }));
     fireEvent.click(screen.getByRole('button', { name: 'All sides' }));
     expect(doc()).toContain('borderWidth: 1.5');
   });
@@ -342,7 +342,7 @@ describe('BorderEditor — patterned styles and corner radius', () => {
     // reference captured earlier points at a detached element.
     const step = (name: 'Increase' | 'Decrease') => {
       const field = screen.getByLabelText('Corner radius').closest('span.mb-2') as HTMLElement;
-      fireEvent.click(within(field).getByRole('button', { name }));
+      fireEvent.click(within(field).getByRole('button', { name: `${name} Corner radius` }));
     };
     // An empty field reads as its 0 placeholder, so the first ▲ authors 1.
     step('Increase');
@@ -364,12 +364,16 @@ describe('BorderEditor — patterned styles and corner radius', () => {
 `;
     render(<Harness source={pill} capabilities={['style.border', 'style.borderRadius']} />);
     const field = screen.getByLabelText('Corner radius').closest('span.mb-2') as HTMLElement;
-    expect(within(field).getByRole('button', { name: 'Increase' }).hasAttribute('disabled')).toBe(
-      true,
-    );
-    expect(within(field).getByRole('button', { name: 'Decrease' }).hasAttribute('disabled')).toBe(
-      true,
-    );
+    expect(
+      within(field)
+        .getByRole('button', { name: 'Increase Corner radius' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+    expect(
+      within(field)
+        .getByRole('button', { name: 'Decrease Corner radius' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
   });
 
   it('clearing the radius removes the key', () => {
@@ -462,5 +466,24 @@ describe('BorderEditor unit affordance', () => {
   it('does NOT invite one on the pen width, whose key is a plain number', () => {
     render(<Harness source={RECT} />);
     expect(unitHintsFor('Line width')).toHaveLength(0);
+  });
+});
+
+// GUI-41 — the corner-radius row. The explanation used to wrap to four lines
+// beside a `w-32` input, which left the sentence's tail (the list of units the
+// key takes) orphaned under the control and the control itself crammed into a
+// third of the row.
+describe('the corner-radius row', () => {
+  it('carries its explanation behind a `?`, not beside the input', () => {
+    render(<Harness source={RECT} capabilities={['style.border', 'style.borderRadius']} />);
+    expect(screen.queryByText(/Rounds the corners/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Rounded corners' }));
+    expect(screen.getByText(/Rounds the corners/)).toBeTruthy();
+  });
+
+  it('gives the field the full row rather than a third of it', () => {
+    render(<Harness source={RECT} capabilities={['style.border', 'style.borderRadius']} />);
+    const field = screen.getByLabelText('Corner radius').closest('span.mb-2');
+    expect(field?.parentElement?.className).not.toMatch(/\bw-32\b/);
   });
 });

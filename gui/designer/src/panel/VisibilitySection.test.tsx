@@ -301,3 +301,33 @@ describe('a page_break', () => {
     expect(screen.queryByText(/does not happen/)).toBeNull();
   });
 });
+
+// GUI-41 — this is the RARE setting, so unset it costs one row rather than a
+// titled block with a two-sentence paragraph and a full-width button above the
+// controls anyone actually opened the panel for.
+describe('the unset form is one row', () => {
+  it('shows no always-visible explanation, and carries it behind the `?`', () => {
+    const controller = makeController({ type: 'text' });
+    draw(<VisibilitySection path={P} controller={controller} options={OPTIONS} itemType="text" />);
+    expect(screen.queryByText(/Bind it to a field/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Showing an item only sometimes' }));
+    expect(screen.getByText(/Bind it to a field/)).toBeTruthy();
+  });
+
+  it('still shows the title and the action', () => {
+    const controller = makeController({ type: 'text' });
+    draw(<VisibilitySection path={P} controller={controller} options={OPTIONS} itemType="text" />);
+    expect(screen.getByRole('heading', { name: 'When to show' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Show conditionally' })).toBeTruthy();
+  });
+
+  it('keeps the full card once a binding IS authored', () => {
+    // Authored, the setting is load-bearing and says so in full — the
+    // compaction is progressive disclosure, not a permanent demotion.
+    const controller = makeController({ visible: { key: 'status', equals: 'approved' } });
+    draw(<VisibilitySection path={P} controller={controller} options={OPTIONS} itemType="text" />);
+    expect(screen.getByLabelText('Field')).toBeTruthy();
+    expect(screen.getByRole('checkbox')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Always show' })).toBeTruthy();
+  });
+});

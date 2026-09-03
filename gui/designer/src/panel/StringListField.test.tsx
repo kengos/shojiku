@@ -113,3 +113,16 @@ describe('StringListField reseed after a trimming commit', () => {
     expect(screen.getAllByLabelText('Keywords')[0]).toBe(before);
   });
 });
+
+describe('the remove button is NOT part of the control', () => {
+  it('keeps its gap, unlike a picker ▼ or a stepper column', () => {
+    // The other half of the panel's rule (stated in `fields.tsx`): a
+    // destructive row ACTION welded to an input reads as belonging to it, which
+    // is exactly what makes it easy to press by mistake. Pinned so the next
+    // flush sweep does not take this one with it.
+    renderField(['a']);
+    const row = rows()[0]?.parentElement;
+    expect(row?.className).toMatch(/\bgap-1\b/);
+    expect(rows()[0]?.className).not.toContain('rounded-r-none');
+  });
+});

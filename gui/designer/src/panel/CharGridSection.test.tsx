@@ -70,7 +70,7 @@ function stepButton(label: string, name: 'Increase' | 'Decrease'): HTMLElement {
   if (row === null || row === undefined) {
     throw new Error(`no stepper row for ${label}`);
   }
-  return within(row).getByRole('button', { name });
+  return within(row).getByRole('button', { name: `${name} ${label}` });
 }
 
 describe('CharGridSection', () => {
@@ -745,8 +745,8 @@ describe('CharGridSection field help', () => {
     // Exactly the two steppers and nothing else. Counting is what makes this a
     // real negative: asserting "no button called X" passes for any X.
     expect(within(row).getAllByRole('button')).toHaveLength(2);
-    expect(within(row).getByRole('button', { name: 'Increase' })).not.toBeNull();
-    expect(within(row).getByRole('button', { name: 'Decrease' })).not.toBeNull();
+    expect(within(row).getByRole('button', { name: /^Increase\b/ })).not.toBeNull();
+    expect(within(row).getByRole('button', { name: /^Decrease\b/ })).not.toBeNull();
   });
 });
 

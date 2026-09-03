@@ -255,7 +255,19 @@ read side, never the reverse.
   - `panel/BorderDiagram.tsx` — the 96×64 paper diagram: per-edge SVG
     painting the effective line (real dash pattern, a second offset
     stroke for `double`, a faint dotted placeholder when off) + the four
-    hit buttons + the named-style/table notes, and the `?` carrying the
+    hit buttons (a 10% wash on hover — the edges ARE the control, and a
+    5% one was invisible on paper this light). The paper is a FIXED tint
+    (`#f0eee9`) rather than a token, for the reason `styles.css` gives
+    for the canvas grid and margin guide: it previews an engine-rendered
+    page, which is white in either scheme, so an authored colour must
+    read against white here exactly as it will there. It is a step down
+    from the near-white it was, and wears the hairline `border-border`
+    ring every other control does — at `#fcfcfa` it was indistinguishable
+    from light chrome and the brightest object in the panel in dark. It also
+    casts the page's own `--sj-paper-shadow`, so it says "sheet" by depth
+    rather than by brightness: a fresh reader shown both schemes called the
+    same box too loud in dark and hard to find at all in light.
+    It also carries the named-style/table notes and the `?` holding the
     WHOLE explanation — that an edge is clickable, and that the order is
     pen-then-edges. There is no always-visible hint line (it was folded in
     to give a cramped panel its line back), so this popover is the only
@@ -272,7 +284,14 @@ read side, never the reverse.
     baselines (pinned by a test).
   - `panel/BorderRadiusField.tsx` — the corner-rounding field: commits
     through `radiusOps` (authored unit preserved) and steps only on a
-    bare numeral or an empty field.
+    bare numeral or an empty field. It takes the FULL row and carries
+    `border.radiusHint` behind the stepper's `?`; as a paragraph beside a
+    `w-32` field the sentence wrapped to four lines and orphaned its own
+    list of accepted units. The BODY is the same `border.radiusHint` string —
+    the wording did not change — behind a `help.borderRadius.title` the
+    trigger needs so its accessible name differs from the field's own label
+    one element away (repeat it and a by-name query matches two elements,
+    and a screen reader says the words twice).
 
 ## Panel model + field widgets
 
@@ -395,7 +414,20 @@ read side, never the reverse.
   `htmlFor` not by wrapping, the outer block owns the bottom margin so none
   lands inside the row, and `items-stretch` gives the button the input's
   height. The house shape, `StepperField`'s ▲▼ row; the button itself wears
-  `PICKER_TOGGLE`), **`FieldGroup`** (the same row WITHOUT the `<label>` — a `<label>`
+  `PICKER_TOGGLE_FLUSH` — `PICKER_TOGGLE` plus the squared left corners and
+  `border-l-0` that make it flush, paired with a `rounded-r-none` input.
+  **The flush pair is its OWN constant, and that is the point**: flushness
+  belongs to the PAIRING, not to the toggle. `PICKER_TOGGLE` has a fourth call
+  site with no input beside it (`FormatDefaultRow`'s row ▼, alone in a `gap-2`
+  row of text spans), and baking the flush classes into the shared constant drew
+  that one as a three-sided open box — green through every gate, since nothing
+  in the repo reads CSS. `DefaultsFormatFields.test.tsx` pins it detached.
+  **The panel's one rule for a button beside an input, stated in `fields.tsx`
+  and pinned from both sides: a button that is PART of the control is flush; a
+  button that ACTS ON THE ROW is detached.** `StringListField`'s trash is the
+  second kind and keeps its `gap-1` — a destructive row action welded to an
+  input reads as belonging to it, which is what makes it easy to press by
+  mistake), **`FieldGroup`** (the same row WITHOUT the `<label>` — a `<label>`
   forwards every click inside it to its implicit control, and a
   contenteditable is not labelable, so the text field's label reached
   past the editor to the insert-a-field button beside it: clicking the
@@ -434,6 +466,15 @@ read side, never the reverse.
   caveats (`%` resolves against a different axis per field and drops with
   `percent_of_auto` under an auto-height parent) live in the glossary's
   `units` term and in `border.radiusHint`, which have room for them.
+- `panel/stepperNames.test.ts` — the node-env source GATE over the stepper
+  labels, in the shape `ui/chromeConvention` set. The ▲▼ accessible name is
+  built FROM the field's label (`stepper.increment` takes `{field}`), which
+  makes the label an a11y surface: it must be catalog text, never a document
+  value. The rule the walker enforces is "a `t(…)` call, or a bare parameter the
+  component was handed" — the second covers `BoxAxisField`'s `label` and
+  `CustomSizeFields`' `dimension(field, label)`, whose own call sites pass
+  `t(…)`. Carries a positive control, because a sweep asserting an EMPTY list
+  passes when the matcher accepts everything.
 - `panel/StepperField.tsx` — length/number input + ▲▼, the numeric primitive
   both the property panel and the document-settings page reach for (one step op
   per click = one undo step; the column sits FLUSH against the input — no gap,
@@ -445,7 +486,17 @@ read side, never the reverse.
   because remounting the widget between the ▲'s mousedown and mouseup
   destroys the button mid-click; optional `tag`
   suffix badge with explicit htmlFor/id association; no key-repeat — an
-  op remounts the panel body). `stepHint` is the bubble shown while
+  op remounts the panel body). **Each button NAMES its field** —
+  `stepper.increment`/`.decrement` take a `{field}` ICU arg fed the label —
+  because one view renders several steppers (the placement tab maps x/y/w/h;
+  page setup in custom mode renders three) and a bare "Increase" repeated
+  leaves a screen reader with identical controls. Two OPT-IN slots: `help`, a
+  `?` rendered as a SIBLING of the label (nested in the `<label>` it would join
+  the input's accessible name and hand its clicks to the input) — the slot
+  `NumericComboField` already had, so the panel has ONE shape for "this field
+  needs a sentence"; and `inputMode`, withheld by default because most call
+  sites take length strings a decimal keypad cannot type, passed only where the
+  WIRE refuses units (the three page-setup numerals). `stepHint` is the bubble shown while
   `canStep` is FALSE, and the CALLER owns the string: only it knows which
   unsteppable state the field is in (a relative unit, empty, garbage, a
   count below 1), so a message naming `%`/`em` would be a lie over the
@@ -484,11 +535,15 @@ read side, never the reverse.
   RegExp), `scopeAuthorable` (the ONE home for the `binding.scope`
   capability — gates OFFERING/AUTHORING, never reading).
 - `panel/FieldPicker.tsx` — the `data.key` editor: the closed control
-  (free entry, scope badge, toggle, and `BoundField` — the bound key's
-  name / localized type / live sample, the popover row's three facts
-  shown WITHOUT opening it, absent for a key no offer matches), the
-  offer derivation and what a pick COMMITS; row-scoped pickers split row/document sections (free entry
-  never re-scopes). `panel/PickerPopover.tsx` — the open popover, shared
+  (free entry + a FLUSH ▼ toggle), the offer derivation and what a pick
+  COMMITS. `panel/BoundFieldLine.tsx` is the line UNDER it — split out when the
+  file hit the line budget — carrying `BoundField`: the document-scope badge
+  when the binding carries one, and the bound key's name / localized type /
+  live sample (the popover row's three facts shown WITHOUT opening it, absent
+  for a key no offer matches). The badge moved there from between the input and
+  the ▼: those two are one control now and share one border, and a rounded
+  accent pill can be flush against neither. Row-scoped pickers split
+  row/document sections (free entry never re-scopes). `panel/PickerPopover.tsx` — the open popover, shared
   with the chip editor's field menus (`text/FieldMenuButton`) so the two
   surfaces cannot drift into two looks: search, the three offer states,
   the rows (label / key / localized type / sample / document badge) and
@@ -527,12 +582,26 @@ read side, never the reverse.
 - `panel/PropertyPanel.tsx` — the thin router: item → `ItemPanel`,
   anything with no `type:` of its own → `CellPanel` (which picks
   `ColumnForm` / `GroupForm` / the unsupported card),
-  none/ghost → the no-selection hint card
-  (with an open-document-settings CTA); the origin jump wires through
+  none/ghost → `NoSelectionCard`; the origin jump wires through
   Designer's `navigateDefaults`.
+- `panel/NoSelectionCard.tsx` — the panel with nothing selected: the sentence
+  that says what to do next, the document's page and margin, and the
+  open-document-settings CTA. `documentGlance(read)` is the pure half — both
+  facts come from the readers `PageSetup` already uses (`readPageView` +
+  `pageSummary`, `readMarginView`), so there is no second walk of the document,
+  and each DECLINES rather than guesses: `pageSummary` is null for a size this
+  build cannot name, and the margin is withheld for any wire form whose single
+  value would be an invention (a scalar the reader normalises to the 25pt
+  default is exactly that). A read that throws degrades to both null and the
+  card disappears; a per-side value is carried verbatim in CSS order and
+  `clip`ped. It deliberately does not fill the column — an empty state orients
+  and offers, it does not pad.
 - `panel/ItemPanel.tsx` — the content/decoration/placement tab SHELL only
   (`applicableTabs`; only applicable tabs render; active tab clamped on
-  type change). **The placement tab is withheld from BOX-LESS types**
+  type change). `VisibilitySection` renders OUTSIDE the tabs — it applies to
+  every type, so it must not appear and disappear as the reader changes tab —
+  and BELOW them, after the tab bodies (or after a single-tab body, or alone
+  for a type with no tabs). **The placement tab is withheld from BOX-LESS types**
   (`itemView.ts`'s `BOXLESS_TYPES` — `line`/`page_break`; both wire
   structs are `deny_unknown_fields` and take no `box:`, so offering the
   fields authored a parse error). `line` therefore renders its stroke
@@ -813,8 +882,14 @@ conditional rules the next section owns).
   in the diff); the FIRST rule seeds the list with `putValue`. Numeric
   fields get NUMBER literals — the engine predicate is type-strict.
 - `panel/VisibilitySection.tsx` — an item's `visible:` presence binding,
-  rendered ABOVE the content/decoration/placement tabs because it applies to
-  every item type and is none of those concerns. It is also what gives
+  rendered OUTSIDE the content/decoration/placement tabs because it applies to
+  every item type and is none of those concerns — and BELOW them, because it is
+  the RARE, advanced one: heading the panel, it opened a rectangle's editor on a
+  titled block with a two-sentence paragraph and a full-width button, above the
+  background and border controls anyone opened the panel for. UNSET it is one
+  row (title + the same paragraph behind a `?` + the button); AUTHORED it keeps
+  the full card, in the same place. The tree's `if` badge is what announces a
+  conditional item at a glance, so the panel need not shout it from the top. It is also what gives
   `page_break` an editing surface at all (the wire takes only `id` and
   `visible:`), which is what a conditional page break is. Gated on the
   `item.visible` capability — an older engine parse-rejects the key. The
@@ -933,7 +1008,10 @@ conditional rules the next section owns).
   They were raw `<input type="number">`s, which meant the BROWSER drew a
   spinner here while the rest of the panel drew the house one. They wear no
   unit badge — the unit is the `shrink-0` select one cell away — and the row is
-  `items-start` so the three labels sit on one baseline.
+  `items-start` so the three labels sit on one baseline. Both opt into
+  `inputMode="decimal"`: `composeDimension` takes a BARE numeral, so a decimal
+  keypad can type every value they accept — which is what a plain
+  `<input type="number">` gave them before the stepper absorbed them.
 - `panel/marginModel.ts` — pure page-margin model (`readMarginView`
   uniform/perSide/legacy-array; mode-switch ops seed all four sides;
   per-side values carried VERBATIM, no unit conversion). The uniform ▲▼ pair
@@ -941,13 +1019,16 @@ conditional rules the next section owns).
   re-authors through `uniformMarginOp` rather than through the shared
   `stepValueOp` the item fields use: that one would author `-1` from a zero
   margin, a value this field refuses from the keyboard. ▼ at the floor
-  dispatches nothing and the button stays enabled, as a native
-  `<input type="number" min="0">` does at its minimum.
+  dispatches nothing and the button stays enabled. (The comparison this entry
+  used to draw — that a native `<input type="number" min="0">` behaves the same
+  — is false: a native input CLAMPS to its minimum rather than going inert. The
+  behaviour is deliberate; the reason given for it was not.)
 - `panel/MarginEditor.tsx` — the mode select + uniform or per-side
   inputs; every control an `applyAll` batch. The uniform field is a
   `StepperField` carrying the unconditional `pt` badge (it was a raw
-  `<input type="number">` with a hand-rolled label and badge); the per-side
-  ones are `TextField`s, which is why only they take the unit invitation.
+  `<input type="number">` with a hand-rolled label and badge) and, on the same
+  bare-numeral rule, `inputMode="decimal"`; the per-side ones are `TextField`s,
+  which is why only they take the unit invitation and NOT the numeric keypad.
 
 ## Document defaults + named styles
 

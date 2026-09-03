@@ -321,6 +321,8 @@ export const en: LanguageCatalog = {
     'help.placement.title': 'Where coordinates start',
     'help.placement.body':
       'X and Y are measured from the top-left corner of the area inside the page margins — the outlined rectangle on the page. Negative values reach into the margin on purpose, and only content that leaves the paper is reported as a problem.',
+    'help.borderRadius.title': 'Rounded corners',
+    'help.visible.title': 'Showing an item only sometimes',
     'help.border.title': 'Setting a border',
     'help.border.body':
       'Set the pen first — the width, color and line type — then click the edges you want it on, the way a spreadsheet border tool works. Clicking an edge that already matches the pen removes that edge instead.',
@@ -943,8 +945,8 @@ export const en: LanguageCatalog = {
     'formats.error.documentTooLarge':
       'Renaming to that name would push the document past its size limit.',
     'formats.error.emptyPattern': 'Enter a pattern — a format cannot be saved without one.',
-    'stepper.increment': 'Increase',
-    'stepper.decrement': 'Decrease',
+    'stepper.increment': 'Increase {field}',
+    'stepper.decrement': 'Decrease {field}',
     'palette.title': 'Data fields',
     'palette.editField': 'Edit this data field',
     'help.dataFields.title': 'How to read a row',
@@ -1031,7 +1033,10 @@ export const en: LanguageCatalog = {
     'docSettings.close': 'Back to canvas',
     'docSettings.preview': 'Preview',
     'docSettings.previewEmpty': 'No preview yet.',
-    'panel.noSelection.hint': 'Nothing selected.',
+    'panel.noSelection.hint':
+      'Nothing selected. Pick an item on the canvas or in the layer list to edit it.',
+    'panel.noSelection.page': 'Page',
+    'panel.noSelection.margin': 'Margins',
     'panel.noSelection.open': 'Open document settings',
     'defaults.familyPlaceholder': '(locale default)',
     'tree.expand': 'Expand',

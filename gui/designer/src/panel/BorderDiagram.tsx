@@ -106,7 +106,28 @@ export function BorderDiagram({ view, isTable, onEdge }: BorderDiagramProps) {
   const { t } = useI18n();
   return (
     <div className="flex items-start gap-3">
-      <div className="relative shrink-0 rounded-sm bg-[#fcfcfa]" style={{ width: 96, height: 64 }}>
+      {/* The paper stays a PAPER TINT rather than a theme token, and for the
+        reason `styles.css` states for the canvas grid and margin guide: what
+        this box previews is the engine-rendered page, which is pixels and is
+        white in either colour scheme, so an authored `#333` border has to read
+        against white here exactly as it will there. What changed is how loudly
+        it says so. At `#fcfcfa` it was a near-white slab — indistinguishable
+        from the light chrome it sits on (`#fdfcfa`), and in dark chrome the
+        brightest thing in the panel by a wide margin, outshouting every control
+        that can actually be pressed. One step down, plus the hairline ring every
+        other control in the panel wears, makes it read as a bounded object in
+        both schemes while keeping ~15:1 against the guarded ink below.
+
+        It also casts the PAGE's own shadow (`--sj-paper-shadow`, the token the
+        canvas page uses). A fresh reader shown both schemes read the same box as
+        "too loud" in dark and "hard to find at all" in light, where the tint sits
+        a hair off the chrome behind it and only the ring separates them. A shadow
+        answers the light half without touching the tint the dark half is about:
+        it says "sheet of paper" by depth rather than by brightness. */}
+      <div
+        className="relative shrink-0 rounded-sm border border-border bg-[#f0eee9] shadow-[0_1px_3px_var(--sj-paper-shadow)]"
+        style={{ width: 96, height: 64 }}
+      >
         <svg
           viewBox="0 0 96 64"
           className="absolute inset-0"
@@ -123,7 +144,10 @@ export function BorderDiagram({ view, isTable, onEdge }: BorderDiagramProps) {
             type="button"
             aria-pressed={view.width.effective[side] > 0}
             aria-label={t(`border.edge.${side}`)}
-            className="absolute cursor-pointer border-0 bg-transparent p-0 hover:bg-black/5"
+            // The edges ARE the control here, so they say so on hover rather
+            // than relying on the cursor alone: a 5% wash is nearly invisible
+            // on paper this light.
+            className="absolute cursor-pointer border-0 bg-transparent p-0 hover:bg-black/10"
             style={HIT[side]}
             onClick={() => onEdge(side)}
           />

@@ -255,7 +255,7 @@ describe('Designer', () => {
     });
     draw(transport);
     // With nothing selected the panel is the no-selection hint card.
-    expect(screen.getByText('Nothing selected.')).toBeTruthy();
+    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
     await waitFor(() => screen.getByRole('button', { name: /heading/ }));
     fireEvent.click(screen.getByRole('button', { name: /heading/ }));
     expect(screen.getByLabelText('Text')).toBeDefined();
@@ -307,7 +307,7 @@ describe('Designer', () => {
     expect(screen.getByLabelText('Text')).toBeDefined();
     // Escape outside an editable element clears the selection.
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.getByText('Nothing selected.')).toBeTruthy();
+    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
     expect(screen.queryByLabelText('Text')).toBeNull();
   });
 
@@ -734,7 +734,7 @@ describe('Designer', () => {
       </I18nProvider>,
     );
     // With nothing selected the panel shows the no-selection hint...
-    expect(screen.getByText('Nothing selected.')).toBeTruthy();
+    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
     // ...the palette lives behind the sidebar's data tab...
     fireEvent.click(screen.getByRole('tab', { name: 'Data fields' }));
     // ...and clicking the used palette field selects the bound text item.
@@ -1316,7 +1316,7 @@ describe('Designer', () => {
     });
     // The section root is selected, so the panel is the item editor, not the
     // no-selection hint (and page size never lived in the panel).
-    expect(screen.queryByText('Nothing selected.')).toBeNull();
+    expect(screen.queryByText(/Nothing selected/)).toBeNull();
   });
 
   it('clears the selection when a bare top-level sequence empties (no enclosing node)', async () => {
@@ -1341,7 +1341,7 @@ describe('Designer', () => {
       expect(last).toContain('attachments: []');
     });
     // No enclosing selectable node → selection clears → the no-selection card.
-    expect(screen.getByText('Nothing selected.')).toBeTruthy();
+    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
   });
 
   it('duplicates the selected item on ⌘/Ctrl+D and selects the copy', async () => {

@@ -2,7 +2,7 @@
 // with one-step-per-click buttons. Split out of `fields.tsx`, which keeps the
 // base widgets and the shared badge helper this file renders through.
 
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 import { useI18n } from '../i18n/context';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import { TipBubble } from '../ui/TipBubble';
@@ -40,6 +40,20 @@ export interface StepperFieldProps {
    * several unsteppable states this field is in — a message naming percent and
    * em would be a lie over an empty or garbage value. Omit for no bubble. */
   readonly stepHint?: string;
+  /** An optional `?` beside the label — the slot `NumericComboField` already
+   * carries, so the panel has ONE shape for "this field needs a sentence of
+   * explanation" rather than a second. It replaces a hint PARAGRAPH beside the
+   * control: a four-line explanation wrapping next to a small input is a line
+   * back in a cramped panel, which is the reason `BorderDiagram` states for
+   * putting its own whole explanation behind a `?`. */
+  readonly help?: ReactNode;
+  /** Opt-in soft-keyboard/AT hint for a field whose value is a BARE numeral.
+   * Withheld by default because this component's values legitimately include
+   * length strings (`12mm`, `50%`) that a decimal keypad cannot type — but a
+   * call site whose own builder refuses a unit is not in that case, and there
+   * a `type="text"` input opens the full keyboard on a touch device. Pass
+   * `'decimal'` only when the WIRE refuses units at that key. */
+  readonly inputMode?: 'decimal';
 }
 
 /** A numeric/length field with ▲▼ steppers. The input keeps the plain
@@ -59,6 +73,8 @@ export function StepperField({
   unitHint,
   placeholder,
   stepHint,
+  help,
+  inputMode,
 }: StepperFieldProps) {
   // An empty field shows its placeholder, so the unit belongs to THAT text.
   const shown = value === '' ? (placeholder ?? '') : value;
@@ -82,9 +98,24 @@ export function StepperField({
     'flex flex-1 cursor-pointer items-center justify-center border border-border bg-chrome px-1.5 text-[9px] leading-none text-text disabled:cursor-default disabled:opacity-40';
   return (
     <span className="mb-2 block">
-      <label htmlFor={id} className={FIELD_LABEL}>
-        {label}
-      </label>
+      {/* The `?` is a SIBLING of the label, never inside it: a `<label>`'s text
+        content becomes the control's accessible name, so a nested help button
+        would both rename the field and hand its own clicks to the input. With no
+        `?` there is no ROW either — a wrapper whose textContent equals the
+        label's is a second element answering to the field's name, which a
+        by-text query then addresses instead of the label. */}
+      {help === undefined ? (
+        <label htmlFor={id} className={FIELD_LABEL}>
+          {label}
+        </label>
+      ) : (
+        <span className="flex items-center gap-1">
+          <label htmlFor={id} className={FIELD_LABEL}>
+            {label}
+          </label>
+          {help}
+        </span>
+      )}
       {/* No gap: a stepper reads as ONE control, so the ▲▼ column sits flush
         against the input (macOS/HIG, and the gdoc numeric field) rather than
         floating 4px off it. The seam is one shared border — the input squares
@@ -96,6 +127,7 @@ export function StepperField({
             key={inputKey}
             id={id}
             type="text"
+            inputMode={inputMode}
             className={`${INPUT} w-full min-w-0 rounded-r-none ${badge === undefined ? '' : 'pr-11'} ${
               tag === undefined ? '' : 'text-muted'
             }`}
@@ -120,7 +152,11 @@ export function StepperField({
           {hint === undefined ? null : <TipBubble text={hint} />}
         </span>
         {/* The bubble rides the COLUMN, not the buttons: a disabled button is
-          an unreliable hover target, and the explanation is about the pair. */}
+          an unreliable hover target, and the explanation is about the pair.
+          Each button NAMES its field: one view renders several steppers (the
+          placement tab maps x/y/w/h, page setup in custom mode renders width,
+          height and the all-sides margin), and a bare "Increase" repeated six
+          times is six controls a screen reader cannot tell apart. */}
         <span
           className={`-ml-px flex shrink-0 flex-col${
             !canStep && stepHint !== undefined ? ' group/tip relative' : ''
@@ -129,7 +165,7 @@ export function StepperField({
           <button
             type="button"
             className={`${stepBtn} rounded-tr-md`}
-            aria-label={t('stepper.increment')}
+            aria-label={t('stepper.increment', { field: label })}
             disabled={!canStep}
             onClick={() => onStep(1)}
           >
@@ -138,7 +174,7 @@ export function StepperField({
           <button
             type="button"
             className={`${stepBtn} -mt-px rounded-br-md`}
-            aria-label={t('stepper.decrement')}
+            aria-label={t('stepper.decrement', { field: label })}
             disabled={!canStep}
             onClick={() => onStep(-1)}
           >

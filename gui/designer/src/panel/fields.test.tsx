@@ -34,8 +34,8 @@ describe('StepperField', () => {
   it('seeds the input with the current value and renders ▲▼ buttons', () => {
     draw({ value: '12', canStep: true });
     expect((screen.getByLabelText('X') as HTMLInputElement).value).toBe('12');
-    expect(screen.getByRole('button', { name: 'Increase' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Decrease' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Increase X' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Decrease X' })).toBeTruthy();
   });
 
   it('commits a changed value on blur', () => {
@@ -52,8 +52,8 @@ describe('StepperField', () => {
 
   it('steps up and down through onStep', () => {
     const { onStep } = draw({ value: '12', canStep: true });
-    fireEvent.click(screen.getByRole('button', { name: 'Increase' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Decrease' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Increase X' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease X' }));
     expect(onStep.mock.calls).toEqual([[1], [-1]]);
   });
 
@@ -70,13 +70,13 @@ describe('StepperField', () => {
     }
     expect(row.className).not.toMatch(/\bgap-/);
     expect(input.className).toContain('rounded-r-none');
-    const column = screen.getByRole('button', { name: 'Increase' }).parentElement;
+    const column = screen.getByRole('button', { name: 'Increase X' }).parentElement;
     expect(column?.className).toContain('-ml-px');
   });
 
   it('disables the ▲▼ buttons when the value is not steppable', () => {
     const { onStep } = draw({ value: '50%', canStep: false });
-    const up = screen.getByRole('button', { name: 'Increase' }) as HTMLButtonElement;
+    const up = screen.getByRole('button', { name: 'Increase X' }) as HTMLButtonElement;
     expect(up.disabled).toBe(true);
     fireEvent.click(up);
     expect(onStep).not.toHaveBeenCalled();
@@ -462,5 +462,101 @@ describe('the unit hint in a rendered field', () => {
     expect(container.querySelector('[data-sj-tip]')?.textContent).toBe(
       'Type mm, cm, in, em or rem.',
     );
+  });
+});
+
+// GUI-41 — the field-level hierarchy fixes. Each pins a MECHANISM rather than a
+// pixel: jsdom computes no geometry, so what is provable here is the class the
+// browser would lay out from, the accessible name, and the attribute.
+describe('a stepper names its own field', () => {
+  it('carries the field name in both button names', () => {
+    // Six identically-named buttons in one view (page setup in custom mode
+    // renders three steppers) is six controls a screen reader cannot tell
+    // apart. The ▲▼ are the same control in every field, so only the field
+    // name distinguishes them.
+    draw({ value: '12', canStep: true });
+    expect(screen.getByRole('button', { name: 'Increase X' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Decrease X' })).toBeTruthy();
+  });
+
+  it('gives two steppers in one view DISTINCT button names', () => {
+    render(
+      <I18nProvider locale="en">
+        <StepperField label="Width" value="1" canStep onCommit={vi.fn()} onStep={vi.fn()} />
+        <StepperField label="Height" value="2" canStep onCommit={vi.fn()} onStep={vi.fn()} />
+      </I18nProvider>,
+    );
+    const names = screen
+      .getAllByRole('button')
+      .map((button) => button.getAttribute('aria-label') ?? '');
+    expect(names).toEqual([
+      'Increase Width',
+      'Decrease Width',
+      'Increase Height',
+      'Decrease Height',
+    ]);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('translates the name, arg and all (the ICU placeholder is not English-only)', () => {
+    render(
+      <I18nProvider locale="ja">
+        <StepperField label="幅" value="1" canStep onCommit={vi.fn()} onStep={vi.fn()} />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button', { name: '幅を増やす' })).toBeTruthy();
+  });
+});
+
+describe("a stepper's optional slots", () => {
+  it('renders no `?` and no inputMode by default', () => {
+    // Both are opt-in, and the default matters: this component's values include
+    // length strings (`12mm`, `50%`) a decimal keypad cannot type.
+    //
+    // The `?` half COUNTS rather than naming a button it expects to be absent:
+    // "no button called X" passes for any X, including an implementation that
+    // renders a `?` named from a catalog string — which is exactly the one this
+    // case exists to exclude. A default stepper draws the ▲ and the ▼ and
+    // nothing else. (`CharGridSection.test.tsx` states the same rule.)
+    draw({ value: '12', canStep: true });
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByLabelText('X').getAttribute('inputmode')).toBeNull();
+  });
+
+  it('renders the `?` beside the label, OUTSIDE it, so the field keeps its name', () => {
+    // A help button nested in the `<label>` would join the input's accessible
+    // name and hand its own clicks to the input.
+    render(
+      <I18nProvider locale="en">
+        <StepperField
+          label="X"
+          value="12"
+          canStep
+          help={<button type="button">What this is</button>}
+          onCommit={vi.fn()}
+          onStep={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+    const input = screen.getByLabelText('X');
+    expect(input).toBeTruthy();
+    const help = screen.getByRole('button', { name: 'What this is' });
+    expect(help.closest('label')).toBeNull();
+  });
+
+  it('passes an opted-in inputMode through to the input', () => {
+    render(
+      <I18nProvider locale="en">
+        <StepperField
+          label="X"
+          value="12"
+          canStep
+          inputMode="decimal"
+          onCommit={vi.fn()}
+          onStep={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+    expect(screen.getByLabelText('X').getAttribute('inputmode')).toBe('decimal');
   });
 });

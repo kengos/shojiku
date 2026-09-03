@@ -115,7 +115,7 @@ describe('LayoutSection (flex)', () => {
   it('steps an unset gap up from 0 via the ▲ button', () => {
     const controller = rowController({ direction: 'row' });
     drawSection(controller);
-    fireEvent.click(screen.getByLabelText('Increase'));
+    fireEvent.click(screen.getByLabelText('Increase Spacing'));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,
@@ -217,14 +217,15 @@ describe('LayoutSection (grid)', () => {
     );
   }
 
-  /** The ▲/▼ of the stepper labeled `label` — scoped to ITS field wrapper (the
-   * gap stepper carries the same Increase/Decrease labels). */
+  /** The ▲/▼ of the stepper labeled `label`. Each button now NAMES its field,
+   * so the pair is addressable directly; the wrapper scoping stays because it
+   * also proves the buttons belong to that field's row. */
   function stepButtons(label: string) {
     const input = screen.getByLabelText(label);
     const wrap = input.parentElement?.parentElement as HTMLElement;
     return {
-      up: within(wrap).getByLabelText('Increase'),
-      down: within(wrap).getByLabelText('Decrease'),
+      up: within(wrap).getByLabelText(`Increase ${label}`),
+      down: within(wrap).getByLabelText(`Decrease ${label}`),
     };
   }
 

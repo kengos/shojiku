@@ -123,3 +123,15 @@ describe('FormatPicker', () => {
     expect(screen.getByText('No formats to choose from.')).toBeTruthy();
   });
 });
+
+describe('FormatPicker — the ▼ is part of the control', () => {
+  it('sits flush against the input, sharing one border', () => {
+    draw('currency', OPTIONS);
+    const input = screen.getByLabelText('Format');
+    expect(input.className).toContain('rounded-r-none');
+    const toggle = screen.getByRole('button', { name: 'Choose a format' });
+    expect(toggle.className).toContain('rounded-l-none');
+    expect(toggle.className).toContain('border-l-0');
+    expect(input.closest('span.items-stretch')?.className).not.toMatch(/\bgap-/);
+  });
+});

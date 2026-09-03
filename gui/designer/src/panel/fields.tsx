@@ -44,7 +44,19 @@ export function Field({ label, children }: FieldProps) {
  * lands inside the row, and the row is `items-stretch` — the button takes the
  * input's height instead of being lined up on one of its edges, which is what
  * left the ▼ 8px low and 2px short. `after` renders under the row, inside the
- * same block (the bound-field line). */
+ * same block (the bound-field line).
+ *
+ * The row has NO GAP: an input and the ▼ that fills it are one control, so the
+ * button sits flush and shares the input's right border (the caller's toggle
+ * wears `PICKER_TOGGLE_FLUSH`, its input `rounded-r-none`). The FLUSH variant is
+ * a separate constant precisely because flushness belongs to the pairing: the
+ * same ▼ standing alone in a row of text — `FormatDefaultRow`'s — must keep all
+ * four corners and all four borders, or it draws an open-sided box. The
+ * panel's rule, stated once here because it was the last place that broke it:
+ * **a button that is PART of the control is flush; a button that ACTS ON THE ROW
+ * is detached.** `StringListField`'s trash is the second kind and keeps its
+ * gap — a destructive row action welded to an input reads as belonging to it,
+ * which is exactly what makes it easy to press by mistake. */
 export function SideButtonField({
   label,
   htmlFor,
@@ -63,7 +75,7 @@ export function SideButtonField({
       <label htmlFor={htmlFor} className={FIELD_LABEL}>
         {label}
       </label>
-      <span className="flex min-w-0 items-stretch gap-1">
+      <span className="flex min-w-0 items-stretch">
         <span className="min-w-0 flex-1">{children}</span>
         {button}
       </span>

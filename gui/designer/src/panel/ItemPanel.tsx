@@ -117,10 +117,12 @@ export function ItemPanel(props: ItemPanelProps) {
     );
 
   // `visible:` applies to EVERY item type and is none of the three tab
-  // concerns — it decides whether the item is there at all — so it sits above
-  // the tablist rather than inside a tab. Gated on the engine capability: an
-  // older engine parse-REJECTS the key, so the control must not be offered
-  // hopefully.
+  // concerns — it decides whether the item is there at all — so it sits outside
+  // the tablist rather than inside a tab, and BELOW it: it is the rare, advanced
+  // case, and it used to own the top of the panel ahead of the controls anyone
+  // opens the panel for (see `VisibilitySection`'s own header). Gated on the
+  // engine capability: an older engine parse-REJECTS the key, so the control
+  // must not be offered hopefully.
   //
   // The picker follows the item's OWN data scope, derived from its path like
   // every other row-scoped surface: inside a `repeat` cell the fields offered
@@ -168,15 +170,14 @@ export function ItemPanel(props: ItemPanelProps) {
   if (tabs.length === 1) {
     return (
       <div className="p-3">
-        {visibility}
         {panelFor(tabs[0])}
+        {visibility}
       </div>
     );
   }
 
   return (
     <TabGroup selectedIndex={selected} onChange={(next) => setActive(tabs[next])}>
-      {visibility === null ? null : <div className="px-3 pt-3">{visibility}</div>}
       <TabList className="flex gap-1 border-b border-border px-3 pt-2">
         {tabs.map((tab) => (
           <Tab
@@ -194,6 +195,9 @@ export function ItemPanel(props: ItemPanelProps) {
           </TabPanel>
         ))}
       </TabPanels>
+      {/* Below the tab BODIES, not inside one: the key applies to every type,
+        so it must not appear and disappear as the reader changes tab. */}
+      {visibility === null ? null : <div className="px-3 pb-3">{visibility}</div>}
     </TabGroup>
   );
 }

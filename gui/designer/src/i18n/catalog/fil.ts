@@ -113,6 +113,8 @@ export const fil: LanguageCatalog = {
     'help.placement.title': 'Saan nagsisimula ang mga coordinate',
     'help.placement.body':
       'Sinusukat ang X at Y mula sa itaas-kaliwang sulok ng lugar sa loob ng mga margin ng pahina — ang nakabalangkas na parihaba sa pahina. Sinadya ang mga negatibong halaga para umabot sa margin, at ang nilalamang lumalabas sa papel lang ang iniuulat na problema.',
+    'help.borderRadius.title': 'Mga bilugang sulok',
+    'help.visible.title': 'Pagpapakita ng item paminsan-minsan',
     'help.border.title': 'Paano maglagay ng border',
     'help.border.body':
       'Itakda muna ang pen sa ibaba — ang kapal, kulay at uri ng linya — pagkatapos ay i-click ang mga gilid na nais mong lagyan, katulad ng border tool sa spreadsheet. Ang pag-click sa gilid na tugma na sa pen ay nag-aalis nito.',
@@ -746,8 +748,8 @@ export const fil: LanguageCatalog = {
       'Lalagpas sa laki-limitasyon ang dokumento kung papalitan ng pangalang iyon.',
     'formats.error.emptyPattern':
       'Maglagay ng pattern — hindi mase-save ang pormat kung wala nito.',
-    'stepper.increment': 'Dagdagan',
-    'stepper.decrement': 'Bawasan',
+    'stepper.increment': 'Dagdagan ang {field}',
+    'stepper.decrement': 'Bawasan ang {field}',
     'palette.title': 'Mga field ng data',
     'palette.editField': 'I-edit ang data field na ito',
     'help.dataFields.title': 'Paano basahin ang isang hilera',
@@ -835,7 +837,10 @@ export const fil: LanguageCatalog = {
     'docSettings.close': 'Bumalik sa canvas',
     'docSettings.preview': 'Preview',
     'docSettings.previewEmpty': 'Wala pang preview.',
-    'panel.noSelection.hint': 'Walang napili.',
+    'panel.noSelection.hint':
+      'Walang napili. Pumili ng item sa canvas o sa listahan ng layer para i-edit ito.',
+    'panel.noSelection.page': 'Pahina',
+    'panel.noSelection.margin': 'Mga margin',
     'panel.noSelection.open': 'Buksan ang mga setting ng dokumento',
     'defaults.familyPlaceholder': '(default ng locale)',
     'tree.expand': 'I-expand',

@@ -145,14 +145,14 @@ describe('GroupForm', () => {
   it('steps from the RESOLVED coverage, one op per click', () => {
     const controller = makeController({ [TABLE]: TABLE_NODE });
     form(controller);
-    fireEvent.click(screen.getByLabelText('Increase'));
+    fireEvent.click(screen.getByLabelText('Increase Span (columns)'));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: GROUP_PATH,
       keys: ['span'],
       value: 4,
     });
-    fireEvent.click(screen.getByLabelText('Decrease'));
+    fireEvent.click(screen.getByLabelText('Decrease Span (columns)'));
     expect(controller.apply).toHaveBeenLastCalledWith({
       op: 'setScalar',
       path: GROUP_PATH,
@@ -170,9 +170,9 @@ describe('GroupForm', () => {
       { label: 'Item', span: '6' },
       { label: 'Quantity', span: '3' },
     ]);
-    expect(screen.getByLabelText('Increase')).toHaveProperty('disabled', true);
+    expect(screen.getByLabelText('Increase Span (columns)')).toHaveProperty('disabled', true);
     expect(screen.queryByText(/Spans/)).toBeNull();
-    fireEvent.click(screen.getByLabelText('Increase'));
+    fireEvent.click(screen.getByLabelText('Increase Span (columns)'));
     expect(controller.apply).not.toHaveBeenCalled();
   });
 

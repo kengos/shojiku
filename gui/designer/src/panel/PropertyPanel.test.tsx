@@ -52,7 +52,7 @@ describe('PropertyPanel', () => {
     draw(
       <PropertyPanel controller={makeController({})} path={null} onOpenDocument={onOpenDocument} />,
     );
-    expect(screen.getByText('Nothing selected.')).toBeTruthy();
+    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Open document settings' }));
     expect(onOpenDocument).toHaveBeenCalledTimes(1);
     // No page-setup surface in the panel any more.
@@ -61,7 +61,7 @@ describe('PropertyPanel', () => {
 
   it('omits the open-settings CTA when no handler is wired', () => {
     draw(<PropertyPanel controller={makeController({})} path={null} />);
-    expect(screen.getByText('Nothing selected.')).toBeTruthy();
+    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Open document settings' })).toBeNull();
   });
 
@@ -109,7 +109,7 @@ describe('PropertyPanel', () => {
     // panel must not show the unsupported-type note for it — it shows the
     // no-selection hint (the ghost reads as nothing selected).
     draw(<PropertyPanel controller={makeController({})} path={PATH} />);
-    expect(screen.getByText('Nothing selected.')).toBeTruthy();
+    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
   });
 
   it('shows an unsupported note for a non-item node', () => {
@@ -1004,7 +1004,7 @@ describe('PropertyPanel — binding field picker', () => {
     draw(<PropertyPanel controller={controller} path={PATH} />);
     openTab('Style');
     // fontSize is the first length/number style field; its ▲ steps 24 → 25.
-    fireEvent.click(screen.getAllByRole('button', { name: 'Increase' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Increase\b/ })[0]);
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,
@@ -1018,7 +1018,7 @@ describe('PropertyPanel — binding field picker', () => {
     draw(<PropertyPanel controller={controller} path={PATH} gridStep={8} />);
     openTab('Layout');
     // The X axis is the first box field; its ▲ steps 8 → 16.
-    const up = screen.getAllByRole('button', { name: 'Increase' })[0];
+    const up = screen.getAllByRole('button', { name: /^Increase\b/ })[0];
     fireEvent.click(up);
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',

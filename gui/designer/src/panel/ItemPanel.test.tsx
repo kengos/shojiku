@@ -197,3 +197,47 @@ describe('ItemPanel — `visible:` inside a row scope', () => {
     expect(screen.getByText('When to show')).toBeTruthy();
   });
 });
+
+// GUI-41 — `visible:` is the rare, advanced setting. It stays OUTSIDE the tabs
+// (it applies to every type and must not appear and disappear as the reader
+// changes tab) but BELOW them: it used to head the panel, so selecting a
+// rectangle opened on it, above the background and border controls.
+describe('ItemPanel — where the presence binding sits', () => {
+  /** DOM order of the tab BODY and the `visible:` heading, as the reader meets
+   * them. `compareDocumentPosition` is what "below" MEANS in a document jsdom
+   * never lays out.
+   *
+   * Against the TABLIST this would be a weaker claim than the requirement: a
+   * layout rendering the section between the tab strip and the tab bodies also
+   * follows the tablist, and that layout is the defect — the section would sit
+   * above the background and border controls again. */
+  function visibleComesAfterTabs(): boolean {
+    const body = screen.getByRole('tabpanel');
+    const heading = screen.getByText('When to show');
+    return (body.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+  }
+
+  it('renders it AFTER the tabs for a multi-tab item', () => {
+    drawPanel({ type: 'rect' });
+    expect(visibleComesAfterTabs()).toBe(true);
+  });
+
+  it('keeps it visible whichever tab is active', () => {
+    drawPanel({ type: 'rect' });
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    expect(screen.getByText('When to show')).toBeTruthy();
+    expect(visibleComesAfterTabs()).toBe(true);
+  });
+
+  it('renders it after the body for a SINGLE-tab item, which shows no tablist', () => {
+    // `ellipse` is neither a content nor a decoration type but is boxed, so it
+    // gets exactly one tab and the tablist chrome is dropped.
+    drawPanel({ type: 'ellipse', box: { w: 10, h: 10 } });
+    expect(screen.queryAllByRole('tab')).toEqual([]);
+    const heading = screen.getByText('When to show');
+    const width = screen.getByLabelText('Width');
+    expect((width.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(
+      true,
+    );
+  });
+});
