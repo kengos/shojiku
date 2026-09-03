@@ -54,6 +54,21 @@ describe('collapse', () => {
   });
 });
 
+describe('the data scope', () => {
+  it('removes `scope:` at element scope only when one is AUTHORED', () => {
+    // `removeKey` on an absent key returns `key_not_found` and one failing op
+    // refuses the whole batch, so the unguarded form made an element-scope pick
+    // silently inert — the same guard `bindingPickOps` has always carried.
+    expect(repointVisibleOps(P, 'paid', 'boolean', [], false, '', false, true)).toEqual([
+      { op: 'setScalar', path: P, keys: ['visible', 'key'], value: 'paid' },
+      { op: 'removeKey', path: P, keys: ['visible', 'scope'] },
+    ]);
+    expect(repointVisibleOps(P, 'paid', 'boolean', [], false, '', false, false)).toEqual([
+      { op: 'setScalar', path: P, keys: ['visible', 'key'], value: 'paid' },
+    ]);
+  });
+});
+
 describe('equals', () => {
   it('writes a string literal verbatim', () => {
     expect(setVisibleEqualsOp(P, 'approved', 'string')).toEqual({
@@ -134,8 +149,11 @@ describe('the scope the field was picked at', () => {
     ]);
   });
 
-  it('REMOVES the scope key when a row field is picked — element is the default', () => {
-    expect(repointVisibleOps(P, 'name', 'string', [], false, '', false)).toEqual([
+  it('REMOVES the scope key when a row field is picked over an AUTHORED one', () => {
+    // Element is the default, so the key goes — but only when it is there to
+    // go (see 'the data scope' above: unguarded, the `removeKey` failed and
+    // took the whole pick with it).
+    expect(repointVisibleOps(P, 'name', 'string', [], false, '', false, true)).toEqual([
       { op: 'setScalar', path: P, keys: ['visible', 'key'], value: 'name' },
       { op: 'removeKey', path: P, keys: ['visible', 'scope'] },
     ]);

@@ -5,7 +5,7 @@
 // Framework-free.
 
 import type { SnippetValue } from '@shojiku/designer-core';
-import { BOXLESS_TYPES } from '../panel/itemView';
+import { BOXLESS_TYPES, MARK_TYPES } from '../panel/itemView';
 import type { InsertKind } from './insertMenu';
 
 /** Which items only make sense inside a header/footer band. */
@@ -47,7 +47,14 @@ export function bandPlaced(snippet: SnippetValue, y: number): SnippetValue {
     return bandPlacedPoints(item, y);
   }
   const box = (item.box ?? {}) as Record<string, unknown>;
-  return { ...item, box: { w: '100%', ...box, x: 0, y } } as SnippetValue;
+  // A FORM MARK is not text-shaped: it is a fixed-aspect glyph (an oval, a
+  // square frame), so the full-width default above would stretch a checkbox
+  // across the whole margin box — and an unsized checkbox is exactly the shape
+  // that reaches here, since its snippet deliberately authors no box so the
+  // engine can match it to the label's cap height. It takes the coordinates and
+  // nothing else.
+  const width = typeof item.type === 'string' && MARK_TYPES.has(item.type) ? {} : { w: '100%' };
+  return { ...item, box: { ...width, ...box, x: 0, y } } as SnippetValue;
 }
 
 /** The band placement of an item that takes NO `box:` — `line` and

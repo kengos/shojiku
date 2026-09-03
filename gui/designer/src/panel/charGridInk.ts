@@ -23,9 +23,10 @@
 //     effective value it did not find in those two places.
 
 import type { Op, ReadFn } from '@shojiku/designer-core';
-import { namedValue, ownValue, readRecord, record } from './borderModel';
+import { readRecord } from './borderModel';
 import { display } from './itemView';
 import { lengthOp, plainTextOp } from './model';
+import { resolveUniform } from './uniformBorder';
 
 /** Line-breaking rule sets the engine accepts, and its default. Copied from the
  * wire (`KinsokuMode`), never guessed. */
@@ -77,41 +78,10 @@ const EMPTY: CharGridInkView = {
   rubySize: '',
 };
 
-/** A `borderWidth`/`borderColor` value as the engine reads it: a scalar outright, or
- * a per-side map's TOP side. Anything else is unset.
- *
- * A map with no `top` therefore reads as `''` — which is the truth about the ruling
- * (`sides()` gives an unset side `0.0`, so the engine draws nothing) but is NOT the
- * same thing as the key being absent. Which layer wins is decided before this runs. */
-function topSide(raw: unknown): string {
-  const asMap = record(raw);
-  return asMap === undefined ? display(raw) : display(asMap.top);
-}
-
-/** Which layer supplies a key, decided the way the ENGINE decides it: by key
- * PRESENCE, not by whether the value happens to display as something.
- *
- * `authored()` ends `pick(&item.style).or(found)`, so an own value of ANY shape wins
- * outright and the named styles are never consulted. Falling through on an empty
- * DISPLAY instead would make the panel contradict the canvas beside it: an item
- * authoring `borderWidth: { bottom: 1 }` over a style's `borderWidth: 2` draws NO
- * ruling (the top side is unset, so `sides()[0]` is 0 and `width <= 0.0` returns
- * early), while the panel would show `2` and name the style it came from. Per-side
- * width maps are an authored idiom here, so this is reachable, not theoretical. */
-function resolveInk(
-  item: Record<string, unknown>,
-  registry: Record<string, unknown>,
-  key: string,
-): { readonly value: string; readonly styleName: string | null } {
-  const own = ownValue(item, key);
-  if (own !== undefined) {
-    return { value: topSide(own), styleName: null };
-  }
-  const found = namedValue(item, registry, key);
-  return found === null
-    ? { value: '', styleName: null }
-    : { value: topSide(found.raw), styleName: found.styleName };
-}
+// How a uniform border resolves — a scalar or a per-side map's TOP side, own value
+// before named styles, by key presence — is the SAME rule the two form marks'
+// outlines follow (`Ctx::shape_paint`), so it lives in `uniformBorder.ts` rather
+// than here. This file keeps only what is specific to a GRID's ruling.
 
 /** Read the ink the item at `path` authors, own value first and named styles below
  * it — the two places, and the only two, the engine looks. */
@@ -121,8 +91,8 @@ export function readCharGridInk(read: ReadFn, path: string): CharGridInkView {
     return EMPTY;
   }
   const registry = readRecord(read, 'styles');
-  const width = resolveInk(item, registry, 'borderWidth');
-  const colour = resolveInk(item, registry, 'borderColor');
+  const width = resolveUniform(item, registry, 'borderWidth');
+  const colour = resolveUniform(item, registry, 'borderColor');
   const mode = item.kinsoku;
   return {
     rulingWidth: width.value,

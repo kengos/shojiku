@@ -55,6 +55,26 @@ describe('page numbers and band inserts', () => {
     expect(screen.queryAllByRole('menuitem', { name: 'Line' })).toHaveLength(0);
   });
 
+  it('offers the two form marks only when the engine advertises them', () => {
+    // Same threading claim as the rule above — and the checkbox's gate is TWO
+    // keys, because its snippet authors no `box:`: against an engine that has
+    // `checkbox` but not the cap-height default, an unsized mark is skipped
+    // with `mark_missing_size` rather than drawn.
+    draw(makeTransport(), { capabilities: ['ellipse', 'checkbox', 'checkbox.auto_size'] });
+    fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+    expect(screen.getByRole('menuitem', { name: 'Ellipse' })).toBeDefined();
+    expect(screen.getByRole('menuitem', { name: 'Checkbox' })).toBeDefined();
+
+    draw(makeTransport(), { capabilities: ['ellipse', 'checkbox'] });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Insert' })[1]);
+    expect(screen.getAllByRole('menuitem', { name: 'Ellipse' })).toHaveLength(1);
+    expect(screen.queryAllByRole('menuitem', { name: 'Checkbox' })).toHaveLength(0);
+
+    draw(makeTransport(), { capabilities: ['checkbox', 'checkbox.auto_size'] });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Insert' })[2]);
+    expect(screen.queryAllByRole('menuitem', { name: 'Ellipse' })).toHaveLength(0);
+  });
+
   it('places a rule in a band through its ENDPOINTS, authoring no box', () => {
     // The end-to-end form of the parse-error class: `LineItem` has no `box`
     // field, so the coordinates a band needs have to reach `from`/`to`.

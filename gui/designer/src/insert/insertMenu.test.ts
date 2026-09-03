@@ -12,6 +12,8 @@ const NONE: InsertArming = {
   field: false,
   cutLine: false,
   line: false,
+  ellipse: false,
+  checkbox: false,
 };
 const ALL: InsertArming = {
   iterable: true,
@@ -19,6 +21,8 @@ const ALL: InsertArming = {
   field: true,
   cutLine: true,
   line: true,
+  ellipse: true,
+  checkbox: true,
 };
 
 /** The element group's rows, by what each one inserts. */
@@ -27,6 +31,46 @@ function elementKinds(armed: InsertArming): string[] {
     entry.kind === 'element' ? entry.insert : entry.kind,
   );
 }
+
+describe('the form marks', () => {
+  it('offers both rows after the rule, leaving the rect→line pair intact', () => {
+    // The marks queue BEHIND `line` rather than beside `rect`: that adjacency
+    // is a measured decision (a reader hunting for a rule reaches for a rect
+    // flattened to a hairline), so a later shape must not split it.
+    expect(
+      elementKinds({ ...NONE, line: true, ellipse: true, checkbox: true }).slice(0, 5),
+    ).toEqual(['text', 'rect', 'line', 'ellipse', 'checkbox']);
+  });
+
+  it('drops the ellipse row when the engine has no `ellipse`', () => {
+    expect(elementKinds({ ...ALL, ellipse: false })).not.toContain('ellipse');
+    expect(elementKinds({ ...ALL, ellipse: false })).toContain('checkbox');
+  });
+
+  it('drops the checkbox row when the engine has no `checkbox`', () => {
+    // Its arming is BOTH `checkbox` and `checkbox.auto_size`, because the
+    // snippet authors no `box:` — against an engine that has the item but not
+    // the auto-size default, an unsized mark is skipped with
+    // `mark_missing_size` rather than drawn.
+    expect(elementKinds({ ...ALL, checkbox: false })).not.toContain('checkbox');
+    expect(elementKinds({ ...ALL, checkbox: false })).toContain('ellipse');
+  });
+
+  it('offers neither against an engine that knows no marks', () => {
+    expect(elementKinds(NONE)).not.toContain('ellipse');
+    expect(elementKinds(NONE)).not.toContain('checkbox');
+  });
+
+  it('labels each row with its own catalog key', () => {
+    const rows = insertMenuGroups({ ...NONE, ellipse: true, checkbox: true })[0].entries;
+    expect(rows).toContainEqual({ kind: 'element', insert: 'ellipse', labelKey: 'insert.ellipse' });
+    expect(rows).toContainEqual({
+      kind: 'element',
+      insert: 'checkbox',
+      labelKey: 'insert.checkbox',
+    });
+  });
+});
 
 describe('insertMenuGroups', () => {
   it('groups every element kind under the element entry class, with the always-present container and paste entries', () => {

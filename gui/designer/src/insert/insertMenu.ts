@@ -6,7 +6,15 @@
 
 import { BAND_LABEL_KEYS, BAND_NAMES, type BandName } from './bandCreate';
 
-export type InsertKind = 'text' | 'rect' | 'line' | 'qrCode' | 'pageNumber' | 'cutLine';
+export type InsertKind =
+  | 'text'
+  | 'rect'
+  | 'line'
+  | 'ellipse'
+  | 'checkbox'
+  | 'qrCode'
+  | 'pageNumber'
+  | 'cutLine';
 
 /** One menu row: a default-snippet element insert, the container-picker intent
  * (opens the n×m grid picker), the iterable-scaffold intent (opens the
@@ -63,6 +71,13 @@ export interface InsertArming {
   /** The engine understands a `Length` `line` endpoint — the plain rule spans
    * `100%` of whatever it sits in. */
   readonly line: boolean;
+  /** The engine understands the `ellipse` form mark. */
+  readonly ellipse: boolean;
+  /** The engine understands the `checkbox` form mark AND its auto-size default.
+   * Both, because the snippet authors no `box:` — on an engine that has
+   * `checkbox` but not `checkbox.auto_size`, an unsized mark is skipped with
+   * `mark_missing_size` rather than drawn. */
+  readonly checkbox: boolean;
 }
 
 /** The insert menu's structure, grouped by entry class (elements / data field /
@@ -86,6 +101,19 @@ export function insertMenuGroups(armed: InsertArming): readonly InsertGroup[] {
         // an older engine parse-rejects rather than mis-drawing.
         ...(armed.line
           ? [{ kind: 'element', insert: 'line', labelKey: 'insert.line' } as const]
+          : []),
+        // The two form marks, AFTER the rule rather than beside the rectangle:
+        // the rect→line adjacency is a measured decision (a reader hunting for
+        // a rule reaches for a rect flattened to a hairline), so the shapes
+        // that arrive later queue behind it. Each is gated on the engine
+        // understanding its own item type — against an older engine the
+        // snippet is a parse error, not a mis-drawing, so the row is absent
+        // rather than broken.
+        ...(armed.ellipse
+          ? [{ kind: 'element', insert: 'ellipse', labelKey: 'insert.ellipse' } as const]
+          : []),
+        ...(armed.checkbox
+          ? [{ kind: 'element', insert: 'checkbox', labelKey: 'insert.checkbox' } as const]
           : []),
         { kind: 'element', insert: 'qrCode', labelKey: 'insert.qrCode' },
         // Band-only: the page count is known at assembly, so the engine warns

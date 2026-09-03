@@ -138,11 +138,10 @@ spelling, so the border cluster's per-side model must not reach it.
   three engine facts, each read from the source and each deciding what an op
   may author: `push_grid_rects` takes `grid_border.unwrap_or(0.5)` and
   returns early on `width <= 0.0`, so an ABSENT key is a 0.5pt ruling and an
-  explicit `0` is none; the width is a scalar or a per-side map's TOP side
-  (`bw.uniform().unwrap_or_else(|| bw.sides()[0])`, colour
-  `border_colors[0]`), so the read goes through `borderModel`'s primitives
-  rather than the generic cascade, which flattens a map to unset and would
-  report a set ruling as blank; and `authored()` consults `styleNames`
+  explicit `0` is none; the width is a scalar or a per-side map's TOP side and
+  own-before-named by key PRESENCE — the SAME rule a form mark's outline
+  follows, so it lives in `uniformBorder.ts` (see the form-marks section) and
+  this file only calls it; and `authored()` consults `styleNames`
   (later name wins) then the item's own style and NOTHING below — no
   defaults, no inheritance — so a control here must not badge an effective
   value from anywhere else. An over-cap width (`MAX_STROKE_WIDTH_PT` 1000)
@@ -192,7 +191,9 @@ read side, never the reverse.
 - `panel/borderTypes.ts` — what a border IS: `BORDER_STYLE_VALUES`
   (drift-guarded against `engine/core/src/style/border.rs`),
   `PATTERNED_BORDER_STYLES` (the capability-gated subset an older engine
-  parse-rejects), `BORDERABLE_TYPES`, the editor-local `Pen`, the
+  parse-rejects), `BORDERABLE_TYPES` (which excludes the THREE insertable
+  types whose stroke is not a border box — `line` and the two form
+  marks, each with its own editor), the editor-local `Pen`, the
   resolved `BorderProp`/`BorderView`/`RadiusView`, `MAX_STROKE_WIDTH`
   (the engine's shared 0..=1000 pt bound over BOTH stroke widths —
   `borderWidth` and the `line` item's `style.width`).
@@ -293,6 +294,83 @@ read side, never the reverse.
     one element away (repeat it and a by-name query matches two elements,
     and a screen reader says the words twice).
 
+## The two form marks (`ellipse` / `checkbox`)
+
+Their surfaces are split the way the wire is: the PRESENCE is content (the
+engine says so — "a mark's *presence* is content"), the outline is decoration,
+and the anchor is placement. All three are their own modules rather than
+arms of the existing ones, because a mark's paint is not a border box and its
+presence is not a text binding.
+
+- `panel/markModel.ts` — the READ side of `data:` / `checked:`. `data:` is the
+  SAME `{ key, equals?, scope? }` predicate `visible:` uses (`visibility.rs`
+  says so: "no second grammar"), so `valueFormFor` is re-exported rather than
+  restated. Unlike `readVisible` it never returns `null` — every mark HAS a
+  presence, so the section always has something true to show; a non-map `data`
+  reads as the STATIC form, since there is no row to edit and the engine's
+  parse error is the honest report. `hasChecked` is separate from `checked`
+  because an absent key and an authored `false` are different documents and
+  the ops must not remove one that is not there; `conflict` reports a document
+  carrying BOTH (the wire calls them mutually exclusive, the engine warns and
+  `data:` wins).
+- `panel/markOps.ts` — the WRITE side. Every mode switch drops the other key in
+  the SAME batch, so the document is never in the shape the wire forbids and it
+  is one undo step; unset never serializes (unticking REMOVES `checked` rather
+  than writing `false`); an unchanged pick returns `[]`, so re-picking authors
+  nothing and mints no undo step. `repointMarkOps` reconciles a stale `equals`
+  and the scope into the same batch, exactly as `visibilityOps` does.
+- `panel/MarkSection.tsx` — the content tab for both types: ONE control with
+  three states for a checkbox and two for an ellipse (the difference is only
+  that a checkbox's static form can be ticked), plus the shared `FieldPicker` /
+  `ValueControl` for the bound arm. Takes the house `props` + `chips` shape
+  (`BoundContent`/`ImageContent`), so `ContentSection`'s route is one element.
+- `panel/uniformBorder.ts` — how the ENGINE reads a UNIFORM border, shared by
+  the two surfaces that stroke one closed path instead of four bands: a form
+  mark's outline (`Ctx::shape_paint`) and a `char_grid`'s ruling
+  (`push_grid_rects`). `topSide` (a scalar outright, else a per-side map's TOP
+  side — reading through the generic cascade would flatten a map to unset and
+  report a set stroke as blank) + `resolveUniform` (own value of ANY shape wins
+  by key PRESENCE, then the named styles, later name winning; nothing below).
+  The DEFAULT an absent key means differs per surface — 0.5 pt for a ruling,
+  1 pt for a mark — so each caller states its own. Extracted from
+  `charGridInk.ts`, which now imports it.
+- `panel/shapeStyle.ts` + `panel/ShapeStyleEditor.tsx` — a mark's own paint:
+  one outline width, one outline colour, one fill. NOT the border cluster, and
+  the reason is the engine rather than taste — THREE of the four things
+  `BorderEditor` authors do not reach a shape. Two warn: a per-side map reduces
+  to its top side (`shape_border_sides_ignored`) and `borderRadius` is answered
+  with `border_radius_ignored` ("a form mark"). The third, `borderStyle`, is
+  SILENTLY inert — `shape_paint` never reads `border_styles`, `PathShape` has no
+  dash field, and `ignored_shape_keys` does not list it — which is why the
+  editor offers no line-style picker and why an already-authored one gets no
+  diagnostic. So the model writes SCALARS only, and a negative test pins that
+  neither warning-producing key can ever be authored. Empty
+  CLEARS the width, because an absent key IS the documented 1 pt default (the
+  `charGridInk` rule, different constant); `0` stays its own value, which is
+  what turns the outline off; a refused entry authors nothing and the field
+  reseeds. The width is written as the PARSED number — `BorderWidth` has no
+  `visit_str`, so a string there is a serde type error rather than a
+  diagnostic the engine degrades past.
+- `panel/ellipseAnchor.ts` + `panel/EllipseAnchorField.tsx` — the `anchor:`
+  that turns a free-floating oval into "circle this answer". Attaching PICKS
+  its target in the same action (switching first would write `anchor: ''`,
+  which resolves to no item and the oval would vanish before the user chose
+  anything) and DROPS `box.x`/`box.y` in the same batch — the engine stops
+  reading them, and `canvas/manipulate` already refuses to drag an anchored
+  ellipse for that reason. Only the coordinates the document carries are
+  dropped: removing an absent key refuses the whole batch. `anchorHidesCoords`
+  is what `BoxSection` consults to withhold the two coordinate fields, and it
+  is deliberately NOT capability-gated — `EllipseItem` is
+  `deny_unknown_fields`, so an engine that does not know `anchor:` REJECTS the
+  document rather than ignoring the key. The capability (`ellipse.anchor`)
+  gates the OFFER to attach and never the reading of a file that already is
+  (the `line.anchor` rule). Targets come from `anchorTargets` unchanged.
+- `panel/BoxAxisGrid.tsx` — the four box fields and which of them the placement
+  kind makes read-only, split out of `BoxSection.tsx` when the anchor control
+  pushed it past the per-file budget. Carries the `noCoords` case (withhold x
+  and y entirely — an anchored ellipse's position is not its box) and the
+  `flat` case (authored-only, no resolved seeding).
+
 ## Panel model + field widgets
 
 - `panel/itemView.ts` — the READ side: `readItemView` → `ItemView`
@@ -303,7 +381,12 @@ read side, never the reverse.
   all): `ItemPanel`'s tab gate, `placementModel`'s classifier,
   `canvas/manipulate`'s `noBox` refusal and `insert/bandPlacement`'s
   band-placement branch all consult this set instead of each keeping
-  their own type list.
+  their own type list. And the ONE home for **`MARK_TYPES`**
+  (`ellipse`/`checkbox` — the two form marks): they share a wire family,
+  a presence predicate, and a paint rule that is emphatically NOT the
+  border box's, so `ItemPanel`'s content and decoration gates, the
+  content router, the decoration tab and `bandPlaced`'s full-width
+  exemption all read this instead of spelling the pair out.
 - `panel/styleFieldSpecs.ts` — the style keys the panel edits, as data
   (`STYLE_FIELDS`: widget kind + enum options copied from
   `engine/core/src/style/enums.rs`). A no-import leaf shared by item
@@ -607,7 +690,11 @@ read side, never the reverse.
   fields authored a parse error). `line` therefore renders its stroke
   editor PLUS a placement tab whose body is the ENDPOINT editor rather
   than the box fields (`POINT_PLACED_TYPES`), while `page_break` has NO
-  applicable tab and renders the `panel.noEditable` placeholder. Tab
+  applicable tab and renders the `panel.noEditable` placeholder. The two
+  FORM MARKS (`MARK_TYPES`) take ALL THREE: they are boxed, their
+  presence is content, and their outline is decoration — reached through
+  `STYLED_TYPES` (which is `BORDERABLE_TYPES` plus `line` plus the marks)
+  rather than through the border set, because their editors differ. Tab
   bodies live beside it: `ContentSection.tsx` (per-type
   routing + the text/data pair; image/page-number surfaces in
   `contentParts.tsx`, the bound-mode half in `contentBound.tsx`
@@ -668,7 +755,10 @@ read side, never the reverse.
     control); unset w/h seed resolved sizes into dimmed steppers.
   - The decoration tab covers every `BORDERABLE_TYPES` item: typography
     steppers (text only) + the fill-and-border cluster (fill swatch +
-    `BorderEditor` + text-color swatch). A **table** is the exception on the
+    `BorderEditor` + text-color swatch). The two OTHER decorated families
+    reach their own editors instead — a `line`'s `LineStyleEditor` and a
+    form mark's `ShapeStyleEditor` — because neither strokes a border
+    box. A **table** is the exception on the
     fill: the engine paints no `style.backgroundColor` on one (asserted in
     `engine/layout/tests/e2e/table/style.rs`), so the swatch is withheld
     unless the document already carries one — in which case the table-style

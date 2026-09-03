@@ -2,7 +2,7 @@
 // cases are all shapes an externally-authored (or hostile) file can carry
 // that the engine would reject but the panel must still survive reading.
 
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { readVisible } from './visibilityModel';
 
 const P = 'sections.body.items[0]';
@@ -30,6 +30,7 @@ it('reads a bare key as the boolean form', () => {
     hasEquals: false,
     collapse: false,
     documentScope: false,
+    hasScope: false,
   });
 });
 
@@ -43,6 +44,7 @@ it('reads every authored key', () => {
     equals: 'approved',
     hasEquals: true,
     collapse: true,
+    hasScope: true,
     documentScope: true,
   });
 });
@@ -81,4 +83,16 @@ it('treats a non-true collapse and a non-document scope as off', () => {
   const row = readVisible(read({ visible: { key: 'k', collapse: 'yes', scope: 'element' } }), P);
   expect(row?.collapse).toBe(false);
   expect(row?.documentScope).toBe(false);
+});
+
+describe('the authored data scope', () => {
+  it('tells an ABSENT `scope` apart from an authored one', () => {
+    // `documentScope` cannot stand in: it is false both for an absent key and
+    // for an authored `element`, and only one of those may be removed.
+    expect(readVisible(read({ visible: { key: 'a' } }), P)?.hasScope).toBe(false);
+    const el = readVisible(read({ visible: { key: 'a', scope: 'element' } }), P);
+    expect(el?.hasScope).toBe(true);
+    expect(el?.documentScope).toBe(false);
+    expect(readVisible(read({ visible: { key: 'a', scope: 'document' } }), P)?.hasScope).toBe(true);
+  });
 });

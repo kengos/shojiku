@@ -17,7 +17,8 @@ import { Field, FieldGroup } from './fields';
 import { formatOptions } from './formatModel';
 import { IterableSourceSection } from './IterableSourceSection';
 import type { ItemPanelProps } from './itemPanelProps';
-import { type ContentMode, registryNames } from './itemView';
+import { type ContentMode, MARK_TYPES, registryNames } from './itemView';
+import { MarkSection } from './MarkSection';
 import { applyPanelOp, switchContentOps, textAsBinding } from './model';
 import { chipsFor, HelpfulHeading } from './panelHelpers';
 import { TableColumnsSection } from './TableColumnsSection';
@@ -71,6 +72,12 @@ export function ContentSection(props: ItemPanelProps) {
   }
   if (view.type === 'page_number') {
     return <PageNumberContent {...props} />;
+  }
+  if (MARK_TYPES.has(view.type)) {
+    // A form mark's content is its PRESENCE, not a string: the `{key}` chips,
+    // the format picker and the text/data switch have nothing to act on here,
+    // so the section is its own rather than a mode of the pair below.
+    return <MarkSection props={props} chips={chips} />;
   }
   // text / qr_code / char_grid: the content-mode pair.
   const formatRows = formatOptions(

@@ -35,6 +35,21 @@ describe('insertSnippet', () => {
     expect(RULE_Y_PT).toBe(4);
   });
 
+  it('pins the two form marks — the ellipse sized, the checkbox deliberately not', () => {
+    // An unanchored ellipse with no positive `w`/`h` is SKIPPED with
+    // `mark_missing_size`, so the box is required; 60x40 is the rect's own 2:1
+    // at half scale, an oval rather than a circle. The ABSENCE of `style` is
+    // the other half of the assertion (`toEqual` fails on an extra key): a
+    // mark's outline already defaults to 1 pt black, so authoring one would put
+    // a value in the file the user never chose.
+    expect(insertSnippet('ellipse', '')).toEqual({ type: 'ellipse', box: { w: 60, h: 40 } });
+    // The checkbox authors NOTHING, and that is the engine's own default rather
+    // than an omission: unsized, it takes the inherited font's cap-height
+    // square — a frame matched to the label beside it, which is the size an
+    // author wants and cannot compute.
+    expect(insertSnippet('checkbox', '')).toEqual({ type: 'checkbox' });
+  });
+
   it('does not let the cut-line argument reach any other kind', () => {
     // Every kind takes the same third argument; only `cutLine` may read it.
     const cut = { label: 'LEAK', width: 123 };

@@ -4,7 +4,7 @@
 import { useId } from 'react';
 import { useI18n } from '../i18n/context';
 import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
-import { FIELD_LABEL, PANEL_SWATCH_TRIGGER } from '../ui/chrome';
+import { FIELD_LABEL, INPUT, PANEL_SWATCH_TRIGGER } from '../ui/chrome';
 import { TipBubble } from '../ui/TipBubble';
 import { Field } from './fields';
 import type { valueFormFor } from './rowConditionsModel';
@@ -42,10 +42,17 @@ export function ValueControl({
     return null;
   }
   const fieldLabel = label ?? t('panel.rowConditions.value');
+  // Both arms wear the house `INPUT`. Without it they render as RAW browser
+  // widgets — which in dark chrome is a white box, the brightest object on the
+  // panel, for the one field on the surface that is asking for a value.
   if (form === 'enum') {
     return (
       <Field label={fieldLabel}>
-        <select value={rule.equals} onChange={(event) => onChange(event.currentTarget.value)}>
+        <select
+          className={INPUT}
+          value={rule.equals}
+          onChange={(event) => onChange(event.currentTarget.value)}
+        >
           <option value="">{t('panel.rowConditions.unset')}</option>
           {options.map((value) => (
             <option key={value} value={value}>
@@ -80,6 +87,7 @@ function EqualsInput({
     <Field label={fieldLabel}>
       <input
         key={inputKey}
+        className={INPUT}
         type="text"
         defaultValue={rule.equals}
         onBlur={(event) => {

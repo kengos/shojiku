@@ -231,6 +231,7 @@ const EXEMPT: Readonly<Record<string, string>> = {
   // A `<select>` option, not a control label.
   'pageSetup.custom': 'select option that reveals inline size fields',
   'panel.line.pickItem': 'select placeholder option',
+  'panel.ellipse.pickItem': 'select placeholder option',
   // Interstitial: the review pane titles the REVIEW it is asking for, and the
   // label reappears verbatim on the confirming action. Self-checked below, so
   // this reason cannot quietly become a free pass.

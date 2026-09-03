@@ -17,14 +17,17 @@ import { readBorder } from './borderModel';
 import { readRadius } from './borderRadius';
 import { BORDER_STYLE_VALUES, BORDERABLE_TYPES } from './borderTypes';
 import { hasCapability, type ItemPanelProps } from './itemPanelProps';
+import { MARK_TYPES } from './itemView';
 import { LineStyleEditor } from './LineStyleEditor';
 import { readLineStyle } from './lineModel';
 import { FieldHelp, HelpfulHeading } from './panelHelpers';
 import { pickerOptions } from './pickerModel';
 import { RowConditionsSection } from './RowConditions';
 import { readRawEntries } from './rowConditionsModel';
+import { ShapeStyleEditor } from './ShapeStyleEditor';
 import { StyleNamesPicker } from './StyleNamesPicker';
 import { PanelColorField, TypographyFields } from './StyleTabFields';
+import { readShapeStyle } from './shapeStyle';
 import { TableStyleSection } from './TableStyleSection';
 import { readTableStyle } from './tableStyleModel';
 
@@ -96,6 +99,19 @@ export function StyleSection(props: ItemPanelProps) {
             isTable={view.type === 'table'}
           />
         </div>
+      ) : null}
+      {MARK_TYPES.has(view.type) ? (
+        // A form mark's outline is one closed path, so it gets a UNIFORM
+        // stroke + fill rather than the border cluster above: a per-side map
+        // reduces to its top side with `shape_border_sides_ignored`, and a
+        // `borderRadius` is answered with `border_radius_ignored`. The
+        // editor authors neither.
+        <ShapeStyleEditor
+          key={path}
+          view={readShapeStyle(controller.read, path)}
+          path={path}
+          controller={controller}
+        />
       ) : null}
       {view.type === 'line' ? (
         // A line's stroke is its OWN shape (width/color/style), not the

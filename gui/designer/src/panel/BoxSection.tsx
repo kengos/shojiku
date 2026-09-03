@@ -6,13 +6,15 @@
 
 import { useI18n } from '../i18n/context';
 import { BTN_SM, SECTION_TITLE } from '../ui/chrome';
-import { BoxAxisDisplay, BoxAxisField, BoxHint, PlacementSegment } from './boxFields';
+import { BoxAxisGrid } from './BoxAxisGrid';
+import { BoxHint, PlacementSegment } from './boxFields';
 import { CharGridSection } from './CharGridSection';
 import { CHAR_GRID_CAPABILITY, CHAR_GRID_TYPE, readCharGrid } from './charGrid';
 import { readCharGridInk } from './charGridInk';
+import { EllipseAnchorField } from './EllipseAnchorField';
+import { anchorHidesCoords } from './ellipseAnchor';
 import type { ItemPanelProps } from './itemPanelProps';
 import { hasCapability } from './itemPanelProps';
-import { BOX_AXES, type BoxAxis } from './itemView';
 import { LayoutSection } from './LayoutSection';
 import { containerLayoutFor, parentContainerOf } from './layoutModel';
 import { ParentContainerCard } from './ParentContainerCard';
@@ -100,27 +102,11 @@ export function BoxSection(props: ItemPanelProps) {
       </button>
     ) : null;
 
-  const editableAxis = (axis: BoxAxis, seed: number | null | undefined) => (
-    <BoxAxisField
-      key={axis}
-      label={t(`panel.box.${axis}`)}
-      authored={view.box[axis]}
-      seed={seed}
-      step={step}
-      axis={axis}
-      path={path}
-      controller={controller}
-    />
-  );
-  // A read-only display for an engine-owned axis, but only when it resolves to
-  // a finite number; otherwise (no render yet, hostile geometry) fall back to
-  // the plain editable field — the segment is disabled in the same state.
-  const displayAxis = (axis: BoxAxis, value: number | null) =>
-    value === null ? (
-      editableAxis(axis, null)
-    ) : (
-      <BoxAxisDisplay key={axis} label={t(`panel.box.${axis}`)} value={value} />
-    );
+  // An ANCHORED ellipse takes its position from the item it circles — the engine
+  // never reads `box.x`/`box.y` — so the two coordinate fields are withheld and
+  // the anchor control says where it sits instead. Its SIZE is still its own.
+  const noCoords = anchorHidesCoords(controller.read, view.type, path);
+  const anchorField = <EllipseAnchorField {...props} />;
 
   // Plain items (sub-templates, `line`, section roots, hostile docs) keep the
   // flat authored-only fields — no mode, no resolved seeding.
@@ -130,9 +116,17 @@ export function BoxSection(props: ItemPanelProps) {
         {parentCard}
         <section>
           {heading}
-          <div className="grid grid-cols-2 gap-2">
-            {BOX_AXES.map((axis) => editableAxis(axis, undefined))}
-          </div>
+          {anchorField}
+          <BoxAxisGrid
+            view={view}
+            path={path}
+            controller={controller}
+            step={step}
+            placement={placement}
+            resolved={null}
+            noCoords={noCoords}
+            flat
+          />
         </section>
         {charGrid}
         {childLayout}
@@ -160,17 +154,16 @@ export function BoxSection(props: ItemPanelProps) {
             {t('panel.placement.caption.coordinate')}
           </p>
         ) : null}
-        <div className="grid grid-cols-2 gap-2">
-          {/* x/y: read-only for an engine-owned axis (auto container child, flow
-            y), editable otherwise; w/h: always editable, seeded when unset. */}
-          {placement.kind === 'pinnable' && !placement.pinned
-            ? [displayAxis('x', resolved?.x ?? null), displayAxis('y', resolved?.y ?? null)]
-            : placement.kind === 'flow'
-              ? [editableAxis('x', undefined), displayAxis('y', resolved?.y ?? null)]
-              : [editableAxis('x', undefined), editableAxis('y', undefined)]}
-          {editableAxis('w', resolved?.w ?? null)}
-          {editableAxis('h', resolved?.h ?? null)}
-        </div>
+        {anchorField}
+        <BoxAxisGrid
+          view={view}
+          path={path}
+          controller={controller}
+          step={step}
+          placement={placement}
+          resolved={resolved}
+          noCoords={noCoords}
+        />
         <BoxHint placement={placement} />
       </section>
       {charGrid}

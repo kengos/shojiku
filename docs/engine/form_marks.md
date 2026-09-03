@@ -204,10 +204,10 @@ glyphs).
 
 - An `ellipse` needs a positive `box.w`/`box.h`; only a `checkbox`, or an
   `ellipse` with `anchor:`, may omit them (`mark_missing_size`).
-- An anchored `ellipse` is not draggable on the canvas, and there is no
-  Designer field for `anchor:` yet — it is authored in the file. Its
-  clearance is not authorable either: give an explicit `box.w`/`box.h` to
-  override the default size.
+- An anchored `ellipse` is not draggable on the canvas — the Designer's
+  placement tab carries the anchor picker instead, and withholds the
+  coordinates the engine does not read. Its clearance is not authorable:
+  give an explicit `box.w`/`box.h` to override the default size.
 - An anchored `ellipse` ignores `box.x`/`box.y`, resolves to the FIRST
   placement of that id on the page (`anchor_ambiguous_target` when there
   is more than one), and draws nothing when the id is unknown

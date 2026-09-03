@@ -33,6 +33,24 @@ export function insertSnippet(
       };
     case 'rect':
       return { type: 'rect', box: { w: 120, h: 60 }, style: { borderWidth: 1 } };
+    case 'ellipse':
+      // No `style`: a form mark's outline defaults to 1 pt black when NO layer
+      // authors a `borderWidth` (`DEFAULT_MARK_STROKE_PT`), because a mark's
+      // visible geometry is its function — so it draws without authoring a
+      // value the user never chose (the `line` precedent). The box IS
+      // required: an unanchored ellipse with no positive `w`/`h` is skipped
+      // with `mark_missing_size`. 60x40 is the rect's own 2:1 proportion at
+      // half its scale — an oval rather than a circle, which is what circling
+      // a word or a table cell wants.
+      return { type: 'ellipse', box: { w: 60, h: 40 } };
+    case 'checkbox':
+      // No `box` either, and here that is the ENGINE's own default rather than
+      // an omission: an unsized checkbox takes the inherited font's cap-height
+      // square, which is a frame matched to the label beside it. That is the
+      // size an author wants and cannot compute, so authoring one would be
+      // worse than authoring none. It is why this row is armed on
+      // `checkbox.auto_size` as well as `checkbox`.
+      return { type: 'checkbox' };
     case 'qrCode':
       return { type: 'qr_code', box: { w: 60, h: 60 }, text: 'https://example.com' };
     case 'pageNumber':

@@ -114,6 +114,7 @@ export function VisibilitySection({
         row.hasEquals,
         row.equals,
         documentScoped,
+        row.hasScope,
       ),
     );
   };

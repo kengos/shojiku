@@ -123,7 +123,13 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
   DIFFERENT capabilities and so arm independently: the plain rule on
   `line.length` (its snippet spans `100%`) and the cut-here scaffold on
   `line.style` (its rule is dashed). The plain rule sits directly after
-  `rect`, which is what a reader flattens to a hairline without it. The `band` entry class is UNCONDITIONAL (no
+  `rect`, which is what a reader flattens to a hairline without it. The
+  two FORM MARK rows (`ellipse`, `checkbox`) queue BEHIND the rule rather
+  than beside the rect, so that measured adjacency is not split. The
+  checkbox arms on TWO keys — `checkbox` AND `checkbox.auto_size` —
+  because its snippet authors no `box:`: an engine carrying the item but
+  not the cap-height default skips an unsized mark with
+  `mark_missing_size` instead of drawing it. The `band` entry class is UNCONDITIONAL (no
   capability, host or schema gate — the two section bands have been in
   the wire since 0.1.0) and sits directly under the element group, next
   to the `page_number` row whose disabled reason names it; its rows are
@@ -134,7 +140,15 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
   snippets — rect carries `borderWidth: 1` because a style-less rect
   draws nothing; the cut-here-line snippet is a container + dashed `line`
   sized from the FLOORED content width), `CutLineText`,
-  `DEFAULT_CUT_LINE_PT`, `RULE_Y_PT`. The plain rule authors neither
+  `DEFAULT_CUT_LINE_PT`, `RULE_Y_PT`. The two FORM MARKS split on whether
+  a size can be defaulted: the `ellipse` carries `box: { w: 60, h: 40 }`
+  because an unanchored one with no positive `w`/`h` is SKIPPED
+  (`mark_missing_size`), while the `checkbox` authors NOTHING at all —
+  unsized, the engine matches its frame to the inherited font's
+  cap-height square, which is the size an author wants beside a label and
+  cannot compute. Neither authors a `style`: a mark's outline already
+  defaults to 1 pt black (`DEFAULT_MARK_STROKE_PT`), because its visible
+  geometry is its function. The plain rule authors neither
   `style` (the engine's own 1 pt black is already visible) nor `box` (a
   parse error on a `line`), and reaches its end with `x: "100%"` rather
   than render geometry, so it follows whatever it is nested in.
@@ -155,8 +169,14 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
   where a footer item's line box ran off the sheet and rendered invisibly.
 - `insert/bandPlacement.ts` — `requiresBand`/`bandInsertY`/`bandPlaced`:
   band children are coordinate-placed against the page margin box,
-  height floored. A BOXLESS item (`panel/itemView`'s `BOXLESS_TYPES`)
-  is the exception and takes the offset in its OWN coordinates — a
+  height floored, and an item authoring no width of its own is given
+  `w: '100%'`. That default is for TEXT-shaped items, and a
+  `MARK_TYPES` item is exempt from it: an `ellipse`/`checkbox` is a
+  fixed-aspect glyph, so a boxless checkbox — the exact shape the insert
+  snippet produces — would otherwise arrive in a header as a frame
+  stretched across the whole margin box. It takes the coordinates and
+  nothing else. A BOXLESS item (`panel/itemView`'s `BOXLESS_TYPES`)
+  is a SEPARATE exception and takes the offset in its OWN coordinates — a
   `box:` on a `line` is an engine parse error, not a misplacement, and
   shifting `from.y`/`to.y` is what puts a footer rule where footers
   print. Only a plain numeric `y` shifts; an anchored endpoint has no

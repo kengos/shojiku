@@ -29,6 +29,12 @@ export interface VisibleRow {
    * scope escape is an authoring-level choice — so the row REPORTS it rather
    * than hiding that the document says something the panel cannot show. */
   readonly documentScope: boolean;
+  /** Whether `visible.scope` is present AT ALL, whatever its value — what a
+   * repoint that CLEARS the scope has to be told, since `removeKey` fails on
+   * an absent key and one failing op refuses the batch. `documentScope` cannot
+   * stand in: it is false both for an absent key and for an authored
+   * `element`. */
+  readonly hasScope: boolean;
 }
 
 /** Longest display string a hostile document can put in the row. */
@@ -76,5 +82,6 @@ export function readVisible(read: ReadFn, path: string): VisibleRow | null {
     hasEquals: visible.equals !== undefined && visible.equals !== null,
     collapse: visible.collapse === true,
     documentScope: visible.scope === 'document',
+    hasScope: visible.scope !== undefined,
   };
 }

@@ -16,6 +16,8 @@ const NO_ARMING: InsertArming = {
   field: false,
   cutLine: false,
   line: false,
+  ellipse: false,
+  checkbox: false,
 };
 
 const t = (key: string) => key;
@@ -369,6 +371,8 @@ describe('buildMenubar', () => {
           field: true,
           cutLine: true,
           line: true,
+          ellipse: true,
+          checkbox: true,
         }),
         onInsertKind,
         onContainer,
