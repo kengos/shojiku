@@ -1,6 +1,6 @@
 // A numeric field that can be driven entirely by the mouse: type any value, or open
 // the ▼ and pick a common one. The word-processor font-size box, and the same shape
-// `FormatPicker` already uses — a `SideButtonField` input beside a `PICKER_TOGGLE`,
+// `FormatPicker` already uses — a `SideButtonField` input beside a `PICKER_TOGGLE_FLUSH`,
 // with a popover of rows.
 //
 // It is NOT a `StepperField` with a menu bolted on. Stepping and jumping-to-a-preset
@@ -23,7 +23,7 @@ import { type ReactNode, useState } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { placementClasses, usePopoverPlacement } from '../hooks/usePopoverPlacement';
 import { useI18n } from '../i18n/context';
-import { FIELD_LABEL, INPUT, PICKER_ROW, PICKER_TOGGLE } from '../ui/chrome';
+import { FIELD_LABEL, INPUT, PICKER_ROW, PICKER_TOGGLE_FLUSH } from '../ui/chrome';
 
 /** One offered value. */
 export interface ComboPreset {
@@ -131,7 +131,7 @@ export function NumericComboField({
         </div>
         <button
           type="button"
-          className={`${PICKER_TOGGLE} rounded-l-none border-l-0`}
+          className={PICKER_TOGGLE_FLUSH}
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label={t('combo.open', { field: label })}

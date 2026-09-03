@@ -35,6 +35,13 @@ export function CustomSizeFields({ controller, custom }: CustomSizeFieldsProps) 
         label={label}
         value={custom[field]}
         canStep={canStepDimension(custom[field])}
+        // The unit lives in the select beside these two, so `composeDimension`
+        // takes a BARE numeral and refuses `12mm` outright — which is exactly
+        // the case `StepperField` withholds `inputMode` for by default. Opting
+        // in gives a touch keyboard its numeric pad back (these were plain
+        // `<input type="number">` before the stepper absorbed them) and tells
+        // assistive tech the field is numeric.
+        inputMode="decimal"
         onCommit={(value) => applyPanelOp(controller, customDimOp(field, value, custom.unit))}
         onStep={(dir) => applyPanelOp(controller, stepCustomDimOp(field, custom, dir))}
       />

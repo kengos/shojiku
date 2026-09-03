@@ -15,10 +15,11 @@ import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { readDefinitionsView } from '../palette/model';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
-import { BTN, PANEL, PANEL_FLUSH } from '../ui/chrome';
+import { PANEL_FLUSH } from '../ui/chrome';
 import { CellPanel } from './CellPanel';
 import { ItemPanel } from './ItemPanel';
 import { readItemView } from './itemView';
+import { NoSelectionCard } from './NoSelectionCard';
 import type { DefaultsSection } from './OriginBadge';
 import type { PlacementGeometry } from './placementGeometry';
 
@@ -106,23 +107,10 @@ export function PropertyPanel({
   // treat it like no selection.
   const raw = path === null ? undefined : controller.read(path);
   if (path === null || raw === undefined) {
-    // Nothing selected: a compact hint pointing at the document-settings view
-    // (the settings themselves live there now, not in the panel).
-    return (
-      <aside data-tour={TOUR_ANCHORS.panel} className={PANEL} aria-label={t('panel.title')}>
-        <p className="m-0 mb-3 text-sm text-muted">{t('panel.noSelection.hint')}</p>
-        {onOpenDocument !== undefined ? (
-          <button
-            type="button"
-            className={BTN}
-            data-tour={TOUR_ANCHORS.panelDocSettings}
-            onClick={onOpenDocument}
-          >
-            {t('panel.noSelection.open')}
-          </button>
-        ) : null}
-      </aside>
-    );
+    // Nothing selected: what the document IS, what to do next, and the way into
+    // the document-settings view (the settings themselves live there now, not in
+    // the panel).
+    return <NoSelectionCard controller={controller} onOpenDocument={onOpenDocument} />;
   }
 
   const view = readItemView(raw);

@@ -74,6 +74,10 @@ export function MarginEditor({ controller }: MarginEditorProps) {
           value={view.uniform}
           unit="pt"
           canStep={canStepUniformMargin(view.uniform)}
+          // Bare-numeral by the same wire rule stated just above, so the numeric
+          // keypad is safe here and NOT on the per-side fields below, which
+          // carry their unit verbatim.
+          inputMode="decimal"
           onCommit={(value) => dispatch(uniformMarginOp(value))}
           onStep={(dir) => dispatch(stepUniformMarginOp(view.uniform, dir))}
         />

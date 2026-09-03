@@ -12,7 +12,7 @@
 import { useId } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
-import { INPUT, PICKER_POPOVER, PICKER_TOGGLE } from '../ui/chrome';
+import { INPUT, PICKER_POPOVER, PICKER_TOGGLE_FLUSH } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
 import { FormatOptionList } from './FormatOptionList';
 import { SideButtonField } from './fields';
@@ -39,7 +39,7 @@ export function FormatPicker({ label, value, options, onCommit }: FormatPickerPr
         button={
           <button
             type="button"
-            className={PICKER_TOGGLE}
+            className={PICKER_TOGGLE_FLUSH}
             aria-haspopup="menu"
             aria-expanded={open}
             aria-label={t('format.open')}
@@ -53,7 +53,7 @@ export function FormatPicker({ label, value, options, onCommit }: FormatPickerPr
           key={value}
           id={id}
           type="text"
-          className={`${INPUT} w-full min-w-0`}
+          className={`${INPUT} w-full min-w-0 rounded-r-none`}
           defaultValue={value}
           // An empty box with no placeholder reads as "not loaded yet"; an
           // unset format is the type's own rendering.

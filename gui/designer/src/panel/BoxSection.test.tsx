@@ -358,7 +358,7 @@ describe('BoxSection — w/h seed guard', () => {
     draw(<PropertyPanel controller={controller} path={CHILD} geometry={containerGeo()} />);
     openLayout();
     // The seeded Height is 30; ▲ steps it to 31 (grid off → 1pt).
-    const heightUp = screen.getAllByRole('button', { name: 'Increase' });
+    const heightUp = screen.getAllByRole('button', { name: /^Increase\b/ });
     // Height's stepper is the last one (X/Y are displays; only W/H have steppers).
     fireEvent.click(heightUp[heightUp.length - 1]);
     expect(controller.apply).toHaveBeenCalledWith({
@@ -517,7 +517,7 @@ describe('BoxSection — a relative width', () => {
     expect(width.value).toBe('100%');
     const row = width.parentElement?.parentElement as HTMLElement;
     expect(
-      (within(row).getByRole('button', { name: 'Increase' }) as HTMLButtonElement).disabled,
+      (within(row).getByRole('button', { name: /^Increase\b/ }) as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(within(row).getByText(/cannot be stepped/)).not.toBeNull();
   });
@@ -533,7 +533,7 @@ describe('BoxSection — a relative width', () => {
     expect(width.value).toBe('auto');
     const row = width.parentElement?.parentElement as HTMLElement;
     expect(
-      (within(row).getByRole('button', { name: 'Increase' }) as HTMLButtonElement).disabled,
+      (within(row).getByRole('button', { name: /^Increase\b/ }) as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(within(row).queryByText(/cannot be stepped/)).toBeNull();
   });
@@ -544,7 +544,7 @@ describe('BoxSection — a relative width', () => {
     const width = screen.getByLabelText('Width') as HTMLInputElement;
     const row = width.parentElement?.parentElement as HTMLElement;
     expect(
-      (within(row).getByRole('button', { name: 'Increase' }) as HTMLButtonElement).disabled,
+      (within(row).getByRole('button', { name: /^Increase\b/ }) as HTMLButtonElement).disabled,
     ).toBe(false);
     expect(within(row).queryByText(/cannot be stepped/)).toBeNull();
   });

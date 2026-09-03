@@ -269,7 +269,7 @@ describe('PageSetup custom dimension steppers', () => {
     if (field === null) {
       throw new Error(`no stepper block around ${label}`);
     }
-    return within(field as HTMLElement).getByLabelText(direction);
+    return within(field as HTMLElement).getByLabelText(`${direction} ${label}`);
   }
 
   it('steps the width by one of the displayed unit, as ONE op', () => {
@@ -303,5 +303,24 @@ describe('PageSetup custom dimension steppers', () => {
     draw(<PageSetup controller={controller} />);
     expect((step('Width', 'Increase') as HTMLButtonElement).disabled).toBe(true);
     expect((step('Height', 'Increase') as HTMLButtonElement).disabled).toBe(false);
+  });
+});
+
+// GUI-41 — the numeric soft keyboard the stepper absorption took away. These
+// three fields' builders (`composeDimension`, `uniformMarginOp`) each refuse a
+// unit outright, so a decimal keypad can type every value they accept; the
+// stepper withholds `inputMode` by default because most of its call sites take
+// length strings it cannot.
+describe('the page-setup numerals opt into a numeric keyboard', () => {
+  it('marks width, height and the all-sides margin as decimal', () => {
+    draw(<PageSetup controller={makeController({ size: { w: '210mm', h: '297mm' } })} />);
+    for (const label of ['Width', 'Height', 'All sides']) {
+      expect(screen.getByLabelText(label).getAttribute('inputmode')).toBe('decimal');
+    }
+  });
+
+  it('leaves the PER-SIDE margins alone — those carry their unit verbatim', () => {
+    draw(<PageSetup controller={makeController({ margin: { top: '12mm' } })} />);
+    expect(screen.getByLabelText('Top').getAttribute('inputmode')).toBeNull();
   });
 });

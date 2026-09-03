@@ -320,3 +320,43 @@ describe('FieldPicker — binding scope', () => {
     expect(onCommit).toHaveBeenCalledWith('order.code');
   });
 });
+
+// GUI-41 — the panel's one rule for a button beside an input: a button that is
+// PART of the control is flush; a button that ACTS ON THE ROW is detached
+// (`StringListField`'s trash pins the other half). jsdom lays nothing out, so
+// what is pinned is the mechanism the browser would lay out FROM.
+describe('FieldPicker — the ▼ is part of the control', () => {
+  it('sits flush against the input, sharing one border', () => {
+    draw('order.code', OPTIONS);
+    const input = screen.getByLabelText('Data key');
+    const row = input.closest('span.items-stretch');
+    if (row === null) {
+      throw new Error('no picker row');
+    }
+    expect(row.className).not.toMatch(/\bgap-/);
+    expect(input.className).toContain('rounded-r-none');
+    const toggle = screen.getByRole('button', { name: 'Choose a data field' });
+    expect(toggle.className).toContain('rounded-l-none');
+    expect(toggle.className).toContain('border-l-0');
+  });
+
+  it('keeps the scope badge OFF that seam, on the line under the row', () => {
+    // A rounded accent pill cannot be flush against either side, and wedged
+    // between the input and the ▼ it denied that those two are one control.
+    render(
+      <I18nProvider locale="en">
+        <FieldPicker
+          label="Data key"
+          value="order.code"
+          options={OPTIONS}
+          scope="document"
+          documentOptions={OPTIONS}
+          onCommit={vi.fn()}
+          onPick={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+    const badge = screen.getByText('Document');
+    expect(badge.closest('span.items-stretch')).toBeNull();
+  });
+});

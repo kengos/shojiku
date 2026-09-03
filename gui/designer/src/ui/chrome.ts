@@ -32,11 +32,24 @@ export const PANEL_FLUSH = 'min-w-0 overflow-y-auto border-l border-border bg-ch
 export const SECTION_TITLE =
   'm-0 mb-2 text-sm font-semibold uppercase tracking-[0.08em] text-muted';
 
-/** The ▼ that opens a picker's popover, standing beside its input. It STRETCHES
- * to the row (`SideButtonField` is `items-stretch`), so the glyph is centred
- * rather than the box being lined up on one edge of the input. */
+/** The ▼ that opens a picker's popover. It STRETCHES to the row
+ * (`SideButtonField` is `items-stretch`), so the glyph is centred rather than
+ * the box being lined up on one edge of the input.
+ *
+ * It is a WHOLE button on its own, and `PICKER_TOGGLE_FLUSH` is what pairs it
+ * with an input. Flushness belongs to the PAIRING, not to the toggle: three of
+ * this constant's four call sites stand beside their own `<input>`, but
+ * `FormatDefaultRow`'s ▼ stands alone in a `gap-2` row of text spans, where
+ * squared left corners and a missing left border draw a three-sided open box. */
 export const PICKER_TOGGLE =
   'flex shrink-0 cursor-pointer items-center rounded-md border border-border bg-chrome px-2 text-text';
+
+/** `PICKER_TOGGLE` for the ▼ that fills an input: it shares that input's right
+ * border rather than floating 4px off it, because an input and its ▼ are ONE
+ * control (macOS/HIG, and the word processor's font box). The input beside it
+ * squares its right corners (`rounded-r-none`) — the seam is one shared border,
+ * the same shape as the stepper's ▲▼ column. */
+export const PICKER_TOGGLE_FLUSH = `${PICKER_TOGGLE} rounded-l-none border-l-0`;
 
 /** A field label above its control. */
 export const FIELD_LABEL = 'mb-0.5 block text-sm text-muted';

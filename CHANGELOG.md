@@ -15,6 +15,45 @@ platform binaries.
 
 ### Changed
 
+- **The Designer's property panel puts the common things first.** Selecting a
+  rectangle opened on 「表示する条件」 — the setting that hides an item unless the
+  data says otherwise — with a two-sentence explanation and a full-width
+  button, above the background and border controls that are why anyone opened
+  the panel. That setting now sits BELOW the tabs, and until it is used it
+  costs a single row: the same explanation is behind the `?` beside it. The
+  corner-radius field was in the same shape from the other direction — a
+  four-line paragraph wrapping next to a field a third of the row wide, ending
+  on an orphaned `pt / mm / em` — and its explanation has moved behind a `?`
+  too, so the field gets the whole row. The border preview beside them was the
+  brightest thing on the panel, a near-white sheet in dark chrome outshouting
+  every control that can actually be pressed; it is one step calmer and now
+  wears the same hairline outline as everything else, and its four clickable
+  edges say so more clearly on hover.
+
+- **Every stepper button now names its own field.** The ▲ and ▼ were called
+  just "Increase" and "Decrease", so a screen reader met six identically named
+  buttons on the page-setup view and eight more on a typical item's placement
+  tab — x, y, width and height, two buttons each — with nothing to tell them
+  apart. They read "Increase width", "Decrease all sides" and so on, in every
+  language. The three page-setup numerals — custom
+  width, custom height and the all-sides margin — also ask for a numeric
+  keyboard again on a touch device: they had one as plain browser number
+  inputs and lost it when they gained the house stepper.
+
+- **A field picker's ▼ sits flush against its box**, the way the steppers and
+  the font-size box already did; the scope badge that used to be wedged
+  between them has moved to the line underneath, beside the description of
+  what the field is. Buttons that act on a ROW rather than filling an input
+  deliberately keep their gap and all four of their borders — a list row's
+  delete button, and the ▼ that opens a format row's variants.
+
+- **The property panel says something when nothing is selected.** It used to
+  be one apology and one button in an otherwise empty column. It now names the
+  page and the margins the document is set to, and says what to do next. It
+  states neither when it cannot read them honestly — a page size this build
+  does not recognise, or a margin whose value it would have to invent, is
+  simply not shown.
+
 - **The Designer reads better at a glance.** Three things were competing for
   the eye in the wrong order. In the layer tree, a row showing a bound value
   put the item's text and its binding on one line that could not wrap, so on

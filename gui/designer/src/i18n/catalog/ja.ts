@@ -342,6 +342,8 @@ export const ja: LanguageCatalog = {
     'help.placement.title': '座標の起点',
     'help.placement.body':
       'X と Y は、ページ余白の内側の領域の左上を起点として測ります（ページ上に枠線で示されている範囲です）。マイナスの値を指定すれば意図的に余白側へはみ出せます。問題として報告されるのは、用紙からはみ出した内容だけです。',
+    'help.borderRadius.title': '角を丸くする',
+    'help.visible.title': '条件によって表示する',
     'help.border.title': '枠線の付け方',
     'help.border.body':
       'まず下のペン（太さ・色・種類）を決めてから、付けたい辺をクリックします。表計算ソフトの罫線ツールと同じ順序です。すでにペンと同じ設定になっている辺をクリックすると、その辺は外れます。',
@@ -957,8 +959,8 @@ export const ja: LanguageCatalog = {
     'formats.error.tooMany': '書式の上限（256個）に達しています。',
     'formats.error.documentTooLarge': 'その名前に変更すると、文書がサイズ上限を超えてしまいます。',
     'formats.error.emptyPattern': 'パターンを入力してください。空のままでは保存できません。',
-    'stepper.increment': '増やす',
-    'stepper.decrement': '減らす',
+    'stepper.increment': '{field}を増やす',
+    'stepper.decrement': '{field}を減らす',
     'palette.title': 'データ項目',
     'palette.editField': 'このデータ項目を編集',
     'help.dataFields.title': '行の読み方',
@@ -1045,7 +1047,10 @@ export const ja: LanguageCatalog = {
     'docSettings.close': 'キャンバスへ戻る',
     'docSettings.preview': 'プレビュー',
     'docSettings.previewEmpty': 'プレビューはまだありません。',
-    'panel.noSelection.hint': '何も選択されていません。',
+    'panel.noSelection.hint':
+      '何も選択されていません。キャンバスかレイヤー一覧で項目を選ぶと編集できます。',
+    'panel.noSelection.page': 'ページ',
+    'panel.noSelection.margin': '余白',
     'panel.noSelection.open': '文書設定を開く',
     'defaults.familyPlaceholder': '(ロケール既定)',
     'tree.expand': '展開',

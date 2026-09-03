@@ -1213,8 +1213,10 @@ map ([gui-designer](../code-map/gui-designer.md) /
   unset inherited key to its real engine default so a control
   reads its value rather than blank; that engine floor is the ONE origin
   with no jump (nothing authored it, and the badge would otherwise stack
-  the same link down every unset field of the decoration tab). The no-selection state is a compact
-  hint card pointing at the **fullscreen document-settings view** (a
+  the same link down every unset field of the decoration tab). The no-selection state states what the
+  document IS — the page and the margins it is set to, withheld rather than
+  guessed when either cannot be read honestly — says what to do next, and
+  points at the **fullscreen document-settings view** (a
   fixed whole-document layer-tree root row / the File-menu document-settings entry /
   an origin-badge jump open it; it takes over the whole editor area — the
   layer-tree pane included, since the view carries its own section rail —

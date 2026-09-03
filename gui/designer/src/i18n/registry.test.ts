@@ -49,4 +49,37 @@ describe('chrome catalog parity', () => {
       expect(missing, `${lang} missing chrome keys`).toEqual([]);
     }
   });
+
+  // The key set is not the whole contract: a string can keep its key and lose
+  // its ARGUMENT. `stepper.increment` reads "Increase {field}" precisely so a
+  // screen reader can tell six ▲ buttons apart, and a translation that drops
+  // the placeholder ships green under the check above while every stepper in
+  // that language goes back to one indistinguishable name. `render.ts` falls
+  // back to English only when an arg is MISSING at the call site, never when
+  // the template stops referencing one, so nothing else would notice.
+  it('every language uses the same placeholders `en` does, per key', () => {
+    const placeholders = (template: string) =>
+      [...template.matchAll(/\{(\w+)/g)].map((match) => match[1]).sort();
+    const en = DEFAULT_CATALOG.en.chrome;
+    for (const lang of Object.keys(DEFAULT_CATALOG)) {
+      const chrome = DEFAULT_CATALOG[lang].chrome;
+      const drifted = Object.keys(en).filter(
+        (key) =>
+          key in chrome &&
+          placeholders(chrome[key] ?? '').join() !== placeholders(en[key] ?? '').join(),
+      );
+      expect(drifted, `${lang} placeholder drift`).toEqual([]);
+    }
+  });
+
+  it('reads a dropped placeholder (the positive control for the sweep)', () => {
+    // The sweep asserts an EMPTY list, so a matcher that found nothing would
+    // pass. Pin that the extractor sees the args the catalogs actually carry.
+    const args = (template: string) =>
+      [...template.matchAll(/\{(\w+)/g)].map((match) => match[1]).sort();
+    expect(args('Increase {field}')).toEqual(['field']);
+    expect(args('{field}を増やす')).toEqual(['field']);
+    expect(args('Increase')).toEqual([]);
+    expect(args('{n, number} of {total}')).toEqual(['n', 'total']);
+  });
 });

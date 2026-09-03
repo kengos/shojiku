@@ -104,7 +104,7 @@ describe('BandForm', () => {
 
   it('steps the height by one nudge per click', () => {
     const controller = form(AUTHORED);
-    fireEvent.click(screen.getByRole('button', { name: 'Increase' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Increase Height' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,

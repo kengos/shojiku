@@ -17,11 +17,18 @@ import { bindingScopeFor, type PickerOption, scopeAuthorable } from './pickerMod
  * rather than another branch here. */
 export type HelpTopic = 'content' | 'style' | 'placement' | 'placementChild';
 
-/** Which FIELD carries a `?`. The criterion is the user's: a field whose NAME
- * does not let a reader with little IT background infer what it does. `Cell
- * size` is deliberately absent — its name is self-evident, and the non-obvious
- * part of its BEHAVIOUR is already carried by the section's own hint line. Each
- * value is the catalog segment, exactly as `HelpTopic` is. */
+/** The topics whose `?` BODY lives under `help.<topic>.body`, for a field-level
+ * `?` rendered through `FieldHelp`. NOT a census of every field that carries
+ * one: `BorderRadiusField` and `VisibilitySection` render a `HelpHint` directly,
+ * because each reuses a hint string that already existed under its own key
+ * (`border.radiusHint`, `panel.visible.hint`) rather than minting a second copy
+ * of the same translated sentence.
+ *
+ * The criterion for having a `?` at all is the user's: a field whose NAME does
+ * not let a reader with little IT background infer what it does. `Cell size` is
+ * deliberately absent — its name is self-evident, and the non-obvious part of
+ * its BEHAVIOUR is already carried by the section's own hint line. Each value is
+ * the catalog segment, exactly as `HelpTopic` is. */
 export type FieldHelpTopic = 'rulingWidth' | 'rubySize' | 'kinsoku' | 'styleNames';
 
 /** The `?` for one field, as opposed to `HelpfulHeading`'s for a whole section.

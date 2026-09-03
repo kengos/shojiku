@@ -10,64 +10,26 @@
 // popover splits in two: the row's own fields, and — when the engine
 // understands `binding.scope` — the DOCUMENT-scope fields, which resolve
 // against top-level params rather than the row. A document pick authors the
-// `scope: document` that makes it so; the closed control keeps a badge, so
-// the scope of an already-authored binding is readable without opening.
+// `scope: document` that makes it so; the line under the closed control keeps a
+// badge, so the scope of an already-authored binding is readable without
+// opening.
 //
-// This file owns the closed CONTROL (free-text input, scope badge, toggle), the
-// offer derivation and what a pick commits; the open popover is
-// `PickerPopover.tsx`.
+// This file owns the closed CONTROL (free-text input + flush ▼ toggle), the
+// offer derivation and what a pick commits; the annotation line beneath it is
+// `BoundFieldLine.tsx` and the open popover is `PickerPopover.tsx`.
 
 import { useId, useState } from 'react';
 import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
-import { TYPE_LABEL_KEYS } from '../palette/paletteRow';
-import { INPUT, PICKER_TOGGLE } from '../ui/chrome';
+import { INPUT, PICKER_TOGGLE_FLUSH } from '../ui/chrome';
 import { IconChevronDown } from '../ui/icons';
+import { BoundField } from './BoundFieldLine';
 import { SideButtonField } from './fields';
 import { DOCUMENT_SCOPE } from './model';
 import { PickerPopover } from './PickerPopover';
 import { filterOptions, type PickerOption } from './pickerModel';
 
-/** The scope badge on the CLOSED control: accent, because it reports the state
- * this binding is actually in (the popover's per-row badge is muted). */
-const SCOPE_BADGE_ON =
-  'rounded-full border px-1.5 text-xs whitespace-nowrap shrink-0 border-accent text-accent';
-
 const NO_OPTIONS: readonly PickerOption[] = [];
-
-/** What the bound key IS, under the closed control: the same three facts the
- * popover row carries (name, type, live sample). The key alone reads as a
- * spelling nobody can check — `customer.name` says nothing about which field
- * that is or what it will print. Absent for a key no offer matches: an
- * undeclared key is exactly what the live diagnostic is for.
- *
- * The name wears the chip editor's own pill (`sj-chip`), because it IS the same
- * thing: a text item shows 「お客様名」 in a pill while a bound item showed the raw
- * `customer.name`, so one binding was named two ways across the content modes. */
-function BoundField({ option }: { option: PickerOption }) {
-  const { t } = useI18n();
-  const typeLabelKey = TYPE_LABEL_KEYS.get(option.type);
-  return (
-    <p className="m-0 -ml-px mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 text-sm text-muted">
-      <span className="sj-chip">
-        <span className="sj-chip-label">{option.label}</span>
-      </span>
-      {/* Separated, not just spaced: read cold, `[今回納品数] 数量 61` looks like
-          one run of text whose pill stops halfway. The dot is the same one the
-          origin badge uses to list a value's attributes. */}
-      <span aria-hidden="true">·</span>
-      <span className="whitespace-nowrap">
-        {typeLabelKey === undefined ? option.type : t(typeLabelKey)}
-      </span>
-      {option.sample === '' ? null : (
-        <>
-          <span aria-hidden="true">·</span>
-          <span className="min-w-0 truncate italic">{option.sample}</span>
-        </>
-      )}
-    </p>
-  );
-}
 
 export interface FieldPickerProps {
   readonly label: string;
@@ -159,23 +121,22 @@ export function FieldPicker({
       <SideButtonField
         label={label}
         htmlFor={id}
-        after={bound === undefined ? null : <BoundField option={bound} />}
+        after={
+          scope === DOCUMENT_SCOPE || bound !== undefined ? (
+            <BoundField option={bound} documentScoped={scope === DOCUMENT_SCOPE} />
+          ) : null
+        }
         button={
-          <>
-            {scope === DOCUMENT_SCOPE ? (
-              <span className={SCOPE_BADGE_ON}>{t('picker.scope.document')}</span>
-            ) : null}
-            <button
-              type="button"
-              className={PICKER_TOGGLE}
-              aria-haspopup="menu"
-              aria-expanded={open}
-              aria-label={t('picker.open')}
-              onClick={() => setOpen((v) => !v)}
-            >
-              <IconChevronDown size={12} className="text-muted" />
-            </button>
-          </>
+          <button
+            type="button"
+            className={PICKER_TOGGLE_FLUSH}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={t('picker.open')}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <IconChevronDown size={12} className="text-muted" />
+          </button>
         }
       >
         {/* `w-full` keeps the input inside its shrunken flex cell: an unsized
@@ -184,7 +145,7 @@ export function FieldPicker({
           key={value}
           id={id}
           type="text"
-          className={`${INPUT} w-full min-w-0`}
+          className={`${INPUT} w-full min-w-0 rounded-r-none`}
           defaultValue={value}
           onBlur={(event) => {
             if (event.currentTarget.value !== value) {

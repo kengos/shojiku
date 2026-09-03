@@ -1,10 +1,20 @@
 // An item's `visible:` presence binding — "show this only when the data says
-// so". It sits ABOVE the content/decoration/placement tabs rather than inside
+// so". It sits OUTSIDE the content/decoration/placement tabs rather than inside
 // one, because it applies to EVERY item type and is none of those three
 // concerns: it decides whether the item is there at all.
 //
-// That placement is also what gives `page_break` an editing surface. A break
-// carries nothing but `id` otherwise, so the panel used to tell the user
+// Outside, but BELOW them. It used to head the panel, so selecting a rectangle
+// opened on a titled block with a two-sentence explanation and a full-width
+// button for a setting almost no item uses — above the background and border
+// controls that are why anyone opened the panel. HIG asks for importance order
+// and progressive disclosure for the advanced case, and this is the advanced
+// case. Unset it is now ONE row: the title, the same explanation behind a `?`,
+// and the button. Authored it keeps the full card, still below the tabs — the
+// tree's `if` badge is what announces a conditional item at a glance, so the
+// panel does not have to shout it from the top.
+//
+// Being outside the tabs is also what gives `page_break` an editing surface. A
+// break carries nothing but `id` otherwise, so the panel used to tell the user
 // there was nothing to edit — while a CONDITIONAL page break is one of the
 // reasons this key exists.
 //
@@ -14,6 +24,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
+import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { BTN_SM, SECTION_TITLE } from '../ui/chrome';
 import { FieldPicker } from './FieldPicker';
@@ -61,12 +72,28 @@ export function VisibilitySection({
 
   if (row === null) {
     return (
-      <section className="mb-3">
-        <h3 className={SECTION_TITLE}>{t('panel.visible.title')}</h3>
-        <p className="mt-0 mb-1.5 text-muted text-sm">{t('panel.visible.hint')}</p>
+      // One row, not a block: title + `?` + the action. Both ends are `shrink-0`
+      // and the row WRAPS: a flex item's min-content in Japanese is one
+      // character, so without it the heading broke mid-word (「表示する条 / 件」)
+      // and the button was still clipped — the panel column is ~280px and the
+      // ja strings are the long ones. Wrapped, the worst case is two lines,
+      // which is still a third of the titled block this replaced.
+      // `SECTION_TITLE` carries the section's own bottom margin, which inside a
+      // centred flex line sits in the line box and pushes the heading half of it
+      // up — the same variant `HelpfulHeading` uses strips it (utility order
+      // decides, not string order, so a bare `mb-0` would not win).
+      <section className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-1 [&>h3]:mb-0">
+        <h3 className={`${SECTION_TITLE} shrink-0`}>{t('panel.visible.title')}</h3>
+        <HelpHint
+          // Named for the TOPIC rather than the heading beside it — see
+          // `BorderRadiusField` for why the two must differ.
+          label={t('help.visible.title')}
+          title={t('help.visible.title')}
+          body={t('panel.visible.hint')}
+        />
         <button
           type="button"
-          className={`${BTN_SM} w-full text-center`}
+          className={`${BTN_SM} ml-auto shrink-0`}
           onClick={() => dispatch(addVisibleOp(path))}
         >
           {t('panel.visible.add')}
@@ -93,7 +120,7 @@ export function VisibilitySection({
   const picked = [...options, ...(documentOptions ?? [])].find((o) => o.key === row.key);
   const form = valueFormFor(picked?.type ?? '', picked?.enumValues ?? []);
   return (
-    <section className="mb-3">
+    <section className="mt-3">
       <h3 className={SECTION_TITLE}>{t('panel.visible.title')}</h3>
       <div className="flex flex-col gap-2 rounded-md border border-border bg-surface p-2">
         <FieldPicker

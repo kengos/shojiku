@@ -215,8 +215,8 @@ describe('MarginEditor refusal snap-back', () => {
 // generic `stepValueOp` the item fields use, so the floor is what these pin.
 
 describe('MarginEditor uniform steppers', () => {
-  const up = () => screen.getByLabelText('Increase');
-  const down = () => screen.getByLabelText('Decrease');
+  const up = () => screen.getByLabelText('Increase All sides');
+  const down = () => screen.getByLabelText('Decrease All sides');
 
   it('steps the all-sides margin up as ONE batch (one undo step)', () => {
     const controller = makeController({ margin: 25 });
