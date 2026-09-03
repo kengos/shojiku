@@ -53,12 +53,18 @@ export function repointVisibleOps(
   hasEquals: boolean,
   equals: string,
   documentScoped?: boolean,
+  hasScope = false,
 ): readonly Op[] {
   const ops: Op[] = [{ op: 'setScalar', path, keys: ['visible', 'key'], value: key }];
   if (documentScoped === true) {
     ops.push({ op: 'setScalar', path, keys: ['visible', 'scope'], value: 'document' });
-  } else if (documentScoped === false) {
-    // Element is the default, and unset never serializes.
+  } else if (documentScoped === false && hasScope) {
+    // Element is the default, and unset never serializes — so the key is
+    // dropped only when it is THERE. `removeKey` on an absent key returns
+    // `key_not_found`, and one failing op refuses the whole batch: unguarded,
+    // an element-scope pick on a binding with no authored scope took the
+    // `visible.key` write down with it and did nothing, silently. Same guard
+    // `bindingPickOps` has carried all along.
     ops.push({ op: 'removeKey', path, keys: ['visible', 'scope'] });
   }
   if (equalsGoesStale(hasEquals, equals, newFieldType, newFieldEnums)) {

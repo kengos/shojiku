@@ -117,6 +117,10 @@ export function useInsertActions({
     field: workshop,
     cutLine: capabilities === undefined || capabilities.includes('line.style'),
     line: capabilities === undefined || capabilities.includes('line.length'),
+    ellipse: capabilities === undefined || capabilities.includes('ellipse'),
+    checkbox:
+      capabilities === undefined ||
+      (capabilities.includes('checkbox') && capabilities.includes('checkbox.auto_size')),
   });
 
   // Insert a default snippet at the resolved target (into the selected

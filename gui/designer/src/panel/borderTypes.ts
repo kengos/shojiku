@@ -22,8 +22,18 @@ export const PATTERNED_BORDER_STYLES: readonly BorderStyleValue[] = ['dashed', '
 /** The item types whose own border/fill the editor decorates — every boxed item
  * the engine draws a border box for. The decoration tab's fill-and-border cluster and the
  * toolbar's border/fill controls both key off this set (`text` additionally
- * gets typography). `line` is excluded (its stroke is its own `width`/`color`
- * shape, not `borderWidth`); form marks are not insertable from the GUI. */
+ * gets typography).
+ *
+ * Three insertable types are excluded BECAUSE their stroke is not a border box,
+ * and each has its own editor instead: `line`, whose stroke is its own
+ * `width`/`color` shape (`LineStyleEditor`), and the two form marks
+ * (`MARK_TYPES`), which stroke one closed path (`ShapeStyleEditor`).
+ *
+ * They are NOT the only insertable types outside this set — `page_number`,
+ * `list` and `repeat_flow` are too, and they have no decoration tab at all,
+ * which for `list` is a real gap (`engine/layout/src/engine/list.rs` calls
+ * `push_decoration` on one, so the engine does draw its border box). Queued
+ * separately; do not read this set's exclusions as one rule. */
 export const BORDERABLE_TYPES: ReadonlySet<string> = new Set([
   'text',
   'rect',

@@ -30,6 +30,7 @@ import { composeDataUri } from '../image/dataUri';
 import { sniffImage } from '../image/sniff';
 import { resolveContainerInsert } from '../insert/containerInsert';
 import { containerShape, containerSnippet } from '../insert/containerModel';
+import { insertSnippet } from '../insert/insertSnippet';
 import { resolveIterableTarget } from '../insert/iterableTarget';
 import { scaffoldFromGroup } from '../insert/scaffold';
 import { type ScaffoldField, scaffoldFromFields, scaffoldSchema } from '../insert/scaffoldFields';
@@ -47,10 +48,13 @@ import { gridColumnsPlan, gridRowsPlan } from '../panel/gridStructure';
 import { registryNames } from '../panel/itemView';
 import { containerLayoutFor } from '../panel/layoutModel';
 import { directionOp, gapOp, ratioOp } from '../panel/layoutOps';
+import { readMark } from '../panel/markModel';
+import { setCheckedOps } from '../panel/markOps';
 import { bindingPickOps } from '../panel/model';
 import { PAGE_SIZES } from '../panel/pageSizes';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
+import { readShapeStyle, strokeWidthOp } from '../panel/shapeStyle';
 import { deleteStyleOps, renameStyleOps } from '../panel/styleRefOps';
 import { extendParams } from '../sample/generate';
 import { buildStyleUsage } from '../styles/usage';
@@ -376,6 +380,65 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
       scale: 2,
     });
     expect(reverted.inspect?.boxes.pages.flat()).toHaveLength(beforeBoxes);
+  });
+
+  it('inserts both FORM MARKS and renders them WARNING-clean, with the checkbox auto-sized', async () => {
+    // The area posture: every insert snippet renders diagnostics-free AND
+    // visibly. Both halves matter here and neither is provable in jsdom — an
+    // unanchored ellipse with no positive `w`/`h` is SKIPPED with
+    // `mark_missing_size`, and the checkbox authors no box at all, so only the
+    // real engine can say whether the cap-height default actually reserved one.
+    const editor = Editor.create(template());
+    const bodyLength = (editor.read('sections.body.items') as unknown[]).length;
+    const ellipsePath = `sections.body.items[${bodyLength}]`;
+    const checkboxPath = `sections.body.items[${bodyLength + 1}]`;
+    expect(
+      editor.apply({
+        op: 'insertItem',
+        path: 'sections.body.items',
+        index: bodyLength,
+        value: insertSnippet('ellipse', ''),
+      }).ok,
+    ).toBe(true);
+    expect(
+      editor.apply({
+        op: 'insertItem',
+        path: 'sections.body.items',
+        index: bodyLength + 1,
+        value: insertSnippet('checkbox', ''),
+      }).ok,
+    ).toBe(true);
+
+    const outcome = await transport.renderRaw(editor.text(), params(), definitions(), { scale: 2 });
+    expect(outcome.ok).toBe(true);
+    // WARNING-clean, not just error-free: a blank insert must not bait live
+    // diagnostics.
+    expect(outcome.diagnostics.items).toHaveLength(0);
+    const boxes = outcome.inspect?.boxes.pages.flat() ?? [];
+    const ellipse = boxes.find((box) => box.path === ellipsePath);
+    const checkbox = boxes.find((box) => box.path === checkboxPath);
+    // VISIBLY: each reserved a positive box. The checkbox's is the engine's
+    // cap-height square — the whole reason its snippet authors no size.
+    expect(ellipse?.border.w).toBe(60);
+    expect(ellipse?.border.h).toBe(40);
+    expect(checkbox?.border.w ?? 0).toBeGreaterThan(0);
+    expect(checkbox?.border.h ?? 0).toBeGreaterThan(0);
+
+    // The panel reads them back exactly, and its ops round-trip through the
+    // engine: ticking the checkbox and stroking the ellipse stay clean.
+    const readFn = (path: string) => editor.read(path);
+    expect(readMark(readFn, checkboxPath).mode).toBe('static');
+    expect(readShapeStyle(readFn, ellipsePath).strokeWidth).toBe('');
+    expect(editor.applyAll(setCheckedOps(checkboxPath, true, false)).ok).toBe(true);
+    const widthOp = strokeWidthOp(ellipsePath, '2.5');
+    expect(widthOp).not.toBeNull();
+    expect(editor.applyAll([widthOp as NonNullable<typeof widthOp>]).ok).toBe(true);
+    const edited = await transport.renderRaw(editor.text(), params(), definitions(), { scale: 2 });
+    expect(edited.ok).toBe(true);
+    expect(edited.diagnostics.items).toHaveLength(0);
+    expect(readShapeStyle((path: string) => editor.read(path), ellipsePath).strokeWidth).toBe(
+      '2.5',
+    );
   });
 
   it('inserts a container-picker scaffold, renders it WARNING-clean with its slot boxes, edits its layout', async () => {

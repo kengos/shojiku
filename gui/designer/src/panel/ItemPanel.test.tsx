@@ -230,9 +230,11 @@ describe('ItemPanel — where the presence binding sits', () => {
   });
 
   it('renders it after the body for a SINGLE-tab item, which shows no tablist', () => {
-    // `ellipse` is neither a content nor a decoration type but is boxed, so it
-    // gets exactly one tab and the tablist chrome is dropped.
-    drawPanel({ type: 'ellipse', box: { w: 10, h: 10 } });
+    // `repeat` is neither a content nor a decoration type but takes the box
+    // tab, so it gets exactly one and the tablist chrome is dropped. (It used
+    // to be `ellipse`, which now has all three: its presence is content and its
+    // outline is decoration.)
+    drawPanel({ type: 'repeat' });
     expect(screen.queryAllByRole('tab')).toEqual([]);
     const heading = screen.getByText('When to show');
     const width = screen.getByLabelText('Width');

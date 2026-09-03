@@ -20,7 +20,7 @@ import { BORDERABLE_TYPES } from './borderTypes';
 import { ContentSection } from './ContentSection';
 import type { ItemPanelProps } from './itemPanelProps';
 import { hasCapability } from './itemPanelProps';
-import { BOXLESS_TYPES, type ItemView } from './itemView';
+import { BOXLESS_TYPES, type ItemView, MARK_TYPES } from './itemView';
 import { LinePointsEditor } from './LinePointsEditor';
 import { readLinePoints } from './linePoints';
 import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
@@ -46,14 +46,26 @@ const CONTENT_TAB_TYPES = new Set([
   'list',
   'image',
   'page_number',
+  // The two form marks. Their content is their PRESENCE — whether the oval or
+  // the tick draws at all — which is the engine's own word for it ("a mark's
+  // *presence* is content"), and without this an inserted mark could be moved
+  // and painted but never bound to the data that decides it.
+  ...MARK_TYPES,
 ]);
 
 /** Types that get a decoration tab: every boxed item the border cluster decorates,
- * PLUS `line` — its stroke is its own shape rather than a border box, but it
- * is still decoration the user must be able to reach (the insert menu creates
- * dashed lines, and an insertable kind with no editing surface is a dead
- * end). */
-const STYLED_TYPES: ReadonlySet<string> = new Set([...BORDERABLE_TYPES, 'line']);
+ * PLUS the three whose stroke is their own shape rather than a border box —
+ * `line` and the two form marks. All three are still decoration the user must
+ * be able to reach (the insert menu creates all of them, and an insertable kind
+ * with no editing surface is a dead end). */
+const STYLED_TYPES: ReadonlySet<string> = new Set([
+  ...BORDERABLE_TYPES,
+  'line',
+  // ...and the form marks, whose outline is one closed path rather than a
+  // border box. They reach `ShapeStyleEditor` instead of the border cluster —
+  // see `MARK_TYPES` for why that distinction is the engine's, not the panel's.
+  ...MARK_TYPES,
+]);
 
 /** Types whose placement tab is NOT the box fields. A `line` has a position
  * (its two endpoints) but no `box:` — the engine rejects that key as a parse

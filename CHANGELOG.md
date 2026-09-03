@@ -13,7 +13,42 @@ platform binaries.
 
 ## [Unreleased]
 
+### Added
+
+- **The Designer can draw an ellipse and a checkbox, and edit what makes them
+  draw.** Both have been in the template format since form marks shipped, and
+  neither could be created from the GUI at all. Selecting one in a file that
+  already used them offered its size and position, and the show-conditionally
+  row every item has — and nothing about the mark itself: not the tick, not the
+  data that decides it, not the outline. Insert ▸ Ellipse and Insert ▸ Checkbox
+  now sit beside Line, and selecting either opens a real panel: what makes it
+  draw (always, or when a data field says so — and for a checkbox, ticked or
+  blank), its outline width and colour and its fill, and its size and position.
+  An ellipse can also
+  be told to **circle another item** instead of standing on its own
+  coordinates — the "circle the chosen answer" mark forms are full of. It picks
+  its target from the items the page has actually placed, which means the ones
+  carrying an `id:`; the Designer does not yet author ids itself, so today that
+  list fills up only for a template that already has them. While an ellipse is
+  circling something, the panel stops offering the coordinates the engine does
+  not read.
+
+  A fresh checkbox deliberately authors no size: unset, the engine matches its
+  frame to the surrounding text's cap height, which is the size you want beside
+  a label and the one you cannot work out yourself. That is also why a band item
+  had to learn an exception on the way in: an item with no width of its own is
+  given the full margin box, a rule written for text, which would have drawn a
+  checkbox in a header as a frame the width of the page. A fixed-aspect mark now
+  takes the position and nothing else.
+
 ### Changed
+
+- **The value field on a conditional rule is no longer a white box.** Wherever
+  you say "…when the data equals this" — a table's row conditions, an item's
+  show-conditionally setting, and now a form mark — that one field was drawn by
+  the browser rather than by the app: in dark chrome it was a white rectangle,
+  the brightest thing on the panel, on the one control that is asking you for
+  something. It now looks like every other field beside it.
 
 - **The Designer's property panel puts the common things first.** Selecting a
   rectangle opened on 「表示する条件」 — the setting that hides an item unless the

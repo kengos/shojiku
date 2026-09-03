@@ -11,6 +11,36 @@ describe('band placement', () => {
     expect(requiresBand('pageNumber')).toBe(true);
     expect(requiresBand('text')).toBe(false);
     expect(requiresBand('rect')).toBe(false);
+    // A form mark is a plain boxed item — a tick beside a footer label is the
+    // ordinary case, not a band-only one.
+    expect(requiresBand('ellipse')).toBe(false);
+    expect(requiresBand('checkbox')).toBe(false);
+  });
+
+  it('band-places a form mark through its BOX, not in its own coordinates', () => {
+    // Regression pin on the set, not on the code path: `BOXLESS_TYPES` gates
+    // this branch, and adding the marks to it (they look boxless — a checkbox
+    // authors no `box:`) would take the offset out of `box.y` and put it
+    // nowhere, since neither type has coordinates of its own.
+    expect(bandPlaced(insertSnippet('ellipse', ''), 700)).toEqual({
+      type: 'ellipse',
+      box: { w: 60, h: 40, x: 0, y: 700 },
+    });
+    // …and it takes NO full-width default. A mark is a fixed-aspect glyph, so
+    // the `w: '100%'` a text-shaped band item gets would stretch the frame
+    // across the whole margin box — which is precisely the shape that arrives
+    // here, since the checkbox snippet authors no box at all.
+    expect(bandPlaced(insertSnippet('checkbox', ''), 700)).toEqual({
+      type: 'checkbox',
+      box: { x: 0, y: 700 },
+    });
+    // The rule is the TYPE, not the absence of a box: a text item with no box
+    // still spans the band.
+    expect(bandPlaced(insertSnippet('text', 'hi'), 700)).toEqual({
+      type: 'text',
+      text: 'hi',
+      box: { w: '100%', x: 0, y: 700 },
+    });
   });
 
   it('places a header item at the top of the margin box and a footer item near its bottom', () => {

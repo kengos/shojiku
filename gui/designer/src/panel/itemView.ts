@@ -32,6 +32,16 @@ export type BoxAxis = (typeof BOX_AXES)[number];
  * different predicate and is enforced where it belongs. */
 export const BOXLESS_TYPES: ReadonlySet<string> = new Set(['line', 'page_break']);
 
+/** The two FORM MARKS — the box-inscribed vector shapes whose *presence* is
+ * content (`engine/core/src/template/marks.rs`). They share a wire family, a
+ * presence predicate, and a paint rule that is emphatically NOT the border
+ * box's: `Ctx::shape_paint` strokes one closed path, reducing a per-side
+ * `borderWidth` map to its top side with a warning and ignoring `borderRadius`
+ * outright. So they are their own set rather than members of
+ * `BORDERABLE_TYPES` — the item panel's content and decoration gates, the
+ * content router and the decoration tab all consult this one home. */
+export const MARK_TYPES: ReadonlySet<string> = new Set(['ellipse', 'checkbox']);
+
 export interface ItemView {
   readonly type: string;
   readonly hasText: boolean;
