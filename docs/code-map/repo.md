@@ -304,11 +304,28 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   hook event on stdin and writing at most one decision: `guard-bash.sh`
   (PreToolUse over Bash — denies a piped gate, `make -n`, a host `cargo`, a
   commit with signing disabled or an attribution trailer, a push at `main`;
-  ASKS on `gh pr merge`, which is the per-change merge authorization made
-  deterministic; notes a bare `make` in a worktree, a `pgrep` watcher, an
-  unquoted `--include` glob, a `git add -f` on the lockfile) and `guard-edit.sh` (PostToolUse over Edit/Write
-  — notes only: the `.rs` 300-line cap and `//!` header, the gui 150
-  executable-line cap, work-item codes reaching tracked files).
+  ASKS on `gh pr merge`; notes a bare `make` in a worktree, a `pgrep` watcher,
+  an unquoted `--include` glob, a `git add -f` on the lockfile) and
+  `guard-edit.sh` (PostToolUse over Edit/Write — notes only: the `.rs`
+  300-line cap and `//!` header, the gui 150 executable-line cap, work-item
+  codes reaching tracked files).
+  **The ASK is advisory, not a control.** A session running under bypass
+  permissions auto-approves an `ask` decision, and that is the mode an agent
+  cycle runs in — measured: `gh pr merge` went straight through with no
+  confirmation surfaced. So the per-change merge authorization is enforced by
+  the cycle's own policy and by the human answering, exactly as before; the
+  hook only records the intent. Every DENY does work under that mode, which is
+  why the rules that must hold are denies.
+  **Two of the deny/note predicates are scoped to the command they are about,
+  and that is load-bearing rather than tidy.** `make -n` and a piped gate both
+  locate the make invocation and stop at the first `;`/`&&`/`|` before looking
+  for their flag, because a whole-string test denies `grep -n`, `head -n` and
+  `sort -n` whenever make is mentioned anywhere in the same call — which is the
+  ordinary shape of running a gate and then reading its log. The work-item-code
+  pattern lists its prefixes for the mirror-image reason: the general
+  `[A-Z]{2,}-[0-9]+` shape matches `UTF-8`, `SHA-256`, `OFL-1` and every sample
+  order number, and a note that fires on almost every edit teaches people to
+  ignore it.
   The shape — controls as code, and a hook as the approval gate an agent can
   drive up to but not through — is the Build and Deploy half of Anthropic's
   AI-native SDLC playbook (https://claude.com/blog/the-ai-native-sdlc-playbook),

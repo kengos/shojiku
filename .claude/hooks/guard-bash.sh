@@ -81,6 +81,20 @@ piped_after_make() {
 		}'
 }
 
+# Does a dry-run FLAG follow the make invocation, before any separator ends it?
+# The twin of `piped_after_make`: same scan, looking for the flag rather than a
+# pipe, so a `-n` belonging to a LATER command in the same call is not make's.
+dry_run_after_make() {
+	printf '%s' "$cmd" | awk '
+		{
+			rest = $0
+			if (match(rest, /(^|[;&|(])[ \t]*([A-Za-z_][A-Za-z0-9_]*=[^ \t]*[ \t]+)*(sudo[ \t]+)?g?make[ \t]/) == 0) exit 1
+			rest = substr(rest, RSTART + RLENGTH)
+			if (match(rest, /\|\||;|&&|\|/) > 0) rest = substr(rest, 1, RSTART - 1)
+			exit (match(rest, /(^|[ \t])(-n|--dry-run|--just-print|--recon)([ \t]|$)/) > 0) ? 0 : 1
+		}'
+}
+
 # A command-position invocation: start of the command or just after a
 # separator, allowing leading VAR=value assignments (`V=1 make ...`).
 POS='(^|[;&|(])[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
@@ -105,7 +119,16 @@ fi
 # GNU make still executes recipe lines containing $(MAKE) under -n, so a "dry"
 # run takes the gate lock and has killed a running gate. The Makefile refuses
 # it at parse time; this refuses it before the container starts.
-if has "$MAKE" && has '[[:space:]](-n|--dry-run|--just-print|--recon)([[:space:]]|$)'; then
+#
+# The flag must belong to the MAKE invocation. Testing the whole command string
+# for a stray ` -n ` denies `grep -n`, `head -n`, `tail -n`, `sort -n` and
+# `ls -n` whenever make is mentioned anywhere in the same call — which is the
+# ordinary shape of "run the gate, then look at its log", and `grep -rn` is the
+# form CLAUDE.md and gotchas/verification-claims.md both recommend. So this
+# reuses `dry_run_after_make`, cut from `piped_after_make` beside it, which
+# stops at the first separator; and it asks `is_gate`, so `make --version` and
+# `make help` are not gates and cannot be dry runs.
+if has "$MAKE" && is_gate && dry_run_after_make; then
 	decide deny '`make -n` is not a dry run here: recipe lines containing $(MAKE) still
 run for real (the documented GNU recursion rule), so a dry run takes the gate
 lock and has killed a gate mid-run. Read the recipe, or run `make help`.'

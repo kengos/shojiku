@@ -88,7 +88,21 @@ esac
 # track left 17 of them stamped into a code map for a later pass to scrub.
 case "$path" in
 */engine/*|*/gui/*|*/sdk/*|*/site/*|*/docs/*|*/scripts/*|*/packs/*|*/examples/*)
-	codes=$(grep -Eo '\b(GU|GD|TB|FP|BX|DF|FR|GL|GS|EQ)[0-9]+[a-z]?\b' "$path" 2>/dev/null | sort -u | tr '\n' ' ')
+	# Two shapes, because the queue uses both: a two-letter stem run straight
+	# into its number (GU12, BX1, EQ1), and a NAMED prefix with a hyphen
+	# (GUI-44, ENGINE-7, MAKE-1, RELEASE-1). The first pattern alone missed the
+	# hyphenated family entirely — which is the majority of the live codes and
+	# the family every current GUI cycle is named after, and six `GUI-41`
+	# comments had already reached the tracked tree unnoticed.
+	#
+	# The prefixes are LISTED rather than matched as `[A-Z]{2,}-[0-9]+`,
+	# because that general shape is what the standards and the sample data look
+	# like: measured over the tree it returned 1328 `OFL-1`, 117 `UTF-8`, 54
+	# `SHA-256` and every order number under examples/. A note that fires on
+	# almost every edit is worse than the miss. The list comes from the queue's
+	# own prefixes and needs extending when a new family appears — the cost of
+	# forgetting is a missed note, never a false one.
+	codes=$(grep -Eo '\b((GU|GD|TB|FP|BX|DF|FR|GL|GS|EQ)[0-9]+[a-z]?|(GUI|ENGINE|MAKE|RELEASE|SDK|SITE|MCP|WASM)-[0-9]+[a-z]?)\b' "$path" 2>/dev/null | sort -u | tr '\n' ' ')
 	[ -n "$codes" ] && add "$path names what look like internal work-item codes: $codes. These live only in the forward-looking set, never in tracked code or docs."
 	;;
 esac

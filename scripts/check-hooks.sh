@@ -93,6 +93,7 @@ case_bash 'gate piped to jq'            deny 'make engine:test | jq .'
 case_bash 'gate piped to sort'          deny 'make engine:test | sort -u'
 case_bash 'make -n'                     deny 'make -n verify'
 case_bash 'make --dry-run'              deny 'make --dry-run engine:test'
+case_bash 'flag after the target'       deny 'make engine:test --dry-run'
 case_bash 'host cargo'                  deny 'cargo test --workspace'
 case_bash 'host cargo after &&'         deny 'cd engine && cargo clippy'
 case_bash 'signing disabled'            deny 'git -c commit.gpgsign=false commit -m wip'
@@ -123,6 +124,17 @@ case_bash 'make is an argument'         silent 'echo hello | grep make'
 case_bash 'ordinary pipeline'           silent 'git log --oneline | head -5'
 case_bash 'pr view'                     silent 'gh pr view 123'
 case_bash 'grep for a trailer'          silent 'git log -1 | grep Co-Authored-By'
+# The `-n` rule used to test the WHOLE command string for a stray flag, so it
+# denied every one of these: `grep -n` is the form CLAUDE.md recommends, and
+# running a gate then reading its log in one call is the shape the
+# don't-pipe-a-gate rule beside it pushes you toward. Each of these is a real
+# spelling a cycle typed and had refused.
+case_bash 'gate then grep -n its log'   silent 'make engine:test > /tmp/e.log 2>&1; grep -n error /tmp/e.log'
+case_bash 'gate then head -n'           silent 'make -C /repo gui:test > /tmp/g.log 2>&1; head -n 40 /tmp/g.log'
+case_bash 'gate then tail -n'           silent 'make gui:verify > /tmp/v.log 2>&1; tail -n 20 /tmp/v.log'
+case_bash 'gate then sort -n'           silent 'make engine:test > /tmp/e.log 2>&1; sort -n /tmp/e.log'
+case_bash 'make --version then head -n' silent 'make --version > /dev/null; head -n 2 /etc/hosts'
+case_bash 'make help then grep -n'      silent 'make help; grep -n verify Makefile'
 
 # ---- Bash guard: ask and note ------------------------------------------
 case_bash 'merge asks'                  ask  'gh pr merge 123 --squash'
@@ -193,6 +205,32 @@ case_edit 'test file is out of scope'   silent "$f"
 f="$tmp/docs/note.md"
 printf 'Implements GU12 and TB1a.\n' > "$f"
 case_edit 'work-item codes in docs'     note "$f"
+
+# The HYPHENATED family was invisible to the first pattern, which required two
+# letters run straight into a number. It is not a corner: measured against the
+# queue, `GUI-nn` and `ENGINE-nn` are the overwhelming majority of live codes,
+# and six `GUI-41` comments had already reached the tracked tree unnoticed.
+f="$tmp/docs/hyphenated.md"
+printf 'See GUI-44 for the surface.\n' > "$f"
+case_edit 'hyphenated code in docs'     note "$f"
+
+f="$tmp/gui/designer/src/coded.tsx"
+printf '// ENGINE-7 — the wire this pins.\nconst a = 1;\n' > "$f"
+case_edit 'hyphenated code in source'   note "$f"
+
+# ...and the reason the pattern is a NAMED prefix list rather than a general
+# `[A-Z]{2,}-[0-9]+`: that shape matches the standards and sample identifiers
+# this repository is full of. Measured over the tracked tree, the general form
+# returned 1328 `OFL-1`, 117 `UTF-8`, 54 `SHA-256` and every order number in
+# examples/ — a note that fires on almost every edit teaches people to ignore
+# it, which is worse than the miss it was fixing.
+f="$tmp/docs/standards.md"
+printf 'UTF-8, SHA-256, BSD-3, PDF-1.7 and OFL-1.1 are not work items.\n' > "$f"
+case_edit 'standards are not codes'     silent "$f"
+
+f="$tmp/docs/sample-ids.md"
+printf 'Order INV-2026-001 shipped as SO-2026-14.\n' > "$f"
+case_edit 'sample identifiers either'   silent "$f"
 
 f="$tmp/docs/clean.md"
 printf 'Implements the character grid.\n' > "$f"
