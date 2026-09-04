@@ -31,15 +31,22 @@ exempt() { grep -q 'line-budget-exempt:' "$path"; }
 
 case "$path" in
 */engine/*.rs)
-	lines=$(wc -l < "$path" | tr -d ' ')
-	if [ "$lines" -gt 300 ] && ! exempt; then
-		add "$path is $lines lines against the 300-line hard cap (make engine:budget). Split by concern into a directory module (foo.rs root + foo/<concern>.rs, no mod.rs), or add an in-file 'line-budget-exempt: <reason>'."
-	elif [ "$lines" -gt 160 ] && ! exempt; then
-		add "$path is $lines lines; 160 is the recommended ceiling and 300 the hard cap. Worth splitting before it becomes urgent."
-	fi
+	# Tests are out of the length budget on both sides (docs/guidelines.md
+	# "File length"): a suite is a list of cases, not a unit of design.
+	case "$path" in
+	*/tests/* | */tests.rs | *_tests.rs) ;;
+	*)
+		lines=$(wc -l < "$path" | tr -d ' ')
+		if [ "$lines" -gt 300 ] && ! exempt; then
+			add "$path is $lines lines against the 300-line cap (make engine:budget). Split at a seam that means something — a foo.rs root keeping the shared state and types, plus foo/<concern>.rs, no mod.rs — rather than shaving to fit. Or add an in-file 'line-budget-exempt: <reason>'."
+		elif [ "$lines" -gt 250 ] && ! exempt; then
+			add "$path is $lines lines, within 50 of the 300 cap. Splitting is cheaper now than under the pressure of a failing gate, and a seam chosen now is a seam chosen for cohesion."
+		fi
+		;;
+	esac
 	case $(head -1 "$path") in
 	'//!'*) ;;
-	*) add "$path does not open with a //! role header. Every .rs under engine/ carries one, and make engine:budget gates it — head -1 is how a file is identified without opening it." ;;
+	*) add "$path does not open with a //! role header. Every .rs under engine/ carries one, tests included, and make engine:budget gates it — head -1 is how a file is identified without opening it." ;;
 	esac
 	;;
 */gui/*.ts|*/gui/*.tsx)

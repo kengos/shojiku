@@ -148,6 +148,27 @@ f="$tmp/engine/core/src/waived.rs"
 	i=0; while [ $i -lt 305 ]; do echo "// $i"; i=$((i + 1)); done; } > "$f"
 case_edit 'rs over the cap with waiver' silent "$f"
 
+f="$tmp/engine/core/src/near.rs"
+{ echo '//! Near the cap.'; i=0; while [ $i -lt 270 ]; do echo "// $i"; i=$((i + 1)); done; } > "$f"
+case_edit 'rs within 50 of the cap'     note "$f"
+
+f="$tmp/engine/core/src/mid.rs"
+{ echo '//! Comfortably inside.'; i=0; while [ $i -lt 200 ]; do echo "// $i"; i=$((i + 1)); done; } > "$f"
+case_edit 'rs at 200 lines is fine'     silent "$f"
+
+mkdir -p "$tmp/engine/core/src/thing/tests"
+f="$tmp/engine/core/src/thing/tests.rs"
+{ echo '//! Tests.'; i=0; while [ $i -lt 400 ]; do echo "// $i"; i=$((i + 1)); done; } > "$f"
+case_edit 'a long suite is out of scope' silent "$f"
+
+f="$tmp/engine/core/src/thing/tests/cases.rs"
+{ echo '//! Tests.'; i=0; while [ $i -lt 400 ]; do echo "// $i"; i=$((i + 1)); done; } > "$f"
+case_edit 'a split suite too'           silent "$f"
+
+f="$tmp/engine/core/src/thing/tests/noheader.rs"
+printf '#[test]\nfn a() {}\n' > "$f"
+case_edit 'but a suite still needs //!' note "$f"
+
 f="$tmp/engine/core/src/noheader.rs"
 printf 'pub fn a() {}\n' > "$f"
 case_edit 'rs without a //! header'     note "$f"

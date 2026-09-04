@@ -72,6 +72,25 @@ platform binaries.
 
 ### Changed
 
+- **The line budget says what it is for, and stops counting tests.** Every
+  component caps how long a source file may be, and nothing anywhere said why —
+  so the number read as arbitrary, and a file that would not fit got trimmed
+  rather than split. The reasons are now written down once, in
+  `docs/guidelines.md`: an over-long file is read wrong, most sharply by an AI
+  that reads an excerpt and generalises from it, and length is a smell in the
+  same sense `rubocop` means by `Metrics/ClassLength`. Both reasons are about
+  the design, which settles what to do at the cap — seams are chosen for
+  cohesion, the cap wins over both, and a cohesive unit that will not fit is an
+  implementation threading too much through one place, never an argument for a
+  waiver. Test files are out of the length budget on both sides now, matching
+  what the gui gate has always done: a suite is a list of independent cases
+  rather than a unit of design, so neither reason reaches it, and splitting one
+  to fit a number moves cases across a seam chosen by arithmetic. Sixteen
+  engine files that still kept their tests inline moved them to the sibling
+  files the other 165 already use, which took 1,070 lines of tests out of the
+  production budget they were being charged to — `layout/src/boxes.rs` was 296
+  lines against a 300 cap and is 133 lines of code.
+
 - **The development rules an AI session works under are enforced now, not
   recited.** `.claude/hooks/`, with the `.claude/settings.json` that registers
   them, is the only tracked part of that directory: two hooks Claude Code runs
