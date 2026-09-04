@@ -1683,9 +1683,11 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 
 ### Build / CI / security posture
 - Pure-Rust workspace, single static binary, clean WASM story.
-- **Anti-bloat gate**: every `.rs` ≤300 lines hard with a first-line
-  `//!` role header (`make engine:budget`); function length via
-  `clippy::too_many_lines` (150).
+- **Anti-bloat gate**: every non-test `.rs` ≤300 lines, and every `.rs`
+  opening with a `//!` role header (`make engine:budget`); function
+  length via `clippy::too_many_lines` (150). Test files are outside the
+  length half — the reasons for a cap are in `docs/guidelines.md`, and
+  none of them reaches a list of independent cases.
 - `cargo deny` (advisories/licenses/bans/sources, **zero ignores**, run
   with `--all-features` so a feature-gated optional dependency cannot
   ride in unchecked), trivy on the Docker job, Dependabot weekly,
@@ -2424,10 +2426,12 @@ identified by their wire spellings, never by internal work-item codes.
   ttf-parser and resvg/usvg are rejected wholesale (unmaintained /
   MPL), enforced by deny.toml with zero ignores.
 - **Module hygiene is a gate, not a review note**: the ≤300-line budget
-  + `//!` headers + function-length lint are CI-enforced; oversized
-  files split into directory modules with stable public paths
-  (`pub use` at module roots), and near-e2e layout tests live in one
-  `tests/e2e` binary.
+  (non-test files) + `//!` headers + function-length lint are
+  CI-enforced; a file at the cap splits into a directory module at a
+  seam chosen for cohesion, with stable public paths (`pub use` at
+  module roots), never by shaving to fit. Unit tests live in
+  `#[cfg(test)] mod tests;` siblings rather than inline, and near-e2e
+  layout tests in one `tests/e2e` binary.
 - **Coordinate unit**: bare numbers are **pt**; `%` only as a string;
   `px` rejected as a template unit.
 - **definitions.yml is an OpenAPI-shaped schema**: the wire mirrors the
