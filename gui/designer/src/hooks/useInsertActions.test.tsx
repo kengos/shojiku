@@ -144,3 +144,133 @@ describe('page numbers and band inserts', () => {
     expect(written).not.toMatch(/type: text\n\s+box:/);
   });
 });
+
+describe('the character grid and the page break', () => {
+  // A real flow body — `sections.body` REQUIRES `type:` on the wire (a body
+  // without one does not parse: "missing field `type`"), so the shared
+  // `SOURCE` fixture, which omits it, is not a document any engine could
+  // render and cannot answer a flow-vs-not question.
+  const FLOW = [
+    'version: 0.1.0',
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - type: text',
+    '        text: hello',
+    '',
+  ].join('\n');
+
+  const BAND = [
+    'version: 0.1.0',
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items: []',
+    '  footer:',
+    '    repeat: every_page',
+    '    height: 40',
+    '    items: []',
+    '',
+  ].join('\n');
+
+  const ABSOLUTE = [
+    'version: 0.1.0',
+    'sections:',
+    '  body:',
+    '    type: absolute',
+    '    items:',
+    '      - type: text',
+    '        text: hello',
+    '        box: { x: 0, y: 0, w: 100, h: 20 }',
+    '',
+  ].join('\n');
+
+  it('offers each row only when the engine advertises its item type', () => {
+    // Same THREADING claim the rule and the marks above pin: a capability key
+    // typed wrong in ONE of the two places leaves `insertMenuGroups` correct
+    // and the row permanently absent, with every model test still green. It
+    // does not catch the same typo made in both, since the literal here is the
+    // literal there — the spellings themselves are pinned by the engine's
+    // capability list, not by this.
+    draw(makeTransport(), { source: FLOW, capabilities: ['char_grid', 'page_break'] });
+    fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+    expect(screen.getByRole('menuitem', { name: 'Character grid' })).toBeDefined();
+    expect(screen.getByRole('menuitem', { name: 'Page break' })).toBeDefined();
+
+    draw(makeTransport(), { source: FLOW, capabilities: ['text'] });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Insert' })[1]);
+    expect(screen.queryAllByRole('menuitem', { name: 'Character grid' })).toHaveLength(0);
+    expect(screen.queryAllByRole('menuitem', { name: 'Page break' })).toHaveLength(0);
+  });
+
+  it('offers both rows against an engine that reports no capabilities at all', () => {
+    // `capabilities === undefined` is the unknown-engine convention every other
+    // gate follows: arm the row rather than withhold a legal insert.
+    draw(makeTransport(), { source: FLOW, capabilities: undefined });
+    fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+    expect(screen.getByRole('menuitem', { name: 'Character grid' })).toBeDefined();
+    expect(screen.getByRole('menuitem', { name: 'Page break' })).toBeDefined();
+  });
+
+  it('writes a grid sized from the page, with content so it draws no diagnostic', () => {
+    const onChange = vi.fn();
+    draw(makeTransport(), { source: FLOW, onChange });
+    pickMenu('Insert', 'Character grid');
+    const written = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(written).toContain('type: char_grid');
+    expect(written).toMatch(/char_grid[\s\S]*charsPerLine: 20/);
+    expect(written).toMatch(/char_grid[\s\S]*lines: 10/);
+    // Content, not just dimensions: with neither `text` nor `data` the engine
+    // reports `empty_char_grid_item`, so the row would insert a diagnostic.
+    expect(written).toMatch(/type: char_grid\n\s+text:/);
+  });
+
+  it('writes a page break as the bare tag, with no box beside it', () => {
+    const onChange = vi.fn();
+    draw(makeTransport(), { source: FLOW, onChange });
+    pickMenu('Insert', 'Page break');
+    const written = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(written).toContain('- type: page_break');
+    // A `box:` here is a parse error, not a misplacement.
+    expect(written).not.toMatch(/type: page_break\n\s+box:/);
+  });
+
+  it('refuses the page break in a band, naming the reason', () => {
+    // The mirror of the page-number refusal at the top of this file, through
+    // the same real menu.
+    draw(makeTransport(), { source: BAND });
+    pickMenu('Insert', 'Footer');
+    fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+    const row = screen.getByRole('menuitem', { name: /Page break/ });
+    expect(row.textContent).toContain('only the body can hold one');
+    expect(row.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('refuses the page break in an ABSOLUTE body, which is not a band at all', () => {
+    // The case `bandTarget` could never have answered, and not a hypothetical:
+    // three bundled PRESETS ship an absolute body (both certificates and the
+    // rirekisho). The engine warns `page_break_in_absolute_body` and skips.
+    draw(makeTransport(), { source: ABSOLUTE });
+    fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+    const row = screen.getByRole('menuitem', { name: /Page break/ });
+    expect(row.textContent).toContain('only the body can hold one');
+    expect(row.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('keeps the character grid armed in both of those places', () => {
+    // It carries no placement gate: the engine lays a `char_grid` out
+    // everywhere, drawing one sheet outside a flow body rather than skipping
+    // it, so withholding the row there would refuse a legal insert.
+    for (const source of [BAND, ABSOLUTE]) {
+      draw(makeTransport(), { source });
+      fireEvent.click(screen.getAllByRole('button', { name: 'Insert' }).at(-1) as HTMLElement);
+      expect(
+        screen
+          .getAllByRole('menuitem', { name: /Character grid/ })
+          .at(-1)
+          ?.getAttribute('aria-disabled'),
+      ).not.toBe('true');
+    }
+  });
+});

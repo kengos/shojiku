@@ -45,6 +45,17 @@ describe('applicableTabs', () => {
     expect(tabsOf({ type: 'qr_code' })).toContain('content');
   });
 
+  it('gives a char_grid 内容 + 配置, so an inserted sheet can be retyped and placed', () => {
+    // The insert menu creates one now, so this is the dead-end guard: no
+    // 装飾 tab, because a char_grid's `borderWidth` is the GRID RULING width
+    // rather than a border box, and the border cluster's per-side model would
+    // author a different property under the same spelling.
+    expect(tabsOf({ type: 'char_grid', grid: { charsPerLine: 20, lines: 10 } })).toEqual([
+      'content',
+      'box',
+    ]);
+  });
+
   it('gives the iterable kinds a 内容 tab, so their source can be rebound', () => {
     expect(tabsOf({ type: 'table' })).toContain('content');
     expect(tabsOf({ type: 'repeat_flow' })).toContain('content');
@@ -55,6 +66,23 @@ describe('applicableTabs', () => {
     for (const type of ['text', 'rect', 'qr_code', 'image', 'page_number', 'table', 'container']) {
       expect(tabsOf({ type })).toContain('box');
     }
+  });
+
+  it('withholds 配置 from BOTH repeaters — the wire gives neither a `box:`', () => {
+    // `RepeatItem` and `RepeatFlowItem` are `deny_unknown_fields` with no box
+    // field, so a placement tab there authors a key that stops the whole
+    // document parsing. `repeat` had that as its ONLY tab, which made the one
+    // control the panel offered the one that breaks the file.
+    expect(tabsOf({ type: 'repeat' })).toEqual([]);
+    expect(tabsOf({ type: 'repeat_flow' })).toEqual(['content']);
+  });
+
+  it('is not fooled by a hostile type name', () => {
+    // The gate reads real `Set`s, so a document string never walks a
+    // prototype: `__proto__` and `constructor` are ordinary unknown types,
+    // which get the box tab like any other boxed item.
+    expect(tabsOf({ type: '__proto__' })).toEqual(['box']);
+    expect(tabsOf({ type: 'constructor' })).toEqual(['box']);
   });
 });
 
@@ -81,12 +109,16 @@ function makeController(reads: Record<string, unknown>): EditorController {
 
 const PATH = 'sections.body.items[0]';
 
-function drawPanel(item: Record<string, unknown>, capabilities?: readonly string[]) {
+function drawPanel(
+  item: Record<string, unknown>,
+  capabilities?: readonly string[],
+  path: string = PATH,
+) {
   return render(
     <I18nProvider locale="en">
       <PropertyPanel
-        controller={makeController({ [PATH]: item })}
-        path={PATH}
+        controller={makeController({ [path]: item })}
+        path={path}
         capabilities={capabilities}
       />
     </I18nProvider>,
@@ -230,16 +262,53 @@ describe('ItemPanel — where the presence binding sits', () => {
   });
 
   it('renders it after the body for a SINGLE-tab item, which shows no tablist', () => {
-    // `repeat` is neither a content nor a decoration type but takes the box
-    // tab, so it gets exactly one and the tablist chrome is dropped. (It used
-    // to be `ellipse`, which now has all three: its presence is content and its
-    // outline is decoration.)
-    drawPanel({ type: 'repeat' });
+    // `repeat_flow` is a content type the border cluster does not decorate, and
+    // the wire gives it no `box:` — so it gets exactly one tab and the tablist
+    // chrome is dropped. (The fixture was `ellipse` before its presence became
+    // content and its outline decoration; then `repeat`, back when the box tab
+    // was wrongly offered to a type the engine parse-rejects it on. Both moves
+    // were the SET changing, not this rule.)
+    drawPanel({ type: 'repeat_flow' });
     expect(screen.queryAllByRole('tab')).toEqual([]);
     const heading = screen.getByText('When to show');
-    const width = screen.getByLabelText('Width');
-    expect((width.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(
+    const body = screen.getByText('Data source');
+    expect((body.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(
       true,
     );
+  });
+});
+
+// A tab-less item's panel: a page break says what it does, a `repeat` does not
+// claim to. Added after a zero-context PM read of the running app reported the
+// page-break insert as "行き止まり" — nothing on the canvas moves except a page
+// appearing in the rail, and the panel was one advanced control.
+describe('ItemPanel — a type with no applicable tab', () => {
+  it('tells the reader what a page break DOES', () => {
+    drawPanel({ type: 'page_break' }, undefined, 'sections.body.items[1]');
+    expect(screen.getByText('Everything after this starts on a new page.')).toBeTruthy();
+    // Not INSTEAD of the presence binding — a conditional page break is
+    // exactly what that key is for.
+    expect(screen.getByText('When to show')).toBeTruthy();
+  });
+
+  it('says the break does NOTHING when it is the first thing in the body', () => {
+    // The engine collapses a break at the top of an untouched page, so on a
+    // blank document Insert ▸ Page break produces nothing at all — and the
+    // general note would then be promising an effect the file does not have.
+    // This is the state a reader is most likely to meet first.
+    drawPanel({ type: 'page_break' }, undefined, 'sections.body.items[0]');
+    expect(
+      screen.getByText('Nothing comes before it, so this break does nothing yet.'),
+    ).toBeTruthy();
+    expect(screen.queryByText('Everything after this starts on a new page.')).toBeNull();
+  });
+
+  it('says nothing of the kind for a `repeat`, whose panel is INCOMPLETE', () => {
+    // Its wire carries a data source, a cell sub-template and a grid, none of
+    // which has a surface yet. A "that is all there is" note would be false,
+    // and so would `panel.noEditable`.
+    drawPanel({ type: 'repeat' });
+    expect(screen.queryByText('Everything after this starts on a new page.')).toBeNull();
+    expect(screen.queryByText('This element has no editable properties.')).toBeNull();
   });
 });

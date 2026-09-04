@@ -98,3 +98,42 @@ describe('insertSnippet', () => {
     });
   });
 });
+
+describe('the page break', () => {
+  it('authors the bare tag and nothing else', () => {
+    // The wire gives a `page_break` only `id` and `visible`, under
+    // `deny_unknown_fields` — so any extra key here is a parse error that stops
+    // the whole document rendering. The own-key COUNT is the assertion: a
+    // shape check on `type` alone would pass with a `box` beside it.
+    const snippet = insertSnippet('pageBreak', 'Text') as Record<string, unknown>;
+    expect(snippet).toEqual({ type: 'page_break' });
+    expect(Object.keys(snippet)).toHaveLength(1);
+  });
+});
+
+describe('the character grid', () => {
+  it('authors the two required grid dimensions and content, and nothing else', () => {
+    // Probed against the real engine (`make engine:preview`): this renders a
+    // 20x10 ruled sheet with the default text in the first cells, with no
+    // diagnostic. The control for that probe was the same item with `text`
+    // removed, which reports `empty_char_grid_item` — which is why content is
+    // part of the snippet rather than left for the panel.
+    expect(insertSnippet('charGrid', 'テキスト')).toEqual({
+      type: 'char_grid',
+      text: 'テキスト',
+      grid: { charsPerLine: 20, lines: 10 },
+    });
+  });
+
+  it('authors no cellSize, box or style — each is the engine default', () => {
+    // `cellSize` derives from the content width (on A4 at the default 25pt
+    // margins: 545.28 / 20 = 27.26pt ≈ 9.6mm, measured off the rendered PNG),
+    // `box.w` already defaults to full width, and the ruling draws at 0.5pt on
+    // its own. Authoring any of them would put a value in the file the user
+    // never chose (the `line`/`page_number` precedent).
+    const snippet = insertSnippet('charGrid', 'Text') as Record<string, unknown>;
+    expect(snippet.box).toBeUndefined();
+    expect(snippet.style).toBeUndefined();
+    expect((snippet.grid as Record<string, unknown>).cellSize).toBeUndefined();
+  });
+});

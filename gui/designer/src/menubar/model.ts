@@ -99,6 +99,10 @@ export interface MenubarWiring {
   /** Whether the current insert target is a header/footer band — the gate for
    * band-only rows. */
   readonly bandTarget: boolean;
+  /** Whether the current insert target is the BODY's flow — the gate for
+   * flow-only rows, and the mirror of `bandTarget`. Positive rather than
+   * "not a band": a container and an `absolute` body cannot hold one either. */
+  readonly flowTarget: boolean;
   /** Help — shortcuts, glossary and the tutorial are all self-contained
    * Designer chrome, always present. */
   readonly onShortcuts: () => void;

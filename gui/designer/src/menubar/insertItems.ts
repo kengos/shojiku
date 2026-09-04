@@ -1,12 +1,24 @@
 // What one armed INSERT group becomes as menu rows: the per-entry-kind dispatch,
-// plus the two gates that show a row DISABLED with its reason rather than hiding
-// it (a band-only element outside a header/footer, save-block without a savable
-// selection) — an affordance that appears and disappears is worse than one that
-// explains itself.
+// plus the gates that show a row DISABLED with its reason rather than hiding it
+// (a band-only element outside a header/footer, a flow-only element outside the
+// body's flow, save-block without a savable selection) — an affordance that
+// appears and disappears is worse than one that explains itself.
 
 import { requiresBand } from '../insert/bandPlacement';
-import type { InsertGroup } from '../insert/insertMenu';
+import { requiresFlow } from '../insert/flowPlacement';
+import type { InsertGroup, InsertKind } from '../insert/insertMenu';
 import type { MenubarWiring, MenuItem } from './model';
+
+/** The reason an element row is blocked, or `null` when it is not. The two
+ * gates are mutually exclusive by construction — no kind both requires a band
+ * and requires the flow — so the first match wins and no precedence rule is
+ * needed. */
+function blockedReasonKey(kind: InsertKind, w: MenubarWiring): string | null {
+  if (requiresBand(kind) && !w.bandTarget) {
+    return 'insert.pageNumber.bandOnly';
+  }
+  return requiresFlow(kind) && !w.flowTarget ? 'insert.pageBreak.flowOnly' : null;
+}
 
 /** Map one armed insert group to menu items, dispatching per entry kind. */
 export function insertItems(
@@ -16,13 +28,11 @@ export function insertItems(
 ): MenuItem[] {
   return group.entries.map((entry) => {
     if (entry.kind === 'element') {
-      const blocked = requiresBand(entry.insert) && !w.bandTarget;
+      const reasonKey = blockedReasonKey(entry.insert, w);
       return {
-        label: blocked
-          ? `${t(entry.labelKey)} — ${t('insert.pageNumber.bandOnly')}`
-          : t(entry.labelKey),
+        label: reasonKey === null ? t(entry.labelKey) : `${t(entry.labelKey)} — ${t(reasonKey)}`,
         run: () => w.onInsertKind(entry.insert),
-        disabled: blocked,
+        disabled: reasonKey !== null,
       };
     }
     if (entry.kind === 'band') {

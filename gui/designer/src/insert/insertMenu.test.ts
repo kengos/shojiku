@@ -1,6 +1,7 @@
 // Tests for insertMenu.ts — the insert-menu row model: a capability-less
 // row is ABSENT rather than broken, and the conditional groups' order.
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_CATALOG } from '../i18n/catalog';
 import { BAND_LABEL_KEYS } from './bandCreate';
 import { type InsertArming, insertMenuGroups } from './insertMenu';
 
@@ -14,6 +15,8 @@ const NONE: InsertArming = {
   line: false,
   ellipse: false,
   checkbox: false,
+  pageBreak: false,
+  charGrid: false,
 };
 const ALL: InsertArming = {
   iterable: true,
@@ -23,6 +26,8 @@ const ALL: InsertArming = {
   line: true,
   ellipse: true,
   checkbox: true,
+  pageBreak: true,
+  charGrid: true,
 };
 
 /** The element group's rows, by what each one inserts. */
@@ -179,5 +184,51 @@ describe('insertMenuGroups', () => {
       'insert.group.listData',
       'insert.group.image',
     ]);
+  });
+});
+
+describe('the character grid and the page break', () => {
+  it('offers the char-grid row directly after the QR code, and the break after the page number', () => {
+    // Neither may split the measured rect -> line -> marks run, so both queue
+    // behind it. The character grid follows the QR code as the next
+    // content-bearing box; the page break follows the page NUMBER because the
+    // two are mirror images — one lays out only in a band, the other only in
+    // the flow, and each states its reason on a disabled row elsewhere.
+    expect(elementKinds(ALL)).toEqual([
+      'text',
+      'rect',
+      'line',
+      'ellipse',
+      'checkbox',
+      'qrCode',
+      'charGrid',
+      'pageNumber',
+      'pageBreak',
+      'cutLine',
+      'container',
+      'paste',
+    ]);
+  });
+
+  it('omits each row against an engine that does not carry its item type', () => {
+    // Absent rather than disabled: against an older engine the snippet is a
+    // PARSE ERROR, so there is nothing to offer and nothing to explain.
+    expect(elementKinds(NONE)).not.toContain('charGrid');
+    expect(elementKinds(NONE)).not.toContain('pageBreak');
+  });
+
+  it('arms each row independently of the other', () => {
+    expect(elementKinds({ ...NONE, charGrid: true })).toContain('charGrid');
+    expect(elementKinds({ ...NONE, charGrid: true })).not.toContain('pageBreak');
+    expect(elementKinds({ ...NONE, pageBreak: true })).toContain('pageBreak');
+    expect(elementKinds({ ...NONE, pageBreak: true })).not.toContain('charGrid');
+  });
+
+  it('labels both rows without an ellipsis — each acts, neither asks', () => {
+    // `i18n/ellipsis.test.ts` walks labels that ALREADY carry an ellipsis, so a
+    // row that wrongly gained one is invisible to it. These two act on click.
+    const chrome = DEFAULT_CATALOG.en.chrome;
+    expect(chrome['insert.charGrid']).not.toContain('\u2026');
+    expect(chrome['insert.pageBreak']).not.toContain('\u2026');
   });
 });
