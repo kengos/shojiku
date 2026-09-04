@@ -121,6 +121,8 @@ export function useInsertActions({
     checkbox:
       capabilities === undefined ||
       (capabilities.includes('checkbox') && capabilities.includes('checkbox.auto_size')),
+    pageBreak: capabilities === undefined || capabilities.includes('page_break'),
+    charGrid: capabilities === undefined || capabilities.includes('char_grid'),
   });
 
   // Insert a default snippet at the resolved target (into the selected

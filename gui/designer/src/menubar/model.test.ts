@@ -18,6 +18,8 @@ const NO_ARMING: InsertArming = {
   line: false,
   ellipse: false,
   checkbox: false,
+  pageBreak: false,
+  charGrid: false,
 };
 
 const t = (key: string) => key;
@@ -28,6 +30,7 @@ function baseWiring(over: Partial<MenubarWiring> = {}): MenubarWiring {
     onDocumentSettings: vi.fn(),
     onDataEditor: vi.fn(),
     bandTarget: false,
+    flowTarget: false,
     onBand: vi.fn(),
     onTutorial: vi.fn(),
     hostEntries: [],
@@ -180,6 +183,39 @@ describe('buildMenubar', () => {
     expect(allowed?.disabled).toBe(false);
     allowed?.run();
     expect(onInsertKind).toHaveBeenCalledWith('pageNumber');
+  });
+
+  it('disables the page-break row outside the flow, naming the reason', () => {
+    // The mirror of the page-number row above, and the reason it needs its OWN
+    // gate: `bandTarget` is false inside a container too, where a page break is
+    // equally skipped — so "not a band" would have offered it there.
+    const onInsertKind = vi.fn();
+    const groups = insertMenuGroups({ ...NO_ARMING, pageBreak: true });
+    const outside = buildMenubar(t, baseWiring({ insert: groups, onInsertKind }))[2].groups[0];
+    const blocked = outside.find((i) => i.label.startsWith('insert.pageBreak'));
+    expect(blocked?.disabled).toBe(true);
+    expect(blocked?.label).toContain('insert.pageBreak.flowOnly');
+
+    const inFlow = buildMenubar(
+      t,
+      baseWiring({ insert: groups, onInsertKind, flowTarget: true }),
+    )[2].groups[0];
+    const allowed = inFlow.find((i) => i.label === 'insert.pageBreak');
+    expect(allowed?.disabled).toBe(false);
+    allowed?.run();
+    expect(onInsertKind).toHaveBeenCalledWith('pageBreak');
+  });
+
+  it('never disables the char-grid row on a placement gate', () => {
+    // It carries neither gate, so it stays enabled in the one state that
+    // blocks both of its neighbours.
+    const groups = insertMenuGroups({ ...NO_ARMING, charGrid: true });
+    const rows = buildMenubar(
+      t,
+      baseWiring({ insert: groups, bandTarget: false, flowTarget: false }),
+    )[2].groups[0];
+    const row = rows.find((i) => i.label === 'insert.charGrid');
+    expect(row?.disabled).toBe(false);
   });
 
   it('maps the reusable-block entries: save (armed), insert-by-id, manage', () => {
@@ -373,6 +409,8 @@ describe('buildMenubar', () => {
           line: true,
           ellipse: true,
           checkbox: true,
+          pageBreak: true,
+          charGrid: true,
         }),
         onInsertKind,
         onContainer,

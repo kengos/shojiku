@@ -14,6 +14,8 @@ export type InsertKind =
   | 'checkbox'
   | 'qrCode'
   | 'pageNumber'
+  | 'pageBreak'
+  | 'charGrid'
   | 'cutLine';
 
 /** One menu row: a default-snippet element insert, the container-picker intent
@@ -78,6 +80,13 @@ export interface InsertArming {
    * `checkbox` but not `checkbox.auto_size`, an unsized mark is skipped with
    * `mark_missing_size` rather than drawn. */
   readonly checkbox: boolean;
+  /** The engine understands `page_break`. One key, not two: the snippet is the
+   * bare `{ type: page_break }` and depends on nothing else. */
+  readonly pageBreak: boolean;
+  /** The engine understands `char_grid`. One key: the snippet authors only
+   * `grid` + `text`, so it needs neither `char_grid.containers` (a POSITIONAL
+   * concern the flow/band gates handle) nor the markup keys. */
+  readonly charGrid: boolean;
 }
 
 /** The insert menu's structure, grouped by entry class (elements / data field /
@@ -116,11 +125,26 @@ export function insertMenuGroups(armed: InsertArming): readonly InsertGroup[] {
           ? [{ kind: 'element', insert: 'checkbox', labelKey: 'insert.checkbox' } as const]
           : []),
         { kind: 'element', insert: 'qrCode', labelKey: 'insert.qrCode' },
+        // The character grid: manuscript paper / workbook / form entry cells.
+        // It sits with the drawn elements rather than with the bands because it
+        // is one, and it carries NO placement gate — the engine lays a
+        // `char_grid` out everywhere, drawing a single sheet outside a flow
+        // body rather than warning.
+        ...(armed.charGrid
+          ? [{ kind: 'element', insert: 'charGrid', labelKey: 'insert.charGrid' } as const]
+          : []),
         // Band-only: the page count is known at assembly, so the engine warns
         // and skips a `page_number` anywhere else. The row stays VISIBLE and
         // disabled (with its reason) rather than vanishing — a control that
         // appears and disappears reads as a bug.
         { kind: 'element', insert: 'pageNumber', labelKey: 'insert.pageNumber' },
+        // Flow-only, and the mirror image of the page number above: the engine
+        // warns and skips a `page_break` in a band, a container or an absolute
+        // body (`page_break_in_*`), so the row stays VISIBLE and disabled with
+        // its reason there rather than vanishing.
+        ...(armed.pageBreak
+          ? [{ kind: 'element', insert: 'pageBreak', labelKey: 'insert.pageBreak' } as const]
+          : []),
         // Cut-here line: a dashed rule plus its label, the business-form staple. Gated on
         // the engine understanding `line`'s `style:` — against an older
         // engine the snippet would be a parse error, not a solid line, so

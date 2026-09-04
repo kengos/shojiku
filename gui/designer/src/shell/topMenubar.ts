@@ -22,6 +22,7 @@ import type { TutorialWiring } from '../hooks/useTutorialWiring';
 import { useI18n } from '../i18n/context';
 import { activateBand } from '../insert/bandCreate';
 import { blockInsertGroup } from '../insert/blockModel';
+import { isFlowTarget } from '../insert/flowPlacement';
 import type { InsertGroup } from '../insert/insertMenu';
 import { resolveInsertTarget } from '../insert/model';
 import {
@@ -79,6 +80,9 @@ export function useMenubarColumns(options: MenubarColumnsOptions): MenuColumn[] 
   // sequence-addressed selection (the shortcuts' guard).
   const seqSelected = editor.selection !== null && seqPosition(editor.selection) !== null;
 
+  // ONE resolution, read by both owner gates below — they are two questions
+  // about the same target, and resolving twice invites them to disagree.
+  const insertPath = resolveInsertTarget(editor.read, editor.selection).path;
   return buildMenubar(t, {
     onBack: menuActions?.onBack,
     onOpen: menuActions?.onOpen,
@@ -124,6 +128,7 @@ export function useMenubarColumns(options: MenubarColumnsOptions): MenuColumn[] 
     onShortcuts: dialogs.openShortcuts,
     onGlossary: dialogs.openGlossary,
     onTutorial: tutorial.openTutorial,
-    bandTarget: bandOf(resolveInsertTarget(editor.read, editor.selection).path) !== null,
+    bandTarget: bandOf(insertPath) !== null,
+    flowTarget: isFlowTarget(editor.read, insertPath),
   });
 }

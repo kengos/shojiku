@@ -111,8 +111,9 @@ succeeded.
 
 ## Insert menu + container picker
 
-The plain insert is four pure leaves — what the menu OFFERS, what each
-kind INSERTS, what a band REQUIRES, and where the result LANDS:
+The plain insert is five pure leaves — what the menu OFFERS, what each
+kind INSERTS, what a band REQUIRES, what the FLOW requires, and where the
+result LANDS:
 
 - `insert/insertMenu.ts` — `InsertKind`/`MenuEntry`/`InsertGroup`/
   `InsertArming` + `insertMenuGroups(armed)` (the menu's entry-class
@@ -134,6 +135,13 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
   the wire since 0.1.0) and sits directly under the element group, next
   to the `page_number` row whose disabled reason names it; its rows are
   bare NOUNS with no `…`, like every other immediately-acting row.
+  The CHARACTER GRID and the PAGE BREAK arm on one capability each
+  (`char_grid`, `page_break`) and likewise queue behind the rule rather
+  than splitting it: the grid follows the QR code as the next
+  content-bearing box, the break follows the page NUMBER because the two
+  are mirror images — one lays out only in a band, the other only in the
+  flow, and each states its reason on a disabled row in the other's
+  place.
   NOTE: `InsertGroup.labelKey` is structure only — `Menubar.tsx` renders
   groups as divider-separated blocks and shows no group heading.
 - `insert/insertSnippet.ts` — `insertSnippet(kind, …)` (per-type default
@@ -156,6 +164,40 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
   vertical extent and paints at the BOTTOM of it, so every point of `y`
   is air ABOVE the rule and none below — 4 pt is the value that reads as
   a rule rather than as an underline of the text above it.
+  The two newest snippets are the same discipline. `page_break` is the
+  BARE tag: its wire struct takes only `id`/`visible` under
+  `deny_unknown_fields`, so any second key is a parse error rather than a
+  misplacement (the test asserts the own-key COUNT, not the shape). The
+  `char_grid` snippet authors exactly the two REQUIRED grid dimensions
+  (`charsPerLine: 20`, `lines: 10`) plus content, and content is not
+  optional decoration: with neither `text` nor `data` the engine reports
+  `empty_char_grid_item`, so the row would insert a diagnostic. It
+  authors no `cellSize` (derived from the content width — on A4 at the
+  engine's default 25pt margins that is 545.28/20 = 27.26pt ≈ 9.6mm,
+  MEASURED off the rendered PNG; it is not the 9mm genkoyoshi cell, which
+  `examples/typography/genkoyoshi-ja` authors explicitly on B5), no `box`
+  (`box.w` already defaults to full width) and no `style` (the ruling
+  draws at 0.5pt on its own). Probed with `make engine:preview`, whose
+  positive control was the same item with `text` removed.
+- `insert/flowPlacement.ts` — the MIRROR of `bandPlacement`, and the
+  INSERT-side half of the flow-only rule. Its other half is
+  `canvas/dnd`'s `typeFitsOwner`/`FLOW_ONLY`, which answers the same
+  question for a DROP or a saved block, in the wire's vocabulary
+  (`repeat`, `repeat_flow`, `page_break`) rather than in `InsertKind`'s.
+  The two agree today only because the repeaters have no insert row;
+  when one gains a creation path they want unifying rather than
+  extending in parallel. Exports: `requiresFlow` (today `pageBreak`
+  alone — `charGrid` is deliberately NOT one, since the engine places a
+  `char_grid` everywhere and merely draws a single sheet outside a flow
+  body) plus
+  `isFlowTarget(read, path)`, the POSITIVE test that the resolved target
+  is `sections.body.items` of a body whose `type` really is `flow`. It
+  fails CLOSED: a container target, an `absolute` body, an unreadable or
+  unrecognized body `type`, and a read that throws all answer `false` —
+  mirroring `panel/placementModel`, which likewise asks
+  `owner.type === 'flow'` rather than ruling `absolute` out. It exists
+  because `bandTarget` cannot stand in for it: a container is not a band
+  and cannot hold a `page_break` either.
 - `insert/bandGeometry.ts` — WHICH margin-box height a band insert places
   against: `documentContentHeightPt` (read off the document's own
   `page.size`/`orientation`/`margin` through `readPageView` + `readMarginView`
@@ -227,8 +269,9 @@ kind INSERTS, what a band REQUIRES, and where the result LANDS:
   restore guard over untrusted storage), `blockInsertGroup` (the
   reusable-blocks menu group; armed only when the host wires
   `onBlocksChange`). Each row carries `flowOnly`, read off `canvas/dnd`'s
-  `typeFitsOwner` — the ONE home for which owner a kind fits — so the
-  menubar can disable it inside a band. Unlike the band-only page number,
+  `typeFitsOwner` — the home for which owner a WIRE TYPE fits, whose
+  insert-menu counterpart over `InsertKind` is `flowPlacement`'s
+  `requiresFlow` — so the menubar can disable it inside a band. Unlike the band-only page number,
   which merely warns in the wrong place, a `repeat`/`repeat_flow`/
   `page_break` inside a band does NOT parse: the whole document stops
   rendering. `hooks/useBlocks` re-checks the same predicate at insert time,

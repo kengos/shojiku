@@ -142,11 +142,15 @@ resolved style.
 
 - `menubar/model.ts` — pure menubar model: `buildMenubar(t, wiring)` →
   File/Edit/Insert/Help columns; every `MenuItem` runs an EXISTING op or
-  host callback (AI parity); band-only/unsavable rows stay VISIBLE and
-  disabled with the reason appended; optional file actions present only
-  when the host wires them. `menubar/insertItems.ts` — one armed insert
-  group → menu rows (the per-entry-kind dispatch + the two
-  visible-but-disabled gates). `menubar/hostEntries.ts` —
+  host callback (AI parity); band-only/flow-only/unsavable rows stay VISIBLE
+  and disabled with the reason appended; optional file actions present only
+  when the host wires them. The wiring carries the two OWNER gates as a pair
+  — `bandTarget` and `flowTarget`, both positive tests over the SAME resolved
+  insert target (`shell/topMenubar` resolves once and reads it twice), because
+  "not a band" is not "in the flow": a container and an `absolute` body are
+  neither. `menubar/insertItems.ts` — one armed insert group → menu rows (the
+  per-entry-kind dispatch + the visible-but-disabled gates, whose element arm
+  is one `blockedReasonKey` over both owner gates). `menubar/hostEntries.ts` —
   `validateHostEntries(raw)`: untrusted host entries runtime-typed, id
   charset + reserved-name reject + caps + dedupe; bad entries dropped,
   never thrown (re-exported through `menubar/model.ts`).

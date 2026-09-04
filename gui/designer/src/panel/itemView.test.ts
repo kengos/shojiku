@@ -2,7 +2,13 @@
 // content kind, bindings, style names, image source summary, and the
 // registry-name reads.
 import { describe, expect, it } from 'vitest';
-import { imageSourceSummary, readItemView, registryNames } from './itemView';
+import {
+  BOXLESS_TYPES,
+  imageSourceSummary,
+  NO_BOX_WIRE_TYPES,
+  readItemView,
+  registryNames,
+} from './itemView';
 
 describe('readItemView', () => {
   it('returns null for a non-item node', () => {
@@ -91,5 +97,31 @@ describe('readItemView — data scope', () => {
     // An authored NON-document scope stays verbatim (display honesty); only
     // `document` drives the badge, which the picker decides.
     expect(view({ key: 'a', scope: 'element' })?.dataScope).toBe('element');
+  });
+});
+
+describe('NO_BOX_WIRE_TYPES', () => {
+  // What the set must EQUAL is pinned to the engine source in
+  // `noBoxWire.test.ts`, which derives the boxless variants from
+  // `template.rs` rather than restating them. These cases cover the
+  // relationship between the two sets, which is a gui-side decision and has
+  // no wire to read.
+  it('contains every member of the canvas set', () => {
+    for (const type of BOXLESS_TYPES) {
+      expect(NO_BOX_WIRE_TYPES.has(type)).toBe(true);
+    }
+  });
+
+  it('stays WIDER than the canvas set, which the repeaters must stay out of', () => {
+    // `BOXLESS_TYPES` also gates canvas manipulation, whose boxless arm
+    // short-circuits before the reorder classification — putting the repeaters
+    // in it would take drag-reordering away from two types that have it.
+    expect(BOXLESS_TYPES.has('repeat')).toBe(false);
+    expect(BOXLESS_TYPES.has('repeat_flow')).toBe(false);
+  });
+
+  it('does not answer for an inherited name', () => {
+    expect(NO_BOX_WIRE_TYPES.has('__proto__')).toBe(false);
+    expect(NO_BOX_WIRE_TYPES.has('constructor')).toBe(false);
   });
 });

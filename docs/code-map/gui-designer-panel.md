@@ -376,12 +376,19 @@ presence is not a text binding.
 - `panel/itemView.ts` — the READ side: `readItemView` → `ItemView`
   (incl. `dataScope`, `pageFormat`), `display`/`record` narrowings,
   `registryNames`, `BOX_AXES`, `imageSourceSummary` (format + KiB — the
-  raw `src` never reaches a field). Also the ONE home for **`BOXLESS_TYPES`**
-  (`line`/`page_break` — the types whose wire struct takes no `box:` at
-  all): `ItemPanel`'s tab gate, `placementModel`'s classifier,
-  `canvas/manipulate`'s `noBox` refusal and `insert/bandPlacement`'s
-  band-placement branch all consult this set instead of each keeping
-  their own type list. And the ONE home for **`MARK_TYPES`**
+  raw `src` never reaches a field). Also the ONE home for the two BOXLESS
+  sets, which answer different questions and are deliberately different
+  sizes. **`BOXLESS_TYPES`** (`line`/`page_break`) is the CANVAS/placement
+  set: `placementModel`'s classifier, `canvas/manipulate`'s `noBox` refusal
+  and `insert/bandPlacement`'s band-placement branch read it. It stays at two
+  because its `noBox` arm short-circuits before the reorder classification, so
+  admitting the repeaters would take canvas drag-reordering away from two
+  types that have it in a flow body. **`NO_BOX_WIRE_TYPES`** is the WIRE truth
+  — all four `Item` variants that omit `box_` (`line`, `page_break`, `repeat`,
+  `repeat_flow`) — and has exactly one consumer, `ItemPanel`'s tab gate,
+  because a placement tab over any of them authors a `deny_unknown_fields`
+  parse error. A drift-guard test pins it to the enum. And the ONE home for
+  **`MARK_TYPES`**
   (`ellipse`/`checkbox` — the two form marks): they share a wire family,
   a presence predicate, and a paint rule that is emphatically NOT the
   border box's, so `ItemPanel`'s content and decoration gates, the
@@ -685,12 +692,24 @@ presence is not a text binding.
   every type, so it must not appear and disappear as the reader changes tab —
   and BELOW them, after the tab bodies (or after a single-tab body, or alone
   for a type with no tabs). **The placement tab is withheld from BOX-LESS types**
-  (`itemView.ts`'s `BOXLESS_TYPES` — `line`/`page_break`; both wire
-  structs are `deny_unknown_fields` and take no `box:`, so offering the
-  fields authored a parse error). `line` therefore renders its stroke
+  (`itemView.ts`'s `NO_BOX_WIRE_TYPES` — `line`, `page_break` and BOTH
+  repeaters; all four wire structs are `deny_unknown_fields` and take no
+  `box:`, so offering the fields authored a parse error. It reads the wire
+  set rather than the narrower canvas one, which is what left `repeat` with
+  a placement tab as its ONLY tab). `line` therefore renders its stroke
   editor PLUS a placement tab whose body is the ENDPOINT editor rather
-  than the box fields (`POINT_PLACED_TYPES`), while `page_break` has NO
-  applicable tab and renders the `panel.noEditable` placeholder. The two
+  than the box fields (`POINT_PLACED_TYPES`), while `page_break` and `repeat`
+  have NO applicable tab. What those two get instead is deliberately
+  different: `page_break` earns a one-line note above the presence binding
+  (`pageBreakNoteKey` — `panel.pageBreak.note`, or `panel.pageBreak.noteFirst`
+  at index 0, where the engine COLLAPSES the break and the general sentence
+  would promise an effect the file does not have), because its empty panel is
+  the whole item; `repeat` gets no note at all, because its wire carries a data
+  source, a cell and a grid that have no surface yet, and any "that is all"
+  sentence would be false. The `panel.noEditable` placeholder is rarer than
+  both: it appears only when even `visible:` is unavailable (an engine without
+  `item.visible`), so against a current engine a tab-less item never shows
+  it. The two
   FORM MARKS (`MARK_TYPES`) take ALL THREE: they are boxed, their
   presence is content, and their outline is decoration — reached through
   `STYLED_TYPES` (which is `BORDERABLE_TYPES` plus `line` plus the marks)

@@ -15,6 +15,18 @@ platform binaries.
 
 ### Added
 
+- **Insert ▸ Character grid and Insert ▸ Page break.** Both have been in the
+  template format for a long time and neither could be created from the GUI: a
+  character grid — manuscript paper, a kanji workbook sheet, the boxed entry
+  cells on an application form — could only reach a document by opening one of
+  the three bundled presets that happened to carry one, and a page break by
+  opening the one bundled preset that did. Insert ▸ Character grid drops a
+  20×10 ruled sheet, sized from the page width, that the existing character-grid
+  panel then edits. Insert ▸ Page break drops a break, and because the engine
+  only paginates the body's flow, the row shows itself disabled — with the
+  reason — when what you have selected would put the break in a header, a footer,
+  a container or an absolute-positioned body.
+
 - **The Designer can draw an ellipse and a checkbox, and edit what makes them
   draw.** Both have been in the template format since form marks shipped, and
   neither could be created from the GUI at all. Selecting one in a file that
@@ -40,6 +52,16 @@ platform binaries.
   given the full margin box, a rule written for text, which would have drawn a
   checkbox in a header as a frame the width of the page. A fixed-aspect mark now
   takes the position and nothing else.
+
+### Fixed
+
+- **The property panel no longer offers a size-and-position tab that breaks the
+  file.** Selecting a `repeat` (the n-up imposition grid) offered exactly one
+  tab, size and position, over an item the format gives no `box` at all — so
+  typing a width there stopped the whole document rendering until it was undone.
+  A `repeat_flow` had the same tab beside its content one. Neither offers it now.
+  That is a stopped mistake rather than a finished panel: a `repeat` still has
+  no way to edit its data source, its cell or its grid.
 
 ### Changed
 

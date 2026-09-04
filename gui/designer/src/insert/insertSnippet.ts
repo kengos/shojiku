@@ -53,6 +53,33 @@ export function insertSnippet(
       return { type: 'checkbox' };
     case 'qrCode':
       return { type: 'qr_code', box: { w: 60, h: 60 }, text: 'https://example.com' };
+    case 'pageBreak':
+      // The wire gives a `page_break` only `id` and `visible`
+      // (`deny_unknown_fields`), so the snippet is the bare tag: a `box:` here
+      // is a parse error, not a misplacement.
+      return { type: 'page_break' };
+    case 'charGrid':
+      // `grid.charsPerLine` and `grid.lines` are the only REQUIRED keys, and
+      // content is the third thing the item needs: with neither `text` nor
+      // `data` the engine warns `empty_char_grid_item`, so the row would
+      // insert a diagnostic. The default text fills the first cells and the
+      // rest draw as blank ruled paper, which is what a manuscript sheet is.
+      //
+      // Nothing else is authored, and each omission is the engine's own
+      // default rather than a gap: no `cellSize` (derived from the content
+      // width), no `box` (`box.w` already defaults to full width and the grid
+      // draws from the content box's top-left), and no `style` (the ruling
+      // draws at 0.5pt on its own).
+      //
+      // 20 x 10 is 200 cells — the half sheet of manuscript paper — and it
+      // fits. MEASURED off the rendered PNG rather than reasoned: on A4 at the
+      // engine's default 25pt margins the content width is 545.28pt
+      // (595.28 - 50), so a derived cell is 27.26pt ≈ 9.6mm and ten lines come
+      // to 272.9pt against the 791.89pt the page has. Deliberately NOT the 9mm
+      // genkoyoshi cell — that is a different thing, authored explicitly with
+      // `cellSize: 9mm` on B5 in `examples/typography/genkoyoshi-ja`, and no
+      // column count on A4 derives it.
+      return { type: 'char_grid', text: defaultText, grid: { charsPerLine: 20, lines: 10 } };
     case 'pageNumber':
       // No `format` key: the engine's own `{page} / {pages}` is the default,
       // and authoring it would put a value in the file the user never chose.
@@ -64,9 +91,14 @@ export function insertSnippet(
   }
 }
 
-/** Fallback cut-line width (pt) when no render geometry is available yet — the
- * A4 portrait margin box at the engine's default margins, so a first insert
- * before the first paint still spans a sensible run. */
+/** Fallback cut-line width (pt) when no render geometry is available yet, so a
+ * first insert before the first paint still spans a sensible run.
+ *
+ * It is NOT the A4 margin box, which its doc used to claim: that measures
+ * 545.28pt at the engine's default 25pt margins (595.28 - 50), and 515 is what
+ * a 40pt margin would give. The value is left alone because a committed test
+ * pins the floored width and the run is a pre-paint fallback that the real
+ * render geometry replaces; only the false description is corrected. */
 export const DEFAULT_CUT_LINE_PT = 515;
 
 /** How far below the flow cursor a plain rule sits, in pt.

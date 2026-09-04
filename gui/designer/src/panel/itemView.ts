@@ -32,6 +32,27 @@ export type BoxAxis = (typeof BOX_AXES)[number];
  * different predicate and is enforced where it belongs. */
 export const BOXLESS_TYPES: ReadonlySet<string> = new Set(['line', 'page_break']);
 
+/** The WIRE's boxless list — all four `Item` variants that omit `box_`, so
+ * authoring `box.w` on any of them is the same `deny_unknown_fields` parse
+ * error that stops the whole document rendering.
+ *
+ * It exists BESIDE `BOXLESS_TYPES` rather than replacing it because the two
+ * answer different questions, and the comment above says so: that set is the
+ * CANVAS/placement one, whose boxless arm short-circuits before the reorder
+ * classification, so putting the repeaters in it would take drag-reordering
+ * away from two types that legitimately have it in a flow body.
+ *
+ * What that split missed is that the same set also gated the placement TAB.
+ * The repeaters therefore reached `applicableTabs` as ordinary boxed items and
+ * came back with `['box']` — for `repeat`, its ONLY tab — so the one control
+ * the panel offered was the one that breaks the file. The tab gate reads the
+ * wire truth; nothing else does. */
+export const NO_BOX_WIRE_TYPES: ReadonlySet<string> = new Set([
+  ...BOXLESS_TYPES,
+  'repeat',
+  'repeat_flow',
+]);
+
 /** The two FORM MARKS — the box-inscribed vector shapes whose *presence* is
  * content (`engine/core/src/template/marks.rs`). They share a wire family, a
  * presence predicate, and a paint rule that is emphatically NOT the border
