@@ -1,4 +1,4 @@
-# Code map — packs/, examples/, docker/, docs/, site/, skills/, scripts/
+# Code map — packs/, examples/, docker/, docs/, site/, skills/, scripts/, .claude/hooks/
 
 > AI-only, token-dense. Index + repo-wide conventions: [CLAUDE.md](../../CLAUDE.md).
 > Read this BEFORE searching or editing the covered dirs; update it in the
@@ -297,6 +297,36 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   reference; `docs/migration-thinreports.md` = the worked migration
   walkthrough; `docs/mockups/` = per-design-session handoff artifacts,
   deleted once shipped — currently empty).
+- **`.claude/hooks/` + `.claude/settings.json`** — the only tracked part of
+  `.claude/` (`.gitignore` narrows the directory rather than excluding it):
+  two hook scripts and the settings file that registers them, three files in
+  all (`git ls-files .claude`). Two POSIX-sh scripts reading a
+  hook event on stdin and writing at most one decision: `guard-bash.sh`
+  (PreToolUse over Bash — denies a piped gate, `make -n`, a host `cargo`, a
+  commit with signing disabled or an attribution trailer, a push at `main`;
+  ASKS on `gh pr merge`, which is the per-change merge authorization made
+  deterministic; notes a bare `make` in a worktree, a `pgrep` watcher, an
+  unquoted `--include` glob, a `git add -f` on the lockfile) and `guard-edit.sh` (PostToolUse over Edit/Write
+  — notes only: the `.rs` 300-line cap and `//!` header, the gui 150
+  executable-line cap, work-item codes reaching tracked files).
+  The shape — controls as code, and a hook as the approval gate an agent can
+  drive up to but not through — is the Build and Deploy half of Anthropic's
+  AI-native SDLC playbook (https://claude.com/blog/the-ai-native-sdlc-playbook),
+  which is what prompted this directory.
+  **The rules in it were carried as prose in the untracked development
+  skills and broken anyway**; they are tracked because settings are read from
+  the WORKING DIRECTORY and every cycle works in a git worktree, so an
+  untracked hook never fires where the work happens. `scripts/check-hooks.sh`
+  is the gate (`make hooks:verify`, job `versions`): it asserts both halves —
+  the deny cases blocked AND the legitimate spelling beside each one allowed —
+  and refuses a run in which fewer than eight denies fired, since a hook that
+  quietly stops deciding reddens nothing on its own.
+  **Read a change here as CODE, not as config.** These scripts execute on every
+  Bash and Edit/Write tool call in whatever checkout they sit in, so a pull
+  request touching them runs on the reviewer's own machine the moment the
+  branch is checked out, with that reviewer's privileges. `make hooks:verify`
+  checks that the deny table still behaves; it has nothing to say about what a
+  hook script does.
 - **Top-level `skills/`** — the product-facing AI skills, kept OUT of
   `docs/` so `npx skills add <owner>/shojiku` discovers them (flat
   `skills/<name>/SKILL.md`, `name`+`description` frontmatter — these are

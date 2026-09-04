@@ -55,6 +55,13 @@ platform binaries.
 
 ### Fixed
 
+- **`make make:check` runs in CI, which its own documentation had claimed for
+  some time.** The Makefile's target-to-CI-job table filed it under the
+  `versions` job; that job ran only `make version:check`. Unwatched, the gate
+  had gone red on a sentence in the MCP reference reading "would only make it
+  unreachable", which its detector reads as a reference to a target named `it`.
+  Both halves are fixed: the sentence, and the wiring that would have caught it.
+
 - **The property panel no longer offers a size-and-position tab that breaks the
   file.** Selecting a `repeat` (the n-up imposition grid) offered exactly one
   tab, size and position, over an item the format gives no `box` at all — so
@@ -64,6 +71,24 @@ platform binaries.
   no way to edit its data source, its cell or its grid.
 
 ### Changed
+
+- **The development rules an AI session works under are enforced now, not
+  recited.** `.claude/hooks/`, with the `.claude/settings.json` that registers
+  them, is the only tracked part of that directory: two hooks Claude Code runs
+  against its own tool calls in this checkout. They refuse a `make` gate feeding
+  a pipe (a pipeline reports the last command's status, so it exits 0 over a
+  failed gate), `make -n` (not a dry run here — recipe lines containing
+  `$(MAKE)` still run for real, and one such run took the gate lock away from a
+  live gate), a `cargo` invocation on a host that has no Rust toolchain, a
+  commit made with signing disabled against a ruleset that requires signatures,
+  an attribution trailer in a commit message or PR body, and a push at the
+  protected `main`; a merge asks first. Every one of those was already written
+  down in two to five places and broken anyway, which is the argument for a
+  control rather than another reminder. Nothing here changes what a human
+  contributor may run — but review a change to the hooks themselves as code,
+  since they execute in whatever checkout they sit in. `make hooks:verify` is
+  the gate over them, and it asserts both halves: every refusal still fires,
+  and the legitimate spelling beside each one still passes.
 
 - **The value field on a conditional rule is no longer a white box.** Wherever
   you say "…when the data equals this" — a table's row conditions, an item's

@@ -295,3 +295,12 @@ takes `version-check-exempt: <reason>`, the same shape as
   area you are touching.
 - [CLAUDE.md](CLAUDE.md) — the repo map AI agents read first; useful to
   humans as a dense index of where everything is.
+- [.claude/hooks/](.claude/hooks/) — hooks Claude Code runs against its own
+  tool calls in this checkout: they refuse a gate piped into `tail` (a
+  pipeline reports the last command's status, so it exits 0 over a failure),
+  a `cargo` run on a host with no toolchain, and a push at the protected
+  `main`, and they ask before a merge. They affect an AI session only;
+  nothing here changes what a human contributor may run. `make hooks:verify`
+  is the gate over them. **Review a change to them as code**: they execute on
+  every tool call in the checkout they sit in, so they will run on your machine
+  once you check the branch out.

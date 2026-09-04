@@ -150,6 +150,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: make version:check
+      - run: make make:check
+      - run: make hooks:verify
 
   wasm:
     name: wasm (build + size budget)

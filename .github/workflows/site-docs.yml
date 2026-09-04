@@ -35,6 +35,19 @@ name: Site (docs-only changes)
 # starts and there is nothing running to read the message. Markers can only
 # ever SKIP (`[skip ci]`), never start.
 #
+# THE SECOND HOLE, same shape. `make make:check` refuses any tracked file that
+# names a make target which does not exist — a failure mode that is
+# predominantly DOCS, since prose is where a target gets named in passing. It
+# was filed under ci.yml's `versions` job, which a docs-only change never
+# starts, so it went red on `main` unnoticed: a sentence in the MCP reference
+# reading "would only make it unreachable" reads as a reference to a target
+# named `it`. It runs here too, needing no Docker and taking seconds.
+#
+# THE PATHS ARE WIDER THAN THE SITE NEEDS, on purpose. `docs/**` and `**/*.md`
+# is exactly ci.yml's markdown blind spot, which is the set `make:check` has to
+# see; the site half then also runs for a markdown file the site does not read,
+# which costs about 45 seconds and is the cheaper mistake.
+#
 # `site:build` is deliberately absent — it is the one step that needs the wasm
 # artifact, and Cloudflare Pages already builds the site on every PR including
 # the docs-only ones. That check is not this repo's `make site:build`, so it
@@ -51,15 +64,13 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs/engine/**'
-      - 'CHANGELOG.md'
-      - 'README.md'
+      - 'docs/**'
+      - '**/*.md'
       - '.github/workflows/site-docs.yml'
   pull_request:
     paths:
-      - 'docs/engine/**'
-      - 'CHANGELOG.md'
-      - 'README.md'
+      - 'docs/**'
+      - '**/*.md'
       - '.github/workflows/site-docs.yml'
 
 # A `site/**` change is NOT listed above on purpose: site/ is absent from
@@ -77,3 +88,10 @@ jobs:
       # engine/wasm/pkg — the real-wasm suite loads the RELEASED build committed
       # under site/.data/wasm — so this job builds no Rust at all.
       - run: make site:verify
+
+  make-surface:
+    name: make surface (no doc names a target that is gone)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: make make:check
