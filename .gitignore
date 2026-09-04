@@ -1,8 +1,20 @@
-# Local AI-assistant workspace: per-machine settings, the development
-# workflow skills, and scratch worktrees. Deliberately untracked — the
-# repository's own design record lives in docs/agents/ and docs/code-map/,
-# which ARE tracked and are what a coding agent should read.
-.claude/
+# Local AI-assistant workspace. Two halves, and only one of them is tracked.
+#
+# TRACKED — .claude/settings.json and .claude/hooks/: the deterministic
+# controls over how work is done here (a gate piped into tail, a cargo run on
+# a host with no toolchain, an attribution trailer, a push at main). Those are
+# repository policy rather than per-machine taste, and they have to be tracked
+# to work at all: settings are read from the WORKING DIRECTORY, and every
+# cycle works in a git worktree, so an untracked hook is one that never fires
+# where the work actually happens.
+#
+# UNTRACKED — everything else: per-machine permissions, the development
+# workflow skills, and scratch worktrees. The repository's own design record
+# lives in docs/agents/ and docs/code-map/, which ARE tracked and are what a
+# coding agent should read.
+.claude/*
+!.claude/hooks/
+!.claude/settings.json
 
 
 # Rust build output

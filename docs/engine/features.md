@@ -1624,7 +1624,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   families bound different things. An over-cap example bundle has
   somewhere else to send the client — its per-file URIs — so it is refused
   at read time. A page has no such fallback, so refusing one would only
-  make it unreachable; its bound is asserted over the compiled-in corpus
+  leave it unreachable; its bound is asserted over the compiled-in corpus
   instead, and over what a read actually ANSWERS (the markdown plus the
   serialized schema half), not over the `.md` file. The reference bound is
   96 KiB, above the examples' 64 KiB, and today's largest response is

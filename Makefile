@@ -15,6 +15,8 @@
 #     make site:verify          make docker:verify      make sdk:<lang>:verify
 #     make make:check           the gate surface itself — a misnamed target, or
 #                               any tracked file naming a command that is gone
+#     make hooks:verify         the tracked .claude/hooks still decide — and
+#                               still let the legitimate spelling through
 #
 #   Faster slices while iterating
 #     make engine:budget        make engine:lint        make engine:test
@@ -108,6 +110,12 @@ endif
 #                                         misnamed target, no doc or script
 #                                         naming a target that does not exist.
 #                                         No Docker, seconds)
+#   hooks:verify      -> job "versions" (the tracked .claude/hooks still decide.
+#                                         Both halves: every deny case blocked,
+#                                         and the legitimate spelling beside it
+#                                         allowed — a hook that quietly stops
+#                                         deciding removes a control without
+#                                         reddening anything. No Docker, seconds)
 #   engine:wasm       -> job "wasm"      (build wasm32 bindings + size budget)
 #   sdk:ruby:verify  -> job "sdk-ruby"  (rubocop, rspec at 100% coverage, gem
 #                                         build/install; engine library injected
@@ -428,6 +436,7 @@ include mk/gui.mk
 include mk/site.mk
 include mk/sdk.mk
 include mk/docker.mk
+include mk/hooks.mk
 include mk/proof.mk
 
 # The investigation surface. Not gates — they print state, they check nothing —
