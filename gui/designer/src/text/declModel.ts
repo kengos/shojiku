@@ -97,6 +97,24 @@ function collectNames(out: Set<string>, value: unknown): void {
   }
 }
 
+/** The names an item's `spans:` interpolate — both surfaces a span carries.
+ * Shared by the two per-surface name sets below, which differ only in which of
+ * the item's OWN keys they add beside it. A non-array `spans`, and a non-map
+ * entry inside one, are skipped rather than thrown on. */
+function collectSpanNames(out: Set<string>, map: Record<string, unknown>): void {
+  if (!Array.isArray(map.spans)) {
+    return;
+  }
+  for (const entry of map.spans) {
+    const span = record(entry);
+    if (span === undefined) {
+      continue;
+    }
+    collectNames(out, span.text);
+    collectNames(out, record(span.link)?.url);
+  }
+}
+
 /** The interpolation names an item references OUTSIDE its own `text:` — its
  * `link.url` and its spans' `text:`/`link.url`, the surfaces the engine
  * resolves through the SAME declaration map (`validate/bindings/decl.rs`).
@@ -109,16 +127,23 @@ export function otherSurfaceNames(item: unknown): ReadonlySet<string> {
     return out;
   }
   collectNames(out, record(map.link)?.url);
-  if (Array.isArray(map.spans)) {
-    for (const entry of map.spans) {
-      const span = record(entry);
-      if (span === undefined) {
-        continue;
-      }
-      collectNames(out, span.text);
-      collectNames(out, record(span.link)?.url);
-    }
+  collectSpanNames(out, map);
+  return out;
+}
+
+/** [`otherSurfaceNames`]'s mirror for the LINK surface: the names an item
+ * references outside its own `link.url` — its `text:` and its spans. Same rule,
+ * one surface over: the edited surface is absent because the commit compares it
+ * directly, and every other surface is present because minting a name one of
+ * them uses would silently redirect it to this field. */
+export function linkSurfaceNames(item: unknown): ReadonlySet<string> {
+  const out = new Set<string>();
+  const map = record(item);
+  if (map === undefined) {
+    return out;
   }
+  collectNames(out, map.text);
+  collectSpanNames(out, map);
   return out;
 }
 

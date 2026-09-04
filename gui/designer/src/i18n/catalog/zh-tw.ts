@@ -295,6 +295,9 @@ export const zhTw: LanguageCatalog = {
     'help.kinsoku.title': '不能出現在行首的字',
     'help.kinsoku.body':
       '避免句號或右引號落在行首，把它拉回前一行。學校標準與教科書的處理相同；選「無」則只依序填入格子。',
+    'help.link.title': '此項目的連結目標',
+    'help.link.body':
+      '在匯出的 PDF 中，整個項目會成為連結。連結不是畫出來的，所以預覽的外觀不會改變，這裡填寫的位址是唯一的線索。用下方的 + 按鈕把資料欄位插入位址，這樣同一個範本就能讓每份文件連到不同的位置。',
     'help.styleNames.title': '定義一次，重複套用',
     'help.styleNames.body':
       '把文件中登錄的樣式套用到這個項目。勾選多個時以最後加入者為準，而直接設在此項目上的值勝過全部。',
@@ -709,6 +712,12 @@ export const zhTw: LanguageCatalog = {
     'panel.charGrid.kinsoku': '避頭尾規則',
     'panel.charGrid.kinsoku.school': '學校標準',
     'panel.charGrid.kinsoku.none': '無',
+    'panel.link.label': '連結',
+    'panel.link.insert': '在連結中插入資料欄位',
+    'panel.link.placeholder': 'https://example.com',
+    'panel.link.problem.scheme':
+      '連結目標只能是網址、電子郵件地址或電話號碼。請以 http:// / https:// / mailto: / tel: 開頭。',
+    'panel.link.problem.tooLong': '這個位址超過 {max} 位元組，超出 PDF 連結能容納的長度。',
     'panel.charGrid.markup': '解讀內文的注音記法',
     'panel.charGrid.markupSafety':
       '關閉時，《》與［＃…］會照原樣當作文字排列。開啟後，帶入資料中的這些符號也會被當成記法讀取。',

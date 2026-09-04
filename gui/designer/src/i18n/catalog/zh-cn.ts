@@ -295,6 +295,9 @@ export const zhCn: LanguageCatalog = {
     'help.kinsoku.title': '不能出现在行首的字',
     'help.kinsoku.body':
       '避免句号或右引号落在行首，把它拉回前一行。学校标准与教科书的处理相同；选「无」则只按顺序填入格子。',
+    'help.link.title': '此项目的链接目标',
+    'help.link.body':
+      '在导出的 PDF 中，整个项目会成为一个链接。链接不是画出来的，所以预览的外观不会改变，这里填写的地址是唯一的线索。用下方的 + 按钮把数据字段插入地址，这样同一个模板就能让每份文档链接到不同的位置。',
     'help.styleNames.title': '定义一次，重复套用',
     'help.styleNames.body':
       '把文档中登录的样式应用到这个项目。勾选多个时以最后加入者为准，而直接设在此项目上的值胜过全部。',
@@ -709,6 +712,12 @@ export const zhCn: LanguageCatalog = {
     'panel.charGrid.kinsoku': '避头尾规则',
     'panel.charGrid.kinsoku.school': '学校标准',
     'panel.charGrid.kinsoku.none': '无',
+    'panel.link.label': '链接',
+    'panel.link.insert': '向链接中插入数据字段',
+    'panel.link.placeholder': 'https://example.com',
+    'panel.link.problem.scheme':
+      '链接目标只能是网址、电子邮件地址或电话号码。请以 http:// / https:// / mailto: / tel: 开头。',
+    'panel.link.problem.tooLong': '该地址超过 {max} 字节，超出了 PDF 链接可容纳的长度。',
     'panel.charGrid.markup': '解读正文的注音记法',
     'panel.charGrid.markupSafety':
       '关闭时，《》与［＃…］会按原样作为文字排列。开启后，代入数据中的这些符号也会被当成记法读取。',

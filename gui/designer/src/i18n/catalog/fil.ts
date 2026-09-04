@@ -132,6 +132,9 @@ export const fil: LanguageCatalog = {
     'help.kinsoku.title': 'Mga karakter na hindi puwedeng magbukas ng linya',
     'help.kinsoku.body':
       'Pinipigilan ang linya na magsimula sa 。 o 」 sa pamamagitan ng paghila ng karakter pabalik sa naunang linya. Ang pamantayan ng paaralan ang ginagamit ng mga aklat-aralin sa Hapon; ang Wala ay pumupuno ng mga kahon nang sunod-sunod.',
+    'help.link.title': 'Kung saan tumutungo ang item na ito',
+    'help.link.body':
+      'Sa na-export na PDF, nagiging link ang buong item. Hindi iginuguhit ang isang link, kaya walang nagbabago sa preview — ang address dito lang ang tanging palatandaan. Gamitin ang + button sa ibaba para maglagay ng data field sa address, para makatungo sa magkaibang lugar ang bawat dokumento mula sa iisang template.',
     'help.styleNames.title': 'Minsang itinakda, dito ipinapataw',
     'help.styleNames.body':
       'Ipinapataw sa item na ito ang istilong nakarehistro sa dokumento. Kapag mahigit isa ang naka-tik, ang huling idinagdag ang mananaig, at ang halagang direktang nakatakda sa item ang tumatalo sa lahat.',
@@ -565,6 +568,13 @@ export const fil: LanguageCatalog = {
     'panel.charGrid.kinsoku': 'Panuntunan sa paghati',
     'panel.charGrid.kinsoku.school': 'Pamantayan ng paaralan',
     'panel.charGrid.kinsoku.none': 'Wala',
+    'panel.link.label': 'Link',
+    'panel.link.insert': 'Maglagay ng data field sa link',
+    'panel.link.placeholder': 'https://example.com',
+    'panel.link.problem.scheme':
+      'Ang link ay maaari lamang tumungo sa isang web address, email address o numero ng telepono. Simulan ito sa http://, https://, mailto: o tel:.',
+    'panel.link.problem.tooLong':
+      'Mas mahaba sa {max} byte ang address na ito, lampas sa kayang dalhin ng isang PDF link.',
     'panel.charGrid.markup': 'Basahin ang ruby notation sa nilalaman',
     'panel.charGrid.markupSafety':
       'Habang naka-off, ang 《》 at ［＃…］ ay naililimbag bilang mismong mga karakter. Kapag binuksan, may kahulugan na rin ang mga markang iyon sa naka-bind na datos.',

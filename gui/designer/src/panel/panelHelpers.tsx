@@ -29,7 +29,7 @@ export type HelpTopic = 'content' | 'style' | 'placement' | 'placementChild';
  * deliberately absent — its name is self-evident, and the non-obvious part of
  * its BEHAVIOUR is already carried by the section's own hint line. Each value is
  * the catalog segment, exactly as `HelpTopic` is. */
-export type FieldHelpTopic = 'rulingWidth' | 'rubySize' | 'kinsoku' | 'styleNames';
+export type FieldHelpTopic = 'rulingWidth' | 'rubySize' | 'kinsoku' | 'styleNames' | 'link';
 
 /** The `?` for one field, as opposed to `HelpfulHeading`'s for a whole section.
  * It renders the icon alone: the field's own label is right beside it, so a

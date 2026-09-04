@@ -340,6 +340,9 @@ export const en: LanguageCatalog = {
     'help.kinsoku.title': 'Characters that may not open a line',
     'help.kinsoku.body':
       'Keeps a line from starting with 。 or 」 by pulling the character back onto the line before it. School standard is what Japanese schoolbooks use; None fills the cells in order and lets punctuation land anywhere.',
+    'help.link.title': 'Where this item leads',
+    'help.link.body':
+      'Turns the whole item into a link in the exported PDF. A link is not something that gets drawn, so the preview never changes — the address here is the only place it shows. Use the + button below to put a data field into the address, which is how one template links somewhere different on every document.',
     'help.styleNames.title': 'Styles defined once, applied here',
     'help.styleNames.body':
       'Applies a style registered on the document to this item. With more than one ticked the one added last wins, and a value set on the item itself beats all of them.',
@@ -765,6 +768,13 @@ export const en: LanguageCatalog = {
     'panel.charGrid.kinsoku': 'Line-break rules',
     'panel.charGrid.kinsoku.school': 'School standard',
     'panel.charGrid.kinsoku.none': 'None',
+    'panel.link.label': 'Link',
+    'panel.link.insert': 'Insert a data field into the link',
+    'panel.link.placeholder': 'https://example.com',
+    'panel.link.problem.scheme':
+      'A link can only go to a web address, an email address or a phone number. Start it with http://, https://, mailto: or tel:.',
+    'panel.link.problem.tooLong':
+      'This address is longer than {max} bytes, which is more than a PDF link can carry.',
     'panel.charGrid.markup': 'Read ruby notation in the content',
     'panel.charGrid.markupSafety':
       'While this is off, 《》 and ［＃…］ print as the characters they are. Turning it on makes those marks meaningful in bound data too.',

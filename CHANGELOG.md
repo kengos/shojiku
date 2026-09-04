@@ -15,6 +15,29 @@ platform binaries.
 
 ### Added
 
+- **The Designer can see and edit a hyperlink.** `link: { url }` has been in
+  the template format since links shipped, and the Designer carried only the
+  three diagnostics that report a bad one — so a text item or an image could
+  neither be given a link nor, more to the point, be shown the one it already
+  had. Ten of the bundled examples carry a hyperlink; opening any of them
+  showed nothing about it anywhere. Selecting a text item or an image now
+  offers a **Link** field on the content tab, with the same insert-a-data-field
+  button the text editor has, so a URL that has to differ on every document
+  (`https://example.com/invoices/{order.code}`) is picked rather than typed.
+  Its `?` says the thing the screen otherwise cannot: a link is a PDF
+  annotation, so nothing about the preview changes when you add one.
+
+  A URL the engine would refuse — a scheme other than `http`, `https`,
+  `mailto` or `tel`, or one past its 2048-byte cap — is now refused at the
+  field, with the reason, instead of being written to the file and coming back
+  as a warning after the next render. A URL that interpolates a data field is
+  always accepted: the engine judges it after the field is filled in, and so
+  neither can the Designer before then.
+
+  Not yet: a link on one fragment of rich text (`spans`), and any indication on
+  the canvas — the layout box index carries no link, so there is nothing there
+  for an overlay to draw.
+
 - **Insert ▸ Character grid and Insert ▸ Page break.** Both have been in the
   template format for a long time and neither could be created from the GUI: a
   character grid — manuscript paper, a kanji workbook sheet, the boxed entry
