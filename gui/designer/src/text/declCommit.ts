@@ -45,6 +45,15 @@ export interface CommitInput {
   readonly pending: readonly PendingDecl[];
 }
 
+/** [`CommitInput`] plus the one thing that differs per SURFACE: the names the
+ * item's other surfaces still interpolate. Every surface an item has resolves
+ * through the one declaration map, so this set is what stops a prune dropping a
+ * declaration another surface is using — and the EDITED surface is never in it,
+ * because the batch compares that one directly. */
+export interface DeclarationBatchInput extends CommitInput {
+  readonly others: ReadonlySet<string>;
+}
+
 /** The ONE batch a commit applies: the text edit, the staged declarations the
  * new text actually references, and the removal of a declaration THIS edit
  * orphaned. Applied through `applyAll` it is a single undo step, and a
@@ -59,8 +68,21 @@ export interface CommitInput {
  * prune at all, and a text past the display-side expression cap stands the
  * prune down entirely (see [`saturated`]). */
 export function commitOps(input: CommitInput): readonly Op[] {
-  const { read, path, oldText, newText, pending } = input;
-  const ops: Op[] = [plainTextOp(path, ['text'], newText)];
+  const others = otherSurfaceNames(readItem(input.read, input.path));
+  return [
+    plainTextOp(input.path, ['text'], input.newText),
+    ...declarationBatch({ ...input, others }),
+  ];
+}
+
+/** The declaration half of a commit, for ANY surface: the staged declarations
+ * the new text actually references, plus the removal of one THIS edit orphaned.
+ * The surface's own write op is the caller's — it is the only other thing that
+ * differs between surfaces, and both are named rather than branched on, so
+ * there is one prune rule in the package rather than one per surface. */
+export function declarationBatch(input: DeclarationBatchInput): readonly Op[] {
+  const { read, path, oldText, newText, pending, others } = input;
+  const ops: Op[] = [];
   const item = readItem(read, path);
   const declared = narrowDeclarations(item?.bindings);
   const used = new Set(interpolationKeys(newText));
@@ -79,7 +101,6 @@ export function commitOps(input: CommitInput): readonly Op[] {
   if (saturated(oldText) || saturated(newText)) {
     return ops;
   }
-  const others = otherSurfaceNames(item);
   const before = new Set(interpolationKeys(oldText));
   for (const name of declared.keys()) {
     if (before.has(name) && !used.has(name) && !others.has(name)) {

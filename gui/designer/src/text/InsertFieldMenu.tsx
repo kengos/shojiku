@@ -31,11 +31,18 @@ export interface InsertFieldMenuProps {
   /** Insert a chip for the picked field. `documentScoped` marks a row from the
    * document-data section, the pick the declaration exists for. */
   readonly onInsert: (option: PickerOption, documentScoped: boolean) => void;
+  /** The trigger's accessible name and tooltip, when the default would COLLIDE.
+   * The content tab now shows two of these menus at once for a text item — one
+   * inserting into the text, one into the link URL — and two controls answering
+   * to one name is a by-name query with two matches and a screen reader saying
+   * the same words twice. Each host names its own; omitted keeps the general
+   * wording, which is right wherever there is only one on screen. */
+  readonly label?: string;
 }
 
-export function InsertFieldMenu({ chips, onInsert }: InsertFieldMenuProps) {
+export function InsertFieldMenu({ chips, onInsert, label: named }: InsertFieldMenuProps) {
   const { t } = useI18n();
-  const label = t('chips.insert');
+  const label = named ?? t('chips.insert');
   return (
     <FieldMenuButton
       chips={chips}

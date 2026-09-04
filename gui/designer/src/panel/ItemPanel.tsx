@@ -22,6 +22,7 @@ import type { ItemPanelProps } from './itemPanelProps';
 import { hasCapability } from './itemPanelProps';
 import { type ItemView, MARK_TYPES, NO_BOX_WIRE_TYPES } from './itemView';
 import { LinePointsEditor } from './LinePointsEditor';
+import { LinkField } from './LinkField';
 import { readLinePoints } from './linePoints';
 import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
 import { StyleSection } from './StyleSection';
@@ -139,7 +140,14 @@ export function ItemPanel(props: ItemPanelProps) {
 
   const panelFor = (tab: PanelTab) =>
     tab === 'content' ? (
-      <ContentSection {...props} />
+      // A SIBLING of the content section, not a field inside it: that section
+      // routes by early return (`image` never reaches its bottom), so a field
+      // added there would appear for `text` and silently not for `image` —
+      // which is the other of the two types the wire gives a `link:`.
+      <>
+        <ContentSection {...props} />
+        <LinkField {...props} />
+      </>
     ) : tab === 'style' ? (
       <StyleSection {...props} />
     ) : POINT_PLACED_TYPES.has(view.type) ? (

@@ -360,6 +360,9 @@ export const ja: LanguageCatalog = {
     'help.kinsoku.title': '行頭に置けない文字',
     'help.kinsoku.body':
       '句読点や閉じ括弧が行頭に来ないよう、前の行に押し込む処理です。学校標準は教科書と同じ扱い、なしを選ぶと文字はマスの順に並ぶだけになります。',
+    'help.link.title': 'この項目のリンク先',
+    'help.link.body':
+      '書き出した PDF で、この項目全体がリンクになります。リンクは描かれるものではないのでプレビューの見た目は変わりません。ここに入れたアドレスだけが手がかりです。下の + ボタンでアドレスにデータ項目を差し込めます。1 つのテンプレートで帳票ごとに違う場所へリンクさせたいときはこれを使います。',
     'help.styleNames.title': '一度決めた体裁を使い回す',
     'help.styleNames.body':
       '文書に登録したスタイルをこの項目に適用します。複数選ぶと後から追加したものが勝ち、この項目に直接指定した値がそのすべてに勝ちます。',
@@ -784,6 +787,13 @@ export const ja: LanguageCatalog = {
     'panel.charGrid.kinsoku': '禁則処理',
     'panel.charGrid.kinsoku.school': '学校標準',
     'panel.charGrid.kinsoku.none': 'なし',
+    'panel.link.label': 'リンク',
+    'panel.link.insert': 'リンクにデータ項目を挿入',
+    'panel.link.placeholder': 'https://example.com',
+    'panel.link.problem.scheme':
+      'リンク先にできるのはウェブアドレス・メールアドレス・電話番号だけです。http:// / https:// / mailto: / tel: のいずれかで始めてください。',
+    'panel.link.problem.tooLong':
+      'このアドレスは {max} バイトを超えています。PDF のリンクが持てる長さより長くなりました。',
     'panel.charGrid.markup': '本文のルビ記法を解釈する',
     'panel.charGrid.markupSafety':
       'オフのあいだ《》や［＃…］はそのままの文字として並びます。オンにすると、差し込まれたデータの中の記号も記法として読まれます。',

@@ -294,6 +294,53 @@ read side, never the reverse.
     one element away (repeat it and a by-name query matches two elements,
     and a screen reader says the words twice).
 
+## The hyperlink (`link: { url }`)
+
+The wire carries `link` on THREE structs — `TextItem`, `ImageItem` and `Span` —
+so on the panel's vocabulary it is TWO item types plus a rich-text fragment the
+chip editor would have to own. `qr_code` and `char_grid` are separate structs
+and take none. Nothing else in the Designer can show a link: `render-png` paints
+no annotation and the box index carries none, so the preview and the canvas
+overlay have nothing to draw from and this field is the only place the fact
+exists.
+
+- `panel/linkModel.ts` — the READ side plus the two pure predicates.
+  `LINK_TYPES` (`text`/`image`) and `LINK_CAPABILITY` (`link.url` — an older
+  engine parse-REJECTS the key, so the field is capability-gated the way
+  `VisibilitySection` is). `readLinkUrl` degrades a hostile `link` to `''`
+  (`Link.url` is required, so `link: {}` is a parse error rather than a link
+  the panel is hiding). `linkUrlProblem` mirrors
+  `engine/layout/src/engine/link.rs::check_link_url` — trim, the 2048-**BYTE**
+  cap, Cc control characters, the `http`/`https`/`mailto`/`tel` allowlist under
+  ASCII-only case folding — with ONE branch that is not in the engine and is
+  the load-bearing one: **a URL containing `{` is always passed through**,
+  because `resolve_link` interpolates before it gates and all TEN bundled
+  examples that author a link interpolate it, none carrying a scheme of its
+  own (the eleventh `link: { url:` in `examples/` is a literal inside the
+  showcase's code panel, not an authored link).
+  `linkWire.test.ts` derives the allowlist, the cap, the gate ORDER and the
+  carrier set from the Rust rather than restating them.
+  `spliceAt` normalises an input's `number | null` selection bounds.
+- `panel/linkOps.ts` — the WRITE side. `linkWireOps` has no presence flag and
+  does not need one: the changed-check runs first, so the `removeKey` arm is
+  reached only when the CURRENT url is non-empty, which can only have come from
+  a `link.url` the document carries — a presence flag beside that guard would
+  have an arm nothing can reach. `linkCommitOps` pairs that write with
+  `text/declCommit`'s shared `declarationBatch`, handing it `linkSurfaceNames`
+  (the item's `text:` + spans) — NOT `otherSurfaceNames`, which returns the URL
+  being edited and omits the text.
+- `panel/LinkField.tsx` — the control, rendered from `ItemPanel`'s content tab
+  as a SIBLING of `ContentSection` (that section routes by early return, so an
+  `image` never reaches its bottom). It does NOT use the shared `TextField`:
+  clicking the insert menu is a blur, and `TextField` would commit the
+  half-typed URL and remount the input, destroying the caret the insertion
+  needs. So the input's own blur asks WHERE focus went first (into the field's
+  own menu row = not a commit), the `text/TextEditor` shape. The input element
+  is STATE rather than a ref, so the menu renders only once it exists and the
+  pick handler closes over something non-null. A refused URL authors nothing
+  and says why; an empty batch is never dispatched, because `applyAll([])`
+  reports ok and bumps the revision.
+
 ## The two form marks (`ellipse` / `checkbox`)
 
 Their surfaces are split the way the wire is: the PRESENCE is content (the
@@ -714,7 +761,11 @@ presence is not a text binding.
   presence is content, and their outline is decoration — reached through
   `STYLED_TYPES` (which is `BORDERABLE_TYPES` plus `line` plus the marks)
   rather than through the border set, because their editors differ. Tab
-  bodies live beside it: `ContentSection.tsx` (per-type
+  bodies live beside it. The CONTENT tab is two siblings, not one — the
+  section plus `LinkField.tsx`, which self-gates on `LINK_TYPES` — because
+  `ContentSection` routes by early return and an `image` never reaches its
+  bottom, so a field added INSIDE it would appear for `text` and silently not
+  for the other carrier. `ContentSection.tsx` (per-type
   routing + the text/data pair; image/page-number surfaces in
   `contentParts.tsx`, the bound-mode half in `contentBound.tsx`
   (`BoundContent` — the data-key picker plus the two options that ride a

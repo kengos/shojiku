@@ -5,6 +5,7 @@ import { type InsertContext, planChipInsert } from './declMint';
 import {
   chipMetaFor,
   type Declaration,
+  linkSurfaceNames,
   narrowDeclarations,
   otherSurfaceNames,
   type PendingDecl,
@@ -160,6 +161,30 @@ describe('otherSurfaceNames', () => {
     expect(otherSurfaceNames(undefined).size).toBe(0);
     expect(otherSurfaceNames('text').size).toBe(0);
     expect(otherSurfaceNames({ link: 'https://x/{a}', spans: 'nope' }).size).toBe(0);
+  });
+});
+
+describe('linkSurfaceNames', () => {
+  it('collects every interpolating surface except the item’s own link URL', () => {
+    // The MIRROR of `otherSurfaceNames`, one surface over. Same fixture, and
+    // the two results must be disjoint on the item's own two surfaces: each
+    // omits the one being edited, because the commit compares that directly.
+    const item = {
+      type: 'text',
+      text: '{owntext}',
+      link: { url: 'https://x/{linked}' },
+      spans: [{ text: '{spantext}' }, { link: { url: '/{spanlink}' } }, 'junk', null],
+    };
+    expect([...linkSurfaceNames(item)].sort()).toEqual(['owntext', 'spanlink', 'spantext']);
+    expect(linkSurfaceNames(item).has('linked')).toBe(false);
+    expect(otherSurfaceNames(item).has('owntext')).toBe(false);
+  });
+
+  it('degrades on hostile shapes', () => {
+    expect(linkSurfaceNames(undefined).size).toBe(0);
+    expect(linkSurfaceNames('text').size).toBe(0);
+    expect(linkSurfaceNames({ text: 5, spans: 'nope' }).size).toBe(0);
+    expect(linkSurfaceNames({ spans: [7, null, { text: 9 }] }).size).toBe(0);
   });
 });
 

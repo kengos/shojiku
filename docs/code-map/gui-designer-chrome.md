@@ -319,19 +319,33 @@ resolved style.
   (writability decided by round-tripping through `chipWire`):
   - `text/declModel.ts` — the READ side: `readDeclarations`
     (hostile-safe, deliberately UNCAPPED so a minted name cannot collide
-    with a hidden real one), `readOtherSurfaceNames` (link.url + spans,
-    mirroring `validate/bindings/decl.rs`), `chipMetaFor` (a declaration
-    WINS over a same-named ambient field).
+    with a hidden real one), `chipMetaFor` (a declaration WINS over a
+    same-named ambient field), and the two per-SURFACE name sets that keep
+    a mint from redirecting a neighbour: `otherSurfaceNames`
+    (`link.url` + spans — for an edit of `text:`) and `linkSurfaceNames`
+    (`text:` + spans — for an edit of `link.url`, the property panel's
+    `LinkField`). Each omits the surface being edited, because the commit
+    compares that one directly; both mirror `validate/bindings/decl.rs`.
   - `text/declMint.ts` — `mintDeclName` (TOTAL; bounded loop; never
     opens with a digit/dot) + `planChipInsert` (bare `{key}` when it
     suffices; reuses an equivalent existing/pending declaration; the
     taken set spans declarations ∪ pending ∪ text names ∪ every offered
-    key ∪ other-surface names — a minted name can neither shadow nor
-    redirect a link URL/span).
-  - `text/declCommit.ts` — `commitOps`: text edit + staged declarations
-    + the prune of one this edit orphaned, ONE `applyAll`; past the
-    `MAX_TEXT_EXPRS` cap the prune stands DOWN entirely (the engine has
-    no such cap).
+    key ∪ the EDITING surface's other-surface names — a minted name can
+    neither shadow a real key nor redirect whichever of the item's
+    surfaces it is not editing).
+  - `text/declCommit.ts` — `declarationBatch`: the staged declarations a
+    new text references + the prune of one this edit orphaned, for ANY
+    surface (it is TOLD the other-surfaces set). `commitOps` is that plus
+    the `text:` write; the panel's link field pairs it with the `link:`
+    write instead, so there is ONE prune rule rather than one per surface.
+    Either way ONE `applyAll`; past the `MAX_TEXT_EXPRS` cap the prune
+    stands DOWN entirely (the engine has no such cap).
+- `text/InsertFieldMenu.tsx` — the icon-only insert trigger over
+  `FieldMenuButton`. Its `label` is a PROP: the content tab shows two of
+  these at once for a text item (one for `text:`, one for the link URL),
+  and two controls answering to one accessible name is a by-name query with
+  two matches and a screen reader saying the same words twice. Omitted, it
+  keeps the general wording.
 - `text/chipContext.ts` — `ChipContext` + `chipContextFor(…)` — the
   per-item context BOTH hosts (panel field, canvas overlay) build
   through so they cannot drift; reading declarations is ungated, only
