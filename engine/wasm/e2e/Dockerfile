@@ -4,7 +4,7 @@
 #   docker run --rm -p 8789:80 shojiku-wasm-e2e
 # Serves the wasm module + the en-US font packs + the receipt-us example.
 
-FROM rust:1.97.1-slim-bookworm AS builder
+FROM rust:1.98.0-slim-bookworm AS builder
 RUN rustup target add wasm32-unknown-unknown
 
 # wasm-bindgen CLI must match the crate version pinned in engine/Cargo.toml.
