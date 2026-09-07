@@ -100,6 +100,7 @@ dry_run_after_make() {
 POS='(^|[;&|(])[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
 MAKE="$POS(sudo[[:space:]]+)?g?make([[:space:]]|$)"
 CARGO="${POS}cargo([[:space:]]|$)"
+GIT="${POS}git([[:space:]]|$)"
 
 # ---------------------------------------------------------------- deny ----
 
@@ -145,8 +146,16 @@ fi
 
 # The branch ruleset requires signatures; disabling signing produces a commit
 # that passes locally and meets mergeStateStatus BLOCKED hours later.
-if hasi 'commit\.gpgsign[[:space:]]*=[[:space:]]*(false|0|no|off)' ||
-	has '[[:space:]]--no-gpg-sign([[:space:]]|$)'; then
+#
+# The flag must belong to a GIT invocation. Testing the whole command string
+# for it denies any command that merely MENTIONS the flag — a heredoc
+# documenting this very rule, a grep for it, a cat of this file — which is the
+# same over-match `dry_run_after_make` exists to avoid one rule above, and the
+# same command-position discipline the attribution rule below already applies.
+# It fired twice in one session on prose, once while writing up the trap.
+if has "$GIT" &&
+	{ hasi 'commit\.gpgsign[[:space:]]*=[[:space:]]*(false|0|no|off)' ||
+		has '[[:space:]]--no-gpg-sign([[:space:]]|$)'; }; then
 	decide deny 'The branch ruleset requires signed commits. A commit made with signing
 off — `-c commit.gpgSign=false`, `=0`, or `--no-gpg-sign` — pushes fine and is
 then BLOCKED at merge. Fix the signing setup instead of disabling it.'
