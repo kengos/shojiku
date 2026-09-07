@@ -133,6 +133,17 @@ case_bash 'gate then grep -n its log'   silent 'make engine:test > /tmp/e.log 2>
 case_bash 'gate then head -n'           silent 'make -C /repo gui:test > /tmp/g.log 2>&1; head -n 40 /tmp/g.log'
 case_bash 'gate then tail -n'           silent 'make gui:verify > /tmp/v.log 2>&1; tail -n 20 /tmp/v.log'
 case_bash 'gate then sort -n'           silent 'make engine:test > /tmp/e.log 2>&1; sort -n /tmp/e.log'
+# The signing rule had FOUR positive cases and no negative one, and tested the
+# whole command string — so it denied any command that merely NAMES the flag,
+# with no git in sight. It fired on a heredoc writing documentation about the
+# rule, and again on the write-up of that trap; the workaround each time was to
+# reach for a different tool, which is how a guard stops being read as a
+# decision. Same shape, same fix and same evidence as the `-n` block above.
+case_bash 'documenting the flag'        silent "cat <<'X'
+prose naming -c commit.gpgsign=false
+X"
+case_bash 'grep for the flag'           silent 'grep -rn "commit.gpgsign=false" docs/'
+case_bash 'flag named mid-sentence'     silent 'echo "never pass --no-gpg-sign to a commit"'
 case_bash 'make --version then head -n' silent 'make --version > /dev/null; head -n 2 /etc/hosts'
 case_bash 'make help then grep -n'      silent 'make help; grep -n verify Makefile'
 
