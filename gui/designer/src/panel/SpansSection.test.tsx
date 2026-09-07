@@ -154,6 +154,21 @@ describe('fragments the engine itself would complain about', () => {
     screen.getByRole('button', { name: 'Fragment 1: Data: order.code' });
   });
 
+  it('clips a very long fragment, so the row NAME stays a name', () => {
+    // The visible half is cut by CSS, which no jsdom test can see; the
+    // accessible name is built from the same string and is what a screen
+    // reader re-reads on every visit to the row. The engine bounds a
+    // fragment's `text:` at nothing.
+    const long = 'x'.repeat(400);
+    render(
+      <Harness
+        source={`sections:\n  body:\n    type: flow\n    items:\n      - type: text\n        spans:\n          - text: ${long}\n`}
+      />,
+    );
+    const row = screen.getByRole('button', { name: /^Fragment 1: x+…$/ });
+    expect((row.getAttribute('aria-label') ?? '').length).toBeLessThan(80);
+  });
+
   it('shows an empty list, and no link field, when every entry is unreadable', () => {
     // `hasSpans` is true (the key is a non-empty array) while `narrowSpans`
     // keeps nothing — the one state where the section renders with no rows.

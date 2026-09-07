@@ -16,6 +16,7 @@
 import { useState } from 'react';
 import { useI18n } from '../i18n/context';
 import { readItem, spanLinkSurfaceNames } from '../text/declModel';
+import { clip } from '../tree/nodeFields';
 import { BTN_SM } from '../ui/chrome';
 import { IconLink } from '../ui/icons';
 import { hasCapability, type ItemPanelProps } from './itemPanelProps';
@@ -28,7 +29,15 @@ import { useReseedKey } from './useReseedKey';
 
 /** What a row shows for its fragment. A span carries `text` OR a `data:`
  * binding; both empty is the engine's `empty_span`, which still has to render
- * as SOMETHING — a blank row is a control with no label. */
+ * as SOMETHING — a blank row is a control with no label.
+ *
+ * CLIPPED, and the accessible name is the reason. The visible half is cut by
+ * CSS (`truncate`), but the row's `aria-label` is built from this string, and
+ * the engine puts no bound on a fragment's `text:` — so an unclipped one hands
+ * a screen-reader user the entire fragment as the control's NAME, re-read on
+ * every visit to the row. The tree already clips its own labels at the same
+ * `MAX_LABEL_CHARS`, so a reader who meets one item in both places is told the
+ * same amount. */
 function preview(
   t: (key: string, args?: Readonly<Record<string, string | number | boolean>>) => string,
   span: SpanView,
@@ -40,10 +49,10 @@ function preview(
   // only view: naming the losing half would point at content the page does
   // not draw.
   if (span.dataKey !== '') {
-    return t('panel.spans.bound', { key: span.dataKey });
+    return t('panel.spans.bound', { key: clip(span.dataKey) });
   }
   if (span.text !== '') {
-    return span.text;
+    return clip(span.text);
   }
   return t('panel.spans.empty');
 }
