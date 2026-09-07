@@ -134,7 +134,10 @@ export const fil: LanguageCatalog = {
       'Pinipigilan ang linya na magsimula sa 。 o 」 sa pamamagitan ng paghila ng karakter pabalik sa naunang linya. Ang pamantayan ng paaralan ang ginagamit ng mga aklat-aralin sa Hapon; ang Wala ay pumupuno ng mga kahon nang sunod-sunod.',
     'help.link.title': 'Kung saan tumutungo ang item na ito',
     'help.link.body':
-      'Sa na-export na PDF, nagiging link ang buong item. Hindi iginuguhit ang isang link, kaya walang nagbabago sa preview — ang address dito lang ang tanging palatandaan. Gamitin ang + button sa ibaba para maglagay ng data field sa address, para makatungo sa magkaibang lugar ang bawat dokumento mula sa iisang template.',
+      'Sa na-export na PDF, nagiging link ang item. Pinapanatili ng bahagi ng tekstong may sariling link ang sarili nito, kaya ang address dito ang sumasaklaw sa lahat ng iba pa. Hindi iginuguhit ang isang link, kaya walang nagbabago sa preview — ang address dito lang ang tanging palatandaan. Gamitin ang + button sa ibaba para maglagay ng data field sa address, para makatungo sa magkaibang lugar ang bawat dokumento mula sa iisang template.',
+    'help.spans.title': 'Tekstong hindi pare-pareho ang anyo',
+    'help.spans.body':
+      'Binubuo ang item na ito ng ilang bahagi para maaaring magkaiba ang anyo ng ilan sa kanila. Pumili ng bahagi para bigyan lang iyon ng sarili nitong link. Ang mga salita mismo ay isinusulat sa file, hindi rito.',
     'help.styleNames.title': 'Minsang itinakda, dito ipinapataw',
     'help.styleNames.body':
       'Ipinapataw sa item na ito ang istilong nakarehistro sa dokumento. Kapag mahigit isa ang naka-tik, ang huling idinagdag ang mananaig, at ang halagang direktang nakatakda sa item ang tumatalo sa lahat.',
@@ -568,6 +571,16 @@ export const fil: LanguageCatalog = {
     'panel.charGrid.kinsoku': 'Panuntunan sa paghati',
     'panel.charGrid.kinsoku.school': 'Pamantayan ng paaralan',
     'panel.charGrid.kinsoku.none': 'Wala',
+    'panel.spans.heading': 'Mga bahagi ng teksto',
+    'panel.spans.bound': 'Data: {key}',
+    'panel.spans.empty': '(walang lamang bahagi)',
+    'panel.spans.row': 'Bahagi {n}: {content}',
+    'panel.spans.rowLinked': 'Bahagi {n}: {content}, may link',
+    'panel.spans.conflict':
+      'May nilalaman din ang item na ito na hindi iginuguhit: pinapalitan ito ng mga bahagi sa ibaba.',
+    'panel.spans.conflict.clear': 'Alisin ang nilalamang hindi iginuguhit',
+    'panel.spans.link.label': 'Link para sa bahagi {n}',
+    'panel.spans.link.insert': 'Maglagay ng data field sa link para sa bahagi {n}',
     'panel.link.label': 'Link',
     'panel.link.insert': 'Maglagay ng data field sa link',
     'panel.link.placeholder': 'https://example.com',

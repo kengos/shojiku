@@ -98,20 +98,33 @@ function collectNames(out: Set<string>, value: unknown): void {
 }
 
 /** The names an item's `spans:` interpolate — both surfaces a span carries.
- * Shared by the two per-surface name sets below, which differ only in which of
- * the item's OWN keys they add beside it. A non-array `spans`, and a non-map
- * entry inside one, are skipped rather than thrown on. */
-function collectSpanNames(out: Set<string>, map: Record<string, unknown>): void {
+ * Shared by the three per-surface name sets below, which differ only in which
+ * of the item's OWN keys they add beside it. A non-array `spans`, and a non-map
+ * entry inside one, are skipped rather than thrown on.
+ *
+ * `skipLinkAt` omits ONE span's `link.url` — the surface being edited when the
+ * editor is a fragment's link field. Its `text` is still collected: a name that
+ * fragment's TEXT uses must survive a link edit. Deliberately UNCAPPED, unlike
+ * `panel/spansModel`'s display list: a name held only by a span past the
+ * display cap is still live, and a taken set that cannot see it lets a mint
+ * collide with it. */
+function collectSpanNames(
+  out: Set<string>,
+  map: Record<string, unknown>,
+  skipLinkAt?: number,
+): void {
   if (!Array.isArray(map.spans)) {
     return;
   }
-  for (const entry of map.spans) {
+  for (const [index, entry] of map.spans.entries()) {
     const span = record(entry);
     if (span === undefined) {
       continue;
     }
     collectNames(out, span.text);
-    collectNames(out, record(span.link)?.url);
+    if (index !== skipLinkAt) {
+      collectNames(out, record(span.link)?.url);
+    }
   }
 }
 
@@ -144,6 +157,29 @@ export function linkSurfaceNames(item: unknown): ReadonlySet<string> {
   }
   collectNames(out, map.text);
   collectSpanNames(out, map);
+  return out;
+}
+
+/** The third member of the family, for a SPAN's link field: the names the item
+ * references outside the `link.url` of the span at `index` — its `text:`, its
+ * own `link.url`, every span's `text`, and every OTHER span's `link.url`.
+ *
+ * Neither sibling above is usable here, and both fail in a way nothing reports.
+ * `linkSurfaceNames` omits the item's `link.url` (so a mint could silently
+ * redirect the item-level link) and includes the span URL being edited (so a
+ * name only that URL uses could never be pruned); `otherSurfaceNames` omits the
+ * item's `text:` and likewise includes the edited URL. One `bindings:` map
+ * serves every surface an item has, which is what makes the omission a
+ * redirection rather than a miss. */
+export function spanLinkSurfaceNames(item: unknown, index: number): ReadonlySet<string> {
+  const out = new Set<string>();
+  const map = record(item);
+  if (map === undefined) {
+    return out;
+  }
+  collectNames(out, map.text);
+  collectNames(out, record(map.link)?.url);
+  collectSpanNames(out, map, index);
   return out;
 }
 

@@ -297,12 +297,13 @@ read side, never the reverse.
 ## The hyperlink (`link: { url }`)
 
 The wire carries `link` on THREE structs — `TextItem`, `ImageItem` and `Span` —
-so on the panel's vocabulary it is TWO item types plus a rich-text fragment the
-chip editor would have to own. `qr_code` and `char_grid` are separate structs
-and take none. Nothing else in the Designer can show a link: `render-png` paints
-no annotation and the box index carries none, so the preview and the canvas
-overlay have nothing to draw from and this field is the only place the fact
-exists.
+so on the panel's vocabulary it is TWO item types plus a rich-text fragment.
+All three now have a surface: the item-level pair through `LinkField.tsx`, the
+fragment through `SpansSection.tsx`'s per-fragment field. `qr_code` and
+`char_grid` are separate structs and take none. Nothing else in the Designer
+can show a link: `render-png` paints no annotation and the box index carries
+none, so the preview and the canvas overlay have nothing to draw from and these
+fields are the only place the fact exists.
 
 - `panel/linkModel.ts` — the READ side plus the two pure predicates.
   `LINK_TYPES` (`text`/`image`) and `LINK_CAPABILITY` (`link.url` — an older
@@ -329,17 +330,58 @@ exists.
   `text/declCommit`'s shared `declarationBatch`, handing it `linkSurfaceNames`
   (the item's `text:` + spans) — NOT `otherSurfaceNames`, which returns the URL
   being edited and omits the text.
-- `panel/LinkField.tsx` — the control, rendered from `ItemPanel`'s content tab
-  as a SIBLING of `ContentSection` (that section routes by early return, so an
-  `image` never reaches its bottom). It does NOT use the shared `TextField`:
-  clicking the insert menu is a blur, and `TextField` would commit the
-  half-typed URL and remount the input, destroying the caret the insertion
-  needs. So the input's own blur asks WHERE focus went first (into the field's
-  own menu row = not a commit), the `text/TextEditor` shape. The input element
-  is STATE rather than a ref, so the menu renders only once it exists and the
-  pick handler closes over something non-null. A refused URL authors nothing
-  and says why; an empty batch is never dispatched, because `applyAll([])`
-  reports ok and bumps the revision.
+- `panel/LinkUrlField.tsx` — the control ITSELF, shared by both surfaces. It
+  does NOT use the shared `TextField`: clicking the insert menu is a blur, and
+  `TextField` would commit the half-typed URL and remount the input, destroying
+  the caret the insertion needs. So the commit decision asks WHERE focus went
+  first (into the field's own menu row = not a commit), the `text/TextEditor`
+  shape — and it lives on the WRAPPER, never the input: focus moving input →
+  button is correctly not a commit, but then the input never blurs again, and a
+  handler on it would strand the typed value for good. The input element is
+  STATE rather than a ref, so the menu renders only once it exists and the pick
+  handler closes over something non-null. A refused URL authors nothing and says
+  why; an empty batch is never dispatched, because `applyAll([])` reports ok and
+  bumps the revision. `id`, `label`, `insertLabel` and `otherNames` are all
+  per-HOST, because two of these on one surface must answer to different
+  accessible names and carry different DOM ids.
+- `panel/LinkField.tsx` — the ITEM-level host of that control, rendered from
+  `ItemPanel`'s content tab as a SIBLING of `ContentSection` (that section
+  routes by early return, so an `image` never reaches its bottom). What is left
+  here is the two gates and the `linkSurfaceNames` wiring.
+
+## Inline rich text (`spans:`)
+
+`spans` takes PRECEDENCE over `text`/`data` when non-empty
+(`engine/core/src/template/items.rs`), so the content tab's text/data pair was
+editing a key the engine ignores for such an item — and authoring one makes the
+document report `span_content_conflict`. `ContentSection` therefore routes a
+`text` item with `view.hasSpans` to its own section instead, keyed by path so
+the selected fragment resets with the selection.
+
+- `panel/spansModel.ts` — the READ side. `narrowSpans` degrades every hostile
+  shape (non-array `spans`, a non-map entry, a non-string `text`/`url`, a
+  non-map `link`) to "unset" rather than throwing. The one thing that does NOT
+  degrade is `SpanView.index`: it is the WIRE position the write addresses, so
+  a skipped entry leaves a GAP rather than renumbering its neighbours.
+  `MAX_SPANS` mirrors the engine constant and is pinned by reading
+  `engine/core/src/template/spans.rs`; it bounds the DISPLAY only.
+- `panel/spanLinkOps.ts` — the WRITE side, composed from the two existing
+  halves rather than branching either, because they address DIFFERENT nodes:
+  the `link:` write lands on `<item>.spans[i]` and the declarations it may
+  reference live in the ITEM's `bindings:`. `clearIgnoredContentOps` is the
+  presence-GUARDED removal of the `text:`/`data:` such an item still carries —
+  unguarded, a `removeKey` for an absent key returns `key_not_found` and
+  `applyAll` discards the whole batch silently.
+- `panel/SpansSection.tsx` — master-detail: a row per fragment (its content, and
+  a link mark for the ones that carry one) over ONE `LinkUrlField` for the
+  selected row. Not a field per fragment: the largest bundled example holds
+  eighteen, and N fields would be N controls answering to one accessible name
+  in a ~255px column. A fragment's TEXT is not editable here — the wire's
+  rich-text authoring surface does not exist in any form yet.
+- The declaration name set is the THIRD member of the family in
+  `text/declModel.ts` (`spanLinkSurfaceNames`), and neither sibling is usable:
+  each omits one of the item's own two surfaces and each includes the span URL
+  being edited. It is uncapped, unlike the display list above.
 
 ## The two form marks (`ellipse` / `checkbox`)
 
@@ -766,7 +808,9 @@ presence is not a text binding.
   `ContentSection` routes by early return and an `image` never reaches its
   bottom, so a field added INSIDE it would appear for `text` and silently not
   for the other carrier. `ContentSection.tsx` (per-type
-  routing + the text/data pair; image/page-number surfaces in
+  routing ONLY — the plain-text surface is `contentText.tsx`
+  (`TextContentField`), split out when the rich-text route left the router
+  carrying more body than routing; image/page-number surfaces in
   `contentParts.tsx`, the bound-mode half in `contentBound.tsx`
   (`BoundContent` — the data-key picker plus the two options that ride a
   binding, `format` and `placeholder`. Both live on the BINDING
@@ -778,11 +822,11 @@ presence is not a text binding.
   `BoxSection.tsx` (+`boxFields.tsx`, +`CharGridSection.tsx`); shared prop contract in
   `itemPanelProps.ts` (`ItemPanelProps` + `hasCapability`); shared
   helpers in `panelHelpers.tsx` (`HelpfulHeading` over the `HelpTopic`
-  vocabulary — `content`/`style`/`placement`/`placementChild`, each value
+  vocabulary — `content`/`spans`/`style`/`placement`/`placementChild`, each value
   also the catalog SEGMENT `help.<topic>.title`/`.body`, so a topic is two
   strings rather than another branch; `FieldHelp` over the parallel
   `FieldHelpTopic` vocabulary — `rulingWidth`/`rubySize`/`kinsoku`/
-  `styleNames` — for the `?` on ONE field rather than a section heading,
+  `styleNames`/`link` — for the `?` on ONE field rather than a section heading,
   attached on the criterion that the field's NAME does not let a reader
   with little IT background infer what it does (`Cell size` is excluded
   by that criterion, not by oversight); `chipsFor`,

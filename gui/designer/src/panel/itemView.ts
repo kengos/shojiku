@@ -67,6 +67,11 @@ export interface ItemView {
   readonly type: string;
   readonly hasText: boolean;
   readonly hasData: boolean;
+  /** Whether the item carries inline rich text. `spans` takes PRECEDENCE over
+   * `text`/`data` when non-empty (`engine/core/src/template/items.rs`), so this
+   * decides whether the content tab shows the text/data pair at all — the pair
+   * edits a key the engine ignores for such an item. */
+  readonly hasSpans: boolean;
   readonly contentMode: ContentMode;
   readonly text: string;
   readonly dataKey: string;
@@ -130,6 +135,7 @@ export function readItemView(raw: unknown): ItemView | null {
   return {
     type: rec.type,
     hasText: rec.text !== undefined,
+    hasSpans: Array.isArray(rec.spans) && rec.spans.length > 0,
     hasData: data !== undefined,
     contentMode: data !== undefined ? 'data' : 'text',
     text: display(rec.text),

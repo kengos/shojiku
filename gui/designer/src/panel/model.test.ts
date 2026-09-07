@@ -197,6 +197,7 @@ describe('switchContentOps', () => {
     type: 'text',
     hasText: true,
     hasData: false,
+    hasSpans: false,
     contentMode: 'text',
     text: 'hi',
     dataScope: '',

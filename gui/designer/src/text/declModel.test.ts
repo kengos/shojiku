@@ -10,6 +10,7 @@ import {
   otherSurfaceNames,
   type PendingDecl,
   readDeclarations,
+  spanLinkSurfaceNames,
 } from './declModel';
 
 /** A read function over a flat path → materialized-value table. */
@@ -185,6 +186,59 @@ describe('linkSurfaceNames', () => {
     expect(linkSurfaceNames('text').size).toBe(0);
     expect(linkSurfaceNames({ text: 5, spans: 'nope' }).size).toBe(0);
     expect(linkSurfaceNames({ spans: [7, null, { text: 9 }] }).size).toBe(0);
+  });
+});
+
+describe('spanLinkSurfaceNames', () => {
+  const item = {
+    type: 'text',
+    text: '{owntext}',
+    link: { url: 'https://x/{itemlink}' },
+    spans: [
+      { text: '{span0text}', link: { url: '/{span0link}' } },
+      { text: '{span1text}', link: { url: '/{span1link}' } },
+      'junk',
+      null,
+    ],
+  };
+
+  it('collects the item’s text, the item’s OWN link, and every fragment', () => {
+    // The item's own `link.url` is the half `linkSurfaceNames` omits, and it is
+    // exactly what a mint here must not take: one `bindings:` map serves every
+    // surface, so taking it would silently redirect the item-level link.
+    expect([...spanLinkSurfaceNames(item, 0)].sort()).toEqual([
+      'itemlink',
+      'owntext',
+      'span0text',
+      'span1link',
+      'span1text',
+    ]);
+    expect(linkSurfaceNames(item).has('itemlink')).toBe(false);
+  });
+
+  it('excludes only the EDITED fragment’s link URL', () => {
+    expect(spanLinkSurfaceNames(item, 0).has('span0link')).toBe(false);
+    expect(spanLinkSurfaceNames(item, 1).has('span1link')).toBe(false);
+    // …and each still holds the other fragment's, so neither can be redirected.
+    expect(spanLinkSurfaceNames(item, 0).has('span1link')).toBe(true);
+    expect(spanLinkSurfaceNames(item, 1).has('span0link')).toBe(true);
+  });
+
+  it('keeps the edited fragment’s own TEXT', () => {
+    // A link edit must not prune a declaration the same fragment's text uses —
+    // only its own link URL is compared directly by the commit.
+    expect(spanLinkSurfaceNames(item, 0).has('span0text')).toBe(true);
+  });
+
+  it('is UNCAPPED, so a name held past the display cap is still reserved', () => {
+    const spans = Array.from({ length: 400 }, (_, i) => ({ text: `{f${i}}` }));
+    expect(spanLinkSurfaceNames({ spans }, 0).has('f399')).toBe(true);
+  });
+
+  it('degrades on hostile shapes', () => {
+    expect(spanLinkSurfaceNames(undefined, 0).size).toBe(0);
+    expect(spanLinkSurfaceNames('text', 0).size).toBe(0);
+    expect(spanLinkSurfaceNames({ text: 5, link: 'x', spans: 'nope' }, 0).size).toBe(0);
   });
 });
 
