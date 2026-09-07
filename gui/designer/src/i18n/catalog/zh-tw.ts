@@ -297,7 +297,10 @@ export const zhTw: LanguageCatalog = {
       '避免句號或右引號落在行首，把它拉回前一行。學校標準與教科書的處理相同；選「無」則只依序填入格子。',
     'help.link.title': '此項目的連結目標',
     'help.link.body':
-      '在匯出的 PDF 中，整個項目會成為連結。連結不是畫出來的，所以預覽的外觀不會改變，這裡填寫的位址是唯一的線索。用下方的 + 按鈕把資料欄位插入位址，這樣同一個範本就能讓每份文件連到不同的位置。',
+      '在匯出的 PDF 中，這個項目會成為連結。帶有自己連結的文字片段以其為準，這裡的位址適用於其餘部分。連結不是畫出來的，所以預覽的外觀不會改變，這裡填寫的位址是唯一的線索。用下方的 + 按鈕把資料欄位插入位址，這樣同一個範本就能讓每份文件連到不同的位置。',
+    'help.spans.title': '外觀不一致的文字',
+    'help.spans.body':
+      '這個項目由多個片段組成，因此其中一部分可以和其餘部分長得不一樣。選取一個片段，就能只為那一部分加上連結。文字本身在檔案中書寫，不在這裡。',
     'help.styleNames.title': '定義一次，重複套用',
     'help.styleNames.body':
       '把文件中登錄的樣式套用到這個項目。勾選多個時以最後加入者為準，而直接設在此項目上的值勝過全部。',
@@ -712,6 +715,15 @@ export const zhTw: LanguageCatalog = {
     'panel.charGrid.kinsoku': '避頭尾規則',
     'panel.charGrid.kinsoku.school': '學校標準',
     'panel.charGrid.kinsoku.none': '無',
+    'panel.spans.heading': '文字片段',
+    'panel.spans.bound': '資料：{key}',
+    'panel.spans.empty': '（空片段）',
+    'panel.spans.row': '片段 {n}：{content}',
+    'panel.spans.rowLinked': '片段 {n}：{content}，含連結',
+    'panel.spans.conflict': '此項目還帶有不會繪製的內容，下方的片段會取代它。',
+    'panel.spans.conflict.clear': '刪除不會繪製的內容',
+    'panel.spans.link.label': '片段 {n} 的連結',
+    'panel.spans.link.insert': '在片段 {n} 的連結中插入資料欄位',
     'panel.link.label': '連結',
     'panel.link.insert': '在連結中插入資料欄位',
     'panel.link.placeholder': 'https://example.com',

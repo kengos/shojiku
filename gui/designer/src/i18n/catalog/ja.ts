@@ -362,7 +362,10 @@ export const ja: LanguageCatalog = {
       '句読点や閉じ括弧が行頭に来ないよう、前の行に押し込む処理です。学校標準は教科書と同じ扱い、なしを選ぶと文字はマスの順に並ぶだけになります。',
     'help.link.title': 'この項目のリンク先',
     'help.link.body':
-      '書き出した PDF で、この項目全体がリンクになります。リンクは描かれるものではないのでプレビューの見た目は変わりません。ここに入れたアドレスだけが手がかりです。下の + ボタンでアドレスにデータ項目を差し込めます。1 つのテンプレートで帳票ごとに違う場所へリンクさせたいときはこれを使います。',
+      '書き出した PDF で、この項目がリンクになります。自分のリンクを持つ文字の断片はそちらが優先され、ここのアドレスは残りすべてに効きます。リンクは描かれるものではないのでプレビューの見た目は変わりません。ここに入れたアドレスだけが手がかりです。下の + ボタンでアドレスにデータ項目を差し込めます。1 つのテンプレートで帳票ごとに違う場所へリンクさせたいときはこれを使います。',
+    'help.spans.title': '見た目が一様でない文字',
+    'help.spans.body':
+      'この項目は、一部だけ見た目を変えられるように複数の断片からできています。断片を選ぶと、その部分だけにリンクを付けられます。文字そのものはファイル側で書きます。',
     'help.styleNames.title': '一度決めた体裁を使い回す',
     'help.styleNames.body':
       '文書に登録したスタイルをこの項目に適用します。複数選ぶと後から追加したものが勝ち、この項目に直接指定した値がそのすべてに勝ちます。',
@@ -787,6 +790,16 @@ export const ja: LanguageCatalog = {
     'panel.charGrid.kinsoku': '禁則処理',
     'panel.charGrid.kinsoku.school': '学校標準',
     'panel.charGrid.kinsoku.none': 'なし',
+    'panel.spans.heading': '文字の断片',
+    'panel.spans.bound': 'データ: {key}',
+    'panel.spans.empty': '（空の断片）',
+    'panel.spans.row': '断片 {n}: {content}',
+    'panel.spans.rowLinked': '断片 {n}: {content}、リンクあり',
+    'panel.spans.conflict':
+      'この項目には描かれない内容も入っています。下の断片がそれに優先します。',
+    'panel.spans.conflict.clear': '描かれない内容を削除',
+    'panel.spans.link.label': '断片 {n} のリンク',
+    'panel.spans.link.insert': '断片 {n} のリンクにデータ項目を挿入',
     'panel.link.label': 'リンク',
     'panel.link.insert': 'リンクにデータ項目を挿入',
     'panel.link.placeholder': 'https://example.com',

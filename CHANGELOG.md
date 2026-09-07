@@ -15,6 +15,29 @@ platform binaries.
 
 ### Added
 
+- **The Designer shows the fragments a rich-text item is made of, and can give
+  one of them its own link.** A text item can be built from `spans` — several
+  fragments drawn as one wrapped block, so part of a sentence can be bold, or
+  coloured, or a link on its own. The Designer had no surface for them at all,
+  and the consequence was worse than a missing feature: because a NON-EMPTY `spans`
+  takes precedence over both `text` and `data`, the content tab was showing —
+  and letting you edit — a `text:` the engine ignores. Typing in it changed
+  nothing on the page and made the document report a conflict.
+
+  Selecting such an item now lists its fragments instead, one row each, showing
+  what the fragment holds and marking the ones that already carry a link.
+  Picking a row opens a **Link** field for that fragment alone, with the same
+  insert-a-data-field button and the same refusals as the item-level one. A
+  fragment's link wins over the item's for the words it covers, which is what
+  the item-level `?` now says.
+
+  If such an item still carries the plain `text:` that is not being drawn, the
+  panel says so and offers to remove it — previously the only surface that
+  could clear it was the one that should never have been editing it.
+
+  Not yet: creating, reordering or retyping a fragment. The words themselves
+  are still written in the file.
+
 - **The Designer can see and edit a hyperlink.** `link: { url }` has been in
   the template format since links shipped, and the Designer carried only the
   three diagnostics that report a bad one — so a text item or an image could
@@ -34,9 +57,8 @@ platform binaries.
   always accepted: the engine judges it after the field is filled in, and so
   neither can the Designer before then.
 
-  Not yet: a link on one fragment of rich text (`spans`), and any indication on
-  the canvas — the layout box index carries no link, so there is nothing there
-  for an overlay to draw.
+  Not yet: any indication on the canvas — the layout box index carries no link,
+  so there is nothing there for an overlay to draw.
 
 - **Insert ▸ Character grid and Insert ▸ Page break.** Both have been in the
   template format for a long time and neither could be created from the GUI: a

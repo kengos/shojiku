@@ -134,6 +134,54 @@ describe('buildTree', () => {
     expect(body?.children[3]?.label).toBeNull();
   });
 
+  it('labels a rich-text item from its FRAGMENTS, and the data half wins', () => {
+    // A spans-only item has no `text`, no `data` and no `id`, so every one of
+    // them used to render as the bare kind name — `dev/layout-showcase` shows
+    // three indistinguishable `Text` rows — and the tree is how a reader
+    // REACHES the fragment list at all. `data` before `text` inside a fragment
+    // is the engine's own order (`resolve_content`, `winner: data`).
+    const withSpans = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: text',
+      '        spans:',
+      '          - {}',
+      '          - text: Shojiku mixes',
+      '      - type: text',
+      '        spans:',
+      '          - { text: A, data: { key: order.total } }',
+      '      - type: text',
+      '        text: own text',
+      '        spans:',
+      '          - text: fragment',
+      '      - type: text',
+      '        spans: not a list',
+      '      - type: text',
+      '        spans:',
+      '          - 3',
+      '          - text: after the junk',
+      '      - type: text',
+      '        spans:',
+      '          - {}',
+      '',
+    ].join('\n');
+    const body = buildTree(withSpans)?.roots[0];
+    // A fragment with nothing in it is skipped, not taken as the label.
+    expect(body?.children[0]?.label).toBe('Shojiku mixes');
+    expect(body?.children[1]?.label).toBe('order.total');
+    // The item's OWN text still outranks its fragments.
+    expect(body?.children[2]?.label).toBe('own text');
+    // A hostile `spans` degrades rather than throwing.
+    expect(body?.children[3]?.label).toBeNull();
+    // A NON-MAP entry is skipped too, and the fragment after it still counts.
+    expect(body?.children[4]?.label).toBe('after the junk');
+    // An item whose every fragment is empty has no name to show — the engine's
+    // `empty_span`, and the one case that legitimately falls back to the kind.
+    expect(body?.children[5]?.label).toBeNull();
+  });
+
   it('shows a MULTI-LINE text as its first line plus a break marker', () => {
     // HTML collapses a `\n` to a space (the row wraps, but that is the default
     // `normal` behaviour, not something the old nowrap caused):

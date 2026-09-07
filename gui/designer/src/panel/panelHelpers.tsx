@@ -15,7 +15,7 @@ import { bindingScopeFor, type PickerOption, scopeAuthorable } from './pickerMod
 /** Which panel concept a `?` explains. Each value is also the catalog SEGMENT
  * (`help.<topic>.title` / `.body`), so adding a topic is adding its two strings
  * rather than another branch here. */
-export type HelpTopic = 'content' | 'style' | 'placement' | 'placementChild';
+export type HelpTopic = 'content' | 'spans' | 'style' | 'placement' | 'placementChild';
 
 /** The topics whose `?` BODY lives under `help.<topic>.body`, for a field-level
  * `?` rendered through `FieldHelp`. NOT a census of every field that carries

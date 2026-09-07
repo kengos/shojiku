@@ -575,3 +575,13 @@ export function IconSparkle(props: IconProps) {
     </Svg>
   );
 }
+
+/** Two links of a chain — a hyperlink. */
+export function IconLink(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6.5 9.5a2.6 2.6 0 0 0 3.9.3l2-2a2.6 2.6 0 0 0-3.7-3.7l-1.1 1.1" />
+      <path d="M9.5 6.5a2.6 2.6 0 0 0-3.9-.3l-2 2a2.6 2.6 0 0 0 3.7 3.7l1.1-1.1" />
+    </Svg>
+  );
+}

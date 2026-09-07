@@ -45,7 +45,7 @@ export interface TreeView {
   readonly truncated: boolean;
 }
 
-import { bindingKey, pickLabel, record } from './nodeFields';
+import { bindingKey, pickLabel, record, spanLabel } from './nodeFields';
 
 export { MAX_LABEL_CHARS } from './nodeFields';
 
@@ -96,7 +96,10 @@ function itemNode(walk: Walk, path: string, entry: unknown, depth: number): Tree
     return { path, kind: 'item', label: null, children: [] };
   }
   const kind = typeof item.type === 'string' && item.type !== '' ? item.type : 'item';
-  const label = pickLabel(item.text, bindingKey(item.data), item.id);
+  // `spans` is asked after `text`/`data` and before `id` — it is real content,
+  // so it outranks an identifier, but the engine only reads it when `text`/`data`
+  // are absent, and the row must not name a key the page does not draw.
+  const label = pickLabel(item.text, bindingKey(item.data), spanLabel(item.spans), item.id);
   const children: TreeNode[] = [];
   if (Array.isArray(item.items)) {
     children.push(...walkItems(walk, `${path}.items`, item.items, depth + 1));

@@ -63,6 +63,36 @@ export function pickLabel(...candidates: readonly unknown[]): string | null {
   return null;
 }
 
+/** The first fragment's own content, for a text item whose words live in
+ * `spans:` rather than in `text:`. Without it every rich-text item labels its
+ * tree row with the bare kind name — `examples/dev/layout-showcase` shows three
+ * indistinguishable `Text` rows — and the tree is how a reader REACHES the
+ * fragment list in the first place.
+ *
+ * `data` before `text`, the engine's own order (`resolve_content` asks the
+ * binding first, and `validate/spans.rs` reports the conflict with
+ * `winner: data`). Hostile shapes degrade to `undefined` rather than throwing,
+ * exactly as `bindingKey` does. */
+export function spanLabel(value: unknown): string | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  for (const entry of value) {
+    const span = record(entry);
+    if (span === undefined) {
+      continue;
+    }
+    const key = bindingKey(span.data);
+    if (key !== undefined) {
+      return key;
+    }
+    if (typeof span.text === 'string' && span.text !== '') {
+      return span.text;
+    }
+  }
+  return undefined;
+}
+
 export function bindingKey(value: unknown): string | undefined {
   const key = record(value)?.key;
   return typeof key === 'string' && key !== '' ? key : undefined;

@@ -342,7 +342,10 @@ export const en: LanguageCatalog = {
       'Keeps a line from starting with 。 or 」 by pulling the character back onto the line before it. School standard is what Japanese schoolbooks use; None fills the cells in order and lets punctuation land anywhere.',
     'help.link.title': 'Where this item leads',
     'help.link.body':
-      'Turns the whole item into a link in the exported PDF. A link is not something that gets drawn, so the preview never changes — the address here is the only place it shows. Use the + button below to put a data field into the address, which is how one template links somewhere different on every document.',
+      'Turns the item into a link in the exported PDF. A text fragment that carries its own link keeps it, so this address covers everything else. A link is not something that gets drawn, so the preview never changes — the address here is the only place it shows. Use the + button below to put a data field into the address, which is how one template links somewhere different on every document.',
+    'help.spans.title': 'Text that is not all one look',
+    'help.spans.body':
+      'This item is built from several fragments so that parts of it can look different from the rest. Pick a fragment to give just that part its own link. The words themselves are written in the file, not here.',
     'help.styleNames.title': 'Styles defined once, applied here',
     'help.styleNames.body':
       'Applies a style registered on the document to this item. With more than one ticked the one added last wins, and a value set on the item itself beats all of them.',
@@ -768,6 +771,16 @@ export const en: LanguageCatalog = {
     'panel.charGrid.kinsoku': 'Line-break rules',
     'panel.charGrid.kinsoku.school': 'School standard',
     'panel.charGrid.kinsoku.none': 'None',
+    'panel.spans.heading': 'Text fragments',
+    'panel.spans.bound': 'Data: {key}',
+    'panel.spans.empty': '(empty fragment)',
+    'panel.spans.row': 'Fragment {n}: {content}',
+    'panel.spans.rowLinked': 'Fragment {n}: {content}, has a link',
+    'panel.spans.conflict':
+      'This item also carries content that is not drawn: the fragments below replace it.',
+    'panel.spans.conflict.clear': 'Remove the content that is not drawn',
+    'panel.spans.link.label': 'Link for fragment {n}',
+    'panel.spans.link.insert': 'Insert a data field into the link for fragment {n}',
     'panel.link.label': 'Link',
     'panel.link.insert': 'Insert a data field into the link',
     'panel.link.placeholder': 'https://example.com',

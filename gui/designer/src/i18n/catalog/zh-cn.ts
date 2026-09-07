@@ -297,7 +297,10 @@ export const zhCn: LanguageCatalog = {
       '避免句号或右引号落在行首，把它拉回前一行。学校标准与教科书的处理相同；选「无」则只按顺序填入格子。',
     'help.link.title': '此项目的链接目标',
     'help.link.body':
-      '在导出的 PDF 中，整个项目会成为一个链接。链接不是画出来的，所以预览的外观不会改变，这里填写的地址是唯一的线索。用下方的 + 按钮把数据字段插入地址，这样同一个模板就能让每份文档链接到不同的位置。',
+      '在导出的 PDF 中，这个项目会成为一个链接。带有自己链接的文字片段以其为准，这里的地址适用于其余部分。链接不是画出来的，所以预览的外观不会改变，这里填写的地址是唯一的线索。用下方的 + 按钮把数据字段插入地址，这样同一个模板就能让每份文档链接到不同的位置。',
+    'help.spans.title': '外观不统一的文字',
+    'help.spans.body':
+      '这个项目由多个片段组成，因此其中一部分可以和其余部分长得不一样。选中一个片段，就能只给那一部分加链接。文字本身在文件中书写，不在这里。',
     'help.styleNames.title': '定义一次，重复套用',
     'help.styleNames.body':
       '把文档中登录的样式应用到这个项目。勾选多个时以最后加入者为准，而直接设在此项目上的值胜过全部。',
@@ -712,6 +715,15 @@ export const zhCn: LanguageCatalog = {
     'panel.charGrid.kinsoku': '避头尾规则',
     'panel.charGrid.kinsoku.school': '学校标准',
     'panel.charGrid.kinsoku.none': '无',
+    'panel.spans.heading': '文字片段',
+    'panel.spans.bound': '数据：{key}',
+    'panel.spans.empty': '（空片段）',
+    'panel.spans.row': '片段 {n}：{content}',
+    'panel.spans.rowLinked': '片段 {n}：{content}，含链接',
+    'panel.spans.conflict': '此项目还带有不会绘制的内容，下面的片段将取代它。',
+    'panel.spans.conflict.clear': '删除不会绘制的内容',
+    'panel.spans.link.label': '片段 {n} 的链接',
+    'panel.spans.link.insert': '向片段 {n} 的链接中插入数据字段',
     'panel.link.label': '链接',
     'panel.link.insert': '向链接中插入数据字段',
     'panel.link.placeholder': 'https://example.com',

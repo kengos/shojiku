@@ -5,15 +5,13 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { useRef } from 'react';
-import { isMacPlatform, modifierGlyph } from '../help/shortcutsModel';
 import { useI18n } from '../i18n/context';
-import { commitOps } from '../text/declCommit';
-import { TextEditor } from '../text/TextEditor';
 import { INPUT } from '../ui/chrome';
 import { CharGridMarkupField } from './CharGridMarkupField';
 import { BoundContent } from './contentBound';
 import { ImageContent, PageNumberContent } from './contentParts';
-import { Field, FieldGroup } from './fields';
+import { TextContentField } from './contentText';
+import { Field } from './fields';
 import { formatOptions } from './formatModel';
 import { IterableSourceSection } from './IterableSourceSection';
 import type { ItemPanelProps } from './itemPanelProps';
@@ -21,11 +19,8 @@ import { type ContentMode, MARK_TYPES, registryNames } from './itemView';
 import { MarkSection } from './MarkSection';
 import { applyPanelOp, switchContentOps, textAsBinding } from './model';
 import { chipsFor, HelpfulHeading } from './panelHelpers';
+import { SpansSection } from './SpansSection';
 import { TableColumnsSection } from './TableColumnsSection';
-
-/** Ties the key hint to the editor it describes. One text field is on screen
- * at a time (the panel shows the selected item), so a constant is enough. */
-const TEXT_HINT_ID = 'sj-text-keys';
 
 export function ContentSection(props: ItemPanelProps) {
   const { t } = useI18n();
@@ -79,6 +74,12 @@ export function ContentSection(props: ItemPanelProps) {
     // so the section is its own rather than a mode of the pair below.
     return <MarkSection props={props} chips={chips} />;
   }
+  if (view.type === 'text' && view.hasSpans) {
+    // Inline rich text REPLACES the pair below: `spans` wins over `text`/`data`,
+    // so the pair would be editing a key the engine ignores. Keyed by path so
+    // the selected fragment resets when a different item is selected.
+    return <SpansSection key={path} {...props} />;
+  }
   // text / qr_code / char_grid: the content-mode pair.
   const formatRows = formatOptions(
     registryNames(controller.read('formats')),
@@ -111,64 +112,7 @@ export function ContentSection(props: ItemPanelProps) {
         </select>
       </Field>
       {view.contentMode === 'text' ? (
-        // FieldGroup, not Field: the editor is a contenteditable next to the
-        // insert-a-field button, and a `<label>` around that pair sends every
-        // click inside it to the button.
-        <FieldGroup label={t('panel.field.text')}>
-          {/* The wrapper is what `:focus-within` keys the hint off — it holds
-              the editor and its hint, and nothing else. */}
-          <div className="sj-text-field">
-            <TextEditor
-              // Keyed by value: the contenteditable seeds once per mount, so it
-              // reseeds on an EXTERNAL change (undo, a delete shifting a sibling
-              // into this slot) but not on a sibling field's commit — the property
-              // panel no longer remounts wholesale per revision.
-              key={view.text}
-              value={view.text}
-              // Two lines, so the field LOOKS like somewhere a line break
-              // belongs. It was one line high, which is most of why a reader
-              // concluded it could not hold two.
-              className={`sj-text-editor min-h-[3.6em] ${INPUT}`}
-              ariaLabel={t('panel.field.text')}
-              ariaDescribedBy={TEXT_HINT_ID}
-              chips={chips}
-              onCommit={(v, declarations) =>
-                controller.applyAll(
-                  commitOps({
-                    read: controller.read,
-                    path,
-                    oldText: view.text,
-                    newText: v,
-                    pending: declarations,
-                  }),
-                )
-              }
-              // The draft goes through the SAME `commitOps` the commit does, so
-              // what the canvas shows while typing cannot drift from what blur
-              // will write — a staged chip's declaration included.
-              onDraft={(draft) =>
-                props.onTextDraft?.(
-                  draft === null
-                    ? null
-                    : commitOps({
-                        read: controller.read,
-                        path,
-                        oldText: view.text,
-                        newText: draft.value,
-                        pending: draft.declarations,
-                      }),
-                )
-              }
-            />
-            {/* Always rendered, so it can DESCRIBE the field for a screen
-                reader; revealed visually only while the field has focus,
-                because the panel has no room for a permanent line under every
-                text field. */}
-            <p className="sj-text-hint" id={TEXT_HINT_ID}>
-              {t('panel.field.text.keys', { mod: modifierGlyph(isMacPlatform()) })}
-            </p>
-          </div>
-        </FieldGroup>
+        <TextContentField props={props} chips={chips} />
       ) : (
         <BoundContent
           props={props}
