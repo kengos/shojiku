@@ -35,6 +35,10 @@ platform binaries.
   panel says so and offers to remove it — previously the only surface that
   could clear it was the one that should never have been editing it.
 
+  A fragment's row names it by what it holds, clipped at the same length the
+  layer tree uses — the engine puts no bound on a fragment's text, and that
+  name is what a screen reader re-reads on every visit to the row.
+
   Not yet: creating, reordering or retyping a fragment. The words themselves
   are still written in the file.
 
