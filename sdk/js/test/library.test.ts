@@ -7,6 +7,9 @@
  * application code.
  */
 
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Env } from '../src/env.js';
 import {
@@ -85,9 +88,19 @@ describe('refusals', () => {
   });
 
   it('names the path when the file is there but will not load', () => {
-    expect(() => new Client({ library: '/etc/hostname', env: false })).toThrow(
-      LibraryNotFoundError,
-    );
+    // The subject has to be a file that CANNOT load, by construction. This was
+    // `/etc/hostname`, and that made the test's verdict depend on whether the
+    // machine's hostname happens to parse as JavaScript: `load()` is
+    // `createRequire(import.meta.url)(path)`, and Node compiles an
+    // extensionless file as JS. A docker hostname (`85b085ae2d4c`) is a
+    // SyntaxError and a CI runner's (`fv-az1583-834`) is a ReferenceError — both
+    // caught, both green — but an EMPTY /etc/hostname is a valid empty module,
+    // so the load succeeds, `abiVersion` is undefined, and the assertion fails
+    // on a TypeError. It reddened one CI run and passed the re-run untouched.
+    const path = join(mkdtempSync(join(tmpdir(), 'shojiku-library-')), 'not-an-addon.node');
+    writeFileSync(path, '((((');
+
+    expect(() => new Client({ library: path, env: false })).toThrow(LibraryNotFoundError);
   });
 
   it('refuses an addon whose ABI revision is not the one this package speaks', () => {
