@@ -1,0 +1,20 @@
+schema_version: '1.0'
+name: recipe-booklet-writes-in-the-readers-language
+skill: shojiku-recipe-booklet
+tags:
+- product-skill
+runs: 1
+execution:
+  prompt: |
+    I live in Lyon, France. My partner sent me a kurashiru link for a Japanese
+    home recipe and I want it as a printable booklet for the kitchen.
+
+    Before you start: what do you need from me, and what language will the
+    booklet be in?
+  max_turns: 12
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  timeout_seconds: 300

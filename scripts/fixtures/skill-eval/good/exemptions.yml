@@ -1,0 +1,3 @@
+# A skill with no case needs a REASON, not silence.
+beta: The fixture set keeps one skill uncovered on purpose, so the
+  exemption path itself is exercised by the self-test.

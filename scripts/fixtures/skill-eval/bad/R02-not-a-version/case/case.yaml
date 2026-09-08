@@ -1,0 +1,4 @@
+schema_version: "one point oh"
+skill: alpha
+execution:
+  prompt: hi

@@ -1,0 +1,5 @@
+schema_version: "1.0"
+skill: alpha
+scaffold_script: rm -rf /
+execution:
+  prompt: hello

@@ -2,10 +2,17 @@
 
 ## Prerequisites
 
-**Docker and `make`. Nothing else.** There is no host Rust or Node
-toolchain — every gate runs in a pinned image with cached volumes, so a
-clean machine produces the same result as CI. `make help` lists every
-target.
+**Docker and `make`, for everything that builds.** There is no host Rust or
+Node toolchain — every gate that compiles anything runs in a pinned image with
+cached volumes, so a clean machine produces the same result as CI. `make help`
+lists every target.
+
+Three cheap gates are the exception and run on the host, because putting a
+container around them would cost more than they take: `make hooks:verify` needs
+`jq`, and `make skills:verify` / `make skills:eval` need Python 3 with PyYAML
+(`python3 -m pip install --user pyyaml`). Each says so by name if the tool is
+missing. They are CI-only in the sense that `make verify` does not run them —
+run them yourself before pushing.
 
 ## Checking your work
 
@@ -44,6 +51,22 @@ slices.
   bar a change must clear before it ships.
 - **`make quiet T=<target>`** gives anything that is not already a gate
   the same treatment.
+- **`make skills:verify`** gates the eval cases over the skills — that every
+  case in `skills/evals/` parses and every product skill still has a case or an
+  exemption carrying a reason. It never calls a model, so it costs nothing. It
+  runs on every PR that can affect it — including a markdown-only one, which is
+  the common shape for a skill change and which `ci.yml` skips entirely
+  (`site-docs.yml` carries it for exactly that reason). **`make skills:eval` is the other half and is NOT a gate**:
+  it puts each case to a real agent and scores the answer, which costs money and
+  is not deterministic. Run it when you change a skill, not on every commit
+  (`make skills:eval CASE='<glob>'` for one case). Both need PyYAML.
+  `make skills:eval-dev` is the same for the development skills under
+  `.claude/skills/`, whose cases live outside the checkout; those skills are
+  gitignored, so from a worktree pass `DEV_SKILLS=<primary checkout>/.claude/skills`.
+  Add `ABLATION=1` to run every case a second time WITHOUT its skill and print
+  the delta — a case that scores the same either way is measuring the model
+  rather than the skill, and is worth rewriting.
+
 - **`make make:check`** is the gate over this surface itself: it refuses
   a target filed under the wrong `mk/<scope>.mk`, a public target with no
   scope, and — the reason it exists — any tracked file naming a `make`

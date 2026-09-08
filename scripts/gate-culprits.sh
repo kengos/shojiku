@@ -62,6 +62,13 @@ emit "examples:" "$(pick '^MISMATCH examples/')"
 # only the count, not which template and which line.
 emit "text indent:" "$(pick '^(examples|skills)/.*: block scalar ')"
 
+# skills:verify: one `R<nn>  <path>` line per malformed case or grader, with the
+# reason on the line under it. The tail shows the total and the make errors; the
+# rule id and the path are what say WHICH case and WHICH rule. A `selftest
+# FAILED` line matters more than any of them: it means the DETECTOR broke, so
+# the case tree is not what the gate is telling you about.
+emit "skill evals:" "$(pick '^ *R[0-9]{2} +[^ ]|^skill-eval selftest FAILED' 30)"
+
 # sbom:check: one line per offending path — DRIFT for an inventory that no
 # longer describes its lockfile, UNMAPPED/MISSING for a lockfile the map does
 # not agree with. Without this the failure falls back to the tail, which shows

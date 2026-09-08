@@ -35,6 +35,14 @@ name: Site (docs-only changes)
 # starts and there is nothing running to read the message. Markers can only
 # ever SKIP (`[skip ci]`), never start.
 #
+# THE THIRD HOLE, and it is the sharpest, because the gate is ABOUT markdown.
+# `make skills:verify` fails when a product skill has neither an eval case nor
+# an exemption. Four of the five product skills ARE a single `SKILL.md`, and an
+# eval grader is a `.md` too — so adding a skill, or editing a grader, is a
+# markdown-only PR, and filing that gate under ci.yml alone meant it never ran
+# on the one change it exists to catch. Same shape as the two above; it needs no
+# Docker and takes seconds.
+#
 # THE SECOND HOLE, same shape. `make make:check` refuses any tracked file that
 # names a make target which does not exist — a failure mode that is
 # predominantly DOCS, since prose is where a target gets named in passing. It
@@ -95,3 +103,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: make make:check
+
+  skills:
+    name: skills (every skill still has an eval case)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # skills:verify parses YAML, so it needs PyYAML. Installed explicitly
+      # rather than assumed off the runner image, as in ci.yml.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install --quiet pyyaml
+      - run: make skills:verify

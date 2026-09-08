@@ -1,0 +1,4 @@
+schema_version: "9.0"
+skill: alpha
+execution:
+  prompt: hi

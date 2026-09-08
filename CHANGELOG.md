@@ -15,6 +15,28 @@ platform binaries.
 
 ### Added
 
+- **The skills can now be tested, not just read.** A skill is a page of rules,
+  and nothing here could say whether one still WORKS — a grep proves the
+  sentence is present, and presence was never the question. `make skills:verify`
+  is the new gate: it parses every eval case under `skills/evals/`, validates it
+  against the schema `claude plugin eval` itself enforces, and fails when a
+  product skill has neither a case nor an exemption carrying a reason. It never
+  calls a model, so it costs nothing, and it runs on markdown-only pull requests
+  too — which is what a skill change usually is.
+
+  `make skills:eval` is the other half, and deliberately not a gate: it puts each
+  case to a fresh agent that has the skill and nothing else, then scores the
+  answer. Add `ABLATION=1` and it runs each case a second time WITHOUT the skill
+  and prints the delta — the only thing that says whether the skill did anything,
+  since a case that scores the same either way is measuring the model. Measured
+  on the first case: 1.00 with the skill, 0.00 without it.
+
+  The case format uses the official `claude plugin eval` schema's key names and
+  bounds and rejects what it rejects, so the cases survive if that command
+  becomes available. It never executes author-supplied code: a case carrying
+  `scaffold_script` is refused rather than gated behind a flag. Both halves need
+  PyYAML.
+
 - **The Designer shows the fragments a rich-text item is made of, and can give
   one of them its own link.** A text item can be built from `spans` — several
   fragments drawn as one wrapped block, so part of a sentence can be bold, or

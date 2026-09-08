@@ -1,0 +1,3 @@
+A directory named `adirectory.md` matches the `*.md` glob and is not a file.
+Git cannot store an empty directory, so this placeholder is what makes the
+fixture exist at all.

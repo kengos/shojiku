@@ -1,0 +1,7 @@
+# Skills that legitimately have no eval case, each with the reason.
+#
+# `make skills:verify` refuses an entry naming a skill that does not exist,
+# and refuses one for a skill that HAS a case — a stale waiver is a silent
+# hole, which is the failure this file would otherwise introduce.
+#
+# Every product skill currently carries a case, so the mapping is empty.
