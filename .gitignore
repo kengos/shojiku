@@ -90,3 +90,9 @@ sdk/php/vendor/
 
 # `make gui:shot` output — screenshots of the running Designer, for looking at
 .shots/
+
+# `make skills:eval` writes each run's transcript and tool trace here, in the
+# official runner's layout (<eval dir>/results/<timestamp>/). They are evidence
+# for one run against one model on one day — worth keeping until the question is
+# answered, never worth committing.
+skills/evals/results/

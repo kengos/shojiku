@@ -63,6 +63,11 @@ slices.
   `make skills:eval-dev` is the same for the development skills under
   `.claude/skills/`, whose cases live outside the checkout; those skills are
   gitignored, so from a worktree pass `DEV_SKILLS=<primary checkout>/.claude/skills`.
+  Each run's transcript, prompt and tool trace are written to
+  `<cases>/results/<timestamp>/` (gitignored), and a failing grader names the
+  directory on its own line — a grader that fails is the one moment you need
+  the answer it scored, and re-running gives you a different sample rather
+  than the one that failed. `--no-save` turns it off.
   Add `ABLATION=1` to run every case a second time WITHOUT its skill and print
   the delta — a case that scores the same either way is measuring the model
   rather than the skill, and is worth rewriting.

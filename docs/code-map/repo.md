@@ -396,7 +396,12 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   skills. `check` parses every case in `skills/evals/`, validates it against
   the schema `claude plugin eval` itself enforces, and fails when a product
   skill has neither a case nor an exemption carrying a reason; `run` puts each
-  case to a fresh agent in a `mkdtemp` sandbox and scores the transcript.
+  case to a fresh agent in a `mkdtemp` sandbox and scores the transcript, which
+  it WRITES (with the prompt and the tool trace) to
+  `<cases>/results/<timestamp>/run-N-{with,no}-skill/`; a failing grader names
+  that directory. The two ablation arms get separate leaves on purpose — a
+  collision would overwrite the evidence for one with the other, and the scores
+  would not show it.
   **Being outside the checkout is not what isolates it** — that only stops
   `CLAUDE.md` auto-loading, and a measured baseline run in a temp directory came
   back quoting `examples/business/pickup-slip-ja/legacy/pickup_slip.tlf` by name.

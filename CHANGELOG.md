@@ -15,6 +15,15 @@ platform binaries.
 
 ### Added
 
+- **A failed eval grader can now be read rather than re-run.** `make skills:eval`
+  scored a transcript and threw it away, so the one moment you need the answer —
+  a grader just said it was wrong — was the moment it was gone, and a second run
+  is a different sample that need not reproduce. Each run now writes its
+  prompt, transcript and tool trace under `<cases>/results/<timestamp>/`, and a
+  failing grader names the directory on its own line. The two ablation arms get
+  separate leaves, so the no-skill run cannot overwrite the evidence for the one
+  beside it. `--no-save` turns it off.
+
 - **The skills can now be tested, not just read.** A skill is a page of rules,
   and nothing here could say whether one still WORKS — a grep proves the
   sentence is present, and presence was never the question. `make skills:verify`
