@@ -2,6 +2,7 @@
 type: tool_used
 tool: Skill
 input_match: shojiku-thinreports-migrator
+arm: with-only
 ---
 The skill UNDER TEST was loaded — `input_match` is doing the work here, and
 without it this grader proves nothing. The sandbox also carries whatever skills

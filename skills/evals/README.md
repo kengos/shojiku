@@ -18,32 +18,130 @@ is the part that would be replaced. What it does NOT do is listed in that
 script's docstring, and is worth reading before assuming a case will load
 elsewhere unchanged.
 
-## Writing a case
+## Writing a case that measures something
 
-Aim it at a decision, not at a phrase. A grader that greps for the rule's
-own wording passes whenever the model quotes the skill back, which is the
-one thing a loaded skill will always do. The graders worth writing ask what
-the answer DID: which tool it reached for, which library it refused, what it
-put in the file it wrote.
+**Where this evidence comes from.** The incidents below are from the
+DEVELOPMENT-skill suite — `~/shojiku-work/skill-evals`, run by
+`make skills:eval-dev` — which is larger and has been run more. This tree's
+five cases are named where they are the example. The advice transfers; the
+anecdotes are not from here, and saying otherwise would send you looking for
+a commit-message case among these five.
 
-Pair a judgment (`llm`) grader with a mechanical one where you can. But a
-`tool_used: Skill` grader alone does **not** prove the skill under test fired:
-the sandbox carries the operator's own skills too, and a name-only match is
-satisfied by any of them. Give it an `input_match` naming the skill.
+First, the thing that decides whether a case is worth writing at all: **aim
+it at a DECISION, not at a phrase.** A grader that greps for the rule's own
+wording passes whenever the model quotes the skill back, which is the one
+thing a loaded skill will always do. The graders worth writing ask what the
+answer DID — which tool it reached for, which library it refused, what it put
+in the file it wrote — and pair a judgment (`llm`) grader with a mechanical
+one wherever both are possible.
 
-Every case here sets `runs: 1` rather than the official default of 3. That is a
-COST choice, not a quality one: one `llm` verdict on one sample is a weak
-signal, so treat a single red run as a reason to re-run with `--runs 3` before
-concluding anything about the skill.
+### 1. Check the skill FIRES. Everything else is downstream of this.
 
-When a grader fails, read the transcript it scored: `make skills:eval` writes
-one per run under `results/<timestamp>/`, and the failing line names the
-directory. The two mistakes below are both ones you can only SEE in the
-transcript — the score alone is consistent with either reading.
+In one full ablated run of the development suite, five cases scored 0.00 and
+two scored 1.00. Of the five cases carrying an indicator that can answer the
+question, **three showed the model had never loaded the skill, and all three
+scored 0.00; the two where it did load scored 1.00.** All three reproduced
+`0x` on a second independent sample.
 
-**A `not_contains` pattern is scored against the whole transcript, and the
-transcript contains the PROMPT.** If the thing you are forbidding also appears
-in the prompt — showing the model a bad example to see whether it copies it —
-the grader cannot tell "wrote it" from "quoted it while refusing". Forbid
-something only a wrong answer would produce, or check the shape of the output
-instead.
+(Two further cases scored 0.00 with **no** indicator, so why they failed is
+unknown — which is itself the argument for this step. Do not read the
+correlation as "every zero is a non-firing skill"; read it as "a zero means
+nothing until you know whether the skill was there".)
+
+A rule inside a skill that never activates is inert however well written, and
+no other grader in the case can tell you it happened. So give every case
+this, and read it before you read the score:
+
+```
+---
+type: tool_used
+tool: Skill
+input_match: <the skill's own directory name>
+arm: with-only
+---
+```
+
+Both keys are load-bearing. `input_match` because the sandbox also carries
+whatever skills the operator's `~/.claude` provides, so matching the tool
+NAME alone is satisfied by any of them. `arm: with-only` because without it
+the indicator SCORES: it is false by construction on the no-skill arm, which
+caps that arm and inflates the ablation delta by up to +0.5 — enough for a
+case that measures nothing to escape the `MEASURES NOTHING` flag.
+
+**When a skill does not fire, the case is not the problem.** Look at the
+skill's `description:` frontmatter and ask whether it advertises the thing
+you are prompting about. One skill owning the commit-message rules described
+itself in terms of Dockerfiles, CI and versioning, and never fired on "write
+the commit message".
+
+### 2. Put the PRESSURE in the prompt
+
+A rule exists to beat something. If that something is absent, both arms pass
+for the same empty reason and the case measures nothing.
+
+A rule forbidding attribution trailers exists to beat the convention in
+`git log` — and the sandbox has no `git log`. With a bare "write a commit
+message" that case scored 1.00 with the skill and 1.00 without. The
+counter-evidence has to be IN the prompt.
+
+Ask of every case: *what would make a careful model get this wrong?* If
+nothing in the prompt pushes that way, you are testing the base model.
+
+### 3. Make the prompt self-contained
+
+The sandbox has **no repository, no engine, no rendered output and no git**.
+A prompt saying "I have staged a change" earns a clarifying question rather
+than an answer, and graders then pass vacuously on a transcript with no
+answer in it. Paste the diff, the schema, the code.
+
+(The sandbox is not bare: it holds the skill's whole directory, so a skill
+shipping `template/` assets has those too, and the operator's own skills are
+present alongside.)
+
+This is what makes some skills legitimately unevaluable here: one whose
+subject IS a rendered page or a running browser can only be asked to recite
+its checklist, which a grep already proves. Those get an `exemptions.yml`
+entry carrying the reason.
+
+### 4. Know what each grader can and cannot see
+
+| type | sees | the trap |
+| --- | --- | --- |
+| `regex` | the model's OUTPUT — not the prompt | `target:` validates and is ignored; every regex scores the whole transcript |
+| `tool_used` | tool name + input | a bare name matches any skill — use `input_match`; the trace records ATTEMPTED calls, so it can pass on one the permission layer denied |
+| `tool_order` | the call sequence | — |
+| `file_exists` | a path resolved inside the **sandbox temp dir**, which is deleted after the run | a repo-relative path is always false |
+| `llm` | the transcript, judged against `criteria` | one judge verdict on one sample |
+| `baseline` | — | validated, never executed here |
+
+**The prompt is NOT in the transcript.** Only assistant text and the final
+result are, so a `not_contains` pattern cannot be tripped by an example you
+put in the prompt as pressure — which means step 2 is free, and an anchored
+pattern buys nothing over a plain one.
+
+### 5. Read the DELTA, not the score
+
+`ABLATION=1` runs each case again with the skill removed. A case scoring the
+same both ways is measuring the model, and the runner says so
+(`MEASURES NOTHING`).
+
+That is not a failed case — it is a true and useful answer. It means the rule
+is not carrying weight on that prompt, so either find the prompt where it
+does, or accept that the skill is confirming an instinct rather than creating
+one. `rust-security-sees-quadratic-input` is the worked example: the skill
+demonstrably loaded, and the base model refuses the quadratic parser anyway.
+
+Apply step 1 before believing any such verdict. A case with no indicator that
+scores equal on both arms may simply have had the skill absent from both.
+
+### 6. When a grader fails, read the transcript before believing it
+
+`<cases>/results/<timestamp>/` holds the prompt, transcript and tool trace
+for every run, and the failing line names the directory. Two defects in this
+suite's own history were found there and were invisible in the score: one
+case passed because no answer was produced at all, and one failure was read
+as the model quoting the prompt when the transcript showed it had written the
+forbidden thing itself.
+
+Cases are `runs: 1` for cost. One judge verdict on one sample is a weak
+signal — re-run before concluding anything about a skill.
