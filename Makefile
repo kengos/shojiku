@@ -17,6 +17,8 @@
 #                               any tracked file naming a command that is gone
 #     make hooks:verify         the tracked .claude/hooks still decide — and
 #                               still let the legitimate spelling through
+#     make skills:verify        the skill eval cases still parse, and every
+#                               product skill still has a case or a reason
 #
 #   Faster slices while iterating
 #     make engine:budget        make engine:lint        make engine:test
@@ -116,6 +118,17 @@ endif
 #                                         allowed — a hook that quietly stops
 #                                         deciding removes a control without
 #                                         reddening anything. No Docker, seconds)
+#   skills:verify     -> job "versions" (the eval cases over skills/ still
+#                                         parse, and every product skill still
+#                                         has a case or an exemption carrying a
+#                                         reason. The self-test runs first, so a
+#                                         broken DETECTOR reddens on its own
+#                                         fixtures rather than passing the tree.
+#                                         No Docker, seconds)
+#   skills:eval       -> NO ci.yml job   (it calls a model: not free, not
+#                                         deterministic, and CI holds no
+#                                         credentials. Run it by hand when you
+#                                         change a skill — see mk/skills.mk)
 #   engine:wasm       -> job "wasm"      (build wasm32 bindings + size budget)
 #   sdk:ruby:verify  -> job "sdk-ruby"  (rubocop, rspec at 100% coverage, gem
 #                                         build/install; engine library injected
@@ -437,6 +450,7 @@ include mk/site.mk
 include mk/sdk.mk
 include mk/docker.mk
 include mk/hooks.mk
+include mk/skills.mk
 include mk/proof.mk
 
 # The investigation surface. Not gates — they print state, they check nothing —
@@ -495,11 +509,15 @@ help: ## Show this help
 # AHEAD of `engine:coverage`: it is a full wasm32 build rather than a lint, so it
 # belong before the tests — but a size-budget crossing used to be discovered
 # only after paying for the single most expensive step in the run.
-verify: ## Full local CI mirror; green == safe to push
+verify: ## Nearly the full local CI mirror — see the note above _verify
 	@$(call gate,_verify,verify)
 
+# NOT the complete CI set, deliberately: `hooks:verify` needs host jq and
+# `skills:verify` needs host python + PyYAML, and this target's contract is
+# "Docker and make, nothing else". Both run in CI. Run them by hand before a
+# push; saying so beats a success line that overstates what was checked.
 _verify: _make-check _engine-lint _engine-wasm _engine-coverage _engine-deny _reference-check _examples-check _sbom-lint _version-check _engine-napi _gui-verify _site-gates _site-check _sdk-ruby-verify _sdk-python-verify _sdk-dotnet-verify _sdk-java-verify _sdk-js-verify _sdk-php-verify _sdk-go-verify _docker-verify
-	@echo "\n✅ verify passed — every CI gate is green locally. Safe to push."
+	@echo "\n✅ verify passed. NOTE: hooks:verify and skills:verify are CI-only (host jq / python) — run them too before pushing."
 
 # NAME labels the run; it defaults to T so `make quiet T=<x>` is unchanged.
 RUN_NAME = $(if $(NAME),$(NAME),$(T))

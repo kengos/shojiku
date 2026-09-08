@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: same
+skill: alpha
+execution:
+  prompt: hello

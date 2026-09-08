@@ -1,0 +1,11 @@
+schema_version: "1.0"
+name: alpha-every-grader
+skill: alpha
+tags: [fixture]
+runs: 1
+execution:
+  prompt: |
+    Say ALPHA twice, then read a file.
+  max_turns: 10
+  allowed_tools: [Read, Glob, Grep, Skill]
+  timeout_seconds: 120

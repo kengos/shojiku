@@ -1,0 +1,19 @@
+schema_version: '1.0'
+name: render-debugger-passes-paths-not-contents
+skill: shojiku-render-debugger
+tags:
+- product-skill
+runs: 1
+execution:
+  prompt: |
+    My template is at ./t.yml, definitions at ./d.yml, params at ./p.json.
+    The invoice total is clipped on the right edge.
+
+    Give me the exact command to run first.
+  max_turns: 12
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  timeout_seconds: 300

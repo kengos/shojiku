@@ -1,0 +1,5 @@
+schema_version: "1.0"
+skill: alpha
+execution:
+  prompt: hello
+  timeout_seconds: 99999

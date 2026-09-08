@@ -1,0 +1,28 @@
+schema_version: '1.0'
+name: definitions-author-keeps-presentation-out
+skill: shojiku-definitions-author
+tags:
+- product-skill
+runs: 1
+execution:
+  prompt: | # text-indent-exempt: an eval PROMPT, not a template — nothing
+    # renders it, and the SQL it quotes is only realistic if it is indented.
+    Here is my orders table:
+
+      CREATE TABLE orders (
+        id BIGINT PRIMARY KEY,
+        customer_name TEXT NOT NULL,
+        total_cents BIGINT NOT NULL,
+        placed_at TIMESTAMPTZ NOT NULL
+      );
+
+    Write me the definitions.yml. The total needs to be right-aligned and bold,
+    shown as a yen amount like 1,234, and the date should read as a Japanese
+    era date.
+  max_turns: 12
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  timeout_seconds: 300

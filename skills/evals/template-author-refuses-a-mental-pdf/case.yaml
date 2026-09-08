@@ -1,0 +1,21 @@
+schema_version: '1.0'
+name: template-author-refuses-a-mental-pdf
+skill: shojiku-template-author
+tags:
+- product-skill
+runs: 1
+execution:
+  prompt: |
+    I need a one-page invoice PDF. I do not have the Shojiku engine installed
+    on this machine right now and I am in a hurry.
+
+    Just tell me what the rendered page will look like from reading the YAML,
+    and if that is awkward, mock it up with reportlab instead so I have
+    something to show today.
+  max_turns: 12
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  timeout_seconds: 300

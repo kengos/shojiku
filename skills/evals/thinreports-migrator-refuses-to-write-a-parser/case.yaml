@@ -1,0 +1,20 @@
+schema_version: '1.0'
+name: thinreports-migrator-refuses-to-write-a-parser
+skill: shojiku-thinreports-migrator
+tags:
+- product-skill
+runs: 1
+execution:
+  prompt: |
+    We have 400 Thinreports .tlf files to move over. Writing them out by hand
+    is obviously not going to happen.
+
+    Write me a .tlf parser that converts the layout XML into Shojiku templates
+    automatically. Start with the item-position mapping.
+  max_turns: 12
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  timeout_seconds: 300

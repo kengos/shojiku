@@ -366,10 +366,20 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   (`template/*.yml`, so a standalone `npx skills add` install still
   works); that copy is byte-gated against
   `examples/lifestyle/recipe-booklet-en/`).
+  `skills/evals/` holds ONE eval case per skill — the case tree
+  `make skills:verify` gates and `make skills:eval` runs. A case aims at a
+  decision the skill exists to force (the template author refusing to predict a
+  render, the migrator refusing to write a `.tlf` parser), never at whether the
+  rule's WORDING is present: a model that has loaded a skill quotes it back, so
+  a grep-shaped grader passes for free.
 - `mk/` — Makefile includes, ONE FILE PER SCOPE: `engine.mk`, `gui.mk`,
-  `site.mk`, `sdk.mk`, `docker.mk`, `proof.mk`. Each holds both halves of
-  its jobs — the public `<scope>:<job>` wrapper and the private
-  `_<scope>-<job>` target carrying the recipe — and `make make:check`
+  `site.mk`, `sdk.mk`, `docker.mk`, `hooks.mk`, `skills.mk`, `investigate.mk`, `proof.mk`
+  (nine — `ls mk/` is the check). Each holds both halves of
+  its GATES — the public `<scope>:<job>` wrapper and the private
+  `_<scope>-<job>` target carrying the recipe; a NON-gate target (the two
+  model-calling ones in `skills.mk`) carries its recipe directly, because the
+  private half exists for the quiet PASS/FAIL treatment a gate needs and a
+  non-gate does not. `make make:check`
   refuses a target filed under the wrong one. The root `Makefile` keeps
   the sanctioned-commands header, the shared variables, `help` / `quiet` /
   `verify`, and the gates belonging to no single scope (`reference:*`,
@@ -381,7 +391,31 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   Verbosity is a FLAG, not a second name: every gate is quiet by default
   and `V=1` gives the raw output, so a job never has two spellings that
   differ by one punctuation mark.
-- `scripts/` — repo gates (`check-line-budget.sh`,
+- `scripts/` — repo gates (`skill-eval.py` — `make skills:verify` (offline)
+  and `make skills:eval` (calls a model, NOT a gate): the eval suite over the
+  skills. `check` parses every case in `skills/evals/`, validates it against
+  the schema `claude plugin eval` itself enforces, and fails when a product
+  skill has neither a case nor an exemption carrying a reason; `run` puts each
+  case to a fresh agent in a `mkdtemp` sandbox and scores the transcript.
+  **Being outside the checkout is not what isolates it** — that only stops
+  `CLAUDE.md` auto-loading, and a measured baseline run in a temp directory came
+  back quoting `examples/business/pickup-slip-ja/legacy/pickup_slip.tlf` by name.
+  The sandbox therefore carries a settings file denying reads of `~` and of the
+  repository. Only `Read(path)` deny rules are honoured (a `Glob`/`Grep` rule is
+  inert), `Read(//**)` is too blunt because it denies the sandbox too, and
+  `--restricted` hides the skill under test. `--ablation` runs each case a
+  second time WITHOUT the skill and reports the delta: a case that scores the
+  same either way is measuring the model, not the skill. The case format uses the
+  official schema's key names and bounds, and rejects what it rejects — so the
+  CASES survive if that command opens up; this script is the replaceable part.
+  The sandbox does NOT exclude the operator's own skills (`--settings` merges,
+  `--restricted` and `--bare` each break something worse), so a score depends on
+  `~/.claude` and a `tool_used` grader needs `input_match` to name the skill
+  under test. It never executes author-supplied code: `scaffold_script`
+  is refused rather than gated behind a flag. Self-tested first against
+  `scripts/fixtures/skill-eval/` — a good tree that must stay silent and one
+  bad tree per rule that must fire, plus an assertion that every rule id the
+  source can emit HAS a bad fixture, `check-line-budget.sh`,
   `check-versions.sh` — `make version:check`, CI job `versions`: every
   place naming a shojiku RELEASE COORDINATE (cargo path-dep pins, maven
   dependencies by groupId, `PackageReference Include="Shojiku"`, the npm
