@@ -48,6 +48,9 @@ Deviations from the official runner, all in the safe direction:
     this CLI exposes no `--max-turns` flag.
   * `prompt.md` is read as a plain body; the official spelling allows
     frontmatter on it.
+  * a `regex` grader's `target` key validates (the official schema has it) and
+    is IGNORED: every regex is scored against the whole transcript. An author
+    reaching for `target` to narrow the match gets a key that does nothing.
 
   * `scaffold_script` is validated and NEVER executed. The official runner
     hides it behind `--scaffold` because it runs author-supplied bash as you.
@@ -560,7 +563,7 @@ def _invoke(prompt, sandbox, execution, model, timeout):
                           text=True, timeout=timeout, check=False,
                           stdin=subprocess.DEVNULL)
 
-    transcript, tools = [], []
+    transcript, tools, final = [], [], None
     for line in proc.stdout.splitlines():
         line = line.strip()
         if not line.startswith("{"):
@@ -570,7 +573,14 @@ def _invoke(prompt, sandbox, execution, model, timeout):
         except json.JSONDecodeError:
             continue
         if event.get("type") == "result" and isinstance(event.get("result"), str):
-            transcript.append(event["result"])
+            # FALLBACK ONLY. The `result` event repeats the final assistant turn,
+            # so appending both recorded every answer TWICE — measured at 12 of
+            # 20 saved runs being exactly 2x duplicated. `contains` /
+            # `not_contains` survive that (both are booleans over the hit list),
+            # but `match: count:N` cannot: an author asking for "names the flag
+            # once" had to write `count:2` or the grader could never pass.
+            final = event["result"]
+            continue
         # `message` is not always an object: some stream-json events carry it as
         # a bare string. Found by the ABLATION arm — the no-skill run produces a
         # different event shape, and the bug was latent in the with-skill path
@@ -590,6 +600,8 @@ def _invoke(prompt, sandbox, execution, model, timeout):
                     # sandbox (see `_sandbox`). `input_match` is what tells the
                     # skill under test from the other twenty.
                     tools.append((block["name"], json.dumps(block.get("input", {}), sort_keys=True)))
+    if not transcript and final is not None:
+        transcript.append(final)          # no text blocks parsed; use the summary
     if proc.returncode != 0:
         raise RuntimeError(f"claude exited {proc.returncode}: {proc.stderr.strip()[:400]}")
     if not transcript:
