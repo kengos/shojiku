@@ -81,6 +81,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 try:
@@ -482,6 +483,19 @@ def check_tree(cases_dir, skills_dir, require_coverage):
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
+def run_dir(out_root, stamp, case_name, attempt, with_skill):
+    """Where one run's transcript goes. Pure, so the self-test can pin it.
+
+    Mirrors the official layout — `<eval dir>/results/<timestamp>/` — because a
+    suite that migrates should not also have to relearn where its output lives.
+    The ablation arm gets its own leaf: two runs of one case differ only by
+    whether the skill was there, and a shared name would let the second silently
+    overwrite the evidence for the first.
+    """
+    arm = "with-skill" if with_skill else "no-skill"
+    return Path(out_root) / stamp / case_name / f"run-{attempt}-{arm}"
+
+
 def _sandbox(skill_dir, tmp_root, with_skill=True):
     """A throwaway tree holding ONLY the skill under test, and a deny rule.
 
@@ -673,8 +687,17 @@ def score_grader(grader, transcript, tools, sandbox, judge_model, timeout):
     raise AssertionError(f"unreachable grader type {gtype!r}")  # pragma: no cover
 
 
-def _score_once(case, skill_dir, model, judge_model, tmp_root, with_skill, label, details):
-    """One sandboxed run, scored. Returns the fraction of grader weight earned."""
+def _score_once(case, skill_dir, model, judge_model, tmp_root, with_skill, label,
+                details, out_dir=None):
+    """One sandboxed run, scored. Returns the fraction of grader weight earned.
+
+    `out_dir` is where the transcript and tool trace land. Scoring used to throw
+    both away, so a FAILED grader could only be diagnosed by paying for another
+    run — and the second run is a different sample, so it need not reproduce.
+    One real failure was left undiagnosed exactly this way: a `not_contains`
+    grader reported six matches while the judgment grader beside it passed, and
+    whether the answer WROTE the forbidden string or QUOTED it was unanswerable.
+    """
     import shutil
 
     execution = case["_execution"]
@@ -682,6 +705,15 @@ def _score_once(case, skill_dir, model, judge_model, tmp_root, with_skill, label
     sandbox = _sandbox(skill_dir, tmp_root, with_skill=with_skill)
     try:
         transcript, tools = _invoke(case["_prompt"], sandbox, execution, model, timeout)
+        trace = None
+        if out_dir is not None:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "transcript.txt").write_text(transcript, encoding="utf-8")
+            (out_dir / "trace.json").write_text(
+                json.dumps([{"name": n, "input": i} for n, i in tools], indent=2),
+                encoding="utf-8")
+            (out_dir / "prompt.txt").write_text(case["_prompt"], encoding="utf-8")
+            trace = out_dir
         earned = possible = 0.0
         for grader in case["_graders"]:
             result = score_grader(grader, transcript, tools, sandbox, judge_model, timeout)
@@ -689,6 +721,9 @@ def _score_once(case, skill_dir, model, judge_model, tmp_root, with_skill, label
                 details.append(f"    {label}  SKIP  {grader['_path'].name} (baseline)")
                 continue
             passed, detail = result
+            if not passed and trace is not None:
+                # The failure line is where someone is actually looking.
+                detail += f"  [transcript: {trace}]"
             if grader.get("arm") == "with-only":
                 # Officially an indicator that the plugin fired, not part of the
                 # score — it is trivially false on the no-skill arm.
@@ -703,7 +738,8 @@ def _score_once(case, skill_dir, model, judge_model, tmp_root, with_skill, label
         shutil.rmtree(sandbox, ignore_errors=True)
 
 
-def run_case(case, skills_dir, model, judge_model, tmp_root, ablation=False):
+def run_case(case, skills_dir, model, judge_model, tmp_root, ablation=False,
+             out_root=None, stamp=None):
     """Run one case `runs` times and return (score, baseline_score_or_None, details).
 
     With `ablation`, each run is paired with a second one whose sandbox has no
@@ -723,12 +759,19 @@ def run_case(case, skills_dir, model, judge_model, tmp_root, ablation=False):
 
     totals, baselines = [], []
     details = []
+    def where(attempt, with_skill):
+        if out_root is None:
+            return None
+        return run_dir(out_root, stamp, case["_name"], attempt + 1, with_skill)
+
     for attempt in range(runs):
         label = f"run {attempt + 1}"
-        totals.append(_score_once(case, skill_dir, model, judge_model, tmp_root, True, label, details))
+        totals.append(_score_once(case, skill_dir, model, judge_model, tmp_root, True,
+                                  label, details, where(attempt, True)))
         if ablation:
             baselines.append(_score_once(case, skill_dir, model, judge_model, tmp_root,
-                                         False, f"{label} (no skill)", details))
+                                         False, f"{label} (no skill)", details,
+                                         where(attempt, False)))
     score = sum(totals) / len(totals) if totals else 0.0
     baseline = (sum(baselines) / len(baselines)) if baselines else None
     return score, baseline, details
@@ -809,6 +852,27 @@ def selftest_fail_closed():
     return failures
 
 
+def selftest_run_dir():
+    """`run_dir` is the one part of the model-calling half that is pure.
+
+    Worth pinning because the ablation arm's two runs differ ONLY by the skill:
+    a layout that collided would overwrite the with-skill evidence with the
+    no-skill one, and the collision is invisible in the scores.
+    """
+    failures = []
+    a = run_dir("/out", "T", "case", 1, True)
+    b = run_dir("/out", "T", "case", 1, False)
+    if a == b:
+        failures.append(f"run_dir: the two ablation arms collide at {a}")
+    if run_dir("/out", "T", "case", 1, True) == run_dir("/out", "T", "case", 2, True):
+        failures.append("run_dir: two runs of one case collide")
+    if run_dir("/out", "T", "a", 1, True) == run_dir("/out", "T", "b", 1, True):
+        failures.append("run_dir: two cases collide")
+    if Path("/out") not in Path(a).parents:
+        failures.append(f"run_dir: {a} is not under the output root")
+    return failures
+
+
 def selftest():
     """Assert every rule both FIRES on a bad fixture and stays QUIET on the good one.
 
@@ -841,6 +905,7 @@ def selftest():
             failures.append(f"{tree.name}: expected rule {rule} to fire, but got {got}")
 
     failures += selftest_fail_closed()
+    failures += selftest_run_dir()
 
     missing = rule_ids_in_source() - seen_rules
     if missing:
@@ -863,7 +928,8 @@ def selftest():
         return 1
     print(f"    selftest ok — {len(seen_rules)} rules over {len(detector_lines())} detector "
           f"branches, every branch reached by a fixture; the good tree stays silent; "
-          f"4 fail-closed cases refuse to pass on an absence")
+          f"4 fail-closed cases refuse to pass on an absence; "
+          f"the transcript layout keeps every run distinct")
     return 0
 
 
@@ -913,10 +979,16 @@ def cmd_run(args):
         return 1
 
     tmp_root = tempfile.gettempdir()
+    stamp = time.strftime("%Y%m%dT%H%M%S")
+    out_root = None if args.no_save else Path(args.output_dir or (Path(args.cases) / "results"))
+    if out_root is not None:
+        print(f"  transcripts -> {out_root / stamp}\n")
+
     worst, rows = 1.0, []
     for case in cases:
         score, baseline, details = run_case(case, Path(args.skills), args.model,
-                                            args.judge_model, tmp_root, args.ablation)
+                                            args.judge_model, tmp_root, args.ablation,
+                                            out_root, stamp)
         worst = min(worst, score)
         rows.append((case["_name"], case["skill"], score, baseline))
         delta = "" if baseline is None else f"   (no skill: {baseline:.2f}, delta {score - baseline:+.2f})"
@@ -956,6 +1028,10 @@ def main(argv=None):
     p_run.add_argument("--threshold", type=float, default=1.0)
     p_run.add_argument("--ablation", action="store_true",
                        help="also run each case WITHOUT the skill, and report the delta")
+    p_run.add_argument("--output-dir", default=None,
+                       help="where transcripts go (default: <cases>/results/<timestamp>/)")
+    p_run.add_argument("--no-save", action="store_true",
+                       help="score without keeping the transcripts")
     p_run.set_defaults(func=cmd_run)
 
     p_self = sub.add_parser("selftest", help="run the fixtures only")

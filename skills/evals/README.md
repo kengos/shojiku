@@ -36,6 +36,11 @@ COST choice, not a quality one: one `llm` verdict on one sample is a weak
 signal, so treat a single red run as a reason to re-run with `--runs 3` before
 concluding anything about the skill.
 
+When a grader fails, read the transcript it scored: `make skills:eval` writes
+one per run under `results/<timestamp>/`, and the failing line names the
+directory. The two mistakes below are both ones you can only SEE in the
+transcript — the score alone is consistent with either reading.
+
 **A `not_contains` pattern is scored against the whole transcript, and the
 transcript contains the PROMPT.** If the thing you are forbidding also appears
 in the prompt — showing the model a bad example to see whether it copies it —
