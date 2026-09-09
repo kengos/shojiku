@@ -67,6 +67,7 @@ export function ToggleButton({
   hint,
   onToggle,
   tour,
+  disabled = false,
 }: {
   readonly label: string;
   readonly glyph: ReactNode;
@@ -74,6 +75,14 @@ export function ToggleButton({
   readonly hint?: string;
   readonly onToggle: (next: boolean) => void;
   readonly tour?: string;
+  /** Greys the control out. `FMT_BTN` already carries the `disabled:` styling.
+   *
+   * Two things use it, and for opposite reasons: the inline runs bar has
+   * nothing to apply a mark TO until the reader selects some words, and the
+   * block-level pair here stands DOWN while that bar is open, because two
+   * controls answering to one accessible name is an ambiguity a reader cannot
+   * resolve. */
+  readonly disabled?: boolean;
 }) {
   return (
     <span className="group/tip relative inline-flex">
@@ -83,6 +92,7 @@ export function ToggleButton({
         data-tour={tour}
         aria-label={label}
         aria-pressed={pressed}
+        disabled={disabled}
         onClick={() => onToggle(!pressed)}
       >
         {glyph}

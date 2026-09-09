@@ -27,7 +27,7 @@ import type { ChipContext } from './chipContext';
 import { buildEditorNodes, CHIP_SELECTED_CLASS, type ChipMeta, serializeEditor } from './chipModel';
 import { chipMetaFor, type PendingDecl } from './declModel';
 import { EditorSurface } from './EditorSurface';
-import { selectAllContent } from './editorDom';
+import { keepIfAttached, selectAllContent } from './editorDom';
 import { type DraftListener, useDraftReporter } from './useDraftReporter';
 
 export interface TextEditorProps {
@@ -136,15 +136,10 @@ export function TextEditor({
     }
   }, [autoFocus, editorEl]);
 
-  // The selected chip can leave the document under us, and `keydown` is too
-  // early to see it: the browser applies its default action AFTER the handler
-  // returns, so typing over a selection that spans the pill, a cut, or a native
-  // undo all detach it later. `input` fires after the edit and covers those; our
-  // own Range surgery (atomic erosion, paste, drop) fires no `input` at all and
-  // calls this directly. Identity-preserving, so the still-attached case costs
-  // no re-render.
+  // The selected chip can leave the document under us; `editorDom`'s
+  // `keepIfAttached` carries the rule, shared with the runs surface.
   const dropDetachedSelection = (el: HTMLElement) => {
-    setSelected((chip) => (chip !== null && !el.contains(chip) ? null : chip));
+    setSelected((chip) => keepIfAttached(el, chip));
   };
 
   const commitFrom = (el: HTMLElement) => {

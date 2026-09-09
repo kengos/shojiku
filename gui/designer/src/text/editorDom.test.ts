@@ -5,6 +5,7 @@ import {
   caretBesideChip,
   chipFromTarget,
   insertNode,
+  keepIfAttached,
   rangeInRoot,
   restoreCaret,
   selectAllContent,
@@ -224,5 +225,31 @@ describe('caretBesideChip', () => {
     expect(placed(pill, 135)).toBe(2);
     expect(placed(pill, 105)).toBe(1);
     root.remove();
+  });
+});
+
+describe('keepIfAttached', () => {
+  it('keeps a chip that is still in the editor, by IDENTITY', () => {
+    // Identity-preserving on purpose: the still-attached case is the common one
+    // and must not re-render the host on every keystroke.
+    const root = document.createElement('div');
+    const chip = document.createElement('span');
+    root.appendChild(chip);
+    expect(keepIfAttached(root, chip)).toBe(chip);
+  });
+
+  it('drops a chip the edit removed from under the caret', () => {
+    // `keydown` is too early to see this: the browser applies its default
+    // action after the handler returns, so typing over a selection that spans
+    // the pill detaches it later.
+    const root = document.createElement('div');
+    const chip = document.createElement('span');
+    root.appendChild(chip);
+    chip.remove();
+    expect(keepIfAttached(root, chip)).toBeNull();
+  });
+
+  it('answers null for no selected chip at all', () => {
+    expect(keepIfAttached(document.createElement('div'), null)).toBeNull();
   });
 });

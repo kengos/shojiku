@@ -51,6 +51,8 @@ export interface FormatToolbarProps {
   /** The engine-default floor for the cascade mirror — an unset inherited key
    * shows its real engine default (e.g. the size box reads `10`, not blank). */
   readonly floor?: Readonly<Record<string, unknown>>;
+  /** Passed through to `TypographyGroup` — see its own note. */
+  readonly flowEditing?: boolean;
 }
 
 export function FormatToolbar({
@@ -61,6 +63,7 @@ export function FormatToolbar({
   onAddFont,
   capabilities,
   floor,
+  flowEditing,
 }: FormatToolbarProps) {
   const { t } = useI18n();
   // The open style-capture modal: `{ mode: 'create' }` (save the selection as a
@@ -126,6 +129,7 @@ export function FormatToolbar({
       ) : null}
       {model.typography ? (
         <TypographyGroup
+          flowEditing={flowEditing}
           model={model}
           path={path}
           fontFamilies={fontFamilies}
@@ -139,6 +143,11 @@ export function FormatToolbar({
         colorKey={model.colorKey}
         path={path}
         controller={controller}
+        // Only the TEXT-colour case stands down: that is the one the flow bar
+        // duplicates. When this control is the FILL it answers to a different
+        // name and nothing is ambiguous, so a reader can still recolour the
+        // box while editing its words.
+        disabled={flowEditing === true && model.typography}
       />
       {ctx.showBorder ? (
         <BorderControl

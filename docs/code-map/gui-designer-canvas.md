@@ -262,6 +262,13 @@ hostile geometry degrades to null before it can reach an op.
   `TextEditor` over the box's content rect, armed with the shared
   `ChipContext`; `onCommit(value, declarations)` — the same contract as
   the panel field, so the two chip surfaces cannot drift.
+  A `spans:`-carrying item opens `text/SpansFlowEditor` in the SAME positioned
+  box instead — the placement rule (content rect, device px, inside the page
+  div) is one question and would otherwise have two answers. The switch rides
+  ONE optional `flow` field on `InlineEdit` (`{ runs, onCommit }`), not two:
+  a host that knows nothing about it gets exactly the editor it got before, and
+  "fragments to show with no way to hand them back" is not a state the type
+  admits.
 
 ## Direct manipulation (pure models + the pointer machine)
 

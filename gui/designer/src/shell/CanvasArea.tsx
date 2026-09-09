@@ -132,6 +132,10 @@ export function CanvasArea({
                     onCommit: inline.commitEdit,
                     onCancel: inline.cancelEdit,
                     chips: inline.editingChips,
+                    flow:
+                      inline.editing.runs === null
+                        ? undefined
+                        : { runs: inline.editing.runs, onCommit: inline.commitRuns },
                   }
             }
           />

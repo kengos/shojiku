@@ -391,7 +391,10 @@ resolved style.
   expression's `:format` across; re-validates the node against the live
   editor first, since paste/drop/erosion restructure it in between),
   `handleEditorKeyDown` (⌘Enter commit, Escape cancel
-  with stopPropagation, ⌘B/I/U preventDefaulted, atomic chip erosion —
+  with stopPropagation, ⌘B/I/U preventDefaulted and then REPORTED to an optional
+  `format` handler — the plain surface passes none and the key does nothing,
+  the runs surface applies the mark, so ONE rule serves both and they cannot
+  disagree about what ⌘B means; atomic chip erosion —
   **plain Enter is NOT handled**: answering it with a `\n` node left the caret
   unable to rest after a break at the end of a value, so the next character
   landed on the previous line, and every other spelling behaved the same way
@@ -399,6 +402,61 @@ resolved style.
   browser's own Enter mints a line container the serializer reads),
   `insertPlainTextAt` (the ONE ingress paste and drop share — a
   native HTML drop would mint live elements), `insertChipAt`.
+- **Inline rich text (`spans:`) is a SECOND surface over the same substrate**,
+  not a mode inside the first: `TextEditor`'s whole shape is "one value in, one
+  string out", and every seed, commit and serialization below answers in
+  FRAGMENTS instead. Both share `EditorSurface`, `editorHandlers` (including its
+  IME guard) and the chip layer, so a `{key}` inside a fragment is the same chip
+  it is anywhere else.
+  - `text/spanRuns.ts` — the READ side: `spans` → runs, carrying the wire index
+    and the four MARK values (`fontWeight`, `fontStyle`, `textDecoration`,
+    `color`). The three METRICS are deliberately absent — the canvas editor is
+    "deliberately NOT WYSIWYG", so painting one would make its line breaks a
+    prediction of the engine's; the property panel owns them. `textDecoration`
+    is the one style key the wire spells `snake_case` (`line_through`).
+  - `text/runNodes.ts` — the seed. A mark is a CLASS, never a document-derived
+    `style` attribute; colour is the one mark whose VALUE comes from the
+    document and goes through `isHexColor`. An EMPTY fragment is seeded with
+    U+200B, because a span with no text node has no place a caret can rest.
+  - `text/runSerialize.ts` — DOM → fragments, in DOCUMENT ORDER, rebuilt rather
+    than patched: measured in a real browser, a split leaves TWO elements
+    carrying the same `data-sj-run`, so the attribute is PROVENANCE, not
+    identity. Normalizes the U+00A0 a browser substitutes for a collapsing
+    space, strips the U+200B placeholder, and composes nesting (which a paste or
+    a native undo can produce even though `runFormat` never does).
+  - `text/runIdentity.ts` — the round-trip rule: a run that appears once, claims
+    a source index ahead of the high-water mark and still says what it said went
+    UNTOUCHED and authors nothing. A changed fragment is updated IN PLACE, so
+    the `styleNames:`/`link:` this surface does not edit are never reconstructed.
+  - `text/runFormat.ts` — the auto-split. SPLIT, THEN PAINT, deliberately not
+    `Range.surroundContents`: that throws `InvalidStateError` across runs and its
+    working fallback NESTS the partial ones. Cutting first makes every affected
+    fragment a whole element. Both boundary guards matter — a cut at a run's
+    START would move the whole run into the sibling and leave the original
+    EMPTY, i.e. `text: ""`, which is the ordinary case of bolding from a word's
+    first letter. The engine says NOTHING about such a remnant: `empty_span`
+    fires for `(None, None)` and this is `Some("")`, so the guard is the only
+    thing standing between that press and a silent leftover.
+  - `text/runMarks.ts` — the read-only half that lights the bar, plus what a
+    press MEANS: a mark reads as set only when the WHOLE selection carries it,
+    and `applyShortcut` is the ONE place ⌘B/I/U and the buttons agree.
+  - `text/useSelectionMarks.ts` — the `selectionchange` listener; a selection can
+    change with no event reaching the editor at all.
+  - `text/RunFormatBar.tsx` — B / I / U / S + colour + the chip insert trigger,
+    all built from the format toolbar's own controls. The decoration is a
+    THREE-state choice, not two toggles, because `textDecoration` is one key.
+    **Every block-level control this bar duplicates STANDS DOWN while it is
+    open** — bold, italic and the TEXT colour, threaded as `flowEditing` from
+    `Designer` through `TopChrome`/`SlimToolbar`/`FormatToolbar`. Two controls
+    answering to one accessible name is an ambiguity a reader cannot resolve,
+    and pressing the block-level one recolours or bolds the whole item when
+    three words were selected. Size and family stay live: this bar offers
+    neither, so neither is ambiguous — and the FILL colour stays live too,
+    because it answers to a different name. The enumeration is the fragile part
+    (colour was missed on the first pass and found by a zero-context review),
+    which is why a suite asserts "exactly one live control per name".
+  - `text/SpansFlowEditor.tsx` — the shell. Shares `TextEditor`'s exit
+    behaviour, and for the same reason: leaving the field is not always a BLUR.
 - `text/TextEditor.tsx` — the ONE text-editing component (contenteditable
   chip editor; content seeded imperatively ONCE from `buildEditorNodes`
   — hand-typed `{key}` stays plain until commit reseeds, IME-safe;

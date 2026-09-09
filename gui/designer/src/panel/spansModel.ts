@@ -36,7 +36,29 @@ export interface SpanView {
   readonly dataKey: string;
   /** This fragment's own `link.url`, `''` when it carries none. */
   readonly url: string;
+  /** The named styles this fragment lists, in wire order. */
+  readonly styleNames: readonly string[];
+  /** The METRIC style values, as display strings (`''` when unset).
+   *
+   * They live HERE rather than on the flow surface's own model on purpose: the
+   * canvas editor is "deliberately NOT WYSIWYG — the Designer never re-resolves
+   * fonts/styles" (`canvas/InlineTextEditor`), so showing a metric there would
+   * make its line breaks a prediction of the engine's. The panel is a list of
+   * VALUES and claims no such thing, which is why the metrics are edited here
+   * and the four marks are edited in the flow. */
+  readonly metrics: Readonly<Record<string, string>>;
 }
+
+/** The style keys the panel edits per fragment — the METRICS, which the flow
+ * surface deliberately does not show. The marks (`fontWeight`, `fontStyle`,
+ * `textDecoration`, `color`) belong to the selection and are absent here.
+ *
+ * The engine allows a third metric per span, `letterSpacing`, and this list
+ * does NOT carry it: `panel/styleFieldSpecs`'s registry has no entry for it, so
+ * it is not authorable at the ITEM level either, and giving a fragment a
+ * control its own block lacks would be the panel promising more than the rest
+ * of it delivers. It becomes available here the moment the registry gains it. */
+export const SPAN_METRIC_KEYS = ['fontSize', 'fontFamily'] as const;
 
 /** The fragments of the item at `path`, or `[]` for an item with no `spans:`
  * (and for any hostile shape). */
@@ -56,11 +78,16 @@ export function narrowSpans(value: unknown): readonly SpanView[] {
     if (span === undefined) {
       continue;
     }
+    const style = record(span.style);
     out.push({
       index,
       text: display(span.text),
       dataKey: display(record(span.data)?.key),
       url: display(record(span.link)?.url),
+      styleNames: Array.isArray(span.styleNames)
+        ? span.styleNames.filter((name): name is string => typeof name === 'string')
+        : [],
+      metrics: Object.fromEntries(SPAN_METRIC_KEYS.map((key) => [key, display(style?.[key])])),
     });
   }
   return out;

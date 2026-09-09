@@ -602,7 +602,9 @@ a parallel engine), and treats definitions content as untrusted:
 hostile input degrades to an empty state, display is capped
 (256 groups/fields, 120-char text clips), and binding-key lookups are
 `Map`-based. The usage correlation ALSO counts `{key}` interpolations —
-static text on text/QR items, link URLs on items and spans, and a
+static text on text/QR items, link URLs on items and spans, a rich-text
+fragment's own text (which is where the flow editor's insert menu writes a
+bound value), and a
 `list`'s per-entry text (entry-scoped under the list's source) — via a
 pure TS mirror of the engine's segment parser (`text/interpolate.ts`:
 same charsets, `{{` escape, malformed-stays-literal; plus a display-side

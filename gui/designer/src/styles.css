@@ -196,6 +196,63 @@
   box-shadow: 0 0 0 2px var(--sj-accent);
 }
 
+/* Inline rich text (`spans:`): one element per wire fragment, its MARKS carried
+ * as classes so no document-derived string ever reaches a style attribute
+ * (`runNodes.ts` — colour is the one exception and goes through `isHexColor`).
+ *
+ * Only the four MARKS are painted. The three metrics (`fontSize`,
+ * `fontFamily`, `letterSpacing`) deliberately are NOT: the editor is "not
+ * WYSIWYG — the Designer never re-resolves fonts/styles" (canvas/
+ * InlineTextEditor), so a metric here would turn the surface's line breaks into
+ * a prediction of the engine's. */
+.sj-run--bold {
+  font-weight: 700;
+}
+
+.sj-run--italic {
+  font-style: italic;
+}
+
+/* A linked fragment reads as a link, but in the CHROME's accent rather than a
+ * web blue: the canvas draws no annotation and the PNG preview paints none, so
+ * this and the property panel's badge are the only places the fact exists.
+ *
+ * It sits BEFORE the two decoration rules on purpose. All three set
+ * `text-decoration-line` at equal specificity, so the later one wins — and with
+ * this rule last, a struck-through fragment that also carried a link rendered
+ * underlined and the strike simply vanished. Ordering is the whole fix: a
+ * fragment's AUTHORED decoration is a wire value the reader set, while the
+ * link's underline is this surface's own convention, and the authored one must
+ * be the one that shows. */
+.sj-run--linked {
+  color: var(--sj-accent);
+  text-decoration-line: underline;
+}
+
+.sj-run--underline {
+  text-decoration-line: underline;
+}
+
+.sj-run--strike {
+  text-decoration-line: line-through;
+}
+
+/* A `data:` fragment: atomic, like a chip, because the flow cannot address what
+ * it cannot split — so it takes the CHIP's own surface and hairline, and a
+ * reader who has met one has met this.
+ *
+ * Not `--sj-canvas`: that is the ground the PAGE sits on, and inside chrome it
+ * paints a hole rather than an object — measured live as a darker box on a
+ * lighter surface, which reads as a recess. The one deliberate difference from
+ * a chip is the corner: a chip is a pill (`999px`) because it stands for a
+ * `{key}` INSIDE a fragment's text, while this IS the fragment. */
+.sj-run-bound {
+  border-radius: var(--sj-radius);
+  background: var(--sj-chrome);
+  border: 1px solid var(--sj-border);
+  padding: 0 var(--sj-space-1);
+}
+
 /* Interpolation chips: atomic labeled tokens standing for a `{key}` wire
  * expression, built imperatively (chipModel.ts) so the style rides the class. */
 .sj-chip {

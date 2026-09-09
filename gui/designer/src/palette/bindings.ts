@@ -80,9 +80,10 @@ function walkItems(
     // (columns / cell / item); a container's own `items` stay at this scope.
     const childScope = isSource && key !== undefined ? key : scope;
     // Interpolated surfaces at THIS item's scope: static text on text/qr_code,
-    // and link URLs (`link: { url: "…/{order.code}" }` interpolates exactly
-    // like static text) on the item and its spans. One ref per distinct key —
-    // several surfaces of one item are still one placement.
+    // link URLs (`link: { url: "…/{order.code}" }` interpolates exactly like
+    // static text) on the item and its spans, and each FRAGMENT's own text. One
+    // ref per distinct key — several surfaces of one item are still one
+    // placement.
     const interpolated = new Set<string>();
     if (typeof item.type === 'string' && TEXT_INTERPOLATION_TYPES.has(item.type)) {
       collectInterpolations(interpolated, item.text);
@@ -90,6 +91,12 @@ function walkItems(
     collectInterpolations(interpolated, record(item.link)?.url);
     if (Array.isArray(item.spans)) {
       for (const span of item.spans) {
+        // A fragment's own TEXT interpolates exactly like an item's, and it is
+        // now the ordinary way a bound value is authored inside rich text — the
+        // flow editor's insert menu writes a `{key}` chip into a fragment
+        // rather than minting a `data:` fragment. Counting only the fragment's
+        // LINK would leave every such field reading unused.
+        collectInterpolations(interpolated, record(span)?.text);
         collectInterpolations(interpolated, record(record(span)?.link)?.url);
       }
     }

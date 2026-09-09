@@ -40,6 +40,8 @@ export interface TopChromeProps {
   /** RAW host input — `topMenubar` validates it; nothing else may read it. */
   readonly hostMenuEntries: readonly RawHostMenuEntry[] | undefined;
   readonly maxBytes: number;
+  /** Passed through to `SlimToolbar` — see `TypographyGroup`'s note. */
+  readonly flowEditing?: boolean;
   readonly insertGroups: readonly InsertGroup[];
   readonly prefs: EditorPrefs;
   readonly sample: SampleData;
@@ -86,6 +88,7 @@ export function TopChrome({
   session,
   host,
   dialogs,
+  flowEditing,
 }: TopChromeProps) {
   const { t } = useI18n();
 
@@ -137,6 +140,7 @@ export function TopChrome({
         </div>
       ) : null}
       <SlimToolbar
+        flowEditing={flowEditing}
         editor={editor}
         prefs={prefs}
         sample={sample}

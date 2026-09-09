@@ -52,6 +52,11 @@ export function Designer(props: DesignerProps) {
         onChange={w.image.onFilePicked}
       />
       <TopChrome
+        // The block-level bold/italic stand down while the inline RICH-TEXT
+        // surface is open — see `toolbar/TypographyGroup`. Only the flow
+        // surface sets this: the plain field carries no format controls, so
+        // nothing is ambiguous while IT is open.
+        flowEditing={w.inline.editing?.runs != null}
         editor={w.editor}
         documentName={props.documentName}
         saveStatus={props.saveStatus}

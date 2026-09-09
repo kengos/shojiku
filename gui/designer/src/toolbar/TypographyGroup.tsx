@@ -23,12 +23,21 @@ export function TypographyGroup({
   fontFamilies,
   onAddFont,
   dispatch,
+  flowEditing = false,
 }: {
   readonly model: ToolbarModel;
   readonly path: string;
   readonly fontFamilies: readonly string[];
   readonly onAddFont?: () => void;
   readonly dispatch: (op: Op | null) => void;
+  /** The inline RICH-TEXT editor is open. Its own bar carries bold and italic
+   * for the SELECTION; this group's carry them for the whole BLOCK. Two
+   * identically-named controls on screen at once is an ambiguity a reader
+   * cannot resolve — and pressing the wrong one bolds the entire item when
+   * three words were selected — so the block-level pair stands down while the
+   * flow surface is open. The SIZE and FAMILY controls stay live: the flow bar
+   * offers neither, so neither is ambiguous. */
+  readonly flowEditing?: boolean;
 }) {
   const { t } = useI18n();
   // ±1pt per click, floored at 1, rounded to one decimal so a fractional size
@@ -106,6 +115,7 @@ export function TypographyGroup({
         tour={TOUR_ANCHORS.toolbarBold}
         glyph={<span className="font-bold">B</span>}
         pressed={model.bold}
+        disabled={flowEditing}
         hint={originHint(t, model.eff.fontWeight)}
         onToggle={(next) => dispatch(fontWeightOp(path, model.eff.fontWeight, next))}
       />
@@ -113,6 +123,7 @@ export function TypographyGroup({
         label={t('toolbar.italic')}
         glyph={<span className="font-serif italic">I</span>}
         pressed={model.italic}
+        disabled={flowEditing}
         hint={originHint(t, model.eff.fontStyle)}
         onToggle={(next) => dispatch(fontStyleOp(path, model.eff.fontStyle, next))}
       />

@@ -23,10 +23,38 @@ const ITEM = {
 describe('narrowSpans', () => {
   it('returns one view per fragment, carrying text, binding key and url', () => {
     expect(narrowSpans(ITEM.spans)).toEqual([
-      { index: 0, text: 'Shojiku ', dataKey: '', url: '' },
-      { index: 1, text: 'links', dataKey: '', url: 'https://example.com' },
-      { index: 2, text: '', dataKey: 'order.total', url: '' },
-      { index: 3, text: '', dataKey: '', url: '' },
+      {
+        index: 0,
+        text: 'Shojiku ',
+        dataKey: '',
+        url: '',
+        styleNames: [],
+        metrics: { fontSize: '', fontFamily: '' },
+      },
+      {
+        index: 1,
+        text: 'links',
+        dataKey: '',
+        url: 'https://example.com',
+        styleNames: [],
+        metrics: { fontSize: '', fontFamily: '' },
+      },
+      {
+        index: 2,
+        text: '',
+        dataKey: 'order.total',
+        url: '',
+        styleNames: [],
+        metrics: { fontSize: '', fontFamily: '' },
+      },
+      {
+        index: 3,
+        text: '',
+        dataKey: '',
+        url: '',
+        styleNames: [],
+        metrics: { fontSize: '', fontFamily: '' },
+      },
     ]);
   });
 
@@ -52,9 +80,30 @@ describe('narrowSpans', () => {
         { data: 'not a map' },
       ]),
     ).toEqual([
-      { index: 0, text: '', dataKey: '', url: '' },
-      { index: 1, text: 'ok', dataKey: '', url: '' },
-      { index: 2, text: '', dataKey: '', url: '' },
+      {
+        index: 0,
+        text: '',
+        dataKey: '',
+        url: '',
+        styleNames: [],
+        metrics: { fontSize: '', fontFamily: '' },
+      },
+      {
+        index: 1,
+        text: 'ok',
+        dataKey: '',
+        url: '',
+        styleNames: [],
+        metrics: { fontSize: '', fontFamily: '' },
+      },
+      {
+        index: 2,
+        text: '',
+        dataKey: '',
+        url: '',
+        styleNames: [],
+        metrics: { fontSize: '', fontFamily: '' },
+      },
     ]);
   });
 
@@ -65,12 +114,66 @@ describe('narrowSpans', () => {
     expect(views[views.length - 1].index).toBe(MAX_SPANS - 1);
   });
 
+  it('carries the named styles and the METRIC style values', () => {
+    // The metrics live on the PANEL's model, not the flow surface's: the canvas
+    // editor is deliberately not WYSIWYG, so it shows no size — and a fragment
+    // whose size is only editable there would have no editing surface at all.
+    expect(
+      narrowSpans([
+        {
+          text: 'a',
+          styleNames: ['emphasis', 42, 'lead'],
+          style: {
+            fontSize: '14pt',
+            fontFamily: 'Serif',
+            letterSpacing: '1pt',
+            fontWeight: 'bold',
+          },
+        },
+      ])[0],
+    ).toEqual({
+      index: 0,
+      text: 'a',
+      dataKey: '',
+      url: '',
+      // The non-string entry is dropped rather than carried through — this is
+      // document text, and a control cannot show what it cannot name.
+      styleNames: ['emphasis', 'lead'],
+      // `fontWeight` is a MARK and is deliberately absent: the flow surface
+      // owns it, and a second control here would be a second way to say it.
+      // `letterSpacing` is absent by design: `panel/styleFieldSpecs` has no
+      // entry for it, so it is not authorable at the ITEM level either.
+      metrics: { fontSize: '14pt', fontFamily: 'Serif' },
+    });
+  });
+
+  it('reads a hostile styleNames and a hostile style as setting neither', () => {
+    expect(narrowSpans([{ styleNames: 'emphasis', style: 'big' }])[0]).toMatchObject({
+      styleNames: [],
+      metrics: { fontSize: '', fontFamily: '' },
+    });
+  });
+
   it('renders a fragment whose text is a prototype name as ordinary text', () => {
     // Nothing looks a span up in a plain-object table — the views are keyed by
     // a numeric wire index — so these are strings and nothing more.
     expect(narrowSpans([{ text: '__proto__' }, { text: 'constructor' }])).toEqual([
-      { index: 0, text: '__proto__', dataKey: '', url: '' },
-      { index: 1, text: 'constructor', dataKey: '', url: '' },
+      {
+        index: 0,
+        text: '__proto__',
+        dataKey: '',
+        url: '',
+        styleNames: [],
+        metrics: { fontSize: '', fontFamily: '' },
+      },
+      {
+        index: 1,
+        text: 'constructor',
+        dataKey: '',
+        url: '',
+        styleNames: [],
+        metrics: { fontSize: '', fontFamily: '' },
+      },
     ]);
   });
 });

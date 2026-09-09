@@ -8,6 +8,9 @@
 import type { BoxRect } from '../engine/types';
 import type { ChipContext } from '../text/chipContext';
 import type { PendingDecl } from '../text/declModel';
+import type { SerializedRun } from '../text/runSerialize';
+import { SpansFlowEditor } from '../text/SpansFlowEditor';
+import type { RunView } from '../text/spanRuns';
 import { TextEditor } from '../text/TextEditor';
 
 export interface InlineTextEditorProps {
@@ -18,6 +21,16 @@ export interface InlineTextEditorProps {
   readonly onCancel: () => void;
   readonly ariaLabel: string;
   readonly chips?: ChipContext;
+  /** Present when the item carries `spans:`. The two halves are ONE optional
+   * field rather than two, because a surface with fragments to show and no way
+   * to hand them back is not a state the host may express. */
+  readonly flow?: {
+    readonly runs: readonly RunView[];
+    readonly onCommit: (
+      runs: readonly SerializedRun[],
+      declarations: readonly PendingDecl[],
+    ) => void;
+  };
 }
 
 export function InlineTextEditor({
@@ -27,6 +40,7 @@ export function InlineTextEditor({
   onCancel,
   ariaLabel,
   chips,
+  flow,
 }: InlineTextEditorProps) {
   return (
     <div
@@ -39,14 +53,24 @@ export function InlineTextEditor({
         minHeight: rect.h,
       }}
     >
-      <TextEditor
-        value={value}
-        onCommit={onCommit}
-        onCancel={onCancel}
-        ariaLabel={ariaLabel}
-        autoFocus
-        chips={chips}
-      />
+      {flow === undefined ? (
+        <TextEditor
+          value={value}
+          onCommit={onCommit}
+          onCancel={onCancel}
+          ariaLabel={ariaLabel}
+          autoFocus
+          chips={chips}
+        />
+      ) : (
+        <SpansFlowEditor
+          runs={flow.runs}
+          onCommit={flow.onCommit}
+          onCancel={onCancel}
+          ariaLabel={ariaLabel}
+          chips={chips}
+        />
+      )}
     </div>
   );
 }
