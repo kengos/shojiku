@@ -97,12 +97,49 @@ case "$path" in
 	#
 	# The prefixes are LISTED rather than matched as `[A-Z]{2,}-[0-9]+`,
 	# because that general shape is what the standards and the sample data look
-	# like: measured over the tree it returned 1328 `OFL-1`, 117 `UTF-8`, 54
-	# `SHA-256` and every order number under examples/. A note that fires on
-	# almost every edit is worse than the miss. The list comes from the queue's
-	# own prefixes and needs extending when a new family appears — the cost of
-	# forgetting is a missed note, never a false one.
-	codes=$(grep -Eo '\b((GU|GD|TB|FP|BX|DF|FR|GL|GS|EQ)[0-9]+[a-z]?|(GUI|ENGINE|MAKE|RELEASE|SDK|SITE|MCP|WASM)-[0-9]+[a-z]?)\b' "$path" 2>/dev/null | sort -u | tr '\n' ' ')
+	# like: over the 3336 tracked files under the paths scanned above it
+	# returns 1330 `OFL-n`, 129 `UTF-n`, 60 `SHA-n`, and BSD/MPL/GPL/RFC/PDF
+	# beside every order number under examples/ (`INV-`, `ORD-`, `SO-`, `ST-`,
+	# `TK-`, `PO-`). A note that fires on almost every edit is worse than the
+	# miss. (The binary files the guard skips carry none of the three, so the
+	# counts are the same over the text subset it actually reads. Both this
+	# comment and check-hooks.sh's spell the families `OFL-n` rather than
+	# `OFL-1`: check-hooks.sh is INSIDE the scanned globs, so writing a census
+	# in the earlier spelling deleted one match of each from the thing being
+	# counted.)
+	#
+	# A LIST rots, though, and this one had: measured against the queue, six
+	# live two-letter families (GC FV FM MK TL KC) and two live hyphenated ones
+	# were invisible here — and those two were `SKILL-` and `DOC-`, both
+	# current queue items, so the guard could not see the codes of the work
+	# being done to it. Re-derive the population with:
+	#
+	#   grep -rhoE '\b[A-Z]{2,8}-?[0-9]+[a-z]?\b' ~/shojiku-work/TODO.md \
+	#     ~/shojiku-work/BACKLOG.md ~/shojiku-work/backlogs/
+	#
+	# Admit a family only when it names OPEN WORK — an item somebody could
+	# still pick up — AND measures zero over the tracked tree first. "Open
+	# work", not "several members": three of the eight admitted here have
+	# exactly ONE member each (`FM2`, `SKILL-6`, `DOC-1`), and the last two are
+	# the headline case, so a member count would have re-excluded them. What
+	# the rejected residue has in common is not scarcity but KIND — `MS1` and
+	# `TY1` are the examples in the queue's own conventions sentence, `RA1`,
+	# `GB1` and `AN2` are rows in a rename table naming superseded codes, and
+	# `RB1` and `LB1` are named in the past tense as shipped. That second clause is not a formality: `LB`
+	# looked exactly like the six admitted above and collides with UAX #14's
+	# own rule names, `LB19` being cited in engine/layout/src/wrap/kinsoku.rs.
+	# No gate can catch the next rot, because the queue that defines the
+	# population lives outside this repository; the cost of forgetting stays a
+	# missed note, never a false one.
+	#
+	# A ONE-letter family could never be added, whatever the queue does with it.
+	# Measured the same way, `\b[A-Z][0-9]+\b` over the forward-looking set
+	# returns no work item at all — it returns the Pain/Cost/Value scores
+	# (`P7`, `C1`, `V4`), the paper sizes (`A4`, `B5`), `M3` for Material 3,
+	# the function keys (`F8`, `F9`, `F11`) and review round numbers — and the
+	# tracked tree is full of the same tokens.
+	# So the omission is deliberate: do not "complete" the list with one.
+	codes=$(grep -Eo '\b((GU|GD|TB|FP|BX|DF|FR|GL|GS|EQ|GC|FV|FM|MK|TL|KC)[0-9]+[a-z]?|(GUI|ENGINE|MAKE|RELEASE|SDK|SITE|MCP|WASM|SKILL|DOC)-[0-9]+[a-z]?)\b' "$path" 2>/dev/null | sort -u | tr '\n' ' ')
 	[ -n "$codes" ] && add "$path names what look like internal work-item codes: $codes. These live only in the forward-looking set, never in tracked code or docs."
 	;;
 esac

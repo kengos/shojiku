@@ -119,6 +119,15 @@ result are, so a `not_contains` pattern cannot be tripped by an example you
 put in the prompt as pressure — which means step 2 is free, and an anchored
 pattern buys nothing over a plain one.
 
+**A `not_contains` still cannot police a rule about REMOVING something**, and
+that is the shape a style or wording rule usually has. The model's own text IS
+in the transcript, so an answer that correctly strips a forbidden phrase and
+then says which phrase it stripped trips the pattern exactly as an answer that
+kept it does. Anchoring does not separate them either — both write it in prose.
+Grade what the forbidden thing was replaced BY instead: hand the prompt a few
+concrete facts the rule pushes the answer toward, and match on those. The
+positive form is checkable where the negative one is not.
+
 ### 5. Read the DELTA, not the score
 
 `ABLATION=1` runs each case again with the skill removed. A case scoring the
