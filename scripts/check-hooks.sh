@@ -145,6 +145,16 @@ X"
 case_bash 'grep for the flag'           silent 'grep -rn "commit.gpgsign=false" docs/'
 case_bash 'flag named mid-sentence'     silent 'echo "never pass --no-gpg-sign to a commit"'
 case_bash 'make --version then head -n' silent 'make --version > /dev/null; head -n 2 /etc/hosts'
+# The cargo rule and the two push rules used to match a RAW STRING, so naming
+# them was enough to be refused. Six wrong denials in one cycle, including the
+# probe that reproduced it, the write-up of the incident and the edit that
+# carried the fix. They are anchored to a command-position TOKEN now, which is
+# the mechanism that always saved the two rules about `make`; the positives
+# above and below are what proves the anchoring did not cost the control.
+case_bash 'cargo named in a quoted alternation' silent 'grep -E "make|cargo x" file'
+case_bash 'cargo named in prose'         silent "echo 'never run cargo test here'"
+case_bash 'push rule documented in prose' silent "echo 'never git push --force origin main again'"
+case_bash 'push rule grepped in docs'     silent "grep -rn 'git push origin main ' docs/"
 case_bash 'make help then grep -n'      silent 'make help; grep -n verify Makefile'
 
 # ---- Bash guard: ask and note ------------------------------------------
@@ -229,12 +239,46 @@ f="$tmp/gui/designer/src/coded.tsx"
 printf '// ENGINE-7 — the wire this pins.\nconst a = 1;\n' > "$f"
 case_edit 'hyphenated code in source'   note "$f"
 
+# The list had rotted behind the queue. These six two-letter families and the
+# two hyphenated ones were live work items the guard could not see — and the
+# hyphenated pair is `SKILL-` and `DOC-`, so the codes of the work being done
+# to this very file were invisible to it.
+#
+# ONE CASE PER FAMILY, deliberately. A single fixture line naming all eight
+# passes as long as ANY one of them still matches, because `case_edit` reads
+# only note-vs-silent and never the note's CONTENT — so six of the eight could
+# be deleted from the guard with this gate staying green, which is precisely
+# the rot this change exists to catch. Measured: dropping `GC` alone, or `DOC`
+# alone, left the whole suite PASS under the one-line form. Split like this,
+# each family reddens on its own.
+for fam in GC19 FV8 FM2 MK2 TL1a KC3 SKILL-6 DOC-1; do
+	f="$tmp/docs/family-$fam.md"
+	printf 'Work item %s is queued.\n' "$fam" > "$f"
+	case_edit "family $fam is seen" note "$f"
+done
+
+# The measured reason a family is admitted only after it counts zero over the
+# tracked tree. `LB` reads exactly like the six above and is UAX #14's own rule
+# namespace: engine/layout/src/wrap/kinsoku.rs cites LB19. Admitting it would
+# have put a note on a correct citation of the spec the file implements.
+mkdir -p "$tmp/engine/layout/src/wrap"
+f="$tmp/engine/layout/src/wrap/spec.rs"
+printf '//! Kinsoku.\n// LB19 forbids a break on either side of the class.\npub fn a() {}\n' > "$f"
+case_edit 'UAX #14 rule names are not codes' silent "$f"
+
 # ...and the reason the pattern is a NAMED prefix list rather than a general
 # `[A-Z]{2,}-[0-9]+`: that shape matches the standards and sample identifiers
 # this repository is full of. Measured over the tracked tree, the general form
-# returned 1328 `OFL-1`, 117 `UTF-8`, 54 `SHA-256` and every order number in
+# returns 1330 `OFL-n`, 129 `UTF-n`, 60 `SHA-n` and every order number in
 # examples/ — a note that fires on almost every edit teaches people to ignore
 # it, which is worse than the miss it was fixing.
+#
+# Those three are measured AFTER this comment, not before: this file sits
+# inside the scanned globs, so writing the figures down changes them. The
+# earlier text spelled the families out as `OFL-1`, `UTF-8` and `SHA-256`,
+# which the census counted — so recording the census removed one of each from
+# it. Spelled `OFL-n` the sentence is a fixed point, which is why it is
+# written that way. guard-edit.sh states the same three; they move together.
 f="$tmp/docs/standards.md"
 printf 'UTF-8, SHA-256, BSD-3, PDF-1.7 and OFL-1.1 are not work items.\n' > "$f"
 case_edit 'standards are not codes'     silent "$f"

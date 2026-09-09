@@ -95,6 +95,44 @@ dry_run_after_make() {
 		}'
 }
 
+# Is NAME invoked as a COMMAND, or merely NAMED inside an argument?
+#
+# Tokenizing is what tells the two apart, and it is the mechanism that has
+# always quietly saved the two rules about `make`: `make_targets` looks for a
+# token EXACTLY equal to `make`, so an alternation inside a quoted regex — where the token is
+# `"make|cargo`, not `make` — never matches. The character-class prefix `POS`
+# has no such protection: it reads that pipe as a shell separator, because in a
+# shell it is one and inside quotes it is not.
+#
+# That cost this repository six wrong denials in a single cycle: a sweep over
+# the development skills, the minimal probe written to reproduce it, the
+# write-up of the incident, a zero-context reviewer's own probes, the edit
+# recording the correction, and the edit making this fix — two of them on the
+# push rules rather than the cargo one. A guard that refuses the
+# documentation of its own defect, and then the fix for it, is not being read
+# as a decision.
+#
+# So the tokenizer is written once, here, and the rules that were matching a
+# raw string use it. Leading VAR=value assignments are skipped (`V=1 make ...`),
+# and a token that IS or ENDS in a separator opens a new command position, so
+# `cd engine && cargo clippy` and `docker rm -f x; cargo test` are
+# still caught.
+at_command_position() {
+	printf '%s' "$cmd" | awk -v want="$1" '
+		{
+			n = split($0, tok, /[ \t]+/)
+			start = 1
+			for (i = 1; i <= n; i++) {
+				t = tok[i]
+				if (t == "") continue
+				if (start && t ~ /^[A-Za-z_][A-Za-z0-9_]*=/) continue
+				if (start && t == want) { found = 1; exit }
+				start = (t ~ /[|;&]$/ || t ~ /^[|;&(]/)
+			}
+		}
+		END { exit(found ? 0 : 1) }'
+}
+
 # A command-position invocation: start of the command or just after a
 # separator, allowing leading VAR=value assignments (`V=1 make ...`).
 POS='(^|[;&|(])[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
@@ -137,7 +175,7 @@ fi
 
 # There is no Rust toolchain on this host, and a hand-built invocation is not a
 # sanctioned claim even where one exists.
-if has "$CARGO" && ! has 'docker[^;&|]*cargo'; then
+if at_command_position cargo && ! has 'docker[^;&|]*cargo'; then
 	decide deny 'This host has no Rust toolchain, and a correctness claim comes from a make
 target, never from an ad-hoc cargo run. Use the <scope>:<job> grid:
   make engine:lint | engine:test | engine:coverage | engine:budget
@@ -173,7 +211,11 @@ fi
 # main takes no direct pushes and no force pushes (repository ruleset). Denying
 # here removes a round trip, not a capability: --force-with-lease on a FEATURE
 # branch is the documented squash workflow and is untouched.
-if has 'git[[:space:]]+([^|;&]*[[:space:]])?push'; then
+# Anchored to a git INVOCATION, not to the words. Testing the whole command
+# string meant ordinary prose fired both of these — documenting the rule, or
+# grepping the docs for it, was refused — which is the same defect the signing
+# rule beside them was already fixed for.
+if at_command_position git && has '(^|[[:space:]])push([[:space:]]|$)'; then
 	if has '(--force|--force-with-lease|[[:space:]]-f([[:space:]]|$))' \
 		&& has '([[:space:]]|:|\+)main([[:space:]]|$)'; then
 		decide deny 'main takes no force pushes (repository ruleset). History there accumulates

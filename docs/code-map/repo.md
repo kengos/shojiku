@@ -316,16 +316,37 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   the cycle's own policy and by the human answering, exactly as before; the
   hook only records the intent. Every DENY does work under that mode, which is
   why the rules that must hold are denies.
-  **Two of the deny/note predicates are scoped to the command they are about,
-  and that is load-bearing rather than tidy.** `make -n` and a piped gate both
+  **The deny/note predicates are scoped to the command they are about, and that
+  is load-bearing rather than tidy.** `make -n` and a piped gate both
   locate the make invocation and stop at the first `;`/`&&`/`|` before looking
   for their flag, because a whole-string test denies `grep -n`, `head -n` and
   `sort -n` whenever make is mentioned anywhere in the same call — which is the
-  ordinary shape of running a gate and then reading its log. The work-item-code
+  ordinary shape of running a gate and then reading its log.
+  `at_command_position` is the general form and the cargo rule and the two
+  push rules now use it: it TOKENIZES, so a name inside a quoted argument is
+  part of a token rather than a command, which is the mechanism that had
+  always saved the two rules about `make` by accident (`make_targets` wants a
+  token exactly equal to `make`). Matching the raw string instead cost six wrong
+  denials in one cycle — a sweep, the probe reproducing it, the write-up, a
+  zero-context reviewer's probes, and the two edits carrying the correction
+  and the fix. A guard that refuses the documentation of its own defect stops
+  being read as a decision, which is the failure mode the whole directory
+  exists to avoid. The work-item-code
   pattern lists its prefixes for the mirror-image reason: the general
   `[A-Z]{2,}-[0-9]+` shape matches `UTF-8`, `SHA-256`, `OFL-1` and every sample
   order number, and a note that fires on almost every edit teaches people to
-  ignore it.
+  ignore it. **A list rots, and this one had**: six live two-letter families
+  and two hyphenated ones — `SKILL-` and `DOC-`, both current queue items —
+  were invisible to it, so the guard could not see the codes of the work being
+  done to it. The script now carries the command that re-derives the
+  population, and the rule for admitting a family: it must name OPEN WORK —
+  not a member count, since three of the eight have one member each — AND
+  count zero over the tracked tree first, which is what kept `LB` out (UAX
+  #14's own rule names; `LB19` is cited in `engine/layout`). Its fixtures are
+  one per FAMILY: a single line naming all eight passes while any one of them
+  matches, because the gate reads note-versus-silent and never the note's
+  content. No gate can catch the next rot, because the queue defining the
+  population lives outside this repository.
   The shape — controls as code, and a hook as the approval gate an agent can
   drive up to but not through — is the Build and Deploy half of Anthropic's
   AI-native SDLC playbook (https://claude.com/blog/the-ai-native-sdlc-playbook),
