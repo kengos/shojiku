@@ -30,6 +30,11 @@ export interface ColorSwatchPickerProps {
   readonly tip?: string;
   readonly customLabel: string;
   readonly clearLabel: string;
+  /** Greys the trigger out and refuses to open. Added for the inline rich-text
+   * surface, whose own bar carries a text colour for the SELECTION — two
+   * controls answering to one accessible name is an ambiguity a reader cannot
+   * resolve, so the block-level one stands down while that surface is open. */
+  readonly disabled?: boolean;
 }
 
 export function ColorSwatchPicker({
@@ -41,6 +46,7 @@ export function ColorSwatchPicker({
   tip,
   customLabel,
   clearLabel,
+  disabled = false,
 }: ColorSwatchPickerProps) {
   const { open, setOpen, rootRef } = usePopover();
   const { placement, placeRef } = usePopoverPlacement(rootRef);
@@ -61,6 +67,7 @@ export function ColorSwatchPicker({
         className={triggerClassName}
         aria-haspopup="menu"
         aria-expanded={open}
+        disabled={disabled}
         // NOT-YET: the closed trigger renders only the chip, so it says which field
         // this is and nothing about what colour is in it — a reader who cannot tell
         // the swatch apart from its neighbour has to OPEN the popover to find out,

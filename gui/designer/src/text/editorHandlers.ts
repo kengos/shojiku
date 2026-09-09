@@ -117,6 +117,10 @@ export interface EditorKeyHandlers {
    * committing); absent in the panel, where Escape stays the field's native
    * no-op. */
   readonly cancel?: () => void;
+  /** What ⌘B / ⌘I / ⌘U mean on THIS surface. Absent on the plain-text one,
+   * where the key is blocked and nothing follows; present on the runs surface,
+   * where the wire has somewhere to put the mark. */
+  readonly format?: (shortcut: FormatShortcut) => void;
 }
 
 /** The ONE plain-text ingress both a PASTE and a DROP go through: the native
@@ -167,6 +171,17 @@ export function handleTextIngress(
  * Enter to CONFIRM a conversion now reaches the browser's native handling,
  * which is exactly what should service it.
  */
+/** The three formatting shortcuts, keyed by the character they are pressed
+ * with. Named rather than inlined so the surface that ACTS on them and the
+ * surface that merely blocks them read from one list. */
+export type FormatShortcut = 'bold' | 'italic' | 'underline';
+
+const FORMAT_KEYS: Readonly<Record<string, FormatShortcut>> = {
+  b: 'bold',
+  i: 'italic',
+  u: 'underline',
+};
+
 export function handleEditorKeyDown(
   event: KeyboardEvent<HTMLDivElement>,
   handlers: EditorKeyHandlers,
@@ -190,11 +205,19 @@ export function handleEditorKeyDown(
     handlers.cancel();
     return;
   }
-  if ((event.metaKey || event.ctrlKey) && ['b', 'i', 'u'].includes(event.key.toLowerCase())) {
-    // Block the browser's native contenteditable formatting (⌘B → <b>
-    // elements): the wire is plain text + chips, so any visual formatting
-    // would silently vanish on the next open.
+  const shortcut = FORMAT_KEYS[event.key.toLowerCase()];
+  if ((event.metaKey || event.ctrlKey) && shortcut !== undefined) {
+    // The browser's native contenteditable formatting (⌘B → `<b>` elements) is
+    // blocked either way: it would mint markup neither serializer reads.
+    //
+    // On the PLAIN surface that is the whole story — the wire is text + chips,
+    // so a mark has nowhere to live and the key does nothing. On the RUNS
+    // surface the wire has `spans[i].style`, so the same key is handed to the
+    // caller, which applies the mark to the selection and splits underneath.
+    // One keydown rule serves both, so the two surfaces cannot disagree about
+    // what ⌘B means.
     event.preventDefault();
+    handlers.format?.(shortcut);
     return;
   }
   if (event.key === 'Backspace' || event.key === 'Delete') {

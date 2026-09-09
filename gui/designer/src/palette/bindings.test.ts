@@ -360,6 +360,31 @@ describe('readBindings — interpolation refs', () => {
     });
   });
 
+  it("counts a field used only through a FRAGMENT's own text", () => {
+    // The flow editor's insert menu writes a `{key}` chip INTO a fragment
+    // rather than minting a `data:` fragment (the surface authors no bound
+    // fragments at all), so this is now the ordinary way a field is used inside
+    // rich text. Counting only the fragment's LINK left every such field
+    // reading unused — the indicator's whole job is to say otherwise.
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: text',
+      '        spans:',
+      '          - text: "Total: {order.total}"',
+      '          - text: plain',
+      '',
+    ].join('\n');
+    expect(readBindings(source)).toContainEqual({
+      path: 'sections.body.items[0]',
+      key: 'order.total',
+      scope: null,
+      source: false,
+    });
+  });
+
   it('a key used in BOTH the text and a link URL is one placement', () => {
     const source = [
       'sections:',

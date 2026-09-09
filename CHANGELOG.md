@@ -15,6 +15,31 @@ platform binaries.
 
 ### Added
 
+- **Rich text can now be written in the Designer, not just read.** A text item
+  built from `spans:` — a run in bold, a struck-through clause, one word in a
+  different colour — could be listed and linked, but the words themselves still
+  had to be typed into the YAML by hand. Double-clicking such an item on the
+  page now opens it as flowing text: select a few words, press bold (or ⌘B), and
+  the fragments underneath split to fit. You never see a fragment boundary and
+  never place one, which is how every editor you have met behaves.
+
+  What the page cannot show, the property panel does — a fragment's size and
+  font, its named styles, and a bound fragment's data field. The panel keeps its
+  fragment list, because it is still the only place that answers "which one
+  carries a link" at a glance.
+
+  Editing one fragment rewrites one fragment: a document with eighteen
+  hand-authored fragments comes back with the seventeen you did not touch on
+  their original lines, keeping their own named styles and links. Splitting a
+  linked fragment leaves both halves linked.
+
+  While you are editing this way, the toolbar's own bold, italic and text
+  colour stand down — they act on the whole block, and two controls with one
+  name is a choice you cannot make. Size, font and fill stay live, because the
+  page's bar offers none of them. And if a change is too large for the document
+  to accept in one step, the editor stays open with your words in it rather
+  than closing over them.
+
 - **A failed eval grader can now be read rather than re-run.** `make skills:eval`
   scored a transcript and threw it away, so the one moment you need the answer —
   a grader just said it was wrong — was the moment it was gone, and a second run

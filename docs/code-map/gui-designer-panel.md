@@ -362,9 +362,23 @@ the selected fragment resets with the selection.
   shape (non-array `spans`, a non-map entry, a non-string `text`/`url`, a
   non-map `link`) to "unset" rather than throwing. The one thing that does NOT
   degrade is `SpanView.index`: it is the WIRE position the write addresses, so
-  a skipped entry leaves a GAP rather than renumbering its neighbours.
+  a skipped entry leaves a GAP rather than renumbering its neighbours — and the
+  gap is load-bearing on the write side too, since a plan then has fewer entries
+  than the sequence has elements (`panel/spanOps` counts positions in wire slots
+  for exactly this reason). It also carries `styleNames` and the `metrics`, the
+  panel's half of a fragment's style.
   `MAX_SPANS` mirrors the engine constant and is pinned by reading
   `engine/core/src/template/spans.rs`; it bounds the DISPLAY only.
+- `panel/spanWire.ts` — one fragment's MARKS as wire keys. A mark that is OFF
+  authors a REMOVAL, not the engine's explicit `normal`/`none` keyword (minimal
+  wire), and every removal is presence-guarded — `removeKey` on an absent key
+  fails and `applyAll` then discards the whole batch. `inheritedKeys` narrows
+  the `styleNames`/`link` a split copies onto the new half.
+- `panel/spanOps.ts` — a run plan → ONE batch, and the ORDER is the whole
+  subtlety: updates first (they address original indices), then removals
+  DESCENDING, then inserts ASCENDING against a SIMULATED sequence. The
+  simulation is what makes a malformed entry harmless: it is invisible to the
+  plan and very much present in the file.
 - `panel/spanLinkOps.ts` — the WRITE side, composed from the two existing
   halves rather than branching either, because they address DIFFERENT nodes:
   the `link:` write lands on `<item>.spans[i]` and the declarations it may
@@ -376,8 +390,21 @@ the selected fragment resets with the selection.
   a link mark for the ones that carry one) over ONE `LinkUrlField` for the
   selected row. Not a field per fragment: the largest bundled example holds
   eighteen, and N fields would be N controls answering to one accessible name
-  in a ~255px column. A fragment's TEXT is not editable here — the wire's
-  rich-text authoring surface does not exist in any form yet.
+  in a ~255px column.
+  A fragment's TEXT and its four MARKS are NOT edited here — those are the FLOW
+  surface's (`text/SpansFlowEditor`, on the canvas), where a selection can point
+  at them. What is left is everything a selection cannot point at, and
+  `panel/SpanInspector.tsx` is that: the METRIC style keys, `styleNames:`, and a
+  bound fragment's `data.key` (atomic in the flow — deletable, not retypable).
+- `panel/SpanInspector.tsx` — the per-fragment inspector described above. Its
+  metric list is `spansModel`'s `SPAN_METRIC_KEYS` intersected with
+  `styleFieldSpecs`'s registry, by FILTER rather than lookup-or-throw: the first
+  cut threw at module scope for a key the registry lacks and took 29 unrelated
+  suites down at import time. `letterSpacing` is the key in question — the
+  engine allows it per span, the panel's registry carries no entry for it, so it
+  is unauthorable at the ITEM level too and a fragment does not get a control
+  its own block lacks. Every commit is changed-checked, because `applyPanelOp`
+  takes `Op | null` precisely so the caller decides whether a write is owed.
 - The declaration name set is the THIRD member of the family in
   `text/declModel.ts` (`spanLinkSurfaceNames`), and neither sibling is usable:
   each omits one of the item's own two surfaces and each includes the span URL

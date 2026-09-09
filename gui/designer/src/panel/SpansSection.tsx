@@ -9,9 +9,15 @@
 // accessible name (and N copies of one DOM id); and the badge on each row is
 // what lets the list answer "which fragments carry a link" without clicking.
 //
-// A fragment's TEXT is not editable here — that is the wire's rich-text
-// authoring surface, which does not exist yet in any form. The row is a
-// selector; the link is what this surface edits.
+// A fragment's TEXT and its four MARKS are not edited here — those belong to
+// the FLOW surface on the canvas, where a selection can point at them and the
+// split happens underneath without the reader ever placing a boundary.
+//
+// What is left is everything a selection CANNOT point at, and this section is
+// the inspector for it: the three METRIC style keys (which the flow surface
+// must not show — it is "deliberately NOT WYSIWYG"), `styleNames:`, a bound
+// fragment's key, and the per-fragment link. The row list stays because it is
+// still the only place that answers "which fragment carries what" at a glance.
 
 import { useState } from 'react';
 import { useI18n } from '../i18n/context';
@@ -23,6 +29,7 @@ import { hasCapability, type ItemPanelProps } from './itemPanelProps';
 import { LinkUrlField } from './LinkUrlField';
 import { LINK_CAPABILITY } from './linkModel';
 import { chipsFor, HelpfulHeading } from './panelHelpers';
+import { SpanInspector } from './SpanInspector';
 import { clearIgnoredContentOps, spanLinkCommitOps } from './spanLinkOps';
 import { readSpans, type SpanView } from './spansModel';
 import { useReseedKey } from './useReseedKey';
@@ -59,7 +66,7 @@ function preview(
 
 export function SpansSection(props: ItemPanelProps) {
   const { t } = useI18n();
-  const { controller, path, view, capabilities } = props;
+  const { controller, path, view, capabilities, fontFamilies } = props;
   const spans = readSpans(controller.read, path);
   const [selected, setSelected] = useState(spans[0]?.index ?? 0);
   // The wire moves under the selection — a fragment can be deleted in YAML, or
@@ -89,7 +96,7 @@ export function SpansSection(props: ItemPanelProps) {
           </button>
         </div>
       ) : null}
-      <ul className="mb-2 rounded-md border border-border">
+      <ul className="m-0 mb-2 list-none rounded-md border border-border p-0">
         {spans.map((span) => (
           <li key={span.index}>
             <button
@@ -105,8 +112,18 @@ export function SpansSection(props: ItemPanelProps) {
                 n: span.index + 1,
                 content: preview(t, span),
               })}
-              className={`flex w-full items-center gap-1 px-2 py-1 text-left text-sm ${
-                span.index === selected ? 'bg-accent-bg text-text' : 'text-muted'
+              // `border-0` and an explicit background are both load-bearing: no
+              // Tailwind preflight is imported, so a bare `<button>` keeps the
+              // browser's own border and its `ButtonFace` grey — which in dark
+              // chrome put near-white text on light grey and made the SELECTED
+              // row the least readable thing on the panel.
+              //
+              // The selected treatment is `panel/AlignRow`'s, the panel's own:
+              // an accent wash the text still reads on. It replaces a
+              // `bg-accent-bg` that named a token the theme never defined, so
+              // the class compiled to nothing at all.
+              className={`flex w-full cursor-pointer items-center gap-1 border-0 px-2 py-1 text-left text-sm ${
+                span.index === selected ? 'bg-accent/15 text-text' : 'bg-transparent text-muted'
               }`}
               onClick={() => setSelected(span.index)}
             >
@@ -117,6 +134,15 @@ export function SpansSection(props: ItemPanelProps) {
           </li>
         ))}
       </ul>
+      {active === null ? null : (
+        <SpanInspector
+          key={active.index}
+          span={active}
+          itemPath={path}
+          controller={controller}
+          fontFamilies={fontFamilies}
+        />
+      )}
       {active === null || !hasCapability(capabilities, LINK_CAPABILITY) ? null : (
         <LinkUrlField
           id={`sj-span-link-${active.index}`}

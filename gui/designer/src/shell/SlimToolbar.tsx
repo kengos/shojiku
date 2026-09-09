@@ -47,6 +47,8 @@ export interface SlimToolbarProps {
   readonly dialogs: ChromeDialogs;
   readonly menuActions: DesignerProps['menuActions'];
   readonly maxBytes: number;
+  /** Passed through to `FormatToolbar` — see `TypographyGroup`'s note. */
+  readonly flowEditing?: boolean;
 }
 
 export function SlimToolbar({
@@ -63,6 +65,7 @@ export function SlimToolbar({
   dialogs,
   menuActions,
   maxBytes,
+  flowEditing,
 }: SlimToolbarProps) {
   const { t } = useI18n();
   // Locals, not property reads: control-flow narrowing follows a local
@@ -98,6 +101,7 @@ export function SlimToolbar({
         onAddFont={menuActions?.onAddFont}
         capabilities={capabilities}
         floor={derived.styleFloor}
+        flowEditing={flowEditing}
       />
       <AlignToolbar
         count={multi.alignCount}

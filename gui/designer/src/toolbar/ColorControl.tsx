@@ -20,12 +20,15 @@ export function ColorControl({
   colorKey,
   path,
   controller,
+  disabled,
 }: {
   readonly label: string;
   readonly eff: EffectiveValue;
   readonly colorKey: ColorKey;
   readonly path: string;
   readonly controller: EditorController;
+  /** See `ColorSwatchPicker`'s own note. */
+  readonly disabled?: boolean;
 }) {
   const { t } = useI18n();
   return (
@@ -37,6 +40,7 @@ export function ColorControl({
       tip={hintTitle(label, originHint(t, eff))}
       customLabel={t('toolbar.color.custom')}
       clearLabel={t('toolbar.color.clear')}
+      disabled={disabled}
     />
   );
 }

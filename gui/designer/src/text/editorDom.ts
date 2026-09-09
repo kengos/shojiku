@@ -98,6 +98,19 @@ export function restoreCaret(sel: Selection | null, range: Range | null): void {
   sel.addRange(range);
 }
 
+/** The selected chip, or `null` once it has left the editor.
+ *
+ * Both editing surfaces need this and for the same reason: `keydown` is too
+ * early to see a detach, because the browser applies its default action AFTER
+ * the handler returns — typing over a selection that spans the pill, a cut, and
+ * a native undo all remove it later. `input` covers those; the surfaces' own
+ * Range surgery fires no `input` and calls this directly.
+ *
+ * Identity-preserving, so the still-attached case costs no re-render. */
+export function keepIfAttached(root: HTMLElement, chip: Element | null): Element | null {
+  return chip !== null && !root.contains(chip) ? null : chip;
+}
+
 /** Select the editor's whole content (the autoFocus open-ready-to-replace
  * behaviour the textarea's `select()` used to provide). */
 export function selectAllContent(root: HTMLElement, sel: Selection | null): void {

@@ -16,7 +16,7 @@ import { BoxOverlay } from './BoxOverlay';
 import type { ContainerMark } from './ContainerMarkVisual';
 import type { IndicatorLine } from './dropPlan';
 import { scaleRect } from './geometry';
-import { InlineTextEditor } from './InlineTextEditor';
+import { InlineTextEditor, type InlineTextEditorProps } from './InlineTextEditor';
 import type { PageMargin } from './marginGuide';
 import type { CanvasManipulate } from './overlayDragModel';
 import { PageUnderlay } from './PageUnderlay';
@@ -41,6 +41,10 @@ export interface InlineEdit {
   readonly onCommit: (value: string, declarations: readonly PendingDecl[]) => void;
   readonly onCancel: () => void;
   readonly chips?: ChipContext;
+  /** Present only for a `spans:`-carrying item — the flow surface opens over
+   * these fragments instead of the plain field. Additive: a host that knows
+   * nothing about it still gets exactly the editor it got before. */
+  readonly flow?: InlineTextEditorProps['flow'];
 }
 
 export interface DesignerCanvasProps {
@@ -171,6 +175,7 @@ export function DesignerCanvas({
                 onCancel={inlineEdit.onCancel}
                 ariaLabel={inlineEdit.ariaLabel}
                 chips={inlineEdit.chips}
+                flow={inlineEdit.flow}
               />
             ) : null}
           </div>

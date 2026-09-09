@@ -9,7 +9,12 @@
 // applies it and fires a real `input`, which the handler below already serves.
 
 import type { KeyboardEvent } from 'react';
-import { handleEditorKeyDown, handleEditorMouseDown, handleTextIngress } from './editorHandlers';
+import {
+  type FormatShortcut,
+  handleEditorKeyDown,
+  handleEditorMouseDown,
+  handleTextIngress,
+} from './editorHandlers';
 import type { DraftReporter } from './useDraftReporter';
 
 export interface EditorSurfaceProps {
@@ -20,6 +25,9 @@ export interface EditorSurfaceProps {
   readonly commit: (el: HTMLElement) => void;
   /** Present only on the canvas overlay — Escape closes without committing. */
   readonly cancel?: () => void;
+  /** What ⌘B / ⌘I / ⌘U do on this surface. Absent on the plain-text one, where
+   * the wire has nowhere to put a mark and the key is merely blocked. */
+  readonly format?: (shortcut: FormatShortcut) => void;
   readonly onSelectChip: (chip: Element | null) => void;
   readonly onDetachCheck: (el: HTMLElement) => void;
   readonly draft: DraftReporter;
@@ -32,6 +40,7 @@ export function EditorSurface({
   className,
   commit,
   cancel,
+  format,
   onSelectChip,
   onDetachCheck,
   draft,
@@ -58,6 +67,7 @@ export function EditorSurface({
               ended = true;
               cancel();
             },
+      format,
     });
     onDetachCheck(event.currentTarget);
     // For an ordinary character key this runs BEFORE the browser applies the
