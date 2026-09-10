@@ -67,6 +67,25 @@ function claimFor(
   return source !== undefined && source.kind === run.kind ? index : null;
 }
 
+/** A run with no content at all. Only a TEXT fragment can be in this state: a
+ * bound one carries a binding key, and the flow cannot retype it. */
+function emptied(run: SerializedRun): boolean {
+  return run.kind === 'text' && run.content === '';
+}
+
+/** Was the fragment at `index` ALREADY empty when the surface was seeded?
+ *
+ * This is the whole distinction the removal rests on. The engine reports
+ * `empty_span` for a fragment carrying neither `text` nor `data` — a document
+ * may hold one deliberately — while a fragment the reader empties is written
+ * `text: ""`, which that predicate does not match and nothing reports. So the
+ * first must survive a commit untouched and the second must not survive at all,
+ * and only the seed can tell them apart. */
+function wasEmpty(before: readonly RunView[], index: number): boolean {
+  const source = before.find((candidate) => candidate.index === index);
+  return source !== undefined && source.kind === 'text' && source.content === '';
+}
+
 /** Classify every fragment the surface now holds against the ones it was seeded
  * from. Pure — the ops are built from this, one layer up, so the decision and
  * its encoding can be tested apart. */
@@ -77,7 +96,22 @@ export function planRuns(before: readonly RunView[], after: readonly SerializedR
   for (const run of after) {
     const claim = claimFor(run, before, highWater);
     if (claim === null) {
-      entries.push({ op: 'insert', run, inheritFrom: run.sourceIndex });
+      // A fragment created and emptied within one edit has nothing to preserve
+      // and is dropped before it is ever inserted.
+      if (!emptied(run)) {
+        entries.push({ op: 'insert', run, inheritFrom: run.sourceIndex });
+      }
+      continue;
+    }
+    // The reader deleted this fragment's words, so they deleted the fragment —
+    // which is what every editor they have met does. Claiming nothing leaves
+    // the index out of `taken`, and the removal below follows from that.
+    //
+    // Deleting the words is the only way to reach it: a fragment that was
+    // ALREADY empty when seeded is not "emptied" and is kept, because a
+    // document may legitimately carry `{}` — `runSerialize` preserves it on
+    // purpose, and dropping it here would delete a node its author wrote.
+    if (emptied(run) && !wasEmpty(before, claim)) {
       continue;
     }
     taken.add(claim);
