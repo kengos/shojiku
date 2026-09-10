@@ -3,6 +3,7 @@
 //! the tree — layout is the trust boundary; renderers emit whatever the
 //! tree carries without judgment.
 
+use crate::tree::{LayoutItem, TextBlock};
 use shojiku_core::{Bindings, Link};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
@@ -94,6 +95,60 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
         }
     }
+}
+
+/// Whether these drawn items will produce at least one PDF link
+/// annotation — the value `PlacedBox.linked` carries, read off what the
+/// item actually DREW rather than off what it authored.
+///
+/// Asking the drawn tree, instead of stamping at each of the five
+/// `resolve_link` call sites, is what lets ONE function answer for plain
+/// text, rich spans, vertical text, a per-span `link:` and an image: every
+/// one of them ends as a `link` on a tree primitive, and a URL
+/// [`Ctx::resolve_link`] rejected ends as `None` there. It mirrors
+/// `render-pdf`'s `collect_annotations` walk — same items, same recursion
+/// into clip groups (a `fit: cover` image is wrapped in one) — because the
+/// two must agree: this flag promises exactly what that walk will emit.
+///
+/// No clip-depth cap, unlike the renderer's walk: this reads an atom
+/// layout has just built, whose nesting is bounded by construction, never
+/// a deserialized tree a caller handed in.
+///
+/// Written as explicit loops rather than `any(|…|)`: a closure that never
+/// RUNS — the inner one, for a block with no lines — is an uncovered
+/// region under `cargo-llvm-cov`, and the metrics builder next door
+/// already carries the same note.
+pub(super) fn linked(items: &[LayoutItem]) -> bool {
+    for item in items {
+        let hit = match item {
+            LayoutItem::Clip(clip) => linked(&clip.items),
+            LayoutItem::Text(block) => text_linked(block),
+            LayoutItem::Image(shape) => shape.link.is_some(),
+            // Shapes carry no links (a mark is not a hyperlink target) —
+            // the same enumeration `collect_annotations` makes.
+            LayoutItem::Rect(_) | LayoutItem::Line(_) | LayoutItem::Path(_) => false,
+        };
+        if hit {
+            return true;
+        }
+    }
+    false
+}
+
+/// A block is linked by its OWN `link:` (a plain block, or a rich one
+/// whose spans inherit it) or by any single run's.
+fn text_linked(block: &TextBlock) -> bool {
+    if block.link.is_some() {
+        return true;
+    }
+    for line in &block.lines {
+        for run in &line.runs {
+            if run.link.is_some() {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 #[cfg(test)]

@@ -22,7 +22,7 @@ import { marginGuide, type PageMargin } from './marginGuide';
 import { OverlayBoxLayer } from './OverlayBoxLayer';
 import { DropIndicators } from './OverlayDropShapes';
 import { GhostRect, GuideLines, MarqueeRect } from './OverlayGestureShapes';
-import { GroupFrame, MarginGuideShape, OverlayGrid } from './OverlayShapes';
+import { GroupFrame, LinkBadgeLayer, MarginGuideShape, OverlayGrid } from './OverlayShapes';
 import { overlayBackground } from './overlayBackground';
 import type { CanvasManipulate } from './overlayDragModel';
 import { overlayLayers } from './overlayLayers';
@@ -213,6 +213,7 @@ export function BoxOverlay({
         ghost={ghostPx}
         scale={scale}
       />
+      <LinkBadgeLayer badges={layers.linkBadges} />
       {layers.groupBox !== null ? <GroupFrame rect={layers.groupBox} /> : null}
       {marqueePx !== null ? <MarqueeRect rect={marqueePx} /> : null}
       {containerMarks.map((mark) => (

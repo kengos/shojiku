@@ -210,7 +210,12 @@ Wire types stay in core; content measurement stays in layout.
   in a `column`).
 - `engine/link.rs` — `link:`: `resolve_link` (scope-aware interpolation) +
   `check_link_url` (scheme allowlist + length/control gates) — layout is
-  the trust boundary; renderers emit what the tree carries.
+  the trust boundary; renderers emit what the tree carries. Plus `linked`,
+  the `PlacedBox.linked` stamp: it reads the DRAWN items (mirroring
+  `render-pdf/annot.rs`, clip recursion included) rather than the five
+  `resolve_link` call sites, which is what makes one function answer for
+  plain / rich / vertical / per-span / image and report false for a URL the
+  gate dropped.
 - `engine/meta.rs` — `document:`: `document_metadata` (interpolates each
   field through the shared binding funnel) + `check_meta_text` /
   `check_meta_language` — the same trust boundary as `link.rs`, and the
@@ -457,7 +462,14 @@ Wire types stay in core; content measurement stays in layout.
   category as `visible:`, and a defensible future widening, but not one
   the field makes today). (Skip-serialized, so the wire is byte-unchanged
   for a document that triggers neither; a COLLAPSED item emits no
-  `PlacedBox` at all.)
+  `PlacedBox` at all.) `PlacedBox.linked` = a PDF link annotation will land
+  on this placement, so a canvas can mark it — also an ENUMERATION (the
+  item's own gated `link:`, or any one of a rich item's span links), also
+  skip-serialized. Stamped by the atom builders through `engine/link.rs`'s
+  `linked`, and CLEARED by `visibility::blank`/`blank_since` beside
+  `hidden`, because a blanked atom's items are gone and the PDF carries
+  nothing there. It cannot be derived from the document: two `repeat`
+  elements share one path and resolve their URLs separately.
 - `tree.rs` — **`LayoutDocument`: the ONLY layout↔renderer contract**.
   Carries `metadata: DocumentMetadata` (`tree/meta.rs` — resolved title/
   description/keywords/language/authors + `DEFAULT_DOCUMENT_TITLE`; the

@@ -40,6 +40,11 @@ impl Visibility {
 /// placements `inspect` reports — each stamped `hidden` so a Designer can
 /// ghost the item instead of showing an unexplained gap.
 ///
+/// `linked` is CLEARED in the same step, for the reason the items are
+/// dropped: nothing paints, so the PDF carries no annotation here, and a
+/// box still claiming one would advertise a link the document does not
+/// have.
+///
 /// Blanking after the fact (rather than not laying the item out) is what
 /// makes the reserved slot exactly the size it would have been: the
 /// height of a wrapped text block or an auto-height container is only
@@ -61,6 +66,7 @@ pub(in crate::engine) fn blank(atom: Atom) -> Atom {
             .into_iter()
             .map(|mut b| {
                 b.hidden = true;
+                b.linked = false;
                 b
             })
             .collect(),
@@ -94,7 +100,8 @@ pub(in crate::engine) fn draw_mark(pages: &[PageBuild], anchors: usize) -> DrawM
 }
 
 /// Blanks everything drawn since `mark`: the drawn primitives are
-/// dropped, and every placement added since is stamped `hidden`.
+/// dropped, and every placement added since is stamped `hidden` — and
+/// un-stamped `linked`, for the same reason [`blank`] clears it.
 ///
 /// Pages the item OPENED stay open. A hidden item still reserves what it
 /// would have occupied, and for a paginating item that is measured in
@@ -124,6 +131,7 @@ pub(in crate::engine) fn blank_since(
         let from = boxes.min(page.boxes.len());
         for placed in &mut page.boxes[from..] {
             placed.hidden = true;
+            placed.linked = false;
         }
     }
 }

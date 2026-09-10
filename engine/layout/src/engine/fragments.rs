@@ -75,6 +75,10 @@ impl Fragments {
                     content: rect,
                     text: None,
                     hidden: false,
+                    // `table` / `repeat` / `repeat_flow` fragments. None of
+                    // the three takes a `link:`; a linked item INSIDE one
+                    // gets its own placement from the atom builders.
+                    linked: false,
                 });
             }
         }

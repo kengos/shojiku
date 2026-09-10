@@ -125,6 +125,16 @@ hostile geometry degrades to null before it can reach an op.
   box, then `OverlayHandles` on the selected movable one. Owns the
   stable `index:path` keying rule; takes the `OverlayBoxSelection` +
   `OverlayBoxWiring` bundles rather than a dozen loose values.
+- `canvas/linkBadge.ts` — pure: WHERE the hyperlink badge goes
+  (`linkBadges(boxes, scale)` → one `LinkBadge {path, cx, cy}` per box the
+  engine stamped `linked`, plus the constant `LINK_BADGE_PX`). Anchored to
+  the item's INK — the widest `text.lines` right edge at the first line's em
+  centre, the rightmost `text.columns` at the text top for a vertical item,
+  the border box for an image — because a text box is wider than its glyphs
+  whenever `w` is a percentage, so a corner badge floats in empty margin. A
+  box the engine did not stamp (an older engine omits the field entirely,
+  which is why this side needs no capability gate), one it stamped false, and
+  any non-finite coordinate all contribute nothing.
 - `canvas/overlayGeometry.ts` — the overlay's pure geometry:
   `pathDepth`/`byDepth`, `clientToPagePt` (over the LIVE bounding rect
   so zoom factors out; unmeasurable → ratio 1), `clientDeltaToPt`,
@@ -198,7 +208,10 @@ hostile geometry degrades to null before it can reach an op.
   holds the narrowing).
 - `canvas/OverlayShapes.tsx` — the overlay's STATE shapes: the grid
   pattern (fed by `manipulate.grid`), the multi-selection group frame
-  (fed by `groupBounds`), and `MarginGuideShape` (fed by `marginGuide`) —
+  (fed by `groupBounds`), `LinkBadgeLayer` (fed by `linkBadges`; the glyph is
+  `ui/icons.tsx`'s `IconLink` with the stroke overridden, never a second copy
+  of its path data, and the layer is `pointer-events: none` because it sits
+  ABOVE the interactive one), and `MarginGuideShape` (fed by `marginGuide`) —
   the page's margin box, DASHED because nothing the engine draws is
   dashed, so it can never be read as document ink; both its strokes are
   FIXED values rather than `--sj-text`/`--sj-accent`, since it is drawn

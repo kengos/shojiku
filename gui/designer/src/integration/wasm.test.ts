@@ -18,6 +18,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { alignOps } from '../canvas/align';
 import { reorderContext, siblingRects } from '../canvas/dnd';
 import { planDrop } from '../canvas/dropPlan';
+import { linkBadges } from '../canvas/linkBadge';
 import { manipulationFor } from '../canvas/manipulate';
 import { planMove } from '../canvas/planMove';
 import { planResize } from '../canvas/planResize';
@@ -180,6 +181,59 @@ describe('locale facts against the real engine', () => {
     await expect(transport.localeFacts?.(doc, 'zz-ZZ')).rejects.toMatchObject({
       code: 'locale_error',
     });
+  });
+});
+
+describe('the link flag, engine to badge, through the real wasm', () => {
+  // The JOIN. The engine's own e2e proves layout STAMPS `linked`, and
+  // `linkBadge.test.ts` proves the canvas turns a stamped box into a badge —
+  // but both halves work off fixtures they wrote themselves, so until this
+  // case existed NO gate executed the seam. (Measured at review time: this
+  // file reads a real-wasm box field 41 times and `linked` zero of them.)
+  const page = (items: string) =>
+    `page: { margin: 0 }\nsections:\n  body:\n    type: flow\n    box: { x: 0, y: 0, w: 400, h: 200 }\n    items:\n${items}`;
+
+  const boxesOf = async (yaml: string) => {
+    const outcome = await transport.renderRaw(yaml, '{}', undefined, { scale: 1 });
+    expect(outcome.ok).toBe(true);
+    return {
+      boxes: outcome.inspect?.boxes.pages.flat() ?? [],
+      diagnostics: outcome.diagnostics.items,
+    };
+  };
+
+  it('carries a real link all the way to a drawn badge', async () => {
+    const { boxes, diagnostics } = await boxesOf(
+      page(
+        '      - type: text\n        id: cta\n        text: shop\n        link: { url: "https://example.com" }\n      - type: text\n        id: plain\n        text: no link\n',
+      ),
+    );
+    expect(diagnostics.filter((d) => d.severity === 'error')).toHaveLength(0);
+    const cta = boxes.find((b) => b.id === 'cta');
+    const plain = boxes.find((b) => b.id === 'plain');
+    // The engine really produced the field (not a fixture we wrote).
+    expect(cta?.linked).toBe(true);
+    expect(plain?.linked).not.toBe(true);
+    // …and the canvas model really turns it into exactly one badge, anchored
+    // to the ink the same engine measured.
+    const badges = linkBadges(boxes, 2);
+    expect(badges).toHaveLength(1);
+    expect(badges[0].path).toBe(cta?.path);
+    expect(Number.isFinite(badges[0].cx)).toBe(true);
+    expect(badges[0].cx).toBeGreaterThan((cta?.border.x ?? 0) * 2);
+  });
+
+  it('does NOT mark a URL the engine refused, and says why', async () => {
+    // The security property, end to end: a badge here would promise the
+    // author a link the PDF will not carry.
+    const { boxes, diagnostics } = await boxesOf(
+      page(
+        '      - type: text\n        id: bad\n        text: nope\n        link: { url: "javascript:alert(1)" }\n',
+      ),
+    );
+    expect(boxes.find((b) => b.id === 'bad')?.linked).not.toBe(true);
+    expect(linkBadges(boxes, 2)).toHaveLength(0);
+    expect(diagnostics.map((d) => d.code)).toContain('unsupported_link_scheme');
   });
 });
 

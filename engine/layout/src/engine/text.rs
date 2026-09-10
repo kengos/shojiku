@@ -191,6 +191,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // Per-line metrics for horizontal blocks, per-column metrics for
         // vertical ones (the builder routes on the block's own axis).
         pb.text = self.text_metrics(&atom.items, computed);
+        pb.linked = super::link::linked(&atom.items);
         atom.boxes.push(pb);
         with_vertical_margin(atom, rb.margin[0], rb.margin[2])
     }

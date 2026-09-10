@@ -5,6 +5,7 @@
 
 mod hostile;
 mod items;
+mod linked;
 mod paths;
 
 use crate::common::*;

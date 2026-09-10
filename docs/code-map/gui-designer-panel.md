@@ -300,10 +300,13 @@ The wire carries `link` on THREE structs — `TextItem`, `ImageItem` and `Span` 
 so on the panel's vocabulary it is TWO item types plus a rich-text fragment.
 All three now have a surface: the item-level pair through `LinkField.tsx`, the
 fragment through `SpansSection.tsx`'s per-fragment field. `qr_code` and
-`char_grid` are separate structs and take none. Nothing else in the Designer
-can show a link: `render-png` paints no annotation and the box index carries
-none, so the preview and the canvas overlay have nothing to draw from and these
-fields are the only place the fact exists.
+`char_grid` are separate structs and take none. `render-png` still paints no
+annotation, so the preview itself shows nothing — but the box index now carries
+a per-placement `linked` flag, which the canvas overlay draws as a chain badge
+beside the item's ink (`canvas/linkBadge.ts` + `OverlayShapes`'
+`LinkBadgeLayer`). So the canvas answers "which ITEMS carry a link"; these
+fields remain the only place the URL itself is readable, and the only surface
+that answers it per FRAGMENT.
 
 - `panel/linkModel.ts` — the READ side plus the two pure predicates.
   `LINK_TYPES` (`text`/`image`) and `LINK_CAPABILITY` (`link.url` — an older

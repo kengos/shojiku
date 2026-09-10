@@ -47,6 +47,11 @@ pub(super) const KEYS: &[&str] = &[
     // `…cell.items[1]`, `…columns[2]`); `id` becomes an optional alias.
     // The GUI canvas hit-tests every item without GUI-side id injection.
     "inspect.boxes.all_items",
+    // A placed box says whether it will carry a PDF link annotation, so a
+    // canvas can show WHERE the links are without opening every item. The
+    // flag reports the RESOLVED, gate-passed link — a rejected URL and a
+    // hidden item both report false, matching what the PDF will contain.
+    "inspect.boxes.linked",
     // Fixed character cells (genkoyoshi/kanji workbooks/application-form) — one char
     // per cell, school kinsoku hang-back, vertical_rl, sheet pagination.
     "char_grid",

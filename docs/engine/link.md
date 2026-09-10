@@ -63,8 +63,13 @@ object form reserves room for internal destinations later.
 
 - Text items, image items and rich spans only. There is no link on a `rect`,
   a `table` cell, or a container.
-- PNG previews carry no annotation surface, so a link is observable in the
-  PDF only.
+- PNG previews carry no annotation surface, so a link is not CLICKABLE
+  outside the PDF. It is still visible while authoring: every placement in
+  the box index carries a `linked` flag (capability `inspect.boxes.linked`),
+  which is what the Designer marks a linked item by. The flag addresses the
+  ITEM, so a rich block whose second span carries the link is marked once, at
+  the block — and a URL the gate below rejected is not marked at all, since
+  the PDF will carry no annotation for it either.
 - `http`, `https`, `mailto` and `tel` only (`unsupported_link_scheme`), 2048
   bytes maximum (`link_url_too_long`), and an empty URL drops the link
   (`empty_link_url`) while the item still renders.

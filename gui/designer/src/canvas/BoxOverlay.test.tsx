@@ -1567,3 +1567,81 @@ describe('BoxOverlay margin-box guide', () => {
     expect(group?.getAttribute('style')).toContain('pointer-events: none');
   });
 });
+
+describe('the hyperlink badge', () => {
+  const linked = (path: string, x: number, over: Partial<PlacedBox> = {}): PlacedBox => ({
+    path,
+    border: { x, y: 0, w: 40, h: 20 },
+    content: { x, y: 0, w: 40, h: 20 },
+    linked: true,
+    ...over,
+  });
+
+  function draw(list: readonly PlacedBox[], onSelect: (path: string) => void = () => {}) {
+    return render(
+      <BoxOverlay
+        boxes={list}
+        scale={1}
+        width={200}
+        height={200}
+        selectedPath={null}
+        onSelect={onSelect}
+        onDeselect={() => {}}
+      />,
+    );
+  }
+
+  it('marks every linked box and leaves the others alone', () => {
+    const { container } = draw([linked('a', 0), box('b', 50, 0, 40, 20), linked('c', 100)]);
+    expect(container.querySelectorAll('.sj-link-badge')).toHaveLength(2);
+  });
+
+  it('marks each element of a repeat, which share ONE structural path', () => {
+    // Two placements, one path — the case a `key={path}` would collapse into
+    // a single badge, silently losing one of the two links.
+    const path = 'sections.body.items[0].cell.items[0]';
+    const { container } = draw([linked(path, 0), linked(path, 60)]);
+    const discs = container.querySelectorAll('.sj-link-badge-disc');
+    expect(discs).toHaveLength(2);
+    expect(discs[0].getAttribute('cx')).not.toBe(discs[1].getAttribute('cx'));
+  });
+
+  it('draws nothing for an engine that never stamped the flag', () => {
+    const { container } = draw([box('a', 0, 0, 40, 20)]);
+    expect(container.querySelectorAll('.sj-link-badge')).toHaveLength(0);
+  });
+
+  it('paints in the paper ink, not the accent, and stays inert', () => {
+    // FIXED ink because the badge sits on the engine-rendered page, which is
+    // white in both colour schemes; NEUTRAL rather than the accent, which is
+    // the selection's colour. Inline, because no stylesheet ships with the
+    // component.
+    const { container } = draw([linked('a', 0)]);
+    const disc = container.querySelector('.sj-link-badge-disc');
+    expect(disc?.getAttribute('stroke')).toBe('#1f1a17');
+    expect(disc?.getAttribute('fill')).toBe('#ffffff');
+    expect(container.querySelector('.sj-link-badge svg')?.getAttribute('stroke')).toBe('#1f1a17');
+    // Inert, so a link-dense document does not become unclickable. jsdom does
+    // no hit-testing, so the DECLARATION is what a unit test can pin; the
+    // behaviour it buys is a live-browser check.
+    const layer = container.querySelector('.sj-link-badge')?.parentElement;
+    expect(layer?.getAttribute('style')).toContain('pointer-events: none');
+  });
+
+  it('still marks a SELECTED linked box', () => {
+    // The badge answers "is there a link here?", which does not stop being
+    // worth answering once the item is selected.
+    const { container } = render(
+      <BoxOverlay
+        boxes={[linked('a', 0)]}
+        scale={1}
+        width={200}
+        height={200}
+        selectedPath="a"
+        onSelect={() => {}}
+        onDeselect={() => {}}
+      />,
+    );
+    expect(container.querySelectorAll('.sj-link-badge')).toHaveLength(1);
+  });
+});

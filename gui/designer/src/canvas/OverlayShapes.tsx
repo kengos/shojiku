@@ -19,6 +19,8 @@
 // JSX decides whether a shape exists, so none of these carries a guard.
 
 import type { BoxRect } from '../engine/types';
+import { IconLink } from '../ui/icons';
+import { LINK_BADGE_PX, type LinkBadge } from './linkBadge';
 import { type MarginGuide, ORIGIN_MARKER_PX } from './marginGuide';
 
 /** The page MARGIN BOX — the rectangle `x: 0` / `y: 0` are measured from.
@@ -122,6 +124,55 @@ export function OverlayGrid({
         style={{ pointerEvents: 'none' }}
       />
     </>
+  );
+}
+
+/** The items that carry a hyperlink, marked beside their ink.
+ *
+ * FIXED ink rather than `--sj-accent`, for the same reason as the margin guide
+ * above: this is drawn on the engine-rendered paper, which stays white in both
+ * schemes. The NEUTRAL `#1f1a17` rather than the accent, because the accent is
+ * already the selection stroke and the origin marker, and a link is
+ * information rather than a warning — a badge in accent ink on a selected item
+ * reads as part of the selection.
+ *
+ * The disc is opaque so the glyph is legible over whatever the item drew. The
+ * glyph itself is `ui/icons.tsx`'s hyperlink icon rather than a second copy of
+ * its path data — `IconProps` spreads `...rest` after `stroke="currentColor"`,
+ * so a fixed stroke overrides it and `x`/`y` position the nested `<svg>`.
+ *
+ * `pointer-events: none` is load-bearing, not tidiness: the badges sit ABOVE
+ * the interactive layer, and a document with many links would otherwise have
+ * unclickable patches over its own items. */
+export function LinkBadgeLayer({ badges }: { readonly badges: readonly LinkBadge[] }) {
+  const r = LINK_BADGE_PX / 2;
+  return (
+    <g style={{ pointerEvents: 'none' }}>
+      {badges.map((badge, index) => (
+        // Paths repeat across a `repeat`'s elements and a split block's page
+        // fragments, so the index rides the key — the same rule the
+        // interactive layer keys its boxes by, and for the same reason.
+        // biome-ignore lint/suspicious/noArrayIndexKey: the badge list is regenerated wholesale per inspect snapshot, never reordered incrementally.
+        <g key={`${index}:${badge.path}`} className="sj-link-badge">
+          <circle
+            className="sj-link-badge-disc"
+            cx={badge.cx}
+            cy={badge.cy}
+            r={r}
+            fill="#ffffff"
+            stroke="#1f1a17"
+            strokeOpacity={0.55}
+            strokeWidth={1}
+          />
+          <IconLink
+            size={LINK_BADGE_PX - 3}
+            x={badge.cx - r + 1.5}
+            y={badge.cy - r + 1.5}
+            stroke="#1f1a17"
+          />
+        </g>
+      ))}
+    </g>
   );
 }
 

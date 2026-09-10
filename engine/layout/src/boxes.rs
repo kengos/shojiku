@@ -78,6 +78,36 @@ pub struct PlacedBox {
     /// document that triggers neither cause.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub hidden: bool,
+    /// The placement will carry at least one PDF link annotation — so a
+    /// Designer can show WHERE the links are without opening every item.
+    /// Like [`hidden`](Self::hidden) this is an ENUMERATION of causes, not
+    /// a predicate over "the item authored a `link:`":
+    ///
+    /// 1. a `text`/`image` item's own `link:` resolved and passed the URL
+    ///    gate (`engine/link.rs`);
+    /// 2. at least one rich `spans:` entry's `link:` did — the ITEM is
+    ///    stamped, since the box addresses the item and not the run.
+    ///
+    /// Three things that DO involve a `link:` and are deliberately not
+    /// stamped:
+    ///
+    /// - a link whose resolved URL the gate REJECTED (bad scheme, over the
+    ///   length cap, empty, control characters). Layout warns and drops it,
+    ///   so the PDF carries no annotation — and a box claiming one would
+    ///   tell the author a link exists where none does;
+    /// - anything inside a HIDDEN item. `visibility::blank` drops the drawn
+    ///   items, so there is nothing for an annotation to sit on; such a box
+    ///   reports `hidden: true` and this flag false;
+    /// - a `link:` on a COLLAPSED item, which emits no `PlacedBox` at all.
+    ///
+    /// It says nothing about WHICH line or run carries the link, because
+    /// the box addresses the item. A consumer wanting the annotation rects
+    /// themselves is asking for the layout tree, not this sidecar.
+    ///
+    /// Skipped when false, like `hidden`, so a link-free document's wire is
+    /// byte-unchanged.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub linked: bool,
 }
 
 impl PlacedBox {
@@ -92,6 +122,7 @@ impl PlacedBox {
             content: shift(self.content),
             text: self.text.as_ref().map(|t| t.shifted(dy)),
             hidden: self.hidden,
+            linked: self.linked,
         }
     }
 
@@ -106,6 +137,7 @@ impl PlacedBox {
             content: shift(self.content),
             text: self.text.as_ref().map(|t| t.shifted_x(dx)),
             hidden: self.hidden,
+            linked: self.linked,
         }
     }
 }

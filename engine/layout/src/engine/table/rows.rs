@@ -264,5 +264,9 @@ fn cell_box(
         },
         text: None,
         hidden,
+        // A table CELL takes no `link:` (docs/engine/link.md
+        // § Limitations); a linked text or image item inside one is
+        // stamped on its own placement.
+        linked: false,
     }
 }
