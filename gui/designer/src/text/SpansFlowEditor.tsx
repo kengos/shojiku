@@ -43,7 +43,11 @@ export function SpansFlowEditor({
   onCancel,
   ariaLabel,
   chips,
-  className = 'sj-text-editor sj-runs',
+  // The plain surface's class, and only that: a second `sj-runs` rode here for
+  // a while with no rule anywhere defining it, which reads as intentional to
+  // the next author. The run styling is carried by the RUN elements' own
+  // classes (`runNodes`), not by the surface.
+  className = 'sj-text-editor',
 }: SpansFlowEditorProps) {
   const [editorEl, setEditorEl] = useState<HTMLDivElement | null>(null);
   const cancelled = useRef(false);
