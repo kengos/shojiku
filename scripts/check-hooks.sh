@@ -111,6 +111,15 @@ case_bash 'direct push to main'         deny 'git push origin main'
 case_bash 'push to a full refspec'      deny 'git push origin HEAD:refs/heads/main'
 case_bash 'cargo after a docker command' deny 'docker rm -f x; cargo test'
 
+# A shell metacharacter inside a QUOTED argument is not a separator, and the two
+# rules about `make` used to read it as one — in BOTH directions. The quoted-`;`
+# row is the serious one: it truncated the scan and let a genuinely piped gate
+# through, i.e. the control failed OPEN.
+case_bash 'quoted ; then a real pipe'   deny "make gui:test F='a;b' | tail -40"
+case_bash 'quoted && then a real pipe'  deny "make gui:test F='a&&b' | tail -40"
+case_bash 'quoted || then a real pipe'  deny "make engine:test F='x||y' | grep error"
+case_bash 'pipe with no spaces'         deny 'make engine:test|tail -40'
+
 # ---- Bash guard: the legitimate spellings beside them -------------------
 case_bash 'redirected gate'             silent 'make engine:test > /tmp/e.log 2>&1'
 case_bash 'make help piped'             silent 'make help | grep engine'
@@ -133,6 +142,25 @@ case_bash 'gate then grep -n its log'   silent 'make engine:test > /tmp/e.log 2>
 case_bash 'gate then head -n'           silent 'make -C /repo gui:test > /tmp/g.log 2>&1; head -n 40 /tmp/g.log'
 case_bash 'gate then tail -n'           silent 'make gui:verify > /tmp/v.log 2>&1; tail -n 20 /tmp/v.log'
 case_bash 'gate then sort -n'           silent 'make engine:test > /tmp/e.log 2>&1; sort -n /tmp/e.log'
+# The negative twins of the quoted-metacharacter rows above. `F='a|b'` is the
+# ordinary way to run two suites in one call, and it was DENIED — twice in one
+# cycle, the second time on the write-up of the first. A `-n` or a `--dry-run`
+# inside an argument is not make's flag either.
+case_bash 'quoted pipe in an argument' silent "make gui:test F='spansModel|SpansSection'"
+case_bash 'quoted pipe, double quotes' silent 'make gui:test F="a|b" > /tmp/x.log 2>&1'
+case_bash 'quoted -n in an argument'   silent "make gui:test F='opt -n dry'"
+case_bash 'quoted --dry-run'           silent 'make gui:test F="--dry-run inside"'
+# The same rule one layer down. `at_command_position` tokenizes on whitespace,
+# so a quoted argument with a SPACE after a separator used to split into two
+# tokens and open a command position INSIDE the quotes — which made the guard
+# refuse an edit whose only offending name was a fixture string in this very
+# file, six times in one cycle. It reads the blanked view now.
+case_bash 'name inside a quoted string' silent 'echo "docker rm -f x; cargo test"'
+case_bash 'quoted name under grep -n'   silent 'grep -n "x; cargo test" file'
+case_bash 'quoted push to main'         silent 'echo "git push origin main"'
+# A BACKSLASH-escaped pipe is a literal `|` passed as an argument, exactly as it
+# is in a shell — so it is not a pipeline and the gate rule does not apply.
+case_bash 'escaped pipe after a gate'   silent 'make engine:test \| tail -40'
 # The signing rule had FOUR positive cases and no negative one, and tested the
 # whole command string — so it denied any command that merely NAMES the flag,
 # with no git in sight. It fired on a heredoc writing documentation about the

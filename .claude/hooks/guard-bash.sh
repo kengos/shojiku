@@ -69,13 +69,66 @@ is_gate() {
 	return 1
 }
 
+# The shared half of the two rules about `make`: the command as the SHELL would
+# read its metacharacters — every quoted span blanked to spaces, so a `|`, `;`,
+# `&&` or `-n` inside an argument is no longer mistaken for one outside.
+#
+# Blanking rather than deleting keeps offsets and word boundaries intact, which
+# is what lets the two rules below keep the regexes they already had: the change
+# is what they are matched AGAINST, not what they look for.
+#
+# Quoting, not token boundaries, is the distinguishing fact here — which is why
+# `at_command_position`'s whitespace tokenizer does not serve this pair. A real
+# pipe can be written with no spaces around it (`make x|head`), so `x|head` and
+# `F='a|b'` are one token either way; only the quotes tell them apart.
+#
+# Both directions were live before this, and the second is the serious one:
+#
+#   - a quoted `|` or `-n` DENIED a legitimate call — `make gui:test F='a|b'`
+#     is the ordinary way to run two suites, and it fired twice in one cycle;
+#   - a quoted `;`, `&&` or `||` truncated the scan and let a genuinely piped
+#     gate THROUGH — `make gui:test F='a;b' | tail -40` was allowed. A control
+#     that fails open is the failure this directory exists to prevent.
+#
+# `\` escapes the next character outside single quotes, as it does in a shell,
+# so `make engine:test \| tail` passes a literal `|` as an argument rather than
+# opening a pipeline. (A real target on purpose: `make:check` scans the tracked
+# tree for `make <name>` and refuses a name that is not a target — including one
+# invented for a comment, which is how this very line first reddened CI.)
+#
+# An UNTERMINATED quote leaves the rest of the line quoted, and therefore
+# blanked. That is the shell's own reading — such a command does not run as
+# written, it waits for the closing quote — so nothing after one can be a
+# working piped gate, and there is nothing there for the rule to catch.
+BLANK='
+	function unquoted_view(s,   i, c, q, out) {
+		q = ""
+		out = ""
+		for (i = 1; i <= length(s); i++) {
+			c = substr(s, i, 1)
+			if (c == "\\" && q != "'"'"'") { out = out "  "; i++; continue }
+			if (q == "") {
+				if (c == "'"'"'" || c == "\"") { q = c; out = out " "; continue }
+				out = out c
+			} else {
+				out = out (c == q ? " " : " ")
+				if (c == q) q = ""
+			}
+		}
+		return out
+	}
+	function after_make(s,   m) {
+		if (match(s, /(^|[;&|(])[ \t]*([A-Za-z_][A-Za-z0-9_]*=[^ \t]*[ \t]+)*(sudo[ \t]+)?g?make[ \t]/) == 0) return ""
+		return substr(s, RSTART + RLENGTH)
+	}
+'
+
 # Does a pipe follow the make invocation, before any `;` or `&&` ends it?
 piped_after_make() {
-	printf '%s' "$cmd" | awk '
+	printf '%s' "$cmd" | awk "$BLANK"'
 		{
-			rest = $0
-			if (match(rest, /(^|[;&|(])[ \t]*([A-Za-z_][A-Za-z0-9_]*=[^ \t]*[ \t]+)*(sudo[ \t]+)?g?make[ \t]/) == 0) exit 1
-			rest = substr(rest, RSTART + RLENGTH)
+			rest = after_make(unquoted_view($0))
+			if (rest == "") exit 1
 			if (match(rest, /\|\||;|&&/) > 0) rest = substr(rest, 1, RSTART - 1)
 			exit (index(rest, "|") > 0) ? 0 : 1
 		}'
@@ -85,11 +138,10 @@ piped_after_make() {
 # The twin of `piped_after_make`: same scan, looking for the flag rather than a
 # pipe, so a `-n` belonging to a LATER command in the same call is not make's.
 dry_run_after_make() {
-	printf '%s' "$cmd" | awk '
+	printf '%s' "$cmd" | awk "$BLANK"'
 		{
-			rest = $0
-			if (match(rest, /(^|[;&|(])[ \t]*([A-Za-z_][A-Za-z0-9_]*=[^ \t]*[ \t]+)*(sudo[ \t]+)?g?make[ \t]/) == 0) exit 1
-			rest = substr(rest, RSTART + RLENGTH)
+			rest = after_make(unquoted_view($0))
+			if (rest == "") exit 1
 			if (match(rest, /\|\||;|&&|\|/) > 0) rest = substr(rest, 1, RSTART - 1)
 			exit (match(rest, /(^|[ \t])(-n|--dry-run|--just-print|--recon)([ \t]|$)/) > 0) ? 0 : 1
 		}'
@@ -97,12 +149,18 @@ dry_run_after_make() {
 
 # Is NAME invoked as a COMMAND, or merely NAMED inside an argument?
 #
-# Tokenizing is what tells the two apart, and it is the mechanism that has
-# always quietly saved the two rules about `make`: `make_targets` looks for a
-# token EXACTLY equal to `make`, so an alternation inside a quoted regex — where the token is
-# `"make|cargo`, not `make` — never matches. The character-class prefix `POS`
-# has no such protection: it reads that pipe as a shell separator, because in a
-# shell it is one and inside quotes it is not.
+# Tokenizing tells the two apart WHEN the name sits inside one token — an
+# alternation in a quoted regex gives the token `"make|cargo`, not `make`, so it
+# never matches. That is not the whole story, and the gap cost this cycle three
+# more wrong denials: a quoted argument with a SPACE after a separator splits
+# into two tokens, the first ending in `;`, which opens a command position. The
+# tokenizer then read a name inside a quoted string as a command — and the
+# string in question was a FIXTURE in `scripts/check-hooks.sh`, so the guard
+# refused the edit that was documenting its own defect, three times running.
+#
+# So it reads the BLANKED view as well: quoting is what decides whether a
+# metacharacter is a separator, and `unquoted_view` is the one place that
+# decision is made.
 #
 # That cost this repository six wrong denials in a single cycle: a sweep over
 # the development skills, the minimal probe written to reproduce it, the
@@ -118,9 +176,9 @@ dry_run_after_make() {
 # `cd engine && cargo clippy` and `docker rm -f x; cargo test` are
 # still caught.
 at_command_position() {
-	printf '%s' "$cmd" | awk -v want="$1" '
+	printf '%s' "$cmd" | awk -v want="$1" "$BLANK"'
 		{
-			n = split($0, tok, /[ \t]+/)
+			n = split(unquoted_view($0), tok, /[ \t]+/)
 			start = 1
 			for (i = 1; i <= n; i++) {
 				t = tok[i]

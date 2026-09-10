@@ -322,15 +322,26 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   for their flag, because a whole-string test denies `grep -n`, `head -n` and
   `sort -n` whenever make is mentioned anywhere in the same call — which is the
   ordinary shape of running a gate and then reading its log.
-  `at_command_position` is the general form and the cargo rule and the two
-  push rules now use it: it TOKENIZES, so a name inside a quoted argument is
-  part of a token rather than a command, which is the mechanism that had
-  always saved the two rules about `make` by accident (`make_targets` wants a
-  token exactly equal to `make`). Matching the raw string instead cost six wrong
-  denials in one cycle — a sweep, the probe reproducing it, the write-up, a
-  zero-context reviewer's probes, and the two edits carrying the correction
-  and the fix. A guard that refuses the documentation of its own defect stops
-  being read as a decision, which is the failure mode the whole directory
+  **Which characters count as those separators is decided by QUOTING, and
+  `unquoted_view` is the one place that decision is made**: it returns the
+  command with every quoted span blanked to spaces, so a `|`, `;`, `&&` or `-n`
+  inside an argument is no longer read as one outside. Every predicate in the
+  file scans that view. Matching the raw string instead was wrong in BOTH
+  directions, and the second is the serious one: a quoted `|` or `-n` DENIED a
+  legitimate call (`make gui:test F='a|b'` is the ordinary way to run two
+  suites), while a quoted `;`, `&&` or `||` truncated the scan early and let a
+  genuinely piped gate THROUGH — `make gui:test F='a;b' | tail -40` was allowed,
+  i.e. the control failed open, which is the failure this directory exists to
+  prevent.
+  `at_command_position` is the general form of "is this a command or just a
+  name", and the cargo rule and the two push rules use it: it TOKENIZES over
+  that same blanked view. Tokenizing alone was not enough — an alternation in a
+  quoted regex is one token and was safe, but a quoted argument with a SPACE
+  after a separator splits into two, the first ending in `;`, which opened a
+  command position inside the quotes. Between the two shapes this cost twelve
+  wrong denials across two cycles, six of them on the edits documenting and
+  fixing the first six. A guard that refuses the documentation of its own defect
+  stops being read as a decision, which is the failure mode the whole directory
   exists to avoid. The work-item-code
   pattern lists its prefixes for the mirror-image reason: the general
   `[A-Z]{2,}-[0-9]+` shape matches `UTF-8`, `SHA-256`, `OFL-1` and every sample
