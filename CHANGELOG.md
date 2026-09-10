@@ -160,6 +160,14 @@ platform binaries.
 
 ### Fixed
 
+- **A development guard no longer reads a `|` inside a quoted argument as a
+  shell pipe.** This is repository tooling rather than the engine: the hooks
+  under `.claude/` decide a handful of development rules, and two of them
+  scanned the raw command text. That refused ordinary calls like
+  `make gui:test F='a|b'` — and, the way round that matters, let a genuinely
+  piped gate through when an argument happened to contain a `;`. Every
+  predicate now scans the command with its quoted spans blanked out.
+
 - **`make make:check` runs in CI, which its own documentation had claimed for
   some time.** The Makefile's target-to-CI-job table filed it under the
   `versions` job; that job ran only `make version:check`. Unwatched, the gate
