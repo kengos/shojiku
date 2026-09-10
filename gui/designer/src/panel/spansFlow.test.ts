@@ -159,6 +159,32 @@ describe('the flow surface over a real document', () => {
     }
   });
 
+  it("leaves NO remnant when the reader deletes a fragment's words", () => {
+    // Written as `text: \"\"` it would be a fragment the engine does not report
+    // (`empty_span` needs neither key) and the panel cannot remove.
+    const editor = Editor.create(source(4));
+    const text = roundTrip(editor, (root) => {
+      (root.children[1]?.firstChild as Text).data = '';
+    });
+    expect(text).not.toContain("text: ''");
+    expect(text).not.toContain('text: ""');
+    expect(text).not.toContain('word1');
+    for (const kept of ['word0', 'word2', 'word3']) {
+      expect(text).toContain(kept);
+    }
+  });
+
+  it("keeps a document's own EMPTY fragment across a commit that edits its neighbour", () => {
+    // The other half of the same rule: `{}` is a fragment an author wrote, and
+    // a commit touching the item next to it must not delete it.
+    const editor = Editor.create(source(2).replace('      - text: word1\n', '      - {}\n'));
+    const text = roundTrip(editor, (root) => {
+      (root.children[0]?.firstChild as Text).data = 'EDITED';
+    });
+    expect(text).toContain('EDITED');
+    expect(text).toMatch(/-\s*\{\s*\}|- \{\}/);
+  });
+
   it('adds a fragment where the reader typed one, without disturbing the rest', () => {
     const editor = Editor.create(source(3));
     const text = roundTrip(editor, (root) => {

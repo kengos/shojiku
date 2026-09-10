@@ -160,6 +160,12 @@ platform binaries.
 
 ### Fixed
 
+- **Deleting a rich-text fragment's words now deletes the fragment.** It used to
+  leave an empty one behind — invisible on the page, listed in the property
+  panel as `(empty fragment)`, and impossible to remove from there. A fragment
+  your document carries as deliberately empty still survives a commit
+  untouched; only one you emptied yourself goes.
+
 - **A development guard no longer reads a `|` inside a quoted argument as a
   shell pipe.** This is repository tooling rather than the engine: the hooks
   under `.claude/` decide a handful of development rules, and two of them

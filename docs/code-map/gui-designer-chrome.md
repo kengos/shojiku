@@ -428,6 +428,14 @@ resolved style.
     a source index ahead of the high-water mark and still says what it said went
     UNTOUCHED and authors nothing. A changed fragment is updated IN PLACE, so
     the `styleNames:`/`link:` this surface does not edit are never reconstructed.
+    It also decides what an EMPTY run means, and the seed is what tells the two
+    cases apart: a fragment the reader emptied is REMOVED (deleting the words
+    deletes the fragment, as every editor does), while one that was already
+    empty when seeded is KEPT — a document may carry `{}` deliberately, and
+    `runSerialize` preserves it on purpose. Writing the first as `text: ""`
+    instead left a remnant nothing reports: `empty_span` fires for
+    `(None, None)` and `Some("")` does not match it, and no panel control can
+    remove such a fragment.
   - `text/runFormat.ts` — the auto-split. SPLIT, THEN PAINT, deliberately not
     `Range.surroundContents`: that throws `InvalidStateError` across runs and its
     working fallback NESTS the partial ones. Cutting first makes every affected

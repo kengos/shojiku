@@ -91,6 +91,44 @@ describe('planRuns', () => {
     expect(plan.entries[1]).toMatchObject({ op: 'insert', inheritFrom: null });
   });
 
+  it('REMOVES a fragment whose words the reader deleted', () => {
+    // Deleting the words deletes the fragment. Written `text: \"\"` instead, it
+    // is a remnant the engine does not report — `empty_span` fires for
+    // `(None, None)` and this is `Some(\"\")` — and the panel offers no way to
+    // remove.
+    const plan = planRuns(BEFORE, [after(0, 'a'), after(1, ''), after(2, 'c')]);
+    expect(plan.entries.map((entry) => entry.op)).toEqual(['keep', 'keep']);
+    expect(plan.removed).toEqual([1]);
+  });
+
+  it('KEEPS a fragment that was already empty when it was seeded', () => {
+    // A document may carry `{}` deliberately, and `runSerialize` preserves it
+    // on purpose — so the removal above must not reach it. The seed is the only
+    // thing that tells the two apart.
+    const before = narrowRuns([{ text: 'a' }, {}, { text: 'c' }]);
+    const plan = planRuns(before, [after(0, 'a'), after(1, ''), after(2, 'c')]);
+    expect(plan.entries.map((entry) => entry.op)).toEqual(['keep', 'keep', 'keep']);
+    expect(plan.removed).toEqual([]);
+  });
+
+  it('drops a fragment created and emptied inside one edit', () => {
+    const plan = planRuns(BEFORE, [
+      after(0, 'a'),
+      after(null, ''),
+      after(1, 'b', BOLD),
+      after(2, 'c'),
+    ]);
+    expect(plan.entries.map((entry) => entry.op)).toEqual(['keep', 'keep', 'keep']);
+  });
+
+  it('leaves a BOUND fragment alone — it has no words to delete', () => {
+    const before = narrowRuns([{ data: { key: 'k' } }]);
+    const plan = planRuns(before, [
+      { sourceIndex: 0, kind: 'bound', content: 'k', marks: NO_MARKS, linked: false },
+    ]);
+    expect(plan.removed).toEqual([]);
+  });
+
   it('removes a fragment no surviving run stands on', () => {
     const plan = planRuns(BEFORE, [after(0, 'a'), after(2, 'c')]);
     expect(plan.removed).toEqual([1]);
