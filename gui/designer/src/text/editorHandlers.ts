@@ -176,11 +176,17 @@ export function handleTextIngress(
  * surface that merely blocks them read from one list. */
 export type FormatShortcut = 'bold' | 'italic' | 'underline';
 
-const FORMAT_KEYS: Readonly<Record<string, FormatShortcut>> = {
-  b: 'bold',
-  i: 'italic',
-  u: 'underline',
-};
+// A real `Map`, not a plain object: the key comes from a KeyboardEvent and
+// reaches this lookup with no narrowing, so an object table would answer for
+// `Object.prototype` as well as for itself. `chipModel` states the rule and its
+// reason ("a plain-object table would walk the prototype"); this is a different
+// population from the binding keys it is about, but the lookup has the same
+// shape and a `Map` costs nothing.
+const FORMAT_KEYS: ReadonlyMap<string, FormatShortcut> = new Map([
+  ['b', 'bold'],
+  ['i', 'italic'],
+  ['u', 'underline'],
+] as const);
 
 export function handleEditorKeyDown(
   event: KeyboardEvent<HTMLDivElement>,
@@ -205,7 +211,7 @@ export function handleEditorKeyDown(
     handlers.cancel();
     return;
   }
-  const shortcut = FORMAT_KEYS[event.key.toLowerCase()];
+  const shortcut = FORMAT_KEYS.get(event.key.toLowerCase());
   if ((event.metaKey || event.ctrlKey) && shortcut !== undefined) {
     // The browser's native contenteditable formatting (⌘B → `<b>` elements) is
     // blocked either way: it would mint markup neither serializer reads.

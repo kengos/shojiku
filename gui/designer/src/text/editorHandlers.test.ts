@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { buildEditorNodes, CHIP_WIRE_ATTR, chipMetaMap, serializeEditor } from './chipModel';
 import type { ChipInsert } from './declMint';
-import { handleTextIngress, replaceChipAt } from './editorHandlers';
+import { handleEditorKeyDown, handleTextIngress, replaceChipAt } from './editorHandlers';
 
 const META = chipMetaMap([
   { key: 'customer.name', label: '顧客名', sample: '山田太郎' },
@@ -130,5 +130,34 @@ describe('handleTextIngress', () => {
     expect(preventDefault).toHaveBeenCalled();
     expect(el.textContent).toBe('ab');
     expect(after).toHaveBeenCalledWith(el);
+  });
+});
+
+describe('the format-shortcut table', () => {
+  it('answers only for its own three keys', () => {
+    const seen: string[] = [];
+    const surface = document.createElement('div');
+    const press = (key: string) =>
+      handleEditorKeyDown(
+        {
+          key,
+          metaKey: true,
+          ctrlKey: false,
+          currentTarget: surface,
+          nativeEvent: { isComposing: false },
+          preventDefault: () => undefined,
+          stopPropagation: () => undefined,
+        } as unknown as Parameters<typeof handleEditorKeyDown>[0],
+        { commit: () => undefined, format: (s) => seen.push(s) },
+      );
+    for (const key of ['b', 'I', 'u']) press(key);
+    expect(seen).toEqual(['bold', 'italic', 'underline']);
+
+    // A lookup on a plain object answers for `Object.prototype` too, and this
+    // key arrives from a KeyboardEvent with no narrowing. No real key event
+    // spells any of these — the point is that the table cannot be ASKED to.
+    seen.length = 0;
+    for (const key of ['__proto__', 'constructor', 'toString', 'valueOf', 'z']) press(key);
+    expect(seen).toEqual([]);
   });
 });

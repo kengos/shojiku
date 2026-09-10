@@ -31,7 +31,16 @@ export const RUN_CLASS = 'sj-run';
 export const BOUND_CLASS = 'sj-run-bound';
 
 /** Mark → class. The decoration's three states collapse to two classes plus
- * "no class", which is what keeps `none` from needing one. */
+ * "no class", which is what keeps `none` from needing one.
+ *
+ * Deliberately a plain object rather than the `Map` `chipModel` prescribes, and
+ * the difference is the KEY's provenance. That rule is about binding keys,
+ * which come from a document and really can be `__proto__`; every key read here
+ * is either a literal in this file or a `Decoration`, which `decorationOf`
+ * narrows to one of three values before it can arrive. The type system is the
+ * guard, and a `Map` would turn the two constant reads below into non-null
+ * assertions for nothing. `runSerialize`'s own table IS a `Map` because it is
+ * built by scanning a live `classList`. */
 const MARK_CLASSES: Readonly<Record<string, string>> = {
   bold: 'sj-run--bold',
   italic: 'sj-run--italic',
