@@ -15,6 +15,25 @@ platform binaries.
 
 ### Added
 
+- **The Designer now shows you where the links are.** A hyperlink has no
+  visual form of its own — the engine never underlines or recolours one, that
+  is the author's choice — so on the canvas a linked item looked exactly like
+  an unlinked one, and finding the links meant selecting items one at a time
+  and watching the property panel. Every linked item now carries a small chain
+  mark beside its text, and images get one too.
+
+  The mark follows what the PDF will actually contain rather than what the
+  template says: a URL the engine refused — anything outside `http`, `https`,
+  `mailto` and `tel`, or over the length cap — is not marked, because there
+  will be no link there to click. Neither is an item your `visible:` condition
+  hid. A rich text item is marked once, at the item, even when only one word
+  inside it carries the link.
+
+  For anything reading the engine directly, this is a `linked` flag on each
+  placement in the box index, behind the capability key
+  `inspect.boxes.linked`. It is absent unless true, so a document with no
+  links produces exactly the bytes it did before.
+
 - **Rich text can now be written in the Designer, not just read.** A text item
   built from `spans:` — a run in bold, a struck-through clause, one word in a
   different colour — could be listed and linked, but the words themselves still

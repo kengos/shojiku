@@ -590,8 +590,9 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   rect (per run for rich), or the image draw box, after the page's
   surface closes; clip groups recurse with the same depth cap and
   fail-closed degenerate-rect guards as drawing. PNG ignores links (no
-  annotation surface; links have no visual form). Capability key
-  `link.url`.
+  annotation surface; links have no visual form) — the box index carries a
+  per-placement `linked` flag instead, which is how a Designer marks a linked
+  item over a PNG preview. Capability key `link.url`.
 - Reference: [link](link.md).
 
 ### Document metadata (`engine/core`, `engine/layout`, `engine/render-pdf`)
@@ -1179,6 +1180,21 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   becomes an optional lookup alias on top (geometry is identical with or
   without it). The renderer contract never sees the sidecar. Capability
   key `inspect.boxes.all_items`.
+- **A placement says whether a link will land on it** (`linked: true`), so a
+  canvas can show WHERE the hyperlinks are instead of asking the author to
+  select every item in turn. Like `hidden` it is an ENUMERATION of causes, not
+  a predicate over "the item authored a `link:`": the item's own `link:`
+  resolved and passed the URL gate, or at least one of a rich item's `spans:`
+  did — the ITEM is stamped either way, since the box addresses the item and
+  not the run. Three things involving a `link:` are deliberately unstamped: a
+  URL the gate REJECTED (a box promising a link the PDF will not carry is
+  worse than no mark at all), anything inside a hidden item (whose drawn
+  content was dropped, so there is nothing for an annotation to sit on), and a
+  collapsed item, which emits no box. It follows that the flag cannot be
+  derived from the document: two `repeat` elements share one structural path
+  and one may resolve a valid URL where the other does not. Skipped when
+  false, so a link-free document's wire is byte-identical. Capability key
+  `inspect.boxes.linked`.
 - **An input-size bound on every authored-wire door** (16 MiB,
   `shojiku_core::MAX_INPUT_BYTES`): templates, params, definitions, locale
   packs — both the plain door and the builtin-overlay arm — and all four

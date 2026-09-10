@@ -25,6 +25,7 @@ pub(super) fn placed_box_rect(
         content: rect,
         text: None,
         hidden: false,
+        linked: false,
     }
 }
 
@@ -52,6 +53,7 @@ pub(super) fn line_placed_box(
         content: rect,
         text: None,
         hidden: false,
+        linked: false,
     }
 }
 
@@ -83,5 +85,9 @@ pub(super) fn placed_box(
         },
         text: None,
         hidden: false,
+        // Both flags are stamped by the CALLER when it knows: the atom
+        // builders set `linked` from what the item actually drew, and the
+        // visibility walk sets `hidden` after the fact.
+        linked: false,
     }
 }

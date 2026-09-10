@@ -11,6 +11,7 @@
 import type { BoxRect, PlacedBox } from '../engine/types';
 import type { ContainerMark } from './ContainerMarkVisual';
 import { scaleRect } from './geometry';
+import { type LinkBadge, linkBadges } from './linkBadge';
 import { type Manipulation, manipulationFor } from './manipulate';
 import type { CanvasManipulate } from './overlayDragModel';
 import { byDepth, groupBounds } from './overlayGeometry';
@@ -50,6 +51,9 @@ export interface OverlayLayers {
   readonly selection: OverlayBoxSelection;
   /** The multi-selection's union frame, or null below two distinct paths. */
   readonly groupBox: BoxRect | null;
+  /** Where to mark the items that carry a hyperlink — one entry per LINKED
+   * placement, so a `repeat`'s two elements at one path get one badge each. */
+  readonly linkBadges: readonly LinkBadge[];
 }
 
 export function overlayLayers({
@@ -78,5 +82,6 @@ export function overlayLayers({
       selectedRect: selectedBox === null ? null : scaleRect(selectedBox.border, scale),
     },
     groupBox: groupBounds(boxes, multiSelected, selectedPath, movable, scale),
+    linkBadges: linkBadges(boxes, scale),
   };
 }

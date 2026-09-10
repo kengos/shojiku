@@ -98,6 +98,13 @@ envelope (`{ engine, document, boxes, margin }`) for Designer overlays;
 **not** part of the renderer contract. Capability key:
 `inspect.boxes.all_items`.
 
+Two flags ride each placement, both skipped when false and both
+ENUMERATIONS of their causes rather than predicates: `hidden` (the box is
+reserved and the document decided nothing paints there — see
+[visible.md](visible.md) and [table.md](table.md)) and `linked` (a PDF link
+annotation will land here — see [link.md](link.md); capability key
+`inspect.boxes.linked`).
+
 `path` is the box's stable structural address in the same grammar the
 parse/validate diagnostics use, so a GUI correlates canvas geometry back
 to a YAML node without its own id injection:

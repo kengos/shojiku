@@ -49,6 +49,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let path = self.current_path();
         let mut pb = placed_box(&path, text.id.as_deref(), &rb, w, atom.height);
         pb.text = self.text_metrics(&atom.items, computed);
+        pb.linked = crate::engine::link::linked(&atom.items);
         atom.boxes.push(pb);
         let (top, bottom) = (rb.margin[0], rb.margin[2]);
         atom.rb = Some(rb);

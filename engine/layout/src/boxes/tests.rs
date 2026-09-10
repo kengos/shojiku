@@ -21,6 +21,7 @@ fn serializes_flat_rects_and_shifts_both_boxes() {
         },
         text: None,
         hidden: false,
+        linked: false,
     };
     let shifted = placed.shifted(5.0);
     assert_eq!((shifted.border.y, shifted.content.y), (25.0, 30.0));
@@ -29,6 +30,8 @@ fn serializes_flat_rects_and_shifts_both_boxes() {
     assert_eq!(shifted.path, "sections.body.items[0]");
     assert_eq!(shifted.id.as_deref(), Some("total"));
 
+    // Cloned BEFORE the index takes ownership below.
+    let mut lit = placed.clone();
     let index = BoxIndex {
         pages: vec![translate_boxes(&[placed], 1.0)],
     };
@@ -37,8 +40,23 @@ fn serializes_flat_rects_and_shifts_both_boxes() {
     assert!(json.contains("\"id\":\"total\""));
     assert!(json.contains("\"border\":{\"x\":10.0"));
     assert!(json.contains("\"content\":{\"x\":15.0"));
-    // A box with no text metrics omits the key entirely.
+    // A box with no text metrics omits the key entirely, and so does an
+    // unlinked one — the two skipped keys are what keep a plain document's
+    // wire byte-identical to what it was before either existed.
     assert!(!json.contains("\"text\""));
+    assert!(!json.contains("\"linked\""));
+
+    // Both translates carry the flag: a `repeat` element and a band item are
+    // shifted copies, and each has to stay honest about its own link.
+    lit.linked = true;
+    assert!(lit.shifted(5.0).linked);
+    assert!(lit.shifted_x(5.0).linked);
+    let moved = BoxIndex {
+        pages: vec![translate_boxes_x(&[lit], 2.0)],
+    };
+    assert!(serde_json::to_string(&moved)
+        .expect("serialize")
+        .contains("\"linked\":true"));
 }
 
 #[test]
@@ -60,6 +78,7 @@ fn id_less_box_carries_path_and_omits_the_id_key() {
         },
         text: None,
         hidden: false,
+        linked: false,
     };
     let json = serde_json::to_string(&placed).expect("serialize");
     assert!(json.contains("\"path\":\"sections.body.items[2].columns[1]\""));
@@ -98,6 +117,7 @@ fn text_metrics_shift_with_the_box_and_serialize_camelcase() {
             }],
         }),
         hidden: false,
+        linked: false,
     };
     // The accessors are variant-exact: lines Some, columns None.
     assert!(placed.text.as_ref().expect("text").columns().is_none());
@@ -144,6 +164,7 @@ fn vertical_column_metrics_shift_and_serialize_camelcase() {
             }],
         }),
         hidden: false,
+        linked: false,
     };
     let metrics = placed.text.as_ref().expect("text");
     // The accessors are variant-exact: columns Some, lines None.

@@ -78,6 +78,23 @@
   stroke: var(--sj-accent);
 }
 
+/* The hyperlink badge beside a linked item's ink. Like the margin guide and
+   the snap grid, both values are FIXED rather than `--sj-*`: the badge is drawn
+   on the engine-rendered paper, which is pixels and stays white in either
+   colour scheme, so a text-toned stroke would vanish in dark chrome. The
+   neutral ink rather than the accent — the accent is the selection's, and a
+   link is information, not a warning. Inline paint on the elements is the
+   no-stylesheet fallback; these are the themed copies. */
+.sj-link-badge-disc {
+  fill: #ffffff;
+  stroke: #1f1a17;
+  stroke-opacity: 0.55;
+}
+
+.sj-link-badge svg {
+  stroke: #1f1a17;
+}
+
 /* Multi-select group frame + rubber-band marquee. */
 .sj-group-bounds {
   stroke: var(--sj-accent);

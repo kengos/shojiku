@@ -104,6 +104,8 @@ fn engine_info_reports_version_capabilities_and_locales() {
     // individually for the same reason: the structural tests pass whether
     // or not any given key is present.
     assert!(info.capabilities.contains(&"table.header.hidden_boxes"));
+    // The box index's link flag, pinned for the same reason.
+    assert!(info.capabilities.contains(&"inspect.boxes.linked"));
     assert!(info
         .capabilities
         .contains(&"table.header.style.verticalAlign"));

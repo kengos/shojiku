@@ -141,7 +141,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let (iw, ih) = asset.intrinsic_size();
         let clips_to_viewport = asset.clips_to_viewport();
         let (dw, dh) = fit_size(image.fit(), (iw, ih), cw, ch);
-        let boxes = vec![placed_box(
+        let mut boxes = vec![placed_box(
             &self.current_path(),
             image.id.as_deref(),
             &rb,
@@ -181,6 +181,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
         } else {
             items.push(shape);
         }
+        // After the shape is in place, so the `cover`/`none` arm above —
+        // which buries it inside a `Clip` — is read the same way the PDF
+        // annotation walk reads it.
+        boxes[0].linked = super::link::linked(&items);
         Some(with_vertical_margin(
             Atom {
                 height: h,

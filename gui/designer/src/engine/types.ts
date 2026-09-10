@@ -71,6 +71,18 @@ export interface PlacedBox {
    * from the layer tree rather than the canvas. Absent on every engine that
    * predates the key, and on every document that triggers neither cause. */
   readonly hidden?: boolean;
+  /** This placement will carry at least one PDF link annotation, so the canvas
+   * can mark it. An ENUMERATION like {@link hidden}, not a predicate over "the
+   * item authored a `link:`": the item's own `link:` resolved and passed the
+   * engine's URL gate, or at least one of a rich item's spans did. A link the
+   * gate REJECTED (bad scheme, over the length cap, empty) reports false —
+   * the PDF will carry no annotation, and a badge would promise one — and so
+   * does anything inside a hidden item, whose drawn content was dropped. It
+   * says nothing about WHICH line or run carries the link: the box addresses
+   * the item. Absent on every engine that predates the key
+   * (`inspect.boxes.linked`) and on every link-free document, which is why
+   * the canvas tests it with `=== true` and needs no capability gate. */
+  readonly linked?: boolean;
 }
 
 /** Per-page box sidecar: `pages[p]` is the boxes laid out on page `p`. */

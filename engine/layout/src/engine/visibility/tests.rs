@@ -23,6 +23,7 @@ fn placed(path: &str) -> PlacedBox {
         content: r,
         text: None,
         hidden: false,
+        linked: false,
     }
 }
 
