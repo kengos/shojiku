@@ -35,9 +35,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { contrast } from '../testkit/contrast';
 import { codeLines } from '../testkit/sourceWalk';
 import { DARK_THEME, LIGHT_THEME, TOKEN_VARS, type TokenName } from '../theme/tokens';
-import { isHexColor, relativeLuminance } from '../ui/chipContrast';
+import { isHexColor } from '../ui/chipContrast';
 
 /** The overlay's assembly — every mark on the paper is drawn from here. */
 const ENTRY = fileURLToPath(new URL('./BoxOverlay.tsx', import.meta.url));
@@ -90,12 +91,6 @@ const UTILITY_PREFIXES = [
   'via',
   'to',
 ];
-
-function contrast(a: string, b: string): number {
-  const first = relativeLuminance(a);
-  const second = relativeLuminance(b);
-  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
-}
 
 /** True when the token carries a COLOUR in either scheme. The spacing, radius
  * and type-ramp tokens cannot vanish against anything, so they are none of this

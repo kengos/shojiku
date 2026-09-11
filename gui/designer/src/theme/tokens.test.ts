@@ -4,26 +4,9 @@
 // tweak that quietly breaks legibility reds this suite, not a user's eyes).
 
 import { describe, expect, it } from 'vitest';
+import { contrast } from '../testkit/contrast';
 import { safeTokenValue } from './resolve';
 import { DARK_THEME, LIGHT_THEME, type ThemeTokens, TOKEN_NAMES, TOKEN_VARS } from './tokens';
-
-// WCAG relative luminance + contrast ratio (test-side helper — production code
-// never computes contrast; the tokens are data).
-function channel(hex: string, at: number): number {
-  const c = Number.parseInt(hex.slice(at, at + 2), 16) / 255;
-  return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-}
-
-function luminance(color: string): number {
-  expect(color).toMatch(/^#[0-9a-f]{6}$/);
-  return 0.2126 * channel(color, 1) + 0.7152 * channel(color, 3) + 0.0722 * channel(color, 5);
-}
-
-function contrast(fg: string, bg: string): number {
-  const a = luminance(fg);
-  const b = luminance(bg);
-  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-}
 
 // The pairings the chrome actually renders: text on each ground it sits on.
 const AA_PAIRS: readonly (readonly [keyof ThemeTokens, keyof ThemeTokens])[] = [
