@@ -8,6 +8,7 @@
 // ARIA at all.
 
 import type { BoxRect } from '../engine/types';
+import { chipWidth } from './chipText';
 import type { IndicatorLine } from './dropPlan';
 import { DropLine, InsertRects } from './OverlayGestureShapes';
 
@@ -56,23 +57,12 @@ const WARN_HEIGHT_PX = 20;
 const WARN_FONT_PX = 11;
 const WARN_PAD_PX = 8;
 
-/** Approximate chip width for the sentence — SVG text has no auto-sized
- * background, so this mirrors `ContainerMarkVisual`'s measure: CJK glyphs run
- * ~1em, everything else ~0.55em. */
-function warnWidth(text: string): number {
-  let width = 0;
-  for (const ch of text) {
-    width += ch.charCodeAt(0) >= 0x2e80 ? WARN_FONT_PX : WARN_FONT_PX * 0.55;
-  }
-  return Math.ceil(width) + WARN_PAD_PX * 2;
-}
-
 /** What a drop will COST, said before the release: the receiving owner takes
  * position over from the item, so its authored `x`/`y` go. Sits just above
  * the dragged item's ghost — where the pointer already is — clamped to stay
  * on the page. */
 function DropWarning({ text, rect }: { readonly text: string; readonly rect: BoxRect }) {
-  const width = warnWidth(text);
+  const width = chipWidth(text, WARN_FONT_PX, WARN_PAD_PX);
   const y = Math.max(0, rect.y - WARN_HEIGHT_PX - 2);
   return (
     <>

@@ -17,6 +17,8 @@
 import type { BoxRect, PlacedBox } from '../engine/types';
 import { type ContainerMark, ContainerMarkVisual } from './ContainerMarkVisual';
 import type { IndicatorLine } from './dropPlan';
+import { LinkHintShape } from './LinkHintShape';
+import { type LinkHint, linkHintChip } from './linkHint';
 import { DropIndicators } from './OverlayDropShapes';
 import { GhostRect, GuideLines, MarqueeRect } from './OverlayGestureShapes';
 import { GroupFrame, LinkBadgeLayer } from './OverlayShapes';
@@ -32,6 +34,9 @@ export interface ExternalDecorations {
   readonly insertRects: readonly BoxRect[];
   readonly containerMarks: readonly ContainerMark[];
   readonly dropWarning?: string;
+  /** What the host says about each LINKED item. Absent = the badge keeps
+   * saying only THAT a link exists, which is where this canvas started. */
+  readonly linkHints?: ReadonlyMap<string, LinkHint>;
 }
 
 export interface OverlayDecorationsProps {
@@ -42,6 +47,10 @@ export interface OverlayDecorationsProps {
   readonly external: ExternalDecorations;
   readonly boxes: readonly PlacedBox[];
   readonly scale: number;
+  /** The PLACEMENT a pointer or focus is on, or null. */
+  readonly hovered: PlacedBox | null;
+  /** The page in overlay px — the destination chip is clamped inside it. */
+  readonly page: { readonly width: number; readonly height: number };
 }
 
 export function OverlayDecorations({
@@ -50,7 +59,10 @@ export function OverlayDecorations({
   external,
   boxes,
   scale,
+  hovered,
+  page,
 }: OverlayDecorationsProps) {
+  const hint = linkHintChip(hovered, external.linkHints, scale, page);
   return (
     <>
       {paint.ghostPx === null ? null : <GhostRect rect={paint.ghostPx} />}
@@ -66,6 +78,7 @@ export function OverlayDecorations({
         scale={scale}
       />
       <LinkBadgeLayer badges={layers.linkBadges} />
+      {hint === null ? null : <LinkHintShape chip={hint} />}
       {layers.groupBox === null ? null : <GroupFrame rect={layers.groupBox} />}
       {paint.marqueePx === null ? null : <MarqueeRect rect={paint.marqueePx} />}
       {external.containerMarks.map((mark) => (

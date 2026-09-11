@@ -9,6 +9,7 @@
 
 import type { RefObject } from 'react';
 import type { PlacedBox } from '../engine/types';
+import type { LinkHint } from './linkHint';
 import { OverlayBox } from './OverlayBox';
 import { OverlayHandles } from './OverlayHandles';
 import type { CanvasManipulate, DragTask } from './overlayDragModel';
@@ -27,6 +28,14 @@ export interface OverlayBoxWiring {
   /** The overlay-wide "already revealed" marker, so the scroll-into-view runs
    * once per SELECTION rather than once per render of the selected box. */
   readonly scrolledTo: RefObject<string | null>;
+  /** What the host says about each LINKED item — the destination the hover chip
+   * shows, and the accessible description the box carries whether or not
+   * anything is hovered, because a screen reader never hovers. */
+  readonly linkHints: ReadonlyMap<string, LinkHint> | undefined;
+  /** Pointer or focus arrived on a box, or left it (`null`) — the PLACEMENT,
+   * since a `repeat`'s rows share one path. Canvas-local state `BoxOverlay`
+   * always owns, not host-optional like its neighbours. */
+  readonly onHover: (box: PlacedBox | null) => void;
 }
 
 export interface OverlayBoxLayerProps {
@@ -64,6 +73,13 @@ export function OverlayBoxLayer({ boxes, scale, selection, wiring }: OverlayBoxL
           onEditRequest={wiring.onEditRequest}
           onContextMenu={wiring.onContextMenu}
           scrolledTo={wiring.scrolledTo}
+          // Gated on the ENGINE's flag as well as on the map, so a host that
+          // names a path the engine never stamped gets neither channel rather
+          // than a description for a badge that is not drawn. The in-repo host
+          // derives the map from the flag; `linkHints` is a public prop, so
+          // this side does not assume it.
+          hint={box.linked === true ? wiring.linkHints?.get(box.path) : undefined}
+          onHover={wiring.onHover}
         />
       ))}
       {selectedPath !== null && selectedRect !== null && manipulate !== undefined ? (

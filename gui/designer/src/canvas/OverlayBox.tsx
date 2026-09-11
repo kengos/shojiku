@@ -12,6 +12,7 @@
 import type { KeyboardEvent, RefObject } from 'react';
 import type { PlacedBox } from '../engine/types';
 import { hitRect, scaleRect } from './geometry';
+import type { LinkHint } from './linkHint';
 import { applyBoxKeyPlan, boxDragTask, boxKeyPlan } from './overlayBoxGestures';
 import type { CanvasManipulate, DragTask } from './overlayDragModel';
 import { boxCursor } from './overlayGeometry';
@@ -40,6 +41,14 @@ export interface OverlayBoxProps {
   /** The overlay-wide "already revealed" marker, so the scroll-into-view runs
    * once per SELECTION rather than once per render of the selected box. */
   readonly scrolledTo: RefObject<string | null>;
+  /** What the host says about this item's link, when it carries one. */
+  readonly hint: LinkHint | undefined;
+  /** Pointer or focus arrived on this box, or left it (`null`). Reports the
+   * PLACEMENT, not its path: a `repeat`'s rows share one path, so a path could
+   * not say WHICH row. REQUIRED, unlike its neighbours here — the hover is
+   * canvas-local state `BoxOverlay` always owns, so an optional one would be a
+   * branch no render can reach. */
+  readonly onHover: (box: PlacedBox | null) => void;
 }
 
 export function OverlayBox({
@@ -57,6 +66,8 @@ export function OverlayBox({
   onEditRequest,
   onContextMenu,
   scrolledTo,
+  hint,
+  onHover,
 }: OverlayBoxProps) {
   // `hitRect`, not the raw scaled rect: a `line`'s placement box is
   // zero-thickness when axis-aligned, and an SVG rect with a zero side is
@@ -127,6 +138,18 @@ export function OverlayBox({
       aria-label={box.path}
       aria-pressed={selected}
       data-path={box.path}
+      // A pointer on the box is what summons the destination chip — the badge
+      // layer above cannot, being `pointer-events: none` so it never steals a
+      // click (pinned in a browser by `gui:e2e`).
+      onPointerEnter={() => onHover(box)}
+      onPointerLeave={() => onHover(null)}
+      // Focus too, not the pointer alone. `gui/STYLE.md` § TipBubble makes the
+      // two channels one opt-in on purpose — its exception is a tip wrapping a
+      // focusable TEXT FIELD, which a canvas box is not. Without this the one
+      // person left with nothing is the sighted keyboard user: the screen
+      // reader has the `<desc>` below, and the pointer has the chip.
+      onFocus={() => onHover(box)}
+      onBlur={() => onHover(null)}
       className={`sj-box${selected ? ' sj-box--selected' : ''}${
         multiStroke ? ' sj-box--multi' : ''
       }${dragging ? ' sj-box--dragging' : ''}${box.hidden === true ? ' sj-box--hidden' : ''}`}
@@ -166,6 +189,18 @@ export function OverlayBox({
       onPointerMove={drag.move}
       onPointerUp={drag.up}
       onPointerCancel={drag.cancel}
-    />
+    >
+      {/* The accessibility half of the link hint, and it must NOT ride the
+          `aria-label`: that is the item's PATH, which is how the layer tree,
+          the panel and `gui:e2e` all address a box. `<desc>` is SVG's
+          DESCRIPTION element — `<title>` would map to the accessible NAME
+          instead, and additionally raise the native ~1s tooltip `gui/STYLE.md`
+          bans. Unlike the chip this is present whether or not anything is
+          hovered, because a screen-reader user never hovers. AT support for
+          `<desc>` is the weaker of the two, and this is honest about that:
+          where it is ignored the reader is exactly where they were before, and
+          the property panel still answers. */}
+      {hint === undefined ? null : <desc>{hint.description}</desc>}
+    </rect>
   );
 }

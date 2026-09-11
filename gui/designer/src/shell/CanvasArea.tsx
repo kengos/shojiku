@@ -13,6 +13,7 @@ import type { EditorPrefs } from '../hooks/useEditorPrefs';
 import type { ImageImport } from '../hooks/useImageImport';
 import type { InlineEdit } from '../hooks/useInlineEdit';
 import type { InsertActions } from '../hooks/useInsertActions';
+import { useLinkHints } from '../hooks/useLinkHints';
 import type { MultiSelect } from '../hooks/useMultiSelect';
 import type { PageNav } from '../hooks/usePageNav';
 import type { PaletteDragWiring } from '../hooks/usePaletteDrag';
@@ -66,6 +67,10 @@ export function CanvasArea({
   const { selectClearing, setRefused } = multi;
   const { gridStep } = prefs;
   const { pages, boxes, margin, renderedScale, cssFactor, canvasRefCallback, preview } = session;
+  // Called HERE rather than in `wiring.ts` beside `useContainerMarks`, because
+  // unlike the marks this value has exactly one consumer — the canvas below.
+  // Hoisting it would thread it through four components to reach the one.
+  const linkHints = useLinkHints({ boxes, read: editor.read, t, text: editor.text });
   const { status: previewStatus, error: previewError } = preview;
 
   const manipulate = useMemo<CanvasManipulate>(
@@ -122,6 +127,7 @@ export function CanvasArea({
             onContextMenu={onContextMenu}
             margin={margin}
             dropWarning={t('canvas.drop.clearsPosition')}
+            linkHints={linkHints}
             inlineEdit={
               inline.editing === null
                 ? undefined

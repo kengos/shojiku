@@ -210,7 +210,7 @@ const NOT_AN_EMPHASIS = [
  *    down), which no source walk can see; `SnapshotDialog.test.tsx` pins it.
  */
 const OUTSIDE_A_FOOTER = [
-  'designer/src/shell/CanvasArea.tsx:158',
+  'designer/src/shell/CanvasArea.tsx:164',
   'designer-app/src/app/SnapshotDialog.tsx:109',
   'designer-app/src/app/SnapshotList.tsx:66',
 ];

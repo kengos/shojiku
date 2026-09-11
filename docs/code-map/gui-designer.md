@@ -435,6 +435,15 @@ lists name the destructured stable fields, never `editor` itself.
   becomes the view's `initialSelection`.
 - `hooks/useContainerMarks.ts` — selection + hovered-card highlight →
   `BoxOverlay` `containerMarks` with `containerKindLabel` chips.
+- `hooks/useLinkHints.ts` — one `LinkHint {url, description}` per LINKED
+  placement, for the canvas's destination chip and the accessible description
+  its box carries. Driven by the ENGINE's `linked` flag rather than by the
+  document, so a link the engine dropped (refused scheme, over the cap) gets no
+  hint — a hint there would explain a badge that is not drawn. `undefined` for a
+  document with no links, so the canvas prop stays ABSENT, which is where a host
+  on an older engine lands. Called in `shell/CanvasArea`, NOT in `wiring.ts`
+  beside `useContainerMarks`: unlike the marks it has exactly one consumer, so
+  hoisting it would thread it through four components to reach one.
 - `hooks/usePdfAction.ts` — render the real PDF via the engine; gated on
   transport `renderPdf` + host `onDownloadPdf` + the `wasm.render.pdf`
   capability (never a version sniff).

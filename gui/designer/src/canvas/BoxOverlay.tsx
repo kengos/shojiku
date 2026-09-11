@@ -17,6 +17,7 @@ import { useCallback, useRef } from 'react';
 import type { BoxRect, PlacedBox } from '../engine/types';
 import type { ContainerMark } from './ContainerMarkVisual';
 import type { IndicatorLine } from './dropPlan';
+import type { LinkHint } from './linkHint';
 import type { PageMargin } from './marginGuide';
 import { OverlayBoxLayer } from './OverlayBoxLayer';
 import { OverlayDecorations } from './OverlayDecorations';
@@ -24,6 +25,7 @@ import { overlayBackground } from './overlayBackground';
 import type { CanvasManipulate } from './overlayDragModel';
 import { overlayLayers } from './overlayLayers';
 import { PaperAnatomy } from './PaperAnatomy';
+import { useHoveredLink } from './useHoveredLink';
 import { useOverlayDrag } from './useOverlayDrag';
 
 /** A stable empty multi-selection so the default prop never re-creates a set. */
@@ -85,6 +87,11 @@ export interface BoxOverlayProps {
    * authored `x`/`y`. Absent = say nothing (this component carries no i18n of
    * its own — the host resolves its own copy). */
   readonly dropWarning?: string;
+  /** What the host says about each LINKED item, keyed by path: the destination
+   * a hover shows, and the accessible description the box carries all the time.
+   * The box index says only WHETHER an item is linked — the URL lives in the
+   * document, which this component does not have. Absent = unchanged. */
+  readonly linkHints?: ReadonlyMap<string, LinkHint>;
 }
 
 export function BoxOverlay({
@@ -107,6 +114,7 @@ export function BoxOverlay({
   onContextMenu,
   margin = null,
   dropWarning,
+  linkHints,
 }: BoxOverlayProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   // One callback ref keeps the internal ref current AND reports the element
@@ -124,6 +132,9 @@ export function BoxOverlay({
   // is visible so `block: 'nearest'` is a no-op). Mirrors the LayerTree row
   // reveal.
   const scrolledTo = useRef<string | null>(null);
+  // The destination chip's subject, gated on the hints so an unhinted canvas
+  // does no React work on hover at all.
+  const [hovered, onHover] = useHoveredLink(linkHints);
 
   // Kept WHOLE rather than destructured: `OverlayDecorations` takes the bundle,
   // and this file needs only the two members that decide the element itself.
@@ -197,14 +208,18 @@ export function BoxOverlay({
           onEditRequest,
           onContextMenu,
           scrolledTo,
+          linkHints,
+          onHover,
         }}
       />
       <OverlayDecorations
         paint={paint}
         layers={layers}
-        external={{ insertLine, insertRects, containerMarks, dropWarning }}
+        external={{ insertLine, insertRects, containerMarks, dropWarning, linkHints }}
         boxes={boxes}
         scale={scale}
+        hovered={hovered}
+        page={{ width, height }}
       />
     </svg>
   );

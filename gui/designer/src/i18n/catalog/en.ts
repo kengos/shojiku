@@ -590,6 +590,7 @@ export const en: LanguageCatalog = {
     'canvas.place.positioned': 'Positioned (x/y) — drag to move',
     'canvas.place.flow': 'Flow — drag to reorder',
     'canvas.place.flex': 'Flex — drag to reorder',
+    'canvas.link.description': 'Links to {url}',
     'canvas.drop.clearsPosition':
       'Position (x/y) will be dropped — the container decides where it sits',
     'canvas.place.grid': 'Grid cell — position set by the tracks',
