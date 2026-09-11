@@ -68,9 +68,12 @@
 }
 
 /* Absolute manipulation: resize handles, sibling alignment guides, the editor
- * base grid. */
+ * base grid. The handle's FILL is fixed paper white, not `--sj-surface`: it is
+ * drawn on the engine-rendered page, so the token turned it into a near-black
+ * square in dark chrome while its own inline fallback painted white. The stroke
+ * is the accent because the accent reads as ink on the page in both schemes. */
 .sj-handle {
-  fill: var(--sj-surface);
+  fill: #ffffff;
   stroke: var(--sj-accent);
 }
 
