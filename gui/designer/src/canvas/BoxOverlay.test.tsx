@@ -1591,6 +1591,25 @@ describe('the hyperlink badge', () => {
     );
   }
 
+  it('paints the decorations OVER the interactive layer', () => {
+    // The twin of "paints the guide UNDER the interactive layer" above, and the
+    // half that was missing: that test pins the anatomy band's boundary, this
+    // one pins the decorations band's. Between them they pin the whole layer
+    // ORDER, which is the one thing `BoxOverlay` exists to decide — and since
+    // the two bands became `PaperAnatomy` / `OverlayDecorations`, swapping them
+    // is now a one-line edit that every other assertion in this file survives.
+    //
+    // `querySelectorAll('*')`, not `'rect'`: `.sj-link-badge` is a `<g>`, where
+    // the margin guide the twin queries is a `<rect>`. Later in the DOM is on
+    // top, in SVG.
+    const { container } = draw([linked('a', 0), box('b', 50, 0, 40, 20)]);
+    const painted = [...container.querySelectorAll('*')];
+    const badge = painted.findIndex((el) => el.classList.contains('sj-link-badge'));
+    const lastBox = painted.map((el) => el.classList.contains('sj-box')).lastIndexOf(true);
+    expect(lastBox).toBeGreaterThanOrEqual(0);
+    expect(badge).toBeGreaterThan(lastBox);
+  });
+
   it('marks every linked box and leaves the others alone', () => {
     const { container } = draw([linked('a', 0), box('b', 50, 0, 40, 20), linked('c', 100)]);
     expect(container.querySelectorAll('.sj-link-badge')).toHaveLength(2);
