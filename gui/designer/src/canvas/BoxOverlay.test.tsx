@@ -1591,6 +1591,95 @@ describe('the hyperlink badge', () => {
     );
   }
 
+  const HINTS = new Map([
+    [
+      'a',
+      { url: 'https://example.com/order/42', description: 'Links to https://example.com/order/42' },
+    ],
+  ]);
+
+  function drawHinted(list: readonly PlacedBox[]) {
+    return render(
+      <BoxOverlay
+        boxes={list}
+        scale={1}
+        width={400}
+        height={200}
+        selectedPath={null}
+        onSelect={() => {}}
+        onDeselect={() => {}}
+        linkHints={HINTS}
+      />,
+    );
+  }
+
+  it('says where the link goes once a pointer is on the item', () => {
+    // The chip is what the badge could not say. It is summoned by the ITEM's
+    // own rect, because the badge layer above it is `pointer-events: none` so
+    // it never steals a click (pinned in a browser by `gui:e2e`).
+    const { container } = drawHinted([linked('a', 0)]);
+    expect(container.querySelector('.sj-link-hint')).toBeNull();
+    fireEvent.pointerEnter(container.querySelector('[data-path="a"]') as Element);
+    expect(container.querySelector('.sj-link-hint-text')?.textContent).toBe(
+      'https://example.com/order/42',
+    );
+    fireEvent.pointerLeave(container.querySelector('[data-path="a"]') as Element);
+    expect(container.querySelector('.sj-link-hint')).toBeNull();
+  });
+
+  it('answers the Tab key too, not the pointer alone', () => {
+    // The channel a pointer-only wiring leaves with nothing: the sighted
+    // keyboard user. The screen reader has the `<desc>`; `gui/STYLE.md`'s
+    // tooltip contract turns hover and focus on together for this reason.
+    const { container } = drawHinted([linked('a', 0)]);
+    fireEvent.focus(container.querySelector('[data-path="a"]') as Element);
+    expect(container.querySelector('.sj-link-hint-text')?.textContent).toBe(
+      'https://example.com/order/42',
+    );
+    fireEvent.blur(container.querySelector('[data-path="a"]') as Element);
+    expect(container.querySelector('.sj-link-hint')).toBeNull();
+  });
+
+  it('follows the hovered ROW of a repeat, not the first sharing its path', () => {
+    // Two placements, one path — the shape a `repeat` produces, and the reason
+    // the hover reports a BOX. Looked up by path, the chip would land beside
+    // the first row whichever row the pointer was on.
+    const rows = [linked('a', 0), linked('a', 0, { border: { x: 0, y: 120, w: 40, h: 20 } })];
+    const { container } = drawHinted(rows);
+    const both = container.querySelectorAll('[data-path="a"]');
+    expect(both).toHaveLength(2);
+    fireEvent.pointerEnter(both[1] as Element);
+    const y = Number(container.querySelector('.sj-link-hint-card')?.getAttribute('y'));
+    expect(y).toBeGreaterThan(100);
+  });
+
+  it('says nothing extra for an item the host wired no hint for', () => {
+    const { container } = drawHinted([linked('a', 0), linked('b', 100)]);
+    fireEvent.pointerEnter(container.querySelector('[data-path="b"]') as Element);
+    expect(container.querySelector('.sj-link-hint')).toBeNull();
+  });
+
+  it('describes a linked box to a reader who never hovers', () => {
+    // The accessibility half, and it is present whether or not anything is
+    // hovered — a screen-reader user does not hover. `<desc>`, not the
+    // `aria-label`: that carries the item's PATH, which is how the tree, the
+    // panel and the e2e all address a box.
+    const { container } = drawHinted([linked('a', 0), linked('b', 100)]);
+    expect(container.querySelector('[data-path="a"] desc')?.textContent).toBe(
+      'Links to https://example.com/order/42',
+    );
+    expect(container.querySelector('[data-path="b"] desc')).toBeNull();
+    expect(container.querySelector('[data-path="a"]')?.getAttribute('aria-label')).toBe('a');
+  });
+
+  it('leaves a host that wired no hints exactly where it was', () => {
+    const { container } = draw([linked('a', 0)]);
+    fireEvent.pointerEnter(container.querySelector('[data-path="a"]') as Element);
+    expect(container.querySelector('.sj-link-hint')).toBeNull();
+    expect(container.querySelector('[data-path="a"] desc')).toBeNull();
+    expect(container.querySelectorAll('.sj-link-badge')).toHaveLength(1);
+  });
+
   it('paints the decorations OVER the interactive layer', () => {
     // The twin of "paints the guide UNDER the interactive layer" above, and the
     // half that was missing: that test pins the anatomy band's boundary, this

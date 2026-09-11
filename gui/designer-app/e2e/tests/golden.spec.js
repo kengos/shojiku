@@ -281,6 +281,15 @@ test('a click on a link badge selects the item under it', async ({ page }) => {
   );
   expect(under).toBe('sections.body.items[1]');
 
+  // The destination, which is the OTHER half of what the badge is for and the
+  // only place it is observable: no unit suite hovers, and jsdom would not
+  // hit-test it if one tried. The chip sits under the badge rather than beside
+  // it, so it cannot cover the words it explains.
+  await marked.hover();
+  await expect(page.locator('.sj-link-hint-text')).toHaveText('https://example.com', {
+    timeout: 30000,
+  });
+
   // …and the consequence a user actually meets.
   await page.mouse.click(cx, cy);
   await expect(marked).toHaveAttribute('aria-pressed', 'true');

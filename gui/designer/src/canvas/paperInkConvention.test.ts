@@ -337,11 +337,15 @@ describe('the canvas overlay paints in ink the paper can carry', () => {
       'canvas/OverlayGestureShapes.tsx',
       'canvas/OverlayDropShapes.tsx',
       'canvas/ContainerMarkVisual.tsx',
-      // Not a painter — the pure model behind the link badge, and the newest
-      // file the overlay assembles from. It is named because the closure
-      // reaching a decoration's MODEL is what says the walk followed the import
-      // that ADDED it, rather than only the components it already knew.
+      // Not painters — the pure models behind the link badge and its
+      // destination chip, and the newest files the overlay assembles from.
+      // They are named because the closure reaching a decoration's MODEL is
+      // what says the walk followed the import that ADDED it, rather than only
+      // the components it already knew.
       'canvas/linkBadge.ts',
+      'canvas/linkHint.ts',
+      'canvas/chipText.ts',
+      'canvas/LinkHintShape.tsx',
     ]) {
       expect(MEMBERS, painter).toContain(painter);
     }
@@ -369,6 +373,7 @@ describe('the canvas overlay paints in ink the paper can carry', () => {
       'sj-grid-line',
       'sj-margin-guide',
       'sj-link-badge-disc',
+      'sj-link-hint-card',
       'sj-marquee',
       'sj-drag-ghost',
       'sj-group-bounds',
@@ -451,6 +456,15 @@ describe('the canvas overlay paints in ink the paper can carry', () => {
     );
     expect(offences('.sj-link-badge svg', 'stroke: var(--sj-text);', CLASSES, PAPER_SAFE)).toEqual([
       { where: '.sj-link-badge svg { stroke }', token: '--sj-text' },
+    ]);
+    // …and the one after that: the destination chip. Same reasoning, and this
+    // is the shape being copied rather than re-derived — its ink is fixed
+    // today, so the sweep says nothing about whether it is REACHED.
+    expect(offences('.sj-link-hint-card', 'fill: var(--sj-surface);', CLASSES, PAPER_SAFE)).toEqual(
+      [{ where: '.sj-link-hint-card { fill }', token: '--sj-surface' }],
+    );
+    expect(offences('.sj-link-hint-text', 'fill: var(--sj-text);', CLASSES, PAPER_SAFE)).toEqual([
+      { where: '.sj-link-hint-text { fill }', token: '--sj-text' },
     ]);
 
     // …and the four things it must NOT fire on: fixed ink, a token that reads

@@ -265,6 +265,26 @@ hostile geometry degrades to null before it can reach an op.
   `IconLink`'s stroke. A declaration is judged by whether its TOKEN carries a
   colour, never by its PROPERTY: a property list is always one shorthand short,
   and `outline:`/`border:`/`background-image:`/`text-shadow:` all carry ink.
+- `canvas/linkHint.ts` — pure: what the canvas can SAY about a link and where
+  it says it. `linkBadge` says an item HAS one; this says WHERE it goes, from a
+  `LinkHint {url, description}` the HOST supplies per path — the box index
+  carries only the `linked` flag and the URL lives in the document, so the
+  destination has to arrive (the `dropWarning` shape: a resolved, localized
+  value handed down, because this side carries no i18n). `linkHintChip` places
+  it BELOW the badge, not beside it: beside, it lands on the item's own text
+  whenever the badge is near the sheet's edge, which is the COMMON case since a
+  badge is anchored to the item's ink. Clamped horizontally, flipped above at
+  the foot of the page, text cut to the page's width. What the chip shows is the
+  AUTHORED url — `{web.tracking_url}` for the interpolated links that are the
+  commonest legal value — because only the engine resolves those, and it does so
+  after the box index is built.
+- `canvas/LinkHintShape.tsx` — that chip, in FIXED ink like every mark on the
+  paper, and `pointer-events: none` like the badge it explains.
+- `canvas/chipText.ts` — the ONE chip measure, shared by all three chips on this
+  canvas (`ContainerMarkVisual`'s kind chip, `OverlayDropShapes`'s drop warning,
+  the link hint): `chipWidth` approximates SVG text (CJK ~1em, else ~0.55em,
+  since SVG has no auto-sized background) and `fitChipText` cuts by CODE POINT
+  for the one chip whose text is not ours to shorten.
 - `canvas/marginGuide.ts` — pure: the margin box as canvas geometry.
   `marginGuide(margin, scale, width, height)` turns the engine's RESOLVED
   `inspect.margin` (`[t,r,b,l]` pt, post-clamp) into the px rect the

@@ -34,6 +34,21 @@ platform binaries.
   `inspect.boxes.linked`. It is absent unless true, so a document with no
   links produces exactly the bytes it did before.
 
+- **The canvas says where a link goes, not just that there is one.** The chain
+  mark above answers "is there a link here?" and stops; finding out where it
+  went meant selecting the item and reading the property panel. Hovering a
+  linked item — or reaching it with the Tab key — now shows its destination on
+  the page, just under the mark.
+
+  What it shows is what you authored. For a link that is a data field —
+  `{web.tracking_url}`, which is the common case — that is the field's name
+  rather than a finished address: the engine fills those in when it renders, so
+  the page cannot know the answer before then.
+
+  The same fact reaches a screen reader, which never hovers: a linked item's box
+  on the canvas describes itself as carrying a link, whether or not anything is
+  pointed at.
+
 - **Rich text can now be written in the Designer, not just read.** A text item
   built from `spans:` — a run in bold, a struck-through clause, one word in a
   different colour — could be listed and linked, but the words themselves still

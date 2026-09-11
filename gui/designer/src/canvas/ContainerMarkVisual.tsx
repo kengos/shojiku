@@ -4,6 +4,7 @@
 // and nothing for a screen reader beyond the property panel's own labels.
 
 import type { PlacedBox } from '../engine/types';
+import { chipWidth } from './chipText';
 import { scaleRect } from './geometry';
 
 /** Container-chip geometry in overlay px (decorative, like the handles). */
@@ -30,18 +31,6 @@ function isDirectChild(parent: string, path: string): boolean {
   const rest = path.slice(prefix.length);
   const close = rest.indexOf(']');
   return close > 0 && close + 1 === rest.length && /^\d+$/.test(rest.slice(0, close));
-}
-
-/** Approximate chip width for its label — decorative sizing only (SVG text
- * has no auto-sized background). CJK glyphs run ~1em, everything else ~0.55em;
- * `charCodeAt` is total on the non-empty chars a string iterator yields (a
- * surrogate half also reads as wide, which only over-sizes the padding). */
-function chipWidth(label: string): number {
-  let width = 0;
-  for (const ch of label) {
-    width += ch.charCodeAt(0) >= 0x2e80 ? CHIP_FONT_PX : CHIP_FONT_PX * 0.55;
-  }
-  return Math.ceil(width) + CHIP_PAD_PX * 2;
 }
 
 /** One container mark's visuals: the dashed outline on every box carrying the
@@ -106,7 +95,7 @@ export function ContainerMarkVisual({
         className="sj-container-chip"
         x={first.x}
         y={chipY}
-        width={chipWidth(mark.label)}
+        width={chipWidth(mark.label, CHIP_FONT_PX, CHIP_PAD_PX)}
         height={CHIP_HEIGHT_PX}
         rx={3}
         fill="#c2402a"

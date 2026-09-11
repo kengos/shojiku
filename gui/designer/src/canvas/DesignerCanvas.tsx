@@ -17,6 +17,7 @@ import type { ContainerMark } from './ContainerMarkVisual';
 import type { IndicatorLine } from './dropPlan';
 import { scaleRect } from './geometry';
 import { InlineTextEditor, type InlineTextEditorProps } from './InlineTextEditor';
+import type { LinkHint } from './linkHint';
 import type { PageMargin } from './marginGuide';
 import type { CanvasManipulate } from './overlayDragModel';
 import { PageUnderlay } from './PageUnderlay';
@@ -89,6 +90,10 @@ export interface DesignerCanvasProps {
   /** Passed straight through to every page's overlay — the localized sentence
    * shown while a drop would DROP the dragged item's authored `x`/`y`. */
   readonly dropWarning?: string;
+  /** Passed straight through to every page's overlay — what the host says about
+   * each LINKED item (the destination its hover chip shows, and the accessible
+   * description its box carries). */
+  readonly linkHints?: ReadonlyMap<string, LinkHint>;
 }
 
 const NO_BOXES: readonly PlacedBox[] = [];
@@ -114,6 +119,7 @@ export function DesignerCanvas({
   onContextMenu,
   margin,
   dropWarning,
+  linkHints,
 }: DesignerCanvasProps) {
   return (
     <div
@@ -166,6 +172,7 @@ export function DesignerCanvas({
               onContextMenu={onContextMenu}
               margin={margin}
               dropWarning={dropWarning}
+              linkHints={linkHints}
             />
             {inlineEdit !== undefined && editingBox !== undefined ? (
               <InlineTextEditor
