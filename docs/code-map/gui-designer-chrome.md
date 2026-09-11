@@ -711,4 +711,7 @@ is Tailwind utilities over the `--sj-*` tokens.
   as its baseline (CSS 2.1 §10.8.1), which hung the pill a descender
   above the text beside it. Dark
   mode themes CHROME only — the canvas paper is engine pixels and stays
-  white. CSS posture: `gui/STYLE.md`.
+  white, so the overlay half of this file may name a `--sj-*` token only
+  where both of the token's scheme values still read as ink on white
+  (`canvas/paperInkConvention.test.ts` gates it; the rule is
+  `gui/STYLE.md` § Ink on the paper). CSS posture: `gui/STYLE.md`.

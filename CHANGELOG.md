@@ -179,6 +179,15 @@ platform binaries.
 
 ### Fixed
 
+- **The canvas resize handles stay white on the page in dark chrome.** A handle
+  took its fill from the chrome's surface colour, so in the dark scheme it
+  turned into a near-black square sitting on a page that is white in both
+  schemes. The snap grid had gone the same way once before, as a stroke that
+  faded to nothing in dark chrome. Every mark the selection overlay draws on the
+  page is now checked — it has to use either a fixed colour or one that still
+  reads as ink on white — instead of the rule being written in a comment beside
+  each mark and remembered by whoever adds the next one.
+
 - **Deleting a rich-text fragment's words now deletes the fragment.** It used to
   leave an empty one behind — invisible on the page, listed in the property
   panel as `(empty fragment)`, and impossible to remove from there. A fragment

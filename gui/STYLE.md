@@ -97,6 +97,43 @@ Everything else — app shell, toolbars, panels, pickers, banners — is utiliti
 Shared utility strings live in the `ui/chrome.ts` modules
 (`BTN`/`INPUT`/`PANEL`/…), not re-typed per call site.
 
+### Ink on the paper
+
+The canvas overlay is drawn ON the engine-rendered page, which is pixels and
+stays white in both colour schemes. A mark there may take its colour from a
+`--sj-*` token only when both of the token's scheme values still read as ink on
+white — otherwise it must be a fixed value. `--sj-text` is the one that bites:
+sumi ink in light chrome, near-white in dark, invisible against the page. Two
+marks shipped wrong before this was gated: the snap grid faded out as `--sj-text`
+at 8 %, and the resize handle's fill was `--sj-surface` and went near-black in
+dark. The margin guide was one edit from the same and landed correct.
+
+The accent is deliberately NOT in that group: `--sj-accent` / `--sj-focus` read
+on the page in both schemes, and the whole interaction layer — hover, selection,
+handles, guides, ghost, drop indicator, marquee — is painted in them so a host
+rethemes the selection with its own accent.
+
+`canvas/paperInkConvention.test.ts` gates this over the overlay's own source and
+this stylesheet, deriving the allowed tokens from their values in
+`theme/tokens.ts` rather than from a list. It closes the four routes a chrome
+colour can take onto the paper: a token in a stylesheet rule, a token in an
+inline style, a Tailwind utility named after the same token (`--color-text:
+var(--sj-text)`, so `stroke-text` is that token with no `--sj-` to grep for),
+and `currentColor`, which inherits the document root's `color: var(--sj-text)`
+— in the source AND in the stylesheets. The overlay's one borrowed glyph, the
+link badge's chain from `ui/icons.tsx`, overrides its stroke for that last
+reason.
+
+Two things it judges by data rather than by a list, because a list standing in
+for a category is how a gate goes quietly blind: a declaration is judged by
+whether its TOKEN carries a colour, never by whether its PROPERTY is one the
+gate thought of (`outline:`, `border:`, `background-image:` and `text-shadow:`
+all carry one, and `styles.css` already writes three of them); and membership is
+the whole transitive import closure of `BoxOverlay.tsx`, not the `canvas/`
+directory, so a decoration authored anywhere joins it. The one exemption is
+`ui/`, the shared primitives, which have their own gate — and the gate asserts
+which files that exemption currently covers.
+
 ## Behavior primitives: Headless UI, styled by us
 
 Dialog / menu / listbox / tabs / popover / switch ride `@headlessui/react`

@@ -220,6 +220,26 @@ hostile geometry degrades to null before it can reach an op.
   reason — it was `--sj-text` at 8% on that same paper, so the snap grid
   faded out in dark chrome; both are the `#1f1a17` `OverlayGrid`'s inline
   fallback already used, and the stylesheet was the half that diverged.
+- `canvas/paperInkConvention.test.ts` — the GATE over that rule. The five
+  comments stating it stay as the local reason; what changed is that something
+  now CHECKS it. Members are the whole transitive local-import closure of
+  `BoxOverlay.tsx` — deliberately NOT the `canvas/` directory, since a
+  decoration one directory over draws on the paper just as much; the one
+  exemption is `ui/`, the shared primitives, whose covered set the gate asserts
+  (`ui/icons.tsx` today). Over those plus every rule in the THREE stylesheets
+  naming a class the closure emits, it allows a `--sj-*` colour token only when
+  BOTH its scheme values clear 3:1 against the paper white — derived from
+  `theme/tokens.ts`, never a list. That admits `--sj-accent`/`--sj-focus`,
+  which is the whole interaction layer and what a host rethemes, and refuses
+  `--sj-text` (1.21 in dark) and `--sj-surface` (1.00 in light — the resize
+  handle's fill, the break this gate found). Four routes, not one: the
+  stylesheet rule, an inline style, a Tailwind utility named after the same
+  token (the `--color-*` bridge shares the token's name, so `stroke-text`
+  carries it with no `--sj-` in the file), and `currentColor`, which inherits
+  the app root's `color: var(--sj-text)` — which is why the link badge overrides
+  `IconLink`'s stroke. A declaration is judged by whether its TOKEN carries a
+  colour, never by its PROPERTY: a property list is always one shorthand short,
+  and `outline:`/`border:`/`background-image:`/`text-shadow:` all carry ink.
 - `canvas/marginGuide.ts` — pure: the margin box as canvas geometry.
   `marginGuide(margin, scale, width, height)` turns the engine's RESOLVED
   `inspect.margin` (`[t,r,b,l]` pt, post-clamp) into the px rect the
