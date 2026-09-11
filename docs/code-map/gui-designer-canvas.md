@@ -91,9 +91,16 @@ hostile geometry degrades to null before it can reach an op.
   `paintPage` RGBA→canvas (no-op without a 2D ctx).
   `canvas/PageUnderlay.tsx` — callback-ref canvas paint.
 - `canvas/BoxOverlay.tsx` — the overlay ASSEMBLY: the `<svg>` element,
-  ONE `useOverlayDrag` call, and the LAYER ORDER (the paper anatomy —
-  grid, margin-box guide — under the interactive layer, every other
-  decoration over it). JSX-only —
+  ONE `useOverlayDrag` call, and the LAYER ORDER — which is now literally
+  what the return statement shows, three children in order:
+  `PaperAnatomy` (under), `OverlayBoxLayer` (interactive), then
+  `OverlayDecorations` (over). It used to be eight JSX expressions with the
+  interactive layer somewhere in the middle, and where a new decoration went
+  was a judgement each time. The drag bundle is kept WHOLE (`paint`) rather
+  than destructured, because the decorations take it and this file needs only
+  three of its nine members (`paint.dragPath` for the element's class,
+  `paint.drag` for the interactive layer's wiring, `paint.marquee` for the
+  background handlers). JSX-only —
   document-derived paths are React-escaped (pinned by a hostile-path
   test). `svgRef` reports the SVG (the palette drag hit-tests through
   it); `insertLine` vs `insertRects` are the two mutually-exclusive
@@ -106,9 +113,23 @@ hostile geometry degrades to null before it can reach an op.
   The background handlers are named one by one rather than spread: a
   spread hides `onClick` from the a11y lint and would silently retire
   the element's `useKeyWithClickEvents` suppression.
+- `canvas/PaperAnatomy.tsx` — the page's own anatomy, UNDER the interactive
+  layer: the snap grid and the margin-box guide. A component of its own rather
+  than the first two members of `OverlayDecorations`, because the ordering
+  decision IS that these sit below the boxes and the rest sit above. Owns the
+  grid pattern's `useId` (two pages' grids cannot collide) and the
+  `marginGuide` derivation, both pure functions of what it already takes.
+- `canvas/OverlayDecorations.tsx` — everything painted OVER the interactive
+  layer: the drag's ghost / alignment guides / drop indicators / rubber band,
+  the multi-selection group frame, the link badges, the container marks. None
+  is clickable. Takes the three bundles they already arrive in — `OverlayDrag`
+  (the machine's own return), `OverlayLayers` (the pure derivation) and
+  `ExternalDecorations` (what the HOST passes through: the palette drag's two
+  mutually-exclusive indicators, the container marks, the localized drop
+  warning) — rather than fifteen loose props.
 - `canvas/overlayLayers.ts` — pure: what the overlay PAINTS, derived in
   ONE pass over an `OverlayLayersInput` bundle → `{ordered, selection,
-  groupBox}`. `ordered` is stable-sorted shallowest-first so a
+  groupBox, linkBadges}`. `ordered` is stable-sorted shallowest-first so a
   container/table fragment never masks its own cells; `selection` is the
   `OverlayBoxSelection` the interactive layer reads every box out of
   (marked paths, the primary's ability + its px rect — non-null only

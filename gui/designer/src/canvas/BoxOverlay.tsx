@@ -6,26 +6,24 @@
 // string-built SVG), so document-derived paths are React-escaped attributes.
 //
 // This file is the ASSEMBLY: the <svg> element, one `useOverlayDrag` call, and
-// the LAYER ORDER — the paper anatomy (grid, margin-box guide) under the
-// interactive layer, every other decoration over it. What is painted comes from
-// the pure `overlayLayers`; what empty
-// space does from `overlayBackground`; the clickable rects and their resize
-// handles from `OverlayBoxLayer`; the decorations from `OverlayShapes` /
-// `OverlayGestureShapes`; and all slot/plan math from the pure
-// `dnd`/`manipulate`/`marquee` models.
+// the LAYER ORDER — which is what its four children ARE, in paint order. What
+// is painted comes from the pure `overlayLayers`; what empty space does from
+// `overlayBackground`; the page's own anatomy (grid, margin-box guide) from
+// `PaperAnatomy`, UNDER the clickable rects and their resize handles from
+// `OverlayBoxLayer`, with everything else OVER them from `OverlayDecorations`;
+// and all slot/plan math from the pure `dnd`/`manipulate`/`marquee` models.
 
-import { useCallback, useId, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import type { BoxRect, PlacedBox } from '../engine/types';
-import { type ContainerMark, ContainerMarkVisual } from './ContainerMarkVisual';
+import type { ContainerMark } from './ContainerMarkVisual';
 import type { IndicatorLine } from './dropPlan';
-import { marginGuide, type PageMargin } from './marginGuide';
+import type { PageMargin } from './marginGuide';
 import { OverlayBoxLayer } from './OverlayBoxLayer';
-import { DropIndicators } from './OverlayDropShapes';
-import { GhostRect, GuideLines, MarqueeRect } from './OverlayGestureShapes';
-import { GroupFrame, LinkBadgeLayer, MarginGuideShape, OverlayGrid } from './OverlayShapes';
+import { OverlayDecorations } from './OverlayDecorations';
 import { overlayBackground } from './overlayBackground';
 import type { CanvasManipulate } from './overlayDragModel';
 import { overlayLayers } from './overlayLayers';
+import { PaperAnatomy } from './PaperAnatomy';
 import { useOverlayDrag } from './useOverlayDrag';
 
 /** A stable empty multi-selection so the default prop never re-creates a set. */
@@ -126,40 +124,43 @@ export function BoxOverlay({
   // is visible so `block: 'nearest'` is a no-op). Mirrors the LayerTree row
   // reveal.
   const scrolledTo = useRef<string | null>(null);
-  const patternId = `sj-grid-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
 
-  const { drag, marquee, dragPath, indicator, ghostPx, guides, marqueePx, region, clearsPosition } =
-    useOverlayDrag({
-      svgRef,
-      boxes,
-      scale,
-      width,
-      height,
-      margin,
-      manipulate,
-      onSelect,
-      onMarquee,
-    });
+  // Kept WHOLE rather than destructured: `OverlayDecorations` takes the bundle,
+  // and this file needs only the two members that decide the element itself.
+  const paint = useOverlayDrag({
+    svgRef,
+    boxes,
+    scale,
+    width,
+    height,
+    margin,
+    manipulate,
+    onSelect,
+    onMarquee,
+  });
   const layers = overlayLayers({
     boxes,
     scale,
     selectedPath,
     multiSelected,
-    dragPath,
+    dragPath: paint.dragPath,
     manipulate,
     containerMarks,
   });
-  const background = overlayBackground({ marquee, manipulate, onMarquee, onDeselect });
-
-  // Paper anatomy, not a gesture — derived every render like the grid, and
-  // painted with it beneath the interactive layer.
-  const guide = marginGuide(margin, scale, width, height);
+  const background = overlayBackground({
+    marquee: paint.marquee,
+    manipulate,
+    onMarquee,
+    onDeselect,
+  });
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: a background click clears the selection; the keyboard equivalent is the window-level Escape handler in Designer (a focusable full-page backdrop would only clutter the tab order).
     <svg
       ref={attachSvg}
-      className={dragPath === null ? 'sj-box-overlay' : 'sj-box-overlay sj-box-overlay--dragging'}
+      className={
+        paint.dragPath === null ? 'sj-box-overlay' : 'sj-box-overlay sj-box-overlay--dragging'
+      }
       width={width}
       height={height}
       // Sit on top of the underlay canvas (the parent page div is positioned),
@@ -177,23 +178,20 @@ export function BoxOverlay({
       onPointerCancel={background.onPointerCancel}
     >
       <title>Template layout overlay</title>
-      {manipulate !== undefined && manipulate.grid > 0 ? (
-        <OverlayGrid
-          grid={manipulate.grid}
-          scale={scale}
-          width={width}
-          height={height}
-          patternId={patternId}
-        />
-      ) : null}
-      {guide !== null ? <MarginGuideShape guide={guide} /> : null}
+      <PaperAnatomy
+        grid={manipulate?.grid}
+        margin={margin}
+        scale={scale}
+        width={width}
+        height={height}
+      />
       <OverlayBoxLayer
         boxes={layers.ordered}
         scale={scale}
         selection={layers.selection}
         wiring={{
           manipulate,
-          drag,
+          drag: paint.drag,
           onSelect,
           onMultiToggle,
           onEditRequest,
@@ -201,24 +199,13 @@ export function BoxOverlay({
           scrolledTo,
         }}
       />
-      {ghostPx !== null ? <GhostRect rect={ghostPx} /> : null}
-      <GuideLines guides={guides} scale={scale} />
-      <DropIndicators
-        region={region}
-        // The reorder indicator and an external (palette-drop) one share the
-        // rendering; at most one exists at a time.
-        line={indicator ?? insertLine}
-        insertRects={insertRects}
-        warning={clearsPosition ? dropWarning : undefined}
-        ghost={ghostPx}
+      <OverlayDecorations
+        paint={paint}
+        layers={layers}
+        external={{ insertLine, insertRects, containerMarks, dropWarning }}
+        boxes={boxes}
         scale={scale}
       />
-      <LinkBadgeLayer badges={layers.linkBadges} />
-      {layers.groupBox !== null ? <GroupFrame rect={layers.groupBox} /> : null}
-      {marqueePx !== null ? <MarqueeRect rect={marqueePx} /> : null}
-      {containerMarks.map((mark) => (
-        <ContainerMarkVisual key={mark.path} mark={mark} boxes={boxes} scale={scale} />
-      ))}
     </svg>
   );
 }
