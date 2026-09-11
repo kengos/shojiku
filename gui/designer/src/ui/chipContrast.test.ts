@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { contrast } from '../testkit/contrast';
 import { chipPaint, chipRing, isHexColor, relativeLuminance } from './chipContrast';
 
 const DARK_RING = 'inset 0 0 0 1px rgba(0, 0, 0, 0.45)';
@@ -38,6 +39,29 @@ describe('relativeLuminance', () => {
   });
 });
 
+// The ratio the three suites assert their thresholds with lives in
+// `testkit/contrast.ts`, on top of the luminance above. It is pinned HERE, where
+// that luminance is pinned, rather than being only used three files away.
+describe('the shared contrast oracle', () => {
+  it('reports the published WCAG ratios, in either argument order', () => {
+    expect(contrast('#000000', '#ffffff')).toBeCloseTo(21, 10);
+    expect(contrast('#ffffff', '#000000')).toBeCloseTo(21, 10);
+    expect(contrast('#b91c1c', '#b91c1c')).toBe(1);
+    // `#767676` on white is WCAG's own AA boundary grey, 4.54. The MID-RANGE
+    // point is the load-bearing one: a sabotage returning a flat 1-or-21 sailed
+    // through the three assertions above, and through `theme/tokens`, whose
+    // threshold is one-sided.
+    expect(contrast('#767676', '#ffffff')).toBeCloseTo(4.54, 2);
+  });
+
+  it('refuses anything that is not a colour, rather than returning NaN', () => {
+    // A silent NaN reads as "this pairing is fine" in a filter — which is how
+    // `canvas/paperInkConvention` decides which tokens may paint on the paper.
+    expect(() => contrast('currentColor', '#ffffff')).toThrow(/#rrggbb/);
+    expect(() => contrast('#ffffff', '#abc')).toThrow(/#rrggbb/);
+  });
+});
+
 describe('chipRing', () => {
   it('gives a light colour the dark ring, so white reads on the light chrome', () => {
     // `#ededed` is the table header default and was the colour that vanished
@@ -70,14 +94,6 @@ describe('chipRing', () => {
     }
   });
 });
-
-/** WCAG 2.x contrast between two validated `#rrggbb` values. Written here rather
- * than imported because it exists to CHECK the module's constants, not to share
- * their arithmetic — a bug copied into both would cancel out. */
-function contrast(a: string, b: string): number {
-  const [hi, lo] = [relativeLuminance(a), relativeLuminance(b)].sort((x, y) => y - x);
-  return (hi + 0.05) / (lo + 0.05);
-}
 
 /** `rgba(grey, alpha)` composited over an opaque backdrop, as `#rrggbb`. The unset
  * ring is drawn at 0.9 alpha, so measuring the opaque grey would score a colour no

@@ -524,7 +524,14 @@ services/props; nothing in the component reads the singleton.
   (the ONE walker behind every convention gate: `sourceFiles`/`codeLines`/
   `nearestOpenTag`/`hits` over both packages' sources — its nearest-tag helper
   reads a generic type argument as a tag, so a rule that must exempt a module
-  exempts it BY PATH). Coverage-excluded (`vitest.config.ts` `src/testkit/**`),
+  exempts it BY PATH). `contrast.ts` is the ONE WCAG ratio the suites measure
+  thresholds with — `theme/tokens` (AA on every rendered pairing),
+  `ui/chipContrast` (the unset chip's ring on both surfaces) and
+  `canvas/paperInkConvention` (which tokens may paint on the paper) had a copy
+  each; it wraps the product's own `relativeLuminance` rather than re-deriving
+  the linearization, and THROWS on a non-`#rrggbb` input so a filter can never
+  read a silent `NaN` as a pairing that passed. Coverage-excluded
+  (`vitest.config.ts` `src/testkit/**`),
   but still budget-counted and typechecked/linted like any non-test source.
 - `src/integration/wasm.test.ts` — real-engine integration (node env,
   never a mock): dynamic-imports the `make engine:wasm` pkg + injects
