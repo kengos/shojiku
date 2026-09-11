@@ -420,6 +420,23 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   CSP — same-origin + `wasm-unsafe-eval`; `connect-src` additionally
   allows raw.githubusercontent.com for the picker) + an explicit
   standalone `config.json` (`{}`).
+- Browser e2e (`e2e/tests/golden.spec.js`, `make gui:e2e` — ON-DEMAND, not part
+  of `make verify`, and no CI job runs it): the golden path (preset → panel
+  edit painted on canvas → a line break through to the exported YAML → band +
+  page number → page size → export → PDF), a shipped-locale preset whose pack
+  and CJK font are FETCHED, and the link badge's click PASS-THROUGH. That last
+  one is here because jsdom does no hit testing at all, so the unit suite can
+  pin the `pointer-events: none` DECLARATION and nothing more. It authors a
+  link through the panel rather than opening one of the eight bundled presets
+  that carry a `link:` — authoring drives the whole path the badge rests on,
+  and it shares the golden path's own catalog locator — then asks
+  `elementFromPoint` at the badge's own centre what would receive a pointer,
+  before clicking there for real. A human running it is the whole mechanism, so
+  its failures NAME what intercepted. Its one coupling is geometric and
+  asserted rather than hoped: the badge rides the rendered width of the
+  preset's sample text, so a widened `params.json` address would move it off
+  the item — a precondition says so in its own sentence, keeping that red
+  distinguishable from a broken pass-through.
 - Run/dev: `designer-app/Dockerfile` (wasm → build → assemble → nginx)
   behind `make gui:serve` (:8788) and `e2e/run-e2e.sh` (Playwright,
   `make gui:e2e`); **`e2e/shot.js` + `run-shot.sh` (`make gui:shot`)**

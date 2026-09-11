@@ -163,3 +163,129 @@ test('open a shipped-locale preset whose pack and CJK font are fetched', async (
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
 });
+
+// The link badge is `pointer-events: none` so it cannot steal clicks from the
+// item it marks — a link-dense document would otherwise grow unclickable
+// patches over its own items, and nothing would say so. jsdom performs no hit
+// testing at all (`fireEvent.click(el)` dispatches straight at `el`), so the
+// unit suite can only pin the DECLARATION
+// (`designer/src/canvas/BoxOverlay.test.tsx`, "paints in the paper ink, not the
+// accent, and stays inert"); the behaviour that declaration buys needs a
+// browser, which is here.
+//
+// NOTE, because a permanent case reads like a guarded one: `make gui:e2e` is
+// deliberately ON-DEMAND and not part of `make verify` (Makefile,
+// CONTRIBUTING.md, docs/agents/gui.md); no CI job runs it either. Those three
+// say the first half — and since CI is a strict SUPERSET of `verify`, the
+// second does not follow from it and is stated separately. This case does not
+// keep `main` honest by itself: it is what a human runs to find out.
+test('a click on a link badge selects the item under it', async ({ page }) => {
+  const consoleErrors = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text());
+  });
+  const pageErrors = [];
+  page.on('pageerror', (err) => pageErrors.push(String(err)));
+
+  await page.goto('/');
+  const card = page.getByRole('button').filter({ hasText: 'Receipt' }).first();
+  await expect(card).toBeVisible({ timeout: 30000 });
+  await card.click();
+  const canvas = page.locator('canvas').first();
+  await expect(canvas).toBeVisible({ timeout: 30000 });
+
+  // The case AUTHORS its link rather than opening one of the eight bundled
+  // presets that already carry a `link:` (invoice-en, estimate-ja, …). Two
+  // reasons: authoring drives panel field → document op → re-render → the box
+  // index's `linked` flag → the badge, which is the whole path the mark rests
+  // on; and it keeps this case on the same preset the rest of this file drives,
+  // so it shares the catalog locator instead of adding a second one.
+  // `items[1]` is the receipt's static-text line, and it is the right target
+  // for a further reason: it has no `w`, so it fills the margin box, and its
+  // text is centred — so the badge (ink's right edge + gap + radius) lands over
+  // the item's OWN rect rather than out over the page. The margin is real but
+  // not generous: measured, the badge's centre sits 11.8 px inside a 144 px
+  // rect, and it rides the RENDERED WIDTH of the preset's sample text (the
+  // address in `examples/business/receipt-us/params.json`, not the
+  // `definitions.yml` `example:`). Eleven more characters there push it off,
+  // which is what the precondition below is for.
+  const badge = page.locator('.sj-link-badge-disc');
+  // The baseline, so "the badge appeared" is a transition rather than a state:
+  // this preset authors no `link:` today, and if one is ever added to it the
+  // case must be retargeted rather than quietly asserting a badge it did not
+  // author.
+  await expect(badge).toHaveCount(0);
+
+  const marked = page.getByRole('button', { name: 'sections.body.items[1]', exact: true });
+  await marked.click();
+  // `exact` because Playwright's default name match is a case-insensitive
+  // SUBSTRING, and `Link` is a strict prefix of `Link for fragment {n}` — the
+  // per-fragment field `SpansSection` renders beside this one on a `spans:`
+  // item. `items[1]` is plain text today, so the locator resolves to one
+  // either way; this is the same trap the golden path above meets twice
+  // (`/^Size/`, and the two `Export` labels).
+  const linkField = page.getByRole('textbox', { name: 'Link', exact: true });
+  await expect(linkField).toBeVisible({ timeout: 30000 });
+  await linkField.click();
+  await linkField.pressSequentially('https://example.com');
+
+  // This field commits on BLUR and has no Enter handler — `panel/LinkUrlField`
+  // delegates the blur to its wrapper so a trip into its own insert menu is not
+  // a commit, and leaving the field is. Selecting another item IS that blur,
+  // and it does double duty: it moves the selection AWAY, so the assertion at
+  // the end cannot pass by the selection simply never having moved.
+  const other = page.getByRole('button', { name: 'sections.body.items[0]', exact: true });
+  await other.click();
+  await expect(other).toHaveAttribute('aria-pressed', 'true');
+  await expect(marked).toHaveAttribute('aria-pressed', 'false');
+
+  await expect(badge).toHaveCount(1, { timeout: 30000 });
+
+  const box = await badge.boundingBox();
+  expect(box).not.toBeNull();
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+
+  // Asserted as a PRECONDITION, so the two ways this case can go red stay
+  // distinguishable. Without it, a widened sample address reds the hit test
+  // with `Received: "svg.sj-box-overlay"` — which reads like the pass-through
+  // breaking, in a run that is on-demand and therefore likely happening inside
+  // somebody else's unrelated cycle.
+  const rect = await marked.boundingBox();
+  expect(
+    cx,
+    'the badge is no longer anchored over its own item: the preset sample text widened, so the ' +
+      'hit test below would be asking about the page. Retarget the case — the pass-through is ' +
+      'not what broke.',
+  ).toBeLessThan(rect.x + rect.width);
+
+  // The hit test itself, asked of the browser directly: at the badge's own
+  // centre, what would receive a pointer? With the layer interactive this
+  // answers the badge; inert, it answers the item underneath. This runs BEFORE
+  // the click because a coordinate click that misses reads exactly like a
+  // broken feature, and this says which of the two happened.
+  // It reports the INTERCEPTOR by name when the answer is not an item, because
+  // this case is on-demand and a human reading the failure is the whole
+  // mechanism: `Received: "circle.sj-link-badge-disc"` says the badge took the
+  // click, where a bare `null` would only say the assertion did not hold.
+  const under = await page.evaluate(
+    ([x, y]) => {
+      const el = document.elementFromPoint(x, y);
+      if (el === null) return null;
+      return (
+        el.getAttribute('data-path') ??
+        `${el.tagName.toLowerCase()}.${el.getAttribute('class') ?? '(no class)'}`
+      );
+    },
+    [cx, cy],
+  );
+  expect(under).toBe('sections.body.items[1]');
+
+  // …and the consequence a user actually meets.
+  await page.mouse.click(cx, cy);
+  await expect(marked).toHaveAttribute('aria-pressed', 'true');
+  await expect(other).toHaveAttribute('aria-pressed', 'false');
+
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});

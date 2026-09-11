@@ -1623,7 +1623,9 @@ describe('the hyperlink badge', () => {
     expect(container.querySelector('.sj-link-badge svg')?.getAttribute('stroke')).toBe('#1f1a17');
     // Inert, so a link-dense document does not become unclickable. jsdom does
     // no hit-testing, so the DECLARATION is what a unit test can pin; the
-    // behaviour it buys is a live-browser check.
+    // BEHAVIOUR it buys is pinned in `gui:e2e` — `designer-app/e2e/tests/
+    // golden.spec.js`, "a click on a link badge selects the item under it",
+    // which is on-demand: not part of `make verify`, and no CI job runs it.
     const layer = container.querySelector('.sj-link-badge')?.parentElement;
     expect(layer?.getAttribute('style')).toContain('pointer-events: none');
   });

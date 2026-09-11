@@ -7,9 +7,11 @@
 // only `text` and `image` have the key at the item level, and the CAPABILITY
 // test, because an older engine rejects `link:` at parse.
 //
-// A link is a PDF `/URI` annotation: `render-png` paints none and the box index
-// carries no link either, so neither the preview nor the canvas overlay can
-// show one and this field is the only place the fact exists.
+// A link is a PDF `/URI` annotation, so `render-png` paints none: the PREVIEW
+// still shows nothing. What the canvas shows is the box index's `linked` flag,
+// as a badge beside the item's ink (`canvas/linkBadge.ts`) — which says an item
+// HAS a link, never where it goes. This field is still the only place the URL
+// itself exists.
 
 import { useI18n } from '../i18n/context';
 import { linkSurfaceNames, readItem } from '../text/declModel';

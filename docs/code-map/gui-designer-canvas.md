@@ -134,7 +134,11 @@ hostile geometry degrades to null before it can reach an op.
   whenever `w` is a percentage, so a corner badge floats in empty margin. A
   box the engine did not stamp (an older engine omits the field entirely,
   which is why this side needs no capability gate), one it stamped false, and
-  any non-finite coordinate all contribute nothing.
+  any non-finite coordinate all contribute nothing. The layer it feeds is
+  `pointer-events: none` so a link-dense document cannot grow unclickable
+  patches over its own items; jsdom does no hit testing, so the unit suite pins
+  that DECLARATION and the BEHAVIOUR is pinned in `gui:e2e`
+  (`designer-app/e2e/tests/golden.spec.js`, on-demand — no CI job runs it).
 - `canvas/overlayGeometry.ts` — the overlay's pure geometry:
   `pathDepth`/`byDepth`, `clientToPagePt` (over the LIVE bounding rect
   so zoom factors out; unmeasurable → ratio 1), `clientDeltaToPt`,
