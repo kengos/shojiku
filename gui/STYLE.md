@@ -378,19 +378,24 @@ re-inventing them:
   definition — are `StepperField`, `SeededField`, `fields.tsx`,
   `TableTextCells` and `toolbar/TypographyGroup`'s font-size box; the last
   carries an `originHint`, so it is the likeliest next opt-in and the one where
-  the trade-off must be re-judged rather than assumed. A bubble near a scroller's left edge also
-  wants `align="start"`: centred, it is wider than the control it explains and
-  the property panel clips the first characters off. The band editors' origin
-  hints are the worked example of all three.
+  the trade-off must be re-judged rather than assumed. The band editors' origin
+  hints are the worked example of both.
   The bubble is width-bounded, because a label may interpolate a
   document-derived name.
   **Constraint to know**: the bubble is `absolute` inside its wrapper, so a
   scrolling ancestor clips it — and in this app essentially every control has
   one (the app shell and the document-settings pane are both `overflow-y-auto`).
-  It hangs DOWNWARD, so this only bites a control sitting at a scroller's
-  bottom edge (measured: the lowest one today keeps 344px of room). Put a new
-  icon-only control where it has room below, or the tooltip is the thing that
-  gets cut.
+  HORIZONTALLY that is handled for you: `hooks/useTipPlacement` measures the
+  nearest clipping box and hangs the bubble off the side that fits, so a call
+  site neither picks a side nor needs to know which column it landed in. Do not
+  reintroduce a per-call-site choice — one `Segmented` row's two options
+  overflow in OPPOSITE directions inside a single row, and the panel's bubbles
+  arrive through `IconButton`, `Menu`, `Segmented` and `ColorSwatchPicker`,
+  none of which takes a side or forwards one.
+  VERTICALLY it is not: the bubble hangs DOWNWARD and nothing flips it, so a
+  control sitting at a scroller's bottom edge still has its tooltip cut
+  (measured: the lowest one today keeps 344px of room). Put a new icon-only
+  control where it has room below, or the tooltip is the thing that gets cut.
   The ONE exception, documented in place, is the app header's document-title
   button: its visible text IS its accessible name (WCAG label-in-name), so the
   rename hint rides `title` as an accessible DESCRIPTION.

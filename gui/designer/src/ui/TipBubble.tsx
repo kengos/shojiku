@@ -27,25 +27,21 @@
 // The text is bounded: a label may interpolate a DOCUMENT-derived name (the
 // styles-list row menu carries the style's own name), and an unbounded hostile
 // name on a `whitespace-nowrap` bubble would paint a strip clean off the
-// viewport. React escapes the text; `max-w` + `truncate` bound its width.
+// viewport. React escapes the text; `max-w` + `truncate` bound its width, and
+// the placement below keeps whatever survives that bound inside the box that
+// clips it rather than centred across both its edges.
+//
+// WHICH SIDE it hangs from is measured, never passed in: a centred bubble is
+// wider than the control it explains, so on a narrow control near a scroller's
+// edge it overhangs into ink that cannot even be scrolled to. No call site can
+// choose the side, because the primitives that carry a bubble are rendered in
+// both columns of the panel's field grid — see `hooks/useTipPlacement`.
 
-export function TipBubble({
-  text,
-  id,
-  align = 'center',
-}: {
-  readonly text: string;
-  readonly id?: string;
-  /** Where the bubble hangs relative to its wrapper. `center` is the default
-   * and right for an icon-only control sitting in open chrome. Use `start`
-   * against a NARROW wrapper near a scroller's left edge: a centered bubble is
-   * wider than the control it explains, so it overhangs on both sides and the
-   * property panel (`overflow-y-auto`, hence clipping on x too) cuts the first
-   * characters off — measured at 16px on the band editors' 太字 row, which is
-   * how a hint that now reaches the keyboard would still arrive unreadable. */
-  readonly align?: 'center' | 'start';
-}) {
-  const anchor = align === 'start' ? 'left-0' : 'left-1/2 -translate-x-1/2';
+import { tipAnchorClasses, useTipPlacement } from '../hooks/useTipPlacement';
+
+export function TipBubble({ text, id }: { readonly text: string; readonly id?: string }) {
+  const { placement, placeRef } = useTipPlacement(text);
+  const anchor = tipAnchorClasses(placement);
   // Opt-in, keyed on the same `id` that makes this a description — see the
   // header: a decorative bubble around a text input must not sit open while
   // the field has focus.
@@ -53,6 +49,7 @@ export function TipBubble({
     id === undefined ? '' : ' group-focus-within/tip:opacity-100 group-focus-within/tip:delay-300';
   return (
     <span
+      ref={placeRef}
       id={id}
       // Hidden from assistive tech ONLY while nothing points at it. A bubble
       // with an `id` is somebody's description, and an `aria-hidden` target is
