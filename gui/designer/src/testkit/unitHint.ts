@@ -10,10 +10,12 @@ import { screen } from '@testing-library/react';
  * `pt` is on screen; the border pen's width is a `number (pt)` and must NOT,
  * which is asserted by absence at that one site.
  *
- * Deliberately TERSE. Measured in the real app: a centred `TipBubble` on a
- * left-column panel field has 123px before the panel column clips it, and the
- * sentence this replaced needed 325px — it was the only truncating tooltip in
- * the Designer. The bubble sits beside the `pt` badge, so it only has to name
+ * Deliberately TERSE. The sentence this replaced needed 325px, and a bubble is
+ * bounded at `max-w-64` (256px) — it was the only truncating tooltip in the
+ * Designer. (It used to be bounded far harder: a centred bubble on a
+ * left-column panel field had 123px before the column clipped it. A bubble now
+ * hangs off the side that fits, so the cap is the bound.) It sits beside the
+ * `pt` badge, so it only has to name
  * alternatives; `em`, `rem`, `%` and the caveats live in the glossary's
  * `units` term, which has room for them. */
 export const UNIT_HINT_EN = 'mm, cm, in too';

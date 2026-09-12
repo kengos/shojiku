@@ -168,9 +168,7 @@ export function TableBandFields({ ctx, path, keys, headerFill, onOp }: TableBand
           />
           {t('panel.field.bold')}
         </label>
-        {boldHint === undefined ? null : (
-          <TipBubble text={boldHint} id={boldHintId} align="start" />
-        )}
+        {boldHint === undefined ? null : <TipBubble text={boldHint} id={boldHintId} />}
       </div>
       <OriginLine effective={weight} />
     </>
@@ -201,7 +199,7 @@ function HintLabel({
   return (
     <span className={`${FIELD_LABEL} relative w-fit`}>
       {label}
-      <TipBubble text={hint} id={hintId} align="start" />
+      <TipBubble text={hint} id={hintId} />
     </span>
   );
 }

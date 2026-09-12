@@ -194,6 +194,30 @@ platform binaries.
 
 ### Fixed
 
+- **Tooltips are readable wherever they appear.** A tooltip sat centred under
+  the control it explains, which is wider than the control itself — so on a
+  narrow button near the edge of a panel that scrolls, the overhanging part was
+  cut off, and cut off for good: it hung past the edge the panel scrolls FROM,
+  where scrolling cannot reach it. It is not a translation problem, though
+  longer names make it worse — four tooltips were being cut on the English
+  editor screen, the worst by 63px. In Japanese the property panel's
+  「リンクにデータ項目を挿入」 lost its first four characters and read as
+  「データ項目を挿入」 — which is, word for word, a different control's tooltip
+  on the same screen, so the hint did not look broken, it looked wrong.
+
+  A tooltip now measures the box that would clip it and hangs off whichever
+  side fits. It is not something a control opts into: the same handful of
+  shared controls appear in both columns of the property panel, and two halves
+  of one row can overflow in opposite directions, so the side that works is a
+  property of where the control ended up rather than of what it is. Nine
+  tooltips were being cut across four different parts of the window — the
+  toolbar, the layer list, the property panel, and inside a single segmented
+  control — and three of the nine were cut on the RIGHT.
+
+  A side effect worth naming: a cut-off tooltip was also stretching the layer
+  list's sideways scrolling by 82px while nobody was hovering it, so the pane
+  could be dragged sideways into empty space. That is gone with it.
+
 - **The canvas resize handles stay white on the page in dark chrome.** A handle
   took its fill from the chrome's surface colour, so in the dark scheme it
   turned into a near-black square sitting on a page that is white in both

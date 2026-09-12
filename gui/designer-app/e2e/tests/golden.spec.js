@@ -298,3 +298,103 @@ test('a click on a link badge selects the item under it', async ({ page }) => {
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);
 });
+
+// Tooltips: every bubble on the editor screen is fully inside whatever clips
+// it. This is the only place the claim is observable — jsdom has no layout
+// backend, so a unit test can pin the DECISION and its geometry table but never
+// that the running app agrees with them. It is also the only place the second
+// half is observable: an overhanging bubble widens its scroller's scroll range
+// even while nobody is hovering.
+test('no tooltip is cut off by the box that clips it', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', (err) => pageErrors.push(String(err)));
+
+  await page.goto('/');
+  const card = page.getByRole('button').filter({ hasText: 'Receipt' }).first();
+  await expect(card).toBeVisible({ timeout: 30000 });
+  await card.click();
+  await expect(page.getByRole('button', { name: 'File' })).toBeVisible({ timeout: 30000 });
+
+  // Select an item so the property panel — the narrowest surface that carries
+  // bubbles, and the one this change exists for — is on screen rather than the
+  // no-selection card.
+  await page.getByRole('button', { name: 'sections.body.items[1]', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Text' })).toBeVisible({ timeout: 30000 });
+
+  const survey = async () =>
+    page.evaluate(() => {
+      const clipperOf = (el) => {
+        const clips = /^(auto|scroll|hidden|clip|overlay)$/;
+        for (let p = el.parentElement; p; p = p.parentElement) {
+          const cs = getComputedStyle(p);
+          if (clips.test(cs.overflowX) || clips.test(cs.overflowY)) return p;
+        }
+        return document.documentElement;
+      };
+      const tips = [...document.querySelectorAll('[data-sj-tip]')];
+      return {
+        // The POSITIVE CONTROL. A walk that reached nothing reports an empty
+        // offender list, which is indistinguishable from a clean screen.
+        seen: tips.length,
+        cut: tips.flatMap((t) => {
+          const r = t.getBoundingClientRect();
+          const c = clipperOf(t).getBoundingClientRect();
+          const left = Math.round(c.left - r.left);
+          const right = Math.round(r.right - c.right);
+          // A bubble with no text has no box worth judging.
+          if (r.width === 0) return [];
+          return left > 0 || right > 0
+            ? [
+                `${t.textContent} (${left > 0 ? `${left}px off the left` : `${right}px off the right`})`,
+              ]
+            : [];
+        }),
+      };
+    });
+
+  const { seen, cut } = await survey();
+  expect(seen).toBeGreaterThan(4);
+  // Named, not counted: on failure the message is the list of hints a user
+  // cannot read, which is what a human running this on demand needs.
+  expect(cut).toEqual([]);
+
+  // The same defect without a hover: an absolutely-positioned bubble hanging
+  // past its scroller contributes to that scroller's scrollable overflow, so
+  // the pane could be dragged sideways into empty space. Measured at 82px in
+  // the layer-tree pane before this was fixed.
+  const overhang = await page.evaluate(() => {
+    // Scroll CONTAINERS only. A plain wrapper reports `scrollWidth` as its
+    // content bounds and scrolls nowhere, so comparing the two there answers a
+    // different question — the first cut did, and named seventeen elements
+    // that lose nothing.
+    const clips = /^(auto|scroll|hidden|clip|overlay)$/;
+    const scrollers = [...document.querySelectorAll('div,aside')].filter((el) => {
+      const cs = getComputedStyle(el);
+      return (
+        (clips.test(cs.overflowX) || clips.test(cs.overflowY)) &&
+        el.querySelector('[data-sj-tip]') !== null
+      );
+    });
+    // Causal, not correlational: a pane may scroll sideways for honest reasons
+    // (a wide table, a long layer name). What must be zero is the part of that
+    // range the TOOLTIPS are responsible for — measured by taking them out,
+    // which is how the 82px was found in the first place.
+    const blamed = scrollers.flatMap((el) => {
+      const tips = [...el.querySelectorAll('[data-sj-tip]')];
+      const before = el.scrollWidth;
+      for (const t of tips) t.style.display = 'none';
+      const after = el.scrollWidth;
+      for (const t of tips) t.style.display = '';
+      return before > after
+        ? [`${el.getAttribute('aria-label') ?? el.className}: ${before - after}px`]
+        : [];
+    });
+    return { scrollers: scrollers.length, blamed };
+  });
+  // The positive control again: zero scrollers examined would report a clean
+  // result for the wrong reason.
+  expect(overhang.scrollers).toBeGreaterThan(0);
+  expect(overhang.blamed).toEqual([]);
+
+  expect(pageErrors).toEqual([]);
+});

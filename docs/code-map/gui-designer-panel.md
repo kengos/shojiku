@@ -667,10 +667,13 @@ presence is not a text binding.
   time over the reseed nonce, for the same reason: both sheet cells now carry
   their own `useReseedKey`, because their caller keys them by a value that a
   normalising commit does not move. Its text is deliberately
-  TERSE (`mm, cm, in too`): measured in the real app, a centred `TipBubble`
-  on a LEFT-column panel field has 123px before the panel column's
-  `overflow-y: auto` clips it, and a sentence needed 325px — it was the
-  only truncating tooltip in the Designer. The bubble sits beside the `pt`
+  TERSE (`mm, cm, in too`): a sentence needed 325px and a bubble is bounded at
+  `max-w-64` (256px), so it was the only truncating tooltip in the Designer.
+  The figure this used to cite — 123px of usable width on a LEFT-column field,
+  before the panel column's `overflow-y: auto` cut the rest — is no longer the
+  bound: a bubble now anchors to the side that fits, so the width available to
+  it is its own cap rather than its distance to the nearest clipping edge.
+  The TERSENESS still stands on the cap, and on the bubble's job. The bubble sits beside the `pt`
   badge, so naming alternatives is its whole job; `em`, `rem`, `%` and the
   caveats (`%` resolves against a different axis per field and drops with
   `percent_of_auto` under an auto-height parent) live in the glossary's

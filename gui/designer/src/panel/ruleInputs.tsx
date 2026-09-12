@@ -127,7 +127,7 @@ export function SwatchRow({
     <div className="group/tip flex items-center gap-2">
       <span className={`${FIELD_LABEL} relative mb-0 flex-1`}>
         {label}
-        {hint === undefined ? null : <TipBubble text={hint} id={hintId} align="start" />}
+        {hint === undefined ? null : <TipBubble text={hint} id={hintId} />}
       </span>
       <ColorSwatchPicker
         label={label}

@@ -560,6 +560,29 @@ is Tailwind utilities over the `--sj-*` tokens.
   placement now lives in `hooks/usePopoverPlacement.ts` — hoisted out when a
   second popover (the panel's numeric combo) needed it, since any panel
   popover taller than a couple of rows has the same problem.
+- `hooks/useTipPlacement.ts` — the same three parts (pure decision +
+  callback-ref measurement + classes) for the TOOLTIP, and a separate file
+  because it answers a different question. A popover asks whether it fits the
+  WINDOW; a tooltip is cut long before that, by the nearest ancestor that
+  CLIPS — which in this app is usually the 280px property panel. Every bubble
+  measured there sat well inside the viewport and was still unreadable, so the
+  popover hook's bound reports no overflow for all of them. `placeTip` keeps
+  the bubble centred where it fits and otherwise hangs it off whichever edge of
+  the trigger lands inside the clipper — tested by whether that side FITS, not
+  by which way the centred box overflowed, which is a different question and
+  the one the first cut asked: a trigger near the clipper's right edge
+  overflows right, and anchoring there can still run off the LEFT once the
+  bubble is wider than the distance to it. A bubble wider than the room on both
+  sides cannot be shown whole by any anchoring, and takes the side that leaves
+  more of it visible. `clipperOf` tests
+  BOTH overflow axes (a clipping value on either clips both, which is how
+  `overflow-y: auto` cuts a bubble sideways) and `anchorOf` walks to the
+  containing block rather than reading `offsetParent`, which jsdom always
+  reports as null. Both predicates are positive SETS, not "not the default
+  value": an unset property can read back as the empty string, and a
+  not-equal test would then call every element a clipper. Measured once per
+  mount and again when the `text` changes, the one input that moves a bubble's
+  width within a session.
 - `ui/swatchPalette.ts` — the palette as a STRUCTURE, not a flat list:
   `HUE_COLUMNS` (six hues × `SHADE_STEPS` shades, lightest first),
   `NEUTRALS`, and `swatchPlace` over a real `Map` (the lookup value can come
@@ -621,8 +644,14 @@ is Tailwind utilities over the `--sj-*` tokens.
   a control's name. Opt-in rather than default because of one CATEGORY — any
   tip group wrapping a focusable text field (the panel's field primitives, and
   `toolbar/TypographyGroup`'s size box) — where reveal-on-focus would park a
-  tooltip over the rows below while the user types. `align="start"` anchors
-  it left for a narrow control near the property panel's clipping edge.
+  tooltip over the rows below while the user types. WHICH SIDE it hangs from is
+  measured, not passed in (`hooks/useTipPlacement`): a centred bubble is wider
+  than the narrow control it explains, so near a scroller's edge it overhangs
+  into ink `scrollLeft` cannot reach. The call site could not choose anyway —
+  one `Segmented` row's two options overflow in OPPOSITE directions inside a
+  single 251px row, and the panel's bubbles arrive through `Button`,
+  `IconButton`, `Menu`, `Segmented` and `ColorSwatchPicker`, none of which
+  takes a side or forwards one.
 - `ui/ResizeHandle.tsx` — the WAI-ARIA window splitter (semantics-free;
   caller owns state; pointer capture guarded for jsdom).
 - `ui/icons.tsx` — the hand-drawn inline-SVG icon set (`currentColor`,
