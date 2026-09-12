@@ -2,7 +2,7 @@
 
 # Builder pinned to an exact Rust release for reproducible builds; bump the
 # version deliberately instead of tracking a floating tag.
-FROM rust:1.97.1-slim-bookworm AS builder
+FROM rust:1.98.0-slim-bookworm AS builder
 WORKDIR /app
 COPY engine ./engine
 # `shojiku-mcp` embeds the bundled examples with `include_str!` so its read
