@@ -1363,8 +1363,10 @@ Formatting/style and coverage follow the general rules in
   against the real WASM engine (never a mock)
 - End-to-end tests (Playwright) for the golden path (open preset →
   tweak → preview → export) — wired as **`make gui:e2e`** (Playwright in
-  Docker over the built + assembled app), on-demand like `make engine:wasm-e2e`,
-  NOT part of `make verify`
+  Docker over the built + assembled app): on-demand locally and NOT part of
+  `make verify`, but it runs as its own CI job. Every other gui gate is jsdom,
+  which lays nothing out, so this is where a LAYOUT claim is checked; it runs
+  with `retries: 0` and uploads its Playwright report on failure
 - Accessibility: run axe (or equivalent) against rendered GUI screens —
   **not yet wired in CI (aspirational, do not assume it gates)**; a11y
   diagnostics surfaced by the engine are a different concern (they

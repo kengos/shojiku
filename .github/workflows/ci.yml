@@ -191,6 +191,40 @@ jobs:
           path: engine/wasm/pkg/
       - run: make gui:verify
 
+  # The ONLY job that runs a real browser, and so the only one that can read
+  # LAYOUT. Everything gui-side above it is jsdom, which lays nothing out — so
+  # "nothing is clipped", "nothing overlaps", "this opens the right way" are
+  # claims `gui:verify` is structurally unable to check, however green it is.
+  # Not a hypothetical: nine tooltips were being cut across four different
+  # clipping boxes in the shipped app, on a `main` every jsdom gate called
+  # green, until somebody looked in a browser.
+  #
+  # No path filter, deliberately — `ci.yml` has one trigger for every job (the
+  # gui job already runs on engine-only PRs, docker on gui-only ones), and this
+  # renders a real document through the real engine, so an engine-only change
+  # is exactly what it should catch.
+  gui-e2e:
+    name: gui — e2e (browser golden path)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: make gui:e2e
+      # `retries` is 0 (see playwright.config.js), so a red has to be readable
+      # without re-running it. The report is written on every run, pass or
+      # fail; `if: failure()` is here because only the failing one is worth 6MB
+      # of artifact storage — and only that one carries the trace and the
+      # screenshot, which are what make it worth reading.
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: gui/designer-app/e2e/playwright-report/
+          # `warn`, not `error`: the job can also fail BEFORE Playwright runs
+          # (the image build, the server never coming up), and there is no
+          # report then. A second, confusing failure would bury the first.
+          if-no-files-found: warn
+
   site:
     name: site (tsc / vitest / data check / Pages build)
     needs: wasm

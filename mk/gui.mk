@@ -108,7 +108,7 @@ gui\:normalize-examples: ## Rewrite examples/*/*/templates.yml at the Designer's
 		pnpm install --frozen-lockfile; \
 		pnpm --filter @shojiku/designer-core normalize:examples'
 
-gui\:e2e: ## Designer-app browser golden path (Playwright in Docker) — on-demand, not in verify
+gui\:e2e: ## Designer-app browser golden path (Playwright in Docker) — in CI, not in local verify
 	@$(call gate,_gui-e2e,gui:e2e)
 
 _gui-e2e:

@@ -420,8 +420,9 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   CSP — same-origin + `wasm-unsafe-eval`; `connect-src` additionally
   allows raw.githubusercontent.com for the picker) + an explicit
   standalone `config.json` (`{}`).
-- Browser e2e (`e2e/tests/golden.spec.js`, `make gui:e2e` — ON-DEMAND, not part
-  of `make verify`, and no CI job runs it): the golden path (preset → panel
+- Browser e2e (`e2e/tests/golden.spec.js`, `make gui:e2e` — on-demand locally
+  and not part of `make verify`, but it IS a CI job, the only one that drives a
+  real browser and so the only one that reads layout): the golden path (preset → panel
   edit painted on canvas → a line break through to the exported YAML → band +
   page number → page size → export → PDF), a shipped-locale preset whose pack
   and CJK font are FETCHED, and the link badge's click PASS-THROUGH. That last

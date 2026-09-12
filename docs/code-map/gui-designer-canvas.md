@@ -159,7 +159,7 @@ hostile geometry degrades to null before it can reach an op.
   `pointer-events: none` so a link-dense document cannot grow unclickable
   patches over its own items; jsdom does no hit testing, so the unit suite pins
   that DECLARATION and the BEHAVIOUR is pinned in `gui:e2e`
-  (`designer-app/e2e/tests/golden.spec.js`, on-demand — no CI job runs it).
+  (`designer-app/e2e/tests/golden.spec.js` — on-demand locally, and a CI job).
 - `canvas/overlayGeometry.ts` — the overlay's pure geometry:
   `pathDepth`/`byDepth`, `clientToPagePt` (over the LIVE bounding rect
   so zoom factors out; unmeasurable → ratio 1), `clientDeltaToPt`,

@@ -418,7 +418,9 @@ ways to run your own copy:
   `.devcontainer/` exists for editor-integrated work (same pnpm store;
   engine artifacts still build on the host via `make engine:wasm`).
 - **`make gui:e2e`** builds the same app image and runs the Playwright
-  golden path against it (on-demand, not part of `make verify`).
+  golden path against it. On-demand locally (it costs minutes), but it DOES
+  run in CI: every other gui gate is jsdom, which lays nothing out, so this
+  is the only place a layout claim is checked.
 - **`make gui:verify`** runs the GUI gates (typecheck + lint + Vitest, including
   real-engine integration tests that render through the WASM bindings —
   never a mock) in Docker.
