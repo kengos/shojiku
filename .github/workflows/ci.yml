@@ -155,7 +155,7 @@ jobs:
       # skills:verify parses YAML, so it needs PyYAML. Installed explicitly
       # rather than assumed off the runner image: an image that stops shipping
       # it would redden a gate that has nothing to do with the change.
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: python3 -m pip install --quiet pyyaml
