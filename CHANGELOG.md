@@ -192,6 +192,21 @@ platform binaries.
   checkbox in a header as a frame the width of the page. A fixed-aspect mark now
   takes the position and nothing else.
 
+### Changed
+
+- **The Designer's browser test now runs on every pull request.** It already
+  existed and already passed; nothing ran it unless somebody typed the command.
+  Every other check on the Designer runs in jsdom, which never lays anything
+  out — so "nothing is clipped", "nothing overlaps", "this menu opens the right
+  way" were claims no gate could read, however green the build was. The
+  The tooltip fix below is what made that concrete: nine tooltips were being
+  cut in the shipped app, across four different parts of the window, while
+  every check we had called the build green.
+
+  It adds no time to a pull request — the checks run in parallel and this one
+  finishes inside the slowest of them — and on failure it now uploads the
+  browser's own report, with a trace and a screenshot of the moment it broke.
+
 ### Fixed
 
 - **Tooltips are readable wherever they appear.** A tooltip sat centred under

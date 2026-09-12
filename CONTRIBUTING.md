@@ -80,8 +80,11 @@ slices.
 
 A few targets are deliberately **on-demand** rather than part of
 `verify`, because they cost minutes and answer a question most changes
-do not raise: `make engine:wasm-e2e` and `make gui:e2e` (browser golden
-paths), `make engine:fuzz` (below), and the two cross-build targets. `make engine:capi-dist`
+do not raise: `make engine:wasm-e2e` (browser golden path),
+`make engine:fuzz` (below), and the two cross-build targets.
+`make gui:e2e` is on-demand LOCALLY for the same reason and **does run in
+CI** — it is the only job that drives a real browser, so it is the only
+one that can read layout at all. `make engine:capi-dist`
 cross-builds
 the C ABI cdylib for the
 platform matrix the FFI SDKs ship (linux x64/arm64, windows x64-gnu)
