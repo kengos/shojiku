@@ -6,6 +6,7 @@ import {
   placeTip,
   type TipPlacement,
   tipAnchorClasses,
+  tipRoom,
   useTipPlacement,
 } from './useTipPlacement';
 
@@ -226,6 +227,45 @@ describe('the one clipper that can be resized', () => {
     // measurement — the measured figure (38px at this pane width) came from the
     // running app, and lives in the change's own record.
     expect(left).toBeLessThan(0);
+  });
+});
+
+describe('tipRoom', () => {
+  const clip = { left: 0, right: 300 };
+
+  it('measures to the FAR edge for a side-anchored bubble', () => {
+    expect(tipRoom({ left: 40, right: 60 }, 'start', clip)).toBe(260);
+    expect(tipRoom({ left: 240, right: 260 }, 'end', clip)).toBe(260);
+  });
+
+  it('measures TWICE the nearer gap when centred, because it grows both ways', () => {
+    // Trigger middle at 60: 60 to the left, 240 to the right. A centred bubble
+    // wider than 120 would overhang the left, so 120 is the room.
+    expect(tipRoom({ left: 50, right: 70 }, 'center', clip)).toBe(120);
+  });
+
+  it('bounds the stepper hint that widened the panel by 90px', () => {
+    // The geometry the widened browser walk reported, in clipper-relative px:
+    // the panel's 279px content box, the anchor where `StepperField`'s relative
+    // unit hint hangs. `max-w-64` (256px) does not save it — the bubble fits
+    // the PANEL and not the room at its own anchor — so the bound has to come
+    // from the side that was chosen, not from the clipper's width.
+    const panel = { left: 0, right: 279 };
+    const anchor = { left: 113, right: 131 };
+    const placement = placeTip(anchor, 256, panel);
+    expect(placement).toBe('start');
+    const room = tipRoom(anchor, placement, panel);
+    expect(room).toBe(166);
+    // Bounded, the bubble ends inside; unbounded it ran 90px past — which is
+    // the figure the walk measured on the running app.
+    expect(anchor.left + room).toBeLessThanOrEqual(panel.right);
+    expect(anchor.left + 256 - panel.right).toBe(90);
+  });
+
+  it('never asks for a negative width', () => {
+    // An anchor clamped outside its clipper would otherwise produce one.
+    expect(tipRoom({ left: 400, right: 420 }, 'start', clip)).toBeLessThanOrEqual(300);
+    expect(tipRoom({ left: -80, right: -60 }, 'end', clip)).toBeGreaterThanOrEqual(0);
   });
 });
 

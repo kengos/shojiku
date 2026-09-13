@@ -321,10 +321,25 @@ test('no tooltip is cut off by the box that clips it', async ({ page }) => {
   await page.getByRole('button', { name: 'sections.body.items[1]', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Text' })).toBeVisible({ timeout: 30000 });
 
+  // A child of the CONTAINER at items[5], on the Layout tab: that is where the
+  // placement-mode picker renders, and it is a `Segmented` — the one control
+  // whose own box used to clip its tooltips away entirely. An item outside a
+  // container gets no mode picker at all, so a walk that never lands here
+  // cannot see them, which is half of why the earlier one-axis version of this
+  // passed.
+  await page.getByRole('button', { name: 'sections.body.items[5].items[0]', exact: true }).click();
+  await page.getByRole('tab', { name: 'Layout' }).click();
+  // The precondition, asserted rather than assumed: without the picker on
+  // screen the survey below would sweep a page that cannot contain the defect
+  // and report it clean.
+  const modePicker = page.locator('fieldset').filter({ has: page.locator('[data-sj-tip]') });
+  await expect(modePicker.first()).toBeVisible({ timeout: 30000 });
+
   const survey = async () =>
     page.evaluate(() => {
+      const clips = /^(auto|scroll|hidden|clip|overlay)$/;
+      const scrolls = /^(auto|scroll|overlay)$/;
       const clipperOf = (el) => {
-        const clips = /^(auto|scroll|hidden|clip|overlay)$/;
         for (let p = el.parentElement; p; p = p.parentElement) {
           const cs = getComputedStyle(p);
           if (clips.test(cs.overflowX) || clips.test(cs.overflowY)) return p;
@@ -338,16 +353,36 @@ test('no tooltip is cut off by the box that clips it', async ({ page }) => {
         seen: tips.length,
         cut: tips.flatMap((t) => {
           const r = t.getBoundingClientRect();
-          const c = clipperOf(t).getBoundingClientRect();
-          const left = Math.round(c.left - r.left);
-          const right = Math.round(r.right - c.right);
           // A bubble with no text has no box worth judging.
           if (r.width === 0) return [];
-          return left > 0 || right > 0
-            ? [
-                `${t.textContent} (${left > 0 ? `${left}px off the left` : `${right}px off the right`})`,
-              ]
-            : [];
+          const c = clipperOf(t);
+          const cr = c.getBoundingClientRect();
+          const cs = getComputedStyle(c);
+          // BOTH axes, and reachability is per DIRECTION, not per axis. Past a
+          // box's scroll ORIGIN is never reachable — `scrollTop`/`scrollLeft`
+          // clamp at 0, so those pixels cannot be brought into view by any
+          // means. Past its END is reachable only if the box scrolls that way:
+          // an absolutely positioned bubble extends `scrollHeight`, so in a
+          // scrolling pane it can be scrolled to, and is not cut.
+          //
+          // Getting this wrong in either direction is a silent gate: treating
+          // every overflow as a defect reports a scrolling pane's last tooltip
+          // forever, and treating none as one is how the ONE-axis version of
+          // this walk passed in CI while two tooltips were invisible.
+          const bad = [];
+          const top = Math.round(cr.top - r.top);
+          const bottom = Math.round(r.bottom - cr.bottom);
+          const left = Math.round(cr.left - r.left);
+          const right = Math.round(r.right - cr.right);
+          if (top > 0) bad.push(`${top}px off the top`);
+          if (bottom > 0 && !scrolls.test(cs.overflowY)) {
+            bad.push(`${bottom}px off the bottom, in a box that cannot scroll`);
+          }
+          if (left > 0) bad.push(`${left}px off the left`);
+          if (right > 0 && !scrolls.test(cs.overflowX)) {
+            bad.push(`${right}px off the right, in a box that cannot scroll`);
+          }
+          return bad.length > 0 ? [`${t.textContent} (${bad.join('; ')})`] : [];
         }),
       };
     });
@@ -385,9 +420,25 @@ test('no tooltip is cut off by the box that clips it', async ({ page }) => {
       for (const t of tips) t.style.display = 'none';
       const after = el.scrollWidth;
       for (const t of tips) t.style.display = '';
-      return before > after
-        ? [`${el.getAttribute('aria-label') ?? el.className}: ${before - after}px`]
-        : [];
+      if (before <= after) return [];
+      // Name the TOOLTIP, not just the pane. Re-hiding them one at a time says
+      // which one owns the range; a bare "Properties: 90px" is a pane-sized
+      // haystack, and this case is on-demand enough that a human reading the
+      // failure is the whole mechanism.
+      const culprits = tips
+        .map((t) => {
+          t.style.display = 'none';
+          const drop = before - el.scrollWidth;
+          t.style.display = '';
+          return { text: t.textContent, drop };
+        })
+        .filter((c) => c.drop > 0)
+        .sort((a, b) => b.drop - a.drop)
+        .map((c) => `${c.text} (+${c.drop}px)`);
+      const pane = el.getAttribute('aria-label') ?? el.className;
+      return [
+        `${pane}: ${before - after}px — ${culprits.join(', ') || 'no single tooltip accounts for it'}`,
+      ];
     });
     return { scrollers: scrollers.length, blamed };
   });

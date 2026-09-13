@@ -583,6 +583,16 @@ is Tailwind utilities over the `--sj-*` tokens.
   not-equal test would then call every element a clipper. Measured once per
   mount and again when the `text` changes, the one input that moves a bubble's
   width within a session.
+  `tipRoom` then gives the bubble a `max-width`: the room from the anchor to
+  the far edge of the clipper at the side that was chosen (twice the nearer gap
+  when centred, since a centred bubble grows both ways). Without it a bubble
+  wider than the room on every side takes the roomiest and hangs the rest
+  OUTSIDE — reachable by scrolling, so not "cut", but it widens that box's
+  scroll range, which is how a 90px strip of the property panel came to be
+  draggable into empty space. Clamped at 0, because CSS silently ignores a
+  negative `max-width` and the bubble would come back unbounded at exactly the
+  geometry needing a bound. The measurement lifts any previous bound before
+  reading the width, or the bound and the measurement chase each other.
 - `ui/swatchPalette.ts` — the palette as a STRUCTURE, not a flat list:
   `HUE_COLUMNS` (six hues × `SHADE_STEPS` shades, lightest first),
   `NEUTRALS`, and `swatchPlace` over a real `Map` (the lookup value can come

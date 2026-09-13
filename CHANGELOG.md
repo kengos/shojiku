@@ -209,6 +209,29 @@ platform binaries.
 
 ### Fixed
 
+- **Two tooltips that had never been visible now show.** The placement mode
+  picker — "Let the container position this" / "Pin this at its current
+  position" — carries a hint on each option, and both were being cut away
+  completely: not shortened, not clipped at an edge, but zero visible pixels,
+  for as long as that control has existed. The control draws itself as one
+  rounded box by clipping its own contents, and a tooltip hangs just below the
+  row it is clipping. It rounds its end segments instead now, and clips
+  nothing.
+
+  Nothing had caught it because the browser check added alongside these fixes
+  only looked left and right. It looks up and down too now, and it knows the
+  difference between a tooltip you could scroll to and one you could not —
+  below a pane that scrolls is fine, below a box that cannot scroll is a hint
+  nobody can read.
+
+- **A long tooltip no longer hangs out of the panel it belongs to.** A hint too
+  wide for the room beside its control used to spill past the property panel,
+  which let the panel be dragged sideways into empty space. Each tooltip is now
+  bounded by the room actually available where it hangs, so an over-long one
+  ends in an ellipsis inside the panel instead of escaping it. Spotted on the
+  stepper's "values in percent or em cannot be stepped" hint, which was
+  stretching the panel by 90px.
+
 - **Tooltips are readable wherever they appear.** A tooltip sat centred under
   the control it explains, which is wider than the control itself — so on a
   narrow button near the edge of a panel that scrolls, the overhanging part was
