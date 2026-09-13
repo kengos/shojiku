@@ -332,6 +332,12 @@ takes `version-check-exempt: <reason>`, the same shape as
   a `cargo` run on a host with no toolchain, and a push at the protected
   `main`, and they ask before a merge. They affect an AI session only;
   nothing here changes what a human contributor may run. `make hooks:verify`
-  is the gate over them. **Review a change to them as code**: they execute on
+  is the gate over them, and it also runs `make hooks:codes` — the same rule
+  from the other end. The hooks stop a work-item code being WRITTEN and fire
+  only for an edit made through Claude Code; `hooks:codes` sweeps the tracked
+  tree for ones already there, which is how two dozen came to sit in test
+  comments and example YAML with every gate green. Those codes name entries in
+  a local-only queue whose entries are deleted when the work ships, so a code
+  in a tracked file points at nothing — describe the substance instead. **Review a change to them as code**: they execute on
   every tool call in the checkout they sit in, so they will run on your machine
   once you check the branch out.

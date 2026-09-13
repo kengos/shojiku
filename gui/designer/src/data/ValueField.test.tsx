@@ -2,7 +2,7 @@
 // through the data editor — `ValueField` had no sibling unit test, and the
 // cases below are about the WIDGET's own behaviour, not the editor's fixture.
 //
-// The defect these pin is the one GUI-5 removed from the property panel,
+// The defect these pin is the one already removed from the property panel,
 // arriving here through the data editor instead: the call site keys the widget
 // by `value`, which cannot move when a commit authors nothing or authors a
 // REWRITTEN value, so the entry the editor did not take used to stay on screen.

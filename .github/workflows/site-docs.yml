@@ -43,6 +43,15 @@ name: Site (docs-only changes)
 # on the one change it exists to catch. Same shape as the two above; it needs no
 # Docker and takes seconds.
 #
+# THE FOURTH HOLE, and it is the same shape a fourth time. `make hooks:codes`
+# sweeps the tracked tree for work-item codes — names like a queue entry, which
+# is local-only and whose entries are DELETED when the work ships, so a code in
+# a tracked file points at nothing. Prose is where they land: two dozen were
+# found in test comments and example YAML, and the rule had until now only an
+# EDIT-TIME hook, which cannot see what is already there. Filing the sweep
+# under ci.yml alone would give it ci.yml's blind spot, and docs are precisely
+# where the next one goes. No Docker, no Rust, under a second.
+#
 # THE SECOND HOLE, same shape. `make make:check` refuses any tracked file that
 # names a make target which does not exist — a failure mode that is
 # predominantly DOCS, since prose is where a target gets named in passing. It
@@ -103,6 +112,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: make make:check
+
+  work-item-codes:
+    name: work-item codes (none reached the tracked tree)
+    runs-on: ubuntu-latest
+    steps:
+      # `fetch-depth: 0` is NOT needed: the sweep reads `git ls-files`, which
+      # is the index, not history.
+      - uses: actions/checkout@v7
+      - run: make hooks:codes
 
   skills:
     name: skills (every skill still has an eval case)

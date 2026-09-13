@@ -194,6 +194,18 @@ platform binaries.
 
 ### Changed
 
+- **Internal tracking codes no longer appear in the source.** Two dozen
+  comments in tests and example templates named an item in a planning queue,
+  which is private and whose entries are deleted once the work ships. So they pointed at nothing: a reader met a label they could
+  not look up, attached to an explanation that was perfectly good without it.
+  Each now says what it means instead. Nothing about behaviour changed; this is
+  the comments only.
+
+  A check now sweeps the repository for them, so the next one fails a build
+  instead of waiting to be noticed. There was a rule and a Claude Code hook,
+  but the hook only sees an edit as it is made — it could not see what was
+  already there, and it never fires for an edit made any other way.
+
 - **The Designer's browser test now runs on every pull request.** It already
   existed and already passed; nothing ran it unless somebody typed the command.
   Every other check on the Designer runs in jsdom, which never lays anything

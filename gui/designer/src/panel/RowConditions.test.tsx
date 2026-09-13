@@ -133,7 +133,7 @@ describe('RowConditionsSection', () => {
     expect(screen.getByRole('checkbox', { name: 'Bold' })).not.toBeNull();
   });
 
-  // GUI-4. The strip and the opened card answer two different questions — what
+  // The strip and the opened card answer two different questions — what
   // this rule ADDS, and what the matching rows RENDER with — and only the
   // second was ever labelled. A rule that adds nothing rendered as an absence,
   // which reads as "nothing happens here" right up until you open the card and
@@ -180,7 +180,7 @@ describe('RowConditionsSection', () => {
     // band that IS bold: a real edit, and the only reason such a rule exists.
     // Read through a `=== 'bold'` boolean it was indistinguishable from an
     // unset weight, so the strip called the rule empty one click after the
-    // user acted — the GUI-4 contradiction restated backwards, in words.
+    // user acted — the same contradiction restated backwards, in words.
     section([{ when: { key: 'kind', equals: 'heading' }, style: { fontWeight: 'normal' } }]);
     expect(screen.queryByText('Adds no formatting of its own')).toBeNull();
     expect(screen.getByText('Not bold')).not.toBeNull();

@@ -1,5 +1,5 @@
-//! The probe GD11 stands on: text drawn at a paint alpha of ZERO must
-//! still reach the PDF as EXTRACTABLE text.
+//! What the form-mark probe stands on: text drawn at a paint alpha of ZERO
+//! must still reach the PDF as EXTRACTABLE text.
 //!
 //! krilla exposes no text rendering mode (0.8.2 is the latest release and
 //! `Surface` has no `Tr` control), so an invisible-but-readable header row
@@ -114,7 +114,8 @@ fn zero_opacity_text_still_reaches_the_content_stream() {
     });
     assert!(
         drawn,
-        "a fully transparent fill dropped the glyphs — GD11 cannot ride paint alpha"
+        "a fully transparent fill dropped the glyphs — an invisible-but-readable
+         row cannot ride paint alpha"
     );
 }
 

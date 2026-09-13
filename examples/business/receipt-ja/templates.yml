@@ -6,10 +6,10 @@ page:
   orientation: portrait
   margin: 25 # the margin box is the coordinate origin: x/y 0 = 25pt in
 
-# Document presentation defaults (FR1): currency renders on its symbol
+# Document presentation defaults: currency renders on its symbol
 # form (¥5,000) everywhere — placements just bind the key.
 defaults:
-  # Document presentation defaults (DF1): the locale drives the pack
+  # Document presentation defaults: the locale drives the pack
   # (dates/currency/units) and the currency code fills the middle of the
   # currency fallback chain, so bindings stay `{key}` with no per-field code.
   locale: ja-JP

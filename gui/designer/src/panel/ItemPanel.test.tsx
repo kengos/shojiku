@@ -230,7 +230,7 @@ describe('ItemPanel — `visible:` inside a row scope', () => {
   });
 });
 
-// GUI-41 — `visible:` is the rare, advanced setting. It stays OUTSIDE the tabs
+// `visible:` is the rare, advanced setting. It stays OUTSIDE the tabs
 // (it applies to every type and must not appear and disappear as the reader
 // changes tab) but BELOW them: it used to head the panel, so selecting a
 // rectangle opened on it, above the background and border controls.

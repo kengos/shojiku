@@ -12,7 +12,7 @@ page:
   margin: { top: 22mm, right: 20mm, bottom: 25mm, left: 20mm }
 
 defaults:
-  # DF1: the document locale drives the ja-JP pack (no currency here).
+  # The document locale drives the ja-JP pack (no currency here).
   locale: ja-JP
 
 sections:
