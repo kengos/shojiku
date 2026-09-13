@@ -27,6 +27,17 @@ import { useCallback, useState } from 'react';
  * right wherever there is room on both sides. */
 export type TipPlacement = 'center' | 'start' | 'end';
 
+/** Where a bubble hangs AND how wide it may be there. The width matters because
+ * a side that "fits" is only ever the best available one: when the bubble is
+ * wider than the room on every side, the rule picks the roomiest and the rest
+ * used to hang outside the clipper — reachable by scrolling, and so not CUT,
+ * but it widened that box's scroll range, which is ink nobody wants to find. */
+export interface TipBox {
+  readonly placement: TipPlacement;
+  /** px, or `null` before anything has been measured. */
+  readonly maxWidth: number | null;
+}
+
 /** A horizontal span. Both inputs are independent of the ANSWER — the anchor is
  * the trigger, which does not move, and the width is the bubble's own extent,
  * which is the same whichever side it hangs from (it is `whitespace-nowrap`, so
@@ -74,6 +85,30 @@ export function placeTip(anchor: Span, width: number, clip: Span): TipPlacement 
     return 'end';
   }
   return clip.right - left >= right - clip.left ? 'start' : 'end';
+}
+
+/** How much room a bubble has at `placement`, measured from the anchor to the
+ * far edge of `clip`. Feeding this back as the bubble's `max-width` is what
+ * keeps it INSIDE the box: with it, a label too long to fit ends in the
+ * `truncate` ellipsis rather than hanging out of the panel.
+ *
+ * Centred, the room is symmetric about the trigger's middle, so it is twice the
+ * nearer gap — a centred bubble grows both ways at once. */
+export function tipRoom(anchor: Span, placement: TipPlacement, clip: Span): number {
+  const left = Math.max(anchor.left, clip.left);
+  const right = Math.min(anchor.right, clip.right);
+  const room =
+    placement === 'start'
+      ? clip.right - left
+      : placement === 'end'
+        ? right - clip.left
+        : 2 * Math.min((left + right) / 2 - clip.left, clip.right - (left + right) / 2);
+  // Never negative: a trigger wholly outside its own clipper (scrolled away)
+  // would otherwise ask for a negative `max-width`, which CSS ignores — so the
+  // bubble would quietly go back to being unbounded at exactly the geometry
+  // that needs a bound most. Clamped here rather than at the call site, so
+  // "room" cannot mean a negative number anywhere.
+  return Math.max(0, room);
 }
 
 /** Tailwind anchor classes for a placement. `center` keeps the spelling the
@@ -134,8 +169,10 @@ export function anchorOf(el: HTMLElement): HTMLElement | null {
  *
  * A bubble with no positioned ancestor cannot be placed against anything and
  * stays centred, which is what it did before it was measured at all. */
+const UNMEASURED: TipBox = { placement: 'center', maxWidth: null };
+
 export function useTipPlacement(text: string) {
-  const [placement, setPlacement] = useState<TipPlacement>('center');
+  const [box, setBox] = useState<TipBox>(UNMEASURED);
   // `text` is not READ below — it is what makes React re-attach the callback
   // ref, and so re-measure, when the bubble's width can have changed. The rule
   // reads that as a surplus dependency; it is the whole mechanism.
@@ -144,18 +181,25 @@ export function useTipPlacement(text: string) {
     (el: HTMLElement | null) => {
       const anchor = el === null ? null : anchorOf(el);
       if (el === null || anchor === null) {
-        setPlacement('center');
+        setBox(UNMEASURED);
         return;
       }
-      setPlacement(
-        placeTip(
-          anchor.getBoundingClientRect(),
-          el.getBoundingClientRect().width,
-          clipperOf(el).getBoundingClientRect(),
-        ),
-      );
+      const anchorRect = anchor.getBoundingClientRect();
+      const clip = clipperOf(el).getBoundingClientRect();
+      // Measure the bubble with any bound this hook previously applied lifted,
+      // then put it back. Reading the bounded box would decide against an
+      // answer the hook itself produced, and the two would chase each other —
+      // a narrow bound makes the bubble look narrow, which makes it look like
+      // it fits, which widens the bound. One reflow per measurement, and
+      // measurement happens on mount and on a text change, not on hover.
+      const bound = el.style.maxWidth;
+      el.style.maxWidth = '';
+      const wanted = el.getBoundingClientRect().width;
+      el.style.maxWidth = bound;
+      const placement = placeTip(anchorRect, wanted, clip);
+      setBox({ placement, maxWidth: tipRoom(anchorRect, placement, clip) });
     },
     [text],
   );
-  return { placement, placeRef };
+  return { ...box, placeRef };
 }

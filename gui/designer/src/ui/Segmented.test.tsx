@@ -49,6 +49,39 @@ describe('Segmented', () => {
     expect(screen.getByText('Auto tip')).toBeTruthy();
   });
 
+  it('does not CLIP the option row, because a tooltip hangs below it', () => {
+    // The row is ~34px tall and a bubble hangs 4px under its trigger, so a
+    // clipping overflow here removes the tooltip entirely — measured at ZERO
+    // visible pixels in the running app, for as long as this control has
+    // existed. Flipping the bubble upward does not help: 24px does not fit a
+    // 34px box from either side, so the box must not clip.
+    //
+    // jsdom lays nothing out, so this can only pin the DECLARATION; the
+    // behaviour is pinned in the browser walk (`golden.spec.js`, case
+    // `no tooltip is cut off by the box that clips it`). The rounding it
+    // replaced moved onto the end options, which is what keeps the control
+    // looking like one rounded box — that part no gate can read, and was
+    // confirmed by eye.
+    const { container } = render(
+      <Segmented
+        ariaLabel="Placement"
+        value="auto"
+        options={[
+          { value: 'auto', label: 'Auto', tip: 'Auto tip' },
+          { value: 'pin', label: 'Fixed', tip: 'Fixed tip' },
+        ]}
+        onChange={vi.fn()}
+      />,
+    );
+    const row = container.querySelector('fieldset') as HTMLElement;
+    expect(row.className).not.toContain('overflow-hidden');
+    expect(row.className).toContain('rounded-md');
+    const labels = [...container.querySelectorAll('label')];
+    expect(labels).toHaveLength(2);
+    expect(labels[0]?.className).toContain('first-of-type:rounded-l-md');
+    expect(labels[1]?.className).toContain('last-of-type:rounded-r-md');
+  });
+
   it('describes the group AND every focusable radio when given an id', () => {
     // The focusable elements are the sr-only radios; a description on the
     // group container alone is announced far less reliably.

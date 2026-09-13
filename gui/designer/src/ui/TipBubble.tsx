@@ -40,7 +40,7 @@
 import { tipAnchorClasses, useTipPlacement } from '../hooks/useTipPlacement';
 
 export function TipBubble({ text, id }: { readonly text: string; readonly id?: string }) {
-  const { placement, placeRef } = useTipPlacement(text);
+  const { placement, maxWidth, placeRef } = useTipPlacement(text);
   const anchor = tipAnchorClasses(placement);
   // Opt-in, keyed on the same `id` that makes this a description — see the
   // header: a decorative bubble around a text input must not sit open while
@@ -51,6 +51,11 @@ export function TipBubble({ text, id }: { readonly text: string; readonly id?: s
     <span
       ref={placeRef}
       id={id}
+      // The measured room at `placement`, so a label too long for it ends in
+      // the `truncate` ellipsis INSIDE the box rather than hanging out of it.
+      // `max-w-64` still caps it; this only ever narrows. Before the first
+      // measurement there is no bound, which is what the bubble always had.
+      style={maxWidth === null ? undefined : { maxWidth: `${maxWidth}px` }}
       // Hidden from assistive tech ONLY while nothing points at it. A bubble
       // with an `id` is somebody's description, and an `aria-hidden` target is
       // not read.

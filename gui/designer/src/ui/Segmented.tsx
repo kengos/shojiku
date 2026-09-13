@@ -40,8 +40,14 @@ export interface SegmentedProps {
   readonly describedBy?: string;
 }
 
+// The end options round themselves. The fieldset used to do it for all of them
+// with `overflow-hidden`, which also clipped each option's TOOLTIP: the row is
+// 34px tall and a bubble hangs 4px below its trigger, so both hints here were
+// cut to ZERO visible pixels — measured in the running app, and true since the
+// control was written. Flipping the bubble upward does not help, because 24px
+// does not fit a 34px box from either side; the box simply must not clip.
 const SEG_LABEL =
-  'group/tip relative inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 border-border border-l px-2 py-1.5 text-muted text-sm font-medium first-of-type:border-l-0 hover:text-text has-checked:bg-accent has-checked:font-semibold has-checked:text-on-accent has-disabled:cursor-default has-disabled:opacity-40 has-disabled:hover:text-muted';
+  'group/tip relative inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 border-border border-l px-2 py-1.5 text-muted text-sm font-medium first-of-type:rounded-l-md first-of-type:border-l-0 last-of-type:rounded-r-md hover:text-text has-checked:bg-accent has-checked:font-semibold has-checked:text-on-accent has-disabled:cursor-default has-disabled:opacity-40 has-disabled:hover:text-muted';
 
 /** A full-width segmented radio group. One `onChange` per pick; a native radio
  * fires no change for a re-pick of the checked option or a disabled one. */
@@ -50,7 +56,7 @@ export function Segmented({ value, options, onChange, ariaLabel, describedBy }: 
   return (
     <fieldset
       aria-describedby={describedBy}
-      className="mb-2 flex overflow-hidden rounded-md border border-border p-0"
+      className="mb-2 flex rounded-md border border-border p-0"
     >
       <legend className="sr-only">{ariaLabel}</legend>
       {options.map((option) => (
