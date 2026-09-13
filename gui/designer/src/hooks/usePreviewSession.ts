@@ -5,7 +5,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { PageMargin } from '../canvas/marginGuide';
-import { cssFactor, renderScale } from '../canvas/zoom';
+import { cssFactor, pixelRatio, renderScale } from '../canvas/zoom';
 import type { EngineTransport } from '../engine/transport';
 import type { BoxIndex, RawPage } from '../engine/types';
 import type { PreviewState } from '../preview/reducer';
@@ -38,9 +38,18 @@ export interface PreviewSession {
   readonly setZoomClamped: (next: number) => void;
   readonly canvasRefCallback: (el: HTMLDivElement | null) => void;
   readonly onFit: () => void;
-  /** The scale the shown render was produced at (not necessarily the target —
-   * the zoom may have moved on since it was requested). */
+  /** The scale the shown render was produced at, in DEVICE px per pt (not
+   * necessarily the target — the zoom may have moved on since it was
+   * requested). Divide by {@link pixelRatio} for the CSS scale the canvas is
+   * laid out at; `useAutoFit` wants this one, because it divides a page's
+   * device-pixel width by it to recover pt. */
   readonly renderedScale: number;
+  /** Device pixels per CSS pixel the render was requested for. */
+  readonly pixelRatio: number;
+  /** CSS px per pt the pages are DISPLAYED at — {@link renderedScale} divided
+   * by {@link pixelRatio}. What the canvas lays out in, and what the overlay's
+   * pt conversions are measured against. */
+  readonly cssScale: number;
   /** The interim CSS transform that gives zoom instant feedback. */
   readonly cssFactor: number;
   /** Whether the shown render corresponds to the LIVE COMMITTED document. A
@@ -72,7 +81,13 @@ export function usePreviewSession({
   maxBytes,
 }: PreviewSessionOptions): PreviewSession {
   const zoomState = useZoom();
-  const target = renderScale(baseScale, zoomState.zoom);
+  // Read fresh on each render rather than subscribed to: the ratio only matters
+  // when it feeds a render, and every way it can change (a browser zoom, a
+  // window moved to another display) re-renders this tree anyway. A stale one
+  // costs exactly what the app did before this was read at all — an upscaled
+  // raster — so there is no state to keep in sync and no listener to leak.
+  const ratio = pixelRatio(window.devicePixelRatio);
+  const target = renderScale(baseScale, zoomState.zoom, ratio);
   const draft = useDraftPreview(text, maxBytes);
   const preview = usePreview(transport, draft.text, {
     params,
@@ -99,7 +114,9 @@ export function usePreviewSession({
     canvasRefCallback: zoomState.canvasRefCallback,
     onFit,
     renderedScale,
-    cssFactor: cssFactor(baseScale, zoomState.zoom, renderedScale),
+    pixelRatio: ratio,
+    cssScale: renderedScale / ratio,
+    cssFactor: cssFactor(baseScale, zoomState.zoom, renderedScale, ratio),
     fresh: !draft.drafting && preview.rendered !== null && preview.rendered === preview.revision,
     setDraftOps: draft.setDraftOps,
     pages: preview.lastGood?.pages ?? [],

@@ -89,7 +89,12 @@ hostile geometry degrades to null before it can reach an op.
   `OverlayBox` uses it; ghosts, marquees and container marks stay on the
   raw `scaleRect`. `canvas/paint.ts` —
   `paintPage` RGBA→canvas (no-op without a 2D ctx).
-  `canvas/PageUnderlay.tsx` — callback-ref canvas paint.
+  `canvas/PageUnderlay.tsx` — callback-ref canvas paint. Its `width`/
+  `height` ATTRIBUTES are the raster (DEVICE px) and the optional
+  `cssSize` is the box it occupies, so a HiDPI screen gets one raster
+  pixel per screen pixel instead of an upscale. `cssSize` is optional
+  because the document-settings preview deliberately lets a stylesheet
+  fit the raster to its column, and an inline size would win over it.
 - `canvas/BoxOverlay.tsx` — the overlay ASSEMBLY: the `<svg>` element,
   ONE `useOverlayDrag` call, and the LAYER ORDER — which is now literally
   what the return statement shows, three children in order:
@@ -315,7 +320,12 @@ hostile geometry degrades to null before it can reach an op.
 - `canvas/DesignerCanvas.tsx` — per-page underlay+overlay stack; passes
   `margin` to EVERY page (one page geometry per document, so every page
   shares the origin);
-  applies the zoom `cssFactor` transform; slots the `InlineTextEditor`;
+  applies the zoom `cssFactor` transform; **turns the render's DEVICE
+  pixels into the CSS pixels everything below lays out in** (`page.width
+  ÷ pixelRatio`, handed to both the underlay's `cssSize` and the
+  overlay's `width`/`height`, whose `scale` is the CSS scale — so
+  `width / scale` is still pt on the overlay's side and no pointer
+  conversion under it changes); slots the `InlineTextEditor`;
   threads reorder/multi-select wiring, `pageSvgRef` + `insertIndicator`
   (palette drop), and `pageRef` (the page-nav rail measures through it).
 
@@ -332,8 +342,12 @@ hostile geometry degrades to null before it can reach an op.
 
 - `canvas/zoom.ts` — pure zoom model: `clampZoom`/`stepZoom`/
   `wheelZoom`/`fitZoom`/`isMeasurable` (gates the open-at-Fit pass),
-  `renderScale` (capped — the RGBA memory bound), `cssFactor`,
-  `anchorScroll` (cursor-anchored wheel math).
+  `renderScale` (DEVICE px per pt: the desired CSS scale times the device
+  pixel ratio, capped — the RGBA memory bound, and the cap is applied
+  AFTER the ratio so no ratio can outgrow it), `pixelRatio` (rescues a
+  non-finite or non-positive one to 1), `cssFactor`, `anchorScroll`
+  (cursor-anchored wheel math). The ratio always arrives as an ARGUMENT —
+  this file reads no `window`.
 - `canvas/ZoomControl.tsx` — the topbar [−][level select][+] cluster;
   all math in `zoom.ts`.
 - `canvas/InlineTextEditor.tsx` — the double-click editor: the shared

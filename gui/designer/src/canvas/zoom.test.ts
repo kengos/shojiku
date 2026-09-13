@@ -9,6 +9,7 @@ import {
   MAX_RENDER_SCALE,
   MAX_ZOOM,
   MIN_ZOOM,
+  pixelRatio,
   renderScale,
   stepZoom,
   wheelZoom,
@@ -82,12 +83,50 @@ describe('isMeasurable', () => {
   });
 });
 
+describe('pixelRatio', () => {
+  it('passes a positive finite ratio through', () => {
+    expect(pixelRatio(2)).toBe(2);
+    expect(pixelRatio(1.5)).toBe(1.5);
+  });
+
+  it('rescues every degenerate ratio to 1', () => {
+    expect(pixelRatio(Number.NaN)).toBe(1);
+    expect(pixelRatio(Number.POSITIVE_INFINITY)).toBe(1);
+    expect(pixelRatio(0)).toBe(1);
+    expect(pixelRatio(-2)).toBe(1);
+  });
+});
+
 describe('renderScale', () => {
   it('is baseScale × zoom, capped at MAX_RENDER_SCALE', () => {
     expect(renderScale(2, 1)).toBe(2);
     expect(renderScale(2, 2)).toBe(4);
     // 2 × 4 = 8 would exceed the cap.
     expect(renderScale(2, 4)).toBe(MAX_RENDER_SCALE);
+  });
+
+  it('asks for the same scale with the ratio omitted as with an explicit 1', () => {
+    // The identity every caller written before the parameter existed relies on.
+    for (const zoom of [MIN_ZOOM, 0.5, 1, 2, MAX_ZOOM]) {
+      expect(renderScale(2, zoom)).toBe(renderScale(2, zoom, 1));
+    }
+  });
+
+  it('multiplies the ratio in, so a 2× screen is rasterized at 2× the pixels', () => {
+    expect(renderScale(2, 0.25, 2)).toBe(1);
+    expect(renderScale(2, 0.25, 3)).toBe(1.5);
+  });
+
+  it('caps AFTER the ratio, so no ratio can outgrow the memory bound', () => {
+    expect(renderScale(2, 1, 4)).toBe(MAX_RENDER_SCALE);
+    // The security case: an absurd ratio from a hostile embedding.
+    expect(renderScale(2, 1, 1e9)).toBe(MAX_RENDER_SCALE);
+  });
+
+  it('treats a degenerate ratio as 1 rather than producing NaN', () => {
+    expect(renderScale(2, 1, Number.NaN)).toBe(2);
+    expect(renderScale(2, 1, 0)).toBe(2);
+    expect(renderScale(2, 1, -2)).toBe(2);
   });
 });
 
@@ -108,6 +147,26 @@ describe('cssFactor', () => {
 
   it('falls back to 1 for a non-positive rendered scale (no render yet)', () => {
     expect(cssFactor(2, 1, 0)).toBe(1);
+  });
+
+  it('reads the same with the ratio omitted as with an explicit 1', () => {
+    expect(cssFactor(2, 1, 2)).toBe(cssFactor(2, 1, 2, 1));
+    expect(cssFactor(2, 4, MAX_RENDER_SCALE)).toBe(cssFactor(2, 4, MAX_RENDER_SCALE, 1));
+  });
+
+  it('is 1 on a 2× screen whose render matched — crisp, not magnified', () => {
+    // zoom 1 at ratio 2 asks for device scale 4; a render that delivered it
+    // needs no transform, because the element is laid out at raster ÷ 2.
+    expect(cssFactor(2, 1, 4, 2)).toBe(1);
+  });
+
+  it('exceeds 1 on a 2× screen whose render was capped', () => {
+    // zoom 2 at ratio 2 wants 8, capped at 6.
+    expect(cssFactor(2, 2, MAX_RENDER_SCALE, 2)).toBeCloseTo(8 / 6, 6);
+  });
+
+  it('treats a degenerate ratio as 1', () => {
+    expect(cssFactor(2, 1, 2, Number.NaN)).toBe(1);
   });
 });
 

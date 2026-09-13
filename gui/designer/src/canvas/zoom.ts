@@ -1,11 +1,14 @@
 // The pure zoom model: all the arithmetic behind the canvas zoom control, kept
 // free of React and the DOM so every branch is unit-testable with plain
-// numbers. Two scales are in play — the DESIRED display scale the user asked
-// for (`baseScale × zoom`) and the RENDER scale the engine actually rasterizes
-// at (the desired scale capped at `MAX_RENDER_SCALE`, because RGBA bytes grow
-// quadratically). When the desired scale exceeds the cap, or a fresh zoom has
-// not re-rendered yet, the gap is covered by a CSS transform (`cssFactor`), so
-// zooming feels instant and only snaps crisp once the debounced render lands.
+// numbers — the device pixel ratio arrives as an ARGUMENT, never as a `window`
+// read in here. Two scales are in play — the DESIRED display scale the user
+// asked for (`baseScale × zoom`, in CSS px per pt) and the RENDER scale the
+// engine actually rasterizes at (that scale times the device pixel ratio, so a
+// HiDPI screen gets one raster pixel per screen pixel, capped at
+// `MAX_RENDER_SCALE` because RGBA bytes grow quadratically). When the desired
+// scale exceeds the cap, or a fresh zoom has not re-rendered yet, the gap is
+// covered by a CSS transform (`cssFactor`), so zooming feels instant and only
+// snaps crisp once the debounced render lands.
 
 /** Smallest / largest zoom the control allows (25% … 400%). */
 export const MIN_ZOOM = 0.25;
@@ -96,22 +99,43 @@ export function isMeasurable(width: number, height: number): boolean {
   return width > 0 && height > 0;
 }
 
-/** The device px per pt to rasterize at for `zoom`, bounded by the memory cap. */
-export function renderScale(baseScale: number, zoom: number): number {
-  return Math.min(baseScale * clampZoom(zoom), MAX_RENDER_SCALE);
+/** The device pixels per CSS pixel a raster should be produced at. A non-finite
+ * or non-positive ratio — a headless surface that reports nothing, a hostile
+ * embedding — falls back to 1, the value every display had before HiDPI and the
+ * same posture `clampZoom` takes for a hostile zoom. */
+export function pixelRatio(ratio: number): number {
+  return Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
+}
+
+/** The device px per pt to rasterize at for `zoom` on a screen with this pixel
+ * ratio, bounded by the memory cap. The cap is applied AFTER the ratio is
+ * multiplied in, which is what keeps an absurd ratio from turning into an
+ * absurd allocation. Omitting the ratio asks for one raster pixel per CSS
+ * pixel — right for a 1x screen, and what every caller meant before the
+ * parameter existed. */
+export function renderScale(baseScale: number, zoom: number, ratio = 1): number {
+  return Math.min(baseScale * clampZoom(zoom) * pixelRatio(ratio), MAX_RENDER_SCALE);
 }
 
 /** The CSS transform factor that displays the DESIRED scale (`baseScale ×
- * zoom`) given pages rasterized at `renderedScale`: 1 when they match (crisp),
- * >1 when the render was capped or a newer zoom has not re-rendered yet
- * (interim magnification), <1 for the brief window a zoom-OUT is still showing
- * the larger previous render. A non-positive `renderedScale` (no render yet) →
- * 1. */
-export function cssFactor(baseScale: number, zoom: number, renderedScale: number): number {
+ * zoom`) given pages rasterized at `renderedScale` for this pixel ratio: 1 when
+ * they match (crisp), >1 when the render was capped or a newer zoom has not
+ * re-rendered yet (interim magnification), <1 for the brief window a zoom-OUT
+ * is still showing the larger previous render. Both sides of the ratio are in
+ * DEVICE pixels, which is why it appears here at all — the canvas element is
+ * laid out at `raster ÷ ratio` CSS px, so the factor that magnifies it must be
+ * measured in the same units the raster is. A non-positive `renderedScale` (no
+ * render yet) → 1. */
+export function cssFactor(
+  baseScale: number,
+  zoom: number,
+  renderedScale: number,
+  ratio = 1,
+): number {
   if (!(renderedScale > 0)) {
     return 1;
   }
-  return (baseScale * clampZoom(zoom)) / renderedScale;
+  return (baseScale * clampZoom(zoom) * pixelRatio(ratio)) / renderedScale;
 }
 
 /** New scroll offset that keeps the content point under the cursor stationary

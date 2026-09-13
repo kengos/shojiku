@@ -221,6 +221,22 @@ platform binaries.
 
 ### Fixed
 
+- **The document preview is drawn at your screen's real resolution.** On a
+  Retina or any other high-density display, the page in the middle of the
+  Designer was the one soft thing on the screen: the engine rendered it at one
+  pixel per CSS pixel and the browser then stretched that over the two or three
+  real pixels the screen has, while every label, menu and tree row around it was
+  drawn sharp. Small text in a document — an address line, a table cell — was
+  the first thing to go, which is exactly the text you are checking when you
+  look at a preview. The preview is now rasterized for the pixels your display
+  actually has, so it is as crisp as the chrome around it. It occupies the same
+  space on screen as before; only the sharpness changed.
+
+  The safety limit on how large a single page render may get is unchanged, and
+  it is applied after the display's density is taken into account — so a very
+  dense screen cannot turn into a very large allocation. A standard-density
+  display renders exactly what it did before.
+
 - **Two tooltips that had never been visible now show.** The placement mode
   picker — "Let the container position this" / "Pin this at its current
   position" — carries a hint on each option, and both were being cut away

@@ -66,7 +66,7 @@ export function CanvasArea({
   const { read, applyAll, selection } = editor;
   const { selectClearing, setRefused } = multi;
   const { gridStep } = prefs;
-  const { pages, boxes, margin, renderedScale, cssFactor, canvasRefCallback, preview } = session;
+  const { pages, boxes, margin, cssScale, cssFactor, canvasRefCallback, preview } = session;
   // Called HERE rather than in `wiring.ts` beside `useContainerMarks`, because
   // unlike the marks this value has exactly one consumer — the canvas below.
   // Hoisting it would thread it through four components to reach the one.
@@ -110,8 +110,9 @@ export function CanvasArea({
           <DesignerCanvas
             pages={pages}
             boxes={boxes}
-            scale={renderedScale}
+            scale={cssScale}
             cssFactor={cssFactor}
+            pixelRatio={session.pixelRatio}
             selectedPath={selection}
             onSelect={selectClearing}
             multiSelected={multi.multiSel}

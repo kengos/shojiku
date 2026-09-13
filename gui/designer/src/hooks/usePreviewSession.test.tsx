@@ -1,8 +1,10 @@
-// The freshness half of the preview session. The render loop itself is covered
-// by `preview/usePreview`; what is asserted here is the one thing composing the
-// draft changed — a render of UNCOMMITTED text is never reported as fresh.
+// The freshness half of the preview session, plus the scale it asks the engine
+// for. The render loop itself is covered by `preview/usePreview`; what is
+// asserted here is the one thing composing the draft changed — a render of
+// UNCOMMITTED text is never reported as fresh — and the one thing the screen
+// depends on, that the requested scale carries the device pixel ratio.
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { EngineTransport } from '../engine/transport';
 import { outcome, SOURCE } from '../testkit/fixtures';
 import { usePreviewSession } from './usePreviewSession';
@@ -16,11 +18,20 @@ function transport(): EngineTransport {
   };
 }
 
-function session() {
+/** jsdom reports 1 and has no way to change displays; the property is
+ * configurable, so it can be redefined and put back. */
+function setPixelRatio(value: number) {
+  Object.defineProperty(window, 'devicePixelRatio', { value, configurable: true });
+}
+
+function session(engineOut?: { engine?: EngineTransport }) {
   // The transport is created ONCE and captured: `usePreview` keys its effect on
   // the transport identity, so a fresh object per render re-renders forever
   // (it exhausts the heap rather than failing an assertion).
   const engine = transport();
+  if (engineOut !== undefined) {
+    engineOut.engine = engine;
+  }
   return renderHook(() =>
     usePreviewSession({
       transport: engine,
@@ -65,5 +76,32 @@ describe('usePreviewSession freshness', () => {
     await waitFor(() => expect(result.current.fresh).toBe(false));
     act(() => result.current.setDraftOps(null));
     await waitFor(() => expect(result.current.fresh).toBe(true));
+  });
+});
+
+describe('usePreviewSession render scale', () => {
+  afterEach(() => {
+    setPixelRatio(1);
+  });
+
+  it('asks the engine for a scale that carries the device pixel ratio', async () => {
+    setPixelRatio(2);
+    const held: { engine?: EngineTransport } = {};
+    const { result } = session(held);
+    await waitFor(() => expect(result.current.preview.lastGood).not.toBeNull());
+    // baseScale 1 × the opening zoom 1 × ratio 2.
+    const call = vi.mocked(held.engine?.renderRaw as EngineTransport['renderRaw']).mock.calls[0];
+    expect(call?.[3]).toEqual({ scale: 2 });
+    // And the ratio is reported, so the canvas can divide the raster back down.
+    expect(result.current.pixelRatio).toBe(2);
+  });
+
+  it('asks for the base scale on a 1× screen', async () => {
+    const held: { engine?: EngineTransport } = {};
+    const { result } = session(held);
+    await waitFor(() => expect(result.current.preview.lastGood).not.toBeNull());
+    const call = vi.mocked(held.engine?.renderRaw as EngineTransport['renderRaw']).mock.calls[0];
+    expect(call?.[3]).toEqual({ scale: 1 });
+    expect(result.current.pixelRatio).toBe(1);
   });
 });

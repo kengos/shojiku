@@ -36,6 +36,49 @@ describe('DesignerCanvas', () => {
     expect(canvas.style.transform).toBe('scale(1)');
   });
 
+  it('lays the page out in CSS px while the raster stays in device px', () => {
+    // A 2× screen: the engine rasterized 20×20 device px for a 10×10 CSS box.
+    const { container } = render(
+      <DesignerCanvas
+        pages={[page(20, 20)]}
+        boxes={{ pages: [[]] }}
+        scale={1}
+        pixelRatio={2}
+        selectedPath={null}
+        onSelect={() => {}}
+        onDeselect={() => {}}
+      />,
+    );
+    const underlay = container.querySelector('canvas') as HTMLCanvasElement;
+    expect(underlay.width).toBe(20);
+    expect(underlay.style.width).toBe('10px');
+    const sheet = underlay.parentElement as HTMLElement;
+    expect(sheet.style.width).toBe('10px');
+    expect(sheet.style.height).toBe('10px');
+    // The overlay is sized in the SAME units its `scale` is in, which is what
+    // keeps `width / scale` pt on its side.
+    const overlay = container.querySelector('svg') as SVGSVGElement;
+    expect(overlay.getAttribute('width')).toBe('10');
+    expect(overlay.getAttribute('height')).toBe('10');
+  });
+
+  it('sizes page and overlay from the raster when no pixel ratio is given', () => {
+    // The default every caller written before the prop existed relies on.
+    const { container } = render(
+      <DesignerCanvas
+        pages={[page(20, 20)]}
+        boxes={{ pages: [[]] }}
+        scale={1}
+        selectedPath={null}
+        onSelect={() => {}}
+        onDeselect={() => {}}
+      />,
+    );
+    const underlay = container.querySelector('canvas') as HTMLCanvasElement;
+    expect(underlay.style.width).toBe('20px');
+    expect(container.querySelector('svg')?.getAttribute('width')).toBe('20');
+  });
+
   it('applies the zoom css factor as a transform', () => {
     const { container } = render(
       <DesignerCanvas
