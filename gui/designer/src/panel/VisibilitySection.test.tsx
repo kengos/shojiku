@@ -302,7 +302,7 @@ describe('a page_break', () => {
   });
 });
 
-// GUI-41 — this is the RARE setting, so unset it costs one row rather than a
+// This is the RARE setting, so unset it costs one row rather than a
 // titled block with a two-sentence paragraph and a full-width button above the
 // controls anyone actually opened the panel for.
 describe('the unset form is one row', () => {

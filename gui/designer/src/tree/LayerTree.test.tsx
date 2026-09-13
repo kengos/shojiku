@@ -569,7 +569,7 @@ describe('a conditionally shown item', () => {
 describe('LayerTree gesture hint', () => {
   const HINT = 'Drag rows to reorder or regroup.';
 
-  // GD9 shipped cross-parent drag and a walkthrough found it BY ACCIDENT:
+  // Cross-parent drag shipped, and a walkthrough found it BY ACCIDENT:
   // nothing on screen said a row could be dragged to change its owner, and no
   // `tree.*` or `sidebar.*` string mentioned dragging at all.
   it('says what a row can do', () => {

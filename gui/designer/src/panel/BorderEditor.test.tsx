@@ -469,7 +469,7 @@ describe('BorderEditor unit affordance', () => {
   });
 });
 
-// GUI-41 — the corner-radius row. The explanation used to wrap to four lines
+// The corner-radius row. The explanation used to wrap to four lines
 // beside a `w-32` input, which left the sentence's tail (the list of units the
 // key takes) orphaned under the control and the control itself crammed into a
 // third of the row.

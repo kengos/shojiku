@@ -465,7 +465,7 @@ describe('the unit hint in a rendered field', () => {
   });
 });
 
-// GUI-41 — the field-level hierarchy fixes. Each pins a MECHANISM rather than a
+// The field-level hierarchy fixes. Each pins a MECHANISM rather than a
 // pixel: jsdom computes no geometry, so what is provable here is the class the
 // browser would lay out from, the accessible name, and the attribute.
 describe('a stepper names its own field', () => {

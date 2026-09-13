@@ -321,7 +321,7 @@ describe('FieldPicker — binding scope', () => {
   });
 });
 
-// GUI-41 — the panel's one rule for a button beside an input: a button that is
+// The panel's one rule for a button beside an input: a button that is
 // PART of the control is flush; a button that ACTS ON THE ROW is detached
 // (`StringListField`'s trash pins the other half). jsdom lays nothing out, so
 // what is pinned is the mechanism the browser would lay out FROM.

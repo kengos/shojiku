@@ -441,7 +441,7 @@ describe('formatOptions — the registry names a type may actually pick', () => 
   });
 
   it('offers the locale pack’s own variants on a bound field', () => {
-    // ENGINE-GUI-3: `wareki` is declared by the ja-JP pack, so no curated
+    // `wareki` is declared by the ja-JP pack, so no curated
     // table in the panel could know about it — before this, a date binding's
     // picker simply had no 和暦 row, while the document-defaults picker (which
     // has read the catalog since it shipped) did. It arrives with the pack's

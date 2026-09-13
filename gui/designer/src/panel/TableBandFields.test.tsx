@@ -252,7 +252,7 @@ describe('TableBandFields — where the value came from', () => {
     }
   });
 
-  // GUI-2. The bubble said where a value came from and said it only to a mouse,
+  // The bubble said where a value came from and said it only to a mouse,
   // and for two of the three it did not even do that: the hover group sat on the
   // LABEL, so pointing at the control showed nothing.
   describe('the origin reaches a keyboard, and the CONTROL shows it', () => {
@@ -347,7 +347,8 @@ describe('TableBandFields — where the value came from', () => {
     });
 
     it('authors nothing by describing anything', () => {
-      // GUI-2 is chrome: no wire moved, so a render must still emit no op.
+      // Reaching the keyboard is CHROME: no wire moved, so a render must
+      // still emit no op.
       const onOp = band(docWith({ type: 'table' }), 'row');
       expect(onOp).not.toHaveBeenCalled();
     });

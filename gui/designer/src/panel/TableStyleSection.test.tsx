@@ -376,7 +376,7 @@ describe('TableStyleSection — the invisible header row', () => {
   const NAME = 'Hide the header row on the page';
   const NOTE = 'The header row is hidden on the page, so none of the settings below are drawn';
 
-  // GUI-7. This switch used to live inside 「Detailed formatting」, one
+  // This switch used to live inside 「Detailed formatting」, one
   // disclosure down, while the zebra switch — its exact peer — sat at the top.
   // Every test below therefore opened the disclosure first; none of them do
   // now, and that deletion IS the assertion.
