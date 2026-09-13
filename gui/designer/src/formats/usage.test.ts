@@ -69,8 +69,8 @@ describe('buildFormatUsage', () => {
 
   it('files a `defaults.formats.<type>` name ONLY for the dated slots', () => {
     // REWRITTEN: this case used to assert that `defaults.formats.currency:
-    // symbol` filed a reference under `symbol`, which is the very bug GUI-24
-    // fixes — the registry is date/datetime-kind only, so the currency slot
+    // symbol` filed a reference under `symbol`, which is the very bug this
+    // guards against — the registry is date/datetime-kind only, so the currency slot
     // names the currency's builtin `symbol` variant and can never reach an
     // entry of that name. Renaming an entry called `symbol` used to rewrite
     // this line and silently change how money displayed.

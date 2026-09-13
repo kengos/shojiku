@@ -306,7 +306,7 @@ describe('PageSetup custom dimension steppers', () => {
   });
 });
 
-// GUI-41 — the numeric soft keyboard the stepper absorption took away. These
+// The numeric soft keyboard the stepper absorption took away. These
 // three fields' builders (`composeDimension`, `uniformMarginOp`) each refuse a
 // unit outright, so a decimal keypad can type every value they accept; the
 // stepper withholds `inputMode` by default because most of its call sites take

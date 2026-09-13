@@ -6,9 +6,9 @@ page:
   size: { w: 80mm, h: 220mm }
   margin: 12
 
-# Currency renders as $-prefixed everywhere (FR1 document default).
+# Currency renders as $-prefixed everywhere, from the document default.
 defaults:
-  # Document presentation defaults (DF1): en-US selects the pack and USD
+  # Document presentation defaults: en-US selects the pack and USD
   # the document currency code.
   locale: en-US
   currency: USD
