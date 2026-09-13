@@ -449,3 +449,79 @@ test('no tooltip is cut off by the box that clips it', async ({ page }) => {
 
   expect(pageErrors).toEqual([]);
 });
+
+// The one gate that can execute this seam. The join is "the engine rasterized
+// at N DEVICE px per pt" meeting "the canvas is laid out at M CSS px per pt",
+// and jsdom can run neither half: it has no layout backend, and its
+// `devicePixelRatio` is 1 with no display to change. So the unit suite pins the
+// arithmetic and the prop threading, and the fact that a real browser on a 2×
+// screen gets a 2× raster is asserted here.
+test.describe('on a 2× display', () => {
+  test.use({ deviceScaleFactor: 2 });
+
+  test('the page preview is rasterized at the screen resolution, not upscaled', async ({
+    page,
+  }) => {
+    const pageErrors = [];
+    page.on('pageerror', (err) => pageErrors.push(String(err)));
+
+    await page.goto('/');
+    const card = page.getByRole('button').filter({ hasText: 'Receipt' }).first();
+    await expect(card).toBeVisible({ timeout: 30000 });
+    await card.click();
+    const canvas = page.locator('canvas').first();
+    await expect(canvas).toBeVisible({ timeout: 30000 });
+
+    // THE DELIVERABLE. Before this change the raster and the CSS box were one
+    // number, so the browser upscaled the document 2× and it was the only soft
+    // thing on the screen.
+    //
+    // Two measurements, because they answer different questions and a single
+    // one hides the difference: `layout` is the CSS box the component chose,
+    // and the bounding rect is that box AFTER the page stack's zoom transform.
+    // Reporting both means a mismatch names itself instead of arriving as a
+    // ratio nobody can decompose.
+    const shot = await canvas.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return {
+        raster: el.width,
+        layout: Number.parseFloat(el.style.width),
+        onScreen: r.width,
+        dpr: window.devicePixelRatio,
+      };
+    });
+    expect(shot.dpr).toBe(2);
+    // One raster pixel per device pixel — exact, because the component divides
+    // the raster by this very number.
+    expect(shot.raster / shot.layout).toBeCloseTo(shot.dpr, 5);
+    // And nothing is magnifying that box at the opening fit, so the 1:1 is what
+    // reaches the screen rather than only the layout. A layout-only assertion
+    // would stay green through an interim magnification, which is the state
+    // that looks blurry.
+    expect(shot.onScreen).toBeCloseTo(shot.layout, 0);
+
+    // The half that would break if only ONE side of the division were done:
+    // the overlay is absolutely positioned over the underlay and the two must
+    // occupy the same box. A canvas sized from the raster while the overlay was
+    // sized in CSS px would leave them 2× apart, which no arithmetic test can
+    // see because neither element has a size in jsdom.
+    const aligned = await page.evaluate(() => {
+      const el = document.querySelector('canvas');
+      const svg = el?.parentElement?.querySelector('svg');
+      const a = el.getBoundingClientRect();
+      const b = svg.getBoundingClientRect();
+      return { dw: Math.abs(a.width - b.width), dh: Math.abs(a.height - b.height) };
+    });
+    expect(aligned.dw).toBeLessThan(1);
+    expect(aligned.dh).toBeLessThan(1);
+
+    // And the chrome still drives at this ratio: picking an item on the canvas
+    // selects that item. A smoke over the pointer path, not a proof of the
+    // conversion — the rect carries its own handler — but a broken overlay
+    // geometry usually shows up here first.
+    await page.getByRole('button', { name: 'sections.body.items[1]', exact: true }).first().click();
+    await expect(page.getByRole('textbox', { name: 'Text' })).toBeVisible({ timeout: 30000 });
+
+    expect(pageErrors).toEqual([]);
+  });
+});

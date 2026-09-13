@@ -300,7 +300,9 @@ lists name the destructured stable fields, never `editor` itself.
   ⌘/Ctrl+wheel via a non-passive native listener through a callback ref;
   auto-fit measures the last-good page on demand, one-shot initial fit.
 - `hooks/usePreviewSession.ts` — composes zoom → DRAFT → preview →
-  auto-fit; returns `renderedScale`/`cssFactor`/`fresh`/`pages`
+  auto-fit; returns `renderedScale` (DEVICE px per pt — what `useAutoFit`
+  divides a page's device-pixel width by)/`pixelRatio`/`cssScale` (the
+  CSS px per pt the canvas lays out in)/`cssFactor`/`fresh`/`pages`
   (last-good, never blanked)/`boxes`/`setDraftOps`. `fresh` means the
   render is of the live COMMITTED document, so a draft render is never
   fresh — that is what keeps a geometry-derived action (today the

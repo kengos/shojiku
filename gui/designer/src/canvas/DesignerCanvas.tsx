@@ -8,6 +8,12 @@
 // desired zoom — 1 when the render already matches (crisp), otherwise an interim
 // magnification until the debounced re-render catches up. When editing, the
 // shared inline editor is positioned over the box on its page.
+//
+// Units: a `RawPage`'s width/height are DEVICE pixels, and everything laid out
+// here is CSS pixels — this component is where the two meet, and dividing by
+// `pixelRatio` is the whole of the conversion. The overlay is handed the CSS
+// size AND a CSS `scale`, so `width / scale` is still pt on its side and every
+// pointer conversion under it is untouched.
 
 import type { BoxIndex, BoxRect, PlacedBox, RawPage } from '../engine/types';
 import type { ChipContext } from '../text/chipContext';
@@ -51,10 +57,13 @@ export interface InlineEdit {
 export interface DesignerCanvasProps {
   readonly pages: readonly RawPage[];
   readonly boxes: BoxIndex;
-  /** Device px per pt the pages were rasterized at (aligns the overlay). */
+  /** CSS px per pt the pages are DISPLAYED at (aligns the overlay) — the
+   * render's device scale divided by the pixel ratio below. */
   readonly scale: number;
   /** CSS transform factor over the painted pixels (default 1 — no transform). */
   readonly cssFactor?: number;
+  /** Device pixels per CSS pixel the pages were rasterized for (default 1). */
+  readonly pixelRatio?: number;
   readonly selectedPath: string | null;
   readonly onSelect: (path: string) => void;
   /** Canvas-local multi-selection (movable paths), painted secondary. */
@@ -103,6 +112,7 @@ export function DesignerCanvas({
   boxes,
   scale,
   cssFactor = 1,
+  pixelRatio = 1,
   selectedPath,
   onSelect,
   multiSelected,
@@ -130,6 +140,11 @@ export function DesignerCanvas({
     >
       {pages.map((page, index) => {
         const pageBoxes = boxes.pages[index] ?? NO_BOXES;
+        // Left exact rather than rounded: `cssWidth × pixelRatio` is then the
+        // raster to the pixel, and the overlay's live-rect conversion reads the
+        // box the browser actually laid out either way.
+        const cssWidth = page.width / pixelRatio;
+        const cssHeight = page.height / pixelRatio;
         // The box being edited, if it is laid out on THIS page.
         const editingBox =
           inlineEdit === undefined
@@ -141,14 +156,14 @@ export function DesignerCanvas({
             key={`page-${index}`}
             ref={pageRef === undefined ? undefined : (el) => pageRef(index, el)}
             className="shadow-[0_2px_12px_var(--sj-paper-shadow)]"
-            style={{ position: 'relative', width: page.width, height: page.height }}
+            style={{ position: 'relative', width: cssWidth, height: cssHeight }}
           >
-            <PageUnderlay page={page} />
+            <PageUnderlay page={page} cssSize={{ width: cssWidth, height: cssHeight }} />
             <BoxOverlay
               boxes={pageBoxes}
               scale={scale}
-              width={page.width}
-              height={page.height}
+              width={cssWidth}
+              height={cssHeight}
               selectedPath={selectedPath}
               onSelect={onSelect}
               multiSelected={multiSelected}
