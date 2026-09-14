@@ -1016,7 +1016,7 @@ export const zhTw: LanguageCatalog = {
     'docSettings.close': '返回畫布',
     'docSettings.preview': '預覽',
     'docSettings.previewEmpty': '尚無預覽。',
-    'panel.noSelection.hint': '未選取任何項目。在畫布或圖層清單中選取項目即可編輯。',
+    'panel.noSelection.hint': '此面板針對整份文件。選取項目後，會切換為該項目的屬性。',
     'panel.noSelection.page': '頁面',
     'panel.noSelection.margin': '頁面邊界',
     'panel.noSelection.open': '開啟文件設定',

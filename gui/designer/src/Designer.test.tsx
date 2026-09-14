@@ -255,7 +255,7 @@ describe('Designer', () => {
     });
     draw(transport);
     // With nothing selected the panel is the no-selection hint card.
-    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
     await waitFor(() => screen.getByRole('button', { name: /heading/ }));
     fireEvent.click(screen.getByRole('button', { name: /heading/ }));
     expect(screen.getByLabelText('Text')).toBeDefined();
@@ -307,7 +307,7 @@ describe('Designer', () => {
     expect(screen.getByLabelText('Text')).toBeDefined();
     // Escape outside an editable element clears the selection.
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
     expect(screen.queryByLabelText('Text')).toBeNull();
   });
 
@@ -703,9 +703,92 @@ describe('Designer', () => {
     // → selects nothing → deselects (cluster gone).
     sweep({}, 6, 6);
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull());
-    // Shift-sweep is additive over the current selection.
+    // A shift-sweep from that deselected state has no primary to add to, so it
+    // sweeps like a plain one: the cluster is back AND a primary exists — the
+    // panel is not the document card and the tree's root row is not current.
     sweep({ shiftKey: true }, 10000, 10000);
     expect(await screen.findByRole('button', { name: 'Align left' })).toBeTruthy();
+    expect(screen.queryByText(/This panel is for the whole document/)).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Document' }).getAttribute('aria-current'),
+    ).toBeNull();
+    // Now a shift-sweep IS additive over the current selection: it keeps the
+    // primary and the cluster.
+    sweep({ shiftKey: true }, 10000, 10000);
+    expect(await screen.findByRole('button', { name: 'Align left' })).toBeTruthy();
+    expect(screen.queryByText(/This panel is for the whole document/)).toBeNull();
+  });
+
+  it('makes a shift-clicked item the primary when nothing is selected', async () => {
+    const paths = ['sections.body.items[0]', 'sections.body.items[1]'];
+    const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs(paths)) });
+    const { container } = draw(transport, { source: ABS_VARIED });
+    await waitFor(() => screen.getByRole('button', { name: paths[0] }));
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
+    // With no primary there is nothing to add it beside: it is a plain selection,
+    // so every surface agrees on it — no multi stroke, no cluster, the panel
+    // edits it and the tree's root row stands down.
+    fireEvent.click(screen.getByRole('button', { name: paths[0] }), { shiftKey: true });
+    await waitFor(() =>
+      expect(screen.queryByText(/This panel is for the whole document/)).toBeNull(),
+    );
+    expect(container.querySelector('.sj-box--selected')?.getAttribute('data-path')).toBe(paths[0]);
+    expect(container.querySelector('.sj-box--multi')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Document' }).getAttribute('aria-current'),
+    ).toBeNull();
+    const tree = screen.getByRole('region', { name: 'Structure' });
+    expect(
+      within(tree).getAllByRole('button', { name: 'Rectangle' })[0].getAttribute('aria-current'),
+    ).toBe('true');
+    // …and the NEXT shift-click adds beside it, exactly as before.
+    fireEvent.click(screen.getByRole('button', { name: paths[1] }), { shiftKey: true });
+    expect(await screen.findByRole('button', { name: 'Align left' })).toBeTruthy();
+    expect(container.querySelector('.sj-box--multi')?.getAttribute('data-path')).toBe(paths[1]);
+  });
+
+  it('selects a non-movable item shift-clicked with nothing selected', async () => {
+    const paths = ['sections.body.items[0]', 'sections.body.items[1]', 'sections.body.items[2]'];
+    const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeStacked(paths)) });
+    const { container } = draw(transport, { source: THREE_ITEMS });
+    await waitFor(() => screen.getByRole('button', { name: paths[0] }));
+    // A flow child cannot join a multi-set, but with no primary a Shift-click is
+    // not a multi-set gesture at all — it selects, like a plain click.
+    fireEvent.click(screen.getByRole('button', { name: paths[1] }), { shiftKey: true });
+    await waitFor(() =>
+      expect(container.querySelector('.sj-box--selected')?.getAttribute('data-path')).toBe(
+        paths[1],
+      ),
+    );
+    expect(screen.queryByText(/This panel is for the whole document/)).toBeNull();
+  });
+
+  it('drops the multi-selection with the primary, whichever route clears it', async () => {
+    const paths = ['sections.body.items[0]', 'sections.body.items[1]'];
+    const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs(paths)) });
+    const { container } = draw(transport, { source: ABS_VARIED });
+    await waitFor(() => screen.getByRole('button', { name: paths[0] }));
+    fireEvent.click(screen.getByRole('button', { name: paths[0] }));
+    fireEvent.click(screen.getByRole('button', { name: paths[1] }), { shiftKey: true });
+    expect(await screen.findByRole('button', { name: 'Align left' })).toBeTruthy();
+    // The document view clears the editor's selection DIRECTLY, not through the
+    // canvas; coming back must not leave a multi-set with no primary behind.
+    fireEvent.click(screen.getByRole('button', { name: 'Document' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to canvas' }));
+    await waitFor(() => screen.getByRole('button', { name: paths[0] }));
+    expect(container.querySelector('.sj-box--multi')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull();
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
+    // Re-selecting the old primary from the TREE — a route that does not reset
+    // the canvas set itself — must not resurrect the member it had.
+    const tree = screen.getByRole('region', { name: 'Structure' });
+    fireEvent.click(within(tree).getAllByRole('button', { name: 'Rectangle' })[0]);
+    await waitFor(() =>
+      expect(screen.queryByText(/This panel is for the whole document/)).toBeNull(),
+    );
+    expect(container.querySelector('.sj-box--selected')?.getAttribute('data-path')).toBe(paths[0]);
+    expect(container.querySelector('.sj-box--multi')).toBeNull();
   });
 
   it('renders the field palette when definitions are present, and a field click selects the bound item', async () => {
@@ -734,7 +817,7 @@ describe('Designer', () => {
       </I18nProvider>,
     );
     // With nothing selected the panel shows the no-selection hint...
-    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
     // ...the palette lives behind the sidebar's data tab...
     fireEvent.click(screen.getByRole('tab', { name: 'Data fields' }));
     // ...and clicking the used palette field selects the bound text item.
@@ -1316,7 +1399,7 @@ describe('Designer', () => {
     });
     // The section root is selected, so the panel is the item editor, not the
     // no-selection hint (and page size never lived in the panel).
-    expect(screen.queryByText(/Nothing selected/)).toBeNull();
+    expect(screen.queryByText(/This panel is for the whole document/)).toBeNull();
   });
 
   it('clears the selection when a bare top-level sequence empties (no enclosing node)', async () => {
@@ -1341,7 +1424,7 @@ describe('Designer', () => {
       expect(last).toContain('attachments: []');
     });
     // No enclosing selectable node → selection clears → the no-selection card.
-    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
   });
 
   it('duplicates the selected item on ⌘/Ctrl+D and selects the copy', async () => {

@@ -104,9 +104,9 @@ describe('documentGlance', () => {
 });
 
 describe('NoSelectionCard', () => {
-  it('says what the document is and what to do next', () => {
+  it('names the whole document as the subject, and says what the document is', () => {
     draw(<NoSelectionCard controller={makeController(undefined)} onOpenDocument={vi.fn()} />);
-    expect(screen.getByText(/Pick an item on the canvas/)).toBeTruthy();
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
     expect(screen.getByText('Page')).toBeTruthy();
     expect(screen.getByText('A4 — 210 × 297 mm')).toBeTruthy();
     expect(screen.getByText('Margins')).toBeTruthy();
@@ -120,7 +120,7 @@ describe('NoSelectionCard', () => {
     expect(screen.getByText('Page')).toBeTruthy();
   });
 
-  it('drops the whole card when neither fact can be stated', () => {
+  it('drops the glance box when neither fact can be stated', () => {
     const controller = makeController(undefined, {
       read: () => {
         throw new Error('hostile document');
@@ -129,8 +129,8 @@ describe('NoSelectionCard', () => {
     draw(<NoSelectionCard controller={controller} />);
     expect(screen.queryByText('Page')).toBeNull();
     expect(screen.queryByText('Margins')).toBeNull();
-    // The sentence that says what to do next is unconditional.
-    expect(screen.getByText(/Pick an item on the canvas/)).toBeTruthy();
+    // The sentence naming the subject is unconditional.
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
   });
 
   it('shows the margin row alone when the page cannot be described', () => {

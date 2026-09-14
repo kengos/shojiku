@@ -11,6 +11,7 @@
 
 import type { Op, OpResult, ReadFn } from '@shojiku/designer-core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { readSubject } from '../editor/subject';
 import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { IconDocument } from '../ui/icons';
@@ -31,13 +32,14 @@ export interface LayerTreeProps {
    * A same-parent reorder is one `moveItem`; a cross-parent one adds the
    * `box` keys the crossing invalidates. */
   readonly applyAll: (ops: readonly Op[]) => OpResult;
-  /** The document read the drop model classifies destinations over. */
+  /** The document read the drop model classifies destinations over, and that
+   * decides whether the selection still names a node (the root row's state). */
   readonly read: ReadFn;
   /** Right-click on a row: open the context menu at the pointer (viewport px).
    * Absent = the browser's native menu (no override). */
   readonly onContextMenu?: (path: string, x: number, y: number) => void;
   /** Open the fullscreen document-settings view (the fixed whole-document root row).
-   * The row is the whole-document node — active when nothing else is selected. */
+   * The row is the whole-document node — active when nothing else is the subject. */
   readonly onOpenDocument: () => void;
 }
 
@@ -102,9 +104,11 @@ export function LayerTree({
   // The whole-document node: a FIXED header row above the outline (never part of
   // the draggable/collapsible tree, no indent), always present — including a
   // blank document, where it is the only reachable settings entry. Active when
-  // nothing else is selected (the state the property panel used to leave
-  // invisible). Not a tree row: no drag, no context menu, no toggle gutter.
-  const isDocumentActive = selection === null;
+  // nothing else is the subject — `readSubject`, the predicate the property
+  // panel shows its document card on, so a selection whose node is gone marks
+  // this row rather than no row at all. Not a tree row: no drag, no context
+  // menu, no toggle gutter.
+  const isDocumentActive = readSubject(read, selection) === null;
   return (
     <section className="p-2" aria-label={t('sidebar.layers')}>
       <div

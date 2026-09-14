@@ -40,6 +40,15 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   `replaceDocument(text)` swaps the whole document (fresh Editor at the
   session cap; history does not cross the swap) — the tutorial's
   practice-document mechanism.
+- `editor/subject.ts` — `readSubject(read, selection)`: the answer to "what
+  is current" that the panel, the tree's root row and the multi-selection
+  share (the placement chip, the sequence menu and the format toolbar still
+  read the selection themselves) — the selected node while it still reads (returned with
+  its value, so the panel reads it once), else `null` = the document is the
+  subject (nothing selected, a ghost path, or a read that throws). Consumed by
+  `PropertyPanel` (the document card), `LayerTree` (the root row's
+  `aria-current`) and `useMultiSelect` (a multi-set only beside a primary), so
+  those three surfaces cannot disagree with each other.
 
 ## Layer tree + breadcrumb
 
@@ -88,7 +97,8 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   count the drag hint is gated on — which is why it is its own component
   rather than a synthetic `TreeNode`.
 - `tree/LayerTree.tsx` — the outline panel frame: the fixed whole-document
-  document-root row, the band placeholders in their positional slots
+  document-root row (current exactly when `readSubject` is null — the panel's
+  own predicate), the band placeholders in their positional slots
   (header above the sections, footer below — `sections:` order, so no
   ordering work), collapse state, incoming-selection reveal, truncation
   notice, and the gesture hint at the foot (rows only) — one line plus a
@@ -367,7 +377,10 @@ lists name the destructured stable fields, never `editor` itself.
 - `hooks/useHostNotify.ts` — report `text` through `onChange` after every
   edit that CHANGES it (handler in a ref).
 - `hooks/useMultiSelect.ts` — canvas multi-select + align/distribute
-  (canvas-local Set, reset on plain select/Escape; `doAlign`/`doDistribute`
+  (canvas-local Set, reset on plain select/Escape, and ONLY ever beside a
+  primary: a Shift-click/Shift-sweep with none is a plain selection, and a
+  primary cleared by any route — the document view clears the editor directly —
+  drops the stored set during render; `doAlign`/`doDistribute`
   = ONE `applyAll` over the primary's page). Owns `refused` (the placement
   chip's drag-refusal state).
 - `hooks/usePaletteDrag.ts` — palette drag-to-bind/scaffold: `useDrag`

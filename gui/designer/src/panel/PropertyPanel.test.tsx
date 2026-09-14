@@ -52,7 +52,7 @@ describe('PropertyPanel', () => {
     draw(
       <PropertyPanel controller={makeController({})} path={null} onOpenDocument={onOpenDocument} />,
     );
-    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Open document settings' }));
     expect(onOpenDocument).toHaveBeenCalledTimes(1);
     // No page-setup surface in the panel any more.
@@ -61,7 +61,7 @@ describe('PropertyPanel', () => {
 
   it('omits the open-settings CTA when no handler is wired', () => {
     draw(<PropertyPanel controller={makeController({})} path={null} />);
-    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Open document settings' })).toBeNull();
   });
 
@@ -105,11 +105,11 @@ describe('PropertyPanel', () => {
   });
 
   it('falls back to the no-selection card when the selected node no longer exists', () => {
-    // An undo/removal can leave the selection pointing at a ghost path; the
-    // panel must not show the unsupported-type note for it — it shows the
-    // no-selection hint (the ghost reads as nothing selected).
+    // An edit elsewhere can leave the selection pointing at a ghost path; the
+    // panel must not show the unsupported-type note for it — the document is the
+    // subject again, exactly as the layer tree's root row says.
     draw(<PropertyPanel controller={makeController({})} path={PATH} />);
-    expect(screen.getByText(/Nothing selected/)).toBeTruthy();
+    expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
   });
 
   it('shows an unsupported note for a non-item node', () => {

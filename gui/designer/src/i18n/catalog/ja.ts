@@ -1105,7 +1105,7 @@ export const ja: LanguageCatalog = {
     'docSettings.preview': 'プレビュー',
     'docSettings.previewEmpty': 'プレビューはまだありません。',
     'panel.noSelection.hint':
-      '何も選択されていません。キャンバスかレイヤー一覧で項目を選ぶと編集できます。',
+      'このパネルは文書全体が対象です。項目を選ぶと、その項目のプロパティに切り替わります。',
     'panel.noSelection.page': 'ページ',
     'panel.noSelection.margin': '余白',
     'panel.noSelection.open': '文書設定を開く',

@@ -794,10 +794,14 @@ presence is not a text binding.
 - `panel/PropertyPanel.tsx` — the thin router: item → `ItemPanel`,
   anything with no `type:` of its own → `CellPanel` (which picks
   `ColumnForm` / `GroupForm` / the unsupported card),
-  none/ghost → `NoSelectionCard`; the origin jump wires through
+  none/ghost (`readSubject` null) → `NoSelectionCard`; the origin jump wires through
   Designer's `navigateDefaults`.
-- `panel/NoSelectionCard.tsx` — the panel with nothing selected: the sentence
-  that says what to do next, the document's page and margin, and the
+- `panel/NoSelectionCard.tsx` — the panel when the document is the subject
+  (still filed under the historical `NoSelectionCard` name and
+  `panel.noSelection.*` keys): the sentence naming its subject (the whole
+  document — what the tree's root row marks too, never "nothing"; it claims
+  nothing about what the card shows, so it holds when both facts are withheld,
+  and nothing about items existing), the document's page and margin, and the
   open-document-settings CTA. `documentGlance(read)` is the pure half — both
   facts come from the readers `PageSetup` already uses (`readPageView` +
   `pageSummary`, `readMarginView`), so there is no second walk of the document,

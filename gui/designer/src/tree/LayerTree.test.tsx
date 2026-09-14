@@ -475,9 +475,17 @@ describe('LayerTree — the 全体 document root row', () => {
     expect(row('Document')).toBeTruthy();
   });
 
-  it('marks the root row active (aria-current) exactly when nothing is selected', () => {
+  it('marks the root row active (aria-current) when nothing is selected', () => {
     draw({ selection: null });
     expect(row('Document').getAttribute('aria-current')).toBe('true');
+  });
+
+  it('marks the root row active when the selected node no longer exists', () => {
+    // The property panel shows its document card for a ghost path; the tree must
+    // say the same thing rather than mark no row at all.
+    draw({ selection: 'sections.body.items[9]' });
+    expect(row('Document').getAttribute('aria-current')).toBe('true');
+    expect(document.querySelectorAll('[aria-current="true"]')).toHaveLength(1);
   });
 
   it('drops aria-current on the root row when an item is selected', () => {

@@ -1,8 +1,8 @@
 // The property panel router: it reads the selection through the editor
 // and dispatches to one of three surfaces — the per-item tabbed editor
 // (`ItemPanel`, content/decoration/placement), a table column's form (`ColumnForm`), or, with
-// nothing selected, a compact hint card pointing at the fullscreen document-
-// settings view (settings moved out of the panel into their own surface).
+// the document as the subject (`readSubject`), a compact card pointing at the
+// fullscreen document-settings view (settings moved out of the panel into their own surface).
 // It holds no field logic itself; each surface dispatches its own named
 // `designer-core` op (AI parity). The panel is a live view — it re-reads
 // `controller.read(path)` every render, so an edit → op → re-serialize → re-read
@@ -10,6 +10,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { useMemo } from 'react';
+import { readSubject } from '../editor/subject';
 import type { EditorController } from '../editor/useEditor';
 import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
@@ -103,22 +104,22 @@ export function PropertyPanel({
     [definitions],
   );
 
-  // A selection pointing at a node that no longer exists reads as undefined —
-  // treat it like no selection.
-  const raw = path === null ? undefined : controller.read(path);
-  if (path === null || raw === undefined) {
-    // Nothing selected: what the document IS, what to do next, and the way into
-    // the document-settings view (the settings themselves live there now, not in
-    // the panel).
+  // The document is the subject — nothing selected, or a selection whose node is
+  // gone — by the SAME predicate the layer tree marks its root row with, so the
+  // two surfaces cannot disagree about what is current.
+  const subject = readSubject(controller.read, path);
+  if (subject === null) {
+    // What the document IS, and the way into the document-settings view (the
+    // settings themselves live there now, not in the panel).
     return <NoSelectionCard controller={controller} onOpenDocument={onOpenDocument} />;
   }
 
-  const view = readItemView(raw);
+  const view = readItemView(subject.node);
   if (view === null) {
     return (
       <CellPanel
         controller={controller}
-        path={path}
+        path={subject.path}
         groups={paletteGroups}
         params={params}
         capabilities={capabilities}
@@ -132,7 +133,7 @@ export function PropertyPanel({
     <aside data-tour={TOUR_ANCHORS.panel} className={PANEL_FLUSH} aria-label={t('panel.title')}>
       <ItemPanel
         controller={controller}
-        path={path}
+        path={subject.path}
         view={view}
         fontFamilies={fontFamilies}
         capabilities={capabilities}
