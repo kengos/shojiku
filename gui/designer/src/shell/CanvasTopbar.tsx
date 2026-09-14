@@ -36,7 +36,7 @@ export interface CanvasTopbarProps {
 export function CanvasTopbar({ editor, multi, image, pdf, treeView }: CanvasTopbarProps) {
   const { t } = useI18n();
   // Locals, not property reads: narrowing follows a local binding.
-  const { read, select, selection } = editor;
+  const { read, selection } = editor;
   const { refused } = multi;
   const { nextCap, imageNotice } = image;
 
@@ -54,7 +54,7 @@ export function CanvasTopbar({ editor, multi, image, pdf, treeView }: CanvasTopb
 
   return (
     <div className="sj-canvas-topbar flex min-h-[30px] items-center gap-2 border-b border-border bg-chrome px-3">
-      <Breadcrumb view={treeView} selection={selection} onSelect={select} />
+      <Breadcrumb view={treeView} selection={selection} onSelect={multi.selectClearing} />
       {chipKey !== null ? (
         // <output> is a polite live region: a refused drag's reason is
         // announced; the text is ALWAYS a catalog string (never document

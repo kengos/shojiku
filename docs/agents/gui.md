@@ -233,9 +233,12 @@ definitions
   (edge/center) and equal-gap distribute over the movable subset, each
   one transactional batch (shipped). A multi-selection exists only beside
   a primary selection: a shift-click or shift-sweep with nothing selected
-  is a plain selection, and clearing the primary by any route drops the
-  set — otherwise the toolbar would count items that neither the panel nor
-  the tree shows as selected. Other edits go through the Property
+  is a plain selection, and a primary that is cleared or CHANGED by any
+  route drops the set, as does an edit that shifts sequence paths or an
+  undo/redo — otherwise the toolbar would offer to align items the user never
+  put beside the current primary. A selection from the layer tree, the field
+  palette or the breadcrumb is a plain selection, like a plain canvas click.
+  Other edits go through the Property
   Panel as `designer-core` patch ops. Rulers come later.
 - **Property Panel** exposes data binding, format selection (type-dependent:
   datetime/currency/quantity variants), style, box, layout mode, page break

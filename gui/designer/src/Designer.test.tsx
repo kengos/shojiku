@@ -780,8 +780,8 @@ describe('Designer', () => {
     expect(container.querySelector('.sj-box--multi')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull();
     expect(screen.getByText(/This panel is for the whole document/)).toBeTruthy();
-    // Re-selecting the old primary from the TREE — a route that does not reset
-    // the canvas set itself — must not resurrect the member it had.
+    // Re-selecting the old primary from the tree must not resurrect the member
+    // it had.
     const tree = screen.getByRole('region', { name: 'Structure' });
     fireEvent.click(within(tree).getAllByRole('button', { name: 'Rectangle' })[0]);
     await waitFor(() =>
@@ -789,6 +789,66 @@ describe('Designer', () => {
     );
     expect(container.querySelector('.sj-box--selected')?.getAttribute('data-path')).toBe(paths[0]);
     expect(container.querySelector('.sj-box--multi')).toBeNull();
+  });
+
+  // A selection made anywhere but the canvas is still a plain selection. The
+  // set used to survive a tree-row or breadcrumb click, so the align cluster kept
+  // offering to act on a member beside a primary the user had just replaced.
+  async function multiSelected() {
+    const paths = ['sections.body.items[0]', 'sections.body.items[1]', 'sections.body.items[2]'];
+    const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs(paths)) });
+    const utils = draw(transport, { source: ABS_VARIED });
+    await waitFor(() => screen.getByRole('button', { name: paths[0] }));
+    fireEvent.click(screen.getByRole('button', { name: paths[0] }));
+    fireEvent.click(screen.getByRole('button', { name: paths[1] }), { shiftKey: true });
+    expect(await screen.findByRole('button', { name: 'Align left' })).toBeTruthy();
+    const rows = within(screen.getByRole('region', { name: 'Structure' })).getAllByRole('button', {
+      name: 'Rectangle',
+    });
+    return { ...utils, paths, rows };
+  }
+
+  it('drops the multi-selection when a tree row selects another item', async () => {
+    const { container, paths, rows } = await multiSelected();
+    fireEvent.click(rows[2]);
+    await waitFor(() =>
+      expect(container.querySelector('.sj-box--selected')?.getAttribute('data-path')).toBe(
+        paths[2],
+      ),
+    );
+    expect(container.querySelector('.sj-box--multi')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull();
+  });
+
+  it('drops the multi-selection when the breadcrumb selects the section', async () => {
+    const { container } = await multiSelected();
+    const nav = screen.getByRole('navigation', { name: 'Selection path' });
+    fireEvent.click(within(nav).getByRole('button', { name: 'Body' }));
+    await waitFor(() => expect(container.querySelector('.sj-box--multi')).toBeNull());
+    expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull();
+  });
+
+  it('treats a tree-row click on the primary itself as a plain selection', async () => {
+    const { container, paths, rows } = await multiSelected();
+    fireEvent.click(rows[0]);
+    await waitFor(() => expect(container.querySelector('.sj-box--multi')).toBeNull());
+    expect(container.querySelector('.sj-box--selected')?.getAttribute('data-path')).toBe(paths[0]);
+    expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull();
+  });
+
+  it('keeps the multi-selection through an align, and drops it on undo', async () => {
+    const { container, paths } = await multiSelected();
+    fireEvent.click(screen.getByRole('button', { name: 'Align left' }));
+    await waitFor(() =>
+      expect((screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement).disabled).toBe(
+        false,
+      ),
+    );
+    // An align moves boxes, not sequence positions: the same set is still there.
+    expect(container.querySelector('.sj-box--multi')?.getAttribute('data-path')).toBe(paths[1]);
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+    await waitFor(() => expect(container.querySelector('.sj-box--multi')).toBeNull());
+    expect(screen.queryByRole('button', { name: 'Align left' })).toBeNull();
   });
 
   it('renders the field palette when definitions are present, and a field click selects the bound item', async () => {

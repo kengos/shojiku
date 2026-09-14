@@ -376,13 +376,19 @@ lists name the destructured stable fields, never `editor` itself.
   capability gate by PRESENCE, never a version sniff.
 - `hooks/useHostNotify.ts` — report `text` through `onChange` after every
   edit that CHANGES it (handler in a ref).
-- `hooks/useMultiSelect.ts` — canvas multi-select + align/distribute
-  (canvas-local Set, reset on plain select/Escape, and ONLY ever beside a
-  primary: a Shift-click/Shift-sweep with none is a plain selection, and a
-  primary cleared by any route — the document view clears the editor directly —
-  drops the stored set during render; `doAlign`/`doDistribute`
-  = ONE `applyAll` over the primary's page). Owns `refused` (the placement
-  chip's drag-refusal state).
+- `hooks/useMultiSelect.ts` — canvas multi-select + align/distribute: the
+  gestures that grow the set (a Shift-click/Shift-sweep with no primary is a
+  plain selection), `selectClearing`/`deselectClearing` (every PLAIN selection
+  surface uses them — canvas, layer tree, field palette, breadcrumb), and
+  `doAlign`/`doDistribute` = ONE `applyAll` over the primary's page. Owns
+  `refused` (the placement chip's drag-refusal state).
+- `hooks/useMultiSet.ts` — the set itself, held BESIDE the primary it was
+  built next to: empty (and dropped during render) the moment the selection is
+  another node, none, or a node that no longer reads — whatever route changed
+  it (diagnostic jump, insert auto-select, undo restoring a selection) — and
+  dropped on an edit that shifts sequence paths (`insertItem`/`removeItem`/
+  `moveItem`/`duplicateItem`) or on undo/redo, via `editor.subscribe`. A value
+  edit (an align) keeps it.
 - `hooks/usePaletteDrag.ts` — palette drag-to-bind/scaffold: `useDrag`
   machine, live-rect hit test (`pageHitAt`), `planPaletteDrop` →
   `insertIndicator`, drop = ONE `insertItem` at the plan's path + select.
