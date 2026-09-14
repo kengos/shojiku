@@ -1317,6 +1317,51 @@ describe('Designer', () => {
     expect(last.match(/type: text/g)?.length).toBe(1);
   });
 
+  // A hostile document can hold a node its own read refuses (the alias cap). The
+  // property panel and the layer tree already treated that selection as the
+  // document; the format bar read it unguarded and took the whole Designer down,
+  // and the dialog host and the block library read it the same way. Every reader
+  // of the selection goes through one predicate now.
+  it('stays standing when the selected item is one a hostile document refuses to read', async () => {
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: text',
+      '        text: hi',
+      '        a: &a [x, x, x, x, x, x, x, x, x, x]',
+      '        b: &b [*a, *a, *a, *a, *a, *a, *a, *a, *a, *a]',
+      '        c: &c [*b, *b, *b, *b, *b, *b, *b, *b, *b, *b]',
+      '        d: &d [*c, *c, *c, *c, *c, *c, *c, *c, *c, *c]',
+      '        boom: [*d, *d, *d, *d, *d, *d, *d, *d, *d, *d]',
+      '',
+    ].join('\n');
+    const transport = makeTransport({
+      renderRaw: vi.fn(async () => outcomeWith(['sections.body.items[0]'])),
+    });
+    const onChange = vi.fn();
+    draw(transport, { source, onBlocksChange: vi.fn(), onChange });
+    await waitFor(() => screen.getByRole('button', { name: 'sections.body.items[0]' }));
+    fireEvent.click(screen.getByRole('button', { name: 'sections.body.items[0]' }));
+    // The panel names the document, and nothing claims the unreadable item: no
+    // format bar, no placement chip.
+    expect(await screen.findByText(/This panel is for the whole document/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Bold' })).toBeNull();
+    expect(screen.queryByText('Not movable')).toBeNull();
+    // The rest of the chrome is still live.
+    fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+    expect(screen.getByRole('menuitem', { name: /Save as reusable block/ }).textContent).toContain(
+      'Select one element first',
+    );
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    // …and the unreadable item can still be removed.
+    fireEvent.click(screen.getByRole('button', { name: 'sections.body.items[0]' }));
+    fireEvent.keyDown(window, { key: 'Delete' });
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(String(onChange.mock.calls.at(-1)?.[0])).not.toContain('boom');
+  });
+
   it('does not open the inline editor for a non-text item', async () => {
     const source = [
       'sections:',
@@ -1704,7 +1749,21 @@ describe('Designer absolute manipulation', () => {
     // movable — the drag attempt explains why instead of doing nothing.
     const paths = ['sections.body.items[0].columns[0]'];
     const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeStacked(paths)) });
-    draw(transport, { source: THREE_ITEMS, onChange });
+    // A real table, so the column path names a node: the chip describes the
+    // selected node, and a path that reads to nothing is the document instead.
+    const table = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: table',
+      '        data: { key: rows }',
+      '        columns:',
+      '          - label: Name',
+      '            data: { key: name }',
+      '',
+    ].join('\n');
+    draw(transport, { source: table, onChange });
     await waitFor(() => screen.getByRole('button', { name: paths[0] }));
     const target = screen.getByRole('button', { name: paths[0] });
     fireEvent.pointerDown(target, { pointerId: 1, isPrimary: true, clientX: 50, clientY: 10 });

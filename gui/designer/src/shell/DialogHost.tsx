@@ -3,6 +3,7 @@
 // plus the help dialogs, the PDF preview, and the table column sheet. All of
 // them are open-flag driven — the state lives in the wiring hooks, never here.
 
+import { readSubject } from '../editor/subject';
 import type { EditorController } from '../editor/useEditor';
 import { GlossaryDialog } from '../help/GlossaryDialog';
 import { ShortcutsDialog } from '../help/ShortcutsDialog';
@@ -74,10 +75,13 @@ export function DialogHost({
   // The column sheet edits the SELECTED table. Derived from the selection
   // (a table view → its path + row source); the sheet mounts only for a table,
   // so a stale open flag can never surface it over a non-table selection.
-  const selectedTableView = selection === null ? null : readItemView(read(selection));
+  // Read through `readSubject`, so a ghost path or a hostile node is no table
+  // rather than a throw that unmounts every dialog with it.
+  const subject = readSubject(read, selection);
+  const selectedTableView = subject === null ? null : readItemView(subject.node);
   const columnSheetTable =
-    selectedTableView !== null && selectedTableView.type === 'table'
-      ? { path: selection as string, dataKey: selectedTableView.dataKey }
+    subject !== null && selectedTableView !== null && selectedTableView.type === 'table'
+      ? { path: subject.path, dataKey: selectedTableView.dataKey }
       : null;
 
   return (

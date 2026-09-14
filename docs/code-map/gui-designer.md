@@ -40,15 +40,20 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   `replaceDocument(text)` swaps the whole document (fresh Editor at the
   session cap; history does not cross the swap) — the tutorial's
   practice-document mechanism.
-- `editor/subject.ts` — `readSubject(read, selection)`: the answer to "what
-  is current" that the panel, the tree's root row and the multi-selection
-  share (the placement chip, the sequence menu and the format toolbar still
-  read the selection themselves) — the selected node while it still reads (returned with
-  its value, so the panel reads it once), else `null` = the document is the
-  subject (nothing selected, a ghost path, or a read that throws). Consumed by
-  `PropertyPanel` (the document card), `LayerTree` (the root row's
-  `aria-current`) and `useMultiSelect` (a multi-set only beside a primary), so
-  those three surfaces cannot disagree with each other.
+- `editor/subject.ts` — `readSubject(read, selection)`: the ONE reader of
+  "what is current" — the selected node while it still reads (returned with its
+  value, so a caller reads it once), else `null` = the document is the subject
+  (nothing selected, a ghost path, or a read that throws on a hostile document).
+  Consumed by `PropertyPanel` (the document card), `LayerTree` (the root row's
+  `aria-current`), `useMultiSet` (a multi-set only beside a primary),
+  `FormatToolbar` (the formatting target), `DialogHost` (the column sheet's
+  table), `useBlocks` (the savable selection) and `CanvasTopbar` (the placement
+  chip). Before the last four joined, selecting a node a hostile document
+  refuses to read left the panel and tree standing and crashed the Designer in
+  the format bar. Deliberately NOT through it: the Delete/Duplicate menu entries
+  and shortcuts (`topMenubar`, `useSelectionOps`) and the insert target — a
+  hostile node must stay deletable, and an op aimed at a ghost path is rejected
+  by the op layer.
 
 ## Layer tree + breadcrumb
 

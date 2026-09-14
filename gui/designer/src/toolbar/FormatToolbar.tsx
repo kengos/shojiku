@@ -17,6 +17,7 @@
 // shared chrome in `fmtChrome`.
 
 import { useState } from 'react';
+import { readSubject } from '../editor/subject';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { readSelectionView } from '../panel/columnsModel';
@@ -78,12 +79,14 @@ export function FormatToolbar({
     | { readonly mode: 'update'; readonly target: string; readonly path: string }
     | null
   >(null);
-  // A selection pointing at a removed/undone node reads as undefined — treat it
-  // like no selection (an empty bar), not a formatting target.
-  const raw = path === null ? undefined : controller.read(path);
+  // The formatting target is the SUBJECT the panel and the tree agree on
+  // (`readSubject`): nothing selected, a selection whose node is gone, or one
+  // whose read throws on a hostile document is no target — an empty bar, never
+  // a crash that takes the rest of the Designer down with it.
+  const subject = readSubject(controller.read, path);
   // Column-aware: a table column formats like the text item it defaults to,
   // whether or not it spells its `type` out.
-  const view = raw === undefined || path === null ? null : readSelectionView(raw, path);
+  const view = subject === null ? null : readSelectionView(subject.node, subject.path);
   const eff = path === null || view === null ? null : effectiveStyles(controller.read, path, floor);
   const model: ToolbarModel | null = eff === null ? null : readToolbar(view, eff);
 
@@ -96,7 +99,13 @@ export function FormatToolbar({
 
   // Everything the clusters and the capture modal need about this selection,
   // derived ONCE (the `cascadeContext` shape: build the context, then read it).
-  const ctx = formatContext({ read: controller.read, path, view, raw, capabilities });
+  const ctx = formatContext({
+    read: controller.read,
+    path,
+    view,
+    raw: subject?.node,
+    capabilities,
+  });
 
   const dispatch = (op: ReturnType<typeof alignOp>) => {
     if (op !== null) {

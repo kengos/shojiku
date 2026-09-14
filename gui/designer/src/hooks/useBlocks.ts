@@ -7,6 +7,7 @@
 import type { SnippetValue } from '@shojiku/designer-core';
 import { useCallback, useState } from 'react';
 import { typeFitsOwner } from '../canvas/dnd';
+import { readSubject } from '../editor/subject';
 import type { EditorController } from '../editor/useEditor';
 import { bandBoxHeightPt } from '../insert/bandGeometry';
 import { bandInsertY, bandPlaced } from '../insert/bandPlacement';
@@ -65,8 +66,8 @@ export function useBlocks({
   // no savable single selection (nothing selected, a multi-selection — wrap it
   // first — or a node that cannot become a snippet). `blockSavable` is derived
   // from it so the two never disagree.
-  const selectionBlockValue =
-    blockArmed && selection !== null && multiSel.size === 0 ? blockFromNode(read(selection)) : null;
+  const subject = blockArmed && multiSel.size === 0 ? readSubject(read, selection) : null;
+  const selectionBlockValue = subject === null ? null : blockFromNode(subject.node);
   const blockSavable = selectionBlockValue !== null;
 
   // The save-as-block dialog holds the snippet it will save (captured at open, so

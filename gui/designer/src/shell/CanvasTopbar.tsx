@@ -4,6 +4,7 @@
 // diagnostics panel below the canvas).
 
 import { type Manipulation, manipulationFor } from '../canvas/manipulate';
+import { readSubject } from '../editor/subject';
 import type { EditorController } from '../editor/useEditor';
 import type { ImageImport } from '../hooks/useImageImport';
 import type { MultiSelect } from '../hooks/useMultiSelect';
@@ -42,9 +43,11 @@ export function CanvasTopbar({ editor, multi, image, pdf, treeView }: CanvasTopb
 
   // The selected box's placement (the chip's subject) — recomputed per render
   // (the classification is a few capped reads; the edit bump already
-  // re-renders).
+  // re-renders). Only for the subject the panel and the tree agree on: a
+  // selection whose node is gone is the document, which has no placement.
+  const subject = readSubject(read, selection);
   const selectedAbility: Manipulation | null =
-    selection === null ? null : manipulationFor(read, selection);
+    subject === null ? null : manipulationFor(read, subject.path);
   const chipKey =
     refused !== null
       ? `canvas.place.${refused}`
