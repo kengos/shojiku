@@ -109,6 +109,65 @@ Generated with [Claude Code]"'
 case_bash 'force push to main'          deny 'git push --force origin main'
 case_bash 'direct push to main'         deny 'git push origin main'
 case_bash 'push to a full refspec'      deny 'git push origin HEAD:refs/heads/main'
+# The push and signing rules read the git invocation's own words now, so these
+# prove that reading still reaches every spelling that pushes to main or turns
+# signing off — including one that is not the first command in the call.
+case_bash 'push to main after &&'       deny 'git fetch -q origin && git push -f origin main'
+case_bash 'force by a + refspec'        deny 'git push origin +main'
+case_bash 'force to HEAD:main'          deny 'git push --force origin HEAD:main'
+case_bash 'another remote, dest main'   deny 'git push upstream feat/x:main'
+case_bash 'lease to main after cd'      deny 'cd repo; git push --force-with-lease=main origin main'
+case_bash 'combined short flags'        deny 'git push -uf origin main'
+case_bash 'global -C then push'         deny 'git -C /repo push origin main'
+case_bash 'signing off, second command' deny 'git status && git -c commit.gpgsign=false commit -m wip'
+case_bash 'push in a substitution'      deny 'echo $(git push -f origin main)'
+# A substitution or subshell INSIDE a git command is part of that command — the
+# first version of the invocation reader ended the command at `(`, `)` or a
+# backtick and let every one of these through, each of which the older
+# whole-string match had denied. A zero-context review found them.
+case_bash 'push after -C $(pwd)'        deny 'git -C $(pwd) push -f origin main'
+case_bash 'push after -C backticks'     deny 'git -C `pwd` push --force origin main'
+case_bash 'substituted refspec source'  deny 'git push -f origin $(git branch --show-current):main'
+case_bash 'flag after a substitution'   deny 'git commit -m $(date) --no-gpg-sign'
+# A here-string and an arithmetic shift are not heredocs; reading them as one
+# skipped the rest of the command. Only a heredoc whose closing line exists is
+# skipped now.
+case_bash 'push after a here-string'    deny 'grep x <<<"$v"
+git push -f origin main'
+case_bash 'push after a shift'          deny 'echo $(( 1 << 3 ))
+git push -f origin main'
+case_bash 'unclosed heredoc, then push' deny 'cat <<X
+git push -f origin main'
+# `<<""` is a heredoc closed by an empty line, not a bare `<<` waiting for its
+# delimiter word; reading it as the second swallowed the next command's verb.
+case_bash 'empty heredoc delimiter'     deny 'cat <<"" ; git push -f origin main'
+case_bash 'empty heredoc, single quotes' deny "cat <<'' ; git push -f origin main"
+# A shift inside `$(( … ))` is not a heredoc, even when a later line happens to
+# read like its delimiter — skipping to that line hid the push between.
+case_bash 'shift, then a matching line'  deny 'echo $((1 << 2))
+git push --force origin main
+2'
+# A substitution inside DOUBLE quotes runs too.
+case_bash 'push in a quoted substitution' deny 'echo "$(git push --force origin main)"'
+case_bash 'push in quoted backticks'     deny 'echo "`git push -f origin main`"'
+# A record separator in the input must not discard what came before it.
+case_bash 'a 0x01 byte after the push'   deny "git push --force origin main
+echo a$(printf '\001')b"
+# Git reads signing config from its environment too, as a prefix or exported.
+case_bash 'signing off by environment'  deny "GIT_CONFIG_PARAMETERS=\"'commit.gpgsign=false'\" git commit -m x"
+case_bash 'signing off, exported'       deny "export GIT_CONFIG_PARAMETERS=\"'commit.gpgsign=false'\"; git commit -m x"
+case_bash 'signing off by key/value'    deny 'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=commit.gpgsign GIT_CONFIG_VALUE_0=false git commit -m x'
+case_bash 'signing off, quoted key'     deny "GIT_CONFIG_PARAMETERS=\"'commit.gpgsign'='false'\" git commit -m x"
+# Words that keep a command position open: a transparent prefix, or the shell
+# word that opens a command.
+case_bash 'sudo prefix'                 deny 'sudo git push -f origin main'
+case_bash 'env prefix with assignment'  deny 'env A=1 git push -f origin main'
+case_bash 'command prefix'              deny 'command git push origin main'
+case_bash 'brace group'                 deny '{ git push -f origin main; }'
+case_bash 'then opens a command'        deny 'if true; then git push -f origin main; fi'
+# Pushes that carry main without naming it as a refspec.
+case_bash 'mirror push'                 deny 'git push --mirror origin'
+case_bash 'all branches, forced'        deny 'git push --all -f origin'
 case_bash 'cargo after a docker command' deny 'docker rm -f x; cargo test'
 
 # A shell metacharacter inside a QUOTED argument is not a separator, and the two
@@ -184,6 +243,77 @@ case_bash 'cargo named in prose'         silent "echo 'never run cargo test here
 case_bash 'push rule documented in prose' silent "echo 'never git push --force origin main again'"
 case_bash 'push rule grepped in docs'     silent "grep -rn 'git push origin main ' docs/"
 case_bash 'make help then grep -n'      silent 'make help; grep -n verify Makefile'
+# Anchoring the `git` VERB was still not enough: the rules then looked for their
+# words anywhere in the call. A registry update whose heredoc prose said "main"
+# and "push", beside an `rm -f` and a `git worktree list`, was refused as a
+# force push to main, and the plan for this fix was refused by the signing rule
+# for naming the flag beside an `&& git`. Each row below pushes nothing to main
+# and disables nothing; the words only sit next to a git call.
+case_bash 'git call, then push words'   silent 'git -C /repo status --short; echo "a push note" -f main'
+case_bash 'git call, unquoted words'    silent 'git status; echo push origin main'
+case_bash 'git call, flag in prose'     silent 'git fetch && echo "never pass --no-gpg-sign to a commit"'
+case_bash 'main is the source'          silent 'git push origin main:feat/x'
+case_bash 'push quoted in a message'    silent 'git commit -m "git push -f origin main"'
+case_bash 'push line in a heredoc body' silent "git status; cat <<'X'
+git push --force origin main
+X"
+case_bash 'push line in a quoted message' silent 'git commit -m "first line
+git push -f origin main
+"'
+case_bash 'rm -f beside git and prose'  silent "rm -f a.md; git worktree list; echo 'the main push run failed'"
+case_bash 'closed heredoc, git after'   silent "cat <<'EOF'
+rm -f x
+EOF
+git worktree list"
+case_bash 'flag as a grep pattern'      silent 'git grep -n -- --no-gpg-sign'
+case_bash 'config value named in prose' silent 'git status; echo "GIT_CONFIG_PARAMETERS is how git reads commit.gpgsign=false"'
+# An assignment only counts where one can stand; as a search pattern it is an
+# argument.
+case_bash 'config names as search terms' silent 'git status; rg "GIT_CONFIG_KEY_0=commit.gpgsign" -n .claude/ && rg "GIT_CONFIG_VALUE_0=false" -n .claude/'
+# The everyday shape of a commit or PR written from a heredoc inside a quoted
+# substitution: its body may discuss exactly these words.
+case_bash 'commit message from a heredoc' silent "git commit -m \"\$(cat <<'EOF'
+Fix the guard
+
+never run git push -f origin main here, and never pass --no-gpg-sign
+EOF
+)\""
+case_bash 'PR body from a heredoc'      silent "gh pr create --title x --body \"\$(cat <<'EOF'
+git push --force origin main is refused
+EOF
+)\""
+
+# ---- Bash guard: the git reader under load -----------------------------
+# The hook has a 10 s timeout, and a hook that times out decides nothing — so a
+# scan that is slow on a large command is a scan that lets its push through.
+# macOS's /usr/bin/awk made a character loop quadratic (an 850 KB command took
+# 14 s); a burst of unclosed `<<` was quadratic in every awk. Each case ends in
+# a force push to main, must be DENIED, and must answer well inside the budget.
+big_case() { # big_case <label> <file>
+	start=$(date +%s)
+	got=$(jq -Rs --arg w "$tmp" \
+		'{hook_event_name:"PreToolUse", cwd:$w, tool_name:"Bash", tool_input:{command:.}}' <"$2" |
+		"$hooks/guard-bash.sh" 2>/dev/null |
+		jq -r '.hookSpecificOutput.permissionDecision // "silent"' 2>/dev/null || true)
+	took=$(($(date +%s) - start))
+	[ "$took" -le 5 ] || got="$got after ${took}s"
+	check "$1" deny "${got:-silent}"
+}
+awk 'BEGIN { for (i = 0; i < 20000; i++) printf "echo an-ordinary-generated-line-of-text-number-%d-nothing-special\n", i; printf "git push -f origin main" }' >"$tmp/bulk.txt"
+big_case 'a 1.4 MB command, then push' "$tmp/bulk.txt"
+awk 'BEGIN { for (i = 0; i < 16000; i++) print "cat <<A"; printf "git push -f origin main" }' >"$tmp/heredocs.txt"
+big_case '16000 unclosed heredocs, push' "$tmp/heredocs.txt"
+# One LINE, because every other rule's quote-blanking pass reads a line at a
+# time: a 400 KB single-line command took 11 s there before it was made linear.
+awk 'BEGIN { printf "echo \047"; for (i = 0; i < 1000000; i++) printf "A"; printf "\047 > /tmp/x && git push --force origin main" }' >"$tmp/oneline.txt"
+big_case 'a 1 MB single line, then push' "$tmp/oneline.txt"
+
+# A scan that FAILS must not read as "found nothing": with awk broken, a
+# command naming git is refused rather than waved through.
+mkdir -p "$tmp/brokenawk" && printf '#!/bin/sh\nexit 2\n' >"$tmp/brokenawk/awk" && chmod +x "$tmp/brokenawk/awk"
+broken=$(bash_event 'git status' | PATH="$tmp/brokenawk:$PATH" "$hooks/guard-bash.sh" 2>/dev/null |
+	jq -r '.hookSpecificOutput.permissionDecision // "silent"' 2>/dev/null || true)
+check 'git command, awk broken' deny "${broken:-silent}"
 
 # ---- Bash guard: ask and note ------------------------------------------
 case_bash 'merge asks'                  ask  'gh pr merge 123 --squash'

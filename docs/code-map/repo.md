@@ -325,8 +325,10 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   **Which characters count as those separators is decided by QUOTING, and
   `unquoted_view` is the one place that decision is made**: it returns the
   command with every quoted span blanked to spaces, so a `|`, `;`, `&&` or `-n`
-  inside an argument is no longer read as one outside. Every predicate in the
-  file scans that view. Matching the raw string instead was wrong in BOTH
+  inside an argument is no longer read as one outside. `piped_after_make`,
+  `dry_run_after_make` and `at_command_position` scan that view (the `$MAKE`
+  presence test and `make_targets` still read the raw string, so a quoted
+  `; make …` can still earn the worktree NOTE). Matching the raw string instead was wrong in BOTH
   directions, and the second is the serious one: a quoted `|` or `-n` DENIED a
   legitimate call (`make gui:test F='a|b'` is the ordinary way to run two
   suites), while a quoted `;`, `&&` or `||` truncated the scan early and let a
@@ -334,15 +336,55 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   i.e. the control failed open, which is the failure this directory exists to
   prevent.
   `at_command_position` is the general form of "is this a command or just a
-  name", and the cargo rule and the two push rules use it: it TOKENIZES over
-  that same blanked view. Tokenizing alone was not enough — an alternation in a
-  quoted regex is one token and was safe, but a quoted argument with a SPACE
-  after a separator splits into two, the first ending in `;`, which opened a
-  command position inside the quotes. Between the two shapes this cost twelve
-  wrong denials across two cycles, six of them on the edits documenting and
-  fixing the first six. A guard that refuses the documentation of its own defect
-  stops being read as a decision, which is the failure mode the whole directory
-  exists to avoid. The work-item-code
+  name", and the cargo rule uses it: it TOKENIZES over that same blanked view.
+  Tokenizing alone was not enough — an alternation in a quoted regex is one
+  token and was safe, but a quoted argument with a SPACE after a separator
+  splits into two, the first ending in `;`, which opened a command position
+  inside the quotes. Between the two shapes this cost twelve wrong denials
+  across two cycles, six of them on the edits documenting and fixing the first
+  six. A guard that refuses the documentation of its own defect stops being read
+  as a decision, which is the failure mode the whole directory exists to avoid.
+  **The git rules (the two push rules and the signing rule) go one step further
+  and read the git INVOCATION's own words** through `GITSCAN`, which walks the
+  whole command once as the shell would and records each command-position `git`
+  as its global options, subcommand and arguments; one scan (`git_verdicts`)
+  answers all three rules. The push rules decide from a refspec's DESTINATION and
+  the push's own flags (`--mirror`/`--all` carry main); the signing rule from
+  that invocation's `-c` options, the flag on a command that takes it, or git's
+  environment spelling (`GIT_CONFIG_PARAMETERS`, `GIT_CONFIG_KEY_n`/`VALUE_n`,
+  prefixed or exported). Anchoring only the `git` verb had left them testing
+  `push`, `-f` and `main` (or the signing flag) anywhere in the call, so a
+  command that pushed nothing — prose beside an `rm -f` and a
+  `git worktree list` — was refused as a force push to main.
+  **The reader has to fail CLOSED, and its first version did not.** A
+  zero-context review found it ending the git command at `(`, `)` and a
+  backtick (so `git -C $(pwd) push -f origin main` went through), reading a
+  here-string `<<<` as a heredoc and skipping the rest of the command, and
+  discarding the environment prefix — seven spellings the old whole-string match
+  had denied. So a substitution or subshell is a NESTED level the outer command
+  resumes after, a heredoc body is skipped only when its closing line exists
+  (`<<""` closes on an empty line), and an assignment counts where one can
+  stand — a command position, or after `export`/`declare`/… — never as a
+  search pattern. Transparent prefixes (`sudo`, `env`, `command`, …) and the
+  words that open a command (`then`, `{`, …) keep the command position open.
+  **Speed is part of failing closed**: the hook's 10 s timeout means a slow scan
+  decides nothing and the push proceeds. A second zero-context pass found the
+  reader quadratic under macOS's `/usr/bin/awk`, whose `substr(s, i, 1)` costs
+  the length of `s` (an 850 KB command took 14 s; mawk and gawk stayed fast),
+  and quadratic in every awk on a burst of unclosed `<<`. So characters are read
+  from a moving 4096-character window, heredocs through a line table built once.
+  A third pass found the SAME cost one layer out: `unquoted_view`, which every
+  command goes through for the make and cargo rules, was quadratic too (a
+  400 KB single-line command took 11 s), and now uses the same window and
+  builds its output in pieces. `scripts/check-hooks.sh` carries three large
+  commands — many lines, many unclosed heredocs, one long line — that must be
+  denied within 5 s. A scan that FAILS denies rather than going quiet — the
+  self-test breaks awk to prove it. That pass also found a `0x01` byte splitting
+  the awk record and discarding the push before it, a shift inside `$(( … ))`
+  arming a heredoc skip, and a substitution inside DOUBLE quotes going unscanned;
+  all three are handled and pinned. What the text cannot decide it does not guess at: an
+  omitted refspec, a refspec in a variable, a quoted `sh -c '…'`, `$'…'`
+  quoting. The work-item-code
   pattern lists its prefixes for the mirror-image reason: the general
   `[A-Z]{2,}-[0-9]+` shape matches `UTF-8`, `SHA-256`, `OFL-1` and every sample
   order number, and a note that fires on almost every edit teaches people to
