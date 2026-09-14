@@ -221,6 +221,22 @@ platform binaries.
 
 ### Fixed
 
+- **The Designer no longer tells you nothing is selected while it shows
+  something as selected.** With no item chosen, the layer tree marks the whole
+  document as the current row and the property panel shows the document's page
+  size and margins — yet the panel's sentence said "Nothing selected" and
+  pointed at a "layer list" the sidebar actually calls Structure. It now says the
+  panel is for the whole document, and what selecting an item will do, in words
+  that also hold in a document with no items yet.
+
+  Shift-clicking an item with nothing selected used to be worse: it started a
+  multi-selection with no primary item, so the toolbar counted "2 selected" and
+  offered the align buttons while the tree and the panel both still said the
+  document was current. A Shift-click or Shift-drag with nothing selected now
+  simply selects, as it does in other design tools, and a multi-selection
+  goes away whenever its primary item does — including when you open the
+  document settings and come back.
+
 - **The document preview is drawn at your screen's real resolution.** On a
   Retina or any other high-density display, the page in the middle of the
   Designer was the one soft thing on the screen: the engine rendered it at one
@@ -277,11 +293,11 @@ platform binaries.
   of one row can overflow in opposite directions, so the side that works is a
   property of where the control ended up rather than of what it is. Nine
   tooltips were being cut across four different parts of the window — the
-  toolbar, the layer list, the property panel, and inside a single segmented
+  toolbar, the Structure pane, the property panel, and inside a single segmented
   control — and three of the nine were cut on the RIGHT.
 
-  A side effect worth naming: a cut-off tooltip was also stretching the layer
-  list's sideways scrolling by 82px while nobody was hovering it, so the pane
+  A side effect worth naming: a cut-off tooltip was also stretching the
+  Structure pane's sideways scrolling by 82px while nobody was hovering it, so the pane
   could be dragged sideways into empty space. That is gone with it.
 
 - **The canvas resize handles stay white on the page in dark chrome.** A handle

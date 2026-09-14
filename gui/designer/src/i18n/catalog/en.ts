@@ -1090,7 +1090,7 @@ export const en: LanguageCatalog = {
     'docSettings.preview': 'Preview',
     'docSettings.previewEmpty': 'No preview yet.',
     'panel.noSelection.hint':
-      'Nothing selected. Pick an item on the canvas or in the layer list to edit it.',
+      "This panel is for the whole document. Selecting an item switches it to that item's properties.",
     'panel.noSelection.page': 'Page',
     'panel.noSelection.margin': 'Margins',
     'panel.noSelection.open': 'Open document settings',

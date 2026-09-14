@@ -1015,7 +1015,7 @@ export const zhCn: LanguageCatalog = {
     'docSettings.close': '返回画布',
     'docSettings.preview': '预览',
     'docSettings.previewEmpty': '尚无预览。',
-    'panel.noSelection.hint': '未选择任何项目。在画布或图层列表中选择一个项目即可编辑。',
+    'panel.noSelection.hint': '此面板针对整个文档。选择项目后，会切换为该项目的属性。',
     'panel.noSelection.page': '页面',
     'panel.noSelection.margin': '页边距',
     'panel.noSelection.open': '打开文档设置',

@@ -896,7 +896,7 @@ export const fil: LanguageCatalog = {
     'docSettings.preview': 'Preview',
     'docSettings.previewEmpty': 'Wala pang preview.',
     'panel.noSelection.hint':
-      'Walang napili. Pumili ng item sa canvas o sa listahan ng layer para i-edit ito.',
+      'Ang panel na ito ay para sa buong dokumento. Kapag pumili ng item, ipapakita rito ang mga katangian nito.',
     'panel.noSelection.page': 'Pahina',
     'panel.noSelection.margin': 'Mga margin',
     'panel.noSelection.open': 'Buksan ang mga setting ng dokumento',

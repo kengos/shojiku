@@ -857,7 +857,7 @@ export const hi: LanguageCatalog = {
     'docSettings.close': 'कैनवास पर वापस',
     'docSettings.preview': 'पूर्वावलोकन',
     'docSettings.previewEmpty': 'अभी कोई पूर्वावलोकन नहीं।',
-    'panel.noSelection.hint': 'कुछ भी चयनित नहीं। संपादित करने के लिए कैनवास या लेयर सूची में कोई आइटम चुनें।',
+    'panel.noSelection.hint': 'यह पैनल पूरे दस्तावेज़ के लिए है। कोई आइटम चुनने पर यह उस आइटम के गुण दिखाएगा।',
     'panel.noSelection.page': 'पृष्ठ',
     'panel.noSelection.margin': 'हाशिए',
     'panel.noSelection.open': 'दस्तावेज़ सेटिंग खोलें',

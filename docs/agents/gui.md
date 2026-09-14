@@ -231,7 +231,11 @@ definitions
   and resize by handles with grid/guide snapping (shipped), and a
   canvas-local multi-selection (shift-click / rubber-band) drives align
   (edge/center) and equal-gap distribute over the movable subset, each
-  one transactional batch (shipped); other edits go through the Property
+  one transactional batch (shipped). A multi-selection exists only beside
+  a primary selection: a shift-click or shift-sweep with nothing selected
+  is a plain selection, and clearing the primary by any route drops the
+  set — otherwise the toolbar would count items that neither the panel nor
+  the tree shows as selected. Other edits go through the Property
   Panel as `designer-core` patch ops. Rulers come later.
 - **Property Panel** exposes data binding, format selection (type-dependent:
   datetime/currency/quantity variants), style, box, layout mode, page break
@@ -1215,9 +1219,13 @@ map ([gui-designer](../code-map/gui-designer.md) /
   unset inherited key to its real engine default so a control
   reads its value rather than blank; that engine floor is the ONE origin
   with no jump (nothing authored it, and the badge would otherwise stack
-  the same link down every unset field of the decoration tab). The no-selection state states what the
+  the same link down every unset field of the decoration tab). With nothing
+  selected the DOCUMENT is the subject, and the panel names it as its
+  subject, as the layer tree marks its whole-document root row current — one shared
+  predicate decides both, and a selection whose node is gone counts as the
+  document for both. That state states what the
   document IS — the page and the margins it is set to, withheld rather than
-  guessed when either cannot be read honestly — says what to do next, and
+  guessed when either cannot be read honestly — says what selecting an item does, and
   points at the **fullscreen document-settings view** (a
   fixed whole-document layer-tree root row / the File-menu document-settings entry /
   an origin-badge jump open it; it takes over the whole editor area — the

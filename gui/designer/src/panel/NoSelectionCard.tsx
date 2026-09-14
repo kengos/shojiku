@@ -1,11 +1,16 @@
-// The property panel with NOTHING selected. It used to be one apology and one
+// The property panel when the DOCUMENT is the subject — nothing selected, or a
+// selection whose node is gone (`readSubject`, the same predicate that marks the
+// layer tree's whole-document row current). It used to be one apology and one
 // button in a 560×1164 column — 87% of it empty — which is a lot of screen
 // spent saying that nothing is happening.
 //
-// It now orients instead: the sentence says what to do next, and two lines say
-// what the document IS, so the panel is worth glancing at even when the reader
-// has not selected anything. It deliberately does NOT fill the column: an empty
-// state orients and offers, it does not pad.
+// It now orients instead: the sentence names the panel's SUBJECT — the whole
+// document, which is what the tree marks too, never "nothing" — and what
+// selecting an item does. It claims nothing about what the card displays, so it
+// stays true when both facts below are withheld, and nothing about items
+// existing, so it stays true in a document with none yet. Two lines say what the
+// document IS. It deliberately does NOT fill the column: an empty state orients
+// and offers, it does not pad.
 //
 // Both facts come from the readers `PageSetup` already uses — no second walk of
 // the document, and no new claim about the wire. Each of them DECLINES rather
