@@ -110,6 +110,7 @@ export function EditorBody({
           onOpenDocument={() => views.openDocView()}
           onOpenDataEditor={views.openDataView}
           onOpenDataField={views.openDataField}
+          selectClearing={multi.selectClearing}
         />
       )}
       {fullscreen ? (

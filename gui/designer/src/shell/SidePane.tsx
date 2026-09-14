@@ -33,6 +33,10 @@ export interface SidePaneProps {
   readonly onOpenDataEditor: () => void;
   /** Open that editor on one field — the palette row's gear. */
   readonly onOpenDataField: (target: FieldTarget) => void;
+  /** Select an item from the tree or the field palette — a plain selection, so
+   * it resets the canvas multi-set (`useMultiSelect.selectClearing`), exactly as
+   * a plain click on the canvas does. */
+  readonly selectClearing: (path: string) => void;
 }
 
 export function SidePane({
@@ -46,6 +50,7 @@ export function SidePane({
   onOpenDocument,
   onOpenDataEditor,
   onOpenDataField,
+  selectClearing,
 }: SidePaneProps) {
   const { t } = useI18n();
 
@@ -74,7 +79,7 @@ export function SidePane({
         <LayerTree
           view={treeView}
           selection={editor.selection}
-          onSelect={editor.select}
+          onSelect={selectClearing}
           applyAll={editor.applyAll}
           read={editor.read}
           onContextMenu={onContextMenu}
@@ -94,7 +99,7 @@ export function SidePane({
         <FieldPalette
           definitions={effectiveDefinitions}
           templateText={editor.text}
-          onSelect={editor.select}
+          onSelect={selectClearing}
           drag={paletteDrag}
           onOpenEditor={onOpenDataEditor}
           onOpenField={onOpenDataField}

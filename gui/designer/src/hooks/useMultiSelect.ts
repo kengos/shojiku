@@ -4,13 +4,11 @@
 // single selection or a deselect resets it. A refused drag's reason rides along
 // (the placement chip shows it until the next selection interaction clears it).
 //
-// The set exists ONLY beside a primary. With none, the property panel shows the
-// document and the layer tree marks it current (`readSubject`), so a set with no
-// primary would have the toolbar counting items that no other surface shows as
-// selected. Hence a Shift-click or Shift-sweep with no primary is a plain
-// selection, and a primary that goes away by ANY route — including the callers
-// that clear the editor's selection directly, like opening the document view —
-// takes the set with it.
+// The set exists ONLY beside the primary it was built next to — `useMultiSet`
+// owns that rule, including a primary that goes away or changes by a route that
+// never passes through here. With no primary the property panel shows the
+// document and the layer tree marks it current (`readSubject`), so a Shift-click
+// or Shift-sweep with no primary has nothing to add to and is a plain selection.
 
 import { useCallback, useState } from 'react';
 import {
@@ -21,12 +19,9 @@ import {
   movableCount,
 } from '../canvas/align';
 import { type FixedReason, manipulationFor } from '../canvas/manipulate';
-import { readSubject } from '../editor/subject';
 import type { EditorController } from '../editor/useEditor';
 import type { BoxIndex } from '../engine/types';
-
-/** The stable empty multi-selection (canvas-local, movable paths). */
-const EMPTY_PATH_SET: ReadonlySet<string> = new Set();
+import { useMultiSet } from './useMultiSet';
 
 /** The page index whose boxes contain `path` (align resolves against one
  * page's local geometry), or null when absent. */
@@ -60,32 +55,28 @@ export interface MultiSelect {
 export function useMultiSelect({ editor, inspectBoxes }: MultiSelectOptions): MultiSelect {
   // Destructured ONCE: the controller object is rebuilt every render, so a memo
   // depending on it would churn — these fields are the stable ones.
-  const { selection, select, clearSelection, read, applyAll } = editor;
+  const { selection, select, clearSelection, read, applyAll, subscribe } = editor;
   // A refused drag's reason (a drag attempt on a fixed box). Shown in the
   // placement chip until the next selection interaction clears it.
   const [refused, setRefused] = useState<FixedReason | null>(null);
-  const [storedMulti, setMultiSel] = useState<ReadonlySet<string>>(EMPTY_PATH_SET);
-  const hasPrimary = readSubject(read, selection) !== null;
-  // The primary went away without passing through this hook: drop the stored set
-  // now (React's adjust-state-while-rendering form), and never paint it meanwhile.
-  if (!hasPrimary && storedMulti.size > 0) {
-    setMultiSel(EMPTY_PATH_SET);
-  }
-  const multiSel = hasPrimary ? storedMulti : EMPTY_PATH_SET;
+  const set = useMultiSet({ read, selection, subscribe });
+  const { clear, toggle, addAll, replace } = set;
+  const multiSel = set.paths;
+  const hasPrimary = set.primary !== null;
 
   const selectClearing = useCallback(
     (path: string) => {
       setRefused(null);
-      setMultiSel(EMPTY_PATH_SET);
+      clear();
       select(path);
     },
-    [select],
+    [select, clear],
   );
   const deselectClearing = useCallback(() => {
     setRefused(null);
-    setMultiSel(EMPTY_PATH_SET);
+    clear();
     clearSelection();
-  }, [clearSelection]);
+  }, [clearSelection, clear]);
 
   // Shift-click a movable box → toggle it in the multi-selection (non-movable
   // shift-clicks are ignored — align/distribute act on the movable subset).
@@ -99,17 +90,9 @@ export function useMultiSelect({ editor, inspectBoxes }: MultiSelectOptions): Mu
       if (manipulationFor(read, path).kind !== 'move') {
         return;
       }
-      setMultiSel((prev) => {
-        const next = new Set(prev);
-        if (next.has(path)) {
-          next.delete(path);
-        } else {
-          next.add(path);
-        }
-        return next;
-      });
+      toggle(path);
     },
-    [read, hasPrimary, selectClearing],
+    [read, hasPrimary, selectClearing, toggle],
   );
 
   // A rubber-band drop: additive (Shift) adds the swept movable items to the
@@ -120,24 +103,18 @@ export function useMultiSelect({ editor, inspectBoxes }: MultiSelectOptions): Mu
     (paths: readonly string[], additive: boolean) => {
       setRefused(null);
       if (additive && hasPrimary) {
-        setMultiSel((prev) => {
-          const next = new Set(prev);
-          for (const path of paths) {
-            next.add(path);
-          }
-          return next;
-        });
+        addAll(paths);
         return;
       }
       if (paths.length === 0) {
-        setMultiSel(EMPTY_PATH_SET);
+        clear();
         clearSelection();
         return;
       }
-      setMultiSel(new Set(paths.slice(1)));
+      replace(paths.slice(1), paths[0]);
       select(paths[0]);
     },
-    [select, clearSelection, hasPrimary],
+    [select, clearSelection, hasPrimary, addAll, clear, replace],
   );
 
   // The align/distribute subject: the movable primary plus the multi-set,

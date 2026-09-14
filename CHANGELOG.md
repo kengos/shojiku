@@ -221,6 +221,18 @@ platform binaries.
 
 ### Fixed
 
+- **Selecting from the layer tree or the breadcrumb clears a canvas
+  multi-selection.** With two boxes selected on the canvas, clicking another
+  item in the Structure pane — or a crumb in the selection path — moved the
+  selection but left the other box highlighted and the align buttons showing,
+  so aligning would have moved a box together with one you had just deselected.
+  Those clicks, and a field in the data palette, now select just that item, as a
+  plain click on the canvas does. A multi-selection also goes away when anything
+  else replaces the selected item — a jump from the problems list, an insert —
+  and when an undo, a redo, or an insert, move or delete changes which items its
+  members point at. Aligning keeps it, so you can still align and then
+  distribute the same boxes.
+
 - **The Designer no longer tells you nothing is selected while it shows
   something as selected.** With no item chosen, the layer tree marks the whole
   document as the current row and the property panel shows the document's page
