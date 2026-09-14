@@ -481,15 +481,46 @@ test.describe('on a 2× display', () => {
     // and the bounding rect is that box AFTER the page stack's zoom transform.
     // Reporting both means a mismatch names itself instead of arriving as a
     // ratio nobody can decompose.
-    const shot = await canvas.evaluate((el) => {
-      const r = el.getBoundingClientRect();
-      return {
-        raster: el.width,
-        layout: Number.parseFloat(el.style.width),
-        onScreen: r.width,
-        dpr: window.devicePixelRatio,
-      };
-    });
+    const measure = () =>
+      canvas.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        const pane = el.closest('.sj-designer-canvas');
+        const box = pane.getBoundingClientRect();
+        return {
+          raster: el.width,
+          layout: Number.parseFloat(el.style.width),
+          onScreen: r.width,
+          dpr: window.devicePixelRatio,
+          status: pane.getAttribute('data-status'),
+          fits: r.width <= box.width && r.height <= box.height,
+        };
+      });
+    // Measure AT the opening fit, not merely once a canvas exists. The first
+    // raster arrives at zoom 1; the fit then changes the zoom at once, and until
+    // the raster at the fitted zoom lands the page stack scales the OLD raster by
+    // the difference — a deliberate interim transform, 0.36× on this preset. A
+    // measurement taken inside that window reads layout 454 against 161 on
+    // screen, which is timing rather than the defect, and a slower machine lands
+    // in it reliably. So wait until the preview is ready, the page fits its
+    // pane (the fit has happened) and nothing scales the box (its raster has
+    // arrived). The magnification is compared as a number, so a box that never
+    // stops being scaled fails naming the factor (2 is the upscale this change
+    // removed; 0.36 is a fit whose raster never came). The deliverable is still
+    // asserted separately below.
+    let shot = await measure();
+    await expect
+      .poll(
+        async () => {
+          shot = await measure();
+          return {
+            ready: shot.status === 'ready',
+            fits: shot.fits,
+            magnification: Math.round((shot.onScreen / shot.layout) * 100) / 100,
+          };
+        },
+        { timeout: 30000 },
+      )
+      .toEqual({ ready: true, fits: true, magnification: 1 });
     expect(shot.dpr).toBe(2);
     // One raster pixel per device pixel — exact, because the component divides
     // the raster by this very number.
