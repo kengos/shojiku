@@ -19,10 +19,10 @@ export interface Subject {
 }
 
 /** The selected node while it still reads; `null` — the document is the subject —
- * when nothing is selected, the node is gone, or the read throws. This predicate
- * never throws; other readers of the same path (the format toolbar, the dialog
- * host) still read it unguarded, so it is not by itself a hostile-document guard
- * for the whole Designer. */
+ * when nothing is selected, the node is gone, or the read throws. Every surface
+ * that shows or acts on "the selected item" reads the selection through this;
+ * the delete/duplicate actions deliberately do not, so a node a hostile document
+ * refuses to read can still be removed. */
 export function readSubject(read: ReadFn, selection: string | null): Subject | null {
   if (selection === null) {
     return null;

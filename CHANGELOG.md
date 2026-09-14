@@ -221,6 +221,16 @@ platform binaries.
 
 ### Fixed
 
+- **A template with a runaway YAML alias no longer crashes the Designer when you
+  select the item holding it.** YAML aliases can expand a few lines into
+  millions of values, and the Designer refuses to read past a safe limit. The
+  property panel and the Structure pane already treated such an item as
+  unreadable and showed the whole document instead, but the format bar above the
+  canvas read it anyway and took the entire Designer down with it. The format
+  bar, the column editor, the reusable-block library and the placement label
+  now all read the selection the same careful way, so selecting the item leaves
+  everything working — and you can still delete it.
+
 - **Selecting from the layer tree or the breadcrumb clears a canvas
   multi-selection.** With two boxes selected on the canvas, clicking another
   item in the Structure pane — or a crumb in the selection path — moved the
