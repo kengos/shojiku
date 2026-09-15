@@ -884,7 +884,16 @@ all three share that origin. A band's own region is not in `inspect`
 `sections.<band>.height`, which is the extent every bundled template
 lays its `body.box` out around, so that is the region here too — a band
 declaring no height is simply not a canvas drop target, and the tree
-still reaches it. The move itself is ONE `moveItem` carrying a
+still reaches it. The tree has no drop point, so a tree drop into a
+band lands the row where an insert into that band would — the top of a
+header or the foot of a footer, bottom-aligned by its own numeric height,
+measured off the document's margin box — unless its `x`/`y` already are
+margin-box coordinates, which is true only when it comes from the other
+band or the absolute body (a flow-body `x`/`y` is never read, and a
+container child's is measured from the container). A `line` keeps its
+endpoints and an anchored `ellipse` its anchor: neither has a box
+position to write. The indicator and the release compute the same batch,
+so a drop the release would refuse is never offered. The move itself is ONE `moveItem` carrying a
 destination sequence (`toPath`), which splices the NODE, so the moved
 subtree keeps its comments, its quoting and its anchors; the batch is
 those box-key edits then that move, applied as one `applyAll`. A move

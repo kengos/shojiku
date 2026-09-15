@@ -37,8 +37,9 @@ export interface ReparentTarget {
   readonly index: number;
   /** Where the pointer released, in page pt. A coordinate-placed receiver (a
    * band, an absolute body) writes `box.x`/`box.y` from it. The layer tree
-   * has no page geometry and omits it, so a tree drop leaves the item's own
-   * coordinates alone. */
+   * has no page geometry: it omits it (leaving the item's own coordinates
+   * alone), except for a box-less row landing directly in a band, where it
+   * supplies the point an insert there would use (`tree/rowDrag`). */
   readonly at?: DropPoint;
 }
 
