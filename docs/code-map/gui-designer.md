@@ -269,7 +269,7 @@ REQUIRED-only (no `?:`/defaults) so the split added no new branch legs.
   format toolbar, save-as-block in the Insert menu.
 - `shell/contextMenuRows.ts` — pure: WHICH rows apply to one path, in
   menu order (`duplicate`/`delete` on a sequence entry, `wrap` when
-  `isWrappablePath`, `border` via `borderableView`, `saveBlock` when the
+  `isWrappable(path, node)`, `border` via `borderableView`, `saveBlock` when the
   host armed blocks). A row that does not apply is ABSENT, never
   disabled. The save-block row CARRIES its snippet, captured while the
   model has it narrowed. `readNodeAt` degrades a throwing read to

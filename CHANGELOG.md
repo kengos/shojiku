@@ -236,6 +236,27 @@ platform binaries.
 
 ### Fixed
 
+- **Group into a container no longer moves the item.** The new container
+  started at the corner of whatever held the item, so in a header, a footer or a
+  fixed-position body its outline and handles sat at the top of the page, away
+  from the item. An item with its own position could also move: inside a
+  flowing body or another container it was placed from the new container's
+  corner instead of where it had been, and a position written as a percentage
+  sent it to the top of the page. An item that shared a row or a grid with its
+  neighbours, stretched across the row or spanning grid columns, lost that share
+  and shrank. The container now takes the item's position and its share of the
+  row or grid, so the item stays where it was, at its size, and the container's
+  outline is around it. A line has no box, so the container takes the height of
+  the line's topmost end and the line is redrawn relative to it, except in a
+  flowing body, which does not read a container's height. One size can still
+  change: an item whose width is a percentage and that sits away from the left
+  edge is now narrower by that distance, because the percentage is of the
+  container.
+
+  Group into a container is also no longer offered for a page number, a page
+  break, a Repeat grid or a Repeat flow. None of them can be drawn inside a
+  container, so grouping one made it disappear from the page.
+
 - **Dragging an item onto the header or footer in the Structure pane puts it
   where that band prints.** An item from the body, or from inside a container,
   has no position on the page, so after the drag it sat at the top of the page

@@ -538,7 +538,10 @@ presence is not a text binding.
   — all four `Item` variants that omit `box_` (`line`, `page_break`, `repeat`,
   `repeat_flow`) — and has exactly one consumer, `panelTabs`' tab gate,
   because a placement tab over any of them authors a `deny_unknown_fields`
-  parse error. A drift-guard test pins it to the enum. And the ONE home for
+  parse error. A drift-guard test pins it to the enum. Its mirror,
+  **`REQUIRED_BOX_WIRE_TYPES`** (`rect`: the one `box_` without a serde
+  default), is read by `insert/wrap`, which must not delete a box it emptied;
+  the same `noBoxWire.test.ts` pins it. And the ONE home for
   **`MARK_TYPES`**
   (`ellipse`/`checkbox` — the two form marks): they share a wire family,
   a presence predicate, and a paint rule that is emphatically NOT the

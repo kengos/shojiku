@@ -230,11 +230,35 @@ describe('Designer container insert + marks', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('wrap on a malformed (non-map) entry is a safe no-op (the ops-null arm)', () => {
-    const onChange = vi.fn();
+  it("withholds the Layout tab's wrap action from a kind a container would skip", () => {
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    repeat: every_page',
+      '    items:',
+      '      - { type: page_number, box: { x: 0, y: 700 } }',
+      '      - { type: text, text: hello, box: { x: 0, y: 740 } }',
+      '',
+    ].join('\n');
+    draw(makeTransport(), { source });
+    fireEvent.click(screen.getByRole('button', { name: /Page number/ }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    // The tab did render the page number's box fields, so the absence below is
+    // the gate and not a tab that shows nothing.
+    expect(screen.getByLabelText('Width')).toBeTruthy();
+    expect(screen.queryByText('Group into a container')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /hello/ }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    expect(screen.getByText('Group into a container')).toBeTruthy();
+  });
+
+  it('offers no wrap on a malformed (non-map) entry', () => {
     // The scalar entry still gets a tree row (indices stay true), and its path
-    // IS an items-list entry — so the menu offers wrap, and the op builder
-    // refuses at the read (not a map).
+    // IS an items-list entry — but there is no map to re-author, so the menu
+    // withholds wrap rather than offering a row that does nothing.
     const source = [
       'sections:',
       '  body:',
@@ -243,13 +267,13 @@ describe('Designer container insert + marks', () => {
       '      - broken',
       '',
     ].join('\n');
-    draw(makeTransport(), { source, onChange });
+    draw(makeTransport(), { source });
     fireEvent.contextMenu(screen.getByRole('button', { name: 'Item' }), {
       clientX: 5,
       clientY: 5,
     });
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Group into a container' }));
-    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Group into a container' })).toBeNull();
   });
 
   it('wrap on an oversized subtree rolls back whole (the snippet validator refuses)', () => {

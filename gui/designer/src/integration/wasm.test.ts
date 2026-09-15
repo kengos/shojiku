@@ -1109,6 +1109,285 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     expect(moved.border.y).toBeLessThan(bottom);
   });
 
+  it('wraps an item in a container without moving it on the page, in every owner', async () => {
+    // The wrap moves the item's position onto the new container, which resolves
+    // against the same basis the item did. So the engine must draw the item where
+    // it drew before, put the container's box where the item is (not at the
+    // owner's origin), and report nothing new.
+    const doc = (body: string[], footer: string[] = []) =>
+      [
+        'version: 0.1.0',
+        'page: { size: A4, margin: 25 }',
+        'sections:',
+        '  body:',
+        ...body,
+        ...(footer.length > 0
+          ? ['  footer:', '    repeat: every_page', '    items:', ...footer]
+          : []),
+        '',
+      ].join('\n');
+    const flowBody = (items: string[]) => ['    type: flow', '    items:', ...items];
+    const cases: [string, string, string, string][] = [
+      [
+        'footer text',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: text, text: hello, box: { x: 10, y: 700, w: 100 } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        'footer rect in percent',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: rect, box: { x: "10%", y: "90%", w: 50, h: 20 } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        'footer line',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: line, from: { x: 10, y: 710 }, to: { x: 200, y: 700 } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        'absolute body',
+        doc([
+          '    type: absolute',
+          '    items:',
+          '      - { type: text, text: hello, box: { x: 40, y: 300 } }',
+        ]),
+        'sections.body.items[0]',
+        '{}',
+      ],
+      [
+        'flow body',
+        doc(
+          flowBody([
+            '      - { type: text, text: first }',
+            '      - { type: text, text: hello, box: { x: 50, y: 30 } }',
+          ]),
+        ),
+        'sections.body.items[1]',
+        '{}',
+      ],
+      [
+        'container',
+        doc(
+          flowBody([
+            '      - type: container',
+            '        box: { direction: row, h: 200 }',
+            '        items:',
+            '          - { type: text, text: sibling }',
+            '          - { type: line, from: { x: 0, y: 150 }, to: { x: 90, y: 150 } }',
+            '          - { type: text, text: hello, box: { x: 40, y: 60 } }',
+          ]),
+        ),
+        'sections.body.items[0].items[2]',
+        '{}',
+      ],
+      [
+        'container line',
+        doc(
+          flowBody([
+            '      - type: container',
+            '        box: { direction: row, h: 200 }',
+            '        items:',
+            '          - { type: text, text: sibling }',
+            '          - { type: line, from: { x: 0, y: 150 }, to: { x: 90, y: 150 } }',
+          ]),
+        ),
+        'sections.body.items[0].items[1]',
+        '{}',
+      ],
+      [
+        'repeat cell',
+        doc(
+          flowBody([
+            '      - type: repeat',
+            '        data: { key: rows }',
+            '        cell:',
+            '          box: { h: 40 }',
+            '          items:',
+            '            - { type: text, text: hello, box: { x: 30, y: 12 } }',
+          ]),
+        ),
+        'sections.body.items[0].cell.items[0]',
+        '{"rows":[{},{}]}',
+      ],
+      [
+        'repeat_flow card',
+        doc(
+          flowBody([
+            '      - type: repeat_flow',
+            '        data: { key: rows }',
+            '        item:',
+            '          items:',
+            '            - { type: text, text: hello, box: { x: 30, y: 12 } }',
+          ]),
+        ),
+        'sections.body.items[0].item.items[0]',
+        '{"rows":[{},{}]}',
+      ],
+      [
+        'table column cell',
+        doc(
+          flowBody([
+            '      - type: table',
+            '        data: { key: rows }',
+            '        columns:',
+            '          - label: name',
+            '            cell:',
+            '              items:',
+            '                - { type: text, text: hello, box: { x: 5, y: 3 } }',
+          ]),
+        ),
+        'sections.body.items[0].columns[0].cell.items[0]',
+        '{"rows":[{},{}]}',
+      ],
+      [
+        'grid container columnSpan',
+        doc(
+          flowBody([
+            '      - type: container',
+            '        box: { type: grid, columns: 2 }',
+            '        items:',
+            '          - { type: text, text: wide, box: { columnSpan: 2 } }',
+            '          - { type: text, text: hello, box: { x: 30, y: 40 } }',
+            '          - { type: text, text: after }',
+          ]),
+        ),
+        'sections.body.items[0].items[0]',
+        '{}',
+      ],
+      [
+        'grid container positioned child',
+        doc(
+          flowBody([
+            '      - type: container',
+            '        box: { type: grid, columns: 2 }',
+            '        items:',
+            '          - { type: text, text: first }',
+            '          - { type: text, text: hello, box: { x: 30, y: 40 } }',
+          ]),
+        ),
+        'sections.body.items[0].items[1]',
+        '{}',
+      ],
+      [
+        'row container flexGrow',
+        doc(
+          flowBody([
+            '      - type: container',
+            '        box: { direction: row }',
+            '        items:',
+            '          - { type: text, text: fixed, box: { w: 100 } }',
+            '          - { type: text, text: hello, box: { flexGrow: 1, flexBasis: 0 } }',
+          ]),
+        ),
+        'sections.body.items[0].items[1]',
+        '{}',
+      ],
+      [
+        'footer rect without size (codes only)',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: rect, box: { x: 10, y: 700 } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+    ];
+    const geometry = async (source: string, params: string) => {
+      const outcome = await transport.renderRaw(source, params, undefined, { scale: 2 });
+      return {
+        codes: outcome.diagnostics.items.map((d) => d.code),
+        boxes: outcome.inspect?.boxes.pages[0] ?? [],
+      };
+    };
+    for (const [owner, source, path, params] of cases) {
+      const before = await geometry(source, params);
+      // A fixture that does not parse would compare two empty renders and pass.
+      expect(before.codes, owner).not.toContain('parse_error');
+      const editor = Editor.create(source);
+      const ops = wrapInContainerOps((at) => editor.read(at), path);
+      if (ops === null) throw new Error(`${owner}: wrap refused`);
+      expect(editor.applyAll(ops).ok, owner).toBe(true);
+      const after = await geometry(editor.text(), params);
+      expect(after.codes, owner).toEqual(before.codes);
+      // A rect with no size draws no box; what matters is that the document
+      // still parses (its box is a required wire key).
+      if (owner.endsWith('(codes only)')) {
+        expect(after.codes, owner).toContain('rect_missing_size');
+        continue;
+      }
+      const item = before.boxes.find((b) => b.path === path);
+      const moved = after.boxes.find((b) => b.path === `${path}.items[0]`);
+      const container = after.boxes.find((b) => b.path === path);
+      if (item == null || moved == null || container == null) {
+        throw new Error(`${owner}: box missing`);
+      }
+      for (const key of ['x', 'y', 'w', 'h'] as const) {
+        expect(moved.border[key], `${owner} item ${key}`).toBeCloseTo(item.border[key], 2);
+      }
+      expect(container.border.y, `${owner} container y`).toBeCloseTo(item.border.y, 2);
+      // A line's x stays on its endpoints, so only a boxed item's wrapper takes it.
+      if (!owner.includes('line')) {
+        expect(container.border.x, `${owner} container x`).toBeCloseTo(item.border.x, 2);
+      }
+      // Every sibling stays put too: a wrapper that became a row slot, or lost
+      // the item's share of a row or grid, would push them.
+      // A repeated sub-template yields one box per element under the SAME path,
+      // so siblings are compared occurrence by occurrence.
+      const others = (boxes: typeof before.boxes) =>
+        boxes.filter((b) => b.path !== path && !b.path.startsWith(`${path}.`));
+      const again = others(after.boxes);
+      others(before.boxes).forEach((sibling, n) => {
+        expect(again[n]?.path, `${owner} sibling ${n}`).toBe(sibling.path);
+        expect(again[n]?.border.x, `${owner} ${sibling.path} x`).toBeCloseTo(sibling.border.x, 2);
+        expect(again[n]?.border.y, `${owner} ${sibling.path} y`).toBeCloseTo(sibling.border.y, 2);
+      });
+    }
+  });
+
+  it('skips a page number a container holds, which is why the wrap refuses one', async () => {
+    const source = [
+      'version: 0.1.0',
+      'page: { size: A4, margin: 25 }',
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    repeat: every_page',
+      '    items:',
+      '      - { type: page_number, box: { x: 0, y: 700 } }',
+      '',
+    ].join('\n');
+    const editor = Editor.create(source);
+    const read = (at: string) => editor.read(at);
+    expect(wrapInContainerOps(read, 'sections.footer.items[0]')).toBeNull();
+    // What the wrap would have written, by hand: the engine skips the item.
+    expect(
+      editor.applyAll([
+        {
+          op: 'insertItem',
+          path: 'sections.footer.items',
+          index: 0,
+          value: { type: 'container', box: { x: 0, y: 700 }, items: [{ type: 'page_number' }] },
+        },
+        { op: 'removeItem', path: 'sections.footer.items', index: 1 },
+      ]).ok,
+    ).toBe(true);
+    const outcome = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+    expect(outcome.diagnostics.items.map((d) => d.code)).toContain('page_number_in_container');
+  });
+
   it('drag-moves an absolute item through the manipulate model against real geometry', async () => {
     const abs = [
       'version: 0.1.0',

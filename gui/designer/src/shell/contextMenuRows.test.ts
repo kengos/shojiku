@@ -43,8 +43,17 @@ describe('contextMenuRows', () => {
   });
 
   it('derives rows from an unreadable node without throwing', () => {
-    // The node-shaped rows go; the path-shaped ones stay.
-    expect(kinds({ node: undefined })).toEqual(['duplicate', 'delete', 'wrap']);
+    // The node-shaped rows go (wrap needs a map to re-author); the path-shaped ones stay.
+    expect(kinds({ node: undefined })).toEqual(['duplicate', 'delete']);
+  });
+
+  it('offers no wrap row for a kind a container would skip', () => {
+    for (const type of ['page_number', 'page_break', 'repeat', 'repeat_flow']) {
+      expect(kinds({ node: { type }, path: 'sections.footer.items[0]' }), type).not.toContain(
+        'wrap',
+      );
+    }
+    expect(kinds({ path: 'sections.footer.items[0]' })).toContain('wrap');
   });
 
   it('carries the snippet on the save-block row, captured from the node', () => {
