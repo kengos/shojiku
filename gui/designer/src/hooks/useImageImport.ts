@@ -87,12 +87,13 @@ export function useImageImport({
         imageBudgets,
         textBytes,
         maxBytes,
+        read,
         apply,
         selectClearing,
         lastGoodRef,
         setNotice: setImageNotice,
       }),
-    [imageBudgets, textBytes, maxBytes, apply, selectClearing, lastGoodRef],
+    [imageBudgets, textBytes, maxBytes, read, apply, selectClearing, lastGoodRef],
   );
 
   // The insert-menu image entry: remember where the insert lands, then open the

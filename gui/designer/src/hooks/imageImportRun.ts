@@ -13,6 +13,7 @@ import { nextCapStep, projectImport } from '../image/capacity';
 import { type ImageCodec, importImageFile } from '../image/import';
 import { defaultBox, type ImageBudgets, type ImportRefusal } from '../image/model';
 import { BODY_ITEMS_PATH, type InsertTarget, resolveInsertTarget } from '../insert/model';
+import { placeForTarget } from '../insert/targetPlacement';
 import { planInsertDrop } from '../palette/drag';
 import type { LastGoodPreview } from '../preview/reducer';
 import { contentWidthPt, type PageHit } from './geometry';
@@ -31,6 +32,7 @@ export interface ImageImportContext {
   readonly imageBudgets: ImageBudgets;
   readonly textBytes: number;
   readonly maxBytes: number;
+  readonly read: ReadFn;
   readonly apply: (op: Op) => OpResult;
   readonly selectClearing: (path: string) => void;
   readonly lastGoodRef: { readonly current: LastGoodPreview | null };
@@ -63,11 +65,13 @@ export async function runImageImport(
           op: 'insertItem',
           path: action.target.path,
           index: action.target.index,
-          value: {
+          // Band-placed (bottom-aligned by its own height in a footer) when the
+          // target is a header/footer directly.
+          value: placeForTarget(ctx.read, ctx.lastGoodRef.current, action.target.path, {
             type: 'image',
             box: defaultBox(outcome.intrinsic, contentWidthPt(ctx.lastGoodRef.current)),
             src: outcome.src,
-          },
+          }),
         })
       : ctx.apply({ op: 'setScalar', path: action.path, keys: ['src'], value: outcome.src });
   if (result.ok) {

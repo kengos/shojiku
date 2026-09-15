@@ -202,10 +202,10 @@ result LANDS:
   engine, whose sub-template and grid children warn `*_in_container` — and
   `isFlowTarget(read, path)`, `insertTargetOwner(…) === 'flow'`, and
   `insertTargetBand(read, path)`, the band a target is DIRECTLY (`null` for a
-  container INSIDE a band, which is a `container`) — the one door both
-  band-placing inserts (`hooks/useInsertActions`, `hooks/useBlocks`) read, so
-  a container in a footer receives its new child box-less rather than pinned
-  against the page margin box. A canvas DROP differs there by design:
+  container INSIDE a band, which is a `container`) — read by
+  `insert/targetPlacement`'s `placeForTarget`, so a container in a footer
+  receives its new child box-less rather than pinned against the page margin
+  box. A canvas DROP differs there by design:
   `canvas/reparentTarget` resolves a drop inside a band's strip to the band
   before `receiverFor` is consulted, so a dragged item lands in the band while
   an inserted one lands in the selected container.
@@ -222,7 +222,11 @@ result LANDS:
   where a footer item's line box ran off the sheet and rendered invisibly.
 - `insert/bandPlacement.ts` — `requiresBand`/`bandInsertY`/`bandPlaced`:
   band children are coordinate-placed against the page margin box,
-  height floored, and an item authoring no width of its own is given
+  height floored; a footer item starts one line (32pt) above the bottom
+  edge, or is BOTTOM-ALIGNED when it carries a finite positive numeric
+  `box.h` (every image, rect, QR code and ellipse snippet does; a saved
+  block may), so a tall item never hangs past
+  the margin box where nothing clips it; an item authoring no width of its own is given
   `w: '100%'`. That default is for TEXT-shaped items, and a
   `MARK_TYPES` item is exempt from it: an `ellipse`/`checkbox` is a
   fixed-aspect glyph, so a boxless checkbox — the exact shape the insert
@@ -234,9 +238,24 @@ result LANDS:
   shifting `from.y`/`to.y` is what puts a footer rule where footers
   print. Only a plain numeric `y` shifts; an anchored endpoint has no
   coordinate and a `Length` string would concatenate (`'50%' + 700`),
-  so both are returned as authored. The values are UNTRUSTED — the
-  other caller is `hooks/useBlocks`, which band-places user-saved
-  blocks restored from browser storage.
+  so both are returned as authored. The values are UNTRUSTED — saved
+  blocks restored from browser storage reach it through `hooks/useBlocks`.
+- `insert/targetPlacement.ts` — `placeForTarget(read, preview, path,
+  snippet)`: the ONE door every insert SURFACE that can land in a header
+  or footer passes through before `insertItem` — the element insert
+  (`hooks/useInsertActions`), saved blocks (`hooks/useBlocks`), the
+  container picker's append (`hooks/useContainerInsert`), the field
+  dialog (`hooks/useFieldInsert`) and the image import
+  (`hooks/imageImportRun`). A band target DIRECTLY (`insertTargetBand`) →
+  `bandPlaced` at `bandInsertY(band, bandBoxHeightPt(preview, read), own
+  box.h)`; anything else → the snippet as authored. The iterable and paste
+  dialogs never reach it: `insert/iterableTarget` always answers the body.
+  Known outside it, both still writing no band coordinates: `insert/wrap.ts`
+  re-authors an existing band child inside a new container that has none
+  (the child keeps its own, so the ink stays while the container's box sits
+  at the top of the page), and a layer-tree drag into a band
+  (`canvas/reparent` `coordinateOps` gets no drop point), which leaves a
+  box-less item at the top of the page.
 - `insert/bandCreate.ts` — CREATING a band (`sections.header` /
   `sections.footer`), which nothing in the deterministic UI did before:
   `BAND_NAMES`, `BAND_LABEL_KEYS` (ONE catalog key per band, shared by

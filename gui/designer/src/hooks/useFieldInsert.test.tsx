@@ -41,6 +41,29 @@ describe('Designer create-data-field', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('band-places a field created into a selected footer', async () => {
+    const onChange = vi.fn();
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    repeat: every_page',
+      '    items: []',
+      '',
+    ].join('\n');
+    draw(makeTransport(), { source, onChange, onParamsChange: vi.fn() });
+    fireEvent.click(await screen.findByRole('button', { name: /Footer/ }));
+    const dialog = openFieldDialog();
+    fireEvent.change(within(dialog).getByLabelText('Field name'), { target: { value: 'amount' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const doc = String(onChange.mock.calls.at(-1)?.[0]);
+    // y: the document's A4 margin box (791pt floored) less the one-line inset.
+    expect(doc).toMatch(/footer:[\s\S]*key: amount[\s\S]*x: 0[\s\S]*y: 759\n/);
+  });
+
   it('carries the edited sample value into params as a typed value', async () => {
     const onParamsChange = vi.fn();
     draw(makeTransport(), { source: THREE_ITEMS, onParamsChange });

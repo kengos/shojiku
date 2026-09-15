@@ -81,6 +81,23 @@ describe('Designer container insert + marks', () => {
     expect(text.indexOf('direction: column')).toBeGreaterThan(text.indexOf('text: keep'));
   });
 
+  it('band-places a container picked into a footer, so it prints where the footer does', async () => {
+    const onChange = vi.fn<(text: string) => void>();
+    draw(makeTransport(), { onChange });
+    pickMenu('Insert', 'Footer');
+    pickMenu('Insert', 'Container…');
+    pickCell(1, 2);
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith(expect.stringContaining('direction: column')),
+    );
+    const text = onChange.mock.calls.at(-1)?.[0] as string;
+    // In the footer's own items, with the coordinates a band child needs —
+    // without them it drew at the top of the page.
+    // y: the document's A4 margin box (791pt floored) less the one-line inset —
+    // an auto-height container has no height to bottom-align by.
+    expect(text).toMatch(/footer:[\s\S]*type: container[\s\S]*x: 0[\s\S]*y: 759\n/);
+  });
+
   it('closes the picker without an edit when the dialog is dismissed', () => {
     const onChange = vi.fn();
     draw(makeTransport(), { onChange });

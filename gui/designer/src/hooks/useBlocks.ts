@@ -9,8 +9,6 @@ import { useCallback, useState } from 'react';
 import { typeFitsOwner } from '../canvas/dnd';
 import { readSubject } from '../editor/subject';
 import type { EditorController } from '../editor/useEditor';
-import { bandBoxHeightPt } from '../insert/bandGeometry';
-import { bandInsertY, bandPlaced } from '../insert/bandPlacement';
 import {
   addBlock,
   type BlockRefusal,
@@ -18,8 +16,9 @@ import {
   removeBlock,
   type SavedBlock,
 } from '../insert/blockModel';
-import { insertTargetBand, insertTargetOwner } from '../insert/flowPlacement';
+import { insertTargetOwner } from '../insert/flowPlacement';
 import { resolveInsertTarget } from '../insert/model';
+import { placeForTarget } from '../insert/targetPlacement';
 import type { LastGoodPreview } from '../preview/reducer';
 
 /** The stable empty block library (a host with the feature off / no saved blocks). */
@@ -109,7 +108,6 @@ export function useBlocks({
         return;
       }
       const target = resolveInsertTarget(read, selection);
-      const band = insertTargetBand(read, target.path);
       // The menu already disables this row, and this is the second lock on the
       // same door, asking the same question of the same target: a node the
       // target's owner cannot hold is skipped by the engine (and a repeat or
@@ -125,10 +123,7 @@ export function useBlocks({
         op: 'insertItem',
         path: target.path,
         index: target.index,
-        value:
-          band === null
-            ? block.value
-            : bandPlaced(block.value, bandInsertY(band, bandBoxHeightPt(previewRef.current, read))),
+        value: placeForTarget(read, previewRef.current, target.path, block.value),
       });
       if (result.ok) {
         select(`${target.path}[${target.index}]`);

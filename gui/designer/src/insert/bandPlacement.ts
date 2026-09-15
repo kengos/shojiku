@@ -13,18 +13,37 @@ export function requiresBand(kind: InsertKind): boolean {
   return kind === 'pageNumber';
 }
 
+/** How far above the margin box's bottom edge a footer item of unknown height
+ * starts: room for one line of text at the blank presets' size. */
+const FOOTER_LINE_PT = 32;
+
 /** Where a freshly inserted band item goes. A header item sits at the top of
  * the margin box; a footer item sits just inside its bottom edge — the reader
  * should find it where bands actually print, not at y 0 on page one.
  *
+ * `itemHeight` is the item's own `box.h` when it authors a finite positive number
+ * (every image, rect, QR code and ellipse snippet does, and a saved block may):
+ * such an item is bottom-aligned, since starting it
+ * 32pt above the edge would hang the rest of it past the margin box, where
+ * nothing clips band items. Anything else — auto-height text, a container, a
+ * `Length` string, a hostile value — starts one line up, as before.
+ *
  * `marginBoxHeight` comes from pixel-derived render geometry, so it is floored
  * before use (a ceil-inflated bound would place the item past the page edge,
  * where band items render silently). */
-export function bandInsertY(band: 'header' | 'footer', marginBoxHeight: number): number {
+export function bandInsertY(
+  band: 'header' | 'footer',
+  marginBoxHeight: number,
+  itemHeight?: unknown,
+): number {
   if (band === 'header' || !Number.isFinite(marginBoxHeight)) {
     return 0;
   }
-  return Math.max(0, Math.floor(marginBoxHeight) - 32);
+  const own =
+    typeof itemHeight === 'number' && Number.isFinite(itemHeight) && itemHeight > 0
+      ? itemHeight
+      : 0;
+  return Math.max(0, Math.floor(marginBoxHeight) - Math.max(FOOTER_LINE_PT, Math.ceil(own)));
 }
 
 /** The band-placed form of a snippet: the same item, plus the coordinates a
