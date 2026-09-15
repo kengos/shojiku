@@ -691,11 +691,17 @@ its palette heading onto the canvas (dropping its default presentation
 — a table; a field-less scalar array drops as a list), and the insert
 menu's list-data entry opens a dialog choosing the source (an array
 group, or — workshop-mode blank-start — a fresh inline spec of field
-names + kinds) and the presentation (table / card / list). Either way
+names + kinds) and the presentation (table / card / grid / list — the
+card and the grid are offered only over a flow body, the one owner the
+engine lays either out in; over any other body they stay visible,
+disabled, with one sentence saying why). Either way
 the result is ONE `insertItem` of an engine-canonical, probed
 diagnostics-free snippet (`table` with one label+`data.key` column per
 field, widths omitted for the engine's equal split; `repeat_flow` with
-a bordered auto-height card of bound text lines; `list` interpolating
+a bordered auto-height card of bound text lines; an n-up `repeat` whose
+`cell:` is that same card body, starting at 2 × 2 — its dimensions are
+chosen in the property panel against the live preview, not in the dialog;
+`list` interpolating
 the first field, through a declared name when the key falls outside the
 interpolation charset and — against an engine without `bindings:` — the
 first charset-SAFE field instead, never composed from an unsafe key). Blank-start additionally generates 3 sample rows through
@@ -707,10 +713,13 @@ scaffold field count is hostile-bounded. The property panel grows
 **table column editing** — source rebinding, per-column label / binding
 (row-scope picker) / width, add / remove / reorder, each ONE op — and a
 canvas click on a `…columns[n]` cell opens that column's form instead
-of the unsupported note. A selected `repeat_flow` / `list` gets a
-data-source section (rebind the array; a list also edits its per-entry
-text template, cleared = entries print directly) — every kind the
-scaffold creates stays editable in the panel.
+of the unsupported note. A selected `repeat_flow` / `repeat` / `list` gets
+a data-source section (rebind the array; a list also edits its per-entry
+text template, cleared = entries print directly), and a `repeat` also gets
+its SHEET on the placement tab in place of the box fields it does not have
+(columns, rows, per-axis gaps, fill order, where the grid starts, cut
+marks). The per-element frame the card and the grid scaffold (`item:` /
+`cell:` padding and border) has no panel surface yet.
 
 **Every style control shows the cascade-EFFECTIVE value** (decided design
 for the toggle-state-vs-effective-style question), the toolbar first and

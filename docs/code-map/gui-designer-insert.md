@@ -184,9 +184,13 @@ result LANDS:
   `canvas/dnd`'s `typeFitsOwner`/`FLOW_ONLY`, which answers the same
   question for a DROP or a saved block, in the wire's vocabulary
   (`repeat`, `repeat_flow`, `page_break`) rather than in `InsertKind`'s.
-  The two agree today only because the repeaters have no insert row;
-  when one gains a creation path they want unifying rather than
-  extending in parallel. Exports: `requiresFlow` (today `pageBreak`
+  The repeaters' creation path does NOT add to this file: the insert
+  menu creates both only as iterable-dialog variants, whose spelling IS
+  the wire type, so `scaffold.ts`'s `variantFitsBody` reads `typeFitsOwner`
+  directly rather than keeping a third list. `requiresFlow` stays about
+  `InsertKind`, and no `InsertKind` creates a repeater (a saved block
+  carrying one is gated by `typeFitsOwner` in `blockModel` — against a BAND
+  target only). Exports: `requiresFlow` (today `pageBreak`
   alone — `charGrid` is deliberately NOT one, since the engine places a
   `char_grid` everywhere and merely draws a single sheet outside a flow
   body) plus
@@ -340,12 +344,26 @@ The scaffold is four leaves — the spec VOCABULARY, its snippet
 REALIZATION, the blank-start SCHEMA side, and where an iterable LANDS:
 
 - `insert/scaffold.ts` — the spec vocabulary: `MAX_SCAFFOLD_FIELDS` (the
-  hostile-definitions bound the paste caps also ride), `ScaffoldVariant`/
-  `ScaffoldColumn`/`ScaffoldSpec`, `scaffoldFromGroup` (image-typed
-  fields excluded), `variantsFor`/`defaultVariantFor`.
+  hostile-definitions bound the paste caps also ride), `ScaffoldVariant`
+  (`table | repeat_flow | repeat | list` — each spelling is the wire
+  `type:` its snippet inserts) and `SCAFFOLD_VARIANTS` (the ONE ordered
+  list the picker renders and the dialog clamps against), `ScaffoldColumn`/
+  `ScaffoldSpec`, `scaffoldFromGroup` (image-typed fields excluded),
+  `variantsFor`/`defaultVariantFor`, and `variantFitsBody(variant,
+  flowBody)` — the flow-only gate, answered by `canvas/dnd`'s
+  `typeFitsOwner` (owner `flow` or `absoluteBody`): the cards and the grid
+  fit only a flow body. The integration suite pins that answer to the real
+  engine's `<type>_in_absolute_body` diagnostics, variant by variant. Of
+  the three scaffold entry points only the dialog can pick a flow-only
+  variant: paste always inserts a `table` and a palette drag inserts
+  `defaultVariantFor` (table or list), both of which lay out in any body.
 - `insert/scaffoldSnippet.ts` — `scaffoldSnippet(spec, variant,
   declarations?)`: one probed `insertItem` value per variant (table /
-  repeat_flow card / list; the list interpolates via `chipWire` — the
+  repeat_flow card / n-up `repeat` grid / list; the card's `item:` and the
+  grid's `cell:` are one shared body — a padded, 0.5pt-bordered container of
+  one bound text per field; the grid starts at 2 × 2 with per-axis 8pt gaps,
+  authoring neither `gap` (a later capability) nor `breakBefore`/`cutMarks`
+  (engine defaults); the list interpolates via `chipWire` — the
   ONE parser round-trip, so an unsafe key can never inject grammar; with
   `declarations` a charset-unsafe field rides a minted `bindings:`
   entry). Total — a field-less spec degrades to the list.
@@ -367,8 +385,15 @@ REALIZATION, the blank-start SCHEMA side, and where an iterable LANDS:
   - `insert/iterableCreateForm.tsx` — the workshop-mode create form
     (`IterableDraft` = name + row fields, in and out as one bundle;
     row count capped by `MAX_FORM_FIELDS`).
-  - `insert/iterableVariantPicker.tsx` — the variant trio; an
-    unsupported variant renders DISABLED, never absent.
+  - `insert/iterableVariantPicker.tsx` — the four variant radios (Table /
+    Cards / Grid / List); an unsupported variant renders DISABLED, never
+    absent. When the body is not a flow it renders one sentence saying why
+    (`iterable.variant.flowOnly`) as the fieldset's description.
+  The dialog's `flowBody` is a REQUIRED prop, threaded by
+  `shell/InsertDialogs` as `isFlowTarget(read, BODY_ITEMS_PATH)`; the
+  render-time clamp over `variantsFor ∩ variantFitsBody` is the one door
+  every confirm passes through, so `useIterableInsert` carries no second
+  guard. Grid dimensions are chosen in the property panel, not here.
 - `insert/fieldModel.ts` — pure create-data-field model
   (`validateFieldForm`, `fieldSchema` (sample rides as `example` — no
   second value-set path), `initialFieldSample`, `confirmField` with

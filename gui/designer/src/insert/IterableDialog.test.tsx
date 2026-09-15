@@ -31,6 +31,7 @@ function draw(overrides: Partial<IterableDialogProps> = {}) {
       <IterableDialog
         groups={[ITEMS, TAGS]}
         workshop={false}
+        flowBody
         onConfirm={onConfirm as IterableDialogProps['onConfirm']}
         onClose={onClose}
         {...overrides}
@@ -75,6 +76,79 @@ describe('IterableDialog — group flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Insert list' }));
     expect(screen.getByText('Could not insert here.')).toBeTruthy();
     expect(screen.getByRole('dialog')).toBeTruthy();
+  });
+});
+
+describe('IterableDialog — the grid, and the body the variants land in', () => {
+  const radio = (name: string) => screen.getByRole('radio', { name }) as HTMLInputElement;
+
+  it('offers four presentations in order and confirms the grid as a repeat', () => {
+    const { onConfirm } = draw();
+    const names = (screen.getAllByRole('radio') as HTMLInputElement[]).map(
+      (input) => input.closest('label')?.textContent,
+    );
+    expect(names.slice(-4)).toEqual(['Table', 'Cards', 'Grid', 'List']);
+    fireEvent.click(radio('Grid'));
+    fireEvent.click(screen.getByRole('button', { name: 'Insert list' }));
+    expect(onConfirm).toHaveBeenCalledWith({ kind: 'group', group: ITEMS, variant: 'repeat' });
+  });
+
+  it('says nothing about the body when it is a flow, and disables nothing for it', () => {
+    draw();
+    for (const name of ['Table', 'Cards', 'Grid', 'List']) {
+      expect(radio(name).disabled).toBe(false);
+    }
+    expect(screen.queryByText(/need a flow body/)).toBeNull();
+    const fieldset = radio('Grid').closest('fieldset');
+    expect(fieldset?.getAttribute('aria-describedby')).toBeNull();
+    expect(radio('Grid').getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('disables the cards and the grid over a non-flow body, and says why', () => {
+    draw({ flowBody: false });
+    expect(radio('Table').disabled).toBe(false);
+    expect(radio('List').disabled).toBe(false);
+    expect(radio('Cards').disabled).toBe(true);
+    expect(radio('Grid').disabled).toBe(true);
+    const note = screen.getByText(/Cards and Grid need a flow body/);
+    // The reason is the picker's DESCRIPTION, so it is read with the rows — on
+    // the group AND on each radio, since the radio is what takes focus.
+    const fieldset = radio('Grid').closest('fieldset');
+    expect(fieldset?.getAttribute('aria-describedby')).toBe(note.id);
+    for (const name of ['Table', 'Cards', 'Grid', 'List']) {
+      expect(radio(name).getAttribute('aria-describedby'), name).toBe(note.id);
+    }
+  });
+
+  it('clamps a picked grid back to the table when the body stops being a flow', () => {
+    // The render-time clamp is the one door every confirm passes through, so a
+    // picked variant the body cannot hold never reaches the handler.
+    const onConfirm = vi.fn<(choice: unknown) => IterableRefusal | null>(() => null);
+    const dialog = (flowBody: boolean) => (
+      <I18nProvider locale="en">
+        <IterableDialog
+          groups={[ITEMS]}
+          workshop={false}
+          flowBody={flowBody}
+          onConfirm={onConfirm as IterableDialogProps['onConfirm']}
+          onClose={vi.fn()}
+        />
+      </I18nProvider>
+    );
+    const { rerender } = render(dialog(true));
+    fireEvent.click(radio('Grid'));
+    expect(radio('Grid').checked).toBe(true);
+    rerender(dialog(false));
+    expect(radio('Table').checked).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Insert list' }));
+    expect(onConfirm).toHaveBeenCalledWith({ kind: 'group', group: ITEMS, variant: 'table' });
+  });
+
+  it('withholds the cards and the grid from the create form too', () => {
+    draw({ groups: [], workshop: true, flowBody: false });
+    expect(radio('Cards').disabled).toBe(true);
+    expect(radio('Grid').disabled).toBe(true);
+    expect(radio('Table').checked).toBe(true);
   });
 });
 

@@ -84,6 +84,52 @@ describe('Designer iterable scaffold', () => {
     expect(inserted).toBeLessThan(doc.indexOf('second'));
   });
 
+  it('inserts the grid variant as ONE n-up repeat at the body landing, selected', async () => {
+    const onChange = vi.fn();
+    draw(makeTransport(), { source: THREE_ITEMS, definitions: ARRAY_DEFS, onChange });
+    const dialog = openDialog();
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Grid' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Insert list' }));
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    const doc = String(onChange.mock.calls.at(-1)?.[0]);
+    expect(doc).toContain('type: repeat\n');
+    expect(doc).toContain('columns: 2');
+    expect(doc.indexOf('third')).toBeLessThan(doc.indexOf('type: repeat'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() =>
+      expect(document.querySelector('[aria-current="true"]')?.textContent).toContain('order_items'),
+    );
+  });
+
+  it('reads the body off the DOCUMENT: an absolute body disables the cards and the grid', () => {
+    // The dialog's `flowBody` is threaded from the open document, not a default.
+    const absolute = THREE_ITEMS.replace('type: flow', 'type: absolute');
+    draw(makeTransport(), { source: absolute, definitions: ARRAY_DEFS });
+    const dialog = openDialog();
+    const radio = (name: string) => within(dialog).getByRole('radio', { name }) as HTMLInputElement;
+    expect(radio('Cards').disabled).toBe(true);
+    expect(radio('Grid').disabled).toBe(true);
+    expect(radio('Table').disabled).toBe(false);
+    expect(within(dialog).getByText(/Cards and Grid need a flow body/)).toBeTruthy();
+  });
+
+  it('blank-start create with the grid keeps the typed fields and commits their rows', async () => {
+    const onChange = vi.fn();
+    const onParamsChange = vi.fn();
+    draw(makeTransport(), { source: THREE_ITEMS, onChange, onParamsChange });
+    const dialog = openDialog();
+    fireEvent.change(within(dialog).getByLabelText('List name'), { target: { value: '明細' } });
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Grid' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Insert list' }));
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const doc = String(onChange.mock.calls.at(-1)?.[0]);
+    expect(doc).toContain('type: repeat\n');
+    expect(doc).toContain('key: Field 1');
+    expect(onParamsChange).toHaveBeenCalledTimes(1);
+    const params = JSON.parse(String(onParamsChange.mock.calls[0][0])) as Record<string, unknown>;
+    expect((params.明細 as Record<string, unknown>[])[0]).toHaveProperty('Field 1');
+  });
+
   it('blank-start create: generates sample rows AND inserts the scaffold, selecting it', async () => {
     const onChange = vi.fn();
     const onParamsChange = vi.fn();

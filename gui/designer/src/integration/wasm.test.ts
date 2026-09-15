@@ -33,7 +33,7 @@ import { resolveContainerInsert } from '../insert/containerInsert';
 import { containerShape, containerSnippet } from '../insert/containerModel';
 import { insertSnippet } from '../insert/insertSnippet';
 import { resolveIterableTarget } from '../insert/iterableTarget';
-import { scaffoldFromGroup } from '../insert/scaffold';
+import { SCAFFOLD_VARIANTS, scaffoldFromGroup, variantFitsBody } from '../insert/scaffold';
 import { type ScaffoldField, scaffoldFromFields, scaffoldSchema } from '../insert/scaffoldFields';
 import { scaffoldSnippet } from '../insert/scaffoldSnippet';
 import { wrapInContainerOps } from '../insert/wrap';
@@ -55,6 +55,7 @@ import { bindingPickOps } from '../panel/model';
 import { PAGE_SIZES } from '../panel/pageSizes';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
+import { fillOrderOp, gridCountOp, gridGapOp, newPageOp } from '../panel/repeatGrid';
 import { readShapeStyle, strokeWidthOp } from '../panel/shapeStyle';
 import { deleteStyleOps, renameStyleOps } from '../panel/styleRefOps';
 import { extendParams } from '../sample/generate';
@@ -1470,7 +1471,7 @@ describe('iterable scaffolds against the real engine', () => {
     const itemsGroup = groups?.find((group) => group.id === 'items' && group.isArray);
     if (itemsGroup == null) throw new Error('items array group missing from receipt-us');
     const spec = scaffoldFromGroup(itemsGroup);
-    for (const variant of ['table', 'repeat_flow', 'list'] as const) {
+    for (const variant of SCAFFOLD_VARIANTS) {
       const editor = Editor.create(template());
       const target = resolveIterableTarget((path) => editor.read(path), null);
       const inserted = editor.apply({
@@ -1489,6 +1490,70 @@ describe('iterable scaffolds against the real engine', () => {
       expect(outcome.diagnostics.items).toHaveLength(0);
       const paths = outcome.inspect?.boxes.pages.flat().map((box) => box.path) ?? [];
       expect(paths).toContain(`${target.path}[${target.index}]`);
+    }
+  });
+
+  it('edits an inserted grid through the panel ops and still renders WARNING-clean', async () => {
+    // The grid's panel authors these keys; only the engine can say they parse
+    // and lay out together. Unit suites build the ops from fixtures they wrote.
+    const groups = readDefinitionsView(definitions());
+    const itemsGroup = groups?.find((group) => group.id === 'items' && group.isArray);
+    if (itemsGroup == null) throw new Error('items array group missing from receipt-us');
+    const editor = Editor.create(template());
+    const target = resolveIterableTarget((path) => editor.read(path), null);
+    const path = `${target.path}[${target.index}]`;
+    expect(
+      editor.apply({
+        op: 'insertItem',
+        path: target.path,
+        index: target.index,
+        value: scaffoldSnippet(scaffoldFromGroup(itemsGroup), 'repeat'),
+      }).ok,
+    ).toBe(true);
+    const ops = [
+      gridCountOp(path, 'columns', '3', '2'),
+      gridGapOp(path, 'columnGap', '12'),
+      fillOrderOp(path, 'column'),
+      newPageOp(path, false),
+    ];
+    for (const op of ops) {
+      if (op === null) throw new Error('a panel op refused a legal value');
+      expect(editor.apply(op).ok).toBe(true);
+    }
+    expect(editor.text()).toContain('breakBefore: auto');
+    const outcome = await transport.renderRaw(editor.text(), params(), definitions(), { scale: 2 });
+    expect(outcome.ok).toBe(true);
+    expect(outcome.diagnostics.items).toHaveLength(0);
+    const paths = outcome.inspect?.boxes.pages.flat().map((box) => box.path) ?? [];
+    expect(paths).toContain(path);
+  });
+
+  it('agrees with the engine about which variants an ABSOLUTE body skips', async () => {
+    // The dialog disables exactly the variants `variantFitsBody` rejects. That
+    // answer is only right if the engine skips exactly those — so ask it, per
+    // variant, rather than restating the rule a second time here.
+    const groups = readDefinitionsView(definitions());
+    const itemsGroup = groups?.find((group) => group.id === 'items' && group.isArray);
+    if (itemsGroup == null) throw new Error('items array group missing from receipt-us');
+    const spec = scaffoldFromGroup(itemsGroup);
+    const absolute = ['sections:', '  body:', '    type: absolute', '    items: []', ''].join('\n');
+    for (const variant of SCAFFOLD_VARIANTS) {
+      const editor = Editor.create(absolute);
+      expect(
+        editor.apply({
+          op: 'insertItem',
+          path: 'sections.body.items',
+          index: 0,
+          value: scaffoldSnippet(spec, variant),
+        }).ok,
+      ).toBe(true);
+      const outcome = await transport.renderRaw(editor.text(), params(), definitions(), {
+        scale: 1,
+      });
+      const skipped = outcome.diagnostics.items.some(
+        (item) => item.code === `${variant}_in_absolute_body`,
+      );
+      expect(skipped, variant).toBe(!variantFitsBody(variant, false));
     }
   });
 

@@ -49,7 +49,7 @@ export function ContentSection(props: ItemPanelProps) {
       />
     );
   }
-  if (view.type === 'repeat_flow' || view.type === 'list') {
+  if (view.type === 'repeat_flow' || view.type === 'repeat' || view.type === 'list') {
     return (
       <IterableSourceSection
         controller={controller}

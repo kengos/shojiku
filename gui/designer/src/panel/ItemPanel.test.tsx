@@ -2,9 +2,9 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
-import { applicableTabs } from './ItemPanel';
 import { readItemView } from './itemView';
 import { PropertyPanel } from './PropertyPanel';
+import { applicableTabs } from './panelTabs';
 
 /** The tab set for one wire item type. `applicableTabs` is the panel's TYPE
  * GATE: a kind missing from it has no editing surface at all, which is how an
@@ -68,12 +68,13 @@ describe('applicableTabs', () => {
     }
   });
 
-  it('withholds 配置 from BOTH repeaters — the wire gives neither a `box:`', () => {
+  it('gives neither repeater the BOX fields — the wire gives neither a `box:`', () => {
     // `RepeatItem` and `RepeatFlowItem` are `deny_unknown_fields` with no box
-    // field, so a placement tab there authors a key that stops the whole
-    // document parsing. `repeat` had that as its ONLY tab, which made the one
-    // control the panel offered the one that breaks the file.
-    expect(tabsOf({ type: 'repeat' })).toEqual([]);
+    // field, so box fields there author a key that stops the whole document
+    // parsing. The cards get their data source alone; the grid also gets a
+    // placement tab, but it carries the GRID (asserted by the panel suite
+    // below: none of the four box fields renders there).
+    expect(tabsOf({ type: 'repeat' })).toEqual(['content', 'box']);
     expect(tabsOf({ type: 'repeat_flow' })).toEqual(['content']);
   });
 
@@ -176,8 +177,52 @@ describe('ItemPanel — box-less types', () => {
     expect(screen.getByLabelText('Start X')).toBeTruthy();
     expect(screen.getByLabelText('End X')).toBeTruthy();
     // The box fields must be absent — authoring one is a parse error.
-    expect(screen.queryByLabelText('X')).toBeNull();
-    expect(screen.queryByLabelText('W')).toBeNull();
+    for (const label of BOX_FIELD_LABELS) {
+      expect(screen.queryByLabelText(label), label).toBeNull();
+    }
+  });
+});
+
+/** The four box fields' accessible names (`panel.box.{x,y,w,h}` in `en`). An
+ * absence assertion over a name no field carries passes for any panel, so the
+ * control below renders a boxed item and finds every one. */
+const BOX_FIELD_LABELS = ['X', 'Y', 'Width', 'Height'] as const;
+
+describe('the box-field names the absence checks rely on', () => {
+  it('finds all four on a boxed item', () => {
+    drawPanel({ type: 'rect', box: { x: 1, y: 2, w: 3, h: 4 } });
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    for (const label of BOX_FIELD_LABELS) {
+      expect(screen.getByLabelText(label), label).toBeTruthy();
+    }
+  });
+});
+
+describe('ItemPanel — an n-up repeat', () => {
+  const REPEAT = {
+    type: 'repeat',
+    data: { key: 'tickets' },
+    grid: { columns: 2, rows: 5 },
+    cell: { items: [] },
+  };
+
+  it('edits the data source on the content tab', () => {
+    drawPanel(REPEAT);
+    expect(screen.getByText('Data source')).toBeTruthy();
+    expect((screen.getByLabelText('Data key') as HTMLInputElement).defaultValue).toBe('tickets');
+  });
+
+  it('carries the grid on the placement tab, and never a box field', () => {
+    drawPanel(REPEAT);
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    expect(screen.getByText('Grid on each page')).toBeTruthy();
+    expect((screen.getByLabelText('Columns') as HTMLInputElement).value).toBe('2');
+    expect((screen.getByLabelText('Rows') as HTMLInputElement).value).toBe('5');
+    // The box fields' real accessible names — the positive control below
+    // proves these queries can find them.
+    for (const label of BOX_FIELD_LABELS) {
+      expect(screen.queryByLabelText(label), label).toBeNull();
+    }
   });
 });
 
@@ -303,12 +348,13 @@ describe('ItemPanel — a type with no applicable tab', () => {
     expect(screen.queryByText('Everything after this starts on a new page.')).toBeNull();
   });
 
-  it('says nothing of the kind for a `repeat`, whose panel is INCOMPLETE', () => {
-    // Its wire carries a data source, a cell sub-template and a grid, none of
-    // which has a surface yet. A "that is all there is" note would be false,
-    // and so would `panel.noEditable`.
-    drawPanel({ type: 'repeat' });
+  it('says nothing of the kind for a `repeat`, whose panel has real surfaces', () => {
+    // A page break's note is for the one type whose panel is the whole item. A
+    // repeat's data source and grid are editable, so neither that note nor
+    // `panel.noEditable` belongs on it.
+    drawPanel({ type: 'repeat', data: { key: 'rows' } });
     expect(screen.queryByText('Everything after this starts on a new page.')).toBeNull();
     expect(screen.queryByText('This element has no editable properties.')).toBeNull();
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Content', 'Layout']);
   });
 });

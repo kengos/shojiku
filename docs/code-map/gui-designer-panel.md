@@ -98,6 +98,38 @@ The child-layout surface is a shell + one module per control cluster.
   the same shell for the parent: select-parent jump + hover canvas
   highlight.
 
+## Placement tab — the n-up repeat grid
+
+A `repeat` has no `box:`, so its placement tab carries its SHEET instead
+(`panelTabs.placementBody` → `repeatGrid`); its content tab is the shared
+`IterableSourceSection`.
+
+- `panel/repeatGrid.ts` — the pure read/write model. `readRepeatGrid` (hostile
+  shapes and a throwing read degrade to the engine defaults; an unknown
+  `direction` is not echoed as selected; `breakBefore` other than `auto` reads
+  as "starts on a new page", non-`true` `cutMarks` as off). Counts are OPTIONAL
+  on the wire (default 1), so unlike `charGrid`'s an emptied count CLEARS its
+  key; `gridCountOp`/`gridCountStepOp` refuse a non-integer, `< 1`, or a value
+  whose product with the OTHER axis as authored passes `MAX_CELLS_PER_SHEET`
+  (64 — `MAX_IMPOSITION_PER_PAGE`, pinned by a drift guard reading
+  `imposition.rs`); a step starts from the EFFECTIVE value, so unset ▲ gives 2.
+  `gridGapOp`/`gridGapStepOp` (per-axis, unit-kept, empty clears; the
+  container gap's ingress rule widened by one member — a `%` gap is legal on
+  this wire — so a negative authors 0, garbage or past `MAX_GAP_PT` authors
+  nothing, and ▼ lands on 0), `fillOrderOp` /
+  `newPageOp` / `cutMarksOp` never author a default (row order, `page`,
+  `false` all REMOVE the key). The `gap` shorthand is read, not edited: it is
+  what an unset axis gap falls back to, and an axis edit wins over it exactly
+  as the engine reads it.
+- `panel/RepeatSection.tsx` — the 「grid on each page」 section over
+  `ItemPanelProps`: columns/rows (count steppers, placeholder `1`; at the cap
+  ▲ stays enabled and does nothing — `canStep` governs both buttons, and
+  disabling it would take away the ▼ that still works; the hint names the
+  cap), column/row gap (length steppers by the canvas grid step, placeholder = the `gap`
+  shorthand or `0`), the fill-order `Segmented`, and two checkboxes gated on
+  their capabilities — "Start on a new page" (`repeat.breakBefore`) and "Draw
+  cut marks" (`repeat.cutMarks`). The grid itself needs only `repeat`.
+
 ## Placement tab — the char_grid grid
 
 `char_grid` is in `CONTENT_TAB_TYPES` and deliberately NOT in
@@ -504,7 +536,7 @@ presence is not a text binding.
   admitting the repeaters would take canvas drag-reordering away from two
   types that have it in a flow body. **`NO_BOX_WIRE_TYPES`** is the WIRE truth
   — all four `Item` variants that omit `box_` (`line`, `page_break`, `repeat`,
-  `repeat_flow`) — and has exactly one consumer, `ItemPanel`'s tab gate,
+  `repeat_flow`) — and has exactly one consumer, `panelTabs`' tab gate,
   because a placement tab over any of them authors a `deny_unknown_fields`
   parse error. A drift-guard test pins it to the enum. And the ONE home for
   **`MARK_TYPES`**
@@ -812,30 +844,33 @@ presence is not a text binding.
   card disappears; a per-side value is carried verbatim in CSS order and
   `clip`ped. It deliberately does not fill the column — an empty state orients
   and offers, it does not pad.
+- `panel/panelTabs.ts` — the panel's type→surface TABLE, framework-free:
+  `PanelTab`, `applicableTabs` (content / decoration / placement, fixed
+  order), `placementBody(type)` (`box` | `points` for `line` | `repeatGrid`
+  for `repeat`) and `tabLessNoteKey(path)`. **The placement tab is withheld
+  from BOX-LESS types** (`itemView.ts`'s `NO_BOX_WIRE_TYPES` — `line`,
+  `page_break` and BOTH repeaters; all four wire structs are
+  `deny_unknown_fields` and take no `box:`, so offering the box fields
+  authored a parse error) UNLESS the type has its own placement editor:
+  `line` gets its ENDPOINTS, `repeat` its GRID (`RepeatSection`, below).
+  `repeat_flow` gets only its content tab (the data source). Exactly one wire
+  type ends up with NO tab — `page_break`, which takes only `id` and
+  `visible:` — and the suite walks the engine's `Item` enum to keep that true,
+  which is what lets `ItemPanel` render the tab-less branch's note
+  unconditionally.
 - `panel/ItemPanel.tsx` — the content/decoration/placement tab SHELL only
-  (`applicableTabs`; only applicable tabs render; active tab clamped on
-  type change). `VisibilitySection` renders OUTSIDE the tabs — it applies to
-  every type, so it must not appear and disappear as the reader changes tab —
-  and BELOW them, after the tab bodies (or after a single-tab body, or alone
-  for a type with no tabs). **The placement tab is withheld from BOX-LESS types**
-  (`itemView.ts`'s `NO_BOX_WIRE_TYPES` — `line`, `page_break` and BOTH
-  repeaters; all four wire structs are `deny_unknown_fields` and take no
-  `box:`, so offering the fields authored a parse error. It reads the wire
-  set rather than the narrower canvas one, which is what left `repeat` with
-  a placement tab as its ONLY tab). `line` therefore renders its stroke
-  editor PLUS a placement tab whose body is the ENDPOINT editor rather
-  than the box fields (`POINT_PLACED_TYPES`), while `page_break` and `repeat`
-  have NO applicable tab. What those two get instead is deliberately
-  different: `page_break` earns a one-line note above the presence binding
-  (`pageBreakNoteKey` — `panel.pageBreak.note`, or `panel.pageBreak.noteFirst`
-  at index 0, where the engine COLLAPSES the break and the general sentence
-  would promise an effect the file does not have), because its empty panel is
-  the whole item; `repeat` gets no note at all, because its wire carries a data
-  source, a cell and a grid that have no surface yet, and any "that is all"
-  sentence would be false. The `panel.noEditable` placeholder is rarer than
-  both: it appears only when even `visible:` is unavailable (an engine without
-  `item.visible`), so against a current engine a tab-less item never shows
-  it. The two
+  (renders `panelTabs`' answer; active tab clamped on type change).
+  `VisibilitySection` renders OUTSIDE the tabs — it applies to every type, so
+  it must not appear and disappear as the reader changes tab — and BELOW
+  them, after the tab bodies (or after a single-tab body, or alone for the
+  tab-less `page_break`). The page break earns a one-line note above the
+  presence binding (`tabLessNoteKey` — `panel.pageBreak.note`, or
+  `panel.pageBreak.noteFirst` at index 0, where the engine COLLAPSES the break
+  and the general sentence would promise an effect the file does not have),
+  because its empty panel is the whole item. The `panel.noEditable`
+  placeholder is rarer still: it appears only when even `visible:` is
+  unavailable (an engine without `item.visible`), so against a current engine
+  a tab-less item never shows it. The two
   FORM MARKS (`MARK_TYPES`) take ALL THREE: they are boxed, their
   presence is content, and their outline is decoration — reached through
   `STYLED_TYPES` (which is `BORDERABLE_TYPES` plus `line` plus the marks)
@@ -856,7 +891,8 @@ presence is not a text binding.
   same `Binding` and whose content resolves through the same
   `resolve_content`)), `StyleSection.tsx`
   (+`StyleTabFields.tsx`),
-  `BoxSection.tsx` (+`boxFields.tsx`, +`CharGridSection.tsx`); shared prop contract in
+  `BoxSection.tsx` (+`boxFields.tsx`, +`CharGridSection.tsx`), or a type's own
+  placement editor (`LinePointsEditor`, `RepeatSection`); shared prop contract in
   `itemPanelProps.ts` (`ItemPanelProps` + `hasCapability`); shared
   helpers in `panelHelpers.tsx` (`HelpfulHeading` over the `HelpTopic`
   vocabulary — `content`/`spans`/`style`/`placement`/`placementChild`, each value
@@ -945,16 +981,20 @@ presence is not a text binding.
   scope the row's own arrays stay element-scoped offers while the
   top-level ones move to the document section and author
   `scope: document`, since only those need the escape. A `repeat_flow`
-  is passed no groups: layout skips one nested in a cell, so a
-  row-relative offer there would author a source that never draws.
+  or `repeat` is passed no groups: both are flow-body-only and layout skips
+  one nested in a cell, so a row-relative offer there would author a source
+  that never draws.
 - `panel/ColumnBindingFields.tsx` — the binding pair a column earns
   (`FieldPicker` for `data.key`; `FormatPicker` once a key is picked,
   its options type-resolved through the row options), shared by the
   columns section and `ColumnForm`. A `cell:` column gets neither — the
   two guards are this component's whole contract.
-- `panel/IterableSourceSection.tsx` — `repeat_flow`/`list` source
+- `panel/IterableSourceSection.tsx` — `repeat_flow`/`repeat`/`list` source
   rebinding (+ a list's per-entry `text:` template): every scaffolded
-  kind stays editable.
+  kind stays editable. **Known gap**: the per-element FRAME the cards and
+  the grid scaffold (`item:`/`cell:` — `box.padding` 8, `style.borderWidth`
+  0.5) has no panel surface; the structure pane lists that container's
+  CHILDREN, not the container itself.
 - `panel/ColumnForm.tsx` — the single-column form a canvas click on a
   `…columns[n]` cell opens: label/binding/format/width (scope via
   `bindingScopeFor`), then the column's OWN cell style — the same

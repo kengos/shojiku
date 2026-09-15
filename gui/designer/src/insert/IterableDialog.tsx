@@ -1,6 +1,6 @@
 // The iterable-insert dialog: pick an array data source (a definitions array
 // group, or — workshop mode — a fresh blank-start spec typed inline) and a
-// presentation (table / cards / list), then confirm. The dialog owns only the
+// presentation (table / cards / grid / list), then confirm. The dialog owns only the
 // choice; the Designer builds the scaffold ops and reports a typed refusal
 // back for display. Modal chrome (focus trap + restore, Escape, outside click,
 // ARIA, portal) is `ui/Modal`'s. Every string is a catalog key or user/document
@@ -16,22 +16,37 @@ import { IterableCreateForm, type IterableDraft } from './iterableCreateForm';
 import { confirmChoice, type IterableChoice, type IterableRefusal } from './iterableModel';
 import { IterableSourceList } from './iterableSourceList';
 import { IterableVariantPicker } from './iterableVariantPicker';
-import { type ScaffoldVariant, scaffoldFromGroup, variantsFor } from './scaffold';
+import {
+  SCAFFOLD_VARIANTS,
+  type ScaffoldVariant,
+  scaffoldFromGroup,
+  variantFitsBody,
+  variantsFor,
+} from './scaffold';
 
 export interface IterableDialogProps {
   /** The bindable array groups (may be empty — the create flow remains). */
   readonly groups: readonly PaletteGroup[];
   /** Whether the blank-start create flow is offered (workshop mode only). */
   readonly workshop: boolean;
+  /** Whether the document's body is a flow — every iterable lands there, and
+   * the cards and the grid lay out nowhere else. Required, not defaulted: a
+   * host that stopped passing it must fail to compile, not quietly offer the
+   * variants that skip. */
+  readonly flowBody: boolean;
   /** Apply the choice. A typed refusal comes back for display (the dialog
    * stays open); `null` = applied (the Designer closes the dialog). */
   readonly onConfirm: (choice: IterableChoice) => IterableRefusal | null;
   readonly onClose: () => void;
 }
 
-const ALL_VARIANTS: readonly ScaffoldVariant[] = ['table', 'repeat_flow', 'list'];
-
-export function IterableDialog({ groups, workshop, onConfirm, onClose }: IterableDialogProps) {
+export function IterableDialog({
+  groups,
+  workshop,
+  flowBody,
+  onConfirm,
+  onClose,
+}: IterableDialogProps) {
   const { t } = useI18n();
   const [mode, setMode] = useState<'group' | 'create'>(groups.length > 0 ? 'group' : 'create');
   const [groupId, setGroupId] = useState(groups[0]?.id ?? '');
@@ -46,12 +61,16 @@ export function IterableDialog({ groups, workshop, onConfirm, onClose }: Iterabl
   const [refusal, setRefusal] = useState<IterableRefusal | null>(null);
 
   const selectedGroup = groups.find((group) => group.id === groupId);
-  const available: readonly ScaffoldVariant[] =
+  const available = (
     mode === 'group' && selectedGroup !== undefined
       ? variantsFor(scaffoldFromGroup(selectedGroup))
-      : ALL_VARIANTS;
+      : SCAFFOLD_VARIANTS
+  ).filter((option) => variantFitsBody(option, flowBody));
   // A group switch can strand the picked variant (a field-less group offers
-  // only the list) — clamp at render, commit the clamped value.
+  // only the list) — clamp at render, commit the clamped value. This clamp is
+  // the ONE door every confirm passes through, so it is also what keeps a
+  // flow-only variant out of a body that would skip it; the list fits every
+  // body, so `available` is never empty.
   const effectiveVariant = available.includes(variant) ? variant : available[0];
 
   const confirm = () => {
@@ -116,6 +135,7 @@ export function IterableDialog({ groups, workshop, onConfirm, onClose }: Iterabl
         available={available}
         selected={effectiveVariant}
         onPick={setVariant}
+        flowBody={flowBody}
       />
 
       {refusal !== null ? (

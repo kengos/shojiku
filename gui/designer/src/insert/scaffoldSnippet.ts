@@ -1,9 +1,10 @@
 // Realizing a scaffold spec: a `ScaffoldSpec` plus a presentation variant
-// become ONE `insertItem` snippet — a table, a repeat_flow card list, or a
-// list. All values are engine-canonical and probed against the real engine to
-// render diagnostics-free AND visibly (the insert-menu snippet rule): no column
-// widths (the engine's equal-split is the canonical default), no fixed heights
-// (rows/cards/lists auto-size), a 0.5pt border makes a card visible.
+// become ONE `insertItem` snippet — a table, a repeat_flow card list, an n-up
+// repeat grid, or a list. All values are engine-canonical and probed against the
+// real engine to render diagnostics-free AND visibly (the insert-menu snippet
+// rule): no column widths (the engine's equal-split is the canonical default), no
+// fixed heights (rows/cards/lists auto-size; a grid cell fills its slot), a 0.5pt
+// border makes a card or a cell visible.
 // Framework-free.
 
 import type { SnippetValue } from '@shojiku/designer-core';
@@ -45,6 +46,24 @@ function listSnippet(spec: ScaffoldSpec, declarations: boolean): SnippetValue {
   return { type: 'list', data };
 }
 
+/** The per-element sub-template the cards and the grid share: one bound text
+ * per field inside a padded, hairline-bordered container — the card's `item:`
+ * and the grid's `cell:` are both a container, so they are one shape. */
+function cardBody(spec: ScaffoldSpec): SnippetValue {
+  return {
+    box: { padding: 8 },
+    style: { borderWidth: 0.5 },
+    items: spec.columns.map((column) => ({ type: 'text', data: { key: column.key } })),
+  };
+}
+
+/** The n-up grid's starting sheet: two cells across, two down, so the insert
+ * reads as a grid at a glance; the property panel resizes it. The gaps are
+ * authored per axis rather than as `gap` — the shorthand is a later wire key
+ * (`repeat.grid.gap`), and the axis keys parse wherever `repeat` does. Neither
+ * `breakBefore` nor `cutMarks` is authored: both engine defaults stand. */
+const GRID_START = { columns: 2, rows: 2, columnGap: 8, rowGap: 8 };
+
 /** The one `insertItem` snippet a spec + variant realize. Total: a field-less
  * spec has only one honest presentation, so table/card requests degrade to
  * the list (`variantsFor` already gates the UI; the model never refuses).
@@ -70,14 +89,13 @@ export function scaffoldSnippet(
       }),
     };
   }
-  return {
-    type: 'repeat_flow',
-    data: { key: spec.sourceKey },
-    gap: 8,
-    item: {
-      box: { padding: 8 },
-      style: { borderWidth: 0.5 },
-      items: spec.columns.map((column) => ({ type: 'text', data: { key: column.key } })),
-    },
-  };
+  if (variant === 'repeat') {
+    return {
+      type: 'repeat',
+      data: { key: spec.sourceKey },
+      grid: GRID_START,
+      cell: cardBody(spec),
+    };
+  }
+  return { type: 'repeat_flow', data: { key: spec.sourceKey }, gap: 8, item: cardBody(spec) };
 }
