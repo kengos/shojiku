@@ -65,6 +65,7 @@ import { buildStyleUsage } from '../styles/usage';
 import { commitOps } from '../text/declCommit';
 import { planChipInsert } from '../text/declMint';
 import { buildTree, type TreeNode } from '../tree/model';
+import { rowDropOps } from '../tree/rowDrag';
 
 // src/integration/ -> repo root is four levels up.
 const REPO = new URL('../../../../', import.meta.url);
@@ -1062,6 +1063,50 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     expect(r.border.y + r.border.h).toBeLessThanOrEqual(bottom);
     expect(r.border.y + r.border.h).toBeGreaterThanOrEqual(bottom - 2);
     expect(c.border.y).toBeGreaterThan(bottom - 40);
+  });
+
+  it('lands a layer-tree drop into a footer where the footer prints', async () => {
+    // The tree has no drop point; a box-less row dropped on the footer row gets
+    // the insert rule's coordinates, and the engine then has to draw it at the
+    // foot of the margin box rather than at the top of the page.
+    const doc = [
+      'version: 0.1.0',
+      'page: { size: A4, margin: 25 }',
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: text',
+      '        id: moved',
+      '        text: moved',
+      '  footer:',
+      '    repeat: every_page',
+      '    items: []',
+      '',
+    ].join('\n');
+    const editor = Editor.create(doc);
+    const read = (path: string) => editor.read(path);
+    const drag = {
+      path: 'sections.body.items[0]',
+      parent: 'sections.body.items',
+      from: 0,
+      pointerId: 1,
+      startY: 0,
+      started: true,
+      drop: null,
+    };
+    const result = rowDropOps(read, drag, { parent: 'sections.footer.items', index: 0 });
+    if (result === null) throw new Error('drop refused');
+    expect(editor.applyAll(result.ops).ok).toBe(true);
+    const outcome = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+    expect(outcome.diagnostics.items.filter((d) => d.severity === 'error')).toHaveLength(0);
+    const margin = outcome.inspect?.margin;
+    if (margin == null) throw new Error('margin missing');
+    const bottom = outcome.pages[0].height / 2 - margin[2];
+    const moved = outcome.inspect?.boxes.pages[0]?.find((b) => b.id === 'moved');
+    if (moved == null) throw new Error('moved box missing');
+    expect(moved.border.y).toBeGreaterThan(bottom - 40);
+    expect(moved.border.y).toBeLessThan(bottom);
   });
 
   it('drag-moves an absolute item through the manipulate model against real geometry', async () => {

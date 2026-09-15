@@ -136,7 +136,13 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   time), `acceptsFor` (the destination predicate handed to the drop
   model, so an indicator can only point at a legal drop), `rowDropOps`
   (same-parent = one `moveItem`; cross-parent = the shared
-  `canvas/reparent` batch), and the pure `rowDragMarks` the hook's
+  `canvas/reparent` batch through `treeReparentOps`, which `acceptsFor`
+  calls too so indicator and release agree; a row landing DIRECTLY in a band
+  gets the insert rule's point — `bandInsertY` off the document's margin box
+  — unless it comes from a band or the absolute body with `x`/`y` already
+  set, since the tree has no drop point and a band child without a
+  margin-box position sits at the top of the page), and the pure
+  `rowDragMarks` the hook's
   `marksFor` delegates to.
 - `tree/rowDrop.ts` — where a row drag LANDS: `visiblePaths` (what the
   tree shows, in its own order), `ROW_INDENT_PX` (12, `TreeRow`'s

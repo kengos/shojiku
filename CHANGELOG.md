@@ -236,6 +236,13 @@ platform binaries.
 
 ### Fixed
 
+- **Dragging an item onto the header or footer in the Structure pane puts it
+  where that band prints.** An item from the body, or from inside a container,
+  has no position on the page, so after the drag it sat at the top of the page
+  even when it went into the footer. It now lands at the top of a header, or at
+  the foot of a footer. An item moved between the header and the footer, or out
+  of a fixed-position body, keeps the position it already had.
+
 - **A container, a data field or an image inserted into a header or footer now
   appears where that header or footer prints.** Inserting text or a shape there
   already placed it, but the container picker, the new-data-field dialog and
