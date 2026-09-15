@@ -455,7 +455,8 @@ export const en: LanguageCatalog = {
     'insert.saveBlock': 'Save as reusable block…',
     'insert.saveBlock.needsSelection': 'Select one element first',
     'insert.manageBlock': 'Manage reusable blocks…',
-    'insert.block.flowOnly': 'a header or footer cannot hold this block',
+    'insert.block.flowOnly': 'only directly in a flow body',
+    'insert.block.bandOnly': 'only directly in a header or footer',
     'contextMenu.saveBlock': 'Save as reusable block…',
     'block.title': 'Save as reusable block',
     'block.hint':

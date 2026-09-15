@@ -474,7 +474,8 @@ export const ja: LanguageCatalog = {
     'insert.saveBlock': '再利用ブロックとして保存…',
     'insert.saveBlock.needsSelection': '先に要素を1つ選択',
     'insert.manageBlock': '再利用ブロックの整理…',
-    'insert.block.flowOnly': 'ヘッダー・フッターには置けません',
+    'insert.block.flowOnly': 'フロー配置の本文に直接置いたときだけ使えます',
+    'insert.block.bandOnly': 'ヘッダー・フッターに直接置いたときだけ使えます',
     'contextMenu.saveBlock': '再利用ブロックとして保存…',
     'block.title': '再利用ブロックとして保存',
     'block.hint':

@@ -236,6 +236,16 @@ platform binaries.
 
 ### Fixed
 
+- **Inserting a saved block no longer places something that never draws.** A
+  reusable block holds whatever item it was saved from, and some items lay out in
+  only one kind of place: a Grid, Cards or a page break needs a body that flows,
+  and a page number has to sit directly in a header or footer. The Insert menu
+  only kept the first group out of headers and footers, so a Grid saved on an
+  invoice went into the résumé's fixed-position body, or into a container, and
+  the engine skipped it with a warning. A block whose item needs one particular
+  kind of place now stays in the menu but is disabled everywhere else, and says
+  where it can go.
+
 - **Choosing Cards for list data no longer inserts something that never draws.**
   On a document whose body places items at fixed positions (the résumé preset is
   one), the cards were offered like any other presentation, and the engine then

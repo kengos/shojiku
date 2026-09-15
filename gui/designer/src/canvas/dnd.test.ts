@@ -1,7 +1,7 @@
 import type { ReadFn } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
 import type { PlacedBox } from '../engine/types';
-import { receiverFor, reorderContext, siblingRects, typeFitsOwner } from './dnd';
+import { receiverFor, reorderContext, requiredOwner, siblingRects, typeFitsOwner } from './dnd';
 
 /** A read function over a flat path → materialized-value table. */
 function readOf(doc: Record<string, unknown>): ReadFn {
@@ -197,6 +197,22 @@ describe('siblingRects', () => {
       parent,
     );
     expect(rects).toEqual([]);
+  });
+});
+
+describe('requiredOwner', () => {
+  it('names the band for a page_number and the flow for the three flow-only kinds', () => {
+    expect(requiredOwner('page_number')).toBe('band');
+    for (const type of ['repeat', 'repeat_flow', 'page_break']) {
+      expect(requiredOwner(type)).toBe('flow');
+    }
+  });
+
+  it('restricts nothing else, including hostile and typeless values', () => {
+    // A saved block restored from storage can carry anything as its type.
+    for (const type of ['text', 'table', 'char_grid', '__proto__', undefined, null, 7, {}, []]) {
+      expect(requiredOwner(type)).toBeNull();
+    }
   });
 });
 

@@ -88,16 +88,21 @@ function ownerPlacement(ownerPath: string, owner: Record<string, unknown>): Owne
 const BAND_ONLY = 'page_number';
 const FLOW_ONLY: ReadonlySet<string> = new Set(['repeat', 'repeat_flow', 'page_break']);
 
-/** Whether an item of wire `type` lays out inside `owner`. A typeless or
- * malformed item is not one of the restricted kinds, so it fits. */
-export function typeFitsOwner(type: unknown, owner: OwnerKind): boolean {
+/** The one owner kind an item of wire `type` lays out in, or `null` when it
+ * lays out in all four. A typeless or malformed item is not one of the
+ * restricted kinds, so it is unrestricted. Exported so a surface that refuses
+ * can also say WHICH owner the item needs. */
+export function requiredOwner(type: unknown): 'band' | 'flow' | null {
   if (type === BAND_ONLY) {
-    return owner === 'band';
+    return 'band';
   }
-  if (typeof type === 'string' && FLOW_ONLY.has(type)) {
-    return owner === 'flow';
-  }
-  return true;
+  return typeof type === 'string' && FLOW_ONLY.has(type) ? 'flow' : null;
+}
+
+/** Whether an item of wire `type` lays out inside `owner`. */
+export function typeFitsOwner(type: unknown, owner: OwnerKind): boolean {
+  const need = requiredOwner(type);
+  return need === null || need === owner;
 }
 
 /** The drag axis the owner's layout order follows, or `null` when its

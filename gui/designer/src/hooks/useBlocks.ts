@@ -18,6 +18,7 @@ import {
   removeBlock,
   type SavedBlock,
 } from '../insert/blockModel';
+import { insertTargetOwner } from '../insert/flowPlacement';
 import { resolveInsertTarget } from '../insert/model';
 import type { LastGoodPreview } from '../preview/reducer';
 import { bandOf } from './geometry';
@@ -99,7 +100,8 @@ export function useBlocks({
   );
 
   // Insert a saved block at the resolved target (band-placed like an element
-  // insert when the target is a header/footer band), selected on success.
+  // insert when the target is a header/footer band), selected on success —
+  // unless the block's node lays out in another owner kind than the target is.
   const insertBlock = useCallback(
     (id: string) => {
       const block = blockList.find((b) => b.id === id);
@@ -110,13 +112,14 @@ export function useBlocks({
       const target = resolveInsertTarget(read, selection);
       const band = bandOf(target.path);
       // The menu already disables this row, and this is the second lock on the
-      // same door: a flow-only kind inside a band is a PARSE error, so the
-      // whole document stops rendering rather than one item misplacing. The
-      // two can only disagree when the selection MOVES between the menu being
-      // built and the row being clicked — the same build-vs-click race the
-      // lookup guard above covers, and not stageable in a single render.
-      /* v8 ignore next 3 -- unreachable while the row is disabled; guards the build-vs-click selection race, like the lookup miss above */
-      if (band !== null && !typeFitsOwner((block.value as Record<string, unknown>).type, 'band')) {
+      // same door, asking the same question of the same target: a node the
+      // target's owner cannot hold is skipped by the engine (and a repeat or
+      // repeat_flow band-placed below would not even parse, `box:` being
+      // unknown to it), so the write is refused here too. The row and this
+      // lock disagree only when the selection moves between the menu being
+      // built and the row being clicked; the hook test calls it directly.
+      const owner = insertTargetOwner(read, target.path);
+      if (!typeFitsOwner((block.value as Record<string, unknown>).type, owner)) {
         return;
       }
       const result = apply({

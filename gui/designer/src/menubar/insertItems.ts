@@ -1,8 +1,9 @@
 // What one armed INSERT group becomes as menu rows: the per-entry-kind dispatch,
 // plus the gates that show a row DISABLED with its reason rather than hiding it
 // (a band-only element outside a header/footer, a flow-only element outside the
-// body's flow, save-block without a savable selection) — an affordance that
-// appears and disappears is worse than one that explains itself.
+// body's flow, a saved block whose node needs an owner the insert target is
+// not, save-block without a savable selection) — an affordance that appears and
+// disappears is worse than one that explains itself.
 
 import { requiresBand } from '../insert/bandPlacement';
 import { requiresFlow } from '../insert/flowPlacement';
@@ -17,7 +18,7 @@ function blockedReasonKey(kind: InsertKind, w: MenubarWiring): string | null {
   if (requiresBand(kind) && !w.bandTarget) {
     return 'insert.pageNumber.bandOnly';
   }
-  return requiresFlow(kind) && !w.flowTarget ? 'insert.pageBreak.flowOnly' : null;
+  return requiresFlow(kind) && w.insertOwner !== 'flow' ? 'insert.pageBreak.flowOnly' : null;
 }
 
 /** Map one armed insert group to menu items, dispatching per entry kind. */
@@ -63,13 +64,16 @@ export function insertItems(
       };
     }
     if (entry.kind === 'block') {
-      // The label IS the block's user-chosen name (React-escaped text).
-      // A flow-only block inside a band does not parse — the document stops
-      // rendering entirely — so the row states the reason rather than acting,
-      // the same shape as the band-only page number above.
-      const blocked = entry.flowOnly && w.bandTarget;
+      // The label IS the block's user-chosen name (React-escaped text). A node
+      // that lays out in only one owner kind is skipped by the engine in every
+      // other — nothing draws — so wherever the insert target is another owner
+      // the row states the reason rather than acting, the same shape as the
+      // element rows above.
+      const blocked = entry.requires !== null && entry.requires !== w.insertOwner;
+      const reasonKey =
+        entry.requires === 'band' ? 'insert.block.bandOnly' : 'insert.block.flowOnly';
       return {
-        label: blocked ? `${entry.name} — ${t('insert.block.flowOnly')}` : entry.name,
+        label: blocked ? `${entry.name} — ${t(reasonKey)}` : entry.name,
         run: () => w.onInsertBlock(entry.blockId),
         disabled: blocked,
       };

@@ -1,10 +1,24 @@
 // Designer-level tests for hooks/useBlocks.ts — the reusable-block library
-// (host-owned list, band-aware insertBlock, save/manage dialogs).
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+// (host-owned list, band-aware insertBlock, the owner gate on a block's node,
+// save/manage dialogs).
+import { act, fireEvent, renderHook, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { useEditor } from '../editor/useEditor';
 import type { SavedBlock } from '../insert/blockModel';
-import { ABS_VARIED, outcomeAbs, THREE_ITEMS } from '../testkit/fixtures';
+import { ABS_VARIED, outcomeAbs, outcomeStacked, THREE_ITEMS } from '../testkit/fixtures';
 import { draw, makeTransport } from '../testkit/harness';
+import { useBlocks } from './useBlocks';
+
+/** A repeat (flow-only), a page number (band-only) and a plain text block. */
+const GATED_BLOCKS: SavedBlock[] = [
+  { id: 'repeat', name: '明細', value: { type: 'repeat_flow', data: { key: 'rows' } } },
+  { id: 'pageNumber', name: '頁番号', value: { type: 'page_number' } },
+  { id: 'text', name: '社判', value: { type: 'text', text: 'seal' } },
+];
+
+const ABSOLUTE_BODY = ['sections:', '  body:', '    type: absolute', '    items: []', ''].join(
+  '\n',
+);
 
 describe('Designer — reusable blocks', () => {
   const openInsert = () => fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
@@ -145,11 +159,10 @@ describe('Designer — reusable blocks', () => {
     expect(written).toMatch(/seal[\s\S]*x: 0/);
   });
 
-  it('refuses a FLOW-ONLY block into a band, in the hook and not only the menu', async () => {
-    // A `repeat`/`repeat_flow`/`page_break` inside a band is a PARSE error, so
-    // the whole document would stop rendering — not just that item. The menu
-    // disables the row, but a disabled row is a UI state and this is where the
-    // document would actually be written, so the guard lives here too.
+  it('refuses a FLOW-ONLY block into a band, naming the reason', async () => {
+    // A `repeat_flow` band-placed into a footer would not even parse (`box:` is
+    // unknown to it), so the whole document would stop rendering — not just
+    // that item. The hook's own lock is pinned directly in the suite below.
     const onChange = vi.fn<(t: string) => void>();
     const source = [
       'version: 0.1.0',
@@ -173,13 +186,85 @@ describe('Designer — reusable blocks', () => {
     openInsert();
     // The row says why instead of acting…
     const blocked = screen.getByRole('menuitem', { name: /明細/ });
-    expect(blocked.textContent).toContain('a header or footer cannot hold this block');
+    expect(blocked.textContent).toContain('only directly in a flow body');
     fireEvent.click(blocked);
     expect(onChange).not.toHaveBeenCalled();
     // …and the CONTROL: the ordinary block in the same library still inserts
     // into the same band, so the refusal is about the kind, not the target.
     fireEvent.click(screen.getByRole('menuitem', { name: '社判' }));
     expect(onChange.mock.calls.at(-1)?.[0]).toMatch(/seal[\s\S]*x: 0/);
+  });
+
+  it('refuses a flow-only block in an ABSOLUTE body, where no band is involved', () => {
+    // The résumé and certificate presets ship an absolute body: the insert used
+    // to succeed there and the engine skipped the item, so nothing drew.
+    const onChange = vi.fn<(t: string) => void>();
+    draw(makeTransport(), {
+      source: ABSOLUTE_BODY,
+      onBlocksChange: vi.fn(),
+      blocks: GATED_BLOCKS,
+      onChange,
+    });
+    openInsert();
+    const row = screen.getByRole('menuitem', { name: /明細/ });
+    expect(row.textContent).toContain('only directly in a flow body');
+    expect(row.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(row);
+    expect(onChange).not.toHaveBeenCalled();
+    // The control: the unrestricted block in the same library inserts here.
+    fireEvent.click(screen.getByRole('menuitem', { name: '社判' }));
+    expect(onChange.mock.calls.at(-1)?.[0]).toContain('seal');
+  });
+
+  it('refuses a flow-only block inside a container of the flow body', async () => {
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: container',
+      '        items: []',
+      '',
+    ].join('\n');
+    const paths = ['sections.body.items[0]'];
+    const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeStacked(paths)) });
+    const onChange = vi.fn<(t: string) => void>();
+    draw(transport, { source, onBlocksChange: vi.fn(), blocks: GATED_BLOCKS, onChange });
+    fireEvent.click(await screen.findByRole('button', { name: 'sections.body.items[0]' }));
+    openInsert();
+    // The body IS a flow here, which is why the reason says DIRECTLY.
+    const row = screen.getByRole('menuitem', { name: /明細/ });
+    expect(row.textContent).toContain('only directly in a flow body');
+    expect(row.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(row);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('refuses a page-number block outside a band and inserts it into one', async () => {
+    const onChange = vi.fn<(t: string) => void>();
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    repeat: every_page',
+      '    items: []',
+      '',
+    ].join('\n');
+    draw(makeTransport(), { source, onBlocksChange: vi.fn(), blocks: GATED_BLOCKS, onChange });
+    openInsert();
+    const inBody = screen.getByRole('menuitem', { name: /頁番号/ });
+    expect(inBody.textContent).toContain('only directly in a header or footer');
+    expect(inBody.getAttribute('aria-disabled')).toBe('true');
+    openInsert(); // the menu button toggles: close it before reaching the tree
+    // The control: the same block is an ordinary row once the footer is the target.
+    fireEvent.click(await screen.findByRole('button', { name: /Footer/ }));
+    openInsert();
+    const inFooter = screen.getByRole('menuitem', { name: '頁番号' });
+    expect(inFooter.getAttribute('aria-disabled')).not.toBe('true');
+    fireEvent.click(inFooter);
+    expect(onChange.mock.calls.at(-1)?.[0]).toMatch(/footer:[\s\S]*type: page_number/);
   });
 
   it('disables the save row while a multi-selection is active (wrap first)', async () => {
@@ -192,5 +277,39 @@ describe('Designer — reusable blocks', () => {
     openInsert();
     const save = screen.getByRole('menuitem', { name: /Save as reusable block/ });
     expect(save.textContent).toContain('Select one element first');
+  });
+});
+
+describe('useBlocks — the insert lock', () => {
+  // The menu disables a row the target cannot hold, and insertBlock refuses the
+  // same write on its own: the two disagree only when the selection moves
+  // between the menu being built and the row being clicked, which a rendered
+  // menu cannot stage — so the lock is driven directly here.
+  function mount(source: string) {
+    return renderHook(() => {
+      const editor = useEditor(source);
+      const blocks = useBlocks({
+        blocks: GATED_BLOCKS,
+        onBlocksChange: vi.fn(),
+        editor,
+        multiSel: new Set(),
+        previewRef: { current: null },
+      });
+      return { editor, blocks };
+    });
+  }
+
+  it('writes nothing for a node the resolved owner cannot hold', () => {
+    const hook = mount(ABSOLUTE_BODY);
+    act(() => hook.result.current.blocks.insertBlock('repeat'));
+    act(() => hook.result.current.blocks.insertBlock('pageNumber'));
+    expect(hook.result.current.editor.text).toBe(ABSOLUTE_BODY);
+  });
+
+  it('inserts an unrestricted node into the same owner (the control)', () => {
+    const hook = mount(ABSOLUTE_BODY);
+    act(() => hook.result.current.blocks.insertBlock('text'));
+    expect(hook.result.current.editor.text).toContain('seal');
+    expect(hook.result.current.editor.selection).toBe('sections.body.items[0]');
   });
 });

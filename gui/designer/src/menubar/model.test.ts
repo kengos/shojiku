@@ -30,7 +30,7 @@ function baseWiring(over: Partial<MenubarWiring> = {}): MenubarWiring {
     onDocumentSettings: vi.fn(),
     onDataEditor: vi.fn(),
     bandTarget: false,
-    flowTarget: false,
+    insertOwner: 'container',
     onBand: vi.fn(),
     onTutorial: vi.fn(),
     hostEntries: [],
@@ -188,17 +188,21 @@ describe('buildMenubar', () => {
   it('disables the page-break row outside the flow, naming the reason', () => {
     // The mirror of the page-number row above, and the reason it needs its OWN
     // gate: `bandTarget` is false inside a container too, where a page break is
-    // equally skipped — so "not a band" would have offered it there.
+    // equally skipped — so "not a band" would have offered it there. Every
+    // owner but the flow refuses it.
     const onInsertKind = vi.fn();
     const groups = insertMenuGroups({ ...NO_ARMING, pageBreak: true });
-    const outside = buildMenubar(t, baseWiring({ insert: groups, onInsertKind }))[2].groups[0];
-    const blocked = outside.find((i) => i.label.startsWith('insert.pageBreak'));
-    expect(blocked?.disabled).toBe(true);
-    expect(blocked?.label).toContain('insert.pageBreak.flowOnly');
+    for (const insertOwner of ['band', 'absoluteBody', 'container'] as const) {
+      const outside = buildMenubar(t, baseWiring({ insert: groups, onInsertKind, insertOwner }))[2]
+        .groups[0];
+      const blocked = outside.find((i) => i.label.startsWith('insert.pageBreak'));
+      expect(blocked?.disabled, insertOwner).toBe(true);
+      expect(blocked?.label).toContain('insert.pageBreak.flowOnly');
+    }
 
     const inFlow = buildMenubar(
       t,
-      baseWiring({ insert: groups, onInsertKind, flowTarget: true }),
+      baseWiring({ insert: groups, onInsertKind, insertOwner: 'flow' }),
     )[2].groups[0];
     const allowed = inFlow.find((i) => i.label === 'insert.pageBreak');
     expect(allowed?.disabled).toBe(false);
@@ -212,7 +216,7 @@ describe('buildMenubar', () => {
     const groups = insertMenuGroups({ ...NO_ARMING, charGrid: true });
     const rows = buildMenubar(
       t,
-      baseWiring({ insert: groups, bandTarget: false, flowTarget: false }),
+      baseWiring({ insert: groups, bandTarget: false, insertOwner: 'container' }),
     )[2].groups[0];
     const row = rows.find((i) => i.label === 'insert.charGrid');
     expect(row?.disabled).toBe(false);
@@ -227,7 +231,7 @@ describe('buildMenubar', () => {
         labelKey: 'insert.group.reuseBlock',
         entries: [
           { kind: 'saveBlock', labelKey: 'insert.saveBlock' },
-          { kind: 'block', blockId: 'block-1', name: '社判＋住所', flowOnly: false },
+          { kind: 'block', blockId: 'block-1', name: '社判＋住所', requires: null },
           { kind: 'manageBlock', labelKey: 'insert.manageBlock' },
         ],
       },
@@ -252,33 +256,41 @@ describe('buildMenubar', () => {
     expect(onManageBlocks).toHaveBeenCalledOnce();
   });
 
-  it('disables a FLOW-ONLY block inside a band, naming the reason', () => {
-    // Unlike the band-only page number, which merely warns in the wrong place,
-    // a `repeat`/`repeat_flow`/`page_break` inside a band does not parse — the
-    // whole document stops rendering — so the row must not act.
+  it('gates a saved block on the owner its node needs, naming the reason', () => {
+    // A node that lays out in only one owner kind is skipped by the engine in
+    // every other, so the row is disabled wherever the insert target is a
+    // different owner — not just in a band.
     const insert = [
       {
         labelKey: 'insert.group.reuseBlock',
         entries: [
-          { kind: 'saveBlock', labelKey: 'insert.saveBlock' },
-          { kind: 'block', blockId: 'b1', name: '明細ブロック', flowOnly: true },
+          { kind: 'block', blockId: 'flow', name: '明細ブロック', requires: 'flow' },
+          { kind: 'block', blockId: 'band', name: '頁番号', requires: 'band' },
+          { kind: 'block', blockId: 'any', name: '社判', requires: null },
         ],
       },
     ] as const;
-    const onInsertBlock = vi.fn();
-    const inBand = buildMenubar(t, baseWiring({ insert, onInsertBlock, bandTarget: true }))[2]
-      .groups[0][1];
-    expect(inBand.disabled).toBe(true);
-    expect(inBand.label).toContain('insert.block.flowOnly');
+    const owners = ['flow', 'absoluteBody', 'band', 'container'] as const;
+    for (const insertOwner of owners) {
+      const onInsertBlock = vi.fn();
+      const [flow, band, any] = buildMenubar(
+        t,
+        baseWiring({ insert, onInsertBlock, insertOwner }),
+      )[2].groups[0];
 
-    // Outside a band the SAME block is an ordinary row — the flag alone never
-    // disables it, which is the control for the assertion above.
-    const outside = buildMenubar(t, baseWiring({ insert, onInsertBlock, bandTarget: false }))[2]
-      .groups[0][1];
-    expect(outside.disabled).toBe(false);
-    expect(outside.label).toBe('明細ブロック');
-    outside.run();
-    expect(onInsertBlock).toHaveBeenCalledWith('b1');
+      expect(flow.disabled, `flow-only in ${insertOwner}`).toBe(insertOwner !== 'flow');
+      expect(flow.label).toBe(
+        insertOwner === 'flow' ? '明細ブロック' : '明細ブロック — insert.block.flowOnly',
+      );
+      expect(band.disabled, `band-only in ${insertOwner}`).toBe(insertOwner !== 'band');
+      expect(band.label).toBe(insertOwner === 'band' ? '頁番号' : '頁番号 — insert.block.bandOnly');
+      // The control: an unrestricted node is an ordinary row in every owner,
+      // so the refusals above are about the node, not the target.
+      expect(any.disabled, `unrestricted in ${insertOwner}`).toBe(false);
+      expect(any.label).toBe('社判');
+      any.run();
+      expect(onInsertBlock).toHaveBeenCalledWith('any');
+    }
   });
 
   it('disables the save-block row without a savable selection, naming the reason', () => {
