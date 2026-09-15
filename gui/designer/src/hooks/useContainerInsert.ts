@@ -6,6 +6,7 @@
 import { useCallback, useState } from 'react';
 import { resolveContainerInsert } from '../insert/containerInsert';
 import { containerShape, containerSnippet } from '../insert/containerModel';
+import { placeForTarget } from '../insert/targetPlacement';
 import type { InsertContext } from './insertContext';
 
 export interface ContainerInsert {
@@ -15,7 +16,7 @@ export interface ContainerInsert {
 }
 
 export function useContainerInsert(ctx: InsertContext): ContainerInsert {
-  const { read, selection, apply, applyAll, select, t } = ctx;
+  const { read, previewRef, selection, apply, applyAll, select, t } = ctx;
   const [containerPickerOpen, setContainerPickerOpen] = useState(false);
 
   const handleContainerPick = useCallback(
@@ -47,13 +48,15 @@ export function useContainerInsert(ctx: InsertContext): ContainerInsert {
         op: 'insertItem',
         path: dest.target.path,
         index: dest.target.index,
-        value: snippet,
+        // Into a header/footer directly, the container needs band coordinates
+        // like any band insert; a nest target is always inside a container.
+        value: placeForTarget(read, previewRef.current, dest.target.path, snippet),
       });
       if (result.ok) {
         select(`${dest.target.path}[${dest.target.index}]`);
       }
     },
-    [read, selection, apply, applyAll, select, t],
+    [read, previewRef, selection, apply, applyAll, select, t],
   );
 
   return { containerPickerOpen, setContainerPickerOpen, handleContainerPick };

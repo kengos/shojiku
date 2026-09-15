@@ -8,6 +8,7 @@
 import { useRef, useState } from 'react';
 import { type FieldChoice, type FieldRefusal, fieldSchema } from '../insert/fieldModel';
 import { resolveInsertTarget } from '../insert/model';
+import { placeForTarget } from '../insert/targetPlacement';
 import { boundSnippet } from '../palette/dragSnippet';
 import { extendParams } from '../sample/generate';
 import { updateActive } from '../sample/variants';
@@ -24,7 +25,18 @@ export interface FieldInsert {
 }
 
 export function useFieldInsert(ctx: InsertContext, workshop: boolean): FieldInsert {
-  const { read, selection, apply, select, params, sampleSet, commitSet, synth, locale } = ctx;
+  const {
+    read,
+    previewRef,
+    selection,
+    apply,
+    select,
+    params,
+    sampleSet,
+    commitSet,
+    synth,
+    locale,
+  } = ctx;
   const [fieldOpen, setFieldOpen] = useState(false);
   const fieldBindRef = useRef<((key: string) => void) | null>(null);
 
@@ -60,16 +72,22 @@ export function useFieldInsert(ctx: InsertContext, workshop: boolean): FieldInse
         op: 'insertItem',
         path: target.path,
         index: target.index,
-        value: boundSnippet(
-          {
-            key: choice.name,
-            type: choice.kind === 'currency' ? 'currency' : 'string',
-            label: choice.name,
-            // The dialog mints a fresh TOP-LEVEL params key, so the field is
-            // document-scope by construction — never a row's.
-            group: null,
-          },
-          true,
+        // Band-placed when the target is a header/footer directly.
+        value: placeForTarget(
+          read,
+          previewRef.current,
+          target.path,
+          boundSnippet(
+            {
+              key: choice.name,
+              type: choice.kind === 'currency' ? 'currency' : 'string',
+              label: choice.name,
+              // The dialog mints a fresh TOP-LEVEL params key, so the field is
+              // document-scope by construction — never a row's.
+              group: null,
+            },
+            true,
+          ),
         ),
       });
       if (!result.ok) {

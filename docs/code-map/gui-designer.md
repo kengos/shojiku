@@ -400,7 +400,8 @@ lists name the destructured stable fields, never `editor` itself.
   `insertIndicator`, drop = ONE `insertItem` at the plan's path + select.
 - `hooks/useImageImport.ts` — menu entry, canvas file drop, clipboard
   paste and panel replace route ONE pipeline: size gate →
-  `insertItem`/`setScalar`;
+  `insertItem` (through `placeForTarget`; `ImageImportContext` carries
+  `read` for it)/`setScalar`;
   notices ride the topbar `<output>`; `applyRaisedCap`; returns
   `hasImageItem`/`nextCap`. The React wiring only — what the import DOES
   is `hooks/imageImportRun.ts` (`runImageImport` over an explicit
@@ -414,25 +415,29 @@ lists name the destructured stable fields, never `editor` itself.
   is in hand, so the insert menu's clipboard-TEXT import and every
   ordinary text paste are untouched).
 - `hooks/useInsertActions.ts` — plain element insert (band-placed only
-  when the target is a band directly — `insertTargetBand`), the
+  when the target is a band directly — `insert/targetPlacement`'s
+  `placeForTarget`), the
   insert-menu gates (`insertGroups` — a capability-less row is ABSENT
   rather than broken; `canDeclare`), and the four scaffold hooks over one
   shared `InsertContext`. Every scaffold selects the new item on success,
   leaves no orphan params on refusal.
-- `hooks/insertContext.ts` — `InsertContext` (type only; one object
+- `hooks/insertContext.ts` — `InsertContext` (type only; carries the
+  last-good `previewRef` a band insert measures from; one object
   argument per scaffold hook).
 - `hooks/useContainerInsert.ts` — the container picker (placeholder slot
-  replaced in place as ONE `applyAll`).
+  replaced in place as ONE `applyAll`; an append into a band directly is
+  band-placed through `placeForTarget`).
 - `hooks/useIterableInsert.ts` — the iterable dialog (params rows first,
   typed refusal, then ONE `insertItem`, params committed only after
   success).
-- `hooks/useFieldInsert.ts` — the create-data-field modal (workshop mode).
+- `hooks/useFieldInsert.ts` — the create-data-field modal (workshop mode;
+  the new bound text goes through `placeForTarget`).
 - `hooks/usePasteInsert.ts` — the paste import (scaffold + verbatim
   params rows + ONE table insert).
 - `hooks/useBlocks.ts` — reusable-block library: `blocks` prop is the
   host-owned app-global list; pure `insert/blockModel`; `insertBlock` is
   a plain `insertItem` (AI parity), band-placed only when the target is a
-  band directly (`insertTargetBand`), refused when the block's node
+  band directly (`placeForTarget`), refused when the block's node
   does not fit the resolved target's owner (`typeFitsOwner` ×
   `insertTargetOwner`).
 - `hooks/useSelectionOps.ts` — `deleteAt`/`duplicateAt` (PATH-scoped: the

@@ -9,10 +9,7 @@
 import { useCallback, useRef } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import type { I18n } from '../i18n/context';
-import { bandBoxHeightPt } from '../insert/bandGeometry';
-import { bandInsertY, bandPlaced } from '../insert/bandPlacement';
 import type { FieldChoice, FieldRefusal } from '../insert/fieldModel';
-import { insertTargetBand } from '../insert/flowPlacement';
 import { type InsertGroup, type InsertKind, insertMenuGroups } from '../insert/insertMenu';
 import { insertSnippet } from '../insert/insertSnippet';
 import {
@@ -23,6 +20,7 @@ import {
 import { resolveInsertTarget } from '../insert/model';
 import type { PasteRefusal } from '../insert/paste';
 import type { PasteGrid } from '../insert/pasteGrid';
+import { placeForTarget } from '../insert/targetPlacement';
 import type { PaletteGroup } from '../palette/model';
 import type { LastGoodPreview } from '../preview/reducer';
 import type { ValueSynth } from '../sample/synth';
@@ -141,15 +139,11 @@ export function useInsertActions({
       // box, so an insert there ships with coordinates; a flow-body insert, and
       // one into a container (even a container inside a band), stays box-less
       // and is placed by its owner.
-      const band = insertTargetBand(read, target.path);
       const result = apply({
         op: 'insertItem',
         path: target.path,
         index: target.index,
-        value:
-          band === null
-            ? snippet
-            : bandPlaced(snippet, bandInsertY(band, bandBoxHeightPt(previewRef.current, read))),
+        value: placeForTarget(read, previewRef.current, target.path, snippet),
       });
       if (result.ok) {
         select(`${target.path}[${target.index}]`);
@@ -160,6 +154,7 @@ export function useInsertActions({
 
   const ctx: InsertContext = {
     read,
+    previewRef,
     selection,
     apply,
     applyAll,

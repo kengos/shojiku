@@ -54,6 +54,34 @@ describe('band placement', () => {
     expect(bandInsertY('footer', 794.7)).toBe(762);
   });
 
+  it('bottom-aligns a footer item by its own numeric height', () => {
+    // A 60pt rect starting one line (32pt) above the edge would hang 28pt past it.
+    expect(bandInsertY('footer', 794, 60)).toBe(734);
+    expect(bandInsertY('footer', 794, 200.4)).toBe(593);
+    // Shorter than a line still starts one line up, like auto-height text.
+    expect(bandInsertY('footer', 794, 14)).toBe(762);
+    // Taller than the whole margin box clamps to its top.
+    expect(bandInsertY('footer', 794, 5000)).toBe(0);
+    // A header item sits at the top whatever its height.
+    expect(bandInsertY('header', 794, 60)).toBe(0);
+  });
+
+  it('ignores a height that is not a finite positive number', () => {
+    for (const h of [
+      undefined,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      -10,
+      0,
+      '50%',
+      '60',
+      null,
+      {},
+    ]) {
+      expect(bandInsertY('footer', 794, h)).toBe(762);
+    }
+  });
+
   it('degrades to the top rather than authoring a nonsense coordinate', () => {
     expect(bandInsertY('footer', Number.NaN)).toBe(0);
     expect(bandInsertY('footer', 10)).toBe(0);

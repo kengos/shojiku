@@ -4,11 +4,14 @@
 
 import type { EditorController } from '../editor/useEditor';
 import type { I18n } from '../i18n/context';
+import type { LastGoodPreview } from '../preview/reducer';
 import type { ValueSynth } from '../sample/synth';
 import type { SampleSet } from '../sample/variants';
 
 export interface InsertContext {
   readonly read: EditorController['read'];
+  /** The last-good render, which a band insert measures the margin box from. */
+  readonly previewRef: { readonly current: LastGoodPreview | null };
   readonly selection: string | null;
   readonly apply: EditorController['apply'];
   readonly applyAll: EditorController['applyAll'];

@@ -236,6 +236,14 @@ platform binaries.
 
 ### Fixed
 
+- **A container, a data field or an image inserted into a header or footer now
+  appears where that header or footer prints.** Inserting text or a shape there
+  already placed it, but the container picker, the new-data-field dialog and
+  image import put the item at the top of the page, far from the footer it
+  belonged to. They are now placed like any other header or footer insert. In a
+  footer, an item with a fixed height — an image, a rectangle, an oval, a QR code — is
+  also lined up with the bottom edge instead of hanging past it.
+
 - **Inserting into a container inside a header or footer now behaves like any
   other container.** With such a container selected, Insert ▸ Page number was
   offered and then skipped, because a page number only works placed directly

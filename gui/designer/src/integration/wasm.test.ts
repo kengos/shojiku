@@ -37,6 +37,7 @@ import { resolveIterableTarget } from '../insert/iterableTarget';
 import { SCAFFOLD_VARIANTS, scaffoldFromGroup, variantFitsBody } from '../insert/scaffold';
 import { type ScaffoldField, scaffoldFromFields, scaffoldSchema } from '../insert/scaffoldFields';
 import { scaffoldSnippet } from '../insert/scaffoldSnippet';
+import { placeForTarget } from '../insert/targetPlacement';
 import { wrapInContainerOps } from '../insert/wrap';
 import { readBindings } from '../palette/bindings';
 import { planInsertDrop } from '../palette/drag';
@@ -1019,6 +1020,48 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     const moved = after.inspect?.boxes.pages[0]?.find((b) => b.id === 'loose');
     expect(moved?.border.x).toBeCloseTo(drop.x, 5);
     expect(moved?.border.y).toBeCloseTo(drop.y, 5);
+  });
+
+  it('band-places an insert so the engine draws it at the foot of the margin box', async () => {
+    // placeForTarget measures the margin box from the DOCUMENT when there is no
+    // render yet; the engine then has to lay the item out where a footer prints:
+    // a fixed-height item bottom-aligned, an auto-height container near the foot
+    // (not at the top of the page, where a box-less band child falls).
+    const doc = [
+      'version: 0.1.0',
+      'page: { size: A4, margin: 25 }',
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    repeat: every_page',
+      '    items: []',
+      '',
+    ].join('\n');
+    const editor = Editor.create(doc);
+    const read = (path: string) => editor.read(path);
+    const path = 'sections.footer.items';
+    const rect = { type: 'rect', id: 'r', box: { w: 120, h: 60 }, style: { borderWidth: 1 } };
+    const container = { type: 'container', id: 'c', items: [{ type: 'text', text: 'x' }] };
+    for (const [index, node] of [rect, container].entries()) {
+      const value = placeForTarget(read, null, path, node as SnippetValue);
+      expect(editor.apply({ op: 'insertItem', path, index, value }).ok).toBe(true);
+    }
+    const outcome = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+    expect(outcome.diagnostics.items.filter((d) => d.severity === 'error')).toHaveLength(0);
+    const margin = outcome.inspect?.margin;
+    if (margin == null) throw new Error('margin missing');
+    // The page's pixel height is ceil-rounded and the placement floors the
+    // document's margin box, so the exact bottom sits within 2pt ABOVE this.
+    const bottom = outcome.pages[0].height / 2 - margin[2];
+    const boxes = outcome.inspect?.boxes.pages[0] ?? [];
+    const r = boxes.find((b) => b.id === 'r');
+    const c = boxes.find((b) => b.id === 'c');
+    if (r == null || c == null) throw new Error('band boxes missing');
+    expect(r.border.y + r.border.h).toBeLessThanOrEqual(bottom);
+    expect(r.border.y + r.border.h).toBeGreaterThanOrEqual(bottom - 2);
+    expect(c.border.y).toBeGreaterThan(bottom - 40);
   });
 
   it('drag-moves an absolute item through the manipulate model against real geometry', async () => {

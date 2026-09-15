@@ -71,6 +71,28 @@ describe('Designer image import', () => {
     expect(screen.getByText(/Template size/)).toBeTruthy();
   });
 
+  it('band-places an image imported into a selected footer', async () => {
+    const onChange = vi.fn();
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    repeat: every_page',
+      '    items: []',
+      '',
+    ].join('\n');
+    const { container } = draw(makeTransport(), { source, imageCodec: fakeCodec(), onChange });
+    fireEvent.click(await screen.findByRole('button', { name: /Footer/ }));
+    pickImage(container);
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const doc = String(onChange.mock.calls.at(-1)?.[0]);
+    // Bottom-aligned by its own height: the fake codec's 100×60px intrinsic is
+    // 75×45pt, so y is the A4 margin box (791pt floored) less 45.
+    expect(doc).toMatch(/footer:[\s\S]*type: image[\s\S]*h: 45[\s\S]*x: 0[\s\S]*y: 746\n/);
+  });
+
   it('offers every accepted format in the file picker', () => {
     // The picker's filter and the byte sniffer must name the same set — a
     // format the sniffer accepts but the dialog filters out is unreachable.
