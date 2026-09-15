@@ -250,12 +250,9 @@ result LANDS:
   `bandPlaced` at `bandInsertY(band, bandBoxHeightPt(preview, read), own
   box.h)`; anything else → the snippet as authored. The iterable and paste
   dialogs never reach it: `insert/iterableTarget` always answers the body.
-  Known outside it, both still writing no band coordinates: `insert/wrap.ts`
-  re-authors an existing band child inside a new container that has none
-  (the child keeps its own, so the ink stays while the container's box sits
-  at the top of the page), and a layer-tree drag into a band
-  (`canvas/reparent` `coordinateOps` gets no drop point), which leaves a
-  box-less item at the top of the page.
+  Not a door for gestures on an EXISTING item: `insert/wrap.ts` moves the
+  item's own position onto its new container, and a layer-tree drop into a
+  band lands through `tree/rowDrag` `bandLanding`.
 - `insert/bandCreate.ts` — CREATING a band (`sections.header` /
   `sections.footer`), which nothing in the deterministic UI did before:
   `BAND_NAMES`, `BAND_LABEL_KEYS` (ONE catalog key per band, shared by
@@ -289,10 +286,20 @@ result LANDS:
 - `insert/containerInsert.ts` — `resolveContainerInsert`: nest (replace
   a placeholder slot directly inside a container) vs append; hostile
   reads fall to append — the implicit replace never fires on content.
-- `insert/wrap.ts` — wrap-in-container: `isWrappablePath` (read-free
-  gate) + `wrapInContainerOps` (ONE batch insertItem+removeItem; the
-  node is re-authored via the snippet path, so hostile subtrees fail the
-  validator and the batch rolls back whole).
+- `insert/wrap.ts` — wrap-in-container: `isWrappable(path, node)` (the
+  ONE gate the context-menu row, the Layout tab action and the op builder
+  share: an `…items` entry holding a map of a type `typeFitsOwner(…,
+  'container')` accepts, so `page_number`/`page_break`/`repeat`/
+  `repeat_flow`, which a container skips, are never wrapped) +
+  `wrapInContainerOps` (ONE batch insertItem+removeItem; the node is
+  re-authored via the snippet path, so hostile subtrees fail the validator
+  and the batch rolls back whole). The item's OWNER keys — `box.x`/`box.y`
+  and `flexGrow`/`flexBasis`/`columnSpan`/`rowSpan` — move onto the container
+  verbatim (it is now the owner's child and resolves against the basis the
+  item did, in every owner); an emptied item box is dropped except on a
+  `REQUIRED_BOX_WIRE_TYPES` type (`rect`, where it is a required wire key); an
+  anchored `ellipse` keeps its keys; a `line` outside the flow body gives the
+  container its topmost numeric endpoint `y` and shifts both endpoints by it.
 - `insert/blockModel.ts` — pure reusable-block model: `SavedBlock` (a
   named `SnippetValue`), `blockFromNode`/`validateBlockName`/
   `addBlock`/`removeBlock` (caps, fresh ids), `sanitizeBlocks` (the

@@ -11,7 +11,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { NO_BOX_WIRE_TYPES } from './itemView';
+import { NO_BOX_WIRE_TYPES, REQUIRED_BOX_WIRE_TYPES } from './itemView';
 
 const ENGINE = new URL('../../../../engine/core/src/', import.meta.url);
 
@@ -53,16 +53,30 @@ function itemVariants(): { rust: string; wire: string }[] {
   }));
 }
 
-/** Whether the struct named `name` declares a `box` field, searched across the
- * template modules that define the item structs. */
-function declaresBox(name: string, sources: readonly string[]): boolean {
+/** The body of the struct named `name`, searched across the template modules
+ * that define the item structs. */
+function structBody(name: string, sources: readonly string[]): string {
   for (const src of sources) {
     const found = new RegExp(`pub struct ${name} \\{\\n([\\s\\S]*?)\\n\\}`).exec(src);
     if (found !== null) {
-      return /\bbox_\s*:/.test(found[1]);
+      return found[1];
     }
   }
   throw new Error(`no \`pub struct ${name}\` found in the template modules`);
+}
+
+/** Whether the struct named `name` declares a `box` field. */
+function declaresBox(name: string, sources: readonly string[]): boolean {
+  return /\bbox_\s*:/.test(structBody(name, sources));
+}
+
+/** The serde attribute directly above the struct's `box_` field. */
+function boxAttribute(name: string, sources: readonly string[]): string {
+  const found = /(#\[serde\([^\]]*\)\])\s*pub box_\s*:/.exec(structBody(name, sources));
+  if (found === null) {
+    throw new Error(`\`${name}\`'s box_ field carries no serde attribute`);
+  }
+  return found[1];
 }
 
 describe('NO_BOX_WIRE_TYPES stays pinned to the engine wire', () => {
@@ -80,5 +94,15 @@ describe('NO_BOX_WIRE_TYPES stays pinned to the engine wire', () => {
 
     const boxless = variants.filter((v) => !declaresBox(v.rust, sources)).map((v) => v.wire);
     expect([...NO_BOX_WIRE_TYPES].sort()).toEqual([...boxless].sort());
+  });
+
+  it('REQUIRED_BOX_WIRE_TYPES is exactly the boxed variants whose `box` has no serde default', () => {
+    const sources = templateSources();
+    const boxed = itemVariants().filter((v) => declaresBox(v.rust, sources));
+    const required = boxed.filter((v) => !/\bdefault\b/.test(boxAttribute(v.rust, sources)));
+    // Controls: some boxed variant must read as defaulted, or a regex that
+    // stopped matching `default` would call every box required.
+    expect(boxed.length).toBeGreaterThan(required.length);
+    expect([...REQUIRED_BOX_WIRE_TYPES].sort()).toEqual(required.map((v) => v.wire).sort());
   });
 });

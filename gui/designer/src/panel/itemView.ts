@@ -53,6 +53,12 @@ export const NO_BOX_WIRE_TYPES: ReadonlySet<string> = new Set([
   'repeat_flow',
 ]);
 
+/** The mirror of `NO_BOX_WIRE_TYPES`: the `Item` variants whose `box` is a
+ * REQUIRED wire key (the field has no `#[serde(default)]`), so an edit that
+ * removes the key authors a parse error. Pinned to the engine source by
+ * `noBoxWire.test.ts`. */
+export const REQUIRED_BOX_WIRE_TYPES: ReadonlySet<string> = new Set(['rect']);
+
 /** The two FORM MARKS — the box-inscribed vector shapes whose *presence* is
  * content (`engine/core/src/template/marks.rs`). They share a wire family, a
  * presence predicate, and a paint rule that is emphatically NOT the border

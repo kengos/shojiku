@@ -2,12 +2,14 @@
 // (hooks/useSelectionOps.ts `deleteAt`/`duplicateAt`) and the border popover
 // that its border row opens (shell/BorderPopover.tsx). The wrap and save-block
 // rows are covered by useContainerInsert / useBlocks; these are the rows this
-// menu gained.
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+// menu gained, plus the wrap hook's own refusal, which no rendered row reaches.
+import { act, fireEvent, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DesignerProps } from '../Designer';
+import { useEditor } from '../editor/useEditor';
 import { outcomeStacked, THREE_ITEMS } from '../testkit/fixtures';
 import { draw, makeTransport } from '../testkit/harness';
+import { useSelectionOps } from './useSelectionOps';
 
 const PATHS = ['sections.body.items[0]', 'sections.body.items[1]', 'sections.body.items[2]'];
 
@@ -129,5 +131,53 @@ describe('Designer border popover', () => {
     fireEvent.keyDown(window, { key: 'Delete' });
     await waitFor(() => expect(latest(onChange)).not.toContain('text: third'));
     expect(screen.queryByRole('menu')).toBeNull();
+  });
+});
+
+describe('useSelectionOps — wrapSelected', () => {
+  // Every wrap affordance is withheld from an item the wrap would erase, so the
+  // hook's own refusal is reachable only when the document changes between the
+  // row being built and being clicked — driven directly here.
+  const FOOTER = [
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items: []',
+    '  footer:',
+    '    repeat: every_page',
+    '    items:',
+    '      - type: page_number',
+    '      - type: text',
+    '        text: hello',
+    '',
+  ].join('\n');
+
+  function mount() {
+    return renderHook(() => {
+      const editor = useEditor(FOOTER);
+      const ops = useSelectionOps({
+        editor,
+        deselectClearing: vi.fn(),
+        docViewOpenRef: { current: false },
+        dataViewOpenRef: { current: false },
+        closeDocView: vi.fn(),
+        closeDataView: vi.fn(),
+      });
+      return { editor, ops };
+    });
+  }
+
+  it('writes nothing for an item a container would skip', () => {
+    const hook = mount();
+    act(() => hook.result.current.ops.wrapSelected('sections.footer.items[0]'));
+    expect(hook.result.current.editor.text).toBe(FOOTER);
+    expect(hook.result.current.editor.selection).toBeNull();
+  });
+
+  it('wraps an item a container holds, and selects the new container (the control)', () => {
+    const hook = mount();
+    act(() => hook.result.current.ops.wrapSelected('sections.footer.items[1]'));
+    expect(hook.result.current.editor.text).toContain('type: container');
+    expect(hook.result.current.editor.selection).toBe('sections.footer.items[1]');
   });
 });

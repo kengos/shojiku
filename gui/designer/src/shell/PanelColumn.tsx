@@ -19,9 +19,10 @@ import type { PreviewSession } from '../hooks/usePreviewSession';
 import type { SampleData } from '../hooks/useSampleData';
 import type { SelectionOps } from '../hooks/useSelectionOps';
 import type { HostConfig } from '../hostConfig';
-import { isWrappablePath } from '../insert/wrap';
+import { isWrappable } from '../insert/wrap';
 import { PropertyPanel } from '../panel/PropertyPanel';
 import type { PlacementGeometry } from '../panel/placementGeometry';
+import { readNodeAt } from './contextMenuRows';
 
 export interface PanelColumnProps {
   readonly editor: EditorController;
@@ -95,7 +96,9 @@ export function PanelColumn({
       onSelectPath={multi.selectClearing}
       onHighlight={marks.setHighlightPath}
       onWrap={
-        selection !== null && isWrappablePath(selection) ? selectionOps.wrapSelected : undefined
+        selection !== null && isWrappable(selection, readNodeAt(editor.read, selection))
+          ? selectionOps.wrapSelected
+          : undefined
       }
       onTextDraft={session.setDraftOps}
     />

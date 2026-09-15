@@ -5,13 +5,17 @@
 //
 // A row that does not apply is ABSENT, never disabled — the toolbar's "shown
 // when usable" rule, which is what the wrap and save-block rows already did.
+// That includes wrap on a kind a container skips (`page_number`, `page_break`,
+// `repeat`, `repeat_flow`): this is a menu of actions on the item under the
+// pointer, not the Insert menu, whose rows are a fixed catalog and so stay
+// visible, disabled with a reason, when the target cannot hold them.
 //
 // Order mirrors the editors this Designer is modelled on: the basic operations
 // first, then the structural one, then formatting, then the export-shaped tail.
 
 import type { ReadFn, SnippetValue } from '@shojiku/designer-core';
 import { blockFromNode } from '../insert/blockModel';
-import { isWrappablePath } from '../insert/wrap';
+import { isWrappable } from '../insert/wrap';
 import { BORDERABLE_TYPES } from '../panel/borderTypes';
 import { hasCapability } from '../panel/itemPanelProps';
 import { type ItemView, readItemView } from '../panel/itemView';
@@ -68,7 +72,7 @@ export function contextMenuRows(input: ContextRowsInput): readonly ContextRow[] 
   if (seqPosition(path) !== null) {
     rows.push({ kind: 'duplicate' }, { kind: 'delete' });
   }
-  if (isWrappablePath(path)) {
+  if (isWrappable(path, node)) {
     rows.push({ kind: 'wrap' });
   }
   if (borderableView(node, capabilities) !== null) {

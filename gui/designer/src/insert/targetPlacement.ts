@@ -3,7 +3,7 @@
 // element and block inserts, the container picker, the field dialog, the image
 // import), so none of them can forget that a band's direct children are
 // coordinate-placed. Not a door for re-authoring an EXISTING item in place:
-// `insert/wrap.ts` wraps a band child that already carries its coordinates.
+// `insert/wrap.ts` moves an item's own coordinates onto its new container.
 // A body or container target keeps the snippet exactly as authored.
 
 import type { ReadFn, SnippetValue } from '@shojiku/designer-core';
