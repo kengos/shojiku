@@ -15,6 +15,21 @@ platform binaries.
 
 ### Added
 
+- **An n-up sheet — tickets, labels, cards cut from one page — can now be made and
+  edited in the Designer.** Insert ▸ Place list data offers a fourth way to show
+  the rows, **Grid**, which lays one cell per row onto each page, two across and
+  two down to start. Select the grid and its Layout tab holds the sheet: how many
+  columns and rows each page takes, the gaps between them, the order the cells
+  fill in, whether the grid starts on a new page, and whether cut marks are drawn.
+  Before this a `repeat` could only arrive in a file written elsewhere, and
+  selecting one showed nothing to edit but its show-when condition.
+
+  The panel refuses a size the engine would clamp — more than 64 cells a page —
+  rather than writing one, and clearing a count returns that axis to a single
+  cell; a negative gap is written as zero. What a cell shows is the items listed under the grid in
+  Structure, edited like any others; the cell's own padding and border are not in
+  the panel yet.
+
 - **The Designer now shows you where the links are.** A hyperlink has no
   visual form of its own — the engine never underlines or recolours one, that
   is the author's choice — so on the canvas a linked item looked exactly like
@@ -220,6 +235,13 @@ platform binaries.
   browser's own report, with a trace and a screenshot of the moment it broke.
 
 ### Fixed
+
+- **Choosing Cards for list data no longer inserts something that never draws.**
+  On a document whose body places items at fixed positions (the résumé preset is
+  one), the cards were offered like any other presentation, and the engine then
+  skipped them with a warning. Cards and the new Grid now stay visible there but
+  cannot be picked, and the dialog says why; Table and List, which lay out
+  anywhere, are unchanged.
 
 - **A template with a runaway YAML alias no longer crashes the Designer when you
   select the item holding it.** YAML aliases can expand a few lines into

@@ -9,8 +9,10 @@ import { useI18n } from '../i18n/context';
 import { ContainerPickerDialog } from '../insert/ContainerPickerDialog';
 import { resolveContainerInsert } from '../insert/containerInsert';
 import { FieldDialog } from '../insert/FieldDialog';
+import { isFlowTarget } from '../insert/flowPlacement';
 import { IterableDialog } from '../insert/IterableDialog';
 import { arrayGroups } from '../insert/iterableModel';
+import { BODY_ITEMS_PATH } from '../insert/model';
 import { PasteDialog } from '../insert/PasteDialog';
 
 export interface InsertDialogsProps {
@@ -29,6 +31,7 @@ export function InsertDialogs({ inserts, defs, sample, read, selection }: Insert
         <IterableDialog
           groups={arrayGroups(defs.paletteGroups)}
           workshop={sample.workshop}
+          flowBody={isFlowTarget(read, BODY_ITEMS_PATH)}
           onConfirm={inserts.handleIterableConfirm}
           onClose={() => inserts.setIterableOpen(false)}
         />

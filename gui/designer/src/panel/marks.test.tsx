@@ -10,9 +10,9 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import type { PlacedBox } from '../engine/types';
 import { I18nProvider } from '../i18n/context';
-import { applicableTabs } from './ItemPanel';
 import { readItemView } from './itemView';
 import { PropertyPanel } from './PropertyPanel';
+import { applicableTabs } from './panelTabs';
 import type { PlacementGeometry } from './placementGeometry';
 
 const PATH = 'sections.body.items[0]';

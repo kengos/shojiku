@@ -1,10 +1,10 @@
 // Tests for scaffoldSnippet.ts — the iterable scaffold's item snippet
-// (table / repeat_flow / list forms) composed from a palette group.
+// (table / repeat_flow / repeat / list forms) composed from a palette group.
 import { Editor } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
 import type { PaletteGroup } from '../palette/model';
 import { BODY_ITEMS_PATH } from './model';
-import { scaffoldFromGroup } from './scaffold';
+import { SCAFFOLD_VARIANTS, scaffoldFromGroup } from './scaffold';
 import { scaffoldSnippet } from './scaffoldSnippet';
 
 function group(fields: readonly { key: string; label?: string; type?: string }[]): PaletteGroup {
@@ -80,6 +80,30 @@ describe('scaffoldSnippet', () => {
     });
   });
 
+  it('builds a two-by-two n-up grid whose cell is the card body', () => {
+    expect(scaffoldSnippet(spec, 'repeat')).toEqual({
+      type: 'repeat',
+      data: { key: 'order_items' },
+      grid: { columns: 2, rows: 2, columnGap: 8, rowGap: 8 },
+      cell: {
+        box: { padding: 8 },
+        style: { borderWidth: 0.5 },
+        items: [
+          { type: 'text', data: { key: 'name' } },
+          { type: 'text', data: { key: 'quantity' } },
+          { type: 'text', data: { key: 'note' } },
+        ],
+      },
+    });
+  });
+
+  it('authors neither breakBefore nor cutMarks nor the gap shorthand on the grid', () => {
+    // Engine defaults stand, and `gap` needs a newer engine than the axis keys.
+    const grid = scaffoldSnippet(spec, 'repeat') as Record<string, unknown>;
+    expect(Object.keys(grid).sort()).toEqual(['cell', 'data', 'grid', 'type']);
+    expect(Object.keys(grid.grid as object)).not.toContain('gap');
+  });
+
   it('builds a list interpolating the first interpolation-safe field', () => {
     expect(scaffoldSnippet(spec, 'list')).toEqual({
       type: 'list',
@@ -139,6 +163,7 @@ describe('scaffoldSnippet', () => {
     const expected = { type: 'list', data: { key: 'tags' } };
     expect(scaffoldSnippet(scalar, 'table')).toEqual(expected);
     expect(scaffoldSnippet(scalar, 'repeat_flow')).toEqual(expected);
+    expect(scaffoldSnippet(scalar, 'repeat')).toEqual(expected);
     expect(scaffoldSnippet(scalar, 'list')).toEqual(expected);
   });
 
@@ -146,7 +171,7 @@ describe('scaffoldSnippet', () => {
     const editor = Editor.create(
       ['sections:', '  body:', '    type: flow', '    items: []', ''].join('\n'),
     );
-    for (const variant of ['table', 'repeat_flow', 'list'] as const) {
+    for (const variant of SCAFFOLD_VARIANTS) {
       const result = editor.apply({
         op: 'insertItem',
         path: BODY_ITEMS_PATH,
@@ -196,5 +221,25 @@ describe('scaffoldSnippet', () => {
     expect(Object.getPrototypeOf(editor.read('sections.body.items[0]'))).toBe(Object.prototype);
     const roundTrip = Editor.create(editor.text());
     expect(roundTrip.text()).toBe(editor.text());
+  });
+
+  it('keeps a hostile field key inert data in the grid cell too', () => {
+    const hostile = scaffoldFromGroup(group([{ key: '__proto__' }]));
+    const editor = Editor.create(
+      ['sections:', '  body:', '    type: flow', '    items: []', ''].join('\n'),
+    );
+    const result = editor.apply({
+      op: 'insertItem',
+      path: BODY_ITEMS_PATH,
+      index: 0,
+      value: scaffoldSnippet(hostile, 'repeat'),
+    });
+    expect(result.ok).toBe(true);
+    expect(editor.read('sections.body.items[0].cell.items')).toEqual([
+      { type: 'text', data: { key: '__proto__' } },
+    ]);
+    expect(Object.getPrototypeOf(editor.read('sections.body.items[0].cell'))).toBe(
+      Object.prototype,
+    );
   });
 });

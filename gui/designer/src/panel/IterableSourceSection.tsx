@@ -1,6 +1,6 @@
-// The data-source section for the non-table iterables (`repeat_flow` / `list`):
-// what a scaffold creates must stay editable — rebind the array, and for a
-// `list` also edit its per-entry text template.
+// The data-source section for the non-table iterables (`repeat_flow` / `repeat`
+// / `list`): what a scaffold creates must stay editable — rebind the array, and
+// for a `list` also edit its per-entry text template.
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
@@ -14,7 +14,7 @@ import { sourceOptions, sourceScopeProps } from './sourceScope';
 
 export interface IterableSourceSectionProps {
   readonly controller: EditorController;
-  /** The selected `repeat_flow` / `list` item's structural path. */
+  /** The selected `repeat_flow` / `repeat` / `list` item's structural path. */
   readonly path: string;
   /** The item's own `data.key` ('' when unset). */
   readonly dataKey: string;
@@ -22,7 +22,7 @@ export interface IterableSourceSectionProps {
    * iterable is itself nested in a row scope. */
   readonly dataScope: string;
   /** A `list`'s per-entry text template ('' = entries print directly);
-   * `null` hides the field (repeat_flow has no entry template). */
+   * `null` hides the field (the cards and the grid have no entry template). */
   readonly entryText: string | null;
   readonly groups: readonly PaletteGroup[] | null;
   /** The engine capability keys — gates the binding-scope escape a nested
@@ -61,9 +61,9 @@ export function IterableSourceSection({
           dataScope,
           capabilities,
           // Only a `list` may bind an array its enclosing ROW carries: a
-          // `repeat_flow` nested in a cell is skipped by layout the way a
-          // nested repeat is, so offering it one would author a source that
-          // never draws.
+          // `repeat_flow` or a `repeat` nested in a cell is skipped by layout
+          // (both are flow-body only), so offering one would author a source
+          // that never draws.
           entryText === null ? null : groups,
         )}
       />
