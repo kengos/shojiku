@@ -1,14 +1,15 @@
-// Flow-body rules: which insert kinds lay out ONLY in the body's flow, and
-// which OWNER a resolved insert target is — the flow being the one those kinds
-// need. The mirror of `bandPlacement.ts` — where that file answers "this
-// belongs in a band", this one answers "this belongs in the flow and nowhere
-// else", and names the owner a target is so any restricted kind can be asked
-// the same question. Framework-free.
+// Insert-target rules: which insert kinds lay out ONLY in the body's flow,
+// which OWNER a resolved insert target is, and which band it is DIRECTLY — the
+// one question band placement asks. The mirror of `bandPlacement.ts` — where
+// that file answers "this belongs in a band" and how to place it there, this
+// one answers "this belongs in the flow and nowhere else" and names the owner a
+// target is, so any restricted kind can be asked the same question.
+// Framework-free.
 //
 // The engine's own word for it is three warn-and-skip diagnostics per kind
 // (`page_break_in_absolute_body` / `_in_band` / `_in_container`, and the same
-// trio for `repeat` and for `repeat_flow`), so a misplaced item is not a parse error — it simply
-// never draws. That is exactly the failure a menu row must not lead someone
+// trio for `repeat` and for `repeat_flow`), so a misplaced item is not a parse
+// error — it simply never draws. That is exactly the failure a menu row must not lead someone
 // into, which is why the row states the reason instead of acting.
 
 import type { ReadFn } from '@shojiku/designer-core';
@@ -43,6 +44,19 @@ export function insertTargetOwner(read: ReadFn, path: string): OwnerKind {
     return 'container';
   }
   return receiverFor(read, path.slice(0, -ITEMS_SUFFIX.length))?.placement.owner ?? 'container';
+}
+
+/** The band the insert target at `path` is DIRECTLY — the owner whose children
+ * are coordinate-placed against the page margin box, so an insert there ships
+ * with band coordinates. `null` for everything else, including a container
+ * INSIDE a band, whose children its own layout places. A `band` owner is only
+ * ever `sections.header.items` or `sections.footer.items` (`canvas/dnd`'s
+ * `ownerPlacement`), so the path names which. */
+export function insertTargetBand(read: ReadFn, path: string): 'header' | 'footer' | null {
+  if (insertTargetOwner(read, path) !== 'band') {
+    return null;
+  }
+  return path === 'sections.header.items' ? 'header' : 'footer';
 }
 
 /** Whether the insert target at `path` is the body's flow — the one owner a

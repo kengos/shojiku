@@ -1,7 +1,7 @@
 // What one armed INSERT group becomes as menu rows: the per-entry-kind dispatch,
 // plus the gates that show a row DISABLED with its reason rather than hiding it
-// (a band-only element outside a header/footer, a flow-only element outside the
-// body's flow, a saved block whose node needs an owner the insert target is
+// (a band-only element anywhere but directly in a header/footer, a flow-only
+// element outside the body's flow, a saved block whose node needs an owner the insert target is
 // not, save-block without a savable selection) — an affordance that appears and
 // disappears is worse than one that explains itself.
 
@@ -15,7 +15,7 @@ import type { MenubarWiring, MenuItem } from './model';
  * and requires the flow — so the first match wins and no precedence rule is
  * needed. */
 function blockedReasonKey(kind: InsertKind, w: MenubarWiring): string | null {
-  if (requiresBand(kind) && !w.bandTarget) {
+  if (requiresBand(kind) && w.insertOwner !== 'band') {
     return 'insert.pageNumber.bandOnly';
   }
   return requiresFlow(kind) && w.insertOwner !== 'flow' ? 'insert.pageBreak.flowOnly' : null;

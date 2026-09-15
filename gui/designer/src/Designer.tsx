@@ -15,7 +15,6 @@
 // persists, fetches, or renders on its own — those are the host's.
 
 import { DiagnosticsPanel } from './diagnostics/DiagnosticsPanel';
-import { bandOf } from './hooks/geometry';
 import type { DesignerProps } from './props';
 import { DialogHost } from './shell/DialogHost';
 import { EditorBody } from './shell/EditorBody';
@@ -29,7 +28,6 @@ import { useDesignerWiring } from './wiring';
 export { contentHeightPt, contentWidthPt } from './hooks/geometry';
 export { isEditableTarget } from './hooks/useSelectionShortcuts';
 export type { DesignerProps };
-export { bandOf };
 
 export function Designer(props: DesignerProps) {
   // Everything below threads either the wiring result or a raw pass-through

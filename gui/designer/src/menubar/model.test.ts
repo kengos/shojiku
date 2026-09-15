@@ -29,7 +29,6 @@ function baseWiring(over: Partial<MenubarWiring> = {}): MenubarWiring {
     onSave: vi.fn(),
     onDocumentSettings: vi.fn(),
     onDataEditor: vi.fn(),
-    bandTarget: false,
     insertOwner: 'container',
     onBand: vi.fn(),
     onTutorial: vi.fn(),
@@ -168,16 +167,21 @@ describe('buildMenubar', () => {
   });
 
   it('disables the page-number row outside a band, naming the reason', () => {
+    // Every owner but a band DIRECTLY refuses it — a container inside a band
+    // included, where the engine skips it (`page_number_in_container`).
     const onInsertKind = vi.fn();
     const groups = insertMenuGroups({ ...NO_ARMING, cutLine: true });
-    const outside = buildMenubar(t, baseWiring({ insert: groups, onInsertKind }))[2].groups[0];
-    const blocked = outside.find((i) => i.label.startsWith('insert.pageNumber'));
-    expect(blocked?.disabled).toBe(true);
-    expect(blocked?.label).toContain('insert.pageNumber.bandOnly');
+    for (const insertOwner of ['flow', 'absoluteBody', 'container'] as const) {
+      const outside = buildMenubar(t, baseWiring({ insert: groups, onInsertKind, insertOwner }))[2]
+        .groups[0];
+      const blocked = outside.find((i) => i.label.startsWith('insert.pageNumber'));
+      expect(blocked?.disabled, insertOwner).toBe(true);
+      expect(blocked?.label).toContain('insert.pageNumber.bandOnly');
+    }
 
     const inBand = buildMenubar(
       t,
-      baseWiring({ insert: groups, onInsertKind, bandTarget: true }),
+      baseWiring({ insert: groups, onInsertKind, insertOwner: 'band' }),
     )[2].groups[0];
     const allowed = inBand.find((i) => i.label === 'insert.pageNumber');
     expect(allowed?.disabled).toBe(false);
@@ -186,10 +190,9 @@ describe('buildMenubar', () => {
   });
 
   it('disables the page-break row outside the flow, naming the reason', () => {
-    // The mirror of the page-number row above, and the reason it needs its OWN
-    // gate: `bandTarget` is false inside a container too, where a page break is
-    // equally skipped — so "not a band" would have offered it there. Every
-    // owner but the flow refuses it.
+    // The mirror of the page-number row above: every owner but the flow refuses
+    // it, so "not a band" would have offered it in a container or an absolute
+    // body, where it is equally skipped.
     const onInsertKind = vi.fn();
     const groups = insertMenuGroups({ ...NO_ARMING, pageBreak: true });
     for (const insertOwner of ['band', 'absoluteBody', 'container'] as const) {
@@ -214,10 +217,8 @@ describe('buildMenubar', () => {
     // It carries neither gate, so it stays enabled in the one state that
     // blocks both of its neighbours.
     const groups = insertMenuGroups({ ...NO_ARMING, charGrid: true });
-    const rows = buildMenubar(
-      t,
-      baseWiring({ insert: groups, bandTarget: false, insertOwner: 'container' }),
-    )[2].groups[0];
+    const rows = buildMenubar(t, baseWiring({ insert: groups, insertOwner: 'container' }))[2]
+      .groups[0];
     const row = rows.find((i) => i.label === 'insert.charGrid');
     expect(row?.disabled).toBe(false);
   });

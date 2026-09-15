@@ -9,7 +9,6 @@
 
 import { useMemo } from 'react';
 import type { EditorController } from '../editor/useEditor';
-import { bandOf } from '../hooks/geometry';
 import type { Blocks } from '../hooks/useBlocks';
 import type { ChromeDialogs } from '../hooks/useChromeDialogs';
 import type { DocViews } from '../hooks/useDocViews';
@@ -80,8 +79,9 @@ export function useMenubarColumns(options: MenubarColumnsOptions): MenuColumn[] 
   // sequence-addressed selection (the shortcuts' guard).
   const seqSelected = editor.selection !== null && seqPosition(editor.selection) !== null;
 
-  // ONE resolution, read by both owner gates below — they are two questions
-  // about the same target, and resolving twice invites them to disagree.
+  // ONE resolution, read by the owner gate below — the band-only, flow-only
+  // and saved-block rows all ask it about the same target, and resolving per
+  // row would invite them to disagree.
   const insertPath = resolveInsertTarget(editor.read, editor.selection).path;
   return buildMenubar(t, {
     onBack: menuActions?.onBack,
@@ -128,7 +128,6 @@ export function useMenubarColumns(options: MenubarColumnsOptions): MenuColumn[] 
     onShortcuts: dialogs.openShortcuts,
     onGlossary: dialogs.openGlossary,
     onTutorial: tutorial.openTutorial,
-    bandTarget: bandOf(insertPath) !== null,
     insertOwner: insertTargetOwner(editor.read, insertPath),
   });
 }

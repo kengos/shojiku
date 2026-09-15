@@ -12,6 +12,7 @@ import type { I18n } from '../i18n/context';
 import { bandBoxHeightPt } from '../insert/bandGeometry';
 import { bandInsertY, bandPlaced } from '../insert/bandPlacement';
 import type { FieldChoice, FieldRefusal } from '../insert/fieldModel';
+import { insertTargetBand } from '../insert/flowPlacement';
 import { type InsertGroup, type InsertKind, insertMenuGroups } from '../insert/insertMenu';
 import { insertSnippet } from '../insert/insertSnippet';
 import {
@@ -26,7 +27,7 @@ import type { PaletteGroup } from '../palette/model';
 import type { LastGoodPreview } from '../preview/reducer';
 import type { ValueSynth } from '../sample/synth';
 import type { SampleSet } from '../sample/variants';
-import { bandOf, contentWidthPt } from './geometry';
+import { contentWidthPt } from './geometry';
 import type { InsertContext } from './insertContext';
 import { useContainerInsert } from './useContainerInsert';
 import { useFieldInsert } from './useFieldInsert';
@@ -136,10 +137,11 @@ export function useInsertActions({
         label: t('insert.cutLine.label'),
         width: contentWidthPt(previewRef.current),
       });
-      // A band's children are coordinate-placed against the page margin box,
-      // so an insert there ships with coordinates; a flow-body insert stays
-      // box-less and auto-sizes.
-      const band = bandOf(target.path);
+      // A band's DIRECT children are coordinate-placed against the page margin
+      // box, so an insert there ships with coordinates; a flow-body insert, and
+      // one into a container (even a container inside a band), stays box-less
+      // and is placed by its owner.
+      const band = insertTargetBand(read, target.path);
       const result = apply({
         op: 'insertItem',
         path: target.path,

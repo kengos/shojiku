@@ -2,7 +2,7 @@
 // content width/height in pt recovered from pixel-derived render geometry
 // (callers floor), and the band classification of a page-relative Y.
 import { describe, expect, it } from 'vitest';
-import { bandOf, contentHeightPt, contentWidthPt } from './geometry';
+import { contentHeightPt, contentWidthPt } from './geometry';
 
 describe('contentWidthPt', () => {
   const page = { width: 200, height: 300, rgba: new Uint8Array(0) };
@@ -59,17 +59,5 @@ describe('contentHeightPt', () => {
     expect(
       contentHeightPt({ pages: [page], inspect: inspectWith([200, 0, 200, 0]), scale: 2 }),
     ).toBe(1);
-  });
-});
-
-describe('bandOf', () => {
-  it('names the band an item list belongs to', () => {
-    expect(bandOf('sections.header.items')).toBe('header');
-    expect(bandOf('sections.footer.items')).toBe('footer');
-  });
-
-  it('is null for the body and for anything else', () => {
-    expect(bandOf('sections.body.items')).toBeNull();
-    expect(bandOf('styles')).toBeNull();
   });
 });

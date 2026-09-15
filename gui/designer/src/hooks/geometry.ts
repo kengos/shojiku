@@ -1,6 +1,7 @@
-// Page-geometry helpers shared by the insert/image/block wiring: the content
-// box recovered from the last-good render, and which band an item-list path
-// belongs to. Pure, so their guard branches are unit-testable.
+// Page-geometry helpers for the insert and image wiring: the content box
+// recovered from the last-good render. Pure, so their guard branches are
+// unit-testable. (Which band an insert target is lives in
+// `insert/flowPlacement`'s `insertTargetBand`, beside the owner it reads.)
 
 import type { PlacedBox } from '../engine/types';
 import type { LastGoodPreview } from '../preview/reducer';
@@ -41,12 +42,4 @@ export function contentHeightPt(snapshot: LastGoodPreview | null): number {
   const margin = snapshot.inspect?.margin;
   const inset = margin === undefined ? 0 : margin[0] + margin[2];
   return Math.max(1, heightPt - inset);
-}
-
-/** Which band an item-list path belongs to, or null for anything else. */
-export function bandOf(path: string): 'header' | 'footer' | null {
-  if (path.startsWith('sections.header')) {
-    return 'header';
-  }
-  return path.startsWith('sections.footer') ? 'footer' : null;
 }
