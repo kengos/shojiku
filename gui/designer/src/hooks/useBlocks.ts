@@ -18,10 +18,9 @@ import {
   removeBlock,
   type SavedBlock,
 } from '../insert/blockModel';
-import { insertTargetOwner } from '../insert/flowPlacement';
+import { insertTargetBand, insertTargetOwner } from '../insert/flowPlacement';
 import { resolveInsertTarget } from '../insert/model';
 import type { LastGoodPreview } from '../preview/reducer';
-import { bandOf } from './geometry';
 
 /** The stable empty block library (a host with the feature off / no saved blocks). */
 const EMPTY_BLOCKS: readonly SavedBlock[] = [];
@@ -100,7 +99,7 @@ export function useBlocks({
   );
 
   // Insert a saved block at the resolved target (band-placed like an element
-  // insert when the target is a header/footer band), selected on success —
+  // insert when the target is directly a header/footer band), selected on success —
   // unless the block's node lays out in another owner kind than the target is.
   const insertBlock = useCallback(
     (id: string) => {
@@ -110,7 +109,7 @@ export function useBlocks({
         return;
       }
       const target = resolveInsertTarget(read, selection);
-      const band = bandOf(target.path);
+      const band = insertTargetBand(read, target.path);
       // The menu already disables this row, and this is the second lock on the
       // same door, asking the same question of the same target: a node the
       // target's owner cannot hold is skipped by the engine (and a repeat or

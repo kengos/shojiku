@@ -236,6 +236,16 @@ platform binaries.
 
 ### Fixed
 
+- **Inserting into a container inside a header or footer now behaves like any
+  other container.** With such a container selected, Insert ▸ Page number was
+  offered and then skipped, because a page number only works placed directly
+  in the header or footer. It is now disabled there with that reason. Text and
+  other elements put into the container used to be pinned to a spot on the
+  page, outside the container's own layout; they now join the container like
+  anywhere else. The reasons on the Page number and Page break rows also read
+  true everywhere they appear: the page-break reason used to say "only the body
+  can hold one" even inside the résumé's body, which does not flow.
+
 - **Inserting a saved block no longer places something that never draws.** A
   reusable block holds whatever item it was saved from, and some items lay out in
   only one kind of place: a Grid, Cards or a page break needs a body that flows,

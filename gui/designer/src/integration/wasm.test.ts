@@ -1591,6 +1591,18 @@ describe('iterable scaffolds against the real engine', () => {
         'sections.body.items[0].items',
       ],
       [
+        'container in the footer band',
+        doc('flow', [
+          '    items: []',
+          '  footer:',
+          '    repeat: every_page',
+          '    items:',
+          '      - type: container',
+          '        items: []',
+        ]),
+        'sections.footer.items[0].items',
+      ],
+      [
         'repeat cell',
         doc('flow', [
           '    items:',

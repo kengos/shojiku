@@ -175,7 +175,7 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   the size-cap helpers are re-exported from designer-core here.
 - `Designer.tsx` — the composition root, PURE assembly:
   `useDesignerWiring(props)` + the render tree. Re-exports
-  `bandOf`/`contentWidthPt`/`contentHeightPt`/`isEditableTarget`/
+  `contentWidthPt`/`contentHeightPt`/`isEditableTarget`/
   `DesignerProps`.
 - `wiring.ts` — `useDesignerWiring`, the composer: ONE call per wiring
   concern into `hooks/`, in the order the concerns feed each other — this
@@ -290,7 +290,8 @@ lists name the destructured stable fields, never `editor` itself.
 
 - `hooks/geometry.ts` — shared page-geometry vocabulary (NON-hook):
   `PageHit`, `contentWidthPt`/`contentHeightPt` (pixel-derived, callers
-  floor), `bandOf`.
+  floor). (Which band an insert target is: `insert/flowPlacement`'s
+  `insertTargetBand`.)
 - `hooks/useDocumentCore.ts` — the head: transport + i18n handles,
   `useTemplateCap`, `useEditor`, `useSampleData`,
   `useDefinitionsOwnership`, `usePreviewSession`, theme style memo.
@@ -412,7 +413,8 @@ lists name the destructured stable fields, never `editor` itself.
   carrying no file → NOT consumed (`preventDefault` fires only once a file
   is in hand, so the insert menu's clipboard-TEXT import and every
   ordinary text paste are untouched).
-- `hooks/useInsertActions.ts` — plain element insert (band-aware), the
+- `hooks/useInsertActions.ts` — plain element insert (band-placed only
+  when the target is a band directly — `insertTargetBand`), the
   insert-menu gates (`insertGroups` — a capability-less row is ABSENT
   rather than broken; `canDeclare`), and the four scaffold hooks over one
   shared `InsertContext`. Every scaffold selects the new item on success,
@@ -429,7 +431,8 @@ lists name the destructured stable fields, never `editor` itself.
   params rows + ONE table insert).
 - `hooks/useBlocks.ts` — reusable-block library: `blocks` prop is the
   host-owned app-global list; pure `insert/blockModel`; `insertBlock` is
-  a plain band-aware `insertItem` (AI parity), refused when the block's node
+  a plain `insertItem` (AI parity), band-placed only when the target is a
+  band directly (`insertTargetBand`), refused when the block's node
   does not fit the resolved target's owner (`typeFitsOwner` ×
   `insertTargetOwner`).
 - `hooks/useSelectionOps.ts` — `deleteAt`/`duplicateAt` (PATH-scoped: the

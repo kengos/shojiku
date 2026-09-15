@@ -159,6 +159,34 @@ describe('Designer — reusable blocks', () => {
     expect(written).toMatch(/seal[\s\S]*x: 0/);
   });
 
+  it('does not band-place a block inserted into a container INSIDE a footer', async () => {
+    // The container places its own children; band coordinates would pin the
+    // block against the page margin box and pull it out of the column.
+    const onChange = vi.fn<(t: string) => void>();
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    repeat: every_page',
+      '    items:',
+      '      - type: container',
+      '        items: []',
+      '',
+    ].join('\n');
+    const paths = ['sections.footer.items[0]'];
+    const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeStacked(paths)) });
+    const blocks = [{ id: 'block-1', name: '社判', value: { type: 'text', text: 'seal' } }];
+    draw(transport, { source, onBlocksChange: vi.fn(), blocks, onChange });
+    fireEvent.click(await screen.findByRole('button', { name: paths[0] }));
+    openInsert();
+    fireEvent.click(screen.getByRole('menuitem', { name: '社判' }));
+    const written = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(written).toMatch(/type: container[\s\S]*text: seal/);
+    expect(written).not.toMatch(/x: 0/);
+  });
+
   it('refuses a FLOW-ONLY block into a band, naming the reason', async () => {
     // A `repeat_flow` band-placed into a footer would not even parse (`box:` is
     // unknown to it), so the whole document would stop rendering — not just

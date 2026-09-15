@@ -2,6 +2,7 @@
 // page numbers and band-aware placement through the insert menu.
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { outcomeStacked } from '../testkit/fixtures';
 import { draw, makeTransport, pickMenu } from '../testkit/harness';
 
 describe('page numbers and band inserts', () => {
@@ -23,9 +24,8 @@ describe('page numbers and band inserts', () => {
     draw(makeTransport());
     fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
     const row = screen.getByRole('menuitem', { name: /Page number/ });
-    // The reason now reads as a STEP, not a wall: the two rows that satisfy
-    // it sit directly below, under the divider.
-    expect(row.textContent).toContain('available once you add a header or footer');
+    // The same menu carries the Header / Footer rows that create a band.
+    expect(row.textContent).toContain('only directly in a header or footer');
     expect(row.getAttribute('aria-disabled')).toBe('true');
   });
 
@@ -39,6 +39,54 @@ describe('page numbers and band inserts', () => {
     expect(written).toContain('type: page_number');
     // Band children are coordinate-placed; the body insert below is not.
     expect(written).toMatch(/page_number[\s\S]*x: 0[\s\S]*y: \d+/);
+  });
+
+  describe('a container INSIDE a band', () => {
+    // Its children are placed by the container, not against the page margin
+    // box — so it is not a band for the page-number gate or for band placement.
+    const CONTAINER_IN_FOOTER = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    repeat: every_page',
+      '    items:',
+      '      - type: container',
+      '        box:',
+      '          direction: column',
+      '        items: []',
+      '',
+    ].join('\n');
+    const path = 'sections.footer.items[0]';
+
+    async function selectContainer(onChange = vi.fn()) {
+      const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeStacked([path])) });
+      draw(transport, { source: CONTAINER_IN_FOOTER, onChange });
+      fireEvent.click(await screen.findByRole('button', { name: path }));
+      fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+      return onChange;
+    }
+
+    it('refuses the page number there, naming the reason', async () => {
+      const onChange = await selectContainer();
+      const row = screen.getByRole('menuitem', { name: /Page number/ });
+      expect(row.textContent).toContain('only directly in a header or footer');
+      expect(row.getAttribute('aria-disabled')).toBe('true');
+      fireEvent.click(row);
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('inserts an element without band coordinates, for the container to place', async () => {
+      const onChange = await selectContainer();
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Text' }));
+      const written = onChange.mock.calls.at(-1)?.[0] as string;
+      // Inside the container's items, and box-less: a band-placed insert would
+      // carry `x: 0` / `y:` and fall out of the column (the band case above is
+      // the control that it does carry them directly in the footer).
+      expect(written).toMatch(/type: container[\s\S]*items:\n\s+- type: text/);
+      expect(written).not.toMatch(/x: 0/);
+    });
   });
 
   it('offers the plain rule only when the engine advertises the Length endpoint', () => {
@@ -243,18 +291,19 @@ describe('the character grid and the page break', () => {
     pickMenu('Insert', 'Footer');
     fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
     const row = screen.getByRole('menuitem', { name: /Page break/ });
-    expect(row.textContent).toContain('only the body can hold one');
+    expect(row.textContent).toContain('only directly in a flow body');
     expect(row.getAttribute('aria-disabled')).toBe('true');
   });
 
   it('refuses the page break in an ABSOLUTE body, which is not a band at all', () => {
-    // The case `bandTarget` could never have answered, and not a hypothetical:
+    // The case "not a band" could never have answered, and not a hypothetical:
     // three bundled PRESETS ship an absolute body (both certificates and the
     // rirekisho). The engine warns `page_break_in_absolute_body` and skips.
     draw(makeTransport(), { source: ABSOLUTE });
     fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
     const row = screen.getByRole('menuitem', { name: /Page break/ });
-    expect(row.textContent).toContain('only the body can hold one');
+    // "The body" alone would be false here: this IS the body, just not a flow.
+    expect(row.textContent).toContain('only directly in a flow body');
     expect(row.getAttribute('aria-disabled')).toBe('true');
   });
 

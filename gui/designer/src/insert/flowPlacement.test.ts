@@ -1,8 +1,9 @@
 // Tests for flowPlacement.ts — which kinds lay out only in the body's flow,
-// which owner a resolved insert target is, and whether it IS that flow. Both
-// answers fail closed: every "cannot tell" is a container, never the flow.
+// which owner a resolved insert target is, whether it IS that flow, and which
+// band it is directly. Every answer fails closed: a "cannot tell" is a
+// container, never the flow and never a band.
 import { describe, expect, it } from 'vitest';
-import { insertTargetOwner, isFlowTarget, requiresFlow } from './flowPlacement';
+import { insertTargetBand, insertTargetOwner, isFlowTarget, requiresFlow } from './flowPlacement';
 import { type InsertArming, type InsertKind, insertMenuGroups } from './insertMenu';
 
 /** Everything armed, so the sweep below sees every element row that exists. */
@@ -96,6 +97,30 @@ describe('insertTargetOwner', () => {
       throw new Error('hostile subtree');
     };
     expect(insertTargetOwner(read, 'sections.body.items')).toBe('container');
+  });
+});
+
+describe('insertTargetBand', () => {
+  it('names the band a target is directly, and nothing for a container inside one', () => {
+    const read = reader({
+      'sections.body': { type: 'flow', items: [] },
+      'sections.header': { items: [] },
+      'sections.footer': { items: [] },
+      'sections.footer.items[0]': { type: 'container', items: [] },
+    });
+    expect(insertTargetBand(read, 'sections.header.items')).toBe('header');
+    expect(insertTargetBand(read, 'sections.footer.items')).toBe('footer');
+    expect(insertTargetBand(read, 'sections.footer.items[0].items')).toBeNull();
+    expect(insertTargetBand(read, 'sections.body.items')).toBeNull();
+    const absolute = reader({ 'sections.body': { type: 'absolute', items: [] } });
+    expect(insertTargetBand(absolute, 'sections.body.items')).toBeNull();
+  });
+
+  it('answers null when the read throws', () => {
+    const read = () => {
+      throw new Error('hostile subtree');
+    };
+    expect(insertTargetBand(read, 'sections.footer.items')).toBeNull();
   });
 });
 

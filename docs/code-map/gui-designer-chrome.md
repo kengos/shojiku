@@ -144,14 +144,15 @@ resolved style.
   File/Edit/Insert/Help columns; every `MenuItem` runs an EXISTING op or
   host callback (AI parity); band-only/flow-only/unsavable rows stay VISIBLE
   and disabled with the reason appended; optional file actions present only
-  when the host wires them. The wiring carries two OWNER gates over the SAME
-  resolved insert target (`shell/topMenubar` resolves once and reads it
-  twice): `bandTarget` (`bandOf`, a path-prefix test) and `insertOwner`
-  (`insert/flowPlacement`'s `insertTargetOwner`, one of the four `OwnerKind`s),
-  because "not a band" is not "in the flow": a container and an `absolute`
-  body are neither. `menubar/insertItems.ts` — one armed insert group → menu
+  when the host wires them. The wiring carries ONE owner gate over the
+  resolved insert target (`shell/topMenubar` resolves it once): `insertOwner`
+  (`insert/flowPlacement`'s `insertTargetOwner`, one of the four `OwnerKind`s).
+  A band-only row needs `band` and a flow-only row needs `flow`, because "not
+  a band" is not "in the flow" (a container and an `absolute` body are
+  neither) and "under a band" is not "a band" (a container inside a footer is
+  a `container`). `menubar/insertItems.ts` — one armed insert group → menu
   rows (the per-entry-kind dispatch + the visible-but-disabled gates: the
-  element arm is one `blockedReasonKey` over both owner gates, and a saved
+  element arm is one `blockedReasonKey` over that gate, and a saved
   block's row is disabled when its entry's `requires` names an owner other
   than `insertOwner`, with `insert.block.flowOnly` / `insert.block.bandOnly`
   as the reason). `menubar/hostEntries.ts` —

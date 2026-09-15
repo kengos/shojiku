@@ -97,13 +97,12 @@ export interface MenubarWiring {
   /** Whether the current selection is a single node that can become a block —
    * gates the save-selection row (the band-only-row precedent). */
   readonly blockSavable: boolean;
-  /** Whether the current insert target is a header/footer band — the gate for
-   * band-only rows. */
-  readonly bandTarget: boolean;
   /** Which owner the current insert target is (`insert/flowPlacement`'s
-   * `insertTargetOwner`) — the gate for flow-only element rows (the flow and
-   * nothing else: a container and an `absolute` body cannot hold one either)
-   * and for saved blocks whose node needs one particular owner. */
+   * `insertTargetOwner`) — the gate for band-only element rows (a band DIRECTLY:
+   * a container inside one cannot hold a page number), for flow-only element
+   * rows (the flow and nothing else: a container and an `absolute` body cannot
+   * hold one either), and for saved blocks whose node needs one particular
+   * owner. */
   readonly insertOwner: OwnerKind;
   /** Help — shortcuts, glossary and the tutorial are all self-contained
    * Designer chrome, always present. */

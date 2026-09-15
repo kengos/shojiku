@@ -200,10 +200,15 @@ result LANDS:
   typeless body, a throwing read, a non-`items` path) answers `container`,
   which fails CLOSED (it holds neither restricted kind) and matches the
   engine, whose sub-template and grid children warn `*_in_container` — and
-  `isFlowTarget(read, path)`, `insertTargetOwner(…) === 'flow'`. A container
-  INSIDE a band is a `container`, not a band. `isFlowTarget` exists because
-  `bandTarget` cannot stand in for it: a container is not a band and cannot
-  hold a `page_break` either.
+  `isFlowTarget(read, path)`, `insertTargetOwner(…) === 'flow'`, and
+  `insertTargetBand(read, path)`, the band a target is DIRECTLY (`null` for a
+  container INSIDE a band, which is a `container`) — the one door both
+  band-placing inserts (`hooks/useInsertActions`, `hooks/useBlocks`) read, so
+  a container in a footer receives its new child box-less rather than pinned
+  against the page margin box. A canvas DROP differs there by design:
+  `canvas/reparentTarget` resolves a drop inside a band's strip to the band
+  before `receiverFor` is consulted, so a dragged item lands in the band while
+  an inserted one lands in the selected container.
 - `insert/bandGeometry.ts` — WHICH margin-box height a band insert places
   against: `documentContentHeightPt` (read off the document's own
   `page.size`/`orientation`/`margin` through `readPageView` + `readMarginView`
