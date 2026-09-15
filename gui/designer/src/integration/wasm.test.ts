@@ -13,10 +13,10 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { activeText, buildSampleSet, switchVariant } from '@shojiku/designer';
-import { Editor } from '@shojiku/designer-core';
+import { Editor, type SnippetValue } from '@shojiku/designer-core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { alignOps } from '../canvas/align';
-import { reorderContext, siblingRects } from '../canvas/dnd';
+import { reorderContext, siblingRects, typeFitsOwner } from '../canvas/dnd';
 import { planDrop } from '../canvas/dropPlan';
 import { linkBadges } from '../canvas/linkBadge';
 import { manipulationFor } from '../canvas/manipulate';
@@ -31,6 +31,7 @@ import { composeDataUri } from '../image/dataUri';
 import { sniffImage } from '../image/sniff';
 import { resolveContainerInsert } from '../insert/containerInsert';
 import { containerShape, containerSnippet } from '../insert/containerModel';
+import { insertTargetOwner } from '../insert/flowPlacement';
 import { insertSnippet } from '../insert/insertSnippet';
 import { resolveIterableTarget } from '../insert/iterableTarget';
 import { SCAFFOLD_VARIANTS, scaffoldFromGroup, variantFitsBody } from '../insert/scaffold';
@@ -1554,6 +1555,72 @@ describe('iterable scaffolds against the real engine', () => {
         (item) => item.code === `${variant}_in_absolute_body`,
       );
       expect(skipped, variant).toBe(!variantFitsBody(variant, false));
+    }
+  });
+
+  it('agrees with the engine about which owners skip a saved block', async () => {
+    // A saved block's row is disabled exactly where `typeFitsOwner` rejects the
+    // node for the owner `insertTargetOwner` reads off the resolved target. That
+    // is only right if the engine skips exactly there — so ask it, per kind and
+    // per owner, rather than restating the rule a second time here. The node is
+    // inserted RAW (no band placement): the question is skip-or-not.
+    const groups = readDefinitionsView(definitions());
+    const itemsGroup = groups?.find((group) => group.id === 'items' && group.isArray);
+    if (itemsGroup == null) throw new Error('items array group missing from receipt-us');
+    const spec = scaffoldFromGroup(itemsGroup);
+    const kinds: readonly (readonly [string, SnippetValue])[] = [
+      ['repeat', scaffoldSnippet(spec, 'repeat')],
+      ['repeat_flow', scaffoldSnippet(spec, 'repeat_flow')],
+      ['page_break', { type: 'page_break' }],
+      ['page_number', { type: 'page_number' }],
+      ['text', { type: 'text', text: 'control' }],
+    ];
+    const doc = (body: string, extra: readonly string[] = []) =>
+      ['sections:', '  body:', `    type: ${body}`, ...extra, ''].join('\n');
+    const owners: readonly (readonly [string, string, string])[] = [
+      ['flow body', doc('flow', ['    items: []']), 'sections.body.items'],
+      ['absolute body', doc('absolute', ['    items: []']), 'sections.body.items'],
+      [
+        'footer band',
+        doc('flow', ['    items: []', '  footer:', '    repeat: every_page', '    items: []']),
+        'sections.footer.items',
+      ],
+      [
+        'container in the flow body',
+        doc('flow', ['    items:', '      - type: container', '        items: []']),
+        'sections.body.items[0].items',
+      ],
+      [
+        'repeat cell',
+        doc('flow', [
+          '    items:',
+          '      - type: repeat',
+          '        data: { key: items }',
+          '        cell:',
+          '          items: []',
+        ]),
+        'sections.body.items[0].cell.items',
+      ],
+    ];
+    for (const [owner, source, path] of owners) {
+      for (const [kind, node] of kinds) {
+        const editor = Editor.create(source);
+        const index = (editor.read(path) as unknown[]).length;
+        expect(editor.apply({ op: 'insertItem', path, index, value: node }).ok).toBe(true);
+        const outcome = await transport.renderRaw(editor.text(), params(), definitions(), {
+          scale: 1,
+        });
+        const label = `${kind} in ${owner}`;
+        expect(outcome.ok, label).toBe(true);
+        const skipped = outcome.diagnostics.items.some((item) =>
+          item.code.startsWith(`${kind}_in_`),
+        );
+        const fits = typeFitsOwner(
+          kind,
+          insertTargetOwner((at) => editor.read(at), path),
+        );
+        expect(skipped, label).toBe(!fits);
+      }
     }
   });
 

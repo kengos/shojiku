@@ -429,7 +429,9 @@ lists name the destructured stable fields, never `editor` itself.
   params rows + ONE table insert).
 - `hooks/useBlocks.ts` — reusable-block library: `blocks` prop is the
   host-owned app-global list; pure `insert/blockModel`; `insertBlock` is
-  a plain band-aware `insertItem` (AI parity).
+  a plain band-aware `insertItem` (AI parity), refused when the block's node
+  does not fit the resolved target's owner (`typeFitsOwner` ×
+  `insertTargetOwner`).
 - `hooks/useSelectionOps.ts` — `deleteAt`/`duplicateAt` (PATH-scoped: the
   right-click menu acts on the path it was opened at, never on whatever
   the selection has become), `deleteSelected`/`duplicateSelected` as the

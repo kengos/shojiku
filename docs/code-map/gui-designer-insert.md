@@ -189,19 +189,21 @@ result LANDS:
   the wire type, so `scaffold.ts`'s `variantFitsBody` reads `typeFitsOwner`
   directly rather than keeping a third list. `requiresFlow` stays about
   `InsertKind`, and no `InsertKind` creates a repeater (a saved block
-  carrying one is gated by `typeFitsOwner` in `blockModel` — against a BAND
-  target only). Exports: `requiresFlow` (today `pageBreak`
+  carrying one is gated by `requiredOwner` against the resolved target's
+  owner, below). Exports: `requiresFlow` (today `pageBreak`
   alone — `charGrid` is deliberately NOT one, since the engine places a
   `char_grid` everywhere and merely draws a single sheet outside a flow
-  body) plus
-  `isFlowTarget(read, path)`, the POSITIVE test that the resolved target
-  is `sections.body.items` of a body whose `type` really is `flow`. It
-  fails CLOSED: a container target, an `absolute` body, an unreadable or
-  unrecognized body `type`, and a read that throws all answer `false` —
-  mirroring `panel/placementModel`, which likewise asks
-  `owner.type === 'flow'` rather than ruling `absolute` out. It exists
-  because `bandTarget` cannot stand in for it: a container is not a band
-  and cannot hold a `page_break` either.
+  body), `insertTargetOwner(read, path)` — which `OwnerKind` a resolved
+  `…items` target is, read through `canvas/dnd`'s `receiverFor` so an
+  insert and a drop agree; everything `receiverFor` cannot classify (a
+  repeat `cell` / repeat_flow `item` sub-template, a grid container, a
+  typeless body, a throwing read, a non-`items` path) answers `container`,
+  which fails CLOSED (it holds neither restricted kind) and matches the
+  engine, whose sub-template and grid children warn `*_in_container` — and
+  `isFlowTarget(read, path)`, `insertTargetOwner(…) === 'flow'`. A container
+  INSIDE a band is a `container`, not a band. `isFlowTarget` exists because
+  `bandTarget` cannot stand in for it: a container is not a band and cannot
+  hold a `page_break` either.
 - `insert/bandGeometry.ts` — WHICH margin-box height a band insert places
   against: `documentContentHeightPt` (read off the document's own
   `page.size`/`orientation`/`margin` through `readPageView` + `readMarginView`
@@ -272,15 +274,16 @@ result LANDS:
   `addBlock`/`removeBlock` (caps, fresh ids), `sanitizeBlocks` (the
   restore guard over untrusted storage), `blockInsertGroup` (the
   reusable-blocks menu group; armed only when the host wires
-  `onBlocksChange`). Each row carries `flowOnly`, read off `canvas/dnd`'s
-  `typeFitsOwner` — the home for which owner a WIRE TYPE fits, whose
-  insert-menu counterpart over `InsertKind` is `flowPlacement`'s
-  `requiresFlow` — so the menubar can disable it inside a band. Unlike the band-only page number,
-  which merely warns in the wrong place, a `repeat`/`repeat_flow`/
-  `page_break` inside a band does NOT parse: the whole document stops
-  rendering. `hooks/useBlocks` re-checks the same predicate at insert time,
-  since a disabled row is a UI state and the two can disagree if the
-  selection moves between the menu being built and the row being clicked.
+  `onBlocksChange`). Each row carries `requires` (`'band' | 'flow' | null`),
+  read off `canvas/dnd`'s `requiredOwner` — the home for which owner a WIRE
+  TYPE needs, whose insert-menu counterpart over `InsertKind` is
+  `flowPlacement`'s `requiresFlow` — so the menubar can disable the row
+  wherever the resolved target (`insertTargetOwner`) is another owner: the
+  engine skips the item there and nothing draws. `hooks/useBlocks` re-checks
+  `typeFitsOwner` against the same owner at insert time, since a disabled row
+  is a UI state and the two can disagree if the selection moves between the
+  menu being built and the row being clicked; `integration/wasm.test.ts`
+  pins the rule against the real engine per kind and owner.
 - `insert/BlockDialog.tsx` / `insert/BlockManageDialog.tsx` — the
   save-as-block naming modal (IME-guarded Enter) and the manage modal
   (two-step per-row delete).

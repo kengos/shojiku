@@ -8,7 +8,7 @@
 // props, the standalone app backs it with localStorage.
 
 import { isSnippetValue, type SnippetValue } from '@shojiku/designer-core';
-import { typeFitsOwner } from '../canvas/dnd';
+import { requiredOwner } from '../canvas/dnd';
 import type { InsertGroup, MenuEntry } from './insertMenu';
 
 /** One saved block: a stable id (React keys / dedupe / delete target — never a
@@ -166,15 +166,14 @@ export function sanitizeBlocks(raw: unknown): SavedBlock[] {
 export function blockInsertGroup(blocks: readonly SavedBlock[]): InsertGroup {
   const entries: MenuEntry[] = [{ kind: 'saveBlock', labelKey: 'insert.saveBlock' }];
   for (const block of blocks) {
-    // A block carries a whole item node, so it can carry a kind the target
-    // cannot hold. `page_number` outside a band merely warns, but a FLOW-ONLY
-    // kind inside one does not parse at all — the document stops rendering
-    // entirely, not just that item — so the row says so instead of acting.
+    // A block carries a whole item node, so it can carry a kind only one owner
+    // lays out. The menu compares this against the RESOLVED insert target, so
+    // a row that would insert something the engine skips says why instead.
     entries.push({
       kind: 'block',
       blockId: block.id,
       name: block.name,
-      flowOnly: !typeFitsOwner((block.value as Record<string, unknown>).type, 'band'),
+      requires: requiredOwner((block.value as Record<string, unknown>).type),
     });
   }
   if (blocks.length > 0) {

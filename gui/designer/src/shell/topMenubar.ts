@@ -22,7 +22,7 @@ import type { TutorialWiring } from '../hooks/useTutorialWiring';
 import { useI18n } from '../i18n/context';
 import { activateBand } from '../insert/bandCreate';
 import { blockInsertGroup } from '../insert/blockModel';
-import { isFlowTarget } from '../insert/flowPlacement';
+import { insertTargetOwner } from '../insert/flowPlacement';
 import type { InsertGroup } from '../insert/insertMenu';
 import { resolveInsertTarget } from '../insert/model';
 import {
@@ -129,6 +129,6 @@ export function useMenubarColumns(options: MenubarColumnsOptions): MenuColumn[] 
     onGlossary: dialogs.openGlossary,
     onTutorial: tutorial.openTutorial,
     bandTarget: bandOf(insertPath) !== null,
-    flowTarget: isFlowTarget(editor.read, insertPath),
+    insertOwner: insertTargetOwner(editor.read, insertPath),
   });
 }

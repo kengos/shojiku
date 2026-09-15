@@ -34,15 +34,16 @@ export type MenuEntry =
   // intent (disabled without a savable selection), one row per saved block (its
   // NAME is the label, user data), and the manage intent.
   | { readonly kind: 'saveBlock'; readonly labelKey: string }
-  // `flowOnly` = the saved node's type lays out ONLY in the flow body
-  // (`canvas/dnd`'s `typeFitsOwner`). Unlike the band-only page number, which
-  // merely warns in the wrong place, one of these inside a band does not parse
-  // — the whole document stops rendering — so the row is disabled there.
+  // `requires` = the one owner kind the saved node's type lays out in
+  // (`canvas/dnd`'s `requiredOwner`: the band for a page number, the flow body
+  // for repeat/repeat_flow/page_break), or null when it lays out anywhere. The
+  // row is disabled with that reason wherever the insert target is another
+  // owner, because the engine skips the item there and nothing draws.
   | {
       readonly kind: 'block';
       readonly blockId: string;
       readonly name: string;
-      readonly flowOnly: boolean;
+      readonly requires: 'band' | 'flow' | null;
     }
   | { readonly kind: 'manageBlock'; readonly labelKey: string }
   // A repeating band: create it if the document lacks it, select it either

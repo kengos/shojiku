@@ -146,26 +146,27 @@ describe('blockInsertGroup', () => {
     const group = blockInsertGroup([block('block-1', '社判'), block('block-2', '枠')]);
     expect(group.entries).toEqual([
       { kind: 'saveBlock', labelKey: 'insert.saveBlock' },
-      { kind: 'block', blockId: 'block-1', name: '社判', flowOnly: false },
-      { kind: 'block', blockId: 'block-2', name: '枠', flowOnly: false },
+      { kind: 'block', blockId: 'block-1', name: '社判', requires: null },
+      { kind: 'block', blockId: 'block-2', name: '枠', requires: null },
       { kind: 'manageBlock', labelKey: 'insert.manageBlock' },
     ]);
   });
 
-  it('marks a block whose node lays out ONLY in the flow body', () => {
-    // Read off `canvas/dnd`'s `typeFitsOwner`, the one home for that rule, so
-    // this cannot drift from what the canvas refuses to reparent. A flow-only
-    // kind inside a band is a PARSE error — the document stops rendering
-    // entirely — which is why the menu must not offer the row there.
+  it('marks the one owner a block node lays out in', () => {
+    // Read off `canvas/dnd`'s `requiredOwner`, the one home for that rule, so
+    // this cannot drift from what the canvas refuses to reparent.
     for (const type of ['repeat', 'repeat_flow', 'page_break']) {
       const [, row] = blockInsertGroup([block('b', 'n', { type } as SnippetValue)]).entries;
-      expect(row).toEqual({ kind: 'block', blockId: 'b', name: 'n', flowOnly: true });
+      expect(row).toEqual({ kind: 'block', blockId: 'b', name: 'n', requires: 'flow' });
     }
-    // The control: everything else, including the band-only page number (which
-    // merely warns elsewhere) and a malformed node, is NOT flow-only.
-    for (const value of [CONTAINER, { type: 'page_number' }, { type: 'line' }, { nope: 1 }]) {
+    const [, pageNumber] = blockInsertGroup([
+      block('b', 'n', { type: 'page_number' } as SnippetValue),
+    ]).entries;
+    expect(pageNumber).toMatchObject({ requires: 'band' });
+    // The control: everything else, including a malformed node, lays out anywhere.
+    for (const value of [CONTAINER, { type: 'line' }, { nope: 1 }]) {
       const [, row] = blockInsertGroup([block('b', 'n', value as SnippetValue)]).entries;
-      expect(row).toMatchObject({ flowOnly: false });
+      expect(row).toMatchObject({ requires: null });
     }
   });
 });

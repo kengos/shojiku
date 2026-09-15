@@ -9,6 +9,7 @@
 // prototype-walk surface) — that validation is `hostEntries.ts`, and the
 // per-entry-kind insert dispatch is `insertItems.ts`.
 
+import type { OwnerKind } from '../canvas/dnd';
 import type { BandName } from '../insert/bandCreate';
 import type { InsertGroup, InsertKind } from '../insert/insertMenu';
 import type { HostMenuEntry } from './hostEntries';
@@ -99,10 +100,11 @@ export interface MenubarWiring {
   /** Whether the current insert target is a header/footer band — the gate for
    * band-only rows. */
   readonly bandTarget: boolean;
-  /** Whether the current insert target is the BODY's flow — the gate for
-   * flow-only rows, and the mirror of `bandTarget`. Positive rather than
-   * "not a band": a container and an `absolute` body cannot hold one either. */
-  readonly flowTarget: boolean;
+  /** Which owner the current insert target is (`insert/flowPlacement`'s
+   * `insertTargetOwner`) — the gate for flow-only element rows (the flow and
+   * nothing else: a container and an `absolute` body cannot hold one either)
+   * and for saved blocks whose node needs one particular owner. */
+  readonly insertOwner: OwnerKind;
   /** Help — shortcuts, glossary and the tutorial are all self-contained
    * Designer chrome, always present. */
   readonly onShortcuts: () => void;

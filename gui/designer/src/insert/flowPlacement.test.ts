@@ -1,8 +1,8 @@
-// Tests for flowPlacement.ts — which kinds lay out only in the body's flow, and
-// whether a resolved insert target IS that flow. The predicate is positive, so
-// every "cannot tell" answer must come back FALSE.
+// Tests for flowPlacement.ts — which kinds lay out only in the body's flow,
+// which owner a resolved insert target is, and whether it IS that flow. Both
+// answers fail closed: every "cannot tell" is a container, never the flow.
 import { describe, expect, it } from 'vitest';
-import { isFlowTarget, requiresFlow } from './flowPlacement';
+import { insertTargetOwner, isFlowTarget, requiresFlow } from './flowPlacement';
 import { type InsertArming, type InsertKind, insertMenuGroups } from './insertMenu';
 
 /** Everything armed, so the sweep below sees every element row that exists. */
@@ -45,6 +45,57 @@ describe('requiresFlow', () => {
     // body instead of skipping the item, so gating that row would withhold a
     // legal insert.
     expect(requiresFlow('charGrid')).toBe(false);
+  });
+});
+
+describe('insertTargetOwner', () => {
+  it('names the four owners receiverFor classifies', () => {
+    const read = reader({
+      'sections.body': { type: 'flow', items: [] },
+      'sections.header': { items: [] },
+      'sections.footer': { items: [] },
+      'sections.body.items[0]': { type: 'container', items: [] },
+      'sections.footer.items[0]': { type: 'container', box: { direction: 'row' }, items: [] },
+    });
+    expect(insertTargetOwner(read, 'sections.body.items')).toBe('flow');
+    expect(insertTargetOwner(read, 'sections.header.items')).toBe('band');
+    expect(insertTargetOwner(read, 'sections.footer.items')).toBe('band');
+    expect(insertTargetOwner(read, 'sections.body.items[0].items')).toBe('container');
+    // A row-direction container: the slot axis never leaks into the owner answer.
+    expect(insertTargetOwner(read, 'sections.footer.items[0].items')).toBe('container');
+    const absolute = reader({ 'sections.body': { type: 'absolute', items: [] } });
+    expect(insertTargetOwner(absolute, 'sections.body.items')).toBe('absoluteBody');
+  });
+
+  it('reads a container INSIDE a band as a container, not as the band', () => {
+    // The band-only kind must be DIRECTLY in the band: the engine skips a
+    // page_number one level down (`page_number_in_container`).
+    const read = reader({ 'sections.footer.items[0]': { type: 'container', items: [] } });
+    expect(insertTargetOwner(read, 'sections.footer.items[0].items')).toBe('container');
+  });
+
+  it('answers container for every target receiverFor cannot classify (fails closed)', () => {
+    const read = reader({
+      'sections.body.items[0]': { type: 'container', box: { type: 'grid' }, items: [] },
+      'sections.body.items[1].cell': { items: [] },
+      'sections.body.items[2].item': { items: [] },
+      'sections.body': { items: [] },
+    });
+    // A grid container, a repeat cell, a repeat_flow card, a typeless body.
+    expect(insertTargetOwner(read, 'sections.body.items[0].items')).toBe('container');
+    expect(insertTargetOwner(read, 'sections.body.items[1].cell.items')).toBe('container');
+    expect(insertTargetOwner(read, 'sections.body.items[2].item.items')).toBe('container');
+    expect(insertTargetOwner(read, 'sections.body.items')).toBe('container');
+    // A missing owner, and a path that is not an item list at all.
+    expect(insertTargetOwner(reader({}), 'sections.header.items')).toBe('container');
+    expect(insertTargetOwner(FLOW, 'sections.body')).toBe('container');
+  });
+
+  it('answers container when the read throws', () => {
+    const read = () => {
+      throw new Error('hostile subtree');
+    };
+    expect(insertTargetOwner(read, 'sections.body.items')).toBe('container');
   });
 });
 

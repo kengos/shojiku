@@ -368,9 +368,10 @@ hostile geometry degrades to null before it can reach an op.
   what may LEAVE (`reorderContext` — drag eligibility + axis from the
   document; refusals incl. grid, sub-templates, authored x/y) and what
   may RECEIVE (`ownerPlacement` → the four `OwnerKind`s and the slot
-  axis, `typeFitsOwner` — the engine's own placement rules, so a move
-  cannot leave an item somewhere it would warn-and-skip, and
-  `receiverFor`). Plus `siblingRects` (duplicated index → null, since
+  axis, `requiredOwner` / `typeFitsOwner` — the engine's own placement
+  rules, so a move cannot leave an item somewhere it would warn-and-skip,
+  and `receiverFor`, which the insert side also reads through
+  `insert/flowPlacement`'s `insertTargetOwner`). Plus `siblingRects` (duplicated index → null, since
   repeat fragments share paths) and `SUB_TEMPLATE_RE`, shared with
   `manipulate`.
 - `canvas/reparent.ts` — the cross-parent move as OPS, and the one model

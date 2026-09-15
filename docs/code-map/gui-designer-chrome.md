@@ -144,13 +144,17 @@ resolved style.
   File/Edit/Insert/Help columns; every `MenuItem` runs an EXISTING op or
   host callback (AI parity); band-only/flow-only/unsavable rows stay VISIBLE
   and disabled with the reason appended; optional file actions present only
-  when the host wires them. The wiring carries the two OWNER gates as a pair
-  — `bandTarget` and `flowTarget`, both positive tests over the SAME resolved
-  insert target (`shell/topMenubar` resolves once and reads it twice), because
-  "not a band" is not "in the flow": a container and an `absolute` body are
-  neither. `menubar/insertItems.ts` — one armed insert group → menu rows (the
-  per-entry-kind dispatch + the visible-but-disabled gates, whose element arm
-  is one `blockedReasonKey` over both owner gates). `menubar/hostEntries.ts` —
+  when the host wires them. The wiring carries two OWNER gates over the SAME
+  resolved insert target (`shell/topMenubar` resolves once and reads it
+  twice): `bandTarget` (`bandOf`, a path-prefix test) and `insertOwner`
+  (`insert/flowPlacement`'s `insertTargetOwner`, one of the four `OwnerKind`s),
+  because "not a band" is not "in the flow": a container and an `absolute`
+  body are neither. `menubar/insertItems.ts` — one armed insert group → menu
+  rows (the per-entry-kind dispatch + the visible-but-disabled gates: the
+  element arm is one `blockedReasonKey` over both owner gates, and a saved
+  block's row is disabled when its entry's `requires` names an owner other
+  than `insertOwner`, with `insert.block.flowOnly` / `insert.block.bandOnly`
+  as the reason). `menubar/hostEntries.ts` —
   `validateHostEntries(raw)`: untrusted host entries runtime-typed, id
   charset + reserved-name reject + caps + dedupe; bad entries dropped,
   never thrown (re-exported through `menubar/model.ts`).
