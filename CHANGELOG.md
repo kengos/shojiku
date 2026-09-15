@@ -1531,6 +1531,16 @@ platform binaries.
   now show what was kept, and tabbing through a date-and-time field no longer
   rewrites the sample it just read.
 
+### Security
+
+- **The CLI's font download no longer accepts a malformed TLS 1.3 handshake.**
+  Fetching a pinned font face (`url:` in a font pack) goes through rustls, and
+  rustls 0.23.43 accepted handshake messages sent at the wrong encryption level
+  (RUSTSEC-2026-0285). The handshake is still authenticated, so a peer could not
+  use it to alter a connection, but the engine now carries rustls 0.23.45, which
+  rejects it as TLS 1.3 requires. Rendering, signing and verifying never open a
+  connection and are unaffected.
+
 ## [0.2.0] - 2026-08-08
 
 ### Added
