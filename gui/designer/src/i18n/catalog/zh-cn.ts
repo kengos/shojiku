@@ -409,6 +409,7 @@ export const zhCn: LanguageCatalog = {
     'insert.manageBlock': '管理可重复使用块…',
     'insert.block.flowOnly': '只能直接放在流式排列的正文中',
     'insert.block.bandOnly': '只能直接放在页眉或页脚中',
+    'insert.block.notInCell': '不能放在 repeat、卡片或表格单元格中',
     'contextMenu.saveBlock': '保存为可重复使用块…',
     'block.title': '保存为可重复使用块',
     'block.hint': '将所选元素加入块库，可随时从插入菜单插入。',

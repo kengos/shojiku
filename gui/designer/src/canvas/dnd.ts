@@ -10,8 +10,10 @@
 //
 // It also owns the other side of eligibility: how an owner places the
 // children it already has (`ownerPlacement`) and which item types it may hold
-// at all (`typeFitsOwner`) — both read the same four owner kinds, so a drop
-// target and a reorder axis can never disagree about what a parent is.
+// at all (`typeFitsOwner`) — both read the same `OwnerKind`s, so a drop target
+// and a reorder axis can never disagree about what a parent is. Four of the
+// five are what a DROP can land in; the fifth, `cell`, belongs to the insert
+// side alone (see `OwnerKind`).
 
 import type { ReadFn } from '@shojiku/designer-core';
 import type { BoxRect, PlacedBox } from '../engine/types';
@@ -42,10 +44,21 @@ function record(value: unknown): Record<string, unknown> | undefined {
     : undefined;
 }
 
-/** The four owners of an `items` list, kept apart because the engine's
- * placement rules distinguish them: `page_number` lays out only in a `band`,
- * and `repeat`/`repeat_flow`/`page_break` only in the `flow` body. */
-export type OwnerKind = 'flow' | 'absoluteBody' | 'band' | 'container';
+/** The owners of an `items` list, kept apart because the engine's placement
+ * rules distinguish them: `page_number` lays out only in a `band`,
+ * `repeat`/`repeat_flow`/`page_break` only in the `flow` body, and a `table`
+ * everywhere EXCEPT under a `cell`.
+ *
+ * `cell` is the odd one, and deliberately so. The other four are a DIRECT
+ * owner — what the item's own parent is — while `cell` is an ANCESTRY answer:
+ * the engine scopes a `repeat` cell, a `repeat_flow` card and a table column's
+ * `cell:` to their bound element and never clears that scope on the way into a
+ * nested container, so a table three levels down inside one is refused just as
+ * the cell's own child is. Only `insert/flowPlacement`'s `insertTargetOwner`
+ * ever mints it, from the target PATH; `ownerPlacement` below cannot and does
+ * not, so `receiverFor` keeps answering `null` for a sub-template and the
+ * canvas and layer-tree drops are unchanged. */
+export type OwnerKind = 'flow' | 'absoluteBody' | 'band' | 'container' | 'cell';
 
 /** How an owner places its direct children: `axis` is the slot axis when they
  * are ORDER-placed, and `null` when they are COORDINATE-placed (a band, an
@@ -88,8 +101,16 @@ function ownerPlacement(ownerPath: string, owner: Record<string, unknown>): Owne
 const BAND_ONLY = 'page_number';
 const FLOW_ONLY: ReadonlySet<string> = new Set(['repeat', 'repeat_flow', 'page_break']);
 
-/** The one owner kind an item of wire `type` lays out in, or `null` when it
- * lays out in all four. A typeless or malformed item is not one of the
+// The mirror image: a kind that lays out in every owner but ONE. The engine
+// renders a `table` as a bounded block in a container, a band, an absolute
+// body and the flow body, and warn-and-skips it under any data-scoped cell
+// (`table_in_cell`) — so this is a set of what a `cell` REFUSES, not of what a
+// type requires, and it needs its own question rather than another
+// `requiredOwner` arm.
+const CELL_FORBIDDEN: ReadonlySet<string> = new Set(['table']);
+
+/** The one owner kind an item of wire `type` lays out in, or `null` when it is
+ * not restricted to one. A typeless or malformed item is not one of the
  * restricted kinds, so it is unrestricted. Exported so a surface that refuses
  * can also say WHICH owner the item needs. */
 export function requiredOwner(type: unknown): 'band' | 'flow' | null {
@@ -99,8 +120,18 @@ export function requiredOwner(type: unknown): 'band' | 'flow' | null {
   return typeof type === 'string' && FLOW_ONLY.has(type) ? 'flow' : null;
 }
 
+/** The one owner kind an item of wire `type` does NOT lay out in, or `null`
+ * when no owner refuses it — the mirror of `requiredOwner`, and exported for
+ * the same reason: a surface that refuses says which owner did the refusing. */
+export function refusedOwner(type: unknown): 'cell' | null {
+  return typeof type === 'string' && CELL_FORBIDDEN.has(type) ? 'cell' : null;
+}
+
 /** Whether an item of wire `type` lays out inside `owner`. */
 export function typeFitsOwner(type: unknown, owner: OwnerKind): boolean {
+  if (refusedOwner(type) === owner) {
+    return false;
+  }
   const need = requiredOwner(type);
   return need === null || need === owner;
 }

@@ -367,13 +367,23 @@ hostile geometry degrades to null before it can reach an op.
 - `canvas/dnd.ts` — the DnD substrate's ELIGIBILITY half, on both sides:
   what may LEAVE (`reorderContext` — drag eligibility + axis from the
   document; refusals incl. grid, sub-templates, authored x/y) and what
-  may RECEIVE (`ownerPlacement` → the four `OwnerKind`s and the slot
-  axis, `requiredOwner` / `typeFitsOwner` — the engine's own placement
-  rules, so a move cannot leave an item somewhere it would warn-and-skip,
-  and `receiverFor`, which the insert side also reads through
-  `insert/flowPlacement`'s `insertTargetOwner`). Plus `siblingRects` (duplicated index → null, since
-  repeat fragments share paths) and `SUB_TEMPLATE_RE`, shared with
-  `manipulate`.
+  may RECEIVE (`ownerPlacement` → four of the five `OwnerKind`s and the
+  slot axis, `requiredOwner` / `refusedOwner` / `typeFitsOwner` — the
+  engine's own placement rules, so a move cannot leave an item somewhere
+  it would warn-and-skip, and `receiverFor`, which the insert side also
+  reads through `insert/flowPlacement`'s `insertTargetOwner`). The two
+  type rules are mirror images: `requiredOwner` is the ONE owner a kind
+  lays out in (`page_number` → band; `repeat`/`repeat_flow`/`page_break`
+  → flow), `refusedOwner` the one it does NOT (`table` → `cell`,
+  mirroring `table_in_cell`). The fifth kind, `cell`, is the odd one and
+  deliberately so: the other four are a DIRECT owner, while `cell` is an
+  ANCESTRY answer, and `ownerPlacement` never returns it — only
+  `insertTargetOwner` mints it, from the target PATH, so `receiverFor`
+  keeps answering `null` for a sub-template and the canvas and layer-tree
+  drops are unchanged. Plus `siblingRects` (duplicated index → null,
+  since repeat fragments share paths) and `SUB_TEMPLATE_RE`, imported by
+  `manipulate`, `reparent` and `insert/flowPlacement`'s `insertTargetOwner`
+  — and re-declared verbatim, not imported, in `panel/placementModel`.
 - `canvas/reparent.ts` — the cross-parent move as OPS, and the one model
   BOTH surfaces share (the layer tree asks it the same question). ONE
   `moveItem` carrying `toPath`, preceded by whatever `box` keys the

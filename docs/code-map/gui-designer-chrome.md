@@ -146,7 +146,7 @@ resolved style.
   and disabled with the reason appended; optional file actions present only
   when the host wires them. The wiring carries ONE owner gate over the
   resolved insert target (`shell/topMenubar` resolves it once): `insertOwner`
-  (`insert/flowPlacement`'s `insertTargetOwner`, one of the four `OwnerKind`s).
+  (`insert/flowPlacement`'s `insertTargetOwner`, one of the five `OwnerKind`s).
   A band-only row needs `band` and a flow-only row needs `flow`, because "not
   a band" is not "in the flow" (a container and an `absolute` body are
   neither) and "under a band" is not "a band" (a container inside a footer is

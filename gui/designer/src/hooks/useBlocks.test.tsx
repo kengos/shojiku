@@ -9,16 +9,41 @@ import { ABS_VARIED, outcomeAbs, outcomeStacked, THREE_ITEMS } from '../testkit/
 import { draw, makeTransport } from '../testkit/harness';
 import { useBlocks } from './useBlocks';
 
-/** A repeat (flow-only), a page number (band-only) and a plain text block. */
+/** A repeat (flow-only), a page number (band-only), a table wrapped in a
+ * container (cell-refused, and wrapped so the walk has to reach it) and a plain
+ * text block. */
 const GATED_BLOCKS: SavedBlock[] = [
   { id: 'repeat', name: '明細', value: { type: 'repeat_flow', data: { key: 'rows' } } },
   { id: 'pageNumber', name: '頁番号', value: { type: 'page_number' } },
+  {
+    id: 'table',
+    name: '表ブロック',
+    value: { type: 'container', items: [{ type: 'table', data: { key: 'rows' } }] },
+  },
   { id: 'text', name: '社判', value: { type: 'text', text: 'seal' } },
 ];
 
 const ABSOLUTE_BODY = ['sections:', '  body:', '    type: absolute', '    items: []', ''].join(
   '\n',
 );
+
+/** A `repeat` whose cell holds one text — the only shape from which the insert
+ * target resolves INSIDE a data-scoped cell. */
+const REPEAT_CELL = [
+  'sections:',
+  '  body:',
+  '    type: flow',
+  '    items:',
+  '      - type: repeat',
+  '        data: { key: rows }',
+  '        grid: { columns: 1, rows: 2 }',
+  '        cell:',
+  '          items:',
+  '            - type: text',
+  '              text: row',
+  '',
+].join('\n');
+const CELL_CHILD = 'sections.body.items[0].cell.items[0]';
 
 describe('Designer — reusable blocks', () => {
   const openInsert = () => fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
@@ -295,6 +320,34 @@ describe('Designer — reusable blocks', () => {
     expect(onChange.mock.calls.at(-1)?.[0]).toMatch(/footer:[\s\S]*type: page_number/);
   });
 
+  it('shows a table block disabled with its reason inside a repeat cell', async () => {
+    const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs([CELL_CHILD])) });
+    const onChange = vi.fn<(text: string) => void>();
+    draw(transport, {
+      source: REPEAT_CELL,
+      onChange,
+      onBlocksChange: vi.fn(),
+      blocks: GATED_BLOCKS,
+    });
+    await waitFor(() => screen.getByRole('button', { name: CELL_CHILD }));
+    fireEvent.click(screen.getByRole('button', { name: CELL_CHILD }));
+    openInsert();
+    const row = screen.getByRole('menuitem', { name: /表ブロック/ });
+    expect(row.textContent).toContain('not inside a repeat, a card or a table cell');
+    // The reason and the DISABLED state are separate assertions, and the three
+    // gate tests above carry both for the same reason this one does: a row
+    // that states why and still acts is the failure, and a test that checks
+    // only the words cannot see it.
+    expect(row.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(row);
+    expect(onChange).not.toHaveBeenCalled();
+    // The control: the plain block beside it stays an ordinary row, so the
+    // reason belongs to the block and not to the selection.
+    const plain = screen.getByRole('menuitem', { name: /社判/ });
+    expect(plain.textContent).toBe('社判');
+    expect(plain.getAttribute('aria-disabled')).not.toBe('true');
+  });
+
   it('disables the save row while a multi-selection is active (wrap first)', async () => {
     const paths = ['sections.body.items[0]', 'sections.body.items[1]', 'sections.body.items[2]'];
     const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs(paths)) });
@@ -339,5 +392,27 @@ describe('useBlocks — the insert lock', () => {
     act(() => hook.result.current.blocks.insertBlock('text'));
     expect(hook.result.current.editor.text).toContain('seal');
     expect(hook.result.current.editor.selection).toBe('sections.body.items[0]');
+  });
+
+  it('writes nothing for a block carrying a table when the target is a cell', () => {
+    const hook = mount(REPEAT_CELL);
+    act(() => hook.result.current.editor.select(CELL_CHILD));
+    act(() => hook.result.current.blocks.insertBlock('table'));
+    expect(hook.result.current.editor.text).toBe(REPEAT_CELL);
+  });
+
+  it('inserts the SAME table block into the flow body, and a text block into the cell', () => {
+    // Two controls in one: the refusal above is about the pairing, not about
+    // the block (it lands in the body) and not about the target (a text block
+    // lands in the cell).
+    const body = mount(REPEAT_CELL);
+    act(() => body.result.current.blocks.insertBlock('table'));
+    expect(body.result.current.editor.text).toContain('type: table');
+
+    const cell = mount(REPEAT_CELL);
+    act(() => cell.result.current.editor.select(CELL_CHILD));
+    act(() => cell.result.current.blocks.insertBlock('text'));
+    expect(cell.result.current.editor.text).toContain('seal');
+    expect(cell.result.current.editor.selection).toBe('sections.body.items[0].cell.items[1]');
   });
 });

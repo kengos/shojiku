@@ -5,6 +5,7 @@
 // not, save-block without a savable selection) — an affordance that appears and
 // disappears is worse than one that explains itself.
 
+import type { OwnerKind } from '../canvas/dnd';
 import { requiresBand } from '../insert/bandPlacement';
 import { requiresFlow } from '../insert/flowPlacement';
 import type { InsertGroup, InsertKind } from '../insert/insertMenu';
@@ -19,6 +20,24 @@ function blockedReasonKey(kind: InsertKind, w: MenubarWiring): string | null {
     return 'insert.pageNumber.bandOnly';
   }
   return requiresFlow(kind) && w.insertOwner !== 'flow' ? 'insert.pageBreak.flowOnly' : null;
+}
+
+/** The reason a saved-block row is blocked against `owner`, or `null` when it
+ * is not. `requires` is asked first, so which reason a row states is decided
+ * here rather than left to the two sets. For a WELL-FORMED block they cannot
+ * both be non-null — every kind `requiredOwner` names takes no `items` key at
+ * all, so there is no chain for the refusal to be found down — but a block
+ * comes from host storage, and a malformed one carrying both is answered by
+ * this precedence rather than by that argument. */
+function blockReasonKey(
+  requires: 'band' | 'flow' | null,
+  refuses: 'cell' | null,
+  owner: OwnerKind,
+): string | null {
+  if (requires !== null && requires !== owner) {
+    return requires === 'band' ? 'insert.block.bandOnly' : 'insert.block.flowOnly';
+  }
+  return refuses === owner ? 'insert.block.notInCell' : null;
 }
 
 /** Map one armed insert group to menu items, dispatching per entry kind. */
@@ -66,16 +85,14 @@ export function insertItems(
     if (entry.kind === 'block') {
       // The label IS the block's user-chosen name (React-escaped text). A node
       // that lays out in only one owner kind is skipped by the engine in every
-      // other — nothing draws — so wherever the insert target is another owner
-      // the row states the reason rather than acting, the same shape as the
-      // element rows above.
-      const blocked = entry.requires !== null && entry.requires !== w.insertOwner;
-      const reasonKey =
-        entry.requires === 'band' ? 'insert.block.bandOnly' : 'insert.block.flowOnly';
+      // other — and one that a single owner refuses is skipped in that one —
+      // so wherever the insert target is such an owner the row states the
+      // reason rather than acting, the same shape as the element rows above.
+      const reasonKey = blockReasonKey(entry.requires, entry.refuses, w.insertOwner);
       return {
-        label: blocked ? `${entry.name} — ${t(reasonKey)}` : entry.name,
+        label: reasonKey === null ? entry.name : `${entry.name} — ${t(reasonKey)}`,
         run: () => w.onInsertBlock(entry.blockId),
-        disabled: blocked,
+        disabled: reasonKey !== null,
       };
     }
     if (entry.kind === 'manageBlock') {

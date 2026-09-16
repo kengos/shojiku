@@ -16,6 +16,7 @@ import {
   removeBlock,
   type SavedBlock,
 } from '../insert/blockModel';
+import { blockRefusedOwner } from '../insert/blockRefusal';
 import { insertTargetOwner } from '../insert/flowPlacement';
 import { resolveInsertTarget } from '../insert/model';
 import { placeForTarget } from '../insert/targetPlacement';
@@ -99,7 +100,7 @@ export function useBlocks({
 
   // Insert a saved block at the resolved target (band-placed like an element
   // insert when the target is directly a header/footer band), selected on success —
-  // unless the block's node lays out in another owner kind than the target is.
+  // unless the target's owner is one the block cannot lay out in.
   const insertBlock = useCallback(
     (id: string) => {
       const block = blockList.find((b) => b.id === id);
@@ -109,14 +110,18 @@ export function useBlocks({
       }
       const target = resolveInsertTarget(read, selection);
       // The menu already disables this row, and this is the second lock on the
-      // same door, asking the same question of the same target: a node the
+      // same door, asking the same two questions of the same target: a node the
       // target's owner cannot hold is skipped by the engine (and a repeat or
       // repeat_flow band-placed below would not even parse, `box:` being
-      // unknown to it), so the write is refused here too. The row and this
-      // lock disagree only when the selection moves between the menu being
-      // built and the row being clicked; the hook test calls it directly.
+      // unknown to it), and so is a table anywhere under a data-scoped cell, so
+      // the write is refused here too. The row and this lock disagree only when
+      // the selection moves between the menu being built and the row being
+      // clicked; the hook test calls it directly.
       const owner = insertTargetOwner(read, target.path);
-      if (!typeFitsOwner((block.value as Record<string, unknown>).type, owner)) {
+      if (
+        !typeFitsOwner((block.value as Record<string, unknown>).type, owner) ||
+        blockRefusedOwner(block.value) === owner
+      ) {
         return;
       }
       const result = apply({

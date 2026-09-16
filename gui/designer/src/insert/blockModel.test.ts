@@ -146,8 +146,8 @@ describe('blockInsertGroup', () => {
     const group = blockInsertGroup([block('block-1', '社判'), block('block-2', '枠')]);
     expect(group.entries).toEqual([
       { kind: 'saveBlock', labelKey: 'insert.saveBlock' },
-      { kind: 'block', blockId: 'block-1', name: '社判', requires: null },
-      { kind: 'block', blockId: 'block-2', name: '枠', requires: null },
+      { kind: 'block', blockId: 'block-1', name: '社判', requires: null, refuses: null },
+      { kind: 'block', blockId: 'block-2', name: '枠', requires: null, refuses: null },
       { kind: 'manageBlock', labelKey: 'insert.manageBlock' },
     ]);
   });
@@ -157,7 +157,13 @@ describe('blockInsertGroup', () => {
     // this cannot drift from what the canvas refuses to reparent.
     for (const type of ['repeat', 'repeat_flow', 'page_break']) {
       const [, row] = blockInsertGroup([block('b', 'n', { type } as SnippetValue)]).entries;
-      expect(row).toEqual({ kind: 'block', blockId: 'b', name: 'n', requires: 'flow' });
+      expect(row).toEqual({
+        kind: 'block',
+        blockId: 'b',
+        name: 'n',
+        requires: 'flow',
+        refuses: null,
+      });
     }
     const [, pageNumber] = blockInsertGroup([
       block('b', 'n', { type: 'page_number' } as SnippetValue),
@@ -168,5 +174,15 @@ describe('blockInsertGroup', () => {
       const [, row] = blockInsertGroup([block('b', 'n', value as SnippetValue)]).entries;
       expect(row).toMatchObject({ requires: null });
     }
+  });
+
+  it('carries the owner that REFUSES the block, read off blockRefusedOwner', () => {
+    // The wiring only — what the walk itself answers is `blockRefusal.test.ts`.
+    const [, wrapped] = blockInsertGroup([
+      block('b', 'n', { type: 'container', items: [{ type: 'table' }] } as SnippetValue),
+    ]).entries;
+    expect(wrapped).toMatchObject({ requires: null, refuses: 'cell' });
+    const [, plain] = blockInsertGroup([block('b', 'n', CONTAINER)]).entries;
+    expect(plain).toMatchObject({ refuses: null });
   });
 });

@@ -29,6 +29,7 @@ import { type EngineTransport, TransportError } from '../engine/transport';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
 import { composeDataUri } from '../image/dataUri';
 import { sniffImage } from '../image/sniff';
+import { blockRefusedOwner } from '../insert/blockRefusal';
 import { resolveContainerInsert } from '../insert/containerInsert';
 import { containerShape, containerSnippet } from '../insert/containerModel';
 import { insertTargetOwner } from '../insert/flowPlacement';
@@ -2116,6 +2117,9 @@ describe('iterable scaffolds against the real engine', () => {
       ['repeat_flow', scaffoldSnippet(spec, 'repeat_flow')],
       ['page_break', { type: 'page_break' }],
       ['page_number', { type: 'page_number' }],
+      // The one kind shaped as a REFUSAL rather than a requirement: it lays
+      // out in every owner but a data-scoped cell (`table_in_cell`).
+      ['table', scaffoldSnippet(spec, 'table')],
       ['text', { type: 'text', text: 'control' }],
     ];
     const doc = (body: string, extra: readonly string[] = []) =>
@@ -2156,6 +2160,46 @@ describe('iterable scaffolds against the real engine', () => {
         ]),
         'sections.body.items[0].cell.items',
       ],
+      [
+        'repeat_flow card',
+        doc('flow', [
+          '    items:',
+          '      - type: repeat_flow',
+          '        data: { key: items }',
+          '        item:',
+          '          items: []',
+        ]),
+        'sections.body.items[0].item.items',
+      ],
+      [
+        'table column cell',
+        doc('flow', [
+          '    items:',
+          '      - type: table',
+          '        data: { key: items }',
+          '        columns:',
+          '          - label: A',
+          '            width: 200',
+          '            cell:',
+          '              items: []',
+        ]),
+        'sections.body.items[0].columns[0].cell.items',
+      ],
+      [
+        // The ANCESTRY case: the engine's data scope is not cleared on the way
+        // into a container, so this is a cell as much as the cell itself is.
+        'container inside a repeat cell',
+        doc('flow', [
+          '    items:',
+          '      - type: repeat',
+          '        data: { key: items }',
+          '        cell:',
+          '          items:',
+          '            - type: container',
+          '              items: []',
+        ]),
+        'sections.body.items[0].cell.items[0].items',
+      ],
     ];
     for (const [owner, source, path] of owners) {
       for (const [kind, node] of kinds) {
@@ -2177,6 +2221,139 @@ describe('iterable scaffolds against the real engine', () => {
         expect(skipped, label).toBe(!fits);
       }
     }
+  });
+
+  it('agrees with the engine about a table the block WRAPS, and keeps the rest', async () => {
+    // `blockRefusedOwner` walks the block's `items` chain because the engine's
+    // refusal travels down it. This is the join: the compositions it withholds
+    // really do lose the table, and the ones it lets through really do draw it.
+    const groups = readDefinitionsView(definitions());
+    const itemsGroup = groups?.find((group) => group.id === 'items' && group.isArray);
+    if (itemsGroup == null) throw new Error('items array group missing from receipt-us');
+    const table = scaffoldSnippet(scaffoldFromGroup(itemsGroup), 'table');
+    const wrapped = { type: 'container', items: [table] } as unknown as SnippetValue;
+    expect(blockRefusedOwner(wrapped)).toBe('cell');
+
+    const doc = (body: readonly string[], extra: readonly string[] = []) =>
+      ['sections:', '  body:', '    type: flow', ...body, ...extra, ''].join('\n');
+    const cases: readonly (readonly [string, string, string])[] = [
+      [
+        'repeat cell',
+        doc([
+          '    items:',
+          '      - type: repeat',
+          '        data: { key: items }',
+          '        cell:',
+          '          items: []',
+        ]),
+        'sections.body.items[0].cell.items',
+      ],
+      [
+        'repeat_flow card',
+        doc([
+          '    items:',
+          '      - type: repeat_flow',
+          '        data: { key: items }',
+          '        item:',
+          '          items: []',
+        ]),
+        'sections.body.items[0].item.items',
+      ],
+      [
+        'table column cell',
+        doc([
+          '    items:',
+          '      - type: table',
+          '        data: { key: items }',
+          '        columns:',
+          '          - label: A',
+          '            width: 200',
+          '            cell:',
+          '              items: []',
+        ]),
+        'sections.body.items[0].columns[0].cell.items',
+      ],
+      [
+        'container inside a repeat cell',
+        doc([
+          '    items:',
+          '      - type: repeat',
+          '        data: { key: items }',
+          '        cell:',
+          '          items:',
+          '            - type: container',
+          '              items: []',
+        ]),
+        'sections.body.items[0].cell.items[0].items',
+      ],
+    ];
+    for (const [label, source, path] of cases) {
+      // The target really is the owner the gate reads it as…
+      expect(
+        insertTargetOwner((at) => Editor.create(source).read(at), path),
+        label,
+      ).toBe('cell');
+      const editor = Editor.create(source);
+      const index = (editor.read(path) as unknown[]).length;
+      expect(editor.apply({ op: 'insertItem', path, index, value: wrapped }).ok, label).toBe(true);
+      const outcome = await transport.renderRaw(editor.text(), params(), definitions(), {
+        scale: 1,
+      });
+      // …the authored document PARSES (an unparseable fixture would satisfy
+      // "the table is missing" for the wrong reason)…
+      expect(outcome.ok, label).toBe(true);
+      // …and the engine really drops the table.
+      expect(
+        outcome.diagnostics.items.map((item) => item.code),
+        label,
+      ).toContain('table_in_cell');
+      // The WRAPPER still draws — it is the table inside it that is gone, so
+      // the absence is addressed at the table's own path rather than by any
+      // `.columns[` anywhere (the outer table in the column-cell case has its
+      // own).
+      const boxes = outcome.inspect?.boxes.pages.flat() ?? [];
+      const wrapperPath = `${path}[${index}]`;
+      expect(
+        boxes.some((box) => box.path === wrapperPath),
+        `${label} wrapper`,
+      ).toBe(true);
+      expect(
+        boxes.some((box) => box.path.startsWith(`${wrapperPath}.items`)),
+        `${label} table`,
+      ).toBe(false);
+    }
+
+    // The CONTROL, and the capability this refusal deliberately keeps: the same
+    // wrapped table in a footer band draws its columns and warns about nothing
+    // of the kind.
+    const band = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    height: 200',
+      '    repeat: every_page',
+      '    items: []',
+      '',
+    ].join('\n');
+    const editor = Editor.create(band);
+    expect(
+      editor.apply({
+        op: 'insertItem',
+        path: 'sections.footer.items',
+        index: 0,
+        value: wrapped,
+      }).ok,
+    ).toBe(true);
+    const outcome = await transport.renderRaw(editor.text(), params(), definitions(), { scale: 1 });
+    expect(outcome.ok).toBe(true);
+    expect(outcome.diagnostics.items.map((item) => item.code)).not.toContain('table_in_cell');
+    const boxes = outcome.inspect?.boxes.pages.flat() ?? [];
+    expect(boxes.some((box) => box.path === 'sections.footer.items[0].items[0]')).toBe(true);
+    expect(
+      boxes.some((box) => box.path.startsWith('sections.footer.items[0].items[0].columns[')),
+    ).toBe(true);
   });
 
   it('blank-start: extendParams rows + the scaffold render WARNING-clean without definitions', async () => {

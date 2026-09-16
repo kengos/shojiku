@@ -193,13 +193,22 @@ result LANDS:
   owner, below). Exports: `requiresFlow` (today `pageBreak`
   alone — `charGrid` is deliberately NOT one, since the engine places a
   `char_grid` everywhere and merely draws a single sheet outside a flow
-  body), `insertTargetOwner(read, path)` — which `OwnerKind` a resolved
-  `…items` target is, read through `canvas/dnd`'s `receiverFor` so an
-  insert and a drop agree; everything `receiverFor` cannot classify (a
-  repeat `cell` / repeat_flow `item` sub-template, a grid container, a
-  typeless body, a throwing read, a non-`items` path) answers `container`,
-  which fails CLOSED (it holds neither restricted kind) and matches the
-  engine, whose sub-template and grid children warn `*_in_container` — and
+  body), `insertTargetOwner(read, path)` — which `OwnerKind` a
+  target is. OUTSIDE a repeating sub-template that is a resolved `…items`
+  list read through `canvas/dnd`'s `receiverFor`, so an insert and a drop
+  agree; inside one neither half applies (the path branch answers first, and
+  the path need not be an `…items` list), and the two agree there by REFUSING
+  rather than by classifying. A target ANYWHERE inside a repeating
+  sub-template answers `cell`, decided from the PATH (`SUB_TEMPLATE_RE`,
+  with `receiverFor`'s trailing dot) before the document is consulted —
+  the engine's data scope is not cleared on the way into a nested
+  container, so the list one container down is as much a cell as the
+  cell's own `items`; `cell` is strictly narrower than `container`,
+  differing only in that it also refuses a `table` (`table_in_cell`).
+  Everything else `receiverFor` cannot classify (a grid container, a
+  typeless body, a throwing read, a non-`items` path) still answers
+  `container`, which fails CLOSED (it holds neither restricted kind) and
+  matches the engine, whose grid children warn `*_in_container` — and
   `isFlowTarget(read, path)`, `insertTargetOwner(…) === 'flow'`, and
   `insertTargetBand(read, path)`, the band a target is DIRECTLY (`null` for a
   container INSIDE a band, which is a `container`) — read by
@@ -324,16 +333,38 @@ result LANDS:
   `addBlock`/`removeBlock` (caps, fresh ids), `sanitizeBlocks` (the
   restore guard over untrusted storage), `blockInsertGroup` (the
   reusable-blocks menu group; armed only when the host wires
-  `onBlocksChange`). Each row carries `requires` (`'band' | 'flow' | null`),
-  read off `canvas/dnd`'s `requiredOwner` — the home for which owner a WIRE
-  TYPE needs, whose insert-menu counterpart over `InsertKind` is
-  `flowPlacement`'s `requiresFlow` — so the menubar can disable the row
-  wherever the resolved target (`insertTargetOwner`) is another owner: the
-  engine skips the item there and nothing draws. `hooks/useBlocks` re-checks
-  `typeFitsOwner` against the same owner at insert time, since a disabled row
-  is a UI state and the two can disagree if the selection moves between the
-  menu being built and the row being clicked; `integration/wasm.test.ts`
-  pins the rule against the real engine per kind and owner.
+  `onBlocksChange`). Each row carries `requires`
+  (`'band' | 'flow' | null`), read off `canvas/dnd`'s `requiredOwner` — the
+  home for which owner a WIRE TYPE needs, whose insert-menu counterpart over
+  `InsertKind` is `flowPlacement`'s `requiresFlow` — and `refuses`
+  (`'cell' | null`), read off `insert/blockRefusal`. Either answer lets the
+  menubar disable the row wherever the resolved target (`insertTargetOwner`)
+  is that owner: the engine skips the item there and nothing draws.
+  `hooks/useBlocks` re-checks BOTH against the same owner at insert time,
+  since a disabled row is a UI state and the two can disagree if the selection
+  moves between the menu being built and the row being clicked;
+  `integration/wasm.test.ts` pins the rule against the real engine per kind
+  and owner, and pins the wrapped-table case with a band control.
+- `insert/blockRefusal.ts` — `blockRefusedOwner(value)`, the whole-BLOCK
+  counterpart of `canvas/dnd`'s per-TYPE `refusedOwner`, and the only part of
+  the block feature that walks a node tree (split out of `blockModel`, which
+  had reached 149 of its 150 executable lines). It walks the block's `items`
+  CHAIN, because a cell's refusal travels down it, and deliberately does NOT
+  descend into the block's own `cell:`/`item:`/`columns[]` sub-templates,
+  where a table is already dead wherever the block lands — refusing there
+  would leave a saved block insertable nowhere and would state a reason no
+  target fixes. Of the three, only `cell:` and `item:` can ever decide an
+  answer: `columns[]` exists solely on a `table` the walk has already refused
+  by type. The refusal it feeds is of the WHOLE block and is therefore WIDER
+  than the engine's, which drops only the table and still draws the container
+  and the siblings beside it (measured); the CHANGELOG says so, because it is
+  a capability the gate withdraws. Bounded over untrusted host storage — the
+  `blocks` prop is host-supplied and the Designer does not sanitize it
+  (`sanitizeBlocks` is a HOST export), and the walk re-runs on every menubar
+  render: depth 24 as a backstop (`MAX_SNIPPET_DEPTH` is 16, so it cannot fire
+  on a sanitized block) and 256 NODES as the working bound, which is the one
+  that matters because the walk re-reads per node and a shared-reference graph
+  re-expands.
 - `insert/BlockDialog.tsx` / `insert/BlockManageDialog.tsx` — the
   save-as-block naming modal (IME-guarded Enter) and the manage modal
   (two-step per-row delete).
