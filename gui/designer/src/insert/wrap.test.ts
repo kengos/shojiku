@@ -288,10 +288,15 @@ describe('wrapInContainerOps — the item keeps its place on the page', () => {
   });
 
   it('leaves a line whose y is not a number on both ends as authored', () => {
-    const percent = '{ type: line, from: { x: 0, y: "90%" }, to: { x: 100, y: 700 } }';
+    // A `%` `y` is NOT in this list: it is refused, in the `%` height suite
+    // below ('refuses a line whose endpoint y is a percentage'). What is left
+    // here are the endpoints a container's `y` genuinely cannot be derived
+    // from — a `Length` string with no number to take, an anchor resolved after
+    // layout, and a missing endpoint.
+    const millimetres = '{ type: line, from: { x: 0, y: 90mm }, to: { x: 100, y: 700 } }';
     const anchored = '{ type: line, from: { item: a }, to: { x: 100, y: 700 } }';
     const endless = '{ type: line, to: { x: 100, y: 700 } }';
-    for (const line of [percent, anchored, endless]) {
+    for (const line of [millimetres, anchored, endless]) {
       const container = wrapped(footer(line), 'sections.footer.items[0]') as { box: unknown };
       expect(container.box, line).toEqual({ direction: 'column' });
     }
@@ -334,5 +339,208 @@ describe('wrapInContainerOps — the item keeps its place on the page', () => {
     const ops = wrapInContainerOps(read, 'sections.body.items[0]');
     const insert = ops?.[0] as unknown as { value: { box: unknown } };
     expect(insert.value.box).toEqual({ direction: 'column' });
+  });
+});
+
+describe('wrapInContainerOps — a percentage height keeps its basis', () => {
+  // A new container is always auto-height, so a `%` height left on the item has
+  // nothing to resolve against: the engine drops it with `percent_of_auto` and
+  // a `rect` is not drawn at all. The container takes the height and the item
+  // takes the container. Measured against the real engine in
+  // `integration/wasm.test.ts` ('wraps an item in a container without moving it
+  // on the page, in every owner').
+
+  it('moves a percentage h onto the container and fills it with the item', () => {
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { x: 10, y: 700, w: 50, h: "10%" } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', x: 10, y: 700, h: '10%' },
+      items: [{ type: 'rect', box: { w: 50, h: '100%' } }],
+    });
+  });
+
+  it('moves the height bounds with it, so the clamp still has its basis', () => {
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { y: 700, w: 50, h: 20, minHeight: "10%" } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700, h: 20, minHeight: '10%' },
+      items: [{ type: 'rect', box: { w: 50, h: '100%' } }],
+    });
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { y: 700, w: 50, h: 300, maxHeight: "10%" } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700, h: 300, maxHeight: '10%' },
+      items: [{ type: 'rect', box: { w: 50, h: '100%' } }],
+    });
+  });
+
+  it('moves the margin too, so the item does not overflow its own container', () => {
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { y: 700, w: 50, h: "10%", margin: { top: 8, bottom: 4 } } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700, h: '10%', margin: { top: 8, bottom: 4 } },
+      items: [{ type: 'rect', box: { w: 50, h: '100%' } }],
+    });
+  });
+
+  it('leaves padding on the item, which insets content inside the same border box', () => {
+    expect(
+      wrapped(
+        footer('{ type: text, text: hi, box: { y: 700, h: "10%", padding: 4 } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700, h: '10%' },
+      items: [{ type: 'text', text: 'hi', box: { h: '100%', padding: 4 } }],
+    });
+  });
+
+  it('reads a percentage the way the engine does — trimmed, suffixed `%`', () => {
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { y: 700, w: 50, h: " 10% " } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700, h: ' 10% ' },
+      items: [{ type: 'rect', box: { w: 50, h: '100%' } }],
+    });
+  });
+
+  it('leaves the height alone when no vertical size key is a percentage', () => {
+    // The negative control for the whole feature: a pt height, a `%` in a key
+    // that resolves against the WIDTH, and a `Length` that is not a `%`.
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { x: 10, y: 700, w: "50%", h: 20, minWidth: "10%" } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', x: 10, y: 700 },
+      items: [{ type: 'rect', box: { w: '50%', h: 20, minWidth: '10%' } }],
+    });
+    expect(
+      wrapped(footer('{ type: rect, box: { y: 700, w: 50, h: 5mm } }'), 'sections.footer.items[0]'),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700 },
+      items: [{ type: 'rect', box: { w: 50, h: '5mm' } }],
+    });
+  });
+
+  it("leaves an anchored ellipse's percentage height on it, where nothing reads it", () => {
+    expect(
+      wrapped(
+        footer('{ type: ellipse, anchor: a, box: { h: "10%", w: 20 } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column' },
+      items: [{ type: 'ellipse', anchor: 'a', box: { h: '10%', w: 20 } }],
+    });
+  });
+});
+
+describe('isWrappable — the percentage heights that cannot be carried', () => {
+  // These have no re-authoring that preserves them, so the wrap is not offered
+  // at all — the same silent treatment `page_number` and `repeat` already get.
+
+  it('refuses a percentage height bound with no height to move it onto', () => {
+    for (const bound of ['minHeight', 'maxHeight']) {
+      const node = { type: 'rect', box: { w: 50, [bound]: '10%' } };
+      expect(isWrappable('sections.footer.items[0]', node), bound).toBe(false);
+      expect(
+        wrapInContainerOps(() => node, 'sections.footer.items[0]'),
+        bound,
+      ).toBeNull();
+    }
+  });
+
+  it('refuses a bound whose h is authored with no value at all', () => {
+    // `h:` with nothing after it reads as `null`, which is not `undefined` — and
+    // a `null` height carries a `%` bound no better than a missing one.
+    const source = [
+      'sections:',
+      '  footer:',
+      '    repeat: every_page',
+      '    items:',
+      '      - type: rect',
+      '        box:',
+      '          h:',
+      '          minHeight: "10%"',
+      '',
+    ].join('\n');
+    const editor = Editor.create(source);
+    const path = 'sections.footer.items[0]';
+    expect(isWrappable(path, editor.read(path))).toBe(false);
+    expect(wrapInContainerOps((p) => editor.read(p), path)).toBeNull();
+  });
+
+  it('accepts the same bound once an h is authored to carry it', () => {
+    for (const bound of ['minHeight', 'maxHeight']) {
+      const node = { type: 'rect', box: { w: 50, h: 20, [bound]: '10%' } };
+      expect(isWrappable('sections.footer.items[0]', node), bound).toBe(true);
+    }
+  });
+
+  it('refuses a line whose endpoint y is a percentage', () => {
+    const ends = [
+      { from: { x: 0, y: '90%' }, to: { x: 100, y: 700 } },
+      { from: { x: 0, y: 700 }, to: { x: 100, y: '90%' } },
+    ];
+    for (const [n, end] of ends.entries()) {
+      const node = { type: 'line', ...end };
+      expect(isWrappable('sections.footer.items[0]', node), `end ${n}`).toBe(false);
+      expect(
+        wrapInContainerOps(() => node, 'sections.footer.items[0]'),
+        `end ${n}`,
+      ).toBeNull();
+    }
+  });
+
+  it('survives shapes the wire would refuse anyway, without throwing', () => {
+    const cases: [string, unknown][] = [
+      ['h is not a length', { type: 'rect', box: { h: { nested: true } } }],
+      ['h is a number', { type: 'rect', box: { h: 20 } }],
+      ['box is not a map', { type: 'rect', box: 'broken' }],
+      ['line endpoints are not maps', { type: 'line', from: 'a', to: 7 }],
+      ['line has no endpoints', { type: 'line' }],
+      ['an absurd percentage', { type: 'rect', box: { h: '1e309%' } }],
+    ];
+    for (const [name, node] of cases) {
+      expect(() => isWrappable('sections.footer.items[0]', node), name).not.toThrow();
+    }
+    // The absurd magnitude still wraps. `"1e309"` parses to infinity, which
+    // `finite()` refuses at PARSE (`engine/core/src/length.rs` names this exact
+    // string), so the document never renders — the wrap only has to move it
+    // verbatim. Not `MAX_RESOLVED_PT`, which is a layout-time clamp and only
+    // ever sees values that already parsed finite.
+    expect(
+      wrapped(footer('{ type: rect, box: { h: "1e309%" } }'), 'sections.footer.items[0]'),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', h: '1e309%' },
+      items: [{ type: 'rect', box: { h: '100%' } }],
+    });
   });
 });

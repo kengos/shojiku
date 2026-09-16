@@ -1294,6 +1294,95 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
         '{}',
       ],
       [
+        'footer rect in percent height',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: rect, box: { y: 700, w: 50, h: "10%" } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        'footer rect in percent height, offset',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: rect, box: { x: 20, y: 700, w: 50, h: "10%" } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        'footer rect with a percent minHeight',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: rect, box: { y: 700, w: 50, h: 20, minHeight: "10%" } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        'footer rect with a percent maxHeight',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: rect, box: { y: 700, w: 50, h: 300, maxHeight: "10%" } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        'percent height with vertical margins, in the flow body',
+        doc(
+          flowBody([
+            '      - { type: rect, box: { w: 50, h: "10%", margin: { top: 8, bottom: 4 } } }',
+            '      - { type: text, text: after }',
+          ]),
+        ),
+        'sections.body.items[0]',
+        '{}',
+      ],
+      [
+        'percent height with a horizontal margin, in a band',
+        doc(
+          ['    type: flow', '    items: []'],
+          [
+            '      - { type: rect, box: { y: 700, w: 50, h: "10%", margin: { left: 12, right: 6 } } }',
+            '      - { type: text, text: beside, box: { x: 300, y: 700 } }',
+          ],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        'percent height under a row container, which stretches its children',
+        doc(
+          flowBody([
+            '      - type: container',
+            '        box: { direction: row, h: 200 }',
+            '        items:',
+            '          - { type: rect, box: { w: 50, h: "10%" } }',
+            '          - { type: text, text: beside }',
+          ]),
+        ),
+        'sections.body.items[0].items[0]',
+        '{}',
+      ],
+      [
+        'percent height in a repeat cell',
+        doc(
+          flowBody([
+            '      - type: repeat',
+            '        data: { key: rows }',
+            '        cell:',
+            '          box: { h: 40 }',
+            '          items:',
+            '            - { type: rect, box: { x: 30, w: 50, h: "10%" } }',
+            '            - { type: text, text: beside, box: { x: 200 } }',
+          ]),
+        ),
+        'sections.body.items[0].cell.items[0]',
+        '{"rows":[{},{}]}',
+      ],
+      [
         'footer rect without size (codes only)',
         doc(
           ['    type: flow', '    items: []'],
@@ -1352,6 +1441,93 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
         expect(again[n]?.border.x, `${owner} ${sibling.path} x`).toBeCloseTo(sibling.border.x, 2);
         expect(again[n]?.border.y, `${owner} ${sibling.path} y`).toBeCloseTo(sibling.border.y, 2);
       });
+    }
+  });
+
+  it('refuses the percentage heights a container cannot carry, and they would break', async () => {
+    // The refusal is EARNED, not defensive: each shape below renders cleanly as
+    // authored, and the wrap the old code would have produced — the item moved
+    // into an auto-height container verbatim — makes the engine drop the value
+    // with `percent_of_auto`. So the missing affordance is the only honest
+    // answer, not a case that was fine.
+    const doc = (items: string[]) =>
+      [
+        'version: 0.1.0',
+        'page: { size: A4, margin: 25 }',
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items: []',
+        '  footer:',
+        '    repeat: every_page',
+        '    items:',
+        ...items,
+        '',
+      ].join('\n');
+    // `wrapped` is the wrap being withheld, written out by hand: the container's
+    // own box, then the item inside it. The bound cases carry TWO — the naive
+    // wrap that leaves the bound on the item, and the composition the height
+    // path would use if the shape were allowed (the bound MOVED, the item given
+    // `h: "100%"`). The second is what the refusal's stated reason rules out, so
+    // it is the one that has to be shown breaking.
+    const cases: [string, string, [string, string][]][] = [
+      [
+        'percent minHeight with no h',
+        '      - { type: rect, box: { y: 700, w: 50, minHeight: "10%" } }',
+        [
+          ['direction: column, y: 700', '{ type: rect, box: { w: 50, minHeight: "10%" } }'],
+          [
+            'direction: column, y: 700, minHeight: "10%"',
+            '{ type: rect, box: { w: 50, h: "100%" } }',
+          ],
+        ],
+      ],
+      [
+        'percent maxHeight with no h',
+        '      - { type: rect, box: { y: 700, w: 50, maxHeight: "10%" } }',
+        [
+          ['direction: column, y: 700', '{ type: rect, box: { w: 50, maxHeight: "10%" } }'],
+          [
+            'direction: column, y: 700, maxHeight: "10%"',
+            '{ type: rect, box: { w: 50, h: "100%" } }',
+          ],
+        ],
+      ],
+      [
+        'a line endpoint in percent',
+        '      - { type: line, from: { x: 0, y: "50%" }, to: { x: 90, y: "50%" } }',
+        [
+          [
+            'direction: column, y: 700',
+            '{ type: line, from: { x: 0, y: "50%" }, to: { x: 90, y: "50%" } }',
+          ],
+        ],
+      ],
+    ];
+    for (const [name, authored, withheld] of cases) {
+      const source = doc([authored]);
+      const editor = Editor.create(source);
+      expect(
+        wrapInContainerOps((at) => editor.read(at), 'sections.footer.items[0]'),
+        name,
+      ).toBeNull();
+      const asAuthored = await transport.renderRaw(source, '{}', undefined, { scale: 2 });
+      const codes = asAuthored.diagnostics.items.map((d) => d.code);
+      expect(codes, name).not.toContain('parse_error');
+      expect(codes, name).not.toContain('percent_of_auto');
+      for (const [containerBox, inner] of withheld) {
+        const wrapped = doc([
+          '      - type: container',
+          `        box: { ${containerBox} }`,
+          '        items:',
+          `          - ${inner}`,
+        ]);
+        const broken = await transport.renderRaw(wrapped, '{}', undefined, { scale: 2 });
+        const brokenCodes = broken.diagnostics.items.map((d) => d.code);
+        const where = `${name} / ${containerBox}`;
+        expect(brokenCodes, where).not.toContain('parse_error');
+        expect(brokenCodes, where).toContain('percent_of_auto');
+      }
     }
   });
 

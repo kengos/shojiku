@@ -300,6 +300,25 @@ result LANDS:
   `REQUIRED_BOX_WIRE_TYPES` type (`rect`, where it is a required wire key); an
   anchored `ellipse` keeps its keys; a `line` outside the flow body gives the
   container its topmost numeric endpoint `y` and shifts both endpoints by it.
+  `heightAxis(node)` decides the HEIGHT axis, and `isWrappable` reads the same
+  answer: a new container is ALWAYS auto-height, so a `%` in
+  `h`/`minHeight`/`maxHeight` left on the item resolves against nothing
+  (`percent_of_auto`, and a sizeless `rect` is not drawn at all). `move` sends
+  those three plus `margin` onto the container and rewrites the item's `h` to
+  `"100%"`, so the item takes the container's content box — which is the item's
+  old border box, the container having no padding of its own. `refuse`
+  withholds the wrap entirely, for the two shapes no re-authoring preserves IN
+  EVERY OWNER: a `%` `minHeight`/`maxHeight` with NO `h` (nothing to move onto —
+  a container carrying only a bound is still auto-height), and a `line` endpoint
+  `y` in `%` (no box to carry it; giving the container a full-height box instead
+  pushes the following siblings down wherever the owner STACKS them — measured
+  off the page in a flowing body and 200pt down in a column container). Both
+  refusals are OWNER-INDEPENDENT and deliberately wider than the break: in a
+  band, a cell, or a `row` container (which hands its children a cross-axis
+  height) both shapes DO survive a wrap today, but `isWrappable(path, node)` is
+  handed the path and the node and never the owner, so it cannot tell those
+  owners apart. `%` is spelled as
+  `parse_length_text` spells it: a string that, trimmed, ends in `%`.
 - `insert/blockModel.ts` — pure reusable-block model: `SavedBlock` (a
   named `SnippetValue`), `blockFromNode`/`validateBlockName`/
   `addBlock`/`removeBlock` (caps, fresh ids), `sanitizeBlocks` (the
