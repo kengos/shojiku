@@ -236,6 +236,22 @@ platform binaries.
 
 ### Fixed
 
+- **Group into a container no longer resizes an item whose height is a
+  percentage.** A height written as a percentage is a share of whatever holds
+  the item, and a new container is only as tall as what is inside it — so once
+  the item was inside one, its height had nothing left to be a share of. The
+  engine dropped it and warned; a rectangle, which needs a height to exist at
+  all, stopped being drawn. The container now takes the percentage height, its
+  minimum and maximum heights and its margin, and the item fills the container,
+  so it keeps the size it had. Two shapes cannot be preserved this way wherever
+  the item sits — a minimum or maximum height in percent with no height of its
+  own to carry it, and a line with an end written as a percentage — and Group
+  into a container is no longer offered for those, the way it already stands
+  down for a page number. Inside a side-by-side container, and in a header,
+  footer or table cell, those two did survive being grouped; they are refused
+  there too, because the check is given the item and not what holds it, and
+  offering the command only sometimes would be worse than not offering it.
+
 - **Group into a container no longer moves the item.** The new container
   started at the corner of whatever held the item, so in a header, a footer or a
   fixed-position body its outline and handles sat at the top of the page, away

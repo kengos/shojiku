@@ -47,6 +47,20 @@ describe('contextMenuRows', () => {
     expect(kinds({ node: undefined })).toEqual(['duplicate', 'delete']);
   });
 
+  it('offers no wrap row for a percentage height the wrap cannot carry', () => {
+    // A `%` `minHeight` with no `h` has nothing to move onto the container, and
+    // a line's `%` endpoint `y` has no box at all — so the row stands down
+    // rather than offering an edit that would stop the item being drawn.
+    const bounded = { type: 'rect', box: { w: 50, minHeight: '10%' } };
+    const percentLine = { type: 'line', from: { x: 0, y: '90%' }, to: { x: 100, y: 700 } };
+    expect(kinds({ node: bounded })).not.toContain('wrap');
+    expect(kinds({ node: percentLine })).not.toContain('wrap');
+    // The control: the same box with an `h` to carry the bound keeps its row.
+    expect(kinds({ node: { type: 'rect', box: { w: 50, h: 20, minHeight: '10%' } } })).toContain(
+      'wrap',
+    );
+  });
+
   it('offers no wrap row for a kind a container would skip', () => {
     for (const type of ['page_number', 'page_break', 'repeat', 'repeat_flow']) {
       expect(kinds({ node: { type }, path: 'sections.footer.items[0]' }), type).not.toContain(

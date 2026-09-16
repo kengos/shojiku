@@ -255,6 +255,52 @@ describe('Designer container insert + marks', () => {
     expect(screen.getByText('Group into a container')).toBeTruthy();
   });
 
+  it('withholds both wrap affordances from a percentage height the wrap cannot carry', () => {
+    // Both entry points into the same gate: the Layout tab's button
+    // (shell/PanelColumn passes `onWrap` only when the selection is wrappable,
+    // and an absent handler renders no button) and the right-click row
+    // (shell/contextMenuRows). A `%` `minHeight` with no `h` has nothing to
+    // move onto the container.
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    repeat: every_page',
+      '    items:',
+      '      - { type: text, text: bounded, box: { x: 0, y: 700, minHeight: "10%" } }',
+      '      - { type: text, text: plain, box: { x: 0, y: 740 } }',
+      '',
+    ].join('\n');
+    draw(makeTransport(), { source });
+    // The right-click row first, while nothing is selected: once an item IS
+    // selected the panel breadcrumb carries its text too, and the tree row
+    // stops being the only button by that name.
+    fireEvent.contextMenu(screen.getByRole('button', { name: /bounded/ }), {
+      clientX: 5,
+      clientY: 5,
+    });
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Group into a container' })).toBeNull();
+    // The right-click also selected the row, so the panel is already on it.
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    // The tab did render the item's box fields, so the absence is the gate.
+    expect(screen.getByLabelText('Width')).toBeTruthy();
+    expect(screen.queryByText('Group into a container')).toBeNull();
+    // The control: the sibling with no percentage bound keeps both. Its row is
+    // still the only button by that name — the breadcrumb carries `bounded`.
+    fireEvent.contextMenu(screen.getByRole('button', { name: /plain/ }), {
+      clientX: 5,
+      clientY: 5,
+    });
+    expect(screen.getByRole('menuitem', { name: 'Group into a container' })).toBeTruthy();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    expect(screen.getByText('Group into a container')).toBeTruthy();
+  });
+
   it('offers no wrap on a malformed (non-map) entry', () => {
     // The scalar entry still gets a tree row (indices stay true), and its path
     // IS an items-list entry — but there is no map to re-author, so the menu

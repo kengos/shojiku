@@ -149,8 +149,13 @@ shrink confirms first; picking while an untouched placeholder slot is
 selected replaces that slot in place, previewed in the picker; a
 right-click wrap-in-container — also a keyboard-reachable placement-tab
 action — wraps a single item in a new column container that takes the
-item's position and its share of a row or grid, so the item keeps its place
-on the page; never offered for a kind a container skips) —
+item's position, its share of a row or grid, and the height keys a percentage
+would strand (`h`, `minHeight`, `maxHeight` and `margin`, with the item then
+filling the container), so the item keeps both its place on the page and its
+size; never offered for a kind a container skips, nor for the two percentage
+shapes no re-authoring preserves in every owner — a percentage
+`minHeight`/`maxHeight` with no `h` to carry it, and a line with a percentage
+endpoint) —
 into the selected container or after the
 selected item; a blank body shows guidance with an insert CTA; a single
 selected node can be SAVED as a named **reusable block** — the serialized
