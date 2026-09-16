@@ -409,6 +409,7 @@ export const zhTw: LanguageCatalog = {
     'insert.manageBlock': '管理可重複使用區塊…',
     'insert.block.flowOnly': '只能直接放在流式排列的內文中',
     'insert.block.bandOnly': '只能直接放在頁首或頁尾中',
+    'insert.block.notInCell': '不能放在 repeat、卡片或表格儲存格中',
     'contextMenu.saveBlock': '儲存為可重複使用區塊…',
     'block.title': '儲存為可重複使用區塊',
     'block.hint': '將選取的元素加入區塊庫，可隨時從插入選單插入。',

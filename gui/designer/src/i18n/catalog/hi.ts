@@ -238,6 +238,7 @@ export const hi: LanguageCatalog = {
     'insert.manageBlock': 'पुन: प्रयोज्य ब्लॉक प्रबंधित करें…',
     'insert.block.flowOnly': 'केवल फ़्लो वाले मुख्य भाग में सीधे रखा जा सकता है',
     'insert.block.bandOnly': 'केवल शीर्ष लेख या पाद लेख में सीधे रखा जा सकता है',
+    'insert.block.notInCell': 'repeat, कार्ड या तालिका सेल के अंदर नहीं',
     'contextMenu.saveBlock': 'पुन: प्रयोज्य ब्लॉक के रूप में सहेजें…',
     'block.title': 'पुन: प्रयोज्य ब्लॉक के रूप में सहेजें',
     'block.hint': 'चयनित तत्व को अपनी ब्लॉक लाइब्रेरी में जोड़ें — इसे Insert मेनू से कभी भी डालें।',

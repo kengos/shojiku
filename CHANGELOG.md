@@ -236,6 +236,30 @@ platform binaries.
 
 ### Fixed
 
+- **A saved block that carries a table is no longer offered inside a repeating
+  cell.** The engine does not draw a table inside a repeat's cell, a card or a
+  table cell yet — it skips the table and warns — and inserting a saved block
+  was how one got there: the row looked like any other, the block landed, and
+  the table simply did not appear. That row now shows the reason and does
+  nothing, the way it already stands down for a page number outside a header or
+  footer, and clicking it while the selection moves is refused a second time.
+
+  The block is looked into, so a table wrapped in a container is refused as
+  well — **and the refusal is of the whole block, which is wider than the
+  engine's**. Grouped with other items, a table used to be the only thing
+  missing: the container and everything beside it drew. Those now do not
+  arrive either. That is the trade: a block that lands half-drawn is the
+  failure this exists to prevent, and it cannot be stated as a reason on the
+  row without also being true of the insert.
+
+  Nothing else about a table changes: inside a container in a header, a footer
+  or an ordinary body it still draws, and that is still offered. Dragging a
+  table into a cell, pasting one and placing one from the data panel were never
+  possible and still are not. Three cases are deliberately left alone — a block
+  whose own repeat cell, card or table cell holds a table, and a block whose
+  container holds a page number. None of those draws wherever it lands, so
+  refusing them would leave a block you had saved insertable nowhere at all.
+
 - **Group into a container no longer resizes an item whose height is a
   percentage.** A height written as a percentage is a share of whatever holds
   the item, and a new container is only as tall as what is inside it — so once

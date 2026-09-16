@@ -444,8 +444,10 @@ lists name the destructured stable fields, never `editor` itself.
   host-owned app-global list; pure `insert/blockModel`; `insertBlock` is
   a plain `insertItem` (AI parity), band-placed only when the target is a
   band directly (`placeForTarget`), refused when the block's node
-  does not fit the resolved target's owner (`typeFitsOwner` ×
-  `insertTargetOwner`).
+  does not fit the resolved target's owner, or when that owner refuses
+  something the block carries (`typeFitsOwner` / `insert/blockRefusal`'s
+  `blockRefusedOwner` × `insertTargetOwner`) — the second refusal is of the
+  WHOLE block, wider than the engine's per-item skip.
 - `hooks/useSelectionOps.ts` — `deleteAt`/`duplicateAt` (PATH-scoped: the
   right-click menu acts on the path it was opened at, never on whatever
   the selection has become), `deleteSelected`/`duplicateSelected` as the

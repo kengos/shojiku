@@ -1,7 +1,14 @@
 import type { ReadFn } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
 import type { PlacedBox } from '../engine/types';
-import { receiverFor, reorderContext, requiredOwner, siblingRects, typeFitsOwner } from './dnd';
+import {
+  receiverFor,
+  refusedOwner,
+  reorderContext,
+  requiredOwner,
+  siblingRects,
+  typeFitsOwner,
+} from './dnd';
 
 /** A read function over a flat path → materialized-value table. */
 function readOf(doc: Record<string, unknown>): ReadFn {
@@ -216,26 +223,56 @@ describe('requiredOwner', () => {
   });
 });
 
+describe('refusedOwner', () => {
+  it('names the cell as the one owner a table does not lay out in', () => {
+    expect(refusedOwner('table')).toBe('cell');
+  });
+
+  it('refuses nothing else, including hostile and typeless values', () => {
+    // The mirror of `requiredOwner`'s own sweep: a block restored from storage
+    // carries whatever storage held.
+    for (const type of ['text', 'page_number', 'repeat', '__proto__', undefined, null, 7, {}, []]) {
+      expect(refusedOwner(type)).toBeNull();
+    }
+  });
+});
+
+// The five owners, so a sweep that adds one does not silently keep testing four.
+const OWNERS = ['flow', 'absoluteBody', 'band', 'container', 'cell'] as const;
+
 describe('typeFitsOwner', () => {
   it('lets a page_number lay out only in a band', () => {
     expect(typeFitsOwner('page_number', 'band')).toBe(true);
-    for (const owner of ['flow', 'absoluteBody', 'container'] as const) {
-      expect(typeFitsOwner('page_number', owner)).toBe(false);
+    for (const owner of OWNERS.filter((o) => o !== 'band')) {
+      expect(typeFitsOwner('page_number', owner), owner).toBe(false);
     }
   });
 
   it('lets the flow-only kinds lay out only in the flow body', () => {
     for (const type of ['repeat', 'repeat_flow', 'page_break']) {
       expect(typeFitsOwner(type, 'flow')).toBe(true);
-      for (const owner of ['band', 'absoluteBody', 'container'] as const) {
-        expect(typeFitsOwner(type, owner)).toBe(false);
+      for (const owner of OWNERS.filter((o) => o !== 'flow')) {
+        expect(typeFitsOwner(type, owner), `${type} in ${owner}`).toBe(false);
       }
     }
   });
 
+  it('lets a table lay out everywhere EXCEPT a cell', () => {
+    // The engine renders a table as a bounded block in a container, a band and
+    // an absolute body, and warn-and-skips it under any data-scoped cell
+    // (`table_in_cell`) — the one rule shaped as a refusal rather than a
+    // requirement.
+    expect(typeFitsOwner('table', 'cell')).toBe(false);
+    for (const owner of OWNERS.filter((o) => o !== 'cell')) {
+      expect(typeFitsOwner('table', owner), owner).toBe(true);
+    }
+  });
+
   it('fits an unrestricted, typeless or malformed item anywhere', () => {
-    for (const type of ['text', 'table', undefined, 7, null]) {
-      expect(typeFitsOwner(type, 'container')).toBe(true);
+    for (const type of ['text', 'rect', undefined, 7, null]) {
+      for (const owner of OWNERS) {
+        expect(typeFitsOwner(type, owner), `${String(type)} in ${owner}`).toBe(true);
+      }
     }
   });
 });

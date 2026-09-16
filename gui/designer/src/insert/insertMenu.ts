@@ -36,14 +36,18 @@ export type MenuEntry =
   | { readonly kind: 'saveBlock'; readonly labelKey: string }
   // `requires` = the one owner kind the saved node's type lays out in
   // (`canvas/dnd`'s `requiredOwner`: the band for a page number, the flow body
-  // for repeat/repeat_flow/page_break), or null when it lays out anywhere. The
-  // row is disabled with that reason wherever the insert target is another
+  // for repeat/repeat_flow/page_break), or null when it lays out anywhere.
+  // `refuses` = the one owner kind that will not hold it (`blockRefusedOwner`:
+  // a `cell`, for a block carrying a table anywhere down its `items` chain
+  // within that walk's own depth cap), or null when none does. The row is
+  // disabled with the matching reason wherever the insert target is such an
   // owner, because the engine skips the item there and nothing draws.
   | {
       readonly kind: 'block';
       readonly blockId: string;
       readonly name: string;
       readonly requires: 'band' | 'flow' | null;
+      readonly refuses: 'cell' | null;
     }
   | { readonly kind: 'manageBlock'; readonly labelKey: string }
   // A repeating band: create it if the document lacks it, select it either

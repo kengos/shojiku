@@ -75,21 +75,41 @@ describe('insertTargetOwner', () => {
     expect(insertTargetOwner(read, 'sections.footer.items[0].items')).toBe('container');
   });
 
+  it('names every repeating sub-template a cell, at any depth', () => {
+    // The engine scopes a repeat cell, a repeat_flow card and a table column's
+    // `cell:` to their bound element and never clears that scope on the way
+    // into a nested container, so the list one container down is as much a
+    // cell as the cell's own `items` — which is why this is decided from the
+    // PATH and not from what the document says the direct owner is.
+    const read = reader({
+      'sections.body.items[0].cell': { items: [] },
+      'sections.body.items[1].item': { items: [] },
+      'sections.body.items[2].columns[0].cell': { items: [] },
+      'sections.body.items[0].cell.items[0]': { type: 'container', items: [] },
+    });
+    expect(insertTargetOwner(read, 'sections.body.items[0].cell.items')).toBe('cell');
+    expect(insertTargetOwner(read, 'sections.body.items[1].item.items')).toBe('cell');
+    expect(insertTargetOwner(read, 'sections.body.items[2].columns[0].cell.items')).toBe('cell');
+    expect(insertTargetOwner(read, 'sections.body.items[0].cell.items[0].items')).toBe('cell');
+    // The sub-template MAP itself, which has no trailing `.items` for the
+    // pattern's own separator to land on.
+    expect(insertTargetOwner(read, 'sections.body.items[0].cell')).toBe('cell');
+  });
+
   it('answers container for every target receiverFor cannot classify (fails closed)', () => {
     const read = reader({
       'sections.body.items[0]': { type: 'container', box: { type: 'grid' }, items: [] },
-      'sections.body.items[1].cell': { items: [] },
-      'sections.body.items[2].item': { items: [] },
       'sections.body': { items: [] },
     });
-    // A grid container, a repeat cell, a repeat_flow card, a typeless body.
+    // A grid container and a typeless body. (A repeat cell and a repeat_flow
+    // card used to land here too; they are their own answer now.)
     expect(insertTargetOwner(read, 'sections.body.items[0].items')).toBe('container');
-    expect(insertTargetOwner(read, 'sections.body.items[1].cell.items')).toBe('container');
-    expect(insertTargetOwner(read, 'sections.body.items[2].item.items')).toBe('container');
     expect(insertTargetOwner(read, 'sections.body.items')).toBe('container');
     // A missing owner, and a path that is not an item list at all.
     expect(insertTargetOwner(reader({}), 'sections.header.items')).toBe('container');
     expect(insertTargetOwner(FLOW, 'sections.body')).toBe('container');
+    // A plain `items` index is NOT a cell: `.items[` must not read as `.item.`.
+    expect(insertTargetOwner(read, 'sections.body.items[0].items')).not.toBe('cell');
   });
 
   it('answers container when the read throws', () => {
@@ -112,6 +132,9 @@ describe('insertTargetBand', () => {
     expect(insertTargetBand(read, 'sections.footer.items')).toBe('footer');
     expect(insertTargetBand(read, 'sections.footer.items[0].items')).toBeNull();
     expect(insertTargetBand(read, 'sections.body.items')).toBeNull();
+    // A cell target is not a band either — the new owner must not reach band
+    // placement, which would write page-margin-box coordinates into a cell.
+    expect(insertTargetBand(read, 'sections.body.items[0].cell.items')).toBeNull();
     const absolute = reader({ 'sections.body': { type: 'absolute', items: [] } });
     expect(insertTargetBand(absolute, 'sections.body.items')).toBeNull();
   });
@@ -132,6 +155,7 @@ describe('isFlowTarget', () => {
   it('refuses every other target path', () => {
     expect(isFlowTarget(FLOW, 'sections.header.items')).toBe(false);
     expect(isFlowTarget(FLOW, 'sections.body.items[0].items')).toBe(false);
+    expect(isFlowTarget(FLOW, 'sections.body.items[0].cell.items')).toBe(false);
   });
 
   it('refuses an absolute body', () => {

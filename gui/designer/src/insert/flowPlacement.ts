@@ -13,7 +13,7 @@
 // into, which is why the row states the reason instead of acting.
 
 import type { ReadFn } from '@shojiku/designer-core';
-import { type OwnerKind, receiverFor } from '../canvas/dnd';
+import { type OwnerKind, receiverFor, SUB_TEMPLATE_RE } from '../canvas/dnd';
 import type { InsertKind } from './insertMenu';
 
 const ITEMS_SUFFIX = '.items';
@@ -27,19 +27,38 @@ export function requiresFlow(kind: InsertKind): boolean {
   return kind === 'pageBreak';
 }
 
-/** The owner kind of the insert target at `path` (an `…items` list), read
- * through the same `receiverFor` a canvas drop uses, so an insert and a drag
- * can never disagree about what a parent is.
+/** The owner kind of the insert target at `path`. OUTSIDE a repeating
+ * sub-template it is an `…items` list read through the same `receiverFor` a
+ * canvas drop uses, so an insert and a drag can never disagree about what a
+ * parent is; inside one, neither half of that mechanism applies — the branch
+ * below answers first, from the path alone, and the path need not be an
+ * `…items` list at all. The two still agree in EFFECT there, by refusing
+ * rather than by classifying: a drag over a cell lands in the body, and an
+ * insert into one is refused for a table.
  *
- * Everything `receiverFor` cannot classify answers `container`: a repeat
- * `cell` or repeat_flow `item` sub-template, a grid container, a body whose
- * `type` is missing or unrecognized, a read that throws (a hostile subtree the
- * materializer refuses), a path that is not an item list. That fails CLOSED —
- * `container` holds neither the band-only nor the flow-only kinds and refuses
- * nothing else — and it is the engine's own classification for sub-template
- * and grid children, which place through the container path and warn
- * `*_in_container`. Nothing is ever read as the flow or a band by default. */
+ * A target ANYWHERE inside a repeating sub-template answers `cell`, decided
+ * from the path before the document is consulted: the engine scopes a `repeat`
+ * cell, a `repeat_flow` card and a table column's `cell:` to their bound
+ * element and carries that scope into every nested container, so the list one
+ * container down is as much a cell as the cell's own `items`. It is strictly
+ * narrower than `container` — the two differ only in that a `cell` also
+ * refuses a `table` (`table_in_cell`).
+ *
+ * Everything else `receiverFor` cannot classify still answers `container`: a
+ * grid container, a body whose `type` is missing or unrecognized, a read that
+ * throws (a hostile subtree the materializer refuses), a path that is not an
+ * item list. That fails CLOSED — `container` holds neither the band-only nor
+ * the flow-only kinds and refuses nothing else — and it is the engine's own
+ * classification for grid children, which place through the container path and
+ * warn `*_in_container`. Nothing is ever read as the flow or a band by
+ * default. */
 export function insertTargetOwner(read: ReadFn, path: string): OwnerKind {
+  // The trailing dot is `receiverFor`'s, for the same reason: a path may END
+  // at the sub-template map itself (`…items[0].cell`), where the pattern's own
+  // trailing separator would otherwise have nothing to match.
+  if (SUB_TEMPLATE_RE.test(`${path}.`)) {
+    return 'cell';
+  }
   if (!path.endsWith(ITEMS_SUFFIX)) {
     return 'container';
   }

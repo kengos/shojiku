@@ -457,6 +457,7 @@ export const en: LanguageCatalog = {
     'insert.manageBlock': 'Manage reusable blocks…',
     'insert.block.flowOnly': 'only directly in a flow body',
     'insert.block.bandOnly': 'only directly in a header or footer',
+    'insert.block.notInCell': 'not inside a repeat, a card or a table cell',
     'contextMenu.saveBlock': 'Save as reusable block…',
     'block.title': 'Save as reusable block',
     'block.hint':

@@ -232,7 +232,7 @@ describe('buildMenubar', () => {
         labelKey: 'insert.group.reuseBlock',
         entries: [
           { kind: 'saveBlock', labelKey: 'insert.saveBlock' },
-          { kind: 'block', blockId: 'block-1', name: '社判＋住所', requires: null },
+          { kind: 'block', blockId: 'block-1', name: '社判＋住所', requires: null, refuses: null },
           { kind: 'manageBlock', labelKey: 'insert.manageBlock' },
         ],
       },
@@ -265,13 +265,13 @@ describe('buildMenubar', () => {
       {
         labelKey: 'insert.group.reuseBlock',
         entries: [
-          { kind: 'block', blockId: 'flow', name: '明細ブロック', requires: 'flow' },
-          { kind: 'block', blockId: 'band', name: '頁番号', requires: 'band' },
-          { kind: 'block', blockId: 'any', name: '社判', requires: null },
+          { kind: 'block', blockId: 'flow', name: '明細ブロック', requires: 'flow', refuses: null },
+          { kind: 'block', blockId: 'band', name: '頁番号', requires: 'band', refuses: null },
+          { kind: 'block', blockId: 'any', name: '社判', requires: null, refuses: null },
         ],
       },
     ] as const;
-    const owners = ['flow', 'absoluteBody', 'band', 'container'] as const;
+    const owners = ['flow', 'absoluteBody', 'band', 'container', 'cell'] as const;
     for (const insertOwner of owners) {
       const onInsertBlock = vi.fn();
       const [flow, band, any] = buildMenubar(
@@ -292,6 +292,60 @@ describe('buildMenubar', () => {
       any.run();
       expect(onInsertBlock).toHaveBeenCalledWith('any');
     }
+  });
+
+  it('gates a saved block on the owner that REFUSES its node, naming the reason', () => {
+    // The mirror of the rule above: a table lays out in every owner but one,
+    // so the row is disabled in that one and ordinary everywhere else.
+    const insert = [
+      {
+        labelKey: 'insert.group.reuseBlock',
+        entries: [
+          { kind: 'block', blockId: 'tbl', name: '明細表', requires: null, refuses: 'cell' },
+          { kind: 'block', blockId: 'any', name: '社判', requires: null, refuses: null },
+        ],
+      },
+    ] as const;
+    for (const insertOwner of ['flow', 'absoluteBody', 'band', 'container', 'cell'] as const) {
+      const onInsertBlock = vi.fn();
+      const [table, any] = buildMenubar(t, baseWiring({ insert, onInsertBlock, insertOwner }))[2]
+        .groups[0];
+
+      expect(table.disabled, `table in ${insertOwner}`).toBe(insertOwner === 'cell');
+      expect(table.label).toBe(
+        insertOwner === 'cell' ? '明細表 — insert.block.notInCell' : '明細表',
+      );
+      // The control: an unrefused node is an ordinary row in every owner,
+      // including the cell — so the refusal above is about the node.
+      expect(any.disabled, `unrefused in ${insertOwner}`).toBe(false);
+      any.run();
+      expect(onInsertBlock).toHaveBeenCalledWith('any');
+    }
+  });
+
+  it('states the REQUIRED owner first when a malformed block carries both rules', () => {
+    // `blockReasonKey`'s precedence. A well-formed block cannot reach this —
+    // every kind `requiredOwner` names takes `cell:`/`item:` or no children at
+    // all, so there is no `items` chain for the refusal to be found down — but
+    // a block comes from host storage, and the comment that says so is only a
+    // claim until a case exercises the arm it describes.
+    const insert = [
+      {
+        labelKey: 'insert.group.reuseBlock',
+        entries: [
+          { kind: 'block', blockId: 'both', name: '壊れ', requires: 'flow', refuses: 'cell' },
+        ],
+      },
+    ] as const;
+    const at = (insertOwner: 'flow' | 'cell' | 'container') =>
+      buildMenubar(t, baseWiring({ insert, insertOwner }))[2].groups[0][0];
+    // In the cell BOTH would fire; the required-owner reason is the one stated.
+    expect(at('cell').label).toBe('壊れ — insert.block.flowOnly');
+    expect(at('cell').disabled).toBe(true);
+    // In the flow the requirement is satisfied and the refusal does not apply.
+    expect(at('flow').label).toBe('壊れ');
+    expect(at('flow').disabled).toBe(false);
+    expect(at('container').label).toBe('壊れ — insert.block.flowOnly');
   });
 
   it('disables the save-block row without a savable selection, naming the reason', () => {
