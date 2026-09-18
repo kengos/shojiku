@@ -3,8 +3,9 @@
 // so the tree stays correct when a render fails. Every node carries the same
 // structural path grammar the box index / diagnostics / palette use, so a
 // tree row, a canvas box, and a diagnostic all address one node through the
-// shared selection. The walk mirrors the palette's binding walk (items /
-// headerGroups + columns + cell.items / cell.items / item.items) and never throws — hostile
+// shared selection. The walk follows the palette's binding walk (items /
+// headerGroups + columns → a column's cell frame / a repeat's cell frame / a
+// repeat_flow's card frame → their items) and never throws — hostile
 // or malformed documents degrade to an empty or truncated view. What the drag
 // and the post-edit selection do with the built tree is `reorder.ts` /
 // `selection.ts`.
@@ -24,7 +25,9 @@ export interface TreeNode {
   readonly path: string;
   /** The wire `type` (`text`/`table`/…), or a structural kind the wire has no
    * type string for: `section:header|body|footer`, `column`, `header_group`,
-   * and `item` for a malformed/typeless entry. Display is localized for known
+   * `cell_frame` / `card_frame` for a sub-template frame (a repeat's or a
+   * column's `cell:`, a repeat_flow's `item:`), and `item` for a
+   * malformed/typeless entry. Display is localized for known
    * kinds; an unknown wire type displays verbatim. */
   readonly kind: string;
   /** Content-derived label (clipped), or `null` → display the kind's name. */
@@ -122,13 +125,13 @@ function itemNode(walk: Walk, path: string, entry: unknown, depth: number): Tree
       children.push(columnNode(walk, `${path}.columns[${index}]`, item.columns[index], depth + 1));
     }
   }
-  const cellItems = record(item.cell)?.items;
-  if (Array.isArray(cellItems)) {
-    children.push(...walkItems(walk, `${path}.cell.items`, cellItems, depth + 1));
+  // The owner's type decides, as it does for the panel (`frameOf`): a `cell:`
+  // under anything but a repeat is not a frame the form would open.
+  if (kind === 'repeat') {
+    children.push(...frameNode(walk, `${path}.cell`, item.cell, 'cell_frame', depth));
   }
-  const cardItems = record(item.item)?.items;
-  if (Array.isArray(cardItems)) {
-    children.push(...walkItems(walk, `${path}.item.items`, cardItems, depth + 1));
+  if (kind === 'repeat_flow') {
+    children.push(...frameNode(walk, `${path}.item`, item.item, 'card_frame', depth));
   }
   const conditional = record(item.visible) !== undefined;
   return conditional
@@ -149,11 +152,30 @@ function columnNode(walk: Walk, path: string, entry: unknown, depth: number): Tr
     return { path, kind: 'column', label: null, children: [] };
   }
   const label = pickLabel(column.label, bindingKey(column.data));
-  const cellItems = record(column.cell)?.items;
-  const children = Array.isArray(cellItems)
-    ? walkItems(walk, `${path}.cell.items`, cellItems, depth + 1)
-    : [];
+  const children = frameNode(walk, `${path}.cell`, column.cell, 'cell_frame', depth);
   return { path, kind: 'column', label, children };
+}
+
+/** The ONE row for a sub-template frame, its fields under it — or nothing when
+ * the owner carries no such map. The frame is a real node the canvas selects
+ * and the panel edits (`FrameForm`), so it gets a row rather than having its
+ * children hoisted into the owner; it has no index, so it is neither a reorder
+ * source nor (a sub-template) a drop receiver. */
+function frameNode(
+  walk: Walk,
+  path: string,
+  value: unknown,
+  kind: 'cell_frame' | 'card_frame',
+  depth: number,
+): TreeNode[] {
+  const frame = record(value);
+  if (frame === undefined || !take(walk)) {
+    return [];
+  }
+  const items = Array.isArray(frame.items) ? frame.items : [];
+  return [
+    { path, kind, label: null, children: walkItems(walk, `${path}.items`, items, depth + 1) },
+  ];
 }
 
 /** Build the outline from template text. `null` when the text does not parse

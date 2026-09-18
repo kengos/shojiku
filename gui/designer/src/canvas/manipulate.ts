@@ -41,6 +41,8 @@ export type Manipulation =
   | { readonly kind: 'fixed'; readonly reason: FixedReason };
 
 const ITEMS_SUFFIX = '.items';
+/** A path that ENDS at a repeat cell or a repeat_flow card frame. */
+const FRAME_END_RE = /\.(?:cell|item)$/;
 
 /** Narrow an untrusted materialized value to a plain object, or `undefined`.
  * The ONE guard every document read in this area goes through — exported for
@@ -81,6 +83,15 @@ export function manipulationFor(read: ReadFn, path: string): Manipulation {
   // Its geometry repeats per data element, so a single box cannot be moved —
   // an edit would affect every instance.
   if (SUB_TEMPLATE_RE.test(path)) {
+    return fixed('repeat');
+  }
+  // A repeat's or a repeat_flow's FRAME itself (`…items[0].cell`,
+  // `…items[0].item`) is drawn once per element too. The pattern above matches a
+  // path running through a `cell`/`item` frame and anything under `columns[` (a
+  // column's own `cell` included), but not these two frames' own paths — so they
+  // fell to `section` below: a chip naming a grid cell a section, over a panel
+  // that then had nothing to offer.
+  if (FRAME_END_RE.test(path)) {
     return fixed('repeat');
   }
   const position = seqPosition(path);

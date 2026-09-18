@@ -109,21 +109,73 @@ describe('buildTree', () => {
       'sections.body.items[4].columns[2]',
     ]);
     expect(table?.children.map((node) => node.kind)).toEqual(['column', 'column', 'column']);
-    expect(table?.children[2]?.children.map((node) => node.path)).toEqual([
+    // Each sub-template's FRAME is its own row — the node the canvas selects and
+    // the frame form edits — with the fields under it.
+    const columnFrame = table?.children[2]?.children[0];
+    expect(columnFrame?.path).toBe('sections.body.items[4].columns[2].cell');
+    expect(columnFrame?.kind).toBe('cell_frame');
+    expect(columnFrame?.children.map((node) => node.path)).toEqual([
       'sections.body.items[4].columns[2].cell.items[0]',
     ]);
-    const repeatFlow = body?.children[5];
-    expect(repeatFlow?.children.map((node) => node.path)).toEqual([
+    const card = body?.children[5]?.children[0];
+    expect(card?.path).toBe('sections.body.items[5].item');
+    expect(card?.kind).toBe('card_frame');
+    expect(card?.children.map((node) => node.path)).toEqual([
       'sections.body.items[5].item.items[0]',
     ]);
-    const repeat = body?.children[6];
-    expect(repeat?.children.map((node) => node.path)).toEqual([
+    const cell = body?.children[6]?.children[0];
+    expect(cell?.path).toBe('sections.body.items[6].cell');
+    expect(cell?.kind).toBe('cell_frame');
+    expect(cell?.children.map((node) => node.path)).toEqual([
       'sections.body.items[6].cell.items[0]',
     ]);
     const container = body?.children[3];
     expect(container?.children.map((node) => node.path)).toEqual([
       'sections.body.items[3].items[0]',
     ]);
+  });
+
+  it('gives a frame its row even with no fields, and none when the key is not a map', () => {
+    const view = buildTree(
+      [
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - type: repeat',
+        '        data: { key: rows }',
+        '        cell: { box: { padding: 8 } }',
+        '      - type: repeat_flow',
+        '        data: { key: rows }',
+        '        item: oops',
+        '',
+      ].join('\n'),
+    );
+    const body = view?.roots.find((root) => root.path === 'sections.body');
+    expect(body?.children[0]?.children).toEqual([
+      { path: 'sections.body.items[0].cell', kind: 'cell_frame', label: null, children: [] },
+    ]);
+    expect(body?.children[1]?.children).toEqual([]);
+  });
+
+  it('gives no frame row to a cell: or item: key under an owner that does not read it', () => {
+    // The panel refuses these (`frameOf`); a tree row would lead to its dead end.
+    const view = buildTree(
+      [
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - type: container',
+        '        cell: { items: [] }',
+        '      - type: repeat',
+        '        item: { items: [] }',
+        '',
+      ].join('\n'),
+    );
+    const body = view?.roots.find((root) => root.path === 'sections.body');
+    expect(body?.children[0]?.children).toEqual([]);
+    expect(body?.children[1]?.children).toEqual([]);
   });
 
   it('labels rows by text content, then binding key, then id, then nothing', () => {
@@ -321,6 +373,30 @@ describe('buildTree', () => {
     ]);
     expect(table?.children.slice(0, 3).map((node) => node.label)).toEqual(['品目', null, null]);
     expect(table?.children[0]?.children).toEqual([]);
+  });
+
+  it('drops a frame row when the node budget runs out at its owner', () => {
+    const filler = Array.from(
+      { length: MAX_TREE_NODES - 2 },
+      () => '      - { type: text, text: row }',
+    ).join('\n');
+    const view = buildTree(
+      [
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        filler,
+        '      - type: repeat',
+        '        data: { key: rows }',
+        '        cell: { items: [] }',
+        '',
+      ].join('\n'),
+    );
+    expect(view?.truncated).toBe(true);
+    const repeat = view?.roots[0]?.children.at(-1);
+    expect(repeat?.kind).toBe('repeat');
+    expect(repeat?.children).toEqual([]);
   });
 
   it('stops mid-headerGroups when the node budget runs out at a table', () => {

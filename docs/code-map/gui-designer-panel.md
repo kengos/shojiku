@@ -804,14 +804,35 @@ presence is not a text binding.
 ## The router + per-item tabs
 
 - `panel/CellPanel.tsx` — the panel for a selection with no `type:` of its
-  own. Neither a table COLUMN, a header GROUP nor a header/footer BAND is
-  an item, but selecting one (a canvas click on a cell, a layer-tree click
-  on a band) hands over its structural path, so this routes to the
-  form for what was actually clicked and falls through to the unsupported
-  card when the path resolves to none of them. A sibling router to
+  own. Neither a table COLUMN, a header GROUP, a header/footer BAND nor a
+  sub-template FRAME (a grid's `cell:`, a card's `item:`, a column's
+  `cell:`) is an item, but selecting one (a canvas click on a cell, a
+  layer-tree click on a band) hands over its structural path, so this
+  routes to the form for what was actually clicked and falls through to
+  the unsupported card when the path resolves to none of them. A sibling router to
   `PropertyPanel`, not a section: the sections all take `ItemPanelProps`,
   and a cell has no `ItemView` to build one from. The BAND arm is tried
   first — an exact two-segment string match, no document read.
+- `panel/frameModel.ts` (pure) — `frameOf(read, path)`: which of the three
+  sub-template frames a path is — `cell` (`…items[n].cell` under a
+  `repeat`), `card` (`…items[n].item` under a `repeat_flow`),
+  `columnCell` (`…columns[n].cell`) — with the owner to jump back to. The
+  owner's TYPE decides, not the key's spelling (a `cell:` under a container
+  is not a frame); non-maps and a throwing read answer `null`.
+- `panel/FrameForm.tsx` — `CellPanel`'s frame arm: a heading by kind, the
+  "every cell/card/row uses this frame" line, a column cell's note (the
+  lines between cells are the table's; `cellPadding` does not reach a
+  container cell), then the ordinary path-generic fields pointed at the
+  frame — `PaddingField`, the fill `PanelColorField`
+  (`style.backgroundColor`), `BorderEditor` (`style.border`) — and the
+  jump back to the owner.
+- `panel/paddingModel.ts` (pure) + `panel/PaddingField.tsx` — ONE
+  all-sides `box.padding` field (the Designer had no padding editor at
+  all). `readPadding` → none / uniform / perSide / other; `paddingOps`
+  takes a bare non-negative numeral (the page margin's uniform ingress
+  rule), removes on empty, refuses a sign, a unit or garbage; ▲▼ by a
+  point, clamped at 0, no op at the floor. A per-side map or an unseedable
+  form shows a line saying a typed number replaces it. Path-generic.
 - `panel/bandModel.ts` (pure) — one section band's two properties:
   `BAND_REPEATS` (the engine's four `Repeat` modes, snake_case, in
   declaration order), `readBandView` (own-property reads; a non-map band,
@@ -828,7 +849,8 @@ presence is not a text binding.
   even the bundled presets that author a band could not change either.
 - `panel/PropertyPanel.tsx` — the thin router: item → `ItemPanel`,
   anything with no `type:` of its own → `CellPanel` (which picks
-  `ColumnForm` / `GroupForm` / the unsupported card),
+  `BandForm` / `ColumnForm` / `GroupForm` / `FrameForm` / the unsupported
+  card),
   none/ghost (`readSubject` null) → `NoSelectionCard`; the origin jump wires through
   Designer's `navigateDefaults`.
 - `panel/NoSelectionCard.tsx` — the panel when the document is the subject
@@ -994,12 +1016,13 @@ presence is not a text binding.
   two guards are this component's whole contract.
 - `panel/IterableSourceSection.tsx` — `repeat_flow`/`repeat`/`list` source
   rebinding (+ a list's per-entry `text:` template): every scaffolded
-  kind stays editable. **Known gap**: the per-element FRAME the cards and
-  the grid scaffold (`item:`/`cell:` — `box.padding` 8, `style.borderWidth`
-  0.5) has no panel surface; the structure pane lists that container's
-  CHILDREN, not the container itself.
+  kind stays editable. For the cards and the grid it also offers the jump
+  INTO the per-element frame (`frame` + `onSelectPath`, computed by
+  `ContentSection` through `frameOf`; none for a `list` or a frame the
+  document does not carry as a map).
 - `panel/ColumnForm.tsx` — the single-column form a canvas click on a
-  `…columns[n]` cell opens: label/binding/format/width (scope via
+  `…columns[n]` cell opens (a `cell:` column adds the jump into its
+  `…cell` frame): label/binding/format/width (scope via
   `bindingScopeFor`), then the column's OWN cell style — the same
   `TableBandFields` at `columns[n].style`, over `cascadeContext(read, path,
   floor)` (a column has a path, so its row band and table come for free), which

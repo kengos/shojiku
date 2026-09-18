@@ -69,6 +69,7 @@ describe('breadcrumbChain', () => {
       'sections.body',
       'sections.body.items[4]',
       'sections.body.items[4].columns[2]',
+      'sections.body.items[4].columns[2].cell',
       'sections.body.items[4].columns[2].cell.items[0]',
     ]);
   });

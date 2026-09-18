@@ -60,7 +60,12 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
 - `tree/model.ts` — pure layer-tree model: `buildTree(text)` → `TreeView`
   (a DOCUMENT walk mirroring the palette walk so node paths ==
   box-index/diagnostic paths; a table's `headerGroups` get leaf nodes
-  ahead of its columns, the order the table draws them; hostile posture:
+  ahead of its columns, the order the table draws them; a sub-template
+  FRAME — a repeat's or a column's `cell:`, a repeat_flow's `item:` — is
+  ONE `cell_frame` / `card_frame` row (`frameNode`) with its fields under
+  it, because the canvas selects the frame and the panel edits it; it has
+  no index, so it is never a reorder source, and `receiverFor` refuses
+  `…cell.` so it is never a drop receiver either; hostile posture:
   never throws, degrades to
   null, depth/node budgets → `truncated`). A node carries `conditional`
   when its item authors a `visible:` binding — the tree never EVALUATES the

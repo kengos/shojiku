@@ -27,6 +27,8 @@ const KIND_LABEL_KEYS: ReadonlyMap<string, string> = new Map(
     'checkbox',
     'column',
     'header_group',
+    'cell_frame',
+    'card_frame',
     'item',
   ].map((kind) => [kind, `tree.type.${kind}`]),
 );

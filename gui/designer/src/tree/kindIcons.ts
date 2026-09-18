@@ -54,6 +54,9 @@ const KIND_ICONS: ReadonlyMap<string, KindIcon> = new Map<string, KindIcon>([
   ['checkbox', IconCheckbox],
   ['column', IconColumn],
   ['header_group', IconHeaderGroup],
+  // A frame IS a container (one per element), so it wears the container mark.
+  ['cell_frame', IconContainer],
+  ['card_frame', IconContainer],
 ]);
 
 /** The two bands' own marks; `body` falls through to the generic section mark,
