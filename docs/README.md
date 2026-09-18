@@ -165,11 +165,13 @@ When a feature ships, its substance moves along this list; the
 *(Internal maintenance note — for contributors and AI agents; readers of
 the docs can ignore this section.)*
 
-Last full doc audit (`shojiku-document-curator`): commit `fa8ee99d`.
-It covered the commits merged since `b243c9ac` (dependency bumps, the
-make/CI gate changes, the gotchas write-backs) plus a reconciliation of
-the changelog's Unreleased section against the whole `v0.1.0..HEAD`
-diff, run as release pre-flight.
+Last full doc audit (`shojiku-document-curator`): commit `7c129096`.
+It covered the commits merged since `fa8ee99d`: every relative link,
+anchor and backticked file name in the doc set checked against the
+tracked tree, the code map checked against the source files added since,
+the stale status and capability phrasings, and the counts the rulebooks
+quote. The generated reference tables, the site's page set and the
+make-target names were left to the gates that already check them.
 
 The previous full pass (`b243c9ac`) mechanically checked, and found
 already true: every one of the 150 codes in the `DiagnosticCode`

@@ -695,7 +695,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **Bytes-first loading (host-injected)**: alongside the filesystem
   loader there is a verified bytes-first path —
   `FontStore::load_from_injected` over `resolve_face_bytes` — where the
-  host (browser/Workers WASM, the future MCP server) fetches each `uses`
+  host (the browser/Workers WASM binding) fetches each `uses`
   pack's manifest and face bytes and injects them. It runs the *same*
   sha256/fsType verification, first-id-wins dedupe, path confinement,
   and locale fallback chain as the filesystem path, so a rendered PNG is

@@ -169,6 +169,10 @@ hostile geometry degrades to null before it can reach an op.
   patches over its own items; jsdom does no hit testing, so the unit suite pins
   that DECLARATION and the BEHAVIOUR is pinned in `gui:e2e`
   (`designer-app/e2e/tests/golden.spec.js` — on-demand locally, and a CI job).
+- `canvas/useHoveredLink.ts` — WHICH placement the link destination chip
+  is for: the `PlacedBox` the pointer is over or the keyboard focused (the
+  box, not its path — a repeat's rows share one path). Gated on the link
+  hints, so a document with no links never re-renders the overlay on hover.
 - `canvas/overlayGeometry.ts` — the overlay's pure geometry:
   `pathDepth`/`byDepth`, `clientToPagePt` (over the LIVE bounding rect
   so zoom factors out; unmeasurable → ratio 1), `clientDeltaToPt`,

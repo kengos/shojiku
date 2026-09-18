@@ -1046,8 +1046,7 @@ Decisions made and recorded here:
   IS apart from what it SHOWS; a shell plus one module per control
   cluster; and — for a hook — the state machine apart from the pure model
   it decides with. Measure with the gate's own counter after EACH
-  extraction (the traps live in
-  [gotchas/gui-toolchain.md](gotchas/gui-toolchain.md)).
+  extraction.
 - **Three wide prop lists are NOT offenders and must not be "fixed"**:
   `designer/src/props.ts` (the host-injection surface — a deliberately
   wide public API), the `editorProps.ts` pair (shared vocabulary), and
