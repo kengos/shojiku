@@ -729,7 +729,9 @@ text template, cleared = entries print directly), and a `repeat` also gets
 its SHEET on the placement tab in place of the box fields it does not have
 (columns, rows, per-axis gaps, fill order, where the grid starts, cut
 marks). The per-element frame the card and the grid scaffold (`item:` /
-`cell:` padding and border) has no panel surface yet.
+`cell:`) has its own surface: selecting it — on the canvas, from its
+Structure row, or from the owner's panel — opens the frame form (padding,
+fill, border), which a table column's `cell:` shares.
 
 **Every style control shows the cascade-EFFECTIVE value** (decided design
 for the toggle-state-vs-effective-style question), the toolbar first and
@@ -1046,8 +1048,7 @@ Decisions made and recorded here:
   IS apart from what it SHOWS; a shell plus one module per control
   cluster; and — for a hook — the state machine apart from the pure model
   it decides with. Measure with the gate's own counter after EACH
-  extraction (the traps live in
-  [gotchas/gui-toolchain.md](gotchas/gui-toolchain.md)).
+  extraction.
 - **Three wide prop lists are NOT offenders and must not be "fixed"**:
   `designer/src/props.ts` (the host-injection surface — a deliberately
   wide public API), the `editorProps.ts` pair (shared vocabulary), and

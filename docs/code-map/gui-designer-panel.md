@@ -693,9 +693,9 @@ presence is not a text binding.
   stops the typing; and a unitless ratio (`lineHeight`) has no badge to hang it
   on. The
   bubble rides the input's WRAPPER, not the badge — the badge is
-  `pointer-events-none` and cannot be hovered. Eight sites reach it
-  through the shared fields' `unitHint` prop; the NINTH,
-  `TableColumnCells`'s `ColumnWidthCell`, renders its own input and its own
+  `pointer-events-none` and cannot be hovered. Every site but one reaches it
+  through the shared fields' `unitHint` prop;
+  `TableTextCells`'s `ColumnWidthCell` renders its own input and its own
   `UnitBadge`, so a sweep for the `unit=` PROP does not see it — it was
   missed exactly that way, and it writes the same `lengthOp(path,
   ['width'])` as the column form. A widget-shaped sweep missed it a SECOND
@@ -1229,6 +1229,8 @@ conditional rules the next section owns).
   `TableColumnCells.tsx` (the cell parts incl. the sample row over
   `displaySample`, and `ColumnAlignRow` — the alignment row itself, which lives
   there because the sheet file is the grid layout and nothing else),
+  `TableTextCells.tsx` (the two hand-rolled free-text cells, `ColumnLabelCell`
+  and `ColumnWidthCell`, split out for the line budget),
   `ColumnSheetBindingRows.tsx` (the data-key and format rows — the only two
   whose cell is conditional on the column's KIND: a `cell:` column's content
   is a sub-template, so it has no binding and no format, and both show a

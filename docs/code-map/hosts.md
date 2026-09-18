@@ -117,22 +117,16 @@ false`), no clap.
   `reference/annotations.rs` (DEFAULT feature) — the rule the gate is:
   `nodes()`, `branches()`, `anonymous_branches()`, `audit() -> Vec<Problem>`,
   plus `annotations/closed.rs` (`closed_values`/`closed_union`, the two
-  spellings a closed value set reaches the catalog in) and
-  `annotations/entry.rs` — `Entry { text, default, inherited }` and `parse()`.
-  An entry is `node: "prose"` OR `node: { text, … }`; the longer form exists
-  only for the few nodes a generated table needs a fact from that prose cannot
-  carry. **Its `Deserialize` is hand-written on purpose**: `#[serde(untagged)]`
-  ACCEPTED a YAML sequence as an annotation, so matching on the value's kind
-  first is what keeps an unknown shape a parse error.
+  spellings a closed value set reaches the catalog in); `parse()` reads the
+  annotation file as `node: "prose"` pairs (`BTreeMap<String, String>`).
   `reference/tables.rs` + `tables/` (DEFAULT feature) — the reference's
   markdown tables: assembled from a spec, AUDITED against the catalog and the
-  code registry. **81 of the 995 rendered cells take a value from the engine,
-  all of them `Severity` on 4 of the 35 tables; on the 28 key tables it is 0
-  of 648.** The cells are authored; the row SET, the column-count invariant
-  and the refusals are what is derived. `spec.rs` (`Table`/`Row`/`Column`/`Cell`/
-  `Coverage`/`Source`, `parse()`), `render.rs` (spec + catalog → GFM, and
-  `Registry` = code → severity), `typedisplay.rs` (a schema as the `Type`
-  cell; returns `None` rather than a plausible wrong type), `splice.rs`
+  code registry. **Only a `Severity` cell reads the engine (the code
+  registry); every other cell is the row's own key or authored text.** The
+  row SET, the column-count invariant and the refusals are what is derived.
+  `spec.rs` (`Table`/`Row`/`Column`/`Cell`/`Coverage`/`Source`, `parse()`),
+  `render.rs` (spec + catalog → GFM, and the `Registry` type = code →
+  severity, whose entries `registry.rs` supplies), `splice.rs`
   (the marker pair and its four refusals), `audit.rs` (the completeness
   rule over both closed sets), `generate.rs` (one page's bytes, pure — the
   binary owns the IO).
@@ -140,10 +134,9 @@ false`), no clap.
   pages, plus `diagnostics.md`'s 7). It holds only what the catalog cannot
   answer: which of a node's keys a page shows, how rows group, the column
   headers, and the per-row prose. **The prose is authored, deliberately**:
-  measured against the catalog, 124 of 129 description cells and 109 of 141
-  type cells say something the catalog does not carry — page context,
-  cross-page links, and constraints like `≥ 0` that the wire validates at
-  parse time rather than in its schema.
+  nearly every description and type cell says something the catalog does not
+  carry — page context, cross-page links, and constraints like `≥ 0` that the
+  wire validates at parse time rather than in its schema.
   `src/bin/reference-gen.rs` — `[[bin]]` with `required-features =
   ["schema"]`, so a default build never compiles it. Wiring over
   `reference::run` (below); it takes no arguments and reads no environment.

@@ -276,10 +276,10 @@ reddens on the first render.
   parse error), and a **bare `rect` draws nothing** — author
   `borderWidth: 1` for an outline. Form marks keep a 1pt outline
   default. Only `line` keeps its own shape style (`width`/`color`;
-  `styleNames:` on a line is a parse error). For a thin rule that
-  should follow the mm-based layout, a flat `rect` (`h: "0.3mm"`,
-  `backgroundColor`) beats `line` (whose `from`/`to` are pt-only
-  numbers).
+  `styleNames:` on a line is a parse error). A `line`'s `from`/`to`
+  take a full Length on both axes — and both axes are required
+  (`to: { x: "100%", y: 0 }` reaches the right edge of its box) — so a
+  rule can follow an mm-based layout directly.
 - `char_grid` works inside containers and `repeat`/`repeat_flow` cells
   (one sheet there — no pagination; element-scoped bindings in cells).
   Entry-box rows (〒 label + digit boxes + hyphen) are a flex row — see

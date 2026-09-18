@@ -141,5 +141,4 @@ tree.
 | top of [Makefile](../../Makefile) (`head -30`) | the allowlist itself — the commands |
 | `make help` | the full target inventory |
 | this file | the rule, its edge, and the missing-command protocol |
-| [CLAUDE.md](../../CLAUDE.md) | § The other half of the map — routes here alongside the other rulebooks (architecture, guidelines, gotchas) |
-| [gotchas/docker-make.md](gotchas/docker-make.md) | the incidents behind each clause |
+| [CLAUDE.md](../../CLAUDE.md) | § The other half of the map — routes here alongside the other rulebooks (architecture, guidelines) |
