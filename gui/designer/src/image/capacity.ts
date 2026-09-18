@@ -1,6 +1,6 @@
 // How much room the TEMPLATE has left: the headroom indicator shown while an
-// image-bearing template is edited, the projected size of one more image, and
-// the cap steps the raise prompt walks. The import is gated on `fits` BEFORE the
+// image-bearing template is edited (and how it writes a byte count), the
+// projected size of one more image, and the cap steps the raise prompt walks. The import is gated on `fits` BEFORE the
 // op is applied — ops do not re-check the cap, and undo/redo must be able to
 // re-parse the result.
 
@@ -22,6 +22,22 @@ const HEADROOM_WARN = 0.8;
 export function headroom(templateBytes: number, maxBytes: number): Headroom {
   const ratio = maxBytes > 0 ? Math.min(1, templateBytes / maxBytes) : 1;
   return { ratio, level: ratio >= HEADROOM_WARN ? 'warn' : 'ok' };
+}
+
+/** A byte count as the readout shows it: whole KB below a megabyte (at least 1
+ * for any content, so a small template never reads as empty), MB to one decimal
+ * above. KiB/MiB labelled KB/MB, the convention `panel.image.summary` already
+ * uses. A count that ROUNDS to 1024 KB is shown as 1 MB rather than as a KB
+ * figure a megabyte wide. Non-finite or non-positive → 0 KB. */
+export function byteAmount(bytes: number): { readonly value: number; readonly unit: 'KB' | 'MB' } {
+  if (!(bytes > 0) || !Number.isFinite(bytes)) {
+    return { value: 0, unit: 'KB' };
+  }
+  const kib = Math.max(1, Math.round(bytes / 1024));
+  if (kib < 1024) {
+    return { value: kib, unit: 'KB' };
+  }
+  return { value: Math.round((bytes / (1024 * 1024)) * 10) / 10, unit: 'MB' };
 }
 
 /** Extra template bytes an image item adds beyond its `src` string (the YAML

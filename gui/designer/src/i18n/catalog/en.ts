@@ -331,6 +331,9 @@ export const en: LanguageCatalog = {
     'help.grid.title': 'Snap grid',
     'help.grid.body':
       'Dragging and resizing on the canvas snaps positions to this step, and the arrow steppers move by it. An editor setting only — it is never saved into the template.',
+    'help.templateSize.title': 'About the size limit',
+    'help.templateSize.body':
+      'How much of the size limit this template uses, embedded images included. The limit keeps saving, previewing and browser storage quick.',
     'help.rulingWidth.title': 'The lines that draw the cells',
     'help.rulingWidth.body':
       'How thick the lines between the manuscript cells are. Left unset they are drawn at 0.5pt; choosing 0 removes them.',
@@ -513,7 +516,10 @@ export const en: LanguageCatalog = {
       'A larger limit can slow parsing, preview, and saving, and may exceed browser storage.',
     'image.headroom.confirm': 'Raise',
     'image.headroom.cancel': 'Cancel',
-    'image.headroom.atMax': 'At the maximum size.',
+    'image.headroom.atMax': 'The limit cannot go any higher.',
+    'image.headroom.usage': '{used} / {limit}',
+    'image.size.kb': '{n, number} KB',
+    'image.size.mb': '{n, number} MB',
     'iterable.title': 'Place list data',
     'iterable.mode': 'How to choose data',
     'iterable.mode.group': 'Use existing data',
@@ -870,7 +876,6 @@ export const en: LanguageCatalog = {
     'pageSetup.orientation': 'Orientation',
     'pageSetup.portrait': 'Portrait',
     'pageSetup.landscape': 'Landscape',
-    'pageSetup.preview': 'Page preview: {size}',
     'pageSetup.margin': 'Margin',
     'pageSetup.marginUniform': 'Uniform',
     'pageSetup.marginPerSide': 'Per side',

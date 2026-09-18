@@ -1,6 +1,6 @@
 // What the page setup IS, and how it READS: the display view derived from the
-// materialized `page:` map (`Editor.read('page')`), plus the human size label the
-// thumbnail captions itself with. Framework-free so the size/orientation/custom
+// materialized `page:` map (`Editor.read('page')`), plus the human size labels the
+// settings surfaces show. Framework-free so the size/orientation/custom
 // logic is exhaustively unit-testable; the component stays thin over it.
 //
 // The other half — what an EDIT WRITES — is `pageSetupOps.ts`: every control's
@@ -32,8 +32,10 @@ interface Dims {
   readonly h: number;
 }
 
-/** The page-setup display view. `dims` is the oriented point size the thumbnail
- * draws (null when unknown — an unrecognized named size or unparseable custom).
+/** The page-setup display view. `dims` is the oriented point size (null when
+ * unknown — an unrecognized named size or unparseable custom); the band
+ * placement, the named→custom switch, `pageSummary` and `orientedDimensions`
+ * read it.
  * `hasSizeKey`/`hasOrientation` drive the switch ops (a removeKey must not run
  * on an absent key). */
 export type PageView =
@@ -161,8 +163,10 @@ export function pageSummary(view: PageView): string | null {
   return view.mode === 'custom' ? sizeLabel(view) : `${view.sizeName} — ${sizeLabel(view)}`;
 }
 
-/** A human dimension label for the thumbnail: the entered custom values with
- * their unit, or the named size's oriented dimensions in its conventional unit. */
+/** A human dimension label: the entered custom values with their unit, or the
+ * named size's oriented dimensions in its conventional unit (an unrecognized name
+ * comes back as itself). The settings nav row, `pageSummary` and
+ * `orientedDimensions` show it. */
 export function sizeLabel(view: PageView): string {
   if (view.mode === 'custom') {
     const { w, h, unit } = view.custom;
@@ -174,4 +178,12 @@ export function sizeLabel(view: PageView): string {
   }
   const [w, h] = view.orientation === 'landscape' ? [base.h, base.w] : [base.w, base.h];
   return `${formatDimension(w, base.unit)} × ${formatDimension(h, base.unit)} ${base.unit}`;
+}
+
+/** The line under the page-setup orientation select: a KNOWN named size's
+ * oriented dimensions (`210 × 297 mm`, `297 × 210 mm` landscape). `null` for a
+ * custom size — its own inputs already show the numbers — and for an
+ * unrecognized name, whose label would only repeat the select. */
+export function orientedDimensions(view: PageView): string | null {
+  return view.mode === 'named' && view.dims !== null ? sizeLabel(view) : null;
 }

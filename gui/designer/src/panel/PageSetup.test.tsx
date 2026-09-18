@@ -35,6 +35,25 @@ function draw(node: ReactElement, locale = 'en-US') {
 }
 
 describe('PageSetup', () => {
+  it("states a named size's oriented dimensions and draws no page outline", () => {
+    const { container, unmount } = draw(<PageSetup controller={makeController({ size: 'A4' })} />);
+    expect(screen.getByText('210 × 297 mm')).toBeTruthy();
+    // The engine preview beside the form is the only picture of the page: a
+    // blank outline here read as a broken preview.
+    expect(container.querySelector('svg')).toBeNull();
+    expect(container.querySelector('figure')).toBeNull();
+    unmount();
+    draw(<PageSetup controller={makeController({ size: 'A4', orientation: 'landscape' })} />);
+    expect(screen.getByText('297 × 210 mm')).toBeTruthy();
+  });
+
+  it('shows no dimension line for a custom size, whose inputs carry the numbers', () => {
+    const { container } = draw(
+      <PageSetup controller={makeController({ size: { w: '80mm', h: '220mm' } })} />,
+    );
+    expect(container.textContent).not.toContain('×');
+  });
+
   it('defaults to A4 portrait with the locale-preferred size group', () => {
     const { container } = draw(<PageSetup controller={makeController(undefined)} />);
     expect((screen.getByLabelText('Size') as HTMLSelectElement).value).toBe('A4');
@@ -59,8 +78,11 @@ describe('PageSetup', () => {
     const { container } = draw(<PageSetup controller={makeController({ size: 'B6' })} />);
     const select = screen.getByLabelText('Size') as HTMLSelectElement;
     expect(select.value).toBe('B6');
-    // The unknown name is its own option and its bare-name thumbnail caption.
-    expect(container.querySelector('figcaption')?.textContent).toBe('B6');
+    // The unknown name is its own option, and there is no dimension line to
+    // repeat it: the select already says B6. (Its label IS the bare name, so a
+    // line would add a second 'B6', not a '×'.)
+    expect(screen.queryAllByText('B6')).toHaveLength(1);
+    expect(container.querySelector('select option[value="B6"]')).not.toBeNull();
   });
 
   it('dispatches a size-select change as a batch', () => {
@@ -161,11 +183,6 @@ describe('PageSetup', () => {
       op: 'removeKey',
       keys: ['page', 'orientation'],
     });
-  });
-
-  it('labels the size thumbnail with the current dimensions', () => {
-    draw(<PageSetup controller={makeController({ size: 'A4' })} />);
-    expect(screen.getByText('210 × 297 mm')).toBeDefined();
   });
 });
 

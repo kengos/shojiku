@@ -123,6 +123,9 @@ export const fil: LanguageCatalog = {
     'help.grid.title': 'Snap grid',
     'help.grid.body':
       'Ang pag-drag at pag-resize sa canvas ay dumidikit sa step na ito, at ito rin ang laki ng galaw ng mga arrow button. Setting lang ito ng editor — hindi ito naisasama sa template.',
+    'help.templateSize.title': 'Tungkol sa limitasyon ng laki',
+    'help.templateSize.body':
+      'Kung gaano karami sa limitasyon ng laki ang ginagamit ng template na ito, kasama ang mga naka-embed na larawan. Pinananatiling mabilis ng limitasyon ang pag-save, preview at storage ng browser.',
     'help.rulingWidth.title': 'Ang mga guhit na bumubuo ng kahon',
     'help.rulingWidth.body':
       'Kapal ng mga guhit sa pagitan ng mga kahon ng manuskrito. Kapag walang halaga, iginuguhit ang mga ito sa 0.5pt; ang 0 ay nag-aalis ng mga ito.',
@@ -309,7 +312,10 @@ export const fil: LanguageCatalog = {
       'Ang mas malaking limitasyon ay maaaring magpabagal sa pag-parse, preview, at pag-save, at maaaring lumampas sa storage ng browser.',
     'image.headroom.confirm': 'Itaas',
     'image.headroom.cancel': 'Kanselahin',
-    'image.headroom.atMax': 'Nasa pinakamataas na laki.',
+    'image.headroom.atMax': 'Hindi na maitataas pa ang limitasyon.',
+    'image.headroom.usage': '{used} / {limit}',
+    'image.size.kb': '{n, number} KB',
+    'image.size.mb': '{n, number} MB',
     'iterable.title': 'Maglagay ng data ng listahan',
     'iterable.mode': 'Paraan ng pagpili ng data',
     'iterable.mode.group': 'Gamitin ang umiiral na data',
@@ -671,7 +677,6 @@ export const fil: LanguageCatalog = {
     'pageSetup.orientation': 'Oryentasyon',
     'pageSetup.portrait': 'Patayo',
     'pageSetup.landscape': 'Pahiga',
-    'pageSetup.preview': 'Preview ng pahina: {size}',
     'pageSetup.margin': 'Margin',
     'pageSetup.marginUniform': 'Pare-pareho',
     'pageSetup.marginPerSide': 'Bawat gilid',

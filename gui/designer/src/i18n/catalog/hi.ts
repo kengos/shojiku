@@ -113,6 +113,9 @@ export const hi: LanguageCatalog = {
     'help.grid.title': 'स्नैप ग्रिड',
     'help.grid.body':
       'कैनवास पर खींचने या आकार बदलने पर स्थिति इस स्टेप पर स्नैप होती है, और तीर बटन इसी मात्रा से बदलते हैं। यह केवल संपादक की सेटिंग है — टेम्पलेट में सहेजी नहीं जाती।',
+    'help.templateSize.title': 'आकार सीमा के बारे में',
+    'help.templateSize.body':
+      'यह टेम्पलेट आकार सीमा का कितना हिस्सा उपयोग करता है, एम्बेड की गई छवियों सहित। यह सीमा सहेजने, पूर्वावलोकन और ब्राउज़र संग्रहण को तेज़ रखती है।',
     'help.rulingWidth.title': 'खाने बनाने वाली रेखाएँ',
     'help.rulingWidth.body':
       'पांडुलिपि खानों के बीच की रेखाओं की मोटाई। अनसेट रहने पर ये 0.5pt पर खिंचती हैं; 0 चुनने पर हटा दी जाती हैं।',
@@ -291,7 +294,10 @@ export const hi: LanguageCatalog = {
       'बड़ी सीमा पार्सिंग, प्रीव्यू और सहेजने को धीमा कर सकती है, और ब्राउज़र संग्रहण से अधिक हो सकती है।',
     'image.headroom.confirm': 'बढ़ाएँ',
     'image.headroom.cancel': 'रद्द करें',
-    'image.headroom.atMax': 'अधिकतम आकार पर।',
+    'image.headroom.atMax': 'सीमा को और नहीं बढ़ाया जा सकता।',
+    'image.headroom.usage': '{used} / {limit}',
+    'image.size.kb': '{n, number} KB',
+    'image.size.mb': '{n, number} MB',
     'iterable.title': 'सूची डेटा रखें',
     'iterable.mode': 'डेटा चुनने का तरीका',
     'iterable.mode.group': 'मौजूदा डेटा से',
@@ -642,7 +648,6 @@ export const hi: LanguageCatalog = {
     'pageSetup.orientation': 'दिशा',
     'pageSetup.portrait': 'ऊर्ध्वाधर',
     'pageSetup.landscape': 'क्षैतिज',
-    'pageSetup.preview': 'पृष्ठ पूर्वावलोकन: {size}',
     'pageSetup.margin': 'हाशिया',
     'pageSetup.marginUniform': 'एक समान',
     'pageSetup.marginPerSide': 'प्रत्येक ओर',
