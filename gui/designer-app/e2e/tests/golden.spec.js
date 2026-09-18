@@ -498,14 +498,15 @@ test.describe('on a 2× display', () => {
     // Measure AT the opening fit, not merely once a canvas exists. The first
     // raster arrives at zoom 1; the fit then changes the zoom at once, and until
     // the raster at the fitted zoom lands the page stack scales the OLD raster by
-    // the difference — a deliberate interim transform, 0.36× on this preset. A
-    // measurement taken inside that window reads layout 454 against 161 on
-    // screen, which is timing rather than the defect, and a slower machine lands
-    // in it reliably. So wait until the preview is ready, the page fits its
-    // pane (the fit has happened) and nothing scales the box (its raster has
-    // arrived). The magnification is compared as a number, so a box that never
-    // stops being scaled fails naming the factor (2 is the upscale this change
-    // removed; 0.36 is a fit whose raster never came). The deliverable is still
+    // the difference — a deliberate interim transform, the fitted zoom over the
+    // opening one. A measurement taken inside that window reads a layout box
+    // well wider than what is on screen, which is timing rather than the defect,
+    // and a slower machine lands in it reliably. So wait until the preview is
+    // ready, the page fits its pane (the fit has happened) and nothing scales the
+    // box (its raster has arrived). The magnification is compared as a number,
+    // so a box that never stops being scaled fails naming the factor (2 is the
+    // upscale this change removed; on this preset, whose fit is under 100%, a
+    // factor below 1 is a fit whose raster never came). The deliverable is still
     // asserted separately below.
     let shot = await measure();
     await expect
@@ -552,6 +553,69 @@ test.describe('on a 2× display', () => {
     // geometry usually shows up here first.
     await page.getByRole('button', { name: 'sections.body.items[1]', exact: true }).first().click();
     await expect(page.getByRole('textbox', { name: 'Text' })).toBeVisible({ timeout: 30000 });
+
+    expect(pageErrors).toEqual([]);
+  });
+
+  // 100% means the printed size — 96 CSS px per inch of 72pt, what gdoc, Word
+  // and every PDF viewer mean by it (a nominal inch: the browser's, not a
+  // ruler's). The number is a CSS length, so only a real
+  // layout can say what reached the screen; the unit suites pin the arithmetic.
+  // Measured at 2× because that is where the two scales could be confused: the
+  // raster is twice the CSS box, and the CSS box is what must match the paper.
+  test('100% shows the page at its printed size', async ({ page }) => {
+    const pageErrors = [];
+    page.on('pageerror', (err) => pageErrors.push(String(err)));
+
+    await page.goto('/');
+    const card = page.getByRole('button').filter({ hasText: 'Receipt' }).first();
+    await expect(card).toBeVisible({ timeout: 30000 });
+    await card.click();
+    const canvas = page.locator('.sj-designer-canvas canvas').first();
+    await expect(canvas).toBeVisible({ timeout: 30000 });
+    await page.getByLabel('Zoom level').selectOption('1');
+
+    // Both the CSS box the component chose and what reached the screen, so an
+    // interim zoom transform names itself instead of arriving as a bare ratio.
+    const measure = () =>
+      canvas.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          raster: [el.width, el.height],
+          layout: Number.parseFloat(el.style.width),
+          onScreen: r.width,
+          dpr: window.devicePixelRatio,
+          status: el.closest('.sj-designer-canvas').getAttribute('data-status'),
+        };
+      });
+    let shot = await measure();
+    await expect
+      .poll(
+        async () => {
+          shot = await measure();
+          return {
+            ready: shot.status === 'ready',
+            magnification: Math.round((shot.onScreen / shot.layout) * 100) / 100,
+          };
+        },
+        { timeout: 30000 },
+      )
+      .toEqual({ ready: true, magnification: 1 });
+
+    // The fixture is the receipt-us preset, an 80 × 220mm thermal roll; a preset
+    // that changes size fails here, naming the aspect, rather than as a wrong
+    // width below.
+    expect(shot.raster[1] / shot.raster[0]).toBeCloseTo(220 / 80, 2);
+    // The describe's 2× is what makes this a test of the CSS box rather than the
+    // raster; at 1× both would read the same and the case would prove less.
+    expect(shot.dpr).toBe(2);
+    // THE DELIVERABLE: an 80mm roll is 80mm at the browser's 96 CSS px per inch
+    // — 80 / 25.4 × 96 = 302.4 CSS px, within a pixel (the raster is whole
+    // device pixels).
+    expect(Math.abs(shot.layout - (80 / 25.4) * 96)).toBeLessThan(1);
+    expect(shot.onScreen).toBeCloseTo(shot.layout, 0);
+    // And the raster is still one pixel per device pixel at this size.
+    expect(shot.raster[0] / shot.layout).toBeCloseTo(shot.dpr, 5);
 
     expect(pageErrors).toEqual([]);
   });

@@ -93,8 +93,9 @@ describe('Designer palette drag — into a table cell', () => {
     return row as HTMLElement;
   }
 
-  /** Drag `row` onto a client point (Designer renders at scale 2, so client
-   * coordinates are twice the page pt). */
+  /** Drag `row` onto a client point. The fixture's 200px raster, tagged with
+   * the opening 100% (4/3 px per pt), is a 150pt page measured as a 200px
+   * overlay — so a client pixel is 0.75pt. */
   function dragTo(row: HTMLElement, clientX: number, clientY: number) {
     fireEvent.pointerDown(row, { pointerId: 7, isPrimary: true, clientX: 500, clientY: 500 });
     fireEvent.pointerMove(row, { pointerId: 7, clientX, clientY });
@@ -104,12 +105,12 @@ describe('Designer palette drag — into a table cell', () => {
     const onChange = vi.fn<(text: string) => void>();
     const { container } = await drawCellDoc(onChange);
     const row = fieldRow('店舗名');
-    // pt (50, 50) → inside the first drawn fragment of the cell column.
-    dragTo(row, 100, 100);
+    // pt (45, 45) → inside the first drawn fragment of the cell column.
+    dragTo(row, 60, 60);
     // Both fragments outline — one authored cell, drawn once per row.
     expect(container.querySelectorAll('.sj-drop-cell')).toHaveLength(2);
     expect(container.querySelector('.sj-drop-indicator')).toBeNull();
-    fireEvent.pointerUp(row, { pointerId: 7, clientX: 100, clientY: 100 });
+    fireEvent.pointerUp(row, { pointerId: 7, clientX: 60, clientY: 60 });
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     const doc = String(onChange.mock.calls.at(-1)?.[0]);
     expect(doc).toContain('key: store.name');
@@ -127,8 +128,8 @@ describe('Designer palette drag — into a table cell', () => {
     const onChange = vi.fn<(text: string) => void>();
     await drawCellDoc(onChange);
     const row = fieldRow('数量');
-    dragTo(row, 100, 100);
-    fireEvent.pointerUp(row, { pointerId: 7, clientX: 100, clientY: 100 });
+    dragTo(row, 60, 60);
+    fireEvent.pointerUp(row, { pointerId: 7, clientX: 60, clientY: 60 });
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     const doc = String(onChange.mock.calls.at(-1)?.[0]);
     expect(doc).toContain('key: qty');
@@ -140,11 +141,11 @@ describe('Designer palette drag — into a table cell', () => {
     const onChange = vi.fn<(text: string) => void>();
     const { container } = await drawCellDoc(onChange);
     const row = fieldRow('数量');
-    // pt (50, 5) → over the body text item, outside every cell.
-    dragTo(row, 100, 10);
+    // pt (45, 6) → over the body text item, outside every cell.
+    dragTo(row, 60, 8);
     expect(container.querySelector('.sj-drop-indicator')).toBeNull();
     expect(container.querySelector('.sj-drop-cell')).toBeNull();
-    fireEvent.pointerUp(row, { pointerId: 7, clientX: 100, clientY: 10 });
+    fireEvent.pointerUp(row, { pointerId: 7, clientX: 60, clientY: 8 });
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -152,9 +153,9 @@ describe('Designer palette drag — into a table cell', () => {
     const onChange = vi.fn<(text: string) => void>();
     const { container } = await drawCellDoc(onChange, ['binding.declarations']);
     const row = fieldRow('店舗名');
-    dragTo(row, 100, 100);
+    dragTo(row, 60, 60);
     expect(container.querySelector('.sj-drop-cell')).toBeNull();
-    fireEvent.pointerUp(row, { pointerId: 7, clientX: 100, clientY: 100 });
+    fireEvent.pointerUp(row, { pointerId: 7, clientX: 60, clientY: 60 });
     expect(onChange).not.toHaveBeenCalled();
   });
 });
@@ -170,7 +171,8 @@ describe('Designer palette drag-to-bind', () => {
   ].join('\n');
 
   /** jsdom cannot measure the overlay, so give the page SVG a real rect for
-   * the Designer's hit-test (page pixels: 200×200 at scale 2). */
+   * the Designer's hit-test (a 200px raster at the opening 4/3 px per pt: a
+   * 150pt page in a 200px rect, so a client pixel is 0.75pt). */
   function measureOverlay(container: HTMLElement) {
     const svg = container.querySelector('.sj-box-overlay');
     expect(svg).not.toBeNull();
@@ -199,13 +201,13 @@ describe('Designer palette drag-to-bind', () => {
     const onChange = vi.fn<(text: string) => void>();
     const { container, row } = await drawWithPalette(onChange);
     measureOverlay(container);
-    // Boxes stack at pt y=0/40/80 (h 30, midpoints 15/55/95); scale 2 halves
-    // client coordinates, so client y=60 → pt 30 → the slot before items[1].
+    // Boxes stack at pt y=0/40/80 (h 30, midpoints 15/55/95); a client pixel is
+    // 0.75pt, so client y=40 → pt 30 → the slot before items[1].
     fireEvent.pointerDown(row, { pointerId: 9, isPrimary: true, clientX: 500, clientY: 500 });
-    fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 60 });
+    fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 40 });
     // The live insertion indicator paints on the page while dragging.
     expect(container.querySelector('.sj-drop-indicator')).not.toBeNull();
-    fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 60 });
+    fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 40 });
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     const doc = String(onChange.mock.calls.at(-1)?.[0]);
     // The bound text item landed between first and second.
@@ -245,8 +247,8 @@ describe('Designer palette drag-to-bind', () => {
     const row = screen.getByText('注文コード').closest('.sj-palette-field') as HTMLElement;
     measureOverlay(container);
     fireEvent.pointerDown(row, { pointerId: 9, isPrimary: true, clientX: 500, clientY: 500 });
-    fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 60 });
-    fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 60 });
+    fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 40 });
+    fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 40 });
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -271,8 +273,8 @@ describe('Designer palette drag-to-bind', () => {
     expect(row).not.toBeNull();
     if (row !== null) {
       fireEvent.pointerDown(row, { pointerId: 9, isPrimary: true, clientX: 5, clientY: 5 });
-      fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 60 });
-      fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 60 });
+      fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 40 });
+      fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 40 });
     }
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     const doc = String(onChange.mock.calls.at(-1)?.[0]);
@@ -292,8 +294,8 @@ describe('Designer palette drag-to-bind', () => {
     expect(row).not.toBeNull();
     if (row !== null) {
       fireEvent.pointerDown(row, { pointerId: 9, isPrimary: true, clientX: 5, clientY: 5 });
-      fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 60 });
-      fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 60 });
+      fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 40 });
+      fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 40 });
     }
     expect(onChange).not.toHaveBeenCalled();
   });
@@ -302,8 +304,8 @@ describe('Designer palette drag-to-bind', () => {
     const onChange = vi.fn<(text: string) => void>();
     const { row } = await drawWithPalette(onChange);
     fireEvent.pointerDown(row, { pointerId: 9, isPrimary: true, clientX: 500, clientY: 500 });
-    fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 60 });
-    fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 60 });
+    fireEvent.pointerMove(row, { pointerId: 9, clientX: 100, clientY: 40 });
+    fireEvent.pointerUp(row, { pointerId: 9, clientX: 100, clientY: 40 });
     expect(onChange).not.toHaveBeenCalled();
   });
 });

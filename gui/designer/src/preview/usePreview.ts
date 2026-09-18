@@ -10,6 +10,12 @@ import { errorText } from '../engine/errors';
 import type { EngineTransport } from '../engine/transport';
 import { INITIAL_PREVIEW, type PreviewState, previewReducer } from './reducer';
 
+/** The px per pt `usePreview` renders at when the caller names none, and the
+ * default of `CanvasPreview`'s `scale` prop. `CanvasPreview` hands it to the
+ * canvas too, with no device pixel ratio, so there it is BOTH the raster density
+ * and the CSS px per pt the page is displayed at — a zoom-less preview that
+ * draws at 1.5× the printed size. It is not the Designer's 100%, which is
+ * `ACTUAL_SIZE_SCALE`. */
 export const DEFAULT_SCALE = 2;
 export const DEFAULT_DEBOUNCE_MS = 250;
 

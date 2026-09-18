@@ -300,7 +300,8 @@ lists name the destructured stable fields, never `editor` itself.
   `insertTargetBand`.)
 - `hooks/useDocumentCore.ts` — the head: transport + i18n handles,
   `useTemplateCap`, `useEditor`, `useSampleData`,
-  `useDefinitionsOwnership`, `usePreviewSession`, theme style memo.
+  `useDefinitionsOwnership`, `usePreviewSession` (at base
+  `ACTUAL_SIZE_SCALE`), theme style memo.
 - `hooks/useCanvasWiring.ts` — the tail: `usePageNav`, `usePaletteDrag`,
   `useImageImport`, `useInlineEdit`, `useHostNotify`, `usePdfAction`,
   `useDocDerived`.

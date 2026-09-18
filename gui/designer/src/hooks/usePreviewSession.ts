@@ -25,6 +25,7 @@ export interface PreviewSessionOptions {
    * render needs (definitions are validate-time, and rendering runs off params)
    * and would only inject `empty_definitions`/`unknown_data_key` noise. */
   readonly definitions: string | undefined;
+  /** CSS px per pt at zoom 1 — the Designer passes `ACTUAL_SIZE_SCALE`. */
   readonly baseScale: number;
   /** The session's template-size cap — a draft is derived by re-parsing the
    * committed text, which must happen under the SAME bound or a legally

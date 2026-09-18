@@ -10,6 +10,13 @@
 // covered by a CSS transform (`cssFactor`), so zooming feels instant and only
 // snaps crisp once the debounced render lands.
 
+/** The CSS px per pt at 100%: the page at its printed size. An inch is 72pt and
+ * 96 CSS px, so this is what every document editor a user arrives from means by
+ * 100% — the browser's nominal inch, which a given display may draw larger or
+ * smaller than a ruler's. It is a DISPLAY size, not a raster density — the
+ * device pixel ratio is multiplied in separately, by `renderScale`. */
+export const ACTUAL_SIZE_SCALE = 96 / 72;
+
 /** Smallest / largest zoom the control allows (25% … 400%). */
 export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 4;
