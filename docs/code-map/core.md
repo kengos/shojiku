@@ -243,7 +243,8 @@ injected at parse). The template model splits along CSS lines.
 - `validate/collect.rs` — table/image walks + the `RepeatRef` walk
   normalizing repeat+repeat_flow + depth cap + generic `walk_sections`.
   **Every walk here descends into a table column's `cell:` — and so do
-  the three walks that keep their OWN recursion: `validate/marks.rs`,
+  the three walks that keep their OWN recursion: `validate/presence.rs`
+  (a form mark's `data:` and every item's `visible:`),
   `validate/styles.rs`, and `engine/image`'s cell walk. A new
   cell-bearing key must be added to each.**
 - `validate/styles.rs` — named-style refs (spans, shapes, text mark,

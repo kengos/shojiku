@@ -527,7 +527,10 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   `scripts/fixtures/make-namespace/` (one seeded violation per rule plus
   a waived line that must not count) before it reads the real tree, with
   a `make-namespace-exempt: <reason>` per-line hatch.
-  `check-gui-line-budget.sh`, `check-skill-template-sync.sh` — the
+  `check-work-item-codes.sh` — work-item codes (the forward-looking set's
+  entry names) must not reach the TRACKED text; reads `git ls-files`, so a
+  new file is only scanned once staged. `check-gui-line-budget.sh`,
+  `check-skill-template-sync.sh` — the
   first step of `make examples:check`: a skill's bundled
   `template/*.yml` must be byte-identical to the example it came from,
   so the rendered+hash-checked example is the proof for the copy that
