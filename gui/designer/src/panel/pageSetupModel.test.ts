@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pageSummary, readPageView, sizeLabel } from './pageSetupModel';
+import { orientedDimensions, pageSummary, readPageView, sizeLabel } from './pageSetupModel';
 
 describe('readPageView', () => {
   it('treats a missing page key as the default A4 portrait', () => {
@@ -182,5 +182,21 @@ describe('pageSummary', () => {
     ['a custom size missing a dimension', { size: { w: '80mm' } }],
   ])('says nothing for %s', (_case, page) => {
     expect(pageSummary(readPageView(page))).toBeNull();
+  });
+});
+
+describe('orientedDimensions', () => {
+  it('gives a known named size its oriented dimensions', () => {
+    expect(orientedDimensions(readPageView({ size: 'A4' }))).toBe('210 × 297 mm');
+    expect(orientedDimensions(readPageView({ size: 'A4', orientation: 'landscape' }))).toBe(
+      '297 × 210 mm',
+    );
+  });
+
+  it('says nothing for a custom size or an unrecognized name', () => {
+    // A custom size's own inputs carry the numbers; an unknown name's label is
+    // the name itself, which the select already shows.
+    expect(orientedDimensions(readPageView({ size: { w: '80mm', h: '220mm' } }))).toBeNull();
+    expect(orientedDimensions(readPageView({ size: 'B6' }))).toBeNull();
   });
 });

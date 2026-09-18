@@ -1,14 +1,17 @@
 // The template-size headroom indicator shown in the canvas topbar while an
-// image-bearing template is edited: the used fraction of the current cap and,
-// once it nears the limit, the raise prompt (with the trade-off spelled out) —
-// or, when no raise is available (at the ceiling), a hint to use a smaller
-// image. Presentational over the pure `headroom` model; the Designer owns
-// computing the next cap step and applying it.
+// image-bearing template is edited: how much it uses OF the current limit, as
+// two amounts (`12 KB / 2 MB` — a bare percent read 0% for any template under
+// about 10 KB and said nothing about what it was a percent of), a `?` that says what the limit
+// is for, and, once it nears the limit, the raise prompt (with the trade-off
+// spelled out) — or, when no raise is available (at the ceiling), a hint to use
+// a smaller image. Presentational over the pure `headroom` / `byteAmount`
+// model; the Designer owns computing the next cap step and applying it.
 
 import { useState } from 'react';
+import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { BTN } from '../ui/chrome';
-import { headroom } from './capacity';
+import { byteAmount, headroom } from './capacity';
 
 export interface TemplateSizeIndicatorProps {
   /** Current serialized template size (bytes). */
@@ -27,14 +30,26 @@ export function TemplateSizeIndicator({
 }: TemplateSizeIndicatorProps) {
   const { t } = useI18n();
   const [promptOpen, setPromptOpen] = useState(false);
-  const { ratio, level } = headroom(templateBytes, maxBytes);
-  const percent = Math.round(ratio * 100);
+  const { level } = headroom(templateBytes, maxBytes);
+  const amount = (bytes: number) => {
+    const { value, unit } = byteAmount(bytes);
+    return t(unit === 'KB' ? 'image.size.kb' : 'image.size.mb', { n: value });
+  };
+  const usage = t('image.headroom.usage', {
+    used: amount(templateBytes),
+    limit: amount(maxBytes),
+  });
 
   return (
     <div className="flex shrink-0 items-center gap-2 text-sm text-muted">
       <output className={level === 'warn' ? 'font-semibold text-warn-text' : undefined}>
-        {`${t('image.headroom.label')} ${percent}%`}
+        {`${t('image.headroom.label')} ${usage}`}
       </output>
+      <HelpHint
+        label={t('help.templateSize.title')}
+        title={t('help.templateSize.title')}
+        body={t('help.templateSize.body')}
+      />
       {level === 'warn' && onRaise === undefined ? <span>{t('image.headroom.atMax')}</span> : null}
       {level === 'warn' && onRaise !== undefined ? (
         promptOpen ? (

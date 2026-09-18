@@ -209,6 +209,21 @@ platform binaries.
 
 ### Changed
 
+- **The template-size readout says what it is a size of.** A template holding
+  an image showed "Template size 0%" in the toolbar — true, since the bundled
+  invoice and receipt are each well under 1% of the 2 MB limit, but it did not
+  say what the percent was of, and it read 0% for any template under about
+  10 KB. It now shows the two amounts, "Template size 12 KB / 2 MB", with a ?
+  beside it that says what the limit is for. Near the limit it still turns bold and offers to raise it,
+  or says the template is at the largest limit there is.
+
+- **Document settings no longer draw a blank page next to the real one.** The
+  page-setup section showed a white outline of the page's shape under the
+  margin field while the rendered page sat in the column beside it, so it read
+  as a preview that had failed to load. The outline is gone; a named size now
+  states its dimensions as a line of text under the orientation select
+  ("210 × 297 mm", or "297 × 210 mm" when landscape).
+
 - **The Designer's zoom percentage now means the printed size.** At 100% an
   inch of the page takes the 96 pixels a browser counts as an inch — the same
   100% as Google Docs, Word or a PDF viewer. (How closely that matches a ruler

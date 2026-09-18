@@ -8,7 +8,6 @@ import {
   PAGE_SIZE_NAMES,
   PAGE_SIZES,
   splitDimension,
-  thumbnailGeometry,
   unitToPt,
 } from './pageSizes';
 
@@ -95,35 +94,5 @@ describe('convertDimension (unit-select conversion)', () => {
   it('rejects the same invalid inputs as composeDimension', () => {
     expect(convertDimension('0', 'in', 'mm')).toBeNull();
     expect(convertDimension('bad', 'in', 'mm')).toBeNull();
-  });
-});
-
-describe('thumbnailGeometry', () => {
-  it('scales the longer side to the max for a portrait size', () => {
-    expect(thumbnailGeometry(595.28, 841.89, 120)).toEqual({ width: 85, height: 120 });
-  });
-
-  it('scales the longer side to the max for a landscape size', () => {
-    expect(thumbnailGeometry(841.89, 595.28, 120)).toEqual({ width: 120, height: 85 });
-  });
-
-  it('handles a square size', () => {
-    expect(thumbnailGeometry(100, 100, 120)).toEqual({ width: 120, height: 120 });
-  });
-
-  it('falls back to a neutral portrait outline for hostile dimensions', () => {
-    const fallback = { width: 85, height: 120 };
-    expect(thumbnailGeometry(Number.NaN, 100)).toEqual(fallback);
-    expect(thumbnailGeometry(100, 0)).toEqual(fallback);
-    expect(thumbnailGeometry(-5, 100)).toEqual(fallback);
-    expect(thumbnailGeometry(100, Number.POSITIVE_INFINITY)).toEqual(fallback);
-  });
-
-  it('clamps a degenerate ratio to a visible minimum side', () => {
-    expect(thumbnailGeometry(14400, 1, 120)).toEqual({ width: 120, height: 1 });
-  });
-
-  it('uses the default max when none is given', () => {
-    expect(thumbnailGeometry(100, 200).height).toBe(120);
   });
 });

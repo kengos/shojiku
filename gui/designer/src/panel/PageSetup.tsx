@@ -1,13 +1,16 @@
-// The page-setup surface: the panel's no-selection state, editing the template's
+// The page-setup surface: the document-settings section editing the template's
 // top-level `page:` map (size, orientation, custom dimensions). It is a live
 // view — it re-reads `controller.read('page')` each render, and every control
-// dispatches a named `designer-core` op (AI parity, no direct mutation). The
-// size thumbnail is CHROME: it draws the input values as a proportional page
-// outline, never document content (the content preview stays engine-rendered).
+// dispatches a named `designer-core` op (AI parity, no direct mutation).
+//
+// The page is pictured only by the engine-rendered preview column beside this
+// form (on a window wide enough to show it). A known named size states its oriented dimensions as a line of text under the
+// orientation select; there is deliberately no drawn outline here — a blank
+// page-shaped rectangle next to the real preview read as a broken one.
 //
 // The custom dimension cluster is its own module (`CustomSizeFields`) because it
 // carries a commit discipline of its own; the rest of the form — size select,
-// orientation, margins, thumbnail — assembles here.
+// orientation, the dimension line, margins — assembles here.
 
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
@@ -17,12 +20,9 @@ import { CustomSizeFields } from './CustomSizeFields';
 import { Field } from './fields';
 import { MarginEditor } from './MarginEditor';
 import { applyPanelOp } from './model';
-import { type Orientation, readPageView, sizeLabel } from './pageSetupModel';
+import { type Orientation, orientedDimensions, readPageView } from './pageSetupModel';
 import { orientationOp, selectSizeOp } from './pageSetupOps';
-import { CUSTOM, PAGE_SIZE_NAMES, thumbnailGeometry } from './pageSizes';
-
-// The padded square (px) the size outline centers in.
-const THUMB_BOX = 140;
+import { CUSTOM, PAGE_SIZE_NAMES } from './pageSizes';
 
 export interface PageSetupProps {
   readonly controller: EditorController;
@@ -47,7 +47,7 @@ export function PageSetup({ controller, titled = true }: PageSetupProps) {
   const unknownNamed =
     view.mode === 'named' && !PAGE_SIZE_NAMES.includes(view.sizeName) ? view.sizeName : null;
 
-  const geom = thumbnailGeometry(view.dims?.w ?? Number.NaN, view.dims?.h ?? Number.NaN);
+  const dimensions = orientedDimensions(view);
 
   return (
     <div>
@@ -101,30 +101,12 @@ export function PageSetup({ controller, titled = true }: PageSetupProps) {
             <option value="landscape">{t('pageSetup.landscape')}</option>
           </select>
         </Field>
+        {dimensions === null ? null : (
+          // Sits under the orientation select because the dimensions depend on it.
+          <p className="-mt-0.5 mb-2 text-sm text-muted">{dimensions}</p>
+        )}
 
         <MarginEditor controller={controller} />
-
-        <figure className="flex justify-center py-2">
-          <svg
-            width={THUMB_BOX}
-            height={THUMB_BOX}
-            aria-label={t('pageSetup.preview', { size: sizeLabel(view) })}
-          >
-            <title>{t('pageSetup.preview', { size: sizeLabel(view) })}</title>
-            <rect
-              x={(THUMB_BOX - geom.width) / 2}
-              y={(THUMB_BOX - geom.height) / 2}
-              width={geom.width}
-              height={geom.height}
-              // No stylesheet ships with the component, so the paper look is
-              // inlined (an unfilled rect would default to black).
-              fill="#ffffff"
-              stroke="#94a3b8"
-              strokeWidth={1}
-            />
-          </svg>
-          <figcaption>{sizeLabel(view)}</figcaption>
-        </figure>
       </div>
     </div>
   );

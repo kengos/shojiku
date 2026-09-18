@@ -356,8 +356,11 @@ document-settings view) edits the top-level `page:` map — a size select
 leading with the locale registry's region-preferred order, then the full
 engine-named list, then a custom `{ w, h }` composed from NUMBER inputs +
 a UNIT select (the GUI composes the wire length string and parses none),
-an orientation select, and a live proportional thumbnail (chrome — it
-draws the input values, never document content). It rides an OPTIONAL
+an orientation select, and — for a known named size — its oriented
+dimensions as a line of text. It draws no page outline: the page is pictured
+only by the engine-rendered preview column beside the form, on a window wide
+enough to show it (a blank outline next to that preview read as a broken
+one). It rides an OPTIONAL
 `path` on `setScalar`/`setStrings`/`removeKey` (absent = the document
 root, reaching `page.*` which the structural grammar cannot spell), and
 the canvas grew deselection (empty-overlay click + window-level Escape,

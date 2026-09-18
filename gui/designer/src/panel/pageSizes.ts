@@ -1,7 +1,7 @@
 // Page-size reference data and the pure geometry helpers the page-setup surface
 // builds on. The named-size point dimensions duplicate the engine's own table
-// (engine/core/src/geometry.rs) so the size thumbnail can draw without a render
-// round-trip; that duplication is pinned against the real engine in the wasm
+// (engine/core/src/geometry.rs) so page setup can state a named size's
+// dimensions, and seed a switch to custom, without a render round-trip; that duplication is pinned against the real engine in the wasm
 // integration suite (render each named size, assert the page pixel dims), so a
 // drift reds `make gui:verify` rather than shipping. The unit constants are physics
 // (1in = 72pt, 1mm = 72/25.4pt), not engine grammar — the GUI composes a wire
@@ -23,7 +23,7 @@ const PT_PER_UNIT: Record<SizeUnit, number> = {
 
 /** A named engine page size in portrait orientation (w < h), plus the unit its
  * dimensions are conventionally quoted in (mm for ISO A / JIS B, in for the
- * North-American sizes) — the unit the thumbnail label and the named→custom
+ * North-American sizes) — the unit the dimension label and the named→custom
  * prefill use. */
 export interface NamedSize {
   readonly name: string;
@@ -95,7 +95,7 @@ export function splitDimension(raw: string): DimensionParts | null {
 
 /** Format a point length in `unit` as a clean numeral string (up to two
  * decimals, trailing zeros trimmed) — the seed value for a custom input and the
- * numeral in a thumbnail label. Always matches {@link NUMERAL}. */
+ * numeral in a dimension label. Always matches {@link NUMERAL}. */
 export function formatDimension(pt: number, unit: SizeUnit): string {
   const value = pt / PT_PER_UNIT[unit];
   const fixed = value.toFixed(2);
@@ -123,29 +123,4 @@ export function convertDimension(value: string, from: SizeUnit, to: SizeUnit): s
     return null;
   }
   return formatDimension(unitToPt(Number(trimmed), from), to);
-}
-
-/** Longest side of the size thumbnail, in px. */
-const THUMB_MAX = 120;
-
-// A neutral portrait aspect (ISO A ratio, 1:√2) for when the dimensions are
-// unknown or hostile — the thumbnail still draws a sensible page outline.
-const FALLBACK_ASPECT = 1 / Math.SQRT2;
-
-/** The proportional outline rectangle for the thumbnail: the longer side is
- * {@link THUMB_MAX}, the shorter scaled to match. Non-finite / non-positive /
- * degenerate dimensions fall back to a neutral portrait outline, and every
- * returned side is a finite integer ≥ 1 (a safe SVG attribute). */
-export function thumbnailGeometry(
-  w: number,
-  h: number,
-  max: number = THUMB_MAX,
-): { readonly width: number; readonly height: number } {
-  const ok = Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0;
-  if (!ok) {
-    return { width: Math.max(1, Math.round(max * FALLBACK_ASPECT)), height: max };
-  }
-  return w >= h
-    ? { width: max, height: Math.max(1, Math.round((max * h) / w)) }
-    : { width: Math.max(1, Math.round((max * w) / h)), height: max };
 }

@@ -352,6 +352,9 @@ export const ja: LanguageCatalog = {
     'help.grid.title': 'グリッド(吸着)',
     'help.grid.body':
       'キャンバスでのドラッグやサイズ変更の位置がこの刻みに吸着し、↑↓ボタンの増減幅にもなります。エディタの設定であり、テンプレートには保存されません。',
+    'help.templateSize.title': '容量の上限について',
+    'help.templateSize.body':
+      'このテンプレートが容量の上限のうちどれだけを使っているかです（埋め込んだ画像も含みます）。上限は保存・プレビュー・ブラウザへの保存を軽く保つためのものです。',
     'help.rulingWidth.title': 'マス目を描く線',
     'help.rulingWidth.body':
       '原稿用紙のマスを区切る線の太さです。未指定なら 0.5pt で引かれ、0 を選ぶと線そのものが消えます。',
@@ -532,7 +535,10 @@ export const ja: LanguageCatalog = {
       '上限を上げるとパース・プレビュー・保存が遅くなる可能性があり、ブラウザの保存容量を超えることがあります。',
     'image.headroom.confirm': '上げる',
     'image.headroom.cancel': 'キャンセル',
-    'image.headroom.atMax': '上限に達しています。',
+    'image.headroom.atMax': '上限はこれ以上上げられません。',
+    'image.headroom.usage': '{used} / {limit}',
+    'image.size.kb': '{n, number} KB',
+    'image.size.mb': '{n, number} MB',
     'iterable.title': '一覧データを置く',
     'iterable.mode': 'データの選び方',
     'iterable.mode.group': '既存のデータから',
@@ -888,7 +894,6 @@ export const ja: LanguageCatalog = {
     'pageSetup.orientation': '向き',
     'pageSetup.portrait': '縦',
     'pageSetup.landscape': '横',
-    'pageSetup.preview': 'ページプレビュー: {size}',
     'pageSetup.margin': '余白',
     'pageSetup.marginUniform': '均一',
     'pageSetup.marginPerSide': '個別に指定',

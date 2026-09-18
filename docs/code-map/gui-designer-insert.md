@@ -393,7 +393,8 @@ result LANDS:
   hand-rolled base64 — no `fromCharCode` spread to overflow on a
   multi-megabyte image), `image/capacity.ts`
   (`headroom`/`projectImport` — the pre-op cap gate — plus `nextCapStep`/
-  `CAP_STEPS`).
+  `CAP_STEPS`, and `byteAmount`, the KB/MB the readout writes a byte count
+  in).
 - `image/import.ts` — the `ImageCodec` host-injection contract
   (`probe` takes a `ProbeKind`, so a host measures GIF/WebP too;
   `reencode` stays `RasterKind` and is never called for them) +
@@ -401,8 +402,9 @@ result LANDS:
   throws; the real browser codec lives in
   `designer-app/src/browser/imageCodec.ts`, coverage-excluded — jsdom
   tests inject a fake).
-- `image/TemplateSizeIndicator.tsx` — the topbar headroom % + raise
-  prompt / at-ceiling hint.
+- `image/TemplateSizeIndicator.tsx` — the topbar headroom readout as
+  used / limit (`12 KB / 2 MB` — not a bare percent), a `?` saying what the
+  limit is for, and the raise prompt / at-ceiling hint.
 
 ## Paste import
 

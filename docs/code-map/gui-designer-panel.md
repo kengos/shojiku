@@ -1263,7 +1263,9 @@ conditional rules the next section owns).
   the surface READS from what an edit WRITES:
   - `panel/pageSetupModel.ts` — the READ side: `PageView`/`CustomDims`/
     `Orientation`, `readPageView` (named vs custom `{ w, h }`, mixed-unit
-    seeds re-expressed in one shared display unit), `sizeLabel` and
+    seeds re-expressed in one shared display unit), `sizeLabel`,
+    `orientedDimensions` (the line under the orientation select: a KNOWN
+    named size's oriented dimensions, `null` for custom or an unknown name) and
     `pageSummary` — the size's NAME plus its dimensions, or `null` when
     this build cannot describe the page; the PDF preview shows it, and a
     reassurance surface may not guess.
@@ -1279,8 +1281,10 @@ conditional rules the next section owns).
     batch entry rather than authoring something the model would refuse.
 - `panel/PageSetup.tsx` — the form (size select with a locale-preferred
   optgroup and an "other sizes" one holding what the first does not — the
-  two used to OVERLAP, listing a locale size twice; orientation; live
-  proportional thumbnail); embeds
+  two used to OVERLAP, listing a locale size twice; orientation; the
+  `orientedDimensions` line — deliberately NO drawn page outline, the engine
+  preview column beside the form (wide windows only, `lg:`) is the picture);
+  embeds
   `MarginEditor` and, in custom mode, `CustomSizeFields`.
 - `panel/CustomSizeFields.tsx` — the custom `{ w, h }` + shared unit
   cluster. The two numerals are `StepperField`s, which is where the whole

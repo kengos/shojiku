@@ -41,7 +41,6 @@ export {
   PAGE_SIZES,
   SIZE_UNITS,
   type SizeUnit,
-  thumbnailGeometry,
 } from '../panel/pageSizes';
 export { Sidebar, type SidebarProps, type SidebarTab } from '../sidebar/Sidebar';
 export {
