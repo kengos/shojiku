@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ACTUAL_SIZE_SCALE,
   anchorScroll,
   clampZoom,
   cssFactor,
@@ -94,6 +95,15 @@ describe('pixelRatio', () => {
     expect(pixelRatio(Number.POSITIVE_INFINITY)).toBe(1);
     expect(pixelRatio(0)).toBe(1);
     expect(pixelRatio(-2)).toBe(1);
+  });
+});
+
+describe('ACTUAL_SIZE_SCALE', () => {
+  it('is the printed size: an inch of 72pt is 96 CSS px', () => {
+    expect(ACTUAL_SIZE_SCALE).toBe(96 / 72);
+    // An A4 page (595.28pt wide) at 100% on a 1× screen is 793.7 CSS px wide —
+    // the width gdoc and every PDF viewer give it at 100%.
+    expect(renderScale(ACTUAL_SIZE_SCALE, 1, 1) * 595.28).toBeCloseTo(793.71, 2);
   });
 });
 

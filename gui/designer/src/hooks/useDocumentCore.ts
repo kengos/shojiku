@@ -6,10 +6,10 @@
 
 import type { CSSProperties } from 'react';
 import { useMemo } from 'react';
+import { ACTUAL_SIZE_SCALE } from '../canvas/zoom';
 import { useEditor } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { useEngineTransport } from '../preview/context';
-import { DEFAULT_SCALE } from '../preview/usePreview';
 import type { DesignerProps } from '../props';
 import { cssVars, resolveTheme } from '../theme/resolve';
 import { useDefinitionsOwnership } from './useDefinitionsOwnership';
@@ -40,7 +40,6 @@ export function useDocumentCore({
   initialDefinitionsEdits,
   onDefinitionsChange,
   templateMaxBytes,
-  scale = DEFAULT_SCALE,
   colorScheme = 'light',
   theme,
 }: DesignerProps): DocumentCore {
@@ -64,14 +63,15 @@ export function useDocumentCore({
     onDefinitionsChange,
   });
   // Zoom → render → auto-fit, in that order (the zoom picks the render scale;
-  // Fit measures what the render produced). The stub never reaches the engine:
-  // its job is the PALETTE + the exported artifact, not the in-session call.
+  // Fit measures what the render produced). 100% is the printed size, and no
+  // host can redefine it. The stub never reaches the engine: its job is the
+  // PALETTE + the exported artifact, not the in-session call.
   const session = usePreviewSession({
     transport,
     text: editor.text,
     params: sample.params,
     definitions: defs.definitionsForEngine,
-    baseScale: scale,
+    baseScale: ACTUAL_SIZE_SCALE,
     maxBytes: cap.maxBytes,
   });
   const themeStyle = useMemo(

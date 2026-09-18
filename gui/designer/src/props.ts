@@ -76,7 +76,6 @@ export interface DesignerProps {
    * Untrusted storage: sanitized (`sanitizeDefsEdits`), and each op is
    * re-validated by designer-core at apply — a garbage op skips harmlessly. */
   readonly initialDefinitionsEdits?: readonly Op[];
-  readonly scale?: number;
   /** Where a locale PACK's text comes from, so the document-settings panel can
    * say what a `defaults.locale` pick does.
    *

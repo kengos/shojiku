@@ -209,6 +209,22 @@ platform binaries.
 
 ### Changed
 
+- **The Designer's zoom percentage now means the printed size.** At 100% an
+  inch of the page takes the 96 pixels a browser counts as an inch — the same
+  100% as Google Docs, Word or a PDF viewer. (How closely that matches a ruler
+  held to the glass depends on the display, exactly as it does in those apps.)
+  Before, 100% showed the page at one and a half times that, so every number in
+  the zoom control was a third smaller than what it showed: a page opening at
+  36% was really at about 55%, and picking 100% drew an 80mm receipt as wide as
+  120mm.
+
+  A document still opens fitted to the window, at the same size as before, and
+  the number beside it is now the true one. The steps are the same numbers as
+  before, so the largest, 400%, now shows the page at four times its printed
+  size rather than six — which also means a page small enough to need more than
+  that to fill the window (a label or a business card on a large screen) now
+  opens at 400% rather than filling it.
+
 - **Internal tracking codes no longer appear in the source.** Two dozen
   comments in tests and example templates named an item in a planning queue,
   which is private and whose entries are deleted once the work ships. So they pointed at nothing: a reader met a label they could

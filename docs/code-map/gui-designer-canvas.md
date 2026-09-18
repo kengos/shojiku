@@ -63,7 +63,11 @@ hostile geometry degrades to null before it can reach an op.
   invalid document never blanks the canvas; diagnostics always read the
   LATEST outcome.
 - `preview/usePreview.ts` — the debounced loop (bump revision → debounce
-  `renderRaw` → dispatch tagged with its scale).
+  `renderRaw` → dispatch tagged with its scale). `DEFAULT_SCALE` (2) is
+  the default of `CanvasPreview`'s `scale` prop, which that component uses
+  as BOTH the raster density and the display scale (no pixel ratio) — so a
+  `CanvasPreview` draws at 1.5× the printed size. NOT the Designer's 100%
+  (`canvas/zoom`'s `ACTUAL_SIZE_SCALE`).
 - `preview/draftTemplate.ts` — the UNCOMMITTED-edit overlay: the ops of an
   edit in progress applied to a THROWAWAY `Editor` over the committed
   source, serialized. Total — a refused batch, an unparseable source, or a
@@ -340,7 +344,9 @@ hostile geometry degrades to null before it can reach an op.
 
 ## Zoom + inline editing
 
-- `canvas/zoom.ts` — pure zoom model: `clampZoom`/`stepZoom`/
+- `canvas/zoom.ts` — pure zoom model: `ACTUAL_SIZE_SCALE` (96/72 CSS px
+  per pt — 100% is the printed size; the Designer's base, not
+  host-configurable), `clampZoom`/`stepZoom`/
   `wheelZoom`/`fitZoom`/`isMeasurable` (gates the open-at-Fit pass),
   `renderScale` (DEVICE px per pt: the desired CSS scale times the device
   pixel ratio, capped — the RGBA memory bound, and the cap is applied

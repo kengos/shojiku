@@ -4,6 +4,7 @@
 // over the shared ./testkit substrate.
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { ACTUAL_SIZE_SCALE } from './canvas/zoom';
 import { Designer, isEditableTarget } from './Designer';
 import { type RenderOutcome, TransportError } from './engine/transport';
 import type { Diagnostic, Diagnostics } from './engine/types';
@@ -521,11 +522,11 @@ describe('Designer', () => {
     draw(transport, { source: THREE_ITEMS, onChange });
     await waitFor(() => screen.getByRole('button', { name: 'sections.body.items[0]' }));
     const target = screen.getByRole('button', { name: 'sections.body.items[0]' });
-    // The Designer renders at scale 2 and jsdom rects are unmeasurable, so
-    // client y 240 lands at page pt 120 — past the last sibling's midpoint.
+    // The opening 100% is 4/3 CSS px per pt and jsdom rects are unmeasurable,
+    // so client y 160 lands at page pt 120 — past the last sibling's midpoint.
     fireEvent.pointerDown(target, { pointerId: 1, isPrimary: true, clientX: 50, clientY: 10 });
-    fireEvent.pointerMove(target, { pointerId: 1, clientX: 50, clientY: 240 });
-    fireEvent.pointerUp(target, { pointerId: 1, clientX: 50, clientY: 240 });
+    fireEvent.pointerMove(target, { pointerId: 1, clientX: 50, clientY: 160 });
+    fireEvent.pointerUp(target, { pointerId: 1, clientX: 50, clientY: 160 });
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     // ONE op: first moved to the tail, the other two shifted up.
     const moved = String(onChange.mock.calls[0][0]);
@@ -1001,16 +1002,26 @@ describe('Designer', () => {
     const transport = makeTransport();
     const { container } = draw(transport, { onChange });
     const canvas = () => container.querySelector('.sj-canvas') as HTMLElement;
-    // Default 100%: pages rendered at the base scale, no CSS magnification.
+    // Default 100%: pages rendered at the printed size — 96 CSS px per inch of
+    // 72pt, on this 1× jsdom screen — with no CSS magnification. Written as the
+    // literal rather than the constant, so a base that drifts fails here.
     expect(canvas().style.transform).toBe('scale(1)');
-    fireEvent.change(screen.getByLabelText('Zoom level'), { target: { value: '2' } });
-    // 200% zoom over the base scale 2 → the engine rasterizes at scale 4.
     await waitFor(() =>
       expect(transport.renderRaw).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
         undefined,
-        { scale: 4 },
+        { scale: 96 / 72 },
+      ),
+    );
+    fireEvent.change(screen.getByLabelText('Zoom level'), { target: { value: '2' } });
+    // 200% → twice the printed size.
+    await waitFor(() =>
+      expect(transport.renderRaw).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        undefined,
+        { scale: ACTUAL_SIZE_SCALE * 2 },
       ),
     );
     // Zoom is UI state only — it never touches the document (the
@@ -1019,22 +1030,49 @@ describe('Designer', () => {
   });
 
   it('caps the render scale and covers the overflow with a CSS transform', async () => {
+    // At 1× the top step no longer reaches the cap (400% is 16/3 px per pt, under
+    // 6), so the cap is exercised where it bites: a 2× screen.
+    // jsdom reports 1 and the property is configurable, so it is redefined and
+    // put back.
+    Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+    try {
+      const transport = makeTransport();
+      const { container } = draw(transport);
+      // 400% wants 4/3 × 4 × 2 ≈ 10.67 device px per pt; the render is capped at
+      // 6, so the canvas is CSS-scaled by 10.67/6 ≈ 1.78 to reach the zoom.
+      fireEvent.change(screen.getByLabelText('Zoom level'), { target: { value: '4' } });
+      await waitFor(() =>
+        expect(transport.renderRaw).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          undefined,
+          { scale: 6 },
+        ),
+      );
+      await waitFor(() => {
+        const canvas = container.querySelector('.sj-canvas') as HTMLElement;
+        expect(canvas.style.transform).toContain('scale(1.77');
+      });
+    } finally {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
+    }
+  });
+
+  it('renders the top zoom uncapped and unmagnified on a 1× screen', async () => {
     const transport = makeTransport();
     const { container } = draw(transport);
-    // 400% wants scale 8; the render is capped at 6, so the canvas is CSS-scaled
-    // by 8/6 to reach the desired zoom.
     fireEvent.change(screen.getByLabelText('Zoom level'), { target: { value: '4' } });
     await waitFor(() =>
       expect(transport.renderRaw).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
         undefined,
-        { scale: 6 },
+        { scale: ACTUAL_SIZE_SCALE * 4 },
       ),
     );
     await waitFor(() => {
       const canvas = container.querySelector('.sj-canvas') as HTMLElement;
-      expect(canvas.style.transform).toContain('scale(1.33');
+      expect(canvas.style.transform).toBe('scale(1)');
     });
   });
 
@@ -1042,12 +1080,13 @@ describe('Designer', () => {
     const transport = makeTransport();
     draw(transport);
     fireEvent.click(screen.getByLabelText('Zoom in'));
+    // 100% → the next stop, 150% of the printed size.
     await waitFor(() =>
       expect(transport.renderRaw).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
         undefined,
-        { scale: 3 },
+        { scale: ACTUAL_SIZE_SCALE * 1.5 },
       ),
     );
   });
@@ -1700,11 +1739,11 @@ describe('Designer absolute manipulation', () => {
     draw(transport, { source: ABS_ITEMS, onChange });
     await waitFor(() => screen.getByRole('button', { name: 'sections.body.items[0]' }));
     const target = screen.getByRole('button', { name: 'sections.body.items[0]' });
-    // Scale 2 with unmeasurable jsdom rects: client y 250 → page pt 125 →
-    // delta 120 from the press at y 10 (pt 5).
+    // The opening 100% is 4/3 CSS px per pt, and jsdom's rects are unmeasurable:
+    // client y 170 → page pt 127.5 → delta 120 from the press at y 10 (pt 7.5).
     fireEvent.pointerDown(target, { pointerId: 1, isPrimary: true, clientX: 50, clientY: 10 });
-    fireEvent.pointerMove(target, { pointerId: 1, clientX: 50, clientY: 250 });
-    fireEvent.pointerUp(target, { pointerId: 1, clientX: 50, clientY: 250 });
+    fireEvent.pointerMove(target, { pointerId: 1, clientX: 50, clientY: 170 });
+    fireEvent.pointerUp(target, { pointerId: 1, clientX: 50, clientY: 170 });
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     const moved = String(onChange.mock.calls.at(-1)?.[0]);
     expect(moved).toContain('y: 120');

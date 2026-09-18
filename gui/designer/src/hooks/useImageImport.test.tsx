@@ -169,8 +169,9 @@ describe('Designer image import', () => {
       value: () => ({ left: 0, top: 0, width: 200, height: 200, right: 200, bottom: 200 }),
     });
     const canvas = container.querySelector('.sj-designer-canvas') as HTMLElement;
-    // client y=60 → pt 30 (scale 2): the slot before items[1].
-    dropFile(canvas, [imageFile()], 100, 60);
+    // A 200px raster at the opening 4/3 px per pt is a 150pt page in the 200px
+    // rect, so client y=40 → pt 30: the slot before items[1].
+    dropFile(canvas, [imageFile()], 100, 40);
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     const doc = String(onChange.mock.calls.at(-1)?.[0]);
     const img = doc.indexOf('type: image');
