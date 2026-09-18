@@ -61,7 +61,9 @@ describe('Breadcrumb', () => {
   it('renders the ancestor chain of the selection', () => {
     draw('sections.body.items[0].columns[0].cell.items[0]');
     const crumbs = screen.getAllByRole('button').map((el) => el.textContent);
-    expect(crumbs).toEqual(['Body', 'items', '品名', 'name']);
+    // The column's cell FRAME is a crumb of its own, between the column and the
+    // field inside it.
+    expect(crumbs).toEqual(['Body', 'items', '品名', 'Cell', 'name']);
   });
 
   it('marks the deepest crumb as current and selects an ancestor on click', () => {

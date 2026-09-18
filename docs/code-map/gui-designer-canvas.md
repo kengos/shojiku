@@ -421,7 +421,11 @@ hostile geometry degrades to null before it can reach an op.
   source}`; op math shared with `tree/model`).
 - `canvas/manipulate.ts` — the pure CLASSIFICATION model:
   `manipulationFor` → move | reorder | `{kind:'fixed', reason}` (the
-  chip/refusal vocabulary). Exports the untrusted-node read guards
+  chip/refusal vocabulary). A repeat's or a repeat_flow's FRAME path
+  (ending at `.cell` / `.item`) is `repeat` — `SUB_TEMPLATE_RE` matches a
+  path through such a frame and anything under `columns[` (a column's own
+  `cell` included), but not those two frames' own paths, which used to
+  fall to `section`. Exports the untrusted-node read guards
   `record` + `baseLength` the plan/handle models share; the `noBox`
   refusal reads `panel/itemView.ts`'s shared `BOXLESS_TYPES` — so the
   plain-rule insert lands as an item the panel's endpoint fields are the

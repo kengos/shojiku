@@ -13,6 +13,7 @@ import { ImageContent, PageNumberContent } from './contentParts';
 import { TextContentField } from './contentText';
 import { Field } from './fields';
 import { formatOptions } from './formatModel';
+import { frameOf } from './frameModel';
 import { IterableSourceSection } from './IterableSourceSection';
 import type { ItemPanelProps } from './itemPanelProps';
 import { type ContentMode, MARK_TYPES, registryNames } from './itemView';
@@ -50,6 +51,10 @@ export function ContentSection(props: ItemPanelProps) {
     );
   }
   if (view.type === 'repeat_flow' || view.type === 'repeat' || view.type === 'list') {
+    // The grid's `cell:` and the cards' `item:` are frames with a form of their
+    // own; a `list` has none.
+    const framePath = `${path}.${view.type === 'repeat' ? 'cell' : 'item'}`;
+    const frame = view.type === 'list' ? null : frameOf(controller.read, framePath);
     return (
       <IterableSourceSection
         controller={controller}
@@ -59,6 +64,8 @@ export function ContentSection(props: ItemPanelProps) {
         entryText={view.type === 'list' ? view.text : null}
         groups={props.paletteGroups}
         capabilities={capabilities}
+        frame={frame === null ? null : { path: framePath, kind: frame.kind }}
+        onSelectPath={props.onSelectPath}
       />
     );
   }

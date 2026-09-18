@@ -48,6 +48,7 @@ import { buildUsage, fieldUsage } from '../palette/usage';
 import { readBorder } from '../panel/borderModel';
 import { edgeOps, presetOps } from '../panel/borderOps';
 import { defaultStyleOp, INHERITED_STYLE_FIELDS } from '../panel/defaultsModel';
+import { frameOf } from '../panel/frameModel';
 import { gridColumnsPlan, gridRowsPlan } from '../panel/gridStructure';
 import { registryNames } from '../panel/itemView';
 import { containerLayoutFor } from '../panel/layoutModel';
@@ -55,6 +56,7 @@ import { directionOp, gapOp, ratioOp } from '../panel/layoutOps';
 import { readMark } from '../panel/markModel';
 import { setCheckedOps } from '../panel/markOps';
 import { bindingPickOps } from '../panel/model';
+import { paddingOps, readPadding } from '../panel/paddingModel';
 import { PAGE_SIZES } from '../panel/pageSizes';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
@@ -2071,6 +2073,129 @@ describe('iterable scaffolds against the real engine', () => {
     expect(outcome.diagnostics.items).toHaveLength(0);
     const paths = outcome.inspect?.boxes.pages.flat().map((box) => box.path) ?? [];
     expect(paths).toContain(path);
+  });
+
+  it('names each scaffold FRAME in the box index, the tree and the panel alike, and edits it', async () => {
+    // The seam: the canvas selects what the box index names, the tree gives a
+    // row to what IT names, and the panel routes on `frameOf`. All three must
+    // agree on the frame's path, and an edit at that path must reach the engine.
+    // Neither half runs in jsdom.
+    const groups = readDefinitionsView(definitions());
+    const itemsGroup = groups?.find((group) => group.id === 'items' && group.isArray);
+    if (itemsGroup == null) throw new Error('items array group missing from receipt-us');
+    for (const [variant, key, kind] of [
+      ['repeat', 'cell', 'cell'],
+      ['repeat_flow', 'item', 'card'],
+    ] as const) {
+      const editor = Editor.create(template());
+      const target = resolveIterableTarget((path) => editor.read(path), null);
+      const owner = `${target.path}[${target.index}]`;
+      const frame = `${owner}.${key}`;
+      expect(
+        editor.apply({
+          op: 'insertItem',
+          path: target.path,
+          index: target.index,
+          value: scaffoldSnippet(scaffoldFromGroup(itemsGroup), variant),
+        }).ok,
+      ).toBe(true);
+      const render = async () => {
+        const outcome = await transport.renderRaw(editor.text(), params(), definitions(), {
+          scale: 1,
+        });
+        expect(outcome.ok).toBe(true);
+        expect(outcome.diagnostics.items).toHaveLength(0);
+        return outcome.inspect?.boxes.pages.flat() ?? [];
+      };
+      const before = await render();
+      expect(before.map((box) => box.path)).toContain(frame);
+      expect(frameOf((path) => editor.read(path), frame)).toEqual({ kind, ownerPath: owner });
+      const walk = (nodes: readonly TreeNode[]): TreeNode[] =>
+        nodes.flatMap((node) => [node, ...walk(node.children)]);
+      const tree = walk(buildTree(editor.text())?.roots ?? []);
+      expect(tree.find((node) => node.path === frame)?.kind).toBe(
+        kind === 'card' ? 'card_frame' : 'cell_frame',
+      );
+
+      // The scaffold's 8pt padding → 20pt: the first field moves 12pt right.
+      const field = `${frame}.items[0]`;
+      const x = (boxes: typeof before) => boxes.find((box) => box.path === field)?.border.x;
+      const ops = paddingOps(frame, readPadding(editor.read(frame)), '20');
+      if (ops === null) throw new Error('the padding field refused a legal value');
+      expect(editor.applyAll(ops).ok).toBe(true);
+      // Borderless and filled — the label/ticket shape the gap blocked.
+      const borderOff = presetOps(
+        frame,
+        readBorder((path) => editor.read(path), frame),
+        'none',
+        {
+          width: 1,
+          color: '#000000',
+          style: 'solid',
+        },
+      );
+      expect(editor.applyAll(borderOff).ok).toBe(true);
+      expect(
+        editor.apply({
+          op: 'setScalar',
+          path: frame,
+          keys: ['style', 'backgroundColor'],
+          value: '#f5f5f5',
+        }).ok,
+      ).toBe(true);
+      const after = await render();
+      const moved = (x(after) ?? Number.NaN) - (x(before) ?? Number.NaN);
+      expect(moved).toBeCloseTo(12, 3);
+      const style = (editor.read(frame) as { style?: Record<string, unknown> }).style;
+      // "None" over the frame's own hairline removes the key (the simplest form)
+      // rather than authoring a 0; either way the frame draws no border.
+      expect(style?.borderWidth ?? 0).toBe(0);
+      expect(style?.backgroundColor).toBe('#f5f5f5');
+    }
+  });
+
+  it("names a table column's cell FRAME in the box index as the panel and the tree do", async () => {
+    const text = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: table',
+      '        data: { key: items }',
+      '        columns:',
+      '          - label: A',
+      '            width: 200',
+      '            cell:',
+      '              box: { padding: 3 }',
+      '              items:',
+      '                - { type: text, text: x }',
+      '',
+    ].join('\n');
+    const outcome = await transport.renderRaw(text, params(), undefined, { scale: 1 });
+    expect(outcome.ok).toBe(true);
+    expect(outcome.diagnostics.items).toHaveLength(0);
+    const frame = 'sections.body.items[0].columns[0].cell';
+    const paths = outcome.inspect?.boxes.pages.flat().map((box) => box.path) ?? [];
+    expect(paths).toContain(frame);
+    const editor = Editor.create(text);
+    expect(frameOf((path) => editor.read(path), frame)?.kind).toBe('columnCell');
+    const walk = (nodes: readonly TreeNode[]): TreeNode[] =>
+      nodes.flatMap((node) => [node, ...walk(node.children)]);
+    expect(walk(buildTree(text)?.roots ?? []).some((node) => node.path === frame)).toBe(true);
+
+    // And an edit at that path reaches the engine: the cell's own inset 3 → 13
+    // moves its first field 10pt right (`cellPadding` does not apply here).
+    const field = `${frame}.items[0]`;
+    const before = outcome.inspect?.boxes.pages.flat() ?? [];
+    const x = (boxes: typeof before) => boxes.find((box) => box.path === field)?.border.x;
+    const ops = paddingOps(frame, readPadding(editor.read(frame)), '13');
+    if (ops === null) throw new Error('the padding field refused a legal value');
+    expect(editor.applyAll(ops).ok).toBe(true);
+    const edited = await transport.renderRaw(editor.text(), params(), undefined, { scale: 1 });
+    expect(edited.ok).toBe(true);
+    expect(edited.diagnostics.items).toHaveLength(0);
+    const after = edited.inspect?.boxes.pages.flat() ?? [];
+    expect((x(after) ?? Number.NaN) - (x(before) ?? Number.NaN)).toBeCloseTo(10, 3);
   });
 
   it('agrees with the engine about which variants an ABSOLUTE body skips', async () => {

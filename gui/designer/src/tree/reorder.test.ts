@@ -47,6 +47,14 @@ describe('moveOpFor', () => {
 });
 
 describe('seqPosition', () => {
+  it('is null for a sub-template frame row, so the tree never drags one', () => {
+    // A frame (`…cell` / `…item`) is a map, not a sequence entry: moving it
+    // would mean moving every cell or card at once.
+    expect(seqPosition('sections.body.items[6].cell')).toBeNull();
+    expect(seqPosition('sections.body.items[5].item')).toBeNull();
+    expect(seqPosition('sections.body.items[4].columns[2].cell')).toBeNull();
+  });
+
   it('splits a sequence entry path into parent and index', () => {
     expect(seqPosition('sections.body.items[3]')).toEqual({
       parent: 'sections.body.items',

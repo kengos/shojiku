@@ -118,6 +118,18 @@ describe('manipulationFor', () => {
     });
   });
 
+  it('fixes the FRAME itself with the repeat reason, not as a section', () => {
+    // The pattern above matches a path running THROUGH a frame; the frame's own
+    // path ends at it, and used to fall through to `section` — a chip calling a
+    // grid cell a section.
+    const read = docRead({});
+    for (const frame of ['sections.body.items[0].cell', 'sections.body.items[3].item']) {
+      expect(manipulationFor(read, frame)).toEqual({ kind: 'fixed', reason: 'repeat' });
+    }
+    // A section root is still a section.
+    expect(manipulationFor(read, 'sections.body')).toEqual({ kind: 'fixed', reason: 'section' });
+  });
+
   it('fixes line and page_break with the noBox reason', () => {
     const read = docRead({
       'sections.body': { type: 'absolute' },

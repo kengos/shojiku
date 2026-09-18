@@ -26,9 +26,27 @@ platform binaries.
 
   The panel refuses a size the engine would clamp — more than 64 cells a page —
   rather than writing one, and clearing a count returns that axis to a single
-  cell; a negative gap is written as zero. What a cell shows is the items listed under the grid in
-  Structure, edited like any others; the cell's own padding and border are not in
-  the panel yet.
+  cell; a negative gap is written as zero. What a cell shows is the items listed under the grid's
+  Cell row in Structure, edited like any others; the cell's own padding, fill and
+  border are edited on that Cell row (below).
+
+- **A grid cell, a card and a table column's cell can now have their padding,
+  fill and border changed.** Each is a frame drawn once per row — the Grid and
+  Cards inserts start it with 8pt of padding and a thin border, and labels and
+  tickets are often wanted without one. Clicking one on the canvas already
+  selected it, but the panel then said "This item type has no editable fields
+  yet" — and for a grid cell or a card the label over the canvas called it a
+  section. Selecting one now opens a form of its
+  own: padding, background and border, headed by a line saying that every cell
+  or card uses it. It also has a row of its own in Structure (Cell, Card) with its
+  fields under it; the grid, the cards and a column that has one offer "Edit the
+  cell frame" or "Edit the card frame"; and the label over every one of them
+  now says it is a repeating part.
+
+  Padding is new to the Designer — no container could set it before. The field
+  takes one number for every side. A document that gives the sides different
+  values says so under the field, and a number typed there replaces them with
+  one.
 
 - **The Designer now shows you where the links are.** A hyperlink has no
   visual form of its own — the engine never underlines or recolours one, that

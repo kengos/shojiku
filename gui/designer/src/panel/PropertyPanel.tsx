@@ -125,6 +125,7 @@ export function PropertyPanel({
         capabilities={capabilities}
         formatCatalog={formatCatalog}
         floor={floor}
+        onSelectPath={onSelectPath}
       />
     );
   }

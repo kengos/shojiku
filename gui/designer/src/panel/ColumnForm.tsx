@@ -18,7 +18,7 @@ import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
 import { cascadeContext } from '../toolbar/cascade';
-import { INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
+import { BTN_SM, INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
 import { ColumnBindingFields } from './ColumnBindingFields';
 import type { ColumnRow } from './columnsModel';
 import { Field, TextField } from './fields';
@@ -45,6 +45,8 @@ export interface ColumnFormProps {
   /** The engine-default floor for the cell-style cascade (unset inherited
    * property → its real engine default). */
   readonly floor?: Readonly<Record<string, unknown>>;
+  /** Select another node — a `cell:` column's jump into its cell frame. */
+  readonly onSelectPath?: (path: string) => void;
 }
 
 export function ColumnForm({
@@ -56,6 +58,7 @@ export function ColumnForm({
   capabilities,
   formatCatalog = null,
   floor,
+  onSelectPath,
 }: ColumnFormProps) {
   const { t } = useI18n();
   const scope = bindingScopeFor(controller.read, path);
@@ -128,6 +131,13 @@ export function ColumnForm({
               panel has to say which. */}
           <p className="m-0 mt-1 text-muted text-sm">{t('panel.column.styleHint')}</p>
         </section>
+        {column.hasCell && onSelectPath !== undefined ? (
+          // A `cell:` column draws a container per row; its padding, fill and
+          // border are the frame's, one level in.
+          <button type="button" className={BTN_SM} onClick={() => onSelectPath(`${path}.cell`)}>
+            {t('panel.frame.edit.columnCell')}
+          </button>
+        ) : null}
       </div>
     </aside>
   );

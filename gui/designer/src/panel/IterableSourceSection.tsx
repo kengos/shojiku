@@ -1,14 +1,17 @@
 // The data-source section for the non-table iterables (`repeat_flow` / `repeat`
-// / `list`): what a scaffold creates must stay editable — rebind the array, and
-// for a `list` also edit its per-entry text template.
+// / `list`): what a scaffold creates must stay editable — rebind the array, for
+// a `list` also edit its per-entry text template, and for the cards and the grid
+// step into the per-element frame (its padding, fill and border live on the
+// frame's own form, `FrameForm`).
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
-import { INPUT, SECTION_TITLE } from '../ui/chrome';
+import { BTN_SM, INPUT, SECTION_TITLE } from '../ui/chrome';
 import { FieldPicker } from './FieldPicker';
 import { Field } from './fields';
+import type { FrameKind } from './frameModel';
 import { bindingKeyOp, plainTextOp } from './model';
 import { sourceOptions, sourceScopeProps } from './sourceScope';
 
@@ -28,6 +31,10 @@ export interface IterableSourceSectionProps {
   /** The engine capability keys — gates the binding-scope escape a nested
    * iterable needs to reach a top-level array (undefined = show). */
   readonly capabilities?: readonly string[];
+  /** The per-element frame to step into (`…cell` / `…item`), or `null` — a
+   * `list`, or a frame the document does not carry as a map. */
+  readonly frame?: { readonly path: string; readonly kind: FrameKind } | null;
+  readonly onSelectPath?: (path: string) => void;
 }
 
 /** The data-source section for the non-table iterables: what a scaffold
@@ -42,6 +49,8 @@ export function IterableSourceSection({
   entryText,
   groups,
   capabilities,
+  frame = null,
+  onSelectPath,
 }: IterableSourceSectionProps) {
   const { t } = useI18n();
   const dispatch = (op: Op) => {
@@ -81,6 +90,11 @@ export function IterableSourceSection({
           />
         </Field>
       )}
+      {frame !== null && onSelectPath !== undefined ? (
+        <button type="button" className={BTN_SM} onClick={() => onSelectPath(frame.path)}>
+          {t(`panel.frame.edit.${frame.kind}`)}
+        </button>
+      ) : null}
     </section>
   );
 }
