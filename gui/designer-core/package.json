@@ -14,6 +14,6 @@
     "normalize:examples": "node scripts/normalize-examples.ts"
   },
   "dependencies": {
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   }
 }
