@@ -16,7 +16,8 @@ box's width, `y` against its height.
 That is what makes an **underline under a flex child** expressible:
 the child's real width is a share of the row, decided at layout time, so
 no pt value can be written down while authoring. Put the line inside the
-child and reach its edge with `to: { x: "100%" }`.
+child and reach its edge with `to: { x: "100%", y: 0 }` (both axes are
+required on an `x`/`y` endpoint).
 
 Bare numbers are `pt`, so every template written before this is
 unchanged — and they serialize back as bare numbers, never as `"0pt"`.

@@ -12,8 +12,8 @@ and every bundled example. It runs on x86-64 and arm64.
 docker pull ghcr.io/kengos/shojiku:edge
 ```
 
-`edge` tracks `main`. It is the only tag that exists — Shojiku is
-pre-1.0, so there is no `latest` and no version tag yet. The same image
+`edge` tracks `main`; released versions are tagged by their number
+(`0.2.0`). There is no `latest` tag — Shojiku is pre-1.0. The same image
 is mirrored to Docker Hub as `kengos/shojiku:edge` if you prefer that
 registry; ghcr is what the rest of this page uses because it does not
 rate-limit anonymous pulls.

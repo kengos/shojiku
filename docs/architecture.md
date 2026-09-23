@@ -189,7 +189,9 @@ shojiku/
   engine/      Rust workspace — layout, render, formatter, diagnostics,
                the shared authoring layer + its hosts: cli, mcp (stdio
                server), wasm (browser bindings), capi (the C ABI cdylib
-               the FFI SDKs load)
+               the FFI SDKs load), napi (the Node addon the npm package
+               loads through that cdylib), fetch (the host-side font
+               fetcher — authoring time only)
                signing (the PDF revision writer + the local PEM signer)
                verify (the verifier + its coverage rule)
                (planned crate: bundle)
