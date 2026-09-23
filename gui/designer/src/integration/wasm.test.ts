@@ -1386,6 +1386,85 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
         '{"rows":[{},{}]}',
       ],
       [
+        // The width axis: a container with no `w` is the parent width MINUS the
+        // item's x, so until the width keys moved onto it these two came out
+        // 50pt narrower than the item had been.
+        'percent width at an x offset, in a band',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: rect, box: { x: 100, y: 700, w: "50%", h: 20 } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        'percent minWidth beside a pt width, at an x offset',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: rect, box: { x: 100, y: 700, w: 60, minWidth: "50%", h: 20 } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        // The margin is a WIDTH value too, so it travels with the axis. The x
+        // offset is what makes the case discriminate: with none, the container
+        // is the full width and nothing differs.
+        'percent width with a percent horizontal margin, in a band',
+        doc(
+          ['    type: flow', '    items: []'],
+          [
+            '      - { type: rect, box: { x: 100, y: 700, w: "50%", h: 20, margin: { left: "5%" } } }',
+            '      - { type: text, text: beside, box: { x: 480, y: 700 } }',
+          ],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
+        // A `%` BOUND with no `w` of its own: the item's width is whatever its
+        // owner measures, so a `w: "100%"` written onto it would make the
+        // wrapper claim the owner's whole basis. A row container measures its
+        // flex children from their content.
+        'percent minWidth with no width, under a row container',
+        doc(
+          flowBody([
+            '      - type: container',
+            '        box: { direction: row, h: 60, alignItems: start }',
+            '        items:',
+            '          - { type: text, text: bound, box: { minWidth: "50%" } }',
+            '          - { type: text, text: beside }',
+          ]),
+        ),
+        'sections.body.items[0].items[0]',
+        '{}',
+      ],
+      [
+        'percent maxWidth with no width, in an auto grid track',
+        doc(
+          flowBody([
+            '      - type: container',
+            '        box: { type: grid, columns: ["auto", "auto"], h: 60 }',
+            '        items:',
+            '          - { type: text, text: bound, box: { maxWidth: "50%" } }',
+            '          - { type: text, text: beside }',
+          ]),
+        ),
+        'sections.body.items[0].items[0]',
+        '{}',
+      ],
+      [
+        // A sizeless `rect` is not drawn and says so; a `w` written onto it by
+        // the wrap would silence the code and draw a full-width box.
+        'rect with a percent minWidth and no size (codes only)',
+        doc(
+          ['    type: flow', '    items: []'],
+          ['      - { type: rect, box: { x: 100, y: 700, minWidth: "50%" } }'],
+        ),
+        'sections.footer.items[0]',
+        '{}',
+      ],
+      [
         'footer rect without size (codes only)',
         doc(
           ['    type: flow', '    items: []'],
