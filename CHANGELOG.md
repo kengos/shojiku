@@ -309,6 +309,19 @@ platform binaries.
   container holds a page number. None of those draws wherever it lands, so
   refusing them would leave a block you had saved insertable nowhere at all.
 
+- **Group into a container no longer narrows an item whose width is a
+  percentage.** A width written as a percentage is a share of whatever holds
+  the item, and a new container starts at the item's own left edge — so a
+  container holding an item that sat 100pt from the left edge of the text area
+  was 100pt narrower than that area, and the item's share was taken from that. A
+  half-width rectangle 100pt in came out 50pt narrower than before it was
+  grouped. The container now takes the percentage width, its minimum and maximum
+  widths and its margin, and an item that had a width of its own fills the
+  container, so it keeps the width it had. An item whose width came from what
+  holds it — one with only a minimum or maximum in percent — is left without
+  one, so a side-by-side or grid layout still measures it the same way. An item
+  at the very left edge was never affected, which is why this went unnoticed.
+
 - **Group into a container no longer resizes an item whose height is a
   percentage.** A height written as a percentage is a share of whatever holds
   the item, and a new container is only as tall as what is inside it — so once

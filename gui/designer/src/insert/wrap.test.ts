@@ -426,17 +426,18 @@ describe('wrapInContainerOps — a percentage height keeps its basis', () => {
   });
 
   it('leaves the height alone when no vertical size key is a percentage', () => {
-    // The negative control for the whole feature: a pt height, a `%` in a key
-    // that resolves against the WIDTH, and a `Length` that is not a `%`.
+    // The negative control for the height axis: a pt height and a `Length` that
+    // is not a `%` stay on the item. (The `%` WIDTH beside it travels — that is
+    // the width axis, below — so the height's own control uses neither.)
     expect(
       wrapped(
-        footer('{ type: rect, box: { x: 10, y: 700, w: "50%", h: 20, minWidth: "10%" } }'),
+        footer('{ type: rect, box: { x: 10, y: 700, w: 120, h: 20 } }'),
         'sections.footer.items[0]',
       ),
     ).toEqual({
       type: 'container',
       box: { direction: 'column', x: 10, y: 700 },
-      items: [{ type: 'rect', box: { w: '50%', h: 20, minWidth: '10%' } }],
+      items: [{ type: 'rect', box: { w: 120, h: 20 } }],
     });
     expect(
       wrapped(footer('{ type: rect, box: { y: 700, w: 50, h: 5mm } }'), 'sections.footer.items[0]'),
@@ -457,6 +458,140 @@ describe('wrapInContainerOps — a percentage height keeps its basis', () => {
       type: 'container',
       box: { direction: 'column' },
       items: [{ type: 'ellipse', anchor: 'a', box: { h: '10%', w: 20 } }],
+    });
+  });
+});
+
+describe('wrapInContainerOps — a percentage width keeps its basis', () => {
+  // A container with no `w` is "the parent width minus the x offset", so a `%`
+  // width left on an OFFSET item resolves against a narrower box: measured
+  // against the real engine, a 50% rect at x: 100 in a 545.28pt band came out
+  // 222.64pt instead of 272.64. The container takes the width and the item
+  // takes the container. Unlike the height there is nothing to refuse — a
+  // container's width is definite in every owner.
+
+  it('moves a percentage w onto the container and fills it with the item', () => {
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { x: 100, y: 700, w: "50%", h: 20 } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', x: 100, y: 700, w: '50%' },
+      items: [{ type: 'rect', box: { h: 20, w: '100%' } }],
+    });
+  });
+
+  it('moves the width bounds with it, so the clamp still has its basis', () => {
+    // All three width keys travel together: a `%` bound beside a pt `w` clamps
+    // the same box only if the box it clamps is the one that moved.
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { x: 100, y: 700, w: 60, minWidth: "50%", h: 20 } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', x: 100, y: 700, w: 60, minWidth: '50%' },
+      items: [{ type: 'rect', box: { h: 20, w: '100%' } }],
+    });
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { y: 700, w: 300, maxWidth: "50%", h: 20 } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700, w: 300, maxWidth: '50%' },
+      items: [{ type: 'rect', box: { h: 20, w: '100%' } }],
+    });
+  });
+
+  it('leaves an unsized width unsized, so the container is not measured as the owner', () => {
+    // A `%` BOUND with no `w`: the item's width is whatever its owner measures.
+    // Writing `w: "100%"` onto it would make an owner that sizes a child from
+    // its content — a flex row, an `auto` grid track — measure the wrapper as
+    // the whole basis (272.64pt → 515.99 in a row, against the real engine).
+    expect(
+      wrapped(
+        footer('{ type: text, text: hi, box: { x: 100, y: 700, minWidth: "50%" } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', x: 100, y: 700, minWidth: '50%' },
+      items: [{ type: 'text', text: 'hi' }],
+    });
+  });
+
+  it('takes the margin with it, since the spacing is measured against that width', () => {
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { y: 700, w: "50%", h: 20, margin: { left: "5%" } } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700, w: '50%', margin: { left: '5%' } },
+      items: [{ type: 'rect', box: { h: 20, w: '100%' } }],
+    });
+  });
+
+  it('carries both axes at once, each with its own fill', () => {
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { x: 10, y: 700, w: "50%", h: "10%" } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', x: 10, y: 700, w: '50%', h: '10%' },
+      items: [{ type: 'rect', box: { h: '100%', w: '100%' } }],
+    });
+  });
+
+  it('leaves the width alone when no horizontal size key is a percentage', () => {
+    // The negative control: pt widths and a `Length` that is not a `%` stay.
+    expect(
+      wrapped(
+        footer('{ type: rect, box: { x: 10, y: 700, w: 120, minWidth: 40, h: 20 } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', x: 10, y: 700 },
+      items: [{ type: 'rect', box: { w: 120, minWidth: 40, h: 20 } }],
+    });
+    expect(
+      wrapped(footer('{ type: rect, box: { y: 700, w: 5mm, h: 20 } }'), 'sections.footer.items[0]'),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700 },
+      items: [{ type: 'rect', box: { w: '5mm', h: 20 } }],
+    });
+  });
+
+  it("leaves an anchored ellipse's percentage width on it, and a line has no box", () => {
+    expect(
+      wrapped(
+        footer('{ type: ellipse, anchor: a, box: { w: "50%", h: 20 } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column' },
+      items: [{ type: 'ellipse', anchor: 'a', box: { w: '50%', h: 20 } }],
+    });
+    expect(
+      wrapped(
+        footer('{ type: line, from: { x: 0, y: 700 }, to: { x: "100%", y: 700 } }'),
+        'sections.footer.items[0]',
+      ),
+    ).toEqual({
+      type: 'container',
+      box: { direction: 'column', y: 700 },
+      items: [{ type: 'line', from: { x: 0, y: 0 }, to: { x: '100%', y: 0 } }],
     });
   });
 });

@@ -17,11 +17,15 @@
 // container instead: the container's box would sit at its owner's origin and,
 // wherever that is not the item's place, the item would move or change size too.
 //
-// A height authored as a `%` moves for the same reason and is the harsher case,
-// because a new container is ALWAYS auto-height: left on the item, `h: "10%"`
-// has no basis at all, so the engine drops it with `percent_of_auto` and a
-// `rect` — which needs a size to exist — is simply not drawn. `heightAxis`
-// decides that, and the shapes it cannot preserve are not offered a wrap.
+// A size authored as a `%` moves for the same reason: it resolved against the
+// owner, and after the wrap only the container still has that basis. The two
+// axes fail differently. A `%` WIDTH silently narrows — a container with no `w`
+// is "the parent width minus the x offset", so a 50% child of a body 545pt wide
+// that sat at x: 100 came out 222.64pt instead of 272.64. A `%` HEIGHT has no
+// basis at all, because a new container is ALWAYS auto-height: the engine drops
+// it with `percent_of_auto` and a `rect` — which needs a size to exist — is
+// simply not drawn. `widthAxis` and `heightAxis` decide each, and the shapes
+// the height cannot preserve are not offered a wrap at all.
 // Framework-free; every op is a designer-core `Op` (AI parity).
 
 import type { Op, ReadFn, SnippetValue } from '@shojiku/designer-core';
@@ -39,11 +43,22 @@ const OWNER_KEYS = ['x', 'y', 'flexGrow', 'flexBasis', 'columnSpan', 'rowSpan'] 
  * loses its size and is not drawn at all. */
 const HEIGHT_PERCENT_KEYS = ['h', 'minHeight', 'maxHeight'] as const;
 
+/** The box keys whose `%` resolves against the OWNER's WIDTH. Left on the item
+ * they resolve against the container instead, which defaults to the parent
+ * width MINUS the item's `x` — so an offset item narrows by that share. */
+const WIDTH_PERCENT_KEYS = ['w', 'minWidth', 'maxWidth'] as const;
+
 /** What moves onto the container when the height axis moves. `margin` rides
  * along even though its `%` is a WIDTH value: the item's height becomes the
  * container's, so the spacing around that height has to travel with it, or the
  * item overflows its own wrapper by the margins it kept. */
 const HEIGHT_AXIS_KEYS = [...HEIGHT_PERCENT_KEYS, 'margin'] as const;
+
+/** What moves when the width axis moves — the same shape, and `margin` for the
+ * same reason: the container's width is now the item's, so spacing measured
+ * against it travels too. All three width keys move together, so a `%`
+ * `minWidth` beside a numeric `w` keeps clamping the same box. */
+const WIDTH_AXIS_KEYS = [...WIDTH_PERCENT_KEYS, 'margin'] as const;
 
 type Node = Record<string, unknown>;
 
@@ -99,6 +114,19 @@ function heightAxis(node: Node): 'leave' | 'move' | 'refuse' {
   return box.h == null ? 'refuse' : 'move';
 }
 
+/** Whether the item's WIDTH has to travel to the container: any `%` among the
+ * width keys of a box. The item is filled back with `w: "100%"` only if it had
+ * a `w`; see `splitPosition`. Unlike the height there is nothing to refuse — a
+ * container's width is definite in every owner (its own `w`, else the parent's
+ * width minus `x` and right margin, else the share a row or grid gives it), and
+ * every width shape has a re-authoring that preserves it. Takes the BOX, because its one caller has already
+ * returned for the two nodes that have none to speak of: a `line`, whose
+ * position is its endpoints, and an anchored `ellipse`, whose box the engine
+ * never reads. */
+function widthAxis(box: Node): boolean {
+  return WIDTH_PERCENT_KEYS.some((key) => isPercent(box[key]));
+}
+
 /** Whether the item `node` at `path` can be wrapped: a sequence entry whose
  * parent is an `…items` list (the flow body, a band, a container, a cell, a
  * card) — the only lists a `container` item is valid in — holding a map of a
@@ -139,7 +167,9 @@ function wrapLine(line: Node, flowBody: boolean): { box: Node; item: Node } {
 /** The container's own keys and the item as re-authored inside it. An anchored
  * `ellipse` keeps its keys: the engine never reads them. A box left empty is
  * dropped, except where the wire requires one (`rect`) — the height-carrying
- * path can never empty one, since it always leaves `h: "100%"` behind. */
+ * path can never empty one, since it always leaves `h: "100%"` behind, and
+ * neither can the width path EXCEPT where the item had only a `%` bound, which
+ * moves away without leaving a fill. */
 function splitPosition(node: Node, flowBody: boolean): { box: Node; item: Node } {
   if (node.type === 'line') {
     return wrapLine(node, flowBody);
@@ -150,21 +180,35 @@ function splitPosition(node: Node, flowBody: boolean): { box: Node; item: Node }
   }
   const moved: Node = {};
   const rest: Node = { ...box };
-  // A height that resolves against the owner travels with the position, for the
+  // A size that resolves against the owner travels with the position, for the
   // same reason: the container is the owner's child now, so only the container
-  // still has the basis that height was authored against.
+  // still has the basis that size was authored against.
   const carryHeight = heightAxis(node) === 'move';
-  const keys: readonly string[] = carryHeight ? [...OWNER_KEYS, ...HEIGHT_AXIS_KEYS] : OWNER_KEYS;
+  const carryWidth = widthAxis(box);
+  const keys: readonly string[] = [
+    ...OWNER_KEYS,
+    ...(carryHeight ? HEIGHT_AXIS_KEYS : []),
+    ...(carryWidth ? WIDTH_AXIS_KEYS : []),
+  ];
   for (const key of keys) {
     if (rest[key] !== undefined) {
       moved[key] = rest[key];
       delete rest[key];
     }
   }
+  // The container is exactly as tall and as wide as the item was, and has no
+  // padding of its own, so its content box IS the item's old border box.
   if (carryHeight) {
-    // The container is exactly as tall as the item was, and has no padding of
-    // its own, so its content box IS the item's old border box.
     rest.h = '100%';
+  }
+  // Only an item that HAD a width fills the container back. An item sized by
+  // its owner (a `%` bound and no `w` of its own) must stay unsized: a `w:
+  // "100%"` is an authored width, and an owner that measures a child from its
+  // content — a flex row, an `auto` grid track — would then size the wrapper as
+  // the whole basis. Measured: a row child with `minWidth: "50%"` went from
+  // 272.64pt to 515.99. The bound still travels, so the clamp keeps its basis.
+  if (carryWidth && box.w != null) {
+    rest.w = '100%';
   }
   const item: Node = { ...node, box: rest };
   if (Object.keys(rest).length === 0 && !REQUIRED_BOX_WIRE_TYPES.has(String(node.type))) {

@@ -309,6 +309,18 @@ result LANDS:
   `REQUIRED_BOX_WIRE_TYPES` type (`rect`, where it is a required wire key); an
   anchored `ellipse` keeps its keys; a `line` outside the flow body gives the
   container its topmost numeric endpoint `y` and shifts both endpoints by it.
+  `widthAxis(box)` decides the WIDTH axis: any `%` in `w`/`minWidth`/`maxWidth`
+  sends all three plus `margin` onto the container. The item is filled back
+  with `w: "100%"` ONLY if it had a `w` — an item sized by its owner (a `%`
+  bound alone) must stay unsized, or an owner that measures a child from its
+  content (a flex row, an `auto` grid track) sizes the wrapper as the whole
+  basis (measured: 272.64pt → 515.99 in a row). Nothing is refused on this
+  axis; a container's width is definite in every owner, and its DEFAULT is the
+  basis the owner hands it — the parent's width minus the item's `x` and right
+  margin in a band/flow/absolute owner, the share a `row` or grid gives it
+  otherwise. That default is exactly why the `%` had to move: an offset item
+  narrowed by that share (measured: a 50% rect at `x: 100` in a 545.28pt band
+  came out 222.64pt instead of 272.64).
   `heightAxis(node)` decides the HEIGHT axis, and `isWrappable` reads the same
   answer: a new container is ALWAYS auto-height, so a `%` in
   `h`/`minHeight`/`maxHeight` left on the item resolves against nothing
