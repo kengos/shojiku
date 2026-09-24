@@ -57,6 +57,44 @@ describe('Menubar', () => {
     expect(cols[0].groups[0][1].run as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
   });
 
+  it('renders an item note as a second line that DESCRIBES the item, never names it', () => {
+    const run = vi.fn();
+    const cols: MenuColumn[] = [
+      {
+        id: 'insert',
+        label: 'Insert',
+        groups: [
+          [
+            { label: 'Frame', run, note: 'Contains an item that never draws' },
+            { label: 'Stamp', run: vi.fn() },
+          ],
+        ],
+      },
+    ];
+    render(<Menubar columns={cols} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
+    // The accessible NAME is still the label alone, so the row is found by it…
+    const noted = screen.getByRole('menuitem', { name: 'Frame' });
+    // …and the note is the element its `aria-describedby` points at.
+    const describedBy = noted.getAttribute('aria-describedby');
+    expect(describedBy).not.toBeNull();
+    const note = document.getElementById(describedBy ?? '');
+    expect(note?.textContent).toBe('Contains an item that never draws');
+    expect(noted.contains(note)).toBe(true);
+    // An enabled noted item still acts.
+    expect(noted.getAttribute('data-disabled')).toBeNull();
+    fireEvent.click(noted);
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  it('renders no note line and no description for an item without one', () => {
+    render(<Menubar columns={columns()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'File' }));
+    const save = screen.getByRole('menuitem', { name: 'Save' });
+    expect(save.getAttribute('aria-describedby')).toBeNull();
+    expect(save.textContent).toBe('Save');
+  });
+
   it('renders a host-derived label as inert text, never HTML', () => {
     const cols: MenuColumn[] = [
       {

@@ -29,7 +29,7 @@ import { type EngineTransport, TransportError } from '../engine/transport';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
 import { composeDataUri } from '../image/dataUri';
 import { sniffImage } from '../image/sniff';
-import { blockRefusedOwner } from '../insert/blockRefusal';
+import { blockNeverDraws, blockRefusedOwner } from '../insert/blockRefusal';
 import { resolveContainerInsert } from '../insert/containerInsert';
 import { containerShape, containerSnippet } from '../insert/containerModel';
 import { insertTargetOwner } from '../insert/flowPlacement';
@@ -2628,6 +2628,112 @@ describe('iterable scaffolds against the real engine', () => {
     expect(
       boxes.some((box) => box.path.startsWith('sections.footer.items[0].items[0].columns[')),
     ).toBe(true);
+  });
+
+  it('agrees with the engine about what BELOW a block root never draws', async () => {
+    // `blockNeverDraws` is the row's note, and it is target-INDEPENDENT: the
+    // claim is that no insert target makes the nested item draw. Ask the engine
+    // in the two owners where each kind draws when BARE — a footer band (page
+    // number) and the flow body (the rest) — so the skip cannot be the owner's.
+    const groups = readDefinitionsView(definitions());
+    const itemsGroup = groups?.find((group) => group.id === 'items' && group.isArray);
+    if (itemsGroup == null) throw new Error('items array group missing from receipt-us');
+    const spec = scaffoldFromGroup(itemsGroup);
+    const kinds: readonly (readonly [string, SnippetValue])[] = [
+      ['repeat', scaffoldSnippet(spec, 'repeat')],
+      ['repeat_flow', scaffoldSnippet(spec, 'repeat_flow')],
+      ['page_break', { type: 'page_break' }],
+      ['page_number', { type: 'page_number' }],
+    ];
+    const table = scaffoldSnippet(spec, 'table') as unknown as { columns: unknown[] };
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items: []',
+      '  footer:',
+      '    height: 200',
+      '    repeat: every_page',
+      '    items: []',
+      '',
+    ].join('\n');
+    const owners = ['sections.body.items', 'sections.footer.items'] as const;
+    const render = async (path: string, value: SnippetValue) => {
+      const editor = Editor.create(source);
+      expect(editor.apply({ op: 'insertItem', path, index: 0, value }).ok).toBe(true);
+      const outcome = await transport.renderRaw(editor.text(), params(), definitions(), {
+        scale: 1,
+      });
+      expect(outcome.ok).toBe(true);
+      return outcome;
+    };
+    for (const [kind, node] of kinds) {
+      // Wrapped in a container, and inside a sub-template (a table's column
+      // cell, the one sub-template owner that itself draws in a band).
+      const wrapped = { type: 'container', items: [node] } as unknown as SnippetValue;
+      const inColumn = {
+        ...table,
+        columns: [...table.columns, { label: 'X', width: 60, cell: { items: [node] } }],
+      } as unknown as SnippetValue;
+      for (const [shape, value] of [
+        ['container', wrapped],
+        ['column cell', inColumn],
+      ] as const) {
+        expect(blockNeverDraws(value), `${kind} in ${shape}`).toBe(true);
+        for (const path of owners) {
+          const label = `${kind} in ${shape} at ${path}`;
+          const outcome = await render(path, value);
+          expect(
+            outcome.diagnostics.items.some((item) => item.code.startsWith(`${kind}_in_`)),
+            label,
+          ).toBe(true);
+          if (shape === 'container') {
+            // The block still lands — its container draws, empty.
+            const boxes = outcome.inspect?.boxes.pages.flat() ?? [];
+            expect(
+              boxes.some((box) => box.path === `${path}[0]`),
+              `${label} frame`,
+            ).toBe(true);
+            expect(
+              boxes.some((box) => box.path.startsWith(`${path}[0].items`)),
+              `${label} item`,
+            ).toBe(false);
+          }
+        }
+      }
+    }
+    // A TABLE is the other shape: dead only inside the block's own sub-template
+    // (`table_in_cell`), so it is asked in the column-cell shape alone — and a
+    // merely WRAPPED table is not flagged, because it draws in both owners.
+    const tableInColumn = {
+      ...table,
+      columns: [...table.columns, { label: 'X', width: 60, cell: { items: [table] } }],
+    } as unknown as SnippetValue;
+    expect(blockNeverDraws(tableInColumn)).toBe(true);
+    const wrappedTable = { type: 'container', items: [table] } as unknown as SnippetValue;
+    expect(blockNeverDraws(wrappedTable)).toBe(false);
+    for (const path of owners) {
+      const dead = await render(path, tableInColumn);
+      expect(
+        dead.diagnostics.items.map((item) => item.code),
+        `table in column cell at ${path}`,
+      ).toContain('table_in_cell');
+      const drawn = await render(path, wrappedTable);
+      expect(
+        drawn.diagnostics.items.map((item) => item.code),
+        `wrapped table at ${path}`,
+      ).not.toContain('table_in_cell');
+    }
+    // The CONTROL: the same wrapper around a text is not flagged, and draws.
+    const clean = { type: 'container', items: [{ type: 'text', text: 'ok' }] } as SnippetValue;
+    expect(blockNeverDraws(clean)).toBe(false);
+    for (const path of owners) {
+      const boxes = (await render(path, clean)).inspect?.boxes.pages.flat() ?? [];
+      expect(
+        boxes.some((box) => box.path === `${path}[0].items[0]`),
+        path,
+      ).toBe(true);
+    }
   });
 
   it('blank-start: extendParams rows + the scaffold render WARNING-clean without definitions', async () => {

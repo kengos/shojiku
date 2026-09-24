@@ -4,9 +4,12 @@
 // portal); the LOOK is plain Tailwind utilities over the `--sj-*` tokens. Each
 // item dispatches its OWN `run` closure — the model never looks an id up in a
 // table, so a host-extension entry carries no injection surface. Labels render
-// as React text (auto-escaped); a host label is never injected as markup.
+// as React text (auto-escaped); a host label is never injected as markup. An
+// item's optional `note` is a second line tied to it as its DESCRIPTION, so the
+// item's accessible name stays its label.
 
 import { Menu as HeadlessMenu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import { useId } from 'react';
 import type { MenuColumn } from './model';
 
 export interface MenubarProps {
@@ -14,6 +17,7 @@ export interface MenubarProps {
 }
 
 export function Menubar({ columns }: MenubarProps) {
+  const noteBase = useId();
   return (
     <div
       role="menubar"
@@ -37,17 +41,29 @@ export function Menubar({ columns }: MenubarProps) {
                 key={group[0].label}
                 className={index > 0 ? 'mt-1 border-t border-border pt-1' : undefined}
               >
-                {group.map((item) => (
-                  <MenuItem key={item.label} disabled={item.disabled}>
-                    <button
-                      type="button"
-                      className="block w-full cursor-pointer border-0 bg-transparent px-3 py-1.5 text-left text-text data-disabled:cursor-default data-disabled:opacity-45 data-focus:bg-chrome"
-                      onClick={item.run}
-                    >
-                      {item.label}
-                    </button>
-                  </MenuItem>
-                ))}
+                {group.map((item, itemIndex) => {
+                  const noteId = `${noteBase}-${column.id}-${index}-${itemIndex}`;
+                  return (
+                    <MenuItem key={item.label} disabled={item.disabled}>
+                      <button
+                        type="button"
+                        // A note is inside the button, so it would join the name
+                        // computed from content; the label is named explicitly.
+                        aria-label={item.note === undefined ? undefined : item.label}
+                        aria-describedby={item.note === undefined ? undefined : noteId}
+                        className="block w-full cursor-pointer border-0 bg-transparent px-3 py-1.5 text-left text-text data-disabled:cursor-default data-disabled:opacity-45 data-focus:bg-chrome"
+                        onClick={item.run}
+                      >
+                        {item.label}
+                        {item.note === undefined ? null : (
+                          <span id={noteId} className="block text-xs text-warn-text">
+                            {item.note}
+                          </span>
+                        )}
+                      </button>
+                    </MenuItem>
+                  );
+                })}
               </div>
             ))}
           </MenuItems>

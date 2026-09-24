@@ -146,8 +146,22 @@ describe('blockInsertGroup', () => {
     const group = blockInsertGroup([block('block-1', '社判'), block('block-2', '枠')]);
     expect(group.entries).toEqual([
       { kind: 'saveBlock', labelKey: 'insert.saveBlock' },
-      { kind: 'block', blockId: 'block-1', name: '社判', requires: null, refuses: null },
-      { kind: 'block', blockId: 'block-2', name: '枠', requires: null, refuses: null },
+      {
+        kind: 'block',
+        blockId: 'block-1',
+        name: '社判',
+        requires: null,
+        refuses: null,
+        neverDraws: false,
+      },
+      {
+        kind: 'block',
+        blockId: 'block-2',
+        name: '枠',
+        requires: null,
+        refuses: null,
+        neverDraws: false,
+      },
       { kind: 'manageBlock', labelKey: 'insert.manageBlock' },
     ]);
   });
@@ -163,6 +177,7 @@ describe('blockInsertGroup', () => {
         name: 'n',
         requires: 'flow',
         refuses: null,
+        neverDraws: false,
       });
     }
     const [, pageNumber] = blockInsertGroup([
@@ -184,5 +199,15 @@ describe('blockInsertGroup', () => {
     expect(wrapped).toMatchObject({ requires: null, refuses: 'cell' });
     const [, plain] = blockInsertGroup([block('b', 'n', CONTAINER)]).entries;
     expect(plain).toMatchObject({ refuses: null });
+  });
+
+  it('carries whether the block holds an item no target draws, read off blockNeverDraws', () => {
+    // The wiring only — what the walk itself answers is `blockRefusal.test.ts`.
+    const [, wrapped] = blockInsertGroup([
+      block('b', 'n', { type: 'container', items: [{ type: 'page_number' }] } as SnippetValue),
+    ]).entries;
+    expect(wrapped).toMatchObject({ requires: null, refuses: null, neverDraws: true });
+    const [, plain] = blockInsertGroup([block('b', 'n', CONTAINER)]).entries;
+    expect(plain).toMatchObject({ neverDraws: false });
   });
 });

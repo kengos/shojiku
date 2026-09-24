@@ -9,7 +9,7 @@
 
 import { isSnippetValue, type SnippetValue } from '@shojiku/designer-core';
 import { requiredOwner } from '../canvas/dnd';
-import { blockRefusedOwner } from './blockRefusal';
+import { blockNeverDraws, blockRefusedOwner } from './blockRefusal';
 import type { InsertGroup, MenuEntry } from './insertMenu';
 
 /** One saved block: a stable id (React keys / dedupe / delete target — never a
@@ -170,13 +170,16 @@ export function blockInsertGroup(blocks: readonly SavedBlock[]): InsertGroup {
     // A block carries a whole item node, so it can carry a kind only one owner
     // lays out — and a kind exactly one owner refuses. The menu compares both
     // against the RESOLVED insert target, so a row that would insert something
-    // the engine skips says why instead.
+    // the engine skips says why instead. A kind that needs an owner NESTED inside
+    // the block draws under no target at all, so that one is a note on the row
+    // rather than a refusal of it.
     entries.push({
       kind: 'block',
       blockId: block.id,
       name: block.name,
       requires: requiredOwner((block.value as Record<string, unknown>).type),
       refuses: blockRefusedOwner(block.value),
+      neverDraws: blockNeverDraws(block.value),
     });
   }
   if (blocks.length > 0) {

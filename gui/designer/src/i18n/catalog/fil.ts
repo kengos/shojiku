@@ -255,6 +255,7 @@ export const fil: LanguageCatalog = {
     'insert.block.flowOnly': 'direkta sa katawang flow lang mailalagay ang block na ito',
     'insert.block.bandOnly': 'direkta sa header o footer lang mailalagay',
     'insert.block.notInCell': 'hindi sa loob ng repeat, card o cell ng talahanayan',
+    'insert.block.neverDraws': 'May item sa loob na hindi kailanman iginuguhit',
     'contextMenu.saveBlock': 'I-save bilang nagagamit-muling block…',
     'block.title': 'I-save bilang nagagamit-muling block',
     'block.hint':

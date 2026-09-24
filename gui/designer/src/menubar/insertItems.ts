@@ -3,7 +3,8 @@
 // (a band-only element anywhere but directly in a header/footer, a flow-only
 // element outside the body's flow, a saved block whose node needs an owner the insert target is
 // not, save-block without a savable selection) — an affordance that appears and
-// disappears is worse than one that explains itself.
+// disappears is worse than one that explains itself. A saved block that holds an
+// item no target can draw keeps its row ENABLED and carries that as a note.
 
 import type { OwnerKind } from '../canvas/dnd';
 import { requiresBand } from '../insert/bandPlacement';
@@ -88,11 +89,14 @@ export function insertItems(
       // other — and one that a single owner refuses is skipped in that one —
       // so wherever the insert target is such an owner the row states the
       // reason rather than acting, the same shape as the element rows above.
+      // A nested kind that draws under no target is not a reason to refuse
+      // this one — it is a note, on the row whether or not it is disabled here.
       const reasonKey = blockReasonKey(entry.requires, entry.refuses, w.insertOwner);
       return {
         label: reasonKey === null ? entry.name : `${entry.name} — ${t(reasonKey)}`,
         run: () => w.onInsertBlock(entry.blockId),
         disabled: reasonKey !== null,
+        ...(entry.neverDraws ? { note: t('insert.block.neverDraws') } : {}),
       };
     }
     if (entry.kind === 'manageBlock') {

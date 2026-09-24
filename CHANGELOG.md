@@ -304,10 +304,32 @@ platform binaries.
   Nothing else about a table changes: inside a container in a header, a footer
   or an ordinary body it still draws, and that is still offered. Dragging a
   table into a cell, pasting one and placing one from the data panel were never
-  possible and still are not. Three cases are deliberately left alone — a block
+  possible and still are not. Two cases are deliberately not refused — a block
   whose own repeat cell, card or table cell holds a table, and a block whose
-  container holds a page number. None of those draws wherever it lands, so
-  refusing them would leave a block you had saved insertable nowhere at all.
+  container holds a page number. Neither draws wherever it lands, so refusing
+  them would leave a block you had saved insertable nowhere at all; both are
+  now noted on the row instead (below).
+
+- **A saved block that holds an item which can never draw now says so in the
+  Insert menu.** A page number lays out only directly in a header or footer,
+  and a page break, a Grid or Cards only directly in a body that flows. Saved
+  inside a container — or inside the block's own repeat cell, card or table
+  cell — such an item has no place it can go. The same is true of a table
+  inside the block's own repeat cell, card or table cell. The engine skips
+  either with a warning wherever the block lands, and the block arrives with a
+  gap, often an empty frame where the page number was meant to be. The row
+  used to look like any other. It now carries a second line, "Contains an item
+  that never draws".
+
+  The row stays usable. No target fixes this, so a row that stood down would
+  leave a block you had saved insertable nowhere — and a reason naming a place
+  would be untrue. Inserting it behaves exactly as before, and the diagnostics
+  panel still names the skipped item. A block that holds only the item itself,
+  not wrapped, is unchanged: it goes where that item draws — and so is a table
+  that is merely wrapped in a container, which still draws everywhere but
+  inside a repeating cell. The check looks a
+  bounded distance into the block, the same limits the table refusal uses, and
+  says nothing about a block past them.
 
 - **Group into a container no longer narrows an item whose width is a
   percentage.** A width written as a percentage is a share of whatever holds

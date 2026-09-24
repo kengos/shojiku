@@ -155,11 +155,17 @@ resolved style.
   element arm is one `blockedReasonKey` over that gate, and a saved
   block's row is disabled when its entry's `requires` names an owner other
   than `insertOwner`, with `insert.block.flowOnly` / `insert.block.bandOnly`
-  as the reason). `menubar/hostEntries.ts` —
+  as the reason — or `insert.block.notInCell` when its `refuses` is the
+  owner; a block whose entry says `neverDraws` stays ENABLED and gets
+  `insert.block.neverDraws` as the item's `note`, on every owner).
+  `menubar/hostEntries.ts` —
   `validateHostEntries(raw)`: untrusted host entries runtime-typed, id
   charset + reserved-name reject + caps + dedupe; bad entries dropped,
   never thrown (re-exported through `menubar/model.ts`).
-- `menubar/Menubar.tsx` — the `role=menubar` row of Headless UI menus.
+- `menubar/Menubar.tsx` — the `role=menubar` row of Headless UI menus. An
+  item's optional `note` renders as a second, warn-toned line inside the item,
+  wired as its `aria-describedby` with the label as its explicit
+  `aria-label`, so the accessible NAME stays the label.
 - `menubar/Titlebar.tsx` — document name + `saveStatus`; renders
   NOTHING when both absent.
 
