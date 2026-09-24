@@ -83,7 +83,22 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   `RowRect`/`dropIndexFor`/`seqPosition`/`moveOpFor` + the `MoveItemOp`
   shape) and `tree/selection.ts` (where the selection sits and goes —
   `breadcrumbChain` over a segment-wise prefix match, plus
-  `seqLength`/`enclosingNodePath`/`nextSelectionAfterRemove`).
+  `seqLength`/`enclosingNodePath`/`nextSelectionAfterRemove`), and
+  `tree/subTemplate.ts` — the ONE door for "does this path repeat per data
+  element", asked by `canvas/dnd`'s `receiverFor`, `canvas/manipulate`,
+  `canvas/reparent`, `insert/flowPlacement` and `panel/placementModel`.
+  TWO named questions over one pattern: `insideSubTemplate` (the item at
+  the path REPEATS) and `isOrInsideSubTemplate`, which adds a `repeat`'s or
+  a `repeat_flow`'s FRAME — asked wherever the frame must answer the same
+  as its inside, which is every owner question AND `manipulate`'s selection
+  one, the only site where the widening is observable. A TABLE COLUMN is
+  outside that distinction: `\.columns\[` matches a PREFIX, so a column and
+  its `cell:` frame answer yes to both. The pattern matches a path's
+  SPELLING, sound only while nothing else addressable is spelled `cell` /
+  `item` / `columns[n]` (stated in the file; `palette/cellTarget.ts` has
+  the exact segment-walk form, for a different question). Telling the two
+  apart by whether the caller appended a separator is what had produced
+  three spellings of one concept.
 - `tree/labels.ts` — kind → localized chrome key; exports `SECTION_PREFIX`.
 - `tree/kindIcons.ts` — `kindIcon(kind)` → the row's decorative type mark
   (real SVG, never text chars — a row's `textContent` is exactly its

@@ -348,3 +348,18 @@ describe('receiverFor', () => {
     ).toBeNull();
   });
 });
+
+describe('receiverFor — the sub-template frame', () => {
+  it('refuses the frame itself, not only paths inside it', () => {
+    // The contract, not the guard that delivers it. TWO deliver it today: the
+    // `isOrInsideSubTemplate` check at the top, and — behind it —
+    // `ownerPlacement`, which answers null because a `ContainerItem` has no
+    // `type`. Narrowing the predicate does NOT red this case (measured), which
+    // is exactly why the case is worth having: the day that second guard
+    // changes shape, this is what still says a frame receives nothing.
+    const read = () => ({ items: [] });
+    for (const frame of ['sections.body.items[0].cell', 'sections.body.items[3].item']) {
+      expect(receiverFor(read, frame), frame).toBeNull();
+    }
+  });
+});

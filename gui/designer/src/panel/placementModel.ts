@@ -17,13 +17,10 @@
 
 import type { Op, ReadFn } from '@shojiku/designer-core';
 import { seqPosition } from '../tree/reorder';
+import { insideSubTemplate } from '../tree/subTemplate';
 import { BOXLESS_TYPES } from './itemView';
 
 const ITEMS_SUFFIX = '.items';
-// A path inside a repeating sub-template (`table` columns / `cell:` /
-// `repeat_flow` `item:`): one definition lays out per data element, so a single
-// coordinate is meaningless — these keep plain fields (the manipulate.ts rule).
-const SUB_TEMPLATE_RE = /\.columns\[|\.cell\.|\.item\./;
 
 /** How the selected item gets its position — the field/segment shape follows.
  * `pinnable`: a container child (auto⇄fixed toggle). `flow`: a flow-body child
@@ -71,7 +68,11 @@ export function ownerPathOf(path: string): string | null {
  * throws: any hostile/garbage shape degrades to `plain`. */
 export function placementFor(read: ReadFn, path: string): Placement {
   const plain: Placement = { kind: 'plain', pinned: false, ignoredY: false };
-  if (SUB_TEMPLATE_RE.test(path)) {
+  // One definition laying out per data element: a single coordinate would be
+  // meaningless, so these keep the plain fields. The NARROW question is enough
+  // here, unlike `canvas/manipulate`'s: a frame path has no trailing index, so
+  // `ownerPathOf` below answers `null` for it and it reaches `plain` anyway.
+  if (insideSubTemplate(path)) {
     return plain;
   }
   const ownerPath = ownerPathOf(path);

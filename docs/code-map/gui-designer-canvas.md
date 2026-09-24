@@ -391,9 +391,9 @@ hostile geometry degrades to null before it can reach an op.
   `insertTargetOwner` mints it, from the target PATH, so `receiverFor`
   keeps answering `null` for a sub-template and the canvas and layer-tree
   drops are unchanged. Plus `siblingRects` (duplicated index → null,
-  since repeat fragments share paths) and `SUB_TEMPLATE_RE`, imported by
-  `manipulate`, `reparent` and `insert/flowPlacement`'s `insertTargetOwner`
-  — and re-declared verbatim, not imported, in `panel/placementModel`.
+  since repeat fragments share paths). The sub-template question itself is
+  NOT here — `receiverFor` asks `tree/subTemplate`'s
+  `isOrInsideSubTemplate`, the one door for all five callers.
 - `canvas/reparent.ts` — the cross-parent move as OPS, and the one model
   BOTH surfaces share (the layer tree asks it the same question). ONE
   `moveItem` carrying `toPath`, preceded by whatever `box` keys the
@@ -426,10 +426,10 @@ hostile geometry degrades to null before it can reach an op.
 - `canvas/manipulate.ts` — the pure CLASSIFICATION model:
   `manipulationFor` → move | reorder | `{kind:'fixed', reason}` (the
   chip/refusal vocabulary). A repeat's or a repeat_flow's FRAME path
-  (ending at `.cell` / `.item`) is `repeat` — `SUB_TEMPLATE_RE` matches a
-  path through such a frame and anything under `columns[` (a column's own
-  `cell` included), but not those two frames' own paths, which used to
-  fall to `section`. Exports the untrusted-node read guards
+  (ending at `.cell` / `.item`) is `repeat` like everything under it,
+  which is why this asks `tree/subTemplate`'s WIDENED
+  `isOrInsideSubTemplate` — the frames used to fall to `section`.
+  Exports the untrusted-node read guards
   `record` + `baseLength` the plan/handle models share; the `noBox`
   refusal reads `panel/itemView.ts`'s shared `BOXLESS_TYPES` — so the
   plain-rule insert lands as an item the panel's endpoint fields are the

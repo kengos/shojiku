@@ -16,7 +16,8 @@
 
 import type { Op, ReadFn } from '@shojiku/designer-core';
 import { seqPosition } from '../tree/reorder';
-import { type Receiver, SUB_TEMPLATE_RE, typeFitsOwner } from './dnd';
+import { isOrInsideSubTemplate } from '../tree/subTemplate';
+import { type Receiver, typeFitsOwner } from './dnd';
 import { baseLength, record } from './manipulate';
 import type { PageMargin } from './marginGuide';
 import { axisOp } from './plan';
@@ -138,7 +139,7 @@ export function reparentOps(
   if (position === null || !position.parent.endsWith(ITEMS_SUFFIX)) {
     return null;
   }
-  if (SUB_TEMPLATE_RE.test(`${fromPath}.`)) {
+  if (isOrInsideSubTemplate(fromPath)) {
     return null;
   }
   const destination = target.receiver.items;

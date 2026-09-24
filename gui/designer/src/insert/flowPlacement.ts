@@ -13,7 +13,8 @@
 // into, which is why the row states the reason instead of acting.
 
 import type { ReadFn } from '@shojiku/designer-core';
-import { type OwnerKind, receiverFor, SUB_TEMPLATE_RE } from '../canvas/dnd';
+import { type OwnerKind, receiverFor } from '../canvas/dnd';
+import { isOrInsideSubTemplate } from '../tree/subTemplate';
 import type { InsertKind } from './insertMenu';
 
 const ITEMS_SUFFIX = '.items';
@@ -53,10 +54,9 @@ export function requiresFlow(kind: InsertKind): boolean {
  * warn `*_in_container`. Nothing is ever read as the flow or a band by
  * default. */
 export function insertTargetOwner(read: ReadFn, path: string): OwnerKind {
-  // The trailing dot is `receiverFor`'s, for the same reason: a path may END
-  // at the sub-template map itself (`…items[0].cell`), where the pattern's own
-  // trailing separator would otherwise have nothing to match.
-  if (SUB_TEMPLATE_RE.test(`${path}.`)) {
+  // The slot's own path answers yes here, the same as `receiverFor`: an insert
+  // aimed AT a `cell:` is an insert into the repeating part.
+  if (isOrInsideSubTemplate(path)) {
     return 'cell';
   }
   if (!path.endsWith(ITEMS_SUFFIX)) {
