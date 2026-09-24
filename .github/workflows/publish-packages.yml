@@ -402,7 +402,7 @@ jobs:
       - uses: actions/checkout@v7
 
       # The runner's preinstalled stable Rust, deliberately NOT the pinned
-      # 1.97.1 container the gates use: publishing packages source and
+      # 1.98.0 container the gates use: publishing packages source and
       # re-verifies a build that the pinned gates already proved, so tying it
       # to the pin would add a SIXTH place the Rust version has to be bumped
       # (Dockerfile ×3, Makefile, ci.yml) for no reproducibility gain.

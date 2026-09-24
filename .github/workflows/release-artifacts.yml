@@ -22,7 +22,7 @@ on:
 
 env:
   # Keep in sync with Makefile RUST_VERSION / ci.yml / docker/Dockerfile.
-  RUST_VERSION: "1.97.1"
+  RUST_VERSION: "1.98.0"
   CARGO_TERM_COLOR: always
   # Gates are quiet by default; a CI log wants the raw output (see ci.yml).
   V: 1

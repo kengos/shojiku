@@ -232,7 +232,7 @@ endif
 # a machine that `make verify` would otherwise thrash.
 
 # Keep in sync with .github/workflows/ci.yml (RUST_VERSION) and docker/Dockerfile.
-RUST_VERSION := 1.97.1
+RUST_VERSION := 1.98.0
 RUST_IMAGE   := rust:$(RUST_VERSION)-slim-bookworm
 TRIVY_IMAGE  := aquasec/trivy:latest
 # Pinned to a DIGEST, and the pin is load-bearing: `make sbom:check` compares
