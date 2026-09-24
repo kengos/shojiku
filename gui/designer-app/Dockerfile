@@ -6,7 +6,7 @@
 #   docker build -f gui/designer-app/Dockerfile -t shojiku-designer-app:local .
 #   docker run --rm -p 8788:80 shojiku-designer-app:local
 
-FROM rust:1.97.1-slim-bookworm AS wasm
+FROM rust:1.98.0-slim-bookworm AS wasm
 RUN rustup target add wasm32-unknown-unknown
 ARG WASM_BINDGEN_VERSION=0.2.126
 RUN cargo install wasm-bindgen-cli --version =${WASM_BINDGEN_VERSION} --locked

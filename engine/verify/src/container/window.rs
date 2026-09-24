@@ -36,7 +36,7 @@ pub(crate) fn decode_window(pdf: &[u8], span: &Range<usize>) -> Result<Vec<u8>> 
         });
     }
     let mut out = Vec::with_capacity(inner.len() / 2);
-    for pair in inner.chunks_exact(2) {
+    for pair in inner.as_chunks::<2>().0 {
         let (high, low) = (nibble(pair[0])?, nibble(pair[1])?);
         out.push((high << 4) | low);
     }

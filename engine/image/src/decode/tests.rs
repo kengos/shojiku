@@ -84,7 +84,7 @@ fn decodes_jpeg_to_opaque_rgba() {
     assert_eq!((img.width, img.height), (4, 3));
     assert_eq!(img.rgba.len(), 4 * 3 * 4);
     // Forced-RGB decode is always opaque.
-    assert!(img.rgba.chunks_exact(4).all(|px| px[3] == 255));
+    assert!(img.rgba.as_chunks::<4>().0.iter().all(|px| px[3] == 255));
     // Solid warm fill: red dominates the (lossy) output.
     let first = &img.rgba[0..3];
     assert!(first[0] > first[2], "expected reddish pixel: {first:?}");

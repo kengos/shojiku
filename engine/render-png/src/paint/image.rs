@@ -142,7 +142,7 @@ pub(crate) fn pixmap_from_rgba(image: &RgbaImage) -> Option<Pixmap> {
         return None;
     }
     let mut premul = Vec::with_capacity(image.rgba.len());
-    for px in image.rgba.chunks_exact(4) {
+    for px in image.rgba.as_chunks::<4>().0 {
         let a = u16::from(px[3]);
         let mul = |c: u8| ((u16::from(c) * a + 127) / 255) as u8;
         premul.extend_from_slice(&[mul(px[0]), mul(px[1]), mul(px[2]), px[3]]);

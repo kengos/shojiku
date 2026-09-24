@@ -8,7 +8,7 @@
 # See published-python.sh for the rest of the rationale.
 . "$(dirname "$0")/common.sh"
 
-IMG="rust:${RUST_VER:-1.97.1}-slim-bookworm"
+IMG="rust:${RUST_VER:-1.98.0}-slim-bookworm"
 SPEC="--version $PROOF_VERSION"
 
 echo "== published-install proof (rust, $IMG) =="
