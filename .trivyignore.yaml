@@ -1,0 +1,18 @@
+# Findings the image scan (`make docker:scan`) accepts, each with the reason it
+# is accepted and the date the acceptance stops. An entry past its expired_at is
+# reported again and fails the gate, so nothing here can be forgotten — a silent
+# permanent exception is what this file exists to avoid.
+#
+# The scan is otherwise unfiltered: `--ignore-unfixed` plus every severity from
+# UNKNOWN up, so anything with a fixed version available fails the build.
+vulnerabilities:
+  - id: DLA-4792-1
+    statement: >-
+      A tzdata data refresh (2026b -> 2026c) in the distroless base, not a code
+      defect. The runtime never reads the timezone database: the only date code
+      is the `time` crate, built with parsing/formatting/macros and no
+      local-offset feature, so no /usr/share/zoneinfo lookup happens. There is
+      nothing to upgrade to either — the current gcr.io/distroless/cc-debian12
+      :nonroot tag still carries 2026b, so pinning the newest digest reports the
+      same row. Drop this entry once distroless rebuilds on 2026c.
+    expired_at: 2026-12-31
