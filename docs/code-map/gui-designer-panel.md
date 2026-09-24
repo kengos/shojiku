@@ -955,7 +955,11 @@ presence is not a text binding.
     `panel/placementModel.ts` reads/authors the DOCUMENT (so it stays
     correct when a render fails) and `panel/placementGeometry.ts` needs
     the render: `placementFor` classifies pinnable/flow/coordinate/plain
-    from the document alone and `pinOps`/`unpinOps` write back exactly
+    from the document alone — a repeating sub-template is `plain`, asked
+    through `tree/subTemplate`'s NARROW `insideSubTemplate` (the panel's one
+    reach into `tree/`; the frame itself needs no widening here because it
+    has no trailing index, so `ownerPathOf` answers `null` for it) — and
+    `pinOps`/`unpinOps` write back exactly
     the `box.x`/`box.y` keys it reads as `pinned` (x+y in one batch;
     unpin removes only present keys), while `resolvePlacement` turns
     LAST-GOOD inspect boxes into display/pin values (displays stay

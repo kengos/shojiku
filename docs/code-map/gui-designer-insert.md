@@ -199,8 +199,9 @@ result LANDS:
   agree; inside one neither half applies (the path branch answers first, and
   the path need not be an `…items` list), and the two agree there by REFUSING
   rather than by classifying. A target ANYWHERE inside a repeating
-  sub-template answers `cell`, decided from the PATH (`SUB_TEMPLATE_RE`,
-  with `receiverFor`'s trailing dot) before the document is consulted —
+  sub-template answers `cell`, decided from the PATH
+  (`tree/subTemplate`'s `isOrInsideSubTemplate`, the same widened question
+  `receiverFor` asks) before the document is consulted —
   the engine's data scope is not cleared on the way into a nested
   container, so the list one container down is as much a cell as the
   cell's own `items`; `cell` is strictly narrower than `container`,

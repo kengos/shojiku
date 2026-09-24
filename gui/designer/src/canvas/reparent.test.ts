@@ -254,3 +254,20 @@ describe('reparentedPath', () => {
     expect(reparentedPath(parent, 1, `${parent}[x].items`, 0)).toBe(`${parent}[x].items[0]`);
   });
 });
+
+describe('reparentOps — the sub-template frame', () => {
+  it('refuses to drag the frame itself out of its owner', () => {
+    // Same shape as the `receiverFor` case: the contract rather than the guard.
+    // `seqPosition` already refuses a frame path (no trailing index), so
+    // narrowing `isOrInsideSubTemplate` does not red this either — it holds
+    // the outcome while the guards behind it are free to move.
+    const read = () => ({ items: [] });
+    const target = {
+      receiver: { items: 'sections.footer.items', placement: { owner: 'band', axis: 'y' } },
+      index: 0,
+    } as unknown as Parameters<typeof reparentOps>[2];
+    for (const frame of ['sections.body.items[0].cell', 'sections.body.items[3].item']) {
+      expect(reparentOps(read, frame, target, null), frame).toBeNull();
+    }
+  });
+});

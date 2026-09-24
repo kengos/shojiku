@@ -145,3 +145,22 @@ file is only for output that could not answer **which file / which line
       ANSI colour. Fixed by normalising the log before matching — and it
       is why a matcher must be tested against a REAL failing log, never
       by reading the regex.
+
+- [ ] `make_issue_gui_test_filter_passes_having_run_nothing` — **When**:
+      `make gui:test F=<pattern>` is given anything vitest's positional
+      filter does not match. `F` is a SUBSTRING against the test file
+      path, not a regex, so a plausible-looking
+      `F='(subTemplate|manipulate)'` matches nothing — and the recipe
+      passes `--passWithNoTests` (`mk/gui.mk:89`), so the gate prints
+      **PASS** and exits 0 having run zero test files. The log says
+      `No test files found, exiting with code 0` once per workspace
+      project, but the PASS line says nothing. **Not detected by**:
+      nothing; a green gate is never diagnosed. **Recovered by**:
+      reading the test COUNT in `.make-logs/gui_test.log`, or running
+      the unfiltered `gui:test`, which cannot pass this way.
+      **Why `--passWithNoTests` is there**: `pnpm -r exec` runs the
+      filter in all four projects, and a filter matching files in one
+      project must not fail the other three — so the fix is not to drop
+      the flag but to assert that at least ONE project found tests.
+      *(Found by a zero-context review that used a regex-shaped `F` to
+      reproduce a positive control and got a PASS over nothing.)*

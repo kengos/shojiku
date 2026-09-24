@@ -18,6 +18,7 @@
 import type { ReadFn } from '@shojiku/designer-core';
 import type { BoxRect, PlacedBox } from '../engine/types';
 import { seqPosition } from '../tree/reorder';
+import { isOrInsideSubTemplate } from '../tree/subTemplate';
 
 /** The drag axis: `y` for a column/flow stack, `x` for a `direction: row`. */
 export type Axis = 'x' | 'y';
@@ -31,12 +32,6 @@ export interface ReorderContext {
 }
 
 const ITEMS_SUFFIX = '.items';
-
-/** A path inside a repeating sub-template (`table` columns / `cell:` /
- * `repeat_flow` `item:`): one authored node drawn once per data element, so
- * it is neither a drag source nor a drop target. Shared with `manipulate`,
- * which classifies the CHILD path against it. */
-export const SUB_TEMPLATE_RE = /\.columns\[|\.cell\.|\.item\./;
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -150,7 +145,7 @@ function ownerAxis(ownerPath: string, owner: Record<string, unknown>): Axis | nu
  * at all — a sub-template, a grid container, a malformed node, or a document
  * the materializer refuses (a read throw reads as "no"). */
 export function receiverFor(read: ReadFn, ownerPath: string): Receiver | null {
-  if (SUB_TEMPLATE_RE.test(`${ownerPath}.`)) {
+  if (isOrInsideSubTemplate(ownerPath)) {
     return null;
   }
   let owner: Record<string, unknown> | undefined;
