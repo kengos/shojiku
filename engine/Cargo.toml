@@ -123,7 +123,7 @@ skrifa = "0.46"
 # and complex-script shaping behind the layout font seam. MIT, no unsafe,
 # and font parsing rides read-fonts (^0.41, its own copy since skrifa 0.45) —
 # no ttf-parser, so deny.toml stays clean.
-harfrust = "0.12"
+harfrust = "0.13"
 # Thai word segmentation for line breaking (ICU4X, Unicode-org): Thai writes
 # without inter-word spaces, so a greedy wrapper has no break opportunity to
 # find and falls through to breaking per character. Pure Rust, Unicode-3.0 —
