@@ -184,7 +184,13 @@ fn clipped_text_loses_ink_outside_the_rect() {
         ..Default::default()
     });
     let (_, clipped) = render_items(vec![clipped_item]);
-    let dark = |rgba: &[u8]| rgba.chunks_exact(4).filter(|p| p[0] < 128).count();
+    let dark = |rgba: &[u8]| {
+        rgba.as_chunks::<4>()
+            .0
+            .iter()
+            .filter(|p| p[0] < 128)
+            .count()
+    };
     assert!(
         dark(&clipped) < dark(&plain),
         "clip must remove glyph ink: {} !< {}",

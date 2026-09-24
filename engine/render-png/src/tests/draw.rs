@@ -114,13 +114,17 @@ sections:
 }
 
 fn dark_pixels(rgba: &[u8]) -> usize {
-    rgba.chunks_exact(4).filter(|p| p[0] < 128).count()
+    rgba.as_chunks::<4>()
+        .0
+        .iter()
+        .filter(|p| p[0] < 128)
+        .count()
 }
 
 /// Rightmost column containing a dark pixel (glyph ink).
 fn rightmost_dark(w: u32, rgba: &[u8]) -> u32 {
     let mut max_x = 0;
-    for (i, p) in rgba.chunks_exact(4).enumerate() {
+    for (i, p) in rgba.as_chunks::<4>().0.iter().enumerate() {
         if p[0] < 128 {
             max_x = max_x.max(i as u32 % w);
         }
