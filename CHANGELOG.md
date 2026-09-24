@@ -333,10 +333,13 @@ platform binaries.
   the item sits — a minimum or maximum height in percent with no height of its
   own to carry it, and a line with an end written as a percentage — and Group
   into a container is no longer offered for those, the way it already stands
-  down for a page number. Inside a side-by-side container, and in a header,
-  footer or table cell, those two did survive being grouped; they are refused
-  there too, because the check is given the item and not what holds it, and
-  offering the command only sometimes would be worse than not offering it.
+  down for a page number. The command is withheld for them wherever the item
+  sits. Almost everywhere the shape is simply lost: the height collapses to the
+  text and a warning appears where there was none. The one place it can come
+  through unchanged is a side-by-side container, and only for a line or for a
+  height written as the full 100%; any other percentage there loses the height
+  the item had with nothing said about it. So the command stays away from that
+  case too, rather than appearing for one particular number.
 
 - **Group into a container no longer moves the item.** The new container
   started at the corner of whatever held the item, so in a header, a footer or a

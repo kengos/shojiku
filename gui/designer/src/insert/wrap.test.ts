@@ -638,6 +638,42 @@ describe('isWrappable — the percentage heights that cannot be carried', () => 
     }
   });
 
+  it('refuses them in every owner, the one that could preserve them included', () => {
+    // Measured against the real engine, owner by owner. Everywhere but a flex
+    // ROW the shape is lost: a `%` bound with no `h` collapses to its content
+    // with `percent_of_auto` (flow/absolute body, header/footer band, column or
+    // grid container, repeat cell, card, table cell — 158.4pt became 14), and a
+    // `%` endpoint `y` lands at the container's top. A flex ROW is the
+    // exception: the wrapper inherits the row's cross-axis stretch, so a line
+    // and a `100%` bound come out identical with no diagnostic, while any other
+    // bound loses the item's own stretch silently (200 -> 40). It is refused
+    // there too rather than offering a command that preserves the shape at one
+    // value of the percentage — which is why this case needs no owner, not
+    // because the check cannot see one. `integration/wasm.test.ts` renders the
+    // row exception itself; this case pins the refusal over the owner set.
+    const owners = [
+      'sections.body.items[0]',
+      'sections.footer.items[0]',
+      'sections.body.items[2].items[1]',
+      'sections.body.items[2].cell.items[0]',
+      'sections.body.items[2].item.items[0]',
+      'sections.body.items[2].columns[1].cell.items[0]',
+    ];
+    const shapes: [string, unknown][] = [
+      ['bound', { type: 'text', text: 'hi', box: { minHeight: '20%' } }],
+      ['line', { type: 'line', from: { x: 0, y: '10%' }, to: { x: 100, y: '10%' } }],
+    ];
+    for (const path of owners) {
+      for (const [name, node] of shapes) {
+        expect(isWrappable(path, node), `${name} at ${path}`).toBe(false);
+        expect(
+          wrapInContainerOps(() => node, path),
+          `${name} ops at ${path}`,
+        ).toBeNull();
+      }
+    }
+  });
+
   it('refuses a line whose endpoint y is a percentage', () => {
     const ends = [
       { from: { x: 0, y: '90%' }, to: { x: 100, y: 700 } },

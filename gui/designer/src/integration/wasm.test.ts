@@ -1613,6 +1613,76 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     }
   });
 
+  it('pins the one owner where the withheld wrap would have preserved the shape', async () => {
+    // The refusal above is right everywhere BUT a flex row, and the prose in
+    // `insert/wrap.ts` now says so — this is what holds that sentence honest.
+    // A flex row hands its children a cross-axis height, and a wrapper put in
+    // the item's place INHERITS it, so the basis the `%` resolves against
+    // survives. A line and a `100%` bound therefore come out identical with no
+    // diagnostic at all; every other bound loses the item's own stretch just as
+    // silently, which is why the command is withheld here too rather than
+    // appearing for one value of the percentage.
+    const doc = (inner: string) =>
+      [
+        'version: 0.1.0',
+        'page: { size: Letter, margin: 0 }',
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - type: container',
+        '        box: { direction: row, h: 200 }',
+        '        items:',
+        `          - ${inner}`,
+        '          - { type: text, text: beside }',
+        '',
+      ].join('\n');
+    const wrapped = (inner: string) =>
+      doc(`{ type: container, box: { direction: column }, items: [ ${inner} ] }`);
+    const at = 'sections.body.items[0].items[0]';
+    const measure = async (source: string, path: string) => {
+      const outcome = await transport.renderRaw(source, '{}', undefined, { scale: 2 });
+      const codes = outcome.diagnostics.items.map((d) => d.code);
+      expect(codes).not.toContain('parse_error');
+      const box = outcome.inspect?.boxes.pages[0]?.find((b) => b.path === path);
+      if (box == null) throw new Error(`no box at ${path}`);
+      return { codes, y: box.border.y, h: box.border.h };
+    };
+    const cases: [string, string, boolean][] = [
+      [
+        'a line endpoint in percent',
+        '{ type: line, from: { x: 0, y: "10%" }, to: { x: 100, y: "10%" } }',
+        true,
+      ],
+      ['a full-height bound', '{ type: text, text: probe, box: { minHeight: "100%" } }', true],
+      [
+        'a bound below full height',
+        '{ type: text, text: probe, box: { minHeight: "20%" } }',
+        false,
+      ],
+    ];
+    for (const [name, inner, survives] of cases) {
+      const editor = Editor.create(doc(inner));
+      expect(
+        wrapInContainerOps((path) => editor.read(path), at),
+        name,
+      ).toBeNull();
+      const before = await measure(doc(inner), at);
+      const after = await measure(wrapped(inner), `${at}.items[0]`);
+      // The row is the owner that reports NOTHING either way — which is exactly
+      // what makes the losing case worth refusing rather than warning about.
+      expect(before.codes, `${name} before`).toEqual([]);
+      expect(after.codes, `${name} after`).toEqual([]);
+      expect(after.y, `${name} y`).toBeCloseTo(before.y, 2);
+      if (survives) {
+        expect(after.h, `${name} h`).toBeCloseTo(before.h, 2);
+      } else {
+        expect(before.h, `${name} h before`).toBeCloseTo(200, 2);
+        expect(after.h, `${name} h after`).toBeCloseTo(40, 2);
+      }
+    }
+  });
+
   it('skips a page number a container holds, which is why the wrap refuses one', async () => {
     const source = [
       'version: 0.1.0',

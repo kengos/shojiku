@@ -90,12 +90,21 @@ function record(value: unknown): Node | undefined {
  * the following siblings down wherever the owner STACKS them (measured: off the
  * page in a flowing body, 200pt down in a column container).
  *
- * Both refusals are OWNER-INDEPENDENT, and deliberately wider than the break.
- * A band and a cell place their children absolutely, and a `row` container
- * hands its children a cross-axis height, so in those owners both shapes do
- * survive a wrap today. `isWrappable(path, node)` is handed the path and the
- * node and never the owner, so it cannot tell those owners apart and refuses in
- * all of them rather than offering an edit that breaks the page in the rest.
+ * Both refusals are OWNER-INDEPENDENT, and measuring the owners one by one says
+ * the check is right to be — with one exception it is still right to cover.
+ * Everywhere but a flex ROW the shape is LOST: a `%` bound with no `h`
+ * collapses to its content with `percent_of_auto` (a flowing or absolute body,
+ * a header or footer band, a column or grid container, a repeat cell, a card, a
+ * table cell — 158.4pt became 14), and a `%` endpoint `y` lands at the
+ * container's top. A flex ROW is the exception, because the wrapper INHERITS
+ * the row's cross-axis stretch: the basis the `%` resolves against survives, so
+ * a line keeps its place and a `100%` bound keeps its height, both identical
+ * before and after with no diagnostic at all. What the item loses there is its
+ * own stretch, which is why every OTHER bound changes silently (200pt tall
+ * became 40, again with nothing reported). Offering the command for the one
+ * owner where it preserves a line, or a bound at exactly one value of the
+ * percentage, would be worse than not offering it — so
+ * `isWrappable(path, node)` needs no owner to decide.
  * `leave` — nothing on this item resolves against the owner's height. An
  * anchored `ellipse` is always `leave`: the engine never reads its box. */
 function heightAxis(node: Node): 'leave' | 'move' | 'refuse' {

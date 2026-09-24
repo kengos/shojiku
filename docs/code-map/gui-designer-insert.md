@@ -334,11 +334,16 @@ result LANDS:
   `y` in `%` (no box to carry it; giving the container a full-height box instead
   pushes the following siblings down wherever the owner STACKS them — measured
   off the page in a flowing body and 200pt down in a column container). Both
-  refusals are OWNER-INDEPENDENT and deliberately wider than the break: in a
-  band, a cell, or a `row` container (which hands its children a cross-axis
-  height) both shapes DO survive a wrap today, but `isWrappable(path, node)` is
-  handed the path and the node and never the owner, so it cannot tell those
-  owners apart. `%` is spelled as
+  refusals are OWNER-INDEPENDENT, measured owner by owner: everywhere but a flex
+  ROW the shape is LOST — a `%` bound with no `h` collapses to its content with
+  `percent_of_auto` (flow/absolute body, header/footer band, column or grid
+  container, repeat cell, card, table cell) and a `%` endpoint `y` lands at the
+  container's top. A flex ROW is the EXCEPTION: the wrapper inherits the row's
+  cross-axis stretch, so the basis survives and a line — or a `100%` bound —
+  comes out IDENTICAL with no diagnostic, while every other bound loses the
+  item's own stretch SILENTLY (200pt -> 40). Refused there too rather than
+  offering a command that preserves the shape only for a line or at one value of
+  the percentage, so `isWrappable(path, node)` needs no owner. `%` is spelled as
   `parse_length_text` spells it: a string that, trimmed, ends in `%`.
 - `insert/blockModel.ts` — pure reusable-block model: `SavedBlock` (a
   named `SnippetValue`), `blockFromNode`/`validateBlockName`/
