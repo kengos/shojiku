@@ -461,6 +461,7 @@ export const en: LanguageCatalog = {
     'insert.block.flowOnly': 'only directly in a flow body',
     'insert.block.bandOnly': 'only directly in a header or footer',
     'insert.block.notInCell': 'not inside a repeat, a card or a table cell',
+    'insert.block.neverDraws': 'Contains an item that never draws',
     'contextMenu.saveBlock': 'Save as reusable block…',
     'block.title': 'Save as reusable block',
     'block.hint':

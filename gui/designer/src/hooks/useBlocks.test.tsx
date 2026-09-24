@@ -348,6 +348,33 @@ describe('Designer — reusable blocks', () => {
     expect(plain.getAttribute('aria-disabled')).not.toBe('true');
   });
 
+  it('keeps a block holding a never-drawing item ENABLED, notes it, and inserts it', () => {
+    // No target makes a page number inside a container draw, so the row is not
+    // refused anywhere: it acts, and says what will be missing. The second lock
+    // in insertBlock is not widened either — the write goes through.
+    const onChange = vi.fn<(t: string) => void>();
+    const blocks: SavedBlock[] = [
+      {
+        id: 'framed',
+        name: '枠付き頁番号',
+        value: { type: 'container', items: [{ type: 'page_number' }] },
+      },
+      { id: 'text', name: '社判', value: { type: 'text', text: 'seal' } },
+    ];
+    draw(makeTransport(), { source: ABSOLUTE_BODY, onBlocksChange: vi.fn(), blocks, onChange });
+    openInsert();
+    const row = screen.getByRole('menuitem', { name: '枠付き頁番号' });
+    expect(row.getAttribute('aria-disabled')).not.toBe('true');
+    const note = document.getElementById(row.getAttribute('aria-describedby') ?? '');
+    expect(note?.textContent).toBe('Contains an item that never draws');
+    // The control: the clean block beside it carries no note.
+    expect(
+      screen.getByRole('menuitem', { name: '社判' }).getAttribute('aria-describedby'),
+    ).toBeNull();
+    fireEvent.click(row);
+    expect(onChange.mock.calls.at(-1)?.[0]).toMatch(/type: container[\s\S]*type: page_number/);
+  });
+
   it('disables the save row while a multi-selection is active (wrap first)', async () => {
     const paths = ['sections.body.items[0]', 'sections.body.items[1]', 'sections.body.items[2]'];
     const transport = makeTransport({ renderRaw: vi.fn(async () => outcomeAbs(paths)) });

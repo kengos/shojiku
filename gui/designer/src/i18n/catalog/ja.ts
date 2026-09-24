@@ -480,6 +480,7 @@ export const ja: LanguageCatalog = {
     'insert.block.flowOnly': 'フロー配置の本文に直接置いたときだけ使えます',
     'insert.block.bandOnly': 'ヘッダー・フッターに直接置いたときだけ使えます',
     'insert.block.notInCell': 'repeat・カード・テーブルのセルの中には置けません',
+    'insert.block.neverDraws': '中に描画されない項目があります',
     'contextMenu.saveBlock': '再利用ブロックとして保存…',
     'block.title': '再利用ブロックとして保存',
     'block.hint':

@@ -42,12 +42,18 @@ export type MenuEntry =
   // within that walk's own depth cap), or null when none does. The row is
   // disabled with the matching reason wherever the insert target is such an
   // owner, because the engine skips the item there and nothing draws.
+  // `neverDraws` = the block holds an item no target makes draw
+  // (`blockNeverDraws`): a kind `requires` would name, BELOW the root, or a
+  // table inside the block's own cell/card/column cell. The row stays enabled
+  // and carries a note instead, since refusing would leave a saved block
+  // insertable nowhere.
   | {
       readonly kind: 'block';
       readonly blockId: string;
       readonly name: string;
       readonly requires: 'band' | 'flow' | null;
       readonly refuses: 'cell' | null;
+      readonly neverDraws: boolean;
     }
   | { readonly kind: 'manageBlock'; readonly labelKey: string }
   // A repeating band: create it if the document lacks it, select it either

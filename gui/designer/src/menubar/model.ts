@@ -29,6 +29,10 @@ export interface MenuItem {
   readonly label: string;
   readonly run: () => void;
   readonly disabled?: boolean;
+  /** A second, muted line under the label: a fact about the item that holds
+   * wherever it is used, so it is shown on an ENABLED row too — unlike a
+   * disabled row's ` — reason` suffix, which says why it cannot act HERE. */
+  readonly note?: string;
 }
 
 /** One top-level menu (File / Edit / Insert): a stable identifier-safe `id`

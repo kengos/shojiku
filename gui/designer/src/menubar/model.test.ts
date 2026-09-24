@@ -232,7 +232,14 @@ describe('buildMenubar', () => {
         labelKey: 'insert.group.reuseBlock',
         entries: [
           { kind: 'saveBlock', labelKey: 'insert.saveBlock' },
-          { kind: 'block', blockId: 'block-1', name: '社判＋住所', requires: null, refuses: null },
+          {
+            kind: 'block',
+            blockId: 'block-1',
+            name: '社判＋住所',
+            requires: null,
+            refuses: null,
+            neverDraws: false,
+          },
           { kind: 'manageBlock', labelKey: 'insert.manageBlock' },
         ],
       },
@@ -265,9 +272,30 @@ describe('buildMenubar', () => {
       {
         labelKey: 'insert.group.reuseBlock',
         entries: [
-          { kind: 'block', blockId: 'flow', name: '明細ブロック', requires: 'flow', refuses: null },
-          { kind: 'block', blockId: 'band', name: '頁番号', requires: 'band', refuses: null },
-          { kind: 'block', blockId: 'any', name: '社判', requires: null, refuses: null },
+          {
+            kind: 'block',
+            blockId: 'flow',
+            name: '明細ブロック',
+            requires: 'flow',
+            refuses: null,
+            neverDraws: false,
+          },
+          {
+            kind: 'block',
+            blockId: 'band',
+            name: '頁番号',
+            requires: 'band',
+            refuses: null,
+            neverDraws: false,
+          },
+          {
+            kind: 'block',
+            blockId: 'any',
+            name: '社判',
+            requires: null,
+            refuses: null,
+            neverDraws: false,
+          },
         ],
       },
     ] as const;
@@ -301,8 +329,22 @@ describe('buildMenubar', () => {
       {
         labelKey: 'insert.group.reuseBlock',
         entries: [
-          { kind: 'block', blockId: 'tbl', name: '明細表', requires: null, refuses: 'cell' },
-          { kind: 'block', blockId: 'any', name: '社判', requires: null, refuses: null },
+          {
+            kind: 'block',
+            blockId: 'tbl',
+            name: '明細表',
+            requires: null,
+            refuses: 'cell',
+            neverDraws: false,
+          },
+          {
+            kind: 'block',
+            blockId: 'any',
+            name: '社判',
+            requires: null,
+            refuses: null,
+            neverDraws: false,
+          },
         ],
       },
     ] as const;
@@ -333,7 +375,14 @@ describe('buildMenubar', () => {
       {
         labelKey: 'insert.group.reuseBlock',
         entries: [
-          { kind: 'block', blockId: 'both', name: '壊れ', requires: 'flow', refuses: 'cell' },
+          {
+            kind: 'block',
+            blockId: 'both',
+            name: '壊れ',
+            requires: 'flow',
+            refuses: 'cell',
+            neverDraws: false,
+          },
         ],
       },
     ] as const;
@@ -346,6 +395,63 @@ describe('buildMenubar', () => {
     expect(at('flow').label).toBe('壊れ');
     expect(at('flow').disabled).toBe(false);
     expect(at('container').label).toBe('壊れ — insert.block.flowOnly');
+  });
+
+  it('keeps a block that holds a never-drawing item ENABLED, with a note on every owner', () => {
+    // No target makes the nested item draw, so no target is refused for it: the
+    // row acts, carries the fact as a note, and states no ` — ` reason. A block
+    // that is ALSO target-refused keeps both — the note is not a reason.
+    const insert = [
+      {
+        labelKey: 'insert.group.reuseBlock',
+        entries: [
+          {
+            kind: 'block',
+            blockId: 'dead',
+            name: '枠',
+            requires: null,
+            refuses: null,
+            neverDraws: true,
+          },
+          {
+            kind: 'block',
+            blockId: 'both',
+            name: '明細',
+            requires: 'flow',
+            refuses: null,
+            neverDraws: true,
+          },
+          {
+            kind: 'block',
+            blockId: 'any',
+            name: '社判',
+            requires: null,
+            refuses: null,
+            neverDraws: false,
+          },
+        ],
+      },
+    ] as const;
+    for (const insertOwner of ['flow', 'absoluteBody', 'band', 'container', 'cell'] as const) {
+      const onInsertBlock = vi.fn();
+      const [dead, both, any] = buildMenubar(
+        t,
+        baseWiring({ insert, onInsertBlock, insertOwner }),
+      )[2].groups[0];
+
+      expect(dead.disabled, `note-only in ${insertOwner}`).toBe(false);
+      expect(dead.label).toBe('枠');
+      expect(dead.note).toBe('insert.block.neverDraws');
+      dead.run();
+      expect(onInsertBlock).toHaveBeenCalledWith('dead');
+
+      expect(both.disabled, `note + reason in ${insertOwner}`).toBe(insertOwner !== 'flow');
+      expect(both.label).toBe(insertOwner === 'flow' ? '明細' : '明細 — insert.block.flowOnly');
+      expect(both.note).toBe('insert.block.neverDraws');
+
+      // The control: a clean block carries no note at all.
+      expect(any.note).toBeUndefined();
+    }
   });
 
   it('disables the save-block row without a savable selection, naming the reason', () => {

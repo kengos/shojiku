@@ -362,7 +362,9 @@ result LANDS:
   since a disabled row is a UI state and the two can disagree if the selection
   moves between the menu being built and the row being clicked;
   `integration/wasm.test.ts` pins the rule against the real engine per kind
-  and owner, and pins the wrapped-table case with a band control.
+  and owner, and pins the wrapped-table case with a band control. A third
+  field, `neverDraws` (read off `blockNeverDraws`), is NOT a gate: the row
+  stays enabled and carries it as a note, and `useBlocks` does not re-check it.
 - `insert/blockRefusal.ts` — `blockRefusedOwner(value)`, the whole-BLOCK
   counterpart of `canvas/dnd`'s per-TYPE `refusedOwner`, and the only part of
   the block feature that walks a node tree (split out of `blockModel`, which
@@ -382,7 +384,22 @@ result LANDS:
   render: depth 24 as a backstop (`MAX_SNIPPET_DEPTH` is 16, so it cannot fire
   on a sanitized block) and 256 NODES as the working bound, which is the one
   that matters because the walk re-reads per node and a shared-reference graph
-  re-expands.
+  re-expands. Beside it, `blockNeverDraws(value)`: whether the block holds an
+  item no insert target makes draw — a restricted kind (`requiredOwner`
+  non-null: page number, page break, repeat, repeat_flow) anywhere BELOW the
+  root, whose owner there is the block's own container or a sub-template; or a
+  table anywhere inside the block's OWN `cell:`/`item:`/`columns[].cell`, whose
+  data scope nothing below clears (`table_in_cell`). It goes INTO the
+  sub-templates — the mirror of the refusal's scope, for the mirror of its
+  reason — carrying a "below a sub-template" bit, and never flags the root
+  (the target-dependent `requires`) or a table outside a sub-template (the
+  target-dependent `refuses`). The refusal's caps, with the deepest inspected
+  level 24 in both walks, over a lazy child iterator, with each table column
+  charged to the node budget so a shared cell-less `columns` array cannot be
+  re-scanned whole per visit; past a cap it answers `false`. The real-wasm suite
+  pins it per restricted kind, wrapped and in a column cell, plus a table in a
+  column cell against a merely wrapped one, in the flow body and a footer band,
+  with a clean-wrapper control.
 - `insert/BlockDialog.tsx` / `insert/BlockManageDialog.tsx` — the
   save-as-block naming modal (IME-guarded Enter) and the manage modal
   (two-step per-row delete).
