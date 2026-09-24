@@ -102,6 +102,19 @@ if printf '%s\n' "$norm" | grep -qE '^(raw|gzip) over budget$'; then
 	emit "wasm budget:" "$(pick '^raw=[0-9]+ bytes gzip=|^(raw|gzip) over budget$')"
 fi
 
+# trivy (docker:scan): the failing rows are a box-drawing TABLE, and the summary
+# line above it carries only a count. The tail cannot show either — trivy first
+# prints one progress line per DB download chunk, which fills the last 40 lines
+# on its own. Match the rows by their ADVISORY ID rather than by the box
+# characters, because the "Report Summary" table a few lines up is drawn with
+# the same characters and would otherwise be reported as the culprit; the id
+# column is what only a finding row has, and the summary table carries no
+# `Total:` line either. Note the delimiter is U+2502, not an ASCII pipe: the
+# first cut of this matcher used `|` and found the count and no rows at all.
+# Validated against a real failing docker_scan.log, induced by expiring an entry
+# in .trivyignore.yaml, and against a PASSING one, which prints no section.
+emit "trivy:" "$(pick '^Total: [0-9]+ \(|│ *(CVE|DLA|DSA|DTSA|GHSA|ELSA|ALAS|RHSA|RUSTSEC)-[0-9A-Za-z.-]+ *│' 30)"
+
 # cargo deny: line-level grep cannot work here — warning blocks (duplicate
 # crates under multiple-versions="warn") carry the SAME "┌─"/"├ crate vX" line
 # shapes as error blocks, and this workspace has dozens of them, so any line

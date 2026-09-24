@@ -153,6 +153,11 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   COMPILE-time inputs of the builder stage because `shojiku-mcp`
   `include_str!`s them (`COPY examples`, `COPY docs/engine`); dropping
   either line breaks the image and no Rust gate can see it.
+  `.trivyignore.yaml` (repo root) is the scan's accepted-findings list,
+  mounted into the trivy container by `_docker-scan` because that container
+  cannot see the checkout. Every entry carries a reason and an `expired_at`;
+  past that date trivy reports the finding again and the gate reds, so an
+  acceptance cannot become permanent by being forgotten.
 - `site/` — the public site (Cloudflare Pages): a STANDALONE pnpm project
   (not a gui/ workspace member), VitePress, eleven nav pages + the index
   ×2 locales (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per

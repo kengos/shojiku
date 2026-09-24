@@ -30,8 +30,12 @@ _docker-render:
 docker\:scan: ## Trivy scan of the image (mirrors CI: fixable CVEs fail)
 	@$(call gate,_docker-scan,docker:scan)
 
+# `.trivyignore.yaml` carries the accepted findings, each with a reason and an
+# expiry; it is mounted in because trivy runs in its own container and would
+# otherwise never see the repository.
 _docker-scan:
 	@echo "== trivy scan =="
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock $(TRIVY_IMAGE) \
-		image --exit-code 1 --ignore-unfixed \
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+		-v "$(CURDIR)/.trivyignore.yaml:/.trivyignore.yaml:ro" $(TRIVY_IMAGE) \
+		image --exit-code 1 --ignore-unfixed --ignorefile /.trivyignore.yaml \
 		--severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL $(IMAGE)

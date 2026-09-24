@@ -90,17 +90,23 @@ file is only for output that could not answer **which file / which line
       *(Separately worth someone's deliberate one-liner: bump that
       `$schema` to match the declared dependency and the info disappears.
       Left out of the cycle that found it — an unrelated file.)*
-- [ ] `make_issue_trivy_no_package` — **When**: `make docker:scan` fails
-      on a fixable CVE. **Not detected by**: no matcher; Trivy's summary
-      line carries only a count and its table is too wide for the tail.
-      **Recovered by**: reading the table rows in `.make-logs/docker_scan.log`.
-      *(Left open on purpose: the other four in this drain were closed
-      against real induced failures, and a fixable CVE cannot be induced
-      on demand — a matcher written against an imagined table format
-      would be exactly the read-the-regex mistake below. Capture the log
-      next time this fires naturally, then close it the same way.)*
 
 ## Shipped
+
+- [x] `make_issue_trivy_no_package` — **When**: `make docker:scan` fails
+      on a fixable CVE. **Not detected by**: no matcher; Trivy's summary
+      line carried only a count and its table is too wide for the tail —
+      and the tail is worthless here anyway, because Trivy prints one
+      progress line per vulnerability-DB chunk and they fill the last 40
+      lines on their own. **Recovered by**: reading the table rows in
+      `.make-logs/docker_scan.log`. **Closed by**: a `trivy:` matcher in
+      `gate-culprits.sh` that anchors on the ADVISORY ID column, which is
+      the one thing the "Report Summary" table drawn a few lines above in
+      the same box characters does not have. The entry had been left open
+      for want of a failure to induce; it became inducible with
+      `.trivyignore.yaml`, whose expired entries are reported again — the
+      matcher was validated against that real failing log and against a
+      passing one, on which it prints nothing.
 
 - [x] `make_issue_coverage_reports_stale_lines_on_a_build_failure` —
       coverage-why.sh reprinted the PREVIOUS run's uncovered list when a
