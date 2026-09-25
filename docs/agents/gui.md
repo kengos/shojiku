@@ -1262,8 +1262,8 @@ map ([gui-designer](../code-map/gui-designer.md) /
   fixed whole-document layer-tree root row / the File-menu document-settings entry /
   an origin-badge jump open it; it takes over the whole editor area — the
   layer-tree pane included, since the view carries its own section rail —
-  and shows ONE of the page / base-text / styles / locale sections at a
-  time beside a live preview of the real document, superseding the earlier
+  and shows ONE of the page / base-text / styles / locale / formats /
+  metadata sections at a time beside a live preview of the real document, superseding the earlier
   right-panel accordion). The base-text section is deliberately named "standard text" in the ja chrome, the
   same words the format toolbar's style picker uses for "no named style
   applied": one thing, named once. Its fields show the engine's fallback
@@ -1282,8 +1282,47 @@ map ([gui-designer](../code-map/gui-designer.md) /
   for label/binding/width/format + a read-only sample preview), with
   an Excel/TSV paste import (clipboard → column definitions + sample
   rows over the scaffold substrate; a new untrusted-input surface with
-  caps and charset guards, no formula evaluation). Offcanvas/modal use
-  is liberal by user direction.
+  caps and charset guards, no formula evaluation). The sheet predates
+  the surface-placement rule below and departs from it: it is a second,
+  MODAL home for the columns the property pane already edits, and while it
+  is open the canvas stays visible but inert.
+- **Surface placement** (user decision): WHAT is being edited decides
+  WHERE its editor lives, in four kinds.
+  - **The selected thing's properties** (an item, a table column, a band,
+    a frame) live in the right property pane: non-modal, the canvas stays
+    live, and an edit applies immediately. This is the Pages/Keynote
+    inspector, and gdoc's own direction — it moved table properties out of
+    a dialog into its right sidebar so the table previews as it changes.
+  - **A quick pick of ONE property of the selection** is a popover off the
+    format toolbar or the context menu. Such a popover is always a shortcut
+    to something the pane also offers, never its only home. (A picker
+    popover INSIDE the pane, and a `?` help popover, are parts of their
+    host control, not this kind.)
+  - **Document-level settings and registries** (page, base text, styles,
+    locale, formats, metadata; data definitions and sample data) live in a
+    full-screen view beside a live preview. This is a DELIBERATE departure
+    from gdoc, whose Page setup is a modal dialog: six settings sections
+    plus the data editor need room, and a registry edit is judged by what
+    it does to the real document.
+  - **A bounded task with a commit point** — an insert flow, creating
+    something new, a destructive confirmation, an app-level list (blocks,
+    snapshots) — is a modal on `ui/Modal`, which owns focus trap and
+    restore, Escape, outside click and the portal. A read-only dialog
+    (help, shortcuts, glossary, the PDF preview) has no commit point and
+    sits outside the four kinds; it too is built on `ui/Modal`.
+
+  Surfaces built before the rule that depart from it: editing an EXISTING
+  named style or format opens a draft modal over the full-screen view, so
+  nothing reaches the view's live document preview until Save (creating
+  one is a bounded task and stays a modal); the data-item editor is
+  full-screen with no preview; the table-column sheet above; the
+  selection→style capture — which both registers a new style and updates
+  an existing one from the selection — is reachable only from the format
+  toolbar's style-picker popover; and the app's font picker hand-rolls its
+  dialog instead of using `ui/Modal`. Not yet placed by the rule: the
+  INLINE two-step confirms on a list row (style and format delete,
+  sample-variant remove, snapshot restore, block delete), which confirm in
+  place rather than in a modal.
 - **Contextual help**: `?` popover affordances beside genuinely
   confusing controls (2 sentences + a "learn more" link, `help.*`
   catalog keys, en+ja first) plus a Help menu (tutorial, shortcuts,
