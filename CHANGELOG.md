@@ -285,6 +285,19 @@ platform binaries.
 
 ### Fixed
 
+- **A template or definitions file nested past its cap is refused before it is
+  read, so it can no longer take down the process reading it.** Containers nest at
+  most 32 levels and a definitions schema at most 16, but both caps were checked
+  only after the document had been read into the engine's model — and reading a
+  deep enough chain, still well inside the YAML parser's own limit, could run the
+  reading thread out of stack. That ends the whole process rather than failing the
+  call, so an SDK, the MCP server or the CLI could be stopped by one hostile file
+  instead of reporting it. The caps are now checked first. The limits are
+  unchanged, and so is what they report: `container_depth_exceeded` naming the same
+  container, and the same located parse error for a schema. A template past the
+  container cap now reports that diagnostic on its own, since it never becomes a
+  document for the other checks to run over.
+
 - **Choosing a named style on a line no longer breaks the whole document.**
   A line's Style tab offered the named-style list, but a line cannot take
   named styles: ticking one wrote a key the engine rejects, and the preview

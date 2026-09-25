@@ -51,6 +51,80 @@ fn depth_past_the_cap_is_a_located_error() {
     assert!(message.contains("deeper than"), "message: {message}");
 }
 
+/// `depth` schema levels chained through `key` (`properties.a` or `items`),
+/// flow-style so a hostile depth stays one line.
+fn chained(depth: usize, key: &str) -> String {
+    let mut node = "{ type: string }".to_owned();
+    for _ in 1..depth {
+        node = match key {
+            "items" => format!("{{ type: array, items: {node} }}"),
+            _ => format!("{{ type: object, properties: {{ a: {node} }} }}"),
+        };
+    }
+    format!("type: object\nproperties:\n  a: {node}\n")
+}
+
+fn depth_refusal(yaml: &str) -> String {
+    let err = parse_definitions(yaml).expect_err("reject");
+    let CoreError::Located { path, message, .. } = &err else { panic!("{err:?}") };
+    assert_eq!(message.as_str(), "schema nests deeper than 16 levels");
+    path.as_str().to_owned()
+}
+
+#[test]
+fn depth_is_refused_at_the_first_node_past_the_cap_along_either_key() {
+    assert!(parse_definitions(&chained(MAX_SCHEMA_DEPTH, "items")).is_ok());
+    let past = MAX_SCHEMA_DEPTH + 1;
+    assert_eq!(
+        depth_refusal(&chained(past, "items")),
+        format!("properties.a{}", ".items".repeat(MAX_SCHEMA_DEPTH))
+    );
+    let expected = format!("properties.a{}", ".properties.a".repeat(MAX_SCHEMA_DEPTH));
+    assert_eq!(
+        depth_refusal(&chained(past, "properties")),
+        Echo::from(expected).as_str()
+    );
+}
+
+#[test]
+fn the_first_too_deep_branch_is_the_first_in_key_order() {
+    // The parsed map iterates in key order, and the refusal names the branch
+    // that order reaches first — whatever order the document wrote them in.
+    let deep = chained(MAX_SCHEMA_DEPTH, "items").replace("type: object\nproperties:\n  a: ", "");
+    let yaml = format!("type: object\nproperties:\n  b: {{ type: array, items: {deep} }}\n  a: {{ type: array, items: {deep} }}\n");
+    assert!(depth_refusal(&yaml).starts_with("properties.a."));
+}
+
+#[test]
+fn a_tag_or_a_non_string_key_does_not_hide_a_level() {
+    let deep = chained(MAX_SCHEMA_DEPTH, "items").replace("type: object\nproperties:\n  a: ", "");
+    let tagged = format!("type: object\nproperties:\n  a: !t {{ type: array, items: {deep} }}\n");
+    assert!(depth_refusal(&tagged).starts_with("properties.a.items"));
+    let numbered = format!("type: object\nproperties:\n  1: {{ type: array, items: {deep} }}\n");
+    assert!(depth_refusal(&numbered).starts_with("properties.?.items"));
+    // A scalar where a schema belongs nests nothing, and the walk moves on.
+    let scalar =
+        format!("type: object\nproperties:\n  a: 5\n  b: {{ type: array, items: {deep} }}\n");
+    assert!(depth_refusal(&scalar).starts_with("properties.b.items"));
+}
+
+#[test]
+fn the_deepest_schema_the_parser_accepts_is_refused_before_the_typed_parse() {
+    // 62 levels is as deep as serde_yaml's own limit lets this shape go; the
+    // refusal comes before the typed parse would recurse through all of them.
+    let yaml = chained(62, "properties");
+    let result = std::thread::Builder::new()
+        .stack_size(1 << 20)
+        .spawn(move || parse_definitions(&yaml).map(|_| ()))
+        .expect("spawn")
+        .join()
+        .expect("no panic");
+    assert!(
+        matches!(result, Err(CoreError::Located { .. })),
+        "{result:?}"
+    );
+}
+
 #[test]
 fn hostile_deep_nesting_errors_instead_of_crashing() {
     // Far past every cap: the parser layer (or the walk) must return an

@@ -54,8 +54,11 @@ properties. Containers nest up to `MAX_CONTAINER_DEPTH` (32).
 
 ## Limitations
 
-- Nesting is capped at 32; a deeper subtree is skipped
-  (`container_depth_exceeded`).
+- Nesting is capped at 32 (`container_depth_exceeded`, naming the container
+  past the cap). A template whose `items:` lists nest deeper is refused when it
+  is read, before any validation check runs; a container past the cap that holds no
+  `items:` list is reported by validation instead, and layout, which enforces
+  the cap on its own, skips a deeper subtree.
 - The flow-only items do not work inside a container: `repeat`
   (`repeat_in_container`), `repeat_flow` (`repeat_flow_in_container`) and
   `page_break` (`page_break_in_container`) are skipped, and `page_number` is

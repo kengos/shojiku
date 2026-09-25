@@ -121,20 +121,32 @@ injected at parse). The template model splits along CSS lines.
   parse error, never a silently-kept object member; per-entry authored
   form round-trips); `FieldType::as_str` (the diagnostics spelling,
   round-trips `from_name`); depth/node/enum caps.
-  `definitions/shape.rs` — the post-parse walk enforcing caps +
-  structural-key checks as Located errors (incl. labeled entries need a
-  scalar `value`).
+  `definitions/shape.rs` — `check_depth`, the `MAX_SCHEMA_DEPTH` walk over
+  the pass-1 `Value` that `parse_checked` runs BEFORE the typed parse (the
+  typed `Schema` recursion is what it protects; same Located path + message,
+  same pre-order: `items`, then `properties` in key order), plus the
+  post-parse walk enforcing the node/enum caps + structural-key checks as
+  Located errors (incl. labeled entries need a scalar `value`).
 - `parse.rs` — two-pass typed parse shared by template/definitions:
-  `ensure_bounded_size` first, then pass 1 `Value` + `ensure_finite`,
-  pass 2 `serde_path_to_error` →
+  `ensure_bounded_size` first, then pass 1 `Value` + `ensure_finite`, then
+  the caller's `Bound` over that `Value`, then pass 2 `serde_path_to_error` →
   `CoreError::Located` (path + line/column). **serde_yaml's own
   ~128-frame recursion limit bounds the pass-1 `Value` tree into a clean
-  parse error, which keeps the walks over that `Value` stack-safe — stated
-  at `validate/collect.rs::check_container_depth`, pinned by a model test.
-  It does NOT bound the TYPED parse: the tagged-enum buffering is a second
-  recursion, and a valid, deeply nested container chain can exhaust the
-  stack well below 128. A depth bound for the typed parse is open
-  hardening work.**
+  parse error, which keeps the walks over that `Value` stack-safe, pinned
+  by a model test. It does NOT bound the TYPED parse — the tagged-enum
+  buffering is a second recursion, far deeper per level — which is what the
+  `Bound` is for: `parse/nesting.rs` for a template, `definitions/shape.rs`
+  `check_depth` for definitions. A new recursive wire type needs its own
+  bound there, not a post-parse cap.**
+  `parse/nesting.rs` — the template bound: counts nesting of `items:`
+  SEQUENCES whatever the `type` beside them (every Item-in-Item passes through
+  one, and `locate` re-reads every one), refusing past `MAX_CONTAINER_DEPTH`
+  as `CoreError::ContainerDepth` → `container_depth_exceeded` with validation's
+  own path (the nearest sequence element: the item, or the table column) —
+  pinned against validate by a parity test over both bands, both body kinds,
+  a container, a repeat cell, a repeat_flow item and a table column cell. A
+  path of structural keys (each bare or with one numeric index) is kept whole
+  (validation's is not clipped); any other path is echoed.
   Internally-tagged enums truncate the error path to the enum boundary;
   for a TEMPLATE, `parse/locate.rs` then re-locates the failure off the
   pass-1 `Value`: it walks every `items:` sequence (the one spelling all four
@@ -258,7 +270,9 @@ injected at parse). The template model splits along CSS lines.
   the three walks that keep their OWN recursion: `validate/presence.rs`
   (a form mark's `data:` and every item's `visible:`),
   `validate/styles.rs`, and `engine/image`'s cell walk. A new
-  cell-bearing key must be added to each.**
+  cell-bearing key must be added to each — and an item list spelled
+  anything but `items:` must be taught to `parse/nesting.rs`, which counts
+  only that spelling.**
 - `validate/styles.rs` — named-style refs (spans, shapes, text mark,
   conditional-style entries included). `validate/shapes.rs` — inert keys
   on shape styles. `validate/spans.rs` — span shape + inert span keys.

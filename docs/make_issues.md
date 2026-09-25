@@ -50,6 +50,11 @@ file is only for output that could not answer **which file / which line
       lockfile was not re-resolved" — the lockfile rule's `--locked`
       alternative matches the echoed `cargo clippy … --locked` recipe line
       the same way.
+      **Seen again under `engine:verify`, with a second gap**: besides the
+      same lock remedy, its "where it broke" excerpt (under `line budget:`)
+      quoted rustfmt's own config warning — `single_line_let_else_max_width`
+      cannot exceed `max_width` — which every fmt run prints, and not one of
+      the `Diff in <file>:<line>` lines that were the failure.
 
 - [ ] `make_issue_quiet_last_step_lags_the_failure` — **When**: `make
       quiet T=gui:test` (also `gui:test`) fails on the vitest COVERAGE

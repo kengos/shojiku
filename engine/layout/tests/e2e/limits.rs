@@ -92,7 +92,7 @@ fn container_depth_cap_skips_subtree() {
     assert!(all_text(&doc.pages[0]).contains("deep"));
 
     let too_deep = nested_containers_yaml(MAX_CONTAINER_DEPTH + 1, "- type: text\n  text: deeper");
-    let (doc, diags) = run(&too_deep, json!({}));
+    let (doc, diags) = run_unguarded(&too_deep, json!({}));
     assert!(diags.has_errors());
     assert!(diags.iter().any(|d| d.code == "container_depth_exceeded"));
     assert!(!all_text(&doc.pages[0]).contains("deeper"));

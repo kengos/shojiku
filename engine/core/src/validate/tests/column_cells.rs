@@ -107,7 +107,7 @@ fn a_table_nested_too_deep_caps_its_cell_columns() {
     // container above it stays legal — one more and the container arm
     // would return first, and the table's own guard would never run.
     let table = "      - type: table\n        data: { key: order_items }\n        columns:\n          - cell:\n              items:\n                - { type: text, text: hi }\n";
-    let t = tpl(&nest_in_containers(table, MAX_CONTAINER_DEPTH));
+    let t = tpl_unguarded(&nest_in_containers(table, MAX_CONTAINER_DEPTH));
     let diags = validate(None, &t, None);
     assert!(
         codes(&diags).contains(&"container_depth_exceeded"),
@@ -200,7 +200,9 @@ fn containers_nested_too_deep_inside_a_cell_are_capped() {
         let nested: String = inner.lines().map(|l| format!("    {l}\n")).collect();
         inner = format!("                - type: container\n                  items:\n{nested}");
     }
-    let t = column_table(&format!("          - cell:\n              items:\n{inner}"));
+    let t = tpl_unguarded(&format!(
+        "      - type: table\n        data: {{ key: order_items }}\n        columns:\n          - cell:\n              items:\n{inner}"
+    ));
     let diags = validate(None, &t, None);
     assert!(
         codes(&diags).contains(&"container_depth_exceeded"),

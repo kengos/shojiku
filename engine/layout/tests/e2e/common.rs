@@ -9,7 +9,8 @@ pub use diag::{arg_num, args_all_numeric};
 
 pub use serde_json::{json, Value};
 pub use shojiku_core::{
-    parse_definitions, parse_template, Catalog, MAX_CONTAINER_DEPTH, MAX_GRID_TRACKS, MAX_SPANS,
+    parse_definitions, parse_template, Catalog, Template, MAX_CONTAINER_DEPTH, MAX_GRID_TRACKS,
+    MAX_SPANS,
 };
 pub use shojiku_diagnostics::{Diagnostic, Diagnostics};
 pub use shojiku_formatter::LangPack;
@@ -49,6 +50,15 @@ pub fn ja_pack() -> LangPack {
 
 pub fn run(template_yaml: &str, params: Value) -> (LayoutDocument, Diagnostics) {
     let out = run_output(template_yaml, params, None);
+    (out.document, out.diagnostics)
+}
+
+/// [`run`] over a template deserialized WITHOUT the parse door's nesting
+/// bound — the only way one nested past `MAX_CONTAINER_DEPTH` still reaches
+/// layout, whose own, independent cap is what the callers pin.
+pub fn run_unguarded(template_yaml: &str, params: Value) -> (LayoutDocument, Diagnostics) {
+    let template: Template = serde_yaml::from_str(template_yaml).expect("template");
+    let out = layout_template(&template, params, None);
     (out.document, out.diagnostics)
 }
 
@@ -161,10 +171,18 @@ fn run_output(
     assets: Option<&shojiku_image::AssetStore>,
 ) -> LayoutOutput {
     let template = parse_template(template_yaml).expect("template");
+    layout_template(&template, params, assets)
+}
+
+fn layout_template(
+    template: &Template,
+    params: Value,
+    assets: Option<&shojiku_image::AssetStore>,
+) -> LayoutOutput {
     let pack = ja_pack();
     let fonts = ja_store();
     let input = LayoutInput {
-        template: &template,
+        template,
         params: &params,
         catalog: None,
         pack: &pack,

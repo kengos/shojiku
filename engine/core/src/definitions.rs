@@ -65,10 +65,11 @@ pub fn parse_definitions(input: &str) -> Result<Definitions, CoreError> {
     // document is still materialized into a `serde_yaml::Value` before the
     // refusal comes back.
     crate::yaml_guard::ensure_bounded_size(input, "definitions")?;
-    let defs: Definitions = match crate::parse::parse_checked(input, "definitions") {
-        Ok(defs) => defs,
-        Err(e) => return Err(v1_form_hint(input).unwrap_or(e)),
-    };
+    let defs: Definitions =
+        match crate::parse::parse_checked(input, "definitions", shape::check_depth) {
+            Ok(defs) => defs,
+            Err(e) => return Err(v1_form_hint(input).unwrap_or(e)),
+        };
     shape::check_shape(&defs)?;
     Ok(defs)
 }

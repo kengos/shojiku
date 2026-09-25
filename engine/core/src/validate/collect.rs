@@ -79,9 +79,12 @@ pub(super) fn collect_repeats(template: &Template) -> Vec<RepeatRef<'_>> {
     repeats
 }
 
-/// Errors on container chains deeper than [`MAX_CONTAINER_DEPTH`]. The
-/// recursion itself is safe: YAML parsing bounds template depth well below
-/// any stack limit.
+/// Errors on container chains deeper than [`MAX_CONTAINER_DEPTH`]. A parsed
+/// template reaches this with its `items:` lists already bounded — the parse
+/// refuses a deeper one with this same code and path — so what is left for
+/// it is a holder past the cap with no `items:` list, and a template
+/// deserialized some other way; the recursion is bounded either way, by that
+/// check or by the parser's own depth limit.
 pub(super) fn check_container_depth(
     items: &[Item],
     depth: usize,
