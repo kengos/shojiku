@@ -541,7 +541,12 @@ presence is not a text binding.
   parse error. A drift-guard test pins it to the enum. Its mirror,
   **`REQUIRED_BOX_WIRE_TYPES`** (`rect`: the one `box_` without a serde
   default), is read by `insert/wrap`, which must not delete a box it emptied;
-  the same `noBoxWire.test.ts` pins it. And the ONE home for
+  the same `noBoxWire.test.ts` pins it. **`STYLE_NAMES_WIRE_TYPES`** is the
+  other wire gate: the 11 `Item` variants whose struct takes `styleNames`,
+  read by `StyleSection` before it mounts the named-style picker — a `line`
+  has a decoration tab and no such key, and one tick there stopped the whole
+  document parsing. `styleNamesWire.test.ts` derives it from the structs
+  through the same `testkit/engineWire.ts`. And the ONE home for
   **`MARK_TYPES`**
   (`ellipse`/`checkbox` — the two form marks): they share a wire family,
   a presence predicate, and a paint rule that is emphatically NOT the
@@ -1537,7 +1542,11 @@ conditional rules the next section owns).
   ops}[]` — or `null` when there are none (no dead button). One candidate is
   one button; `image_source_conflict` is the only code today with two, since
   only the author knows which source to keep. Hostile reads and stale paths
-  degrade to no-op.
+  degrade to no-op. `parse_error` is the one FATAL diagnostic it repairs — every other fixable
+  code fires on a document that already parsed: when the engine
+  names an unknown key on an item (`args.key`, with the item as `path`), the
+  fix removes it — the only way back for a document the engine cannot parse,
+  since the Designer has no source editor.
   - `diagnostics/fixWrites.ts` — the builders that WRITE a value rather than
     removing a key, split out because the obligation differs: a write puts a
     number the author never typed into the document, so the candidate carries

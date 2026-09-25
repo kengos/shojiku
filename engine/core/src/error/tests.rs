@@ -8,6 +8,7 @@ fn located_maps_to_parse_error_with_location_args() {
     let err = CoreError::Located {
         what: "template",
         path: Echo::from("sections.body"),
+        key: None,
         line: 3,
         column: 5,
         message: Echo::from("unknown field `foo`"),
@@ -25,6 +26,7 @@ fn located_without_location_omits_line_and_column() {
     let err = CoreError::Located {
         what: "template",
         path: Echo::from("root"),
+        key: None,
         line: 0,
         column: 0,
         message: Echo::from("bad"),
@@ -87,6 +89,7 @@ fn a_located_error_bounds_both_the_path_and_the_message() {
     let err = CoreError::Located {
         what: "template",
         path: Echo::from("a".repeat(10_000)),
+        key: None,
         line: 1,
         column: 1,
         message: Echo::from(format!("unknown field `{}`", "\u{1b}[2J".repeat(500))),
@@ -107,6 +110,7 @@ fn the_diagnostic_args_stay_bounded_when_the_echo_is_already_at_the_cap() {
     let err = CoreError::Located {
         what: "definitions",
         path: Echo::from("p".repeat(400)),
+        key: None,
         line: 0,
         column: 0,
         message: Echo::from("m".repeat(400)),
@@ -114,4 +118,21 @@ fn the_diagnostic_args_stay_bounded_when_the_echo_is_already_at_the_cap() {
     let diag = err.to_diagnostic();
     assert_eq!(diag.args.get("detail"), Some(&"m".repeat(MAX_ECHO).into()));
     assert_eq!(diag.args.get("path"), Some(&"p".repeat(MAX_ECHO).into()));
+}
+
+#[test]
+fn an_item_fault_carries_its_key_and_no_location() {
+    let err = CoreError::Located {
+        what: "template",
+        path: Echo::from("sections.body.items[0]"),
+        key: Some(Echo::from("styleNames")),
+        line: 0,
+        column: 0,
+        message: Echo::from("unknown field `styleNames`"),
+    };
+    let diag = err.to_diagnostic();
+    assert_eq!(diag.path.as_deref(), Some("sections.body.items[0]"));
+    assert_eq!(diag.args.get("key"), Some(&"styleNames".into()));
+    assert!(!diag.args.contains_key("line"));
+    assert!(!diag.args.contains_key("column"));
 }

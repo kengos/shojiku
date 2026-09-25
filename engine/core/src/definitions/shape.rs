@@ -118,6 +118,7 @@ fn err(path: &str, message: &str) -> CoreError {
     CoreError::Located {
         what: "definitions",
         path: Echo::from(path),
+        key: None,
         line: 0,
         column: 0,
         message: Echo::from(message),

@@ -278,5 +278,5 @@ impl Item {
 /// geometry computation downstream — and locates any structural error to
 /// its field path (see [`crate::parse`]).
 pub fn parse_template(input: &str) -> Result<Template, CoreError> {
-    crate::parse::parse_checked(input, "template")
+    crate::parse::parse_template_checked(input)
 }

@@ -981,8 +981,9 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   the cell's own `overflow`. The exclusivity is a validate ERROR
   (`column_content_conflict` / `column_content_missing`) rather than a
   parse rejection, so the diagnostic carries the column's own path — a
-  parse error truncates to `sections.body` at the internally-tagged item
-  boundary — and a best-effort preview still renders (`cell` wins).
+  parse error on the column's OWN keys stops at the whole table item
+  (one inside the column's `cell` items does reach that item) — and a
+  best-effort preview still renders (`cell` wins).
   A per-column `text:` interpolation shorthand was deliberately NOT
   added: a one-line cell holding one text item covers it without a third
   content mode widening the exclusivity matrix. `cellPadding` stays a

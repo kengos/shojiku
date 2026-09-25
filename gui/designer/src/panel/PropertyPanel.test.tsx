@@ -812,6 +812,42 @@ describe('PropertyPanel', () => {
     expect(screen.queryByLabelText('Corner radius')).toBeNull();
   });
 
+  it('offers a line no named-style picker, because its wire takes no styleNames', () => {
+    // `LineItem` denies unknown keys and has no `styleNames`, so one tick here
+    // used to stop the WHOLE document parsing. The registry is non-empty, so
+    // an absent group is the gate, not an empty list.
+    const controller = makeController({
+      [PATH]: { type: 'line', from: { x: 0, y: 0 }, to: { x: 100, y: 0 } },
+      styles: { heading: {} },
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    expect(screen.getByRole('heading', { name: 'Style' })).toBeDefined();
+    expect(screen.queryByRole('group', { name: 'Styles' })).toBeNull();
+    expect(screen.queryByLabelText('heading')).toBeNull();
+  });
+
+  it.each([
+    ['text', { text: 'hi' }],
+    ['rect', { box: { w: 10, h: 10 } }],
+    ['container', { items: [] }],
+    ['table', { columns: [] }],
+    ['image', { src: 'a.png' }],
+    ['qr_code', { text: 'q' }],
+    ['ellipse', {}],
+    ['checkbox', {}],
+  ])('keeps the named-style picker on a %s, whose wire takes styleNames', (type, rest) => {
+    const controller = makeController({
+      [PATH]: { type, ...rest },
+      styles: { heading: {} },
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    if (screen.queryByRole('tab', { name: 'Style' }) !== null) {
+      openTab('Style');
+    }
+    expect(screen.getByRole('group', { name: 'Styles' })).toBeDefined();
+    expect(screen.getByLabelText('heading')).toBeDefined();
+  });
+
   it('edits a line ENDPOINT from the 配置 tab, never a box key', () => {
     // A `line` draws from `from`/`to` and its wire struct is
     // `deny_unknown_fields`, so the `box.x` this tab used to write broke the

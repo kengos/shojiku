@@ -59,6 +59,25 @@ export const NO_BOX_WIRE_TYPES: ReadonlySet<string> = new Set([
  * `noBoxWire.test.ts`. */
 export const REQUIRED_BOX_WIRE_TYPES: ReadonlySet<string> = new Set(['rect']);
 
+/** The `Item` variants whose wire takes `styleNames` — the gate on the
+ * named-style picker. `LineItem` (like `repeat`, `repeat_flow` and
+ * `page_break`) has no such field and denies unknown ones, so one tick of a
+ * picker mounted there authored a key that stops the WHOLE document parsing.
+ * Pinned to the engine source by `styleNamesWire.test.ts`. */
+export const STYLE_NAMES_WIRE_TYPES: ReadonlySet<string> = new Set([
+  'text',
+  'char_grid',
+  'container',
+  'table',
+  'image',
+  'qr_code',
+  'list',
+  'page_number',
+  'rect',
+  'ellipse',
+  'checkbox',
+]);
+
 /** The two FORM MARKS — the box-inscribed vector shapes whose *presence* is
  * content (`engine/core/src/template/marks.rs`). They share a wire family, a
  * presence predicate, and a paint rule that is emphatically NOT the border

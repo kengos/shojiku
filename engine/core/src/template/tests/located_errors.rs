@@ -1,9 +1,10 @@
 //! Located parse errors: a structural mistake carries the field path and,
 //! for plain-struct inputs, the YAML line/column — instead of a bare
 //! location-less serde message. Body/Item are internally-tagged enums, so
-//! errors inside a body item truncate the path to `sections.body` and the
-//! location degrades (see the `crate::parse` module doc); the serde MESSAGE
-//! — naming the bad key and the expected fields — is the fix that lands.
+//! serde's own path for an error inside an item stops at the enum boundary;
+//! the template parse re-locates it to the item (the re-location itself is
+//! pinned in `parse/locate/tests.rs`). These pin the serde MESSAGE — naming
+//! the bad key and the expected fields — which rides along unchanged.
 
 use super::*;
 use crate::error::CoreError;

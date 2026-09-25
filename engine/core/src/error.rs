@@ -1,5 +1,6 @@
 //! The crate error type for parsing untrusted input artifacts.
 
+use crate::parse::locate::ItemFault;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode, Echo};
 use thiserror::Error;
 
@@ -36,10 +37,19 @@ pub enum CoreError {
     /// is the English default rendering; the structured fields are kept
     /// separate so diagnostics can later map them into typed args
     /// without re-parsing the string.
+    ///
+    /// A failure inside a template ITEM is located to the item itself
+    /// (`sections.body.items[0]`): the tagged-enum buffering loses the path
+    /// inside it, so `line`/`column` are 0 there, and `key` names the item's
+    /// own top-level key when the failure is that key being unknown (checked:
+    /// the item without it no longer complains) — the one fact a tool needs
+    /// to remove it.
     #[error("failed to parse {what} at `{path}`: {message}")]
     Located {
         what: &'static str,
         path: Echo,
+        /// The item's rejected top-level key, for an unknown key on an item.
+        key: Option<Echo>,
         /// 1-based line, or 0 when the location is unavailable.
         line: usize,
         /// 1-based column, or 0 when the location is unavailable.
@@ -66,23 +76,38 @@ impl CoreError {
     /// line/column. Attacker-controlled text (an unbounded unknown key
     /// name, a deeply nested path) is bounded by the [`Echo`] field type,
     /// so a hostile document cannot blow up the error message or repaint
-    /// the terminal reading it.
+    /// the terminal reading it. `fault` is the item the failure was
+    /// re-located to, when there is one: its path replaces the truncated one
+    /// and the location, which points at the enclosing enum, is dropped.
     pub(crate) fn located(
         what: &'static str,
         err: serde_path_to_error::Error<serde_yaml::Error>,
+        fault: Option<ItemFault>,
     ) -> Self {
-        let path = Echo::from(err.path().to_string());
+        let path = err.path().to_string();
         let inner = err.into_inner();
         let (line, column) = inner
             .location()
             .map(|loc| (loc.line(), loc.column()))
             .unwrap_or((0, 0));
-        CoreError::Located {
-            what,
-            path,
-            line,
-            column,
-            message: Echo::from(inner.to_string()),
+        let message = Echo::from(inner.to_string());
+        match fault {
+            Some(fault) => CoreError::Located {
+                what,
+                path: Echo::from(fault.path),
+                key: fault.key.map(Echo::from),
+                line: 0,
+                column: 0,
+                message,
+            },
+            None => CoreError::Located {
+                what,
+                path: Echo::from(path),
+                key: None,
+                line,
+                column,
+                message,
+            },
         }
     }
 
@@ -98,6 +123,7 @@ impl CoreError {
             CoreError::Located {
                 what,
                 path,
+                key,
                 line,
                 column,
                 message,
@@ -107,6 +133,9 @@ impl CoreError {
                     .arg("path", path.as_str())
                     .arg("detail", message.as_str())
                     .with_path(path.as_str());
+                if let Some(key) = key {
+                    diag = diag.arg("key", key.as_str());
+                }
                 if *line > 0 {
                     diag = diag.arg("line", *line);
                 }

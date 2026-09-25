@@ -9,12 +9,15 @@
 //! and does not cover is worth stating precisely, because two neighbouring
 //! limits are easy to conflate with it.
 //!
-//! **Nesting depth is the parser's, and it holds.** serde_yaml refuses
-//! anything past depth 128 (measured: 128 parses, 129 is
+//! **Nesting depth is the parser's, and it holds for the `Value` tree.**
+//! serde_yaml refuses anything past depth 128 (measured: 128 parses, 129 is
 //! `recursion limit exceeded`), which is what makes `has_non_finite`'s
 //! unbounded recursion safe — it is bounded by construction rather than by
 //! anything here. A test in this module pins that, since nothing in this
 //! workspace enforces it and swapping the parser would reopen it silently.
+//! It does NOT bound the typed parse that follows: the tagged-enum
+//! buffering recurses again, and much further per level, so that parse can
+//! exhaust the stack on a valid document well inside depth 128.
 //!
 //! **Alias amplification is NOT bounded to a constant, and this cap does
 //! not close it.** serde_yaml's repetition limit is `events.len() * 100` —

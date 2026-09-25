@@ -285,6 +285,23 @@ platform binaries.
 
 ### Fixed
 
+- **Choosing a named style on a line no longer breaks the whole document.**
+  A line's Style tab offered the named-style list, but a line cannot take
+  named styles: ticking one wrote a key the engine rejects, and the preview
+  went blank with a parse error pointing at the page body rather than the
+  line. The list is gone from lines (and only from the types that cannot use
+  it), and a document already carrying that key can be repaired from the
+  diagnostics list: its row now names the line and offers to remove the key.
+
+- **A mistyped or unsupported key on an item is reported on the item itself.**
+  Anywhere a template is checked — the Designer, `shojiku validate`, the MCP
+  tools, the SDKs — a key an item does not take used to be reported against
+  the whole page body (`sections.body`), with a line number pointing at the
+  body too. It now names the item (`sections.body.items[3]`, or deeper inside
+  a container, a repeating cell or a table column cell) and, as a separate
+  `key` value, the offending key when it is one of the item's own. The line
+  and column are left out for these, since they only ever located the body.
+
 - **A saved block that carries a table is no longer offered inside a repeating
   cell.** The engine does not draw a table inside a repeat's cell, a card or a
   table cell yet — it skips the table and warns — and inserting a saved block

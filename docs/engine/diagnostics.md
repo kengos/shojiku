@@ -74,7 +74,7 @@ inline:
 <!-- rf:table:start diagnostics#parse-errors (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `parse_error` | error | a structural parse failure, with `args` `what` (which artifact) + `path` (the field path, e.g. `sections.body`) + `detail` (the underlying message) + `line`/`column` when known. An error inside an internally-tagged item (`Body`/`Item`) truncates the path to the enum boundary and omits `line`/`column`, so the location is never over-promised |
+| `parse_error` | error | a structural parse failure, with `args` `what` (which artifact) + `path` (the field path, e.g. `page.size`) + `detail` (the underlying message) + `line`/`column` when known. A failure inside a template ITEM is located to the item (`sections.body.items[1]`, `…items[0].cell.items[2]`): the item's own inner path is lost to the tagged-enum buffering, so `line`/`column` are omitted there, and `key` names one of the item's own top-level keys when the failure is that key being unknown — confirmed by the item no longer making that complaint without it — and is absent otherwise (a nested key such as `style.fontSizee`, even one spelled like a key of the item; a wrong type; an unknown `type:`). The Designer offers to remove that key. A failure on the BODY itself is still stopped at `sections.body` by the same buffering, and its `line`/`column` point at the body's own start, not the offending key |
 | `non_finite_number` | error | a `.nan`/`.inf`/overflowing number anywhere in the artifact (`args` `what`) |
 <!-- rf:table:end -->
 

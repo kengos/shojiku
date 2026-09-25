@@ -8,62 +8,9 @@
 // this guard exists for (a placement tab authoring a parse-error key) comes
 // back. Same shape as `borderTypes.test.ts`, which pins the border keywords to
 // `style/border.rs`.
-import { readdirSync, readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { itemVariants, structBody, templateSources } from '../testkit/engineWire';
 import { NO_BOX_WIRE_TYPES, REQUIRED_BOX_WIRE_TYPES } from './itemView';
-
-const ENGINE = new URL('../../../../engine/core/src/', import.meta.url);
-
-function read(relative: string): string {
-  return readFileSync(fileURLToPath(new URL(relative, ENGINE)), 'utf8');
-}
-
-/** Every non-test module under `template/`, plus `template.rs` itself. Read as
- * a DIRECTORY rather than a hand-written list: a list is the same brittleness
- * this guard exists to remove, and the first draft of it was already missing
- * `repeat_flow.rs` — which the guard caught by throwing rather than by
- * quietly reporting the struct boxless. */
-function templateSources(): string[] {
-  const dir = fileURLToPath(new URL('template/', ENGINE));
-  const walk = (at: string): string[] =>
-    readdirSync(at, { withFileTypes: true }).flatMap((entry) =>
-      entry.isDirectory()
-        ? entry.name === 'tests'
-          ? []
-          : walk(`${at}${entry.name}/`)
-        : entry.name.endsWith('.rs')
-          ? [readFileSync(`${at}${entry.name}`, 'utf8')]
-          : [],
-    );
-  return [read('template.rs'), ...walk(dir)];
-}
-
-/** `Item`'s variants, as (Rust variant, wire `type:` spelling) pairs. The enum
- * is `rename_all = "snake_case"`, so the wire name is derived, not listed. */
-function itemVariants(): { rust: string; wire: string }[] {
-  const src = read('template.rs');
-  const body = /pub enum Item \{\n([\s\S]*?)\n\}/.exec(src);
-  if (body === null) {
-    throw new Error('could not find `pub enum Item` in template.rs');
-  }
-  return [...body[1].matchAll(/^ {4}(\w+)\((?:Box<)?(\w+)/gm)].map((m) => ({
-    rust: m[2],
-    wire: m[1].replace(/(?<!^)([A-Z])/g, '_$1').toLowerCase(),
-  }));
-}
-
-/** The body of the struct named `name`, searched across the template modules
- * that define the item structs. */
-function structBody(name: string, sources: readonly string[]): string {
-  for (const src of sources) {
-    const found = new RegExp(`pub struct ${name} \\{\\n([\\s\\S]*?)\\n\\}`).exec(src);
-    if (found !== null) {
-      return found[1];
-    }
-  }
-  throw new Error(`no \`pub struct ${name}\` found in the template modules`);
-}
 
 /** Whether the struct named `name` declares a `box` field. */
 function declaresBox(name: string, sources: readonly string[]): boolean {

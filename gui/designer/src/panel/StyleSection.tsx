@@ -1,8 +1,9 @@
 // The decoration tab: the item's OWN style keys. It composes the typography rows and
 // the colour swatches (`StyleTabFields.tsx`) with the border editor, a `line`
 // item's stroke editor, a table's row-condition rules, and the
-// named-style picker. Every boxed item gets this tab (fill + border); `text`
-// additionally gets the typography fields.
+// named-style picker — the last only on a type whose wire takes `styleNames`
+// (`STYLE_NAMES_WIRE_TYPES`), which a `line` does not. Every boxed item gets
+// this tab (fill + border); `text` additionally gets the typography fields.
 //
 // The named-style picker is a SHARED leaf (`StyleNamesPicker`) rather than a
 // block inlined here: `char_grid` has no decoration tab and needs the same
@@ -17,7 +18,7 @@ import { readBorder } from './borderModel';
 import { readRadius } from './borderRadius';
 import { BORDER_STYLE_VALUES, BORDERABLE_TYPES } from './borderTypes';
 import { hasCapability, type ItemPanelProps } from './itemPanelProps';
-import { MARK_TYPES } from './itemView';
+import { MARK_TYPES, STYLE_NAMES_WIRE_TYPES } from './itemView';
 import { LineStyleEditor } from './LineStyleEditor';
 import { readLineStyle } from './lineModel';
 import { FieldHelp, HelpfulHeading } from './panelHelpers';
@@ -144,12 +145,14 @@ export function StyleSection(props: ItemPanelProps) {
       {/* The same `?` the char_grid placement tab gives this control. It is one
           group with one label, and 「Styles」 is exactly as inscrutable here as
           there — the criterion is the field's NAME, not which tab it sits on. */}
-      <StyleNamesPicker
-        controller={controller}
-        path={path}
-        styleNames={view.styleNames}
-        help={<FieldHelp topic="styleNames" />}
-      />
+      {STYLE_NAMES_WIRE_TYPES.has(view.type) ? (
+        <StyleNamesPicker
+          controller={controller}
+          path={path}
+          styleNames={view.styleNames}
+          help={<FieldHelp topic="styleNames" />}
+        />
+      ) : null}
     </section>
   );
 }
