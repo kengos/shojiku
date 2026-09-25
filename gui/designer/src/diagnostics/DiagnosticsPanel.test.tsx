@@ -144,6 +144,31 @@ describe('DiagnosticsPanel', () => {
       ]);
     });
 
+    it('offers the fix on a parse ERROR that names an unknown item key', () => {
+      // The document does not parse at all, so this row is the only way back.
+      const parse: Diagnostic = {
+        severity: 'error',
+        code: 'parse_error',
+        category: 'parse',
+        message: 'failed to parse template',
+        args: { what: 'template', path: 'sections.body.items[1]', detail: 'x', key: 'styleNames' },
+        path: 'sections.body.items[1]',
+      };
+      const onApplyFix = vi.fn();
+      draw(
+        <DiagnosticsPanel
+          diagnostics={[parse]}
+          onSelect={vi.fn()}
+          read={() => ({ type: 'line', styleNames: ['a'] })}
+          onApplyFix={onApplyFix}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: '修正' }));
+      expect(onApplyFix).toHaveBeenCalledWith([
+        { op: 'removeKey', path: 'sections.body.items[1]', keys: ['styleNames'] },
+      ]);
+    });
+
     it('offers the fix on an unused binding declaration', () => {
       // The declaration a hand-written (or AI-written) document orphaned: the
       // panel reaches the registry entry, so the row is actionable rather than

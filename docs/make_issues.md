@@ -36,6 +36,21 @@ file is only for output that could not answer **which file / which line
 
 ## Open
 
+- [ ] `make_issue_lock_remedy_matches_the_recipe_echo` — **When**: `make
+      engine:lint` failed at `== fmt ==` on a plain rustfmt diff, with no
+      other gate running. **Not detected by**: the FAIL block's diagnosis
+      said "REMEDY — another gate holds this tree's lock", because
+      `scripts/gate-diagnose.sh` matches `gate-lock` anywhere in the log and
+      every dockerized step echoes its recipe as `scripts/gate-lock.sh docker
+      run …` — so any such step whose failure matches no earlier rule reads
+      as a lock conflict. **Recovered by**: `make investigate:gates` ("no gate
+      lock held in this tree") and reading the `Diff in …` lines in the log.
+      The same run's clippy failure (a plain lint in a test file) was
+      diagnosed as BOTH that lock remedy and "a manifest moved and its
+      lockfile was not re-resolved" — the lockfile rule's `--locked`
+      alternative matches the echoed `cargo clippy … --locked` recipe line
+      the same way.
+
 - [ ] `make_issue_quiet_last_step_lags_the_failure` — **When**: `make
       quiet T=gui:test` (also `gui:test`) fails on the vitest COVERAGE
       thresholds. **Not detected by**: the wrapper's own summary, which

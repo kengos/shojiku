@@ -83,6 +83,7 @@ fn v1_form_hint(input: &str) -> Option<CoreError> {
         .then(|| CoreError::Located {
             what: "definitions",
             path: Echo::from("groups"),
+            key: None,
             line: 0,
             column: 0,
             message: "the `groups` list is the retired v1 form; definitions now use the \

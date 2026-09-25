@@ -188,6 +188,51 @@ describe('fixFor — ignored style keys (shape + span)', () => {
   });
 });
 
+describe('fixFor — parse_error (an unknown key on an item)', () => {
+  const T = [
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - type: line',
+    '        from: { x: 0, y: 0 }',
+    '        to: { x: 9, y: 0 }',
+    '        styleNames: [ a ]',
+    '',
+  ].join('\n');
+  const PATH = 'sections.body.items[0]';
+  const parse = (args: Record<string, ArgValue>): Diagnostic => ({
+    ...diag('parse_error', { path: PATH, args: { what: 'template', ...args } }),
+    severity: 'error',
+  });
+
+  it('drops the key the engine names, on the item it locates', () => {
+    const { text, undone } = apply(T, parse({ key: 'styleNames' }));
+    expect(text).not.toContain('styleNames');
+    expect(text).toContain('to: { x: 9, y: 0 }');
+    expect(undone).toBe(T);
+  });
+  it('is null when the parse error names no key (not an unknown item key)', () => {
+    expect(fixFor(parse({ detail: 'bad' }), editorRead(Editor.create(T)))).toBeNull();
+  });
+  it('is null when the named key is not on the node', () => {
+    expect(fixFor(parse({ key: 'bogus' }), editorRead(Editor.create(T)))).toBeNull();
+  });
+  it('is null when the parse error is about another artifact', () => {
+    const other = parse({ key: 'styleNames', what: 'definitions' });
+    expect(fixFor(other, editorRead(Editor.create(T)))).toBeNull();
+  });
+  it('is null for a forged prototype key', () => {
+    for (const key of ['__proto__', 'constructor', 'toString']) {
+      expect(fixFor(parse({ key }), editorRead(Editor.create(T)))).toBeNull();
+    }
+  });
+  it('is null for a pathless parse error', () => {
+    const pathless = { ...parse({ key: 'styleNames' }), path: undefined };
+    expect(fixFor(pathless, editorRead(Editor.create(T)))).toBeNull();
+  });
+});
+
 describe('fixFor — no fix / hostile input', () => {
   const noop: ReadNode = () => undefined;
   it('is null for an unknown code', () => {

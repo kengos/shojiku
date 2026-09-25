@@ -151,9 +151,26 @@ function fixUnusedBinding(path: string, diag: Diagnostic, read: ReadNode): reado
   return removePresent(read, itemPath, ['bindings'], [name]);
 }
 
+/** An unknown key on a template item (`parse_error` carrying `args.key`) →
+ * drop it. The engine names a key only when it is one of the item's OWN
+ * top-level keys AND the item without it no longer makes that complaint, so
+ * removing it is what the error asks for; any other parse failure (a nested
+ * key, a wrong type) carries no `key`, and this builder then offers nothing. The one fix that repairs a document
+ * the engine cannot parse at all — and the Designer has no source editor to
+ * reach it otherwise. */
+function fixUnknownItemKey(path: string, diag: Diagnostic, read: ReadNode): readonly Op[] | null {
+  // `read` is the TEMPLATE editor, so a key named for any other artifact
+  // (definitions, params) must not be applied to it.
+  const key = diag.args.key;
+  return diag.args.what === 'template' && typeof key === 'string'
+    ? removePresent(read, path, [], [key])
+    : null;
+}
+
 /** The code → fix table. A `Map`, so an unknown/hostile `code` misses cleanly. */
 const FIXES: ReadonlyMap<string, FixBuilder> = new Map<string, FixBuilder>([
   ['orientation_ignored', fixOrientation],
+  ['parse_error', pathFix(removal(fixUnknownItemKey))],
   [
     'ignored_column_key',
     pathFix(removal((path, _diag, read) => removePresent(read, path, [], ['fit']))),

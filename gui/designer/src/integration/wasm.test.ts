@@ -25,6 +25,7 @@ import { planResize } from '../canvas/planResize';
 import { reparentOps } from '../canvas/reparent';
 import { planReparent } from '../canvas/reparentTarget';
 import { applyDefinitionOps, readDefinitionField, titleOp } from '../data/definitionsEdit';
+import { fixFor } from '../diagnostics/fixModel';
 import { type EngineTransport, TransportError } from '../engine/transport';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
 import { composeDataUri } from '../image/dataUri';
@@ -2005,6 +2006,39 @@ describe('styles-registry + defaults edits against the real engine', () => {
     '        styleNames: [ heading ]',
     '',
   ].join('\n');
+
+  it('locates an unknown key on an item and the quick-fix makes the document parse again', async () => {
+    // The shape the named-style picker used to author on a line: a key
+    // `LineItem` denies. The engine must name the ITEM and the KEY (not the
+    // enclosing body), and the GUI fix built from them must repair it.
+    const broken = [
+      'styles:',
+      '  heading: { fontSize: 24 }',
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - type: text',
+      '        text: Receipt',
+      '      - type: line',
+      '        from: { x: 0, y: 0 }',
+      '        to: { x: 100, y: 0 }',
+      '        styleNames: [ heading ]',
+      '',
+    ].join('\n');
+    const before = await transport.validate(broken, '{}', undefined);
+    const parse = before.items.find((d) => d.code === 'parse_error');
+    expect(parse?.path).toBe('sections.body.items[1]');
+    expect(parse?.args.key).toBe('styleNames');
+    expect(parse?.args.line).toBeUndefined();
+
+    const editor = Editor.create(broken);
+    const fix = parse ? fixFor(parse, (path) => editor.read(path)) : null;
+    expect(fix).not.toBeNull();
+    expect(editor.applyAll(fix?.[0]?.ops ?? []).ok).toBe(true);
+    const after = await transport.validate(editor.text(), '{}', undefined);
+    expect(after.items.filter((d) => d.severity === 'error')).toHaveLength(0);
+  });
 
   it('renames a style AND its reference so the engine reports no undefined_style_name', async () => {
     const editor = Editor.create(STYLED);

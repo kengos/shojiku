@@ -9,15 +9,18 @@
 //! which is why a mistyped top-level key used to surface only as a flood
 //! of downstream binding errors instead of one located parse error.
 //!
-//! Limitation — internally-tagged enums: `serde` buffers the content of a
+//! Internally-tagged enums: `serde` buffers the content of a
 //! `#[serde(tag = "type")]` enum (the template's `Body` and `Item`) into an
 //! intermediate value and re-deserializes it, so an error INSIDE a body item
 //! truncates the path to the enum boundary (`sections.body`) and its
 //! line/column point at the buffered container's start, not the offending
-//! key. The serde MESSAGE still names the bad key and lists the expected
-//! fields (so `key:` on a table column reports `unknown field \`key\`,
-//! expected … \`data\``), and plain-struct inputs (definitions, top-level
-//! template keys) keep full path + accurate location.
+//! key. For a TEMPLATE, [`locate`] then walks the raw document to the item
+//! that fails on its own and reports ITS path — with the rejected top-level
+//! key as a typed field when the failure is that key being unknown — and drops the
+//! misleading line/column. The serde MESSAGE still names the bad key and
+//! lists the expected fields (so `key:` on a table column reports
+//! `unknown field \`key\`, expected … \`data\``), and plain-struct inputs
+//! (definitions, top-level template keys) keep full path + accurate location.
 
 use crate::error::CoreError;
 use serde::de::DeserializeOwned;
@@ -31,12 +34,31 @@ pub(crate) fn parse_checked<T: DeserializeOwned>(
     input: &str,
     what: &'static str,
 ) -> Result<T, CoreError> {
+    parse_with(input, what, |_, _| None)
+}
+
+/// [`parse_checked`] for a template, whose items are the tagged enum the
+/// module doc warns about: an in-item failure is re-located to the item that
+/// raised it (see [`locate`]).
+pub(crate) fn parse_template_checked<T: DeserializeOwned>(input: &str) -> Result<T, CoreError> {
+    parse_with(input, "template", locate::item_fault)
+}
+
+fn parse_with<T: DeserializeOwned>(
+    input: &str,
+    what: &'static str,
+    fault: fn(&serde_yaml::Value, &str) -> Option<locate::ItemFault>,
+) -> Result<T, CoreError> {
     crate::yaml_guard::ensure_bounded_size(input, what)?;
     let raw: serde_yaml::Value = serde_yaml::from_str(input)?;
     crate::yaml_guard::ensure_finite(&raw, what)?;
     let de = serde_yaml::Deserializer::from_str(input);
-    serde_path_to_error::deserialize(de).map_err(|err| CoreError::located(what, err))
+    serde_path_to_error::deserialize(de).map_err(|err| {
+        let found = fault(&raw, &err.inner().to_string());
+        CoreError::located(what, err, found)
+    })
 }
 
+pub(crate) mod locate;
 #[cfg(test)]
 mod tests;

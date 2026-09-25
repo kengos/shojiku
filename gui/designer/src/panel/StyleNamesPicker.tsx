@@ -8,6 +8,13 @@
 // panel, while the engine honours `styleNames` on it through two paths. Lifting the
 // block here is what lets a second tab mount it without a second copy.
 //
+// Every mount must be on a node whose wire takes `styleNames` — the key is
+// `deny_unknown_fields`-checked, so a tick anywhere else stops the document
+// parsing. The three today: `StyleSection` (gated on `STYLE_NAMES_WIRE_TYPES`,
+// because the decoration tab also serves a `line`), `CharGridSection` (a
+// `char_grid` takes it) and `SpanInspector` (a span takes it). A new site
+// checks its node the same way.
+//
 // The read is deliberately the item's OWN `styleNames` and nothing else: the engine's
 // `authored()` consults the named styles and the item's own style and stops there, so
 // there is no cascade to badge and no effective value to show. The option list is the

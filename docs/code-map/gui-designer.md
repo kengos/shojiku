@@ -589,7 +589,10 @@ services/props; nothing in the component reads the singleton.
   (the ONE walker behind every convention gate: `sourceFiles`/`codeLines`/
   `nearestOpenTag`/`hits` over both packages' sources — its nearest-tag helper
   reads a generic type argument as a tag, so a rule that must exempt a module
-  exempts it BY PATH). `contrast.ts` is the ONE WCAG ratio the suites measure
+  exempts it BY PATH). `engineWire.ts` reads the engine's template STRUCTS
+  off disk (`itemVariants`/`structBody`/`templateSources`) for the drift guards
+  that derive a panel's type set from the wire (`panel/noBoxWire`,
+  `panel/styleNamesWire`). `contrast.ts` is the ONE WCAG ratio the suites measure
   thresholds with — `theme/tokens` (AA on every rendered pairing),
   `ui/chipContrast` (the unset chip's ring on both surfaces) and
   `canvas/paperInkConvention` (which tokens may paint on the paper) had a copy

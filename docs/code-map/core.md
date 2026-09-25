@@ -128,11 +128,23 @@ injected at parse). The template model splits along CSS lines.
   `ensure_bounded_size` first, then pass 1 `Value` + `ensure_finite`,
   pass 2 `serde_path_to_error` →
   `CoreError::Located` (path + line/column). **serde_yaml's own
-  ~128-frame recursion limit bounds tree depth into a clean parse error,
-  which is what keeps every downstream recursive walk stack-safe — stated
-  at `validate/collect.rs::check_container_depth`, pinned by a model
-  test; do not re-file "unbounded walk recursion" as a hardening item.**
-  Internally-tagged enums truncate the error path to the enum boundary.
+  ~128-frame recursion limit bounds the pass-1 `Value` tree into a clean
+  parse error, which keeps the walks over that `Value` stack-safe — stated
+  at `validate/collect.rs::check_container_depth`, pinned by a model test.
+  It does NOT bound the TYPED parse: the tagged-enum buffering is a second
+  recursion, and a valid, deeply nested container chain can exhaust the
+  stack well below 128. A depth bound for the typed parse is open
+  hardening work.**
+  Internally-tagged enums truncate the error path to the enum boundary;
+  for a TEMPLATE, `parse/locate.rs` then re-locates the failure off the
+  pass-1 `Value`: it walks every `items:` sequence (the one spelling all four
+  item holders share), follows the first element that fails `Item::deserialize`
+  down to the deepest failing item, and — only when that item's own error is
+  part of serde's message — reports the item's path, `key` (one of its own
+  top-level keys the message quotes, CONFIRMED by the item without it no longer
+  making that complaint — the message alone cannot tell an inner struct's
+  `box.style` from the item's own `style`) and no line/column
+  (`CoreError::Located.key`).
 - `params.rs` — params parse + `resolve_path` dotted lookup + `is_blank`
   (the shared absent/null/`""` predicate placeholders key off).
 - `catalog.rs` — the schema tree flattens to dotted-key lookup tables
