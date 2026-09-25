@@ -18,8 +18,9 @@
 //! single failing chain, plus one per candidate key — O(size × depth), on the
 //! error path only. It is NOT bounded by how far the typed parse got: a
 //! document that fails at a top-level key is still walked to the items below
-//! it, so this pass meets the same tagged-enum recursion the typed parse does.
-//! Its cost at the full input cap is not pinned by a test.
+//! it. What bounds its recursion is the nesting check that ran before the
+//! typed parse ([`super::nesting`]), which counts every `items:` sequence
+//! this walk can reach. Its cost at the full input cap is not pinned by a test.
 
 use crate::template::Item;
 use serde::Deserialize;

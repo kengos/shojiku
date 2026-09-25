@@ -210,7 +210,8 @@ migration hint naming this page. A misspelled `type:` value is likewise
 rejected. `pattern` (regex) is reserved and not accepted in this
 version — semantic generation hints belong in `format`.
 
-Caps: schemas nest at most 16 levels (`MAX_SCHEMA_DEPTH`), declare at
+Caps: schemas nest at most 16 levels (`MAX_SCHEMA_DEPTH`, checked before the
+file is read into the model), declare at
 most 4096 nodes (`MAX_SCHEMA_NODES`), and an `enum` lists at most 256
 members (`MAX_ENUM_VALUES`) — labeled or bare.
 

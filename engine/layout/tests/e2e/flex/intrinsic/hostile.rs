@@ -22,7 +22,8 @@ fn deep_row(depth: usize) -> (Vec<f64>, bool) {
          sections:\n  body:\n    type: absolute\n    items:\n      - type: container\n        box: {{ x: 0, y: 0, w: 200, h: 60, direction: row }}\n        items:\n{}",
         inner.lines().map(|l| format!("          {l}\n")).collect::<String>()
     );
-    let (doc, diags) = run(&yaml, json!({}));
+    // Unguarded: the callers nest past the cap, which the parse refuses.
+    let (doc, diags) = run_unguarded(&yaml, json!({}));
     let widths = rect_shapes(&doc.pages[0]).iter().map(|r| r.w).collect();
     (widths, diags.has_errors())
 }

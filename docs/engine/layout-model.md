@@ -70,7 +70,8 @@ Templates are untrusted input; the resolve pass is guarded:
 
 - **Nesting depth** ≤ `MAX_CONTAINER_DEPTH` (32, mirroring the SVG group
   cap): deeper subtrees are skipped with `container_depth_exceeded`
-  (validate reports it statically; layout enforces it independently).
+  (a template whose `items:` lists nest past it is refused when parsed,
+  validate reports it statically, and layout enforces it independently).
 - **Resolved size bound**: any resolved length with `|v| > 1_000_000pt`
   (or non-finite) is dropped with `length_out_of_range` and the caller's
   default applies — a chain of >100% values cannot amplify geometry.

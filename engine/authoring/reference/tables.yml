@@ -1701,7 +1701,7 @@
     - keys: ["container_depth_exceeded"]
       cells:
         "Code": "`container_depth_exceeded`"
-        "Meaning": "nesting > 32 (also enforced independently at layout)"
+        "Meaning": "nesting > 32; a template whose `items:` lists nest past it is refused when parsed, with this code and path (also enforced independently at layout)"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
 
 "diagnostics#layout-geometry-resolution":

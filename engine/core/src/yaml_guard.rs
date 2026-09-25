@@ -16,8 +16,10 @@
 //! anything here. A test in this module pins that, since nothing in this
 //! workspace enforces it and swapping the parser would reopen it silently.
 //! It does NOT bound the typed parse that follows: the tagged-enum
-//! buffering recurses again, and much further per level, so that parse can
-//! exhaust the stack on a valid document well inside depth 128.
+//! buffering recurses again, and much further per level. That parse is
+//! bounded separately, by the nesting checks `crate::parse` runs on this
+//! same `Value` before it (templates' `items:` lists, definitions' schema
+//! levels) — not by anything here.
 //!
 //! **Alias amplification is NOT bounded to a constant, and this cap does
 //! not close it.** serde_yaml's repetition limit is `events.len() * 100` —

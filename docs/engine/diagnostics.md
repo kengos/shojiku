@@ -124,7 +124,7 @@ inline:
 | `too_many_row_conditions` | warning | a table's `row.conditionalStyles` over the 16-entry cap; extras ignored |
 | `too_many_bindings` | warning | an item's `bindings:` over the 256-entry cap; advisory only — every declaration still resolves |
 | `too_many_document_entries` | warning | `document.keywords` / `document.authors` over the 64-entry cap; only the first 64 are written |
-| `container_depth_exceeded` | error | nesting > 32 (also enforced independently at layout) |
+| `container_depth_exceeded` | error | nesting > 32; a template whose `items:` lists nest past it is refused when parsed, with this code and path (also enforced independently at layout) |
 <!-- rf:table:end -->
 
 ## Layout — geometry & resolution

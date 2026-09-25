@@ -171,7 +171,7 @@ fn repeat_cell_counts_toward_container_depth_cap() {
              items:\n      - type: repeat\n        data: {{ key: order_items }}\n        \
              cell:\n          items:\n{cell_items}"
     );
-    let template = parse_template(&yaml).expect("template");
+    let template = unguarded(&yaml);
     let diags = validate(None, &template, None);
     assert!(diags.iter().any(|d| d.code == "container_depth_exceeded"));
 }

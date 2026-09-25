@@ -56,6 +56,13 @@ pub enum CoreError {
         column: usize,
         message: Echo,
     },
+    /// A template whose items nest deeper than
+    /// [`crate::template::MAX_CONTAINER_DEPTH`], refused on the pass-1 tree
+    /// before the typed parse reads it. It is validation's
+    /// `container_depth_exceeded`, raised earlier: the path names the same
+    /// holder (the item, or the table column) that validation would.
+    #[error("template containers nest deeper than {max} levels at `{path}`")]
+    ContainerDepth { path: Echo, max: usize },
 }
 
 impl From<serde_yaml::Error> for CoreError {
@@ -143,6 +150,11 @@ impl CoreError {
                     diag = diag.arg("column", *column);
                 }
                 diag
+            }
+            CoreError::ContainerDepth { path, max } => {
+                Diagnostic::new(DiagnosticCode::ContainerDepthExceeded)
+                    .arg("max", *max)
+                    .with_path(path.as_str())
             }
             CoreError::NonFinite(what) => {
                 Diagnostic::new(DiagnosticCode::NonFiniteNumber).arg("what", *what)

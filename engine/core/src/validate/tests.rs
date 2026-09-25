@@ -66,7 +66,16 @@ properties:
     .expect("defs")
 }
 pub(super) fn tpl(body_items: &str) -> Template {
-    parse_template(&format!(
+    parse_template(&flow_yaml(body_items)).expect("template")
+}
+/// [`tpl`] read WITHOUT the parse-time nesting bound — the only way a
+/// template nested past `MAX_CONTAINER_DEPTH` still reaches validation,
+/// whose own cap is what these tests pin.
+pub(super) fn tpl_unguarded(body_items: &str) -> Template {
+    unguarded(&flow_yaml(body_items))
+}
+fn flow_yaml(body_items: &str) -> String {
+    format!(
         r#"
 sections:
   body:
@@ -75,10 +84,22 @@ sections:
     items:
 {body_items}
 "#
-    ))
-    .expect("template")
+    )
+}
+/// Deserializes a template straight from YAML, skipping the parse door's
+/// checks (see [`tpl_unguarded`]).
+pub(super) fn unguarded(yaml: &str) -> Template {
+    serde_yaml::from_str(yaml).expect("template")
 }
 pub(super) fn nested_containers(depth: usize, innermost_items: &str) -> Template {
+    parse_template(&nested_containers_yaml(depth, innermost_items)).expect("template")
+}
+/// [`nested_containers`] without the parse-time nesting bound (see
+/// [`tpl_unguarded`]).
+pub(super) fn nested_containers_unguarded(depth: usize, innermost_items: &str) -> Template {
+    unguarded(&nested_containers_yaml(depth, innermost_items))
+}
+fn nested_containers_yaml(depth: usize, innermost_items: &str) -> String {
     let mut yaml = String::from("sections:\n  body:\n    type: absolute\n    items:\n");
     let mut indent = String::from("      ");
     for _ in 0..depth {
@@ -88,5 +109,5 @@ pub(super) fn nested_containers(depth: usize, innermost_items: &str) -> Template
     for line in innermost_items.lines() {
         yaml.push_str(&format!("{indent}{line}\n"));
     }
-    parse_template(&yaml).expect("template")
+    yaml
 }

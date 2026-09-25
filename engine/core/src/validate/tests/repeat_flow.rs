@@ -130,7 +130,7 @@ fn repeat_flow_card_counts_toward_container_depth_cap() {
              items:\n      - type: repeat_flow\n        data: {{ key: order_items }}\n        \
              item:\n          items:\n{card_items}"
     );
-    let template = parse_template(&yaml).expect("template");
+    let template = unguarded(&yaml);
     let diags = validate(None, &template, None);
     assert!(diags.iter().any(|d| d.code == "container_depth_exceeded"));
 }

@@ -23,5 +23,10 @@ shojiku-image = { workspace = true }
 qrcodegen = { workspace = true }
 sha2 = { workspace = true }
 
+[dev-dependencies]
+# The e2e depth-cap cases read a template WITHOUT the parse door's nesting
+# bound, which is the only way one nested past the cap still reaches layout.
+serde_yaml = { workspace = true }
+
 [lints]
 workspace = true

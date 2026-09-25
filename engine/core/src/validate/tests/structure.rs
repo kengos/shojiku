@@ -34,7 +34,8 @@ fn container_depth_over_cap_is_error() {
     let ok = nested_containers(MAX_CONTAINER_DEPTH, "- type: text\n  text: deep");
     assert!(!validate(None, &ok, None).has_errors());
 
-    let too_deep = nested_containers(MAX_CONTAINER_DEPTH + 1, "- type: text\n  text: deeper");
+    let too_deep =
+        nested_containers_unguarded(MAX_CONTAINER_DEPTH + 1, "- type: text\n  text: deeper");
     let diags = validate(None, &too_deep, None);
     assert!(diags.has_errors());
     assert!(diags.iter().any(|d| d.code == "container_depth_exceeded"));

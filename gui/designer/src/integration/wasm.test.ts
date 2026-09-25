@@ -322,6 +322,25 @@ describe('wasm transport against the real engine (receipt-us)', () => {
     expect(outcome.diagnostics.items.some((d) => d.code === 'parse_error')).toBe(true);
   });
 
+  it('refuses containers nested past the cap on the container itself, as a diagnostic', async () => {
+    // Refused while the engine reads the document, before validation runs,
+    // yet under validation's own code, argument and path — which is what
+    // lets the panel point at the container that went one level too deep.
+    let item = '{ type: text, text: deep }';
+    for (let i = 0; i < 61; i++) {
+      item = `{ type: container, items: [ ${item} ] }`;
+    }
+    const deep = `sections:\n  body:\n    type: flow\n    items: [ ${item} ]\n`;
+    const outcome = await transport.renderRaw(deep, params(), definitions(), { scale: 2 });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.diagnostics.items.map((d) => d.code)).toEqual(['container_depth_exceeded']);
+    const [refusal] = outcome.diagnostics.items;
+    expect(refusal.path).toBe(`sections.body.items[0]${'.items[0]'.repeat(32)}`);
+    expect(refusal.args).toEqual({ max: 32 });
+    const again = await transport.validate(template(), params(), definitions());
+    expect(Array.isArray(again.items)).toBe(true);
+  });
+
   it('rejects with a TransportError when rendering before fonts are loaded', async () => {
     const bare = new wasmModule.Engine();
     bare.setLocale('en-US', null);
