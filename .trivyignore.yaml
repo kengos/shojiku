@@ -16,3 +16,69 @@ vulnerabilities:
       :nonroot tag still carries 2026b, so pinning the newest digest reports the
       same row. Drop this entry once distroless rebuilds on 2026c.
     expired_at: 2026-12-31
+  - id: CVE-2026-63072
+    statement: >-
+      OpenSSL advisories (libssl3 3.0.20-1~deb12u2, fixed in 3.0.22-1~deb12u1)
+      in the distroless base, which ships libssl3 whether or not a binary uses
+      it. Neither shipped binary links OpenSSL: engine/Cargo.lock carries no
+      openssl-sys or native-tls (TLS, where any is fetched at authoring time,
+      is rustls), so no code path in the image reaches the affected CMS, CMP,
+      CRMF, DTLS or AEAD routines. There is nothing to upgrade to either: the
+      pinned gcr.io/distroless/cc-debian12:nonroot digest is still the tag's
+      newest. Drop these entries once distroless rebuilds on the fixed libssl3.
+    expired_at: 2026-10-31
+  - id: CVE-2026-63076
+    statement: >-
+      OpenSSL advisories (libssl3 3.0.20-1~deb12u2, fixed in 3.0.22-1~deb12u1)
+      in the distroless base, which ships libssl3 whether or not a binary uses
+      it. Neither shipped binary links OpenSSL: engine/Cargo.lock carries no
+      openssl-sys or native-tls (TLS, where any is fetched at authoring time,
+      is rustls), so no code path in the image reaches the affected CMS, CMP,
+      CRMF, DTLS or AEAD routines. There is nothing to upgrade to either: the
+      pinned gcr.io/distroless/cc-debian12:nonroot digest is still the tag's
+      newest. Drop these entries once distroless rebuilds on the fixed libssl3.
+    expired_at: 2026-10-31
+  - id: CVE-2026-42767
+    statement: >-
+      OpenSSL advisories (libssl3 3.0.20-1~deb12u2, fixed in 3.0.22-1~deb12u1)
+      in the distroless base, which ships libssl3 whether or not a binary uses
+      it. Neither shipped binary links OpenSSL: engine/Cargo.lock carries no
+      openssl-sys or native-tls (TLS, where any is fetched at authoring time,
+      is rustls), so no code path in the image reaches the affected CMS, CMP,
+      CRMF, DTLS or AEAD routines. There is nothing to upgrade to either: the
+      pinned gcr.io/distroless/cc-debian12:nonroot digest is still the tag's
+      newest. Drop these entries once distroless rebuilds on the fixed libssl3.
+    expired_at: 2026-10-31
+  - id: CVE-2026-54874
+    statement: >-
+      OpenSSL advisories (libssl3 3.0.20-1~deb12u2, fixed in 3.0.22-1~deb12u1)
+      in the distroless base, which ships libssl3 whether or not a binary uses
+      it. Neither shipped binary links OpenSSL: engine/Cargo.lock carries no
+      openssl-sys or native-tls (TLS, where any is fetched at authoring time,
+      is rustls), so no code path in the image reaches the affected CMS, CMP,
+      CRMF, DTLS or AEAD routines. There is nothing to upgrade to either: the
+      pinned gcr.io/distroless/cc-debian12:nonroot digest is still the tag's
+      newest. Drop these entries once distroless rebuilds on the fixed libssl3.
+    expired_at: 2026-10-31
+  - id: CVE-2026-63074
+    statement: >-
+      OpenSSL advisories (libssl3 3.0.20-1~deb12u2, fixed in 3.0.22-1~deb12u1)
+      in the distroless base, which ships libssl3 whether or not a binary uses
+      it. Neither shipped binary links OpenSSL: engine/Cargo.lock carries no
+      openssl-sys or native-tls (TLS, where any is fetched at authoring time,
+      is rustls), so no code path in the image reaches the affected CMS, CMP,
+      CRMF, DTLS or AEAD routines. There is nothing to upgrade to either: the
+      pinned gcr.io/distroless/cc-debian12:nonroot digest is still the tag's
+      newest. Drop these entries once distroless rebuilds on the fixed libssl3.
+    expired_at: 2026-10-31
+  - id: CVE-2026-75803
+    statement: >-
+      OpenSSL advisories (libssl3 3.0.20-1~deb12u2, fixed in 3.0.22-1~deb12u1)
+      in the distroless base, which ships libssl3 whether or not a binary uses
+      it. Neither shipped binary links OpenSSL: engine/Cargo.lock carries no
+      openssl-sys or native-tls (TLS, where any is fetched at authoring time,
+      is rustls), so no code path in the image reaches the affected CMS, CMP,
+      CRMF, DTLS or AEAD routines. There is nothing to upgrade to either: the
+      pinned gcr.io/distroless/cc-debian12:nonroot digest is still the tag's
+      newest. Drop these entries once distroless rebuilds on the fixed libssl3.
+    expired_at: 2026-10-31
