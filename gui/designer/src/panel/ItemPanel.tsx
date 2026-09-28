@@ -7,8 +7,8 @@
 // mutation, no GUI-only state in the file; the active tab is Designer-local UI
 // state like zoom/grid-step).
 //
-// Only the tabs that APPLY to the item render (a rect has no content tab, a table no
-// decoration tab), fixed content→decoration→placement order; a lone tab (box-only items) drops the tablist
+// Only the tabs that APPLY to the item render (a rect has no content tab, a
+// page_break no tab at all), fixed content→decoration→placement order; a lone tab (box-only items) drops the tablist
 // chrome. Headless UI `Tab` is used locally — the Sidebar precedent — not a
 // catalog primitive (that extraction is still pending).
 

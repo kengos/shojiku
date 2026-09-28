@@ -1,19 +1,23 @@
 // The single-group form a canvas header-group selection (`…headerGroups[n]`)
 // opens: the heading label and how many columns it spans — the group identity
-// the user just clicked, without hunting the parent table. Style editing stays
-// in the YAML for now; a group's fill/border belong with the wider header-row
-// styling surface, not this first editing wave.
+// the user just clicked, without hunting the parent table — and the way to
+// remove it (adding one lives with the table's own settings, since there is no
+// group to select before the first exists). Style editing stays in the YAML
+// for now; a group's fill/border belong with the wider header-row styling
+// surface, not this first editing wave.
 
 import type { Op } from '@shojiku/designer-core';
+import { useId } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { formatList } from '../i18n/format';
-import { INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
+import { BTN_SM, INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
 import { readColumnsView } from './columnsModel';
 import { Field } from './fields';
 import { type GroupRow, groupCoverage, spanOp } from './groupModel';
 import { applyPanelOp, plainTextOp } from './model';
 import { StepperField } from './StepperField';
+import { removeHeaderGroupOp } from './tableSettingsOps';
 
 /** Hint-label clip — a spanned-column name is a glance aid, not a viewer. */
 const MAX_HINT_LABEL_CHARS = 24;
@@ -32,9 +36,19 @@ export interface GroupFormProps {
   readonly index: number;
   readonly group: GroupRow;
   readonly groups: readonly GroupRow[];
+  /** Move the selection off the group a removal deletes. */
+  readonly onSelectPath?: (path: string) => void;
 }
 
-export function GroupForm({ controller, path, tablePath, index, group, groups }: GroupFormProps) {
+export function GroupForm({
+  controller,
+  path,
+  tablePath,
+  index,
+  group,
+  groups,
+  onSelectPath,
+}: GroupFormProps) {
   const { t, locale } = useI18n();
   const columns = readColumnsView(controller.read(tablePath)) ?? [];
   const coverage = groupCoverage(groups, columns.length, index);
@@ -54,6 +68,25 @@ export function GroupForm({ controller, path, tablePath, index, group, groups }:
   };
   const commitSpan = (raw: string) => {
     dispatch(spanOp(path, columns.length, raw));
+  };
+  // The selection travels the way the Delete key's does
+  // (`tree/selection`'s `nextSelectionAfterRemove`) — to the group that slides
+  // into the freed slot, the new last one, or the table once none is left — so
+  // the panel never shows a form for a group that is gone.
+  // A group has no start column of its own — it begins where the one before it
+  // ends — so removing one that covers columns moves every later group left onto
+  // other columns. Said BEFORE the click (and only then: the last group, or one
+  // layout already drops, moves nothing).
+  const shiftId = useId();
+  const shifts = coverage !== null && index < groups.length - 1;
+  const remove = () => {
+    if (controller.apply(removeHeaderGroupOp(tablePath, index, groups.length)).ok) {
+      onSelectPath?.(
+        groups.length <= 1
+          ? tablePath
+          : `${tablePath}.headerGroups[${Math.min(index, groups.length - 2)}]`,
+      );
+    }
   };
   return (
     <aside className={PANEL} aria-label={t('panel.title')}>
@@ -93,6 +126,19 @@ export function GroupForm({ controller, path, tablePath, index, group, groups }:
                 columns: formatList(covered, locale),
                 n: covered.length,
               })}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            className={`${BTN_SM} mt-3`}
+            onClick={remove}
+            aria-describedby={shifts ? shiftId : undefined}
+          >
+            {t('panel.headerGroup.remove')}
+          </button>
+          {shifts ? (
+            <p id={shiftId} className="mt-1 mb-0 text-sm text-muted">
+              {t('panel.headerGroup.removeShifts')}
             </p>
           ) : null}
         </section>

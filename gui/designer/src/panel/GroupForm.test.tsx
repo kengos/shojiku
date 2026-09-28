@@ -58,6 +58,7 @@ function form(
   group: GroupRow = { label: 'Quantity', span: '3' },
   groups: readonly GroupRow[] = GROUPS,
   locale = 'en',
+  onSelectPath?: (path: string) => void,
 ) {
   return render(
     <I18nProvider locale={locale}>
@@ -68,6 +69,7 @@ function form(
         index={index}
         group={group}
         groups={groups}
+        onSelectPath={onSelectPath}
       />
     </I18nProvider>,
   );
@@ -205,5 +207,79 @@ describe('GroupForm', () => {
     const hint = screen.getByText(/Spans/);
     expect(hint.textContent).toContain('…');
     expect(hint.textContent?.length).toBeLessThan(100);
+  });
+});
+
+describe('GroupForm — removing the group', () => {
+  it('removes a middle group and selects the one that slides into its slot', () => {
+    const onSelectPath = vi.fn();
+    const controller = makeController({ [TABLE]: TABLE_NODE });
+    form(controller, 1, GROUPS[1], GROUPS, 'en', onSelectPath);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove this group' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeItem',
+      path: `${TABLE}.headerGroups`,
+      index: 1,
+    });
+    expect(onSelectPath).toHaveBeenCalledWith(`${TABLE}.headerGroups[1]`);
+  });
+
+  it('removes the last group and selects the new last one', () => {
+    const onSelectPath = vi.fn();
+    form(makeController({ [TABLE]: TABLE_NODE }), 2, GROUPS[2], GROUPS, 'en', onSelectPath);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove this group' }));
+    expect(onSelectPath).toHaveBeenCalledWith(`${TABLE}.headerGroups[1]`);
+  });
+
+  it('removes the only group with its key and selects the table', () => {
+    const onSelectPath = vi.fn();
+    const controller = makeController({ [TABLE]: TABLE_NODE });
+    form(controller, 0, GROUPS[0], [GROUPS[0]], 'en', onSelectPath);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove this group' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: TABLE,
+      keys: ['headerGroups'],
+    });
+    expect(onSelectPath).toHaveBeenCalledWith(TABLE);
+  });
+
+  it('removes without a selection callback, and keeps the selection after a refusal', () => {
+    const controller = makeController({ [TABLE]: TABLE_NODE });
+    form(controller);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove this group' }));
+    expect(controller.apply).toHaveBeenCalledTimes(1);
+    const refused = makeController({ [TABLE]: TABLE_NODE });
+    refused.apply = vi.fn(() => ({
+      ok: false as const,
+      error: { code: 'index_out_of_range' as const, message: 'x' },
+    }));
+    const onSelectPath = vi.fn();
+    form(refused, 1, GROUPS[1], GROUPS, 'en', onSelectPath);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove this group' })[1]);
+    expect(onSelectPath).not.toHaveBeenCalled();
+  });
+});
+
+describe('GroupForm — what a removal moves', () => {
+  it('says the later groups move left, as the button description, before the click', () => {
+    form(makeController({ [TABLE]: TABLE_NODE }), 1, GROUPS[1], GROUPS);
+    const button = screen.getByRole('button', { name: 'Remove this group' });
+    const note = document.getElementById(button.getAttribute('aria-describedby') ?? '');
+    expect(note?.textContent).toBe('Groups after this one move left to fill its columns.');
+  });
+
+  it('says nothing for the last group, which moves nothing', () => {
+    form(makeController({ [TABLE]: TABLE_NODE }), 2, GROUPS[2], GROUPS);
+    expect(
+      screen.getByRole('button', { name: 'Remove this group' }).getAttribute('aria-describedby'),
+    ).toBeNull();
+    expect(screen.queryByText(/move left/)).toBeNull();
+  });
+
+  it('says nothing for a group layout already drops, which covers no column', () => {
+    const node = { ...TABLE_NODE, columns: [{ label: 'Name' }, { label: 'Unit' }] };
+    form(makeController({ [TABLE]: node }), 1, GROUPS[1], GROUPS);
+    expect(screen.queryByText(/move left/)).toBeNull();
   });
 });
