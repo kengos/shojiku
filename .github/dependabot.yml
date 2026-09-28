@@ -27,6 +27,19 @@ updates:
     groups:
       cargo-minor-patch:
         update-types: [minor, patch]
+    # The RustCrypto DER crates stay on ONE version line, the one `cms` has
+    # released (engine/Cargo.toml says why). A lone `der`/`x509-cert`/`pkcs8`
+    # bump past that line does not compile — `der` 0.8 moves `OctetString`,
+    # `SetOfVec` and `Any` behind features the 0.7-line crates do not enable —
+    # so hold them until `cms` 0.3 ships, then move all four together by hand
+    # and delete this block.
+    ignore:
+      - dependency-name: der
+        versions: [">=0.8"]
+      - dependency-name: x509-cert
+        versions: [">=0.3"]
+      - dependency-name: pkcs8
+        versions: [">=0.11"]
 
   # Three Dockerfiles pin the SAME `rust:<X.Y.Z>-slim-bookworm` builder and
   # must move together. All three directories are listed so none is silently
