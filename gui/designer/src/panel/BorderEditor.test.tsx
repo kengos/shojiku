@@ -226,7 +226,11 @@ sections:
       />,
     );
     expect(screen.getByText('Border from style "framed"')).toBeTruthy();
-    expect(screen.getByText('On a table this draws the outer frame only.')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'On a table, one width for all sides is the grid between the cells; a per-side setting draws an outer frame instead.',
+      ),
+    ).toBeTruthy();
     // The diagram reflects the EFFECTIVE (style-sourced) state: every edge
     // reads pressed even though the item's own style has no border key.
     expect(screen.getByRole('button', { name: 'Top border' }).getAttribute('aria-pressed')).toBe(

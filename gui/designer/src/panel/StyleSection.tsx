@@ -1,9 +1,10 @@
 // The decoration tab: the item's OWN style keys. It composes the typography rows and
 // the colour swatches (`StyleTabFields.tsx`) with the border editor, a `line`
-// item's stroke editor, a table's row-condition rules, and the
+// item's stroke editor, and the
 // named-style picker — the last only on a type whose wire takes `styleNames`
 // (`STYLE_NAMES_WIRE_TYPES`), which a `line` does not. Every boxed item gets
-// this tab (fill + border); `text` additionally gets the typography fields.
+// this tab (fill + border); `text` additionally gets the typography fields. A
+// TABLE is routed away to `TableDecorationSections` (collapsible sections).
 //
 // The named-style picker is a SHARED leaf (`StyleNamesPicker`) rather than a
 // block inlined here: `char_grid` has no decoration tab and needs the same
@@ -22,32 +23,25 @@ import { MARK_TYPES, STYLE_NAMES_WIRE_TYPES } from './itemView';
 import { LineStyleEditor } from './LineStyleEditor';
 import { readLineStyle } from './lineModel';
 import { FieldHelp, HelpfulHeading } from './panelHelpers';
-import { pickerOptions } from './pickerModel';
-import { RowConditionsSection } from './RowConditions';
-import { readRawEntries } from './rowConditionsModel';
 import { ShapeStyleEditor } from './ShapeStyleEditor';
 import { StyleNamesPicker } from './StyleNamesPicker';
 import { PanelColorField, TypographyFields } from './StyleTabFields';
 import { readShapeStyle } from './shapeStyle';
-import { TableStyleSection } from './TableStyleSection';
-import { readTableStyle } from './tableStyleModel';
+import { TableDecorationSections } from './TableDecorationSections';
 
 export function StyleSection(props: ItemPanelProps) {
   const { t } = useI18n();
   const { controller, path, view, fontFamilies, capabilities, onNavigateDefaults } = props;
   const ctx = cascadeContext(controller.read, path, props.floor);
+  if (view.type === 'table') {
+    // A table's decoration tab is collapsible sections of its own (the table
+    // style, grid border, bands, conditional rules, named styles).
+    return <TableDecorationSections {...props} />;
+  }
   const isText = view.type === 'text';
   // The fill/border cluster decorates a BORDER BOX; `line` has a decoration tab
   // but no box (its stroke is its own shape, edited below).
   const boxed = BORDERABLE_TYPES.has(view.type);
-  // A TABLE paints no `style.backgroundColor` — the engine asserts it — so the
-  // fill swatch would author a key nothing draws. It is withheld unless the
-  // document already carries one, in which case the table-style section below
-  // shows it as ineffective and offers to clear it: hiding an authored key
-  // outright would leave it invisible and unremovable in the panel.
-  const isTable = view.type === 'table';
-  const showFill =
-    boxed && (!isTable || readTableStyle(controller.read(path)).ineffectiveFill !== '');
   return (
     <section>
       <HelpfulHeading
@@ -77,7 +71,7 @@ export function StyleSection(props: ItemPanelProps) {
           onNavigate={onNavigateDefaults}
         />
       ) : null}
-      {showFill && hasCapability(capabilities, 'style.backgroundColor') ? (
+      {boxed && hasCapability(capabilities, 'style.backgroundColor') ? (
         <PanelColorField
           label={t('panel.field.backgroundColor')}
           styleKey="backgroundColor"
@@ -97,7 +91,7 @@ export function StyleSection(props: ItemPanelProps) {
             path={path}
             controller={controller}
             capabilities={capabilities}
-            isTable={view.type === 'table'}
+            isTable={false}
           />
         </div>
       ) : null}
@@ -124,22 +118,6 @@ export function StyleSection(props: ItemPanelProps) {
           path={path}
           controller={controller}
           capabilities={capabilities}
-        />
-      ) : null}
-      {isTable ? (
-        <TableStyleSection context={{ path, controller, capabilities, floor: props.floor }} />
-      ) : null}
-      {isTable && hasCapability(capabilities, 'table.row.conditionalStyles') ? (
-        <RowConditionsSection
-          path={path}
-          controller={controller}
-          floor={props.floor}
-          entries={readRawEntries(controller.read, path)}
-          options={
-            view.dataKey === ''
-              ? []
-              : pickerOptions(props.paletteGroups, view.dataKey, props.params)
-          }
         />
       ) : null}
       {/* The same `?` the char_grid placement tab gives this control. It is one

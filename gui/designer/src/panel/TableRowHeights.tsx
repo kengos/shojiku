@@ -1,6 +1,6 @@
 // The table's row heights: the body rows' auto⇄fixed mode with the one height
-// field that mode uses, and the header row's own height. Split from
-// `TableSettingsSection`, which mounts it behind `table.row.height`. That gate
+// field that mode uses, and the header row's own height. `TableRowsBody`
+// (`TableSettingsSection.tsx`) mounts it behind `table.row.height`. That gate
 // is deliberately coarse: the key names only the FIXED heights, but
 // `row.minHeight` and `header.height` arrived in the same engine release, so no
 // engine declares `table` without it and splitting the gate would buy nothing.

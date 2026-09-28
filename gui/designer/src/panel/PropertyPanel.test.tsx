@@ -212,7 +212,7 @@ describe('PropertyPanel', () => {
     expect(screen.getByText('Group settings')).toBeTruthy();
     expect(screen.queryByLabelText('Column label')).toBeNull();
     expect((screen.getByLabelText('Group label') as HTMLInputElement).value).toBe('Quantity');
-    expect((screen.getByLabelText('Span (columns)') as HTMLInputElement).value).toBe('2');
+    expect((screen.getByLabelText('Columns covered') as HTMLInputElement).value).toBe('2');
   });
 
   it('keeps the unsupported note for a group path whose table has no such group', () => {
@@ -844,6 +844,11 @@ describe('PropertyPanel', () => {
     if (screen.queryByRole('tab', { name: 'Style' }) !== null) {
       openTab('Style');
     }
+    // A table's decoration tab is collapsible sections; the picker is in the
+    // closed 「Named styles」 one.
+    if (type === 'table') {
+      fireEvent.click(screen.getByRole('button', { name: /^Named styles/ }));
+    }
     expect(screen.getByRole('group', { name: 'Styles' })).toBeDefined();
     expect(screen.getByLabelText('heading')).toBeDefined();
   });
@@ -1307,6 +1312,7 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
       />,
     );
     openTab('Style');
+    fireEvent.click(screen.getByRole('button', { name: /^Conditional formatting/ }));
     expect(screen.getByRole('button', { name: '+ Add a row condition' })).not.toBeNull();
   });
 
@@ -1403,6 +1409,7 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
       />,
     );
     openTab('Style');
+    fireEvent.click(screen.getByRole('button', { name: /^Conditional formatting/ }));
     expect(screen.getByRole('button', { name: '+ Add a row condition' })).not.toBeNull();
   });
 

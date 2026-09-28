@@ -954,11 +954,16 @@ describe('FormatToolbar — border control', () => {
     expect(screen.getByRole('button', { name: 'Top border' })).toBeTruthy();
   });
 
-  it('applies an outer frame to a table in one click (one undo step)', () => {
+  it('applies a grid to a table in one click (one undo step)', () => {
     render(<Harness source={TABLE_SRC} />);
     fireEvent.click(screen.getByRole('button', { name: 'Border' }));
-    // The table note explains the outer-frame-only behavior.
-    expect(screen.getByText('On a table this draws the outer frame only.')).toBeTruthy();
+    // The table note says what one width does on a table (the grid) and what
+    // per-side widths do (an outer frame); All sides authors the one width.
+    expect(
+      screen.getByText(
+        'On a table, one width for all sides is the grid between the cells; a per-side setting draws an outer frame instead.',
+      ),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'All sides' }));
     expect(doc()).toContain('borderWidth: 1');
     fireEvent.click(screen.getByTestId('undo'));

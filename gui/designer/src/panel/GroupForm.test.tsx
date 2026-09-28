@@ -114,7 +114,7 @@ describe('GroupForm', () => {
   it('commits a typed span as a NUMBER literal, one op', () => {
     const controller = makeController({ [TABLE]: TABLE_NODE });
     form(controller);
-    fireEvent.blur(screen.getByLabelText('Span (columns)'), { target: { value: '2' } });
+    fireEvent.blur(screen.getByLabelText('Columns covered'), { target: { value: '2' } });
     expect(controller.apply).toHaveBeenCalledTimes(1);
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
@@ -130,7 +130,7 @@ describe('GroupForm', () => {
     // Re-queried every time, NOT captured once: a refusal now remounts the
     // input, so a held reference would be detached from the second blur on and
     // the rest of the cases would pass without ever reaching the handler.
-    const span = () => screen.getByLabelText('Span (columns)') as HTMLInputElement;
+    const span = () => screen.getByLabelText('Columns covered') as HTMLInputElement;
     const refuse = (value: string) => {
       fireEvent.blur(span(), { target: { value } });
       // Each refusal also takes its text back, leaving the authored span.
@@ -147,14 +147,14 @@ describe('GroupForm', () => {
   it('steps from the RESOLVED coverage, one op per click', () => {
     const controller = makeController({ [TABLE]: TABLE_NODE });
     form(controller);
-    fireEvent.click(screen.getByLabelText('Increase Span (columns)'));
+    fireEvent.click(screen.getByLabelText('Increase Columns covered'));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: GROUP_PATH,
       keys: ['span'],
       value: 4,
     });
-    fireEvent.click(screen.getByLabelText('Decrease Span (columns)'));
+    fireEvent.click(screen.getByLabelText('Decrease Columns covered'));
     expect(controller.apply).toHaveBeenLastCalledWith({
       op: 'setScalar',
       path: GROUP_PATH,
@@ -172,9 +172,9 @@ describe('GroupForm', () => {
       { label: 'Item', span: '6' },
       { label: 'Quantity', span: '3' },
     ]);
-    expect(screen.getByLabelText('Increase Span (columns)')).toHaveProperty('disabled', true);
+    expect(screen.getByLabelText('Increase Columns covered')).toHaveProperty('disabled', true);
     expect(screen.queryByText(/Spans/)).toBeNull();
-    fireEvent.click(screen.getByLabelText('Increase Span (columns)'));
+    fireEvent.click(screen.getByLabelText('Increase Columns covered'));
     expect(controller.apply).not.toHaveBeenCalled();
   });
 

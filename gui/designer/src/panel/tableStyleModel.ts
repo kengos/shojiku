@@ -81,3 +81,24 @@ export function readTableStyle(tableNode: unknown): TableStyleView {
     hiddenHeader: record(table?.header)?.visuallyHidden === true,
   };
 }
+
+/** The authored grid width as a display string — the one preset-owned key that
+ * lives on the table's own `style` rather than on a band. A PER-SIDE map (which
+ * the border editor authors when the four sides differ) is not "no width":
+ * reporting it as unset would let the gallery mark `plain` active on a table
+ * that carries an outer frame. It reports a sentinel no preset declares, so such
+ * a table reads as hand-tuned. */
+export function gridWidthOf(tableNode: unknown): string {
+  const width = record(record(tableNode)?.style)?.borderWidth;
+  if (typeof width === 'number') {
+    return Number.isFinite(width) ? String(width) : '';
+  }
+  return width === undefined ? '' : 'custom';
+}
+
+/** The named styles a band applies (`header.styleNames` / `row.styleNames`),
+ * non-string entries dropped — what a closed band section lists by name. */
+export function bandStyleNames(tableNode: unknown, band: 'header' | 'row'): readonly string[] {
+  const names = record(record(tableNode)?.[band])?.styleNames;
+  return Array.isArray(names) ? names.filter((n): n is string => typeof n === 'string') : [];
+}

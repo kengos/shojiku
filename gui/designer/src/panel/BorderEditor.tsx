@@ -29,9 +29,9 @@ export interface BorderEditorProps {
   /** The item's `borderRadius`, resolved through the same cascade as the
    * per-side properties. */
   readonly radius: RadiusView;
-  /** A `table` draws the map form as its OUTER frame only (inner ruling is the
-   * table's own spec) — the editor notes this so the per-side controls don't
-   * read as inner-cell borders. */
+  /** On a `table` one width is the GRID between the cells, and only the
+   * per-side map form is an OUTER frame — the editor notes which is which, so
+   * the per-side controls don't read as inner-cell borders. */
   readonly isTable: boolean;
 }
 
