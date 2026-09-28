@@ -20,14 +20,24 @@ WORKDIR /app/engine
 # --locked: the committed Cargo.lock is authoritative; fail the build
 # rather than silently resolving new dependency versions.
 RUN cargo build --release --locked --package shojiku-cli --package shojiku-mcp
+# The one shared library the binaries need that the runtime base below does not
+# carry: the unwinder, `libgcc_s.so.1`. Staged under its own multiarch path
+# (found, not spelled, so amd64 and arm64 both work) and copied across whole.
+# It comes from this same bookworm builder, so it matches the base's glibc.
+RUN mkdir -p /runtime-libs \
+ && cp --parents "$(find /lib /usr/lib -name libgcc_s.so.1 -print -quit)" /runtime-libs
 
-# Distroless runtime: glibc/libgcc only (all the binary links against).
-# No shell, no package manager, no perl — debian-slim carried 43 CVEs,
+# Distroless runtime: glibc plus the libgcc_s staged above — all the binaries
+# link against. The `base-nossl` variant, not `cc`: `cc` also ships libssl3,
+# which nothing here links (TLS is rustls, and only at authoring time), yet
+# every OpenSSL advisory against it failed the image scan with no upgrade to
+# take. No shell, no package manager, no perl — debian-slim carried 43 CVEs,
 # including criticals, in packages this CLI never executes. Runs as
 # nonroot (uid 65532). Digest-pinned; refresh the digest deliberately.
 # Debugging note: there is no shell in this image — use
 # `docker run --entrypoint shojiku` variants or inspect from the builder.
-FROM gcr.io/distroless/cc-debian12:nonroot@sha256:9dac0a79194e45a7da0158a9c6da57b217585af0786db3845d1f0ec1a0dd182f
+FROM gcr.io/distroless/base-nossl-debian12:nonroot@sha256:be40c00dfabd86576d92666e87e406714d5618342de1a0c213ad232de255172e
+COPY --from=builder /runtime-libs/ /
 COPY --from=builder /app/engine/target/release/shojiku /usr/local/bin/shojiku
 # The stdio MCP server rides the same image:
 #   docker run -i --rm --entrypoint shojiku-mcp <image>
