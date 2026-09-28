@@ -21,6 +21,27 @@ if (typeof HTMLCanvasElement !== 'undefined') {
   HTMLCanvasElement.prototype.getContext = () => null;
 }
 
+// jsdom 30.1 added its own `URL.createObjectURL`, and it rejects the `Blob`
+// this environment constructs (it reads jsdom-internal state the Blob does not
+// carry: `Cannot read properties of undefined (reading '_buffer')`). Before
+// that release the function was absent. A component that uses it when present
+// (the PDF preview) then crashed on mount in every test. Probe once; when the
+// real one cannot take a Blob, stand in with an opaque, unique `blob:` string —
+// all a test can observe of an object URL anyway. Suites that care about the
+// URLs (the PDF preview's own) stub the function themselves.
+if (typeof URL.createObjectURL === 'function') {
+  try {
+    URL.revokeObjectURL(URL.createObjectURL(new Blob([])));
+  } catch {
+    let n = 0;
+    URL.createObjectURL = () => {
+      n += 1;
+      return `blob:test-${n}`;
+    };
+    URL.revokeObjectURL = () => {};
+  }
+}
+
 if (typeof globalThis.ImageData === 'undefined') {
   class ImageDataShim {
     readonly data: Uint8ClampedArray;
