@@ -134,6 +134,38 @@ describe('renderDiagnostic', () => {
   });
 });
 
+describe('renderDiagnostic — overflow warnings read as plain advice', () => {
+  const OVERFLOW = diag({
+    code: 'text_overflow',
+    args: { content: 13.299999999999999, avail: 12 },
+  });
+
+  it('says in Japanese what does not fit, by how much, and what to do', () => {
+    expect(renderDiagnostic(OVERFLOW, DEFAULT_CATALOG, ['ja', 'en'], 'ja')).toBe(
+      '文字が枠に収まりません（必要な高さ 13.3pt／枠の高さ 12pt）。枠を高くするか、文字を小さくしてください',
+    );
+  });
+
+  it('says the same in English, with no float noise', () => {
+    expect(renderDiagnostic(OVERFLOW, DEFAULT_CATALOG, ['en'], 'en')).toBe(
+      'text does not fit its box (13.3pt tall, the box has 12pt); make the box taller or the text smaller',
+    );
+  });
+
+  it('keeps the internal word out of every rewritten Japanese warning', () => {
+    const ja = DEFAULT_CATALOG.ja.diagnostics;
+    for (const code of [
+      'text_overflow',
+      'flex_row_overflow',
+      'vertical_text_overflow',
+      'child_overflow',
+      'layout_key_on_leaf',
+    ]) {
+      expect(ja[code], code).not.toContain('ボックス');
+    }
+  });
+});
+
 describe('catalog integrity', () => {
   const FULL = ['en', 'ja', 'zh-tw', 'zh-cn'] as const;
   const PARTIAL = ['hi', 'fil'] as const;

@@ -33,6 +33,29 @@ describe('formatMessage', () => {
     );
   });
 
+  it('shows a measured length to at most two decimals, not its float noise', () => {
+    expect(
+      formatMessage('{content}pt vs {avail}pt', { content: 13.299999999999999, avail: 12 }, 'ja'),
+    ).toBe('13.3pt vs 12pt');
+    expect(formatMessage('{v}', { v: -0.125 }, 'en')).toBe('-0.13');
+  });
+
+  it('keeps the two sides of an overflow apart at the engine tolerance', () => {
+    // The engine warns only past `avail + 0.01`, so the smallest reported
+    // content still reads larger than the room it overflows.
+    expect(formatMessage('{c} > {a}', { c: 12.0100001, a: 12 }, 'en')).toBe('12.01 > 12');
+  });
+
+  it('leaves integers, strings and non-finite values exactly as they were', () => {
+    expect(formatMessage('{year} {n}', { year: 2026, n: 12345 }, 'en')).toBe('2026 12345');
+    expect(formatMessage('{v}', { v: '12.3456789' }, 'en')).toBe('12.3456789');
+    expect(formatMessage('{v}', { v: Number.NaN }, 'en')).toBe('NaN');
+  });
+
+  it('rounds a plain length even under an invalid locale tag', () => {
+    expect(formatMessage('{v}', { v: 1.23456 }, 'not a valid tag!!')).toBe('1.23');
+  });
+
   it('returns null when a referenced arg is missing (caller falls back)', () => {
     expect(formatMessage('{key} missing', {}, 'en')).toBeNull();
   });
