@@ -1210,6 +1210,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "read-fonts"
+version = "0.44.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5a0cf4bb6cbce4c29756270d189a5e400ac05e91192161d83a0bcb6e68492e8"
+dependencies = [
+ "bytemuck",
+ "font-types 0.12.5",
+ "once_cell",
+]
+
+[[package]]
 name = "ref-cast"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1672,7 +1683,7 @@ dependencies = [
  "shojiku-formatter",
  "shojiku-image",
  "shojiku-layout-box",
- "skrifa 0.46.0",
+ "skrifa 0.47.0",
  "thiserror",
 ]
 
@@ -1817,12 +1828,12 @@ dependencies = [
 
 [[package]]
 name = "skrifa"
-version = "0.46.0"
+version = "0.47.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de0bbcc507e438bfe765692ae5228059959781db7430fe36e1cfd569e7c88c89"
+checksum = "526e654b303ff4ad73a5a40b25de2b3ce3d039c5e3b6da5f89ae6e57004cb40f"
 dependencies = [
  "bytemuck",
- "read-fonts 0.43.3",
+ "read-fonts 0.44.0",
 ]
 
 [[package]]
