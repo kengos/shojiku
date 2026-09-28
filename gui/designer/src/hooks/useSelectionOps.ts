@@ -6,6 +6,8 @@
 import { useCallback, useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { wrapInContainerOps } from '../insert/wrap';
+import { groupPathInfo } from '../panel/groupModel';
+import { removeHeaderGroupOp } from '../panel/tableSettingsOps';
 import { seqPosition } from '../tree/reorder';
 import { nextSelectionAfterRemove, seqLength } from '../tree/selection';
 import { useSelectionShortcuts } from './useSelectionShortcuts';
@@ -85,7 +87,16 @@ export function useSelectionOps({
       // Read the sequence length BEFORE the removal (a hostile/alias-bomb read
       // degrades to a plain deselect, never a crash).
       const lengthBefore = seqLength(read, pos.parent);
-      if (!apply({ op: 'removeItem', path: pos.parent, index: pos.index }).ok) {
+      // A table's header group leaves through the panel's own door, so the
+      // last one takes its `headerGroups` key with it whichever command the
+      // reader used — the panel's button and this key must not write two
+      // different files.
+      const group = groupPathInfo(path);
+      const op =
+        group === null
+          ? { op: 'removeItem' as const, path: pos.parent, index: pos.index }
+          : removeHeaderGroupOp(group.tablePath, group.index, lengthBefore);
+      if (!apply(op).ok) {
         return;
       }
       const next = nextSelectionAfterRemove(pos.parent, pos.index, lengthBefore);

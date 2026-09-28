@@ -474,7 +474,9 @@ lists name the destructured stable fields, never `editor` itself.
   the selection has become), `deleteSelected`/`duplicateSelected` as the
   selection-scoped wrappers the keyboard and the Edit menu use, plus
   `wrapSelected` and the context-menu anchor. A delete selects the
-  surviving neighbour.
+  surviving neighbour. A table's header group is removed through
+  `panel/tableSettingsOps`' `removeHeaderGroupOp`, so the last one takes the
+  `headerGroups` key with it — the same file the group form's button leaves.
 - `hooks/useSelectionShortcuts.ts` — the window keydown effect over pure
   `shortcuts.ts`, guarded by `isEditableTarget` (exported here, and
   re-exported from `Designer.tsx`).

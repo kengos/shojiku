@@ -37,6 +37,52 @@ function latest(onChange: ReturnType<typeof vi.fn>): string {
   return (onChange.mock.calls.at(-1)?.[0] ?? '') as string;
 }
 
+const GROUPED = (groups: string) => `sections:
+  body:
+    type: flow
+    items:
+      - type: table
+        data: { key: rows }
+        headerGroups: [${groups}]
+        columns:
+          - { label: A }
+          - { label: B }
+`;
+
+describe('deleting a header group', () => {
+  function mount(source: string) {
+    return renderHook(() => {
+      const editor = useEditor(source);
+      const ops = useSelectionOps({
+        editor,
+        deselectClearing: vi.fn(),
+        docViewOpenRef: { current: false },
+        dataViewOpenRef: { current: false },
+        closeDocView: vi.fn(),
+        closeDataView: vi.fn(),
+      });
+      return { editor, ops };
+    });
+  }
+
+  it('takes the key with the last group, exactly as the panel button does', () => {
+    const hook = mount(GROUPED('{ label: X, span: 2 }'));
+    act(() => hook.result.current.ops.deleteAt('sections.body.items[0].headerGroups[0]'));
+    expect(hook.result.current.editor.text).not.toContain('headerGroups');
+    expect(hook.result.current.editor.selection).toBe('sections.body.items[0]');
+  });
+
+  it('removes one of several groups and selects the one that slides in', () => {
+    const hook = mount(GROUPED('{ label: X, span: 1 }, { label: Y, span: 1 }'));
+    act(() => hook.result.current.ops.deleteAt('sections.body.items[0].headerGroups[0]'));
+    const text = hook.result.current.editor.text;
+    expect(text).toContain('headerGroups');
+    expect(text).toContain('label: Y');
+    expect(text).not.toContain('label: X');
+    expect(hook.result.current.editor.selection).toBe('sections.body.items[0].headerGroups[0]');
+  });
+});
+
 describe('Designer right-click actions', () => {
   it('offers duplicate, delete, wrap and borders in menu order on a canvas box', async () => {
     await drawCanvas();

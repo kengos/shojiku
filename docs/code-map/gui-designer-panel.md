@@ -1049,7 +1049,60 @@ presence is not a text binding.
 - `panel/GroupForm.tsx` — the single-group form a canvas click on a
   `…headerGroups[n]` cell opens: label (blur-commit) + span
   (`StepperField` stepping from the RESOLVED coverage) + a hint naming
-  the covered columns via `formatList` (impact scope before the edit).
+  the covered columns via `formatList` (impact scope before the edit),
+  and a remove button (`removeHeaderGroupOp`) whose selection travels the
+  way the Delete key's does, to the table once the last group is gone (the
+  Delete key itself routes a group through the same `removeHeaderGroupOp`, so
+  both leave the same file). Under
+  it, as the button's description, a notice that the LATER groups move left —
+  shown only when there are later groups and this one covers columns, since a
+  group has no start column of its own.
+  Adding a group lives in the table's settings section below — there is no
+  group to select before the first exists.
+
+The table's ROW and PAGE settings are a section of the content tab, under the
+columns, over a pure read model and a pure op module:
+
+- `panel/tableSettingsModel.ts` (pure, READ) — `readTableSettings`: the row
+  mode (`fixed` exactly when `row.height` is present), the three heights and
+  `cellPadding` as verbatim text, `emptyBehavior`, and the four switches read
+  STRICTLY against the engine defaults (`autoPageBreak`/`repeatHeader` on unless
+  a real `false`, `keepTogether`/`mergeEmptyCells` off unless a real `true`).
+  Own-key reads; a hostile table degrades to the defaults. Carries the engine
+  defaults it mirrors (`DEFAULT_ROW_MIN_HEIGHT` 24, `DEFAULT_CELL_PADDING` 4).
+- `panel/tableSettingsOps.ts` (pure, WRITE) — every builder returns `null` for
+  an entry the wire should not get. `rowLengthOp`/`rowLengthStepOp` (absolute
+  lengths only, `MAX_ROW_HEIGHT_PT`, no negative, no 0 for a fixed height),
+  `rowModeOps` (fixed seeds `row.height` from the authored minimum and drops
+  `row.minHeight` in the same batch; auto removes `row.height`),
+  `cellPaddingOp`/`cellPaddingStepOp` (`paddingModel`'s bare-numeral rule, steps
+  from 4), `emptyBehaviorOp` and `flagToggleOp` (back to the default REMOVES the
+  key), `uncoveredColumns`/`addHeaderGroupOp` (a new group spans every column
+  still uncovered, via `groupCoverage`) and `removeHeaderGroupOp` (the last group
+  takes the `headerGroups` key with it).
+- `panel/TableSettingsSection.tsx` — the section shell over one
+  `TableSettingsContext` (path, controller, capabilities, `onSelectPath`):
+  the row heights above, then cell padding, the empty-data select and the merge
+  switch (`table.mergeEmptyCells`), then the page fields below.
+- `panel/TableRowHeights.tsx` — the auto⇄fixed `ui/Segmented` and the height
+  fields, behind `table.row.height` — deliberately coarse: the key names the
+  FIXED heights, but `row.minHeight` and `header.height` shipped in the same
+  engine release, so no engine has `table` without it. An empty header height
+  steps from the body rows' floor. An authored `%`/`em` height is shown
+  verbatim with the ▲▼ disabled and the field's own hint
+  (`panel.tableSettings.relativeHeight` — not the shared `stepper.relativeUnit`,
+  whose "type it instead" this field would refuse); `applyRowMode` is the mode
+  pick, exported so its re-pick guard is pinned below the UI.
+- `panel/TablePageFields.tsx` — `pageMode`: `flow` when the table sits DIRECTLY
+  in the flow body (`insertTargetOwner` on its parent list), `bounded`
+  elsewhere, `null` when the panel cannot tell (no list entry, or a parent read
+  that throws — `insertTargetOwner` would answer `container` there, and the note
+  would assert a render fact nobody established). `flow` gets the three page
+  switches (`keepTogether` also needs `table.keepTogether`), `bounded` the note,
+  `null` neither; then the header-group count and the add button
+  (`table.headerGroups`), which selects the new group. Removing a group is not
+  gated: it only ever takes the key away.
+
 The table's BAND styling is a shell + two pure modules + a data module, ordered
 the way the engine layers the bands (grid → header → body base → zebra → the
 conditional rules the next section owns).

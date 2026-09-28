@@ -13,7 +13,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { activeText, buildSampleSet, switchVariant } from '@shojiku/designer';
-import { Editor, type SnippetValue } from '@shojiku/designer-core';
+import { Editor, type Op, type SnippetValue } from '@shojiku/designer-core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { alignOps } from '../canvas/align';
 import { reorderContext, siblingRects, typeFitsOwner } from '../canvas/dnd';
@@ -51,6 +51,7 @@ import { edgeOps, presetOps } from '../panel/borderOps';
 import { defaultStyleOp, INHERITED_STYLE_FIELDS } from '../panel/defaultsModel';
 import { frameOf } from '../panel/frameModel';
 import { gridColumnsPlan, gridRowsPlan } from '../panel/gridStructure';
+import { readGroupsView } from '../panel/groupModel';
 import { registryNames } from '../panel/itemView';
 import { containerLayoutFor } from '../panel/layoutModel';
 import { directionOp, gapOp, ratioOp } from '../panel/layoutOps';
@@ -64,6 +65,16 @@ import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
 import { fillOrderOp, gridCountOp, gridGapOp, newPageOp } from '../panel/repeatGrid';
 import { readShapeStyle, strokeWidthOp } from '../panel/shapeStyle';
 import { deleteStyleOps, renameStyleOps } from '../panel/styleRefOps';
+import { readTableSettings } from '../panel/tableSettingsModel';
+import {
+  addHeaderGroupOp,
+  cellPaddingOp,
+  emptyBehaviorOp,
+  flagToggleOp,
+  removeHeaderGroupOp,
+  rowLengthOp,
+  rowModeOps,
+} from '../panel/tableSettingsOps';
 import { extendParams } from '../sample/generate';
 import { buildStyleUsage } from '../styles/usage';
 import { commitOps } from '../text/declCommit';
@@ -3030,5 +3041,76 @@ describe('binding declarations reach the engine (receipt-us)', () => {
     const diags = await transport.validate(editor.text(), data, defs);
     // Not an error, not a warning — the page just prints the braces.
     expect(diags.items.filter((d) => d.severity !== 'info')).toHaveLength(0);
+  });
+});
+
+// The table's row and page settings, authored through the panel's own op
+// builders and read back from the engine's box index — the join between what
+// the panel writes and what the engine lays out, which neither side's suite
+// executes on its own.
+describe('table row and page settings against the real engine (receipt-us)', () => {
+  it('lays the rows out at the heights the panel authors, warning-free', async () => {
+    const editor = Editor.create(template());
+    const bodyItems = editor.read('sections.body.items') as readonly { type?: string }[];
+    const tableIndex = bodyItems.findIndex((item) => item?.type === 'table');
+    expect(tableIndex).toBeGreaterThanOrEqual(0);
+    const table = `sections.body.items[${tableIndex}]`;
+
+    // The BEFORE render must itself parse, or a codes comparison is two parse
+    // errors agreeing with each other.
+    const before = await transport.renderRaw(editor.text(), params(), definitions(), { scale: 1 });
+    expect(before.ok).toBe(true);
+    expect(before.diagnostics.items.some((d) => d.code === 'parse_error')).toBe(false);
+    const beforeCodes = new Set(before.diagnostics.items.map((d) => d.code));
+
+    const view = readTableSettings(editor.read(table));
+    const columnCount = (editor.read(`${table}.columns`) as readonly unknown[]).length;
+    const ops = [
+      ...(rowModeOps(table, view, 'fixed') ?? []),
+      rowLengthOp(table, ['row', 'height'], '44', 'positive'),
+      rowLengthOp(table, ['header', 'height'], '48', 'positive'),
+      cellPaddingOp(table, view.cellPadding, '6'),
+      emptyBehaviorOp(table, view.emptyBehavior, 'reserve'),
+      flagToggleOp(table, 'mergeEmptyCells', view.mergeEmptyCells),
+      flagToggleOp(table, 'autoPageBreak', view.autoPageBreak),
+      flagToggleOp(table, 'repeatHeader', view.repeatHeader),
+      flagToggleOp(table, 'keepTogether', view.keepTogether),
+      addHeaderGroupOp(table, readGroupsView(editor.read(table)) ?? [], columnCount, 'Group'),
+    ];
+    for (const op of ops) {
+      expect(op).not.toBeNull();
+    }
+    expect(editor.applyAll(ops as Op[]).ok).toBe(true);
+
+    const after = await transport.renderRaw(editor.text(), params(), definitions(), { scale: 1 });
+    expect(after.ok).toBe(true);
+    const newCodes = after.diagnostics.items.filter((d) => !beforeCodes.has(d.code));
+    expect(newCodes).toEqual([]);
+
+    // The first page's column-0 placements: the header cell at the header
+    // height, every body cell at the fixed row height. (Both roomy on purpose: a
+    // fixed height activates the cells' `textOverflow`, and this example's item
+    // names and one header label wrap to two lines, which a row shorter than
+    // their 28pt plus the 6pt padding each side reports as `text_overflow`.)
+    const first = after.inspect?.boxes.pages[0] ?? [];
+    const cells = first
+      .filter((box) => box.path === `${table}.columns[0]`)
+      .sort((a, b) => a.border.y - b.border.y);
+    expect(cells.length).toBeGreaterThan(2);
+    expect(cells[0]?.border.h).toBeCloseTo(48, 3);
+    for (const cell of cells.slice(1)) {
+      expect(cell.border.h).toBeCloseTo(44, 3);
+    }
+    expect(first.some((box) => box.path === `${table}.headerGroups[0]`)).toBe(true);
+
+    // And the group comes back out, leaving the rest as it was.
+    expect(editor.apply(removeHeaderGroupOp(table, 0, 1)).ok).toBe(true);
+    const removed = await transport.renderRaw(editor.text(), params(), definitions(), {
+      scale: 1,
+    });
+    expect(removed.diagnostics.items.filter((d) => !beforeCodes.has(d.code))).toEqual([]);
+    expect(
+      removed.inspect?.boxes.pages[0]?.some((box) => box.path === `${table}.headerGroups[0]`),
+    ).toBe(false);
   });
 });

@@ -87,6 +87,7 @@ export function CellPanel({
           index={groupInfo.index}
           group={group}
           groups={rows}
+          onSelectPath={onSelectPath}
         />
       );
     }

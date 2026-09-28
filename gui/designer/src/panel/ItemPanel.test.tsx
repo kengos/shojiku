@@ -152,6 +152,15 @@ describe('the text field says which keys it takes', () => {
   });
 });
 
+describe('ItemPanel — a table', () => {
+  it('shows the row and page settings below the columns in the content tab', () => {
+    drawPanel({ type: 'table', data: { key: 'rows' }, columns: [{ label: 'A' }] });
+    const headings = screen.getAllByRole('heading').map((h) => h.textContent);
+    expect(headings.indexOf('Rows and pages')).toBeGreaterThan(headings.indexOf('Columns'));
+    expect(headings.indexOf('Columns')).toBeGreaterThanOrEqual(0);
+  });
+});
+
 describe('ItemPanel — box-less types', () => {
   it('gives a page_break the presence binding and still no tabs', () => {
     // The wire takes only `id` and `visible:`, so there is no TAB to show —

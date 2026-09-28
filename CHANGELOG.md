@@ -15,6 +15,32 @@ platform binaries.
 
 ### Added
 
+- **A table's rows and page behaviour can now be set in the Designer.** Select a
+  table and its Content tab holds a new **Rows and pages** section under the
+  columns: whether the body rows fit their content (with a minimum height) or sit
+  at a fixed height, the header row's height, the cell padding, what the table
+  shows when its data is empty — nothing, or just the header row — and whether an
+  empty cell joins the filled cell to its right. For a table placed directly in
+  the page's flow it also offers the three page-end switches: continue rows on
+  the next page, repeat the header row on each page, and keep the table on one
+  page when it fits. A table inside a container, a band or an absolute page is
+  drawn as one block and never continues, so there the section says so instead
+  of offering switches that would do nothing. Before this none of these settings
+  could be made in the Designer.
+
+  Header groups can now be added and removed there too: **Add header group**
+  puts a new group over every column no group covers yet and selects it, and the
+  group's own form has **Remove this group**. A group starts where the one before
+  it ends, so removing any but the last moves the later groups left onto other
+  columns; the form says so under the button before you click. Removing the last
+  group — with that button or the Delete key — removes the `headerGroups` key with
+  it, where Delete used to leave an empty `headerGroups: []` behind. Turning a
+  switch or the empty-data choice back to its default removes its key rather than
+  spelling the default out, and a field you only clicked into writes nothing, so a
+  table you only looked at saves unchanged. A height takes pt, mm, cm
+  or in. A percentage height already in the file is shown as written and kept,
+  but the panel neither steps one nor writes one.
+
 - **An n-up sheet — tickets, labels, cards cut from one page — can now be made and
   edited in the Designer.** Insert ▸ Place list data offers a fourth way to show
   the rows, **Grid**, which lays one cell per row onto each page, two across and
