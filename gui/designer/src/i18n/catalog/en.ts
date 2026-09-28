@@ -134,14 +134,16 @@ export const en: LanguageCatalog = {
     flow_item_overflow:
       'item reaches {over}pt past the right edge of the {avail}pt flow region and renders off-sheet',
     flex_row_overflow:
-      'row children need {needed}pt but the content box is only {avail}pt wide; the row overflows',
+      'the items in this row need {needed}pt across but the box is only {avail}pt wide inside, so they spill out; narrow the items or widen the box',
     vertical_text_overflow:
-      'vertical text needs {columns} columns ({needed}pt) but the box is {avail}pt wide',
+      'vertical text needs {columns} columns ({needed}pt) but the box is only {avail}pt wide; widen the box or shorten the text',
     sheet_overflow: 'item reaches {over}pt past the right edge of the sheet and renders off-paper',
-    child_overflow: 'child overflows its {avail}pt content box by {over}pt',
+    child_overflow:
+      'an item spills {over}pt past the inside of its box ({avail}pt); make the item smaller or the box bigger',
     grid_column_overflow:
       'grid child ({child}pt) is wider than the {track}pt column run it spans ({span} tracks)',
-    text_overflow: 'text overflows the box height ({content}pt content vs {avail}pt available)',
+    text_overflow:
+      'text does not fit its box ({content}pt tall, the box has {avail}pt); make the box taller or the text smaller',
     char_grid_overflow:
       'char_grid content exceeds the single sheet ({cells} cells) available outside a flow body; {dropped} characters dropped',
     ruby_overflow:
@@ -154,7 +156,7 @@ export const en: LanguageCatalog = {
     header_group_span_clamped:
       'headerGroups span more columns than the table has; extra groups dropped',
     layout_key_on_leaf:
-      'box layout keys (type/direction/gap/alignItems/justifyContent/columns/rows/columnGap/rowGap) lay out children and only apply to `container` boxes (and repeat cells); ignored here',
+      'layout settings (type/direction/gap/alignItems/justifyContent/columns/rows/columnGap/rowGap) arrange the items inside a `container` (or a repeat cell); this item holds none, so they are ignored',
     grid_key_ignored:
       'columns/rows/columnGap/rowGap require `box.type: grid`; ignored under flex layout',
     table_pagination_key_ignored:

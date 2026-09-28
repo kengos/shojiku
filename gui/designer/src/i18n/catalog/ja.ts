@@ -144,15 +144,16 @@ export const ja: LanguageCatalog = {
     flow_item_overflow:
       '項目がフロー領域（{avail}pt）の右端を {over}pt はみ出しており、紙面外に描画されます',
     flex_row_overflow:
-      '行の子要素に {needed}pt 必要ですが、内容ボックスの幅は {avail}pt しかありません。行がはみ出します',
+      '横に並べた中身に幅 {needed}pt が必要ですが、枠の内側は {avail}pt しかなく、はみ出します。中身の幅を減らすか、枠を広げてください',
     vertical_text_overflow:
-      '縦書きテキストに {columns} 列（{needed}pt）必要ですが、ボックスの幅は {avail}pt です',
+      '縦書きの文字に {columns} 列（幅 {needed}pt）が必要ですが、枠の幅は {avail}pt しかありません。枠を広げるか、文字を減らしてください',
     sheet_overflow: '項目が用紙の右端を {over}pt はみ出しており、紙面外に描画されます',
-    child_overflow: '子要素が内容ボックス（{avail}pt）を {over}pt はみ出しています',
+    child_overflow:
+      '中の要素が、枠の内側（{avail}pt）から {over}pt はみ出しています。要素を小さくするか、枠を大きくしてください',
     grid_column_overflow:
       'グリッドの子要素（{child}pt）が、またがる {span} 列分のトラック幅（{track}pt）より広くなっています',
     text_overflow:
-      'テキストがボックス高さを超えています（内容 {content}pt に対し利用可能 {avail}pt）',
+      '文字が枠に収まりません（必要な高さ {content}pt／枠の高さ {avail}pt）。枠を高くするか、文字を小さくしてください',
     char_grid_overflow:
       'char_grid の内容がフローボディ外で利用可能な 1 シート（{cells} セル）を超えています。{dropped} 文字が破棄されました',
     ruby_overflow: 'ルビの読みが {min}pt の下限でも親文字列より長く、はみ出しています',
@@ -164,7 +165,7 @@ export const ja: LanguageCatalog = {
     header_group_span_clamped:
       'headerGroups がテーブルの列数より多くの列にまたがっています。超過分のグループは破棄されました',
     layout_key_on_leaf:
-      'ボックスのレイアウトキー（type/direction/gap/alignItems/justifyContent/columns/rows/columnGap/rowGap）は子要素を配置するもので、`container` ボックス（および repeat セル）にのみ適用されます。ここでは無視されます',
+      '並べ方の設定（type/direction/gap/alignItems/justifyContent/columns/rows/columnGap/rowGap）は、中に要素を並べる `container`（と repeat のセル）にだけ効きます。この要素は中に何も持たないため無視されます',
     grid_key_ignored:
       'columns/rows/columnGap/rowGap には `box.type: grid` が必要です。flex レイアウトでは無視されます',
     table_pagination_key_ignored:

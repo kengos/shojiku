@@ -311,6 +311,18 @@ platform binaries.
 
 ### Fixed
 
+- **Layout warnings in the Designer show measured sizes as readable numbers,
+  and five of them are reworded in plain terms.** A warning comparing two sizes used to
+  print the engine's raw floating-point value — 「内容 13.299999999999999pt に対し
+  利用可能 12pt」 — and now prints at most two decimals (13.3pt); counts and other
+  whole numbers are unchanged, and because the engine only warns past a 0.01pt
+  margin the two numbers never round to the same value. The text-overflow,
+  row-overflow, vertical-text, child-overflow and layout-settings warnings were
+  also reworded in English, Japanese and both Chinese catalogs: they no longer
+  lean on internal words such as "content box", and each overflow names the
+  remedy (make the box taller, the text smaller, and so on). The engine's own
+  message text, which the CLI prints, is unchanged.
+
 - **A template or definitions file nested past its cap is refused before it is
   read, so it can no longer take down the process reading it.** Containers nest at
   most 32 levels and a definitions schema at most 16, but both caps were checked

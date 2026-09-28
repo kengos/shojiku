@@ -20,7 +20,11 @@ tooltip replaces it — gated by `ui/chromeConvention.test.ts`).
 
 - `i18n/format.ts` — `formatMessage`: an in-repo ICU-subset substitution
   (single linear scan, no backtracking; an interpolated arg value is
-  never re-scanned; missing arg → null so the caller falls back) +
+  never re-scanned; missing arg → null so the caller falls back; a plain
+  `{name}` holding a NON-INTEGER number prints at most two decimals via
+  `plainValue` — engine lengths arrive as raw floats, and two decimals stay
+  apart at the engine's 0.01pt overflow tolerance — while integers keep their
+  exact digits) +
   `formatList` (locale-aware "and" list join over `Intl.ListFormat`,
   hostile-tag fallback to `en` — for chrome naming a SET of things).
   The subset has NO `plural` arm, deliberately; a count string picks its

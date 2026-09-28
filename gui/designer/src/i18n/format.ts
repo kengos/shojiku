@@ -24,6 +24,25 @@ function formatNumber(value: string | number | boolean, locale: string): string 
   }
 }
 
+/** A plain `{name}` value as text. Every value renders as `String(value)`
+ * EXCEPT a non-integer number, which is a measured length the engine computed
+ * in floating point (`13.299999999999999` for a line box) and is shown to at
+ * most two decimals instead. Two, not one: the engine's overflow checks warn
+ * past a 0.01pt tolerance, so the two numbers a warning compares can never
+ * round to the same text. Integers — counts, indices, years — keep their exact
+ * digits, with no grouping and no locale separator, as before. */
+function plainValue(value: string | number | boolean, locale: string): string {
+  if (typeof value !== 'number' || !Number.isFinite(value) || Number.isInteger(value)) {
+    return String(value);
+  }
+  const options = { maximumFractionDigits: 2, useGrouping: false } as const;
+  try {
+    return new Intl.NumberFormat(locale, options).format(value);
+  } catch {
+    return new Intl.NumberFormat('en', options).format(value);
+  }
+}
+
 /** Join `items` as a locale-aware "and" list (`a, b, and c` / `a、b、c`),
  * retrying under `'en'` if the tag is invalid — the same hostile-tag posture
  * [`formatNumber`] takes. Chrome that names a SET of things (which columns a
@@ -90,7 +109,7 @@ export function formatMessage(template: string, args: MessageArgs, locale: strin
         return null;
       }
       const value = args[name];
-      out += format === 'number' ? formatNumber(value, locale) : String(value);
+      out += format === 'number' ? formatNumber(value, locale) : plainValue(value, locale);
       i = end + 1;
       continue;
     }

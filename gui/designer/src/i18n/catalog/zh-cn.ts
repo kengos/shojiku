@@ -114,12 +114,14 @@ export const zhCn: LanguageCatalog = {
     grid_cell_overflow: '网格子项（{child}pt）超过其 {track}pt 的{extent}',
     horizontal_overflow: '{detail}',
     flow_item_overflow: '项目超出流式区域（{avail}pt）右边缘 {over}pt，将绘制在纸面之外',
-    flex_row_overflow: '行的子项需要 {needed}pt，但内容框仅 {avail}pt 宽；该行将溢出',
-    vertical_text_overflow: '竖排文字需要 {columns} 列（{needed}pt），但框宽度为 {avail}pt',
+    flex_row_overflow:
+      '这一行的内容需要 {needed}pt 宽，但框内只有 {avail}pt，内容会溢出。请减小内容宽度或加宽框',
+    vertical_text_overflow:
+      '竖排文字需要 {columns} 列（{needed}pt 宽），但框宽只有 {avail}pt。请加宽框或减少文字',
     sheet_overflow: '项目超出纸张右边缘 {over}pt，将绘制在纸面之外',
-    child_overflow: '子项超出其内容框（{avail}pt）达 {over}pt',
+    child_overflow: '内部元素超出框内区域（{avail}pt）{over}pt。请缩小元素或放大框',
     grid_column_overflow: '网格子项（{child}pt）比其跨越的 {span} 个列轨（共 {track}pt）更宽',
-    text_overflow: '文本超过盒子高度（内容 {content}pt，可用 {avail}pt）',
+    text_overflow: '文字超出了框的高度（需要 {content}pt，框高 {avail}pt）。请加高框或缩小文字',
     char_grid_overflow:
       'char_grid 内容超过流式主体外可用的单张（{cells} 格）；已丢弃 {dropped} 个字符',
     ruby_overflow: '注音的读音即使在 {min}pt 下限仍比其父字符串长并溢出',
@@ -129,7 +131,7 @@ export const zhCn: LanguageCatalog = {
     row_overflow: '表格 `{key}` 溢出，且 autoPageBreak 已禁用',
     header_group_span_clamped: 'headerGroups 跨越的列数多于表格拥有的列数；已丢弃多出的分组',
     layout_key_on_leaf:
-      '盒子的布局键（type/direction/gap/alignItems/justifyContent/columns/rows/columnGap/rowGap）用于排列子项，仅适用于 `container` 盒子（及 repeat 单元格）；此处已忽略',
+      '排列设置（type/direction/gap/alignItems/justifyContent/columns/rows/columnGap/rowGap）只用于排列 `container`（及 repeat 单元格）内部的元素；此元素内部没有元素，因此被忽略',
     grid_key_ignored: 'columns/rows/columnGap/rowGap 需要 `box.type: grid`；在 flex 布局下已忽略',
     table_pagination_key_ignored:
       'repeatHeader/autoPageBreak/keepTogether 仅作用于流式主体的表格；位于容器内、绝对定位主体或带区内的表格会以单个有界块绘制并忽略这些设置',
