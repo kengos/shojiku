@@ -4,14 +4,14 @@
 //
 // They used to be one component, on the argument that they are one idea. They
 // are, but the idea has two ENDS: the checkbox is a table-level switch, the
-// peer of the zebra toggle, and burying it inside 「Detailed formatting」 hid a
-// setting an author looks for at the top (Excel puts it top-level, and so does
-// every spreadsheet that has one). The note is the other end — it is about the
-// header BAND's fields, so it has to sit beside them, inside the disclosure,
-// or it names fields the reader cannot see.
+// peer of the zebra toggle, and burying it beside the header band's fields hid
+// a setting an author looks for at the top (Excel puts it top-level, and so
+// does every spreadsheet that has one). The note is the other end — it is about
+// the header BAND's fields, so it has to sit beside them, in the header-row
+// section, or it names fields the reader cannot see. What the switch MEANS is
+// explained by the table-style section's `?`, not by one of its own.
 //
-// Its own leaf rather than more lines in `TableStyleSection.tsx`, which sits
-// at the executable-line cap.
+// Its own leaf rather than more lines in `TableStyleSection.tsx`.
 //
 // Capability-gated: an older engine parse-REJECTS `header.visuallyHidden`,
 // so the control must not be offered against one. The note is NOT gated on the
@@ -19,7 +19,6 @@
 // the key even where this engine would not offer it.
 
 import type { Op } from '@shojiku/designer-core';
-import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { hasCapability } from './itemPanelProps';
 import { HIDDEN_HEADER_CAPABILITY, hiddenHeaderToggleOp } from './tableStyleOps';
@@ -53,16 +52,11 @@ export function HiddenHeaderToggle({
         onChange={() => onOp(hiddenHeaderToggleOp(path, hidden))}
       />
       {t('panel.tableStyle.hiddenHeader')}
-      <HelpHint
-        label={t('help.hiddenHeader.title')}
-        title={t('help.hiddenHeader.title')}
-        body={t('help.hiddenHeader.body')}
-      />
     </label>
   );
 }
 
-/** The note, rendered inside the disclosure ABOVE the header band's fields —
+/** The note, rendered in the header-row section ABOVE the header band's fields —
  * the fields it is about. */
 export function HiddenHeaderNote({ hidden }: { readonly hidden: boolean }) {
   const { t } = useI18n();

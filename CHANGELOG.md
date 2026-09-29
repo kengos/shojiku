@@ -253,6 +253,32 @@ platform binaries.
 
 ### Changed
 
+- **A selected table's settings are now folded into sections, the way Google
+  Docs shows table properties.** The Content tab lists **Columns**, **Rows and
+  cells**, **When the table crosses a page**, **When there is no data** and
+  **Header groups**; the Decoration tab lists **Table style**, **Border**,
+  **Header row format**, **Body row format**, **Conditional formatting** and
+  **Named styles**. Only the first section of each tab starts open. A closed
+  section shows what it is set to in one line — "Row height auto (min 24pt) ·
+  Header Auto · Padding 4pt", "Rules: 2" — so you can read a table's settings
+  without opening anything, and open only the part you want to change. Which
+  sections you opened stays that way while you switch tabs and select other
+  items, until the Designer is reloaded. The Header groups section now lists
+  the groups, each with the number of columns it covers; clicking one selects
+  it. Every section but Border has one ? beside its title that explains the
+  whole section, in place of the ? that sat beside single switches (the border
+  editor inside Border keeps its own); the 「Detailed
+  formatting」 disclosure is gone, split into the two row-format sections. Some
+  labels are plainer: the page switches read "Continue rows that do not fit on
+  the next page", "Repeat the header row on the next page too" and "Do not
+  split the table", the row-height choice is Auto or Fixed, and a header
+  group's column count is labelled "Columns covered".
+
+  The border editor's note on a table was also wrong and is corrected. It said
+  a table's border draws the outer frame only, but one width for all four
+  sides — which is what **All sides** sets — is the grid between the cells;
+  only a per-side setting draws an outer frame.
+
 - **The template-size readout says what it is a size of.** A template holding
   an image showed "Template size 0%" in the toolbar — true, since the bundled
   invoice and receipt are each well under 1% of the 2 MB limit, but it did not

@@ -979,18 +979,22 @@ presence is not a text binding.
     `BorderEditor` + text-color swatch). The two OTHER decorated families
     reach their own editors instead — a `line`'s `LineStyleEditor` and a
     form mark's `ShapeStyleEditor` — because neither strokes a border
-    box. A **table** is the exception on the
-    fill: the engine paints no `style.backgroundColor` on one (asserted in
-    `engine/layout/tests/e2e/table/style.rs`), so the swatch is withheld
-    unless the document already carries one — in which case the table-style
-    section below reports it as ineffective and offers to clear it, rather
-    than hiding a key the panel could then never remove. Each unset style field carries
+    box. A **table** leaves this flat tab altogether: `StyleSection` routes it
+    to `TableDecorationSections` (the collapsible sections below). The fill is
+    still the exception there: the engine paints no `style.backgroundColor` on
+    a table (asserted in `engine/layout/tests/e2e/table/style.rs`), so the
+    swatch is withheld unless the document already carries one — in which case
+    it sits in the table-style section under the banner reporting it as
+    ineffective and offering to clear it (`IneffectiveFillBanner`, rendered with
+    or without `table.style`, so the section exists whenever a fill does),
+    rather than hiding a key the panel could then never remove. Each unset style field carries
     a `panel/OriginBadge.tsx` effective-value hint (resolved value +
     origin default/style/inherited + a to-document-settings jump; the engine-floor
     origin shows no jump).
-- `panel/TableColumnsSection.tsx` — the columns section for a selected
-  table: source rebinding via the array-group picker, then per-column
-  label / ▲▼ reorder / delete / label-only add — each ONE op over
+- `panel/TableColumnsSection.tsx` — the body of the 「Columns」 section for a
+  selected table (no heading of its own): source rebinding via the array-group
+  picker, then per-column label / ▲▼ reorder / delete, then label-only add
+  beside the column-sheet opener — each ONE op over
   `panel/columnsModel.ts` (`readColumnsView` — whose row carries the column's
   own `style.textAlign` for the sheet's comparison row —
   `columnPathInfo`/`addColumnOp`/`removeColumnOp`/`moveColumnOp`, plus
@@ -1060,7 +1064,53 @@ presence is not a text binding.
   Adding a group lives in the table's settings section below — there is no
   group to select before the first exists.
 
-The table's ROW and PAGE settings are a section of the content tab, under the
+A selected table's two tabs are COLLAPSIBLE SECTIONS (Google Docs' 「Table
+properties」 shape), not the flat tabs every other type gets:
+
+- `panel/PanelSection.tsx` — one section: `<h3><button aria-expanded>` (chevron
+  rotated when closed, title, and — only while CLOSED — a two-line-clamped
+  summary) with the section's one `HelpHint` as a SIBLING of the toggle (no
+  nested buttons; its accessible name is `panel.section.helpLabel`, its bubble's
+  lead line the title). The toggle's accessible NAME is the title alone
+  (`aria-labelledby`); the summary is its DESCRIPTION (`aria-describedby`) — it
+  always resolves and can carry document text. A closed body is not rendered.
+  Takes a `SectionId`.
+- `panel/sectionOpenState.tsx` — `SectionOpenProvider` + `useSectionOpen(id,
+  defaultOpen)`: Designer-local UI state (never in the template, never
+  persisted). The provider is mounted in `Designer.tsx` because the tab bodies
+  UNMOUNT on a tab switch (Headless UI `TabPanel`) and `PropertyPanel` swaps its
+  body per selection branch, so section-local state would die on a tab switch
+  alone; with no provider a section keeps state of its own. `SectionId` is a
+  closed union.
+- `panel/TableContentSections.tsx` — the content tab: 「Columns」 (open at
+  first), 「Rows and cells」, 「When the table crosses a page」 (absent when
+  `pageMode` is `null`), 「When there is no data」, 「Header groups」
+  (`table.headerGroups`).
+- `panel/TableDecorationSections.tsx` — the decoration tab, in the engine's
+  layer order: 「Table style」 (open at first; `table.style`, or an ineffective
+  fill to show), 「Border」 (`style.border`; the `BorderEditor` with `isTable`,
+  whose own `?` and table note serve the section, so its heading has none),
+  「Header row format」/「Body row format」 (`table.style`), 「Conditional
+  formatting」 (`table.row.conditionalStyles`), 「Named styles」. The flat tab's
+  「Style」 heading is not rendered for a table.
+- `panel/tableContentSummaries.ts` / `panel/tableDecorationSummaries.ts` (pure) —
+  the closed-section summaries, over the SAME read models the bodies render from,
+  with ONE deliberate extra wire read (`borderWidthRaw`, below): lengths as `lengthText` (bare number → pt, else
+  verbatim), parts joined by `panel.tableSection.sep`; bands report AUTHORED
+  values (plus the band's named styles by name); the border names grid (one
+  number, default 0.5pt when unset) vs outer frame by the RAW wire FORM
+  (`borderWidthRaw` — a per-side map is a frame even with four equal sides, which
+  the parsed side map cannot tell; a hostile shape gets no summary line). `helpText` joins a section's `?` lines,
+  dropping empty ones, so a control's line is passed only while that control is
+  on screen (the column-sheet line: the host passed `onOpenColumnSheet`; row and
+  header heights: `table.row.height`; keep-together: flow + capability; merge,
+  hide-header: capability; the table-style text only when `table.style` is there
+  at all); EVERY line that explains one control goes through `controlHelp`, which
+  leads it with the control's OWN label key via `panel.tableSection.helpLine`, so
+  help and label cannot drift. The Border section is the one without a `?` of its
+  own (the border editor carries one).
+
+The table's ROW and PAGE settings are sections of the content tab, under the
 columns, over a pure read model and a pure op module:
 
 - `panel/tableSettingsModel.ts` (pure, READ) — `readTableSettings`: the row
@@ -1080,10 +1130,12 @@ columns, over a pure read model and a pure op module:
   key), `uncoveredColumns`/`addHeaderGroupOp` (a new group spans every column
   still uncovered, via `groupCoverage`) and `removeHeaderGroupOp` (the last group
   takes the `headerGroups` key with it).
-- `panel/TableSettingsSection.tsx` — the section shell over one
-  `TableSettingsContext` (path, controller, capabilities, `onSelectPath`):
-  the row heights above, then cell padding, the empty-data select and the merge
-  switch (`table.mergeEmptyCells`), then the page fields below.
+- `panel/TableSettingsSection.tsx` — two section BODIES over one
+  `TableSettingsContext` (path, controller, capabilities, `onSelectPath`), the
+  context every table-settings body takes: `TableRowsBody` (the row heights
+  above, then cell padding) and `TableEmptyBody` (the empty-data select and the
+  merge switch, `table.mergeEmptyCells`). No heading, no `?` on a switch — the
+  section around each body carries both.
 - `panel/TableRowHeights.tsx` — the auto⇄fixed `ui/Segmented` and the height
   fields, behind `table.row.height` — deliberately coarse: the key names the
   FIXED heights, but `row.minHeight` and `header.height` shipped in the same
@@ -1097,13 +1149,18 @@ columns, over a pure read model and a pure op module:
   in the flow body (`insertTargetOwner` on its parent list), `bounded`
   elsewhere, `null` when the panel cannot tell (no list entry, or a parent read
   that throws — `insertTargetOwner` would answer `container` there, and the note
-  would assert a render fact nobody established). `flow` gets the three page
-  switches (`keepTogether` also needs `table.keepTogether`), `bounded` the note,
-  `null` neither; then the header-group count and the add button
-  (`table.headerGroups`), which selects the new group. Removing a group is not
-  gated: it only ever takes the key away.
+  would assert a render fact nobody established). `TablePageFields` is the page
+  section's body and takes that answer: `flow` gets the three page switches
+  (`keepTogether` also needs `table.keepTogether`), `bounded` the note; on `null`
+  `TableContentSections` renders no page section at all.
+- `panel/TableGroupList.tsx` — the 「Header groups」 section's body: one row per
+  group (label, or 「unnamed」, + the RESOLVED coverage via `groupCoverage`, so a
+  crowded-out group says 0 columns) that selects `…headerGroups[n]`, then the add
+  button (`table.headerGroups` gates the whole section), which selects the new
+  group, with its disabled reason. Removing a group lives on `GroupForm`; it is
+  not gated, since it only ever takes the key away.
 
-The table's BAND styling is a shell + two pure modules + a data module, ordered
+The table's BAND styling is section bodies + two pure modules + a data module, ordered
 the way the engine layers the bands (grid → header → body base → zebra → the
 conditional rules the next section owns).
 
@@ -1137,19 +1194,26 @@ conditional rules the next section owns).
   render, so the gallery holds no selection state. Lookup is a `Map`, never a
   plain-object index — a preset id is a string from a click handler, and a
   `Record` lookup would answer `constructor` with an inherited function.
-- `panel/TableStyleSection.tsx` — the shell. It takes a `TableStyleContext
-  {path, controller, capabilities}` of its OWN rather than `ItemPanelProps`,
-  and assumes nothing about the panel's ~255px column: appearance editing is
-  expected to move into a modal sheet, and a test mounts the section standalone
-  so that move stays a change of render site. Capability-gated on `table.style`,
-  with a SECOND gate nested inside it: the 「hide the header row」 checkbox needs
-  `table.header.visuallyHidden`, which an older engine parse-rejects outright.
+- `panel/TableStyleSection.tsx` — the bodies of three decoration sections over
+  a `TableStyleContext {path, controller, capabilities, floor}` of its OWN rather
+  than `ItemPanelProps`: `IneffectiveFillBanner` (its own export, since it
+  renders whether or not `table.style` is declared), `TableStyleBody`
+  (miniature, gallery, zebra, the hide-header switch) and `TableBandBody` (`band: 'header'`
+  — the hidden-header note + the header band's fields — or `'row'`). It assumes
+  nothing about the panel's ~255px column: appearance editing is expected to
+  move into a modal sheet, and a test mounts the bodies standalone so that move
+  stays a change of render site. The caller gates them on `table.style`; the
+  hide-header switch nests its own gate (`table.header.visuallyHidden`, which an
+  older engine parse-rejects outright). `gridWidthOf` (the preset-owned grid
+  width, `custom` for a per-side map) lives in `tableStyleModel.ts`, where the
+  summary reads it too.
 - `panel/HiddenHeaderField.tsx` — TWO exports, because one idea has two
   ends: `HiddenHeaderToggle`, the 「hide the header row on the page」 checkbox,
-  which `TableStyleSection` renders TOP-LEVEL beside the zebra switch (its
+  which `TableStyleBody` renders TOP-LEVEL beside the zebra switch (its
   peer — both are table-level decisions, and Excel puts this one at the top),
   and `HiddenHeaderNote`, the note that keeps the header band honest, which
-  stays INSIDE the disclosure beside the band fields it names. The CHECKBOX is
+  stays in the header-row section beside the band fields it names. What the
+  switch means is the table-style section's `?`, not one of its own. The CHECKBOX is
   capability-gated
   (`table.header.visuallyHidden`; an older engine parse-rejects the key), the
   NOTE is gated on the authored value instead — a document can carry the key
@@ -1207,8 +1271,9 @@ conditional rules the next section owns).
   (`RuleControls`). Exports `AlignSegment` for the ONE place that needs the
   alignment control alone — the column sheet's per-column row
   (`TableColumnCells`).
-- `panel/RowConditions.tsx` — the table's row-conditional-styles section
-  (decoration tab, `table.row.conditionalStyles`-gated): the rule list shell —
+- `panel/RowConditions.tsx` — the body of the table's 「Conditional formatting」
+  section (decoration tab, `table.row.conditionalStyles`-gated; no heading of its
+  own): the rule list shell —
   add, remove, open-one-at-a-time, and the repoint reconciliation (a
   stale `equals` is dropped in the SAME batch when the new field reads
   as boolean). The section never evaluates a predicate; how many rows a

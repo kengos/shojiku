@@ -4,7 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { swatchLabel } from '../testkit/swatchLabel';
-import { TableStyleSection } from './TableStyleSection';
+import { hasCapability } from './itemPanelProps';
+import { PanelSection } from './PanelSection';
+import {
+  IneffectiveFillBanner,
+  TableBandBody,
+  TableStyleBody,
+  type TableStyleContext,
+} from './TableStyleSection';
 
 const PATH = 'sections.body.items[0]';
 
@@ -32,10 +39,33 @@ function draw(element: ReactElement) {
   return render(<I18nProvider locale="en">{element}</I18nProvider>);
 }
 
-/** Mount the section the way its HOST does — with nothing but its own context.
- * This is not a convenience: appearance editing is expected to move into a modal
- * sheet, and the section must already be mountable outside the property panel
- * for that to be a change of render site rather than a rewrite. */
+/** The three band-styling bodies inside the sections the decoration tab puts
+ * them in (the sections' own behaviour is `PanelSection.test.tsx`'s), behind the
+ * same `table.style` gate. Titles are literal: the chrome is not under test. */
+function TableStyleSection({ context }: { readonly context: TableStyleContext }) {
+  if (!hasCapability(context.capabilities, 'table.style')) {
+    return null;
+  }
+  return (
+    <>
+      <PanelSection id="table.style" title="Table style" summary="" defaultOpen>
+        <IneffectiveFillBanner context={context} />
+        <TableStyleBody context={context} />
+      </PanelSection>
+      <PanelSection id="table.headerBand" title="Header row format" summary="">
+        <TableBandBody context={context} band="header" />
+      </PanelSection>
+      <PanelSection id="table.bodyBand" title="Body row format" summary="">
+        <TableBandBody context={context} band="row" />
+      </PanelSection>
+    </>
+  );
+}
+
+/** Mount the bodies the way their HOST does — with nothing but their own
+ * context. This is not a convenience: appearance editing is expected to move
+ * into a modal sheet, and the bodies must already be mountable outside the
+ * property panel for that to be a change of render site rather than a rewrite. */
 function section(
   node: unknown,
   capabilities: readonly string[] | undefined = undefined,
@@ -49,8 +79,10 @@ function section(
 
 const TABLE = { type: 'table', data: { key: 'rows' }, columns: [{ data: { key: 'a' } }] };
 
+/** Open both band sections — the header row's and the body rows'. */
 function openDetail() {
-  fireEvent.click(screen.getByRole('button', { name: 'Detailed formatting' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Header row format' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Body row format' }));
 }
 
 describe('TableStyleSection', () => {
@@ -376,14 +408,14 @@ describe('TableStyleSection — the invisible header row', () => {
   const NAME = 'Hide the header row on the page';
   const NOTE = 'The header row is hidden on the page, so none of the settings below are drawn';
 
-  // This switch used to live inside 「Detailed formatting」, one
-  // disclosure down, while the zebra switch — its exact peer — sat at the top.
-  // Every test below therefore opened the disclosure first; none of them do
-  // now, and that deletion IS the assertion.
-  it('is reachable WITHOUT opening the detail, beside the zebra switch', () => {
+  // This switch once lived beside the header band's fields, one disclosure
+  // down, while the zebra switch — its exact peer — sat at the top. It stays in
+  // the table-style section, which is the one open at first, and the header-row
+  // section being CLOSED while it is reachable is the assertion.
+  it('is reachable WITHOUT opening the header-row section, beside the zebra switch', () => {
     section(TABLE, ['table.style', 'table.header.visuallyHidden']);
     expect(
-      screen.queryByRole('button', { name: /Detailed formatting/ })?.getAttribute('aria-expanded'),
+      screen.getByRole('button', { name: 'Header row format' }).getAttribute('aria-expanded'),
     ).toBe('false');
     expect(screen.getByRole('checkbox', { name: NAME })).not.toBeNull();
   });
@@ -402,10 +434,10 @@ describe('TableStyleSection — the invisible header row', () => {
     expect(controller.apply).not.toHaveBeenCalled();
   });
 
-  it('keeps the NOTE beside the band fields it is about, inside the detail', () => {
+  it('keeps the NOTE beside the band fields it is about, in the header-row section', () => {
     // The other end of the same idea, and the reason the split is a split: the
     // note names the header band's fields, so a reader has to be able to see
-    // them. Hidden while the disclosure is closed, present once it is open.
+    // them. Hidden while that section is closed, present once it is open.
     section({ ...TABLE, header: { visuallyHidden: true } }, [
       'table.style',
       'table.header.visuallyHidden',

@@ -1,28 +1,27 @@
-// The table's row-band styling section: a live miniature, Excel's preset gallery,
-// the zebra checkbox, and — collapsed, because most tables never need it — the
-// per-band detail. Ordered the way the engine layers the bands (grid → header →
-// body base → zebra → the conditional rules the next section owns), which is also
-// the order Excel's table-design tab reads in.
+// The table's band styling, as the bodies of three decoration-tab sections: the
+// table style itself (a live miniature, Excel's preset gallery, the zebra and
+// hide-header switches, and the ineffective-fill banner beside them), and the header and body bands' own formatting. Ordered
+// the way the engine layers the bands (grid → header → body base → zebra → the
+// conditional rules `RowConditions` owns), which is also the order Excel's
+// table-design tab reads in. `TableDecorationSections` wraps each body in its
+// collapsible section.
 //
 // It takes a `TableStyleContext` of its own rather than the property panel's prop
 // bundle, and assumes nothing about the panel's ~255px column. That is deliberate:
-// appearance editing is expected to move into a modal sheet, and this section
-// should then move by changing WHERE it is rendered and nothing else. A test
-// mounts it standalone to keep that true.
+// appearance editing is expected to move into a modal sheet, and these bodies
+// should then move by changing WHERE they are rendered and nothing else. A test
+// mounts them standalone to keep that true.
 
 import type { Op } from '@shojiku/designer-core';
-import { useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
-import { BTN_SM, FIELD_LABEL, SECTION_TITLE } from '../ui/chrome';
-import { IconChevronDown } from '../ui/icons';
+import { BTN_SM } from '../ui/chrome';
 import { bandInk, headerFillOf, readBandCascades } from './bandCascade';
 import { HiddenHeaderNote, HiddenHeaderToggle } from './HiddenHeaderField';
-import { hasCapability } from './itemPanelProps';
 import { applyPanelOp } from './model';
 import { TableBandFields } from './TableBandFields';
 import { TableMiniature, TableStyleGallery } from './TableStyleGallery';
-import { readTableStyle, TABLE_HEADER_FILL } from './tableStyleModel';
+import { gridWidthOf, readTableStyle, TABLE_HEADER_FILL } from './tableStyleModel';
 import { clearIneffectiveFillOp, zebraToggleOp } from './tableStyleOps';
 import { matchPreset, presetOps } from './tableStylePresets';
 
@@ -43,34 +42,34 @@ export interface TableStyleContext {
   readonly floor?: Readonly<Record<string, unknown>>;
 }
 
-/** The authored grid width as a display string — the one owned key that lives on
- * the table's own `style` rather than on a band. A PER-SIDE map (which the border
- * editor authors when the four sides differ) is not "no width": reporting it as
- * unset would let the gallery mark `plain` active on a table that carries an
- * outer frame. It reports a sentinel no preset declares, so such a table reads as
- * hand-tuned. */
-function gridWidthOf(raw: unknown): string {
-  const style =
-    typeof raw === 'object' && raw !== null && !Array.isArray(raw)
-      ? (raw as Record<string, unknown>).style
-      : undefined;
-  const width =
-    typeof style === 'object' && style !== null && !Array.isArray(style)
-      ? (style as Record<string, unknown>).borderWidth
-      : undefined;
-  if (typeof width === 'number') {
-    return Number.isFinite(width) ? String(width) : '';
-  }
-  return width === undefined ? '' : 'custom';
-}
-
-export function TableStyleSection({ context }: { readonly context: TableStyleContext }) {
+/** The banner for a `style.backgroundColor` the engine does not paint on a
+ * table, with its one-click clear. Its own export because it must render
+ * whether or not the engine declares `table.style` — it is the explanation of
+ * the swatch the section keeps in both arms. Renders nothing without a fill. */
+export function IneffectiveFillBanner({ context }: { readonly context: TableStyleContext }) {
   const { t } = useI18n();
-  const { path, controller, capabilities, floor } = context;
-  const [open, setOpen] = useState(false);
-  if (!hasCapability(capabilities, 'table.style')) {
+  const { path, controller } = context;
+  if (readTableStyle(controller.read(path)).ineffectiveFill === '') {
     return null;
   }
+  return (
+    <div className="mb-2 rounded-sj bg-warn-bg px-2 py-1.5 text-sm text-warn-text">
+      <p className="m-0">{t('panel.tableStyle.fillIgnored')}</p>
+      <button
+        type="button"
+        className={`${BTN_SM} mt-1.5`}
+        onClick={() => controller.apply(clearIneffectiveFillOp(path))}
+      >
+        {t('panel.tableStyle.fillClear')}
+      </button>
+    </div>
+  );
+}
+
+/** The 「Table style」 section's body. The caller gates it on `table.style`. */
+export function TableStyleBody({ context }: { readonly context: TableStyleContext }) {
+  const { t } = useI18n();
+  const { path, controller, capabilities, floor } = context;
   const raw = controller.read(path);
   const view = readTableStyle(raw);
   const gridWidth = gridWidthOf(raw);
@@ -80,25 +79,10 @@ export function TableStyleSection({ context }: { readonly context: TableStyleCon
   const bands = readBandCascades(controller.read, path, floor);
   const headerInk = bandInk(bands.header);
   const rowInk = bandInk(bands.row);
-  const headerFill = headerFillOf(bands.header, TABLE_HEADER_FILL);
-  const onOp = (op: Op | null) => applyPanelOp(controller, op);
   return (
-    <section className="mb-3">
-      <h4 className={SECTION_TITLE}>{t('panel.tableStyle.title')}</h4>
-      {view.ineffectiveFill === '' ? null : (
-        <div className="mb-2 rounded-sj bg-warn-bg px-2 py-1.5 text-sm text-warn-text">
-          <p className="m-0">{t('panel.tableStyle.fillIgnored')}</p>
-          <button
-            type="button"
-            className={`${BTN_SM} mt-1.5`}
-            onClick={() => controller.apply(clearIneffectiveFillOp(path))}
-          >
-            {t('panel.tableStyle.fillClear')}
-          </button>
-        </div>
-      )}
+    <>
       <TableMiniature
-        headerFill={headerFill.value}
+        headerFill={headerFillOf(bands.header, TABLE_HEADER_FILL).value}
         headerColor={headerInk.color}
         headerBold={headerInk.bold}
         zebra={view.zebra}
@@ -133,41 +117,35 @@ export function TableStyleSection({ context }: { readonly context: TableStyleCon
         capabilities={capabilities}
         onOp={(op) => controller.apply(op)}
       />
-      <button
-        type="button"
-        className="mb-1 flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-muted text-sm"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        {/* One chevron, rotated a quarter turn when collapsed — the shipped
-            disclosure pattern (the layer tree's rows). A text ▸ is banned
-            chrome, and the convention guard enforces it. */}
-        <IconChevronDown
-          size={12}
-          data-collapsed={open ? undefined : ''}
-          className="transition-transform data-collapsed:-rotate-90"
-        />
-        {t('panel.tableStyle.detail')}
-      </button>
-      {open ? (
-        <div className="border-border border-t pt-2">
-          <p className={`${FIELD_LABEL} font-semibold text-text`}>
-            {t('panel.tableStyle.headerBand')}
-          </p>
-          <HiddenHeaderNote hidden={view.hiddenHeader} />
-          <TableBandFields
-            ctx={bands.header}
-            path={path}
-            keys={HEADER_KEYS}
-            headerFill={headerFill}
-            onOp={onOp}
-          />
-          <p className={`${FIELD_LABEL} mt-3 font-semibold text-text`}>
-            {t('panel.tableStyle.bodyBand')}
-          </p>
-          <TableBandFields ctx={bands.row} path={path} keys={ROW_KEYS} onOp={onOp} />
-        </div>
-      ) : null}
-    </section>
+    </>
+  );
+}
+
+/** One band section's body: the header band (with the note that its fields
+ * paint nothing while the row is hidden) or the body band. */
+export function TableBandBody({
+  context,
+  band,
+}: {
+  readonly context: TableStyleContext;
+  readonly band: 'header' | 'row';
+}) {
+  const { path, controller, floor } = context;
+  const bands = readBandCascades(controller.read, path, floor);
+  const onOp = (op: Op | null) => applyPanelOp(controller, op);
+  if (band === 'row') {
+    return <TableBandFields ctx={bands.row} path={path} keys={ROW_KEYS} onOp={onOp} />;
+  }
+  return (
+    <>
+      <HiddenHeaderNote hidden={readTableStyle(controller.read(path)).hiddenHeader} />
+      <TableBandFields
+        ctx={bands.header}
+        path={path}
+        keys={HEADER_KEYS}
+        headerFill={headerFillOf(bands.header, TABLE_HEADER_FILL)}
+        onOp={onOp}
+      />
+    </>
   );
 }

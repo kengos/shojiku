@@ -1,4 +1,5 @@
-// The table's row-conditional-styles section (decoration tab): a list of collapsible rule
+// The body of the table's 「Conditional formatting」 section (decoration tab — the
+// heading is `TableDecorationSections`'): a list of collapsible rule
 // cards over `row.conditionalStyles`. Each card reads "when <field> is
 // <value>" so the rule is legible without opening it, and expands into the four
 // controls the panel owns — alignment, bold, background, text color.
@@ -12,7 +13,7 @@ import { useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { cascadeContext } from '../toolbar/cascade';
-import { BTN_SM, SECTION_TITLE } from '../ui/chrome';
+import { BTN_SM } from '../ui/chrome';
 import { ruleContext } from './bandCascade';
 import { applyPanelOp } from './model';
 import type { PickerOption } from './pickerModel';
@@ -67,8 +68,7 @@ export function RowConditionsSection({
     );
   };
   return (
-    <section className="mb-3">
-      <h3 className={SECTION_TITLE}>{t('panel.rowConditions.title')}</h3>
+    <>
       {rules.length === 0 ? (
         <p className="mt-0 mb-1.5 text-muted text-sm">{t('panel.rowConditions.hint')}</p>
       ) : (
@@ -109,6 +109,6 @@ export function RowConditionsSection({
       >
         {t('panel.rowConditions.add')}
       </button>
-    </section>
+    </>
   );
 }

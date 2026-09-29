@@ -200,7 +200,10 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   primitives), `registry.ts` (the hook-registry seams + tutorial). `Op` +
   the size-cap helpers are re-exported from designer-core here.
 - `Designer.tsx` — the composition root, PURE assembly:
-  `useDesignerWiring(props)` + the render tree. Re-exports
+  `useDesignerWiring(props)` + the render tree, under the
+  `SectionOpenProvider` (which collapsible panel sections are open — held at
+  the root because the panel's tabs and selection branches remount below it;
+  `panel/sectionOpenState.tsx`). Re-exports
   `contentWidthPt`/`contentHeightPt`/`isEditableTarget`/
   `DesignerProps`.
 - `wiring.ts` — `useDesignerWiring`, the composer: ONE call per wiring

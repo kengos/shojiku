@@ -1,9 +1,9 @@
 // The content tab: it routes each content-bearing item type to its surface and
 // owns the text/data pair the rest share (`text`/`qr_code`). The per-type
-// surfaces live in `contentParts.tsx` (image, page number) and the iterable
-// sections in `TableColumnsSection.tsx` / `IterableSourceSection.tsx` — a table
-// also gets its row and page settings (`TableSettingsSection.tsx`) under the
-// columns.
+// surfaces live in `contentParts.tsx` (image, page number), the iterable
+// section in `IterableSourceSection.tsx`, and a table's collapsible sections
+// (columns, rows, pages, empty data, header groups) in
+// `TableContentSections.tsx`.
 
 import type { Op } from '@shojiku/designer-core';
 import { useRef } from 'react';
@@ -23,8 +23,7 @@ import { MarkSection } from './MarkSection';
 import { applyPanelOp, switchContentOps, textAsBinding } from './model';
 import { chipsFor, HelpfulHeading } from './panelHelpers';
 import { SpansSection } from './SpansSection';
-import { TableColumnsSection } from './TableColumnsSection';
-import { TableSettingsSection } from './TableSettingsSection';
+import { TableContentSections } from './TableContentSections';
 
 export function ContentSection(props: ItemPanelProps) {
   const { t } = useI18n();
@@ -39,24 +38,7 @@ export function ContentSection(props: ItemPanelProps) {
   const bindingOptions = chips.options;
 
   if (view.type === 'table') {
-    return (
-      <>
-        <TableColumnsSection
-          controller={controller}
-          tablePath={path}
-          dataKey={view.dataKey}
-          dataScope={view.dataScope}
-          groups={props.paletteGroups}
-          params={props.params}
-          capabilities={capabilities}
-          formatCatalog={props.formatCatalog}
-          onOpenSheet={props.onOpenColumnSheet}
-        />
-        <TableSettingsSection
-          context={{ path, controller, capabilities, onSelectPath: props.onSelectPath }}
-        />
-      </>
-    );
+    return <TableContentSections {...props} />;
   }
   if (view.type === 'repeat_flow' || view.type === 'repeat' || view.type === 'list') {
     // The grid's `cell:` and the cards' `item:` are frames with a form of their

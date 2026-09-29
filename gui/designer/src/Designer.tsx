@@ -15,6 +15,7 @@
 // persists, fetches, or renders on its own — those are the host's.
 
 import { DiagnosticsPanel } from './diagnostics/DiagnosticsPanel';
+import { SectionOpenProvider } from './panel/sectionOpenState';
 import type { DesignerProps } from './props';
 import { DialogHost } from './shell/DialogHost';
 import { EditorBody } from './shell/EditorBody';
@@ -36,97 +37,101 @@ export function Designer(props: DesignerProps) {
   const w = useDesignerWiring(props);
 
   return (
-    <div
-      className="sj-designer flex min-h-0 flex-1 flex-col bg-bg text-text leading-[1.45]"
-      style={w.themeStyle}
-    >
-      {/* Always present (the menu/replace entries that open it stay codec-gated),
+    // Which panel sections are open outlives the panel's tabs and selection
+    // branches, so it is held here, for the Designer's lifetime.
+    <SectionOpenProvider>
+      <div
+        className="sj-designer flex min-h-0 flex-1 flex-col bg-bg text-text leading-[1.45]"
+        style={w.themeStyle}
+      >
+        {/* Always present (the menu/replace entries that open it stay codec-gated),
           so a codec-less host carries an inert hidden input, never a live one. */}
-      <input
-        ref={w.image.fileInputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
-        hidden
-        onChange={w.image.onFilePicked}
-      />
-      <TopChrome
-        // The block-level bold/italic stand down while the inline RICH-TEXT
-        // surface is open — see `toolbar/TypographyGroup`. Only the flow
-        // surface sets this: the plain field carries no format controls, so
-        // nothing is ambiguous while IT is open.
-        flowEditing={w.inline.editing?.runs != null}
-        editor={w.editor}
-        documentName={props.documentName}
-        saveStatus={props.saveStatus}
-        menuActions={props.menuActions}
-        hostMenuEntries={props.hostMenuEntries}
-        maxBytes={w.cap.maxBytes}
-        insertGroups={w.inserts.insertGroups}
-        prefs={w.prefs}
-        sample={w.sample}
-        image={w.image}
-        inserts={w.inserts}
-        blocks={w.blocks}
-        selectionOps={w.selectionOps}
-        multi={w.multi}
-        copilot={w.copilot}
-        save={w.save}
-        tutorial={w.tutorial}
-        views={w.views}
-        pdf={w.pdf}
-        derived={w.derived}
-        session={w.session}
-        host={w.host}
-        dialogs={w.dialogs}
-      />
-      <EditorBody
-        editor={w.editor}
-        views={w.views}
-        prefs={w.prefs}
-        defs={w.defs}
-        sample={w.sample}
-        derived={w.derived}
-        multi={w.multi}
-        nav={w.nav}
-        drag={w.drag}
-        image={w.image}
-        inline={w.inline}
-        marks={w.marks}
-        pdf={w.pdf}
-        inserts={w.inserts}
-        selectionOps={w.selectionOps}
-        uiEvent={w.tutorial.uiEvent}
-        session={w.session}
-        host={w.host}
-        maxBytes={w.cap.maxBytes}
-        dialogs={w.dialogs}
-        onParamsChange={w.handleParamsChange}
-      />
-      <div data-tour={TOUR_ANCHORS.diagnostics}>
-        <DiagnosticsPanel
-          diagnostics={w.diagnostics}
-          advisories={w.advisories}
-          onSelect={w.editor.select}
-          read={w.editor.read}
-          onApplyFix={w.applyDiagnosticFix}
+        <input
+          ref={w.image.fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
+          hidden
+          onChange={w.image.onFilePicked}
+        />
+        <TopChrome
+          // The block-level bold/italic stand down while the inline RICH-TEXT
+          // surface is open — see `toolbar/TypographyGroup`. Only the flow
+          // surface sets this: the plain field carries no format controls, so
+          // nothing is ambiguous while IT is open.
+          flowEditing={w.inline.editing?.runs != null}
+          editor={w.editor}
+          documentName={props.documentName}
+          saveStatus={props.saveStatus}
+          menuActions={props.menuActions}
+          hostMenuEntries={props.hostMenuEntries}
+          maxBytes={w.cap.maxBytes}
+          insertGroups={w.inserts.insertGroups}
+          prefs={w.prefs}
+          sample={w.sample}
+          image={w.image}
+          inserts={w.inserts}
+          blocks={w.blocks}
+          selectionOps={w.selectionOps}
+          multi={w.multi}
+          copilot={w.copilot}
+          save={w.save}
+          tutorial={w.tutorial}
+          views={w.views}
+          pdf={w.pdf}
+          derived={w.derived}
+          session={w.session}
+          host={w.host}
+          dialogs={w.dialogs}
+        />
+        <EditorBody
+          editor={w.editor}
+          views={w.views}
+          prefs={w.prefs}
+          defs={w.defs}
+          sample={w.sample}
+          derived={w.derived}
+          multi={w.multi}
+          nav={w.nav}
+          drag={w.drag}
+          image={w.image}
+          inline={w.inline}
+          marks={w.marks}
+          pdf={w.pdf}
+          inserts={w.inserts}
+          selectionOps={w.selectionOps}
+          uiEvent={w.tutorial.uiEvent}
+          session={w.session}
+          host={w.host}
+          maxBytes={w.cap.maxBytes}
+          dialogs={w.dialogs}
+          onParamsChange={w.handleParamsChange}
+        />
+        <div data-tour={TOUR_ANCHORS.diagnostics}>
+          <DiagnosticsPanel
+            diagnostics={w.diagnostics}
+            advisories={w.advisories}
+            onSelect={w.editor.select}
+            read={w.editor.read}
+            onApplyFix={w.applyDiagnosticFix}
+          />
+        </div>
+        <DialogHost
+          editor={w.editor}
+          inserts={w.inserts}
+          defs={w.defs}
+          sample={w.sample}
+          blocks={w.blocks}
+          selectionOps={w.selectionOps}
+          tutorial={w.tutorial}
+          save={w.save}
+          copilot={w.copilot}
+          pdf={w.pdf}
+          derived={w.derived}
+          host={w.host}
+          onDownloadPdf={props.menuActions?.onDownloadPdf}
+          dialogs={w.dialogs}
         />
       </div>
-      <DialogHost
-        editor={w.editor}
-        inserts={w.inserts}
-        defs={w.defs}
-        sample={w.sample}
-        blocks={w.blocks}
-        selectionOps={w.selectionOps}
-        tutorial={w.tutorial}
-        save={w.save}
-        copilot={w.copilot}
-        pdf={w.pdf}
-        derived={w.derived}
-        host={w.host}
-        onDownloadPdf={props.menuActions?.onDownloadPdf}
-        dialogs={w.dialogs}
-      />
-    </div>
+    </SectionOpenProvider>
   );
 }

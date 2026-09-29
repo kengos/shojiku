@@ -153,11 +153,12 @@ describe('the text field says which keys it takes', () => {
 });
 
 describe('ItemPanel — a table', () => {
-  it('shows the row and page settings below the columns in the content tab', () => {
+  it('shows the row and page sections below the columns in the content tab', () => {
     drawPanel({ type: 'table', data: { key: 'rows' }, columns: [{ label: 'A' }] });
-    const headings = screen.getAllByRole('heading').map((h) => h.textContent);
-    expect(headings.indexOf('Rows and pages')).toBeGreaterThan(headings.indexOf('Columns'));
-    expect(headings.indexOf('Columns')).toBeGreaterThanOrEqual(0);
+    const sections = Array.from(document.querySelectorAll('[data-section]')).map((s) =>
+      s.getAttribute('data-section'),
+    );
+    expect(sections.slice(0, 2)).toEqual(['table.columns', 'table.rows']);
   });
 });
 

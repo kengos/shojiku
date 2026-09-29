@@ -1,5 +1,6 @@
-// The property panel's columns section for a selected table: source binding,
-// then per-column label / binding / format / ▲▼ reorder / delete / add — each
+// The body of the 「Columns」 section for a selected table (the heading is
+// `TableContentSections`'): source binding, then per-column label / binding /
+// format / ▲▼ reorder / delete, then add and the column-sheet opener — each
 // ONE designer-core op = one undo step. Thin over the pure `columnsModel` +
 // the shared `panel/model` builders; document strings render through React's
 // escaping only.
@@ -9,7 +10,7 @@ import type { EditorController } from '../editor/useEditor';
 import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
-import { BTN_SM, INPUT, SECTION_TITLE } from '../ui/chrome';
+import { BTN_SM, INPUT } from '../ui/chrome';
 import { ColumnBindingFields } from './ColumnBindingFields';
 import { addColumnOp, moveColumnOp, readColumnsView, removeColumnOp } from './columnsModel';
 import { FieldPicker } from './FieldPicker';
@@ -68,15 +69,7 @@ export function TableColumnsSection({
     controller.apply(op);
   };
   return (
-    <section className="mb-4">
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <h3 className={`${SECTION_TITLE} mb-0`}>{t('panel.section.columns')}</h3>
-        {onOpenSheet === undefined ? null : (
-          <button type="button" className={BTN_SM} onClick={onOpenSheet}>
-            {t('panel.columns.editSheet')}
-          </button>
-        )}
-      </div>
+    <>
       <FieldPicker
         label={t('panel.field.dataKey')}
         value={dataKey}
@@ -148,15 +141,22 @@ export function TableColumnsSection({
           </li>
         ))}
       </ul>
-      <button
-        type="button"
-        className={BTN_SM}
-        onClick={() =>
-          dispatch(addColumnOp(tablePath, columns.length, t('panel.column.defaultLabel')))
-        }
-      >
-        {t('panel.column.add')}
-      </button>
-    </section>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={BTN_SM}
+          onClick={() =>
+            dispatch(addColumnOp(tablePath, columns.length, t('panel.column.defaultLabel')))
+          }
+        >
+          {t('panel.column.add')}
+        </button>
+        {onOpenSheet === undefined ? null : (
+          <button type="button" className={BTN_SM} onClick={onOpenSheet}>
+            {t('panel.columns.editSheet')}
+          </button>
+        )}
+      </div>
+    </>
   );
 }

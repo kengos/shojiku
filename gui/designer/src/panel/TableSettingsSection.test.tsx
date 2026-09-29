@@ -1,5 +1,5 @@
-// The table's "Rows and pages" section as a reader meets it: which controls a
-// flow-body table and a bounded one get, which the engine's capabilities
+// The table's row, empty-data, page and header-group CONTROLS as a reader meets
+// them: which controls a flow-body table and a bounded one get, which the engine's capabilities
 // withhold, and that every control commits exactly one edit — or none, for a
 // blur that changed nothing.
 
@@ -7,9 +7,30 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { TableGroupList } from './TableGroupList';
+import { pageMode, TablePageFields } from './TablePageFields';
 import { applyRowMode } from './TableRowHeights';
-import { TableSettingsSection } from './TableSettingsSection';
+import { TableEmptyBody, TableRowsBody, type TableSettingsContext } from './TableSettingsSection';
 import { readTableSettings } from './tableSettingsModel';
+
+/** Every table-settings body at once, in the order the content tab's sections
+ * stack them, with no section chrome — so these cases pin the CONTROLS, and
+ * `TableSections.test.tsx` pins the sections — and their capability gates —
+ * around them. The header-group gate below mirrors `TableContentSections`'. */
+function TableSettingsSection({ context }: { readonly context: TableSettingsContext }) {
+  const mode = pageMode(context.controller.read, context.path);
+  const view = readTableSettings(context.controller.read(context.path));
+  return (
+    <>
+      <TableRowsBody context={context} />
+      <TableEmptyBody context={context} />
+      {mode === null ? null : <TablePageFields context={context} view={view} mode={mode} />}
+      {context.capabilities === undefined || context.capabilities.includes('table.headerGroups') ? (
+        <TableGroupList context={context} />
+      ) : null}
+    </>
+  );
+}
 
 const FLOW = 'sections.body.items[0]';
 const NESTED = 'sections.body.items[0].items[1]';
@@ -92,24 +113,23 @@ function commit(name: string, value: string) {
 describe('TableSettingsSection — a table in the flow body', () => {
   it('offers the row, padding, empty-data and page controls', () => {
     section();
-    expect(screen.getByRole('heading', { name: 'Rows and pages' })).toBeTruthy();
-    expect(screen.getByRole('radio', { name: 'Fit content' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Auto' })).toBeTruthy();
     expect(field('Minimum height')).toBeTruthy();
     expect(field('Header row height').placeholder).toBe('Auto');
     expect(field('Cell padding').placeholder).toBe('4');
-    expect(screen.getByRole('combobox', { name: 'When there is no data' })).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: 'When there are 0 rows' })).toBeTruthy();
     expect(box('Join empty cells to the next one').checked).toBe(false);
-    expect(box('Continue rows on the next page').checked).toBe(true);
-    expect(box('Repeat the header row on each page').checked).toBe(true);
-    expect(box('Keep the table on one page').checked).toBe(false);
+    expect(box('Continue rows that do not fit on the next page').checked).toBe(true);
+    expect(box('Repeat the header row on the next page too').checked).toBe(true);
+    expect(box('Do not split the table').checked).toBe(false);
     expect(screen.queryByText(/drawn as one block/)).toBeNull();
   });
 
   it('commits each switch as one edit', () => {
     const controller = section();
-    fireEvent.click(box('Continue rows on the next page'));
-    fireEvent.click(box('Repeat the header row on each page'));
-    fireEvent.click(box('Keep the table on one page'));
+    fireEvent.click(box('Continue rows that do not fit on the next page'));
+    fireEvent.click(box('Repeat the header row on the next page too'));
+    fireEvent.click(box('Do not split the table'));
     fireEvent.click(box('Join empty cells to the next one'));
     expect(vi.mocked(controller.apply).mock.calls.map(([op]) => op)).toEqual([
       { op: 'setScalar', path: FLOW, keys: ['autoPageBreak'], value: false },
@@ -135,7 +155,7 @@ describe('TableSettingsSection — a table in the flow body', () => {
     fireEvent.blur(field('Row height'));
     expect(controller.apply).not.toHaveBeenCalled();
     expect(screen.queryByRole('textbox', { name: 'Minimum height' })).toBeNull();
-    fireEvent.click(screen.getByRole('radio', { name: 'Fit content' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Auto' }));
     expect(controller.applyAll).toHaveBeenCalledWith([
       { op: 'removeKey', path: FLOW, keys: ['row', 'height'] },
     ]);
@@ -194,7 +214,7 @@ describe('TableSettingsSection — a table in the flow body', () => {
 
   it('picks what an empty array draws, and clears it back to the default', () => {
     const controller = section();
-    fireEvent.change(screen.getByRole('combobox', { name: 'When there is no data' }), {
+    fireEvent.change(screen.getByRole('combobox', { name: 'When there are 0 rows' }), {
       target: { value: 'reserve' },
     });
     expect(controller.apply).toHaveBeenCalledWith({
@@ -207,7 +227,7 @@ describe('TableSettingsSection — a table in the flow body', () => {
 
   it('shows an authored reserve and removes it when the default is picked', () => {
     const controller = section({ ...TABLE, emptyBehavior: 'reserve' });
-    fireEvent.change(screen.getByRole('combobox', { name: 'When there is no data' }), {
+    fireEvent.change(screen.getByRole('combobox', { name: 'When there are 0 rows' }), {
       target: { value: 'collapse' },
     });
     expect(controller.apply).toHaveBeenCalledWith({
@@ -222,11 +242,13 @@ describe('TableSettingsSection — a table the engine draws as one block', () =>
   it('says the table does not continue, and offers no page switches', () => {
     section(TABLE, { path: NESTED });
     expect(screen.getByText(/drawn as one block/)).toBeTruthy();
-    expect(screen.queryByRole('checkbox', { name: 'Continue rows on the next page' })).toBeNull();
     expect(
-      screen.queryByRole('checkbox', { name: 'Repeat the header row on each page' }),
+      screen.queryByRole('checkbox', { name: 'Continue rows that do not fit on the next page' }),
     ).toBeNull();
-    expect(screen.queryByRole('checkbox', { name: 'Keep the table on one page' })).toBeNull();
+    expect(
+      screen.queryByRole('checkbox', { name: 'Repeat the header row on the next page too' }),
+    ).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: 'Do not split the table' })).toBeNull();
     expect(field('Cell padding')).toBeTruthy();
     expect(box('Join empty cells to the next one')).toBeTruthy();
   });
@@ -234,19 +256,23 @@ describe('TableSettingsSection — a table the engine draws as one block', () =>
   it('says so for a table directly in an absolute body', () => {
     section(TABLE, { bodyType: 'absolute' });
     expect(screen.getByText(/drawn as one block/)).toBeTruthy();
-    expect(screen.queryByRole('checkbox', { name: 'Continue rows on the next page' })).toBeNull();
+    expect(
+      screen.queryByRole('checkbox', { name: 'Continue rows that do not fit on the next page' }),
+    ).toBeNull();
   });
 
   it('says so for a table in a header or footer band', () => {
     section(TABLE, { path: 'sections.footer.items[0]' });
     expect(screen.getByText(/drawn as one block/)).toBeTruthy();
-    expect(screen.queryByRole('checkbox', { name: 'Keep the table on one page' })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: 'Do not split the table' })).toBeNull();
   });
 
   it('says nothing about pages for a path that is no list entry', () => {
     section(TABLE, { path: 'sections.body' });
     expect(screen.queryByText(/drawn as one block/)).toBeNull();
-    expect(screen.queryByRole('checkbox', { name: 'Continue rows on the next page' })).toBeNull();
+    expect(
+      screen.queryByRole('checkbox', { name: 'Continue rows that do not fit on the next page' }),
+    ).toBeNull();
     expect(field('Cell padding')).toBeTruthy();
   });
 
@@ -265,7 +291,9 @@ describe('TableSettingsSection — a table the engine draws as one block', () =>
       </I18nProvider>,
     );
     expect(screen.queryByText(/drawn as one block/)).toBeNull();
-    expect(screen.queryByRole('checkbox', { name: 'Continue rows on the next page' })).toBeNull();
+    expect(
+      screen.queryByRole('checkbox', { name: 'Continue rows that do not fit on the next page' }),
+    ).toBeNull();
   });
 });
 
@@ -274,12 +302,12 @@ describe('TableSettingsSection — engine capabilities', () => {
     section(TABLE, { capabilities: ['table'] });
     expect(screen.queryByRole('radio', { name: 'Fixed' })).toBeNull();
     expect(screen.queryByRole('textbox', { name: 'Header row height' })).toBeNull();
-    expect(screen.queryByRole('checkbox', { name: 'Keep the table on one page' })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: 'Do not split the table' })).toBeNull();
     expect(screen.queryByRole('checkbox', { name: 'Join empty cells to the next one' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Add header group' })).toBeNull();
     // Ungated: they ride on the table itself.
     expect(field('Cell padding')).toBeTruthy();
-    expect(box('Continue rows on the next page')).toBeTruthy();
+    expect(box('Continue rows that do not fit on the next page')).toBeTruthy();
   });
 
   it('offers each gated control against an engine that declares it', () => {
@@ -292,7 +320,7 @@ describe('TableSettingsSection — engine capabilities', () => {
       ],
     });
     expect(screen.getByRole('radio', { name: 'Fixed' })).toBeTruthy();
-    expect(box('Keep the table on one page')).toBeTruthy();
+    expect(box('Do not split the table')).toBeTruthy();
     expect(box('Join empty cells to the next one')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Add header group' })).toBeTruthy();
   });
@@ -305,7 +333,8 @@ describe('TableSettingsSection — header groups', () => {
       { ...TABLE, headerGroups: [{ label: 'X', span: 1 }] },
       { onSelectPath },
     );
-    expect(screen.getByText('Header groups (1)')).toBeTruthy();
+    // The existing group is listed as a row: its label and the columns it covers.
+    expect(screen.getByRole('button', { name: 'X Columns: 1' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Add header group' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'insertItem',
