@@ -84,8 +84,9 @@ reject unknown keys, and every optional scalar is omitted-when-unset
   A group's `style` applies in full: the text properties (`color`,
   `fontWeight`, `fontSize`) and its own `backgroundColor` / border, which
   paint over the group row's band so each group can be tinted
-  independently. A group that authors neither keeps the band's default
-  fill (`#ededed`, or `header.style.backgroundColor` when set).
+  independently. A group that authors neither keeps the group row's
+  default fill, `#ededed` — the header row's `header.style.backgroundColor`
+  does not reach the group row.
 - **`mergeEmptyCells: true`**: in a body row, empty text cells merge the
   way a spreadsheet merges cells — an empty cell joins the nearest
   non-empty cell to its **left**, which extends rightward over it, so

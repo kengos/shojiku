@@ -61,6 +61,7 @@ function section(
       entries={entries}
       options={OPTIONS}
       floor={floor}
+      host={{ fontFamilies: [], params: '', dataKey: 'rows' }}
     />,
   );
   return controller;
@@ -186,11 +187,13 @@ describe('RowConditionsSection', () => {
     expect(screen.getByText('Not bold')).not.toBeNull();
   });
 
-  it('does not call a rule empty for the ~20 Style keys the panel does not model', () => {
-    // `Style` carries two dozen properties and this panel renders four, so
-    // "adds nothing" cannot be decided from the chips. An externally-authored
-    // template carrying `fontSize` is the ordinary case, not a hostile one.
-    section([{ when: { key: 'kind', equals: 'heading' }, style: { fontSize: 14, opacity: 0.5 } }]);
+  it('does not call a rule empty for the Style keys the rule editor does not render', () => {
+    // `Style` carries two dozen properties and the rule editor renders seven,
+    // so "adds nothing" cannot be decided from the chips. An externally-authored
+    // template carrying `opacity` is the ordinary case, not a hostile one.
+    section([
+      { when: { key: 'kind', equals: 'heading' }, style: { borderWidth: 1, opacity: 0.5 } },
+    ]);
     expect(screen.queryByText('Adds no formatting of its own')).toBeNull();
     expect(screen.getByText('Other ×2')).not.toBeNull();
   });
@@ -199,11 +202,30 @@ describe('RowConditionsSection', () => {
     section([
       {
         when: { key: 'kind', equals: 'heading' },
-        style: { textAlign: 'center', fontSize: 14 },
+        style: { textAlign: 'center', opacity: 0.5 },
       },
     ]);
     expect(screen.getByText('Center')).not.toBeNull();
     expect(screen.getByText('Other ×1')).not.toBeNull();
+  });
+
+  it('shows italic, size and family as chips too — the rule editor edits them', () => {
+    section([
+      {
+        when: { key: 'kind' },
+        style: { fontStyle: 'italic', fontSize: 9, fontFamily: 'noto-sans', opacity: 0.5 },
+      },
+    ]);
+    for (const chip of ['Italic', '9pt', 'noto-sans', 'Other ×1']) {
+      expect(screen.getByText(chip)).toBeTruthy();
+    }
+  });
+
+  it('shows an un-ticked inherited italic as a chip of its own', () => {
+    section([{ when: { key: 'kind' }, style: { fontStyle: 'normal', fontSize: '1em' } }]);
+    expect(screen.getByText('Not italic')).toBeTruthy();
+    expect(screen.getByText('1em')).toBeTruthy();
+    expect(screen.queryByText(/Other/)).toBeNull();
   });
 
   it('labels the chips as what the rule ADDS, not as what the row renders', () => {
@@ -214,22 +236,75 @@ describe('RowConditionsSection', () => {
     expect(screen.queryByText('Adds no formatting of its own')).toBeNull();
   });
 
-  it('hides the chips while the rule is open (its controls show the same)', () => {
-    section([{ when: { key: 'kind' }, style: { textAlign: 'center' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
-    // Only the alignment RADIO remains — no chip duplicating it.
+  it('shows an opened rule on its own, in place of the list', () => {
+    section([{ when: { key: 'kind' }, style: { textAlign: 'center' } }, { when: { key: 'note' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    // No list row, no chip duplicating the alignment RADIO, no other rule.
+    expect(screen.queryAllByRole('button', { name: 'Remove this condition' })).toHaveLength(0);
     expect(screen.getAllByText('Center')).toHaveLength(1);
     expect(screen.getByRole('radio', { name: 'Center' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /備考/ })).toBeNull();
+    // The rule's sentence heads the view.
+    expect(screen.getByText('When 行種別 is yes')).toBeTruthy();
+  });
+
+  it('summarizes a boolean `equals: true` as on, like the bare key', () => {
+    section([{ when: { key: 'flagged', equals: true } }]);
+    expect(screen.getByRole('button', { name: 'When 要確認 is yes' })).toBeTruthy();
+  });
+
+  it('names a field by its KEY when its definitions label is empty', () => {
+    const options: readonly PickerOption[] = [
+      { key: 'code', label: '', type: 'string', sample: '', enumValues: [] },
+    ];
+    draw(
+      <RowConditionsSection
+        path={TABLE}
+        controller={makeController()}
+        entries={[{ when: { key: 'code', equals: 'A' } }]}
+        options={options}
+        host={{ fontFamilies: [], params: '', dataKey: 'rows' }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'When code is A' })).toBeTruthy();
+  });
+
+  it('offers a long enum as a select rather than a wall of chips', () => {
+    const many = Array.from({ length: 13 }, (_, i) => `v${i}`);
+    const options: readonly PickerOption[] = [
+      { key: 'kind', label: '行種別', type: 'string', sample: '', enumValues: many },
+    ];
+    const controller = makeController();
+    draw(
+      <RowConditionsSection
+        path={TABLE}
+        controller={controller}
+        entries={[{ when: { key: 'kind', equals: 'v3' } }]}
+        options={options}
+        host={{ fontFamilies: [], params: '', dataKey: 'rows' }}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is v3' }));
+    const value = screen.getByLabelText('When the value is') as HTMLSelectElement;
+    expect(value.tagName).toBe('SELECT');
+    expect(value.options).toHaveLength(14);
+    fireEvent.change(value, { target: { value: 'v12' } });
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['when', 'equals'],
+      value: 'v12',
+    });
   });
 
   it('summarizes an equals-less rule as a switch, not a comparison', () => {
     section([{ when: { key: 'flagged' } }]);
-    expect(screen.getByRole('button', { name: 'When 要確認 is on' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'When 要確認 is yes' })).toBeTruthy();
   });
 
   it('names an unpicked field rather than showing an empty summary', () => {
     section([{ when: { key: '' } }]);
-    expect(screen.getByRole('button', { name: 'When not set is on' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'When not set is yes' })).toBeTruthy();
   });
 
   it('adds a rule as ONE op and opens it', () => {
@@ -255,13 +330,17 @@ describe('RowConditionsSection', () => {
     });
   });
 
-  it('offers a declared enum as a select when the rule is expanded', () => {
-    section([{ when: { key: 'kind', equals: 'heading' } }]);
+  it('offers a declared enum as value chips, the current one pressed', () => {
+    const controller = section([{ when: { key: 'kind', equals: 'heading' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is heading' }));
-    const value = screen.getByLabelText('When the value is') as HTMLSelectElement;
-    expect(value.tagName).toBe('SELECT');
-    expect(Array.from(value.options).map((o) => o.value)).toEqual(['', 'heading', 'end']);
-    expect(value.value).toBe('heading');
+    const group = screen.getByRole('group', { name: 'When the value is' });
+    const heading = screen.getByRole('button', { name: 'heading' });
+    expect(group.contains(heading)).toBe(true);
+    expect(heading.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'end' }).getAttribute('aria-pressed')).toBe('false');
+    // Pressing the chip already chosen authors nothing.
+    fireEvent.click(heading);
+    expect(controller.apply).not.toHaveBeenCalled();
   });
 
   it('offers free entry for a field with no declared enum', () => {
@@ -272,12 +351,80 @@ describe('RowConditionsSection', () => {
     expect(value.value).toBe('x');
   });
 
-  it('drops the value control entirely for a boolean field', () => {
+  it('leads the enum chips with "not set", pressed while no value is authored', () => {
+    section([{ when: { key: 'kind' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    expect(screen.getByRole('button', { name: 'not set' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+    expect(screen.getByRole('button', { name: 'heading' }).getAttribute('aria-pressed')).toBe(
+      'false',
+    );
+  });
+
+  it('takes a picked enum value back through "not set" — one removeKey', () => {
+    const controller = section([{ when: { key: 'kind', equals: 'heading' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is heading' }));
+    fireEvent.click(screen.getByRole('button', { name: 'not set' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['when', 'equals'],
+    });
+  });
+
+  it('shows a value outside the declared enum verbatim and pressed, so it can be replaced', () => {
+    const controller = section([{ when: { key: 'kind', equals: 'legacy' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is legacy' }));
+    expect(screen.getByRole('button', { name: 'legacy' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'end' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['when', 'equals'],
+      value: 'end',
+    });
+  });
+
+  it('offers a boolean field as on/off, reading the bare key as on', () => {
     section([{ when: { key: 'flagged' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 要確認 is on' }));
-    expect(screen.queryByLabelText('When the value is')).toBeNull();
-    // The rest of the editor is still there.
-    expect(screen.getByLabelText('Field to check')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'When 要確認 is yes' }));
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Yes' }).checked).toBe(true);
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'No' }).checked).toBe(false);
+    expect(screen.queryByRole('textbox', { name: 'When the value is' })).toBeNull();
+  });
+
+  it('authors `equals: false` for off — a BOOLEAN, which the type-strict predicate needs', () => {
+    const controller = section([{ when: { key: 'flagged' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 要確認 is yes' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'No' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['when', 'equals'],
+      value: false,
+    });
+  });
+
+  it('reads `equals: false` as off and turns it on by removing the key', () => {
+    const controller = section([{ when: { key: 'flagged', equals: false } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 要確認 is no' }));
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'No' }).checked).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: 'Yes' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['when', 'equals'],
+    });
+  });
+
+  it('keeps a QUOTED "false" on a boolean field as free entry — it is not the off state', () => {
+    section([{ when: { key: 'flagged', equals: 'false' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 要確認 is false' }));
+    expect(screen.queryByRole('radio', { name: 'No' })).toBeNull();
+    expect((screen.getByLabelText('When the value is') as HTMLInputElement).value).toBe('false');
   });
 
   it('commits an alignment pick as ONE op', () => {
@@ -295,7 +442,7 @@ describe('RowConditionsSection', () => {
 
   it('commits bold ON as ONE op', () => {
     const controller = section([{ when: { key: 'kind' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Bold' }));
     expect(controller.apply).toHaveBeenCalledTimes(1);
     expect(controller.apply).toHaveBeenCalledWith({
@@ -308,7 +455,7 @@ describe('RowConditionsSection', () => {
 
   it('commits bold OFF as ONE op that drops the emptied style map', () => {
     const controller = section([{ when: { key: 'kind' }, style: { fontWeight: 'bold' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Bold' }));
     expect(controller.apply).toHaveBeenCalledTimes(1);
     expect(controller.apply).toHaveBeenCalledWith({
@@ -339,7 +486,7 @@ describe('RowConditionsSection', () => {
   it('commits a value verbatim when the key matches no declared field', () => {
     // No picker option → no type to coerce with; the text is authored as is.
     const controller = section([{ when: { key: 'not_declared' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When not_declared is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When not_declared is yes' }));
     const value = screen.getByLabelText('When the value is') as HTMLInputElement;
     fireEvent.blur(value, { target: { value: '2' } });
     expect(controller.apply).toHaveBeenCalledWith({
@@ -351,8 +498,8 @@ describe('RowConditionsSection', () => {
   });
 
   it('repointing an equals-carrying rule at a boolean field also clears the equals', () => {
-    // A boolean-form field renders no value control, so a kept `equals`
-    // would be invisible AND still override the boolean read on the wire.
+    // A boolean field's on/off cannot show `heading`, so a kept `equals`
+    // would be hidden AND still override the boolean read on the wire.
     // The two writes land as ONE transactional batch (one undo step).
     const controller = section([{ when: { key: 'kind', equals: 'heading' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is heading' }));
@@ -377,7 +524,7 @@ describe('RowConditionsSection', () => {
 
   it('repointing WITHOUT a stale equals batches only the key write', () => {
     const controller = section([{ when: { key: 'kind' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     const key = screen.getByLabelText('Field to check') as HTMLInputElement;
     fireEvent.blur(key, { target: { value: 'flagged' } });
     expect(controller.applyAll).toHaveBeenCalledTimes(1);
@@ -410,7 +557,7 @@ describe('RowConditionsSection', () => {
     // The GUI never creates this state (repointing reconciles it), but a
     // hand-authored document can. The summary must read as the WIRE
     // behaves (a comparison, not a switch), and the value must be
-    // clearable even though a clean boolean rule has no value control.
+    // clearable — the on/off a clean boolean rule gets cannot show `yes`.
     const controller = section([{ when: { key: 'flagged', equals: 'yes' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 要確認 is yes' }));
     const value = screen.getByLabelText('When the value is') as HTMLInputElement;
@@ -423,13 +570,36 @@ describe('RowConditionsSection', () => {
     });
   });
 
-  it('collapses an open rule again', () => {
-    section([{ when: { key: 'kind' } }]);
-    const summary = screen.getByRole('button', { name: 'When 行種別 is on' });
-    fireEvent.click(summary);
-    expect(screen.getByLabelText('Field to check')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Close this condition' }));
+  it('returns to the list from the back button and from Done, authoring nothing', () => {
+    const controller = section([{ when: { key: 'kind' } }]);
+    for (const leave of ['‹ All rules', 'Done']) {
+      fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+      expect(screen.getByLabelText('Field to check')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: leave }));
+      expect(screen.queryByLabelText('Field to check')).toBeNull();
+    }
+    expect(controller.apply).not.toHaveBeenCalled();
+    expect(controller.applyAll).not.toHaveBeenCalled();
+  });
+
+  it('shows the list when the open rule is gone (an undo took it away)', () => {
+    const controller = makeController();
+    const node = (entries: readonly unknown[]) => (
+      <I18nProvider locale="en">
+        <RowConditionsSection
+          path={TABLE}
+          controller={controller}
+          entries={entries}
+          options={OPTIONS}
+          host={{ fontFamilies: [], params: '', dataKey: 'rows' }}
+        />
+      </I18nProvider>
+    );
+    const { rerender } = render(node([{ when: { key: 'kind' } }, { when: { key: 'note' } }]));
+    fireEvent.click(screen.getByRole('button', { name: 'When 備考 is yes' }));
+    rerender(node([{ when: { key: 'kind' } }]));
     expect(screen.queryByLabelText('Field to check')).toBeNull();
+    expect(screen.getByRole('button', { name: 'When 行種別 is yes' })).toBeTruthy();
   });
 
   it('renders a row for a hostile entry so the indices still line up', () => {
@@ -441,7 +611,7 @@ describe('RowConditionsSection', () => {
 describe('RowConditionsSection — style controls', () => {
   it('commits a background color as ONE op', () => {
     const controller = section([{ when: { key: 'kind' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     fireEvent.click(screen.getByRole('button', { name: 'Background' }));
     fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#1d4ed8') }));
     expect(controller.apply).toHaveBeenCalledTimes(1);
@@ -455,7 +625,7 @@ describe('RowConditionsSection — style controls', () => {
 
   it('commits a text color as ONE op', () => {
     const controller = section([{ when: { key: 'kind' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     fireEvent.click(screen.getByRole('button', { name: 'Color' }));
     fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#1d4ed8') }));
     expect(controller.apply).toHaveBeenCalledWith({
@@ -468,7 +638,7 @@ describe('RowConditionsSection — style controls', () => {
 
   it('clears a color back to the cascade', () => {
     const controller = section([{ when: { key: 'kind' }, style: { backgroundColor: '#1d4ed8' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     fireEvent.click(screen.getByRole('button', { name: 'Background' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Clear' }));
     expect(controller.apply).toHaveBeenCalledWith({
@@ -480,7 +650,7 @@ describe('RowConditionsSection — style controls', () => {
 
   it('clears the text color back to the cascade', () => {
     const controller = section([{ when: { key: 'kind' }, style: { color: '#1d4ed8' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     fireEvent.click(screen.getByRole('button', { name: 'Color' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Clear' }));
     expect(controller.apply).toHaveBeenCalledWith({
@@ -496,7 +666,7 @@ describe('RowConditionsSection — style controls', () => {
   // what the header/body/column editors were fixed not to do.)
   it('reverts rather than restating the default when the pick is what the cascade gives', () => {
     const controller = section([{ when: { key: 'kind' }, style: { textAlign: 'right' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Left' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'removeKey',
@@ -507,7 +677,7 @@ describe('RowConditionsSection — style controls', () => {
 
   it('switches an alignment to the newly picked one', () => {
     const controller = section([{ when: { key: 'kind' }, style: { textAlign: 'right' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Center' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
@@ -530,21 +700,50 @@ describe('RowConditionsSection — style controls', () => {
     expect(screen.getByRole('button', { name: 'When 備考 is not set' })).toBeTruthy();
   });
 
-  it('reports the named styles a rule carries but does not edit', () => {
-    section([{ when: { key: 'kind' }, styleNames: ['banner', 'loud'] }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
-    expect(screen.getByText('Also applies 2 named style(s)')).toBeTruthy();
+  it('edits a rule’s named styles behind its disclosure, which names them while closed', () => {
+    const controller = section([{ when: { key: 'kind' }, styleNames: ['banner', 'loud'] }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    const toggle = screen.getByRole('button', { name: 'Named styles (2)' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'loud' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setStrings',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['styleNames'],
+      values: ['banner'],
+    });
   });
 
   it('says nothing about named styles when a rule carries none', () => {
     section([{ when: { key: 'kind' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    expect(screen.getByRole('button', { name: 'Named styles' })).toBeTruthy();
     expect(screen.queryByText(/named style/)).toBeNull();
+  });
+
+  it('authors a new control — italic — at the RULE entry’s own style', () => {
+    const controller = section([{ when: { key: 'kind' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Italic' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['style', 'fontStyle'],
+      value: 'italic',
+    });
+  });
+
+  it('offers no vertical alignment — a body cell takes its column’s alone', () => {
+    section([{ when: { key: 'kind' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    expect(screen.queryByRole('group', { name: 'Vertical alignment' })).toBeNull();
+    expect(screen.getByRole('checkbox', { name: 'Italic' })).toBeTruthy();
   });
 
   it('commits a free-entry value on blur', () => {
     const controller = section([{ when: { key: 'note' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 備考 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 備考 is yes' }));
     const value = screen.getByLabelText('When the value is') as HTMLInputElement;
     fireEvent.blur(value, { target: { value: 'urgent' } });
     expect(controller.apply).toHaveBeenCalledWith({
@@ -567,7 +766,7 @@ describe('RowConditionsSection — style controls', () => {
     // The threading matters, not just the model fn: the card must hand the
     // picked field's TYPE to the commit.
     const controller = section([{ when: { key: 'qty' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 数量 is on' }));
+    fireEvent.click(screen.getByRole('button', { name: 'When 数量 is yes' }));
     const value = screen.getByLabelText('When the value is') as HTMLInputElement;
     fireEvent.blur(value, { target: { value: '2' } });
     expect(controller.apply).toHaveBeenCalledWith({
@@ -580,8 +779,8 @@ describe('RowConditionsSection — style controls', () => {
 
   it('commits an enum pick', () => {
     const controller = section([{ when: { key: 'kind' } }]);
-    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is on' }));
-    fireEvent.change(screen.getByLabelText('When the value is'), { target: { value: 'end' } });
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'end' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: `${TABLE}.row.conditionalStyles[0]`,
@@ -622,7 +821,7 @@ describe('RowConditionsSection — a rule sits on the body band', () => {
     // Neither statement is wrong; before this they were merely unlabelled.
     withTable();
     expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Bold' }).checked).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Close this condition' }));
+    fireEvent.click(screen.getByRole('button', { name: '‹ All rules' }));
     expect(screen.getByText('Adds no formatting of its own')).not.toBeNull();
   });
 
@@ -664,8 +863,94 @@ describe('RowConditionsSection — a rule sits on the body band', () => {
     expect(
       screen.queryAllByText('Effective').map((label) => label.closest('p')?.textContent ?? ''),
     ).toEqual([
-      'Effective center·Inherited from the level above',
       'Effective bold·Inherited from the level above',
+      'Effective center·Inherited from the level above',
     ]);
+  });
+});
+
+describe('RowConditionsSection — formatting presets and sample values', () => {
+  it('applies a preset as ONE batch at the rule entry, and presses it once the wire matches', () => {
+    const controller = section([{ when: { key: 'kind' }, style: { fontWeight: 'bold' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Red background, dark red text' }));
+    expect(controller.applyAll).toHaveBeenCalledTimes(1);
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      {
+        op: 'setScalar',
+        path: `${TABLE}.row.conditionalStyles[0]`,
+        keys: ['style', 'backgroundColor'],
+        value: '#f4c7c3',
+      },
+      {
+        op: 'setScalar',
+        path: `${TABLE}.row.conditionalStyles[0]`,
+        keys: ['style', 'color'],
+        value: '#a50e0e',
+      },
+      {
+        op: 'removeKey',
+        path: `${TABLE}.row.conditionalStyles[0]`,
+        keys: ['style', 'fontWeight'],
+      },
+    ]);
+  });
+
+  it('presses the preset the rule already carries, and re-picking it authors nothing', () => {
+    const controller = section([{ when: { key: 'kind' }, style: { fontWeight: 'bold' } }]);
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    const bold = screen.getByRole('button', { name: 'Bold text' });
+    expect(bold.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(bold);
+    expect(controller.applyAll).not.toHaveBeenCalled();
+  });
+
+  it('offers the sample data’s values for a free-entry field as chips', () => {
+    const controller = makeController();
+    const params = JSON.stringify({
+      rows: [{ note: 'rush' }, { note: 'hold' }, { note: 'rush' }, { note: 7 }],
+    });
+    draw(
+      <RowConditionsSection
+        path={TABLE}
+        controller={controller}
+        entries={[{ when: { key: 'note', equals: 'hold' } }]}
+        options={OPTIONS}
+        host={{ fontFamilies: [], params, dataKey: 'rows' }}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'When 備考 is hold' }));
+    const group = screen.getByRole('group', { name: 'Values in the sample data' });
+    const chips = Array.from(group.querySelectorAll('button')).map((b) => b.textContent);
+    expect(chips).toEqual(['rush', 'hold', '7']);
+    fireEvent.click(screen.getByRole('button', { name: 'rush' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['when', 'equals'],
+      value: 'rush',
+    });
+  });
+
+  it('offers no sample chips for a rule with no field picked, or a table with no source', () => {
+    const params = JSON.stringify({ rows: [{ note: 'rush' }] });
+    const cases = [
+      { entries: [{ when: { key: '' } }], dataKey: 'rows', name: 'When not set is yes' },
+      { entries: [{ when: { key: 'note' } }], dataKey: '', name: 'When 備考 is yes' },
+    ];
+    for (const { entries, dataKey, name } of cases) {
+      const { unmount } = draw(
+        <RowConditionsSection
+          path={TABLE}
+          controller={makeController()}
+          entries={entries}
+          options={OPTIONS}
+          host={{ fontFamilies: [], params, dataKey }}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name }));
+      expect(screen.queryByRole('group', { name: 'Values in the sample data' })).toBeNull();
+      unmount();
+    }
   });
 });

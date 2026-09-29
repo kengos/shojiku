@@ -70,6 +70,7 @@ function form(
         group={group}
         groups={groups}
         onSelectPath={onSelectPath}
+        host={{ fontFamilies: [] }}
       />
     </I18nProvider>,
   );
@@ -281,5 +282,121 @@ describe('GroupForm — what a removal moves', () => {
     const node = { ...TABLE_NODE, columns: [{ label: 'Name' }, { label: 'Unit' }] };
     form(makeController({ [TABLE]: node }), 1, GROUPS[1], GROUPS);
     expect(screen.queryByText(/move left/)).toBeNull();
+  });
+});
+
+// A group's format: the table bands' controls at the group's own `style`, over
+// the TABLE (not the header band — the engine resolves a group that way), with
+// the band's fill shown as what sits beneath an unset group fill.
+describe('GroupForm — the group’s format', () => {
+  function styled(
+    table: Record<string, unknown>,
+    group: Record<string, unknown>,
+    capabilities?: readonly string[],
+  ) {
+    const controller = makeController({ [TABLE]: table, [GROUP_PATH]: group });
+    render(
+      <I18nProvider locale="en">
+        <GroupForm
+          controller={controller}
+          path={GROUP_PATH}
+          tablePath={TABLE}
+          index={1}
+          group={{ label: 'Quantity', span: '3' }}
+          groups={GROUPS}
+          host={{ fontFamilies: [], capabilities }}
+        />
+      </I18nProvider>,
+    );
+    return controller;
+  }
+
+  it('authors bold at the GROUP’s own style', () => {
+    const controller = styled(TABLE_NODE, TABLE_NODE.headerGroups[1]);
+    // The positive control for the withheld case below.
+    expect(screen.getByRole('heading', { name: 'Group format' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Bold' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: GROUP_PATH,
+      keys: ['style', 'fontWeight'],
+      value: 'bold',
+    });
+  });
+
+  it('shows what the TABLE gives it, not what the header band does', () => {
+    styled(
+      { ...TABLE_NODE, style: { fontStyle: 'italic' }, header: { style: { fontWeight: 'bold' } } },
+      TABLE_NODE.headerGroups[1],
+    );
+    expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Italic' }).checked).toBe(true);
+    expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Bold' }).checked).toBe(false);
+  });
+
+  it('reports the engine’s header fill beneath an unset group fill', () => {
+    styled(TABLE_NODE, TABLE_NODE.headerGroups[1]);
+    expect(screen.getByText('#ededed')).toBeTruthy();
+  });
+
+  it('reports the engine’s #ededed beneath an unset group fill even when the header band sets one', () => {
+    // The group row's band resolves from an EMPTY style
+    // (engine/layout/src/engine/table/span.rs), so the header band's fill never
+    // reaches it: this is what the page paints.
+    styled(
+      { ...TABLE_NODE, header: { style: { backgroundColor: '#dbe7ff' } } },
+      TABLE_NODE.headerGroups[1],
+    );
+    expect(screen.getByText('#ededed')).toBeTruthy();
+    expect(screen.queryByText('#dbe7ff')).toBeNull();
+  });
+
+  it('shows the group’s own fill once it has one', () => {
+    styled(TABLE_NODE, { label: 'Quantity', span: 3, style: { backgroundColor: '#fff3bf' } });
+    expect(screen.queryByText('#ededed')).toBeNull();
+  });
+
+  it('offers vertical alignment on a group — the engine honours it there', () => {
+    styled(TABLE_NODE, TABLE_NODE.headerGroups[1]);
+    expect(screen.getByRole('group', { name: 'Vertical alignment' })).toBeTruthy();
+  });
+
+  it('edits the group’s named styles behind its disclosure', () => {
+    const controller = styled(TABLE_NODE, { label: 'Quantity', span: 3, styleNames: ['banner'] });
+    fireEvent.click(screen.getByRole('button', { name: 'Named styles (1)' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'banner' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: GROUP_PATH,
+      keys: ['styleNames'],
+    });
+  });
+
+  it('renders a hostile group node as unset controls rather than throwing', () => {
+    for (const group of ['group', 7, ['x'], null]) {
+      const { unmount } = render(
+        <I18nProvider locale="en">
+          <GroupForm
+            controller={makeController({ [TABLE]: TABLE_NODE, [GROUP_PATH]: group })}
+            path={GROUP_PATH}
+            tablePath={TABLE}
+            index={1}
+            group={{ label: 'Quantity', span: '3' }}
+            groups={GROUPS}
+            host={{ fontFamilies: [] }}
+          />
+        </I18nProvider>,
+      );
+      expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Bold' }).checked).toBe(false);
+      expect(screen.getByRole('button', { name: 'Named styles' })).toBeTruthy();
+      unmount();
+    }
+  });
+
+  it('is withheld against an engine that does not paint a group’s own style', () => {
+    styled(TABLE_NODE, TABLE_NODE.headerGroups[1], ['table.headerGroups']);
+    expect(screen.queryByRole('heading', { name: 'Group format' })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: 'Bold' })).toBeNull();
+    // The rest of the form is still there.
+    expect(screen.getByRole('button', { name: 'Remove this group' })).toBeTruthy();
   });
 });

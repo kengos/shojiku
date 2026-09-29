@@ -15,6 +15,35 @@ platform binaries.
 
 ### Added
 
+- **A table's look can now be finished in the Designer.** Every styled part of a
+  table — the header row, the body rows, a column, a conditional-formatting rule
+  and now a header group — has the same format controls, in the order Google's
+  toolbar uses: font, size, bold, italic, text colour, background, alignment,
+  and vertical alignment where it has an effect (the header row, a column and a
+  header group; a body cell's vertical position comes from its column alone, so
+  the body rows and a rule do not offer one). A new **Text (whole table)**
+  section sets the font, size, bold, italic, colour and alignment every cell
+  starts from, and the format
+  toolbar does the same when a table is selected — it used to offer a fill,
+  which a table never paints. Banded rows get a colour you can change after
+  switching them on. Named styles can be applied to the header row, the body
+  rows, the even rows, a rule and a header group, in a
+  **Named styles** fold-out that says how many are applied while it is closed.
+
+  **Conditional formatting works the way it does in Google Sheets.** The section
+  lists the rules as sentences with chips of what each one adds; clicking one
+  opens that rule on its own, with its condition, a row of format presets drawn
+  as samples, the format controls and **Done**. Every change shows on the page
+  at once, so there is nothing to confirm or cancel. A rule's value is picked
+  rather than typed where that is possible: a field with a fixed list of values
+  offers them as chips (or a list, past twelve), with **not set** to take a
+  value back; any other field offers the values found in the sample
+  data, and a yes/no field is a **Yes**/**No** choice. **No** is new — a rule can
+  now apply to the rows where a flag is false (`equals: false`), and so can an
+  item's show-when condition and a checkbox bound to data. It writes the boolean
+  `false`: the engine compares types strictly, so the text `"false"` would never
+  match.
+
 - **A table's rows and page behaviour can now be set in the Designer.** Select a
   table and its Content tab holds a new **Rows and pages** section under the
   columns: whether the body rows fit their content (with a minimum height) or sit

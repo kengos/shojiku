@@ -83,12 +83,18 @@ describe('repointing the binding', () => {
   });
 
   it('reconciles a stale `equals` in the SAME batch', () => {
-    // A boolean-form field renders no value control, so a kept `equals` would
-    // be invisible AND still override the boolean read.
+    // A boolean field's on/off cannot show `card`, so a kept `equals` would be
+    // hidden AND still override the boolean read.
     expect(repointMarkOps(P, 'agreed', 'boolean', [], true, 'card')).toEqual([
       { op: 'setScalar', path: P, keys: ['data', 'key'], value: 'agreed' },
       { op: 'removeKey', path: P, keys: ['data', 'equals'] },
     ]);
+  });
+
+  it('keeps a BOOLEAN `equals` across a repoint to another boolean field', () => {
+    expect(
+      repointMarkOps(P, 'agreed', 'boolean', [], true, 'false', undefined, false, true),
+    ).toEqual([{ op: 'setScalar', path: P, keys: ['data', 'key'], value: 'agreed' }]);
   });
 
   it('writes `scope: document` when the field was offered at document scope', () => {

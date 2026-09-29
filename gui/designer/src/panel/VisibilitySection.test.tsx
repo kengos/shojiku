@@ -64,18 +64,30 @@ describe('with no binding authored', () => {
 });
 
 describe('with a binding authored', () => {
-  it('renders the enum value control for an enum field', () => {
+  it('renders an enum field as value chips under the value label', () => {
     const controller = makeController({ visible: { key: 'status', equals: 'approved' } });
     draw(<VisibilitySection path={P} controller={controller} options={OPTIONS} itemType="text" />);
-    expect(screen.getByLabelText('Shown when the value is')).toBeTruthy();
+    const group = screen.getByRole('group', { name: 'Shown when the value is' });
+    const chip = screen.getByRole('button', { name: 'approved' });
+    expect(group.contains(chip)).toBe(true);
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('renders NO value control for a boolean field', () => {
-    // The wire omits `equals` in the boolean form, so a control would author
-    // a key that changes what the predicate means.
-    const controller = makeController({ visible: { key: 'paid' } });
+  it('renders a boolean field as on/off — on is the bare key, off authors a boolean false', () => {
+    // The same shared control a table rule gets: the boolean form (no
+    // `equals`) is ON, and OFF must be the BOOLEAN literal — the engine's
+    // predicate is type-strict, so a quoted "false" would never match.
+    const apply = vi.fn(() => ({ ok: true as const }));
+    const controller = makeController({ visible: { key: 'paid' } }, apply);
     draw(<VisibilitySection path={P} controller={controller} options={OPTIONS} itemType="text" />);
-    expect(screen.queryByLabelText('Shown when the value is')).toBeNull();
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Yes' }).checked).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: 'No' }));
+    expect(apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: P,
+      keys: ['visible', 'equals'],
+      value: false,
+    });
   });
 
   it('turns collapse on with one op and OFF by removing the key', () => {
@@ -197,9 +209,7 @@ describe('with a binding authored', () => {
     const apply = vi.fn(() => ({ ok: true as const }));
     const controller = makeController({ visible: { key: 'status', equals: 'draft' } }, apply);
     draw(<VisibilitySection path={P} controller={controller} options={OPTIONS} itemType="text" />);
-    fireEvent.change(screen.getByLabelText('Shown when the value is'), {
-      target: { value: 'approved' },
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'approved' }));
     expect(apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: P,
@@ -257,7 +267,7 @@ describe('inside a row scope, with both scopes offered', () => {
 
   it('resolves the value control against the DOCUMENT list too', () => {
     // `picked` must search both sections, or a document-scoped enum field
-    // would render free entry instead of its select.
+    // would render free entry instead of its chips.
     const controller = makeController({
       visible: { key: 'status', equals: 'approved', scope: 'document' },
     });
@@ -270,8 +280,11 @@ describe('inside a row scope, with both scopes offered', () => {
         itemType="text"
       />,
     );
-    const value = screen.getByLabelText('Shown when the value is');
-    expect(value.tagName).toBe('SELECT');
+    // An enum field's chips, not free entry.
+    expect(screen.getByRole('button', { name: 'approved' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+    expect(screen.queryByRole('textbox', { name: 'Shown when the value is' })).toBeNull();
   });
 });
 

@@ -12,11 +12,10 @@ import {
   placeholderOp,
   plainTextOp,
   stepValueOp,
-  styleNamesOp,
   switchContentOps,
   textAsBinding,
-  toggleStyleName,
 } from './model';
+import { styleNamesOp, toggleStyleName } from './styleNamesOps';
 
 describe('stepValueOp', () => {
   it('steps a length value and authors it (unit preserved)', () => {
@@ -180,6 +179,20 @@ describe('styleNames editing', () => {
 
   it('clears an empty selection', () => {
     expect(styleNamesOp('p', [])).toEqual({ op: 'removeKey', path: 'p', keys: ['styleNames'] });
+  });
+
+  it('writes a table band’s list under its own keys — bands are map keys, not paths', () => {
+    expect(styleNamesOp('t', ['zebra'], ['row', 'alternateStyleNames'])).toEqual({
+      op: 'setStrings',
+      path: 't',
+      keys: ['row', 'alternateStyleNames'],
+      values: ['zebra'],
+    });
+    expect(styleNamesOp('t', [], ['header', 'styleNames'])).toEqual({
+      op: 'removeKey',
+      path: 't',
+      keys: ['header', 'styleNames'],
+    });
   });
 
   it('adds a name preserving order and dedupes', () => {

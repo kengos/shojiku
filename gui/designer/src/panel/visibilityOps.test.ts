@@ -124,13 +124,19 @@ describe('repointing at another field', () => {
   });
 
   it('clears a stale `equals` when the new field is boolean-form', () => {
-    // A boolean field renders no value control, so a kept `equals` would be
-    // invisible AND still override the boolean read on the wire.
+    // A boolean field's on/off cannot show `approved`, so a kept `equals`
+    // would be hidden AND still override the boolean read on the wire.
     const ops = repointVisibleOps(P, 'paid', 'boolean', [], true, 'approved');
     expect(ops).toEqual([
       { op: 'setScalar', path: P, keys: ['visible', 'key'], value: 'paid' },
       { op: 'removeKey', path: P, keys: ['visible', 'equals'] },
     ]);
+  });
+
+  it('keeps a BOOLEAN `equals` across a repoint to another boolean field — yes/no shows it', () => {
+    expect(
+      repointVisibleOps(P, 'paid', 'boolean', [], true, 'false', undefined, false, true),
+    ).toEqual([{ op: 'setScalar', path: P, keys: ['visible', 'key'], value: 'paid' }]);
   });
 
   it('writes no clear when there was no `equals` to go stale', () => {

@@ -13,7 +13,7 @@ import { usePopover } from '../hooks/usePopover';
 import { useI18n } from '../i18n/context';
 import { usageLabel } from '../i18n/usageLabel';
 import type { ItemView } from '../panel/itemView';
-import { styleNamesOp, toggleStyleName } from '../panel/model';
+import { styleNamesOp, toggleStyleName } from '../panel/styleNamesOps';
 import { readStylesView } from '../panel/stylesModel';
 import { PREVIEW_CHIP, stylePreview } from '../styles/preview';
 import type { StyleUsage } from '../styles/usage';

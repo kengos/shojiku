@@ -1,6 +1,6 @@
 // A table's decoration tab, as collapsible sections in the order the engine
-// layers a table's look: the table style (open at first), the grid/frame
-// border, the header row, the body rows, the conditional rules, and the named
+// layers a table's look: the table style (open at first), the text every cell
+// inherits (`TableTextSection`), the grid/frame border, the header row, the body rows, the conditional rules, and the named
 // styles. `StyleSection` routes a table here; every other type keeps its flat
 // decoration tab.
 //
@@ -14,18 +14,17 @@ import { readBorder } from './borderModel';
 import { readRadius } from './borderRadius';
 import { hasCapability, type ItemPanelProps } from './itemPanelProps';
 import { PanelSection } from './PanelSection';
-import { pickerOptions } from './pickerModel';
-import { RowConditionsSection } from './RowConditions';
-import { readRawEntries } from './rowConditionsModel';
+import { TableConditionsSection } from './RowConditions';
 import { StyleNamesPicker } from './StyleNamesPicker';
 import { PanelColorField } from './StyleTabFields';
-import { IneffectiveFillBanner, TableBandBody, TableStyleBody } from './TableStyleSection';
+import { TableBandBody } from './TableBandBody';
+import { IneffectiveFillBanner, TableStyleBody } from './TableStyleSection';
+import { TableTextSection } from './TableTextSection';
 import { controlHelp, helpText } from './tableContentSummaries';
 import {
   bandSummary,
   borderSummary,
   borderWidthRaw,
-  conditionsSummary,
   styleNamesSummary,
   styleSummary,
 } from './tableDecorationSummaries';
@@ -38,7 +37,7 @@ export function TableDecorationSections(props: ItemPanelProps) {
   const { controller, path, view, capabilities, floor } = props;
   const raw = controller.read(path);
   const style = readTableStyle(raw);
-  const context = { path, controller, capabilities, floor };
+  const context = { path, controller, capabilities, floor, fontFamilies: props.fontFamilies };
   const styled = hasCapability(capabilities, 'table.style');
   // The engine paints no `style.backgroundColor` on a table, so the swatch is
   // withheld unless the document already carries one — then it stays, under the
@@ -46,7 +45,6 @@ export function TableDecorationSections(props: ItemPanelProps) {
   // without `table.style`), so the key is never invisible and unremovable.
   const fill = style.ineffectiveFill !== '';
   const showFill = fill && hasCapability(capabilities, 'style.backgroundColor');
-  const entries = readRawEntries(controller.read, path);
   return (
     <>
       {styled || fill ? (
@@ -87,6 +85,7 @@ export function TableDecorationSections(props: ItemPanelProps) {
           {styled ? <TableStyleBody context={context} /> : null}
         </PanelSection>
       ) : null}
+      <TableTextSection {...props} />
       {hasCapability(capabilities, 'style.border') ? (
         <PanelSection
           id="table.border"
@@ -116,7 +115,7 @@ export function TableDecorationSections(props: ItemPanelProps) {
           <PanelSection
             id="table.headerBand"
             title={t('panel.tableSection.headerBand.title')}
-            summary={bandSummary(i18n, style.header, bandStyleNames(raw, 'header'))}
+            summary={bandSummary(i18n, style.header, bandStyleNames(raw, 'header'), true)}
             help={t('panel.tableSection.headerBand.help')}
           >
             <TableBandBody context={context} band="header" />
@@ -125,32 +124,17 @@ export function TableDecorationSections(props: ItemPanelProps) {
             id="table.bodyBand"
             title={t('panel.tableSection.bodyBand.title')}
             summary={bandSummary(i18n, style.row, bandStyleNames(raw, 'row'))}
-            help={t('panel.tableSection.bodyBand.help')}
+            // The section it points at is named by ITS title key, so the two
+            // cannot drift apart.
+            help={t('panel.tableSection.bodyBand.help', {
+              section: t('panel.tableSection.style.title'),
+            })}
           >
             <TableBandBody context={context} band="row" />
           </PanelSection>
         </>
       ) : null}
-      {hasCapability(capabilities, 'table.row.conditionalStyles') ? (
-        <PanelSection
-          id="table.conditions"
-          title={t('panel.tableSection.conditions.title')}
-          summary={conditionsSummary(i18n, entries.length)}
-          help={t('panel.tableSection.conditions.help')}
-        >
-          <RowConditionsSection
-            path={path}
-            controller={controller}
-            floor={floor}
-            entries={entries}
-            options={
-              view.dataKey === ''
-                ? []
-                : pickerOptions(props.paletteGroups, view.dataKey, props.params)
-            }
-          />
-        </PanelSection>
-      ) : null}
+      <TableConditionsSection {...props} />
       <PanelSection
         id="table.styleNames"
         title={t('panel.tableSection.styleNames.title')}

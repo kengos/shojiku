@@ -28,6 +28,7 @@ it('reads a bare key as the boolean form', () => {
     key: 'paid',
     equals: '',
     hasEquals: false,
+    boolEquals: false,
     collapse: false,
     documentScope: false,
     hasScope: false,
@@ -43,10 +44,18 @@ it('reads every authored key', () => {
     key: 'status',
     equals: 'approved',
     hasEquals: true,
+    boolEquals: false,
     collapse: true,
     hasScope: true,
     documentScope: true,
   });
+});
+
+it('tells a boolean `equals` from the same text quoted', () => {
+  // `false` and `"false"` display alike; only the boolean is the off state the
+  // on/off control may show.
+  expect(readVisible(read({ visible: { key: 'b', equals: false } }), P)?.boolEquals).toBe(true);
+  expect(readVisible(read({ visible: { key: 'b', equals: 'false' } }), P)?.boolEquals).toBe(false);
 });
 
 it('displays a numeric or boolean `equals` as text', () => {

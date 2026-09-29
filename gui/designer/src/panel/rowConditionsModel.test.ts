@@ -45,14 +45,27 @@ describe('readRowConditions', () => {
         key: 'kind',
         equals: 'heading',
         hasEquals: true,
+        boolEquals: false,
         textAlign: 'center',
         fontWeight: 'bold',
         backgroundColor: '#dbe7ff',
         color: '#222222',
+        fontStyle: '',
+        fontSize: '',
+        fontFamily: '',
         styleNameCount: 2,
         styleKeyCount: 4,
       },
     ]);
+  });
+
+  it('reads a boolean `equals` as the off state, and a quoted one as text', () => {
+    const [off, quoted] = readRowConditions([
+      { when: { key: 'paid', equals: false } },
+      { when: { key: 'paid', equals: 'false' } },
+    ]);
+    expect(off).toMatchObject({ equals: 'false', hasEquals: true, boolEquals: true });
+    expect(quoted).toMatchObject({ equals: 'false', hasEquals: true, boolEquals: false });
   });
 
   it('reads an equals-less rule as the boolean form', () => {

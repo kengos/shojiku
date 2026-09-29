@@ -1173,3 +1173,30 @@ describe('FormatToolbar — font size refusal snap-back', () => {
     expect(doc()).toContain('fontSize: 11');
   });
 });
+
+// A selected TABLE formats like text: its own style is what every cell
+// inherits, so the toolbar offers the text cluster and writes the table's
+// `style.*` — and no fill, which a table never paints.
+describe('FormatToolbar — a table selection', () => {
+  it('offers the text cluster and no fill', () => {
+    render(<Harness source={TABLE_SRC} fontFamilies={['gf-lato']} />);
+    expect(screen.getByLabelText('Font family')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Italic' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Text color' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Fill' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Border' })).toBeTruthy();
+  });
+
+  it('writes italic and the size on the table’s own style, one undo step each', () => {
+    render(<Harness source={TABLE_SRC} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Italic' }));
+    expect(doc()).toMatch(/style: \{ fontStyle: italic \}/);
+    const size = screen.getByLabelText('Font size');
+    fireEvent.change(size, { target: { value: '9' } });
+    fireEvent.blur(size);
+    expect(doc()).toMatch(/fontSize: 9/);
+    fireEvent.click(screen.getByTestId('undo'));
+    fireEvent.click(screen.getByTestId('undo'));
+    expect(doc()).not.toContain('style:');
+  });
+});

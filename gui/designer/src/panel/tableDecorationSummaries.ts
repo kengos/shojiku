@@ -11,12 +11,14 @@ import { formatList } from '../i18n/format';
 import { namedValue, ownValue, readRecord, record } from './borderModel';
 import { allEqual } from './borderSides';
 import type { BorderView } from './borderTypes';
-import { joinParts, type SummaryI18n } from './tableContentSummaries';
+import { joinParts, lengthText, type SummaryI18n } from './tableContentSummaries';
 import type { BandView, TableStyleView } from './tableStyleModel';
 import { matchPreset } from './tableStylePresets';
 
 const ALIGNS: ReadonlySet<string> = new Set(['left', 'center', 'right']);
 const WEIGHTS: ReadonlySet<string> = new Set(['normal', 'bold']);
+const FONT_STYLES: ReadonlySet<string> = new Set(['normal', 'italic']);
+const VALIGNS: ReadonlySet<string> = new Set(['top', 'middle', 'bottom']);
 const LINE_STYLES: ReadonlySet<string> = new Set(['double', 'dashed', 'dotted']);
 
 export function styleSummary(i18n: SummaryI18n, view: TableStyleView, gridWidth: string): string {
@@ -78,6 +80,10 @@ export function bandSummary(
   i18n: SummaryI18n,
   band: BandView,
   styleNames: readonly string[],
+  /** Whether the band's section offers vertical alignment — the header band
+   * does; the body band does not (a body cell takes its column's alone), so a
+   * value it carries is not reported as if it did something. */
+  verticalAlign = false,
 ): string {
   const { t, locale } = i18n;
   const text = joinParts(i18n, [
@@ -87,9 +93,42 @@ export function bandSummary(
       : t('panel.tableSection.band.fill', { value: band.backgroundColor }),
     band.color === '' ? '' : t('panel.tableSection.band.color', { value: band.color }),
     WEIGHTS.has(band.fontWeight) ? t(`style.value.fontWeight.${band.fontWeight}`) : band.fontWeight,
+    ...typeParts(i18n, band),
+    !verticalAlign || band.verticalAlign === ''
+      ? ''
+      : VALIGNS.has(band.verticalAlign)
+        ? t(`style.value.verticalAlign.${band.verticalAlign}`)
+        : band.verticalAlign,
     styleNames.length === 0
       ? ''
       : t('panel.tableSection.band.styles', { names: formatList(styleNames, locale) }),
+  ]);
+  return text === '' ? t('panel.tableSection.band.unset') : text;
+}
+
+/** The type-face parts of a band — family, size, italic — which the table's
+ * own 「文字」 section summarises by themselves. */
+function typeParts(i18n: SummaryI18n, band: BandView): readonly string[] {
+  return [
+    band.fontFamily,
+    band.fontSize === '' ? '' : lengthText(band.fontSize),
+    FONT_STYLES.has(band.fontStyle)
+      ? i18n.t(`style.value.fontStyle.${band.fontStyle}`)
+      : band.fontStyle,
+  ];
+}
+
+/** The table's own text settings (`table.style`) as AUTHORED — the type face,
+ * weight, colour and alignment it hands every cell. */
+export function textSummary(i18n: SummaryI18n, table: BandView): string {
+  const { t } = i18n;
+  const text = joinParts(i18n, [
+    ...typeParts(i18n, table),
+    WEIGHTS.has(table.fontWeight)
+      ? t(`style.value.fontWeight.${table.fontWeight}`)
+      : table.fontWeight,
+    table.color === '' ? '' : t('panel.tableSection.band.color', { value: table.color }),
+    ALIGNS.has(table.textAlign) ? t(`style.value.textAlign.${table.textAlign}`) : table.textAlign,
   ]);
   return text === '' ? t('panel.tableSection.band.unset') : text;
 }

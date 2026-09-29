@@ -36,21 +36,28 @@ export function toggleWire(
   return { op: 'setScalar', path, keys, value: next ? onValue : 'normal' };
 }
 
-/** The alignment a resolution MEANS on canvas (`''` = the engine default). */
-export function alignedValue(value: string): string {
-  return value === '' ? 'left' : value;
+/** The alignment a resolution MEANS on canvas (`''` = the engine default,
+ * `left` for a horizontal alignment; a vertical one in a table row passes
+ * `middle`). */
+export function alignedValue(value: string, fallback = 'left'): string {
+  return value === '' ? fallback : value;
 }
 
 /** Pick alignment `value`: picking the one already shown — or the one the
  * cascade would yield on its own — reverts to the cascade (drops the own key);
- * anything else authors the own key. */
+ * anything else authors the own key. `fallback` is what an unset value means
+ * on canvas (see `alignedValue`). */
 export function alignWire(
   path: string,
   keys: readonly string[],
   eff: EffectiveValue,
   value: string,
+  fallback = 'left',
 ): Op | null {
-  if (value === alignedValue(eff.value) || value === alignedValue(eff.cascade)) {
+  if (
+    value === alignedValue(eff.value, fallback) ||
+    value === alignedValue(eff.cascade, fallback)
+  ) {
     return eff.own === '' ? null : { op: 'removeKey', path, keys };
   }
   return { op: 'setScalar', path, keys, value };

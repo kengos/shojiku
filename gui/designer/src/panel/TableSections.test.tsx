@@ -272,11 +272,12 @@ describe('the header-group list', () => {
 });
 
 describe('the decoration tab', () => {
-  it('lists the six sections in order and opens only the table style', () => {
+  it('lists the seven sections in order and opens only the table style', () => {
     draw();
     styleTab();
     expect(sections()).toEqual([
       'table.style',
+      'table.text',
       'table.border',
       'table.headerBand',
       'table.bodyBand',
@@ -284,6 +285,27 @@ describe('the decoration tab', () => {
       'table.styleNames',
     ]);
     expect(openSections()).toEqual(['table.style']);
+  });
+
+  it('edits the text every cell inherits at the table’s own style, with no fill and no vertical alignment', () => {
+    const controller = draw({ ...TABLE, style: { fontFamily: 'noto-sans', fontSize: 9 } });
+    styleTab();
+    const text = screen.getByRole('button', { name: 'Text (whole table)' });
+    // Closed, it says what the table sets.
+    expect(document.getElementById(text.getAttribute('aria-describedby') ?? '')?.textContent).toBe(
+      'noto-sans · 9pt',
+    );
+    fireEvent.click(text);
+    const section = text.closest('[data-section]') as HTMLElement;
+    fireEvent.click(within(section).getByRole('checkbox', { name: 'Italic' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: PATH,
+      keys: ['style', 'fontStyle'],
+      value: 'italic',
+    });
+    expect(within(section).queryByRole('button', { name: 'Background' })).toBeNull();
+    expect(within(section).queryByRole('group', { name: 'Vertical alignment' })).toBeNull();
   });
 
   it('drops the flat tab heading for a table', () => {
@@ -302,7 +324,7 @@ describe('the decoration tab', () => {
   // the all-missing case above.
   const ALL = ['table.style', 'style.border', 'table.row.conditionalStyles'];
   it.each([
-    ['table.style', ['table.style', 'table.headerBand', 'table.bodyBand']],
+    ['table.style', ['table.style', 'table.text', 'table.headerBand', 'table.bodyBand']],
     ['style.border', ['table.border']],
     ['table.row.conditionalStyles', ['table.conditions']],
   ])('withholds only what %s gates', (key, gone) => {
@@ -310,6 +332,7 @@ describe('the decoration tab', () => {
     styleTab();
     const expected = [
       'table.style',
+      'table.text',
       'table.border',
       'table.headerBand',
       'table.bodyBand',
@@ -368,6 +391,6 @@ describe('the decoration tab', () => {
     draw({ ...TABLE, styleNames: ['ruled'], row: { conditionalStyles: [{ when: { key: 'a' } }] } });
     styleTab();
     expect(toggle('Conditional formatting').textContent).toContain('Rules: 1');
-    expect(toggle('Named styles').textContent).toContain('ruled');
+    expect(toggle('Named styles \\(whole table\\)').textContent).toContain('ruled');
   });
 });

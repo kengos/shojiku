@@ -123,15 +123,22 @@ describe('the bound arm', () => {
   });
 
   it('drops a stale `equals` in the same step as a repoint to a boolean field', () => {
-    // A boolean-form field renders no value control, so a kept `equals` would
-    // be invisible AND still override the boolean read.
+    // A boolean field's control is on/off, which cannot show `card`: a kept
+    // `equals` would be hidden behind it AND still override the boolean read.
     bind();
     fireEvent.blur(screen.getByLabelText('Data field'), { target: { value: 'method' } });
-    fireEvent.change(screen.getByLabelText('Ticked when the value is'), {
-      target: { value: 'card' },
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'card' }));
     expect(doc()).toContain('equals: card');
     fireEvent.blur(screen.getByLabelText('Data field'), { target: { value: 'agreed' } });
+    expect(doc()).not.toContain('equals');
+  });
+
+  it('ticks on a boolean field being OFF by authoring the boolean `false`', () => {
+    bind();
+    fireEvent.blur(screen.getByLabelText('Data field'), { target: { value: 'agreed' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'No' }));
+    expect(doc()).toMatch(/equals:\s*false\s*$/m);
+    fireEvent.click(screen.getByRole('radio', { name: 'Yes' }));
     expect(doc()).not.toContain('equals');
   });
 

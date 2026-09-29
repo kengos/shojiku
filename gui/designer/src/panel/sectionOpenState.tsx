@@ -20,6 +20,7 @@ export type SectionId =
   | 'table.empty'
   | 'table.groups'
   | 'table.style'
+  | 'table.text'
   | 'table.border'
   | 'table.headerBand'
   | 'table.bodyBand'

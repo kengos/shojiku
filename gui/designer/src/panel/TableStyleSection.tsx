@@ -1,6 +1,8 @@
-// The table's band styling, as the bodies of three decoration-tab sections: the
-// table style itself (a live miniature, Excel's preset gallery, the zebra and
-// hide-header switches, and the ineffective-fill banner beside them), and the header and body bands' own formatting. Ordered
+// The table's band styling: the 「表のスタイル」 section's body (a live
+// miniature, Excel's preset gallery, the zebra switch with its stripe colour,
+// the hide-header switch) and the ineffective-fill banner beside it. The header
+// and body bands' own formatting is `TableBandBody`, over the same
+// `TableStyleContext` defined here. Ordered
 // the way the engine layers the bands (grid → header → body base → zebra → the
 // conditional rules `RowConditions` owns), which is also the order Excel's
 // table-design tab reads in. `TableDecorationSections` wraps each body in its
@@ -12,22 +14,16 @@
 // should then move by changing WHERE they are rendered and nothing else. A test
 // mounts them standalone to keep that true.
 
-import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { BTN_SM } from '../ui/chrome';
 import { bandInk, headerFillOf, readBandCascades } from './bandCascade';
-import { HiddenHeaderNote, HiddenHeaderToggle } from './HiddenHeaderField';
-import { applyPanelOp } from './model';
-import { TableBandFields } from './TableBandFields';
+import { HiddenHeaderToggle } from './HiddenHeaderField';
+import { SwatchRow } from './ruleInputs';
 import { TableMiniature, TableStyleGallery } from './TableStyleGallery';
 import { gridWidthOf, readTableStyle, TABLE_HEADER_FILL } from './tableStyleModel';
-import { clearIneffectiveFillOp, zebraToggleOp } from './tableStyleOps';
+import { bandStyleOp, clearIneffectiveFillOp, zebraToggleOp } from './tableStyleOps';
 import { matchPreset, presetOps } from './tableStylePresets';
-
-/** The key paths the two bands own under the table item. */
-const HEADER_KEYS = ['header', 'style'] as const;
-const ROW_KEYS = ['row', 'style'] as const;
 
 /** Everything the section needs, and nothing about where it is hosted. */
 export interface TableStyleContext {
@@ -40,6 +36,8 @@ export interface TableStyleContext {
    * in tests and the floor only changes an origin LABEL, never the shown value
    * or the op. */
   readonly floor?: Readonly<Record<string, unknown>>;
+  /** The host's font families, the band family fields' suggestions. */
+  readonly fontFamilies: readonly string[];
 }
 
 /** The banner for a `style.backgroundColor` the engine does not paint on a
@@ -108,6 +106,19 @@ export function TableStyleBody({ context }: { readonly context: TableStyleContex
         />
         {t('panel.tableStyle.zebra')}
       </label>
+      {/* The stripe's colour, only while there is a stripe: the checkbox SEEDS
+          a default, this is where it is changed afterwards. */}
+      {view.zebra === '' ? null : (
+        <div className="mb-2 pl-5">
+          <SwatchRow
+            label={t('panel.tableStyle.zebraColor')}
+            value={view.zebra}
+            onCommit={(value) =>
+              controller.apply(bandStyleOp(path, 'zebra', 'backgroundColor', value))
+            }
+          />
+        </div>
+      )}
       {/* The peer of the zebra switch, not a detail of the header band: both
           are table-level decisions an author looks for without opening
           anything. */}
@@ -116,35 +127,6 @@ export function TableStyleBody({ context }: { readonly context: TableStyleContex
         hidden={view.hiddenHeader}
         capabilities={capabilities}
         onOp={(op) => controller.apply(op)}
-      />
-    </>
-  );
-}
-
-/** One band section's body: the header band (with the note that its fields
- * paint nothing while the row is hidden) or the body band. */
-export function TableBandBody({
-  context,
-  band,
-}: {
-  readonly context: TableStyleContext;
-  readonly band: 'header' | 'row';
-}) {
-  const { path, controller, floor } = context;
-  const bands = readBandCascades(controller.read, path, floor);
-  const onOp = (op: Op | null) => applyPanelOp(controller, op);
-  if (band === 'row') {
-    return <TableBandFields ctx={bands.row} path={path} keys={ROW_KEYS} onOp={onOp} />;
-  }
-  return (
-    <>
-      <HiddenHeaderNote hidden={readTableStyle(controller.read(path)).hiddenHeader} />
-      <TableBandFields
-        ctx={bands.header}
-        path={path}
-        keys={HEADER_KEYS}
-        headerFill={headerFillOf(bands.header, TABLE_HEADER_FILL)}
-        onOp={onOp}
       />
     </>
   );

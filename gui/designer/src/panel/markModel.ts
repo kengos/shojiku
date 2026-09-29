@@ -31,6 +31,9 @@ export interface MarkRow {
   readonly equals: string;
   /** Whether `equals` is authored at all (absent = read the field as a bool). */
   readonly hasEquals: boolean;
+  /** Whether `equals` is authored as a BOOLEAN literal (`true`/`false`) — the
+   * yes/no control's input, which a quoted `"false"` must not light up. */
+  readonly boolEquals: boolean;
   /** Whether `data.scope: document` is authored. The panel does not edit it —
    * the scope escape is an authoring-level choice — so the row REPORTS it
    * rather than hiding that the document says something the panel cannot. */
@@ -104,6 +107,7 @@ export function readMark(read: ReadFn, path: string): MarkRow {
     key: text(data?.key),
     equals: displayScalar(data?.equals),
     hasEquals: data?.equals !== undefined && data?.equals !== null,
+    boolEquals: typeof data?.equals === 'boolean',
     documentScope: data?.scope === 'document',
     hasScope: data !== undefined && data.scope !== undefined,
     checked: item?.checked === true,

@@ -10,10 +10,12 @@
 //
 // Every mount must be on a node whose wire takes `styleNames` — the key is
 // `deny_unknown_fields`-checked, so a tick anywhere else stops the document
-// parsing. The three today: `StyleSection` (gated on `STYLE_NAMES_WIRE_TYPES`,
+// parsing. The item sites: `StyleSection` (gated on `STYLE_NAMES_WIRE_TYPES`,
 // because the decoration tab also serves a `line`), `CharGridSection` (a
-// `char_grid` takes it) and `SpanInspector` (a span takes it). A new site
-// checks its node the same way.
+// `char_grid` takes it) and `SpanInspector` (a span takes it). The table's
+// band-level lists go through `AdvancedStyles`, with `keys` naming the wire slot
+// (`header`/`row` `styleNames`, `row.alternateStyleNames`, a rule entry's or a
+// header group's own). A new site checks its node the same way.
 //
 // The read is deliberately the item's OWN `styleNames` and nothing else: the engine's
 // `authored()` consults the named styles and the item's own style and stops there, so
@@ -27,18 +29,27 @@ import { useI18n } from '../i18n/context';
 import { CheckboxList } from './choiceFields';
 import type { ItemPanelProps } from './itemPanelProps';
 import { registryNames } from './itemView';
-import { applyPanelOp, styleNamesOp, toggleStyleName } from './model';
+import { applyPanelOp } from './model';
+import { styleNamesOp, toggleStyleName } from './styleNamesOps';
 
 export function StyleNamesPicker({
   controller,
   path,
   styleNames,
+  keys,
+  label,
   help,
 }: {
   readonly controller: ItemPanelProps['controller'];
   readonly path: string;
   /** The item's authored `styleNames`, in order. */
   readonly styleNames: readonly string[];
+  /** Where the list lives under `path` (see `styleNamesOp`); an item's own
+   * `styleNames` when omitted. */
+  readonly keys?: readonly string[];
+  /** The legend, when one surface shows two lists (a band's rows and its even
+   * rows) and the general wording would name both the same. */
+  readonly label?: string;
   /** An optional `?` beside the legend. */
   readonly help?: ReactNode;
 }) {
@@ -46,13 +57,13 @@ export function StyleNamesPicker({
   const options = Array.from(new Set([...registryNames(controller.read('styles')), ...styleNames]));
   return (
     <CheckboxList
-      label={t('panel.field.styleNames')}
+      label={label ?? t('panel.field.styleNames')}
       help={help}
       options={options}
       selected={styleNames}
       emptyLabel={t('panel.field.formatNone')}
       onToggle={(name, on) =>
-        applyPanelOp(controller, styleNamesOp(path, toggleStyleName(styleNames, name, on)))
+        applyPanelOp(controller, styleNamesOp(path, toggleStyleName(styleNames, name, on), keys))
       }
     />
   );

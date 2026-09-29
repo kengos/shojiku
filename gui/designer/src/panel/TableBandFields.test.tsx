@@ -34,7 +34,10 @@ function docWith(table: unknown, rest: Record<string, unknown> = {}): Record<str
 function band(
   doc: Record<string, unknown>,
   owner: 'header' | 'row' | 'column',
-  options: { readonly headerFill?: boolean } = {},
+  options: {
+    readonly headerFill?: boolean;
+    readonly host?: Partial<{ fontFamilies: string[]; verticalAlign: boolean; fill: boolean }>;
+  } = {},
 ) {
   const read = reader(doc);
   const onOp = vi.fn<(op: Op | null) => void>();
@@ -50,6 +53,7 @@ function band(
         ctx={ctx}
         path={path}
         keys={keys}
+        host={{ fontFamilies: [], verticalAlign: false, fill: true, ...options.host }}
         headerFill={options.headerFill === true ? headerFillOf(ctx, TABLE_HEADER_FILL) : undefined}
         onOp={onOp}
       />
@@ -431,5 +435,134 @@ describe('TableBandFields — a hostile document degrades', () => {
       path: TABLE,
       keys: ['row', 'style', 'color'],
     });
+  });
+});
+
+// The four controls past the original four — font family, size, italic and
+// (where the host says it reaches the page) vertical alignment — ride the same
+// cascade-effective display and minimal-wire ops as the rest.
+describe('TableBandFields — type face, italic and vertical alignment', () => {
+  const TYPED = {
+    type: 'table',
+    style: { fontFamily: 'noto-sans', fontSize: 10, fontStyle: 'italic' },
+  };
+
+  it('leads with the family and size the band RESOLVES to, in Google toolbar order', () => {
+    band(docWith(TYPED), 'row');
+    const family = screen.getByLabelText('Font family') as HTMLInputElement;
+    const size = screen.getByLabelText('Font size') as HTMLInputElement;
+    expect(family.value).toBe('noto-sans');
+    expect(size.value).toBe('10');
+    const order = [
+      family,
+      size,
+      screen.getByRole('checkbox', { name: 'Bold' }),
+      screen.getByRole('checkbox', { name: 'Italic' }),
+      screen.getByRole('button', { name: /^Color/ }),
+      screen.getByRole('button', { name: /^Background/ }),
+      screen.getByRole('radio', { name: 'Left' }),
+    ];
+    for (let i = 1; i < order.length; i++) {
+      // DOCUMENT_POSITION_FOLLOWING: each control comes after the one before.
+      expect(order[i - 1].compareDocumentPosition(order[i]) & 4).toBe(4);
+    }
+  });
+
+  it('authors a family at the band’s own keys, and nothing on an unchanged blur', () => {
+    const onOp = band(docWith(TYPED), 'header', { host: { fontFamilies: ['serif-jp'] } });
+    const family = screen.getByLabelText('Font family');
+    fireEvent.blur(family, { target: { value: 'noto-sans' } });
+    expect(onOp).not.toHaveBeenCalled();
+    fireEvent.blur(family, { target: { value: 'serif-jp' } });
+    expect(onOp).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: TABLE,
+      keys: ['header', 'style', 'fontFamily'],
+      value: 'serif-jp',
+    });
+    // The host's families are the combo's suggestions.
+    expect(document.querySelector('datalist option')?.getAttribute('value')).toBe('serif-jp');
+  });
+
+  it('steps the size from the RESOLVED value and authors a typed one', () => {
+    const onOp = band(docWith(TYPED), 'row');
+    fireEvent.click(screen.getByRole('button', { name: 'Increase Font size' }));
+    expect(onOp).toHaveBeenLastCalledWith({
+      op: 'setScalar',
+      path: TABLE,
+      keys: ['row', 'style', 'fontSize'],
+      value: 11,
+    });
+    fireEvent.blur(screen.getByLabelText('Font size'), { target: { value: '8' } });
+    expect(onOp).toHaveBeenLastCalledWith({
+      op: 'setScalar',
+      path: TABLE,
+      keys: ['row', 'style', 'fontSize'],
+      value: 8,
+    });
+  });
+
+  it('checks Italic from the cascade and authors the override that turns it off', () => {
+    const onOp = band(docWith(TYPED), 'row');
+    const italic = screen.getByRole<HTMLInputElement>('checkbox', { name: 'Italic' });
+    expect(italic.checked).toBe(true);
+    fireEvent.click(italic);
+    expect(onOp).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: TABLE,
+      keys: ['row', 'style', 'fontStyle'],
+      value: 'normal',
+    });
+  });
+
+  it('authors italic ON where nothing gives it', () => {
+    const onOp = band(docWith({ type: 'table' }), 'column');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Italic' }));
+    expect(onOp).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.columns[0]`,
+      keys: ['style', 'fontStyle'],
+      value: 'italic',
+    });
+  });
+
+  it('offers vertical alignment only where the host says it reaches the page', () => {
+    band(docWith({ type: 'table' }), 'row');
+    expect(screen.queryByRole('group', { name: 'Vertical alignment' })).toBeNull();
+    cleanup();
+    band(docWith({ type: 'table' }), 'header', { host: { verticalAlign: true } });
+    expect(screen.getByRole('group', { name: 'Vertical alignment' })).toBeTruthy();
+  });
+
+  it('reads an unset vertical alignment as MIDDLE — a table row’s default — and authors only a change', () => {
+    const onOp = band(docWith({ type: 'table' }), 'header', { host: { verticalAlign: true } });
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Middle' }).checked).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: 'Top' }));
+    expect(onOp).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: TABLE,
+      keys: ['header', 'style', 'verticalAlign'],
+      value: 'top',
+    });
+  });
+
+  it('reverts an authored vertical alignment by re-picking the default', () => {
+    const onOp = band(
+      docWith({ type: 'table', header: { style: { verticalAlign: 'bottom' } } }),
+      'header',
+      { host: { verticalAlign: true } },
+    );
+    fireEvent.click(screen.getByRole('radio', { name: 'Middle' }));
+    expect(onOp).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: TABLE,
+      keys: ['header', 'style', 'verticalAlign'],
+    });
+  });
+
+  it('withholds the background where the host says a fill paints nothing', () => {
+    band(docWith({ type: 'table' }), 'column', { host: { fill: false } });
+    expect(screen.queryByText('Background')).toBeNull();
+    expect(screen.getByText('Color')).toBeTruthy();
   });
 });

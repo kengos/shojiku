@@ -22,7 +22,7 @@ screen over a document that never changed. The rule is deliberately not
 because a commit can LAND and still leave the value alone. A CLAMP does
 exactly that (a negative gap to 0, an over-cap pen width), and so does
 NORMALISATION (`lengthOp` running `40.0` through `Number`, `metaListOp`
-trimming, `literal()` coercing a numeric `equals`); a landed/refused signal
+trimming, `equalsLiteral` coercing a numeric `equals`); a landed/refused signal
 strands the entry in every one of those cases. `OpResult.ok` and the revision
 counter are wrong twice over, since `applyAll([])` reports ok and bumps the
 revision for a commit that authored nothing. The only guard is the CHANGED
@@ -652,12 +652,18 @@ presence is not a text binding.
   or root-addressed)/`bindingKeyOp`/`bindingPickOps` (a document pick
   authors `data.scope: document` — the only spelling the GUI writes; a
   row pick clears it only when present)/`formatOp`/`placeholderOp`/
-  `stepValueOp`/`styleNamesOp`/`toggleStyleName`/`switchContentOps`
+  `stepValueOp`/`switchContentOps`
   (+ `textAsBinding`/`bindingAsText`: the two modes both express "this item
   IS that field", so the switch CARRIES the binding across — a text of one
   expression becomes that data key with its format, a data key becomes
   `{key}` text. Only mixed text (`{customer.name} 様`) has to be dropped,
   and `ContentSection` keeps it for the way back).
+- `panel/styleNamesOps.ts` — the `styleNames` LIST edits every named-style
+  checklist authors and the toolbar's style picker toggles: `styleNamesOp(path,
+  names, keys = ['styleNames'])` (an empty list REMOVES the key; `keys` names a
+  table band's slot — `header`/`row` `styleNames`, `row.alternateStyleNames` —
+  which are map keys under the table, not paths) and `toggleStyleName`. Split
+  from `model.ts` as its own concern: a list of references, not a leaf.
 - `panel/fields.tsx` — the base widgets: `Field` (label wrapper),
   **`SideButtonField`** (a control BESIDE a button — the pickers' ▼: label by
   `htmlFor` not by wrapping, the outer block owns the bottom margin so none
@@ -1061,6 +1067,17 @@ presence is not a text binding.
   it, as the button's description, a notice that the LATER groups move left —
   shown only when there are later groups and this one covers columns, since a
   group has no start column of its own.
+  Between the hint and the button sits the group's 「書式」 part,
+  `panel/GroupStyleFields.tsx` (`GroupStyleContext`, gated on
+  `table.headerGroups.style.fill`): `TableBandFields` at the group's own
+  `style.*` over `bandContext(tableCtx, group)` — a group resolves over the
+  TABLE, not the header band (`engine/layout/src/engine/table/span.rs`) — with
+  vertical alignment (a group honours it) and an unset fill shown as the
+  engine's `#ededed` — the group row's band resolves from an EMPTY style, so the
+  header band's fill never reaches it — then its `styleNames` via
+  `AdvancedStyles`. The form's
+  host inputs (`fontFamilies`, `capabilities`, `floor`) arrive as one `host`
+  bundle threaded from `CellPanel`.
   Adding a group lives in the table's settings section below — there is no
   group to select before the first exists.
 
@@ -1087,11 +1104,17 @@ properties」 shape), not the flat tabs every other type gets:
   `pageMode` is `null`), 「Blanks」, 「Header groups」 (`table.headerGroups`).
 - `panel/TableDecorationSections.tsx` — the decoration tab, in the engine's
   layer order: 「Table style」 (open at first; `table.style`, or an ineffective
-  fill to show), 「Border」 (`style.border`; the `BorderEditor` with `isTable`,
+  fill to show), 「文字（表全体）」/"Text (whole table)" (`panel/TableTextSection.tsx`, `table.style`-gated: the
+  band controls at the table's OWN `style.*` over `cascadeContext` — what every
+  cell inherits — minus the background and the vertical alignment, which the
+  engine ignores on a table's own style; summary `textSummary`), 「Border」 (`style.border`; the `BorderEditor` with `isTable`,
   whose own `?` and table note serve the section, so its heading has none),
   「Header row format」/「Body row format」 (`table.style`), 「Conditional
-  formatting」 (`table.row.conditionalStyles`), 「Named styles」. The flat tab's
-  「Style」 heading is not rendered for a table.
+  formatting」 (`TableConditionsSection` in `RowConditions.tsx`, which owns its
+  own `PanelSection` and gate, `table.row.conditionalStyles`), 「Named styles」.
+  The flat tab's 「Style」 heading is not rendered for a table. The body band's
+  `?` composes the 「Table style」 title key into its sentence (`{section}`)
+  rather than retyping it.
 - `panel/tableContentSummaries.ts` / `panel/tableDecorationSummaries.ts` (pure) —
   the closed-section summaries, over the SAME read models the bodies render from,
   with ONE deliberate extra wire read (`borderWidthRaw`, below): lengths as `lengthText` (bare number → pt, else
@@ -1163,9 +1186,11 @@ The table's BAND styling is section bodies + two pure modules + a data module, o
 the way the engine layers the bands (grid → header → body base → zebra → the
 conditional rules the next section owns).
 
-- `panel/tableStyleModel.ts` (pure, READ) — `readBand` (one band's four
-  properties out of whatever sits at `<owner>.style`; a non-map band or style
-  degrades to unset) and `readTableStyle` → `{header, headerFill, row, zebra,
+- `panel/tableStyleModel.ts` (pure, READ) — `readBand` (one band's eight
+  properties — alignment, fill, colour, weight, family, size, italic, vertical
+  alignment — out of whatever sits at `<owner>.style`, the table's own `style` too;
+  a bare numeric size reads as its numeral; a non-map band or style degrades to
+  unset) and `readTableStyle` → `{header, headerFill, row, zebra,
   ineffectiveFill, hiddenHeader}` (`hiddenHeader` reads `=== true`, so a
   document putting `"true"`/`1`/`{}` there cannot light the control up). `headerFill` is packaged as the same `EffectiveValue` the
   item style fields use, so an UNSET header fill renders through the shared
@@ -1193,12 +1218,17 @@ conditional rules the next section owns).
   render, so the gallery holds no selection state. Lookup is a `Map`, never a
   plain-object index — a preset id is a string from a click handler, and a
   `Record` lookup would answer `constructor` with an inherited function.
-- `panel/TableStyleSection.tsx` — the bodies of three decoration sections over
-  a `TableStyleContext {path, controller, capabilities, floor}` of its OWN rather
-  than `ItemPanelProps`: `IneffectiveFillBanner` (its own export, since it
-  renders whether or not `table.style` is declared), `TableStyleBody`
-  (miniature, gallery, zebra, the hide-header switch) and `TableBandBody` (`band: 'header'`
-  — the hidden-header note + the header band's fields — or `'row'`). It assumes
+- `panel/TableStyleSection.tsx` — the 「Table style」 body over a
+  `TableStyleContext {path, controller, capabilities, floor, fontFamilies}` of
+  its OWN rather than `ItemPanelProps`: `IneffectiveFillBanner` (its own export,
+  since it renders whether or not `table.style` is declared) and `TableStyleBody`
+  (miniature, gallery, the zebra switch with — only while banded — the stripe
+  colour swatch at `row.alternateStyle.backgroundColor`, the hide-header switch).
+  `panel/TableBandBody.tsx` is the two band sections' body over the same
+  context (`band: 'header'` — the hidden-header note + the header band's fields,
+  vertical alignment behind `table.header.style.verticalAlign` — or `'row'`, no
+  vertical alignment), each followed by its `AdvancedStyles` (the body band's
+  with the even rows' `alternateStyleNames` list beside its own). It assumes
   nothing about the panel's ~255px column: appearance editing is expected to
   move into a modal sheet, and a test mounts the bodies standalone so that move
   stays a change of render site. The caller gates them on `table.style`; the
@@ -1248,10 +1278,20 @@ conditional rules the next section owns).
   genuinely does inherit the band's background (`apply_row_conditions` overlays
   onto the resolved row style), which this module does NOT express yet — the
   header note carries why.
-- `panel/TableBandFields.tsx` — the four controls one styled band carries
-  (alignment, background, text colour, bold), rendered for the header band, the
-  body band and (from `ColumnForm`) one column's cells: the same four `Style`
-  properties, only the caller's key path differs (`{ctx, path, keys}`). Every
+- `panel/TableBandFields.tsx` — the controls one styled band carries, in Google's
+  format-toolbar order: family + size (`panel/BandTypeFields.tsx`), bold, italic,
+  text colour, background, horizontal alignment, vertical alignment — rendered
+  for the header band, the body band, one column's cells (`ColumnForm`), one
+  row-condition rule, one header group and the table's own 「文字（表全体）」 section: the
+  same `Style` properties, only the caller's key path differs (`{ctx, path,
+  keys}`). The HOST decides what the set includes through one `BandFieldsHost
+  {fontFamilies, verticalAlign, fill}` bundle: vertical alignment only where it
+  reaches the page (header band behind `TABLE_VALIGN_CAPABILITY`, a column, a
+  group — a body cell takes its column's alone, so a body band / rule / table
+  value would change nothing) and no background on the table's own style. The
+  shared parts — `AlignSegment`, `VAlignSegment` (unset = `middle`, via
+  `alignWire`'s `fallback`), `BandToggle`, `HintLabel`, `OriginLine`,
+  `floorHint` — live in `panel/bandFieldParts.tsx`. Every
   control shows its CASCADE-EFFECTIVE state — the toolbar's semantics, so a
   column whose row band is bold shows a CHECKED box — and therefore authors
   through `toolbar/wire`; a control rendering an inherited value over a raw
@@ -1265,55 +1305,72 @@ conditional rules the next section owns).
   `textAlign`/`color`/`fontWeight`
   always resolve and a line apiece would be permanent chrome saying nothing. The
   header band's floor FILL is the deliberate exception and keeps its line —
-  `#ededed` is a grey nobody authored. FOUR hosts render it: the header band,
-  the body band, a column's cells (`ColumnForm`) and one row-condition rule
-  (`RuleControls`). Exports `AlignSegment` for the ONE place that needs the
-  alignment control alone — the column sheet's per-column row
-  (`TableColumnCells`).
-- `panel/RowConditions.tsx` — the body of the table's 「Conditional formatting」
-  section (decoration tab, `table.row.conditionalStyles`-gated; no heading of its
-  own): the rule list shell —
-  add, remove, open-one-at-a-time, and the repoint reconciliation (a
-  stale `equals` is dropped in the SAME batch when the new field reads
-  as boolean). The section never evaluates a predicate; how many rows a
-  rule hits is the engine's answer via the canvas preview. Parts:
-  `RuleCard.tsx` (one rule's card — the always-visible summary line read
-  from the WIRE (`hasEquals`), remove/expand buttons, and the chips or
-  the body), `ruleStyleChips.tsx` (the collapsed card's
-  applied-style chips; colours as swatch dots — the strip is LABELLED as what
-  the rule ADDS and says so outright when it adds nothing, because the opened
-  card answers the different question of what the matching ROWS render, and an
-  unlabelled empty strip beside a card showing checked controls read as a
-  contradiction. "Adds nothing" is a claim, and this panel models FOUR of
-  `Style`'s two dozen properties — so the sentence is decided from the WIRE
-  (`styleKeyCount` + `styleNameCount` on `RowConditionRow`), never from whether
-  any chip was produced. The three ways a rule adds something without earning
-  one of the four: `styleNames`; `fontWeight: normal`, which the Designer
-  itself authors on an un-tick over a bold band (hence the RAW `fontWeight`
-  rather than a `bold` boolean); and the ~20 unmodelled properties, which earn
-  a counted remainder chip), `RuleControls.tsx` (the
-  expanded body: a row-scope `FieldPicker` + value control, then the SHARED
-  `TableBandFields` at the rule entry's `style.*` over `ruleContext` — a rule is
-  one more layer over the body band, so it gets the same four controls, the same
-  cascade-effective display and the same minimal-wire ops rather than a fourth
-  copy of any of them; `styleNames` reported, not edited). It takes the entry
-  PATH, not its index: the caller rendered the rule from the list it read, so no
-  range guard is re-proved here — which is why the dedicated rule-style op
-  builder is gone. `ruleInputs.tsx`
-  (its leaf inputs — the value control is enum select / nothing (clean
-  boolean) / free entry, plus the labeled swatch row, which takes an optional
-  origin hint). The free-entry arm is its own `EqualsInput` carrying a
-  `useReseedKey`: the commit never refuses, but `literal()` coerces a numeric
-  field's entry through `Number`, so ` 40.0 ` over an `equals: 40` rule
-  authors 40 and the value in the key does not move.
+  `#ededed` is a grey nobody authored (a header group passes its band fill the
+  same way). SIX hosts render it: the header band, the body band, a column's
+  cells (`ColumnForm`), one row-condition rule (`RuleControls`), one header group
+  (`GroupStyleFields`) and the table (`TableTextSection`). The column sheet's
+  per-column row (`TableColumnCells`) takes `AlignSegment` alone from
+  `bandFieldParts`.
+- `panel/AdvancedStyles.tsx` — the 「名前付きスタイル」 disclosure under a band /
+  rule / group, named after what it holds: its named-style checklist(s) (`StyleNamesPicker` with `keys` naming the
+  wire slot), closed by default; while closed it SAYS how many named styles it
+  holds (`panel.styleNamesToggle.count`, all its lists together), because a style in effect behind a closed
+  door is the question a non-engineer cannot answer. Open state is local UI
+  state. `namesAt(node, keys)` is the own-property, strings-only read.
+- `panel/RowConditions.tsx` — the table's 「Conditional formatting」 section
+  (`TableConditionsSection`, its own `PanelSection` + gate) in Google Sheets'
+  conditional-format sidebar shape: `RowConditionsSection` shows either the rule
+  LIST or ONE rule's view in its place (the open index is local UI state; an
+  index an undo took away shows the list). Its inputs: path, controller, floor,
+  the raw entries, the row-scope `options`, and one `host {fontFamilies, params,
+  dataKey}` bundle. Add appends a rule as ONE op and opens it; remove is on the
+  list row. The section never evaluates a predicate — how many rows a rule hits
+  is the canvas preview's answer. Parts:
+  - `RuleCard.tsx` — one LIST row: the sentence (`ruleSummary.ts`, shared with
+    the view's heading: when … is …, is yes, is no — a boolean `equals: true`
+    reads as yes), the remove button and the applied-style chips
+    (`ruleStyleChips.tsx`: colours as swatch dots, LABELLED as what the rule
+    ADDS, and saying outright when it adds nothing — decided from the WIRE
+    (`styleKeyCount` + `styleNameCount`), never from whether a chip was produced;
+    `fontWeight: normal` and the unmodelled properties earn chips of their own).
+    Pressing the row opens the view.
+  - `RuleControls.tsx` — one rule's VIEW: back button, the sentence, the
+    row-scope `FieldPicker`, the value control, the format presets
+    (`RulePresetGallery.tsx` over `rulePresets.ts`: Sheets' formatting-style
+    samples as "Aa" TILES — pictures, not a text menu, whose names are the tiles'
+    hover bubbles and accessible names; a preset authors its declared keys over
+    a FIXED owned set (`backgroundColor`/`color`/`fontWeight`) and removes the
+    owned keys it does not declare, in ONE `applyAll`; the active tile is
+    `matchRulePreset` over the wire; `Map` lookup), the SHARED `TableBandFields`
+    at the entry's `style.*` over `ruleContext` (no vertical alignment), the
+    rule's `styleNames` in `AdvancedStyles`, and 「完了」. Every edit applies at
+    once, so back and 「完了」 both only return to the list. It takes the entry
+    PATH, not its index.
+  - `ValueControl.tsx` (+ `ValueChips.tsx`) — the value control the picked field
+    earns, SHARED by the rule, `VisibilitySection` and `MarkSection`: a boolean
+    field → yes/no (`ui/Segmented`; yes = no `equals`, no = the boolean
+    `false`), shown only while the wire's `equals` is absent or a boolean
+    (`boolEquals`) — a quoted `"false"` or any other stale value keeps the
+    free-entry arm so it stays visible and clearable; an enum → its values as
+    chips (a select past `MAX_VALUE_CHIPS`); anything else → free entry with a
+    `useReseedKey` (the commit normalises through `equalsLiteral`) plus the
+    sample data's values as chips (`ruleValues.ts` `sampleValues`: bounded rows
+    and chips, own-property walk via `pickerModel`'s `step`, strings and numbers
+    only, a value too long to show whole SKIPPED rather than truncated).
+  - `ruleInputs.tsx` — `SwatchRow`, the labelled colour row the band and rule
+    editors compose.
 - `panel/rowConditionsModel.ts` (pure, READ) — `readRawEntries`/
   `readRowConditions`/`valueFormFor`; a hostile entry still yields a row
   so indices stay true, and a hostile display string is truncated.
   `panel/rowConditionOps.ts` (pure, WRITE) — the op builders. The wire
   is a SEQUENCE, so an edit addresses ONE entry by `[n]` in the PATH and
   touches only its own leaf (a rule the user never opened must not move
-  in the diff); the FIRST rule seeds the list with `putValue`. Numeric
-  fields get NUMBER literals — the engine predicate is type-strict.
+  in the diff); the FIRST rule seeds the list with `putValue`. The `equals`
+  literal follows the FIELD's type through `panel/equalsLiteral.ts` — ONE home
+  for the rule, `visibilityOps` and `markOps`: a number for a numeric field, the
+  boolean for `true`/`false` on a boolean field, else the text — because the
+  engine predicate is type-strict. The three read models carry `boolEquals`
+  (whether `equals` is a boolean literal) for the yes/no control.
 - `panel/VisibilitySection.tsx` — an item's `visible:` presence binding,
   rendered OUTSIDE the content/decoration/placement tabs because it applies to
   every item type and is none of those concerns — and BELOW them, because it is

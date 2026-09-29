@@ -61,6 +61,13 @@ describe('the bound form', () => {
     ).toBe(true);
   });
 
+  it('tells a boolean `equals` from the same text quoted', () => {
+    const off = readMark(read({ type: 'checkbox', data: { key: 'a', equals: false } }), P);
+    const quoted = readMark(read({ type: 'checkbox', data: { key: 'a', equals: 'false' } }), P);
+    expect(off.boolEquals).toBe(true);
+    expect(quoted.boolEquals).toBe(false);
+  });
+
   it('reads a binding with no `equals` as the boolean form', () => {
     const row = readMark(read({ type: 'checkbox', data: { key: 'agreed' } }), P);
     expect(row.hasEquals).toBe(false);

@@ -126,6 +126,7 @@ export function PropertyPanel({
         formatCatalog={formatCatalog}
         floor={floor}
         onSelectPath={onSelectPath}
+        fontFamilies={fontFamilies}
       />
     );
   }

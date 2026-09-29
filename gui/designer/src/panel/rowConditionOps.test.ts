@@ -133,6 +133,11 @@ describe('op builders', () => {
         { op: 'removeKey', path: `${TABLE}.row.conditionalStyles[0]`, keys: ['when', 'equals'] },
       ],
     );
+    // Boolean → boolean with a BOOLEAN equals (the user's "No") → key only: the
+    // new field's yes/no shows it, so it is not stale.
+    expect(
+      repointRuleOps(TABLE, withEquals, 0, 'flagged', 'boolean', [], true, 'false', true),
+    ).toHaveLength(1);
     // Boolean target but no equals → key only.
     expect(repointRuleOps(TABLE, ONE, 0, 'flagged', 'boolean', [], false, '')).toHaveLength(1);
     // A boolean field with a declared enum keeps its enum FORM, so an equals
