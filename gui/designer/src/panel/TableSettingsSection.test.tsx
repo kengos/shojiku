@@ -118,7 +118,7 @@ describe('TableSettingsSection — a table in the flow body', () => {
     expect(field('Header row height').placeholder).toBe('Auto');
     expect(field('Cell padding').placeholder).toBe('4');
     expect(screen.getByRole('combobox', { name: 'When there are 0 rows' })).toBeTruthy();
-    expect(box('Join empty cells to the next one').checked).toBe(false);
+    expect(box('Merge empty cells into the cell on their left').checked).toBe(false);
     expect(box('Continue rows that do not fit on the next page').checked).toBe(true);
     expect(box('Repeat the header row on the next page too').checked).toBe(true);
     expect(box('Do not split the table').checked).toBe(false);
@@ -130,7 +130,7 @@ describe('TableSettingsSection — a table in the flow body', () => {
     fireEvent.click(box('Continue rows that do not fit on the next page'));
     fireEvent.click(box('Repeat the header row on the next page too'));
     fireEvent.click(box('Do not split the table'));
-    fireEvent.click(box('Join empty cells to the next one'));
+    fireEvent.click(box('Merge empty cells into the cell on their left'));
     expect(vi.mocked(controller.apply).mock.calls.map(([op]) => op)).toEqual([
       { op: 'setScalar', path: FLOW, keys: ['autoPageBreak'], value: false },
       { op: 'setScalar', path: FLOW, keys: ['repeatHeader'], value: false },
@@ -250,7 +250,7 @@ describe('TableSettingsSection — a table the engine draws as one block', () =>
     ).toBeNull();
     expect(screen.queryByRole('checkbox', { name: 'Do not split the table' })).toBeNull();
     expect(field('Cell padding')).toBeTruthy();
-    expect(box('Join empty cells to the next one')).toBeTruthy();
+    expect(box('Merge empty cells into the cell on their left')).toBeTruthy();
   });
 
   it('says so for a table directly in an absolute body', () => {
@@ -303,7 +303,9 @@ describe('TableSettingsSection — engine capabilities', () => {
     expect(screen.queryByRole('radio', { name: 'Fixed' })).toBeNull();
     expect(screen.queryByRole('textbox', { name: 'Header row height' })).toBeNull();
     expect(screen.queryByRole('checkbox', { name: 'Do not split the table' })).toBeNull();
-    expect(screen.queryByRole('checkbox', { name: 'Join empty cells to the next one' })).toBeNull();
+    expect(
+      screen.queryByRole('checkbox', { name: 'Merge empty cells into the cell on their left' }),
+    ).toBeNull();
     expect(screen.queryByRole('button', { name: 'Add header group' })).toBeNull();
     // Ungated: they ride on the table itself.
     expect(field('Cell padding')).toBeTruthy();
@@ -321,7 +323,7 @@ describe('TableSettingsSection — engine capabilities', () => {
     });
     expect(screen.getByRole('radio', { name: 'Fixed' })).toBeTruthy();
     expect(box('Do not split the table')).toBeTruthy();
-    expect(box('Join empty cells to the next one')).toBeTruthy();
+    expect(box('Merge empty cells into the cell on their left')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Add header group' })).toBeTruthy();
   });
 });

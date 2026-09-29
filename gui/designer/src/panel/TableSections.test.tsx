@@ -202,22 +202,29 @@ describe('the content tab', () => {
 
   it('explains the merge switch in the empty-data help only when it is offered', () => {
     draw(TABLE, { capabilities: [] });
-    fireEvent.click(screen.getByRole('button', { name: 'About When there is no data' }));
-    expect(screen.queryByText(/Join empty cells to the next one: In a body row/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'About Blanks' }));
+    expect(
+      screen.queryByText(/Merge empty cells into the cell on their left: In a data row/),
+    ).toBeNull();
   });
 
   it('explains the merge switch when it is there', () => {
     draw();
-    fireEvent.click(screen.getByRole('button', { name: 'About When there is no data' }));
-    expect(screen.getByText(/Join empty cells to the next one: In a body row/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'About Blanks' }));
+    expect(
+      screen.getByText(/Merge empty cells into the cell on their left: In a data row/),
+    ).toBeTruthy();
   });
 
   it('no longer carries a `?` of its own on any single switch', () => {
     // Their explanations moved into the section's one `?`.
     draw();
     fireEvent.click(toggle('When the table crosses a page'));
-    fireEvent.click(toggle('When there is no data'));
-    for (const name of ['Do not split the table', 'Join empty cells to the next one']) {
+    fireEvent.click(toggle('Blanks'));
+    for (const name of [
+      'Do not split the table',
+      'Merge empty cells into the cell on their left',
+    ]) {
       const row = screen.getByRole('checkbox', { name }).closest('label')?.parentElement;
       expect(row?.querySelector('button')).toBeNull();
     }

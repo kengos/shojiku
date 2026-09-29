@@ -166,12 +166,19 @@ reddens on the first render.
   spaces (U+00A0); a literal `{key}`-shaped string needs the `{{`
   escape or validation flags it as an unknown binding.
 - Tables: no explicit body cell spanning (colspan) — but a section-heading
-  row ("学歴", "以上") is expressible from the DATA: tag the row
+  row ("学歴") is expressible from the DATA: tag the row
   (`kind: heading`) and style it with `row.conditionalStyles`
   (`when: { key: kind, equals: heading }` — the form-mark predicate, read
   relative to the row), optionally with `mergeEmptyCells: true` so the
-  empty cells merge into one full-width banner. Table grid stroke is one
-  width — no thick-outer/thin-inner.
+  row reads as one full-width banner — which needs the heading in the
+  FIRST column and the rest of the row empty: a value extends right over
+  the empty cells after it, like a spreadsheet merge, and an empty cell
+  with no value to its left stays its own cell. The banner IS the first
+  column's cell, so that column's own `style` (e.g. a `textAlign` for its
+  values) wins over the row style across the whole banner. A closing
+  "以上" row takes the same recipe when it should span the row; left in
+  the last column with the first empty, it stays an ordinary cell. Table
+  grid stroke is one width — no thick-outer/thin-inner.
 - **`table` takes a `box`** — in the flow body it still paginates
   (`box` only narrows/centers it horizontally); in a container / absolute
   body / band it renders as one **bounded** block (no pagination, and

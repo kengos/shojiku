@@ -1,6 +1,6 @@
 //! Table spanning: the `headerGroups` group row (cells spanning
 //! several columns above the labels) and the `mergeEmptyCells` body
-//! transform (empty-cell runs absorbed into their right neighbor).
+//! transform (a value extends right over the empty cells after it).
 
 use shojiku_core::TableItem;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
@@ -98,40 +98,28 @@ impl<'a, 'b> Ctx<'a, 'b> {
     }
 }
 
-/// The `mergeEmptyCells` transform: a run of empty-content cells merges
-/// into the next non-empty cell to its right (which grows leftward);
-/// trailing empties extend the last non-empty cell rightward; an
-/// all-empty row collapses to one full-width cell. Swallowed cells lose
-/// their column `id` placement (there is no cell left to place).
+/// The `mergeEmptyCells` transform, merged the way a spreadsheet merges:
+/// an empty text cell is absorbed by the nearest non-empty cell to its
+/// LEFT, which extends rightward over it. An empty cell with no value to
+/// its left stays its own cell, so a leading run and an all-empty row
+/// draw as authored. Absorbed cells lose their column `id` placement
+/// (there is no cell left to place).
 pub(super) fn merge_empty<'i>(cells: Vec<Cell<'i>>) -> Vec<Cell<'i>> {
     let mut merged: Vec<Cell<'i>> = Vec::with_capacity(cells.len());
-    let mut pending = 0.0;
     for cell in cells {
-        // Only empty TEXT cells merge; qr/image/`cell:` columns always
-        // count as content (their emptiness is a per-row data question).
-        if matches!(&cell.content, CellContent::Text(s) if s.is_empty()) {
-            pending += cell.width;
-            continue;
-        }
-        let mut cell = cell;
-        cell.width += pending;
-        pending = 0.0;
-        merged.push(cell);
-    }
-    match merged.last_mut() {
-        Some(last) => last.width += pending,
-        None => {
-            // Every cell was empty: keep one full-width cell so the row
-            // band and grid still draw. Its content is synthesized and
-            // covers every column, so there is no one column to name.
-            return vec![Cell {
-                width: pending,
-                content: CellContent::Text(String::new()),
-                computed: crate::style::ComputedStyle::default(),
-                id: None,
-                path: CellPath::Synthesized,
-            }];
+        match merged.last_mut() {
+            Some(last) if is_empty_text(&cell) && !is_empty_text(last) => last.width += cell.width,
+            _ => merged.push(cell),
         }
     }
     merged
 }
+
+/// Only an empty TEXT cell is empty here: qr/image/`cell:` columns always
+/// count as content (their emptiness is a per-row data question).
+fn is_empty_text(cell: &Cell<'_>) -> bool {
+    matches!(&cell.content, CellContent::Text(s) if s.is_empty())
+}
+
+#[cfg(test)]
+mod tests;

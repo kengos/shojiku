@@ -1,5 +1,6 @@
 //! Table spanning end to end: the `headerGroups` group row and the
-//! `mergeEmptyCells` body transform (mirrors src `engine/table/span.rs`).
+//! `mergeEmptyCells` body transform, where a value extends right over the
+//! empty cells after it (mirrors src `engine/table/span.rs`).
 
 use crate::common::*;
 
@@ -184,17 +185,16 @@ fn merge_empty_cells_widens_the_heading_cell() {
     let (doc, diags) = span_table(
         "        mergeEmptyCells: true\n",
         json!([
-            { "y": "", "m": "", "d": "学歴" },
+            { "y": "学歴", "m": "", "d": "" },
             { "y": "2016", "m": "4", "d": "入学" }
         ]),
     );
     assert!(diags.is_empty(), "{diags:?}");
-    // The heading row draws NO column separators (one merged cell);
-    // the data row draws 2. Separators are vertical lines.
+    // The heading row draws NO column separators (its first cell extends
+    // right over the two empty ones); the data row draws 2. Separators
+    // are vertical lines.
     let seps = line_shapes(&doc.pages[0]);
     assert_eq!(seps.len(), 2 + 2, "header row + data row separators");
-    // The 学歴 text starts at the row's left edge (plus cell padding),
-    // not at column 3.
     let heading = text_blocks(&doc.pages[0])
         .into_iter()
         .find(|b| b.lines[0].text == "学歴")
@@ -203,13 +203,50 @@ fn merge_empty_cells_widens_the_heading_cell() {
 }
 
 #[test]
-fn all_empty_row_collapses_to_one_full_width_cell() {
+fn a_value_extends_right_over_the_empty_cell_after_it() {
+    let (doc, diags) = span_table(
+        "        mergeEmptyCells: true\n",
+        json!([{ "y": "2026", "m": "", "d": "x" }]),
+    );
+    assert!(diags.is_empty(), "{diags:?}");
+    // `[2026][ ][x]` draws `[2026    ][x]`: the header row separates at
+    // 100 and 180, the body row only at 180 (the start of column 3).
+    let mut seps: Vec<f64> = line_shapes(&doc.pages[0]).iter().map(|l| l.x1).collect();
+    seps.sort_by(f64::total_cmp);
+    assert_eq!(seps, vec![100.0, 180.0, 180.0]);
+    let x = text_blocks(&doc.pages[0])
+        .into_iter()
+        .find(|b| b.lines[0].text == "x")
+        .expect("value");
+    assert!(x.lines[0].x >= 180.0, "x = {}", x.lines[0].x);
+}
+
+#[test]
+fn a_leading_empty_cell_stays_its_own_cell() {
+    let (doc, diags) = span_table(
+        "        mergeEmptyCells: true\n",
+        json!([{ "y": "", "m": "", "d": "学歴" }]),
+    );
+    assert!(diags.is_empty(), "{diags:?}");
+    // No value to their left, so the two empty cells merge into nothing:
+    // the row keeps both separators and 学歴 stays in column 3.
+    assert_eq!(line_shapes(&doc.pages[0]).len(), 2 + 2);
+    let heading = text_blocks(&doc.pages[0])
+        .into_iter()
+        .find(|b| b.lines[0].text == "学歴")
+        .expect("heading");
+    assert!(heading.lines[0].x >= 180.0, "x = {}", heading.lines[0].x);
+}
+
+#[test]
+fn an_all_empty_row_keeps_every_column_cell() {
     let (doc, _) = span_table(
         "        mergeEmptyCells: true\n",
         json!([{ "y": "", "m": "", "d": "" }]),
     );
-    // Header row separators only; the body row has a single cell.
-    assert_eq!(line_shapes(&doc.pages[0]).len(), 2);
+    // Nothing to extend, so the body row draws its separators like the
+    // header row does.
+    assert_eq!(line_shapes(&doc.pages[0]).len(), 2 + 2);
 }
 
 #[test]

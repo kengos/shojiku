@@ -119,10 +119,10 @@ to a YAML node without its own id injection:
 - a table cell → `…items[i].columns[c]` (one box per column per row, so
   the same path recurs per row/page — the GUI groups by path); a
   `headerGroups` cell → `…items[i].headerGroups[g]` (its own authored
-  position, never the leftmost column it spans). The cells layout
-  synthesizes — the trailing header region no group covers, the
-  all-empty `mergeEmptyCells` collapse — are authored nowhere and emit
-  no box: a click there falls through to the table fragment.
+  position, never the leftmost column it spans). The cell layout
+  synthesizes — the trailing header region no group covers — is
+  authored nowhere and emits no box: a click there falls through to the
+  table fragment.
 
 `path` is always present and synthesized from structure alone (never from
 an authored `id:` or data key). `id` is the item's authored `id:` when it

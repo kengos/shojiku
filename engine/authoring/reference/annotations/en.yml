@@ -417,12 +417,14 @@ Item.table.cellPadding: >-
   container cell is inset by its own `cell.box.padding` instead. Negative
   clamps with `invalid_cell_padding`.
 Item.table.mergeEmptyCells: >-
-  Whether a run of empty text cells in a body row merges into the next
-  non-empty cell to its right, so a section-heading row reads as one wide cell
-  with correct rules. Trailing empties extend the last non-empty cell, and an
-  all-empty row becomes one full-width cell. Defaults to false. Swallowed cells
-  lose their column-`id` placement, and QR, image and `cell:` columns never
-  merge.
+  Whether empty text cells in a body row merge the way a spreadsheet merges
+  cells: an empty cell joins the nearest non-empty cell to its left, which
+  extends rightward over it. An empty cell with no value to its left stays its
+  own cell, so a leading run and an all-empty row draw as authored; put a
+  section heading in the first column to have it read as one wide cell. The
+  merged cell is the absorbing column's own, so that column's `style` (its
+  `textAlign` above all) governs the whole merged width. Defaults to false. Absorbed cells lose their column-`id` placement, and QR,
+  image and `cell:` cells always count as content.
 Item.table.style: >-
   The table's own style layer. `borderWidth` is the grid stroke — 0.5 pt by
   default, and 0 removes the grid — while the per-side map form draws an OUTER

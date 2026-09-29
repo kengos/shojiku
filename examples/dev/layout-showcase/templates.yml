@@ -789,7 +789,11 @@ sections:
       # Per-row conditional styles: a row's OWN data selects extra style
       # layers on top of the base and zebra ones. The predicate is the
       # form-mark one (`when: { key, equals? }`), read relative to the row —
-      # with `mergeEmptyCells` the section rows read as full-width banners.
+      # with `mergeEmptyCells` a section row (its heading in the first
+      # column) reads as a full-width banner, while the closing 以上 row,
+      # empty in the first column, keeps that cell of its own. The banner
+      # is the 年 column's own cell, so that column's `textAlign: center`
+      # (which wins over a row style) is what centres it.
       - type: table
         data: { key: roster }
         cellPadding: 5
@@ -819,7 +823,7 @@ sections:
             text: |-
               - type: table
                 data: { key: roster }
-                mergeEmptyCells: true          # empty runs merge → one wide cell
+                mergeEmptyCells: true          # a value spans the empty cells after it
                 row:
                   alternateStyle: { backgroundColor: "#f6f8fa" }   # zebra first
                   conditionalStyles:            # …then whatever the row matches

@@ -1,8 +1,7 @@
 //! `headerGroups` cells in the box index: a group cell is addressed by its
 //! own authored position (`headerGroups[n]`), never as the leftmost column
-//! it spans, and the cells layout synthesizes around it (the trailing
-//! region no group covers, the all-empty `mergeEmptyCells` collapse) are
-//! authored nowhere and so contribute no placement at all.
+//! it spans, and the cell layout synthesizes beside it (the trailing region
+//! no group covers) is authored nowhere and so contributes no placement.
 
 use super::page_boxes;
 use crate::common::*;
@@ -138,28 +137,6 @@ fn the_trailing_region_no_group_covers_emits_no_placement() {
     // Everything on the page: the table fragment, the one group, and the
     // 6 label + 6 body cells. The filler is the only cell drawn without one.
     assert_eq!(paths(&out, 0).len(), 1 + 1 + 12);
-}
-
-#[test]
-fn an_all_empty_collapsed_row_emits_no_cell_placement() {
-    let out = group_table(
-        "        mergeEmptyCells: true\n",
-        600.0,
-        json!([
-            { "a": "", "b": "", "c": "", "d": "", "e": "", "f": "" },
-            { "a": "1", "b": "2", "c": "3", "d": "4", "e": "5", "f": "6" }
-        ]),
-    );
-    // The collapsed row is one synthesized full-width cell covering every
-    // column, so no column may claim it: 6 label cells + the second row's 6.
-    let cells: Vec<_> = paths(&out, 0)
-        .into_iter()
-        .filter(|p| p.contains(".columns["))
-        .collect();
-    assert_eq!(cells.len(), 12);
-    // The table itself stays addressable, so a click on the collapsed row
-    // falls through to the table rather than selecting an arbitrary column.
-    assert!(paths(&out, 0).contains(&"sections.body.items[0]"));
 }
 
 #[test]

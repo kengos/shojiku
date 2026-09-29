@@ -1,8 +1,10 @@
 //! Table entries in the id-addressable box index (the GUI's table
 //! surface): per-page table fragments and per-cell column placements.
-//! `groups` covers the `headerGroups` row's own placements.
+//! `groups` covers the `headerGroups` row's own placements, `merge` the
+//! body cells `mergeEmptyCells` widens.
 
 mod groups;
+mod merge;
 
 use crate::common::*;
 use shojiku_layout::PlacedBox;
