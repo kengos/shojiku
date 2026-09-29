@@ -119,8 +119,9 @@ export function sampleValueFor(
 }
 
 /** One own-property step into a params object (scope keys may themselves be
- * dotted — a nested array group's id). */
-function step(node: unknown, key: string): unknown {
+ * dotted — a nested array group's id). Shared with `ruleValues`, which walks
+ * the same params to a field's sample values. */
+export function step(node: unknown, key: string): unknown {
   let current = node;
   for (const segment of key.split('.')) {
     const rec = record(current);

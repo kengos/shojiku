@@ -34,6 +34,8 @@ export interface CellPanelProps {
   readonly floor?: Readonly<Record<string, unknown>>;
   /** Select another node (a frame's way back to its owner). */
   readonly onSelectPath?: (path: string) => void;
+  /** The host's font families (a column's and a group's format fields). */
+  readonly fontFamilies: readonly string[];
 }
 
 export function CellPanel({
@@ -45,6 +47,7 @@ export function CellPanel({
   formatCatalog,
   floor,
   onSelectPath,
+  fontFamilies,
 }: CellPanelProps) {
   const { t } = useI18n();
   // Cheapest recognizer first: an exact two-segment string match, no read.
@@ -69,6 +72,7 @@ export function CellPanel({
         formatCatalog={formatCatalog}
         floor={floor}
         onSelectPath={onSelectPath}
+        fontFamilies={fontFamilies}
       />
     );
   }
@@ -88,6 +92,7 @@ export function CellPanel({
           group={group}
           groups={rows}
           onSelectPath={onSelectPath}
+          host={{ fontFamilies, capabilities, floor }}
         />
       );
     }

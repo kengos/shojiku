@@ -1,5 +1,5 @@
-// The format toolbar's colour control — text colour for a text item, fill for
-// any other boxed one. The popover itself is the shared `ui/ColorSwatchPicker`;
+// The format toolbar's colour control — text colour for a text item or a table,
+// fill for any other boxed one. The popover itself is the shared `ui/ColorSwatchPicker`;
 // only the op stays here (minimal wire over the cascade), so the picker carries
 // no wire knowledge.
 

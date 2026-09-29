@@ -469,6 +469,7 @@ describe('ColumnForm', () => {
   ) {
     return draw(
       <ColumnForm
+        fontFamilies={[]}
         controller={controller}
         path={COLUMN_PATH}
         column={column}
@@ -792,6 +793,7 @@ describe('column editors — binding scope', () => {
     });
     draw(
       <ColumnForm
+        fontFamilies={[]}
         controller={controller}
         path={columnPath}
         column={{
@@ -827,6 +829,7 @@ describe('column editors — binding scope', () => {
     });
     draw(
       <ColumnForm
+        fontFamilies={[]}
         controller={controller}
         path={columnPath}
         column={{
@@ -863,6 +866,7 @@ describe('column editors — binding scope', () => {
     const controller = makeController({ [TABLE]: SCOPED_TABLE, [columnPath]: {} });
     draw(
       <ColumnForm
+        fontFamilies={[]}
         controller={controller}
         path={columnPath}
         column={{

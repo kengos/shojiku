@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
@@ -6,12 +6,8 @@ import { I18nProvider } from '../i18n/context';
 import { swatchLabel } from '../testkit/swatchLabel';
 import { hasCapability } from './itemPanelProps';
 import { PanelSection } from './PanelSection';
-import {
-  IneffectiveFillBanner,
-  TableBandBody,
-  TableStyleBody,
-  type TableStyleContext,
-} from './TableStyleSection';
+import { TableBandBody } from './TableBandBody';
+import { IneffectiveFillBanner, TableStyleBody, type TableStyleContext } from './TableStyleSection';
 
 const PATH = 'sections.body.items[0]';
 
@@ -73,7 +69,11 @@ function section(
   floor?: Readonly<Record<string, unknown>>,
 ) {
   const controller = makeController(node, rest);
-  draw(<TableStyleSection context={{ path: PATH, controller, capabilities, floor }} />);
+  draw(
+    <TableStyleSection
+      context={{ path: PATH, controller, capabilities, floor, fontFamilies: [] }}
+    />,
+  );
   return controller;
 }
 
@@ -514,5 +514,71 @@ describe('TableStyleSection — the invisible header row', () => {
       );
       cleanup();
     }
+  });
+});
+
+describe('TableStyleSection — the stripe colour and the bands’ named styles', () => {
+  it('shows no stripe swatch while the rows are not banded', () => {
+    section(TABLE);
+    expect(screen.queryByRole('button', { name: 'Band color' })).toBeNull();
+  });
+
+  it('edits the stripe colour beside the switch — the checkbox only seeds it', () => {
+    const controller = section({
+      ...TABLE,
+      row: { alternateStyle: { backgroundColor: '#f6f8fa' } },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Band color' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: swatchLabel('#b91c1c') }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: PATH,
+      keys: ['row', 'alternateStyle', 'backgroundColor'],
+      value: '#b91c1c',
+    });
+  });
+
+  it('gives the header band vertical alignment and the body band none', () => {
+    section(TABLE);
+    openDetail();
+    // Only the header section carries it: a body cell takes its column's alone.
+    expect(screen.getAllByRole('group', { name: 'Vertical alignment' })).toHaveLength(1);
+    cleanup();
+    section(TABLE, ['table.style']);
+    openDetail();
+    expect(screen.queryByRole('group', { name: 'Vertical alignment' })).toBeNull();
+  });
+
+  it('edits the header band’s named styles at `header.styleNames`', () => {
+    const controller = section(TABLE, undefined, { styles: { banner: { fontWeight: 'bold' } } });
+    fireEvent.click(screen.getByRole('button', { name: 'Header row format' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Named styles' }));
+    // Opening it is UI state: nothing reaches the document.
+    expect(controller.apply).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'banner' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setStrings',
+      path: PATH,
+      keys: ['header', 'styleNames'],
+      values: ['banner'],
+    });
+  });
+
+  it('lists the body rows’ and the even rows’ named styles apart, and counts both while closed', () => {
+    const controller = section({
+      ...TABLE,
+      row: { styleNames: ['base'], alternateStyleNames: ['stripe'] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Body row format' }));
+    const more = screen.getByRole('button', { name: 'Named styles (2)' });
+    fireEvent.click(more);
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+    const even = screen.getByRole('group', { name: 'Styles for even rows' });
+    fireEvent.click(within(even).getByRole('checkbox', { name: 'stripe' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: PATH,
+      keys: ['row', 'alternateStyleNames'],
+    });
   });
 });

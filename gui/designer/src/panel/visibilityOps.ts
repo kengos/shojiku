@@ -7,19 +7,13 @@
 //
 // Two rules the wire enforces and this file honours: unset never serializes
 // (clearing `collapse` REMOVES the key rather than writing `false`), and a
-// repoint reconciles a stale `equals` in the same batch — a boolean-form
-// field renders no value control, so a kept `equals` would be invisible AND
-// still override the boolean read.
+// repoint reconciles a stale `equals` in the same batch — a boolean field's
+// control is yes/no, which cannot show the old field's `equals`, so a kept one
+// would be hidden AND still override the boolean read.
 
-import type { Op, ScalarValue, SnippetValue } from '@shojiku/designer-core';
+import type { Op, SnippetValue } from '@shojiku/designer-core';
+import { equalsLiteral } from './equalsLiteral';
 import { equalsGoesStale } from './rowConditionsModel';
-
-/** The display types that mean "the params value is a NUMBER" (the engine's
- * `(type, format)` map collapses currency/percentage/quantity onto number).
- * An `equals` against one of these must be authored as a number literal:
- * the engine's predicate is type-strict, so a quoted `"2"` would never match
- * a numeric 2 — and the user typed digits, not a string. */
-const NUMERIC_TYPES = new Set(['number', 'currency', 'percentage', 'quantity']);
 
 /** Adds a `visible:` binding with no field picked yet. The empty key is
  * HONEST — the engine reports it until a field is chosen — and matches how
@@ -54,6 +48,7 @@ export function repointVisibleOps(
   equals: string,
   documentScoped?: boolean,
   hasScope = false,
+  boolEquals = false,
 ): readonly Op[] {
   const ops: Op[] = [{ op: 'setScalar', path, keys: ['visible', 'key'], value: key }];
   if (documentScoped === true) {
@@ -67,7 +62,7 @@ export function repointVisibleOps(
     // `bindingPickOps` has carried all along.
     ops.push({ op: 'removeKey', path, keys: ['visible', 'scope'] });
   }
-  if (equalsGoesStale(hasEquals, equals, newFieldType, newFieldEnums)) {
+  if (equalsGoesStale(hasEquals, equals, newFieldType, newFieldEnums, boolEquals)) {
     ops.push({ op: 'removeKey', path, keys: ['visible', 'equals'] });
   }
   return ops;
@@ -79,7 +74,12 @@ export function setVisibleEqualsOp(path: string, value: string | null, fieldType
   if (value === null || value === '') {
     return { op: 'removeKey', path, keys: ['visible', 'equals'] };
   }
-  return { op: 'setScalar', path, keys: ['visible', 'equals'], value: literal(value, fieldType) };
+  return {
+    op: 'setScalar',
+    path,
+    keys: ['visible', 'equals'],
+    value: equalsLiteral(value, fieldType),
+  };
 }
 
 /** Turns `collapse` on, or OFF by removing the key. Writing `collapse: false`
@@ -89,16 +89,4 @@ export function setCollapseOp(path: string, collapse: boolean): Op {
   return collapse
     ? { op: 'setScalar', path, keys: ['visible', 'collapse'], value: true }
     : { op: 'removeKey', path, keys: ['visible', 'collapse'] };
-}
-
-/** The typed literal an `equals` should carry: a number for a numeric field
- * (so the type-strict predicate can match), the text verbatim otherwise. An
- * unparseable or non-finite entry stays a string — the engine then warns
- * about the mismatch, which beats authoring `NaN`. */
-function literal(value: string, fieldType: string): ScalarValue {
-  if (!NUMERIC_TYPES.has(fieldType)) {
-    return value;
-  }
-  const parsed = Number(value.trim());
-  return value.trim() !== '' && Number.isFinite(parsed) ? parsed : value;
 }

@@ -27,9 +27,10 @@ import {
   conditionsSummary,
   styleNamesSummary,
   styleSummary,
+  textSummary,
 } from './tableDecorationSummaries';
 import { readTableSettings } from './tableSettingsModel';
-import { bandStyleNames, gridWidthOf, readTableStyle } from './tableStyleModel';
+import { bandStyleNames, gridWidthOf, readBand, readTableStyle } from './tableStyleModel';
 
 function i18nFor(locale: string): SummaryI18n {
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -236,6 +237,7 @@ describe('decoration-tab summaries', () => {
 
   it('band: nothing set, and each authored property', () => {
     expect(bandSummary(en, readTableStyle({}).header, [])).toBe('Not set');
+    expect(bandSummary(en, readTableStyle({}).header, [], true)).toBe('Not set');
     const header = readTableStyle({
       header: {
         style: {
@@ -264,6 +266,42 @@ describe('decoration-tab summaries', () => {
       'Styles zebra and total',
     );
     expect(bandStyleNames({ header: { styleNames: 'x' } }, 'header')).toEqual([]);
+  });
+
+  it('band: the type face, italic and vertical alignment are reported too', () => {
+    const header = readTableStyle({
+      header: {
+        style: { fontFamily: 'noto-sans', fontSize: 9, fontStyle: 'italic', verticalAlign: 'top' },
+      },
+    }).header;
+    expect(bandSummary(en, header, [], true)).toBe('noto-sans · 9pt · Italic · Top');
+    const odd = readTableStyle({
+      row: { style: { fontStyle: 'oblique', verticalAlign: 'baseline', fontSize: '1em' } },
+    }).row;
+    expect(bandSummary(en, odd, [], true)).toBe('1em · oblique · baseline');
+    // The body band offers no vertical alignment, so it does not report one.
+    expect(bandSummary(en, odd, [])).toBe('1em · oblique');
+  });
+
+  it('text: the table’s own type face, weight, colour and alignment, or not set', () => {
+    expect(textSummary(en, readBand({}))).toBe('Not set');
+    expect(
+      textSummary(
+        en,
+        readBand({
+          style: {
+            fontFamily: 'noto-sans',
+            fontSize: '9pt',
+            fontWeight: 'bold',
+            color: '#333333',
+            textAlign: 'right',
+          },
+        }),
+      ),
+    ).toBe('noto-sans · 9pt · Bold · Text #333333 · Right');
+    expect(textSummary(en, readBand({ style: { fontWeight: '900', textAlign: 'justify' } }))).toBe(
+      '900 · justify',
+    );
   });
 
   it('conditions: none, or the rule count', () => {

@@ -101,7 +101,10 @@ resolved style.
   author what the cascade already yields; `normal` appears only as a cascade
   override, never as a default restated. `null` = dispatch nothing.
 - `toolbar/model.ts` — pure toolbar model: `readToolbar` (the
-  selection-context control set keyed off `BORDERABLE_TYPES`) + the op
+  selection-context control set keyed off `BORDERABLE_TYPES`; `text` AND `table`
+  get the text cluster, because a table's own style is what its cells inherit
+  (the same keys as the panel's 「文字（表全体）」 section) and a table fill is never
+  painted; the other boxed types get a fill) + the op
   builders, which are `toolbar/wire`'s decisions aimed at `style.*`;
   `formatContext(…)` — the toolbar's derived-value context built once
   at the root; enum values drift-guarded against `STYLE_FIELDS`.

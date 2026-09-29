@@ -23,6 +23,9 @@ export interface VisibleRow {
   readonly equals: string;
   /** Whether `equals` is authored at all (absent = read the field as a bool). */
   readonly hasEquals: boolean;
+  /** Whether `equals` is authored as a BOOLEAN literal (`true`/`false`) — the
+   * yes/no control's input, which a quoted `"false"` must not light up. */
+  readonly boolEquals: boolean;
   /** Whether `collapse: true` is authored (take the item out of layout). */
   readonly collapse: boolean;
   /** Whether `scope: document` is authored. The panel does not edit it — the
@@ -80,6 +83,7 @@ export function readVisible(read: ReadFn, path: string): VisibleRow | null {
     key: text(visible.key),
     equals: displayScalar(visible.equals),
     hasEquals: visible.equals !== undefined && visible.equals !== null,
+    boolEquals: typeof visible.equals === 'boolean',
     collapse: visible.collapse === true,
     documentScope: visible.scope === 'document',
     hasScope: visible.scope !== undefined,

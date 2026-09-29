@@ -60,8 +60,14 @@ describe('readToolbar applicability', () => {
     expect(model?.colorKey).toBe('backgroundColor');
   });
 
-  it('gives a table and a container the fill color (no typography)', () => {
-    for (const type of ['table', 'container', 'image']) {
+  it('gives a TABLE the text cluster — its own style is what every cell inherits, and a table fill is never painted', () => {
+    const model = readToolbar(readItemView({ type: 'table' }), effOf());
+    expect(model?.typography).toBe(true);
+    expect(model?.colorKey).toBe('color');
+  });
+
+  it('gives a container and an image the fill color (no typography)', () => {
+    for (const type of ['container', 'image']) {
       const model = readToolbar(readItemView({ type }), effOf());
       expect(model, type).not.toBeNull();
       expect(model?.typography, type).toBe(false);

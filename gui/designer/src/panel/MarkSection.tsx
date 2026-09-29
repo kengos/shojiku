@@ -29,7 +29,7 @@ import {
 } from './markOps';
 import { applyPanelOp } from './model';
 import { HelpfulHeading, scopePickerProps } from './panelHelpers';
-import { ValueControl } from './ruleInputs';
+import { ValueControl } from './ValueControl';
 
 /** The three presence states, as one closed vocabulary. `off` is an
  * ellipse's impossible state (it has no `checked:`), so the ellipse simply
@@ -91,6 +91,7 @@ export function MarkSection({ props, chips }: MarkSectionProps) {
         row.equals,
         documentScoped,
         row.hasScope,
+        row.boolEquals,
       ),
     );
   };
@@ -132,9 +133,9 @@ export function MarkSection({ props, chips }: MarkSectionProps) {
             options={options}
             documentOptions={documentOptions}
             scope={row.documentScope ? 'document' : ''}
-            // Repointing can change which controls render (a boolean-form
-            // field has no value control), so a stale `equals` is reconciled
-            // in the SAME batch — one transactional undo step.
+            // Repointing can change which controls render (a boolean field's
+            // yes/no cannot show a text `equals`), so a stale `equals` is
+            // reconciled in the SAME batch — one transactional undo step.
             onCommit={(key) => repoint(key, undefined)}
             // A PICKED row commits with the scope it was offered at. Typing a
             // key never re-scopes: the file's `scope:` stays as authored.

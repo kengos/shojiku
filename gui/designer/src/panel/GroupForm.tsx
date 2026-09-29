@@ -1,10 +1,9 @@
 // The single-group form a canvas header-group selection (`…headerGroups[n]`)
 // opens: the heading label and how many columns it spans — the group identity
-// the user just clicked, without hunting the parent table — and the way to
-// remove it (adding one lives with the table's own settings, since there is no
-// group to select before the first exists). Style editing stays in the YAML
-// for now; a group's fill/border belong with the wider header-row styling
-// surface, not this first editing wave.
+// the user just clicked, without hunting the parent table — its format
+// (`GroupStyleFields`: the table bands' controls at the group's own `style`, and
+// its named styles) and the way to remove it (adding one lives with the table's
+// own settings, since there is no group to select before the first exists).
 
 import type { Op } from '@shojiku/designer-core';
 import { useId } from 'react';
@@ -14,6 +13,7 @@ import { formatList } from '../i18n/format';
 import { BTN_SM, INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
 import { readColumnsView } from './columnsModel';
 import { Field } from './fields';
+import { GroupStyleFields } from './GroupStyleFields';
 import { type GroupRow, groupCoverage, spanOp } from './groupModel';
 import { applyPanelOp, plainTextOp } from './model';
 import { StepperField } from './StepperField';
@@ -38,6 +38,13 @@ export interface GroupFormProps {
   readonly groups: readonly GroupRow[];
   /** Move the selection off the group a removal deletes. */
   readonly onSelectPath?: (path: string) => void;
+  /** What the format part needs from the host: its font families, the engine's
+   * capabilities (the part is gated) and the engine-default floor. */
+  readonly host: {
+    readonly fontFamilies: readonly string[];
+    readonly capabilities?: readonly string[];
+    readonly floor?: Readonly<Record<string, unknown>>;
+  };
 }
 
 export function GroupForm({
@@ -48,6 +55,7 @@ export function GroupForm({
   group,
   groups,
   onSelectPath,
+  host,
 }: GroupFormProps) {
   const { t, locale } = useI18n();
   const columns = readColumnsView(controller.read(tablePath)) ?? [];
@@ -128,6 +136,7 @@ export function GroupForm({
               })}
             </p>
           ) : null}
+          <GroupStyleFields context={{ controller, path, tablePath, ...host }} />
           <button
             type="button"
             className={`${BTN_SM} mt-3`}

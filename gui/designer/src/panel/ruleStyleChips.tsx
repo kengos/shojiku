@@ -9,16 +9,18 @@
 // nothing rendered as absence rather than as an answer.
 //
 // "Adds nothing" is a claim, so it has to be true of EVERY way a rule can add
-// something — and this panel models FOUR of `Style`'s two dozen properties, so
-// the chips are the wrong thing to decide it from. Three ways a rule adds
-// something without earning a chip from the four:
+// something — and the chips model only the properties the rule editor renders
+// (alignment, weight, italic, size, family, fill, colour) out of `Style`'s two
+// dozen, so the chips are the wrong thing to decide it from. Three ways a rule
+// adds something without earning one of those chips:
 //   - `styleNames`, which carries no `style.*` key at all and used to be
 //     reported only inside the OPENED card;
-//   - `fontWeight: normal`, which is what the Designer itself authors when you
-//     un-tick Bold over a band that is bold — a real, deliberate edit that a
-//     `=== 'bold'` boolean cannot tell apart from an unset weight;
-//   - any of the ~20 properties the editor does not render (`fontSize`,
-//     `opacity`, `borderWidth` …), which an externally-authored template
+//   - `fontWeight: normal` (and `fontStyle: normal`), which is what the Designer
+//     itself authors when you un-tick Bold (Italic) over a band that has it — a
+//     real, deliberate edit that a `=== 'bold'` boolean cannot tell apart from
+//     an unset value — so each earns a "not bold" / "not italic" chip;
+//   - any of the properties the editor does not render (`opacity`,
+//     `borderWidth`, `verticalAlign` …), which an externally-authored template
 //     carries as a matter of course.
 // So the sentence is decided from `styleKeyCount` + `styleNameCount` — the
 // WIRE — and the remainder earns a chip of its own rather than vanishing.
@@ -29,6 +31,7 @@ import type { ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import { chipPaint } from '../ui/chipContrast';
 import type { RowConditionRow } from './rowConditionsModel';
+import { lengthText } from './tableContentSummaries';
 
 /** One chip per style property the rule sets. Colors show as a swatch dot (a
  * hex string means nothing to the nontech-pm). */
@@ -43,6 +46,19 @@ export function StyleChips({ rule }: { readonly rule: RowConditionRow }) {
   } else if (rule.fontWeight === 'normal') {
     chips.push(<Chip key="bold" label={t('panel.rowConditions.notBold')} />);
   }
+  if (rule.fontStyle === 'italic') {
+    chips.push(<Chip key="italic" label={t('panel.field.italic')} />);
+  } else if (rule.fontStyle === 'normal') {
+    chips.push(<Chip key="italic" label={t('panel.rowConditions.notItalic')} />);
+  }
+  for (const [key, value] of [
+    ['size', rule.fontSize === '' ? '' : lengthText(rule.fontSize)],
+    ['family', rule.fontFamily],
+  ] as const) {
+    if (value !== '') {
+      chips.push(<Chip key={key} label={value} />);
+    }
+  }
   for (const [key, value, labelKey] of [
     ['bg', rule.backgroundColor, 'panel.field.backgroundColor'],
     ['fg', rule.color, 'panel.field.color'],
@@ -51,11 +67,17 @@ export function StyleChips({ rule }: { readonly rule: RowConditionRow }) {
       chips.push(<Chip key={key} label={t(labelKey)} swatch={value} />);
     }
   }
-  // Every `style` key this panel did NOT turn into a chip above, counted from
-  // the wire rather than guessed from the four it models.
-  const modelled = [rule.textAlign, rule.fontWeight, rule.backgroundColor, rule.color].filter(
-    (value) => value !== '',
-  ).length;
+  // Every `style` key NOT turned into a chip above, counted from the wire
+  // rather than guessed from the properties it models.
+  const modelled = [
+    rule.textAlign,
+    rule.fontWeight,
+    rule.fontStyle,
+    rule.fontSize,
+    rule.fontFamily,
+    rule.backgroundColor,
+    rule.color,
+  ].filter((value) => value !== '').length;
   const other = Math.max(0, rule.styleKeyCount - modelled);
   if (other > 0) {
     chips.push(<Chip key="other" label={t('panel.rowConditions.addsOther', { count: other })} />);

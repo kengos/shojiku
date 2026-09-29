@@ -19,9 +19,18 @@
  * against the engine constant by a drift-guard test. */
 export const TABLE_HEADER_FILL = '#ededed';
 
-/** The four properties a band editor owns. Module-local: it exists to derive the
+/** The properties a band editor owns. Module-local: it exists to derive the
  * type, and nothing outside needs the list itself. */
-const BAND_PROPERTIES = ['textAlign', 'backgroundColor', 'color', 'fontWeight'] as const;
+const BAND_PROPERTIES = [
+  'textAlign',
+  'backgroundColor',
+  'color',
+  'fontWeight',
+  'fontFamily',
+  'fontSize',
+  'fontStyle',
+  'verticalAlign',
+] as const;
 export type BandProperty = (typeof BAND_PROPERTIES)[number];
 
 /** One band's authored values, `''` for anything unset or not a string. */
@@ -41,7 +50,16 @@ export interface TableStyleView {
   readonly hiddenHeader: boolean;
 }
 
-const EMPTY_BAND: BandView = { textAlign: '', backgroundColor: '', color: '', fontWeight: '' };
+const EMPTY_BAND: BandView = {
+  textAlign: '',
+  backgroundColor: '',
+  color: '',
+  fontWeight: '',
+  fontFamily: '',
+  fontSize: '',
+  fontStyle: '',
+  verticalAlign: '',
+};
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -53,7 +71,9 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
-/** One band's four properties out of whatever sits at `<owner>.style`. */
+/** One band's properties out of whatever sits at `<owner>.style` (the table's
+ * own `style` too, read as `readBand(table)`). A size is shown as authored, a
+ * bare number as its numeral. */
 export function readBand(owner: unknown): BandView {
   const style = record(record(owner)?.style);
   if (style === undefined) {
@@ -64,6 +84,10 @@ export function readBand(owner: unknown): BandView {
     backgroundColor: text(style.backgroundColor),
     color: text(style.color),
     fontWeight: text(style.fontWeight),
+    fontFamily: text(style.fontFamily),
+    fontSize: typeof style.fontSize === 'number' ? String(style.fontSize) : text(style.fontSize),
+    fontStyle: text(style.fontStyle),
+    verticalAlign: text(style.verticalAlign),
   };
 }
 

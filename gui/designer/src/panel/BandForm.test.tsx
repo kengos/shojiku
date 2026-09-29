@@ -124,7 +124,13 @@ describe('CellPanel routing', () => {
   function cell(path: string) {
     render(
       <I18nProvider locale="en">
-        <CellPanel controller={makeController(AUTHORED)} path={path} groups={null} params="" />
+        <CellPanel
+          controller={makeController(AUTHORED)}
+          path={path}
+          groups={null}
+          params=""
+          fontFamilies={[]}
+        />
       </I18nProvider>,
     );
   }
@@ -148,6 +154,7 @@ describe('CellPanel routing', () => {
           path="sections.body.items[0].columns[0]"
           groups={null}
           params=""
+          fontFamilies={[]}
         />
       </I18nProvider>,
     );

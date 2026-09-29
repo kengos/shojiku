@@ -178,23 +178,6 @@ export function placeholderOp(path: string, raw: string): Op {
     : { op: 'setScalar', path, keys: ['data', 'placeholder'], value: raw };
 }
 
-/** A styleNames edit: an empty selection clears the key, otherwise writes the
- * list as a flow sequence. */
-export function styleNamesOp(path: string, names: readonly string[]): Op {
-  return names.length === 0
-    ? { op: 'removeKey', path, keys: ['styleNames'] }
-    : { op: 'setStrings', path, keys: ['styleNames'], values: [...names] };
-}
-
-/** Toggle one name in a styleNames selection, preserving order (append on add,
- * drop on remove). */
-export function toggleStyleName(current: readonly string[], name: string, on: boolean): string[] {
-  if (on) {
-    return current.includes(name) ? [...current] : [...current, name];
-  }
-  return current.filter((n) => n !== name);
-}
-
 /** The binding a text carries when it is NOTHING BUT one expression — the case
  * the two content modes can both express, so switching between them need not
  * throw the binding away. Null for mixed text (`{customer.name} 様`), which no

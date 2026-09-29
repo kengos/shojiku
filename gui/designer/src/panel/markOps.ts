@@ -16,18 +16,13 @@
 //      state is what a fresh form is.
 //
 // A repoint reconciles a stale `equals` in the same batch, exactly as
-// `visibilityOps` does: a boolean-form field renders no value control, so a
-// kept `equals` would be invisible AND still override the boolean read.
+// `visibilityOps` does: a boolean field's control is yes/no, which cannot show
+// the old field's `equals`, so a kept one would be hidden AND still override
+// the boolean read.
 
-import type { Op, ScalarValue, SnippetValue } from '@shojiku/designer-core';
+import type { Op, SnippetValue } from '@shojiku/designer-core';
+import { equalsLiteral } from './equalsLiteral';
 import { equalsGoesStale } from './rowConditionsModel';
-
-/** The display types that mean "the params value is a NUMBER" (the engine's
- * `(type, format)` map collapses currency/percentage/quantity onto number).
- * An `equals` against one of these must be authored as a number literal: the
- * engine's predicate is type-strict, so a quoted `"2"` would never match a
- * numeric 2 — and the user typed digits, not a string. */
-const NUMERIC_TYPES = new Set(['number', 'currency', 'percentage', 'quantity']);
 
 /** Switches the mark to its BOUND form: a `data:` with no field picked yet.
  * The empty key is HONEST — the engine reports it until a field is chosen —
@@ -83,6 +78,7 @@ export function repointMarkOps(
   equals: string,
   documentScoped?: boolean,
   hasScope = false,
+  boolEquals = false,
 ): readonly Op[] {
   const ops: Op[] = [{ op: 'setScalar', path, keys: ['data', 'key'], value: key }];
   if (documentScoped === true) {
@@ -96,7 +92,7 @@ export function repointMarkOps(
     // form was wrong for the common case rather than for an edge one.
     ops.push({ op: 'removeKey', path, keys: ['data', 'scope'] });
   }
-  if (equalsGoesStale(hasEquals, equals, newFieldType, newFieldEnums)) {
+  if (equalsGoesStale(hasEquals, equals, newFieldType, newFieldEnums, boolEquals)) {
     ops.push({ op: 'removeKey', path, keys: ['data', 'equals'] });
   }
   return ops;
@@ -108,17 +104,10 @@ export function setMarkEqualsOp(path: string, value: string | null, fieldType = 
   if (value === null || value === '') {
     return { op: 'removeKey', path, keys: ['data', 'equals'] };
   }
-  return { op: 'setScalar', path, keys: ['data', 'equals'], value: literal(value, fieldType) };
-}
-
-/** The typed literal an `equals` should carry: a number for a numeric field
- * (so the type-strict predicate can match), the text verbatim otherwise. An
- * unparseable or non-finite entry stays a string — the engine then warns about
- * the mismatch, which beats authoring `NaN`. */
-function literal(value: string, fieldType: string): ScalarValue {
-  if (!NUMERIC_TYPES.has(fieldType)) {
-    return value;
-  }
-  const parsed = Number(value.trim());
-  return value.trim() !== '' && Number.isFinite(parsed) ? parsed : value;
+  return {
+    op: 'setScalar',
+    path,
+    keys: ['data', 'equals'],
+    value: equalsLiteral(value, fieldType),
+  };
 }

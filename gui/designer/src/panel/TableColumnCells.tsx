@@ -11,8 +11,8 @@
 import type { Op } from '@shojiku/designer-core';
 import type { EffectiveValue } from '../toolbar/effective';
 import { alignedValue, alignWire } from '../toolbar/wire';
+import { AlignSegment } from './bandFieldParts';
 import type { ColumnRow } from './columnsModel';
-import { AlignSegment } from './TableBandFields';
 import type { ColumnHeaderDrag } from './useColumnHeaderDrag';
 
 /** A column's own alignment key path, under the column itself. */

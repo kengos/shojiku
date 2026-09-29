@@ -29,8 +29,13 @@ export type AlignValue = (typeof ALIGN_VALUES)[number];
 export const BOLD_VALUE = 'bold';
 export const ITALIC_VALUE = 'italic';
 
-/** The style key a type's color control writes: text items color their glyphs
- * (`color`), rect items fill their box (`backgroundColor`). */
+/** The types whose toolbar is the TEXT cluster (font, size, B, I, text colour,
+ * alignment) rather than a fill. */
+const TYPOGRAPHY_TYPES: ReadonlySet<string> = new Set(['text', 'table']);
+
+/** The style key a type's color control writes: text items and tables color
+ * their glyphs (`color`, which a table's cells inherit), the other boxed items
+ * fill their box (`backgroundColor`). */
 export type ColorKey = 'color' | 'backgroundColor';
 
 /** The toolbar's view of the selected item — which controls apply and the
@@ -59,14 +64,17 @@ export interface ToolbarModel {
 
 /** Derive the toolbar model from an item view + the effective resolution.
  * Mirrors the panel's styled-type set (`BORDERABLE_TYPES`): `text` gets
- * typography + text color; the other boxed types (`rect`/`container`/`table`/
- * `image`/`qr_code`) get fill color; all get the style picker and the border
- * control. Any other type (or `null`) → no controls. */
+ * typography + text color, and so does a `table` — its own style's text
+ * properties are what every cell inherits (the panel's 「文字」 section writes the
+ * same keys), and a table's FILL is never painted, so offering one would author
+ * a key that does nothing. The other boxed types (`rect`/`container`/`image`/
+ * `qr_code`) get fill color; all get the style picker and the border control.
+ * Any other type (or `null`) → no controls. */
 export function readToolbar(view: ItemView | null, eff: EffectiveStyles): ToolbarModel | null {
   if (view === null || !BORDERABLE_TYPES.has(view.type)) {
     return null;
   }
-  const typography = view.type === 'text';
+  const typography = TYPOGRAPHY_TYPES.has(view.type);
   return {
     typography,
     colorKey: typography ? 'color' : 'backgroundColor',

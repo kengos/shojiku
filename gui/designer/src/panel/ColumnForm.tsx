@@ -22,10 +22,11 @@ import { BTN_SM, INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
 import { ColumnBindingFields } from './ColumnBindingFields';
 import type { ColumnRow } from './columnsModel';
 import { Field, TextField } from './fields';
+import { hasCapability } from './itemPanelProps';
 import { registryNames } from './itemView';
 import { applyPanelOp, lengthOp, plainTextOp } from './model';
 import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
-import { TableBandFields } from './TableBandFields';
+import { TABLE_VALIGN_CAPABILITY, TableBandFields } from './TableBandFields';
 
 /** A column's own cell style sits at `style.*` under the column itself. */
 const COLUMN_STYLE_KEYS = ['style'] as const;
@@ -47,6 +48,8 @@ export interface ColumnFormProps {
   readonly floor?: Readonly<Record<string, unknown>>;
   /** Select another node — a `cell:` column's jump into its cell frame. */
   readonly onSelectPath?: (path: string) => void;
+  /** The host's font families — the cell style's family suggestions. */
+  readonly fontFamilies: readonly string[];
 }
 
 export function ColumnForm({
@@ -59,6 +62,7 @@ export function ColumnForm({
   formatCatalog = null,
   floor,
   onSelectPath,
+  fontFamilies,
 }: ColumnFormProps) {
   const { t } = useI18n();
   const scope = bindingScopeFor(controller.read, path);
@@ -123,6 +127,11 @@ export function ColumnForm({
             ctx={cascadeContext(controller.read, path, floor)}
             path={path}
             keys={COLUMN_STYLE_KEYS}
+            host={{
+              fontFamilies,
+              verticalAlign: hasCapability(capabilities, TABLE_VALIGN_CAPABILITY),
+              fill: true,
+            }}
             onOp={(op) => applyPanelOp(controller, op)}
           />
           {/* Not decoration trivia: a column's own alignment also wins for its

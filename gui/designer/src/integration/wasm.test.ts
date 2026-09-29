@@ -63,7 +63,10 @@ import { PAGE_SIZES } from '../panel/pageSizes';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
 import { fillOrderOp, gridCountOp, gridGapOp, newPageOp } from '../panel/repeatGrid';
+import { addRuleOp, setRuleEqualsOp } from '../panel/rowConditionOps';
+import { rulePresetOps } from '../panel/rulePresets';
 import { readShapeStyle, strokeWidthOp } from '../panel/shapeStyle';
+import { styleNamesOp } from '../panel/styleNamesOps';
 import { deleteStyleOps, renameStyleOps } from '../panel/styleRefOps';
 import { readTableSettings } from '../panel/tableSettingsModel';
 import {
@@ -75,6 +78,7 @@ import {
   rowLengthOp,
   rowModeOps,
 } from '../panel/tableSettingsOps';
+import { bandStyleOp } from '../panel/tableStyleOps';
 import { extendParams } from '../sample/generate';
 import { buildStyleUsage } from '../styles/usage';
 import { commitOps } from '../text/declCommit';
@@ -3112,5 +3116,79 @@ describe('table row and page settings against the real engine (receipt-us)', () 
     expect(
       removed.inspect?.boxes.pages[0]?.some((box) => box.path === `${table}.headerGroups[0]`),
     ).toBe(false);
+  });
+});
+
+// The table's STYLE wire, authored through the panel's own op builders — band
+// named styles, the even rows' list and stripe colour, a header group's own
+// style, the band controls past the original four, a rule preset and a rule's
+// `equals: false` — and handed to the real engine, which must parse all of it
+// and warn about none. Neither side's suite executes this join on its own.
+describe('table style edits against the real engine (receipt-us)', () => {
+  it('renders every style key the panel writes, warning-free', async () => {
+    const editor = Editor.create(template());
+    const bodyItems = editor.read('sections.body.items') as readonly { type?: string }[];
+    const table = `sections.body.items[${bodyItems.findIndex((item) => item?.type === 'table')}]`;
+    // A boolean on every row, so `equals: false` has something to match —
+    // and a row without it, which must stay silent.
+    const data = JSON.parse(params()) as { items: Record<string, unknown>[] };
+    data.items = data.items.map((row, index) =>
+      index === 0 ? row : { ...row, void: index % 2 === 0 },
+    );
+    const rowParams = JSON.stringify(data);
+
+    const before = await transport.renderRaw(editor.text(), rowParams, undefined, { scale: 1 });
+    expect(before.diagnostics.items.some((d) => d.code === 'parse_error')).toBe(false);
+    const beforeCodes = new Set(before.diagnostics.items.map((d) => d.code));
+
+    const columnCount = (editor.read(`${table}.columns`) as readonly unknown[]).length;
+    const setup: Op[] = [
+      { op: 'setScalar', keys: ['styles', 'banner', 'fontWeight'], value: 'bold' },
+      addHeaderGroupOp(table, readGroupsView(editor.read(table)) ?? [], columnCount, 'Group') as Op,
+    ];
+    expect(editor.applyAll(setup).ok).toBe(true);
+    const group = `${table}.headerGroups[0]`;
+    const style: Op[] = [
+      styleNamesOp(table, ['banner'], ['header', 'styleNames']),
+      styleNamesOp(table, ['banner'], ['row', 'styleNames']),
+      styleNamesOp(table, ['banner'], ['row', 'alternateStyleNames']),
+      bandStyleOp(table, 'zebra', 'backgroundColor', '#e8eef6'),
+      { op: 'setScalar', path: table, keys: ['header', 'style', 'verticalAlign'], value: 'top' },
+      { op: 'setScalar', path: table, keys: ['header', 'style', 'fontFamily'], value: 'noto-sans' },
+      { op: 'setScalar', path: table, keys: ['row', 'style', 'fontStyle'], value: 'italic' },
+      { op: 'setScalar', path: table, keys: ['row', 'style', 'fontSize'], value: 9 },
+      { op: 'setScalar', path: table, keys: ['style', 'color'], value: '#333333' },
+      { op: 'setScalar', path: group, keys: ['style', 'backgroundColor'], value: '#dbe7ff' },
+      { op: 'setScalar', path: group, keys: ['style', 'verticalAlign'], value: 'bottom' },
+      styleNamesOp(group, ['banner']),
+    ];
+    expect(editor.applyAll(style).ok).toBe(true);
+    const entries = () => (editor.read(`${table}.row.conditionalStyles`) as unknown[]) ?? [];
+    expect(editor.apply(addRuleOp(table, [])).ok).toBe(true);
+    const rule = `${table}.row.conditionalStyles[0]`;
+    const ruleOps: Op[] = [
+      { op: 'setScalar', path: rule, keys: ['when', 'key'], value: 'void' },
+      setRuleEqualsOp(table, entries(), 0, 'false', 'boolean') as Op,
+      ...rulePresetOps(rule, editor.read(rule), 'red'),
+      styleNamesOp(rule, ['banner']),
+    ];
+    expect(editor.applyAll(ruleOps).ok).toBe(true);
+    // The boolean literal, not the text: the engine's predicate is type-strict.
+    expect(editor.text()).toMatch(/equals:\s*false\s*$/m);
+
+    const after = await transport.renderRaw(editor.text(), rowParams, undefined, { scale: 1 });
+    expect(after.ok).toBe(true);
+    expect(after.diagnostics.items.filter((d) => !beforeCodes.has(d.code))).toEqual([]);
+    expect(after.inspect?.boxes.pages[0]?.some((box) => box.path === group)).toBe(true);
+
+    // The positive control for the set-difference above: a family the engine
+    // cannot resolve DOES surface as a new diagnostic, so the empty diff is a
+    // measurement of the font key rather than a blind spot.
+    const header = ['header', 'style', 'fontFamily'];
+    expect(
+      editor.apply({ op: 'setScalar', path: table, keys: header, value: 'no-such-family' }).ok,
+    ).toBe(true);
+    const unknown = await transport.renderRaw(editor.text(), rowParams, undefined, { scale: 1 });
+    expect(unknown.diagnostics.items.filter((d) => !beforeCodes.has(d.code))).not.toEqual([]);
   });
 });

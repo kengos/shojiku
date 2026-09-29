@@ -4,10 +4,19 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { readBand, readTableStyle, TABLE_HEADER_FILL } from './tableStyleModel';
 
-const EMPTY = { textAlign: '', backgroundColor: '', color: '', fontWeight: '' };
+const EMPTY = {
+  textAlign: '',
+  backgroundColor: '',
+  color: '',
+  fontWeight: '',
+  fontFamily: '',
+  fontSize: '',
+  fontStyle: '',
+  verticalAlign: '',
+};
 
 describe('readBand', () => {
-  it('reads a band’s four properties out of its style map', () => {
+  it('reads a band’s properties out of its style map', () => {
     expect(
       readBand({
         style: {
@@ -15,6 +24,10 @@ describe('readBand', () => {
           backgroundColor: '#dbe7ff',
           color: '#222222',
           fontWeight: 'bold',
+          fontFamily: 'noto-sans',
+          fontSize: '9pt',
+          fontStyle: 'italic',
+          verticalAlign: 'top',
         },
       }),
     ).toEqual({
@@ -22,7 +35,17 @@ describe('readBand', () => {
       backgroundColor: '#dbe7ff',
       color: '#222222',
       fontWeight: 'bold',
+      fontFamily: 'noto-sans',
+      fontSize: '9pt',
+      fontStyle: 'italic',
+      verticalAlign: 'top',
     });
+  });
+
+  it('shows a bare numeric size as its numeral, and drops a non-finite one', () => {
+    expect(readBand({ style: { fontSize: 9 } }).fontSize).toBe('9');
+    expect(readBand({ style: { fontSize: 9.5 } }).fontSize).toBe('9.5');
+    expect(readBand({ style: { fontSize: { pt: 9 } } }).fontSize).toBe('');
   });
 
   it('degrades a band that is not a map to unset, whatever the document carries', () => {

@@ -1239,7 +1239,7 @@ map ([gui-designer](../code-map/gui-designer.md) /
   origin badge (default / style "name" / inherited) and — when that origin is
   AUTHORED in the document — a jump into the
   document-settings view. Where a surface is DENSE — the table's band and
-  per-column style editors, four controls in a ~255px column, three of them
+  per-column style editors, eight controls in a ~255px column, most of them
   always resolving to something — the badge LINE is reserved for a value the
   DOCUMENT made and the engine floor carries its origin as the hover bubble
   instead; a line apiece for `left` / `#000000` / `normal` would be permanent

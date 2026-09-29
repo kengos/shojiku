@@ -11,15 +11,9 @@
 // with `putValue`. (2) The document is untrusted: an out-of-range index
 // refuses rather than writing.
 
-import type { Op, ScalarValue, SnippetValue } from '@shojiku/designer-core';
+import type { Op, SnippetValue } from '@shojiku/designer-core';
+import { equalsLiteral } from './equalsLiteral';
 import { equalsGoesStale } from './rowConditionsModel';
-
-/** The display types that mean "the params value is a NUMBER" (the engine's
- * `(type, format)` map collapses currency/percentage/quantity onto number).
- * An `equals` against one of these must be authored as a number literal:
- * the engine's predicate is type-strict, so a quoted `"2"` would never match
- * a numeric 2 — and the user typed digits, not a string. */
-const NUMERIC_TYPES = new Set(['number', 'currency', 'percentage', 'quantity']);
 
 /** The structural path of one entry — the op layer addresses a sequence
  * element by `[n]` in the PATH (the map-key `keys` cannot), which is what
@@ -85,9 +79,9 @@ export function setRuleKeyOp(
   return { op: 'setScalar', path: entryPath(tablePath, index), keys: ['when', 'key'], value: key };
 }
 
-/** Repoints a rule at another field, reconciling a stale `equals`: a
- * boolean-form field renders no value control, so a kept `equals` would be
- * invisible AND still override the boolean read on the wire. Returns the op
+/** Repoints a rule at another field, reconciling a stale `equals`: a boolean
+ * field's yes/no cannot show the old field's `equals`, so a kept one would be
+ * hidden AND still override the boolean read on the wire. Returns the op
  * batch to apply transactionally (one undo step); `[]` for an out-of-range
  * index. */
 export function repointRuleOps(
@@ -99,12 +93,13 @@ export function repointRuleOps(
   newFieldEnums: readonly string[],
   hasEquals: boolean,
   equals: string,
+  boolEquals = false,
 ): readonly Op[] {
   const keyOp = setRuleKeyOp(tablePath, entries, index, key);
   if (keyOp === null) {
     return [];
   }
-  if (!equalsGoesStale(hasEquals, equals, newFieldType, newFieldEnums)) {
+  if (!equalsGoesStale(hasEquals, equals, newFieldType, newFieldEnums, boolEquals)) {
     return [keyOp];
   }
   // `keyOp` being non-null proves the index is in range, so the removal
@@ -128,17 +123,10 @@ export function setRuleEqualsOp(
   if (value === null || value === '') {
     return { op: 'removeKey', path, keys: ['when', 'equals'] };
   }
-  return { op: 'setScalar', path, keys: ['when', 'equals'], value: literal(value, fieldType) };
-}
-
-/** The typed literal an `equals` should carry: a number for a numeric field
- * (so the type-strict predicate can match), the text verbatim otherwise. An
- * unparseable or non-finite entry stays a string — the engine then warns
- * about the mismatch, which beats authoring `NaN`. */
-function literal(value: string, fieldType: string): ScalarValue {
-  if (!NUMERIC_TYPES.has(fieldType)) {
-    return value;
-  }
-  const parsed = Number(value.trim());
-  return value.trim() !== '' && Number.isFinite(parsed) ? parsed : value;
+  return {
+    op: 'setScalar',
+    path,
+    keys: ['when', 'equals'],
+    value: equalsLiteral(value, fieldType),
+  };
 }

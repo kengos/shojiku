@@ -1,7 +1,8 @@
 // The format toolbar's typography cluster — gdoc's font group: family
-// dropdown, `− size +`, then bold/italic behind a thin rule. Rendered only for
-// a text target (the other boxed types get fill + border only), so the whole
-// group is one unit the shell shows or hides.
+// dropdown, `− size +`, then bold/italic behind a thin rule. Rendered for a
+// text target and a table (whose own style every cell inherits); the other
+// boxed types get fill + border only, so the whole group is one unit the shell
+// shows or hides.
 //
 // The size field is a change-guarded commit-on-blur input flanked by ±1pt
 // steppers; the steppers act on a PLAIN-NUMBER effective size only (a unit
