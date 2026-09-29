@@ -299,8 +299,8 @@ Wire types stay in core; content measurement stays in layout.
   per cell serving BOTH the diagnostics descent and the box-index path
   (`segment()`): `Column(n)` → `columns[n]`, `Group(n)` → a
   `headerGroups` cell's own `headerGroups[n]`, and `Synthesized` (the
-  uncovered trailing header cell, the all-empty collapse) → no segment,
-  so no box and diagnostics stay on the table. The row passes that
+  uncovered trailing header cell) → no segment, so no box and diagnostics
+  stay on the table. The row passes that
   descend per cell (`measure`, `row_atom`'s draw loop) share
   `segment()`; prepare's binding resolve descends into `columns[{col}]`
   itself — and `row_atom`; vertical text cells fill via
@@ -311,7 +311,9 @@ Wire types stay in core; content measurement stays in layout.
   `table/rows/cell.rs` (`cell:` columns:
   `measure_cell`/`cell_container` — the cell fills the column rectangle;
   `cellPadding` does not inset it),
-  `table/span.rs` (spanning header groups + `merge_empty`; a
+  `table/span.rs` (spanning header groups + `merge_empty`, the
+  spreadsheet-style merge: a value extends right over the empty cells
+  after it, unit-tested in `span/tests.rs`; a
   `header.visuallyHidden` table hides this row too — it is header chrome
   that repeats with the labels, and its cell placements are stamped
   `hidden` alongside the label row's),
@@ -491,7 +493,7 @@ Modules mirror the src module they target: `atoms`/`band`/`bindings/`
 (carriers/scopes/precedence)/`char_grid/`/`container`/`flex/`/`flow`
 (+`page_break`)/`grid/` (+auto/fr/spans/track_width)/`link/`/`repeat/`/`repeat_flow/`/`table/`
 (geom/rows/style/boxes (+`boxes/groups` — the `headerGroups` box
-addressing)/vertical)/`text` (+ overflow/paginate/ (+decoration, slack)/glyphs/
+addressing, `boxes/merge` — the `mergeEmptyCells` widths)/vertical)/`text` (+ overflow/paginate/ (+decoration, slack)/glyphs/
 decoration/rich/line_break/spacing_trim/hanging/ruby/ and the vertical
 family: vertical, vertical_degrade, vertical_rich, vertical_knobs/,
 vertical_combine/, vertical_ruby/, vertical_paginate/)/`style`/

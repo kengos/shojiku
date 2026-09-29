@@ -908,8 +908,11 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   `verticalAlign` is honored on a group, on `header.style`, or on a column
   for its own label, the column's winning over the header's —
   `table.header.style.verticalAlign`) and opt-in `mergeEmptyCells`
-  (empty text-cell runs merge into their right neighbor — the rirekisho
-  education/employment heading-row case; qr/image cells never merge).
+  (merged like a spreadsheet: an empty text cell joins the nearest value
+  to its left, which extends rightward; an empty cell with no value to its
+  left stays its own cell — the rirekisho education/employment
+  heading-row case, heading in the first column; qr/image cells always
+  count as content).
   Explicit body rowspan/colspan is deliberately out of scope: rows are
   data-driven.
 - **A visually hidden header row**: `header.visuallyHidden` paints nothing —
@@ -1176,10 +1179,10 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   authored id — so a Designer canvas hit-tests and correlates every node
   back to YAML without GUI-side ephemeral-id injection. A table cell
   layout synthesizes without an authored home (the trailing header
-  region no `headerGroups` entry covers, the all-empty `mergeEmptyCells`
-  collapse) emits no box — a click falls through to the table fragment. An authored `id:`
-  becomes an optional lookup alias on top (geometry is identical with or
-  without it). The renderer contract never sees the sidecar. Capability
+  region no `headerGroups` entry covers) emits no box — a click falls
+  through to the table fragment. An authored `id:` becomes an optional
+  lookup alias on top (geometry is identical with or without it). The
+  renderer contract never sees the sidecar. Capability
   key `inspect.boxes.all_items`.
 - **A placement says whether a link will land on it** (`linked: true`), so a
   canvas can show WHERE the hyperlinks are instead of asking the author to
@@ -1243,10 +1246,9 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   (`…headerGroups[g]` — the same address its box-index placement
   carries, so boxes and diagnostics can never disagree; decided when the
   box index stopped addressing group cells as their leftmost column). A
-  cell layout synthesizes (the uncovered trailing header region, the
-  all-empty `mergeEmptyCells` collapse) is authored nowhere and stays on
-  the table item, as do problems about the `headerGroups` list itself
-  (`header_group_span_clamped`). Capability key:
+  cell layout synthesizes (the uncovered trailing header region) is
+  authored nowhere and stays on the table item, as do problems about the
+  `headerGroups` list itself (`header_group_span_clamped`). Capability key:
   `diagnostics.layout.path`.
 
 ### Images (`engine/image`)

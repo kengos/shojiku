@@ -38,7 +38,7 @@ reject unknown keys, and every optional scalar is omitted-when-unset
   #   borderStyle sides apply to that frame (double / dashed / dotted
   #   included); borderRadius is refused on a table (a ruled grid cannot
   #   meet a curve) and warns border_radius_ignored
-  mergeEmptyCells: false            # true: empty-cell runs merge rightward
+  mergeEmptyCells: false            # true: a value extends over the empty cells to its right
   headerGroups:                     # optional spanning row above the labels
     - { label: 期間, span: 2 }
     - { label: 内容, span: 1, style: { fontWeight: bold } }
@@ -86,14 +86,21 @@ reject unknown keys, and every optional scalar is omitted-when-unset
   paint over the group row's band so each group can be tinted
   independently. A group that authors neither keeps the band's default
   fill (`#ededed`, or `header.style.backgroundColor` when set).
-- **`mergeEmptyCells: true`**: in a body row, a run of empty text cells
-  merges into the next non-empty cell to its right (trailing empties
-  extend the last non-empty cell; an all-empty row is one full-width
-  cell) — section-heading rows (a rirekisho's education/employment
-  headings) read as one wide
-  cell with correct rules. Swallowed cells lose their column-`id`
-  placement; qr/image/`cell:` columns never merge. Explicit body rowspan/colspan
-  stays out of scope (rows are data-driven).
+- **`mergeEmptyCells: true`**: in a body row, empty text cells merge the
+  way a spreadsheet merges cells — an empty cell joins the nearest
+  non-empty cell to its **left**, which extends rightward over it, so
+  `[A][ ][B]` draws as `[A    ][B]` and `[A][B][ ][ ]` as `[A][B      ]`.
+  An empty cell with no value to its left stays its own cell: `[ ][A]`
+  keeps both cells, and an all-empty row keeps every column's cell. A
+  section-heading row (a rirekisho's education/employment headings) puts
+  its heading in the **first** column and leaves the rest empty, and reads
+  as one wide cell with correct rules. The merged cell is the absorbing
+  column's own cell, so that column's `style` (its `textAlign` above
+  all) governs the whole merged width — a first column that aligns its
+  own values aligns the merged heading too. Absorbed cells lose their
+  column-`id` placement; qr/image/`cell:` cells always count as content.
+  Explicit body rowspan/colspan stays out of scope (rows are
+  data-driven).
 - **`type: qr_code` columns** encode the bound value at layout time (the
   same caps and diagnostics as the `qr_code` item); the code square
   scales to the row height minus the cell padding, centered.
@@ -268,7 +275,8 @@ row:
   band. A column's own `style` still wins for its own cell.
 - The **header row is never conditioned** (it is chrome, not a bound
   element), and `mergeEmptyCells` composes: a merged full-width cell
-  takes the conditional alignment across the whole row.
+  takes the conditional alignment across the whole row, unless the
+  absorbing column authors its own (a column's own `style` wins).
 - At most **16 entries** per table (`too_many_row_conditions`; extras
   are ignored). Every body row evaluates every entry.
 
@@ -320,9 +328,10 @@ id-carrying or not; a `cell:` column adds its container
 addressed by its own authored position (`…items[i].headerGroups[g]`,
 repeated with the header on every page), never as the leftmost column it
 spans — a group click and a column click are different selections. The
-cells layout synthesizes (the trailing region no group covers, the
-all-empty `mergeEmptyCells` collapse) are authored nowhere and emit no
-box, so a click there falls through to the table fragment. A bounded
+cell layout synthesizes (the trailing header region no group covers) is
+authored nowhere and emits no box, so a click there falls through to the
+table fragment. A body cell `mergeEmptyCells` widens keeps its own
+column's address, as one box across the columns it covers. A bounded
 (`box`-placed) table never paginates, so it
 is a single rectangle. An authored `id:` on the table or a column adds a
 stable lookup alias on top of the path (a group authors no `id:`).

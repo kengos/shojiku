@@ -137,7 +137,8 @@ pub(super) const KEYS: &[&str] = &[
     // staple. Older engines parse-reject the key.
     "line.style",
     // Spanning: grid children columnSpan/rowSpan; table headerGroups
-    // (spanning group row) + mergeEmptyCells (empty runs merge right).
+    // (spanning group row) + mergeEmptyCells (a value extends right over
+    // the empty cells after it).
     "grid.span",
     "table.headerGroups",
     "table.mergeEmptyCells",

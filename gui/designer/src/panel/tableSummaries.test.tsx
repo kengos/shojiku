@@ -61,7 +61,7 @@ describe('the shared helpers', () => {
   it('leads a control help line with the control’s own label, per locale', () => {
     expect(
       controlHelp(en, 'panel.tableSettings.mergeEmptyCells', 'panel.tableSection.empty.helpMerge'),
-    ).toMatch(/^Join empty cells to the next one: In a body row/);
+    ).toMatch(/^Merge empty cells into the cell on their left: In a data row/);
     expect(
       controlHelp(ja, 'panel.tableSettings.keepTogether', 'panel.tableSection.pages.helpKeep'),
     ).toMatch(/^表を途中で分けない：/);
@@ -128,11 +128,11 @@ describe('content-tab summaries', () => {
 
   it('empty: the zero-row choice and the merge switch', () => {
     expect(emptySummary(en, settings({}), true)).toBe(
-      '0 rows: Hide the whole table · Empty cells: not joined',
+      '0 rows: Hide the whole table · Empty cells: not merged',
     );
     const view = settings({ emptyBehavior: 'reserve', mergeEmptyCells: true });
     expect(emptySummary(en, view, true)).toBe(
-      '0 rows: Show the header row only · Empty cells: joined',
+      '0 rows: Show the header row only · Empty cells: merged left',
     );
   });
 

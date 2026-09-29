@@ -67,9 +67,11 @@ pub struct TableItem {
         skip_serializing_if = "Vec::is_empty"
     )]
     pub header_groups: Vec<HeaderGroup>,
-    /// opt-in: a run of empty body cells merges into the next
-    /// non-empty cell to its right (trailing empties extend the last
-    /// non-empty cell), so section-heading rows read as one wide cell.
+    /// opt-in: in a body row, an empty cell merges into the nearest
+    /// non-empty cell to its left, which extends rightward over it (an
+    /// empty cell with no value to its left stays its own cell), so a
+    /// section-heading row with its heading in the first column reads as
+    /// one wide cell.
     #[serde(
         rename = "mergeEmptyCells",
         default,

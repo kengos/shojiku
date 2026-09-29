@@ -1084,8 +1084,7 @@ properties」 shape), not the flat tabs every other type gets:
   closed union.
 - `panel/TableContentSections.tsx` — the content tab: 「Columns」 (open at
   first), 「Rows and cells」, 「When the table crosses a page」 (absent when
-  `pageMode` is `null`), 「When there is no data」, 「Header groups」
-  (`table.headerGroups`).
+  `pageMode` is `null`), 「Blanks」, 「Header groups」 (`table.headerGroups`).
 - `panel/TableDecorationSections.tsx` — the decoration tab, in the engine's
   layer order: 「Table style」 (open at first; `table.style`, or an ineffective
   fill to show), 「Border」 (`style.border`; the `BorderEditor` with `isTable`,

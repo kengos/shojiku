@@ -390,7 +390,8 @@ export const fil: LanguageCatalog = {
     'panel.tableSettings.empty': 'Kapag 0 ang hanay',
     'panel.tableSettings.empty.collapse': 'Itago ang buong talahanayan',
     'panel.tableSettings.empty.reserve': 'Ipakita lang ang header na hanay',
-    'panel.tableSettings.mergeEmptyCells': 'Idugtong ang mga walang lamang cell sa kasunod',
+    'panel.tableSettings.mergeEmptyCells':
+      'Pagsamahin ang walang lamang cell sa cell sa kaliwa nito',
     'panel.tableSettings.autoPageBreak': 'Ituloy sa susunod na pahina ang mga hanay na hindi kasya',
     'panel.tableSettings.repeatHeader': 'Ulitin din ang header row sa susunod na pahina',
     'panel.tableSettings.keepTogether': 'Huwag hatiin ang talahanayan',
@@ -431,14 +432,14 @@ export const fil: LanguageCatalog = {
       'Ang ginagawa ng talahanayan kapag hindi ito kasya sa isang pahina.',
     'panel.tableSection.pages.helpKeep':
       'Kung mahahati ang talahanayan sa mga pahina pero kasya sa isa, magsisimula ito sa bagong pahina. Ang talahanayang mas mahaba sa isang pahina ay magpapatuloy gaya ng dati.',
-    'panel.tableSection.empty.title': 'Kapag walang data',
+    'panel.tableSection.empty.title': 'Mga blangko',
     'panel.tableSection.empty.zero': '0 hanay: {value}',
-    'panel.tableSection.empty.merge': 'Walang lamang cell: pinagdudugtong',
-    'panel.tableSection.empty.noMerge': 'Walang lamang cell: hindi pinagdudugtong',
+    'panel.tableSection.empty.merge': 'Walang lamang cell: pinagsama sa kaliwa',
+    'panel.tableSection.empty.noMerge': 'Walang lamang cell: hindi pinagsasama',
     'panel.tableSection.empty.helpZero':
       'Itago ang buong talahanayan, o iwan lamang ang header row.',
     'panel.tableSection.empty.helpMerge':
-      'Sa isang hanay ng katawan, ang walang lamang cell ay dumudugtong sa kasunod na may-lamang cell sa kanan, at ang mga walang laman sa dulo ay nagpapalapad sa huling may-lamang cell. Gamitin ito sa mga hanay ng pamagat na dapat magmukhang iisang malapad na cell.',
+      'Sa isang hanay ng data, ang walang lamang cell ay sumasama sa pinakamalapit na cell na may value sa kaliwa nito, na lumalapad para sakupin ito, gaya ng pinagsamang mga cell sa spreadsheet. Nananatili ang walang lamang cell na walang value sa kaliwa nito, kaya ilagay ang pamagat sa unang column at iwanang walang laman ang iba para maging iisang malapad na cell.',
     'panel.tableSection.groups.title': 'Mga header group',
     'panel.tableSection.groups.count': 'Mga group: {n, number} ({labels})',
     'panel.tableSection.groups.unnamed': '(walang pangalan)',

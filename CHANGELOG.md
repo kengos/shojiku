@@ -20,7 +20,7 @@ platform binaries.
   columns: whether the body rows fit their content (with a minimum height) or sit
   at a fixed height, the header row's height, the cell padding, what the table
   shows when its data is empty — nothing, or just the header row — and whether an
-  empty cell joins the filled cell to its right. For a table placed directly in
+  empty cell merges into the cell on its left. For a table placed directly in
   the page's flow it also offers the three page-end switches: continue rows on
   the next page, repeat the header row on each page, and keep the table on one
   page when it fits. A table inside a container, a band or an absolute page is
@@ -253,12 +253,29 @@ platform binaries.
 
 ### Changed
 
+- **`mergeEmptyCells` now merges a table's empty cells the way a spreadsheet
+  does.** In a body row an empty cell joins the nearest cell with a value on its
+  LEFT, which widens to the right over it: in `[A][ ][B]` it is now A's cell
+  that spans the empty column, where B's cell used to widen leftward over it. An
+  empty cell with no value to its left now stays a cell of its own — so a
+  leading run of empty cells no longer widens the value after it, and a row that
+  is empty throughout keeps every column's cell and its column rules instead of
+  becoming one full-width cell. A section-heading row that should read as one
+  wide cell now puts its heading in the FIRST column and leaves the rest of the
+  row empty — and the merged cell is then that first column's own cell, so an
+  alignment the column authors for its values wins over a row style's; a
+  template that relied on the old behaviour, with its heading in the last
+  column, draws that row with its column rules until the data is moved.
+  The key's name and its default (off) are unchanged. In the Designer the switch
+  reads "Merge empty cells into the cell on their left", and its ? says where
+  the heading goes. The bundled layout showcase's résumé-style table now puts
+  its section headings in the first column.
+
 - **A selected table's settings are now folded into sections, the way Google
   Docs shows table properties.** The Content tab lists **Columns**, **Rows and
-  cells**, **When the table crosses a page**, **When there is no data** and
-  **Header groups**; the Decoration tab lists **Table style**, **Border**,
-  **Header row format**, **Body row format**, **Conditional formatting** and
-  **Named styles**. Only the first section of each tab starts open. A closed
+  cells**, **When the table crosses a page**, **Blanks** and **Header groups**;
+  the Decoration tab lists **Table style**, **Border**, **Header row format**,
+  **Body row format**, **Conditional formatting** and **Named styles**. Only the first section of each tab starts open. A closed
   section shows what it is set to in one line — "Row height auto (min 24pt) ·
   Header Auto · Padding 4pt", "Rules: 2" — so you can read a table's settings
   without opening anything, and open only the part you want to change. Which

@@ -135,8 +135,9 @@ fn a_non_inherited_key_decorates_the_band_and_an_inherited_one_reaches_the_cell(
 
 #[test]
 fn merged_empty_cells_take_the_conditional_alignment_across_the_full_width() {
-    // `mergeEmptyCells` makes the section row one wide cell; the
-    // conditional centering then applies across the merged width.
+    // `mergeEmptyCells` extends the section row's first cell over the
+    // empty one after it; the conditional centering then applies across
+    // the merged width.
     let (doc, diags) = run(
         r##"
 page: { margin: 0 }
@@ -159,7 +160,7 @@ sections:
           - data: { key: label }
             width: 200
 "##,
-        json!({ "items": [{ "year": "", "label": "AAA", "kind": "heading" }] }),
+        json!({ "items": [{ "year": "AAA", "label": "", "kind": "heading" }] }),
     );
     assert!(diags.is_empty(), "diags: {diags:?}");
     // The merged cell spans both columns (300pt), so its center is 150.

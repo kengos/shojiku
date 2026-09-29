@@ -44,10 +44,9 @@ pub(super) enum CellPath {
     /// column's editor and share its box path).
     Group(usize),
     /// The cell is synthesized by layout, not authored anywhere: the
-    /// trailing region no `headerGroups` entry covers, and the all-empty
-    /// row `mergeEmptyCells` collapses into one full-width cell. It has no
-    /// address to claim, so it emits no box (a click falls through to the
-    /// table) and its diagnostics stay on the table item.
+    /// trailing region no `headerGroups` entry covers. It has no address
+    /// to claim, so it emits no box (a click falls through to the table)
+    /// and its diagnostics stay on the table item.
     Synthesized,
 }
 

@@ -1,6 +1,6 @@
 // Two of the table's content-tab section bodies — 「Rows and cells」 (how tall
-// the body and header rows are, the cell padding) and 「When there is no data」
-// (what an empty array draws, whether empty cells merge) — plus the context
+// the body and header rows are, the cell padding) and 「Blanks」 (what an
+// empty array draws, whether empty cells merge) — plus the context
 // every table-settings body takes. The page switches are `TablePageFields`, the
 // header groups `TableGroupList`; `TableContentSections` wraps each body in its
 // collapsible section. Thin over the pure `tableSettingsModel` (read) and
@@ -59,8 +59,8 @@ export function TableRowsBody({ context }: { readonly context: TableSettingsCont
   );
 }
 
-/** The 「When there is no data」 section's body: what an empty array draws, and
- * whether empty cells merge (behind `table.mergeEmptyCells`). */
+/** The 「Blanks」 section's body: what an empty array draws, and whether
+ * empty cells merge (behind `table.mergeEmptyCells`). */
 export function TableEmptyBody({ context }: { readonly context: TableSettingsContext }) {
   const { t } = useI18n();
   const { path, controller, capabilities } = context;
