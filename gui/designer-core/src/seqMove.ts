@@ -12,9 +12,15 @@
 // index; cross-sequence the removal does not shift the destination, so it is
 // the plain insertion index (and, like `insertItem`, it admits `length` to
 // append).
+//
+// A comment written directly above an entry travels with it — the first
+// entry's too, although the parser files that one on the sequence; a note
+// separated from the first entry by a blank line stays with the list
+// (`headComment.ts`).
 
 import type { Document, Node, YAMLSeq } from 'yaml';
 import { isAlias, isCollection, isMap, isNode, visit } from 'yaml';
+import { keepAsListNote, lift, settle } from './headComment';
 import { inRange, resolveSeq } from './opTarget';
 import { clip, fail, OK, type Op, type OpResult } from './opTypes';
 
@@ -76,25 +82,42 @@ function writable(doc: Document): boolean {
   }
 }
 
+/** Run `move` with the entry's part of every touched sequence's head comment
+ * lifted onto its first entry, so it rides the splice — and the anchor
+ * rollback — like any other entry's comment. */
+function carried(seqs: YAMLSeq[], move: () => OpResult): OpResult {
+  for (const seq of seqs) {
+    lift(seq);
+  }
+  const result = move();
+  for (const seq of seqs) {
+    settle(seq);
+  }
+  return result;
+}
+
 const ANCHOR_REFUSAL = 'moving this item would place a YAML anchor after an alias to it';
 
 /** The reorder inside one sequence: `to` is the index the element takes once
  * it has been lifted out, so both indices address the CURRENT list. */
-function moveWithin(doc: Document, items: unknown[], op: MoveOp): OpResult {
+function moveWithin(doc: Document, seq: YAMLSeq, op: MoveOp): OpResult {
+  const { items } = seq;
   if (!inRange(op.to, items.length)) {
     return fail(
       'index_out_of_range',
       `move ${op.from}->${op.to} out of range for ${clip(op.path)}`,
     );
   }
-  const [node] = items.splice(op.from, 1);
-  items.splice(op.to, 0, node);
-  if (touchesAnchors(node) && !writable(doc)) {
-    items.splice(op.to, 1);
-    items.splice(op.from, 0, node);
-    return fail('invalid_value', ANCHOR_REFUSAL);
-  }
-  return OK;
+  return carried([seq], () => {
+    const [node] = items.splice(op.from, 1);
+    items.splice(op.to, 0, node);
+    if (touchesAnchors(node) && !writable(doc)) {
+      items.splice(op.to, 1);
+      items.splice(op.from, 0, node);
+      return fail('invalid_value', ANCHOR_REFUSAL);
+    }
+    return OK;
+  });
 }
 
 /** Apply a `moveItem`. Every refusal happens before the first splice, so a
@@ -112,7 +135,7 @@ export function applyMoveItem(doc: Document, op: MoveOp): OpResult {
     );
   }
   if (op.toPath === undefined) {
-    return moveWithin(doc, items, op);
+    return moveWithin(doc, source.seq, op);
   }
   const dest = resolveSeq(doc, op.toPath);
   if (!dest.ok) {
@@ -121,7 +144,7 @@ export function applyMoveItem(doc: Document, op: MoveOp): OpResult {
   // Identity, not string equality: two spellings of one path address the same
   // node, and a move onto itself must keep the post-splice index rule.
   if (dest.seq === source.seq) {
-    return moveWithin(doc, items, op);
+    return moveWithin(doc, source.seq, op);
   }
   if (!Number.isInteger(op.to) || op.to < 0 || op.to > dest.seq.items.length) {
     return fail(
@@ -132,19 +155,27 @@ export function applyMoveItem(doc: Document, op: MoveOp): OpResult {
   if (holds(items[op.from], dest.seq)) {
     return fail('invalid_value', `${clip(op.toPath)} is inside the item being moved`);
   }
-  // As in `insertItem`: the first element to land in an empty sequence clears
-  // the flow flag, so an authored `items: []` stops reading as `items: [ … ]`.
-  const flow = dest.seq.flow;
-  if (dest.seq.items.length === 0) {
-    dest.seq.flow = false;
-  }
-  const [node] = items.splice(op.from, 1);
-  dest.seq.items.splice(op.to, 0, node);
-  if (touchesAnchors(node) && !writable(doc)) {
-    dest.seq.items.splice(op.to, 1);
-    dest.seq.flow = flow;
-    items.splice(op.from, 0, node);
-    return fail('invalid_value', ANCHOR_REFUSAL);
-  }
-  return OK;
+  const target = dest.seq;
+  return carried([source.seq, target], () => {
+    // As in `insertItem`: the first element to land in an empty sequence
+    // clears the flow flag, so an authored `items: []` stops reading as
+    // `items: [ … ]`.
+    const flow = target.flow;
+    const empty = target.items.length === 0;
+    if (empty) {
+      target.flow = false;
+    }
+    const [node] = items.splice(op.from, 1);
+    target.items.splice(op.to, 0, node);
+    if (touchesAnchors(node) && !writable(doc)) {
+      target.items.splice(op.to, 1);
+      target.flow = flow;
+      items.splice(op.from, 0, node);
+      return fail('invalid_value', ANCHOR_REFUSAL);
+    }
+    if (empty) {
+      keepAsListNote(target);
+    }
+    return OK;
+  });
 }
