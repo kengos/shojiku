@@ -83,7 +83,18 @@ describe('Designer image import', () => {
       '    items: []',
       '',
     ].join('\n');
-    const { container } = draw(makeTransport(), { source, imageCodec: fakeCodec(), onChange });
+    // The render never settles, so this places in the window before the first
+    // preview, against the DOCUMENT's page. The fake render's 8px page would
+    // otherwise win whenever it lands first (a loaded machine) and put the
+    // item at the band's top.
+    const { container } = draw(
+      makeTransport({ renderRaw: vi.fn(() => new Promise<never>(() => {})) }),
+      {
+        source,
+        imageCodec: fakeCodec(),
+        onChange,
+      },
+    );
     fireEvent.click(await screen.findByRole('button', { name: /Footer/ }));
     pickImage(container);
     await waitFor(() => expect(onChange).toHaveBeenCalled());
