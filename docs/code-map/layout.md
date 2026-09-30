@@ -318,9 +318,12 @@ Wire types stay in core; content measurement stays in layout.
   that repeats with the labels, and its cell placements are stamped
   `hidden` alongside the label row's),
   `table/content.rs` (`cell_qr`/`cell_image`), `table/style.rs`
-  (grid-border fold, zebra, `cell_valign`/`label_valign` — the authored
-  fold that tells "unset" from "resolved to the initial value";
-  `style/conditional.rs` —
+  (grid-border fold, zebra, `valign_of`/`cell_valign` — the authored
+  fold that tells "unset" from "resolved to the initial value", and a
+  cell's `verticalAlign` fallback through the table's own layers: body
+  cell → row's authored value → table, label → header → table, group →
+  table; `resolve_row_style` returns the row's authored value beside its
+  computed style; `style/conditional.rs` —
   `apply_row_conditions` overlaid after zebra, warned once per entry),
   `table/atom.rs` (bounded non-paginating table atom for container/
   absolute/band/grid-cell contexts).

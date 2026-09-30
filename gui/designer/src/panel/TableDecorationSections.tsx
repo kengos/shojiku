@@ -18,6 +18,7 @@ import { TableConditionsSection } from './RowConditions';
 import { StyleNamesPicker } from './StyleNamesPicker';
 import { PanelColorField } from './StyleTabFields';
 import { TableBandBody } from './TableBandBody';
+import { bodyValignHost } from './TableBandFields';
 import { IneffectiveFillBanner, TableStyleBody } from './TableStyleSection';
 import { TableTextSection } from './TableTextSection';
 import { controlHelp, helpText } from './tableContentSummaries';
@@ -123,7 +124,12 @@ export function TableDecorationSections(props: ItemPanelProps) {
           <PanelSection
             id="table.bodyBand"
             title={t('panel.tableSection.bodyBand.title')}
-            summary={bandSummary(i18n, style.row, bandStyleNames(raw, 'row'))}
+            summary={bandSummary(
+              i18n,
+              style.row,
+              bandStyleNames(raw, 'row'),
+              bodyValignHost(capabilities) !== false,
+            )}
             // The section it points at is named by ITS title key, so the two
             // cannot drift apart.
             help={t('panel.tableSection.bodyBand.help', {

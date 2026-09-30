@@ -26,8 +26,9 @@ import { type PickerOption, pickerOptions } from './pickerModel';
 import { RuleCard } from './RuleCard';
 import { RuleControls } from './RuleControls';
 import { addRuleOp, removeRuleOp, repointRuleOps, setRuleEqualsOp } from './rowConditionOps';
-import { readRawEntries, readRowConditions } from './rowConditionsModel';
+import { openedRule, readRawEntries, readRowConditions } from './rowConditionsModel';
 import { sampleValues } from './ruleValues';
+import { bodyValignHost, type ValignHost } from './TableBandFields';
 import { conditionsSummary } from './tableDecorationSummaries';
 
 /** The whole section, gated on `table.row.conditionalStyles`. */
@@ -49,7 +50,12 @@ export function TableConditionsSection(props: ItemPanelProps) {
         path={path}
         controller={controller}
         floor={props.floor}
-        host={{ fontFamilies: props.fontFamilies, params: props.params, dataKey: view.dataKey }}
+        host={{
+          fontFamilies: props.fontFamilies,
+          params: props.params,
+          dataKey: view.dataKey,
+          verticalAlign: bodyValignHost(props.capabilities),
+        }}
         entries={entries}
         options={
           view.dataKey === '' ? [] : pickerOptions(props.paletteGroups, view.dataKey, props.params)
@@ -65,12 +71,15 @@ export interface RowConditionsSectionProps {
   readonly controller: ItemPanelProps['controller'];
   /** The engine-default floor for the rule style cascade. */
   readonly floor?: Readonly<Record<string, unknown>>;
-  /** What the rule view needs from the host: its font families, and the sample
-   * params + the table's array key its value chips are read from. */
+  /** What the rule view needs from the host: its font families, the sample
+   * params + the table's array key its value chips are read from, and whether
+   * the engine honours a rule's vertical alignment
+   * (`TABLE_BODY_VALIGN_CAPABILITY`). */
   readonly host: {
     readonly fontFamilies: readonly string[];
     readonly params: string;
     readonly dataKey: string;
+    readonly verticalAlign: ValignHost;
   };
   /** The raw `row.conditionalStyles` entries — every op rewrites the list, so
    * the component hands them back to the model untouched. */
@@ -100,6 +109,7 @@ export function RowConditionsSection(props: RowConditionsSectionProps) {
         ctx={ruleContext(cascadeContext(controller.read, path, floor), entries[at])}
         path={`${path}.row.conditionalStyles[${at}]`}
         fontFamilies={host.fontFamilies}
+        verticalAlign={host.verticalAlign}
         samples={
           host.dataKey === '' || open.key === ''
             ? []
@@ -164,16 +174,4 @@ export function RowConditionsSection(props: RowConditionsSectionProps) {
       </button>
     </>
   );
-}
-
-/** The open rule and its index — `null` when none is open, or when the open
- * index no longer names a rule (an undo took it away), which shows the list. */
-function openedRule<R>(
-  rules: readonly R[],
-  index: number | null,
-): { readonly rule: R; readonly index: number } | null {
-  if (index === null || index >= rules.length) {
-    return null;
-  }
-  return { rule: rules[index], index };
 }

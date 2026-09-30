@@ -2,8 +2,9 @@
 //! pagination, keep-together, and table diagnostics. Geometry lives in
 //! `table/geom.rs`, cell/row building in `table/rows.rs`, `cell:`
 //! columns in `table/container_cell/`, styling in `table/style.rs`,
-//! per-row conditional styles in `table/conditional/`, and the box-index
-//! sidecar in `table/boxes.rs`.
+//! per-row conditional styles in `table/conditional/`, the
+//! `verticalAlign` precedence across a table's layers in `table/valign.rs`,
+//! and the box-index sidecar in `table/boxes.rs`.
 
 mod boxes;
 mod cells;
@@ -17,6 +18,7 @@ mod placement;
 mod rows;
 mod span;
 mod style;
+mod valign;
 mod vertical;
 
 use crate::common::*;

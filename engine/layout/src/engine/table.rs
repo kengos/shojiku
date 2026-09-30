@@ -12,7 +12,7 @@ mod span;
 mod style;
 
 use serde_json::Value;
-use shojiku_core::{resolve_path, AlignItems, Bindings, EmptyBehavior, TableItem};
+use shojiku_core::{resolve_path, AlignItems, Bindings, EmptyBehavior, TableItem, VerticalAlign};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::cross_offset;
 
@@ -50,12 +50,14 @@ struct RowGeom {
 }
 
 /// The per-table invariants every row shares: resolved column widths,
-/// vertical geometry, grid stroke, and the region-left x.
+/// vertical geometry, grid stroke, the region-left x, and the table's own
+/// authored `verticalAlign` (every cell's outermost fallback).
 struct TableFrame<'w> {
     widths: &'w [f64],
     geom: RowGeom,
     grid: GridBorder,
     x: f64,
+    valign: Option<VerticalAlign>,
 }
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -87,6 +89,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             geom: self.row_geom(table, region),
             grid: self.grid_border(table),
             x: region.x,
+            valign: self.valign_of(&table.style_names, &table.style),
         };
 
         // The table's own style cascades into header and cells (CSS: a

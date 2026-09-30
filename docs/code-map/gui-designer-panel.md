@@ -1226,8 +1226,8 @@ conditional rules the next section owns).
   colour swatch at `row.alternateStyle.backgroundColor`, the hide-header switch).
   `panel/TableBandBody.tsx` is the two band sections' body over the same
   context (`band: 'header'` — the hidden-header note + the header band's fields,
-  vertical alignment behind `table.header.style.verticalAlign` — or `'row'`, no
-  vertical alignment), each followed by its `AdvancedStyles` (the body band's
+  vertical alignment behind `table.header.style.verticalAlign` — or `'row'`,
+  vertical alignment behind `table.style.verticalAlign`), each followed by its `AdvancedStyles` (the body band's
   with the even rows' `alternateStyleNames` list beside its own). It assumes
   nothing about the panel's ~255px column: appearance editing is expected to
   move into a modal sheet, and a test mounts the bodies standalone so that move
@@ -1268,6 +1268,13 @@ conditional rules the next section owns).
   what `apply_row_conditions` does, and `alternateStyle` is deliberately not in
   the stack (the zebra applies to every other row and the card shows one value);
   `bandInk(ctx)` is what the MINIATURE draws (effective, not authored);
+  `tableValignIn(ctx)` resolves `verticalAlign` the engine's way — own, named,
+  then each ancestor layer out to and including the first `type: table` one —
+  the one non-inherited key this walk carries (the header LABEL row also clones
+  its band's whole computed style, so other non-inherited keys ride along
+  there) — and `TableBandFields` uses it only for a `'table'` `ValignHost`
+  (`headerValignHost`/`bodyValignHost` map the engine's two keys; `'own'` is an
+  engine with the header key alone, whose cells never fall back);
   `documentOrigin(eff)` is the badge predicate. A column needs none of this —
   it has a path, so `toolbar/cascade` already puts the row band and the table
   under it. `backgroundColor` travels none of these ANCESTOR layers (it does not
@@ -1286,9 +1293,15 @@ conditional rules the next section owns).
   same `Style` properties, only the caller's key path differs (`{ctx, path,
   keys}`). The HOST decides what the set includes through one `BandFieldsHost
   {fontFamilies, verticalAlign, fill}` bundle: vertical alignment only where it
-  reaches the page (header band behind `TABLE_VALIGN_CAPABILITY`, a column, a
-  group — a body cell takes its column's alone, so a body band / rule / table
-  value would change nothing) and no background on the table's own style. The
+  reaches the page (header band, a column and a group behind
+  `TABLE_VALIGN_CAPABILITY`; the body band, a rule and the table's own section
+  behind `TABLE_BODY_VALIGN_CAPABILITY` = `table.style.verticalAlign`) and no
+  background on the table's own style (`BandFieldsHost.verticalAlign` is a
+  `ValignHost`: `false` / `'own'` / `'table'`). Where the engine declares the
+  body key its value is `bandCascade`'s `tableValignIn`, not the plain
+  cascade: a cell falls back through the table
+  layers under it out to the table (never past it), so a column over a `top`
+  band shows `top` and re-picking `middle` authors it. The
   shared parts — `AlignSegment`, `VAlignSegment` (unset = `middle`, via
   `alignWire`'s `fallback`), `BandToggle`, `HintLabel`, `OriginLine`,
   `floorHint` — live in `panel/bandFieldParts.tsx`. Every
@@ -1360,7 +1373,8 @@ conditional rules the next section owns).
   - `ruleInputs.tsx` — `SwatchRow`, the labelled colour row the band and rule
     editors compose.
 - `panel/rowConditionsModel.ts` (pure, READ) — `readRawEntries`/
-  `readRowConditions`/`valueFormFor`; a hostile entry still yields a row
+  `readRowConditions`/`valueFormFor`/`openedRule` (the open rule, `null` once
+  an undo took it away); a hostile entry still yields a row
   so indices stay true, and a hostile display string is truncated.
   `panel/rowConditionOps.ts` (pure, WRITE) — the op builders. The wire
   is a SEQUENCE, so an edit addresses ONE entry by `[n]` in the PATH and

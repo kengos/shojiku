@@ -65,7 +65,7 @@ fn every_hand_written_diagnostics_section_names_only_real_things() {
     // `excused_names` is DISTINCT names actually hit: holding it equal to the
     // list's length is what turns an entry that has stopped being needed into
     // a red test rather than a mask that quietly grows.
-    assert_eq!(census.outside, 666, "code-shaped names read in the prose");
+    assert_eq!(census.outside, 668, "code-shaped names read in the prose");
     assert_eq!(
         census.excused, 13,
         "of which the excused list accounted for"

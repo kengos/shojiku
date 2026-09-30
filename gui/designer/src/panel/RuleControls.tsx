@@ -9,8 +9,8 @@
 // The format controls ARE `TableBandFields`, the same component the header band,
 // the body band, a column and a header group render: a rule is one more layer
 // over the body row, so it gets the same controls, the same cascade-effective
-// display and the same minimal-wire ops. No vertical alignment: a body cell
-// takes its column's alone, so a rule's would change nothing.
+// display and the same minimal-wire ops — vertical alignment included where the
+// engine honours a rule's (a body cell falls back to it under its column's).
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
@@ -24,7 +24,7 @@ import { RulePresetGallery } from './RulePresetGallery';
 import { type RowConditionRow, valueFormFor } from './rowConditionsModel';
 import { matchRulePreset, rulePresetOps } from './rulePresets';
 import { ruleSummary } from './ruleSummary';
-import { TableBandFields } from './TableBandFields';
+import { TableBandFields, type ValignHost } from './TableBandFields';
 import { ValueControl } from './ValueControl';
 
 /** A rule's own style sits at `style.*` under the rule entry itself. */
@@ -44,6 +44,9 @@ export interface RuleControlsProps {
   /** The rule entry's structural path (`…row.conditionalStyles[n]`). */
   readonly path: string;
   readonly fontFamilies: readonly string[];
+  /** Whether the engine honours a rule's `verticalAlign`
+   * (`TABLE_BODY_VALIGN_CAPABILITY`) — the control is withheld otherwise. */
+  readonly verticalAlign: ValignHost;
   /** The values the sample data carries for the picked field. */
   readonly samples: readonly string[];
   readonly onKeyChange: (key: string) => void;
@@ -85,7 +88,11 @@ export function RuleControls(props: RuleControlsProps) {
           ctx={ctx}
           path={path}
           keys={RULE_STYLE_KEYS}
-          host={{ fontFamilies: props.fontFamilies, verticalAlign: false, fill: true }}
+          host={{
+            fontFamilies: props.fontFamilies,
+            verticalAlign: props.verticalAlign,
+            fill: true,
+          }}
           onOp={onOp}
         />
         <AdvancedStyles

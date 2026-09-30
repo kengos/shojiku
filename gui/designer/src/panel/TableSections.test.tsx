@@ -287,7 +287,7 @@ describe('the decoration tab', () => {
     expect(openSections()).toEqual(['table.style']);
   });
 
-  it('edits the text every cell inherits at the table’s own style, with no fill and no vertical alignment', () => {
+  it('edits the text every cell inherits at the table’s own style, with no fill', () => {
     const controller = draw({ ...TABLE, style: { fontFamily: 'noto-sans', fontSize: 9 } });
     styleTab();
     const text = screen.getByRole('button', { name: 'Text (whole table)' });
@@ -305,7 +305,55 @@ describe('the decoration tab', () => {
       value: 'italic',
     });
     expect(within(section).queryByRole('button', { name: 'Background' })).toBeNull();
-    expect(within(section).queryByRole('group', { name: 'Vertical alignment' })).toBeNull();
+  });
+
+  // The two sections the vertical-alignment key newly opens; the header band's
+  // is gated on its own key and unaffected.
+  it.each([
+    ['Text (whole table)', ['style', 'verticalAlign']],
+    ['Body row format', ['row', 'style', 'verticalAlign']],
+  ])('offers vertical alignment in %s where the engine honours it', (title, keys) => {
+    const controller = draw(TABLE, {
+      capabilities: ['table.style', 'table.style.verticalAlign'],
+    });
+    styleTab();
+    const toggleButton = screen.getByRole('button', { name: title });
+    fireEvent.click(toggleButton);
+    const section = toggleButton.closest('[data-section]') as HTMLElement;
+    fireEvent.click(within(section).getByRole('radio', { name: 'Top' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: PATH,
+      keys,
+      value: 'top',
+    });
+  });
+
+  it.each(['Text (whole table)', 'Body row format'])(
+    'withholds vertical alignment in %s against an older engine',
+    (title) => {
+      draw(TABLE, { capabilities: ['table.style'] });
+      styleTab();
+      const toggleButton = screen.getByRole('button', { name: title });
+      fireEvent.click(toggleButton);
+      const section = toggleButton.closest('[data-section]') as HTMLElement;
+      expect(within(section).queryByRole('group', { name: 'Vertical alignment' })).toBeNull();
+    },
+  );
+
+  it('summarises an authored vertical alignment in both closed sections', () => {
+    draw({
+      ...TABLE,
+      style: { verticalAlign: 'bottom' },
+      row: { style: { verticalAlign: 'top' } },
+    });
+    styleTab();
+    const summary = (title: string) =>
+      document.getElementById(
+        screen.getByRole('button', { name: title }).getAttribute('aria-describedby') ?? '',
+      )?.textContent;
+    expect(summary('Text (whole table)')).toBe('Bottom');
+    expect(summary('Body row format')).toBe('Top');
   });
 
   it('drops the flat tab heading for a table', () => {

@@ -21,7 +21,7 @@ import { AdvancedStyles, namesAt } from './AdvancedStyles';
 import { bandContext, headerFillOf } from './bandCascade';
 import { hasCapability } from './itemPanelProps';
 import { applyPanelOp } from './model';
-import { TABLE_VALIGN_CAPABILITY, TableBandFields } from './TableBandFields';
+import { headerValignHost, TableBandFields } from './TableBandFields';
 import { TABLE_HEADER_FILL } from './tableStyleModel';
 
 /** The capability under which an engine paints a group's own style. */
@@ -58,7 +58,7 @@ export function GroupStyleFields({ context }: { readonly context: GroupStyleCont
         keys={GROUP_STYLE_KEYS}
         host={{
           fontFamilies: context.fontFamilies,
-          verticalAlign: hasCapability(capabilities, TABLE_VALIGN_CAPABILITY),
+          verticalAlign: headerValignHost(capabilities),
           fill: true,
         }}
         headerFill={headerFillOf(ctx, TABLE_HEADER_FILL)}

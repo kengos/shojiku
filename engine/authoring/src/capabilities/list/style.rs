@@ -231,6 +231,14 @@ pub(super) const KEYS: &[&str] = &[
     // value winning over the header's, as `textAlign` already does for
     // labels. Older engines center every header/group label regardless.
     "table.header.style.verticalAlign",
+    // `verticalAlign` reaches a body cell from every layer above its
+    // column: a matching `row.conditionalStyles` entry, then the zebra
+    // `alternateStyle`, then `row.style`, then the table's own `style` —
+    // which also reaches the header labels (under `header.style`) and the
+    // `headerGroups` entries. Each layer's named styles count. Older
+    // engines read a body cell's value from its column alone and center
+    // it otherwise.
+    "table.style.verticalAlign",
     // The format CATALOG query: the pickable display variants per field
     // type with an engine-rendered sample of each (against fixed exemplar
     // values), plus previews of patterns the document does not carry yet.

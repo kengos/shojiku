@@ -10,9 +10,8 @@ import { useI18n } from '../i18n/context';
 import { AdvancedStyles, namesAt } from './AdvancedStyles';
 import { headerFillOf, readBandCascades } from './bandCascade';
 import { HiddenHeaderNote } from './HiddenHeaderField';
-import { hasCapability } from './itemPanelProps';
 import { applyPanelOp } from './model';
-import { TABLE_VALIGN_CAPABILITY, TableBandFields } from './TableBandFields';
+import { bodyValignHost, headerValignHost, TableBandFields } from './TableBandFields';
 import type { TableStyleContext } from './TableStyleSection';
 import { readTableStyle, TABLE_HEADER_FILL } from './tableStyleModel';
 
@@ -43,7 +42,11 @@ export function TableBandBody({
           ctx={bands.row}
           path={path}
           keys={ROW_KEYS}
-          host={{ fontFamilies, verticalAlign: false, fill: true }}
+          host={{
+            fontFamilies,
+            verticalAlign: bodyValignHost(capabilities),
+            fill: true,
+          }}
           onOp={onOp}
         />
         <AdvancedStyles
@@ -70,7 +73,7 @@ export function TableBandBody({
         keys={HEADER_KEYS}
         host={{
           fontFamilies,
-          verticalAlign: hasCapability(capabilities, TABLE_VALIGN_CAPABILITY),
+          verticalAlign: headerValignHost(capabilities),
           fill: true,
         }}
         headerFill={headerFillOf(bands.header, TABLE_HEADER_FILL)}

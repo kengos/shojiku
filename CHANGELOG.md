@@ -18,11 +18,9 @@ platform binaries.
 - **A table's look can now be finished in the Designer.** Every styled part of a
   table — the header row, the body rows, a column, a conditional-formatting rule
   and now a header group — has the same format controls, in the order Google's
-  toolbar uses: font, size, bold, italic, text colour, background, alignment,
-  and vertical alignment where it has an effect (the header row, a column and a
-  header group; a body cell's vertical position comes from its column alone, so
-  the body rows and a rule do not offer one). A new **Text (whole table)**
-  section sets the font, size, bold, italic, colour and alignment every cell
+  toolbar uses: font, size, bold, italic, text colour, background, alignment
+  and vertical alignment. A new **Text (whole table)** section sets the font,
+  size, bold, italic, colour, alignment and vertical alignment every cell
   starts from, and the format
   toolbar does the same when a table is selected — it used to offer a fill,
   which a table never paints. Banded rows get a colour you can change after
@@ -281,6 +279,20 @@ platform binaries.
   takes the position and nothing else.
 
 ### Changed
+
+- **A table's vertical alignment now reaches the text cells it is set above.**
+  `verticalAlign` on `row.style`, on a `row.conditionalStyles` entry, on the
+  zebra `row.alternateStyle` or on the table's own `style` used to be ignored:
+  a body cell took its column's value, or centred. Now a body cell takes its
+  column's, then a matching rule's, then the zebra row's, then the body row's,
+  then the table's, and centres only when none of them sets one; a header label
+  falls back from its column to `header.style` and then to the table, and a
+  header group from its own style to the table. Named styles on each of those
+  count too. A template that set `verticalAlign` on one of those places for no
+  effect will now see it take effect. Engines that do this declare the
+  capability `table.style.verticalAlign`, and the Designer offers vertical
+  alignment on the body rows, a rule and **Text (whole table)** only against
+  such an engine.
 
 - **`mergeEmptyCells` now merges a table's empty cells the way a spreadsheet
   does.** In a body row an empty cell joins the nearest cell with a value on its

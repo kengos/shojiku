@@ -10,7 +10,8 @@
 use crate::style::ComputedStyle;
 use serde_json::Value;
 use shojiku_core::{
-    resolve_path, RowConditionalStyle, RowSpec, MAX_ROW_CONDITIONAL_STYLES, MAX_STYLE_NAMES,
+    resolve_path, RowConditionalStyle, RowSpec, VerticalAlign, MAX_ROW_CONDITIONAL_STYLES,
+    MAX_STYLE_NAMES,
 };
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
@@ -22,13 +23,15 @@ impl Ctx<'_, '_> {
     /// listed order — so a later entry wins over an earlier one, and any
     /// entry wins over the zebra layer already folded in. Entries past
     /// the cap are ignored here (validate warns about them). Takes and
-    /// returns the style by value, like [`ComputedStyle::overlaid`].
+    /// returns the style by value, like [`ComputedStyle::overlaid`], with
+    /// the row's authored `verticalAlign` beside it: a matching entry that
+    /// authored one replaces it, in the same listed order.
     pub(super) fn apply_row_conditions(
         &mut self,
         spec: &RowSpec,
         row: &Value,
-        mut computed: ComputedStyle,
-    ) -> ComputedStyle {
+        (mut computed, mut valign): (ComputedStyle, Option<VerticalAlign>),
+    ) -> (ComputedStyle, Option<VerticalAlign>) {
         for (index, entry) in spec
             .conditional_styles
             .iter()
@@ -44,8 +47,9 @@ impl Ctx<'_, '_> {
                 }
             }
             computed = computed.overlaid(&entry.style);
+            valign = self.valign_of(&entry.style_names, &entry.style).or(valign);
         }
-        computed
+        (computed, valign)
     }
 
     /// Whether one entry's `when` holds for this row. A missing key or an

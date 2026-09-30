@@ -41,6 +41,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // Resolved up front, not inside the `map` below: interpolation
         // needs `&mut self` (it can warn) and the closure already borrows
         // self for the style cascade.
+        // A label's own column wins, then the header row, then the table.
+        let label_outer = [self.valign_of(names, inline), frame.valign];
         let mut labels: Vec<String> = Vec::with_capacity(table.columns.len());
         for column in &table.columns {
             labels.push(self.header_label(column.label.as_deref()));
@@ -63,7 +65,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     computed.opacity = 0.0;
                 }
                 computed.vertical_align =
-                    self.label_valign((names, inline), (&column.style_names, &column.style));
+                    self.cell_valign((&column.style_names, &column.style), &label_outer);
                 if let Some(align) = column.style.text_align {
                     computed.text_align = align;
                 }
@@ -90,7 +92,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
         row: &Value,
         index: usize,
     ) -> Atom {
-        let row_style = self.resolve_row_style(&table.row, index % 2 == 1, row);
+        let (row_style, row_valign) = self.resolve_row_style(&table.row, index % 2 == 1, row);
+        // A body cell's own column wins, then the row's layers (a matching
+        // rule over the zebra over the band), then the table.
+        let cell_outer = [row_valign, frame.valign];
         let saved_style = self.inherited.clone();
         self.inherited = row_style.clone();
         // Shared by every `cell:` column in this row: the scope is a cheap
@@ -113,7 +118,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 let mark = self.enter_item(format!("columns[{col}]"));
                 let content = self.cell_content(table, column, (row, index), element.as_ref());
                 let mut computed = self.resolve_style(&column.style_names, &column.style);
-                computed.vertical_align = self.cell_valign(&column.style_names, &column.style);
+                computed.vertical_align =
+                    self.cell_valign((&column.style_names, &column.style), &cell_outer);
                 self.leave_item(mark);
                 Cell {
                     width,

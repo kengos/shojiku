@@ -95,23 +95,27 @@ impl<'a, 'b> Ctx<'a, 'b> {
         }
     }
 
-    /// A cell's vertical alignment: the column's own layers win; unset
-    /// keeps the default of centering within the row.
-    pub(super) fn cell_valign(&self, names: &[String], inline: &Style) -> VerticalAlign {
-        authored(self, names, inline, |s| s.vertical_align).unwrap_or(VerticalAlign::Middle)
+    /// One table layer's AUTHORED `verticalAlign` — its named styles in
+    /// listed order, then inline — or `None` when it set none, so the next
+    /// layer out can supply it.
+    pub(super) fn valign_of(&self, names: &[String], inline: &Style) -> Option<VerticalAlign> {
+        authored(self, names, inline, |s| s.vertical_align)
     }
 
-    /// A header LABEL cell's vertical alignment: the column's own authored
-    /// value wins over the header row's, and the table default applies only
-    /// when neither authored one — the precedence `text_align` already
-    /// follows for labels, so the two axes behave alike.
-    pub(super) fn label_valign(
+    /// A cell's vertical alignment: its own layers win, then the first
+    /// outer layer that authored one (`outer`, innermost first — a body
+    /// cell's row then table, a label's header row then table, a group's
+    /// table), and only when none did, the table default of centering.
+    /// `verticalAlign` is not inherited anywhere else in the engine; a
+    /// table carries it down its own layers because a cell has no box of
+    /// its own to author it on.
+    pub(super) fn cell_valign(
         &self,
-        header: (&[String], &Style),
-        column: (&[String], &Style),
+        (names, inline): (&[String], &Style),
+        outer: &[Option<VerticalAlign>],
     ) -> VerticalAlign {
-        authored(self, column.0, column.1, |s| s.vertical_align)
-            .or_else(|| authored(self, header.0, header.1, |s| s.vertical_align))
+        self.valign_of(names, inline)
+            .or_else(|| outer.iter().find_map(|v| *v))
             .unwrap_or(VerticalAlign::Middle)
     }
 
@@ -122,13 +126,19 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// [`conditional`]) — so a data-driven layer always wins over the
     /// positional zebra one. Its `backgroundColor`/border decorate the
     /// row band; its inherited properties cascade into the row's cells.
+    ///
+    /// Also returns the row's authored `verticalAlign` over the same layers
+    /// (later wins, so a matching rule beats the zebra and the band): the
+    /// computed value cannot say whether anyone authored it, and a body
+    /// cell falls back to it before the table's.
     pub(super) fn resolve_row_style(
         &mut self,
         spec: &RowSpec,
         alternate: bool,
         row: &Value,
-    ) -> ComputedStyle {
+    ) -> (ComputedStyle, Option<VerticalAlign>) {
         let mut computed = self.resolve_style(&spec.style_names, &spec.style);
+        let mut valign = self.valign_of(&spec.style_names, &spec.style);
         if alternate {
             for name in spec.alternate_style_names.iter().take(MAX_STYLE_NAMES) {
                 if let Some(style) = self.input.template.styles.get(name) {
@@ -136,7 +146,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 }
             }
             computed = computed.overlaid(&spec.alternate_style);
+            valign = self
+                .valign_of(&spec.alternate_style_names, &spec.alternate_style)
+                .or(valign);
         }
-        self.apply_row_conditions(spec, row, computed)
+        self.apply_row_conditions(spec, row, (computed, valign))
     }
 }

@@ -9,6 +9,7 @@ import {
   headerFillOf,
   readBandCascades,
   ruleContext,
+  tableValignIn,
 } from './bandCascade';
 
 const TABLE = 'sections.body.items[0]';
@@ -318,5 +319,100 @@ describe('headerFillOf — resolved, then floored', () => {
       { styles: { tint: { backgroundColor: '#eef2ff' } } },
     );
     expect(bandInk(readBandCascades(reader(doc), TABLE, {}).row).fill).toBe('#eef2ff');
+  });
+});
+
+describe('tableValignIn — a cell falls back through the table layers', () => {
+  const COLUMN = `${TABLE}.columns[0]`;
+  /** A table in a `container` that authors `bottom` itself — which must never
+   * reach a cell, since the walk stops at the table. */
+  function nested(table: Record<string, unknown>, rest: Record<string, unknown> = {}) {
+    return {
+      sections: {
+        body: {
+          items: [{ type: 'container', style: { verticalAlign: 'bottom' }, items: [table] }],
+        },
+      },
+      ...rest,
+    };
+  }
+  const NESTED = 'sections.body.items[0].items[0]';
+
+  it('gives a column the body band’s value, then the table’s', () => {
+    const doc = docWith({
+      type: 'table',
+      style: { verticalAlign: 'bottom' },
+      row: { style: { verticalAlign: 'top' } },
+      columns: [{}],
+    });
+    expect(tableValignIn(cascadeContext(reader(doc), COLUMN, FLOOR))).toMatchObject({
+      value: 'top',
+      cascade: 'top',
+      own: '',
+      origin: 'inherited',
+    });
+    const bare = docWith({ type: 'table', style: { verticalAlign: 'bottom' }, columns: [{}] });
+    expect(tableValignIn(cascadeContext(reader(bare), COLUMN, FLOOR)).value).toBe('bottom');
+  });
+
+  it('keeps a layer’s own value, carrying what is below it as the cascade', () => {
+    const doc = docWith({
+      type: 'table',
+      row: { style: { verticalAlign: 'top' } },
+      columns: [{ style: { verticalAlign: 'middle' } }],
+    });
+    expect(tableValignIn(cascadeContext(reader(doc), COLUMN, FLOOR))).toMatchObject({
+      value: 'middle',
+      cascade: 'top',
+      own: 'middle',
+      origin: 'own',
+    });
+  });
+
+  it('lets a layer’s named style beat the layers below it', () => {
+    const doc = docWith(
+      { type: 'table', style: { verticalAlign: 'bottom' }, row: { styleNames: ['up'] } },
+      { styles: { up: { verticalAlign: 'top' } } },
+    );
+    expect(tableValignIn(readBandCascades(reader(doc), TABLE, FLOOR).row)).toMatchObject({
+      value: 'top',
+      origin: 'style',
+      styleName: 'up',
+    });
+  });
+
+  it('gives a band, a rule and a header group the layers the engine does', () => {
+    const doc = docWith({
+      type: 'table',
+      style: { verticalAlign: 'bottom' },
+      row: { style: { verticalAlign: 'top' } },
+    });
+    const read = reader(doc);
+    const bands = readBandCascades(read, TABLE, FLOOR);
+    // Both bands sit on the table; the header's own row is not the body's.
+    expect(tableValignIn(bands.header).value).toBe('bottom');
+    // A rule sits on the body band first.
+    const tableCtx = cascadeContext(read, TABLE, FLOOR);
+    expect(tableValignIn(ruleContext(tableCtx, {})).value).toBe('top');
+    // A group sits on the table alone.
+    expect(tableValignIn(bandContext(tableCtx, {})).value).toBe('bottom');
+    // A rule over a band that sets none falls through to the table.
+    const bandless = cascadeContext(
+      reader(docWith({ type: 'table', style: { verticalAlign: 'bottom' } })),
+      TABLE,
+      FLOOR,
+    );
+    expect(tableValignIn(ruleContext(bandless, {})).value).toBe('bottom');
+  });
+
+  it('stops at the table — a container above it hands a cell nothing', () => {
+    const doc = nested({ type: 'table', columns: [{}] });
+    const read = reader(doc);
+    expect(tableValignIn(cascadeContext(read, `${NESTED}.columns[0]`, FLOOR))).toMatchObject({
+      value: '',
+      origin: 'unset',
+    });
+    // The table's OWN context has no table layer below it, so it walks nothing.
+    expect(tableValignIn(cascadeContext(read, NESTED, FLOOR)).value).toBe('');
   });
 });

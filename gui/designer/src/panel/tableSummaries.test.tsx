@@ -279,7 +279,7 @@ describe('decoration-tab summaries', () => {
       row: { style: { fontStyle: 'oblique', verticalAlign: 'baseline', fontSize: '1em' } },
     }).row;
     expect(bandSummary(en, odd, [], true)).toBe('1em · oblique · baseline');
-    // The body band offers no vertical alignment, so it does not report one.
+    // Without the engine honouring it, the body band does not report one.
     expect(bandSummary(en, odd, [])).toBe('1em · oblique');
   });
 
@@ -302,6 +302,10 @@ describe('decoration-tab summaries', () => {
     expect(textSummary(en, readBand({ style: { fontWeight: '900', textAlign: 'justify' } }))).toBe(
       '900 · justify',
     );
+    // The vertical alignment joins only where the engine honours it.
+    const valigned = readBand({ style: { textAlign: 'right', verticalAlign: 'bottom' } });
+    expect(textSummary(en, valigned, true)).toBe('Right · Bottom');
+    expect(textSummary(en, valigned)).toBe('Right');
   });
 
   it('conditions: none, or the rule count', () => {

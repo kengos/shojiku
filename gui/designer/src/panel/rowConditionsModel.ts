@@ -1,6 +1,7 @@
 // The READ side of a table's per-row conditional styles
 // (`row.conditionalStyles`): the raw entry list, the rule rows the panel
-// renders, and which value control a picked field earns. The op builders that
+// renders, which of them is still open, and which value control a picked field
+// earns. The op builders that
 // edit the list live beside it in `rowConditionOps.ts`.
 //
 // The document is untrusted: a hostile entry still yields a row so the
@@ -25,6 +26,8 @@ export interface RowConditionRow {
   readonly boolEquals: boolean;
   /** `style.textAlign` ('' when unset). */
   readonly textAlign: string;
+  /** `style.verticalAlign` ('' when unset). */
+  readonly verticalAlign: string;
   /** `style.fontWeight` ('' when unset). Kept as the RAW value rather than a
    * `bold` boolean: the Designer authors `normal` explicitly when you un-tick
    * Bold over a band that is bold, and a boolean cannot tell that apart from
@@ -109,6 +112,7 @@ export function readRowConditions(entries: readonly unknown[]): readonly RowCond
       hasEquals: when !== undefined && when.equals !== undefined && when.equals !== null,
       boolEquals: typeof when?.equals === 'boolean',
       textAlign: text(style?.textAlign),
+      verticalAlign: text(style?.verticalAlign),
       fontWeight: text(style?.fontWeight),
       backgroundColor: text(style?.backgroundColor),
       color: text(style?.color),
@@ -120,6 +124,18 @@ export function readRowConditions(entries: readonly unknown[]): readonly RowCond
       styleKeyCount: style === undefined ? 0 : Object.keys(style).length,
     };
   });
+}
+
+/** The open rule and its index — `null` when none is open, or when the open
+ * index no longer names a rule (an undo took it away), which shows the list. */
+export function openedRule<R>(
+  rules: readonly R[],
+  index: number | null,
+): { readonly rule: R; readonly index: number } | null {
+  if (index === null || index >= rules.length) {
+    return null;
+  }
+  return { rule: rules[index], index };
 }
 
 /** Whether repointing at a new field must CLEAR the authored `equals`.
