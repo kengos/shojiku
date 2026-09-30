@@ -34,7 +34,13 @@ function draw(node: ReactElement) {
 
 const OWNER = 'sections.body.items[0]';
 const CELL = `${OWNER}.cell`;
-const ALL = ['style.backgroundColor', 'style.border'];
+const ALL = [
+  'style.backgroundColor',
+  'style.border',
+  'box.padding',
+  'style.overflow',
+  'style.opacity',
+];
 
 function gridDoc(cell: Record<string, unknown>) {
   return makeController({
@@ -50,7 +56,7 @@ describe('FrameForm via CellPanel', () => {
     expect(screen.queryByText('This item type has no editable fields yet.')).toBeNull();
     expect(screen.getByText('Cell frame')).toBeTruthy();
     expect(screen.getByText('Every cell of the grid uses this frame.')).toBeTruthy();
-    expect((screen.getByLabelText('Padding') as HTMLInputElement).value).toBe('8');
+    expect((screen.getByLabelText('Padding (all sides)') as HTMLInputElement).value).toBe('8');
     expect(screen.getByText('Background')).toBeTruthy();
     expect(screen.getByText('Border')).toBeTruthy();
     // The column note is the column cell's alone.
@@ -60,7 +66,7 @@ describe('FrameForm via CellPanel', () => {
   it('writes the padding at the FRAME path, not the owner', () => {
     const controller = gridDoc({ box: { padding: 8 }, items: [] });
     draw(<PropertyPanel controller={controller} path={CELL} capabilities={ALL} />);
-    const field = screen.getByLabelText('Padding');
+    const field = screen.getByLabelText('Padding (all sides)');
     fireEvent.change(field, { target: { value: '4' } });
     fireEvent.blur(field);
     expect(controller.applyAll).toHaveBeenCalledWith([
@@ -71,35 +77,65 @@ describe('FrameForm via CellPanel', () => {
   it('steps the padding by a point and refuses what the wire cannot take', () => {
     const controller = gridDoc({ box: { padding: 8 }, items: [] });
     draw(<PropertyPanel controller={controller} path={CELL} capabilities={ALL} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Increase Padding' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Increase Padding (all sides)' }));
     expect(controller.applyAll).toHaveBeenCalledWith([
       { op: 'setScalar', path: CELL, keys: ['box', 'padding'], value: 9 },
     ]);
-    const field = screen.getByLabelText('Padding');
+    const field = screen.getByLabelText('Padding (all sides)');
     fireEvent.change(field, { target: { value: '-3' } });
     fireEvent.blur(field);
     // A negative is a parse error on this wire: nothing is written.
     expect(controller.applyAll).toHaveBeenCalledTimes(1);
   });
 
-  it('says so when the padding differs per side, and when it cannot show it', () => {
-    const { unmount } = draw(
-      <PropertyPanel
-        controller={gridDoc({ box: { padding: { top: 4 } }, items: [] })}
-        path={CELL}
-        capabilities={ALL}
-      />,
-    );
-    expect(screen.getByText(/Differs per side/)).toBeTruthy();
-    unmount();
-    draw(
-      <PropertyPanel
-        controller={gridDoc({ box: { padding: '4mm' }, items: [] })}
-        path={CELL}
-        capabilities={ALL}
-      />,
-    );
-    expect(screen.getByText(/can't show/)).toBeTruthy();
+  it('shows a per-side padding in the side fields, and edits one side alone', () => {
+    const controller = gridDoc({ box: { padding: { top: 4, left: '2mm' } }, items: [] });
+    draw(<PropertyPanel controller={controller} path={CELL} capabilities={ALL} />);
+    expect((screen.getByLabelText('Padding (all sides)') as HTMLInputElement).value).toBe('');
+    expect((screen.getByLabelText('Padding: Top') as HTMLInputElement).value).toBe('4');
+    expect((screen.getByLabelText('Padding: Left') as HTMLInputElement).value).toBe('2mm');
+    const right = screen.getByLabelText('Padding: Right');
+    fireEvent.change(right, { target: { value: '3mm' } });
+    fireEvent.blur(right);
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path: CELL, keys: ['box', 'padding', 'right'], value: '3mm' },
+    ]);
+  });
+
+  it('offers the frame\u2019s overflow and opacity, written at the frame path', () => {
+    const controller = gridDoc({ items: [] });
+    draw(<PropertyPanel controller={controller} path={CELL} capabilities={ALL} />);
+    fireEvent.change(screen.getByLabelText('Content overflow'), {
+      target: { value: 'hidden' },
+    });
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: CELL,
+      keys: ['style', 'overflow'],
+      value: 'hidden',
+    });
+    const opacity = screen.getByLabelText('Opacity');
+    fireEvent.change(opacity, { target: { value: '40' } });
+    fireEvent.blur(opacity);
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: CELL,
+      keys: ['style', 'opacity'],
+      value: 0.4,
+    });
+  });
+
+  it('says a frame\u2019s opacity fades its own fill and border only', () => {
+    draw(<PropertyPanel controller={gridDoc({ items: [] })} path={CELL} capabilities={ALL} />);
+    fireEvent.click(screen.getByRole('button', { name: 'About Opacity' }));
+    expect(screen.getByText(/only to this item's own fill and border/)).toBeTruthy();
+  });
+
+  it('withholds padding, overflow and opacity without their capabilities', () => {
+    draw(<PropertyPanel controller={gridDoc({ items: [] })} path={CELL} capabilities={[]} />);
+    expect(screen.queryByLabelText('Padding (all sides)')).toBeNull();
+    expect(screen.queryByLabelText('Content overflow')).toBeNull();
+    expect(screen.queryByLabelText('Opacity')).toBeNull();
   });
 
   it('withholds the fill and the border without their capabilities', () => {
@@ -127,6 +163,53 @@ describe('FrameForm via CellPanel', () => {
     draw(<PropertyPanel controller={table} path={`${column}.cell`} />);
     expect(screen.getByText('Column cell frame')).toBeTruthy();
     expect(screen.getByText(/cell padding does not apply/)).toBeTruthy();
+  });
+
+  it('writes overflow, opacity and a side of padding at a card and a column cell frame too', () => {
+    const column = `${OWNER}.columns[0]`;
+    const frames: readonly [string, Record<string, unknown>][] = [
+      [
+        `${OWNER}.item`,
+        { [OWNER]: { type: 'repeat_flow', item: { items: [] } }, [`${OWNER}.item`]: { items: [] } },
+      ],
+      [
+        `${column}.cell`,
+        {
+          [OWNER]: { type: 'table', columns: [{ label: 'A', cell: {} }] },
+          [column]: { label: 'A', cell: {} },
+          [`${column}.cell`]: {},
+        },
+      ],
+    ];
+    for (const [path, reads] of frames) {
+      const controller = makeController(reads);
+      const { unmount } = draw(
+        <PropertyPanel controller={controller} path={path} capabilities={ALL} />,
+      );
+      fireEvent.change(screen.getByLabelText('Content overflow'), { target: { value: 'hidden' } });
+      const opacity = screen.getByLabelText('Opacity');
+      fireEvent.change(opacity, { target: { value: '50' } });
+      fireEvent.blur(opacity);
+      const top = screen.getByLabelText('Padding: Top');
+      fireEvent.change(top, { target: { value: '2mm' } });
+      fireEvent.blur(top);
+      expect(controller.apply).toHaveBeenCalledWith({
+        op: 'setScalar',
+        path,
+        keys: ['style', 'overflow'],
+        value: 'hidden',
+      });
+      expect(controller.apply).toHaveBeenCalledWith({
+        op: 'setScalar',
+        path,
+        keys: ['style', 'opacity'],
+        value: 0.5,
+      });
+      expect(controller.applyAll).toHaveBeenCalledWith([
+        { op: 'putValue', path, keys: ['box', 'padding'], value: { top: '2mm' } },
+      ]);
+      unmount();
+    }
   });
 
   it('jumps back to the owner', () => {

@@ -1,47 +1,20 @@
-// The decoration tab: the item's OWN style keys. It composes the typography rows and
-// the colour swatches (`StyleTabFields.tsx`) with the border editor, a `line`
-// item's stroke editor, and the
-// named-style picker — the last only on a type whose wire takes `styleNames`
-// (`STYLE_NAMES_WIRE_TYPES`), which a `line` does not. Every boxed item gets
-// this tab (fill + border); `text` additionally gets the typography fields. A
-// TABLE is routed away to `TableDecorationSections` (collapsible sections).
-//
-// The named-style picker is a SHARED leaf (`StyleNamesPicker`) rather than a
-// block inlined here: `char_grid` has no decoration tab and needs the same
-// control on its placement tab, and a second copy would be two things to keep
-// in agreement.
+// The decoration tab. A TABLE is routed to `TableDecorationSections` (its bands,
+// grid and rules); every other type to `ItemDecorationSections` — the text, the
+// overflow, fill and border (or the item's own stroke editor), opacity and the
+// named styles, each a collapsible section offered only where the engine
+// honours it. The tab's heading and its `?` on the cascade sit above both.
 
 import { useI18n } from '../i18n/context';
-import { cascadeContext } from '../toolbar/cascade';
-import { FIELD_LABEL } from '../ui/chrome';
-import { BorderEditor } from './BorderEditor';
-import { readBorder } from './borderModel';
-import { readRadius } from './borderRadius';
-import { BORDER_STYLE_VALUES, BORDERABLE_TYPES } from './borderTypes';
-import { hasCapability, type ItemPanelProps } from './itemPanelProps';
-import { MARK_TYPES, STYLE_NAMES_WIRE_TYPES } from './itemView';
-import { LineStyleEditor } from './LineStyleEditor';
-import { readLineStyle } from './lineModel';
-import { FieldHelp, HelpfulHeading } from './panelHelpers';
-import { ShapeStyleEditor } from './ShapeStyleEditor';
-import { StyleNamesPicker } from './StyleNamesPicker';
-import { PanelColorField, TypographyFields } from './StyleTabFields';
-import { readShapeStyle } from './shapeStyle';
+import { ItemDecorationSections } from './ItemDecorationSections';
+import type { ItemPanelProps } from './itemPanelProps';
+import { HelpfulHeading } from './panelHelpers';
 import { TableDecorationSections } from './TableDecorationSections';
 
 export function StyleSection(props: ItemPanelProps) {
   const { t } = useI18n();
-  const { controller, path, view, fontFamilies, capabilities, onNavigateDefaults } = props;
-  const ctx = cascadeContext(controller.read, path, props.floor);
-  if (view.type === 'table') {
-    // A table's decoration tab is collapsible sections of its own (the table
-    // style, grid border, bands, conditional rules, named styles).
+  if (props.view.type === 'table') {
     return <TableDecorationSections {...props} />;
   }
-  const isText = view.type === 'text';
-  // The fill/border cluster decorates a BORDER BOX; `line` has a decoration tab
-  // but no box (its stroke is its own shape, edited below).
-  const boxed = BORDERABLE_TYPES.has(view.type);
   return (
     <section>
       <HelpfulHeading
@@ -49,88 +22,7 @@ export function StyleSection(props: ItemPanelProps) {
         topic="style"
         onOpenGlossary={props.onOpenGlossary}
       />
-      {isText ? (
-        <TypographyFields
-          controller={controller}
-          path={path}
-          style={view.style}
-          fontFamilies={fontFamilies}
-          ctx={ctx}
-          onNavigate={onNavigateDefaults}
-        />
-      ) : null}
-      {/* Fill & border — the fill-and-border cluster, on every boxed item; text color
-          rides with the typography fields above. */}
-      {isText ? (
-        <PanelColorField
-          label={t('panel.field.color')}
-          styleKey="color"
-          ctx={ctx}
-          path={path}
-          controller={controller}
-          onNavigate={onNavigateDefaults}
-        />
-      ) : null}
-      {boxed && hasCapability(capabilities, 'style.backgroundColor') ? (
-        <PanelColorField
-          label={t('panel.field.backgroundColor')}
-          styleKey="backgroundColor"
-          ctx={ctx}
-          path={path}
-          controller={controller}
-          onNavigate={onNavigateDefaults}
-        />
-      ) : null}
-      {boxed && hasCapability(capabilities, 'style.border') ? (
-        <div className="mb-2">
-          <span className={FIELD_LABEL}>{t('panel.field.border')}</span>
-          <BorderEditor
-            key={path}
-            view={readBorder(controller.read, path)}
-            radius={readRadius(controller.read, path)}
-            path={path}
-            controller={controller}
-            capabilities={capabilities}
-            isTable={false}
-          />
-        </div>
-      ) : null}
-      {MARK_TYPES.has(view.type) ? (
-        // A form mark's outline is one closed path, so it gets a UNIFORM
-        // stroke + fill rather than the border cluster above: a per-side map
-        // reduces to its top side with `shape_border_sides_ignored`, and a
-        // `borderRadius` is answered with `border_radius_ignored`. The
-        // editor authors neither.
-        <ShapeStyleEditor
-          key={path}
-          view={readShapeStyle(controller.read, path)}
-          path={path}
-          controller={controller}
-        />
-      ) : null}
-      {view.type === 'line' ? (
-        // A line's stroke is its OWN shape (width/color/style), not the
-        // border box the cluster above edits — and the insert menu can
-        // create one (cut-here line), so it needs an editing surface.
-        <LineStyleEditor
-          key={path}
-          view={readLineStyle(controller.read, path, BORDER_STYLE_VALUES)}
-          path={path}
-          controller={controller}
-          capabilities={capabilities}
-        />
-      ) : null}
-      {/* The same `?` the char_grid placement tab gives this control. It is one
-          group with one label, and 「Styles」 is exactly as inscrutable here as
-          there — the criterion is the field's NAME, not which tab it sits on. */}
-      {STYLE_NAMES_WIRE_TYPES.has(view.type) ? (
-        <StyleNamesPicker
-          controller={controller}
-          path={path}
-          styleNames={view.styleNames}
-          help={<FieldHelp topic="styleNames" />}
-        />
-      ) : null}
+      <ItemDecorationSections {...props} />
     </section>
   );
 }

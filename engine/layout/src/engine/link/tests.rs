@@ -93,7 +93,7 @@ fn block(link: Option<&str>, run_links: &[Option<&str>]) -> LayoutItem {
             color: (0.0, 0.0, 0.0),
             synthetic_bold: false,
             synthetic_italic: false,
-            decoration: None,
+            decorations: Vec::new(),
             link: l.map(str::to_string),
             combine: None,
         })
@@ -107,7 +107,7 @@ fn block(link: Option<&str>, run_links: &[Option<&str>]) -> LayoutItem {
         color: (0.0, 0.0, 0.0),
         synthetic_bold: false,
         synthetic_italic: false,
-        decoration: None,
+        decorations: Vec::new(),
         opacity: 1.0,
         baseline: None,
         link: link.map(str::to_string),

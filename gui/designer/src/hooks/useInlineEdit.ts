@@ -56,6 +56,17 @@ export interface InlineEdit {
   /** The overlay editor's chip options: the same binding-picker rows the panel
    * offers for the edited item (row-relative inside an array scope). */
   readonly editingChips: ChipContext | undefined;
+  /** The flow surface's inputs while a `spans:` item is being edited (its
+   * runs, its commit, and whether it may author both decoration lines at once
+   * — `style.textDecoration.combined`, an absent list being the bundled
+   * engine); `undefined` otherwise. */
+  readonly editingFlow:
+    | {
+        readonly runs: readonly RunView[];
+        readonly onCommit: InlineEdit['commitRuns'];
+        readonly combinedDecoration: boolean;
+      }
+    | undefined;
 }
 
 export function useInlineEdit({
@@ -167,5 +178,19 @@ export function useInlineEdit({
     [editing, paletteGroups, read, params, capabilities],
   );
 
-  return { editing, requestEdit, commitEdit, commitRuns, cancelEdit, editingChips };
+  const combinedDecoration =
+    capabilities === undefined || capabilities.includes('style.textDecoration.combined');
+  const editingFlow =
+    editing === null || editing.runs === null
+      ? undefined
+      : { runs: editing.runs, onCommit: commitRuns, combinedDecoration };
+  return {
+    editing,
+    requestEdit,
+    commitEdit,
+    commitRuns,
+    cancelEdit,
+    editingChips,
+    editingFlow,
+  };
 }

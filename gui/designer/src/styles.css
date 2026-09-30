@@ -257,6 +257,12 @@
   text-decoration-line: line-through;
 }
 
+/* Both authored lines at once: the two single-line rules above set the same
+ * property, so the pair needs its own (higher-specificity) value. */
+.sj-run--underline.sj-run--strike {
+  text-decoration-line: underline line-through;
+}
+
 /* A `data:` fragment: atomic, like a chip, because the flow cannot address what
  * it cannot split — so it takes the CHIP's own surface and hairline, and a
  * reader who has met one has met this.

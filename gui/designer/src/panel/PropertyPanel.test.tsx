@@ -42,6 +42,11 @@ function openTab(name: 'Content' | 'Style' | 'Layout') {
   fireEvent.click(screen.getByRole('tab', { name }));
 }
 
+/** The decoration tab is collapsible sections, only the first open at first. */
+function openSection(name: string) {
+  fireEvent.click(screen.getByRole('button', { name }));
+}
+
 const PATH = 'sections.body.items[0]';
 
 describe('PropertyPanel', () => {
@@ -266,6 +271,7 @@ describe('PropertyPanel', () => {
     openTab('Style');
     expect((screen.getByLabelText('Font size') as HTMLInputElement).value).toBe('24');
     expect(screen.getByLabelText('Weight')).toBeDefined();
+    openSection('Styles');
     expect((screen.getByLabelText('heading') as HTMLInputElement).checked).toBe(true);
     expect((screen.getByLabelText('muted') as HTMLInputElement).checked).toBe(false);
     // 配置 tab.
@@ -513,6 +519,7 @@ describe('PropertyPanel', () => {
     });
     draw(<PropertyPanel controller={controller} path={PATH} />);
     openTab('Style');
+    openSection('Styles');
     fireEvent.click(screen.getByLabelText('muted'));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setStrings',
@@ -532,6 +539,7 @@ describe('PropertyPanel', () => {
     const controller = makeController({ [PATH]: { type: 'text' } });
     draw(<PropertyPanel controller={controller} path={PATH} />);
     openTab('Style');
+    openSection('Styles');
     // The styleNames field renders its empty placeholder.
     const group = screen.getByRole('group', { name: 'Styles' });
     expect(group.textContent).toContain('(default)');
@@ -848,6 +856,8 @@ describe('PropertyPanel', () => {
     // closed 「Named styles」 one.
     if (type === 'table') {
       fireEvent.click(screen.getByRole('button', { name: /^Named styles/ }));
+    } else {
+      openSection('Styles');
     }
     expect(screen.getByRole('group', { name: 'Styles' })).toBeDefined();
     expect(screen.getByLabelText('heading')).toBeDefined();
@@ -1245,6 +1255,7 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
     openTab('Style');
     expect(screen.getByText('Red, shade 4 of 5')).toBeTruthy();
     expect(screen.getByText('#b91c1c')).toBeTruthy();
+    openSection('Fill and border');
     expect(screen.getByText('Green, shade 4 of 5')).toBeTruthy();
     expect(screen.getByText('#15803d')).toBeTruthy();
   });

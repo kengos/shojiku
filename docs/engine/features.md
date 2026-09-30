@@ -334,9 +334,11 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   (stroke)/italic (skew) with layout-owned constants; `letterSpacing`
   (± capped) is added to every advance in the one shared measurement
   path.
-- **`textDecoration`**: `underline`/`line_through` resolved from the
-  font's own metrics into a tree-level spec — renderers draw one rect
-  per line with zero font knowledge.
+- **`textDecoration`**: `underline`/`line_through`, or both at once
+  (`underline line_through`, either order — CSS `text-decoration-line`
+  with two values), resolved from the font's own metrics into tree-level
+  specs — renderers draw one rect per decoration line per text line with
+  zero font knowledge.
 - **`opacity`**: per-item paint alpha (deliberately not CSS group
   compositing); out-of-range warns and draws opaque.
 - Capability keys: `styles`, `styleNames`, `style.fontWeight`,
@@ -344,7 +346,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   `style.textSpacingTrim`, `style.hangingPunctuation`,
   `style.backgroundColor`, `style.backgroundColor.box`, `style.border`,
   `style.textOverflow`, `style.textOverflow.clip`, `style.overflow`,
-  `style.verticalAlign`, `style.textDecoration`, `style.opacity`.
+  `style.verticalAlign`, `style.textDecoration`,
+  `style.textDecoration.combined`, `style.opacity`.
   Reference: [style](style.md).
 
 ### Text (`engine/layout`, `engine/render-*`)

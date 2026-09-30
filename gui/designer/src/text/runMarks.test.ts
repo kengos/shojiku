@@ -92,6 +92,16 @@ describe('selectionMarks', () => {
     expect(selectionMarks(root, selectAll(root))?.decoration).toBe('none');
   });
 
+  it('reports each LINE the whole selection shares, one fragment carrying both', () => {
+    const root = host(
+      ['a', 'sj-run sj-run--underline sj-run--strike'],
+      ['b', 'sj-run sj-run--underline'],
+    );
+    expect(selectionMarks(root, selectAll(root))?.decoration).toBe('underline');
+    const both = host(['a', 'sj-run sj-run--underline sj-run--strike']);
+    expect(selectionMarks(both, selectAll(both))?.decoration).toBe('underline line_through');
+  });
+
   it('reports one shared decoration', () => {
     const root = host(['a', 'sj-run sj-run--underline'], ['b', 'sj-run sj-run--underline']);
     expect(selectionMarks(root, selectAll(root))?.decoration).toBe('underline');
@@ -139,19 +149,33 @@ describe('the presses', () => {
     expect(toggleBold(bolded, NO_MARKS)).toEqual({ ...bolded, bold: true });
   });
 
-  it('REPLACES a decoration rather than adding a second line', () => {
-    // `textDecoration` is ONE wire key with three values, so underline over a
-    // struck selection is a replacement, not an addition.
+  it('ADDS a line beside the one a fragment already carries', () => {
+    // Both lines are one wire value (`underline line_through`), so underline
+    // over a struck fragment keeps the strike.
+    const struck: RunMarks = { ...current, decoration: 'line_through' };
     expect(
-      toggleDecoration(current, { ...NO_MARKS, decoration: 'line_through' }, 'underline')
-        .decoration,
-    ).toBe('underline');
+      toggleDecoration(struck, { ...NO_MARKS, decoration: 'line_through' }, 'underline').decoration,
+    ).toBe('underline line_through');
   });
 
-  it('clears the decoration when the selection already shares it', () => {
+  it('keeps the lines exclusive against an engine that takes one at a time', () => {
+    const struck: RunMarks = { ...current, decoration: 'line_through' };
+    expect(
+      toggleDecoration(struck, { ...NO_MARKS, decoration: 'line_through' }, 'underline', false)
+        .decoration,
+    ).toBe('underline');
+    const both: RunMarks = { ...current, decoration: 'underline line_through' };
+    expect(toggleDecoration(both, both, 'underline', false).decoration).toBe('line_through');
+    expect(applyShortcut('underline', struck, null, false).decoration).toBe('underline');
+  });
+
+  it('clears only the line the selection already shares', () => {
     expect(
       toggleDecoration(current, { ...NO_MARKS, decoration: 'underline' }, 'underline').decoration,
     ).toBe('none');
+    const both: RunMarks = { ...current, decoration: 'underline line_through' };
+    expect(toggleDecoration(both, both, 'underline').decoration).toBe('line_through');
+    expect(toggleDecoration(both, both, 'line_through').decoration).toBe('underline');
   });
 
   it('sets a colour outright, and clears it with the empty value', () => {

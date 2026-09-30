@@ -48,7 +48,7 @@ fn unknown_run_font_is_an_error() {
         color: (0.0, 0.0, 0.0),
         synthetic_bold: false,
         synthetic_italic: false,
-        decoration: None,
+        decorations: Vec::new(),
         opacity: 1.0,
         baseline: Some(10.0),
         link: None,
@@ -74,7 +74,7 @@ fn unknown_run_font_is_an_error() {
                 color: (0.0, 0.0, 0.0),
                 synthetic_bold: false,
                 synthetic_italic: false,
-                decoration: None,
+                decorations: Vec::new(),
             }],
         }],
     };

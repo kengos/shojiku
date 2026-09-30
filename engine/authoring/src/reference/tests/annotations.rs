@@ -244,13 +244,13 @@ fn the_value_sets_are_enumerated_from_the_artifact() {
     let closed = count(|s| closed_values(s).or_else(|| closed_union(s)));
     assert_eq!(
         closed,
-        (32, 95),
+        (32, 97),
         "shapes whose value set is CLOSED, and values"
     );
     let literal = count(literal_values);
     assert_eq!(
         literal,
-        (36, 107),
+        (36, 109),
         "shapes carrying literals at all — the clause's real population"
     );
     for name in [

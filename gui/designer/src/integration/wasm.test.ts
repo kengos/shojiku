@@ -49,6 +49,9 @@ import { buildUsage, fieldUsage } from '../palette/usage';
 import { readBorder } from '../panel/borderModel';
 import { edgeOps, presetOps } from '../panel/borderOps';
 import { defaultStyleOp, INHERITED_STYLE_FIELDS } from '../panel/defaultsModel';
+import { readEdge } from '../panel/edgeModel';
+import { edgeSideOps, edgeUniformOps } from '../panel/edgeOps';
+import { edgeRules, FRAME_PADDING_RULES } from '../panel/edgeRules';
 import { frameOf } from '../panel/frameModel';
 import { gridColumnsPlan, gridRowsPlan } from '../panel/gridStructure';
 import { readGroupsView } from '../panel/groupModel';
@@ -57,8 +60,7 @@ import { containerLayoutFor } from '../panel/layoutModel';
 import { directionOp, gapOp, ratioOp } from '../panel/layoutOps';
 import { readMark } from '../panel/markModel';
 import { setCheckedOps } from '../panel/markOps';
-import { bindingPickOps } from '../panel/model';
-import { paddingOps, readPadding } from '../panel/paddingModel';
+import { bindingPickOps, plainTextOp } from '../panel/model';
 import { PAGE_SIZES } from '../panel/pageSizes';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
@@ -66,6 +68,7 @@ import { fillOrderOp, gridCountOp, gridGapOp, newPageOp } from '../panel/repeatG
 import { addRuleOp, setRuleEqualsOp } from '../panel/rowConditionOps';
 import { rulePresetOps } from '../panel/rulePresets';
 import { readShapeStyle, strokeWidthOp } from '../panel/shapeStyle';
+import { sizeLimitOp } from '../panel/sizeLimits';
 import { styleNamesOp } from '../panel/styleNamesOps';
 import { deleteStyleOps, renameStyleOps } from '../panel/styleRefOps';
 import { TABLE_BODY_VALIGN_CAPABILITY, TABLE_VALIGN_CAPABILITY } from '../panel/TableBandFields';
@@ -80,10 +83,13 @@ import {
   rowModeOps,
 } from '../panel/tableSettingsOps';
 import { bandStyleOp } from '../panel/tableStyleOps';
+import { decorationToggleOp, letterSpacingOp, opacityOp } from '../panel/textLookOps';
 import { extendParams } from '../sample/generate';
 import { buildStyleUsage } from '../styles/usage';
 import { commitOps } from '../text/declCommit';
 import { planChipInsert } from '../text/declMint';
+import { cascadeContext } from '../toolbar/cascade';
+import { effectiveValueIn } from '../toolbar/effective';
 import { buildTree, type TreeNode } from '../tree/model';
 import { rowDropOps } from '../tree/rowDrag';
 
@@ -2338,7 +2344,13 @@ describe('iterable scaffolds against the real engine', () => {
       // The scaffold's 8pt padding → 20pt: the first field moves 12pt right.
       const field = `${frame}.items[0]`;
       const x = (boxes: typeof before) => boxes.find((box) => box.path === field)?.border.x;
-      const ops = paddingOps(frame, readPadding(editor.read(frame)), '20');
+      const ops = edgeUniformOps(
+        frame,
+        'padding',
+        readEdge(editor.read(frame), 'padding'),
+        '20',
+        FRAME_PADDING_RULES,
+      );
       if (ops === null) throw new Error('the padding field refused a legal value');
       expect(editor.applyAll(ops).ok).toBe(true);
       // Borderless and filled — the label/ticket shape the gap blocked.
@@ -2406,7 +2418,13 @@ describe('iterable scaffolds against the real engine', () => {
     const field = `${frame}.items[0]`;
     const before = outcome.inspect?.boxes.pages.flat() ?? [];
     const x = (boxes: typeof before) => boxes.find((box) => box.path === field)?.border.x;
-    const ops = paddingOps(frame, readPadding(editor.read(frame)), '13');
+    const ops = edgeUniformOps(
+      frame,
+      'padding',
+      readEdge(editor.read(frame), 'padding'),
+      '13',
+      FRAME_PADDING_RULES,
+    );
     if (ops === null) throw new Error('the padding field refused a legal value');
     expect(editor.applyAll(ops).ok).toBe(true);
     const edited = await transport.renderRaw(editor.text(), params(), undefined, { scale: 1 });
@@ -3235,5 +3253,226 @@ describe('table style edits against the real engine (receipt-us)', () => {
 
     const after = await transport.validate(editor.text(), params(), undefined);
     expect(after.items.some((d) => d.code === 'row_condition_scope_ignored')).toBe(false);
+  });
+});
+
+// The text-and-box style keys the panel now writes, authored through the SAME
+// op builders the fields dispatch and handed to the real engine. Each case asks
+// two things: the file still parses and draws with no error or `invalid_*`
+// diagnostic (a builder writing a shape the wire refuses would fail here, not in
+// a unit test that only reads its own output), and where a key MOVES something
+// measurable, that it moved — a key the engine silently ignored would pass the
+// first half alone.
+describe('text and box style edits against the real engine', () => {
+  const P = 'sections.body.items[0]';
+  const flow = (item: readonly string[]) =>
+    ['version: 0.1.0', 'sections:', '  body:', '    type: flow', '    items:', ...item, ''].join(
+      '\n',
+    );
+
+  async function draw(text: string) {
+    const outcome = await transport.renderRaw(text, '{"rows":[{"a":"x"}]}', undefined, {
+      scale: 1,
+    });
+    expect(outcome.ok).toBe(true);
+    const bad = outcome.diagnostics.items.filter(
+      (d) => d.severity === 'error' || d.code.startsWith('invalid_'),
+    );
+    expect(bad).toEqual([]);
+    return outcome.inspect?.boxes.pages.flat().find((box) => box.path === P);
+  }
+
+  function edit(src: string, build: (editor: Editor) => readonly (Op | null)[]) {
+    const editor = Editor.create(src);
+    for (const op of build(editor)) {
+      if (op === null) throw new Error('a builder refused a legal value');
+      expect(editor.apply(op).ok).toBe(true);
+    }
+    return editor.text();
+  }
+
+  const textItem = flow([
+    '      - type: text',
+    '        text: Hello',
+    '        box: { w: 200, h: 80 }',
+  ]);
+
+  it('moves the text down with verticalAlign: middle', async () => {
+    const before = await draw(textItem);
+    const after = await draw(
+      edit(textItem, () => [plainTextOp(P, ['style', 'verticalAlign'], 'middle')]),
+    );
+    const baseline = (box: typeof before) =>
+      box?.text !== undefined && 'lines' in box.text ? box.text.lines[0]?.baseline : undefined;
+    expect((baseline(after) ?? 0) - (baseline(before) ?? 0)).toBeGreaterThan(10);
+  });
+
+  it('widens the line with letterSpacing, in pt and in em', async () => {
+    const width = (box: Awaited<ReturnType<typeof draw>>) =>
+      box?.text !== undefined && 'lines' in box.text ? box.text.lines[0]?.width : undefined;
+    const before = width(await draw(textItem));
+    for (const value of ['2', '0.2em']) {
+      const after = width(await draw(edit(textItem, () => [letterSpacingOp(P, '', value)])));
+      expect((after ?? 0) - (before ?? 0)).toBeGreaterThan(5);
+    }
+  });
+
+  it('draws underline and strikethrough together, as the two checkboxes write them', async () => {
+    const tick = (editor: Editor, line: 'underline' | 'line_through') =>
+      decorationToggleOp(
+        P,
+        effectiveValueIn(
+          cascadeContext((p) => editor.read(p), P),
+          'textDecoration',
+        ),
+        line,
+        true,
+      );
+    const once = edit(textItem, (editor) => [tick(editor, 'underline')]);
+    const both = edit(once, (editor) => [tick(editor, 'line_through')]);
+    expect(both).toContain('textDecoration: underline line_through');
+    await draw(both);
+  });
+
+  it('draws a decoration line, an overflow policy and an opacity cleanly', async () => {
+    await draw(
+      edit(textItem, () => [
+        plainTextOp(P, ['style', 'textDecoration'], 'line_through'),
+        plainTextOp(P, ['style', 'textOverflow'], 'shrink'),
+        opacityOp(P, '', '40'),
+      ]),
+    );
+  });
+
+  it('insets the content with a per-side padding in units', async () => {
+    const before = await draw(textItem);
+    const text = edit(textItem, (editor) => [
+      ...(edgeSideOps(
+        P,
+        'padding',
+        readEdge(editor.read(P), 'padding'),
+        'left',
+        '10mm',
+        edgeRules(
+          'padding',
+          'text',
+          placementFor((p) => editor.read(p), P),
+        ),
+      ) ?? [null]),
+    ]);
+    expect(text).toContain('padding: { left: 10mm }');
+    const after = await draw(text);
+    expect((after?.content.x ?? 0) - (before?.content.x ?? 0)).toBeCloseTo(28.35, 1);
+  });
+
+  it('centres a fixed-width item with auto left and right margins in the flow body', async () => {
+    const rules = (editor: Editor) =>
+      edgeRules(
+        'margin',
+        'text',
+        placementFor((p) => editor.read(p), P),
+      );
+    const step1 = edit(textItem, (editor) => [
+      ...(edgeSideOps(
+        P,
+        'margin',
+        readEdge(editor.read(P), 'margin'),
+        'left',
+        'auto',
+        rules(editor),
+      ) ?? [null]),
+    ]);
+    const text = edit(step1, (editor) => [
+      ...(edgeSideOps(
+        P,
+        'margin',
+        readEdge(editor.read(P), 'margin'),
+        'right',
+        'auto',
+        rules(editor),
+      ) ?? [null]),
+    ]);
+    const before = await draw(textItem);
+    const after = await draw(text);
+    expect((after?.border.x ?? 0) - (before?.border.x ?? 0)).toBeGreaterThan(50);
+  });
+
+  it('grows an automatic height to minHeight', async () => {
+    const auto = flow(['      - type: text', '        text: Hello', '        box: { w: 200 }']);
+    const text = edit(auto, () => [sizeLimitOp(P, 'minHeight', '', '30mm')]);
+    const after = await draw(text);
+    expect(after?.border.h ?? 0).toBeCloseTo(85.04, 1);
+    // A maximum below the minimum loses (CSS order: min wins), and a max width
+    // narrows an authored one.
+    const bounded = edit(text, () => [
+      sizeLimitOp(P, 'maxHeight', '', '10mm'),
+      sizeLimitOp(P, 'maxWidth', '', '100'),
+      sizeLimitOp(P, 'minWidth', '', '20'),
+    ]);
+    const clamped = await draw(bounded);
+    expect(clamped?.border.h ?? 0).toBeCloseTo(85.04, 1);
+    expect(clamped?.border.w ?? 0).toBeCloseTo(100, 1);
+  });
+
+  it('styles a page number, a list, a container and a char_grid cleanly', async () => {
+    await draw(
+      edit(
+        [
+          'version: 0.1.0',
+          'sections:',
+          '  footer:',
+          '    items:',
+          '      - type: page_number',
+          '        box: { x: 0, y: 0, w: 100, h: 20 }',
+          '  body:',
+          '    type: flow',
+          '    items:',
+          '      - { type: text, text: x }',
+          '',
+        ].join('\n'),
+        () => [
+          plainTextOp('sections.footer.items[0]', ['style', 'verticalAlign'], 'bottom'),
+          letterSpacingOp('sections.footer.items[0]', '', '1'),
+          plainTextOp('sections.footer.items[0]', ['style', 'backgroundColor'], '#eeeeee'),
+          {
+            op: 'setScalar',
+            path: 'sections.footer.items[0]',
+            keys: ['style', 'borderWidth'],
+            value: 1,
+          },
+        ],
+      ),
+    );
+    await draw(
+      edit(
+        flow(['      - type: list', '        data: { key: rows }', '        text: "{a}"']),
+        () => [
+          plainTextOp(P, ['style', 'textDecoration'], 'underline'),
+          letterSpacingOp(P, '', '0.5mm'),
+          { op: 'setScalar', path: P, keys: ['style', 'borderWidth'], value: 1 },
+        ],
+      ),
+    );
+    await draw(
+      edit(flow(['      - type: container', '        box: { h: 20 }', '        items: []']), () => [
+        plainTextOp(P, ['style', 'overflow'], 'hidden'),
+        letterSpacingOp(P, '', '1'),
+        plainTextOp(P, ['style', 'fontWeight'], 'bold'),
+      ]),
+    );
+    await draw(
+      edit(
+        flow([
+          '      - type: char_grid',
+          '        text: abc',
+          '        grid: { charsPerLine: 5, lines: 2 }',
+        ]),
+        () => [
+          plainTextOp(P, ['style', 'color'], '#cc0000'),
+          plainTextOp(P, ['style', 'fontFamily'], 'biz-ud-gothic'),
+          opacityOp(P, '', '50'),
+        ],
+      ),
+    );
   });
 });

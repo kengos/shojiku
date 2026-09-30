@@ -60,7 +60,7 @@ pub(super) fn rich_line(
             color: s.color,
             synthetic_bold: s.synthetic_bold,
             synthetic_italic: s.synthetic_italic,
-            decoration: s.decoration,
+            decorations: s.decorations.clone(),
             link: s.link.clone(),
             // Horizontal runs never combine (tate-chu-yoko is a vertical-only
             // effect); the field still records nothing here.

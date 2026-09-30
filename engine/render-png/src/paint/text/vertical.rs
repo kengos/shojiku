@@ -59,10 +59,10 @@ impl Painter<'_> {
                     orient,
                 };
                 self.draw_column(pixmap, &col, &line.text, &mut paint, mask);
-                // `textDecoration` as a SIDE band: one filled rect per column
+                // `textDecoration` as SIDE bands: one filled rect per line per column
                 // at the layout-resolved x offset, running the column's
                 // inked down-extent (mirrors the PDF backend).
-                if let Some(d) = block.decoration {
+                for d in &block.decorations {
                     if let Some(path) =
                         rect_path(line.x + d.offset, line.y, d.thickness, line.width)
                     {
@@ -91,7 +91,7 @@ impl Painter<'_> {
                     };
                     self.draw_column(pixmap, &col, &run.text, &mut paint, mask);
                     // Per-run decoration band alongside the run's extent.
-                    if let Some(d) = run.decoration {
+                    for d in &run.decorations {
                         if let Some(path) =
                             rect_path(line.x + d.offset, line.y + run.x, d.thickness, run.width)
                         {

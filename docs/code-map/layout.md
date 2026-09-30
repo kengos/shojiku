@@ -332,7 +332,8 @@ Wire types stay in core; content measurement stays in layout.
 
 - `engine/text.rs` — the text atom: routes `spans` to rich, applies `ruby`
   to every finished surface; shared `align_x`/`valign_offset`; re-exports
-  `decoration_spec` (the ONE metric→`DecorationSpec` home) and the `vcol`
+  `decoration_specs` (the ONE metric→`DecorationSpec` home — 0, 1 or 2
+  specs, underline first) and the `vcol`
   helpers.
 - `text/resolve.rs` — the ONE binding choke point: `resolve_content`/
   `resolve_binding` shared by text `data:`/interpolation, spans, qr_code,
@@ -370,7 +371,7 @@ Wire types stay in core; content measurement stays in layout.
   decoration, `textSpacingTrim`, tate-chu-yoko via `text_combine`.
 - `text/vcol.rs` — shared vertical-writing column geometry (vblock/vrich/list/table
   cells): `column_extent` (shaped, `RunOptions`-aware so measure == draw),
-  `along_offset`/`column_left`/`stack_shift`, `vertical_decoration_spec`,
+  `along_offset`/`column_left`/`stack_shift`, `vertical_decoration_specs`,
   `clamp_column_down`/`trim_to` (line-end-kinsoku- and tate-chu-yoko-aware down-clamp).
 - `text/voverflow.rs` — vertical `textOverflow` policy math.
 - `text/vrich.rs` — vertical-writing rich spans (`vertical_rich_atom`): axes-swapped
@@ -486,7 +487,8 @@ Wire types stay in core; content measurement stays in layout.
   the ONE rounded-rect path both renderers replay). Shapes carry
   radius/dash/opacity/link; `LayoutItem::Path` (form marks),
   `LayoutItem::Clip` (the one nested node, renderer recursion capped);
-  `TextBlock` carries spacing/trim/synthetics/decoration/baseline/
+  `TextBlock` carries spacing/trim/synthetics/`decorations` (a list: both
+  lines of `underline line_through` are two specs)/baseline/
   runs/fallback_ids/`vertical`/`text_combine` — layout decides, renderers
   execute.
 

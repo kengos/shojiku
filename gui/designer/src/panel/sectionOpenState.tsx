@@ -25,7 +25,14 @@ export type SectionId =
   | 'table.headerBand'
   | 'table.bodyBand'
   | 'table.conditions'
-  | 'table.styleNames';
+  | 'table.styleNames'
+  | 'item.text'
+  | 'item.overflow'
+  | 'item.fill'
+  | 'item.opacity'
+  | 'item.styleNames'
+  | 'item.spacing'
+  | 'item.sizeLimits';
 
 interface SectionOpenStore {
   readonly overrides: ReadonlyMap<SectionId, boolean>;

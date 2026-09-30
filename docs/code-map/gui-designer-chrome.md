@@ -101,7 +101,8 @@ resolved style.
   author what the cascade already yields; `normal` appears only as a cascade
   override, never as a default restated. `null` = dispatch nothing.
 - `toolbar/model.ts` — pure toolbar model: `readToolbar` (the
-  selection-context control set keyed off `BORDERABLE_TYPES`; `text` AND `table`
+  selection-context control set keyed off `BORDERABLE_TYPES`; the three text
+  surfaces (`text`, `page_number`, `list`) AND `table`
   get the text cluster, because a table's own style is what its cells inherit
   (the same keys as the panel's 「文字（表全体）」 section) and a table fill is never
   painted; the other boxed types get a fill) + the op
@@ -431,7 +432,10 @@ resolved style.
     `color`). The three METRICS are deliberately absent — the canvas editor is
     "deliberately NOT WYSIWYG", so painting one would make its line breaks a
     prediction of the engine's; the property panel owns them. `textDecoration`
-    is the one style key the wire spells `snake_case` (`line_through`).
+    is the one style key the wire spells `snake_case` (`line_through`); both
+    lines are the two-token value, which `decorationOf` folds (either order) to
+    the canonical `underline line_through`, and `hasUnderline`/`hasLineThrough`/
+    `composeDecoration` read and build it as two independent lines.
   - `text/runNodes.ts` — the seed. A mark is a CLASS, never a document-derived
     `style` attribute; colour is the one mark whose VALUE comes from the
     document and goes through `isHexColor`. An EMPTY fragment is seeded with
@@ -469,8 +473,13 @@ resolved style.
   - `text/useSelectionMarks.ts` — the `selectionchange` listener; a selection can
     change with no event reaching the editor at all.
   - `text/RunFormatBar.tsx` — B / I / U / S + colour + the chip insert trigger,
-    all built from the format toolbar's own controls. The decoration is a
-    THREE-state choice, not two toggles, because `textDecoration` is one key.
+    all built from the format toolbar's own controls. U and S are independent
+    toggles over the one `textDecoration` key (`runMarks.toggleDecoration`
+    flips one line and keeps the other), so both can be on — exclusive when
+    the engine lacks `style.textDecoration.combined` (`useInlineEdit` derives
+    `combinedDecoration`, threaded CanvasArea → InlineTextEditor →
+    SpansFlowEditor → the bar and the ⌘U shortcut); the run paints
+    both classes, and `styles.css` carries a combined rule for the pair.
     **Every block-level control this bar duplicates STANDS DOWN while it is
     open** — bold, italic and the TEXT colour, threaded as `flowEditing` from
     `Designer` through `TopChrome`/`SlimToolbar`/`FormatToolbar`. Two controls

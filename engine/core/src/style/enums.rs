@@ -122,13 +122,13 @@ pub enum FontStyle {
     Italic,
 }
 
-/// Text decoration line (CSS `text-decoration-line`, keyword subset).
-/// Not inherited (matches CSS — note CSS *propagates* decoration to
-/// descendants instead, which this engine does not model yet). `none`
-/// exists so an inline style can switch a named style's decoration off.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
-#[serde(rename_all = "snake_case")]
+/// Text decoration line (CSS `text-decoration-line`, subset): no line, an
+/// underline, a line-through, or both at once. Not inherited (matches CSS —
+/// note CSS *propagates* decoration to descendants instead, which this
+/// engine does not model yet). `none` exists so an inline style can switch a
+/// named style's decoration off. The wire spelling and its hand-written
+/// serde live in `style/decoration.rs`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum TextDecoration {
     /// No decoration line — the engine default, and the explicit "turn a
     /// named style's decoration off" value.
@@ -139,6 +139,8 @@ pub enum TextDecoration {
     /// A line through the middle of the text (strikeout, per font
     /// metrics).
     LineThrough,
+    /// Both lines: `underline line_through` (either order) on the wire.
+    UnderlineLineThrough,
 }
 
 /// What a box does with content outside its border box (CSS `overflow`

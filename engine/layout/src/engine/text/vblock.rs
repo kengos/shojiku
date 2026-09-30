@@ -16,7 +16,7 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::super::{Atom, Ctx};
 use super::height::content_avail;
-use super::vcol::{along_offset, column_left, stack_shift, vertical_decoration_spec};
+use super::vcol::{along_offset, column_left, stack_shift, vertical_decoration_specs};
 use super::voverflow::{ellipsize_column, fit_columns_size, measure_columns, VColumn, VWrap};
 
 impl Ctx<'_, '_> {
@@ -169,7 +169,7 @@ impl Ctx<'_, '_> {
             synthetic_italic: false,
             // A side band per column: underline on the RIGHT of the column
             // (the JLREQ side-line convention), line-through on the column axis.
-            decoration: vertical_decoration_spec(
+            decorations: vertical_decoration_specs(
                 resolved.primary.face,
                 computed.text_decoration,
                 size,

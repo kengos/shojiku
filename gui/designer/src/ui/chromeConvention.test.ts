@@ -298,6 +298,16 @@ describe('chrome conventions', () => {
     expect(at('sj-run--linked')).toBeLessThan(at('sj-run--strike'));
   });
 
+  it('draws BOTH authored lines on a run carrying both classes', () => {
+    // The two single-line rules set the same property, so whichever comes last
+    // would win and the other line would vanish. The pair has its own rule, and
+    // its TWO-class selector is what outranks both regardless of order.
+    const css = readFileSync(STYLES, 'utf8');
+    expect(css).toMatch(
+      /\.sj-run--underline\.sj-run--strike\s*\{\s*text-decoration-line:\s*underline line-through;/,
+    );
+  });
+
   it('draws control glyphs as SVG icons, never text characters', () => {
     // The CLASS the rule names, not a list of the characters that happened to
     // be in use: a hand-listed set is how this rule kept getting re-broken — it

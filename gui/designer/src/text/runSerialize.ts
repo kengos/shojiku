@@ -20,7 +20,7 @@
 
 import { CHIP_WIRE_ATTR } from './chipModel';
 import { BOUND_ATTR, EMPTY_RUN_PLACEHOLDER, RUN_ATTR } from './runNodes';
-import { DECORATION_VALUES, type Decoration, NO_MARKS, type RunMarks } from './spanRuns';
+import { composeDecoration, type Decoration, NO_MARKS, type RunMarks } from './spanRuns';
 
 /** One fragment as the surface now holds it. */
 export interface SerializedRun {
@@ -47,7 +47,8 @@ const CLASS_MARKS: ReadonlyMap<string, keyof RunMarks | Decoration> = new Map([
  * ours, while a computed style also answers for the sheet, the theme and every
  * inherited rule, none of which is a fragment's authored value. */
 export function marksOfElement(el: Element): RunMarks {
-  let decoration: Decoration = 'none';
+  let underline = false;
+  let lineThrough = false;
   let bold = false;
   let italic = false;
   for (const name of el.classList) {
@@ -56,11 +57,18 @@ export function marksOfElement(el: Element): RunMarks {
       bold = true;
     } else if (mark === 'italic') {
       italic = true;
-    } else if (DECORATION_VALUES.some((value) => value === mark)) {
-      decoration = mark as Decoration;
+    } else if (mark === 'underline') {
+      underline = true;
+    } else if (mark === 'line_through') {
+      lineThrough = true;
     }
   }
-  return { bold, italic, decoration, color: colorOf(el) };
+  return {
+    bold,
+    italic,
+    decoration: composeDecoration(underline, lineThrough),
+    color: colorOf(el),
+  };
 }
 
 /** The inline colour `paintRun` set, normalized back to the `#rrggbb` the

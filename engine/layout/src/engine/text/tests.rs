@@ -30,7 +30,7 @@ fn text() -> LayoutItem {
         color: (0.0, 0.0, 0.0),
         synthetic_bold: false,
         synthetic_italic: false,
-        decoration: None,
+        decorations: Vec::new(),
         opacity: 1.0,
         baseline: None,
         link: None,

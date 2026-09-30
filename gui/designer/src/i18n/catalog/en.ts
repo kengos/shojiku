@@ -870,10 +870,6 @@ export const en: LanguageCatalog = {
     'panel.frame.every.columnCell': "This column's cell on every row uses this frame.",
     'panel.frame.columnNote':
       "The lines between cells are set on the table; a border here is drawn around this cell as well. The table's cell padding does not apply to this cell — use Padding below.",
-    'panel.frame.padding': 'Padding',
-    'panel.frame.padding.perSide': 'Differs per side. A number typed here sets every side to it.',
-    'panel.frame.padding.other':
-      "Set in a form this field can't show. A number typed here replaces it.",
     'panel.frame.selectOwner.cell': 'Select the grid',
     'panel.frame.selectOwner.card': 'Select the cards',
     'panel.frame.selectOwner.columnCell': 'Select the column',
@@ -900,6 +896,32 @@ export const en: LanguageCatalog = {
     'panel.field.lineHeight': 'Line height',
     'panel.field.color': 'Color',
     'panel.field.backgroundColor': 'Background',
+    'panel.field.letterSpacing': 'Letter spacing',
+    'panel.field.letterSpacing.units': 'mm, em too; no %',
+    'panel.field.textOverflow': 'Text overflow',
+    'panel.field.overflow': 'Content overflow',
+    'panel.field.opacity': 'Opacity',
+    'panel.itemSection.text.title': 'Text',
+    'panel.itemSection.text.inheritHelp':
+      'The container shows no text of its own. Items placed inside it use these settings unless they set their own.',
+    'panel.itemSection.text.charGridHelp':
+      'Applies to the characters written in the cells. Leave the size blank to match the cell size.',
+    'panel.itemSection.overflow.title': 'Overflow',
+    'panel.itemSection.overflow.textOverflowHelp':
+      'Takes effect only when the height is fixed. With an automatic height the box grows to fit the text instead.',
+    'panel.itemSection.overflow.overflowHelp':
+      "Whether items that stick out of the container are cut off at its edge. The container's own fill and border are drawn either way.",
+    'panel.itemSection.fill.title': 'Fill and border',
+    'panel.itemSection.text.listHelp':
+      'Each entry is drawn on one line; a longer one ends with "…".',
+    'panel.itemSection.fill.fillOnly': 'Fill',
+    'panel.itemSection.fill.border': 'Border on',
+    'panel.itemSection.fill.charGridHelp':
+      'The fill covers the grid of cells. The grid lines are set in {section} on the {tab} tab.',
+    'panel.itemSection.opacity.help':
+      '100% is fully opaque, 0% invisible. Applies to what this item draws itself.',
+    'panel.itemSection.opacity.decorationHelp':
+      "100% is fully opaque, 0% invisible. Applies only to this item's own fill and border — not to what it contains or draws inside.",
     'panel.box.x': 'X',
     'panel.box.y': 'Y',
     'panel.box.w': 'Width',
@@ -964,6 +986,30 @@ export const en: LanguageCatalog = {
     'stepper.relativeUnit': 'Values in percent or em cannot be stepped. Type the value instead.',
     'stepper.unitHint': 'mm, cm, in too',
     'panel.box.h': 'Height',
+    'panel.box.minWidth': 'Min width',
+    'panel.box.maxWidth': 'Max width',
+    'panel.box.minHeight': 'Min height',
+    'panel.box.maxHeight': 'Max height',
+    'panel.box.limits.title': 'Size limits',
+    'panel.box.limits.help':
+      'Keeps the size within these bounds even when the content or where it is placed would make it larger or smaller. On a page number or a list, the height bounds apply only to a fixed height.',
+    'panel.edge.title': 'Spacing',
+    'panel.edge.help':
+      'Padding is the space between the border and the content; margin is the space outside the border. The side fields also take a unit such as 5mm or 10%; the all-sides field is in points. A margin may be negative.',
+    'panel.edge.tableHelp':
+      'A table placed in a flow body uses only its left and right padding and margin. Setting both left and right margins to Auto centres it.',
+    'panel.edge.padding': 'Padding',
+    'panel.edge.margin': 'Margin',
+    'panel.edge.top': 'Top',
+    'panel.edge.right': 'Right',
+    'panel.edge.bottom': 'Bottom',
+    'panel.edge.left': 'Left',
+    'panel.edge.side': '{edge}: {side}',
+    'panel.edge.all': '{edge} (all sides)',
+    'panel.edge.perSide': 'per side',
+    'panel.edge.auto': 'Auto',
+    'panel.edge.autoNote': 'takes the free space',
+    'panel.edge.autoIneffective': '"Auto" has no effect here, so {sides} counts as 0.',
     'panel.placement.label': 'Placement',
     'panel.placement.mode.auto': 'Auto',
     'panel.placement.mode.pinned': 'Fixed',
@@ -1063,6 +1109,12 @@ export const en: LanguageCatalog = {
     'style.value.textAlign.left': 'Left',
     'style.value.textAlign.center': 'Center',
     'style.value.textAlign.right': 'Right',
+    'style.value.textOverflow.visible': 'Let it stick out',
+    'style.value.textOverflow.shrink': 'Shrink to fit',
+    'style.value.textOverflow.ellipsis': 'Shorten with "…"',
+    'style.value.textOverflow.clip': 'Cut off at the edge',
+    'style.value.overflow.visible': 'Let it stick out',
+    'style.value.overflow.hidden': 'Cut off at the edge',
     'styles.count': '{n, number} styles',
     'docSettings.sections': 'Settings sections',
     'docSettings.baseTextPreview': 'A sample set in this text (an approximation, not the page).',

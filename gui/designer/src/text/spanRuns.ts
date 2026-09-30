@@ -19,15 +19,39 @@ import { display, record } from '../panel/itemView';
 import { MAX_SPANS } from '../panel/spansModel';
 
 /** The wire's `textDecoration` values, snake_case on the wire — NOT the
- * camelCase every other key uses (`engine/core/src/style/enums.rs` renames this
- * one `snake_case`). Spelled out here so a run never guesses it. */
-export const DECORATION_VALUES = ['none', 'underline', 'line_through'] as const;
+ * camelCase every other key uses (`engine/core/src/style/decoration.rs`).
+ * Spelled out here so a run never guesses it. Both lines at once is the
+ * two-token value, written in this one canonical order; the engine also reads
+ * `line_through underline`, which `decorationOf` folds into it. */
+export const DECORATION_VALUES = [
+  'none',
+  'underline',
+  'line_through',
+  'underline line_through',
+] as const;
 export type Decoration = (typeof DECORATION_VALUES)[number];
 
+/** Whether a decoration draws an underline / a line-through. */
+export function hasUnderline(decoration: Decoration): boolean {
+  return decoration === 'underline' || decoration === 'underline line_through';
+}
+
+export function hasLineThrough(decoration: Decoration): boolean {
+  return decoration === 'line_through' || decoration === 'underline line_through';
+}
+
+/** The one decoration carrying exactly these lines. */
+export function composeDecoration(underline: boolean, lineThrough: boolean): Decoration {
+  if (underline) {
+    return lineThrough ? 'underline line_through' : 'underline';
+  }
+  return lineThrough ? 'line_through' : 'none';
+}
+
 /** The marks a run may carry — the four style keys the flow surface paints.
- * `fontWeight` and `fontStyle` are independent booleans; the decoration is a
- * THREE-state choice, because `textDecoration` is one key on the wire and
- * underline and line-through cannot both be set. */
+ * `fontWeight` and `fontStyle` are independent booleans; the decoration is ONE
+ * wire key whose value names either line, both, or none (`hasUnderline` /
+ * `hasLineThrough` read it as two independent lines). */
 export interface RunMarks {
   readonly bold: boolean;
   readonly italic: boolean;
@@ -69,8 +93,15 @@ export interface RunView {
   readonly linked: boolean;
 }
 
-function decorationOf(raw: string): Decoration {
-  return DECORATION_VALUES.find((value) => value === raw) ?? 'none';
+/** A wire value as a `Decoration`: the two lines in either order (and any
+ * whitespace between them) fold into the canonical pair; anything the engine
+ * would refuse degrades to none. */
+export function decorationOf(raw: string): Decoration {
+  const tokens = raw.split(/\s+/).filter((token) => token !== '');
+  if (tokens.length === 2 && tokens.includes('underline') && tokens.includes('line_through')) {
+    return 'underline line_through';
+  }
+  return DECORATION_VALUES.find((value) => tokens.length === 1 && value === tokens[0]) ?? 'none';
 }
 
 /** The marks of one already-narrowed `style` map. Every unknown or hostile

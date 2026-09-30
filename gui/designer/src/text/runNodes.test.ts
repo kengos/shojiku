@@ -14,6 +14,7 @@ import {
   RUN_ATTR,
   runClasses,
 } from './runNodes';
+import { marksOfElement } from './runSerialize';
 import { NO_MARKS, narrowRuns, type RunMarks } from './spanRuns';
 
 const META = chipMetaMap([{ key: 'order.total', label: 'Total', sample: '1,200' }]);
@@ -27,6 +28,16 @@ function seed(spans: readonly unknown[]): HTMLElement {
 }
 
 describe('runClasses', () => {
+  it('paints both lines as both classes, and reads them back as both', () => {
+    const marks = { ...NO_MARKS, decoration: 'underline line_through' as const };
+    const classes = runClasses(marks, false);
+    expect(classes).toContain('sj-run--underline');
+    expect(classes).toContain('sj-run--strike');
+    const el = document.createElement('span');
+    el.className = classes.join(' ');
+    expect(marksOfElement(el).decoration).toBe('underline line_through');
+  });
+
   it('names one class per set mark, and none for an unset decoration', () => {
     expect(runClasses(NO_MARKS, false)).toEqual(['sj-run']);
     expect(

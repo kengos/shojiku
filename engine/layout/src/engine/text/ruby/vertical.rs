@@ -106,7 +106,7 @@ fn ruby_block(block: &TextBlock, fallback_ids: &[String], size: f64, line: TextL
         // Readings stay light for readability at small sizes.
         synthetic_bold: false,
         synthetic_italic: false,
-        decoration: None,
+        decorations: Vec::new(),
         opacity: block.opacity,
         baseline: None,
         link: None,

@@ -132,10 +132,12 @@ A `repeat` has no `box:`, so its placement tab carries its SHEET instead
 
 ## Placement tab — the char_grid grid
 
-`char_grid` is in `CONTENT_TAB_TYPES` and deliberately NOT in
-`STYLED_TYPES`/`BORDERABLE_TYPES`: its `borderWidth` is the GRID RULING
-width (`0` turns the ruling off), a different property under the same
-spelling, so the border cluster's per-side model must not reach it.
+`char_grid` is in `CONTENT_TAB_TYPES` and `STYLED_TYPES` but deliberately
+NOT in `BORDERABLE_TYPES`: its `borderWidth` is the GRID RULING width (`0`
+turns the ruling off), a different property under the same spelling, so the
+border cluster's per-side model must not reach it. Its decoration tab carries
+the glyphs' text keys, the fill and the opacity (`ItemDecorationSections`);
+the ruling stays here with the grid.
 
 - `panel/charGrid.ts` — the pure read/write model. `readCharGrid` (a
   non-map `grid`, a container where a scalar belongs, or a throwing read
@@ -156,13 +158,10 @@ spelling, so the border cluster's per-side model must not reach it.
   canvas grid; lengths step by the canvas grid. No field is a bare empty
   box — an unset cell side shows `auto` (derived), an unset gap shows `0`
   (the wire default). Capability-gated on `char_grid`. The INK half is a
-  sibling component, not more lines here — see below. It also mounts the
-  shared `StyleNamesPicker` at its foot: that is the SAME documented
-  exception the ruling colour rides (a char_grid has no decoration tab, and
-  `styleNames` is where its `fontSize`/`borderWidth`/`textAlign` resolve
-  from), so the section carries one exception rather than two. `styleNames`
-  is threaded in as a prop because `BoxSection.tsx` sits at the
-  executable-line cap and this file has headroom.
+  sibling component, not more lines here — see below. Its named-style
+  picker used to sit at this section's foot, when the type had no
+  decoration tab; it now lives in the decoration tab's Styles section like
+  every other type's, so the item has one picker.
 - `panel/charGridInk.ts` — the ruling / ruby / kinsoku model, split from
   `charGrid.ts` because it reads a different place on the wire: the ruling
   is a STYLE property (`style.borderWidth` / `style.borderColor`) a named
@@ -191,15 +190,11 @@ spelling, so the border cluster's per-side model must not reach it.
   against 「自動」 with nothing to say what the default was. The ruling
   colour is the shared `ColorSwatchPicker` plus `ui/SwatchValueLabel`,
   which is what says WHICH colour is set while the popover is closed.
-  **Two keys the bundled genkoyoshi templates author are still unreachable
-  from the panel**, and neither has a control anywhere: `style.color` — the
-  CHARACTERS' ink, a different property from the ruling colour beside it —
-  and `style.fontFamily`. `TypographyFields` is `isText`-gated and this type
-  gets no decoration tab, so `PanelColorField` never mounts for it, and
-  `toolbarModel` returns `null` for any type outside `BORDERABLE_TYPES`, so
-  the format toolbar is not a fallback either. The one path that IS open is
-  indirect: a named style carrying either key can be ticked from the
-  `StyleNamesPicker` below. Direct fields for both are queued, not forgotten.
+  The CHARACTERS' ink (`style.color`, a different property from the ruling
+  colour here) and their face/weight/size are on the decoration tab's Text
+  section (`CHAR_GRID_GLYPH_KEYS`), not in this cluster. The format toolbar
+  still offers nothing for this type (`readToolbar` keys off
+  `BORDERABLE_TYPES`).
 - `panel/NumericComboField.tsx` — type a value, or open the ▼ and pick a
   common one; the word-processor font-size box, shaped like `FormatPicker`.
   NOT a `StepperField` with a menu: stepping walks a value you already have,
@@ -690,10 +685,12 @@ presence is not a text binding.
   `TextField`, `UnitBadge` + `unitIsImplicit`/`badgeText` (the implicit
   `pt` badge shows only while the text is a bare numeral) and
   `showsUnitHint` — whether the field invites ANOTHER unit, which is
-  OPT-IN per site because the WIRE decides. NINE fields carry it (box
-  coordinates, corner radius, column width in BOTH the form and the
-  sheet, per-side margins, flex/grid gap, char-grid cell size + line gap,
-  and `fontSize` on both style surfaces); several deliberately do NOT, each
+  OPT-IN per site because the WIRE decides. Among the fields that carry it:
+  box coordinates, corner radius, column width in BOTH the form and the
+  sheet, per-side page margins, flex/grid gap, char-grid cell size + line gap,
+  `fontSize` on both style surfaces, the padding/margin sides, the size bounds,
+  and letter spacing (whose bubble names `em`, not `cm`: its own
+  `panel.field.letterSpacing.units`); several deliberately do NOT, each
   for its own reason — a band's height and the two custom PAGE dimensions
   among them (the page cluster states its unit in the `<select>` one cell
   away), and three whose reason is worth spelling out: the border PEN's width is `borderWidth`, `number (pt)` in the
@@ -771,9 +768,8 @@ presence is not a text binding.
   the optional `help` node it renders there would fold its own accessible
   name into the group's.
 - `panel/StyleNamesPicker.tsx` — the named-style multi-select, as one leaf
-  over `CheckboxList`. Lifted out of `StyleSection` so a type with no
-  decoration tab can mount it (char_grid does, on its placement tab)
-  without a second copy. Options are the registry's names UNION the ones
+  over `CheckboxList`, mounted by the decoration tab's Styles section
+  (`ItemDecorationSections`) and nowhere else for a non-table item. Options are the registry's names UNION the ones
   the item already carries, so a name deleted from the registry still
   renders ticked and can be removed; a plain OWN-VALUE read, with no
   cascade and no origin badge, because `authored()` looks nowhere else.
@@ -834,16 +830,68 @@ presence is not a text binding.
   "every cell/card/row uses this frame" line, a column cell's note (the
   lines between cells are the table's; `cellPadding` does not reach a
   container cell), then the ordinary path-generic fields pointed at the
-  frame — `PaddingField`, the fill `PanelColorField`
-  (`style.backgroundColor`), `BorderEditor` (`style.border`) — and the
-  jump back to the owner.
-- `panel/paddingModel.ts` (pure) + `panel/PaddingField.tsx` — ONE
-  all-sides `box.padding` field (the Designer had no padding editor at
-  all). `readPadding` → none / uniform / perSide / other; `paddingOps`
-  takes a bare non-negative numeral (the page margin's uniform ingress
-  rule), removes on empty, refuses a sign, a unit or garbage; ▲▼ by a
-  point, clamped at 0, no op at the floor. A per-side map or an unseedable
-  form shows a line saying a typed number replaces it. Path-generic.
+  frame — `EdgeFields` (padding, `FRAME_PADDING_RULES`), the fill
+  `PanelColorField` (`style.backgroundColor`), `BorderEditor`
+  (`style.border`), `OverflowField` (`style.overflow`, which a repeat cell
+  and a card honour) and `OpacityField` — and the jump back to the owner.
+  Padding, overflow and opacity are each capability-gated.
+- `panel/styleSurfaces.ts` (pure; imports only `hasCapability`) — the type→control table of the
+  text-and-box keys, one `Set` per key, each citing the layout code that honours
+  it: `TEXT_SURFACE_TYPES` (text/page_number/list), `TEXT_INHERIT_TYPES`
+  (container — its text keys only reach its children), `LETTER_SPACING_TYPES`
+  (the text surfaces + container + table — the table's text section mounts
+  `TextLookFields` for it, since every cell inherits it), `VALIGN_TYPES`,
+  `TEXT_OVERFLOW_TYPES`, `DECORATION_LINE_TYPES`, `OVERFLOW_TYPES`,
+  `OPACITY_TYPES` (+`OPACITY_DECORATION_ONLY`: a QR code and a container fade
+  only their own fill and border), `PADDING_TYPES` (rect and the marks inset
+  nothing), `CHAR_GRID_GLYPH_KEYS`, plus `textHelpKey`/`overflowKeyOf`/
+  `fillTitleKey`/`openingSection`/`opacityOffered`.
+  `styleSurfaces.test.ts` pins the rows against the engine matrix.
+- `panel/ItemDecorationSections.tsx` — builds the section list above; bodies are
+  `ItemTextFields` (`TypographyFields` — restricted by `only` for a char_grid —
+  + text colour + `TextLookFields`), `OverflowField` (`OverflowFields.tsx`:
+  `textOverflow` on a text surface, `overflow` on a container or frame; `clip`
+  behind `style.textOverflow.clip`), `FillBorderFields` (+`hasFillBorder`: a
+  char_grid takes the fill alone), `OpacityField`, `StyleNamesPicker`.
+- `panel/TextLookFields.tsx` — letter spacing (stepper, `letterSpacingOp`),
+  the decoration lines (`DecorationChecks.tsx`: an Underline and a
+  Strikethrough checkbox over the one `textDecoration` key, read from the
+  EFFECTIVE value; `decorationToggleOp` removes an own key the cascade makes
+  redundant and writes `none` to switch off a named style's line; exclusive
+  without `style.textDecoration.combined`) and vertical alignment (select),
+  each gated by type AND
+  capability; `withAuthored` keeps a legal out-of-set authored value visible as
+  itself (the closed-control-over-open-vocabulary rule), shared by the overflow
+  selects. `letterSpacing` is resolved through the cascade as an INHERITED key
+  (`toolbar/effective` names it beside the defaults editor's inherited set,
+  which does not offer it).
+- `panel/textLookOps.ts` (pure) — `letterSpacingOp` (signed, units but no `%`,
+  ±`MAX_LETTER_SPACING_PT`), `opacityPercent`/`opacityOp` (the field shows a
+  percentage of the 0..1 alpha; a commit that would author the value already
+  carried is `null`, so a converted view is never written back untouched),
+  `steppedOpacity`, and the ▲▼ op builders.
+- `panel/edgeModel.ts` (pure) + `panel/edgeOps.ts` (pure) — `box.padding` /
+  `box.margin` as an all-sides number plus four verbatim sides (`readEdge` →
+  none/uniform/perSide/other), and what a field authors: a leaf op on one side
+  of a map (siblings byte-exact), a ONE-batch `putValue` expanding the
+  all-sides number into a map, the all-sides number over any form; empty clears
+  a side, the last side clears the key. `EdgeRules` carries the two
+  differences: a margin may be negative, and `auto` only on the sides
+  `edgeRules.ts` offers — `autoSides(placement)`: flow body left/right, an
+  unpinned container child every side, else none; `horizontalOnly`: a
+  flow-body table uses left/right only.
+- `panel/EdgeFields.tsx` — the editor: an all-sides stepper (withheld for a
+  flow-body table) and a 2×2 of sides; an `auto`-capable side is a
+  `NumericComboField` with an **Auto** row, an authored `auto` the placement
+  cannot use is shown with a line NAMING the side(s) that count as 0 (one may
+  be a side not shown, a flow table's top). Sides and size bounds step in their
+  own absolute unit (`edgeModel.steppedLength` over `canvas/lengths.stepLength`,
+  shared with `sizeLimits`); a relative one gets the `stepper.relativeUnit` hint.
+- `panel/SpacingSections.tsx` — the placement tab's **Spacing** (padding on
+  `PADDING_TYPES`, margin) and **Size limits** (`sizeLimits.ts`: four
+  non-negative lengths, empty clears, ▲▼ by the canvas grid; a flow-body table
+  gets width bounds only) sections, gated on `box.padding`/`box.margin`/
+  `box.minmax`, mounted by `BoxSection` in both its arms.
 - `panel/bandModel.ts` (pure) — one section band's two properties:
   `BAND_REPEATS` (the engine's four `Repeat` modes, snake_case, in
   declaration order), `readBandView` (own-property reads; a non-map band,
@@ -909,7 +957,8 @@ presence is not a text binding.
   a tab-less item never shows it. The two
   FORM MARKS (`MARK_TYPES`) take ALL THREE: they are boxed, their
   presence is content, and their outline is decoration — reached through
-  `STYLED_TYPES` (which is `BORDERABLE_TYPES` plus `line` plus the marks)
+  `STYLED_TYPES` (which is `BORDERABLE_TYPES` plus `line`, the marks and
+  `char_grid`)
   rather than through the border set, because their editors differ. Tab
   bodies live beside it. The CONTENT tab is two siblings, not one — the
   section plus `LinkField.tsx`, which self-gates on `LINK_TYPES` — because
@@ -925,9 +974,10 @@ presence is not a text binding.
   (`data.format`/`data.placeholder`), not at the item root, so every
   data-bound type takes them — a `char_grid` included, whose `data:` is the
   same `Binding` and whose content resolves through the same
-  `resolve_content`)), `StyleSection.tsx`
-  (+`StyleTabFields.tsx`),
-  `BoxSection.tsx` (+`boxFields.tsx`, +`CharGridSection.tsx`), or a type's own
+  `resolve_content`)), `StyleSection.tsx` (a router: a table to
+  `TableDecorationSections`, anything else to `ItemDecorationSections`),
+  `BoxSection.tsx` (+`boxFields.tsx`, +`CharGridSection.tsx`,
+  +`SpacingSections.tsx`), or a type's own
   placement editor (`LinePointsEditor`, `RepeatSection`); shared prop contract in
   `itemPanelProps.ts` (`ItemPanelProps` + `hasCapability`); shared
   helpers in `panelHelpers.tsx` (`HelpfulHeading` over the `HelpTopic`
@@ -980,12 +1030,16 @@ presence is not a text binding.
     the toggle). A pinnable
     child gets the auto⇄fixed `ui/Segmented` (native-radio segmented
     control); unset w/h seed resolved sizes into dimmed steppers.
-  - The decoration tab covers every `BORDERABLE_TYPES` item: typography
-    steppers (text only) + the fill-and-border cluster (fill swatch +
-    `BorderEditor` + text-color swatch). The two OTHER decorated families
-    reach their own editors instead — a `line`'s `LineStyleEditor` and a
-    form mark's `ShapeStyleEditor` — because neither strokes a border
-    box. A **table** leaves this flat tab altogether: `StyleSection` routes it
+  - The decoration tab of a non-table item is collapsible sections
+    (`ItemDecorationSections`, `PanelSection` + the `item.*` `SectionId`s): Text,
+    Overflow, Fill and border (or the item's own stroke editor — a `line`'s
+    `LineStyleEditor`, a form mark's `ShapeStyleEditor`, neither of which
+    strokes a border box), Opacity, Styles; the first section starts open, except that a
+    container opens on its fill, not on the text it only hands down, a
+    section with no control this type honours is not rendered, and each shows
+    a closed summary (`itemSectionSummaries`). WHICH type gets which control is
+    `styleSurfaces.ts`, read from the layout source. A **table** leaves it
+    altogether: `StyleSection` routes it
     to `TableDecorationSections` (the collapsible sections below). The fill is
     still the exception there: the engine paints no `style.backgroundColor` on
     a table (asserted in `engine/layout/tests/e2e/table/style.rs`), so the
@@ -1147,7 +1201,7 @@ columns, over a pure read model and a pure op module:
   lengths only, `MAX_ROW_HEIGHT_PT`, no negative, no 0 for a fixed height),
   `rowModeOps` (fixed seeds `row.height` from the authored minimum and drops
   `row.minHeight` in the same batch; auto removes `row.height`),
-  `cellPaddingOp`/`cellPaddingStepOp` (`paddingModel`'s bare-numeral rule, steps
+  `cellPaddingOp`/`cellPaddingStepOp` (the all-sides rule of `edgeModel`, steps
   from 4), `emptyBehaviorOp` and `flagToggleOp` (back to the default REMOVES the
   key), `uncoveredColumns`/`addHeaderGroupOp` (a new group spans every column
   still uncovered, via `groupCoverage`) and `removeHeaderGroupOp` (the last group

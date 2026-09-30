@@ -28,7 +28,7 @@ impl TextBlock {
                 color: self.color,
                 synthetic_bold: self.synthetic_bold,
                 synthetic_italic: self.synthetic_italic,
-                decoration: self.decoration,
+                decorations: &self.decorations,
                 link: self.link.as_deref(),
             }];
         }
@@ -49,7 +49,7 @@ impl TextBlock {
                 color: r.color,
                 synthetic_bold: r.synthetic_bold,
                 synthetic_italic: r.synthetic_italic,
-                decoration: r.decoration,
+                decorations: &r.decorations,
                 link: r.link.as_deref(),
             })
             .collect()
@@ -83,7 +83,7 @@ pub struct RunView<'a> {
     pub color: (f32, f32, f32),
     pub synthetic_bold: bool,
     pub synthetic_italic: bool,
-    pub decoration: Option<DecorationSpec>,
+    pub decorations: &'a [DecorationSpec],
     /// Hyperlink URL for this run: the block's for the implicit plain
     /// run, the run's own for rich runs.
     pub link: Option<&'a str>,

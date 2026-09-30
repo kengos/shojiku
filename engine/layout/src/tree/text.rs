@@ -42,14 +42,15 @@ pub struct TextBlock {
     /// Synthetic (faux) italic: renderers skew each line rightward by
     /// [`TextBlock::SYNTHETIC_ITALIC_SKEW`] about its baseline.
     pub synthetic_italic: bool,
-    /// Decoration line (`textDecoration`), fully resolved: renderers
-    /// draw one filled rect per line at
+    /// Decoration lines (`textDecoration`), fully resolved: renderers
+    /// draw one filled rect per line per spec at
     /// `(line.x, line.y + offset, line.width, thickness)` in the text
-    /// color — no font knowledge needed. `None` = no decoration. On a
-    /// vertical block ([`TextBlock::vertical`] `Some`) the spec reads
-    /// axis-swapped — see [`DecorationSpec`].
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub decoration: Option<DecorationSpec>,
+    /// color — no font knowledge needed. Empty = no decoration; two specs
+    /// when both an underline and a line-through are set (underline
+    /// first). On a vertical block ([`TextBlock::vertical`] `Some`) each
+    /// spec reads axis-swapped — see [`DecorationSpec`].
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub decorations: Vec<DecorationSpec>,
     /// Paint alpha `0..=1` (`opacity`), applied to glyphs and the
     /// decoration line alike. Already sanity-clamped by layout.
     pub opacity: f32,
@@ -183,11 +184,11 @@ pub struct TextRun {
     pub color: (f32, f32, f32),
     pub synthetic_bold: bool,
     pub synthetic_italic: bool,
-    /// Decoration line for this run, offset from the *line's* top like
-    /// the block-level [`TextBlock::decoration`] (layout already folded
+    /// Decoration lines for this run, offset from the *line's* top like
+    /// the block-level [`TextBlock::decorations`] (layout already folded
     /// the shared baseline in).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub decoration: Option<DecorationSpec>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub decorations: Vec<DecorationSpec>,
     /// Hyperlink URL for this run: the span's own `link`, else the
     /// block's, resolved and gated by layout. The PDF backend emits one
     /// link annotation per run rect.

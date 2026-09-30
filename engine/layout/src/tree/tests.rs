@@ -16,7 +16,7 @@ fn synthetic_variant_policy_is_layout_owned() {
         color: (0.0, 0.0, 0.0),
         synthetic_bold: true,
         synthetic_italic: true,
-        decoration: None,
+        decorations: Vec::new(),
         opacity: 1.0,
         baseline: None,
         link: None,
@@ -41,10 +41,10 @@ fn line_runs_yields_implicit_run_for_plain_lines_and_explicit_for_rich() {
         color: (0.0, 0.5, 1.0),
         synthetic_bold: true,
         synthetic_italic: false,
-        decoration: Some(DecorationSpec {
+        decorations: vec![DecorationSpec {
             offset: 18.0,
             thickness: 1.0,
-        }),
+        }],
         opacity: 1.0,
         baseline: None,
         link: None,
@@ -73,7 +73,7 @@ fn line_runs_yields_implicit_run_for_plain_lines_and_explicit_for_rich() {
     assert_eq!(run.color, (0.0, 0.5, 1.0));
     assert!(run.synthetic_bold);
     assert!(!run.synthetic_italic);
-    assert!(run.decoration.is_some());
+    assert!(!run.decorations.is_empty());
     // Rich line: the explicit runs come back as-is.
     block.lines[0].runs.push(TextRun {
         combine: None,
@@ -89,7 +89,7 @@ fn line_runs_yields_implicit_run_for_plain_lines_and_explicit_for_rich() {
         color: (0.0, 0.0, 0.0),
         synthetic_bold: false,
         synthetic_italic: true,
-        decoration: None,
+        decorations: Vec::new(),
     });
     let runs = block.line_runs(&block.lines[0]);
     assert_eq!(runs.len(), 1);
@@ -121,7 +121,7 @@ fn text_run_combine_serializes_only_when_set() {
         color: (0.0, 0.0, 0.0),
         synthetic_bold: false,
         synthetic_italic: false,
-        decoration: None,
+        decorations: Vec::new(),
     };
     // Absent combine keeps the pre-existing rich wire byte-identical.
     let v = serde_json::to_value(&run).expect("json");
@@ -218,7 +218,7 @@ fn plain_lines_serialize_without_runs_or_baseline() {
         color: (0.0, 0.0, 0.0),
         synthetic_bold: false,
         synthetic_italic: false,
-        decoration: None,
+        decorations: Vec::new(),
         opacity: 1.0,
         baseline: None,
         link: None,

@@ -17,6 +17,7 @@ use crate::length::Length;
 use serde::{Deserialize, Serialize};
 
 mod border;
+mod decoration;
 #[cfg(test)]
 mod decoration_tests;
 mod enums;
@@ -174,8 +175,9 @@ pub struct Style {
     /// warning. Text items use `textOverflow: clip` instead.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub overflow: Option<Overflow>,
-    /// Decoration line on text (CSS `text-decoration-line` keyword
-    /// subset): `underline` | `line_through` | `none`. Not inherited
+    /// Decoration line on text (CSS `text-decoration-line` subset):
+    /// `underline` | `line_through` | `none`, or both lines as
+    /// `underline line_through` (either order). Not inherited
     /// (matches CSS). Position and thickness come from the font's own
     /// metrics at layout time; the line is drawn in the text color and
     /// follows shrink/ellipsis/clip like the glyphs do.

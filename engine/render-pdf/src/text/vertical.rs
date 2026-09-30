@@ -62,10 +62,10 @@ pub(crate) fn draw_text_vertical(
                 orient,
             };
             draw_column(surface, &col, &line.text);
-            // `textDecoration` as a SIDE band: one filled rect per column at
+            // `textDecoration` as SIDE bands: one filled rect per line per column at
             // the layout-resolved x offset, running the column's inked
             // down-extent (matches the horizontal per-line rect).
-            if let Some(d) = block.decoration {
+            for d in &block.decorations {
                 if let Some(path) =
                     crate::draw::rect_path(line.x + d.offset, line.y, d.thickness, line.width)
                 {
@@ -94,7 +94,7 @@ pub(crate) fn draw_text_vertical(
                 };
                 draw_column(surface, &col, &run.text);
                 // Per-run decoration band alongside the run's own extent.
-                if let Some(d) = run.decoration {
+                for d in &run.decorations {
                     if let Some(path) = crate::draw::rect_path(
                         line.x + d.offset,
                         line.y + run.x,

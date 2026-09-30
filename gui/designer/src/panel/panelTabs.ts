@@ -18,9 +18,10 @@ const CONTENT_TAB_TYPES = new Set([
   // Its content is a text item's (static text with `{key}`, or one bound
   // value) — and without this it had NO content surface at all, so a preset's
   // manuscript paper could not be rebound or retyped anywhere in the Designer.
-  // It stays OUT of `STYLED_TYPES`: a char_grid's `borderWidth` is the GRID
+  // It stays OUT of `BORDERABLE_TYPES`: a char_grid's `borderWidth` is the GRID
   // RULING width, not a border box, so the border cluster's per-side model
-  // would author a different property under the same spelling.
+  // would author a different property under the same spelling. Its decoration
+  // tab carries the glyphs' text keys, the fill and the opacity instead.
   'char_grid',
   'table',
   // The three non-table iterables share one content surface: the array they
@@ -39,9 +40,10 @@ const CONTENT_TAB_TYPES = new Set([
 
 /** Types that get a decoration tab: every boxed item the border cluster decorates,
  * PLUS the three whose stroke is their own shape rather than a border box —
- * `line` and the two form marks. All three are still decoration the user must
- * be able to reach (the insert menu creates all of them, and an insertable kind
- * with no editing surface is a dead end). */
+ * `line` and the two form marks — and `char_grid`, whose look is its glyphs and
+ * fill. All are decoration the user must be able to reach (the insert menu
+ * creates all of them, and an insertable kind with no editing surface is a dead
+ * end). */
 const STYLED_TYPES: ReadonlySet<string> = new Set([
   ...BORDERABLE_TYPES,
   'line',
@@ -49,6 +51,10 @@ const STYLED_TYPES: ReadonlySet<string> = new Set([
   // border box. They reach `ShapeStyleEditor` instead of the border cluster —
   // see `MARK_TYPES` for why that distinction is the engine's, not the panel's.
   ...MARK_TYPES,
+  // Manuscript paper: its characters' colour, face, weight and size, its fill
+  // and its opacity — every look key it honours except the ruling, which stays
+  // with the grid on the placement tab.
+  'char_grid',
 ]);
 
 /** What a placement tab carries: the box fields, or a type's own editor. */

@@ -26,6 +26,8 @@ export interface InlineTextEditorProps {
    * to hand them back is not a state the host may express. */
   readonly flow?: {
     readonly runs: readonly RunView[];
+    /** The engine takes both decoration lines at once. */
+    readonly combinedDecoration?: boolean;
     readonly onCommit: (
       runs: readonly SerializedRun[],
       declarations: readonly PendingDecl[],
@@ -69,6 +71,7 @@ export function InlineTextEditor({
           onCancel={onCancel}
           ariaLabel={ariaLabel}
           chips={chips}
+          combinedDecoration={flow.combinedDecoration}
         />
       )}
     </div>

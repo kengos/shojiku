@@ -12,7 +12,13 @@ import { rangeInRoot } from './editorDom';
 import type { FormatShortcut } from './editorHandlers';
 import { RUN_ATTR } from './runNodes';
 import { marksOfElement } from './runSerialize';
-import { type Decoration, NO_MARKS, type RunMarks } from './spanRuns';
+import {
+  composeDecoration,
+  hasLineThrough,
+  hasUnderline,
+  NO_MARKS,
+  type RunMarks,
+} from './spanRuns';
 
 /** The run elements a selection touches, WITHOUT cutting anything. */
 export function runsTouching(root: HTMLElement, sel: Selection | null): readonly HTMLElement[] {
@@ -39,7 +45,10 @@ export function selectionMarks(root: HTMLElement, sel: Selection | null): RunMar
     return {
       bold: common.bold && marks.bold,
       italic: common.italic && marks.italic,
-      decoration: common.decoration === marks.decoration ? common.decoration : 'none',
+      decoration: composeDecoration(
+        hasUnderline(common.decoration) && hasUnderline(marks.decoration),
+        hasLineThrough(common.decoration) && hasLineThrough(marks.decoration),
+      ),
       color: common.color === marks.color ? common.color : '',
     };
   }, marksOfElement(first));
@@ -55,16 +64,32 @@ export function toggleItalic(current: RunMarks, common: RunMarks): RunMarks {
   return { ...current, italic: !common.italic };
 }
 
-/** The decoration is ONE wire key with three values, not two independent
- * toggles, so pressing underline over a struck-through selection REPLACES the
- * line rather than adding one. Pressing the value already common to the
- * selection clears it, which is the same round trip the booleans have. */
+/** Flip ONE decoration line across the selection, leaving the other line each
+ * fragment carries alone — underline over a struck-through selection adds the
+ * underline beside the strike (the wire's two-token value). Like the booleans,
+ * the line is set unless every fragment already carries it. Against an engine
+ * that takes one line at a time (`combined` false — no
+ * `style.textDecoration.combined`), setting a line drops the other instead. */
 export function toggleDecoration(
   current: RunMarks,
   common: RunMarks,
-  value: Exclude<Decoration, 'none'>,
+  line: 'underline' | 'line_through',
+  combined = true,
 ): RunMarks {
-  return { ...current, decoration: common.decoration === value ? 'none' : value };
+  const underline =
+    line === 'underline' ? !hasUnderline(common.decoration) : hasUnderline(current.decoration);
+  const lineThrough =
+    line === 'line_through'
+      ? !hasLineThrough(common.decoration)
+      : hasLineThrough(current.decoration);
+  const turnedOn = line === 'underline' ? underline : lineThrough;
+  return {
+    ...current,
+    decoration:
+      combined || !turnedOn
+        ? composeDecoration(underline, lineThrough)
+        : composeDecoration(line === 'underline', line === 'line_through'),
+  };
 }
 
 /** Colour is a VALUE, not a toggle: picking one sets it, and the picker's
@@ -88,6 +113,7 @@ export function applyShortcut(
   shortcut: FormatShortcut,
   current: RunMarks,
   common: RunMarks | null,
+  combined = true,
 ): RunMarks {
   const against = common ?? current;
   if (shortcut === 'bold') {
@@ -96,5 +122,5 @@ export function applyShortcut(
   if (shortcut === 'italic') {
     return toggleItalic(current, against);
   }
-  return toggleDecoration(current, against, 'underline');
+  return toggleDecoration(current, against, 'underline', combined);
 }

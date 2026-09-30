@@ -61,5 +61,5 @@ sections:
     );
     assert_eq!(count(&diags, "vertical_style_ignored"), 0);
     let block = text_blocks(&doc.pages[0])[0];
-    assert!(block.decoration.is_some());
+    assert!(!block.decorations.is_empty());
 }

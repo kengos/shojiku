@@ -125,6 +125,9 @@ sections:
           - text: ", "
           - text: "strikethrough"
             style: { textDecoration: line_through }
+          - text: ", "
+          - text: "both lines"
+            style: { textDecoration: underline line_through }
           - text: ", tracked "
           - text: "letterSpacing"
             style: { letterSpacing: 2 }

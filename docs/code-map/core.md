@@ -95,7 +95,9 @@ injected at parse). The template model splits along CSS lines.
 - `style.rs` — painting core: unified `Style`, every field `Option`
   (unset = inherit), CSS camelCase names; border scalar-or-per-side-map
   visitors in `style/border.rs`. `style/enums.rs` — the keyword enums
-  (re-exported). `style/shapes.rs` — non-cascading `LineStyle` (the one
+  (re-exported). `style/decoration.rs` — `TextDecoration`'s hand-written
+  serde: one keyword or `underline line_through` (either order, canonical on
+  write) + `underline()`/`line_through()`. `style/shapes.rs` — non-cascading `LineStyle` (the one
   shape off the unified `Style`). `style/inert.rs` — the context-inert
   key lists (`ignored_span_keys`/`ignored_shape_keys`).
   `style/writing.rs` — vertical-writing vocabulary: `WritingMode`
@@ -196,8 +198,9 @@ injected at parse). The template model splits along CSS lines.
   `{top/right/bottom/left}` closed-map shape all three border properties
   parse by hand), and `sub::<T>` (a `$ref` into `$defs`). Every wire type
   in this crate carries `#[cfg_attr(feature = "schema",
-  derive(schemars::JsonSchema))]`; these files exist for the **15 types
-  whose `Deserialize` is hand-written**, where the derive would describe
+  derive(schemars::JsonSchema))]`; these files exist for the **types
+  whose `Deserialize` is hand-written** (`TextDecoration` among them, in
+  `schema/border.rs`), where the derive would describe
   the Rust shape instead of the accepted wire form. Living out of the wire
   files is what keeps `definitions/schema.rs`, `edges.rs` and
   `style/border.rs` under the 300-line budget.

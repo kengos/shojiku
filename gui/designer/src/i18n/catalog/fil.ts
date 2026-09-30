@@ -672,11 +672,6 @@ export const fil: LanguageCatalog = {
       'Ginagamit ng cell ng column na ito sa bawat row ang frame na ito.',
     'panel.frame.columnNote':
       'Ang mga linya sa pagitan ng mga cell ay itinatakda sa table; ang border dito ay iginuguhit din sa paligid ng cell na ito. Hindi umaabot sa cell na ito ang cell padding ng table — gamitin ang Padding sa ibaba.',
-    'panel.frame.padding': 'Padding',
-    'panel.frame.padding.perSide':
-      'Iba-iba bawat gilid. Ang numerong itina-type dito ay ilalapat sa lahat ng gilid.',
-    'panel.frame.padding.other':
-      'Nakatakda sa anyong hindi maipakita ng field na ito. Papalitan ito ng numerong itina-type dito.',
     'panel.frame.selectOwner.cell': 'Piliin ang grid',
     'panel.frame.selectOwner.card': 'Piliin ang mga card',
     'panel.frame.selectOwner.columnCell': 'Piliin ang column',
@@ -703,6 +698,32 @@ export const fil: LanguageCatalog = {
     'panel.field.lineHeight': 'Taas ng linya',
     'panel.field.color': 'Kulay',
     'panel.field.backgroundColor': 'Background',
+    'panel.field.letterSpacing': 'Pagitan ng letra',
+    'panel.field.letterSpacing.units': 'mm, em din; hindi %',
+    'panel.field.textOverflow': 'Overflow ng teksto',
+    'panel.field.overflow': 'Overflow ng nilalaman',
+    'panel.field.opacity': 'Opacity',
+    'panel.itemSection.text.title': 'Teksto',
+    'panel.itemSection.text.inheritHelp':
+      'Walang sariling teksto ang container. Ginagamit ng mga item sa loob nito ang mga setting na ito maliban kung may sarili silang halaga.',
+    'panel.itemSection.text.charGridHelp':
+      'Para sa mga titik na nakasulat sa mga cell. Iwanang blangko ang laki para sumunod sa laki ng cell.',
+    'panel.itemSection.overflow.title': 'Overflow',
+    'panel.itemSection.overflow.textOverflowHelp':
+      'Gumagana lang kapag nakapirmi ang taas. Kapag awtomatiko ang taas, lumalaki ang kahon para magkasya ang teksto.',
+    'panel.itemSection.overflow.overflowHelp':
+      'Kung puputulin sa gilid ng container ang mga item na lumalampas dito. Iginuguhit pa rin ang sariling fill at border ng container.',
+    'panel.itemSection.fill.title': 'Fill at border',
+    'panel.itemSection.text.listHelp':
+      'Isang linya ang bawat entry; nagtatapos sa "…" ang mas mahaba.',
+    'panel.itemSection.fill.fillOnly': 'Fill',
+    'panel.itemSection.fill.border': 'May border',
+    'panel.itemSection.fill.charGridHelp':
+      'Tinatakpan ng fill ang grid ng mga cell. Itinatakda ang mga linya ng grid sa {section} sa tab na {tab}.',
+    'panel.itemSection.opacity.help':
+      '100% ay buo ang opacity, 0% ay hindi nakikita. Para sa iginuguhit mismo ng item na ito.',
+    'panel.itemSection.opacity.decorationHelp':
+      '100% ay buo ang opacity, 0% ay hindi nakikita. Sa sariling fill at border lang ng item na ito — hindi sa laman nito.',
     'panel.box.x': 'X',
     'panel.box.y': 'Y',
     'panel.box.w': 'Lapad',
@@ -768,6 +789,30 @@ export const fil: LanguageCatalog = {
       'Hindi maaaring i-step ang mga halagang porsyento o em. I-type ang halaga nang direkta.',
     'stepper.unitHint': 'mm, cm, in din',
     'panel.box.h': 'Taas',
+    'panel.box.minWidth': 'Min na lapad',
+    'panel.box.maxWidth': 'Max na lapad',
+    'panel.box.minHeight': 'Min na taas',
+    'panel.box.maxHeight': 'Max na taas',
+    'panel.box.limits.title': 'Hangganan ng laki',
+    'panel.box.limits.help':
+      'Pinananatili ang laki sa loob ng mga hangganang ito kahit palakihin o paliitin ito ng laman o ng kinalalagyan. Sa page number o list, sa nakapirming taas lang gumagana ang hangganan ng taas.',
+    'panel.edge.title': 'Espasyo',
+    'panel.edge.help':
+      'Ang padding ay ang espasyo sa pagitan ng border at ng laman; ang margin ay ang espasyo sa labas ng border. Tumatanggap din ng unit ang mga field ng bawat gilid, gaya ng 5mm o 10%; nasa points ang field ng lahat ng gilid. Maaaring negatibo ang margin.',
+    'panel.edge.tableHelp':
+      'Kaliwa at kanang padding at margin lang ang ginagamit ng talahanayan sa flow body. Kapag parehong Awtomatiko ang kaliwa at kanang margin, napupunta ito sa gitna.',
+    'panel.edge.padding': 'Padding',
+    'panel.edge.margin': 'Margin',
+    'panel.edge.top': 'Itaas',
+    'panel.edge.right': 'Kanan',
+    'panel.edge.bottom': 'Ibaba',
+    'panel.edge.left': 'Kaliwa',
+    'panel.edge.side': '{edge}: {side}',
+    'panel.edge.all': '{edge} (lahat ng gilid)',
+    'panel.edge.perSide': 'bawat gilid',
+    'panel.edge.auto': 'Awtomatiko',
+    'panel.edge.autoNote': 'sumasakop sa bakanteng espasyo',
+    'panel.edge.autoIneffective': 'Walang epekto rito ang "Awtomatiko", kaya 0 ang {sides}.',
     'panel.placement.label': 'Posisyon',
     'panel.placement.mode.auto': 'Awto',
     'panel.placement.mode.pinned': 'Nakatakda',
@@ -868,6 +913,12 @@ export const fil: LanguageCatalog = {
     'style.value.textAlign.left': 'Kaliwa',
     'style.value.textAlign.center': 'Gitna',
     'style.value.textAlign.right': 'Kanan',
+    'style.value.textOverflow.visible': 'Hayaang lumampas',
+    'style.value.textOverflow.shrink': 'Paliitin para magkasya',
+    'style.value.textOverflow.ellipsis': 'Paikliin gamit ang "…"',
+    'style.value.textOverflow.clip': 'Putulin sa gilid',
+    'style.value.overflow.visible': 'Hayaang lumampas',
+    'style.value.overflow.hidden': 'Putulin sa gilid',
     'styles.count': '{n, number} na estilo',
     'docSettings.sections': 'Mga bahagi ng setting',
     'docSettings.baseTextPreview':

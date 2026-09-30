@@ -3444,7 +3444,7 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `text-decoration-line`, as a single-keyword subset. Position and thickness come from the font's own metrics, drawn in the text colour and sized to each measured line. Not inherited, matching CSS, since decoration PROPAGATION is not modelled — set it on the text item itself. Defaults to `none`."
+          "description": "Mirrors CSS `text-decoration-line`: one keyword, or both lines at once as `underline line_through` (either order). Position and thickness come from the font's own metrics, drawn in the text colour and sized to each measured line. Not inherited, matching CSS, since decoration PROPAGATION is not modelled — set it on the text item itself. Defaults to `none`."
         },
         "textOrientation": {
           "anyOf": [
@@ -3683,20 +3683,13 @@
       ]
     },
     "TextDecoration": {
-      "description": "A decoration line drawn on text. `none` draws nothing; `underline` draws below the baseline; `line_through` draws across the glyphs. On a vertical block an underline becomes the side line right of the em cell, following the JLREQ convention.",
-      "oneOf": [
-        {
-          "const": "none",
-          "type": "string"
-        },
-        {
-          "const": "underline",
-          "type": "string"
-        },
-        {
-          "const": "line_through",
-          "type": "string"
-        }
+      "description": "The decoration lines drawn on text. `none` draws nothing; `underline` draws below the baseline; `line_through` draws across the glyphs; `underline line_through` draws both, and so does the same pair written `line_through underline`. On a vertical block an underline becomes the side line right of the em cell, following the JLREQ convention.",
+      "enum": [
+        "none",
+        "underline",
+        "line_through",
+        "underline line_through",
+        "line_through underline"
       ]
     },
     "TextMark": {

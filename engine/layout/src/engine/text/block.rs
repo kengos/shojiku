@@ -153,7 +153,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // `textDecoration`: resolved here — at the FINAL (post-shrink) size,
         // from the primary face's own tables — so renderers just draw a
         // rect per line.
-        let decoration = decoration_spec(resolved.primary.face, computed.text_decoration, size);
+        let decorations = decoration_specs(resolved.primary.face, computed.text_decoration, size);
 
         let block = LayoutItem::Text(TextBlock {
             font_id,
@@ -168,7 +168,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             synthetic_bold: computed.font_weight == FontWeight::Bold && !resolved.primary.real_bold,
             synthetic_italic: computed.font_style == FontStyle::Italic
                 && !resolved.primary.real_italic,
-            decoration,
+            decorations,
             opacity: self.sane_opacity(computed.opacity),
             baseline: None,
             // Filled by `text_atom` (the item owns `link:`); cell/band
@@ -209,34 +209,40 @@ impl<'a, 'b> Ctx<'a, 'b> {
     }
 }
 
-/// Resolves a `textDecoration` into the tree's [`DecorationSpec`] at the
-/// final font size. Metric offsets are baseline-relative y-up; the tree
-/// wants "from the line top, y-down", and the baseline sits `ascent`
-/// below the line top in both renderers. Shared by text blocks and lists.
-pub(in crate::engine) fn decoration_spec(
+/// Resolves a `textDecoration` into the tree's [`DecorationSpec`]s at the
+/// final font size — none, one, or an underline then a line-through.
+/// Metric offsets are baseline-relative y-up; the tree wants "from the
+/// line top, y-down", and the baseline sits `ascent` below the line top in
+/// both renderers. Shared by text blocks and lists.
+pub(in crate::engine) fn decoration_specs(
     face: &crate::font::FontFace,
     kind: TextDecoration,
     size: f64,
-) -> Option<DecorationSpec> {
-    decoration_spec_at(face, kind, size, face.ascent(size))
+) -> Vec<DecorationSpec> {
+    decoration_specs_at(face, kind, size, face.ascent(size))
 }
 
-/// [`decoration_spec`] against an explicit baseline offset: blocks built
+/// [`decoration_specs`] against an explicit baseline offset: blocks built
 /// from `spans` share one layout-computed baseline across mixed-size runs,
 /// so each run's decoration hangs off that baseline, not its own ascent.
-pub(super) fn decoration_spec_at(
+pub(super) fn decoration_specs_at(
     face: &crate::font::FontFace,
     kind: TextDecoration,
     size: f64,
     baseline: f64,
-) -> Option<DecorationSpec> {
-    let (off, thickness) = match kind {
-        TextDecoration::None => return None,
-        TextDecoration::Underline => face.underline_metrics(size),
-        TextDecoration::LineThrough => face.strikeout_metrics(size),
-    };
-    Some(DecorationSpec {
-        offset: baseline - off,
-        thickness,
-    })
+) -> Vec<DecorationSpec> {
+    let mut lines = Vec::new();
+    if kind.underline() {
+        lines.push(face.underline_metrics(size));
+    }
+    if kind.line_through() {
+        lines.push(face.strikeout_metrics(size));
+    }
+    lines
+        .into_iter()
+        .map(|(off, thickness)| DecorationSpec {
+            offset: baseline - off,
+            thickness,
+        })
+        .collect()
 }

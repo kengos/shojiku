@@ -41,11 +41,19 @@ describe('readMarks', () => {
   });
 
   it('takes the wire spelling of line-through, which is NOT camelCase', () => {
-    // `engine/core/src/style/enums.rs` renames this one enum `snake_case`,
-    // alone among the style keys. A surface that guessed `lineThrough` would
+    // `engine/core/src/style/decoration.rs` spells this one key's values
+    // `snake_case`, alone among the style keys. A surface that guessed `lineThrough` would
     // author a value the engine refuses.
     expect(readMarks({ textDecoration: 'line_through' }).decoration).toBe('line_through');
     expect(readMarks({ textDecoration: 'lineThrough' }).decoration).toBe('none');
+    // Both lines, in either order and spacing, fold into one canonical value;
+    // a repeated line or `none` beside a line is not a value the engine takes.
+    for (const both of ['underline line_through', 'line_through  underline']) {
+      expect(readMarks({ textDecoration: both }).decoration).toBe('underline line_through');
+    }
+    for (const bad of ['underline underline', 'none underline', 'underline line_through x']) {
+      expect(readMarks({ textDecoration: bad }).decoration).toBe('none');
+    }
   });
 });
 

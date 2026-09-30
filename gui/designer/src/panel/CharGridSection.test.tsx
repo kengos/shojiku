@@ -60,6 +60,11 @@ function draw(node: unknown, capabilities?: readonly string[], gridStep = 0): Ed
 }
 
 const openLayout = () => fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+/** The named styles live in the decoration tab's last section, closed at first. */
+const openStyleNames = () => {
+  fireEvent.click(screen.getByRole('tab', { name: 'Style' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Styles' }));
+};
 
 /** The ▲/▼ belonging to ONE field. The placement tab carries the box steppers
  * too, so an index into all of them would silently address `x`. */
@@ -230,14 +235,17 @@ describe('CharGridSection', () => {
 });
 
 describe('char_grid panel tabs', () => {
-  it('gets a content tab and a placement tab, and NO decoration tab', () => {
+  it('gets all three tabs, and a decoration tab with NO border cluster', () => {
     draw(GRID);
-    // `borderWidth` on a char_grid is the GRID RULING width, not a border box —
-    // the border cluster would author a different property under the same
-    // spelling, so the decoration tab stays away from this type.
     expect(screen.getByRole('tab', { name: 'Content' })).not.toBeNull();
     expect(screen.getByRole('tab', { name: 'Layout' })).not.toBeNull();
-    expect(screen.queryByRole('tab', { name: 'Style' })).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: 'Style' }));
+    // `borderWidth` on a char_grid is the GRID RULING width, not a border box —
+    // the border cluster would author a different property under the same
+    // spelling, so the fill section carries the fill alone.
+    fireEvent.click(screen.getByRole('button', { name: 'Fill' }));
+    expect(screen.getByRole('button', { name: 'Background' })).not.toBeNull();
+    expect(screen.queryByText('Border')).toBeNull();
   });
 
   it('offers the binding AND its format and placeholder on the content tab', () => {
@@ -717,7 +725,6 @@ describe('CharGridSection field help', () => {
     ['ruling width', 'The lines that draw the cells'],
     ['ruby size', 'The reading printed beside a kanji'],
     ['kinsoku', 'Characters that may not open a line'],
-    ['styleNames', 'Styles defined once, applied here'],
   ];
 
   for (const [field, title] of HELPED) {
@@ -727,6 +734,14 @@ describe('CharGridSection field help', () => {
       expect(screen.getByRole('button', { name: title })).not.toBeNull();
     });
   }
+
+  it('offers the styleNames ? where the picker now lives, the decoration tab', () => {
+    draw(GRID);
+    openStyleNames();
+    expect(
+      screen.getByRole('button', { name: 'Styles defined once, applied here' }),
+    ).not.toBeNull();
+  });
 
   it('explains the field when the ? is opened, rather than only naming it', () => {
     // The title and the body are two catalog keys. A component wired to the right
@@ -750,9 +765,9 @@ describe('CharGridSection field help', () => {
   });
 });
 
-// M11 — `styleNames` reaches a type with no decoration tab. The engine honours it on
-// a char_grid (it is where `fontSize`/`borderWidth`/`textAlign` resolve from), and
-// before this the only picker lived on a tab this type does not get.
+// `styleNames` on a char_grid — where its `fontSize`/`borderWidth`/`textAlign`
+// resolve from. The picker used to ride the placement tab because this type had no
+// decoration tab; it now has one, and the picker lives there with every other type's.
 describe('CharGridSection named styles', () => {
   function withStyles(node: unknown, styles: unknown): EditorController {
     const controller = makeController(node);
@@ -766,9 +781,9 @@ describe('CharGridSection named styles', () => {
     return controller;
   }
 
-  it('offers the registry names on the PLACEMENT tab, ticked as the item authors them', () => {
+  it('offers the registry names on the decoration tab, ticked as the item authors them', () => {
     withStyles({ ...GRID, styleNames: ['genkou'] }, { genkou: {}, plain: {} });
-    openLayout();
+    openStyleNames();
     expect((screen.getByRole('checkbox', { name: 'genkou' }) as HTMLInputElement).checked).toBe(
       true,
     );
@@ -779,7 +794,7 @@ describe('CharGridSection named styles', () => {
 
   it('authors a style pick from that tab', () => {
     const controller = withStyles({ ...GRID, styleNames: ['genkou'] }, { genkou: {}, plain: {} });
-    openLayout();
+    openStyleNames();
     fireEvent.click(screen.getByRole('checkbox', { name: 'plain' }));
     expect(controller.apply).toHaveBeenCalledExactlyOnceWith({
       op: 'setStrings',
@@ -789,25 +804,15 @@ describe('CharGridSection named styles', () => {
     });
   });
 
-  it('sits at the FOOT of the section, after the ink controls', () => {
-    // M11's clause, and a green run says nothing about it: the picker could
-    // render first and every other assertion here would still pass. It belongs
-    // last because it is the widest-reaching control in the section — what it
-    // ticks decides where the fields above it resolve from.
+  it('is gone from the PLACEMENT tab, so the item has one picker, not two', () => {
     withStyles(GRID, { genkou: {} });
     openLayout();
-    const group = screen.getByRole('group', { name: 'Styles' });
-    const section = group.closest('section') as HTMLElement;
-    const blocks = [...section.children];
-    // The hint paragraph is the section's last child; the picker is the last
-    // CONTROL before it.
-    expect(blocks.indexOf(group)).toBe(blocks.length - 2);
-    expect(section.lastElementChild?.textContent).toContain('the drawn size comes from the cells');
+    expect(screen.queryByRole('group', { name: 'Styles' })).toBeNull();
   });
 
   it('names the group by its label even with the ? beside it', () => {
     withStyles(GRID, { genkou: {} });
-    openLayout();
+    openStyleNames();
     expect(screen.getByRole('group', { name: 'Styles' })).not.toBeNull();
   });
 });
@@ -1072,7 +1077,7 @@ describe('char_grid named styles over a live document', () => {
     // not presentation. The list itself renders in registry order, which is a
     // different thing and is pinned separately.
     render(<StyledHarness />);
-    openLayout();
+    openStyleNames();
     tick('plain');
     tick('genkou');
     expect(screen.getByTestId('doc').textContent).toContain('styleNames: [ plain, genkou ]');
@@ -1082,7 +1087,7 @@ describe('char_grid named styles over a live document', () => {
     // A non-event: `setStrings` then `removeKey` must leave no residue — not an
     // empty `styleNames: []`, and not a re-flowed sibling.
     render(<StyledHarness />);
-    openLayout();
+    openStyleNames();
     const before = screen.getByTestId('doc').textContent ?? '';
     tick('genkou');
     tick('genkou');
@@ -1091,7 +1096,7 @@ describe('char_grid named styles over a live document', () => {
 
   it('leaves the item’s other keys byte-exact', () => {
     render(<StyledHarness />);
-    openLayout();
+    openStyleNames();
     tick('genkou');
     const doc = screen.getByTestId('doc').textContent ?? '';
     expect(doc).toContain('grid: { charsPerLine: 20, lines: 10 }');

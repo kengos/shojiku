@@ -66,6 +66,14 @@ describe('readToolbar applicability', () => {
     expect(model?.colorKey).toBe('color');
   });
 
+  it('gives a page number and a list the text cluster — both draw their own text and box', () => {
+    for (const type of ['page_number', 'list']) {
+      const model = readToolbar(readItemView({ type }), effOf());
+      expect(model?.typography, type).toBe(true);
+      expect(model?.colorKey, type).toBe('color');
+    }
+  });
+
   it('gives a container and an image the fill color (no typography)', () => {
     for (const type of ['container', 'image']) {
       const model = readToolbar(readItemView({ type }), effOf());

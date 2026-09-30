@@ -28,18 +28,60 @@ fn text_decoration_parses_round_trips_and_defaults_to_none() {
 
 #[test]
 fn text_decoration_rejects_css_spellings_we_do_not_support() {
-    // Kebab-case (raw CSS), the shorthand, and multi-value lines must be
-    // parse errors, not silent no-ops.
+    // Kebab-case (raw CSS), the shorthand, a repeated or unknown line, and
+    // `none` beside a line must be parse errors, not silent no-ops.
     for bad in [
         "textDecoration: line-through",
         "textDecoration: overline",
-        "textDecoration: underline line_through",
+        "textDecoration: underline overline",
+        "textDecoration: underline underline",
+        "textDecoration: none underline",
+        "textDecoration: ''",
+        "textDecoration: 1",
         "textDecorationLine: underline",
     ] {
         assert!(
             serde_yaml::from_str::<Style>(bad).is_err(),
             "expected rejection of `{bad}`"
         );
+    }
+    // The refusal names what IS accepted, both lines included.
+    let err = serde_yaml::from_str::<Style>("textDecoration: overline")
+        .expect_err("refused")
+        .to_string();
+    assert!(err.contains("`underline line_through`"), "got: {err}");
+}
+
+#[test]
+fn text_decoration_takes_both_lines_in_either_order_and_writes_one_spelling() {
+    for yaml in [
+        "textDecoration: underline line_through",
+        "textDecoration: line_through   underline",
+    ] {
+        let s: Style = serde_yaml::from_str(yaml).expect("parse");
+        assert_eq!(
+            s.text_decoration,
+            Some(TextDecoration::UnderlineLineThrough),
+            "{yaml}"
+        );
+        let out = serde_yaml::to_string(&s).expect("yaml");
+        assert!(
+            out.contains("textDecoration: underline line_through"),
+            "got: {out}"
+        );
+    }
+}
+
+#[test]
+fn text_decoration_reports_each_line_it_draws() {
+    for (d, under, through) in [
+        (TextDecoration::None, false, false),
+        (TextDecoration::Underline, true, false),
+        (TextDecoration::LineThrough, false, true),
+        (TextDecoration::UnderlineLineThrough, true, true),
+    ] {
+        assert_eq!((d.underline(), d.line_through()), (under, through), "{d:?}");
+        assert!(!d.as_str().is_empty());
     }
 }
 
