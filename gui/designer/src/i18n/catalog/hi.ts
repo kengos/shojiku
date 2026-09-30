@@ -543,7 +543,7 @@ export const hi: LanguageCatalog = {
     'panel.visible.documentScope': 'यह बाइंडिंग दोहराई गई पंक्ति नहीं, शीर्ष-स्तर का डेटा पढ़ती है।',
     'panel.visible.remove': 'हमेशा दिखाएँ',
     'panel.rowConditions.hint': 'डेटा के आधार पर कुछ पंक्तियों का रूप बदलें (जैसे शीर्षक पंक्तियाँ बीच में)।',
-    'panel.rowConditions.add': '+ पंक्ति शर्त जोड़ें',
+    'panel.rowConditions.add': '+ नियम जोड़ें',
     'panel.rowConditions.when': 'जब {field} {value} हो',
     'panel.rowConditions.whenOn': 'जब {field} "हाँ" हो',
     'panel.rowConditions.field': 'जाँची जाने वाली फ़ील्ड',
@@ -567,7 +567,14 @@ export const hi: LanguageCatalog = {
     'panel.column.style': 'स्तंभ शैली',
     'panel.column.styleHint':
       'इस स्तंभ की मुख्य कोशिकाओं पर लागू होता है। इसका संरेखण इस स्तंभ के अपने शीर्षक पर शीर्ष पंक्ति से भी ऊपर रहता है।',
-    'panel.rowConditions.remove': 'यह शर्त हटाएँ',
+    'panel.rowConditions.remove': 'यह नियम हटाएँ',
+    'panel.rowConditions.moveUp': 'नियम ऊपर ले जाएँ',
+    'panel.rowConditions.moveDown': 'नियम नीचे ले जाएँ',
+    'panel.rowConditions.precedence':
+      'किसी पंक्ति से मेल खाने वाले सभी नियम लागू होते हैं। यदि दो नियम एक ही चीज़ सेट करें, तो ऊपर वाला नियम मान्य होता है।',
+    'panel.rowConditions.overCap':
+      'लागू नहीं — इस सूची के सबसे नीचे के केवल {max} नियम उपयोग होते हैं। इसे नीचे ले जाएँ, या कोई नियम हटाएँ।',
+    'panel.rowConditions.atCap': 'अधिकतम {max} नियम हो सकते हैं। नया जोड़ने के लिए कोई नियम हटाएँ।',
     'panel.field.italic': 'इटैलिक',
     'panel.field.verticalAlign': 'लंबवत संरेखण',
     'style.value.verticalAlign.top': 'ऊपर',

@@ -773,7 +773,7 @@ export const en: LanguageCatalog = {
     'panel.visible.remove': 'Always show',
     'panel.rowConditions.hint':
       'Change how certain rows look, based on their data (for example, center the heading rows).',
-    'panel.rowConditions.add': '+ Add a row condition',
+    'panel.rowConditions.add': '+ Add a rule',
     'panel.rowConditions.when': 'When {field} is {value}',
     'panel.rowConditions.whenOn': 'When {field} is yes',
     'panel.rowConditions.field': 'Field to check',
@@ -797,7 +797,14 @@ export const en: LanguageCatalog = {
     'panel.column.style': 'Column style',
     'panel.column.styleHint':
       'Applies to this column’s body cells. Its alignment also wins over the header row for this column’s own label.',
-    'panel.rowConditions.remove': 'Remove this condition',
+    'panel.rowConditions.remove': 'Remove this rule',
+    'panel.rowConditions.moveUp': 'Move rule up',
+    'panel.rowConditions.moveDown': 'Move rule down',
+    'panel.rowConditions.precedence':
+      'All rules that match a row apply. If two of them set the same thing, the one above wins.',
+    'panel.rowConditions.overCap':
+      'Not applied — only the bottom {max} rules in this list are used. Move it down, or delete a rule.',
+    'panel.rowConditions.atCap': 'The limit is {max} rules. Remove rules to add another.',
     'panel.field.italic': 'Italic',
     'panel.field.verticalAlign': 'Vertical alignment',
     'style.value.verticalAlign.top': 'Top',

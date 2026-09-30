@@ -1313,7 +1313,7 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
     );
     openTab('Style');
     fireEvent.click(screen.getByRole('button', { name: /^Conditional formatting/ }));
-    expect(screen.getByRole('button', { name: '+ Add a row condition' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: '+ Add a rule' })).not.toBeNull();
   });
 
   it('hides the row-conditions section when the engine lacks the capability', () => {
@@ -1333,7 +1333,7 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
       />,
     );
     openTab('Style');
-    expect(screen.queryByRole('button', { name: '+ Add a row condition' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '+ Add a rule' })).toBeNull();
     // The rest of the 装飾 tab still renders. The handle is the border label,
     // not the fill swatch: a TABLE gets no fill swatch (the engine paints none),
     // which the test below is about.
@@ -1410,14 +1410,14 @@ describe('PropertyPanel — 塗り・枠線 cluster', () => {
     );
     openTab('Style');
     fireEvent.click(screen.getByRole('button', { name: /^Conditional formatting/ }));
-    expect(screen.getByRole('button', { name: '+ Add a row condition' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: '+ Add a rule' })).not.toBeNull();
   });
 
   it('never shows the row-conditions section on a non-table item', () => {
     const controller = makeController({ [PATH]: { type: 'rect', box: { w: 50 } } });
     draw(<PropertyPanel controller={controller} path={PATH} />);
     openTab('Style');
-    expect(screen.queryByRole('button', { name: '+ Add a row condition' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '+ Add a rule' })).toBeNull();
   });
 
   it('gates the fill swatch and border cluster by capability', () => {

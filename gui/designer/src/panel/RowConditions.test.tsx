@@ -78,7 +78,7 @@ describe('RowConditionsSection', () => {
   it('shows a one-line explanation and the add button when there are no rules', () => {
     section([]);
     expect(screen.getByText(/Change how certain rows look/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: '+ Add a row condition' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '+ Add a rule' })).toBeTruthy();
   });
 
   it('summarizes each rule by its field LABEL and value without opening it', () => {
@@ -242,7 +242,7 @@ describe('RowConditionsSection', () => {
     section([{ when: { key: 'kind' }, style: { textAlign: 'center' } }, { when: { key: 'note' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     // No list row, no chip duplicating the alignment RADIO, no other rule.
-    expect(screen.queryAllByRole('button', { name: 'Remove this condition' })).toHaveLength(0);
+    expect(screen.queryAllByRole('button', { name: 'Remove this rule' })).toHaveLength(0);
     expect(screen.getAllByText('Center')).toHaveLength(1);
     expect(screen.getByRole('radio', { name: 'Center' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /備考/ })).toBeNull();
@@ -311,7 +311,7 @@ describe('RowConditionsSection', () => {
 
   it('adds a rule as ONE op and opens it', () => {
     const controller = section([]);
-    fireEvent.click(screen.getByRole('button', { name: '+ Add a row condition' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Add a rule' }));
     expect(controller.apply).toHaveBeenCalledTimes(1);
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'putValue',
@@ -321,14 +321,14 @@ describe('RowConditionsSection', () => {
     });
   });
 
-  it('removes a rule as ONE op', () => {
+  it('removes a rule as ONE op — the TOP card is the last entry', () => {
     const controller = section([{ when: { key: 'kind' } }, { when: { key: 'note' } }]);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Remove this condition' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove this rule' })[0]);
     expect(controller.apply).toHaveBeenCalledTimes(1);
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'removeItem',
       path: `${TABLE}.row.conditionalStyles`,
-      index: 0,
+      index: 1,
     });
   });
 
@@ -606,7 +606,7 @@ describe('RowConditionsSection', () => {
 
   it('renders a row for a hostile entry so the indices still line up', () => {
     section([null, { when: { key: 'kind' } }]);
-    expect(screen.getAllByRole('button', { name: 'Remove this condition' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Remove this rule' })).toHaveLength(2);
   });
 });
 

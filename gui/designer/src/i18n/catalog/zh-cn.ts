@@ -710,7 +710,7 @@ export const zhCn: LanguageCatalog = {
     'panel.visible.documentScope': '此条件读取顶层数据，而非重复行的数据。',
     'panel.visible.remove': '始终显示',
     'panel.rowConditions.hint': '根据数据的值，只改变特定行的外观（例如把标题行居中）。',
-    'panel.rowConditions.add': '+ 添加行条件',
+    'panel.rowConditions.add': '+ 添加规则',
     'panel.rowConditions.when': '当 {field} 为 {value} 时',
     'panel.rowConditions.whenOn': '当 {field} 为“是”时',
     'panel.rowConditions.field': '检查的字段',
@@ -734,7 +734,14 @@ export const zhCn: LanguageCatalog = {
     'panel.column.style': '列样式',
     'panel.column.styleHint':
       '应用于此列的正文单元格。其文字对齐也会优先于标题行，作用于此列自己的标题文字。',
-    'panel.rowConditions.remove': '删除此条件',
+    'panel.rowConditions.remove': '删除此规则',
+    'panel.rowConditions.moveUp': '规则上移',
+    'panel.rowConditions.moveDown': '规则下移',
+    'panel.rowConditions.precedence':
+      '与某行匹配的规则都会生效。如果两条规则设置了同一项格式，以上方的规则为准。',
+    'panel.rowConditions.overCap':
+      '未生效：只使用此列表中最下方的 {max} 条规则。请将其下移，或删除一条规则。',
+    'panel.rowConditions.atCap': '规则最多 {max} 条。如需添加，请先删除。',
     'panel.field.italic': '斜体',
     'panel.field.verticalAlign': '垂直对齐',
     'style.value.verticalAlign.top': '顶端',
