@@ -55,10 +55,19 @@ export function codeLines(file: string): string[] {
         inBlock = false;
         return '';
       }
-      if (!inBlock && /\/\*/.test(line) && !line.includes('*/')) {
-        inBlock = true;
+      if (opened) {
+        return '';
       }
-      return opened ? '' : line.replace(/\/\*.*?\*\//g, '').replace(/\/\/.*$/, '');
+      // Same-line comments first, so what is left of `/*` can only be the
+      // OPENER of a block that runs on — and its own text is prose too.
+      // A `/*` inside a `//` comment opens nothing.
+      const code = line.replace(/\/\*.*?\*\//g, '').replace(/\/\/.*$/, '');
+      const opener = code.indexOf('/*');
+      if (opener === -1) {
+        return code;
+      }
+      inBlock = true;
+      return code.slice(0, opener);
     });
 }
 

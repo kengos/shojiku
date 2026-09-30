@@ -12,6 +12,7 @@ import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
 import { useReseedKey } from '../panel/useReseedKey';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
+import { IconMinus, IconPlus } from '../ui/icons';
 import { Sep } from '../ui/Sep';
 import { TipBubble } from '../ui/TipBubble';
 import { FamilyControl } from './FamilyControl';
@@ -70,7 +71,7 @@ export function TypographyGroup({
           disabled={sizeNum === null}
           onClick={stepSize(-1)}
         >
-          −
+          <IconMinus size={14} />
         </button>
         <TipBubble text={t('toolbar.sizeDown')} />
       </span>
@@ -106,7 +107,7 @@ export function TypographyGroup({
           disabled={sizeNum === null}
           onClick={stepSize(1)}
         >
-          +
+          <IconPlus size={14} />
         </button>
         <TipBubble text={t('toolbar.sizeUp')} />
       </span>

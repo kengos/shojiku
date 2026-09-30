@@ -14,6 +14,10 @@ export const BTN =
 export const BTN_SM =
   'cursor-pointer rounded-md border border-border bg-surface px-2 py-1 text-text enabled:hover:border-muted disabled:cursor-default disabled:opacity-45';
 
+/** `BTN_SM` carrying an icon from `ui/icons.tsx` instead of text: flex-centred
+ * so the SVG sits on the same rail as a text button beside it. */
+export const BTN_SM_ICON = `${BTN_SM} inline-flex items-center justify-center`;
+
 /** A full-width panel form control (text/number input, select). */
 export const INPUT = 'w-full rounded-md border border-border bg-surface px-2 py-1 text-text';
 

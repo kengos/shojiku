@@ -10,7 +10,8 @@ import type { EditorController } from '../editor/useEditor';
 import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
-import { BTN_SM, INPUT } from '../ui/chrome';
+import { BTN_SM, BTN_SM_ICON, INPUT } from '../ui/chrome';
+import { IconChevronDown, IconChevronUp, IconClose } from '../ui/icons';
 import { ColumnBindingFields } from './ColumnBindingFields';
 import { addColumnOp, moveColumnOp, readColumnsView, removeColumnOp } from './columnsModel';
 import { FieldPicker } from './FieldPicker';
@@ -102,29 +103,29 @@ export function TableColumnsSection({
             <div className="flex justify-end gap-1">
               <button
                 type="button"
-                className={BTN_SM}
+                className={BTN_SM_ICON}
                 aria-label={t('panel.column.moveUp')}
                 disabled={index === 0}
                 onClick={() => dispatch(moveColumnOp(tablePath, index, index - 1))}
               >
-                ↑
+                <IconChevronUp size={14} />
               </button>
               <button
                 type="button"
-                className={BTN_SM}
+                className={BTN_SM_ICON}
                 aria-label={t('panel.column.moveDown')}
                 disabled={index === columns.length - 1}
                 onClick={() => dispatch(moveColumnOp(tablePath, index, index + 1))}
               >
-                ↓
+                <IconChevronDown size={14} />
               </button>
               <button
                 type="button"
-                className={BTN_SM}
+                className={BTN_SM_ICON}
                 aria-label={t('panel.column.remove')}
                 onClick={() => dispatch(removeColumnOp(tablePath, index))}
               >
-                ×
+                <IconClose size={14} />
               </button>
             </div>
             <ColumnBindingFields

@@ -11,6 +11,7 @@
 import type { Op } from '@shojiku/designer-core';
 import type { EffectiveValue } from '../toolbar/effective';
 import { alignedValue, alignWire } from '../toolbar/wire';
+import { IconGrip } from '../ui/icons';
 import { AlignSegment } from './bandFieldParts';
 import type { ColumnRow } from './columnsModel';
 import type { ColumnHeaderDrag } from './useColumnHeaderDrag';
@@ -74,9 +75,7 @@ export function ColumnHeaderRow({ columns, drag, reorderLabel }: ColumnHeaderRow
           onPointerUp={drag.onPointerUp}
           onKeyDown={drag.onKeyDown(index)}
         >
-          <span aria-hidden="true" className="text-muted">
-            ⠿
-          </span>
+          <IconGrip size={14} className="shrink-0 text-muted" />
           <span className="truncate">{column.label}</span>
         </button>
       ))}

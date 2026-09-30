@@ -39,8 +39,10 @@ describe('PageSetup', () => {
     const { container, unmount } = draw(<PageSetup controller={makeController({ size: 'A4' })} />);
     expect(screen.getByText('210 × 297 mm')).toBeTruthy();
     // The engine preview beside the form is the only picture of the page: a
-    // blank outline here read as a broken preview.
-    expect(container.querySelector('svg')).toBeNull();
+    // blank outline here read as a broken preview. The only SVGs left are the
+    // steppers' icons, each inside its button.
+    const drawings = [...container.querySelectorAll('svg')].filter((svg) => !svg.closest('button'));
+    expect(drawings).toEqual([]);
     expect(container.querySelector('figure')).toBeNull();
     unmount();
     draw(<PageSetup controller={makeController({ size: 'A4', orientation: 'landscape' })} />);

@@ -20,13 +20,16 @@
 // any of them. The walker itself is `testkit/sourceWalk.ts`, shared with the
 // action-convention and ellipsis gates.
 
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   APP_SRC,
   codeLines,
   DESIGNER_SRC,
+  GUI_ROOT,
   hits,
   nearestOpenTag,
   sourceFiles,
@@ -61,6 +64,48 @@ const SEP_MINT_FILE = 'designer/src/ui/Sep.tsx';
  * other reason to author a one-pixel-wide tinted box. Both orders, because a
  * class list has no canonical order. */
 const GROUP_RULE = /\bw-px\b.*\bbg-border\b|\bbg-border\b.*\bw-px\b/;
+
+/** A text character standing in for an icon, by CLASS: every block from the
+ * arrows to the misc symbols and arrows (U+2190–2BFF — mathematical and
+ * technical symbols, enclosed alphanumerics, box drawing, geometric shapes,
+ * dingbats, braille), the letterlike symbols (U+2100–214F), the pictograph
+ * planes (U+1F000–1FBFF, emoji included), the private-use area an icon FONT
+ * draws from, plus × ÷ • and the char_grid mark 囲 that once stood in for its
+ * tree icon. Punctuation (… — · ›), currency and letters are outside it: they
+ * are prose, and prose is not what this rule polices. ASCII is outside it too,
+ * so a `+` or `x` on a button is left to review. */
+const GLYPH =
+  /[\p{Extended_Pictographic}\p{Co}\u00D7\u00F7\u2022\u2100-\u214F\u2190-\u2BFF\u{1F000}-\u{1FBFF}囲]/u;
+
+/** Where a class character is TEXT rather than an icon, keyed by file and
+ * exact characters. A line in one of these files is exempt only when every
+ * class character on it is one granted here. */
+const GLYPH_TEXT: Readonly<Record<string, string>> = {
+  // The shortcut sheet spells keys the way the OS keycaps do.
+  'designer/src/help/shortcutsModel.ts': '⌘⇧⌫⌥↑↓',
+  // A tree row's label marks a clipped multi-line value.
+  'designer/src/tree/nodeFields.ts': '⏎',
+  // A page size reads `210 × 297 mm`.
+  'designer/src/panel/pageSetupModel.ts': '×',
+  // The save review's diff: a removed-line marker and the folded-gap row.
+  'designer/src/review/SaveReviewModal.tsx': '−⋯',
+  // A build-time error message, never rendered as chrome.
+  'designer-app/src/build/presetManifest.ts': '→',
+};
+
+/** Paths whose whole content is prose (translations, tutorial copy). */
+const PROSE = /\/i18n\/catalog\/|\/tutorial\/copy\.[\w-]+\.ts$/;
+
+/** Whether `line` of `file` (gui-relative or absolute) uses a class character
+ * as a glyph: some class character on it is not granted to that file. */
+function isGlyphViolation(line: string, file: string): boolean {
+  if (PROSE.test(file)) {
+    return false;
+  }
+  const key = Object.keys(GLYPH_TEXT).find((granted) => file.endsWith(granted));
+  const granted = key === undefined ? '' : (GLYPH_TEXT[key] ?? '');
+  return [...line].some((char) => GLYPH.test(char) && !granted.includes(char));
+}
 
 /** True when the JSX element the line at `index` belongs to is a DOM element
  * (a lowercase tag) rather than a React component. `title` is a legitimate
@@ -254,19 +299,101 @@ describe('chrome conventions', () => {
   });
 
   it('draws control glyphs as SVG icons, never text characters', () => {
-    // The characters that stood in for icons before the sweep — plus their
-    // near neighbours, because an additions-only list is how this rule keeps
-    // getting re-broken: the sweep's own first pass listed the item-type marks
-    // but not the ▤ on the tree's document-root row one element above them, and
-    // only a live look found it. The breadcrumb's CSS `content:'›'` separator
-    // is deliberately absent: it is a separator, not a control's icon.
+    // The CLASS the rule names, not a list of the characters that happened to
+    // be in use: a hand-listed set is how this rule kept getting re-broken — it
+    // carried ▴▾ but not the ▲▼ on every panel stepper, and none of the braille
+    // grip or the arrows on the column sheet's buttons, so all of them passed.
     //
     // The message catalogs are exempt — they hold translated PROSE, never
     // chrome markup, and several of these characters are ordinary in it (the
     // char_grid mark 囲 is the kanji in 範囲, which every range diagnostic uses).
-    const glyph = /[✓✔✕✖✗✘▾▿▴▵▸▹◂◃▭▬▮▯╱╲▦▧▨▩▤▥№▣▢⬚⬛⬜⊞⊟⊠≣≡⤓⤒囲◯◉●○☑☐☒❘❙❚◇◆★☆■□•]/u;
-    expect(hits(ROOTS, glyph, (_lines, _index, file) => !file.includes('/i18n/catalog/'))).toEqual(
-      [],
+    // The tutorial copy is prose for the same reason.
+    const found = hits(ROOTS, GLYPH, (lines, index, file) => isGlyphViolation(lines[index], file));
+    expect(found).toEqual([]);
+  });
+
+  it('reads the glyph CLASS, not a list (the positive control for the sweep)', () => {
+    // An empty sweep means only that the pattern matched nothing unless the
+    // pattern is shown to recognise what it polices: the three characters that
+    // slipped past the old list, the stepper triangles, keycaps, an enclosed
+    // letter, an icon-font codepoint and emoji.
+    for (const glyph of [
+      '⠿',
+      '↑',
+      '↓',
+      '▲',
+      '▼',
+      '×',
+      '−',
+      '⌘',
+      '✓',
+      '★',
+      '→',
+      '▤',
+      '№',
+      '•',
+      'ⓧ',
+      '⟨',
+      '🠕',
+      '\uE001',
+      '囲',
+      '🔍',
+    ]) {
+      expect(GLYPH.test(glyph), glyph).toBe(true);
+    }
+    // …and does NOT sweep in typography, currency or letters.
+    for (const text of ['…', '—', '·', '›', '’', 'é', '¥', 'あ', '範']) {
+      expect(GLYPH.test(text), text).toBe(false);
+    }
+  });
+
+  it('flags a planted grip on a code line, and not in a comment', () => {
+    // End to end through the walker: the same file with the grip on a block
+    // comment's OPENING line, in its body, in a line comment, and as the text of
+    // a control. Only the last is a use; the opener used to count as code,
+    // which a class-based rule would have read as ~25 false hits.
+    const dir = mkdtempSync(join(tmpdir(), 'sj-glyph-'));
+    const planted = join(dir, 'Planted.tsx');
+    try {
+      writeFileSync(
+        planted,
+        [
+          '/** the ⠿ grip',
+          ' * body ⠿ */',
+          '// a ⠿ in a line comment',
+          '<span aria-hidden="true">⠿</span>',
+        ].join('\n'),
+      );
+      const flagged = codeLines(planted).flatMap((line, index) =>
+        GLYPH.test(line) && isGlyphViolation(line, 'designer/src/panel/Planted.tsx')
+          ? [index + 1]
+          : [],
+      );
+      expect(flagged).toEqual([4]);
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('exempts only the named characters in an allowlisted file', () => {
+    // Keyed by FILE and CHARACTER, never by line: a keycap sheet may spell ⌘,
+    // but a stray ▼ button in the same file is still a violation.
+    expect(
+      isGlyphViolation("return mac ? '⌘' : 'Ctrl+';", 'designer/src/help/shortcutsModel.ts'),
+    ).toBe(false);
+    expect(isGlyphViolation('<button>▼</button>', 'designer/src/help/shortcutsModel.ts')).toBe(
+      true,
     );
+    expect(isGlyphViolation("return mac ? '⌘' : 'Ctrl+';", 'designer/src/panel/Other.tsx')).toBe(
+      true,
+    );
+    // Every entry still names a file that exists and still spells each of its
+    // characters, so an exemption cannot outlive the text it was granted for.
+    for (const [file, chars] of Object.entries(GLYPH_TEXT)) {
+      const source = readFileSync(join(GUI_ROOT, file), 'utf8');
+      for (const char of chars) {
+        expect(source.includes(char), `${file} ${char}`).toBe(true);
+      }
+    }
   });
 });
