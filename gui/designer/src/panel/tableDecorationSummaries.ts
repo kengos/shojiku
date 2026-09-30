@@ -21,6 +21,18 @@ const FONT_STYLES: ReadonlySet<string> = new Set(['normal', 'italic']);
 const VALIGNS: ReadonlySet<string> = new Set(['top', 'middle', 'bottom']);
 const LINE_STYLES: ReadonlySet<string> = new Set(['double', 'dashed', 'dotted']);
 
+/** An alignment's label, or — for a spelling the closed label map lacks, which a
+ * document can carry — the spelling itself rather than the catalog KEY
+ * `translate` returns for a miss. Shared with the rule chips. */
+export function alignLabel(t: SummaryI18n['t'], value: string): string {
+  return ALIGNS.has(value) ? t(`style.value.textAlign.${value}`) : value;
+}
+
+/** `alignLabel`'s vertical twin. */
+export function valignLabel(t: SummaryI18n['t'], value: string): string {
+  return VALIGNS.has(value) ? t(`style.value.verticalAlign.${value}`) : value;
+}
+
 export function styleSummary(i18n: SummaryI18n, view: TableStyleView, gridWidth: string): string {
   const { t } = i18n;
   const preset = matchPreset(view, gridWidth);
@@ -80,30 +92,33 @@ export function bandSummary(
   i18n: SummaryI18n,
   band: BandView,
   styleNames: readonly string[],
-  /** Whether the band's section offers vertical alignment — the header band
-   * does; the body band does not (a body cell takes its column's alone), so a
-   * value it carries is not reported as if it did something. */
+  /** Whether to report the band's vertical alignment: the header band's caller
+   * passes `true` unconditionally; the body band's passes whether the engine
+   * honours it (`bodyValignHost`), since against an older engine a body band's
+   * value does nothing and is not reported as if it did. */
   verticalAlign = false,
 ): string {
   const { t, locale } = i18n;
   const text = joinParts(i18n, [
-    ALIGNS.has(band.textAlign) ? t(`style.value.textAlign.${band.textAlign}`) : band.textAlign,
+    alignLabel(t, band.textAlign),
     band.backgroundColor === ''
       ? ''
       : t('panel.tableSection.band.fill', { value: band.backgroundColor }),
     band.color === '' ? '' : t('panel.tableSection.band.color', { value: band.color }),
     WEIGHTS.has(band.fontWeight) ? t(`style.value.fontWeight.${band.fontWeight}`) : band.fontWeight,
     ...typeParts(i18n, band),
-    !verticalAlign || band.verticalAlign === ''
-      ? ''
-      : VALIGNS.has(band.verticalAlign)
-        ? t(`style.value.verticalAlign.${band.verticalAlign}`)
-        : band.verticalAlign,
+    valignPart(i18n, band, verticalAlign),
     styleNames.length === 0
       ? ''
       : t('panel.tableSection.band.styles', { names: formatList(styleNames, locale) }),
   ]);
   return text === '' ? t('panel.tableSection.band.unset') : text;
+}
+
+/** A band's vertical alignment as a summary part — '' when the section does
+ * not offer it or nothing is authored; an unknown spelling as its own text. */
+function valignPart(i18n: SummaryI18n, band: BandView, offered: boolean): string {
+  return offered ? valignLabel(i18n.t, band.verticalAlign) : '';
 }
 
 /** The type-face parts of a band — family, size, italic — which the table's
@@ -119,8 +134,9 @@ function typeParts(i18n: SummaryI18n, band: BandView): readonly string[] {
 }
 
 /** The table's own text settings (`table.style`) as AUTHORED — the type face,
- * weight, colour and alignment it hands every cell. */
-export function textSummary(i18n: SummaryI18n, table: BandView): string {
+ * weight, colour and alignment it hands every cell, and its vertical alignment
+ * where the engine honours it (the same gate as `bandSummary`'s). */
+export function textSummary(i18n: SummaryI18n, table: BandView, verticalAlign = false): string {
   const { t } = i18n;
   const text = joinParts(i18n, [
     ...typeParts(i18n, table),
@@ -128,7 +144,8 @@ export function textSummary(i18n: SummaryI18n, table: BandView): string {
       ? t(`style.value.fontWeight.${table.fontWeight}`)
       : table.fontWeight,
     table.color === '' ? '' : t('panel.tableSection.band.color', { value: table.color }),
-    ALIGNS.has(table.textAlign) ? t(`style.value.textAlign.${table.textAlign}`) : table.textAlign,
+    alignLabel(t, table.textAlign),
+    valignPart(i18n, table, verticalAlign),
   ]);
   return text === '' ? t('panel.tableSection.band.unset') : text;
 }

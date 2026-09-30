@@ -235,11 +235,24 @@ Row keys live under `row:` (`minHeight` / `height` / `style` /
   keys: `table.header.visuallyHidden`, and
   `table.header.hidden_boxes` for the box-index half.
 - **Vertical alignment** defaults to `middle` in every table row, and an
-  authored `verticalAlign` wins wherever it is written: on a column (for
-  its body cells AND its own label), on `header.style` (every label in
-  that row), or on a `headerGroups` entry (that group). A label takes its
-  column's value over the header's — the precedence `textAlign` already
-  follows there. Capability key: `table.header.style.verticalAlign`.
+  authored `verticalAlign` reaches the text cells below the layer it is
+  written on (a `qr_code`/`image` cell centres regardless, a `cell:`
+  column places its own items, and a `vertical_rl` cell neutralizes it in
+  v1 — [vertical_text.md](vertical_text.md)). `verticalAlign` is not inherited anywhere else ([style.md](style.md));
+  a table carries it down its own layers because a cell has no box of its
+  own to author it on. The nearest layer that authors one wins:
+  - a **body cell**: its column, then the matching
+    `row.conditionalStyles` entries (a later one over an earlier one), then `row.alternateStyle` on the alternate rows, then
+    `row.style`, then the table's own `style`;
+  - a **header label**: its column, then `header.style`, then the table's
+    `style` — the precedence `textAlign` already follows there;
+  - a **`headerGroups` entry**: its own `style`, then the table's.
+    `header.style` is the label row's and does not reach a group.
+
+  Each layer's named styles count (`styleNames`, or `alternateStyleNames`
+  on the zebra layer), under its inline style, as everywhere else. Capability keys: `table.header.style.verticalAlign` (the column,
+  `header.style` and group layers) and `table.style.verticalAlign` (the
+  row, rule, zebra and table layers).
 
 ## Conditional row styles
 
@@ -393,6 +406,7 @@ Capability keys: `table`, `table.column.width.length`,
 `table.row.height`, `table.style`, `table.keepTogether`, `table.boxes`,
 `table.headerGroups`, `table.headerGroups.style.fill` (per-group
 fills/borders paint), `table.header.style.verticalAlign`,
+`table.style.verticalAlign`,
 `table.mergeEmptyCells`, `table.column.type`,
 `table.row.conditionalStyles`,
 `table.column.cell` (container cells), `table.box` (placement),

@@ -4,7 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
 import { cascadeContext } from '../toolbar/cascade';
 import { headerFillOf, readBandCascades } from './bandCascade';
-import { TableBandFields } from './TableBandFields';
+import {
+  bodyValignHost,
+  headerValignHost,
+  TableBandFields,
+  type ValignHost,
+} from './TableBandFields';
 import { TABLE_HEADER_FILL } from './tableStyleModel';
 
 const TABLE = 'sections.body.items[0]';
@@ -36,7 +41,7 @@ function band(
   owner: 'header' | 'row' | 'column',
   options: {
     readonly headerFill?: boolean;
-    readonly host?: Partial<{ fontFamilies: string[]; verticalAlign: boolean; fill: boolean }>;
+    readonly host?: Partial<{ fontFamilies: string[]; verticalAlign: ValignHost; fill: boolean }>;
   } = {},
 ) {
   const read = reader(doc);
@@ -530,12 +535,12 @@ describe('TableBandFields — type face, italic and vertical alignment', () => {
     band(docWith({ type: 'table' }), 'row');
     expect(screen.queryByRole('group', { name: 'Vertical alignment' })).toBeNull();
     cleanup();
-    band(docWith({ type: 'table' }), 'header', { host: { verticalAlign: true } });
+    band(docWith({ type: 'table' }), 'header', { host: { verticalAlign: 'table' } });
     expect(screen.getByRole('group', { name: 'Vertical alignment' })).toBeTruthy();
   });
 
   it('reads an unset vertical alignment as MIDDLE — a table row’s default — and authors only a change', () => {
-    const onOp = band(docWith({ type: 'table' }), 'header', { host: { verticalAlign: true } });
+    const onOp = band(docWith({ type: 'table' }), 'header', { host: { verticalAlign: 'table' } });
     expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Middle' }).checked).toBe(true);
     fireEvent.click(screen.getByRole('radio', { name: 'Top' }));
     expect(onOp).toHaveBeenCalledWith({
@@ -550,7 +555,7 @@ describe('TableBandFields — type face, italic and vertical alignment', () => {
     const onOp = band(
       docWith({ type: 'table', header: { style: { verticalAlign: 'bottom' } } }),
       'header',
-      { host: { verticalAlign: true } },
+      { host: { verticalAlign: 'table' } },
     );
     fireEvent.click(screen.getByRole('radio', { name: 'Middle' }));
     expect(onOp).toHaveBeenCalledWith({
@@ -558,6 +563,67 @@ describe('TableBandFields — type face, italic and vertical alignment', () => {
       path: TABLE,
       keys: ['header', 'style', 'verticalAlign'],
     });
+  });
+
+  it('shows a column the body band’s vertical alignment, and authors a pick away from it', () => {
+    // The engine falls a body cell back to its band, so a column over a `top`
+    // band renders `top`. Re-picking the table default must AUTHOR `middle`:
+    // read as the plain cascade, `middle` would look like the value already in
+    // force and the click would author nothing.
+    const onOp = band(
+      docWith({ type: 'table', row: { style: { verticalAlign: 'top' } }, columns: [{}] }),
+      'column',
+      { host: { verticalAlign: 'table' } },
+    );
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Top' }).checked).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: 'Middle' }));
+    expect(onOp).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.columns[0]`,
+      keys: ['style', 'verticalAlign'],
+      value: 'middle',
+    });
+  });
+
+  it('shows a column its OWN value where the engine does not fall back through the table', () => {
+    // An engine with the header key but not the body key reads a body cell from
+    // its column alone: showing the band's `top` as inherited would state a
+    // value the page does not render, and picking `Top` would author nothing.
+    const onOp = band(
+      docWith({ type: 'table', row: { style: { verticalAlign: 'top' } }, columns: [{}] }),
+      'column',
+      { host: { verticalAlign: 'own' } },
+    );
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Middle' }).checked).toBe(true);
+    expect(screen.queryByText(/Inherited/)).toBeNull();
+    fireEvent.click(screen.getByRole('radio', { name: 'Top' }));
+    expect(onOp).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.columns[0]`,
+      keys: ['style', 'verticalAlign'],
+      value: 'top',
+    });
+  });
+
+  it('maps the engine’s two keys onto how each host offers vertical alignment', () => {
+    const header = 'table.header.style.verticalAlign';
+    const body = 'table.style.verticalAlign';
+    expect(headerValignHost([header, body])).toBe('table');
+    expect(headerValignHost([header])).toBe('own');
+    expect(headerValignHost([body])).toBe(false);
+    expect(bodyValignHost([header, body])).toBe('table');
+    expect(bodyValignHost([header])).toBe(false);
+    // No capability list at all is the embed with no engine answer yet: offer.
+    expect(headerValignHost(undefined)).toBe('table');
+    expect(bodyValignHost(undefined)).toBe('table');
+  });
+
+  it('shows the body band the table’s vertical alignment, with where it came from', () => {
+    band(docWith({ type: 'table', style: { verticalAlign: 'bottom' } }), 'row', {
+      host: { verticalAlign: 'table' },
+    });
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Bottom' }).checked).toBe(true);
+    expect(screen.getByText(/Inherited/)).toBeTruthy();
   });
 
   it('withholds the background where the host says a fill paints nothing', () => {

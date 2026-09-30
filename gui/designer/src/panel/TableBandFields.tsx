@@ -26,10 +26,16 @@
 // The header band's floor FILL is the deliberate exception and keeps its line:
 // `#ededed` is a grey nobody authored and nobody expects, unlike `left`.
 //
-// Vertical alignment is offered only where the HOST says it reaches the page:
-// a body cell takes its column's value alone (`engine/layout/src/engine/table/
-// rows/prepare.rs`), so a `verticalAlign` on the body band, a rule or the table
-// itself would be a control that changes nothing.
+// Vertical alignment is offered only where the HOST says it reaches the page —
+// that is, where the engine declares the layer honours it (`ValignHost`). Where
+// the engine declares the body key, its effective value is the one key resolved
+// by `tableValignIn` rather than the plain cascade: a cell falls back through the
+// table's own layers for it, so a
+// column over a `top` body band shows `top`, and re-picking `middle` there
+// authors `middle` instead of removing a key that was never set. A column's one
+// control shows what its BODY cells render; its label, while the column sets
+// nothing, follows the header row instead — an authored column value reaches
+// both.
 
 import type { Op } from '@shojiku/designer-core';
 import { useId } from 'react';
@@ -40,6 +46,7 @@ import { BOLD_VALUE, ITALIC_VALUE } from '../toolbar/model';
 import { alignedValue, alignWire, comboWire, toggleWire } from '../toolbar/wire';
 import { FIELD_LABEL } from '../ui/chrome';
 import { BandTypeFields } from './BandTypeFields';
+import { tableValignIn } from './bandCascade';
 import {
   AlignSegment,
   BandToggle,
@@ -49,25 +56,54 @@ import {
   TABLE_VALIGN_DEFAULT,
   VAlignSegment,
 } from './bandFieldParts';
+import { hasCapability } from './itemPanelProps';
 import { OriginBadge } from './OriginBadge';
 import { SwatchRow } from './ruleInputs';
 
 /** The capability an engine declares when a table honours an authored
  * `verticalAlign` on `header.style`, on a header group, and on a column for its
- * own LABEL cell. A column's BODY cells read their column's value too, but the
- * key does not promise that, so the column control stays behind the same gate:
- * against an older engine it is withheld rather than offered on a guess. */
+ * own LABEL cell (its body cells read it too) — the gate on those three hosts'
+ * control. Against an older engine it is withheld rather than offered on a
+ * guess. */
 export const TABLE_VALIGN_CAPABILITY = 'table.header.style.verticalAlign';
+
+/** The capability an engine declares when a body cell falls back to a matching
+ * rule, the body band and the table for its `verticalAlign` (and a label and a
+ * header group to the table): the gate on the control for the body band, a rule
+ * and the table's own 「文字」 section. An older engine centres a body cell unless
+ * its column says otherwise, so there those three controls would change
+ * nothing. */
+export const TABLE_BODY_VALIGN_CAPABILITY = 'table.style.verticalAlign';
+
+/** How a host offers vertical alignment: not at all; over the layer's OWN value
+ * alone — an engine with the header key but not the body key, whose cells never
+ * fall back through the table, so showing an inherited value there would state
+ * one the page does not render and make re-picking it author nothing; or over
+ * the table's layers (`tableValignIn`), where the engine declares the body
+ * key. */
+export type ValignHost = false | 'own' | 'table';
+
+/** The header band's, a column's and a header group's vertical alignment. */
+export function headerValignHost(capabilities: readonly string[] | undefined): ValignHost {
+  if (!hasCapability(capabilities, TABLE_VALIGN_CAPABILITY)) {
+    return false;
+  }
+  return hasCapability(capabilities, TABLE_BODY_VALIGN_CAPABILITY) ? 'table' : 'own';
+}
+
+/** The body band's, a rule's and the table's own vertical alignment. */
+export function bodyValignHost(capabilities: readonly string[] | undefined): ValignHost {
+  return hasCapability(capabilities, TABLE_BODY_VALIGN_CAPABILITY) ? 'table' : false;
+}
 
 /** What the band's HOST decides about the control set — one bundle, so every
  * caller states the same three facts about where it sits. */
 export interface BandFieldsHost {
   /** The host's font families, offered as the family field's suggestions. */
   readonly fontFamilies: readonly string[];
-  /** Whether this host's vertical alignment reaches the page AND the engine
-   * declares it (`table.header.style.verticalAlign`): the header band, a
-   * column and a header group, never the body band, a rule or the table. */
-  readonly verticalAlign: boolean;
+  /** Whether — and over which layers — this host's vertical alignment reaches
+   * the page (`headerValignHost` / `bodyValignHost`). */
+  readonly verticalAlign: ValignHost;
   /** Whether the background control belongs here — false for the table's own
    * style, which the engine never paints. */
   readonly fill: boolean;
@@ -98,7 +134,8 @@ export function TableBandFields({ ctx, path, keys, host, headerFill, onOp }: Tab
   const { t } = useI18n();
   const at = (property: string) => [...keys, property];
   const align = effectiveValueIn(ctx, 'textAlign');
-  const valign = effectiveValueIn(ctx, 'verticalAlign');
+  const valign =
+    host.verticalAlign === 'table' ? tableValignIn(ctx) : effectiveValueIn(ctx, 'verticalAlign');
   const background = headerFill ?? effectiveValueIn(ctx, 'backgroundColor');
   const color = effectiveValueIn(ctx, 'color');
   const alignHint = floorHint(t, align);
@@ -165,7 +202,7 @@ export function TableBandFields({ ctx, path, keys, host, headerFill, onOp }: Tab
         />
         <OriginLine effective={align} />
       </div>
-      {host.verticalAlign ? (
+      {host.verticalAlign !== false ? (
         <div className="mb-2">
           <span className={FIELD_LABEL}>{t('panel.field.verticalAlign')}</span>
           <VAlignSegment

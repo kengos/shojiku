@@ -904,10 +904,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 - **Header spanning & empty-cell merge**: `headerGroups` (a spanning group row above the
   labels, repeating with the header; each group's own `backgroundColor` /
   border paints over the row's band, so groups tint independently —
-  capability key `table.headerGroups.style.fill`; an authored
-  `verticalAlign` is honored on a group, on `header.style`, or on a column
-  for its own label, the column's winning over the header's —
-  `table.header.style.verticalAlign`) and opt-in `mergeEmptyCells`
+  capability key `table.headerGroups.style.fill`) and opt-in `mergeEmptyCells`
   (merged like a spreadsheet: an empty text cell joins the nearest value
   to its left, which extends rightward; an empty cell with no value to its
   left stays its own cell — the rirekisho education/employment
@@ -962,6 +959,13 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   `textOverflow`) or auto rows growing from `row.minHeight`;
   `keepTogether` breaks a table to a fresh page rather than splitting
   one that would fit.
+- **Vertical alignment through a table's layers**: `verticalAlign`, which
+  inherits nowhere else, reaches a text cell from the nearest table layer
+  that authors it — a body cell from its column, the matching row conditions,
+  the zebra layer, `row.style` and then the table's `style`; a header
+  label from its column, `header.style` and then the table; a header
+  group from its own style and then the table — else `middle`. Capability
+  keys `table.header.style.verticalAlign` and `table.style.verticalAlign`.
 - A table `id:` yields one box-index fragment per page, a column `id:`
   one placement per cell.
 - **Placement — `box` on a table**: the same geometry map every

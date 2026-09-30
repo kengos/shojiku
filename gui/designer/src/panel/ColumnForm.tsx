@@ -22,11 +22,10 @@ import { BTN_SM, INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
 import { ColumnBindingFields } from './ColumnBindingFields';
 import type { ColumnRow } from './columnsModel';
 import { Field, TextField } from './fields';
-import { hasCapability } from './itemPanelProps';
 import { registryNames } from './itemView';
 import { applyPanelOp, lengthOp, plainTextOp } from './model';
 import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
-import { TABLE_VALIGN_CAPABILITY, TableBandFields } from './TableBandFields';
+import { headerValignHost, TableBandFields } from './TableBandFields';
 
 /** A column's own cell style sits at `style.*` under the column itself. */
 const COLUMN_STYLE_KEYS = ['style'] as const;
@@ -129,7 +128,7 @@ export function ColumnForm({
             keys={COLUMN_STYLE_KEYS}
             host={{
               fontFamilies,
-              verticalAlign: hasCapability(capabilities, TABLE_VALIGN_CAPABILITY),
+              verticalAlign: headerValignHost(capabilities),
               fill: true,
             }}
             onOp={(op) => applyPanelOp(controller, op)}

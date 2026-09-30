@@ -6,6 +6,7 @@ import { I18nProvider } from '../i18n/context';
 import { swatchLabel } from '../testkit/swatchLabel';
 import type { PickerOption } from './pickerModel';
 import { RowConditionsSection } from './RowConditions';
+import type { ValignHost } from './TableBandFields';
 
 const TABLE = 'sections.body.items[0]';
 
@@ -53,6 +54,7 @@ function section(
   entries: readonly unknown[],
   controller = makeController(),
   floor?: Readonly<Record<string, unknown>>,
+  verticalAlign: ValignHost = false,
 ) {
   draw(
     <RowConditionsSection
@@ -61,7 +63,7 @@ function section(
       entries={entries}
       options={OPTIONS}
       floor={floor}
-      host={{ fontFamilies: [], params: '', dataKey: 'rows' }}
+      host={{ fontFamilies: [], params: '', dataKey: 'rows', verticalAlign }}
     />,
   );
   return controller;
@@ -263,7 +265,7 @@ describe('RowConditionsSection', () => {
         controller={makeController()}
         entries={[{ when: { key: 'code', equals: 'A' } }]}
         options={options}
-        host={{ fontFamilies: [], params: '', dataKey: 'rows' }}
+        host={{ fontFamilies: [], params: '', dataKey: 'rows', verticalAlign: false }}
       />,
     );
     expect(screen.getByRole('button', { name: 'When code is A' })).toBeTruthy();
@@ -281,7 +283,7 @@ describe('RowConditionsSection', () => {
         controller={controller}
         entries={[{ when: { key: 'kind', equals: 'v3' } }]}
         options={options}
-        host={{ fontFamilies: [], params: '', dataKey: 'rows' }}
+        host={{ fontFamilies: [], params: '', dataKey: 'rows', verticalAlign: false }}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is v3' }));
@@ -591,7 +593,7 @@ describe('RowConditionsSection', () => {
           controller={controller}
           entries={entries}
           options={OPTIONS}
-          host={{ fontFamilies: [], params: '', dataKey: 'rows' }}
+          host={{ fontFamilies: [], params: '', dataKey: 'rows', verticalAlign: false }}
         />
       </I18nProvider>
     );
@@ -734,11 +736,51 @@ describe('RowConditionsSection — style controls', () => {
     });
   });
 
-  it('offers no vertical alignment — a body cell takes its column’s alone', () => {
+  it('withholds vertical alignment where the engine does not honour a rule’s', () => {
     section([{ when: { key: 'kind' } }]);
     fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
     expect(screen.queryByRole('group', { name: 'Vertical alignment' })).toBeNull();
     expect(screen.getByRole('checkbox', { name: 'Italic' })).toBeTruthy();
+  });
+
+  it('offers vertical alignment over the body band’s, authoring at the rule’s own style', () => {
+    const entries = [{ when: { key: 'kind' } }];
+    const controller = section(
+      entries,
+      makeController(undefined, {
+        [TABLE]: {
+          type: 'table',
+          row: { style: { verticalAlign: 'bottom' }, conditionalStyles: entries },
+        },
+      }),
+      undefined,
+      'table',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'When 行種別 is yes' }));
+    // The rule sets none, so the band's `bottom` is what its rows render.
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Bottom' }).checked).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: 'Top' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${TABLE}.row.conditionalStyles[0]`,
+      keys: ['style', 'verticalAlign'],
+      value: 'top',
+    });
+  });
+
+  it('shows a rule’s vertical alignment as a chip, not as an unnamed remainder', () => {
+    section([{ when: { key: 'kind' }, style: { verticalAlign: 'top', opacity: 0.5 } }]);
+    expect(screen.getByText('Top')).toBeTruthy();
+    expect(screen.getByText('Other ×1')).toBeTruthy();
+  });
+
+  it('shows an alignment spelling the label map lacks as itself, not as a catalog key', () => {
+    section([
+      { when: { key: 'kind' }, style: { textAlign: 'justify', verticalAlign: 'baseline' } },
+    ]);
+    expect(screen.getByText('justify')).toBeTruthy();
+    expect(screen.getByText('baseline')).toBeTruthy();
+    expect(screen.queryByText(/style\.value\./)).toBeNull();
   });
 
   it('commits a free-entry value on blur', () => {
@@ -916,7 +958,7 @@ describe('RowConditionsSection — formatting presets and sample values', () => 
         controller={controller}
         entries={[{ when: { key: 'note', equals: 'hold' } }]}
         options={OPTIONS}
-        host={{ fontFamilies: [], params, dataKey: 'rows' }}
+        host={{ fontFamilies: [], params, dataKey: 'rows', verticalAlign: false }}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'When 備考 is hold' }));
@@ -945,7 +987,7 @@ describe('RowConditionsSection — formatting presets and sample values', () => 
           controller={makeController()}
           entries={entries}
           options={OPTIONS}
-          host={{ fontFamilies: [], params, dataKey }}
+          host={{ fontFamilies: [], params, dataKey, verticalAlign: false }}
         />,
       );
       fireEvent.click(screen.getByRole('button', { name }));

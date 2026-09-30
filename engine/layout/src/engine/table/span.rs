@@ -30,6 +30,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
             return None;
         }
         let hidden = table.header.as_ref().is_some_and(|h| h.visually_hidden());
+        // A group's own style wins, then the table's. The header row's
+        // style is the LABEL row's and reaches no group.
+        let group_outer = [frame.valign];
         let mut cells = Vec::new();
         let mut col = 0;
         for (index, group) in table.header_groups.iter().enumerate() {
@@ -53,7 +56,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             // this group authored them — unlike the header LABEL row, whose
             // style IS the band's and would double-paint per cell.
             let mut computed = self.resolve_style(&group.style_names, &group.style);
-            computed.vertical_align = self.cell_valign(&group.style_names, &group.style);
+            computed.vertical_align =
+                self.cell_valign((&group.style_names, &group.style), &group_outer);
             if hidden {
                 // A group carries its OWN fill/border, which the row band
                 // cannot switch off for it — so the cell itself goes fully

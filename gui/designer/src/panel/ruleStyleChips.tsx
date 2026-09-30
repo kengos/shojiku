@@ -10,8 +10,9 @@
 //
 // "Adds nothing" is a claim, so it has to be true of EVERY way a rule can add
 // something — and the chips model only the properties the rule editor renders
-// (alignment, weight, italic, size, family, fill, colour) out of `Style`'s two
-// dozen, so the chips are the wrong thing to decide it from. Three ways a rule
+// (alignment, vertical alignment, weight, italic, size, family, fill, colour)
+// out of `Style`'s two dozen, so the chips are the wrong thing to decide it
+// from. Three ways a rule
 // adds something without earning one of those chips:
 //   - `styleNames`, which carries no `style.*` key at all and used to be
 //     reported only inside the OPENED card;
@@ -20,10 +21,16 @@
 //     real, deliberate edit that a `=== 'bold'` boolean cannot tell apart from
 //     an unset value — so each earns a "not bold" / "not italic" chip;
 //   - any of the properties the editor does not render (`opacity`,
-//     `borderWidth`, `verticalAlign` …), which an externally-authored template
+//     `borderWidth`, `lineHeight` …), which an externally-authored template
 //     carries as a matter of course.
 // So the sentence is decided from `styleKeyCount` + `styleNameCount` — the
 // WIRE — and the remainder earns a chip of its own rather than vanishing.
+//
+// The chips are WIRE facts, so none is gated on what the engine honours: a
+// `verticalAlign` chip shows against an engine that ignores a rule's (the closed
+// band summaries, which answer "does this row look different?", are gated
+// instead). Before the vertical alignment was named it was counted in the
+// remainder, so an ungated chip claims nothing the strip did not already say.
 // Getting this wrong would restate the very contradiction this file exists to
 // remove, in the opposite direction and in words rather than as a blank.
 
@@ -32,6 +39,7 @@ import { useI18n } from '../i18n/context';
 import { chipPaint } from '../ui/chipContrast';
 import type { RowConditionRow } from './rowConditionsModel';
 import { lengthText } from './tableContentSummaries';
+import { alignLabel, valignLabel } from './tableDecorationSummaries';
 
 /** One chip per style property the rule sets. Colors show as a swatch dot (a
  * hex string means nothing to the nontech-pm). */
@@ -39,7 +47,10 @@ export function StyleChips({ rule }: { readonly rule: RowConditionRow }) {
   const { t } = useI18n();
   const chips: ReactNode[] = [];
   if (rule.textAlign !== '') {
-    chips.push(<Chip key="align" label={t(`style.value.textAlign.${rule.textAlign}`)} />);
+    chips.push(<Chip key="align" label={alignLabel(t, rule.textAlign)} />);
+  }
+  if (rule.verticalAlign !== '') {
+    chips.push(<Chip key="valign" label={valignLabel(t, rule.verticalAlign)} />);
   }
   if (rule.fontWeight === 'bold') {
     chips.push(<Chip key="bold" label={t('panel.field.bold')} />);
@@ -71,6 +82,7 @@ export function StyleChips({ rule }: { readonly rule: RowConditionRow }) {
   // rather than guessed from the properties it models.
   const modelled = [
     rule.textAlign,
+    rule.verticalAlign,
     rule.fontWeight,
     rule.fontStyle,
     rule.fontSize,

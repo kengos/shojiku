@@ -109,6 +109,7 @@ fn engine_info_reports_version_capabilities_and_locales() {
     assert!(info
         .capabilities
         .contains(&"table.header.style.verticalAlign"));
+    assert!(info.capabilities.contains(&"table.style.verticalAlign"));
     assert!(info.builtin_locales.contains(&"ja-JP"));
 }
 

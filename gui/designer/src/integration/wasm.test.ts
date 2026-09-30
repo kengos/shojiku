@@ -68,6 +68,7 @@ import { rulePresetOps } from '../panel/rulePresets';
 import { readShapeStyle, strokeWidthOp } from '../panel/shapeStyle';
 import { styleNamesOp } from '../panel/styleNamesOps';
 import { deleteStyleOps, renameStyleOps } from '../panel/styleRefOps';
+import { TABLE_BODY_VALIGN_CAPABILITY, TABLE_VALIGN_CAPABILITY } from '../panel/TableBandFields';
 import { readTableSettings } from '../panel/tableSettingsModel';
 import {
   addHeaderGroupOp,
@@ -104,7 +105,7 @@ interface FullEngine extends WasmEngine {
 
 interface WasmModule {
   initSync(input: { module: BufferSource }): unknown;
-  Engine: new () => FullEngine;
+  Engine: { new (): FullEngine; capabilities(): string };
 }
 
 const fontFile = (packId: string, name: string) =>
@@ -3119,6 +3120,20 @@ describe('table row and page settings against the real engine (receipt-us)', () 
   });
 });
 
+// The two keys the table panel gates its vertical-alignment controls on are the
+// ENGINE's spellings, read from the real capability list: a Designer constant
+// that drifted from the engine's key would withhold the control on every
+// engine, with each side's own suite still green.
+describe('table vertical-alignment gates against the real engine', () => {
+  it('finds both keys the panel gates on in the engine’s capability list', () => {
+    const { capabilities } = JSON.parse(wasmModule.Engine.capabilities()) as {
+      capabilities: string[];
+    };
+    expect(capabilities).toContain(TABLE_VALIGN_CAPABILITY);
+    expect(capabilities).toContain(TABLE_BODY_VALIGN_CAPABILITY);
+  });
+});
+
 // The table's STYLE wire, authored through the panel's own op builders — band
 // named styles, the even rows' list and stripe colour, a header group's own
 // style, the band controls past the original four, a rule preset and a rule's
@@ -3160,6 +3175,8 @@ describe('table style edits against the real engine (receipt-us)', () => {
       { op: 'setScalar', path: table, keys: ['style', 'color'], value: '#333333' },
       { op: 'setScalar', path: group, keys: ['style', 'backgroundColor'], value: '#dbe7ff' },
       { op: 'setScalar', path: group, keys: ['style', 'verticalAlign'], value: 'bottom' },
+      { op: 'setScalar', path: table, keys: ['row', 'style', 'verticalAlign'], value: 'bottom' },
+      { op: 'setScalar', path: table, keys: ['style', 'verticalAlign'], value: 'top' },
       styleNamesOp(group, ['banner']),
     ];
     expect(editor.applyAll(style).ok).toBe(true);
@@ -3171,6 +3188,7 @@ describe('table style edits against the real engine (receipt-us)', () => {
       setRuleEqualsOp(table, entries(), 0, 'false', 'boolean') as Op,
       ...rulePresetOps(rule, editor.read(rule), 'red'),
       styleNamesOp(rule, ['banner']),
+      { op: 'setScalar', path: rule, keys: ['style', 'verticalAlign'], value: 'middle' },
     ];
     expect(editor.applyAll(ruleOps).ok).toBe(true);
     // The boolean literal, not the text: the engine's predicate is type-strict.

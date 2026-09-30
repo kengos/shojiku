@@ -17,6 +17,10 @@
 // because the row band PAINTS beneath it — paint order, not a cascade, and the
 // panel must not report it as one.
 //
+// `verticalAlign` is the other exception, in the opposite direction: it is not
+// inherited anywhere else, yet a table cell falls back through the table's own
+// layers for it (`tableValignIn` below).
+//
 // The row-condition RULE is the exception, and this module does not yet express
 // it: `apply_row_conditions` overlays a matching rule onto the already-resolved
 // row `ComputedStyle` rather than starting from `base`
@@ -29,7 +33,7 @@
 // supplies a colour. Filed rather than bodged.
 
 import type { ReadFn } from '@shojiku/designer-core';
-import { type CascadeContext, cascadeContext, record } from '../toolbar/cascade';
+import { type CascadeContext, cascadeContext, levelValue, record } from '../toolbar/cascade';
 import { type EffectiveValue, effectiveValueIn } from '../toolbar/effective';
 import { BOLD_VALUE } from '../toolbar/model';
 
@@ -78,6 +82,32 @@ export function readBandCascades(
  * the band (see the header note); the panel does not show that yet. */
 export function ruleContext(tableCtx: CascadeContext, rule: unknown): CascadeContext {
   return bandContext(bandContext(tableCtx, tableCtx.item.row), rule);
+}
+
+/** A table layer's `verticalAlign` as the engine resolves it for a cell: the
+ * layer's own `style`, then its `styleNames`, then — unlike every other
+ * non-inherited key — each table layer below it out to and including the TABLE
+ * item (`cell_valign` in `engine/layout/src/engine/table/style.rs`): a column
+ * over the body band and the table, a band, a rule over the body band, or a
+ * header group over the table. The walk stops at the table, because a container
+ * the table sits in hands its cells nothing; the table's own context has no
+ * table layer below it and so walks nothing. The engine's `middle` is left to
+ * the caller, as the control's fallback. */
+export function tableValignIn(ctx: CascadeContext): EffectiveValue {
+  const eff = effectiveValueIn(ctx, 'verticalAlign');
+  if (eff.cascade !== '') {
+    return eff;
+  }
+  const end = ctx.ancestors.findIndex((layer) => layer.type === 'table');
+  for (const layer of ctx.ancestors.slice(0, end + 1)) {
+    const value = levelValue(layer, ctx.registry, 'verticalAlign');
+    if (value !== '') {
+      return eff.own === ''
+        ? { value, cascade: value, own: '', origin: 'inherited', styleName: '' }
+        : { ...eff, cascade: value };
+    }
+  }
+  return eff;
 }
 
 /** The header band's fill as an effective value: whatever the band RESOLVES to

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readRawEntries, readRowConditions, valueFormFor } from './rowConditionsModel';
+import { openedRule, readRawEntries, readRowConditions, valueFormFor } from './rowConditionsModel';
 
 const TABLE = 'sections.body.items[0]';
 
@@ -47,6 +47,7 @@ describe('readRowConditions', () => {
         hasEquals: true,
         boolEquals: false,
         textAlign: 'center',
+        verticalAlign: '',
         fontWeight: 'bold',
         backgroundColor: '#dbe7ff',
         color: '#222222',
@@ -131,5 +132,14 @@ describe('valueFormFor', () => {
     ]);
     expect(row.styleKeyCount).toBe(3);
     expect(row.textAlign).toBe('center');
+  });
+});
+
+describe('openedRule', () => {
+  it('names the open rule, and none once the index is gone or unset', () => {
+    expect(openedRule(['a', 'b'], 1)).toEqual({ rule: 'b', index: 1 });
+    // An undo that took the open rule away shows the list again.
+    expect(openedRule(['a'], 1)).toBeNull();
+    expect(openedRule(['a'], null)).toBeNull();
   });
 });

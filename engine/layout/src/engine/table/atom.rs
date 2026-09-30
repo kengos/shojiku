@@ -57,6 +57,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             geom: self.row_geom(table, &region),
             grid: self.grid_border(table),
             x: region.x,
+            valign: self.valign_of(&table.style_names, &table.style),
         };
 
         // The table's own style cascades into header + cells, like

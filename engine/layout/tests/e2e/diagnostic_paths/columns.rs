@@ -194,7 +194,7 @@ fn a_negative_column_width_names_the_column_that_authored_it() {
 
 #[test]
 fn a_header_valign_survives_an_over_cap_style_name_list() {
-    // `label_valign` folds the named-style layers under the same
+    // `valign_of` folds the named-style layers under the same
     // `MAX_STYLE_NAMES` take as the rest of the cascade: an over-cap list
     // resolves (only the first 16 count) rather than panicking or hanging.
     let names: String = (0..40).map(|i| format!("s{i}, ")).collect();

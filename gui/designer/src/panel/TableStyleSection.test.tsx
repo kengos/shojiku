@@ -538,10 +538,15 @@ describe('TableStyleSection — the stripe colour and the bands’ named styles'
     });
   });
 
-  it('gives the header band vertical alignment and the body band none', () => {
+  it('gates each band’s vertical alignment on its own engine key', () => {
     section(TABLE);
     openDetail();
-    // Only the header section carries it: a body cell takes its column's alone.
+    // Both bands carry it when the engine declares both keys.
+    expect(screen.getAllByRole('group', { name: 'Vertical alignment' })).toHaveLength(2);
+    cleanup();
+    // The header band's key alone: a body band's value would change nothing.
+    section(TABLE, ['table.style', 'table.header.style.verticalAlign']);
+    openDetail();
     expect(screen.getAllByRole('group', { name: 'Vertical alignment' })).toHaveLength(1);
     cleanup();
     section(TABLE, ['table.style']);
