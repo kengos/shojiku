@@ -5,7 +5,7 @@
 use shojiku_core::{TextOrientation, TextSpacingTrim};
 
 use super::super::rich::SpanRun;
-use super::super::vcol::vertical_decoration_spec;
+use super::super::vcol::vertical_decoration_specs;
 use crate::font::{down_advance_over, RunOptions};
 use crate::tree::TextRun;
 use crate::wrap::WrappedLine;
@@ -25,7 +25,7 @@ pub(super) struct PlacedCol {
 /// the `trim_start` column head). A hung trailing comma is kept in the
 /// inked extent but excluded from the alignment basis, mirroring the
 /// horizontal rule; per-run `textDecoration` becomes a side band
-/// ([`vertical_decoration_spec`]).
+/// ([`vertical_decoration_specs`]).
 pub(super) fn place_col(
     spans: &[SpanRun<'_>],
     col: &WrappedLine,
@@ -57,7 +57,7 @@ pub(super) fn place_col(
             color: s.color,
             synthetic_bold: s.synthetic_bold,
             synthetic_italic: false,
-            decoration: vertical_decoration_spec(
+            decorations: vertical_decoration_specs(
                 s.chain.primary.face,
                 s.decoration_kind,
                 s.size,

@@ -15,7 +15,7 @@ fn underline_bands_sit_right_of_the_em_cell() {
     );
     assert_eq!(count_code(&diags, "vertical_style_ignored"), 0);
     let block = text_blocks(&doc.pages[0])[0];
-    let d = block.decoration.expect("side band");
+    let d = block.decorations.first().copied().expect("side band");
     // col_w 10 (axis at 5) + half the 10pt em = the band starts at the em
     // cell's right edge.
     assert!((d.offset - 10.0).abs() < 1e-9, "{d:?}");
@@ -29,7 +29,7 @@ fn line_through_rides_the_column_axis() {
         json!({}),
     );
     let block = text_blocks(&doc.pages[0])[0];
-    let d = block.decoration.expect("side band");
+    let d = block.decorations.first().copied().expect("side band");
     // Band center = offset + thickness/2 = the column axis (col_w / 2).
     assert!((d.offset + d.thickness / 2.0 - 5.0).abs() < 1e-9, "{d:?}");
 }
@@ -55,8 +55,44 @@ sections:
     );
     assert_eq!(count_code(&diags, "vertical_style_ignored"), 0);
     let block = text_blocks(&doc.pages[0])[0];
-    assert!(block.decoration.is_none(), "rich decoration is per run");
+    assert!(block.decorations.is_empty(), "rich decoration is per run");
     let runs = &block.lines[0].runs;
-    assert!(runs[0].decoration.is_some());
-    assert!(runs[1].decoration.is_none());
+    assert!(!runs[0].decorations.is_empty());
+    assert!(runs[1].decorations.is_empty());
+}
+
+#[test]
+fn both_lines_draw_two_side_bands_on_a_block_and_a_run() {
+    let (doc, _d) = run(
+        &tmpl(
+            "あいう",
+            "w: 200, h: 100",
+            ", textDecoration: underline line_through",
+        ),
+        json!({}),
+    );
+    let block = text_blocks(&doc.pages[0])[0];
+    let [under, through] = block.decorations[..] else {
+        panic!("two bands, got {:?}", block.decorations);
+    };
+    assert!((under.offset - 10.0).abs() < 1e-9, "{under:?}");
+    assert!((through.offset + through.thickness / 2.0 - 5.0).abs() < 1e-9);
+    let (doc, _d) = run(
+        r#"
+page: { margin: 0 }
+sections:
+  body:
+    type: flow
+    box: { x: 0, y: 0, w: 300, h: 300 }
+    items:
+      - type: text
+        box: { w: 200, h: 100 }
+        style: { fontFamily: biz-ud-gothic, fontSize: 10, lineHeight: 1.0, writingMode: vertical_rl }
+        spans:
+          - { text: "あい", style: { textDecoration: underline line_through } }
+"#,
+        json!({}),
+    );
+    let block = text_blocks(&doc.pages[0])[0];
+    assert_eq!(block.lines[0].runs[0].decorations.len(), 2);
 }

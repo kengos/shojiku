@@ -1110,10 +1110,10 @@
     - keys: ["textDecoration"]
       cells:
         "Property": "`textDecoration`"
-        "Type / values": "`none` | `underline` | `line_through`"
+        "Type / values": "`none` | `underline` | `line_through` | `underline line_through` (either order)"
         "Engine default": "`none`"
         "Inherited": "no"
-        "Description": "Decoration line on text (also `list` entries and table cells via the column style). Position/thickness come from the font's own metrics (post/OS2 tables, conventional fallback), drawn in the text color, sized to each line's measured width; follows `shrink` (computed at the final size) and pagination. On a vertical block it draws a SIDE band per column — underline right of the em cell (the JLREQ side-line convention), line-through on the column axis ([vertical_text.md](vertical_text.md)). Not inherited (matches CSS; decoration *propagation* is not modeled) — set it on the text item itself."
+        "Description": "Decoration lines on text (also `list` entries and table cells via the column style); the two-token value draws both lines (CSS `text-decoration-line: underline line-through`). Position/thickness come from the font's own metrics (post/OS2 tables, conventional fallback), drawn in the text color, sized to each line's measured width; follows `shrink` (computed at the final size) and pagination. On a vertical block it draws a SIDE band per column — underline right of the em cell (the JLREQ side-line convention), line-through on the column axis ([vertical_text.md](vertical_text.md)). Not inherited (matches CSS; decoration *propagation* is not modeled) — set it on the text item itself."
     - keys: ["opacity"]
       cells:
         "Property": "`opacity`"

@@ -31,7 +31,7 @@ export const ITALIC_VALUE = 'italic';
 
 /** The types whose toolbar is the TEXT cluster (font, size, B, I, text colour,
  * alignment) rather than a fill. */
-const TYPOGRAPHY_TYPES: ReadonlySet<string> = new Set(['text', 'table']);
+const TYPOGRAPHY_TYPES: ReadonlySet<string> = new Set(['text', 'page_number', 'list', 'table']);
 
 /** The style key a type's color control writes: text items and tables color
  * their glyphs (`color`, which a table's cells inherit), the other boxed items
@@ -63,8 +63,9 @@ export interface ToolbarModel {
 }
 
 /** Derive the toolbar model from an item view + the effective resolution.
- * Mirrors the panel's styled-type set (`BORDERABLE_TYPES`): `text` gets
- * typography + text color, and so does a `table` — its own style's text
+ * Mirrors the panel's styled-type set (`BORDERABLE_TYPES`): the three text
+ * surfaces (`text`, `page_number`, `list`) get typography + text color, and so
+ * does a `table` — its own style's text
  * properties are what every cell inherits (the panel's 「文字」 section writes the
  * same keys), and a table's FILL is never painted, so offering one would author
  * a key that does nothing. The other boxed types (`rect`/`container`/`image`/

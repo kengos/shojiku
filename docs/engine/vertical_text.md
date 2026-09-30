@@ -125,8 +125,9 @@ never ends one.
 - **`textDecoration`** draws a **side band** per column (per run for
   `spans`): `underline` just right of the em cell — the JLREQ side-line
   convention; CSS leaves `text-underline-position: auto` UA-defined in
-  vertical modes — and `line_through` on the column axis. Thickness
-  comes from the same font tables as the horizontal line.
+  vertical modes — and `line_through` on the column axis;
+  `underline line_through` draws both bands. Thickness comes from the
+  same font tables as the horizontal line.
 - **`textSpacingTrim`** (half-width punctuation) trims fullwidth punctuation cells to
   half-em down the column: `normal` between two adjacent fullwidth
   punctuation cells (a closing form keeps its ink at the cell top, an

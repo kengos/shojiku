@@ -640,10 +640,6 @@ export const hi: LanguageCatalog = {
     'panel.frame.every.columnCell': 'हर पंक्ति में इस कॉलम का सेल इस फ़्रेम का उपयोग करता है।',
     'panel.frame.columnNote':
       'सेलों के बीच की रेखाएँ तालिका पर सेट होती हैं; यहाँ का बॉर्डर इसके अलावा इस सेल के चारों ओर बनता है। तालिका की सेल पैडिंग इस सेल पर लागू नहीं होती — नीचे पैडिंग का उपयोग करें।',
-    'panel.frame.padding': 'पैडिंग',
-    'panel.frame.padding.perSide': 'हर तरफ़ अलग है। यहाँ लिखी संख्या सभी तरफ़ लागू होगी।',
-    'panel.frame.padding.other':
-      'ऐसे रूप में सेट है जिसे यह फ़ील्ड नहीं दिखा सकता। यहाँ लिखी संख्या इसे बदल देगी।',
     'panel.frame.selectOwner.cell': 'ग्रिड चुनें',
     'panel.frame.selectOwner.card': 'कार्ड चुनें',
     'panel.frame.selectOwner.columnCell': 'कॉलम चुनें',
@@ -670,6 +666,32 @@ export const hi: LanguageCatalog = {
     'panel.field.lineHeight': 'पंक्ति ऊँचाई',
     'panel.field.color': 'रंग',
     'panel.field.backgroundColor': 'पृष्ठभूमि',
+    'panel.field.letterSpacing': 'अक्षर अंतर',
+    'panel.field.letterSpacing.units': 'mm, em भी; % नहीं',
+    'panel.field.textOverflow': 'टेक्स्ट ओवरफ़्लो',
+    'panel.field.overflow': 'सामग्री ओवरफ़्लो',
+    'panel.field.opacity': 'अपारदर्शिता',
+    'panel.itemSection.text.title': 'टेक्स्ट',
+    'panel.itemSection.text.inheritHelp':
+      'कंटेनर अपना कोई टेक्स्ट नहीं दिखाता। इसके अंदर रखे आइटम, जब तक वे अपना मान न दें, इन सेटिंग का उपयोग करते हैं।',
+    'panel.itemSection.text.charGridHelp':
+      'खानों में लिखे अक्षरों पर लागू होता है। आकार खाली छोड़ें तो वह खाने के आकार के अनुसार होगा।',
+    'panel.itemSection.overflow.title': 'ओवरफ़्लो',
+    'panel.itemSection.overflow.textOverflowHelp':
+      'केवल तय ऊँचाई पर लागू होता है। स्वचालित ऊँचाई पर बॉक्स टेक्स्ट के अनुसार बढ़ जाता है।',
+    'panel.itemSection.overflow.overflowHelp':
+      'कंटेनर से बाहर निकलने वाले आइटम उसके किनारे पर काटे जाएँ या नहीं। कंटेनर की अपनी भराई और बॉर्डर दोनों स्थितियों में बनते हैं।',
+    'panel.itemSection.fill.title': 'भराई और बॉर्डर',
+    'panel.itemSection.text.listHelp':
+      'हर प्रविष्टि एक पंक्ति में बनती है; लंबी प्रविष्टि "…" पर समाप्त होती है।',
+    'panel.itemSection.fill.fillOnly': 'भराई',
+    'panel.itemSection.fill.border': 'बॉर्डर चालू',
+    'panel.itemSection.fill.charGridHelp':
+      'भराई खानों के ग्रिड पर लगती है। ग्रिड रेखाएँ {tab} टैब के {section} में सेट होती हैं।',
+    'panel.itemSection.opacity.help':
+      '100% पूरी तरह अपारदर्शी, 0% अदृश्य। यह आइटम स्वयं जो बनाता है उस पर लागू होता है।',
+    'panel.itemSection.opacity.decorationHelp':
+      '100% पूरी तरह अपारदर्शी, 0% अदृश्य। केवल इस आइटम की अपनी भराई और बॉर्डर पर लागू होता है — अंदर की सामग्री पर नहीं।',
     'panel.box.x': 'X',
     'panel.box.y': 'Y',
     'panel.box.w': 'चौड़ाई',
@@ -733,6 +755,30 @@ export const hi: LanguageCatalog = {
     'stepper.relativeUnit': 'प्रतिशत या em वाले मान चरणबद्ध नहीं बदले जा सकते। उन्हें सीधे टाइप करें।',
     'stepper.unitHint': 'mm, cm, in भी',
     'panel.box.h': 'ऊँचाई',
+    'panel.box.minWidth': 'न्यूनतम चौड़ाई',
+    'panel.box.maxWidth': 'अधिकतम चौड़ाई',
+    'panel.box.minHeight': 'न्यूनतम ऊँचाई',
+    'panel.box.maxHeight': 'अधिकतम ऊँचाई',
+    'panel.box.limits.title': 'आकार सीमाएँ',
+    'panel.box.limits.help':
+      'सामग्री या स्थान के कारण आकार बदले तब भी इसे इन सीमाओं में रखता है। पृष्ठ संख्या और सूची पर ऊँचाई की सीमाएँ केवल तय ऊँचाई पर लागू होती हैं।',
+    'panel.edge.title': 'अंतराल',
+    'panel.edge.help':
+      'पैडिंग बॉर्डर और सामग्री के बीच की जगह है; मार्जिन बॉर्डर के बाहर की जगह। हर तरफ़ के फ़ील्ड में 5mm या 10% जैसी इकाई भी लिख सकते हैं; सभी तरफ़ वाला फ़ील्ड pt में है। मार्जिन ऋणात्मक हो सकता है।',
+    'panel.edge.tableHelp':
+      'फ़्लो बॉडी में रखी तालिका केवल बाएँ और दाएँ पैडिंग व मार्जिन का उपयोग करती है। बाएँ और दाएँ दोनों मार्जिन स्वचालित करने पर वह बीच में आ जाती है।',
+    'panel.edge.padding': 'पैडिंग',
+    'panel.edge.margin': 'मार्जिन',
+    'panel.edge.top': 'ऊपर',
+    'panel.edge.right': 'दाएँ',
+    'panel.edge.bottom': 'नीचे',
+    'panel.edge.left': 'बाएँ',
+    'panel.edge.side': '{edge}: {side}',
+    'panel.edge.all': '{edge} (सभी तरफ़)',
+    'panel.edge.perSide': 'हर तरफ़ अलग',
+    'panel.edge.auto': 'स्वचालित',
+    'panel.edge.autoNote': 'खाली जगह लेता है',
+    'panel.edge.autoIneffective': 'यहाँ "स्वचालित" का असर नहीं होता, इसलिए {sides} को 0 माना जाता है।',
     'panel.placement.label': 'स्थिति',
     'panel.placement.mode.auto': 'स्वतः',
     'panel.placement.mode.pinned': 'स्थिर',
@@ -828,6 +874,12 @@ export const hi: LanguageCatalog = {
     'style.value.textAlign.left': 'बाएँ',
     'style.value.textAlign.center': 'बीच में',
     'style.value.textAlign.right': 'दाएँ',
+    'style.value.textOverflow.visible': 'बाहर निकलने दें',
+    'style.value.textOverflow.shrink': 'फ़िट करने के लिए छोटा करें',
+    'style.value.textOverflow.ellipsis': '"…" से छोटा करें',
+    'style.value.textOverflow.clip': 'किनारे पर काटें',
+    'style.value.overflow.visible': 'बाहर निकलने दें',
+    'style.value.overflow.hidden': 'किनारे पर काटें',
     'styles.count': '{n, number} शैलियाँ',
     'docSettings.sections': 'सेटिंग अनुभाग',
     'docSettings.baseTextPreview': 'इसी टेक्स्ट में सजाया गया नमूना (अनुमानित, वास्तविक पृष्ठ नहीं)।',

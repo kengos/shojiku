@@ -23,7 +23,7 @@ import { StepperField } from './StepperField';
 import { STYLE_FIELDS } from './styleFieldSpecs';
 import { styleOptionLabel } from './styleLabels';
 
-/** The decoration tab's typography fields (text only) — the box-decoration fields
+/** The decoration tab's typography fields — the box-decoration fields
  * (`color` text glyph color, `backgroundColor` fill) are swatch pickers,
  * not free-text inputs. */
 const TEXT_STYLE_FIELDS = STYLE_FIELDS.filter(
@@ -87,6 +87,7 @@ export function TypographyFields({
   fontFamilies,
   ctx,
   onNavigate,
+  only,
 }: {
   readonly controller: EditorController;
   readonly path: string;
@@ -94,12 +95,17 @@ export function TypographyFields({
   readonly fontFamilies: readonly string[];
   readonly ctx: ReturnType<typeof cascadeContext>;
   readonly onNavigate?: (section: DefaultsSection) => void;
+  /** Restrict the rows to these keys (a `char_grid`'s glyph subset); absent =
+   * every typography row. */
+  readonly only?: readonly string[];
 }) {
   const { t } = useI18n();
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
+  const specs =
+    only === undefined ? TEXT_STYLE_FIELDS : TEXT_STYLE_FIELDS.filter((s) => only.includes(s.key));
   return (
     <>
-      {TEXT_STYLE_FIELDS.map((spec) => {
+      {specs.map((spec) => {
         const keys = ['style', spec.key];
         const value = style[spec.key];
         const effective = effectiveValueIn(ctx, spec.key);

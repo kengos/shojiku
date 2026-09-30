@@ -56,3 +56,27 @@ sections:
     let content = String::from_utf8_lossy(&bytes);
     assert!(!content.contains("/ca"), "unexpected alpha state");
 }
+
+#[test]
+fn renders_both_lines_on_a_block_and_a_run() {
+    let bytes = render_template(
+        r##"
+page: { margin: 0 }
+sections:
+  body:
+    type: flow
+    box: { x: 25, y: 100, w: 500, h: 600 }
+    items:
+      - type: text
+        text: 両方
+        box: { w: 200 }
+        style: { fontSize: 20, textDecoration: underline line_through }
+      - type: text
+        box: { w: 200 }
+        spans:
+          - { text: 両方, style: { textDecoration: line_through underline } }
+"##,
+        json!({}),
+    );
+    assert!(bytes.starts_with(b"%PDF-"));
+}

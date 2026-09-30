@@ -119,7 +119,7 @@ fn unknown_font_id_in_layout_is_an_error() {
                     color: (0.0, 0.0, 0.0),
                     synthetic_bold: false,
                     synthetic_italic: false,
-                    decoration: None,
+                    decorations: Vec::new(),
                     opacity: 1.0,
                     baseline: None,
                     link: None,

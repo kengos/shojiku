@@ -9,7 +9,7 @@
 use super::{pin, schema_of};
 use crate::{
     BorderColor, BorderStyle, BorderStyleKind, BorderWidth, EdgeValue, EnumEntry, EqualsValue,
-    PageMargin, PointSpec, TextCombineUpright, TrackSpec,
+    PageMargin, PointSpec, TextCombineUpright, TextDecoration, TrackSpec,
 };
 
 #[test]
@@ -33,6 +33,25 @@ fn text_combine_upright_takes_two_keywords_or_a_bounded_digits_map() {
         &["none", "all", "{ digits: 2 }", "{ digits: 4 }"],
         // Both ends of the range the schema states, plus a third keyword.
         &["{ digits: 1 }", "{ digits: 5 }", "upright"],
+    );
+}
+
+#[test]
+fn text_decoration_takes_a_keyword_or_both_lines_in_either_order() {
+    pin::<TextDecoration>(
+        &[
+            "none",
+            "underline",
+            "line_through",
+            "\"underline line_through\"",
+            "\"line_through underline\"",
+        ],
+        &[
+            "\"none underline\"",
+            "\"underline underline\"",
+            "overline",
+            "\"\"",
+        ],
     );
 }
 

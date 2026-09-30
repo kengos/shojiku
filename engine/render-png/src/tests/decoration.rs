@@ -85,3 +85,113 @@ sections:
         "translucent should blend toward white: {translucent:?}"
     );
 }
+
+#[test]
+fn both_lines_draw_two_separate_rows_of_ink() {
+    // "あ あ" again: a row whose dark run is decisively longer than anything
+    // inside a glyph can only be a decoration line (it crosses the gap), so
+    // counting the separate bands of such rows counts the lines drawn.
+    let template = |deco: &str| {
+        format!(
+            r#"
+page: {{ size: {{ w: 200, h: 100 }}, margin: 0 }}
+sections:
+  body:
+    type: absolute
+    items:
+      - type: text
+        text: "あ あ"
+        box: {{ x: 0, y: 0, w: 200 }}
+        style: {{ fontSize: 40, lineHeight: 1.2{deco} }}
+"#
+        )
+    };
+    let row_runs = |deco: &str| -> Vec<usize> {
+        let pages = render(&template(deco), json!({}));
+        let (w, h, px) = decode(&pages[0]);
+        (0..h)
+            .map(|y| {
+                let (mut run, mut best) = (0, 0);
+                for x in 0..w {
+                    run = if pixel(&px, w, x, y)[0] < 128 {
+                        run + 1
+                    } else {
+                        0
+                    };
+                    best = best.max(run);
+                }
+                best
+            })
+            .collect()
+    };
+    let glyph_run = row_runs("").into_iter().max().unwrap_or(0);
+    let bands = |deco: &str| -> usize {
+        let mut bands = 0;
+        let mut inside = false;
+        for run in row_runs(deco) {
+            let line = run > glyph_run + 20;
+            if line && !inside {
+                bands += 1;
+            }
+            inside = line;
+        }
+        bands
+    };
+    assert_eq!(bands(", textDecoration: underline"), 1);
+    assert_eq!(bands(", textDecoration: underline line_through"), 2);
+}
+
+#[test]
+fn both_lines_draw_two_side_bands_on_vertical_text() {
+    // The vertical twin of the band count above, transposed: "あ　あ" down one
+    // column leaves a glyph-free gap, so a COLUMN of pixels whose dark run is
+    // decisively longer than any inside a glyph can only be a side line.
+    let template = |deco: &str| {
+        format!(
+            r#"
+page: {{ size: {{ w: 100, h: 200 }}, margin: 0 }}
+sections:
+  body:
+    type: absolute
+    items:
+      - type: text
+        text: "あ　あ"
+        box: {{ x: 0, y: 0, w: 100, h: 200 }}
+        style: {{ fontSize: 40, lineHeight: 1.2, writingMode: vertical_rl{deco} }}
+"#
+        )
+    };
+    let col_runs = |deco: &str| -> Vec<usize> {
+        let pages = render(&template(deco), json!({}));
+        let (w, h, px) = decode(&pages[0]);
+        (0..w)
+            .map(|x| {
+                let (mut run, mut best) = (0, 0);
+                for y in 0..h {
+                    run = if pixel(&px, w, x, y)[0] < 128 {
+                        run + 1
+                    } else {
+                        0
+                    };
+                    best = best.max(run);
+                }
+                best
+            })
+            .collect()
+    };
+    let glyph_run = col_runs("").into_iter().max().unwrap_or(0);
+    let bands = |deco: &str| -> usize {
+        let mut bands = 0;
+        let mut inside = false;
+        for run in col_runs(deco) {
+            let line = run > glyph_run + 20;
+            if line && !inside {
+                bands += 1;
+            }
+            inside = line;
+        }
+        bands
+    };
+    assert_eq!(bands(", textDecoration: underline"), 1);
+    assert_eq!(bands(", textDecoration: underline line_through"), 2);
+}

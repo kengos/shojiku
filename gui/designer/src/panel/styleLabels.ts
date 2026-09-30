@@ -26,6 +26,21 @@ const OPTION_KEYS: Readonly<Record<string, Readonly<Record<string, string>>>> = 
     center: 'style.value.textAlign.center',
     right: 'style.value.textAlign.right',
   },
+  verticalAlign: {
+    top: 'style.value.verticalAlign.top',
+    middle: 'style.value.verticalAlign.middle',
+    bottom: 'style.value.verticalAlign.bottom',
+  },
+  textOverflow: {
+    visible: 'style.value.textOverflow.visible',
+    shrink: 'style.value.textOverflow.shrink',
+    ellipsis: 'style.value.textOverflow.ellipsis',
+    clip: 'style.value.textOverflow.clip',
+  },
+  overflow: {
+    visible: 'style.value.overflow.visible',
+    hidden: 'style.value.overflow.hidden',
+  },
 };
 
 /** A translate function of the shape `useI18n().t`. */

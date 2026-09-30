@@ -70,12 +70,32 @@ describe('RunFormatBar', () => {
     expect(resultOf(onMark, { ...NO_MARKS, italic: true }).italic).toBe(false);
   });
 
-  it('REPLACES the decoration rather than adding a second line', () => {
-    // One wire key, three values — so underline over a struck selection cannot
-    // mean "both".
-    const onMark = show({ ...NO_MARKS, decoration: 'line_through' });
+  it('ADDS underline beside a strike, and shows both pressed', () => {
+    const struck = { ...NO_MARKS, decoration: 'line_through' as const };
+    const onMark = show(struck);
     fireEvent.click(screen.getByRole('button', { name: 'Underline' }));
-    expect(resultOf(onMark).decoration).toBe('underline');
+    expect(resultOf(onMark, struck).decoration).toBe('underline line_through');
+  });
+
+  it('REPLACES the strike with underline when the engine takes one line at a time', () => {
+    const struck = { ...NO_MARKS, decoration: 'line_through' as const };
+    const onMark = vi.fn();
+    render(
+      <I18nProvider locale="en">
+        <RunFormatBar marks={struck} onMark={onMark} combined={false} />
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Underline' }));
+    expect(resultOf(onMark, struck).decoration).toBe('underline');
+    fireEvent.click(screen.getByRole('button', { name: 'Strikethrough' }));
+    expect(onMark.mock.calls[1][0](struck).decoration).toBe('none');
+  });
+
+  it('presses both buttons over a fragment carrying both lines', () => {
+    show({ ...NO_MARKS, decoration: 'underline line_through' });
+    for (const name of ['Underline', 'Strikethrough']) {
+      expect(screen.getByRole('button', { name }).getAttribute('aria-pressed')).toBe('true');
+    }
   });
 
   it('clears the decoration on a second press of the same one', () => {

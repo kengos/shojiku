@@ -33,7 +33,7 @@ pub(in crate::engine::text) struct SpanRun<'a> {
     pub(in crate::engine::text) synthetic_italic: bool,
     pub(in crate::engine::text) decoration_kind: TextDecoration,
     /// Filled once the block baseline is known (see `resolve::span_grid`).
-    pub(in crate::engine::text) decoration: Option<DecorationSpec>,
+    pub(in crate::engine::text) decorations: Vec<DecorationSpec>,
     /// Resolved hyperlink for this span's runs: the span's own
     /// `link`, else the block's (see `resolve::resolve_spans`).
     pub(in crate::engine::text) link: Option<String>,
@@ -158,7 +158,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 && !grid.block_chain.primary.real_italic,
             // Rich decoration is per run; the block-level field would
             // only reach empty lines' implicit runs (which draw nothing).
-            decoration: None,
+            decorations: Vec::new(),
             opacity: self.sane_opacity(computed.opacity),
             baseline: Some(grid.baseline),
             // Rich links are per run (span override or block fallback);

@@ -15,6 +15,51 @@ platform binaries.
 
 ### Added
 
+- **Text and box styling that could only be written by hand can now be set in
+  the Designer.** Every item's Style tab is now folded into sections — Text,
+  Overflow, Fill and border (a line's or a form mark's own stroke), Opacity and
+  Styles — each saying what it is set to while closed, and it gained the
+  settings the engine already had:
+
+  - **Letter spacing**, **underline** and **strikethrough** (as two
+    checkboxes, both at once allowed) and **vertical alignment** for text, and
+    letter spacing and the two lines for a page number and a list. A table's
+    **Text (whole table)** section gains letter spacing too, which every cell
+    inherits.
+  - **What text does when it does not fit** a fixed-height box — run past it,
+    shrink to fit, end with "…" or be cut off at the edge — and, for a
+    container, whether items sticking out of it are cut off.
+  - **Opacity**, as a percentage, on every item that has one. On a QR code and
+    a container it fades only the item's own fill and border.
+
+  A **page number** and a **list** now have a Style tab with the font controls,
+  fill and border, and the format toolbar treats them as text. A **container**
+  gets the font controls too; they are not drawn by the container itself but
+  used by every item inside it that sets no value of its own. **Manuscript
+  paper** gets a Style tab for its characters' colour, font, weight and size,
+  its fill and its opacity; its named styles moved there from the Layout tab.
+
+  The Layout tab gains **Spacing** and **Size limits** sections. Padding and
+  margin can be set for all sides at once or side by side, each side taking a
+  unit (5mm, 10%); a margin may be negative, and where the page flow or a
+  container shares out free space a margin side can be **Auto** — which is how
+  a fixed-width item is centred. A table in the page flow uses only its left
+  and right spacing, so only those two are offered. Minimum and maximum width
+  and height keep an item within bounds. A grid cell, a card and a column cell
+  get side-by-side padding, overflow and opacity on their frame form as well.
+  A control is offered only on the items where the engine does something with
+  it.
+
+- **`textDecoration` can draw an underline and a line-through together.**
+  Write both lines in one value, `textDecoration: underline line_through` (in
+  either order), the way CSS `text-decoration-line` takes two values; a span
+  can carry the pair too, and vertical text draws both side lines. The single
+  keywords are unchanged. In the Designer the U and S buttons of the inline
+  text bar are now independent, so pressing U over struck-through text adds
+  the underline instead of replacing the strike. An engine that supports it
+  reports the capability `style.textDecoration.combined`; older engines reject
+  the two-word value.
+
 - **A table's look can now be finished in the Designer.** Every styled part of a
   table — the header row, the body rows, a column, a conditional-formatting rule
   and now a header group — has the same format controls, in the order Google's

@@ -35,6 +35,9 @@ export interface SpansFlowEditorProps {
   readonly ariaLabel: string;
   readonly chips?: ChipContext;
   readonly className?: string;
+  /** The engine takes both decoration lines at once; absent = the bundled
+   * engine, which does. */
+  readonly combinedDecoration?: boolean;
 }
 
 export function SpansFlowEditor({
@@ -48,6 +51,7 @@ export function SpansFlowEditor({
   // the next author. The run styling is carried by the RUN elements' own
   // classes (`runNodes`), not by the surface.
   className = 'sj-text-editor',
+  combinedDecoration = true,
 }: SpansFlowEditorProps) {
   const [editorEl, setEditorEl] = useState<HTMLDivElement | null>(null);
   const cancelled = useRef(false);
@@ -132,7 +136,7 @@ export function SpansFlowEditor({
       onKeyUp={refresh}
       onMouseUp={refresh}
     >
-      <RunFormatBar marks={marks} onMark={mark}>
+      <RunFormatBar marks={marks} onMark={mark} combined={combinedDecoration}>
         {/* The insert trigger, on the bar beside the marks. A bound value is
             authored as a `{key}` CHIP inside a fragment's text, never as a new
             `data:` fragment (the user's decision) — so the affordance belongs
@@ -162,7 +166,9 @@ export function SpansFlowEditor({
         // ⌘B / ⌘I / ⌘U reach the SAME mark the bar applies, through the one
         // keydown rule both surfaces share — so the shortcut and the button
         // cannot come to mean different things.
-        format={(shortcut) => mark((current) => applyShortcut(shortcut, current, marks))}
+        format={(shortcut) =>
+          mark((current) => applyShortcut(shortcut, current, marks, combinedDecoration))
+        }
         // A `{key}` inside a fragment's TEXT is still a chip, and the same
         // click/detach bookkeeping the plain surface does applies here: the
         // node the re-pick menu names can leave the document under us.

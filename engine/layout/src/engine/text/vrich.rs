@@ -192,7 +192,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             synthetic_italic: false,
             // Rich decoration is per run; the block-level field would
             // double-draw.
-            decoration: None,
+            decorations: Vec::new(),
             opacity: self.sane_opacity(computed.opacity),
             baseline: None,
             link: None,

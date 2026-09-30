@@ -119,7 +119,8 @@ Style.overflow: >-
   box. Inert on items that are not container-like — text uses `textOverflow`
   instead. Not inherited; defaults to `visible`.
 Style.textDecoration: >-
-  Mirrors CSS `text-decoration-line`, as a single-keyword subset. Position and
+  Mirrors CSS `text-decoration-line`: one keyword, or both lines at once as
+  `underline line_through` (either order). Position and
   thickness come from the font's own metrics, drawn in the text colour and
   sized to each measured line. Not inherited, matching CSS, since decoration
   PROPAGATION is not modelled — set it on the text item itself. Defaults to
@@ -192,8 +193,10 @@ TextCombineUpright: >-
   into one upright cell, and the map form `{ digits: n }` combines runs of up
   to n consecutive ASCII digits, with n from 2 to 4.
 TextDecoration: >-
-  A decoration line drawn on text. `none` draws nothing; `underline` draws
-  below the baseline; `line_through` draws across the glyphs. On a vertical
+  The decoration lines drawn on text. `none` draws nothing; `underline` draws
+  below the baseline; `line_through` draws across the glyphs; `underline
+  line_through` draws both, and so does the same pair written `line_through
+  underline`. On a vertical
   block an underline becomes the side line right of the em cell, following the
   JLREQ convention.
 TextOrientation: >-

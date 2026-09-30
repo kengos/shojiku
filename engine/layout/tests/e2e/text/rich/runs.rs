@@ -157,11 +157,15 @@ sections:
     );
     let block = text_blocks(&doc.pages[0])[0];
     // Rich decoration lives on the runs, not the block.
-    assert!(block.decoration.is_none());
+    assert!(block.decorations.is_empty());
     let line = &block.lines[0];
-    let deco = line.runs[0].decoration.expect("propagated underline");
+    let deco = line.runs[0]
+        .decorations
+        .first()
+        .copied()
+        .expect("propagated underline");
     assert!(deco.thickness > 0.0);
     // Underline sits below the shared baseline.
     assert!(deco.offset > block.baseline.unwrap());
-    assert!(line.runs[1].decoration.is_none());
+    assert!(line.runs[1].decorations.is_empty());
 }

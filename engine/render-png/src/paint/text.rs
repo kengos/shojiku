@@ -111,10 +111,11 @@ impl Painter<'_> {
                 pixmap.stroke_path(&path, &paint, stroke, transform, mask);
             }
         }
-        // `textDecoration` on a span run: one filled rect per run in its paint,
+        // `textDecoration` on a span run: one filled rect per line (underline,
+        // line-through, or both) per run in its paint,
         // drawn unskewed even under synthetic italic (matches the PDF
         // backend). Layout precomputed offset/thickness per line top.
-        if let Some(d) = run.decoration {
+        for d in run.decorations {
             if let Some(path) = rect_path(run.x, line_y + d.offset, run.width, d.thickness) {
                 pixmap.fill_path(&path, &paint, FillRule::Winding, self.transform, mask);
             }

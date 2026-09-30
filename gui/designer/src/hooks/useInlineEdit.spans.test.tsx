@@ -92,8 +92,12 @@ function caretIn(surface: HTMLElement, run: number, offset: number): void {
   sel?.addRange(range);
 }
 
-async function open(source: string, onChange = vi.fn()) {
-  draw(makeTransport(), { source, onChange });
+async function open(
+  source: string,
+  onChange = vi.fn(),
+  capabilities: readonly string[] | undefined = undefined,
+) {
+  draw(makeTransport(), { source, onChange, capabilities });
   await waitFor(() => screen.getByRole('button', { name: ITEM }));
   fireEvent.doubleClick(screen.getByRole('button', { name: ITEM }));
   return { onChange, surface: screen.getByLabelText('Edit text') };
@@ -104,6 +108,13 @@ describe('the inline editor over a spans item', () => {
     const { surface } = await open(SPANS);
     expect([...surface.children].map((el) => el.getAttribute('data-sj-run'))).toEqual(['0', '1']);
     // And the format bar came with it — the plain field has none.
+    expect(screen.getByRole('toolbar', { name: 'Text formatting' })).toBeTruthy();
+  });
+
+  it('opens against an engine that takes one decoration line at a time', async () => {
+    // The flag reaches the bar through the hook; the bar's own suite pins what
+    // an exclusive U/S does. Here the surface must still open with the bar.
+    await open(SPANS, vi.fn(), ['style.textDecoration']);
     expect(screen.getByRole('toolbar', { name: 'Text formatting' })).toBeTruthy();
   });
 

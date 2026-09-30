@@ -4,7 +4,8 @@
 // HERE through `effectiveStyles`.
 import type { ReadFn } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
-import { effectiveStyles } from './effective';
+import { cascadeContext } from './cascade';
+import { effectiveStyles, effectiveValueIn } from './effective';
 
 /** A read function over a flat path → materialized-value table. */
 function readOf(doc: Record<string, unknown>): ReadFn {
@@ -59,6 +60,20 @@ describe('effectiveStyles — layer resolution', () => {
     });
     const eff = effectiveStyles(read, path);
     expect(eff.textAlign).toMatchObject({ value: 'center', origin: 'inherited' });
+  });
+
+  it('inherits letter spacing too, though the defaults editor does not offer it', () => {
+    const path = 'sections.body.items[2].items[1]';
+    const read = readOf({
+      [path]: { type: 'text' },
+      'sections.body.items[2]': { type: 'container', style: { letterSpacing: 2 } },
+      defaults: { style: { letterSpacing: 1 } },
+    });
+    const ctx = cascadeContext(read, path);
+    expect(effectiveValueIn(ctx, 'letterSpacing')).toMatchObject({
+      value: '2',
+      origin: 'inherited',
+    });
   });
 
   it('prefers the INNER container over an outer one', () => {

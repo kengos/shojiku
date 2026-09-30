@@ -104,11 +104,12 @@ fn draw_run(
         surface.pop();
     }
     surface.set_stroke(None);
-    // `textDecoration` on a span run: one filled rect per run in its fill,
+    // `textDecoration` on a span run: one filled rect per line (underline,
+    // line-through, or both) per run in its fill,
     // drawn unskewed even under synthetic italic (matching how browsers
     // underline faux-italic text). Layout precomputed offset/thickness
     // relative to the line top.
-    if let Some(d) = run.decoration {
+    for d in run.decorations {
         if let Some(path) = crate::draw::rect_path(run.x, line_y + d.offset, run.width, d.thickness)
         {
             surface.draw_path(&path);

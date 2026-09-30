@@ -21,6 +21,7 @@ import { ParentContainerCard } from './ParentContainerCard';
 import { HelpfulHeading } from './panelHelpers';
 import { resolvePlacement } from './placementGeometry';
 import { placementFor } from './placementModel';
+import { SpacingSections } from './SpacingSections';
 
 /** The box steppers' fallback increment when the canvas grid is off. */
 const FALLBACK_STEP_PT = 1;
@@ -89,7 +90,6 @@ export function BoxSection(props: ItemPanelProps) {
         controller={controller}
         path={path}
         gridStep={gridStep}
-        styleNames={view.styleNames}
       />
     ) : null;
   // The keyboard-reachable wrap-in-container (the canvas/tree right-click's
@@ -106,6 +106,8 @@ export function BoxSection(props: ItemPanelProps) {
   // never reads `box.x`/`box.y` — so the two coordinate fields are withheld and
   // the anchor control says where it sits instead. Its SIZE is still its own.
   const noCoords = anchorHidesCoords(controller.read, view.type, path);
+  // Spacing and size bounds, as collapsible sections under the box fields.
+  const spacing = <SpacingSections {...props} placement={placement} step={step} />;
   const anchorField = <EllipseAnchorField {...props} />;
 
   // Plain items (sub-templates, `line`, section roots, hostile docs) keep the
@@ -129,6 +131,7 @@ export function BoxSection(props: ItemPanelProps) {
           />
         </section>
         {charGrid}
+        {spacing}
         {childLayout}
         {wrapAction}
       </div>
@@ -167,6 +170,7 @@ export function BoxSection(props: ItemPanelProps) {
         <BoxHint placement={placement} />
       </section>
       {charGrid}
+      {spacing}
       {childLayout}
       {wrapAction}
     </div>

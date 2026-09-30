@@ -164,8 +164,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
 
         // `textDecoration`, resolved like text_block does (same metric
         // source, same line-top-relative offset).
-        let decoration =
-            super::text::decoration_spec(resolved.primary.face, computed.text_decoration, size);
+        let decorations =
+            super::text::decoration_specs(resolved.primary.face, computed.text_decoration, size);
 
         let mut items = Vec::with_capacity(2);
         self.push_decoration(&mut items, &computed, rb.x, w, height);
@@ -183,7 +183,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             color: self.color_or_black(computed.color.as_deref()),
             synthetic_bold,
             synthetic_italic,
-            decoration,
+            decorations,
             opacity: self.sane_opacity(computed.opacity),
             baseline: None,
             // Lists have no `link:` wire (scope: text/image/span).

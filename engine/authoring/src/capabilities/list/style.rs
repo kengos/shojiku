@@ -273,4 +273,9 @@ pub(super) const KEYS: &[&str] = &[
     // expose no such query, so a consumer explains nothing rather than
     // guessing.
     "locale.facts",
+    // style.textDecoration takes both lines at once: `underline
+    // line_through` (either order), CSS `text-decoration-line` with two
+    // values; each backend draws both. Older engines parse-reject the
+    // two-token string.
+    "style.textDecoration.combined",
 ];

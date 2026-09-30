@@ -19,7 +19,7 @@ use shojiku_core::{FontWeight, ListItem, TextSpacingTrim};
 use shojiku_layout_box::ResolvedBox;
 
 use super::super::text::{
-    along_offset, clamp_column_down, column_extent, column_left, vertical_decoration_spec,
+    along_offset, clamp_column_down, column_extent, column_left, vertical_decoration_specs,
 };
 use super::super::{placed_box, with_vertical_margin, Atom, Ctx};
 use super::{EntryKeys, MAX_LIST_ENTRIES};
@@ -128,7 +128,7 @@ impl Ctx<'_, '_> {
             synthetic_italic: false,
             // `textDecoration` as a per-column side band, resolved like
             // the horizontal list resolves its per-line rect.
-            decoration: vertical_decoration_spec(
+            decorations: vertical_decoration_specs(
                 resolved.primary.face,
                 computed.text_decoration,
                 size,

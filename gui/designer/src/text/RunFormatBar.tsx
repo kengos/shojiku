@@ -18,7 +18,7 @@ import { FMT_BTN, ToggleButton } from '../toolbar/fmtChrome';
 import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
 import { Sep } from '../ui/Sep';
 import { setColor, toggleBold, toggleDecoration, toggleItalic, UNSELECTED_MARKS } from './runMarks';
-import type { RunMarks } from './spanRuns';
+import { hasLineThrough, hasUnderline, type RunMarks } from './spanRuns';
 
 /** The bar's own shell. It rides ON the item being edited rather than floating
  * over the selection: a bar that moved as the reader dragged would move the
@@ -37,9 +37,12 @@ export interface RunFormatBarProps {
    * authored as a `{key}` chip inside a fragment's text, never as a new `data:`
    * fragment (the user's decision), so it belongs on this bar beside the marks. */
   readonly children?: ReactNode;
+  /** The engine takes both decoration lines at once
+   * (`style.textDecoration.combined`); without it U and S are exclusive. */
+  readonly combined?: boolean;
 }
 
-export function RunFormatBar({ marks, onMark, children }: RunFormatBarProps) {
+export function RunFormatBar({ marks, onMark, children, combined = true }: RunFormatBarProps) {
   const { t } = useI18n();
   const common = marks ?? UNSELECTED_MARKS;
   const disabled = marks === null;
@@ -62,16 +65,20 @@ export function RunFormatBar({ marks, onMark, children }: RunFormatBarProps) {
       <ToggleButton
         label={t('flow.underline')}
         glyph={<span className="underline">U</span>}
-        pressed={common.decoration === 'underline'}
+        pressed={hasUnderline(common.decoration)}
         disabled={disabled}
-        onToggle={() => onMark((current) => toggleDecoration(current, common, 'underline'))}
+        onToggle={() =>
+          onMark((current) => toggleDecoration(current, common, 'underline', combined))
+        }
       />
       <ToggleButton
         label={t('flow.lineThrough')}
         glyph={<span className="line-through">S</span>}
-        pressed={common.decoration === 'line_through'}
+        pressed={hasLineThrough(common.decoration)}
         disabled={disabled}
-        onToggle={() => onMark((current) => toggleDecoration(current, common, 'line_through'))}
+        onToggle={() =>
+          onMark((current) => toggleDecoration(current, common, 'line_through', combined))
+        }
       />
       <Sep />
       <ColorSwatchPicker

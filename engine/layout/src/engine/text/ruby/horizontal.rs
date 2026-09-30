@@ -112,7 +112,7 @@ fn ruby_line_block(
         // Readings stay light for readability at small sizes.
         synthetic_bold: false,
         synthetic_italic: false,
-        decoration: None,
+        decorations: Vec::new(),
         opacity: block.opacity,
         baseline: None,
         link: None,

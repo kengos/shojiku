@@ -20,11 +20,11 @@ mod voverflow;
 mod vrich;
 
 pub(in crate::engine) use block::collect_missing;
-pub(super) use block::decoration_spec;
+pub(super) use block::decoration_specs;
 pub(in crate::engine) use chrome::{BlockGeom, SplitChrome};
 pub(super) use overflow::clamp_line;
 pub(in crate::engine) use vcol::{
-    along_offset, clamp_column_down, column_extent, column_left, vertical_decoration_spec,
+    along_offset, clamp_column_down, column_extent, column_left, vertical_decoration_specs,
 };
 
 use crate::style::ComputedStyle;

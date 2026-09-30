@@ -7,7 +7,7 @@ use shojiku_core::{FontStyle, FontWeight, Style, TextItem, MAX_SPANS, MAX_STYLE_
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::super::super::Ctx;
-use super::super::block::{collect_missing, decoration_spec_at};
+use super::super::block::{collect_missing, decoration_specs_at};
 use super::{Grid, SpanRun};
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -71,7 +71,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 synthetic_bold: sc.font_weight == FontWeight::Bold && !chain.primary.real_bold,
                 synthetic_italic: sc.font_style == FontStyle::Italic && !chain.primary.real_italic,
                 decoration_kind: sc.text_decoration,
-                decoration: None,
+                decorations: Vec::new(),
                 link,
                 // tate-chu-yoko rides the span cascade (block value inherited,
                 // span override honored) — active only on vertical blocks.
@@ -129,8 +129,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             .reduce(f64::max)
             .unwrap_or_else(|| block_chain.primary.face.ascent(block_size));
         for s in spans.iter_mut() {
-            s.decoration =
-                decoration_spec_at(s.chain.primary.face, s.decoration_kind, s.size, baseline);
+            s.decorations =
+                decoration_specs_at(s.chain.primary.face, s.decoration_kind, s.size, baseline);
         }
         Grid {
             block_chain,

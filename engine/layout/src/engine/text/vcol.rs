@@ -73,24 +73,28 @@ pub(in crate::engine) fn stack_shift(valign: VerticalAlign, content_w: f64, cols
 /// and line-through rides the column axis. Thickness comes from the same
 /// font tables as the horizontal spec. Shared by the plain block, rich
 /// runs, and the vertical list.
-pub(in crate::engine) fn vertical_decoration_spec(
+pub(in crate::engine) fn vertical_decoration_specs(
     face: &FontFace,
     kind: TextDecoration,
     size: f64,
     col_w: f64,
-) -> Option<DecorationSpec> {
-    let (offset, thickness) = match kind {
-        TextDecoration::None => return None,
-        TextDecoration::Underline => {
-            let (_, th) = face.underline_metrics(size);
-            (col_w / 2.0 + size / 2.0, th)
-        }
-        TextDecoration::LineThrough => {
-            let (_, th) = face.strikeout_metrics(size);
-            (col_w / 2.0 - th / 2.0, th)
-        }
-    };
-    Some(DecorationSpec { offset, thickness })
+) -> Vec<DecorationSpec> {
+    let mut specs = Vec::new();
+    if kind.underline() {
+        let (_, thickness) = face.underline_metrics(size);
+        specs.push(DecorationSpec {
+            offset: col_w / 2.0 + size / 2.0,
+            thickness,
+        });
+    }
+    if kind.line_through() {
+        let (_, thickness) = face.strikeout_metrics(size);
+        specs.push(DecorationSpec {
+            offset: col_w / 2.0 - thickness / 2.0,
+            thickness,
+        });
+    }
+    specs
 }
 
 /// Clamps one column to `max_down` pt: keeps the longest char prefix whose

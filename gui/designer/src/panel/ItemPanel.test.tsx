@@ -45,15 +45,20 @@ describe('applicableTabs', () => {
     expect(tabsOf({ type: 'qr_code' })).toContain('content');
   });
 
-  it('gives a char_grid 内容 + 配置, so an inserted sheet can be retyped and placed', () => {
-    // The insert menu creates one now, so this is the dead-end guard: no
-    // 装飾 tab, because a char_grid's `borderWidth` is the GRID RULING width
-    // rather than a border box, and the border cluster's per-side model would
-    // author a different property under the same spelling.
+  it('gives a char_grid all three tabs, so its glyphs can be styled too', () => {
+    // The insert menu creates one, so this is the dead-end guard. Its 装飾 tab
+    // carries the glyphs' text keys, the fill and the opacity — never the border
+    // cluster, because a char_grid's `borderWidth` is the GRID RULING width.
     expect(tabsOf({ type: 'char_grid', grid: { charsPerLine: 20, lines: 10 } })).toEqual([
       'content',
+      'style',
       'box',
     ]);
+  });
+
+  it('gives a page number and a list a 装飾 tab, since the engine draws their box', () => {
+    expect(tabsOf({ type: 'page_number' })).toEqual(['content', 'style', 'box']);
+    expect(tabsOf({ type: 'list', data: { key: 'rows' } })).toEqual(['content', 'style', 'box']);
   });
 
   it('gives the iterable kinds a 内容 tab, so their source can be rebound', () => {

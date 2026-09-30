@@ -1,11 +1,14 @@
-//! Schemas for the per-side border properties and `textCombineUpright`.
+//! Schemas for the per-side border properties, `textCombineUpright` and
+//! `textDecoration`.
 //!
 //! All three border properties share one hand-rolled map visitor
 //! (`style/border.rs`'s `visit_sides`): every side optional, unknown side
 //! keys rejected by name. [`super::per_side_map`] is that shape.
 
 use super::{per_side_map, sub};
-use crate::{BorderColor, BorderStyle, BorderStyleKind, BorderWidth, TextCombineUpright};
+use crate::{
+    BorderColor, BorderStyle, BorderStyleKind, BorderWidth, TextCombineUpright, TextDecoration,
+};
 use schemars::{json_schema, JsonSchema, Schema, SchemaGenerator};
 use std::borrow::Cow;
 
@@ -72,6 +75,27 @@ impl JsonSchema for TextCombineUpright {
                     "required": ["digits"],
                     "additionalProperties": false,
                 },
+            ],
+        })
+    }
+}
+
+/// `textDecoration`: one keyword, or both lines as one string in either
+/// order (`style/decoration.rs`). The parser also takes extra whitespace
+/// between the two tokens; the schema states the single-space spellings.
+impl JsonSchema for TextDecoration {
+    fn schema_name() -> Cow<'static, str> {
+        "TextDecoration".into()
+    }
+
+    fn json_schema(_generator: &mut SchemaGenerator) -> Schema {
+        json_schema!({
+            "enum": [
+                "none",
+                "underline",
+                "line_through",
+                "underline line_through",
+                "line_through underline",
             ],
         })
     }

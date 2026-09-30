@@ -56,8 +56,13 @@ export interface EffectiveValue {
 export type EffectiveStyles = Readonly<Record<ToolbarStyleKey, EffectiveValue>>;
 
 /** Inherited properties (the ancestor/defaults layers apply only to these —
- * among the toolbar's keys everything but `backgroundColor`). */
-const INHERITED_KEYS: ReadonlySet<string> = new Set(INHERITED_STYLE_FIELDS.map((f) => f.key));
+ * among the toolbar's keys everything but `backgroundColor`). `letterSpacing`
+ * inherits too (docs/engine/style.md) though the defaults editor does not offer
+ * it, so it is named here rather than through that editor's field list. */
+const INHERITED_KEYS: ReadonlySet<string> = new Set([
+  ...INHERITED_STYLE_FIELDS.map((f) => f.key),
+  'letterSpacing',
+]);
 
 /** One style key's cascade-effective value over a prepared context — THE mirror
  * of the engine cascade (docs/engine/style.md), shared by the format toolbar

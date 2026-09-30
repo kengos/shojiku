@@ -177,7 +177,7 @@ fn text_decoration_draws_a_side_band_per_column() {
     );
     assert!(diags.iter().all(|d| d.code != "vertical_style_ignored"));
     let block = text_blocks(&doc.pages[0])[0];
-    let d = block.decoration.expect("side band");
+    let d = block.decorations.first().copied().expect("side band");
     // Band left edge = col_w/2 (5) + em/2 (5), right of the em cell.
     assert!((d.offset - 10.0).abs() < 1e-9, "{d:?}");
 }

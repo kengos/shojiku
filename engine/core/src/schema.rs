@@ -3,14 +3,14 @@
 //!
 //! Every wire type in this crate carries
 //! `#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]`, which is
-//! correct exactly when serde's own derive is what parses it. Fourteen types
+//! correct exactly when serde's own derive is what parses it. Some types
 //! parse through a hand-rolled `impl Deserialize` instead, and for those the
 //! derive would describe the RUST shape while the parser accepts something
 //! else — `Length` is `enum { Pt, Physical, Percent, Em, Rem }` in Rust and
 //! `10` or `"10mm"` on the wire. A catalog that got those wrong would be
 //! wrong about precisely the keys authors get wrong.
 //!
-//! So they are written here, out of the wire files: fourteen impls in-file
+//! So they are written here, out of the wire files: these impls in-file
 //! would push `definitions/schema.rs`, `edges.rs` and `style/border.rs` past
 //! the 300-line budget, while one `cfg_attr` line per type does not.
 //!

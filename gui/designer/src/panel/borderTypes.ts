@@ -21,21 +21,24 @@ export const PATTERNED_BORDER_STYLES: readonly BorderStyleValue[] = ['dashed', '
 
 /** The item types whose own border/fill the editor decorates — every boxed item
  * the engine draws a border box for. The decoration tab's fill-and-border cluster and the
- * toolbar's border/fill controls both key off this set (`text` additionally
- * gets typography).
+ * toolbar's border/fill controls both key off this set (the three text surfaces
+ * additionally get typography — `TEXT_SURFACE_TYPES`).
  *
  * Three insertable types are excluded BECAUSE their stroke is not a border box,
  * and each has its own editor instead: `line`, whose stroke is its own
  * `width`/`color` shape (`LineStyleEditor`), and the two form marks
  * (`MARK_TYPES`), which stroke one closed path (`ShapeStyleEditor`).
  *
- * They are NOT the only insertable types outside this set — `page_number`,
- * `list` and `repeat_flow` are too, and they have no decoration tab at all,
- * which for `list` is a real gap (`engine/layout/src/engine/list.rs` calls
- * `push_decoration` on one, so the engine does draw its border box). Queued
- * separately; do not read this set's exclusions as one rule. */
+ * They are not the only types outside this set: `char_grid` reads its
+ * `borderWidth` as the grid RULING, a different property under the same
+ * spelling, and `repeat` / `repeat_flow` take no `style:` of their own (their
+ * look is their frame's). Do not read this set's exclusions as one rule. */
 export const BORDERABLE_TYPES: ReadonlySet<string> = new Set([
   'text',
+  // The two other text surfaces draw a border box too (`band.rs` for a page
+  // number, `list.rs` for a list), fill and border alike.
+  'page_number',
+  'list',
   'rect',
   'container',
   'table',

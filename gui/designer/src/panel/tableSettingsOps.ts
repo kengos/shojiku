@@ -7,8 +7,8 @@
 // value kind rather than invented: a row height is a length like a container
 // gap (`layoutOps.gapOp` — absolute units only, a magnitude cap), minus the
 // negative clamp, because a negative height is not "0" to the engine but "auto
-// with a warning"; the cell padding is a padding (`paddingModel` — a bare
-// non-negative numeral, since the wire takes a plain number in pt). Turning a
+// with a warning"; the cell padding is a padding (the all-sides rule of
+// `edgeModel` — a bare non-negative numeral, since the wire takes a plain number in pt). Turning a
 // setting back to its engine default REMOVES the key rather than spelling the
 // default out, the `hiddenHeaderToggleOp` precedent: an unset key already means
 // it, and the file returns to what it was before the setting was touched.

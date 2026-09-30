@@ -26,7 +26,11 @@ fn underline_sits_below_the_baseline_at_line_width() {
     let (doc, diags) = run(&one_text(", textDecoration: underline"), json!({}));
     assert!(!diags.has_errors());
     let block = text_blocks(&doc.pages[0])[0];
-    let d = block.decoration.expect("underline resolved");
+    let d = block
+        .decorations
+        .first()
+        .copied()
+        .expect("underline resolved");
     // The baseline sits `ascent` below the line top; the underline is
     // below it (post-table offset is negative y-up, so offset > ascent).
     let ascent = ja_store().face(None).ascent(20.0);
@@ -46,7 +50,11 @@ fn underline_sits_below_the_baseline_at_line_width() {
 fn line_through_crosses_above_the_baseline() {
     let (doc, _) = run(&one_text(", textDecoration: line_through"), json!({}));
     let block = text_blocks(&doc.pages[0])[0];
-    let d = block.decoration.expect("strikeout resolved");
+    let d = block
+        .decorations
+        .first()
+        .copied()
+        .expect("strikeout resolved");
     let ascent = ja_store().face(None).ascent(20.0);
     assert!(
         d.offset < ascent,
@@ -56,9 +64,9 @@ fn line_through_crosses_above_the_baseline() {
     );
     // `none` (and unset) resolve to no decoration.
     let (doc, _) = run(&one_text(", textDecoration: none"), json!({}));
-    assert!(text_blocks(&doc.pages[0])[0].decoration.is_none());
+    assert!(text_blocks(&doc.pages[0])[0].decorations.is_empty());
     let (doc, _) = run(&one_text(""), json!({}));
-    assert!(text_blocks(&doc.pages[0])[0].decoration.is_none());
+    assert!(text_blocks(&doc.pages[0])[0].decorations.is_empty());
 }
 
 #[test]
@@ -80,7 +88,11 @@ sections:
     let (doc, _) = run(template, json!({}));
     let block = text_blocks(&doc.pages[0])[0];
     assert!(block.font_size < 10.0, "shrunk: {}", block.font_size);
-    let d = block.decoration.expect("decoration survives shrink");
+    let d = block
+        .decorations
+        .first()
+        .copied()
+        .expect("decoration survives shrink");
     // At most ascent(size) + size below the top — i.e. proportional to
     // the shrunk size, not the authored 10pt.
     let ascent = ja_store().face(None).ascent(block.font_size);
@@ -111,7 +123,7 @@ sections:
     assert!(doc.pages.len() > 1, "should paginate");
     for page in &doc.pages {
         for block in text_blocks(page) {
-            assert!(block.decoration.is_some(), "fragment lost decoration");
+            assert!(!block.decorations.is_empty(), "fragment lost decoration");
             assert!(block.lines.iter().all(|l| l.width > 0.0));
         }
     }
@@ -133,7 +145,7 @@ sections:
 "#;
     let (doc, _) = run(template, json!({ "items": [{ "name": "みかん" }] }));
     let block = text_blocks(&doc.pages[0])[0];
-    assert!(block.decoration.is_some());
+    assert!(!block.decorations.is_empty());
     assert_eq!(block.opacity, 0.5);
     assert!(block.lines[0].width > 0.0);
 }
@@ -157,7 +169,7 @@ sections:
     let (doc, _) = run(template, json!({}));
     let block = text_blocks(&doc.pages[0])[0];
     // Non-inherited (CSS): the child text is undecorated and opaque.
-    assert!(block.decoration.is_none());
+    assert!(block.decorations.is_empty());
     assert_eq!(block.opacity, 1.0);
 }
 
@@ -263,8 +275,55 @@ sections:
     assert!(!diags.has_errors(), "{diags:?}");
     let decorated = text_blocks(&doc.pages[0])
         .iter()
-        .filter(|b| b.decoration.is_some())
+        .filter(|b| !b.decorations.is_empty())
         .count();
     // The body cell is decorated via the column style (the header is not).
     assert_eq!(decorated, 1);
+}
+
+#[test]
+fn both_lines_resolve_underline_first_then_line_through() {
+    let (doc, diags) = run(
+        &one_text(", textDecoration: underline line_through"),
+        json!({}),
+    );
+    assert!(!diags.has_errors());
+    let block = text_blocks(&doc.pages[0])[0];
+    let ascent = ja_store().face(None).ascent(20.0);
+    let [under, through] = block.decorations[..] else {
+        panic!("two lines, got {:?}", block.decorations);
+    };
+    assert!(under.offset > ascent, "{under:?}");
+    assert!(through.offset < ascent, "{through:?}");
+}
+
+#[test]
+fn both_lines_ride_a_rich_run_and_a_list_entry() {
+    let (doc, diags) = run(
+        r#"
+page: { margin: 0 }
+sections:
+  body:
+    type: absolute
+    items:
+      - type: text
+        box: { x: 0, y: 0, w: 200 }
+        style: { fontSize: 20 }
+        spans:
+          - { text: "あい", style: { textDecoration: line_through underline } }
+          - { text: "う" }
+      - type: list
+        data: { key: rows }
+        text: "{a}"
+        box: { x: 0, y: 100, w: 200 }
+        style: { fontSize: 12, textDecoration: underline line_through }
+"#,
+        json!({ "rows": [{ "a": "x" }] }),
+    );
+    assert!(!diags.has_errors());
+    let blocks = text_blocks(&doc.pages[0]);
+    let runs = &blocks[0].lines[0].runs;
+    assert_eq!(runs[0].decorations.len(), 2);
+    assert!(runs[1].decorations.is_empty());
+    assert_eq!(blocks[1].decorations.len(), 2);
 }

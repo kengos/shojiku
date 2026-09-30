@@ -16,7 +16,7 @@
 import { clip } from '../tree/nodeFields';
 import { isHexColor } from '../ui/chipContrast';
 import { buildEditorNodes, type ChipMeta } from './chipModel';
-import type { RunMarks, RunView } from './spanRuns';
+import { hasLineThrough, hasUnderline, type RunMarks, type RunView } from './spanRuns';
 
 /** Marks an element as one wire fragment, holding its wire index. The
  * serializer reads fragment structure ONLY from elements carrying it. */
@@ -30,15 +30,14 @@ export const BOUND_ATTR = 'data-sj-bound';
 export const RUN_CLASS = 'sj-run';
 export const BOUND_CLASS = 'sj-run-bound';
 
-/** Mark → class. The decoration's three states collapse to two classes plus
- * "no class", which is what keeps `none` from needing one.
+/** Mark → class. The decoration's lines are one class each, so `none` needs
+ * none and both lines are both classes.
  *
  * Deliberately a plain object rather than the `Map` `chipModel` prescribes, and
  * the difference is the KEY's provenance. That rule is about binding keys,
  * which come from a document and really can be `__proto__`; every key read here
- * is either a literal in this file or a `Decoration`, which `decorationOf`
- * narrows to one of three values before it can arrive. The type system is the
- * guard, and a `Map` would turn the two constant reads below into non-null
+ * is a literal in this file — the decoration's two lines are read by name. The
+ * type system is the guard, and a `Map` would turn the constant reads below into non-null
  * assertions for nothing. `runSerialize`'s own table IS a `Map` because it is
  * built by scanning a live `classList`. */
 const MARK_CLASSES: Readonly<Record<string, string>> = {
@@ -60,9 +59,11 @@ export function runClasses(marks: RunMarks, linked: boolean): readonly string[] 
   if (marks.italic) {
     out.push(MARK_CLASSES.italic);
   }
-  const decoration = MARK_CLASSES[marks.decoration];
-  if (decoration !== undefined) {
-    out.push(decoration);
+  if (hasUnderline(marks.decoration)) {
+    out.push(MARK_CLASSES.underline);
+  }
+  if (hasLineThrough(marks.decoration)) {
+    out.push(MARK_CLASSES.line_through);
   }
   if (linked) {
     out.push(MARK_CLASSES.linked);

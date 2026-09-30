@@ -19,7 +19,7 @@ fn a_vertical_block_with_an_unknown_font_is_an_error() {
         color: (0.0, 0.0, 0.0),
         synthetic_bold: false,
         synthetic_italic: false,
-        decoration: None,
+        decorations: Vec::new(),
         opacity: 1.0,
         baseline: None,
         link: None,

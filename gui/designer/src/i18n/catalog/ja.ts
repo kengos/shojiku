@@ -888,11 +888,6 @@ export const ja: LanguageCatalog = {
     'panel.frame.every.columnCell': 'この列の全行のセルがこの枠を使います。',
     'panel.frame.columnNote':
       'セル間の罫線は表で設定します。ここで付ける枠線は、それとは別にこのセルの周りに描かれます。表のセル余白はこのセルには効かないため、下の「内側の余白」を使います。',
-    'panel.frame.padding': '内側の余白',
-    'panel.frame.padding.perSide':
-      '辺ごとに異なります。ここに数値を入れると全辺がその値になります。',
-    'panel.frame.padding.other':
-      'この欄では表示できない形で設定されています。数値を入れると置き換わります。',
     'panel.frame.selectOwner.cell': 'グリッドを選択',
     'panel.frame.selectOwner.card': 'カード一覧を選択',
     'panel.frame.selectOwner.columnCell': '列を選択',
@@ -919,6 +914,31 @@ export const ja: LanguageCatalog = {
     'panel.field.lineHeight': '行の高さ',
     'panel.field.color': '文字色',
     'panel.field.backgroundColor': '背景色',
+    'panel.field.letterSpacing': '文字の間隔',
+    'panel.field.letterSpacing.units': 'mm・em も可、% は不可',
+    'panel.field.textOverflow': '文字のはみ出し設定',
+    'panel.field.overflow': '中身のはみ出し設定',
+    'panel.field.opacity': '不透明度',
+    'panel.itemSection.text.title': '文字',
+    'panel.itemSection.text.inheritHelp':
+      'コンテナ自体には文字は表示されません。中に置いた項目は、自分で設定していない分だけこの設定を使います。',
+    'panel.itemSection.text.charGridHelp':
+      'マス目に書かれる文字に効きます。サイズを空欄にすると、マス目の大きさに合わせます。',
+    'panel.itemSection.overflow.title': 'はみ出し',
+    'panel.itemSection.overflow.textOverflowHelp':
+      '高さを固定したときだけ効きます。高さが自動のときは、文字に合わせて枠が伸びます。',
+    'panel.itemSection.overflow.overflowHelp':
+      'はみ出した中の項目を、コンテナの端で切るかどうかです。コンテナ自身の塗りと枠線はどちらでも描かれます。',
+    'panel.itemSection.fill.title': '塗りと枠線',
+    'panel.itemSection.text.listHelp': '各行は1行で表示され、長いものは「…」で省略されます。',
+    'panel.itemSection.fill.fillOnly': '塗り',
+    'panel.itemSection.fill.border': '枠線あり',
+    'panel.itemSection.fill.charGridHelp':
+      '塗りはマス目の範囲にかかります。罫線は「{tab}」タブの「{section}」で変えます。',
+    'panel.itemSection.opacity.help':
+      '100% で不透明、0% で見えなくなります。この項目自身が描くものに効きます。',
+    'panel.itemSection.opacity.decorationHelp':
+      '100% で不透明、0% で見えなくなります。この項目自身の塗りと枠線だけに効き、中身には効きません。',
     'panel.box.x': 'X',
     'panel.box.y': 'Y',
     'panel.box.w': '幅',
@@ -983,6 +1003,30 @@ export const ja: LanguageCatalog = {
     'stepper.relativeUnit': 'パーセントやemの値は段階調整できません。直接入力してください。',
     'stepper.unitHint': 'mm・cm・in も可',
     'panel.box.h': '高さ',
+    'panel.box.minWidth': '最小の幅',
+    'panel.box.maxWidth': '最大の幅',
+    'panel.box.minHeight': '最小の高さ',
+    'panel.box.maxHeight': '最大の高さ',
+    'panel.box.limits.title': 'サイズの上限と下限',
+    'panel.box.limits.help':
+      '中身や置き場所によって大きさが変わっても、この範囲に収めます。ページ番号と一覧では、高さの上限・下限は高さを固定したときだけ効きます。',
+    'panel.edge.title': '余白',
+    'panel.edge.help':
+      '内側の余白は枠線と中身の間、外側の余白は枠線の外の間隔です。辺ごとの欄には 5mm や 10% のように単位も書けます（すべての辺の欄は pt）。外側の余白はマイナスも指定できます。',
+    'panel.edge.tableHelp':
+      'フロー配置の本文に置いた表は、内側・外側とも左右の余白だけを使います。左右の外側の余白を両方「自動」にすると中央に寄ります。',
+    'panel.edge.padding': '内側の余白',
+    'panel.edge.margin': '外側の余白',
+    'panel.edge.top': '上',
+    'panel.edge.right': '右',
+    'panel.edge.bottom': '下',
+    'panel.edge.left': '左',
+    'panel.edge.side': '{edge}（{side}）',
+    'panel.edge.all': '{edge}（すべての辺）',
+    'panel.edge.perSide': '辺ごと',
+    'panel.edge.auto': '自動',
+    'panel.edge.autoNote': '空きを埋める',
+    'panel.edge.autoIneffective': 'ここでは「自動」は効かないため、{sides}は 0 として扱われます。',
     'panel.placement.label': '配置',
     'panel.placement.mode.auto': '自動',
     'panel.placement.mode.pinned': '固定',
@@ -1080,6 +1124,12 @@ export const ja: LanguageCatalog = {
     'style.value.textAlign.left': '左寄せ',
     'style.value.textAlign.center': '中央',
     'style.value.textAlign.right': '右寄せ',
+    'style.value.textOverflow.visible': 'はみ出したまま表示',
+    'style.value.textOverflow.shrink': '縮めて収める',
+    'style.value.textOverflow.ellipsis': '「…」で省略',
+    'style.value.textOverflow.clip': '枠で切る',
+    'style.value.overflow.visible': 'はみ出したまま表示',
+    'style.value.overflow.hidden': '枠で切る',
     'styles.count': '{n, number}個',
     'docSettings.sections': '設定の項目',
     'docSettings.baseTextPreview': 'この文字で組んだ見本です（実際の紙面ではなく近似表示）。',
