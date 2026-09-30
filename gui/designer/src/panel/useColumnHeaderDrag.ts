@@ -1,29 +1,34 @@
-// The column-sheet header's reorder machine: pointer drag on the X axis plus
-// the Alt+Arrow keyboard path. Thin over the SAME slot math the layer tree's
-// vertical reorder uses (`dropIndexFor`/`moveOpFor`) — a drop is ONE `moveItem`.
+// The column-sheet header's reorder: a pointer drag on the X axis over the
+// shared reorder machine (`usePointerReorder`) plus the Alt+Arrow keyboard
+// path. A drop is ONE `moveItem` built by the same slot math the layer tree
+// uses (`moveOpFor`), and the drop line down the sheet is painted from that
+// same call, so a slot that shows a line is exactly a slot that moves.
 
 import type { Op } from '@shojiku/designer-core';
-import { useRef, useState } from 'react';
-import { DRAG_THRESHOLD_PX } from '../canvas/useDrag';
-import { dropIndexFor, moveOpFor } from '../tree/reorder';
+import {
+  type ListSlot,
+  type PointerReorder,
+  usePointerReorder,
+  useSlotRefs,
+} from '../hooks/usePointerReorder';
+import { moveOpFor } from '../tree/reorder';
 import { moveColumnOp } from './columnsModel';
 
-/** In-progress header drag: `from` is the pressed column, `slot` the current
- * 0..count insertion index (LayerTree's local-state reorder, on the X axis). */
-interface HeaderDrag {
-  readonly from: number;
-  readonly pointerId: number;
-  readonly startX: number;
-  readonly started: boolean;
-  readonly slot: number;
-}
+/** Where a header drop line sits against its slot's edge (the grid is the
+ * headers' offset parent): in the middle of the 4px gap before the slot's
+ * header, or just past the last one. */
+const LINE_BEFORE_PX = -3;
+const LINE_AFTER_PX = 1;
 
-export interface ColumnHeaderDrag {
+export interface ColumnHeaderDrag
+  extends Pick<
+    PointerReorder<number, ListSlot, Op>,
+    'onPointerDown' | 'onPointerMove' | 'onPointerUp' | 'onPointerCancel'
+  > {
   readonly setRef: (index: number, el: HTMLElement | null) => void;
-  readonly onPointerDown: (index: number) => (event: React.PointerEvent<HTMLElement>) => void;
-  readonly onPointerMove: (event: React.PointerEvent<HTMLElement>) => void;
-  readonly onPointerUp: (event: React.PointerEvent<HTMLElement>) => void;
   readonly onKeyDown: (index: number) => (event: React.KeyboardEvent<HTMLElement>) => void;
+  /** The drop line's x in the grid, or `null` while no drop would move anything. */
+  readonly lineX: number | null;
 }
 
 export function useColumnHeaderDrag(
@@ -31,68 +36,24 @@ export function useColumnHeaderDrag(
   columnCount: number,
   dispatch: (op: Op | null) => void,
 ): ColumnHeaderDrag {
-  const [drag, setDrag] = useState<HeaderDrag | null>(null);
-  const headerRefs = useRef(new Map<number, HTMLElement>());
+  const slots = useSlotRefs('x');
   const columnsPath = `${tablePath}.columns`;
-
-  const headerRects = () => {
-    const rects: { top: number; height: number }[] = [];
-    let el = headerRefs.current.get(rects.length);
-    while (el !== undefined) {
-      const rect = el.getBoundingClientRect();
-      // RowRect is "any consistent coordinate space" — feed X/width so the
-      // shared vertical slot math reorders horizontally.
-      rects.push({ top: rect.left, height: rect.width });
-      el = headerRefs.current.get(rects.length);
-    }
-    return rects;
-  };
+  const reorder = usePointerReorder<number, ListSlot, Op>({
+    axis: 'x',
+    dropAt: (_from, point) => slots.slotAt(point),
+    // moveOpFor adds the slot→post-splice `to` adjustment + the no-op guard a
+    // multi-slot drag needs; the ±1 keyboard path below uses moveColumnOp.
+    resolve: (from, slot) => moveOpFor(columnsPath, from, slot.index),
+    onDrop: dispatch,
+  });
+  const { active } = reorder;
 
   return {
-    setRef: (index, el) => {
-      if (el === null) {
-        headerRefs.current.delete(index);
-      } else {
-        headerRefs.current.set(index, el);
-      }
-    },
-
-    onPointerDown: (index) => (event) => {
-      if (!event.isPrimary) {
-        return;
-      }
-      event.currentTarget.setPointerCapture?.(event.pointerId);
-      setDrag({
-        from: index,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        started: false,
-        slot: index,
-      });
-    },
-
-    onPointerMove: (event) => {
-      if (drag === null || event.pointerId !== drag.pointerId) {
-        return;
-      }
-      if (!drag.started && Math.abs(event.clientX - drag.startX) < DRAG_THRESHOLD_PX) {
-        return;
-      }
-      setDrag({ ...drag, started: true, slot: dropIndexFor(headerRects(), event.clientX) });
-    },
-
-    onPointerUp: (event) => {
-      if (drag === null || event.pointerId !== drag.pointerId) {
-        return;
-      }
-      if (drag.started) {
-        // moveOpFor adds the slot→post-splice `to` adjustment + the no-op guard a
-        // multi-slot drag needs; the ±1 keyboard path below uses moveColumnOp.
-        dispatch(moveOpFor(columnsPath, drag.from, drag.slot));
-      }
-      setDrag(null);
-    },
-
+    setRef: slots.setRef,
+    onPointerDown: reorder.onPointerDown,
+    onPointerMove: reorder.onPointerMove,
+    onPointerUp: reorder.onPointerUp,
+    onPointerCancel: reorder.onPointerCancel,
     onKeyDown: (index) => (event) => {
       if (!event.altKey || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) {
         return;
@@ -104,5 +65,9 @@ export function useColumnHeaderDrag(
       event.preventDefault();
       dispatch(moveColumnOp(tablePath, index, to));
     },
+    lineX:
+      active === null || reorder.pending === null
+        ? null
+        : active.drop.edge + (active.drop.tail ? LINE_AFTER_PX : LINE_BEFORE_PX),
   };
 }

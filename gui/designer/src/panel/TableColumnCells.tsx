@@ -55,9 +55,11 @@ export interface ColumnHeaderRowProps {
   readonly reorderLabel: string;
 }
 
-/** The strip's header row: a corner cell, then one drag handle per column.
+/** The strip's header row: a corner cell, then one drag handle per column,
+ * plus the drop line a header drag paints down the whole column strip.
  * Returns bare cells (a fragment adds no DOM node), so they stay direct
- * children of the sheet's grid. */
+ * children of the sheet's grid; the line is absolutely positioned in that grid,
+ * so it takes no grid cell. */
 export function ColumnHeaderRow({ columns, drag, reorderLabel }: ColumnHeaderRowProps) {
   return (
     <>
@@ -69,16 +71,24 @@ export function ColumnHeaderRow({ columns, drag, reorderLabel }: ColumnHeaderRow
           type="button"
           ref={(el) => drag.setRef(index, el)}
           aria-label={reorderLabel}
-          className="flex cursor-grab items-center gap-1 rounded-md border border-border bg-chrome px-2 py-1 text-sm active:cursor-grabbing"
+          className="flex cursor-grab touch-none items-center gap-1 rounded-md border border-border bg-chrome px-2 py-1 text-sm active:cursor-grabbing"
           onPointerDown={drag.onPointerDown(index)}
           onPointerMove={drag.onPointerMove}
           onPointerUp={drag.onPointerUp}
+          onPointerCancel={drag.onPointerCancel}
           onKeyDown={drag.onKeyDown(index)}
         >
           <IconGrip size={14} className="shrink-0 text-muted" />
           <span className="truncate">{column.label}</span>
         </button>
       ))}
+      {drag.lineX === null ? null : (
+        <span
+          data-drop=""
+          className="pointer-events-none absolute top-0 bottom-0 w-0.5 rounded-full bg-accent"
+          style={{ left: drag.lineX }}
+        />
+      )}
     </>
   );
 }

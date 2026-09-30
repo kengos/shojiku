@@ -3,7 +3,7 @@
 // ops a landing commits.
 import type { Op, OpResult, ReadFn } from '@shojiku/designer-core';
 import { describe, expect, it, vi } from 'vitest';
-import { acceptsFor, applyDrop, type DragState, rowDropOps, visibleRows } from './rowDrag';
+import { acceptsFor, applyDrop, type RowDragKey, rowDropOps, visibleRows } from './rowDrag';
 
 function readOf(doc: Record<string, unknown>): ReadFn {
   return (path) => doc[path];
@@ -17,14 +17,10 @@ const DOC: Record<string, unknown> = {
 };
 const READ = readOf(DOC);
 
-const DRAG: DragState = {
+const DRAG: RowDragKey = {
   path: 'sections.body.items[0]',
   parent: 'sections.body.items',
   from: 0,
-  pointerId: 1,
-  startY: 0,
-  started: true,
-  drop: null,
 };
 
 describe('acceptsFor', () => {
@@ -126,7 +122,7 @@ describe('rowDropOps into a band', () => {
     'sections.body.items[5].items[0]': { type: 'text', text: 'pinned', box: { x: 10, y: 4 } },
     'sections.header.items[0]': { type: 'text', text: 'h', box: { y: 5 } },
   };
-  const drag = (index: number): DragState => ({
+  const drag = (index: number): RowDragKey => ({
     ...DRAG,
     path: `sections.body.items[${index}]`,
     from: index,
@@ -167,7 +163,7 @@ describe('rowDropOps into a band', () => {
   });
 
   it('keeps coordinates that are already margin-box coordinates: a row from another band', () => {
-    const fromHeader: DragState = {
+    const fromHeader: RowDragKey = {
       ...DRAG,
       path: 'sections.header.items[0]',
       parent: 'sections.header.items',
@@ -190,7 +186,7 @@ describe('rowDropOps into a band', () => {
       move(2, 'sections.footer.items'),
     ]);
     // …and a container child pinned against the CONTAINER's origin.
-    const pinned: DragState = {
+    const pinned: RowDragKey = {
       ...DRAG,
       path: 'sections.body.items[5].items[0]',
       parent: 'sections.body.items[5].items',

@@ -463,7 +463,9 @@ hostile geometry degrades to null before it can reach an op.
 - `canvas/guides.ts` — smart-guide math (`alignPositions`/`axisGuide`/
   `guideLineFor`).
 - `canvas/useDrag.ts` — the generic pointer drag state machine
-  (semantics-free; box/palette/marquee drags reuse it):
+  (semantics-free; box/palette/marquee drags reuse it; the LIST reorders use
+  `hooks/usePointerReorder.ts` instead, which starts on its own axis only and
+  re-reads a drop on every move):
   `DRAG_THRESHOLD_PX` 4 (the ONE threshold), alt/shift modifiers,
   primary-pointer + finite guards, guarded pointer capture,
   capture-phase Escape cancel, `consumeClick` one-shot suppression.

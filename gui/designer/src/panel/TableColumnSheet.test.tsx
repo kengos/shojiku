@@ -103,6 +103,11 @@ function headers(): HTMLElement[] {
   const hs = screen.getAllByLabelText('Reorder (drag, or Alt+Arrow)');
   hs.forEach((h, index) => {
     h.getBoundingClientRect = () => ({ left: index * 160, width: 160 }) as DOMRect;
+    // Offsets against the sheet grid, which starts 40px into the client space.
+    Object.defineProperties(h, {
+      offsetLeft: { value: index * 160 - 40, configurable: true },
+      offsetWidth: { value: 160, configurable: true },
+    });
   });
   return hs;
 }
@@ -327,6 +332,72 @@ describe('TableColumnSheet', () => {
     fireEvent.pointerDown(hs[1], { pointerId: 2, clientX: 0, isPrimary: false });
     fireEvent.pointerMove(hs[1], { pointerId: 2, clientX: 500, isPrimary: false });
     fireEvent.pointerUp(hs[1], { pointerId: 2, clientX: 500 });
+    expect(controller.apply).not.toHaveBeenCalled();
+  });
+
+  it('draws the drop line down the sheet only where a release would move the column', () => {
+    const { container } = sheet(makeController(TABLE_NODE));
+    const hs = headers();
+    const line = () => container.querySelector<HTMLElement>('[data-drop]');
+    fireEvent.pointerDown(hs[0], { pointerId: 1, clientX: 0, isPrimary: true });
+    // Before the threshold: no line.
+    fireEvent.pointerMove(hs[0], { pointerId: 1, clientX: 2, isPrimary: true });
+    expect(line()).toBeNull();
+    // Slot 1 is where column 0 already is: no line.
+    fireEvent.pointerMove(hs[0], { pointerId: 1, clientX: 90, isPrimary: true });
+    expect(line()).toBeNull();
+    // Slot 2: in the gap before the third header (its offset 280, less 3).
+    fireEvent.pointerMove(hs[0], { pointerId: 1, clientX: 300, isPrimary: true });
+    expect(line()?.style.left).toBe('277px');
+    // Placed in the headers' own offset parent: the sheet grid, which must be
+    // positioned for the offsets to mean its space (jsdom computes no
+    // offsetParent, so the class is what can be pinned here).
+    expect(line()?.parentElement).toBe(hs[0].parentElement);
+    expect(hs[0].parentElement?.classList.contains('relative')).toBe(true);
+    // The tail: just past the last header's right edge (600 + 160, plus 1).
+    fireEvent.pointerMove(hs[0], { pointerId: 1, clientX: 900, isPrimary: true });
+    expect(line()?.style.left).toBe('761px');
+    expect(container.querySelectorAll('[data-drop]')).toHaveLength(1);
+    fireEvent.pointerUp(hs[0], { pointerId: 1, clientX: 900 });
+    expect(line()).toBeNull();
+  });
+
+  it('cancels a started header drag on Escape, which the Designer never sees', () => {
+    const controller = makeController(TABLE_NODE);
+    const { container } = sheet(controller);
+    const outer = vi.fn();
+    window.addEventListener('keydown', outer);
+    const hs = headers();
+    fireEvent.pointerDown(hs[0], { pointerId: 1, clientX: 0, isPrimary: true });
+    fireEvent.pointerMove(hs[0], { pointerId: 1, clientX: 900, isPrimary: true });
+    fireEvent.keyDown(hs[0], { key: 'Escape' });
+    expect(outer).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-drop]')).toBeNull();
+    fireEvent.pointerUp(hs[0], { pointerId: 1, clientX: 900 });
+    expect(controller.apply).not.toHaveBeenCalled();
+    window.removeEventListener('keydown', outer);
+  });
+
+  it('lets Escape through to the Designer before a press becomes a drag', () => {
+    sheet(makeController(TABLE_NODE));
+    const outer = vi.fn();
+    window.addEventListener('keydown', outer);
+    const hs = headers();
+    fireEvent.pointerDown(hs[0], { pointerId: 1, clientX: 0, isPrimary: true });
+    fireEvent.keyDown(hs[0], { key: 'Escape' });
+    expect(outer).toHaveBeenCalledTimes(1);
+    window.removeEventListener('keydown', outer);
+  });
+
+  it('cancels a header drag on its own pointercancel', () => {
+    const controller = makeController(TABLE_NODE);
+    const { container } = sheet(controller);
+    const hs = headers();
+    fireEvent.pointerDown(hs[0], { pointerId: 1, clientX: 0, isPrimary: true });
+    fireEvent.pointerMove(hs[0], { pointerId: 1, clientX: 900, isPrimary: true });
+    fireEvent.pointerCancel(hs[0], { pointerId: 1 });
+    expect(container.querySelector('[data-drop]')).toBeNull();
+    fireEvent.pointerUp(hs[0], { pointerId: 1, clientX: 900 });
     expect(controller.apply).not.toHaveBeenCalled();
   });
 

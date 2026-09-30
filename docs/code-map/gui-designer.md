@@ -144,14 +144,16 @@ session/tree/sidebar surfaces, the hook registry, and the test substrate.
   TOP-aligned with the mark in a one-line-high box: centring against the whole
   block puts the mark beside the second line of a three-line row, so the marks
   stop lining up down the tree.
-- `tree/useRowReorder.ts` — the row-drag gesture (pointer state machine
-  + Alt+↑/↓): the pointer drags over ALL visible rows, so a drop may
-  leave the row's own parent; Alt+arrow stays inside it. Capture-phase
-  Escape cancel, ONE transactional batch, selection travels;
+- `tree/useRowReorder.ts` — the row-drag gesture (Alt+↑/↓ + the pointer
+  drag, the latter over the shared `hooks/usePointerReorder.ts` machine with
+  `rowDropAt` as its drop and `rowDropOps` as its resolve): the pointer drags
+  over ALL visible rows, so a drop may leave the row's own parent; Alt+arrow
+  stays inside it. ONE transactional batch, selection travels, the machine's
+  `consumeClick` swallows the click a finished drag leaves;
   `marksFor(node)` = the per-row drop-indicator derivation.
-- `tree/rowDrag.ts` — what a row drag IS while it runs: `DragState`
-  (carrying the resolved `RowSlot`), `applyDrop` (the batch + the
-  travelling selection), `visibleRows`/`siblingEnd` read off the
+- `tree/rowDrag.ts` — what a row drag IS while it runs: `RowDragKey`
+  (the carried row) and `ActiveRowDrag` (it plus the resolved `RowSlot`),
+  `applyDrop` (the batch + the travelling selection), `visibleRows`/`siblingEnd` read off the
   `rowRefs` map at the moment they are needed (never captured at render
   time), `acceptsFor` (the destination predicate handed to the drop
   model, so an indicator can only point at a legal drop), `rowDropOps`
@@ -312,9 +314,9 @@ A LEAF concern hook never imports a sibling: every cross-concern value
 threads through the composer. The only sibling-importing hooks are the four
 SUB-COMPOSERS, which exist to hold a call ORDER: `usePreviewSession`
 (zoom → preview → auto-fit), `useDocumentCore`, `useCanvasWiring`,
-`useInsertActions` (the four scaffold hooks). `usePopover.ts` is a generic
-UI primitive. Hooks taking several editor operations take the whole
-`editor: EditorController` and destructure ONCE at the top — memo dep
+`useInsertActions` (the four scaffold hooks). `usePopover.ts` and
+`usePointerReorder.ts` are generic UI primitives. Hooks taking several
+editor operations take the whole `editor: EditorController` and destructure ONCE at the top — memo dep
 lists name the destructured stable fields, never `editor` itself.
 
 - `hooks/geometry.ts` — shared page-geometry vocabulary (NON-hook):

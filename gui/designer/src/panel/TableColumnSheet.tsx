@@ -71,9 +71,10 @@ export function TableColumnSheet({
     // (raw inputs are value-keyed; the pickers self-reseed internally), so a
     // commit in one cell never discards an in-progress edit in another — the
     // read-only/positional cells (header, sample) just re-render in place, which
-    // is correct when a reorder swaps the data at a position.
+    // is correct when a reorder swaps the data at a position. `relative`: the
+    // header drag's drop line is placed against this grid.
     <div
-      className="grid w-max gap-1"
+      className="relative grid w-max gap-1"
       style={{ gridTemplateColumns: `auto repeat(${columns.length}, 160px)` }}
     >
       <ColumnHeaderRow

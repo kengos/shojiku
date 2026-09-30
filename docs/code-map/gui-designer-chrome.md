@@ -215,6 +215,27 @@ resolved style.
 - `hooks/usePopover.ts` — Escape / outside-pointerdown dismiss (Escape
   stopPropagations so the window-level deselect never fires).
 
+## List reorder gesture
+
+- `hooks/usePointerReorder.ts` — the ONE pointer-drag machine under the
+  three list reorders (`tree/useRowReorder`, `panel/useColumnHeaderDrag`,
+  `panel/useRuleDrag`): primary + pointer-id guards (cancel included),
+  guarded capture, `DRAG_THRESHOLD_PX` along the list's axis only, window
+  capture-phase Escape (started drags only), pointercancel, and
+  `consumeClick` (armed by a started drag's release or Escape, never by
+  pointercancel — the browser sends no click after one; only the tree reads
+  it, the other two handles have no click action). The surface supplies
+  `dropAt` and `resolve`; `pending` (a getter, so the tree, which paints
+  nothing from it, never computes it) is that same `resolve`, so the column
+  sheet's line and the rule list's line, both painted from it, show exactly
+  where a release moves (the tree's marks keep their own `acceptsFor`
+  legality). `useSlotRefs(axis)` is a flat list's index-keyed element map:
+  slot by client rect, `tail` and the edge in offset-parent space (where the
+  column sheet draws its drop line). Deliberately separate from
+  `canvas/useDrag` (the canvas machine): a list starts on travel along its
+  own axis only, guards pointercancel by pointer id, and re-reads its drop on
+  every move.
+
 ## Named-style capture + usage
 
 - `styles/preview.ts` — `stylePreview(style)` → object-prop

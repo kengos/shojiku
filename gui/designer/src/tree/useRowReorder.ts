@@ -7,19 +7,20 @@
 //
 // The pure models are `reorder.ts` (same-parent slot math + op) and
 // `rowDrop.ts` (which gap, and which of its meanings); what a drag IS while it
-// runs — its state, the live row rects, the per-row drop-indicator marks, the
-// ops a release commits — is `rowDrag.ts`. This hook is the pointer + keyboard
-// state machine over them.
+// runs — which row it carries, the live row rects, the per-row drop-indicator
+// marks, the ops a release commits — is `rowDrag.ts`. The pointer gesture is
+// the shared `hooks/usePointerReorder`; this hook feeds it those models and
+// adds the tree's own click-to-select and keyboard path.
 
 import type { Op, OpResult, ReadFn } from '@shojiku/designer-core';
-import { type PointerEvent, useEffect, useRef, useState } from 'react';
-import { DRAG_THRESHOLD_PX } from '../canvas/useDrag';
+import type { PointerEvent } from 'react';
+import { usePointerReorder } from '../hooks/usePointerReorder';
 import type { TreeNode } from './model';
 import { seqPosition } from './reorder';
 import {
   acceptsFor,
   applyDrop,
-  type DragState,
+  type RowDragKey,
   type RowDragMarks,
   type RowRefs,
   rowDragMarks,
@@ -27,9 +28,12 @@ import {
   siblingEnd,
   visibleRows,
 } from './rowDrag';
-import { rowDropAt } from './rowDrop';
+import { type RowSlot, rowDropAt } from './rowDrop';
 
 export type { RowDragMarks } from './rowDrag';
+
+/** What a release commits: the batch, and where the moved row then is. */
+type RowDrop = NonNullable<ReturnType<typeof rowDropOps>>;
 
 export interface RowReorderOptions {
   /** Dispatches a drop as ONE transactional batch — the editor's `applyAll`. */
@@ -47,7 +51,7 @@ export interface RowReorder {
   readonly onPointerDown: (node: TreeNode) => (event: PointerEvent<HTMLElement>) => void;
   readonly onPointerMove: (event: PointerEvent<HTMLElement>) => void;
   readonly onPointerUp: (event: PointerEvent<HTMLElement>) => void;
-  readonly onPointerCancel: () => void;
+  readonly onPointerCancel: (event: PointerEvent<HTMLElement>) => void;
   /** Row click-to-select — a completed drag swallows the trailing click. */
   readonly onClick: (node: TreeNode) => () => void;
   /** Alt+↑/↓ on a row: the keyboard equivalent of the drag. It owns the
@@ -63,81 +67,27 @@ export function useRowReorder({
   rowRefs,
   order,
 }: RowReorderOptions): RowReorder {
-  const [drag, setDrag] = useState<DragState | null>(null);
-  // A completed drag must not fire the row's click-to-select.
-  const suppressClick = useRef(false);
-
-  // Escape cancels an active drag — captured on window so it wins over (and
-  // stops) the Designer's own Escape-to-deselect listener.
-  useEffect(() => {
-    if (drag?.started !== true) {
-      return;
-    }
-    const cancel = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        setDrag(null);
-        suppressClick.current = true;
-      }
-    };
-    window.addEventListener('keydown', cancel, true);
-    return () => window.removeEventListener('keydown', cancel, true);
-  }, [drag]);
+  const reorder = usePointerReorder<RowDragKey, RowSlot | null, RowDrop>({
+    axis: 'y',
+    dropAt: (key, point) =>
+      rowDropAt(visibleRows(rowRefs, order), point, acceptsFor(read, key.path, key.parent)),
+    resolve: (key, drop) => (drop === null ? null : rowDropOps(read, key, drop)),
+    onDrop: ({ ops, selectPath }) => applyDrop(applyAll, onSelect, ops, selectPath),
+  });
 
   const onPointerDown = (node: TreeNode) => (event: PointerEvent<HTMLElement>) => {
     const position = seqPosition(node.path);
-    if (position === null || !event.isPrimary) {
-      return;
+    if (position !== null) {
+      reorder.onPointerDown({ path: node.path, parent: position.parent, from: position.index })(
+        event,
+      );
     }
-    // Guarded: jsdom implements no pointer capture; in a real browser this
-    // keeps the move/up stream on the row while the pointer travels.
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    setDrag({
-      path: node.path,
-      parent: position.parent,
-      from: position.index,
-      pointerId: event.pointerId,
-      startY: event.clientY,
-      started: false,
-      drop: null,
-    });
-  };
-
-  const onPointerMove = (event: PointerEvent<HTMLElement>) => {
-    if (drag === null || event.pointerId !== drag.pointerId) {
-      return;
-    }
-    if (!drag.started && Math.abs(event.clientY - drag.startY) < DRAG_THRESHOLD_PX) {
-      return;
-    }
-    const drop = rowDropAt(
-      visibleRows(rowRefs, order),
-      { x: event.clientX, y: event.clientY },
-      acceptsFor(read, drag.path, drag.parent),
-    );
-    setDrag({ ...drag, started: true, drop });
-  };
-
-  const onPointerUp = (event: PointerEvent<HTMLElement>) => {
-    if (drag === null || event.pointerId !== drag.pointerId) {
-      return;
-    }
-    if (drag.started) {
-      suppressClick.current = true;
-      const committed = drag.drop === null ? null : rowDropOps(read, drag, drag.drop);
-      if (committed !== null) {
-        applyDrop(applyAll, onSelect, committed.ops, committed.selectPath);
-      }
-    }
-    setDrag(null);
   };
 
   const onClick = (node: TreeNode) => () => {
-    if (suppressClick.current) {
-      suppressClick.current = false;
-      return;
+    if (!reorder.consumeClick()) {
+      onSelect(node.path);
     }
-    onSelect(node.path);
   };
 
   const onArrowMove = (node: TreeNode, event: { key: string; preventDefault(): void }) => {
@@ -160,15 +110,15 @@ export function useRowReorder({
   };
 
   const marksFor = (node: TreeNode): RowDragMarks =>
-    rowDragMarks(drag, node.path, seqPosition(node.path), (parent, index) =>
+    rowDragMarks(reorder.active, node.path, seqPosition(node.path), (parent, index) =>
       siblingEnd(rowRefs, parent, index),
     );
 
   return {
     onPointerDown,
-    onPointerMove,
-    onPointerUp,
-    onPointerCancel: () => setDrag(null),
+    onPointerMove: reorder.onPointerMove,
+    onPointerUp: reorder.onPointerUp,
+    onPointerCancel: reorder.onPointerCancel,
     onClick,
     onArrowMove,
     marksFor,
