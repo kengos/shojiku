@@ -5,7 +5,9 @@
 //! The predicate is the shared `{ key, equals? }` one (`super::super::
 //! super::predicate`), read RELATIVE to the row element exactly like a
 //! column's `data:` binding — so the wire carries no row-selector
-//! grammar of its own.
+//! grammar of its own. `when.scope` is deliberately NOT read: a row
+//! condition always reads the row, and validate warns
+//! `row_condition_scope_ignored` when a template sets `scope: document`.
 
 use crate::style::ComputedStyle;
 use serde_json::Value;

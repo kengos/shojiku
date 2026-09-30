@@ -1,7 +1,7 @@
 //! Table checks: the bound array group, per-column content shape
 //! (`data` vs `cell` exclusivity), row-relative column keys, the
-//! row `conditionalStyles` predicates, and the array-scoped bindings
-//! inside a `cell:` column's sub-template.
+//! row `conditionalStyles` predicates (and the `scope` they ignore), and
+//! the array-scoped bindings inside a `cell:` column's sub-template.
 
 use super::equals::{equals_fault, reads_as_boolean, resolve_target, EqualsFault};
 use crate::catalog::Catalog;
@@ -52,6 +52,7 @@ pub(super) fn check_tables(
             check_column_content(column, &format!("{path}.columns[{ci}]"), diags);
         }
         check_row_condition_cap(&table.row, &path, diags);
+        check_row_condition_scopes(&table.row, &path, diags);
         check_array_params(params, key, "table", &path, diags);
     }
 }
@@ -172,6 +173,28 @@ fn check_row_condition_cap(row: &RowSpec, path: &str, diags: &mut Diagnostics) {
                 .arg("max", MAX_ROW_CONDITIONAL_STYLES)
                 .with_path(path.to_string()),
         );
+    }
+}
+
+/// A row condition's `when` shares the form-mark predicate, so
+/// `scope: document` parses — but a row condition always reads the ROW
+/// (a document-level predicate would match every row or none). Warned
+/// without a catalog, like the cap; an explicit `scope: element` is what
+/// happens anyway and stays silent.
+fn check_row_condition_scopes(row: &RowSpec, path: &str, diags: &mut Diagnostics) {
+    for (index, entry) in row
+        .conditional_styles
+        .iter()
+        .take(MAX_ROW_CONDITIONAL_STYLES)
+        .enumerate()
+    {
+        if entry.when.scope() == BindingScope::Document {
+            diags.push(
+                Diagnostic::new(Code::RowConditionScopeIgnored)
+                    .arg("key", entry.when.key.as_str())
+                    .with_path(format!("{path}.row.conditionalStyles[{index}]")),
+            );
+        }
     }
 }
 

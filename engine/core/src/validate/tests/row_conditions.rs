@@ -1,6 +1,7 @@
 //! `row.conditionalStyles` validation: the predicate key against the
 //! bound array group, the boolean hint for an `equals`-less entry, the
-//! entry cap, and the entries' own `styleNames`.
+//! entry cap, the `scope` a row condition ignores, and the entries' own
+//! `styleNames`.
 
 use super::*;
 
@@ -160,5 +161,54 @@ fn an_entrys_undefined_style_name_is_reported_at_the_entrys_path() {
     assert_eq!(
         d.path.as_deref(),
         Some("sections.body.items[0].row.conditionalStyles[0]")
+    );
+}
+
+#[test]
+fn a_document_scope_on_a_row_condition_warns_at_the_entrys_path() {
+    let t =
+        conditional_table("            - when: { key: kind, equals: heading, scope: document }\n");
+    let diags = validate(Some(&rdefs()), &t, None);
+    let d = diags
+        .iter()
+        .find(|d| d.code == "row_condition_scope_ignored")
+        .expect("scope warning");
+    assert!(d.message.contains("kind"), "{}", d.message);
+    assert_eq!(
+        d.path.as_deref(),
+        Some("sections.body.items[0].row.conditionalStyles[0]")
+    );
+}
+
+#[test]
+fn the_scope_is_checked_without_definitions_too() {
+    let t = conditional_table("            - when: { key: flagged, scope: document }\n");
+    assert!(has(
+        &validate(None, &t, None),
+        "row_condition_scope_ignored"
+    ));
+}
+
+#[test]
+fn an_element_scope_or_no_scope_is_silent() {
+    let t = conditional_table(
+        "            - when: { key: kind, equals: heading, scope: element }\n            - when: { key: flagged }\n",
+    );
+    let diags = validate(Some(&rdefs()), &t, None);
+    assert!(
+        !has(&diags, "row_condition_scope_ignored"),
+        "diags: {diags:?}"
+    );
+}
+
+#[test]
+fn an_entry_past_the_cap_is_not_scope_warned() {
+    let mut entries = "            - when: { key: flagged }\n".repeat(MAX_ROW_CONDITIONAL_STYLES);
+    entries.push_str("            - when: { key: flagged, scope: document }\n");
+    let diags = validate(Some(&rdefs()), &conditional_table(&entries), None);
+    assert!(has(&diags, "too_many_row_conditions"), "diags: {diags:?}");
+    assert!(
+        !has(&diags, "row_condition_scope_ignored"),
+        "diags: {diags:?}"
     );
 }

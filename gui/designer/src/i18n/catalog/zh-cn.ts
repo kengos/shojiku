@@ -49,6 +49,7 @@ export const zhCn: LanguageCatalog = {
     row_condition_type_mismatch: '`{key}` 的值类型与 `equals` 不同；不应用行样式',
     row_condition_equals_not_declared: '`{key}` 的 `enum` 未列出此 `equals` 值；行样式永远不会应用',
     row_condition_value_not_bool: '`{key}` 不是布尔值；不应用行样式',
+    row_condition_scope_ignored: '`{key}`：`scope: document` 对行条件无效；键从每一行读取',
     empty_link_url: '链接 URL 为空；已丢弃链接',
     unsupported_link_scheme: '链接 URL 必须是不含控制字符的 http/https/mailto/tel；已丢弃链接',
     params_missing_required: 'params 缺少必需键 `{key}`',

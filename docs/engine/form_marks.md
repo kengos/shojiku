@@ -182,7 +182,8 @@ page-global flag that should tick the mark in every cell). Then:
 The same `{ key, equals? }` predicate — and the same truth table —
 selects a table row's conditional style
 ([table.md](table.md#conditional-row-styles)); there it reads a key
-relative to the row element and carries its own diagnostic codes.
+relative to the row element, carries its own diagnostic codes, and
+ignores `scope` (`row_condition_scope_ignored`).
 
 `equals` accepts a string, number, or boolean scalar; a map or sequence is
 a parse error. A **missing** params value draws nothing, silently — a

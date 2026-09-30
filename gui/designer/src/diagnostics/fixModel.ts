@@ -184,6 +184,12 @@ const FIXES: ReadonlyMap<string, FixBuilder> = new Map<string, FixBuilder>([
     'table_pagination_key_ignored',
     pathFix(removal((path, _diag, read) => removePresent(read, path, [], PAGINATION_KEYS))),
   ],
+  // The rule UI never shows `scope`, so this button is the Designer's only way
+  // to clear it; the path is the conditional-formatting entry itself.
+  [
+    'row_condition_scope_ignored',
+    pathFix(removal((path, _diag, read) => removePresent(read, path, ['when'], ['scope']))),
+  ],
   ['shape_style_ignored', pathFix(removal(fixIgnoredStyleKeys))],
   ['ignored_span_style', pathFix(removal(fixIgnoredStyleKeys))],
   ['unused_binding', pathFix(removal(fixUnusedBinding))],

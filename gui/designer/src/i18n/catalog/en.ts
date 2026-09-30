@@ -58,6 +58,8 @@ export const en: LanguageCatalog = {
     row_condition_equals_not_declared:
       '`{key}` declares an `enum` that does not list this `equals` value; the row style can never apply',
     row_condition_value_not_bool: '`{key}` is not a boolean; row style not applied',
+    row_condition_scope_ignored:
+      '`{key}`: `scope: document` has no effect on a row condition; the key is read from each row',
     empty_link_url: 'link URL is empty; link dropped',
     unsupported_link_scheme:
       'link URL must be http/https/mailto/tel without control characters; link dropped',
