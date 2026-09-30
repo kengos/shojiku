@@ -1,6 +1,7 @@
 // Designer-level tests for hooks/useContainerInsert.ts (the container picker,
 // placeholder slot replaced as ONE applyAll) and hooks/useContainerMarks.ts
 // (selection/hover container highlights with kind chips).
+import { MAX_SNIPPET_NODES } from '@shojiku/designer-core';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { outcomeStacked, THREE_ITEMS } from '../testkit/fixtures';
@@ -83,7 +84,11 @@ describe('Designer container insert + marks', () => {
 
   it('band-places a container picked into a footer, so it prints where the footer does', async () => {
     const onChange = vi.fn<(text: string) => void>();
-    draw(makeTransport(), { onChange });
+    // The render never settles, so this places in the window before the first
+    // preview, against the DOCUMENT's page. The fake render's 8px page would
+    // otherwise win whenever it lands first (a loaded machine) and put the
+    // item at the band's top.
+    draw(makeTransport({ renderRaw: vi.fn(() => new Promise<never>(() => {})) }), { onChange });
     pickMenu('Insert', 'Footer');
     pickMenu('Insert', 'Container…');
     pickCell(1, 2);
@@ -324,10 +329,17 @@ describe('Designer container insert + marks', () => {
 
   it('wrap on an oversized subtree rolls back whole (the snippet validator refuses)', () => {
     const onChange = vi.fn();
-    // A container with 300 children reads fine but exceeds the insertItem
-    // snippet node cap when re-authored — the batch must fail atomically.
+    // A container whose children read fine but exceed the insertItem snippet
+    // node cap when re-authored — the batch must fail atomically. Each child is
+    // three snippet nodes (its map, `type`, `text`), so a third of the cap in
+    // children is over it on their own. Sized off the cap rather than a round
+    // number: every child is a layer-tree row this Designer-level test draws,
+    // and 300 of them put the case near the default timeout on a loaded
+    // machine. The refused op is the batch's FIRST, so nothing is mutated
+    // before it fails; the rollback of an op that DID land is pinned by
+    // designer-core's editor tests.
     const children = Array.from(
-      { length: 300 },
+      { length: Math.ceil(MAX_SNIPPET_NODES / 3) },
       () => '          - type: text\n            text: x',
     );
     const source = [

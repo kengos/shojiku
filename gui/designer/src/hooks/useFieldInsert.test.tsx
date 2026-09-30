@@ -53,7 +53,15 @@ describe('Designer create-data-field', () => {
       '    items: []',
       '',
     ].join('\n');
-    draw(makeTransport(), { source, onChange, onParamsChange: vi.fn() });
+    // The render never settles, so this places in the window before the first
+    // preview, against the DOCUMENT's page. The fake render's 8px page would
+    // otherwise win whenever it lands first (a loaded machine) and put the
+    // item at the band's top.
+    draw(makeTransport({ renderRaw: vi.fn(() => new Promise<never>(() => {})) }), {
+      source,
+      onChange,
+      onParamsChange: vi.fn(),
+    });
     fireEvent.click(await screen.findByRole('button', { name: /Footer/ }));
     const dialog = openFieldDialog();
     fireEvent.change(within(dialog).getByLabelText('Field name'), { target: { value: 'amount' } });
