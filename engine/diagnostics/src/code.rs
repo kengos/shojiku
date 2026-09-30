@@ -87,6 +87,7 @@ diagnostic_codes! {
     RowConditionTypeMismatch = "row_condition_type_mismatch", Warning, Data, "`{key}` value type differs from `equals`; row style not applied";
     RowConditionEqualsNotDeclared = "row_condition_equals_not_declared", Warning, Data, "`{key}` declares an `enum` that does not list this `equals` value; the row style can never apply";
     RowConditionValueNotBool = "row_condition_value_not_bool", Warning, Data, "`{key}` is not a boolean; row style not applied";
+    RowConditionScopeIgnored = "row_condition_scope_ignored", Warning, Data, "`{key}`: `scope: document` has no effect on a row condition; the key is read from each row";
     EmptyLinkUrl = "empty_link_url", Warning, Data, "link URL is empty; link dropped";
     UnsupportedLinkScheme = "unsupported_link_scheme", Warning, Data, "link URL must be http/https/mailto/tel without control characters; link dropped";
     DocumentMetadataControlChars = "document_metadata_control_chars", Warning, Data, "`document.{key}` contains control characters; it is not written to the PDF";

@@ -49,6 +49,7 @@ export const zhTw: LanguageCatalog = {
     row_condition_type_mismatch: '`{key}` 的值型別與 `equals` 不同；不套用列樣式',
     row_condition_equals_not_declared: '`{key}` 的 `enum` 未列出此 `equals` 值；列樣式永遠不會套用',
     row_condition_value_not_bool: '`{key}` 不是布林值；不套用列樣式',
+    row_condition_scope_ignored: '`{key}`：`scope: document` 對列條件無效；鍵從每一列讀取',
     empty_link_url: '連結 URL 為空；已捨棄連結',
     unsupported_link_scheme: '連結 URL 必須是不含控制字元的 http/https/mailto/tel；已捨棄連結',
     params_missing_required: 'params 缺少必要鍵 `{key}`',

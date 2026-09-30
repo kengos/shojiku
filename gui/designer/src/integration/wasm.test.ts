@@ -3209,4 +3209,31 @@ describe('table style edits against the real engine (receipt-us)', () => {
     const unknown = await transport.renderRaw(editor.text(), rowParams, undefined, { scale: 1 });
     expect(unknown.diagnostics.items.filter((d) => !beforeCodes.has(d.code))).not.toEqual([]);
   });
+
+  it('locates a rule whose `scope` is ignored, and the quick-fix clears the warning', async () => {
+    // The rule UI never shows `scope`, so the diagnostics fix is the only way
+    // to clear it: the engine's path must be one the GUI fix can act on.
+    const editor = Editor.create(template());
+    const bodyItems = editor.read('sections.body.items') as readonly { type?: string }[];
+    const table = `sections.body.items[${bodyItems.findIndex((item) => item?.type === 'table')}]`;
+    const existing = (editor.read(`${table}.row.conditionalStyles`) as unknown[] | undefined) ?? [];
+    expect(editor.apply(addRuleOp(table, existing)).ok).toBe(true);
+    const rule = `${table}.row.conditionalStyles[${existing.length}]`;
+    const ruleOps: Op[] = [
+      { op: 'setScalar', path: rule, keys: ['when', 'key'], value: 'name' },
+      { op: 'setScalar', path: rule, keys: ['when', 'scope'], value: 'document' },
+    ];
+    expect(editor.applyAll(ruleOps).ok).toBe(true);
+
+    const before = await transport.validate(editor.text(), params(), undefined);
+    const ignored = before.items.find((d) => d.code === 'row_condition_scope_ignored');
+    expect(ignored?.path).toBe(rule);
+    const fix = ignored ? fixFor(ignored, (path) => editor.read(path)) : null;
+    expect(fix).not.toBeNull();
+    expect(editor.applyAll(fix?.[0]?.ops ?? []).ok).toBe(true);
+    expect(editor.text()).not.toContain('scope');
+
+    const after = await transport.validate(editor.text(), params(), undefined);
+    expect(after.items.some((d) => d.code === 'row_condition_scope_ignored')).toBe(false);
+  });
 });

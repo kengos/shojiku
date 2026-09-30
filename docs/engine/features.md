@@ -1007,7 +1007,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   row is never conditioned; and a missing key is silent, so a blank
   form renders identically to one with no entries. 16 entries max
   (`too_many_row_conditions`). Diagnostics
-  `row_condition_not_boolean` (validate) /
+  `row_condition_not_boolean` / `row_condition_scope_ignored` (validate;
+  the form-mark `scope: document` has no effect on a row condition) /
   `row_condition_type_mismatch` / `row_condition_value_not_bool`
   (layout, warned once per entry). Capability
   `table.row.conditionalStyles`.

@@ -1734,7 +1734,10 @@ conditional rules the next section owns).
   code fires on a document that already parsed: when the engine
   names an unknown key on an item (`args.key`, with the item as `path`), the
   fix removes it — the only way back for a document the engine cannot parse,
-  since the Designer has no source editor.
+  since the Designer has no source editor. `row_condition_scope_ignored`
+  removes `when.scope` from the rule entry the diagnostic names — the only
+  way to clear it without deleting the rule, since the rule editor
+  deliberately never shows `scope`.
   - `diagnostics/fixWrites.ts` — the builders that WRITE a value rather than
     removing a key, split out because the obligation differs: a write puts a
     number the author never typed into the document, so the candidate carries

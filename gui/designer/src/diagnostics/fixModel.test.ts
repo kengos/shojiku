@@ -113,6 +113,30 @@ describe('fixFor — grid_key_ignored (three box locations)', () => {
   });
 });
 
+describe('fixFor — row_condition_scope_ignored', () => {
+  const T =
+    'sections:\n  body:\n    items:\n      - type: table\n        data: { key: rows }\n        row:\n          conditionalStyles:\n            - when: { key: kind, equals: heading, scope: document }\n              style: { textAlign: center }\n        columns: []\n';
+  const D = diag('row_condition_scope_ignored', {
+    path: 'sections.body.items[0].row.conditionalStyles[0]',
+  });
+  it('drops the scope and keeps the rest of the condition and its format', () => {
+    const { text, undone } = apply(T, D);
+    expect(text).not.toContain('scope');
+    expect(text).toContain('key: kind');
+    expect(text).toContain('equals: heading');
+    expect(text).toContain('textAlign: center');
+    expect(undone).toBe(T);
+  });
+  it('is null when the entry carries no scope', () => {
+    const ed = Editor.create(T.replace(', scope: document', ''));
+    expect(fixFor(D, editorRead(ed))).toBeNull();
+  });
+  it('is null when `when` is not a map', () => {
+    const ed = Editor.create(T.replace('{ key: kind, equals: heading, scope: document }', 'kind'));
+    expect(fixFor(D, editorRead(ed))).toBeNull();
+  });
+});
+
 describe('fixFor — table_pagination_key_ignored', () => {
   const T =
     'sections:\n  body:\n    items:\n      - type: table\n        autoPageBreak: false\n        repeatHeader: true\n        columns: []\n';

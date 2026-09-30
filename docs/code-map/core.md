@@ -263,7 +263,8 @@ injected at parse). The template model splits along CSS lines.
   echoed.
 - `validate/tables.rs` — table checks: bound array group, per-column
   content shape, row-relative keys, `cell:` sub-template bindings, and the
-  `conditionalStyles` predicates.
+  `conditionalStyles` predicates (+ the `scope: document` a row
+  condition ignores, warned without a catalog like the entry cap).
 - `validate/collect.rs` — table/image walks + the `RepeatRef` walk
   normalizing repeat+repeat_flow + depth cap + generic `walk_sections`.
   **Every walk here descends into a table column's `cell:` — and so do

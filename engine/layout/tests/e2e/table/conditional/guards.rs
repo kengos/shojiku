@@ -195,3 +195,41 @@ fn a_blank_form_renders_the_same_geometry_as_an_unconditioned_table() {
     );
     assert_eq!(row_fills(&with.pages[0]), row_fills(&without.pages[0]));
 }
+
+/// `scope: document` parses on a row condition but is not a document
+/// read: the key still resolves against the row (validate warns
+/// `row_condition_scope_ignored`; layout itself stays quiet). The
+/// top-level `kind` disagrees with the row's, so a document read would
+/// not apply the layer.
+#[test]
+fn a_document_scope_still_reads_the_row() {
+    let (doc, diags) = run(
+        r#"
+page: { margin: 0 }
+sections:
+  body:
+    type: flow
+    box: { x: 0, y: 0, w: 400, h: 600 }
+    items:
+      - type: table
+        data: { key: items }
+        cellPadding: 0
+        row:
+          conditionalStyles:
+            - when: { key: kind, equals: heading, scope: document }
+              style: { textAlign: center }
+        columns:
+          - data: { key: label }
+            width: 200
+"#,
+        json!({ "kind": "body", "items": [{ "label": "AAA", "kind": "heading" }] }),
+    );
+    assert_centered(&doc.pages[0], "AAA");
+    assert!(
+        !diags
+            .items
+            .iter()
+            .any(|d| d.code.as_str().starts_with("row_condition_")),
+        "diags: {diags:?}"
+    );
+}

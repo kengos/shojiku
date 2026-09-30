@@ -138,10 +138,14 @@ explicit escape:
 
 The key rides every binding carrier: `text` / `spans` / `qr_code` /
 `char_grid` / `image` / a `list`'s array key / a table column's `data:`,
-and a form mark's presence binding (`ellipse` / `checkbox` `data:`).
+an item's `visible:`, and a form mark's presence binding (`ellipse` /
+`checkbox` `data:`, a text item's `mark: { data }`).
 `validate` follows it — a document-scoped key is checked against the
 top-level scalars (declared field, format variant, params presence)
 instead of the array group, so the escape never opens an unchecked path.
+A table's `row.conditionalStyles[].when` is written like a form mark's
+binding but is NOT a carrier: a row condition always reads the row, and
+`scope: document` there is ignored with `row_condition_scope_ignored`.
 
 **A bare `{key}` carries no scope.** The `{key:format}` grammar stays
 two-part by design, so an UNDECLARED name inside a cell always reads the

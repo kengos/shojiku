@@ -60,6 +60,8 @@ export const ja: LanguageCatalog = {
     row_condition_equals_not_declared:
       '`{key}` の `enum` にこの `equals` の値がありません。行スタイルは決して適用されません',
     row_condition_value_not_bool: '`{key}` は真偽値ではありません。行スタイルは適用されません',
+    row_condition_scope_ignored:
+      '`{key}`: 行の条件では `scope: document` は効きません。キーは各行から読まれます',
     empty_link_url: 'リンク URL が空です。リンクは無視されました',
     unsupported_link_scheme:
       'リンク URL は制御文字を含まない http/https/mailto/tel である必要があります。リンクは無視されました',

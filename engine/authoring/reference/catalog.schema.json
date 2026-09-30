@@ -2418,7 +2418,7 @@
     },
     "MarkBinding": {
       "additionalProperties": false,
-      "description": "The presence predicate a form mark, a row condition or an item's `visible:` is driven by. Its key is read at the ambient scope unless it escapes to the document, and equality is type-strict.",
+      "description": "The presence predicate a form mark is driven by, and the shape a table row condition reuses (an item's `visible:` is its generalization, `VisibleBinding`). Its key is read at the ambient scope unless it escapes to the document, and equality is type-strict. A row condition is the exception: it always reads the row, and ignores `scope`.",
       "properties": {
         "equals": {
           "anyOf": [
@@ -2444,7 +2444,7 @@
               "type": "null"
             }
           ],
-          "description": "Which data the key resolves against inside a cell. `element` is the default; `document` reads top-level params, which a page-global flag needs."
+          "description": "Which data the key resolves against inside a cell. `element` is the default; `document` reads top-level params, which a page-global flag needs. Ignored on a table row condition, which warns `row_condition_scope_ignored`."
         }
       },
       "required": [
@@ -2899,7 +2899,7 @@
         },
         "when": {
           "$ref": "#/$defs/MarkBinding",
-          "description": "Required. The predicate, read relative to the row element exactly like a column's binding. `equals` matches a scalar type-strictly, or an array value by contains; with no `equals` the value is read as a boolean and the entry applies when it is true. A missing key is SILENT, so a blank-form params set simply matches nothing."
+          "description": "Required. The predicate, read relative to the row element exactly like a column's binding. `scope` has no effect here: the key is ALWAYS read from the row, and `scope: document` warns `row_condition_scope_ignored`. `equals` matches a scalar type-strictly, or an array value by contains; with no `equals` the value is read as a boolean and the entry applies when it is true. A missing key is SILENT, so a blank-form params set simply matches nothing."
         }
       },
       "required": [

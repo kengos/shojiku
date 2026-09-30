@@ -395,6 +395,17 @@ platform binaries.
 
 ### Fixed
 
+- **A conditional-formatting rule on a table's rows now says when its `scope`
+  does nothing.** A rule's condition is written like a form mark's
+  (`when: { key, equals? }`), so `scope: document` was accepted there too — and
+  silently ignored: a rule always reads the key from each row, never from the
+  top-level params. Validation now warns `row_condition_scope_ignored` on the
+  rule, translated wherever the other row-condition warnings are, and the
+  Designer's diagnostics panel offers **Fix** to remove the `scope` — the rule
+  editor does not show it, so that button is the way to clear it there. How the
+  table renders is unchanged, and `scope: element` (what a rule does anyway)
+  stays quiet.
+
 - **Layout warnings in the Designer show measured sizes as readable numbers,
   and five of them are reworded in plain terms.** A warning comparing two sizes used to
   print the engine's raw floating-point value — 「内容 13.299999999999999pt に対し

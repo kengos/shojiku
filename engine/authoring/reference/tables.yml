@@ -1673,6 +1673,11 @@
         "Code": "`row_condition_not_boolean`"
         "Meaning": "an `equals`-less `row.conditionalStyles` entry targets a non-boolean field"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["row_condition_scope_ignored"]
+      cells:
+        "Code": "`row_condition_scope_ignored`"
+        "Meaning": "a `row.conditionalStyles` entry's `when` sets `scope: document`, which a row condition ignores — its key is read from each row"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
     - keys: ["reserved_format_name"]
       cells:
         "Code": "`reserved_format_name`"

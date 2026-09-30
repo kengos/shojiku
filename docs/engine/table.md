@@ -278,6 +278,9 @@ row:
   `equals` matches a scalar type-strictly (`"2"` never equals `2`) or,
   for an array value, by contains (multi-select); with no `equals` the
   value is read as a boolean and the entry applies when it is `true`.
+  The form-mark `scope` does not apply: a row condition always reads
+  the row, so `scope: document` warns `row_condition_scope_ignored`
+  (validate) and is otherwise ignored.
 - A **missing key is silent** — a blank-form params set simply matches
   nothing, and the table renders exactly as it would without the
   entries. A value the predicate cannot act on warns
@@ -397,6 +400,7 @@ own `data` problems stay on the table item.
 | `row_condition_type_mismatch` | a row value's type differs from the entry's `equals`; layer not applied. With definitions, the DECLARED type is checked the same way at validate |
 | `row_condition_equals_not_declared` | the entry's `equals` literal is outside the field's declared `enum` — a layer that can never apply |
 | `row_condition_value_not_bool` | a row value is not a boolean under an `equals`-less entry; layer not applied |
+| `row_condition_scope_ignored` | an entry's `when` sets `scope: document`; ignored — the key is read from each row |
 | `too_many_row_conditions` | more than 16 `conditionalStyles` entries; the rest are ignored |
 | `ignored_column_key` | `fit` on a non-image column; ignored |
 | `cell_image_assets_capped` | per-element cell images over the 1000-load cap; rest skipped |
