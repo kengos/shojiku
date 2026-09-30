@@ -709,7 +709,7 @@ export const zhTw: LanguageCatalog = {
     'panel.visible.documentScope': '此條件讀取最上層資料，而非重複列的資料。',
     'panel.visible.remove': '一律顯示',
     'panel.rowConditions.hint': '依資料的值，只改變特定列的外觀（例如把標題列置中）。',
-    'panel.rowConditions.add': '+ 新增列條件',
+    'panel.rowConditions.add': '+ 新增規則',
     'panel.rowConditions.when': '當 {field} 為 {value} 時',
     'panel.rowConditions.whenOn': '當 {field} 為「是」時',
     'panel.rowConditions.field': '檢查的欄位',
@@ -733,7 +733,14 @@ export const zhTw: LanguageCatalog = {
     'panel.column.style': '欄樣式',
     'panel.column.styleHint':
       '套用於此欄的內文儲存格。其文字對齊也會優先於標題列，作用於此欄自己的標題文字。',
-    'panel.rowConditions.remove': '刪除此條件',
+    'panel.rowConditions.remove': '刪除此規則',
+    'panel.rowConditions.moveUp': '規則上移',
+    'panel.rowConditions.moveDown': '規則下移',
+    'panel.rowConditions.precedence':
+      '與某列相符的規則都會套用。如果兩條規則設定了同一項格式，以上方的規則為準。',
+    'panel.rowConditions.overCap':
+      '未套用：只會使用此清單中最下方的 {max} 條規則。請將其下移，或刪除一條規則。',
+    'panel.rowConditions.atCap': '規則最多 {max} 條。如需新增，請先刪除。',
     'panel.field.italic': '斜體',
     'panel.field.verticalAlign': '垂直對齊',
     'style.value.verticalAlign.top': '頂端',

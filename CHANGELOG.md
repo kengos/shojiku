@@ -42,6 +42,20 @@ platform binaries.
   `false`: the engine compares types strictly, so the text `"false"` would never
   match.
 
+  Rules can be put in order, as in Sheets: once there are two, drag a rule by
+  its grip or use its **Move rule up** / **Move rule down** buttons. Every rule
+  that matches a row applies to it, and where two set the same thing the one
+  higher in the list wins — the list
+  shows the file's `row.conditionalStyles` bottom-up, because the engine lets a
+  later entry override an earlier one, and a note under the list says so once
+  there are two rules. A new rule is added at the top, where it wins. A move is
+  one undo step and carries the rule across as it is written in the file, and a
+  rule you have open stays open on the same rule when a move under it is undone.
+  The engine uses at most 16 rules per table, so **Add a rule** stops there and
+  says why, and a rule past the limit in a hand-edited file is marked as not
+  applied. The buttons that add and remove a rule now say "rule", like the rest
+  of the section.
+
 - **A table's rows and page behaviour can now be set in the Designer.** Select a
   table and its Content tab holds a new **Rows and pages** section under the
   columns: whether the body rows fit their content (with a minimum height) or sit

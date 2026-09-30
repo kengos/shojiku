@@ -80,6 +80,25 @@ export function IconChevronDown(props: IconProps) {
   );
 }
 
+/** Six dots — a list row's drag grip (pointer-only; the row's buttons are
+ * its keyboard path). */
+export function IconGrip(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 4h.01M10 4h.01M6 8h.01M10 8h.01M6 12h.01M10 12h.01" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+/** The mirror of `IconChevronDown` — a list row's "move up" button. */
+export function IconChevronUp(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 10l4-4 4 4" />
+    </Svg>
+  );
+}
+
 /** A checkmark — the selected-entry marker in a single-choice menu. */
 export function IconCheck(props: IconProps) {
   return (

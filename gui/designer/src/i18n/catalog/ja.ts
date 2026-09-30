@@ -789,7 +789,7 @@ export const ja: LanguageCatalog = {
     'panel.visible.remove': '常に表示する',
     'panel.rowConditions.hint':
       'データの値に応じて、特定の行だけ見た目を変えます（例: 見出し行を中央寄せ）。',
-    'panel.rowConditions.add': '+ 条件スタイルを追加',
+    'panel.rowConditions.add': '+ ルールを追加',
     'panel.rowConditions.when': '{field} が {value} のとき',
     'panel.rowConditions.whenOn': '{field} が「はい」のとき',
     'panel.rowConditions.field': '対象フィールド',
@@ -813,7 +813,14 @@ export const ja: LanguageCatalog = {
     'panel.column.style': '列のスタイル',
     'panel.column.styleHint':
       'この列の本文セルに適用されます。文字配置は、この列の見出しラベルにもヘッダー行より優先して効きます。',
-    'panel.rowConditions.remove': 'この条件を削除',
+    'panel.rowConditions.remove': 'このルールを削除',
+    'panel.rowConditions.moveUp': 'ルールを上へ移動',
+    'panel.rowConditions.moveDown': 'ルールを下へ移動',
+    'panel.rowConditions.precedence':
+      '行に当てはまるルールはすべて適用されます。同じ書式（背景色など）を設定するルールが重なったときは、上にあるルールが優先されます。',
+    'panel.rowConditions.overCap':
+      '適用されません：使われるのは、リストの下から {max} 件のルールだけです。下へ移動するか、ルールを削除してください。',
+    'panel.rowConditions.atCap': 'ルールは {max} 件までです。追加するには削除してください。',
     'panel.field.italic': '斜体',
     'panel.field.verticalAlign': '縦位置',
     'style.value.verticalAlign.top': '上',

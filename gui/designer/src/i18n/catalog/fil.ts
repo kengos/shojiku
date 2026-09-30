@@ -574,7 +574,7 @@ export const fil: LanguageCatalog = {
     'panel.visible.remove': 'Palaging ipakita',
     'panel.rowConditions.hint':
       'Baguhin ang itsura ng ilang row batay sa datos nito (halimbawa, isentro ang mga heading row).',
-    'panel.rowConditions.add': '+ Magdagdag ng kondisyon',
+    'panel.rowConditions.add': '+ Magdagdag ng panuntunan',
     'panel.rowConditions.when': 'Kapag ang {field} ay {value}',
     'panel.rowConditions.whenOn': 'Kapag "Oo" ang {field}',
     'panel.rowConditions.field': 'Field na susuriin',
@@ -598,7 +598,14 @@ export const fil: LanguageCatalog = {
     'panel.column.style': 'Estilo ng kolum',
     'panel.column.styleHint':
       'Nalalapat sa mga cell ng nilalaman ng kolum na ito. Ang pagkakahanay nito ay mananaig din sa hanay ng pamagat para sa sariling label ng kolum na ito.',
-    'panel.rowConditions.remove': 'Alisin ang kondisyong ito',
+    'panel.rowConditions.remove': 'Alisin ang panuntunang ito',
+    'panel.rowConditions.moveUp': 'Itaas ang panuntunan',
+    'panel.rowConditions.moveDown': 'Ibaba ang panuntunan',
+    'panel.rowConditions.precedence':
+      'Lahat ng panuntunang tumutugma sa isang row ay nalalapat. Kapag pareho ang itinatakda ng dalawa, ang nasa itaas ang nananaig.',
+    'panel.rowConditions.overCap':
+      'Hindi nalalapat — ang pinakamababang {max} panuntunan lang sa listahang ito ang ginagamit. Ilipat ito pababa, o magbura ng isang panuntunan.',
+    'panel.rowConditions.atCap': 'Hanggang {max} panuntunan lang. Magbura muna para makapagdagdag.',
     'panel.field.italic': 'Italic',
     'panel.field.verticalAlign': 'Patayong pagkakahanay',
     'style.value.verticalAlign.top': 'Itaas',

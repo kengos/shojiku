@@ -1333,15 +1333,37 @@ conditional rules the next section owns).
 - `panel/RowConditions.tsx` — the table's 「Conditional formatting」 section
   (`TableConditionsSection`, its own `PanelSection` + gate) in Google Sheets'
   conditional-format sidebar shape: `RowConditionsSection` shows either the rule
-  LIST or ONE rule's view in its place (the open index is local UI state; an
-  index an undo took away shows the list). Its inputs: path, controller, floor,
+  LIST or ONE rule's view in its place. Its inputs: path, controller, floor,
   the raw entries, the row-scope `options`, and one `host {fontFamilies, params,
   dataKey}` bundle. Add appends a rule as ONE op and opens it; remove is on the
   list row. The section never evaluates a predicate — how many rows a rule hits
   is the canvas preview's answer. Parts:
-  - `RuleCard.tsx` — one LIST row: the sentence (`ruleSummary.ts`, shared with
+  - `useOpenRule.ts` — the open rule, local UI state held as a WIRE index and
+    kept on the same rule while the list changes under it, through
+    `controller.subscribe`: an applied change is remapped exactly from its ops,
+    an undo/redo (which reports none) from the list before and after
+    (`openRuleRemap.ts`: `openAfterOps`, and `followOpenRule`, which follows
+    only a recognisable shape — a permutation by value, one entry out or in by
+    the index shift — because a value match alone would jump to another rule
+    that equals the undone one). An index past the end shows the list.
+  - `RuleList.tsx` — the LIST: the cards REVERSED (`ruleOrder.ts`: the engine
+    applies entries in listed order and a later one wins, so the top card is the
+    last entry — Sheets' "top wins" reading; only the list maps, the wire, the op
+    builders and the open index stay in wire indices), the precedence note at 2+
+    rules, add disabled at `MAX_ROW_CONDITIONS` (16, the engine's
+    `MAX_ROW_CONDITIONAL_STYLES`, pinned by a source-reading drift test) with a
+    reason line, and a "not applied" line on a hand-authored card past the cap.
+    A reorder is ONE `moveItem` (`moveRuleOp`; up = wire +1), from a card's ↑/↓
+    buttons — the focus follows the moved rule, to the other button when the
+    move reached an end — or its grip's pointer drag (`useRuleDrag.ts`: the
+    layer tree's `dropIndexFor` in display positions, `DRAG_THRESHOLD_PX`,
+    Escape cancels; the drop line and the release both read `dragMoveOp`, which
+    maps `moveOpFor` from display to wire).
+  - `RuleCard.tsx` — one LIST row by DISPLAY position: the grip (`IconGrip`;
+    it and ↑/↓ render only at 2+ rules), the sentence
+    (`ruleSummary.ts`, shared with
     the view's heading: when … is …, is yes, is no — a boolean `equals: true`
-    reads as yes), the remove button and the applied-style chips
+    reads as yes), ↑/↓ (disabled at the ends), the remove button and the applied-style chips
     (`ruleStyleChips.tsx`: colours as swatch dots, LABELLED as what the rule
     ADDS, and saying outright when it adds nothing — decided from the WIRE
     (`styleKeyCount` + `styleNameCount`), never from whether a chip was produced;
@@ -1355,7 +1377,8 @@ conditional rules the next section owns).
     a FIXED owned set (`backgroundColor`/`color`/`fontWeight`) and removes the
     owned keys it does not declare, in ONE `applyAll`; the active tile is
     `matchRulePreset` over the wire; `Map` lookup), the SHARED `TableBandFields`
-    at the entry's `style.*` over `ruleContext` (no vertical alignment), the
+    at the entry's `style.*` over `ruleContext` (vertical alignment only behind
+    `TABLE_BODY_VALIGN_CAPABILITY`, via `host.verticalAlign`), the
     rule's `styleNames` in `AdvancedStyles`, and 「完了」. Every edit applies at
     once, so back and 「完了」 both only return to the list. It takes the entry
     PATH, not its index.

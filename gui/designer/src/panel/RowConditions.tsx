@@ -5,8 +5,11 @@
 // (`RuleControls`) in place of the list. Every edit applies at once; the view's
 // back button and 「完了」 only return to the list.
 //
-// The open rule is Designer-local UI state: it resets when the section
+// The open rule is Designer-local UI state (`useOpenRule`): it follows its rule
+// while the list is reordered or undone under it, resets when the section
 // remounts (a tab switch, another selection) and never reaches the template.
+// The list itself — shown reversed so the top rule is the one that wins — is
+// `RuleList`.
 //
 // The section never evaluates a predicate itself: how many rows a rule hits is
 // the engine's answer, shown by the canvas preview. The value chips it offers
@@ -14,22 +17,21 @@
 // than a count.
 
 import type { Op } from '@shojiku/designer-core';
-import { useState } from 'react';
 import { useI18n } from '../i18n/context';
 import { cascadeContext } from '../toolbar/cascade';
-import { BTN_SM } from '../ui/chrome';
 import { ruleContext } from './bandCascade';
 import { hasCapability, type ItemPanelProps } from './itemPanelProps';
 import { applyPanelOp } from './model';
 import { PanelSection } from './PanelSection';
 import { type PickerOption, pickerOptions } from './pickerModel';
-import { RuleCard } from './RuleCard';
 import { RuleControls } from './RuleControls';
-import { addRuleOp, removeRuleOp, repointRuleOps, setRuleEqualsOp } from './rowConditionOps';
+import { RuleList } from './RuleList';
+import { addRuleOp, repointRuleOps, setRuleEqualsOp } from './rowConditionOps';
 import { openedRule, readRawEntries, readRowConditions } from './rowConditionsModel';
 import { sampleValues } from './ruleValues';
 import { bodyValignHost, type ValignHost } from './TableBandFields';
 import { conditionsSummary } from './tableDecorationSummaries';
+import { useOpenRule } from './useOpenRule';
 
 /** The whole section, gated on `table.row.conditionalStyles`. */
 export function TableConditionsSection(props: ItemPanelProps) {
@@ -81,17 +83,16 @@ export interface RowConditionsSectionProps {
     readonly dataKey: string;
     readonly verticalAlign: ValignHost;
   };
-  /** The raw `row.conditionalStyles` entries — every op rewrites the list, so
-   * the component hands them back to the model untouched. */
+  /** The raw `row.conditionalStyles` entries, in wire order — the op builders
+   * guard their indices against them, so they are handed back untouched. */
   readonly entries: readonly unknown[];
   /** The row-scope binding options (the table's own array group). */
   readonly options: readonly PickerOption[];
 }
 
 export function RowConditionsSection(props: RowConditionsSectionProps) {
-  const { t } = useI18n();
   const { path, controller, entries, options, floor, host } = props;
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const { open: openIndex, setOpen: setOpenIndex } = useOpenRule(controller, path, entries);
   const rules = readRowConditions(entries);
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   const pickedFor = (key: string) => options.find((o) => o.key === key);
@@ -142,36 +143,16 @@ export function RowConditionsSection(props: RowConditionsSectionProps) {
     );
   }
   return (
-    <>
-      {rules.length === 0 ? (
-        <p className="mt-0 mb-1.5 text-muted text-sm">{t('panel.rowConditions.hint')}</p>
-      ) : (
-        <ul className="m-0 mb-1.5 flex list-none flex-col gap-1.5 p-0">
-          {rules.map((rule, index) => (
-            <RuleCard
-              // The list is index-addressed (the wire is a sequence with no
-              // ids), so the index is the only stable handle a rule has.
-              // biome-ignore lint/suspicious/noArrayIndexKey: see above
-              key={index}
-              rule={rule}
-              index={index}
-              picked={pickedFor(rule.key)}
-              onOpen={() => setOpenIndex(index)}
-              onRemove={() => dispatch(removeRuleOp(path, entries, index))}
-            />
-          ))}
-        </ul>
-      )}
-      <button
-        type="button"
-        className={`${BTN_SM} w-full text-center`}
-        onClick={() => {
-          dispatch(addRuleOp(path, entries));
-          setOpenIndex(rules.length);
-        }}
-      >
-        {t('panel.rowConditions.add')}
-      </button>
-    </>
+    <RuleList
+      path={path}
+      list={{ entries, rules }}
+      pickedFor={pickedFor}
+      dispatch={dispatch}
+      onOpen={setOpenIndex}
+      onAdd={() => {
+        dispatch(addRuleOp(path, entries));
+        setOpenIndex(rules.length);
+      }}
+    />
   );
 }
