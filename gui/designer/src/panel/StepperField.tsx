@@ -5,6 +5,7 @@
 import { type ReactNode, useId } from 'react';
 import { useI18n } from '../i18n/context';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
+import { IconChevronDown, IconChevronUp } from '../ui/icons';
 import { TipBubble } from '../ui/TipBubble';
 import { badgeText, showsUnitHint, UnitBadge } from './fields';
 import { useReseedKey } from './useReseedKey';
@@ -95,7 +96,7 @@ export function StepperField({
   // are rounded: the column is flush against the input, so its left edge is the
   // input's right edge and must stay square.
   const stepBtn =
-    'flex flex-1 cursor-pointer items-center justify-center border border-border bg-chrome px-1.5 text-[9px] leading-none text-text disabled:cursor-default disabled:opacity-40';
+    'flex flex-1 cursor-pointer items-center justify-center border border-border bg-chrome px-1.5 leading-none text-text disabled:cursor-default disabled:opacity-40';
   return (
     <span className="mb-2 block">
       {/* The `?` is a SIBLING of the label, never inside it: a `<label>`'s text
@@ -169,7 +170,7 @@ export function StepperField({
             disabled={!canStep}
             onClick={() => onStep(1)}
           >
-            ▲
+            <IconChevronUp size={10} />
           </button>
           <button
             type="button"
@@ -178,7 +179,7 @@ export function StepperField({
             disabled={!canStep}
             onClick={() => onStep(-1)}
           >
-            ▼
+            <IconChevronDown size={10} />
           </button>
           {!canStep && stepHint !== undefined ? <TipBubble text={stepHint} /> : null}
         </span>

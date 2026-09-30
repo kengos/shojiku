@@ -5,7 +5,8 @@
 // text rendered through React's escaping.
 
 import { useI18n } from '../i18n/context';
-import { BTN_SM } from '../ui/chrome';
+import { BTN_SM, BTN_SM_ICON } from '../ui/chrome';
+import { IconClose } from '../ui/icons';
 import { MAX_FORM_FIELDS } from './iterableModel';
 import { FIELD_KINDS, type FieldKind, type ScaffoldField } from './scaffoldFields';
 
@@ -83,11 +84,11 @@ export function IterableCreateForm({ draft, onDraft, showFields }: IterableCreat
               </select>
               <button
                 type="button"
-                className={BTN_SM}
+                className={BTN_SM_ICON}
                 aria-label={t('iterable.removeField')}
                 onClick={() => setFields(fields.filter((_, i) => i !== index))}
               >
-                ×
+                <IconClose size={12} />
               </button>
             </div>
           ))}

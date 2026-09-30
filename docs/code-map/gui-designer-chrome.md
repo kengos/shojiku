@@ -691,9 +691,13 @@ is Tailwind utilities over the `--sj-*` tokens.
   middle / bottom — so the mark says WHICH section without a letter that
   would only work in English.
 - `ui/chromeConvention.test.ts` — the node-env convention GATE: fails
-  on native `title=`, on a text character standing in for an icon, or on a
+  on native `title=`, on a text character standing in for an icon (judged
+  by Unicode CLASS — arrows, math/technical symbols, box drawing through
+  dingbats, braille, pictographs, private-use icon-font codepoints — with `GLYPH_TEXT` granting named
+  characters to the few files where they are text, and the catalogs and
+  tutorial copy exempt by path), or on a
   toolbar group rule (`w-px` beside `bg-border`) authored anywhere but
-  `ui/Sep.tsx` (comments blanked; `i18n/catalog/` exempt; two pinned
+  `ui/Sep.tsx` (comments blanked; two pinned
   exceptions — the app header's document-title button, which lives in
   designer-app, and `ui/Sep.tsx` itself as the rule's mint site). Walks BOTH
   packages via `testkit/sourceWalk.ts`.

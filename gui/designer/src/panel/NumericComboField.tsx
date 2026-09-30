@@ -24,6 +24,7 @@ import { usePopover } from '../hooks/usePopover';
 import { placementClasses, usePopoverPlacement } from '../hooks/usePopoverPlacement';
 import { useI18n } from '../i18n/context';
 import { FIELD_LABEL, INPUT, PICKER_ROW, PICKER_TOGGLE_FLUSH } from '../ui/chrome';
+import { IconChevronDown } from '../ui/icons';
 
 /** One offered value. */
 export interface ComboPreset {
@@ -137,9 +138,7 @@ export function NumericComboField({
           aria-label={t('combo.open', { field: label })}
           onClick={() => setOpen((v) => !v)}
         >
-          <span aria-hidden="true" className="text-[9px] leading-none">
-            ▼
-          </span>
+          <IconChevronDown size={12} className="text-muted" />
         </button>
         {open ? (
           <div

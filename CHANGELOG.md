@@ -308,6 +308,15 @@ platform binaries.
   alignment on the body rows, a rule and **Text (whole table)** only against
   such an engine.
 
+- **Designer buttons that showed a typed character now draw an icon.** The ▲▼
+  on every number stepper, the ▼ that opens the character grid's ruling-width
+  and ruby-size presets, the − and + beside the zoom level and the font size,
+  the column sheet's drag grip, the move-up, move-down and remove buttons on a
+  table's column list, and the remove button on the list-data dialog's fields
+  were text, so they drew in whatever font the system picked — the braille grip
+  and the arrows most visibly. They now use the same icon set as the rest of
+  the chrome, and every button keeps the name a screen reader announces.
+
 - **`mergeEmptyCells` now merges a table's empty cells the way a spreadsheet
   does.** In a body row an empty cell joins the nearest cell with a value on its
   LEFT, which widens to the right over it: in `[A][ ][B]` it is now A's cell

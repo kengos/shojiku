@@ -7,12 +7,13 @@
 
 import { useI18n } from '../i18n/context';
 import { SELECT_SM } from '../ui/chrome';
+import { IconMinus, IconPlus } from '../ui/icons';
 import { isZoomStep, MAX_ZOOM, MIN_ZOOM, stepZoom, ZOOM_STEPS, zoomPercent } from './zoom';
 
 const EPS = 1e-9;
 
 const ZOOM_STEP =
-  'min-w-[22px] cursor-pointer rounded-md border border-border bg-bg px-1.5 py-0.5 leading-none text-text disabled:cursor-default disabled:opacity-40';
+  'inline-flex min-w-[22px] cursor-pointer items-center justify-center rounded-md border border-border bg-bg px-1.5 py-0.5 leading-none text-text disabled:cursor-default disabled:opacity-40';
 
 export interface ZoomControlProps {
   readonly zoom: number;
@@ -46,7 +47,7 @@ export function ZoomControl({ zoom, onZoom, onFit }: ZoomControlProps) {
         disabled={zoom <= MIN_ZOOM + EPS}
         onClick={() => onZoom(stepZoom(zoom, -1))}
       >
-        −
+        <IconMinus size={12} />
       </button>
       <select
         className={SELECT_SM}
@@ -69,7 +70,7 @@ export function ZoomControl({ zoom, onZoom, onFit }: ZoomControlProps) {
         disabled={zoom >= MAX_ZOOM - EPS}
         onClick={() => onZoom(stepZoom(zoom, 1))}
       >
-        +
+        <IconPlus size={12} />
       </button>
     </div>
   );

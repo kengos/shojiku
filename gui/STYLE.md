@@ -430,8 +430,14 @@ re-inventing them:
 BOTH packages (`designer/src` and `designer-app/src`) and fails on a native
 `title=` DOM attribute, a banned text glyph, or a group rule (`w-px` beside
 `bg-border`) authored outside `ui/Sep.tsx`.
-Adding a new mark character to a control means the guard's character set is
-incomplete — widen it in the same change rather than working around it.
+The glyph rule is judged by Unicode CLASS (arrows, mathematical and technical
+symbols, box drawing through dingbats, braille, pictographs, an icon font's
+private-use codepoints), never by a list
+of the characters once in use: a list is what let the steppers' ▲▼ and the
+column sheet's braille grip through. Where a class character is genuinely TEXT
+— a keycap on the shortcut sheet, `210 × 297 mm` — the guard grants that
+character to that file by name; a whole prose module (the catalogs, the
+tutorial copy) is exempt by path.
 - Value fields must fit their widest realistic value (`10.5`); note Chrome
   reserves indicator width inside datalist inputs even when hidden — the size
   field dropped its datalist for exactly this.
