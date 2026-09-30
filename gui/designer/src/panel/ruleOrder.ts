@@ -7,10 +7,11 @@
 //
 // A reorder is ONE `moveItem` on the sequence (never a whole-list rewrite, which
 // would re-serialize every rule), so the moved rule keeps its own text and
-// inline comment, and the move is one undo step. A comment written ABOVE the
-// first entry is the exception: the YAML library attaches it to the sequence,
-// not to that entry, so it stays at the top of the list. The drag's slot math
-// is the layer tree's (`moveOpFor`), run in display space and then mapped.
+// comments, and the move is one undo step — including the comment directly
+// above the first entry, which `moveItem` hands to that entry although the
+// YAML library files it on the sequence; a note separated from it by a blank
+// line stays at the top as the list's. The drag's slot math is the layer
+// tree's (`moveOpFor`), run in display space and then mapped.
 
 import type { Op } from '@shojiku/designer-core';
 import { moveOpFor } from '../tree/reorder';

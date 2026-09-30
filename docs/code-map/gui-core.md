@@ -106,6 +106,26 @@ files and `e2e/` excluded, with NO waiver list.
   The containment walk needs no budget — a
   parsed document is a TREE (an alias is a leaf node, not a back-edge),
   and this check is what keeps it one.
+  Every splice runs inside `carried`, which hands the ENTRY'S part of
+  each touched block seq's head comment to its first entry for the move
+  and back after it (`headComment.ts`), so entry 0's comment travels like
+  any other's while a note about the list stays.
+- `headComment.ts` — the comment above a BLOCK seq's FIRST entry, which
+  `eemeli/yaml` parses onto the SEQ (`commentBefore`) where every later
+  entry's sits on the entry. The author's blank line decides whose it is:
+  the lines below the LAST blank line are the entry's (`lift` hands them
+  to it before the splice), the lines down to that blank line are a note
+  about the list and stay; `settle` folds the new first entry's comment
+  back under that note — the parser's shape, so the output stays at the
+  fixed point. The parser keeps a blank line as an empty comment line (a
+  bare `#` is a single space) and the serializer writes it back, so the
+  reading survives every save. A key-line `items: # c` is parsed to the
+  same place, so it reads as the entry's (the first save writes it onto
+  its own line). A FLOW seq is skipped (a comment above `[ … ]` is the
+  list's). `keepAsListNote` ends
+  an EMPTY seq's comment with a blank line when the first entry lands in
+  it, since it had no entry to describe. No public surface — pinned
+  through `seqMove.test.ts`.
 - `snippet.ts` — what a snippet VALUE is, refused without reading the
   document: depth/node caps (`MAX_SNIPPET_DEPTH` also terminates cyclic
   hostile values, `MAX_SNIPPET_NODES`), finite scalars only,
@@ -165,7 +185,8 @@ files and `e2e/` excluded, with NO waiver list.
 
 Tests are sibling-per-module (`keyOps.test.ts` = the five map-key ops,
 `seqOps.test.ts` = the four sequence ops, `seqMove.test.ts` = what a
-SECOND sequence brings to `moveItem`, `snippet.test.ts` =
+SECOND sequence brings to `moveItem` plus whose the comment above a
+seq's first entry is (`headComment.ts`), `snippet.test.ts` =
 `isSnippetValue`, `history.test.ts` = `trimHistory`, `ops.test.ts` =
 dispatch + the root-addressed form), all exercised through `applyOp` —
 `opTarget.ts`/`opCreate.ts`/`opTypes.ts` have no separate public surface

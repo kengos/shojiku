@@ -429,6 +429,15 @@ platform binaries.
   table renders is unchanged, and `scope: element` (what a rule does anyway)
   stays quiet.
 
+- **Reordering a list in the Designer takes the first entry's comment with it.**
+  A `# comment` written directly above the first entry of a list stayed at the
+  top when that entry was moved — dragged in the layer tree, the column sheet,
+  the conditional-formatting rules or on the canvas — and ended up above
+  whichever entry came first instead. It now travels with its entry, the way
+  every other entry's comment already did. A comment separated from the first
+  entry by a blank line is read as a note about the whole list and stays at the
+  top.
+
 - **Layout warnings in the Designer show measured sizes as readable numbers,
   and five of them are reworded in plain terms.** A warning comparing two sizes used to
   print the engine's raw floating-point value — 「内容 13.299999999999999pt に対し
