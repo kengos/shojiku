@@ -3,7 +3,9 @@
 // (stopping the Designer's own Escape-to-deselect), and click suppression
 // after a completed or cancelled drag. Semantics-free — what a drag MEANS
 // (reorder, move/resize, palette insert) is the caller's: it supplies the
-// payload at press and receives it back with the drop point.
+// payload at press and receives it back with the drop point. The Designer's
+// LIST reorders use `hooks/usePointerReorder` instead: a list starts on travel
+// along its own axis only and re-reads its drop on every move.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 

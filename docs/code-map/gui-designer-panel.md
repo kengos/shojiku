@@ -1409,10 +1409,10 @@ conditional rules the next section owns).
     reason line, and a "not applied" line on a hand-authored card past the cap.
     A reorder is ONE `moveItem` (`moveRuleOp`; up = wire +1), from a card's ↑/↓
     buttons — the focus follows the moved rule, to the other button when the
-    move reached an end — or its grip's pointer drag (`useRuleDrag.ts`: the
-    layer tree's `dropIndexFor` in display positions, `DRAG_THRESHOLD_PX`,
-    Escape cancels; the drop line and the release both read `dragMoveOp`, which
-    maps `moveOpFor` from display to wire).
+    move reached an end — or its grip's pointer drag (`useRuleDrag.ts`, over the shared
+    `hooks/usePointerReorder.ts` machine: the layer tree's `dropIndexFor` in
+    display positions; the drop line and the release both read `dragMoveOp`,
+    which maps `moveOpFor` from display to wire).
   - `RuleCard.tsx` — one LIST row by DISPLAY position: the grip (`IconGrip`;
     it and ↑/↓ render only at 2+ rules), the sentence
     (`ruleSummary.ts`, shared with
@@ -1499,7 +1499,10 @@ conditional rules the next section owns).
   this transposed view is for; the rest of a column's styling lives in
   `ColumnForm`. The existing sample row renders under the pick, so the row above
   it is showing its own effect. Parts:
-  `useColumnHeaderDrag.ts` (the header reorder machine),
+  `useColumnHeaderDrag.ts` (the header reorder over the shared
+  `hooks/usePointerReorder.ts` machine — Escape and pointercancel cancel, and
+  the drop line down the whole column strip is painted from the same
+  `moveOpFor` the release commits, so it shows only where a drop moves),
   `TableColumnCells.tsx` (the cell parts incl. the sample row over
   `displaySample`, and `ColumnAlignRow` — the alignment row itself, which lives
   there because the sheet file is the grid layout and nothing else),

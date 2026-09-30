@@ -1,7 +1,8 @@
 // What a row DRAG decides: the insertion slot a pointer is over, the sequence
 // position a tree path names, and the `moveItem` op that realizes the drop.
-// Pure geometry + op building — the drag machinery that feeds it is
-// `useRowReorder`, and the selection that survives an edit is `selection.ts`.
+// Pure geometry + op building, shared by every list reorder in the Designer —
+// the pointer machinery that feeds it is `hooks/usePointerReorder`, and the
+// selection that survives an edit is `selection.ts`.
 
 /** One sibling row's vertical extent, in any consistent coordinate space. */
 export interface RowRect {

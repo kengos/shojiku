@@ -1,9 +1,9 @@
-// What a row drag IS while it runs: the in-flight state, the live row rects it
+// What a row drag IS while it runs: which row it carries, the live row rects it
 // measures against, how it MARKS one row (dragged / drop-line above / below),
-// and the ops a release commits. The pointer + keyboard machine that produces
-// the state is `useRowReorder`; where a pointer LANDS is `rowDrop.ts`, and
-// what a cross-parent landing means is the shared `canvas/reparent` model the
-// canvas uses too.
+// and the ops a release commits. The pointer machine is the shared
+// `hooks/usePointerReorder`, which `useRowReorder` drives with these; where a
+// pointer LANDS is `rowDrop.ts`, and what a cross-parent landing means is the
+// shared `canvas/reparent` model the canvas uses too.
 //
 // The rects are read from the row-element ref map at the moment they are needed,
 // never captured at render time — a drop must decide against where the rows
@@ -22,15 +22,18 @@ import type { RowSlot, VisibleRow } from './rowDrop';
 
 const ITEMS_SUFFIX = '.items';
 
-export interface DragState {
+/** Which row a drag carries: its path, its parent sequence and its index there. */
+export interface RowDragKey {
   readonly path: string;
   readonly parent: string;
   readonly from: number;
-  readonly pointerId: number;
-  readonly startY: number;
-  readonly started: boolean;
-  /** Where the pointer currently drops — `null` when nothing under it can
-   * take this row, which paints no indicator and releases as a no-op. */
+}
+
+/** A drag past the threshold: its row, and where the pointer currently drops —
+ * `null` when nothing under it can take this row, which paints no indicator
+ * and releases as a no-op. */
+export interface ActiveRowDrag {
+  readonly key: RowDragKey;
   readonly drop: RowSlot | null;
 }
 
@@ -170,7 +173,7 @@ function treeReparentOps(
  * there would (`bandLanding`). */
 export function rowDropOps(
   read: ReadFn,
-  drag: DragState,
+  drag: RowDragKey,
   drop: RowSlot,
 ): { readonly ops: readonly Op[]; readonly selectPath: string } | null {
   if (drop.parent === drag.parent) {
@@ -190,15 +193,15 @@ export function rowDropOps(
 /** The drop indicator renders on the row occupying the active slot (line
  * above), or as a line below the last row when the slot is the tail. */
 export function rowDragMarks(
-  drag: DragState | null,
+  active: ActiveRowDrag | null,
   path: string,
   position: { readonly parent: string; readonly index: number } | null,
   isEnd: (parent: string, index: number) => boolean,
 ): RowDragMarks {
-  const dragging = drag?.started === true && drag.path === path;
+  const dragging = active?.key.path === path;
   let dropBefore = false;
   let dropAfter = false;
-  const drop = drag?.started === true ? drag.drop : null;
+  const drop = active === null ? null : active.drop;
   if (drop !== null && position !== null && drop.parent === position.parent) {
     if (drop.index === position.index) {
       dropBefore = true;

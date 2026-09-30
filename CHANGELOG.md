@@ -353,6 +353,16 @@ platform binaries.
   alignment on the body rows, a rule and **Text (whole table)** only against
   such an engine.
 
+- **Dragging a column in a table's column sheet now shows where it will land,
+  and can be called off.** A line runs down the whole column strip at the gap
+  the column would drop into, and only where letting go would actually move it.
+  Escape cancels the drag, as it does in the layer tree and the
+  conditional-formatting list. All three lists now share one drag gesture, so
+  they also agree on the details: when the browser cancels a second pointer
+  (another finger on a touch screen), a drag in progress now carries on. On a
+  touch screen a finger on a column header now drags the column instead of
+  scrolling the sheet, as it does on a layer-tree row and a rule's grip.
+
 - **Designer buttons that showed a typed character now draw an icon.** The ▲▼
   on every number stepper, the ▼ that opens the character grid's ruling-width
   and ruby-size presets, the − and + beside the zoom level and the font size,

@@ -242,6 +242,30 @@ describe('the grip drag', () => {
     expect(screen.getByTestId('text').textContent).toBe(before);
   });
 
+  it('keeps a running drag through ANOTHER pointer’s cancel', () => {
+    render(<Live keys={['a', 'b', 'c']} />);
+    stubRects();
+    pointer('pointerdown', grip(0), { clientY: 10 });
+    pointer('pointermove', grip(0), { clientY: 115 });
+    pointer('pointercancel', grip(0), { pointerId: 2 });
+    expect(document.querySelectorAll('[data-drop]')).toHaveLength(1);
+    pointer('pointerup', grip(0), { clientY: 115 });
+    expect(cards()).toEqual(['When Beta is yes', 'When Alpha is yes', 'When Gamma is yes']);
+  });
+
+  it('still opens a rule on the first click after an Escape-cancelled drag', () => {
+    render(<Live keys={['a', 'b']} />);
+    stubRects();
+    pointer('pointerdown', grip(0), { clientY: 10 });
+    pointer('pointermove', grip(0), { clientY: 75 });
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    pointer('pointerup', grip(0), { clientY: 75 });
+    fireEvent.click(screen.getAllByRole('button', { name: /^When / })[0]);
+    expect(openField()).toBe('b');
+  });
+
   it('ignores a secondary pointer, another pointer id, and a move with no press', () => {
     render(<Live keys={['a', 'b']} />);
     stubRects();

@@ -400,6 +400,32 @@ describe('LayerTree', () => {
     expect(applyAll).not.toHaveBeenCalled();
   });
 
+  it('keeps a running drag live through a FOREIGN pointer cancel', () => {
+    const { applyAll } = draw();
+    stackRows();
+    startDrag('First');
+    dragTo('First', 135, 0);
+    fireEvent.pointerCancel(row('First'), { pointerId: 9 });
+    expect(document.querySelector('.sj-tree-row--drop-after')).not.toBeNull();
+    fireEvent.pointerUp(row('First'), { pointerId: 1, clientY: 135 });
+    expect(applyAll).toHaveBeenCalledWith([
+      { op: 'moveItem', path: 'sections.body.items', from: 0, to: 2 },
+    ]);
+  });
+
+  it('lets the next click select after its own pointer cancel', () => {
+    const { onSelect, applyAll } = draw();
+    stackRows();
+    startDrag('First');
+    dragTo('First', 135, 0);
+    fireEvent.pointerCancel(row('First'), { pointerId: 1 });
+    expect(document.querySelector('.sj-tree-row--dragging')).toBeNull();
+    // A browser sends no click after a pointercancel, so none is swallowed.
+    fireEvent.click(row('Second'));
+    expect(applyAll).not.toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledWith('sections.body.items[1]');
+  });
+
   it('shows the empty state for a null or empty view', () => {
     draw({ view: null });
     expect(screen.getByText('No items to show.')).toBeTruthy();
