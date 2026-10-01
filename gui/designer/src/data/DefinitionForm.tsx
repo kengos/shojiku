@@ -1,5 +1,5 @@
-// The DEFINITION half of the data-item editor's right pane: one field's label,
-// type, format and description.
+// The DEFINITION half of the data-item editor's right pane for a FIELD: its
+// label, type, format, required flag and description.
 //
 // Every control is read-only (not hidden) when the host did not arm definition
 // editing, so a viewer still sees what the engineer declared. Each input is
@@ -20,17 +20,22 @@ import {
   titleOp,
   typeOp,
 } from './definitionsEdit';
+import type { DefsNode } from './defsTree';
 import { TYPE_OPTION_KEY } from './editorModel';
+import { RequiredToggle } from './RequiredToggle';
 
 export interface DefinitionFormProps {
-  readonly keysPath: readonly string[];
+  readonly node: DefsNode;
+  /** The container holding the field — the required hint names it. */
+  readonly parent: DefsNode | null;
   readonly def: DefinitionField;
   readonly editable: boolean;
   readonly onDefEdit: (op: Op | null) => void;
 }
 
-export function DefinitionForm({ keysPath, def, editable, onDefEdit }: DefinitionFormProps) {
+export function DefinitionForm({ node, parent, def, editable, onDefEdit }: DefinitionFormProps) {
   const { t } = useI18n();
+  const keysPath = node.keysPath;
   return (
     <section className="flex flex-col gap-3">
       <h3 className={SECTION_TITLE}>{t('data.definition')}</h3>
@@ -38,6 +43,7 @@ export function DefinitionForm({ keysPath, def, editable, onDefEdit }: Definitio
         <input
           key={def.title}
           type="text"
+          className={INPUT}
           defaultValue={def.title}
           readOnly={!editable}
           onBlur={(event) => onDefEdit(titleOp(keysPath, def.title, event.currentTarget.value))}
@@ -91,6 +97,7 @@ export function DefinitionForm({ keysPath, def, editable, onDefEdit }: Definitio
           {isSemanticFormat(def) ? null : <option value={def.format}>{def.format}</option>}
         </select>
       </div>
+      <RequiredToggle node={node} parent={parent} editable={editable} onDefEdit={onDefEdit} />
       <Field label={t('data.field.description')}>
         <textarea
           key={def.description}

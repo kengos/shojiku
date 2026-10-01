@@ -1249,9 +1249,6 @@ export const en: LanguageCatalog = {
     'sample.readOnlyHint': 'Sample data is managed by the engineer.',
     'sample.generate': 'Generate sample data',
     'sample.undo': 'Undo edit',
-    'sample.addField': 'Add field',
-    'sample.addFieldKey': 'Field name',
-    'sample.addFieldKind': 'Field type',
     'sample.addRow': 'Add row',
     'sample.removeRow': 'Remove',
     'sample.enumRawValue': 'params value: {value}',
@@ -1279,6 +1276,40 @@ export const en: LanguageCatalog = {
       'Placeholder data used to check how the layout looks in the preview. It is not the value that gets merged in when the document is really produced.',
     'data.type.integer': 'Whole number',
     'data.addItem': 'Add data field',
+    'data.root.title': 'About this data',
+    'data.root.version': 'Version (for engineers)',
+    'data.root.versionHint':
+      'The version of these definitions. Leave it empty if you have no rule for it.',
+    'data.kind.group': 'Group',
+    'data.kind.table': 'Table',
+    'data.kind.list': 'List',
+    'data.required': 'Required',
+    'data.requiredHint':
+      'If the data lacks it, Diagnostics shows a warning. Printing does not stop.',
+    'data.tree.toggle': 'Items inside “{label}”',
+    'data.dataName': 'Data name',
+    'data.children': 'Items inside ({count})',
+    'data.add.submit': 'Add',
+    'data.add.cancel': 'Cancel',
+    'data.add.target': 'Add to',
+    'data.add.targetRoot': 'Not inside any group',
+    'data.add.targetRows': 'Each row of {label}',
+    'data.add.nameHint':
+      'Use a–z, A–Z, 0–9 and _ (underscore). Other characters need extra setup before they can be inserted into text.',
+    'data.error.empty_name': 'Enter a data name.',
+    'data.error.name_too_long': 'Keep the data name to {max} characters or fewer.',
+    'data.error.key_exists': 'This place already has that data name. Choose a different name.',
+    'data.error.name_has_dot': 'A data name cannot contain “.”.',
+    'data.error.name_invisible':
+      'The data name contains hidden characters. Clear it and type it again.',
+    'data.band.workshop':
+      'These definitions were inferred from the sample data. Edits you make here are kept as definitions.',
+    'data.kindOption.table': 'Table (e.g. line items)',
+    'data.kindOption.list': 'List (e.g. tags)',
+    'data.requiredHintGroup':
+      'When “{parent}” is in the data and this item is missing, Diagnostics shows a warning. Printing does not stop.',
+    'data.requiredHintRows':
+      'If a row of “{parent}” lacks this item, Diagnostics shows a warning. Printing does not stop.',
     'data.undo': 'Undo definition edit',
     'data.projectScopeHint':
       'These definitions are shared across the whole project — saving changes what every template in it validates against.',

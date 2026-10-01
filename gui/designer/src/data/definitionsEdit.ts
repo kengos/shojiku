@@ -1,8 +1,8 @@
-// The pure definitions-edit model: the keys path of a palette field's schema
-// node, the metadata reads at that path, the op builders that edit it (label /
-// type / format / description), the coalescing rule, and the transient-Editor
-// apply helper. Adding a field and the persisted-edit restore guard live in
-// `defsPlan.ts`.
+// The pure definitions-edit model: the metadata reads at a schema node's keys
+// path, the op builders that edit it (label / type / format / description /
+// version / required), the coalescing rule, and the transient-Editor apply
+// helper. A node's keys path comes from the tree walk (`defsTree.ts`); adding an
+// item and the persisted-edit restore guard live in `defsPlan.ts`.
 //
 // Definitions become EDITABLE in the data-item editor (reversing the old
 // read-only seam). Every edit is a serializable, root-addressed `Op` on the
@@ -11,8 +11,14 @@
 // comments and untouched keys survive byte-exact. This file is pure TS (no
 // React), hostile-input safe: reads are own-property-guarded and never throw.
 
-import { Editor, type Op, parseTemplate, readTemplate } from '@shojiku/designer-core';
-import type { PaletteGroup } from '../palette/model';
+import {
+  Editor,
+  MAX_STRING_VALUES,
+  type Op,
+  parseTemplate,
+  readTemplate,
+} from '@shojiku/designer-core';
+import type { DefsNode } from './defsTree';
 
 /** The closed scalar-type vocabulary the type picker offers — the base JSON-schema
  * types a leaf field can carry. Structural types (`object`/`array`) are groups,
@@ -68,37 +74,23 @@ function str(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
-/** Interleave `properties` before each dotted key segment, mirroring the schema
- * shape (`properties.customer.properties.name`). */
-function interleave(segs: readonly string[]): string[] {
-  const out: string[] = [];
-  for (const seg of segs) {
-    out.push('properties', seg);
-  }
-  return out;
-}
-
-/** The root-addressed keys path of a palette field's schema node. A non-array
- * group's field is a dotted full key under nested `properties`; an array group's
- * row field lives under the array's `items.properties` (the group id may itself
- * be a dotted nested-array id). */
-export function fieldKeysPath(group: PaletteGroup, fieldKey: string): string[] {
-  const fieldSegs = fieldKey.split('.');
-  if (!group.isArray) {
-    return interleave(fieldSegs);
-  }
-  return [...interleave(group.id.split('.')), 'items', ...interleave(fieldSegs)];
-}
-
 /** One field's editable definition metadata (raw wire values, `''` when unset). */
 export interface DefinitionField {
   readonly title: string;
   readonly type: string;
   readonly format: string;
   readonly description: string;
+  /** The root's `version` (any node reads it; only the root carries one). */
+  readonly version: string;
 }
 
-const EMPTY_FIELD: DefinitionField = { title: '', type: '', format: '', description: '' };
+const EMPTY_FIELD: DefinitionField = {
+  title: '',
+  type: '',
+  format: '',
+  description: '',
+  version: '',
+};
 
 /** Read the raw schema node at a keys path — own-property guarded, never throws.
  * A missing node, a hostile prototype segment, or unparseable definitions all
@@ -129,6 +121,7 @@ export function readDefinitionField(
     type: str(schema.type),
     format: str(schema.format),
     description: str(schema.description),
+    version: str(schema.version),
   };
 }
 
@@ -165,6 +158,28 @@ export function descriptionOp(
   next: string,
 ): Op | null {
   return scalarLeafOp(keysPath, 'description', current, next);
+}
+
+export function versionOp(keysPath: readonly string[], current: string, next: string): Op | null {
+  return scalarLeafOp(keysPath, 'version', current, next);
+}
+
+/** Add the node's name to (or take it out of) its parent's `required` list,
+ * keeping the list's order. An emptied list is REMOVED rather than left `[]`.
+ * `null` when nothing changes, for the root (no parent), and past designer-core's
+ * string-list cap (a parent with more required children than one op may write). */
+export function requiredOp(node: DefsNode, on: boolean): Op | null {
+  if (node.requiredListPath === null || node.required === on) {
+    return null;
+  }
+  const values = on
+    ? [...node.parentRequired, node.name]
+    : node.parentRequired.filter((name) => name !== node.name);
+  const keys = [...node.requiredListPath];
+  if (values.length === 0) {
+    return { op: 'removeKey', keys };
+  }
+  return values.length > MAX_STRING_VALUES ? null : { op: 'setStrings', keys, values };
 }
 
 /** Apply definition-edit ops to the definitions text, CST-preserving, via a

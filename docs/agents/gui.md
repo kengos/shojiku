@@ -41,11 +41,16 @@ daily users. Consequences:
   reviews the diff. CST-preserving writes, only touched keys change,
   engine-canonical value forms, engine `validate` before save.
 - **`definitions.yml` is EDITABLE in the Designer** (the full-screen
-  data-item editor — reverses the earlier read-only seam). Each metadata
-  edit (display label / type / format / description) and each added field is a
-  CST-preserving, root-addressed patch op on the definitions doc,
-  re-applied over a base each render (a coalesced op layer), so comments
-  and untouched keys survive byte-exact and an added field never desyncs.
+  data-item editor — reverses the earlier read-only seam). Its rail is the
+  definitions TREE — the root, object groups, tables (an array of objects),
+  lists (an array of values) and fields at any depth — and every node is
+  addressed by the keys path the tree walk FOUND it at, never one re-derived
+  from a display id. Each edit (display label / type / format / description /
+  required / the root's version) and each added item (any of four scalar types
+  or a group, table or list, into the root, a group or a table's rows) is a
+  CST-preserving, root-addressed patch op on the definitions doc, re-applied
+  over a base each render (a coalesced op layer), so comments and untouched
+  keys survive byte-exact and an added item never desyncs.
   These definition edits have their OWN panel-local undo — a left-rail
   control over snapshots of the coalesced op layer, separate from both the
   sample-data undo ring and the template's undo stack (three distinct undo
@@ -53,10 +58,11 @@ daily users. Consequences:
   with no field selected and stays available on a mounted host where the
   sample is read-only but definitions are not.
   On a mounted host the definitions doc is PROJECT-scoped (one save changes
-  what every template in the project validates against); the editor shows a
-  left-rail impact-scope hint beside the definition-editing controls,
-  app-derived from the definitions-save wire (`definitionsProjectScoped`),
-  so the PM sees the fan-out before saving.
+  what every template in the project validates against); the editor shows an
+  impact-scope band at the top of the right pane, over every edit, app-derived
+  from the definitions-save wire (`definitionsProjectScoped`), so the PM sees
+  the fan-out before saving. Definitions INFERRED from the sample data (no
+  engineer file) carry a band of their own saying so.
   The engine contract is unchanged — definitions stay VALIDATE-time only,
   the render still runs off `params`; "editable" is about authoring, not
   the render path. Presets still bundle template + definitions pairs.
@@ -199,8 +205,13 @@ CRITIQUING the document (a review/lint pane written by a model; the
 decided AI copilot is the opposite direction: the AI proposes ops and
 the HUMAN reviews them before apply — the **AI copilot (op output)**
 entry above), Workers-side preview. (A definitions editor was a v1 non-goal until the
-data-item editor shipped it; field-KEY rename and field delete remain
-out of scope.)
+data-item editor shipped it.) Renaming a field's data name and deleting a
+field are DECIDED, not yet built: a rename rewrites this template's references
+and every sample variant's key with it, as one action that one definitions
+undo reverts; a delete leaves the template's references in place (they then
+read as undefined keys) after a confirmation naming where the field is used.
+A project-scoped definitions file cannot reach the project's other templates,
+and both confirmations say so.
 
 **GUI i18n:** chrome strings and diagnostic message templates live in a
 per-language catalog (one module per language, each a flat `key → string`

@@ -117,23 +117,28 @@ function blankLike(value: unknown, depth: number): unknown {
 }
 
 /** Append a row to an array, shaped like its existing rows (or an empty object
- * when the array is empty). A top-level key MISSING from params is treated as
- * an empty array and CREATED (a definitions-declared list whose data does not
- * exist yet must still gain its first row from the data editor); any other
- * non-array shape stays a no-op. */
+ * when the array is empty). An array MISSING from params at an all-key path —
+ * top level, or inside a group (`order.lines`) — is treated as empty and
+ * CREATED, missing groups on the way included (a definitions-declared table
+ * whose data does not exist yet must still gain its first row from the data
+ * editor). A path that runs into a non-array or a non-object, or one through a
+ * row index, stays a no-op: creation never clobbers data or invents rows. */
 export function addSampleRow(text: string, path: SamplePath): string {
   const root = parseParams(text);
   if (root === null) {
     return text;
   }
   const found = getAtPath(root, path);
-  const missingTopLevel = found === undefined && path.length === 1 && typeof path[0] === 'string';
-  if (!Array.isArray(found) && !missingTopLevel) {
+  const missing = found === undefined && path.every((seg) => typeof seg === 'string');
+  if (!Array.isArray(found) && !missing) {
     return text;
   }
   const arr = Array.isArray(found) ? found : [];
   const row = arr.length > 0 ? blankLike(arr[arr.length - 1], 0) : {};
-  return serializeParams(setAtPath(root, path, [...arr, row]));
+  const next = setAtPath(root, path, [...arr, row]);
+  // A missing array behind a scalar (`order: 5` for `order.lines`) cannot be
+  // created; `setAtPath` leaves that shape alone, so nothing landed.
+  return Array.isArray(getAtPath(next, path)) ? serializeParams(next) : text;
 }
 
 /** Remove one row from an array (an emptied array is kept as `[]`). A no-op

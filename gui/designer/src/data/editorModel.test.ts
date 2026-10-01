@@ -1,30 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { arrayLength, SELECTION_SEP, sampleKind, selectionKey } from './editorModel';
+import { arrayLength, KIND_OPTION_KEY, SELECTION_SEP, sampleKind } from './editorModel';
 
-describe('selectionKey', () => {
-  it('joins the group id and the field key with U+0000', () => {
-    expect(SELECTION_SEP).toBe(String.fromCharCode(0));
-    expect(selectionKey('order', 'total')).toBe(`order${String.fromCharCode(0)}total`);
-  });
-
-  it('keeps the separator out of the source as an escape, not a raw byte', () => {
+describe('SELECTION_SEP', () => {
+  it('is one U+0000, kept in the source as an escape, not a raw byte', () => {
     // The separator must be a single NUL: anything else (a space, a dot) is a
-    // character a real key can contain, and pairs would start colliding.
+    // character a real key can contain, and two keys paths would start colliding.
     expect(SELECTION_SEP).toHaveLength(1);
     expect(SELECTION_SEP.charCodeAt(0)).toBe(0);
   });
+});
 
-  it('cannot be forged across a pair boundary by keys carrying separators', () => {
-    // Keys legally hold spaces and dots; only a NUL discriminates the split.
-    expect(selectionKey('a b', 'c')).not.toBe(selectionKey('a', 'b c'));
-    expect(selectionKey('a.b', 'c')).not.toBe(selectionKey('a', 'b.c'));
-    expect(selectionKey('', 'a')).not.toBe(selectionKey('a', ''));
-  });
-
-  it('passes hostile keys through verbatim (no escaping, no lookup)', () => {
-    expect(selectionKey('__proto__', 'constructor')).toBe(
-      `__proto__${String.fromCharCode(0)}constructor`,
-    );
+describe('KIND_OPTION_KEY', () => {
+  it('labels the four scalar types and the three containers', () => {
+    expect(Object.keys(KIND_OPTION_KEY)).toEqual([
+      'string',
+      'number',
+      'integer',
+      'boolean',
+      'group',
+      'table',
+      'list',
+    ]);
+    expect(KIND_OPTION_KEY.table).toBe('data.kindOption.table');
   });
 });
 
@@ -55,26 +52,40 @@ describe('sampleKind', () => {
 
 describe('arrayLength', () => {
   it('counts the rows of a top-level array', () => {
-    expect(arrayLength(JSON.stringify({ items: [1, 2, 3] }), 'items')).toBe(3);
-    expect(arrayLength(JSON.stringify({ items: [] }), 'items')).toBe(0);
+    expect(arrayLength(JSON.stringify({ items: [1, 2, 3] }), ['items'])).toBe(3);
+    expect(arrayLength(JSON.stringify({ items: [] }), ['items'])).toBe(0);
+  });
+
+  it('counts the rows of an array nested in an object, by path', () => {
+    // A table inside an object group (`order.lines`) is one PATH, not a dotted
+    // top-level key.
+    const params = JSON.stringify({ order: { lines: [{}, {}] }, 'order.lines': [{}] });
+    expect(arrayLength(params, ['order', 'lines'])).toBe(2);
+  });
+
+  it('walks a numeric segment into an array element', () => {
+    expect(arrayLength(JSON.stringify({ rows: [{ tags: ['a', 'b'] }] }), ['rows', 0, 'tags'])).toBe(
+      2,
+    );
+    expect(arrayLength(JSON.stringify({ rows: [] }), ['rows', 0, 'tags'])).toBe(0);
   });
 
   it('reads 0 for a key that is absent or holds something else', () => {
-    expect(arrayLength(JSON.stringify({ items: [1] }), 'other')).toBe(0);
-    expect(arrayLength(JSON.stringify({ items: 'nope' }), 'items')).toBe(0);
-    expect(arrayLength(JSON.stringify({ items: { 0: 'a' } }), 'items')).toBe(0);
+    expect(arrayLength(JSON.stringify({ items: [1] }), ['other'])).toBe(0);
+    expect(arrayLength(JSON.stringify({ items: 'nope' }), ['items'])).toBe(0);
+    expect(arrayLength(JSON.stringify({ items: { 0: 'a' } }), ['items'])).toBe(0);
   });
 
   it('reads 0 for unparseable params rather than throwing', () => {
-    expect(arrayLength('nope', 'items')).toBe(0);
-    expect(arrayLength('[1,2]', 'items')).toBe(0);
+    expect(arrayLength('nope', ['items'])).toBe(0);
+    expect(arrayLength('[1,2]', ['items'])).toBe(0);
   });
 
   it('does not resolve a prototype key as a row array', () => {
     // `constructor`/`toString` exist on the prototype; the own-property guard
     // must keep them at 0 rather than reading the inherited value.
-    expect(arrayLength(JSON.stringify({ a: 1 }), 'constructor')).toBe(0);
-    expect(arrayLength(JSON.stringify({ a: 1 }), 'toString')).toBe(0);
-    expect(arrayLength('{"__proto__":{"x":[1,2]}}', '__proto__')).toBe(0);
+    expect(arrayLength(JSON.stringify({ a: 1 }), ['constructor'])).toBe(0);
+    expect(arrayLength(JSON.stringify({ a: 1 }), ['toString'])).toBe(0);
+    expect(arrayLength('{"__proto__":{"x":[1,2]}}', ['__proto__'])).toBe(0);
   });
 });

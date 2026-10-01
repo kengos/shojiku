@@ -615,11 +615,163 @@ describe('DataEditorView project-scope hint', () => {
   });
 });
 
-describe('DataEditorView add-field', () => {
-  it('adds a fresh field as a putValue op', () => {
+function openAdd() {
+  fireEvent.click(screen.getByRole('button', { name: 'データ項目を追加' }));
+  return screen.getByRole('form', { name: 'データ項目を追加' });
+}
+
+describe('DataEditorView add-item', () => {
+  it('opens the form from its button and closes it on cancel, authoring nothing', () => {
     const { mocks } = draw();
-    fireEvent.change(screen.getByLabelText('項目名'), { target: { value: 'memo' } });
-    fireEvent.click(screen.getByRole('button', { name: 'データ項目を追加' }));
+    const form = openAdd();
+    fireEvent.change(within(form).getByLabelText('データ名'), { target: { value: 'memo' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'キャンセル' }));
+    expect(screen.queryByRole('form', { name: 'データ項目を追加' })).toBeNull();
+    expect(mocks.onDefinitionEdit).not.toHaveBeenCalled();
+    // Reopening starts from a clean draft.
+    expect((within(openAdd()).getByLabelText('データ名') as HTMLInputElement).value).toBe('');
+  });
+
+  it('adds a fresh top-level field as ONE putValue op, closes, and selects it', () => {
+    const { mocks, rerender, props } = draw();
+    const form = openAdd();
+    fireEvent.change(within(form).getByLabelText('表示ラベル'), { target: { value: 'メモ' } });
+    fireEvent.change(within(form).getByLabelText('データ名'), { target: { value: 'memo' } });
+    fireEvent.click(within(form).getByRole('button', { name: '追加' }));
+    expect(mocks.onDefinitionEdit).toHaveBeenCalledTimes(1);
+    expect(mocks.onDefinitionEdit).toHaveBeenCalledWith({
+      op: 'putValue',
+      keys: ['properties', 'memo'],
+      value: { type: 'string', title: 'メモ' },
+    });
+    expect(screen.queryByRole('form', { name: 'データ項目を追加' })).toBeNull();
+    // Once the host folds the op in, the new item is the selection.
+    rerender(
+      <I18nProvider locale="ja">
+        <DataEditorView
+          {...props}
+          definitions={`${DEFS}  memo:\n    type: string\n    title: メモ\n`}
+        />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('heading', { level: 2, name: 'メモ' })).not.toBeNull();
+  });
+
+  it('disables 追加 until a data name is typed', () => {
+    draw();
+    const form = openAdd();
+    expect((within(form).getByRole('button', { name: '追加' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it('refuses a name the same place already holds, with a localized notice', () => {
+    const { mocks } = draw();
+    const form = openAdd();
+    fireEvent.change(within(form).getByLabelText('データ名'), { target: { value: 'title' } });
+    fireEvent.click(within(form).getByRole('button', { name: '追加' }));
+    expect(mocks.onDefinitionEdit).not.toHaveBeenCalled();
+    expect(
+      within(form).getByText(
+        'この追加先には、同じデータ名がすでにあります。別の名前にしてください。',
+      ),
+    ).not.toBeNull();
+  });
+
+  it('refuses an over-long, a dotted and an invisible-character name, each with its reason', () => {
+    const { mocks } = draw();
+    const form = openAdd();
+    const cases: [string, string][] = [
+      ['x'.repeat(200), 'データ名は 120 文字以内にしてください。'],
+      ['a.b', 'データ名に「.」は使えません。'],
+      ['a‮b', 'データ名に目に見えない文字が入っています。いったん消して、入力し直してください。'],
+    ];
+    for (const [name, message] of cases) {
+      fireEvent.change(within(form).getByLabelText('データ名'), { target: { value: name } });
+      fireEvent.click(within(form).getByRole('button', { name: '追加' }));
+      expect(within(form).getByText(message)).not.toBeNull();
+    }
+    expect(mocks.onDefinitionEdit).not.toHaveBeenCalled();
+  });
+
+  it('an IME kanji-confirm Enter never submits the add form', () => {
+    const { mocks } = draw();
+    const form = openAdd();
+    const input = within(form).getByLabelText('データ名');
+    fireEvent.change(input, { target: { value: 'memo' } });
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(mocks.onDefinitionEdit).not.toHaveBeenCalled();
+    // A plain Enter (composition settled) submits as usual.
+    fireEvent.keyDown(input, { key: 'Enter' });
+    fireEvent.submit(form);
+    expect(mocks.onDefinitionEdit).toHaveBeenCalled();
+  });
+
+  it('adds a container kind picked from the seven', () => {
+    const { mocks } = draw();
+    const form = openAdd();
+    const kinds = within(form).getByLabelText('型') as HTMLSelectElement;
+    expect([...kinds.options].map((option) => option.text)).toEqual([
+      'テキスト',
+      '数値',
+      '整数',
+      'はい / いいえ',
+      'グループ',
+      '表（例：明細）',
+      'リスト（例：タグ）',
+    ]);
+    fireEvent.change(within(form).getByLabelText('データ名'), { target: { value: 'lines' } });
+    fireEvent.change(kinds, { target: { value: 'table' } });
+    fireEvent.click(within(form).getByRole('button', { name: '追加' }));
+    expect(mocks.onDefinitionEdit).toHaveBeenCalledWith({
+      op: 'putValue',
+      keys: ['properties', 'lines'],
+      value: { type: 'array', items: { type: 'object' } },
+    });
+  });
+
+  it('starts at the selected table rows, and can add elsewhere', () => {
+    const { mocks } = draw();
+    selectField('明細');
+    const form = openAdd();
+    const target = within(form).getByLabelText('追加先') as HTMLSelectElement;
+    expect(target.selectedOptions[0]?.text).toBe('明細 の各行');
+    expect([...target.options].map((option) => option.text)).toEqual([
+      'どのグループにも入れない',
+      '明細 の各行',
+    ]);
+    fireEvent.change(within(form).getByLabelText('データ名'), { target: { value: 'unit' } });
+    fireEvent.click(within(form).getByRole('button', { name: '追加' }));
+    expect(mocks.onDefinitionEdit).toHaveBeenLastCalledWith({
+      op: 'putValue',
+      keys: ['properties', 'items', 'items', 'properties', 'unit'],
+      value: { type: 'string' },
+    });
+    const again = openAdd();
+    fireEvent.change(within(again).getByLabelText('追加先'), { target: { value: '' } });
+    fireEvent.change(within(again).getByLabelText('データ名'), { target: { value: 'unit' } });
+    fireEvent.click(within(again).getByRole('button', { name: '追加' }));
+    expect(mocks.onDefinitionEdit).toHaveBeenLastCalledWith({
+      op: 'putValue',
+      keys: ['properties', 'unit'],
+      value: { type: 'string' },
+    });
+  });
+
+  it('falls back to the top when the picked place disappears while the form is open', () => {
+    const { mocks, rerender, props } = draw();
+    selectField('明細');
+    const form = openAdd();
+    rerender(
+      <I18nProvider locale="ja">
+        <DataEditorView
+          {...props}
+          definitions={'type: object\nproperties:\n  title: { type: string }\n'}
+        />
+      </I18nProvider>,
+    );
+    fireEvent.change(within(form).getByLabelText('データ名'), { target: { value: 'memo' } });
+    fireEvent.click(within(form).getByRole('button', { name: '追加' }));
     expect(mocks.onDefinitionEdit).toHaveBeenCalledWith({
       op: 'putValue',
       keys: ['properties', 'memo'],
@@ -627,50 +779,21 @@ describe('DataEditorView add-field', () => {
     });
   });
 
-  it('disables the add button until a name is typed', () => {
-    draw();
-    expect(
-      (screen.getByRole('button', { name: 'データ項目を追加' }) as HTMLButtonElement).disabled,
-    ).toBe(true);
-  });
-
-  it('refuses an existing key with a localized notice', () => {
-    const { mocks } = draw();
-    fireEvent.change(screen.getByLabelText('項目名'), { target: { value: 'title' } });
-    fireEvent.click(screen.getByRole('button', { name: 'データ項目を追加' }));
-    expect(mocks.onDefinitionEdit).not.toHaveBeenCalled();
-    expect(screen.getByText(/同じ名前/)).not.toBeNull();
-  });
-
-  it('refuses an over-long name', () => {
-    const { mocks } = draw();
-    fireEvent.change(screen.getByLabelText('項目名'), { target: { value: 'x'.repeat(200) } });
-    fireEvent.click(screen.getByRole('button', { name: 'データ項目を追加' }));
-    expect(mocks.onDefinitionEdit).not.toHaveBeenCalled();
-  });
-
-  it('an IME kanji-confirm Enter never submits the add-field form', () => {
-    const { mocks } = draw();
-    const input = screen.getByLabelText('項目名');
-    fireEvent.change(input, { target: { value: 'memo' } });
-    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
-    expect(mocks.onDefinitionEdit).not.toHaveBeenCalled();
-    // A plain Enter (composition settled) submits as usual.
-    fireEvent.keyDown(input, { key: 'Enter' });
-    fireEvent.submit(input.closest('form') as HTMLFormElement);
-    expect(mocks.onDefinitionEdit).toHaveBeenCalled();
-  });
-
-  it('adds a field of a picked non-default type', () => {
-    const { mocks } = draw();
-    fireEvent.change(screen.getByLabelText('項目名'), { target: { value: 'qty' } });
-    fireEvent.change(screen.getByLabelText('種類'), { target: { value: 'integer' } });
-    fireEvent.click(screen.getByRole('button', { name: 'データ項目を追加' }));
+  it('adds into a blank start (no definitions yet) at the top', () => {
+    const { mocks } = draw({ definitions: '' });
+    const form = openAdd();
+    fireEvent.change(within(form).getByLabelText('データ名'), { target: { value: 'memo' } });
+    fireEvent.click(within(form).getByRole('button', { name: '追加' }));
     expect(mocks.onDefinitionEdit).toHaveBeenCalledWith({
       op: 'putValue',
-      keys: ['properties', 'qty'],
-      value: { type: 'integer' },
+      keys: ['properties', 'memo'],
+      value: { type: 'string' },
     });
+  });
+
+  it('is absent when definitions are not editable', () => {
+    draw({ onDefinitionEdit: undefined });
+    expect(screen.queryByRole('button', { name: 'データ項目を追加' })).toBeNull();
   });
 });
 
@@ -874,5 +997,374 @@ describe('DataEditorView — the sample-value section', () => {
     // 明細 is the array GROUP; its one field is `name`.
     selectField('name');
     expect(screen.getAllByLabelText('name')).toHaveLength(2);
+  });
+});
+
+const TREE_DEFS = `type: object
+title: 請求書データ
+version: "0.2.0"
+required: [customer]
+properties:
+  customer:
+    type: object
+    title: 取引先
+    description: 請求先の会社
+    properties:
+      name: { type: string, title: 宛名 }
+      address:
+        type: object
+        properties:
+          city: { type: string, title: 市区町村 }
+  order:
+    type: object
+    properties:
+      lines:
+        type: array
+        title: 注文行
+        items:
+          type: object
+          required: [sku]
+          properties:
+            sku: { type: string, title: 品番 }
+            tags:
+              type: array
+              items:
+                type: object
+                properties:
+                  word: { type: string, title: 語 }
+  notes:
+    type: array
+    title: 備考
+    items: { type: string }
+`;
+
+const TREE_PARAMS = JSON.stringify({
+  customer: { name: 'A社', address: { city: '大阪' } },
+  order: { lines: [{ sku: 'X-1', tags: [{ word: 'w' }] }, { sku: 'X-2' }] },
+});
+
+function drawTree(over: Partial<DataEditorViewProps> = {}) {
+  return draw({ definitions: TREE_DEFS, params: TREE_PARAMS, ...over });
+}
+
+function rowButton(label: string) {
+  const nav = screen.getByRole('navigation');
+  const found = within(nav)
+    .getAllByRole('button')
+    .find(
+      (button) =>
+        button.getAttribute('aria-current') !== null &&
+        (button.textContent ?? '').startsWith(label),
+    );
+  if (found === undefined) {
+    throw new Error(`no row ${label}`);
+  }
+  return found;
+}
+
+describe('DataEditorView tree', () => {
+  it('lists the root first, then containers with their items indented under them', () => {
+    drawTree();
+    const nav = screen.getByRole('navigation');
+    const rows = within(nav)
+      .getAllByRole('button')
+      .filter((button) => button.getAttribute('aria-current') !== null)
+      .map((button) => button.textContent ?? '');
+    expect(rows).toEqual([
+      'データ全体の情報',
+      expect.stringContaining('取引先'),
+      expect.stringContaining('宛名'),
+      expect.stringContaining('address'),
+      expect.stringContaining('市区町村'),
+      expect.stringContaining('order'),
+      expect.stringContaining('注文行'),
+      expect.stringContaining('品番'),
+      expect.stringContaining('tags'),
+      expect.stringContaining('語'),
+      expect.stringContaining('備考'),
+    ]);
+  });
+
+  it('shows the kind of a container, the required chip, and no usage for a group', () => {
+    drawTree();
+    expect(rowButton('取引先').textContent).toContain('グループ');
+    expect(rowButton('取引先').textContent).toContain('必須');
+    expect(rowButton('取引先').textContent).not.toContain('未使用');
+    expect(rowButton('注文行').textContent).toContain('表');
+    expect(rowButton('備考').textContent).toContain('リスト');
+    expect(rowButton('備考').textContent).toContain('未使用');
+    expect(rowButton('品番').textContent).toContain('必須');
+  });
+
+  it('selects a node two levels down', () => {
+    drawTree();
+    fireEvent.click(rowButton('市区町村'));
+    expect(screen.getByRole('heading', { level: 2, name: '市区町村' })).not.toBeNull();
+    // The header names the node's OWN data name — the same unit the add form
+    // takes and refuses a 「.」 in; the tree above already shows where it sits.
+    const header = screen.getByRole('heading', { level: 2, name: '市区町村' }).parentElement;
+    expect(header?.textContent).toContain('データ名: city');
+    expect(header?.textContent).not.toContain('customer.address.city');
+    expect(rowButton('市区町村').getAttribute('aria-current')).toBe('true');
+  });
+
+  it('folds and unfolds a container with its own toggle, without changing the selection', () => {
+    drawTree();
+    fireEvent.click(rowButton('宛名'));
+    const toggle = screen.getByRole('button', { name: '「取引先」の中の項目' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByText('市区町村')).toBeNull();
+    // The selection stays on 宛名 (the detail heading), hidden row or not.
+    expect(screen.getByRole('heading', { level: 2, name: '宛名' })).not.toBeNull();
+    fireEvent.click(toggle);
+    expect(rowButton('市区町村')).not.toBeNull();
+  });
+
+  it('opens a folded container when an item inside it becomes the selection', () => {
+    const { rerender, props } = drawTree();
+    fireEvent.click(rowButton('注文行'));
+    fireEvent.click(screen.getByRole('button', { name: '「注文行」の中の項目' }));
+    // The rail no longer shows the folded rows (the detail pane's 中の項目 links
+    // to the same items, so scope the query to the rail).
+    expect(within(screen.getByRole('navigation')).queryByText('品番')).toBeNull();
+    const form = openAdd();
+    fireEvent.change(within(form).getByLabelText('データ名'), { target: { value: 'qty' } });
+    fireEvent.click(within(form).getByRole('button', { name: '追加' }));
+    rerender(
+      <I18nProvider locale="ja">
+        <DataEditorView
+          {...props}
+          definitions={TREE_DEFS.replace(
+            '            sku: { type: string, title: 品番 }\n',
+            '            sku: { type: string, title: 品番 }\n            qty: { type: number }\n',
+          )}
+        />
+      </I18nProvider>,
+    );
+    expect(
+      screen.getByRole('button', { name: '「注文行」の中の項目' }).getAttribute('aria-expanded'),
+    ).toBe('true');
+    expect(rowButton('qty').getAttribute('aria-current')).toBe('true');
+  });
+
+  it('gives a list (nothing to open) no toggle', () => {
+    drawTree();
+    expect(screen.queryByRole('button', { name: '「備考」の中の項目' })).toBeNull();
+  });
+
+  it('shows a search hit even inside a folded container', () => {
+    drawTree();
+    fireEvent.click(screen.getByRole('button', { name: '「取引先」の中の項目' }));
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: '市区' } });
+    expect(rowButton('市区町村')).not.toBeNull();
+  });
+
+  it('opens on a palette jump into a table nested in an object', () => {
+    drawTree({ initialSelection: { group: 'order.lines', key: 'sku' } });
+    expect(screen.getByRole('heading', { level: 2, name: '品番' })).not.toBeNull();
+  });
+});
+
+describe('DataEditorView container and root detail', () => {
+  it('edits a group label and description, and lists its items as links', () => {
+    const { mocks } = drawTree();
+    fireEvent.click(rowButton('取引先'));
+    expect(screen.getByText('グループ', { selector: 'span.rounded-full' })).not.toBeNull();
+    const label = screen.getByDisplayValue('取引先');
+    fireEvent.blur(label, { target: { value: '請求先' } });
+    expect(mocks.onDefinitionEdit).toHaveBeenLastCalledWith({
+      op: 'setScalar',
+      keys: ['properties', 'customer', 'title'],
+      value: '請求先',
+    });
+    fireEvent.blur(screen.getByDisplayValue('請求先の会社'), { target: { value: '' } });
+    expect(mocks.onDefinitionEdit).toHaveBeenLastCalledWith({
+      op: 'removeKey',
+      keys: ['properties', 'customer', 'description'],
+    });
+    expect(screen.getByText('中の項目（2）')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'address' }));
+    expect(screen.getByRole('heading', { level: 2, name: 'address' })).not.toBeNull();
+  });
+
+  it('a container blur that changes nothing authors nothing', () => {
+    const { mocks } = drawTree();
+    fireEvent.click(rowButton('取引先'));
+    fireEvent.blur(screen.getByDisplayValue('取引先'));
+    expect(mocks.onDefinitionEdit).not.toHaveBeenCalled();
+  });
+
+  it('keeps the root row of an EMPTY dictionary editable', () => {
+    const { mocks } = draw({ definitions: 'type: object\nproperties: {}\n' });
+    expect(screen.getByText('データ項目はありません。')).not.toBeNull();
+    fireEvent.click(rowButton('データ全体の情報'));
+    fireEvent.blur(screen.getByLabelText('版（技術者向け）'), { target: { value: '0.1.0' } });
+    expect(mocks.onDefinitionEdit).toHaveBeenCalledWith({
+      op: 'setScalar',
+      keys: ['version'],
+      value: '0.1.0',
+    });
+  });
+
+  it('shows a list with no items section', () => {
+    drawTree();
+    fireEvent.click(rowButton('備考'));
+    expect(screen.getByRole('heading', { level: 2, name: '備考' })).not.toBeNull();
+    expect(screen.queryByText(/中の項目/)).toBeNull();
+  });
+
+  it('edits the root label, description and version', () => {
+    const { mocks } = drawTree();
+    fireEvent.click(rowButton('データ全体の情報'));
+    expect(screen.getByRole('heading', { level: 2, name: 'データ全体の情報' })).not.toBeNull();
+    expect(screen.queryByRole('checkbox', { name: '必須' })).toBeNull();
+    fireEvent.blur(screen.getByDisplayValue('請求書データ'), { target: { value: '納品書データ' } });
+    expect(mocks.onDefinitionEdit).toHaveBeenLastCalledWith({
+      op: 'setScalar',
+      keys: ['title'],
+      value: '納品書データ',
+    });
+    fireEvent.blur(screen.getByDisplayValue('0.2.0'), { target: { value: '0.3.0' } });
+    expect(mocks.onDefinitionEdit).toHaveBeenLastCalledWith({
+      op: 'setScalar',
+      keys: ['version'],
+      value: '0.3.0',
+    });
+    expect(screen.getByText(/この定義の版です/)).not.toBeNull();
+    fireEvent.blur(screen.getByLabelText('説明'), { target: { value: '請求書の項目' } });
+    expect(mocks.onDefinitionEdit).toHaveBeenLastCalledWith({
+      op: 'setScalar',
+      keys: ['description'],
+      value: '請求書の項目',
+    });
+  });
+
+  it('renders container and root forms read-only when not editable', () => {
+    drawTree({ onDefinitionEdit: undefined });
+    fireEvent.click(rowButton('取引先'));
+    expect((screen.getByDisplayValue('取引先') as HTMLInputElement).readOnly).toBe(true);
+    expect((screen.getByRole('checkbox', { name: '必須' }) as HTMLInputElement).disabled).toBe(
+      true,
+    );
+    fireEvent.click(rowButton('データ全体の情報'));
+    expect((screen.getByDisplayValue('0.2.0') as HTMLInputElement).readOnly).toBe(true);
+  });
+});
+
+describe('DataEditorView required', () => {
+  it('ticks a field into its parent list and explains what required does', () => {
+    const { mocks } = drawTree();
+    fireEvent.click(rowButton('宛名'));
+    // Inside a group the engine checks `required` only when the group is in the
+    // data, so the hint names the group.
+    expect(
+      screen.getByText(
+        '「取引先」がデータにあるとき、この項目が無いと診断に警告が出ます。印刷は止まりません。',
+      ),
+    ).not.toBeNull();
+    fireEvent.click(screen.getByRole('checkbox', { name: '必須' }));
+    expect(mocks.onDefinitionEdit).toHaveBeenCalledWith({
+      op: 'setStrings',
+      keys: ['properties', 'customer', 'required'],
+      values: ['name'],
+    });
+  });
+
+  it('says a top-level item warns whenever it is missing, and a row field per row', () => {
+    drawTree();
+    fireEvent.click(rowButton('取引先'));
+    expect(
+      screen.getByText('データに無いと、診断に警告が出ます。印刷は止まりません。'),
+    ).not.toBeNull();
+    fireEvent.click(rowButton('品番'));
+    expect(
+      screen.getByText(
+        '「注文行」の各行に、この項目が無いと診断に警告が出ます。印刷は止まりません。',
+      ),
+    ).not.toBeNull();
+  });
+
+  it('unticks a top-level container, removing the emptied root list', () => {
+    const { mocks } = drawTree();
+    fireEvent.click(rowButton('取引先'));
+    const box = screen.getByRole('checkbox', { name: '必須' }) as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    fireEvent.click(box);
+    expect(mocks.onDefinitionEdit).toHaveBeenCalledWith({ op: 'removeKey', keys: ['required'] });
+  });
+});
+
+describe('DataEditorView sample placement through the tree', () => {
+  it('edits the rows of a table nested in an object, by path', () => {
+    const { mocks } = drawTree();
+    fireEvent.click(rowButton('品番'));
+    const inputs = screen.getAllByLabelText('品番');
+    expect(inputs).toHaveLength(2);
+    fireEvent.blur(inputs[1] as HTMLElement, { target: { value: 'X-9' } });
+    const next = JSON.parse(mocks.onParamsChange.mock.calls[0][0]);
+    expect(next.order.lines[1].sku).toBe('X-9');
+    fireEvent.click(screen.getByText('行を追加'));
+    expect(JSON.parse(mocks.onParamsChange.mock.calls[1][0]).order.lines).toHaveLength(3);
+    fireEvent.click(screen.getAllByText('削除')[0] as HTMLElement);
+    expect(JSON.parse(mocks.onParamsChange.mock.calls[2][0]).order.lines).toHaveLength(1);
+  });
+
+  it('adds the FIRST row to an empty table inside a group, creating its data', () => {
+    const { mocks } = drawTree({ params: JSON.stringify({ customer: { name: 'A社' } }) });
+    fireEvent.click(rowButton('品番'));
+    expect(screen.getByText('サンプルデータはありません。')).not.toBeNull();
+    fireEvent.click(screen.getByText('行を追加'));
+    expect(JSON.parse(mocks.onParamsChange.mock.calls[0][0]).order).toEqual({ lines: [{}] });
+  });
+
+  it('shows the no-rows note for a table nested in another table rows', () => {
+    drawTree();
+    fireEvent.click(rowButton('語'));
+    expect(screen.getByText('サンプルデータはありません。')).not.toBeNull();
+    expect(screen.queryByLabelText('語')).toBeNull();
+  });
+});
+
+describe('DataEditorView bands', () => {
+  it('shows the project-scope band above the pane and not in the rail', () => {
+    drawTree({ definitionsProjectScoped: true });
+    const nav = screen.getByRole('navigation');
+    expect(within(nav).queryByText(/プロジェクト全体で共有/)).toBeNull();
+    expect(screen.getByText(/プロジェクト全体で共有/)).not.toBeNull();
+  });
+
+  it('says the definitions were inferred in workshop mode', () => {
+    drawTree({ definitionsInferred: true });
+    expect(screen.getByText(/サンプルデータから推測した定義です/)).not.toBeNull();
+  });
+
+  it('lets the wider (shared) band win if both ever apply', () => {
+    drawTree({ definitionsProjectScoped: true, definitionsInferred: true });
+    expect(screen.getByText(/プロジェクト全体で共有/)).not.toBeNull();
+    expect(screen.queryByText(/サンプルデータから推測した定義です/)).toBeNull();
+  });
+
+  it('shows no band for an engineer file edited in the standalone app', () => {
+    drawTree();
+    expect(screen.queryByText(/プロジェクト全体で共有/)).toBeNull();
+    expect(screen.queryByText(/サンプルデータから推測した定義です/)).toBeNull();
+  });
+});
+
+describe('DataEditorView add-item targets on a nested tree', () => {
+  it('offers the top and every group and table rows, each named by its path from the top', () => {
+    drawTree();
+    const form = openAdd();
+    const target = within(form).getByLabelText('追加先') as HTMLSelectElement;
+    expect([...target.options].map((option) => option.text)).toEqual([
+      'どのグループにも入れない',
+      '取引先',
+      '取引先 › address',
+      'order',
+      'order › 注文行 の各行',
+      'order › 注文行 の各行 › tags の各行',
+    ]);
   });
 });

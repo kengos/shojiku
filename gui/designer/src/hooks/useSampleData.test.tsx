@@ -222,8 +222,9 @@ describe('Designer sample data', () => {
     // File menu, and an add-field applies over the empty-properties base.
     draw(makeTransport(), { params: '{}', onDefinitionsChange });
     openDataEditor();
-    fireEvent.change(screen.getByLabelText('Field name'), { target: { value: 'memo' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add data field' }));
+    fireEvent.change(screen.getByLabelText('Data name'), { target: { value: 'memo' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
     expect(onDefinitionsChange.mock.calls.at(-1)?.[0]).toContain('memo');
   });
 

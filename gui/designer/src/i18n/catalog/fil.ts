@@ -1056,9 +1056,6 @@ export const fil: LanguageCatalog = {
     'sample.readOnlyHint': 'Pinamamahalaan ng engineer ang sample na datos.',
     'sample.generate': 'Bumuo ng sample na datos',
     'sample.undo': 'I-undo ang edit',
-    'sample.addField': 'Magdagdag ng field',
-    'sample.addFieldKey': 'Pangalan ng field',
-    'sample.addFieldKind': 'Uri',
     'sample.addRow': 'Magdagdag ng row',
     'sample.removeRow': 'Alisin',
     'sample.enumRawValue': 'halaga sa params: {value}',
@@ -1087,6 +1084,41 @@ export const fil: LanguageCatalog = {
       'Pansamantalang datos para makita kung paano lumalabas ang ayos sa preview. Hindi ito ang halagang isasama kapag talagang ginawa na ang dokumento.',
     'data.type.integer': 'Buong numero',
     'data.addItem': 'Magdagdag ng field ng data',
+    'data.root.title': 'Tungkol sa data na ito',
+    'data.root.version': 'Bersyon (para sa mga engineer)',
+    'data.root.versionHint':
+      'Ang bersyon ng mga depinisyong ito. Iwanang blangko kung walang patakaran para dito.',
+    'data.kind.group': 'Grupo',
+    'data.kind.table': 'Talahanayan',
+    'data.kind.list': 'Listahan',
+    'data.required': 'Kailangan',
+    'data.requiredHint':
+      'Kapag wala ito sa data, magpapakita ng babala ang Mga diagnostic. Hindi titigil ang pag-print.',
+    'data.tree.toggle': 'Mga item sa loob ng “{label}”',
+    'data.dataName': 'Pangalan ng data',
+    'data.children': 'Mga item sa loob ({count})',
+    'data.add.submit': 'Idagdag',
+    'data.add.cancel': 'Kanselahin',
+    'data.add.target': 'Idagdag sa',
+    'data.add.targetRoot': 'Hindi sa loob ng anumang grupo',
+    'data.add.targetRows': 'Bawat hilera ng {label}',
+    'data.add.nameHint':
+      'Gamitin ang a–z, A–Z, 0–9 at _ (underscore). Kailangan ng dagdag na setup ang ibang karakter bago maipasok sa teksto.',
+    'data.error.empty_name': 'Maglagay ng pangalan ng data.',
+    'data.error.name_too_long': 'Panatilihin ang pangalan ng data sa {max} karakter o mas kaunti.',
+    'data.error.key_exists':
+      'Mayroon nang ganitong pangalan ng data sa lugar na ito. Pumili ng ibang pangalan.',
+    'data.error.name_has_dot': 'Hindi puwedeng may “.” ang pangalan ng data.',
+    'data.error.name_invisible':
+      'May nakatagong karakter ang pangalan ng data. Burahin ito at i-type muli.',
+    'data.band.workshop':
+      'Hinulaan ang mga depinisyong ito mula sa sample na data. Mananatili bilang depinisyon ang mga pag-edit mo rito.',
+    'data.kindOption.table': 'Talahanayan (hal. mga line item)',
+    'data.kindOption.list': 'Listahan (hal. mga tag)',
+    'data.requiredHintGroup':
+      'Kapag nasa data ang “{parent}” at wala ang item na ito, magpapakita ng babala ang Mga diagnostic. Hindi titigil ang pag-print.',
+    'data.requiredHintRows':
+      'Kapag wala ang item na ito sa isang hilera ng “{parent}”, magpapakita ng babala ang Mga diagnostic. Hindi titigil ang pag-print.',
     'data.undo': 'I-undo ang pag-edit ng depinisyon',
     'data.projectScopeHint':
       'Ibinabahagi ang mga depinisyong ito sa buong proyekto — babaguhin ng pag-save kung ano ang bina-validate ng bawat template dito.',

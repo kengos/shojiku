@@ -1,27 +1,26 @@
 // The full-screen data-item editor (the document settings mould): it takes over the whole
 // editor area, entered by the gear on the data-items tab and the File-menu
-// edit-data-items entry. Left = search + the data-item list; right = the
-// selected field's DEFINITION (label / type / format / description) AND its
-// SAMPLE value in a roomy editor — the point being a novel-length genkoyoshi body text,
-// uneditable in the old one-line sidebar input.
+// edit-data-items entry. Left = search + the data-item TREE (the root, groups,
+// tables, lists and fields at any depth); right = the selected node's DEFINITION
+// and, for a field, its SAMPLE value in a roomy editor — the point being a
+// novel-length genkoyoshi body text, uneditable in the old one-line sidebar input.
 //
 // This file is the SHELL: the host-facing props, the selection/derived state,
 // the two commit paths (a sample value, a definition op), and the header +
 // two-pane composition. The panes themselves are `ItemListPane` (left) and
-// `DetailPane` (right); `VariantBar` carries the document-level sample
-// controls.
+// `DetailPane` (right, handed ONE `DetailContext`); `SampleControls` carries the
+// document-level sample controls and `EditorBand` what the definitions are.
 //
-// Definitions are EDITABLE here (reversing the old read-only seam): each
-// metadata edit is a CST-preserving op reported up through `onDefinitionEdit`,
-// and a fresh field is added through `addFieldPlan`. Sample values are `params`
-// edits reported through `onParamsChange`, variant-aware and read-only on a
-// mounted host (engineer-owned data).
+// Definitions are EDITABLE here: each edit is a CST-preserving op reported up
+// through `onDefinitionEdit`, addressed by the tree node's own keys path, and a
+// fresh item is added through `addFieldPlan`. Sample values are `params` edits
+// reported through `onParamsChange`, variant-aware and read-only on a mounted
+// host (engineer-owned data).
 
 import type { Op } from '@shojiku/designer-core';
 import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n/context';
 import { readBindings } from '../palette/bindings';
-import { readDefinitionsView } from '../palette/model';
 import { buildUsage } from '../palette/usage';
 import { addSampleField, addSampleRow, removeSampleRow, setSampleValue } from '../sample/edit';
 import { fillMissingParams, missingParamKeys } from '../sample/generate';
@@ -29,10 +28,13 @@ import { coerceSampleValue, parseParams, type SampleKind, type SamplePath } from
 import { IconButton } from '../ui/Button';
 import { IconClose } from '../ui/icons';
 import { DetailPane } from './DetailPane';
-import { selectionKey } from './editorModel';
+import { readDefsTree } from './defsTree';
+import type { DetailContext } from './detailContext';
+import { EditorBand } from './EditorBand';
 import type { DataEditorViewProps } from './editorProps';
 import { ItemListPane } from './ItemListPane';
 import { SampleControls } from './SampleControls';
+import { findNode, nodeForTarget } from './treeModel';
 
 export function DataEditorView({
   definitions,
@@ -42,6 +44,7 @@ export function DataEditorView({
   onParamsChange,
   sampleDataReadOnly = false,
   definitionsProjectScoped = false,
+  definitionsInferred = false,
   synth,
   locale = 'en',
   engineLocale,
@@ -54,34 +57,19 @@ export function DataEditorView({
   onClose,
 }: DataEditorViewProps) {
   const { t } = useI18n();
-  // Seeded once, on mount: the view is unmounted whenever it is not open, so
-  // every entry re-runs this. The key is RESOLVED against the live groups by
-  // the memo below, so a stale or hostile target lands on the no-selection
-  // surface rather than erroring.
-  const [selectedKey, setSelectedKey] = useState<string | null>(() =>
-    initialSelection === undefined
-      ? null
-      : selectionKey(initialSelection.group, initialSelection.key),
-  );
-
-  const groups = useMemo(() => readDefinitionsView(definitions) ?? [], [definitions]);
+  const tree = useMemo(() => readDefsTree(definitions), [definitions]);
   const usage = useMemo(() => buildUsage(readBindings(templateText)), [templateText]);
-
-  // Resolve the selection against the CURRENT groups so an edit that keeps the
-  // field selected still finds it (null when it no longer exists).
-  const selected = useMemo(() => {
-    if (selectedKey === null) {
-      return null;
-    }
-    for (const group of groups) {
-      for (const field of group.fields) {
-        if (selectionKey(group.id, field.key) === selectedKey) {
-          return { group, field };
-        }
-      }
-    }
-    return null;
-  }, [groups, selectedKey]);
+  // Seeded once, on mount: the view is unmounted whenever it is not open, so
+  // every entry re-runs this. A stale or hostile target resolves to no node and
+  // lands on the no-selection surface rather than erroring.
+  const [selectedId, setSelectedId] = useState<string | null>(() =>
+    initialSelection === undefined || tree === null
+      ? null
+      : (nodeForTarget(tree, initialSelection)?.id ?? null),
+  );
+  // Resolved against the CURRENT tree each render, so an edit that keeps the node
+  // selected still finds it (null once it no longer exists).
+  const selected = tree === null || selectedId === null ? null : findNode(tree, selectedId);
 
   const canEditSample = !sampleDataReadOnly;
   const missing = onDefinitionEdit === undefined ? [] : missingParamKeys(params, definitions);
@@ -114,6 +102,21 @@ export function DataEditorView({
     }
   };
 
+  const detailContext = (root: NonNullable<typeof tree>): DetailContext => ({
+    tree: root,
+    definitions,
+    params,
+    editable,
+    canEditSample,
+    engineLocale,
+    onDefEdit: dispatchDefEdit,
+    onCommitSample: commitSample,
+    onAddRow: (arrayPath: SamplePath) => onParamsChange(addSampleRow(params, arrayPath)),
+    onRemoveRow: (arrayPath: SamplePath, index: number) =>
+      onParamsChange(removeSampleRow(params, arrayPath, index)),
+    onSelect: setSelectedId,
+  });
+
   return (
     <section
       className="flex min-h-0 min-w-0 flex-1 flex-col bg-bg"
@@ -126,21 +129,22 @@ export function DataEditorView({
         <h2 className="m-0 text-base font-semibold text-text">{t('data.editorTitle')}</h2>
       </header>
       <div className="flex min-h-0 flex-1">
-        {/* Left: search + add + list. */}
+        {/* Left: search + add + tree. */}
         <ItemListPane
-          groups={groups}
+          tree={tree}
           usage={usage}
           definitions={definitions}
-          onDefinitionEdit={onDefinitionEdit}
-          canUndoDefinition={canUndoDefinition}
-          onUndoDefinition={onUndoDefinition}
-          definitionsProjectScoped={definitionsProjectScoped}
-          selectedField={selected?.field ?? null}
-          onSelect={setSelectedKey}
+          selected={selected}
+          onSelect={setSelectedId}
+          edit={{ onDefinitionEdit, canUndo: canUndoDefinition, onUndo: onUndoDefinition }}
         />
         {/* Right: the selected field's definition + sample. */}
         <div className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
           <div className="mx-auto flex max-w-[560px] flex-col gap-6">
+            <EditorBand
+              projectScoped={definitionsProjectScoped && onDefinitionEdit !== undefined}
+              inferred={definitionsInferred}
+            />
             <SampleControls
               canEditSample={canEditSample}
               variants={variants}
@@ -151,24 +155,10 @@ export function DataEditorView({
                 onParamsChange(fillMissingParams(params, definitions, synth, locale))
               }
             />
-            {selected === null ? (
+            {tree === null || selected === null ? (
               <p className="m-0 text-muted">{t('data.selectHint')}</p>
             ) : (
-              <DetailPane
-                group={selected.group}
-                field={selected.field}
-                definitions={definitions}
-                params={params}
-                editable={editable}
-                canEditSample={canEditSample}
-                engineLocale={engineLocale}
-                onDefEdit={dispatchDefEdit}
-                onCommitSample={commitSample}
-                onAddRow={() => onParamsChange(addSampleRow(params, [selected.group.id]))}
-                onRemoveRow={(index) =>
-                  onParamsChange(removeSampleRow(params, [selected.group.id], index))
-                }
-              />
+              <DetailPane node={selected} ctx={detailContext(tree)} />
             )}
           </div>
         </div>

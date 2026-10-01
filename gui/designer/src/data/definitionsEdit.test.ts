@@ -1,17 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { readDefinitionsView } from '../palette/model';
 import {
   applyDefinitionOps,
   coalesceDefsEdit,
   DEFINITION_TYPES,
   descriptionOp,
-  fieldKeysPath,
   formatOp,
   readDefinitionField,
+  requiredOp,
   semanticFormats,
   titleOp,
   typeOp,
+  versionOp,
 } from './definitionsEdit';
+import { readDefsTree } from './defsTree';
+import { SELECTION_SEP } from './editorModel';
+import { findNode } from './treeModel';
 
 // A schema exercising every field shape: a top-level scalar (ungrouped), a
 // nested object leaf, and an array-group row field.
@@ -38,50 +41,6 @@ properties:
           type: number
 `;
 
-function groups() {
-  const g = readDefinitionsView(DEFS);
-  if (g === null) {
-    throw new Error('fixture should parse');
-  }
-  return g;
-}
-
-function groupById(id: string) {
-  const g = groups().find((entry) => entry.id === id);
-  if (g === undefined) {
-    throw new Error(`no group ${id}`);
-  }
-  return g;
-}
-
-describe('fieldKeysPath', () => {
-  it('addresses a top-level scalar (ungrouped) field', () => {
-    const ungrouped = groupById('');
-    expect(fieldKeysPath(ungrouped, 'total')).toEqual(['properties', 'total']);
-  });
-
-  it('interleaves properties for a nested object leaf', () => {
-    const customer = groupById('customer');
-    expect(fieldKeysPath(customer, 'customer.name')).toEqual([
-      'properties',
-      'customer',
-      'properties',
-      'name',
-    ]);
-  });
-
-  it('routes an array-group row field through items.properties', () => {
-    const items = groupById('items');
-    expect(fieldKeysPath(items, 'qty')).toEqual([
-      'properties',
-      'items',
-      'items',
-      'properties',
-      'qty',
-    ]);
-  });
-});
-
 describe('readDefinitionField', () => {
   it('reads the raw metadata of a scalar field', () => {
     const field = readDefinitionField(DEFS, ['properties', 'total']);
@@ -90,6 +49,7 @@ describe('readDefinitionField', () => {
       type: 'number',
       format: 'currency',
       description: '税込の総額',
+      version: '',
     });
   });
 
@@ -106,6 +66,7 @@ describe('readDefinitionField', () => {
       type: '',
       format: '',
       description: '',
+      version: '',
     });
   });
 
@@ -116,6 +77,7 @@ describe('readDefinitionField', () => {
       type: '',
       format: '',
       description: '',
+      version: '',
     });
   });
 
@@ -126,6 +88,7 @@ describe('readDefinitionField', () => {
       type: '',
       format: '',
       description: '',
+      version: '',
     });
   });
 
@@ -135,6 +98,7 @@ describe('readDefinitionField', () => {
       type: '',
       format: '',
       description: '',
+      version: '',
     });
   });
 
@@ -144,6 +108,7 @@ describe('readDefinitionField', () => {
       type: '',
       format: '',
       description: '',
+      version: '',
     });
   });
 });
@@ -231,6 +196,7 @@ describe('applyDefinitionOps', () => {
       type: '',
       format: '',
       description: '',
+      version: '',
     });
   });
 
@@ -314,5 +280,123 @@ describe('semanticFormats', () => {
     for (const hostile of ['constructor', '__proto__', 'toString', 'valueOf']) {
       expect(semanticFormats(hostile), hostile).toEqual([]);
     }
+  });
+});
+
+describe('the root version read and its op', () => {
+  it('reads the root version (and empty for a field, which carries none)', () => {
+    const text = `version: "0.2.0"\n${DEFS}`;
+    expect(readDefinitionField(text, []).version).toBe('0.2.0');
+    expect(readDefinitionField(text, ['properties', 'total']).version).toBe('');
+  });
+
+  it('sets, clears and leaves an unchanged version alone', () => {
+    expect(versionOp([], '', '1.0')).toEqual({ op: 'setScalar', keys: ['version'], value: '1.0' });
+    expect(versionOp([], '1.0', '')).toEqual({ op: 'removeKey', keys: ['version'] });
+    expect(versionOp([], '1.0', '1.0')).toBeNull();
+  });
+});
+
+const REQ = `type: object
+required: [ total ]
+properties:
+  total: { type: number }
+  memo: { type: string }
+  customer:
+    type: object
+    required: [ name, tel ]
+    properties:
+      name: { type: string }
+      tel: { type: string }
+  items:
+    type: array
+    items:
+      type: object
+      properties:
+        qty: { type: number }
+`;
+
+function at(...keys: string[]) {
+  const tree = readDefsTree(REQ);
+  const found = tree === null ? null : findNode(tree, keys.join(SELECTION_SEP));
+  if (found === null) {
+    throw new Error(`no node ${keys.join('.')}`);
+  }
+  return found;
+}
+
+describe('the root ops round-trip', () => {
+  it('writes the root label, description and version leaving the rest byte-exact', () => {
+    const text =
+      '# the data dictionary\nversion: "0.2.0"\ntype: object\nproperties:\n  total: { type: number }\n';
+    const ops = [
+      titleOp([], '', 'Invoice'),
+      descriptionOp([], '', 'Fields'),
+      versionOp([], '0.2.0', '0.3.0'),
+    ].filter((op) => op !== null);
+    expect(applyDefinitionOps(text, ops)).toBe(
+      '# the data dictionary\nversion: "0.3.0"\ntype: object\nproperties:\n  total: { type: number }\ntitle: Invoice\ndescription: Fields\n',
+    );
+  });
+});
+
+describe('requiredOp', () => {
+  it('appends to the ROOT list for a top-level item, keeping its order', () => {
+    expect(requiredOp(at('properties', 'memo'), true)).toEqual({
+      op: 'setStrings',
+      keys: ['required'],
+      values: ['total', 'memo'],
+    });
+  });
+
+  it("edits a group's own list for its child", () => {
+    expect(requiredOp(at('properties', 'customer', 'properties', 'name'), false)).toEqual({
+      op: 'setStrings',
+      keys: ['properties', 'customer', 'required'],
+      values: ['tel'],
+    });
+  });
+
+  it("edits a table ROW object's list (items.required) for a row field", () => {
+    expect(requiredOp(at('properties', 'items', 'items', 'properties', 'qty'), true)).toEqual({
+      op: 'setStrings',
+      keys: ['properties', 'items', 'items', 'required'],
+      values: ['qty'],
+    });
+  });
+
+  it('REMOVES a list its last member leaves, rather than writing []', () => {
+    expect(requiredOp(at('properties', 'total'), false)).toEqual({
+      op: 'removeKey',
+      keys: ['required'],
+    });
+  });
+
+  it('authors nothing when the flag already matches, and nothing for the root', () => {
+    expect(requiredOp(at('properties', 'total'), true)).toBeNull();
+    expect(requiredOp(at('properties', 'memo'), false)).toBeNull();
+    const tree = readDefsTree(REQ);
+    expect(tree === null ? 'no tree' : requiredOp(tree, true)).toBeNull();
+  });
+
+  it('authors nothing past the string-list cap one op may write', () => {
+    const names = Array.from({ length: 256 }, (_, i) => `f${i}`);
+    const text = `type: object\nrequired: [${names.join(', ')}]\nproperties:\n  extra: { type: string }\n`;
+    const tree = readDefsTree(text);
+    const extra =
+      tree === null ? null : findNode(tree, ['properties', 'extra'].join(SELECTION_SEP));
+    expect(extra === null ? 'missing' : requiredOp(extra, true)).toBeNull();
+  });
+
+  it('round-trips: applying the op leaves untouched keys and comments byte-exact', () => {
+    const text = `# the data dictionary\n${REQ}`;
+    const op = requiredOp(at('properties', 'memo'), true);
+    const out = applyDefinitionOps(text, op === null ? [] : [op]);
+    expect(out.startsWith('# the data dictionary\n')).toBe(true);
+    expect(out).toContain('required: [ total, memo ]');
+    // A FIXED-POINT fixture (canonical flow spacing): designer-core re-emits flow
+    // collections canonically on the first write, so only such a fixture can be
+    // compared byte for byte.
+    expect(out.replace('required: [ total, memo ]', 'required: [ total ]')).toBe(text);
   });
 });

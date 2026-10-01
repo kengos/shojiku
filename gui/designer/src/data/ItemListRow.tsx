@@ -1,33 +1,75 @@
-// One row of the data-item list: the field's label, key and type, plus the
-// a used/unused chip counting its placements in the template.
+// One row of the data-item tree: the node's label over its data name and type
+// (a container shows its kind instead), the 必須 chip, and the used/unused chip
+// counting its placements in the template.
 //
-// The help affordance is a SIBLING of the select button, never nested inside it
+// A container row carries its OWN ▸/▾ toggle beside the select button, so opening
+// a group never changes the selection and selecting one never folds it. The help
+// affordance is likewise a SIBLING of the select button, never nested inside it
 // (a button-in-button is invalid HTML), so a field carrying a description stays
 // selectable and its description separately revealable.
 
 import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
-import type { PaletteField } from '../palette/model';
 import { TYPE_LABEL_KEYS } from '../palette/paletteRow';
+import { IconChevronDown } from '../ui/icons';
+import type { DefsNode } from './defsTree';
+import { nodeLabel } from './treeModel';
 
-/** One row in the left data-item list. */
+export interface ListRowProps {
+  readonly node: DefsNode;
+  readonly depth: number;
+  /** `null` = the node has no usage of its own (a group). */
+  readonly usedCount: number | null;
+  readonly active: boolean;
+  /** `null` = nothing to open (a field, a list, an empty container). */
+  readonly expanded: boolean | null;
+  readonly onToggle: () => void;
+  readonly onSelect: () => void;
+}
+
+function TypeText({ node }: { readonly node: DefsNode }) {
+  const { t } = useI18n();
+  if (node.leaf === null) {
+    return <span>{t(`data.kind.${node.kind}`)}</span>;
+  }
+  const typeKey = TYPE_LABEL_KEYS.get(node.leaf.type);
+  return <span>{typeKey !== undefined ? t(typeKey) : node.leaf.type}</span>;
+}
+
+/** One row in the left data-item tree. */
 export function ListRow({
-  field,
+  node,
+  depth,
   usedCount,
   active,
+  expanded,
+  onToggle,
   onSelect,
-}: {
-  readonly field: PaletteField;
-  readonly usedCount: number;
-  readonly active: boolean;
-  readonly onSelect: () => void;
-}) {
+}: ListRowProps) {
   const { t } = useI18n();
-  const typeKey = TYPE_LABEL_KEYS.get(field.type);
-  // The help affordance is a SIBLING of the select button, never nested inside
-  // it (a button-in-button is invalid HTML).
+  const label = nodeLabel(node);
+  const description = node.leaf?.description ?? '';
   return (
-    <li className="flex items-start gap-1">
+    <div className="flex items-start gap-1" style={{ paddingLeft: `${depth}rem` }}>
+      {expanded === null ? (
+        <span className="w-5 shrink-0" aria-hidden="true" />
+      ) : (
+        <button
+          type="button"
+          className="flex h-6 w-5 shrink-0 items-center justify-center border-0 bg-transparent p-0 text-muted"
+          aria-expanded={expanded}
+          aria-label={t('data.tree.toggle', { label })}
+          onClick={onToggle}
+        >
+          {/* The shipped disclosure pattern (the layer tree's): one chevron,
+              rotated a quarter turn when folded; `data-collapsed` is the hook. */}
+          <IconChevronDown
+            size={12}
+            data-collapsed={expanded ? undefined : ''}
+            className="transition-transform data-collapsed:-rotate-90"
+          />
+        </button>
+      )}
       <button
         type="button"
         aria-current={active}
@@ -37,19 +79,22 @@ export function ListRow({
         onClick={onSelect}
       >
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold [overflow-wrap:anywhere]">{field.label}</span>
-          <span className="flex items-baseline gap-2 text-sm text-muted">
-            <code className="text-sm">{field.key}</code>
-            <span>{typeKey !== undefined ? t(typeKey) : field.type}</span>
+          <span className="block font-semibold [overflow-wrap:anywhere]">{label}</span>
+          <span className="flex flex-wrap items-baseline gap-x-2 text-sm text-muted">
+            <code className="text-sm">{node.name}</code>
+            <TypeText node={node} />
+            {node.required ? <span className="text-accent">{t('data.required')}</span> : null}
           </span>
         </span>
-        <span className={`shrink-0 text-sm ${usedCount > 0 ? 'text-accent' : 'text-muted'}`}>
-          {usedCount > 0 ? t('palette.used', { count: usedCount }) : t('palette.unused')}
-        </span>
+        {usedCount === null ? null : (
+          <span className={`shrink-0 text-sm ${usedCount > 0 ? 'text-accent' : 'text-muted'}`}>
+            {usedCount > 0 ? t('palette.used', { count: usedCount }) : t('palette.unused')}
+          </span>
+        )}
       </button>
-      {field.description !== '' ? (
-        <HelpHint label={t('data.field.description')} body={field.description} />
+      {description !== '' ? (
+        <HelpHint label={t('data.field.description')} body={description} />
       ) : null}
-    </li>
+    </div>
   );
 }
