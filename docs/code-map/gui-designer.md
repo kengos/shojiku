@@ -615,5 +615,17 @@ services/props; nothing in the component reads the singleton.
   box path addressable in `buildTree`), reorder/duplicate re-renders,
   the canvas dnd pipeline over real inspect geometry, zoomed render
   scale, and the page-setup size table against the engine.
+- `src/integration/sampleData.test.ts` — sample-data generation and the
+  workshop stub against the real engine: params generated from a bundled
+  definitions schema validate with no `params_*` diagnostics, and a
+  blank-start document (sample data + its inferred stub) validates and
+  renders.
+- `src/integration/definitionsAuthoring.test.ts` — the data-item editor's
+  WRITE side against the real engine: every op its builders author (each of
+  the seven add kinds into the root, a group and a table's rows; required on
+  and off at each parent kind; the root's label / description / version) is
+  applied to a realistic definitions file and validated error-free, with a
+  positive control that a broken definitions file does red. The unit suites
+  build on their own fixtures; this is the one that crosses the seam.
 - `vitest.setup.ts` — jsdom RTL setup: auto-cleanup, `ImageData`/
   `getContext` shims, the `PointerEvent` shim.

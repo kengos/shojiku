@@ -135,9 +135,23 @@ describe('addSampleRow / removeSampleRow', () => {
     expect(JSON.parse(next)).toEqual({ a: 1, items: [{}] });
   });
 
-  it('does not create a missing NESTED array (top-level keys only)', () => {
-    const text = serializeParams({ a: {} });
-    expect(addSampleRow(text, ['a', 'items'])).toBe(text);
+  it('creates a missing array inside a group, and the missing group with it', () => {
+    // A table inside a group (`order.lines`) with no data yet must gain its
+    // first row from the data editor too.
+    expect(JSON.parse(addSampleRow(serializeParams({ order: {} }), ['order', 'lines']))).toEqual({
+      order: { lines: [{}] },
+    });
+    expect(JSON.parse(addSampleRow(serializeParams({ a: 1 }), ['order', 'lines']))).toEqual({
+      a: 1,
+      order: { lines: [{}] },
+    });
+  });
+
+  it('never creates through a scalar or a row index (no clobbering, no invented rows)', () => {
+    const scalar = serializeParams({ order: 5 });
+    expect(addSampleRow(scalar, ['order', 'lines'])).toBe(scalar);
+    const rows = serializeParams({ items: [] });
+    expect(addSampleRow(rows, ['items', 0, 'tags'])).toBe(rows);
   });
 
   it('removes a row and keeps an emptied array', () => {

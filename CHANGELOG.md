@@ -15,6 +15,33 @@ platform binaries.
 
 ### Added
 
+- **The data-item editor shows the whole data dictionary as a tree, and items
+  can be added anywhere in it.** Groups, tables (a repeating set of rows) and
+  lists (a repeating set of values) are rows you can select, with their items
+  indented beneath them at any depth, each container opening and closing on
+  its own. A group, table or list now has its own form — its label,
+  description and whether it is required — with links to the items inside, and
+  a 「データ全体の情報」 row edits the definitions file's own label, description
+  and version. Every item can be marked **required**, which warns in
+  Diagnostics when the data lacks it — for an item inside a group or a table,
+  wherever that group or row is present; printing never stops.
+
+  **Add data field** now asks where the item goes (the top level, a group, or
+  each row of a table), its display label, its data name and its type, and
+  can create a group, a table or a list as well as a text, number, integer or
+  yes/no field; each place is named by its path from the top, so two groups
+  with the same label are told apart. A data name containing 「.」, or
+  characters that draw nothing, is refused with the reason, and the new item
+  is selected (its group opened) once it is added.
+
+  Editing a field of a table nested inside another table's rows changed a
+  different place in the file than the one shown; every item is now edited at
+  the place it was read from. Sample values for a table inside a group can now
+  be edited row by row, including adding its first row. When the definitions were worked out from the sample
+  data rather than supplied, the editor says so above the form, and on a
+  mounted host the note that the definitions are shared with the whole
+  project now sits there too, over every edit.
+
 - **Text and box styling that could only be written by hand can now be set in
   the Designer.** Every item's Style tab is now folded into sections — Text,
   Overflow, Fill and border (a line's or a form mark's own stroke), Opacity and

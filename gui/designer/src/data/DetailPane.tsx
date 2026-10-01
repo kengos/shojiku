@@ -1,145 +1,84 @@
-// The right pane of the data-item editor for ONE selected field: its DEFINITION
-// metadata (label / type / format / description) and its SAMPLE value(s).
+// The right pane of the data-item editor for ONE selected tree node: a header
+// (its label, kind and data name) over the part that node kind edits — a field's
+// definition form and sample value(s), a container's form, or the root's.
 //
-// The pane itself holds no state: every uncontrolled input inside is keyed by
-// its OWN value (`def.title`, the sample value), and that is what reseeds them
-// when the selection or the document changes — the pane is NOT keyed by the
-// selection, so anything added here must carry the same value-key or it will go
-// on showing the previous field's text.
-//
-// A scalar field has one value; an array-group field renders one value per row
-// (a focused column view) plus add/remove-row. Definition inputs are read-only
-// when the host did not arm definition editing; sample inputs are read-only on a
-// mounted host, and the two are independent.
+// The pane holds no state: every uncontrolled input inside is keyed by its OWN
+// value, and that is what reseeds them when the selection or the document
+// changes — the pane is NOT keyed by the selection, so anything added here must
+// carry the same value-key or it will go on showing the previous node's text.
 
-import type { Op } from '@shojiku/designer-core';
 import type { ReactNode } from 'react';
-import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
-import type { PaletteField, PaletteGroup } from '../palette/model';
-import type { SampleKind, SamplePath } from '../sample/model';
-import { BTN_SM, SECTION_TITLE } from '../ui/chrome';
+import { ContainerDetail } from './ContainerDetail';
 import { DefinitionForm } from './DefinitionForm';
-import { fieldKeysPath, readDefinitionField } from './definitionsEdit';
-import { arrayLength, readAt, sampleKind } from './editorModel';
-import { ReadonlyValue, ValueField } from './ValueField';
+import { readDefinitionField } from './definitionsEdit';
+import type { DefsNode } from './defsTree';
+import type { DetailContext } from './detailContext';
+import { sampleKind } from './editorModel';
+import { RootDetail } from './RootDetail';
+import { SampleSection } from './SampleSection';
+import { nodeLabel, parentOf } from './treeModel';
 
-export interface DetailPaneProps {
-  readonly group: PaletteGroup;
-  readonly field: PaletteField;
-  readonly definitions: string;
-  readonly params: string;
-  readonly editable: boolean;
-  readonly canEditSample: boolean;
-  readonly engineLocale?: string;
-  readonly onDefEdit: (op: Op | null) => void;
-  readonly onCommitSample: (path: SamplePath, kind: SampleKind, raw: string) => void;
-  readonly onAddRow: () => void;
-  readonly onRemoveRow: (index: number) => void;
-}
-
-/** The right pane for one selected field: its definition metadata + its sample
- * value(s). Stateless — the inputs inside reseed by their own value keys. */
-export function DetailPane({
-  group,
-  field,
-  definitions,
-  params,
-  editable,
-  canEditSample,
-  engineLocale,
-  onDefEdit,
-  onCommitSample,
-  onAddRow,
-  onRemoveRow,
-}: DetailPaneProps) {
+function NodeHeader({ node }: { readonly node: DefsNode }) {
   const { t } = useI18n();
-  const keysPath = fieldKeysPath(group, field.key);
-  const def = readDefinitionField(definitions, keysPath);
-  const kind = sampleKind(def.type, def.format);
-  const fieldSegs = field.key.split('.');
-
-  // The sample section: a scalar field has ONE value; an array-group field has
-  // one value per row (a focused column view) plus add/remove-row.
-  let sampleSection: ReactNode;
-  if (!group.isArray) {
-    const value = readAt(params, fieldSegs);
-    sampleSection = canEditSample ? (
-      <ValueField
-        key={value}
-        label={field.label}
-        kind={kind}
-        value={value}
-        engineLocale={engineLocale}
-        options={field.enumOptions}
-        onCommit={(raw) => onCommitSample(fieldSegs, kind, raw)}
-      />
-    ) : (
-      <ReadonlyValue value={value} options={field.enumOptions} />
-    );
-  } else {
-    const rows = arrayLength(params, group.id);
-    sampleSection = (
-      <div className="flex flex-col gap-2">
-        {rows === 0 ? <p className="m-0 text-sm text-muted">{t('sample.emptyReadOnly')}</p> : null}
-        {Array.from({ length: rows }, (_, index) => {
-          const path: SamplePath = [group.id, index, ...fieldSegs];
-          const value = readAt(params, path);
-          return (
-            // biome-ignore lint/suspicious/noArrayIndexKey: sample rows are a stable order-preserving list with no identity of their own (the index IS the row).
-            <fieldset key={`${index}`} className="rounded-md border border-border p-2">
-              <legend className="px-1 text-sm text-muted">{`#${index + 1}`}</legend>
-              {canEditSample ? (
-                <ValueField
-                  key={value}
-                  label={field.label}
-                  kind={kind}
-                  value={value}
-                  engineLocale={engineLocale}
-                  options={field.enumOptions}
-                  compact
-                  onCommit={(raw) => onCommitSample(path, kind, raw)}
-                />
-              ) : (
-                <ReadonlyValue value={value} options={field.enumOptions} />
-              )}
-              {canEditSample ? (
-                <button type="button" className={BTN_SM} onClick={() => onRemoveRow(index)}>
-                  {t('sample.removeRow')}
-                </button>
-              ) : null}
-            </fieldset>
-          );
-        })}
-        {canEditSample ? (
-          <button type="button" className={`${BTN_SM} self-start`} onClick={onAddRow}>
-            {t('sample.addRow')}
-          </button>
-        ) : null}
-      </div>
+  if (node.kind === 'root') {
+    return (
+      <h2 className="m-0 border-b border-border pb-3 text-lg font-semibold text-text">
+        {t('data.root.title')}
+      </h2>
     );
   }
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border pb-3">
+      <h2 className="m-0 text-lg font-semibold text-text [overflow-wrap:anywhere]">
+        {nodeLabel(node)}
+      </h2>
+      {node.leaf === null ? (
+        <span className="rounded-full border border-border px-2 text-sm text-muted">
+          {t(`data.kind.${node.kind}`)}
+        </span>
+      ) : null}
+      <span className="text-sm text-muted">
+        {t('data.dataName')}: <code className="text-sm">{node.name}</code>
+      </span>
+    </div>
+  );
+}
 
+/** The right pane for one selected node. Stateless — the inputs inside reseed by
+ * their own value keys. */
+export function DetailPane({
+  node,
+  ctx,
+}: {
+  readonly node: DefsNode;
+  readonly ctx: DetailContext;
+}) {
+  const leaf = node.leaf;
+  let body: ReactNode;
+  if (node.kind === 'root') {
+    body = <RootDetail ctx={ctx} />;
+  } else if (leaf === null) {
+    body = <ContainerDetail node={node} ctx={ctx} />;
+  } else {
+    const def = readDefinitionField(ctx.definitions, node.keysPath);
+    body = (
+      <>
+        <DefinitionForm
+          node={node}
+          parent={parentOf(ctx.tree, node)}
+          def={def}
+          editable={ctx.editable}
+          onDefEdit={ctx.onDefEdit}
+        />
+        <SampleSection node={node} leaf={leaf} kind={sampleKind(def.type, def.format)} ctx={ctx} />
+      </>
+    );
+  }
   return (
     <>
-      <DefinitionForm keysPath={keysPath} def={def} editable={editable} onDefEdit={onDefEdit} />
-      <section className="flex flex-col gap-2">
-        {/* The heading is the section's ONE 「sample value」 label — the value
-          widget below names itself after the FIELD (as the array branch always
-          did), so the two no longer read as the same label twice. The `?` says
-          what this data IS; the sentence must hold in every arm this pane
-          renders (scalar / array, editable / read-only mounted host), so it
-          describes the data's ROLE and never the editing affordance. */}
-        <div className="flex items-center gap-1">
-          <h3 className={`${SECTION_TITLE} mb-0`}>{t('data.sampleValue')}</h3>
-          <HelpHint
-            label={t('help.sampleValue.title')}
-            title={t('help.sampleValue.title')}
-            body={t('help.sampleValue.body')}
-          />
-        </div>
-        {sampleSection}
-      </section>
+      <NodeHeader node={node} />
+      {body}
     </>
   );
 }

@@ -76,6 +76,7 @@ export function FullscreenView({
       onParamsChange={onParamsChange}
       sampleDataReadOnly={host.sampleDataReadOnly}
       definitionsProjectScoped={host.definitionsProjectScoped}
+      definitionsInferred={sample.stub !== undefined}
       synth={synth}
       locale={locale}
       engineLocale={engineLocale}

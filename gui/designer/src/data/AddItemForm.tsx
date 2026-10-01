@@ -1,84 +1,148 @@
-// The add-a-data-item form in the editor's left rail: a name + scalar type that
-// dispatches an `addFieldPlan` putValue, so a missing field is added without
-// leaving the Designer — including on a mounted host, where the sample data is
-// read-only but the definitions are not.
+// The add-a-data-item control in the editor's left rail: a button that opens a
+// small form — where it goes (the root, a group, or a table's rows), its display
+// label, its data name and its kind (four scalar types, group, table, list) — and
+// dispatches ONE `addFieldPlan` putValue. Works on a mounted host too, where the
+// sample data is read-only but the definitions are not.
+//
+// The form mounts on open, so its starting place is read from the selection at
+// that moment (`defaultAddTarget`), and it unmounts — dropping the draft — on
+// add or cancel.
 
 import type { Op } from '@shojiku/designer-core';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useI18n } from '../i18n/context';
-import { BTN_SM, INPUT } from '../ui/chrome';
-import { DEFINITION_TYPES, type DefinitionType } from './definitionsEdit';
-import { addFieldPlan } from './defsPlan';
-import { TYPE_OPTION_KEY } from './editorModel';
+import { MAX_FIELD_NAME_CHARS } from '../insert/fieldModel';
+import { Field } from '../panel/fields';
+import { BTN_SM, FIELD_LABEL, INPUT } from '../ui/chrome';
+import { IconPlus } from '../ui/icons';
+import { AddTargetSelect } from './AddTargetSelect';
+import { ADD_KINDS, type AddKind, addFieldPlan } from './defsPlan';
+import type { DefsNode } from './defsTree';
+import { KIND_OPTION_KEY, SELECTION_SEP } from './editorModel';
+import { addTargets, defaultAddTarget } from './treeModel';
 
-/** The add-a-data-item form (name + scalar type) → an `addFieldPlan` putValue,
- * so a missing field is added without leaving the Designer (works even when the
- * sample data is read-only). */
-export function AddItemForm({
-  definitions,
-  onDefinitionEdit,
-}: {
+export interface AddItemFormProps {
   readonly definitions: string;
+  readonly tree: DefsNode;
+  readonly selected: DefsNode | null;
   readonly onDefinitionEdit: (op: Op) => void;
+  /** The new item's selection id, so the editor can select it. */
+  readonly onAdded: (id: string) => void;
+}
+
+function AddForm({
+  definitions,
+  tree,
+  selected,
+  onDefinitionEdit,
+  onAdded,
+  onClose,
+}: AddItemFormProps & {
+  readonly onClose: () => void;
 }) {
   const { t } = useI18n();
+  const targets = addTargets(tree);
+  const [targetId, setTargetId] = useState(() => defaultAddTarget(tree, selected).id);
+  const [label, setLabel] = useState('');
   const [name, setName] = useState('');
-  const [type, setType] = useState<DefinitionType>('string');
+  const [kind, setKind] = useState<AddKind>('string');
   const [refusal, setRefusal] = useState<string | null>(null);
+  const nameId = useId();
+  const hintId = useId();
+  const target = targets.find((node) => node.id === targetId) ?? tree;
   return (
     <form
-      className="flex flex-col gap-1"
+      className="flex flex-col gap-1 rounded-md border border-border bg-bg p-2"
+      aria-label={t('data.addItem')}
       onSubmit={(event) => {
         event.preventDefault();
-        const plan = addFieldPlan(definitions, name, type);
+        const plan = addFieldPlan(definitions, target, label, name, kind);
         if (!plan.ok) {
-          setRefusal(
-            plan.reason === 'key_exists' ? 'field.error.key_exists' : 'field.error.name_too_long',
-          );
+          setRefusal(`data.error.${plan.reason}`);
           return;
         }
         onDefinitionEdit(plan.op);
-        setName('');
-        setRefusal(null);
+        onAdded(plan.keysPath.join(SELECTION_SEP));
+        onClose();
       }}
     >
-      <input
-        type="text"
-        className={INPUT}
-        aria-label={t('sample.addFieldKey')}
-        placeholder={t('sample.addFieldKey')}
-        value={name}
-        onChange={(event) => setName(event.currentTarget.value)}
-        onKeyDown={(event) => {
-          // A Japanese user pressing Enter to confirm an IME conversion must
-          // not submit the form mid-composition.
-          if (event.key === 'Enter' && event.nativeEvent.isComposing) {
-            event.preventDefault();
-          }
-        }}
-      />
-      <div className="flex gap-1">
+      <AddTargetSelect tree={tree} targets={targets} value={target.id} onChange={setTargetId} />
+      <Field label={t('data.field.label')}>
+        <input
+          type="text"
+          className={INPUT}
+          value={label}
+          onChange={(event) => setLabel(event.currentTarget.value)}
+        />
+      </Field>
+      <div className="mb-2">
+        <label htmlFor={nameId} className={FIELD_LABEL}>
+          {t('data.dataName')}
+        </label>
+        <input
+          id={nameId}
+          type="text"
+          className={`${INPUT} font-mono`}
+          aria-describedby={hintId}
+          value={name}
+          onChange={(event) => setName(event.currentTarget.value)}
+          onKeyDown={(event) => {
+            // A Japanese user pressing Enter to confirm an IME conversion must
+            // not submit the form mid-composition.
+            if (event.key === 'Enter' && event.nativeEvent.isComposing) {
+              event.preventDefault();
+            }
+          }}
+        />
+        <span id={hintId} className="text-sm text-muted">
+          {t('data.add.nameHint')}
+        </span>
+      </div>
+      <Field label={t('data.field.type')}>
         <select
-          className={`${INPUT} min-w-0 flex-1`}
-          aria-label={t('sample.addFieldKind')}
-          value={type}
-          onChange={(event) => setType(event.currentTarget.value as DefinitionType)}
+          className={INPUT}
+          value={kind}
+          onChange={(event) => setKind(event.currentTarget.value as AddKind)}
         >
-          {DEFINITION_TYPES.map((option) => (
+          {ADD_KINDS.map((option) => (
             <option key={option} value={option}>
-              {t(TYPE_OPTION_KEY[option])}
+              {t(KIND_OPTION_KEY[option])}
             </option>
           ))}
         </select>
-        <button
-          type="submit"
-          className={`${BTN_SM} whitespace-nowrap`}
-          disabled={name.trim() === ''}
-        >
-          {t('data.addItem')}
+      </Field>
+      {refusal !== null ? (
+        <output className="text-sm text-error-text">
+          {t(refusal, { max: MAX_FIELD_NAME_CHARS })}
+        </output>
+      ) : null}
+      <div className="flex gap-1">
+        <button type="submit" className={BTN_SM} disabled={name.trim() === ''}>
+          {t('data.add.submit')}
+        </button>
+        <button type="button" className={BTN_SM} onClick={onClose}>
+          {t('data.add.cancel')}
         </button>
       </div>
-      {refusal !== null ? <output className="text-sm text-error-text">{t(refusal)}</output> : null}
     </form>
+  );
+}
+
+/** The rail's add control: the opener button, or the open form. */
+export function AddItemForm(props: AddItemFormProps) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  if (open) {
+    return <AddForm {...props} onClose={() => setOpen(false)} />;
+  }
+  return (
+    <button
+      type="button"
+      className={`${BTN_SM} inline-flex items-center gap-1 self-start`}
+      onClick={() => setOpen(true)}
+    >
+      <IconPlus size={12} />
+      {t('data.addItem')}
+    </button>
   );
 }

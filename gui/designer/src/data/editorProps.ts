@@ -32,6 +32,9 @@ export interface DataEditorViewProps {
    * save changes what every template in the project validates against. When set
    * (and definitions are editable), the editor shows the impact-scope hint. */
   readonly definitionsProjectScoped?: boolean;
+  /** The definitions were INFERRED from the sample data (workshop mode — no
+   * engineer file). When set, the editor says so above the edited node. */
+  readonly definitionsInferred?: boolean;
   readonly synth?: ValueSynth;
   readonly locale?: string;
   /** The document engine locale — the offset a new/offset-less datetime attaches. */

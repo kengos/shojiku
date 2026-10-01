@@ -48,7 +48,7 @@ succeeded.
 - `palette/model.ts` — the palette's view types (`PaletteField`,
   `PaletteGroup`, whose `rowScope` names the group whose ROWS carry this
   one; `FieldTarget {group, key}` — the jump a row's gear hands up, and
-  the pair `data/editorModel`'s `selectionKey` resolves on the other
+  the pair `data/treeModel`'s `nodeForTarget` resolves on the other
   side, so an object group's own id travels beside the DOTTED full key)
   + `readDefinitionsView`: the `properties` tree → groups, `null`
   for anything unparseable/oversized/the retired v1 `groups:` form; +
@@ -552,7 +552,9 @@ and `edit.ts` both import `model.ts` and never each other.
   `addSampleRow`/`removeSampleRow`, each a serializable text→text
   transform (AI parity) over proto-safe rebuilds; a missing
   intermediate map is CREATED, a path contradicting the existing shape
-  is a no-op.
+  is a no-op. `addSampleRow` creates a MISSING array at an all-key path
+  (top level, or a table inside a group), never through a scalar or a row
+  index.
 - `sample/datetime.ts` — pure RFC 3339 wall-clock split/compose (never
   a `Date` round-trip; offset display-inert), `representativeOffset`.
 - `sample/history.ts` — panel-local sample undo ring (count+byte
@@ -584,17 +586,49 @@ and `edit.ts` both import `model.ts` and never each other.
 
 ## Data-item editor (`data/` — the fullscreen definitions + sample editor)
 
+- `data/defsTree.ts` — `readDefsTree`: the definitions TREE (root,
+  groups, tables = array of objects, lists = array of values, fields — any
+  depth) over the same `parseTemplate`/`readTemplate` parse the palette
+  uses. Each `DefsNode` carries the `keysPath` it was FOUND at (recorded in
+  the walk, never re-derived from a dotted id — a table nested in another
+  table's rows is `…items.properties.<b>.items…`), its `dataPath` (property
+  names, rows add no segment), `scope` (the innermost table carrying it),
+  `required` read from the PARENT's full `required` list + that list's
+  path, and the palette `leaf` for fields. `null` for text that is not a
+  map, a non-map `properties`, or the v1 `groups:` form; a map with NO
+  `properties` is an empty dictionary (the engine defaults it).
+  Depth-capped (`MAX_WALK_DEPTH`) and `MAX_TREE_NODES` = 1024, its own cap
+  rather than the palette's 256 per group (a DISPLAY cap —
+  no write is decided from the truncated walk). `id` = keysPath joined by
+  `SELECTION_SEP` (display-only).
+- `data/treeModel.ts` — pure readers over the tree: `flattenTree`,
+  `findNode`, `nodeLabel`, `parentOf`, `ancestry` (the containers from the
+  top down to a node), `nodeUsage` (maps a node onto the palette's
+  `UsageIndex`: scalar / source / row-relative), `nodeForTarget` (the
+  palette jump → a field node), `filterTree` (a match keeps its subtree,
+  ancestors stay), `addTargets` / `defaultAddTarget`, and `sampleSpot`
+  (single path / one per row of the carrying table / none for a table
+  nested in another table's rows).
 - `data/definitionsEdit.ts` — pure definitions-edit model:
-  `fieldKeysPath` (palette field → root-addressed schema keys path),
-  `readDefinitionField`, op builders (changed-guard null; empty clears),
-  `applyDefinitionOps` (a throwaway Editor applies PER OP with
-  skip-on-refusal — a benign miss must not drop the other edits;
-  fail-closed on malformed text), `coalesceDefsEdit`,
-  `DEFINITION_TYPES`.
-- `data/defsPlan.ts` — the untrusted-boundary pair: `addFieldPlan` (a
-  fresh top-level field as ONE `putValue`; returns the OP so the
-  Designer coalesces it) + `sanitizeDefsEdits` (the persisted-edit-list
-  restore guard; deep validation stays with designer-core at apply).
+  `readDefinitionField` (title/type/format/description/version at a keys
+  path), op builders (changed-guard null; empty clears) incl. `versionOp`
+  and `requiredOp` (the parent's list, order-kept; an emptied list is
+  REMOVED; null past designer-core's string-list cap), `applyDefinitionOps`
+  (a throwaway Editor applies PER OP with skip-on-refusal — a benign miss
+  must not drop the other edits; fail-closed on malformed text),
+  `coalesceDefsEdit`, `DEFINITION_TYPES`, `SEMANTIC_FORMATS`.
+- `data/defsPlan.ts` — the untrusted-boundary pair: `addFieldPlan` (ONE
+  `putValue` of a fresh item — `ADD_KINDS` = the four scalar types + group /
+  table / list, containers written WITHOUT an empty `properties: {}` so the
+  first child is block-style — into the root, a group or a table's rows,
+  `title` only when a label was given; refusals empty / too long / exists in
+  THAT container (read from the document, own-property) / a `.` (no binding
+  path reaches it) / a character that draws nothing — `\p{Cc}`, `\p{Cf}`,
+  `\p{Zl}`, `\p{Zp}`, `\p{Default_Ignorable_Code_Point}` (the Hangul
+  fillers included), checked per character so ZWJ·ZWNJ and the variation
+  selectors stay allowed; returns the OP and the
+  new `keysPath`) + `sanitizeDefsEdits` (the persisted-edit-list restore
+  guard; deep validation stays with designer-core at apply).
 - `data/defsHistory.ts` — panel-local DEFINITION undo ring (a faithful
   parallel of `sample/history.ts` — definitions are a distinct undo
   document; three independent undo contexts).
@@ -604,35 +638,69 @@ The fullscreen editor is a SHELL plus per-responsibility panes; inside
 the panes never import each other.
 
 - `data/DataEditorView.tsx` — the shell (document-settings mould: whole editor
-  area, own back control, Escape closes): owns the selection
-  (`selectionKey`-addressed, re-resolved per render; `initialSelection`
-  seeds it ONCE on mount — the view is unmounted whenever it is not open,
-  so every entry re-seeds, and a stale/hostile target simply resolves to
-  nothing), the derived
-  view/usage memos, and the two commit paths (`commitSample` →
-  `onParamsChange`; `dispatchDefEdit` → `onDefinitionEdit(op)`);
-  `sampleDataReadOnly` renders sample values as text.
+  area, own back control, Escape closes): owns the tree (`readDefsTree`) and
+  the selection (a node id, re-resolved per render; `initialSelection` seeds
+  it ONCE on mount through `nodeForTarget` — the view is unmounted whenever
+  it is not open, so every entry re-seeds, and a stale/hostile target simply
+  resolves to nothing), the usage memo, the two commit paths (`commitSample`
+  → `onParamsChange`; `dispatchDefEdit` → `onDefinitionEdit(op)`), and builds
+  ONE `DetailContext` for the right pane; `sampleDataReadOnly` renders sample
+  values as text.
 - `data/editorProps.ts` — `DataEditorViewProps` (optionality carries
-  meaning: an absent callback disarms its affordance).
-- `data/ItemListPane.tsx` — the left rail: search (owns its query
-  state), the add-item form, the definitions-edit undo button (reachable with
-  no selection), the grouped list, the `definitionsProjectScoped` hint.
-- `data/ItemListRow.tsx` — one row (label/key/type/usage chip; the
-  `HelpHint` is a SIBLING of the row button — no button-in-button).
-- `data/AddItemForm.tsx` — name + type dispatching `addFieldPlan`'s op
-  (IME-guarded Enter).
-- `data/DetailPane.tsx` — the right pane for ONE field: definition form
-  + sample value(s) (array-group fields render one per row with
-  add/remove). The 「sample value」 heading is the section's ONE label —
-  the widget under it is named after the FIELD in both branches — and
-  carries the `?` saying the data is preview-only placeholder, a sentence
-  that has to hold in every arm the pane classifies (scalar / array,
-  editable / read-only mounted host). STATELESS, not keyed by selection — each uncontrolled
-  input is keyed by its own value; a control added here needs the same
-  value-key.
-- `data/DefinitionForm.tsx` — display label / type / format (the shared
-  `FormatPicker`) / description; read-only (not hidden) without
-  `onDefinitionEdit`.
+  meaning: an absent callback disarms its affordance; `definitionsInferred`
+  = the base is the stub inferred from the sample data).
+- `data/detailContext.ts` — `DetailContext`, the one bundle the right
+  pane's parts take (tree, texts, editability, commit callbacks, `onSelect`).
+- `data/EditorBand.tsx` — the band over the right pane: project-scoped
+  (`data.projectScopeHint`, wins) or inferred-from-sample (workshop with a
+  real stub — never at blank start, where nothing was inferred).
+- `data/ItemListPane.tsx` — the left rail: search (owns its query state),
+  the add control, the definitions-edit undo button (reachable with no
+  selection), and the tree — an EMPTY dictionary still shows its root row
+  (with the empty note under it), so the file's own label/version are
+  editable before any item exists.
+- `data/ItemTree.tsx` — the tree: the 「データ全体の情報」 root row first,
+  then nodes indented under their containers; folded ids are panel-local
+  VIEW state; a search shows every match open, and a selection that MOVES
+  (a jump, a just-added item) opens its folded ancestors.
+- `data/ItemListRow.tsx` — one row (label / data name / type or kind /
+  必須 / usage chip — a group has no usage); a container's OWN chevron toggle
+  (the layer tree's IconChevronDown + `data-collapsed` pattern) beside the
+  select button; the `HelpHint` is a SIBLING of the row button — no
+  button-in-button.
+- `data/AddItemForm.tsx` — the IconPlus opener; the open form mounts with
+  追加先 = `defaultAddTarget` (the selected container, or the selected item's
+  container, or the root) / 表示ラベル / データ名 (hint by `aria-describedby`) /
+  型 (seven kinds), dispatches `addFieldPlan`'s op, reports the new id so the
+  shell selects it, and drops its draft on add or cancel (IME-guarded Enter).
+- `data/AddTargetSelect.tsx` — the 追加先 select; each target named as a
+  breadcrumb from the top (`treeModel` `ancestry`, a table as 「… の各行」), so
+  same-labelled groups in different places read apart.
+- `data/DetailPane.tsx` — the right pane for ONE node: a header (label,
+  kind chip for a container, 「データ名:」 the node's OWN name — the unit the
+  add form takes) over the part that kind edits: `RootDetail`,
+  `ContainerDetail`, or a field's `DefinitionForm` + `SampleSection`.
+  STATELESS, not keyed by selection — each uncontrolled input is keyed by its
+  own value; a control added here needs the same value-key.
+- `data/RootDetail.tsx` — root `title` (as 表示ラベル) / `description` /
+  `version` (版（技術者向け）+ hint); no required flag.
+- `data/ContainerDetail.tsx` — a group / table / list: label, description,
+  `RequiredToggle`, and (group / table) 中の項目 link buttons that select.
+- `data/RequiredToggle.tsx` — the 必須 checkbox over `requiredOp`, and what
+  it does by PARENT: a top-level item warns in 診断 whenever missing; inside a
+  group only when that group is in the data; in a table, per row (the
+  engine checks an object's `required` only where the object exists).
+  Printing never stops.
+- `data/SampleSection.tsx` — the sample value(s) by `sampleSpot`: one value,
+  one per row with add/remove (by params PATH — a table inside an object
+  works), or the no-rows note. The 「sample value」 heading is the section's
+  ONE label and carries the `?` saying the data is preview-only placeholder,
+  a sentence that has to hold in every arm (single / rows / none, editable /
+  read-only mounted host).
+- `data/DefinitionForm.tsx` — a field's display label / type / format (a
+  `<select>` over the SEMANTIC formats the engine's `(type, format)` table
+  refines, plus an authored out-of-set value verbatim) / 必須 / description;
+  read-only (not hidden) without `onDefinitionEdit`.
 - `data/ValueField.tsx` — the sample-value widgets per kind (roomy
   textarea for strings — the genkoyoshi body-text case; compact widgets else;
   uncontrolled + commit-on-blur, keyed by the CALLER's `key={value}` plus its
@@ -655,8 +723,10 @@ the panes never import each other.
   replaced wholesale by the read-only hint on a mounted host.
 - `data/VariantBar.tsx` — the variant switcher/add/two-step delete
   (user variants only removable); typed refusals as localized notices.
-- `data/editorModel.ts` — the editor's pure helpers: `selectionKey` +
-  `SELECTION_SEP` (U+0000 written as an ESCAPE — display-only composite
-  key; ops address resolved objects instead; the escape also keeps the
-  file out of binary grep classification), `sampleKind`, `readAt`,
-  `arrayLength`, `TYPE_OPTION_KEY`.
+- `data/editorModel.ts` — the editor's pure helpers: `SELECTION_SEP`
+  (U+0000 written as an ESCAPE — joins a node's keys path into its
+  display-only id; ops address the node's `keysPath` instead; the escape also
+  keeps the file out of binary grep classification), `sampleKind`, `readAt`
+  and `arrayLength` (by params PATH), `TYPE_OPTION_KEY`, `KIND_OPTION_KEY`
+  (the add form's seven kinds; the two repeating kinds are explained by
+  example).
