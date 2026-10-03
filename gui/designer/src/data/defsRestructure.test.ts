@@ -95,6 +95,24 @@ describe('renameInEdits', () => {
     );
   });
 
+  it('carries the node’s value rules — choices, ranges, a list element’s keys — to the new name', () => {
+    const rules: Op[] = [
+      { op: 'putValue', keys: [...A, 'enum'], value: ['x', { value: 'y', label: 'Y' }] },
+      { op: 'setScalar', keys: [...A, 'maxLength'], value: 12 },
+      { op: 'removeKey', keys: [...A, 'items', 'enum'] },
+    ];
+    const edits = renameInEdits(rules, BASE, A, 'b');
+    expect(edits).toEqual([
+      { op: 'renameKey', keys: A, to: 'b' },
+      { ...rules[0], keys: [...B, 'enum'] },
+      { ...rules[1], keys: [...B, 'maxLength'] },
+      { ...rules[2], keys: [...B, 'items', 'enum'] },
+    ]);
+    expect(applyDefinitionOps(BASE, edits.slice(0, 3))).toContain(
+      '  b:\n    type: string\n    title: A\n    enum:\n      - x\n      - value: y\n        label: Y\n    maxLength: 12\n',
+    );
+  });
+
   it('leaves other nodes’ edits alone', () => {
     const other = title(['properties', 'z'], 'Z');
     expect(renameInEdits([other], BASE, A, 'b')).toEqual([
@@ -107,6 +125,12 @@ describe('renameInEdits', () => {
 describe('deleteInEdits', () => {
   it('drops the node’s edits and removes a base node structurally', () => {
     expect(deleteInEdits([title(A, 'X')], BASE, A)).toEqual([{ op: 'removeKey', keys: A }]);
+  });
+
+  it('drops the node’s value rules with it', () => {
+    const choices: Op = { op: 'putValue', keys: [...A, 'enum'], value: ['x'] };
+    const range: Op = { op: 'setScalar', keys: [...A, 'minLength'], value: 1 };
+    expect(deleteInEdits([choices, range], BASE, A)).toEqual([{ op: 'removeKey', keys: A }]);
   });
 
   it('removes an added node by dropping its add', () => {

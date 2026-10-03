@@ -53,6 +53,7 @@ export function StandaloneBody({
               initialFonts: draft.fonts,
               initialSample: draft.sample,
               initialDefinitions: draft.definitions,
+              initialDefinitionsEdits: draft.definitionsEdits,
               initialCustomName: draft.name,
             })
           }
@@ -82,6 +83,7 @@ export function StandaloneBody({
         initialFonts={view.initialFonts}
         initialSample={view.initialSample}
         initialDefinitions={view.initialDefinitions}
+        initialDefinitionsEdits={view.initialDefinitionsEdits}
         initialCustomName={view.initialCustomName}
         colorScheme={scheme}
         documentName={presetDisplayName(preset, locale)}

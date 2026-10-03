@@ -29,11 +29,19 @@ export interface ListRowProps {
 
 function TypeText({ node }: { readonly node: DefsNode }) {
   const { t } = useI18n();
+  let type: string;
   if (node.leaf === null) {
-    return <span>{t(`data.kind.${node.kind}`)}</span>;
+    type = t(`data.kind.${node.kind}`);
+  } else {
+    const typeKey = TYPE_LABEL_KEYS.get(node.leaf.type);
+    type = typeKey !== undefined ? t(typeKey) : node.leaf.type;
   }
-  const typeKey = TYPE_LABEL_KEYS.get(node.leaf.type);
-  return <span>{typeKey !== undefined ? t(typeKey) : node.leaf.type}</span>;
+  // A field (or a list's element) limited to choices says so beside its type.
+  return (
+    <span>
+      {node.choices ? t('data.typeWithChoices', { type, choices: t('data.choices.title') }) : type}
+    </span>
+  );
 }
 
 /** One row in the left data-item tree. */

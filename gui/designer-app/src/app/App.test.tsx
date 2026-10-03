@@ -566,6 +566,31 @@ describe('App draft prompt', () => {
     expect(await screen.findByRole('button', { name: 'File' })).toBeTruthy();
   });
 
+  it('restores the draft’s definition edits over the preset’s own definitions', async () => {
+    const drafts = new DraftStore(memoryStorage());
+    await drafts.save('receipt-us', {
+      text: TEMPLATE,
+      fonts: [],
+      definitionsEdits: [
+        { op: 'setScalar', keys: ['properties', 'memo', 'title'], value: 'Restored label' },
+      ],
+    });
+    const services = makeServices({ drafts });
+    services.loadFiles.mockImplementation(async () => ({
+      source: TEMPLATE,
+      params: '{}',
+      definitions: 'type: object\nproperties:\n  memo: { type: string, title: Memo }\n',
+      assets: [],
+      variants: [],
+    }));
+    render(<App services={services} />);
+    fireEvent.click(screen.getByRole('button', { name: /Receipt/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Restore' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Data fields' }));
+    expect(await screen.findByText('Restored label')).toBeTruthy();
+    expect(screen.queryByText('Memo')).toBeNull();
+  });
+
   it('discards a draft and enters the editor from the preset source', async () => {
     const drafts = new DraftStore(memoryStorage());
     await drafts.save('receipt-us', { text: TEMPLATE, fonts: [] });

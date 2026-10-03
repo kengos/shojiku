@@ -1058,8 +1058,8 @@ export const fil: LanguageCatalog = {
     'sample.undo': 'I-undo ang edit',
     'sample.addRow': 'Magdagdag ng row',
     'sample.removeRow': 'Alisin',
-    'sample.enumRawValue': 'halaga sa params: {value}',
-    'sample.enumUndeclared': 'Wala ang halagang ito sa mga idineklarang pagpipilian.',
+    'sample.enumRawValue': 'Halaga sa data: {value}',
+    'sample.enumUndeclared': 'Wala ang halagang ito sa listahan ng pagpipilian.',
     'data.editorTitle': 'I-edit ang mga field ng data',
     'data.listLabel': 'Mga field ng data',
     'data.gear': 'I-edit ang mga field ng data',
@@ -1189,6 +1189,89 @@ export const fil: LanguageCatalog = {
       'Napakaraming item sa template na ito para masuri ang bawat lugar na gumagamit ng data na ito, kaya hindi mapapalitan dito ang pangalan — baka may makaligtaang lugar.',
     'data.error.edit_cap':
       'Hanggang {edits} lang ang pag-edit ng depinisyon, at naabot na ito, kaya hindi nagawa ang pag-edit na ito. Ang “{undo}” ay nagbabalik ng mga pag-edit at nagbibigay ng puwang; hindi ang pag-save.',
+    'data.choices.title': 'Mga pagpipilian',
+    'data.choices.help':
+      'Inililista ang mga halagang puwedeng nasa data. Sa item na “{text}”, puwede ring bigyan ng sariling ipi-print na teksto ang bawat halaga.',
+    'data.choices.toggle': 'Pagpasyahan ang halaga mula sa listahan ng pagpipilian',
+    'data.choices.toggleHint':
+      'Kapag may halaga sa data na wala sa listahan, magpapakita ng babala ang Mga diagnostic. Hindi titigil ang pag-print.',
+    'data.choices.value': 'Halaga sa data',
+    'data.choices.label': 'Ipi-print na teksto',
+    'data.choices.labelEmpty': '(ang halaga sa data mismo)',
+    'data.choices.note':
+      'Isulat ang halaga sa data nang eksakto kung paano ito dumarating sa data.',
+    'data.choices.add': 'Magdagdag ng pagpipilian',
+    'data.choices.addSubmit': 'Idagdag',
+    'data.choices.remove': 'Alisin ang “{value}”',
+    'data.choices.moveUp': 'Itaas ang “{value}”',
+    'data.choices.moveDown': 'Ibaba ang “{value}”',
+    'data.choices.valueOf': 'Halaga sa data ng “{value}”',
+    'data.choices.labelOf': 'Ipi-print na teksto ng “{value}”',
+    'data.choices.confirmClear': 'Kapag pinatay ito, aalisin ang mga pagpipilian ({count}).',
+    'data.choices.confirmClearSubmit': 'Alisin',
+    'data.choices.labelsIgnoredTitle': 'Hindi ginagamit ng item na ito ang ipi-print na teksto.',
+    'data.choices.labelsIgnoredBody':
+      'Ginagamit lang ang ipi-print na teksto kapag ang “{type}” ay “{text}” at ang “{format}” ay “{none}”. Dito, ipi-print ang halaga sa data sa anyong ibinibigay ng “{type}” at “{format}”, at magpapakita ng babala ang Mga diagnostic. Gagamitin pa rin ang listahan ng pagpipilian.',
+    'data.choices.mismatch':
+      'Hindi naka-save bilang halagang “{type}” ang mga may markang pagpipilian, kaya hindi sila kailanman tutugma sa data. Alisin at idagdag muli ang mga ito.',
+    'data.choices.mismatchMark': 'Hindi tugma ang uri',
+    'data.choices.readonly.shape':
+      'Nakasulat ang listahang ito ng pagpipilian sa anyong hindi mae-edit dito. Para baguhin ito, direktang i-edit ang depinisyon.',
+    'data.choices.readonly.too_long':
+      'Masyadong marami ang pagpipilian para ma-edit dito (ang may ipi-print na teksto ay bilang na tatlo, hanggang {bare} lahat). Para baguhin ito, direktang i-edit ang depinisyon.',
+    'data.choices.refusal.empty': 'Maglagay ng halaga sa data.',
+    'data.choices.refusal.duplicate': 'Nasa listahan na ang halagang iyan.',
+    'data.choices.refusal.full':
+      'Hindi na makakapagdagdag ng pagpipilian: ang pagpipiliang may ipi-print na teksto ay bilang na tatlo, hanggang {bare} lahat.',
+    'data.refusal.not_a_number': 'Maglagay ng numero.',
+    'data.refusal.not_whole': 'Maglagay ng buong numero.',
+    'data.refusal.negative': 'Maglagay ng 0 o higit pa.',
+    'data.refusal.too_large': 'Masyadong malaki ang numerong iyan.',
+    'data.range.bound': 'Saklaw ng halaga',
+    'data.range.length': 'Saklaw ng haba',
+    'data.range.rows': 'Saklaw ng bilang ng hilera',
+    'data.range.count': 'Saklaw ng bilang',
+    'data.range.elementLength': 'Saklaw ng haba ng bawat halaga',
+    'data.range.elementBound': 'Saklaw ng bawat halaga',
+    'data.range.min': '{range}: pinakamababa',
+    'data.range.max': '{range}: pinakamataas',
+    'data.range.minNone': 'Walang pinakamababa',
+    'data.range.maxNone': 'Walang pinakamataas',
+    'data.range.unit.chars': 'karakter',
+    'data.range.unit.rows': 'hilera',
+    'data.range.unit.items': 'halaga',
+    'data.range.hint':
+      'Kapag lampas sa saklaw, magpapakita ng babala ang Mga diagnostic. Hindi titigil ang pag-print.',
+    'data.range.conflict':
+      'Mas mataas ang pinakamababa kaysa sa pinakamataas, kaya magbababala ang anumang data.',
+    'data.display': 'Pagpapakita',
+    'data.placeholder': 'Teksto kapag blangko',
+    'data.placeholderHint':
+      'Kapag wala o walang laman ang item na ito sa data, ito ang ipi-print (maliban kung may sariling teksto kapag blangko ang inilagay na item).',
+    'data.none': '(wala)',
+    'data.example': 'Halimbawa para sa ginagawang sample',
+    'data.exampleSaved': 'Naka-save sa depinisyon · lahat ng variant',
+    'data.exampleReadonly':
+      'Nakasulat ang halimbawang ito sa anyong hindi mae-edit dito. Para baguhin ito, direktang i-edit ang depinisyon.',
+    'data.element': 'Bawat halaga',
+    'data.typeWithChoices': '{type} · {choices}',
+    'data.choices.noteLabel':
+      'Iwanang blangko ang ipi-print na teksto para i-print ang halaga sa data mismo.',
+    'data.choices.mismatchReadonly':
+      'Hindi naka-save bilang halagang “{type}” ang mga may markang pagpipilian, kaya hindi sila kailanman tutugma sa data.',
+    'data.choices.addSubmitLabel': 'Idagdag ang pagpipiliang ito',
+    'data.element.placeholderHint':
+      'Ipi-print ng listahan ang bawat halaga nang ganito mismo, kaya hindi pa ito ipi-print sa ngayon (itatabi ito sa depinisyon).',
+    'data.element.labelsIgnored':
+      'Ipi-print ng listahan ang bawat halaga sa data nang ganito mismo, kaya hindi pa ginagamit ang “Ipi-print na teksto”. Magbababala pa rin ang Mga diagnostic sa mga halagang wala sa listahan.',
+    'data.element.typeFirst':
+      'Piliin muna ang “{type}”. Lalabas ang ibang setting kapag naitakda na ang uri.',
+    'data.field.typeUnset': '(hindi nakatakda)',
+    'data.choices.empty':
+      'Walang laman ang listahan, kaya magbababala ang Mga diagnostic sa bawat halaga.',
+    'data.choices.emptyFix': 'Magdagdag ng pagpipilian, o patayin ito.',
+    'data.choices.confirmClearUnknown':
+      'Kapag pinatay ito, aalisin ang buong setting ng pagpipilian.',
     'data.projectScopeHint':
       'Ibinabahagi ang mga depinisyong ito sa buong proyekto — babaguhin ng pag-save kung ano ang bina-validate ng bawat template dito.',
     'canvas.sampleVariant': 'Sample variant',

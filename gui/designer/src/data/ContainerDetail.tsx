@@ -1,6 +1,7 @@
 // The right pane for a CONTAINER — an object group, a table or a list: its label,
-// description and required flag, and (group / table) links to the items inside,
-// which select them in the tree.
+// description and required flag, a table's 行数の範囲 or a list's 個数の範囲, a
+// list's 「1 つ 1 つの値」 (its element schema), and (group / table) links to the
+// items inside, which select them in the tree.
 //
 // Inputs are uncontrolled + commit-on-blur and keyed by their own value (the
 // pane is not keyed by the selection), and each op builder returns null when
@@ -12,8 +13,11 @@ import { BTN_SM, INPUT, SECTION_TITLE } from '../ui/chrome';
 import { descriptionOp, readDefinitionField, titleOp } from './definitionsEdit';
 import type { DefsNode } from './defsTree';
 import type { DetailContext } from './detailContext';
+import { ListElementSection } from './ListElementSection';
+import { RangeFields } from './RangeFields';
 import { RequiredToggle } from './RequiredToggle';
 import { nodeLabel, parentOf } from './treeModel';
+import { readValueRules } from './valueRules';
 
 export function ContainerDetail({
   node,
@@ -56,6 +60,25 @@ export function ContainerDetail({
         editable={ctx.editable}
         onDefEdit={ctx.onDefEdit}
       />
+      {node.kind === 'group' ? null : (
+        <RangeFields
+          key={node.id}
+          kind={node.kind === 'table' ? 'rows' : 'count'}
+          keysPath={node.keysPath}
+          ranges={readValueRules(ctx.definitions, node.keysPath).ranges}
+          editable={ctx.editable}
+          onDefEdit={ctx.onDefEdit}
+        />
+      )}
+      {node.kind === 'list' ? (
+        <ListElementSection
+          key={`${node.id}:items`}
+          listPath={node.keysPath}
+          definitions={ctx.definitions}
+          editable={ctx.editable}
+          onDefEdit={ctx.onDefEdit}
+        />
+      ) : null}
       {node.children.length > 0 ? (
         <div>
           <h3 className={SECTION_TITLE}>{t('data.children', { count: node.children.length })}</h3>

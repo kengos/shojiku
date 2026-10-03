@@ -6,7 +6,9 @@
 // rows; ticking and unticking required at each kind of parent (the root, a
 // group, a table row — including the untick that removes an emptied list); a
 // container's label and description; the root's label, description and
-// version — are each applied to a realistic definitions file
+// version; and the value rules — choices (bare, labeled, typed, reordered,
+// removed), every range key, the placeholder, the example per type and a list
+// element's own keys — are each applied to a realistic definitions file
 // and validated by the wasm engine with no error-severity diagnostic (a
 // definitions file the engine cannot parse fails the whole validate as one).
 //
@@ -17,6 +19,11 @@
 // definitions alone (the engine's `unknown_data_key` count must equal the walk's
 // reference count: the census positive control) and with the cascade (zero) —
 // and a delete reports exactly the places its confirmation names.
+//
+// CHOICES cross it too: the editor's labels-ignored notice is a mirror of an
+// engine warning, so each (type, format) arm is validated and the two must
+// agree; the longest lists the editor can write must parse; and a member typed
+// by the field must match exactly the data of that type.
 //
 // The designer unit suites build their expectations on fixtures they wrote
 // themselves; this is the suite that crosses the seam. Loads the
@@ -29,19 +36,25 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import {
   applyDefinitionOps,
   descriptionOp,
+  formatOp,
   requiredOp,
   titleOp,
+  typeOp,
   versionOp,
 } from '../data/definitionsEdit';
 import { ADD_KINDS, addFieldPlan } from '../data/defsPlan';
 import { type DefsNode, readDefsTree } from '../data/defsTree';
 import { planDelete } from '../data/deletePlan';
 import { SELECTION_SEP } from '../data/editorModel';
+import { addRow, moveRow, removeRow, setRowLabel, setRowValue } from '../data/enumEdits';
+import { type EnumRow, writeRows } from '../data/enumModel';
+import { labelsIgnored } from '../data/enumRules';
 import { refsUnder } from '../data/refs/match';
 import { type DataRef, DOCUMENT_OWNER } from '../data/refs/types';
 import { readDataRefs } from '../data/refs/walk';
 import { applyScratch, planRename, type RestructureInput } from '../data/renamePlan';
 import { findNode } from '../data/treeModel';
+import { exampleOp, placeholderOp, rangeOp } from '../data/valueRules';
 import type { EngineTransport } from '../engine/transport';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
 
@@ -74,6 +87,15 @@ properties:
     format: currency
   memo:
     type: string
+  status:
+    type: string
+    enum: [ draft, sent ]
+  count: { type: integer }
+  paid: { type: boolean }
+  tags:
+    type: array
+    items: { type: string }
+  untyped: { type: array }
   customer:
     type: object
     title: Customer
@@ -119,6 +141,15 @@ function added(parent: readonly string[], kind: (typeof ADD_KINDS)[number]): Op 
   return plan.op;
 }
 
+/** The op of an edit the builder took (a value-rule builder answers a refusal
+ * or an op). */
+function taken(edit: { ok: true; op: Op | null } | { ok: false; refusal: string }): Op {
+  if (!edit.ok) {
+    throw new Error(edit.refusal);
+  }
+  return must(edit.op);
+}
+
 function must(op: Op | null): Op {
   if (op === null) {
     throw new Error('the builder authored nothing');
@@ -127,6 +158,70 @@ function must(op: Op | null): Op {
 }
 
 const ITEMS = ['properties', 'items'];
+const at = (...names: string[]) => names.flatMap((name) => ['properties', name]);
+const TAG = [...at('tags'), 'items'];
+const STATUS_ROWS: readonly EnumRow[] = [
+  { value: 'draft', label: '', labeled: false },
+  { value: 'sent', label: '', labeled: false },
+];
+
+/** The value-rule op builders' output — choices, ranges, the placeholder, the
+ * example, a list element's keys — each a document the engine reads. */
+const VALUE_RULE_CASES: readonly [string, Op][] = [
+  [
+    'choices on a text field',
+    taken(addRow({ keysPath: at('memo'), type: 'string', rows: [] }, 'a', '')),
+  ],
+  [
+    'labeled choices on a text field',
+    taken(
+      setRowLabel({ keysPath: at('status'), type: 'string', rows: STATUS_ROWS }, 1, '送付済み'),
+    ),
+  ],
+  ['number choices', taken(addRow({ keysPath: at('total'), type: 'number', rows: [] }, '1.5', ''))],
+  ['integer choices', taken(addRow({ keysPath: at('count'), type: 'integer', rows: [] }, '7', ''))],
+  ['remove the choices', taken(writeRows(at('status'), []))],
+  [
+    'change a choice’s value',
+    taken(setRowValue({ keysPath: at('status'), type: 'string', rows: STATUS_ROWS }, 0, 'void')),
+  ],
+  [
+    'remove one choice of several',
+    taken(removeRow({ keysPath: at('status'), type: 'string', rows: STATUS_ROWS }, 0)),
+  ],
+  [
+    'a negative-zero minimum length (written as 0)',
+    taken(rangeOp(at('memo'), 'minLength', '', '-0')),
+  ],
+  [
+    'the type of an untyped list’s element (the only edit offered there first)',
+    must(typeOp([...at('untyped'), 'items'], '', 'string')),
+  ],
+  [
+    'reorder the choices',
+    must(moveRow({ keysPath: at('status'), type: 'string', rows: STATUS_ROWS }, 0, 2)),
+  ],
+  ['a minimum length', taken(rangeOp(at('memo'), 'minLength', '', '0'))],
+  ['a maximum length', taken(rangeOp(at('memo'), 'maxLength', '', '40'))],
+  ['a minimum value', taken(rangeOp(at('total'), 'minimum', '', '-1.5'))],
+  ['a maximum value', taken(rangeOp(at('total'), 'maximum', '', '1e6'))],
+  ['a minimum row count', taken(rangeOp(ITEMS, 'minItems', '', '1'))],
+  ['a maximum row count', taken(rangeOp(ITEMS, 'maxItems', '', '30'))],
+  ['a list value count', taken(rangeOp(at('tags'), 'maxItems', '', '5'))],
+  ['each list value’s length', taken(rangeOp(TAG, 'maxLength', '', '12'))],
+  ['each list value’s type', must(typeOp(TAG, 'string', 'number'))],
+  ['each list value’s format', must(formatOp(TAG, '', 'date'))],
+  ['each list value’s placeholder', must(placeholderOp(TAG, '', '-'))],
+  [
+    'each list value’s choices',
+    taken(addRow({ keysPath: TAG, type: 'string', rows: [] }, 'red', '赤')),
+  ],
+  ['a placeholder', must(placeholderOp(at('memo'), '', '（未記入）'))],
+  ['a text example', taken(exampleOp(at('memo'), 'string', undefined, '0012'))],
+  ['a number example', taken(exampleOp(at('total'), 'number', undefined, '1200.5'))],
+  ['an integer example', taken(exampleOp(at('count'), 'integer', undefined, '3'))],
+  ['a yes / no example', taken(exampleOp(at('paid'), 'boolean', undefined, 'true'))],
+];
 
 const CASES: readonly [string, Op][] = [
   ...ADD_KINDS.flatMap((kind): [string, Op][] => [
@@ -159,6 +254,7 @@ const CASES: readonly [string, Op][] = [
   ['describe the root', must(descriptionOp([], '', 'The fields an invoice carries'))],
   ['bump the root version', must(versionOp([], '0.2.0', '0.3.0'))],
   ['clear the root version', must(versionOp([], '0.2.0', ''))],
+  ...VALUE_RULE_CASES,
 ];
 
 let transport: EngineTransport;
@@ -394,5 +490,63 @@ describe('the carriers only the GUI walks (layout reads them, validate does not)
     expect(spelled).toEqual(expect.arrayContaining(['zz_rows', 'zz_col', 'zz_group', 'zz_label']));
     const diagnostics = await transport.validate(ONLY_GUI, CENSUS_PARAMS, CENSUS_DEFS);
     expect(unknown(diagnostics.items)).toEqual([]);
+  });
+});
+
+describe('choices, read by the real engine', () => {
+  const labeledDefs = (type: string, format: string) =>
+    `type: object\nproperties:\n  f:\n    type: ${type}\n${
+      format === '' ? '' : `    format: ${format}\n`
+    }    enum: [ { value: ${type === 'boolean' ? 'true' : type === 'string' ? 'a' : '1'}, label: L } ]\n`;
+  const ROWS: readonly EnumRow[] = [{ value: 'a', label: 'L', labeled: true }];
+  const BOUND_TO_F = TEMPLATE.replace('key: total', 'key: f');
+
+  // The mirror decides the editor's notice; the engine decides the warning.
+  // Each arm is checked both ways, so a mirror that always said "ignored" (or
+  // never did) fails here.
+  for (const [type, format] of [
+    ['string', ''],
+    ['string', 'person-name'],
+    ['string', 'date'],
+    ['string', 'date-time'],
+    ['string', 'image'],
+    ['number', ''],
+    ['number', 'currency'],
+    ['integer', 'percentage'],
+    ['boolean', ''],
+  ]) {
+    it(`labels on (${type}, ${format || 'no format'}): the notice agrees with the engine`, async () => {
+      const diagnostics = await transport.validate(BOUND_TO_F, '{}', labeledDefs(type, format));
+      expect(errors(diagnostics.items)).toEqual([]);
+      const warned = diagnostics.items.some((d) => d.code === 'definitions_enum_labels_ignored');
+      expect(warned).toBe(labelsIgnored(type, format, ROWS));
+    });
+  }
+
+  it('accepts the longest lists the editor can write (all bare, all labeled)', async () => {
+    const bare = Array.from({ length: 255 }, (_, i) => `v${i}`);
+    const labeled = Array.from({ length: 85 }, (_, i) => ({ value: `v${i}`, label: `L${i}` }));
+    for (const rows of [
+      bare.map((value) => ({ value, label: '', labeled: false })),
+      labeled.map(({ value, label }) => ({ value, label, labeled: true })),
+    ]) {
+      const text = applyDefinitionOps(BASE, [taken(writeRows(at('memo'), rows))]);
+      expect(text).not.toBe(BASE);
+      const diagnostics = await transport.validate(TEMPLATE, '{}', text);
+      expect(errors(diagnostics.items)).toEqual([]);
+    }
+  });
+
+  it('matches the data a member was typed for, and only that', async () => {
+    const text = applyDefinitionOps(BASE, [
+      taken(addRow({ keysPath: at('count'), type: 'integer', rows: [] }, '7', '')),
+      taken(addRow({ keysPath: at('memo'), type: 'string', rows: [] }, '001', '')),
+    ]);
+    const mismatch = async (params: object) =>
+      (await transport.validate(TEMPLATE, JSON.stringify(params), text)).items.filter(
+        (d) => d.code === 'params_enum_mismatch',
+      ).length;
+    expect(await mismatch({ total: 1, count: 7, memo: '001' })).toBe(0);
+    expect(await mismatch({ total: 1, count: 8, memo: '1' })).toBe(2);
   });
 });

@@ -77,6 +77,33 @@ platform binaries.
   are capped at 256, as a restored draft always was; an edit past the cap is
   refused with a note instead of being dropped when the draft is reopened.
 
+- **A data item's value rules can be set in the data-item editor.**
+  **選択肢** limits a field to a list of choices: each choice is the value the
+  data carries plus, optionally, the text printed for it; choices are added,
+  edited, removed and put in order by dragging or with the up / down buttons,
+  and a number field takes only numbers. A value the list does not hold
+  warns in Diagnostics. Turning choices off asks before removing them, and the
+  editor says when the printed text will not be used — the item is not plain
+  text, so its value prints in its own form — and marks a choice whose value is
+  not of the field's type, which can never match. A hand-written list the
+  editor could not write back exactly as it is (an unusual form, a number
+  spelled like `2.0`, or more choices than one change can hold) is shown with a
+  note and left alone, though it can still be turned off; an empty list, which
+  makes every value warn, says so.
+
+  Ranges are set by what they bound — a number's value, a text's length, a
+  table's rows, a list's values — refusing a negative, fractional or oversized
+  entry where the file needs a whole number; a value outside one warns in
+  Diagnostics and printing goes on. **空欄のときに出す文字** sets the text
+  printed when an item's data is empty, and **サンプルを生成するときの例** sets
+  the value sample generation uses first, typed by the field and shared by
+  every sample variant. A list's **1 つ 1 つの値** sets what each of its values
+  is — its type first, when the file gives it none — with its own length or
+  value range and choices; a list prints each value as it is, so the editor
+  says that its blank text and printed text are kept in the definitions but not
+  printed. The item tree marks a field limited to choices. Editing a list of choices rewrites that list whole, so a
+  comment written inside it is not kept; the rest of the file is untouched.
+
 - **Text and box styling that could only be written by hand can now be set in
   the Designer.** Every item's Style tab is now folded into sections — Text,
   Overflow, Fill and border (a line's or a form mark's own stroke), Opacity and
@@ -534,6 +561,12 @@ platform binaries.
   browser's own report, with a trace and a screenshot of the moment it broke.
 
 ### Fixed
+
+- **Restoring a draft of a bundled template in the standalone app keeps its
+  data-item edits.** Edits made in the data-item editor were saved with the
+  draft but dropped when the draft was restored, so the template reopened with
+  the definitions it started from; they now come back, as they already did on
+  a mounted host.
 
 - **A conditional-formatting rule on a table's rows now says when its `scope`
   does nothing.** A rule's condition is written like a form mark's

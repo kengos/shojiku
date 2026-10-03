@@ -52,6 +52,7 @@ const EMPTY_ROOT: DefsNode = {
   dataPath: [],
   scope: null,
   leaf: null,
+  choices: false,
   children: [],
 };
 

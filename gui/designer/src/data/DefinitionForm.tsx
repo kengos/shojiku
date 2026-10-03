@@ -9,20 +9,11 @@
 import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
 import { Field } from '../panel/fields';
-import { FIELD_LABEL, INPUT, SECTION_TITLE } from '../ui/chrome';
-import {
-  DEFINITION_TYPES,
-  type DefinitionField,
-  descriptionOp,
-  formatOp,
-  isSemanticFormat,
-  semanticFormats,
-  titleOp,
-  typeOp,
-} from './definitionsEdit';
+import { INPUT, SECTION_TITLE } from '../ui/chrome';
+import { type DefinitionField, descriptionOp, titleOp } from './definitionsEdit';
 import type { DefsNode } from './defsTree';
-import { TYPE_OPTION_KEY } from './editorModel';
 import { RequiredToggle } from './RequiredToggle';
+import { TypeFields } from './TypeFields';
 
 export interface DefinitionFormProps {
   readonly node: DefsNode;
@@ -49,54 +40,7 @@ export function DefinitionForm({ node, parent, def, editable, onDefEdit }: Defin
           onBlur={(event) => onDefEdit(titleOp(keysPath, def.title, event.currentTarget.value))}
         />
       </Field>
-      <div>
-        <span className={FIELD_LABEL}>{t('data.field.type')}</span>
-        <select
-          className={INPUT}
-          aria-label={t('data.field.type')}
-          value={def.type === '' ? 'string' : def.type}
-          disabled={!editable}
-          onChange={(event) => onDefEdit(typeOp(keysPath, def.type, event.currentTarget.value))}
-        >
-          {DEFINITION_TYPES.map((option) => (
-            <option key={option} value={option}>
-              {t(TYPE_OPTION_KEY[option])}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <span className={FIELD_LABEL}>{t('data.field.format')}</span>
-        {/* The SEMANTIC format — the data type refiner, not the display
-            variant. The values that REFINE the type are a closed set the
-            engine's `(type, format)` table decides, so this is a select
-            over what actually applies rather than a picker over display
-            variants and `formats:` names (which this key ignores). How a
-            value LOOKS is chosen per placement, or once for the whole
-            document under 表示形式.
-
-            The wire vocabulary itself is OPEN, though (`schema.rs`: an
-            unknown value is a generation hint such as `person-name` and
-            leaves the base type untouched) — so an authored value outside
-            the set gets its own option and is shown verbatim. Dropping it
-            into the not-set row would tell the author the field represents
-            nothing, and the next edit would overwrite the hint silently. */}
-        <select
-          className={INPUT}
-          aria-label={t('data.field.format')}
-          disabled={!editable}
-          value={def.format}
-          onChange={(event) => onDefEdit(formatOp(keysPath, def.format, event.currentTarget.value))}
-        >
-          <option value="">{t('data.field.formatNone')}</option>
-          {semanticFormats(def.type === '' ? 'string' : def.type).map((option) => (
-            <option key={option} value={option}>
-              {t(`data.semanticFormat.${option}`)}
-            </option>
-          ))}
-          {isSemanticFormat(def) ? null : <option value={def.format}>{def.format}</option>}
-        </select>
-      </div>
+      <TypeFields keysPath={keysPath} def={def} editable={editable} onDefEdit={onDefEdit} />
       <RequiredToggle node={node} parent={parent} editable={editable} onDefEdit={onDefEdit} />
       <Field label={t('data.field.description')}>
         <textarea

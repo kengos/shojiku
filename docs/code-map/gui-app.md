@@ -274,7 +274,9 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   `services.remote` (mounted → `MountedApp`, else `StandaloneBody`);
   owns theme preference + the header's open-document context.
   `app/StandaloneBody.tsx` — the standalone body's RENDER TREE (catalog →
-  draft prompt → editor), the sibling of the mounted one;
+  draft prompt → editor), the sibling of the mounted one; a restore hands the
+  draft's definition edits back as OPS (`initialDefinitionsEdits`), as the
+  mounted host does;
   `app/standaloneNav.ts` — its view vocabulary + open flow
   (`useStandaloneNav`), split the way `MountedApp`/`mountedNav` are:
   engine prepared PER preset-open keyed on `engineLocale`, with the

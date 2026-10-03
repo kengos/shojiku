@@ -488,7 +488,7 @@ properties:
       '（入荷待ち）',
     ]);
     expect(select.value).toBe('backorder');
-    expect(screen.getByText('params の値: backorder')).not.toBeNull();
+    expect(screen.getByText('データの値: backorder')).not.toBeNull();
   });
 
   it('an unlabeled enum renders its values as the options, with no caption', () => {
@@ -496,7 +496,7 @@ properties:
     selectField('区切り種別');
     const select = screen.getByLabelText('区切り種別') as HTMLSelectElement;
     expect(Array.from(select.options).map((o) => o.textContent)).toEqual(['section', 'end']);
-    expect(screen.queryByText(/params の値/)).toBeNull();
+    expect(screen.queryByText(/データの値: /)).toBeNull();
   });
 
   it('picking an option commits the VALUE, not the label', () => {
@@ -525,9 +525,9 @@ properties:
       'backorder',
       'canceld',
     ]);
-    expect(screen.getByText('この値は宣言された選択肢にありません。')).not.toBeNull();
+    expect(screen.getByText('この値は選択肢の一覧にありません。')).not.toBeNull();
     // No raw caption while undeclared — the warning already shows the value.
-    expect(screen.queryByText(/params の値/)).toBeNull();
+    expect(screen.queryByText(/データの値: /)).toBeNull();
     fireEvent.change(select, { target: { value: 'arrived' } });
     const written = JSON.parse(mocks.onParamsChange.mock.calls[0][0] as string);
     expect(written.status).toBe('arrived');
@@ -540,7 +540,7 @@ properties:
     expect(selects).toHaveLength(2);
     expect(selects[0].value).toBe('open');
     expect(selects[1].value).toBe('done');
-    expect(screen.queryByText(/params の値/)).toBeNull();
+    expect(screen.queryByText(/データの値: /)).toBeNull();
   });
 
   it('read-only shows the label with the machine value beside it', () => {
