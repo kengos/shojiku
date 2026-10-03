@@ -1323,6 +1323,72 @@ export const ja: LanguageCatalog = {
     'data.requiredHintRows':
       '「{parent}」の各行に、この項目が無いと診断に警告が出ます。印刷は止まりません。',
     'data.undo': '定義の編集を元に戻す',
+    'data.undoHint.delete': '元に戻す: {name} の削除',
+    'data.undoHint.rename': '元に戻す: {from} → {to} のデータ名の変更',
+    'data.delete.samplesUntouched':
+      'サンプルデータは技術者が管理しているため、書き換わりません。「{undo}」で戻せます。',
+    'data.rename.templateOnly':
+      'サンプルデータは技術者が管理しているため、書き換わりません。「{undo}」1 回で、テンプレートもまとめて戻ります。',
+    'data.sample.untouched': 'サンプルデータは技術者が管理しているため、書き換わりません。',
+    'data.rename.samplesOnly':
+      'すべてのサンプルデータの名前も書き換えます。「{undo}」1 回で、サンプルデータもまとめて戻ります。',
+    'data.rename.submit': '変更する',
+    'data.usage.partial':
+      '部品が多いため、最後まで調べられませんでした。ほかにも使っている場所があるかもしれません。',
+    'data.usage.count': 'このテンプレートで {count} か所',
+    'data.usage.none': 'このテンプレートでは未使用',
+    'data.usage.title': 'このテンプレートでの使用箇所',
+    'data.usage.coverage': 'ヘッダー・フッター・文書情報（タイトルなど）での使用も含みます。',
+    'data.usage.document': '文書情報',
+    'data.usage.item': '{kind}「{label}」',
+    'data.usage.inside': '{owner}の「{label}」',
+    'data.usage.carrier.value': '値',
+    'data.usage.carrier.inline': '文中の差し込み',
+    'data.usage.carrier.link': 'リンク先',
+    'data.usage.carrier.mark': '印を付ける条件',
+    'data.usage.carrier.source': '繰り返すデータ',
+    'data.usage.carrier.column': '列の値',
+    'data.usage.carrier.rowCondition': '行の条件',
+    'data.usage.carrier.declaration': '差し込みの設定',
+    'data.usage.carrier.label': '見出しへの差し込み',
+    'data.usage.carrier.document': '文書情報への差し込み',
+    'data.rename.open': 'データ名を変更',
+    'data.rename.newName': '新しいデータ名',
+    'data.rename.labelHint':
+      '一覧に出る名前を変えるときは、データ名ではなく「{label}」を変えてください。',
+    'data.rename.diff': '{from} → {to}',
+    'data.rename.rewrite': 'このテンプレートの {count} か所も新しいデータ名に書き換えます。',
+    'data.rename.samples':
+      'すべてのサンプルデータの名前も書き換えます。「{undo}」1 回で、テンプレートとサンプルデータもまとめて戻ります。',
+    'data.rename.sharedTitle': 'ほかのテンプレートは書き換わりません。',
+    'data.rename.shared':
+      '保存すると、同じ定義を使うほかのテンプレートで {name} を使っている場所には、データが入らなくなり、診断に「定義されていません」と出ます。',
+    'data.delete.open': '削除',
+    'data.delete.title': '「{label}」を削除しますか？',
+    'data.delete.titleInside': '「{label}」と中の {count} 項目を削除しますか？',
+    'data.delete.used': 'このテンプレートでは、次の {count} か所がこのデータを使っています。',
+    'data.delete.outcome':
+      '削除しても、これらの場所の書き方はそのまま残りますが、データが入らなくなり、診断に「定義されていません」と出ます。',
+    'data.delete.shared':
+      'この定義はプロジェクト全体で共有されていて、ほかのテンプレートで使われているかは、ここでは分かりません。保存すると、使っている場所にはデータが入らなくなり、診断に「定義されていません」と出ます。',
+    'data.delete.samples':
+      'すべてのサンプルデータの「{label}」も消えます。「{undo}」で、サンプルデータも含めて戻せます。',
+    'data.delete.confirm': '「{label}」を削除する',
+    'data.notice.deleted': '「{label}」を削除しました。「{undo}」で戻せます。',
+    'data.notice.undoRefused':
+      'データ名の変更を元に戻せませんでした。いまのテンプレートやサンプルデータを元の名前に戻すと、扱える大きさを超えるか、書き換えられない場所があるためです。何も変更していません。',
+    'data.error.not_interpolatable':
+      '文中の差し込みで使えるのは、半角英数字と _ だけです。このテンプレートには文中でこのデータを使っている場所があるため、この名前にはできません。',
+    'data.error.binding_capture':
+      'このテンプレートの部品に、「{name}」という名前の差し込みがすでに設定されています。この名前に変えると、その部品にはそちらの値が入ってしまうため、使えません。',
+    'data.error.too_many_refs':
+      'このテンプレートで書き換えが必要な値や文が、一度に書き換えられる数（{ops}）を超えます。',
+    'data.error.too_large':
+      '書き換えると、テンプレート・定義・サンプルデータのどれかが、この画面で扱える大きさを超えます。もっと短い名前にしてください。',
+    'data.error.walk_truncated':
+      'テンプレートの部品が多すぎて、使用箇所を最後まで調べられませんでした。書き換え漏れを防ぐため、ここではデータ名を変えられません。',
+    'data.error.edit_cap':
+      '定義の編集は {edits} 件までで、上限に達したため、この編集はできませんでした。「{undo}」で編集を戻すと減ります。保存しても件数は減りません。',
     'data.projectScopeHint':
       'この定義はプロジェクト全体で共有されています。保存すると、プロジェクト内のすべてのテンプレートの検証内容が変わります。',
     'canvas.sampleVariant': 'サンプル切替',

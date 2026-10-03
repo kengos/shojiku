@@ -8,26 +8,32 @@
 
 import type { Op } from '@shojiku/designer-core';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useI18n } from '../i18n/context';
-import type { UsageIndex } from '../palette/usage';
 import { BTN_SM, INPUT } from '../ui/chrome';
+import { TipBubble } from '../ui/TipBubble';
 import { AddItemForm } from './AddItemForm';
 import type { DefsNode } from './defsTree';
 import { ItemTree } from './ItemTree';
+import type { DataRef } from './refs/types';
 import { filterTree } from './treeModel';
 
 export interface ItemListPaneProps {
   /** `null` = no definitions to show (nothing parses yet). */
   readonly tree: DefsNode | null;
-  readonly usage: UsageIndex;
+  readonly usage: readonly DataRef[];
+  /** What the last rail-level action did or why it could not (a delete, an
+   * undo refused, the edit cap) — read out as a status. */
+  readonly notice: string | null;
   readonly definitions: string;
   readonly selected: DefsNode | null;
   readonly onSelect: (id: string) => void;
   readonly edit: {
-    readonly onDefinitionEdit?: (op: Op) => void;
+    readonly onDefinitionEdit?: (op: Op) => boolean;
     readonly canUndo: boolean;
     readonly onUndo?: () => void;
+    /** What the undo would take back (a rename / delete), as its description. */
+    readonly undoHint?: string;
   };
 }
 
@@ -52,6 +58,7 @@ const EMPTY_ROOT: DefsNode = {
 export function ItemListPane({
   tree,
   usage,
+  notice,
   definitions,
   selected,
   onSelect,
@@ -59,6 +66,7 @@ export function ItemListPane({
 }: ItemListPaneProps) {
   const { t } = useI18n();
   const [query, setQuery] = useState('');
+  const undoHintId = useId();
   // An empty dictionary still shows its root row — the file's own label,
   // description and version are editable before any item exists.
   let list: ReactNode;
@@ -106,16 +114,26 @@ export function ItemListPane({
         />
       ) : null}
       {edit.onUndo !== undefined ? (
-        <button
-          type="button"
-          className={`${BTN_SM} self-start`}
-          disabled={!edit.canUndo}
-          onClick={edit.onUndo}
-        >
-          {t('data.undo')}
-        </button>
+        // The instant bubble (never native `title`) says what the next undo takes
+        // back when it is a rename / delete; with an id it is also the
+        // button's description and shows on keyboard focus.
+        <span className="group/tip relative self-start">
+          <button
+            type="button"
+            className={BTN_SM}
+            disabled={!edit.canUndo}
+            aria-describedby={edit.undoHint === undefined ? undefined : undoHintId}
+            onClick={edit.onUndo}
+          >
+            {t('data.undo')}
+          </button>
+          {edit.undoHint === undefined ? null : <TipBubble id={undoHintId} text={edit.undoHint} />}
+        </span>
       ) : null}
       {list}
+      <p role="status" className="m-0 border-t border-border pt-2 text-sm text-muted empty:hidden">
+        {notice}
+      </p>
     </nav>
   );
 }

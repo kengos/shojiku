@@ -1,176 +1,52 @@
-// The template walk: every `data.key` reference a template carries, with the
-// structural path that carries it. Untrusted text — unparseable input yields
-// no bindings (never a throw), and the walk is depth-bounded against hostile
-// nesting and anything YAML anchors could express as a cycle.
+// The palette's view of where the template binds each data key: one
+// `BindingRef` per PLACE (an item, or a table column) per key and scope —
+// several surfaces of one item naming the same key are one placement.
+//
+// A PROJECTION of the data-reference walk (`data/refs/walk.ts`), the one census
+// every usage count shares, so the palette, the data-item editor's rows and its
+// usage list never disagree about whether a field is used: values, spans, text
+// marks, `visible:`, interpolated text and links, `bindings:` declarations,
+// list entries, table columns and row conditions, header-group and column
+// labels, all three bands, and the `document:` block (whose path is
+// `document`, which selects no canvas item). Untrusted text: unparseable input
+// yields no bindings (never a throw).
 
-import { MAX_TEMPLATE_BYTES_CEILING, parseTemplate, readTemplate } from '@shojiku/designer-core';
-import { narrowDeclarations } from '../text/declModel';
-import {
-  ARRAY_SOURCE_TYPES,
-  bindingKey,
-  bindingScope,
-  collectInterpolations,
-  entryScope,
-  pushInterpolated,
-  TEXT_INTERPOLATION_TYPES,
-} from './bindingRefs';
-import { MAX_WALK_DEPTH } from './caps';
-import { record } from './fieldDisplay';
+import { placePath } from '../data/refs/match';
+import { readDataRefs } from '../data/refs/walk';
 
 /** One `data.key` reference found in the template. */
 export interface BindingRef {
   /** Structural path of the ITEM carrying the binding (the box-index
-   * grammar), so selecting it highlights on canvas. Spans and text marks
-   * report their item's path — they have no box of their own. */
+   * grammar), so selecting it highlights on canvas — a table column's own
+   * path for a column binding, `document` for the document block. Spans and
+   * text marks report their item's path — they have no box of their own. */
   readonly path: string;
   readonly key: string;
-  /** Innermost enclosing array source key (bindings under a table column /
-   * repeat cell / repeat_flow card are row-relative), or `null` at document
-   * scope. */
+  /** The array the binding resolves in (dotted data path) — rows of a table /
+   * repeat / repeat_flow, entries of a list — or `null` at document scope. */
   readonly scope: string | null;
   /** Whether this binding IS an array source (`table`/`repeat`/
    * `repeat_flow`/`list` `data:`). */
   readonly source: boolean;
 }
-function walkItems(
-  out: BindingRef[],
-  prefix: string,
-  items: readonly unknown[],
-  scope: string | null,
-  depth: number,
-): void {
-  if (depth > MAX_WALK_DEPTH) {
-    return;
-  }
-  items.forEach((entry, index) => {
-    const item = record(entry);
-    if (item === undefined) {
-      return;
-    }
-    const path = `${prefix}[${index}]`;
-    const isSource = typeof item.type === 'string' && ARRAY_SOURCE_TYPES.has(item.type);
-    const key = bindingKey(item.data);
-    if (key !== undefined) {
-      out.push({ path, key, scope: bindingScope(item.data, scope), source: isSource });
-    }
-    if (Array.isArray(item.spans)) {
-      for (const span of item.spans) {
-        const spanData = record(span)?.data;
-        const spanKey = bindingKey(spanData);
-        if (spanKey !== undefined) {
-          out.push({ path, key: spanKey, scope: bindingScope(spanData, scope), source: false });
-        }
-      }
-    }
-    const markData = record(item.mark)?.data;
-    const markKey = bindingKey(markData);
-    if (markKey !== undefined) {
-      out.push({ path, key: markKey, scope: bindingScope(markData, scope), source: false });
-    }
-    // `visible: { key, … }` is a data reference like any other — without
-    // this, a field used ONLY to hide an item reads as unused in the
-    // palette. It resolves the same way a mark's `data:` does, element
-    // scope by default with the `scope: document` escape.
-    const visible = record(item.visible);
-    const visibleKey = bindingKey(visible);
-    if (visibleKey !== undefined) {
-      out.push({ path, key: visibleKey, scope: bindingScope(visible, scope), source: false });
-    }
-    // Row-relative scope opens only under a source's sub-template keys
-    // (columns / cell / item); a container's own `items` stay at this scope.
-    const childScope = isSource && key !== undefined ? key : scope;
-    // Interpolated surfaces at THIS item's scope: static text on text/qr_code,
-    // link URLs (`link: { url: "…/{order.code}" }` interpolates exactly like
-    // static text) on the item and its spans, and each FRAGMENT's own text. One
-    // ref per distinct key — several surfaces of one item are still one
-    // placement.
-    const interpolated = new Set<string>();
-    if (typeof item.type === 'string' && TEXT_INTERPOLATION_TYPES.has(item.type)) {
-      collectInterpolations(interpolated, item.text);
-    }
-    collectInterpolations(interpolated, record(item.link)?.url);
-    if (Array.isArray(item.spans)) {
-      for (const span of item.spans) {
-        // A fragment's own TEXT interpolates exactly like an item's, and it is
-        // now the ordinary way a bound value is authored inside rich text — the
-        // flow editor's insert menu writes a `{key}` chip into a fragment
-        // rather than minting a `data:` fragment. Counting only the fragment's
-        // LINK would leave every such field reading unused.
-        collectInterpolations(interpolated, record(span)?.text);
-        collectInterpolations(interpolated, record(record(span)?.link)?.url);
-      }
-    }
-    // The item's own declarations redirect the names its surfaces use.
-    const decls = narrowDeclarations(item.bindings);
-    pushInterpolated(out, path, interpolated, decls, scope);
-    // A `list`'s per-entry text template resolves against the array ENTRY, so
-    // its keys count under the array's own scope — which for a row-carried
-    // array is the JOINED path (`orders.items`), never the authored key
-    // alone: that is where the engine's catalog declares those fields, and
-    // where the palette's group for them lives.
-    const entries = item.type === 'list' && isSource ? entryScope(item.data, scope) : null;
-    if (entries !== null) {
-      const entryKeys = new Set<string>();
-      collectInterpolations(entryKeys, item.text);
-      pushInterpolated(out, path, entryKeys, decls, entries);
-    }
-    if (Array.isArray(item.items)) {
-      walkItems(out, `${path}.items`, item.items, scope, depth + 1);
-    }
-    if (Array.isArray(item.columns)) {
-      item.columns.forEach((column, columnIndex) => {
-        const columnRec = record(column);
-        if (columnRec === undefined) {
-          return;
-        }
-        const columnPath = `${path}.columns[${columnIndex}]`;
-        const columnKey = bindingKey(columnRec.data);
-        if (columnKey !== undefined) {
-          out.push({
-            path: columnPath,
-            key: columnKey,
-            scope: bindingScope(columnRec.data, childScope),
-            source: false,
-          });
-        }
-        const cellItems = record(columnRec.cell)?.items;
-        if (Array.isArray(cellItems)) {
-          walkItems(out, `${columnPath}.cell.items`, cellItems, childScope, depth + 1);
-        }
-      });
-    }
-    const cellItems = record(item.cell)?.items;
-    if (Array.isArray(cellItems)) {
-      walkItems(out, `${path}.cell.items`, cellItems, childScope, depth + 1);
-    }
-    const cardItems = record(item.item)?.items;
-    if (Array.isArray(cardItems)) {
-      walkItems(out, `${path}.item.items`, cardItems, childScope, depth + 1);
-    }
-  });
-}
 
-/** Collect every `data.key` binding in the template text, with the structural
- * path that carries it. Never throws — unparseable text yields no bindings
- * (every field then reads "unused", which matches a template the engine
- * cannot render either). */
+/** Collect every data reference in the template text as palette bindings. Never
+ * throws — unparseable text yields no bindings (every field then reads
+ * "unused", which matches a template the engine cannot render either). */
 export function readBindings(source: string): readonly BindingRef[] {
-  let raw: unknown;
-  try {
-    // Editor-held TEMPLATE text (an image can push it past 2 MiB) → ceiling.
-    raw = readTemplate(parseTemplate(source, MAX_TEMPLATE_BYTES_CEILING));
-  } catch {
+  const index = readDataRefs(source);
+  if (index === null) {
     return [];
   }
+  const seen = new Set<string>();
   const out: BindingRef[] = [];
-  const sections = record(record(raw)?.sections);
-  if (sections === undefined) {
-    return out;
-  }
-  for (const name of ['header', 'body', 'footer'] as const) {
-    const items = record(sections[name])?.items;
-    if (Array.isArray(items)) {
-      walkItems(out, `sections.${name}.items`, items, null, 0);
+  for (const ref of index.refs) {
+    const path = placePath(ref);
+    const scope = ref.frame.length === 0 ? null : ref.frame.join('.');
+    const identity = JSON.stringify([path, ref.spelled, scope, ref.source]);
+    if (!seen.has(identity)) {
+      seen.add(identity);
+      out.push({ path, key: ref.spelled, scope, source: ref.source });
     }
   }
   return out;

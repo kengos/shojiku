@@ -1120,6 +1120,75 @@ export const fil: LanguageCatalog = {
     'data.requiredHintRows':
       'Kapag wala ang item na ito sa isang hilera ng “{parent}”, magpapakita ng babala ang Mga diagnostic. Hindi titigil ang pag-print.',
     'data.undo': 'I-undo ang pag-edit ng depinisyon',
+    'data.undoHint.delete': 'I-undo: pagbura ng {name}',
+    'data.undoHint.rename': 'I-undo: pagpapalit ng pangalan ng data {from} → {to}',
+    'data.delete.samplesUntouched':
+      'Ang mga engineer ang namamahala sa sample data, kaya hindi ito binabago. Maibabalik ito ng “{undo}”.',
+    'data.rename.templateOnly':
+      'Ang mga engineer ang namamahala sa sample data, kaya hindi ito binabago. Isang “{undo}” lang, babalik din ang template.',
+    'data.sample.untouched':
+      'Ang mga engineer ang namamahala sa sample data, kaya hindi ito binabago.',
+    'data.rename.samplesOnly':
+      'Mapapalitan din ang pangalan sa bawat sample data. Isang “{undo}” lang, babalik din ang sample data.',
+    'data.rename.submit': 'Palitan',
+    'data.usage.partial':
+      'Napakaraming item sa template na ito para masuri lahat, kaya baka may iba pang lugar.',
+    'data.usage.count': 'Ginamit nang {count}× sa template na ito',
+    'data.usage.none': 'Hindi ginagamit sa template na ito',
+    'data.usage.title': 'Kung saan ito ginagamit sa template na ito',
+    'data.usage.coverage':
+      'Kasama ang paggamit sa mga header, footer at impormasyon ng dokumento (pamagat at iba pa).',
+    'data.usage.document': 'Impormasyon ng dokumento',
+    'data.usage.item': '{kind} “{label}”',
+    'data.usage.inside': '{owner}, “{label}”',
+    'data.usage.carrier.value': 'Halaga',
+    'data.usage.carrier.inline': 'Nakasingit sa teksto',
+    'data.usage.carrier.link': 'Patutunguhan ng link',
+    'data.usage.carrier.mark': 'Kondisyon ng paglalagay ng marka',
+    'data.usage.carrier.source': 'Inuulit na data',
+    'data.usage.carrier.column': 'Halaga ng column',
+    'data.usage.carrier.rowCondition': 'Kondisyon ng row',
+    'data.usage.carrier.declaration': 'Setting ng insert',
+    'data.usage.carrier.label': 'Nakasingit sa heading',
+    'data.usage.carrier.document': 'Nakasingit sa impormasyon ng dokumento',
+    'data.rename.open': 'Palitan ang pangalan ng data',
+    'data.rename.newName': 'Bagong pangalan ng data',
+    'data.rename.labelHint':
+      'Para palitan ang pangalang nakikita sa mga listahan, palitan ang “{label}”, hindi ang pangalan ng data.',
+    'data.rename.diff': '{from} → {to}',
+    'data.rename.rewrite':
+      'Papalitan din sa bagong pangalan ng data ang mga lugar sa template na ito na gumagamit nito ({count}).',
+    'data.rename.samples':
+      'Mapapalitan din ang pangalan sa bawat sample data. Isang “{undo}” lang, babalik din ang template at ang sample data.',
+    'data.rename.sharedTitle': 'Hindi papalitan ang ibang template.',
+    'data.rename.shared':
+      'Kapag nai-save, ang mga lugar sa ibang template na gumagamit ng {name} sa mga depinisyong ito ay walang data, at iuulat ng Mga diagnostic na hindi ito nakadepina.',
+    'data.delete.open': 'Burahin',
+    'data.delete.title': 'Burahin ang “{label}”?',
+    'data.delete.titleInside': 'Burahin ang “{label}” at ang nasa loob nito ({count})?',
+    'data.delete.used': 'Ginagamit ng mga lugar na ito sa template ang data na ito ({count}):',
+    'data.delete.outcome':
+      'Mananatili ang nakasulat sa mga lugar na ito, pero walang data na papasok, at iuulat ng Mga diagnostic na hindi ito nakadepina.',
+    'data.delete.shared':
+      'Ibinabahagi ang mga depinisyong ito sa buong proyekto, at hindi masusuri mula rito kung ginagamit ito ng ibang template. Kapag nai-save, walang data ang mga lugar na gumagamit nito, at iuulat ng Mga diagnostic na hindi ito nakadepina.',
+    'data.delete.samples':
+      'Mabubura rin ang “{label}” sa bawat sample data. Maibabalik ito ng “{undo}”, kasama ang sample data.',
+    'data.delete.confirm': 'Burahin ang “{label}”',
+    'data.notice.deleted': 'Nabura ang “{label}”. Maibabalik ito ng “{undo}”.',
+    'data.notice.undoRefused':
+      'Hindi na-undo ang pagpapalit ng pangalan ng data: lalampas sa limitasyon ng laki o may lugar na hindi mapapalitan kapag ibinalik ang lumang pangalan sa kasalukuyang template at sample data. Walang nagbago.',
+    'data.error.not_interpolatable':
+      'Ang mga insert sa teksto ay puwede lang gumamit ng a–z, A–Z, 0–9 at _. Isinisingit ng template na ito ang data na ito sa teksto, kaya hindi puwede ang pangalang ito.',
+    'data.error.binding_capture':
+      'May item sa template na ito na may insert na pinangalanang “{name}”. Sa pangalang ito, ang halaga ng insert na iyon ang ipapakita ng item, kaya hindi ito puwede.',
+    'data.error.too_many_refs':
+      'Mas marami ang mga halaga at tekstong kailangang palitan sa template na ito kaysa sa kaya ng isang pagbabago ({ops}).',
+    'data.error.too_large':
+      'Kapag pinalitan, lalaki ang template, ang mga depinisyon o ang sample data nang higit sa kaya ng screen na ito. Pumili ng mas maikling pangalan.',
+    'data.error.walk_truncated':
+      'Napakaraming item sa template na ito para masuri ang bawat lugar na gumagamit ng data na ito, kaya hindi mapapalitan dito ang pangalan — baka may makaligtaang lugar.',
+    'data.error.edit_cap':
+      'Hanggang {edits} lang ang pag-edit ng depinisyon, at naabot na ito, kaya hindi nagawa ang pag-edit na ito. Ang “{undo}” ay nagbabalik ng mga pag-edit at nagbibigay ng puwang; hindi ang pag-save.',
     'data.projectScopeHint':
       'Ibinabahagi ang mga depinisyong ito sa buong proyekto — babaguhin ng pag-save kung ano ang bina-validate ng bawat template dito.',
     'canvas.sampleVariant': 'Sample variant',

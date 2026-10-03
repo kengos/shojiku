@@ -10,6 +10,8 @@
 import type { Op } from '@shojiku/designer-core';
 import type { FieldTarget } from '../palette/model';
 import type { ValueSynth } from '../sample/synth';
+import type { DefsNode } from './defsTree';
+import type { RestructureRefusal } from './renamePlan';
 import type { VariantControls } from './VariantBar';
 
 export interface DataEditorViewProps {
@@ -21,8 +23,9 @@ export interface DataEditorViewProps {
   /** The current template YAML — the used/unused correlation reads its bindings. */
   readonly templateText: string;
   /** Report a CST-preserving definition edit (metadata set/clear, or an
-   * add-field putValue). Absent = definitions not editable here. */
-  readonly onDefinitionEdit?: (op: Op) => void;
+   * add-field putValue). Absent = definitions not editable here. Returning
+   * `false` says the edit was refused (the edit list is at its cap). */
+  readonly onDefinitionEdit?: (op: Op) => boolean | undefined;
   /** Report a params edit (a sample value / row change). */
   readonly onParamsChange: (params: string) => void;
   /** Sample data read-only (a mounted host's engineer-owned params). Definitions
@@ -48,7 +51,16 @@ export interface DataEditorViewProps {
    * reachable with no field selected and stays available on a mounted host where
    * the sample is read-only but the definitions are not. */
   readonly canUndoDefinition?: boolean;
-  readonly onUndoDefinition?: () => void;
+  /** Returning `false` says the undo was refused and nothing changed; a keys
+   * path says where an undone rename put the node back (it stays selected). */
+  readonly onUndoDefinition?: () => boolean | readonly string[] | undefined;
+  /** What the definitions undo would take back, when it is a rename or a
+   * delete (the undo control's description). */
+  readonly undoDefinitionHint?: string;
+  /** Rename / delete a data item with everything it carries — this template's
+   * references and every sample variant's key (`useDefsRestructure`). Absent =
+   * no rename / delete controls. */
+  readonly restructure?: RestructureHost;
   /** The template's `formats:` registry names, for the format picker. */
   /** Open with this field already selected (entered from its own gear). The
    * view mounts fresh every time it opens — `EditorBody` swaps the whole grid
@@ -57,4 +69,11 @@ export interface DataEditorViewProps {
    * simply selects nothing. */
   readonly initialSelection?: FieldTarget;
   readonly onClose: () => void;
+}
+
+/** The host's rename / delete over the three documents; each returns the
+ * refusal when nothing changed. */
+export interface RestructureHost {
+  readonly rename: (node: DefsNode, name: string) => RestructureRefusal | null;
+  readonly remove: (node: DefsNode) => RestructureRefusal | null;
 }

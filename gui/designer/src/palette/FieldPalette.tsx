@@ -14,6 +14,7 @@
 // nothing, does nothing) everywhere else.
 
 import { useMemo, useState } from 'react';
+import { DOCUMENT_OWNER } from '../data/refs/types';
 import { HelpHint } from '../help/HelpHint';
 import { useI18n } from '../i18n/context';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
@@ -66,7 +67,13 @@ export function FieldPalette({
   const usage = useMemo(() => buildUsage(readBindings(templateText)), [templateText]);
   const shown = useMemo(() => filterGroups(groups ?? [], query), [groups, query]);
 
-  const pick = (id: string, paths: readonly string[]) => {
+  const pick = (id: string, places: readonly string[]) => {
+    // The document block is a place that uses a field but nothing on the canvas
+    // to select.
+    const paths = places.filter((path) => path !== DOCUMENT_OWNER);
+    if (paths.length === 0) {
+      return;
+    }
     const index = cycle !== null && cycle.id === id ? (cycle.index + 1) % paths.length : 0;
     setCycle({ id, index });
     onSelect(paths[index]);

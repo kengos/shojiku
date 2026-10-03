@@ -7,14 +7,17 @@
 // the grid it swaps out.
 
 import { DataEditorView } from '../data/DataEditorView';
-import { canUndoDefs } from '../data/defsHistory';
+import { canUndoDefs, peekDefsHistory } from '../data/defsHistory';
+import { undoHint } from '../data/undoHint';
 import type { EditorController } from '../editor/useEditor';
 import type { DefinitionsOwnership } from '../hooks/useDefinitionsOwnership';
+import { useDefsRestructure } from '../hooks/useDefsRestructure';
 import type { DocDerived } from '../hooks/useDocDerived';
 import type { DocViews } from '../hooks/useDocViews';
 import type { PreviewSession } from '../hooks/usePreviewSession';
 import type { SampleData } from '../hooks/useSampleData';
 import type { HostConfig } from '../hostConfig';
+import { useI18n } from '../i18n/context';
 import { DocumentSettingsPage } from '../panel/DocumentSettingsPage';
 import { canUndoSample } from '../sample/history';
 
@@ -47,6 +50,14 @@ export function FullscreenView({
   const { capabilities, defaultFontFamily, engineLocale, fontFamilies, locale, synth } = host;
   const { docViewOpen, docFocus } = views;
   const { effectiveDefinitions } = defs;
+  const { t } = useI18n();
+  const restructure = useDefsRestructure({
+    editor,
+    sample,
+    defs,
+    maxBytes,
+    sampleReadOnly: host.sampleDataReadOnly,
+  });
 
   if (docViewOpen) {
     return (
@@ -88,7 +99,9 @@ export function FullscreenView({
       canUndo={canUndoSample(sample.sampleHistory)}
       onUndo={sample.undoSample}
       canUndoDefinition={canUndoDefs(defs.defsHistory)}
-      onUndoDefinition={defs.undoDefinition}
+      onUndoDefinition={restructure.undo}
+      undoDefinitionHint={undoHint(peekDefsHistory(defs.defsHistory)?.companion, t)}
+      restructure={restructure}
       initialSelection={views.dataFocus ?? undefined}
       onClose={views.closeDataView}
     />

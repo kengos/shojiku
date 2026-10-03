@@ -80,7 +80,7 @@ const TEMPLATE = `sections:
 
 function draw(over: Partial<DataEditorViewProps> = {}) {
   const mocks = {
-    onDefinitionEdit: vi.fn<(op: Op) => void>(),
+    onDefinitionEdit: vi.fn<(op: Op) => boolean | undefined>(),
     onParamsChange: vi.fn<(params: string) => void>(),
     onClose: vi.fn<() => void>(),
   };

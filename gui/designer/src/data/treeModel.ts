@@ -1,16 +1,17 @@
 // Pure readers over the definitions tree (`defsTree.ts`) that the data-item
-// editor's panes share: lookup, the display label, the template usage of a node,
+// editor's panes share: lookup, the display label,
 // resolving the palette's jump target, the search filter, where a new item may
-// go, and where a field's sample value lives in the params.
+// go, and where a field's sample value lives in the params. (Where the template
+// uses a node is `refs/match.ts`.)
 //
-// Usage and the jump target speak the palette's addressing (a document-scope
-// full key, or a row-relative key under an array's dotted id), so a node maps
-// onto the same `UsageIndex` and `FieldTarget` the palette produces.
+// The jump target speaks the palette's addressing (a document-scope full key, or
+// a row-relative key under an array's dotted id), so a node maps onto the same
+// `FieldTarget` the palette produces.
 
 import type { FieldTarget } from '../palette/model';
-import type { UsageIndex } from '../palette/usage';
 import type { SamplePath } from '../sample/model';
 import type { DefsNode } from './defsTree';
+import { relativeKey } from './refs/match';
 
 /** Every node, pre-order, the root first. */
 export function flattenTree(root: DefsNode): DefsNode[] {
@@ -30,25 +31,6 @@ export function findNode(root: DefsNode, id: string): DefsNode | null {
 /** The words a node shows as: its label, else its data name. */
 export function nodeLabel(node: DefsNode): string {
   return node.label !== '' ? node.label : node.name;
-}
-
-/** The data name relative to the rows that carry the node (the full dotted
- * path at document scope). */
-function relativeKey(node: DefsNode): string {
-  return node.dataPath.slice(node.scope?.length ?? 0).join('.');
-}
-
-/** The template item paths bound to a node. `null` for the root and object
- * groups, which no binding names. */
-export function nodeUsage(usage: UsageIndex, node: DefsNode): readonly string[] | null {
-  if (node.kind === 'root' || node.kind === 'group') {
-    return null;
-  }
-  if (node.scope === null) {
-    const index = node.kind === 'field' ? usage.scalar : usage.sources;
-    return index.get(relativeKey(node)) ?? [];
-  }
-  return usage.rows.get(node.scope.join('.'))?.get(relativeKey(node)) ?? [];
 }
 
 /** The field a palette jump names, or `null` (a stale or hostile target simply

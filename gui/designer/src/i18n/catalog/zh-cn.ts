@@ -1221,6 +1221,67 @@ export const zhCn: LanguageCatalog = {
     'data.requiredHintGroup': '数据中有“{parent}”而缺少此项目时，诊断会显示警告。打印不会停止。',
     'data.requiredHintRows': '“{parent}”的某一行缺少此项目时，诊断会显示警告。打印不会停止。',
     'data.undo': '撤销定义编辑',
+    'data.undoHint.delete': '撤销：删除 {name}',
+    'data.undoHint.rename': '撤销：数据名更改 {from} → {to}',
+    'data.delete.samplesUntouched': '示例数据由技术人员管理，因此不会被改写。点“{undo}”可恢复。',
+    'data.rename.templateOnly':
+      '示例数据由技术人员管理，因此不会被改写。点一次“{undo}”，模板也会一起恢复。',
+    'data.sample.untouched': '示例数据由技术人员管理，因此不会被改写。',
+    'data.rename.samplesOnly':
+      '所有示例数据中的名称也会改写。点一次“{undo}”，示例数据也会一起恢复。',
+    'data.rename.submit': '更改',
+    'data.usage.partial': '此模板部件太多，未能全部查完。可能还有其他使用位置。',
+    'data.usage.count': '在此模板中使用 {count} 处',
+    'data.usage.none': '此模板中未使用',
+    'data.usage.title': '此模板中的使用位置',
+    'data.usage.coverage': '包括页眉、页脚和文档信息（标题等）中的使用。',
+    'data.usage.document': '文档信息',
+    'data.usage.item': '{kind}“{label}”',
+    'data.usage.inside': '{owner}中的“{label}”',
+    'data.usage.carrier.value': '值',
+    'data.usage.carrier.inline': '文中插入',
+    'data.usage.carrier.link': '链接目标',
+    'data.usage.carrier.mark': '添加标记的条件',
+    'data.usage.carrier.source': '重复的数据',
+    'data.usage.carrier.column': '列的值',
+    'data.usage.carrier.rowCondition': '行条件',
+    'data.usage.carrier.declaration': '插入设置',
+    'data.usage.carrier.label': '插入标题',
+    'data.usage.carrier.document': '插入文档信息',
+    'data.rename.open': '更改数据名',
+    'data.rename.newName': '新数据名',
+    'data.rename.labelHint': '如需更改列表中显示的名称，请修改“{label}”，而不是数据名。',
+    'data.rename.diff': '{from} → {to}',
+    'data.rename.rewrite': '此模板中使用它的 {count} 处也会改写为新的数据名。',
+    'data.rename.samples':
+      '所有示例数据中的名称也会改写。点一次“{undo}”，模板和示例数据也会一起恢复。',
+    'data.rename.sharedTitle': '其他模板不会被改写。',
+    'data.rename.shared':
+      '保存后，使用相同定义的其他模板中使用 {name} 的位置将不再有数据填入，诊断会显示“未定义”。',
+    'data.delete.open': '删除',
+    'data.delete.title': '要删除“{label}”吗？',
+    'data.delete.titleInside': '要删除“{label}”及其中的 {count} 个项目吗？',
+    'data.delete.used': '此模板中有以下 {count} 处使用此数据。',
+    'data.delete.outcome': '删除后这些位置的写法保持不变，但不再有数据填入，诊断会显示“未定义”。',
+    'data.delete.shared':
+      '此定义在整个项目中共享，无法在此确认其他模板是否使用它。保存后，使用它的位置将不再有数据填入，诊断会显示“未定义”。',
+    'data.delete.samples':
+      '所有示例数据中的“{label}”也会被删除。点“{undo}”可连同示例数据一起恢复。',
+    'data.delete.confirm': '删除“{label}”',
+    'data.notice.deleted': '已删除“{label}”。点“{undo}”可恢复。',
+    'data.notice.undoRefused':
+      '无法撤销数据名的更改：把当前模板和示例数据改回原名称会超过大小上限，或有无法改写的位置。没有做任何更改。',
+    'data.error.not_interpolatable':
+      '文中插入只能使用半角英文字母、数字和 _。此模板中有在文中使用此数据的位置，因此不能使用这个名称。',
+    'data.error.binding_capture':
+      '此模板的部件中已设置名为“{name}”的插入。改为此名称后，该部件会显示那个插入的值，因此不能使用。',
+    'data.error.too_many_refs': '此模板中需要改写的值和文字超过了一次能改写的数量（{ops}）。',
+    'data.error.too_large':
+      '改写后，模板、定义或示例数据中的某一个会超过此界面能处理的大小。请使用更短的名称。',
+    'data.error.walk_truncated':
+      '此模板的部件太多，无法查完所有使用位置。为防止漏改，无法在此更改数据名。',
+    'data.error.edit_cap':
+      '定义编辑最多 {edits} 条，已达到上限，因此未能进行此编辑。用“{undo}”撤销编辑可减少条数；保存不会减少。',
     'data.projectScopeHint':
       '这些定义在整个项目中共用——保存后，项目内所有模板的验证内容都会随之改变。',
     'canvas.sampleVariant': '示例变体',

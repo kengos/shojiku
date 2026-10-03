@@ -17,11 +17,8 @@
 // reported through `onParamsChange`, variant-aware and read-only on a mounted
 // host (engineer-owned data).
 
-import type { Op } from '@shojiku/designer-core';
 import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n/context';
-import { readBindings } from '../palette/bindings';
-import { buildUsage } from '../palette/usage';
 import { addSampleField, addSampleRow, removeSampleRow, setSampleValue } from '../sample/edit';
 import { fillMissingParams, missingParamKeys } from '../sample/generate';
 import { coerceSampleValue, parseParams, type SampleKind, type SamplePath } from '../sample/model';
@@ -33,8 +30,10 @@ import type { DetailContext } from './detailContext';
 import { EditorBand } from './EditorBand';
 import type { DataEditorViewProps } from './editorProps';
 import { ItemListPane } from './ItemListPane';
+import { readDataRefs } from './refs/walk';
 import { SampleControls } from './SampleControls';
 import { findNode, nodeForTarget } from './treeModel';
+import { useNodeActions } from './useNodeActions';
 
 export function DataEditorView({
   definitions,
@@ -53,12 +52,14 @@ export function DataEditorView({
   onUndo,
   canUndoDefinition = false,
   onUndoDefinition,
+  undoDefinitionHint,
+  restructure,
   initialSelection,
   onClose,
 }: DataEditorViewProps) {
   const { t } = useI18n();
   const tree = useMemo(() => readDefsTree(definitions), [definitions]);
-  const usage = useMemo(() => buildUsage(readBindings(templateText)), [templateText]);
+  const refs = useMemo(() => readDataRefs(templateText), [templateText]);
   // Seeded once, on mount: the view is unmounted whenever it is not open, so
   // every entry re-runs this. A stale or hostile target resolves to no node and
   // lands on the no-selection surface rather than erroring.
@@ -76,11 +77,18 @@ export function DataEditorView({
 
   const editable = onDefinitionEdit !== undefined && definitions !== '';
 
-  const dispatchDefEdit = (op: Op | null) => {
-    if (op !== null && onDefinitionEdit !== undefined) {
-      onDefinitionEdit(op);
-    }
-  };
+  const { notice, dispatchDefEdit, undo, actions } = useNodeActions({
+    tree,
+    definitions,
+    refs,
+    editable,
+    projectScoped: definitionsProjectScoped,
+    sampleReadOnly: sampleDataReadOnly,
+    onDefinitionEdit,
+    onUndoDefinition,
+    restructure,
+    select: setSelectedId,
+  });
 
   // Commit a sample value: a fresh top-level scalar is CREATED (a field added to
   // definitions has no params value yet); an existing leaf is set in place.
@@ -115,6 +123,8 @@ export function DataEditorView({
     onRemoveRow: (arrayPath: SamplePath, index: number) =>
       onParamsChange(removeSampleRow(params, arrayPath, index)),
     onSelect: setSelectedId,
+    usage: refs,
+    restructure: actions,
   });
 
   return (
@@ -132,11 +142,17 @@ export function DataEditorView({
         {/* Left: search + add + tree. */}
         <ItemListPane
           tree={tree}
-          usage={usage}
+          usage={refs?.refs ?? []}
+          notice={notice}
           definitions={definitions}
           selected={selected}
           onSelect={setSelectedId}
-          edit={{ onDefinitionEdit, canUndo: canUndoDefinition, onUndo: onUndoDefinition }}
+          edit={{
+            onDefinitionEdit: onDefinitionEdit === undefined ? undefined : dispatchDefEdit,
+            canUndo: canUndoDefinition,
+            onUndo: undo,
+            undoHint: undoDefinitionHint,
+          }}
         />
         {/* Right: the selected field's definition + sample. */}
         <div className="min-w-0 flex-1 overflow-y-auto px-6 py-5">

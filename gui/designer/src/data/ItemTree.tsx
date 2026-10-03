@@ -11,15 +11,16 @@
 
 import { useEffect, useState } from 'react';
 import { useI18n } from '../i18n/context';
-import type { UsageIndex } from '../palette/usage';
 import type { DefsNode } from './defsTree';
 import { SELECTION_SEP } from './editorModel';
 import { ListRow } from './ItemListRow';
-import { nodeUsage } from './treeModel';
+import { placeCount, refsUnder } from './refs/match';
+import type { DataRef } from './refs/types';
 
 export interface ItemTreeProps {
   readonly root: DefsNode;
-  readonly usage: UsageIndex;
+  /** Every data reference in the template. */
+  readonly usage: readonly DataRef[];
   readonly selectedId: string | null;
   /** Show every container open (a search is narrowing the tree). */
   readonly forceOpen: boolean;
@@ -54,13 +55,14 @@ export function ItemTree({ root, usage, selectedId, forceOpen, onSelect }: ItemT
   const rows = (nodes: readonly DefsNode[], depth: number) =>
     nodes.map((node) => {
       const open = forceOpen || !folded.has(node.id);
-      const bound = nodeUsage(usage, node);
+      // A group's usage is its children's; the row shows none of its own.
+      const bound = node.kind === 'group' ? null : placeCount(refsUnder(usage, node));
       return (
         <li key={node.id}>
           <ListRow
             node={node}
             depth={depth}
-            usedCount={bound === null ? null : bound.length}
+            usedCount={bound}
             active={node.id === selectedId}
             expanded={node.children.length > 0 ? open : null}
             onToggle={() => toggle(node.id)}

@@ -10,6 +10,14 @@
 // and validated by the wasm engine with no error-severity diagnostic (a
 // definitions file the engine cannot parse fails the whole validate as one).
 //
+// A RENAME crosses the seam twice: the template references it rewrites must
+// still resolve against the renamed definitions, and the reference walk that
+// finds them must see exactly the carriers the engine checks. A fixture naming
+// one data key in every carrier the engine validates is renamed both ways —
+// definitions alone (the engine's `unknown_data_key` count must equal the walk's
+// reference count: the census positive control) and with the cascade (zero) —
+// and a delete reports exactly the places its confirmation names.
+//
 // The designer unit suites build their expectations on fixtures they wrote
 // themselves; this is the suite that crosses the seam. Loads the
 // `make engine:wasm` pkg exactly as the other integration suites do.
@@ -27,7 +35,12 @@ import {
 } from '../data/definitionsEdit';
 import { ADD_KINDS, addFieldPlan } from '../data/defsPlan';
 import { type DefsNode, readDefsTree } from '../data/defsTree';
+import { planDelete } from '../data/deletePlan';
 import { SELECTION_SEP } from '../data/editorModel';
+import { refsUnder } from '../data/refs/match';
+import { type DataRef, DOCUMENT_OWNER } from '../data/refs/types';
+import { readDataRefs } from '../data/refs/walk';
+import { applyScratch, planRename, type RestructureInput } from '../data/renamePlan';
 import { findNode } from '../data/treeModel';
 import type { EngineTransport } from '../engine/transport';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
@@ -181,4 +194,205 @@ describe('definitions the data-item editor authors, read by the real engine', ()
       expect(errors(diagnostics.items)).toEqual([]);
     });
   }
+});
+
+const CENSUS_DEFS = `type: object
+properties:
+  amt: { type: number }
+  flag: { type: boolean }
+  rows:
+    type: array
+    items:
+      type: object
+      properties:
+        amt: { type: number }
+        flag: { type: boolean }
+`;
+
+/** One reference in every carrier the engine validates (the body + the
+ * document block): to the top-level \`amt\` / \`flag\`, and in the rows of
+ * \`rows\` to its own \`amt\` / \`flag\`. */
+const CENSUS = `document:
+  title: "{amt}"
+  description: "{amt}"
+  language: "{amt}"
+  keywords: ["{amt}"]
+  authors: ["{amt}"]
+sections:
+  body:
+    type: flow
+    items:
+      - type: text
+        data: { key: amt }
+        link: { url: "https://e.test/{amt}" }
+        mark: { data: { key: flag } }
+        visible: { key: flag }
+      - { type: text, text: "x {amt}" }
+      - type: text
+        spans:
+          - { data: { key: amt } }
+          - { text: "y {amt}", link: { url: "https://e.test/{amt}" } }
+      - { type: text, text: "{n}", bindings: { n: { key: amt } } }
+      - { type: image, data: { key: amt }, link: { url: "https://e.test/{amt}" } }
+      - { type: image, src: a.png, link: { url: "https://e.test/{n}" }, bindings: { n: { key: amt } } }
+      - { type: qr_code, data: { key: amt } }
+      - { type: qr_code, text: "{amt}" }
+      - { type: qr_code, text: "{n}", bindings: { n: { key: amt } } }
+      - { type: char_grid, data: { key: amt }, grid: { charsPerLine: 3, lines: 1, cellSize: 18 } }
+      - { type: char_grid, text: "{amt}", grid: { charsPerLine: 3, lines: 1, cellSize: 18 } }
+      - { type: char_grid, text: "{n}", bindings: { n: { key: amt } }, grid: { charsPerLine: 3, lines: 1, cellSize: 18 } }
+      - { type: ellipse, data: { key: flag } }
+      - { type: checkbox, data: { key: flag } }
+      - { type: list, data: { key: rows }, text: "{amt} {n}", bindings: { n: { key: flag } } }
+      - type: table
+        data: { key: rows }
+        columns:
+          - { data: { key: amt } }
+          - cell:
+              items:
+                - { type: text, data: { key: flag } }
+                - { type: text, data: { key: amt, scope: document } }
+        row:
+          conditionalStyles:
+            - { when: { key: flag }, style: { textAlign: center } }
+      - type: repeat
+        data: { key: rows }
+        cell: { items: [ { type: text, text: "{amt}" } ] }
+      - type: repeat_flow
+        data: { key: rows }
+        item: { items: [ { type: text, data: { key: amt } } ] }
+`;
+
+const CENSUS_PARAMS = JSON.stringify({ amt: 1, flag: true, rows: [{ amt: 2, flag: false }] });
+
+function censusInput(): RestructureInput {
+  return {
+    definitions: CENSUS_DEFS,
+    base: CENSUS_DEFS,
+    edits: [],
+    templateText: CENSUS,
+    refs: readDataRefs(CENSUS),
+    maxBytes: 1_048_576,
+    sampleSet: { active: 'd', variants: [{ id: 'd', text: CENSUS_PARAMS, origin: 'preset' }] },
+  };
+}
+
+function censusNode(keys: readonly string[]): DefsNode {
+  const tree = readDefsTree(CENSUS_DEFS);
+  const found = tree === null ? null : findNode(tree, keys.join(SELECTION_SEP));
+  if (found === null) {
+    throw new Error(`no node ${keys.join('.')}`);
+  }
+  return found;
+}
+
+/** Where the engine reports a reference: the item (or span / column / row
+ * condition), a `visible:` or text mark at its own key, a declaration by its
+ * name, a document string by its field — and a document list by its element
+ * (the fixture's lists hold one each). */
+function diagnosticPath(ref: DataRef): string {
+  if (ref.carrier === 'declaration') {
+    return `${ref.path}.bindings.${ref.keys[1]}`;
+  }
+  if (ref.carrier === 'visible' || ref.keys[0] === 'mark') {
+    return `${ref.path}.${ref.keys[0]}`;
+  }
+  if (ref.path === DOCUMENT_OWNER) {
+    return `document.${ref.keys[0]}${ref.form === 'strings' ? '[0]' : ''}`;
+  }
+  return ref.path;
+}
+
+const unknown = (items: readonly { code: string; path?: string | null }[]) =>
+  items.filter((d) => d.code === 'unknown_data_key');
+
+const ROW = ['properties', 'rows', 'items', 'properties'];
+const NODES: readonly (readonly string[])[] = [
+  ['properties', 'amt'],
+  ['properties', 'flag'],
+  ['properties', 'rows'],
+  [...ROW, 'amt'],
+  [...ROW, 'flag'],
+];
+
+describe('a rename cascade, read by the real engine', () => {
+  it('validates the census fixture clean (no reference is undefined to start with)', async () => {
+    const diagnostics = await transport.validate(CENSUS, CENSUS_PARAMS, CENSUS_DEFS);
+    expect(diagnostics.items.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(unknown(diagnostics.items)).toEqual([]);
+  });
+
+  for (const keys of NODES) {
+    const label = keys.filter((key) => key !== 'properties' && key !== 'items').join('.');
+    it(`${label}: the engine finds exactly the references the walk finds (census control)`, async () => {
+      const node = censusNode(keys);
+      const refs = refsUnder(censusInput().refs?.refs ?? [], node);
+      expect(refs.length).toBeGreaterThan(0);
+      const renamedOnly = applyDefinitionOps(CENSUS_DEFS, [{ op: 'renameKey', keys, to: 'zz' }]);
+      const diagnostics = await transport.validate(CENSUS, CENSUS_PARAMS, renamedOnly);
+      // The engine reports a key once per place (an item's text and link naming
+      // it are one diagnostic), so the census is compared as the SET of places.
+      const places = (paths: readonly string[]) => [...new Set(paths)].sort();
+      expect(places(unknown(diagnostics.items).map((d) => d.path ?? ''))).toEqual(
+        places(refs.map(diagnosticPath)),
+      );
+    });
+
+    it(`${label}: the cascade leaves nothing undefined and the documents parse`, async () => {
+      const plan = planRename(censusInput(), censusNode(keys), 'zz');
+      if (!plan.ok) {
+        throw new Error(plan.reason);
+      }
+      const template = applyScratch(CENSUS, plan.templateOps, 1_048_576) ?? '';
+      const defs = applyDefinitionOps(CENSUS_DEFS, plan.edits);
+      const params = plan.sampleSet.variants[0]?.text ?? '';
+      expect(template).not.toBe(CENSUS);
+      const diagnostics = await transport.validate(template, params, defs);
+      expect(errors(diagnostics.items)).toEqual([]);
+      expect(unknown(diagnostics.items)).toEqual([]);
+    });
+  }
+
+  it('a delete leaves its references, which the engine reports at exactly those places', async () => {
+    const node = censusNode(['properties', 'amt']);
+    const plan = planDelete(censusInput(), node);
+    if (!plan.ok) {
+      throw new Error(plan.reason);
+    }
+    const defs = applyDefinitionOps(CENSUS_DEFS, plan.edits);
+    const diagnostics = await transport.validate(
+      CENSUS,
+      plan.sampleSet.variants[0]?.text ?? '',
+      defs,
+    );
+    const refs = refsUnder(censusInput().refs?.refs ?? [], node);
+    const places = (paths: readonly string[]) => [...new Set(paths)].sort();
+    expect(places(unknown(diagnostics.items).map((d) => d.path ?? ''))).toEqual(
+      places(refs.map(diagnosticPath)),
+    );
+  });
+});
+
+describe('the carriers only the GUI walks (layout reads them, validate does not)', () => {
+  const ONLY_GUI = `sections:
+  header:
+    items:
+      - type: table
+        data: { key: zz_rows }
+        columns: [ { data: { key: zz_col } } ]
+  body:
+    type: flow
+    items:
+      - type: table
+        data: { key: rows }
+        headerGroups: [ { label: "{zz_group}", span: 1 } ]
+        columns: [ { label: "{zz_label}", data: { key: amt } } ]
+`;
+
+  it('the walk finds them and the engine reports none — the GUI rewrites them on its own', async () => {
+    const spelled = (readDataRefs(ONLY_GUI)?.refs ?? []).map((ref) => ref.spelled);
+    expect(spelled).toEqual(expect.arrayContaining(['zz_rows', 'zz_col', 'zz_group', 'zz_label']));
+    const diagnostics = await transport.validate(ONLY_GUI, CENSUS_PARAMS, CENSUS_DEFS);
+    expect(unknown(diagnostics.items)).toEqual([]);
+  });
 });

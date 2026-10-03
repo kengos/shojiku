@@ -1223,6 +1223,67 @@ export const zhTw: LanguageCatalog = {
     'data.requiredHintGroup': '資料中有「{parent}」而缺少此項目時，診斷會顯示警告。列印不會停止。',
     'data.requiredHintRows': '「{parent}」的某一列缺少此項目時，診斷會顯示警告。列印不會停止。',
     'data.undo': '復原定義編輯',
+    'data.undoHint.delete': '復原：刪除 {name}',
+    'data.undoHint.rename': '復原：資料名稱變更 {from} → {to}',
+    'data.delete.samplesUntouched': '範例資料由技術人員管理，因此不會被改寫。按「{undo}」可復原。',
+    'data.rename.templateOnly':
+      '範例資料由技術人員管理，因此不會被改寫。按一次「{undo}」，範本也會一起復原。',
+    'data.sample.untouched': '範例資料由技術人員管理，因此不會被改寫。',
+    'data.rename.samplesOnly':
+      '所有範例資料中的名稱也會改寫。按一次「{undo}」，範例資料也會一起復原。',
+    'data.rename.submit': '變更',
+    'data.usage.partial': '此範本元件太多，未能全部查完。可能還有其他使用位置。',
+    'data.usage.count': '在此範本中使用 {count} 處',
+    'data.usage.none': '此範本中未使用',
+    'data.usage.title': '此範本中的使用位置',
+    'data.usage.coverage': '包括頁首、頁尾和文件資訊（標題等）中的使用。',
+    'data.usage.document': '文件資訊',
+    'data.usage.item': '{kind}「{label}」',
+    'data.usage.inside': '{owner}中的「{label}」',
+    'data.usage.carrier.value': '值',
+    'data.usage.carrier.inline': '文中插入',
+    'data.usage.carrier.link': '連結目標',
+    'data.usage.carrier.mark': '加上標記的條件',
+    'data.usage.carrier.source': '重複的資料',
+    'data.usage.carrier.column': '欄的值',
+    'data.usage.carrier.rowCondition': '列條件',
+    'data.usage.carrier.declaration': '插入設定',
+    'data.usage.carrier.label': '插入標題',
+    'data.usage.carrier.document': '插入文件資訊',
+    'data.rename.open': '變更資料名稱',
+    'data.rename.newName': '新的資料名稱',
+    'data.rename.labelHint': '如需變更清單中顯示的名稱，請修改「{label}」，而不是資料名稱。',
+    'data.rename.diff': '{from} → {to}',
+    'data.rename.rewrite': '此範本中使用它的 {count} 處也會改寫為新的資料名稱。',
+    'data.rename.samples':
+      '所有範例資料中的名稱也會改寫。按一次「{undo}」，範本和範例資料也會一起復原。',
+    'data.rename.sharedTitle': '其他範本不會被改寫。',
+    'data.rename.shared':
+      '儲存後，使用相同定義的其他範本中使用 {name} 的位置將不再有資料填入，診斷會顯示「未定義」。',
+    'data.delete.open': '刪除',
+    'data.delete.title': '要刪除「{label}」嗎？',
+    'data.delete.titleInside': '要刪除「{label}」及其中的 {count} 個項目嗎？',
+    'data.delete.used': '此範本中有以下 {count} 處使用此資料。',
+    'data.delete.outcome': '刪除後這些位置的寫法保持不變，但不再有資料填入，診斷會顯示「未定義」。',
+    'data.delete.shared':
+      '此定義在整個專案中共用，無法在此確認其他範本是否使用它。儲存後，使用它的位置將不再有資料填入，診斷會顯示「未定義」。',
+    'data.delete.samples':
+      '所有範例資料中的「{label}」也會被刪除。按「{undo}」可連同範例資料一起復原。',
+    'data.delete.confirm': '刪除「{label}」',
+    'data.notice.deleted': '已刪除「{label}」。按「{undo}」可復原。',
+    'data.notice.undoRefused':
+      '無法復原資料名稱的變更：把目前的範本和範例資料改回原名稱會超過大小上限，或有無法改寫的位置。沒有做任何變更。',
+    'data.error.not_interpolatable':
+      '文中插入只能使用半形英文字母、數字和 _。此範本中有在文中使用此資料的位置，因此不能使用這個名稱。',
+    'data.error.binding_capture':
+      '此範本的元件中已設定名為「{name}」的插入。改為此名稱後，該元件會顯示那個插入的值，因此不能使用。',
+    'data.error.too_many_refs': '此範本中需要改寫的值和文字超過一次能改寫的數量（{ops}）。',
+    'data.error.too_large':
+      '改寫後，範本、定義或範例資料中的某一個會超過此畫面能處理的大小。請使用更短的名稱。',
+    'data.error.walk_truncated':
+      '此範本的元件太多，無法查完所有使用位置。為避免漏改，無法在此變更資料名稱。',
+    'data.error.edit_cap':
+      '定義編輯最多 {edits} 筆，已達到上限，因此未能進行此編輯。用「{undo}」復原編輯可減少筆數；儲存不會減少。',
     'data.projectScopeHint':
       '這些定義在整個專案中共用——儲存後，專案內所有範本的驗證內容都會隨之改變。',
     'canvas.sampleVariant': '範例變體',
