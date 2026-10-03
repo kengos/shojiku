@@ -1311,6 +1311,74 @@ export const en: LanguageCatalog = {
     'data.requiredHintRows':
       'If a row of “{parent}” lacks this item, Diagnostics shows a warning. Printing does not stop.',
     'data.undo': 'Undo definition edit',
+    'data.undoHint.delete': 'Undo: deleting {name}',
+    'data.undoHint.rename': 'Undo: the data name change {from} → {to}',
+    'data.delete.samplesUntouched':
+      'The sample data is managed by the engineers, so it is not changed. “{undo}” brings the item back.',
+    'data.rename.templateOnly':
+      'The sample data is managed by the engineers, so it is not changed. One “{undo}” puts the template back as well.',
+    'data.sample.untouched': 'The sample data is managed by the engineers, so it is not changed.',
+    'data.rename.samplesOnly':
+      'The name changes in every sample data set too. One “{undo}” puts the sample data back as well.',
+    'data.rename.submit': 'Change',
+    'data.usage.partial':
+      'This template has too many items to check them all, so there may be more places.',
+    'data.usage.count': 'Used {count}× in this template',
+    'data.usage.none': 'Not used in this template',
+    'data.usage.title': 'Where this template uses it',
+    'data.usage.coverage':
+      'Uses in headers, footers and the document information (title and so on) are included.',
+    'data.usage.document': 'Document information',
+    'data.usage.item': '{kind} “{label}”',
+    'data.usage.inside': '{owner}, “{label}”',
+    'data.usage.carrier.value': 'Value',
+    'data.usage.carrier.inline': 'Inserted in text',
+    'data.usage.carrier.link': 'Link target',
+    'data.usage.carrier.mark': 'Mark condition',
+    'data.usage.carrier.source': 'Repeated data',
+    'data.usage.carrier.column': 'Column value',
+    'data.usage.carrier.rowCondition': 'Row condition',
+    'data.usage.carrier.declaration': 'Insert setting',
+    'data.usage.carrier.label': 'Inserted in heading',
+    'data.usage.carrier.document': 'Inserted in document information',
+    'data.rename.open': 'Change data name',
+    'data.rename.newName': 'New data name',
+    'data.rename.labelHint':
+      'To change the name shown in the lists, change “{label}” instead of the data name.',
+    'data.rename.diff': '{from} → {to}',
+    'data.rename.rewrite':
+      'The places in this template that use it are rewritten to the new data name too ({count}).',
+    'data.rename.samples':
+      'The name changes in every sample data set too. One “{undo}” puts the template and the sample data back as well.',
+    'data.rename.sharedTitle': 'Other templates are not rewritten.',
+    'data.rename.shared':
+      'Once saved, places in other templates that use {name} with these definitions get no data, and Diagnostics reports it as not defined.',
+    'data.delete.open': 'Delete',
+    'data.delete.title': 'Delete “{label}”?',
+    'data.delete.titleInside': 'Delete “{label}” and what is inside it ({count})?',
+    'data.delete.used': 'These places in this template use this data ({count}):',
+    'data.delete.outcome':
+      'What they say stays as it is, but no data reaches them, and Diagnostics reports it as not defined.',
+    'data.delete.shared':
+      'These definitions are shared across the project, and whether other templates use this cannot be checked from here. Once saved, places that use it get no data, and Diagnostics reports it as not defined.',
+    'data.delete.samples':
+      '“{label}” is removed from every sample data set too. “{undo}” brings it back, sample data included.',
+    'data.delete.confirm': 'Delete “{label}”',
+    'data.notice.deleted': 'Deleted “{label}”. “{undo}” brings it back.',
+    'data.notice.undoRefused':
+      'The data name change could not be undone: putting the old name back into the current template and sample data would go over a size limit or reach a place that cannot be rewritten. Nothing was changed.',
+    'data.error.not_interpolatable':
+      'Text insertions can only use a–z, A–Z, 0–9 and _. This template inserts this data into text, so it cannot take this name.',
+    'data.error.binding_capture':
+      'An item in this template already has an insert named “{name}”. With this name, that item would show that insert’s value instead, so this name cannot be used.',
+    'data.error.too_many_refs':
+      'This would rewrite more values and texts in this template than one change can ({ops}).',
+    'data.error.too_large':
+      'Rewriting would make the template, the definitions or the sample data larger than this screen can handle. Choose a shorter name.',
+    'data.error.walk_truncated':
+      'This template has too many items to check every place that uses this data, so the name cannot be changed here — a place could be missed.',
+    'data.error.edit_cap':
+      'Definition edits are limited to {edits}, and the limit is reached, so this edit was not made. “{undo}” takes edits back and frees room; saving does not.',
     'data.projectScopeHint':
       'These definitions are shared across the whole project — saving changes what every template in it validates against.',
     'canvas.sampleVariant': 'Sample variant',

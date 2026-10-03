@@ -25,7 +25,9 @@ export interface AddItemFormProps {
   readonly definitions: string;
   readonly tree: DefsNode;
   readonly selected: DefsNode | null;
-  readonly onDefinitionEdit: (op: Op) => void;
+  /** `false` = the edit was refused (the edit list is at its cap; the rail
+   * says so). */
+  readonly onDefinitionEdit: (op: Op) => boolean;
   /** The new item's selection id, so the editor can select it. */
   readonly onAdded: (id: string) => void;
 }
@@ -61,7 +63,11 @@ function AddForm({
           setRefusal(`data.error.${plan.reason}`);
           return;
         }
-        onDefinitionEdit(plan.op);
+        // Refused at the edit-list cap: the rail's status line says why, and
+        // the form stays open with what was typed.
+        if (!onDefinitionEdit(plan.op)) {
+          return;
+        }
         onAdded(plan.keysPath.join(SELECTION_SEP));
         onClose();
       }}

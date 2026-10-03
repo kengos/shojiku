@@ -55,16 +55,16 @@ succeeded.
   `rowScopeLabel` (the parent's display label for the heading badge,
   falling back to the parent id). The widely-imported surface of the
   area.
-- `palette/bindings.ts` — the template walk → `BindingRef {path, key,
-  scope, source}`; unparseable text yields `[]`, never a throw.
-- `palette/bindingRefs.ts` — its per-item helpers: `bindingKey`,
-  `bindingScope` (`scope: document` files a ref at document scope even
-  inside a cell), `entryScope` (a `list`'s per-entry keys resolve one
-  scope FURTHER IN — against the array it binds, addressed the way the
-  engine's catalog does, so a row-carried source joins its parent's
-  path), `collectInterpolations` + `pushInterpolated` (`{key}` refs and
-  `bindings:` declarations resolved via `text/declModel`; one ref per
-  distinct (key, scope)).
+- `palette/bindings.ts` — `readBindings` → `BindingRef {path, key,
+  scope, source}`: a PROJECTION of the data-reference walk
+  (`data/refs/walk.ts`), one per place (an item, or a table column) per
+  (key, scope, source), the place being `refs/match`'s `placePath` — so the
+  palette and the data-item editor count the same places. A `document:` reference has path `document`, which
+  `FieldPalette`'s pick skips (nothing on the canvas to select).
+  Unparseable text yields `[]`, never a throw.
+- `palette/bindingRefs.ts` — the binding-shape readers several walks share:
+  `ARRAY_SOURCE_TYPES`, `bindingKey`, `bindingScope` (`scope: document`
+  files a ref at document scope even inside a cell).
 - `palette/usage.ts` — `buildUsage` (→ real `Map`s; binding keys are
   attacker-influenced, so `__proto__` stays inert) + `fieldUsage` /
   `groupUsage` (a `rowScope` group is bound row-relatively, so its usage
@@ -557,6 +557,12 @@ and `edit.ts` both import `model.ts` and never each other.
   index.
 - `sample/datetime.ts` — pure RFC 3339 wall-clock split/compose (never
   a `Date` round-trip; offset display-inert), `representativeOffset`.
+- `sample/rekey.ts` — `renameSampleKey` / `removeSampleKey` /
+  `restoreSampleValues`: a definitions keys path walked over the params
+  (`properties` + name per object, `items` = every element), key order kept,
+  `Object.fromEntries` rebuilds (proto-safe), a contradicting path skipped,
+  an existing target never overwritten; removed values carry their path and
+  position so an undo puts them back in place.
 - `sample/history.ts` — panel-local sample undo ring (count+byte
   capped, no redo).
 - `sample/generate.ts` — the public generation API: `generateParams`,
@@ -603,8 +609,7 @@ and `edit.ts` both import `model.ts` and never each other.
   `SELECTION_SEP` (display-only).
 - `data/treeModel.ts` — pure readers over the tree: `flattenTree`,
   `findNode`, `nodeLabel`, `parentOf`, `ancestry` (the containers from the
-  top down to a node), `nodeUsage` (maps a node onto the palette's
-  `UsageIndex`: scalar / source / row-relative), `nodeForTarget` (the
+  top down to a node), `nodeForTarget` (the
   palette jump → a field node), `filterTree` (a match keeps its subtree,
   ancestors stay), `addTargets` / `defaultAddTarget`, and `sampleSpot`
   (single path / one per row of the carrying table / none for a table
@@ -616,7 +621,55 @@ and `edit.ts` both import `model.ts` and never each other.
   REMOVED; null past designer-core's string-list cap), `applyDefinitionOps`
   (a throwaway Editor applies PER OP with skip-on-refusal — a benign miss
   must not drop the other edits; fail-closed on malformed text),
-  `coalesceDefsEdit`, `DEFINITION_TYPES`, `SEMANTIC_FORMATS`.
+  `coalesceDefsEdit` (a re-edited leaf's op moves to the END; a STRUCTURAL
+  op is never dropped), `DEFINITION_TYPES`, `SEMANTIC_FORMATS`.
+- `data/structuralOps.ts` — `isNodeKeys` / `isStructural`: a node's
+  `renameKey` / `removeKey` (the one predicate the edit list's shape and
+  coalescing share).
+- `data/defsRestructure.ts` — `renameInEdits` / `deleteInEdits`: the edit
+  list kept as STRUCTURAL ops first (over the base) + CONTENT ops in final
+  names. A rename re-keys the content under the node and appends a
+  `renameKey` only when the BASE holds the node there (an added node is
+  renamed by re-keying its add; a workshop base, re-inferred from the
+  re-keyed sample, never gets one); a rename chain folds; a delete drops the
+  node's content ops and removes a base node structurally.
+- `data/renamePlan.ts` — `RestructureInput` (effective + base definitions,
+  edits, template text + its `RefIndex`, session `maxBytes`, the
+  `SampleSet`), `renameRefusal` (per keystroke: the add form's name rules,
+  `same_name`, `key_exists`, and the template's `not_interpolatable` /
+  `binding_capture` / `too_many_refs` / `walk_truncated`; only `too_large`
+  and `edit_cap` wait for the full plan), `cascadePlan` (template + samples,
+  measured: template vs `maxBytes`, each variant vs `MAX_PARAMS_BYTES`) and
+  `planRename` (+ the edit list, the parent's `required` entry renamed in
+  place, the `MAX_DEFS_EDITS` cap, the definitions cap) → one
+  `Restructure {templateOps, sampleSet, edits, companion, keysPath}`;
+  `applyScratch`, `mapVariants`.
+- `data/deletePlan.ts` — `planDelete` (no template ops — references stay;
+  every variant loses the value, the companion records what and where) and
+  `reversePlan` (what a definitions undo re-applies: a delete's values put
+  back by variant id; a rename's cascade BACK, planned over the documents as
+  they are now; refused whole).
+- `data/refs/` — the data-reference census every usage count, usage list and
+  rename shares: `types.ts` (`DataRef` at its LEAF — `path` + `keys`, `form`
+  whole / inline / strings, `frame`, `spelled`, `carrier`, `owner`, the
+  item's `shadow` declaration names — and `RefIndex {refs, truncated}`,
+  `MAX_REF_ITEMS`, `DOCUMENT_OWNER`), `walk.ts` (`readDataRefs`: all three
+  bands + `document:`, item recursion and frames, depth / item bounds),
+  `item.ts` (one item's own surfaces: data, visible, text mark, text / link
+  of the interpolating types, spans, `bindings:` declarations; a `list`
+  inside rows joins them while any other source is read from the root, as
+  the engine checks it; a list's
+  entry frame), `table.ts` (columns' data + label, row conditions,
+  header-group labels), `collect.ts` (leaf recording; a string at
+  `MAX_TEXT_EXPRS` marks the walk truncated), `match.ts` (`refsUnder` — a
+  ref in the node's own frame spelling its relative key or running through
+  it; `placePath` / `placeCount` — a place is the item, or a table column),
+  `rewrite.ts` (`rewritePlan`: one
+  `setScalar` / `setStrings` per leaf, interpolated strings re-emitted
+  segment by segment from their wire slices; refusals `not_interpolatable` /
+  `binding_capture` / `too_many_refs`). The engine census it mirrors is
+  pinned path-for-path by the seam suite (`integration/
+  definitionsAuthoring.test.ts`).
 - `data/defsPlan.ts` — the untrusted-boundary pair: `addFieldPlan` (ONE
   `putValue` of a fresh item — `ADD_KINDS` = the four scalar types + group /
   table / list, containers written WITHOUT an empty `properties: {}` so the
@@ -631,7 +684,10 @@ and `edit.ts` both import `model.ts` and never each other.
   guard; deep validation stays with designer-core at apply).
 - `data/defsHistory.ts` — panel-local DEFINITION undo ring (a faithful
   parallel of `sample/history.ts` — definitions are a distinct undo
-  document; three independent undo contexts).
+  document; three independent undo contexts). An entry is `{ops,
+  companion?}`: a rename / delete carries what reverting the template and
+  samples takes (`DefsCompanion`), counted in the byte budget;
+  `peekDefsHistory` lets the undo plan its reverse before popping.
 
 The fullscreen editor is a SHELL plus per-responsibility panes; inside
 `data/` imports run one way (shell → pane → row/form → pure model) and
@@ -642,21 +698,30 @@ the panes never import each other.
   the selection (a node id, re-resolved per render; `initialSelection` seeds
   it ONCE on mount through `nodeForTarget` — the view is unmounted whenever
   it is not open, so every entry re-seeds, and a stale/hostile target simply
-  resolves to nothing), the usage memo, the two commit paths (`commitSample`
-  → `onParamsChange`; `dispatchDefEdit` → `onDefinitionEdit(op)`), and builds
-  ONE `DetailContext` for the right pane; `sampleDataReadOnly` renders sample
-  values as text.
+  resolves to nothing), the reference memo (`readDataRefs` over the
+  template), the sample commit path (`commitSample` → `onParamsChange`), and
+  builds ONE `DetailContext` for the right pane; `sampleDataReadOnly` renders
+  sample values as text. The definition actions live in `useNodeActions`.
+- `data/useNodeActions.ts` — the definition edit (`false` from the host =
+  refused at the edit-list cap), the definitions undo (`false` = its reverse
+  was refused; a keys path = where an undone rename put the node back, which
+  stays selected), and the `RestructureActions` (armed only with the host's
+  `restructure` over editable definitions): rename selects the renamed node,
+  delete selects its parent; each outcome lands in the rail's status line.
 - `data/editorProps.ts` — `DataEditorViewProps` (optionality carries
   meaning: an absent callback disarms its affordance; `definitionsInferred`
-  = the base is the stub inferred from the sample data).
+  = the base is the stub inferred from the sample data; `restructure` =
+  the host's `RestructureHost` rename / remove, absent = no controls).
 - `data/detailContext.ts` — `DetailContext`, the one bundle the right
-  pane's parts take (tree, texts, editability, commit callbacks, `onSelect`).
+  pane's parts take (tree, texts, editability, commit callbacks, `onSelect`,
+  the template's `RefIndex`, the nested `RestructureActions`).
 - `data/EditorBand.tsx` — the band over the right pane: project-scoped
   (`data.projectScopeHint`, wins) or inferred-from-sample (workshop with a
   real stub — never at blank start, where nothing was inferred).
 - `data/ItemListPane.tsx` — the left rail: search (owns its query state),
   the add control, the definitions-edit undo button (reachable with no
-  selection), and the tree — an EMPTY dictionary still shows its root row
+  selection), the status line (`role=status`: a delete done, an edit or undo
+  refused), and the tree — an EMPTY dictionary still shows its root row
   (with the empty note under it), so the file's own label/version are
   editable before any item exists.
 - `data/ItemTree.tsx` — the tree: the 「データ全体の情報」 root row first,
@@ -664,7 +729,7 @@ the panes never import each other.
   VIEW state; a search shows every match open, and a selection that MOVES
   (a jump, a just-added item) opens its folded ancestors.
 - `data/ItemListRow.tsx` — one row (label / data name / type or kind /
-  必須 / usage chip — a group has no usage); a container's OWN chevron toggle
+  必須 / usage chip — `placeCount(refsUnder(…))`; a group's row shows none); a container's OWN chevron toggle
   (the layer tree's IconChevronDown + `data-collapsed` pattern) beside the
   select button; the `HelpHint` is a SIBLING of the row button — no
   button-in-button.
@@ -676,12 +741,31 @@ the panes never import each other.
 - `data/AddTargetSelect.tsx` — the 追加先 select; each target named as a
   breadcrumb from the top (`treeModel` `ancestry`, a table as 「… の各行」), so
   same-labelled groups in different places read apart.
-- `data/DetailPane.tsx` — the right pane for ONE node: a header (label,
-  kind chip for a container, 「データ名:」 the node's OWN name — the unit the
-  add form takes) over the part that kind edits: `RootDetail`,
+- `data/DetailPane.tsx` — the right pane for ONE node: `NodeHeader` (keyed
+  by the node) over the part that kind edits: `RootDetail`,
   `ContainerDetail`, or a field's `DefinitionForm` + `SampleSection`.
   STATELESS, not keyed by selection — each uncontrolled input is keyed by its
   own value; a control added here needs the same value-key.
+- `data/NodeHeader.tsx` — label, kind chip for a container, 「データ名:」 the
+  node's OWN name (the unit a rename edits), the usage chip (「このテンプレート
+  で N か所」 opening the usage list / 「このテンプレートでは未使用」; a group
+  counts its children; a truncated walk adds that the count is a floor), and
+  — with `RestructureActions` — 「データ名を変更」 / 「削除」 (the chip carries
+  the tree rows' chevron) (immediate for an
+  unused node in an unshared file over a complete walk, else the confirm).
+- `data/RenameForm.tsx` — the rename form: new name (refused as typed via
+  `renameRefusal`, plan-only refusals on submit), the `old → new` line, what
+  it rewrites (places + every sample; withheld while refused), the shared
+  warning; `useRefusalText` maps a `RestructureRefusal` to its message.
+- `data/undoHint.ts` — the definitions undo control's description when its
+  next step is a rename (old → new) or a delete (the name).
+- `data/DeleteConfirm.tsx` — the two-step delete: title (with what is
+  inside), the places + outcome (references stay → 診断), the shared
+  sentence, the sample sentence + undo route.
+- `data/UsageList.tsx` — one row per owner + role, named as the layer tree
+  names it (`tree/labels` `kindName`), the column / header group it sits in,
+  and the role word — a panel's own label key where one exists
+  (`panel.visible.title`, `panel.mark.ellipseState`, …).
 - `data/RootDetail.tsx` — root `title` (as 表示ラベル) / `description` /
   `version` (版（技術者向け）+ hint); no required flag.
 - `data/ContainerDetail.tsx` — a group / table / list: label, description,

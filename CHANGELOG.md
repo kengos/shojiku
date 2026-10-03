@@ -42,6 +42,41 @@ platform binaries.
   mounted host the note that the definitions are shared with the whole
   project now sits there too, over every edit.
 
+- **A data item can be renamed or deleted in the data-item editor.** Its
+  header says where this template uses it — 「このテンプレートで N か所」 opens
+  the list, each place named as the layer tree names it, with what it does
+  there (the value, inside the text, the row condition …), counting the header,
+  the footer and the document information too; the palette's used count now
+  counts the same places, so a field used only in a row condition, a character
+  grid's text or the document title no longer reads as unused.
+
+  **Change data name** rewrites every place this template uses the item — one
+  step of the template's undo — and renames the key in every sample data set,
+  the ones not shown included. It says what it will rewrite before you
+  confirm, and refuses, saying why, a name that a text insertion could not
+  spell, a name another insertion on the same item already uses, more places
+  than one change can rewrite, or a result too large for the editor. Renaming
+  a group rewrites the places that use what is inside it; renaming a table
+  rewrites the places that repeat it (inside its rows, its fields keep their
+  own names).
+  **Delete** removes the item from the definitions and its value from every
+  sample data set; places in the template that used it stay, and Diagnostics
+  reports them as not defined. An item this template does not use is deleted
+  at once, with a note on how to undo it; anything else asks first, naming the
+  places. When the definitions are shared across a project, both say that
+  other templates cannot be checked from here, and a delete always asks. On a
+  host that manages its own sample data, neither changes it, and both say so.
+  For integrators, `readBindings` now also returns these places — a reference
+  in the document block comes back with the path `document`, which selects
+  nothing on the canvas.
+
+  One 「定義の編集を元に戻す」 undoes a rename or a delete in the definitions,
+  the template and the sample data together, keeping any template edit made
+  since. The template's own ⌘Z after a rename puts back only the template's
+  references (Diagnostics then reports them). Definition edits in one session
+  are capped at 256, as a restored draft always was; an edit past the cap is
+  refused with a note instead of being dropped when the draft is reopened.
+
 - **Text and box styling that could only be written by hand can now be set in
   the Designer.** Every item's Style tab is now folded into sections — Text,
   Overflow, Fill and border (a line's or a form mark's own stroke), Opacity and

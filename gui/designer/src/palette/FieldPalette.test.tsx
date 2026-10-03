@@ -131,6 +131,33 @@ describe('FieldPalette', () => {
     expect(onSelect).toHaveBeenLastCalledWith('sections.body.items[0]');
   });
 
+  it('counts a document-block use but selects only canvas items', () => {
+    const { onSelect } = draw({
+      templateText: [
+        'document:',
+        '  title: "{receipt.number}"',
+        'sections:',
+        '  body:',
+        '    items:',
+        '      - { type: text, data: { key: receipt.number } }',
+        '',
+      ].join('\n'),
+    });
+    const field = screen.getByRole('button', { name: /Number/ });
+    expect(field.textContent).toContain('×2');
+    fireEvent.click(field);
+    fireEvent.click(field);
+    expect(onSelect.mock.calls).toEqual([['sections.body.items[0]'], ['sections.body.items[0]']]);
+  });
+
+  it('does nothing for a field used ONLY in the document block', () => {
+    const { onSelect } = draw({
+      templateText: 'document:\n  title: "{receipt.number}"\nsections: {}\n',
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Number/ }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it('restarts the cycle when a different field is clicked', () => {
     const { onSelect } = draw();
     fireEvent.click(screen.getByRole('button', { name: /Number/ }));

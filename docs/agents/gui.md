@@ -50,7 +50,33 @@ daily users. Consequences:
   or a group, table or list, into the root, a group or a table's rows) is a
   CST-preserving, root-addressed patch op on the definitions doc, re-applied
   over a base each render (a coalesced op layer), so comments and untouched
-  keys survive byte-exact and an added item never desyncs.
+  keys survive byte-exact and an added item never desyncs. The layer keeps
+  one shape: a node's renames and removals first (in base names), then the
+  content edits in FINAL names, so renaming or deleting a node REWRITES the
+  layer instead of piling an op on top — an added node is renamed by
+  re-keying its add, a deleted node takes its edits with it (re-adding it
+  starts clean), and a workshop session, whose base is re-inferred from the
+  sample, never resurrects the old name. The live layer is capped at the
+  restore cap (256 edits); past it an edit is refused and the rail says so,
+  so a restore never drops the newest edits.
+  **Renaming a data name** rewrites, as ONE action, every reference this
+  template makes to it (one template undo step; the census is the engine's
+  own validate walks plus the column / header-group labels layout
+  interpolates, across all three bands and the `document:` block, scoped
+  exactly as the engine resolves them), the key in EVERY sample variant, and
+  the definitions; it is refused whole when a rewritten `{key}` could not
+  spell the name, a `bindings:` name on the same item would capture it, the
+  walk could not see everything, or a document would pass its size cap.
+  **Deleting** leaves the template's references in place (they then read as
+  undefined keys) and removes the value from every sample variant (a host
+  that manages its own sample data keeps it, rename included); it is
+  immediate for a node unused here in an unshared file and confirmed
+  otherwise, naming the places. One definitions undo reverts all three
+  documents — the template half re-applied as a NEW forward batch, so a
+  template edit made since survives, and refused whole if it cannot apply.
+  The template's own ⌘Z after a rename reverts only the template half.
+  A project-scoped file cannot reach the project's other templates, and both
+  confirmations say so.
   These definition edits have their OWN panel-local undo — a left-rail
   control over snapshots of the coalesced op layer, separate from both the
   sample-data undo ring and the template's undo stack (three distinct undo
@@ -205,13 +231,7 @@ CRITIQUING the document (a review/lint pane written by a model; the
 decided AI copilot is the opposite direction: the AI proposes ops and
 the HUMAN reviews them before apply — the **AI copilot (op output)**
 entry above), Workers-side preview. (A definitions editor was a v1 non-goal until the
-data-item editor shipped it.) Renaming a field's data name and deleting a
-field are DECIDED, not yet built: a rename rewrites this template's references
-and every sample variant's key with it, as one action that one definitions
-undo reverts; a delete leaves the template's references in place (they then
-read as undefined keys) after a confirmation naming where the field is used.
-A project-scoped definitions file cannot reach the project's other templates,
-and both confirmations say so.
+data-item editor shipped it, rename and delete included.)
 
 **GUI i18n:** chrome strings and diagnostic message templates live in a
 per-language catalog (one module per language, each a flat `key → string`

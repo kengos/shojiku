@@ -562,9 +562,11 @@ describe('readBindings — interpolation refs', () => {
     });
   });
 
-  it('ignores a declaration nothing references', () => {
-    // The engine reports that as `unused_binding`; counting it as a
-    // placement would make the palette's usage indicator lie.
+  it('counts a declaration nothing references — its key is still a reference', () => {
+    // The engine checks a declaration's key whether or not a `{name}` uses it
+    // (an undefined one is `unknown_data_key` at the declaration), and a rename
+    // must rewrite it, so the one usage census every count shares records it
+    // where it is declared.
     const source = [
       'sections:',
       '  body:',
@@ -576,7 +578,9 @@ describe('readBindings — interpolation refs', () => {
       '          f1: { key: 品名 }',
       '',
     ].join('\n');
-    expect(readBindings(source)).toEqual([]);
+    expect(readBindings(source)).toEqual([
+      { path: 'sections.body.items[0]', key: '品名', scope: null, source: false },
+    ]);
   });
 
   it('counts two names pointing at one field as one placement', () => {
@@ -838,5 +842,44 @@ describe('`visible:` presence bindings', () => {
   it('honours the `scope: document` escape from inside a cell', () => {
     const refs = readBindings(VISIBLE);
     expect(refs.some((r) => r.key === 'draft' && r.scope === null)).toBe(true);
+  });
+});
+
+describe('readBindings — the carriers the editor census added', () => {
+  const at = (body: string) =>
+    readBindings(`sections:\n  body:\n    type: flow\n    items:\n${body}`);
+
+  it('counts a row condition under its table’s rows', () => {
+    expect(
+      at(
+        '      - type: table\n        data: { key: items }\n        row:\n          conditionalStyles:\n            - { when: { key: flagged } }\n',
+      ),
+    ).toEqual([
+      { path: 'sections.body.items[0]', key: 'items', scope: null, source: true },
+      { path: 'sections.body.items[0]', key: 'flagged', scope: 'items', source: false },
+    ]);
+  });
+
+  it('counts a char_grid’s interpolated text', () => {
+    expect(at('      - { type: char_grid, text: "{zip}" }\n')).toEqual([
+      { path: 'sections.body.items[0]', key: 'zip', scope: null, source: false },
+    ]);
+  });
+
+  it('counts column and header-group labels at document scope', () => {
+    expect(
+      at(
+        '      - type: table\n        headerGroups: [ { label: "{g}" } ]\n        columns: [ { label: "{c}" } ]\n',
+      ),
+    ).toEqual([
+      { path: 'sections.body.items[0]', key: 'c', scope: null, source: false },
+      { path: 'sections.body.items[0]', key: 'g', scope: null, source: false },
+    ]);
+  });
+
+  it('counts the document block under the path `document`', () => {
+    expect(readBindings('document:\n  title: "{t}"\nsections: {}\n')).toEqual([
+      { path: 'document', key: 't', scope: null, source: false },
+    ]);
   });
 });

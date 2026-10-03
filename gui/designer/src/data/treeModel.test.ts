@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { readBindings } from '../palette/bindings';
-import { buildUsage } from '../palette/usage';
 import { type DefsNode, readDefsTree } from './defsTree';
 import { SELECTION_SEP } from './editorModel';
+import { placeCount, refsUnder } from './refs/match';
+import { readDataRefs } from './refs/walk';
 import {
   addTargets,
   ancestry,
@@ -11,7 +11,6 @@ import {
   findNode,
   nodeForTarget,
   nodeLabel,
-  nodeUsage,
   parentOf,
   sampleSpot,
 } from './treeModel';
@@ -103,35 +102,34 @@ describe('findNode / nodeLabel', () => {
   });
 });
 
-describe('nodeUsage', () => {
-  const usage = buildUsage(readBindings(TEMPLATE));
+describe('refsUnder (the node usage predicate every count shares)', () => {
+  const refs = readDataRefs(TEMPLATE)?.refs ?? [];
+  const used = (node: DefsNode) => placeCount(refsUnder(refs, node));
 
   it('counts a document-scope field by its full key, interpolations included', () => {
-    expect(nodeUsage(usage, at('properties', 'total'))).toHaveLength(1);
-    expect(nodeUsage(usage, at('properties', 'customer', 'properties', 'name'))).toHaveLength(1);
+    expect(used(at('properties', 'total'))).toBe(1);
+    expect(used(at('properties', 'customer', 'properties', 'name'))).toBe(1);
   });
 
   it('counts a table or list as a document-scope SOURCE', () => {
-    expect(nodeUsage(usage, at(...ITEMS))).toHaveLength(1);
-    expect(nodeUsage(usage, at('properties', 'notes'))).toHaveLength(1);
-    expect(nodeUsage(usage, at('properties', 'order', 'properties', 'lines'))).toHaveLength(1);
+    expect(used(at(...ITEMS))).toBe(1);
+    expect(used(at('properties', 'notes'))).toBe(1);
+    expect(used(at('properties', 'order', 'properties', 'lines'))).toBe(1);
   });
 
   it('counts a row field row-relatively under its own table', () => {
-    expect(nodeUsage(usage, at(...QTY))).toHaveLength(1);
+    expect(used(at(...QTY))).toBe(1);
     expect(
-      nodeUsage(
-        usage,
-        at('properties', 'order', 'properties', 'lines', 'items', 'properties', 'sku'),
-      ),
-    ).toHaveLength(1);
+      used(at('properties', 'order', 'properties', 'lines', 'items', 'properties', 'sku')),
+    ).toBe(1);
   });
 
-  it('reads an unbound node as [] and the root / a group as no usage at all', () => {
-    expect(nodeUsage(usage, at(...WORD))).toEqual([]);
-    expect(nodeUsage(usage, at(...ITEMS, 'items', 'properties', 'tags'))).toEqual([]);
-    expect(nodeUsage(usage, tree())).toBeNull();
-    expect(nodeUsage(usage, at('properties', 'customer'))).toBeNull();
+  it('reads an unbound node as none, the root as none, and a group as its children', () => {
+    expect(refsUnder(refs, at(...WORD))).toEqual([]);
+    expect(refsUnder(refs, at(...ITEMS, 'items', 'properties', 'tags'))).toEqual([]);
+    expect(refsUnder(refs, tree())).toEqual([]);
+    expect(used(at('properties', 'customer'))).toBe(1);
+    expect(used(at('properties', 'order'))).toBe(1);
   });
 });
 

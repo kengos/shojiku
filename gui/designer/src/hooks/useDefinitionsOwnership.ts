@@ -9,12 +9,13 @@ import type { Op } from '@shojiku/designer-core';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { applyDefinitionOps, coalesceDefsEdit } from '../data/definitionsEdit';
 import {
+  type DefsCompanion,
   type DefsHistory,
   EMPTY_DEFS_HISTORY,
   popDefsHistory,
   pushDefsHistory,
 } from '../data/defsHistory';
-import { sanitizeDefsEdits } from '../data/defsPlan';
+import { MAX_DEFS_EDITS, sanitizeDefsEdits } from '../data/defsPlan';
 import { type PaletteGroup, readDefinitionsView } from '../palette/model';
 
 /** The base a definition edit applies over when nothing else exists yet — a
@@ -34,8 +35,17 @@ export interface DefinitionsOwnershipOptions {
 
 export interface DefinitionsOwnership {
   readonly defsHistory: DefsHistory;
-  readonly editDefinition: (op: Op) => void;
+  /** Apply one edit; `false` (nothing changes) when the edit list would grow
+   * past `MAX_DEFS_EDITS`. */
+  readonly editDefinition: (op: Op) => boolean;
+  /** Replace the edit list as ONE undo step carrying `companion` (a rename /
+   * delete, planned by the caller over the whole list). */
+  readonly restructure: (edits: readonly Op[], companion: DefsCompanion) => void;
   readonly undoDefinition: () => void;
+  /** The live edit list and the engineer base it applies over (`undefined` in
+   * a workshop / blank start) — what a rename / delete plans against. */
+  readonly edits: readonly Op[];
+  readonly base: string | undefined;
   /** What the palette + the data-item editor read. */
   readonly effectiveDefinitions: string | undefined;
   /** What preview/validate consume (a pristine workshop stub never reaches the
@@ -60,9 +70,28 @@ export function useDefinitionsOwnership({
   // merging any two would corrupt trust — the sample-history rationale). Each
   // edit snapshots the PRE-edit coalesced op list; undo restores it.
   const [defsHistory, setDefsHistory] = useState<DefsHistory>(EMPTY_DEFS_HISTORY);
-  const editDefinition = (op: Op) => {
-    setDefsHistory((history) => pushDefsHistory(history, defsEdits));
-    setDefsEdits((edits) => coalesceDefsEdit(edits, op));
+  // The live list for the cap check: two edits in one tick (a blur then a
+  // click) must each see the other.
+  const liveEditsRef = useRef(defsEdits);
+  liveEditsRef.current = defsEdits;
+  // The live list is capped where a restore caps it, so a restore never drops
+  // the newest edits: an edit past the cap is refused, nothing silently lost.
+  const editDefinition = (op: Op): boolean => {
+    const before = liveEditsRef.current;
+    const next = coalesceDefsEdit(before, op);
+    if (next.length > MAX_DEFS_EDITS) {
+      return false;
+    }
+    liveEditsRef.current = next;
+    setDefsHistory((history) => pushDefsHistory(history, before));
+    setDefsEdits(next);
+    return true;
+  };
+  const restructure = (edits: readonly Op[], companion: DefsCompanion) => {
+    const before = liveEditsRef.current;
+    liveEditsRef.current = edits;
+    setDefsHistory((history) => pushDefsHistory(history, before, companion));
+    setDefsEdits(edits);
   };
   // Undo one definition edit: restore the newest prior coalesced op list. Routes
   // `setDefsEdits` directly (NOT `editDefinition`) so the restore does not
@@ -74,7 +103,8 @@ export function useDefinitionsOwnership({
       return;
     }
     setDefsHistory(popped.history);
-    setDefsEdits(popped.snapshot);
+    liveEditsRef.current = popped.entry.ops;
+    setDefsEdits(popped.entry.ops);
   };
   const defsBase = definitions ?? stub;
   const effectiveDefinitions = useMemo(() => {
@@ -121,7 +151,10 @@ export function useDefinitionsOwnership({
   return {
     defsHistory,
     editDefinition,
+    restructure,
     undoDefinition,
+    edits: defsEdits,
+    base: definitions,
     effectiveDefinitions,
     definitionsForEngine,
     paletteGroups,

@@ -110,13 +110,14 @@ function freshSchema(kind: AddKind): { [key: string]: SnippetValue } {
 
 /** The keys path of a container's `properties` map: the root's, a group's own,
  * or a table's ROW object's. */
-function propertiesPath(parent: DefsNode): string[] {
+export function propertiesPath(parent: DefsNode): string[] {
   return parent.kind === 'table'
     ? [...parent.keysPath, 'items', 'properties']
     : [...parent.keysPath, 'properties'];
 }
 
-function refusalOf(name: string): AddFieldRefusal | null {
+/** The data-name rules every new name obeys (an add and a rename alike). */
+export function nameRefusal(name: string): AddFieldRefusal | null {
   if (name === '') {
     return 'empty_name';
   }
@@ -133,7 +134,7 @@ function refusalOf(name: string): AddFieldRefusal | null {
 
 /** Whether the DOCUMENT's map at `keys` already holds `name` — read from the
  * text, never from the (display-capped) tree. */
-function holds(defsText: string, keys: readonly string[], name: string): boolean {
+export function holds(defsText: string, keys: readonly string[], name: string): boolean {
   let node: unknown;
   try {
     node = readTemplate(parseTemplate(defsText));
@@ -146,6 +147,11 @@ function holds(defsText: string, keys: readonly string[], name: string): boolean
   }
   const map = record(node);
   return map !== undefined && Object.hasOwn(map, name);
+}
+
+/** Whether the document holds the node at `keys` (a definitions keys path). */
+export function holdsNode(defsText: string, keys: readonly string[]): boolean {
+  return keys.length > 0 && holds(defsText, keys.slice(0, -1), keys[keys.length - 1]);
 }
 
 /** Plan a fresh item inside `parent` (the root, a group, or a table's rows): ONE
@@ -161,7 +167,7 @@ export function addFieldPlan(
   kind: AddKind,
 ): AddFieldPlan {
   const trimmed = name.trim();
-  const refusal = refusalOf(trimmed);
+  const refusal = nameRefusal(trimmed);
   if (refusal !== null) {
     return { ok: false, reason: refusal };
   }

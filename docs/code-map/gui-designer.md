@@ -276,7 +276,9 @@ REQUIRED-only (no `?:`/defaults) so the split added no new branch legs.
   `placementGeometry` memo (last-good boxes, tagged `fresh` only when the
   shown render matches the live document).
 - `shell/FullscreenView.tsx` — the `DocumentSettingsPage`/`DataEditorView`
-  branch (either takes the whole editor area).
+  branch (either takes the whole editor area); wires `useDefsRestructure`
+  into the data-item editor (its `rename` / `remove`, and its `undo` as the
+  definitions undo, described by `data/undoHint`).
 - `shell/DialogHost.tsx` — every modal/overlay/popup, open-flag driven
   (shortcuts/glossary, `PdfPreviewModal`, the `Offcanvas` column sheet).
   The preview's `pageLabel` comes from `usePdfAction`, snapshotted WITH the
@@ -338,11 +340,22 @@ lists name the destructured stable fields, never `editor` itself.
   from non-empty params.
 - `hooks/useDefinitionsOwnership.ts` — definitions ownership: base
   (engineer file | workshop stub | minimal doc) + the data-item editor's
-  coalesced op list re-applied over it each render; `effectiveDefinitions`
+  coalesced op list re-applied over it each render (live list capped at
+  `MAX_DEFS_EDITS` — `editDefinition` returns `false` past it;
+  `restructure(edits, companion)` replaces the list as one undo step;
+  `edits` / `base` exposed for planning); `effectiveDefinitions`
   feeds palette/editor, `definitionsForEngine` feeds preview/validate (a
   pristine stub never reaches the engine); reports text + ops with a
   dedup ref seeded to the base; own undo ring. Also derives
   `paletteGroups`.
+- `hooks/useDefsRestructure.ts` — rename / delete as ONE action over the
+  template (one `applyAll`), every sample variant (`handleVariantCommit`,
+  which also clears the sample undo ring — its entries hold the old key; a
+  `sampleReadOnly` host's samples are left alone) and
+  the definitions (`restructure`), template first; `undo` plans the reverse
+  from the newest entry's companion BEFORE popping and applies it as a new
+  forward template batch, refusing whole when it cannot (after a rename it
+  returns the node's old keys path, so the editor keeps it selected).
 - `hooks/useZoom.ts` + `hooks/useAutoFit.ts` — zoom is Designer-local UI
   state, never in the template: `renderScale` + instant `cssFactor`,
   ⌘/Ctrl+wheel via a non-passive native listener through a callback ref;

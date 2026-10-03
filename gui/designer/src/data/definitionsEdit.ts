@@ -19,6 +19,7 @@ import {
   readTemplate,
 } from '@shojiku/designer-core';
 import type { DefsNode } from './defsTree';
+import { isStructural } from './structuralOps';
 
 /** The closed scalar-type vocabulary the type picker offers — the base JSON-schema
  * types a leaf field can carry. Structural types (`object`/`array`) are groups,
@@ -213,12 +214,15 @@ function opTarget(op: Op): string {
   return 'keys' in op ? JSON.stringify(op.keys) : JSON.stringify(['@', op.op]);
 }
 
-/** Coalesce a definition-edit op into an ordered list keyed by its target:
- * re-editing the same leaf replaces its prior op (so the list stays bounded to
- * the distinct edited leaves) while preserving first-seen order. */
+/** Coalesce a definition-edit op into the list keyed by its target: re-editing
+ * the same leaf drops its prior op and APPENDS the new one at the end (so the
+ * list stays bounded to the distinct edited leaves). A STRUCTURAL op (a node's
+ * rename / removal, `defsRestructure.ts`) is never dropped this way — it is
+ * what the edits after it are written against, so re-adding a removed node
+ * must leave its removal in place rather than inherit the old node. */
 export function coalesceDefsEdit(edits: readonly Op[], op: Op): Op[] {
   const key = opTarget(op);
-  const out = edits.filter((existing) => opTarget(existing) !== key);
+  const out = edits.filter((existing) => isStructural(existing) || opTarget(existing) !== key);
   out.push(op);
   return out;
 }
