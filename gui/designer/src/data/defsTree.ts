@@ -17,6 +17,7 @@ import { record } from '../palette/fieldDisplay';
 import type { PaletteField } from '../palette/model';
 import { leafField } from '../palette/schemaWalk';
 import { SELECTION_SEP } from './editorModel';
+import { declaresChoices } from './enumRules';
 
 export type NodeKind = 'root' | 'field' | 'group' | 'table' | 'list';
 
@@ -49,6 +50,9 @@ export interface DefsNode {
   readonly scope: readonly string[] | null;
   /** The palette's leaf view (label fallback, enum options) — fields only. */
   readonly leaf: PaletteField | null;
+  /** The node declares choices: a field's own `enum`, or a list's element's.
+   * The rail marks it; the editor reads the list itself (`enumModel.ts`). */
+  readonly choices: boolean;
   readonly children: readonly DefsNode[];
 }
 
@@ -137,6 +141,7 @@ function walk(
       dataPath,
       scope: parent.scope,
       leaf: kind === 'field' ? leafField(dataPath.join('.'), name, schema) : null,
+      choices: declaresChoices(schema, kind),
       children: [],
     };
     out.push({ ...base, children: childrenOf(base, schema, depth, budget) });
@@ -185,6 +190,7 @@ export function readDefsTree(defsText: string): DefsNode | null {
     dataPath: [],
     scope: null,
     leaf: null,
+    choices: false,
     children: walk(frame, properties, 0, { left: MAX_TREE_NODES }),
   };
 }

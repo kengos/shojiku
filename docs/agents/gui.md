@@ -46,11 +46,20 @@ daily users. Consequences:
   lists (an array of values) and fields at any depth — and every node is
   addressed by the keys path the tree walk FOUND it at, never one re-derived
   from a display id. Each edit (display label / type / format / description /
-  required / the root's version) and each added item (any of four scalar types
-  or a group, table or list, into the root, a group or a table's rows) is a
-  CST-preserving, root-addressed patch op on the definitions doc, re-applied
-  over a base each render (a coalesced op layer), so comments and untouched
-  keys survive byte-exact and an added item never desyncs. The layer keeps
+  required / the root's version, and the value rules: choices, the range keys,
+  `placeholder`, `example`, and a list element's own keys under `items`) and
+  each added item (any of four scalar types or a group, table or list, into
+  the root, a group or a table's rows) is a CST-preserving, root-addressed
+  patch op on the definitions doc, re-applied over a base each render (a
+  coalesced op layer), so comments and untouched keys survive byte-exact and
+  an added item never desyncs. Two LISTS are rewritten whole rather than
+  edited in place: a parent's `required` (`setStrings`) and a field's `enum`
+  (`putValue`) — the host takes one op per action and a sequence op cannot
+  address a non-identifier data name. A choice edit is therefore bounded by
+  the op layer's snippet budget as well as the engine's member cap, a comment
+  inside the list does not survive it, and a list the editor could not write
+  back exactly as found (a shape it cannot hold, a number spelled `2.0`) is
+  shown read-only, never rewritten. The layer keeps
   one shape: a node's renames and removals first (in base names), then the
   content edits in FINAL names, so renaming or deleting a node REWRITES the
   layer instead of piling an op on top — an added node is renamed by

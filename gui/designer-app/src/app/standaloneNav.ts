@@ -3,7 +3,7 @@
 // them — the standalone sibling of `mountedNav.ts`, split along the same seam
 // (`StandaloneBody.tsx` renders whichever view this reports).
 
-import type { PresetContribution, StoredSampleSet } from '@shojiku/designer';
+import type { Op, PresetContribution, StoredSampleSet } from '@shojiku/designer';
 import { useRef, useState } from 'react';
 import { presetDisplayName } from '../catalog/catalog';
 import type { InstalledFont } from '../fonts/library';
@@ -31,6 +31,9 @@ export type StandaloneView =
       readonly initialFonts: readonly InstalledFont[];
       readonly initialSample?: StoredSampleSet;
       readonly initialDefinitions?: string;
+      /** A restored draft's definition edits, re-applied as OPS over the
+       * preset's own definitions (the same seam the mounted host uses). */
+      readonly initialDefinitionsEdits?: readonly Op[];
       readonly initialCustomName?: string;
     };
 

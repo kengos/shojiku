@@ -34,7 +34,8 @@ export interface DetailContext {
   /** Sample values editable (false on a mounted host's engineer-owned params). */
   readonly canEditSample: boolean;
   readonly engineLocale?: string;
-  readonly onDefEdit: (op: Op | null) => void;
+  /** `false` = the host refused the edit (its edit-list cap; the rail says so). */
+  readonly onDefEdit: (op: Op | null) => boolean;
   readonly onCommitSample: (path: SamplePath, kind: SampleKind, raw: string) => void;
   readonly onAddRow: (arrayPath: SamplePath) => void;
   readonly onRemoveRow: (arrayPath: SamplePath, index: number) => void;

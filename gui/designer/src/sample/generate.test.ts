@@ -3,6 +3,8 @@
 // per-type value constraints) are internals of this surface and are pinned
 // HERE through `generateParams`/`extendParams`.
 import { describe, expect, it } from 'vitest';
+import { applyDefinitionOps } from '../data/definitionsEdit';
+import { exampleOp } from '../data/valueRules';
 import {
   extendParams,
   extendParamsValue,
@@ -28,6 +30,19 @@ describe('generateParams', () => {
       n: { type: 'number', example: 42 },
     });
     expect(out).toEqual({ a: 'hello', n: 42 });
+  });
+
+  it('generates the example the data-item editor wrote, in its type', () => {
+    const base = 'type: object\nproperties:\n  qty: { type: integer }\n  memo: { type: string }\n';
+    const ops = [
+      exampleOp(['properties', 'qty'], 'integer', undefined, '7'),
+      exampleOp(['properties', 'memo'], 'string', undefined, '0012'),
+    ].map((edit) => (edit.ok && edit.op !== null ? edit.op : null));
+    const written = applyDefinitionOps(
+      base,
+      ops.filter((op) => op !== null),
+    );
+    expect(JSON.parse(generateParams(written))).toEqual({ qty: 7, memo: '0012' });
   });
 
   it('picks an enum member deterministically', () => {

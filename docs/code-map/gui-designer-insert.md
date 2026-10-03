@@ -600,7 +600,9 @@ and `edit.ts` both import `model.ts` and never each other.
   table's rows is `…items.properties.<b>.items…`), its `dataPath` (property
   names, rows add no segment), `scope` (the innermost table carrying it),
   `required` read from the PARENT's full `required` list + that list's
-  path, and the palette `leaf` for fields. `null` for text that is not a
+  path, the palette `leaf` for fields, and `choices` (a field's own or a
+  list element's non-empty `enum` — `enumRules.declaresChoices`; the rail's
+  「· 選択肢」 mark). `null` for text that is not a
   map, a non-map `properties`, or the v1 `groups:` form; a map with NO
   `properties` is an empty dictionary (the engine defaults it).
   Depth-capped (`MAX_WALK_DEPTH`) and `MAX_TREE_NODES` = 1024, its own cap
@@ -614,6 +616,9 @@ and `edit.ts` both import `model.ts` and never each other.
   ancestors stay), `addTargets` / `defaultAddTarget`, and `sampleSpot`
   (single path / one per row of the carrying table / none for a table
   nested in another table's rows).
+- `data/schemaNode.ts` — `readSchemaNode` (the ONE raw read of a schema
+  node at a keys path, own-property guarded, never throws) + `own` / `record`;
+  shared by every reader below.
 - `data/definitionsEdit.ts` — pure definitions-edit model:
   `readDefinitionField` (title/type/format/description/version at a keys
   path), op builders (changed-guard null; empty clears) incl. `versionOp`
@@ -623,6 +628,44 @@ and `edit.ts` both import `model.ts` and never each other.
   must not drop the other edits; fail-closed on malformed text),
   `coalesceDefsEdit` (a re-edited leaf's op moves to the END; a STRUCTURAL
   op is never dropped), `DEFINITION_TYPES`, `SEMANTIC_FORMATS`.
+- `data/valueRules.ts` — the value rules other than choices:
+  `readValueRules` (the six range keys as shown, `placeholder`, the raw
+  `example`), `parseNumber` (the number ingress: `not_a_number` / `not_whole`
+  / `negative` / `too_large`), `rangeOp` (the u64 COUNT keys — min/maxLength,
+  min/maxItems — take non-negative safe integers, since a fraction or a
+  negative there is a whole-document parse error; min/maximum any finite
+  number; empty clears; a same number authors nothing), `rangeConflict`,
+  `placeholderOp` (verbatim), `exampleOp` (typed by the base type) +
+  `exampleEditable` (a container example is shown, never rewritten).
+- `data/enumModel.ts` — choices read IN FULL for writing back (not the
+  palette's capped display list): `readEnum` → absent / rows (`EnumRow`
+  value + label + the labeled FORM, kept even with an empty label) /
+  read-only with the member `count` (`shape`: a non-list, a container or
+  malformed member, a non-canonical number — `enumSource.ts`; `too_long`);
+  `parseEnumValue` (typed per base type); `writeRows` (one root-addressed
+  `putValue` of the whole list, `removeKey` once empty — never `enum: []`,
+  which makes every value warn); `fits` = within `MAX_ENUM_VALUES` (engine
+  mirror, drift-pinned) AND designer-core's `MAX_SNIPPET_NODES` (list 1 +
+  bare 1 + labeled 3 → 255 bare / 85 labeled). Whole-list because the
+  definitions host takes ONE op per action and the sequence ops' path grammar
+  cannot spell a non-identifier data name; a comment INSIDE the list does not
+  survive an edit of it.
+- `data/enumEdits.ts` — the member edits over `EnumTarget {keysPath, type,
+  rows}`: `addRow` / `setRowValue` / `setRowLabel` (empty label → bare form) /
+  `removeRow` (refusals `empty` / `duplicate` / `full` + the number ones) and
+  `moveRow` (the shared `tree/reorder` slot math; never refused).
+- `data/enumRules.ts` — the engine mirrors behind the notices:
+  `engineFieldType` (`Schema::mapped`), `labelsIgnored` (the
+  `definitions_enum_labels_ignored` predicate: a labeled-form member and a
+  mapped type that is not text — an unknown format keeps labels),
+  `memberMismatch`, `declaresChoices`; pinned to the engine source (each
+  arm, and the arm COUNT so a new one fails) — `labelsIgnored` also arm by arm
+  against the real engine in the seam suite.
+- `data/enumSource.ts` — `enumSpelledCanonically`: every numeric member
+  spelled as `String(value)` and the list not an alias, read from the parsed
+  nodes' source ranges; otherwise `readEnum` reads the list READ-ONLY (a
+  rewrite would turn `2.0` into `2`, which the engine compares as a different
+  value).
 - `data/structuralOps.ts` — `isNodeKeys` / `isStructural`: a node's
   `renameKey` / `removeKey` (the one predicate the edit list's shape and
   coalescing share).
@@ -728,8 +771,8 @@ the panes never import each other.
   then nodes indented under their containers; folded ids are panel-local
   VIEW state; a search shows every match open, and a selection that MOVES
   (a jump, a just-added item) opens its folded ancestors.
-- `data/ItemListRow.tsx` — one row (label / data name / type or kind /
-  必須 / usage chip — `placeCount(refsUnder(…))`; a group's row shows none); a container's OWN chevron toggle
+- `data/ItemListRow.tsx` — one row (label / data name / type or kind, plus
+  「· 選択肢」 when `choices` / 必須 / usage chip — `placeCount(refsUnder(…))`; a group's row shows none); a container's OWN chevron toggle
   (the layer tree's IconChevronDown + `data-collapsed` pattern) beside the
   select button; the `HelpHint` is a SIBLING of the row button — no
   button-in-button.
@@ -743,9 +786,10 @@ the panes never import each other.
   same-labelled groups in different places read apart.
 - `data/DetailPane.tsx` — the right pane for ONE node: `NodeHeader` (keyed
   by the node) over the part that kind edits: `RootDetail`,
-  `ContainerDetail`, or a field's `DefinitionForm` + `SampleSection`.
-  STATELESS, not keyed by selection — each uncontrolled input is keyed by its
-  own value; a control added here needs the same value-key.
+  `ContainerDetail`, or a field's `DefinitionForm` + `FieldRules` +
+  `SampleSection` + `ExampleField`. STATELESS, not keyed by selection — each
+  uncontrolled input is keyed by its own value; a control added here needs the
+  same value-key, and a part holding per-node STATE is keyed by the node.
 - `data/NodeHeader.tsx` — label, kind chip for a container, 「データ名:」 the
   node's OWN name (the unit a rename edits), the usage chip (「このテンプレート
   で N か所」 opening the usage list / 「このテンプレートでは未使用」; a group
@@ -769,7 +813,8 @@ the panes never import each other.
 - `data/RootDetail.tsx` — root `title` (as 表示ラベル) / `description` /
   `version` (版（技術者向け）+ hint); no required flag.
 - `data/ContainerDetail.tsx` — a group / table / list: label, description,
-  `RequiredToggle`, and (group / table) 中の項目 link buttons that select.
+  `RequiredToggle`, a table's 行数の範囲 or a list's 個数の範囲 + its
+  `ListElementSection`, and (group / table) 中の項目 link buttons that select.
 - `data/RequiredToggle.tsx` — the 必須 checkbox over `requiredOp`, and what
   it does by PARENT: a top-level item warns in 診断 whenever missing; inside a
   group only when that group is in the data; in a table, per row (the
@@ -781,10 +826,51 @@ the panes never import each other.
   ONE label and carries the `?` saying the data is preview-only placeholder,
   a sentence that has to hold in every arm (single / rows / none, editable /
   read-only mounted host).
-- `data/DefinitionForm.tsx` — a field's display label / type / format (a
-  `<select>` over the SEMANTIC formats the engine's `(type, format)` table
-  refines, plus an authored out-of-set value verbatim) / 必須 / description;
-  read-only (not hidden) without `onDefinitionEdit`.
+- `data/DefinitionForm.tsx` — a field's display label / `TypeFields` / 必須 /
+  description; read-only (not hidden) without `onDefinitionEdit`.
+- `data/TypeFields.tsx` — the 型 / 表すもの pair (a `<select>` over the
+  SEMANTIC formats the engine's `(type, format)` table refines, plus an
+  authored out-of-set value verbatim), shared by a field and a list element;
+  `allowUnset` shows a missing type as unset (and hides 表すもの).
+- `data/FieldRules.tsx` — a field's value-rule sections, keyed by the node
+  (they hold per-node state): `EnumSection`, `DisplaySection`, and the range
+  its base type reads (値の範囲 / 文字数の範囲; none for yes / no).
+- `data/RuleInput.tsx` — the commit-on-blur input every value-rule control
+  shares: value key + reseed nonce, Enter commits (IME-guarded), a refusal
+  shown under it via `aria-describedby` until the next commit.
+- `data/RangeFields.tsx` — one 下限 〜 上限 pair by `RangeKind` (bound /
+  length / rows / count / the two element kinds), unit word, the
+  consequence line, the lower-above-upper warning; `useNumberRefusal`.
+- `data/DisplaySection.tsx` — 「表示」 holding `PlaceholderField` (also the
+  list element's).
+- `data/ExampleField.tsx` — under the sample value: the generation example,
+  typed per field (a select for yes / no), badged as saved in the definitions
+  for every variant; editable on a sample-read-only host.
+- `data/EnumSection.tsx` — 選択肢: `EnumToggle`, the read-only note, and the
+  table + add row + `EnumNotices`; not offered on a yes / no field with none
+  authored, nor without definition editing; an edit the host refuses (its
+  edit-list cap) keeps the entry with the reason. Keyed by the node by its
+  caller.
+- `data/EnumToggle.tsx` — 「値を選択肢で決める」: ON writes nothing; OFF over
+  members (a read-only list included — removing writes no list) confirms, OFF
+  over an authored `enum: []` removes it at once, OFF over a list only opened
+  here closes it.
+- `data/EnumRows.tsx` / `data/EnumRow.tsx` — the member rows (pointer-only
+  `touch-none` grip + up / down buttons, both at 2+ rows, the rule list's
+  shape; focus follows a moved member; a mistyped member marked
+  `aria-invalid`); `data/useEnumDrag.ts` — the drag over the shared
+  `usePointerReorder` (release = one op; the line reads the same resolve).
+- `data/EnumAddRow.tsx` — the add draft (typed value + printed text, 追加 /
+  IME-guarded Enter; a refusal stays with the draft).
+- `data/EnumNotices.tsx` — labels-ignored (a field: names 型 / 表すもの by
+  their own label keys; a list element: a list prints values as they are), the
+  type-mismatch notice (no fix asked on a read-only host), and the authored
+  empty list.
+- `data/ListElementSection.tsx` — a list's 「1 つ 1 つの値」 at `items`:
+  `TypeFields`, placeholder (its hint says a list does not print it), the
+  element range by type, its `EnumSection`; an element with no `type` offers
+  型 ALONE (shown unset) — any other key first would leave `items` without
+  its required `type`, a whole-file parse error.
 - `data/ValueField.tsx` — the sample-value widgets per kind (roomy
   textarea for strings — the genkoyoshi body-text case; compact widgets else;
   uncontrolled + commit-on-blur, keyed by the CALLER's `key={value}` plus its

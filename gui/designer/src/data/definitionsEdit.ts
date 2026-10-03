@@ -11,14 +11,9 @@
 // comments and untouched keys survive byte-exact. This file is pure TS (no
 // React), hostile-input safe: reads are own-property-guarded and never throw.
 
-import {
-  Editor,
-  MAX_STRING_VALUES,
-  type Op,
-  parseTemplate,
-  readTemplate,
-} from '@shojiku/designer-core';
+import { Editor, MAX_STRING_VALUES, type Op } from '@shojiku/designer-core';
 import type { DefsNode } from './defsTree';
+import { readSchemaNode } from './schemaNode';
 import { isStructural } from './structuralOps';
 
 /** The closed scalar-type vocabulary the type picker offers — the base JSON-schema
@@ -65,12 +60,6 @@ export function isSemanticFormat(def: DefinitionField): boolean {
   return def.format === '' || offered.includes(def.format);
 }
 
-function record(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
 function str(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
@@ -100,20 +89,7 @@ export function readDefinitionField(
   defsText: string,
   keysPath: readonly string[],
 ): DefinitionField {
-  let node: unknown;
-  try {
-    node = readTemplate(parseTemplate(defsText));
-  } catch {
-    return EMPTY_FIELD;
-  }
-  for (const key of keysPath) {
-    const rec = record(node);
-    if (rec === undefined || !Object.hasOwn(rec, key)) {
-      return EMPTY_FIELD;
-    }
-    node = rec[key];
-  }
-  const schema = record(node);
+  const schema = readSchemaNode(defsText, keysPath);
   if (schema === undefined) {
     return EMPTY_FIELD;
   }
