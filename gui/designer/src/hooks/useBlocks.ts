@@ -2,13 +2,16 @@
 // Designer runs the pure model against the `blocks` prop and reports the updated
 // library up through `onBlocksChange`, which persists it and re-renders with the
 // new list. The feature is armed only when the host wired persistence. Inserting
-// a block is a plain `insertItem` (AI parity).
+// a block is a plain `insertItem` (AI parity), batched with the fresh ids its
+// copy takes (`ids/copyIds`).
 
 import type { SnippetValue } from '@shojiku/designer-core';
 import { useCallback, useState } from 'react';
 import { typeFitsOwner } from '../canvas/dnd';
 import { readSubject } from '../editor/subject';
 import type { EditorController } from '../editor/useEditor';
+import { type CopyRefusal, copyIdOps } from '../ids/copyIds';
+import { buildIdIndex } from '../ids/idIndex';
 import {
   addBlock,
   type BlockRefusal,
@@ -31,6 +34,8 @@ export interface BlocksOptions {
   readonly editor: EditorController;
   readonly multiSel: ReadonlySet<string>;
   readonly previewRef: { readonly current: LastGoodPreview | null };
+  /** Say why a block was not inserted (`hooks/useCopyNotice`). */
+  readonly refuseCopy: (reason: CopyRefusal) => void;
 }
 
 export interface Blocks {
@@ -56,10 +61,11 @@ export function useBlocks({
   editor,
   multiSel,
   previewRef,
+  refuseCopy,
 }: BlocksOptions): Blocks {
   // Destructured ONCE: the controller object is rebuilt every render, so the
   // memo deps below must be these stable fields, never `editor` itself.
-  const { selection, read, apply, select } = editor;
+  const { selection, read, applyAll, select } = editor;
   const blockArmed = onBlocksChange !== undefined;
   const blockList = blocks ?? EMPTY_BLOCKS;
   // The snippet the CURRENT single selection would save as, or null when there is
@@ -124,17 +130,24 @@ export function useBlocks({
       ) {
         return;
       }
-      const result = apply({
-        op: 'insertItem',
-        path: target.path,
-        index: target.index,
-        value: placeForTarget(read, previewRef.current, target.path, block.value),
-      });
+      const at = `${target.path}[${target.index}]`;
+      const value = placeForTarget(read, previewRef.current, target.path, block.value);
+      // A block saved from this document carries ITS ids: the copy takes fresh
+      // ones in the same batch (`ids/copyIds`), as a duplicate does.
+      const ids = copyIdOps(value, at, buildIdIndex(read));
+      if (!ids.ok) {
+        refuseCopy(ids.reason);
+        return;
+      }
+      const result = applyAll([
+        { op: 'insertItem', path: target.path, index: target.index, value },
+        ...ids.ops,
+      ]);
       if (result.ok) {
-        select(`${target.path}[${target.index}]`);
+        select(at);
       }
     },
-    [blockList, read, selection, apply, select, previewRef],
+    [blockList, read, selection, applyAll, select, previewRef, refuseCopy],
   );
 
   const [manageBlocksOpen, setManageBlocksOpen] = useState(false);

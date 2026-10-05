@@ -28,6 +28,9 @@ import { applyDefinitionOps, readDefinitionField, titleOp } from '../data/defini
 import { fixFor } from '../diagnostics/fixModel';
 import { type EngineTransport, TransportError } from '../engine/transport';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
+import { duplicateOps } from '../ids/copyIds';
+import { idEdit } from '../ids/idEdit';
+import { buildIdIndex } from '../ids/idIndex';
 import { composeDataUri } from '../image/dataUri';
 import { sniffImage } from '../image/sniff';
 import { blockNeverDraws, blockRefusedOwner } from '../insert/blockRefusal';
@@ -3596,5 +3599,84 @@ describe('table column kinds the panel authors, rendered by the real engine', ()
       expect(drawn.boxes.some((b) => b.path === path)).toBe(true);
       expect(drawn.boxes.some((b) => b.path === `${path}.cell.items[0]`)).toBe(false);
     }
+  });
+});
+
+describe('names the Designer writes, resolved by the real engine', () => {
+  // The JOIN for the name field and the copy renaming: `ids/` decides every
+  // write from its own model of the namespace, and the ENGINE is what resolves
+  // an anchor against it. Each step here is written by the same builders the
+  // field and ⌘D use, then rendered, so the claim "the anchor now finds its
+  // target" is the engine's, not a fixture's.
+  const DOC = [
+    'page: { margin: 0 }',
+    'sections:',
+    '  body:',
+    '    type: absolute',
+    '    items:',
+    '      - type: container',
+    '        box: { x: 20, y: 20, w: 200, h: 40 }',
+    '        items:',
+    '          - { type: text, text: "Yes", box: { x: 0, y: 0, w: 60, h: 20 } }',
+    '          - { type: ellipse, anchor: answer }',
+    '',
+  ].join('\n');
+  const TEXT = 'sections.body.items[0].items[0]';
+  const ELLIPSE = 'sections.body.items[0].items[1]';
+
+  const render = async (editor: Editor) => {
+    const outcome = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 1 });
+    expect(outcome.ok).toBe(true);
+    return {
+      boxes: outcome.inspect?.boxes.pages.flat() ?? [],
+      codes: outcome.diagnostics.items.map((d) => d.code),
+    };
+  };
+  const index = (editor: Editor) => buildIdIndex((p) => editor.read(p));
+  const write = (editor: Editor, path: string, current: string | undefined, raw: string) => {
+    const edit = idEdit(index(editor), path, current, raw);
+    expect(edit.ok).toBe(true);
+    expect(edit.ok && editor.applyAll(edit.ops).ok).toBe(true);
+  };
+
+  it('a name the field writes is the id the box index reports, and the anchor finds it', async () => {
+    const editor = Editor.create(DOC);
+    expect((await render(editor)).codes).toContain('anchor_unknown_target');
+    write(editor, TEXT, undefined, 'answer');
+    const { boxes, codes } = await render(editor);
+    expect(boxes.find((b) => b.path === TEXT)?.id).toBe('answer');
+    expect(codes).not.toContain('anchor_unknown_target');
+    expect(boxes.some((b) => b.path === ELLIPSE)).toBe(true);
+  });
+
+  it('a rename keeps the anchor resolving, because it follows', async () => {
+    const editor = Editor.create(DOC);
+    write(editor, TEXT, undefined, 'answer');
+    write(editor, TEXT, 'answer', 'choice');
+    const { boxes, codes } = await render(editor);
+    expect(boxes.find((b) => b.path === TEXT)?.id).toBe('choice');
+    expect(codes).not.toContain('anchor_unknown_target');
+    expect(boxes.some((b) => b.path === ELLIPSE)).toBe(true);
+  });
+
+  it('a cleared name leaves its anchor unresolved — the effect the confirm warns of', async () => {
+    const editor = Editor.create(DOC);
+    write(editor, TEXT, undefined, 'answer');
+    write(editor, TEXT, 'answer', '');
+    const { boxes, codes } = await render(editor);
+    expect(codes).toContain('anchor_unknown_target');
+    expect(boxes.some((b) => b.path === ELLIPSE)).toBe(false);
+  });
+
+  it('a duplicated group circles its own copy, with no ambiguous target', async () => {
+    const editor = Editor.create(DOC);
+    write(editor, TEXT, undefined, 'answer');
+    const batch = duplicateOps((p) => editor.read(p), 'sections.body.items', 0);
+    expect(batch.ok && editor.applyAll(batch.ops).ok).toBe(true);
+    const { boxes, codes } = await render(editor);
+    expect(codes).not.toContain('anchor_ambiguous_target');
+    expect(codes).not.toContain('anchor_unknown_target');
+    expect(boxes.find((b) => b.path === 'sections.body.items[1].items[0]')?.id).toBe('answer_2');
+    expect(boxes.some((b) => b.path === 'sections.body.items[1].items[1]')).toBe(true);
   });
 });

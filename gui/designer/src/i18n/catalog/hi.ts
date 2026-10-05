@@ -189,6 +189,29 @@ export const hi: LanguageCatalog = {
     'panel.ellipse.detach': 'स्वयं रखें',
     'panel.ellipse.noTargets': 'पृष्ठ पर अभी घेरने योग्य कुछ नहीं है',
     'panel.ellipse.anchoredHint': 'स्थिति उस आइटम का अनुसरण करती है; नीचे का आकार आपका ही है।',
+    'copy.notice.too_many': 'कुछ नहीं जोड़ा गया: एक साथ बहुत अधिक नामों को फिर से क्रमांकित करना होगा।',
+    'copy.notice.unreadable': 'कुछ नहीं जोड़ा गया: यह हिस्सा डुप्लिकेट नाम जाँचने के लिए बहुत बड़ा या जटिल है।',
+    'panel.id.label': 'नाम (ID)',
+    'panel.id.placeholder': 'सेट नहीं',
+    'panel.id.help':
+      'वह नाम जिससे अंडाकार और रेखाएँ इस आइटम की ओर इशारा करती हैं। यह प्रिंट नहीं होता। एक दस्तावेज़ में हर नाम केवल एक आइटम का हो सकता है। डेवलपर के लिए: यह आइटम का `id` है, जो लेआउट आउटपुट में भी आता है।',
+    'panel.id.followers':
+      'इस नाम की ओर इशारा करने वाले अंडाकार और रेखाएँ: {n}। नाम बदलने पर भी वे जुड़े रहेंगे।',
+    'panel.id.duplicate': 'किसी दूसरे आइटम (“{label}”) का यह नाम पहले से है। कोई दूसरा नाम चुनें।',
+    'panel.id.refusal.too_long': 'नाम अधिकतम {max} अक्षरों का हो सकता है।',
+    'panel.id.refusal.control': 'नाम एक ही पंक्ति में होना चाहिए, टैब या अन्य विशेष अक्षरों के बिना।',
+    'panel.id.refusal.truncated':
+      'नाम नहीं बदला गया: दस्तावेज़ इतना बड़ा है कि यह जाँचा नहीं जा सकता कि नाम कहाँ उपयोग हो रहा है।',
+    'panel.id.refusal.too_many':
+      'नाम नहीं बदला गया: इसकी ओर इशारा करने वाले अंडाकार और रेखाएँ एक बार में अपडेट करने के लिए बहुत अधिक हैं।',
+    'panel.id.foreign':
+      'यह नाम टेम्पलेट फ़ाइल में ऐसे रूप में लिखा है जिसे यहाँ संपादित नहीं किया जा सकता (उदाहरण के लिए, एक संख्या)।',
+    'panel.id.clearConfirm.title': 'यह नाम हटाएँ?',
+    'panel.id.clearConfirm.body':
+      'इस नाम की ओर इशारा करने वाले अंडाकार और रेखाएँ: {n}। इसके बिना वे नहीं बनेंगे।',
+    'panel.id.clearConfirm.undo': 'Undo ({mod}Z) से नाम और अंडाकार व रेखाएँ वापस आ जाएँगी।',
+    'panel.id.clearConfirm.confirm': 'नाम हटाएँ',
+    'panel.id.clearConfirm.cancel': 'रद्द करें',
     'insert.qrCode': 'QR कोड',
     'insert.charGrid': 'अक्षर ग्रिड',
     'insert.defaultText': 'पाठ',
@@ -835,7 +858,6 @@ export const hi: LanguageCatalog = {
     'panel.tab.content': 'सामग्री',
     'panel.tab.style': 'शैली',
     'panel.tab.box': 'लेआउट',
-    'panel.noEditable': 'इस तत्व में संपादन योग्य गुण नहीं हैं।',
     'panel.pageBreak.note': 'इसके बाद की हर चीज़ नए पृष्ठ से शुरू होती है।',
     'panel.pageBreak.noteFirst': 'इससे पहले कुछ नहीं है, इसलिए यह विराम अभी कुछ नहीं करता।',
     'panel.line.points': 'सिरे',

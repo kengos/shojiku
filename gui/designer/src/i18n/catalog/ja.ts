@@ -432,6 +432,32 @@ export const ja: LanguageCatalog = {
     'panel.ellipse.detach': '自分で配置する',
     'panel.ellipse.noTargets': '囲める要素がまだありません',
     'panel.ellipse.anchoredHint': '位置はその要素に従います。下の大きさは自分で決められます。',
+    'copy.notice.too_many':
+      '追加しませんでした: 番号を振り直す名前が多すぎて、一度に処理できません。',
+    'copy.notice.unreadable':
+      '追加しませんでした: この部分は大きすぎるか複雑すぎるため、名前の重複を確認できません。',
+    'panel.id.label': '名前（ID）',
+    'panel.id.placeholder': '未設定',
+    'panel.id.help':
+      '楕円や線がこの要素を指すときに使う名前です。印刷はされません。同じ名前は文書内で1つの要素にしか付けられません。開発者向け: 要素の `id` として、レイアウト出力にも含まれます。',
+    'panel.id.followers':
+      'この名前を指している楕円・線: {n} 件。名前を変えても、つながりは保たれます。',
+    'panel.id.duplicate':
+      '別の要素（{label}）にすでにこの名前が付いています。ほかの名前にしてください。',
+    'panel.id.refusal.too_long': '名前は{max}文字以内にしてください。',
+    'panel.id.refusal.control': '名前は1行で、タブなどの特殊な文字を含めないでください。',
+    'panel.id.refusal.truncated':
+      '文書が大きすぎて、この名前がどこで使われているか確認できないため、変更しませんでした。',
+    'panel.id.refusal.too_many':
+      'この名前を指す楕円・線が多すぎて一度に更新できないため、変更しませんでした。',
+    'panel.id.foreign':
+      'この名前はテンプレートファイルに数値などの形式で書かれているため、ここでは編集できません。',
+    'panel.id.clearConfirm.title': '名前を消しますか？',
+    'panel.id.clearConfirm.body':
+      'この名前を指している楕円・線が {n} 件あります。名前を消すと、それらは描かれなくなります。',
+    'panel.id.clearConfirm.undo': '元に戻す（{mod}Z）で、名前と楕円・線を元どおりにできます。',
+    'panel.id.clearConfirm.confirm': '名前を消す',
+    'panel.id.clearConfirm.cancel': 'キャンセル',
     'insert.qrCode': 'QRコード',
     'insert.charGrid': 'マス目テキスト',
     'insert.defaultText': 'テキスト',
@@ -1084,7 +1110,6 @@ export const ja: LanguageCatalog = {
     'panel.tab.content': '内容',
     'panel.tab.style': '装飾',
     'panel.tab.box': '配置',
-    'panel.noEditable': 'この要素には編集できるプロパティがありません。',
     'panel.pageBreak.note': 'これより後ろは次のページから始まります。',
     'panel.pageBreak.noteFirst': '前に何もないので、この改ページはまだ何もしません。',
     'panel.line.points': '始点・終点',

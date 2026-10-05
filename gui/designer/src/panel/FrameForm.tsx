@@ -1,13 +1,14 @@
 // The panel for a selected sub-template FRAME — a grid's cell, a card, a table
 // column's cell (`frameModel`). Each is a container with no `type:`, drawn once
 // per data element, so the form says first that an edit reaches every one of
-// them, then offers what a frame is for: the inner padding, the fill, the
-// border, whether content sticking out of it is hidden, and its opacity. The
-// fields are the ordinary path-generic ones (`EdgeFields`, `PanelColorField`,
+// them, then offers its name (`id:`, through the same `ItemIdField` every item
+// has) and what a frame is for: the inner padding, the fill, the border,
+// whether content sticking out of it is hidden, and its opacity. The fields are
+// the ordinary path-generic ones (`EdgeFields`, `PanelColorField`,
 // `BorderEditor`, `OverflowField`, `OpacityField`) pointed at the frame's path,
-// so a frame edits exactly as any boxed item's decoration does. A way back out to the owner
-// sits at the foot, because the tree places the frame between the owner and its
-// fields.
+// so a frame edits exactly as any boxed item's decoration does. A way back out
+// to the owner sits at the foot, because the tree places the frame between the
+// owner and its fields.
 
 import type { EditorController } from '../editor/useEditor';
 import { HelpHint } from '../help/HelpHint';
@@ -20,6 +21,7 @@ import { readRadius } from './borderRadius';
 import { EdgeFields } from './EdgeFields';
 import { FRAME_PADDING_RULES } from './edgeRules';
 import type { Frame } from './frameModel';
+import { ItemIdField } from './ItemIdField';
 import { hasCapability } from './itemPanelProps';
 import { OpacityField } from './OpacityField';
 import { OverflowField, overflowOffered } from './OverflowFields';
@@ -52,6 +54,7 @@ export function FrameForm({
       {kind === 'columnCell' ? (
         <p className="mt-0 mb-2 text-sm text-muted">{t('panel.frame.columnNote')}</p>
       ) : null}
+      <ItemIdField key={path} controller={controller} path={path} />
       {hasCapability(capabilities, 'box.padding') ? (
         <EdgeFields
           controller={controller}

@@ -483,6 +483,17 @@ describe('ColumnForm', () => {
     );
   }
 
+  it('names the column at the column itself', () => {
+    const controller = makeController({ [COLUMN_PATH]: { id: 'name_col', label: '品名' } });
+    form(controller);
+    const field = screen.getByLabelText('Name (ID)') as HTMLInputElement;
+    expect(field.value).toBe('name_col');
+    fireEvent.blur(field, { target: { value: 'item_name' } });
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path: COLUMN_PATH, keys: ['id'], value: 'item_name' },
+    ]);
+  });
+
   // A bare width: the shipped fixture uses `15%`, which states its own unit,
   // so the badge — and the invitation that rides it — are both absent there.
   it('invites another unit on a bare column width', () => {

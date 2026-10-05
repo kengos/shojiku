@@ -18,6 +18,7 @@ import { useI18n } from '../i18n/context';
 import { anchorTargets, readItemId } from './anchorTargets';
 import { BoxSection } from './BoxSection';
 import { ContentSection } from './ContentSection';
+import { ItemIdField } from './ItemIdField';
 import type { ItemPanelProps } from './itemPanelProps';
 import { hasCapability } from './itemPanelProps';
 import { LinePointsEditor } from './LinePointsEditor';
@@ -110,11 +111,15 @@ export function ItemPanel(props: ItemPanelProps) {
     />
   ) : null;
 
-  // A type with no applicable TAB still has the presence binding to edit. For
-  // `page_break` that is the WHOLE item — nothing but `id` and `visible:` on
-  // the wire — and a conditional page break is exactly what the key is for.
-  // Only when there is nothing at all — an engine without `item.visible` —
-  // does the panel say so in words.
+  // Every type has a NAME (`id:`), which no tab owns either: it is what an
+  // anchor points at, so it sits with the item-wide keys below the tabs.
+  // `key` resets the field's refusal and draft when the selection moves.
+  const naming = <ItemIdField key={props.path} controller={props.controller} path={props.path} />;
+
+  // A type with no applicable TAB still has its name and the presence binding
+  // to edit. For `page_break` that is the WHOLE item — nothing but `id` and
+  // `visible:` on the wire — and a conditional page break is exactly what the
+  // second key is for.
   if (tabs.length === 0) {
     return (
       <div className="p-3">
@@ -125,10 +130,8 @@ export function ItemPanel(props: ItemPanelProps) {
          * break is a no-op that line says THAT instead. It is the only type
          * that reaches this branch (`tabLessNoteKey`). */}
         <p className="m-0 mb-3 text-muted text-sm">{t(tabLessNoteKey(props.path))}</p>
+        {naming}
         {visibility}
-        {visibility === null ? (
-          <p className="m-0 text-muted text-sm">{t('panel.noEditable')}</p>
-        ) : null}
       </div>
     );
   }
@@ -138,6 +141,7 @@ export function ItemPanel(props: ItemPanelProps) {
     return (
       <div className="p-3">
         {panelFor(tabs[0])}
+        {naming}
         {visibility}
       </div>
     );
@@ -164,7 +168,10 @@ export function ItemPanel(props: ItemPanelProps) {
       </TabPanels>
       {/* Below the tab BODIES, not inside one: the key applies to every type,
         so it must not appear and disappear as the reader changes tab. */}
-      {visibility === null ? null : <div className="px-3 pb-3">{visibility}</div>}
+      <div className="px-3 pb-3">
+        {naming}
+        {visibility}
+      </div>
     </TabGroup>
   );
 }

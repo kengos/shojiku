@@ -227,7 +227,7 @@ filled-tonal tier).
     the DIRECTORY instead would have been wrong on arrival: three of the
     thirteen footers live under `panel/`.)
   - **Two surfaces sit outside a footer** (three lines), each pinned by
-    `path:line`. The first is an EMPTY STATE: `shell/CanvasArea.tsx` fills its
+    `path:line`. The first is an EMPTY STATE: `shell/CanvasEmptyState.tsx` fills its
     *Add text* CTA because, with no body items, it is the only thing on the
     page — that screen's primary rather than one voice among peers
     (`Designer.test.tsx` pins that it renders). The second

@@ -125,6 +125,26 @@ describe('Designer right-click actions', () => {
     await waitFor(() => expect(latest(onChange).match(/text: second/g)).toHaveLength(2));
   });
 
+  it('says above the canvas why a duplicate did not happen', async () => {
+    const many = Array.from({ length: 256 }, (_, n) => `          - { type: text, id: t${n} }`);
+    const source = [
+      'sections:',
+      '  body:',
+      '    items:',
+      '      - { type: text, text: first }',
+      '      - type: container',
+      '        items:',
+      ...many,
+      '      - { type: text, text: third }',
+      '',
+    ].join('\n');
+    await drawCanvas({ source });
+    fireEvent.click(within(rightClickBox(PATHS[1])).getByRole('menuitem', { name: 'Duplicate' }));
+    expect(
+      await screen.findByText('Nothing was added: too many names would need renumbering at once.'),
+    ).toBeTruthy();
+  });
+
   it('withholds the border row on an engine without borders', async () => {
     await drawCanvas({ capabilities: [] });
     expect(rowNames(rightClickBox(PATHS[1]))).toEqual([
@@ -225,5 +245,83 @@ describe('useSelectionOps — wrapSelected', () => {
     act(() => hook.result.current.ops.wrapSelected('sections.footer.items[1]'));
     expect(hook.result.current.editor.text).toContain('type: container');
     expect(hook.result.current.editor.selection).toBe('sections.footer.items[1]');
+  });
+});
+
+// ⌘D's copy takes fresh ids in the same batch (`ids/copyIds`): a copied group
+// circles its OWN answer, the original keeps its names, and one undo removes
+// the copy whole. The exhaustive renaming rules are the model suite's; this
+// pins the hook's wiring of them.
+describe('duplicating a named item', () => {
+  const NAMED = `sections:
+  body:
+    items:
+      - type: container
+        id: answer
+        items:
+          - { type: text, id: yes, text: "Yes" }
+          - { type: ellipse, anchor: yes }
+`;
+
+  function mount(source: string) {
+    return renderHook(() => {
+      const editor = useEditor(source);
+      const ops = useSelectionOps({
+        editor,
+        deselectClearing: vi.fn(),
+        docViewOpenRef: { current: false },
+        dataViewOpenRef: { current: false },
+        closeDocView: vi.fn(),
+        closeDataView: vi.fn(),
+      });
+      return { editor, ops };
+    });
+  }
+
+  it('renames the copy and rewires its anchor, in one undo step', () => {
+    const hook = mount(NAMED);
+    const before = hook.result.current.editor.text;
+    act(() => hook.result.current.ops.duplicateAt('sections.body.items[0]'));
+    const { editor } = hook.result.current;
+    expect(editor.read('sections.body.items[1]')).toEqual({
+      type: 'container',
+      id: 'answer_2',
+      items: [
+        { type: 'text', id: 'yes_2', text: 'Yes' },
+        { type: 'ellipse', anchor: 'yes_2' },
+      ],
+    });
+    expect(editor.read('sections.body.items[0]')).toMatchObject({ id: 'answer' });
+    expect(editor.selection).toBe('sections.body.items[1]');
+    act(() => hook.result.current.editor.undo());
+    expect(hook.result.current.editor.text).toBe(before);
+  });
+
+  it('duplicates nothing when the copy would overrun the batch cap, and says why until the next edit', () => {
+    const many = Array.from({ length: 256 }, (_, n) => `          - { type: text, id: t${n} }`);
+    const source = [
+      'sections:',
+      '  body:',
+      '    items:',
+      '      - type: container',
+      '        items:',
+      ...many,
+      '',
+    ].join('\n');
+    const hook = mount(source);
+    act(() => hook.result.current.ops.duplicateAt('sections.body.items[0]'));
+    expect(hook.result.current.editor.text).toBe(source);
+    expect(hook.result.current.editor.canUndo).toBe(false);
+    expect(hook.result.current.ops.copyNotice).toBe('copy.notice.too_many');
+    // The next committed edit clears it: the user has moved on.
+    act(() => {
+      hook.result.current.editor.apply({
+        op: 'setScalar',
+        path: 'sections.body.items[0]',
+        keys: ['id'],
+        value: 'g',
+      });
+    });
+    expect(hook.result.current.ops.copyNotice).toBeNull();
   });
 });

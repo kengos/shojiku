@@ -45,6 +45,9 @@ const REPEAT_CELL = [
 ].join('\n');
 const CELL_CHILD = 'sections.body.items[0].cell.items[0]';
 
+/** The copy-notice reporter the hook is wired to (`hooks/useCopyNotice`). */
+const refuseCopy = vi.fn();
+
 describe('Designer — reusable blocks', () => {
   const openInsert = () => fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
 
@@ -402,6 +405,7 @@ describe('useBlocks — the insert lock', () => {
         editor,
         multiSel: new Set(),
         previewRef: { current: null },
+        refuseCopy,
       });
       return { editor, blocks };
     });
@@ -419,6 +423,73 @@ describe('useBlocks — the insert lock', () => {
     act(() => hook.result.current.blocks.insertBlock('text'));
     expect(hook.result.current.editor.text).toContain('seal');
     expect(hook.result.current.editor.selection).toBe('sections.body.items[0]');
+  });
+
+  it('gives an inserted block fresh ids and rewires its own anchor, in one step', () => {
+    const named: SavedBlock[] = [
+      {
+        id: 'answer',
+        name: '回答',
+        value: {
+          type: 'container',
+          id: 'answer',
+          items: [
+            { type: 'text', id: 'yes', text: 'Yes' },
+            { type: 'ellipse', anchor: 'yes' },
+          ],
+        },
+      },
+    ];
+    const source = [
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      '      - { type: text, id: yes, text: taken }',
+      '',
+    ].join('\n');
+    const hook = renderHook(() => {
+      const editor = useEditor(source);
+      const blocks = useBlocks({
+        blocks: named,
+        onBlocksChange: vi.fn(),
+        editor,
+        multiSel: new Set(),
+        previewRef: { current: null },
+        refuseCopy,
+      });
+      return { editor, blocks };
+    });
+    act(() => hook.result.current.blocks.insertBlock('answer'));
+    const { editor } = hook.result.current;
+    // `answer` is free in this document, so it stays; `yes` is taken, so the
+    // block's text becomes `yes_2` and its circle follows it.
+    expect(editor.read('sections.body.items[1]')).toMatchObject({
+      id: 'answer',
+      items: [{ id: 'yes_2' }, { anchor: 'yes_2' }],
+    });
+    act(() => hook.result.current.editor.undo());
+    expect(hook.result.current.editor.text).toBe(source);
+  });
+
+  it('inserts nothing when the renaming of the block would overrun the batch cap', () => {
+    const items = Array.from({ length: 256 }, (_, n) => ({ type: 'text', id: `t${n}` }));
+    const huge: SavedBlock[] = [{ id: 'huge', name: '大', value: { type: 'container', items } }];
+    const hook = renderHook(() => {
+      const editor = useEditor(ABSOLUTE_BODY);
+      const blocks = useBlocks({
+        blocks: huge,
+        onBlocksChange: vi.fn(),
+        editor,
+        multiSel: new Set(),
+        previewRef: { current: null },
+        refuseCopy,
+      });
+      return { editor, blocks };
+    });
+    act(() => hook.result.current.blocks.insertBlock('huge'));
+    expect(hook.result.current.editor.text).toBe(ABSOLUTE_BODY);
+    expect(refuseCopy).toHaveBeenCalledWith('too_many');
   });
 
   it('writes nothing for a block carrying a table when the target is a cell', () => {

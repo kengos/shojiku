@@ -1,5 +1,5 @@
 // The canvas topbar: the breadcrumb, the placement chip, and the transient
-// pdf/image notices. Every string it renders is a CATALOG key — never document
+// copy/pdf/image notices. Every string it renders is a CATALOG key — never document
 // content and never engine text (a failed render's reasons stay in the
 // diagnostics panel below the canvas).
 
@@ -22,7 +22,7 @@ function placeKey(ability: Manipulation): string {
     : `canvas.place.${ability.place}`;
 }
 
-/** The notice pill shared by the pdf and image `<output>`s. */
+/** The notice pill shared by the copy, pdf and image `<output>`s. */
 const NOTICE =
   'shrink-0 rounded-md border border-border bg-warn-bg px-2 py-px text-sm whitespace-nowrap text-warn-text';
 
@@ -32,9 +32,18 @@ export interface CanvasTopbarProps {
   readonly image: ImageImport;
   readonly pdf: PdfAction;
   readonly treeView: TreeView | null;
+  /** Why the last copy (⌘D / block insert) did not happen — `useCopyNotice`. */
+  readonly copyNotice: string | null;
 }
 
-export function CanvasTopbar({ editor, multi, image, pdf, treeView }: CanvasTopbarProps) {
+export function CanvasTopbar({
+  editor,
+  multi,
+  image,
+  pdf,
+  treeView,
+  copyNotice,
+}: CanvasTopbarProps) {
   const { t } = useI18n();
   // Locals, not property reads: narrowing follows a local binding.
   const { read, selection } = editor;
@@ -72,6 +81,11 @@ export function CanvasTopbar({ editor, multi, image, pdf, treeView }: CanvasTopb
         >
           {t(chipKey)}
         </output>
+      ) : null}
+      {copyNotice !== null ? (
+        // A refused copy changes nothing on the page, so this is the only
+        // answer the key press gets — a catalog string, never document text.
+        <output className={NOTICE}>{t(copyNotice)}</output>
       ) : null}
       {pdf.pdfNotice !== null ? (
         // The PDF action's transient state (rendering / failed) — a

@@ -81,13 +81,6 @@ export function useDesignerWiring(props: DesignerProps): DesignerWiring {
     paletteGroups: defs.paletteGroups,
     workshop: sample.workshop,
   });
-  const blocks = useBlocks({
-    blocks: hostBlocks,
-    onBlocksChange,
-    editor,
-    multiSel: multi.multiSel,
-    previewRef: inserts.previewRef,
-  });
   const selectionOps = useSelectionOps({
     editor,
     deselectClearing: multi.deselectClearing,
@@ -95,6 +88,16 @@ export function useDesignerWiring(props: DesignerProps): DesignerWiring {
     dataViewOpenRef: views.dataViewOpenRef,
     closeDocView: views.closeDocView,
     closeDataView: views.closeDataView,
+  });
+  // After the selection ops: a block insert reports a refused copy through
+  // the same notice ⌘D does.
+  const blocks = useBlocks({
+    blocks: hostBlocks,
+    onBlocksChange,
+    editor,
+    multiSel: multi.multiSel,
+    previewRef: inserts.previewRef,
+    refuseCopy: selectionOps.refuseCopy,
   });
 
   // A diagnostics quick-fix: the fix model already built the op batch; one

@@ -412,6 +412,31 @@ export const en: LanguageCatalog = {
     'panel.ellipse.detach': 'Place it myself',
     'panel.ellipse.noTargets': 'Nothing on the page to circle yet',
     'panel.ellipse.anchoredHint': 'Position follows that item; the size below is still yours.',
+    'copy.notice.too_many': 'Nothing was added: too many names would need renumbering at once.',
+    'copy.notice.unreadable':
+      'Nothing was added: this part is too large or complex to check for duplicate names.',
+    'panel.id.label': 'Name (ID)',
+    'panel.id.placeholder': 'Not set',
+    'panel.id.help':
+      "A name that circles and lines use to point at this item. It isn't printed. Each name can be used only once per document. For developers: this is the item's `id`, also returned in the layout output.",
+    'panel.id.followers':
+      'Circles and lines pointing to this name: {n}. Renaming keeps them connected.',
+    'panel.id.duplicate': 'Another item (“{label}”) already has this name. Choose a different one.',
+    'panel.id.refusal.too_long': 'Names can be up to {max} characters.',
+    'panel.id.refusal.control':
+      'A name must be one line, without tabs or other special characters.',
+    'panel.id.refusal.truncated':
+      'Name not changed: this document is too large to check where the name is used.',
+    'panel.id.refusal.too_many':
+      "The name wasn't changed: too many circles and lines point to it to update at once.",
+    'panel.id.foreign':
+      "This name is written in the template file in a form that can't be edited here (for example, a number).",
+    'panel.id.clearConfirm.title': 'Remove this name?',
+    'panel.id.clearConfirm.body':
+      "Circles and lines pointing to this name: {n}. They won't be drawn without it.",
+    'panel.id.clearConfirm.undo': 'Undo ({mod}Z) restores the name and the circles and lines.',
+    'panel.id.clearConfirm.confirm': 'Remove name',
+    'panel.id.clearConfirm.cancel': 'Cancel',
     'insert.qrCode': 'QR code',
     'insert.charGrid': 'Character grid',
     'insert.defaultText': 'Text',
@@ -1068,7 +1093,6 @@ export const en: LanguageCatalog = {
     'panel.tab.content': 'Content',
     'panel.tab.style': 'Style',
     'panel.tab.box': 'Layout',
-    'panel.noEditable': 'This element has no editable properties.',
     'panel.pageBreak.note': 'Everything after this starts on a new page.',
     'panel.pageBreak.noteFirst': 'Nothing comes before it, so this break does nothing yet.',
     'panel.line.points': 'Endpoints',

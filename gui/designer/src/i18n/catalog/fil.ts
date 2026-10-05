@@ -202,6 +202,34 @@ export const fil: LanguageCatalog = {
     'panel.ellipse.noTargets': 'Wala pang mabibilugan sa pahina',
     'panel.ellipse.anchoredHint':
       'Sumusunod ang posisyon sa item na iyon; sa iyo pa rin ang laki sa ibaba.',
+    'copy.notice.too_many':
+      'Walang naidagdag: masyadong maraming pangalan ang kailangang i-renumber nang sabay.',
+    'copy.notice.unreadable':
+      'Walang naidagdag: masyadong malaki o kumplikado ang bahaging ito para masuri kung may dobleng pangalan.',
+    'panel.id.label': 'Pangalan (ID)',
+    'panel.id.placeholder': 'Hindi nakatakda',
+    'panel.id.help':
+      'Pangalang ginagamit ng mga bilog at linya para ituro ang item na ito. Hindi ito ipi-print. Isang item lang sa dokumento ang puwedeng gumamit ng bawat pangalan. Para sa developer: ito ang `id` ng item, na kasama rin sa layout output.',
+    'panel.id.followers':
+      'Mga bilog at linyang nakaturo sa pangalang ito: {n}. Mananatili silang nakakabit kapag pinalitan ang pangalan.',
+    'panel.id.duplicate':
+      'May ibang item (“{label}”) na gumagamit na ng pangalang ito. Pumili ng iba.',
+    'panel.id.refusal.too_long': 'Hanggang {max} character lang ang pangalan.',
+    'panel.id.refusal.control':
+      'Dapat isang linya lang ang pangalan, walang tab o iba pang espesyal na character.',
+    'panel.id.refusal.truncated':
+      'Hindi binago ang pangalan: masyadong malaki ang dokumento para masuri kung saan ginagamit ang pangalan.',
+    'panel.id.refusal.too_many':
+      'Hindi binago ang pangalan: masyadong maraming bilog at linya ang nakaturo dito para ma-update nang sabay.',
+    'panel.id.foreign':
+      'Nakasulat ang pangalang ito sa template file sa anyong hindi mae-edit dito (halimbawa, isang numero).',
+    'panel.id.clearConfirm.title': 'Alisin ang pangalang ito?',
+    'panel.id.clearConfirm.body':
+      'Mga bilog at linyang nakaturo sa pangalang ito: {n}. Hindi na sila iguguhit kapag wala ito.',
+    'panel.id.clearConfirm.undo':
+      'Ibinabalik ng Undo ({mod}Z) ang pangalan at ang mga bilog at linya.',
+    'panel.id.clearConfirm.confirm': 'Alisin ang pangalan',
+    'panel.id.clearConfirm.cancel': 'Kanselahin',
     'insert.qrCode': 'QR code',
     'insert.charGrid': 'Grid ng karakter',
     'insert.defaultText': 'Teksto',
@@ -871,7 +899,6 @@ export const fil: LanguageCatalog = {
     'panel.tab.content': 'Nilalaman',
     'panel.tab.style': 'Estilo',
     'panel.tab.box': 'Layout',
-    'panel.noEditable': 'Walang mae-edit na property ang elementong ito.',
     'panel.pageBreak.note': 'Ang lahat pagkatapos nito ay nagsisimula sa bagong pahina.',
     'panel.pageBreak.noteFirst': 'Walang nauuna rito, kaya wala pang ginagawa ang hating ito.',
     'panel.line.points': 'Mga dulo',
