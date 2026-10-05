@@ -1316,6 +1316,7 @@ export const zhCn: LanguageCatalog = {
     'data.refusal.not_whole': '请输入整数。',
     'data.refusal.negative': '请输入 0 或更大的数。',
     'data.refusal.too_large': '数字太大。',
+    'data.refusal.over_max': '请输入 {max} 或更小的数。',
     'data.range.bound': '值的范围',
     'data.range.length': '字数范围',
     'data.range.rows': '行数范围',
@@ -1336,6 +1337,70 @@ export const zhCn: LanguageCatalog = {
     'data.placeholderHint':
       '数据中没有此项目或为空时，会打印这里填写的文字（若放置的部件指定了空白时的文字，则使用该文字）。',
     'data.none': '（无）',
+    'data.display.currency': '货币',
+    'data.display.currencyPlaceholder': '文档货币',
+    'data.display.currencyHint':
+      '留空则不写入定义；使用文档“{section}”中的货币（未设置时使用语言区域的默认货币）。',
+    'data.display.precision': '小数位数',
+    'data.display.precisionCurrency': '货币标准',
+    'data.display.precisionStandard': '标准',
+    'data.display.precisionHintCurrency':
+      '0 到 {max}。留空则不写入定义；使用各货币的标准位数（日元 0 位，美元 2 位）。',
+    'data.display.precisionHint':
+      '0 到 {max}。留空则不写入定义；最多打印到小数点后 2 位（省略末尾的 0）。',
+    'data.display.unit': '单位',
+    'data.display.unitHint': '留空则不写入定义；使用默认单位 {unit}。',
+    'data.display.unitHintSamples': '留空则不写入定义；使用默认单位 {unit}（{samples}）。',
+    'data.display.unitUnknown':
+      '“{unit}”会按原样作为单位打印。该语言区域没有这个单位，因此诊断会显示警告。打印不会停止。',
+    'data.display.defaultFormat': '默认显示格式',
+    'data.display.defaultFormatHint': '页面上的组件未选择格式时使用。选择“{follow}”时不写入定义。',
+    'data.display.follow': '跟随文档的{section}',
+    'data.display.fixed': '此类项目无法选择默认格式',
+    'data.display.authored': '手动写入的值（不在列表中）',
+    'data.display.chooseFormat': '选择默认显示格式',
+    'data.display.sampleDigits': '示例使用标准小数位数；此项目按 {places} 位打印。',
+    'data.formats.title': '显示格式限制（{count} 项）',
+    'data.formats.titleNone': '显示格式限制（无）',
+    'data.formats.hint':
+      '仅对此项目限制组件可使用的显示格式时使用。通常保持为空即可（为空则不限制）。只要有一项，选择了既不在此列表、也不在文档“{registry}”中的格式的组件，会在诊断中显示警告（打印不会停止；指定类型等少数选择不会警告）。此列表中的格式暂不出现在组件的显示格式选择中。',
+    'data.formats.hintNumber':
+      '仅对此项目限制组件可使用的显示格式时使用。通常保持为空即可（为空则不限制）。只要有一项，选择了既不在此列表、不在文档“{registry}”中、也不是以金额显示的两种格式（{symbol}、{name}）的格式的组件，会在诊断中显示警告（打印不会停止；指定类型等少数选择不会警告）。此列表中的格式暂不出现在组件的显示格式选择中。',
+    'data.formats.hintCurrency':
+      '仅对此项目限制组件可使用的显示格式时使用。通常保持为空即可（为空则不限制）。只要有一项，选择了既不在此列表、不在文档“{registry}”中、也不是三种金额格式（{default}、{symbol}、{name}）的格式的组件，会在诊断中显示警告（打印不会停止；指定类型等少数选择不会警告）。此列表中的格式暂不出现在组件的显示格式选择中。',
+    'data.formats.readonly.shape': '此列表以定义文件中直接书写的形式保存，因此无法在这里更改。',
+    'data.formats.readonly.too_long':
+      '此列表太长，无法在这里编辑（有显示名称最多 {labeled} 项，无显示名称最多 {bare} 项）。',
+    'data.formats.refusal.empty': '请输入 ID。',
+    'data.formats.refusal.duplicate': '列表中已有此 ID。',
+    'data.formats.refusal.full':
+      '此列表最多可容纳有显示名称的 {labeled} 项，或无显示名称的 {bare} 项。',
+    'data.formats.id': 'ID',
+    'data.formats.label': '显示名称',
+    'data.formats.idOf': '“{id}”的 ID',
+    'data.formats.labelOf': '“{id}”的显示名称',
+    'data.formats.moveUp': '将格式“{id}”上移',
+    'data.formats.moveDown': '将格式“{id}”下移',
+    'data.formats.remove': '删除格式“{id}”',
+    'data.formats.add': '添加格式',
+    'data.formats.addSubmit': '添加',
+    'data.otherTools': '供其他工具使用的信息',
+    'data.otherTools.intro':
+      'AI 和其他制作工具读取的提示。不会影响此 Designer 的显示、布局或打印结果。',
+    'data.otherTools.align': '放置时建议的对齐方式',
+    'data.otherTools.align.none': '未指定',
+    'data.otherTools.align.left': '左',
+    'data.otherTools.align.center': '居中',
+    'data.otherTools.align.right': '右',
+    'data.otherTools.bold': '建议粗体',
+    'data.otherTools.weightNow':
+      '当前字重：{value}（直接写在定义文件中的值；选择“{bold}”会替换它）',
+    'data.otherTools.emptyNote': '选择“未指定”且未勾选粗体时，这两项不写入定义。',
+    'data.otherTools.kept': '此处的其他设置（{keys}）保持不变。',
+    'data.otherTools.unreadable':
+      '此项目的“{section}”以定义文件中直接书写的形式保存，因此无法在这里更改。',
+    'data.otherTools.rowTitle': '一行的名称',
+    'data.otherTools.rowTitleHint': '表格中一行的称呼（例如：明细行）。留空则不写入定义。',
     'data.example': '生成示例时使用的例子',
     'data.exampleSaved': '保存到定义 · 所有变体共用',
     'data.exampleReadonly': '此例子的写法无法在这里编辑。如需修改，请直接改写定义。',

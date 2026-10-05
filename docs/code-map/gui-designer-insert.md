@@ -754,10 +754,14 @@ the panes never import each other.
 - `data/editorProps.ts` — `DataEditorViewProps` (optionality carries
   meaning: an absent callback disarms its affordance; `definitionsInferred`
   = the base is the stub inferred from the sample data; `restructure` =
-  the host's `RestructureHost` rename / remove, absent = no controls).
+  the host's `RestructureHost` rename / remove, absent = no controls;
+  `formatCatalog` = `DataFormatCatalog` {`catalog`, `atCurrency`}, the
+  Designer's `derived.formats` via `FullscreenView`, absent = no variants and
+  no samples).
 - `data/detailContext.ts` — `DetailContext`, the one bundle the right
   pane's parts take (tree, texts, editability, commit callbacks, `onSelect`,
-  the template's `RefIndex`, the nested `RestructureActions`).
+  the template's `RefIndex`, the nested `RestructureActions`, the optional
+  `formats` catalog).
 - `data/EditorBand.tsx` — the band over the right pane: project-scoped
   (`data.projectScopeHint`, wins) or inferred-from-sample (workshop with a
   real stub — never at blank start, where nothing was inferred).
@@ -787,7 +791,7 @@ the panes never import each other.
 - `data/DetailPane.tsx` — the right pane for ONE node: `NodeHeader` (keyed
   by the node) over the part that kind edits: `RootDetail`,
   `ContainerDetail`, or a field's `DefinitionForm` + `FieldRules` +
-  `SampleSection` + `ExampleField`. STATELESS, not keyed by selection — each
+  `SampleSection` + `ExampleField` + `FieldOtherTools`. STATELESS, not keyed by selection — each
   uncontrolled input is keyed by its own value; a control added here needs the
   same value-key, and a part holding per-node STATE is keyed by the node.
 - `data/NodeHeader.tsx` — label, kind chip for a container, 「データ名:」 the
@@ -814,7 +818,8 @@ the panes never import each other.
   `version` (版（技術者向け）+ hint); no required flag.
 - `data/ContainerDetail.tsx` — a group / table / list: label, description,
   `RequiredToggle`, a table's 行数の範囲 or a list's 個数の範囲 + its
-  `ListElementSection`, and (group / table) 中の項目 link buttons that select.
+  `ListElementSection`, (group / table) 中の項目 link buttons that select,
+  and a table's `TableOtherTools` (1 行の呼び名 = `items.title`).
 - `data/RequiredToggle.tsx` — the 必須 checkbox over `requiredOp`, and what
   it does by PARENT: a top-level item warns in 診断 whenever missing; inside a
   group only when that group is in the data; in a table, per row (the
@@ -837,12 +842,74 @@ the panes never import each other.
   its base type reads (値の範囲 / 文字数の範囲; none for yes / no).
 - `data/RuleInput.tsx` — the commit-on-blur input every value-rule control
   shares: value key + reseed nonce, Enter commits (IME-guarded), a refusal
-  shown under it via `aria-describedby` until the next commit.
+  shown under it via `aria-describedby` until the next commit; an optional
+  `list` names a `<datalist>` of suggestions.
 - `data/RangeFields.tsx` — one 下限 〜 上限 pair by `RangeKind` (bound /
   length / rows / count / the two element kinds), unit word, the
   consequence line, the lower-above-upper warning; `useNumberRefusal`.
-- `data/DisplaySection.tsx` — 「表示」 holding `PlaceholderField` (also the
-  list element's).
+- `data/DisplaySection.tsx` — 「表示」 by the field's ENGINE type
+  (`engineFieldType`; `date-time` → the catalog's `datetime`): currency →
+  `CurrencyField` + `PrecisionField`; percentage → `PrecisionField`; quantity →
+  `UnitField`; then `DefaultFormatField`, the places-are-standard note when a
+  precision override sits beside engine samples, `PlaceholderField` (also the
+  list element's — a list prints values verbatim, so it gets nothing else),
+  and `DisplayFormatsList` for date / datetime / currency or wherever a list
+  is authored. Samples come from `useFieldCatalog`.
+- `data/displayRules.ts` — `readDisplayRules` (currency / precision / unit /
+  displayFormat as shown), verbatim `currencyOp` / `unitOp` /
+  `displayFormatOp` (empty clears, unchanged authors nothing), `precisionOp`
+  (`parseNumber` whole + non-negative, then `over_max` past `MAX_PRECISION` =
+  20, the formatter's clamp — drift-pinned; the wire is a u32).
+- `data/DisplayKeyFields.tsx` — `CurrencyField` (suggests
+  `CURRENCY_SUGGESTIONS`; hint names the document's ロケール・通貨 section by
+  its label key) and `UnitField` (suggests `UNIT_SUGGESTIONS` = `item`, the
+  only key every pack declares — drift-pinned; an undeclared key gets the
+  prints-verbatim / warns / printing-goes-on note); `data/PrecisionField.tsx`
+  — the places entry with its refusals beside it.
+- `data/DefaultFormatField.tsx` — the `displayFormat` picker: the catalog's
+  variants for the type (`variantOptions` + the type's own `default` last, in
+  the engine's order and origin) through `FormatOptionList` (label + wire
+  spelling + engine sample) plus the field's own declared ids not in it (as
+  written, first), 「文書の表示形式に従う」 clears; a FIXED type shows
+  its rendering and no picker; a type with no variants shows nothing unless
+  authored; an authored out-of-set value stays selected verbatim.
+- `data/useFieldCatalog.ts` — the catalog a field reads: the document's, or
+  `atCurrency(field currency)`'s (none while it is on its way or when it
+  cannot be had — including while the document does not parse, which
+  `catalogAtCurrency` checks with a `validate` of the copy because the engine
+  still answers an unparseable template at the locale's own currency).
+- `data/displayFormatsModel.ts` — `displayFormats` as rows `{id, label}`:
+  `readFormats` (read-only for any shape it could not write back as found —
+  not a list, unknown keys, non-string id/label, `label: ''` — or past the
+  snippet budget: `FORMATS_MAX_LABELED` 85 / `FORMATS_MAX_BARE` 127), edits as
+  ONE whole-list `putValue` (`addFormat` / `setFormatId` / `setFormatLabel` /
+  `removeFormat` / `moveFormat`; empty label omits `label`; empty /
+  duplicate id refused; the last removal removes the key).
+- `data/DisplayFormatsList.tsx` / `data/DisplayFormatRow.tsx` /
+  `data/DisplayFormatAdd.tsx` — 「表示形式の絞り込み」 behind a disclosure
+  button (`aria-expanded`, the `AdvancedStyles` idiom) that starts CLOSED
+  (「（なし）」 when empty); offered where the catalog names variants for the
+  type (its non-fixed entries) or a list is authored; the hint says an empty
+  list restricts nothing, that with entries a placement picking a format
+  outside it and the document's named formats warns (validate's
+  `unknown_format`; a currency field adds the three money formats, a plain
+  number the two that promote it, named by their label keys; a few picks such
+  as a type name never warn), and that the placement picker does not offer it
+  yet; a list repeating an id is read-only; rows like the choices' (`touch-none` grip, ▲▼, focus
+  follows — `data/useMoveFocus.ts`, shared with `EnumRows`), the catalog's
+  spellings as id suggestions; a read-only host gets no controls and no
+  empty list.
+- `data/recommendedStyle.ts` — the hints for other tools: `readRecommended`
+  (a map, or `unreadable` for a scalar / list / null bag), `textAlignOp` /
+  `boldOp` MERGE into the bag (other keys kept; clearing the bag's last own
+  key removes the bag; an unreadable bag is never written), `TEXT_ALIGNS` /
+  `BOLD` drift-pinned to the style enums; `readRowTitle` / `rowTitleOp`
+  (a table's `items.title`, never creating `items`).
+- `data/OtherToolsSection.tsx` — 「ほかのツール向けの情報」, open: a field's
+  alignment as the shared `ui/Segmented` radio group (指定なし first, an
+  authored out-of-set value as its own segment) + 太字をおすすめ (another hand-written weight shown
+  until replaced, and the "clearing writes nothing" line withheld while it
+  remains) + the kept-keys line; a table's 1 行の呼び名.
 - `data/ExampleField.tsx` — under the sample value: the generation example,
   typed per field (a select for yes / no), badged as saved in the definitions
   for every variant; editable on a sample-read-only host.
@@ -858,8 +925,9 @@ the panes never import each other.
 - `data/EnumRows.tsx` / `data/EnumRow.tsx` — the member rows (pointer-only
   `touch-none` grip + up / down buttons, both at 2+ rows, the rule list's
   shape; focus follows a moved member; a mistyped member marked
-  `aria-invalid`); `data/useEnumDrag.ts` — the drag over the shared
-  `usePointerReorder` (release = one op; the line reads the same resolve).
+  `aria-invalid`); `data/useEnumDrag.ts` — `useRowDrag(move, dispatch)`, the
+  row lists' drag over the shared `usePointerReorder` (release = one op; the
+  line reads the same resolve), and `useEnumDrag` over it.
 - `data/EnumAddRow.tsx` — the add draft (typed value + printed text, 追加 /
   IME-guarded Enter; a refusal stays with the draft).
 - `data/EnumNotices.tsx` — labels-ignored (a field: names 型 / 表すもの by
@@ -896,7 +964,9 @@ the panes never import each other.
 - `data/editorModel.ts` — the editor's pure helpers: `SELECTION_SEP`
   (U+0000 written as an ESCAPE — joins a node's keys path into its
   display-only id; ops address the node's `keysPath` instead; the escape also
-  keeps the file out of binary grep classification), `sampleKind`, `readAt`
+  keeps the file out of binary grep classification), `sampleKind`,
+  `commitSampleValue` (a fresh top-level scalar is created, an existing leaf
+  set in place), `readAt`
   and `arrayLength` (by params PATH), `TYPE_OPTION_KEY`, `KIND_OPTION_KEY`
   (the add form's seven kinds; the two repeating kinds are explained by
   example).

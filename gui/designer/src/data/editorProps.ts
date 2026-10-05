@@ -8,6 +8,7 @@
 // keeps definitions editable while the engineer-owned params are not).
 
 import type { Op } from '@shojiku/designer-core';
+import type { FormatCatalog } from '../engine/types';
 import type { FieldTarget } from '../palette/model';
 import type { ValueSynth } from '../sample/synth';
 import type { DefsNode } from './defsTree';
@@ -61,7 +62,10 @@ export interface DataEditorViewProps {
    * references and every sample variant's key (`useDefsRestructure`). Absent =
    * no rename / delete controls. */
   readonly restructure?: RestructureHost;
-  /** The template's `formats:` registry names, for the format picker. */
+  /** The engine's format catalog for this document — what each display variant
+   * renders, for a field's default display format and its samples. Absent = the
+   * pickers offer no variants and show no samples. */
+  readonly formatCatalog?: DataFormatCatalog;
   /** Open with this field already selected (entered from its own gear). The
    * view mounts fresh every time it opens — `EditorBody` swaps the whole grid
    * out — so this seeds the selection once and the user is free to navigate
@@ -69,6 +73,14 @@ export interface DataEditorViewProps {
    * simply selects nothing. */
   readonly initialSelection?: FieldTarget;
   readonly onClose: () => void;
+}
+
+/** The format catalog as the editor reads it (`useFormatCatalog`): the
+ * document's own, and one as if the document's currency were another code — a
+ * field with its own currency is sampled in that currency. */
+export interface DataFormatCatalog {
+  readonly catalog: FormatCatalog | null;
+  readonly atCurrency: (code: string) => Promise<FormatCatalog | null>;
 }
 
 /** The host's rename / delete over the three documents; each returns the

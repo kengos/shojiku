@@ -1319,6 +1319,7 @@ export const zhTw: LanguageCatalog = {
     'data.refusal.not_whole': '請輸入整數。',
     'data.refusal.negative': '請輸入 0 或更大的數。',
     'data.refusal.too_large': '數字太大。',
+    'data.refusal.over_max': '請輸入 {max} 或更小的數。',
     'data.range.bound': '值的範圍',
     'data.range.length': '字數範圍',
     'data.range.rows': '列數範圍',
@@ -1339,6 +1340,71 @@ export const zhTw: LanguageCatalog = {
     'data.placeholderHint':
       '資料中沒有此項目或為空時，會列印這裡填寫的文字（若放置的元件指定了空白時的文字，則使用該文字）。',
     'data.none': '（無）',
+    'data.display.currency': '貨幣',
+    'data.display.currencyPlaceholder': '文件貨幣',
+    'data.display.currencyHint':
+      '留空則不寫入定義；使用文件「{section}」中的貨幣（未設定時使用地區設定的預設貨幣）。',
+    'data.display.precision': '小數位數',
+    'data.display.precisionCurrency': '貨幣標準',
+    'data.display.precisionStandard': '標準',
+    'data.display.precisionHintCurrency':
+      '0 到 {max}。留空則不寫入定義；使用各貨幣的標準位數（日圓 0 位，美元 2 位）。',
+    'data.display.precisionHint':
+      '0 到 {max}。留空則不寫入定義；最多列印到小數點後 2 位（省略結尾的 0）。',
+    'data.display.unit': '單位',
+    'data.display.unitHint': '留空則不寫入定義；使用預設單位 {unit}。',
+    'data.display.unitHintSamples': '留空則不寫入定義；使用預設單位 {unit}（{samples}）。',
+    'data.display.unitUnknown':
+      '「{unit}」會照原樣作為單位列印。此地區設定沒有這個單位，因此診斷會顯示警告。列印不會停止。',
+    'data.display.defaultFormat': '預設顯示格式',
+    'data.display.defaultFormatHint':
+      '頁面上的元件未選擇格式時使用。選擇「{follow}」時不寫入定義。',
+    'data.display.follow': '依照文件的{section}',
+    'data.display.fixed': '此類項目無法選擇預設格式',
+    'data.display.authored': '手動寫入的值（不在清單中）',
+    'data.display.chooseFormat': '選擇預設顯示格式',
+    'data.display.sampleDigits': '範例使用標準小數位數；此項目以 {places} 位列印。',
+    'data.formats.title': '顯示格式限制（{count} 項）',
+    'data.formats.titleNone': '顯示格式限制（無）',
+    'data.formats.hint':
+      '僅針對此項目限制元件可使用的顯示格式時使用。通常保持空白即可（空白則不限制）。只要有一項，選擇了既不在此清單、也不在文件「{registry}」中的格式的元件，會在診斷中顯示警告（列印不會停止；指定類型等少數選擇不會警告）。此清單中的格式暫不出現在元件的顯示格式選擇中。',
+    'data.formats.hintNumber':
+      '僅針對此項目限制元件可使用的顯示格式時使用。通常保持空白即可（空白則不限制）。只要有一項，選擇了既不在此清單、不在文件「{registry}」中、也不是以金額顯示的兩種格式（{symbol}、{name}）的格式的元件，會在診斷中顯示警告（列印不會停止；指定類型等少數選擇不會警告）。此清單中的格式暫不出現在元件的顯示格式選擇中。',
+    'data.formats.hintCurrency':
+      '僅針對此項目限制元件可使用的顯示格式時使用。通常保持空白即可（空白則不限制）。只要有一項，選擇了既不在此清單、不在文件「{registry}」中、也不是三種金額格式（{default}、{symbol}、{name}）的格式的元件，會在診斷中顯示警告（列印不會停止；指定類型等少數選擇不會警告）。此清單中的格式暫不出現在元件的顯示格式選擇中。',
+    'data.formats.readonly.shape': '此清單以定義檔中直接撰寫的形式儲存，因此無法在這裡變更。',
+    'data.formats.readonly.too_long':
+      '此清單太長，無法在這裡編輯（有顯示名稱最多 {labeled} 項，無顯示名稱最多 {bare} 項）。',
+    'data.formats.refusal.empty': '請輸入 ID。',
+    'data.formats.refusal.duplicate': '清單中已有此 ID。',
+    'data.formats.refusal.full':
+      '此清單最多可容納有顯示名稱的 {labeled} 項，或無顯示名稱的 {bare} 項。',
+    'data.formats.id': 'ID',
+    'data.formats.label': '顯示名稱',
+    'data.formats.idOf': '「{id}」的 ID',
+    'data.formats.labelOf': '「{id}」的顯示名稱',
+    'data.formats.moveUp': '將格式「{id}」上移',
+    'data.formats.moveDown': '將格式「{id}」下移',
+    'data.formats.remove': '刪除格式「{id}」',
+    'data.formats.add': '新增格式',
+    'data.formats.addSubmit': '新增',
+    'data.otherTools': '供其他工具使用的資訊',
+    'data.otherTools.intro':
+      'AI 和其他製作工具讀取的提示。不會影響此 Designer 的顯示、配置或列印結果。',
+    'data.otherTools.align': '配置時建議的對齊方式',
+    'data.otherTools.align.none': '未指定',
+    'data.otherTools.align.left': '左',
+    'data.otherTools.align.center': '置中',
+    'data.otherTools.align.right': '右',
+    'data.otherTools.bold': '建議粗體',
+    'data.otherTools.weightNow':
+      '目前字重：{value}（直接寫在定義檔中的值；選擇「{bold}」會取代它）',
+    'data.otherTools.emptyNote': '選擇「未指定」且未勾選粗體時，這兩項不寫入定義。',
+    'data.otherTools.kept': '此處的其他設定（{keys}）保持不變。',
+    'data.otherTools.unreadable':
+      '此項目的「{section}」以定義檔中直接撰寫的形式儲存，因此無法在這裡變更。',
+    'data.otherTools.rowTitle': '一列的名稱',
+    'data.otherTools.rowTitleHint': '表格中一列的稱呼（例如：明細列）。留空則不寫入定義。',
     'data.example': '產生範例時使用的例子',
     'data.exampleSaved': '儲存到定義 · 所有變體共用',
     'data.exampleReadonly': '此例子的寫法無法在這裡編輯。如需修改，請直接改寫定義。',

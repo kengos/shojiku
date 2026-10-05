@@ -96,18 +96,32 @@ const sections = () =>
   screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.replace('?', '').trim());
 
 describe('a field pane', () => {
-  it('orders definition, choices, display, range and sample', () => {
+  it('orders definition, choices, display, range, sample and the hints for other tools', () => {
     draw();
     select('状態');
-    expect(sections()).toEqual(['定義', '選択肢', '表示', '文字数の範囲', 'サンプル値']);
+    expect(sections()).toEqual([
+      '定義',
+      '選択肢',
+      '表示',
+      '文字数の範囲',
+      'サンプル値',
+      'ほかのツール向けの情報',
+    ]);
     select('合計');
-    expect(sections()).toEqual(['定義', '選択肢', '表示', '値の範囲', 'サンプル値']);
+    expect(sections()).toEqual([
+      '定義',
+      '選択肢',
+      '表示',
+      '値の範囲',
+      'サンプル値',
+      'ほかのツール向けの情報',
+    ]);
   });
 
   it('shows no choices and no range on a yes / no field with none authored', () => {
     draw();
     select('入金');
-    expect(sections()).toEqual(['定義', '表示', 'サンプル値']);
+    expect(sections()).toEqual(['定義', '表示', 'サンプル値', 'ほかのツール向けの情報']);
   });
 });
 

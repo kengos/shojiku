@@ -1,5 +1,6 @@
 // The value-rule sections of a FIELD's pane, between its definition form and its
-// sample value: 選択肢 (`EnumSection`), 表示 (the blank-form placeholder) and the
+// sample value: 選択肢 (`EnumSection`), 表示 (`DisplaySection` — currency, places,
+// unit, default format, placeholder, declared formats) and the
 // range its type reads — 値の範囲 for a number, 文字数の範囲 for text, none for a
 // yes / no field. A range key of the OTHER kind left behind by a type change is
 // inert (the engine reads a range only for its own base type) and stays as it is.
@@ -30,7 +31,7 @@ export function FieldRules({
   return (
     <>
       <EnumSection {...edit} definitions={ctx.definitions} type={type} format={def.format} />
-      <DisplaySection {...edit} placeholder={rules.placeholder} />
+      <DisplaySection keysPath={keysPath} def={def} placeholder={rules.placeholder} ctx={ctx} />
       {type === 'boolean' ? null : (
         <RangeFields {...edit} kind={numeric ? 'bound' : 'length'} ranges={rules.ranges} />
       )}

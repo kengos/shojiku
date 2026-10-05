@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   CURRENCY_SUGGESTIONS,
@@ -132,5 +134,26 @@ describe('CURRENCY_SUGGESTIONS', () => {
     for (const code of CURRENCY_SUGGESTIONS) {
       expect(code).toMatch(/^[A-Z]{3}$/);
     }
+  });
+  it('are exactly the codes every shipped locale pack carries display data for', () => {
+    const dirs = ['../../engine/formatter/src/lang/builtin', '../../packs/locale'];
+    const packs = dirs.flatMap((dir) =>
+      readdirSync(resolve(process.cwd(), dir))
+        .filter((name) => /^[a-z]{2,3}-[a-z]{2}\.yml$/.test(name))
+        .map((name) => readFileSync(resolve(process.cwd(), dir, name), 'utf8')),
+    );
+    // Positive control: the walk reached the two builtins and the five packs.
+    expect(packs.length).toBe(7);
+    const codesOf = (pack: string): Set<string> => {
+      const block = pack.split(/^currency:\n/m)[1]?.split(/^\S/m)[0] ?? '';
+      return new Set([...block.matchAll(/^ {2}([A-Z]{3}):$/gm)].map((m) => m[1]));
+    };
+    const sets = packs.map(codesOf);
+    for (const set of sets) {
+      expect(set.size).toBeGreaterThan(0);
+    }
+    const everywhere = [...sets[0]].filter((code) => sets.every((set) => set.has(code)));
+    expect([...CURRENCY_SUGGESTIONS].sort()).toEqual(everywhere.sort());
+    expect(CURRENCY_SUGGESTIONS[0]).toBe('JPY');
   });
 });

@@ -104,6 +104,27 @@ platform binaries.
   printed. The item tree marks a field limited to choices. Editing a list of choices rewrites that list whole, so a
   comment written inside it is not kept; the rest of the file is untouched.
 
+- **How a data item shows can be set in the data-item editor.** An amount
+  takes its own **通貨** — suggested from the currencies every shipped locale
+  knows, any code accepted — and **小数の桁数** (0 to 20, also on a percentage);
+  a quantity takes its **単位**, and a unit no locale declares prints as written
+  with a warning in Diagnostics. **既定の表示形式** picks what an item shows as
+  when the placed item picks no format, from the formats the engine offers for
+  that kind of item, each beside what it prints — in the item's own currency
+  when it has one. **表示形式の絞り込み** declares the formats an item's
+  placements may use; the editor says that an empty list restricts nothing,
+  that once it has entries an item on the page using a format outside it (and
+  outside the document's named formats, apart from a few such as a type name)
+  warns in Diagnostics, and that the format picker does not offer the list
+  yet. **ほかのツール向けの情報** records a
+  suggested alignment and bold for other authoring tools — nothing in the
+  Designer or the printed page reads it — keeping anything else written
+  there, and a table's name for one row. A value written by hand
+  that the controls do not offer is kept as it is until another is picked.
+  The document's own 通貨 suggestions now list the same currencies, so KRW and
+  HKD, which no locale prints a symbol or name for, are no longer suggested
+  (they can still be typed).
+
 - **Text and box styling that could only be written by hand can now be set in
   the Designer.** Every item's Style tab is now folded into sections — Text,
   Overflow, Fill and border (a line's or a form mark's own stroke), Opacity and

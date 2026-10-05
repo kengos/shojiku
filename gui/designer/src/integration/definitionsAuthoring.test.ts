@@ -25,6 +25,14 @@
 // agree; the longest lists the editor can write must parse; and a member typed
 // by the field must match exactly the data of that type.
 //
+// The DISPLAY keys cross it as well: every display op (currency, decimal
+// places, unit, default and declared display formats — the longest lists the
+// editor can write included —, the hints for other tools and a table's row
+// name) parses; the hint bag merge keeps a hand-written key; the engine's
+// format catalog over the currency-swapped document copy samples the field's
+// own currency; and a declared format list narrows the placement picks that
+// validate, exactly as the list's hint says.
+//
 // The designer unit suites build their expectations on fixtures they wrote
 // themselves; this is the suite that crosses the seam. Loads the
 // `make engine:wasm` pkg exactly as the other integration suites do.
@@ -45,10 +53,13 @@ import {
 import { ADD_KINDS, addFieldPlan } from '../data/defsPlan';
 import { type DefsNode, readDefsTree } from '../data/defsTree';
 import { planDelete } from '../data/deletePlan';
+import { addFormat, type FormatRow, writeFormats } from '../data/displayFormatsModel';
+import { currencyOp, displayFormatOp, precisionOp, unitOp } from '../data/displayRules';
 import { SELECTION_SEP } from '../data/editorModel';
 import { addRow, moveRow, removeRow, setRowLabel, setRowValue } from '../data/enumEdits';
 import { type EnumRow, writeRows } from '../data/enumModel';
 import { labelsIgnored } from '../data/enumRules';
+import { boldOp, readRecommended, rowTitleOp, textAlignOp } from '../data/recommendedStyle';
 import { refsUnder } from '../data/refs/match';
 import { type DataRef, DOCUMENT_OWNER } from '../data/refs/types';
 import { readDataRefs } from '../data/refs/walk';
@@ -57,6 +68,8 @@ import { findNode } from '../data/treeModel';
 import { exampleOp, placeholderOp, rangeOp } from '../data/valueRules';
 import type { EngineTransport } from '../engine/transport';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
+import { withCurrency } from '../formats/currencyCopy';
+import { catalogAtCurrency } from '../hooks/useFormatCatalog';
 
 const REPO = new URL('../../../../', import.meta.url);
 const PKG_JS = new URL('engine/wasm/pkg/shojiku_wasm.js', REPO);
@@ -223,6 +236,32 @@ const VALUE_RULE_CASES: readonly [string, Op][] = [
   ['a yes / no example', taken(exampleOp(at('paid'), 'boolean', undefined, 'true'))],
 ];
 
+const formatRows = (count: number, label: string): FormatRow[] =>
+  Array.from({ length: count }, (_, i) => ({ id: `v${i}`, label }));
+
+/** The display op builders' output — each a document the engine reads. */
+const DISPLAY_CASES: readonly [string, Op][] = [
+  ['a currency code', must(currencyOp(at('total'), '', 'USD'))],
+  ['no decimal places', taken(precisionOp(at('total'), '', '0'))],
+  ['the most decimal places', taken(precisionOp(at('total'), '', '20'))],
+  ['a negative-zero decimal places (written as 0)', taken(precisionOp(at('total'), '', '-0'))],
+  ['the pack unit', must(unitOp(at('count'), '', 'item'))],
+  ['a unit the packs do not declare', must(unitOp(at('count'), '', 'kg'))],
+  ['a default display format', must(displayFormatOp(at('total'), '', 'symbol'))],
+  ['the longest labeled format list', taken(writeFormats(at('total'), formatRows(85, 'n')))],
+  ['the longest unlabeled format list', taken(writeFormats(at('total'), formatRows(127, '')))],
+  [
+    'a mixed format list',
+    taken(addFormat({ keysPath: at('memo'), rows: [{ id: 'long', label: 'Long' }] }, 'x', '')),
+  ],
+  [
+    'an alignment hint (creating the bag)',
+    must(textAlignOp(at('total'), readRecommended(BASE, at('total')), 'right')),
+  ],
+  ['a bold hint', must(boldOp(at('memo'), readRecommended(BASE, at('memo')), true))],
+  ['a table row name', must(rowTitleOp(ITEMS, '', 'Line'))],
+];
+
 const CASES: readonly [string, Op][] = [
   ...ADD_KINDS.flatMap((kind): [string, Op][] => [
     [`add a ${kind} at the top`, added([], kind)],
@@ -255,6 +294,7 @@ const CASES: readonly [string, Op][] = [
   ['bump the root version', must(versionOp([], '0.2.0', '0.3.0'))],
   ['clear the root version', must(versionOp([], '0.2.0', ''))],
   ...VALUE_RULE_CASES,
+  ...DISPLAY_CASES,
 ];
 
 let transport: EngineTransport;
@@ -548,5 +588,96 @@ describe('choices, read by the real engine', () => {
       ).length;
     expect(await mismatch({ total: 1, count: 7, memo: '001' })).toBe(0);
     expect(await mismatch({ total: 1, count: 8, memo: '1' })).toBe(2);
+  });
+});
+
+describe('the display keys, read by the real engine', () => {
+  const STYLED = BASE.replace(
+    '  memo:\n    type: string\n',
+    '  memo:\n    type: string\n    recommendedStyle: { color: red }\n',
+  );
+
+  it('merges a hint into a hand-written bag, keeping its key, and both parse', async () => {
+    const read = readRecommended(STYLED, at('memo'));
+    const text = applyDefinitionOps(STYLED, [must(textAlignOp(at('memo'), read, 'center'))]);
+    expect(readRecommended(text, at('memo'))).toMatchObject({
+      textAlign: 'center',
+      others: ['color'],
+    });
+    const diagnostics = await transport.validate(TEMPLATE, '{}', text);
+    expect(errors(diagnostics.items)).toEqual([]);
+  });
+
+  it('removes the bag with its last hint, and the result parses', async () => {
+    const text = applyDefinitionOps(BASE, [
+      must(textAlignOp(at('memo'), readRecommended(BASE, at('memo')), 'left')),
+    ]);
+    const cleared = applyDefinitionOps(text, [
+      must(textAlignOp(at('memo'), readRecommended(text, at('memo')), '')),
+    ]);
+    expect(cleared).toBe(BASE);
+  });
+
+  it('fails the whole file on what the editor refuses (the suite can fail)', async () => {
+    for (const bad of ['    precision: 1.5\n', '    displayFormats: [ { id: a, lable: b } ]\n']) {
+      const text = BASE.replace('    format: currency\n', `    format: currency\n${bad}`);
+      const diagnostics = await transport.validate(TEMPLATE, '{}', text);
+      expect(errors(diagnostics.items), bad).not.toEqual([]);
+    }
+  });
+
+  it('samples the field currency through the document copy the editor asks about', async () => {
+    const ask = transport.formatCatalog;
+    if (ask === undefined) {
+      throw new Error('the wasm transport answers the format catalog');
+    }
+    const symbol = async (template: string) => {
+      const catalog = await ask.call(transport, template, []);
+      const currency = catalog.types.find((entry) => entry.fieldType === 'currency');
+      return currency?.variants.find((variant) => variant.spelling === 'symbol')?.samples ?? [];
+    };
+    // The document names no currency, so it samples in the en-US pack's own
+    // default (USD); the copy asks about euros — through the hook's own helper.
+    const eurCatalog = await catalogAtCurrency(transport, TEMPLATE, 'EUR');
+    const eur =
+      eurCatalog?.types
+        .find((entry) => entry.fieldType === 'currency')
+        ?.variants.find((variant) => variant.spelling === 'symbol')?.samples ?? [];
+    expect(eur).toHaveLength(1);
+    expect(eur[0]).toMatch(/€1,234,567\.89/);
+    const own = await symbol(TEMPLATE);
+    expect(own[0]).not.toContain('€');
+  });
+
+  it('answers no catalog for a document the engine cannot parse, rather than the locale currency', async () => {
+    const broken = TEMPLATE.replace('    type: flow\n', '    type: flow\n    lable: x\n');
+    expect(withCurrency(broken, 'EUR')).not.toBeNull();
+    // The engine itself still answers that copy — at the pack's own currency.
+    const ask = transport.formatCatalog;
+    const raw = await ask?.call(transport, withCurrency(broken, 'EUR') as string, []);
+    const rawSymbol = raw?.types
+      .find((entry) => entry.fieldType === 'currency')
+      ?.variants.find((variant) => variant.spelling === 'symbol')?.samples[0];
+    expect(rawSymbol).not.toContain('€');
+    await expect(catalogAtCurrency(transport, broken, 'EUR')).resolves.toBeNull();
+  });
+
+  it('narrows the placement picks that validate once formats are declared, as the hint says', async () => {
+    const placed = TEMPLATE.replace(
+      '      - { type: text, data: { key: total } }',
+      '      - { type: text, data: { key: issued, format: wareki } }',
+    );
+    const withList = (list: string) =>
+      BASE.replace(
+        '  memo:\n',
+        `  issued: { type: string, format: date, displayFormats: ${list} }\n  memo:\n`,
+      );
+    const unknown = async (defs: string) =>
+      (await transport.validate(placed, '{}', defs)).items.filter(
+        (d) => d.code === 'unknown_format',
+      ).length;
+    expect(await unknown(withList('[]'))).toBe(0);
+    expect(await unknown(withList('[ { id: long } ]'))).toBe(1);
+    expect(await unknown(withList('[ { id: long }, { id: wareki } ]'))).toBe(0);
   });
 });

@@ -1,7 +1,8 @@
 // The right pane of the data-item editor for ONE selected tree node: a header
 // (its label, kind, data name, usage and the rename / delete actions —
 // `NodeHeader`) over the part that node kind edits — a field's definition form,
-// value rules (`FieldRules`), sample value(s) and generation example, a
+// value rules (`FieldRules`), sample value(s) and generation example and its
+// hints for other tools (`OtherToolsSection`), a
 // container's form, or the root's.
 //
 // The pane holds no state: every uncontrolled input inside is keyed by its OWN
@@ -19,6 +20,7 @@ import { ExampleField } from './ExampleField';
 import { sampleKind } from './editorModel';
 import { FieldRules } from './FieldRules';
 import { NodeHeader } from './NodeHeader';
+import { FieldOtherTools } from './OtherToolsSection';
 import { RootDetail } from './RootDetail';
 import { SampleSection } from './SampleSection';
 import { parentOf } from './treeModel';
@@ -57,6 +59,13 @@ export function DetailPane({
           keysPath={node.keysPath}
           type={def.type === '' ? 'string' : def.type}
           example={readValueRules(ctx.definitions, node.keysPath).example}
+          editable={ctx.editable}
+          onDefEdit={ctx.onDefEdit}
+        />
+        <FieldOtherTools
+          key={`${node.id}:tools`}
+          definitions={ctx.definitions}
+          keysPath={node.keysPath}
           editable={ctx.editable}
           onDefEdit={ctx.onDefEdit}
         />

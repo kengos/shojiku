@@ -1623,8 +1623,10 @@ conditional rules the next section owns).
 ## Document defaults + named styles
 
 - `panel/defaultsModel.ts` — pure (`readDefaultsView`,
-  `INHERITED_STYLE_FIELDS` (drift-guarded subset), `CURRENCY_SUGGESTIONS`,
-  root-addressed `defaults.*` op builders).
+  `INHERITED_STYLE_FIELDS` (drift-guarded subset), `CURRENCY_SUGGESTIONS`
+  — the 25 codes every shipped locale pack carries display data for, pinned
+  to the packs' `currency:` tables and shared with the data-item editor's
+  通貨 entry —, root-addressed `defaults.*` op builders).
 - The pure `styles:` registry model, split by what each half can be
   refused BY. Every op is keyed by a literal `keys` path
   (`['styles', name, …]`), safe for hostile names.

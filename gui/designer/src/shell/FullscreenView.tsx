@@ -103,6 +103,7 @@ export function FullscreenView({
       undoDefinitionHint={undoHint(peekDefsHistory(defs.defsHistory)?.companion, t)}
       restructure={restructure}
       initialSelection={views.dataFocus ?? undefined}
+      formatCatalog={derived.formats}
       onClose={views.closeDataView}
     />
   );

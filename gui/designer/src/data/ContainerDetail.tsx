@@ -1,7 +1,8 @@
 // The right pane for a CONTAINER — an object group, a table or a list: its label,
 // description and required flag, a table's 行数の範囲 or a list's 個数の範囲, a
 // list's 「1 つ 1 つの値」 (its element schema), and (group / table) links to the
-// items inside, which select them in the tree.
+// items inside, which select them in the tree; a table's 「ほかのツール向けの情報」
+// (what one row is called).
 //
 // Inputs are uncontrolled + commit-on-blur and keyed by their own value (the
 // pane is not keyed by the selection), and each op builder returns null when
@@ -14,6 +15,7 @@ import { descriptionOp, readDefinitionField, titleOp } from './definitionsEdit';
 import type { DefsNode } from './defsTree';
 import type { DetailContext } from './detailContext';
 import { ListElementSection } from './ListElementSection';
+import { TableOtherTools } from './OtherToolsSection';
 import { RangeFields } from './RangeFields';
 import { RequiredToggle } from './RequiredToggle';
 import { nodeLabel, parentOf } from './treeModel';
@@ -92,6 +94,15 @@ export function ContainerDetail({
             ))}
           </ul>
         </div>
+      ) : null}
+      {node.kind === 'table' ? (
+        <TableOtherTools
+          key={`${node.id}:tools`}
+          definitions={ctx.definitions}
+          keysPath={node.keysPath}
+          editable={ctx.editable}
+          onDefEdit={ctx.onDefEdit}
+        />
       ) : null}
     </section>
   );

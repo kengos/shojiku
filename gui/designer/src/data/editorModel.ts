@@ -1,10 +1,11 @@
 // Pure helpers behind the data-item editor's view: the selection-id separator,
 // the definition→widget-kind mapping, the type/kind label tables, and the params
-// readers the panes share. DOM-free and Designer-free, so the hostile arms (a
+// readers the panes share, and the sample-value commit. DOM-free and Designer-free, so the hostile arms (a
 // params leaf that is not a scalar, an array key that holds something else) are
 // unit-testable without rendering.
 
-import { parseParams, type SampleKind, type SamplePath } from '../sample/model';
+import { addSampleField, setSampleValue } from '../sample/edit';
+import { coerceSampleValue, parseParams, type SampleKind, type SamplePath } from '../sample/model';
 import type { DefinitionType } from './definitionsEdit';
 import type { AddKind } from './defsPlan';
 
@@ -91,4 +92,26 @@ export function readAt(params: string, path: SamplePath): string {
 export function arrayLength(params: string, path: SamplePath): number {
   const arr = walkParams(params, path);
   return Array.isArray(arr) ? arr.length : 0;
+}
+
+/** The params after committing a sample value: a fresh top-level scalar is
+ * CREATED (a field added to definitions has no params value yet); an existing
+ * leaf is set in place. The same text when nothing changed. */
+export function commitSampleValue(
+  params: string,
+  path: SamplePath,
+  kind: SampleKind,
+  raw: string,
+): string {
+  const value = coerceSampleValue(kind, raw);
+  const root = parseParams(params);
+  if (
+    path.length === 1 &&
+    typeof path[0] === 'string' &&
+    root !== null &&
+    !Object.hasOwn(root, path[0])
+  ) {
+    return addSampleField(params, path[0], value);
+  }
+  return setSampleValue(params, path, value);
 }

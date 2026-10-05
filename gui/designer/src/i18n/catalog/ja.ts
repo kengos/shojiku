@@ -1426,6 +1426,7 @@ export const ja: LanguageCatalog = {
     'data.refusal.not_whole': '整数を入れてください。',
     'data.refusal.negative': '0 以上の数を入れてください。',
     'data.refusal.too_large': '数が大きすぎます。',
+    'data.refusal.over_max': '{max} 以下の数を入れてください。',
     'data.range.bound': '値の範囲',
     'data.range.length': '文字数の範囲',
     'data.range.rows': '行数の範囲',
@@ -1446,6 +1447,75 @@ export const ja: LanguageCatalog = {
     'data.placeholderHint':
       'データにこの項目が無いときや空のとき、ここに入れた文字を印字します（配置した部品で空欄のときの文字を指定していれば、そちらが使われます）。',
     'data.none': '（なし）',
+    'data.display.currency': '通貨',
+    'data.display.currencyPlaceholder': '文書の通貨',
+    'data.display.currencyHint':
+      '空欄なら定義に書きません。文書の「{section}」の通貨（未設定ならロケールの既定）になります。',
+    'data.display.precision': '小数の桁数',
+    'data.display.precisionCurrency': '通貨の標準',
+    'data.display.precisionStandard': '標準',
+    'data.display.precisionHintCurrency':
+      '0〜{max}。空欄なら定義に書きません。通貨ごとの標準の桁数（円は 0、ドルは 2）になります。',
+    'data.display.precisionHint':
+      '0〜{max}。空欄なら定義に書きません。小数第 2 位まで（末尾の 0 は省く）で印字します。',
+    'data.display.unit': '単位',
+    'data.display.unitHint': '空欄なら定義に書きません。既定の単位 {unit} になります。',
+    'data.display.unitHintSamples':
+      '空欄なら定義に書きません。既定の単位 {unit}（{samples}）になります。',
+    'data.display.unitUnknown':
+      '「{unit}」がそのまま単位として印字されます。ロケールに用意された単位ではないため診断に警告が出ますが、印刷は止まりません。',
+    'data.display.defaultFormat': '既定の表示形式',
+    'data.display.defaultFormatHint':
+      '部品の側で形式を選んでいないときに使います。「{follow}」なら定義に書きません。',
+    'data.display.follow': '文書の{section}に従う',
+    'data.display.fixed': 'この種類の項目では、既定は選べません',
+    'data.display.authored': '手で書かれた値（一覧にない形式）',
+    'data.display.chooseFormat': '既定の表示形式を選ぶ',
+    'data.display.sampleDigits':
+      '見本の桁数は標準のままです。この項目は {places} 桁で印字されます。',
+    'data.formats.title': '表示形式の絞り込み（{count} 件）',
+    'data.formats.titleNone': '表示形式の絞り込み（なし）',
+    'data.formats.hint':
+      '部品で選ぶ表示形式を、この項目だけ制限したいときに使います。普段は空のままで構いません（空なら制限しません）。1 件でも入れると、この一覧にも文書の「{registry}」にもない形式を選んでいる部品で、診断に警告が出ます（印刷は止まりません。型の指定など、警告にならない選び方も一部あります）。この一覧の形式は、部品の表示形式の選択肢にはまだ出ません。',
+    'data.formats.hintNumber':
+      '部品で選ぶ表示形式を、この項目だけ制限したいときに使います。普段は空のままで構いません（空なら制限しません）。1 件でも入れると、この一覧にも文書の「{registry}」にも金額として出す 2 形式（{symbol}・{name}）にもない形式を選んでいる部品で、診断に警告が出ます（印刷は止まりません。型の指定など、警告にならない選び方も一部あります）。この一覧の形式は、部品の表示形式の選択肢にはまだ出ません。',
+    'data.formats.hintCurrency':
+      '部品で選ぶ表示形式を、この項目だけ制限したいときに使います。普段は空のままで構いません（空なら制限しません）。1 件でも入れると、この一覧にも文書の「{registry}」にも金額の 3 形式（{default}・{symbol}・{name}）にもない形式を選んでいる部品で、診断に警告が出ます（印刷は止まりません。型の指定など、警告にならない選び方も一部あります）。この一覧の形式は、部品の表示形式の選択肢にはまだ出ません。',
+    'data.formats.readonly.shape':
+      'この一覧は、定義ファイルに直接書かれた形のため、ここでは変更できません。',
+    'data.formats.readonly.too_long':
+      'この一覧は長すぎて、ここでは編集できません（表示名ありで {labeled} 件、表示名なしで {bare} 件まで）。',
+    'data.formats.refusal.empty': '呼び出し名を入れてください。',
+    'data.formats.refusal.duplicate': 'この呼び出し名はもう一覧にあります。',
+    'data.formats.refusal.full':
+      'この一覧に入れられるのは、表示名ありなら {labeled} 件、表示名なしなら {bare} 件までです。',
+    'data.formats.id': '呼び出し名',
+    'data.formats.label': '表示名',
+    'data.formats.idOf': '「{id}」の呼び出し名',
+    'data.formats.labelOf': '「{id}」の表示名',
+    'data.formats.moveUp': '表示形式「{id}」を上へ移動',
+    'data.formats.moveDown': '表示形式「{id}」を下へ移動',
+    'data.formats.remove': '表示形式「{id}」を削除',
+    'data.formats.add': '表示形式を追加',
+    'data.formats.addSubmit': '追加',
+    'data.otherTools': 'ほかのツール向けの情報',
+    'data.otherTools.intro':
+      'AI やほかの作成ツールが読むヒントです。この Designer の表示・配置にも、印刷結果にも影響しません。',
+    'data.otherTools.align': '配置するときのおすすめ: 文字揃え',
+    'data.otherTools.align.none': '指定なし',
+    'data.otherTools.align.left': '左',
+    'data.otherTools.align.center': '中央',
+    'data.otherTools.align.right': '右',
+    'data.otherTools.bold': '太字をおすすめ',
+    'data.otherTools.weightNow':
+      'いまの文字の太さ: {value}（定義ファイルに直接書かれた値です。「{bold}」にすると置き換わります）',
+    'data.otherTools.emptyNote': '「指定なし」で太字もなければ、この 2 つは定義に書きません。',
+    'data.otherTools.kept': 'このほかの指定（{keys}）は、そのまま残します。',
+    'data.otherTools.unreadable':
+      'この項目の「{section}」は、定義ファイルに直接書かれた形のため、ここでは変更できません。',
+    'data.otherTools.rowTitle': '1 行の呼び名',
+    'data.otherTools.rowTitleHint':
+      '表の 1 行を何と呼ぶかです（例: 明細行）。空欄なら定義に書きません。',
     'data.example': 'サンプルを生成するときの例',
     'data.exampleSaved': '定義に保存 · 全バリアント共通',
     'data.exampleReadonly':

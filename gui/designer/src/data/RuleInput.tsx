@@ -1,5 +1,6 @@
 // The commit-on-blur text input every value-rule control shares — a range bound,
-// the placeholder, the example, a choice's value or printed text.
+// the placeholder, the example, a choice's value or printed text, and the display
+// keys (a currency code or unit with suggestions, the decimal places).
 //
 // Uncontrolled and keyed by its committed value plus a reseed nonce bumped on
 // every committing blur (`panel/useReseedKey`): an accepted entry that does not
@@ -26,6 +27,8 @@ export interface RuleInputProps {
   readonly invalid?: boolean;
   /** Extra classes for the refusal line (a narrow input lets it run wider). */
   readonly messageClassName?: string;
+  /** The id of a `<datalist>` of suggestions (free entry stays possible). */
+  readonly list?: string;
 }
 
 export function RuleInput({
@@ -37,6 +40,7 @@ export function RuleInput({
   onCommit,
   invalid,
   messageClassName,
+  list,
 }: RuleInputProps) {
   const [key, reseed] = useReseedKey(value);
   const [refusal, setRefusal] = useState<string | null>(null);
@@ -52,6 +56,7 @@ export function RuleInput({
         className={`${INPUT} ${className ?? ''}`}
         defaultValue={value}
         placeholder={placeholder}
+        list={list}
         readOnly={!editable}
         onBlur={(event) => {
           if (!editable || event.currentTarget.value === value) {

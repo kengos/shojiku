@@ -19,15 +19,16 @@
 
 import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n/context';
-import { addSampleField, addSampleRow, removeSampleRow, setSampleValue } from '../sample/edit';
+import { addSampleRow, removeSampleRow } from '../sample/edit';
 import { fillMissingParams, missingParamKeys } from '../sample/generate';
-import { coerceSampleValue, parseParams, type SampleKind, type SamplePath } from '../sample/model';
+import type { SampleKind, SamplePath } from '../sample/model';
 import { IconButton } from '../ui/Button';
 import { IconClose } from '../ui/icons';
 import { DetailPane } from './DetailPane';
 import { readDefsTree } from './defsTree';
 import type { DetailContext } from './detailContext';
 import { EditorBand } from './EditorBand';
+import { commitSampleValue } from './editorModel';
 import type { DataEditorViewProps } from './editorProps';
 import { ItemListPane } from './ItemListPane';
 import { readDataRefs } from './refs/walk';
@@ -55,6 +56,7 @@ export function DataEditorView({
   undoDefinitionHint,
   restructure,
   initialSelection,
+  formatCatalog,
   onClose,
 }: DataEditorViewProps) {
   const { t } = useI18n();
@@ -90,21 +92,8 @@ export function DataEditorView({
     select: setSelectedId,
   });
 
-  // Commit a sample value: a fresh top-level scalar is CREATED (a field added to
-  // definitions has no params value yet); an existing leaf is set in place.
   const commitSample = (path: SamplePath, kind: SampleKind, raw: string) => {
-    const value = coerceSampleValue(kind, raw);
-    const root = parseParams(params);
-    if (
-      path.length === 1 &&
-      typeof path[0] === 'string' &&
-      root !== null &&
-      !Object.hasOwn(root, path[0])
-    ) {
-      onParamsChange(addSampleField(params, path[0], value));
-      return;
-    }
-    const next = setSampleValue(params, path, value);
+    const next = commitSampleValue(params, path, kind, raw);
     if (next !== params) {
       onParamsChange(next);
     }
@@ -125,6 +114,7 @@ export function DataEditorView({
     onSelect: setSelectedId,
     usage: refs,
     restructure: actions,
+    formats: formatCatalog,
   });
 
   return (
