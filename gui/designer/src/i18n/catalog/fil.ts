@@ -1227,6 +1227,7 @@ export const fil: LanguageCatalog = {
     'data.refusal.not_whole': 'Maglagay ng buong numero.',
     'data.refusal.negative': 'Maglagay ng 0 o higit pa.',
     'data.refusal.too_large': 'Masyadong malaki ang numerong iyan.',
+    'data.refusal.over_max': 'Maglagay ng {max} o mas mababa.',
     'data.range.bound': 'Saklaw ng halaga',
     'data.range.length': 'Saklaw ng haba',
     'data.range.rows': 'Saklaw ng bilang ng hilera',
@@ -1249,6 +1250,77 @@ export const fil: LanguageCatalog = {
     'data.placeholderHint':
       'Kapag wala o walang laman ang item na ito sa data, ito ang ipi-print (maliban kung may sariling teksto kapag blangko ang inilagay na item).',
     'data.none': '(wala)',
+    'data.display.currency': 'Pera',
+    'data.display.currencyPlaceholder': 'Pera ng dokumento',
+    'data.display.currencyHint':
+      'Kapag blangko, walang isusulat sa definitions; ang perang nasa “{section}” ng dokumento ang gagamitin (ang default ng locale kapag wala).',
+    'data.display.precision': 'Bilang ng decimal',
+    'data.display.precisionCurrency': 'Pamantayan ng pera',
+    'data.display.precisionStandard': 'Pamantayan',
+    'data.display.precisionHintCurrency':
+      '0 hanggang {max}. Kapag blangko, walang isusulat sa definitions; ang karaniwang bilang ng decimal ng bawat pera ang gagamitin (0 sa yen, 2 sa dolyar).',
+    'data.display.precisionHint':
+      '0 hanggang {max}. Kapag blangko, walang isusulat sa definitions; hanggang 2 decimal ang ipi-print, walang trailing zero.',
+    'data.display.unit': 'Yunit',
+    'data.display.unitHint':
+      'Kapag blangko, walang isusulat sa definitions; ang default na yunit na {unit} ang gagamitin.',
+    'data.display.unitHintSamples':
+      'Kapag blangko, walang isusulat sa definitions; ang default na yunit na {unit} ang gagamitin ({samples}).',
+    'data.display.unitUnknown':
+      'Ipi-print ang “{unit}” bilang yunit, gaya ng pagkakasulat. Walang ganitong yunit ang locale, kaya magpapakita ng babala ang Diagnostics. Hindi hihinto ang pag-print.',
+    'data.display.defaultFormat': 'Default na anyo ng pagpapakita',
+    'data.display.defaultFormatHint':
+      'Ginagamit kapag walang piniling anyo ang item na nakalagay sa pahina. Kapag “{follow}”, walang isusulat sa definitions.',
+    'data.display.follow': 'Sundin ang {section} ng dokumento',
+    'data.display.fixed': 'Walang default na mapipili para sa ganitong item',
+    'data.display.authored': 'Isinulat nang mano-mano; wala sa listahang ito',
+    'data.display.chooseFormat': 'Piliin ang default na anyo ng pagpapakita',
+    'data.display.sampleDigits':
+      'Karaniwang bilang ng decimal ang ginagamit ng mga halimbawa; ipi-print ang item na ito nang may {places}.',
+    'data.formats.title': 'Paghihigpit sa anyo ({count})',
+    'data.formats.titleNone': 'Paghihigpit sa anyo (wala)',
+    'data.formats.hint':
+      'Gamitin ito para higpitan, para sa item na ito lamang, ang mga anyong magagamit ng mga nakalagay na item. Karamihan ng item ay iniiwang walang laman ito (walang laman = walang paghihigpit). Kapag may isang entry, magpapakita ng babala sa Diagnostics ang nakalagay na item na gumagamit ng anyong wala sa listahang ito at wala sa “{registry}” ng dokumento (hindi hihinto ang pag-print; may ilang pili, gaya ng pagpangalan ng type, na hindi nagbababala). Hindi pa iniaalok ng pagpili ng anyo ng mga nakalagay na item ang listahang ito.',
+    'data.formats.hintNumber':
+      'Gamitin ito para higpitan, para sa item na ito lamang, ang mga anyong magagamit ng mga nakalagay na item. Karamihan ng item ay iniiwang walang laman ito (walang laman = walang paghihigpit). Kapag may isang entry, magpapakita ng babala sa Diagnostics ang nakalagay na item na gumagamit ng anyong wala sa listahang ito, wala sa “{registry}” ng dokumento at hindi isa sa dalawang anyong nagpapakita nito bilang halaga ({symbol}, {name}) (hindi hihinto ang pag-print; may ilang pili, gaya ng pagpangalan ng type, na hindi nagbababala). Hindi pa iniaalok ng pagpili ng anyo ng mga nakalagay na item ang listahang ito.',
+    'data.formats.hintCurrency':
+      'Gamitin ito para higpitan, para sa item na ito lamang, ang mga anyong magagamit ng mga nakalagay na item. Karamihan ng item ay iniiwang walang laman ito (walang laman = walang paghihigpit). Kapag may isang entry, magpapakita ng babala sa Diagnostics ang nakalagay na item na gumagamit ng anyong wala sa listahang ito, wala sa “{registry}” ng dokumento at hindi isa sa tatlong anyo ng halaga ({default}, {symbol}, {name}) (hindi hihinto ang pag-print; may ilang pili, gaya ng pagpangalan ng type, na hindi nagbababala). Hindi pa iniaalok ng pagpili ng anyo ng mga nakalagay na item ang listahang ito.',
+    'data.formats.readonly.shape':
+      'Direktang nakasulat ang listahang ito sa definitions file sa anyong hindi mababago ng editor na ito.',
+    'data.formats.readonly.too_long':
+      'Masyadong mahaba ang listahang ito para i-edit dito (hanggang {labeled} na may display name, o {bare} na wala).',
+    'data.formats.refusal.empty': 'Maglagay ng ID.',
+    'data.formats.refusal.duplicate': 'Nasa listahan na ang ID na ito.',
+    'data.formats.refusal.full':
+      'Hanggang {labeled} anyo na may display name, o {bare} na wala, ang kasya sa listahang ito.',
+    'data.formats.id': 'ID',
+    'data.formats.label': 'Display name',
+    'data.formats.idOf': 'ID ng “{id}”',
+    'data.formats.labelOf': 'Display name ng “{id}”',
+    'data.formats.moveUp': 'Itaas ang anyong “{id}”',
+    'data.formats.moveDown': 'Ibaba ang anyong “{id}”',
+    'data.formats.remove': 'Alisin ang anyong “{id}”',
+    'data.formats.add': 'Magdagdag ng anyo',
+    'data.formats.addSubmit': 'Idagdag',
+    'data.otherTools': 'Mga pahiwatig para sa ibang tool',
+    'data.otherTools.intro':
+      'Mga pahiwatig na binabasa ng AI at ng ibang authoring tool. Wala silang binabago sa Designer na ito o sa naka-print na output.',
+    'data.otherTools.align': 'Iminumungkahing alignment kapag inilagay',
+    'data.otherTools.align.none': 'Hindi nakatakda',
+    'data.otherTools.align.left': 'Kaliwa',
+    'data.otherTools.align.center': 'Gitna',
+    'data.otherTools.align.right': 'Kanan',
+    'data.otherTools.bold': 'Imungkahi ang bold',
+    'data.otherTools.weightNow':
+      'Kasalukuyang kapal ng font: {value} (direktang nakasulat sa definitions file; papalitan ito ng “{bold}”).',
+    'data.otherTools.emptyNote':
+      'Kapag “Hindi nakatakda” at walang bold, hindi isusulat sa definitions ang dalawang ito.',
+    'data.otherTools.kept': 'Mananatili ang ibang setting dito ({keys}).',
+    'data.otherTools.unreadable':
+      'Direktang nakasulat ang “{section}” ng item na ito sa definitions file sa anyong hindi mababago ng editor na ito.',
+    'data.otherTools.rowTitle': 'Tawag sa isang hilera',
+    'data.otherTools.rowTitleHint':
+      'Ang pangalan ng isang hilera ng talahanayang ito (halimbawa, “line item”). Kapag blangko, walang isusulat sa definitions.',
     'data.example': 'Halimbawa para sa ginagawang sample',
     'data.exampleSaved': 'Naka-save sa depinisyon · lahat ng variant',
     'data.exampleReadonly':

@@ -424,7 +424,12 @@ lists name the destructured stable fields, never `editor` itself.
   answer that arrives after the key moved on, and probes against the LIVE
   text through a ref rather than the text the callback closed over.
   A transport with no `formatCatalog` simply leaves it `null` — a
-  capability gate by PRESENCE, never a version sniff.
+  capability gate by PRESENCE, never a version sniff. `atCurrency(code)` asks
+  for the catalog of a COPY of the document whose `defaults.currency` is
+  `code` (`formats/currencyCopy.ts`, via the op layer), so a data item with
+  its own currency is sampled in it; answers kept per code (≤
+  `CURRENCY_CATALOGS_KEPT`), dropped when the key or the transport moves;
+  `null` when nothing can answer.
 - `hooks/useHostNotify.ts` — report `text` through `onChange` after every
   edit that CHANGES it (handler in a ref).
 - `hooks/useMultiSelect.ts` — canvas multi-select + align/distribute: the

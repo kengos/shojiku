@@ -8,11 +8,11 @@
 // member to its new row.
 
 import type { Op } from '@shojiku/designer-core';
-import { useEffect, useRef, useState } from 'react';
 import { EnumRow } from './EnumRow';
 import { type EnumTarget, moveRow } from './enumEdits';
 import type { EnumEdit } from './enumModel';
 import { useEnumDrag } from './useEnumDrag';
+import { useMoveFocus } from './useMoveFocus';
 import { shownScalar } from './valueRules';
 
 export interface EnumRowsProps {
@@ -26,25 +26,12 @@ export interface EnumRowsProps {
 export function EnumRows({ target, editable, apply, dispatch }: EnumRowsProps) {
   const movable = editable && target.rows.length > 1;
   const drag = useEnumDrag(target, dispatch);
-  const listRef = useRef<HTMLUListElement>(null);
-  const [focus, setFocus] = useState<{ index: number; button: 'up' | 'down' } | null>(null);
-
-  useEffect(() => {
-    if (focus === null) {
-      return;
-    }
-    const row = listRef.current?.children.item(focus.index);
-    const other = focus.button === 'up' ? 'down' : 'up';
-    const pick = (button: string) =>
-      row?.querySelector<HTMLButtonElement>(`[data-move="${button}"]:not(:disabled)`);
-    (pick(focus.button) ?? pick(other))?.focus();
-    setFocus(null);
-  }, [focus]);
+  const { listRef, moved } = useMoveFocus();
 
   const move = (index: number, step: -1 | 1) => {
     // Slot math: the slot BEFORE the row above, or AFTER the row below.
     dispatch(moveRow(target, index, step === -1 ? index - 1 : index + 2));
-    setFocus({ index: index + step, button: step === -1 ? 'up' : 'down' });
+    moved(index, step);
   };
 
   return (

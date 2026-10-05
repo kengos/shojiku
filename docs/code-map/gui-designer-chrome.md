@@ -274,6 +274,11 @@ resolved style.
   field is required and authoring without it produces a template the
   engine cannot parse) and `refOps.ts` (rename/delete, one transactional
   batch, refused whole).
+- `formats/currencyCopy.ts` — `withCurrency(text, code)`: the document with
+  ONE change, `defaults.currency` set through a designer-core `setScalar`
+  (quoted, never spliced; creates `defaults:` when absent); `null` when the
+  text does not parse or `defaults` is not a map. Feeds
+  `useFormatCatalog.atCurrency`; never reaches the editor or the file.
 - `formats/usage.ts` — `buildFormatUsage(text, paletteGroups)` →
   `FormatUsage {refs, truncated}`, plus the `FormatRef` shape. THREE
   roots, which is what makes it differ from the style walk it otherwise

@@ -22,24 +22,38 @@ export const INHERITED_STYLE_FIELDS: readonly StyleFieldSpec[] = STYLE_FIELDS.fi
   (field) => !NON_INHERITED_AT_ROOT.has(field.key),
 );
 
-/** Curated ISO 4217 currency-code suggestions for the picker (the SWATCHES
- * precedent — free entry stays possible through the combo). Every entry is a
- * 3-letter uppercase code (pinned by a unit test). */
+/** The currency codes the pickers suggest — the document currency and a data
+ * item's own: every code the shipped locale packs carry display data for (a
+ * symbol and a name), so a suggested code never prints as a bare code with an
+ * `unknown currency` warning. Free entry stays possible through the combo. JPY
+ * first, then the packs' own order. Drift-pinned against every pack's
+ * `currency:` table (`defaultsModel.test.ts`). */
 export const CURRENCY_SUGGESTIONS: readonly string[] = [
   'JPY',
   'USD',
   'EUR',
   'GBP',
-  'CNY',
-  'KRW',
-  'TWD',
-  'HKD',
-  'SGD',
   'AUD',
   'CAD',
-  'INR',
+  'SGD',
   'PHP',
+  'VND',
+  'IDR',
+  'MYR',
+  'XOF',
+  'PLN',
+  'HUF',
+  'TRY',
+  'BRL',
+  'MXN',
+  'KES',
+  'TWD',
+  'CNY',
   'THB',
+  'SAR',
+  'AED',
+  'JOD',
+  'INR',
 ];
 
 /** The document-defaults display view. `locale` / `currency` are the bare wire

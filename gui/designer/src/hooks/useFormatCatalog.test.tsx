@@ -5,7 +5,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EngineTransport } from '../engine/transport';
 import type { Diagnostics, FormatCatalog } from '../engine/types';
-import { useFormatCatalog } from './useFormatCatalog';
+import { CURRENCY_CATALOGS_KEPT, useFormatCatalog } from './useFormatCatalog';
 
 const CATALOG: FormatCatalog = {
   types: [
@@ -167,5 +167,92 @@ describe('useFormatCatalog', () => {
     answers[0]({ types: [], probes: [] });
     await Promise.resolve();
     expect(result.current.catalog).toBeNull();
+  });
+
+  describe('atCurrency', () => {
+    const DOC = 'defaults:\n  currency: JPY\nsections: {}\n';
+
+    it('asks about a copy whose currency is the code, leaving the document alone', async () => {
+      const { transport, fn } = withCatalog();
+      const { result } = renderHook(() => useFormatCatalog({ transport, text: DOC, key: 'k' }));
+      await waitFor(() => expect(result.current.catalog).toBe(CATALOG));
+      await expect(result.current.atCurrency('USD')).resolves.toBe(CATALOG);
+      expect(fn).toHaveBeenLastCalledWith(DOC.replace('JPY', 'USD'), []);
+    });
+
+    it('answers a repeated code from what it kept, and asks again once the key moves', async () => {
+      const { transport, fn } = withCatalog();
+      const { result, rerender } = renderHook(
+        ({ key }) => useFormatCatalog({ transport, text: DOC, key }),
+        { initialProps: { key: 'one' } },
+      );
+      await waitFor(() => expect(fn).toHaveBeenCalledTimes(1));
+      await result.current.atCurrency('USD');
+      await result.current.atCurrency('USD');
+      expect(fn).toHaveBeenCalledTimes(2);
+      rerender({ key: 'two' });
+      await waitFor(() => expect(fn).toHaveBeenCalledTimes(3));
+      await result.current.atCurrency('USD');
+      expect(fn).toHaveBeenCalledTimes(4);
+    });
+
+    it('keeps a bounded number of codes, dropping the oldest', async () => {
+      const { transport, fn } = withCatalog();
+      const { result } = renderHook(() => useFormatCatalog({ transport, text: DOC, key: 'k' }));
+      await waitFor(() => expect(fn).toHaveBeenCalledTimes(1));
+      for (let i = 0; i <= CURRENCY_CATALOGS_KEPT; i += 1) {
+        await result.current.atCurrency(`C${i}`);
+      }
+      expect(fn).toHaveBeenCalledTimes(CURRENCY_CATALOGS_KEPT + 2);
+      await result.current.atCurrency(`C${CURRENCY_CATALOGS_KEPT}`);
+      expect(fn).toHaveBeenCalledTimes(CURRENCY_CATALOGS_KEPT + 2);
+      await result.current.atCurrency('C0');
+      expect(fn).toHaveBeenCalledTimes(CURRENCY_CATALOGS_KEPT + 3);
+    });
+
+    it('answers null for a copy the engine cannot parse, without asking for its catalog', async () => {
+      const fn = vi.fn(async () => CATALOG);
+      const transport: EngineTransport = {
+        ...baseTransport(),
+        validate: async () => ({
+          items: [
+            {
+              severity: 'error',
+              code: 'parse_error',
+              category: 'parse',
+              message: 'unknown field',
+              args: {},
+            },
+          ],
+        }),
+        formatCatalog: fn,
+      };
+      const { result } = renderHook(() => useFormatCatalog({ transport, text: DOC, key: 'k' }));
+      await waitFor(() => expect(fn).toHaveBeenCalledTimes(1));
+      await expect(result.current.atCurrency('USD')).resolves.toBeNull();
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('answers null without a transport query, a usable copy, or an answer', async () => {
+      const bare = renderHook(() =>
+        useFormatCatalog({ transport: baseTransport(), text: DOC, key: 'k' }),
+      );
+      await expect(bare.result.current.atCurrency('USD')).resolves.toBeNull();
+      const { transport, fn } = withCatalog();
+      const { result } = renderHook(() =>
+        useFormatCatalog({ transport, text: 'defaults: 3\n', key: 'k' }),
+      );
+      await waitFor(() => expect(fn).toHaveBeenCalledTimes(1));
+      await expect(result.current.atCurrency('USD')).resolves.toBeNull();
+      expect(fn).toHaveBeenCalledTimes(1);
+      const failing = {
+        ...baseTransport(),
+        formatCatalog: vi.fn(async (): Promise<FormatCatalog> => {
+          throw new Error('down');
+        }),
+      };
+      const late = renderHook(() => useFormatCatalog({ transport: failing, text: DOC, key: 'k' }));
+      await expect(late.result.current.atCurrency('USD')).resolves.toBeNull();
+    });
   });
 });

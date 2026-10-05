@@ -5,6 +5,7 @@
 import type { Op } from '@shojiku/designer-core';
 import type { SampleKind, SamplePath } from '../sample/model';
 import type { DefsNode } from './defsTree';
+import type { DataFormatCatalog } from './editorProps';
 import type { RefIndex } from './refs/types';
 import type { RestructureRefusal } from './renamePlan';
 
@@ -44,4 +45,6 @@ export interface DetailContext {
   /** Every data reference in the template (`null` = it could not be read). */
   readonly usage: RefIndex | null;
   readonly restructure?: RestructureActions;
+  /** The engine's format catalog (absent = no variants, no samples). */
+  readonly formats?: DataFormatCatalog;
 }

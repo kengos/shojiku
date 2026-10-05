@@ -1416,6 +1416,7 @@ export const en: LanguageCatalog = {
     'data.refusal.not_whole': 'Enter a whole number.',
     'data.refusal.negative': 'Enter 0 or more.',
     'data.refusal.too_large': 'That number is too large.',
+    'data.refusal.over_max': 'Enter {max} or less.',
     'data.range.bound': 'Value range',
     'data.range.length': 'Length range',
     'data.range.rows': 'Row count range',
@@ -1436,6 +1437,77 @@ export const en: LanguageCatalog = {
     'data.placeholderHint':
       'When this item is missing or empty in the data, this text prints instead (unless the placed item sets its own text when blank).',
     'data.none': '(none)',
+    'data.display.currency': 'Currency',
+    'data.display.currencyPlaceholder': 'Document currency',
+    'data.display.currencyHint':
+      'Leave it blank and nothing is written to the definitions; the currency set in the document’s “{section}” applies (the locale default when none is set).',
+    'data.display.precision': 'Decimal places',
+    'data.display.precisionCurrency': 'Currency standard',
+    'data.display.precisionStandard': 'Standard',
+    'data.display.precisionHintCurrency':
+      '0 to {max}. Leave it blank and nothing is written to the definitions; each currency’s standard places apply (0 for yen, 2 for dollars).',
+    'data.display.precisionHint':
+      '0 to {max}. Leave it blank and nothing is written to the definitions; up to 2 decimal places print, without trailing zeros.',
+    'data.display.unit': 'Unit',
+    'data.display.unitHint':
+      'Leave it blank and nothing is written to the definitions; the default unit {unit} applies.',
+    'data.display.unitHintSamples':
+      'Leave it blank and nothing is written to the definitions; the default unit {unit} applies ({samples}).',
+    'data.display.unitUnknown':
+      '“{unit}” prints as the unit, exactly as written. The locale has no such unit, so Diagnostics shows a warning. Printing does not stop.',
+    'data.display.defaultFormat': 'Default display format',
+    'data.display.defaultFormatHint':
+      'Used when the item placed on the page picks no format. With “{follow}”, nothing is written to the definitions.',
+    'data.display.follow': 'Follow the document’s {section}',
+    'data.display.fixed': 'No default to choose for this kind of item',
+    'data.display.authored': 'Written by hand; not in this list',
+    'data.display.chooseFormat': 'Choose the default display format',
+    'data.display.sampleDigits':
+      'The samples use the standard decimal places; this item prints with {places}.',
+    'data.formats.title': 'Format restriction ({count})',
+    'data.formats.titleNone': 'Format restriction (none)',
+    'data.formats.hint':
+      'Use this to restrict, for this item only, the formats placed items may use. Most items leave it empty (empty means no restriction). Once it has an entry, any placed item using a format that is neither in this list nor in the document’s “{registry}” gets a warning in Diagnostics (printing continues; a few picks, such as naming a type, never warn). The format picker for placed items does not offer this list yet.',
+    'data.formats.hintNumber':
+      'Use this to restrict, for this item only, the formats placed items may use. Most items leave it empty (empty means no restriction). Once it has an entry, any placed item using a format that is not in this list, not in the document’s “{registry}” and not one of the two formats that show it as an amount ({symbol}, {name}) gets a warning in Diagnostics (printing continues; a few picks, such as naming a type, never warn). The format picker for placed items does not offer this list yet.',
+    'data.formats.hintCurrency':
+      'Use this to restrict, for this item only, the formats placed items may use. Most items leave it empty (empty means no restriction). Once it has an entry, any placed item using a format that is not in this list, not in the document’s “{registry}” and not one of the three amount formats ({default}, {symbol}, {name}) gets a warning in Diagnostics (printing continues; a few picks, such as naming a type, never warn). The format picker for placed items does not offer this list yet.',
+    'data.formats.readonly.shape':
+      'This list is written directly in the definitions file in a form this editor cannot change.',
+    'data.formats.readonly.too_long':
+      'This list is too long to edit here (up to {labeled} with a display name, or {bare} without).',
+    'data.formats.refusal.empty': 'Enter an ID.',
+    'data.formats.refusal.duplicate': 'This ID is already in the list.',
+    'data.formats.refusal.full':
+      'This list can hold up to {labeled} formats with a display name, or {bare} without.',
+    'data.formats.id': 'ID',
+    'data.formats.label': 'Display name',
+    'data.formats.idOf': 'ID of “{id}”',
+    'data.formats.labelOf': 'Display name of “{id}”',
+    'data.formats.moveUp': 'Move format “{id}” up',
+    'data.formats.moveDown': 'Move format “{id}” down',
+    'data.formats.remove': 'Remove format “{id}”',
+    'data.formats.add': 'Add format',
+    'data.formats.addSubmit': 'Add',
+    'data.otherTools': 'Hints for other tools',
+    'data.otherTools.intro':
+      'Hints that AI and other authoring tools read. They change nothing in this Designer or in the printed output.',
+    'data.otherTools.align': 'Suggested alignment when placed',
+    'data.otherTools.align.none': 'Not set',
+    'data.otherTools.align.left': 'Left',
+    'data.otherTools.align.center': 'Center',
+    'data.otherTools.align.right': 'Right',
+    'data.otherTools.bold': 'Suggest bold',
+    'data.otherTools.weightNow':
+      'Current font weight: {value} (written directly in the definitions file; “{bold}” replaces it).',
+    'data.otherTools.emptyNote':
+      'With “Not set” and bold off, these two are not written to the definitions.',
+    'data.otherTools.kept': 'Other settings here ({keys}) stay as they are.',
+    'data.otherTools.unreadable':
+      'This item’s “{section}” is written directly in the definitions file in a form this editor cannot change.',
+    'data.otherTools.rowTitle': 'What one row is called',
+    'data.otherTools.rowTitleHint':
+      'The name for one row of this table (for example, “line item”). Leave it blank and nothing is written to the definitions.',
     'data.example': 'Example for generated samples',
     'data.exampleSaved': 'Saved in the definitions · all variants',
     'data.exampleReadonly':

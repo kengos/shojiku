@@ -46,8 +46,10 @@ daily users. Consequences:
   lists (an array of values) and fields at any depth — and every node is
   addressed by the keys path the tree walk FOUND it at, never one re-derived
   from a display id. Each edit (display label / type / format / description /
-  required / the root's version, and the value rules: choices, the range keys,
-  `placeholder`, `example`, and a list element's own keys under `items`) and
+  required / the root's version, the value rules: choices, the range keys,
+  `placeholder`, `example`, and a list element's own keys under `items`, and
+  the display keys: `currency`, `precision`, `unit`, `displayFormat`,
+  `displayFormats`, `recommendedStyle` and a table's `items.title`) and
   each added item (any of four scalar types or a group, table or list, into
   the root, a group or a table's rows) is a CST-preserving, root-addressed
   patch op on the definitions doc, re-applied over a base each render (a
@@ -68,6 +70,27 @@ daily users. Consequences:
   sample, never resurrects the old name. The live layer is capped at the
   restore cap (256 edits); past it an edit is refused and the rail says so,
   so a restore never drops the newest edits.
+  **The display keys** are offered by what the engine reads for the field's
+  TYPE (a placement's `symbol` / `name` pick that promotes a plain number to
+  currency reads them too, but is not where they are offered) (currency +
+  places on a currency field, places on a percentage, the
+  unit on a quantity, a default display format where the format catalog
+  names variants; a key the type does not read stays as authored, unshown).
+  The currency and unit entries SUGGEST what every shipped locale pack carries
+  display data for (25 codes; the unit `item`) and accept anything typed; the
+  places stop at the formatter's clamp (20). Every sample beside them is the
+  ENGINE's — and for a field with its own currency, the format catalog of a
+  copy of the document whose `defaults.currency` is that code, and none while
+  that copy does not parse (the engine would answer it at the locale's own
+  currency) — never the document currency's sample beside a field that prints
+  in another. A
+  declared `displayFormats` list is written whole like `enum`, and the editor
+  says that a non-empty list narrows the placement picks that validate
+  (`unknown_format`; a few — a type name, the money formats on an amount —
+  always pass) and is not yet offered by the placement picker.
+  `recommendedStyle` is written two keys at a time (`textAlign`, `fontWeight:
+  bold`), MERGED into the bag so a hand-written key survives; a bag that is
+  not a map is reported and never written.
   **Renaming a data name** rewrites, as ONE action, every reference this
   template makes to it (one template undo step; the census is the engine's
   own validate walks plus the column / header-group labels layout
