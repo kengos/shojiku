@@ -732,6 +732,44 @@ export const zhTw: LanguageCatalog = {
     'panel.tableStyle.preset.borderless': '無格線',
     'panel.tableStyle.preset.noHeaderFill': '標題不填滿',
     'panel.column.style': '欄樣式',
+    'panel.column.kind': '欄類型',
+    'panel.column.kind.text': '文字',
+    'panel.column.kind.qr_code': 'QR 碼',
+    'panel.column.kind.image': '影像',
+    'panel.column.kind.cell': '自由配置',
+    'panel.column.kindHint.qr_code':
+      'QR 碼依列高繪製。要統一大小，請選取表格，在「{section}」中固定列高。',
+    'panel.column.kindHint.image':
+      '將每列的值（影像資料或影像路徑）顯示為影像，大小隨列高縮放。切換為文字或 QR 碼時，「{fit}」設定會被刪除。',
+    'panel.column.kindHint.cell':
+      '在一列的儲存格中自由排列元素，所有列都會以相同配置重複，各元素顯示其所在列的值。',
+    'panel.column.placeholderHintQr':
+      '值為空的列會印出掃描後得到此文字的 QR 碼。此文字本身不會印出。',
+    'panel.column.styleHintDrawn':
+      'QR 碼和影像繪製於儲存格中央。{background}作用於儲存格；{textAlign}和{verticalAlign}作用於此欄的標題標籤。',
+    'panel.column.kindConfirm.title': '將欄「{label}」切換為{kind}？',
+    'panel.column.kindConfirm.titleUnnamed': '將此欄切換為{kind}？',
+    'panel.column.kindConfirm.body': '儲存格中的所有元素（{kinds}）都將被刪除。',
+    'panel.column.kindConfirm.carry':
+      '將從第一個設定了資料鍵的元素沿用資料鍵「{key}」及其顯示設定。其他元素的資料鍵不會保留。',
+    'panel.column.kindConfirm.noCarry':
+      '沒有設定資料鍵的元素，切換後此欄為空。在選擇資料鍵之前會持續顯示警告。',
+    'panel.column.kindConfirm.undo': '可用復原（{mod}Z）還原這些元素。',
+    'panel.column.kindConfirm.confirm': '刪除並切換',
+    'panel.column.kindConfirm.cancel': '取消',
+    'panel.fit.default': '（預設：放入框內）',
+    'panel.fit.contain': '放入框內（不裁切，可能留白）',
+    'panel.fit.cover': '填滿框（超出部分被裁切）',
+    'panel.fit.stretch': '延展（長寬比例改變）',
+    'panel.fit.none': '原始大小（超出框的部分被裁切）',
+    'panel.fit.unsupported': '{mode}（此引擎不支援）',
+    'panel.column.kindConfirm.kindCount': '{kind} {n} 個',
+    'panel.column.kindConfirm.otherKind': '其他',
+    'panel.column.styleHintDrawnNoValign':
+      'QR 碼和影像繪製於儲存格中央。{background}作用於儲存格；{textAlign}作用於此欄的標題標籤。',
+    'panel.column.placeholderQr': '空白列的 QR 碼內容',
+    'panel.column.kindTag': '類型：{kind}',
+    'panel.column.kindFor': '欄「{label}」的類型',
     'panel.column.styleHint':
       '套用於此欄的內文儲存格。其文字對齊也會優先於標題列，作用於此欄自己的標題文字。',
     'panel.rowConditions.remove': '刪除此規則',

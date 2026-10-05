@@ -596,6 +596,44 @@ export const fil: LanguageCatalog = {
     'panel.tableStyle.preset.borderless': 'Walang grid',
     'panel.tableStyle.preset.noHeaderFill': 'Payak na pamagat',
     'panel.column.style': 'Estilo ng kolum',
+    'panel.column.kind': 'Uri ng kolum',
+    'panel.column.kind.text': 'Teksto',
+    'panel.column.kind.qr_code': 'QR code',
+    'panel.column.kind.image': 'Larawan',
+    'panel.column.kind.cell': 'Malayang layout',
+    'panel.column.kindHint.qr_code':
+      'Iginuguhit ang mga QR code ayon sa taas ng hilera. Para magkakapareho ang laki, piliin ang talahanayan at itakda ang taas ng hilera sa “{section}”.',
+    'panel.column.kindHint.image':
+      'Ipinapakita ang value ng bawat hilera (image data o path ng larawan) bilang larawan, ayon sa taas ng hilera. Kapag pinalitan ng Teksto o QR code, nabubura ang setting na “{fit}”.',
+    'panel.column.kindHint.cell':
+      'Malayang ayusin ang mga elemento sa cell ng isang hilera; inuulit ng bawat hilera ang parehong layout, at ipinapakita ng bawat elemento ang value ng sarili nitong hilera.',
+    'panel.column.placeholderHintQr':
+      'Ang hilerang walang value ay makakakuha ng QR code na kapag na-scan ay ang tekstong ito. Hindi ipi-print ang teksto mismo.',
+    'panel.column.styleHintDrawn':
+      'Iginuguhit sa gitna ng cell ang mga QR code at larawan. Ang {background} ay para sa mga cell; ang {textAlign} at {verticalAlign} ay para sa label ng header ng kolum na ito.',
+    'panel.column.kindConfirm.title': 'Palitan ang kolum na “{label}” ng {kind}?',
+    'panel.column.kindConfirm.titleUnnamed': 'Palitan ang kolum na ito ng {kind}?',
+    'panel.column.kindConfirm.body': 'Mabubura ang lahat ng nasa cell ({kinds}).',
+    'panel.column.kindConfirm.carry':
+      'Kukunin ng kolum ang data key na “{key}” at ang mga setting ng pagpapakita nito mula sa unang elementong may data key. Hindi pinananatili ang data key ng ibang elemento.',
+    'panel.column.kindConfirm.noCarry':
+      'Walang elementong may data key sa cell, kaya magiging walang laman ang kolum. Pumili ng data key pagkapalit; may babala hangga’t hindi pa.',
+    'panel.column.kindConfirm.undo': 'Ibinabalik ng Undo ({mod}Z) ang mga elemento.',
+    'panel.column.kindConfirm.confirm': 'Burahin at palitan',
+    'panel.column.kindConfirm.cancel': 'Kanselahin',
+    'panel.fit.default': '(Default: ipagkasya sa loob)',
+    'panel.fit.contain': 'Ipagkasya sa loob (walang napuputol, maaaring may puwang)',
+    'panel.fit.cover': 'Punuin ang kahon (napuputol ang lumalampas)',
+    'panel.fit.stretch': 'Iunat (nagbabago ang proporsyon)',
+    'panel.fit.none': 'Orihinal na laki (napuputol ang lampas sa kahon)',
+    'panel.fit.unsupported': '{mode} (hindi suportado ng engine na ito)',
+    'panel.column.kindConfirm.kindCount': '{kind} ×{n}',
+    'panel.column.kindConfirm.otherKind': 'Iba pa',
+    'panel.column.styleHintDrawnNoValign':
+      'Iginuguhit sa gitna ng cell ang mga QR code at larawan. Ang {background} ay para sa mga cell; ang {textAlign} ay para sa label ng header ng kolum na ito.',
+    'panel.column.placeholderQr': 'Laman ng QR para sa blangkong hilera',
+    'panel.column.kindTag': 'Uri: {kind}',
+    'panel.column.kindFor': 'Uri ng kolum na “{label}”',
     'panel.column.styleHint':
       'Nalalapat sa mga cell ng nilalaman ng kolum na ito. Ang pagkakahanay nito ay mananaig din sa hanay ng pamagat para sa sariling label ng kolum na ito.',
     'panel.rowConditions.remove': 'Alisin ang panuntunang ito',

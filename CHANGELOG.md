@@ -15,6 +15,30 @@ platform binaries.
 
 ### Added
 
+- **A table column can print a QR code or an image, or hold freely placed
+  items, from the Designer.** The column form gains 「列の種類」 — text, QR code,
+  image or free layout — and the column sheet a row to compare and switch it
+  per column; the columns list names each non-text column's kind. A QR code or
+  image column keeps its data key, an image column picks how the picture fits
+  its cell, and a bound text or QR code column sets what a row with no value
+  prints (a QR code column prints that text as a QR code). On a QR code or
+  image column the column style offers only what reaches the page — the
+  background, and the alignment its header label takes.
+
+  Switching to free layout moves the column's binding into one item inside
+  the cell, in a frame that keeps the table's cell padding and the column's
+  vertical alignment, so the page looks the same until you add more (a row
+  rule's alignment, which can differ row by row, is not carried).
+  Switching a free-layout column back asks first, naming the column, how many
+  items the cell loses and of which kinds, and which data key the column keeps
+  (the first item with one). Leaving the image kind removes the fit setting,
+  which no other kind reads; the format and blank text stay in the file and
+  come back when the column prints text again.
+
+  The image fit picker — on image columns and on placed images — now names
+  each mode by its result (fit inside, fill the box, stretch, original size)
+  and draws it, instead of listing the engine's spellings.
+
 - **The data-item editor shows the whole data dictionary as a tree, and items
   can be added anywhere in it.** Groups, tables (a repeating set of rows) and
   lists (a repeating set of values) are rows you can select, with their items
@@ -582,6 +606,16 @@ platform binaries.
   browser's own report, with a trace and a screenshot of the moment it broke.
 
 ### Fixed
+
+- **Selecting a table column that names its kind opens the column's own form.**
+  A column with `type: qr_code`, `type: image` or a spelled-out `type: text`
+  opened the property panel of an item of that type — a QR code or an image
+  item — instead of the column form, so its label, width and binding could not
+  be edited there.
+
+- **Escape inside a dialog closes only the dialog.** It also cleared the
+  canvas selection, so pressing Escape in a confirm opened from the column
+  sheet closed the sheet along with it.
 
 - **Restoring a draft of a bundled template in the standalone app keeps its
   data-item edits.** Edits made in the data-item editor were saved with the

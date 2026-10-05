@@ -107,6 +107,10 @@ export interface BandFieldsHost {
   /** Whether the background control belongs here — false for the table's own
    * style, which the engine never paints. */
   readonly fill: boolean;
+  /** Whether the type controls (family, size, bold, italic, colour) belong
+   * here — false for a QR-code or image column, whose cells carry no text.
+   * Absent = shown. Hidden controls leave any authored value in the file. */
+  readonly typography?: boolean;
 }
 
 export interface TableBandFieldsProps {
@@ -140,36 +144,41 @@ export function TableBandFields({ ctx, path, keys, host, headerFill, onOp }: Tab
   const color = effectiveValueIn(ctx, 'color');
   const alignHint = floorHint(t, align);
   const alignHintId = `${useId()}align`;
+  const typography = host.typography !== false;
   return (
     <>
-      <BandTypeFields
-        ctx={ctx}
-        path={path}
-        keys={keys}
-        fontFamilies={host.fontFamilies}
-        onOp={onOp}
-      />
-      <BandToggle
-        ctx={ctx}
-        property="fontWeight"
-        onValue={BOLD_VALUE}
-        label={t('panel.field.bold')}
-        onToggle={(eff, on) => onOp(toggleWire(path, at('fontWeight'), eff, BOLD_VALUE, on))}
-      />
-      <BandToggle
-        ctx={ctx}
-        property="fontStyle"
-        onValue={ITALIC_VALUE}
-        label={t('panel.field.italic')}
-        onToggle={(eff, on) => onOp(toggleWire(path, at('fontStyle'), eff, ITALIC_VALUE, on))}
-      />
-      <SwatchRow
-        label={t('panel.field.color')}
-        value={color.value}
-        hint={floorHint(t, color)}
-        onCommit={(value) => onOp(comboWire(path, at('color'), color, value, false))}
-      />
-      <OriginLine effective={color} />
+      {typography ? (
+        <>
+          <BandTypeFields
+            ctx={ctx}
+            path={path}
+            keys={keys}
+            fontFamilies={host.fontFamilies}
+            onOp={onOp}
+          />
+          <BandToggle
+            ctx={ctx}
+            property="fontWeight"
+            onValue={BOLD_VALUE}
+            label={t('panel.field.bold')}
+            onToggle={(eff, on) => onOp(toggleWire(path, at('fontWeight'), eff, BOLD_VALUE, on))}
+          />
+          <BandToggle
+            ctx={ctx}
+            property="fontStyle"
+            onValue={ITALIC_VALUE}
+            label={t('panel.field.italic')}
+            onToggle={(eff, on) => onOp(toggleWire(path, at('fontStyle'), eff, ITALIC_VALUE, on))}
+          />
+          <SwatchRow
+            label={t('panel.field.color')}
+            value={color.value}
+            hint={floorHint(t, color)}
+            onCommit={(value) => onOp(comboWire(path, at('color'), color, value, false))}
+          />
+          <OriginLine effective={color} />
+        </>
+      ) : null}
       {host.fill ? (
         <>
           <SwatchRow

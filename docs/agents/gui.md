@@ -427,7 +427,7 @@ one). It rides an OPTIONAL
 `path` on `setScalar`/`setStrings`/`removeKey` (absent = the document
 root, reaching `page.*` which the structural grammar cannot spell), and
 the canvas grew deselection (empty-overlay click + window-level Escape,
-editable-guarded) so the surface is reachable. The named sizes' pt
+editable-guarded, and standing down inside a dialog) so the surface is reachable. The named sizes' pt
 dimensions + custom unit composition are pinned against the real engine
 in the wasm integration test. The rich format picker has since shipped in
 full: engine-rendered samples first, and now the MERGED variant list —
@@ -786,7 +786,25 @@ scaffold field count is hostile-bounded. The property panel grows
 **table column editing** — source rebinding, per-column label / binding
 (row-scope picker) / width, add / remove / reorder, each ONE op — and a
 canvas click on a `…columns[n]` cell opens that column's form instead
-of the unsupported note. A selected `repeat_flow` / `repeat` / `list` gets
+of the unsupported note (whatever the column's `type:` says — a column is
+never routed to an item's panel). The column form also picks what the
+column RENDERS — text, QR code, image, or free layout (a `cell:`
+sub-template) — offered by `table.column.type` / `table.column.cell` plus
+the kind the column already has; the sheet carries the same picker as a
+row. A switch is ONE batch: between the bound kinds only `type` moves,
+plus `fit` when leaving image (the key the engine warns on) — `format` and
+`placeholder` stay in the file, hidden on an image column, so a trip
+through image loses nothing. Into free layout the binding moves into one
+item, in a cell frame that carries the table's `cellPadding` and the
+column's effective vertical alignment (a sub-template gets neither on its
+own), so the page looks the same; a QR code or image item fills that frame
+(without a size the engine draws nothing). Out of it, the first item with a data key lends its
+binding back, behind a confirm naming the column, what the cell loses and
+what the column keeps. An image column picks its `fit` (the image item's
+picker, which names each mode by its result and draws it); a bound text or
+QR column sets its blank-row `placeholder` (a QR column encodes it); a QR or
+image column's style offers only the background and the alignment its
+header label takes. A selected `repeat_flow` / `repeat` / `list` gets
 a data-source section (rebind the array; a list also edits its per-entry
 text template, cleared = entries print directly), and a `repeat` also gets
 its SHEET on the placement tab in place of the box fields it does not have
@@ -1342,7 +1360,7 @@ map ([gui-designer](../code-map/gui-designer.md) /
   `extendParams`).
 - **Table columns edit horizontally**: a bottom offcanvas sheet
   (spreadsheet orientation — one grid column per table column, rows
-  for label/binding/width/format + a read-only sample preview), with
+  for label/kind/width/binding/format/alignment + a read-only sample preview), with
   an Excel/TSV paste import (clipboard → column definitions + sample
   rows over the scaffold substrate; a new untrusted-input surface with
   caps and charset guards, no formula evaluation). The sheet predates

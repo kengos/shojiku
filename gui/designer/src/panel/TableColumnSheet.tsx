@@ -1,7 +1,7 @@
 // The horizontal table-column editor shown in the bottom Offcanvas
 // sheet. Where `TableColumnsSection` stacks columns VERTICALLY in the property
 // panel, this transposes them: one column per table column, the rows being the
-// properties (label / data key / width / format) plus a read-only sample-data
+// properties (label / what it renders / width / data key / format / alignment) plus a read-only sample-data
 // preview row. Header cells drag-reorder (or Alt+Arrow) — ONE `moveItem` per
 // reorder. Thin over the SAME pure `columnsModel` + `panel/model` builders the
 // vertical section uses (AI parity: every edit is an existing op); the document
@@ -13,6 +13,7 @@ import type { EditorController } from '../editor/useEditor';
 import type { FormatCatalog } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
+import { ColumnKindCell, sheetShowsKinds } from './ColumnKindCell';
 import { ColumnSheetBindingRows } from './ColumnSheetBindingRows';
 import { columnSheetData } from './columnSheetData';
 import { readColumnsView } from './columnsModel';
@@ -96,6 +97,23 @@ export function TableColumnSheet({
           onCommit={(next) => dispatch(plainTextOp(`${columnsPath}[${index}]`, ['label'], next))}
         />
       ))}
+
+      {/* What each column renders per row — the kinds side by side. */}
+      {sheetShowsKinds(columns, capabilities) ? (
+        <>
+          <RowLabel>{t('panel.column.kind')}</RowLabel>
+          {columns.map((column, index) => (
+            <ColumnKindCell
+              // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — it reads its column afresh each render, so a reorder re-renders it in place
+              key={`k${index}`}
+              controller={controller}
+              path={`${columnsPath}[${index}]`}
+              column={column}
+              capabilities={capabilities}
+            />
+          ))}
+        </>
+      ) : null}
 
       {/* Width row. */}
       <RowLabel>{t('panel.column.width')}</RowLabel>

@@ -1,6 +1,7 @@
 // The body of the 「Columns」 section for a selected table (the heading is
-// `TableContentSections`'): source binding, then per-column label / binding /
-// format / ▲▼ reorder / delete, then add and the column-sheet opener — each
+// `TableContentSections`'): source binding, then per-column label / ▲▼ reorder /
+// delete / what a non-text column renders / binding / format, then add and the
+// column-sheet opener — each
 // ONE designer-core op = one undo step. Thin over the pure `columnsModel` +
 // the shared `panel/model` builders; document strings render through React's
 // escaping only.
@@ -128,6 +129,13 @@ export function TableColumnsSection({
                 <IconClose size={14} />
               </button>
             </div>
+            {/* What a non-text column renders, as plain text — switching it is
+                the column form's job, so nothing here looks pressable. */}
+            {column.kind === 'text' ? null : (
+              <span className="text-muted text-xs">
+                {t('panel.column.kindTag', { kind: t(`panel.column.kind.${column.kind}`) })}
+              </span>
+            )}
             <ColumnBindingFields
               controller={controller}
               path={`${tablePath}.columns[${index}]`}

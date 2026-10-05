@@ -813,6 +813,44 @@ export const ja: LanguageCatalog = {
     'panel.tableStyle.preset.borderless': '罫線なし',
     'panel.tableStyle.preset.noHeaderFill': '見出し塗りなし',
     'panel.column.style': '列のスタイル',
+    'panel.column.kind': '列の種類',
+    'panel.column.kind.text': 'テキスト',
+    'panel.column.kind.qr_code': 'QRコード',
+    'panel.column.kind.image': '画像',
+    'panel.column.kind.cell': '自由配置',
+    'panel.column.kindHint.qr_code':
+      'QRコードは行の高さに合わせて描かれます。大きさをそろえるには、表を選んで「{section}」で行の高さを固定します。',
+    'panel.column.kindHint.image':
+      '各行の値（画像データまたは画像のパス）を画像として表示します。大きさは行の高さに合わせます。テキストかQRコードに切り替えると、{fit}の設定は消えます。',
+    'panel.column.kindHint.cell':
+      '1 行分のセルに要素を自由に並べると、全行に同じ配置で繰り返されます。各要素にはその行の値が入ります。',
+    'panel.column.placeholderHintQr':
+      '値が空の行には、読み取るとこの文字になるQRコードを印字します。この文字自体は印字されません。',
+    'panel.column.styleHintDrawn':
+      'QRコード・画像はセルの中央に描かれます。{background}はセルに、{textAlign}と{verticalAlign}はこの列の見出しラベルに効きます。',
+    'panel.column.kindConfirm.title': '列「{label}」を{kind}に切り替えますか？',
+    'panel.column.kindConfirm.titleUnnamed': 'この列を{kind}に切り替えますか？',
+    'panel.column.kindConfirm.body': 'セルに置いた要素（{kinds}）はすべて削除されます。',
+    'panel.column.kindConfirm.carry':
+      'データキーが設定された最初の要素から、データキー「{key}」と表示の設定を引き継ぎます。ほかの要素のデータキーは引き継がれません。',
+    'panel.column.kindConfirm.noCarry':
+      'データキーが設定された要素がないため、切り替えた直後の列は空になります。データキーを選ぶまで警告が表示されます。',
+    'panel.column.kindConfirm.undo': '元に戻す（{mod}Z）で取り消せます。',
+    'panel.column.kindConfirm.confirm': '削除して切り替える',
+    'panel.column.kindConfirm.cancel': 'キャンセル',
+    'panel.fit.default': '（既定：枠に収める）',
+    'panel.fit.contain': '枠に収める（欠けない・余白が出ることがある）',
+    'panel.fit.cover': '枠を埋める（はみ出しは切る）',
+    'panel.fit.stretch': '引き伸ばす（縦横の比率が変わる）',
+    'panel.fit.none': '元のサイズ（枠より大きい部分は切る）',
+    'panel.fit.unsupported': '{mode}（このエンジンでは未対応）',
+    'panel.column.kindConfirm.kindCount': '{kind} {n} 個',
+    'panel.column.kindConfirm.otherKind': 'その他',
+    'panel.column.styleHintDrawnNoValign':
+      'QRコード・画像はセルの中央に描かれます。{background}はセルに、{textAlign}はこの列の見出しラベルに効きます。',
+    'panel.column.placeholderQr': '空欄時のQRコードの中身',
+    'panel.column.kindTag': '種類：{kind}',
+    'panel.column.kindFor': '列「{label}」の種類',
     'panel.column.styleHint':
       'この列の本文セルに適用されます。文字配置は、この列の見出しラベルにもヘッダー行より優先して効きます。',
     'panel.rowConditions.remove': 'このルールを削除',

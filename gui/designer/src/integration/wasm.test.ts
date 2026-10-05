@@ -48,6 +48,7 @@ import { readDefinitionsView } from '../palette/model';
 import { buildUsage, fieldUsage } from '../palette/usage';
 import { readBorder } from '../panel/borderModel';
 import { edgeOps, presetOps } from '../panel/borderOps';
+import { kindSwitchOps } from '../panel/columnKindOps';
 import { defaultStyleOp, INHERITED_STYLE_FIELDS } from '../panel/defaultsModel';
 import { readEdge } from '../panel/edgeModel';
 import { edgeSideOps, edgeUniformOps } from '../panel/edgeOps';
@@ -60,7 +61,7 @@ import { containerLayoutFor } from '../panel/layoutModel';
 import { directionOp, gapOp, ratioOp } from '../panel/layoutOps';
 import { readMark } from '../panel/markModel';
 import { setCheckedOps } from '../panel/markOps';
-import { bindingPickOps, plainTextOp } from '../panel/model';
+import { bindingKeyOp, bindingPickOps, placeholderOp, plainTextOp } from '../panel/model';
 import { PAGE_SIZES } from '../panel/pageSizes';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
@@ -3474,5 +3475,126 @@ describe('text and box style edits against the real engine', () => {
         ],
       ),
     );
+  });
+});
+
+describe('table column kinds the panel authors, rendered by the real engine', () => {
+  // A valid 1×1 RGB PNG (CRC-correct chunks) the engine decodes.
+  const PNG =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGM45KAFAAL0AS1AMrjaAAAAAElFTkSuQmCC';
+  // The example has no image field; give its rows one, declared as an image.
+  const photoDefinitions = () => {
+    const defs = definitions().replace(
+      '      properties:\n        name:\n',
+      '      properties:\n        photo:\n          type: string\n          format: image\n        name:\n',
+    );
+    expect(defs).toContain('photo:');
+    return defs;
+  };
+  const photoParams = () => {
+    const parsed = JSON.parse(params()) as { items: Record<string, unknown>[] };
+    for (const row of parsed.items) {
+      row.photo = `data:image/png;base64,${PNG}`;
+    }
+    return JSON.stringify(parsed);
+  };
+  // The one diagnostic a GUI-authored column may add: the example's rows are
+  // short, so a QR code drawn to the row height is smaller than its modules
+  // want. Anything else new is a fault.
+  const EXPECTED_NEW = new Set(['qr_module_too_small']);
+
+  interface Placed {
+    readonly path: string;
+    readonly border: {
+      readonly x: number;
+      readonly y: number;
+      readonly w: number;
+      readonly h: number;
+    };
+    readonly content: {
+      readonly x: number;
+      readonly y: number;
+      readonly w: number;
+      readonly h: number;
+    };
+  }
+
+  async function render(text: string) {
+    const outcome = await transport.renderRaw(text, photoParams(), photoDefinitions(), {
+      scale: 2,
+    });
+    expect(outcome.ok).toBe(true);
+    const boxes = (outcome.inspect?.boxes.pages.flat() ?? []) as unknown as readonly Placed[];
+    return { codes: outcome.diagnostics.items.map((d) => d.code), boxes };
+  }
+
+  it('draws QR code, image and free-layout columns, and every switch back out', async () => {
+    const editor = Editor.create(template());
+    const read = (path: string) => editor.read(path);
+    const bodyItems = editor.read('sections.body.items') as readonly { type?: string }[];
+    const table = `sections.body.items[${bodyItems.findIndex((item) => item?.type === 'table')}]`;
+    // The example's columns already fill the table's width, so the kinds go on
+    // existing ones (a new column would get a near-zero leftover share).
+    const name = `${table}.columns[0]`;
+    const code = `${table}.columns[1]`;
+    const photo = `${table}.columns[2]`;
+    const baseline = new Set((await render(editor.text())).codes);
+    const onlyExpected = (codes: readonly string[]) =>
+      expect(codes.filter((c) => !baseline.has(c) && !EXPECTED_NEW.has(c))).toEqual([]);
+
+    // An image column and a QR code column, as the panel builds them.
+    expect(editor.apply(bindingKeyOp(photo, 'photo')).ok).toBe(true);
+    expect(editor.applyAll(kindSwitchOps(read, photo, 'image')).ok).toBe(true);
+    expect(editor.apply(plainTextOp(photo, ['fit'], 'cover')).ok).toBe(true);
+    expect(editor.apply(bindingKeyOp(code, 'name')).ok).toBe(true);
+    expect(editor.applyAll(kindSwitchOps(read, code, 'qr_code')).ok).toBe(true);
+    expect(editor.apply(placeholderOp(code, 'none')).ok).toBe(true);
+    let drawn = await render(editor.text());
+    onlyExpected(drawn.codes);
+    const before = drawn.boxes.filter((b) => b.path === name);
+    expect(drawn.boxes.some((b) => b.path === photo)).toBe(true);
+    expect(drawn.boxes.some((b) => b.path === code)).toBe(true);
+
+    // Every bound kind into a free-layout cell: the carried item draws, and the
+    // text sits where the column's own content sat — the frame carries the
+    // table's cell padding and the column's (middle) vertical alignment.
+    for (const path of [photo, code, name]) {
+      expect(editor.applyAll(kindSwitchOps(read, path, 'cell')).ok).toBe(true);
+    }
+    drawn = await render(editor.text());
+    onlyExpected(drawn.codes);
+    for (const path of [photo, code]) {
+      expect(drawn.boxes.some((b) => b.path === `${path}.cell.items[0]`)).toBe(true);
+    }
+    const carried = drawn.boxes.filter((b) => b.path === `${name}.cell.items[0]`);
+    // The header label is a cell of the column too; the carried item is per row.
+    const rows = before.slice(before.length - carried.length);
+    expect(carried.length).toBeGreaterThan(1);
+    carried.forEach((item, i) => {
+      const cell = rows[i].content;
+      expect(item.border.x).toBeCloseTo(cell.x, 2);
+      expect(item.border.w).toBeCloseTo(cell.w, 2);
+      expect(item.border.y + item.border.h / 2).toBeCloseTo(cell.y + cell.h / 2, 2);
+    });
+
+    // And back out: each cell's binding returns to its column.
+    expect(editor.applyAll(kindSwitchOps(read, photo, 'image')).ok).toBe(true);
+    expect(editor.applyAll(kindSwitchOps(read, code, 'qr_code')).ok).toBe(true);
+    expect(editor.applyAll(kindSwitchOps(read, name, 'text')).ok).toBe(true);
+    expect(editor.read(photo)).toMatchObject({
+      type: 'image',
+      fit: 'cover',
+      data: { key: 'photo' },
+    });
+    expect(editor.read(code)).toMatchObject({
+      type: 'qr_code',
+      data: { key: 'name', placeholder: 'none' },
+    });
+    drawn = await render(editor.text());
+    onlyExpected(drawn.codes);
+    for (const path of [photo, code, name]) {
+      expect(drawn.boxes.some((b) => b.path === path)).toBe(true);
+      expect(drawn.boxes.some((b) => b.path === `${path}.cell.items[0]`)).toBe(false);
+    }
   });
 });

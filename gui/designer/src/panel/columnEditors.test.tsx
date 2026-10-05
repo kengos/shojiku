@@ -8,6 +8,7 @@ import { FORMAT_CATALOG } from '../testkit/formatCatalog';
 import { swatchLabel } from '../testkit/swatchLabel';
 import { unitHintsFor } from '../testkit/unitHint';
 import { ColumnForm } from './ColumnForm';
+import type { ColumnRow } from './columnsModel';
 import { IterableSourceSection } from './IterableSourceSection';
 import { TableColumnsSection } from './TableColumnsSection';
 
@@ -457,13 +458,16 @@ describe('ColumnForm', () => {
 
   function form(
     controller: EditorController,
-    column = {
+    column: ColumnRow = {
       label: '品名',
       key: 'name',
       width: '15%',
       format: '',
       scope: '',
       hasCell: false,
+      kind: 'text',
+      fit: '',
+      placeholder: '',
       textAlign: '',
     },
   ) {
@@ -489,6 +493,9 @@ describe('ColumnForm', () => {
       format: '',
       scope: '',
       hasCell: false,
+      kind: 'text',
+      fit: '',
+      placeholder: '',
       textAlign: '',
     });
     expect(unitHintsFor('Column width').length).toBeGreaterThan(0);
@@ -579,6 +586,9 @@ describe('ColumnForm', () => {
       format: '',
       scope: '',
       hasCell: true,
+      kind: 'cell',
+      fit: '',
+      placeholder: '',
       textAlign: '',
     });
     expect(screen.queryByLabelText('Data key')).toBeNull();
@@ -593,6 +603,9 @@ describe('ColumnForm', () => {
       format: '',
       scope: '',
       hasCell: false,
+      kind: 'text',
+      fit: '',
+      placeholder: '',
       textAlign: '',
     });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a format' }));
@@ -614,6 +627,9 @@ describe('ColumnForm', () => {
       format: '',
       scope: '',
       hasCell: false,
+      kind: 'text',
+      fit: '',
+      placeholder: '',
       textAlign: '',
     });
     expect(screen.queryByLabelText('Format')).toBeNull();
@@ -803,6 +819,9 @@ describe('column editors — binding scope', () => {
           format: '',
           scope: 'document',
           hasCell: false,
+          kind: 'text',
+          fit: '',
+          placeholder: '',
           textAlign: '',
         }}
         groups={SCOPED_GROUPS}
@@ -839,6 +858,9 @@ describe('column editors — binding scope', () => {
           format: '',
           scope: '',
           hasCell: false,
+          kind: 'text',
+          fit: '',
+          placeholder: '',
           textAlign: '',
         }}
         groups={SCOPED_GROUPS}
@@ -876,6 +898,9 @@ describe('column editors — binding scope', () => {
           format: '',
           scope: '',
           hasCell: false,
+          kind: 'text',
+          fit: '',
+          placeholder: '',
           textAlign: '',
         }}
         groups={SCOPED_GROUPS}

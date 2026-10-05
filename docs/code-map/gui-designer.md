@@ -502,7 +502,10 @@ lists name the destructured stable fields, never `editor` itself.
   `headerGroups` key with it — the same file the group form's button leaves.
 - `hooks/useSelectionShortcuts.ts` — the window keydown effect over pure
   `shortcuts.ts`, guarded by `isEditableTarget` (exported here, and
-  re-exported from `Designer.tsx`).
+  re-exported from `Designer.tsx`). Escape's deselect also stands down for a
+  target inside `[role="dialog"]` — the dialog's own dismissal (a confirm over
+  the column sheet would otherwise close the sheet with it); the other
+  shortcuts still reach a dialog.
 - `hooks/useInlineEdit.ts` — double-click a static-text box → the shared
   `TextEditor` over its content rect (same chip context as the panel);
   commit = ONE `applyAll` of `text/declModel` `commitOps`.

@@ -19,7 +19,7 @@ import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
 import { cascadeContext } from '../toolbar/cascade';
 import { BTN_SM, INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
-import { ColumnBindingFields } from './ColumnBindingFields';
+import { ColumnContentFields } from './ColumnContentFields';
 import type { ColumnRow } from './columnsModel';
 import { Field, TextField } from './fields';
 import { registryNames } from './itemView';
@@ -74,6 +74,8 @@ export function ColumnForm({
   const dispatch = (op: Op) => {
     controller.apply(op);
   };
+  const drawn = column.kind === 'qr_code' || column.kind === 'image';
+  const valign = headerValignHost(capabilities);
   return (
     <aside className={PANEL} aria-label={t('panel.title')}>
       <div>
@@ -92,16 +94,18 @@ export function ColumnForm({
               }}
             />
           </Field>
-          <ColumnBindingFields
+          <ColumnContentFields
             controller={controller}
             path={path}
             column={column}
-            options={options}
-            documentOptions={documentOptions}
-            rowScoped={rowScoped}
-            formatRegistry={registryNames(controller.read('formats'))}
+            binding={{
+              options,
+              documentOptions,
+              rowScoped,
+              formatRegistry: registryNames(controller.read('formats')),
+              formatCatalog,
+            }}
             capabilities={capabilities}
-            formatCatalog={formatCatalog}
           />
           {/* `TextField` (explicit htmlFor/id) rather than the wrapping-label
               `Field`: the unit badge's text would otherwise fold into the
@@ -128,8 +132,11 @@ export function ColumnForm({
             keys={COLUMN_STYLE_KEYS}
             host={{
               fontFamilies,
-              verticalAlign: headerValignHost(capabilities),
+              verticalAlign: valign,
               fill: true,
+              // A QR code or an image is drawn centred and carries no text, so
+              // the type controls would change nothing on its cells.
+              typography: !drawn,
             }}
             onOp={(op) => applyPanelOp(controller, op)}
           />
@@ -137,7 +144,20 @@ export function ColumnForm({
               header LABEL over whatever the header row sets
               (docs/engine/table.md), so the control reaches two places and the
               panel has to say which. */}
-          <p className="m-0 mt-1 text-muted text-sm">{t('panel.column.styleHint')}</p>
+          <p className="m-0 mt-1 text-muted text-sm">
+            {drawn
+              ? t(
+                  valign === false
+                    ? 'panel.column.styleHintDrawnNoValign'
+                    : 'panel.column.styleHintDrawn',
+                  {
+                    background: t('panel.field.backgroundColor'),
+                    textAlign: t('panel.field.textAlign'),
+                    verticalAlign: t('panel.field.verticalAlign'),
+                  },
+                )
+              : t('panel.column.styleHint')}
+          </p>
         </section>
         {column.hasCell && onSelectPath !== undefined ? (
           // A `cell:` column draws a container per row; its padding, fill and

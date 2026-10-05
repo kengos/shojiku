@@ -1,8 +1,9 @@
 // The two BINDING rows of the horizontal column sheet: which params key each
 // column reads, and which format it displays. Split from the sheet because
-// these are the only rows whose cell is conditional on the column's KIND — a
+// these are the binding rows whose cell is conditional on the column's KIND — a
 // `cell:` column's content is a sub-template, so it has no binding and no
-// format, and an unbound column's format would be inert noise. Both rows show a
+// format; an image column ignores a format; and an unbound column's format would
+// be inert noise. Both rows show a
 // muted placeholder there rather than an empty grid cell, so the grid stays
 // legible as a table.
 //
@@ -67,10 +68,11 @@ export function ColumnSheetBindingRows({
         ),
       )}
 
-      {/* Format row — only a bound, non-cell column. */}
+      {/* Format row — only a bound, non-cell column that prints text (an image
+          column ignores a format). */}
       <RowLabel>{t('panel.field.format')}</RowLabel>
       {columns.map((column, index) =>
-        column.hasCell || column.key === '' ? (
+        column.hasCell || column.key === '' || column.kind === 'image' ? (
           // biome-ignore lint/suspicious/noArrayIndexKey: positional cell — read-only or self-reseeding internally, so it re-renders in place when a reorder swaps the data at this position
           <MutedCell key={`f${index}`} />
         ) : (
