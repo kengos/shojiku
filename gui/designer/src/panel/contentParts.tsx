@@ -7,15 +7,12 @@ import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
 import type { ChipContext } from '../text/chipContext';
 import { BTN_SM, FIELD_LABEL, INPUT, SECTION_TITLE } from '../ui/chrome';
-import { SelectField } from './choiceFields';
 import { FieldPicker } from './FieldPicker';
-import { hasCapability, type ItemPanelProps } from './itemPanelProps';
+import { FitField } from './FitField';
+import type { ItemPanelProps } from './itemPanelProps';
 import { imageSourceSummary } from './itemView';
 import { applyPanelOp, bindingKeyOp, plainTextOp } from './model';
 import { documentScopeCreateField, HelpfulHeading, scopePickerProps } from './panelHelpers';
-
-const IMAGE_FIT_MODES = ['contain', 'cover', 'stretch', 'none'] as const;
-const IMAGE_FIT_MODES_BASE = ['contain', 'stretch'] as const;
 
 /** The engine's own page-number pattern, shown as the field's placeholder so
  * an unset value reads as a value rather than a blank. */
@@ -66,15 +63,9 @@ export function ImageContent(props: ItemPanelProps & { readonly chips: ChipConte
           {t('panel.image.replace')}
         </button>
       ) : null}
-      <SelectField
-        label={t('panel.field.fit')}
+      <FitField
         value={view.fit}
-        options={
-          hasCapability(capabilities, 'image.fit.cover_none')
-            ? [...IMAGE_FIT_MODES]
-            : [...IMAGE_FIT_MODES_BASE]
-        }
-        noneLabel={t('panel.field.formatNone')}
+        capabilities={capabilities}
         onCommit={(v) => dispatch(plainTextOp(path, ['fit'], v))}
       />
     </section>

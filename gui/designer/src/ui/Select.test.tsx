@@ -56,6 +56,33 @@ describe('Select', () => {
     await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
   });
 
+  it('draws an option’s icon in the list and, once picked, in the button — the name stays the label', () => {
+    const withIcons: readonly SelectOption[] = [
+      { value: '', label: '(none)' },
+      { value: 'a', label: 'Alpha', icon: <svg data-testid="icon-a" aria-hidden="true" /> },
+    ];
+    render(<Select value="a" options={withIcons} onChange={vi.fn()} label="Pick" />);
+    const trigger = screen.getByRole('button', { name: 'Pick' });
+    expect(trigger.querySelector('[data-testid="icon-a"]')).not.toBeNull();
+    fireEvent.click(trigger);
+    const option = screen.getByRole('option', { name: 'Alpha' });
+    expect(option.querySelector('[data-testid="icon-a"]')).not.toBeNull();
+    // An option without one draws none.
+    expect(screen.getByRole('option', { name: '(none)' }).querySelector('svg')).toBeNull();
+  });
+
+  it('keeps a text-only picker’s markup: no glyph row in the button or the options', () => {
+    render(<Select value="left" options={OPTIONS} onChange={vi.fn()} label="Align" />);
+    const trigger = screen.getByRole('button', { name: 'Align' });
+    expect(trigger.firstElementChild?.className).toBe('truncate');
+    fireEvent.click(trigger);
+    for (const option of screen.getAllByRole('option')) {
+      expect(option.className).toBe(
+        'cursor-pointer px-3 py-2 data-focus:bg-chrome data-selected:font-semibold',
+      );
+    }
+  });
+
   it('does not open when disabled', () => {
     render(<Select value="left" options={OPTIONS} onChange={vi.fn()} label="Align" disabled />);
     const trigger = screen.getByRole('button', { name: 'Align' });

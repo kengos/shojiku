@@ -50,6 +50,9 @@ describe('readColumnsView', () => {
         format: '',
         scope: '',
         hasCell: false,
+        kind: 'text',
+        fit: '',
+        placeholder: '',
         textAlign: '',
       },
       {
@@ -59,6 +62,9 @@ describe('readColumnsView', () => {
         format: 'symbol',
         scope: '',
         hasCell: false,
+        kind: 'text',
+        fit: '',
+        placeholder: '',
         textAlign: '',
       },
       {
@@ -68,11 +74,36 @@ describe('readColumnsView', () => {
         format: '',
         scope: '',
         hasCell: false,
+        kind: 'text',
+        fit: '',
+        placeholder: '',
         textAlign: '',
       },
-      { label: '明細', key: '', width: '', format: '', scope: '', hasCell: true, textAlign: '' },
+      {
+        label: '明細',
+        key: '',
+        width: '',
+        format: '',
+        scope: '',
+        hasCell: true,
+        kind: 'cell',
+        fit: '',
+        placeholder: '',
+        textAlign: '',
+      },
       // A hostile non-map entry still yields a row so indices stay true.
-      { label: '', key: '', width: '', format: '', scope: '', hasCell: false, textAlign: '' },
+      {
+        label: '',
+        key: '',
+        width: '',
+        format: '',
+        scope: '',
+        hasCell: false,
+        kind: 'text',
+        fit: '',
+        placeholder: '',
+        textAlign: '',
+      },
     ]);
   });
 
@@ -94,7 +125,18 @@ describe('readColumnsView', () => {
 
   it('drops a non-finite width to the empty display form', () => {
     expect(readColumnsView({ columns: [{ width: Number.NaN }] })).toEqual([
-      { label: '', key: '', width: '', format: '', scope: '', hasCell: false, textAlign: '' },
+      {
+        label: '',
+        key: '',
+        width: '',
+        format: '',
+        scope: '',
+        hasCell: false,
+        kind: 'text',
+        fit: '',
+        placeholder: '',
+        textAlign: '',
+      },
     ]);
   });
 });
@@ -126,6 +168,9 @@ describe('column ops', () => {
       format: '',
       scope: '',
       hasCell: false,
+      kind: 'text',
+      fit: '',
+      placeholder: '',
       textAlign: '',
     });
   });

@@ -18,6 +18,7 @@ import { readDefinitionsView } from '../palette/model';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
 import { PANEL_FLUSH } from '../ui/chrome';
 import { CellPanel } from './CellPanel';
+import { columnPathInfo } from './columnsModel';
 import { ItemPanel } from './ItemPanel';
 import { readItemView } from './itemView';
 import { NoSelectionCard } from './NoSelectionCard';
@@ -114,7 +115,10 @@ export function PropertyPanel({
     return <NoSelectionCard controller={controller} onOpenDocument={onOpenDocument} />;
   }
 
-  const view = readItemView(subject.node);
+  // A table column is never an item, whatever its `type:` says: `type: image`
+  // (or a spelled-out `type: text`) is the column's KIND, and reading it as an
+  // item's would open the image item's panel on a column.
+  const view = columnPathInfo(subject.path) === null ? readItemView(subject.node) : null;
   if (view === null) {
     return (
       <CellPanel

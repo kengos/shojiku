@@ -4,9 +4,11 @@
 // offer the same controls over the same models and differ only in which path
 // and option set they address.
 //
-// A `cell:` column has a sub-template for content, so it gets neither: the
-// two guards are the component's whole contract and stay here rather than at
-// the call sites.
+// A `cell:` column has a sub-template for content, so it gets neither; an image
+// column keeps its key and loses the format, which the engine ignores there (an
+// authored one stays in the file, back on screen once the column prints text
+// again). These guards are the component's whole contract and stay here rather
+// than at the call sites.
 
 import type { Op } from '@shojiku/designer-core';
 import type { EditorController } from '../editor/useEditor';
@@ -76,8 +78,8 @@ export function ColumnBindingFields({
         />
       )}
       {/* Format only once the column is bound — a format on an unbound
-          column is inert noise. */}
-      {column.hasCell || column.key === '' ? null : (
+          column is inert noise — and never on an image column. */}
+      {column.hasCell || column.key === '' || column.kind === 'image' ? null : (
         <FormatPicker
           label={t('panel.field.format')}
           value={column.format}

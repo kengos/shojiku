@@ -190,6 +190,24 @@ describe('PropertyPanel', () => {
     expect((screen.getByLabelText('Column width') as HTMLInputElement).value).toBe('90');
   });
 
+  it.each([
+    ['image', 'Image'],
+    ['qr_code', 'QR code'],
+    ['text', 'Text'],
+  ])('opens the COLUMN form for a column whose type is %s, never an item panel', (type, kind) => {
+    const columnPath = `${PATH}.columns[0]`;
+    const column = { label: 'Photo', type, data: { key: 'photo' } };
+    const controller = makeController({
+      [PATH]: { type: 'table', data: { key: 'rows' }, columns: [column] },
+      [columnPath]: column,
+    });
+    draw(<PropertyPanel controller={controller} path={columnPath} />);
+    expect(screen.getByText('Column')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Column type' }).textContent).toBe(kind);
+    // The item panel's tabs are not there.
+    expect(screen.queryByRole('tab', { name: 'Content' })).toBeNull();
+  });
+
   it('keeps the unsupported note for a column path whose table has no such column', () => {
     const columnPath = `${PATH}.columns[4]`;
     const controller = makeController({
@@ -1124,7 +1142,12 @@ describe('PropertyPanel — binding field picker', () => {
     expect(screen.getByLabelText('Width')).toBeTruthy();
     expect(screen.getByLabelText('Height')).toBeTruthy();
     openTab('Content');
-    fireEvent.change(screen.getByLabelText('Fit mode'), { target: { value: 'stretch' } });
+    // The authored mode reads in words, with its picture beside it.
+    const fit = screen.getByRole('button', { name: 'Fit mode' });
+    expect(fit.textContent).toBe('Fit inside (nothing cut, space may remain)');
+    expect(fit.querySelector('svg')).not.toBeNull();
+    fireEvent.click(fit);
+    fireEvent.click(screen.getByRole('option', { name: 'Stretch (the proportions change)' }));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,
@@ -1138,13 +1161,23 @@ describe('PropertyPanel — binding field picker', () => {
       [PATH]: { type: 'image', src: 'data:image/jpeg;base64,QUJD' },
     });
     draw(<PropertyPanel controller={controller} path={PATH} capabilities={['image']} />);
-    const options = Array.from(
-      (screen.getByLabelText('Fit mode') as HTMLSelectElement).options,
-      (o) => o.value,
+    fireEvent.click(screen.getByRole('button', { name: 'Fit mode' }));
+    const options = screen.getAllByRole('option').map((o) => o.textContent);
+    expect(options).toEqual([
+      '(Default: fit inside)',
+      'Fit inside (nothing cut, space may remain)',
+      'Stretch (the proportions change)',
+    ]);
+  });
+
+  it('names an authored cover/none the engine does not draw, instead of a raw spelling', () => {
+    const controller = makeController({
+      [PATH]: { type: 'image', src: 'data:image/jpeg;base64,QUJD', fit: 'cover' },
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} capabilities={['image']} />);
+    expect(screen.getByRole('button', { name: 'Fit mode' }).textContent).toBe(
+      'Fill the box (overflow is cut) (not supported by this engine)',
     );
-    expect(options).not.toContain('cover');
-    expect(options).not.toContain('none');
-    expect(options).toContain('stretch');
   });
 
   it('offers the replace button only when the host injects the import callback', () => {

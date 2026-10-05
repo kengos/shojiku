@@ -907,7 +907,8 @@ presence is not a text binding.
   ONLY surface that edits a band's `repeat`/`height`; before it existed
   even the bundled presets that author a band could not change either.
 - `panel/PropertyPanel.tsx` — the thin router: item → `ItemPanel`,
-  anything with no `type:` of its own → `CellPanel` (which picks
+  anything with no `type:` of its own — and any table column, whose `type:`
+  names its KIND, not an item's → `CellPanel` (which picks
   `BandForm` / `ColumnForm` / `GroupForm` / `FrameForm` / the unsupported
   card),
   none/ghost (`readSubject` null) → `NoSelectionCard`; the origin jump wires through
@@ -968,7 +969,7 @@ presence is not a text binding.
   routing ONLY — the plain-text surface is `contentText.tsx`
   (`TextContentField`), split out when the rich-text route left the router
   carrying more body than routing; image/page-number surfaces in
-  `contentParts.tsx`, the bound-mode half in `contentBound.tsx`
+  `contentParts.tsx` (the image's fit through the shared `FitField`), the bound-mode half in `contentBound.tsx`
   (`BoundContent` — the data-key picker plus the two options that ride a
   binding, `format` and `placeholder`. Both live on the BINDING
   (`data.format`/`data.placeholder`), not at the item root, so every
@@ -1053,10 +1054,12 @@ presence is not a text binding.
     origin shows no jump).
 - `panel/TableColumnsSection.tsx` — the body of the 「Columns」 section for a
   selected table (no heading of its own): source rebinding via the array-group
-  picker, then per-column label / ▲▼ reorder / delete, then label-only add
+  picker, then per-column label / ▲▼ reorder / delete / a plain-text kind
+  label on a non-text column (switching is the column form's), then label-only add
   beside the column-sheet opener — each ONE op over
   `panel/columnsModel.ts` (`readColumnsView` — whose row carries the column's
-  own `style.textAlign` for the sheet's comparison row —
+  own `style.textAlign` for the sheet's comparison row, its `kind`, `fit` and
+  `data.placeholder` —
   `columnPathInfo`/`addColumnOp`/`removeColumnOp`/`moveColumnOp`, plus
   **`readSelectionView`**: the view the FORMAT TOOLBAR resolves a selection
   through. `readItemView` requires a string `type`, which a column carries only
@@ -1068,6 +1071,10 @@ presence is not a text binding.
   the view reads as a `text` item, the column's bar carries the full text control
   set — typography, the style picker (`styleNames` is a real column key) and the
   item border control — not only the alignment the change was motivated by;
+  A column authoring `type: qr_code`/`image` reads as THAT item here, so its
+  bar is the image/QR one (fill, style picker, border) while `ColumnForm`
+  offers fill and the header-label alignment — the two surfaces differ
+  deliberately by what each owns.
   `toolbar/cascade.ts` supplies the layers that make those values TRUE for a cell
   (`row.style` over the table's own style, mirroring the engine's
   `resolve_row_style`), which a `container`-only ancestor walk did not.
@@ -1085,8 +1092,41 @@ presence is not a text binding.
 - `panel/ColumnBindingFields.tsx` — the binding pair a column earns
   (`FieldPicker` for `data.key`; `FormatPicker` once a key is picked,
   its options type-resolved through the row options), shared by the
-  columns section and `ColumnForm`. A `cell:` column gets neither — the
-  two guards are this component's whole contract.
+  columns section and `ColumnForm`. A `cell:` column gets neither, and an
+  image column no format (the engine ignores one there) — those guards are
+  this component's whole contract.
+- `panel/columnKinds.ts` (pure) — what a column RENDERS (`ColumnKind`:
+  `text` / `qr_code` / `image` / `cell`; `columnKindOf`, `cell` winning over
+  `type` as layout draws it, hostile shapes reading as text) and
+  `offeredKinds` — `table.column.type` / `table.column.cell` plus the kind the
+  column already has. `panel/columnKindOps.ts` (pure) — `kindSwitchOps`, ONE
+  batch per switch: between bound kinds only `type` moves, plus `fit` when
+  leaving image (the key the engine warns on); `format`/`placeholder` stay,
+  hidden on an image column. Into a `cell:`, the binding moves into one item
+  (`carryBinding`: the wire's four keys, own strings only) — a QR code or
+  image item with a 100%×100% box, since a box-less one draws nothing — in a
+  frame from `panel/carriedCellFrame.ts` (pure): `box.padding` = the table's
+  `cellPadding` (4 when unset) and `box.justifyContent` = the column's
+  effective vertical alignment through `tableValignIn`, the two things a
+  container cell does not get from the table; out of
+  one, `cellSummary` (top-level count + types, the first bound item
+  depth-first, bounded in depth and nodes) lends its binding back. Removals
+  are emitted only for keys present (`removeKey` fails on an absent key).
+- `panel/useColumnKindSwitch.tsx` — the one door both column surfaces switch
+  through: applies the batch, or holds a switch OUT of a `cell:` that has
+  items behind a `ui/Modal` naming the column, the item count and kinds
+  (`tree/labels` `kindName`), what carries, and the platform's undo key
+  (`help/shortcutsModel`). `panel/ColumnContentFields.tsx` — `ColumnForm`'s
+  content block: the kind picker — a `ui/Select`, not segments, since four kind
+  names do not fit the panel in every locale (absent when only text is
+  offered; a per-kind hint in the description channel, as a Headless `Field` +
+  `Description`), `ColumnBindingFields`, the
+  blank-row placeholder on a BOUND text/QR column (`binding.placeholder`; a
+  placeholder without a key would be a binding the engine refuses), and
+  `FitField` on an image column. `panel/FitField.tsx` — the `fit` picker an
+  image item and an image column share: `ui/Select` options naming each
+  `ImageFit` mode by its result with a drawn glyph, the default row clearing
+  the key, `cover`/`none` behind `image.fit.cover_none`.
 - `panel/IterableSourceSection.tsx` — `repeat_flow`/`repeat`/`list` source
   rebinding (+ a list's per-entry `text:` template): every scaffolded
   kind stays editable. For the cards and the grid it also offers the jump
@@ -1095,11 +1135,13 @@ presence is not a text binding.
   document does not carry as a map).
 - `panel/ColumnForm.tsx` — the single-column form a canvas click on a
   `…columns[n]` cell opens (a `cell:` column adds the jump into its
-  `…cell` frame): label/binding/format/width (scope via
-  `bindingScopeFor`), then the column's OWN cell style — the same
+  `…cell` frame): label, the content block (`ColumnContentFields`), width
+  (scope via `bindingScopeFor`), then the column's OWN cell style — the same
   `TableBandFields` at `columns[n].style`, over `cascadeContext(read, path,
   floor)` (a column has a path, so its row band and table come for free), which
-  is how a money column becomes right-aligned. It says so: a column's `textAlign`/`verticalAlign` also wins
+  is how a money column becomes right-aligned. On a QR code or image column
+  the band drops its type controls (`BandFieldsHost.typography: false` —
+  nothing there carries text) and the hint says the content is centred. It says so: a column's `textAlign`/`verticalAlign` also wins
   for that column's own header LABEL over the header row's
   ([table.md](../engine/table.md)).
 - `panel/groupModel.ts` — pure model for table `headerGroups` editing
@@ -1512,6 +1554,10 @@ conditional rules the next section owns).
   whose cell is conditional on the column's KIND: a `cell:` column's content
   is a sub-template, so it has no binding and no format, and both show a
   muted placeholder there rather than an empty grid cell),
+  `ColumnKindCell.tsx` (the 「列の種類」 row's cell — a `ui/Select` over
+  `offeredKinds` through `useColumnKindSwitch`, plain text when nothing else
+  is offered; `sheetShowsKinds` drops the row when no kind is authorable and
+  every column is text),
   `columnSheetData.ts` (what the sheet READS — picker options, the per-column
   format rows, the sample value, and `alignFor(index)`, each column's
   cascade-effective `textAlign`, so the sheet and `ColumnForm` agree about the

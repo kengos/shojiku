@@ -9,6 +9,7 @@
 // (auto-escaped); an unknown value displays verbatim, never as HTML.
 
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
+import type { ReactNode } from 'react';
 import { IconChevronDown } from './icons';
 
 export interface SelectOption {
@@ -16,6 +17,10 @@ export interface SelectOption {
   readonly value: string;
   /** The displayed label (the caller's i18n/localized string). */
   readonly label: string;
+  /** Decorative leading glyph (caller code, never document content) shown in
+   * the option and, for the picked option, in the button. The accessible name
+   * stays the label text. Omit for a text-only option. */
+  readonly icon?: ReactNode;
 }
 
 export interface SelectProps {
@@ -36,7 +41,16 @@ export function Select({ value, options, onChange, label, disabled }: SelectProp
         aria-label={label}
         className="inline-flex w-full min-w-32 cursor-pointer items-center justify-between gap-2 rounded-md border border-border bg-surface px-3 py-2 text-left text-text transition-colors hover:border-muted disabled:cursor-default disabled:opacity-45"
       >
-        <span className="truncate">{selected === undefined ? value : selected.label}</span>
+        {selected?.icon === undefined ? (
+          <span className="truncate">{selected === undefined ? value : selected.label}</span>
+        ) : (
+          // Only an option that carries a glyph gets the row around it, so a
+          // text-only picker keeps its markup exactly.
+          <span className="flex min-w-0 items-center gap-2">
+            {selected.icon}
+            <span className="truncate">{selected.label}</span>
+          </span>
+        )}
         <IconChevronDown className="shrink-0 text-muted" />
       </ListboxButton>
       <ListboxOptions
@@ -48,8 +62,9 @@ export function Select({ value, options, onChange, label, disabled }: SelectProp
           <ListboxOption
             key={option.value}
             value={option.value}
-            className="cursor-pointer px-3 py-2 data-focus:bg-chrome data-selected:font-semibold"
+            className={`${option.icon === undefined ? '' : 'flex items-center gap-2 '}cursor-pointer px-3 py-2 data-focus:bg-chrome data-selected:font-semibold`}
           >
+            {option.icon}
             {option.label}
           </ListboxOption>
         ))}

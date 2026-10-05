@@ -795,6 +795,44 @@ export const en: LanguageCatalog = {
     'panel.tableStyle.preset.borderless': 'No grid',
     'panel.tableStyle.preset.noHeaderFill': 'Plain header',
     'panel.column.style': 'Column style',
+    'panel.column.kind': 'Column type',
+    'panel.column.kind.text': 'Text',
+    'panel.column.kind.qr_code': 'QR code',
+    'panel.column.kind.image': 'Image',
+    'panel.column.kind.cell': 'Free layout',
+    'panel.column.kindHint.qr_code':
+      'QR codes are drawn to the row height. To make them all one size, select the table and fix the row height under “{section}”.',
+    'panel.column.kindHint.image':
+      'Shows each row’s value (image data or an image path) as an image, scaled to the row height. Switching to Text or QR code removes the “{fit}” setting.',
+    'panel.column.kindHint.cell':
+      'Arrange items freely in one row’s cell; every row repeats the same layout, each showing its own row’s values.',
+    'panel.column.placeholderHintQr':
+      'Rows with no value get a QR code that scans as this text. The text itself is not printed.',
+    'panel.column.styleHintDrawn':
+      'QR codes and images are drawn centred in the cell. {background} applies to the cells; {textAlign} and {verticalAlign} apply to this column’s header label.',
+    'panel.column.kindConfirm.title': 'Switch column “{label}” to {kind}?',
+    'panel.column.kindConfirm.titleUnnamed': 'Switch this column to {kind}?',
+    'panel.column.kindConfirm.body': 'Everything in the cell ({kinds}) will be removed.',
+    'panel.column.kindConfirm.carry':
+      'The column takes the data key “{key}” and its display settings from the first item that has a data key. Other items’ data keys are not kept.',
+    'panel.column.kindConfirm.noCarry':
+      'No item in the cell has a data key, so the column will be empty. Pick a data key after switching; a warning shows until you do.',
+    'panel.column.kindConfirm.undo': 'Undo ({mod}Z) restores the items.',
+    'panel.column.kindConfirm.confirm': 'Remove items and switch',
+    'panel.column.kindConfirm.cancel': 'Cancel',
+    'panel.fit.default': '(Default: fit inside)',
+    'panel.fit.contain': 'Fit inside (nothing cut, space may remain)',
+    'panel.fit.cover': 'Fill the box (overflow is cut)',
+    'panel.fit.stretch': 'Stretch (the proportions change)',
+    'panel.fit.none': 'Original size (anything larger than the box is cut)',
+    'panel.fit.unsupported': '{mode} (not supported by this engine)',
+    'panel.column.kindConfirm.kindCount': '{kind} ×{n}',
+    'panel.column.kindConfirm.otherKind': 'Other',
+    'panel.column.styleHintDrawnNoValign':
+      'QR codes and images are drawn centred in the cell. {background} applies to the cells; {textAlign} applies to this column’s header label.',
+    'panel.column.placeholderQr': 'Blank-row QR content',
+    'panel.column.kindTag': 'Type: {kind}',
+    'panel.column.kindFor': 'Type of column “{label}”',
     'panel.column.styleHint':
       'Applies to this column’s body cells. Its alignment also wins over the header row for this column’s own label.',
     'panel.rowConditions.remove': 'Remove this rule',

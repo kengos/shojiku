@@ -732,6 +732,44 @@ export const zhCn: LanguageCatalog = {
     'panel.tableStyle.preset.borderless': '无网格线',
     'panel.tableStyle.preset.noHeaderFill': '标题不填充',
     'panel.column.style': '列样式',
+    'panel.column.kind': '列类型',
+    'panel.column.kind.text': '文本',
+    'panel.column.kind.qr_code': '二维码',
+    'panel.column.kind.image': '图片',
+    'panel.column.kind.cell': '自由布局',
+    'panel.column.kindHint.qr_code':
+      '二维码按行高绘制。要统一大小，请选中表格，在“{section}”中固定行高。',
+    'panel.column.kindHint.image':
+      '将每行的值（图片数据或图片路径）显示为图片，大小随行高缩放。切换为文本或二维码时，“{fit}”设置会被删除。',
+    'panel.column.kindHint.cell':
+      '在一行的单元格中自由排列元素，所有行都会以相同布局重复，各元素显示其所在行的值。',
+    'panel.column.placeholderHintQr':
+      '值为空的行会印出扫描后得到此文字的二维码。此文字本身不会印出。',
+    'panel.column.styleHintDrawn':
+      '二维码和图片绘制在单元格中央。{background}作用于单元格；{textAlign}和{verticalAlign}作用于本列的标题标签。',
+    'panel.column.kindConfirm.title': '将列“{label}”切换为{kind}？',
+    'panel.column.kindConfirm.titleUnnamed': '将此列切换为{kind}？',
+    'panel.column.kindConfirm.body': '单元格中的所有元素（{kinds}）都将被删除。',
+    'panel.column.kindConfirm.carry':
+      '将从第一个设置了数据键的元素继承数据键“{key}”及其显示设置。其他元素的数据键不会保留。',
+    'panel.column.kindConfirm.noCarry':
+      '没有设置了数据键的元素，切换后该列为空。在选择数据键之前会一直显示警告。',
+    'panel.column.kindConfirm.undo': '可用撤销（{mod}Z）恢复这些元素。',
+    'panel.column.kindConfirm.confirm': '删除并切换',
+    'panel.column.kindConfirm.cancel': '取消',
+    'panel.fit.default': '（默认：适应框内）',
+    'panel.fit.contain': '适应框内（不裁切，可能留白）',
+    'panel.fit.cover': '填满框（超出部分被裁切）',
+    'panel.fit.stretch': '拉伸（宽高比例改变）',
+    'panel.fit.none': '原始大小（超出框的部分被裁切）',
+    'panel.fit.unsupported': '{mode}（此引擎不支持）',
+    'panel.column.kindConfirm.kindCount': '{kind} {n} 个',
+    'panel.column.kindConfirm.otherKind': '其他',
+    'panel.column.styleHintDrawnNoValign':
+      '二维码和图片绘制在单元格中央。{background}作用于单元格；{textAlign}作用于本列的标题标签。',
+    'panel.column.placeholderQr': '空行的二维码内容',
+    'panel.column.kindTag': '类型：{kind}',
+    'panel.column.kindFor': '列“{label}”的类型',
     'panel.column.styleHint':
       '应用于此列的正文单元格。其文字对齐也会优先于标题行，作用于此列自己的标题文字。',
     'panel.rowConditions.remove': '删除此规则',

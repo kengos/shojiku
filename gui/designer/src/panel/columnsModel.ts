@@ -10,6 +10,7 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { formatPath, parsePath } from '@shojiku/designer-core';
+import { type ColumnKind, columnKindOf } from './columnKinds';
 import { type ItemView, readItemView } from './itemView';
 
 export interface ColumnRow {
@@ -27,8 +28,15 @@ export interface ColumnRow {
    * `element` default, i.e. the row). Drives the picker's scope badge. */
   readonly scope: string;
   /** A `cell:` column — its content is a sub-template, so the binding
-   * editor is hidden (label/width/order still edit). */
+   * editor is hidden (label/width/order still edit). The same fact as
+   * `kind === 'cell'`. */
   readonly hasCell: boolean;
+  /** What the column renders per row (`columnKinds.ts`). */
+  readonly kind: ColumnKind;
+  /** The authored `fit` ('' when unset/not a string) — an image column's. */
+  readonly fit: string;
+  /** The binding's `data.placeholder` ('' when unset/not a string). */
+  readonly placeholder: string;
   /** The column's own `style.textAlign` ('' when unset) — the property the
    * column sheet compares across columns, and the one a money column needs. */
   readonly textAlign: string;
@@ -62,6 +70,9 @@ export function readColumnsView(tableNode: unknown): readonly ColumnRow[] | null
     const key = data?.key;
     const format = data?.format;
     const scope = data?.scope;
+    const placeholder = data?.placeholder;
+    const fit = column?.fit;
+    const kind = columnKindOf(entry);
     const align = record(column?.style)?.textAlign;
     return {
       label: typeof label === 'string' ? label : '',
@@ -69,7 +80,10 @@ export function readColumnsView(tableNode: unknown): readonly ColumnRow[] | null
       width: displayLength(column?.width),
       format: typeof format === 'string' ? format : '',
       scope: typeof scope === 'string' ? scope : '',
-      hasCell: record(column?.cell) !== undefined,
+      hasCell: kind === 'cell',
+      kind,
+      fit: typeof fit === 'string' ? fit : '',
+      placeholder: typeof placeholder === 'string' ? placeholder : '',
       textAlign: typeof align === 'string' ? align : '',
     };
   });

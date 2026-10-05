@@ -565,6 +565,44 @@ export const hi: LanguageCatalog = {
     'panel.tableStyle.preset.borderless': 'बिना ग्रिड',
     'panel.tableStyle.preset.noHeaderFill': 'सादा शीर्ष',
     'panel.column.style': 'स्तंभ शैली',
+    'panel.column.kind': 'स्तंभ का प्रकार',
+    'panel.column.kind.text': 'टेक्स्ट',
+    'panel.column.kind.qr_code': 'QR कोड',
+    'panel.column.kind.image': 'छवि',
+    'panel.column.kind.cell': 'मुक्त लेआउट',
+    'panel.column.kindHint.qr_code':
+      'QR कोड पंक्ति की ऊँचाई के अनुसार बनते हैं। सबका आकार एक-सा रखने के लिए तालिका चुनें और “{section}” में पंक्ति की ऊँचाई तय करें।',
+    'panel.column.kindHint.image':
+      'हर पंक्ति का मान (छवि डेटा या छवि का पथ) छवि के रूप में दिखाता है, पंक्ति की ऊँचाई के अनुसार। टेक्स्ट या QR कोड पर बदलने से “{fit}” सेटिंग हट जाती है।',
+    'panel.column.kindHint.cell':
+      'एक पंक्ति के सेल में तत्व खुलकर रखें; हर पंक्ति में वही लेआउट दोहराया जाता है, और हर तत्व अपनी पंक्ति का मान दिखाता है।',
+    'panel.column.placeholderHintQr':
+      'बिना मान वाली पंक्ति में ऐसा QR कोड छपता है जिसे स्कैन करने पर यह टेक्स्ट मिलता है। टेक्स्ट स्वयं नहीं छपता।',
+    'panel.column.styleHintDrawn':
+      'QR कोड और छवियाँ सेल के बीच में बनती हैं। {background} सेल पर लागू होता है; {textAlign} और {verticalAlign} इस स्तंभ के शीर्ष लेबल पर लागू होते हैं।',
+    'panel.column.kindConfirm.title': 'स्तंभ “{label}” को {kind} में बदलें?',
+    'panel.column.kindConfirm.titleUnnamed': 'इस स्तंभ को {kind} में बदलें?',
+    'panel.column.kindConfirm.body': 'सेल की हर चीज़ ({kinds}) हटा दी जाएगी।',
+    'panel.column.kindConfirm.carry':
+      'डेटा कुंजी वाले पहले तत्व से स्तंभ डेटा कुंजी “{key}” और उसकी प्रदर्शन सेटिंग लेगा। दूसरे तत्वों की डेटा कुंजियाँ नहीं रखी जातीं।',
+    'panel.column.kindConfirm.noCarry':
+      'सेल के किसी तत्व में डेटा कुंजी नहीं है, इसलिए स्तंभ खाली रहेगा। बदलने के बाद डेटा कुंजी चुनें; तब तक चेतावनी दिखती रहेगी।',
+    'panel.column.kindConfirm.undo': 'पूर्ववत ({mod}Z) से तत्व वापस आ जाते हैं।',
+    'panel.column.kindConfirm.confirm': 'तत्व हटाकर बदलें',
+    'panel.column.kindConfirm.cancel': 'रद्द करें',
+    'panel.fit.default': '(डिफ़ॉल्ट: अंदर फ़िट करें)',
+    'panel.fit.contain': 'अंदर फ़िट करें (कुछ नहीं कटता, जगह बच सकती है)',
+    'panel.fit.cover': 'बॉक्स भरें (बाहर का हिस्सा कटता है)',
+    'panel.fit.stretch': 'खींचें (अनुपात बदलता है)',
+    'panel.fit.none': 'मूल आकार (बॉक्स से बड़ा हिस्सा कटता है)',
+    'panel.fit.unsupported': '{mode} (इस इंजन में समर्थित नहीं)',
+    'panel.column.kindConfirm.kindCount': '{kind} ×{n}',
+    'panel.column.kindConfirm.otherKind': 'अन्य',
+    'panel.column.styleHintDrawnNoValign':
+      'QR कोड और छवियाँ सेल के बीच में बनती हैं। {background} सेल पर लागू होता है; {textAlign} इस स्तंभ के शीर्ष लेबल पर लागू होता है।',
+    'panel.column.placeholderQr': 'खाली पंक्ति का QR सामग्री',
+    'panel.column.kindTag': 'प्रकार: {kind}',
+    'panel.column.kindFor': 'स्तंभ “{label}” का प्रकार',
     'panel.column.styleHint':
       'इस स्तंभ की मुख्य कोशिकाओं पर लागू होता है। इसका संरेखण इस स्तंभ के अपने शीर्षक पर शीर्ष पंक्ति से भी ऊपर रहता है।',
     'panel.rowConditions.remove': 'यह नियम हटाएँ',

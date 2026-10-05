@@ -564,7 +564,11 @@ is Tailwind utilities over the `--sj-*` tokens.
   Material 3 hierarchy (primary=filled / default=outlined / ghost=text)
   gateable; `ui/actionConvention.test.ts` refuses a hand-rolled copy.
 - `ui/Select.tsx` — over Headless UI Listbox (display label separate
-  from wire value).
+  from wire value; an option may carry a decorative `icon`, drawn in the
+  list and, once picked, in the button — the fit picker's result glyphs). A
+  hint describes the button only through a Headless `Field` + `Description`
+  around it: `ListboxButton` builds its `aria-describedby` from that context
+  and ignores one passed as a prop.
 - `ui/Menu.tsx` — data-driven grouped entries + headings; text or icon
   trigger (icon form gets a TipBubble); `checkedId` for single-choice.
   An icon trigger may also carry `triggerText`, the control's current

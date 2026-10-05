@@ -69,6 +69,13 @@ export function useSelectionShortcuts(options: SelectionShortcutsOptions): void 
         return;
       }
       if (action === 'deselect') {
+        // An Escape pressed inside a dialog is that dialog's own dismissal
+        // (Headless UI closes it from the same keypress). Deselecting too would
+        // pull the selection — and the panel that opened the dialog — out from
+        // under it: a confirm over the column sheet closed the whole sheet.
+        if (event.target instanceof Element && event.target.closest('[role="dialog"]') !== null) {
+          return;
+        }
         // Escape closes the document view first (its own dismissal), before
         // falling through to canvas deselect. The editable-target guard above
         // means Escape inside a field never reaches here.
