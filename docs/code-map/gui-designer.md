@@ -259,11 +259,14 @@ REQUIRED-only (no `?:`/defaults) so the split added no new branch legs.
 - `shell/SidePane.tsx` — the left pane: collapsed rail ⇄ `Sidebar` tabs
   (layers always; data iff EFFECTIVE definitions) + `ResizeHandle`.
 - `shell/CanvasArea.tsx` — the center column: `CanvasTopbar`, `PageRail`
-  (≥2 pages), scrolling `DesignerCanvas`, preview-error alert, empty-state
-  card; memoizes `canvasManipulate` over destructured editor locals.
+  (≥2 pages), scrolling `DesignerCanvas`, preview-error alert, the
+  empty-state card (`shell/CanvasEmptyState.tsx`, which reads
+  `hasNoBodyItems` itself and carries the `actionConvention` primary
+  exception); memoizes `canvasManipulate` over destructured editor locals.
 - `shell/CanvasTopbar.tsx` — breadcrumb + the placement chip (`canvas.place.*`
   keys in an `<output>`; a refused drag's reason until the next selection)
-  + pdf/image notices + the over-cap raise button. Renders CATALOG keys
+  + copy/pdf/image notices (the copy one is `hooks/useCopyNotice`'s refused
+  ⌘D / block insert) + the over-cap raise button. Renders CATALOG keys
   only, never document content.
 - `shell/canvasManipulate.ts` — the overlay's manipulation wiring as a
   pure factory: every drop that changes an item's PATH (a same-parent
@@ -486,7 +489,8 @@ lists name the destructured stable fields, never `editor` itself.
   params rows + ONE table insert).
 - `hooks/useBlocks.ts` — reusable-block library: `blocks` prop is the
   host-owned app-global list; pure `insert/blockModel`; `insertBlock` is
-  a plain `insertItem` (AI parity), band-placed only when the target is a
+  a plain `insertItem` (AI parity) batched with the fresh ids the copy
+  takes (`ids/copyIds`), band-placed only when the target is a
   band directly (`placeForTarget`), refused when the block's node
   does not fit the resolved target's owner, or when that owner refuses
   something the block carries (`typeFitsOwner` / `insert/blockRefusal`'s
@@ -496,8 +500,15 @@ lists name the destructured stable fields, never `editor` itself.
   right-click menu acts on the path it was opened at, never on whatever
   the selection has become), `deleteSelected`/`duplicateSelected` as the
   selection-scoped wrappers the keyboard and the Edit menu use, plus
-  `wrapSelected` and the context-menu anchor. A delete selects the
-  surviving neighbour. A table's header group is removed through
+  `wrapSelected` and the context-menu anchor. A duplicate is ONE batch from
+  `ids/copyIds`' `duplicateOps` — the `duplicateItem` plus the copy's fresh
+  ids — so a duplicate never leaves two nodes answering to one anchor; a copy
+  it cannot rename whole (over `MAX_BATCH_OPS`, or a subtree it cannot read
+  whole) authors nothing and says why through `hooks/useCopyNotice.ts`
+  (`copyNotice` / `refuseCopy`, a catalog key the canvas topbar shows until
+  the next committed edit; `useBlocks` reports through the same
+  `refuseCopy`, which is why `wiring.ts` builds the selection ops first). A delete
+  selects the surviving neighbour. A table's header group is removed through
   `panel/tableSettingsOps`' `removeHeaderGroupOp`, so the last one takes the
   `headerGroups` key with it — the same file the group form's button leaves.
 - `hooks/useSelectionShortcuts.ts` — the window keydown effect over pure
@@ -544,6 +555,42 @@ lists name the destructured stable fields, never `editor` itself.
   `mostVisiblePageIndex`, thumbnail jump).
 - `hooks/useEditorPrefs.ts` — grid-step + pane width/collapsed prefs
   (normalized/clamped; never written into the template).
+
+## Names (`src/ids/` — the `id:` namespace)
+
+Pure, framework-free. The node NAMES an anchor points at — every item type, a
+table column and the three sub-template frames carry an `id`; exactly two
+spellings name one (an ellipse's `anchor`, a line endpoint's `item`).
+Uniqueness is a DESIGNER rule (the engine has none): every write the
+Designer UI makes that could leave two nodes sharing an id — the name field,
+⌘D, a saved-block insert — goes through here. Copilot replies are raw ops
+(`duplicateItem` clones verbatim) that the user reviews before applying.
+
+- `ids/walk.ts` — the bounded walk (own-property reads, the layer tree's
+  descent and depth cap, `MAX_ID_WALK_NODES` budget → `truncated`) yielding
+  HOLDERS (path, id, kind, the tree's label) and REFS (path + keys + id).
+- `ids/idIndex.ts` — `buildIdIndex(read)` over the three sections (read from
+  the document, never the box index; an unreadable document is `truncated`)
+  and `subtreeIndex(value, at)` (a copy's namespace; a `…columns[n]` root is
+  walked as a column).
+- `ids/idEdit.ts` — `idEdit(index, path, current, raw)`: trimmed; equal →
+  no ops; empty → `removeKey` (`clears`); refusals `too_long`
+  (`MAX_ID_CHARS` = the data-item name cap) / `control` / `truncated` /
+  `duplicate` (with the holder) / `too_many` (`MAX_BATCH_OPS`); a rename
+  carries the refs only when this node is the old id's SOLE holder
+  (`followers`, counted in distinct referring items); a partial index refuses
+  every write, a clear included (it would count no anchors and skip the
+  confirm). `freshName` (`x` → `x_2`, `x_2` → `x_3`), the stem cut so a
+  minted name stays within `MAX_ID_CHARS`.
+- `ids/copyIds.ts` — `copyIdOps(value, at, index)`: each copied id takes
+  `freshName` over the whole namespace, refs INSIDE the copy that named a
+  copied id follow it, refs outside are untouched; the taken set is every
+  holder's id AND every reference's (an orphan anchor's name is never
+  minted). A partial DOCUMENT namespace removes the copy's ids instead (the
+  copy's own walk is whole, so every one of them); a copy that cannot be
+  walked whole is refused (`unreadable`), as is one over the batch cap
+  (`too_many`) — `CopyIds`. `duplicateOps(read, parent, index)` = ⌘D's whole
+  batch, refusing an original the materialization cap cannot read.
 
 ## Hook registry (`src/registry/` — host-composition surface)
 
@@ -620,7 +667,9 @@ services/props; nothing in the component reads the singleton.
   exempts it BY PATH). `engineWire.ts` reads the engine's template STRUCTS
   off disk (`itemVariants`/`structBody`/`templateSources`) for the drift guards
   that derive a panel's type set from the wire (`panel/noBoxWire`,
-  `panel/styleNamesWire`). `contrast.ts` is the ONE WCAG ratio the suites measure
+  `panel/styleNamesWire`, `ids/idWire`). `itemTypes.ts` is the 15 wire item
+  types as a literal for jsdom suites, which cannot read the engine source;
+  `ids/idWire.test.ts` asserts it equals the `Item` enum. `contrast.ts` is the ONE WCAG ratio the suites measure
   thresholds with — `theme/tokens` (AA on every rendered pairing),
   `ui/chipContrast` (the unset chip's ring on both surfaces) and
   `canvas/paperInkConvention` (which tokens may paint on the paper) had a copy
@@ -635,7 +684,9 @@ services/props; nothing in the component reads the singleton.
   save-block trigger, the layer-tree grammar-identity pin (every engine
   box path addressable in `buildTree`), reorder/duplicate re-renders,
   the canvas dnd pipeline over real inspect geometry, zoomed render
-  scale, and the page-setup size table against the engine.
+  scale, the page-setup size table against the engine, and the names
+  `ids/` writes (a named target resolving an anchor, a rename it follows, a
+  duplicated group with no `anchor_ambiguous_target`).
 - `src/integration/sampleData.test.ts` — sample-data generation and the
   workshop stub against the real engine: params generated from a bundled
   definitions schema validate with no `params_*` diagnostics, and a

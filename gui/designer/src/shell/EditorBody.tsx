@@ -140,6 +140,7 @@ export function EditorBody({
             inserts={inserts}
             treeView={derived.treeView}
             session={session}
+            copyNotice={selectionOps.copyNotice}
             onContextMenu={selectionOps.openContextMenu}
           />
           <PanelColumn

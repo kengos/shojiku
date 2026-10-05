@@ -834,7 +834,8 @@ presence is not a text binding.
   `PanelColorField` (`style.backgroundColor`), `BorderEditor`
   (`style.border`), `OverflowField` (`style.overflow`, which a repeat cell
   and a card honour) and `OpacityField` — and the jump back to the owner.
-  Padding, overflow and opacity are each capability-gated.
+  Padding, overflow and opacity are each capability-gated; the frame's NAME
+  (`ItemIdField`, first) is not — the engine reads a frame's `id` everywhere.
 - `panel/styleSurfaces.ts` (pure; imports only `hasCapability`) — the type→control table of the
   text-and-box keys, one `Set` per key, each citing the layout code that honours
   it: `TEXT_SURFACE_TYPES` (text/page_number/list), `TEXT_INHERIT_TYPES`
@@ -947,15 +948,15 @@ presence is not a text binding.
   (renders `panelTabs`' answer; active tab clamped on type change).
   `VisibilitySection` renders OUTSIDE the tabs — it applies to every type, so
   it must not appear and disappear as the reader changes tab — and BELOW
-  them, after the tab bodies (or after a single-tab body, or alone for the
-  tab-less `page_break`). The page break earns a one-line note above the
+  them, after the tab bodies (or after a single-tab body, or after the name
+  field alone for the tab-less `page_break`). The page break earns a one-line note above the
   presence binding (`tabLessNoteKey` — `panel.pageBreak.note`, or
   `panel.pageBreak.noteFirst` at index 0, where the engine COLLAPSES the break
   and the general sentence would promise an effect the file does not have),
-  because its empty panel is the whole item. The `panel.noEditable`
-  placeholder is rarer still: it appears only when even `visible:` is
-  unavailable (an engine without `item.visible`), so against a current engine
-  a tab-less item never shows it. The two
+  because its empty panel is the whole item. The NAME field (`ItemIdField`,
+  below) sits with `VisibilitySection` for the same reason — every type
+  carries an `id` — and is never capability-gated, so no type's panel is ever
+  empty (the old `panel.noEditable` placeholder was retired with it). The two
   FORM MARKS (`MARK_TYPES`) take ALL THREE: they are boxed, their
   presence is content, and their outline is decoration — reached through
   `STYLED_TYPES` (which is `BORDERABLE_TYPES` plus `line`, the marks and
@@ -1135,7 +1136,9 @@ presence is not a text binding.
   document does not carry as a map).
 - `panel/ColumnForm.tsx` — the single-column form a canvas click on a
   `…columns[n]` cell opens (a `cell:` column adds the jump into its
-  `…cell` frame): label, the content block (`ColumnContentFields`), width
+  `…cell` frame): label, the content block (`ColumnContentFields`), the
+  column's NAME (`ItemIdField` — a column `id` is one box-index placement per
+  cell and a host asset policy's key for its dynamic images), width
   (scope via `bindingScopeFor`), then the column's OWN cell style — the same
   `TableBandFields` at `columns[n].style`, over `cascadeContext(read, path,
   floor)` (a column has a path, so its row band and table come for free), which
@@ -1504,6 +1507,20 @@ conditional rules the next section owns).
   boolean for `true`/`false` on a boolean field, else the text — because the
   engine predicate is type-strict. The three read models carry `boolEquals`
   (whether `equals` is a boolean literal) for the yes/no control.
+- `panel/ItemIdField.tsx` — the node's NAME (`id:`), rendered by `ItemPanel`
+  beside `VisibilitySection` for every item type, by `ColumnForm` for a column
+  and by `FrameForm` for a sub-template frame; keyed by path at each host so a
+  refusal does not outlive the selection. NOT capability-gated: every engine
+  reads `id` on every holder (`ids/idWire.test.ts` pins the structs). What an
+  entry means is `ids/idEdit`'s answer over the whole namespace
+  (`ids/idIndex`, memoized on `revision`): a name another node carries is
+  refused NAMING that node (the layer tree's label, else its kind name); a
+  rename carries every anchor that named the old id in ONE batch, and the
+  field states how many BEFORE the edit; clearing a name anchors still use
+  waits on `panel/IdClearConfirm.tsx` (a modal — the destructive-confirm
+  placement rule), which removes the id only. Uncontrolled input reseeded by a
+  value+nonce key on every committing blur; Enter blurs, IME-guarded. A
+  non-string authored id is shown as written, read-only, never overwritten.
 - `panel/VisibilitySection.tsx` — an item's `visible:` presence binding,
   rendered OUTSIDE the content/decoration/placement tabs because it applies to
   every item type and is none of those concerns — and BELOW them, because it is
@@ -1512,9 +1529,10 @@ conditional rules the next section owns).
   background and border controls anyone opened the panel for. UNSET it is one
   row (title + the same paragraph behind a `?` + the button); AUTHORED it keeps
   the full card, in the same place. The tree's `if` badge is what announces a
-  conditional item at a glance, so the panel need not shout it from the top. It is also what gives
-  `page_break` an editing surface at all (the wire takes only `id` and
-  `visible:`), which is what a conditional page break is. Gated on the
+  conditional item at a glance, so the panel need not shout it from the top. With
+  the name field (`ItemIdField`) it is `page_break`'s whole editing surface (the
+  wire takes only `id` and `visible:`), and a conditional page break is what
+  this key is for. Gated on the
   `item.visible` capability — an older engine parse-rejects the key. The
   field picker follows the item's OWN data scope, derived from its path by
   `bindingScopeFor` like every other row-scoped surface: inside a `repeat`

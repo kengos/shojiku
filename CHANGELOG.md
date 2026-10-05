@@ -15,6 +15,17 @@ platform binaries.
 
 ### Added
 
+- **Name any item in the Designer.** Every item, table column and cell or
+  card frame has a 「名前（ID）」 field — the name a circle or a line anchored
+  to it points at, and the id the layout output reports for it. A name
+  another item already uses is refused, naming that item; renaming carries
+  every anchor that points at the old name, in one undo step; and clearing a
+  name that anchors still use asks first, since they stop drawing without it.
+  Duplicating an item (⌘D) or inserting a saved block gives the copy's names
+  a fresh number (`total` → `total_2`), and a circle inside the copy follows
+  its own copy rather than the original; a copy too large to renumber is not
+  made, and the bar above the canvas says why.
+
 - **A table column can print a QR code or an image, or hold freely placed
   items, from the Designer.** The column form gains 「列の種類」 — text, QR code,
   image or free layout — and the column sheet a row to compare and switch it

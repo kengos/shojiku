@@ -20,9 +20,8 @@ import type { PaletteDragWiring } from '../hooks/usePaletteDrag';
 import type { PdfAction } from '../hooks/usePdfAction';
 import type { PreviewSession } from '../hooks/usePreviewSession';
 import { useI18n } from '../i18n/context';
-import { hasNoBodyItems } from '../insert/model';
 import type { TreeView } from '../tree/model';
-import { Button } from '../ui/Button';
+import { CanvasEmptyState } from './CanvasEmptyState';
 import { CanvasTopbar } from './CanvasTopbar';
 import { canvasManipulate } from './canvasManipulate';
 
@@ -42,6 +41,8 @@ export interface CanvasAreaProps {
    * scales, the transport status and the canvas scroll ref. */
   readonly session: PreviewSession;
   readonly onContextMenu: (path: string, x: number, y: number) => void;
+  /** Why the last copy (⌘D / block insert) did not happen — a catalog key. */
+  readonly copyNotice: string | null;
 }
 
 export function CanvasArea({
@@ -58,6 +59,7 @@ export function CanvasArea({
   treeView,
   session,
   onContextMenu,
+  copyNotice,
 }: CanvasAreaProps) {
   const { t } = useI18n();
   // Locals, not property reads: memo dependencies must be the stable callback
@@ -89,7 +91,14 @@ export function CanvasArea({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-col">
-      <CanvasTopbar editor={editor} multi={multi} image={image} pdf={pdf} treeView={treeView} />
+      <CanvasTopbar
+        editor={editor}
+        multi={multi}
+        image={image}
+        pdf={pdf}
+        treeView={treeView}
+        copyNotice={copyNotice}
+      />
       <div className="flex min-h-0 flex-1">
         {pageCount >= 2 ? (
           <PageRail
@@ -151,19 +160,7 @@ export function CanvasArea({
               {previewError}
             </div>
           ) : null}
-          {hasNoBodyItems(read) ? (
-            <div className="absolute top-24 left-1/2 w-fit max-w-[80%] -translate-x-1/2 rounded-md border border-dashed border-border bg-surface px-4 py-3 text-center text-text shadow-[0_4px_12px_rgb(0_0_0/0.12)]">
-              <p className="m-0 mb-2">{t('canvas.empty')}</p>
-              {/* The one filled control on the WORK SURFACE, and the documented
-                  exception to "a canvas screen carries no primary": in an empty
-                  state it is the only thing on the page, so it IS that screen's
-                  primary. gui/STYLE.md § Actions carries the rule and this
-                  exception; `Designer.test.tsx` pins it. */}
-              <Button variant="primary" onClick={() => inserts.insert('text')}>
-                {t('canvas.emptyAction')}
-              </Button>
-            </div>
-          ) : null}
+          <CanvasEmptyState read={read} onInsertText={() => inserts.insert('text')} />
         </div>
       </div>
     </div>

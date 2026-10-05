@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { WIRE_ITEM_TYPES } from '../testkit/itemTypes';
 import { readItemView } from './itemView';
 import { PropertyPanel } from './PropertyPanel';
 import { applicableTabs } from './panelTabs';
@@ -168,21 +169,22 @@ describe('ItemPanel — a table', () => {
 });
 
 describe('ItemPanel — box-less types', () => {
-  it('gives a page_break the presence binding and still no tabs', () => {
+  it('gives a page_break its name and the presence binding, and still no tabs', () => {
     // The wire takes only `id` and `visible:`, so there is no TAB to show —
-    // but a conditional page break is exactly what `visible:` is for, and the
-    // panel used to say the type had nothing editable at all.
+    // but both keys are editable, and a conditional page break is exactly
+    // what `visible:` is for.
     drawPanel({ type: 'page_break' });
     expect(screen.queryAllByRole('tab')).toEqual([]);
+    expect(screen.getByLabelText('Name (ID)')).toBeTruthy();
     expect(screen.getByText('When to show')).toBeTruthy();
-    expect(screen.queryByText('This element has no editable properties.')).toBeNull();
   });
 
-  it('falls back to the no-editable placeholder when the engine lacks the key', () => {
-    // An older engine parse-REJECTS `visible:`, so the control is withheld —
-    // and a page_break then genuinely has nothing to edit again.
+  it('keeps the name on a page_break when the engine lacks the presence key', () => {
+    // An older engine parse-REJECTS `visible:`, so that control is withheld —
+    // but every engine reads `id`, so the break still has its name to edit and
+    // the panel no longer claims there is nothing editable.
     drawPanel({ type: 'page_break' }, ['text']);
-    expect(screen.getByText('This element has no editable properties.')).toBeTruthy();
+    expect(screen.getByLabelText('Name (ID)')).toBeTruthy();
     expect(screen.queryByText('When to show')).toBeNull();
   });
 
@@ -365,11 +367,29 @@ describe('ItemPanel — a type with no applicable tab', () => {
 
   it('says nothing of the kind for a `repeat`, whose panel has real surfaces', () => {
     // A page break's note is for the one type whose panel is the whole item. A
-    // repeat's data source and grid are editable, so neither that note nor
-    // `panel.noEditable` belongs on it.
+    // repeat's data source and grid are editable, so that note does not belong
+    // on it.
     drawPanel({ type: 'repeat', data: { key: 'rows' } });
     expect(screen.queryByText('Everything after this starts on a new page.')).toBeNull();
-    expect(screen.queryByText('This element has no editable properties.')).toBeNull();
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Content', 'Layout']);
   });
+});
+
+// The name field is item-wide, like `visible:`: every wire type carries an `id`
+// (pinned to the engine structs, and this type list to the `Item` enum, by
+// `ids/idWire.test.ts`), so every type's panel
+// shows it — in each of the three layouts (tabbed, single-tab, tab-less) — and
+// no capability list withholds it, since no engine lacks the key.
+describe('ItemPanel — the name field', () => {
+  it.each([...WIRE_ITEM_TYPES])(
+    'shows the name field for a %s, under an empty capability list too',
+    (type) => {
+      drawPanel({ type, id: `my_${type}` }, []);
+      const field = screen.getByLabelText('Name (ID)') as HTMLInputElement;
+      expect(field.value).toBe(`my_${type}`);
+      // Outside the tabs: it must not appear and disappear as the reader
+      // changes tab.
+      expect(field.closest('[role="tabpanel"]')).toBeNull();
+    },
+  );
 });

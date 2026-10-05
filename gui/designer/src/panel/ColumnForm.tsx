@@ -1,5 +1,5 @@
 // The single-column form a canvas column selection (`…columns[n]`) opens:
-// label, binding, format, width, and the column's own cell styling — the column
+// label, binding, format, name (`id`), width, and the column's own cell styling — the column
 // identity the user just clicked, without hunting the parent table in the tree.
 //
 // The styling half is the SAME four controls the table's header and body bands
@@ -22,6 +22,7 @@ import { BTN_SM, INPUT, PANEL, SECTION_TITLE } from '../ui/chrome';
 import { ColumnContentFields } from './ColumnContentFields';
 import type { ColumnRow } from './columnsModel';
 import { Field, TextField } from './fields';
+import { ItemIdField } from './ItemIdField';
 import { registryNames } from './itemView';
 import { applyPanelOp, lengthOp, plainTextOp } from './model';
 import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
@@ -112,6 +113,10 @@ export function ColumnForm({
               computed label — the bare label would read as word+"pt" run together to a screen reader. A
               column width is commonly a `%`, and the badge shows only while
               the value is bare, i.e. while the pt is the invisible one. */}
+          {/* The column's own name: a column `id:` gives one box-index
+              placement per cell, and is what a host's asset policy keys a
+              column's dynamic images by. */}
+          <ItemIdField key={path} controller={controller} path={path} />
           <TextField
             label={t('panel.column.width')}
             value={column.width}

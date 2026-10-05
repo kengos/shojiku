@@ -5,11 +5,13 @@
 
 import { useCallback, useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
+import { duplicateOps } from '../ids/copyIds';
 import { wrapInContainerOps } from '../insert/wrap';
 import { groupPathInfo } from '../panel/groupModel';
 import { removeHeaderGroupOp } from '../panel/tableSettingsOps';
 import { seqPosition } from '../tree/reorder';
 import { nextSelectionAfterRemove, seqLength } from '../tree/selection';
+import { type CopyNotice, useCopyNotice } from './useCopyNotice';
 import { useSelectionShortcuts } from './useSelectionShortcuts';
 
 export interface SelectionOpsOptions {
@@ -36,6 +38,10 @@ export interface SelectionOps {
   readonly contextMenu: { readonly x: number; readonly y: number; readonly path: string } | null;
   readonly openContextMenu: (path: string, x: number, y: number) => void;
   readonly closeContextMenu: () => void;
+  /** Why the last duplicate (or saved-block insert, which reports through
+   * `refuseCopy`) did not happen — `hooks/useCopyNotice`. */
+  readonly copyNotice: string | null;
+  readonly refuseCopy: CopyNotice['refuseCopy'];
 }
 
 export function useSelectionOps({
@@ -48,7 +54,9 @@ export function useSelectionOps({
 }: SelectionOpsOptions): SelectionOps {
   // Destructured ONCE: the controller object is rebuilt every render, so the
   // memo/effect deps below must be these stable fields, never `editor` itself.
-  const { selection, read, apply, applyAll, select, clearSelection, undo, redo } = editor;
+  const { selection, read, apply, applyAll, select, clearSelection, undo, redo, subscribe } =
+    editor;
+  const { copyNotice, refuseCopy } = useCopyNotice(subscribe);
   const [contextMenu, setContextMenu] = useState<{
     readonly x: number;
     readonly y: number;
@@ -111,11 +119,20 @@ export function useSelectionOps({
   const duplicateAt = useCallback(
     (path: string) => {
       const pos = seqPosition(path);
-      if (pos !== null && apply({ op: 'duplicateItem', path: pos.parent, index: pos.index }).ok) {
+      // The copy takes fresh ids in the same batch (`ids/copyIds`), so a
+      // duplicate never leaves two nodes answering to one anchor; a copy that
+      // cannot be renamed whole is refused, and the topbar says why.
+      if (pos === null) {
+        return;
+      }
+      const batch = duplicateOps(read, pos.parent, pos.index);
+      if (!batch.ok) {
+        refuseCopy(batch.reason);
+      } else if (applyAll(batch.ops).ok) {
         select(`${pos.parent}[${pos.index + 1}]`);
       }
     },
-    [apply, select],
+    [read, applyAll, select, refuseCopy],
   );
   const deleteSelected = useCallback(() => {
     if (selection !== null) {
@@ -149,5 +166,7 @@ export function useSelectionOps({
     contextMenu,
     openContextMenu,
     closeContextMenu,
+    copyNotice,
+    refuseCopy,
   };
 }

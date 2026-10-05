@@ -145,6 +145,35 @@ describe('FrameForm via CellPanel', () => {
     expect(screen.queryByText('Border')).toBeNull();
   });
 
+  it.each([
+    [
+      'a grid cell',
+      CELL,
+      { [OWNER]: { type: 'repeat', cell: { items: [] } }, [CELL]: { items: [] } },
+    ],
+    [
+      'a card',
+      `${OWNER}.item`,
+      { [OWNER]: { type: 'repeat_flow', item: { items: [] } }, [`${OWNER}.item`]: { items: [] } },
+    ],
+    [
+      'a column cell',
+      `${OWNER}.columns[0].cell`,
+      {
+        [OWNER]: { type: 'table', columns: [{ label: 'A', cell: {} }] },
+        [`${OWNER}.columns[0]`]: { label: 'A', cell: {} },
+        [`${OWNER}.columns[0].cell`]: {},
+      },
+    ],
+  ])('names %s frame at the frame itself', (_, path, reads) => {
+    const controller = makeController(reads);
+    draw(<PropertyPanel controller={controller} path={path} />);
+    fireEvent.blur(screen.getByLabelText('Name (ID)'), { target: { value: 'slot' } });
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path, keys: ['id'], value: 'slot' },
+    ]);
+  });
+
   it('names a card frame and a column cell frame, the latter with its note', () => {
     const card = makeController({
       [OWNER]: { type: 'repeat_flow', item: { items: [] } },
