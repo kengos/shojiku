@@ -47,11 +47,27 @@ mechanism); capability gates are "undefined = show"
 
 ## Placement tab — placement + container layout
 
-- `panel/gridStructure.ts` — pure grid column/row plans: `gridColumnsPlan`
-  (re-chunk row-major children + ONE `setScalar box.columns` count),
-  `gridRowsPlan` (child-list only; implicit auto rows), `gridRowCount`;
-  `{ops, drops}` where `drops` flags content-bearing removals (the
-  panel's confirm gate).
+- `panel/gridStructure.ts` — pure grid column/row plans over the grid's CELLS
+  (the flex items; a positioned child or a `line` is never moved, counted or
+  dropped), in FILL order (`panel/gridLines.ts`: `relineOps` pads/trims every
+  line, `resizeLinesOps` adds/drops whole lines — a column change is the first
+  across-then-down and the second down-then-across, a row change the reverse):
+  `gridColumnsPlan` (`box.columns` keeps its form — a count is rewritten, a
+  track LIST gains copies of its last track or loses trailing ones),
+  `gridRowsPlan` (an authored `box.rows` follows — a count is rewritten, a
+  longer list trimmed), `gridRowCount`; `{ops, drops}` where `drops` flags
+  content-bearing removals (the panel's confirm gate). The grid read they share
+  (cells, fill order) is `panel/gridState.ts`. A grid with a SPANNING cell is
+  never re-chunked: the panel withholds the steppers there (`GridSection`).
+- `panel/gridTracks.ts` — the column-width / row-height model: `readTracks`
+  (absent / a count / a list of `Track` = `auto` | `fr` | `fixed`, an
+  unclassifiable entry shown as fixed with its text verbatim; `null` for a
+  hostile value), `trackFormOp` (count ↔ list ↔ absent; a count becomes equal
+  `1fr` columns or `auto` rows), `trackKindOps`/`trackValueOps` (ONE entry
+  replaced in place by removeItem+insertItem — never a whole-list rewrite;
+  ingress: an fr weight in [0, `MAX_FLEX_GROW`], a fixed length non-negative
+  and ≤ `MAX_TRACK_PT` when absolute, a relative `%`/`em`/`rem` passed
+  through), `trackListResizeOps`, `trackCount`.
 
 The container-layout model is a READ/WRITE pair; the write side depends on
 the read side, never the reverse.
@@ -69,7 +85,8 @@ the read side, never the reverse.
   (direct parent only), `containerKindLabel`, `MAX_GRID_TRACKS`, and the
   `ITEMS_SUFFIX` the write side appends through.
 - `panel/layoutOps.ts` — what a control AUTHORS, one key at a time: the
-  value-parsing `gapOp`/`gapStepOp`/`ratioOp` (each refuses (null) rather than
+  value-parsing `gapOp`/`gapStepOp` (one ingress rule for `gap` and a grid's
+  `columnGap`/`rowGap`, `GapKey`)/`ratioOp` (each refuses (null) rather than
   authoring what the engine would warn on or discard) beside
   `directionOp`/`alignItemsOp`/`justifyContentOp`/`addSlotOp`, which always
   author (typed enums, an always-valid append); the engine vocabularies
@@ -100,10 +117,31 @@ The child-layout surface is a shell + one module per control cluster.
 
 - `panel/LayoutSection.tsx` — the shell: the arrangement `Segmented`
   (row / stack / grid, every mode; an option disabled with its reason as the
-  tip when the engine lacks `box.grid` or the batch is refused) and the gap
-  stepper every mode shows, then the per-mode clusters, and the add-slot only
-  a NON-grid container shows. Takes the host `capabilities` (absent = the
-  bundled engine).
+  tip when the engine lacks `box.grid` or the batch is refused), then a row's
+  or a stack's gap stepper or a grid's `GridSection`, the per-mode clusters,
+  and the add-slot only a NON-grid container shows. Takes the host
+  `capabilities` (absent = the bundled engine).
+- `panel/GridSection.tsx` — the grid half: count steppers, column widths and
+  row heights (`GridTrackEditor` per axis, over `readTracks` of the layout
+  view's `box`; an absent `columns` reads as one column, a hostile one gets no
+  column controls; while any cell spans more than one cell the count steppers
+  are replaced by a note naming the child fields that bring them back), then
+  `GridGapFields`.
+- `panel/GridTrackEditor.tsx` — one axis: a form `Segmented` (columns: equal
+  count / per column; rows additionally all-fit-content = no key), the list
+  form's `GridTrackRow`s (kind `Select` + a value input for fr / fixed; a kind
+  the engine lacks — `grid.fr` / `grid.auto` — is left out unless it is the
+  entry's own), and for rows: 「すべて同じ高さ」 disabled with the reason when the
+  container has no `h` (the engine drops equal rows there with `percent_of_auto`),
+  plus a note when shares or an authored equal count meet no `h`.
+- `panel/GridGapFields.tsx` — a grid's `columnGap`/`rowGap` (the shared `gap`
+  as placeholder and step base) and the fill-order `Segmented`
+  (`gridFillOrderOp`: `column` writes `box.direction`, `row` removes it).
+- `panel/GridSpanFields.tsx` — a grid child's `columnSpan`/`rowSpan` steppers
+  (`spanOp`: clamped to the column count / 64 FIRST, then 1 removes the key and
+  an unchanged value authors nothing), hosted under the
+  parent card by `GridSpanSection` only for a flex item in a grid parent
+  behind `grid.span`.
 - `panel/JustifySelect.tsx` — the distribution dropdown (`justifyContent`):
   a row and a stack always, a grid only over a column-track LIST
   (`offersJustify`); the first three choices named for the main axis; an
@@ -139,7 +177,8 @@ The child-layout surface is a shell + one module per control cluster.
   stated reason.)
 - `panel/ParentContainerCard.tsx` — the parent-first tinted card hosting
   the same shell for the parent (capabilities threaded through): select-parent
-  jump + hover canvas highlight.
+  jump + hover canvas highlight; given the selected child's path it also hosts
+  that child's grid spans just below the card (`GridSpanSection`).
 
 ## Placement tab — the n-up repeat grid
 

@@ -37,7 +37,7 @@ export const COPY_EN: Record<string, string> = {
   'ch2.gap':
     'Selecting a slot shows a Parent container card at the top of the right panel — set its Gap to 8 (the space between slots).',
   'ch2.ratio':
-    "Set the ratio to 1:2:1, left to right. The numbers are each slot's share of the width, so the middle one becomes twice as wide.",
+    'Set Ratio to 1, 2, 1 (left to right). Each slot first takes the width of its text; the leftover width is then shared 1:2:1, so the middle slot gets twice as much extra as each side.',
   'ch2.auto':
     'The X/Y on the Layout tab read "auto" in grey. Positions are computed for you — the only places you type coordinates are the repeating band in chapter 6 and the seal in chapter 7.',
   'ch3.openField':
@@ -65,7 +65,8 @@ export const COPY_EN: Record<string, string> = {
   'ch5.container': 'As in chapter 2, place a 2-columns-by-1-row container under the table.',
   'ch5.total':
     'Type "Total " in the right slot and drag the amount field in as a chip, as you did in chapter 3.',
-  'ch5.ratio': 'Set the ratio to 3:1, so the right slot takes a quarter and the total sits right.',
+  'ch5.ratio':
+    'Set Ratio to 3 and 1. The left slot (still showing its placeholder) takes three quarters of the leftover width, which pushes the total toward the right.',
   'ch5.bold':
     'Make the total bold. A one-off look like this is fine to set directly, without naming a style.',
   'ch6.createFooter':

@@ -1,6 +1,7 @@
 // The child-layout shell for a container: the arrangement segment (side by side /
-// stacked / grid) every mode shows, the gap stepper, then the per-mode cluster —
-// column/row steppers for a grid (`GridSteppers`), the distribution dropdown
+// stacked / grid) every mode shows, then the per-mode cluster — for a row or a
+// stack the gap stepper, for a grid `GridSection` (count steppers, column widths
+// and row heights, per-axis spacing, fill order) — the distribution dropdown
 // (`JustifySelect`) where the arrangement has leftover space to share, the
 // alignment row (`AlignRow`, its words following the cross axis), and for a row or
 // a stack the ratio inputs (`RatioRow`), a row adding the split-by-ratio checkbox
@@ -22,7 +23,7 @@ import { IconLayoutColumn, IconLayoutGrid, IconLayoutRow, IconPlus } from '../ui
 import { Segmented } from '../ui/Segmented';
 import { AlignRow, BASELINE_CAPABILITY } from './AlignRow';
 import { BASIS_CAPABILITY, BasisCheck } from './BasisCheck';
-import { GridSteppers } from './GridSteppers';
+import { GridSection } from './GridSection';
 import { hasCapability } from './itemPanelProps';
 import { JustifySelect, offersJustify } from './JustifySelect';
 import type { ContainerLayout, LayoutMode } from './layoutModel';
@@ -108,24 +109,28 @@ export function LayoutSection(props: LayoutSectionProps) {
   return (
     <div>
       <ModeSegment {...props} />
-      <StepperField
-        label={t('panel.layout.gap')}
-        value={layout.gap}
-        placeholder="0"
-        unit="pt"
-        unitHint={t('stepper.unitHint')}
-        canStep={readLength(gapBase) !== null}
-        onCommit={(value) => dispatch(gapOp(path, value))}
-        onStep={(dir) => dispatch(gapStepOp(path, layout.gap, dir, GAP_STEP_PT))}
-      />
-      {grid && layout.columns !== null ? (
-        <GridSteppers
+      {grid ? (
+        <GridSection
           controller={controller}
           path={path}
-          columns={layout.columns}
-          rows={Math.ceil(layout.children.length / layout.columns)}
+          layout={layout}
+          support={{
+            fr: hasCapability(capabilities, FR_CAPABILITY),
+            auto: hasCapability(capabilities, AUTO_CAPABILITY),
+          }}
         />
-      ) : null}
+      ) : (
+        <StepperField
+          label={t('panel.layout.gap')}
+          value={layout.gap}
+          placeholder="0"
+          unit="pt"
+          unitHint={t('stepper.unitHint')}
+          canStep={readLength(gapBase) !== null}
+          onCommit={(value) => dispatch(gapOp(path, value))}
+          onStep={(dir) => dispatch(gapStepOp(path, layout.gap, dir, GAP_STEP_PT))}
+        />
+      )}
       {offersJustify(layout) ? (
         <JustifySelect
           layout={layout}

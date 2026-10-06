@@ -67,6 +67,7 @@ export function BoxSection(props: ItemPanelProps) {
         controller={controller}
         path={parentPath}
         layout={parentLayout}
+        childPath={path}
         onSelectParent={props.onSelectPath}
         onHighlight={props.onHighlight}
         capabilities={props.capabilities}

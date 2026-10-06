@@ -227,7 +227,7 @@ describe('LayoutSection (flex)', () => {
     // The fixed axis follows the arrangement: a height takes a stack slot out.
     expect(screen.getByText('Fixed height')).toBeTruthy();
     expect(screen.queryByText('Fixed width')).toBeNull();
-    expect(screen.getByText(/Free height is shared/)).toBeTruthy();
+    expect(screen.getByText(/Leftover height is shared/)).toBeTruthy();
     fireEvent.change(first, { target: { value: '2' } });
     fireEvent.blur(first);
     expect(controller.apply).toHaveBeenCalledWith({
@@ -302,7 +302,10 @@ describe('LayoutSection (grid)', () => {
     drawSection(controller);
     expect(screen.getByLabelText('Columns')).toBeTruthy();
     expect(screen.getByLabelText('Rows')).toBeTruthy();
-    expect(screen.getByLabelText('Spacing')).toBeTruthy();
+    // A grid spaces each axis on its own; the single both-axes field is gone.
+    expect(screen.getByLabelText('Column spacing')).toBeTruthy();
+    expect(screen.getByLabelText('Row spacing')).toBeTruthy();
+    expect(screen.queryByLabelText('Spacing')).toBeNull();
     // The arrangement segment shows in a grid too, with the grid picked.
     expect((screen.getByLabelText('Table grid') as HTMLInputElement).checked).toBe(true);
     expect(screen.getByText('Align children')).toBeTruthy();

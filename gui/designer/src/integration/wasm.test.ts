@@ -60,7 +60,10 @@ import { edgeSideOps, edgeUniformOps } from '../panel/edgeOps';
 import { edgeRules, FRAME_PADDING_RULES } from '../panel/edgeRules';
 import { attachAnchorOps, readEllipseAnchor } from '../panel/ellipseAnchor';
 import { frameOf } from '../panel/frameModel';
+import { gridFillOrderOp } from '../panel/GridGapFields';
+import { spanOp } from '../panel/GridSpanFields';
 import { gridColumnsPlan, gridRowsPlan } from '../panel/gridStructure';
+import { trackFormOp, trackKindOps, trackValueOps } from '../panel/gridTracks';
 import { readGroupsView } from '../panel/groupModel';
 import { registryNames } from '../panel/itemView';
 import { containerLayoutFor } from '../panel/layoutModel';
@@ -709,6 +712,71 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     });
     boxes = await render();
     expect(rect(boxes, `${path}.items[0]`).w).toBeCloseTo(rect(boxes, `${path}.items[1]`).w, 0);
+  });
+
+  it('edits grid tracks, per-axis gaps, a span and the fill order — WARNING-clean, geometry as authored', async () => {
+    // Every grid control's op goes through the real engine here; each claim is
+    // read back from the box index rather than from the document.
+    const editor = Editor.create(template());
+    const bodyLength = (editor.read('sections.body.items') as unknown[]).length;
+    const shape = containerShape(3, 2);
+    expect(
+      editor.apply({
+        op: 'insertItem',
+        path: 'sections.body.items',
+        index: bodyLength,
+        value: containerSnippet(shape as NonNullable<typeof shape>, 'Slot'),
+      }).ok,
+    ).toBe(true);
+    const path = `sections.body.items[${bodyLength}]`;
+    const cell = (i: number) => `${path}.items[${i}]`;
+    const apply = (ops: Op[] | null) => {
+      expect(ops).not.toBeNull();
+      expect(editor.applyAll(ops as Op[]).ok).toBe(true);
+    };
+    const render = async () => {
+      const outcome = await transport.renderRaw(editor.text(), params(), definitions(), {
+        scale: 2,
+      });
+      expect(outcome.ok).toBe(true);
+      expect(outcome.diagnostics.items).toEqual([]);
+      return outcome.inspect?.boxes.pages.flat() ?? [];
+    };
+    const rect = (boxes: Awaited<ReturnType<typeof render>>, at: string) => {
+      const found = boxes.find((box) => box.path === at);
+      expect(found, `no box for ${at}`).toBeDefined();
+      return (found as NonNullable<typeof found>).border;
+    };
+
+    // Per column: auto | 2fr | 90pt, through the panel's own entry edits.
+    apply([trackFormOp(path, 'columns', 'list', 3)]);
+    apply(trackKindOps(path, 'columns', 0, 'auto'));
+    apply(trackValueOps(path, 'columns', 1, 'fr', '2'));
+    apply(trackKindOps(path, 'columns', 2, 'fixed'));
+    apply(trackValueOps(path, 'columns', 2, 'fixed', '90'));
+    expect(editor.read(`${path}.box.columns`)).toEqual(['auto', '2fr', 90]);
+    // Column and row spacing, each on its own axis (the scaffold's shared gap
+    // is overridden per axis).
+    apply([gapOp(path, '10', 'columnGap') as Op, gapOp(path, '4', 'rowGap') as Op]);
+    let boxes = await render();
+    expect(rect(boxes, cell(2)).w).toBeCloseTo(90, 0);
+    const c0 = rect(boxes, cell(0));
+    const c1 = rect(boxes, cell(1));
+    expect(c1.x - (c0.x + c0.w)).toBeCloseTo(10, 0);
+    expect(rect(boxes, cell(3)).y - (c0.y + c0.h)).toBeCloseTo(4, 0);
+
+    // A span over two columns: the cell is both tracks plus the gap between.
+    const spanned = rect(boxes, cell(1)).w + 10 + rect(boxes, cell(2)).w;
+    apply([spanOp(cell(1), 'columnSpan', '2', 3, undefined) as Op]);
+    boxes = await render();
+    expect(rect(boxes, cell(1)).w).toBeCloseTo(spanned, 0);
+    apply([spanOp(cell(1), 'columnSpan', '1', 3, 2) as Op]);
+
+    // Down, then across: the second cell goes under the first.
+    apply([gridFillOrderOp(path, 'column')]);
+    boxes = await render();
+    expect(rect(boxes, cell(1)).x).toBeCloseTo(rect(boxes, cell(0)).x, 0);
+    expect(rect(boxes, cell(1)).y).toBeGreaterThan(rect(boxes, cell(0)).y);
   });
 
   it('nest-into-slot, grid 列/行 plans, and コンテナにまとめる all render WARNING-clean', async () => {
