@@ -567,3 +567,103 @@ describe('BoxSection unit affordance', () => {
     expect(unitHintsFor('X').length).toBeGreaterThan(0);
   });
 });
+
+// A grid child's spans: on the CHILD's own placement tab, under the parent card.
+describe('grid cell spans', () => {
+  const GRID = 'sections.body.items[0]';
+  const CELL = `${GRID}.items[0]`;
+
+  function gridDoc(child: Record<string, unknown>, columns: unknown = 3) {
+    return makeController({
+      [GRID]: { type: 'container', box: { type: 'grid', columns }, items: [child] },
+      [CELL]: child,
+      'sections.body': { type: 'flow', items: [] },
+    });
+  }
+
+  function drawCell(controller: EditorController, capabilities?: readonly string[]) {
+    draw(<PropertyPanel controller={controller} path={CELL} capabilities={capabilities} />);
+    openLayout();
+  }
+
+  it('shows both span fields for a grid cell, reading 1 when unset', () => {
+    drawCell(gridDoc({ type: 'text', text: 'a' }));
+    expect(screen.getByText('Cell size in the grid')).toBeTruthy();
+    expect((screen.getByLabelText('Cells across') as HTMLInputElement).placeholder).toBe('1');
+    expect((screen.getByLabelText('Cells down') as HTMLInputElement).value).toBe('');
+  });
+
+  it('authors a span, clamps a column span at the column count, and refuses garbage', () => {
+    const controller = gridDoc({ type: 'text', text: 'a' });
+    drawCell(controller);
+    const cols = screen.getByLabelText('Cells across') as HTMLInputElement;
+    fireEvent.change(cols, { target: { value: '9' } });
+    fireEvent.blur(cols);
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: CELL,
+      keys: ['box', 'columnSpan'],
+      value: 3,
+    });
+    for (const bad of ['0', '1.5', 'x']) {
+      fireEvent.change(cols, { target: { value: bad } });
+      fireEvent.blur(cols);
+    }
+    expect(controller.apply).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByLabelText('Increase Cells down'));
+    expect(controller.apply).toHaveBeenLastCalledWith({
+      op: 'setScalar',
+      path: CELL,
+      keys: ['box', 'rowSpan'],
+      value: 2,
+    });
+  });
+
+  it('removes the key at 1, and authors nothing for 1 when there is no key', () => {
+    const controller = gridDoc({ type: 'text', text: 'a', box: { columnSpan: 2 } });
+    drawCell(controller);
+    fireEvent.click(screen.getByLabelText('Decrease Cells across'));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      path: CELL,
+      keys: ['box', 'columnSpan'],
+    });
+    fireEvent.click(screen.getByLabelText('Decrease Cells down'));
+    expect(controller.apply).toHaveBeenCalledTimes(1);
+  });
+
+  it('caps at one column when the parent columns are unreadable — and 1 is never authored', () => {
+    const controller = gridDoc({ type: 'text', text: 'a' }, 'garbage');
+    drawCell(controller);
+    const cols = screen.getByLabelText('Cells across') as HTMLInputElement;
+    fireEvent.change(cols, { target: { value: '2' } });
+    fireEvent.blur(cols);
+    fireEvent.click(screen.getByLabelText('Increase Cells across'));
+    expect(controller.apply).not.toHaveBeenCalled();
+  });
+
+  it('is absent for a positioned child, a line, a non-grid parent and an engine without spans', () => {
+    const cases: [EditorController, readonly string[] | undefined][] = [
+      [gridDoc({ type: 'text', text: 'a', box: { x: 3 } }), undefined],
+      [gridDoc({ type: 'line', from: { x: 0, y: 0 }, to: { x: 9, y: 0 } }), undefined],
+      [gridDoc({ type: 'text', text: 'a' }), ['box.grid']],
+    ];
+    for (const [controller, caps] of cases) {
+      const { unmount } = draw(
+        <PropertyPanel controller={controller} path={CELL} capabilities={caps} />,
+      );
+      const layout = screen.queryByRole('tab', { name: 'Layout' });
+      if (layout !== null) {
+        fireEvent.click(layout);
+      }
+      expect(screen.queryByText('Cell size in the grid')).toBeNull();
+      unmount();
+    }
+    const row = makeController({
+      [GRID]: { type: 'container', box: { direction: 'row' }, items: [{ type: 'text' }] },
+      [CELL]: { type: 'text' },
+    });
+    drawCell(row);
+    expect(screen.queryByText('Cell size in the grid')).toBeNull();
+  });
+});

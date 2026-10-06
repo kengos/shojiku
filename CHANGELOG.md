@@ -15,6 +15,26 @@ platform binaries.
 
 ### Added
 
+- **Set each grid column's width, each row's height, the spacing per
+  direction, the fill order and cell spans in the Designer.** A 表組み
+  container's 「列の幅」 is either 「すべて同じ幅」 or 「列ごとに指定」, and per
+  column you pick 中身に合わせる, 比率 or 固定 and type only the number;
+  「行の高さ」 does the same for rows, with 「すべて中身に合わせる」 as the
+  default and a note when shares or equal heights need the container to have
+  a height. 「列の間隔」 and 「行の間隔」 replace the single spacing field in a
+  grid (the shared spacing still shows as their placeholder), 「並べる順」
+  picks 横→縦 or 縦→横, and a child in a grid gets 「表組みでの大きさ」 — how
+  many cells it covers across and down. Adding or removing columns now keeps
+  per-column widths (a new column copies the last one) instead of flattening
+  them to equal columns, follows the fill order (in a 縦→横 grid a column
+  change adds or removes whole columns), and ignores items placed by
+  coordinates and lines, which occupy no cell; while an item covers more than
+  one cell the counts are not offered, with a note saying how to get them
+  back. 「すべて同じ高さ」 is offered only once the container has a height of
+  its own, since equal rows need one. The tutorial's ratio steps
+  now describe what the numbers do: they share out the width left over after
+  each slot's text.
+
 - **Change how a container arranges its items after inserting it.** The
   container's 「子の並べ方」 now switches between 横並び, 縦積み and 表組み at
   any time, in one undo step, without losing an item: a row becomes a one-row

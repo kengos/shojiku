@@ -63,12 +63,17 @@ export function justifyContentOp(path: string, value: JustifyValue): Op {
   return { op: 'setScalar', path, keys: ['box', 'justifyContent'], value };
 }
 
+/** The container gap keys: the both-axes `gap`, and a grid's per-axis pair
+ * (the specific key wins over `gap` in the engine). */
+export type GapKey = 'gap' | 'columnGap' | 'rowGap';
+
 /** Gap commit: empty clears the key; a readable absolute length authors in
  * its typed form; a negative clamps to 0 (the engine reads negatives as 0 —
  * never author what it would discard); unreadable (relative units, garbage,
- * non-finite) or over-cap input dispatches nothing (`null`). */
-export function gapOp(path: string, raw: string): Op | null {
-  const keys = ['box', 'gap'];
+ * non-finite) or over-cap input dispatches nothing (`null`). One rule for all
+ * three keys. */
+export function gapOp(path: string, raw: string, key: GapKey = 'gap'): Op | null {
+  const keys = ['box', key];
   if (raw.trim() === '') {
     return { op: 'removeKey', path, keys };
   }
@@ -85,12 +90,18 @@ export function gapOp(path: string, raw: string): Op | null {
 /** A gap ▲▼ step: steps the authored value (empty = 0) by `dir` pt in its
  * authored form, re-guarded through `gapOp` so a step below zero clamps to 0
  * instead of authoring a negative. */
-export function gapStepOp(path: string, current: string, dir: 1 | -1, step: number): Op | null {
+export function gapStepOp(
+  path: string,
+  current: string,
+  dir: 1 | -1,
+  step: number,
+  key: GapKey = 'gap',
+): Op | null {
   const next = stepLength(current.trim() === '' ? '0' : current, dir, step);
   if (next === null) {
     return null;
   }
-  return gapOp(path, String(next));
+  return gapOp(path, String(next), key);
 }
 
 /** A ratio (grow weight) commit: empty clears the key; a finite number in

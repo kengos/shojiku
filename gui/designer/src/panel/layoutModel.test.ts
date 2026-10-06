@@ -86,6 +86,7 @@ describe('containerLayoutFor', () => {
         fixedWidth: false,
         fixedHeight: false,
         flexItem: true,
+        spanning: false,
       },
       {
         path: `${PATH}.items[1]`,
@@ -93,9 +94,24 @@ describe('containerLayoutFor', () => {
         fixedWidth: false,
         fixedHeight: false,
         flexItem: true,
+        spanning: false,
       },
-      { path: `${PATH}.items[2]`, ratio: '', fixedWidth: true, fixedHeight: false, flexItem: true },
-      { path: `${PATH}.items[3]`, ratio: '', fixedWidth: false, fixedHeight: true, flexItem: true },
+      {
+        path: `${PATH}.items[2]`,
+        ratio: '',
+        fixedWidth: true,
+        fixedHeight: false,
+        flexItem: true,
+        spanning: false,
+      },
+      {
+        path: `${PATH}.items[3]`,
+        ratio: '',
+        fixedWidth: false,
+        fixedHeight: true,
+        flexItem: true,
+        spanning: false,
+      },
       // Hostile entries still yield slots so indices stay true.
       {
         path: `${PATH}.items[4]`,
@@ -103,6 +119,7 @@ describe('containerLayoutFor', () => {
         fixedWidth: false,
         fixedHeight: false,
         flexItem: false,
+        spanning: false,
       },
     ]);
   });
@@ -171,6 +188,17 @@ describe('containerLayoutFor', () => {
         PATH,
       )?.children.map((slot) => slot.flexItem),
     ).toEqual([false, true]);
+    // A span above 1 on either axis marks a spanning cell; 1 does not.
+    expect(
+      containerLayoutFor(
+        container({ type: 'grid', columns: 2 }, [
+          { type: 'text', box: { columnSpan: 2 } },
+          { type: 'text', box: { rowSpan: 3 } },
+          { type: 'text', box: { columnSpan: 1, rowSpan: '2' } },
+        ]),
+        PATH,
+      )?.children.map((slot) => slot.spanning),
+    ).toEqual([true, true, false]);
     // `content` is the default basis, not a zero one.
     expect(basis([{ type: 'text', box: { flexBasis: 'content' } }])).toBe('none');
     // Nothing in the split at all.
@@ -212,6 +240,7 @@ describe('containerLayoutFor', () => {
       fixedWidth: false,
       fixedHeight: false,
       flexItem: true,
+      spanning: false,
     });
   });
 });

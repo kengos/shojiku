@@ -113,10 +113,17 @@ describe('gridColumnsPlan', () => {
         '',
       ].join('\n'),
     );
-    // 2 tracks → growing to 3 pads each row by one (list collapses to a count).
+    // 2 tracks → growing to 3 pads each row by one, and the LIST stays a list:
+    // the new column copies the last track instead of the widths collapsing to
+    // an equal count.
     const plan = gridColumnsPlan((p) => listGrid.read(p), GRID, 3, DEFAULT);
     expect(listGrid.applyAll(plan.ops).ok).toBe(true);
-    expect(listGrid.read(`${GRID}.box.columns`)).toBe(3);
+    expect(listGrid.read(`${GRID}.box.columns`)).toEqual(['30%', '70%', '70%']);
+    // …and a shrink drops the trailing tracks, keeping the first ones verbatim.
+    const shrink = gridColumnsPlan((p) => listGrid.read(p), GRID, 1, DEFAULT);
+    expect(listGrid.applyAll(shrink.ops).ok).toBe(true);
+    expect(listGrid.read(`${GRID}.box.columns`)).toEqual(['30%']);
+    expect(listGrid.text()).toContain('"30%"');
 
     const garbage = Editor.create(gridSource(2, ['a']).replace('columns: 2', 'columns: garbage'));
     // Unresolvable columns read as 1 (the engine default) — rows = children.
@@ -227,5 +234,160 @@ describe('gridRowCount', () => {
   it('is null for a non-grid node', () => {
     const editor = Editor.create(gridSource(2, ['a']));
     expect(gridRowCount((p) => editor.read(p), 'sections.body')).toBeNull();
+  });
+});
+
+/** A grid source with arbitrary child lines (each already indented as a list
+ * entry under `items:`) and extra box keys. */
+function gridWith(box: string, children: readonly string[]): string {
+  return [
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - type: container',
+    `        box: { type: grid, ${box} }`,
+    '        items:',
+    ...children,
+    '',
+  ].join('\n');
+}
+
+const TEXT = (label: string) => [`          - type: text`, `            text: ${label}`];
+const PLACED = [
+  '          - type: text',
+  '            text: placed',
+  '            box: { x: 4, y: 4 }',
+];
+const LINE = [
+  '          - type: line',
+  '            from: { x: 0, y: 0 }',
+  '            to: { x: 9, y: 0 }',
+];
+
+describe('grid plans over CELLS (children the grid lays out)', () => {
+  it('neither counts, moves nor drops a positioned child or a line', () => {
+    const editor = Editor.create(
+      gridWith('columns: 2', [...TEXT('a'), ...PLACED, ...TEXT('b'), ...LINE, ...TEXT('c')]),
+    );
+    const read = (p: string) => editor.read(p);
+    // Three cells in two columns: two rows, whatever else the list holds.
+    expect(gridRowCount(read, GRID)).toBe(2);
+    // Shrink to one column: only cell b (the second of row 1) goes.
+    const plan = gridColumnsPlan(read, GRID, 1, DEFAULT);
+    expect(plan.drops).toBe(true);
+    expect(editor.applyAll(plan.ops).ok).toBe(true);
+    const items = editor.read(`${GRID}.items`) as { type: string; text?: string }[];
+    expect(items.map((item) => item.text ?? item.type)).toEqual(['a', 'placed', 'line', 'c']);
+  });
+
+  it('pads a row right after its last cell, past a positioned child in between', () => {
+    const editor = Editor.create(gridWith('columns: 1', [...TEXT('a'), ...PLACED, ...TEXT('b')]));
+    const plan = gridColumnsPlan((p) => editor.read(p), GRID, 2, DEFAULT);
+    expect(editor.applyAll(plan.ops).ok).toBe(true);
+    const items = editor.read(`${GRID}.items`) as { text: string }[];
+    expect(items.map((item) => item.text)).toEqual(['a', DEFAULT, 'placed', 'b', DEFAULT]);
+  });
+
+  it('a row shrink removes trailing cells only', () => {
+    const editor = Editor.create(gridWith('columns: 1', [...TEXT('a'), ...TEXT('b'), ...LINE]));
+    const plan = gridRowsPlan((p) => editor.read(p), GRID, 1, DEFAULT);
+    expect(editor.applyAll(plan.ops).ok).toBe(true);
+    const items = editor.read(`${GRID}.items`) as { type: string; text?: string }[];
+    expect(items.map((item) => item.text ?? item.type)).toEqual(['a', 'line']);
+  });
+});
+
+describe('grid row plans keep an authored rows key in step', () => {
+  const rowsOf = (editor: Editor) => editor.read(`${GRID}.box.rows`);
+
+  it('a row COUNT follows the new count both ways', () => {
+    const editor = Editor.create(gridWith('columns: 1, rows: 2', [...TEXT('a'), ...TEXT('b')]));
+    const read = (p: string) => editor.read(p);
+    expect(editor.applyAll(gridRowsPlan(read, GRID, 3, DEFAULT).ops).ok).toBe(true);
+    expect(rowsOf(editor)).toBe(3);
+    expect(editor.applyAll(gridRowsPlan(read, GRID, 1, DEFAULT).ops).ok).toBe(true);
+    expect(rowsOf(editor)).toBe(1);
+  });
+
+  it('a row LIST is trimmed when it would outlast the rows, and left alone on growth', () => {
+    const editor = Editor.create(
+      gridWith('columns: 1, rows: [20, auto, 30]', [...TEXT('a'), ...TEXT('b'), ...TEXT('c')]),
+    );
+    const read = (p: string) => editor.read(p);
+    expect(editor.applyAll(gridRowsPlan(read, GRID, 4, DEFAULT).ops).ok).toBe(true);
+    expect(rowsOf(editor)).toEqual([20, 'auto', 30]);
+    expect(editor.applyAll(gridRowsPlan(read, GRID, 2, DEFAULT).ops).ok).toBe(true);
+    expect(rowsOf(editor)).toEqual([20, 'auto']);
+  });
+
+  it('absent rows stay absent', () => {
+    const editor = Editor.create(gridWith('columns: 1', [...TEXT('a')]));
+    expect(editor.applyAll(gridRowsPlan((p) => editor.read(p), GRID, 2, DEFAULT).ops).ok).toBe(
+      true,
+    );
+    expect(rowsOf(editor)).toBeUndefined();
+  });
+});
+
+describe('grid plans in a down-then-across grid (direction: column)', () => {
+  // 2 columns × 2 rows filled down first: column 0 = a, b; column 1 = c, d.
+  const COLUMN_FILL = () =>
+    Editor.create(
+      gridWith('columns: 2, direction: column', [
+        ...TEXT('a'),
+        ...TEXT('b'),
+        ...TEXT('c'),
+        ...TEXT('d'),
+      ]),
+    );
+  const texts = (editor: Editor) =>
+    (editor.read(`${GRID}.items`) as { text: string }[]).map((item) => item.text);
+
+  it('a column shrink drops the whole RIGHT column, not each row tail', () => {
+    const editor = COLUMN_FILL();
+    const plan = gridColumnsPlan((p) => editor.read(p), GRID, 1, DEFAULT);
+    expect(editor.applyAll(plan.ops).ok).toBe(true);
+    expect(texts(editor)).toEqual(['a', 'b']);
+  });
+
+  it('a row shrink drops the BOTTOM row: each column keeps its first cell', () => {
+    const editor = COLUMN_FILL();
+    const plan = gridRowsPlan((p) => editor.read(p), GRID, 1, DEFAULT);
+    expect(plan.drops).toBe(true);
+    expect(editor.applyAll(plan.ops).ok).toBe(true);
+    expect(texts(editor)).toEqual(['a', 'c']);
+  });
+
+  it('a row grow pads every column in place, so no cell changes column', () => {
+    const editor = COLUMN_FILL();
+    expect(editor.applyAll(gridRowsPlan((p) => editor.read(p), GRID, 3, DEFAULT).ops).ok).toBe(
+      true,
+    );
+    expect(texts(editor)).toEqual(['a', 'b', DEFAULT, 'c', 'd', DEFAULT]);
+  });
+
+  it('a column grow appends a whole column of placeholders', () => {
+    const editor = COLUMN_FILL();
+    expect(editor.applyAll(gridColumnsPlan((p) => editor.read(p), GRID, 3, DEFAULT).ops).ok).toBe(
+      true,
+    );
+    expect(texts(editor)).toEqual(['a', 'b', 'c', 'd', DEFAULT, DEFAULT]);
+    expect(editor.read(`${GRID}.box.columns`)).toBe(3);
+  });
+});
+
+describe('a track-list resize is one undo step', () => {
+  it('restores the list and the cells together', () => {
+    const source = gridWith('columns: ["30%", "70%"]', [...TEXT('a'), ...TEXT('b')]);
+    const editor = Editor.create(source);
+    expect(editor.applyAll(gridColumnsPlan((p) => editor.read(p), GRID, 3, DEFAULT).ops).ok).toBe(
+      true,
+    );
+    expect(editor.undo()).toBe(true);
+    // (Compared as data: the YAML printer re-spaces a flow list it re-emits.)
+    expect(editor.read(`${GRID}.box.columns`)).toEqual(['30%', '70%']);
+    expect((editor.read(`${GRID}.items`) as unknown[]).length).toBe(2);
+    expect(editor.undo()).toBe(false);
   });
 });

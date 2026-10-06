@@ -45,10 +45,15 @@ export interface ChildSlot {
   /** The engine lays the child out by flex (`isFlexItem`): a positioned child
    * or a `line` takes no part in a split, so it gets no ratio input. */
   readonly flexItem: boolean;
+  /** The child covers more than one grid cell (`columnSpan`/`rowSpan` > 1). */
+  readonly spanning: boolean;
 }
 
 export interface ContainerLayout {
   readonly mode: LayoutMode;
+  /** The container's authored `box` (`{}` when absent or not a map) — what the
+   * grid controls read their tracks, gaps and fill order from. */
+  readonly box: Readonly<Record<string, unknown>>;
   /** Authored `box.gap` display (`''` when unset — the engine default 0). */
   readonly gap: string;
   /** EFFECTIVE cross-axis alignment: the authored value, or `stretch` (the
@@ -102,6 +107,7 @@ function childSlot(path: string, index: number, child: unknown): ChildSlot {
     fixedWidth: box?.w !== undefined,
     fixedHeight: box?.h !== undefined,
     flexItem: isFlexItem(child),
+    spanning: [box?.columnSpan, box?.rowSpan].some((n) => typeof n === 'number' && n > 1),
   };
 }
 
@@ -170,6 +176,7 @@ export function containerLayoutFor(read: ReadFn, path: string): ContainerLayout 
   const { mode, box, items } = container;
   return {
     mode,
+    box,
     gap: display(box.gap),
     alignItems: box.alignItems === undefined ? 'stretch' : display(box.alignItems),
     justifyContent: box.justifyContent === undefined ? 'start' : display(box.justifyContent),
