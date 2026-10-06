@@ -20,6 +20,8 @@ export interface ParentContainerCardProps {
   /** Highlight the parent's outline+chip on canvas while the card is hovered
    * or focused — the impact scope shown BEFORE a shared edit. `null` clears. */
   readonly onHighlight?: (path: string | null) => void;
+  /** The engine's capability keys; absent = the bundled engine. */
+  readonly capabilities?: readonly string[];
 }
 
 export function ParentContainerCard({
@@ -28,6 +30,7 @@ export function ParentContainerCard({
   layout,
   onSelectParent,
   onHighlight,
+  capabilities,
 }: ParentContainerCardProps) {
   const { t } = useI18n();
   return (
@@ -47,7 +50,12 @@ export function ParentContainerCard({
           {t('panel.layout.selectParent')}
         </button>
       </div>
-      <LayoutSection controller={controller} path={path} layout={layout} />
+      <LayoutSection
+        controller={controller}
+        path={path}
+        layout={layout}
+        capabilities={capabilities}
+      />
     </section>
   );
 }

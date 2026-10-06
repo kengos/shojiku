@@ -66,31 +66,116 @@ describe('containerLayoutFor', () => {
     expect(containerLayoutFor(container({ alignItems: {} }), PATH)?.alignItems).toBe('');
   });
 
-  it('yields a slot per child with the authored flexGrow (default 1) and the fixed-width flag', () => {
+  it('yields a slot per child with the authored flexGrow (empty when unset) and the fixed-size flags', () => {
     const layout = containerLayoutFor(
       container({ direction: 'row' }, [
         { type: 'text', text: 'a' },
         { type: 'text', text: 'b', box: { flexGrow: 2 } },
         { type: 'text', text: 'c', box: { w: 120 } },
+        { type: 'text', text: 'd', box: { h: 30 } },
         'garbage',
       ]),
       PATH,
     );
     expect(layout?.children).toEqual([
-      { path: `${PATH}.items[0]`, ratio: '1', fixedWidth: false },
-      { path: `${PATH}.items[1]`, ratio: '2', fixedWidth: false },
-      { path: `${PATH}.items[2]`, ratio: '1', fixedWidth: true },
+      // An unset weight is NOT shown as a number: the engine's default depends
+      // on whether it can measure the child, which the document cannot tell.
+      {
+        path: `${PATH}.items[0]`,
+        ratio: '',
+        fixedWidth: false,
+        fixedHeight: false,
+        flexItem: true,
+      },
+      {
+        path: `${PATH}.items[1]`,
+        ratio: '2',
+        fixedWidth: false,
+        fixedHeight: false,
+        flexItem: true,
+      },
+      { path: `${PATH}.items[2]`, ratio: '', fixedWidth: true, fixedHeight: false, flexItem: true },
+      { path: `${PATH}.items[3]`, ratio: '', fixedWidth: false, fixedHeight: true, flexItem: true },
       // Hostile entries still yield slots so indices stay true.
-      { path: `${PATH}.items[3]`, ratio: '1', fixedWidth: false },
+      {
+        path: `${PATH}.items[4]`,
+        ratio: '',
+        fixedWidth: false,
+        fixedHeight: false,
+        flexItem: false,
+      },
     ]);
   });
 
-  it('shows a non-displayable flexGrow (a map) as the default 1', () => {
+  it('shows a non-displayable flexGrow (a map) as empty, never as an invented default', () => {
     const layout = containerLayoutFor(
       container({ direction: 'row' }, [{ type: 'text', box: { flexGrow: {} } }]),
       PATH,
     );
-    expect(layout?.children[0].ratio).toBe('1');
+    expect(layout?.children[0].ratio).toBe('');
+  });
+
+  it('reads justifyContent as the authored value, start when unset, garbage verbatim', () => {
+    expect(containerLayoutFor(container({}), PATH)?.justifyContent).toBe('start');
+    expect(
+      containerLayoutFor(container({ justifyContent: 'space_between' }), PATH)?.justifyContent,
+    ).toBe('space_between');
+    expect(
+      containerLayoutFor(container({ justifyContent: 'constructor' }), PATH)?.justifyContent,
+    ).toBe('constructor');
+    expect(containerLayoutFor(container({ justifyContent: {} }), PATH)?.justifyContent).toBe('');
+  });
+
+  it('reads whether the container authors its own height', () => {
+    expect(containerLayoutFor(container({}), PATH)?.hasHeight).toBe(false);
+    expect(containerLayoutFor(container({ h: 80 }), PATH)?.hasHeight).toBe(true);
+  });
+
+  it('flags a grid column-track LIST, never a count or a flex container', () => {
+    expect(
+      containerLayoutFor(container({ type: 'grid', columns: ['1fr', 90] }), PATH)?.columnsIsList,
+    ).toBe(true);
+    expect(containerLayoutFor(container({ type: 'grid', columns: 2 }), PATH)?.columnsIsList).toBe(
+      false,
+    );
+    // A flex container carrying a stray list is not a grid.
+    expect(containerLayoutFor(container({ columns: ['1fr'] }), PATH)?.columnsIsList).toBe(false);
+  });
+
+  it('reads the split-by-ratio state over the children with no width or position', () => {
+    const basis = (items: unknown[]) =>
+      containerLayoutFor(container({ direction: 'row' }, items), PATH)?.basis;
+    const zero = { type: 'text', box: { flexBasis: 0 } };
+    const plain = { type: 'text' };
+    expect(basis([zero, zero])).toBe('all');
+    expect(basis([plain, plain])).toBe('none');
+    expect(basis([zero, plain])).toBe('mixed');
+    // A sized or placed child is outside the split, so it never makes a row mixed.
+    expect(
+      basis([
+        zero,
+        { type: 'text', box: { w: 40 } },
+        { type: 'text', box: { x: 4 } },
+        { type: 'text', box: { y: 4 } },
+        'garbage',
+      ]),
+    ).toBe('all');
+    // A line takes no part in a split (it has no box on the wire), so it can
+    // neither make a row mixed nor be counted as a member.
+    const line = { type: 'line', from: { x: 0, y: 0 }, to: { x: 9, y: 0 } };
+    expect(basis([zero, line])).toBe('all');
+    expect(basis([line])).toBe('empty');
+    expect(
+      containerLayoutFor(
+        container({ direction: 'row' }, [line, { type: 'text' }]),
+        PATH,
+      )?.children.map((slot) => slot.flexItem),
+    ).toEqual([false, true]);
+    // `content` is the default basis, not a zero one.
+    expect(basis([{ type: 'text', box: { flexBasis: 'content' } }])).toBe('none');
+    // Nothing in the split at all.
+    expect(basis([{ type: 'text', box: { w: 40 } }])).toBe('empty');
+    expect(basis([])).toBe('empty');
   });
 
   it('returns null for a non-container, an unknown box.type, and a hostile read', () => {
@@ -125,6 +210,8 @@ describe('containerLayoutFor', () => {
       path: `${PATH}.items[0]`,
       ratio: 'x',
       fixedWidth: false,
+      fixedHeight: false,
+      flexItem: true,
     });
   });
 });

@@ -261,6 +261,68 @@ export function IconAlignStretch(props: IconProps) {
   );
 }
 
+/** Items of different heights sitting on one shared text line —
+ * `alignItems: baseline` (the line is dashed: it is the text's, not the box's). */
+export function IconAlignBaseline(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.4}>
+      <path d="M2 10h12" strokeDasharray="1.5 1.5" />
+      <path d="M5 4v9M11 7v4" />
+    </Svg>
+  );
+}
+
+// The stack's cross axis is horizontal, so its alignment icons are the row set
+// turned on its side: a vertical rule, the items hung from it.
+
+/** Items hung from a left rule — a stack's `alignItems: start`. */
+export function IconAlignLeftEdge(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.4}>
+      <path d="M3 2v12M6 5h7M6 11h4" />
+    </Svg>
+  );
+}
+
+/** Items centered on a vertical rule — a stack's `alignItems: center`. */
+export function IconAlignCenterEdge(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.4}>
+      <path d="M8 2v12M4 5h8M5.5 11h5" />
+    </Svg>
+  );
+}
+
+/** Items hung from a right rule — a stack's `alignItems: end`. */
+export function IconAlignRightEdge(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.4}>
+      <path d="M13 2v12M3 5h7M6 11h4" />
+    </Svg>
+  );
+}
+
+/** An item pulled to both side rules — a stack's `alignItems: stretch`. */
+export function IconAlignStretchH(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.4}>
+      <path d="M3 2v12M13 2v12M5.5 8h5M7 6.5 5.5 8 7 9.5M9 6.5l1.5 1.5L9 9.5" />
+    </Svg>
+  );
+}
+
+/** Children tiled into rows and columns — the grid arrangement. */
+export function IconLayoutGrid(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1" />
+      <rect x="9" y="2.5" width="4.5" height="4.5" rx="1" />
+      <rect x="2.5" y="9" width="4.5" height="4.5" rx="1" />
+      <rect x="9" y="9" width="4.5" height="4.5" rx="1" />
+    </Svg>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Object align / distribute marks (multi-select cluster). Distinct from
 // the text/flex alignment icons above: these show two/three OBJECTS lining up

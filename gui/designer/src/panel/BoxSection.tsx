@@ -69,13 +69,19 @@ export function BoxSection(props: ItemPanelProps) {
         layout={parentLayout}
         onSelectParent={props.onSelectPath}
         onHighlight={props.onHighlight}
+        capabilities={props.capabilities}
       />
     ) : null;
   const childLayout =
     ownLayout !== null ? (
       <section className="mt-3">
         <h3 className={SECTION_TITLE}>{t('panel.layout.children')}</h3>
-        <LayoutSection controller={controller} path={path} layout={ownLayout} />
+        <LayoutSection
+          controller={controller}
+          path={path}
+          layout={ownLayout}
+          capabilities={props.capabilities}
+        />
       </section>
     ) : null;
   // Manuscript paper is sized by its CELLS, not by `box.w` — so the controls
