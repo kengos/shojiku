@@ -14,35 +14,13 @@
 
 import { MAX_TREE_DEPTH } from '../tree/model';
 import { bindingKey, pickLabel, record, spanLabel } from '../tree/nodeFields';
+import type { IdHolder, IdWalk, Owner } from './holders';
+
+export type { IdHolder, IdRef, IdWalk, Owner } from './holders';
 
 /** Node budget for one walk — generous next to the layer tree's DOM cap, since
  * nothing here renders, but still a bound a hostile document cannot push past. */
 export const MAX_ID_WALK_NODES = 8192;
-
-/** A node that carries (or could carry) an `id:`. */
-export interface IdHolder {
-  readonly path: string;
-  /** The authored id; `undefined` when absent or not a string. */
-  readonly id: string | undefined;
-  /** The wire type, or `column` / `cell_frame` / `card_frame`. */
-  readonly kind: string;
-  /** Content-derived label (the tree's), or `null` → show the kind's name. */
-  readonly label: string | null;
-}
-
-/** A leaf naming an id: `keys` under the item at `path`. */
-export interface IdRef {
-  readonly path: string;
-  readonly keys: readonly string[];
-  readonly id: string;
-}
-
-export interface IdWalk {
-  readonly holders: IdHolder[];
-  readonly refs: IdRef[];
-  nodes: number;
-  truncated: boolean;
-}
 
 export function newWalk(): IdWalk {
   return { holders: [], refs: [], nodes: 0, truncated: false };
@@ -61,9 +39,12 @@ function own(node: Record<string, unknown>, key: string): unknown {
   return Object.hasOwn(node, key) ? node[key] : undefined;
 }
 
-function idOf(node: Record<string, unknown>): string | undefined {
+/** The node's `id` when it is a string, and whether it carries one that is not. */
+function named(node: Record<string, unknown>): Pick<IdHolder, 'id' | 'foreign'> {
   const id = own(node, 'id');
-  return typeof id === 'string' ? id : undefined;
+  return typeof id === 'string'
+    ? { id, foreign: false }
+    : { id: undefined, foreign: id !== undefined };
 }
 
 function addRef(walk: IdWalk, path: string, keys: readonly string[], value: unknown): void {
@@ -72,17 +53,32 @@ function addRef(walk: IdWalk, path: string, keys: readonly string[], value: unkn
   }
 }
 
-function walkItemList(walk: IdWalk, prefix: string, value: unknown, depth: number): void {
+function walkItemList(
+  walk: IdWalk,
+  prefix: string,
+  value: unknown,
+  depth: number,
+  repeated: boolean,
+): void {
   if (!Array.isArray(value)) {
     return;
   }
   for (let index = 0; index < value.length; index++) {
-    walkItem(walk, `${prefix}[${index}]`, value[index], depth);
+    walkItem(walk, `${prefix}[${index}]`, value[index], depth, repeated);
   }
 }
 
-/** One item: itself, its references, then what it owns. */
-export function walkItem(walk: IdWalk, path: string, entry: unknown, depth: number): void {
+/** One item: itself, its references, then what it owns. `repeated` says the
+ * item sits inside a repeated scope (see `IdHolder.repeated`); `owner` is the
+ * region holding it directly (see `IdHolder.owner`). */
+export function walkItem(
+  walk: IdWalk,
+  path: string,
+  entry: unknown,
+  depth: number,
+  repeated = false,
+  owner: Owner = null,
+): void {
   if (depth > MAX_TREE_DEPTH) {
     walk.truncated = true;
     return;
@@ -94,13 +90,14 @@ export function walkItem(walk: IdWalk, path: string, entry: unknown, depth: numb
   const rawType = own(item, 'type');
   const kind = typeof rawType === 'string' && rawType !== '' ? rawType : 'item';
   // The layer tree's own label order, so a refusal names the row the user sees.
+  const dataKey = bindingKey(own(item, 'data'));
   const label = pickLabel(
     own(item, 'text'),
-    bindingKey(own(item, 'data')),
+    dataKey,
     spanLabel(own(item, 'spans')),
     own(item, 'id'),
   );
-  walk.holders.push({ path, id: idOf(item), kind, label });
+  walk.holders.push({ path, kind, label, repeated, dataKey, owner, ...named(item) });
   if (kind === 'ellipse') {
     addRef(walk, path, ['anchor'], own(item, 'anchor'));
   }
@@ -112,30 +109,45 @@ export function walkItem(walk: IdWalk, path: string, entry: unknown, depth: numb
       }
     }
   }
-  walkItemList(walk, `${path}.items`, own(item, 'items'), depth + 1);
+  walkItemList(walk, `${path}.items`, own(item, 'items'), depth + 1, repeated);
   const columns = own(item, 'columns');
   if (Array.isArray(columns)) {
     for (let index = 0; index < columns.length; index++) {
-      walkColumn(walk, `${path}.columns[${index}]`, columns[index], depth + 1);
+      walkColumn(walk, `${path}.columns[${index}]`, columns[index], depth + 1, repeated);
     }
   }
   if (kind === 'repeat') {
-    walkFrame(walk, `${path}.cell`, own(item, 'cell'), 'cell_frame', depth);
+    walkFrame(walk, `${path}.cell`, own(item, 'cell'), 'cell_frame', depth, repeated);
   }
   if (kind === 'repeat_flow') {
-    walkFrame(walk, `${path}.item`, own(item, 'item'), 'card_frame', depth);
+    walkFrame(walk, `${path}.item`, own(item, 'item'), 'card_frame', depth, repeated);
   }
 }
 
 /** One table column: it carries an id, and its `cell:` frame holds items. */
-export function walkColumn(walk: IdWalk, path: string, entry: unknown, depth: number): void {
+export function walkColumn(
+  walk: IdWalk,
+  path: string,
+  entry: unknown,
+  depth: number,
+  repeated = false,
+): void {
   const column = record(entry);
   if (column === undefined || !take(walk)) {
     return;
   }
-  const label = pickLabel(own(column, 'label'), bindingKey(own(column, 'data')));
-  walk.holders.push({ path, id: idOf(column), kind: 'column', label });
-  walkFrame(walk, `${path}.cell`, own(column, 'cell'), 'cell_frame', depth);
+  const dataKey = bindingKey(own(column, 'data'));
+  const label = pickLabel(own(column, 'label'), dataKey);
+  walk.holders.push({
+    path,
+    kind: 'column',
+    label,
+    repeated,
+    dataKey,
+    owner: null,
+    ...named(column),
+  });
+  walkFrame(walk, `${path}.cell`, own(column, 'cell'), 'cell_frame', depth, repeated);
 }
 
 function walkFrame(
@@ -144,11 +156,15 @@ function walkFrame(
   value: unknown,
   kind: 'cell_frame' | 'card_frame',
   depth: number,
+  repeated: boolean,
 ): void {
   const frame = record(value);
   if (frame === undefined || !take(walk)) {
     return;
   }
-  walk.holders.push({ path, id: idOf(frame), kind, label: null });
-  walkItemList(walk, `${path}.items`, own(frame, 'items'), depth + 1);
+  // The frame itself repeats only if its owner does; everything INSIDE it is
+  // one placement per element.
+  const fields = { label: null, repeated, dataKey: undefined, owner: null };
+  walk.holders.push({ path, kind, ...fields, ...named(frame) });
+  walkItemList(walk, `${path}.items`, own(frame, 'items'), depth + 1, true);
 }

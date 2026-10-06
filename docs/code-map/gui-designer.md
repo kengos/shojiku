@@ -563,16 +563,23 @@ table column and the three sub-template frames carry an `id`; exactly two
 spellings name one (an ellipse's `anchor`, a line endpoint's `item`).
 Uniqueness is a DESIGNER rule (the engine has none): every write the
 Designer UI makes that could leave two nodes sharing an id — the name field,
-⌘D, a saved-block insert — goes through here. Copilot replies are raw ops
+⌘D, a saved-block insert, picking an unnamed anchor target — goes through
+here. Copilot replies are raw ops
 (`duplicateItem` clones verbatim) that the user reviews before applying.
 
 - `ids/walk.ts` — the bounded walk (own-property reads, the layer tree's
   descent and depth cap, `MAX_ID_WALK_NODES` budget → `truncated`) yielding
-  HOLDERS (path, id, kind, the tree's label) and REFS (path + keys + id).
+  HOLDERS and REFS; their types (and the walk's running state) live in
+  `ids/holders.ts`, re-exported here. A holder is path, id, kind, the tree's
+  label, `repeated` (inside a repeat cell / column cell / repeat_flow card at
+  any depth), the bound `dataKey`, `foreign` (an `id:` that is not a string)
+  and `owner` (the region holding the item DIRECTLY — `flow` / `absolute`
+  body, `band` — else `null`); a ref is path + keys + id.
 - `ids/idIndex.ts` — `buildIdIndex(read)` over the three sections (read from
   the document, never the box index; an unreadable document is `truncated`)
   and `subtreeIndex(value, at)` (a copy's namespace; a `…columns[n]` root is
-  walked as a column).
+  walked as a column). `takenNames(index)` = every holder id ∪ every reference
+  id — the ONE taken set a minted name is checked against.
 - `ids/idEdit.ts` — `idEdit(index, path, current, raw)`: trimmed; equal →
   no ops; empty → `removeKey` (`clears`); refusals `too_long`
   (`MAX_ID_CHARS` = the data-item name cap) / `control` / `truncated` /
@@ -581,12 +588,25 @@ Designer UI makes that could leave two nodes sharing an id — the name field,
   (`followers`, counted in distinct referring items); a partial index refuses
   every write, a clear included (it would count no anchors and skip the
   confirm). `freshName` (`x` → `x_2`, `x_2` → `x_3`), the stem cut so a
-  minted name stays within `MAX_ID_CHARS`.
+  minted name stays within `MAX_ID_CHARS`. `isIdText` is the per-string half
+  of the rule (non-empty, no control characters, within `MAX_ID_CHARS`),
+  shared with the line endpoint's `item`.
+- `ids/anchorTargets.ts` — what an anchor picker offers:
+  `anchorCandidates(index, selfPath)` = the holders minus self, `page_break`,
+  columns, the three frames, typeless entries, anything `repeated`, a
+  `repeat`/`repeat_flow` whose `owner` is not `flow` and a `page_number` whose
+  `owner` is not `band` (the engine skips both there), anything itself
+  anchored (a ref's path), ids `isIdText` refuses and `foreign` ids (picking
+  would overwrite one); an id two holders
+  share once (the first); a truncated index offers only named holders.
+  `pickTarget(holder, index)` → `{id, ops}`: a named holder's id with no ops,
+  else a minted name (`mintBase`: the data key with dots → `_` when plain
+  ASCII `[A-Za-z0-9_-]` within `MAX_ID_CHARS`, else `<type>_1`) through
+  `freshName` over `takenNames`, written by one `setScalar`.
 - `ids/copyIds.ts` — `copyIdOps(value, at, index)`: each copied id takes
   `freshName` over the whole namespace, refs INSIDE the copy that named a
-  copied id follow it, refs outside are untouched; the taken set is every
-  holder's id AND every reference's (an orphan anchor's name is never
-  minted). A partial DOCUMENT namespace removes the copy's ids instead (the
+  copied id follow it, refs outside are untouched; the taken set is
+  `takenNames` (an orphan anchor's name is never minted). A partial DOCUMENT namespace removes the copy's ids instead (the
   copy's own walk is whole, so every one of them); a copy that cannot be
   walked whole is refused (`unreadable`), as is one over the batch cap
   (`too_many`) — `CopyIds`. `duplicateOps(read, parent, index)` = ⌘D's whole

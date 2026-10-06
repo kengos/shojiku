@@ -199,7 +199,11 @@ export const fil: LanguageCatalog = {
     'panel.ellipse.circling': 'Binibilugan',
     'panel.ellipse.pickItem': 'Pumili ng item…',
     'panel.ellipse.detach': 'Ako ang maglalagay',
-    'panel.ellipse.noTargets': 'Wala pang mabibilugan sa pahina',
+    'panel.ellipse.noTargets': 'Walang item na mabibilugan',
+    'panel.anchor.option': '{label} ({kind})',
+    'panel.anchor.ordinal': '{text} {n}',
+    'panel.anchor.missing': '{label} (hindi makita)',
+    'panel.anchor.autoNamed': 'Pinangalanang “{name}” ang item na iyon para masundan ito.',
     'panel.ellipse.anchoredHint':
       'Sumusunod ang posisyon sa item na iyon; sa iyo pa rin ang laki sa ibaba.',
     'copy.notice.too_many':
@@ -912,6 +916,7 @@ export const fil: LanguageCatalog = {
     'panel.line.toEdge': 'Gilid ng dulo',
     'panel.line.useAnchor': 'Ikabit sa item',
     'panel.line.pickItem': 'Pumili ng item…',
+    'panel.line.noTargets': 'Walang mapipili',
     'panel.line.edgeCenter': 'Gitna (default)',
     'panel.line.useCoordinates': 'Gumamit ng coordinates',
     'panel.line.pointsHint':

@@ -15,7 +15,6 @@
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { useState } from 'react';
 import { useI18n } from '../i18n/context';
-import { anchorTargets, readItemId } from './anchorTargets';
 import { BoxSection } from './BoxSection';
 import { ContentSection } from './ContentSection';
 import { ItemIdField } from './ItemIdField';
@@ -67,10 +66,6 @@ export function ItemPanel(props: ItemPanelProps) {
         path={props.path}
         controller={props.controller}
         capabilities={props.capabilities}
-        targets={anchorTargets(
-          props.geometry?.boxes.pages,
-          readItemId(props.controller.read, props.path),
-        )}
       />
     ) : (
       <BoxSection {...props} />

@@ -10,7 +10,7 @@
 
 import type { ReadFn } from '@shojiku/designer-core';
 import { record } from '../tree/nodeFields';
-import { type IdHolder, type IdRef, newWalk, walkColumn, walkItem } from './walk';
+import { type IdHolder, type IdRef, newWalk, type Owner, walkColumn, walkItem } from './walk';
 
 export interface IdIndex {
   readonly holders: readonly IdHolder[];
@@ -21,6 +21,15 @@ export interface IdIndex {
 }
 
 const SECTION_NAMES = ['header', 'body', 'footer'] as const;
+
+/** The region a section's top-level items sit in: a band, or the body's
+ * declared `type` (anything else is a body the engine will not parse). */
+function ownerOf(name: (typeof SECTION_NAMES)[number], type: unknown): Owner {
+  if (name !== 'body') {
+    return 'band';
+  }
+  return type === 'flow' || type === 'absolute' ? type : null;
+}
 
 /** The whole document's namespace. An unreadable document (an alias bomb past
  * the materialization cap) reads as truncated — the field then refuses rather
@@ -36,9 +45,10 @@ export function buildIdIndex(read: ReadFn): IdIndex {
   for (const name of SECTION_NAMES) {
     const section = record(sections?.[name]);
     const items = section?.items;
+    const owner = ownerOf(name, section?.type);
     if (Array.isArray(items)) {
       for (let index = 0; index < items.length; index++) {
-        walkItem(walk, `sections.${name}.items[${index}]`, items[index], 0);
+        walkItem(walk, `sections.${name}.items[${index}]`, items[index], 0, false, owner);
       }
     }
   }
@@ -66,4 +76,14 @@ export function holdersOf(index: IdIndex, id: string): readonly IdHolder[] {
 /** Every reference naming `id`. */
 export function refsTo(index: IdIndex, id: string): readonly IdRef[] {
   return index.refs.filter((ref) => ref.id === id);
+}
+
+/** Every name the document USES — a holder's, and a reference's too: minting
+ * a name an orphan anchor still names would silently attach that anchor to
+ * whatever took it. The ONE taken set every minted name is checked against. */
+export function takenNames(index: IdIndex): Set<string> {
+  return new Set<string>([
+    ...index.holders.flatMap((holder) => (holder.id === undefined ? [] : [holder.id])),
+    ...index.refs.map((ref) => ref.id),
+  ]);
 }

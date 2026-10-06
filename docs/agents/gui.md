@@ -1547,8 +1547,9 @@ Formatting/style and coverage follow the general rules in
   `…columns[2]`) so the canvas hit-tests every node and correlates it back
   to YAML without GUI-side id injection; an authored `id:` is a lookup
   alias on top. The Designer's own surfaces write `id:` only as a NAME — one
-  the user types, or the fresh one a copy (duplicate, saved block) takes, a
-  copy it cannot rename whole being refused — and keep names unique across
+  the user types, the fresh one a copy (duplicate, saved block) takes, a
+  copy it cannot rename whole being refused, or the one an unnamed item is
+  given when an anchor picker picks it — and keep names unique across
   the document (copilot replies are raw ops the user reviews): a Designer rule, since the engine checks
   none ([line.md](../engine/line.md)) and two nodes sharing an id make every
   anchor to it resolve to whichever is placed first. A rename carries the

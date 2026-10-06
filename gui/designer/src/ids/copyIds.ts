@@ -16,7 +16,7 @@
 
 import { MAX_BATCH_OPS, type Op, type ReadFn } from '@shojiku/designer-core';
 import { freshName } from './idEdit';
-import { buildIdIndex, type IdIndex, subtreeIndex } from './idIndex';
+import { buildIdIndex, type IdIndex, subtreeIndex, takenNames } from './idIndex';
 
 /** Why a copy is refused: its ops would pass `MAX_BATCH_OPS` together with
  * the op that creates it, or its subtree cannot be read whole (the
@@ -45,13 +45,7 @@ export function copyIdOps(value: unknown, at: string, document: IdIndex): CopyId
       ops.push({ op: 'removeKey', path: holder.path, keys: ['id'] });
     }
   } else {
-    // Every name the document USES is taken — a holder's, and a reference's
-    // too: minting a name an orphan anchor still names would silently attach
-    // that anchor to the copy.
-    const taken = new Set<string>([
-      ...document.holders.flatMap((holder) => (holder.id === undefined ? [] : [holder.id])),
-      ...document.refs.map((ref) => ref.id),
-    ]);
+    const taken = takenNames(document);
     const renamed = new Map<string, string>();
     for (const holder of named) {
       const { id } = holder;

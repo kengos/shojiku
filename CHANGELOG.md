@@ -15,6 +15,28 @@ platform binaries.
 
 ### Added
 
+- **Circle an item, or run a line to one, by picking it — no name needed
+  first.** The ellipse's 「要素を囲む」 and a line end's 「要素に付ける」 now
+  list the document's own items, labelled as in the layer tree and grouped by
+  section, instead of only the names the last preview reported — so a
+  document made in the Designer, with no names anywhere, can be anchored
+  straight away, and the list no longer waits for a preview. Picking an item
+  that has no name gives it one in the same undo step: its data key (dots
+  become `_`) when it is bound, otherwise its type and a number
+  (`text_1`), counting on past any name already in use — and the panel says
+  which name it gave. A target no item carries any more is marked
+  「（見つかりません）」 instead of looking like an ordinary choice, and choices that
+  would read the same (「長方形」, 「長方形」) are numbered. Left out of the list:
+  anything inside a repeat, a table column's cell or a repeated card (each is
+  drawn once per row, and an anchor finds only the first), page breaks, a
+  repeat placed anywhere but directly in a flowing body or a page number
+  anywhere but directly in a header or footer (neither is drawn there), and
+  items that are themselves anchored. A line's anchor control now shows
+  whenever the engine supports it, greyed out with the reason when there is
+  nothing to attach to, as the ellipse's already did, and a line end anchored
+  to a name in any script (`合計`) now shows that name and can be picked back.
+  The line's labels now say 要素, as the ellipse's do.
+
 - **Name any item in the Designer.** Every item, table column and cell or
   card frame has a 「名前（ID）」 field — the name a circle or a line anchored
   to it points at, and the id the layout output reports for it. A name

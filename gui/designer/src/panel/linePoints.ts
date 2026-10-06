@@ -16,6 +16,7 @@
 // from a UI mode flag, so an externally-authored document displays honestly.
 
 import type { Op, ReadFn } from '@shojiku/designer-core';
+import { isIdText } from '../ids/idEdit';
 
 /** Which endpoint value a field edits. `from`/`to` × `x`/`y`. */
 export const LINE_POINT_FIELDS = ['from.x', 'from.y', 'to.x', 'to.y'] as const;
@@ -84,14 +85,14 @@ function keysOf(field: LinePointField | LineAnchorField): string[] {
   return field.split('.');
 }
 
-/** An authored id or edge keyword as display text. Bounded and
- * character-restricted: the value is echoed into the panel and written back
- * into the document, so a hostile string is shown as unset rather than
- * round-tripped. */
-const ID_RE = /^[A-Za-z0-9_.-]{1,64}$/;
-
+/** An authored id or edge keyword as the panel's value. The id rule is the
+ * name field's own (`isIdText`: no control characters, at most `MAX_ID_CHARS`)
+ * — not a narrower one, or a name that field accepted (`合計`) would read as
+ * unset here and could never be picked back. A string outside it is shown as
+ * unset rather than round-tripped; the value is otherwise kept EXACT, and only
+ * its display is clipped (`anchorLabel`). */
 function nameText(raw: unknown): string {
-  return typeof raw === 'string' && ID_RE.test(raw) ? raw : '';
+  return typeof raw === 'string' && isIdText(raw) ? raw : '';
 }
 
 /** Read the line's endpoints at `path`. Never throws: a hostile document
@@ -171,7 +172,9 @@ export function lineAnchorOps(
   field: LineAnchorField,
   next: string,
 ): Op[] {
-  const text = next.trim();
+  // An id is written EXACTLY as picked — it must equal the holder's — while
+  // an edge keyword is trimmed.
+  const text = field.endsWith('.edge') ? next.trim() : next;
   if (text === view[field]) {
     return [];
   }
@@ -179,7 +182,7 @@ export function lineAnchorOps(
   if (text === '') {
     return field.endsWith('.edge') ? [{ op: 'removeKey', path, keys }] : [];
   }
-  if (!ID_RE.test(text)) {
+  if (!isIdText(text)) {
     return [];
   }
   if (field.endsWith('.edge') && !LINE_EDGES.includes(text as (typeof LINE_EDGES)[number])) {

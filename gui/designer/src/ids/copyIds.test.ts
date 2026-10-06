@@ -108,7 +108,18 @@ describe('copyIdOps', () => {
   const EMPTY = { holders: [], refs: [], truncated: false };
   // A namespace where `g` is already taken.
   const TAKEN = {
-    holders: [{ path: `${BODY}[0]`, id: 'g', kind: 'text', label: null }],
+    holders: [
+      {
+        path: `${BODY}[0]`,
+        id: 'g',
+        kind: 'text',
+        label: null,
+        repeated: false,
+        dataKey: undefined,
+        foreign: false,
+        owner: 'flow' as const,
+      },
+    ],
     refs: [],
     truncated: false,
   };
