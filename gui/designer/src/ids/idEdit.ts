@@ -21,6 +21,14 @@ export const MAX_ID_CHARS = MAX_NAME_CHARS;
 // biome-ignore lint/suspicious/noControlCharactersInRegex: refusing control characters in an entered name is the intent.
 const CONTROL_RE = /[\u0000-\u001f\u007f]/;
 
+/** Whether `text` is a name this rule accepts at all — non-empty, no control
+ * characters, within `MAX_ID_CHARS` code points. Uniqueness is a separate,
+ * namespace-wide question (`idEdit`); this is the per-string half, shared by
+ * every control that writes a name into a reference. */
+export function isIdText(text: string): boolean {
+  return text !== '' && [...text].length <= MAX_ID_CHARS && !CONTROL_RE.test(text);
+}
+
 /** A refusal with nothing to name beyond its reason. */
 export type IdRefusal = 'too_long' | 'control' | 'truncated' | 'too_many';
 

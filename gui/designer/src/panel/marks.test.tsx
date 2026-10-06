@@ -8,15 +8,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { EditorController } from '../editor/useEditor';
-import type { PlacedBox } from '../engine/types';
+import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
 import { readItemView } from './itemView';
 import { PropertyPanel } from './PropertyPanel';
 import { applicableTabs } from './panelTabs';
-import type { PlacementGeometry } from './placementGeometry';
 
 const PATH = 'sections.body.items[0]';
-const OTHER = 'sections.body.items[1]';
 
 const CAPS = ['ellipse', 'checkbox', 'ellipse.anchor', 'style.backgroundColor', 'style.border'];
 
@@ -45,34 +43,34 @@ function draw(node: ReactElement) {
   return render(<I18nProvider locale="en">{node}</I18nProvider>);
 }
 
-/** A box index carrying OTHER placed ids, so the anchor picker has targets.
- * Two of them, because re-pointing an already-anchored oval needs somewhere
- * else to point. */
-function geoWithTarget(): PlacementGeometry {
-  const box = { x: 0, y: 0, w: 10, h: 10 };
-  const boxes: PlacedBox[] = [
-    { path: OTHER, id: 'total', border: box, content: box },
-    { path: `${OTHER}x`, id: 'subtotal', border: box, content: box },
-  ];
-  return { boxes: { pages: [boxes] }, margin: [0, 0, 0, 0], fresh: true };
+/** The anchor picker reads the DOCUMENT (`sections`), never a box index — so
+ * the reads carry the ellipse and two OTHER named items: re-pointing an
+ * already-anchored oval needs somewhere else to point. */
+const TARGETS = [
+  { type: 'text', id: 'total' },
+  { type: 'rect', id: 'subtotal' },
+];
+
+function withDoc(
+  item: Record<string, unknown>,
+  others: readonly Record<string, unknown>[] = TARGETS,
+): Record<string, unknown> {
+  return { [PATH]: item, sections: { body: { type: 'flow', items: [item, ...others] } } };
 }
+
+/** The option key `AnchorTargetSelect` gives the body item at `index`. */
+const key = (index: number) => `p:sections.body.items[${index}]`;
 
 function panel(
   item: Record<string, unknown>,
   opts: {
     capabilities?: readonly string[];
-    geometry?: PlacementGeometry;
     controller?: EditorController;
   } = {},
 ) {
-  const controller = opts.controller ?? makeController({ [PATH]: item });
+  const controller = opts.controller ?? makeController(withDoc(item));
   draw(
-    <PropertyPanel
-      controller={controller}
-      path={PATH}
-      capabilities={opts.capabilities ?? CAPS}
-      geometry={opts.geometry}
-    />,
+    <PropertyPanel controller={controller} path={PATH} capabilities={opts.capabilities ?? CAPS} />,
   );
   return controller;
 }
@@ -242,15 +240,19 @@ describe('the ellipse anchor', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
   }
 
-  it('offers the placed ids and attaches in one batch, dropping the coordinates', () => {
-    const controller = makeController({
-      [PATH]: { type: 'ellipse', box: { x: 5, y: 8, w: 6, h: 4 } },
-    });
-    panel({ type: 'ellipse' }, { controller, geometry: geoWithTarget() });
+  it('offers the document’s items — no preview needed — and attaches in one batch', () => {
+    // No geometry is passed at all: the list must not wait on a render.
+    const item = { type: 'ellipse', box: { x: 5, y: 8, w: 6, h: 4 } };
+    const controller = makeController(withDoc(item));
+    panel(item, { controller });
     openPlacement();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Circle an item' }), {
-      target: { value: 'total' },
-    });
+    const select = screen.getByRole('combobox', { name: 'Circle an item' }) as HTMLSelectElement;
+    expect([...select.options].map((o) => o.textContent)).toEqual([
+      'Choose an item…',
+      'total (Text)',
+      'subtotal (Rectangle)',
+    ]);
+    fireEvent.change(select, { target: { value: key(1) } });
     expect(controller.applyAll).toHaveBeenCalledWith([
       { op: 'setScalar', path: PATH, keys: ['anchor'], value: 'total' },
       { op: 'removeKey', path: PATH, keys: ['box', 'x'] },
@@ -258,13 +260,28 @@ describe('the ellipse anchor', () => {
     ]);
   });
 
+  it('names an UNNAMED target in the same batch as the anchor', () => {
+    const item = { type: 'ellipse', box: { x: 5, w: 6, h: 4 } };
+    const controller = makeController(
+      withDoc(item, [{ type: 'text', data: { key: 'order.total' } }]),
+    );
+    panel(item, { controller });
+    openPlacement();
+    const select = screen.getByRole('combobox', { name: 'Circle an item' }) as HTMLSelectElement;
+    expect(select.options[1]?.textContent).toBe('order.total (Text)');
+    fireEvent.change(select, { target: { value: key(1) } });
+    expect(controller.applyAll).toHaveBeenCalledTimes(1);
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path: key(1).slice(2), keys: ['id'], value: 'order_total' },
+      { op: 'setScalar', path: PATH, keys: ['anchor'], value: 'order_total' },
+      { op: 'removeKey', path: PATH, keys: ['box', 'x'] },
+    ]);
+  });
+
   it('withholds the coordinate fields while anchored, keeping the size', () => {
     // The engine reads neither `box.x` nor `box.y` for an anchored ellipse, so
     // an editable coordinate would be a control with no effect.
-    panel(
-      { type: 'ellipse', anchor: 'total', box: { w: 60, h: 40 } },
-      { geometry: geoWithTarget() },
-    );
+    panel({ type: 'ellipse', anchor: 'total', box: { w: 60, h: 40 } });
     openPlacement();
     expect(screen.queryByRole('textbox', { name: 'X' })).toBeNull();
     expect(screen.queryByRole('textbox', { name: 'Y' })).toBeNull();
@@ -280,10 +297,7 @@ describe('the ellipse anchor', () => {
   it('withholds the OFFER against an engine that has no `ellipse.anchor`', () => {
     // An older engine parse-REJECTS `anchor:`, so the offer must not be made
     // hopefully.
-    panel(
-      { type: 'ellipse', box: { w: 6, h: 4 } },
-      { capabilities: ['ellipse'], geometry: geoWithTarget() },
-    );
+    panel({ type: 'ellipse', box: { w: 6, h: 4 } }, { capabilities: ['ellipse'] });
     openPlacement();
     expect(screen.queryByRole('combobox', { name: 'Circle an item' })).toBeNull();
   });
@@ -291,72 +305,108 @@ describe('the ellipse anchor', () => {
   it('still shows — and can detach — a file that already carries an anchor', () => {
     // The gate is on the OFFER, never on the reading: a document the panel
     // cannot describe is worse than one it cannot extend.
-    panel(
-      { type: 'ellipse', anchor: 'total', box: { w: 6, h: 4 } },
-      { capabilities: ['ellipse'], geometry: geoWithTarget() },
-    );
+    panel({ type: 'ellipse', anchor: 'total', box: { w: 6, h: 4 } }, { capabilities: ['ellipse'] });
     openPlacement();
     expect(screen.getByRole('combobox', { name: 'Circling' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Place it myself' })).toBeTruthy();
   });
 
-  it('keeps the row VISIBLE and disabled when there is nothing to circle', () => {
+  it('offers neither a page_break nor an item inside a repeat cell', () => {
+    // A page_break places no box, and an item in a repeat cell is placed once
+    // per row — an anchor would only ever find the first.
+    const item = { type: 'ellipse', box: { w: 6, h: 4 } };
+    panel(item, {
+      controller: makeController(
+        withDoc(item, [
+          { type: 'page_break' },
+          { type: 'repeat', cell: { items: [{ type: 'text', id: 'row' }] } },
+        ]),
+      ),
+    });
+    openPlacement();
+    const select = screen.getByRole('combobox', { name: 'Circle an item' }) as HTMLSelectElement;
+    // The repeat ITSELF is one placement, so it is offered; nothing else is.
+    expect([...select.options].map((o) => o.textContent)).toEqual([
+      'Choose an item…',
+      'Repeat grid',
+    ]);
+  });
+
+  it('keeps the row VISIBLE and disabled, with its reason, when nothing can be circled', () => {
     // The band-only page-number rule: a control that appears and disappears
     // reads as a bug, and a bare sentence with no control reads as one too.
-    // NOTE the fixture: no geometry at all. That is the SECOND cause of an
-    // empty list — nothing placed yet — which is why the copy says "yet"
-    // rather than claiming the document has no ids.
-    panel({ type: 'ellipse', box: { w: 6, h: 4 } });
+    const item = { type: 'ellipse', box: { w: 6, h: 4 } };
+    panel(item, { controller: makeController(withDoc(item, [])) });
     openPlacement();
-    const select = screen.getByRole('combobox', { name: 'Circle an item' });
-    expect((select as HTMLSelectElement).disabled).toBe(true);
-    expect(select.textContent).toBe('Nothing on the page to circle yet');
+    const select = screen.getByRole('combobox', { name: 'Circle an item' }) as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    expect(select.textContent).toBe('No items to circle');
   });
 
   it('keeps an unlisted target selectable, so an edit never re-points the oval', () => {
-    panel({ type: 'ellipse', anchor: 'gone', box: { w: 6, h: 4 } }, { geometry: geoWithTarget() });
+    panel({ type: 'ellipse', anchor: 'gone', box: { w: 6, h: 4 } });
     openPlacement();
     const select = screen.getByRole('combobox', { name: 'Circling' }) as HTMLSelectElement;
-    expect([...select.querySelectorAll('option')].map((o) => o.value)).toContain('gone');
+    expect(select.value).toBe('v:gone');
+    expect([...select.options].map((o) => o.value)).toEqual([key(1), key(2), 'v:gone']);
+    // No node carries `gone`: the anchor draws nothing, and the option says so.
+    expect(select.selectedOptions[0]?.textContent).toBe('gone (not found)');
+  });
+
+  it('shows a target a node DOES carry, but the list leaves out, as written', () => {
+    // `row` sits in a repeat cell — not offered, yet not missing either.
+    const item = { type: 'ellipse', anchor: 'row', box: { w: 6, h: 4 } };
+    panel(item, {
+      controller: makeController(
+        withDoc(item, [{ type: 'repeat', cell: { items: [{ type: 'text', id: 'row' }] } }]),
+      ),
+    });
+    openPlacement();
+    const select = screen.getByRole('combobox', { name: 'Circling' }) as HTMLSelectElement;
+    expect(select.selectedOptions[0]?.textContent).toBe('row');
+  });
+
+  it('never calls a target missing when the document cannot be read whole', () => {
+    // A partial namespace cannot prove an id absent.
+    const item = { type: 'ellipse', anchor: 'gone', box: { w: 6, h: 4 } };
+    const controller = makeController({ [PATH]: item });
+    panel(item, {
+      controller: {
+        ...controller,
+        read: (path: string) => {
+          if (path === 'sections') {
+            throw new Error('over the materialization cap');
+          }
+          return controller.read(path);
+        },
+      },
+    });
+    openPlacement();
+    const select = screen.getByRole('combobox', { name: 'Circling' }) as HTMLSelectElement;
+    expect(select.selectedOptions[0]?.textContent).toBe('gone');
   });
 
   it('never offers the oval ITSELF as a target', () => {
-    // A self-anchor resolves to nothing (the drain writes the ellipse's own
-    // placement, so it is absent from the index it reads). `anchorTargets`
-    // excludes it — this pins that the ellipse's own id actually reaches it,
-    // which a dropped argument would fail open on.
-    const box = { x: 0, y: 0, w: 10, h: 10 };
-    const geometry: PlacementGeometry = {
-      boxes: {
-        pages: [
-          [
-            { path: PATH, id: 'oval', border: box, content: box },
-            { path: OTHER, id: 'total', border: box, content: box },
-          ],
-        ],
-      },
-      margin: [0, 0, 0, 0],
-      fresh: true,
-    };
-    panel({ type: 'ellipse', id: 'oval', box: { w: 6, h: 4 } }, { geometry });
+    // A self-anchor resolves to nothing: an anchored item is deferred, so it
+    // is absent from the index the engine resolves against.
+    panel({ type: 'ellipse', id: 'oval', box: { w: 6, h: 4 } });
     openPlacement();
     const select = screen.getByRole('combobox', { name: 'Circle an item' }) as HTMLSelectElement;
-    const values = [...select.querySelectorAll('option')].map((o) => o.value);
-    expect(values).toContain('total');
-    expect(values).not.toContain('oval');
+    const values = [...select.options].map((o) => o.value);
+    expect(values).toContain(key(1));
+    expect(values).not.toContain(key(0));
   });
 
   it('re-points an already-anchored oval without touching anything else', () => {
     // Its `box.x`/`box.y` are already gone (attaching dropped them), so the
     // switch is the anchor key alone — and removing a coordinate that is not
     // there would refuse the whole batch.
-    const controller = makeController({
-      [PATH]: { type: 'ellipse', anchor: 'total', box: { w: 6, h: 4 } },
-    });
-    panel({ type: 'ellipse' }, { controller, geometry: geoWithTarget() });
+    const item = { type: 'ellipse', anchor: 'total', box: { w: 6, h: 4 } };
+    const controller = makeController(withDoc(item));
+    panel(item, { controller });
     openPlacement();
     fireEvent.change(screen.getByRole('combobox', { name: 'Circling' }), {
-      target: { value: 'subtotal' },
+      target: { value: key(2) },
     });
     expect(controller.applyAll).toHaveBeenCalledWith([
       { op: 'setScalar', path: PATH, keys: ['anchor'], value: 'subtotal' },
@@ -364,10 +414,9 @@ describe('the ellipse anchor', () => {
   });
 
   it('detaches by removing the key alone', () => {
-    const controller = makeController({
-      [PATH]: { type: 'ellipse', anchor: 'total', box: { w: 6, h: 4 } },
-    });
-    panel({ type: 'ellipse' }, { controller, geometry: geoWithTarget() });
+    const item = { type: 'ellipse', anchor: 'total', box: { w: 6, h: 4 } };
+    const controller = makeController(withDoc(item));
+    panel(item, { controller });
     openPlacement();
     fireEvent.click(screen.getByRole('button', { name: 'Place it myself' }));
     expect(controller.apply).toHaveBeenCalledWith({
@@ -381,17 +430,108 @@ describe('the ellipse anchor', () => {
     // Display and round-trip are different contracts: a clipped value would
     // author a truncated id the engine cannot resolve.
     const long = 'a'.repeat(200);
-    panel({ type: 'ellipse', anchor: long, box: { w: 6, h: 4 } }, { geometry: geoWithTarget() });
+    panel({ type: 'ellipse', anchor: long, box: { w: 6, h: 4 } });
     openPlacement();
     const select = screen.getByRole('combobox', { name: 'Circling' }) as HTMLSelectElement;
-    const option = [...select.querySelectorAll('option')].find((o) => o.value === long);
-    expect(option).toBeTruthy();
-    expect(option?.textContent?.length).toBe(81);
+    const option = [...select.options].find((o) => o.value === `v:${long}`);
+    expect(option?.textContent).toBe(`${'a'.repeat(80)}… (not found)`);
+  });
+
+  it('clips a hostile LABEL too', () => {
+    const item = { type: 'ellipse', box: { w: 6, h: 4 } };
+    panel(item, {
+      controller: makeController(withDoc(item, [{ type: 'text', text: 'w'.repeat(10_000) }])),
+    });
+    openPlacement();
+    const select = screen.getByRole('combobox', { name: 'Circle an item' }) as HTMLSelectElement;
+    // The LABEL is clipped, so the kind survives.
+    const text = select.options[1]?.textContent ?? '';
+    expect(text.endsWith('… (Text)')).toBe(true);
+    expect(text.length).toBeLessThanOrEqual(81 + ' (Text)'.length);
+  });
+
+  it('groups the offer by section, as the layer tree does, once there is more than one', () => {
+    const item = { type: 'ellipse', box: { w: 6, h: 4 } };
+    const reads = withDoc(item);
+    (reads.sections as Record<string, unknown>).header = { items: [{ type: 'text', id: 'title' }] };
+    panel(item, { controller: makeController(reads) });
+    openPlacement();
+    const select = screen.getByRole('combobox', { name: 'Circle an item' }) as HTMLSelectElement;
+    expect([...select.querySelectorAll('optgroup')].map((g) => g.label)).toEqual([
+      'Header',
+      'Body',
+    ]);
   });
 
   it('never offers the anchor on a checkbox — the wire has no such key', () => {
-    panel({ type: 'checkbox' }, { geometry: geoWithTarget() });
+    panel({ type: 'checkbox' });
     openPlacement();
     expect(screen.queryByRole('combobox', { name: 'Circle an item' })).toBeNull();
+  });
+});
+
+describe('the ellipse anchor against a real editor', () => {
+  function Harness({ source }: { readonly source: string }) {
+    const editor = useEditor(source);
+    return (
+      <I18nProvider locale="en">
+        <PropertyPanel controller={editor} path={PATH} capabilities={CAPS} />
+        <pre data-testid="doc">{editor.text}</pre>
+        <button type="button" data-testid="undo" onClick={editor.undo}>
+          undo
+        </button>
+      </I18nProvider>
+    );
+  }
+
+  it('names the target and anchors to it in ONE undo step', () => {
+    render(
+      <Harness
+        source={`sections:
+  body:
+    type: absolute
+    items:
+      - { type: ellipse, box: { x: 4, y: 4, w: 6, h: 4 } }
+      - { type: text, text: Yes, box: { x: 0, y: 20, w: 40, h: 10 } }
+`}
+      />,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Circle an item' }), {
+      target: { value: key(1) },
+    });
+    const doc = () => screen.getByTestId('doc').textContent ?? '';
+    expect(doc()).toContain('id: text_1');
+    expect(doc()).toContain('anchor: text_1');
+    expect(doc()).not.toContain('x: 4');
+    // …and says so, once: the name landed on an item the user is not looking at.
+    expect(screen.getByRole('status').textContent).toBe(
+      'Named that item “text_1” so this can follow it.',
+    );
+    fireEvent.click(screen.getByTestId('undo'));
+    expect(doc()).not.toContain('text_1');
+    expect(doc()).toContain('x: 4');
+    // Undone, the note would be false — it goes with it.
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('says nothing when the target already had a name', () => {
+    render(
+      <Harness
+        source={`sections:
+  body:
+    type: absolute
+    items:
+      - { type: ellipse, box: { w: 6, h: 4 } }
+      - { type: text, id: yes, text: Yes }
+`}
+      />,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Circle an item' }), {
+      target: { value: key(1) },
+    });
+    expect(screen.getByTestId('doc').textContent).toContain('anchor: yes');
+    expect(screen.queryByRole('status')).toBeNull();
   });
 });

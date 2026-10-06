@@ -269,9 +269,12 @@ read side, never the reverse.
   never the mixed shape the engine rejects), dropping only the keys the
   document actually carries because removing an absent key refuses the
   whole batch. Both anchored values PICK from closed sets — the five edge
-  keywords, and `panel/anchorTargets.ts`, which reads the placed ids out of the box
-  index so the list is exactly what the engine can resolve (an id with no
-  placement would only produce `anchor_unknown_target`). Attaching
+  keywords, and the document's items through `panel/AnchorTargetSelect.tsx`
+  (shared with the ellipse; an unnamed target is named in the same batch).
+  The attach control renders whenever `line.anchor` is on, DISABLED with its
+  reason when nothing can be named. An endpoint's `item` is read and written
+  under the name field's own rule (`ids/idEdit` `isIdText`), exact and never
+  trimmed, so a name in any script reads back and re-picks. Attaching
   picks its target in the same action: switching first would write
   `item: ''` and the line would vanish before the user chose anything.
 - `panel/BorderEditor.tsx` — the Excel-style border editor shared by the
@@ -510,7 +513,30 @@ presence is not a text binding.
   `deny_unknown_fields`, so an engine that does not know `anchor:` REJECTS the
   document rather than ignoring the key. The capability (`ellipse.anchor`)
   gates the OFFER to attach and never the reading of a file that already is
-  (the `line.anchor` rule). Targets come from `anchorTargets` unchanged.
+  (the `line.anchor` rule). Targets come from `AnchorTargetSelect`, as the
+  line's do; the row stays visible and disabled with its reason when the
+  document has no item an oval can circle.
+- `panel/useAnchorTargets.ts` + `panel/AnchorTargetSelect.tsx` — the ONE
+  target list both anchor pickers render. The hook reads the document's id
+  namespace (`ids/idIndex`, memoized on `revision`) and `ids/anchorTargets`'
+  candidates for the picking item — never the preview's box index, so the list
+  needs no render and includes unnamed items. The select keys options by PATH
+  (`p:<path>`; an authored value outside the list is a verbatim `v:<id>`
+  option, display-clipped by `anchorLabel`, value exact), groups them by
+  section once there is more than one, shows the prompt only while nothing is
+  chosen, marks a verbatim value NO holder carries with `panel.anchor.missing`
+  (never on a partial namespace, which cannot prove it), and hands the caller
+  `pickTarget`'s `{id, ops}` — the naming ops run first in the caller's one
+  batch. Option TEXT is `panel/anchorOptions.ts` (`optionTexts`): the layer
+  tree's label with the kind (`label (kind)`, the LABEL clipped, never the
+  kind), else the kind alone, and options that would read the same numbered in
+  document order (`panel.anchor.ordinal`).
+- `panel/AutoNamedNote.tsx` — `useAutoNamed` + `AutoNamedNote`: after a pick
+  that NAMED its target, a one-line `role="status"` note gives the name, shown
+  only while that slot (the ellipse's anchor, a line end) still names it and
+  only for the item it was picked on — an undo, a re-pick, or selecting another
+  item forgets it (reset during render on a path change), so coming back does
+  not bring it back.
 - `panel/BoxAxisGrid.tsx` — the four box fields and which of them the placement
   kind makes read-only, split out of `BoxSection.tsx` when the anchor control
   pushed it past the per-file budget. Carries the `noCoords` case (withhold x

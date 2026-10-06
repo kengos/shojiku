@@ -5,7 +5,7 @@
 
 import type { ReadFn } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
-import { anchorTargets, readItemId } from './anchorTargets';
+import { MAX_ID_CHARS } from '../ids/idEdit';
 import {
   isAnchored,
   type LinePointsView,
@@ -167,34 +167,6 @@ describe('linePointOps', () => {
   });
 });
 
-describe('anchorTargets / readItemId', () => {
-  it('lists placed ids, deduped and sorted, minus the line’s own', () => {
-    const pages = [
-      [{ id: 'total' }, { id: 'note' }, {}],
-      [{ id: 'total' }, { id: 'self' }],
-    ];
-    expect(anchorTargets(pages, 'self')).toEqual(['note', 'total']);
-  });
-
-  it('reads no targets when there is no geometry yet', () => {
-    expect(anchorTargets(undefined, undefined)).toEqual([]);
-  });
-
-  it('reads the item’s own id, and nothing from a hostile document', () => {
-    expect(readItemId(readerOf({ id: 'leader' }), PATH)).toBe('leader');
-    expect(readItemId(readerOf({ id: 42 }), PATH)).toBeUndefined();
-    // A document node that is not a map at all (a sequence, a scalar) —
-    // the shape a hostile or half-edited file reaches the panel with.
-    expect(readItemId(readerOf([1, 2]), PATH)).toBeUndefined();
-    expect(readItemId(readerOf('line'), PATH)).toBeUndefined();
-    expect(
-      readItemId(() => {
-        throw new Error('boom');
-      }, PATH),
-    ).toBeUndefined();
-  });
-});
-
 describe('the anchored arm', () => {
   const ANCHORED = { type: 'line', from: { x: 0, y: 2 }, to: { item: 'total', edge: 'left' } };
 
@@ -209,8 +181,19 @@ describe('the anchored arm', () => {
     expect(view['to.x']).toBe('');
   });
 
+  it('shows an id the name field would accept — any script — exactly as authored', () => {
+    // The name field takes `合計`; a narrower rule here would show the
+    // endpoint unset and leave it impossible to pick back.
+    expect(viewOf({ to: { item: '合計' } })['to.item']).toBe('合計');
+    expect(viewOf({ to: { item: ' padded ' } })['to.item']).toBe(' padded ');
+    const longest = 'x'.repeat(MAX_ID_CHARS);
+    expect(viewOf({ to: { item: longest } })['to.item']).toBe(longest);
+  });
+
   it('shows a hostile id as unset rather than round-tripping it', () => {
-    const view = viewOf({ from: { x: 0, y: 0 }, to: { item: 'a‮b c!' } });
+    const view = viewOf({ from: { x: 0, y: 0 }, to: { item: 'a\u0007b' } });
+    expect(viewOf({ to: { item: 'x'.repeat(MAX_ID_CHARS + 1) } })['to.item']).toBe('');
+    expect(viewOf({ to: { item: 7 } })['to.item']).toBe('');
     expect(view['to.item']).toBe('');
     // …but the endpoint is still ANCHORED. Reading the arm off the display
     // text would show empty coordinate fields for an anchored endpoint, and
@@ -219,7 +202,7 @@ describe('the anchored arm', () => {
   });
 
   it('drops an undisplayable id when switching to coordinates', () => {
-    const view = viewOf({ to: { item: 'a‮b c!' } });
+    const view = viewOf({ to: { item: 'a\u0007b' } });
     expect(lineArmOps(PATH, view, 'to', 'xy')).toEqual([
       { op: 'removeKey', path: PATH, keys: ['to', 'item'] },
       { op: 'setScalar', path: PATH, keys: ['to', 'x'], value: 0 },
@@ -294,9 +277,25 @@ describe('the anchored arm', () => {
   it('refuses to clear the target — the arm has no meaning without one', () => {
     const view = viewOf(ANCHORED);
     expect(lineAnchorOps(PATH, view, 'to.item', '')).toEqual([]);
-    expect(lineAnchorOps(PATH, view, 'to.item', 'a b')).toEqual([]);
+    expect(lineAnchorOps(PATH, view, 'to.item', 'a\u0007b')).toEqual([]);
+    expect(lineAnchorOps(PATH, view, 'to.item', 'x'.repeat(MAX_ID_CHARS + 1))).toEqual([]);
     expect(lineAnchorOps(PATH, view, 'to.item', 'other')).toEqual([
       { op: 'setScalar', path: PATH, keys: ['to', 'item'], value: 'other' },
+    ]);
+  });
+
+  it('writes a picked id EXACTLY — any script, never trimmed', () => {
+    // It must equal the holder's own id, or the anchor names nothing.
+    const view = viewOf(ANCHORED);
+    expect(lineAnchorOps(PATH, view, 'to.item', '合計')).toEqual([
+      { op: 'setScalar', path: PATH, keys: ['to', 'item'], value: '合計' },
+    ]);
+    expect(lineAnchorOps(PATH, view, 'to.item', ' a ')).toEqual([
+      { op: 'setScalar', path: PATH, keys: ['to', 'item'], value: ' a ' },
+    ]);
+    // An edge keyword is still trimmed.
+    expect(lineAnchorOps(PATH, view, 'to.edge', ' top ')).toEqual([
+      { op: 'setScalar', path: PATH, keys: ['to', 'edge'], value: 'top' },
     ]);
   });
 });

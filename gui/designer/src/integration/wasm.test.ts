@@ -28,9 +28,11 @@ import { applyDefinitionOps, readDefinitionField, titleOp } from '../data/defini
 import { fixFor } from '../diagnostics/fixModel';
 import { type EngineTransport, TransportError } from '../engine/transport';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
+import { anchorCandidates, pickTarget } from '../ids/anchorTargets';
 import { duplicateOps } from '../ids/copyIds';
 import { idEdit } from '../ids/idEdit';
 import { buildIdIndex } from '../ids/idIndex';
+import type { IdHolder } from '../ids/walk';
 import { composeDataUri } from '../image/dataUri';
 import { sniffImage } from '../image/sniff';
 import { blockNeverDraws, blockRefusedOwner } from '../insert/blockRefusal';
@@ -56,12 +58,14 @@ import { defaultStyleOp, INHERITED_STYLE_FIELDS } from '../panel/defaultsModel';
 import { readEdge } from '../panel/edgeModel';
 import { edgeSideOps, edgeUniformOps } from '../panel/edgeOps';
 import { edgeRules, FRAME_PADDING_RULES } from '../panel/edgeRules';
+import { attachAnchorOps, readEllipseAnchor } from '../panel/ellipseAnchor';
 import { frameOf } from '../panel/frameModel';
 import { gridColumnsPlan, gridRowsPlan } from '../panel/gridStructure';
 import { readGroupsView } from '../panel/groupModel';
 import { registryNames } from '../panel/itemView';
 import { containerLayoutFor } from '../panel/layoutModel';
 import { directionOp, gapOp, ratioOp } from '../panel/layoutOps';
+import { lineArmOps, readLinePoints } from '../panel/linePoints';
 import { readMark } from '../panel/markModel';
 import { setCheckedOps } from '../panel/markOps';
 import { bindingKeyOp, bindingPickOps, placeholderOp, plainTextOp } from '../panel/model';
@@ -3678,5 +3682,98 @@ describe('names the Designer writes, resolved by the real engine', () => {
     expect(codes).not.toContain('anchor_unknown_target');
     expect(boxes.find((b) => b.path === 'sections.body.items[1].items[0]')?.id).toBe('answer_2');
     expect(boxes.some((b) => b.path === 'sections.body.items[1].items[1]')).toBe(true);
+  });
+});
+
+describe('anchoring by picking, in a document with no names, resolved by the real engine', () => {
+  // The JOIN for the two anchor pickers: the candidate list and the minted name
+  // come from `ids/` (the document, no box index), and the ENGINE is what
+  // resolves the anchor. Each step uses the builders the pickers themselves
+  // call — `anchorCandidates` → `pickTarget` → the item's own attach ops — so
+  // "the oval lands on the answer" is measured on the engine's boxes.
+  const DOC = [
+    'page: { margin: 0 }',
+    'sections:',
+    '  body:',
+    '    type: absolute',
+    '    items:',
+    '      - { type: text, text: "Yes", box: { x: 20, y: 20, w: 60, h: 20 } }',
+    '      - { type: ellipse, box: { x: 300, y: 300, w: 40, h: 16 } }',
+    '      - { type: rect, box: { x: 200, y: 100, w: 40, h: 40 } }',
+    '      - { type: line, from: { x: 0, y: 0 }, to: { x: 10, y: 10 } }',
+    '',
+  ].join('\n');
+  const TEXT = 'sections.body.items[0]';
+  const ELLIPSE = 'sections.body.items[1]';
+  const RECT = 'sections.body.items[2]';
+  const LINE = 'sections.body.items[3]';
+
+  const render = async (editor: Editor) => {
+    const outcome = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 1 });
+    expect(outcome.ok).toBe(true);
+    return {
+      boxes: outcome.inspect?.boxes.pages.flat() ?? [],
+      codes: outcome.diagnostics.items.map((d) => d.code),
+    };
+  };
+  const pick = (editor: Editor, self: string, target: string) => {
+    const index = buildIdIndex((p) => editor.read(p));
+    const holder = anchorCandidates(index, self).find((h) => h.path === target);
+    expect(holder?.id).toBeUndefined();
+    return pickTarget(holder as IdHolder, index);
+  };
+  const centre = (r: { x: number; y: number; w: number; h: number }) => [
+    r.x + r.w / 2,
+    r.y + r.h / 2,
+  ];
+
+  it('an oval attached to an unnamed text by picking is drawn on that text', async () => {
+    const editor = Editor.create(DOC);
+    const picked = pick(editor, ELLIPSE, TEXT);
+    const view = readEllipseAnchor((p) => editor.read(p), ELLIPSE);
+    expect(editor.applyAll([...picked.ops, ...attachAnchorOps(ELLIPSE, picked.id, view)]).ok).toBe(
+      true,
+    );
+    const { boxes, codes } = await render(editor);
+    expect(codes).not.toContain('anchor_unknown_target');
+    const text = boxes.find((b) => b.path === TEXT);
+    const oval = boxes.find((b) => b.path === ELLIPSE);
+    expect(text?.id).toBe('text_1');
+    // Geometry, not "it draws": the oval left (300, 300) and is centred on the
+    // text's GLYPH BAND — the inked extent the engine circles — which for a
+    // left-aligned "Yes" in a 60pt box is well left of the border box's centre,
+    // so centring on the border box would fail this.
+    const lines = text?.text !== undefined && 'lines' in text.text ? text.text.lines : [];
+    expect(lines.length).toBeGreaterThan(0);
+    const left = Math.min(...lines.map((l) => l.x));
+    const right = Math.max(...lines.map((l) => l.x + l.width));
+    const top = Math.min(...lines.map((l) => l.emTop));
+    const bottom = Math.max(...lines.map((l) => l.emBottom));
+    const [ox, oy] = centre(oval?.border ?? { x: 0, y: 0, w: 0, h: 0 });
+    expect(ox).toBeCloseTo((left + right) / 2, 0);
+    expect(oy).toBeCloseTo((top + bottom) / 2, 0);
+    const [bx] = centre(text?.border ?? { x: 0, y: 0, w: 0, h: 0 });
+    expect(Math.abs(ox - bx)).toBeGreaterThan(5);
+  });
+
+  it('a line end attached to an unnamed rect by picking lands on it', async () => {
+    const editor = Editor.create(DOC);
+    const picked = pick(editor, LINE, RECT);
+    const arm = lineArmOps(
+      LINE,
+      readLinePoints((p) => editor.read(p), LINE),
+      'to',
+      'anchor',
+      picked.id,
+    );
+    expect(editor.applyAll([...picked.ops, ...arm]).ok).toBe(true);
+    const { boxes, codes } = await render(editor);
+    expect(codes).not.toContain('anchor_unknown_target');
+    expect(boxes.find((b) => b.path === RECT)?.id).toBe('rect_1');
+    // The default edge is `center`: the line's far corner is the rect's centre.
+    const line = boxes.find((b) => b.path === LINE)?.border;
+    expect(line).toBeDefined();
+    expect((line?.x ?? 0) + (line?.w ?? 0)).toBeCloseTo(220, 0);
+    expect((line?.y ?? 0) + (line?.h ?? 0)).toBeCloseTo(120, 0);
   });
 });

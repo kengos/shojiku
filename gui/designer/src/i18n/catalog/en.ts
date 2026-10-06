@@ -408,9 +408,13 @@ export const en: LanguageCatalog = {
     'panel.shape.widthFromStyle': 'Width comes from the style “{name}”.',
     'panel.ellipse.circle': 'Circle an item',
     'panel.ellipse.circling': 'Circling',
-    'panel.ellipse.pickItem': 'Pick an item…',
+    'panel.ellipse.pickItem': 'Choose an item…',
     'panel.ellipse.detach': 'Place it myself',
-    'panel.ellipse.noTargets': 'Nothing on the page to circle yet',
+    'panel.ellipse.noTargets': 'No items to circle',
+    'panel.anchor.option': '{label} ({kind})',
+    'panel.anchor.ordinal': '{text} {n}',
+    'panel.anchor.missing': '{label} (not found)',
+    'panel.anchor.autoNamed': 'Named that item “{name}” so this can follow it.',
     'panel.ellipse.anchoredHint': 'Position follows that item; the size below is still yours.',
     'copy.notice.too_many': 'Nothing was added: too many names would need renumbering at once.',
     'copy.notice.unreadable':
@@ -1106,6 +1110,7 @@ export const en: LanguageCatalog = {
     'panel.line.toEdge': 'End edge',
     'panel.line.useAnchor': 'Attach to an item',
     'panel.line.pickItem': 'Choose an item…',
+    'panel.line.noTargets': 'None available',
     'panel.line.edgeCenter': 'Centre (default)',
     'panel.line.useCoordinates': 'Use coordinates',
     'panel.line.pointsHint':

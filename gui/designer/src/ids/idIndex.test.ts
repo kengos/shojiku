@@ -78,6 +78,10 @@ describe('buildIdIndex', () => {
       id: 'head',
       kind: 'text',
       label: 'Title',
+      repeated: false,
+      dataKey: undefined,
+      foreign: false,
+      owner: 'band',
     });
     expect(byId.get('total')?.path).toBe('sections.body.items[0].items[0]');
     expect(byId.get('total')?.label).toBe('order.total');
@@ -102,6 +106,123 @@ describe('buildIdIndex', () => {
       kind: 'card_frame',
     });
     expect(byId.get('pn')?.path).toBe('sections.footer.items[0]');
+  });
+
+  it('marks every node inside a repeated scope, and only those', () => {
+    // A repeat cell, a column cell and a repeat_flow card each place their
+    // items once per element; the frames themselves repeat only if their
+    // owner does.
+    const repeated = new Map(
+      index().holders.flatMap((h) => (h.id === undefined ? [] : [[h.id, h.repeated]])),
+    );
+    expect(Object.fromEntries(repeated)).toEqual({
+      head: false,
+      box: false,
+      total: false,
+      lines: false,
+      qty: false,
+      note_cell: false,
+      note_text: true,
+      ticket: false,
+      stub: true,
+      card: false,
+      brk: false,
+      pn: false,
+    });
+  });
+
+  it('marks a whole nested subtree under a frame repeated, columns and frames included', () => {
+    const nested = buildIdIndex((path) =>
+      Editor.create(`
+sections:
+  body:
+    items:
+      - type: repeat
+        data: { key: rows }
+        cell:
+          items:
+            - type: container
+              id: inner
+              items:
+                - { type: text, id: deep }
+            - type: table
+              id: t
+              columns:
+                - id: c
+                  cell: { id: f, items: [] }
+`).read(path),
+    );
+    expect(nested.holders.map((h) => [h.id ?? h.kind, h.repeated])).toEqual([
+      ['repeat', false],
+      ['cell_frame', false],
+      ['inner', true],
+      ['deep', true],
+      ['t', true],
+      ['c', true],
+      ['f', true],
+    ]);
+  });
+
+  it('records the region that holds each item directly', () => {
+    const owners = (yaml: string) =>
+      buildIdIndex((path) => Editor.create(yaml).read(path)).holders.map((h) => [h.kind, h.owner]);
+    expect(owners(DOC)[0]).toEqual(['text', 'band']);
+    // A body with no (or an unknown) type is one the engine will not parse.
+    expect(
+      owners(`
+sections:
+  body:
+    type: flow
+    items:
+      - type: container
+        items: [ { type: repeat, cell: { items: [] } } ]
+  footer:
+    items: [ { type: page_number } ]
+`),
+    ).toEqual([
+      ['container', 'flow'],
+      ['repeat', null],
+      ['cell_frame', null],
+      ['page_number', 'band'],
+    ]);
+    expect(owners('sections: { body: { type: absolute, items: [ { type: rect } ] } }')).toEqual([
+      ['rect', 'absolute'],
+    ]);
+    expect(owners('sections: { body: { type: grid, items: [ { type: rect } ] } }')).toEqual([
+      ['rect', null],
+    ]);
+  });
+
+  it('flags a holder whose authored id is not a string', () => {
+    const flagged = buildIdIndex((path) =>
+      Editor.create(`
+sections:
+  body:
+    items:
+      - { type: text, id: 3 }
+      - { type: text, id: ok }
+      - { type: text }
+      - type: table
+        columns: [ { id: [1], cell: { id: true, items: [] } } ]
+`).read(path),
+    );
+    expect(flagged.holders.map((h) => [h.kind, h.foreign])).toEqual([
+      ['text', true],
+      ['text', false],
+      ['text', false],
+      ['table', false],
+      ['column', true],
+      ['cell_frame', true],
+    ]);
+  });
+
+  it('carries each holder’s bound data key, the first choice for a minted name', () => {
+    const keys = new Map(index().holders.map((h) => [h.id ?? h.path, h.dataKey]));
+    expect(keys.get('total')).toBe('order.total');
+    expect(keys.get('lines')).toBe('lines');
+    expect(keys.get('qty')).toBe('qty');
+    expect(keys.get('head')).toBeUndefined();
+    expect(keys.get('ticket')).toBeUndefined();
   });
 
   it('lists nodes without an id as holders too (the field can name them)', () => {
