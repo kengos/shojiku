@@ -76,7 +76,7 @@ import { bindingKeyOp, bindingPickOps, placeholderOp, plainTextOp } from '../pan
 import { PAGE_SIZES } from '../panel/pageSizes';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
-import { fillOrderOp, gridCountOp, gridGapOp, newPageOp } from '../panel/repeatGrid';
+import { fillOrderOp, gridCountOp, gridGapOp, newPageOp, relativeGapOp } from '../panel/repeatGrid';
 import { addRuleOp, setRuleEqualsOp } from '../panel/rowConditionOps';
 import { rulePresetOps } from '../panel/rulePresets';
 import { readShapeStyle, strokeWidthOp } from '../panel/shapeStyle';
@@ -777,6 +777,97 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     boxes = await render();
     expect(rect(boxes, cell(1)).x).toBeCloseTo(rect(boxes, cell(0)).x, 0);
     expect(rect(boxes, cell(1)).y).toBeGreaterThan(rect(boxes, cell(0)).y);
+  });
+
+  it('arranges a repeat_flow card as a row and spaces the cards — WARNING-clean, geometry as authored', async () => {
+    // A card frame is edited by the container's own layout ops pointed at the
+    // frame path, and the cards' gap by its own op; both meet the engine here.
+    const editor = Editor.create(template());
+    const readFn = (path: string) => editor.read(path);
+    const bodyLength = (editor.read('sections.body.items') as unknown[]).length;
+    expect(
+      editor.apply({
+        op: 'insertItem',
+        path: 'sections.body.items',
+        index: bodyLength,
+        value: {
+          type: 'repeat_flow',
+          data: { key: 'items' },
+          gap: 8,
+          item: {
+            items: [
+              { type: 'text', data: { key: 'name' } },
+              { type: 'text', data: { key: 'qty' } },
+            ],
+          },
+        },
+      }).ok,
+    ).toBe(true);
+    const flow = `sections.body.items[${bodyLength}]`;
+    const card = `${flow}.item`;
+    const apply = (ops: Op[] | null) => {
+      expect(ops).not.toBeNull();
+      expect(editor.applyAll(ops as Op[]).ok).toBe(true);
+    };
+    apply(modeSwitchOps(readFn, card, 'row', { trackList: true }));
+    apply([relativeGapOp(flow, ['gap'], '12') as Op]);
+    expect(editor.read(`${card}.box.direction`)).toBe('row');
+    const outcome = await transport.renderRaw(editor.text(), params(), definitions(), {
+      scale: 2,
+    });
+    expect(outcome.ok).toBe(true);
+    expect(outcome.diagnostics.items).toEqual([]);
+    const boxes = outcome.inspect?.boxes.pages.flat() ?? [];
+    const cards = boxes.filter((box) => box.path === card).map((box) => box.border);
+    expect(cards.length).toBe(4);
+    // Cards 12pt apart, one under the next.
+    expect(cards[1].y - (cards[0].y + cards[0].h)).toBeCloseTo(12, 0);
+    // Inside a card the two texts now sit side by side.
+    const names = boxes.filter((box) => box.path === `${card}.items[0]`).map((box) => box.border);
+    const qtys = boxes.filter((box) => box.path === `${card}.items[1]`).map((box) => box.border);
+    expect(qtys[0].x).toBeGreaterThan(names[0].x + names[0].w - 0.5);
+    expect(qtys[0].y).toBeCloseTo(names[0].y, 0);
+  });
+
+  it('turns a repeat cell into a grid and steps its columns — WARNING-clean', async () => {
+    // The cell frame goes through the same switch and the same count plans a
+    // container does; this is the case that proves the plans see the frame.
+    const editor = Editor.create(template());
+    const readFn = (path: string) => editor.read(path);
+    const bodyLength = (editor.read('sections.body.items') as unknown[]).length;
+    expect(
+      editor.apply({
+        op: 'insertItem',
+        path: 'sections.body.items',
+        index: bodyLength,
+        value: {
+          type: 'repeat',
+          data: { key: 'items' },
+          grid: { columns: 2, rows: 2 },
+          cell: {
+            items: [
+              { type: 'text', data: { key: 'name' } },
+              { type: 'text', data: { key: 'qty' } },
+            ],
+          },
+        },
+      }).ok,
+    ).toBe(true);
+    const cell = `sections.body.items[${bodyLength}].cell`;
+    const apply = (ops: readonly Op[] | null) => {
+      expect(ops).not.toBeNull();
+      expect(editor.applyAll(ops as Op[]).ok).toBe(true);
+    };
+    apply(modeSwitchOps(readFn, cell, 'grid', { trackList: true }));
+    const plan = gridColumnsPlan(readFn, cell, 2, 'Slot');
+    expect(plan.ops.length).toBeGreaterThan(0);
+    apply(plan.ops);
+    expect(editor.read(`${cell}.box.type`)).toBe('grid');
+    const outcome = await transport.renderRaw(editor.text(), params(), definitions(), {
+      scale: 2,
+    });
+    expect(outcome.ok).toBe(true);
+    expect(outcome.diagnostics.items).toEqual([]);
   });
 
   it('nest-into-slot, grid 列/行 plans, and コンテナにまとめる all render WARNING-clean', async () => {

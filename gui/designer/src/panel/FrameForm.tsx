@@ -2,7 +2,9 @@
 // column's cell (`frameModel`). Each is a container with no `type:`, drawn once
 // per data element, so the form says first that an edit reaches every one of
 // them, then offers its name (`id:`, through the same `ItemIdField` every item
-// has) and what a frame is for: the inner padding, the fill, the border,
+// has), for a repeat cell or a card its size and child arrangement
+// (`FrameLayoutSection` — a frame is a container), and what a frame is for: the
+// inner padding, the fill, the border,
 // whether content sticking out of it is hidden, and its opacity. The fields are
 // the ordinary path-generic ones (`EdgeFields`, `PanelColorField`,
 // `BorderEditor`, `OverflowField`, `OpacityField`) pointed at the frame's path,
@@ -20,6 +22,7 @@ import { readBorder } from './borderModel';
 import { readRadius } from './borderRadius';
 import { EdgeFields } from './EdgeFields';
 import { FRAME_PADDING_RULES } from './edgeRules';
+import { FrameLayoutSection } from './FrameLayoutSection';
 import type { Frame } from './frameModel';
 import { ItemIdField } from './ItemIdField';
 import { hasCapability } from './itemPanelProps';
@@ -55,6 +58,14 @@ export function FrameForm({
         <p className="mt-0 mb-2 text-sm text-muted">{t('panel.frame.columnNote')}</p>
       ) : null}
       <ItemIdField key={path} controller={controller} path={path} />
+      {kind === 'columnCell' ? null : (
+        <FrameLayoutSection
+          controller={controller}
+          path={path}
+          kind={kind}
+          capabilities={capabilities}
+        />
+      )}
       {hasCapability(capabilities, 'box.padding') ? (
         <EdgeFields
           controller={controller}

@@ -44,6 +44,7 @@ export function GridTrackEditor({
   count,
   support,
   hasHeight,
+  inFrame,
 }: {
   readonly controller: EditorController;
   readonly path: string;
@@ -52,8 +53,11 @@ export function GridTrackEditor({
   /** How many tracks the grid shows on this axis now (a form switch keeps it). */
   readonly count: number;
   readonly support: TrackSupport;
-  /** The container authors its own `h` (rows only: shares need a height). */
+  /** The container has a definite height (rows only: shares need one). */
   readonly hasHeight: boolean;
+  /** The container is a repeat cell / card frame, whose height field sits in
+   * the frame form's size section rather than on a Layout tab. */
+  readonly inFrame: boolean;
 }) {
   const { t } = useI18n();
   // A columns list starts as equal shares, a rows list as content-sized rows.
@@ -69,7 +73,7 @@ export function GridTrackEditor({
     }
     return axis === 'rows' && form === 'count' && !hasHeight
       ? t('panel.layout.tracks.rows.countNeedsHeight', {
-          tab: t('panel.tab.box'),
+          tab: t(inFrame ? 'panel.frame.size' : 'panel.tab.box'),
           height: t('panel.box.h'),
         })
       : undefined;

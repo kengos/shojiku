@@ -16,15 +16,10 @@
 // winning on the new main axis into `gap`. Wire: docs/engine/{flex,grid}.md.
 
 import { MAX_BATCH_OPS, type Op, type ReadFn } from '@shojiku/designer-core';
+import { type ContainerNode, readContainerNode } from './containerNode';
 import { isFlexItem, trackFor } from './flexParticipants';
 import { REQUIRED_BOX_WIRE_TYPES } from './itemView';
-import {
-  type ContainerNode,
-  inBasisPopulation,
-  type LayoutMode,
-  MAX_GRID_TRACKS,
-  readContainerNode,
-} from './layoutModel';
+import { inBasisPopulation, type LayoutMode, MAX_GRID_TRACKS } from './layoutModel';
 import { directionOp } from './layoutOps';
 
 /** The container keys only a grid reads. */

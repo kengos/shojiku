@@ -15,6 +15,20 @@ platform binaries.
 
 ### Added
 
+- **Arrange and size the frame of a repeat and the cards of a repeat_flow,
+  and space the cards, in the Designer.** A repeat's cell frame and a
+  repeat_flow's card frame now carry the same 「子の並べ方」 as a container —
+  side by side, stacked or a grid, with distribution, alignment and ratios —
+  and their own width and height, shown as 「自動」 when empty with a line
+  saying what that means (a cell fills its cell, a card fills the list's
+  width and fits its content). A cell counts as having a height (its cell's),
+  so equal rows and distribution work in it without one being typed.
+  Selecting an item inside a cell or a card shows the frame — named 「セルの枠」
+  or 「カードの枠」 — as its parent container, as an item in a container does.
+  The space between cards, written as 8 when the cards are inserted, is now
+  「カードの間隔」 on the repeat_flow's own panel, a `%` of the flowing area
+  included.
+
 - **Set each grid column's width, each row's height, the spacing per
   direction, the fill order and cell spans in the Designer.** A 表組み
   container's 「列の幅」 is either 「すべて同じ幅」 or 「列ごとに指定」, and per

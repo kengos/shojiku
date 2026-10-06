@@ -5,6 +5,7 @@
 // frame's own form, `FrameForm`).
 
 import type { Op } from '@shojiku/designer-core';
+import type { ReactNode } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import type { PaletteGroup } from '../palette/model';
@@ -35,6 +36,8 @@ export interface IterableSourceSectionProps {
    * `list`, or a frame the document does not carry as a map. */
   readonly frame?: { readonly path: string; readonly kind: FrameKind } | null;
   readonly onSelectPath?: (path: string) => void;
+  /** A kind-specific field placed after the binding (the cards' gap). */
+  readonly footer?: ReactNode;
 }
 
 /** The data-source section for the non-table iterables: what a scaffold
@@ -51,6 +54,7 @@ export function IterableSourceSection({
   capabilities,
   frame = null,
   onSelectPath,
+  footer = null,
 }: IterableSourceSectionProps) {
   const { t } = useI18n();
   const dispatch = (op: Op) => {
@@ -90,6 +94,7 @@ export function IterableSourceSection({
           />
         </Field>
       )}
+      {footer}
       {frame !== null && onSelectPath !== undefined ? (
         <button type="button" className={BTN_SM} onClick={() => onSelectPath(frame.path)}>
           {t(`panel.frame.edit.${frame.kind}`)}

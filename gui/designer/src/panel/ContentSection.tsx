@@ -9,6 +9,7 @@ import type { Op } from '@shojiku/designer-core';
 import { useRef } from 'react';
 import { useI18n } from '../i18n/context';
 import { INPUT } from '../ui/chrome';
+import { CardGapField } from './CardGapField';
 import { CharGridMarkupField } from './CharGridMarkupField';
 import { BoundContent } from './contentBound';
 import { ImageContent, PageNumberContent } from './contentParts';
@@ -56,6 +57,9 @@ export function ContentSection(props: ItemPanelProps) {
         capabilities={capabilities}
         frame={frame === null ? null : { path: framePath, kind: frame.kind }}
         onSelectPath={props.onSelectPath}
+        footer={
+          view.type === 'repeat_flow' ? <CardGapField controller={controller} path={path} /> : null
+        }
       />
     );
   }

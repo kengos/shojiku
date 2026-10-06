@@ -57,7 +57,8 @@ mechanism); capability gates are "undefined = show"
   `gridRowsPlan` (an authored `box.rows` follows — a count is rewritten, a
   longer list trimmed), `gridRowCount`; `{ops, drops}` where `drops` flags
   content-bearing removals (the panel's confirm gate). The grid read they share
-  (cells, fill order) is `panel/gridState.ts`. A grid with a SPANNING cell is
+  (cells, fill order — through `readContainerNode`, so a frame grid steps
+  too) is `panel/gridState.ts`. A grid with a SPANNING cell is
   never re-chunked: the panel withholds the steppers there (`GridSection`).
 - `panel/gridTracks.ts` — the column-width / row-height model: `readTracks`
   (absent / a count / a list of `Track` = `auto` | `fr` | `fixed`, an
@@ -72,11 +73,16 @@ mechanism); capability gates are "undefined = show"
 The container-layout model is a READ/WRITE pair; the write side depends on
 the read side, never the reverse.
 
-- `panel/layoutModel.ts` — what the DOCUMENT says about a container:
-  `readContainerNode` (the ONE classification — mode, `box`, child list, or
-  `null` for a non-container / hostile `box.type` / unreadable subtree — that
-  the view and the multi-key edits both read), `containerLayoutFor(read,
-  path)` (mode/gap/align/justify/height/column-count/track-list flag/
+- `panel/containerNode.ts` — `readContainerNode`, the ONE container
+  classification (mode, `box`, child list, which frame it is, or `null` for a
+  non-container / hostile `box.type` / unreadable subtree) that the view, the
+  multi-key edits and the grid count plans (`gridState`) all read: a repeat
+  `cell:` or a repeat_flow `item:` frame counts as a container (`holdsLayout`
+  via `frameOf`), a table column's `cell:` does not.
+- `panel/layoutModel.ts` — what the DOCUMENT says about a container, over
+  `readContainerNode`: `parentContainerOf` (a frame is a parent too), `containerLayoutFor(read,
+  path)` (mode/gap/align/justify/height — a repeat cell's slot height counts
+  as definite —/column-count/track-list flag/
   split-by-ratio state/per-child `ChildSlot`s from the DOCUMENT alone, never
   the box index; an unset grow weight reads EMPTY, since the engine's default
   depends on whether it can measure the child), `inBasisPopulation` (the flex
@@ -177,7 +183,8 @@ The child-layout surface is a shell + one module per control cluster.
   stated reason.)
 - `panel/ParentContainerCard.tsx` — the parent-first tinted card hosting
   the same shell for the parent (capabilities threaded through): select-parent
-  jump + hover canvas highlight; given the selected child's path it also hosts
+  jump + hover canvas highlight, titled by the frame's own name when the parent
+  is a repeat cell / card frame; given the selected child's path it also hosts
   that child's grid spans just below the card (`GridSpanSection`).
 
 ## Placement tab — the n-up repeat grid
@@ -195,7 +202,8 @@ A `repeat` has no `box:`, so its placement tab carries its SHEET instead
   whose product with the OTHER axis as authored passes `MAX_CELLS_PER_SHEET`
   (64 — `MAX_IMPOSITION_PER_PAGE`, pinned by a drift guard reading
   `imposition.rs`); a step starts from the EFFECTIVE value, so unset ▲ gives 2.
-  `gridGapOp`/`gridGapStepOp` (per-axis, unit-kept, empty clears; the
+  `gridGapOp`/`gridGapStepOp` (per-axis, through `relativeGapOp`, which the
+  cards' `gap` field shares; unit-kept, empty clears; the
   container gap's ingress rule widened by one member — a `%` gap is legal on
   this wire — so a negative authors 0, garbage or past `MAX_GAP_PT` authors
   nothing, and ▼ lands on 0), `fillOrderOp` /
@@ -944,6 +952,12 @@ presence is not a text binding.
   and a card honour) and `OpacityField` — and the jump back to the owner.
   Padding, overflow and opacity are each capability-gated; the frame's NAME
   (`ItemIdField`, first) is not — the engine reads a frame's `id` everywhere.
+  A repeat cell or a card then gets `FrameLayoutSection.tsx`: its size
+  (`BoxAxisField` w/h with an "Auto" placeholder and an always-visible line
+  saying what empty means for that kind — shown whatever the arrangement; a
+  hostile `box.type` withholds only the layout controls) and the container
+  `LayoutSection` pointed at the frame path; a column cell gets neither (the
+  table sizes it).
 - `panel/styleSurfaces.ts` (pure; imports only `hasCapability`) — the type→control table of the
   text-and-box keys, one `Set` per key, each citing the layout code that honours
   it: `TEXT_SURFACE_TYPES` (text/page_number/list), `TEXT_INHERIT_TYPES`
@@ -1241,7 +1255,10 @@ presence is not a text binding.
   kind stays editable. For the cards and the grid it also offers the jump
   INTO the per-element frame (`frame` + `onSelectPath`, computed by
   `ContentSection` through `frameOf`; none for a `list` or a frame the
-  document does not carry as a map).
+  document does not carry as a map), and a kind-specific `footer` after the
+  binding — a `repeat_flow`'s `CardGapField.tsx` (its own top-level `gap`, the
+  n-up sheet's `relativeGapOp` ingress: `%` allowed, a negative 0, garbage
+  refused, empty removes).
 - `panel/ColumnForm.tsx` — the single-column form a canvas click on a
   `…columns[n]` cell opens (a `cell:` column adds the jump into its
   `…cell` frame): label, the content block (`ColumnContentFields`), the

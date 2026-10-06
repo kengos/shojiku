@@ -236,8 +236,9 @@ export const hi: LanguageCatalog = {
     'containerKind.grid': 'तालिका ग्रिड',
     'containerKind.gridN': 'तालिका ग्रिड, {columns, number} कॉलम',
     'canvas.chip.container': 'कंटेनर ({kind})',
-    'panel.layout.children': 'बच्चों की व्यवस्था',
+    'panel.layout.children': 'अंदर की वस्तुओं की व्यवस्था',
     'panel.layout.parent': 'मूल कंटेनर ({kind})',
+    'panel.layout.parentFrame': '{frame} ({kind})',
     'panel.layout.selectParent': 'मूल चुनें',
     'panel.layout.mode': 'व्यवस्था का प्रकार',
     'panel.layout.direction.row': 'अगल-बगल',
@@ -760,6 +761,12 @@ export const hi: LanguageCatalog = {
     'panel.frame.every.columnCell': 'हर पंक्ति में इस कॉलम का सेल इस फ़्रेम का उपयोग करता है।',
     'panel.frame.columnNote':
       'सेलों के बीच की रेखाएँ तालिका पर सेट होती हैं; यहाँ का बॉर्डर इसके अलावा इस सेल के चारों ओर बनता है। तालिका की सेल पैडिंग इस सेल पर लागू नहीं होती — नीचे पैडिंग का उपयोग करें।',
+    'panel.frame.size': 'माप',
+    'panel.frame.size.auto': 'स्वतः',
+    'panel.frame.size.hint.cell': 'खाली छोड़ने पर पूरा सेल भरता है।',
+    'panel.frame.size.hint.card':
+      'खाली छोड़ने पर चौड़ाई पूरी सूची भरती है और ऊँचाई सामग्री के अनुसार होती है।',
+    'panel.cards.gap': 'कार्डों के बीच अंतराल',
     'panel.frame.selectOwner.cell': 'ग्रिड चुनें',
     'panel.frame.selectOwner.card': 'कार्ड चुनें',
     'panel.frame.selectOwner.columnCell': 'कॉलम चुनें',

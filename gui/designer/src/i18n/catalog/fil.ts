@@ -254,8 +254,9 @@ export const fil: LanguageCatalog = {
     'containerKind.grid': 'grid na talahanayan',
     'containerKind.gridN': 'grid na talahanayan, {columns, number} column',
     'canvas.chip.container': 'Container ({kind})',
-    'panel.layout.children': 'Ayos ng mga anak',
+    'panel.layout.children': 'Ayos ng laman',
     'panel.layout.parent': 'Magulang na container ({kind})',
+    'panel.layout.parentFrame': '{frame} ({kind})',
     'panel.layout.selectParent': 'Piliin ang magulang',
     'panel.layout.mode': 'Uri ng ayos',
     'panel.layout.direction.row': 'Magkatabi',
@@ -798,6 +799,12 @@ export const fil: LanguageCatalog = {
       'Ginagamit ng cell ng column na ito sa bawat row ang frame na ito.',
     'panel.frame.columnNote':
       'Ang mga linya sa pagitan ng mga cell ay itinatakda sa table; ang border dito ay iginuguhit din sa paligid ng cell na ito. Hindi umaabot sa cell na ito ang cell padding ng table — gamitin ang Padding sa ibaba.',
+    'panel.frame.size': 'Laki',
+    'panel.frame.size.auto': 'Auto',
+    'panel.frame.size.hint.cell': 'Kapag walang laman, pupunuin ang cell.',
+    'panel.frame.size.hint.card':
+      'Kapag walang laman: punô ng lapad ang listahan, ayon sa laman ang taas.',
+    'panel.cards.gap': 'Pagitan ng mga card',
     'panel.frame.selectOwner.cell': 'Piliin ang grid',
     'panel.frame.selectOwner.card': 'Piliin ang mga card',
     'panel.frame.selectOwner.columnCell': 'Piliin ang column',

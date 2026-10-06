@@ -245,6 +245,52 @@ describe('containerLayoutFor', () => {
   });
 });
 
+describe('a repeat cell or a card frame is a container', () => {
+  const OWNER = 'sections.body.items[0]';
+  it('classifies the frame of a repeat and of a repeat_flow, with their arrangement', () => {
+    const cellRead = reader({
+      [OWNER]: { type: 'repeat', cell: {} },
+      [`${OWNER}.cell`]: { box: { direction: 'row' }, items: [{ type: 'text' }] },
+    });
+    expect(containerLayoutFor(cellRead, `${OWNER}.cell`)?.mode).toBe('row');
+    const cardRead = reader({
+      [OWNER]: { type: 'repeat_flow', item: {} },
+      [`${OWNER}.item`]: { items: [] },
+    });
+    expect(containerLayoutFor(cardRead, `${OWNER}.item`)?.mode).toBe('column');
+  });
+
+  it('refuses a cell under a non-repeat, and a table column cell', () => {
+    const notRepeat = reader({
+      [OWNER]: { type: 'container', cell: {} },
+      [`${OWNER}.cell`]: { items: [] },
+    });
+    expect(containerLayoutFor(notRepeat, `${OWNER}.cell`)).toBeNull();
+    const column = reader({
+      [OWNER]: { type: 'table', columns: [{}] },
+      [`${OWNER}.columns[0]`]: {},
+      [`${OWNER}.columns[0].cell`]: { items: [] },
+    });
+    expect(containerLayoutFor(column, `${OWNER}.columns[0].cell`)).toBeNull();
+  });
+
+  it('gives a frame child its frame as the parent container', () => {
+    const read = reader({
+      [OWNER]: { type: 'repeat_flow', item: {} },
+      [`${OWNER}.item`]: { items: [{ type: 'text' }] },
+      [`${OWNER}.item.items[0]`]: { type: 'text' },
+    });
+    expect(parentContainerOf(read, `${OWNER}.item.items[0]`)).toBe(`${OWNER}.item`);
+    // A column cell child stays without a parent card.
+    const column = reader({
+      [OWNER]: { type: 'table', columns: [{}] },
+      [`${OWNER}.columns[0]`]: {},
+      [`${OWNER}.columns[0].cell`]: { items: [{ type: 'text' }] },
+    });
+    expect(parentContainerOf(column, `${OWNER}.columns[0].cell.items[0]`)).toBeNull();
+  });
+});
+
 describe('parentContainerOf', () => {
   const CHILD = `${PATH}.items[1]`;
 
@@ -264,14 +310,14 @@ describe('parentContainerOf', () => {
     expect(parentContainerOf(throwingRead, CHILD)).toBeNull();
   });
 
-  it('yields null inside a repeat_flow sub-template (the item map is not a container)', () => {
+  it('finds the card frame inside a repeat_flow (the item map IS a container)', () => {
     const rowItem = `${PATH}.item.items[0]`;
     const read = reader({
       [PATH]: { type: 'repeat_flow', data: { key: 'rows' }, item: { items: [{ type: 'text' }] } },
       [`${PATH}.item`]: { items: [{ type: 'text' }] },
       [rowItem]: { type: 'text' },
     });
-    expect(parentContainerOf(read, rowItem)).toBeNull();
+    expect(parentContainerOf(read, rowItem)).toBe(`${PATH}.item`);
   });
 });
 
