@@ -77,6 +77,37 @@ export const hi: LanguageCatalog = {
     'panel.band.repeat.except_first_page': 'पहले पेज को छोड़कर',
     'panel.band.repeat.last_page': 'सिर्फ़ आख़िरी पेज',
     'panel.band.height': 'ऊँचाई',
+    'panel.band.delete.header': 'शीर्ष लेख हटाएँ',
+    'panel.band.delete.footer': 'पाद लेख हटाएँ',
+    'panel.band.delete.body': 'इसके तत्व ({count}) भी साथ में हटेंगे (वापस ला सकते हैं)।',
+    'panel.band.delete.confirm': 'हटाएँ',
+    'panel.band.delete.cancel': 'रद्द करें',
+    'panel.body.title': 'मुख्य भाग',
+    'panel.body.mode': 'रखने का तरीका',
+    'panel.body.mode.flow': 'क्रम से',
+    'panel.body.mode.absolute': 'तय स्थिति',
+    'panel.body.mode.waitPreview': 'पूर्वावलोकन अपडेट होने पर उपलब्ध।',
+    'panel.body.mode.tooMany':
+      'इस दस्तावेज़ में मोड बदलने के लिए तत्व बहुत ज़्यादा हैं। बदलने के लिए कुछ तत्व हटाएँ।',
+    'panel.body.mode.flowHint': 'तत्व ऊपर से एक के नीचे एक आते हैं और बाकी अगले पृष्ठ पर जाते हैं।',
+    'panel.body.mode.absoluteHint':
+      'हर तत्व पृष्ठ 1 पर वहीं रहता है जहाँ आपने रखा। आगे के पृष्ठों पर कुछ नहीं जाता।',
+    'panel.body.toAbsolute.title': 'तय स्थिति में बदलें?',
+    'panel.body.toAbsolute.pastFirstPage':
+      'पृष्ठ 2 या उसके बाद से शुरू होने वाले तत्व हटा दिए जाएँगे (तय स्थिति केवल पृष्ठ 1 का उपयोग करती है): {count}',
+    'panel.body.toAbsolute.continued': 'पृष्ठ 1 से आगे जाने वाले तत्व, जो पृष्ठ 1 के अंत में कट जाएँगे: {count}',
+    'panel.body.toAbsolute.unplaced':
+      'जिन तत्वों की जगह पता नहीं (जैसे नमूना डेटा में किसी शर्त से छिपे तत्व)। वे पृष्ठ 1 में सबसे ऊपर रखे जाएँगे: {count}',
+    'panel.body.toAbsolute.flowOnly': 'छोड़े जाने वाले दोहराव और पृष्ठ-विराम: {count}',
+    'panel.body.toAbsolute.tablePaging':
+      "तालिकाएँ जिनकी पृष्ठ-विराम सेटिंग हटेंगी ('क्रम से' मोड में ही काम करती हैं): {count}",
+    'panel.body.toAbsolute.undo': 'इसे वापस ला सकते हैं।',
+    'panel.body.toAbsolute.confirm': 'बदलें',
+    'panel.body.toAbsolute.cancel': 'रद्द करें',
+    'panel.body.gap': 'तत्वों के बीच अंतराल',
+    'panel.body.region': 'मुख्य भाग का क्षेत्र',
+    'panel.body.regionHint':
+      'सब खाली छोड़ने पर हाशियों के भीतर का पूरा क्षेत्र उपयोग होता है। X और Y हाशियों के भीतर ऊपरी-बाएँ कोने से मापे जाते हैं।',
     'panel.band.heightHint': 'बैंड की अनुमानित ऊँचाई। इसके अंदर के आइटम पेज निर्देशांक से रखे जाते हैं।',
     'panel.pageFormat': 'पैटर्न',
     'panel.pageFormat.hint':

@@ -297,6 +297,38 @@ export const en: LanguageCatalog = {
     'panel.band.repeat.except_first_page': 'All but the first page',
     'panel.band.repeat.last_page': 'Last page only',
     'panel.band.height': 'Height',
+    'panel.band.delete.header': 'Delete header',
+    'panel.band.delete.footer': 'Delete footer',
+    'panel.band.delete.body': 'Items in it: {count}. They are deleted with it (you can undo).',
+    'panel.band.delete.confirm': 'Delete',
+    'panel.band.delete.cancel': 'Cancel',
+    'panel.body.title': 'Body',
+    'panel.body.mode': 'Placement',
+    'panel.body.mode.flow': 'Flow',
+    'panel.body.mode.absolute': 'Fixed position',
+    'panel.body.mode.waitPreview': 'Available once the preview is up to date.',
+    'panel.body.mode.tooMany':
+      'This document has too many items to switch modes. Remove some items to switch.',
+    'panel.body.mode.flowHint': 'Items stack from the top and continue onto the next page.',
+    'panel.body.mode.absoluteHint':
+      'Each item stays where you put it on page 1. Nothing moves to later pages.',
+    'panel.body.toAbsolute.title': 'Switch to fixed position?',
+    'panel.body.toAbsolute.pastFirstPage':
+      'Items that start on page 2 or later will be deleted (Fixed position uses page 1 only): {count}.',
+    'panel.body.toAbsolute.continued':
+      'Items that run past page 1 will be cut off at the end of page 1: {count}.',
+    'panel.body.toAbsolute.unplaced':
+      "Items with no known position (for example, hidden by a condition in the sample data). They'll be placed at the top of page 1: {count}.",
+    'panel.body.toAbsolute.flowOnly': 'Repeats and page breaks that will be skipped: {count}.',
+    'panel.body.toAbsolute.tablePaging':
+      'Tables that will lose their Flow-only page-break settings: {count}.',
+    'panel.body.toAbsolute.undo': 'You can undo this.',
+    'panel.body.toAbsolute.confirm': 'Switch',
+    'panel.body.toAbsolute.cancel': 'Cancel',
+    'panel.body.gap': 'Space between items',
+    'panel.body.region': 'Body area',
+    'panel.body.regionHint':
+      'Leave all empty to use the whole area inside the margins. X and Y are measured from the top-left corner inside the margins.',
     'panel.band.heightHint':
       'Nominal height of the band. Items inside are placed by page coordinates.',
     'panel.pageFormat': 'Pattern',

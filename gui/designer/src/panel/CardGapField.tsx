@@ -14,12 +14,13 @@ import { readItem } from './placementModel';
 import { relativeGapOp } from './repeatGrid';
 import { StepperField } from './StepperField';
 
-const GAP_STEP_PT = 1;
+/** One ▲▼ step of a gap, in pt. */
+export const CARD_GAP_STEP_PT = 1;
 
 /** A ▲▼ step of the cards' gap from its current value (empty = 0); `null`
  * when the value cannot be stepped (a relative or garbage one). */
 export function cardGapStepOp(path: string, current: string, dir: 1 | -1): Op | null {
-  const next = stepLength(current.trim() === '' ? '0' : current, dir, GAP_STEP_PT);
+  const next = stepLength(current.trim() === '' ? '0' : current, dir, CARD_GAP_STEP_PT);
   return next === null ? null : relativeGapOp(path, ['gap'], String(next));
 }
 

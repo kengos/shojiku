@@ -85,6 +85,40 @@ export const fil: LanguageCatalog = {
     'panel.band.repeat.except_first_page': 'Lahat maliban sa unang pahina',
     'panel.band.repeat.last_page': 'Huling pahina lang',
     'panel.band.height': 'Taas',
+    'panel.band.delete.header': 'Burahin ang header',
+    'panel.band.delete.footer': 'Burahin ang footer',
+    'panel.band.delete.body':
+      'Mabubura rin ang mga elemento sa loob nito ({count}) (maaaring i-undo).',
+    'panel.band.delete.confirm': 'Burahin',
+    'panel.band.delete.cancel': 'Kanselahin',
+    'panel.body.title': 'Katawan',
+    'panel.body.mode': 'Paglalagay',
+    'panel.body.mode.flow': 'Sunud-sunod',
+    'panel.body.mode.absolute': 'Nakapirming posisyon',
+    'panel.body.mode.waitPreview': 'Magagamit kapag na-update na ang preview.',
+    'panel.body.mode.tooMany':
+      'Masyadong maraming elemento ang dokumentong ito para mapalitan ang mode. Mag-alis ng ilang elemento para mapalitan ito.',
+    'panel.body.mode.flowHint':
+      'Sunud-sunod mula sa itaas ang mga elemento at itinutuloy sa susunod na pahina.',
+    'panel.body.mode.absoluteHint':
+      'Nananatili ang bawat elemento kung saan mo inilagay sa pahina 1. Walang lumilipat sa susunod na pahina.',
+    'panel.body.toAbsolute.title': 'Ilipat sa nakapirming posisyon?',
+    'panel.body.toAbsolute.pastFirstPage':
+      'Mga elementong nagsisimula sa pahina 2 pataas na buburahin (pahina 1 lang ang gamit ng Nakapirming posisyon): {count}',
+    'panel.body.toAbsolute.continued':
+      'Mga elementong lumalampas sa pahina 1 na mapuputol sa dulo ng pahina 1: {count}',
+    'panel.body.toAbsolute.unplaced':
+      'Mga elementong hindi alam ang posisyon (halimbawa, nakatago dahil sa isang kondisyon sa sample data). Ilalagay sila sa itaas ng pahina 1: {count}',
+    'panel.body.toAbsolute.flowOnly': 'Mga pag-uulit at page break na lalaktawan: {count}',
+    'panel.body.toAbsolute.tablePaging':
+      'Mga talahanayang aalisan ng mga page break setting (gumagana lang sa Sunud-sunod na mode): {count}',
+    'panel.body.toAbsolute.undo': 'Maaari itong i-undo.',
+    'panel.body.toAbsolute.confirm': 'Ilipat',
+    'panel.body.toAbsolute.cancel': 'Kanselahin',
+    'panel.body.gap': 'Pagitan ng mga elemento',
+    'panel.body.region': 'Lugar ng katawan',
+    'panel.body.regionHint':
+      'Iwanang walang laman ang lahat para gamitin ang buong lugar sa loob ng mga margin. Sinusukat ang X at Y mula sa itaas-kaliwang sulok sa loob ng mga margin.',
     'panel.band.heightHint':
       'Tinatayang taas ng band. Ang mga item sa loob ay nakalagay ayon sa page coordinates.',
     'panel.pageFormat': 'Pattern',

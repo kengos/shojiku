@@ -51,6 +51,9 @@ import { planInsertDrop } from '../palette/drag';
 import { boundSnippet } from '../palette/dragSnippet';
 import { readDefinitionsView } from '../palette/model';
 import { buildUsage, fieldUsage } from '../palette/usage';
+import { toFlowOps } from '../panel/bodyFlow';
+import { toAbsoluteOps } from '../panel/bodyModel';
+import { regionOps } from '../panel/bodyRegion';
 import { readBorder } from '../panel/borderModel';
 import { edgeOps, presetOps } from '../panel/borderOps';
 import { kindSwitchOps } from '../panel/columnKindOps';
@@ -868,6 +871,160 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     });
     expect(outcome.ok).toBe(true);
     expect(outcome.diagnostics.items).toEqual([]);
+  });
+
+  it('switches a flowing body to placed items and back — every item keeps its place', async () => {
+    // The pins come from the engine's own boxes; the second render must put
+    // every pinned item exactly where the flow drew it.
+    const source = [
+      'page: { size: A4, margin: 30 }',
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    gap: 12',
+      '    items:',
+      '      - { type: text, text: Title, box: { w: 200 } }',
+      '      - { type: text, text: Second line, box: { w: 200, margin: 4 } }',
+      '      - { type: rect, box: { w: 80, h: 40 } }',
+      '      - { type: line, from: { x: 0, y: 6 }, to: { x: 120, y: 6 } }',
+      '      - type: table',
+      '        repeatHeader: true',
+      '        autoPageBreak: true',
+      '        data: { key: rows }',
+      '        columns: [{ label: A, data: { key: a } }]',
+      '',
+    ].join('\n');
+    const editor = Editor.create(source);
+    const read = (path: string) => editor.read(path);
+    const render = async () => {
+      const outcome = await transport.renderRaw(editor.text(), '{"rows":[{"a":"x"}]}', undefined, {
+        scale: 2,
+      });
+      expect(outcome.ok).toBe(true);
+      expect(outcome.diagnostics.items.filter((d) => d.severity !== 'info')).toEqual([]);
+      if (outcome.inspect === null) throw new Error('inspect missing');
+      return outcome.inspect;
+    };
+    const rects = (inspect: Awaited<ReturnType<typeof render>>) =>
+      [0, 1, 2, 3, 4].map((i) => {
+        const box = inspect.boxes.pages[0].find((b) => b.path === `sections.body.items[${i}]`);
+        if (box === undefined) throw new Error(`no box ${i}`);
+        return box.border;
+      });
+    const flowing = await render();
+    const plan = toAbsoluteOps(read, {
+      boxes: flowing.boxes,
+      margin: flowing.margin,
+      fresh: true,
+    });
+    if (plan === null || plan === 'tooMany') throw new Error('no plan');
+    expect(plan.loss).toEqual({
+      pastFirstPage: 0,
+      unplaced: 0,
+      continued: 0,
+      flowOnly: 0,
+      tablePaging: 1,
+    });
+    expect(editor.applyAll(plan.ops).ok).toBe(true);
+    const placedBody = await render();
+    rects(placedBody).forEach((rect, i) => {
+      expect(rect.x).toBeCloseTo(rects(flowing)[i].x, 1);
+      expect(rect.y).toBeCloseTo(rects(flowing)[i].y, 1);
+    });
+    // And back: top-to-bottom order kept, y gone, still clean.
+    expect(editor.applyAll(toFlowOps(read) as Op[]).ok).toBe(true);
+    expect(editor.read('sections.body.type')).toBe('flow');
+    expect(editor.read('sections.body.items[2].box')).toEqual({ w: 80, h: 40, x: 0 });
+    // The line came back to the stack's cursor: its endpoints start at 0.
+    expect(editor.read('sections.body.items[3].from')).toEqual({ x: 0, y: 0 });
+    await render();
+  });
+
+  it('switching a body that reaches page 2: what started there is deleted, page 1 stays, clean', async () => {
+    // A fixed-position body draws every item on its one page, so an item the
+    // flow pushed to page 2 must not survive the switch at y 0.
+    const editor = Editor.create(
+      [
+        'page: { size: A4, margin: 25 }',
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - { type: rect, box: { w: 100, h: 500 } }',
+        '      - { type: rect, box: { w: 100, h: 500 } }',
+        '      - { type: rect, box: { w: 100, h: 100 } }',
+        '',
+      ].join('\n'),
+    );
+    const read = (path: string) => editor.read(path);
+    const first = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+    if (first.inspect === null) throw new Error('inspect missing');
+    expect(first.inspect.boxes.pages.length).toBeGreaterThan(1);
+    const plan = toAbsoluteOps(read, {
+      boxes: first.inspect.boxes,
+      margin: first.inspect.margin,
+      fresh: true,
+    });
+    if (plan === null || plan === 'tooMany') throw new Error('no plan');
+    expect(plan.loss.pastFirstPage).toBe(2);
+    expect(editor.applyAll(plan.ops).ok).toBe(true);
+    expect(editor.read('sections.body.items')).toEqual([
+      { type: 'rect', box: { w: 100, h: 500, x: 0, y: 0 } },
+    ]);
+    const after = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+    expect(after.ok).toBe(true);
+    expect(after.diagnostics.items.filter((d) => d.severity !== 'info')).toEqual([]);
+  });
+
+  it('a body between bands: the round trip keeps the first item below the header, clean', async () => {
+    // The region (y + h above the footer) is dropped by the switch to placed
+    // items; the switch back must rebuild one, or the first item jumps under
+    // the header band and the overlap check fires.
+    const source = [
+      'page: { size: A4, margin: 25 }',
+      'sections:',
+      '  header:',
+      '    height: 50',
+      '    items:',
+      '      - { type: text, text: Header, box: { x: 0, y: 0, w: 200 } }',
+      '  body:',
+      '    type: flow',
+      '    box: { x: 0, y: 60, w: "100%", h: 600 }',
+      '    items:',
+      '      - { type: text, text: First, box: { w: 200 } }',
+      '      - { type: text, text: Second, box: { w: 200 } }',
+      '  footer:',
+      '    height: 40',
+      '    items:',
+      '      - { type: text, text: Footer, box: { x: 0, y: 0, w: 200 } }',
+      '',
+    ].join('\n');
+    const editor = Editor.create(source);
+    const read = (path: string) => editor.read(path);
+    const render = async () => {
+      const outcome = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 2 });
+      expect(outcome.ok).toBe(true);
+      expect(outcome.diagnostics.items.filter((d) => d.severity !== 'info')).toEqual([]);
+      if (outcome.inspect === null) throw new Error('inspect missing');
+      return outcome.inspect;
+    };
+    const firstY = (inspect: Awaited<ReturnType<typeof render>>) =>
+      inspect.boxes.pages[0].find((b) => b.path === 'sections.body.items[0]')?.border.y;
+    const flowing = await render();
+    const plan = toAbsoluteOps(read, { boxes: flowing.boxes, margin: flowing.margin, fresh: true });
+    if (plan === null || plan === 'tooMany') throw new Error('no plan');
+    expect(editor.applyAll(plan.ops).ok).toBe(true);
+    await render();
+    expect(editor.applyAll(toFlowOps(read) as Op[]).ok).toBe(true);
+    // 841.89 (A4) − 2 × 25 (margins) − 40 (footer) − 60 (top).
+    expect(editor.read('sections.body.box')).toEqual({ x: 0, y: 60, w: '100%', h: 691.89 });
+    const back = await render();
+    expect(firstY(back)).toBeCloseTo(firstY(flowing) as number, 1);
+    // A one-field region edit on a body with no region writes a whole one.
+    expect(editor.apply({ op: 'removeKey', path: 'sections.body', keys: ['box'] }).ok).toBe(true);
+    const edit: Op = { op: 'setScalar', path: 'sections.body', keys: ['box', 'y'], value: 60 };
+    expect(editor.applyAll(regionOps(read, 'sections.body', edit) ?? []).ok).toBe(true);
+    expect(firstY(await render())).toBeCloseTo(firstY(flowing) as number, 1);
   });
 
   it('nest-into-slot, grid 列/行 plans, and コンテナにまとめる all render WARNING-clean', async () => {
