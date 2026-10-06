@@ -29,6 +29,7 @@ export function BoxAxisField({
   axis,
   path,
   controller,
+  emptyHint,
 }: {
   readonly label: string;
   readonly authored: string;
@@ -37,6 +38,9 @@ export function BoxAxisField({
   readonly axis: BoxAxis;
   readonly path: string;
   readonly controller: EditorController;
+  /** What an EMPTY width/height means here, shown as the placeholder (a frame
+   * fills its slot, a card fits its content) — omitted, it stays blank. */
+  readonly emptyHint?: string;
 }) {
   const { t } = useI18n();
   const seeded = authored === '' && seed !== null && seed !== undefined;
@@ -63,7 +67,7 @@ export function BoxAxisField({
       unitHint={t('stepper.unitHint')}
       // An empty editable COORDINATE means 0 to the engine (w/h mean auto-size,
       // so they stay placeholder-less) — state it instead of a blank box.
-      placeholder={value === '' && (axis === 'x' || axis === 'y') ? '0' : undefined}
+      placeholder={value === '' && (axis === 'x' || axis === 'y') ? '0' : emptyHint}
       stepHint={relative ? t('stepper.relativeUnit') : undefined}
       onCommit={(v) => dispatch(lengthOp(path, keys, v))}
       onStep={(dir) => dispatch(stepValueOp(path, keys, value, dir, step, 'length'))}

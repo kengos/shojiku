@@ -152,7 +152,13 @@ export function gridCountStepOp(
  * engine reads it as 0, and an engine from before the shorthand let it overlap
  * the cells instead — while garbage or an over-cap magnitude authors nothing. */
 export function gridGapOp(path: string, key: GridGapKey, raw: string): Op | null {
-  const keys = ['grid', key];
+  return relativeGapOp(path, ['grid', key], raw);
+}
+
+/** The gap ingress rule for a gap that may be RELATIVE (`%` of the region):
+ * empty clears the key, a negative authors 0, garbage or an over-cap magnitude
+ * authors nothing. Shared by the n-up sheet's gaps and the cards' `gap`. */
+export function relativeGapOp(path: string, keys: readonly string[], raw: string): Op | null {
   const trimmed = raw.trim();
   if (trimmed === '') {
     return { op: 'removeKey', path, keys };

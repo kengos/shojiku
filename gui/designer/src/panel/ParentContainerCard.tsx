@@ -38,10 +38,18 @@ export function ParentContainerCard({
   childPath,
 }: ParentContainerCardProps) {
   const { t } = useI18n();
+  // A repeat cell / card frame is named the way its own form names it.
+  const title =
+    layout.frame === null
+      ? t('panel.layout.parent', { kind: containerKindLabel(t, layout) })
+      : t('panel.layout.parentFrame', {
+          frame: t(`panel.frame.title.${layout.frame}`),
+          kind: containerKindLabel(t, layout),
+        });
   return (
     <>
       <section
-        aria-label={t('panel.layout.parent', { kind: containerKindLabel(t, layout) })}
+        aria-label={title}
         className="mb-3 rounded-md border border-border bg-bg p-2"
         onMouseEnter={() => onHighlight?.(path)}
         onMouseLeave={() => onHighlight?.(null)}
@@ -49,9 +57,7 @@ export function ParentContainerCard({
         onBlur={() => onHighlight?.(null)}
       >
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className={`${SECTION_TITLE} mb-0`}>
-            {t('panel.layout.parent', { kind: containerKindLabel(t, layout) })}
-          </h3>
+          <h3 className={`${SECTION_TITLE} mb-0`}>{title}</h3>
           <button type="button" className={BTN_SM} onClick={() => onSelectParent?.(path)}>
             {t('panel.layout.selectParent')}
           </button>

@@ -19,6 +19,7 @@
 import type { ReadFn } from '@shojiku/designer-core';
 import type { ContainerKind } from '../insert/containerModel';
 import { seqPosition } from '../tree/reorder';
+import { type FrameKindOf, holdsLayout, readContainerNode } from './containerNode';
 import { isFlexItem } from './flexParticipants';
 import { display } from './itemView';
 
@@ -54,6 +55,8 @@ export interface ContainerLayout {
   /** The container's authored `box` (`{}` when absent or not a map) — what the
    * grid controls read their tracks, gaps and fill order from. */
   readonly box: Readonly<Record<string, unknown>>;
+  /** The repeat cell / card frame this container is, or `null` for an item. */
+  readonly frame: FrameKindOf | null;
   /** Authored `box.gap` display (`''` when unset — the engine default 0). */
   readonly gap: string;
   /** EFFECTIVE cross-axis alignment: the authored value, or `stretch` (the
@@ -63,8 +66,9 @@ export interface ContainerLayout {
   /** EFFECTIVE main-axis distribution: the authored value verbatim, or `start`
    * (the engine default) when unset. */
   readonly justifyContent: string;
-  /** The container authors its own `box.h` — a stack's distribution only acts
-   * against a definite height. */
+  /** The container has a definite height of its own: an authored `box.h`, or
+   * a repeat cell (sized by its slot) — a stack's distribution, equal rows and
+   * `fr` rows only act against one. */
   readonly hasHeight: boolean;
   /** Grid only: the column-track count (a count, or a track list's length),
    * clamped to the engine's cap; `null` when unresolvable or not a grid. */
@@ -130,41 +134,6 @@ function basisState(items: readonly unknown[]): BasisState {
   return zero === population.length ? 'all' : 'mixed';
 }
 
-/** A container as the layout controls see it: its mode, its `box` (`{}` when
- * absent or not a map) and its child list (`[]` when not a list). */
-export interface ContainerNode {
-  readonly mode: LayoutMode;
-  readonly box: Readonly<Record<string, unknown>>;
-  readonly items: readonly unknown[];
-}
-
-/** The container at `path`, or `null` when the node is not a container, its
- * `box.type` is neither flex nor grid (a hostile mode gets no layout controls —
- * the dnd refusal posture), or the subtree is unreadable (an alias bomb: a read
- * throw is "no"). The one classification the view AND the multi-key edits
- * (`layoutModeOps.ts`) read, so a control and its edit never disagree. */
-export function readContainerNode(read: ReadFn, path: string): ContainerNode | null {
-  let node: Record<string, unknown> | undefined;
-  try {
-    node = record(read(path));
-  } catch {
-    return null;
-  }
-  if (node === undefined || node.type !== 'container') {
-    return null;
-  }
-  const box = record(node.box) ?? {};
-  let mode: LayoutMode;
-  if (box.type === 'grid') {
-    mode = 'grid';
-  } else if (box.type === undefined || box.type === 'flex') {
-    mode = box.direction === 'row' ? 'row' : 'column';
-  } else {
-    return null;
-  }
-  return { mode, box, items: Array.isArray(node.items) ? node.items : [] };
-}
-
 /** The layout view of the container at `path` (`null` exactly when
  * `readContainerNode` is). Hostile child entries still yield slots so indices
  * stay true (the columns-model precedent). */
@@ -173,14 +142,17 @@ export function containerLayoutFor(read: ReadFn, path: string): ContainerLayout 
   if (container === null) {
     return null;
   }
-  const { mode, box, items } = container;
+  const { mode, box, items, frame } = container;
   return {
     mode,
     box,
+    frame,
     gap: display(box.gap),
     alignItems: box.alignItems === undefined ? 'stretch' : display(box.alignItems),
     justifyContent: box.justifyContent === undefined ? 'start' : display(box.justifyContent),
-    hasHeight: box.h !== undefined,
+    // A repeat cell is handed its slot's height (it fills the slot), so it has
+    // a definite height without a `box.h` of its own; a card does not.
+    hasHeight: box.h !== undefined || frame === 'cell',
     columns: mode === 'grid' ? gridColumns(box.columns) : null,
     columnsIsList: mode === 'grid' && Array.isArray(box.columns),
     basis: basisState(items),
@@ -188,8 +160,9 @@ export function containerLayoutFor(read: ReadFn, path: string): ContainerLayout 
   };
 }
 
-/** The path of the DIRECT parent container of the item at `path`, or `null`
- * when the parent is anything else (the flow body, a band, a table — the
+/** The path of the DIRECT parent container (or repeat / card frame) of the
+ * item at `path`, or `null` when the parent is anything else (the flow body, a
+ * band, a table — the
  * parent-first card shows only for a real container parent; exactly one
  * level, never recursive). A read throw is "no". */
 export function parentContainerOf(read: ReadFn, path: string): string | null {
@@ -200,7 +173,7 @@ export function parentContainerOf(read: ReadFn, path: string): string | null {
   const ownerPath = position.parent.slice(0, -ITEMS_SUFFIX.length);
   try {
     const owner = record(read(ownerPath));
-    return owner?.type === 'container' ? ownerPath : null;
+    return owner !== undefined && holdsLayout(read, ownerPath, owner) !== null ? ownerPath : null;
   } catch {
     return null;
   }

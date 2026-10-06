@@ -60,6 +60,7 @@ export function GridSection({
             count={columns}
             support={support}
             hasHeight={layout.hasHeight}
+            inFrame={layout.frame !== null}
           />
         </>
       ) : null}
@@ -72,6 +73,7 @@ export function GridSection({
           count={rows}
           support={support}
           hasHeight={layout.hasHeight}
+          inFrame={layout.frame !== null}
         />
       ) : null}
       <GridGapFields controller={controller} path={path} box={box} />

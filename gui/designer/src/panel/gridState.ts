@@ -4,14 +4,9 @@
 // Split from `gridStructure.ts`, whose plans are the only consumer.
 
 import type { ReadFn } from '@shojiku/designer-core';
+import { readContainerNode } from './containerNode';
 import { isFlexItem } from './flexParticipants';
 import { MAX_GRID_TRACKS } from './layoutModel';
-
-function record(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
 
 export function clampInt(value: number, min: number, max: number): number {
   if (!Number.isFinite(value)) {
@@ -49,17 +44,13 @@ export interface GridState {
 /** The grid container's current column count + children, or `null` when the
  * node at `path` is not a grid container (a read throw is also `null`). */
 export function gridState(read: ReadFn, path: string): GridState | null {
-  let node: Record<string, unknown> | undefined;
-  try {
-    node = record(read(path));
-  } catch {
+  // The ONE container classification (a repeat cell / card frame included),
+  // so a grid's steppers work wherever its controls are offered.
+  const node = readContainerNode(read, path);
+  if (node === null || node.mode !== 'grid') {
     return null;
   }
-  const box = record(node?.box);
-  if (node?.type !== 'container' || box?.type !== 'grid') {
-    return null;
-  }
-  const items = Array.isArray(node.items) ? node.items : [];
+  const { box, items } = node;
   const cells: number[] = [];
   items.forEach((child, index) => {
     if (isFlexItem(child)) {

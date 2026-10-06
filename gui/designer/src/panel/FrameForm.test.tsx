@@ -323,3 +323,114 @@ describe('jumps into the frame', () => {
     expect(screen.queryByRole('button', { name: 'Edit the cell frame' })).toBeNull();
   });
 });
+
+// A repeat cell and a card are containers on the wire: their form adds the
+// frame's size and its child arrangement, pointed at the FRAME path.
+describe('FrameForm — a frame is a container', () => {
+  const FLOW = 'sections.body.items[1]';
+  const CARD = `${FLOW}.item`;
+
+  function cardDoc(item: Record<string, unknown>) {
+    return makeController({
+      [FLOW]: { type: 'repeat_flow', data: { key: 'rows' }, gap: 8, item },
+      [CARD]: item,
+    });
+  }
+
+  it('offers a cell its size (empty = Auto, spelled out under it) and its child arrangement', () => {
+    const controller = gridDoc({ items: [{ type: 'text', text: 'a' }] });
+    draw(<PropertyPanel controller={controller} path={CELL} capabilities={ALL} />);
+    expect((screen.getByLabelText('Width') as HTMLInputElement).placeholder).toBe('Auto');
+    expect((screen.getByLabelText('Height') as HTMLInputElement).placeholder).toBe('Auto');
+    expect(screen.getByText('Leave empty to fill the cell.')).toBeTruthy();
+    expect(screen.getByText('Child layout')).toBeTruthy();
+    // A stack by default, like any container with no direction.
+    expect((screen.getByLabelText('Stacked') as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('names the card defaults and edits the card at its own path', () => {
+    const controller = cardDoc({ items: [{ type: 'text', text: 'a' }] });
+    draw(<PropertyPanel controller={controller} path={CARD} capabilities={ALL} />);
+    expect(
+      screen.getByText('Leave empty: width fills the list, height fits the content.'),
+    ).toBeTruthy();
+    const height = screen.getByLabelText('Height') as HTMLInputElement;
+    expect(height.placeholder).toBe('Auto');
+    fireEvent.change(height, { target: { value: '40' } });
+    fireEvent.blur(height);
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: CARD,
+      keys: ['box', 'h'],
+      value: 40,
+    });
+    fireEvent.click(screen.getByLabelText('Side by side'));
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path: CARD, keys: ['box', 'direction'], value: 'row' },
+    ]);
+  });
+
+  it('keeps the authored size but offers no arrangement for a hostile box.type', () => {
+    const controller = cardDoc({ box: { w: 200, type: 'constructor' }, items: [] });
+    draw(<PropertyPanel controller={controller} path={CARD} capabilities={ALL} />);
+    expect(screen.queryByText('Child layout')).toBeNull();
+    expect((screen.getByLabelText('Width') as HTMLInputElement).value).toBe('200');
+  });
+
+  it('steps a frame grid by its own column stepper — the frame IS the grid', () => {
+    const cell = {
+      box: { type: 'grid', columns: 2 },
+      items: [
+        { type: 'text', text: 'a' },
+        { type: 'text', text: 'b' },
+      ],
+    };
+    const controller = gridDoc(cell);
+    draw(<PropertyPanel controller={controller} path={CELL} capabilities={ALL} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Increase Columns' }));
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'insertItem', path: `${CELL}.items`, index: 2, value: { type: 'text', text: 'Text' } },
+      { op: 'setScalar', path: CELL, keys: ['box', 'columns'], value: 3 },
+    ]);
+  });
+
+  it('gives a repeat cell its slot height: equal rows offered, no needs-a-height note', () => {
+    const controller = gridDoc({ box: { type: 'grid', columns: 1 }, items: [] });
+    draw(<PropertyPanel controller={controller} path={CELL} capabilities={ALL} />);
+    expect((screen.getByLabelText('All the same height') as HTMLInputElement).disabled).toBe(false);
+    expect(screen.queryByText(/need a height set on this container/)).toBeNull();
+  });
+
+  it('a card has no height of its own: equal rows wait for one, pointing at the Size fields', () => {
+    const controller = cardDoc({ box: { type: 'grid', columns: 1 }, items: [] });
+    draw(<PropertyPanel controller={controller} path={CARD} capabilities={ALL} />);
+    expect((screen.getByLabelText(/^All the same height/) as HTMLInputElement).disabled).toBe(true);
+    expect(screen.getByText("Set this container's “Height” in “Size” first.")).toBeTruthy();
+  });
+
+  it('names a frame child parent card by the frame', () => {
+    const child = { type: 'text', text: 'a' };
+    const controller = makeController({
+      [FLOW]: { type: 'repeat_flow', data: { key: 'rows' }, item: { items: [child] } },
+      [CARD]: { items: [child] },
+      [`${CARD}.items[0]`]: child,
+    });
+    draw(<PropertyPanel controller={controller} path={`${CARD}.items[0]`} capabilities={ALL} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Layout' }));
+    expect(screen.getByText('Card frame (stacked)')).toBeTruthy();
+  });
+
+  it('leaves a table column cell to the table: no size, no arrangement', () => {
+    const TABLE = 'sections.body.items[2]';
+    const COLUMN_CELL = `${TABLE}.columns[0].cell`;
+    const cell = { items: [{ type: 'text', text: 'a' }] };
+    const controller = makeController({
+      [TABLE]: { type: 'table', columns: [{ cell }] },
+      [`${TABLE}.columns[0]`]: { cell },
+      [COLUMN_CELL]: cell,
+    });
+    draw(<PropertyPanel controller={controller} path={COLUMN_CELL} capabilities={ALL} />);
+    expect(screen.queryByText('Child layout')).toBeNull();
+    expect(screen.queryByLabelText('Width')).toBeNull();
+  });
+});
