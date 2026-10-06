@@ -64,7 +64,8 @@ import { gridColumnsPlan, gridRowsPlan } from '../panel/gridStructure';
 import { readGroupsView } from '../panel/groupModel';
 import { registryNames } from '../panel/itemView';
 import { containerLayoutFor } from '../panel/layoutModel';
-import { directionOp, gapOp, ratioOp } from '../panel/layoutOps';
+import { basisOps, modeSwitchOps } from '../panel/layoutModeOps';
+import { directionOp, gapOp, justifyContentOp, ratioOp } from '../panel/layoutOps';
 import { lineArmOps, readLinePoints } from '../panel/linePoints';
 import { readMark } from '../panel/markModel';
 import { setCheckedOps } from '../panel/markOps';
@@ -606,6 +607,108 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     });
     expect(edited.ok).toBe(true);
     expect(edited.diagnostics.items.filter((d) => d.severity === 'error')).toHaveLength(0);
+  });
+
+  it('switches a container row → grid → stack, distributes and splits — WARNING-clean against the engine', async () => {
+    // The arrangement switch, the distribution and the split-by-ratio toggle are
+    // GUI-built batches over keys the engine reads; this is the one place their
+    // output meets the real layout. Geometry is read back from the box index,
+    // so each claim is about what the engine DID with the keys.
+    const editor = Editor.create(template());
+    const readFn = (path: string) => editor.read(path);
+    const bodyLength = (editor.read('sections.body.items') as unknown[]).length;
+    const shape = containerShape(3, 1);
+    expect(
+      editor.apply({
+        op: 'insertItem',
+        path: 'sections.body.items',
+        index: bodyLength,
+        value: containerSnippet(shape as NonNullable<typeof shape>, 'Slot'),
+      }).ok,
+    ).toBe(true);
+    const path = `sections.body.items[${bodyLength}]`;
+    const render = async () => {
+      const outcome = await transport.renderRaw(editor.text(), params(), definitions(), {
+        scale: 2,
+      });
+      expect(outcome.ok).toBe(true);
+      expect(outcome.diagnostics.items).toEqual([]);
+      return outcome.inspect?.boxes.pages.flat() ?? [];
+    };
+    const rect = (boxes: Awaited<ReturnType<typeof render>>, at: string) => {
+      const found = boxes.find((box) => box.path === at);
+      expect(found, `no box for ${at}`).toBeDefined();
+      return (found as NonNullable<typeof found>).border;
+    };
+    const apply = (ops: Op[] | null) => {
+      expect(ops).not.toBeNull();
+      expect(editor.applyAll(ops as Op[]).ok).toBe(true);
+    };
+
+    // Row → grid: one row with a column per former slot, each sized the way
+    // the slot was in the row — so every slot keeps its x and its width.
+    const LIST = { trackList: true };
+    const asRow = await render();
+    const slots = [0, 1, 2].map((i) => `${path}.items[${i}]`);
+    apply(modeSwitchOps(readFn, path, 'grid', LIST));
+    expect(editor.read(`${path}.box.columns`)).toEqual(['auto', 'auto', 'auto']);
+    let boxes = await render();
+    for (const slot of slots) {
+      expect(rect(boxes, slot).x).toBeCloseTo(rect(asRow, slot).x, 0);
+      expect(rect(boxes, slot).w).toBeCloseTo(rect(asRow, slot).w, 0);
+    }
+    expect(new Set(slots.map((slot) => rect(boxes, slot).y)).size).toBe(1);
+
+    // A span authored in the grid, then grid → stack: neither the grid keys
+    // (`grid_key_ignored`) nor the span (`span_outside_grid`) may survive.
+    apply([{ op: 'setScalar', path: `${path}.items[0]`, keys: ['box', 'columnSpan'], value: 2 }]);
+    await render();
+    apply(modeSwitchOps(readFn, path, 'column', LIST));
+    boxes = await render();
+    expect(rect(boxes, `${path}.items[1]`).y).toBeGreaterThan(rect(boxes, `${path}.items[0]`).y);
+
+    // Stack → row of fixed-width slots, spread with the ends at the edges.
+    apply(modeSwitchOps(readFn, path, 'row', LIST));
+    apply(
+      [0, 1, 2].map((i) => ({
+        op: 'setScalar' as const,
+        path: `${path}.items[${i}]`,
+        keys: ['box', 'w'],
+        value: 40,
+      })),
+    );
+    apply([justifyContentOp(path, 'space_between')]);
+    boxes = await render();
+    const row = rect(boxes, path);
+    expect(rect(boxes, `${path}.items[0]`).x).toBeCloseTo(row.x, 1);
+    const last = rect(boxes, `${path}.items[2]`);
+    expect(last.x + last.w).toBeCloseTo(row.x + row.w, 1);
+
+    // Split by ratio: two unsized slots of very different text lengths start
+    // from zero and share the row 1:1 — equal widths, whatever their content.
+    apply([
+      { op: 'removeKey', path: `${path}.items[0]`, keys: ['box', 'w'] },
+      { op: 'removeKey', path: `${path}.items[1]`, keys: ['box', 'w'] },
+      { op: 'setScalar', path: `${path}.items[1]`, keys: ['text'], value: 'a much longer label' },
+    ]);
+    // A line in the row takes no part: ticking writes nothing on it, so the
+    // document still parses and the line still draws.
+    apply([
+      {
+        op: 'insertItem',
+        path: `${path}.items`,
+        index: 3,
+        value: { type: 'line', from: { x: 0, y: 0 }, to: { x: 20, y: 0 } },
+      },
+    ]);
+    apply(basisOps(readFn, path, true));
+    expect(editor.read(`${path}.items[3]`)).toEqual({
+      type: 'line',
+      from: { x: 0, y: 0 },
+      to: { x: 20, y: 0 },
+    });
+    boxes = await render();
+    expect(rect(boxes, `${path}.items[0]`).w).toBeCloseTo(rect(boxes, `${path}.items[1]`).w, 0);
   });
 
   it('nest-into-slot, grid 列/行 plans, and コンテナにまとめる all render WARNING-clean', async () => {

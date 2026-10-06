@@ -49,41 +49,55 @@ function layoutOf(controller: EditorController) {
   return layout;
 }
 
-function drawSection(controller: EditorController) {
-  draw(<LayoutSection controller={controller} path={PATH} layout={layoutOf(controller)} />);
+function drawSection(controller: EditorController, capabilities?: readonly string[]) {
+  draw(
+    <LayoutSection
+      controller={controller}
+      path={PATH}
+      layout={layoutOf(controller)}
+      capabilities={capabilities}
+    />,
+  );
+}
+
+/** Every capability the layout controls gate on, minus `without`. */
+function capsWithout(...without: string[]): string[] {
+  return ['box.grid', 'grid.fr', 'grid.auto', 'box.alignItems.baseline', 'box.flexBasis'].filter(
+    (key) => !without.includes(key),
+  );
+}
+
+/** The ops of the n-th `applyAll` call. */
+function batchAt(controller: EditorController, n = 0): unknown[] {
+  return (controller.applyAll as ReturnType<typeof vi.fn>).mock.calls[n][0];
 }
 
 describe('LayoutSection (flex)', () => {
-  it('dispatches ONE direction op when the segment crosses', () => {
+  it('dispatches ONE batch holding the direction op when the segment crosses', () => {
     const controller = rowController();
     drawSection(controller);
-    fireEvent.click(screen.getByLabelText('Stack vertically'));
-    expect(controller.apply).toHaveBeenCalledTimes(1);
-    expect(controller.apply).toHaveBeenCalledWith({
-      op: 'setScalar',
-      path: PATH,
-      keys: ['box', 'direction'],
-      value: 'column',
-    });
+    fireEvent.click(screen.getByLabelText('Stacked'));
+    expect(controller.applyAll).toHaveBeenCalledTimes(1);
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path: PATH, keys: ['box', 'direction'], value: 'column' },
+    ]);
   });
 
   it('dispatches ONE direction op crossing column → row too', () => {
     const controller = rowController({ direction: 'column' });
     drawSection(controller);
     fireEvent.click(screen.getByLabelText('Side by side'));
-    expect(controller.apply).toHaveBeenCalledWith({
-      op: 'setScalar',
-      path: PATH,
-      keys: ['box', 'direction'],
-      value: 'row',
-    });
+    expect(controller.applyAll).toHaveBeenCalledWith([
+      { op: 'setScalar', path: PATH, keys: ['box', 'direction'], value: 'row' },
+    ]);
   });
 
-  it('dispatches nothing on a re-pick of the current direction (native radio)', () => {
+  it('dispatches nothing on a re-pick of the current arrangement (native radio)', () => {
     const controller = rowController();
     drawSection(controller);
     fireEvent.click(screen.getByLabelText('Side by side'));
     expect(controller.apply).not.toHaveBeenCalled();
+    expect(controller.applyAll).not.toHaveBeenCalled();
   });
 
   it('commits the gap on blur only when changed', () => {
@@ -129,7 +143,7 @@ describe('LayoutSection (flex)', () => {
     drawSection(controller);
     // Unset alignItems reads as the engine default stretch.
     expect(screen.getByLabelText('Stretch to fill').getAttribute('aria-pressed')).toBe('true');
-    fireEvent.click(screen.getByLabelText('Align middle'));
+    fireEvent.click(screen.getByLabelText('Align middle (top–bottom)'));
     expect(controller.apply).toHaveBeenCalledWith({
       op: 'setScalar',
       path: PATH,
@@ -141,7 +155,7 @@ describe('LayoutSection (flex)', () => {
   it('dispatches nothing on a re-pick of the active alignment (minimal wire)', () => {
     const controller = rowController({ direction: 'row', alignItems: 'center' });
     drawSection(controller);
-    fireEvent.click(screen.getByLabelText('Align middle'));
+    fireEvent.click(screen.getByLabelText('Align middle (top–bottom)'));
     expect(controller.apply).not.toHaveBeenCalled();
   });
 
@@ -152,7 +166,9 @@ describe('LayoutSection (flex)', () => {
     ]);
     drawSection(controller);
     const first = screen.getByLabelText('Ratio 1') as HTMLInputElement;
-    expect(first.defaultValue).toBe('1');
+    // Unset: empty, with the placeholder saying the engine decides.
+    expect(first.defaultValue).toBe('');
+    expect(first.placeholder).toBe('auto');
     expect((screen.getByLabelText('Ratio 2') as HTMLInputElement).defaultValue).toBe('2');
     fireEvent.blur(first);
     expect(controller.apply).not.toHaveBeenCalled();
@@ -199,9 +215,61 @@ describe('LayoutSection (flex)', () => {
     });
   });
 
-  it('shows no ratio row in a column (grow is row-only) and no ratio for an empty row', () => {
-    drawSection(rowController({ direction: 'column' }));
+  it('shows the ratio row in a stack too, sharing HEIGHT, with 0 as the unset placeholder', () => {
+    const controller = rowController({ direction: 'column' }, [
+      { type: 'text' },
+      { type: 'text', box: { h: 30 } },
+    ]);
+    drawSection(controller);
+    const first = screen.getByLabelText('Ratio 1') as HTMLInputElement;
+    // In a stack an unset weight IS 0 in the engine, so the placeholder says so.
+    expect(first.placeholder).toBe('0');
+    // The fixed axis follows the arrangement: a height takes a stack slot out.
+    expect(screen.getByText('Fixed height')).toBeTruthy();
+    expect(screen.queryByText('Fixed width')).toBeNull();
+    expect(screen.getByText(/Free height is shared/)).toBeTruthy();
+    fireEvent.change(first, { target: { value: '2' } });
+    fireEvent.blur(first);
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${PATH}.items[0]`,
+      keys: ['box', 'flexGrow'],
+      value: 2,
+    });
+  });
+
+  it('gives no ratio input to a child the engine does not lay out by flex', () => {
+    // A line has no box on the wire (a flex key on it does not parse), and a
+    // positioned child is outside the split: neither gets an input, so the
+    // inputs number only the children that share the space.
+    const controller = rowController({ direction: 'column' }, [
+      { type: 'line', from: { x: 0, y: 0 }, to: { x: 9, y: 0 } },
+      { type: 'text' },
+      { type: 'text', box: { x: 3 } },
+    ]);
+    drawSection(controller);
+    expect(screen.getByLabelText('Ratio 1')).toBeTruthy();
+    expect(screen.queryByLabelText('Ratio 2')).toBeNull();
+    fireEvent.change(screen.getByLabelText('Ratio 1'), { target: { value: '2' } });
+    fireEvent.blur(screen.getByLabelText('Ratio 1'));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: `${PATH}.items[1]`,
+      keys: ['box', 'flexGrow'],
+      value: 2,
+    });
+  });
+
+  it('shows no ratio row when no child is laid out by flex', () => {
+    drawSection(
+      rowController({ direction: 'row' }, [
+        { type: 'line', from: { x: 0, y: 0 }, to: { x: 9, y: 0 } },
+      ]),
+    );
     expect(screen.queryByText('Ratio')).toBeNull();
+  });
+
+  it('shows no ratio row for an empty container', () => {
     drawSection(rowController({ direction: 'row' }, []));
     expect(screen.queryByText('Ratio')).toBeNull();
   });
@@ -229,14 +297,15 @@ describe('LayoutSection (grid)', () => {
     };
   }
 
-  it('renders gap + the 列/行 steppers, no direction/align/ratio/add-slot', () => {
+  it('renders the arrangement, gap, the 列/行 steppers and the cell alignment — no ratio/add-slot', () => {
     const controller = gridController(['a', 'b', 'c', 'd'], 3);
     drawSection(controller);
     expect(screen.getByLabelText('Columns')).toBeTruthy();
     expect(screen.getByLabelText('Rows')).toBeTruthy();
     expect(screen.getByLabelText('Spacing')).toBeTruthy();
-    expect(screen.queryByLabelText('Side by side')).toBeNull();
-    expect(screen.queryByText('Align children')).toBeNull();
+    // The arrangement segment shows in a grid too, with the grid picked.
+    expect((screen.getByLabelText('Table grid') as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByText('Align children')).toBeTruthy();
     expect(screen.queryByText('Ratio')).toBeNull();
     expect(screen.queryByText('Add slot')).toBeNull();
   });
@@ -406,6 +475,327 @@ describe('LayoutSection (grid)', () => {
   });
 });
 
+describe('LayoutSection arrangement switch', () => {
+  it('offers row, stack and grid in every arrangement', () => {
+    for (const box of [{ direction: 'row' }, {}, { type: 'grid', columns: 2 }]) {
+      const { unmount } = draw(
+        <LayoutSection
+          controller={rowController(box)}
+          path={PATH}
+          layout={layoutOf(rowController(box))}
+        />,
+      );
+      for (const label of ['Side by side', 'Stacked', 'Table grid']) {
+        expect(screen.getByLabelText(label)).toBeTruthy();
+      }
+      unmount();
+    }
+  });
+
+  it('switches a row to a grid in ONE batch: a column sized per child, direction dropped', () => {
+    const controller = rowController({ direction: 'row', gap: 8 }, [
+      { type: 'text', box: { w: 120 } },
+      { type: 'text' },
+    ]);
+    drawSection(controller);
+    fireEvent.click(screen.getByLabelText('Table grid'));
+    expect(controller.applyAll).toHaveBeenCalledTimes(1);
+    expect(batchAt(controller)).toEqual([
+      { op: 'setScalar', path: PATH, keys: ['box', 'type'], value: 'grid' },
+      { op: 'putValue', path: PATH, keys: ['box', 'columns'], value: [120, 'auto'] },
+      { op: 'removeKey', path: PATH, keys: ['box', 'direction'] },
+    ]);
+  });
+
+  it('switches to a column COUNT against an engine without fr or auto tracks', () => {
+    for (const missing of ['grid.fr', 'grid.auto']) {
+      const controller = rowController();
+      const { unmount } = draw(
+        <LayoutSection
+          controller={controller}
+          path={PATH}
+          layout={layoutOf(controller)}
+          capabilities={capsWithout(missing)}
+        />,
+      );
+      fireEvent.click(screen.getByLabelText('Table grid'));
+      expect(batchAt(controller)[1]).toEqual({
+        op: 'setScalar',
+        path: PATH,
+        keys: ['box', 'columns'],
+        value: 2,
+      });
+      unmount();
+    }
+  });
+
+  it('switches a grid back to a row in ONE batch that drops the grid keys', () => {
+    const controller = rowController({ type: 'grid', columns: 2 }, [
+      { type: 'text', box: { columnSpan: 2 } },
+    ]);
+    drawSection(controller);
+    fireEvent.click(screen.getByLabelText('Side by side'));
+    expect(batchAt(controller)).toEqual([
+      { op: 'removeKey', path: PATH, keys: ['box', 'type'] },
+      { op: 'removeKey', path: PATH, keys: ['box', 'columns'] },
+      { op: 'setScalar', path: PATH, keys: ['box', 'direction'], value: 'row' },
+      { op: 'removeKey', path: `${PATH}.items[0]`, keys: ['box', 'columnSpan'] },
+    ]);
+  });
+
+  it('disables the grid option, with the reason, against an engine without grids', () => {
+    const without = rowController();
+    drawSection(without, capsWithout('box.grid'));
+    // A disabled option's tip rides its label (the Segmented primitive's
+    // bubble), so the label is matched by its start.
+    const grid = screen.getByLabelText(/^Table grid/) as HTMLInputElement;
+    expect(grid.disabled).toBe(true);
+    expect(screen.getByText("Table grid isn't available in this version.")).toBeTruthy();
+    fireEvent.click(grid);
+    expect(without.applyAll).not.toHaveBeenCalled();
+  });
+
+  it('enables it when the engine lists the capability', () => {
+    drawSection(rowController(), capsWithout());
+    expect((screen.getByLabelText('Table grid') as HTMLInputElement).disabled).toBe(false);
+    expect(screen.queryByText("Table grid isn't available in this version.")).toBeNull();
+  });
+
+  it('disables a switch whose batch is refused, saying why', () => {
+    const many = Array.from({ length: 300 }, () => ({ type: 'text', box: { columnSpan: 2 } }));
+    const controller = rowController({ type: 'grid', columns: 2 }, many);
+    drawSection(controller);
+    expect((screen.getByLabelText(/^Side by side/) as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText(/^Stacked/) as HTMLInputElement).disabled).toBe(true);
+    expect(
+      screen.getAllByText(
+        'Too many items to change the arrangement. Split them into smaller containers first.',
+      ),
+    ).toHaveLength(2);
+  });
+});
+
+describe('LayoutSection distribution', () => {
+  const distribute = () => screen.queryByLabelText('Leftover space');
+
+  it('shows the dropdown in a row and a stack, with the effective value', () => {
+    drawSection(rowController({ direction: 'row', justifyContent: 'center' }));
+    expect(distribute()?.textContent).toContain('Pack to the center (left–right)');
+  });
+
+  it('names the first three choices for the main axis', () => {
+    drawSection(rowController({ direction: 'column', h: 100 }));
+    // Unset reads as the engine default, named vertically in a stack.
+    expect(distribute()?.textContent).toContain('Pack to the top');
+  });
+
+  it('shows it in a grid only over a column-track list', () => {
+    drawSection(rowController({ type: 'grid', columns: 2 }));
+    expect(distribute()).toBeNull();
+  });
+
+  it('shows it over a grid track list', () => {
+    drawSection(rowController({ type: 'grid', columns: ['1fr', 90] }));
+    expect(distribute()?.textContent).toContain('Pack to the left');
+  });
+
+  it('authors a pick as ONE op', () => {
+    const controller = rowController();
+    drawSection(controller);
+    fireEvent.click(distribute() as HTMLElement);
+    fireEvent.click(screen.getByRole('option', { name: 'Spread out, ends at the edges' }));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: PATH,
+      keys: ['box', 'justifyContent'],
+      value: 'space_between',
+    });
+  });
+
+  it('authors nothing on a re-pick of the effective value', () => {
+    const controller = rowController();
+    drawSection(controller);
+    fireEvent.click(distribute() as HTMLElement);
+    fireEvent.click(screen.getByRole('option', { name: 'Pack to the left' }));
+    expect(controller.apply).not.toHaveBeenCalled();
+  });
+
+  it('carries an out-of-vocabulary value verbatim as an option', () => {
+    drawSection(rowController({ direction: 'row', justifyContent: 'space-between' }));
+    expect(distribute()?.textContent).toContain('space-between');
+    fireEvent.click(distribute() as HTMLElement);
+    expect(screen.getByRole('option', { name: 'space-between' })).toBeTruthy();
+  });
+
+  it('notes that a stack with no height of its own has nothing to distribute', () => {
+    const note = /Has an effect only when this container is taller/;
+    drawSection(rowController({ direction: 'column' }));
+    expect(screen.getByText(note)).toBeTruthy();
+  });
+
+  it('drops the note once the stack has a height, and never shows it in a row', () => {
+    const note = /Has an effect only when this container is taller/;
+    const { unmount } = draw(
+      <LayoutSection
+        controller={rowController({ direction: 'column', h: 120 })}
+        path={PATH}
+        layout={layoutOf(rowController({ direction: 'column', h: 120 }))}
+      />,
+    );
+    expect(screen.queryByText(note)).toBeNull();
+    unmount();
+    drawSection(rowController({ direction: 'row' }));
+    expect(screen.queryByText(note)).toBeNull();
+  });
+});
+
+describe('LayoutSection alignment per arrangement', () => {
+  const names = () =>
+    within(screen.getByRole('group', { name: 'Align children' }))
+      .getAllByRole('button')
+      .map((button) => button.getAttribute('aria-label'));
+
+  it('offers a row the vertical set plus baseline where the engine has it', () => {
+    drawSection(rowController({ direction: 'row' }), capsWithout());
+    expect(names()).toEqual([
+      'Align top',
+      'Align middle (top–bottom)',
+      'Align bottom',
+      'Stretch to fill',
+      'Line up the first line of text',
+    ]);
+  });
+
+  it('withholds baseline from an engine that would reject it', () => {
+    drawSection(rowController({ direction: 'row' }), capsWithout('box.alignItems.baseline'));
+    expect(names()).not.toContain('Line up the first line of text');
+  });
+
+  it('names a stack its HORIZONTAL alignments — never top or bottom', () => {
+    drawSection(rowController({ direction: 'column' }), capsWithout());
+    expect(names()).toEqual([
+      'Align left',
+      'Align center (left–right)',
+      'Align right',
+      'Stretch to full width',
+    ]);
+  });
+
+  it('offers a grid the vertical set without baseline (the engine reads it as start there)', () => {
+    drawSection(rowController({ type: 'grid', columns: 2 }), capsWithout());
+    expect(names()).toEqual([
+      'Align top',
+      'Align middle (top–bottom)',
+      'Align bottom',
+      'Stretch to fill',
+    ]);
+  });
+
+  it('shows an authored baseline as active in a row and authors a stack pick', () => {
+    drawSection(rowController({ direction: 'row', alignItems: 'baseline' }));
+    expect(
+      screen.getByLabelText('Line up the first line of text').getAttribute('aria-pressed'),
+    ).toBe('true');
+  });
+
+  it('authors a stack alignment pick as the same wire value', () => {
+    const controller = rowController({ direction: 'column' });
+    drawSection(controller);
+    fireEvent.click(screen.getByLabelText('Align right'));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'setScalar',
+      path: PATH,
+      keys: ['box', 'alignItems'],
+      value: 'end',
+    });
+  });
+});
+
+describe('LayoutSection split-by-ratio', () => {
+  const check = () =>
+    screen.queryByLabelText(
+      'Ignore content width when splitting by ratio',
+    ) as HTMLInputElement | null;
+
+  it('reads unticked, ticks in ONE batch (zero bases + a weight where missing)', () => {
+    const controller = rowController();
+    drawSection(controller);
+    expect(check()?.checked).toBe(false);
+    expect(check()?.indeterminate).toBe(false);
+    fireEvent.click(check() as HTMLInputElement);
+    expect(controller.applyAll).toHaveBeenCalledTimes(1);
+    expect(batchAt(controller)).toHaveLength(4);
+  });
+
+  it('reads ticked, and unticks by removing the zero bases', () => {
+    const zero = { type: 'text', box: { flexBasis: 0, flexGrow: 1 } };
+    const controller = rowController({ direction: 'row' }, [zero, zero]);
+    drawSection(controller);
+    expect(check()?.checked).toBe(true);
+    fireEvent.click(check() as HTMLInputElement);
+    expect(batchAt(controller)).toEqual([
+      { op: 'removeKey', path: `${PATH}.items[0]`, keys: ['box', 'flexBasis'] },
+      { op: 'removeKey', path: `${PATH}.items[1]`, keys: ['box', 'flexBasis'] },
+    ]);
+  });
+
+  it('reads a mixed row as indeterminate, and ticking makes it agree', () => {
+    const controller = rowController({ direction: 'row' }, [
+      { type: 'text', box: { flexBasis: 0, flexGrow: 1 } },
+      { type: 'text' },
+    ]);
+    drawSection(controller);
+    expect(check()?.indeterminate).toBe(true);
+    fireEvent.click(check() as HTMLInputElement);
+    expect(batchAt(controller)).toEqual([
+      { op: 'setScalar', path: `${PATH}.items[1]`, keys: ['box', 'flexBasis'], value: 0 },
+      { op: 'setScalar', path: `${PATH}.items[1]`, keys: ['box', 'flexGrow'], value: 1 },
+    ]);
+  });
+
+  it('is disabled when every child has its own width', () => {
+    drawSection(rowController({ direction: 'row' }, [{ type: 'text', box: { w: 40 } }]));
+    expect(check()?.disabled).toBe(true);
+  });
+
+  it('authors nothing when the batch is refused', () => {
+    const many = Array.from({ length: 300 }, () => ({ type: 'text' }));
+    const controller = rowController({ direction: 'row' }, many);
+    drawSection(controller);
+    fireEvent.click(check() as HTMLInputElement);
+    expect(controller.applyAll).not.toHaveBeenCalled();
+  });
+
+  it('is a row control: absent in a stack and in a grid', () => {
+    const { unmount } = draw(
+      <LayoutSection
+        controller={rowController({ direction: 'column' })}
+        path={PATH}
+        layout={layoutOf(rowController({ direction: 'column' }))}
+      />,
+    );
+    expect(check()).toBeNull();
+    unmount();
+    drawSection(rowController({ type: 'grid', columns: 2 }));
+    expect(check()).toBeNull();
+  });
+
+  it('is absent against an engine without flexBasis, present with it', () => {
+    const { unmount } = draw(
+      <LayoutSection
+        controller={rowController()}
+        path={PATH}
+        layout={layoutOf(rowController())}
+        capabilities={capsWithout('box.flexBasis')}
+      />,
+    );
+    expect(check()).toBeNull();
+    unmount();
+    drawSection(rowController(), capsWithout());
+    expect(check()).not.toBeNull();
+  });
+});
+
 describe('ParentContainerCard', () => {
   function drawCard(onSelectParent = vi.fn(), onHighlight = vi.fn(), controller = rowController()) {
     draw(
@@ -424,6 +814,22 @@ describe('ParentContainerCard', () => {
     drawCard();
     expect(screen.getByText('Parent container (side by side)')).toBeTruthy();
     expect(screen.getByLabelText('Spacing')).toBeTruthy();
+    // The arrangement switch and the distribution reach a child's parent too.
+    expect(screen.getByLabelText('Table grid')).toBeTruthy();
+    expect(screen.getByLabelText('Leftover space')).toBeTruthy();
+  });
+
+  it('threads the capabilities into the parent controls', () => {
+    const controller = rowController();
+    draw(
+      <ParentContainerCard
+        controller={controller}
+        path={PATH}
+        layout={layoutOf(controller)}
+        capabilities={capsWithout('box.grid')}
+      />,
+    );
+    expect((screen.getByLabelText(/^Table grid/) as HTMLInputElement).disabled).toBe(true);
   });
 
   it('jumps the selection to the parent path', () => {

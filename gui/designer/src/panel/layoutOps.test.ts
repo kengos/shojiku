@@ -6,6 +6,7 @@ import {
   directionOp,
   gapOp,
   gapStepOp,
+  justifyContentOp,
   MAX_FLEX_GROW,
   MAX_GAP_PT,
   ratioOp,
@@ -41,6 +42,16 @@ describe('op builders', () => {
       path: PATH,
       keys: ['box', 'alignItems'],
       value: 'center',
+    });
+    expect(alignItemsOp(PATH, 'baseline')).toMatchObject({ value: 'baseline' });
+  });
+
+  it('justifyContentOp authors the distribution as a scalar', () => {
+    expect(justifyContentOp(PATH, 'space_between')).toEqual({
+      op: 'setScalar',
+      path: PATH,
+      keys: ['box', 'justifyContent'],
+      value: 'space_between',
     });
   });
 

@@ -1507,8 +1507,8 @@ describe('PropertyPanel — container layout composition (配置 tab)', () => {
     expect(
       (card as HTMLElement).compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    // The card's controls edit the PARENT (direction segment present).
-    expect(screen.getByLabelText('Stack vertically')).toBeTruthy();
+    // The card's controls edit the PARENT (arrangement segment present).
+    expect(screen.getByLabelText('Stacked')).toBeTruthy();
   });
 
   it('jumps the selection to the parent via the card button', () => {

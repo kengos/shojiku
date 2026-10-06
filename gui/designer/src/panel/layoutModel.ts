@@ -7,12 +7,19 @@
 //
 // The engine wire (docs/engine/{flex,grid}.md): layout-mode keys live on the
 // container's `box` — `type` (unset/`flex` = flex, `grid` = tracks),
-// `direction`, `gap`, `alignItems`; a child's grow weight is its own
-// `box.flexGrow` (default 1, inert on a width-authored child).
+// `direction`, `gap`, `alignItems`, `justifyContent`; a child's grow weight is its
+// own `box.flexGrow` and its starting size its `box.flexBasis` (both inert on a
+// width-authored child). An unset grow weight has no single default the document
+// can show: in a ROW the engine gives a child it can measure 0 and one it cannot
+// (a table, vertical text) 1, and vertical writing can arrive through inherited
+// style — so an unset weight reads as EMPTY rather than as a number that may be
+// false. (In a stack an unset weight is always 0.) Only the children the engine
+// lays out by flex take part in any of this — `flexParticipants.ts`.
 
 import type { ReadFn } from '@shojiku/designer-core';
 import type { ContainerKind } from '../insert/containerModel';
 import { seqPosition } from '../tree/reorder';
+import { isFlexItem } from './flexParticipants';
 import { display } from './itemView';
 
 export type LayoutMode = ContainerKind;
@@ -21,17 +28,23 @@ export type LayoutMode = ContainerKind;
  * write half appends through it too. */
 export const ITEMS_SUFFIX = '.items';
 
-/** The engine's track cap (`MAX_GRID_TRACKS`) — the displayed column count is
- * clamped to what the engine would actually lay out. */
-const MAX_GRID_TRACKS = 64;
+/** The engine's track cap (`MAX_GRID_TRACKS`, engine/core/src/geometry/grid.rs)
+ * — the displayed column count is clamped to what the engine would actually lay
+ * out, and a switch to a grid never asks for more. */
+export const MAX_GRID_TRACKS = 64;
 
 export interface ChildSlot {
   readonly path: string;
-  /** The child's grow-weight display: authored `box.flexGrow`, or `"1"` (the
-   * engine default) when unset or not a displayable scalar. */
+  /** The child's grow-weight display: authored `box.flexGrow`, or `''` when
+   * unset or not a displayable scalar (the engine decides the default). */
   readonly ratio: string;
-  /** The child authors `box.w` — outside the ratio split (the fixed-width chip). */
+  /** The child authors `box.w` — outside a row's split (the fixed-width chip). */
   readonly fixedWidth: boolean;
+  /** The child authors `box.h` — outside a stack's split (the fixed-height chip). */
+  readonly fixedHeight: boolean;
+  /** The engine lays the child out by flex (`isFlexItem`): a positioned child
+   * or a `line` takes no part in a split, so it gets no ratio input. */
+  readonly flexItem: boolean;
 }
 
 export interface ContainerLayout {
@@ -42,11 +55,26 @@ export interface ContainerLayout {
    * engine default) when unset. A garbage value passes through verbatim (no
    * button reads active) — the engine is the validator. */
   readonly alignItems: string;
+  /** EFFECTIVE main-axis distribution: the authored value verbatim, or `start`
+   * (the engine default) when unset. */
+  readonly justifyContent: string;
+  /** The container authors its own `box.h` — a stack's distribution only acts
+   * against a definite height. */
+  readonly hasHeight: boolean;
   /** Grid only: the column-track count (a count, or a track list's length),
    * clamped to the engine's cap; `null` when unresolvable or not a grid. */
   readonly columns: number | null;
+  /** Grid `columns` is a track LIST — the only grid shape whose leftover width
+   * `justifyContent` can distribute (a count consumes the axis). */
+  readonly columnsIsList: boolean;
+  /** Whether the BASIS POPULATION (children with no `box.x`/`box.y` and no
+   * `box.w`) starts from zero (`flexBasis: 0`): all of them, none, a mix — or
+   * `empty` when there is no such child. */
+  readonly basis: BasisState;
   readonly children: readonly ChildSlot[];
 }
+
+export type BasisState = 'all' | 'none' | 'mixed' | 'empty';
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -68,21 +96,48 @@ function gridColumns(value: unknown): number | null {
 
 function childSlot(path: string, index: number, child: unknown): ChildSlot {
   const box = record(record(child)?.box);
-  const grow = box?.flexGrow;
-  const shown = display(grow);
   return {
     path: `${path}.items[${index}]`,
-    ratio: grow === undefined || shown === '' ? '1' : shown,
+    ratio: display(box?.flexGrow),
     fixedWidth: box?.w !== undefined,
+    fixedHeight: box?.h !== undefined,
+    flexItem: isFlexItem(child),
   };
 }
 
-/** The layout view of the container at `path`, or `null` when the node is not
- * a container, its `box.type` is neither flex nor grid (a hostile mode gets no
- * layout controls — the dnd refusal posture), or the subtree is unreadable
- * (an alias bomb: a read throw is "no"). Hostile child entries still yield
- * slots so indices stay true (the columns-model precedent). */
-export function containerLayoutFor(read: ReadFn, path: string): ContainerLayout | null {
+/** A child the engine lays out by flex (`isFlexItem` — a flex item type with
+ * no `x`/`y`) that sizes from its basis: no authored `w`. Shared with the write
+ * half, so the checkbox's state and its edit read one population. */
+export function inBasisPopulation(child: unknown): boolean {
+  return isFlexItem(child) && record(record(child)?.box)?.w === undefined;
+}
+
+function basisState(items: readonly unknown[]): BasisState {
+  const population = items.filter(inBasisPopulation);
+  if (population.length === 0) {
+    return 'empty';
+  }
+  const zero = population.filter((child) => record(record(child)?.box)?.flexBasis === 0).length;
+  if (zero === 0) {
+    return 'none';
+  }
+  return zero === population.length ? 'all' : 'mixed';
+}
+
+/** A container as the layout controls see it: its mode, its `box` (`{}` when
+ * absent or not a map) and its child list (`[]` when not a list). */
+export interface ContainerNode {
+  readonly mode: LayoutMode;
+  readonly box: Readonly<Record<string, unknown>>;
+  readonly items: readonly unknown[];
+}
+
+/** The container at `path`, or `null` when the node is not a container, its
+ * `box.type` is neither flex nor grid (a hostile mode gets no layout controls —
+ * the dnd refusal posture), or the subtree is unreadable (an alias bomb: a read
+ * throw is "no"). The one classification the view AND the multi-key edits
+ * (`layoutModeOps.ts`) read, so a control and its edit never disagree. */
+export function readContainerNode(read: ReadFn, path: string): ContainerNode | null {
   let node: Record<string, unknown> | undefined;
   try {
     node = record(read(path));
@@ -101,12 +156,27 @@ export function containerLayoutFor(read: ReadFn, path: string): ContainerLayout 
   } else {
     return null;
   }
-  const items = Array.isArray(node.items) ? node.items : [];
+  return { mode, box, items: Array.isArray(node.items) ? node.items : [] };
+}
+
+/** The layout view of the container at `path` (`null` exactly when
+ * `readContainerNode` is). Hostile child entries still yield slots so indices
+ * stay true (the columns-model precedent). */
+export function containerLayoutFor(read: ReadFn, path: string): ContainerLayout | null {
+  const container = readContainerNode(read, path);
+  if (container === null) {
+    return null;
+  }
+  const { mode, box, items } = container;
   return {
     mode,
     gap: display(box.gap),
     alignItems: box.alignItems === undefined ? 'stretch' : display(box.alignItems),
+    justifyContent: box.justifyContent === undefined ? 'start' : display(box.justifyContent),
+    hasHeight: box.h !== undefined,
     columns: mode === 'grid' ? gridColumns(box.columns) : null,
+    columnsIsList: mode === 'grid' && Array.isArray(box.columns),
+    basis: basisState(items),
     children: items.map((child, index) => childSlot(path, index, child)),
   };
 }

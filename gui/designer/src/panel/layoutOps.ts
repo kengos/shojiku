@@ -1,16 +1,18 @@
-// What a child-layout control AUTHORS: the named ops the direction segment, the gap
-// stepper, the alignment row, the ratio inputs and add-slot dispatch (AI parity:
-// every edit is a serializable op). The write half of the container-layout
+// What a child-layout control AUTHORS, one key at a time: the named ops the gap
+// stepper, the distribution dropdown, the alignment row, the ratio inputs and
+// add-slot dispatch (AI parity: every edit is a serializable op). The write half of the container-layout
 // pair — it depends on the read half (`layoutModel.ts`), never the reverse.
 //
 // The three value-PARSING builders (`gapOp`/`gapStepOp`/`ratioOp`) refuse (null)
 // rather than authoring what the engine would warn on or discard, and cap the
-// magnitudes a hostile paste could land in the wire. The other three cannot be
-// refused: two take a typed enum, and the append is always valid.
+// magnitudes a hostile paste could land in the wire. The other four cannot be
+// refused: three take a typed enum, and the append is always valid.
 //
 // The engine wire (docs/engine/{flex,grid}.md): layout-mode keys live on the
-// container's `box` — `direction`, `gap`, `alignItems`; a child's grow weight is
-// its own `box.flexGrow` (default 1, inert on a width-authored child).
+// container's `box` — `direction`, `gap`, `alignItems`, `justifyContent`; a child's
+// grow weight is its own `box.flexGrow` (inert on a width-authored child). The
+// edits that touch MORE than one key at once — the row/stack/grid switch and the
+// split-by-ratio toggle — are batches, in `layoutModeOps.ts`.
 
 import type { Op, ReadFn } from '@shojiku/designer-core';
 import { readLength, stepLength } from '../canvas/lengths';
@@ -29,19 +31,36 @@ function record(value: unknown): Record<string, unknown> | undefined {
     : undefined;
 }
 
-/** The direction segment's edit — the same key the insert scaffold authors. */
+/** A row ↔ stack switch's edit (the arrangement segment reaches it through
+ * `modeSwitchOps`) — the same key the insert scaffold authors. */
 export function directionOp(path: string, direction: 'row' | 'column'): Op {
   return { op: 'setScalar', path, keys: ['box', 'direction'], value: direction };
 }
 
-/** Cross-axis alignment values the alignment row offers, mirroring the engine
- * enum minus `baseline` (expert-only, YAML-authored; an authored baseline
- * simply shows no active button). Wire spellings from docs/engine/flex.md. */
-export const ALIGN_VALUES = ['start', 'center', 'end', 'stretch'] as const;
+/** Cross-axis alignment values, the engine enum in its wire spellings
+ * (docs/engine/flex.md). The alignment row offers `baseline` only in a row —
+ * a stack and a grid fall back to `start` for it in the engine. */
+export const ALIGN_VALUES = ['start', 'center', 'end', 'stretch', 'baseline'] as const;
 export type AlignValue = (typeof ALIGN_VALUES)[number];
 
 export function alignItemsOp(path: string, value: AlignValue): Op {
   return { op: 'setScalar', path, keys: ['box', 'alignItems'], value };
+}
+
+/** Main-axis distribution values, the engine enum in its wire spellings
+ * (docs/engine/flex.md). */
+export const JUSTIFY_VALUES = [
+  'start',
+  'center',
+  'end',
+  'space_between',
+  'space_around',
+  'space_evenly',
+] as const;
+export type JustifyValue = (typeof JUSTIFY_VALUES)[number];
+
+export function justifyContentOp(path: string, value: JustifyValue): Op {
+  return { op: 'setScalar', path, keys: ['box', 'justifyContent'], value };
 }
 
 /** Gap commit: empty clears the key; a readable absolute length authors in

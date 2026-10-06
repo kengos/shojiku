@@ -15,6 +15,35 @@ platform binaries.
 
 ### Added
 
+- **Change how a container arranges its items after inserting it.** The
+  container's 「子の並べ方」 now switches between 横並び, 縦積み and 表組み at
+  any time, in one undo step, without losing an item: a row becomes a one-row
+  grid with a column per item, each as wide as the item was — its own width,
+  its ratio as a share, or its content's width — so the row looks the same
+  (an engine that cannot read such column widths gets equal columns); a
+  stack becomes a one-column grid (its left/centre/right alignment does not
+  carry over, since a grid aligns its items vertically); and a grid turned
+  back into a row or a stack sheds the settings only a grid reads (columns,
+  rows, per-direction spacing, items spanning cells) instead of leaving them
+  to warn. A line, or an item placed by coordinates, takes no part in any of
+  this — it gets no ratio input and no column. A new 「空きの配り方」 dropdown packs the items to one end or the
+  middle, or spreads them out three ways; it shows for a row and a stack, and
+  for a grid only when its columns have individual widths, since a column
+  count leaves no space over. The alignment buttons now follow the direction
+  that alignment actually works in — a stack aligns its items left, centre or
+  right, where it used to show top, middle and bottom — appear for a grid
+  too, and a row adds 「1行目の文字の高さでそろえる」 (`alignItems: baseline`).
+  A stack gets ratio inputs as well, sharing spare height when the container
+  is taller than its contents, and a row gets 「中身の幅を無視して、比率どおりに
+  分ける」, which starts every item without its own width from zero
+  (`flexBasis: 0`) so the ratio divides the row exactly. An item with no
+  ratio of its own now shows an empty input marked 「自動」 instead of a 1:
+  the engine gives such an item no share when it can measure its content and
+  a share of 1 when it cannot (a table, vertical text), so the 1 was wrong
+  for ordinary text. Against an engine that cannot lay out a grid, the 表組み
+  option is greyed out with the reason; the baseline button and the ratio
+  checkbox are left out against an engine that would reject them.
+
 - **Circle an item, or run a line to one, by picking it — no name needed
   first.** The ellipse's 「要素を囲む」 and a line end's 「要素に付ける」 now
   list the document's own items, labelled as in the layer tree and grouped by

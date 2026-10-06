@@ -57,23 +57,58 @@ The container-layout model is a READ/WRITE pair; the write side depends on
 the read side, never the reverse.
 
 - `panel/layoutModel.ts` — what the DOCUMENT says about a container:
-  `containerLayoutFor(read, path)` (mode/gap/align/column-count/per-child
-  `ChildSlot`s from the DOCUMENT alone, never the box index),
-  `parentContainerOf` (direct parent only), `containerKindLabel`, and the
+  `readContainerNode` (the ONE classification — mode, `box`, child list, or
+  `null` for a non-container / hostile `box.type` / unreadable subtree — that
+  the view and the multi-key edits both read), `containerLayoutFor(read,
+  path)` (mode/gap/align/justify/height/column-count/track-list flag/
+  split-by-ratio state/per-child `ChildSlot`s from the DOCUMENT alone, never
+  the box index; an unset grow weight reads EMPTY, since the engine's default
+  depends on whether it can measure the child), `inBasisPopulation` (the flex
+  items without a `w` — the children the split-by-ratio checkbox reads and
+  writes), `parentContainerOf`
+  (direct parent only), `containerKindLabel`, `MAX_GRID_TRACKS`, and the
   `ITEMS_SUFFIX` the write side appends through.
-- `panel/layoutOps.ts` — what a control AUTHORS: the value-parsing
-  `gapOp`/`gapStepOp`/`ratioOp` (each refuses (null) rather than
+- `panel/layoutOps.ts` — what a control AUTHORS, one key at a time: the
+  value-parsing `gapOp`/`gapStepOp`/`ratioOp` (each refuses (null) rather than
   authoring what the engine would warn on or discard) beside
-  `directionOp`/`alignItemsOp`/`addSlotOp`, which always author (typed
-  enums, an always-valid append); the alignment vocabulary
-  `ALIGN_VALUES`/`AlignValue`; the ingress caps
-  `MAX_FLEX_GROW`/`MAX_GAP_PT`.
+  `directionOp`/`alignItemsOp`/`justifyContentOp`/`addSlotOp`, which always
+  author (typed enums, an always-valid append); the engine vocabularies
+  `ALIGN_VALUES`/`JUSTIFY_VALUES` (pinned to the engine enums by
+  `layoutWire.test.ts`); the ingress caps `MAX_FLEX_GROW`/`MAX_GAP_PT`.
+- `panel/flexParticipants.ts` — which children the engine lays out by flex/grid
+  (`isFlexItem`: a `FLEX_ITEM_TYPES` type with no `x`/`y` — never a `line`,
+  `page_number`, `page_break` or repeat, several of which have no `box` on the
+  wire, so a flex key on one is a parse error) and the grid column each would
+  ask for (`trackFor`: its `w`, its weight as `"<n>fr"`, `"1fr"` for a kind the
+  engine cannot measure (`UNMEASURED_TYPES`, or `spans` text), else `"auto"`).
+  Both sets pinned to the engine source by `layoutWire.test.ts`.
+- `panel/layoutModeOps.ts` — the edits that change SEVERAL keys as one batch
+  (one undo): `modeSwitchOps` (row / stack / grid, never deleting or
+  reordering a child — a row becomes a one-row grid with a column per flex item
+  sized by `trackFor`, so it keeps its look, when the host passes
+  `trackList` (`grid.fr` + `grid.auto`), else an equal column COUNT, which does
+  not; a stack becomes a one-column grid and its horizontal alignment does not
+  carry over; a grid going back drops the grid-only keys and the children's
+  spans and carries the main-axis per-axis gap into `gap`; a span on a `rect`
+  whose box would empty stays, since the pruned box would not parse) and
+  `basisOps` (the split-by-ratio toggle over the flex items without a `w`:
+  `flexBasis: 0` plus a weight of 1 where none is authored, because the engine
+  weighs an unset grow on a zero basis as 0). Both refuse (`null`) over
+  `MAX_BATCH_OPS` rather than doing part.
 
 The child-layout surface is a shell + one module per control cluster.
 
-- `panel/LayoutSection.tsx` — the shell: the gap stepper every mode
-  shows, the direction `Segmented` + add-slot only a NON-grid container
-  shows, and the per-mode branch that picks a cluster.
+- `panel/LayoutSection.tsx` — the shell: the arrangement `Segmented`
+  (row / stack / grid, every mode; an option disabled with its reason as the
+  tip when the engine lacks `box.grid` or the batch is refused) and the gap
+  stepper every mode shows, then the per-mode clusters, and the add-slot only
+  a NON-grid container shows. Takes the host `capabilities` (absent = the
+  bundled engine).
+- `panel/JustifySelect.tsx` — the distribution dropdown (`justifyContent`):
+  a row and a stack always, a grid only over a column-track LIST
+  (`offersJustify`); the first three choices named for the main axis; an
+  out-of-vocabulary authored value kept as a verbatim option; a note under it
+  in a stack with no height of its own.
 - `panel/GridSteppers.tsx` — the grid column/row cluster over `gridStructure`
   plans, with the content-drop confirm Modal. Its non-commits — an emptied
   field, a non-finite count, a typed count that rounds to the current one, and
@@ -81,10 +116,18 @@ The child-layout surface is a shell + one module per control cluster.
   blur reseeds unconditionally. It used to carry a partial `seed` nonce of its
   own that bumped only on the confirm path; that was the precedent the shared
   mechanism generalized, and it is gone.
-- `panel/AlignRow.tsx` — the alignment icon row (a re-pick of the active
-  value authors nothing).
-- `panel/RatioRow.tsx` — the row-mode ratio inputs + the fixed-width chip for a
-  width-authoring child. Each weight input is its own `RatioInput` component
+- `panel/AlignRow.tsx` — the alignment icon row, its words and glyphs
+  following the CROSS axis (`alignChoices`: vertical for a row and a grid,
+  horizontal for a stack; `baseline` in a row only, behind
+  `box.alignItems.baseline`). A re-pick of the active value authors nothing.
+- `panel/BasisCheck.tsx` — the row-only split-by-ratio checkbox (checked /
+  mixed / unchecked / disabled when every child has its own width), behind
+  `box.flexBasis`; one batch through `basisOps`.
+- `panel/RatioRow.tsx` — the ratio inputs of a row (width) or a stack
+  (height), one per flex item (the shell passes only those) + the fixed-size
+  chip for a child authoring that axis; an unset
+  weight is an empty input whose placeholder is "auto" in a row and `0` in a
+  stack (what the engine does with it there). Each weight input is its own `RatioInput` component
   so its reseed hook has a fixed home (the slot list is variable-length). Its
   weights stay hand-rolled rather than going through `StepperField`, and the
   reason is the ROW: a ratio is read as `2 : 3 : 1`, so each weight is a bare
@@ -95,8 +138,8 @@ The child-layout surface is a shell + one module per control cluster.
   the toolbar's font size are each hand-rolled or stepper-less for their own
   stated reason.)
 - `panel/ParentContainerCard.tsx` — the parent-first tinted card hosting
-  the same shell for the parent: select-parent jump + hover canvas
-  highlight.
+  the same shell for the parent (capabilities threaded through): select-parent
+  jump + hover canvas highlight.
 
 ## Placement tab — the n-up repeat grid
 
