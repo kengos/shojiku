@@ -976,6 +976,37 @@ presence is not a text binding.
   `textOverflow` on a text surface, `overflow` on a container or frame; `clip`
   behind `style.textOverflow.clip`), `FillBorderFields` (+`hasFillBorder`: a
   char_grid takes the fill alone), `OpacityField`, `StyleNamesPicker`.
+- `panel/itemTextSections.tsx` — the text half of that list, split out:
+  `textSections(props, ctx, i18n)` → the 「Text」 section and, after it,
+  `item.typesetting` (from `TypesettingSection`), each only when the type gets
+  it; also the `ItemSection` shape the builder lists.
+- `panel/typesettingModel.ts` (pure) — the six typesetting `Style` keys
+  (`writingMode`, `textOrientation`, `textCombineUpright`, `lineBreak`,
+  `textSpacingTrim`, `hangingPunctuation`) as data: which types' layout reads
+  which key (text/page_number/table/container all six, a list the vertical
+  three, horizontal `spans` no `hangingPunctuation`; char_grid, shapes and media
+  none — each cited to `engine/layout/src/engine/`), the per-key and per-option
+  capability gates (`style.writingMode.surfaces` past a plain text block,
+  `.all` for tate-chu-yoko in a list or spans, `strict_loose`), the
+  `textCombineUpright` codec (`combineToken`: `{ digits: N }` ↔ `digitsN`;
+  absent is unset, and any other PRESENT shape the engine cannot parse is
+  `UNREADABLE_COMBINE`, so the row stays visible and its 「not set」 row can
+  remove it) and `typesettingOp` (one
+  `putValue` per pick, so the map ↔ keyword switch is one op; `''` removes;
+  unchanged is `null`).
+- `panel/TypesettingSection.tsx` — `typesettingParts(props, i18n)` → the
+  section's summary, `?` and body (or `null` when the type gets no key): one
+  inherited-select per key (own value, `withAuthored`, `OriginBadge` with the
+  option LABEL via its `valueLabel`), ONE visibility predicate — a key shows
+  when the item authors it, or when it is offered and honoured in the mode the
+  item reads now (so the vertical-only pair while horizontal, and hanging
+  punctuation in horizontal spans, never hide an authored value) — and a note
+  when a
+  circled (`mark:`) text is vertical — the engine skips the circle there. The
+  unreadable 縦中横 row's own label names the 「not set」 row (composed from
+  its label key, brackets dropped); the origin line keeps the short label. Both
+  decoration tabs wrap it in their own `PanelSection` (`item.typesetting`,
+  `table.typesetting`).
 - `panel/TextLookFields.tsx` — letter spacing (stepper, `letterSpacingOp`),
   the decoration lines (`DecorationChecks.tsx`: an Underline and a
   Strikethrough checkbox over the one `textDecoration` key, read from the
@@ -985,9 +1016,9 @@ presence is not a text binding.
   each gated by type AND
   capability; `withAuthored` keeps a legal out-of-set authored value visible as
   itself (the closed-control-over-open-vocabulary rule), shared by the overflow
-  selects. `letterSpacing` is resolved through the cascade as an INHERITED key
-  (`toolbar/effective` names it beside the defaults editor's inherited set,
-  which does not offer it).
+  selects. `letterSpacing` and the six typesetting keys are resolved through
+  the cascade as INHERITED keys (`toolbar/effective` names them beside the
+  defaults editor's inherited set, which does not offer them).
 - `panel/textLookOps.ts` (pure) — `letterSpacingOp` (signed, units but no `%`,
   ±`MAX_LETTER_SPACING_PT`), `opacityPercent`/`opacityOp` (the field shows a
   percentage of the 0..1 alpha; a commit that would author the value already
@@ -1214,9 +1245,9 @@ presence is not a text binding.
     ineffective and offering to clear it (`IneffectiveFillBanner`, rendered with
     or without `table.style`, so the section exists whenever a fill does),
     rather than hiding a key the panel could then never remove. Each unset style field carries
-    a `panel/OriginBadge.tsx` effective-value hint (resolved value +
-    origin default/style/inherited + a to-document-settings jump; the engine-floor
-    origin shows no jump).
+    a `panel/OriginBadge.tsx` effective-value hint (resolved value — or its
+    option label, through `valueLabel` — + origin default/style/inherited + a
+    to-document-settings jump; the engine-floor origin shows no jump).
 - `panel/TableColumnsSection.tsx` — the body of the 「Columns」 section for a
   selected table (no heading of its own): source rebinding via the array-group
   picker, then per-column label / ▲▼ reorder / delete / a plain-text kind
@@ -1373,7 +1404,9 @@ properties」 shape), not the flat tabs every other type gets:
   fill to show), 「文字（表全体）」/"Text (whole table)" (`panel/TableTextSection.tsx`, `table.style`-gated: the
   band controls at the table's OWN `style.*` over `cascadeContext` — what every
   cell inherits — minus the background and the vertical alignment, which the
-  engine ignores on a table's own style; summary `textSummary`), 「Border」 (`style.border`; the `BorderEditor` with `isTable`,
+  engine ignores on a table's own style; summary `textSummary`), the
+  typesetting section (`table.typesetting`, `TypesettingSection` — the six keys
+  every cell inherits), 「Border」 (`style.border`; the `BorderEditor` with `isTable`,
   whose own `?` and table note serve the section, so its heading has none),
   「Header row format」/「Body row format」 (`table.style`), 「Conditional
   formatting」 (`TableConditionsSection` in `RowConditions.tsx`, which owns its

@@ -89,6 +89,58 @@ describe('effectiveStyles — layer resolution', () => {
     });
   });
 
+  it('inherits every typesetting key, reading the upright-digits MAP at each layer', () => {
+    const path = 'sections.body.items[2].items[1]';
+    const read = readOf({
+      [path]: { type: 'text', style: { textCombineUpright: { digits: 4 } } },
+      'sections.body.items[2]': {
+        type: 'container',
+        style: {
+          writingMode: 'vertical_rl',
+          textOrientation: 'upright',
+          textCombineUpright: { digits: 2 },
+          lineBreak: 'strict',
+          textSpacingTrim: 'normal',
+        },
+      },
+      defaults: { style: { hangingPunctuation: 'allow_end' } },
+    });
+    const ctx = cascadeContext(read, path);
+    for (const [key, value] of [
+      ['writingMode', 'vertical_rl'],
+      ['textOrientation', 'upright'],
+      ['lineBreak', 'strict'],
+      ['textSpacingTrim', 'normal'],
+    ]) {
+      expect(effectiveValueIn(ctx, key)).toMatchObject({ value, origin: 'inherited' });
+    }
+    expect(effectiveValueIn(ctx, 'hangingPunctuation')).toMatchObject({
+      value: 'allow_end',
+      origin: 'default',
+    });
+    expect(effectiveValueIn(ctx, 'textCombineUpright')).toEqual({
+      value: 'digits4',
+      cascade: 'digits2',
+      own: 'digits4',
+      origin: 'own',
+      styleName: '',
+    });
+  });
+
+  it('reads an upright-digits map from defaults.style, and a hostile one as unreadable', () => {
+    const at = (value: unknown) =>
+      effectiveValueIn(
+        cascadeContext(
+          readOf({ [P]: { type: 'text' }, defaults: { style: { textCombineUpright: value } } }),
+          P,
+        ),
+        'textCombineUpright',
+      );
+    expect(at({ digits: 3 })).toMatchObject({ value: 'digits3', origin: 'default' });
+    expect(at({ digits: 3, x: 1 })).toMatchObject({ value: 'invalid', origin: 'default' });
+    expect(at(undefined)).toMatchObject({ value: '', origin: 'unset' });
+  });
+
   it('falls through non-container ancestors to defaults.style', () => {
     const path = 'sections.body.items[1].cell.items[0]';
     const read = readOf({

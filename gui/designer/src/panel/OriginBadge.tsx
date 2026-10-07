@@ -23,12 +23,15 @@ export interface OriginBadgeProps {
    * section that owns the resolved value. Absent → no jump control; an
    * `engine`-origin value has no authored owner and never shows one either. */
   readonly onNavigate?: (section: DefaultsSection) => void;
+  /** The resolved value in the reader's words — an enum's localized option
+   * label. Absent prints the value as resolved (a length, a colour, a name). */
+  readonly valueLabel?: (value: string) => string;
 }
 
 /** Renders nothing when the field carries its OWN value (no cascade to explain)
  * or resolves to nothing (`unset` — the engine default applies, so there is no
  * authored source to show or jump to). Otherwise the hint line. */
-export function OriginBadge({ effective, onNavigate }: OriginBadgeProps) {
+export function OriginBadge({ effective, onNavigate, valueLabel }: OriginBadgeProps) {
   const { t } = useI18n();
   if (effective.own !== '' || effective.origin === 'unset') {
     return null;
@@ -49,7 +52,8 @@ export function OriginBadge({ effective, onNavigate }: OriginBadgeProps) {
   return (
     <p className="-mt-1.5 mb-2 flex flex-wrap items-baseline gap-x-2 text-sm text-muted">
       <span>
-        {t('panel.effective.label')} <span className="text-text">{value}</span>
+        {t('panel.effective.label')}{' '}
+        <span className="text-text">{valueLabel === undefined ? value : valueLabel(value)}</span>
       </span>
       <span aria-hidden="true">·</span>
       <span>{label}</span>

@@ -1,6 +1,7 @@
 // A table's decoration tab, as collapsible sections in the order the engine
 // layers a table's look: the table style (open at first), the text every cell
-// inherits (`TableTextSection`), the grid/frame border, the header row, the body rows, the conditional rules, and the named
+// inherits (`TableTextSection`) and its vertical writing and line breaking
+// (`TypesettingSection`), the grid/frame border, the header row, the body rows, the conditional rules, and the named
 // styles. `StyleSection` routes a table here; every other type keeps its flat
 // decoration tab.
 //
@@ -21,6 +22,7 @@ import { TableBandBody } from './TableBandBody';
 import { bodyValignHost } from './TableBandFields';
 import { IneffectiveFillBanner, TableStyleBody } from './TableStyleSection';
 import { TableTextSection } from './TableTextSection';
+import { typesettingParts } from './TypesettingSection';
 import { controlHelp, helpText } from './tableContentSummaries';
 import {
   bandSummary,
@@ -46,6 +48,7 @@ export function TableDecorationSections(props: ItemPanelProps) {
   // without `table.style`), so the key is never invisible and unremovable.
   const fill = style.ineffectiveFill !== '';
   const showFill = fill && hasCapability(capabilities, 'style.backgroundColor');
+  const typesetting = typesettingParts(props, i18n);
   return (
     <>
       {styled || fill ? (
@@ -87,6 +90,16 @@ export function TableDecorationSections(props: ItemPanelProps) {
         </PanelSection>
       ) : null}
       <TableTextSection {...props} />
+      {typesetting === null ? null : (
+        <PanelSection
+          id="table.typesetting"
+          title={t('panel.itemSection.typesetting.title')}
+          summary={typesetting.summary}
+          help={typesetting.help}
+        >
+          {typesetting.body}
+        </PanelSection>
+      )}
       {hasCapability(capabilities, 'style.border') ? (
         <PanelSection
           id="table.border"

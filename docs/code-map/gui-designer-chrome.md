@@ -85,7 +85,9 @@ resolved style.
 - `toolbar/cascade.ts` — the cascade LAYERS below one item, read ONCE:
   `cascadeContext(read, path, floor?)` → `CascadeContext` (item,
   registry, defaults, ancestors, floor; every layer read try/caught and
-  narrowed).
+  narrowed). `styleValue(key, raw)` is the one per-layer value reader: a key
+  whose wire form can be a MAP (`textCombineUpright: { digits: N }`) reads
+  through its codec, every other key through `display`.
 - `toolbar/effective.ts` — cascade-EFFECTIVE resolution over a prepared
   context — the ONE mirror the toolbar AND the panel's decoration tab consume:
   `effectiveValueIn(ctx, key)` / `effectiveStyles(…)` → per key

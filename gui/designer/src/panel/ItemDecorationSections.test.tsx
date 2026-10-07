@@ -64,14 +64,28 @@ const commit = (label: string, value: string) => {
 describe('which sections a type gets', () => {
   it('gives text every section, the text one open first', () => {
     open(doc('{ type: text, text: hi }'));
-    expect(sectionTitles()).toEqual(['Text', 'Overflow', 'Fill and border', 'Opacity', 'Styles']);
+    expect(sectionTitles()).toEqual([
+      'Text',
+      'Vertical text & line breaks',
+      'Overflow',
+      'Fill and border',
+      'Opacity',
+      'Styles',
+    ]);
     expect(screen.getByLabelText('Font size')).not.toBeNull();
     expect(screen.queryByLabelText('Background')).toBeNull();
   });
 
   it('gives a page number the same text set as a text item', () => {
     open(doc('{ type: page_number }'));
-    expect(sectionTitles()).toEqual(['Text', 'Overflow', 'Fill and border', 'Opacity', 'Styles']);
+    expect(sectionTitles()).toEqual([
+      'Text',
+      'Vertical text & line breaks',
+      'Overflow',
+      'Fill and border',
+      'Opacity',
+      'Styles',
+    ]);
     expect(screen.getByLabelText('Vertical alignment')).not.toBeNull();
     expect(screen.getByRole('checkbox', { name: 'Strikethrough' })).not.toBeNull();
   });
@@ -80,7 +94,13 @@ describe('which sections a type gets', () => {
     open(doc('{ type: list, data: { key: rows } }'));
     fireEvent.click(screen.getByRole('button', { name: 'About Text' }));
     expect(screen.getByText(/drawn on one line/)).not.toBeNull();
-    expect(sectionTitles()).toEqual(['Text', 'Fill and border', 'Opacity', 'Styles']);
+    expect(sectionTitles()).toEqual([
+      'Text',
+      'Vertical text & line breaks',
+      'Fill and border',
+      'Opacity',
+      'Styles',
+    ]);
     expect(screen.getByLabelText('Letter spacing')).not.toBeNull();
     expect(screen.getByRole('checkbox', { name: 'Strikethrough' })).not.toBeNull();
     expect(screen.queryByLabelText('Vertical alignment')).toBeNull();
@@ -88,7 +108,14 @@ describe('which sections a type gets', () => {
 
   it('gives a container the inherited text keys, explained, and its own overflow', () => {
     open(doc('{ type: container, items: [] }'));
-    expect(sectionTitles()).toEqual(['Text', 'Overflow', 'Fill and border', 'Opacity', 'Styles']);
+    expect(sectionTitles()).toEqual([
+      'Text',
+      'Vertical text & line breaks',
+      'Overflow',
+      'Fill and border',
+      'Opacity',
+      'Styles',
+    ]);
     openSection('Text');
     expect(screen.getByLabelText('Letter spacing')).not.toBeNull();
     // Not inherited, so nothing inside would ever draw them.

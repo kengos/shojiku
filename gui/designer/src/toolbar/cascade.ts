@@ -12,11 +12,21 @@
 import { formatPath, parsePath, type ReadFn } from '@shojiku/designer-core';
 import { columnPathInfo } from '../panel/columnsModel';
 import { display } from '../panel/itemView';
+import { combineToken } from '../panel/typesettingModel';
 
 export function record(value: unknown): Record<string, unknown> | undefined {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined;
+}
+
+/** One style value as the display string every resolution compares. A key
+ * whose wire form can be a MAP reads through its own codec — without it a
+ * `textCombineUpright: { digits: 2 }` in a named style or an ancestor resolves
+ * as unset. Every other key keeps `display` (a map there is not a value the
+ * panel shows). */
+export function styleValue(key: string, raw: unknown): string {
+  return key === 'textCombineUpright' ? combineToken(raw) : display(raw);
 }
 
 function stringList(value: unknown): string[] {
@@ -46,7 +56,7 @@ export function namedValue(
     if (!Object.hasOwn(registry, name)) {
       continue;
     }
-    const value = display(record(registry[name])?.[key]);
+    const value = styleValue(key, record(registry[name])?.[key]);
     if (value !== '') {
       return { value, styleName: name };
     }
@@ -61,7 +71,7 @@ export function levelValue(
   registry: Record<string, unknown>,
   key: string,
 ): string {
-  const own = display(record(item.style)?.[key]);
+  const own = styleValue(key, record(item.style)?.[key]);
   if (own !== '') {
     return own;
   }
