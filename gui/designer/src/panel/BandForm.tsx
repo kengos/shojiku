@@ -1,5 +1,5 @@
 // The form a header/footer band selection opens: which pages the band prints
-// on, and how tall it is. Before this existed a band was readable in the layer
+// on, how tall it is, and removing it (`BandDelete`). Before this existed a band was readable in the layer
 // tree and editable nowhere — not even in the 13 bundled presets that author
 // one — so `repeat`/`height` could only ever be changed by hand-editing YAML.
 //
@@ -12,6 +12,7 @@ import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { BAND_LABEL_KEYS, type BandName } from '../insert/bandCreate';
 import { PANEL, SECTION_TITLE } from '../ui/chrome';
+import { BandDelete } from './BandDelete';
 import {
   BAND_REPEATS,
   bandHeightOp,
@@ -77,6 +78,7 @@ export function BandForm({ controller, path, band }: BandFormProps) {
           }
         />
         <p className="m-0 text-sm text-muted">{t('panel.band.heightHint')}</p>
+        <BandDelete controller={controller} path={path} band={band} />
       </section>
     </aside>
   );

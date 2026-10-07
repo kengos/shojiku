@@ -15,6 +15,27 @@ platform binaries.
 
 ### Added
 
+- **Set up the page body and remove a header or footer in the Designer.**
+  Selecting 本文 in the layer tree now opens its own panel instead of the
+  ordinary item panel, whose name field could write an `id:` the body does
+  not take and stop the document from opening. There the body can be switched
+  between 流し込み (items stack and continue onto the next pages) and 自由配置
+  (each item fixed at its own position on page 1): switching to 自由配置 pins
+  every item — lines included — where the preview drew it, and asks first,
+  listing each change that happens: items that start on page 2 or later are
+  deleted (a fixed-position body draws everything on page 1, where they would
+  overlap), items that run past page 1 are cut there, items the preview did
+  not draw (hidden by a condition in the sample data) go to the top of page 1,
+  repeats and page breaks are skipped, and tables lose their page-break
+  settings (`repeatHeader` / `autoPageBreak` / `keepTogether`), which only act
+  in a flowing body. Switching back stacks the items top to bottom in the
+  order they appeared, starting where the topmost one was and stopping above
+  the footer. Either switch is one undo step. A flowing body also gets 「要素の間隔」 and its area on the
+  page (「本文の範囲」, empty = everything inside the margins; filling in one
+  field fills the others with their whole-area values). A
+  header or footer band can now be deleted from its own panel, with a
+  confirmation saying how many items go with it.
+
 - **Arrange and size the frame of a repeat and the cards of a repeat_flow,
   and space the cards, in the Designer.** A repeat's cell frame and a
   repeat_flow's card frame now carry the same 「子の並べ方」 as a container —

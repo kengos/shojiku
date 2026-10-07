@@ -17,6 +17,8 @@ import { useI18n } from '../i18n/context';
 import { readDefinitionsView } from '../palette/model';
 import { TOUR_ANCHORS } from '../tutorial/anchors';
 import { PANEL_FLUSH } from '../ui/chrome';
+import { BodyForm } from './BodyForm';
+import { BODY_PATH } from './bodyModel';
 import { CellPanel } from './CellPanel';
 import { columnPathInfo } from './columnsModel';
 import { ItemPanel } from './ItemPanel';
@@ -113,6 +115,12 @@ export function PropertyPanel({
     // What the document IS, and the way into the document-settings view (the
     // settings themselves live there now, not in the panel).
     return <NoSelectionCard controller={controller} onOpenDocument={onOpenDocument} />;
+  }
+
+  // The body is a section, not an item: its own form, with no name field (a
+  // body takes no `id:`) and the flow/placed switch.
+  if (subject.path === BODY_PATH) {
+    return <BodyForm controller={controller} geometry={geometry} />;
   }
 
   // A table column is never an item, whatever its `type:` says: `type: image`

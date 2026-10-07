@@ -318,6 +318,36 @@ export const ja: LanguageCatalog = {
     'panel.band.repeat.except_first_page': '2 ページ目以降',
     'panel.band.repeat.last_page': '最終ページだけ',
     'panel.band.height': '高さ',
+    'panel.band.delete.header': 'ヘッダーを削除',
+    'panel.band.delete.footer': 'フッターを削除',
+    'panel.band.delete.body': '中の要素（{count} 個）も一緒に削除されます（元に戻せます）。',
+    'panel.band.delete.confirm': '削除する',
+    'panel.band.delete.cancel': 'キャンセル',
+    'panel.body.title': '本文',
+    'panel.body.mode': '配置方法',
+    'panel.body.mode.flow': '流し込み',
+    'panel.body.mode.absolute': '自由配置',
+    'panel.body.mode.waitPreview': 'プレビューの更新が終わると選べます。',
+    'panel.body.mode.tooMany':
+      '要素が多すぎるため切り替えできません。要素を減らすと切り替えられます。',
+    'panel.body.mode.flowHint': '上から順に並べ、入りきらない分は次のページへ送ります。',
+    'panel.body.mode.absoluteHint': '各要素を指定した位置に、1ページ目だけに置きます。',
+    'panel.body.toAbsolute.title': '自由配置にしますか？',
+    'panel.body.toAbsolute.pastFirstPage':
+      '2ページ目以降から始まる要素は削除されます（自由配置は1ページ目のみ）：{count} 個',
+    'panel.body.toAbsolute.continued':
+      '1ページ目に収まらず、1ページ目の終わりで切れる要素：{count} 個',
+    'panel.body.toAbsolute.unplaced':
+      '位置が分からない要素（サンプルデータで非表示になっているものなど）。1ページ目の先頭に置かれます：{count} 個',
+    'panel.body.toAbsolute.flowOnly': '無視される繰り返し・改ページ：{count} 個',
+    'panel.body.toAbsolute.tablePaging': '改ページ設定が外れる表（流し込みでのみ有効）：{count} 個',
+    'panel.body.toAbsolute.undo': '元に戻せます。',
+    'panel.body.toAbsolute.confirm': '切り替える',
+    'panel.body.toAbsolute.cancel': 'キャンセル',
+    'panel.body.gap': '要素の間隔',
+    'panel.body.region': '本文の範囲',
+    'panel.body.regionHint':
+      'すべて空欄にすると余白の内側全体を使います。X・Y は余白の内側の左上からの位置です。',
     'panel.band.heightHint': '帯の目安の高さです。中の項目はページ座標で置かれます。',
     'panel.pageFormat': '書式',
     'panel.pageFormat.hint':

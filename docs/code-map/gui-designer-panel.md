@@ -1028,8 +1028,50 @@ presence is not a text binding.
 - `panel/BandForm.tsx` — the form itself: the repeat select (a document's
   unknown mode keeps its own option) + a `StepperField` height in pt. The
   ONLY surface that edits a band's `repeat`/`height`; before it existed
-  even the bundled presets that author a band could not change either.
-- `panel/PropertyPanel.tsx` — the thin router: item → `ItemPanel`,
+  even the bundled presets that author a band could not change either. Ends
+  with `BandDelete.tsx`: one `removeKey ['sections', band]` (one undo brings
+  the band back whole) and the selection cleared — at once for an empty band,
+  behind a Modal stating the item count otherwise. The band's own button, not
+  the Delete key: every list-entry delete path is unchanged.
+- `panel/bodyModel.ts` (pure) — the flowing body: `bodyMode`,
+  `toAbsoluteOps` (fresh geometry required; drops the flow-only `gap`/`box`
+  an absolute body refuses, pins each boxed child at its page-1 border rect
+  − margin origin − its own margin, rebases each unanchored line, and
+  DELETES the children that start after page 1 — an absolute body draws
+  every item on its one page, so they would land on top of page 1; it
+  COUNTS everything that changes for the confirm (`AbsoluteLoss`): those
+  deletions, children that continue past page 1, children the preview did
+  not draw (hidden under the sample data — kept, at the top of page 1),
+  `repeat`/`repeat_flow`/`page_break`, and the tables whose
+  `TABLE_PAGINATION_KEYS` it removes — they act only on a table directly in
+  a flowing body). `'tooMany'` over `MAX_BATCH_OPS`, `null` without fresh
+  geometry.
+- `panel/bodyFlow.ts` (pure) — `toFlowOps`, the way back: stable
+  top-to-bottom reorder by y then x via `moveItem`, each `y` dropped unless
+  it would empty a required box, each line rebased to its top endpoint, and
+  a region from `bodyRegion.topRegion` so the topmost child keeps its `y`
+  instead of landing under a header band. `'tooMany'` over the cap.
+- `panel/bodyLines.ts` (pure) — a `line` in the switch: its `from`/`to` are
+  cursor-relative in a flow and margin-relative in an absolute body, so the
+  switch rebases them (`linePinOps` by the preview's placed box, `lineFlowOps`
+  by the top endpoint); an anchored line is absolutely placed in both and is
+  left alone; `%`/em endpoints cannot be rebased and are counted.
+- `panel/bodyRegion.ts` (pure) — the body region is a WHOLE `BoxSpec` on the
+  wire (x/y/w/h all required; a partial one is a parse error): `regionOps`
+  completes a one-axis field edit with the whole-margin-box values
+  (`REGION_DEFAULTS` 0/0/100%/100%) and removes the region once every axis
+  is back at them; `topRegion` is the switch-back region — from the topmost
+  child's `y` down to the footer band (the engine does not keep a flow out
+  of the bands), `null` without an exact page height.
+- `panel/BodyForm.tsx` — what `sections.body` opens (routed by
+  `PropertyPanel` before the item arm, so the body never shows the name
+  field — a body takes no `id:`): the flow / fixed-position `Segmented` (the
+  other option disabled with a reason — no fresh preview yet, or too many
+  items for one batch; a confirm listing only the changes that happen), the mode's hint, and for a flowing
+  body `BodyRegionFields.tsx` (`gap` through `relativeGapOp`, the region's
+  x/y/w/h through `BoxAxisField` with `complete` = `regionOps`, w/h
+  placeholders `100%`, a hint saying empty = inside the margins).
+- `panel/PropertyPanel.tsx` — the thin router: the body → `BodyForm`, item → `ItemPanel`,
   anything with no `type:` of its own — and any table column, whose `type:`
   names its KIND, not an item's → `CellPanel` (which picks
   `BandForm` / `ColumnForm` / `GroupForm` / `FrameForm` / the unsupported

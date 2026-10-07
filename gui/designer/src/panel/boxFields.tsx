@@ -30,6 +30,7 @@ export function BoxAxisField({
   path,
   controller,
   emptyHint,
+  complete,
 }: {
   readonly label: string;
   readonly authored: string;
@@ -41,6 +42,9 @@ export function BoxAxisField({
   /** What an EMPTY width/height means here, shown as the placeholder (a frame
    * fills its slot, a card fits its content) — omitted, it stays blank. */
   readonly emptyHint?: string;
+  /** Turns the one-axis edit into the batch to apply — for a box the wire takes
+   * only whole (the body's region). Omitted, the edit applies as it is. */
+  readonly complete?: (op: Op | null) => Op[] | null;
 }) {
   const { t } = useI18n();
   const seeded = authored === '' && seed !== null && seed !== undefined;
@@ -56,7 +60,16 @@ export function BoxAxisField({
   // over those would contradict the engine's own `invalid_length` diagnostic.
   const relative = isRelativeLength(value);
   const keys = ['box', axis];
-  const dispatch = (op: Op | null) => applyPanelOp(controller, op);
+  const dispatch = (op: Op | null) => {
+    if (complete === undefined) {
+      applyPanelOp(controller, op);
+      return;
+    }
+    const ops = complete(op);
+    if (ops !== null) {
+      controller.applyAll(ops);
+    }
+  };
   return (
     <StepperField
       label={label}

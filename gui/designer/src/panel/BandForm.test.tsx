@@ -205,3 +205,55 @@ describe('BandForm height refusal', () => {
     });
   });
 });
+
+describe('BandForm — deleting the band', () => {
+  it('removes an EMPTY band at once, as one op, and clears the selection', () => {
+    const controller = form(AUTHORED);
+    fireEvent.click(screen.getByText('Delete footer'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      keys: ['sections', 'footer'],
+    });
+    expect(controller.clearSelection).toHaveBeenCalled();
+  });
+
+  it('asks first when the band holds items, saying how many go with it', () => {
+    const controller = form({ ...AUTHORED, items: [{ type: 'text' }, { type: 'text' }] }, 'header');
+    fireEvent.click(screen.getByText('Delete header'));
+    expect(controller.apply).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('Items in it: 2. They are deleted with it (you can undo).'),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByText('Delete'));
+    expect(controller.apply).toHaveBeenCalledWith({
+      op: 'removeKey',
+      keys: ['sections', 'header'],
+    });
+  });
+
+  it('cancelling the confirm deletes nothing', () => {
+    const controller = form({ ...AUTHORED, items: [{ type: 'text' }] });
+    fireEvent.click(screen.getByText('Delete footer'));
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(controller.apply).not.toHaveBeenCalled();
+    expect(controller.clearSelection).not.toHaveBeenCalled();
+  });
+
+  it('keeps the selection when the removal is refused', () => {
+    const controller = form(AUTHORED);
+    (controller.apply as ReturnType<typeof vi.fn>).mockReturnValue({
+      ok: false,
+      error: { code: 'key_not_found', message: 'x' },
+    });
+    fireEvent.click(screen.getByText('Delete footer'));
+    expect(controller.clearSelection).not.toHaveBeenCalled();
+  });
+});
+
+it('Escape dismisses the band-delete confirm without deleting', () => {
+  const controller = form({ ...AUTHORED, items: [{ type: 'text' }] });
+  fireEvent.click(screen.getByText('Delete footer'));
+  fireEvent.keyDown(document, { key: 'Escape' });
+  expect(controller.apply).not.toHaveBeenCalled();
+});
