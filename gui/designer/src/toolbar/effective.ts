@@ -19,7 +19,15 @@
 import type { ReadFn } from '@shojiku/designer-core';
 import { INHERITED_STYLE_FIELDS } from '../panel/defaultsModel';
 import { display } from '../panel/itemView';
-import { type CascadeContext, cascadeContext, levelValue, namedValue, record } from './cascade';
+import { TYPESETTING_KEYS } from '../panel/typesettingModel';
+import {
+  type CascadeContext,
+  cascadeContext,
+  levelValue,
+  namedValue,
+  record,
+  styleValue,
+} from './cascade';
 
 /** The style keys the toolbar renders/edits. */
 export const TOOLBAR_STYLE_KEYS = [
@@ -57,11 +65,14 @@ export type EffectiveStyles = Readonly<Record<ToolbarStyleKey, EffectiveValue>>;
 
 /** Inherited properties (the ancestor/defaults layers apply only to these —
  * among the toolbar's keys everything but `backgroundColor`). `letterSpacing`
- * inherits too (docs/engine/style.md) though the defaults editor does not offer
- * it, so it is named here rather than through that editor's field list. */
+ * and the typesetting keys inherit too (docs/engine/style.md;
+ * `ComputedStyle::base` in `engine/layout/src/style.rs` copies all six) though
+ * the defaults editor does not offer them, so they are named here rather than
+ * through that editor's field list. */
 const INHERITED_KEYS: ReadonlySet<string> = new Set([
   ...INHERITED_STYLE_FIELDS.map((f) => f.key),
   'letterSpacing',
+  ...TYPESETTING_KEYS,
 ]);
 
 /** One style key's cascade-effective value over a prepared context — THE mirror
@@ -71,7 +82,7 @@ const INHERITED_KEYS: ReadonlySet<string> = new Set([
  * below it, named styles (later wins), then — for INHERITED keys only —
  * container ancestors innermost-out, then `defaults.style`. */
 export function effectiveValueIn(ctx: CascadeContext, key: string): EffectiveValue {
-  const own = display(record(ctx.item.style)?.[key]);
+  const own = styleValue(key, record(ctx.item.style)?.[key]);
   let cascade = '';
   let origin: StyleOrigin = 'unset';
   let styleName = '';
@@ -90,7 +101,7 @@ export function effectiveValueIn(ctx: CascadeContext, key: string): EffectiveVal
       }
     }
     if (cascade === '') {
-      const fromDefaults = display(ctx.defaults[key]);
+      const fromDefaults = styleValue(key, ctx.defaults[key]);
       if (fromDefaults !== '') {
         cascade = fromDefaults;
         origin = 'default';

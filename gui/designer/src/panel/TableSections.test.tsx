@@ -272,12 +272,13 @@ describe('the header-group list', () => {
 });
 
 describe('the decoration tab', () => {
-  it('lists the seven sections in order and opens only the table style', () => {
+  it('lists the eight sections in order and opens only the table style', () => {
     draw();
     styleTab();
     expect(sections()).toEqual([
       'table.style',
       'table.text',
+      'table.typesetting',
       'table.border',
       'table.headerBand',
       'table.bodyBand',

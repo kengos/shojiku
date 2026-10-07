@@ -15,6 +15,23 @@ platform binaries.
 
 ### Added
 
+- **Write text vertically, and set the Japanese line-breaking rules, in the
+  Designer.** The Style tab has a new 「縦書き・禁則」 section for text, page
+  numbers, lists, tables and containers: text direction (横書き / 縦書き),
+  and for vertical text the character orientation and 縦中横 (two to four
+  digits, or the whole text, set horizontally in one character space); then
+  the line-break rules (禁則処理: standard, 強い禁則, 弱い禁則 or none),
+  bracket and punctuation spacing (括弧・句読点の詰め) and hanging punctuation
+  (句読点のぶら下げ).
+  Each type gets only the settings its text actually takes — a list, whose
+  entries never wrap, gets the vertical three — and the two vertical-only
+  settings appear once the text is vertical, or while one is still set. A
+  container or table passes its settings to the text it holds, and a value
+  that comes from there, from a named style or from the document defaults is
+  shown with where it came from. On a text that is circled (`mark:`), the
+  section says the circle is not drawn while the text is vertical, which is
+  what the engine does. Until now these were only reachable by editing the
+  template by hand or through the AI copilot.
 - **Set up the page body and remove a header or footer in the Designer.**
   Selecting 本文 in the layer tree now opens its own panel instead of the
   ordinary item panel, whose name field could write an `id:` the body does

@@ -1,51 +1,33 @@
 // Every non-table item's decoration tab, as collapsible sections in the order
-// a presentation app's format panel uses: the text, what happens when it does
-// not fit, fill and border, opacity, and the named styles. A section is
+// a presentation app's format panel uses: the text and its vertical writing
+// and line breaking (`itemTextSections`), what happens when it does not fit,
+// fill and border, opacity, and the named styles. A section is
 // rendered only when the item's TYPE honours at least one of its controls
-// (`styleSurfaces`) and the engine declares it — an empty section would be a
+// (`styleSurfaces`; `typesettingModel` for the typesetting section) and the engine declares it — an empty section would be a
 // heading that opens onto nothing. The first section starts open, except that
 // a container opens on its fill (`openingSection`).
 
-import type { ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import { cascadeContext } from '../toolbar/cascade';
 import { effectiveValueIn } from '../toolbar/effective';
 import { FillBorderFields, hasFillBorder } from './FillBorderFields';
-import { ItemTextFields } from './ItemTextFields';
 import type { ItemPanelProps } from './itemPanelProps';
-import {
-  enumSummary,
-  fillSectionSummary,
-  itemTextSummary,
-  opacitySummary,
-} from './itemSectionSummaries';
+import { enumSummary, fillSectionSummary, opacitySummary } from './itemSectionSummaries';
+import { type ItemSection, textSections } from './itemTextSections';
 import { STYLE_NAMES_WIRE_TYPES } from './itemView';
 import { OpacityField } from './OpacityField';
 import { OverflowField, overflowOffered } from './OverflowFields';
 import { PanelSection } from './PanelSection';
 import { FieldHelp } from './panelHelpers';
 import { StyleNamesPicker } from './StyleNamesPicker';
-import type { SectionId } from './sectionOpenState';
 import {
   fillTitleKey,
   OPACITY_DECORATION_ONLY,
   opacityOffered,
   openingSection,
   overflowKeyOf,
-  TEXT_INHERIT_TYPES,
-  TEXT_SURFACE_TYPES,
-  textHelpKey,
 } from './styleSurfaces';
 import { styleNamesSummary } from './tableDecorationSummaries';
-import { readBand } from './tableStyleModel';
-
-interface Section {
-  readonly id: SectionId;
-  readonly title: string;
-  readonly summary: string;
-  readonly help?: string;
-  readonly body: ReactNode;
-}
 
 export function ItemDecorationSections(props: ItemPanelProps) {
   const i18n = useI18n();
@@ -54,23 +36,9 @@ export function ItemDecorationSections(props: ItemPanelProps) {
   const { type } = view;
   const ctx = cascadeContext(controller.read, path, props.floor);
   const own = (key: string) => effectiveValueIn(ctx, key).own;
-  const sections: Section[] = [];
+  const sections: ItemSection[] = [];
 
-  if (TEXT_SURFACE_TYPES.has(type) || TEXT_INHERIT_TYPES.has(type) || type === 'char_grid') {
-    const helpKey = textHelpKey(type);
-    sections.push({
-      id: 'item.text',
-      title: t('panel.itemSection.text.title'),
-      summary: itemTextSummary(
-        i18n,
-        readBand(controller.read(path)),
-        own('letterSpacing'),
-        own('textDecoration'),
-      ),
-      help: helpKey === undefined ? undefined : t(helpKey),
-      body: <ItemTextFields props={props} ctx={ctx} />,
-    });
-  }
+  sections.push(...textSections(props, ctx, i18n));
   const overflowKey = overflowKeyOf(type);
   if (overflowKey !== null && overflowOffered(overflowKey, capabilities)) {
     sections.push({

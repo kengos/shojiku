@@ -99,6 +99,13 @@ import {
 } from '../panel/tableSettingsOps';
 import { bandStyleOp } from '../panel/tableStyleOps';
 import { decorationToggleOp, letterSpacingOp, opacityOp } from '../panel/textLookOps';
+import {
+  combineToken,
+  type TypesettingKey,
+  typesettingKeys,
+  typesettingOp,
+  typesettingOptions,
+} from '../panel/typesettingModel';
 import { extendParams } from '../sample/generate';
 import { buildStyleUsage } from '../styles/usage';
 import { commitOps } from '../text/declCommit';
@@ -4194,5 +4201,97 @@ describe('anchoring by picking, in a document with no names, resolved by the rea
     expect(line).toBeDefined();
     expect((line?.x ?? 0) + (line?.w ?? 0)).toBeCloseTo(220, 0);
     expect((line?.y ?? 0) + (line?.h ?? 0)).toBeCloseTo(120, 0);
+  });
+});
+
+describe('the vertical text & line-break section against the real engine', () => {
+  const TEXT = 'sections.body.items[0]';
+  const SOURCE = [
+    'page: { size: A4, margin: 30 }',
+    'sections:',
+    '  footer:',
+    '    repeat: every_page',
+    '    height: 40',
+    '    items:',
+    '      - { type: page_number, box: { x: 0, y: 0, w: 60, h: 30 } }',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - { type: text, text: "Ab 2026 x, y.", box: { w: 120, h: 80 } }',
+    '      - { type: list, data: { key: rows }, text: "{a}", box: { w: 40, h: 60 } }',
+    '      - type: table',
+    '        data: { key: rows }',
+    '        columns: [{ label: A, data: { key: a } }]',
+    '      - type: container',
+    '        box: { w: 120, h: 80 }',
+    '        items: [{ type: text, text: "Ab 12" }]',
+    '',
+  ].join('\n');
+  const PARAMS = '{"rows":[{"a":"x"}]}';
+  const outcome = async (editor: Editor) => {
+    const result = await transport.renderRaw(editor.text(), PARAMS, undefined, { scale: 1 });
+    expect(result.ok, JSON.stringify(result.diagnostics.items)).toBe(true);
+    if (result.inspect === null) throw new Error('inspect missing');
+    return {
+      codes: result.diagnostics.items.filter((d) => d.severity !== 'info').map((d) => d.code),
+      boxes: result.inspect.boxes.pages[0],
+    };
+  };
+  const own = (editor: Editor, path: string, key: TypesettingKey) => {
+    const raw = (editor.read(path) as { style?: Record<string, unknown> }).style?.[key];
+    return key === 'textCombineUpright' ? combineToken(raw) : typeof raw === 'string' ? raw : '';
+  };
+  const pickAll = async (editor: Editor, path: string, key: TypesettingKey) => {
+    for (const option of typesettingOptions(key, undefined)) {
+      const op = typesettingOp(path, key, own(editor, path, key), option);
+      if (op !== null) expect(editor.apply(op).ok).toBe(true);
+      const { codes } = await outcome(editor);
+      // Every option the section offers parses and draws without a warning.
+      expect(codes, `${path} ${key}: ${option}`).toEqual([]);
+    }
+  };
+
+  it('every key and option the section writes on a text item renders warning-clean', async () => {
+    const editor = Editor.create(SOURCE);
+    expect((await outcome(editor)).codes).toEqual([]);
+    const subject = { type: 'text', hasSpans: false, vertical: true };
+    for (const key of typesettingKeys(subject, undefined)) {
+      await pickAll(editor, TEXT, key);
+    }
+    // The sweep above ends on vertical writing, so the line-breaking family ran
+    // vertical only; run it again on the horizontal text it more often styles.
+    const back = typesettingOp(TEXT, 'writingMode', own(editor, TEXT, 'writingMode'), '');
+    expect(back !== null && editor.apply(back).ok).toBe(true);
+    for (const key of ['lineBreak', 'textSpacingTrim', 'hangingPunctuation'] as const) {
+      await pickAll(editor, TEXT, key);
+    }
+  });
+
+  it('vertical writing on every other surface the section offers it renders warning-clean', async () => {
+    const editor = Editor.create(SOURCE);
+    const paths: [string, string][] = [
+      ['sections.footer.items[0]', 'page_number'],
+      ['sections.body.items[1]', 'list'],
+      ['sections.body.items[2]', 'table'],
+      ['sections.body.items[3]', 'container'],
+    ];
+    for (const [path, type] of paths) {
+      const subject = { type, hasSpans: false, vertical: true };
+      for (const key of typesettingKeys(subject, undefined)) {
+        await pickAll(editor, path, key);
+      }
+    }
+  });
+
+  it('turning a text vertical changes what the engine draws (the positive control)', async () => {
+    const editor = Editor.create(SOURCE);
+    const metrics = async () => {
+      const text = (await outcome(editor)).boxes.find((b) => b.path === TEXT)?.text;
+      return text === undefined ? 'none' : 'columns' in text ? 'columns' : 'lines';
+    };
+    expect(await metrics()).toBe('lines');
+    const op = typesettingOp(TEXT, 'writingMode', '', 'vertical_rl');
+    expect(op !== null && editor.apply(op).ok).toBe(true);
+    expect(await metrics()).toBe('columns');
   });
 });

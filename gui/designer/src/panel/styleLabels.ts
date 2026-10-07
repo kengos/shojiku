@@ -41,6 +41,40 @@ const OPTION_KEYS: Readonly<Record<string, Readonly<Record<string, string>>>> = 
     visible: 'style.value.overflow.visible',
     hidden: 'style.value.overflow.hidden',
   },
+  // The typesetting keys (`typesettingModel`); `textCombineUpright` is keyed by
+  // the select's TOKENS, its `{ digits: N }` map read as `digitsN`.
+  writingMode: {
+    horizontal_tb: 'style.value.writingMode.horizontal_tb',
+    vertical_rl: 'style.value.writingMode.vertical_rl',
+  },
+  textOrientation: {
+    mixed: 'style.value.textOrientation.mixed',
+    upright: 'style.value.textOrientation.upright',
+  },
+  textCombineUpright: {
+    none: 'style.value.textCombineUpright.none',
+    digits2: 'style.value.textCombineUpright.digits2',
+    digits3: 'style.value.textCombineUpright.digits3',
+    digits4: 'style.value.textCombineUpright.digits4',
+    all: 'style.value.textCombineUpright.all',
+    invalid: 'style.value.textCombineUpright.invalid',
+  },
+  lineBreak: {
+    normal: 'style.value.lineBreak.normal',
+    strict: 'style.value.lineBreak.strict',
+    loose: 'style.value.lineBreak.loose',
+    anywhere: 'style.value.lineBreak.anywhere',
+  },
+  textSpacingTrim: {
+    space_all: 'style.value.textSpacingTrim.space_all',
+    normal: 'style.value.textSpacingTrim.normal',
+    trim_start: 'style.value.textSpacingTrim.trim_start',
+  },
+  hangingPunctuation: {
+    none: 'style.value.hangingPunctuation.none',
+    allow_end: 'style.value.hangingPunctuation.allow_end',
+    force_end: 'style.value.hangingPunctuation.force_end',
+  },
 };
 
 /** A translate function of the shape `useI18n().t`. */

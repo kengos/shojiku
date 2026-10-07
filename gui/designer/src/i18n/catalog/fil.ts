@@ -871,6 +871,43 @@ export const fil: LanguageCatalog = {
     'panel.field.overflow': 'Overflow ng nilalaman',
     'panel.field.opacity': 'Opacity',
     'panel.itemSection.text.title': 'Teksto',
+    'panel.itemSection.typesetting.title': 'Patayong teksto at line break',
+    'panel.itemSection.typesetting.inheritHelp':
+      'Nalalapat ang mga setting na ito sa teksto sa loob ng container na ito, maliban kung may sariling setting ang teksto.',
+    'panel.itemSection.typesetting.tableHelp':
+      'Nalalapat ang mga setting na ito sa teksto ng bawat cell, maliban kung may sariling setting ang column o row.',
+    'panel.itemSection.typesetting.markVertical':
+      'Hindi iginuguhit ang bilog sa paligid ng tekstong ito habang patayo ito.',
+    'panel.itemSection.typesetting.notSet': '(Hindi nakatakda)',
+    'panel.itemSection.typesetting.invalidOwn':
+      'Invalid na value (piliin ang “{notSet}” para alisin)',
+    'panel.field.writingMode': 'Direksyon ng pagsulat',
+    'panel.field.textOrientation': 'Oryentasyon ng mga character',
+    'panel.field.textCombineUpright': 'Pahalang sa loob ng patayo',
+    'panel.field.lineBreak': 'Panuntunan sa paghati',
+    'panel.field.textSpacingTrim': 'Espasyo ng bantas',
+    'panel.field.hangingPunctuation': 'Nakabiting bantas',
+    'style.value.writingMode.horizontal_tb': 'Pahalang',
+    'style.value.writingMode.vertical_rl': 'Patayo',
+    'style.value.textOrientation.mixed': 'Nakatagilid ang Latin at numero',
+    'style.value.textOrientation.upright': 'Lahat ay nakatayo',
+    'style.value.textCombineUpright.none': 'Naka-off',
+    'style.value.textCombineUpright.digits2': 'Hanggang 2 digit',
+    'style.value.textCombineUpright.digits3': 'Hanggang 3 digit',
+    'style.value.textCombineUpright.digits4': 'Hanggang 4 digit',
+    'style.value.textCombineUpright.all': 'Buong teksto sa isang character',
+    'style.value.textCombineUpright.invalid': 'Invalid na value',
+    'style.value.lineBreak.normal': 'Karaniwan',
+    'style.value.lineBreak.strict': 'Mahigpit',
+    'style.value.lineBreak.loose': 'Maluwag',
+    'style.value.lineBreak.anywhere': 'Kahit saan (walang tuntunin)',
+    'style.value.textSpacingTrim.space_all': 'Huwag bawasan',
+    'style.value.textSpacingTrim.normal': 'Bawasan ang magkakatabing bantas',
+    'style.value.textSpacingTrim.trim_start':
+      'Bawasan din ang pambukas na panaklong sa simula ng linya',
+    'style.value.hangingPunctuation.none': 'Naka-off',
+    'style.value.hangingPunctuation.allow_end': 'Kapag lilipat lang ng linya',
+    'style.value.hangingPunctuation.force_end': 'Laging sa dulo ng linya',
     'panel.itemSection.text.inheritHelp':
       'Walang sariling teksto ang container. Ginagamit ng mga item sa loob nito ang mga setting na ito maliban kung may sarili silang halaga.',
     'panel.itemSection.text.charGridHelp':
