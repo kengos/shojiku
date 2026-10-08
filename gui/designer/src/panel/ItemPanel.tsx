@@ -26,6 +26,7 @@ import { readLinePoints } from './linePoints';
 import { applicableTabs, type PanelTab, placementBody, tabLessNoteKey } from './panelTabs';
 import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
 import { RepeatSection } from './RepeatSection';
+import { RubySection } from './RubySection';
 import { StyleSection } from './StyleSection';
 import { VisibilitySection } from './VisibilitySection';
 
@@ -55,6 +56,8 @@ export function ItemPanel(props: ItemPanelProps) {
       <>
         <ContentSection {...props} />
         <LinkField {...props} />
+        {/* Keyed by path: its add row holds a draft that belongs to ONE item. */}
+        <RubySection key={props.path} {...props} />
       </>
     ) : tab === 'style' ? (
       <StyleSection {...props} />

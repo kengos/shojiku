@@ -391,6 +391,9 @@ export const ja: LanguageCatalog = {
     'help.rulingWidth.title': 'マス目を描く線',
     'help.rulingWidth.body':
       '原稿用紙のマスを区切る線の太さです。未指定なら 0.5pt で引かれ、0 を選ぶと線そのものが消えます。',
+    'help.ruby.title': '文字に添える読みがな',
+    'help.ruby.body':
+      '各行のルビを対象の文字に小さく添えます（横書きは上、縦書きは右）。リストの上から順に、印刷される文字の中から、前の行が一致した位置より後ろで最初に見つかった箇所に振ります。見つからない行は振られません。データ項目では、差し込まれる値の中から探します。',
     'help.rubySize.title': '漢字に添えるふりがな',
     'help.rubySize.body': 'ルビの文字サイズです。未指定ならマスの 0.4 倍で描きます。',
     'help.kinsoku.title': '行頭に置けない文字',
@@ -1193,6 +1196,27 @@ export const ja: LanguageCatalog = {
       'リンク先にできるのはウェブアドレス・メールアドレス・電話番号だけです。http:// / https:// / mailto: / tel: のいずれかで始めてください。',
     'panel.link.problem.tooLong':
       'このアドレスは {max} バイトを超えています。PDF のリンクが持てる長さより長くなりました。',
+    'panel.ruby.title': 'ルビ（ふりがな）',
+    'panel.ruby.spacing':
+      'ルビは行と行のあいだに描かれ、そのために行の間隔は広がりません。隣の行に重なるときは「{lineHeight}」を大きくしてください。1行目のルビは枠の外（横書きは上、縦書きは右）にはみ出すので、収めるには「{padding}」を空けてください。',
+    'panel.ruby.unreadable': '読み取れない値',
+    'panel.ruby.unreadableList': 'ルビの設定を読み取れません。',
+    'panel.ruby.unreadableEntry': '読み取れないルビ',
+    'panel.ruby.clear': 'ルビをすべて削除',
+    'panel.ruby.baseOf': '対象の文字 {n}',
+    'panel.ruby.readingOf': 'ルビ {n}',
+    'panel.ruby.remove': '{n} 行目を削除',
+    'panel.ruby.newBase': '追加する対象の文字',
+    'panel.ruby.newReading': '追加するルビ',
+    'panel.ruby.base': '対象の文字',
+    'panel.ruby.reading': 'ルビ',
+    'panel.ruby.add': 'ルビを追加',
+    'panel.ruby.full': 'ルビは1つのテキストに {max} 件までです。',
+    'panel.ruby.tooLong': '反映していません。対象の文字とルビはそれぞれ {max} 文字までです。',
+    'panel.ruby.size': 'ルビの大きさ',
+    'panel.ruby.sizeAuto': '自動',
+    'panel.ruby.sizeDefault': '文字サイズの半分',
+    'panel.ruby.sizeRefused': '6pt、2mm のように指定してください。% は使えません。',
     'panel.charGrid.markup': '本文のルビ記法を解釈する',
     'panel.charGrid.markupSafety':
       'オフのあいだ《》や［＃…］はそのままの文字として並びます。オンにすると、差し込まれたデータの中の記号も記法として読まれます。',

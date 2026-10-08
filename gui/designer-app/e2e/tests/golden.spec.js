@@ -34,7 +34,7 @@ test('open a preset, preview it client-side, and export', async ({ page }) => {
   // `items[1]` is the receipt's static-text line (`items[0]` is data-bound, so
   // its panel shows the binding picker rather than a text field).
   await page.getByRole('button', { name: 'sections.body.items[1]', exact: true }).click();
-  const textField = page.getByRole('textbox', { name: 'Text' });
+  const textField = page.getByRole('textbox', { name: 'Text', exact: true });
   await expect(textField).toBeVisible({ timeout: 30000 });
   const painted = () => canvas.evaluate((el) => el.toDataURL());
   const beforeTyping = await painted();
@@ -319,7 +319,9 @@ test('no tooltip is cut off by the box that clips it', async ({ page }) => {
   // bubbles, and the one this change exists for — is on screen rather than the
   // no-selection card.
   await page.getByRole('button', { name: 'sections.body.items[1]', exact: true }).click();
-  await expect(page.getByRole('textbox', { name: 'Text' })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByRole('textbox', { name: 'Text', exact: true })).toBeVisible({
+    timeout: 30000,
+  });
 
   // A child of the CONTAINER at items[5], on the Layout tab: that is where the
   // placement-mode picker renders, and it is a `Segmented` — the one control
@@ -552,7 +554,9 @@ test.describe('on a 2× display', () => {
     // conversion — the rect carries its own handler — but a broken overlay
     // geometry usually shows up here first.
     await page.getByRole('button', { name: 'sections.body.items[1]', exact: true }).first().click();
-    await expect(page.getByRole('textbox', { name: 'Text' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole('textbox', { name: 'Text', exact: true })).toBeVisible({
+      timeout: 30000,
+    });
 
     expect(pageErrors).toEqual([]);
   });

@@ -62,8 +62,8 @@ pub struct TextItem {
     /// every `Item::Text` (clippy `large_enum_variant`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mark: Option<Box<TextMark>>,
-    /// Ruby (furigana) readings over a vertical block's content — see
-    /// [`super::ruby::RubyPair`]. Bounded by
+    /// Ruby (furigana) readings over the item's drawn text — plain or
+    /// `spans`, horizontal or vertical; see [`super::ruby::RubyPair`]. Bounded by
     /// [`super::ruby::MAX_RUBY_ENTRIES`].
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub ruby: Vec<RubyPair>,

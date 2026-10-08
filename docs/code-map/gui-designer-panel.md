@@ -472,6 +472,45 @@ that answers it per FRAGMENT.
   routes by early return, so an `image` never reaches its bottom). What is left
   here is the two gates and the `linkSurfaceNames` wiring.
 
+## Ruby (`ruby:` / `rubySize` on a text item)
+
+- `panel/rubyModel.ts` (pure) — the read and the write builders. READ keeps
+  ABSENT apart from UNREADABLE: a present non-list `ruby` is `unreadable`
+  (cleared by `clearRubyOp`), an entry the engine cannot parse (not a map, a
+  missing or non-string side, or any other key — `RubyPair` is
+  `deny_unknown_fields`) is a row with `readable: false` so later indices stay
+  true, and a present `rubySize` that
+  reads as nothing is `sizeUnreadable`. WRITE returns `null` rather than author
+  what the engine skips with a warning: an empty side, a side over
+  `MAX_RUBY_CHARS` (64, counted in code points like Rust's `chars().count()`),
+  an entry past `MAX_RUBY_ENTRIES` (256). `addRubyOp` creates the list
+  (`putValue`) or appends (`insertItem` — listed order is the match order);
+  `editRubyOp` is ONE targeted `setScalar` on `ruby[i]`, so siblings keep their
+  bytes and comments; `removeRubyOp` takes the key with the last entry.
+  `rubySizeOp` refuses `%` (the engine resolves it against the PARENT WIDTH via
+  `resolve_x`), zero and signs (they parse, and layout silently swaps in the
+  default) and garbage (a whole-document parse error); `em` is the INHERITED
+  font size. Also `RubyRowsContext`, the rows' input bundle.
+  `rubyWire.test.ts` (node env) reads both caps, the two `TextItem` fields, the
+  `text.ruby` capability and the length grammar from the engine source.
+- `panel/RubySection.tsx` — the content-tab section (see `ItemPanel` for why a
+  sibling): gates on type `text` (the only struct with `ruby`) + capability
+  `text.ruby`; a fixed sentence that readings never push lines apart and that
+  the FIRST line's readings stick out of the box (naming the line-height and
+  padding fields by their label keys); the rows, or an unreadable list's clear button; the length
+  refusal's message; the size as a `NumericComboField` (auto = half the text
+  size, `RUBY_TEXT_SIZE_PRESETS` 5–8pt with samples) whose refusal shows in its
+  hint. An unreadable size is SHOWN as such, so the auto row is a change and
+  removes it.
+- `panel/RubyRows.tsx` — one row per entry: two uncommitted-until-blur inputs
+  keyed by value + reseed nonce (a refused commit puts the value back),
+  Enter blurs outside an IME composition, emptying is refused (the row's own
+  button removes); an unreadable entry shows as such with its remove button.
+- `panel/RubyAddRow.tsx` — the add row: a DRAFT in component state (never in
+  the document until both sides are filled and the button or Enter asks), no
+  blur handler at all, so leaving an input keeps the draft; disabled at the
+  cap with the reason. Owns `ENTRY_INPUT`, shared with the rows.
+
 ## Inline rich text (`spans:`)
 
 `spans` takes PRECEDENCE over `text`/`data` when non-empty
@@ -1157,11 +1196,12 @@ presence is not a text binding.
   `STYLED_TYPES` (which is `BORDERABLE_TYPES` plus `line`, the marks and
   `char_grid`)
   rather than through the border set, because their editors differ. Tab
-  bodies live beside it. The CONTENT tab is two siblings, not one — the
-  section plus `LinkField.tsx`, which self-gates on `LINK_TYPES` — because
-  `ContentSection` routes by early return and an `image` never reaches its
-  bottom, so a field added INSIDE it would appear for `text` and silently not
-  for the other carrier. `ContentSection.tsx` (per-type
+  bodies live beside it. The CONTENT tab is three siblings, not one — the
+  section, `LinkField.tsx` (self-gates on `LINK_TYPES`) and `RubySection.tsx`
+  (self-gates on `text`, keyed by path) — because `ContentSection` routes by
+  early return: an `image` never reaches its bottom, and a `spans` text leaves
+  at the spans editor, so a field added INSIDE it would appear for plain `text`
+  and silently not for the other carriers. `ContentSection.tsx` (per-type
   routing ONLY — the plain-text surface is `contentText.tsx`
   (`TextContentField`), split out when the rich-text route left the router
   carrying more body than routing; image/page-number surfaces in
@@ -1178,7 +1218,7 @@ presence is not a text binding.
   placement editor (`LinePointsEditor`, `RepeatSection`); shared prop contract in
   `itemPanelProps.ts` (`ItemPanelProps` + `hasCapability`); shared
   helpers in `panelHelpers.tsx` (`HelpfulHeading` over the `HelpTopic`
-  vocabulary — `content`/`spans`/`style`/`placement`/`placementChild`, each value
+  vocabulary — `content`/`spans`/`style`/`placement`/`placementChild`/`ruby`, each value
   also the catalog SEGMENT `help.<topic>.title`/`.body`, so a topic is two
   strings rather than another branch; `FieldHelp` over the parallel
   `FieldHelpTopic` vocabulary — `rulingWidth`/`rubySize`/`kinsoku`/
