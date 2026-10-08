@@ -326,6 +326,9 @@ export const zhTw: LanguageCatalog = {
     'help.ruby.title': '隨文字印出的注音',
     'help.ruby.body':
       '每一列把注音以小字印在基底文字旁：橫排在上方，直排在右側。各列依序與印出的文字比對，每一列都從上一列比對到的位置往後找，所以資料項目的基底文字必須出現在其值中。',
+    'help.textMark.title': '為文字加圈',
+    'help.textMark.body':
+      '在印出的文字周圍畫一個橢圓，以文字為中心並貼合其大小，因此字型或文字變動後仍會貼合。它不會移動文字或周圍的任何內容。也可以只在某個資料欄位為指定值時才畫，就像表單上圈出所選的選項。直排文字上不會畫出。',
     'help.rubySize.title': '漢字旁的注音',
     'help.rubySize.body': '注音文字的大小。不設定時以格子的 0.4 倍繪製。',
     'help.kinsoku.title': '不能出現在行首的字',
@@ -1117,6 +1120,19 @@ export const zhTw: LanguageCatalog = {
     'panel.ruby.sizeAuto': '自動',
     'panel.ruby.sizeDefault': '文字的一半',
     'panel.ruby.sizeRefused': '請輸入 6pt 或 2mm 這樣的大小。此處不能使用百分比。',
+    'panel.textMark.title': '加圈',
+    'panel.textMark.state': '畫圈',
+    'panel.textMark.state.none': '不畫圈',
+    'panel.textMark.state.always': '一律畫圈',
+    'panel.textMark.value': '值為此時畫圈',
+    'panel.textMark.padding': '與文字的間距',
+    'panel.textMark.paddingDefault': '預設',
+    'panel.textMark.paddingRefused':
+      '請輸入 0 或以上的值，例如 2pt、1mm 或 0.3em。此處不能使用負值。',
+    'panel.textMark.paddingUnreadable': '無法讀取的值',
+    'panel.textMark.styleNames': '圈的樣式',
+    'panel.textMark.unreadable': '無法讀取此文字的加圈設定。',
+    'panel.textMark.clear': '去掉圈',
     'panel.charGrid.markup': '解讀內文的注音記法',
     'panel.charGrid.markupSafety':
       '關閉時，《》與［＃…］會照原樣當作文字排列。開啟後，帶入資料中的這些符號也會被當成記法讀取。',

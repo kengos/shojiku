@@ -7,29 +7,19 @@
 //
 // A checkbox has three states and an ellipse two, and they are one control
 // rather than two: the difference is only that a checkbox's static form can be
-// ticked, where an ellipse's can only be "always". The bound arm is the SAME
-// `{ key, equals? }` predicate `visible:` uses, so the field picker, the value
-// control and the stale-`equals` reconciliation are the shared ones — there is
-// no second grammar to learn here or to keep in agreement.
+// ticked, where an ellipse's can only be "always". The bound arm is
+// `MarkBindingFields`, shared with a text item's circle (`TextMarkSection`):
+// both are one `MarkBinding` on the wire.
 
-import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
 import type { ChipContext } from '../text/chipContext';
 import { INPUT } from '../ui/chrome';
-import { FieldPicker } from './FieldPicker';
 import { Field } from './fields';
 import type { ItemPanelProps } from './itemPanelProps';
-import { readMark, valueFormFor } from './markModel';
-import {
-  bindMarkOps,
-  repointMarkOps,
-  setCheckedOps,
-  setMarkEqualsOp,
-  unbindMarkOps,
-} from './markOps';
-import { applyPanelOp } from './model';
+import { MarkBindingFields } from './MarkBindingFields';
+import { readMark } from './markModel';
+import { bindMarkOps, setCheckedOps, unbindMarkOps } from './markOps';
 import { HelpfulHeading, scopePickerProps } from './panelHelpers';
-import { ValueControl } from './ValueControl';
 
 /** The three presence states, as one closed vocabulary. `off` is an
  * ellipse's impossible state (it has no `checked:`), so the ellipse simply
@@ -59,7 +49,6 @@ export function MarkSection({ props, chips }: MarkSectionProps) {
   // char_grid rule, which refuses to echo back an unknown value as selected.
   const ticked = isCheckbox && row.checked;
   const presence: Presence = row.mode === 'bound' ? 'bound' : ticked ? 'on' : 'off';
-  const dispatch = (op: Op | null) => applyPanelOp(controller, op);
 
   // Every switch is ONE `applyAll` — one undo step — and an unchanged pick
   // produces an EMPTY list, so re-picking the current state authors nothing.
@@ -77,26 +66,6 @@ export function MarkSection({ props, chips }: MarkSectionProps) {
         : setCheckedOps(path, next === 'on', row.hasChecked),
     );
   };
-
-  const all = [...options, ...(documentOptions ?? [])];
-  const repoint = (key: string, documentScoped?: boolean) => {
-    const option = all.find((o) => o.key === key);
-    controller.applyAll(
-      repointMarkOps(
-        path,
-        key,
-        option?.type ?? '',
-        option?.enumValues ?? [],
-        row.hasEquals,
-        row.equals,
-        documentScoped,
-        row.hasScope,
-        row.boolEquals,
-      ),
-    );
-  };
-  const picked = all.find((o) => o.key === row.key);
-  const form = valueFormFor(picked?.type ?? '', picked?.enumValues ?? []);
 
   return (
     <section>
@@ -126,39 +95,18 @@ export function MarkSection({ props, chips }: MarkSectionProps) {
         <p className="m-0 mb-2 text-muted text-xs">{t('panel.mark.conflict')}</p>
       ) : null}
       {row.mode === 'bound' ? (
-        <>
-          <FieldPicker
-            label={t('panel.mark.field')}
-            value={row.key}
-            options={options}
-            documentOptions={documentOptions}
-            scope={row.documentScope ? 'document' : ''}
-            // Repointing can change which controls render (a boolean field's
-            // yes/no cannot show a text `equals`), so a stale `equals` is
-            // reconciled in the SAME batch — one transactional undo step.
-            onCommit={(key) => repoint(key, undefined)}
-            // A PICKED row commits with the scope it was offered at. Typing a
-            // key never re-scopes: the file's `scope:` stays as authored.
-            onPick={documentOptions === undefined ? undefined : repoint}
-          />
-          <ValueControl
-            form={form}
-            rule={row}
-            options={picked?.enumValues ?? []}
-            // The checkbox's frame ALWAYS draws — the engine calls it chrome —
-            // so what a binding decides there is the TICK, not the drawing.
-            // One string for both types said "draws when…" over a control that
-            // does nothing of the sort.
-            label={t(isCheckbox ? 'panel.mark.tickValue' : 'panel.mark.value')}
-            onChange={(value) => dispatch(setMarkEqualsOp(path, value, picked?.type ?? ''))}
-          />
-          {row.documentScope ? (
-            // The panel does not edit `scope:` — it is an authoring-level
-            // choice — but silently not showing it would misdescribe the
-            // document, so the row says what the wire holds.
-            <p className="m-0 text-muted text-xs">{t('panel.mark.documentScope')}</p>
-          ) : null}
-        </>
+        <MarkBindingFields
+          controller={controller}
+          markPath={path}
+          row={row}
+          options={options}
+          documentOptions={documentOptions}
+          // The checkbox's frame ALWAYS draws — the engine calls it chrome —
+          // so what a binding decides there is the TICK, not the drawing.
+          // One string for both types said "draws when…" over a control that
+          // does nothing of the sort.
+          valueLabel={t(isCheckbox ? 'panel.mark.tickValue' : 'panel.mark.value')}
+        />
       ) : null}
     </section>
   );

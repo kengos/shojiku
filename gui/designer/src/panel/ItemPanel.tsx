@@ -28,6 +28,7 @@ import { bindingScopeFor, pickerOptions, scopeAuthorable } from './pickerModel';
 import { RepeatSection } from './RepeatSection';
 import { RubySection } from './RubySection';
 import { StyleSection } from './StyleSection';
+import { TextMarkSection } from './TextMarkSection';
 import { VisibilitySection } from './VisibilitySection';
 
 const TAB_LABEL_KEYS: Readonly<Record<PanelTab, string>> = {
@@ -58,6 +59,8 @@ export function ItemPanel(props: ItemPanelProps) {
         <LinkField {...props} />
         {/* Keyed by path: its add row holds a draft that belongs to ONE item. */}
         <RubySection key={props.path} {...props} />
+        {/* Keyed by path: its refused-clearance note belongs to ONE item. */}
+        <TextMarkSection key={`${props.path}#mark`} {...props} />
       </>
     ) : tab === 'style' ? (
       <StyleSection {...props} />

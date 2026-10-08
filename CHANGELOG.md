@@ -15,6 +15,19 @@ platform binaries.
 
 ### Added
 
+- **Circle text in the Designer.** A text item's Content tab has a new
+  「丸囲み」 section that draws an oval around the printed characters — centred
+  on them and sized to fit, so it follows when the font or the wording
+  changes, and never moves anything on the page. Draw it always, or only when
+  a data field has a given value, which is how a form circles the chosen
+  option: one template, and the circle appears on whichever label the data
+  picks. The same section sets the space between the circle and the
+  characters (0.4em when left empty; a negative space is not accepted, since
+  it would cut through the characters), the outline width and colour, a fill,
+  and named styles for the circle itself. Turning the circle off removes all
+  of it in one step, which one undo brings back. It works on fixed text, on a
+  data field and on text with mixed styles; on vertical text the engine does
+  not draw it, and the section says so.
 - **Add ruby (furigana) to text in the Designer.** A text item's Content tab
   has a new 「ルビ（ふりがな）」 section: each row pairs the characters to
   annotate with their reading, and the reading prints above them (beside

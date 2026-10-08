@@ -166,6 +166,9 @@ export const fil: LanguageCatalog = {
     'help.ruby.title': 'Mga basang nakalimbag kasama ng teksto',
     'help.ruby.body':
       'Inililimbag ng bawat hanay ang basa nito sa maliit na titik sa tabi ng batayang teksto: sa itaas nito sa pahalang na teksto, sa kanan nito sa patayong teksto. Itinutugma ang mga hanay nang sunod-sunod sa tekstong nakalimbag, bawat isa mula sa tinapusan ng nauna, kaya sa isang data field ay dapat nasa halaga ang batayang teksto.',
+    'help.textMark.title': 'Bilog sa paligid ng teksto',
+    'help.textMark.body':
+      'Gumuguhit ng bilohaba sa paligid ng mga nakalimbag na titik, nakagitna at kasukat ng mga ito, kaya kumakasya pa rin ito kapag nagbago ang font o ang mga salita. Hindi nito inililipat ang teksto o ang anumang nasa paligid nito. Maaari rin itong iguhit lang kapag may partikular na halaga ang isang field ng datos, gaya ng pagbilog sa napiling opsiyon sa isang form. Hindi ito iginuguhit sa patayong teksto.',
     'help.rubySize.title': 'Ang basa sa tabi ng isang kanji',
     'help.rubySize.body':
       'Laki ng furigana. Kapag walang halaga, iginuguhit ito ng engine sa 0.4 ng kahon.',
@@ -1012,6 +1015,19 @@ export const fil: LanguageCatalog = {
     'panel.ruby.sizeDefault': 'kalahati ng laki ng teksto',
     'panel.ruby.sizeRefused':
       'Maglagay ng laki gaya ng 6pt o 2mm. Hindi puwede rito ang porsiyento.',
+    'panel.textMark.title': 'Bilog',
+    'panel.textMark.state': 'Gumuhit ng bilog',
+    'panel.textMark.state.none': 'Huwag bilugan',
+    'panel.textMark.state.always': 'Palagi',
+    'panel.textMark.value': 'Binibilugan kapag ang halaga ay',
+    'panel.textMark.padding': 'Puwang sa pagitan ng teksto at bilog',
+    'panel.textMark.paddingDefault': 'default',
+    'panel.textMark.paddingRefused':
+      'Maglagay ng 0 o higit pa, gaya ng 2pt, 1mm o 0.3em. Hindi puwede rito ang negatibong halaga.',
+    'panel.textMark.paddingUnreadable': 'Hindi mabasang halaga',
+    'panel.textMark.styleNames': 'Mga style ng bilog',
+    'panel.textMark.unreadable': 'Hindi mabasa ang mga setting ng bilog para sa tekstong ito.',
+    'panel.textMark.clear': 'Alisin ang bilog',
     'panel.charGrid.markup': 'Basahin ang ruby notation sa nilalaman',
     'panel.charGrid.markupSafety':
       'Habang naka-off, ang 《》 at ［＃…］ ay naililimbag bilang mismong mga karakter. Kapag binuksan, may kahulugan na rin ang mga markang iyon sa naka-bind na datos.',
