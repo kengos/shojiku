@@ -15,6 +15,18 @@ platform binaries.
 
 ### Added
 
+- **Add ruby (furigana) to text in the Designer.** A text item's Content tab
+  has a new 「ルビ（ふりがな）」 section: each row pairs the characters to
+  annotate with their reading, and the reading prints above them (beside
+  them, in vertical text). It works on fixed text, on a data field — the
+  characters are matched in the value that prints — and on text with mixed
+  styles. A new reading is written only once both sides are filled in, and
+  the last one removed takes the list with it. The reading size defaults to
+  half the text size; pick 5–8pt or type a size, but not a percentage, which
+  the engine would read against the width of the surrounding box. Readings
+  sit in the space between lines without pushing them apart, and the first
+  line's readings stand outside the text's box; the section says so, and
+  points at the line height and the padding that make room.
 - **Write text vertically, and set the Japanese line-breaking rules, in the
   Designer.** The Style tab has a new 「縦書き・禁則」 section for text, page
   numbers, lists, tables and containers: text direction (横書き / 縦書き),

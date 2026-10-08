@@ -37,7 +37,7 @@ import { FieldHelp } from './panelHelpers';
  * pixels: at 5–12px the sample is under-rendered by a third and too small to read,
  * which defeats the only reason the row carries one. Floored so the smallest preset
  * stays legible on a low-DPI screen. */
-function rubyPx(pt: string): number {
+export function rubyPx(pt: string): number {
   return Math.max(Number(pt) * (96 / 72), 9);
 }
 

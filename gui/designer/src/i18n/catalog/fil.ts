@@ -163,6 +163,9 @@ export const fil: LanguageCatalog = {
     'help.rulingWidth.title': 'Ang mga guhit na bumubuo ng kahon',
     'help.rulingWidth.body':
       'Kapal ng mga guhit sa pagitan ng mga kahon ng manuskrito. Kapag walang halaga, iginuguhit ang mga ito sa 0.5pt; ang 0 ay nag-aalis ng mga ito.',
+    'help.ruby.title': 'Mga basang nakalimbag kasama ng teksto',
+    'help.ruby.body':
+      'Inililimbag ng bawat hanay ang basa nito sa maliit na titik sa tabi ng batayang teksto: sa itaas nito sa pahalang na teksto, sa kanan nito sa patayong teksto. Itinutugma ang mga hanay nang sunod-sunod sa tekstong nakalimbag, bawat isa mula sa tinapusan ng nauna, kaya sa isang data field ay dapat nasa halaga ang batayang teksto.',
     'help.rubySize.title': 'Ang basa sa tabi ng isang kanji',
     'help.rubySize.body':
       'Laki ng furigana. Kapag walang halaga, iginuguhit ito ng engine sa 0.4 ng kahon.',
@@ -986,6 +989,29 @@ export const fil: LanguageCatalog = {
       'Ang link ay maaari lamang tumungo sa isang web address, email address o numero ng telepono. Simulan ito sa http://, https://, mailto: o tel:.',
     'panel.link.problem.tooLong':
       'Mas mahaba sa {max} byte ang address na ito, lampas sa kayang dalhin ng isang PDF link.',
+    'panel.ruby.title': 'Ruby (furigana)',
+    'panel.ruby.spacing':
+      'Nasa pagitan ng mga linya ang mga basa, at hindi naglalayo ang mga linya para sa kanila. Kung dumikit sila sa katabing linya, palakihin ang “{lineHeight}”. Lumalabas sa kahon ang mga basa ng unang linya (sa itaas sa pahalang na teksto, sa kanan sa patayong teksto); para manatili sa loob, magdagdag ng “{padding}”.',
+    'panel.ruby.unreadable': 'Hindi mabasang halaga',
+    'panel.ruby.unreadableList': 'Hindi mabasa ang mga basa sa file na ito.',
+    'panel.ruby.unreadableEntry': 'Hindi mabasang entry',
+    'panel.ruby.clear': 'Alisin ang lahat ng basa',
+    'panel.ruby.baseOf': 'Batayang teksto {n}',
+    'panel.ruby.readingOf': 'Basa {n}',
+    'panel.ruby.remove': 'Alisin ang hanay {n}',
+    'panel.ruby.newBase': 'Bagong batayang teksto',
+    'panel.ruby.newReading': 'Bagong basa',
+    'panel.ruby.base': 'Batayang teksto',
+    'panel.ruby.reading': 'Basa',
+    'panel.ruby.add': 'Magdagdag ng basa',
+    'panel.ruby.full': 'Hanggang {max} basa lang ang kaya ng isang teksto.',
+    'panel.ruby.tooLong':
+      'Hindi inilapat: hanggang {max} character lang ang bawat batayang teksto at basa.',
+    'panel.ruby.size': 'Laki ng ruby',
+    'panel.ruby.sizeAuto': 'awtomatiko',
+    'panel.ruby.sizeDefault': 'kalahati ng laki ng teksto',
+    'panel.ruby.sizeRefused':
+      'Maglagay ng laki gaya ng 6pt o 2mm. Hindi puwede rito ang porsiyento.',
     'panel.charGrid.markup': 'Basahin ang ruby notation sa nilalaman',
     'panel.charGrid.markupSafety':
       'Habang naka-off, ang 《》 at ［＃…］ ay naililimbag bilang mismong mga karakter. Kapag binuksan, may kahulugan na rin ang mga markang iyon sa naka-bind na datos.',

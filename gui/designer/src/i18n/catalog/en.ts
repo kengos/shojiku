@@ -373,6 +373,9 @@ export const en: LanguageCatalog = {
     'help.rulingWidth.title': 'The lines that draw the cells',
     'help.rulingWidth.body':
       'How thick the lines between the manuscript cells are. Left unset they are drawn at 0.5pt; choosing 0 removes them.',
+    'help.ruby.title': 'Readings printed with the text',
+    'help.ruby.body':
+      'Each row prints its reading in small type next to its base text: above it in horizontal text, to its right in vertical text. Rows are applied from the top, each to the first match after the previous row’s match, so list them in the order the text uses them; a row whose base text is not found is skipped. For a data field, the base text is looked for in the value that is printed.',
     'help.rubySize.title': 'The reading printed beside a kanji',
     'help.rubySize.body':
       'How large the furigana is. Left unset, the engine draws it at 0.4 of the cell.',
@@ -1176,6 +1179,28 @@ export const en: LanguageCatalog = {
       'A link can only go to a web address, an email address or a phone number. Start it with http://, https://, mailto: or tel:.',
     'panel.link.problem.tooLong':
       'This address is longer than {max} bytes, which is more than a PDF link can carry.',
+    'panel.ruby.title': 'Ruby (furigana)',
+    'panel.ruby.spacing':
+      'Readings sit in the space between lines, and lines do not move apart for them. If they touch the neighbouring line, increase “{lineHeight}”. The first line’s readings stick out of the box (above it in horizontal text, to its right in vertical text); to keep them inside, add “{padding}”.',
+    'panel.ruby.unreadable': 'Unreadable value',
+    'panel.ruby.unreadableList': 'The readings in this file cannot be read.',
+    'panel.ruby.unreadableEntry': 'Unreadable entry',
+    'panel.ruby.clear': 'Remove all readings',
+    'panel.ruby.baseOf': 'Base text {n}',
+    'panel.ruby.readingOf': 'Reading {n}',
+    'panel.ruby.remove': 'Remove row {n}',
+    'panel.ruby.newBase': 'New base text',
+    'panel.ruby.newReading': 'New reading',
+    'panel.ruby.base': 'Base text',
+    'panel.ruby.reading': 'Reading',
+    'panel.ruby.add': 'Add reading',
+    'panel.ruby.full': 'This text can have up to {max} readings.',
+    'panel.ruby.tooLong':
+      'Not applied: base text and reading can each be at most {max} characters.',
+    'panel.ruby.size': 'Ruby size',
+    'panel.ruby.sizeAuto': 'auto',
+    'panel.ruby.sizeDefault': 'half the text size',
+    'panel.ruby.sizeRefused': 'Enter a size such as 6pt or 2mm. A percentage cannot be used here.',
     'panel.charGrid.markup': 'Read ruby notation in the content',
     'panel.charGrid.markupSafety':
       'While this is off, 《》 and ［＃…］ print as the characters they are. Turning it on makes those marks meaningful in bound data too.',

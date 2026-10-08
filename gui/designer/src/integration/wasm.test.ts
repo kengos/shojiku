@@ -79,8 +79,10 @@ import { bindingKeyOp, bindingPickOps, placeholderOp, plainTextOp } from '../pan
 import { PAGE_SIZES } from '../panel/pageSizes';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
+import { RUBY_TEXT_SIZE_PRESETS } from '../panel/RubySection';
 import { fillOrderOp, gridCountOp, gridGapOp, newPageOp, relativeGapOp } from '../panel/repeatGrid';
 import { addRuleOp, setRuleEqualsOp } from '../panel/rowConditionOps';
+import { addRubyOp, editRubyOp, readRuby, removeRubyOp, rubySizeOp } from '../panel/rubyModel';
 import { rulePresetOps } from '../panel/rulePresets';
 import { readShapeStyle, strokeWidthOp } from '../panel/shapeStyle';
 import { sizeLimitOp } from '../panel/sizeLimits';
@@ -152,9 +154,9 @@ async function loadModule(): Promise<WasmModule> {
 
 /** A locale-set, fonts-loaded engine — the "prepared" instance the transport
  * expects (matching how a browser host wires it up). */
-function preparedEngine(mod: WasmModule): FullEngine {
+function preparedEngine(mod: WasmModule, locale = 'en-US'): FullEngine {
   const engine = new mod.Engine();
-  engine.setLocale('en-US', null);
+  engine.setLocale(locale, null);
   const packs = JSON.parse(engine.fontPacksNeeded()) as string[];
   for (const packId of packs) {
     engine.addFontPack(packId, readFileSync(fontFile(packId, 'manifest.yml'), 'utf8'));
@@ -4293,5 +4295,99 @@ describe('the vertical text & line-break section against the real engine', () =>
     const op = typesettingOp(TEXT, 'writingMode', '', 'vertical_rl');
     expect(op !== null && editor.apply(op).ok).toBe(true);
     expect(await metrics()).toBe('columns');
+  });
+});
+
+describe('the ruby section against the real engine', () => {
+  // Japanese bases and readings need a Japanese face; the shared transport is
+  // set up for en-US, whose font packs have none (every glyph would warn).
+  let ja: EngineTransport;
+  beforeAll(() => {
+    ja = createWasmTransport(preparedEngine(wasmModule, 'ja-JP'));
+  });
+  const PLAIN = 'sections.body.items[0]';
+  const SUBJECTS: [string, string][] = [
+    [PLAIN, 'plain horizontal'],
+    ['sections.body.items[1]', 'vertical'],
+    ['sections.body.items[2]', 'spans'],
+    ['sections.body.items[3]', 'bound'],
+  ];
+  const SOURCE = [
+    'page: { size: A4, margin: 30 }',
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - { type: text, text: "吾輩は猫である 2026", box: { w: 300 }, style: { lineHeight: 2 } }',
+    '      - type: text',
+    '        text: "吾輩は猫である 2026"',
+    '        box: { w: 80, h: 260 }',
+    '        style: { writingMode: vertical_rl, lineHeight: 2 }',
+    '      - type: text',
+    '        spans: [{ text: "吾輩は" }, { text: "猫である 2026", style: { fontWeight: bold } }]',
+    '        box: { w: 300 }',
+    '        style: { lineHeight: 2 }',
+    '      - { type: text, data: { key: name }, box: { w: 300 }, style: { lineHeight: 2 } }',
+    '',
+  ].join('\n');
+  const PARAMS = '{"name":"吾輩は猫である 2026"}';
+  const render = async (editor: Editor) => {
+    const result = await ja.renderRaw(editor.text(), PARAMS, undefined, { scale: 1 });
+    expect(result.ok, JSON.stringify(result.diagnostics.items)).toBe(true);
+    return {
+      codes: result.diagnostics.items.filter((d) => d.severity !== 'info').map((d) => d.code),
+      rgba: result.pages[0].rgba,
+    };
+  };
+  const apply = (editor: Editor, op: Op | null) => {
+    expect(op).not.toBeNull();
+    expect(editor.apply(op as Op).ok).toBe(true);
+  };
+  const view = (editor: Editor, path: string) => readRuby((p) => editor.read(p), path);
+  const same = (a: Uint8Array, b: Uint8Array) =>
+    a.length === b.length && a.every((v, i) => v === b[i]);
+
+  it('adds, edits and removes readings on every text shape, warning-clean', async () => {
+    const editor = Editor.create(SOURCE);
+    expect((await render(editor)).codes).toEqual([]);
+    for (const [path, shape] of SUBJECTS) {
+      apply(editor, addRubyOp(path, view(editor, path), '吾輩', 'わがはい'));
+      // A digit-only base must reach the engine as a STRING (a bare 2026 fails
+      // the parse). Its reading is short enough to fit over four digits.
+      apply(editor, addRubyOp(path, view(editor, path), '2026', 'ねん'));
+      expect((await render(editor)).codes, `${shape} added`).toEqual([]);
+      apply(editor, editRubyOp(path, view(editor, path).rows[0], 'text', 'わがはい!'));
+      apply(editor, editRubyOp(path, view(editor, path).rows[1], 'base', '猫'));
+      expect((await render(editor)).codes, `${shape} edited`).toEqual([]);
+    }
+    for (const [path, shape] of SUBJECTS) {
+      for (const preset of [...RUBY_TEXT_SIZE_PRESETS, '2mm']) {
+        apply(editor, rubySizeOp(path, view(editor, path), preset));
+        expect((await render(editor)).codes, `${shape} size ${preset}`).toEqual([]);
+      }
+    }
+    for (const [path, shape] of SUBJECTS) {
+      while (view(editor, path).rows.length > 0) {
+        apply(editor, removeRubyOp(path, view(editor, path), 0));
+      }
+      expect(editor.read(path), shape).not.toHaveProperty('ruby');
+    }
+    expect((await render(editor)).codes).toEqual([]);
+  });
+
+  it('the engine reads what the section writes (the positive controls)', async () => {
+    const editor = Editor.create(SOURCE);
+    const bare = (await render(editor)).rgba;
+    apply(editor, addRubyOp(PLAIN, view(editor, PLAIN), '吾輩', 'わがはい'));
+    const ruby = (await render(editor)).rgba;
+    // The readings draw: the page is not what it was without them.
+    expect(same(bare, ruby)).toBe(false);
+    apply(editor, rubySizeOp(PLAIN, view(editor, PLAIN), '4'));
+    // ...and the size reaches them.
+    expect(same(ruby, (await render(editor)).rgba)).toBe(false);
+    // A base the drawn text does not contain is reported by the engine, so a
+    // clean run above means the bases MATCHED rather than were ignored.
+    apply(editor, addRubyOp(PLAIN, view(editor, PLAIN), '犬', 'いぬ'));
+    expect((await render(editor)).codes).toEqual(['ruby_base_not_found']);
   });
 });
