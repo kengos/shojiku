@@ -511,6 +511,50 @@ that answers it per FRAGMENT.
   blur handler at all, so leaving an input keeps the draft; disabled at the
   cap with the reason. Owns `ENTRY_INPUT`, shared with the rows.
 
+## The text circle (`mark:` on a text item)
+
+- `panel/textMarkModel.ts` (pure) — the read and the write builders for
+  `TextMark` (`engine/core/src/template/marks.rs`: `data` / `padding` /
+  `styleNames` / `style`, every one optional, `deny_unknown_fields`). READ keeps
+  ABSENT (no key, or `null` — serde's `None`) apart from UNREADABLE (any other
+  non-map, cleared by `clearTextMarkOp`); a map's presence is `readMark` at
+  `<item>.mark` (`static` → always, `bound` → bound); a present `padding` that
+  reads as nothing is `paddingUnreadable`. WRITE: `textMarkPresenceOps` is one
+  batch per switch — on is `putValue mark {}` (or `{ data: { key: '' } }`), off
+  removes the whole mark, and a bind/unbind over an existing map is
+  `bindMarkOps` / `unbindMarkOps` at `<item>.mark`, so unbinding leaves
+  `mark: {}` (`removeKey` prunes the maps its `keys` name, never the one at its
+  `path`). `markPaddingOp` writes a non-negative length (a bare number as a
+  NUMBER) and refuses a sign (user decision — the engine shrinks the oval into
+  the glyphs), garbage, and an absolute length past `MAX_PADDING_PT`; a
+  `padding: null` reads as unset (serde's `None`), not unreadable; `%`/`em`/`rem` all resolve against the text's own
+  font size in `pad_pt`, so a percentage is safe here, unlike `rubySize`.
+  `textMarkWire.test.ts` (node env) reads the four fields, the one `mark` on
+  `TextItem`, the `text.mark` capability, `DEFAULT_PAD_EM`, `pad_pt`'s basis and
+  its `MAX_RESOLVED_PT` bound (an absolute clearance past it is refused — the
+  engine would silently draw the default), and the unit list `parse_length_text`
+  reports in its error message, from the engine source.
+- `panel/TextMarkSection.tsx` — the content-tab section, a sibling after the
+  ruby one (the user placed everything in ONE section, content tab): gates on
+  type `text` + capability `text.mark`; an unreadable mark gets a sentence and
+  its clear button and nothing else; otherwise the none/always/bound select, the
+  bound arm (`MarkBindingFields` at `<item>.mark`), and — only while the mark is
+  a map, because every op inside it addresses `<item>.mark` and the document
+  refuses an op over an absent path — the clearance (`NumericComboField`,
+  default 0.4em named in the placeholder, refusal in its hint), the outline
+  (`ShapeStyleEditor` over `readShapeStyle(<item>.mark)` — the engine paints it
+  with the same `shape_paint`) and `StyleNamesPicker` at `<item>.mark`. Never
+  `keys: ['mark', …]` from the item: unticking the last named style that way
+  would prune `mark: {}` — the always-drawn circle — with it. A vertical block
+  draws no circle (`vertical_text_unsupported`), so while the mark is present
+  and the effective `writingMode` is `vertical_rl` it shows the same sentence the
+  vertical-text section does. No opacity: the form marks offer none either.
+- `panel/MarkBindingFields.tsx` — the BOUND arm of any `MarkBinding`
+  (`FieldPicker` + `ValueControl` + the document-scope note, with the stale-
+  `equals` and scope reconciliation of `repointMarkOps`), taking the map that
+  carries `data:` — the item for a form mark, `<item>.mark` for a text — and the
+  value's label. `MarkSection` and `TextMarkSection` both mount it.
+
 ## Inline rich text (`spans:`)
 
 `spans` takes PRECEDENCE over `text`/`data` when non-empty
@@ -599,8 +643,8 @@ presence is not a text binding.
   and the scope into the same batch, exactly as `visibilityOps` does.
 - `panel/MarkSection.tsx` — the content tab for both types: ONE control with
   three states for a checkbox and two for an ellipse (the difference is only
-  that a checkbox's static form can be ticked), plus the shared `FieldPicker` /
-  `ValueControl` for the bound arm. Takes the house `props` + `chips` shape
+  that a checkbox's static form can be ticked), plus `MarkBindingFields` for the
+  bound arm (shared with the text circle). Takes the house `props` + `chips` shape
   (`BoundContent`/`ImageContent`), so `ContentSection`'s route is one element.
 - `panel/uniformBorder.ts` — how the ENGINE reads a UNIFORM border, shared by
   the two surfaces that stroke one closed path instead of four bands: a form
@@ -1196,9 +1240,9 @@ presence is not a text binding.
   `STYLED_TYPES` (which is `BORDERABLE_TYPES` plus `line`, the marks and
   `char_grid`)
   rather than through the border set, because their editors differ. Tab
-  bodies live beside it. The CONTENT tab is three siblings, not one — the
-  section, `LinkField.tsx` (self-gates on `LINK_TYPES`) and `RubySection.tsx`
-  (self-gates on `text`, keyed by path) — because `ContentSection` routes by
+  bodies live beside it. The CONTENT tab is four siblings, not one — the
+  section, `LinkField.tsx` (self-gates on `LINK_TYPES`), `RubySection.tsx` and
+  `TextMarkSection.tsx` (each self-gates on `text`, keyed by path) — because `ContentSection` routes by
   early return: an `image` never reaches its bottom, and a `spans` text leaves
   at the spans editor, so a field added INSIDE it would appear for plain `text`
   and silently not for the other carriers. `ContentSection.tsx` (per-type
@@ -1218,7 +1262,7 @@ presence is not a text binding.
   placement editor (`LinePointsEditor`, `RepeatSection`); shared prop contract in
   `itemPanelProps.ts` (`ItemPanelProps` + `hasCapability`); shared
   helpers in `panelHelpers.tsx` (`HelpfulHeading` over the `HelpTopic`
-  vocabulary — `content`/`spans`/`style`/`placement`/`placementChild`/`ruby`, each value
+  vocabulary — `content`/`spans`/`style`/`placement`/`placementChild`/`ruby`/`textMark`, each value
   also the catalog SEGMENT `help.<topic>.title`/`.body`, so a topic is two
   strings rather than another branch; `FieldHelp` over the parallel
   `FieldHelpTopic` vocabulary — `rulingWidth`/`rubySize`/`kinsoku`/

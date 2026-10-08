@@ -153,6 +153,9 @@ export const hi: LanguageCatalog = {
     'help.ruby.title': 'पाठ के साथ छपने वाले उच्चारण',
     'help.ruby.body':
       'हर पंक्ति अपना उच्चारण छोटे अक्षरों में मूल पाठ के पास छापती है: क्षैतिज पाठ में उसके ऊपर, लंबवत पाठ में उसके दाईं ओर। पंक्तियाँ क्रम से छपे हुए पाठ से मिलाई जाती हैं, हर एक पिछली के मिलान के बाद से, इसलिए डेटा फ़ील्ड में मूल पाठ उसके मान में होना चाहिए।',
+    'help.textMark.title': 'पाठ के चारों ओर घेरा',
+    'help.textMark.body':
+      'छपे अक्षरों के चारों ओर एक अंडाकार बनाता है, जो उन्हीं पर केंद्रित और उन्हीं के आकार का होता है, इसलिए फ़ॉन्ट या शब्द बदलने पर भी ठीक बैठता है। यह पाठ या उसके आसपास की किसी चीज़ को नहीं खिसकाता। इसे केवल तब भी बनाया जा सकता है जब किसी डेटा फ़ील्ड का एक तय मान हो, जैसे फ़ॉर्म में चुने गए विकल्प पर घेरा। लंबवत पाठ पर यह नहीं बनता।',
     'help.rubySize.title': 'कांजी के साथ छपने वाला उच्चारण',
     'help.rubySize.body': 'फ़ुरिगाना का आकार। अनसेट रहने पर इंजन इसे खाने के 0.4 गुना पर खींचता है।',
     'help.kinsoku.title': 'वे अक्षर जो पंक्ति शुरू नहीं कर सकते',
@@ -966,6 +969,19 @@ export const hi: LanguageCatalog = {
     'panel.ruby.sizeAuto': 'स्वचालित',
     'panel.ruby.sizeDefault': 'पाठ के आकार का आधा',
     'panel.ruby.sizeRefused': '6pt या 2mm जैसा आकार लिखें। यहाँ प्रतिशत नहीं चलता।',
+    'panel.textMark.title': 'घेरा',
+    'panel.textMark.state': 'घेरा बनाएँ',
+    'panel.textMark.state.none': 'कभी नहीं',
+    'panel.textMark.state.always': 'हमेशा',
+    'panel.textMark.value': 'इस मान पर घेरा बनेगा',
+    'panel.textMark.padding': 'पाठ और घेरे के बीच की दूरी',
+    'panel.textMark.paddingDefault': 'डिफ़ॉल्ट',
+    'panel.textMark.paddingRefused':
+      '0 या उससे अधिक लिखें, जैसे 2pt, 1mm या 0.3em। यहाँ ऋणात्मक मान नहीं चलता।',
+    'panel.textMark.paddingUnreadable': 'पढ़ा न जा सकने वाला मान',
+    'panel.textMark.styleNames': 'घेरे की स्टाइल',
+    'panel.textMark.unreadable': 'इस पाठ के घेरे की सेटिंग पढ़ी नहीं जा सकती।',
+    'panel.textMark.clear': 'घेरा हटाएँ',
     'panel.charGrid.markup': 'सामग्री में रूबी नोटेशन पढ़ें',
     'panel.charGrid.markupSafety':
       'बंद रहने पर 《》 और ［＃…］ वैसे ही अक्षरों की तरह छपते हैं। चालू करने पर जुड़े हुए डेटा में भी ये चिह्न नोटेशन बन जाते हैं।',

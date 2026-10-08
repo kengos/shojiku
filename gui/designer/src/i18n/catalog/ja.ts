@@ -394,6 +394,9 @@ export const ja: LanguageCatalog = {
     'help.ruby.title': '文字に添える読みがな',
     'help.ruby.body':
       '各行のルビを対象の文字に小さく添えます（横書きは上、縦書きは右）。リストの上から順に、印刷される文字の中から、前の行が一致した位置より後ろで最初に見つかった箇所に振ります。見つからない行は振られません。データ項目では、差し込まれる値の中から探します。',
+    'help.textMark.title': '文字を丸で囲む',
+    'help.textMark.body':
+      '印刷される文字のまわりに楕円を描きます。文字に合わせて中央に置き、大きさも合わせるので、フォントや文言を変えても自動で合います。文字や周りの配置は動きません。データ項目が特定の値のときだけ描くこともでき、帳票で選ばれた項目に丸を付けるのに使えます。縦書きの文字には描かれません。',
     'help.rubySize.title': '漢字に添えるふりがな',
     'help.rubySize.body': 'ルビの文字サイズです。未指定ならマスの 0.4 倍で描きます。',
     'help.kinsoku.title': '行頭に置けない文字',
@@ -1217,6 +1220,19 @@ export const ja: LanguageCatalog = {
     'panel.ruby.sizeAuto': '自動',
     'panel.ruby.sizeDefault': '文字サイズの半分',
     'panel.ruby.sizeRefused': '6pt、2mm のように指定してください。% は使えません。',
+    'panel.textMark.title': '丸囲み',
+    'panel.textMark.state': '丸で囲む',
+    'panel.textMark.state.none': '囲まない',
+    'panel.textMark.state.always': '常に囲む',
+    'panel.textMark.value': 'この値のとき囲む',
+    'panel.textMark.padding': '文字との間隔',
+    'panel.textMark.paddingDefault': '既定',
+    'panel.textMark.paddingRefused':
+      '2pt、1mm、0.3em のように 0 以上で指定してください。マイナスの値は使えません。',
+    'panel.textMark.paddingUnreadable': '読み取れない値',
+    'panel.textMark.styleNames': '丸囲みのスタイル',
+    'panel.textMark.unreadable': 'この文字の丸囲みの設定を読み取れません。',
+    'panel.textMark.clear': '丸囲みを外す',
     'panel.charGrid.markup': '本文のルビ記法を解釈する',
     'panel.charGrid.markupSafety':
       'オフのあいだ《》や［＃…］はそのままの文字として並びます。オンにすると、差し込まれたデータの中の記号も記法として読まれます。',

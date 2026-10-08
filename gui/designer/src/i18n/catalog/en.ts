@@ -376,6 +376,9 @@ export const en: LanguageCatalog = {
     'help.ruby.title': 'Readings printed with the text',
     'help.ruby.body':
       'Each row prints its reading in small type next to its base text: above it in horizontal text, to its right in vertical text. Rows are applied from the top, each to the first match after the previous row’s match, so list them in the order the text uses them; a row whose base text is not found is skipped. For a data field, the base text is looked for in the value that is printed.',
+    'help.textMark.title': 'A circle around the text',
+    'help.textMark.body':
+      'Draws an oval around the printed characters, centered on them and sized to fit, so it still fits when the font or the wording changes. It never moves the text or anything around it. It can also be drawn only when a data field has a given value, the way a form circles the chosen option. It is not drawn on vertical text.',
     'help.rubySize.title': 'The reading printed beside a kanji',
     'help.rubySize.body':
       'How large the furigana is. Left unset, the engine draws it at 0.4 of the cell.',
@@ -1201,6 +1204,19 @@ export const en: LanguageCatalog = {
     'panel.ruby.sizeAuto': 'auto',
     'panel.ruby.sizeDefault': 'half the text size',
     'panel.ruby.sizeRefused': 'Enter a size such as 6pt or 2mm. A percentage cannot be used here.',
+    'panel.textMark.title': 'Circle',
+    'panel.textMark.state': 'Draw a circle',
+    'panel.textMark.state.none': 'Never',
+    'panel.textMark.state.always': 'Always',
+    'panel.textMark.value': 'Circled when the value is',
+    'panel.textMark.padding': 'Space between text and circle',
+    'panel.textMark.paddingDefault': 'default',
+    'panel.textMark.paddingRefused':
+      'Enter 0 or more, such as 2pt, 1mm or 0.3em. A negative value cannot be used here.',
+    'panel.textMark.paddingUnreadable': 'Unreadable value',
+    'panel.textMark.styleNames': 'Circle styles',
+    'panel.textMark.unreadable': 'The circle settings for this text cannot be read.',
+    'panel.textMark.clear': 'Remove the circle',
     'panel.charGrid.markup': 'Read ruby notation in the content',
     'panel.charGrid.markupSafety':
       'While this is off, 《》 and ［＃…］ print as the characters they are. Turning it on makes those marks meaningful in bound data too.',

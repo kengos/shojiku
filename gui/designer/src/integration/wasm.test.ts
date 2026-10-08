@@ -74,7 +74,7 @@ import { basisOps, modeSwitchOps } from '../panel/layoutModeOps';
 import { directionOp, gapOp, justifyContentOp, ratioOp } from '../panel/layoutOps';
 import { lineArmOps, readLinePoints } from '../panel/linePoints';
 import { readMark } from '../panel/markModel';
-import { setCheckedOps } from '../panel/markOps';
+import { repointMarkOps, setCheckedOps, setMarkEqualsOp } from '../panel/markOps';
 import { bindingKeyOp, bindingPickOps, placeholderOp, plainTextOp } from '../panel/model';
 import { PAGE_SIZES } from '../panel/pageSizes';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
@@ -84,7 +84,7 @@ import { fillOrderOp, gridCountOp, gridGapOp, newPageOp, relativeGapOp } from '.
 import { addRuleOp, setRuleEqualsOp } from '../panel/rowConditionOps';
 import { addRubyOp, editRubyOp, readRuby, removeRubyOp, rubySizeOp } from '../panel/rubyModel';
 import { rulePresetOps } from '../panel/rulePresets';
-import { readShapeStyle, strokeWidthOp } from '../panel/shapeStyle';
+import { fillOp, readShapeStyle, strokeColorOp, strokeWidthOp } from '../panel/shapeStyle';
 import { sizeLimitOp } from '../panel/sizeLimits';
 import { styleNamesOp } from '../panel/styleNamesOps';
 import { deleteStyleOps, renameStyleOps } from '../panel/styleRefOps';
@@ -101,6 +101,12 @@ import {
 } from '../panel/tableSettingsOps';
 import { bandStyleOp } from '../panel/tableStyleOps';
 import { decorationToggleOp, letterSpacingOp, opacityOp } from '../panel/textLookOps';
+import {
+  MARK_PADDING_PRESETS,
+  markPaddingOp,
+  readTextMark,
+  textMarkPresenceOps,
+} from '../panel/textMarkModel';
 import {
   combineToken,
   type TypesettingKey,
@@ -4389,5 +4395,122 @@ describe('the ruby section against the real engine', () => {
     // clean run above means the bases MATCHED rather than were ignored.
     apply(editor, addRubyOp(PLAIN, view(editor, PLAIN), '犬', 'いぬ'));
     expect((await render(editor)).codes).toEqual(['ruby_base_not_found']);
+  });
+});
+
+describe('the text circle section against the real engine', () => {
+  // The labels are Japanese, so the transport needs a Japanese face (the shared
+  // en-US one has none and every glyph would warn).
+  let ja: EngineTransport;
+  beforeAll(() => {
+    ja = createWasmTransport(preparedEngine(wasmModule, 'ja-JP'));
+  });
+  const PLAIN = 'sections.body.items[0]';
+  const SUBJECTS: [string, string][] = [
+    [PLAIN, 'plain'],
+    ['sections.body.items[1]', 'spans'],
+    ['sections.body.items[2]', 'bound text'],
+  ];
+  const SOURCE = [
+    'page: { size: A4, margin: 30 }',
+    'styles:',
+    '  red: { borderColor: "#cc0000" }',
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - { type: text, text: 現金, box: { w: 120 } }',
+    '      - { type: text, spans: [{ text: カー }, { text: ド, style: { fontWeight: bold } }], box: { w: 120 } }',
+    '      - { type: text, data: { key: label }, box: { w: 120 } }',
+    '      - type: text',
+    '        text: 縦書き',
+    '        box: { w: 40, h: 120 }',
+    '        style: { writingMode: vertical_rl }',
+    '',
+  ].join('\n');
+  const render = async (editor: Editor, params = '{"label":"振込","pay":"cash"}') => {
+    const result = await ja.renderRaw(editor.text(), params, undefined, { scale: 1 });
+    expect(result.ok, JSON.stringify(result.diagnostics.items)).toBe(true);
+    return {
+      codes: result.diagnostics.items.filter((d) => d.severity !== 'info').map((d) => d.code),
+      rgba: result.pages[0].rgba,
+    };
+  };
+  const apply = (editor: Editor, op: Op | null) => {
+    expect(op).not.toBeNull();
+    expect(editor.apply(op as Op).ok).toBe(true);
+  };
+  const applyAll = (editor: Editor, ops: readonly Op[]) => {
+    expect(ops.length).toBeGreaterThan(0);
+    expect(editor.applyAll(ops).ok).toBe(true);
+  };
+  const view = (editor: Editor, path: string) => readTextMark((p) => editor.read(p), path);
+  const bind = (editor: Editor, path: string, equals: string) => {
+    const markPath = view(editor, path).markPath;
+    applyAll(editor, repointMarkOps(markPath, 'pay', 'string', [], false, ''));
+    apply(editor, setMarkEqualsOp(markPath, equals, 'string'));
+  };
+  const same = (a: Uint8Array, b: Uint8Array) =>
+    a.length === b.length && a.every((v, i) => v === b[i]);
+
+  it('turns a circle on, binds, styles and removes it on every text shape, warning-clean', async () => {
+    const editor = Editor.create(SOURCE);
+    expect((await render(editor)).codes).toEqual([]);
+    for (const [path, shape] of SUBJECTS) {
+      applyAll(editor, textMarkPresenceOps(path, view(editor, path), 'always'));
+      expect((await render(editor)).codes, `${shape} always`).toEqual([]);
+      applyAll(editor, textMarkPresenceOps(path, view(editor, path), 'bound'));
+      bind(editor, path, 'cash');
+      expect((await render(editor)).codes, `${shape} bound`).toEqual([]);
+      for (const preset of [...MARK_PADDING_PRESETS, '2', '1mm', '30%', '']) {
+        apply(editor, markPaddingOp(view(editor, path), preset));
+        expect((await render(editor)).codes, `${shape} padding ${preset}`).toEqual([]);
+      }
+      const markPath = view(editor, path).markPath;
+      apply(editor, strokeWidthOp(markPath, '2'));
+      apply(editor, strokeColorOp(markPath, '#0055aa'));
+      apply(editor, fillOp(markPath, '#eeeeee'));
+      expect(readShapeStyle((p) => editor.read(p), markPath).strokeWidth).toBe('2');
+      apply(editor, styleNamesOp(markPath, ['red']));
+      expect((await render(editor)).codes, `${shape} styled`).toEqual([]);
+      applyAll(editor, textMarkPresenceOps(path, view(editor, path), 'always'));
+      expect((await render(editor)).codes, `${shape} unbound`).toEqual([]);
+      applyAll(editor, textMarkPresenceOps(path, view(editor, path), 'none'));
+      expect(editor.read(path), shape).not.toHaveProperty('mark');
+    }
+    expect((await render(editor)).codes).toEqual([]);
+  });
+
+  it('the engine reads what the section writes (the positive controls)', async () => {
+    const editor = Editor.create(SOURCE);
+    const bare = (await render(editor)).rgba;
+    applyAll(editor, textMarkPresenceOps(PLAIN, view(editor, PLAIN), 'always'));
+    const circled = (await render(editor)).rgba;
+    // The circle draws: the page is not what it was without it.
+    expect(same(bare, circled)).toBe(false);
+    // Bound to a field: drawn on a match, absent otherwise.
+    applyAll(editor, textMarkPresenceOps(PLAIN, view(editor, PLAIN), 'bound'));
+    bind(editor, PLAIN, 'cash');
+    expect(same((await render(editor)).rgba, circled)).toBe(true);
+    expect(same((await render(editor, '{"label":"振込","pay":"card"}')).rgba, bare)).toBe(true);
+    // Unbinding keeps the circle.
+    applyAll(editor, textMarkPresenceOps(PLAIN, view(editor, PLAIN), 'always'));
+    expect(same((await render(editor)).rgba, circled)).toBe(true);
+    // The clearance and the outline reach it.
+    apply(editor, markPaddingOp(view(editor, PLAIN), '1em'));
+    const padded = (await render(editor)).rgba;
+    expect(same(padded, circled)).toBe(false);
+    apply(editor, strokeColorOp(view(editor, PLAIN).markPath, '#0055aa'));
+    expect(same((await render(editor)).rgba, padded)).toBe(false);
+  });
+
+  it('a circle on vertical text is reported, not drawn', async () => {
+    const editor = Editor.create(SOURCE);
+    const VERTICAL = 'sections.body.items[3]';
+    const bare = (await render(editor)).rgba;
+    applyAll(editor, textMarkPresenceOps(VERTICAL, view(editor, VERTICAL), 'always'));
+    const result = await render(editor);
+    expect(result.codes).toEqual(['vertical_text_unsupported']);
+    expect(same(result.rgba, bare)).toBe(true);
   });
 });
