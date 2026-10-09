@@ -5,7 +5,9 @@
 // It lives beside the hook rather than in `Designer.test.tsx` because the
 // proposition is the hook's: `spans` wins over `text`/`data` when non-empty, so
 // a spans-carrying item must open the flow surface WHATEVER its content mode
-// says — and the plain field must keep opening for everything else.
+// says. A plain static text opens it too on an engine that renders spans (its
+// commits are `useInlineEdit.plain.test.tsx`'s); the plain field keeps opening
+// on an engine that does not.
 
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -38,6 +40,16 @@ const SPANS_WITH_TEXT = doc(
     '          - text: alpha',
   ].join('\n'),
 );
+
+/** A plain static text — no `spans:`. */
+const PLAIN = doc(
+  ['      - type: text', '        box: { x: 0, y: 0, w: 100, h: 20 }', '        text: hi'].join(
+    '\n',
+  ),
+);
+
+/** An engine declaring capabilities, none of them `text.spans`. */
+const NO_SPANS_ENGINE: readonly string[] = ['style.textDecoration.combined'];
 
 const DEFS = [
   'version: "0.2.0"',
@@ -307,31 +319,45 @@ describe('the inline editor over a spans item', () => {
     expect(live.closest('[role="toolbar"]')?.getAttribute('aria-label')).toBe('Text formatting');
   });
 
-  it('leaves the block-level Bold live for a PLAIN text item', async () => {
-    await open(
-      doc(
-        [
-          '      - type: text',
-          '        box: { x: 0, y: 0, w: 100, h: 20 }',
-          '        text: hi',
-        ].join('\n'),
-      ),
+  it('stands the block-level Bold down for a PLAIN text too — it opens the same surface', async () => {
+    // A plain static text opens the flow surface on an engine that renders
+    // spans, so the rule above applies to it unchanged: one live Bold, the
+    // flow bar's.
+    const { surface } = await open(PLAIN);
+    caretIn(surface, 0, 0);
+    const text = surface.children[0]?.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(text, 0);
+    range.setEnd(text, 1);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+    fireEvent.mouseUp(surface);
+    const live = screen
+      .getAllByRole('button', { name: 'Bold' })
+      .filter((b) => !(b as HTMLButtonElement).disabled);
+    expect(live).toHaveLength(1);
+    expect(live[0]?.closest('[role="toolbar"]')?.getAttribute('aria-label')).toBe(
+      'Text formatting',
     );
+  });
+
+  it('leaves the block-level Bold live for a PLAIN text on an engine WITHOUT spans', async () => {
+    await open(PLAIN, vi.fn(), NO_SPANS_ENGINE);
     const bolds = screen.getAllByRole('button', { name: 'Bold' });
     expect(bolds).toHaveLength(1);
     expect((bolds[0] as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it('still opens the PLAIN field for an item with no spans', async () => {
-    const { surface } = await open(
-      doc(
-        [
-          '      - type: text',
-          '        box: { x: 0, y: 0, w: 100, h: 20 }',
-          '        text: hi',
-        ].join('\n'),
-      ),
-    );
+  it('opens the FLOW surface over a plain text, as ONE unmarked fragment', async () => {
+    const { surface } = await open(PLAIN);
+    expect(surface.textContent).toBe('hi');
+    expect(surface.children).toHaveLength(1);
+    expect(screen.getByRole('toolbar', { name: 'Text formatting' })).toBeTruthy();
+  });
+
+  it('still opens the PLAIN field on an engine without `text.spans`', async () => {
+    const { surface } = await open(PLAIN, vi.fn(), NO_SPANS_ENGINE);
     expect(surface.textContent).toBe('hi');
     expect(screen.queryByRole('toolbar', { name: 'Text formatting' })).toBeNull();
   });

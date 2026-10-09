@@ -13,14 +13,26 @@
 //   - the U+200B placeholder an empty run is seeded with is stripped, so the
 //     thing that makes an empty fragment editable can never become content.
 //
+// Line breaks follow `lineBreaks`, the rule the plain surface's serializer
+// applies too. Measured in a real browser: Enter inside a run mints a `<div>`
+// holding a CLONE of the run element (same `data-sj-run`, same mark classes),
+// and before this file applied that rule the break the reader typed was simply
+// lost — "第一行" + Enter + "X" came back as two fragments with no "\n" between
+// them. A break belongs to the END of the fragment before it, and the clone's
+// text then rejoins its source in `coalesce`, so Enter inside one fragment
+// still yields one fragment.
+//
 // Nesting is composed rather than refused. `runFormat` avoids creating it (it
 // splits, then paints), but a paste, a native undo or an IME can restructure
 // the surface, and a serializer that assumed flatness would silently drop the
 // outer run's marks.
 
 import { CHIP_WIRE_ATTR } from './chipModel';
-import { BOUND_ATTR, EMPTY_RUN_PLACEHOLDER, RUN_ATTR } from './runNodes';
-import { composeDecoration, type Decoration, NO_MARKS, type RunMarks } from './spanRuns';
+import { breakBefore, isBreakElement, lineChildren } from './lineBreaks';
+import { Collector, type Frame, ROOT_FRAME } from './runCollector';
+import { compose, marksOfElement } from './runElementMarks';
+import { BOUND_ATTR, RUN_ATTR } from './runNodes';
+import { type RunMarks, sameMarks } from './spanRuns';
 
 /** One fragment as the surface now holds it. */
 export interface SerializedRun {
@@ -35,89 +47,6 @@ export interface SerializedRun {
   readonly linked: boolean;
 }
 
-const CLASS_MARKS: ReadonlyMap<string, keyof RunMarks | Decoration> = new Map([
-  ['sj-run--bold', 'bold'],
-  ['sj-run--italic', 'italic'],
-  ['sj-run--underline', 'underline'],
-  ['sj-run--strike', 'line_through'],
-]);
-
-/** A run element's own marks, read back from the classes `paintRun` wrote. The
- * CLASS is the source of truth rather than the computed style: the class set is
- * ours, while a computed style also answers for the sheet, the theme and every
- * inherited rule, none of which is a fragment's authored value. */
-export function marksOfElement(el: Element): RunMarks {
-  let underline = false;
-  let lineThrough = false;
-  let bold = false;
-  let italic = false;
-  for (const name of el.classList) {
-    const mark = CLASS_MARKS.get(name);
-    if (mark === 'bold') {
-      bold = true;
-    } else if (mark === 'italic') {
-      italic = true;
-    } else if (mark === 'underline') {
-      underline = true;
-    } else if (mark === 'line_through') {
-      lineThrough = true;
-    }
-  }
-  return {
-    bold,
-    italic,
-    decoration: composeDecoration(underline, lineThrough),
-    color: colorOf(el),
-  };
-}
-
-/** The inline colour `paintRun` set, normalized back to the `#rrggbb` the
- * document authored. A browser re-serializes an inline colour as `rgb(r, g, b)`,
- * so reading the property back verbatim would rewrite every coloured fragment
- * on the first commit that touched its neighbour. */
-function colorOf(el: Element): string {
-  const raw = el instanceof HTMLElement ? el.style.getPropertyValue('color').trim() : '';
-  const rgb = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(raw);
-  if (rgb === null) {
-    return raw;
-  }
-  const hex = (index: number) => Number(rgb[index]).toString(16).padStart(2, '0');
-  return `#${hex(1)}${hex(2)}${hex(3)}`;
-}
-
-/** Compose an ancestor's marks with a descendant's: a boolean mark is set when
- * EITHER carries it, and the two valued marks take the innermost that says
- * something (a nested run overriding its parent's colour is the whole reason a
- * nested run exists). */
-function compose(outer: RunMarks, inner: RunMarks): RunMarks {
-  return {
-    bold: outer.bold || inner.bold,
-    italic: outer.italic || inner.italic,
-    decoration: inner.decoration === 'none' ? outer.decoration : inner.decoration,
-    color: inner.color === '' ? outer.color : inner.color,
-  };
-}
-
-/** Both written as ESCAPES, never as the bytes: a literal U+00A0 or U+200B is
- * invisible in review and to `grep`, and turns the file binary to a census
- * sweep. `replaceAll` over the string spares a constructed RegExp, so the
- * placeholder has exactly one spelling — `runNodes`' constant. */
-const NBSP = '\u00A0';
-
-function wireText(raw: string): string {
-  return raw.replaceAll(NBSP, ' ').replaceAll(EMPTY_RUN_PLACEHOLDER, '');
-}
-
-/** The run context a walk carries: which element owns the text it is reading,
- * with that element's composed marks and provenance. */
-interface Frame {
-  readonly sourceIndex: number | null;
-  readonly marks: RunMarks;
-  readonly linked: boolean;
-}
-
-const ROOT_FRAME: Frame = { sourceIndex: null, marks: NO_MARKS, linked: false };
-
 /** `raw` is passed IN rather than read here: the caller has already established
  * that the element carries the attribute, so re-reading it would add a
  * null branch nothing can reach. */
@@ -128,55 +57,6 @@ function frameFor(el: Element, raw: string, outer: Frame): Frame {
     marks: compose(outer.marks, marksOfElement(el)),
     linked: outer.linked || el.classList.contains('sj-run--linked'),
   };
-}
-
-class Collector {
-  readonly out: SerializedRun[] = [];
-  private buffer = '';
-  private frame: Frame | null = null;
-
-  /** Close whatever fragment is open. An EMPTY buffer is still emitted when its
-   * frame came from a real run element: a document may legitimately carry a
-   * fragment with neither key (which the engine does report — `empty_span`
-   * fires for `(None, None)`), and dropping it here would delete a node the
-   * reader never asked to remove. Such a fragment round-trips as a `keep`,
-   * because its content compares equal, so nothing is rewritten either.
-   *
-   * A fragment the reader EMPTIED is a different thing and is NOT reported: it
-   * becomes `text: ""`, i.e. `Some("")`, which that predicate does not match.
-   * `runFormat` is where the accidental version of that is prevented. */
-  flush(): void {
-    if (this.frame !== null && (this.buffer !== '' || this.frame.sourceIndex !== null)) {
-      this.out.push({
-        sourceIndex: this.frame.sourceIndex,
-        kind: 'text',
-        content: wireText(this.buffer),
-        marks: this.frame.marks,
-        linked: this.frame.linked,
-      });
-    }
-    this.buffer = '';
-    this.frame = null;
-  }
-
-  text(data: string, frame: Frame): void {
-    if (this.frame !== frame) {
-      this.flush();
-      this.frame = frame;
-    }
-    this.buffer += data;
-  }
-
-  bound(key: string, frame: Frame): void {
-    this.flush();
-    this.out.push({
-      sourceIndex: frame.sourceIndex,
-      kind: 'bound',
-      content: key,
-      marks: frame.marks,
-      linked: frame.linked,
-    });
-  }
 }
 
 function walk(node: Node, frame: Frame, into: Collector): void {
@@ -197,12 +77,18 @@ function walk(node: Node, frame: Frame, into: Collector): void {
     into.text(chip, frame);
     return;
   }
+  if (breakBefore(node, into.line) !== '') {
+    into.lineBreak();
+  }
+  if (isBreakElement(node)) {
+    return;
+  }
   const run = node.getAttribute(RUN_ATTR);
   const next = run === null ? frame : frameFor(node, run, frame);
   if (next !== frame) {
     into.flush();
   }
-  for (const child of node.childNodes) {
+  for (const child of lineChildren(node)) {
     walk(child, next, into);
   }
   if (next !== frame) {
@@ -210,12 +96,40 @@ function walk(node: Node, frame: Frame, into: Collector): void {
   }
 }
 
+/** Whether two neighbouring fragments are one fragment the DOM happens to hold
+ * as two elements: both text, from the same source (or both new), saying the
+ * same marks. A split the reader then un-marked, and the run clone Enter mints,
+ * are both this shape; two fragments the document authored side by side are
+ * not, because their source indices differ. */
+function sameFragment(a: SerializedRun, b: SerializedRun): boolean {
+  return (
+    a.kind === 'text' &&
+    b.kind === 'text' &&
+    a.sourceIndex === b.sourceIndex &&
+    a.linked === b.linked &&
+    sameMarks(a.marks, b.marks)
+  );
+}
+
+function coalesce(runs: readonly SerializedRun[]): readonly SerializedRun[] {
+  const out: SerializedRun[] = [];
+  for (const run of runs) {
+    const last = out[out.length - 1];
+    if (last !== undefined && sameFragment(last, run)) {
+      out[out.length - 1] = { ...last, content: last.content + run.content };
+    } else {
+      out.push(run);
+    }
+  }
+  return out;
+}
+
 /** Every fragment the surface now holds, in document order. */
-export function serializeRuns(root: Node): readonly SerializedRun[] {
-  const into = new Collector();
-  for (const child of root.childNodes) {
+export function serializeRuns(root: Node, verbatim = false): readonly SerializedRun[] {
+  const into = new Collector(verbatim);
+  for (const child of lineChildren(root)) {
     walk(child, ROOT_FRAME, into);
   }
-  into.flush();
-  return into.out;
+  into.finish();
+  return coalesce(into.out);
 }

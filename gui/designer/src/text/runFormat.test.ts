@@ -9,7 +9,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import { applyMarks, runsInSelection, splitRunAt } from './runFormat';
-import { RUN_ATTR } from './runNodes';
+import { COMBINE_ATTR, RUN_ATTR } from './runNodes';
 import { serializeRuns } from './runSerialize';
 import { NO_MARKS, type RunMarks } from './spanRuns';
 
@@ -220,5 +220,19 @@ describe('applyMarks', () => {
       color: '#c2402a',
     }));
     expect(serializeRuns(root)[1]?.marks).toMatchObject({ ...NO_MARKS, color: '#c2402a' });
+  });
+});
+
+describe('a split of a tate-chu-yoko run', () => {
+  it('keeps the token on BOTH halves — the clone carries every attribute', () => {
+    const root = host([0, '令和12', 'sj-run sj-run--tcy']);
+    root.children[0]?.setAttribute(COMBINE_ATTR, 'digits3');
+    applyMarks(root, select(root, [0, 0], [0, 2]), bold);
+    expect(
+      serializeRuns(root).map((run) => [run.content, run.marks.bold, run.marks.combine]),
+    ).toEqual([
+      ['令和', true, 'digits3'],
+      ['12', false, 'digits3'],
+    ]);
   });
 });

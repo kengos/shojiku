@@ -6,10 +6,10 @@
 // style keys are deliberately absent from the answer.
 
 import { describe, expect, it } from 'vitest';
-import { NO_MARKS, narrowRuns, readMarks, sameMarks } from './spanRuns';
+import { combineOn, NO_MARKS, narrowRuns, readMarks, sameMarks } from './spanRuns';
 
 describe('readMarks', () => {
-  it('reads the four marks the flow surface paints', () => {
+  it('reads the marks the flow surface paints', () => {
     expect(
       readMarks({
         fontWeight: 'bold',
@@ -17,7 +17,13 @@ describe('readMarks', () => {
         textDecoration: 'line_through',
         color: '#112233',
       }),
-    ).toEqual({ bold: true, italic: true, decoration: 'line_through', color: '#112233' });
+    ).toEqual({
+      bold: true,
+      italic: true,
+      decoration: 'line_through',
+      color: '#112233',
+      combine: '',
+    });
   });
 
   it('reads NOTHING from the three METRIC keys', () => {
@@ -136,5 +142,43 @@ describe('sameMarks', () => {
     expect(sameMarks(NO_MARKS, { ...NO_MARKS, italic: true })).toBe(false);
     expect(sameMarks(NO_MARKS, { ...NO_MARKS, decoration: 'underline' })).toBe(false);
     expect(sameMarks(NO_MARKS, { ...NO_MARKS, color: '#000000' })).toBe(false);
+  });
+});
+
+describe('the tate-chu-yoko mark', () => {
+  it('reads each wire form as its token', () => {
+    expect(readMarks({ textCombineUpright: 'all' }).combine).toBe('all');
+    expect(readMarks({ textCombineUpright: 'none' }).combine).toBe('none');
+    for (const n of [2, 3, 4]) {
+      expect(readMarks({ textCombineUpright: { digits: n } }).combine).toBe(`digits${n}`);
+    }
+    expect(readMarks({}).combine).toBe('');
+  });
+
+  it('degrades every shape the engine cannot parse to the unreadable token, never throwing', () => {
+    for (const hostile of [
+      { digits: '2' },
+      { digits: 2.5 },
+      { digits: 2, extra: 1 },
+      ['all'],
+      7,
+      JSON.parse('{"__proto__": {"digits": 2}}'),
+    ]) {
+      expect(readMarks({ textCombineUpright: hostile }).combine).toBe('invalid');
+    }
+    // Out of the engine's 2..=4 range keeps its token, as the item-level select does.
+    expect(readMarks({ textCombineUpright: { digits: 9 } }).combine).toBe('digits9');
+  });
+
+  it('is ON for anything but unset and the explicit `none`', () => {
+    expect(combineOn('')).toBe(false);
+    expect(combineOn('none')).toBe(false);
+    for (const token of ['all', 'digits2', 'invalid']) {
+      expect(combineOn(token)).toBe(true);
+    }
+  });
+
+  it('takes part in the changed-check', () => {
+    expect(sameMarks(NO_MARKS, { ...NO_MARKS, combine: 'all' })).toBe(false);
   });
 });

@@ -6,6 +6,7 @@
 // which items qualify); commit writes ONE `plainTextOp`, Escape cancels.
 
 import type { BoxRect } from '../engine/types';
+import type { ConversionCause } from '../panel/spanConversion';
 import type { ChipContext } from '../text/chipContext';
 import type { PendingDecl } from '../text/declModel';
 import type { SerializedRun } from '../text/runSerialize';
@@ -21,13 +22,21 @@ export interface InlineTextEditorProps {
   readonly onCancel: () => void;
   readonly ariaLabel: string;
   readonly chips?: ChipContext;
-  /** Present when the item carries `spans:`. The two halves are ONE optional
-   * field rather than two, because a surface with fragments to show and no way
-   * to hand them back is not a state the host may express. */
+  /** Present when the item is edited on the FLOW surface — one carrying
+   * `spans:`, or a plain static text on an engine that renders spans. The two
+   * halves are ONE optional field rather than two, because a surface with
+   * fragments to show and no way to hand them back is not a state the host may
+   * express. */
   readonly flow?: {
     readonly runs: readonly RunView[];
     /** The engine takes both decoration lines at once. */
     readonly combinedDecoration?: boolean;
+    /** Offer the per-fragment tate-chu-yoko toggle. */
+    readonly combineUpright?: boolean;
+    /** Read the surface's text verbatim (a plain item's). */
+    readonly verbatim?: boolean;
+    /** What changes once a plain item holds spans, told before the first mark. */
+    readonly causes?: readonly ConversionCause[];
     readonly onCommit: (
       runs: readonly SerializedRun[],
       declarations: readonly PendingDecl[],
@@ -72,6 +81,9 @@ export function InlineTextEditor({
           ariaLabel={ariaLabel}
           chips={chips}
           combinedDecoration={flow.combinedDecoration}
+          combineUpright={flow.combineUpright}
+          verbatim={flow.verbatim}
+          causes={flow.causes}
         />
       )}
     </div>

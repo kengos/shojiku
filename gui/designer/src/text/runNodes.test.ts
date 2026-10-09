@@ -5,16 +5,17 @@
 
 import { describe, expect, it } from 'vitest';
 import { chipMetaMap } from './chipModel';
+import { marksOfElement } from './runElementMarks';
 import {
   BOUND_ATTR,
   buildRunNode,
   buildRunNodes,
+  COMBINE_ATTR,
   EMPTY_RUN_PLACEHOLDER,
   paintRun,
   RUN_ATTR,
   runClasses,
 } from './runNodes';
-import { marksOfElement } from './runSerialize';
 import { NO_MARKS, narrowRuns, type RunMarks } from './spanRuns';
 
 const META = chipMetaMap([{ key: 'order.total', label: 'Total', sample: '1,200' }]);
@@ -41,7 +42,10 @@ describe('runClasses', () => {
   it('names one class per set mark, and none for an unset decoration', () => {
     expect(runClasses(NO_MARKS, false)).toEqual(['sj-run']);
     expect(
-      runClasses({ bold: true, italic: true, decoration: 'underline', color: '' }, true),
+      runClasses(
+        { bold: true, italic: true, decoration: 'underline', color: '', combine: '' },
+        true,
+      ),
     ).toEqual(['sj-run', 'sj-run--bold', 'sj-run--italic', 'sj-run--underline', 'sj-run--linked']);
     expect(runClasses({ ...NO_MARKS, decoration: 'line_through' }, false)).toContain(
       'sj-run--strike',
@@ -155,7 +159,13 @@ describe('buildRunNodes', () => {
 
 describe('buildRunNode', () => {
   it('paints the run it builds', () => {
-    const marks: RunMarks = { bold: true, italic: false, decoration: 'underline', color: '' };
+    const marks: RunMarks = {
+      bold: true,
+      italic: false,
+      decoration: 'underline',
+      color: '',
+      combine: '',
+    };
     const node = buildRunNode(
       document,
       { index: 0, kind: 'text', content: 'x', marks, hasStyleNames: false, linked: true },
@@ -167,5 +177,39 @@ describe('buildRunNode', () => {
       'sj-run--underline',
       'sj-run--linked',
     ]);
+  });
+});
+
+describe('the tate-chu-yoko mark on a run element', () => {
+  it('paints the dotted-box class and keeps the token VERBATIM in an attribute', () => {
+    const el = document.createElement('span');
+    paintRun(el, { ...NO_MARKS, combine: 'digits3' }, false);
+    expect(el.classList.contains('sj-run--tcy')).toBe(true);
+    expect(el.getAttribute(COMBINE_ATTR)).toBe('digits3');
+    expect(marksOfElement(el).combine).toBe('digits3');
+  });
+
+  it('keeps an explicit `none` without painting it as on', () => {
+    const el = document.createElement('span');
+    paintRun(el, { ...NO_MARKS, combine: 'none' }, false);
+    expect(el.classList.contains('sj-run--tcy')).toBe(false);
+    expect(el.getAttribute(COMBINE_ATTR)).toBe('none');
+  });
+
+  it('removes the attribute when the mark goes', () => {
+    const el = document.createElement('span');
+    paintRun(el, { ...NO_MARKS, combine: 'all' }, false);
+    paintRun(el, NO_MARKS, false);
+    expect(el.hasAttribute(COMBINE_ATTR)).toBe(false);
+    expect(runClasses(NO_MARKS, false)).toEqual(['sj-run']);
+  });
+
+  it('seeds a fragment carrying one', () => {
+    const [node] = buildRunNodes(
+      document,
+      narrowRuns([{ text: '12', style: { textCombineUpright: 'all' } }]),
+      META,
+    );
+    expect((node as HTMLElement).getAttribute(COMBINE_ATTR)).toBe('all');
   });
 });

@@ -9,6 +9,7 @@
 // `__proto__`; a plain-object table would walk the prototype).
 
 import { parseRawSegments, type RawSegment } from './interpolate';
+import { breakBefore, isBreakElement, type LineState, lineChildren } from './lineBreaks';
 
 /** What a chip displays for a known key: the field's label and its bounded
  * sample display string (both from the binding picker's options, which
@@ -155,16 +156,6 @@ export function buildEditorNodes(
   );
 }
 
-/** Elements a browser mints to END A LINE inside a contenteditable, rather than
- * to decorate one. Nothing here is built by this file and none of it can arrive
- * by paste or drop (both are forced through the plain-text ingress) — these
- * appear only when the BROWSER restructures the content itself. The reader
- * pressing ENTER is by far the commonest producer; a native undo, dictation and
- * the DOM an IME leaves behind on composition end are the rest. The list is
- * short on purpose; an element not on it is decorative and contributes only its
- * text, exactly as before. */
-const LINE_ENDING_TAGS: ReadonlySet<string> = new Set(['DIV', 'P', 'LI']);
-
 /** Serialize the editor DOM back to wire text: text nodes verbatim, a chip
  * contributes its stored wire slice, `<br>` reads as a newline, and any
  * other element (nothing we build; paste is plain-text-only) degrades to its
@@ -187,23 +178,11 @@ export function serializeEditor(root: Node): string {
   return walkEditor(root, { started: false });
 }
 
-/** `started` says whether a LINE has been begun yet, and it is shared across the
- * whole walk. A line container ends the line before it, so it emits a break
- * unless it opens the content — but "opens the content" is not the same as
- * "nothing written yet": an EMPTY container writes nothing while still being a
- * line, and testing the output instead swallowed the break of whichever
- * container came after it. A value opening with a blank line lost that line
- * silently, which is the same class of loss this file exists to close. Sharing
- * the flag through the recursion is also what gets a container nested inside a
- * non-container right (`<ul><li>`). */
-function walkEditor(root: Node, state: { started: boolean }): string {
-  const children = Array.from(root.childNodes);
-  const last = children[children.length - 1];
-  if (last instanceof Element && last.tagName === 'BR') {
-    children.pop();
-  }
+/** The line rule (`<br>`, line containers, the shared `started` flag) is
+ * `lineBreaks`' — the flow surface's serializer applies the same one. */
+function walkEditor(root: Node, state: LineState): string {
   let out = '';
-  for (const node of children) {
+  for (const node of lineChildren(root)) {
     if (node instanceof Text) {
       out += node.data;
       state.started = true;
@@ -216,18 +195,10 @@ function walkEditor(root: Node, state: { started: boolean }): string {
         state.started = true;
         continue;
       }
-      if (node.tagName === 'BR') {
-        out += '\n';
-        state.started = true;
-        continue;
+      out += breakBefore(node, state);
+      if (!isBreakElement(node)) {
+        out += walkEditor(node, state);
       }
-      if (LINE_ENDING_TAGS.has(node.tagName)) {
-        if (state.started) {
-          out += '\n';
-        }
-        state.started = true;
-      }
-      out += walkEditor(node, state);
     }
   }
   return out;

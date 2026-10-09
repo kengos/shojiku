@@ -11,10 +11,10 @@ import { NO_MARKS, type RunMarks } from './spanRuns';
 
 afterEach(cleanup);
 
-function show(marks: RunMarks | null, onMark = vi.fn()) {
+function show(marks: RunMarks | null, onMark = vi.fn(), combineUpright = false) {
   render(
     <I18nProvider locale="en">
-      <RunFormatBar marks={marks} onMark={onMark} />
+      <RunFormatBar marks={marks} onMark={onMark} combineUpright={combineUpright} />
     </I18nProvider>,
   );
   return onMark;
@@ -136,5 +136,35 @@ describe('RunFormatBar', () => {
       </I18nProvider>,
     );
     expect(screen.getByRole('button', { name: 'Insert field' })).toBeTruthy();
+  });
+});
+
+describe('the tate-chu-yoko toggle', () => {
+  const NAME = 'Horizontal in vertical (selected text)';
+
+  it('is absent unless the host offers it', () => {
+    show(NO_MARKS);
+    expect(screen.queryByRole('button', { name: NAME })).toBeNull();
+  });
+
+  it('turns it on over the selection, as `all`', () => {
+    const onMark = show(NO_MARKS, vi.fn(), true);
+    const toggle = screen.getByRole('button', { name: NAME });
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(toggle);
+    expect(resultOf(onMark).combine).toBe('all');
+  });
+
+  it('reads an authored digits form as ON, and a press clears it', () => {
+    const onMark = show({ ...NO_MARKS, combine: 'digits2' }, vi.fn(), true);
+    const toggle = screen.getByRole('button', { name: NAME });
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(toggle);
+    expect(resultOf(onMark, { ...NO_MARKS, combine: 'digits2' }).combine).toBe('');
+  });
+
+  it('is dead with nothing selected, like every other mark', () => {
+    show(null, vi.fn(), true);
+    expect((screen.getByRole('button', { name: NAME }) as HTMLButtonElement).disabled).toBe(true);
   });
 });

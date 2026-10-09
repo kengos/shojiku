@@ -27,6 +27,7 @@ import { planReparent } from '../canvas/reparentTarget';
 import { applyDefinitionOps, readDefinitionField, titleOp } from '../data/definitionsEdit';
 import { fixFor } from '../diagnostics/fixModel';
 import { type EngineTransport, TransportError } from '../engine/transport';
+import type { PlacedBox } from '../engine/types';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
 import { anchorCandidates, pickTarget } from '../ids/anchorTargets';
 import { duplicateOps } from '../ids/copyIds';
@@ -86,6 +87,7 @@ import { addRubyOp, editRubyOp, readRuby, removeRubyOp, rubySizeOp } from '../pa
 import { rulePresetOps } from '../panel/rulePresets';
 import { fillOp, readShapeStyle, strokeColorOp, strokeWidthOp } from '../panel/shapeStyle';
 import { sizeLimitOp } from '../panel/sizeLimits';
+import { plainFlowCommitOps } from '../panel/spanConversion';
 import { styleNamesOp } from '../panel/styleNamesOps';
 import { deleteStyleOps, renameStyleOps } from '../panel/styleRefOps';
 import { TABLE_BODY_VALIGN_CAPABILITY, TABLE_VALIGN_CAPABILITY } from '../panel/TableBandFields';
@@ -118,6 +120,8 @@ import { extendParams } from '../sample/generate';
 import { buildStyleUsage } from '../styles/usage';
 import { commitOps } from '../text/declCommit';
 import { planChipInsert } from '../text/declMint';
+import type { SerializedRun } from '../text/runSerialize';
+import { NO_MARKS, type RunMarks } from '../text/spanRuns';
 import { cascadeContext } from '../toolbar/cascade';
 import { effectiveValueIn } from '../toolbar/effective';
 import { buildTree, type TreeNode } from '../tree/model';
@@ -4512,5 +4516,129 @@ describe('the text circle section against the real engine', () => {
     const result = await render(editor);
     expect(result.codes).toEqual(['vertical_text_unsupported']);
     expect(same(result.rgba, bare)).toBe(true);
+  });
+});
+
+describe('creating spans from a plain text against the real engine', () => {
+  // Japanese text needs a Japanese face (the shared en-US transport has none).
+  let ja: EngineTransport;
+  beforeAll(() => {
+    ja = createWasmTransport(preparedEngine(wasmModule, 'ja-JP'));
+  });
+  const HORIZONTAL = 'sections.body.items[0]';
+  const VERTICAL = 'sections.body.items[1]';
+  const SOURCE = [
+    'page: { size: A4, margin: 30 }',
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - { type: text, text: 合計金額, box: { w: 200 } }',
+    '      - type: text',
+    '        text: 令和12年',
+    '        box: { w: 40, h: 160 }',
+    '        style: { writingMode: vertical_rl }',
+    '',
+  ].join('\n');
+  const outcome = async (editor: Editor) => {
+    const result = await ja.renderRaw(editor.text(), '{}', undefined, { scale: 1 });
+    expect(result.ok, JSON.stringify(result.diagnostics.items)).toBe(true);
+    if (result.inspect === null) throw new Error('inspect missing');
+    return {
+      codes: result.diagnostics.items.filter((d) => d.severity !== 'info').map((d) => d.code),
+      boxes: result.inspect.boxes.pages[0],
+      rgba: result.pages[0].rgba,
+    };
+  };
+  const run = (content: string, marks: RunMarks = NO_MARKS): SerializedRun => ({
+    sourceIndex: 0,
+    kind: 'text',
+    content,
+    marks,
+    linked: false,
+  });
+  /** Commit `runs` over the plain item at `path`, as the flow surface does. */
+  const convert = (
+    editor: Editor,
+    path: string,
+    oldText: string,
+    runs: readonly SerializedRun[],
+  ) => {
+    const ops =
+      plainFlowCommitOps({
+        read: (p) => editor.read(p),
+        path,
+        oldText,
+        runs,
+        pending: [],
+      }) ?? [];
+    expect(ops.length).toBeGreaterThan(0);
+    expect(editor.applyAll(ops).ok).toBe(true);
+  };
+  const border = (boxes: readonly PlacedBox[], path: string) =>
+    boxes.find((b) => b.path === path)?.border;
+  const same = (a: Uint8Array, b: Uint8Array) =>
+    a.length === b.length && a.every((v, i) => v === b[i]);
+  const BOLD: RunMarks = { ...NO_MARKS, bold: true };
+
+  it('converts warning-clean, at the SAME place and size as the plain item', async () => {
+    const editor = Editor.create(SOURCE);
+    const before = await outcome(editor);
+    expect(before.codes).toEqual([]);
+    convert(editor, HORIZONTAL, '合計金額', [run('合計'), run('金額', BOLD)]);
+    const after = await outcome(editor);
+    // No `span_content_conflict` (the `text:` went), no `empty_span`.
+    expect(after.codes).toEqual([]);
+    expect(border(after.boxes, HORIZONTAL)).toEqual(border(before.boxes, HORIZONTAL));
+    // The positive control: the bold fragment reached the page.
+    expect(same(after.rgba, before.rgba)).toBe(false);
+  });
+
+  it('draws a line break inside a fragment as a second line', async () => {
+    const editor = Editor.create(SOURCE);
+    convert(editor, HORIZONTAL, '合計金額', [run('合計\n'), run('金額', BOLD)]);
+    const text = (await outcome(editor)).boxes.find((b) => b.path === HORIZONTAL)?.text;
+    expect(text !== undefined && 'lines' in text ? text.lines.length : 0).toBe(2);
+  });
+
+  it('sets tate-chu-yoko on ONE fragment of a vertical text — and the engine draws it', async () => {
+    const off = Editor.create(SOURCE);
+    convert(off, VERTICAL, '令和12年', [
+      run('令和'),
+      run('12', { ...NO_MARKS, combine: 'none' }),
+      run('年'),
+    ]);
+    const upright = Editor.create(SOURCE);
+    convert(upright, VERTICAL, '令和12年', [
+      run('令和'),
+      run('12', { ...NO_MARKS, combine: 'all' }),
+      run('年'),
+    ]);
+    const digits = Editor.create(SOURCE);
+    convert(digits, VERTICAL, '令和12年', [
+      run('令和'),
+      run('12', { ...NO_MARKS, combine: 'digits2' }),
+      run('年'),
+    ]);
+    const [a, b, c] = [await outcome(off), await outcome(upright), await outcome(digits)];
+    for (const result of [a, b, c]) {
+      expect(result.codes).toEqual([]);
+    }
+    expect(same(a.rgba, b.rgba)).toBe(false);
+    // The digits map the builder writes parses and combines the same two digits.
+    expect(same(b.rgba, c.rgba)).toBe(true);
+  });
+
+  it('leaves tate-chu-yoko inert — and silent — on a horizontal text', async () => {
+    const plain = Editor.create(SOURCE);
+    convert(plain, HORIZONTAL, '合計金額', [run('合計'), run('金額', BOLD)]);
+    const marked = Editor.create(SOURCE);
+    convert(marked, HORIZONTAL, '合計金額', [
+      run('合計'),
+      run('金額', { ...BOLD, combine: 'all' }),
+    ]);
+    const [a, b] = [await outcome(plain), await outcome(marked)];
+    expect(b.codes).toEqual([]);
+    expect(same(a.rgba, b.rgba)).toBe(true);
   });
 });

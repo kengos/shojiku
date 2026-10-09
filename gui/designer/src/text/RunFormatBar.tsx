@@ -1,9 +1,13 @@
-// The inline rich-text format bar: the four MARKS a fragment may carry, over
+// The inline rich-text format bar: the MARKS a fragment may carry, over
 // whatever the reader has selected. Pressing one splits the fragments
 // underneath — invisibly, which is the point — so this bar shows no fragment
 // number and offers no boundary control of any kind.
 //
-// The four are exactly the marks, and NOT the three metrics (`fontSize`,
+// The fifth mark, tate-chu-yoko, is offered only where it can draw: the host
+// passes `combineUpright` while the block is vertical (or a fragment already
+// carries one, so it can be cleared) on an engine honouring it per span.
+//
+// The marks are exactly that, and NOT the three metrics (`fontSize`,
 // `fontFamily`, `letterSpacing`). `canvas/InlineTextEditor` records why: the
 // surface is "deliberately NOT WYSIWYG — the Designer never re-resolves
 // fonts/styles", so painting a metric would make its line breaks a prediction
@@ -17,14 +21,27 @@ import { useI18n } from '../i18n/context';
 import { FMT_BTN, ToggleButton } from '../toolbar/fmtChrome';
 import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
 import { Sep } from '../ui/Sep';
-import { setColor, toggleBold, toggleDecoration, toggleItalic, UNSELECTED_MARKS } from './runMarks';
-import { hasLineThrough, hasUnderline, type RunMarks } from './spanRuns';
+import {
+  setColor,
+  toggleBold,
+  toggleCombine,
+  toggleDecoration,
+  toggleItalic,
+  UNSELECTED_MARKS,
+} from './runMarks';
+import { combineOn, hasLineThrough, hasUnderline, type RunMarks } from './spanRuns';
 
 /** The bar's own shell. It rides ON the item being edited rather than floating
  * over the selection: a bar that moved as the reader dragged would move the
- * thing they were reaching for. */
+ * thing they were reaching for.
+ *
+ * And it rides OUTSIDE the item's top edge, out of flow (`absolute bottom-full`
+ * against the editor root): in flow it pushed the surface down by its own
+ * height — measured, the words being edited sat 42px below where the page
+ * prints them — which every static text now opens onto. Over the content above
+ * is the cheaper place for it, the way a word processor's mini toolbar sits. */
 const BAR =
-  'mb-1 flex items-center gap-0.5 rounded-md border border-border bg-chrome px-1 py-0.5 shadow-[0_2px_8px_rgb(0_0_0/0.12)]';
+  'absolute bottom-full left-0 z-10 mb-1 flex w-max items-center gap-0.5 rounded-md border border-border bg-chrome px-1 py-0.5 shadow-[0_2px_8px_rgb(0_0_0/0.12)]';
 
 export interface RunFormatBarProps {
   /** The marks the selection shares, or `null` for no usable selection — which
@@ -40,9 +57,17 @@ export interface RunFormatBarProps {
   /** The engine takes both decoration lines at once
    * (`style.textDecoration.combined`); without it U and S are exclusive. */
   readonly combined?: boolean;
+  /** Offer the tate-chu-yoko toggle. */
+  readonly combineUpright?: boolean;
 }
 
-export function RunFormatBar({ marks, onMark, children, combined = true }: RunFormatBarProps) {
+export function RunFormatBar({
+  marks,
+  onMark,
+  children,
+  combined = true,
+  combineUpright = false,
+}: RunFormatBarProps) {
   const { t } = useI18n();
   const common = marks ?? UNSELECTED_MARKS;
   const disabled = marks === null;
@@ -90,6 +115,15 @@ export function RunFormatBar({ marks, onMark, children, combined = true }: RunFo
         customLabel={t('toolbar.color.custom')}
         clearLabel={t('toolbar.color.clear')}
       />
+      {combineUpright ? (
+        <ToggleButton
+          label={t('flow.combine')}
+          glyph={<span className="text-[10px] leading-none tracking-tighter">12</span>}
+          pressed={combineOn(common.combine)}
+          disabled={disabled}
+          onToggle={() => onMark((current) => toggleCombine(current, common))}
+        />
+      ) : null}
       {children}
     </div>
   );

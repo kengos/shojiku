@@ -16,7 +16,7 @@
 import { clip } from '../tree/nodeFields';
 import { isHexColor } from '../ui/chipContrast';
 import { buildEditorNodes, type ChipMeta } from './chipModel';
-import { hasLineThrough, hasUnderline, type RunMarks, type RunView } from './spanRuns';
+import { combineOn, hasLineThrough, hasUnderline, type RunMarks, type RunView } from './spanRuns';
 
 /** Marks an element as one wire fragment, holding its wire index. The
  * serializer reads fragment structure ONLY from elements carrying it. */
@@ -28,6 +28,12 @@ export const RUN_ATTR = 'data-sj-run';
 export const BOUND_ATTR = 'data-sj-bound';
 
 export const RUN_CLASS = 'sj-run';
+
+/** Holds a run's tate-chu-yoko token (`RunMarks.combine`) VERBATIM, so a token
+ * the toggle never wrote (`digits3`, an unreadable shape) round-trips through
+ * the DOM instead of collapsing to on/off. An attribute, never a style or
+ * markup: the token is document text. */
+export const COMBINE_ATTR = 'data-sj-tcy';
 export const BOUND_CLASS = 'sj-run-bound';
 
 /** Mark → class. The decoration's lines are one class each, so `none` needs
@@ -46,6 +52,7 @@ const MARK_CLASSES: Readonly<Record<string, string>> = {
   underline: 'sj-run--underline',
   line_through: 'sj-run--strike',
   linked: 'sj-run--linked',
+  combine: 'sj-run--tcy',
 };
 
 /** The classes one mark set paints. Exported because the format bar's own
@@ -68,6 +75,9 @@ export function runClasses(marks: RunMarks, linked: boolean): readonly string[] 
   if (linked) {
     out.push(MARK_CLASSES.linked);
   }
+  if (combineOn(marks.combine)) {
+    out.push(MARK_CLASSES.combine);
+  }
   return out;
 }
 
@@ -81,6 +91,11 @@ export function paintRun(el: HTMLElement, marks: RunMarks, linked: boolean): voi
   el.style.removeProperty('color');
   if (isHexColor(marks.color)) {
     el.style.setProperty('color', marks.color);
+  }
+  if (marks.combine === '') {
+    el.removeAttribute(COMBINE_ATTR);
+  } else {
+    el.setAttribute(COMBINE_ATTR, marks.combine);
   }
 }
 

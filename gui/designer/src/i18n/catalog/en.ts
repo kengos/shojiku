@@ -861,6 +861,14 @@ export const en: LanguageCatalog = {
     'flow.title': 'Text formatting',
     'flow.underline': 'Underline',
     'flow.lineThrough': 'Strikethrough',
+    'flow.combine': 'Horizontal in vertical (selected text)',
+    'flow.convert.lead': 'If you format any words here:',
+    'flow.convert.shrink':
+      'Shrink-to-fit stops working; text that does not fit spills out of the box.',
+    'flow.convert.ellipsis':
+      'Text that does not fit no longer ends in “…”; it spills out of the box.',
+    'flow.convert.width': "This box's width may change.",
+    'flow.convert.hanging': 'Commas and periods at a line end no longer hang past the edge.',
     'panel.spans.fragment': 'Fragment {n, number}',
     'panel.spans.editHint': 'Words and their look are edited on the page.',
     'panel.spans.field': '{field} for fragment {n, number}',

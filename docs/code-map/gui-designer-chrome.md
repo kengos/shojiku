@@ -348,8 +348,9 @@ resolved style.
 - `text/chipModel.ts` — pure chip model: `chipMetaMap` (real `Map`),
   `buildEditorNodes` (raw segments → text nodes + atomic labeled chip
   spans, DOM-API-built), `serializeEditor` (never more wire than
-  visible text — and it carries LINE structure: a `<div>`/`<p>`/`<li>`
-  contributes the break it displays, while a lone `<br>` inside one is the
+  visible text — and it carries LINE structure, by the rule in
+  `text/lineBreaks.ts` that the flow surface's serializer shares: a
+  `<div>`/`<p>`/`<li>` contributes the break it displays, while a lone `<br>` inside one is the
   browser's empty-line placeholder and contributes none. That is what makes it
   safe to leave plain Enter to the browser, which is the only way the caret can
   rest after a break at the end of a value), `chipWire(key)` — the ONE charset gate (round-trips
@@ -449,15 +450,27 @@ resolved style.
   browser's own Enter mints a line container the serializer reads),
   `insertPlainTextAt` (the ONE ingress paste and drop share — a
   native HTML drop would mint live elements), `insertChipAt`.
+- `text/lineBreaks.ts` — the ONE line-break rule both serializers apply
+  (`lineChildren` drops a FINAL `<br>`, the caret placeholder; `breakBefore`:
+  a `<br>` is a break, a line container ends the line before it once a line has
+  begun, the `started` flag shared across the whole walk). Two copies of it are
+  how the flow surface came to drop every break Enter typed.
 - **Inline rich text (`spans:`) is a SECOND surface over the same substrate**,
   not a mode inside the first: `TextEditor`'s whole shape is "one value in, one
   string out", and every seed, commit and serialization below answers in
   FRAGMENTS instead. Both share `EditorSurface`, `editorHandlers` (including its
   IME guard) and the chip layer, so a `{key}` inside a fragment is the same chip
-  it is anywhere else.
+  it is anywhere else. It opens over a PLAIN static text too (on an engine that
+  renders spans — `panel/spanConversion.flowSeed`), seeded as one unmarked run;
+  its commit keeps such an item `text:` until something is marked, then creates
+  `spans:` in the same batch (`text/flowCommit.ts` →
+  `panel/spanConversion.plainFlowCommitOps`).
   - `text/spanRuns.ts` — the READ side: `spans` → runs, carrying the wire index
-    and the four MARK values (`fontWeight`, `fontStyle`, `textDecoration`,
-    `color`). The three METRICS are deliberately absent — the canvas editor is
+    and the five MARK values (`fontWeight`, `fontStyle`, `textDecoration`,
+    `color`, and tate-chu-yoko — `textCombineUpright`, the one typesetting key
+    the engine honours per span — held as `typesettingModel.combineToken`'s
+    TOKEN so an authored `{digits: N}` or unreadable shape compares equal to
+    itself and is never rewritten; `combineOn` is "anything but unset/`none`"). The three METRICS are deliberately absent — the canvas editor is
     "deliberately NOT WYSIWYG", so painting one would make its line breaks a
     prediction of the engine's; the property panel owns them. `textDecoration`
     is the one style key the wire spells `snake_case` (`line_through`); both
@@ -466,14 +479,29 @@ resolved style.
     `composeDecoration` read and build it as two independent lines.
   - `text/runNodes.ts` — the seed. A mark is a CLASS, never a document-derived
     `style` attribute; colour is the one mark whose VALUE comes from the
-    document and goes through `isHexColor`. An EMPTY fragment is seeded with
+    document and goes through `isHexColor`; the tate-chu-yoko token rides
+    VERBATIM in `data-sj-tcy` (an attribute, never markup) beside the
+    `sj-run--tcy` dotted box — marked, not previewed, since the editor stays
+    horizontal. An EMPTY fragment is seeded with
     U+200B, because a span with no text node has no place a caret can rest.
   - `text/runSerialize.ts` — DOM → fragments, in DOCUMENT ORDER, rebuilt rather
     than patched: measured in a real browser, a split leaves TWO elements
     carrying the same `data-sj-run`, so the attribute is PROVENANCE, not
     identity. Normalizes the U+00A0 a browser substitutes for a collapsing
     space, strips the U+200B placeholder, and composes nesting (which a paste or
-    a native undo can produce even though `runFormat` never does).
+    a native undo can produce even though `runFormat` never does). Over a PLAIN
+    item with text it reads `verbatim` instead, skipping both normalizations as
+    the plain editor always has — an authored U+00A0 / U+200B otherwise turned
+    an untouched double-click into a `text:` write. Applies
+    `lineBreaks` — measured: Enter mints a `<div>` holding a CLONE of the run
+    element — and then JOINS neighbours that are one fragment held as two
+    elements (same source index, kind, marks and link state), so Enter inside a
+    fragment still yields one. Two helpers split out of it:
+    `text/runElementMarks.ts` (an element's marks read back from its classes,
+    colour and `data-sj-tcy`; `runFormat` and `runMarks` read it too) and
+    `text/runCollector.ts` (the collector the walk feeds, which puts a break on
+    the END of the fragment before it, or carries it into the next text after a
+    bound value).
   - `text/runIdentity.ts` — the round-trip rule: a run that appears once, claims
     a source index ahead of the high-water mark and still says what it said went
     UNTOUCHED and authors nothing. A changed fragment is updated IN PLACE, so
@@ -500,7 +528,8 @@ resolved style.
     and `applyShortcut` is the ONE place ⌘B/I/U and the buttons agree.
   - `text/useSelectionMarks.ts` — the `selectionchange` listener; a selection can
     change with no event reaching the editor at all.
-  - `text/RunFormatBar.tsx` — B / I / U / S + colour + the chip insert trigger,
+  - `text/RunFormatBar.tsx` — B / I / U / S + colour + (when the host offers it,
+    `combineUpright`) the tate-chu-yoko toggle + the chip insert trigger,
     all built from the format toolbar's own controls. U and S are independent
     toggles over the one `textDecoration` key (`runMarks.toggleDecoration`
     flips one line and keeps the other), so both can be on — exclusive when
@@ -517,9 +546,22 @@ resolved style.
     neither, so neither is ambiguous — and the FILL colour stays live too,
     because it answers to a different name. The enumeration is the fragile part
     (colour was missed on the first pass and found by a zero-context review),
-    which is why a suite asserts "exactly one live control per name".
+    which is why a suite asserts "exactly one live control per name". The
+    tate-chu-yoko toggle (shown while the block is vertical, or a fragment
+    carries one, on an engine with `style.textCombineUpright.all` and
+    `style.writingMode.surfaces`) writes `all` or a removal, never a digits form,
+    and takes its own name (`flow.combine`) so it never shares one with the
+    panel's item-level select.
   - `text/SpansFlowEditor.tsx` — the shell. Shares `TextEditor`'s exit
     behaviour, and for the same reason: leaving the field is not always a BLUR.
+    Over a plain item it shows `text/ConversionNote.tsx` BELOW the surface: one
+    lead-in line, then one short line per setting the engine treats differently
+    once the item holds spans
+    (`spanConversion.conversionCauses`: shrink/ellipsis, a measured flex/grid
+    width, horizontal hanging punctuation) — information, nothing blocks.
+  - `text/flowCommit.ts` — the ONE batch a flow commit applies, by origin:
+    `plainFlowCommitOps` over a plain item, the run plan (`runIdentity` +
+    `panel/spanOps`) plus the declaration prune over a spans item.
 - `text/TextEditor.tsx` — the ONE text-editing component (contenteditable
   chip editor; content seeded imperatively ONCE from `buildEditorNodes`
   — hand-typed `{key}` stays plain until commit reseeds, IME-safe;

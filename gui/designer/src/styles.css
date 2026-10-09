@@ -220,7 +220,7 @@
  * as classes so no document-derived string ever reaches a style attribute
  * (`runNodes.ts` — colour is the one exception and goes through `isHexColor`).
  *
- * Only the four MARKS are painted. The three metrics (`fontSize`,
+ * Only the MARKS are painted. The three metrics (`fontSize`,
  * `fontFamily`, `letterSpacing`) deliberately are NOT: the editor is "not
  * WYSIWYG — the Designer never re-resolves fonts/styles" (canvas/
  * InlineTextEditor), so a metric here would turn the surface's line breaks into
@@ -261,6 +261,15 @@
  * property, so the pair needs its own (higher-specificity) value. */
 .sj-run--underline.sj-run--strike {
   text-decoration-line: underline line-through;
+}
+
+/* Tate-chu-yoko: MARKED, not previewed. The editor stays horizontal over a
+ * vertical block, so it cannot show the characters set upright; a dotted box
+ * says "these characters are one cell" without pretending to draw it. An
+ * outline rather than a border, so marking a run cannot move a line break. */
+.sj-run--tcy {
+  outline: 1px dotted var(--sj-accent);
+  outline-offset: 1px;
 }
 
 /* A `data:` fragment: atomic, like a chip, because the flow cannot address what

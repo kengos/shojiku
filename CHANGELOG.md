@@ -15,6 +15,20 @@ platform binaries.
 
 ### Added
 
+- **Format part of a text in the Designer.** Double-click a fixed text on
+  the page, select some words and press bold, italic, underline,
+  strikethrough or a colour, and only those words change — the way a word
+  processor works. Until now this was possible only on text that already had
+  mixed styles; plain text could only be styled as a whole. Text that nobody
+  formats stays exactly as it was in the file, and the first formatted word
+  turns it into mixed-style text in one step, which one undo reverses. On
+  vertical text the same bar can set selected characters upright side by side
+  (縦中横), so "12" in 令和12年 reads across the column without affecting the
+  rest. Mixed-style text cannot shrink to fit, end in "…", size itself to its
+  text inside a row or a grid, or hang punctuation in horizontal lines, so when
+  an item relies on one of these the editor says which before the first
+  change.
+
 - **Circle text in the Designer.** A text item's Content tab has a new
   「丸囲み」 section that draws an oval around the printed characters — centred
   on them and sized to fit, so it follows when the font or the wording
@@ -765,6 +779,12 @@ platform binaries.
   browser's own report, with a trace and a screenshot of the moment it broke.
 
 ### Fixed
+
+- **Line breaks in mixed-style text are kept.** Pressing Enter while editing
+  mixed-style text on the canvas now starts a new line that stays after the
+  edit is saved; before, the new line was joined back onto the one before it.
+  The formatting bar also sits above the text now, instead of pushing the
+  words being edited below where the page prints them.
 
 - **Selecting a table column that names its kind opens the column's own form.**
   A column with `type: qr_code`, `type: image` or a spelled-out `type: text`
