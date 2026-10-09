@@ -21,7 +21,7 @@ succeeded.
 
 - `palette/caps.ts` — the area's untrusted-input caps in one no-import
   leaf (`MAX_PALETTE_GROUPS`/`MAX_PALETTE_FIELDS`/`MAX_TEXT_CHARS`/
-  `MAX_ENUM_OPTIONS`/`MAX_WALK_DEPTH`), shared by the display narrowing,
+  `MAX_ENUM_OPTIONS`/`MAX_DECLARED_FORMATS`/`MAX_WALK_DEPTH`), shared by the display narrowing,
   both walks and the definitions view.
 - `palette/fieldDisplay.ts` — per-value display narrowing over untrusted
   text: `record`/`clip`/`text`, `sampleDisplay` (containers as bounded
@@ -36,6 +36,15 @@ succeeded.
   definitions view and the drag/cell-target planners, plus
   `panel/pickerModel` (`sampleDisplay`) and `sample/genWalk`
   (`enumMember` — the generator picks the VALUE in its declared type).
+- `palette/declaredFormats.ts` — `declaredFormats`: a field's
+  `displayFormats` as the PLACEMENT side reads it (`DeclaredFormat {id,
+  label}`, label `''` when none): a non-list reads as none, an entry that is
+  not an `{id, label?}` map of strings is skipped, an EMPTY id is kept (the
+  engine counts it as a restriction; the picker offers no row for it), a
+  repeated id keeps its first entry, bounded at `MAX_DECLARED_FORMATS`. The
+  id is kept VERBATIM — a pick writes it back as `format:`, so it is never
+  clipped. `leafField` sets it as `PaletteField.displayFormats`; the
+  data-item editor's own read/write is `data/displayFormatsModel.ts`.
 - `palette/schemaWalk.ts` — the definitions schema walk: `leafField`,
   `collectFields` (object groups flatten to dotted full keys; nested
   array properties surface as their own groups), `collectRowFields`
@@ -891,11 +900,12 @@ the panes never import each other.
   (「（なし）」 when empty); offered where the catalog names variants for the
   type (its non-fixed entries) or a list is authored; the hint says an empty
   list restricts nothing, that with entries a placement picking a format
-  outside it and the document's named formats warns (validate's
-  `unknown_format`; a currency field adds the three money formats, a plain
-  number the two that promote it, named by their label keys; a few picks such
-  as a type name never warn), and that the placement picker does not offer it
-  yet; a list repeating an id is read-only; rows like the choices' (`touch-none` grip, ▲▼, focus
+  outside it and the document's named formats is an error in Diagnostics and
+  the document does not print (validate's `unknown_format`, error severity; a
+  currency field adds the three money formats, a plain number the two that
+  promote it, named by their label keys; a few picks such as a type name are
+  always allowed), and that the placement picker lists it first and leaves
+  out what it rules out; a list repeating an id is read-only; rows like the choices' (`touch-none` grip, ▲▼, focus
   follows — `data/useMoveFocus.ts`, shared with `EnumRows`), the catalog's
   spellings as id suggestions; a read-only host gets no controls and no
   empty list.

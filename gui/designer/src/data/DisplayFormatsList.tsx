@@ -3,8 +3,9 @@
 // starts CLOSED: most fields never
 // need one. An empty list restricts nothing; a non-empty one makes a placement
 // picking a format outside it (and outside the document's named formats, the
-// money formats on an amount, and a few others such as a type name) warn in
-// Diagnostics — the hint says so. Rows edit as one op each over the
+// money formats on an amount, and a few others such as a type name) an ERROR in
+// Diagnostics that stops the document printing, and the placement format picker
+// offers the list first — the hint says so. Rows edit as one op each over the
 // whole list (`displayFormatsModel.ts`); a list this editor cannot write back as
 // found is a note, never rewritten. Reorder is a grip drag or a row's up / down
 // button, both only at two or more rows; after a button move the focus follows
@@ -38,7 +39,7 @@ export interface DisplayFormatsListProps {
   readonly keysPath: readonly string[];
   /** The spellings the engine offers for the field's type (suggestions). */
   readonly spellings: readonly string[];
-  /** Which money formats also pass without a warning, named in the hint: the
+  /** Which money formats also pass without an error, named in the hint: the
    * three on a currency field, the two that promote a plain number. */
   readonly money: 'currency' | 'number' | null;
   readonly editable: boolean;

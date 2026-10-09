@@ -15,6 +15,19 @@ platform binaries.
 
 ### Added
 
+- **Pick a data field's own display formats where it is placed.** When a
+  data field lists the display formats it supports (the "Format
+  restriction" list in its editor), the format picker of every item bound
+  to it — a text, a table column, a column in the column sheet — now shows
+  those formats first, under their own heading and by the names the list
+  gives them; picking one writes it in one step. Until now the list could
+  only be chosen from by typing the format's name. Because a field with
+  such a list refuses any other format (an error, and the document does
+  not print until it is fixed), the picker also stops offering the locale
+  formats the list leaves out. The list's explanation in the field editor
+  said such a pick only warned and printing went on; it now says what
+  actually happens.
+
 - **Format part of a text in the Designer.** Double-click a fixed text on
   the page, select some words and press bold, italic, underline,
   strikethrough or a colour, and only those words change — the way a word

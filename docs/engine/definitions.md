@@ -193,14 +193,20 @@ array is NOT blank and stays subject to `minItems`.
   against it, and those entries carry their declared display formats,
   `placeholder` and `enum` labels exactly as a top-level array's rows do.
   Nesting is not limited to one level.
-- A `format:` variant on a binding must appear in that field's
-  `displayFormats` list, the template's `formats:` registry, the
-  currency variants (`default`/`symbol`/`name` on a currency field;
-  `symbol`/`name` also pass on a number field, which they promote to
-  currency at render), `value` on a field with enum display labels (the
-  label escape), or be a type override — `unknown_format` warns
-  otherwise. The field's own `displayFormat:` is its default when the
-  placement picks nothing ([precedence](data-binding.md)).
+- Once a field declares a non-empty `displayFormats` list, a `format:`
+  variant on a binding to it must appear in that list, the template's
+  `formats:` registry, the currency variants (`default`/`symbol`/`name`
+  on a currency field; `symbol`/`name` also pass on a number field, which
+  they promote to currency at render), `value` on a field with enum
+  display labels (the label escape), or be a type override — otherwise
+  `unknown_format` is an error and the document does not render. A field
+  with no list restricts nothing. A declared id is not itself a format:
+  a pick of it resolves at render like any other spelling, so one the
+  locale and the registry do not know gets no format of its own — it
+  warns `unknown_format_variant` where the field's type has variants,
+  and a plain text, yes/no or image field ignores it silently. The
+  field's own `displayFormat:` is its default when the placement picks
+  nothing ([precedence](data-binding.md)).
 
 ## Limits and typo safety
 

@@ -56,6 +56,7 @@ export function ColumnBindingFields({
   formatCatalog,
 }: ColumnBindingFieldsProps) {
   const { t } = useI18n();
+  const bound = options.find((option) => option.key === column.key);
   const dispatch = (op: Op) => {
     controller.apply(op);
   };
@@ -85,9 +86,10 @@ export function ColumnBindingFields({
           value={column.format}
           options={formatOptions(
             formatRegistry,
-            options.find((option) => option.key === column.key)?.type,
+            bound?.type,
             capabilities,
             formatCatalog,
+            bound?.displayFormats,
           )}
           onCommit={(v) => dispatch(formatOp(path, v))}
         />

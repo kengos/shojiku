@@ -12,6 +12,7 @@
 
 import { parseTemplate, readTemplate } from '@shojiku/designer-core';
 import { MAX_PALETTE_FIELDS, MAX_PALETTE_GROUPS } from './caps';
+import type { DeclaredFormat } from './declaredFormats';
 import type { EnumOption } from './fieldDisplay';
 import { clip, record, text } from './fieldDisplay';
 import { arrayGroup, collectFields, leafField } from './schemaWalk';
@@ -39,6 +40,9 @@ export interface PaletteField {
    * closed value set the editors offer as a choice instead of free entry.
    * Bounded: hostile lists are truncated, malformed members dropped. */
   readonly enumOptions: readonly EnumOption[];
+  /** The declared display variants (`displayFormats`) a placement's format
+   * picker offers first. Absent or empty when the field declares none. */
+  readonly displayFormats?: readonly DeclaredFormat[];
 }
 
 export interface PaletteGroup {

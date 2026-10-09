@@ -7,6 +7,7 @@
 // parent's scope.
 
 import { MAX_PALETTE_FIELDS, MAX_WALK_DEPTH } from './caps';
+import { declaredFormats } from './declaredFormats';
 import { clip, displayType, enumOptions, record, sampleDisplay, text } from './fieldDisplay';
 import type { PaletteField, PaletteGroup } from './model';
 
@@ -16,6 +17,7 @@ export function leafField(
   schema: Record<string, unknown>,
 ): PaletteField {
   const label = text(schema.title);
+  const formats = declaredFormats(schema.displayFormats);
   return {
     key,
     label: label === '' ? clip(fallbackLabel) : label,
@@ -23,6 +25,8 @@ export function leafField(
     description: text(schema.description),
     sample: sampleDisplay(schema.example),
     enumOptions: enumOptions(schema.enum),
+    // Only a field that declares some carries the key — absent reads as none.
+    ...(formats.length > 0 ? { displayFormats: formats } : {}),
   };
 }
 

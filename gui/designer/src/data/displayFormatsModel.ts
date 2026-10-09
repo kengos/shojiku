@@ -2,10 +2,11 @@
 // data-item editor edits them: the list read in full, the edits over it, and
 // the op that writes it back.
 //
-// What the list DOES is narrower than its name suggests: the placement picker
-// does not offer it yet, but a NON-EMPTY list narrows which placement picks
-// validate without `unknown_format` (engine/core/src/validate/bindings.rs) — so
-// declaring one can make an existing placement warn. The section says so.
+// What the list DOES: the placement format picker offers it first
+// (`palette/declaredFormats.ts` reads it there), and a NON-EMPTY list narrows
+// which placement picks validate without `unknown_format`
+// (engine/core/src/validate/bindings.rs) — an error that stops the render, so
+// declaring one can break an existing placement. The section says so.
 //
 // Every edit writes the WHOLE list as one `putValue` (the choices editor's
 // reason, `enumModel.ts`: the sequence ops cannot spell a data name such as

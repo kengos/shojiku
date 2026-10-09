@@ -110,16 +110,24 @@ describe('the declared display formats', () => {
   it('says what the list narrows, naming the money formats only on a currency field', () => {
     draw();
     select('発行日');
-    expect(open().getByText(/この一覧にも文書の「名前付き書式」にもない形式/)).toBeTruthy();
+    const hint = open().getByText(/この一覧にも文書の「名前付き書式」にもない形式/);
+    // An out-of-list pick is an ERROR that stops printing, and the placement
+    // picker lists the declared formats first.
+    expect(hint.textContent).toContain('診断でエラーになり、直すまで文書を印刷できません');
+    expect(hint.textContent).toContain('この一覧が先頭に並び');
     select('合計');
-    expect(open().getByText(/金額の 3 形式（既定・記号付き・通貨名付き）/)).toBeTruthy();
+    expect(
+      open().getByText(/金額の 3 つの形式（既定、記号付き、通貨名付き）でもない/),
+    ).toBeTruthy();
     expect(screen.getByText('表示形式の絞り込み（なし）')).toBeTruthy();
   });
 
   it('names the two amount formats on a plain number that declares a list', () => {
     draw();
     select('件数');
-    expect(open().getByText(/金額として出す 2 形式（記号付き・通貨名付き）/)).toBeTruthy();
+    expect(
+      open().getByText(/金額として出す 2 つの形式（記号付き、通貨名付き）でもない/),
+    ).toBeTruthy();
   });
 
   it('offers a declared id in the default display format menu, as written and first', () => {

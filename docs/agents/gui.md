@@ -86,8 +86,10 @@ daily users. Consequences:
   in another. A
   declared `displayFormats` list is written whole like `enum`, and the editor
   says that a non-empty list narrows the placement picks that validate
-  (`unknown_format`; a few — a type name, the money formats on an amount —
-  always pass) and is not yet offered by the placement picker.
+  (`unknown_format`, an error that stops the render; a few — a type name, the
+  money formats on an amount — always pass). The placement format picker
+  offers the bound field's declared variants first, under their own heading
+  and labels, and drops the picks the list makes the engine refuse.
   `recommendedStyle` is written two keys at a time (`textAlign`, `fontWeight:
   bold`), MERGED into the bag so a hand-written key survives; a bag that is
   not a map is reported and never written.
