@@ -4,7 +4,7 @@
 
 import type { EditorController } from '../editor/useEditor';
 import { readDefaultsView } from './defaultsModel';
-import { readDocumentMetaView } from './documentMetaModel';
+import { readDocumentMetaView, readTemplateIdentity } from './documentMetaModel';
 import { ENGINE_STYLE_DEFAULTS } from './engineDefaults';
 import { formatSectionSummary } from './formatSummary';
 import { readPageView, sizeLabel } from './pageSetupModel';
@@ -58,8 +58,12 @@ export function sectionSummaries(
     styles: t('styles.count', { n: readStylesView(controller.read('styles')).length }),
     locale: [defaults.locale, defaults.currency].filter((v) => v !== '').join(' · '),
     formats: formatSectionSummary(controller.read('defaults'), controller.read('formats'), t),
-    // The title is what a reader's Properties panel shows first, so it is
-    // the honest one-liner for this section.
-    metadata: meta.title === '' ? t('docMeta.unset') : meta.title,
+    // The PDF's title is what a reader's Properties panel shows first, so it
+    // is the honest one-liner: the title, else the template name, else
+    // nothing set here — each TRIMMED, because the engine trims both and
+    // treats a blank result as absent. (A title the engine REJECTS falls to
+    // its default instead; this line does not model that.)
+    metadata:
+      meta.title.trim() || readTemplateIdentity(controller.read).name.trim() || t('docMeta.unset'),
   };
 }

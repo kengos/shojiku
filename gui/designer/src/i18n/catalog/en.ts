@@ -1324,6 +1324,12 @@ export const en: LanguageCatalog = {
       "These are the document's base text settings. Every box left empty keeps the engine's own value — only what you change is written to the file.",
     'defaults.unset': 'Not set',
     'docMeta.title': 'Document properties',
+    'docMeta.name': 'Template name',
+    'docMeta.nameHint':
+      "Used as the PDF's title (shown in PDF viewers, not on the page) when {title} is empty. If both are empty, a default title is used.",
+    'docMeta.version': 'Template version',
+    'docMeta.versionHint': 'For your own records — not written into the PDF.',
+    'docMeta.unreadable': 'Unreadable value',
     'docMeta.intro':
       "What the file says it is. These go into the PDF's properties, not onto the page — the preview will not change, and PNG previews carry none of it.",
     'docMeta.docTitle': 'Title',

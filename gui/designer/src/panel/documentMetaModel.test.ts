@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  identityOp,
   MAX_META_ENTRIES,
   metaListOp,
   metaTextOp,
   readDocumentMetaView,
+  readTemplateIdentity,
   removeEntry,
   replaceEntry,
 } from './documentMetaModel';
@@ -54,16 +56,99 @@ describe('readDocumentMetaView', () => {
 
 describe('metaTextOp', () => {
   it('writes a root-addressed scalar and clears on empty', () => {
-    expect(metaTextOp('title', 'Invoice')).toEqual({
+    expect(metaTextOp('title', '', 'Invoice')).toEqual({
       op: 'setScalar',
       path: undefined,
       keys: ['document', 'title'],
       value: 'Invoice',
     });
-    expect(metaTextOp('language', '')).toEqual({
+    expect(metaTextOp('language', 'ja-JP', '')).toEqual({
       op: 'removeKey',
       path: undefined,
       keys: ['document', 'language'],
+    });
+  });
+
+  it('authors nothing when the commit does not change the value', () => {
+    expect(metaTextOp('title', 'Invoice', 'Invoice')).toBeNull();
+    expect(metaTextOp('description', '', '')).toBeNull();
+  });
+});
+
+describe('readTemplateIdentity', () => {
+  const reader =
+    (doc: Record<string, unknown>) =>
+    (path: string): unknown =>
+      doc[path];
+
+  it('reads the root name and version verbatim, a number as its decimal string', () => {
+    expect(readTemplateIdentity(reader({ name: 'invoice_ja', version: '0.1.0' }))).toEqual({
+      name: 'invoice_ja',
+      version: '0.1.0',
+      unreadable: { name: false, version: false },
+    });
+    expect(readTemplateIdentity(reader({ version: 1.5 })).version).toBe('1.5');
+    // The document model has already parsed the number: an authored `1.0`
+    // arrives as 1 and shows as "1".
+    expect(readTemplateIdentity(reader({ version: 1 })).version).toBe('1');
+  });
+
+  it('reads an absent value as unset, and a hostile one as unset AND unreadable', () => {
+    for (const raw of [undefined, null]) {
+      expect(readTemplateIdentity(reader({ name: raw, version: raw }))).toEqual({
+        name: '',
+        version: '',
+        unreadable: { name: false, version: false },
+      });
+    }
+    for (const raw of [true, { a: 1 }, ['x']]) {
+      expect(readTemplateIdentity(reader({ name: raw, version: raw }))).toEqual({
+        name: '',
+        version: '',
+        unreadable: { name: true, version: true },
+      });
+    }
+  });
+});
+
+describe('identityOp', () => {
+  it('writes the key at the ROOT, always as a string', () => {
+    expect(identityOp('name', '', 'invoice_ja')).toEqual({
+      op: 'setScalar',
+      path: undefined,
+      keys: ['name'],
+      value: 'invoice_ja',
+    });
+    // "2" stays text, which keeps exactly what was typed.
+    expect(identityOp('version', '1.5', '2')).toEqual({
+      op: 'setScalar',
+      path: undefined,
+      keys: ['version'],
+      value: '2',
+    });
+  });
+
+  it('clears on empty and authors nothing for an unchanged commit', () => {
+    expect(identityOp('version', '1.5', '')).toEqual({
+      op: 'removeKey',
+      path: undefined,
+      keys: ['version'],
+    });
+    expect(identityOp('name', 'r', 'r')).toBeNull();
+    expect(identityOp('name', '', '')).toBeNull();
+  });
+
+  it('removes an UNREADABLE value on an empty commit', () => {
+    expect(identityOp('name', '', '', true)).toEqual({
+      op: 'removeKey',
+      path: undefined,
+      keys: ['name'],
+    });
+    expect(identityOp('version', '', '3', true)).toEqual({
+      op: 'setScalar',
+      path: undefined,
+      keys: ['version'],
+      value: '3',
     });
   });
 });

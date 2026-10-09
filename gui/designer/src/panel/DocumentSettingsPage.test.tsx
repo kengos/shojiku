@@ -112,9 +112,17 @@ describe('DocumentSettingsPage', () => {
   });
 
   it('summarizes the document properties by title, or says they are unset', () => {
-    render(<Harness source={`document:\n  title: Monthly invoice\n${BASE}`} />);
+    render(<Harness source={`name: receipt\ndocument:\n  title: Monthly invoice\n${BASE}`} />);
+    // The title wins over the template name, as it does in the engine.
     expect(screen.getByRole('button', { name: /^Document properties/ }).textContent).toContain(
       'Monthly invoice',
+    );
+  });
+
+  it('summarizes by the template name when no title is set — the engine fallback', () => {
+    render(<Harness source={`name: receipt\n${BASE}`} />);
+    expect(screen.getByRole('button', { name: /^Document properties/ }).textContent).toContain(
+      'receipt',
     );
   });
 
@@ -125,16 +133,20 @@ describe('DocumentSettingsPage', () => {
     );
   });
 
-  it('gates the document-properties section on the engine capability', () => {
-    // Present: the rail row and the section body both exist.
+  it('lists the document-properties section on every engine, gating only its document half', () => {
+    // Present: the rail row, the identity fields and the document fields.
     const withKey = render(<Harness capabilities={['template.document.metadata']} />);
     openSection('Document properties');
+    expect(screen.getByLabelText('Template name')).toBeTruthy();
     expect(screen.getByLabelText('Title')).toBeTruthy();
     withKey.unmount();
-    // Absent: no row at all — a row that opens onto nothing is worse than none.
+    // Absent: the row stays — every engine accepts `name:` and `version:` —
+    // but the `document:` fields an engine would refuse are not offered.
     render(<Harness capabilities={[]} />);
-    expect(screen.queryByRole('button', { name: /^Document properties/ })).toBeNull();
-    expect(screen.getByRole('button', { name: /^Page setup/ })).toBeTruthy();
+    openSection('Document properties');
+    expect(screen.getByLabelText('Template name')).toBeTruthy();
+    expect(screen.getByLabelText('Template version')).toBeTruthy();
+    expect(screen.queryByLabelText('Title')).toBeNull();
   });
 
   it('gates the display-formats section on EITHER of its two capabilities', () => {

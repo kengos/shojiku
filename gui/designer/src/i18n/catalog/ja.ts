@@ -1337,6 +1337,12 @@ export const ja: LanguageCatalog = {
       '文書ぜんたいの土台になる文字の設定です。空のままの項目はエンジンの値で組まれ、変えた項目だけがファイルに書かれます。',
     'defaults.unset': '未設定',
     'docMeta.title': 'ドキュメント情報',
+    'docMeta.name': 'テンプレート名',
+    'docMeta.nameHint':
+      '「{title}」が空のとき、PDF のタイトルとして使われます（ページには出ません）。両方とも空なら既定のタイトルになります。',
+    'docMeta.version': 'テンプレートのバージョン',
+    'docMeta.versionHint': '管理用です。PDF には書き込まれません。',
+    'docMeta.unreadable': '読み取れない値',
     'docMeta.intro':
       'この書類が何であるかを表す情報です。PDF のプロパティに書き込まれるもので、ページ上には現れません（プレビューは変わりません。PNG プレビューにも含まれません）。',
     'docMeta.docTitle': 'タイトル',

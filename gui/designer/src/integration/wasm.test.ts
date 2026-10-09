@@ -59,6 +59,7 @@ import { readBorder } from '../panel/borderModel';
 import { edgeOps, presetOps } from '../panel/borderOps';
 import { kindSwitchOps } from '../panel/columnKindOps';
 import { defaultStyleOp, INHERITED_STYLE_FIELDS } from '../panel/defaultsModel';
+import { identityOp, metaTextOp } from '../panel/documentMetaModel';
 import { readEdge } from '../panel/edgeModel';
 import { edgeSideOps, edgeUniformOps } from '../panel/edgeOps';
 import { edgeRules, FRAME_PADDING_RULES } from '../panel/edgeRules';
@@ -4752,5 +4753,65 @@ describe('a field’s declared display formats in the placement picker, through 
     });
     expect(declared.ok).toBe(true);
     expect(declared.pages).toHaveLength(1);
+  });
+});
+
+// The template's own name and version, edited from the document-properties
+// section, reach the engine as the engine reads them: the name is the PDF
+// title when no `document.title` is set (receipt-us carries `name: receipt_us`
+// and no title, so its committed PDF says `/Title(receipt_us)` — the positive
+// control), a set title still wins, and a version written as TEXT is accepted.
+describe('template name and version against the real engine', () => {
+  const pdfText = (bytes: Uint8Array | undefined) =>
+    new TextDecoder('latin1').decode(bytes ?? new Uint8Array());
+
+  async function renderedTitle(source: string): Promise<string> {
+    const outcome = await transport.renderPdf?.(source, params(), definitions());
+    expect(outcome?.ok).toBe(true);
+    return pdfText(outcome?.pdf);
+  }
+
+  it('titles the PDF with the name, and an edited name moves the title', async () => {
+    expect(await renderedTitle(template())).toContain('/Title(receipt_us)');
+    const editor = Editor.create(template());
+    const op = identityOp('name', 'receipt_us', 'renamed_in_designer');
+    expect(op).not.toBeNull();
+    expect(editor.apply(op as Op).ok).toBe(true);
+    const title = await renderedTitle(editor.text());
+    expect(title).toContain('/Title(renamed_in_designer)');
+    expect(title).not.toContain('receipt_us');
+  });
+
+  it('lets a set document title win over the name', async () => {
+    const editor = Editor.create(template());
+    expect(editor.apply(metaTextOp('title', '', 'Shop receipt') as Op).ok).toBe(true);
+    const title = await renderedTitle(editor.text());
+    expect(title).toContain('/Title(Shop receipt)');
+    expect(title).not.toContain('/Title(receipt_us)');
+  });
+
+  it('accepts a version written as text, numeric-looking or not', async () => {
+    const codes = (items: readonly { readonly code: string }[]) => items.map((d) => d.code).sort();
+    const baseline = codes((await transport.validate(template(), params(), definitions())).items);
+    for (const raw of ['2', '1.0', '0.3.0-beta']) {
+      const editor = Editor.create(template());
+      expect(editor.apply(identityOp('version', '', raw) as Op).ok).toBe(true);
+      const edited = editor.text();
+      // Written as TEXT: re-reading the file gives back the typed string.
+      expect(Editor.create(edited).read('version')).toBe(raw);
+      // ...and the engine says nothing about it the untouched file did not.
+      const diags = await transport.validate(edited, params(), definitions());
+      expect(codes(diags.items)).toEqual(baseline);
+    }
+  });
+
+  it('refuses a version shape it cannot read — the control for the case above', async () => {
+    // receipt-us already carries `version: 0.1.0`, so the shape is REPLACED in
+    // place — prepending one would fail as a duplicate key instead.
+    const source = template();
+    const refused = source.replace(/^version: .*$/m, 'version: [1]');
+    expect(refused).not.toBe(source);
+    const diags = await transport.validate(refused, params(), definitions());
+    expect(diags.items.some((d) => d.code === 'parse_error')).toBe(true);
   });
 });

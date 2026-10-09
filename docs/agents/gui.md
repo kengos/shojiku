@@ -1271,7 +1271,10 @@ map ([gui-designer](../code-map/gui-designer.md) /
   theme/language menus. **The title is click-to-rename** (inline input,
   commit on Enter/blur, Escape cancels, IME-composition aware): the name
   is document metadata, NOT template wire (`templates.yml` is untouched
-  by a rename, so the round-trip guarantee holds). Standalone it persists
+  by a rename, so the round-trip guarantee holds) — and so it is a
+  different thing from the template's own root `name:`, which is edited
+  under Document settings › Document properties and is the PDF title
+  when no title is set. Standalone it persists
   in the local draft envelope; mounted it routes through the host
   `TemplateStore.save` payload (an optional `name` field the host may
   ignore — the project index entry name stays the authoritative source on

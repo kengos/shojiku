@@ -78,9 +78,66 @@ export function readDocumentMetaView(raw: unknown): DocumentMetaView {
   };
 }
 
-/** The op for one scalar metadata edit (empty clears the key). */
-export function metaTextOp(key: MetaTextKey, raw: string): Op {
-  return plainTextOp(undefined, ['document', key], raw);
+/** The template's own identity, which sits at the ROOT beside `document:`
+ * rather than inside it: `name:` (the PDF title when `document.title` is
+ * absent — the engine's only reader of it) and `version:` (informational; the
+ * engine reads it nowhere). Display strings, `''` when unset. */
+export interface TemplateIdentityView {
+  readonly name: string;
+  readonly version: string;
+  /** The key is PRESENT but holds a shape no field can show (a map, a list, a
+   * bool) — distinct from absent, which also displays as `''`. The engine
+   * refuses such a document at parse, so the field must be able to clear it. */
+  readonly unreadable: Readonly<Record<IdentityKey, boolean>>;
+}
+
+/** The root keys the identity fields write. */
+export type IdentityKey = 'name' | 'version';
+
+/** A present value the display cannot show (`null` reads as absent, as the
+ * engine's `Option` does). */
+function unreadableValue(value: unknown): boolean {
+  return (
+    value !== undefined && value !== null && typeof value !== 'string' && typeof value !== 'number'
+  );
+}
+
+/** Read the identity view through the editor's root reads. A number reads as
+ * its decimal string — the document model has already parsed it, so an
+ * authored `1.0` shows as `1` (an unchanged blur writes nothing back); anything
+ * else — a map, a list, a bool — reads as `''` and is flagged `unreadable`. */
+export function readTemplateIdentity(read: (path: string) => unknown): TemplateIdentityView {
+  const name = read('name');
+  const version = read('version');
+  return {
+    name: display(name),
+    version: display(version),
+    unreadable: { name: unreadableValue(name), version: unreadableValue(version) },
+  };
+}
+
+/** The op for one identity edit, or `null` when the commit changes nothing (a
+ * blur at the field's own value must not bump the revision) — except that an
+ * EMPTY commit over an unreadable value removes the key, the one way to clear
+ * a shape the field could not show. The value is always written as TEXT, so it
+ * keeps exactly what was typed: a number would turn a typed `1.10` into `1.1`
+ * and `1.0` into `1`, while the engine's `Version` takes a string as readily
+ * as a number. Empty clears the key. */
+export function identityOp(
+  key: IdentityKey,
+  current: string,
+  raw: string,
+  unreadable = false,
+): Op | null {
+  return raw === current && !(unreadable && raw === '') ? null : plainTextOp(undefined, [key], raw);
+}
+
+/** The op for one scalar metadata edit (empty clears the key), or `null` when
+ * the commit changes nothing — a field blurred at its own value must not put
+ * an edit nobody made on the undo stack (`controller.apply` commits whatever
+ * it is handed, a same-value write included). */
+export function metaTextOp(key: MetaTextKey, current: string, raw: string): Op | null {
+  return raw === current ? null : plainTextOp(undefined, ['document', key], raw);
 }
 
 /** The op for a whole metadata list: an empty selection clears the key,
