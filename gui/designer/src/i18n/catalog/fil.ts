@@ -663,6 +663,14 @@ export const fil: LanguageCatalog = {
     'flow.title': 'Pag-format ng teksto',
     'flow.underline': 'Salungguhit',
     'flow.lineThrough': 'May guhit sa gitna',
+    'flow.combine': 'Pahalang sa loob ng patayo (napiling teksto)',
+    'flow.convert.lead': 'Kapag nilagyan mo ng format ang ilang salita rito:',
+    'flow.convert.shrink':
+      'Hindi na liliit ang teksto para magkasya, at lalampas sa kahon ang hindi kasya.',
+    'flow.convert.ellipsis':
+      'Hindi na magtatapos sa “…” ang tekstong hindi kasya, at lalampas ito sa kahon.',
+    'flow.convert.width': 'Maaaring magbago ang lapad ng kahong ito.',
+    'flow.convert.hanging': 'Hindi na lalampas sa gilid ang bantas sa dulo ng linya.',
     'panel.spans.fragment': 'Bahagi {n, number}',
     'panel.spans.editHint': 'Ang mga salita at ang anyo ng mga ito ay ini-edit sa pahina.',
     'panel.spans.field': '{field} para sa bahagi {n, number}',

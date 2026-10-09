@@ -629,6 +629,13 @@ export const hi: LanguageCatalog = {
     'flow.title': 'टेक्स्ट फ़ॉर्मैटिंग',
     'flow.underline': 'रेखांकित',
     'flow.lineThrough': 'बीच से कटा',
+    'flow.combine': 'ऊर्ध्वाधर में क्षैतिज (चुना गया टेक्स्ट)',
+    'flow.convert.lead': 'टेक्स्ट के किसी हिस्से को फ़ॉर्मैट करने पर:',
+    'flow.convert.shrink':
+      'फ़िट करने के लिए छोटा करना बंद हो जाएगा, और जो टेक्स्ट नहीं समाता वह बॉक्स से बाहर निकल जाएगा।',
+    'flow.convert.ellipsis': 'न समाने वाला टेक्स्ट “…” पर ख़त्म नहीं होगा, बल्कि बॉक्स से बाहर निकल जाएगा।',
+    'flow.convert.width': 'इस बॉक्स की चौड़ाई बदल सकती है।',
+    'flow.convert.hanging': 'पंक्ति के अंत के विराम-चिह्न किनारे से बाहर नहीं लटकेंगे।',
     'panel.spans.fragment': 'अंश {n, number}',
     'panel.spans.editHint': 'शब्द और उनका रूप पेज पर ही बदले जाते हैं।',
     'panel.spans.field': 'अंश {n, number} का {field}',

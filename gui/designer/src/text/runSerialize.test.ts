@@ -10,8 +10,9 @@
 
 import { describe, expect, it } from 'vitest';
 import { chipMetaMap } from './chipModel';
-import { buildRunNodes, EMPTY_RUN_PLACEHOLDER, paintRun, RUN_ATTR } from './runNodes';
-import { marksOfElement, serializeRuns } from './runSerialize';
+import { marksOfElement } from './runElementMarks';
+import { buildRunNodes, COMBINE_ATTR, EMPTY_RUN_PLACEHOLDER, paintRun, RUN_ATTR } from './runNodes';
+import { serializeRuns } from './runSerialize';
 import { NO_MARKS, narrowRuns } from './spanRuns';
 
 const META = chipMetaMap([{ key: 'order.total', label: 'Total', sample: '1,200' }]);
@@ -89,18 +90,27 @@ describe('serializeRuns', () => {
     ]);
   });
 
-  it('emits ONE fragment per contiguous stretch, splitting where the run changes', () => {
+  it('JOINS two elements of one fragment — same source, same marks — back into one', () => {
+    // A split the reader then un-marked, and the run clone a browser mints for
+    // Enter, are both this shape: one fragment the DOM holds as two elements.
     const host = document.createElement('div');
     host.appendChild(run(0, 'a'));
     host.appendChild(run(0, 'b'));
-    expect(serializeRuns(host)).toHaveLength(2);
+    expect(serializeRuns(host).map((entry) => entry.content)).toEqual(['ab']);
   });
 
-  it('keeps a duplicated source index on BOTH halves of a split', () => {
+  it('keeps a duplicated source index on BOTH halves of a split whose marks differ', () => {
     const host = document.createElement('div');
     host.appendChild(run(3, 'left'));
-    host.appendChild(run(3, 'right'));
+    host.appendChild(run(3, 'right', 'sj-run--bold'));
     expect(serializeRuns(host).map((entry) => entry.sourceIndex)).toEqual([3, 3]);
+  });
+
+  it('keeps two AUTHORED neighbours apart even when their marks agree', () => {
+    const host = document.createElement('div');
+    host.appendChild(run(0, 'a'));
+    host.appendChild(run(1, 'b'));
+    expect(serializeRuns(host).map((entry) => entry.sourceIndex)).toEqual([0, 1]);
   });
 
   it('reads a run with no usable index as a NEW fragment', () => {
@@ -168,5 +178,128 @@ describe('marksOfElement', () => {
   it('answers for a non-HTML element without throwing', () => {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     expect(marksOfElement(svg).color).toBe('');
+  });
+});
+
+describe('serializeRuns — line breaks (the DOM a real browser mints for Enter)', () => {
+  // Each fixture below is the markup Chrome produced in a measured session,
+  // copied verbatim: Enter inside a run wraps a CLONE of the run element (same
+  // `data-sj-run`, same mark classes) in a `<div>`.
+  function minted(markup: string): HTMLElement {
+    const host = document.createElement('div');
+    host.innerHTML = markup;
+    return host;
+  }
+
+  it('keeps the break Enter typed inside one fragment — as ONE fragment', () => {
+    const host = minted(
+      '<span data-sj-run="0" class="sj-run">第一行</span>' +
+        '<div><span data-sj-run="0" class="sj-run">X\n第二行</span></div>',
+    );
+    expect(serializeRuns(host).map((entry) => [entry.sourceIndex, entry.content])).toEqual([
+      [0, '第一行\nX\n第二行'],
+    ]);
+  });
+
+  it('keeps the break at the END of a marked fragment, on that fragment', () => {
+    const host = minted(
+      '<span data-sj-run="0" class="sj-run">あいう</span>' +
+        '<span data-sj-run="1" class="sj-run sj-run--bold">えお</span>' +
+        '<div><span data-sj-run="1" class="sj-run sj-run--bold">Y\nZ</span></div>',
+    );
+    expect(serializeRuns(host).map((entry) => [entry.content, entry.marks.bold])).toEqual([
+      ['あいう', false],
+      ['えお\nY\nZ', true],
+    ]);
+  });
+
+  it('reads a <br> as a break and drops the FINAL placeholder one', () => {
+    const host = minted('<span data-sj-run="0" class="sj-run">a<br>b<br></span>');
+    expect(serializeRuns(host)[0]?.content).toBe('a\nb');
+  });
+
+  it('carries a break after a BOUND fragment into the next text fragment', () => {
+    // A bound value is atomic and cannot end with a break of its own.
+    const host = seeded([{ data: { key: 'order.total' } }, { text: 'yen' }]);
+    const line = document.createElement('div');
+    line.appendChild(host.children[1] as Node);
+    host.appendChild(line);
+    expect(serializeRuns(host).map((entry) => entry.content)).toEqual(['order.total', '\nyen']);
+  });
+
+  it('keeps a break the reader ENDED on after a bound fragment, as a fragment of its own', () => {
+    const host = seeded([{ data: { key: 'order.total' } }]);
+    host.appendChild(document.createElement('br'));
+    host.appendChild(document.createElement('br'));
+    expect(serializeRuns(host)).toEqual([
+      expect.objectContaining({ kind: 'bound', content: 'order.total' }),
+      { sourceIndex: null, kind: 'text', content: '\n', marks: NO_MARKS, linked: false },
+    ]);
+  });
+
+  it('puts a break typed OUTSIDE every run onto the open text', () => {
+    const host = minted('loose<div>more</div>');
+    expect(serializeRuns(host).map((entry) => entry.content)).toEqual(['loose\nmore']);
+  });
+
+  it('puts a break BEFORE a bound fragment on the text before it', () => {
+    const host = seeded([{ text: 'Total' }, { data: { key: 'order.total' } }]);
+    const line = document.createElement('div');
+    line.appendChild(host.children[1] as Node);
+    host.appendChild(line);
+    expect(serializeRuns(host).map((entry) => entry.content)).toEqual(['Total\n', 'order.total']);
+  });
+
+  it('keeps two halves apart when only their LINK state differs', () => {
+    const host = document.createElement('div');
+    host.appendChild(run(0, 'a'));
+    host.appendChild(run(0, 'b', 'sj-run sj-run--linked'));
+    expect(serializeRuns(host).map((entry) => entry.linked)).toEqual([false, true]);
+  });
+
+  it('writes no break for a line container that OPENS the surface', () => {
+    const host = minted('<div><span data-sj-run="0" class="sj-run">only</span></div>');
+    expect(serializeRuns(host).map((entry) => entry.content)).toEqual(['only']);
+  });
+});
+
+describe('serializeRuns — the tate-chu-yoko mark', () => {
+  it('round-trips a seeded token, digits forms included', () => {
+    const host = seeded([{ text: '12', style: { textCombineUpright: { digits: 3 } } }]);
+    expect(serializeRuns(host)[0]?.marks.combine).toBe('digits3');
+  });
+
+  it('lets a NESTED run override its parent, and inherit it when it says nothing', () => {
+    // Built bare: `run()` would seed an empty text node, which the walk reads
+    // as a fragment of the outer run's own.
+    const outer = document.createElement('span');
+    outer.setAttribute(RUN_ATTR, '0');
+    outer.setAttribute(COMBINE_ATTR, 'all');
+    const inner = run(0, '12');
+    outer.appendChild(inner);
+    const host = document.createElement('div');
+    host.appendChild(outer);
+    expect(serializeRuns(host)[0]?.marks.combine).toBe('all');
+    inner.setAttribute(COMBINE_ATTR, 'none');
+    expect(serializeRuns(host)[0]?.marks.combine).toBe('none');
+  });
+
+  it('keeps two halves apart when only their tate-chu-yoko differs', () => {
+    const host = document.createElement('div');
+    host.appendChild(run(0, 'ab'));
+    const tail = run(0, '12');
+    tail.setAttribute(COMBINE_ATTR, 'all');
+    host.appendChild(tail);
+    expect(serializeRuns(host).map((entry) => entry.marks.combine)).toEqual(['', 'all']);
+  });
+});
+
+describe('serializeRuns — verbatim (a plain item, read as the plain editor reads it)', () => {
+  it('keeps an authored U+00A0 and U+200B exactly', () => {
+    const host = document.createElement('div');
+    host.appendChild(run(0, '10 kg​'));
+    expect(serializeRuns(host, true)[0]?.content).toBe('10 kg​');
+    // …which the default reading normalizes, as it does for a spans item.
+    expect(serializeRuns(host)[0]?.content).toBe('10 kg');
   });
 });

@@ -564,6 +564,26 @@ document report `span_content_conflict`. `ContentSection` therefore routes a
 `text` item with `view.hasSpans` to its own section instead, keyed by path so
 the selected fragment resets with the selection.
 
+`spans:` are CREATED on the canvas, not here: a plain static text opens the flow
+surface too, and the first mark converts it (`panel/spanConversion.ts`).
+
+- `panel/spanConversion.ts` — creating `spans:` from a plain `text:` item.
+  `flowSeed` decides what a double-click opens (flow surface for a spans item;
+  for a plain static text when the engine declares `text.spans`, plus
+  `style.writingMode.surfaces` for a vertical block; else the plain editor).
+  `plainFlowCommitOps`: nothing marked → the plain `text:` write (an unchanged
+  edit authors nothing); anything marked → ONE batch of `putValue spans` + a
+  presence-guarded `text:` removal + the declaration batch, leaving `bindings:`,
+  `ruby:`, `mark:`, `link:` and the block style where they are.
+  `conversionCauses` names what the engine treats differently once an item holds
+  spans (`shrink` / `ellipsis` — the item's one `textOverflow` value →
+  `span_overflow_unsupported`; `width` a horizontal text the engine sizes
+  something from — `measuredChild` climbs widthless flex containers to the
+  first row (child basis ≠ 0) or grid with an `auto` column, mirroring
+  `intrinsic/leaf.rs`, since spans text is not measured; `hanging` on a
+  horizontal block).
+  `combineOffered` gates the per-fragment tate-chu-yoko toggle.
+
 - `panel/spansModel.ts` — the READ side. `narrowSpans` degrades every hostile
   shape (non-array `spans`, a non-map entry, a non-string `text`/`url`, a
   non-map `link`) to "unset" rather than throwing. The one thing that does NOT
@@ -579,7 +599,11 @@ the selected fragment resets with the selection.
   authors a REMOVAL, not the engine's explicit `normal`/`none` keyword (minimal
   wire), and every removal is presence-guarded — `removeKey` on an absent key
   fails and `applyAll` then discards the whole batch. `inheritedKeys` narrows
-  the `styleNames`/`link` a split copies onto the new half.
+  the `styleNames`/`link` a split copies onto the new half. Tate-chu-yoko is the
+  fifth mark and is compared as a TOKEN (`combineOps`): an untouched
+  `{digits: N}` or unreadable value is never rewritten; `all` is a scalar, a
+  digits token a `{digits: N}` map (`putValue`), an unreadable token writes
+  nothing.
 - `panel/spanOps.ts` — a run plan → ONE batch, and the ORDER is the whole
   subtlety: updates first (they address original indices), then removals
   DESCENDING, then inserts ASCENDING against a SIMULATED sequence. The
@@ -597,7 +621,7 @@ the selected fragment resets with the selection.
   selected row. Not a field per fragment: the largest bundled example holds
   eighteen, and N fields would be N controls answering to one accessible name
   in a ~255px column.
-  A fragment's TEXT and its four MARKS are NOT edited here — those are the FLOW
+  A fragment's TEXT and its MARKS are NOT edited here — those are the FLOW
   surface's (`text/SpansFlowEditor`, on the canvas), where a selection can point
   at them. What is left is everything a selection cannot point at, and
   `panel/SpanInspector.tsx` is that: the METRIC style keys, `styleNames:`, and a

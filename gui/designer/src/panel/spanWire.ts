@@ -15,6 +15,26 @@ import type { RunMarks } from '../text/spanRuns';
 export type SnippetMap = { readonly [key: string]: SnippetValue };
 
 import { record } from './itemView';
+import { combineToken, UNREADABLE_COMBINE } from './typesettingModel';
+
+/** The tate-chu-yoko key — the fifth mark, kept out of `MARK_KEYS` because its
+ * value is not always a scalar (`{ digits: N }`). */
+const COMBINE_KEY = 'textCombineUpright';
+
+/** What a combine token spells on the wire, or `null` for nothing to write.
+ * A token is turned back into the value it was READ from, never into a new
+ * one: `digitsN` → `{ digits: N }` for ANY integer N (out of the engine's
+ * 2..=4 too — that map is what the author wrote, and the engine already reports
+ * it), a keyword → itself. Unset writes nothing, and so does the UNREADABLE
+ * token, whose authored shape this model never kept (a fragment split out of
+ * such a run gets no value rather than an invented one). */
+function combineWire(token: string): SnippetValue | null {
+  if (token === '' || token === UNREADABLE_COMBINE) {
+    return null;
+  }
+  const digits = /^digits(-?\d+)$/.exec(token);
+  return digits === null ? token : { digits: Number(digits[1]) };
+}
 
 /** The four style keys this surface owns. `fontSize`, `fontFamily` and
  * `letterSpacing` are deliberately NOT here: the flow surface is not WYSIWYG
@@ -40,12 +60,16 @@ export function markValues(marks: RunMarks): Readonly<Record<string, string | nu
  * something, and omitted entirely when none do. */
 export function markStyleValue(marks: RunMarks): SnippetMap | undefined {
   const values = markValues(marks);
-  const out: Record<string, string> = {};
+  const out: Record<string, SnippetValue> = {};
   for (const key of MARK_KEYS) {
     const value = values[key];
     if (value !== null) {
       out[key] = value;
     }
+  }
+  const combine = combineWire(marks.combine);
+  if (combine !== null) {
+    out[COMBINE_KEY] = combine;
   }
   return Object.keys(out).length === 0 ? undefined : out;
 }
@@ -71,7 +95,29 @@ export function markStyleOps(spanPath: string, current: unknown, marks: RunMarks
       ops.push({ op: 'setScalar', path: spanPath, keys: ['style', key], value: next });
     }
   }
+  ops.push(...combineOps(spanPath, style, marks.combine));
   return ops;
+}
+
+/** The tate-chu-yoko write, compared as TOKENS: a fragment whose token did not
+ * move authors nothing, so an authored `{ digits: 3 }` (or an unreadable
+ * shape) survives every edit that does not press the toggle. */
+function combineOps(
+  spanPath: string,
+  style: Readonly<Record<string, unknown>>,
+  next: string,
+): readonly Op[] {
+  if (combineToken(style[COMBINE_KEY]) === next) {
+    return [];
+  }
+  const keys = ['style', COMBINE_KEY];
+  // Guarded by the token check above: the current token is not `''`, and only
+  // a PRESENT value reads as anything else, so this removal has a key to hit.
+  if (next === '') {
+    return [{ op: 'removeKey', path: spanPath, keys }];
+  }
+  const value = combineWire(next);
+  return value === null ? [] : [{ op: 'putValue', path: spanPath, keys, value }];
 }
 
 /** The keys this surface does NOT edit, copied onto a fragment the edit split

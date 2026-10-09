@@ -12,7 +12,13 @@ import { NO_MARKS, type RunMarks } from '../text/spanRuns';
 import { inheritedKeys, markStyleOps, markStyleValue, markValues } from './spanWire';
 
 const PATH = 'sections.body.items[0].spans[1]';
-const ALL: RunMarks = { bold: true, italic: true, decoration: 'underline', color: '#c2402a' };
+const ALL: RunMarks = {
+  bold: true,
+  italic: true,
+  decoration: 'underline',
+  color: '#c2402a',
+  combine: '',
+};
 
 describe('markValues', () => {
   it('spells each set mark, and answers null for each unset one', () => {
@@ -134,6 +140,72 @@ describe('inheritedKeys', () => {
   it("copies the url only, never a link's other keys", () => {
     expect(inheritedKeys({ link: { url: 'https://x', extra: 'no' } })).toEqual({
       link: { url: 'https://x' },
+    });
+  });
+});
+
+describe('the tate-chu-yoko mark', () => {
+  const KEYS = ['style', 'textCombineUpright'];
+
+  it('inserts `all` as the keyword and a digits token as its map', () => {
+    expect(markStyleValue({ ...NO_MARKS, combine: 'all' })).toEqual({ textCombineUpright: 'all' });
+    expect(markStyleValue({ ...NO_MARKS, combine: 'digits2' })).toEqual({
+      textCombineUpright: { digits: 2 },
+    });
+  });
+
+  it('inserts NOTHING for an unreadable token — its authored shape was never kept', () => {
+    expect(markStyleValue({ ...NO_MARKS, combine: 'invalid' })).toBeUndefined();
+  });
+
+  it('turns it on with ONE putValue, and off with a guarded removal', () => {
+    expect(markStyleOps(PATH, {}, { ...NO_MARKS, combine: 'all' })).toEqual([
+      { op: 'putValue', path: PATH, keys: KEYS, value: 'all' },
+    ]);
+    expect(markStyleOps(PATH, { textCombineUpright: 'all' }, NO_MARKS)).toEqual([
+      { op: 'removeKey', path: PATH, keys: KEYS },
+    ]);
+  });
+
+  it('writes nothing for a run whose token did not move — an authored digits map survives', () => {
+    expect(
+      markStyleOps(
+        PATH,
+        { textCombineUpright: { digits: 3 } },
+        { ...NO_MARKS, combine: 'digits3' },
+      ),
+    ).toEqual([]);
+    // …and so does a shape the engine cannot parse, which reads as `invalid`.
+    expect(
+      markStyleOps(PATH, { textCombineUpright: [1] }, { ...NO_MARKS, combine: 'invalid' }),
+    ).toEqual([]);
+  });
+
+  it('removes nothing that is not there, and invents nothing it cannot spell', () => {
+    // No key at all, and a `null` value, both read as unset — so "off" over
+    // either is no write at all.
+    expect(markStyleOps(PATH, {}, NO_MARKS)).toEqual([]);
+    expect(markStyleOps(PATH, { textCombineUpright: null }, NO_MARKS)).toEqual([]);
+    // An unreadable token reaching a fragment that holds something else.
+    expect(markStyleOps(PATH, {}, { ...NO_MARKS, combine: 'invalid' })).toEqual([]);
+  });
+
+  it('switches a digits map to the keyword in ONE op on the one key', () => {
+    expect(
+      markStyleOps(PATH, { textCombineUpright: { digits: 2 } }, { ...NO_MARKS, combine: 'all' }),
+    ).toEqual([{ op: 'putValue', path: PATH, keys: KEYS, value: 'all' }]);
+  });
+});
+
+describe('a split half of a fragment whose tate-chu-yoko the engine refuses', () => {
+  it('carries the authored map faithfully — never an invented string', () => {
+    // `{ digits: 12 }` is out of the engine's 2..=4 (a parse error the engine
+    // already reports); the half a split creates repeats what was authored.
+    expect(markStyleValue({ ...NO_MARKS, combine: 'digits12' })).toEqual({
+      textCombineUpright: { digits: 12 },
+    });
+    expect(markStyleValue({ ...NO_MARKS, combine: 'digits-1' })).toEqual({
+      textCombineUpright: { digits: -1 },
     });
   });
 });

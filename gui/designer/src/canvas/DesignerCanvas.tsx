@@ -48,8 +48,9 @@ export interface InlineEdit {
   readonly onCommit: (value: string, declarations: readonly PendingDecl[]) => void;
   readonly onCancel: () => void;
   readonly chips?: ChipContext;
-  /** Present only for a `spans:`-carrying item — the flow surface opens over
-   * these fragments instead of the plain field. Additive: a host that knows
+  /** Present when the item is edited on the flow surface (a `spans:` item, or
+   * a plain static text on an engine that renders spans) — it opens over these
+   * fragments instead of the plain field. Additive: a host that knows
    * nothing about it still gets exactly the editor it got before. */
   readonly flow?: InlineTextEditorProps['flow'];
 }

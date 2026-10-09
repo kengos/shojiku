@@ -10,11 +10,12 @@ import {
   selectionMarks,
   setColor,
   toggleBold,
+  toggleCombine,
   toggleDecoration,
   toggleItalic,
   UNSELECTED_MARKS,
 } from './runMarks';
-import { RUN_ATTR } from './runNodes';
+import { COMBINE_ATTR, RUN_ATTR } from './runNodes';
 import { NO_MARKS, type RunMarks } from './spanRuns';
 
 function host(...runs: readonly (readonly [string, string])[]): HTMLElement {
@@ -135,7 +136,7 @@ describe('selectionMarks', () => {
 });
 
 describe('the presses', () => {
-  const current: RunMarks = { bold: false, italic: false, decoration: 'none', color: '' };
+  const current: RunMarks = NO_MARKS;
 
   it('sets a boolean mark the selection does not all carry, and clears one it does', () => {
     expect(toggleBold(current, NO_MARKS).bold).toBe(true);
@@ -185,7 +186,7 @@ describe('the presses', () => {
 });
 
 describe('applyShortcut', () => {
-  const off: RunMarks = { bold: false, italic: false, decoration: 'none', color: '' };
+  const off: RunMarks = NO_MARKS;
 
   it('routes each shortcut to its own mark', () => {
     expect(applyShortcut('bold', off, off).bold).toBe(true);
@@ -212,5 +213,46 @@ describe('applyShortcut', () => {
 describe('UNSELECTED_MARKS', () => {
   it('is the nothing-pressed state', () => {
     expect(UNSELECTED_MARKS).toEqual(NO_MARKS);
+  });
+});
+
+describe('tate-chu-yoko over a selection', () => {
+  function tcy(root: HTMLElement, tokens: readonly string[]): void {
+    for (const [index, token] of tokens.entries()) {
+      const el = root.children[index] as HTMLElement;
+      if (token !== '') {
+        el.setAttribute(COMBINE_ATTR, token);
+      }
+    }
+  }
+
+  it('reports the token the whole selection shares', () => {
+    const root = host(['1', 'sj-run'], ['2', 'sj-run']);
+    tcy(root, ['digits3', 'digits3']);
+    expect(selectionMarks(root, selectAll(root))?.combine).toBe('digits3');
+  });
+
+  it('reports ON (as `all`) when every run is on in a different spelling', () => {
+    const root = host(['1', 'sj-run'], ['2', 'sj-run']);
+    tcy(root, ['all', 'digits2']);
+    expect(selectionMarks(root, selectAll(root))?.combine).toBe('all');
+  });
+
+  it('reports a MIXED selection as unset, so a press turns it on throughout', () => {
+    const root = host(['1', 'sj-run'], ['2', 'sj-run']);
+    tcy(root, ['all', '']);
+    expect(selectionMarks(root, selectAll(root))?.combine).toBe('');
+  });
+
+  it('writes `all` when off and a removal when on — never a digits form', () => {
+    expect(toggleCombine(NO_MARKS, NO_MARKS).combine).toBe('all');
+    expect(toggleCombine(NO_MARKS, { ...NO_MARKS, combine: 'none' }).combine).toBe('all');
+    expect(toggleCombine(NO_MARKS, { ...NO_MARKS, combine: 'digits3' }).combine).toBe('');
+    // Only the combine mark moves.
+    expect(toggleCombine({ ...NO_MARKS, bold: true }, NO_MARKS)).toEqual({
+      ...NO_MARKS,
+      bold: true,
+      combine: 'all',
+    });
   });
 });

@@ -17,6 +17,7 @@
 
 import { display, record } from '../panel/itemView';
 import { MAX_SPANS } from '../panel/spansModel';
+import { combineToken } from '../panel/typesettingModel';
 
 /** The wire's `textDecoration` values, snake_case on the wire — NOT the
  * camelCase every other key uses (`engine/core/src/style/decoration.rs`).
@@ -48,7 +49,11 @@ export function composeDecoration(underline: boolean, lineThrough: boolean): Dec
   return lineThrough ? 'line_through' : 'none';
 }
 
-/** The marks a run may carry — the four style keys the flow surface paints.
+/** The marks a run may carry — the five style keys the flow surface paints.
+ * The fifth, `combine`, is tate-chu-yoko (`textCombineUpright`), the one
+ * typesetting key the engine honours PER SPAN; it is a mark rather than a panel
+ * row because it applies to characters a selection points at ("12" in a
+ * vertical line), which only the flow surface can split out.
  * `fontWeight` and `fontStyle` are independent booleans; the decoration is ONE
  * wire key whose value names either line, both, or none (`hasUnderline` /
  * `hasLineThrough` read it as two independent lines). */
@@ -60,6 +65,19 @@ export interface RunMarks {
    * here — the paint layer decides what it will render, since a document is
    * untrusted and a colour string reaches CSS. */
   readonly color: string;
+  /** The fragment's own `style.textCombineUpright` as `combineToken` reads it:
+   * `''` unset, a keyword as itself, `{ digits: N }` as `digitsN`, any other
+   * shape `UNREADABLE_COMBINE`. A TOKEN rather than a boolean so a run nobody
+   * touched compares equal to itself and its authored value is never
+   * rewritten — the toggle only ever writes `all` or a removal. */
+  readonly combine: string;
+}
+
+/** Whether a combine token turns tate-chu-yoko ON for the run — anything but
+ * unset and the explicit `none`. An unreadable value counts as on, so the
+ * toggle shows it pressed and one press removes it. */
+export function combineOn(token: string): boolean {
+  return token !== '' && token !== 'none';
 }
 
 /** The marks of a fragment that sets none — also what a toggle compares
@@ -69,6 +87,7 @@ export const NO_MARKS: RunMarks = {
   italic: false,
   decoration: 'none',
   color: '',
+  combine: '',
 };
 
 /** One fragment as the flow surface paints it. */
@@ -118,6 +137,7 @@ export function readMarks(style: unknown): RunMarks {
     italic: display(map.fontStyle) === 'italic',
     decoration: decorationOf(display(map.textDecoration)),
     color: display(map.color),
+    combine: combineToken(map.textCombineUpright),
   };
 }
 
@@ -156,6 +176,7 @@ export function sameMarks(a: RunMarks, b: RunMarks): boolean {
     a.bold === b.bold &&
     a.italic === b.italic &&
     a.decoration === b.decoration &&
-    a.color === b.color
+    a.color === b.color &&
+    a.combine === b.combine
   );
 }

@@ -10,9 +10,10 @@
 
 import { rangeInRoot } from './editorDom';
 import type { FormatShortcut } from './editorHandlers';
+import { marksOfElement } from './runElementMarks';
 import { RUN_ATTR } from './runNodes';
-import { marksOfElement } from './runSerialize';
 import {
+  combineOn,
   composeDecoration,
   hasLineThrough,
   hasUnderline,
@@ -50,8 +51,27 @@ export function selectionMarks(root: HTMLElement, sel: Selection | null): RunMar
         hasLineThrough(common.decoration) && hasLineThrough(marks.decoration),
       ),
       color: common.color === marks.color ? common.color : '',
+      combine: commonCombine(common.combine, marks.combine),
     };
   }, marksOfElement(first));
+}
+
+/** The tate-chu-yoko two runs SHARE: their token when it is the same, `all`
+ * when both are on in different spellings (so the toggle reads pressed), and
+ * unset otherwise. */
+function commonCombine(a: string, b: string): string {
+  if (a === b) {
+    return a;
+  }
+  return combineOn(a) && combineOn(b) ? 'all' : '';
+}
+
+/** Tate-chu-yoko over the selection: ON writes the `all` keyword — the whole
+ * selected run in one upright cell, which is what selecting "12" means — and
+ * OFF is a removal. The `digitsN` forms are the item-level select's; this
+ * toggle never authors one, it only reads one as on. */
+export function toggleCombine(current: RunMarks, common: RunMarks): RunMarks {
+  return { ...current, combine: combineOn(common.combine) ? '' : 'all' };
 }
 
 /** Flip a boolean mark across the selection: set unless every fragment already

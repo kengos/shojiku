@@ -15,8 +15,8 @@
 // this file never does.
 
 import { rangeInRoot } from './editorDom';
+import { marksOfElement } from './runElementMarks';
 import { paintRun, RUN_ATTR } from './runNodes';
-import { marksOfElement } from './runSerialize';
 import type { RunMarks } from './spanRuns';
 
 const RUN_SELECTOR = `[${RUN_ATTR}]`;

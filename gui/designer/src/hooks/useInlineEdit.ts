@@ -7,27 +7,30 @@
 // its commit routes to `spanCommitOps` instead. Both are still ONE batch and
 // therefore one undo step; what differs is only what the batch addresses —
 // a `text:` key for the plain item, the `spans` sequence for the other.
+//
+// A PLAIN static text opens the flow surface too, on an engine that renders
+// spans: selecting a word and pressing B is how a reader makes one bold, and
+// the plain editor offers no way to. Its commit (`plainFlowCommitOps`) writes
+// `text:` exactly as before while nothing is marked, and creates `spans:` only
+// once something is. An engine without spans keeps the plain editor.
 
 import { useCallback, useMemo, useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import type { PaletteGroup } from '../palette/model';
 import { readItemView } from '../panel/itemView';
-import { spanCommitOps } from '../panel/spanOps';
+import {
+  type ConversionCause,
+  combineOffered,
+  conversionCauses,
+  flowSeed,
+} from '../panel/spanConversion';
 import type { ChipContext } from '../text/chipContext';
 import { chipContextFor } from '../text/chipContext';
-import { commitOps, declarationBatch } from '../text/declCommit';
+import { commitOps } from '../text/declCommit';
 import type { PendingDecl } from '../text/declModel';
-import { otherSurfaceNames, readItem } from '../text/declModel';
-import { planRuns } from '../text/runIdentity';
+import { flowCommitOps } from '../text/flowCommit';
 import type { SerializedRun } from '../text/runSerialize';
-import { narrowRuns, type RunView } from '../text/spanRuns';
-
-/** The flow surface's text as ONE string — what the declaration model reads a
- * surface's content as. A `data:` fragment contributes nothing: its binding is
- * not an interpolation and no declaration can be minted for it. */
-function joinRuns(runs: readonly { readonly kind: string; readonly content: string }[]): string {
-  return runs.map((run) => (run.kind === 'text' ? run.content : '')).join('');
-}
+import type { RunView } from '../text/spanRuns';
 
 export interface InlineEditOptions {
   readonly editor: EditorController;
@@ -44,6 +47,10 @@ export interface InlineEdit {
     readonly path: string;
     readonly value: string;
     readonly runs: readonly RunView[] | null;
+    /** `plain` — the flow surface over a `text:` item, whose first mark
+     * creates `spans:`; `spans` — over an item that already has them. */
+    readonly origin: 'plain' | 'spans';
+    readonly vertical: boolean;
   } | null;
   readonly requestEdit: (path: string) => void;
   readonly commitEdit: (value: string, declarations: readonly PendingDecl[]) => void;
@@ -65,6 +72,15 @@ export interface InlineEdit {
         readonly runs: readonly RunView[];
         readonly onCommit: InlineEdit['commitRuns'];
         readonly combinedDecoration: boolean;
+        /** Offer the per-fragment tate-chu-yoko toggle. */
+        readonly combineUpright: boolean;
+        /** Read the surface verbatim: over a plain item with text, so an
+         * authored U+00A0 / U+200B is not normalized into a write. (An EMPTY
+         * plain item is seeded with the U+200B placeholder, which must go.) */
+        readonly verbatim: boolean;
+        /** Over a PLAIN item: what the engine treats differently once the
+         * item holds spans — the reader is told before the first mark. */
+        readonly causes: readonly ConversionCause[];
       }
     | undefined;
 }
@@ -86,20 +102,13 @@ export function useInlineEdit({
       if (view === null || view.type !== 'text') {
         return;
       }
-      // `spans` wins over `text`/`data` when non-empty, so a spans-carrying
-      // item opens the flow surface WHATEVER its content mode says — the
-      // `text:` the mode is derived from is a key the engine is ignoring.
-      if (view.hasSpans) {
+      const seed = flowSeed(read, path, view, capabilities);
+      if (seed !== null) {
         select(path);
-        setEditing({ path, value: view.text, runs: narrowRuns(readItem(read, path)?.spans) });
-        return;
-      }
-      if (view.contentMode === 'text') {
-        select(path);
-        setEditing({ path, value: view.text, runs: null });
+        setEditing({ path, value: view.text, ...seed });
       }
     },
-    [read, select],
+    [read, select, capabilities],
   );
   const commitEdit = useCallback(
     (value: string, declarations: readonly PendingDecl[]) => {
@@ -131,38 +140,27 @@ export function useInlineEdit({
         setEditing(null);
         return;
       }
-      const plan = planRuns(editing.runs, runs);
-      // The fragments and the declarations their chips staged land as ONE
-      // batch: one undo step, and never a declaration without the text that
-      // uses it.
-      //
-      // The prune is told `otherSurfaceNames`, which INCLUDES the spans — so a
-      // name any fragment still references survives. That is deliberately
-      // conservative: the set is read from the PRE-commit document, so a name
-      // this very edit orphaned still looks used and is kept. An unused
-      // declaration is a harmless leftover; a pruned one that another fragment
-      // still names is a dangling reference, and only one of those is a bug.
-      const ops = [
-        ...spanCommitOps(read, editing.path, plan),
-        ...declarationBatch({
-          read,
-          path: editing.path,
-          oldText: joinRuns(editing.runs),
-          newText: joinRuns(runs),
-          pending: declarations,
-          others: otherSurfaceNames(readItem(read, editing.path)),
-        }),
-      ];
+      const ops = flowCommitOps({
+        read,
+        path: editing.path,
+        origin: editing.origin,
+        oldText: editing.value,
+        seeded: editing.runs,
+        runs,
+        pending: declarations,
+      });
       // An unchanged edit dispatches NOTHING: `applyAll([])` reports ok and
       // bumps the revision, which would put an empty step on the undo stack.
       //
       // A REFUSED batch leaves the editor OPEN. `MAX_BATCH_OPS` is 256 and
-      // `MAX_SPANS` is also 256, and a fragment can carry five writes — so a
+      // `MAX_SPANS` is also 256, and a fragment can carry several writes — so a
       // reformat of a large document really can exceed the cap, and clearing
       // `editing` there would unmount the surface and take the reader's typing
       // with it, silently. Staying open keeps the words on screen: the surface
-      // is uncontrolled, so its DOM is still exactly what they typed.
-      if (ops.length > 0 && !applyAll(ops).ok) {
+      // is uncontrolled, so its DOM is still exactly what they typed. A `null`
+      // batch is the same answer reached before any batch was built (a plain
+      // item converted into more fragments than the engine draws).
+      if (ops === null || (ops.length > 0 && !applyAll(ops).ok)) {
         return;
       }
       setEditing(null);
@@ -180,10 +178,20 @@ export function useInlineEdit({
 
   const combinedDecoration =
     capabilities === undefined || capabilities.includes('style.textDecoration.combined');
-  const editingFlow =
-    editing === null || editing.runs === null
-      ? undefined
-      : { runs: editing.runs, onCommit: commitRuns, combinedDecoration };
+  const editingFlow = useMemo(
+    () =>
+      editing === null || editing.runs === null
+        ? undefined
+        : {
+            runs: editing.runs,
+            onCommit: commitRuns,
+            combinedDecoration,
+            combineUpright: combineOffered(capabilities, editing.vertical, editing.runs),
+            verbatim: editing.origin === 'plain' && editing.value !== '',
+            causes: editing.origin === 'plain' ? conversionCauses(read, editing.path) : [],
+          },
+    [editing, commitRuns, combinedDecoration, capabilities, read],
+  );
   return {
     editing,
     requestEdit,

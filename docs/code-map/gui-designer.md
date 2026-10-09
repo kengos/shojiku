@@ -517,9 +517,15 @@ lists name the destructured stable fields, never `editor` itself.
   target inside `[role="dialog"]` — the dialog's own dismissal (a confirm over
   the column sheet would otherwise close the sheet with it); the other
   shortcuts still reach a dialog.
-- `hooks/useInlineEdit.ts` — double-click a static-text box → the shared
-  `TextEditor` over its content rect (same chip context as the panel);
-  commit = ONE `applyAll` of `text/declModel` `commitOps`.
+- `hooks/useInlineEdit.ts` — double-click a static-text box → an editor over
+  its content rect (same chip context as the panel); WHICH editor is
+  `panel/spanConversion.flowSeed`: the FLOW surface (`text/SpansFlowEditor`) for
+  a `spans:` item, and for a plain static text on an engine that renders spans
+  (`text.spans`, plus `style.writingMode.surfaces` for a vertical block); the
+  plain `TextEditor` otherwise. A commit is ONE `applyAll` — `commitOps` from the
+  plain editor, `text/flowCommit.flowCommitOps` from the flow surface (which
+  keeps a plain item `text:` until something is marked). A refused batch keeps
+  the surface open.
 - `hooks/useSaveFlow.ts` — validate-before-save fail-closed: fresh
   `transport.validate` at save time (errors block, a throw blocks); Save
   AND Export first open the save/export review pane; `baselineText` =

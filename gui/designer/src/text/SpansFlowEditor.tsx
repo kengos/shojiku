@@ -10,7 +10,9 @@
 // without the unmount path the reader's typing is simply discarded.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ConversionCause } from '../panel/spanConversion';
 import { ChipFieldMenus } from './ChipFieldMenus';
+import { ConversionNote } from './ConversionNote';
 import type { ChipContext } from './chipContext';
 import type { ChipMeta } from './chipModel';
 import type { PendingDecl } from './declModel';
@@ -38,6 +40,14 @@ export interface SpansFlowEditorProps {
   /** The engine takes both decoration lines at once; absent = the bundled
    * engine, which does. */
   readonly combinedDecoration?: boolean;
+  /** Offer the per-fragment tate-chu-yoko toggle. */
+  readonly combineUpright?: boolean;
+  /** Read the text exactly as typed (`serializeRuns`' `verbatim`) — over a plain
+   * item, which the plain editor never normalized. */
+  readonly verbatim?: boolean;
+  /** Over a PLAIN item: what the engine treats differently once it holds
+   * spans. Told below the surface, before the reader's first mark converts it. */
+  readonly causes?: readonly ConversionCause[];
 }
 
 export function SpansFlowEditor({
@@ -52,6 +62,9 @@ export function SpansFlowEditor({
   // classes (`runNodes`), not by the surface.
   className = 'sj-text-editor',
   combinedDecoration = true,
+  combineUpright = false,
+  verbatim = false,
+  causes = [],
 }: SpansFlowEditorProps) {
   const [editorEl, setEditorEl] = useState<HTMLDivElement | null>(null);
   const cancelled = useRef(false);
@@ -100,7 +113,7 @@ export function SpansFlowEditor({
     // Always handed up: whether the fragments actually moved is a question
     // about the DOCUMENT, and the host answers it — an empty op batch is never
     // dispatched, so an unchanged commit still costs no undo step.
-    onCommit(serializeRuns(el), pending);
+    onCommit(serializeRuns(el, verbatim), pending);
   };
 
   exitRef.current = () => {
@@ -121,7 +134,8 @@ export function SpansFlowEditor({
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: blur-delegation wrapper for the editing surface; focus and the textbox role live on the contentEditable child.
     <div
-      className="sj-text-editor-root"
+      // `relative`: the format bar floats above it (`RunFormatBar`'s BAR).
+      className="sj-text-editor-root relative"
       onBlur={(event) => {
         const next = event.relatedTarget;
         if (
@@ -136,7 +150,12 @@ export function SpansFlowEditor({
       onKeyUp={refresh}
       onMouseUp={refresh}
     >
-      <RunFormatBar marks={marks} onMark={mark} combined={combinedDecoration}>
+      <RunFormatBar
+        marks={marks}
+        onMark={mark}
+        combined={combinedDecoration}
+        combineUpright={combineUpright}
+      >
         {/* The insert trigger, on the bar beside the marks. A bound value is
             authored as a `{key}` CHIP inside a fragment's text, never as a new
             `data:` fragment (the user's decision) — so the affordance belongs
@@ -176,6 +195,10 @@ export function SpansFlowEditor({
         onDetachCheck={(el) => setSelectedChip((chip) => keepIfAttached(el, chip))}
         draft={draft}
       />
+      {/* BELOW the text: in flow above it, the note would push the words being
+          edited away from where the page prints them (the bar floats for the
+          same reason). */}
+      <ConversionNote causes={causes} />
     </div>
   );
 }

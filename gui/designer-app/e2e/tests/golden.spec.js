@@ -179,6 +179,69 @@ test('open a shipped-locale preset whose pack and CJK font are fetched', async (
 // say the first half — and since CI is a strict SUPERSET of `verify`, the
 // second does not follow from it and is stated separately. This case does not
 // keep `main` honest by itself: it is what a human runs to find out.
+// Part of a PLAIN text, formatted on the canvas: the browser half that jsdom
+// cannot see. jsdom implements no contenteditable editing, so a keyboard
+// selection, the bar's Bold over it, and the line container a browser mints for
+// Enter exist only here — and the Enter case is the one that used to lose its
+// break (the flow surface's serializer did not read the browser's `<div>`).
+test('bold part of a plain text on the canvas, and keep a line break typed after it', async ({
+  page,
+}) => {
+  const consoleErrors = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text());
+  });
+  const pageErrors = [];
+  page.on('pageerror', (err) => pageErrors.push(String(err)));
+
+  await page.goto('/');
+  const card = page.getByRole('button').filter({ hasText: 'Receipt' }).first();
+  await expect(card).toBeVisible({ timeout: 30000 });
+  await card.click();
+  await expect(page.locator('canvas').first()).toBeVisible({ timeout: 30000 });
+
+  // `items[8]` is the receipt's `THANK YOU FOR SHOPPING!` line — a plain static
+  // text, so this is the arrival that creates `spans:`.
+  await page.getByRole('button', { name: 'sections.body.items[8]', exact: true }).dblclick();
+  const surface = page.getByRole('textbox', { name: 'Edit text', exact: true });
+  await expect(surface).toBeFocused({ timeout: 30000 });
+  // `Control+End`, not `End`: the line WRAPS in the editor (it is narrower than
+  // the text), and `End` stops at the end of the first VISUAL line — measured,
+  // the first run of this case bolded " YOU FOR " and typed before SHOPPING!.
+  await surface.press('Control+End');
+  for (let i = 0; i < 'SHOPPING!'.length; i += 1) {
+    await surface.press('Shift+ArrowLeft');
+  }
+  await page
+    .getByRole('toolbar', { name: 'Text formatting' })
+    .getByRole('button', { name: 'Bold', exact: true })
+    .click();
+  await surface.press('Control+End');
+  await surface.press('Enter');
+  await surface.pressSequentially('NEXT');
+  await surface.press('Control+Enter');
+  await expect(surface).toBeHidden();
+
+  await page.getByRole('button', { name: 'File' }).click();
+  await page.getByRole('menuitem', { name: 'Export…', exact: true }).click();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Export', exact: true }).click(),
+  ]);
+  const exported = readFileSync(await download.path(), 'utf8');
+  expect(exported).toContain('spans:');
+  expect(exported).not.toContain('text: THANK YOU FOR SHOPPING!');
+  // The bold must sit ON the SHOPPING! fragment, with the break typed after it
+  // inside it. A bare `fontWeight: bold` proves nothing here — the preset's own
+  // heading styles already carry one — so the fragment's text (either YAML
+  // spelling of the break: an escaped `\n` or a block scalar's next line) must
+  // be followed directly by its style.
+  expect(exported).toMatch(/SHOPPING!(\\n|\n\s+)NEXT"?\n\s+style:\s*(\{\s*)?fontWeight: bold/);
+
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
 test('a click on a link badge selects the item under it', async ({ page }) => {
   const consoleErrors = [];
   page.on('console', (msg) => {

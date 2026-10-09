@@ -8,14 +8,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../i18n/context';
 import { RUN_ATTR } from './runNodes';
 import type { SerializedRun } from './runSerialize';
-import { SpansFlowEditor } from './SpansFlowEditor';
+import { SpansFlowEditor, type SpansFlowEditorProps } from './SpansFlowEditor';
 import { narrowRuns } from './spanRuns';
 
 afterEach(cleanup);
 
 const SPANS = [{ text: 'alpha' }, { text: 'beta', style: { fontWeight: 'bold' } }];
 
-function show(spans: readonly unknown[] = SPANS) {
+function show(
+  spans: readonly unknown[] = SPANS,
+  extra: Partial<Pick<SpansFlowEditorProps, 'combineUpright' | 'causes'>> = {},
+) {
   const onCommit = vi.fn();
   const onCancel = vi.fn();
   const view = render(
@@ -25,6 +28,7 @@ function show(spans: readonly unknown[] = SPANS) {
         onCommit={onCommit}
         onCancel={onCancel}
         ariaLabel="Edit text"
+        {...extra}
       />
     </I18nProvider>,
   );
@@ -196,5 +200,35 @@ describe('SpansFlowEditor', () => {
       </I18nProvider>,
     );
     expect(screen.getByRole('textbox').textContent).toBe('typed');
+  });
+});
+
+describe('the plain-text arrival', () => {
+  it('splits out a tate-chu-yoko fragment from a selection, and hands it up marked', () => {
+    const { onCommit, surface } = show([{ text: '令和12年' }], { combineUpright: true });
+    select(surface, 0, 2, 4);
+    fireEvent.click(screen.getByRole('button', { name: 'Horizontal in vertical (selected text)' }));
+    fireEvent.blur(surface);
+    const runs = onCommit.mock.calls[0][0] as readonly SerializedRun[];
+    expect(runs.map((run) => [run.content, run.marks.combine])).toEqual([
+      ['令和', ''],
+      ['12', 'all'],
+      ['年', ''],
+    ]);
+  });
+
+  it('tells the reader what converting changes, one line per cause, before the first mark', () => {
+    show([{ text: 'x' }], { causes: ['ellipsis', 'hanging'] });
+    // The condition once, then one line per cause — in the order given.
+    expect(screen.getAllByText('If you format any words here:')).toHaveLength(1);
+    expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      'Text that does not fit no longer ends in “…”; it spills out of the box.',
+      'Commas and periods at a line end no longer hang past the edge.',
+    ]);
+  });
+
+  it('says nothing when there is nothing to tell', () => {
+    const { view } = show([{ text: 'x' }]);
+    expect(view.container.textContent).not.toMatch(/If you format any words/);
   });
 });
