@@ -9,6 +9,7 @@
 // a RegExp).
 
 import { formatPath, parsePath, type ReadFn } from '@shojiku/designer-core';
+import type { DeclaredFormat } from '../palette/declaredFormats';
 import { sampleDisplay } from '../palette/fieldDisplay';
 import type { PaletteField, PaletteGroup } from '../palette/model';
 import { parseParams } from '../sample/model';
@@ -25,6 +26,8 @@ export interface PickerOption {
   readonly sample: string;
   /** The field's declared `enum` members (empty when it declares none). */
   readonly enumValues: readonly string[];
+  /** The field's declared display variants (absent or empty when none). */
+  readonly displayFormats?: readonly DeclaredFormat[];
 }
 
 const ARRAY_SOURCE_TYPES = new Set(['table', 'repeat', 'repeat_flow', 'list']);
@@ -172,6 +175,7 @@ function option(
     type: field.type,
     sample,
     enumValues: field.enumOptions.map((option) => option.value),
+    displayFormats: field.displayFormats ?? [],
   };
 }
 

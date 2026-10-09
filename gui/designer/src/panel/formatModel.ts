@@ -15,6 +15,8 @@
 // list every spelling — with no sample beside them.
 
 import type { FormatCatalog, FormatOrigin } from '../engine/types';
+import type { DeclaredFormat } from '../palette/declaredFormats';
+import { allowedUnder, declaredRows } from './declaredFormatOptions';
 import { catalogVariants, originOf, pickableRegistry, sampleFor } from './formatCatalogReads';
 import { variantLabelKey } from './formatLabels';
 
@@ -67,6 +69,10 @@ const NUMBER_COERCE_SUGGESTIONS: readonly string[] = [
  * (author-defined `formats:`) name is offered by its wire `spelling` alone. */
 export interface FormatOption {
   readonly spelling: string;
+  /** The author's own words for the row — a field's declared `label` — shown
+   * verbatim ahead of any `labelKey`. Document text, so it only ever reaches
+   * the DOM as escaped React text. */
+  readonly label?: string;
   /** `format.label.<spelling>` i18n key — builtin spellings only; a registry
    * name has none (its wire spelling IS its label). */
   readonly labelKey: string | undefined;
@@ -74,9 +80,10 @@ export interface FormatOption {
    * value(s). Empty when no catalog is available. `quantity` carries two
    * (the plural arms); everything else carries one. */
   readonly samples: readonly string[];
-  /** Where the spelling comes from, for the picker's origin headings.
-   * `undefined` without a catalog. */
-  readonly origin: FormatOrigin | undefined;
+  /** Where the spelling comes from, for the picker's origin headings:
+   * `declared` for the bound field's own `displayFormats` (known without the
+   * engine), else the catalog's origin — `undefined` without a catalog. */
+  readonly origin: FormatOrigin | 'declared' | undefined;
   /** Whether picking this DISCARDS the time part of the value — the engine's
    * own measurement, carried through so the row can say so. A row the catalog
    * did not describe (an engine with no catalog, or a curated override the
@@ -85,14 +92,16 @@ export interface FormatOption {
   readonly dropsTime: boolean;
 }
 
-/** The rows the format picker shows: the template's `formats:` registry names
- * first (author-defined, and filtered to the ones this field's type may
+/** The rows the format picker shows: the bound field's own declared variants
+ * (`declared`, its `displayFormats`) first, then the template's `formats:`
+ * registry names (author-defined, and filtered to the ones this field's type may
  * actually pick — see `pickableRegistry`), then the builtin spellings the
  * engine accepts for the bound field's display type — each with a localized
  * label and, when the engine supplied a catalog, what it actually renders. The
  * engine stays the validator (a name typed by hand still warns live); this list
  * only keeps the wire spellings out of the user's head, and no longer offers a
- * pick that could only produce a diagnostic.
+ * pick that could only produce a diagnostic — which is why a field that
+ * declares variants also loses every row its list makes the engine refuse.
  *
  * A hostile `fieldType` (`__proto__`) resolves to the generic set via the
  * own-property guard, never an inherited table entry. `capabilities` gates the
@@ -104,6 +113,7 @@ export function formatOptions(
   fieldType: string | undefined,
   capabilities?: readonly string[],
   catalog: FormatCatalog | null = null,
+  declared: readonly DeclaredFormat[] = [],
 ): FormatOption[] {
   const coerce =
     fieldType === 'number' &&
@@ -113,30 +123,33 @@ export function formatOptions(
     : fieldType !== undefined && Object.hasOwn(BUILTIN_FORMAT_SUGGESTIONS, fieldType)
       ? BUILTIN_FORMAT_SUGGESTIONS[fieldType]
       : GENERIC_FORMAT_SUGGESTIONS;
-  const seen = new Set<string>();
-  const out: FormatOption[] = [];
-  for (const spelling of pickableRegistry(registry, catalog, fieldType)) {
-    if (!seen.has(spelling)) {
-      seen.add(spelling);
-      out.push({
-        spelling,
-        labelKey: undefined,
-        samples: sampleFor(catalog, spelling, fieldType),
-        origin: catalog === null ? undefined : 'registry',
-        dropsTime: false,
-      });
+  // The field's own declared variants come first, and once there are any they
+  // also drop every later row the engine would refuse (`allowedUnder`). One
+  // `seen` set dedupes across all four sources: a declared id may repeat a
+  // registry name, a pack variant or a curated spelling, and it wins as the
+  // declared row. A row appears once, at its first source.
+  const out: FormatOption[] = declaredRows(declared, fieldType, catalog);
+  const seen = new Set(out.map((option) => option.spelling));
+  const add = (option: FormatOption) => {
+    if (
+      !seen.has(option.spelling) &&
+      allowedUnder(declared, option.spelling, fieldType, registry)
+    ) {
+      seen.add(option.spelling);
+      out.push(option);
     }
+  };
+  for (const spelling of pickableRegistry(registry, catalog, fieldType)) {
+    add({
+      spelling,
+      labelKey: undefined,
+      samples: sampleFor(catalog, spelling, fieldType),
+      origin: catalog === null ? undefined : 'registry',
+      dropsTime: false,
+    });
   }
-  // No `seen` GUARD here, only a `seen` write: these rows cannot collide with
-  // the registry rows above. `pickableRegistry` admits exactly the spellings
-  // the catalog attributes to `registry`, and `catalogVariants` excludes
-  // exactly those — and where there is no catalog to attribute anything,
-  // `catalogVariants` is empty. A guard would be a branch no input can take.
-  // The write still matters: it is what lets a curated override row below
-  // dedupe away when the pack already declared that spelling.
   for (const variant of catalogVariants(catalog, fieldType)) {
-    seen.add(variant.spelling);
-    out.push({
+    add({
       spelling: variant.spelling,
       // A closed own-property-guarded table, never `format.label.${…}`: a
       // pack spelling is pack-derived text and must not be spliced into a
@@ -148,19 +161,18 @@ export function formatOptions(
     });
   }
   for (const spelling of builtins) {
-    if (!seen.has(spelling)) {
-      seen.add(spelling);
-      // `spelling` here is only ever a member of the closed builtin vocabulary
-      // (`BUILTIN_FORMAT_SUGGESTIONS` / `GENERIC_FORMAT_SUGGESTIONS`), never a
-      // document-derived registry name (those took the label-less path above).
-      out.push({
-        spelling,
-        labelKey: `format.label.${spelling}`,
-        samples: sampleFor(catalog, spelling, fieldType),
-        origin: originOf(catalog, spelling, fieldType),
-        dropsTime: overrideDropsTime(spelling, fieldType),
-      });
-    }
+    // `spelling` here is only ever a member of the closed builtin vocabulary
+    // (`BUILTIN_FORMAT_SUGGESTIONS` / `GENERIC_FORMAT_SUGGESTIONS`), never a
+    // document-derived registry name (those took the label-less path above).
+    // The `seen` check is what lets a curated override row dedupe away when
+    // the pack already declared that spelling.
+    add({
+      spelling,
+      labelKey: `format.label.${spelling}`,
+      samples: sampleFor(catalog, spelling, fieldType),
+      origin: originOf(catalog, spelling, fieldType),
+      dropsTime: overrideDropsTime(spelling, fieldType),
+    });
   }
   return out;
 }

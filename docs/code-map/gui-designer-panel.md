@@ -775,7 +775,9 @@ presence is not a text binding.
   (`STYLE_FIELDS`: widget kind + enum options copied from
   `engine/core/src/style/enums.rs`). A no-import leaf shared by item
   panel / defaults / registry / capture / format toolbar.
-- `panel/formatModel.ts` — `formatOptions`: registry names first, then
+- `panel/formatModel.ts` — `formatOptions`: the bound field's DECLARED
+  variants first (`declared`, from `PickerOption.displayFormats`; see
+  `declaredFormatOptions.ts`), then registry names, then
   **the catalog's own variants for the bound type** (`catalogVariants`),
   then the closed builtin spellings per display type (localized labels);
   own-property-guarded; currency variants capability-gated. **Every
@@ -821,6 +823,21 @@ presence is not a text binding.
   value as a date — that is an error, not a format), so wherever the engine
   answered its picker is empty and the spelling is typed; with no catalog it
   still lists the document's names, as the paragraph above says.
+- `panel/declaredFormatOptions.ts` — what a field's declared variants change in
+  `formatOptions`: `declaredRows` (origin `declared` — so their own heading —
+  only when the engine answered, unheaded like every other row without a
+  catalog; no row for an empty id; the author's `label` shown verbatim as
+  `FormatOption.label`, else the chrome label for a known spelling or a
+  labelled type name, else the bare id; sample and `dropsTime` from the catalog when it
+  lists that spelling for the bound type, none otherwise — a declared id the
+  engine does not list is still offered) and `allowedUnder`, the engine's
+  `unknown_format` predicate mirrored from `validate/bindings.rs` (declared
+  id, type name, registry name, the money formats on currency/number; the
+  `value` escape is not mirrored because the picker never offers it). Once a
+  list exists, every later row it fails leaves the list — the pick would be
+  an ERROR that refuses the render. One `seen` set dedupes across all four
+  sources. Pinned against the engine in `integration/wasm.test.ts` (every
+  offered row validates clean, every dropped one is refused).
 - `panel/formatCatalogReads.ts` — the catalog lookups `formatOptions` needs,
   split out of `formatModel.ts` for the line budget. NOT a shared seam, and
   the entry says so because the name invites the assumption: every export has
@@ -849,8 +866,11 @@ presence is not a text binding.
   one job beyond rendering is the ORIGIN GROUPING: a heading above each
   run of options, so a document's own `formats:` entry is visibly a
   different KIND from a locale variant (only the former breaks on
-  rename). Headings appear only where the origin CHANGES and only when
-  the engine answered, so a single-origin list stays flat. A row whose
+  rename). A heading appears where the origin CHANGES (the first row
+  counts as a change, so a single-origin list carries just the one heading)
+  and only when the engine answered — the `declared` heading
+  (「このデータ項目の書式」) included, though the GUI reads those rows itself. A row's `label` (a declared variant's own words) wins over its
+  `labelKey`. A row whose
   variant the engine marks `dropsTime` carries the date-only chip
   (`format.dropsTime`) in the panel's existing neutral badge idiom: the
   pick is honoured and warns about nothing, the sample shows the RESULT
@@ -1008,7 +1028,8 @@ presence is not a text binding.
 - `panel/pickerModel.ts` — pure binding-picker model: `bindingScopeFor`
   (the enclosing row scope; unparseable → document scope),
   `pickerOptions` (rows with live sample values via `sampleValueFor`,
-  own-property-guarded), `filterOptions` (plain includes, never a
+  own-property-guarded, carrying the field's `displayFormats` through for
+  the format picker), `filterOptions` (plain includes, never a
   RegExp), `scopeAuthorable` (the ONE home for the `binding.scope`
   capability — gates OFFERING/AUTHORING, never reading).
 - `panel/FieldPicker.tsx` — the `data.key` editor: the closed control

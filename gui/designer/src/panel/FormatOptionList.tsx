@@ -6,9 +6,14 @@
 // registry is renamed, and the reader cannot tell them apart from the spelling.
 //
 // Headings appear only when the engine answered (`origin` is undefined without
-// a catalog) and only where the origin CHANGES, so a single-origin list reads
-// as the flat list it already was. Every document-derived value — a registry
-// name, a rendered sample — reaches the DOM as escaped React text.
+// a catalog) and only where the origin CHANGES — the first row counts as a
+// change, so a single-origin list carries just the one heading. The bound
+// field's own declared variants (`declared`) follow the same rule: the GUI reads
+// them from the definitions itself, but they are headed only beside the
+// engine's groups, never as a lone heading over unheaded rows. Every
+// document-derived value — a registry
+// name, a declared label, a rendered sample — reaches the DOM as escaped React
+// text.
 
 import { useI18n } from '../i18n/context';
 import { PICKER_ROW } from '../ui/chrome';
@@ -58,7 +63,10 @@ export function FormatOptionList({ options, onPick, leading }: FormatOptionListP
           <div key={option.spelling}>
             {heading === null ? null : <p className={HEADING}>{t(ORIGIN_HEADING_KEY[heading])}</p>}
             <Row
-              label={option.labelKey !== undefined ? t(option.labelKey) : option.spelling}
+              label={
+                option.label ??
+                (option.labelKey !== undefined ? t(option.labelKey) : option.spelling)
+              }
               spelling={option.spelling}
               samples={option.samples}
               note={option.dropsTime ? t('format.dropsTime') : undefined}

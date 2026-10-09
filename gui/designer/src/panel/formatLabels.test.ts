@@ -24,7 +24,12 @@ describe('variantLabelKey', () => {
 });
 
 describe('ORIGIN_HEADING_KEY', () => {
-  it('carries a heading for every origin the engine can report', () => {
-    expect(Object.keys(ORIGIN_HEADING_KEY).sort()).toEqual(['builtin', 'pack', 'registry']);
+  it('carries a heading for every origin the engine can report, and the declared one', () => {
+    expect(Object.keys(ORIGIN_HEADING_KEY).sort()).toEqual([
+      'builtin',
+      'declared',
+      'pack',
+      'registry',
+    ]);
   });
 });

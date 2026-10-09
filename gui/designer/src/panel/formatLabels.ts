@@ -37,7 +37,8 @@ export function variantLabelKey(spelling: string): string | undefined {
 /** The group heading above a run of options sharing an origin. A document's own
  * `formats:` entries and the locale's variants differ in KIND — only the former
  * breaks when the registry is renamed — so the picker says which is which. */
-export const ORIGIN_HEADING_KEY: Record<FormatOrigin, string> = {
+export const ORIGIN_HEADING_KEY: Record<FormatOrigin | 'declared', string> = {
+  declared: 'format.origin.declared',
   registry: 'format.origin.registry',
   pack: 'format.origin.pack',
   builtin: 'format.origin.builtin',

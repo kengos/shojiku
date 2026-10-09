@@ -31,7 +31,8 @@
 // name) parses; the hint bag merge keeps a hand-written key; the engine's
 // format catalog over the currency-swapped document copy samples the field's
 // own currency; and a declared format list narrows the placement picks that
-// validate, exactly as the list's hint says.
+// validate — the count the list's hint rests on (that such a pick also refuses
+// the render is pinned in `wasm.test.ts`, which has a font-loaded engine).
 //
 // The designer unit suites build their expectations on fixtures they wrote
 // themselves; this is the suite that crosses the seam. Loads the
@@ -662,7 +663,7 @@ describe('the display keys, read by the real engine', () => {
     await expect(catalogAtCurrency(transport, broken, 'EUR')).resolves.toBeNull();
   });
 
-  it('narrows the placement picks that validate once formats are declared, as the hint says', async () => {
+  it('narrows the placement picks that validate once formats are declared', async () => {
     const placed = TEMPLATE.replace(
       '      - { type: text, data: { key: total } }',
       '      - { type: text, data: { key: issued, format: wareki } }',

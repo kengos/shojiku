@@ -69,13 +69,16 @@ export function columnSheetData(options: ColumnSheetDataOptions): ColumnSheetDat
     documentOptions,
     alignFor: (index: number) =>
       effectiveValueIn(cascadeContext(read, `${tablePath}.columns[${index}]`), 'textAlign'),
-    formatRowsFor: (key: string) =>
-      formatOptions(
+    formatRowsFor: (key: string) => {
+      const bound = rowOptions.find((option) => option.key === key);
+      return formatOptions(
         formatRegistry,
-        rowOptions.find((option) => option.key === key)?.type,
+        bound?.type,
         capabilities,
         formatCatalog,
-      ),
+        bound?.displayFormats,
+      );
+    },
     sampleFor: (column: ColumnRow) =>
       column.hasCell || column.key === '' || !rowScoped
         ? undefined

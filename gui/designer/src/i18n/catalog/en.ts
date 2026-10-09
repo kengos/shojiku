@@ -1424,6 +1424,7 @@ export const en: LanguageCatalog = {
     'format.variant.gregorian': 'Gregorian year',
     'format.variant.dateOnly': 'Date only',
     'format.dropsTime': 'No time',
+    'format.origin.declared': 'From this data field',
     'format.origin.registry': 'Formats in this document',
     'format.origin.pack': 'From the locale',
     'format.origin.builtin': 'Built in',
@@ -1712,11 +1713,11 @@ export const en: LanguageCatalog = {
     'data.formats.title': 'Format restriction ({count})',
     'data.formats.titleNone': 'Format restriction (none)',
     'data.formats.hint':
-      'Use this to restrict, for this item only, the formats placed items may use. Most items leave it empty (empty means no restriction). Once it has an entry, any placed item using a format that is neither in this list nor in the document’s “{registry}” gets a warning in Diagnostics (printing continues; a few picks, such as naming a type, never warn). The format picker for placed items does not offer this list yet.',
+      'Limits the formats a placed item bound to this data field may use. Most data fields leave it empty, which means no limit. Once the list has an entry, a placed item using a format that is in neither this list nor the document’s “{registry}” shows an error in Diagnostics, and the document will not print until it is fixed. A few picks, such as a type name, are always allowed. In the format picker, this list comes first and the formats it rules out are not offered. Adding an entry does not create a format: a name that neither the locale nor the document knows does not print in a format of its own when picked, and on some kinds of data field it also warns.',
     'data.formats.hintNumber':
-      'Use this to restrict, for this item only, the formats placed items may use. Most items leave it empty (empty means no restriction). Once it has an entry, any placed item using a format that is not in this list, not in the document’s “{registry}” and not one of the two formats that show it as an amount ({symbol}, {name}) gets a warning in Diagnostics (printing continues; a few picks, such as naming a type, never warn). The format picker for placed items does not offer this list yet.',
+      'Limits the formats a placed item bound to this data field may use. Most data fields leave it empty, which means no limit. Once the list has an entry, a placed item using a format that is not in this list, not in the document’s “{registry}”, and not one of the two amount formats ({symbol}, {name}) shows an error in Diagnostics, and the document will not print until it is fixed. A few picks, such as a type name, are always allowed. In the format picker, this list comes first and the formats it rules out are not offered. Adding an entry does not create a format: a name that neither the locale nor the document knows does not print in a format of its own when picked, and on some kinds of data field it also warns.',
     'data.formats.hintCurrency':
-      'Use this to restrict, for this item only, the formats placed items may use. Most items leave it empty (empty means no restriction). Once it has an entry, any placed item using a format that is not in this list, not in the document’s “{registry}” and not one of the three amount formats ({default}, {symbol}, {name}) gets a warning in Diagnostics (printing continues; a few picks, such as naming a type, never warn). The format picker for placed items does not offer this list yet.',
+      'Limits the formats a placed item bound to this data field may use. Most data fields leave it empty, which means no limit. Once the list has an entry, a placed item using a format that is not in this list, not in the document’s “{registry}”, and not one of the three amount formats ({default}, {symbol}, {name}) shows an error in Diagnostics, and the document will not print until it is fixed. A few picks, such as a type name, are always allowed. In the format picker, this list comes first and the formats it rules out are not offered. Adding an entry does not create a format: a name that neither the locale nor the document knows does not print in a format of its own when picked, and on some kinds of data field it also warns.',
     'data.formats.readonly.shape':
       'This list is written directly in the definitions file in a form this editor cannot change.',
     'data.formats.readonly.too_long':

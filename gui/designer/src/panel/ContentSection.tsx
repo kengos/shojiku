@@ -82,11 +82,13 @@ export function ContentSection(props: ItemPanelProps) {
     return <SpansSection key={path} {...props} />;
   }
   // text / qr_code / char_grid: the content-mode pair.
+  const bound = bindingOptions.find((option) => option.key === view.dataKey);
   const formatRows = formatOptions(
     registryNames(controller.read('formats')),
-    bindingOptions.find((option) => option.key === view.dataKey)?.type,
+    bound?.type,
     capabilities,
     props.formatCatalog ?? null,
+    bound?.displayFormats,
   );
   return (
     <section>

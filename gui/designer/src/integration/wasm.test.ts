@@ -27,7 +27,7 @@ import { planReparent } from '../canvas/reparentTarget';
 import { applyDefinitionOps, readDefinitionField, titleOp } from '../data/definitionsEdit';
 import { fixFor } from '../diagnostics/fixModel';
 import { type EngineTransport, TransportError } from '../engine/transport';
-import type { PlacedBox } from '../engine/types';
+import type { FormatCatalog, PlacedBox } from '../engine/types';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
 import { anchorCandidates, pickTarget } from '../ids/anchorTargets';
 import { duplicateOps } from '../ids/copyIds';
@@ -63,6 +63,7 @@ import { readEdge } from '../panel/edgeModel';
 import { edgeSideOps, edgeUniformOps } from '../panel/edgeOps';
 import { edgeRules, FRAME_PADDING_RULES } from '../panel/edgeRules';
 import { attachAnchorOps, readEllipseAnchor } from '../panel/ellipseAnchor';
+import { formatOptions } from '../panel/formatModel';
 import { frameOf } from '../panel/frameModel';
 import { gridFillOrderOp } from '../panel/GridGapFields';
 import { spanOp } from '../panel/GridSpanFields';
@@ -78,6 +79,7 @@ import { readMark } from '../panel/markModel';
 import { repointMarkOps, setCheckedOps, setMarkEqualsOp } from '../panel/markOps';
 import { bindingKeyOp, bindingPickOps, placeholderOp, plainTextOp } from '../panel/model';
 import { PAGE_SIZES } from '../panel/pageSizes';
+import { pickerOptions } from '../panel/pickerModel';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
 import { RUBY_TEXT_SIZE_PRESETS } from '../panel/RubySection';
@@ -4640,5 +4642,115 @@ describe('creating spans from a plain text against the real engine', () => {
     const [a, b] = [await outcome(plain), await outcome(marked)];
     expect(b.codes).toEqual([]);
     expect(same(a.rgba, b.rgba)).toBe(true);
+  });
+});
+
+describe('a field’s declared display formats in the placement picker, through the real wasm', () => {
+  // The picker reads the list from the definitions text itself (the palette
+  // walk), heads its rows with it, and drops what the list makes the engine
+  // refuse — a mirror of `validate/bindings.rs`. This crosses the join: the
+  // GUI's own parse of the list, its mirror of the rule, and the engine's
+  // validate over every row it offers AND every catalog row it dropped.
+  const defs = (list: string) =>
+    [
+      'type: object',
+      'properties:',
+      `  issued: { type: string, format: date, displayFormats: ${list} }`,
+      `  amount: { type: number, format: currency, displayFormats: ${list} }`,
+      '',
+    ].join('\n');
+  const placed = (key: string, format: string) =>
+    [
+      'version: 0.1.0',
+      'formats:',
+      '  stamp: { type: date, pattern: "yyyy.MM.dd" }',
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    items:',
+      `      - { type: text, data: { key: ${key}, format: ${JSON.stringify(format)} } }`,
+      '',
+    ].join('\n');
+  const PARAMS = '{"issued":"2026-11-03","amount":1234.5}';
+  const refusals = async (engine: EngineTransport, key: string, format: string, list: string) =>
+    (await engine.validate(placed(key, format), PARAMS, defs(list))).items.filter(
+      (d) => d.code === 'unknown_format',
+    ).length;
+
+  it('offers only picks the engine accepts, and drops exactly the ones it refuses', async () => {
+    for (const locale of ['en-US', 'ja-JP']) {
+      const engine = createWasmTransport(preparedEngine(wasmModule, locale));
+      const catalog = await engine.formatCatalog?.(placed('issued', 'stamp'), []);
+      if (catalog === undefined) {
+        throw new Error('the wasm transport answers the format catalog');
+      }
+      for (const list of ['[ { id: long, label: Long date }, { id: foo } ]', '[ { id: "" } ]']) {
+        await checkList(engine, catalog, locale, list);
+      }
+    }
+  });
+
+  async function checkList(
+    engine: EngineTransport,
+    catalog: FormatCatalog,
+    locale: string,
+    list: string,
+  ) {
+    for (const [key, type] of [
+      ['issued', 'date'],
+      ['amount', 'currency'],
+    ] as const) {
+      const field = pickerOptions(readDefinitionsView(defs(list)), null, PARAMS).find(
+        (option) => option.key === key,
+      );
+      expect(field?.type, locale).toBe(type);
+      const offered = formatOptions(['stamp'], type, undefined, catalog, field?.displayFormats);
+      // Declared first, in the order written, with the author's label — and
+      // a list of one empty id restricts the field with no row of its own.
+      const head = offered.slice(0, 2).map((row) => [row.spelling, row.label]);
+      if (list.includes('long')) {
+        expect(head, locale).toEqual([
+          ['long', 'Long date'],
+          ['foo', undefined],
+        ]);
+      } else {
+        expect(
+          offered.some((row) => row.spelling === ''),
+          locale,
+        ).toBe(false);
+      }
+      for (const row of offered) {
+        expect(await refusals(engine, key, row.spelling, list), `${locale} ${row.spelling}`).toBe(
+          0,
+        );
+      }
+      // Everything the same picker offers with NO list, minus what it offers
+      // now, is what the list dropped — and each is a pick the engine refuses.
+      const before = formatOptions(['stamp'], type, undefined, catalog).map((r) => r.spelling);
+      const dropped = before.filter((s) => !offered.some((row) => row.spelling === s));
+      if (type === 'date') {
+        expect(dropped.length, locale).toBeGreaterThan(0);
+      }
+      for (const spelling of dropped) {
+        expect(await refusals(engine, key, spelling, list), `${locale} ${spelling}`).toBe(1);
+      }
+    }
+  }
+
+  it('refuses the render over a pick the list leaves out, and renders a declared one', async () => {
+    const list = '[ { id: long } ]';
+    const refused = await transport.renderRaw(placed('issued', 'compact'), PARAMS, defs(list), {
+      scale: 1,
+    });
+    expect(refused.ok).toBe(false);
+    expect(refused.pages).toHaveLength(0);
+    expect(refused.diagnostics.items.map((d) => `${d.severity}:${d.code}`)).toContain(
+      'error:unknown_format',
+    );
+    const declared = await transport.renderRaw(placed('issued', 'long'), PARAMS, defs(list), {
+      scale: 1,
+    });
+    expect(declared.ok).toBe(true);
+    expect(declared.pages).toHaveLength(1);
   });
 });
