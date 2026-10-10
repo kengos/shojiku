@@ -1,10 +1,12 @@
-// Image import: the menu file-pick, the canvas file drop, a clipboard paste and
-// the panel's replace button share ONE pipeline. A transient notice (downscaled / refused
-// reason / over-cap) rides the topbar status region; the raise prompt offers the
-// next cap step. The size gate runs BEFORE the op — ops never re-check the cap,
-// and undo/redo must stay able to re-parse. What the import DOES to the document
-// (the gate + the op) is `imageImportRun.ts`; this hook is the React wiring —
-// the file input, the drag/drop handlers, the notice state and the cap raise.
+// Image import: the menu file-pick, the canvas file drop, a clipboard paste, the
+// panel's replace button and its switch of a bound image to fixed share ONE
+// pipeline. A transient notice (downscaled / refused reason / over-cap) rides
+// the topbar status region; the raise prompt offers the next cap step. The size
+// gate runs BEFORE the op — ops never re-check the cap, and undo/redo must stay
+// able to re-parse. What the import DOES to the document (the gate + the op) is
+// `imageImportRun.ts`; this hook is the React wiring — the file input, the
+// panel's actions, the notice state and the cap raise. The drop and paste routes
+// are `useCanvasImageDrop` and `usePasteImage`, called from here.
 
 import { type ChangeEvent, type DragEvent, useCallback, useMemo, useRef, useState } from 'react';
 import type { DragPoint } from '../canvas/useDrag';
@@ -15,7 +17,8 @@ import type { ImageBudgets } from '../image/model';
 import { resolveInsertTarget } from '../insert/model';
 import type { LastGoodPreview } from '../preview/reducer';
 import type { PageHit } from './geometry';
-import { dropInsertTarget, type ImageAction, runImageImport } from './imageImportRun';
+import { type ImageAction, restoreImageSource, runImageImport } from './imageImportRun';
+import { useCanvasImageDrop } from './useCanvasImageDrop';
 import { usePasteImage } from './usePasteImage';
 
 export interface ImageImportOptions {
@@ -40,6 +43,10 @@ export interface ImageImport {
   readonly textBytes: number;
   readonly onImageInsert: () => void;
   readonly onReplaceImage: (targetPath: string, currentSrcLength: number) => void;
+  /** Make the bound image at `targetPath` fixed: write `remembered` through the
+   * size gate, or — with nothing remembered — pick a file (a no-op without a
+   * codec, which the panel knows by `onReplaceImage` being withheld). */
+  readonly onFixImageSource: (targetPath: string, remembered: string | null) => void;
   readonly onFilePicked: (event: ChangeEvent<HTMLInputElement>) => void;
   readonly onCanvasDragOver: (event: DragEvent<HTMLDivElement>) => void;
   readonly onCanvasDrop: (event: DragEvent<HTMLDivElement>) => void;
@@ -67,7 +74,7 @@ export function useImageImport({
 }: ImageImportOptions): ImageImport {
   // Destructured ONCE: the controller object is rebuilt every render, so the
   // memo deps below must be these stable fields, never `editor` itself.
-  const { text, read, selection, apply, setMaxBytes: setEditorMaxBytes } = editor;
+  const { text, read, selection, apply, applyAll, setMaxBytes: setEditorMaxBytes } = editor;
   const [imageNotice, setImageNotice] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pendingActionRef = useRef<ImageAction | null>(null);
@@ -89,11 +96,12 @@ export function useImageImport({
         maxBytes,
         read,
         apply,
+        applyAll,
         selectClearing,
         lastGoodRef,
         setNotice: setImageNotice,
       }),
-    [imageBudgets, textBytes, maxBytes, read, apply, selectClearing, lastGoodRef],
+    [imageBudgets, textBytes, maxBytes, read, apply, applyAll, selectClearing, lastGoodRef],
   );
 
   // The insert-menu image entry: remember where the insert lands, then open the
@@ -109,6 +117,33 @@ export function useImageImport({
     pendingActionRef.current = { kind: 'replace', path: targetPath, currentSrcLength };
     fileInputRef.current?.click();
   }, []);
+  // The panel's switch of a bound image to fixed. A remembered `src` is written
+  // straight away (after the size gate); otherwise the file picker opens and the
+  // import drops the binding in the same batch as it writes the new `src`.
+  const onFixImageSource = useCallback(
+    (targetPath: string, remembered: string | null) => {
+      if (remembered !== null) {
+        restoreImageSource(targetPath, remembered, {
+          textBytes,
+          maxBytes,
+          applyAll,
+          setNotice: setImageNotice,
+        });
+        return;
+      }
+      if (imageCodec === undefined) {
+        return;
+      }
+      pendingActionRef.current = {
+        kind: 'replace',
+        path: targetPath,
+        currentSrcLength: 0,
+        dropData: true,
+      };
+      fileInputRef.current?.click();
+    },
+    [textBytes, maxBytes, applyAll, imageCodec],
+  );
   const onFilePicked = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -122,35 +157,15 @@ export function useImageImport({
     [runImport, imageCodec],
   );
 
-  // Canvas file drop: an image file dropped on a page inserts at the planned
-  // flow slot (reusing the palette hit-test); a drop off every page appends to
-  // the body. A non-image drag is ignored. Only the FIRST file is imported.
-  const onCanvasDragOver = useCallback(
-    (event: DragEvent<HTMLDivElement>) => {
-      if (imageCodec !== undefined && Array.from(event.dataTransfer.types).includes('Files')) {
-        event.preventDefault();
-      }
-    },
-    [imageCodec],
-  );
-  const onCanvasDrop = useCallback(
-    (event: DragEvent<HTMLDivElement>) => {
-      if (imageCodec === undefined) {
-        return;
-      }
-      const file = event.dataTransfer.files[0];
-      if (file === undefined) {
-        return;
-      }
-      event.preventDefault();
-      const hit = pageHitAt({ x: event.clientX, y: event.clientY });
-      const target = dropInsertTarget(read, selection, hit);
-      void runImport(file, { kind: 'insert', target }, imageCodec);
-    },
-    [imageCodec, pageHitAt, read, selection, runImport],
-  );
-
-  // The clipboard route into the same pipeline (guards + listener live there).
+  // The canvas file drop and the clipboard paste: the same pipeline, wired by
+  // their own hooks (each route's guards live there).
+  const { onCanvasDragOver, onCanvasDrop } = useCanvasImageDrop({
+    imageCodec,
+    pageHitAt,
+    read,
+    selection,
+    runImport,
+  });
   const insertTarget = useCallback(() => resolveInsertTarget(read, selection), [read, selection]);
   usePasteImage({ imageCodec, insertTarget, runImport });
 
@@ -175,6 +190,7 @@ export function useImageImport({
     textBytes,
     onImageInsert,
     onReplaceImage,
+    onFixImageSource,
     onFilePicked,
     onCanvasDragOver,
     onCanvasDrop,

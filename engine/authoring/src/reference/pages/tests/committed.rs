@@ -52,14 +52,14 @@ fn every_hand_written_diagnostics_section_names_only_real_things() {
         "pages carrying a `## Diagnostics` section"
     );
     assert_eq!(census.tables, 22, "of which carry a code table");
-    assert_eq!(census.rows, 144, "table rows naming a code");
-    assert_eq!(census.occurrences, 175, "column-1 code occurrences");
+    assert_eq!(census.rows, 146, "table rows naming a code");
+    assert_eq!(census.occurrences, 176, "column-1 code occurrences");
     assert_eq!(
         census.distinct, 135,
         "distinct codes named across the pages"
     );
-    assert_eq!(census.tokens, 199, "underscore-bearing in-section tokens");
-    assert_eq!(census.checked, 24, "of which the second rule judged");
+    assert_eq!(census.tokens, 203, "underscore-bearing in-section tokens");
+    assert_eq!(census.checked, 27, "of which the second rule judged");
     assert_eq!(census.exempt, 0, "no line has needed a waiver yet");
     // The third rule's own population, and the guard on its excused list.
     // `excused_names` is DISTINCT names actually hit: holding it equal to the

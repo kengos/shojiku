@@ -821,6 +821,7 @@ export const hi: LanguageCatalog = {
     'panel.section.box': 'बॉक्स',
     'panel.contentMode': 'सामग्री स्रोत',
     'panel.contentMode.text': 'स्थिर पाठ',
+    'panel.contentMode.image': 'स्थिर छवि',
     'panel.contentMode.data': 'डेटा बाइंडिंग',
     'panel.field.text': 'पाठ',
     'panel.field.text.keys': 'नई पंक्ति के लिए Enter · पूरा करने के लिए {mod}Enter',

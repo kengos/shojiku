@@ -758,7 +758,8 @@ presence is not a text binding.
 ## Panel model + field widgets
 
 - `panel/itemView.ts` — the READ side: `readItemView` → `ItemView`
-  (incl. `dataScope`, `pageFormat`), `display`/`record` narrowings,
+  (incl. `dataScope`, `pageFormat`, `hasSrc` — key presence, apart from the
+  display `src`), `display`/`record` narrowings,
   `registryNames`, `BOX_AXES`, `imageSourceSummary` (format + KiB — the
   raw `src` never reaches a field). Also the ONE home for the two BOXLESS
   sets, which answer different questions and are deliberately different
@@ -911,6 +912,22 @@ presence is not a text binding.
   expression becomes that data key with its format, a data key becomes
   `{key}` text. Only mixed text (`{customer.name} 様`) has to be dropped,
   and `ContentSection` keeps it for the way back).
+- `panel/imageSourceOps.ts` — an image's source switch as pure plans:
+  `imageSourceMode` (the same `hasData` the arms branch on, so both keys read
+  as bound), `imageToDataOps`/`imageToFixedOps`, and `planImageSwitch` →
+  `ops` (apply now), `restore` (a remembered `src`, written by the host after
+  the size gate) or `pick` (no `src` to be had — the host opens the picker).
+  Every plan leaves exactly one of `src`/`data` (both or neither is a
+  validation error that refuses the render) and lands as one `applyAll`.
+  `ImageMemory` is what the switches dropped for ONE path (the `src`, and the
+  binding's key + scope — not its format/placeholder, which an image ignores);
+  `ContentSection` holds it beside the text pair's dropped text, because
+  selecting an item of another type unmounts `ImageContent`. Both memories
+  are keyed by PATH, so `ContentSection` drops them on any committed change
+  `keepsItemPaths` rejects — an op that can move an item (insert, remove,
+  move, duplicate, a renamed or replaced map) or an undo/redo, which restores
+  a snapshot — rather than offer one item's content to whatever now sits at
+  its old path.
 - `panel/styleNamesOps.ts` — the `styleNames` LIST edits every named-style
   checklist authors and the toolbar's style picker toggles: `styleNamesOp(path,
   names, keys = ['styleNames'])` (an empty list REMOVES the key; `keys` names a
@@ -1308,8 +1325,12 @@ presence is not a text binding.
   and silently not for the other carriers. `ContentSection.tsx` (per-type
   routing ONLY — the plain-text surface is `contentText.tsx`
   (`TextContentField`), split out when the rich-text route left the router
-  carrying more body than routing; image/page-number surfaces in
-  `contentParts.tsx` (the image's fit through the shared `FitField`), the bound-mode half in `contentBound.tsx`
+  carrying more body than routing; the image's surface is `contentImage.tsx`
+  (`ImageContent`: the text pair's content-source select, `fixed` ⇄ `data`
+  through `imageSourceOps.ts`, then the source's own fields, then the shared
+  `FitField` on BOTH arms — the engine fits a bound image as it fits a fixed
+  one — and no format/placeholder on the bound arm, since an image binding
+  reads only its key), the page-number surface `contentParts.tsx`, the bound-mode half in `contentBound.tsx`
   (`BoundContent` — the data-key picker plus the two options that ride a
   binding, `format` and `placeholder`, aimed at a `BindingTarget` (path + the
   binding's current values, `panelHelpers.itemBindingTarget` for the item) so

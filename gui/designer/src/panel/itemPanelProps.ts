@@ -36,6 +36,12 @@ export interface ItemPanelProps {
    * the geometry is stale — the box fields then degrade to plain editing. */
   readonly geometry?: PlacementGeometry | null;
   readonly onReplaceImage?: (path: string, currentSrcLength: number) => void;
+  /** Make the bound image at `path` a fixed one: write `remembered` (the `src`
+   * this panel dropped from the same image earlier — the host gates its size as
+   * it gates an import), or, when there is none, pick a file and write it. Either
+   * way the `data` binding goes in the same batch, one undo step. Absent = the
+   * panel cannot switch a bound image to fixed (unless it already has a `src`). */
+  readonly onFixImageSource?: (path: string, remembered: string | null) => void;
   /** workshop mode: open the create-data-field modal. The picker hands its
    * own commit up so a created field binds THIS item. The tail shows only on a
    * DOCUMENT-scope data.key picker (a fresh top-level key is meaningless inside

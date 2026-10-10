@@ -88,6 +88,9 @@ export function PanelColumn({
       gridStep={prefs.gridStep}
       geometry={placementGeometry}
       onReplaceImage={imageCodec !== undefined ? image.onReplaceImage : undefined}
+      // Always: restoring a remembered `src` needs no codec, and the panel
+      // offers the picker half only alongside `onReplaceImage`.
+      onFixImageSource={image.onFixImageSource}
       onCreateField={inserts.onCreateField}
       onOpenColumnSheet={dialogs.openColumnSheet}
       onNavigateDefaults={views.navigateDefaults}

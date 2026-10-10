@@ -452,15 +452,22 @@ lists name the destructured stable fields, never `editor` itself.
   machine, live-rect hit test (`pageHitAt`), `planPaletteDrop` →
   `insertIndicator`, drop = ONE `insertItem` at the plan's path + select.
 - `hooks/useImageImport.ts` — menu entry, canvas file drop, clipboard
-  paste and panel replace route ONE pipeline: size gate →
+  paste, panel replace and the panel's switch of a bound image to fixed
+  (`onFixImageSource`) route ONE pipeline: size gate →
   `insertItem` (through `placeForTarget`; `ImageImportContext` carries
-  `read` for it)/`setScalar`;
+  `read` for it) or one `applyAll` batch (a `src` replacement; with
+  `dropData`, the binding removed in the same batch);
   notices ride the topbar `<output>`; `applyRaisedCap`; returns
   `hasImageItem`/`nextCap`. The React wiring only — what the import DOES
   is `hooks/imageImportRun.ts` (`runImageImport` over an explicit
   `ImageImportContext`: the pre-op cap gate, then the op; `textBytes` is
   the RENDER-time size, deliberately not an accessor — plus
-  `dropInsertTarget`, where a canvas file drop lands).
+  `restoreImageSource`, the same gate over a `src` the panel remembers
+  dropping, counted in UTF-8 bytes since a bundled path may be non-ASCII,
+  and `dropInsertTarget`, where a canvas file drop lands).
+- `hooks/useCanvasImageDrop.ts` — the canvas file-drop route into that
+  pipeline (`onCanvasDragOver`/`onCanvasDrop`: no codec → inert, only the
+  first file, the planned flow slot under the pointer).
 - `hooks/usePasteImage.ts` — the window-level `paste` route into that same
   pipeline, and the guard ORDER that makes it safe: no codec → inert; an
   editable target → the platform's own paste keeps the event; a paste

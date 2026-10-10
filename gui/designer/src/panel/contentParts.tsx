@@ -1,18 +1,12 @@
-// The content tab's per-TYPE content surfaces — an `image` item's source/fit
-// cluster and a `page_number`'s pattern field. `ContentSection` beside this file
-// routes to them and owns the text/data pair every other content-bearing type
-// shares.
+// The content tab's `page_number` surface — its pattern field. `ContentSection`
+// beside this file routes to it and owns the text/data pair every other
+// content-bearing type shares; an image's surface is `contentImage.tsx`.
 
-import type { Op } from '@shojiku/designer-core';
 import { useI18n } from '../i18n/context';
-import type { ChipContext } from '../text/chipContext';
-import { BTN_SM, FIELD_LABEL, INPUT, SECTION_TITLE } from '../ui/chrome';
-import { FieldPicker } from './FieldPicker';
-import { FitField } from './FitField';
+import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import type { ItemPanelProps } from './itemPanelProps';
-import { imageSourceSummary } from './itemView';
-import { applyPanelOp, bindingKeyOp, plainTextOp } from './model';
-import { documentScopeCreateField, HelpfulHeading, scopePickerProps } from './panelHelpers';
+import { applyPanelOp, plainTextOp } from './model';
+import { HelpfulHeading } from './panelHelpers';
 
 /** The engine's own page-number pattern, shown as the field's placeholder so
  * an unset value reads as a value rather than a blank. */
@@ -21,56 +15,6 @@ const DEFAULT_PAGE_FORMAT = '{page} / {pages}';
 /** A pattern is a label, not a document — long enough for the ja default `- {page}ページ -`,
  * short enough that the field can never carry a payload. */
 const MAX_PAGE_FORMAT_CHARS = 80;
-
-export function ImageContent(props: ItemPanelProps & { readonly chips: ChipContext }) {
-  const { t } = useI18n();
-  const { controller, path, view, capabilities, onReplaceImage, chips } = props;
-  const dispatch = (op: Op | null) => applyPanelOp(controller, op);
-  if (view.hasData) {
-    return (
-      <section>
-        <h3 className={SECTION_TITLE}>{t('panel.section.content')}</h3>
-        <FieldPicker
-          label={t('panel.field.dataKey')}
-          value={view.dataKey}
-          options={chips.options}
-          onCommit={(v) => dispatch(bindingKeyOp(path, v))}
-          onCreateField={documentScopeCreateField(props)}
-          {...scopePickerProps(props, chips)}
-        />
-      </section>
-    );
-  }
-  return (
-    <section>
-      <h3 className={SECTION_TITLE}>{t('panel.section.image')}</h3>
-      {view.src === '' ? (
-        <p className="m-0 text-muted">{t('panel.image.none')}</p>
-      ) : (
-        <p className="m-0 mb-2 text-[12px] text-muted">
-          {t('panel.image.summary', {
-            format: imageSourceSummary(view.src).format,
-            kib: imageSourceSummary(view.src).kib,
-          })}
-        </p>
-      )}
-      {onReplaceImage !== undefined ? (
-        <button
-          type="button"
-          className={BTN_SM}
-          onClick={() => onReplaceImage(path, view.src.length)}
-        >
-          {t('panel.image.replace')}
-        </button>
-      ) : null}
-      <FitField
-        value={view.fit}
-        capabilities={capabilities}
-        onCommit={(v) => dispatch(plainTextOp(path, ['fit'], v))}
-      />
-    </section>
-  );
-}
 
 /** A `page_number`'s pattern field. The pattern is a free string because its two
  * tokens ARE the vocabulary — they are shown in the hint, and anything else

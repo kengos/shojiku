@@ -2,8 +2,8 @@
 // key hint under it. Split out of `ContentSection.tsx`, which is the per-type
 // ROUTER: with the rich-text route beside the image, page-number, mark and
 // iterable ones, the router no longer fits its own body, and the body is the
-// part that is not routing. The other per-type surfaces already live beside it
-// in `contentParts.tsx`.
+// part that is not routing. The other per-type surfaces live beside it
+// (`contentImage.tsx`, `contentParts.tsx`, `MarkSection.tsx`).
 
 import { isMacPlatform, modifierGlyph } from '../help/shortcutsModel';
 import { useI18n } from '../i18n/context';

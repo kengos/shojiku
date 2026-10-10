@@ -218,6 +218,7 @@ describe('switchContentOps', () => {
     format: '',
     placeholder: '',
     pageFormat: '',
+    hasSrc: false,
     src: '',
     fit: '',
     styleNames: [],

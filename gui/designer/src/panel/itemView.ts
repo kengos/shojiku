@@ -109,10 +109,15 @@ export interface ItemView {
   /** The binding's blank-form placeholder (`data.placeholder`) — drawn when
    * the bound value is absent/empty. Empty string when unset. */
   readonly placeholder: string;
-  /** An `image` item's template-time source (`data:` URI, inline SVG, or bundled
-   * path). Empty for non-image items or a data-bound image. */
   /** `page_number`'s own `format` pattern (`{page} / {pages}`). */
   readonly pageFormat: string;
+  /** Whether the item carries a `src` KEY — the image's fixed source. Kept apart
+   * from `src` for the same reason `hasText` is apart from `text`: an authored
+   * empty value and an absent key are different documents, and an op removing
+   * a key that is not there is refused. */
+  readonly hasSrc: boolean;
+  /** An `image` item's template-time source (`data:` URI, inline SVG, or bundled
+   * path). Empty for non-image items or a data-bound image. */
   readonly src: string;
   /** An `image` item's `fit` mode (empty = the engine default `contain`). */
   readonly fit: string;
@@ -170,6 +175,7 @@ export function readItemView(raw: unknown): ItemView | null {
     placeholder: display(data?.placeholder),
     // `page_number` carries its pattern at the item root, not under `data`.
     pageFormat: display(rec.format),
+    hasSrc: rec.src !== undefined,
     src: display(rec.src),
     fit: display(rec.fit),
     styleNames: stringList(rec.styleNames),

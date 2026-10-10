@@ -53,6 +53,9 @@ export interface PropertyPanelProps {
   readonly geometry?: PlacementGeometry | null;
   /** Open the image import pipeline to REPLACE the `src` of the image at `path`. */
   readonly onReplaceImage?: (path: string, currentSrcLength: number) => void;
+  /** Make the bound image at `path` fixed — write the `src` the panel remembers
+   * dropping from it (size-gated), or pick a file when there is none. */
+  readonly onFixImageSource?: (path: string, remembered: string | null) => void;
   /** workshop mode: open the create-data-field modal from a document-scope
    * data.key picker tail; the picker hands its commit up to bind the item. */
   readonly onCreateField?: (bindKey: (key: string) => void) => void;
@@ -90,6 +93,7 @@ export function PropertyPanel({
   gridStep = 0,
   geometry = null,
   onReplaceImage,
+  onFixImageSource,
   onCreateField,
   onOpenColumnSheet,
   onNavigateDefaults,
@@ -158,6 +162,7 @@ export function PropertyPanel({
         gridStep={gridStep}
         geometry={geometry}
         onReplaceImage={onReplaceImage}
+        onFixImageSource={onFixImageSource}
         onCreateField={onCreateField}
         onOpenColumnSheet={onOpenColumnSheet}
         onNavigateDefaults={onNavigateDefaults}

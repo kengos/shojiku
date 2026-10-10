@@ -1,22 +1,24 @@
 // The content tab: it routes each content-bearing item type to its surface and
 // owns the text/data pair the rest share (`text`/`qr_code`). The per-type
-// surfaces live in `contentParts.tsx` (image, page number), the iterable
-// section in `IterableSourceSection.tsx`, and a table's collapsible sections
-// (columns, rows, pages, empty data, header groups) in
+// surfaces live in `contentImage.tsx` (image) and `contentParts.tsx` (page
+// number), the iterable section in `IterableSourceSection.tsx`, and a table's
+// collapsible sections (columns, rows, pages, empty data, header groups) in
 // `TableContentSections.tsx`.
 
 import type { Op } from '@shojiku/designer-core';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useI18n } from '../i18n/context';
 import { INPUT } from '../ui/chrome';
 import { CardGapField } from './CardGapField';
 import { CharGridMarkupField } from './CharGridMarkupField';
 import { BoundContent } from './contentBound';
-import { ImageContent, PageNumberContent } from './contentParts';
+import { ImageContent } from './contentImage';
+import { PageNumberContent } from './contentParts';
 import { TextContentField } from './contentText';
 import { Field } from './fields';
 import { frameOf } from './frameModel';
 import { IterableSourceSection } from './IterableSourceSection';
+import { type ImageMemory, keepsItemPaths } from './imageSourceOps';
 import type { ItemPanelProps } from './itemPanelProps';
 import { type ContentMode, MARK_TYPES } from './itemView';
 import { MarkSection } from './MarkSection';
@@ -32,7 +34,25 @@ export function ContentSection(props: ItemPanelProps) {
   // switches this SAME item straight back. It waits here rather than in the
   // file because the document carries exactly one content key.
   const dropped = useRef<{ path: string; text: string } | null>(null);
+  // An image's counterpart: the `src` or the binding a source switch dropped,
+  // kept here rather than in `ImageContent` because selecting an item of
+  // another type unmounts that component and this one stays.
+  const droppedImage = useRef<ImageMemory | null>(null);
   const { controller, path, view, capabilities } = props;
+  // Both memories are keyed by PATH, so an edit that can move an item (or an
+  // undo/redo, which may undo a move) ends them: otherwise a reorder would
+  // offer one item's dropped content to whatever now sits at its old path.
+  const { subscribe } = controller;
+  useEffect(
+    () =>
+      subscribe((change) => {
+        if (!keepsItemPaths(change)) {
+          dropped.current = null;
+          droppedImage.current = null;
+        }
+      }),
+    [subscribe],
+  );
   const dispatch = (op: Op | null) => applyPanelOp(controller, op);
   const chips = chipsFor(props);
   const bindingOptions = chips.options;
@@ -63,7 +83,7 @@ export function ContentSection(props: ItemPanelProps) {
     );
   }
   if (view.type === 'image') {
-    return <ImageContent {...props} chips={chips} />;
+    return <ImageContent props={props} chips={chips} memory={droppedImage} />;
   }
   if (view.type === 'page_number') {
     return <PageNumberContent {...props} />;
