@@ -78,7 +78,7 @@ import { directionOp, gapOp, justifyContentOp, ratioOp } from '../panel/layoutOp
 import { lineArmOps, readLinePoints } from '../panel/linePoints';
 import { readMark } from '../panel/markModel';
 import { repointMarkOps, setCheckedOps, setMarkEqualsOp } from '../panel/markOps';
-import { bindingKeyOp, bindingPickOps, placeholderOp, plainTextOp } from '../panel/model';
+import { bindingKeyOp, bindingPickOps, formatOp, placeholderOp, plainTextOp } from '../panel/model';
 import { PAGE_SIZES } from '../panel/pageSizes';
 import { pickerOptions } from '../panel/pickerModel';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
@@ -91,6 +91,7 @@ import { rulePresetOps } from '../panel/rulePresets';
 import { fillOp, readShapeStyle, strokeColorOp, strokeWidthOp } from '../panel/shapeStyle';
 import { sizeLimitOp } from '../panel/sizeLimits';
 import { plainFlowCommitOps } from '../panel/spanConversion';
+import { spanCommitOps } from '../panel/spanOps';
 import { styleNamesOp } from '../panel/styleNamesOps';
 import { deleteStyleOps, renameStyleOps } from '../panel/styleRefOps';
 import { TABLE_BODY_VALIGN_CAPABILITY, TABLE_VALIGN_CAPABILITY } from '../panel/TableBandFields';
@@ -123,8 +124,9 @@ import { extendParams } from '../sample/generate';
 import { buildStyleUsage } from '../styles/usage';
 import { commitOps } from '../text/declCommit';
 import { planChipInsert } from '../text/declMint';
+import { planRuns } from '../text/runIdentity';
 import type { SerializedRun } from '../text/runSerialize';
-import { NO_MARKS, type RunMarks } from '../text/spanRuns';
+import { NO_MARKS, narrowRuns, type RunMarks } from '../text/spanRuns';
 import { cascadeContext } from '../toolbar/cascade';
 import { effectiveValueIn } from '../toolbar/effective';
 import { buildTree, type TreeNode } from '../tree/model';
@@ -4643,6 +4645,146 @@ describe('creating spans from a plain text against the real engine', () => {
     const [a, b] = [await outcome(plain), await outcome(marked)];
     expect(b.codes).toEqual([]);
     expect(same(a.rgba, b.rgba)).toBe(true);
+  });
+});
+
+describe("a fragment's binding and a split's metrics, through the real engine", () => {
+  const ITEM = 'sections.body.items[0]';
+  const BOUND = `${ITEM}.spans[1]`;
+  const DEFS = [
+    'type: object',
+    'properties:',
+    '  amount: { type: number }',
+    '  shop: { type: string }',
+    '  note: { type: string }',
+    '  lines:',
+    '    type: array',
+    '    items:',
+    '      type: object',
+    '      properties:',
+    '        sku: { type: string }',
+    '',
+  ].join('\n');
+  const PARAMS = JSON.stringify({
+    amount: 1234567,
+    shop: 'Shojiku Store Main Street',
+    lines: [{ sku: 'A' }],
+  });
+  const flow = (items: readonly string[]) =>
+    ['page: { size: A4, margin: 30 }', 'sections:', '  body:', '    type: flow', '    items:']
+      .concat(items, '')
+      .join('\n');
+  const SOURCE = flow([
+    '      - type: text',
+    '        box: { w: 400 }',
+    '        spans:',
+    '          - { text: "Total " }',
+    '          - { data: { key: amount } }',
+  ]);
+  /** The first drawn line of the first box at `path`, and the warning codes. */
+  const draw = async (editor: Editor, path = ITEM) => {
+    const result = await transport.renderRaw(editor.text(), PARAMS, DEFS, { scale: 1 });
+    expect(result.ok, JSON.stringify(result.diagnostics.items)).toBe(true);
+    const text = result.inspect?.boxes.pages.flat().find((b) => b.path === path)?.text;
+    return {
+      codes: result.diagnostics.items.filter((d) => d.severity !== 'info').map((d) => d.code),
+      width: text !== undefined && 'lines' in text ? (text.lines[0]?.width ?? 0) : 0,
+    };
+  };
+
+  it('draws the format the inspector writes onto a bound fragment', async () => {
+    const editor = Editor.create(SOURCE);
+    const before = await draw(editor);
+    expect(editor.apply(formatOp(BOUND, 'symbol')).ok).toBe(true);
+    expect(editor.read(`${BOUND}.data`)).toEqual({ key: 'amount', format: 'symbol' });
+    const after = await draw(editor);
+    expect(after.codes).toEqual(before.codes);
+    // The currency symbol widens the same digits.
+    expect(after.width).toBeGreaterThan(before.width);
+  });
+
+  it('draws the blank placeholder when the fragment value is absent', async () => {
+    const editor = Editor.create(SOURCE);
+    expect(editor.apply(bindingKeyOp(BOUND, 'note')).ok).toBe(true);
+    const blank = await draw(editor);
+    expect(editor.apply(placeholderOp(BOUND, '(no note given)')).ok).toBe(true);
+    const shown = await draw(editor);
+    expect(shown.width).toBeGreaterThan(blank.width + 20);
+  });
+
+  it('resolves a fragment picked at document scope inside a repeat cell from the top level', async () => {
+    const CELL = 'sections.body.items[0].cell.items[0]';
+    const editor = Editor.create(
+      flow([
+        '      - type: repeat',
+        '        data: { key: lines }',
+        '        cell:',
+        '          box: { w: 400, h: 40 }',
+        '          items:',
+        '            - type: text',
+        '              box: { w: 400 }',
+        '              spans:',
+        '                - { text: "at " }',
+        '                - { data: { key: sku } }',
+      ]),
+    );
+    const row = await draw(editor, CELL);
+    const read = (path: string) => editor.read(path);
+    expect(editor.applyAll(bindingPickOps(read, `${CELL}.spans[1]`, 'shop', true)).ok).toBe(true);
+    expect(editor.read(`${CELL}.spans[1].data`)).toEqual({ key: 'shop', scope: 'document' });
+    const top = await draw(editor, CELL);
+    expect(top.codes).toEqual(row.codes);
+    // "at Shojiku Store Main Street" is far wider than "at A".
+    expect(top.width).toBeGreaterThan(row.width + 50);
+  });
+
+  it('keeps the look of a split fragment — the same line width as before the split', async () => {
+    // The geometry claim behind carrying the metrics: marking part of a
+    // fragment with a COLOUR (which moves no glyph) must leave the line
+    // exactly as wide. The control is the split as it was written before the
+    // metrics were carried — the new halves at the block's size — which does
+    // move it.
+    const sized = flow([
+      '      - type: text',
+      '        box: { w: 400 }',
+      '        spans:',
+      '          - { text: "Total amount due", style: { fontSize: 16, letterSpacing: 1 } }',
+    ]);
+    const editor = Editor.create(sized);
+    const whole = await draw(editor);
+    const spans = editor.read(`${ITEM}.spans`) as readonly unknown[];
+    const run = (content: string, marks: RunMarks = NO_MARKS): SerializedRun => ({
+      sourceIndex: 0,
+      kind: 'text',
+      content,
+      marks,
+      linked: false,
+    });
+    const ops = spanCommitOps(
+      (path) => editor.read(path),
+      ITEM,
+      planRuns(narrowRuns(spans), [
+        run('Total '),
+        run('amount', { ...NO_MARKS, color: '#cc0000' }),
+        run(' due'),
+      ]),
+    );
+    expect(editor.applyAll(ops).ok).toBe(true);
+    const split = await draw(editor);
+    expect(split.codes).toEqual(whole.codes);
+    expect(split.width).toBeCloseTo(whole.width, 3);
+
+    const control = Editor.create(
+      flow([
+        '      - type: text',
+        '        box: { w: 400 }',
+        '        spans:',
+        '          - { text: "Total ", style: { fontSize: 16, letterSpacing: 1 } }',
+        '          - { text: amount, style: { color: "#cc0000" } }',
+        '          - { text: " due" }',
+      ]),
+    );
+    expect((await draw(control)).width).toBeLessThan(whole.width - 10);
   });
 });
 

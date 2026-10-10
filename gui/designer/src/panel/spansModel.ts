@@ -34,6 +34,20 @@ export interface SpanView {
   readonly index: number;
   readonly text: string;
   readonly dataKey: string;
+  /** Whether the fragment carries a `data:` map at all — the BOUND state,
+   * which an empty key does not end: the field picker keeps an emptied key
+   * present "so the validation warning surfaces" and the reader can pick
+   * again, exactly as the item panel's `hasData` does. */
+  readonly bound: boolean;
+  /** The binding's `data.format`, `data.placeholder` and `data.scope` — the
+   * same three options an item's own `data:` carries, because a fragment's
+   * `data:` IS that `Binding` (`engine/core/src/template/spans.rs`), resolved
+   * by the same `resolve_content`. `''` when unset or not a scalar; a number
+   * shows as its decimal, as the item panel shows it (`display`). The scope is
+   * string-only. */
+  readonly format: string;
+  readonly placeholder: string;
+  readonly dataScope: string;
   /** This fragment's own `link.url`, `''` when it carries none. */
   readonly url: string;
   /** The named styles this fragment lists, in wire order. */
@@ -53,11 +67,12 @@ export interface SpanView {
  * surface deliberately does not show. The marks (`fontWeight`, `fontStyle`,
  * `textDecoration`, `color`) belong to the selection and are absent here.
  *
- * The engine allows a third metric per span, `letterSpacing`, and this list
- * does NOT carry it: `panel/styleFieldSpecs`'s registry has no entry for it, so
- * it is not authorable at the ITEM level either, and giving a fragment a
- * control its own block lacks would be the panel promising more than the rest
- * of it delivers. It becomes available here the moment the registry gains it. */
+ * The engine honours a third metric per span, `letterSpacing`, and this list
+ * does NOT carry it yet. The item panel edits it through its own control
+ * (`TextLookFields`), not through `panel/styleFieldSpecs`'s registry, and the
+ * fragment inspector draws its controls from that registry — so a fragment has
+ * no control for it. A split still keeps an authored value on both halves
+ * (`spanWire.inheritedStyle`). */
 export const SPAN_METRIC_KEYS = ['fontSize', 'fontFamily'] as const;
 
 /** The fragments of the item at `path`, or `[]` for an item with no `spans:`
@@ -79,10 +94,15 @@ export function narrowSpans(value: unknown): readonly SpanView[] {
       continue;
     }
     const style = record(span.style);
+    const data = record(span.data);
     out.push({
       index,
       text: display(span.text),
-      dataKey: display(record(span.data)?.key),
+      dataKey: display(data?.key),
+      bound: data !== undefined,
+      format: display(data?.format),
+      placeholder: display(data?.placeholder),
+      dataScope: typeof data?.scope === 'string' ? data.scope : '',
       url: display(record(span.link)?.url),
       styleNames: Array.isArray(span.styleNames)
         ? span.styleNames.filter((name): name is string => typeof name === 'string')

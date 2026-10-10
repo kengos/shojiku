@@ -592,14 +592,24 @@ surface too, and the first mark converts it (`panel/spanConversion.ts`).
   gap is load-bearing on the write side too, since a plan then has fewer entries
   than the sequence has elements (`panel/spanOps` counts positions in wire slots
   for exactly this reason). It also carries `styleNames` and the `metrics`, the
-  panel's half of a fragment's style.
+  panel's half of a fragment's style, and a bound fragment's `format` /
+  `placeholder` / `dataScope` (the same `Binding` an item's `data:` is).
+  `bound` is the presence of a `data:` map, not a non-empty key — an emptied
+  key stays bound (and keeps its picker), as `itemView`'s `hasData` does.
   `MAX_SPANS` mirrors the engine constant and is pinned by reading
   `engine/core/src/template/spans.rs`; it bounds the DISPLAY only.
 - `panel/spanWire.ts` — one fragment's MARKS as wire keys. A mark that is OFF
   authors a REMOVAL, not the engine's explicit `normal`/`none` keyword (minimal
   wire), and every removal is presence-guarded — `removeKey` on an absent key
-  fails and `applyAll` then discards the whole batch. `inheritedKeys` narrows
-  the `styleNames`/`link` a split copies onto the new half. Tate-chu-yoko is the
+  fails and `applyAll` then discards the whole batch. What a split copies onto
+  the new half is three narrowed pieces: `inheritedKeys` (`styleNames`/`link`),
+  `inheritedStyle` (`INHERITED_STYLE_KEYS` — fontSize, fontFamily,
+  letterSpacing: the span-honoured keys of `engine/core/src/style/inert.rs`
+  minus `MARK_KEYS` and the combine key, pinned against the Rust by
+  `spanWire.inert.test.ts`), and `inheritedBinding` (a BOUND run's
+  format/placeholder/scope from a source bound to the same key — a defence: no
+  measured edit re-inserts a bound fragment). `spanOps.insertValue` lays the
+  run's marks over the inherited metrics in ONE `style:` map. Tate-chu-yoko is the
   fifth mark and is compared as a TOKEN (`combineOps`): an untouched
   `{digits: N}` or unreadable value is never rewritten; `all` is a scalar, a
   digits token a `{digits: N}` map (`putValue`), an unreadable token writes
@@ -625,16 +635,21 @@ surface too, and the first mark converts it (`panel/spanConversion.ts`).
   surface's (`text/SpansFlowEditor`, on the canvas), where a selection can point
   at them. What is left is everything a selection cannot point at, and
   `panel/SpanInspector.tsx` is that: the METRIC style keys, `styleNames:`, and a
-  bound fragment's `data.key` (atomic in the flow — deletable, not retypable).
-- `panel/SpanInspector.tsx` — the per-fragment inspector described above. Its
-  metric list is `spansModel`'s `SPAN_METRIC_KEYS` intersected with
+  bound fragment's binding (atomic in the flow — deletable, not retypable).
+- `panel/SpanInspector.tsx` — the per-fragment inspector described above. A
+  bound fragment mounts `BoundContent` (`contentBound.tsx`) aimed at
+  `<item>.spans[i]` — key picker (with the document-scope section inside a row
+  scope), format, blank placeholder — every label scoped "… for fragment N".
+  Its metric list is `spansModel`'s `SPAN_METRIC_KEYS` intersected with
   `styleFieldSpecs`'s registry, by FILTER rather than lookup-or-throw: the first
   cut threw at module scope for a key the registry lacks and took 29 unrelated
   suites down at import time. `letterSpacing` is the key in question — the
-  engine allows it per span, the panel's registry carries no entry for it, so it
-  is unauthorable at the ITEM level too and a fragment does not get a control
-  its own block lacks. Every commit is changed-checked, because `applyPanelOp`
-  takes `Op | null` precisely so the caller decides whether a write is owed.
+  engine allows it per span and the item panel edits it through its own
+  control (`TextLookFields`), but the registry the inspector draws from has no
+  entry for it, so a fragment has no control yet (a split still keeps an
+  authored value — `spanWire.inheritedStyle`). Every commit is changed-checked,
+  because `applyPanelOp` takes `Op | null` precisely so the caller decides
+  whether a write is owed.
 - The declaration name set is the THIRD member of the family in
   `text/declModel.ts` (`spanLinkSurfaceNames`), and neither sibling is usable:
   each omits one of the item's own two surfaces and each includes the span URL
@@ -1296,7 +1311,10 @@ presence is not a text binding.
   carrying more body than routing; image/page-number surfaces in
   `contentParts.tsx` (the image's fit through the shared `FitField`), the bound-mode half in `contentBound.tsx`
   (`BoundContent` — the data-key picker plus the two options that ride a
-  binding, `format` and `placeholder`. Both live on the BINDING
+  binding, `format` and `placeholder`, aimed at a `BindingTarget` (path + the
+  binding's current values, `panelHelpers.itemBindingTarget` for the item) so
+  a rich-text fragment's inspector mounts the same component; `boundFormatRows`
+  is the one format-row builder both use. Both live on the BINDING
   (`data.format`/`data.placeholder`), not at the item root, so every
   data-bound type takes them — a `char_grid` included, whose `data:` is the
   same `Binding` and whose content resolves through the same
@@ -1315,7 +1333,9 @@ presence is not a text binding.
   attached on the criterion that the field's NAME does not let a reader
   with little IT background infer what it does (`Cell size` is excluded
   by that criterion, not by oversight); `chipsFor`,
-  `documentScopeCreateField`, `scopePickerProps`) — no section imports
+  `documentScopeCreateField`, `scopePickerProps` — which takes an optional
+  `BindingTarget`, so the pick lands on a fragment while the row scope is still
+  asked of its item) — no section imports
   another for a helper.
   - The static-text content field is the shared `text/TextEditor` chip
     editor over the SAME `text/chipContext.ts` context the canvas

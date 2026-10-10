@@ -8,8 +8,16 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
+import type { SerializedRun } from '../text/runSerialize';
 import { NO_MARKS, type RunMarks } from '../text/spanRuns';
-import { inheritedKeys, markStyleOps, markStyleValue, markValues } from './spanWire';
+import {
+  inheritedBinding,
+  inheritedKeys,
+  inheritedStyle,
+  markStyleOps,
+  markStyleValue,
+  markValues,
+} from './spanWire';
 
 const PATH = 'sections.body.items[0].spans[1]';
 const ALL: RunMarks = {
@@ -140,6 +148,94 @@ describe('inheritedKeys', () => {
   it("copies the url only, never a link's other keys", () => {
     expect(inheritedKeys({ link: { url: 'https://x', extra: 'no' } })).toEqual({
       link: { url: 'https://x' },
+    });
+  });
+});
+
+describe('inheritedStyle', () => {
+  it('carries the metrics the flow does not edit — size, family, letter spacing', () => {
+    expect(
+      inheritedStyle({
+        text: 'x',
+        style: { fontSize: 12, fontFamily: 'Noto Sans JP', letterSpacing: '0.1em' },
+      }),
+    ).toEqual({ fontSize: 12, fontFamily: 'Noto Sans JP', letterSpacing: '0.1em' });
+  });
+
+  it("never carries the source's MARKS — the new run's own marks decide those", () => {
+    expect(
+      inheritedStyle({
+        style: {
+          fontSize: '12pt',
+          fontWeight: 'bold',
+          fontStyle: 'italic',
+          textDecoration: 'underline',
+          color: '#c00',
+          textCombineUpright: 'all',
+          lineHeight: 2,
+        },
+      }),
+    ).toEqual({ fontSize: '12pt' });
+  });
+
+  it('carries nothing from a fragment with no metric, and narrows a hostile value away', () => {
+    expect(inheritedStyle({ text: 'x' })).toBeUndefined();
+    expect(inheritedStyle(undefined)).toBeUndefined();
+    expect(inheritedStyle({ style: 'big' })).toBeUndefined();
+    expect(
+      inheritedStyle({ style: { fontSize: { pt: 12 }, fontFamily: ['a'], letterSpacing: true } }),
+    ).toBeUndefined();
+    // A YAML `.nan` / `.inf` is a number the engine cannot size anything with.
+    expect(
+      inheritedStyle({ style: { fontSize: Number.NaN, letterSpacing: Infinity } }),
+    ).toBeUndefined();
+  });
+});
+
+describe('inheritedBinding', () => {
+  const run = (kind: 'text' | 'bound', content: string): SerializedRun => ({
+    sourceIndex: 0,
+    kind,
+    content,
+    marks: NO_MARKS,
+    linked: false,
+  });
+  const source = {
+    data: { key: 'total', format: 'currency', placeholder: '—', scope: 'document' },
+  };
+
+  it("gives a re-inserted bound run its same-key source's options", () => {
+    expect(inheritedBinding(source, run('bound', 'total'))).toEqual({
+      key: 'total',
+      format: 'currency',
+      placeholder: '—',
+      scope: 'document',
+    });
+  });
+
+  it('gives nothing to another key, to a text run, or from a source with no option', () => {
+    expect(inheritedBinding(source, run('bound', 'other'))).toBeUndefined();
+    expect(inheritedBinding(source, run('text', 'total'))).toBeUndefined();
+    expect(inheritedBinding({ data: { key: 'total' } }, run('bound', 'total'))).toBeUndefined();
+    expect(inheritedBinding({ text: 'x' }, run('bound', 'total'))).toBeUndefined();
+    expect(inheritedBinding(undefined, run('bound', 'total'))).toBeUndefined();
+  });
+
+  it('narrows a hostile option away, and keeps only the two scope spellings', () => {
+    expect(
+      inheritedBinding(
+        { data: { key: 'k', format: { a: 1 }, placeholder: ['x'], scope: 'row' } },
+        run('bound', 'k'),
+      ),
+    ).toBeUndefined();
+    // A number is a scalar the inspector shows as set, so it is carried too.
+    expect(inheritedBinding({ data: { key: 'k', placeholder: 0 } }, run('bound', 'k'))).toEqual({
+      key: 'k',
+      placeholder: 0,
+    });
+    expect(inheritedBinding({ data: { key: 'k', scope: 'element' } }, run('bound', 'k'))).toEqual({
+      key: 'k',
+      scope: 'element',
     });
   });
 });

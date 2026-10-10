@@ -15,6 +15,15 @@ platform binaries.
 
 ### Added
 
+- **Give a value inside mixed-style text its own format and blank text.**
+  When part of a mixed-style text shows a data value, selecting that part
+  in the text's Content tab now offers the same choices as a text bound to
+  a value: the data field, its display format (the field's own formats
+  first) and what to print when the value is empty. Inside a repeat, a
+  table cell or a card, the field list also offers the document's own
+  fields, so the part can show a shop name on every row. Until now only the
+  field could be changed there; everything else meant editing the YAML.
+
 - **Name a template and give it a version in the Designer.** Document
   settings › Document properties now opens with the template's name and
   version. The name is what a PDF viewer shows as the document's title
@@ -806,6 +815,18 @@ platform binaries.
   browser's own report, with a trace and a screenshot of the moment it broke.
 
 ### Fixed
+
+- **Formatting part of a text keeps that text's size and font.** Making one
+  word of a mixed-style text bold (or any other change on the formatting
+  bar that splits it) used to give the new pieces the text block's size,
+  font and letter spacing instead of the ones that part had, so the word
+  and the rest of its part could shrink or change face. Text typed right
+  after a data value takes that value's size too.
+
+- **Leaving a data value's Blank placeholder unchanged no longer adds an
+  undo step.** Clicking into the field under a bound text's format (and now
+  under a data value inside mixed-style text) and leaving without changing
+  anything recorded an edit nobody made.
 
 - **Leaving a document-properties field unchanged no longer adds an undo
   step.** Clicking into Title, Description or Language under Document

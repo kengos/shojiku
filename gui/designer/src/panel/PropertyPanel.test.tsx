@@ -680,6 +680,26 @@ describe('PropertyPanel', () => {
     });
   });
 
+  it('writes nothing when the placeholder blurs at its own value', () => {
+    // The field commits on every blur; re-writing the same text was an undo
+    // step for an edit nobody made.
+    const controller = makeController({
+      [PATH]: { type: 'text', data: { key: 'birth_date', placeholder: '既存' } },
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    fireEvent.blur(screen.getByLabelText('Blank placeholder'), { target: { value: '既存' } });
+    expect(controller.apply).not.toHaveBeenCalled();
+  });
+
+  it('writes nothing when an absent placeholder blurs empty', () => {
+    const controller = makeController({
+      [PATH]: { type: 'text', data: { key: 'birth_date' } },
+    });
+    draw(<PropertyPanel controller={controller} path={PATH} />);
+    fireEvent.blur(screen.getByLabelText('Blank placeholder'), { target: { value: '' } });
+    expect(controller.apply).not.toHaveBeenCalled();
+  });
+
   it('hides the placeholder field when the engine lacks the capability', () => {
     const controller = makeController({
       [PATH]: { type: 'text', data: { key: 'birth_date' } },

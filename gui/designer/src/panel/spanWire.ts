@@ -9,6 +9,7 @@
 // the whole commit, including the text the reader just typed.
 
 import type { Op, SnippetValue } from '@shojiku/designer-core';
+import type { SerializedRun } from '../text/runSerialize';
 import type { RunMarks } from '../text/spanRuns';
 
 /** A snippet's MAP form — the shape `insertItem` composes into the document. */
@@ -19,7 +20,7 @@ import { combineToken, UNREADABLE_COMBINE } from './typesettingModel';
 
 /** The tate-chu-yoko key — the fifth mark, kept out of `MARK_KEYS` because its
  * value is not always a scalar (`{ digits: N }`). */
-const COMBINE_KEY = 'textCombineUpright';
+export const COMBINE_KEY = 'textCombineUpright';
 
 /** What a combine token spells on the wire, or `null` for nothing to write.
  * A token is turned back into the value it was READ from, never into a new
@@ -39,8 +40,17 @@ function combineWire(token: string): SnippetValue | null {
 /** The four style keys this surface owns. `fontSize`, `fontFamily` and
  * `letterSpacing` are deliberately NOT here: the flow surface is not WYSIWYG
  * (`canvas/InlineTextEditor` says so), so it shows no metric and therefore
- * writes none — those three are the panel inspector's. */
-const MARK_KEYS = ['fontWeight', 'fontStyle', 'textDecoration', 'color'] as const;
+ * writes none — those three are the panel's (and a split carries them over,
+ * `INHERITED_STYLE_KEYS`). */
+export const MARK_KEYS = ['fontWeight', 'fontStyle', 'textDecoration', 'color'] as const;
+
+/** The style keys a span honours that this surface does NOT edit — the
+ * engine's per-span list (`Style::ignored_span_keys`'s complement in
+ * `engine/core/src/style/inert.rs`) minus `MARK_KEYS` and the combine key.
+ * A fragment split out of another copies them, or marking one word of a 12pt
+ * fragment would drop the rest of it back to the block's size. Pinned against
+ * the Rust by `spanWire.inert.test.ts`. */
+export const INHERITED_STYLE_KEYS = ['fontSize', 'fontFamily', 'letterSpacing'] as const;
 
 /** What each mark spells on the wire, or `null` for "this fragment sets none",
  * which is a REMOVAL rather than a value. The engine has explicit `normal` and
@@ -121,20 +131,23 @@ function combineOps(
 }
 
 /** The keys this surface does NOT edit, copied onto a fragment the edit split
- * out of an existing one. Splitting a linked, named-style fragment must leave
- * both halves linked and named — that is what every editor a reader has met
- * does, and the alternative silently drops an author's work at a boundary they
- * never placed. */
+ * out of an existing one. Splitting a linked, named-style, 12pt fragment must
+ * leave both halves linked, named and 12pt — that is what every editor a
+ * reader has met does, and the alternative silently drops an author's work at
+ * a boundary they never placed. Three pieces, composed by `spanOps`:
+ * `inheritedKeys` (`styleNames`, `link`), `inheritedStyle` (the metrics) and
+ * `inheritedBinding` (a bound run's options).
+ *
+ * Each is NARROWED on the way through rather than copied verbatim: the source
+ * is document text, so a value of the wrong shape must not be carried onto a
+ * fragment the reader just created. The engine would report it, but the
+ * report would name a node nobody authored. */
 export function inheritedKeys(source: unknown): SnippetMap {
   const span = record(source);
   if (span === undefined) {
     return {};
   }
   const out: Record<string, SnippetValue> = {};
-  // NARROWED on the way through, not copied verbatim: the source is document
-  // text, so a `styleNames` holding a number or a `link` holding a non-string
-  // `url` must not be carried onto a fragment the reader just created. The
-  // engine would report it, but the report would name a node nobody authored.
   const names = Array.isArray(span.styleNames)
     ? span.styleNames.filter((name): name is string => typeof name === 'string')
     : [];
@@ -146,4 +159,58 @@ export function inheritedKeys(source: unknown): SnippetMap {
     out.link = { url };
   }
   return out;
+}
+
+/** The source's `INHERITED_STYLE_KEYS` whose value is a scalar — a string or a
+ * finite number, copied as the source wrote it so the new node says what the
+ * old one did — or `undefined` when it has none. The source's MARK keys are
+ * never copied: the new run's own marks decide those. */
+export function inheritedStyle(source: unknown): SnippetMap | undefined {
+  const style = record(record(source)?.style);
+  const out: Record<string, SnippetValue> = {};
+  for (const key of INHERITED_STYLE_KEYS) {
+    const value = style?.[key];
+    if (isScalar(value)) {
+      out[key] = value;
+    }
+  }
+  return Object.keys(out).length === 0 ? undefined : out;
+}
+
+/** A string or a finite number — the one narrowing every inherited value goes
+ * through, and the same shapes `display` shows as set. */
+function isScalar(value: unknown): value is string | number {
+  return typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value));
+}
+
+/** The engine's two `BindingScope` spellings — anything else is a parse error
+ * in the source, and is not copied onto a new node. */
+const SCOPES = new Set(['element', 'document']);
+
+/** The `data:` a re-inserted BOUND run is written with when its source is bound
+ * to the SAME key: the run's key plus the source's `format`, `placeholder` and
+ * `scope`. `undefined` for a text run, another key, or nothing to give — the
+ * run's plain `{ key }` then stands.
+ *
+ * No measured edit reaches this. A bound fragment is atomic in the flow, and
+ * paste and drop insert plain text, so marking, typing beside it, deleting and
+ * undoing a single delete all leave it on its own node. It is a defence for the
+ * paths nobody measured (an IME, a native undo beyond a single delete) — a
+ * binding's options are an author's work just as its metrics are. */
+export function inheritedBinding(source: unknown, run: SerializedRun): SnippetMap | undefined {
+  const data = record(record(source)?.data);
+  if (run.kind !== 'bound' || data === undefined || data.key !== run.content) {
+    return undefined;
+  }
+  const out: Record<string, SnippetValue> = { key: run.content };
+  for (const option of ['format', 'placeholder'] as const) {
+    const value = data[option];
+    if (isScalar(value)) {
+      out[option] = value;
+    }
+  }
+  if (typeof data.scope === 'string' && SCOPES.has(data.scope)) {
+    out.scope = data.scope;
+  }
+  return Object.keys(out).length === 1 ? undefined : out;
 }

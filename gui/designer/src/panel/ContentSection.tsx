@@ -15,14 +15,13 @@ import { BoundContent } from './contentBound';
 import { ImageContent, PageNumberContent } from './contentParts';
 import { TextContentField } from './contentText';
 import { Field } from './fields';
-import { formatOptions } from './formatModel';
 import { frameOf } from './frameModel';
 import { IterableSourceSection } from './IterableSourceSection';
 import type { ItemPanelProps } from './itemPanelProps';
-import { type ContentMode, MARK_TYPES, registryNames } from './itemView';
+import { type ContentMode, MARK_TYPES } from './itemView';
 import { MarkSection } from './MarkSection';
 import { applyPanelOp, switchContentOps, textAsBinding } from './model';
-import { chipsFor, HelpfulHeading } from './panelHelpers';
+import { chipsFor, HelpfulHeading, itemBindingTarget } from './panelHelpers';
 import { SpansSection } from './SpansSection';
 import { TableContentSections } from './TableContentSections';
 
@@ -82,14 +81,6 @@ export function ContentSection(props: ItemPanelProps) {
     return <SpansSection key={path} {...props} />;
   }
   // text / qr_code / char_grid: the content-mode pair.
-  const bound = bindingOptions.find((option) => option.key === view.dataKey);
-  const formatRows = formatOptions(
-    registryNames(controller.read('formats')),
-    bound?.type,
-    capabilities,
-    props.formatCatalog ?? null,
-    bound?.displayFormats,
-  );
   return (
     <section>
       <HelpfulHeading
@@ -120,8 +111,9 @@ export function ContentSection(props: ItemPanelProps) {
         <BoundContent
           props={props}
           chips={chips}
+          target={itemBindingTarget(props)}
+          label={(field) => field}
           bindingOptions={bindingOptions}
-          formatRows={formatRows}
           dispatch={dispatch}
         />
       )}
