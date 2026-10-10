@@ -1232,6 +1232,12 @@ export const zhTw: LanguageCatalog = {
       '這是整份文件的基礎文字設定。留空的項目沿用引擎本身的值，只有你改過的項目才會寫入檔案。',
     'defaults.unset': '未設定',
     'docMeta.title': '文件資訊',
+    'docMeta.name': '範本名稱',
+    'docMeta.nameHint':
+      '「{title}」為空時，會作為 PDF 的標題（顯示在 PDF 檢視器中，不會出現在頁面上）。兩者皆為空時，使用預設標題。',
+    'docMeta.version': '範本版本',
+    'docMeta.versionHint': '僅供記錄，不會寫入 PDF。',
+    'docMeta.unreadable': '無法讀取的值',
     'docMeta.intro':
       '這份文件是什麼的說明。這些值會寫入 PDF 的文件內容，不會出現在頁面上（預覽不會改變，PNG 預覽也不包含這些資訊）。',
     'docMeta.docTitle': '標題',

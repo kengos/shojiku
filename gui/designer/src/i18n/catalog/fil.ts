@@ -1136,6 +1136,12 @@ export const fil: LanguageCatalog = {
       'Ito ang batayang teksto ng buong dokumento. Ang bawat kahong iniwang blangko ay sumusunod sa sariling halaga ng engine — ang binago mo lang ang naisusulat sa file.',
     'defaults.unset': 'Hindi nakatakda',
     'docMeta.title': 'Impormasyon ng dokumento',
+    'docMeta.name': 'Pangalan ng template',
+    'docMeta.nameHint':
+      'Ginagamit bilang pamagat ng PDF (makikita sa PDF viewer, hindi sa pahina) kapag walang laman ang {title}. Kapag parehong walang laman, isang default na pamagat ang ginagamit.',
+    'docMeta.version': 'Bersyon ng template',
+    'docMeta.versionHint': 'Para sa sarili mong tala — hindi isinusulat sa PDF.',
+    'docMeta.unreadable': 'Hindi mabasang halaga',
     'docMeta.intro':
       'Kung ano ang sinasabi ng file tungkol sa sarili nito. Napupunta ito sa mga katangian ng PDF, hindi sa pahina — hindi magbabago ang preview, at wala nito sa mga PNG preview.',
     'docMeta.docTitle': 'Pamagat',

@@ -15,6 +15,20 @@ platform binaries.
 
 ### Added
 
+- **Name a template and give it a version in the Designer.** Document
+  settings › Document properties now opens with the template's name and
+  version. The name is what a PDF viewer shows as the document's title
+  whenever no title is set, and until now it could only be changed in the
+  YAML file — even though the Title field already said the name would be
+  used. The version is for your own records and is not written into the
+  PDF. The rail line for the section follows the same order the PDF does:
+  the title, else the template name. On an engine that does not support
+  document properties, the name and version are still offered there and
+  the other fields are not. The name's hint also says what happens when
+  both are empty (a default title is used). A name or version the field
+  cannot show (a list, say) is marked "Unreadable value" and can be
+  cleared from the field.
+
 - **Pick a data field's own display formats where it is placed.** When a
   data field lists the display formats it supports (the "Format
   restriction" list in its editor), the format picker of every item bound
@@ -792,6 +806,12 @@ platform binaries.
   browser's own report, with a trace and a screenshot of the moment it broke.
 
 ### Fixed
+
+- **Leaving a document-properties field unchanged no longer adds an undo
+  step.** Clicking into Title, Description or Language under Document
+  settings › Document properties and leaving without changing anything
+  used to put an edit nobody made on the undo stack; now nothing is
+  recorded.
 
 - **Line breaks in mixed-style text are kept.** Pressing Enter while editing
   mixed-style text on the canvas now starts a new line that stays after the

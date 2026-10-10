@@ -1921,24 +1921,41 @@ conditional rules the next section owns).
     from the page so the page owns navigation and this owns the
     section→component map; a section's own capability gate lives here,
     because the 表示形式 section has TWO gated halves and either alone is
-    still worth opening.
+    still worth opening — and the document-properties section's
+    `document:` half is gated here too (`template.document.metadata`),
+    while the section itself is listed on every engine.
   - `panel/docSections.ts` — pure section vocabulary: `DocSection` (also
     the jump-target type `hooks/useDocViews.ts` speaks), `SECTION_ORDER`,
     `SECTION_TITLE_KEYS`, and `sectionSummaries` (one line per rail row,
     each read through that section's OWN pure model, so a hostile
-    document degrades exactly as that section does).
+    document degrades exactly as that section does; the
+    document-properties line is title, else the template name, else
+    unset — each trimmed, as the engine trims; a title the engine
+    rejects is not modelled).
   - `panel/DocSectionRail.tsx` — the rail: the view's table of contents
     AND its navigation (`current`/`summaries`/`onSelect`, plus an
     optional `sections` the page narrows by capability — a gated-off
-    section leaves no row rather than a row opening onto nothing).
+    section leaves no row rather than a row opening onto nothing; the
+    document-properties row is never gated off, since its name/version
+    half needs no capability).
   - `panel/documentMetaModel.ts` — the pure `document:` model
     (`readDocumentMetaView` — a hostile node reads all-empty and a
     non-scalar list entry is dropped rather than shown as uneditable
     text; `metaTextOp`/`metaListOp` root-addressed, `setStrings` for the
-    two lists like `styleNames`; `replaceEntry`/`removeEntry`).
-  - `panel/DocumentMetaFields.tsx` — the section itself: title /
-    description / keywords / authors / language, gated on
-    `template.document.metadata`. `language` is a ComboField over the
+    two lists like `styleNames`; `replaceEntry`/`removeEntry`) plus the
+    template's root identity (`readTemplateIdentity` → `name`/`version`,
+    a number shown as its decimal string, a present map/list/bool flagged
+    `unreadable`; `identityOp` writes the ROOT key, always as TEXT so it
+    keeps what was typed — a number would turn `1.10` into `1.1` — and an
+    empty commit over an unreadable value removes the key). Both scalar
+    op builders return `null` for an unchanged commit, so a field
+    blurred at its own value puts nothing on the undo stack.
+  - `panel/DocumentMetaFields.tsx` — the section itself: the template
+    name and version first (every engine accepts both; the name is the
+    PDF title when Title is empty, so it sits right above it), then the
+    `document:` half — intro, title / description / keywords / authors /
+    language — rendered only under `template.document.metadata` (the
+    `metadata` prop). `language` is a ComboField over the
     known locale tags because the engine charset-gates the tag and drops
     anything else. Its list rows are `panel/StringListField.tsx` — one
     input per entry plus a TRAILING BLANK ROW that appends (no "add"

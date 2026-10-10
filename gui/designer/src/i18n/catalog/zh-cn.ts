@@ -1231,6 +1231,12 @@ export const zhCn: LanguageCatalog = {
       '这是整个文档的基础文字设置。留空的项目沿用引擎自身的值，只有你改动过的项目才会写入文件。',
     'defaults.unset': '未设置',
     'docMeta.title': '文档信息',
+    'docMeta.name': '模板名称',
+    'docMeta.nameHint':
+      '“{title}”为空时，将用作 PDF 的标题（显示在 PDF 阅读器中，不会出现在页面上）。两者都为空时，使用默认标题。',
+    'docMeta.version': '模板版本',
+    'docMeta.versionHint': '仅供记录，不会写入 PDF。',
+    'docMeta.unreadable': '无法读取的值',
     'docMeta.intro':
       '这份文档是什么的说明。这些值会写入 PDF 的文档属性，不会出现在页面上（预览不会改变，PNG 预览也不包含这些信息）。',
     'docMeta.docTitle': '标题',

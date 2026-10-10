@@ -17,6 +17,7 @@ import { DocumentDefaults } from './DocumentDefaults';
 import { DocumentMetaFields } from './DocumentMetaFields';
 import type { DocSection } from './docSections';
 import { FormatsManager } from './FormatsManager';
+import { hasCapability } from './itemPanelProps';
 import { PageSetup } from './PageSetup';
 import { StylesManager } from './StylesManager';
 
@@ -46,7 +47,12 @@ export function DocSectionBody(props: DocSectionBodyProps) {
     case 'page':
       return <PageSetup controller={controller} titled={false} />;
     case 'metadata':
-      return <DocumentMetaFields controller={controller} />;
+      return (
+        <DocumentMetaFields
+          controller={controller}
+          metadata={hasCapability(capabilities, 'template.document.metadata')}
+        />
+      );
     case 'defaults':
       return (
         <DocumentDefaults

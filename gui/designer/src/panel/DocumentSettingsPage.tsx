@@ -116,18 +116,15 @@ export function DocumentSettingsPage({
     }
   }, [nonce]);
 
-  // A section whose engine capability is missing is not listed at all — an
-  // empty rail row that opens onto nothing is worse than no row.
-  const showMetadata = hasCapability(capabilities, 'template.document.metadata');
   // The 表示形式 section holds two capability-gated halves; it is listed only
   // when at least one of them would render, because an empty rail row that
   // opens onto nothing is worse than no row.
   const showDefaults = hasCapability(capabilities, 'template.defaults');
   const showRegistry = hasCapability(capabilities, 'template.formats');
   const sections = SECTION_ORDER.filter((section) => {
-    if (section === 'metadata') {
-      return showMetadata;
-    }
+    // The metadata section is ALWAYS listed: its template name and version
+    // need no capability (every engine accepts both keys) — only its
+    // `document:` half is gated, and `DocSectionBody` gates it.
     return section !== 'formats' || showDefaults || showRegistry;
   });
 
