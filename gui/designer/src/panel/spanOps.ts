@@ -20,7 +20,14 @@ import type { RunPlan } from '../text/runIdentity';
 import type { SerializedRun } from '../text/runSerialize';
 import { display, record } from './itemView';
 import { spanPath } from './spanLinkOps';
-import { inheritedKeys, markStyleOps, markStyleValue, type SnippetMap } from './spanWire';
+import {
+  inheritedBinding,
+  inheritedKeys,
+  inheritedStyle,
+  markStyleOps,
+  markStyleValue,
+  type SnippetMap,
+} from './spanWire';
 
 /** The item's raw `spans` sequence, or `[]` for anything else. Hostile shapes
  * degrade the same way `narrowSpans` degrades them — a template is untrusted,
@@ -54,10 +61,20 @@ function updateOps(path: string, source: unknown, run: SerializedRun): readonly 
   return [{ op: 'setScalar', path, keys: ['text'], value: run.content }, ...style];
 }
 
+/** A new fragment: its content, the keys it inherits from the fragment it was
+ * split out of, and its own marks. ONE `style:` map — the inherited metrics
+ * with the run's marks laid over them (`inheritedStyle` never carries a mark
+ * key, so the order only says who would win) — and, for a bound run, the
+ * inherited binding in place of the bare `{ key }`. */
 function insertValue(run: SerializedRun, source: unknown): SnippetMap {
-  const style = markStyleValue(run.marks);
+  const inherited = inheritedStyle(source);
+  const marks = markStyleValue(run.marks);
+  const style =
+    inherited === undefined && marks === undefined ? undefined : { ...inherited, ...marks };
+  const binding = inheritedBinding(source, run);
   return {
     ...contentValue(run),
+    ...(binding === undefined ? {} : { data: binding }),
     ...inheritedKeys(source),
     ...(style === undefined ? {} : { style }),
   };

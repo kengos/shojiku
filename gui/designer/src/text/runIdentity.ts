@@ -10,9 +10,10 @@
 // sound witness for untouched, and everything else is the touched range.
 //
 // A changed fragment is UPDATED IN PLACE rather than removed and re-inserted.
-// That is not an optimization: a fragment's `styleNames:` and `link:` are keys
-// this surface does not edit, and a re-insert would have to reconstruct them
-// from a model that never carried them. Writing only the keys that changed
+// That is not an optimization: a fragment's `styleNames:`, `link:`, metrics
+// (`fontSize` and the like) and a bound value's format are keys this surface
+// does not edit, and a re-insert would have to reconstruct them from a model
+// that never carried them. Writing only the keys that changed
 // leaves the rest of the node alone by construction.
 
 import type { SerializedRun } from './runSerialize';
@@ -24,7 +25,8 @@ export type RunPlanEntry =
   | { readonly op: 'update'; readonly sourceIndex: number; readonly run: SerializedRun }
   /** A fragment the edit created. `inheritFrom` is the source fragment it was
    * split OUT of, when there is one — the keys this surface does not edit are
-   * copied from it, so splitting a linked fragment leaves both halves linked,
+   * copied from it (`panel/spanWire`), so splitting a linked 12pt fragment
+   * leaves both halves linked and 12pt,
    * which is what every editor a reader has met does. */
   | { readonly op: 'insert'; readonly run: SerializedRun; readonly inheritFrom: number | null };
 

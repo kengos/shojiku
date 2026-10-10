@@ -14,10 +14,11 @@
 // split happens underneath without the reader ever placing a boundary.
 //
 // What is left is everything a selection CANNOT point at, and this section is
-// the inspector for it: the three METRIC style keys (which the flow surface
-// must not show — it is "deliberately NOT WYSIWYG"), `styleNames:`, a bound
-// fragment's key, and the per-fragment link. The row list stays because it is
-// still the only place that answers "which fragment carries what" at a glance.
+// the inspector for it: the METRIC style keys (which the flow surface must not
+// show — it is "deliberately NOT WYSIWYG"), `styleNames:`, a bound fragment's
+// binding (key, format, blank placeholder, scope), and the per-fragment link.
+// The row list stays because it is still the only place that answers "which
+// fragment carries what" at a glance.
 
 import { useState } from 'react';
 import { useI18n } from '../i18n/context';
@@ -55,7 +56,7 @@ function preview(
   // carrying both is a document the engine warns about, and the row is its
   // only view: naming the losing half would point at content the page does
   // not draw.
-  if (span.dataKey !== '') {
+  if (span.bound) {
     return t('panel.spans.bound', { key: clip(span.dataKey) });
   }
   if (span.text !== '') {
@@ -66,7 +67,7 @@ function preview(
 
 export function SpansSection(props: ItemPanelProps) {
   const { t } = useI18n();
-  const { controller, path, view, capabilities, fontFamilies } = props;
+  const { controller, path, view, capabilities } = props;
   const spans = readSpans(controller.read, path);
   const [selected, setSelected] = useState(spans[0]?.index ?? 0);
   // The wire moves under the selection — a fragment can be deleted in YAML, or
@@ -135,13 +136,7 @@ export function SpansSection(props: ItemPanelProps) {
         ))}
       </ul>
       {active === null ? null : (
-        <SpanInspector
-          key={active.index}
-          span={active}
-          itemPath={path}
-          controller={controller}
-          fontFamilies={fontFamilies}
-        />
+        <SpanInspector key={active.index} span={active} chips={chips} props={props} />
       )}
       {active === null || !hasCapability(capabilities, LINK_CAPABILITY) ? null : (
         <LinkUrlField

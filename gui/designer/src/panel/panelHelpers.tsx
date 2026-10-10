@@ -108,17 +108,44 @@ export function documentScopeCreateField(
     : undefined;
 }
 
-/** The scope wiring the item's `data.key` picker needs INSIDE a row scope: the
+/** A node that carries a `data:` binding, and what that binding holds now —
+ * the item itself, or one of its rich-text fragments (`<item>.spans[i]`). */
+export interface BindingTarget {
+  readonly path: string;
+  readonly dataKey: string;
+  readonly format: string;
+  readonly placeholder: string;
+  readonly dataScope: string;
+}
+
+/** The item's own binding as a [`BindingTarget`]. */
+export function itemBindingTarget(props: ItemPanelProps): BindingTarget {
+  const { path, view } = props;
+  return {
+    path,
+    dataKey: view.dataKey,
+    format: view.format,
+    placeholder: view.placeholder,
+    dataScope: view.dataScope,
+  };
+}
+
+/** The scope wiring a `data.key` picker needs INSIDE a row scope: the
  * document-scope rows as a second section (armed only when the engine can
  * carry a scope), the authored scope for the closed-state badge, and the pick
  * handler that keeps `data.scope` matching the section the row came from —
  * one `applyAll`, so key and scope move as ONE undo step.
+ *
+ * `target` is the node the binding lives on (the item when omitted). The row
+ * scope is still asked of the ITEM (`chips`): a fragment sits inside its item,
+ * so the two have the same enclosing scope.
  *
  * Outside a row scope all three are absent: element and document resolve
  * identically there, so the picker stays exactly today's. */
 export function scopePickerProps(
   props: ItemPanelProps,
   chips: ChipContext,
+  target: BindingTarget = itemBindingTarget(props),
 ): {
   readonly documentOptions?: readonly PickerOption[];
   readonly scope?: string;
@@ -127,11 +154,11 @@ export function scopePickerProps(
   if (chips.scope === null) {
     return {};
   }
-  const { controller, path, view, capabilities } = props;
+  const { controller, capabilities } = props;
   return {
     documentOptions: scopeAuthorable(capabilities) ? chips.documentOptions : undefined,
-    scope: view.dataScope,
+    scope: target.dataScope,
     onPick: (key: string, documentScoped: boolean) =>
-      controller.applyAll(bindingPickOps(controller.read, path, key, documentScoped)),
+      controller.applyAll(bindingPickOps(controller.read, target.path, key, documentScoped)),
   };
 }

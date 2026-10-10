@@ -505,7 +505,9 @@ resolved style.
   - `text/runIdentity.ts` — the round-trip rule: a run that appears once, claims
     a source index ahead of the high-water mark and still says what it said went
     UNTOUCHED and authors nothing. A changed fragment is updated IN PLACE, so
-    the `styleNames:`/`link:` this surface does not edit are never reconstructed.
+    the keys this surface does not edit (`styleNames:`, `link:`, the metrics, a
+    binding's options) are never reconstructed; a split's NEW half names its
+    source as `inheritFrom`, and `panel/spanWire` narrows what it copies.
     It also decides what an EMPTY run means, and the seed is what tells the two
     cases apart: a fragment the reader emptied is REMOVED (deleting the words
     deletes the fragment, as every editor does), while one that was already

@@ -27,6 +27,10 @@ describe('narrowSpans', () => {
         index: 0,
         text: 'Shojiku ',
         dataKey: '',
+        bound: false,
+        format: '',
+        placeholder: '',
+        dataScope: '',
         url: '',
         styleNames: [],
         metrics: { fontSize: '', fontFamily: '' },
@@ -35,6 +39,10 @@ describe('narrowSpans', () => {
         index: 1,
         text: 'links',
         dataKey: '',
+        bound: false,
+        format: '',
+        placeholder: '',
+        dataScope: '',
         url: 'https://example.com',
         styleNames: [],
         metrics: { fontSize: '', fontFamily: '' },
@@ -43,6 +51,10 @@ describe('narrowSpans', () => {
         index: 2,
         text: '',
         dataKey: 'order.total',
+        bound: true,
+        format: '',
+        placeholder: '',
+        dataScope: '',
         url: '',
         styleNames: [],
         metrics: { fontSize: '', fontFamily: '' },
@@ -51,6 +63,10 @@ describe('narrowSpans', () => {
         index: 3,
         text: '',
         dataKey: '',
+        bound: false,
+        format: '',
+        placeholder: '',
+        dataScope: '',
         url: '',
         styleNames: [],
         metrics: { fontSize: '', fontFamily: '' },
@@ -84,6 +100,10 @@ describe('narrowSpans', () => {
         index: 0,
         text: '',
         dataKey: '',
+        bound: false,
+        format: '',
+        placeholder: '',
+        dataScope: '',
         url: '',
         styleNames: [],
         metrics: { fontSize: '', fontFamily: '' },
@@ -92,6 +112,10 @@ describe('narrowSpans', () => {
         index: 1,
         text: 'ok',
         dataKey: '',
+        bound: false,
+        format: '',
+        placeholder: '',
+        dataScope: '',
         url: '',
         styleNames: [],
         metrics: { fontSize: '', fontFamily: '' },
@@ -100,6 +124,10 @@ describe('narrowSpans', () => {
         index: 2,
         text: '',
         dataKey: '',
+        bound: false,
+        format: '',
+        placeholder: '',
+        dataScope: '',
         url: '',
         styleNames: [],
         metrics: { fontSize: '', fontFamily: '' },
@@ -135,14 +163,19 @@ describe('narrowSpans', () => {
       index: 0,
       text: 'a',
       dataKey: '',
+      bound: false,
+      format: '',
+      placeholder: '',
+      dataScope: '',
       url: '',
       // The non-string entry is dropped rather than carried through — this is
       // document text, and a control cannot show what it cannot name.
       styleNames: ['emphasis', 'lead'],
       // `fontWeight` is a MARK and is deliberately absent: the flow surface
       // owns it, and a second control here would be a second way to say it.
-      // `letterSpacing` is absent by design: `panel/styleFieldSpecs` has no
-      // entry for it, so it is not authorable at the ITEM level either.
+      // `letterSpacing` is absent: the inspector's controls come from
+      // `panel/styleFieldSpecs`, which has no entry for it (the item panel
+      // edits it through its own control).
       metrics: { fontSize: '14pt', fontFamily: 'Serif' },
     });
   });
@@ -162,6 +195,10 @@ describe('narrowSpans', () => {
         index: 0,
         text: '__proto__',
         dataKey: '',
+        bound: false,
+        format: '',
+        placeholder: '',
+        dataScope: '',
         url: '',
         styleNames: [],
         metrics: { fontSize: '', fontFamily: '' },
@@ -170,11 +207,56 @@ describe('narrowSpans', () => {
         index: 1,
         text: 'constructor',
         dataKey: '',
+        bound: false,
+        format: '',
+        placeholder: '',
+        dataScope: '',
         url: '',
         styleNames: [],
         metrics: { fontSize: '', fontFamily: '' },
       },
     ]);
+  });
+});
+
+describe("a fragment binding's options", () => {
+  it('reads the format, placeholder and scope a bound fragment carries', () => {
+    const [view] = narrowSpans([
+      { data: { key: 'total', format: 'currency', placeholder: '—', scope: 'document' } },
+    ]);
+    expect(view).toMatchObject({
+      dataKey: 'total',
+      bound: true,
+      format: 'currency',
+      placeholder: '—',
+      dataScope: 'document',
+    });
+  });
+
+  it('reads a hostile option as unset, and a number the way the item panel does', () => {
+    // `display` is the item view's own narrowing, so a fragment and an item
+    // holding the same `data:` show the same thing.
+    for (const hostile of [{ a: 1 }, ['x'], true, null]) {
+      const [view] = narrowSpans([
+        { data: { key: 'k', format: hostile, placeholder: hostile, scope: hostile } },
+      ]);
+      expect(view).toMatchObject({ format: '', placeholder: '', dataScope: '' });
+    }
+    const [numeric] = narrowSpans([{ data: { key: 'k', placeholder: 0, scope: 1 } }]);
+    expect(numeric).toMatchObject({ placeholder: '0', dataScope: '' });
+  });
+});
+
+describe('the bound state', () => {
+  it('is the presence of a `data:` map, which an emptied key does not end', () => {
+    const [emptied, text, hostile] = narrowSpans([
+      { data: { key: '' } },
+      { text: 'x' },
+      { data: 'not a map' },
+    ]);
+    expect(emptied).toMatchObject({ bound: true, dataKey: '' });
+    expect(text?.bound).toBe(false);
+    expect(hostile?.bound).toBe(false);
   });
 });
 

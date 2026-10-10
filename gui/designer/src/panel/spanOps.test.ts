@@ -100,6 +100,88 @@ describe('spanCommitOps', () => {
     });
   });
 
+  it('keeps the metrics on every half of a split, under ONE style map with the marks', () => {
+    // Marking one word of a 12pt fragment must not drop the rest of it back to
+    // the block's size.
+    const ops = opsFor(
+      [{ text: 'abc', style: { fontSize: 12, fontFamily: 'Serif', letterSpacing: '1pt' } }],
+      [after(0, 'a'), after(0, 'b', BOLD), after(0, 'c')],
+    );
+    const metrics = { fontSize: 12, fontFamily: 'Serif', letterSpacing: '1pt' };
+    expect(ops).toEqual([
+      { op: 'setScalar', path: `${SEQ}[0]`, keys: ['text'], value: 'a' },
+      {
+        op: 'insertItem',
+        path: SEQ,
+        index: 1,
+        value: { text: 'b', style: { ...metrics, fontWeight: 'bold' } },
+      },
+      { op: 'insertItem', path: SEQ, index: 2, value: { text: 'c', style: metrics } },
+    ]);
+  });
+
+  it("lets the new run's marks decide, not the source's", () => {
+    // A bold source split into an un-bolded half: the half is plain.
+    const ops = opsFor(
+      [{ text: 'ab', style: { fontWeight: 'bold', fontSize: 9 } }],
+      [after(0, 'a', BOLD), after(0, 'b')],
+    );
+    expect(ops[1]).toEqual({
+      op: 'insertItem',
+      path: SEQ,
+      index: 1,
+      value: { text: 'b', style: { fontSize: 9 } },
+    });
+  });
+
+  it('gives text typed after a bound value that value’s size', () => {
+    // Measured in a browser: a character typed at the end of a bound value's
+    // run element lands inside it, so the new text run names the BOUND
+    // fragment as its source.
+    const ops = opsFor(
+      [{ text: 'Mail ' }, { data: { key: 'email' }, style: { fontSize: 10 } }],
+      [
+        after(0, 'Mail '),
+        { sourceIndex: 1, kind: 'bound', content: 'email', marks: NO_MARKS, linked: false },
+        after(1, 'X'),
+      ],
+    );
+    expect(ops).toEqual([
+      { op: 'insertItem', path: SEQ, index: 2, value: { text: 'X', style: { fontSize: 10 } } },
+    ]);
+  });
+
+  it('writes a re-inserted bound fragment with its binding options, under ONE data map', () => {
+    // No measured edit reaches this (a bound value is atomic, paste is plain
+    // text); the plan shape is built directly — a bound run that names a
+    // source the high-water mark has passed.
+    const spans = [{ data: { key: 'total', format: 'currency', placeholder: '—' } }, { text: 'x' }];
+    const bound = (index: number): SerializedRun => ({
+      sourceIndex: index,
+      kind: 'bound',
+      content: 'total',
+      marks: NO_MARKS,
+      linked: false,
+    });
+    const ops = opsFor(spans, [bound(0), after(1, 'x'), bound(0)]);
+    expect(ops).toEqual([
+      {
+        op: 'insertItem',
+        path: SEQ,
+        index: 2,
+        value: { data: { key: 'total', format: 'currency', placeholder: '—' } },
+      },
+    ]);
+  });
+
+  it("gives a fragment with no source none of a neighbour's metrics", () => {
+    const ops = opsFor(
+      [{ text: 'a', style: { fontSize: 20, fontFamily: 'Serif' } }],
+      [after(0, 'a'), after(null, 'new')],
+    );
+    expect(ops).toEqual([{ op: 'insertItem', path: SEQ, index: 1, value: { text: 'new' } }]);
+  });
+
   it('gives a brand-new fragment no inherited keys', () => {
     // The source fragment is LINKED, and `linked` takes part in the identity —
     // so the kept run has to say so, or it reads as an edit and the case would
