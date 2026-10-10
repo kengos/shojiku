@@ -26,7 +26,7 @@ import { reparentOps } from '../canvas/reparent';
 import { planReparent } from '../canvas/reparentTarget';
 import { applyDefinitionOps, readDefinitionField, titleOp } from '../data/definitionsEdit';
 import { fixFor } from '../diagnostics/fixModel';
-import { type EngineTransport, TransportError } from '../engine/transport';
+import { type EngineTransport, type RenderOutcome, TransportError } from '../engine/transport';
 import type { FormatCatalog, PlacedBox } from '../engine/types';
 import { createWasmTransport, type WasmEngine } from '../engine/wasmTransport';
 import { anchorCandidates, pickTarget } from '../ids/anchorTargets';
@@ -71,6 +71,7 @@ import { spanOp } from '../panel/GridSpanFields';
 import { gridColumnsPlan, gridRowsPlan } from '../panel/gridStructure';
 import { trackFormOp, trackKindOps, trackValueOps } from '../panel/gridTracks';
 import { readGroupsView } from '../panel/groupModel';
+import { imageToDataOps, imageToFixedOps } from '../panel/imageSourceOps';
 import { registryNames } from '../panel/itemView';
 import { containerLayoutFor } from '../panel/layoutModel';
 import { basisOps, modeSwitchOps } from '../panel/layoutModeOps';
@@ -2417,6 +2418,92 @@ describe('editor edit -> engine re-render (receipt-us)', () => {
     expect(
       diagnostics.items.some((d) => d.code === 'image_source_missing' && d.severity === 'error'),
     ).toBe(true);
+  });
+});
+
+// The image's source switch: the panel's op builders applied to a real Editor,
+// then rendered by the real engine. Both keys or neither refuse the whole render
+// (`image_source_conflict` / `image_source_missing` are validation errors), so
+// no switch may leave either; and the fit the bound arm now offers must be one
+// the engine draws for a bound image.
+describe('the image source switch, through the real engine', () => {
+  const P = 'sections.body.items[0]';
+  const RED_20X10 =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="10"><rect width="20" height="10" fill="#ff0000"/></svg>';
+  const svgUri = composeDataUri('svg', new TextEncoder().encode(RED_20X10));
+  const BOX = 'box: { x: 10, y: 10, w: 40, h: 40 }';
+  const doc = (item: string) =>
+    [
+      'version: 0.1.0',
+      'page: { size: A4 }',
+      'sections:',
+      '  body:',
+      '    type: absolute',
+      '    items:',
+      `      - ${item}`,
+      '',
+    ].join('\n');
+  const SOURCE_CODES = new Set(['image_source_missing', 'image_source_conflict']);
+
+  async function both(text: string, params: string) {
+    const validation = await transport.validate(text, params);
+    const outcome = await transport.renderRaw(text, params, undefined, { scale: 2 });
+    return { validation, outcome };
+  }
+
+  function contentRect(outcome: RenderOutcome) {
+    return outcome.inspect?.boxes.pages.flat().find((box) => box.path === P)?.content;
+  }
+
+  it('a fixed image switched to data renders, warning only that the empty key has no value', async () => {
+    const editor = Editor.create(doc(`{ type: image, ${BOX}, src: "${svgUri}" }`));
+    expect(editor.applyAll(imageToDataOps(P, { hasSrc: true }, null))).toEqual({ ok: true });
+    const { validation, outcome } = await both(editor.text(), '{}');
+    expect(validation.items.filter((d) => SOURCE_CODES.has(d.code))).toEqual([]);
+    expect(outcome.ok).toBe(true);
+    const atItem = outcome.diagnostics.items.filter((d) => d.path === P);
+    expect(atItem.map((d) => `${d.severity}:${d.code}`).sort()).toEqual([
+      'warning:missing_asset',
+      'warning:missing_data',
+    ]);
+  });
+
+  it('a remembered binding restored by the switch draws the field’s image', async () => {
+    const editor = Editor.create(doc(`{ type: image, ${BOX}, src: "${svgUri}" }`));
+    editor.applyAll(imageToDataOps(P, { hasSrc: true }, { key: 'logo', scope: '' }));
+    const { outcome } = await both(editor.text(), JSON.stringify({ logo: svgUri }));
+    expect(outcome.ok).toBe(true);
+    expect(outcome.diagnostics.items).toEqual([]);
+    expect(contentRect(outcome)).toBeDefined();
+  });
+
+  it('a bound image made fixed renders error-free with its box', async () => {
+    const editor = Editor.create(doc(`{ type: image, ${BOX}, data: { key: logo } }`));
+    expect(editor.applyAll(imageToFixedOps(P, svgUri))).toEqual({ ok: true });
+    const { validation, outcome } = await both(editor.text(), '{}');
+    expect(validation.items).toEqual([]);
+    expect(outcome.ok).toBe(true);
+    expect(outcome.diagnostics.items).toEqual([]);
+    expect(contentRect(outcome)).toBeDefined();
+  });
+
+  it('honours the fit the bound arm writes: stretch fills the box a contain leaves blank', async () => {
+    const params = JSON.stringify({ logo: svgUri });
+    const topCentre = async (text: string) => {
+      const { outcome } = await both(text, params);
+      const rect = contentRect(outcome);
+      const page = outcome.pages[0];
+      if (rect === undefined || page === undefined) throw new Error('no box or page');
+      // A 20×10 image contained in 40×40 leaves 10pt bands above and below.
+      const x = Math.round((rect.x + rect.w / 2) * 2);
+      const y = Math.round((rect.y + 2) * 2);
+      const i = (y * page.width + x) * 4;
+      return Array.from(page.rgba.slice(i, i + 3));
+    };
+    const editor = Editor.create(doc(`{ type: image, ${BOX}, data: { key: logo } }`));
+    expect(await topCentre(editor.text())).toEqual([255, 255, 255]);
+    editor.apply(plainTextOp(P, ['fit'], 'stretch'));
+    expect(await topCentre(editor.text())).toEqual([255, 0, 0]);
   });
 });
 

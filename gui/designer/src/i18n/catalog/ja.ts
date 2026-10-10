@@ -1071,6 +1071,7 @@ export const ja: LanguageCatalog = {
     'panel.section.box': 'ボックス',
     'panel.contentMode': '内容の種類',
     'panel.contentMode.text': '固定テキスト',
+    'panel.contentMode.image': '固定画像',
     'panel.contentMode.data': 'データ連携',
     'panel.field.text': 'テキスト',
     'panel.field.text.keys': 'Enter で改行 · {mod}Enter で確定',

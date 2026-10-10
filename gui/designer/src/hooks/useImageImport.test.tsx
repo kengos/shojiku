@@ -1,12 +1,14 @@
 // Designer-level tests for hooks/useImageImport.ts — menu entry, canvas file
 // drop and panel replace routed through ONE pipeline (size gate, cap raise,
 // topbar notices).
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, renderHook, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { useEditor } from '../editor/useEditor';
 import type { ImageCodec } from '../image/import';
 import type { ImageBudgets } from '../image/model';
 import { outcomeStacked, SOURCE, THREE_ITEMS } from '../testkit/fixtures';
 import { draw, makeTransport } from '../testkit/harness';
+import { useImageImport } from './useImageImport';
 
 describe('Designer image import', () => {
   const PNG_SIG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
@@ -257,6 +259,93 @@ describe('Designer image import', () => {
     expect(doc).toContain('w: 40');
   });
 
+  // A bound image beside a fixed one with a bundled-path src — what the panel's
+  // source switch moves between.
+  const SWITCH_DOC = [
+    'sections:',
+    '  body:',
+    '    items:',
+    '      - type: image',
+    '        box: { w: 40, h: 40 }',
+    '        data: { key: shop.logo }',
+    '      - type: image',
+    '        box: { w: 40, h: 40 }',
+    '        src: assets/logo.svg',
+    '',
+  ].join('\n');
+
+  async function selectItem(path: string) {
+    await waitFor(() => screen.getByRole('button', { name: path }));
+    fireEvent.click(screen.getByRole('button', { name: path }));
+  }
+
+  function sourceSelect(): HTMLSelectElement {
+    return screen.getByRole('combobox', { name: 'Content source' }) as HTMLSelectElement;
+  }
+
+  it('makes a bound image fixed through the picker: one batch, one undo back to the binding', async () => {
+    const onChange = vi.fn();
+    const { container } = draw(makeTransport(), {
+      source: SWITCH_DOC,
+      imageCodec: fakeCodec(),
+      onChange,
+    });
+    await selectItem('sections.body.items[0]');
+    fireEvent.change(sourceSelect(), { target: { value: 'fixed' } });
+    // Nothing is written until a file arrives.
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.change(fileInput(container), { target: { files: [imageFile()] } });
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    const fixed = String(onChange.mock.calls.at(-1)?.[0]);
+    expect(fixed).toContain('src: data:image/png;base64,');
+    expect(fixed).not.toContain('shop.logo');
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2));
+    const back = String(onChange.mock.calls.at(-1)?.[0]);
+    expect(back).toContain('data: { key: shop.logo }');
+    expect(back.match(/src:/g)).toHaveLength(1);
+  });
+
+  it('writes nothing when the picked file is refused, and the image stays bound', async () => {
+    const onChange = vi.fn();
+    const codec = fakeCodec({ read: async () => new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]) });
+    const { container } = draw(makeTransport(), {
+      source: SWITCH_DOC,
+      imageCodec: codec,
+      onChange,
+    });
+    await selectItem('sections.body.items[0]');
+    fireEvent.change(sourceSelect(), { target: { value: 'fixed' } });
+    fireEvent.change(fileInput(container), { target: { files: [imageFile()] } });
+    expect(await screen.findByText(/That file type is not supported/)).toBeTruthy();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(sourceSelect().value).toBe('data');
+  });
+
+  it('restores a src the panel dropped without opening the picker', async () => {
+    const onChange = vi.fn();
+    // The fake transport boxes the first item only, so the fixed image leads.
+    const fixedFirst = [
+      'sections:',
+      '  body:',
+      '    items:',
+      '      - type: image',
+      '        box: { w: 40, h: 40 }',
+      '        src: assets/logo.svg',
+      '',
+    ].join('\n');
+    const { container } = draw(makeTransport(), { source: fixedFirst, onChange });
+    const click = vi.spyOn(fileInput(container), 'click');
+    await selectItem('sections.body.items[0]');
+    fireEvent.change(sourceSelect(), { target: { value: 'data' } });
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    fireEvent.change(sourceSelect(), { target: { value: 'fixed' } });
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2));
+    expect(String(onChange.mock.calls.at(-1)?.[0])).toContain('src: assets/logo.svg');
+    expect(String(onChange.mock.calls.at(-1)?.[0])).not.toContain('key:');
+    expect(click).not.toHaveBeenCalled();
+  });
+
   it('shows the at-max notice (no raise) for an over-cap import already at the ceiling', async () => {
     const onChange = vi.fn();
     // ~6.6 MiB raster accepted whole → ~8.8 MiB data URI, over the 8 MiB ceiling.
@@ -498,5 +587,37 @@ describe('Designer image import', () => {
       expect(reencode).not.toHaveBeenCalled();
       expect(onChange).not.toHaveBeenCalled();
     });
+  });
+});
+
+// The panel withholds 固定画像 from a bound image with nothing remembered and no
+// picker, so the hook's own refusal is unreachable through the UI — drive it
+// directly, as a host mounting the panel bare could.
+describe('useImageImport — onFixImageSource without a codec', () => {
+  it('neither picks nor writes when nothing is remembered', () => {
+    const source = 'sections:\n  body:\n    items:\n      - { type: image, data: { key: k } }\n';
+    const { result } = renderHook(() => {
+      const editor = useEditor(source);
+      const image = useImageImport({
+        imageCodec: undefined,
+        imageBudgets: {
+          maxImageBytes: 1024,
+          downscaleEdge: 64,
+          jpegQuality: 0.8,
+          maxPixels: 4096,
+        },
+        editor,
+        maxBytes: 2 * 1024 * 1024,
+        setMaxBytesState: () => {},
+        onTemplateMaxBytesChange: undefined,
+        selectClearing: () => {},
+        lastGoodRef: { current: null },
+        pageHitAt: () => null,
+      });
+      return { editor, image };
+    });
+    act(() => result.current.image.onFixImageSource('sections.body.items[0]', null));
+    expect(result.current.editor.text).toBe(source);
+    expect(result.current.image.imageNotice).toBeNull();
   });
 });

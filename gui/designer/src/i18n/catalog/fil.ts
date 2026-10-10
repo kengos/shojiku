@@ -863,6 +863,7 @@ export const fil: LanguageCatalog = {
     'panel.section.box': 'Kahon',
     'panel.contentMode': 'Pinagmulan ng nilalaman',
     'panel.contentMode.text': 'Nakapirming teksto',
+    'panel.contentMode.image': 'Nakapirming larawan',
     'panel.contentMode.data': 'Data binding',
     'panel.field.text': 'Teksto',
     'panel.field.text.keys': 'Enter para sa bagong linya · {mod}Enter para tapusin',

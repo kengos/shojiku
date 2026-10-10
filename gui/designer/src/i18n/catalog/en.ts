@@ -1055,6 +1055,7 @@ export const en: LanguageCatalog = {
     'panel.section.box': 'Box',
     'panel.contentMode': 'Content source',
     'panel.contentMode.text': 'Static text',
+    'panel.contentMode.image': 'Fixed image',
     'panel.contentMode.data': 'Data binding',
     'panel.field.text': 'Text',
     'panel.field.text.keys': 'Enter for a line break · {mod}Enter to finish',

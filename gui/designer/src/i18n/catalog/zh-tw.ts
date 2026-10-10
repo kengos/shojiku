@@ -975,6 +975,7 @@ export const zhTw: LanguageCatalog = {
     'panel.section.box': '方塊',
     'panel.contentMode': '內容來源',
     'panel.contentMode.text': '固定文字',
+    'panel.contentMode.image': '固定圖片',
     'panel.contentMode.data': '資料繫結',
     'panel.field.text': '文字',
     'panel.field.text.keys': 'Enter 換行 · {mod}Enter 完成',

@@ -11,7 +11,8 @@ reference:
 An image item. The source comes from `src` (template-time: a path under
 the assets directory, a `data:` URI, or inline SVG markup) or `data` (a
 params-bound value, subject to the host's asset policy) — exactly one
-should be set. `box.w`/`box.h` are required to reserve space (layout
+must be set. A `data` binding reads only its `key`: a `format` or
+`placeholder` on it is accepted and has no effect. `box.w`/`box.h` are required to reserve space (layout
 never sizes from image pixels).
 
 ## Syntax
@@ -123,9 +124,11 @@ The host asset policy gates dynamic cell images by the image item's `id`.
 | Code | Meaning |
 | --- | --- |
 | `image_missing_size` | `box.w`/`box.h` absent |
-| `empty_image_item` / `image_source_conflict` | neither / both of `src`+`data` set |
-| `missing_asset` / `assets_root_missing` / `asset_traversal` | bundled path problems (absent, no root, escapes the root) |
-| `invalid_image_data` / `invalid_image_asset` / `image_source_missing` | undecodable or unresolvable sources |
+| `image_source_conflict` / `image_source_missing` | both / neither of `src`+`data` set — a validation error, so the document does not render |
+| `empty_image_item` | neither set, reported by layout itself; only a caller that lays out without validating sees it, since the render pipelines refuse the document with `image_source_missing` first |
+| `missing_asset` / `assets_root_missing` / `asset_traversal` | bundled path problems (absent, no root, escapes the root); `missing_asset` also follows a `data` image whose value never loaded |
+| `missing_data` | a `data` image's key is empty or absent from params (warning, with `missing_asset`; nothing is drawn) |
+| `invalid_image_data` / `invalid_image_asset` | undecodable or unresolvable sources, including a params value that is not a string |
 | `remote_asset_unsupported` | remote URL source; rejected |
 | `dynamic_image_denied` | params-bound image blocked by the asset policy |
 | `svg_unsupported` | SVG constructs outside the subset |

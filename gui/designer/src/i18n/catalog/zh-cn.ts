@@ -975,6 +975,7 @@ export const zhCn: LanguageCatalog = {
     'panel.section.box': '盒子',
     'panel.contentMode': '内容来源',
     'panel.contentMode.text': '固定文本',
+    'panel.contentMode.image': '固定图片',
     'panel.contentMode.data': '数据绑定',
     'panel.field.text': '文本',
     'panel.field.text.keys': 'Enter 换行 · {mod}Enter 完成',

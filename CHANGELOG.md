@@ -15,6 +15,19 @@ platform binaries.
 
 ### Added
 
+- **Switch an image between a fixed picture and a data field.** An image's
+  Content tab now opens with the same Content source choice a text has:
+  Fixed image or Data binding. Switching to Data binding removes the
+  picture, and the image shows nothing until you pick a data field.
+  Switching to Fixed image brings back the picture this image had a moment
+  ago — embedded or linked from the assets folder alike — and opens the
+  file picker only when there is none; switching back to Data binding the
+  same way brings back its field. Cancelling the picker changes nothing,
+  and every switch is one undo step. The Fit choice now shows on a
+  data-bound image too, and works the same way it does on a fixed one;
+  the panel used to offer it on a fixed image only. Until now an image
+  stayed whichever kind it was inserted as.
+
 - **Give a value inside mixed-style text its own format and blank text.**
   When part of a mixed-style text shows a data value, selecting that part
   in the text's Content tab now offers the same choices as a text bound to
@@ -815,6 +828,19 @@ platform binaries.
   browser's own report, with a trace and a screenshot of the moment it broke.
 
 ### Fixed
+
+- **Switching a text back from Data binding no longer brings back another
+  item's sentence.** The mixed text a switch to Data binding drops is kept
+  for the way back; after items were reordered, inserted or removed, or an
+  undo or redo, it could be offered to whichever item then sat in that
+  place. It is now forgotten as soon as such an edit happens (the image
+  switch above works the same way).
+
+- **The image reference now says what happens to an image with neither a
+  picture nor a data field:** the document does not render
+  (`image_source_missing`), just as with an image that has both. It used to
+  describe this as a warning. The same page now also lists the warnings a
+  data-bound image gets when its field has no value.
 
 - **Formatting part of a text keeps that text's size and font.** Making one
   word of a mixed-style text bold (or any other change on the formatting
