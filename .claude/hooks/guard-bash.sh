@@ -422,8 +422,8 @@ GITSCAN='
 	}
 '
 
-# One scan answers both git rules: prints the push verdict (`force`, `direct`
-# or `-`) and whether signing is turned off (`1` or `0`).
+# One scan answers the git rules: prints the verdict (`force` / `direct` for a
+# push, `reset` for `git reset --soft <remote-tracking ref>`, else `-`) and whether signing is turned off (`1` or `0`).
 #
 # Push: the DESTINATION of a refspec decides — `main`, `+main`, `X:main`,
 # `refs/heads/main` — so pushing main somewhere else is not a push to main, and
@@ -446,6 +446,15 @@ git_verdicts() {
 						if (a[j] == "--") break
 						if (a[j] == "--no-gpg-sign") sign = 1
 					}
+				}
+				if (subc[k] == "reset") {
+					soft = 0; remote = 0
+					for (j = 1; j <= m; j++) {
+						if (a[j] == "--") break
+						if (a[j] == "--soft") soft = 1
+						else if (a[j] ~ /^(origin\/|upstream\/|refs\/remotes\/|@\{u(pstream)?\})/) remote = 1
+					}
+					if (soft && remote && verdict == "-") verdict = "reset"
 				}
 				if (subc[k] != "push") continue
 				force = 0; positional = 0; to_main = 0
@@ -473,7 +482,7 @@ case $cmd in
 *git*)
 	git_verdict=$(git_verdicts) || git_verdict=''
 	case $git_verdict in
-	'- 0' | '- 1' | 'force 0' | 'force 1' | 'direct 0' | 'direct 1') ;;
+	'- 0' | '- 1' | 'force 0' | 'force 1' | 'direct 0' | 'direct 1' | 'reset 0' | 'reset 1') ;;
 	*)
 		decide deny 'The Bash guard could not read this command to check it for a push to main or
 disabled commit signing — its scan did not produce an answer, which it treats as
@@ -555,7 +564,7 @@ fi
 
 # main takes no direct pushes and no force pushes (repository ruleset). Denying
 # here removes a round trip, not a capability: --force-with-lease on a FEATURE
-# branch is the documented squash workflow and is untouched.
+# branch after a rebase is the documented workflow and is untouched.
 # Decided from the push invocation's own refspecs and flags (`GITSCAN`), never
 # from words elsewhere in the command. Testing the whole command string meant
 # ordinary prose fired both of these — documenting the rule, or grepping the
@@ -565,6 +574,14 @@ case ${git_verdict% *} in
 force)
 	decide deny 'main takes no force pushes (repository ruleset). History there accumulates
 through PRs. Force-push your own feature branch instead.'
+	;;
+reset)
+	decide deny '`git reset --soft` onto a remote-tracking ref is how a stale working tree gets
+recorded as "delete whatever the neighbours merged" (#340 was reverted that way
+inside #345/#346, CI green). No session squashes locally: commit normally, catch
+up with `git rebase origin/main`, force-push with --force-with-lease, and let
+GitHub'"'"'s squash merge (`gh pr merge --squash`, PR body = commit message) make
+the one commit. shojiku-release-engineer § Ship mechanics.'
 	;;
 direct)
 	decide deny 'main is ruleset-protected: it takes no direct pushes, docs-only changes
