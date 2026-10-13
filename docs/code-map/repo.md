@@ -308,7 +308,9 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   all (`git ls-files .claude`). Two POSIX-sh scripts reading a
   hook event on stdin and writing at most one decision: `guard-bash.sh`
   (PreToolUse over Bash — denies a piped gate, `make -n`, a host `cargo`, a
-  commit with signing disabled or an attribution trailer, a push at `main`;
+  commit with signing disabled or an attribution trailer, a push at `main`, a
+  `git reset --soft` onto a remote-tracking ref (no local squash: GitHub's
+  squash merge makes the one commit);
   ASKS on `gh pr merge`; notes a bare `make` in a worktree, a `pgrep` watcher,
   an unquoted `--include` glob, a `git add -f` on the lockfile) and
   `guard-edit.sh` (PostToolUse over Edit/Write — notes only: the `.rs`

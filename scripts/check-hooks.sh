@@ -315,6 +315,15 @@ broken=$(bash_event 'git status' | PATH="$tmp/brokenawk:$PATH" "$hooks/guard-bas
 	jq -r '.hookSpecificOutput.permissionDecision // "silent"' 2>/dev/null || true)
 check 'git command, awk broken' deny "${broken:-silent}"
 
+# No local squash: a soft reset onto a remote-tracking ref is denied; a reset
+# to the branch's own history (amending) and a rebase are not.
+case_bash 'reset --soft origin/main'    deny 'git reset --soft origin/main'
+case_bash 'reset --soft upstream ref'   deny 'git reset --soft @{upstream}'
+case_bash 'reset --soft HEAD~1'         silent 'git reset --soft HEAD~1'
+case_bash 'reset --hard origin/main'    silent 'git reset --hard origin/main'
+case_bash 'rebase origin/main'          silent 'git rebase origin/main'
+case_bash 'grep naming reset --soft'    silent 'grep -rn "reset --soft origin/main" docs'
+
 # ---- Bash guard: ask and note ------------------------------------------
 case_bash 'merge asks'                  ask  'gh pr merge 123 --squash'
 case_bash 'pgrep watcher'               note 'pgrep -f gmake'
