@@ -166,10 +166,17 @@ fn a_path_through_an_unknown_key_is_echoed_not_kept_whole() {
 }
 
 #[test]
-fn non_string_keys_and_scalars_are_passed_over() {
-    let yaml = format!("sections:\n  body:\n    type: flow\n    items: [ {TEXT} ]\n    1: [ 2 ]\n");
-    let err = parse_template(&yaml).expect_err("the typed parse still refuses the key");
-    assert!(!matches!(err, CoreError::ContainerDepth { .. }), "{err:?}");
+fn a_non_string_key_is_left_to_the_key_check() {
+    // The parse refuses one before this walk runs (`super::keys`); on its
+    // own, the walk does not count what sits under it.
+    let yaml = body(&format!(
+        "{{ type: container, 5: [ {} ] }}",
+        chain(MAX_CONTAINER_DEPTH + 1, TEXT)
+    ));
+    let raw: serde_yaml::Value = serde_yaml::from_str(&yaml).expect("yaml");
+    super::template(&raw).expect("passed over");
+    let err = parse_template(&yaml).expect_err("refused by the key check");
+    assert!(matches!(err, CoreError::Located { .. }), "{err:?}");
 }
 
 /// Parses `yaml` on a thread the size of a test thread: enough for the

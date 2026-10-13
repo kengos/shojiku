@@ -12,7 +12,7 @@ reference:
 A template (`templates.yml`, YAML or JSON) describes one document: the
 page geometry, an optional named-style registry, and the sections whose
 items produce content. Parsing rejects non-finite numbers (`.nan`/`.inf`)
-anywhere in the document.
+and mapping keys that are not strings anywhere in the document.
 
 ## Syntax
 
@@ -111,6 +111,9 @@ cannot mean "unset".
   a typo cannot mean "unset", in any wire struct.
 - `.nan`, `.inf` and overflowing numbers are refused anywhere in the document
   (`non_finite_number`).
+- Every mapping key is a string, as in JSON. A key YAML reads as a number,
+  `true`, `null`, a list or a map is a parse error (`parse_error`) wherever it
+  sits, so a style or format named `5` is written `"5":`.
 - One `body`, and `header`/`footer` are the only bands. There is no third
   section and no per-page section switch.
 - `version` is author-owned: the engine records it and interprets nothing.

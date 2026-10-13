@@ -40,7 +40,8 @@ pub(super) fn check_shape(defs: &Definitions) -> Result<(), CoreError> {
 /// tree. It walks exactly what the typed parse would descend — a node's
 /// `items`, then its `properties` in key order, as the parsed `BTreeMap`
 /// iterates them — so the first path it reports is the one the post-parse
-/// walk reported when the cap lived there. Being a pass of its own ahead of
+/// walk reported when the cap lived there (for string keys; see
+/// [`for_each_property`] for the rest). Being a pass of its own ahead of
 /// the typed parse, it also wins over every other schema error: a file both
 /// too deep and over the node or enum cap (or mistyped) reports the depth.
 pub(super) fn check_depth(raw: &Value) -> Result<(), CoreError> {
@@ -61,8 +62,11 @@ fn depth_node(node: &Value, path: &str, depth: usize) -> Result<(), CoreError> {
 }
 
 /// Every schema under `node`'s `properties`, string keys in sorted order and
-/// any other key after them (the typed parse refuses those, but a bound does
-/// not get to assume which error comes first).
+/// any other key after them, as `?`. The typed parse does NOT refuse such a
+/// key: it reads a plain scalar by its source text, so `1:` is the property
+/// `"1"`, sorted among the names rather than after them. The nesting it holds
+/// is walked all the same; only the first path reported for a file both too
+/// deep and keyed that way can differ from the post-parse order.
 fn for_each_property(node: &Value, path: &str, depth: usize) -> Result<(), CoreError> {
     let Some(Value::Mapping(props)) = field(node, "properties").map(untag) else {
         return Ok(());

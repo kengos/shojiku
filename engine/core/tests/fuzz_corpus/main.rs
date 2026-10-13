@@ -11,7 +11,9 @@
 //! warning list, so a seed being REFUSED is a pass — the defect these guard
 //! against is a panic on a boundary, not a rejection.
 
-use shojiku_core::{parse_aozora_ruby, parse_definitions, parse_params, parse_template, Catalog};
+use shojiku_core::{
+    parse_aozora_ruby, parse_definitions, parse_params, parse_template, validate, Catalog,
+};
 
 /// Every seed committed for one fuzz target, as text.
 ///
@@ -46,9 +48,17 @@ fn every_template_seed_parses_or_is_refused() {
     // Collect the names rather than a count: on failure the message has to
     // say WHICH seed, and dumping the seeds themselves would print a
     // 200-line template.
+    // A parsed seed is validated too, as the target does: `validate` is what
+    // descends every section, item and binding the parse only shaped.
     let refused: Vec<&str> = seeds
         .iter()
-        .filter(|(_, text)| parse_template(text).is_err())
+        .filter(|(_, text)| match parse_template(text) {
+            Ok(template) => {
+                let _ = validate(None, &template, None);
+                false
+            }
+            Err(_) => true,
+        })
         .map(|(name, _)| name.as_str())
         .collect();
     assert!(
