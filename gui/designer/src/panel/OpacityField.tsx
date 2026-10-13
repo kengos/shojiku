@@ -3,7 +3,9 @@
 // merely displays: `opacityOp` refuses a commit that would author the value the
 // item already carries, and the stepper's own changed-guard skips a
 // tab-through. Not inherited: a named style is the only other place a value can
-// come from, and the origin line says so.
+// come from, and the origin line says so. A `line` has not even that — its wire
+// takes no `styleNames` — so in any document the engine accepts, the cascade
+// reduces to its own key for one.
 
 import type { ReactNode } from 'react';
 import type { EditorController } from '../editor/useEditor';

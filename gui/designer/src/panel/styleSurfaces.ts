@@ -48,8 +48,10 @@ export const DECORATION_LINE_TYPES: ReadonlySet<string> = TEXT_SURFACE_TYPES;
 export const OVERFLOW_TYPES: ReadonlySet<string> = new Set(['container']);
 
 /** Types whose own painting takes `opacity`. Everything with a decoration tab
- * except a `table` (its grid is always drawn opaque) and a `line` (whose stroke
- * takes opacity in its own style shape). */
+ * except a `table` (its grid is always drawn opaque). A `line` keeps its alpha
+ * at the same `style.opacity` key (`atoms.rs` hands it to the stroke), but its
+ * value is its own alone: its wire takes no `styleNames`, and nothing above it
+ * reaches its stroke style. */
 export const OPACITY_TYPES: ReadonlySet<string> = new Set([
   'text',
   'page_number',
@@ -61,6 +63,7 @@ export const OPACITY_TYPES: ReadonlySet<string> = new Set([
   'char_grid',
   'ellipse',
   'checkbox',
+  'line',
 ]);
 
 /** Of `OPACITY_TYPES`, the ones where it reaches only the item's own FILL and

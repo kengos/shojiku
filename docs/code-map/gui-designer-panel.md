@@ -563,7 +563,9 @@ that answers it per FRAGMENT.
   would prune `mark: {}` — the always-drawn circle — with it. A vertical block
   draws no circle (`vertical_text_unsupported`), so while the mark is present
   and the effective `writingMode` is `vertical_rl` it shows the same sentence the
-  vertical-text section does. No opacity: the form marks offer none either.
+  vertical-text section does. No opacity field yet: the engine paints the
+  mark's `style.opacity` (`shape_paint`, shared with the form marks, whose
+  decoration tab offers it), but this section does not author it.
 - `panel/MarkBindingFields.tsx` — the BOUND arm of any `MarkBinding`
   (`FieldPicker` + `ValueControl` + the document-scope note, with the stale-
   `equals` and scope reconciliation of `repointMarkOps`), taking the map that
@@ -1140,8 +1142,10 @@ presence is not a text binding.
   (the text surfaces + container + table — the table's text section mounts
   `TextLookFields` for it, since every cell inherits it), `VALIGN_TYPES`,
   `TEXT_OVERFLOW_TYPES`, `DECORATION_LINE_TYPES`, `OVERFLOW_TYPES`,
-  `OPACITY_TYPES` (+`OPACITY_DECORATION_ONLY`: a QR code and a container fade
-  only their own fill and border), `PADDING_TYPES` (rect and the marks inset
+  `OPACITY_TYPES` (every decorated type but a table — a line included, whose
+  stroke alpha is the same `style.opacity` key and its own alone; plus
+  `OPACITY_DECORATION_ONLY`: a QR code and a container fade only their own
+  fill and border), `PADDING_TYPES` (rect and the marks inset
   nothing), `CHAR_GRID_GLYPH_KEYS`, plus `textHelpKey`/`overflowKeyOf`/
   `fillTitleKey`/`openingSection`/`opacityOffered`.
   `styleSurfaces.test.ts` pins the rows against the engine matrix.

@@ -35,6 +35,7 @@ function Harness({
     <I18nProvider locale="en">
       <PropertyPanel controller={editor} path={path} capabilities={capabilities} />
       <pre data-testid="doc">{editor.text}</pre>
+      <output data-testid="revision">{editor.revision}</output>
     </I18nProvider>
   );
 }
@@ -45,6 +46,9 @@ function open(text: string, capabilities?: readonly string[]) {
 }
 
 const file = () => screen.getByTestId('doc').textContent ?? '';
+/** The editor's revision — a same-value write leaves the TEXT identical (the
+ * number node keeps its authored digits) but still costs an undo step. */
+const revision = () => screen.getByTestId('revision').textContent;
 /** The section toggles' titles, in order (a toggle is the heading's button,
  * carrying `aria-expanded`; its name is the title alone). */
 const sectionTitles = () =>
@@ -155,8 +159,18 @@ describe('which sections a type gets', () => {
     expect(screen.getByRole('button', { name: 'Background' })).not.toBeNull();
   });
 
-  it('keeps a line on its own stroke, with no opacity section', () => {
+  it('gives a line its own stroke, then the opacity a rect has', () => {
     open(doc('{ type: line, from: { x: 0, y: 0 }, to: { x: 10, y: 0 } }'));
+    expect(sectionTitles()).toEqual(['Line', 'Opacity']);
+    // The stroke is what a line draws itself: the generic sentence, not the
+    // fill-and-border-only one a QR code and a container carry.
+    fireEvent.click(screen.getByRole('button', { name: 'About Opacity' }));
+    expect(screen.getByText(/Applies to what this item draws itself/)).not.toBeNull();
+    expect(screen.queryByText(/only to this item's own fill and border/)).toBeNull();
+  });
+
+  it('withholds a line’s opacity against an engine without it', () => {
+    open(doc('{ type: line, from: { x: 0, y: 0 }, to: { x: 10, y: 0 } }'), ['line.style']);
     expect(sectionTitles()).toEqual(['Line']);
   });
 
@@ -368,6 +382,97 @@ describe('opacity', () => {
     );
     openSection('Opacity');
     expect(screen.getByText('50%')).not.toBeNull();
+  });
+});
+
+describe('a line’s opacity', () => {
+  const LINE = 'type: line, from: { x: 0, y: 0 }, to: { x: 10, y: 0 }';
+  const field = () => screen.getByRole('textbox', { name: 'Opacity' }) as HTMLInputElement;
+
+  function openAt(text: string, path: string) {
+    render(<Harness text={text} path={path} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Style' }));
+  }
+
+  it('writes the alpha into the line’s own style beside its stroke keys', () => {
+    open(doc(`{ ${LINE}, style: { width: 2, color: "#ff0000" } }`));
+    openSection('Opacity');
+    commit('Opacity', '40');
+    expect(file()).toContain('style: { width: 2, color: "#ff0000", opacity: 0.4 }');
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease Opacity' }));
+    expect(file()).toContain('style: { width: 2, color: "#ff0000", opacity: 0.3 }');
+  });
+
+  it('reads an authored alpha as a percentage, closed and open', () => {
+    open(doc(`{ ${LINE}, style: { opacity: 0.5 } }`));
+    expect(screen.getByText('50%')).not.toBeNull();
+    openSection('Opacity');
+    expect(field().value).toBe('50');
+  });
+
+  it('writes nothing when the entry only restates the authored alpha', () => {
+    // `50%` is a different TEXT from the shown 50, so the field passes it on;
+    // only the op's own same-value refusal keeps it from becoming an edit.
+    open(doc(`{ ${LINE}, style: { opacity: 0.5 } }`));
+    openSection('Opacity');
+    const before = revision();
+    fireEvent.blur(field());
+    commit('Opacity', '50%');
+    expect(revision()).toBe(before);
+    expect(file()).toContain('style: { opacity: 0.5 }');
+  });
+
+  it('drops the whole style map when the alpha was its only key', () => {
+    open(doc(`{ ${LINE}, style: { opacity: 0.5 } }`));
+    openSection('Opacity');
+    commit('Opacity', '');
+    expect(file()).toContain('type: line');
+    expect(file()).not.toContain('style');
+  });
+
+  it('removes only the alpha when the stroke keys stay', () => {
+    open(doc(`{ ${LINE}, style: { width: 2, opacity: 0.5 } }`));
+    openSection('Opacity');
+    commit('Opacity', '');
+    expect(file()).toContain('style: { width: 2 }');
+  });
+
+  it('keeps the alpha through a stroke edit', () => {
+    open(doc(`{ ${LINE}, style: { opacity: 0.5 } }`));
+    commit('Line width', '3');
+    expect(file()).toContain('style: { opacity: 0.5, width: 3 }');
+  });
+
+  it('shows no default alpha: defaults.style never reaches a line', () => {
+    open(doc(`{ ${LINE} }`, 'defaults:\n  style: { opacity: 0.2 }\n'));
+    // Closed, the summary would name it; open, the origin line would.
+    const toggle = screen.getByRole('button', { name: 'Opacity' });
+    const summary = document.getElementById(toggle.getAttribute('aria-describedby') ?? '');
+    expect(summary?.textContent).toBe('Not set');
+    openSection('Opacity');
+    expect(field().value).toBe('');
+    expect(screen.queryByText('20%')).toBeNull();
+  });
+
+  it('shows no inherited alpha: a container’s opacity never reaches its line', () => {
+    openAt(
+      doc(
+        `type: container\n        style: { opacity: 0.2 }\n        items:\n          - { ${LINE} }`,
+      ),
+      'sections.body.items[0].items[0]',
+    );
+    openSection('Opacity');
+    expect(field().value).toBe('');
+    expect(screen.queryByText('20%')).toBeNull();
+  });
+
+  it.each([
+    ['a list for its style', 'style: [a]'],
+    ['a map for its alpha', 'style: { opacity: { a: 1 } }'],
+  ])('reads a hostile line with %s as unset', (_name, style) => {
+    open(doc(`{ ${LINE}, ${style} }`));
+    openSection('Opacity');
+    expect(field().value).toBe('');
   });
 });
 
