@@ -185,6 +185,21 @@ case_bash 'quoted ; then a real pipe'   deny "make gui:test F='a;b' | tail -40"
 case_bash 'quoted && then a real pipe'  deny "make gui:test F='a&&b' | tail -40"
 case_bash 'quoted || then a real pipe'  deny "make engine:test F='x||y' | grep error"
 case_bash 'pipe with no spaces'         deny 'make engine:test|tail -40'
+# Both rules about `make` used to read only LINE 1 of the command, so a gate on
+# any later line was waved through — failing open, the serious direction.
+case_bash 'gate piped on line 2'        deny 'cd x
+make engine:test | tail -40'
+case_bash 'make -n on line 2'           deny 'cd x
+make -n verify'
+case_bash 'gate piped after make help'  deny 'make help
+gmake gui:verify | grep -i error'
+case_bash 'gate piped in a substitution' deny 'out=$(make engine:test | tail -5)'
+case_bash 'gate piped in backticks'     deny 'echo `make engine:test|tail`'
+case_bash 'piped with 2>&1 first'       deny 'make engine:test 2>&1 | tail -40'
+case_bash 'piped stderr and stdout'     deny 'make engine:test |& tail -40'
+case_bash 'gate piped in a sh heredoc'  deny 'sh <<EOF
+make engine:test | tail -40
+EOF'
 
 # ---- Bash guard: the legitimate spellings beside them -------------------
 case_bash 'redirected gate'             silent 'make engine:test > /tmp/e.log 2>&1'
@@ -220,13 +235,25 @@ case_bash 'quoted --dry-run'           silent 'make gui:test F="--dry-run inside
 # so a quoted argument with a SPACE after a separator used to split into two
 # tokens and open a command position INSIDE the quotes — which made the guard
 # refuse an edit whose only offending name was a fixture string in this very
-# file, six times in one cycle. It reads the blanked view now.
+# file, six times in one cycle. It reads the shell's own word split now.
 case_bash 'name inside a quoted string' silent 'echo "docker rm -f x; cargo test"'
 case_bash 'quoted name under grep -n'   silent 'grep -n "x; cargo test" file'
 case_bash 'quoted push to main'         silent 'echo "git push origin main"'
 # A BACKSLASH-escaped pipe is a literal `|` passed as an argument, exactly as it
 # is in a shell — so it is not a pipeline and the gate rule does not apply.
 case_bash 'escaped pipe after a gate'   silent 'make engine:test \| tail -40'
+# A heredoc body is data: prose that NAMES a piped gate or `make -n` on its own
+# line is not one, whichever line the body starts on.
+case_bash 'piped gate in heredoc prose' silent "cd x
+cat <<'EOF'
+make engine:test | tail -40
+make -n verify
+EOF"
+case_bash 'make help piped on line 2'   silent 'cd x
+make help | grep engine'
+case_bash 'gate || fallback'            silent 'make engine:test > /tmp/e.log 2>&1 || cat .make-logs/last-error.log'
+case_bash 'gate redirected with >|'     silent 'make engine:test >| /tmp/e.log'
+case_bash 'make help redirected'        silent 'make help > /tmp/h.txt; head -n 5 /tmp/h.txt'
 # The signing rule had FOUR positive cases and no negative one, and tested the
 # whole command string — so it denied any command that merely NAMES the flag,
 # with no git in sight. It fired on a heredoc writing documentation about the
@@ -323,10 +350,14 @@ awk 'BEGIN { for (i = 0; i < 20000; i++) printf "echo an-ordinary-generated-line
 big_case 'a 1.4 MB command, then push' "$tmp/bulk.txt"
 awk 'BEGIN { for (i = 0; i < 16000; i++) print "cat <<A"; printf "git push -f origin main" }' >"$tmp/heredocs.txt"
 big_case '16000 unclosed heredocs, push' "$tmp/heredocs.txt"
-# One LINE, because every other rule's quote-blanking pass reads a line at a
-# time: a 400 KB single-line command took 11 s there before it was made linear.
+# One LINE, because the quote-blanking pass the make rules once used read a line
+# at a time: a 400 KB single-line command took 11 s there before it was linear.
 awk 'BEGIN { printf "echo \047"; for (i = 0; i < 1000000; i++) printf "A"; printf "\047 > /tmp/x && git push --force origin main" }' >"$tmp/oneline.txt"
 big_case 'a 1 MB single line, then push' "$tmp/oneline.txt"
+# The two rules about `make` read the same whole-command scan, so the same load
+# must leave a piped gate on the LAST line just as refused.
+awk 'BEGIN { for (i = 0; i < 20000; i++) printf "echo an-ordinary-generated-line-of-text-number-%d-nothing-special\n", i; printf "make engine:test | tail -40" }' >"$tmp/bulkmake.txt"
+big_case 'a 1.4 MB command, then piped gate' "$tmp/bulkmake.txt"
 
 # A scan that FAILS must not read as "found nothing": with awk broken, a
 # command naming git is refused rather than waved through.

@@ -35,126 +35,6 @@ decide() {
 }
 has() { printf '%s' "$cmd" | grep -Eq -- "$1"; }
 
-# The non-flag arguments of the first make invocation — its TARGETS. `make`
-# bare, `make help` and `make --version` ask for nothing that can be reported
-# green, so they are not gates; anything else is. Deciding from the arguments
-# rather than from a list of pagers is what keeps the rule complete in one
-# direction and quiet in the other.
-make_targets() {
-	printf '%s' "$cmd" | awk '
-		{
-			n = split($0, tok, /[ \t]+/)
-			seen = 0
-			for (i = 1; i <= n; i++) {
-				t = tok[i]
-				if (!seen) { if (t ~ /^g?make$/) seen = 1; continue }
-				if (t ~ /^[|;&]/ || t == "&&" || t == "||") break
-				if (skip) { skip = 0; continue }
-				if (t ~ /^-[CfjIoW]$/) { skip = 1; continue }
-				if (t ~ /^-/) continue
-				if (t ~ /^[A-Za-z_][A-Za-z0-9_]*=/) continue
-				if (t != "") print t
-			}
-		}'
-}
-
-# Is a gate being run, as opposed to make being asked a question?
-is_gate() {
-	t=$(make_targets)
-	[ -n "$t" ] || return 1
-	for one in $t; do
-		case "$one" in help) ;; *) return 0 ;; esac
-	done
-	return 1
-}
-
-# The shared half of the two rules about `make`: the command as the SHELL would
-# read its metacharacters — every quoted span blanked to spaces, so a `|`, `;`,
-# `&&` or `-n` inside an argument is no longer mistaken for one outside.
-#
-# Blanking rather than deleting keeps offsets and word boundaries intact, which
-# is what lets the two rules below keep the regexes they already had: the change
-# is what they are matched AGAINST, not what they look for.
-#
-# Quoting, not token boundaries, is the distinguishing fact here: a real pipe
-# can be written with no spaces around it (`make x|head`), so `x|head` and
-# `F='a|b'` are one token either way; only the quotes tell them apart.
-#
-# Both directions were live before this, and the second is the serious one:
-#
-#   - a quoted `|` or `-n` DENIED a legitimate call — `make gui:test F='a|b'`
-#     is the ordinary way to run two suites, and it fired twice in one cycle;
-#   - a quoted `;`, `&&` or `||` truncated the scan and let a genuinely piped
-#     gate THROUGH — `make gui:test F='a;b' | tail -40` was allowed. A control
-#     that fails open is the failure this directory exists to prevent.
-#
-# `\` escapes the next character outside single quotes, as it does in a shell,
-# so `make engine:test \| tail` passes a literal `|` as an argument rather than
-# opening a pipeline. (A real target on purpose: `make:check` scans the tracked
-# tree for `make <name>` and refuses a name that is not a target — including one
-# invented for a comment, which is how this very line first reddened CI.)
-#
-# An UNTERMINATED quote leaves the rest of the line quoted, and therefore
-# blanked. That is the shell's own reading — such a command does not run as
-# written, it waits for the closing quote — so nothing after one can be a
-# working piped gate, and there is nothing there for the rule to catch.
-#
-# It must stay LINEAR in every awk, because it runs on every command and the
-# hook has a 10 s timeout that decides nothing when it fires. macOS's
-# /usr/bin/awk makes `substr(s, i, 1)` and `length(s)` cost the length of `s`,
-# and appending one character to a growing string costs its length in every
-# awk — a 400 KB single-line command took 11 s. So characters are read from a
-# moving 4096-character window, and the view is built in 4096-character pieces.
-BLANK='
-	function unquoted_view(s,   i, c, q, out, part, parts, len, base, chunk) {
-		q = ""; out = ""; part = ""; parts = 0; len = length(s); base = -1
-		for (i = 1; i <= len; i++) {
-			if (base < 0 || i > base + 4096) { base = i - 1; chunk = substr(s, i, 4096) }
-			c = substr(chunk, i - base, 1)
-			if (c == "\\" && q != "'"'"'") { part = part "  "; parts += 2; i++ }
-			else if (q == "") {
-				if (c == "'"'"'" || c == "\"") { q = c; part = part " " }
-				else part = part c
-				parts++
-			} else {
-				part = part " "
-				parts++
-				if (c == q) q = ""
-			}
-			if (parts >= 4096) { out = out part; part = ""; parts = 0 }
-		}
-		return out part
-	}
-	function after_make(s,   m) {
-		if (match(s, /(^|[;&|(])[ \t]*([A-Za-z_][A-Za-z0-9_]*=[^ \t]*[ \t]+)*(sudo[ \t]+)?g?make[ \t]/) == 0) return ""
-		return substr(s, RSTART + RLENGTH)
-	}
-'
-
-# Does a pipe follow the make invocation, before any `;` or `&&` ends it?
-piped_after_make() {
-	printf '%s' "$cmd" | awk "$BLANK"'
-		{
-			rest = after_make(unquoted_view($0))
-			if (rest == "") exit 1
-			if (match(rest, /\|\||;|&&/) > 0) rest = substr(rest, 1, RSTART - 1)
-			exit (index(rest, "|") > 0) ? 0 : 1
-		}'
-}
-
-# Does a dry-run FLAG follow the make invocation, before any separator ends it?
-# The twin of `piped_after_make`: same scan, looking for the flag rather than a
-# pipe, so a `-n` belonging to a LATER command in the same call is not make's.
-dry_run_after_make() {
-	printf '%s' "$cmd" | awk "$BLANK"'
-		{
-			rest = after_make(unquoted_view($0))
-			if (rest == "") exit 1
-			if (match(rest, /\|\||;|&&|\|/) > 0) rest = substr(rest, 1, RSTART - 1)
-			exit (match(rest, /(^|[ \t])(-n|--dry-run|--just-print|--recon)([ \t]|$)/) > 0) ? 0 : 1
-		}'
-}
-
 # A command-position invocation: start of the command or just after a
 # separator, allowing leading VAR=value assignments (`V=1 make ...`).
 POS='(^|[;&|(])[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
@@ -170,10 +50,13 @@ MAKE="$POS(sudo[[:space:]]+)?g?make([[:space:]]|$)"
 #
 # So the whole command is read once, the way the shell reads it, and every
 # command-position `git` is recorded as its global options, its subcommand and
-# its arguments (and every command name, for `at_command_position`):
+# its arguments (and every command name, for `at_command_position`, and every
+# command-position `make` with its arguments and whether a pipe ends it, for
+# `make_verdicts`):
 #
 #   - quotes and backslashes remove their characters from the words, and an
-#     unquoted `;`, `&`, `|` or newline ends a command;
+#     unquoted `;`, `&`, `|` or newline ends a command — except inside a
+#     redirection (`2>&1`, `>&2`, `&>`, `>|`), which stays part of its word;
 #   - `$( … )`, a backtick pair and a `( … )` subshell hold commands of their
 #     own, but they sit INSIDE the command around them — `git -C $(pwd) push`
 #     is still one push — so they are scanned as a nested level and the outer
@@ -219,7 +102,7 @@ GITSCAN='
 	function begin_scan(s,   p, k, t) {
 		n = 0; cur = 0; tok = ""; have = 0; at_start = 1; in_git = 0; opener = 0; decl = 0
 		q = ""; pending = ""; hd_on = 0; heredoc_word = 0; depth = 0; word_q = 0
-		sign_env_off = 0; sign_key = 0; sign_val = 0; cn = 0; curcmd = ""
+		sign_env_off = 0; sign_key = 0; sign_val = 0; cn = 0; curcmd = ""; mkn = 0; mk = 0
 		split("sh bash zsh dash ksh", p, " ")
 		for (k in p) SHELLS[p[k]] = 1
 		split("sudo env command exec time nohup nice then do else { ! if while until", p, " ")
@@ -289,9 +172,12 @@ GITSCAN='
 			at_start = 0; opener = 0
 			cmdname[++cn] = w; curcmd = w
 			in_git = (w == "git")
+			mk = (w ~ /^g?make$/) ? ++mkn : 0
+			if (mk) { margs[mk] = ""; mpiped[mk] = 0 }
 			if (in_git) { cur = ++n; gopts[cur] = ""; subc[cur] = ""; args[cur] = ""; phase = "global"; takes_value = 0 }
 			return
 		}
+		if (mk) { margs[mk] = margs[mk] "\037" w; return }
 		if (!in_git) return
 		if (phase == "global") {
 			if (takes_value) { gopts[cur] = gopts[cur] " " w; takes_value = 0; return }
@@ -303,7 +189,7 @@ GITSCAN='
 		}
 		args[cur] = args[cur] "\037" w
 	}
-	function command_end() { word_end(); at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = "" }
+	function command_end() { word_end(); at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""; mk = 0 }
 	function add(c, quoted) {
 		if (!have) lead_quoted = quoted
 		if (quoted) word_q = 1
@@ -318,8 +204,8 @@ GITSCAN='
 		st_tv[depth] = takes_value; st_at[depth] = at_start; st_op[depth] = opener
 		st_have[depth] = have; st_tok[depth] = tok; st_lq[depth] = lead_quoted
 		st_wq[depth] = word_q; st_decl[depth] = decl
-		st_bt[depth] = by_backtick; st_word[depth] = in_word; st_cmd[depth] = curcmd
-		have = 0; tok = ""; word_q = 0; at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""
+		st_bt[depth] = by_backtick; st_word[depth] = in_word; st_cmd[depth] = curcmd; st_mk[depth] = mk
+		have = 0; tok = ""; word_q = 0; at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""; mk = 0
 	}
 	# Leave it: the outer command resumes, and a substitution inside a word
 	# stands in that word as one placeholder character.
@@ -329,7 +215,7 @@ GITSCAN='
 		takes_value = st_tv[depth]; at_start = st_at[depth]; opener = st_op[depth]
 		have = st_have[depth]; tok = st_tok[depth]; lead_quoted = st_lq[depth]
 		word_q = st_wq[depth]; decl = st_decl[depth]; q = st_q[depth]
-		in_word = st_word[depth]; curcmd = st_cmd[depth]
+		in_word = st_word[depth]; curcmd = st_cmd[depth]; mk = st_mk[depth]
 		depth--
 		if (in_word) add("_", 0)
 	}
@@ -374,7 +260,17 @@ GITSCAN='
 			}
 			if (c == ")") { if (depth > 0 && !st_bt[depth]) pop_level(); else command_end(); continue }
 			if (c == "`") { if (depth > 0 && st_bt[depth]) pop_level(); else push_level(1, 1, 0); continue }
-			if (c == ";" || c == "&" || c == "|") { command_end(); continue }
+			# `2>&1`, `>&2`, `&>` and `>|` are redirections, not separators.
+			if ((c == "&" || c == "|") && have && substr(tok, length(tok)) ~ /[<>]/) { add(c, 0); continue }
+			if (c == "&" && ch(i + 1) == ">") { add(c, 0); continue }
+			if (c == "|") {
+				if (ch(i + 1) == "|") { command_end(); i++; continue }
+				word_end()
+				if (mk) mpiped[mk] = 1
+				command_end()
+				continue
+			}
+			if (c == ";" || c == "&") { command_end(); continue }
 			add(c, 0)
 		}
 		command_end()
@@ -470,6 +366,75 @@ at_command_position() {
 		}'
 }
 
+# One scan answers the two rules about `make`: prints whether a GATE is piped
+# and whether one is given a dry-run flag (`1` or `0` each). Both are decided
+# per make invocation, from that invocation's own words — the same whole-command
+# read as the git rules (`GITSCAN` records each command-position `make`, its
+# arguments, and whether an unquoted `|` — not `||`, not the `>|` or `2>&1`
+# redirections — ends it):
+#
+#   - a GATE is a make invocation asking for a target other than `help`; `make`
+#     bare, `make help` and `make --version` ask for nothing that can be
+#     reported green. Deciding from the arguments rather than from a list of
+#     pagers is what keeps the rule complete in one direction and quiet in the
+#     other; a redirection and its file are not targets;
+#   - the dry-run flag must be one of THAT invocation's words, so `grep -n`,
+#     `head -n` or `sort -n` in a later command of the same call is not make's.
+#
+# Both rules used to read the command one LINE at a time and `exit` on the
+# first, so only line 1 was ever examined: `cd x` then `make engine:test |
+# tail -40` on line 2 was ALLOWED — a control that fails open. Before that, a
+# raw-string read failed in both directions on quoting: a quoted `|` or `-n`
+# (`make gui:test F='a|b'`, the ordinary way to run two suites) was denied, and
+# a quoted `;` truncated the scan and let `make gui:test F='a;b' | tail -40`
+# through. The shell's reading settles all three, and also keeps a heredoc body
+# that merely NAMES a piped gate — prose about this very rule — from being one.
+#
+# A scan that fails denies, as the git rules do: a guard that cannot read the
+# command has not found it safe.
+make_verdicts() {
+	printf '%s' "$cmd" | awk "$GITSCAN"'
+		BEGIN { RS = "\001" }
+		{ all = all (NR > 1 ? "\001" : "") $0 }
+		END {
+			scan(all)
+			piped = 0; dry = 0
+			for (k = 1; k <= mkn; k++) {
+				m = split(substr(margs[k], 2), a, "\037")
+				gate = 0; d = 0; skip = 0
+				for (j = 1; j <= m; j++) {
+					t = a[j]
+					if (skip) { skip = 0; continue }
+					if (t ~ /^(-n|--dry-run|--just-print|--recon)$/) { d = 1; continue }
+					if (t ~ /^-[CfjIoW]$/) { skip = 1; continue }
+					if (t ~ /^-/) continue
+					if (t ~ /^([0-9]*|&)(>>?|<)$/) { skip = 1; continue }
+					if (t ~ /^([0-9]*|&)[<>]/) continue
+					if (t ~ /^[A-Za-z_][A-Za-z0-9_]*=/) continue
+					if (t != "" && t != "help") gate = 1
+				}
+				if (gate && mpiped[k]) piped = 1
+				if (gate && d) dry = 1
+			}
+			print piped " " dry
+		}'
+}
+
+case $cmd in
+*make*)
+	make_verdict=$(make_verdicts) || make_verdict=''
+	case $make_verdict in
+	'0 0' | '0 1' | '1 0' | '1 1') ;;
+	*)
+		decide deny 'The Bash guard could not read this command to check it for a piped or dry-run
+gate — its scan did not produce an answer, which it treats as a refusal rather
+than as safe. Split the command into smaller calls.'
+		;;
+	esac
+	;;
+*) make_verdict='0 0' ;;
+esac
+
 case $cmd in
 *git*)
 	git_verdict=$(git_verdicts) || git_verdict=''
@@ -490,7 +455,7 @@ esac
 # A pipeline reports the LAST command's status, so a piped gate exits 0 over a
 # failure — and a BACKGROUNDED piped gate has the harness announce that lie as
 # a verdict. Carried in one cycle's own pre-flight list and violated twice.
-if has "$MAKE" && is_gate && piped_after_make; then
+if [ "${make_verdict% *}" = 1 ]; then
 	decide deny 'A pipeline reports the last command'"'"'s exit status, so this reports a
 FAILED gate as green. Redirect, and read the file as a SEPARATE call:
   make <target> > /tmp/<name>.log 2>&1
@@ -508,11 +473,10 @@ fi
 # for a stray ` -n ` denies `grep -n`, `head -n`, `tail -n`, `sort -n` and
 # `ls -n` whenever make is mentioned anywhere in the same call — which is the
 # ordinary shape of "run the gate, then look at its log", and `grep -rn` is the
-# form CLAUDE.md and gotchas/verification-claims.md both recommend. So this
-# reuses `dry_run_after_make`, cut from `piped_after_make` beside it, which
-# stops at the first separator; and it asks `is_gate`, so `make --version` and
-# `make help` are not gates and cannot be dry runs.
-if has "$MAKE" && is_gate && dry_run_after_make; then
+# form CLAUDE.md and gotchas/verification-claims.md both recommend. So this is
+# decided from the make invocation's own words (`make_verdicts`), and only for
+# a gate: `make --version` and `make help` cannot be dry runs.
+if [ "${make_verdict#* }" = 1 ]; then
 	decide deny '`make -n` is not a dry run here: recipe lines containing $(MAKE) still
 run for real (the documented GNU recursion rule), so a dry run takes the gate
 lock and has killed a gate mid-run. Read the recipe, or run `make help`.'
@@ -533,7 +497,7 @@ fi
 # The flag must belong to a GIT invocation. Testing the whole command string
 # for it denies any command that merely MENTIONS the flag — a heredoc
 # documenting this very rule, a grep for it, a cat of this file — which is the
-# same over-match `dry_run_after_make` exists to avoid one rule above, and the
+# same over-match the `-n` rule above exists to avoid one rule above, and the
 # same command-position discipline the attribution rule below already applies.
 # It fired twice in one session on prose, once while writing up the trap — and,
 # once `git` was required at a command position but the flag was still looked
