@@ -437,8 +437,14 @@ WASM_MAX_GZIP := 3145728
 # restored cache is already where cargo looks (TARGET_SLOTS above).
 #
 # MOUNT DISCIPLINE — the single biggest time-sink in this repo, and the reason
-# this uses $(CURDIR) rather than $(pwd). Copy these flags for an ad-hoc cargo
-# run; do not retype them:
+# this uses $(CURDIR) rather than $(pwd). For an ad-hoc cargo run, keep the
+# whole CARGO_IN_DOCKER prefix (`scripts/gate-lock.sh scripts/target-slot.sh
+# docker run …`) with SHOJIKU_TARGET_SLOTS=$(TARGET_SLOTS) and
+# SHOJIKU_TARGET_IMAGE=$(RUST_IMAGE) in the environment (make exports both),
+# not just the `docker run` flags: the target mount is added at run time, and
+# only under a gate lock with the pool on, so a bare copy builds into the host
+# engine/target — a different target from the gates', and the 13 GB the pool
+# exists to save:
 #   * mount the REPO ROOT at /repo and let -w select the subdirectory. A
 #     `cd engine` first, or a `$(pwd)` mount taken from the wrong cwd, makes a
 #     CORRECT change look broken: font-loading tests answer
@@ -450,7 +456,8 @@ WASM_MAX_GZIP := 3145728
 #     cache, and the symptom outlives the fix: the stale test binary keeps
 #     failing under a CORRECT mount. Recovery is to re-bake the path —
 #     `touch engine/layout/tests/e2e/main.rs` for one suite, or
-#     `docker volume rm shojiku-cargo` to start the cache over.
+#     `make clean:target SLOT=<k>` to start that target slot over (the
+#     poisoned binary lives in the target, not in the cargo volume).
 CARGO_VOLUME  ?= shojiku-cargo
 PNPM_VOLUME   ?= shojiku-pnpm
 RUSTUP_VOLUME ?= shojiku-rustup

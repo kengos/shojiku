@@ -325,7 +325,8 @@ takes `version-check-exempt: <reason>`, the same shape as
 > log names the holders. Taking over another tree's slot rebuilds only the
 > workspace crates — their fingerprints are dropped first, because cargo
 > judges freshness by file time and would otherwise run the other tree's
-> build. `make investigate:gates` shows who holds what; `make clean:target`
+> build. A gate that seems stuck may be waiting for a slot:
+> `make investigate:gates` shows who holds what; `make clean:target`
 > frees the disk (`SLOT=<k>` resets one slot), and also removes the
 > pre-pool `engine/target` a tree may still carry. `TARGET_SLOTS=<n>`
 > changes the pool size, `TARGET_SLOTS=0` turns it off; CI runs with it

@@ -1,5 +1,5 @@
 #!/bin/sh
-# A small POOL of cargo target volumes, shared by every worktree on the machine.
+# A small POOL of cargo target volumes, shared by every worktree of this user.
 #
 # Each worktree used to build its own `engine/target` on the bind mount — debug,
 # llvm-cov-target, release, wasm32 and the cross targets, 13-18 GB a tree — and
@@ -18,7 +18,8 @@
 #
 # THE LEASE. A slot is leased lazily, at a gate's first engine container, and
 # held until the OUTERMOST gate-lock.sh exits — so `make quiet T=verify` keeps
-# one slot for the whole run, and a gui-only gate never takes one. The lease is
+# one slot for the whole run, and a gui-only gate takes one only to build a
+# missing engine/wasm/pkg. The lease is
 # recorded in the gate's own lock dir (SHOJIKU_GATE_LOCK_DIR), which is how a
 # later container in the same run finds it. Outside a gate lock this script
 # leases nothing and runs docker unchanged.
@@ -44,11 +45,20 @@ set -eu
 
 slots=${SHOJIKU_TARGET_SLOTS:-0}
 prefix=${SHOJIKU_TARGET_VOLUME_PREFIX:-shojiku-target-}
+# Lease state is per USER (under $HOME) while the volumes are per Docker daemon:
+# right on Docker Desktop, where the daemon is per user too. Two users sharing
+# one Linux daemon would share slots without sharing leases — give each its own
+# SHOJIKU_TARGET_VOLUME_PREFIX there.
 pool_dir=${SHOJIKU_TARGET_POOL_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/shojiku/target-pool}
 image=${SHOJIKU_TARGET_IMAGE:-}
 
 say() { echo "target pool: $*" >&2; }
-alive() { [ -n "$1" ] && kill -0 "$1" 2>/dev/null; }
+# Only a plain positive pid: `kill -0 -1` / `kill -0 0` succeed (process-group
+# semantics), so a corrupted owner file would otherwise wedge a slot forever.
+alive() {
+  case $1 in ''|*[!0-9]*|0) return 1 ;; esac
+  kill -0 "$1" 2>/dev/null
+}
 in_use() { [ -n "$(docker ps -q --filter "volume=$prefix$1")" ]; }
 field() { sed -n "s/^$2 *: //p" "$1" 2>/dev/null | head -1; }
 
@@ -61,15 +71,21 @@ takeable() {
   ! in_use "$1"
 }
 
-# The allocation step is short, so one machine-wide mutex keeps two racers from
+# The allocation step is short, so one pool-wide mutex keeps two racers from
 # both reclaiming the same stale lease. Its own staleness is checked by pid.
+# A holder killed between the mkdir and writing its pid leaves a pid-less mutex;
+# after ~10s of seeing one, it is treated as dead too.
 mutex_take() {
+  spins=0
   while ! mkdir "$pool_dir/.alloc" 2>/dev/null; do
     holder=$(cat "$pool_dir/.alloc/pid" 2>/dev/null || true)
-    if [ -n "$holder" ] && ! alive "$holder"; then
+    spins=$((spins + 1))
+    if { [ -n "$holder" ] && ! alive "$holder"; } || { [ -z "$holder" ] && [ "$spins" -gt 50 ]; }; then
       rm -rf "$pool_dir/.alloc"
+      spins=0
       continue
     fi
+    if [ "$spins" -eq 25 ]; then say "waiting for the allocation mutex $pool_dir/.alloc (pid ${holder:-none})"; fi
     sleep 0.2
   done
   echo $$ > "$pool_dir/.alloc/pid"
@@ -123,12 +139,18 @@ acquire() {
           echo "pid     : ${SHOJIKU_GATE_PID:-$PPID}"
           echo "started : $(date '+%Y-%m-%d %H:%M:%S')"
         } > "$pool_dir/$k/lease/owner"
+        # The scrub debt lives in POOL state, not in the lock dir: last-tree is
+        # removed now and written back only after a scrub SUCCEEDS, so a scrub
+        # that is interrupted or fails leaves the slot owing one to whoever
+        # takes it next — including this tree.
         last=$(cat "$pool_dir/$k/last-tree" 2>/dev/null || true)
-        echo "$tree" > "$pool_dir/$k/last-tree"
+        if [ "$last" != "$tree" ]; then
+          rm -f "$pool_dir/$k/last-tree"
+          echo "$k" > "$lockdir/scrub"
+        fi
         date +%s > "$pool_dir/$k/last-used"
         mutex_drop
         echo "$k" > "$lockdir/slot"
-        if [ "$last" != "$tree" ]; then echo "$k" > "$lockdir/scrub"; fi
         echo "$k"
         return
       fi
@@ -167,6 +189,7 @@ case "${1:-}" in
     k=$(acquire "$lockdir" "$tree")
     if [ -f "$lockdir/scrub" ]; then
       scrub "$k"
+      echo "$tree" > "$pool_dir/$k/last-tree"
       rm -f "$lockdir/scrub"
     fi
     say "slot $k ($prefix$k) mounted at /repo/engine/target"
@@ -206,6 +229,8 @@ case "${1:-}" in
     mutex_take
     trap mutex_drop EXIT
     if [ -n "${2:-}" ]; then
+      # k becomes a path component below (rm -rf), so only a slot number passes.
+      case $2 in *[!0-9]*|0*) echo "clean: slot must be a number from 1, got '$2'" >&2; exit 2 ;; esac
       vols=$prefix$2
     else
       vols=$(docker volume ls -q --filter "name=^$prefix[0-9]+\$")
@@ -217,7 +242,14 @@ case "${1:-}" in
         continue
       fi
       if docker volume inspect "$vol" >/dev/null 2>&1; then
-        docker volume rm "$vol" >/dev/null
+        # A STOPPED container still pins the volume (a Ctrl-C before a --rm
+        # container started leaves one). Only ours reference these volumes.
+        stopped=$(docker ps -aq --filter "volume=$vol" --filter status=created --filter status=exited)
+        if [ -n "$stopped" ]; then docker rm $stopped >/dev/null || true; fi
+        if ! docker volume rm "$vol" >/dev/null; then
+          say "could not remove $vol — kept (docker ps -a --filter volume=$vol)"
+          continue
+        fi
         say "removed $vol"
       fi
       rm -rf "${pool_dir:?}/$k"
