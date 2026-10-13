@@ -14,6 +14,17 @@
 - Every map opens with the same preamble: the AI-only note, the
   read-before-searching rule, the update-in-same-PR rule, and a
   one-line granularity statement.
+- **One map is GENERATED, not hand-written**:
+  [engine-structure.md](engine-structure.md) — engine crate layers, the
+  per-file dispatch/recursion index over the item-tree enums, and every
+  non-test engine file's line count + the first sentence of its `//!` header. It is the COUNTED half of the
+  engine maps (the hand-written ones carry roles and contracts), so read it
+  alongside the component map for any engine change — and before adding a
+  per-variant match, to see how many copies of that shape already exist.
+  None of the rules below apply to it: never edit it by hand;
+  `make engine:map` regenerates it, `make engine:map-check` (in
+  `engine:lint`) fails on drift, and a merge conflict in it is resolved by
+  regenerating.
 - **Area-wide shared postures are stated ONCE near the top of the map**
   (e.g. "pure models never throw — hostile input degrades to null",
   "every multi-part edit is ONE `applyAll`"), never repeated per file

@@ -46,7 +46,7 @@ _engine-verify: _engine-lint _engine-coverage _engine-deny _reference-check _exa
 engine\:lint: ## engine/ line budget + //! headers + fmt --check + clippy -D warnings
 	@$(call gate,_engine-lint,engine:lint)
 
-_engine-lint: _engine-budget _engine-fmt _engine-clippy
+_engine-lint: _engine-budget _engine-map-check _engine-fmt _engine-clippy
 
 engine\:budget: ## .rs line budget + //! header check (scripts/check-line-budget.sh)
 	@$(call gate,_engine-budget,engine:budget)
@@ -54,6 +54,33 @@ engine\:budget: ## .rs line budget + //! header check (scripts/check-line-budget
 _engine-budget:
 	@echo "== line budget =="
 	@scripts/check-line-budget.sh
+
+# The GENERATED structure map (docs/code-map/engine-structure.md): crate
+# layers, the per-file dispatch/walk index over the item-tree enums, and the
+# module tree with each //! header's first sentence. Derived, so it can
+# only be current or wrong — the check rides `engine:lint`, which CI runs on
+# every .rs / Cargo.toml change, and site-docs.yml runs it on a docs-only PR
+# (a hand edit of the map itself). A merge conflict in the file is resolved by
+# `engine:map`, never by hand.
+#
+# Node in $(NODE_IMAGE) rather than a host pipeline: host grep/awk differ
+# between macOS and Linux (BSD grep has no `\b`), and the map must come out
+# byte-identical on both. The script needs no npm packages.
+ENGINE_MAP_IN_DOCKER = $(GATE_LOCK) docker run --rm \
+	-u "$$(id -u):$$(id -g)" \
+	-v "$(CURDIR):/repo" -w /repo \
+	$(NODE_IMAGE) node scripts/gen-engine-map.mjs
+
+engine\:map: ## Regenerate docs/code-map/engine-structure.md (the generated engine structure map)
+	@echo "== engine structure map =="
+	@$(ENGINE_MAP_IN_DOCKER)
+
+engine\:map-check: ## Fail if docs/code-map/engine-structure.md drifts from the engine tree
+	@$(call gate,_engine-map-check,engine:map-check)
+
+_engine-map-check:
+	@echo "== engine structure map =="
+	@$(ENGINE_MAP_IN_DOCKER) --check
 
 engine\:fmt: ## cargo fmt --check
 	@$(call gate,_engine-fmt,engine:fmt)
