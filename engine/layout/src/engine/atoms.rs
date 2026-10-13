@@ -7,7 +7,7 @@ use shojiku_core::{BorderStyleKind, ImageFit, ImageItem, Length, RectItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_image::asset_key;
 
-use super::anchor::{PendingAnchor, PendingEnd, PendingKind, PendingLine};
+use super::anchor::{PendingEnd, PendingKind, PendingLine};
 use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx};
 
 /// Splits a `double` line into the two parallel strokes CSS draws: each a
@@ -254,26 +254,13 @@ impl<'a, 'b> Ctx<'a, 'b> {
         };
         let double = line.style.style() == BorderStyleKind::Double;
         if anchored {
-            // Absolutely positioned: nothing is drawn and no placement is
-            // reported HERE — both are produced by the drain, from the
-            // target's page, in that page's coordinates.
-            self.pending_anchors.push(PendingAnchor {
-                kind: PendingKind::Line(PendingLine {
-                    from: PendingEnd::of(&line.from),
-                    to: PendingEnd::of(&line.to),
-                    stroke,
-                    double,
-                }),
-                path: self.current_path(),
-                id: line.id.clone(),
-                hidden: false,
-            });
-            return Atom {
-                height: 0.0,
-                items: Vec::new(),
-                boxes: Vec::new(),
-                rb: None,
+            let pending = PendingLine {
+                from: PendingEnd::of(&line.from),
+                to: PendingEnd::of(&line.to),
+                stroke,
+                double,
             };
+            return self.defer(PendingKind::Line(pending), line.id.clone());
         }
         let items = if double {
             double_lines(&stroke)

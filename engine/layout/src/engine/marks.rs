@@ -11,7 +11,6 @@ mod presence;
 #[cfg(test)]
 mod tests;
 
-use super::anchor::{PendingAnchor, PendingEllipse, PendingKind};
 use crate::tree::{LayoutItem, PathShape, RectShape};
 use shojiku_core::{CheckboxItem, EllipseItem, Length, OptBox, Style};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
@@ -73,29 +72,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // positioned for the same reason a line's anchor is, so it takes
         // no space here and `box.w`/`box.h` survive only as a size.
         if let Some(target) = &e.anchor {
-            let paint = self.shape_paint(&e.style_names, &e.style, "ellipse");
-            let b = e.box_.clone().unwrap_or_default();
-            let size = (
-                b.w.and_then(|l| self.resolve_x(Some(l), basis)),
-                b.h.and_then(|l| self.resolve_y(Some(l), basis)),
-            );
-            self.pending_anchors.push(PendingAnchor {
-                kind: PendingKind::Ellipse(PendingEllipse {
-                    target: target.clone(),
-                    paint,
-                    size,
-                    drawn: draw,
-                }),
-                path: self.current_path(),
-                id: e.id.clone(),
-                hidden: false,
-            });
-            return Some(Atom {
-                height: 0.0,
-                items: Vec::new(),
-                boxes: Vec::new(),
-                rb: None,
-            });
+            return self.defer_ellipse(e, target, basis, draw);
         }
         let (rb, w, h) = self.mark_box(&e.box_.clone().unwrap_or_default(), basis, None)?;
         let mut items = Vec::new();

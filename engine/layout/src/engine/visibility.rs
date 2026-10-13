@@ -9,6 +9,12 @@
 //! would let params drive the cost twice over; and the two fault
 //! diagnostics are pushed at evaluation, so a second evaluation would
 //! report the same mistake twice.
+//!
+//! The one exception is the max-content measurement (`intrinsic/leaf.rs`),
+//! which re-asks for a container's children so a collapsed one adds no
+//! width. It runs under a measure park, which discards the repeated faults,
+//! and only over containers a `flexBasis: content` or grid `auto` sizing
+//! measures.
 
 use shojiku_core::Item;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
@@ -49,7 +55,11 @@ impl Visibility {
 /// makes the reserved slot exactly the size it would have been: the
 /// height of a wrapped text block or an auto-height container is only
 /// knowable by measuring it.
-pub(in crate::engine) fn blank_if(atom: Atom, hidden: bool) -> Atom {
+///
+/// An ATOM is not everything a hidden item produced: anchored descendants
+/// were deferred instead of riding it, so a walk hides a child through
+/// [`Ctx::blank_child`], which stamps those too, never through this alone.
+fn blank_if(atom: Atom, hidden: bool) -> Atom {
     if hidden {
         blank(atom)
     } else {
@@ -57,7 +67,7 @@ pub(in crate::engine) fn blank_if(atom: Atom, hidden: bool) -> Atom {
     }
 }
 
-pub(in crate::engine) fn blank(atom: Atom) -> Atom {
+fn blank(atom: Atom) -> Atom {
     Atom {
         height: atom.height,
         items: Vec::new(),
@@ -82,9 +92,9 @@ pub(in crate::engine) fn blank(atom: Atom) -> Atom {
 /// mark rather than a value to transform.
 pub(in crate::engine) struct DrawMark {
     pages: Vec<(usize, usize)>,
-    /// How many anchored lines were deferred before this item was placed.
-    /// A deferred line never rides the atom blanking transforms, so it is
-    /// hidden HERE or not at all — see [`super::anchor`].
+    /// How many anchored items were deferred before this item was placed.
+    /// A deferred item never rides the pages this mark brackets, so it is
+    /// stamped from this count — see [`super::anchor`].
     anchors: usize,
 }
 
@@ -112,13 +122,7 @@ pub(in crate::engine) fn blank_since(
     mark: &DrawMark,
     anchors: &mut [super::anchor::PendingAnchor],
 ) {
-    // Deferred lines are STAMPED rather than dropped, which is what makes
-    // a hidden anchored line report where it would have drawn — the same
-    // contract the placements below get.
-    let from = mark.anchors.min(anchors.len());
-    for pending in &mut anchors[from..] {
-        pending.hidden = true;
-    }
+    stamp_anchors(anchors, mark.anchors);
     for (index, page) in pages.iter_mut().enumerate() {
         let (items, boxes) = mark.pages.get(index).copied().unwrap_or((0, 0));
         page.items.truncate(items);
@@ -136,7 +140,35 @@ pub(in crate::engine) fn blank_since(
     }
 }
 
+/// Stamps every anchored item deferred since `from` hidden. STAMPED rather
+/// than dropped, which is what makes a hidden anchored item report where it
+/// would have drawn — the same contract a hidden item's placements get.
+fn stamp_anchors(anchors: &mut [super::anchor::PendingAnchor], from: usize) {
+    for pending in anchors.iter_mut().skip(from) {
+        pending.hidden = true;
+    }
+}
+
 impl Ctx<'_, '_> {
+    /// Where hiding a flex or grid child starts, taken BEFORE the child is
+    /// laid out: `Some(count of deferred anchored items)` for a hidden
+    /// child, `None` for one that draws. [`Self::blank_child`] reads it.
+    pub(in crate::engine) fn hide_mark(&self, verdict: Visibility) -> Option<usize> {
+        (verdict == Visibility::Hidden).then_some(self.pending_anchors.len())
+    }
+
+    /// Hides one atom-returning child when `hide` (from [`Self::hide_mark`])
+    /// says so: blanks its atom AND stamps every anchored item deferred
+    /// while it was laid out — its own anchor, or any descendant's — since
+    /// those never rode the atom. A measure pass inside the child only ever
+    /// truncates back to its own entry length, never below the mark.
+    pub(in crate::engine) fn blank_child(&mut self, atom: Atom, hide: Option<usize>) -> Atom {
+        if let Some(from) = hide {
+            stamp_anchors(&mut self.pending_anchors, from);
+        }
+        blank_if(atom, hide.is_some())
+    }
+
     /// The verdict for one item. Enters the item's own path mark so a
     /// fault diagnostic lands on the item that authored the binding.
     fn visibility_at(&mut self, item: &Item, index: usize) -> Visibility {

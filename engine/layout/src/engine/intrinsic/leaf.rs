@@ -69,7 +69,15 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let mut total = 0.0_f64;
         let mut widest = 0.0_f64;
         let mut counted = 0usize;
-        for child in &container.items {
+        // A collapsed child generates no box in the row or column it sits
+        // in, so it adds neither width nor a gap here either. Evaluated under
+        // the caller's measure park, so a predicate fault is reported once,
+        // by the real walk, not by this measurement.
+        let visibility = self.child_visibility(&container.items);
+        for (child, verdict) in container.items.iter().zip(visibility) {
+            if verdict.is_collapsed() {
+                continue;
+            }
             let Some(kind) = FlexKind::of(child) else {
                 continue;
             };

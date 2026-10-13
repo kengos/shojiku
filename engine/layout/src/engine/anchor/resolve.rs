@@ -6,11 +6,10 @@
 //! coordinate half of a mixed line, which resolves here against the page
 //! margin box, is lifted by the top margin to match.
 
-use std::collections::HashMap;
-
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::band::{glyph_band, BAND_PAD_FRACTION};
+use super::index::{Lookup, TargetIndex};
 use super::{anchor_point, PendingAnchor, PendingEllipse, PendingEnd, PendingKind, PendingLine};
 use crate::boxes::PlacedBox;
 use crate::engine::marks::ellipse_cmds;
@@ -25,51 +24,6 @@ type Resolved = Option<(usize, Vec<LayoutItem>, PlacedBox)>;
 struct Landing {
     point: (f64, f64),
     page: Option<usize>,
-}
-
-/// Every anchorable placement, by id — built ONCE for the whole drain.
-///
-/// Resolution would otherwise be O(anchors x placements): both are driven by
-/// the template, so a document with many leaders over many rows would pay a
-/// product, which is a hang rather than a slowdown. One pass to build, one
-/// hash lookup per endpoint.
-///
-/// It is built BEFORE anything is drawn, which also settles a question the
-/// scan left to ordering: an anchored item is never itself an anchor TARGET.
-/// A line anchored to its own id resolves to nothing, and an A->B / B->A pair
-/// is impossible by construction rather than by luck.
-struct TargetIndex<'p> {
-    /// The first placement of each id, in (page, document) order.
-    first: HashMap<&'p str, (usize, &'p PlacedBox)>,
-    /// Ids with more than one placement on their own first page.
-    duplicated: std::collections::HashSet<&'p str>,
-}
-
-impl<'p> TargetIndex<'p> {
-    fn build(pages: &'p [PageBuild]) -> TargetIndex<'p> {
-        let mut first: HashMap<&str, (usize, &PlacedBox)> = HashMap::new();
-        let mut duplicated = std::collections::HashSet::new();
-        for (index, page) in pages.iter().enumerate() {
-            for b in &page.boxes {
-                let Some(id) = b.id.as_deref() else {
-                    continue;
-                };
-                match first.get(id) {
-                    // Only a repeat on the id's OWN page is ambiguous: the
-                    // same item on a later page is the ordinary
-                    // one-placement-per-page case.
-                    Some((page_of, _)) if *page_of == index => {
-                        duplicated.insert(id);
-                    }
-                    Some(_) => {}
-                    None => {
-                        first.insert(id, (index, b));
-                    }
-                }
-            }
-        }
-        TargetIndex { first, duplicated }
-    }
 }
 
 impl Ctx<'_, '_> {
@@ -95,11 +49,19 @@ impl Ctx<'_, '_> {
             let index = TargetIndex::build(pages);
             pending
                 .iter()
-                .map(|p| match &p.kind {
-                    PendingKind::Line(line) => {
-                        self.resolve_line(p, line, &index, basis, top_margin)
-                    }
-                    PendingKind::Ellipse(e) => self.resolve_ellipse(p, e, &index),
+                .map(|p| {
+                    // The drain runs after the walk has left every item, so
+                    // nothing else would locate what resolving raises (the
+                    // coordinate half of a mixed line resolves HERE).
+                    let mark = self.diags.len();
+                    let r = match &p.kind {
+                        PendingKind::Line(line) => {
+                            self.resolve_line(p, line, &index, basis, top_margin)
+                        }
+                        PendingKind::Ellipse(e) => self.resolve_ellipse(p, e, &index),
+                    };
+                    self.diags.set_missing_paths(mark, &p.path);
+                    r
                 })
                 .collect()
         };
@@ -253,14 +215,23 @@ impl Ctx<'_, '_> {
         p: &PendingAnchor,
         index: &TargetIndex<'p>,
     ) -> Option<(usize, &'p PlacedBox)> {
-        let Some(found) = index.first.get(id).copied() else {
-            self.anchor_fault(Code::AnchorUnknownTarget, p, Some(id));
-            return None;
-        };
-        if index.duplicated.contains(id) {
-            self.anchor_fault(Code::AnchorAmbiguousTarget, p, Some(id));
+        match index.lookup(id, p.band_page) {
+            Lookup::Found {
+                page,
+                target,
+                ambiguous,
+            } => {
+                if ambiguous {
+                    self.anchor_fault(Code::AnchorAmbiguousTarget, p, Some(id));
+                }
+                Some((page, target))
+            }
+            Lookup::ElsewhereOnly => None,
+            Lookup::Unknown => {
+                self.anchor_fault(Code::AnchorUnknownTarget, p, Some(id));
+                None
+            }
         }
-        Some(found)
     }
 
     /// Every anchor fault carries the authoring path of the ANCHORED item

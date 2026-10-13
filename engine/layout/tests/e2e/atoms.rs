@@ -3,6 +3,7 @@
 
 mod image;
 mod line_anchor;
+mod line_anchor_band;
 mod line_anchor_guards;
 mod line_anchor_targets;
 mod line_length;

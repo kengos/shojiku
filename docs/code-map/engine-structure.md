@@ -357,18 +357,20 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 130 files / 19424 lines; tests 267 files / 37484 lines
+### `layout` (L3) — 132 files / 19581 lines; tests 269 files / 37881 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
 - `src/color.rs` 32 — `#rrggbb` color parsing.
 - `src/engine.rs` 274 ▲ — Template + params -> positioned pages.
-- `src/engine/anchor.rs` 137 — Anchored line endpoints: the deferred record and its page resolution.
+- `src/engine/anchor.rs` 143 — Anchored line endpoints: the deferred record and its page resolution.
 - `src/engine/anchor/band.rs` 59 — The rectangle an anchored `ellipse` circles.
-- `src/engine/anchor/resolve.rs` 275 ▲ — The drain: every deferred item, resolved against the finished pages.
+- `src/engine/anchor/defer.rs` 85 — Deferral: the one place a [`PendingAnchor`] is made.
+- `src/engine/anchor/index.rs` 90 — The target index the drain resolves against: every anchorable placement, by page and id, built ONCE for the whole drain.
+- `src/engine/anchor/resolve.rs` 246 — The drain: every deferred item, resolved against the finished pages.
 - `src/engine/assemble.rs` 170 — The layout entry point: seeds the cascade root and the page basis, walks the body, then assembles each page as header + body + footer in sheet coordinates.
-- `src/engine/atoms.rs` 297 ▲ — Leaf item atoms: rect, image (contain/cover/stretch/none fit against the prepared asset store; cover/none clipped to the box, and every SVG clipped to it whatever the fit), and line.
-- `src/engine/band.rs` 201 — Header/footer bands: per-page item placement and `page_number` substitution ({page}/{pages}).
+- `src/engine/atoms.rs` 284 ▲ — Leaf item atoms: rect, image (contain/cover/stretch/none fit against the prepared asset store; cover/none clipped to the box, and every SVG clipped to it whatever the fit), and line.
+- `src/engine/band.rs` 204 — Header/footer bands: per-page item placement and `page_number` substitution ({page}/{pages}).
 - `src/engine/cell.rs` 193 — The slot-filling, data-scoped cell: the ONE home for the container a `repeat` places per array element and a table column's `cell:` places per row.
 - `src/engine/char_grid.rs` 242 — `type: char_grid` — genkoyoshi/kanji workbooks/application-form fixed character cells: the engine assigns one char per cell (school kinsoku hang-back included), draws the cell grid as stroked rects, and lays ruby (furigana) along each base run.
 - `src/engine/char_grid/cells.rs` 208 — Cell assignment for `char_grid`: sequential fill with the school kinsoku rule set, `［＃改ページ］` sheet breaks, large-writing span blocks, and the per-line placement notes.
@@ -387,7 +389,7 @@ first sentence of its `//!` header.
 - `src/engine/decoration/dash.rs` 54 — Dash-pattern derivation for `borderStyle: dashed | dotted`.
 - `src/engine/decoration/paint.rs` 213 — Box decoration as DATA: a decorated box's fully resolved paint, plus the pure emitter over it.
 - `src/engine/decoration/radius.rs` 89 — `borderRadius` resolution: an authored [`Length`] plus the box's own size become the concrete [`Corners`] the tree carries.
-- `src/engine/flex.rs` 273 ▲ — Flex child placement (box-model Phase 2): the shared box-children walk.
+- `src/engine/flex.rs` 272 ▲ — Flex child placement (box-model Phase 2): the shared box-children walk.
 - `src/engine/flex/baseline.rs` 40 — Row baseline alignment (`alignItems: baseline`): per-atom first-text baselines and the cross shifts that line them up.
 - `src/engine/flex/child.rs` 64 — Placing and measuring ONE flex/grid child.
 - `src/engine/flex/column.rs` 229 — The column side of the flex walk: the main-axis `flexGrow` pre-pass (heights measured, then shared) and the per-item main/cross offsets.
@@ -397,16 +399,16 @@ first sentence of its `//!` header.
 - `src/engine/flow.rs` 257 — Flow-section placement: the flow item walk and the absolute-body item walk; the paginating cursor lives in [`layouter`].
 - `src/engine/flow/layouter.rs` 101 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
 - `src/engine/fragments.rs` 104 — Per-page vertical extents of a paginating item's placed atoms, emitted as the item's own `PlacedBox` fragments (one per page it spans).
-- `src/engine/grid.rs` 295 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
+- `src/engine/grid.rs` 294 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
 - `src/engine/grid/cells.rs` 189 — Cell assignment and `auto` column measurement.
 - `src/engine/grid/span.rs` 107 — Grid span placement: the occupancy map that assigns each grid child its `(column, row)` cell honoring `columnSpan`/`rowSpan`.
 - `src/engine/grid/tracks.rs` 254 — `TrackSpec` resolution: the wire form (count or track list) to per-track pt sizes, with the hostile-input caps — track counts and list lengths clamp to `MAX_GRID_TRACKS` with a diagnostic, negative tracks clamp to 0, and `rows: N` needs a definite height to split.
 - `src/engine/intrinsic.rs` 109 — Max-content (intrinsic) width measurement — the ONE machine two consumers read: the flex row planner's `flexBasis: content` sizing and the grid's `auto` COLUMN tracks.
-- `src/engine/intrinsic/leaf.rs` 119 — Per-kind max-content width: the text leaf and the container recursion.
+- `src/engine/intrinsic/leaf.rs` 127 — Per-kind max-content width: the text leaf and the container recursion.
 - `src/engine/link.rs` 155 — Hyperlink resolution: interpolates `link.url` against the current data scope, then gates the resolved value before it enters the tree — layout is the trust boundary; renderers emit whatever the tree carries without judgment.
 - `src/engine/list.rs` 249 — List items: a bounded per-element list — one line per array entry, clamped at the last fitting entry with a count-aware overflow line (`他{count}件`).
 - `src/engine/list/vertical.rs` 163 — Vertical list building: each array entry is one COLUMN, laid right-to-left (the first entry rightmost).
-- `src/engine/marks.rs` 297 ▲ — Form marks (`ellipse`, `checkbox`): box-inscribed vector shapes whose *presence* is params-driven but whose *geometry* is template-fixed — an unmatched mark still reserves its box, so the blank↔filled one-template workflow never shifts layout between params sets.
+- `src/engine/marks.rs` 274 ▲ — Form marks (`ellipse`, `checkbox`): box-inscribed vector shapes whose *presence* is params-driven but whose *geometry* is template-fixed — an unmatched mark still reserves its box, so the blank↔filled one-template workflow never shifts layout between params sets.
 - `src/engine/marks/presence.rs` 59 — Form-mark presence: turns a `MarkBinding` into "draw / don't draw" against the current data scope, warning on the two params shapes the predicate cannot use.
 - `src/engine/meta.rs` 197 — Document-metadata resolution: interpolates the `document:` block against params, then gates every resolved value before it enters the tree — layout is the trust boundary here exactly as it is for `link.url` (see `engine/link.rs`); renderers write what the tree carries without judgment.
 - `src/engine/overflow.rs` 135 — The horizontal-overflow policy: the one home for every "does this reach past the box that holds it?" check, so the rules can be read against each other instead of being inferred from three call sites.
@@ -457,7 +459,7 @@ first sentence of its `//!` header.
 - `src/engine/text/vrich.rs` 226 — Vertical rich-text blocks: the `spans` counterpart of [`super::rich`] when `writingMode: vertical_rl`.
 - `src/engine/text/vrich/place.rs` 87 — Vertical rich column positioning: one wrapped column's pieces into stacked [`TextRun`]s with the shaped extent / hung-exclusion bases.
 - `src/engine/translate.rs` 82 — Whole-item translation over the layout tree: shifting positioned items vertically (flow cursor, margins) and horizontally (flex placement), recursing into clip groups.
-- `src/engine/visibility.rs` 190 — Params-conditional item visibility: turns an item's `visible:` binding into one of three placement verdicts, and blanks the atom of a hidden one.
+- `src/engine/visibility.rs` 222 — Params-conditional item visibility: turns an item's `visible:` binding into one of three placement verdicts, and blanks the atom of a hidden one.
 - `src/font.rs` 235 — Font loading and text measurement.
 - `src/font/face.rs` 260 — A loaded font face: glyph mapping, advance measurement, and outline extraction (y-down, cubics only) for pixel backends.
 - `src/font/face/decoration.rs` 52 — Decoration-line metrics (`textDecoration`): underline and strikeout positions scaled from the face's font tables, with conventional fallbacks and hostile-value clamps.

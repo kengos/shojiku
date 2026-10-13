@@ -21,7 +21,7 @@ use crate::tree::LayoutItem;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::flex::{emit_slots, h_auto_margin, FlexKind, Slot};
-use super::visibility::{self, Visibility};
+use super::visibility::Visibility;
 use super::{Atom, Basis, Ctx};
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -122,7 +122,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             if visibility[i].is_collapsed() {
                 continue;
             }
-            let hidden = visibility[i] == Visibility::Hidden;
+            let hide = self.hide_mark(visibility[i]);
             let mark = self.enter_item(format!("items[{i}]"));
             match FlexKind::of(child) {
                 Some(kind) => {
@@ -157,17 +157,16 @@ impl<'a, 'b> Ctx<'a, 'b> {
                         // was placed in spills over its neighbour.
                         self.check_track_width(&atom, &basis, cell.cols);
                         // Horizontal auto margins act within the cell run.
-                        slots.push(Slot::Flex(visibility::blank_if(
-                            h_auto_margin(atom, &basis),
-                            hidden,
-                        )));
+                        slots.push(Slot::Flex(
+                            self.blank_child(h_auto_margin(atom, &basis), hide),
+                        ));
                         cells.push(cell);
                     }
                 }
                 None => {
                     if let Some((atom, dy)) = self.absolute_child_atom(child, inner, depth) {
                         self.check_child_right(&atom, inner, clipped);
-                        slots.push(Slot::Abs(visibility::blank_if(atom, hidden), dy));
+                        slots.push(Slot::Abs(self.blank_child(atom, hide), dy));
                     }
                 }
             }

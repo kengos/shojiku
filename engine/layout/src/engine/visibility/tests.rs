@@ -101,9 +101,9 @@ fn blank_since_keeps_pages_a_hidden_item_opened() {
 
 #[test]
 fn blank_since_stamps_deferred_anchors_instead_of_dropping_them() {
-    // A deferred anchored item never rides the atom that blanking
-    // transforms, so hiding it happens HERE or not at all — and it is
-    // STAMPED, not dropped, because a hidden item still reports where it
+    // A deferred anchored item never rides the pages the mark brackets,
+    // so hiding it is a separate stamp from the mark's anchor count — and it
+    // is STAMPED, not dropped, because a hidden item still reports where it
     // would have drawn.
     let pending = |path: &str| super::super::anchor::PendingAnchor {
         kind: super::super::anchor::PendingKind::Ellipse(super::super::anchor::PendingEllipse {
@@ -121,6 +121,7 @@ fn blank_since_stamps_deferred_anchors_instead_of_dropping_them() {
         path: path.to_string(),
         id: None,
         hidden: false,
+        band_page: None,
     };
     let mut anchors = vec![pending("items[0]"), pending("items[1]")];
     let mut pages = vec![PageBuild::default()];

@@ -269,3 +269,43 @@ fn an_unanchored_unsized_ellipse_still_warns_rather_than_guessing() {
         "{diags:?}"
     );
 }
+
+#[test]
+fn an_anchored_ellipse_with_a_non_positive_size_warns_and_is_skipped() {
+    // The same guard an unanchored ellipse gets: an authored size that is
+    // zero or negative is a mistake, not a mirror image or a collapsed
+    // path. Each axis is checked, and the other one may be left unset.
+    for size in ["w: -40, h: 30", "w: 0", "h: -1", "w: 80, h: 0"] {
+        let out = with_answer_full(&format!(", id: ring, box: {{ {size} }}"), "");
+        assert!(
+            path_shapes(&out.document.pages[0]).is_empty(),
+            "{size}: must not draw"
+        );
+        assert!(
+            !out.boxes.pages[0]
+                .iter()
+                .any(|b| b.id.as_deref() == Some("ring")),
+            "{size}: a skipped mark reports no placement"
+        );
+        let d = out
+            .diagnostics
+            .iter()
+            .find(|d| d.code == "mark_missing_size")
+            .unwrap_or_else(|| panic!("{size}: must warn, got {:?}", out.diagnostics));
+        assert_eq!(d.path.as_deref(), Some("sections.body.items[1]"), "{size}");
+    }
+}
+
+#[test]
+fn an_anchored_ellipse_with_one_axis_authored_keeps_the_band_on_the_other() {
+    let (bare, _) = circled("", "");
+    let (_, _, _, bh) = only_oval(&bare.pages[0]);
+    let (sized, diags) = circled(", box: { w: 80 }", "");
+    assert!(diags.is_empty(), "{diags:?}");
+    let (_, _, w, h) = only_oval(&sized.pages[0]);
+    assert_eq!(w, 80.0);
+    assert!(
+        (h - bh).abs() < 1e-9,
+        "the unset axis keeps the band height"
+    );
+}

@@ -204,7 +204,9 @@ glyphs).
 ## Limitations
 
 - An `ellipse` needs a positive `box.w`/`box.h`; only a `checkbox`, or an
-  `ellipse` with `anchor:`, may omit them (`mark_missing_size`).
+  `ellipse` with `anchor:`, may omit them (`mark_missing_size`). An
+  anchored `ellipse` that DOES author one must make it positive too — a
+  zero or negative axis warns the same code and skips the mark.
 - An anchored `ellipse` is not draggable on the canvas — the Designer's
   placement tab carries the anchor picker instead, and withholds the
   coordinates the engine does not read. Its clearance is not authorable:
@@ -212,7 +214,9 @@ glyphs).
 - An anchored `ellipse` ignores `box.x`/`box.y`, resolves to the FIRST
   placement of that id on the page (`anchor_ambiguous_target` when there
   is more than one), and draws nothing when the id is unknown
-  (`anchor_unknown_target`).
+  (`anchor_unknown_target`). In a header or footer it is drawn once per
+  page and each copy resolves on its own page, exactly as an anchored
+  [`line`](line.md) endpoint does.
 - Per-side `borderWidth` is reduced to the top side
   (`shape_border_sides_ignored`), and a radius is refused
   (`border_radius_ignored`).
