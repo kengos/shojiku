@@ -354,7 +354,7 @@ ERROR_LOG := $(LOG_DIR)/last-error.log
 # Which TREE did that PASS/FAIL describe? Every gate line says so, because this
 # is the one way to drift that has no other tell. A cwd drift into a non-repo
 # announces itself (`No rule to make target`); a drift into the PRIMARY CHECKOUT
-# does not — it has a Makefile, a full source tree and a warm engine/target, so
+# does not — it has a Makefile, a full source tree and a warm build slot, so
 # the gate runs to completion and prints PASS for main while you believe you
 # gated your branch. An agent harness that resets cwd between tool calls makes
 # that the DEFAULT outcome for a worktree session, not an accident. The fix is
@@ -432,8 +432,9 @@ WASM_MAX_GZIP := 3145728
 # bare name is a named volume, an absolute path is a host bind mount. CI passes
 # paths so a restored cache lands where the container will look, which is what
 # lets the pipeline run these very targets instead of a hand-copied set of
-# cargo flags that drifts from them. `engine/target/` needs no such switch —
-# it is inside the repository mount, so it is already on the host.
+# cargo flags that drifts from them. The target needs no such switch: under CI
+# the pool is off and `engine/target/` is inside the repository mount, so the
+# restored cache is already where cargo looks (TARGET_SLOTS above).
 #
 # MOUNT DISCIPLINE — the single biggest time-sink in this repo, and the reason
 # this uses $(CURDIR) rather than $(pwd). Copy these flags for an ad-hoc cargo

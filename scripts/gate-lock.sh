@@ -1,7 +1,7 @@
 #!/bin/sh
 # One gate at a time, per working tree.
 #
-# Two gates running in ONE tree corrupt each other: they share `engine/target`,
+# Two gates running in ONE tree corrupt each other: they share one cargo target,
 # and the tell is a cargo error blaming a test rather than your code ("the
 # binary the runner was about to execute was deleted underneath it"). That is
 # easy to hit from an agent harness, where a "quick" second command lands while

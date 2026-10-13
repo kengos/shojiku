@@ -93,8 +93,10 @@ holders() {
   while [ "$k" -le "$slots" ]; do
     owner="$pool_dir/$k/lease/owner"
     if [ -f "$owner" ]; then
-      printf '  slot %s: %s (pid %s, since %s)\n' "$k" "$(field "$owner" tree)" \
-        "$(field "$owner" pid)" "$(field "$owner" started)" >&2
+      pid=$(field "$owner" pid)
+      if alive "$pid"; then note=""; else note=", DEAD — its container is still running"; fi
+      printf '  slot %s: %s (pid %s%s, since %s)\n' "$k" "$(field "$owner" tree)" \
+        "$pid" "$note" "$(field "$owner" started)" >&2
     elif in_use "$k"; then
       printf '  slot %s: no lease, but a running container still mounts %s%s\n' \
         "$k" "$prefix" "$k" >&2
@@ -143,6 +145,8 @@ acquire() {
 
 scrub() {
   vol=$prefix$1
+  # A volume that does not exist yet is created empty by the run: nothing to drop.
+  docker volume inspect "$vol" >/dev/null 2>&1 || return 0
   if [ -z "$image" ]; then
     say "slot $1 changed tree but SHOJIKU_TARGET_IMAGE is unset — cannot scrub"; exit 1
   fi
