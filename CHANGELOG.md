@@ -15,6 +15,17 @@ platform binaries.
 
 ### Added
 
+- **Shift an attached line end by a few points.** When a line's end is
+  attached to another item, its Layout tab now shows two fields under that
+  end — Start offset X / Y or End offset X / Y — that move the end off the
+  point it was attached to, for example 4pt short of a total's left edge.
+  The fields take points only, negatives included; a positive Y moves the
+  end down. Emptying a field or entering 0 removes that shift, a value with
+  a unit such as `2mm` is not accepted, and each change or ▲▼ click is one
+  undo step. An end placed by coordinates has no such fields, because its
+  own X and Y already say where it goes. Until now the shift could only be
+  written in the YAML.
+
 - **Switch an image between a fixed picture and a data field.** An image's
   Content tab now opens with the same Content source choice a text has:
   Fixed image or Data binding. Switching to Data binding removes the
@@ -828,6 +839,13 @@ platform binaries.
   browser's own report, with a trace and a screenshot of the moment it broke.
 
 ### Fixed
+
+- **The warning for a line end shifted too far now names that line and the
+  real number.** When an attached end's offset puts it past ±1,000,000pt,
+  the line is not drawn and `length_out_of_range` warns. The warning used
+  to carry no item path, so the Designer could not point at the line, and
+  it quoted the offset's X even when the Y was at fault. It now carries the
+  line's path and the coordinate the end would have landed on.
 
 - **Switching a text back from Data binding no longer brings back another
   item's sentence.** The mixed text a switch to Data binding drops is kept

@@ -204,8 +204,55 @@ sections:
         json!({}),
     );
     assert!(line_shapes(&doc.pages[0]).is_empty(), "must not be drawn");
-    assert!(
-        diags.iter().any(|d| d.code == "length_out_of_range"),
-        "must warn like every other over-range length: {diags:?}"
+    let d = diags
+        .iter()
+        .find(|d| d.code == "length_out_of_range")
+        .unwrap_or_else(|| panic!("must warn like every other over-range length: {diags:?}"));
+    // The warning points at the LINE — the item that can be fixed — like
+    // every other anchor fault.
+    assert_eq!(d.path.as_deref(), Some("sections.body.items[1]"), "{d:?}");
+}
+
+/// The capped point as the warning reports it: `(value, path)`.
+fn capped(offset: &str) -> (Option<f64>, Option<String>) {
+    let (doc, diags) = with_target(&format!(
+        "{{ type: line, from: {{ x: 0, y: 0 }}, to: {{ item: target, offset: {offset} }} }}"
+    ));
+    assert!(line_shapes(&doc.pages[0]).is_empty(), "must not be drawn");
+    let d = diags
+        .iter()
+        .find(|d| d.code == "length_out_of_range")
+        .unwrap_or_else(|| panic!("must warn: {diags:?}"));
+    assert_eq!(arg_num(d, "max"), Some(1_000_000.0));
+    (arg_num(d, "value"), d.path.clone())
+}
+
+#[test]
+fn the_cap_warning_names_the_resolved_coordinate_not_the_offset() {
+    // The target's centre is (120, 110). The cap is on where the point
+    // LANDS, so the number the message calls a "resolved length" is the
+    // centre plus the offset — 1_000_010, not the authored 999_890.
+    let (value, path) = capped("{ x: 999890 }");
+    assert_eq!(value, Some(1_000_010.0));
+    assert_eq!(path.as_deref(), Some("sections.body.items[1]"));
+}
+
+#[test]
+fn the_cap_warning_names_the_axis_at_fault() {
+    // An in-range x beside an over-range y: the warning must name the y
+    // that broke the cap, never the harmless x.
+    let (value, _) = capped("{ x: 3, y: 1000000 }");
+    assert_eq!(value, Some(1_000_110.0));
+}
+
+#[test]
+fn an_offset_landing_exactly_on_the_cap_still_draws() {
+    let (doc, diags) = with_target(
+        "{ type: line, from: { x: 0, y: 0 }, to: { item: target, offset: { x: 999880 } } }",
     );
+    assert!(
+        !diags.iter().any(|d| d.code == "length_out_of_range"),
+        "{diags:?}"
+    );
+    assert_eq!(only_line(&doc.pages[0]).2, 1_000_000.0);
 }

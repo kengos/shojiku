@@ -70,7 +70,11 @@ Wire types stay in core; content measurement stays in layout.
   box; an unsized oval takes that band plus `BAND_PAD_FRACTION` clearance,
   the deferred analogue of the text `mark:` overlay's `DEFAULT_PAD_EM`.
   An `offset` is capped against `MAX_RESOLVED_PT` here — it is the one
-  endpoint value that never passes through `resolve_x`/`_y`.
+  endpoint value that never passes through `resolve_x`/`_y`. The cap is on
+  where the point LANDS (target edge point + offset): `anchor_point`
+  returns the first out-of-range resolved coordinate (`x` before `y`), and
+  `length_out_of_range` carries that value and the anchored item's path,
+  like every anchor fault.
   **`Ctx.pending_anchors` is parked by `begin_measure`/`end_measure`**: a
   throwaway measure pass (flex cross-size, table row, grid cell) would
   otherwise leave a record behind and the item would be drawn twice. Hidden (`visible:`) deferred items are STAMPED by

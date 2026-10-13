@@ -224,14 +224,20 @@ impl Ctx<'_, '_> {
         let (page, target) = self.find_target(&a.item, p, index)?;
         // A shift past the resolve cap drops the item with the same code
         // an over-range `%` endpoint gets, rather than sending an
-        // unrenderable coordinate to the backend.
-        let Some(point) = anchor_point(target, a) else {
-            self.diags.push(
-                Diagnostic::new(Code::LengthOutOfRange)
-                    .arg("value", a.offset().x)
-                    .arg("max", shojiku_layout_box::MAX_RESOLVED_PT),
-            );
-            return None;
+        // unrenderable coordinate to the backend. It carries the ANCHORED
+        // item's path, like every anchor fault, so the warning points at the
+        // line that can be fixed.
+        let point = match anchor_point(target, a) {
+            Ok(point) => point,
+            Err(value) => {
+                self.diags.push(
+                    Diagnostic::new(Code::LengthOutOfRange)
+                        .with_path(p.path.clone())
+                        .arg("value", value)
+                        .arg("max", shojiku_layout_box::MAX_RESOLVED_PT),
+                );
+                return None;
+            }
         };
         Some(Landing {
             point,

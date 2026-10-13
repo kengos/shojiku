@@ -72,6 +72,7 @@ export function ItemPanel(props: ItemPanelProps) {
         path={props.path}
         controller={props.controller}
         capabilities={props.capabilities}
+        gridStep={props.gridStep}
       />
     ) : (
       <BoxSection {...props} />

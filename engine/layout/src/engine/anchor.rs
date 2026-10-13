@@ -112,18 +112,26 @@ pub(super) fn edge_point(b: &PlacedBox, edge: AnchorEdge) -> (f64, f64) {
     }
 }
 
-/// The anchor point of `b` including the authored offset, or `None` when
-/// the shift puts it past the resolve cap.
+/// The anchor point of `b` including the authored offset — or, when the
+/// shift puts it past the resolve cap, `Err` carrying the first RESOLVED
+/// coordinate out of range (`x` before `y`), which is the value the
+/// `length_out_of_range` warning names. Not the offset: the cap is on
+/// where the point lands, so an offset of 3 can be the axis at fault no
+/// more than an in-range `x` can be.
 ///
 /// An `offset` reaches the tree without passing through `resolve_x`/`_y`,
 /// so it is the one endpoint value that could carry an unbounded
 /// coordinate to the render boundary — where `1e300f64 as f32` is
 /// `INFINITY` and the stroke is silently dropped. Capped here against the
 /// same bound every other resolved length obeys.
-pub(super) fn anchor_point(b: &PlacedBox, a: &AnchorPoint) -> Option<(f64, f64)> {
+pub(super) fn anchor_point(b: &PlacedBox, a: &AnchorPoint) -> Result<(f64, f64), f64> {
     let (x, y) = edge_point(b, a.edge());
     let off = a.offset();
     let (x, y) = (x + off.x, y + off.y);
     let sane = |v: f64| v.is_finite() && v.abs() <= MAX_RESOLVED_PT;
-    (sane(x) && sane(y)).then_some((x, y))
+    match (sane(x), sane(y)) {
+        (true, true) => Ok((x, y)),
+        (false, _) => Err(x),
+        (true, false) => Err(y),
+    }
 }

@@ -4,9 +4,11 @@
 // values are the only position a line has.
 //
 // An endpoint is EITHER coordinates (`{ x, y }`, both required) or an anchor
-// to another item (`{ item, edge? }`) — never a mix, and the engine refuses
-// the mix at parse. So there is no "remove the key" state within an arm: an
-// empty or unparseable entry is REFUSED, leaving the document as it was, and
+// to another item (`{ item, edge?, offset? }`) — never a mix, and the engine
+// refuses the mix at parse. (The anchored arm's `offset` has its own model,
+// `lineOffset.ts`.) So a REQUIRED key (`x`, `y`, `item`) has no "remove the
+// key" state: an empty or unparseable entry is REFUSED, leaving the document
+// as it was (only the optional `edge` and `offset` are removed), and
 // switching arms reconciles BOTH sides' keys in one transactional op (a stale
 // `x` left beside an `item` is exactly the shape the engine rejects).
 // Writes keep the authored form — a bare number stays a number (pt), a
@@ -36,10 +38,10 @@ export const LINE_EDGES = ['top', 'right', 'bottom', 'left', 'center'] as const;
  * non-finite number). Both arms are present; which one is LIVE is read from
  * `item` being non-empty, never from a mode flag. */
 export type LinePointsView = Readonly<Record<LinePointField | LineAnchorField, string>> & {
-  /** Whether each endpoint authors an `offset:` map. Not a text field — the
-   * panel does not edit it — but the arm switch must know, because removing
-   * a key the document does not carry REFUSES the whole op batch, and the
-   * batch is what makes the switch one undo step. */
+  /** Whether each endpoint authors an `offset:` key. The offset's own fields
+   * read it through `lineOffset`; this flag is for the arm switch, which
+   * drops it — removing a key the document does not carry REFUSES the whole
+   * op batch, and the batch is what makes the switch one undo step. */
   readonly offsets: Readonly<Record<LineEnd, boolean>>;
   /** Whether each endpoint carries an `item:` key AT ALL — which is not the
    * same as `item` reading as non-empty. An id this panel will not display

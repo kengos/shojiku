@@ -58,9 +58,11 @@ const key = (index: number) => `p:sections.body.items[${index}]`;
 function Harness({
   source,
   capabilities,
+  gridStep = 0,
 }: {
   readonly source: string;
   readonly capabilities?: readonly string[];
+  readonly gridStep?: number;
 }) {
   const editor = useEditor(source);
   return (
@@ -70,8 +72,10 @@ function Harness({
         path={PATH}
         controller={editor}
         capabilities={capabilities}
+        gridStep={gridStep}
       />
       <pre data-testid="doc">{editor.text}</pre>
+      <span data-testid="canUndo">{String(editor.canUndo)}</span>
       <button type="button" data-testid="undo" onClick={editor.undo}>
         undo
       </button>
@@ -208,6 +212,7 @@ describe('LinePointsEditor — the anchored arm', () => {
             view={readLinePoints(editor.read, path)}
             path={path}
             controller={editor}
+            gridStep={0}
           />
           <button
             type="button"
@@ -391,5 +396,124 @@ describe('LinePointsEditor refusal snap-back', () => {
     fireEvent.blur(screen.getByLabelText('End X'), { target: { value: 'abc' } });
     expect((screen.getByLabelText('End X') as HTMLInputElement).value).toBe('40');
     expect((screen.getByLabelText('Start X') as HTMLInputElement).value).toBe('17');
+  });
+});
+
+describe("LinePointsEditor — an anchored endpoint's offset", () => {
+  const OFFSET = ANCHORED.replace('edge: left }', 'edge: left, offset: { x: 4 } }');
+  const field = (name: string) => screen.getByLabelText(name) as HTMLInputElement;
+
+  it('shows the offset pair under an ANCHORED endpoint only', () => {
+    // Read from the wire: the end carries `item`, the start does not — and an
+    // engine reporting no capabilities still shows it, as it does the
+    // item/edge pickers (an anchored document already needs that engine).
+    render(<Harness source={OFFSET} capabilities={[]} />);
+    expect(field('End offset X').value).toBe('4');
+    expect(field('End offset Y').value).toBe('');
+    expect(field('End offset Y').placeholder).toBe('0');
+    expect(field('End offset X').inputMode).toBe('decimal');
+    expect(screen.queryByLabelText('Start offset X')).toBeNull();
+    expect(screen.queryByLabelText('Start offset Y')).toBeNull();
+  });
+
+  it('commits a typed number as ONE undo step', () => {
+    render(<Harness source={ANCHORED} />);
+    const before = doc();
+    fireEvent.blur(field('End offset Y'), { target: { value: '-3' } });
+    expect(doc()).toContain('offset: { y: -3 }');
+    expect(doc()).toContain('item: total');
+    expect(field('End offset Y').value).toBe('-3');
+    fireEvent.click(screen.getByTestId('undo'));
+    expect(doc()).toBe(before);
+  });
+
+  it('steps by the grid, one undo step per click', () => {
+    render(<Harness source={OFFSET} gridStep={0.5} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Increase End offset X' }));
+    expect(doc()).toContain('offset: { x: 4.5 }');
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease End offset Y' }));
+    expect(doc()).toContain('offset: { x: 4.5, y: -0.5 }');
+    fireEvent.click(screen.getByTestId('undo'));
+    expect(doc()).toContain('offset: { x: 4.5 }');
+    expect(doc()).not.toContain('y: -0.5');
+  });
+
+  it('steps by 1pt when the grid is off', () => {
+    render(<Harness source={ANCHORED} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Increase End offset X' }));
+    expect(doc()).toContain('offset: { x: 1 }');
+  });
+
+  it('refuses a unit and takes the text back off the screen', () => {
+    // `2mm` is a whole-document parse error on this key.
+    render(<Harness source={OFFSET} />);
+    const before = doc();
+    fireEvent.blur(field('End offset X'), { target: { value: '2mm' } });
+    expect(doc()).toBe(before);
+    expect(field('End offset X').value).toBe('4');
+  });
+
+  it('removes the whole offset when its last axis is emptied', () => {
+    render(<Harness source={OFFSET} />);
+    fireEvent.blur(field('End offset X'), { target: { value: '' } });
+    expect(doc()).not.toContain('offset');
+    expect(doc()).toContain('to: { item: total, edge: left }');
+  });
+
+  it('writes nothing for an entry that names the same number', () => {
+    // `4.0` over an authored `4` gets past the field's text guard, so only
+    // the model stands between it and a same-value write — which would land,
+    // change no text, and still leave an undo step behind.
+    render(<Harness source={OFFSET} />);
+    fireEvent.blur(field('End offset X'), { target: { value: '4.0' } });
+    expect(screen.getByTestId('canUndo').textContent).toBe('false');
+    expect(field('End offset X').value).toBe('4');
+  });
+
+  it('shows a value the engine cannot read, with the ▲▼ off and saying why', () => {
+    render(
+      <Harness source={ANCHORED.replace('edge: left }', 'edge: left, offset: { x: "2mm" } }')} />,
+    );
+    expect(field('End offset X').value).toBe('2mm');
+    const up = screen.getByRole('button', { name: 'Increase End offset X' }) as HTMLButtonElement;
+    expect(up.disabled).toBe(true);
+    expect(screen.getByText('Replace with a number in pt, e.g. -2')).toBeTruthy();
+    // …and replacing it with a number makes the document readable again.
+    fireEvent.blur(field('End offset X'), { target: { value: '2' } });
+    expect(doc()).toContain('offset: { x: 2 }');
+  });
+
+  it('gives BOTH attached ends their own pair, each writing its own end', () => {
+    // A line attached at both ends shows four distinct names; a field that
+    // edited the other end, or two fields sharing a name, would pass every
+    // single-end case.
+    const BOTH = OFFSET.replace(
+      'from: { x: 0, y: 2 }',
+      'from: { item: total, edge: right, offset: { y: 2 } }',
+    );
+    render(<Harness source={BOTH} />);
+    expect(field('Start offset X').value).toBe('');
+    expect(field('Start offset Y').value).toBe('2');
+    expect(field('End offset X').value).toBe('4');
+    expect(field('End offset Y').value).toBe('');
+    fireEvent.blur(field('Start offset X'), { target: { value: '7' } });
+    expect(doc()).toContain('from: { item: total, edge: right, offset: { y: 2, x: 7 } }');
+    expect(doc()).toContain('to: { item: total, edge: left, offset: { x: 4 } }');
+  });
+
+  it('treats a bare `offset:` as no shift — no warning bubble, and ▲ writes', () => {
+    render(<Harness source={ANCHORED.replace('edge: left }', 'edge: left, offset: ~ }')} />);
+    expect(screen.queryByText('Replace with a number in pt, e.g. -2')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Increase End offset X' }));
+    expect(doc()).toContain('offset: { x: 1 }');
+  });
+
+  it('drops the offset with the switch back to coordinates, in one step', () => {
+    render(<Harness source={OFFSET} capabilities={['line.anchor']} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Use coordinates' }));
+    expect(doc()).not.toContain('offset');
+    expect(screen.queryByLabelText('End offset X')).toBeNull();
+    fireEvent.click(screen.getByTestId('undo'));
+    expect(doc()).toContain('offset: { x: 4 }');
   });
 });
