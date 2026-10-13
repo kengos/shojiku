@@ -181,13 +181,13 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 78 files / 10315 lines; tests 96 files / 13825 lines
+### `core` (L1) — 79 files / 10433 lines; tests 97 files / 13987 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
 - `src/definitions.rs` 95 — `definitions` — the data dictionary for the Designer, AI, and validation.
 - `src/definitions/schema.rs` 279 ▲ — The OpenAPI-style schema node: types, constraints, the Shojiku authoring keys, and the `(type, format)` → field-type mapping.
-- `src/definitions/shape.rs` 192 — Structural checks over a definitions schema: the root must be an object, nesting/node/enum caps hold, and structural keys sit on the right base types (serde can't express those conditionals).
+- `src/definitions/shape.rs` 196 — Structural checks over a definitions schema: the root must be an object, nesting/node/enum caps hold, and structural keys sit on the right base types (serde can't express those conditionals).
 - `src/edges.rs` 262 — Box-edge insets: per-side `margin` / `padding` values on item boxes.
 - `src/error.rs` 187 — The crate error type for parsing untrusted input artifacts.
 - `src/geometry.rs` 225 — Positioning core — page geometry and box model.
@@ -201,9 +201,10 @@ first sentence of its `//!` header.
 - `src/length.rs` 229 — Template length values: absolute points/physical units, a percentage of the parent, or a font-relative `em`/`rem`.
 - `src/lib.rs` 67 — Shojiku data model.
 - `src/params.rs` 50 — `params` — runtime data supplied by the calling application.
-- `src/parse.rs` 78 — Two-pass typed parse shared by the template and definitions entry points.
+- `src/parse.rs` 89 — Two-pass typed parse shared by the template and definitions entry points.
+- `src/parse/keys.rs` 99 — Every mapping key in a template is a string, checked on the pass-1 `Value` before the typed parse reads the document.
 - `src/parse/locate.rs` 127 — Re-locates a template parse failure that the tagged-enum buffering cut short.
-- `src/parse/nesting.rs` 120 — The template nesting bound, checked on the pass-1 `Value` before the typed parse reads the document.
+- `src/parse/nesting.rs` 124 — The template nesting bound, checked on the pass-1 `Value` before the typed parse reads the document.
 - `src/ruby.rs` 283 ▲ — Aozora-bunko markup (`|base《reading》` ruby + `［＃…］` notes) — the `markup: aozora` grammar for `char_grid` content.
 - `src/ruby/grammar.rs` 121 — `［＃…］` note-body grammars beyond the sheet break: the large-writing span notes and the per-line placement notes.
 - `src/ruby/note.rs` 42 — `［＃…］` aozora notes inside `markup: aozora` content: the scan that finds a note's body and recognizes the sheet break.

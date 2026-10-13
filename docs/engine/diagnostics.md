@@ -62,7 +62,8 @@ and a render pass), keeping the first occurrence.
 
 ## Parse errors
 
-Malformed YAML/JSON, non-finite numbers (`.nan`/`.inf`), unknown keys
+Malformed YAML/JSON, non-finite numbers (`.nan`/`.inf`), a template mapping
+key that is not a string, unknown keys
 anywhere in the template (**every wire struct rejects them** — a typo'd
 key is never a silent no-op), negative padding, `padding: auto`,
 shorthand edge strings, invalid page sizes, and unknown enum values are

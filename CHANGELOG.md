@@ -2572,6 +2572,19 @@ platform binaries.
   rejects it as TLS 1.3 requires. Rendering, signing and verifying never open a
   connection and are unaffected.
 
+- **A template key written as a number is refused, closing a second way past
+  the nesting cap.** Inside an item or the page body, a plain integer key such
+  as `5:` was read as one of that object's fields by position rather than
+  rejected, so `{ type: container, 5: [ … ] }` quietly meant `items: [ … ]`.
+  The check that refuses containers nested past 32 levels before the document
+  is read counts only keys spelled `items`, so a chain written with the number
+  got past it, and a deep enough one could again run the reading thread out of
+  stack and end the process. A template now refuses any mapping key that is not
+  a string (a number, `true`, `null`, or a list or map used as a key) with a
+  parse error naming where it sits. No valid template needed one. A style or
+  format named by a number now has to be quoted (`"5":`), where it used to be
+  read as the name `5`.
+
 ## [0.2.0] - 2026-08-08
 
 ### Added

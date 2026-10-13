@@ -143,9 +143,15 @@ injected at parse). The template model splits along CSS lines.
   parse error, which keeps the walks over that `Value` stack-safe, pinned
   by a model test. It does NOT bound the TYPED parse — the tagged-enum
   buffering is a second recursion, far deeper per level — which is what the
-  `Bound` is for: `parse/nesting.rs` for a template, `definitions/shape.rs`
-  `check_depth` for definitions. A new recursive wire type needs its own
+  `Bound` is for: `parse/keys.rs` then `parse/nesting.rs` for a template,
+  `definitions/shape.rs` `check_depth` for definitions. A new recursive wire type needs its own
   bound there, not a post-parse cap.**
+  `parse/keys.rs` — the template's first bound: every mapping key (tags
+  peeled) must be a STRING, else a `Located` parse error at the holding
+  mapping's path (composite keys named by kind, never quoted). Why: the
+  tagged-enum buffering reads a plain integer key as a field NUMBER
+  (`5:` on a container = `items:`), which also slipped past nesting's
+  `items:` count — pinned by a 61-deep `5:` chain on a 2 MiB thread.
   `parse/nesting.rs` — the template bound: counts nesting of `items:`
   SEQUENCES whatever the `type` beside them (every Item-in-Item passes through
   one, and `locate` re-reads every one), refusing past `MAX_CONTAINER_DEPTH`

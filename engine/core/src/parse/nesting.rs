@@ -20,6 +20,10 @@
 //! would leave `locate` unbounded, since it re-reads every `items:` sequence it
 //! finds, including one under an item whose type takes none.
 //!
+//! Only string keys are read. A non-string one could still be read as
+//! `items` — the buffered struct takes a plain integer as a field NUMBER — so
+//! the template parse refuses it before this walk runs ([`super::keys`]).
+//!
 //! The walk itself recurses once per `Value` level and so shares the parser's
 //! bound, like every other walk over the pass-1 tree.
 

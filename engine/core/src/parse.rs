@@ -5,7 +5,9 @@
 //! [`crate::yaml_guard`]) and applies the caller's nesting [`Bound`]: the
 //! typed parse recurses far deeper per level than the `Value` did, so how
 //! deep it may go is decided here, on the tree already in hand, rather than
-//! discovered by running out of stack. Pass 2 deserializes the typed model straight
+//! discovered by running out of stack. (A template's bound also refuses a
+//! non-string key first, which the buffering below could misread as a field
+//! — see [`keys`].) Pass 2 deserializes the typed model straight
 //! from the source string through `serde_path_to_error`, so a structural
 //! error (unknown key, wrong type, bad enum variant) carries the field
 //! PATH and the YAML line/column. `serde_yaml::from_value` drops both,
@@ -48,11 +50,19 @@ pub(crate) fn parse_checked<T: DeserializeOwned>(
 }
 
 /// [`parse_checked`] for a template, whose items are the tagged enum the
-/// module doc warns about: their nesting is bounded first (see [`nesting`]),
-/// and an in-item failure is re-located to the item that raised it (see
-/// [`locate`]).
+/// module doc warns about: a key the buffering could misread as a field
+/// number is refused first (see [`keys`]), their nesting is bounded next
+/// (see [`nesting`]), and an in-item failure is re-located to the item that
+/// raised it (see [`locate`]).
 pub(crate) fn parse_template_checked<T: DeserializeOwned>(input: &str) -> Result<T, CoreError> {
-    parse_with(input, "template", nesting::template, locate::item_fault)
+    parse_with(input, "template", template_bound, locate::item_fault)
+}
+
+/// The template's pass-1 checks, in order: the key check first, because the
+/// nesting bound counts `items:` keys and a non-string key is a way past it.
+fn template_bound(raw: &serde_yaml::Value) -> Result<(), CoreError> {
+    keys::template(raw)?;
+    nesting::template(raw)
 }
 
 fn parse_with<T: DeserializeOwned>(
@@ -72,6 +82,7 @@ fn parse_with<T: DeserializeOwned>(
     })
 }
 
+mod keys;
 pub(crate) mod locate;
 mod nesting;
 #[cfg(test)]
