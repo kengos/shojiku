@@ -178,9 +178,10 @@ Responses:
 ```
 
 The Designer sends this on an explicit save when the PM edited the
-data-item definitions (labels, types, formats, descriptions, added
-fields) — AFTER the template save succeeded, and only when something
-actually changed. `rev` is the `definitionsRev` from
+data-item definitions (labels, types, formats, descriptions, value
+rules, display keys, added fields, and renamed or deleted items — see
+[v1 boundaries](#v1-boundaries)) — AFTER the template save succeeded,
+and only when something actually changed. `rev` is the `definitionsRev` from
 `GET projects/{projectId}` when you issued one. Responses follow the
 template-save shape: `200` with an optional next `{ "rev": … }`, `409`
 for a concurrency conflict (the Designer keeps the working copy and
@@ -236,9 +237,32 @@ recovery; a successful server save clears it.
 
 ## v1 boundaries
 
-- **Definitions edits are metadata + added fields only**: the Designer
-  never renames a field KEY or deletes a field (both fan out into
-  template bindings and params). Structural rewrites stay server-side.
+- **The Designer can rename and delete data items, and rewrites only
+  the template being edited.** Renaming a field, group, table or list
+  rewrites every reference the open template makes to it, or refuses
+  the rename and changes nothing; the template save then carries the
+  new name and the definitions save carries the renamed key. Deleting
+  one changes the definitions only and leaves the template's references
+  in place. Nothing else changes: the project's other templates keep
+  the old name, and so do your stored params and the sample params.
+  - Other templates: once the definitions save lands, their references
+    to the old name get no data and Diagnostics reports them as not
+    defined.
+  - Params: params still keyed by the old name are reported as unknown
+    keys, and the renamed references read nothing from them (missing
+    data) — in the mounted preview right away, whose sample params keep
+    the old key, and in production as the template and definitions
+    saves land.
+  - The two saves are separate requests. A header rename saves the
+    template alone, and a definitions save can fail after the template
+    save succeeded, so until the next explicit save succeeds your
+    stored template can name a key your stored definitions do not have
+    yet.
+
+  Before the PM confirms, the Designer warns that other templates are
+  not rewritten (and, for a delete, that it cannot check them). It says
+  nothing about your params: migrating other templates and production
+  params is yours.
 - **Sample params stay engineer-owned**: read-only in the mounted
   Designer, never part of any save payload.
 - **No template create/delete** from the Designer; manage the template

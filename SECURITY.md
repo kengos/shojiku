@@ -80,10 +80,13 @@ against:
 
 - **Rendering, signing and verification make no network calls.** Fetch
   exists only at authoring and bundle time, in a host-only crate.
-- **`engine/deny.toml` carries zero advisory ignores**, with `yanked =
-  "deny"`. Adding an ignore requires written justification, and the
-  krilla/fontations migration removed the last two exceptions by
-  dropping those dependencies entirely.
+- **`engine/deny.toml` ignores no vulnerability advisory**, with `yanked =
+  "deny"`. It carries one ignore: RUSTSEC-2024-0449, the notice that
+  unsafe-libyaml (the YAML parser under serde_yaml) is unmaintained. The
+  notice names no flaw; the argument is written beside the entry, and the
+  entry is dropped with the move off serde_yaml. Adding an ignore requires
+  written justification, and the krilla/fontations migration removed the
+  two earlier exceptions by dropping those dependencies entirely.
 - **Five fuzz targets** run against the hostile-input surface:
   `pdf_document`, `contents_window`, `cms_container`, `trust_anchors`
   and `verify_document`.

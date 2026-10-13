@@ -376,7 +376,9 @@ every crate in `engine/`:
 - `cargo llvm-cov --workspace --fail-under-lines 100` (see
   [../guidelines.md](../guidelines.md) for the exclusion policy — no
   wholesale exclusions to hit the number)
-- `cargo deny` (licenses + advisories, **zero ignores** in deny.toml)
+- `cargo deny` (licenses + advisories; **no vulnerability advisory
+  ignored** in deny.toml — its one ignore is an unmaintained notice for
+  unsafe-libyaml under serde_yaml, argued there)
 - The line budget / `//!` role-header check
   (`scripts/check-line-budget.sh`) and the docker build/render/scan job
 

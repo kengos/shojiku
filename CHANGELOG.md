@@ -853,7 +853,7 @@ platform binaries.
   Every other check on the Designer runs in jsdom, which never lays anything
   out — so "nothing is clipped", "nothing overlaps", "this menu opens the right
   way" were claims no gate could read, however green the build was. The
-  The tooltip fix below is what made that concrete: nine tooltips were being
+  tooltip fix below is what made that concrete: nine tooltips were being
   cut in the shipped app, across four different parts of the window, while
   every check we had called the build green.
 
@@ -862,6 +862,25 @@ platform binaries.
   browser's own report, with a trace and a screenshot of the moment it broke.
 
 ### Fixed
+
+- **The guide for hosting the Designer now says it can rename and delete
+  data items.** `docs/designer-mount.md` still promised that the Designer
+  never renames or deletes a field, after the data-item editor learned to
+  do both. A host that relied on the promise would miss that a saved
+  definitions file can now drop or rename a key. The guide now says what
+  a rename rewrites (the open template and the definitions), what a
+  delete changes (the definitions only), and what both leave alone: the
+  project's other templates, your stored params and the sample params,
+  which keep the old name. It also says that the template and
+  definitions saves are separate requests, so a stored template can name
+  a key the stored definitions do not have yet.
+
+- **The security page and `SECURITY.md` no longer say that cargo-deny
+  ignores no advisory.** Since the notice that unsafe-libyaml (the YAML
+  parser serde_yaml uses) is unmaintained was accepted, `deny.toml` has
+  carried one ignore. They now say what is true: no vulnerability
+  advisory is ignored, and the one ignore is that notice, argued in
+  `deny.toml` and removed with the move off serde_yaml.
 
 - **The warning for a line end shifted too far now names that line and the
   real number.** When an attached end's offset puts it past ±1,000,000pt,
