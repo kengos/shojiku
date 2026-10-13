@@ -1,5 +1,5 @@
 ---
-title: Playground
+title: "Edit the YAML in your browser"
 description: "Change the YAML and the rendering changes with it — the engine's WebAssembly build runs inside the page."
 ---
 

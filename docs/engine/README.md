@@ -5,7 +5,7 @@ reference:
   summary: "The reference index: every authorable key, one page per feature."
 ---
 
-# Shojiku template reference
+# Template reference
 
 The complete authorable surface of the Shojiku engine, one page per
 feature (MDN-style): what you can write in `templates.yml`, what each
@@ -35,7 +35,7 @@ implemented-capability inventory and the decision log — *that* a feature
 exists and why it is shaped that way; the pages here carry only *how to
 author it*. It lives in the repository only and is not part of this
 rendered reference; the reader-facing tour of what the engine does is the
-site's own [Features](https://shojiku.pages.dev/features) page.
+site's own [Features](https://shojiku.kengos.jp/features) page.
 
 ## A minimal template
 

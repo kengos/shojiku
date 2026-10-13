@@ -18,7 +18,7 @@
     in the CLI and every other Shojiku SDK.
   </description>
   <!-- The product's site. The repository is <scm> below, not this. -->
-  <url>https://shojiku.pages.dev</url>
+  <url>https://shojiku.kengos.jp</url>
 
   <!-- The workspace's tri-license: any of these, at the user's option. -->
   <licenses>

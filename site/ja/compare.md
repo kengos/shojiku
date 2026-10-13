@@ -1,5 +1,5 @@
 ---
-title: 比較
+title: "他ツールとの比較"
 description: "HTML/CSS系、プログラムで描くPDFライブラリ、pdfme、Typst/LaTeX。それぞれの得意分野と、Shojikuの位置。"
 ---
 
