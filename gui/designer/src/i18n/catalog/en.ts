@@ -379,6 +379,9 @@ export const en: LanguageCatalog = {
     'help.textMark.title': 'A circle around the text',
     'help.textMark.body':
       'Draws an oval around the printed characters, centered on them and sized to fit, so it still fits when the font or the wording changes. It never moves the text or anything around it. It can also be drawn only when a data field has a given value, the way a form circles the chosen option. It is not drawn on vertical text.',
+    'help.errorCorrection.title': 'How much damage it survives',
+    'help.errorCorrection.body':
+      'How much of the printed code can be dirty, torn or covered and still scan (the % beside each level). A higher level can need more modules (the black and white squares) for the same content, so each one is smaller; in a small box they can drop under 1pt, which warns that the code may not scan (it is still drawn). The level is a minimum: depending on the content, the code may already be drawn at a higher level, so the canvas can stay the same.',
     'help.rubySize.title': 'The reading printed beside a kanji',
     'help.rubySize.body':
       'How large the furigana is. Left unset, the engine draws it at 0.4 of the cell.',
@@ -958,6 +961,14 @@ export const en: LanguageCatalog = {
     'panel.fit.stretch': 'Stretch (the proportions change)',
     'panel.fit.none': 'Original size (anything larger than the box is cut)',
     'panel.fit.unsupported': '{mode} (not supported by this engine)',
+    'panel.field.errorCorrection': 'Error correction',
+    'panel.qr.ecDefault': '(Default: M, medium)',
+    'panel.qr.ecInvalid': '{value} (invalid value)',
+    'panel.qr.ecUnreadable': '(invalid value)',
+    'panel.qr.ec.low': 'L: low (about 7%)',
+    'panel.qr.ec.medium': 'M: medium (about 15%)',
+    'panel.qr.ec.quartile': 'Q: quartile (about 25%)',
+    'panel.qr.ec.high': 'H: high (about 30%)',
     'panel.column.kindConfirm.kindCount': '{kind} ×{n}',
     'panel.column.kindConfirm.otherKind': 'Other',
     'panel.column.styleHintDrawnNoValign':

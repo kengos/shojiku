@@ -397,6 +397,9 @@ export const ja: LanguageCatalog = {
     'help.textMark.title': '文字を丸で囲む',
     'help.textMark.body':
       '印刷される文字のまわりに楕円を描きます。文字に合わせて中央に置き、大きさも合わせるので、フォントや文言を変えても自動で合います。文字や周りの配置は動きません。データ項目が特定の値のときだけ描くこともでき、帳票で選ばれた項目に丸を付けるのに使えます。縦書きの文字には描かれません。',
+    'help.errorCorrection.title': '汚れや欠けへの強さ',
+    'help.errorCorrection.body':
+      '印刷したコードのどのくらいまでが汚れ・欠け・隠れても読み取れるかの目安です（各レベルの %）。レベルを上げると、同じ内容でもモジュール（白黒の四角）が増えて、一つずつが小さくなることがあります。小さな枠では 1pt を下回り、読み取れないおそれがあるという警告が出ます（コードは描かれます）。選んだレベルは下限です。内容によっては、すでに上のレベルで描かれていて、キャンバスが変わらないことがあります。',
     'help.rubySize.title': '漢字に添えるふりがな',
     'help.rubySize.body': 'ルビの文字サイズです。未指定ならマスの 0.4 倍で描きます。',
     'help.kinsoku.title': '行頭に置けない文字',
@@ -974,6 +977,14 @@ export const ja: LanguageCatalog = {
     'panel.fit.stretch': '引き伸ばす（縦横の比率が変わる）',
     'panel.fit.none': '元のサイズ（枠より大きい部分は切る）',
     'panel.fit.unsupported': '{mode}（このエンジンでは未対応）',
+    'panel.field.errorCorrection': '誤り訂正レベル',
+    'panel.qr.ecDefault': '（既定：M 標準）',
+    'panel.qr.ecInvalid': '{value}（無効な値）',
+    'panel.qr.ecUnreadable': '（無効な値）',
+    'panel.qr.ec.low': 'L：低（約7%）',
+    'panel.qr.ec.medium': 'M：標準（約15%）',
+    'panel.qr.ec.quartile': 'Q：やや高（約25%）',
+    'panel.qr.ec.high': 'H：高（約30%）',
     'panel.column.kindConfirm.kindCount': '{kind} {n} 個',
     'panel.column.kindConfirm.otherKind': 'その他',
     'panel.column.styleHintDrawnNoValign':

@@ -1402,13 +1402,14 @@ Item.qr_code.bindings: >-
   options the bare `{key}` grammar cannot.
 Item.qr_code.errorCorrection: >-
   How much damage the code tolerates. Defaults to `medium`. A higher level
-  needs more modules for the same content, and content is capped at 1 KiB
+  can need more modules for the same content, and content is capped at 1 KiB
   (`qr_content_too_long`) because params are untrusted and modules fan out into
-  tree items.
+  tree items. The level is a minimum: while the content still fits the same
+  code size at a higher level, the code is drawn at that level.
 EcLevel: >-
   A QR code's error-correction level, tolerating roughly 7, 15, 25 and 30
   percent damage respectively. `low`, `medium`, `quartile` and `high` are the
-  ISO 18004 levels; a higher one needs more modules for the same content.
+  ISO 18004 levels; a higher one can need more modules for the same content.
 Item.list: >-
   A bounded per-element list: an array field rendered one entry per line,
   clamping at the last fitting entry and ending with an overflow line when

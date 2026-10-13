@@ -1,8 +1,8 @@
 // The 「interpret ruby notation in this content」 switch, on the CONTENT tab.
 //
-// Its own leaf rather than more lines in `ContentSection.tsx`, which sits nine
-// executable lines under the cap: gating inside the component costs that file one
-// import and one mount instead of a type test, a capability test and a mount.
+// Its own leaf rather than more lines in `ContentSection.tsx`, the router every
+// content-bearing type passes through: gating inside the component costs that file
+// one import and one mount instead of a type test, a capability test and a mount.
 //
 // It carries BOTH its gates for the same reason `HiddenHeaderToggle` does — the
 // type test, because only a `char_grid` has this key, and the capability test,

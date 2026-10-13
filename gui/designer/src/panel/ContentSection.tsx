@@ -3,7 +3,9 @@
 // surfaces live in `contentImage.tsx` (image) and `contentParts.tsx` (page
 // number), the iterable section in `IterableSourceSection.tsx`, and a table's
 // collapsible sections (columns, rows, pages, empty data, header groups) in
-// `TableContentSections.tsx`.
+// `TableContentSections.tsx`. Under the pair sit two leaves that carry their own
+// gates: `CharGridMarkupField.tsx` (the item type and an engine capability) and
+// `QrErrorCorrectionField.tsx` (the item type).
 
 import type { Op } from '@shojiku/designer-core';
 import { useEffect, useRef } from 'react';
@@ -24,6 +26,7 @@ import { type ContentMode, MARK_TYPES } from './itemView';
 import { MarkSection } from './MarkSection';
 import { applyPanelOp, switchContentOps, textAsBinding } from './model';
 import { chipsFor, HelpfulHeading, itemBindingTarget } from './panelHelpers';
+import { QrErrorCorrectionField } from './QrErrorCorrectionField';
 import { SpansSection } from './SpansSection';
 import { TableContentSections } from './TableContentSections';
 
@@ -141,6 +144,8 @@ export function ContentSection(props: ItemPanelProps) {
           interprets the CONTENT above, so it sits under it rather than with the
           grid geometry on the placement tab. */}
       <CharGridMarkupField {...props} />
+      {/* qr_code only: how the content above is encoded. */}
+      <QrErrorCorrectionField {...props} />
     </section>
   );
 }

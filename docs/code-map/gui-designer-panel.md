@@ -1072,8 +1072,27 @@ presence is not a text binding.
   the control is a toggle, never a three-state select; an unrecognised
   markup value reads as OFF rather than as a half-on toggle whose off path
   would delete a key the document meant. The component carries BOTH its
-  gates (the item type and `char_grid.markup.aozora`) so `ContentSection`,
-  nine executable lines under the cap, grows by an import and a mount.
+  gates (the item type and `char_grid.markup.aozora`) so `ContentSection`
+  grows by an import and a mount.
+- `panel/qrErrorCorrection.ts` + `panel/QrErrorCorrectionField.tsx` — a QR
+  code's `errorCorrection` (an item-ROOT key, never under `style`), on the
+  CONTENT tab under the content it encodes, mounted the same way. Its only
+  gate is the item type: every engine that offers `qr_code` reads the key.
+  A native select: a default row that CLEARS the key, then the four `EcLevel`
+  spellings (picking `medium` writes it, so unset and explicit read apart),
+  then a row for any other value the file carries, marked invalid — a string
+  or a number as itself, any other shape (an empty string, a boolean, a list,
+  a map) as `UNREADABLE_LEVEL` — never the default row, since every released
+  engine refuses each as a whole-document parse error. `errorCorrectionOf`
+  returns `{ shown, present }` so the default row can remove an invalid
+  value (a `~` already shows AS the default, so picking it writes nothing);
+  `errorCorrectionOp` is null for a re-pick and for the default row over no
+  key (a removal there fails on the missing key). The `?` says the level is a MINIMUM (the encoder
+  raises it while the content fits the same code size), so a pick need not
+  change the canvas. A table column of kind `qr_code` has no such key (the
+  engine rejects it as an unknown field and encodes a column QR at
+  `medium`), so the column form offers none; a `qr_code` ITEM inside a
+  column's `cell:` is an ordinary item and gets this field.
 - `panel/pickerModel.ts` — pure binding-picker model: `bindingScopeFor`
   (the enclosing row scope; unparseable → document scope),
   `pickerOptions` (rows with live sample values via `sampleValueFor`,
@@ -1369,7 +1388,7 @@ presence is not a text binding.
   also the catalog SEGMENT `help.<topic>.title`/`.body`, so a topic is two
   strings rather than another branch; `FieldHelp` over the parallel
   `FieldHelpTopic` vocabulary — `rulingWidth`/`rubySize`/`kinsoku`/
-  `styleNames`/`link` — for the `?` on ONE field rather than a section heading,
+  `styleNames`/`link`/`errorCorrection` — for the `?` on ONE field rather than a section heading,
   attached on the criterion that the field's NAME does not let a reader
   with little IT background infer what it does (`Cell size` is excluded
   by that criterion, not by oversight); `chipsFor`,

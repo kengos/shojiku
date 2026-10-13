@@ -649,7 +649,7 @@
       "type": "object"
     },
     "EcLevel": {
-      "description": "A QR code's error-correction level, tolerating roughly 7, 15, 25 and 30 percent damage respectively. `low`, `medium`, `quartile` and `high` are the ISO 18004 levels; a higher one needs more modules for the same content.",
+      "description": "A QR code's error-correction level, tolerating roughly 7, 15, 25 and 30 percent damage respectively. `low`, `medium`, `quartile` and `high` are the ISO 18004 levels; a higher one can need more modules for the same content.",
       "enum": [
         "low",
         "medium",
@@ -1838,7 +1838,7 @@
                   "type": "null"
                 }
               ],
-              "description": "How much damage the code tolerates. Defaults to `medium`. A higher level needs more modules for the same content, and content is capped at 1 KiB (`qr_content_too_long`) because params are untrusted and modules fan out into tree items."
+              "description": "How much damage the code tolerates. Defaults to `medium`. A higher level can need more modules for the same content, and content is capped at 1 KiB (`qr_content_too_long`) because params are untrusted and modules fan out into tree items. The level is a minimum: while the content still fits the same code size at a higher level, the code is drawn at that level."
             },
             "id": {
               "description": "A stable name for this item, adding a lookup alias beside its path in the `inspect` box index.",

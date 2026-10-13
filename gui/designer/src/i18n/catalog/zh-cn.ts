@@ -329,6 +329,9 @@ export const zhCn: LanguageCatalog = {
     'help.textMark.title': '给文字加圈',
     'help.textMark.body':
       '在印出的文字周围画一个椭圆，以文字为中心并贴合其大小，因此字体或文字变化后仍会贴合。它不会移动文字或周围的任何内容。也可以只在某个数据字段为指定值时才画，就像表单上圈出所选的选项。竖排文字上不会画出。',
+    'help.errorCorrection.title': '对污损的耐受程度',
+    'help.errorCorrection.body':
+      '印刷出的码最多可有多大比例被弄脏、破损或遮挡而仍能识别（即各等级旁的 %）。等级越高，相同内容可能需要更多模块（黑白小方块），每个模块也就越小；在小框中模块可能小于 1pt，此时会提示可能无法扫描（码仍会绘制）。所选等级是下限：视内容而定，码可能已按更高的等级绘制，画布因此可能不变。',
     'help.rubySize.title': '汉字旁的注音',
     'help.rubySize.body': '注音文字的大小。不设置时以格子的 0.4 倍绘制。',
     'help.kinsoku.title': '不能出现在行首的字',
@@ -878,6 +881,14 @@ export const zhCn: LanguageCatalog = {
     'panel.fit.stretch': '拉伸（宽高比例改变）',
     'panel.fit.none': '原始大小（超出框的部分被裁切）',
     'panel.fit.unsupported': '{mode}（此引擎不支持）',
+    'panel.field.errorCorrection': '纠错等级',
+    'panel.qr.ecDefault': '（默认：M，中等）',
+    'panel.qr.ecInvalid': '{value}（无效值）',
+    'panel.qr.ecUnreadable': '（无效值）',
+    'panel.qr.ec.low': 'L：低（约 7%）',
+    'panel.qr.ec.medium': 'M：中（约 15%）',
+    'panel.qr.ec.quartile': 'Q：较高（约 25%）',
+    'panel.qr.ec.high': 'H：高（约 30%）',
     'panel.column.kindConfirm.kindCount': '{kind} {n} 个',
     'panel.column.kindConfirm.otherKind': '其他',
     'panel.column.styleHintDrawnNoValign':
