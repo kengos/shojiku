@@ -1,5 +1,6 @@
 // The FONT / LOCALE / wasm half of the assembly: copy every font pack (splitting
-// an oversized face into the chunk slices the index plans), every locale pack,
+// an oversized face into the chunk slices the index plans, and carrying the
+// pack's license text beside its faces), every locale pack,
 // and the built wasm `pkg/`. Returns what the driver needs to write the two
 // indexes. Coverage-excluded (scripts/ is not a coverage target) — the chunk
 // plan it calls is unit-tested in src/build.
@@ -8,7 +9,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 // `.ts` extensions: node runs this script under type stripping (no bundler), so
 // the runtime import of the pure logic needs the explicit extension.
-import { CHUNK_SIZE, planFace } from '../src/build/assemble.ts';
+import { CHUNK_SIZE, packTextFiles, planFace } from '../src/build/assemble.ts';
 import { copyFile, ensureDir, FACE_EXT, FONTS, LOCALES, OUT, PKG } from './assembleIo.ts';
 
 /** Copy a face whole, or write its chunk slices, per the index plan. */
@@ -31,11 +32,15 @@ export function assembleFonts(): { id: string; faces: { name: string; size: numb
     if (!statSync(srcDir).isDirectory()) {
       continue;
     }
-    const faceNames = readdirSync(srcDir).filter((f) => FACE_EXT.test(f));
+    const names = readdirSync(srcDir);
+    const faceNames = names.filter((f) => FACE_EXT.test(f));
     const faces = faceNames.map((name) => ({ name, size: statSync(join(srcDir, name)).size }));
     const outDir = join(OUT, 'fonts', id);
     ensureDir(outDir);
     copyFile(join(srcDir, 'manifest.yml'), join(outDir, 'manifest.yml'));
+    for (const text of packTextFiles(id, names)) {
+      copyFile(join(srcDir, text), join(outDir, text));
+    }
     for (const face of faces) {
       emitFace(srcDir, outDir, face.name, face.size);
     }

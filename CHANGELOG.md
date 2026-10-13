@@ -863,6 +863,17 @@ platform binaries.
 
 ### Fixed
 
+- **The hosted Designer now serves each font's license beside the font.**
+  The Designer site ships the bundled font packs so the editor can draw
+  with them, but it copied only the font files and their manifests, so
+  `OFL.txt`, `BIZ_UD_Gothic_OFL.txt` and the IPA Font License Agreement
+  never reached it. Those licenses are what make redistributing the fonts
+  allowed, and both require the license text to travel with the font.
+  Each pack's text files (its license, plus IPAmj Mincho's own readme)
+  are now copied with it, and a pack with no license text fails the build
+  instead of deploying. The Docker image and the CLI's packs archive
+  already carried them.
+
 - **The guide for hosting the Designer now says it can rename and delete
   data items.** `docs/designer-mount.md` still promised that the Designer
   never renames or deletes a field, after the data-item editor learned to

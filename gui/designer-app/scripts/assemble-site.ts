@@ -1,7 +1,8 @@
 // Assemble the static-deploy data tree the app fetches at runtime. Thin IO over
 // the pure decisions in src/build/: glob the bundled presets' manifests, copy
 // each preset's files, build the catalog; copy every font pack, splitting
-// oversized faces into chunks (Cloudflare Pages caps files at 25 MiB); copy
+// oversized faces into chunks (Cloudflare Pages caps files at 25 MiB) and
+// checking its license texts landed in the output; copy
 // every locale pack + its index (a preset whose engineLocale has no engine
 // builtin needs its pack text at setLocale); copy the wasm pkg.
 // Coverage-excluded (scripts/ is not a coverage target) — the
@@ -13,14 +14,33 @@
 //   Usage (from gui/): pnpm --filter @shojiku/designer-app assemble
 //   Output: gui/designer-app/dist/data/  (run after `vite build`)
 
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 // `.ts` extensions: node runs this script under type stripping (no bundler), so
 // the runtime import of the pure logic needs the explicit extension.
-import { buildCatalog, buildFontIndex, buildLocaleIndex } from '../src/build/assemble.ts';
+import {
+  buildCatalog,
+  buildFontIndex,
+  buildLocaleIndex,
+  packTextFiles,
+} from '../src/build/assemble.ts';
 import { assembleFonts, assembleLocales, copyPkg } from './assembleAssets.ts';
-import { copyFile, ensureDir, FONT_CATALOG, OUT, PKG } from './assembleIo.ts';
+import { copyFile, ensureDir, FONT_CATALOG, FONTS, OUT, PKG } from './assembleIo.ts';
 import { assemblePresets } from './assemblePresets.ts';
+
+/** The deploy must never carry a face without its license. This script runs in
+ * no coverage gate, so the copy step is checked by its OUTPUT here, separately
+ * from the step itself: a dropped or broken copy fails every job that
+ * assembles (the Pages build, the designer-app image, the browser e2e). */
+function assertLicensesShipped(packIds: readonly string[]): void {
+  for (const id of packIds) {
+    for (const text of packTextFiles(id, readdirSync(join(FONTS, id)))) {
+      if (!existsSync(join(OUT, 'fonts', id, text))) {
+        throw new Error(`font pack ${id}: ${text} missing from the assembled tree`);
+      }
+    }
+  }
+}
 
 function main(): void {
   if (!existsSync(PKG)) {
@@ -29,6 +49,7 @@ function main(): void {
   ensureDir(OUT);
   const presets = assemblePresets();
   const packs = assembleFonts();
+  assertLicensesShipped(packs.map((p) => p.id));
   const localeFiles = assembleLocales();
   copyPkg();
   // The Google-Fonts catalog snapshot the font picker searches (checked in,

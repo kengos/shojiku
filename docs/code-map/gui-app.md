@@ -379,7 +379,9 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
 - `src/build/assemble.ts` — what the deployed FILES look like:
   `planFace`/`partNames` (>20 MiB chunked), `packTier` (>25 MiB → lazy),
   `buildFontIndex`/`buildLocaleIndex` (an unsafe or non-lowercase name
-  THROWS = fails the build), deterministic order; re-exports the preset
+  THROWS = fails the build), `packTextFiles` (every `.txt` a font pack
+  carries rides beside its faces; a pack with no `*License*`/`*OFL*` text
+  THROWS — the hosted Designer redistributes the faces), deterministic order; re-exports the preset
   half so consumers keep one import surface.
   `src/build/presetManifest.ts` — what a preset DECLARES, validated:
   `validatePreset` incl. variants, `validateAssetNames`,
@@ -392,7 +394,9 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   the app could catch but not un-log. Driven by `scripts/assemble-site.ts` (the
   DRIVER) over `scripts/assembleIo.ts` (the resolved paths + the two fs
   primitives), `scripts/assemblePresets.ts` (the preset copy) and
-  `scripts/assembleAssets.ts` (font chunks, locale packs, the wasm pkg)
+  `scripts/assembleAssets.ts` (font chunks + license texts, locale packs,
+  the wasm pkg); the driver re-checks every pack's license text EXISTS in
+  the assembled output, so a dropped copy fails the build that deploys
   — node type stripping, so every relative runtime import carries `.ts`.
 - Test substrate: `src/testkit/` — the shared EditorScreen-suite
   substrate (`fixtures.ts` = fake engine/transport/prep + the injected
@@ -415,7 +419,9 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   page break), `presetAssets` (session-retained injection + the
   withheld negative), `localePacks` (zh-TW/zh-CN boot from real packs,
   the typed `locale_error` negative, every registry engineLocale
-  boots).
+  boots). `fontLicenses` (no engine) runs `packTextFiles` over the real
+  `packs/fonts/` tree, so a pack added without its license fails a gate
+  rather than the deploy.
 - Build: Vite `base: './'` (the SAME dist serves at root or under a
   reverse-proxy sub-path; mounted host = this build + `config.json` +
   the host JSON contract). Deploy: `public/_headers` (Cloudflare Pages

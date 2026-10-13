@@ -194,7 +194,7 @@ const PRIMARY_TOKEN = /['"]primary['"]/;
 const NOT_AN_EMPHASIS = [
   'designer/src/ui/Button.tsx:11',
   'designer-app/src/assets/manifest.ts:66',
-  'designer-app/src/build/assemble.ts:49',
+  'designer-app/src/build/assemble.ts:50',
   'designer-app/src/engine/boot.ts:119',
 ];
 
