@@ -15,6 +15,15 @@ platform binaries.
 
 ### Added
 
+- **Fade a line in the Designer.** A line's Style tab now has the
+  Opacity section a rectangle or a text already has, under its Line
+  settings: 100% is fully opaque and 0% makes the line invisible. A
+  typed value is kept between 0% and 100%, emptying the field removes
+  the setting, and each change or ▲▼ click is one undo step. A value
+  written in the YAML above that range, such as `1.5`, shows as 150% and
+  draws the line fully opaque with a warning; one ▼ brings it back to
+  100%. Until now a line's opacity could only be written in the YAML.
+
 - **Shift an attached line end by a few points.** When a line's end is
   attached to another item, its Layout tab now shows two fields under that
   end — Start offset X / Y or End offset X / Y — that move the end off the

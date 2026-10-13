@@ -108,7 +108,12 @@ import {
   rowModeOps,
 } from '../panel/tableSettingsOps';
 import { bandStyleOp } from '../panel/tableStyleOps';
-import { decorationToggleOp, letterSpacingOp, opacityOp } from '../panel/textLookOps';
+import {
+  decorationToggleOp,
+  letterSpacingOp,
+  opacityOp,
+  opacityStepOp,
+} from '../panel/textLookOps';
 import {
   MARK_PADDING_PRESETS,
   markPaddingOp,
@@ -4013,6 +4018,63 @@ describe('text and box style edits against the real engine', () => {
         ],
       ),
     );
+  });
+});
+
+describe('a line’s opacity, from the panel’s op to the engine’s stroke', () => {
+  // The join: the panel's unit suites prove the op lands in the line's own
+  // `style`, the engine's prove the stroke takes the alpha — this drives the
+  // GUI-authored key through the real wasm and reads the raster back.
+  const P = 'sections.body.items[0]';
+  const lineDoc = (style: string) =>
+    [
+      'page: { margin: 0 }',
+      'sections:',
+      '  body:',
+      '    type: flow',
+      '    box: { x: 0, y: 0, w: 400, h: 200 }',
+      '    items:',
+      `      - { type: line, from: { x: 0, y: 20 }, to: { x: 200, y: 20 }, style: { width: 6${style} } }`,
+      '',
+    ].join('\n');
+
+  async function render(text: string) {
+    const outcome = await transport.renderRaw(text, '{}', undefined, { scale: 1 });
+    expect(outcome.ok).toBe(true);
+    const page = outcome.pages[0];
+    // The stroke's midpoint, a 6pt black line on a white page.
+    const i = (20 * page.width + 100) * 4;
+    return { red: page.rgba[i], diagnostics: outcome.diagnostics.items };
+  }
+
+  function edit(src: string, op: Op | null) {
+    if (op === null) throw new Error('a builder refused a legal value');
+    const editor = Editor.create(src);
+    expect(editor.apply(op).ok).toBe(true);
+    return editor.text();
+  }
+
+  it('draws the stroke at the alpha the field authors', async () => {
+    const opaque = await render(lineDoc(''));
+    expect(opaque.red).toBe(0);
+    const text = edit(lineDoc(''), opacityOp(P, '', '50'));
+    expect(text).toContain('opacity: 0.5');
+    const faded = await render(text);
+    expect(faded.diagnostics).toEqual([]);
+    expect(faded.red).toBeGreaterThan(110);
+    expect(faded.red).toBeLessThan(145);
+  });
+
+  it('brings a hand-authored out-of-range alpha back with one step', async () => {
+    const authored = await render(lineDoc(', opacity: 1.5'));
+    expect(authored.red).toBe(0);
+    expect(authored.diagnostics.map((d) => [d.code, d.path, d.args.value])).toEqual([
+      ['invalid_opacity', P, 1.5],
+    ]);
+    // The field shows the wire value as 150; one ▼ clamps into range.
+    const stepped = edit(lineDoc(', opacity: 1.5'), opacityStepOp(P, '1.5', '150', -1));
+    expect(stepped).toContain('opacity: 1 }');
+    expect((await render(stepped)).diagnostics).toEqual([]);
   });
 });
 

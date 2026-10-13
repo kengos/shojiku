@@ -8,6 +8,7 @@ import {
   LETTER_SPACING_TYPES,
   OPACITY_DECORATION_ONLY,
   OPACITY_TYPES,
+  opacityOffered,
   overflowKeyOf,
   PADDING_TYPES,
   TEXT_SURFACE_TYPES,
@@ -43,12 +44,20 @@ describe('styleSurfaces', () => {
     expect([...DECORATION_LINE_TYPES]).toEqual([...TEXT_SURFACE_TYPES]);
   });
 
-  it('never offers opacity on a table (always opaque) or a line (its own shape)', () => {
+  it('never offers opacity on a table, whose grid is always drawn opaque', () => {
     expect(OPACITY_TYPES.has('table')).toBe(false);
-    expect(OPACITY_TYPES.has('line')).toBe(false);
     for (const only of OPACITY_DECORATION_ONLY) {
       expect(OPACITY_TYPES.has(only)).toBe(true);
     }
+  });
+
+  it('offers a line its stroke opacity under the same capability as a rect', () => {
+    expect(OPACITY_TYPES.has('line')).toBe(true);
+    // The stroke IS what a line draws, so the generic help applies, not the
+    // fill-and-border-only sentence.
+    expect(OPACITY_DECORATION_ONLY.has('line')).toBe(false);
+    expect(opacityOffered('line', ['style.opacity'])).toBe(true);
+    expect(opacityOffered('line', [])).toBe(false);
   });
 
   it('never offers padding where the engine has nothing to inset', () => {
