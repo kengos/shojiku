@@ -6,6 +6,7 @@ import {
   buildLocaleIndex,
   CHUNK_THRESHOLD,
   LAZY_THRESHOLD,
+  packTextFiles,
   packTier,
   partNames,
   planFace,
@@ -240,6 +241,40 @@ describe('buildFontPack', () => {
       'a.ttf': { name: 'a.ttf', size: 10 },
       'b.ttf': { name: 'b.ttf', size: 20 },
     });
+  });
+});
+
+describe('packTextFiles', () => {
+  it('carries every text file beside the faces, sorted, and nothing else', () => {
+    expect(
+      packTextFiles('ipamj-mincho', [
+        'manifest.yml',
+        'Readme_IPAmjMincho.txt',
+        'ipamjm.ttf',
+        'IPA_Font_License_Agreement_v1.0.txt',
+      ]),
+    ).toEqual(['IPA_Font_License_Agreement_v1.0.txt', 'Readme_IPAmjMincho.txt']);
+  });
+
+  it('accepts a prefixed OFL text as the license', () => {
+    expect(packTextFiles('biz-ud', ['BIZ_UD_Gothic_OFL.txt', 'a.ttf'])).toEqual([
+      'BIZ_UD_Gothic_OFL.txt',
+    ]);
+  });
+
+  it('fails the build on a pack with no license text, naming the pack', () => {
+    // A face served without its license breaks the redistribution terms.
+    expect(() => packTextFiles('bare', ['manifest.yml', 'a.ttf'])).toThrow(
+      /font pack bare: no license text/,
+    );
+  });
+
+  it('does not take a readme alone for the license', () => {
+    expect(() => packTextFiles('readme-only', ['README.txt', 'a.otf'])).toThrow(/no license text/);
+  });
+
+  it('fails the build on an unsafe text file name', () => {
+    expect(() => packTextFiles('odd', ['OFL.txt', 'read me.txt'])).toThrow(/unsafe file name/);
   });
 });
 

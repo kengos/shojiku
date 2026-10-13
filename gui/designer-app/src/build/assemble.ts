@@ -1,5 +1,6 @@
 // What the assembled site's FILES look like: a font face's chunk plan, a pack's
-// tier, and the font + locale indexes the app fetches. The filesystem IO (glob /
+// tier, the license texts it ships with, and the font + locale indexes the app
+// fetches. The filesystem IO (glob /
 // read / write / copy) lives in the thin scripts/assemble-site.ts wrapper over
 // these; keeping the decisions here makes them unit-testable (tier boundary,
 // chunk splitting, the lowercase locale-name rule). What a preset DECLARES is
@@ -57,6 +58,31 @@ export function buildFontPack(faces: readonly { name: string; size: number }[]):
     files[face.name] = planFace(face.name, face.size);
   }
   return { tier: packTier(total), files };
+}
+
+/** A redistributed font has to travel with its license: the OFL requires the
+ * copyright notice and license in every copy, and the IPA Font License requires
+ * a copy of its agreement attached to every redistribution (Art. 3 ¶2(3)). */
+const LICENSE_TEXT = /(licen[cs]e|ofl)[^/]*\.txt$/i;
+
+/** The text files a font pack's assembled copy carries beside its faces: every
+ * `.txt` in the pack (the license plus the foundry's own readme, when it ships
+ * one), sorted. A pack with no license text fails the build — the deployed
+ * Designer would otherwise serve the faces without the terms they are
+ * redistributed under — and so does an unsafe name. */
+export function packTextFiles(id: string, fileNames: readonly string[]): readonly string[] {
+  const texts = fileNames.filter((name) => name.toLowerCase().endsWith('.txt')).sort();
+  for (const name of texts) {
+    if (!isSafeAssetName(name)) {
+      throw new Error(`font pack ${id}: unsafe file name ${JSON.stringify(name)}`);
+    }
+  }
+  if (!texts.some((name) => LICENSE_TEXT.test(name))) {
+    throw new Error(
+      `font pack ${id}: no license text (a *License*.txt or *OFL*.txt) beside the faces — a redistributed face must ship with its license`,
+    );
+  }
+  return texts;
 }
 
 /** Build the locale index from `packs/locale/` file names (`zh-tw.yml`), in
