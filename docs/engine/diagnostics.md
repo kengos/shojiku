@@ -83,7 +83,7 @@ inline:
 <!-- rf:table:start diagnostics#validation-static-shojiku-validate (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `unknown_data_key` | error | a binding key is not in definitions (scalar, column, cell, or card scope) |
+| `unknown_data_key` | error | a binding key is not in definitions (scalar, column, cell, or card scope; a table's header `label` is scalar scope). Checked in the header and footer bands as in the body |
 | `empty_definitions` | warning | definitions was supplied but declares no properties; every binding will read as `unknown_data_key` (check the file's top-level structure) |
 | `unknown_format` | error | a format variant not declared for the field |
 | `not_an_array` | error | a table/repeat/list source key is not an array property |

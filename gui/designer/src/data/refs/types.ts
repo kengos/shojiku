@@ -5,10 +5,9 @@
 // rewrites the references.
 //
 // The census is the engine's own validate walks (`engine/core/src/validate/` —
-// bindings, cells, list entries, presence, tables, the document block) plus the
-// two strings layout interpolates that validate does not check (a column's
-// `label`, a header group's `label`), across ALL three bands — layout renders a
-// header/footer table even though validate only walks the body.
+// bindings, cells, list entries, presence, tables, the document block, and a
+// table's column / header-group `label`), across ALL three bands, as layout
+// renders them.
 
 /** Where in its owner a reference sits — what a usage list says ("the value",
  * "inside the text", "the row condition" …). */

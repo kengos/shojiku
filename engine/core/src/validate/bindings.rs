@@ -214,18 +214,34 @@ pub(super) fn walk_item<F: FnMut(&str, Option<&str>, Option<&str>, &str)>(
             walk_text(grid.text.as_deref(), &grid.bindings, path, check);
         }
         // Marks (ellipse/checkbox) bind via `MarkBinding`, validated in
-        // `validate/marks.rs` (existence + boolean-type + conflict).
+        // `validate/presence.rs` (existence + boolean-type + conflict).
         Item::Rect(_)
         | Item::Line(_)
         | Item::PageNumber(_)
         | Item::PageBreak(_)
         | Item::Ellipse(_)
         | Item::Checkbox(_) => {}
-        // Table, repeat, and list bindings are array-scoped, not scalar:
-        // table/repeat/repeat_flow are validated separately in `validate`;
+        // A table's header labels are the one part of it that is NOT
+        // row-scoped: layout interpolates them against top-level params
+        // (a header belongs to no row) with no `bindings:` of their own,
+        // so they are checked here like any static text. Its row-scoped
+        // keys are validated separately in `validate/tables.rs`.
+        Item::Table(table) => {
+            let none = Bindings::new();
+            for (ci, column) in table.columns.iter().enumerate() {
+                let col_path = format!("{path}.columns[{ci}]");
+                walk_text(column.label.as_deref(), &none, &col_path, check);
+            }
+            for (gi, group) in table.header_groups.iter().enumerate() {
+                let group_path = format!("{path}.headerGroups[{gi}]");
+                walk_text(group.label.as_deref(), &none, &group_path, check);
+            }
+        }
+        // Repeat and list bindings are array-scoped, not scalar:
+        // repeat/repeat_flow are validated separately in `validate`;
         // a list's array key is checked against params at layout
         // (`missing_data` / `not_an_array`), and its per-entry keys
         // against the element scope in [`entry`].
-        Item::Table(_) | Item::Repeat(_) | Item::RepeatFlow(_) | Item::List(_) => {}
+        Item::Repeat(_) | Item::RepeatFlow(_) | Item::List(_) => {}
     }
 }

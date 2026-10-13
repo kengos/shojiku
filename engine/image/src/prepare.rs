@@ -10,7 +10,7 @@
 use crate::policy::AssetPolicy;
 use crate::store::{Asset, AssetKind, AssetStore};
 use serde_json::Value;
-use shojiku_core::{Binding, BindingScope, Body, ImageItem, Item, Template};
+use shojiku_core::{Binding, BindingScope, ImageItem, Item, Template};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -161,16 +161,8 @@ pub(super) fn insert_asset(
 /// loaded once per element by the cell walk instead.
 fn image_items(template: &Template) -> Vec<(String, &ImageItem)> {
     let mut out = Vec::new();
-    if let Some(header) = &template.sections.header {
-        push_images(&header.items, "sections.header.items", false, &mut out);
-    }
-    let body_items: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    push_images(body_items, "sections.body.items", false, &mut out);
-    if let Some(footer) = &template.sections.footer {
-        push_images(&footer.items, "sections.footer.items", false, &mut out);
+    for (prefix, items) in template.sections.item_lists() {
+        push_images(items, prefix, false, &mut out);
     }
     out
 }

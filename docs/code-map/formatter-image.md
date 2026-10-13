@@ -195,12 +195,15 @@ the manifest wire's key list) lives in `docs/engine/`
   shared `MAX_CELL_IMAGE_ASSETS` `Cap` across both walks. A
   `scope: document` image COLUMN instead loads ONCE off top-level
   params under `dyn:<key>`, uncounted, matching the id layout asks for.
-- `prepare/cells/walk.rs` — the collection walks: **`body_tables`**
-  finds tables in the flow body AND nested in containers (a bounded
+- `prepare/cells/walk.rs` — the collection walks: **`tables`**
+  finds tables in every section (`Sections::item_lists`: header band,
+  body, footer band) AND nested in containers (a bounded or band
   table's image columns bind per row exactly like a flow table's, so
   the walk mirrors validate's recursion); `element_cell_images` finds
   the ELEMENT-scoped `data:`-bound cell images, skipping the
-  document-scoped ones the shared walk owns.
+  document-scoped ones the shared walk owns, and skipping a band's
+  `repeat`/`repeat_flow` (layout never draws one, so its images would
+  only spend the shared cap).
 - `prepare/load.rs` — static (template `src:`) and dynamic
   (params-bound) loading incl. the shared `dynamic_value` tail.
 - `prepare/bundled.rs` — **`AssetsRoot`** None | Dir(FS) |

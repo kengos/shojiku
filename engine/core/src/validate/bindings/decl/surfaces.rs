@@ -38,6 +38,18 @@ pub(super) fn interpolated_strings(item: &Item) -> Vec<&str> {
         Item::QrCode(qr) => out.extend(qr.text.as_deref()),
         Item::CharGrid(grid) => out.extend(grid.text.as_deref()),
         Item::List(list) => out.extend(list.text.as_deref()),
+        // Header labels interpolate too, against top-level params; a
+        // table declares no `bindings:`, so this feeds the charset scan
+        // only.
+        Item::Table(table) => {
+            out.extend(table.columns.iter().filter_map(|c| c.label.as_deref()));
+            out.extend(
+                table
+                    .header_groups
+                    .iter()
+                    .filter_map(|g| g.label.as_deref()),
+            );
+        }
         _ => {}
     }
     out

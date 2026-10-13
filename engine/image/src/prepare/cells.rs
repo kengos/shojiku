@@ -16,7 +16,7 @@ mod walk;
 use super::bundled::AssetsRoot;
 use super::load::dynamic_value;
 use super::{cell_asset_key, insert_asset, MAX_CELL_IMAGE_ASSETS};
-use walk::{body_tables, element_cell_images};
+use walk::{element_cell_images, tables};
 
 /// The bindings a per-element cell walk shares: the policy, the assets
 /// root, and the growing store/diagnostics — bundled so the two cell
@@ -65,7 +65,7 @@ pub(super) fn prepare_cell_assets(
     diags: &mut Diagnostics,
 ) {
     let mut cap = Cap::default();
-    for (path, table) in body_tables(template) {
+    for (path, table) in tables(template) {
         if table_column_assets(table, &path, params, ctx, store, diags, &mut cap) {
             return;
         }

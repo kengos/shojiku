@@ -26,6 +26,7 @@ mod link;
 mod marks;
 mod repeat_flow;
 mod ruby;
+mod sections;
 mod spans;
 mod table;
 #[cfg(test)]

@@ -20,6 +20,12 @@ injected at parse). The template model splits along CSS lines.
   `defaults: TemplateDefaults` + the named-style registry
   `Template.styles`; re-exports submodules so `shojiku_core::X` paths stay
   stable.
+- `template/sections.rs` — `Sections::item_lists`: each present
+  section's top-level items with its path prefix (header, body, footer).
+  The one place a walk learns where items live — validate's walks and
+  `engine/image`'s preparation walks start here (all but
+  `validate/box_keys.rs`, which needs the body's flow/absolute kind), so
+  none covers the body and forgets the bands layout also draws.
 - `template/items.rs` — the drawn leaves: `TextItem` (incl. `mark`,
   `bindings` — ONE map per item serving its `text`/`link.url` AND its
   spans), `RectItem` (unified `Style`, no default stroke), `LineItem`,
@@ -236,8 +242,10 @@ injected at parse). The template model splits along CSS lines.
   the same interpolation-key and suspect-key checks the drawn strings
   get, addressed `document.<key>` / `document.<key>[n]`. Catalog-free —
   it runs with or without definitions.
-- `validate/bindings.rs` — scalar/interpolated keys incl. per-span and
-  `link.url`; `BindingCtx`; the shared `walk_text` skips segments whose
+- `validate/bindings.rs` — scalar/interpolated keys incl. per-span,
+  `link.url` and a table's header labels (`columns[].label`,
+  `headerGroups[].label`: top-level scope, as layout reads them);
+  `BindingCtx`; the shared `walk_text` skips segments whose
   name the item declares. `validate/bindings/decl.rs` — the `bindings:`
   declaration checks (name charset, per-declaration routing through
   `DeclCtx`, `unused_binding`, shadowing, the suspect-key sweep);
@@ -270,6 +278,9 @@ injected at parse). The template model splits along CSS lines.
   condition ignores, warned without a catalog like the entry cap).
 - `validate/collect.rs` — table/image walks + the `RepeatRef` walk
   normalizing repeat+repeat_flow + depth cap + generic `walk_sections`.
+  Every walk (and `validate.rs`'s own per-section loops) starts from
+  `Sections::item_lists` (`template/sections.rs`), so it covers the
+  bands as well as the body.
   **Every walk here descends into a table column's `cell:` — and so do
   the three walks that keep their OWN recursion: `validate/presence.rs`
   (a form mark's `data:` and every item's `visible:`),
