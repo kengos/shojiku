@@ -232,9 +232,17 @@ fn rows_count_on_auto_height_and_cell_overflow_degrade_with_diagnostics() {
         "- type: rect\n  style: { borderWidth: 1 }\n  box: { w: \"100%\", h: 30 }",
     );
     let (_, diags) = run(&overflow, json!({}));
+    let hit = diags
+        .iter()
+        .find(|d| d.code == "grid_row_overflow")
+        .unwrap_or_else(|| panic!("{diags:?}"));
+    // Numbers only — the axis is the CODE, not an English arg.
+    assert!(args_all_numeric(hit), "{hit:?}");
+    assert_eq!(arg_num(hit, "child"), Some(30.0));
+    assert_eq!(arg_num(hit, "track"), Some(10.0));
     assert!(
-        diags.iter().any(|d| d.code == "grid_cell_overflow"),
-        "{diags:?}"
+        diags.iter().all(|d| d.code != "grid_cell_overflow"),
+        "the deprecated code is emitted by nothing: {diags:?}"
     );
     // Negative gaps clamp to 0.
     let negative = container_body(

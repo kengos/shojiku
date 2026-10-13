@@ -156,6 +156,10 @@ export const ja: LanguageCatalog = {
       '中の要素が、枠の内側（{avail}pt）から {over}pt はみ出しています。要素を小さくするか、枠を大きくしてください',
     grid_column_overflow:
       'グリッドの子要素（{child}pt）が、またがる {span} 列分のトラック幅（{track}pt）より広くなっています',
+    grid_row_overflow:
+      'グリッドの子要素（{child}pt）が行トラックの高さ（{track}pt）より高くなっています',
+    grid_span_overflow:
+      'グリッドの子要素（{child}pt）が、またがる {span} 行分のトラックの高さ（{track}pt）より高くなっています',
     text_overflow:
       '文字が枠に収まりません（必要な高さ {content}pt／枠の高さ {avail}pt）。枠を高くするか、文字を小さくしてください',
     char_grid_overflow:

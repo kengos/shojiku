@@ -144,11 +144,11 @@ first sentence of its `//!` header.
 ▲ = within 10% of the 300-line cap (≥270); ■ = over it under a
 `line-budget-exempt` waiver. Test files are summarised per crate.
 
-### `diagnostics` (L0) — 6 files / 925 lines; tests 5 files / 628 lines
+### `diagnostics` (L0) — 6 files / 933 lines; tests 5 files / 628 lines
 
 - `src/arg.rs` 132 — Typed diagnostic argument values.
 - `src/category.rs` 32 — Semantic domain grouping for diagnostics.
-- `src/code.rs` 265 — The closed diagnostic-code registry.
+- `src/code.rs` 273 ▲ — The closed diagnostic-code registry.
 - `src/echo.rs` 229 — The one bounded-echo guard, and the type that applies it structurally.
 - `src/lib.rs` 219 — Structured diagnostics shared across the Shojiku engine.
 - `src/render.rs` 48 — Single-pass message-template substitution.
@@ -359,7 +359,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19581 lines; tests 269 files / 37881 lines
+### `layout` (L3) — 132 files / 19580 lines; tests 269 files / 37903 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -401,7 +401,7 @@ first sentence of its `//!` header.
 - `src/engine/flow.rs` 257 — Flow-section placement: the flow item walk and the absolute-body item walk; the paginating cursor lives in [`layouter`].
 - `src/engine/flow/layouter.rs` 101 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
 - `src/engine/fragments.rs` 104 — Per-page vertical extents of a paginating item's placed atoms, emitted as the item's own `PlacedBox` fragments (one per page it spans).
-- `src/engine/grid.rs` 294 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
+- `src/engine/grid.rs` 293 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
 - `src/engine/grid/cells.rs` 189 — Cell assignment and `auto` column measurement.
 - `src/engine/grid/span.rs` 107 — Grid span placement: the occupancy map that assigns each grid child its `(column, row)` cell honoring `columnSpan`/`rowSpan`.
 - `src/engine/grid/tracks.rs` 254 — `TrackSpec` resolution: the wire form (count or track list) to per-track pt sizes, with the hostile-input caps — track counts and list lengths clamp to `MAX_GRID_TRACKS` with a diagnostic, negative tracks clamp to 0, and `rows: N` needs a definite height to split.

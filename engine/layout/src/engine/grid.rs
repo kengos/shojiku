@@ -253,10 +253,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 Some(h) => {
                     if atom.height > h + 0.01 {
                         self.diags.push(
-                            Diagnostic::new(Code::GridCellOverflow)
+                            Diagnostic::new(Code::GridRowOverflow)
                                 .arg("child", atom.height)
-                                .arg("track", h)
-                                .arg("extent", "row track"),
+                                .arg("track", h),
                         );
                     }
                 }
@@ -274,10 +273,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 Some(_) => {
                     if atom.height > spanned + 0.01 {
                         self.diags.push(
-                            Diagnostic::new(Code::GridCellOverflow)
+                            Diagnostic::new(Code::GridSpanOverflow)
                                 .arg("child", atom.height)
                                 .arg("track", spanned)
-                                .arg("extent", "spanned rows"),
+                                .arg("span", cell.rows as f64),
                         );
                     }
                 }

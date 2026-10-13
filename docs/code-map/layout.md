@@ -148,7 +148,7 @@ Wire types stay in core; content measurement stays in layout.
   `cross_offset` has not run yet and `alignItems: center`/`end` push the
   excess LEFT), and `check_track_width` (grid child vs its column-track
   run, reported as `grid_column_overflow` with the run's track count; the
-  row axis is `grid.rs`'s `grid_cell_overflow`).
+  row axis is `grid.rs`'s `grid_row_overflow` / `grid_span_overflow`).
   A filling item (`rb.w` unset) is never checked; each fires inside the
   child's own `items[i]` mark. The flex ROW check stays in
   `flex/offsets.rs::plan_row` — it speaks for the whole row, which is why
@@ -264,7 +264,7 @@ Wire types stay in core; content measurement stays in layout.
   BEFORE tracks are sized, because an `auto` column is sized from the
   cells placed in it and a spec's column COUNT is knowable without any
   size; then fill order + auto/explicit row heights + spans (the
-  row-track `grid_cell_overflow` check is here; its column-axis mirror is
+  row-track `grid_row_overflow` / `grid_span_overflow` checks are here; their column-axis mirror is
   `engine/overflow.rs::check_track_width`);
   `engine/grid/cells.rs` (`plan_cells` — the assignment pre-pass, run
   ONCE because `clamped_spans` warns; it carries each child's `FlexKind`

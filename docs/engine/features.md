@@ -178,8 +178,8 @@ Pipeline: `Template/Definitions → Bundle → Layout → Render → Preview →
   CHILD; a row child is reported once, by the row-level check),
   `sheet_overflow` (a band / absolute-body item past the edge of the
   **sheet**, a `line`'s endpoints included), and `grid_column_overflow`
-  (a grid child wider than its column-track run, beside the existing
-  row-track `grid_cell_overflow`). The sheet rather than the margin box
+  (a grid child wider than its column-track run; the row axis reports
+  `grid_row_overflow` / `grid_span_overflow`). The sheet rather than the margin box
   is what reconciles the check with the deliberate page-margin escape
   hatch: reaching into the margins is a designed-for move, leaving the
   paper is not. Filling items never warn, and `overflow: hidden` parents

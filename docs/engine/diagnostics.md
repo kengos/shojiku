@@ -150,9 +150,11 @@ inline:
 | `sheet_overflow` | warning | a band / absolute-body item (a `line`'s endpoints included) reaches `over` pt past the right edge of the **sheet** and renders off-paper. The bound is the paper, not the margin box: reaching into the margins is a deliberate escape hatch, so only ink that leaves the sheet warns. Filling items never warn |
 | `child_overflow` | warning | a column or `x`/`y`-positioned box child overflows its parent's `avail` pt content box by `over` pt. States the magnitude, never a side — cross-axis alignment runs after the check, and `alignItems: center`/`end` push the excess LEFT. Suppressed under `overflow: hidden`; a ROW child is reported once, by the row-level `flex_row_overflow` |
 | `grid_column_overflow` | warning | a grid child (`child` pt) is wider than the `track` pt run of `span` column tracks it sits in, so it spills over its neighbour (an `auto` column sizes to its content; a fixed or `fr` one does not) |
+| `grid_row_overflow` | warning | a grid child (`child` pt) is taller than its explicit `track` pt row track and overflows it visually (an auto row grows instead of warning) |
+| `grid_span_overflow` | warning | a grid child (`child` pt) spanning `span` rows, the last of them explicit, is taller than the `track` pt those rows give it and overflows visually (an auto last row grows instead) |
 | `page_overflow` | error | layout exceeded 500 pages; output truncated |
 | `grid_tracks_clamped` | warning | grid `columns`/`rows` outside 1..=64 tracks; clamped |
-| `grid_cell_overflow` | warning | grid child TALLER than its explicit row track; the `extent` arg says `row track` or `spanned rows` (auto rows grow instead of warning). The width axis is `grid_column_overflow` above |
+| `grid_cell_overflow` | warning | **DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing.** It reported a grid child taller than its row track, with an `extent` arg naming the axis in English (`row track` / `spanned rows`) that a translating consumer could only pass through. The two cases are now `grid_row_overflow` and `grid_span_overflow`. A catalog entry for it can be dropped once a host no longer supports 0.3 |
 | `imposition_grid_clamped` | warning | `repeat` grid over 64 cells/page (or a zero axis); clamped |
 | `char_grid_clamped` | warning | `char_grid` outside 1..=4096 cells/sheet; clamped |
 | `char_grid_markup_clamped` | warning | an aozora note asks for more cells than the grid holds (a large-writing scale > `min(columns, lines)`, an indent/raise past the line); clamped |
@@ -265,8 +267,12 @@ inline:
   start matching something else.
 - The engine does not translate. Messages are English and carry typed
   arguments; rendering them in another language is the consumer's job.
-- Two codes are emitted by nothing, and both are deprecated in 0.3.0 and
-  removed in 0.4.0 (`horizontal_overflow`, `vertical_style_ignored`).
+- Three codes are emitted by nothing, and all are deprecated in 0.3.0 and
+  removed in 0.4.0 (`horizontal_overflow`, `vertical_style_ignored`,
+  `grid_cell_overflow`). The last one still fired in 0.2.x; from 0.3.0
+  the same two conditions report their own codes instead
+  (`grid_row_overflow`, `grid_span_overflow`), so a matcher keyed on it has
+  to add those.
 - A wire form that still parses but is marked for removal draws a warning
   from `validate` until the release that removes it (`deprecated_syntax`).
   Today that is only `page.margin` written as an array.

@@ -122,8 +122,19 @@ sections:
 "#,
         json!({}),
     );
+    let hit = diags
+        .iter()
+        .find(|d| d.code == "grid_span_overflow")
+        .unwrap_or_else(|| panic!("{diags:?}"));
+    assert!(args_all_numeric(hit), "{hit:?}");
+    assert_eq!(arg_num(hit, "child"), Some(60.0));
+    assert_eq!(arg_num(hit, "track"), Some(40.0));
+    // The span COUNT is the arg — a locale phrases "2 rows" its own way.
+    assert_eq!(arg_num(hit, "span"), Some(2.0));
     assert!(
-        diags.iter().any(|d| d.code == "grid_cell_overflow"),
+        diags
+            .iter()
+            .all(|d| d.code != "grid_cell_overflow" && d.code != "grid_row_overflow"),
         "{diags:?}"
     );
 }
