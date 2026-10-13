@@ -83,7 +83,7 @@ Explicitly **deferred** — decided deferrals, not oversights:
 | --- | --- |
 | Visible signature appearance | Needs a template item type and its Designer operability pass; the wire split is decided (see [Template wire boundary](#template-wire-boundary)) but nothing ships until that phase |
 | PAdES / LTV / PDF-A profiles | Each is a conformance surface with its own test corpus; the baseline signature must exist first |
-| Cloud KMS / HSM CLIENTS in this repo | The seam is exposed (C ABI two-call surface, the CLI's two verbs, every SDK's `ExternalSigner`), but the client that talks to a key service is the ADOPTER's, not ours: every one of these languages already has a first-party one, `deny.toml` carries zero advisory ignores, and a vendor SDK is a large transitive tree to drag through it for a wrapper this thin |
+| Cloud KMS / HSM CLIENTS in this repo | The seam is exposed (C ABI two-call surface, the CLI's two verbs, every SDK's `ExternalSigner`), but the client that talks to a key service is the ADOPTER's, not ours: every one of these languages already has a first-party one, `deny.toml` ignores no vulnerability advisory, and a vendor SDK is a large transitive tree to drag through it for a wrapper this thin |
 | Timestamps (TSA) | Requires network I/O, which is host-side by the same rule |
 | Revocation checking (OCSP / CRL) | Same network constraint, plus a caching/freshness policy this project has not decided |
 | Signing arbitrary third-party PDFs | See [Input document scope](#input-document-scope) |
@@ -139,7 +139,7 @@ Why this combination:
 - **The `rsa` crate is not usable here.** It carries an unfixed
   timing-sidechannel advisory (the Marvin attack, RUSTSEC-2023-0071);
   as of this decision the fix is still unreleased on the stable line.
-  `engine/deny.toml` keeps an empty advisory ignore list on purpose, so
+  `engine/deny.toml` ignores no vulnerability advisory on purpose, so
   depending on it would mean either breaking that posture or shipping a
   known-vulnerable signing path.
 - **`ring` is already in the dependency tree and already passes the
@@ -197,7 +197,8 @@ Why this combination:
   entry gate over the full transitive set (34 new crates: `ring`, `cms`,
   `x509-cert`, `der`, `pkcs8` with passphrase decryption, `zeroize`, and
   `rpassword` for the CLI prompt) reported `advisories ok, bans ok,
-  licenses ok, sources ok` with the advisory ignore list still empty.
+  licenses ok, sources ok` with the advisory ignore list still empty
+  at the time.
 - If `ring` ever trips the advisory gate, the fallback is a
   RustCrypto-only, ECDSA-P-256-only signer — narrower, but pure Rust
   and available without a policy exception.

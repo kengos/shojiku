@@ -1715,7 +1715,9 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   length via `clippy::too_many_lines` (150). Test files are outside the
   length half — the reasons for a cap are in `docs/guidelines.md`, and
   none of them reaches a list of independent cases.
-- `cargo deny` (advisories/licenses/bans/sources, **zero ignores**, run
+- `cargo deny` (advisories/licenses/bans/sources, **no vulnerability
+  advisory ignored** — the one ignore, an unmaintained notice for
+  unsafe-libyaml, is argued in deny.toml — run
   with `--all-features` so a feature-gated optional dependency cannot
   ride in unchecked), trivy on the Docker job, Dependabot weekly,
   **coverage blocking at 100% lines**; doc-only changes skip CI.
@@ -1782,7 +1784,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   the engine through the shipped `Signer` trait rather than a second
   code path, so the external and local routes provably write the same
   bytes. Shipping AWS/GCP KMS clients was rejected in the same pass:
-  `deny.toml` carries zero advisory ignores, the SDKs are thin wrappers
+  `deny.toml` ignores no vulnerability advisory, the SDKs are thin wrappers
   by contract, and every one of these languages already has a first-party
   client in the adopter's application.
 
@@ -1913,7 +1915,7 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   without the diagnostics catalog ever having to describe host errors.
 - **MCP server = hand-rolled stdio JSON-RPC, not an SDK crate.** The
   official Rust MCP SDK (rmcp) drags tokio + a ~30-crate transitive
-  tree into a workspace whose deny.toml carries zero advisory ignores;
+  tree into a workspace whose deny.toml ignores no vulnerability advisory;
   four tools over newline-delimited stdio need only serde_json (already
   present), so `shojiku-mcp` implements the loop directly (user
   decision). **That revisit has since happened once, and the answer held**:
@@ -2451,7 +2453,8 @@ identified by their wire spellings, never by internal work-item codes.
   for PDF (write-only, auto-subsetting — fixed multi-MB CJK output);
   tiny-skia for PNG preview; skrifa (fontations) for fonts —
   ttf-parser and resvg/usvg are rejected wholesale (unmaintained /
-  MPL), enforced by deny.toml with zero ignores.
+  MPL), enforced by deny.toml: ttf-parser's unmaintained notice is not
+  ignored, and MPL is not in the license allow-list.
 - **Module hygiene is a gate, not a review note**: the ≤300-line budget
   (non-test files) + `//!` headers + function-length lint are
   CI-enforced; a file at the cap splits into a directory module at a
