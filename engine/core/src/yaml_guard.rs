@@ -61,9 +61,10 @@ pub const MAX_INPUT_BYTES: usize = 16 * 1024 * 1024;
 /// the same refusal (the formatter reports `LangPackError::TooLarge`), so
 /// what they share is [`MAX_INPUT_BYTES`] — one number in one place —
 /// rather than a function they would have to wrap anyway. `shojiku-formatter`
-/// funnels all four of its pack doors through a single `ensure_pack_size`
-/// for the same reason a convention to "call the check here" does not
-/// survive: it becomes N divergent copies.
+/// funnels its pack doors (the locale pack, the builtin overlay and the
+/// font-pack manifest) through a single `ensure_pack_size` for the same
+/// reason a convention to "call the check here" does not survive: it
+/// becomes N divergent copies.
 pub(crate) fn ensure_bounded_size(input: &str, what: &'static str) -> Result<(), CoreError> {
     if input.len() > MAX_INPUT_BYTES {
         return Err(CoreError::TooLarge {

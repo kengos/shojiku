@@ -144,22 +144,17 @@ impl PackManifest {
     /// here so a generator round-trips through the same pair the resolver
     /// parses with instead of carrying its own YAML dependency.
     ///
-    /// Oversize input is refused unread, on the same bound every other pack
-    /// door uses — a manifest arrives from a host exactly the way a locale
-    /// pack does. The refusal is reported as a parse failure because this
-    /// signature returns `serde_yaml::Error`; the callers that own a richer
-    /// error type check the bound themselves before calling in.
+    /// Oversize input is refused unread, by the same `ensure_pack_size`
+    /// every other pack door goes through — a manifest arrives from a host
+    /// exactly the way a locale pack does. This is the ONE manifest door:
+    /// the filesystem resolver, injected packs, the wasm session and the CLI
+    /// all parse through it and none checks the size first. The refusal comes
+    /// back as a `serde_yaml::Error` (built with `de::Error::custom`, since
+    /// serde_yaml has no public constructor) because that is this
+    /// signature's error type; its message names the two numbers only.
     pub fn from_yaml(text: &str) -> Result<Self, serde_yaml::Error> {
-        if text.len() > shojiku_core::MAX_INPUT_BYTES {
-            // serde_yaml has no public error constructor, so produce one by
-            // deserializing a value the target type cannot accept. The
-            // message names the bound rather than quoting the manifest.
-            return Err(serde::de::Error::custom(format!(
-                "font pack manifest is {} bytes, over the {}-byte input cap",
-                text.len(),
-                shojiku_core::MAX_INPUT_BYTES
-            )));
-        }
+        crate::lang::ensure_pack_size(text)
+            .map_err(<serde_yaml::Error as serde::de::Error>::custom)?;
         serde_yaml::from_str(text)
     }
 
