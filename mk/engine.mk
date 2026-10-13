@@ -216,7 +216,7 @@ engine\:wasm: ## Build the browser WASM bindings (engine/wasm/pkg) + assert size
 
 _engine-wasm:
 	@echo "== wasm build (size-budgeted) =="
-	@$(GATE_LOCK) docker run --rm \
+	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
 		-v "$(CURDIR):/repo" -w /repo/engine \
 		-v "$(CARGO_VOLUME):/usr/local/cargo" \
 		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
@@ -292,7 +292,7 @@ engine\:capi-dist: ## Build the C ABI cdylib for the platform matrix + checksums
 _engine-capi-dist:
 	@echo "== capi dist ($(CAPI_TARGETS)) =="
 	@mkdir -p $(CAPI_DIST)
-	@$(GATE_LOCK) docker run --rm \
+	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
 		-v "$(CURDIR):/repo" -w /repo/engine \
 		-v "$(CARGO_VOLUME):/usr/local/cargo" \
 		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
@@ -354,7 +354,7 @@ engine\:cli-dist: ## Build the `shojiku` CLI for the platform matrix + checksums
 _engine-cli-dist:
 	@echo "== cli dist ($(CLI_TARGETS)) =="
 	@mkdir -p $(CLI_DIST)
-	@$(GATE_LOCK) docker run --rm \
+	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
 		-v "$(CURDIR):/repo" -w /repo/engine \
 		-v "$(CARGO_VOLUME):/usr/local/cargo" \
 		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
@@ -593,6 +593,10 @@ endif
 engine\:fuzz: ## Fuzz the untrusted-input parsers (nightly+libFuzzer; FUZZ_GROUP=sign|wire FUZZ_TARGET=<name>)
 	@$(call gate,_engine-fuzz,engine:fuzz)
 
+# Plain `docker run`, not $(TARGET_DOCKER): the fuzz crate is outside the
+# workspace and builds into its OWN engine/fuzz/target, which the pooled
+# volume (mounted over engine/target) does not cover. On-demand and nightly-only,
+# so it stays on the bind mount — `rm -rf engine/fuzz/target` reclaims it.
 _engine-fuzz:
 	@echo "== fuzz ($(FUZZ_SECS)s per target) =="
 	@$(GATE_LOCK) docker run --rm \
@@ -627,8 +631,12 @@ engine\:render: ## Render one template with the pack dirs already right: TPL=<fi
 		echo '  which is why an ad-hoc `cargo run -p shojiku-cli` dies with `font pack not found`.' >&2; \
 		exit 2; \
 	fi
+	@$(GATE_LOCK) $(MAKE) --no-print-directory _engine-render
+
+# One gate-lock hold over the build and the run, so both see the same target slot.
+_engine-render:
 	@$(CARGO_IN_DOCKER) 'cargo build --release -p shojiku-cli'
-	@$(GATE_LOCK) docker run --rm \
+	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
 		-v "$(CURDIR):/repo" -w /repo \
 		-e SHOJIKU_FONT_DIR=/repo/packs/fonts \
 		-e SHOJIKU_LOCALE_DIR=/repo/packs/locale \
@@ -646,9 +654,12 @@ engine\:preview: ## Rasterize one template to PNG so a human can LOOK at it: TPL
 		echo '  examples, and a PDF needs a viewer this repo does not ship.' >&2; \
 		exit 2; \
 	fi
+	@$(GATE_LOCK) $(MAKE) --no-print-directory _engine-preview
+
+_engine-preview:
 	@$(CARGO_IN_DOCKER) 'cargo build --release -p shojiku-cli'
 	@rm -f $(CURDIR)/.make-logs/engine-preview-*.png
-	@$(GATE_LOCK) docker run --rm \
+	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
 		-v "$(CURDIR):/repo" -w /repo \
 		-e SHOJIKU_FONT_DIR=/repo/packs/fonts \
 		-e SHOJIKU_LOCALE_DIR=/repo/packs/locale \
