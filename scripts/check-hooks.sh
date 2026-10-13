@@ -169,6 +169,13 @@ case_bash 'then opens a command'        deny 'if true; then git push -f origin m
 case_bash 'mirror push'                 deny 'git push --mirror origin'
 case_bash 'all branches, forced'        deny 'git push --all -f origin'
 case_bash 'cargo after a docker command' deny 'docker rm -f x; cargo test'
+case_bash 'cargo after ;'                deny 'x; cargo build'
+case_bash 'cargo behind a prefix'       deny 'time cargo test'
+case_bash 'cargo opening a subshell'    deny '(cargo test)'
+# A heredoc fed to a SHELL is commands, so its body is read, not skipped.
+case_bash 'cargo in a heredoc run by sh' deny 'sh <<EOF
+cargo test
+EOF'
 
 # A shell metacharacter inside a QUOTED argument is not a separator, and the two
 # rules about `make` used to read it as one — in BOTH directions. The quoted-`;`
@@ -240,6 +247,19 @@ case_bash 'make --version then head -n' silent 'make --version > /dev/null; head
 # above and below are what proves the anchoring did not cost the control.
 case_bash 'cargo named in a quoted alternation' silent 'grep -E "make|cargo x" file'
 case_bash 'cargo named in prose'         silent "echo 'never run cargo test here'"
+# Any other heredoc body is data. The cargo rule split each LINE on whitespace,
+# so a body line beginning with the word, or a prose `(no` read as a subshell
+# whose next word is the command, was refused as host cargo — two edits to
+# skill prose on 2026-10-14, both of which invoked only python and cat.
+case_bash 'cargo opening a python heredoc line' silent "python3 - <<'EOF'
+edit('x', \"\"\"...staying in Docker.\"\"\", \"\"\"...the
+cargo target is a pooled volume now...\"\"\")
+EOF"
+case_bash 'cargo after a prose (no'      silent "cat >> notes.md <<'EOF'
+containing \"cargo\" + build words
+  (no cargo invocation).
+EOF"
+case_bash 'cargo after (no, no heredoc'  silent 'echo x; (no cargo here)'
 case_bash 'push rule documented in prose' silent "echo 'never git push --force origin main again'"
 case_bash 'push rule grepped in docs'     silent "grep -rn 'git push origin main ' docs/"
 case_bash 'make help then grep -n'      silent 'make help; grep -n verify Makefile'

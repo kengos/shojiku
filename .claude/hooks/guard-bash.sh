@@ -76,9 +76,8 @@ is_gate() {
 # is what lets the two rules below keep the regexes they already had: the change
 # is what they are matched AGAINST, not what they look for.
 #
-# Quoting, not token boundaries, is the distinguishing fact here — which is why
-# `at_command_position`'s whitespace tokenizer does not serve this pair. A real
-# pipe can be written with no spaces around it (`make x|head`), so `x|head` and
+# Quoting, not token boundaries, is the distinguishing fact here: a real pipe
+# can be written with no spaces around it (`make x|head`), so `x|head` and
 # `F='a|b'` are one token either way; only the quotes tell them apart.
 #
 # Both directions were live before this, and the second is the serious one:
@@ -156,50 +155,6 @@ dry_run_after_make() {
 		}'
 }
 
-# Is NAME invoked as a COMMAND, or merely NAMED inside an argument?
-#
-# Tokenizing tells the two apart WHEN the name sits inside one token — an
-# alternation in a quoted regex gives the token `"make|cargo`, not `make`, so it
-# never matches. That is not the whole story, and the gap cost this cycle three
-# more wrong denials: a quoted argument with a SPACE after a separator splits
-# into two tokens, the first ending in `;`, which opens a command position. The
-# tokenizer then read a name inside a quoted string as a command — and the
-# string in question was a FIXTURE in `scripts/check-hooks.sh`, so the guard
-# refused the edit that was documenting its own defect, three times running.
-#
-# So it reads the BLANKED view as well: quoting is what decides whether a
-# metacharacter is a separator, and `unquoted_view` is the one place that
-# decision is made.
-#
-# That cost this repository six wrong denials in a single cycle: a sweep over
-# the development skills, the minimal probe written to reproduce it, the
-# write-up of the incident, a zero-context reviewer's own probes, the edit
-# recording the correction, and the edit making this fix — two of them on the
-# push rules rather than the cargo one. A guard that refuses the
-# documentation of its own defect, and then the fix for it, is not being read
-# as a decision.
-#
-# So the tokenizer is written once, here, and the rules that were matching a
-# raw string use it. Leading VAR=value assignments are skipped (`V=1 make ...`),
-# and a token that IS or ENDS in a separator opens a new command position, so
-# `cd engine && cargo clippy` and `docker rm -f x; cargo test` are
-# still caught.
-at_command_position() {
-	printf '%s' "$cmd" | awk -v want="$1" "$BLANK"'
-		{
-			n = split(unquoted_view($0), tok, /[ \t]+/)
-			start = 1
-			for (i = 1; i <= n; i++) {
-				t = tok[i]
-				if (t == "") continue
-				if (start && t ~ /^[A-Za-z_][A-Za-z0-9_]*=/) continue
-				if (start && t == want) { found = 1; exit }
-				start = (t ~ /[|;&]$/ || t ~ /^[|;&(]/)
-			}
-		}
-		END { exit(found ? 0 : 1) }'
-}
-
 # A command-position invocation: start of the command or just after a
 # separator, allowing leading VAR=value assignments (`V=1 make ...`).
 POS='(^|[;&|(])[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
@@ -215,7 +170,7 @@ MAKE="$POS(sudo[[:space:]]+)?g?make([[:space:]]|$)"
 #
 # So the whole command is read once, the way the shell reads it, and every
 # command-position `git` is recorded as its global options, its subcommand and
-# its arguments:
+# its arguments (and every command name, for `at_command_position`):
 #
 #   - quotes and backslashes remove their characters from the words, and an
 #     unquoted `;`, `&`, `|` or newline ends a command;
@@ -227,7 +182,9 @@ MAKE="$POS(sudo[[:space:]]+)?g?make([[:space:]]|$)"
 #     skipped: `<<<` is a here-string, and a `<<` whose delimiter line never
 #     appears (`$(( 1 << 3 ))`) is not a heredoc at all. Skipping to the end on
 #     a guess would let everything after it through. `<<""` is a heredoc closed
-#     by an EMPTY line, not a `<<` waiting for its delimiter word;
+#     by an EMPTY line, not a `<<` waiting for its delimiter word. A heredoc
+#     fed to a shell (`sh`, `bash`, `zsh`, `dash`, `ksh`) IS commands, so its
+#     body is read rather than skipped;
 #   - transparent prefixes (`sudo`, `env`, `command`, `exec`, `time`, `nohup`,
 #     `nice`) and the words that open a command (`then`, `do`, `else`, `{`, `!`,
 #     `if`, `while`, `until`) keep the command position open;
@@ -262,7 +219,9 @@ GITSCAN='
 	function begin_scan(s,   p, k, t) {
 		n = 0; cur = 0; tok = ""; have = 0; at_start = 1; in_git = 0; opener = 0; decl = 0
 		q = ""; pending = ""; hd_on = 0; heredoc_word = 0; depth = 0; word_q = 0
-		sign_env_off = 0; sign_key = 0; sign_val = 0
+		sign_env_off = 0; sign_key = 0; sign_val = 0; cn = 0; curcmd = ""
+		split("sh bash zsh dash ksh", p, " ")
+		for (k in p) SHELLS[p[k]] = 1
 		split("sudo env command exec time nohup nice then do else { ! if while until", p, " ")
 		for (k in p) PREFIX[p[k]] = 1
 		split("export declare typeset readonly local", p, " ")
@@ -316,10 +275,10 @@ GITSCAN='
 			if (lw ~ /^git_config_key_[0-9]+=commit\.gpgsign$/) sign_key = 1
 			if (lw ~ /^git_config_value_[0-9]+=(false|0|no|off)$/) sign_val = 1
 		}
-		if (heredoc_word) { pending = w; hd_on = 1; heredoc_word = 0; return }
+		if (heredoc_word) { pending = w; hd_on = !(curcmd in SHELLS); heredoc_word = 0; return }
 		if (!lead_quoted && w ~ /^<</ && w !~ /^<<</ && !(depth > 0 && st_arith[depth])) {
 			sub(/^<<-?/, "", w)
-			if (w == "" && !wq) heredoc_word = 1; else { pending = w; hd_on = 1 }
+			if (w == "" && !wq) heredoc_word = 1; else { pending = w; hd_on = !(curcmd in SHELLS) }
 			return
 		}
 		if (at_start) {
@@ -328,6 +287,7 @@ GITSCAN='
 			if (w in PREFIX) { opener = 1; return }
 			if (w in DECL) { at_start = 0; opener = 0; decl = 1; return }
 			at_start = 0; opener = 0
+			cmdname[++cn] = w; curcmd = w
 			in_git = (w == "git")
 			if (in_git) { cur = ++n; gopts[cur] = ""; subc[cur] = ""; args[cur] = ""; phase = "global"; takes_value = 0 }
 			return
@@ -343,7 +303,7 @@ GITSCAN='
 		}
 		args[cur] = args[cur] "\037" w
 	}
-	function command_end() { word_end(); at_start = 1; in_git = 0; opener = 0; decl = 0 }
+	function command_end() { word_end(); at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = "" }
 	function add(c, quoted) {
 		if (!have) lead_quoted = quoted
 		if (quoted) word_q = 1
@@ -358,8 +318,8 @@ GITSCAN='
 		st_tv[depth] = takes_value; st_at[depth] = at_start; st_op[depth] = opener
 		st_have[depth] = have; st_tok[depth] = tok; st_lq[depth] = lead_quoted
 		st_wq[depth] = word_q; st_decl[depth] = decl
-		st_bt[depth] = by_backtick; st_word[depth] = in_word
-		have = 0; tok = ""; word_q = 0; at_start = 1; in_git = 0; opener = 0; decl = 0
+		st_bt[depth] = by_backtick; st_word[depth] = in_word; st_cmd[depth] = curcmd
+		have = 0; tok = ""; word_q = 0; at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""
 	}
 	# Leave it: the outer command resumes, and a substitution inside a word
 	# stands in that word as one placeholder character.
@@ -369,7 +329,7 @@ GITSCAN='
 		takes_value = st_tv[depth]; at_start = st_at[depth]; opener = st_op[depth]
 		have = st_have[depth]; tok = st_tok[depth]; lead_quoted = st_lq[depth]
 		word_q = st_wq[depth]; decl = st_decl[depth]; q = st_q[depth]
-		in_word = st_word[depth]
+		in_word = st_word[depth]; curcmd = st_cmd[depth]
 		depth--
 		if (in_word) add("_", 0)
 	}
@@ -478,6 +438,38 @@ git_verdicts() {
 			print verdict " " (sign ? 1 : 0)
 		}'
 }
+# Is NAME invoked as a COMMAND, or merely NAMED inside an argument? Answered
+# from the same whole-command scan as the git rules (`GITSCAN` records every
+# command name it meets), so the shell's own reading decides: quotes, `;`, `&&`,
+# `|`, substitutions, subshells, transparent prefixes and heredoc bodies.
+#
+# It used to split each LINE on whitespace and call a token a command position
+# when it followed one ending in a separator or STARTING with `(`. That read a
+# heredoc body as commands, and a prose `(no` as a subshell whose NEXT word is
+# the command — in a shell the word right after `(` is. Two edits to skill
+# prose were refused as host cargo on 2026-10-14 for exactly that: a python
+# heredoc whose line began with the word, and a `cat` heredoc saying
+# "(no cargo invocation)". Before that, quoted arguments split into tokens had
+# cost six wrong denials in one cycle (the quoted-name rows in the self-test).
+#
+# A heredoc fed to a shell (`sh <<EOF`) IS commands, so the scan reads that
+# body rather than skipping it: `sh <<EOF` / `cargo test` / `EOF` is still
+# host cargo. What it cannot see: a body piped to a shell (`cat <<EOF | sh`),
+# and a command inside a quoted `sh -c '…'`.
+#
+# A scan that fails reads as "not found" here: this rule is advice about a
+# toolchain that is not installed, not a ruleset the push rules protect.
+at_command_position() {
+	printf '%s' "$cmd" | awk -v want="$1" "$GITSCAN"'
+		BEGIN { RS = "\001" }
+		{ all = all (NR > 1 ? "\001" : "") $0 }
+		END {
+			scan(all)
+			for (k = 1; k <= cn; k++) if (cmdname[k] == want) exit 0
+			exit 1
+		}'
+}
+
 case $cmd in
 *git*)
 	git_verdict=$(git_verdicts) || git_verdict=''
@@ -528,7 +520,7 @@ fi
 
 # There is no Rust toolchain on this host, and a hand-built invocation is not a
 # sanctioned claim even where one exists.
-if at_command_position cargo && ! has 'docker[^;&|]*cargo'; then
+if at_command_position cargo; then
 	decide deny 'This host has no Rust toolchain, and a correctness claim comes from a make
 target, never from an ad-hoc cargo run. Use the <scope>:<job> grid:
   make engine:lint | engine:test | engine:coverage | engine:budget
