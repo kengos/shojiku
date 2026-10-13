@@ -322,6 +322,9 @@ case_bash 'reset --soft upstream ref'   deny 'git reset --soft @{upstream}'
 case_bash 'reset --soft HEAD~1'         silent 'git reset --soft HEAD~1'
 case_bash 'reset --hard origin/main'    silent 'git reset --hard origin/main'
 case_bash 'rebase origin/main'          silent 'git rebase origin/main'
+case_bash 'reset --soft refs/remotes'   deny 'git reset --soft refs/remotes/origin/main'
+case_bash 'echo naming reset --soft'    silent 'echo "never run git reset --soft origin/main"'
+case_bash 'commit msg naming reset'     silent 'git commit -m "no more git reset --soft origin/main"'
 case_bash 'grep naming reset --soft'    silent 'grep -rn "reset --soft origin/main" docs'
 
 # ---- Bash guard: ask and note ------------------------------------------
