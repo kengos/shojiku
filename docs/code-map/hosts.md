@@ -205,10 +205,13 @@ false`), no clap.
   (an ITERATIVE walk, so nothing recurses) and `Known::of_this_build()`, which
   holds the three sets in ONE place so the drift test and `reference-gen`
   cannot audit against different vocabularies.
-  Measured on the committed tree and pinned by `Census`: **34 pages, 23 with a
-  section, 22 with a table, 143 rows, 174 column-1 code occurrences, 134
-  distinct codes, 198 underscore-bearing in-section tokens** (174 of them in
-  column 1, **24** judged by the second rule), **0 waived**. The census is the
+  Pinned by `Census`: pages, pages with a section, pages with a table, table
+  rows, column-1 code occurrences, distinct codes, underscore-bearing
+  in-section tokens (those in column 1 and those the second rule judges), and
+  **0 waived**. The exact values are asserted in
+  `pages/tests/committed.rs` and move with every docs edit, so they are
+  deliberately not restated here (they went stale once already); `make
+  engine:test` names the new value when one moves. The census is the
   anti-vacuity half and is not decoration: an inert scan reports zero problems,
   and only these numbers tell that apart from a clean tree.
   Three lookups because two are not enough: **12** pages carry a
@@ -220,9 +223,9 @@ false`), no clap.
   The THIRD rule is why `features.md` is named: measured over `docs/engine/`,
   43 backticked code-shaped tokens are unknown to all three lookups and **35 of
   them occur only there** (the other 8 are exactly the excused set below) — it is the capability and decision LOG, not a reference page,
-  and the MCP catalog already excludes it. Over the other 33 pages the rule
-  reads **666** backticked code-shaped names and **13 occurrences of 8 names** are
-  excused (`deny_unknown_fields`, five MCP tool names, `prepare_assets`, and
+  and the MCP catalog already excludes it. Over the other pages the rule
+  reads every backticked code-shaped name, and a handful of occurrences of 8
+  names are excused (`deny_unknown_fields`, five MCP tool names, `prepare_assets`, and
   `font_embedding_restricted` — a `FontError` message tag whose two `fonts.md`
   uses are what the rule was built for). `Census::excused_names` counts
   DISTINCT excusals HIT and the drift test holds it equal to the list's
@@ -233,9 +236,9 @@ false`), no clap.
   for the current residue.
   **What it does NOT reach**, since a gate's scope is the thing its own tests
   cannot tell you: the heading is matched EXACTLY (a renamed one drops out —
-  the pinned section count is what fails then, not silence); of the **198**
-  tokens the census pins, 174 are column-1 claims and 24 fall to the second
-  rule, so the single-word names beside them (`overflow`, `ellipse`,
+  the pinned section count is what fails then, not silence); of the tokens
+  the census pins, the column-1 claims are held to the registry and the rest
+  fall to the second rule, so the single-word names beside them (`overflow`, `ellipse`,
   `checkbox`) go unchecked by both and a mistyped one-word capability key is
   not caught (no CODE hides there: every registry code has an underscore, and
   a test says so); and **a code claim written as PROSE is held only to the

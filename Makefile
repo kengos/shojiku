@@ -23,6 +23,8 @@
 #   Faster slices while iterating
 #     make engine:budget        make engine:lint        make engine:test
 #     make gui:budget           make gui:lint           make gui:test [F=<pat>]
+#     make reference:docs      the engine suites that read docs/engine (what a
+#                               docs-only PR must not break; site-docs.yml runs it)
 #     make <any>:<job> V=1      the same run, verbose, for debugging a failure
 #     make quiet T=<target>     the PASS/FAIL treatment for anything else
 #
@@ -468,7 +470,7 @@ include mk/investigate.mk
         _proof-java _proof-js _proof-php _proof-published _proof-published-crates \
         _proof-published-dotnet _proof-published-java _proof-published-js \
         _proof-published-php _proof-published-python _proof-published-ruby \
-        _proof-python _proof-ruby _reference-check _sbom-check _sbom-lint \
+        _proof-python _proof-ruby _reference-check _reference-docs _sbom-check _sbom-lint \
         _sdk-dotnet-lint _sdk-dotnet-test _sdk-dotnet-verify _sdk-go-lint \
         _sdk-go-test _sdk-go-verify _sdk-java-lint _sdk-java-test _sdk-java-verify \
         _sdk-js-lint _sdk-js-test _sdk-js-verify _sdk-php-lint _sdk-php-test \
@@ -489,7 +491,7 @@ include mk/investigate.mk
         proof\:php proof\:published proof\:published\:crates \
         proof\:published\:dotnet proof\:published\:java proof\:published\:js \
         proof\:published\:php proof\:published\:python proof\:published\:ruby \
-        proof\:python proof\:ruby quiet reference\:check reference\:generate \
+        proof\:python proof\:ruby quiet reference\:check reference\:docs reference\:generate \
         sbom\:check sbom\:generate sbom\:lint sdk\:dotnet\:lint sdk\:dotnet\:test \
         sdk\:dotnet\:verify sdk\:go\:lint sdk\:go\:test sdk\:go\:verify \
         sdk\:java\:lint sdk\:java\:test sdk\:java\:verify sdk\:js\:format \
@@ -598,6 +600,18 @@ _reference-check:
 	@echo "== reference schema tests =="
 	$(CARGO_IN_DOCKER) 'cargo test -p shojiku-core --features schema --locked $(CARGO_JOBS) ;\
 		cargo test -p shojiku-authoring --features schema --locked $(CARGO_JOBS)'
+
+# The engine suites that read docs/engine LIVE: the prose census and the
+# generated-table byte equality (authoring), and the embedded-page equality and
+# size cap (mcp). A markdown-only PR never starts ci.yml, so site-docs.yml runs
+# this one; it is a slice of engine:test, not a new claim.
+reference\:docs: ## Fail if docs/engine breaks an engine suite that reads it (census, tables, MCP pages)
+	@$(call gate,_reference-docs,reference:docs)
+
+_reference-docs:
+	@echo "== docs/engine readers =="
+	$(CARGO_IN_DOCKER) 'cargo test -p shojiku-authoring --locked $(CARGO_JOBS) reference:: ;\
+		cargo test -p shojiku-mcp --locked $(CARGO_JOBS) reference'
 
 ## ---- examples ----------------------------------------------------------
 

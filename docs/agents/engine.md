@@ -273,11 +273,11 @@ honest (regenerate, then fail on drift):
   why that is not an oversight.** The `rendered` gate can only hold what a
   spec ASSEMBLES: `tables.yml` has no audit-only mode — every table it
   describes is also rendered and spliced, and an `authored` column requires
-  text on every row. Bringing these 22 in therefore means moving 143 rows of
-  page-scoped prose into a central YAML, and the great majority of those 134
-  codes say something on their page that `diagnostics.md` does not — 121 of
-  134 carry at least one page sentence the registry page does not, and 114 of
-  them share no sentence with it at all; the figure moves with the method,
+  text on every row. Bringing these 22 in therefore means moving every row of
+  page-scoped prose into a central YAML, and the great majority of those
+  codes say something on their page that `diagnostics.md` does not — most
+  carry at least one page sentence the registry page does not, and a large
+  share share no sentence with it at all; the figure moves with the method,
   which is
   why the REASON is the durable statement here as it is for the description
   cells above. That is a table migration in its own

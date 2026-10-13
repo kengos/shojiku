@@ -70,6 +70,14 @@ name: Site (docs-only changes)
 # the docs-only ones. That check is not this repo's `make site:build`, so it
 # proves the build rather than the target; the tsc/vitest/data half is what
 # nothing else was running.
+# THE FIFTH HOLE, and the one that needs Rust. The engine's own suites read
+# `docs/engine/` live: the prose census in `shojiku-authoring` pins exact
+# counts of what the pages say, every generated table must match byte for byte,
+# and the MCP server embeds the directory and asserts the embedded set equals
+# it. A docs-only PR starts none of them, so it merged green and the next code
+# PR reddened `main` for a reason unrelated to its own diff. `reference:docs` is
+# that slice of `engine:test`. GitHub cannot filter paths per job, so it runs on
+# every markdown PR (warm cache: minutes), the cheaper mistake as above.
 # The two path lists are duplicated rather than shared through a YAML anchor:
 # GitHub's workflow parser is not plain YAML and anchors are not something to
 # find out about from a run that silently did not fire. Keep them identical.
@@ -145,3 +153,13 @@ jobs:
           python-version: '3.12'
       - run: python3 -m pip install --quiet pyyaml
       - run: make skills:verify
+
+  engine-docs-readers:
+    name: engine suites that read docs/engine
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: reference:docs
+          key: reference-docs
