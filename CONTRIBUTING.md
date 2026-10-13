@@ -51,6 +51,12 @@ slices.
   bar a change must clear before it ships.
 - **`make quiet T=<target>`** gives anything that is not already a gate
   the same treatment.
+- **`make engine:map`** regenerates `docs/code-map/engine-structure.md`, the
+  engine's GENERATED structure map (crate layers, the per-file dispatch index
+  over the item-tree enums, each file's line count and the first sentence of its `//!` header). Never
+  edit that file by hand: `make engine:map-check` — part of `engine:lint` —
+  fails when it drifts from the tree, and a merge conflict in it is resolved
+  by re-running `make engine:map`, not by picking a side.
 - **`make skills:verify`** gates the eval cases over the skills — that every
   case in `skills/evals/` parses and every product skill still has a case or an
   exemption carrying a reason. It never calls a model, so it costs nothing. It

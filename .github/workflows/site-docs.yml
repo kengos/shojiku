@@ -122,6 +122,17 @@ jobs:
       - uses: actions/checkout@v7
       - run: make hooks:codes
 
+  engine-map:
+    name: engine map (the generated structure map matches the tree)
+    runs-on: ubuntu-latest
+    steps:
+      # docs/code-map/engine-structure.md is GENERATED from engine/. A change
+      # to engine/ starts ci.yml, whose engine-lint job runs this check; a
+      # HAND EDIT of the map alone is a docs/** change ci.yml never sees.
+      # Node in a container, no Rust, seconds.
+      - uses: actions/checkout@v7
+      - run: make engine:map-check
+
   skills:
     name: skills (every skill still has an eval case)
     runs-on: ubuntu-latest

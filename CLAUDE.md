@@ -22,6 +22,7 @@ crate's `tests/` directory.
 
 | You touch | Read first | It carries |
 | --- | --- | --- |
+| any `engine/**` (alongside the component map below) | [docs/code-map/engine-structure.md](docs/code-map/engine-structure.md) — **GENERATED** (`make engine:map`; never hand-edit, regenerate on conflict) | crate dependency layers, the per-file dispatch/recursion index over the item-tree enums (how many copies of a per-variant shape exist, and which copy misses a variant), every non-test engine file's line count + the first sentence of its `//!` header |
 | `engine/core`, `engine/diagnostics` | [docs/code-map/core.md](docs/code-map/core.md) | template/definitions/params wire model, two-pass parse, validation walks, the diagnostics code registry |
 | `engine/layout`, `engine/layout-box` | [docs/code-map/layout.md](docs/code-map/layout.md) | positioning/pagination, text·wrap·fonts, the layout tree (the ONLY layout↔renderer contract), the box index, the e2e suite map |
 | `engine/formatter`, `engine/image` | [docs/code-map/formatter-image.md](docs/code-map/formatter-image.md) | display strings, locale packs (CLDR builtins, 和暦), the font-pack wire; asset policy/SVG/raster |

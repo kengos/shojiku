@@ -29,6 +29,9 @@
 #   Apply fixes
 #     make engine:format        rustfmt        make gui:format      biome
 #     make examples:render      re-render the committed example outputs
+#     make engine:map           regenerate the generated engine structure map
+#                               (docs/code-map/engine-structure.md); its drift
+#                               check rides engine:lint
 #     make sbom:generate        re-generate the committed SBOMs from the
 #                               lockfiles. RELEASE-TIME: the inventories
 #                               describe the last release, not every commit
@@ -459,7 +462,7 @@ include mk/investigate.mk
 .PHONY: _docker-build _docker-render _docker-scan _docker-verify _engine-budget \
         _engine-capi-dist _engine-capi-lib _engine-cli-bin _engine-cli-dist \
         _engine-clippy _engine-coverage _engine-deny _engine-fmt _engine-fuzz \
-        _engine-lint _engine-napi _engine-test _engine-verify _engine-wasm \
+        _engine-lint _engine-map-check _engine-napi _engine-test _engine-verify _engine-wasm \
         _engine-wasm-e2e _examples-check _gui-budget _gui-e2e _gui-lint _gui-test \
         _gui-verify _make-check _proof _proof-deploy _proof-dotnet _proof-go \
         _proof-java _proof-js _proof-php _proof-published _proof-published-crates \
@@ -476,7 +479,7 @@ include mk/investigate.mk
         docker\:render docker\:scan docker\:verify engine\:budget \
         engine\:capi-dist engine\:capi-lib engine\:cli-bin engine\:cli-dist \
         engine\:clippy engine\:coverage engine\:coverage-why engine\:deny \
-        engine\:fmt engine\:format engine\:fuzz engine\:lint engine\:lock \
+        engine\:fmt engine\:format engine\:fuzz engine\:lint engine\:lock engine\:map engine\:map-check \
         engine\:napi engine\:preview engine\:render engine\:test engine\:update \
         engine\:verify engine\:wasm \
         engine\:wasm-e2e examples\:check examples\:render gui\:budget gui\:dev \

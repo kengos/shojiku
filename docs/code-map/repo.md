@@ -598,7 +598,21 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   made every dependency bump red on arrival with no way for dependabot to
   fix it. The site's tech page says the release cadence in as many words
   rather than claiming CI holds the two together.
-  + codegen (`gen-locale-builtins.py` — authoring-time CLDR
+  + codegen (`gen-engine-map.mjs` — `make engine:map` / `engine:map-check`
+  (in `engine:lint`; also a `site-docs.yml` job for a docs-only PR): the
+  GENERATED `docs/code-map/engine-structure.md` — crate layers from the
+  `Cargo.toml`s, the per-file dispatch/recursion index over the item-tree
+  enums (their variants and nesting variants are PARSED, only the enum's file
+  is declared), and the module tree with line counts + the FIRST SENTENCE of
+  each `//!` paragraph (not the first line: most role sentences wrap). Zero-dep
+  Node in `$(NODE_IMAGE)` so macOS and Linux produce identical bytes; fails
+  closed on a walk that finds <100 files. `--into <md> --crates a,b` scopes
+  the same sections to a crate set and rewrites only the
+  `<!-- generated:start -->`/`<!-- generated:end -->` block of an existing
+  map (refusing a file without exactly one marker pair) — the mechanism a
+  hand-written component map can carry its own census by; no target wires
+  it yet;
+  `gen-locale-builtins.py` — authoring-time CLDR
   fetch, ONE emitter for builtins AND packs; `gen-uax50.py` —
   authoring-time pinned Unicode fetch → the UAX#50 table in
   `engine/layout`).
