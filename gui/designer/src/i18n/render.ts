@@ -76,7 +76,7 @@ export function variantKey(diag: Diagnostic): string | null {
 /** Render a diagnostic's human message from `code` + `args` through the chain.
  * A [`variantKey`] refinement is tried first, then the bare code. The engine's
  * English `message` is the fallback when no catalog language in the chain
- * carries either (an append-only newer code, or a partial catalog) or the
+ * carries either (a code newer than the catalog, or a partial catalog) or the
  * localized template references an arg the diagnostic did not carry — NEVER the
  * raw template, and the engine `message` is never parsed. `origin` is not
  * consulted here (a GUI hides it). */

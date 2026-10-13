@@ -8,6 +8,7 @@ mod bindings_decl;
 mod cell_images;
 mod char_grid;
 mod column_cells;
+mod deprecated;
 mod document;
 mod equals_predicates;
 mod format_picks;

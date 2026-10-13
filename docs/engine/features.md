@@ -268,7 +268,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
 
 ### Page geometry (`engine/core`, `engine/layout`)
 - **`page.margin` is the coordinate origin**: bare number, per-side
-  map, or legacy `[t,r,b,l]` array (all `Length` forms; authored form
+  map, or the `[t,r,b,l]` array, deprecated since 0.3.0 and removed in
+  0.4.0 (all `Length` forms; authored form
   round-trips; default 25pt). `x: 0`/`y: 0` mean the margin corner;
   absolute items reach into the margin with negative coordinates
   (bleed/crop marks); margins that would consume a page axis fall back
@@ -508,8 +509,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   UA-defined; line-through on the column axis; per-run bands for
   spans); `textSpacingTrim` as a vertical half-width-punctuation pass sharing the
   horizontal class tables (measure == draw through `vertical_extent`).
-  `vertical_style_ignored` no longer fires (the code stays registered —
-  append-only contract). Rich shrink/ellipsis keep warning
+  `vertical_style_ignored` no longer fires (the code is deprecated in
+  0.3.0 and removed in 0.4.0). Rich shrink/ellipsis keep warning
   `span_overflow_unsupported` (horizontal parity).
 - **Column pagination**: a direct-flow vertical block whose columns
   overflow the box width continues on the next page (whole columns,
@@ -1233,13 +1234,22 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   re-categorizable `category`, an English `message` rendered from the
   code's registry template + args, an optional document `path`, and a
   non-contract `origin` (`file:line`). The engine never translates — a
-  consumer localizes from `code` + `args`; `code` and per-code arg keys
-  are an append-only frozen contract. `validate` surfaces structural
+  consumer localizes from `code` + `args`; a `code` and its arg keys never
+  change name or meaning, and a code is removed only after a release
+  deprecated it. `validate` surfaces structural
   parse failures as `parse_error` / `non_finite_number` diagnostics
   (with the field path + line/column) instead of an opaque error, so a
   GUI renders them inline. Duplicate `(code, path, message)` diagnostics
   collapse at the output boundary. Capability keys: `diagnostics.args`,
   `diagnostics.parse_error`. See [diagnostics.md](diagnostics.md).
+- **Deprecated wire forms warn**: `validate` reports a form that still
+  parses but is marked for removal as `deprecated_syntax` (warning;
+  `args` `key` / `form` / `replacement` / `since` / `removed_in`, `path`
+  = the key), with or without definitions, so it reaches the CLI report,
+  MCP, the Designer and the SDKs. Today: the `page.margin`
+  `[t, r, b, l]` array (deprecated in 0.3.0, removed in 0.4.0). The
+  catalog schema marks that array arm `deprecated: true`. Capability key
+  `diagnostics.deprecated_syntax`.
 - **Located layout diagnostics**: a layout-stage diagnostic names the
   item that raised it, in the box-index path grammar — the walk stamps
   the innermost enclosing item on the way out, so warnings raised by
@@ -2336,8 +2346,23 @@ identified by their wire spellings, never by internal work-item codes.
   `w: "100%"` to *mean* something. Origin-shift chosen over an opt-in
   key (pre-1.0 hard change; examples re-based in the same PR); the top
   margin is one assembly-time translate so the resolve pass stays
-  y-less. The legacy `[t,r,b,l]` array stays accepted — structured
-  YAML, eases coordinate imports.
+  y-less. The `[t,r,b,l]` array stayed accepted to ease coordinate
+  imports; it is deprecated since 0.3.0 and removed in 0.4.0 (see
+  the deprecation entry below).
+- **Deprecate, then remove — one release apart**: the wire and the
+  diagnostic codes were described as append-only, which left a form
+  nobody should write (the `page.margin` array: its import use is gone,
+  since a Thinreports migration regenerates the template, and the
+  Designer already rewrites it to the per-side map on the first edit)
+  parsing forever. Chosen instead: a form or code is deprecated in one
+  release and removed in the next minor before 1.0, at the next major
+  after it ([architecture.md](../architecture.md) § Deprecation). An
+  author-writable form warns through ONE code, `deprecated_syntax`, fed
+  by one table of forms, because every arg is a YAML spelling or a
+  version and a code per form would only grow the registry. Codes that
+  nothing emits get no registry flag: they leave one release later, so
+  a flag would live for exactly that release. Capability keys stay
+  append-only — a removed key reads as a removed feature.
 - **The GENERAL page break is an item, not a per-item `breakBefore`
   key**: an item is discoverable (GUI palette, one YAML line) and
   touches no other wire struct; a break key on every struct would widen

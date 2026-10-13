@@ -10,6 +10,8 @@ export const zhTw: LanguageCatalog = {
   diagnostics: {
     parse_error: '無法解析 {what}（`{path}`）：{detail}',
     non_finite_number: '{what} 含有非有限數（NaN/Infinity），不允許使用',
+    deprecated_syntax:
+      '`{key}` 的 {form} 寫法自 {since} 起已棄用，將在 {removed_in} 中移除；請改寫為 {replacement}',
     unknown_data_key: '資料鍵 `{key}` 未在 {source} 中宣告',
     'unknown_data_key.empty': '請為此元素選擇資料欄位（資料鍵為空）',
     unknown_format: '格式 `{format}` 未針對 `{key}` 宣告',

@@ -10,6 +10,8 @@ export const en: LanguageCatalog = {
   diagnostics: {
     parse_error: 'failed to parse {what} at `{path}`: {detail}',
     non_finite_number: '{what} contains non-finite numbers (NaN/Infinity), which are not allowed',
+    deprecated_syntax:
+      '`{key}` written as {form} is deprecated since {since} and will be removed in {removed_in}; write {replacement} instead',
     unknown_data_key: 'data key `{key}` is not declared in {source}',
     'unknown_data_key.empty': 'pick a data field for this item (its data key is empty)',
     unknown_format: 'format `{format}` is not declared for `{key}`',

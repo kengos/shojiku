@@ -338,7 +338,9 @@ injected at parse). The template model splits along CSS lines.
   everything pushed since `from` that carries none — the hook a walk uses
   to locate diagnostics its emit sites could not (out-of-range `from` is a
   no-op, never a panic).
-- `code.rs` — `DiagnosticCode`: the closed, append-only code registry —
+- `code.rs` — `DiagnosticCode`: the closed code registry (never renamed/
+  repurposed; removal only after a deprecation release — architecture
+  § Deprecation) —
   one `diagnostic_codes!` table maps each variant → wire string +
   severity + category + English `{arg}` template (`ALL`/`as_str`/
   `from_wire`). The complete code list: `docs/engine/diagnostics.md`.

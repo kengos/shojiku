@@ -2562,6 +2562,27 @@ platform binaries.
   now show what was kept, and tabbing through a date-and-time field no longer
   rewrites the sample it just read.
 
+### Deprecated
+
+- **Writing `page.margin` as a `[top, right, bottom, left]` array is
+  deprecated, and 0.4.0 stops reading it.** It still applies the four
+  margins, but `validate`, the CLI's report, the MCP server, the Designer
+  and the SDKs now show a `deprecated_syntax` warning naming the
+  replacement: the per-side map `{ top, right, bottom, left }`, or a bare
+  number for all four. The Designer already rewrites the array to the map
+  on the first margin edit. Engines that report the capability key
+  `diagnostics.deprecated_syntax` emit the warning.
+
+- **The diagnostic codes `horizontal_overflow` and `vertical_style_ignored`
+  are deprecated and leave the registry in 0.4.0.** Nothing emits either
+  of them (`vertical_style_ignored` never fired in a release), so the only
+  thing to change is a catalog or a matcher that still lists them.
+
+- **Removals now follow a written rule.** A template form or a diagnostic
+  code is deprecated one release before it is removed: before 1.0 in the
+  next minor release, from 1.0 at the next major. Until now the wire and
+  the code registry were described as append-only.
+
 ### Security
 
 - **The CLI's font download no longer accepts a malformed TLS 1.3 handshake.**

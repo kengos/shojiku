@@ -1,13 +1,16 @@
 //! The closed diagnostic-code registry.
 //!
-//! [`DiagnosticCode`] is the engine's stable, append-only contract with
-//! translating consumers (the React GUI's ICU catalog keys off it). Being a
-//! closed enum, the compiler enforces uniqueness and hands us the registry
-//! for free: every code's [`Severity`](crate::Severity), [`Category`], and
-//! English message template lives here in one table, so a code's message can
-//! never drift from its declared args. **Codes and their per-code arg keys
-//! (the `{placeholder}`s in each template) are frozen once shipped** — add
-//! new codes, never rename or repurpose an existing one.
+//! [`DiagnosticCode`] is the engine's stable contract with translating
+//! consumers (the React GUI's ICU catalog keys off it). Being a closed enum,
+//! the compiler enforces uniqueness and hands us the registry for free:
+//! every code's [`Severity`](crate::Severity), [`Category`], and English
+//! message template lives here in one table, so a code's message can never
+//! drift from its declared args. **A shipped code and its per-code arg keys
+//! (the `{placeholder}`s in each template) are never renamed or repurposed,
+//! and a removed wire string is never reused.** New codes are added freely; a
+//! code is removed only after a release has marked it deprecated (before 1.0
+//! the next minor, after it the next major — `docs/architecture.md`
+//! § Deprecation).
 
 use crate::category::Category;
 use crate::Severity;
@@ -57,6 +60,12 @@ diagnostic_codes! {
     // Parse (located errors mapped from CoreError).
     ParseError = "parse_error", Error, Parse, "failed to parse {what} at `{path}`: {detail}";
     NonFiniteNumber = "non_finite_number", Error, Parse, "{what} contains non-finite numbers (NaN/Infinity), which are not allowed";
+    // A wire form that still parses and renders but is marked for removal.
+    // ONE code for every such form, driven by the core's `DEPRECATED_FORMS`
+    // table, rather than a code per form: every arg is a YAML literal or a
+    // version number, so no English reaches a translated sentence. An arg
+    // that would carry prose needs its own code instead.
+    DeprecatedSyntax = "deprecated_syntax", Warning, Parse, "`{key}` written as {form} is deprecated since {since} and will be removed in {removed_in}; write {replacement} instead";
 
     // Data — bindings, params, image sources.
     UnknownDataKey = "unknown_data_key", Error, Data, "data key `{key}` is not declared in {source}";
@@ -162,12 +171,11 @@ diagnostic_codes! {
     MarkMissingSize = "mark_missing_size", Warning, Layout, "ellipse/checkbox items need a positive box.w and box.h; item skipped";
     ContainerOverflow = "container_overflow", Warning, Layout, "container content ({content}pt) exceeds its content height ({avail}pt)";
     GridCellOverflow = "grid_cell_overflow", Warning, Layout, "grid child ({child}pt) exceeds its {track}pt {extent}";
-    // RETIRED — emitted by nothing. Its single free-text `{detail}` arg
-    // held a whole English sentence, which a translating consumer could
-    // only pass through. The reasons it covered were enumerable, so each
-    // became its own number-carrying code (see the layout tail below).
-    // The entry stays because codes and arg keys are append-only and a
-    // consumer may still hold a catalog key for it.
+    // DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing. Its
+    // single free-text `{detail}` arg held a whole English sentence, which a
+    // translating consumer could only pass through. The reasons it covered
+    // were enumerable, so each became its own number-carrying code (see the
+    // layout tail below).
     HorizontalOverflow = "horizontal_overflow", Warning, Layout, "{detail}";
     TextOverflow = "text_overflow", Warning, Layout, "text overflows the box height ({content}pt content vs {avail}pt available)";
     CharGridOverflow = "char_grid_overflow", Warning, Layout, "char_grid content exceeds the single sheet ({cells} cells) available outside a flow body; {dropped} characters dropped";
@@ -187,6 +195,9 @@ diagnostic_codes! {
     CutMarksClipped = "cut_marks_clipped", Warning, Layout, "cutMarks have no room outside the grid on the {sides} side(s) of the sheet; those ticks are omitted";
     VerticalTextUnsupported = "vertical_text_unsupported", Warning, Layout, "{feature} does not support vertical writing (writingMode: vertical_rl) in v1";
     RubyBaseNotFound = "ruby_base_not_found", Warning, Layout, "ruby base `{base}` was not found in the drawn text; reading skipped";
+    // DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing, in any
+    // release: the block-level knobs it was reserved for apply to vertical
+    // text instead.
     VerticalStyleIgnored = "vertical_style_ignored", Warning, Layout, "`{prop}` is ignored on a vertical (writingMode: vertical_rl) block";
     PageNumberInBody = "page_number_in_body", Warning, Layout, "page_number items are only supported in header/footer bands";
     PageNumberInContainer = "page_number_in_container", Warning, Layout, "page_number items are only supported directly in header/footer bands; item skipped";
@@ -220,7 +231,7 @@ diagnostic_codes! {
     GridTracksClamped = "grid_tracks_clamped", Warning, Limits, "{detail}";
     ImpositionGridClamped = "imposition_grid_clamped", Warning, Limits, "grid {columns}×{rows} is over the {max} cells/page cap (or has a zero axis); clamped to {clamped_columns}×{clamped_rows}";
     CellImageAssetsCapped = "cell_image_assets_capped", Warning, Limits, "per-element cell images exceed the {max} cap; the rest are skipped";
-    // The horizontal-overflow family. `horizontal_overflow` above carries
+    // The horizontal-overflow family. `horizontal_overflow` above carried
     // its whole sentence in a free-text `{detail}` arg, so a translating
     // consumer can only pass the English through; these carry NUMBERS and
     // nothing else, so each catalog writes its own sentence. One code per

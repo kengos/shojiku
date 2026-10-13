@@ -2763,7 +2763,7 @@
       ]
     },
     "PageMargin": {
-      "description": "The printable-area insets: a bare point number for all four sides, a per-side map whose unset sides are 0, or the legacy top-right-bottom-left array. The authored form round-trips. Negative sides, `auto`, wrong array lengths and unknown map keys are all parse errors.",
+      "description": "The printable-area insets: a bare point number for all four sides, a per-side map whose unset sides are 0, or the top-right-bottom-left array, which is deprecated since 0.3.0 and removed in 0.4.0. The authored form round-trips. Negative sides, `auto`, wrong array lengths and unknown map keys are all parse errors.",
       "oneOf": [
         {
           "type": "number"
@@ -2772,6 +2772,7 @@
           "$ref": "#/$defs/EdgeMapRepr"
         },
         {
+          "deprecated": true,
           "items": {
             "$ref": "#/$defs/Length"
           },

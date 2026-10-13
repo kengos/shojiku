@@ -156,7 +156,8 @@ pub(super) const KEYS: &[&str] = &[
     // Diagnostics v2: every diagnostic carries typed `args` (String |
     // Number | Bool) + a `category` + an `origin` alongside `code` +
     // `message`, so a GUI can localize from `code` + `args` instead of the
-    // English string. Codes + per-code arg keys are an append-only contract.
+    // English string. A shipped code and its arg keys are never renamed or
+    // repurposed; one is removed only after a release deprecated it.
     "diagnostics.args",
     // Structural parse failures are surfaced by `validate` as a
     // `parse_error` / `non_finite_number` diagnostic (with `path` +
@@ -188,4 +189,10 @@ pub(super) const KEYS: &[&str] = &[
     // + `borderStyle` and LOST its implicit 1pt default stroke; marks
     // keep a 1pt frame default. Absent this key, author `fillColor`.
     "style.shapes.unified",
+    // `validate` reports a wire form that still parses but is marked for
+    // removal as a `deprecated_syntax` WARNING (`args` `key` / `form` /
+    // `replacement` / `since` / `removed_in`, `path` = the key) — today the
+    // `page.margin` `[t, r, b, l]` array. Absent this key, a deprecated form
+    // is accepted silently until the release that stops parsing it.
+    "diagnostics.deprecated_syntax",
 ];

@@ -10,6 +10,8 @@ export const zhCn: LanguageCatalog = {
   diagnostics: {
     parse_error: '无法解析 {what}（`{path}`）：{detail}',
     non_finite_number: '{what} 含有非有限数（NaN/Infinity），不允许使用',
+    deprecated_syntax:
+      '`{key}` 的 {form} 写法自 {since} 起已弃用，将在 {removed_in} 中移除；请改写为 {replacement}',
     unknown_data_key: '数据键 `{key}` 未在 {source} 中声明',
     'unknown_data_key.empty': '请为该元素选择数据字段（数据键为空）',
     unknown_format: '格式 `{format}` 未针对 `{key}` 声明',

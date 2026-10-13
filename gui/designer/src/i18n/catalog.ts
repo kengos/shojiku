@@ -6,8 +6,9 @@
 // (see `resolve.ts`), and rendering (`render.ts`) walks the chain PER KEY, so a
 // regional or partial language only needs to carry the keys where it differs —
 // the rest fall through to a less-specific language and ultimately to English.
-// Diagnostics are keyed by the engine's append-only `DiagnosticCode` registry
-// (English entries are the engine templates verbatim); an uncatalogued newer
+// Diagnostics are keyed by the engine's `DiagnosticCode` registry, whose wire
+// strings never change meaning (English entries are the engine templates
+// verbatim); an uncatalogued newer
 // code degrades to the engine's own `message`, so a partial catalog is safe.
 //
 // The catalog is a host-injection point: a host spreads-extends DEFAULT_CATALOG

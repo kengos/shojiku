@@ -49,9 +49,10 @@ impl JsonSchema for EdgeSpec {
     }
 }
 
-/// `page.margin`: the two [`EdgeSpec`] forms plus the legacy positional
-/// `[top, right, bottom, left]` array. Negative sides and `auto` are
-/// rejected at parse — a value constraint the shape cannot carry.
+/// `page.margin`: the two [`EdgeSpec`] forms plus the positional
+/// `[top, right, bottom, left]` array, marked `deprecated` (removed in
+/// 0.4.0). Negative sides and `auto` are rejected at parse — a value
+/// constraint the shape cannot carry.
 impl JsonSchema for PageMargin {
     fn schema_name() -> Cow<'static, str> {
         "PageMargin".into()
@@ -69,6 +70,7 @@ impl JsonSchema for PageMargin {
                     "items": length,
                     "minItems": 4,
                     "maxItems": 4,
+                    "deprecated": true,
                 },
             ],
         })

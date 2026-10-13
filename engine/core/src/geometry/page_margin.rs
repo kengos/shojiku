@@ -2,9 +2,10 @@
 //! coordinate origin.
 //!
 //! Wire forms: the [`EdgeSpec`] forms — a bare number (all sides) or a
-//! per-side `{ top/right/bottom/left }` mapping — plus the legacy
-//! positional array `[top, right, bottom, left]` kept for compatibility
-//! and coordinate-faithful imports (Thinreports). Side values accept
+//! per-side `{ top/right/bottom/left }` mapping — plus the positional array
+//! `[top, right, bottom, left]`, deprecated since 0.3.0 and removed in
+//! 0.4.0: it still parses and applies, and `validate` reports it as
+//! `deprecated_syntax` ([`PageMargin::is_legacy_array`]). Side values accept
 //! every [`Length`] unit; `%` resolves against the *page width* for all
 //! four sides (the CSS edge rule). Negative sides and `auto` are
 //! rejected at parse — a print margin cannot be negative, and items
@@ -25,7 +26,7 @@ pub struct PageMargin(Repr);
 enum Repr {
     /// Bare number or per-side mapping (the item-edge forms).
     Edges(EdgeSpec),
-    /// Legacy positional `[top, right, bottom, left]` array.
+    /// The deprecated positional `[top, right, bottom, left]` array.
     Array([Length; 4]),
 }
 
@@ -36,6 +37,11 @@ impl PageMargin {
             Repr::Edges(spec) => spec.edges(),
             Repr::Array(sides) => *sides,
         }
+    }
+
+    /// Whether the margin was authored as the deprecated positional array.
+    pub fn is_legacy_array(&self) -> bool {
+        matches!(self.0, Repr::Array(_))
     }
 
     /// All four sides the same pt value (bare-number form); the

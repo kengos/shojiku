@@ -388,7 +388,9 @@ somewhere the tie-break above then decides in favour of.
 1. **The authored wire** — templates, params and definitions. Every
    document that parses at 1.0 keeps parsing, with the same meaning,
    through every 1.x. Change is additive: new keys, new enum variants,
-   new item types. The enumeration of record for templates and
+   new item types. A form can be deprecated in a 1.x minor release; it
+   still parses, with a warning, until 2.0 (§ Deprecation below). The
+   enumeration of record for templates and
    definitions is not prose here but the key catalog, which
    `make reference:check` holds against the real parser
    ([agents/engine.md](agents/engine.md) § The key catalog) — so the
@@ -397,9 +399,11 @@ somewhere the tie-break above then decides in favour of.
    have no such artifact and need none: their shape is whatever a
    document's own `definitions` declares, so freezing definitions freezes
    them.
-2. **The diagnostics registry** — codes and their per-code arg keys,
-   append-only, a retired code staying listed rather than deleted
-   ([engine/diagnostics.md](engine/diagnostics.md)).
+2. **The diagnostics registry** — codes and their per-code arg keys
+   ([engine/diagnostics.md](engine/diagnostics.md)). A code is never
+   renamed or given a new meaning, and a removed code's name is never
+   reused. New codes are added freely; a code is removed only after it was
+   deprecated (§ Deprecation below).
 3. **Capability keys** — append-only, which this section is the first
    page to say outright. A key that has shipped answers the same question
    forever; a different answer needs a different key. That is what lets a
@@ -441,6 +445,33 @@ somewhere the tie-break above then decides in favour of.
    a recovery path silently). This is the embedding surface a reader can
    use with no toolchain at all, and the Designer's own preview transport
    rides it.
+
+### Deprecation
+
+The authored wire (item 1) and the diagnostics registry (item 2) change
+incompatibly in one way only: a form or code is deprecated first and
+removed in a later release.
+
+- Before 1.0, it is deprecated in one minor release and removed in the
+  next. The first ones were deprecated in 0.3 and go in 0.4.
+- From 1.0, it is deprecated in a minor release and removed at the next
+  major.
+
+A deprecation is listed in the `Deprecated` section of
+[CHANGELOG.md](../CHANGELOG.md) and marked on the reference page that
+documents the form or code. A form an author can still write is also
+reported by `validate` as a `deprecated_syntax` warning for as long as it
+parses, so a template shows the notice in the CLI's report, the MCP
+server, the Designer and every SDK before the release that stops reading
+it. One table in the engine lists those forms, and a new deprecation is a
+row in it, never a new code. A code that nothing emits any more gets no
+warning, since no document can trigger it; the changelog and the
+reference carry its notice.
+
+Capability keys stay append-only (item 3): a key that disappeared would
+read to every consumer as a feature that disappeared. The MCP tool
+surface (item 7) and the `WasmError::code()` registry (item 8) keep their
+append-only rule too.
 
 ### What 1.0 does not promise
 
