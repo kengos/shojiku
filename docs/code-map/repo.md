@@ -343,14 +343,16 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   i.e. the control failed open, which is the failure this directory exists to
   prevent.
   `at_command_position` is the general form of "is this a command or just a
-  name", and the cargo rule uses it: it TOKENIZES over that same blanked view.
-  Tokenizing alone was not enough — an alternation in a quoted regex is one
-  token and was safe, but a quoted argument with a SPACE after a separator
-  splits into two, the first ending in `;`, which opened a command position
-  inside the quotes. Between the two shapes this cost twelve wrong denials
-  across two cycles, six of them on the edits documenting and fixing the first
-  six. A guard that refuses the documentation of its own defect stops being read
-  as a decision, which is the failure mode the whole directory exists to avoid.
+  name", and the cargo rule uses it. It reads the command names `GITSCAN`
+  (below) records, so the shell's own reading decides. It used to tokenize
+  each LINE of the blanked view, and every refinement of that missed a shape:
+  a quoted argument with a space after a separator opened a command position
+  inside the quotes (twelve wrong denials across two cycles, six of them on the
+  edits documenting and fixing the first six), and later a heredoc body line
+  starting with the word, or a prose `(no` taken as a subshell whose NEXT word
+  is the command. A guard that refuses the documentation of its own defect
+  stops being read as a decision, which is the failure mode the whole
+  directory exists to avoid.
   **The git rules (the two push rules and the signing rule) go one step further
   and read the git INVOCATION's own words** through `GITSCAN`, which walks the
   whole command once as the shell would and records each command-position `git`
@@ -370,7 +372,8 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   discarding the environment prefix — seven spellings the old whole-string match
   had denied. So a substitution or subshell is a NESTED level the outer command
   resumes after, a heredoc body is skipped only when its closing line exists
-  (`<<""` closes on an empty line), and an assignment counts where one can
+  (`<<""` closes on an empty line) and its command is not a shell (`sh <<EOF`
+  is commands, and is read), and an assignment counts where one can
   stand — a command position, or after `export`/`declare`/… — never as a
   search pattern. Transparent prefixes (`sudo`, `env`, `command`, …) and the
   words that open a command (`then`, `{`, …) keep the command position open.
