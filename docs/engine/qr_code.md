@@ -34,7 +34,7 @@ containers (flex or absolute placement).
 | `text` / `data` | | one required | Content, exactly like [text.md](text.md) — scope-aware, so per-element inside cells. |
 | `bindings` | map of name → binding | unset | Named declarations for this item's `{name}` interpolations — the option set the bare `{key}` grammar cannot carry, incl. a key outside `[A-Za-z0-9_.]` ([data-binding.md](data-binding.md#named-binding-declarations)). |
 | `box.w` / `box.h` | [Length](length.md) | required | The code draws **square** on the smaller content-box side, centered, with the ISO 18004 4-module quiet zone *inside* the box. |
-| `errorCorrection` | `low` \| `medium` \| `quartile` \| `high` | `medium` | Tolerated damage ~7/15/25/30%; higher levels need more modules for the same content. |
+| `errorCorrection` | `low` \| `medium` \| `quartile` \| `high` | `medium` | Tolerated damage ~7/15/25/30%; a higher level can need more modules for the same content. The level is a minimum: while the content still fits the same code size at a higher level, the code is drawn at that level, so a short content can draw `low` exactly as `medium`. |
 | `style` / `styleNames` | | | Decoration only: `backgroundColor` paints under the modules (the usual white backing), plus `borderWidth`/`borderColor`. |
 <!-- rf:table:end -->
 

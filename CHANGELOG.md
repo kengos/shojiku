@@ -15,6 +15,20 @@ platform binaries.
 
 ### Added
 
+- **Choose a QR code's error correction in the Designer.** A QR code's
+  Content tab now has an Error correction choice under its content: the
+  default (M) or one of L, M, Q and H, which let the printed code survive
+  about 7, 15, 25 or 30 percent damage. Picking the default removes the
+  setting and picking M writes it, and each pick is one undo step. A
+  higher level can pack more, smaller modules into the same box; in a
+  small box they can drop under 1pt, and the code is still drawn with a
+  warning that it may not scan. The level is a minimum: while a short content
+  still fits the same code size at a higher level, it is drawn at that
+  level, so picking a lower one need not change the code. A QR code
+  column in a table has no such setting and always uses M, while a QR
+  code placed in a column's Free layout cell has it like any other. Until
+  now the level could only be written in the YAML.
+
 - **Fade a line in the Designer.** A line's Style tab now has the
   Opacity section a rectangle or a text already has, under its Line
   settings: 100% is fully opaque and 0% makes the line invisible. A

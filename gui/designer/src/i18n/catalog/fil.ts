@@ -169,6 +169,9 @@ export const fil: LanguageCatalog = {
     'help.textMark.title': 'Bilog sa paligid ng teksto',
     'help.textMark.body':
       'Gumuguhit ng bilohaba sa paligid ng mga nakalimbag na titik, nakagitna at kasukat ng mga ito, kaya kumakasya pa rin ito kapag nagbago ang font o ang mga salita. Hindi nito inililipat ang teksto o ang anumang nasa paligid nito. Maaari rin itong iguhit lang kapag may partikular na halaga ang isang field ng datos, gaya ng pagbilog sa napiling opsiyon sa isang form. Hindi ito iginuguhit sa patayong teksto.',
+    'help.errorCorrection.title': 'Gaano karaming sira ang kaya',
+    'help.errorCorrection.body':
+      'Gaano kalaking bahagi ng naka-print na code ang puwedeng marumi, punit o matakpan at mababasa pa rin (ang % sa tabi ng bawat level). Sa mas mataas na level, puwedeng mas marami ang module (ang maliliit na itim at puting parisukat) para sa parehong nilalaman, kaya mas maliit ang bawat isa; sa maliit na kahon, puwede silang lumiit nang mas mababa sa 1pt, at may babalang baka hindi ma-scan ang code (iginuguhit pa rin ito). Minimum ang level: depende sa nilalaman, baka nakaguhit na ang code sa mas mataas na level, kaya puwedeng hindi magbago ang canvas.',
     'help.rubySize.title': 'Ang basa sa tabi ng isang kanji',
     'help.rubySize.body':
       'Laki ng furigana. Kapag walang halaga, iginuguhit ito ng engine sa 0.4 ng kahon.',
@@ -764,6 +767,14 @@ export const fil: LanguageCatalog = {
     'panel.fit.stretch': 'Iunat (nagbabago ang proporsyon)',
     'panel.fit.none': 'Orihinal na laki (napuputol ang lampas sa kahon)',
     'panel.fit.unsupported': '{mode} (hindi suportado ng engine na ito)',
+    'panel.field.errorCorrection': 'Error correction',
+    'panel.qr.ecDefault': '(Default: M, katamtaman)',
+    'panel.qr.ecInvalid': '{value} (invalid na value)',
+    'panel.qr.ecUnreadable': '(invalid na value)',
+    'panel.qr.ec.low': 'L: mababa (~7%)',
+    'panel.qr.ec.medium': 'M: katamtaman (~15%)',
+    'panel.qr.ec.quartile': 'Q: medyo mataas (~25%)',
+    'panel.qr.ec.high': 'H: mataas (~30%)',
     'panel.column.kindConfirm.kindCount': '{kind} ×{n}',
     'panel.column.kindConfirm.otherKind': 'Iba pa',
     'panel.column.styleHintDrawnNoValign':

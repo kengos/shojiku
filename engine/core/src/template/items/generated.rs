@@ -40,7 +40,8 @@ pub struct QrCodeItem {
     #[serde(default, skip_serializing_if = "Bindings::is_empty")]
     pub bindings: Bindings,
     /// QR error-correction level (default `medium`). Higher levels
-    /// tolerate more damage but need more modules for the same content.
+    /// tolerate more damage but can need more modules for the same content;
+    /// the level is a minimum the encoder raises while the code size holds.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     error_correction: Option<EcLevel>,
     /// Named styles, decoration only (`backgroundColor` under the code —

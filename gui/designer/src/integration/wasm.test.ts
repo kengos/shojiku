@@ -85,6 +85,7 @@ import { PAGE_SIZES } from '../panel/pageSizes';
 import { pickerOptions } from '../panel/pickerModel';
 import { type PlacementGeometry, resolvePlacement } from '../panel/placementGeometry';
 import { pinOps, placementFor, unpinOps } from '../panel/placementModel';
+import { errorCorrectionOf, errorCorrectionOp } from '../panel/qrErrorCorrection';
 import { RUBY_TEXT_SIZE_PRESETS } from '../panel/RubySection';
 import { fillOrderOp, gridCountOp, gridGapOp, newPageOp, relativeGapOp } from '../panel/repeatGrid';
 import { addRuleOp, setRuleEqualsOp } from '../panel/rowConditionOps';
@@ -5163,5 +5164,123 @@ describe('template name and version against the real engine', () => {
     expect(refused).not.toBe(source);
     const diags = await transport.validate(refused, params(), definitions());
     expect(diags.items.some((d) => d.code === 'parse_error')).toBe(true);
+  });
+});
+
+describe('a QR code’s error correction, from the panel’s op to the engine’s modules', () => {
+  // The join for the content tab's level select: the GUI writes `errorCorrection`
+  // from its own model of the wire, and only the engine can say the key is read,
+  // where it is read, and what it does to the drawn code.
+  const P = 'sections.body.items[0]';
+  const LONG = 'https://shojiku.example/receipt/2026-10-13/000123';
+  const SCALE = 10;
+  const doc = (text: string, side = 60, extra = '') =>
+    [
+      'page: { margin: 0 }',
+      'sections:',
+      '  body:',
+      '    type: absolute',
+      '    items:',
+      `      - { type: qr_code, box: { x: 10, y: 10, w: ${side}, h: ${side} }, text: "${text}"${extra} }`,
+      '',
+    ].join('\n');
+
+  /** The code's side in modules, off the raster: the first dark row is the top
+   * of the finder pattern, whose dark run is exactly 7 modules; the 4-module
+   * quiet zone sits inside the box on each side. */
+  async function drawn(text: string, side = 60) {
+    const outcome = await transport.renderRaw(text, '{}', undefined, {
+      scale: SCALE,
+      pageIndex: 0,
+    });
+    expect(outcome.ok).toBe(true);
+    const page = outcome.pages[0];
+    const dark = (x: number, y: number) => page.rgba[(y * page.width + x) * 4] < 128;
+    const first = page.rgba.findIndex((value, i) => i % 4 === 0 && value < 128) / 4;
+    expect(first).toBeGreaterThanOrEqual(0);
+    const [left, top] = [first % page.width, Math.floor(first / page.width)];
+    let run = 0;
+    while (dark(left + run, top)) {
+      run++;
+    }
+    return {
+      modules: Math.round((side * SCALE * 7) / run) - 8,
+      diagnostics: outcome.diagnostics.items.map((d) => [d.code, d.path ?? null, d.args]),
+      rgba: page.rgba,
+    };
+  }
+
+  it('draws the level the select writes, and the default again once it is cleared', async () => {
+    const editor = Editor.create(doc(LONG));
+    expect((await drawn(editor.text())).modules).toBe(33);
+    const own = (path: string) => errorCorrectionOf((p) => editor.read(p), path);
+    const high = errorCorrectionOp(P, own(P), 'high');
+    expect(high).not.toBeNull();
+    expect(editor.apply(high as Op).ok).toBe(true);
+    const raised = await drawn(editor.text());
+    expect(raised.modules).toBe(41);
+    expect(raised.diagnostics).toEqual([]);
+    expect(own(P)).toEqual({ shown: 'high', present: true });
+    expect(editor.apply(errorCorrectionOp(P, own(P), '') as Op).ok).toBe(true);
+    expect(editor.text()).not.toContain('errorCorrection');
+    expect((await drawn(editor.text())).modules).toBe(33);
+  });
+
+  it('draws a short content at the lowest level exactly as at the default', async () => {
+    // What the help and the reference page say: the level is a minimum, so the
+    // canvas need not change when one is picked.
+    const at = (level: string) => doc('https://example.com/abc', 60, `, errorCorrection: ${level}`);
+    const low = await drawn(at('low'));
+    const medium = await drawn(at('medium'));
+    expect(low.modules).toBe(25);
+    // Byte-identical rasters, compared as bytes (a diff of two pages would not fit).
+    expect(Buffer.from(low.rgba).equals(Buffer.from(medium.rgba))).toBe(true);
+    expect((await drawn(at('high'))).modules).toBe(29);
+  });
+
+  it('warns at the item when a raised level shrinks the modules under 1pt', async () => {
+    // 45pt: the default's 33 modules + quiet zone are ~1.1pt each; high's 41
+    // are under 1pt, which the engine still draws.
+    const editor = Editor.create(doc(LONG, 45));
+    expect((await drawn(editor.text(), 45)).diagnostics).toEqual([]);
+    const own = errorCorrectionOf((p) => editor.read(p), P);
+    expect(editor.apply(errorCorrectionOp(P, own, 'high') as Op).ok).toBe(true);
+    const small = await drawn(editor.text(), 45);
+    expect(small.modules).toBe(41);
+    expect(small.diagnostics.map(([code, path]) => [code, path])).toEqual([
+      ['qr_module_too_small', P],
+    ]);
+  });
+
+  it('reads the level on a QR code inside a column’s cell, and refuses it on the column', async () => {
+    const table = (column: string) =>
+      [
+        'sections:',
+        '  body:',
+        '    type: flow',
+        '    items:',
+        '      - type: table',
+        '        data: { key: rows }',
+        '        columns:',
+        column,
+        '',
+      ].join('\n');
+    const rows = '{"rows":[{"u":"x"}]}';
+    const cellQr = 'sections.body.items[0].columns[0].cell.items[0]';
+    const editor = Editor.create(
+      table(
+        '          - { label: Code, cell: { items: [ { type: qr_code, box: { x: 0, y: 0, w: 40, h: 40 }, data: { key: u } } ] } }',
+      ),
+    );
+    const own = errorCorrectionOf((p) => editor.read(p), cellQr);
+    expect(editor.apply(errorCorrectionOp(cellQr, own, 'high') as Op).ok).toBe(true);
+    expect(editor.text()).toContain('errorCorrection: high');
+    expect((await transport.validate(editor.text(), rows)).items).toEqual([]);
+    // The control: a QR COLUMN has no such key, which is why the column form offers none.
+    const column = await transport.validate(
+      table('          - { label: Code, type: qr_code, data: { key: u }, errorCorrection: high }'),
+      rows,
+    );
+    expect(column.items.map((d) => d.code)).toEqual(['parse_error']);
   });
 });

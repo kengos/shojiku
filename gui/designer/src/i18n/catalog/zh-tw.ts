@@ -329,6 +329,9 @@ export const zhTw: LanguageCatalog = {
     'help.textMark.title': '為文字加圈',
     'help.textMark.body':
       '在印出的文字周圍畫一個橢圓，以文字為中心並貼合其大小，因此字型或文字變動後仍會貼合。它不會移動文字或周圍的任何內容。也可以只在某個資料欄位為指定值時才畫，就像表單上圈出所選的選項。直排文字上不會畫出。',
+    'help.errorCorrection.title': '對髒汙與破損的耐受程度',
+    'help.errorCorrection.body':
+      '印出的碼最多可有多大比例弄髒、破損或被遮住而仍可讀取（即各等級旁的 %）。等級越高，同樣的內容可能需要更多模組（黑白小方塊），每個模組也就越小；在小框中模組可能小於 1pt，此時會警告可能無法掃描（碼仍會繪製）。所選等級是下限：視內容而定，碼可能已用更高的等級繪製，因此畫布可能不變。',
     'help.rubySize.title': '漢字旁的注音',
     'help.rubySize.body': '注音文字的大小。不設定時以格子的 0.4 倍繪製。',
     'help.kinsoku.title': '不能出現在行首的字',
@@ -878,6 +881,14 @@ export const zhTw: LanguageCatalog = {
     'panel.fit.stretch': '延展（長寬比例改變）',
     'panel.fit.none': '原始大小（超出框的部分被裁切）',
     'panel.fit.unsupported': '{mode}（此引擎不支援）',
+    'panel.field.errorCorrection': '容錯等級',
+    'panel.qr.ecDefault': '（預設：M，中等）',
+    'panel.qr.ecInvalid': '{value}（無效的值）',
+    'panel.qr.ecUnreadable': '（無效的值）',
+    'panel.qr.ec.low': 'L：低（約 7%）',
+    'panel.qr.ec.medium': 'M：中（約 15%）',
+    'panel.qr.ec.quartile': 'Q：較高（約 25%）',
+    'panel.qr.ec.high': 'H：高（約 30%）',
     'panel.column.kindConfirm.kindCount': '{kind} {n} 個',
     'panel.column.kindConfirm.otherKind': '其他',
     'panel.column.styleHintDrawnNoValign':

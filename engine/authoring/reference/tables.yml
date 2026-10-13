@@ -805,7 +805,7 @@
         "Key": "`errorCorrection`"
         "Type": "`low` | `medium` | `quartile` | `high`"
         "Default": "`medium`"
-        "Description": "Tolerated damage ~7/15/25/30%; higher levels need more modules for the same content."
+        "Description": "Tolerated damage ~7/15/25/30%; a higher level can need more modules for the same content. The level is a minimum: while the content still fits the same code size at a higher level, the code is drawn at that level, so a short content can draw `low` exactly as `medium`."
     - keys: ["style", "styleNames"]
       cells:
         "Key": "`style` / `styleNames`"
