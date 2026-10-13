@@ -181,7 +181,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 78 files / 10314 lines; tests 96 files / 13825 lines
+### `core` (L1) — 78 files / 10315 lines; tests 96 files / 13825 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -260,7 +260,7 @@ first sentence of its `//!` header.
 - `src/validate/spans.rs` 65 — Structural checks for rich-text `spans`: content exclusivity, the MAX_SPANS cap, and span-inapplicable style keys.
 - `src/validate/styles.rs` 141 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 - `src/validate/tables.rs` 232 — Table checks: the bound array group, per-column content shape (`data` vs `cell` exclusivity), row-relative column keys, the row `conditionalStyles` predicates (and the `scope` they ignore), and the array-scoped bindings inside a `cell:` column's sub-template.
-- `src/yaml_guard.rs` 102 — Input sanitation shared by the YAML/JSON parse entry points.
+- `src/yaml_guard.rs` 103 — Input sanitation shared by the YAML/JSON parse entry points.
 
 ### `verify` (L1) — 14 files / 1577 lines; tests 20 files / 2453 lines
 
@@ -279,7 +279,7 @@ first sentence of its `//!` header.
 - `src/testkit.rs` 204 — Test-only fixtures: minimal signable documents, and signed ones.
 - `src/testkit/keys.rs` 65 — Test key material, generated fresh for every test process.
 
-### `formatter` (L2) — 16 files / 2004 lines; tests 20 files / 3821 lines
+### `formatter` (L2) — 16 files / 2000 lines; tests 20 files / 3826 lines
 
 - `src/format.rs` 235 — `format(value, type, locale, options) -> string`
 - `src/format/dated.rs` 121 — Resolving a date/datetime pick: which tables a dated field reads, and whether a name is one it can already resolve.
@@ -287,10 +287,10 @@ first sentence of its `//!` header.
 - `src/format/money.rs` 125 — Currency and quantity rendering: the three currency variants (`default` = bare amount, `symbol`, `name`), the CLDR fractions precision chain, and semantic-unit quantities with plural words from the pack.
 - `src/format/number.rs` 70 — Number rendering shared by every numeric type: precision clamping, trailing-zero trimming, and locale-separator grouping.
 - `src/format/text.rs` 77 — The text arm: values that draw as words — plain strings, booleans and image references — plus the `enum` display-label lookup layered over them.
-- `src/lang.rs` 181 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
+- `src/lang.rs` 182 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
 - `src/lang/builtin.rs` 119 — Builtin locale packs (CLDR-generated YAML, compiled in via `include_str!`) and the per-key overlay merge over them.
 - `src/lang/era.rs` 104 — Era tables (wareki): the `eras:` wire types and the date→era lookup.
-- `src/lang/fonts.rs` 190 — Font-pack manifest + locale font-policy wire types.
+- `src/lang/fonts.rs` 185 — Font-pack manifest + locale font-policy wire types.
 - `src/lang/fonts/pack_id.rs` 45 — What a font pack id may be.
 - `src/lang/packs.rs` 143 — Font-pack resolution: find each `uses` pack's `manifest.yml` across the font search dirs, confine face paths to the pack dir, and merge faces into one ordered list.
 - `src/lang/packs/bytes.rs` 192 — Bytes-first font-pack resolution: the host injects each `uses` pack's `manifest.yml` source plus the bytes of the face files it declares (browser/Workers WASM, the MCP server), and this parses/confines/dedupes them into loadable specs exactly like the filesystem resolver — no directory walk, no file reads.

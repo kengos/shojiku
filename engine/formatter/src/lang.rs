@@ -37,8 +37,9 @@ pub enum LangPackError {
     /// Refused unread for its size, on the same bound the core wire doors
     /// use. A pack is data a host supplies, and every pack door goes
     /// through `ensure_pack_size` — the locale pack, the builtin overlay,
-    /// and all four font-pack manifest sites.
-    #[error("locale pack is {bytes} bytes, over the {limit}-byte input cap")]
+    /// and the font-pack manifest (`PackManifest::from_yaml`, the one door
+    /// every manifest caller parses through). Worded for any of the three.
+    #[error("pack is {bytes} bytes, over the {limit}-byte input cap")]
     TooLarge { bytes: usize, limit: usize },
 }
 
@@ -119,8 +120,8 @@ fn default_percent_format() -> String {
 
 /// Refuses host-supplied pack text over `shojiku_core::MAX_INPUT_BYTES`,
 /// unread. Shared by every pack door — the locale pack, the builtin
-/// OVERLAY, and the font-pack manifest — so the bound is read from one
-/// place rather than compared at four call sites that can drift apart.
+/// OVERLAY, and the font-pack manifest — so the bound is compared in this
+/// one place rather than at each door, where copies drift apart.
 pub(crate) fn ensure_pack_size(input: &str) -> Result<(), LangPackError> {
     if input.len() > shojiku_core::MAX_INPUT_BYTES {
         return Err(LangPackError::TooLarge {

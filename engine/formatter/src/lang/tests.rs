@@ -185,13 +185,18 @@ fn an_oversize_builtin_overlay_is_refused() {
 
 #[test]
 fn an_oversize_font_pack_manifest_is_refused() {
-    // The manifest wire this change also fuzzes. `from_yaml` is the public
-    // door; the three other sites carry the same bound with their own error
-    // types (filesystem resolution, injected packs, and the wasm session).
+    // The manifest wire is fuzzed too. `from_yaml` is its one door: the
+    // filesystem resolver, injected packs, the wasm session and the CLI all
+    // parse through it, and it refuses through the shared `ensure_pack_size`
+    // rather than a comparison of its own.
     let doc = "version: 1\nlicense: OFL-1.1\nfaces: []\n";
     let manifest = format!("{doc}{}", "#".repeat(shojiku_core::MAX_INPUT_BYTES));
     let err = PackManifest::from_yaml(&manifest).expect_err("must refuse");
-    assert!(err.to_string().contains("input cap"), "got: {err}");
+    let expected = LangPackError::TooLarge {
+        bytes: manifest.len(),
+        limit: shojiku_core::MAX_INPUT_BYTES,
+    };
+    assert_eq!(err.to_string(), expected.to_string());
     // Positive control: at the cap it still parses, so the refusal above is
     // the bound and not a manifest the type could never accept.
     let at_cap = format!(

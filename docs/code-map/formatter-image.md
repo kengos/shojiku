@@ -91,12 +91,13 @@ the manifest wire's key list) lives in `docs/engine/`
   date→era lookup.
 - `lang/fonts.rs` — pack-manifest + locale-fonts wire.
   **`PackManifest`** (`packs/fonts/<pack>/manifest.yml`; camelCase,
-  `deny_unknown`) — the manifest wire is bounded at ALL FOUR of its parse
-  sites, not just the public one: `from_yaml`, filesystem pack resolution
-  (`packs.rs`), the injected bytes-first path (`packs/bytes.rs`) and the
-  wasm session's own re-parse (`add_font_pack` takes the string from JS).
-  Each reports the refusal in its own error type — with
-  **`to_yaml`/`from_yaml`** kept BESIDE the wire
+  `deny_unknown`) — the manifest wire has ONE parse door, `from_yaml`, which
+  refuses an oversize input through the shared `ensure_pack_size` (as a
+  `serde_yaml::Error` carrying `TooLarge`'s message); filesystem pack
+  resolution (`packs.rs`), the injected bytes-first path (`packs/bytes.rs`),
+  the wasm session's re-parse (`add_font_pack` takes the string from JS) and
+  the CLI's `font add` all call it and wrap its message in their own error —
+  with **`to_yaml`/`from_yaml`** kept BESIDE the wire
   type so a generator (`shojiku font add`) round-trips through the same
   pair the resolver parses with (`to_yaml` infallible by construction —
   only shapes serde_yaml cannot refuse). **`FontFaceDecl`** (`id`/`file`/
