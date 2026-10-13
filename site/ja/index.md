@@ -1,6 +1,6 @@
 ---
 layout: home
-title: Shojiku
+title: "請求書・領収書・納品書のPDF生成"
 description: "YAMLのテンプレートとJSONのデータから請求書・領収書・申込書のPDFを出すRust製の帳票エンジン。Python、Go、Rubyなど7言語から呼べます。マルチテナントのSaaSでは、テナントごとのテンプレートを差し替えるだけで体裁を変えられます。"
 hero:
   tagline: 請求書、領収書、申込書、原稿用紙。YAMLのテンプレートとJSONのデータからPDFを出力するRust製のエンジンです。
@@ -40,6 +40,14 @@ features:
 日本語の例を試すときは、ボタンを押して日本語フォント（約9MB）を読み込んでください。ブラウザ上で動かしていますが、CLIでもDockerでもSDKでも、同じ入力からは同じPDFが出ます。
 
 <ClientOnly><LiveRenderer /></ClientOnly>
+
+## なぜこの形なのか
+
+作者は[Thinreports](https://github.com/thinreports)の帳票テンプレートを長年使ってきました。道具として便利に使ってきた一方で、運用していくうえで注意し続ける点が六つありました。どれも根はフォーマットの構造にあります。
+
+Shojikuは、この六つに注意しなくていい構造を選び直したものです。テンプレートをYAMLにしたのも、使えるキーを`definitions.yml`に先に並べたのも、そのためです。
+
+その六つは[コンセプト](/ja/concept)に書いてあります。
 
 ## アーキテクチャ
 

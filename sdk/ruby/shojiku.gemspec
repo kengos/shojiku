@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
     shared C library loaded through fiddle, so the same params produce the same
     bytes here as in the CLI and every other Shojiku SDK.
   TEXT
-  spec.homepage = "https://shojiku.pages.dev"
+  spec.homepage = "https://shojiku.kengos.jp"
   # The workspace's `MIT OR Apache-2.0 OR BSD-3-Clause`, in the form RubyGems
   # understands: a list of SPDX identifiers, which it reads as "any of these,
   # at your option". The single-string SPDX expression is rejected as an

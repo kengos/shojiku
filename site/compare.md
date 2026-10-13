@@ -1,5 +1,5 @@
 ---
-title: Compare
+title: "Compared with other document tools"
 description: "HTML/CSS engines, programmatic PDF libraries, pdfme, Typst and LaTeX: what each is good at, and where Shojiku sits among them."
 ---
 

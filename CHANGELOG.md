@@ -729,6 +729,24 @@ platform binaries.
 
 ### Changed
 
+- **The site now lives at
+  [shojiku.kengos.jp](https://shojiku.kengos.jp).** It was served from a
+  Cloudflare Pages subdomain, which search engines treat as a free shared
+  host carrying none of its own standing. The READMEs, the docs and every
+  package's homepage field point at the new host. The old
+  `shojiku.pages.dev` keeps working: a published package's metadata
+  cannot be rewritten after the fact, and v0.2.0 still names it.
+
+- **Every site page's browser title now says what the page covers and
+  what Shojiku is.** Titles were a bare page name ("Tech", 「技術」), and
+  the English and Japanese homepages shared one, "Shojiku". Every
+  page's title now ends in a per-language suffix, "Shojiku — call it
+  from any language" or 「好きな開発言語から使える帳票エンジン shojiku」,
+  and most pages' titles now name their subject ("Technology, licensing
+  and the security model"). The
+  navigation labels are unchanged. The homepage also gains a short
+  section on why the format is shaped the way it is, linking to Concept.
+
 - **A table's vertical alignment now reaches the text cells it is set above.**
   `verticalAlign` on `row.style`, on a `row.conditionalStyles` entry, on the
   zebra `row.alternateStyle` or on the table's own `style` used to be ignored:

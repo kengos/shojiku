@@ -846,7 +846,7 @@ None is queued; raise any of them with the user before filing.
 ## Package metadata: where the URLs point
 
 Every registry renders a *homepage* link and a *source* link, and they
-are different places: **homepage is `https://shojiku.pages.dev`**, the
+are different places: **homepage is `https://shojiku.kengos.jp`**, the
 product's own site, and **source / repository / documentation stay on
 GitHub**. This holds for everything published, the engine's crates
 included. The fields, per registry, are the whole list — there is no
