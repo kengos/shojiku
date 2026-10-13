@@ -747,6 +747,24 @@ platform binaries.
   navigation labels are unchanged. The homepage also gains a short
   section on why the format is shaped the way it is, linking to Concept.
 
+- **`get_reference` and `get_example` answer their content directly.** The
+  MCP tools used to wrap the whole `resources/read` result in one more
+  pretty-printed JSON string, so a model read escaped markdown and an
+  escaped schema, and the heaviest reference page cost about half again as
+  many bytes as it needed to. They now return the read's own parts as
+  embedded `resource` content (each keeps its URI and MIME type), and the
+  schema half and a key's node are compact JSON. Clients that parsed the
+  old single text part as JSON need to read the `resource` parts instead.
+- **`resources/list` reports what a reference page costs to read.** The
+  `size` of a reference page counted its markdown only, about a tenth of
+  the real read for the largest pages; it now counts the markdown plus the
+  schema part.
+- **A format-catalog probe list is capped the same way everywhere.** Asking
+  for more than 16 probes is now refused whole by the CLI (`--probe`), the
+  MCP `format_catalog` tool and the browser build alike. The CLI used to
+  accept any number and mark the overflow one by one, and the browser build
+  refused only past 32.
+
 - **A table's vertical alignment now reaches the text cells it is set above.**
   `verticalAlign` on `row.style`, on a `row.conditionalStyles` entry, on the
   zebra `row.alternateStyle` or on the table's own `style` used to be ignored:
@@ -961,6 +979,15 @@ platform binaries.
   text. An unknown or missing key and an unknown format pick are now
   reported at that column or group, and a `{…}` that cannot be a key
   (`interpolation_key_charset`) at the table.
+- **An item type's own keys are addressable in the MCP reference.**
+  `shojiku://reference/image#fit` and `#qr_code`'s keys, and
+  `template#Item.image`, used to answer "reference node not found" because
+  the item types exist only as branches of `Item`; the item pages now
+  answer for their own keys.
+- **The format catalog no longer slows down on a huge `formats:` registry.**
+  Deduplicating spellings was quadratic and the registry half was not
+  capped; it is now linear, and offers at most 256 of the document's own
+  entries (the limit `validate` already reports).
 
 - **The warning for a line end shifted too far now names that line and the
   real number.** When an attached end's offset puts it past ±1,000,000pt,

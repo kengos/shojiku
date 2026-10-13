@@ -37,10 +37,18 @@ pub(crate) fn list_entries() -> Vec<Value> {
                 "title": page.title,
                 "description": page.summary,
                 "mimeType": "text/markdown",
-                "size": page.body.len(),
+                "size": read_size(page),
             })
         })
         .collect()
+}
+
+/// What a whole-page read returns, in bytes: the markdown half plus the
+/// schema half. `size` is the client's hint for budgeting context, so it
+/// counts what a read costs rather than the markdown alone (which understates
+/// the heaviest pages about tenfold).
+fn read_size(page: &Page) -> usize {
+    page.body.len() + crate::tools::compact_text(&nodes::defs(page)).len()
 }
 
 /// `resources/read` for the reference family.
@@ -71,7 +79,7 @@ fn read_page(page: &'static Page) -> Value {
         json!({
             "uri": uri,
             "mimeType": "application/schema+json",
-            "text": crate::tools::json_text(&nodes::defs(page)),
+            "text": crate::tools::compact_text(&nodes::defs(page)),
         }),
     ])
 }
@@ -86,7 +94,7 @@ fn read_fragment(page: &'static Page, fragment: &str, target: &str) -> Result<Va
     Ok(contents(vec![json!({
         "uri": uri::fragment_uri(page.stem, fragment),
         "mimeType": "application/json",
-        "text": crate::tools::json_text(&nodes::matches_body(page, fragment, &matches)),
+        "text": crate::tools::compact_text(&nodes::matches_body(page, fragment, &matches)),
     })]))
 }
 

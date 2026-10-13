@@ -91,6 +91,38 @@ pub(crate) fn json_text<T: Serialize>(value: &T) -> String {
     serde_json::to_string_pretty(value).unwrap_or_default()
 }
 
+/// Compact JSON for a payload a model reads as DATA, where pretty
+/// indentation is pure token cost (schema fragments, catalog nodes).
+pub(crate) fn compact_text<T: Serialize>(value: &T) -> String {
+    serde_json::to_string(value).unwrap_or_default()
+}
+
+/// The tool spelling of `resources/read`, shared by `get_example` and
+/// `get_reference`: the read's `contents` become embedded `resource` content
+/// parts, one for one, so each keeps its URI and MIME type and nothing is
+/// wrapped in a JSON string a second time. A failed read is the message as
+/// in-band `isError` content (the tool convention), not a protocol error.
+pub(crate) fn read_tool(arguments: &Value) -> ToolOutcome {
+    if arguments.get("uri").and_then(Value::as_str).is_none() {
+        return Err((
+            INVALID_PARAMS,
+            "`uri` is required and must be a string".into(),
+        ));
+    }
+    match crate::resources::read(arguments) {
+        Ok(result) => {
+            let parts = result["contents"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|item| json!({ "type": "resource", "resource": item }))
+                .collect();
+            Ok(tool_result(parts, false))
+        }
+        Err(error) => Ok(tool_result(vec![text_part(error.message)], true)),
+    }
+}
+
 /// Maps an in-band failure to an `isError` tool result: a plain message,
 /// or the full diagnostics list as JSON so the client sees structure.
 pub(crate) fn failure_result(failure: ToolFailure) -> Value {

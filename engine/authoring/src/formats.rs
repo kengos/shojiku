@@ -15,12 +15,14 @@
 
 mod exemplar;
 mod facts;
+mod pattern;
 mod probe;
 #[cfg(test)]
 mod tests;
 mod variants;
 
 pub use facts::{locale_facts, LocaleFacts};
+pub use pattern::{check_probe_count, PatternProbe, ProbeError, ProbeType};
 
 use serde::Serialize;
 use shojiku_core::{FieldType, Template};
@@ -101,14 +103,6 @@ pub struct FormatTypeEntry {
     /// variants — `symbol`/`name` are listed, under `currency`.
     pub fixed: bool,
     pub variants: Vec<FormatVariant>,
-}
-
-/// A pattern the caller wants previewed before authoring it.
-#[derive(Debug, Clone)]
-pub struct PatternProbe {
-    /// `date` or `datetime`; any other type has no pattern form.
-    pub field_type: FieldType,
-    pub pattern: String,
 }
 
 /// What one probe rendered, or why it was refused.

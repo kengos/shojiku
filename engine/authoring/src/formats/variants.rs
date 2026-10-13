@@ -6,10 +6,10 @@
 use super::exemplar;
 use super::{FormatOrigin, FormatTypeEntry, FormatVariant, CURRENCY_VARIANTS};
 use serde_json::{json, Value};
-use shojiku_core::{FieldType, NamedFormat, NamedFormatKind, Template};
+use shojiku_core::{FieldType, NamedFormat, NamedFormatKind, Template, MAX_FORMATS};
 use shojiku_diagnostics::{sanitize, MAX_ECHO};
 use shojiku_formatter::{format_value, FormatContext, LangPack};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 pub(super) fn type_entry(
     field_type: FieldType,
@@ -45,10 +45,9 @@ fn spellings(
     pack: &LangPack,
 ) -> Vec<(String, FormatOrigin)> {
     let mut out: Vec<(String, FormatOrigin)> = Vec::new();
-    let mut seen: Vec<String> = Vec::new();
-    let mut push = |name: String, origin: FormatOrigin, seen: &mut Vec<String>| {
-        if !seen.contains(&name) {
-            seen.push(name.clone());
+    let mut seen: BTreeSet<String> = BTreeSet::new();
+    let mut push = |name: String, origin: FormatOrigin, seen: &mut BTreeSet<String>| {
+        if seen.insert(name.clone()) {
             out.push((name, origin));
         }
     };
@@ -99,11 +98,17 @@ fn pickable(name: &str) -> bool {
 /// `date` format: `render_dated` looks a name up in the registry before
 /// the pack, so offering one under the wrong type would author a pick that
 /// renders the wrong shape rather than warning.
+///
+/// Capped at [`MAX_FORMATS`]: that bound is a `validate` diagnostic, and this
+/// catalog skips `validate` (it must answer for an invalid document, on every
+/// keystroke), so a hostile registry would otherwise reach the renderer
+/// uncapped — about five `format_value` calls per entry.
 fn registry_names(registry: &BTreeMap<String, NamedFormat>, field_type: FieldType) -> Vec<String> {
     registry
         .iter()
         .filter(|(name, entry)| kind_matches(entry, field_type) && pickable(name))
         .map(|(name, _)| name.clone())
+        .take(MAX_FORMATS)
         .collect()
 }
 

@@ -277,7 +277,7 @@ honest (regenerate, then fail on drift):
   page-scoped prose into a central YAML, and the great majority of those
   codes say something on their page that `diagnostics.md` does not — most
   carry at least one page sentence the registry page does not, and a large
-  share share no sentence with it at all; the figure moves with the method,
+  share have no sentence with it at all; the figure moves with the method,
   which is
   why the REASON is the durable statement here as it is for the description
   cells above. That is a table migration in its own

@@ -52,11 +52,14 @@ always riding along; `assets?` = the `assetsDir` / `assetMode` /
   registry half is empty rather than reporting nothing.
 - `list_examples() -> the bundled catalog (URI, title, what it exercises,
   file names, size) + how to fetch one`
-- `get_example(uri) -> that entry's source files (or one named file)`
+- `get_example(uri) -> that entry's source files (or one named file)`, one
+  embedded `resource` content part per file (URI + MIME type kept)
 - `list_reference() -> the reference page index (URI, title, group, what
   it covers, the catalog shapes it documents) + how to fetch one`
 - `get_reference(uri) -> that page's markdown + its keys as a JSON Schema
-  fragment` — or the matching catalog node(s), for a `<page>#<key>` URI
+  fragment` (two embedded `resource` parts, the schema as compact JSON) — or
+  the matching catalog node(s), for a `<page>#<key>` URI; an item page
+  (`image`, `qr_code`, …) also answers for its own item type's keys
 
 ## The read surface (`instructions` + resources)
 

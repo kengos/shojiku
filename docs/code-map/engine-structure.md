@@ -510,7 +510,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 37 files / 4498 lines; tests 42 files / 5358 lines
+### `authoring` (L5) — 38 files / 4587 lines; tests 42 files / 5455 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -519,14 +519,15 @@ first sentence of its `//!` header.
 - `src/capabilities/list/hosts.rs` 191 — Capability keys — output surfaces and host bindings.
 - `src/capabilities/list/items.rs` 169 — Capability keys — item types and item-level features.
 - `src/capabilities/list/style.rs` 281 ▲ — Capability keys — style properties and the styled wire surface.
-- `src/formats.rs` 195 — The format catalog: which display variants a document can pick per field type, what each one actually renders, and a preview of a pattern that is not in the document yet.
+- `src/formats.rs` 189 — The format catalog: which display variants a document can pick per field type, what each one actually renders, and a preview of a pattern that is not in the document yet.
 - `src/formats/exemplar.rs` 107 — The fixed exemplar values a format sample is rendered against, and the `FieldSpec`s that carry them.
 - `src/formats/facts.rs` 95 — What a document's `defaults.locale` / `defaults.currency` pick actually DOES, as the engine's own rendered output.
-- `src/formats/probe.rs` 72 — Running one pattern probe.
-- `src/formats/variants.rs` 188 — Which spellings each field type offers, and what each one renders.
+- `src/formats/pattern.rs` 87 — The pattern probe's input side: which types a probe may name, how a host's raw `(type name, pattern)` pair becomes a [`PatternProbe`], and the one count cap.
+- `src/formats/probe.rs` 74 — Running one pattern probe.
+- `src/formats/variants.rs` 193 — Which spellings each field type offers, and what each one renders.
 - `src/fs.rs` 120 — Filesystem pack discovery — the shared half of locale/font loading for the FS hosts (CLI, MCP server).
 - `src/inspect.rs` 38 — The `inspect` envelope: engine info (version + capabilities) for GUI gating, the layout tree, the path-addressed box sidecar (one box per item, id-carrying or not), and the resolved page margins — the bundle a Designer canvas hit-tests against.
-- `src/lib.rs` 47 — Authoring surface: the shared validate / prepare / preview / inspect / capabilities layer that the CLI, the browser/Workers WASM bindings, and the MCP server all wrap.
+- `src/lib.rs` 48 — Authoring surface: the shared validate / prepare / preview / inspect / capabilities layer that the CLI, the browser/Workers WASM bindings, and the MCP server all wrap.
 - `src/locale.rs` 57 — Locale-id resolution and pack loading from an overlay STRING (not a path).
 - `src/prepare.rs` 114 — The layout pipeline shared by `inspect` / `preview` / `render`: gate validation errors, load (or accept injected) assets, lay out, dedupe diagnostics.
 - `src/preview.rs` 81 — Preview rasterization: every page to PNG bytes (the export/download form) or raw RGBA pixels (the canvas form, skipping the PNG encode).
@@ -570,25 +571,25 @@ first sentence of its `//!` header.
 - `src/status.rs` 171 — Status codes, the panic shield, and the failure type every operation funnels into.
 - `src/status/wire.rs` 93 — How a [`Failure`] renders for the caller, and the JSON encoder the whole crate shares.
 
-### `cli` (L6) — 15 files / 2104 lines; tests 33 files / 5059 lines
+### `cli` (L6) — 15 files / 2104 lines; tests 33 files / 5072 lines
 
 - `src/args.rs` 204 — The flags each command takes, as clap types.
 - `src/args/font.rs` 108 — Flags for the `font` command — creating a user font pack on disk.
 - `src/args/signing.rs` 97 — Flags for the commands that sign a document or check a signature.
 - `src/commands.rs` 260 — Command implementations: input loading, the validate/inspect/render/ preview pipelines, and output writing.
-- `src/error.rs` 196 — `CliError` and its machine-readable classification.
+- `src/error.rs` 202 — `CliError` and its machine-readable classification.
 - `src/external.rs` 132 — The `sign-prepare` / `sign-complete` pair: signing without a private key.
 - `src/font.rs` 189 — `shojiku font add` — creating a user font pack on disk.
 - `src/font/ids.rs` 105 — The id rules `font add` applies, as pure functions.
 - `src/font/write.rs` 154 — The filesystem half of `font add`: reading the source face, reading any existing manifest, and committing both files.
-- `src/formats.rs` 65 — `shojiku formats`: the format catalog as JSON — which display variants a document can pick per field type, what each one renders, and previews of patterns that are not authored yet.
+- `src/formats.rs` 59 — `shojiku formats`: the format catalog as JSON — which display variants a document can pick per field type, what each one renders, and previews of patterns that are not authored yet.
 - `src/lib.rs` 86 — Implementation of the `shojiku` CLI commands.
 - `src/main.rs` 176 — `shojiku` binary entry point.
 - `src/report.rs` 159 — The `--report <path>` sidecar: what a lifecycle operation did, as JSON.
 - `src/sign.rs` 115 — The `sign` command: a rendered PDF in, a signed one out.
 - `src/verify.rs` 58 — The `verify` command: a signed PDF and a trust anchor in, a report out.
 
-### `mcp` (L6) — 27 files / 2707 lines; tests 29 files / 4149 lines
+### `mcp` (L6) — 27 files / 2776 lines; tests 29 files / 4230 lines
 
 - `src/examples.rs` 180 — The bundled-example read surface's data model: the embedded source files (`embed`), the `shojiku://example/…` grammar (`uri`), and the catalog that gives each entry a human title and a line saying what it exercises.
 - `src/examples/embed.rs` 156 — The compile-time example table: every bundled entry's source files, embedded with `include_str!` so the surface works identically from a checkout and from the docker image, needs no root path, and cannot be pointed at anything outside this list.
@@ -598,30 +599,30 @@ first sentence of its `//!` header.
 - `src/main.rs` 10 — `shojiku-mcp` binary entry point.
 - `src/reference.rs` 48 — The authoring-reference read surface's data model: the embedded pages (`embed`), their front matter and body (`page`), the `shojiku://reference/…` grammar (`uri`), and resolution into the key catalog (`nodes`).
 - `src/reference/embed.rs` 72 — The compile-time reference table: every page of the authoring reference, embedded with `include_str!` so the surface works identically from a checkout and from the docker image, needs no root path, and cannot be pointed at anything outside this list.
-- `src/reference/nodes.rs` 147 — Resolution into the key catalog: a page's declared shapes as a JSON Schema fragment, and a fragment selector as the catalog node(s) it names.
+- `src/reference/nodes.rs` 204 — Resolution into the key catalog: a page's declared shapes as a JSON Schema fragment, and a fragment selector as the catalog node(s) it names.
 - `src/reference/page.rs` 90 — One reference page's data model: the YAML front matter split off the markdown, parsed for the four fields this surface serves, plus the H1 title and the body.
 - `src/reference/uri.rs` 86 — The `shojiku://reference/<page>[#<fragment>]` grammar: parsing a client-supplied string into a page reference, and formatting the two forms back.
 - `src/resources.rs` 155 — The MCP `resources` area: `resources/list` and `resources/read` over the two resource families — the bundled examples (served from this file) and the authoring reference (`resources/reference`).
-- `src/resources/reference.rs` 94 — The `resources` view of the authoring reference: the `resources/list` entries for the 33 pages, and the read of one page or one node.
+- `src/resources/reference.rs` 102 — The `resources` view of the authoring reference: the `resources/list` entries for the 33 pages, and the read of one page or one node.
 - `src/rpc.rs` 135 — JSON-RPC 2.0 plumbing: newline-delimited framing with a line cap, response/error builders, and the bounded echo for hostile strings.
 - `src/server.rs` 118 — The dispatch loop: initialize handshake, method routing, and the JSON-RPC error mapping.
-- `src/test_support.rs` 69 — Shared fixtures for the crate's unit tests: the bundled receipt example, the repo pack dirs, temp source files, and a one-shot tool-call helper.
-- `src/tools.rs` 104 — The MCP tool surface: the call dispatcher, the content-part builders every tool answers with, and the in-band failure mapping.
+- `src/test_support.rs` 83 — Shared fixtures for the crate's unit tests: the bundled receipt example, the repo pack dirs, temp source files, and a one-shot tool-call helper.
+- `src/tools.rs` 136 — The MCP tool surface: the call dispatcher, the content-part builders every tool answers with, and the in-band failure mapping.
 - `src/tools/assets.rs` 107 — Per-call asset arguments, mirroring the CLI's `--assets-dir` / `--asset-mode` / `--allow|deny-dynamic-image`: which directory bundled images resolve against, and how much params-supplied (dynamic) content an item may carry.
-- `src/tools/examples.rs` 67 — The two example-reading tools.
-- `src/tools/formats.rs` 161 — The `format_catalog` tool: which display variants a document may pick per field type, what each one renders, and previews of patterns the document does not carry yet.
+- `src/tools/examples.rs` 57 — The two example-reading tools.
+- `src/tools/formats.rs` 140 — The `format_catalog` tool: which display variants a document may pick per field type, what each one renders, and previews of patterns the document does not carry yet.
 - `src/tools/inspect.rs` 35 — The `inspect_layout` tool: the inspect envelope (engine info, layout tree, path-addressed boxes for every item, page margins) followed by the diagnostics JSON — the machine-readable half of the preview/tree/diagnostics bundle.
 - `src/tools/pipeline.rs` 122 — Shared source→layout pipeline for the template tools: argument composition (sources in `sources.rs`, asset knobs in `assets.rs`), pack/font resolution, and the authoring `prepare` gate.
 - `src/tools/preview.rs` 100 — The `render_preview` tool: lay out, rasterize, and answer one PNG image part per selected page followed by the diagnostics JSON — never an image alone.
-- `src/tools/reference.rs` 78 — The two reference-reading tools.
+- `src/tools/reference.rs` 67 — The two reference-reading tools.
 - `src/tools/schema.rs` 233 — Tool descriptors: names, descriptions, and hand-written JSON schemas.
 - `src/tools/sources.rs` 98 — Source arguments: each of definitions/template/params arrives either as a `*Path` file reference or as an inline string (a client without a shared filesystem passes the text itself).
 - `src/tools/validate.rs` 38 — The `validate` tool: parse + validate the sources and answer the full diagnostics list (parse failures surface as diagnostics, not errors — the client renders them like any other finding).
 
-### `wasm` (L6) — 7 files / 1087 lines; tests 7 files / 1248 lines
+### `wasm` (L6) — 7 files / 1072 lines; tests 7 files / 1244 lines
 
 - `src/error.rs` 112 — The wasm-surface host-misuse error type plus its stable `code`/`args` registry.
-- `src/formats.rs` 111 — The format-catalog op over an injected [`Session`]: which display variants the document can pick per field type, what each renders, and a preview of a pattern that is not authored yet.
+- `src/formats.rs` 96 — The format-catalog op over an injected [`Session`]: which display variants the document can pick per field type, what each renders, and a preview of a pattern that is not authored yet.
 - `src/lib.rs` 44 — `shojiku-wasm` — the browser/Workers WASM host over the shared `shojiku-authoring` surface.
 - `src/render.rs` 278 ▲ — Validate + render over the injected [`Session`].
 - `src/session.rs` 166 — The pure session core: injected fonts/assets/locale accumulated ONCE and retained across renders (bytes cross the boundary a single time; the `FontStore` is built once).

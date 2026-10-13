@@ -105,27 +105,23 @@ fn an_unknown_type_name_is_refused_with_the_name_sanitized() {
 }
 
 #[test]
-fn an_absurd_probe_count_is_refused_outright() {
-    let many: Vec<String> = (0..MAX_PROBES * 2 + 1)
-        .map(|_| r#"{"fieldType":"date","pattern":"d"}"#.to_string())
-        .collect();
-    let err = parse_probes(&format!("[{}]", many.join(","))).expect_err("too many");
+fn more_probes_than_the_cap_are_refused_whole() {
+    // One policy across hosts: past MAX_PROBES the request is refused, not
+    // answered with the overflow marked slot by slot.
+    let probes = |n: usize| -> String {
+        let many: Vec<String> = (0..n)
+            .map(|_| r#"{"fieldType":"date","pattern":"d"}"#.to_string())
+            .collect();
+        format!("[{}]", many.join(","))
+    };
+    let err = parse_probes(&probes(MAX_PROBES + 1)).expect_err("too many");
     assert_eq!(err.code(), "bad_probes");
-}
-
-#[test]
-fn a_probe_count_within_the_refusal_bound_is_marked_individually() {
-    // Between MAX_PROBES and the outright refusal, the catalog answers and
-    // marks the overflow rather than throwing — the host asked a slightly
-    // large question, not a nonsensical one.
-    let many: Vec<String> = (0..MAX_PROBES + 1)
-        .map(|_| r#"{"fieldType":"date","pattern":"d"}"#.to_string())
-        .collect();
-    let probes = parse_probes(&format!("[{}]", many.join(","))).expect("accepted");
+    assert!(err.to_string().contains("probes requested"), "{err}");
+    let accepted = parse_probes(&probes(MAX_PROBES)).expect("the cap itself is answered");
     let catalog = with_locale()
-        .format_catalog(TEMPLATE, &probes)
+        .format_catalog(TEMPLATE, &accepted)
         .expect("catalog");
-    assert!(catalog.probes[MAX_PROBES].refused.is_some());
+    assert!(catalog.probes.iter().all(|p| p.refused.is_none()));
 }
 
 /// The zh-TW pack as a host sends it: whole-pack text for a non-builtin id.

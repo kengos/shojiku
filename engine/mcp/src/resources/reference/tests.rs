@@ -148,7 +148,7 @@ fn a_bare_key_returns_only_the_nodes_that_carry_it() {
 
 #[test]
 fn an_ambiguous_key_returns_every_match_each_naming_its_shape() {
-    // `style` is a property of five of `table`'s seven shapes. A lookup
+    // `style` is a property of five of `table`'s seven shapes, and of the table item's own branch. A lookup
     // would have to pick one and be wrong four times; the enumeration is
     // never wrong, and it costs no disambiguation round trip.
     let body = envelope("shojiku://reference/table#style");
@@ -164,7 +164,9 @@ fn an_ambiguous_key_returns_every_match_each_naming_its_shape() {
             "RowSpec",
             "RowConditionalStyle",
             "HeaderGroup",
-            "TableHeaderSpec"
+            "TableHeaderSpec",
+            // The table ITEM's own branch of `Item`, owned by this page.
+            "Item.table"
         ],
         "every owner, in the page's declared order"
     );
@@ -240,7 +242,13 @@ fn every_uri_the_list_advertises_round_trips_and_reads() {
         assert_eq!(parts(uri).len(), 2);
         assert!(!entry["title"].as_str().expect("title").is_empty());
         assert!(!entry["description"].as_str().expect("summary").is_empty());
-        assert!(entry["size"].as_u64().expect("size") > 0);
+        // `size` is what a read costs (markdown plus schema half), not the
+        // markdown alone.
+        let read: usize = parts(uri)
+            .iter()
+            .map(|part| part["text"].as_str().expect("text").len())
+            .sum();
+        assert_eq!(entry["size"].as_u64().expect("size"), read as u64, "{uri}");
         assert_eq!(entry["mimeType"], "text/markdown");
     }
     // Deterministic order, matching `embed::PAGES`, so a list that
