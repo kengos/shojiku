@@ -144,11 +144,11 @@ first sentence of its `//!` header.
 ▲ = within 10% of the 300-line cap (≥270); ■ = over it under a
 `line-budget-exempt` waiver. Test files are summarised per crate.
 
-### `diagnostics` (L0) — 6 files / 914 lines; tests 5 files / 628 lines
+### `diagnostics` (L0) — 6 files / 925 lines; tests 5 files / 628 lines
 
 - `src/arg.rs` 132 — Typed diagnostic argument values.
 - `src/category.rs` 32 — Semantic domain grouping for diagnostics.
-- `src/code.rs` 254 — The closed diagnostic-code registry.
+- `src/code.rs` 265 — The closed diagnostic-code registry.
 - `src/echo.rs` 229 — The one bounded-echo guard, and the type that applies it structurally.
 - `src/lib.rs` 219 — Structured diagnostics shared across the Shojiku engine.
 - `src/render.rs` 48 — Single-pass message-template substitution.
@@ -181,7 +181,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 79 files / 10433 lines; tests 97 files / 13987 lines
+### `core` (L1) — 80 files / 10503 lines; tests 98 files / 14062 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -195,7 +195,7 @@ first sentence of its `//!` header.
 - `src/geometry/flex.rs` 142 — Flex layout keys on item boxes (box-model Phase 2): the layout-mode key and the content-alignment enums.
 - `src/geometry/grid.rs` 104 — Static-grid track spec (box-model Phase 3): how a `box.type: grid` container divides its axes into tracks.
 - `src/geometry/grid/track.rs` 102 — One entry in a grid `columns`/`rows` track list: a fixed [`Length`] or an `fr` weight.
-- `src/geometry/page_margin.rs` 169 — `page.margin` wire type: the printable-area insets that become the coordinate origin.
+- `src/geometry/page_margin.rs` 175 — `page.margin` wire type: the printable-area insets that become the coordinate origin.
 - `src/geometry/point_spec.rs` 185 — A `line` endpoint: authored coordinates, or an anchor to another item.
 - `src/interpolate.rs` 178 — `{key}` / `{key:format}` interpolation inside static text.
 - `src/length.rs` 229 — Template length values: absolute points/physical units, a percentage of the parent, or a font-relative `em`/`rem`.
@@ -213,7 +213,7 @@ first sentence of its `//!` header.
 - `src/ruby/warning.rs` 84 — Recoverable aozora-markup mistakes: what the parser reports when notation is well-formed enough to recognize but not to act on.
 - `src/schema.rs` 63 — `schema` — hand-written `JsonSchema` impls for the wire types whose `Deserialize` is hand-written too.
 - `src/schema/border.rs` 102 — Schemas for the per-side border properties, `textCombineUpright` and `textDecoration`.
-- `src/schema/edges.rs` 104 — Schemas for the edge/page geometry wire types.
+- `src/schema/edges.rs` 106 — Schemas for the edge/page geometry wire types.
 - `src/schema/length.rs` 91 — Schemas for the length- and track-shaped wire types.
 - `src/schema/point.rs` 42 — The schema for a `line` endpoint.
 - `src/schema/value.rs` 43 — Schemas for the two wire types that parse through `serde_json::Value`.
@@ -242,7 +242,7 @@ first sentence of its `//!` header.
 - `src/template/table/column.rs` 84 — Table columns: what one column binds and renders per row — a bound value (text / QR / image) or a freely composed `cell:` sub-template.
 - `src/template/table/row.rs` 90 — Body-row sizing and styling: the base/zebra layers and the per-row conditional layers a row's own data selects.
 - `src/template/visibility.rs` 75 — Params-conditional visibility: the `visible:` key every item carries.
-- `src/validate.rs` 222 — Binding validation: do the template's data keys exist, are formats valid, does the params tree actually contain the data?
+- `src/validate.rs` 227 — Binding validation: do the template's data keys exist, are formats valid, does the params tree actually contain the data?
 - `src/validate/bindings.rs` 247 — Per-item scalar binding checks: `data:` keys, interpolation segments, and their format variants.
 - `src/validate/bindings/cell.rs` 193 — Array-scoped binding checks for `repeat` cell / `repeat_flow` card / table `cell:` column contents: every `data:` key and `{{key}}` segment must be a declared field of the bound array group (table-column style) — unless the binding authors `scope: document`, which is checked against the top-level scalars instead.
 - `src/validate/bindings/decl.rs` 239 — Named binding declarations (`bindings:`): does each declaration point at a real key, can its name be referenced, is it actually used, and does it quietly shadow an ambient key of the same name?
@@ -251,6 +251,7 @@ first sentence of its `//!` header.
 - `src/validate/bindings/entry.rs` 115 — A `list`'s per-ENTRY scope: its `text:` template and its own `bindings:` declarations resolve against ONE ELEMENT of the array it binds, not against the ambient scope.
 - `src/validate/box_keys.rs` 86 — Context-inert authoring-key checks: keys that lay out nothing where they are written.
 - `src/validate/collect.rs` 253 — Template walks that gather items for cross-checks (tables, images, repeats) and enforce the container depth cap.
+- `src/validate/deprecated.rs` 57 — Wire forms that still parse and render but are marked for removal, each reported as `deprecated_syntax` so an author sees it a release before the form stops parsing.
 - `src/validate/document.rs` 66 — `document:` metadata checks: the interpolation keys each metadata string references, the charset scan that catches a `{品名}` mistake, and the two list caps.
 - `src/validate/equals.rs` 108 — What a declarative `{ key, equals?
 - `src/validate/formats.rs` 56 — Presentation-defaults checks: the `formats:` registry (reserved names, size cap) and `defaults.formats` (inline patterns only make sense on date/datetime).
@@ -511,13 +512,13 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 38 files / 4587 lines; tests 42 files / 5455 lines
+### `authoring` (L5) — 38 files / 4594 lines; tests 42 files / 5475 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
 - `src/capabilities/list.rs` 54 — The capability key list: the stable-key registry the CLI, MCP, and WASM surfaces all advertise.
 - `src/capabilities/list/boxes.rs` 81 — Capability keys — the box model, page geometry, and length units.
-- `src/capabilities/list/hosts.rs` 191 — Capability keys — output surfaces and host bindings.
+- `src/capabilities/list/hosts.rs` 198 — Capability keys — output surfaces and host bindings.
 - `src/capabilities/list/items.rs` 169 — Capability keys — item types and item-level features.
 - `src/capabilities/list/style.rs` 281 ▲ — Capability keys — style properties and the styled wire surface.
 - `src/formats.rs` 189 — The format catalog: which display variants a document can pick per field type, what each one actually renders, and a preview of a pattern that is not in the document yet.

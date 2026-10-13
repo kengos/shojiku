@@ -28,8 +28,9 @@ The fields separate concerns so a localizing consumer (the React GUI's
 ICU catalog) can render its own message and the engine never translates:
 
 - **`code`** — a stable machine-readable identifier and the catalog key.
-  Codes and their per-code **arg keys are an append-only frozen contract**:
-  new codes are added, existing ones are never renamed or repurposed.
+  A code and its per-code **arg keys never change name or meaning**. New
+  codes are added freely; a code is removed only after a release has
+  marked it deprecated, and its name is never reused (see Limitations).
 - **`args`** — typed interpolation data (`String | Number | Bool`,
   serialized as bare JSON scalars); a consumer formats its own localized
   message from these. String args are control-character-stripped and
@@ -86,6 +87,7 @@ inline:
 | --- | --- | --- |
 | `unknown_data_key` | error | a binding key is not in definitions (scalar, column, cell, or card scope; a table's header `label` is scalar scope). Checked in the header and footer bands as in the body |
 | `empty_definitions` | warning | definitions was supplied but declares no properties; every binding will read as `unknown_data_key` (check the file's top-level structure) |
+| `deprecated_syntax` | warning | a wire form that still parses and renders but will be removed: `args` `key` (the wire key, also the diagnostic's `path`), `form` and `replacement` (YAML spellings), and the two versions `since` and removed_in. Reported with or without definitions. Today only `page.margin` written as a `[top, right, bottom, left]` array ([page.md](page.md)). A deprecated form is removed in the next minor before 1.0, at the next major after it |
 | `unknown_format` | error | a format variant not declared for the field |
 | `not_an_array` | error | a table/repeat/list source key is not an array property |
 | `interpolation_key_charset` | warning | a `{…}` that looks like an intended key uses characters outside `[A-Za-z0-9_.]`, so it prints its own braces; declare a name under `bindings:` to reach the key |
@@ -141,7 +143,7 @@ inline:
 | `container_depth_exceeded` | error | nesting > 32; subtree skipped |
 | `container_overflow` | warning | content taller than a definite-`h` content box; suppressed by `overflow: hidden` |
 | `section_overflow` | warning | an unsplittable item is taller than the flow region |
-| `horizontal_overflow` | warning | **RETIRED — emitted by nothing.** It carried a whole English sentence in one free-text `detail` arg, which a translating consumer could only pass through. Every reason it covered now has its own number-carrying code (the five below). The entry remains because codes and arg keys are append-only |
+| `horizontal_overflow` | warning | **DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing.** It carried a whole English sentence in one free-text `detail` arg, which a translating consumer could only pass through. Every reason it covered now has its own number-carrying code (the five below). A catalog entry for it can be dropped once a host no longer supports 0.3 |
 | `flow_item_overflow` | warning | a definite-width flow item reaches `over` pt past the right edge of the `avail` pt flow region and renders off-sheet |
 | `flex_row_overflow` | warning | a row's fixed children + gaps need `needed` pt but the parent content box is only `avail` pt wide; unsized children shrink instead and never warn, and `overflow: hidden` suppresses it |
 | `vertical_text_overflow` | warning | a vertical text block needs `columns` columns (`needed` pt) but its box is `avail` pt wide. The flow paginator reads this code's PRESENCE as "a policy already resolved this block's overflow", so it places whole instead of paginating its columns |
@@ -156,7 +158,7 @@ inline:
 | `char_grid_markup_clamped` | warning | an aozora note asks for more cells than the grid holds (a large-writing scale > `min(columns, lines)`, an indent/raise past the line); clamped |
 | `invalid_cell_size` | warning | `char_grid` cell size not positive and finite; item skipped |
 | `vertical_text_unsupported` | warning | `writingMode: vertical_rl` reached a text `mark:` (the circled-text overlay), whose glyph-band overlay is horizontal-only; the mark is skipped. Rich `spans` / `list` / table cells / `page_number` now render vertically. See [vertical_text.md](vertical_text.md) |
-| `vertical_style_ignored` | warning | registered but no longer emitted: the block-level knobs (`textOverflow`, `textDecoration`, `verticalAlign`, `textSpacingTrim`, `hangingPunctuation`) now apply on vertical blocks ([vertical_text.md](vertical_text.md)); the code stays for the append-only GUI catalog contract |
+| `vertical_style_ignored` | warning | **DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing**, in any release: the block-level knobs (`textOverflow`, `textDecoration`, `verticalAlign`, `textSpacingTrim`, `hangingPunctuation`) apply on vertical blocks instead ([vertical_text.md](vertical_text.md)) |
 <!-- rf:table:end -->
 
 ## Layout — placement rules
@@ -255,14 +257,19 @@ inline:
 
 ## Limitations
 
-- Codes and argument keys are APPEND-ONLY: an existing code never changes
-  meaning, so a consumer that matches on one keeps working across engine
-  versions.
+- An existing code never changes meaning and its argument keys never
+  change, so a consumer that matches on one keeps working until the code
+  is removed. A code is removed only after a release marked it deprecated:
+  before 1.0 in the next minor release, from 1.0 at the next major. A
+  removed code's name is never reused, so a matcher keyed on it cannot
+  start matching something else.
 - The engine does not translate. Messages are English and carry typed
   arguments; rendering them in another language is the consumer's job.
-- A retired code stays listed and is emitted by nothing, rather than being
-  removed (`horizontal_overflow`, `vertical_style_ignored`) — a matcher
-  keyed on it must not start matching something else.
+- Two codes are emitted by nothing, and both are deprecated in 0.3.0 and
+  removed in 0.4.0 (`horizontal_overflow`, `vertical_style_ignored`).
+- A wire form that still parses but is marked for removal draws a warning
+  from `validate` until the release that removes it (`deprecated_syntax`).
+  Today that is only `page.margin` written as an array.
 
 ## See also
 

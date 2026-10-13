@@ -8,6 +8,8 @@ export const ja: LanguageCatalog = {
   diagnostics: {
     parse_error: '{what} の解析に失敗しました（`{path}`）: {detail}',
     non_finite_number: '{what} に非有限数（NaN/Infinity）が含まれています。使用できません',
+    deprecated_syntax:
+      '`{key}` の {form} という書き方は {since} で非推奨になり、{removed_in} で使えなくなります。{replacement} の形で書いてください',
     unknown_data_key: 'データキー `{key}` は {source} に定義されていません',
     'unknown_data_key.empty': 'この項目のデータ項目を選んでください（データキーが空です）',
     unknown_format: 'フォーマット `{format}` は `{key}` に定義されていません',

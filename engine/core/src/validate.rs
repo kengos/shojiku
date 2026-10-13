@@ -11,6 +11,7 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 mod bindings;
 mod box_keys;
 mod collect;
+mod deprecated;
 mod document;
 mod equals;
 mod formats;
@@ -29,6 +30,7 @@ use bindings::{
 };
 use box_keys::{check_box_keys, check_table_pagination_keys};
 use collect::{check_container_depth, collect_images, collect_repeats, walk_sections};
+use deprecated::check_deprecated;
 use document::check_document;
 use formats::check_formats;
 use presence::check_presence;
@@ -57,6 +59,9 @@ pub fn validate(
     if definitions.is_some_and(|d| d.properties.is_empty()) {
         diags.push(Diagnostic::new(Code::EmptyDefinitions));
     }
+    // Deprecated wire forms are a fact about the template's own spelling,
+    // so they are reported whether or not definitions came with it.
+    check_deprecated(template, &mut diags);
     if let Some(defs) = definitions {
         // Known semantic `format` values on a base type they don't apply
         // to are declared-schema mistakes; unknown values are hints.

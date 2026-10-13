@@ -54,3 +54,21 @@ fn validate_strings_surfaces_a_definitions_parse_error() {
 fn validate_strings_surfaces_a_params_parse_error() {
     assert!(validate_strings(None, SIMPLE, Some("{ not json")).has_errors());
 }
+
+/// A template whose only finding is the deprecated `page.margin` array.
+const ARRAY_MARGIN: &str =
+    "page:\n  margin: [20, 10, 20, 10]\nsections:\n  body:\n    type: flow\n    items: []\n";
+
+#[test]
+fn a_deprecated_form_reaches_both_the_render_and_the_validate_path() {
+    // `load_sources` feeds render / preview / inspect on every host;
+    // `validate_strings` is the GUI's and the CLI's `validate`. Both carry
+    // the warning, and neither treats it as an error.
+    let rendered = load_sources(None, ARRAY_MARGIN, "{}").expect("still parses");
+    let validated = validate_strings(None, ARRAY_MARGIN, None);
+    for diags in [&rendered.validation, &validated] {
+        let codes: Vec<&str> = diags.iter().map(|d| d.code.as_str()).collect();
+        assert_eq!(codes, ["deprecated_syntax"]);
+        assert!(!diags.has_errors());
+    }
+}

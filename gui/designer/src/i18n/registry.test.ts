@@ -1,7 +1,7 @@
 // @vitest-environment node
 //
-// The catalog-completeness gate against the engine's append-only diagnostic
-// registry: it reads `engine/diagnostics/src/code.rs` (the source of truth) and
+// The catalog-completeness gate against the engine's diagnostic registry: it
+// reads `engine/diagnostics/src/code.rs` (the source of truth) and
 // asserts EVERY FULL language covers EVERY wire code. A newly shipped engine
 // code without a catalog entry reds here, catching the drift at the source
 // rather than as an English-fallback surprise in the GUI. Partial languages

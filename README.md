@@ -10,8 +10,10 @@ tutorials, and a playground that renders in your browser.
 > [!IMPORTANT]
 > **Pre-1.0 — not recommended for production yet.** The template wire
 > format (`templates.yml` / `definitions.yml`), the CLI surface and every
-> Rust crate API change **without notice or a migration path** while the
-> design settles, so templates you write today may need rework. What is
+> Rust crate API **may change between minor releases** while the design
+> settles, so templates you write today may need rework. A form removed
+> from the template format is deprecated one release first, and
+> `validate` warns about it while it still works. What is
 > already solid: the engine renders every document in the Gallery below,
 > under a CI gate at 100% line coverage, and its output is byte-identical
 > across machines.
