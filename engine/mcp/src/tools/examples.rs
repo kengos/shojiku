@@ -14,7 +14,6 @@
 use super::{json_text, text_part, tool_result};
 use crate::examples::{self, uri};
 use crate::resources;
-use crate::rpc::INVALID_PARAMS;
 use serde_json::{json, Value};
 
 /// `list_examples`: the whole bundled catalog, one line of prose each.
@@ -51,16 +50,7 @@ pub(crate) fn list(_arguments: &Value) -> super::ToolOutcome {
 /// big to bundle is something the model should READ and act on — so it
 /// comes back in-band as `isError` content.
 pub(crate) fn get(arguments: &Value) -> super::ToolOutcome {
-    if arguments.get("uri").and_then(Value::as_str).is_none() {
-        return Err((
-            INVALID_PARAMS,
-            "`uri` is required and must be a string".into(),
-        ));
-    }
-    match resources::read(arguments) {
-        Ok(result) => Ok(tool_result(vec![text_part(json_text(&result))], false)),
-        Err(error) => Ok(tool_result(vec![text_part(error.message)], true)),
-    }
+    super::read_tool(arguments)
 }
 
 #[cfg(test)]

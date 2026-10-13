@@ -159,3 +159,37 @@ fn no_document_still_yields_the_pack_and_builtin_vocabulary() {
         .iter()
         .all(|v| v.origin != FormatOrigin::Registry));
 }
+
+#[test]
+fn a_registry_past_the_formats_cap_is_offered_up_to_the_cap_only() {
+    // `MAX_FORMATS` is otherwise a `validate` diagnostic, and the catalog
+    // answers for documents that never reach validate (a live picker). Without
+    // the cap here, a registry of thousands multiplies into thousands of
+    // renders per call.
+    let entries: String = (0..shojiku_core::MAX_FORMATS + 50)
+        .map(|n| format!("  d{n:04}: {{ type: date, pattern: \"yyyy\" }}\n"))
+        .collect();
+    let template = template(&format!("formats:\n{entries}"));
+    let cat = catalog(&template);
+    let offered = entry(&cat, "date")
+        .variants
+        .iter()
+        .filter(|v| v.origin == FormatOrigin::Registry)
+        .count();
+    assert_eq!(offered, shojiku_core::MAX_FORMATS);
+}
+
+#[test]
+fn a_registry_name_shadows_the_pack_name_it_collides_with_once() {
+    // The dedupe is by spelling across origins: the document's entry is listed
+    // first and the pack's namesake is not listed again.
+    let template = template("formats:\n  compact: { type: date, pattern: \"yyyy\" }\n");
+    let cat = catalog(&template);
+    let compact: Vec<FormatOrigin> = entry(&cat, "date")
+        .variants
+        .iter()
+        .filter(|v| v.spelling == "compact")
+        .map(|v| v.origin)
+        .collect();
+    assert_eq!(compact, [FormatOrigin::Registry]);
+}

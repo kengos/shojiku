@@ -51,11 +51,11 @@ const GROUPS: &[&str] = &[
 /// page is a document a client reads once and works from, with no per-file
 /// spelling to fall back to.
 ///
-/// Today's largest response is `shojiku://reference/template` at ~68 KiB —
+/// Today's largest response is `shojiku://reference/template` at ~48 KiB (compact JSON, as the tool path serves it) —
 /// pinned by name below, because it is counter-intuitive and is why this
 /// gate weighed the wrong quantity until it was corrected. `template.md` is
 /// a 6 KiB file, but it declares eight shapes including `Item`, so its
-/// schema half alone is ~62 KiB; `diagnostics.md`, the largest FILE at
+/// schema half alone is ~43 KiB; `diagnostics.md`, the largest FILE at
 /// ~23 KiB, declares none and answers ~23 KiB. File size says nothing about
 /// response size.
 const MAX_REFERENCE_BYTES: usize = 96 * 1024;
@@ -227,7 +227,7 @@ fn no_page_response_exceeds_the_build_time_size_bound() {
     // served — see the bound's own doc comment.
     let mut largest = (0_usize, "");
     for page in catalog() {
-        let served = page.body.len() + crate::tools::json_text(&nodes::defs(page)).len();
+        let served = page.body.len() + crate::tools::compact_text(&nodes::defs(page)).len();
         assert!(
             served <= MAX_REFERENCE_BYTES,
             "{} answers {served} bytes, over the {MAX_REFERENCE_BYTES}-byte bound — \
@@ -242,7 +242,7 @@ fn no_page_response_exceeds_the_build_time_size_bound() {
     // that sentence true, and doubles as the positive control that the walk
     // measured the real corpus rather than an empty one.
     assert_eq!(largest.1, "template", "the largest response changed pages");
-    assert!(largest.0 > 60_000, "largest response was {} B", largest.0);
+    assert!(largest.0 > 40_000, "largest response was {} B", largest.0);
 }
 
 #[test]

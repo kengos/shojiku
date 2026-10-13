@@ -37,7 +37,7 @@ false`), no clap.
   `document.metadata`, so the hosts pass the tree and nothing else.)
 - `inspect.rs` — `InspectEnvelope { engine, document, boxes, margin }` +
   `inspect_json`.
-- `formats.rs` (+ `formats/{variants,probe,exemplar,facts}.rs`) — the FORMAT
+- `formats.rs` (+ `formats/{variants,probe,pattern,exemplar,facts}.rs`) — the FORMAT
   CATALOG: `format_catalog(Option<&Template>, &LangPack, &[PatternProbe])`
   → `FormatCatalog { types: [FormatTypeEntry { field_type, fixed,
   variants: [FormatVariant { spelling, origin, samples, drops_time }] }],
@@ -79,8 +79,13 @@ false`), no clap.
   what they illustrate (8 significant digits separate uniform-3 grouping
   from lakh/crore; the instant is after noon and carries a weekday and an
   era-bearing year; percentage is a FRACTION; quantity samples both plural
-  arms). `probe.rs` bounds the caller-supplied list (`MAX_PROBES`,
-  `MAX_PROBE_PATTERN`). Echoed NAMES are guarded one file over, in
+  arms). `probe.rs` runs one probe and bounds the caller-supplied list
+  (`MAX_PROBES`, `MAX_PROBE_PATTERN`). `pattern.rs` is the INPUT side every host
+  shares: `ProbeType` (`date`|`datetime` — the only types with a pattern
+  form), `PatternProbe::new(type_name, pattern)` and `check_probe_count`
+  (a request past `MAX_PROBES` is refused WHOLE), both failing as
+  `ProbeError`, which a host maps into its own envelope. `variants.rs`'s
+  dedupe is a `BTreeSet` and the registry half is capped at `MAX_FORMATS`. Echoed NAMES are guarded one file over, in
   `variants.rs` — `pickable()` is the whole rule, and it OMITS a name
   that would not survive the echo guard rather than offering a clipped
   or stripped spelling, because a catalog entry is re-authored back as
@@ -345,7 +350,8 @@ so layout/render/sign/verify stay socket-free.
   OPTIONAL (the locale's vocabulary is useful with no document; a NAMED
   file that cannot be read is still an error, which is a different case),
   and `--probe <type>:<pattern>` splits at the FIRST colon only, because a
-  pattern routinely contains one (`datetime:HH:mm`).
+  pattern routinely contains one (`datetime:HH:mm`); the type rule and the
+  count cap are `authoring`'s (`CliError::BadProbe` / `TooManyProbes`).
 - `font.rs` (+ `font/{ids,write}.rs`, `font/tests/hostile.rs`) — the only
   command that writes to paths it DERIVES rather than paths the caller
   named (`--output`, `--report`): `font add` turns a licensed font file
@@ -482,7 +488,9 @@ host over authoring.
   selector of 30. `reference/nodes.rs` — resolution into
   `shojiku_authoring::reference::CATALOG`: a page's `$defs` fragment, and
   a selector's matches (a bare key ENUMERATES every owning shape —
-  `table#style` is on five — `#<Shape>` / `#<Shape>.<key>` narrow). The
+  `table#style` is on five — `#<Shape>` / `#<Shape>.<key>` narrow; an ITEM
+  page also answers for its own `oneOf` branch of `Item`, so `image#fit` and
+  `image#Item.image` resolve, as do `template#Item.image[.fit]`). The
   fragment's `$ref`s point OUTWARD (the partition guarantees it), so
   `REF_RESOLUTION` rides the document as `$comment` and the same sentence
   rides `howToRead` and the `get_reference` descriptor. `reference/tests.rs`
@@ -524,8 +532,11 @@ host over authoring.
   `list_examples` and `list_reference` also declare neither, but they
   accept no arguments at all). `tools/reference.rs` — `list_reference`
   (the page index + how to fetch, how to address a key, and where an
-  outward `$ref` resolves) and `get_reference`, which delegates to
-  `resources::read` on the same terms `get_example` does. Because that
+  outward `$ref` resolves) and `get_reference`, which delegates (through `tools::read_tool`, shared with
+  `get_example`) to `resources::read`, answering the read's `contents` as
+  embedded `resource` content parts one for one — never a JSON string
+  wrapping the read — with the schema half and fragment envelopes as COMPACT
+  JSON. Because that
   resolver dispatches on the URI's own PREFIX, each of the two get tools
   also answers the other family's URI — kept deliberately (the URI is
   unambiguous), said in both descriptors, pinned in both directions by
@@ -550,7 +561,8 @@ host over authoring.
   registry-free half and no reason given reads as "the registry does not
   work"; those diagnostics are PARSE-only, never a second `validate`.
   Its probe list arrives as `{ fieldType, pattern }` objects (the wasm
-  host's shape, not the CLI's `<type>:<pattern>` string): the COUNT cap
+  host's shape, not the CLI's `<type>:<pattern>` string): the COUNT cap (`authoring`'s
+  `check_probe_count`, the same one the CLI and wasm apply)
   refuses the call as invalid params — the descriptor declares
   `maxItems`, so an over-long list is a wrong-shaped argument — while an
   over-long PATTERN rides through to the engine's per-probe `refused`,
@@ -584,8 +596,9 @@ target-gated).
   never compiled by host clippy/test/coverage, and a parser is not
   marshalling: putting it there would have shipped it unexercised by every
   host gate. It refuses (`deny_unknown_fields`, an unknown type name, a
-  type with no pattern form) rather than defaulting, and sanitizes the
-  echoed type name; `WasmError::BadProbes` is its host-misuse error.
+  type with no pattern form, more than `MAX_PROBES`) rather than defaulting,
+  the last two by `authoring`'s `PatternProbe::new` / `check_probe_count`
+  (which sanitize the echoed type name); `WasmError::BadProbes` is its host-misuse error.
 - `error.rs` — `WasmError` = host-API misuse ONLY (document problems
   are diagnostics, never thrown), carrying a stable snake_case `code()`
   + typed `args()` (control-stripped/clipped) — an append-only registry

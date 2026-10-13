@@ -22,12 +22,12 @@
 use super::pipeline::{opt_string, tool_msg, ToolFailure};
 use super::sources::{opt_source, Source};
 use super::{failure_result, json_text, text_part, tool_result, ToolOutcome};
-use crate::rpc::{clip, INVALID_PARAMS};
+use crate::rpc::INVALID_PARAMS;
 use crate::ServerArgs;
 use serde_json::Value;
 use shojiku_authoring::fs::{load_locale_pack, resolve_locale_dir};
-use shojiku_authoring::{format_catalog, resolve_locale_id, PatternProbe, MAX_PROBES};
-use shojiku_core::{parse_template, FieldType, Template};
+use shojiku_authoring::{check_probe_count, format_catalog, resolve_locale_id, PatternProbe};
+use shojiku_core::{parse_template, Template};
 use shojiku_diagnostics::Diagnostics;
 
 /// Runs `format_catalog`. Every argument is optional: with no template at all
@@ -111,21 +111,12 @@ fn parse_probes(arguments: &Value) -> Result<Vec<PatternProbe>, (i64, String)> {
         Some(Value::Array(items)) => items,
         Some(_) => return Err(not_a_probe_list()),
     };
-    if items.len() > MAX_PROBES {
-        return Err((
-            INVALID_PARAMS,
-            format!(
-                "`probes` has {} entries, over the {MAX_PROBES}-entry cap",
-                items.len()
-            ),
-        ));
-    }
+    check_probe_count(items.len()).map_err(|e| (INVALID_PARAMS, e.to_string()))?;
     items.iter().map(parse_probe).collect()
 }
 
-/// Parses one probe entry. Only `date` and `datetime` carry a pattern form,
-/// so accepting any other type would answer a question the wire cannot be
-/// asked — the same rule the CLI and the wasm host apply.
+/// Parses one probe entry. Which types carry a pattern form is the authoring
+/// surface's rule, shared with the CLI and the wasm host.
 fn parse_probe(item: &Value) -> Result<PatternProbe, (i64, String)> {
     let (Some(field_type), Some(pattern)) = (
         item.get("fieldType").and_then(Value::as_str),
@@ -133,19 +124,7 @@ fn parse_probe(item: &Value) -> Result<PatternProbe, (i64, String)> {
     ) else {
         return Err(not_a_probe_list());
     };
-    match FieldType::from_name(field_type) {
-        Some(field_type @ (FieldType::Date | FieldType::Datetime)) => Ok(PatternProbe {
-            field_type,
-            pattern: pattern.to_string(),
-        }),
-        _ => Err((
-            INVALID_PARAMS,
-            format!(
-                "`{}` has no pattern form; probe `date` or `datetime`",
-                clip(field_type)
-            ),
-        )),
-    }
+    PatternProbe::new(field_type, pattern).map_err(|e| (INVALID_PARAMS, e.to_string()))
 }
 
 /// The shared wrong-shape refusal. Never echoes the offending value: a

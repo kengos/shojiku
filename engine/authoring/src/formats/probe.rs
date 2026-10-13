@@ -3,7 +3,7 @@
 //! Split from the module root for the line budget.
 
 use super::exemplar;
-use super::{PatternProbe, ProbeRefusal, ProbeResult, MAX_PROBES, MAX_PROBE_PATTERN};
+use super::{PatternProbe, ProbeRefusal, ProbeResult, ProbeType, MAX_PROBES, MAX_PROBE_PATTERN};
 use shojiku_core::{FieldType, FormatDefaults, FormatRef, InlineFormat};
 use shojiku_formatter::{format_value, FormatContext, LangPack};
 
@@ -28,18 +28,20 @@ pub(super) fn run(
         pattern: p.pattern.clone(),
     });
     let mut defaults = FormatDefaults::default();
-    match p.field_type {
-        FieldType::Datetime => defaults.datetime = Some(inline),
-        _ => defaults.date = Some(inline),
-    }
+    let field_type = match p.field_type {
+        ProbeType::Datetime => {
+            defaults.datetime = Some(inline);
+            FieldType::Datetime
+        }
+        ProbeType::Date => {
+            defaults.date = Some(inline);
+            FieldType::Date
+        }
+    };
     let probe_ctx = FormatContext {
         defaults: Some(&defaults),
         named: ctx.named,
         currency: ctx.currency,
-    };
-    let field_type = match p.field_type {
-        FieldType::Datetime => FieldType::Datetime,
-        _ => FieldType::Date,
     };
     let spec = exemplar::spec(field_type);
     let value = exemplar::values(field_type);

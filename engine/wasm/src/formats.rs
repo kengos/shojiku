@@ -11,9 +11,10 @@ use crate::error::WasmError;
 use crate::session::Session;
 use serde::Deserialize;
 use shojiku_authoring::{
-    format_catalog, load_pack, locale_facts, FormatCatalog, LocaleFacts, PatternProbe, MAX_PROBES,
+    check_probe_count, format_catalog, load_pack, locale_facts, FormatCatalog, LocaleFacts,
+    PatternProbe,
 };
-use shojiku_core::{parse_template, FieldType};
+use shojiku_core::parse_template;
 
 /// One probe as a host sends it: `{ "fieldType": "date", "pattern": "…" }`.
 ///
@@ -32,32 +33,16 @@ struct ProbeInput {
 /// exercise it: the `cfg(wasm32)` shim is never compiled by clippy, test or
 /// coverage, and a parser is not marshalling.
 ///
-/// The COUNT cap is applied here as a refusal, ahead of the per-probe
-/// refusals the catalog itself reports. A host that asks for a million
-/// probes has made an API mistake; one that asks for a few too many gets
-/// them back individually marked.
+/// The count cap and the type rule are the authoring surface's, shared with
+/// the CLI and MCP hosts: a request past the cap is refused whole.
 pub fn parse_probes(json: &str) -> Result<Vec<PatternProbe>, WasmError> {
     let raw: Vec<ProbeInput> =
         serde_json::from_str(json).map_err(|e| WasmError::BadProbes(e.to_string()))?;
-    if raw.len() > MAX_PROBES * 2 {
-        return Err(WasmError::BadProbes(format!(
-            "{} probes requested; at most {} are answered",
-            raw.len(),
-            MAX_PROBES
-        )));
-    }
+    check_probe_count(raw.len()).map_err(|e| WasmError::BadProbes(e.to_string()))?;
     raw.into_iter()
-        .map(|p| match FieldType::from_name(&p.field_type) {
-            Some(field_type @ (FieldType::Date | FieldType::Datetime)) => Ok(PatternProbe {
-                field_type,
-                pattern: p.pattern,
-            }),
-            // Every other type has no pattern form at all, so accepting one
-            // would answer a question the wire cannot be asked.
-            _ => Err(WasmError::BadProbes(format!(
-                "`{}` has no pattern form; probe `date` or `datetime`",
-                shojiku_diagnostics::sanitize(&p.field_type, 40)
-            ))),
+        .map(|p| {
+            PatternProbe::new(&p.field_type, p.pattern)
+                .map_err(|e| WasmError::BadProbes(e.to_string()))
         })
         .collect()
 }

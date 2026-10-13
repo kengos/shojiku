@@ -27,7 +27,7 @@ fn a_probe_splits_at_the_first_colon_only() {
     // A pattern routinely contains one, so splitting on every colon would
     // make the commonest time pattern unspellable.
     let probe = parse_probe("datetime:HH:mm").expect("parsed");
-    assert_eq!(probe.field_type, FieldType::Datetime);
+    assert_eq!(probe.field_type, shojiku_authoring::ProbeType::Datetime);
     assert_eq!(probe.pattern, "HH:mm");
 }
 
@@ -42,6 +42,19 @@ fn a_probe_type_with_no_pattern_form_is_refused() {
     // `currency` is a real field type and has no pattern form at all.
     assert!(parse_probe("currency:foo").is_err());
     assert!(parse_probe("nonsense:foo").is_err());
+}
+
+#[test]
+fn more_probes_than_the_cap_are_refused_whole() {
+    let mut over = args();
+    over.probe = vec!["date:d".to_string(); shojiku_authoring::MAX_PROBES + 1];
+    let err = run_formats(&over).expect_err("over the cap");
+    assert!(matches!(err, CliError::TooManyProbes(_)));
+    assert_eq!(err.kind(), "invalid_request");
+    assert!(err.to_string().contains("probes requested"), "{err}");
+    // The cap itself is answered, so the refusal is about the count only.
+    over.probe.pop();
+    assert!(run_formats(&over).is_ok());
 }
 
 #[test]

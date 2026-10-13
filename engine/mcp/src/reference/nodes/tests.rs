@@ -119,3 +119,57 @@ fn a_shape_the_catalog_does_not_define_is_skipped_rather_than_faked() {
     assert!(property("NoSuchShape", "margin").is_none());
     assert!(property("OptBox", "noSuchKey").is_none());
 }
+
+#[test]
+fn an_item_pages_own_keys_resolve_through_its_branch() {
+    // The item types exist only as `oneOf` branches of `Item`, so the page
+    // that documents one declares no shape of its own; its keys are still its
+    // to answer for.
+    let page = find("image").expect("image");
+    assert!(page.shapes.iter().all(|s| s != "Item"));
+    let fit = resolve(page, "fit");
+    let owners: Vec<&str> = fit.iter().map(|m| m.shape.as_str()).collect();
+    assert_eq!(owners, ["Item.image"]);
+    assert_eq!(fit[0].key.as_deref(), Some("fit"));
+    assert!(fit[0].schema.is_object());
+
+    let qualified = resolve(page, "Item.image.fit");
+    assert_eq!(qualified.len(), 1);
+    assert_eq!(qualified[0].schema, fit[0].schema);
+
+    let branch = resolve(page, "Item.image");
+    assert_eq!(branch.len(), 1);
+    assert_eq!(branch[0].key, None);
+    assert_eq!(branch[0].shape, "Item.image");
+}
+
+#[test]
+fn the_template_page_addresses_a_branch_by_its_discriminator() {
+    let page = find("template").expect("template");
+    let branch = resolve(page, "Item.image");
+    assert_eq!(branch.len(), 1);
+    assert_eq!(branch[0].shape, "Item.image");
+    assert_eq!(resolve(page, "Item.image.fit").len(), 1);
+    assert_eq!(resolve(page, "Item.qr_code.errorCorrection").len(), 1);
+    // A bare key never reaches into a union, so this stays a miss.
+    assert!(resolve(page, "image").is_empty());
+}
+
+#[test]
+fn a_branch_selector_that_names_nothing_resolves_to_nothing() {
+    let image = find("image").expect("image");
+    let template = find("template").expect("template");
+    for (page, miss) in [
+        // Another item's branch, asked of the image page.
+        (image, "Item.qr_code"),
+        (image, "Item.image.noSuchKey"),
+        (image, "Item.image.fit.deeper"),
+        (image, "noSuchKey"),
+        (template, "Item.noSuchItem"),
+        (template, "Item.image.fit.deeper"),
+        // A property is a leaf: nothing below it is addressable.
+        (template, "Template.version.x"),
+    ] {
+        assert!(resolve(page, miss).is_empty(), "{miss} should not resolve");
+    }
+}

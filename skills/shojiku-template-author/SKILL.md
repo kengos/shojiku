@@ -381,9 +381,9 @@ migrator/debugger skills reference this section, they never restate it.
   | `capabilities` | — | — | engine version + capability-key list |
   | `format_catalog` | — | `templatePath` (or inline `template`), `lang`, `probes` (`[{fieldType, pattern}]`, ≤16) | the pickable spellings per field type with a rendered sample of each, then diagnostics JSON |
   | `list_examples` | — | — | the bundled catalog: each entry's `shojiku://example/...` URI, title, what it exercises, file names, size |
-  | `get_example` | `uri` | — | that entry's source files together (append `/<file>` to the URI for one file) |
+  | `get_example` | `uri` | — | that entry's source files together, one embedded `resource` part per file (append `/<file>` to the URI for one file) |
   | `list_reference` | — | — | the syntax reference index: each page's `shojiku://reference/...` URI, title, group, what it covers, the catalog shapes it documents |
-  | `get_reference` | `uri` | — | that page's markdown (syntax, defaults, limitations) + its keys as a JSON Schema fragment; `#<key>` returns that key's node on every shape of the page carrying it, `#<Shape>` / `#<Shape>.<key>` narrow |
+  | `get_reference` | `uri` | — | that page's markdown (syntax, defaults, limitations) + its keys as a JSON Schema fragment, as two embedded `resource` parts; `#<key>` returns that key's node on every shape of the page carrying it (an item page such as `image` answers for its own item type's keys), `#<Shape>` / `#<Shape>.<key>` narrow |
 
   **Start from a bundled example rather than a blank file.** The 34
   entries cover invoices, receipts, forms, labels, vertical typography

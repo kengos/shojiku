@@ -2,7 +2,8 @@
 //! resource read.
 
 use super::*;
-use crate::rpc::RESOURCE_NOT_FOUND;
+use crate::rpc::{INVALID_PARAMS, RESOURCE_NOT_FOUND};
+use crate::test_support::resource_contents;
 use serde_json::json;
 
 /// The JSON payload a tool answered with.
@@ -49,7 +50,7 @@ fn list_examples_ignores_unexpected_arguments() {
 #[test]
 fn get_example_returns_the_same_body_as_a_resource_read() {
     let uri = "shojiku://example/business/invoice-ja";
-    let via_tool = payload(&get(&json!({ "uri": uri })).expect("succeeds"));
+    let via_tool = resource_contents(&get(&json!({ "uri": uri })).expect("succeeds"));
     let via_resource = resources::read(&json!({ "uri": uri })).expect("readable");
     assert_eq!(
         via_tool, via_resource,
@@ -64,7 +65,7 @@ fn get_example_reads_a_single_file() {
     }))
     .expect("succeeds");
     assert_eq!(result["isError"], false);
-    let body = payload(&result);
+    let body = resource_contents(&result);
     assert_eq!(body["contents"].as_array().expect("contents").len(), 1);
 }
 

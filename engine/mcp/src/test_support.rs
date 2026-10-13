@@ -54,6 +54,20 @@ pub(crate) fn content(result: &Value) -> &Vec<Value> {
     result["content"].as_array().expect("content array")
 }
 
+/// A read tool's embedded `resource` parts, re-gathered into the
+/// `{ "contents": [...] }` shape `resources/read` answers with — so a test can
+/// hold the two entry points to one body.
+pub(crate) fn resource_contents(result: &Value) -> Value {
+    let items: Vec<Value> = content(result)
+        .iter()
+        .map(|part| {
+            assert_eq!(part["type"], "resource", "expected a resource part: {part}");
+            part["resource"].clone()
+        })
+        .collect();
+    json!({ "contents": items })
+}
+
 /// Parses a text content part as JSON.
 pub(crate) fn text_json(part: &Value) -> Value {
     assert_eq!(part["type"], "text", "expected a text part: {part}");

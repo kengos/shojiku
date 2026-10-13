@@ -2,7 +2,8 @@
 //! tool/resource error split `get_reference` follows.
 
 use super::*;
-use crate::test_support::{call_tool, content, text_json};
+use crate::rpc::INVALID_PARAMS;
+use crate::test_support::{call_tool, content, resource_contents, text_json};
 use serde_json::json;
 
 /// One `list_reference` payload.
@@ -80,13 +81,13 @@ fn the_two_read_tools_answer_each_others_uris() {
     let example = "shojiku://example/business/receipt-ja";
     let result = fetched(example);
     assert_eq!(result["isError"], false, "get_reference on an example URI");
-    let payload = text_json(&content(&result)[0]);
+    let payload = resource_contents(&result);
     assert!(!payload["contents"].as_array().expect("contents").is_empty());
 
     let crossed =
         call_tool("get_example", json!({ "uri": "shojiku://reference/box" })).expect("get_example");
     assert_eq!(crossed["isError"], false, "get_example on a reference URI");
-    let parts = text_json(&content(&crossed)[0]);
+    let parts = resource_contents(&crossed);
     assert_eq!(parts["contents"].as_array().expect("contents").len(), 2);
 }
 
@@ -110,7 +111,7 @@ fn get_reference_and_resources_read_answer_identically() {
         "shojiku://reference/table#style",
         "shojiku://reference/table#Column.style",
     ] {
-        let via_tool = text_json(&content(&fetched(uri))[0]);
+        let via_tool = resource_contents(&fetched(uri));
         let via_resource = crate::resources::read(&json!({ "uri": uri })).expect("readable");
         assert_eq!(via_tool, via_resource, "{uri} diverged");
     }
@@ -162,11 +163,28 @@ fn get_reference_without_a_uri_is_a_protocol_error() {
 fn get_reference_reads_a_page_through_the_tool_surface() {
     let result = fetched("shojiku://reference/box");
     assert_eq!(result["isError"], false);
-    let payload = text_json(&content(&result)[0]);
+    let payload = resource_contents(&result);
     let parts = payload["contents"].as_array().expect("contents");
     assert_eq!(parts.len(), 2);
     assert!(parts[0]["text"]
         .as_str()
         .expect("text")
         .starts_with("# `box`"));
+}
+
+#[test]
+fn a_page_is_not_encoded_twice() {
+    // The tool answer is the read's parts themselves: the markdown verbatim,
+    // and the schema half as COMPACT JSON that parses on its own. Wrapping the
+    // whole read in one more pretty-printed JSON string made the heaviest page
+    // about half again as large and put `\"` escapes in front of the model.
+    let result = fetched("shojiku://reference/template");
+    let parts = content(&result);
+    assert_eq!(parts[0]["resource"]["mimeType"], "text/markdown");
+    assert_eq!(parts[1]["resource"]["mimeType"], "application/schema+json");
+    let schema = parts[1]["resource"]["text"].as_str().expect("schema text");
+    assert!(!schema.contains('\n'), "the schema half is compact");
+    serde_json::from_str::<Value>(schema).expect("schema half parses as JSON");
+    let page = crate::reference::find("template").expect("template page");
+    assert_eq!(parts[0]["resource"]["text"], page.body, "markdown verbatim");
 }

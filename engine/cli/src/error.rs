@@ -63,6 +63,10 @@ pub enum CliError {
     /// control-stripped by the shared echo guard at the display boundary.
     #[error("`--probe` wants `<type>:<pattern>` with type `date` or `datetime`, got `{0}`")]
     BadProbe(String),
+    /// More `--probe` values than the catalog answers. The text is the
+    /// authoring surface's own, so every host states the cap the same way.
+    #[error("{0}")]
+    TooManyProbes(String),
     /// The engine refused the document. The diagnostics were printed to
     /// stderr when it happened and are carried here as well, because
     /// stderr prose cannot express a diagnostic's `code` or its typed
@@ -130,6 +134,7 @@ impl CliError {
             CliError::PageOutOfRange { .. }
             | CliError::OutputPatternRequired(_)
             | CliError::BadProbe(_)
+            | CliError::TooManyProbes(_)
             | CliError::Serialize(_)
             | CliError::Output { .. }
             | CliError::PassphraseVariableUnset { .. }
@@ -180,9 +185,10 @@ impl CliError {
             // request it will not act on: the two subprocess SDKs map the same
             // strings the other five already do.
             CliError::Cms(_) => "certificate",
-            CliError::Algorithm | CliError::EmptySignature | CliError::BadProbe(_) => {
-                "invalid_request"
-            }
+            CliError::Algorithm
+            | CliError::EmptySignature
+            | CliError::BadProbe(_)
+            | CliError::TooManyProbes(_) => "invalid_request",
             CliError::Key(_) => "key",
             CliError::Verify(_) => "verify",
             CliError::Passphrase(_) => "passphrase",

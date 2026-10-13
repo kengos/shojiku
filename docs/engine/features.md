@@ -1620,7 +1620,10 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   (`list_reference`: title, group, what the page covers, the catalog
   shapes it documents) for the same reason `list_examples` is one; the
   fetch is either `resources/read` or the `get_reference` tool over the
-  same body of text. A page answers TWO parts: its markdown — the syntax
+  same body of text (the tool answers the read's parts as embedded `resource`
+  content, the schema half as compact JSON, never as one JSON string wrapping
+  the read; `resources/list` reports a page's `size` as markdown plus schema,
+  which is what a read returns). A page answers TWO parts: its markdown — the syntax
   examples and the `## Limitations` the catalog cannot express — and the
   page's keys as a JSON Schema fragment cut from the same key catalog the
   site renders. The page→shape map is the page's own `reference:` front
@@ -1636,7 +1639,9 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   five of that page's seven shapes), so `#<key>` is an ENUMERATION: every
   match on the page, each naming its owning shape. `#<Shape>` and
   `#<Shape>.<key>` narrow. Picking one owner would be silently wrong, and
-  asking for disambiguation would cost a round trip.
+  asking for disambiguation would cost a round trip. An item page
+  (`image`, `table`, …) also answers for its own item type's keys, which the
+  catalog holds as a branch of `Item` (`image#fit`, `template#Item.image`).
 - **The schema fragment's `$ref`s point outward, and it says so.** Because
   the page→shape map is an exact partition, a shape one node references is
   owned by a DIFFERENT page — `box`'s `OptBox.w` points at `Length`, which
@@ -1684,7 +1689,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   with what this engine renders for it, plus previews of patterns the
   document does not carry yet (`probes`, a `{ fieldType, pattern }` list —
   structured objects rather than the CLI's `<type>:<pattern>` string,
-  because a JSON client composes JSON). Every argument is optional: with no
+  because a JSON client composes JSON; more than 16 probes are refused whole
+  by every host, one rule from the authoring surface). Every argument is optional: with no
   template the answer is the locale's own vocabulary, which is what an
   author who has not written a document yet needs, so the descriptor
   carries no `required` at all. An unparseable template still answers a

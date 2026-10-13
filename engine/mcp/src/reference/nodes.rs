@@ -96,8 +96,20 @@ pub(crate) fn defs(page: &Page) -> Value {
     json!({ "$comment": REF_RESOLUTION, "$defs": Value::Object(defs) })
 }
 
+/// The union shape whose `oneOf` branches are the item types.
+const ITEM_UNION: &str = "Item";
+
 /// Every node on `page` that `fragment` names, in the page's declared shape
 /// order. Empty = the selector names nothing here.
+///
+/// The grammar is the annotation layer's: a shape, then segments that are each
+/// a property of the node in hand or — where the node is a tagged union — the
+/// discriminator selecting one of its `oneOf` branches. So `Item.image` is the
+/// image branch and `Item.image.fit` one of its keys.
+///
+/// An ITEM page declares no shape of its own (its keys live on a branch of
+/// `Item`, owned by the template page), so it also answers for the branch named
+/// like itself: `image#fit` and `image#Item.image` resolve there.
 pub(crate) fn resolve(page: &Page, fragment: &str) -> Vec<Match> {
     if let Some(node) = page.shapes.iter().find(|s| *s == fragment) {
         return shape(node)
@@ -109,22 +121,32 @@ pub(crate) fn resolve(page: &Page, fragment: &str) -> Vec<Match> {
             .into_iter()
             .collect();
     }
-    match fragment.split_once('.') {
-        Some((name, key)) => page
-            .shapes
-            .iter()
-            .filter(|s| *s == name)
-            .filter_map(|s| property(s, key))
-            .collect(),
-        None => page
-            .shapes
-            .iter()
-            .filter_map(|s| property(s, fragment))
-            .collect(),
+    let tail: Vec<&str> = fragment.split('.').collect();
+    if tail.len() > 1 {
+        let root = tail[0];
+        let owned = page.shapes.iter().any(|s| s == root)
+            || (page.group == "item" && root == ITEM_UNION && tail.get(1) == Some(&page.stem));
+        return if owned {
+            walk(root, &tail[1..]).into_iter().collect()
+        } else {
+            Vec::new()
+        };
     }
+    let mut found: Vec<Match> = page
+        .shapes
+        .iter()
+        .filter_map(|s| property(s, fragment))
+        .collect();
+    if page.group == "item" {
+        found.extend(walk(ITEM_UNION, &[page.stem, fragment]));
+    }
+    found
 }
 
 /// One shape's named property, as a match.
+///
+/// Properties only: a bare key never reaches into a union's branches, which
+/// would make `template#image` answer with the whole image branch.
 fn property(shape_name: &str, key: &str) -> Option<Match> {
     let node = shape(shape_name)?.get("properties")?.get(key)?;
     Some(Match {
@@ -132,6 +154,41 @@ fn property(shape_name: &str, key: &str) -> Option<Match> {
         key: Some(key.to_string()),
         schema: node.clone(),
     })
+}
+
+/// Follows `tail` from the named shape: a property of the node in hand, else
+/// the `oneOf` branch whose discriminator is that segment. A property ends the
+/// path (it is the key); a branch extends the shape's address.
+fn walk(shape_name: &str, tail: &[&str]) -> Option<Match> {
+    let mut node = shape(shape_name)?;
+    let mut address = shape_name.to_string();
+    let mut key = None;
+    for segment in tail {
+        if key.is_some() {
+            return None;
+        }
+        if let Some(properties) = node.get("properties") {
+            node = properties.get(*segment)?;
+            key = Some((*segment).to_string());
+        } else {
+            node = node
+                .get("oneOf")?
+                .as_array()?
+                .iter()
+                .find(|branch| selects(branch, segment))?;
+            address = format!("{address}.{segment}");
+        }
+    }
+    Some(Match {
+        shape: address,
+        key,
+        schema: node.clone(),
+    })
+}
+
+/// Whether a branch's discriminator is pinned to `name`.
+fn selects(branch: &Value, name: &str) -> bool {
+    branch["properties"]["type"]["const"].as_str() == Some(name)
 }
 
 /// The `resources/read` body for a fragment: the matches, each addressed.

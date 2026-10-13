@@ -14,8 +14,6 @@
 
 use super::{json_text, text_part, tool_result};
 use crate::reference::{self, uri};
-use crate::resources;
-use crate::rpc::INVALID_PARAMS;
 use serde_json::{json, Value};
 
 /// `list_reference`: every page, with what it covers and what it documents.
@@ -62,16 +60,7 @@ pub(crate) fn list(_arguments: &Value) -> super::ToolOutcome {
 /// neighbouring tool name gets its answer instead of a round trip. Both
 /// descriptors say so, and `tests` pins it in both directions.
 pub(crate) fn get(arguments: &Value) -> super::ToolOutcome {
-    if arguments.get("uri").and_then(Value::as_str).is_none() {
-        return Err((
-            INVALID_PARAMS,
-            "`uri` is required and must be a string".into(),
-        ));
-    }
-    match resources::read(arguments) {
-        Ok(result) => Ok(tool_result(vec![text_part(json_text(&result))], false)),
-        Err(error) => Ok(tool_result(vec![text_part(error.message)], true)),
-    }
+    super::read_tool(arguments)
 }
 
 #[cfg(test)]

@@ -12,8 +12,8 @@ mod tests;
 use crate::args::FormatsArgs;
 use crate::error::CliError;
 use shojiku_authoring::fs::{load_locale_pack, resolve_locale_dir};
-use shojiku_authoring::{format_catalog, resolve_locale_id, PatternProbe};
-use shojiku_core::{parse_template, FieldType, Template};
+use shojiku_authoring::{check_probe_count, format_catalog, resolve_locale_id, PatternProbe};
+use shojiku_core::{parse_template, Template};
 
 /// Reads `--templates` when given. A missing file is an error (the caller
 /// named it); NO `--templates` at all is the locale-only catalog.
@@ -31,20 +31,13 @@ fn read_template(args: &FormatsArgs) -> Result<Option<Template>, CliError> {
 /// Parses one `--probe` value: `<type>:<pattern>`.
 ///
 /// Split at the FIRST colon only, because a pattern routinely contains one
-/// (`date:HH:mm` is a `date` probe of `HH:mm`). The type is `date` or
-/// `datetime` — every other field type has no pattern form, so accepting
-/// one would answer a question the wire cannot be asked.
+/// (`date:HH:mm` is a `date` probe of `HH:mm`). Which types carry a pattern
+/// form is the authoring surface's rule, not this host's.
 fn parse_probe(spec: &str) -> Result<PatternProbe, CliError> {
     let (kind, pattern) = spec
         .split_once(':')
         .ok_or_else(|| CliError::BadProbe(spec.to_string()))?;
-    match FieldType::from_name(kind) {
-        Some(field_type @ (FieldType::Date | FieldType::Datetime)) => Ok(PatternProbe {
-            field_type,
-            pattern: pattern.to_string(),
-        }),
-        _ => Err(CliError::BadProbe(spec.to_string())),
-    }
+    PatternProbe::new(kind, pattern).map_err(|_| CliError::BadProbe(spec.to_string()))
 }
 
 /// `shojiku formats`: the catalog as pretty JSON on stdout.
@@ -55,6 +48,7 @@ pub fn run_formats(args: &FormatsArgs) -> Result<String, CliError> {
         template.as_ref().and_then(|t| t.defaults.locale.as_deref()),
     );
     let pack = load_locale_pack(&locale, &resolve_locale_dir(&args.locale_dir))?;
+    check_probe_count(args.probe.len()).map_err(|e| CliError::TooManyProbes(e.to_string()))?;
     let probes = args
         .probe
         .iter()
