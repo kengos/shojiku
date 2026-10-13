@@ -67,7 +67,7 @@ investigate\:docker: ## Daemon healthy AND able to pull? (a daemon that answers 
 		printf '  ok — a real pull completed.\n'; \
 	fi
 
-investigate\:gates: ## Is another gate running in this tree, and who holds the lock?
+investigate\:gates: ## Is another gate running in this tree, who holds the lock, and which target slots are leased?
 	@lock="$(CURDIR)/.make-logs/gates"; \
 	if [ -d "$$lock" ] && [ -n "$$(ls -A "$$lock" 2>/dev/null)" ]; then \
 		printf 'lock held in this tree:\n'; \
@@ -81,6 +81,7 @@ investigate\:gates: ## Is another gate running in this tree, and who holds the l
 	else \
 		printf 'no gate lock held in this tree.\n'; \
 	fi
+	@printf '\n'; scripts/target-slot.sh status
 	@printf '\nmake processes on this machine:\n'
 	@pgrep -fl 'g?make' 2>/dev/null | grep -v pgrep | sed 's/^/  /' || printf '  (none)\n'
 	@printf '\ngate containers running against a checkout of this repo:\n'

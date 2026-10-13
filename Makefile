@@ -287,6 +287,28 @@ SDK_SUFFIX := $(if $(filter-out local,$(WORK_TAG)),-$(WORK_TAG))
 # prints both, and the commands to stop them.
 GATE_LOCK  := scripts/gate-lock.sh
 
+# The engine's cargo target lives in a POOL of named volumes shared by every
+# worktree, not in each tree's engine/target: every tree used to build its own
+# (13-18 GB each) and parallel sessions filled the disk. Every engine container
+# runs through TARGET_DOCKER, which leases one of TARGET_SLOTS volumes
+# (`shojiku-target-<k>`) for the outermost gate-lock hold and mounts it OVER
+# /repo/engine/target — so every path inside the container is unchanged.
+# scripts/target-slot.sh explains the lease, the wait, and the fingerprint
+# scrub that keeps one tree from running another tree's stale build.
+#
+#   make investigate:gates      who holds which slot
+#   make clean:target           drop the free slot volumes (SLOT=<k> for one)
+#   TARGET_SLOTS=0              no pool: engine/target on the bind mount
+#
+# CI sets CI=true and so gets 0 — one checkout per job, engine/target restored
+# from the Actions cache exactly as before. Disk: each slot grows to roughly a
+# full tree's target, so Docker Desktop's disk image needs TARGET_SLOTS times
+# that on top of the images and the cargo cache (CONTRIBUTING.md has numbers).
+TARGET_SLOTS ?= $(if $(CI),0,3)
+TARGET_DOCKER := scripts/target-slot.sh docker
+export SHOJIKU_TARGET_SLOTS := $(TARGET_SLOTS)
+export SHOJIKU_TARGET_IMAGE := $(RUST_IMAGE)
+
 IMAGE        := shojiku-ci:$(WORK_TAG)
 
 # The two browser golden paths build their images from shell scripts rather
@@ -332,7 +354,7 @@ ERROR_LOG := $(LOG_DIR)/last-error.log
 # Which TREE did that PASS/FAIL describe? Every gate line says so, because this
 # is the one way to drift that has no other tell. A cwd drift into a non-repo
 # announces itself (`No rule to make target`); a drift into the PRIMARY CHECKOUT
-# does not — it has a Makefile, a full source tree and a warm engine/target, so
+# does not — it has a Makefile, a full source tree and a warm build slot, so
 # the gate runs to completion and prints PASS for main while you believe you
 # gated your branch. An agent harness that resets cwd between tool calls makes
 # that the DEFAULT outcome for a worktree session, not an accident. The fix is
@@ -366,7 +388,7 @@ VITEST_JOBS := $(if $(JOBS),--maxWorkers=$(JOBS))
 # pressure. NAME is what keeps the private spelling out of the PASS line, the
 # log file name and the $(ERROR_LOG) header: the user sees `gui:lint`
 # throughout, and `make quiet T=<x>` on its own still labels itself <x>.
-gate = $(MAKE) --no-print-directory $(if $(V),$(1),quiet T=$(1) NAME=$(2))
+gate = $(if $(V),$(GATE_LOCK) )$(MAKE) --no-print-directory $(if $(V),$(1),quiet T=$(1) NAME=$(2))
 
 # wasm-bindgen CLI must match the crate version pinned in engine/Cargo.toml.
 WASM_BINDGEN_VERSION := 0.2.126
@@ -410,12 +432,19 @@ WASM_MAX_GZIP := 3145728
 # bare name is a named volume, an absolute path is a host bind mount. CI passes
 # paths so a restored cache lands where the container will look, which is what
 # lets the pipeline run these very targets instead of a hand-copied set of
-# cargo flags that drifts from them. `engine/target/` needs no such switch —
-# it is inside the repository mount, so it is already on the host.
+# cargo flags that drifts from them. The target needs no such switch: under CI
+# the pool is off and `engine/target/` is inside the repository mount, so the
+# restored cache is already where cargo looks (TARGET_SLOTS above).
 #
 # MOUNT DISCIPLINE — the single biggest time-sink in this repo, and the reason
-# this uses $(CURDIR) rather than $(pwd). Copy these flags for an ad-hoc cargo
-# run; do not retype them:
+# this uses $(CURDIR) rather than $(pwd). For an ad-hoc cargo run, keep the
+# whole CARGO_IN_DOCKER prefix (`scripts/gate-lock.sh scripts/target-slot.sh
+# docker run …`) with SHOJIKU_TARGET_SLOTS=$(TARGET_SLOTS) and
+# SHOJIKU_TARGET_IMAGE=$(RUST_IMAGE) in the environment (make exports both),
+# not just the `docker run` flags: the target mount is added at run time, and
+# only under a gate lock with the pool on, so a bare copy builds into the host
+# engine/target — a different target from the gates', and the 13 GB the pool
+# exists to save:
 #   * mount the REPO ROOT at /repo and let -w select the subdirectory. A
 #     `cd engine` first, or a `$(pwd)` mount taken from the wrong cwd, makes a
 #     CORRECT change look broken: font-loading tests answer
@@ -427,12 +456,13 @@ WASM_MAX_GZIP := 3145728
 #     cache, and the symptom outlives the fix: the stale test binary keeps
 #     failing under a CORRECT mount. Recovery is to re-bake the path —
 #     `touch engine/layout/tests/e2e/main.rs` for one suite, or
-#     `docker volume rm shojiku-cargo` to start the cache over.
+#     `make clean:target SLOT=<k>` to start that target slot over (the
+#     poisoned binary lives in the target, not in the cargo volume).
 CARGO_VOLUME  ?= shojiku-cargo
 PNPM_VOLUME   ?= shojiku-pnpm
 RUSTUP_VOLUME ?= shojiku-rustup
 
-CARGO_IN_DOCKER = $(GATE_LOCK) docker run --rm \
+CARGO_IN_DOCKER = $(GATE_LOCK) $(TARGET_DOCKER) run --rm \
 	-v "$(CURDIR):/repo" -w /repo/engine \
 	-v "$(CARGO_VOLUME):/usr/local/cargo" \
 	-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
@@ -464,7 +494,7 @@ include mk/investigate.mk
 .PHONY: _docker-build _docker-render _docker-scan _docker-verify _engine-budget \
         _engine-capi-dist _engine-capi-lib _engine-cli-bin _engine-cli-dist \
         _engine-clippy _engine-coverage _engine-deny _engine-fmt _engine-fuzz \
-        _engine-lint _engine-map-check _engine-napi _engine-test _engine-verify _engine-wasm \
+        _engine-lint _engine-map-check _engine-napi _engine-preview _engine-render _engine-test _engine-verify _engine-wasm \
         _engine-wasm-e2e _examples-check _gui-budget _gui-e2e _gui-lint _gui-test \
         _gui-verify _make-check _proof _proof-deploy _proof-dotnet _proof-go \
         _proof-java _proof-js _proof-php _proof-published _proof-published-crates \
@@ -477,7 +507,7 @@ include mk/investigate.mk
         _sdk-php-verify _sdk-python-lint _sdk-python-test _sdk-python-verify \
         _sdk-ruby-lint _sdk-ruby-test _sdk-ruby-verify _site-build _site-check \
         _site-gates _site-lint _site-node-modules _site-test _site-verify _verify \
-        _version-check clean clean\:cache clean\:images docker\:build \
+        _version-check _examples-render clean clean\:cache clean\:images clean\:target docker\:build \
         docker\:render docker\:scan docker\:verify engine\:budget \
         engine\:capi-dist engine\:capi-lib engine\:cli-bin engine\:cli-dist \
         engine\:clippy engine\:coverage engine\:coverage-why engine\:deny \
@@ -615,9 +645,14 @@ _reference-docs:
 
 ## ---- examples ----------------------------------------------------------
 
+# ONE gate-lock hold around the build and the run: two holds could lease two
+# different target slots, and the second would run whatever binary its slot has.
 examples\:render: ## Re-render every example's committed output.pdf + preview-*.png
+	@$(GATE_LOCK) $(MAKE) --no-print-directory _examples-render
+
+_examples-render:
 	@$(CARGO_IN_DOCKER) 'cargo build --release -p shojiku-cli'
-	@$(GATE_LOCK) docker run --rm \
+	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
 		-v "$(CURDIR):/repo" -w /repo \
 		$(RUST_IMAGE) ./scripts/render-examples.sh
 
@@ -630,7 +665,7 @@ _examples-check:
 	@echo "== block scalar indentation =="
 	@./scripts/check-example-text-indent.sh
 	@$(CARGO_IN_DOCKER) 'cargo build --release -p shojiku-cli'
-	@$(GATE_LOCK) docker run --rm \
+	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
 		-v "$(CURDIR):/repo" -w /repo \
 		$(RUST_IMAGE) ./scripts/render-examples.sh --check
 
@@ -680,6 +715,17 @@ clean: ## Remove local artifacts (out.pdf, lcov.info, stderr.txt)
 
 clean\:cache: ## Drop the persistent cargo/rustup/pnpm Docker volumes
 	-docker volume rm $(CARGO_VOLUME) $(RUSTUP_VOLUME) $(PNPM_VOLUME)
+
+# Two things, both safe to lose (the next gate rebuilds): the pooled target
+# volumes no gate is using — or only slot SLOT=<k>, the reset for one that went
+# bad — and THIS tree's engine/target on the host, which under the pool is only
+# a mount point (anything in it predates the pool and is never read again).
+# Under this tree's gate lock, so it cannot delete a build in progress here; a
+# slot another tree is using is reported and kept.
+clean\:target: ## Drop the free pooled target volumes (SLOT=<k> for one) and this tree's host engine/target
+	@$(GATE_LOCK) scripts/target-slot.sh clean $(SLOT)
+	@$(GATE_LOCK) rm -rf engine/target
+	@echo "removed this tree's host engine/target"
 
 # The images a local gate run leaves behind. They are cheap to lose — each
 # rebuilds from the layer cache in seconds — but there are eleven of them and

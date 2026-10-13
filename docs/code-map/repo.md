@@ -519,6 +519,19 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   `make <scope>:lock`; example drift -> `make examples:render`). Both normalise
   ANSI + the `pnpm -r` package prefix first, and both are validated by
   inducing a real failure, never by reading the regex.
+  `gate-lock.sh` — one gate per working tree (re-entrant; the outermost
+  hold exports its lock dir and pid). `target-slot.sh` — the pooled cargo
+  target: every engine container runs through it (`TARGET_DOCKER`), which
+  leases one of `TARGET_SLOTS` named volumes (`shojiku-target-<k>`) for the
+  outermost hold and mounts it OVER `/repo/engine/target`, so no in-container
+  path changes. Lease state is per user under `~/.cache/shojiku/
+  target-pool` (the volumes are per Docker daemon); a slot is free only when no live holder AND no running
+  container mounts it; allocation prefers the slot this tree used last; and
+  a slot that changes tree first loses its `.fingerprint/shojiku-*` dirs,
+  because cargo's mtime freshness would otherwise serve one tree's build to
+  another — and `last-tree` is written back only after that scrub succeeds,
+  so an interrupted one is owed again. Off (`TARGET_SLOTS=0`) under `CI`, where engine/target stays on
+  the bind mount. `status` / `clean` back `investigate:gates` / `clean:target`.
   `check-make-namespace.sh` — `make make:check`, the invariant over the
   target surface itself (CI job `versions`, no Docker): a target defined in
   `mk/<x>.mk` belongs to scope `<x>`, a public target is colon-named or

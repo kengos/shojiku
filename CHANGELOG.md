@@ -729,6 +729,18 @@ platform binaries.
 
 ### Changed
 
+- **Parallel worktrees no longer each build their own 13 GB cargo
+  target.** The local gates kept the engine's build output in every
+  checkout's `engine/target`, and a handful of worktrees running gates at
+  once filled a 460 GB disk. Engine containers now lease one of three
+  shared Docker volumes for the length of a gate, so the disk spent on
+  builds is bounded by the number of slots rather than the number of
+  worktrees (`make clean:target` resets a slot that has grown); a tree
+  gets back the slot it used last, and a busy pool makes a gate wait
+  rather than fail. `make investigate:gates` shows who holds what and
+  `make clean:target` frees the space. CI is unchanged — the pool is off
+  there.
+
 - **The site now lives at
   [shojiku.kengos.jp](https://shojiku.kengos.jp).** It was served from a
   Cloudflare Pages subdomain, which search engines treat as a free shared
