@@ -21,7 +21,6 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 mod child;
 
-use super::visibility::{self, Visibility};
 use super::{Atom, Basis, Ctx};
 
 pub(in crate::engine) use kind::FlexKind;
@@ -176,7 +175,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             if visibility[i].is_collapsed() {
                 continue;
             }
-            let hidden = visibility[i] == Visibility::Hidden;
+            let hide = self.hide_mark(visibility[i]);
             let mark = self.enter_item(format!("items[{i}]"));
             match FlexKind::of(child) {
                 Some(kind) => {
@@ -198,13 +197,13 @@ impl<'a, 'b> Ctx<'a, 'b> {
                         // Checked first, then blanked: a hidden item still
                         // occupies its box, so an overflow it causes is
                         // real and worth reporting.
-                        slots.push(Slot::Flex(visibility::blank_if(atom, hidden)));
+                        slots.push(Slot::Flex(self.blank_child(atom, hide)));
                     }
                 }
                 None => {
                     if let Some((atom, dy)) = self.absolute_child_atom(child, inner, depth) {
                         self.check_child_right(&atom, inner, clipped);
-                        slots.push(Slot::Abs(visibility::blank_if(atom, hidden), dy));
+                        slots.push(Slot::Abs(self.blank_child(atom, hide), dy));
                     }
                 }
             }

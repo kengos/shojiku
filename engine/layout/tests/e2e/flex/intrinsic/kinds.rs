@@ -169,3 +169,38 @@ fn padding_counts_toward_a_measured_content_width() {
     );
     assert_eq!(padded[0].1 - bare[0].1, 14.0, "both sides of padding");
 }
+
+#[test]
+fn a_collapsed_child_adds_nothing_to_a_row_containers_content_width() {
+    // `collapse: true` removes the child from the row it sits in, gap
+    // included — so the width the PARENT measures for that row must drop
+    // it too, or the parent sizes the row for a child that is not there.
+    // A merely hidden child still reserves its box and still counts.
+    let first = |visible: &str| {
+        format!(
+            "- type: container\n  box: {{ h: 20, direction: row, gap: 10 }}\n  style: {{ borderWidth: 1 }}\n  items:\n    - type: rect\n      box: {{ w: 30, h: 10 }}\n    - type: rect\n      box: {{ w: 50, h: 10 }}\n      visible: {{ key: show{visible} }}"
+        )
+    };
+    let measure = |visible: &str, show: bool| {
+        row_with(
+            "{ x: 0, y: 0, w: 200, h: 40, direction: row }",
+            &format!(
+                "{}\n- type: container\n  box: {{ h: 20, flexGrow: 1 }}\n  style: {{ borderWidth: 1 }}\n  items:\n    - type: text\n      text: ん",
+                first(visible)
+            ),
+            json!({ "show": show }),
+        )[0]
+        .1
+    };
+    assert_eq!(
+        measure(", collapse: true", true),
+        90.0,
+        "shown: 30 + 10 + 50"
+    );
+    assert_eq!(
+        measure(", collapse: true", false),
+        30.0,
+        "collapsed: no box, no gap"
+    );
+    assert_eq!(measure("", false), 90.0, "hidden still reserves its box");
+}

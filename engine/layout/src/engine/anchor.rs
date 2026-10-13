@@ -17,6 +17,8 @@
 //!   positioned content above in-flow content, so this is conformance.
 
 mod band;
+mod defer;
+mod index;
 mod resolve;
 
 use shojiku_core::{AnchorEdge, AnchorPoint, Length, PointSpec};
@@ -93,10 +95,14 @@ pub(super) struct PendingAnchor {
     pub(super) kind: PendingKind,
     pub(super) path: String,
     pub(super) id: Option<String>,
-    /// The item's `visible:` predicate did not hold. Stamped by
-    /// `visibility::blank_since`, exactly as a `PlacedBox` is: the
-    /// placement is still reported, nothing is drawn.
+    /// The item's `visible:` predicate did not hold, or a hidden ancestor's
+    /// did. Stamped by the `visibility` blanking helpers, exactly as a
+    /// `PlacedBox` is: the placement is still reported, nothing is drawn.
     pub(super) hidden: bool,
+    /// The page (0-based) whose header or footer deferred this copy. A band
+    /// is laid out once per page, so each copy resolves on its OWN page;
+    /// `None` for a body item, which resolves on its target's first page.
+    pub(super) band_page: Option<usize>,
 }
 
 /// The point on `b` that `edge` names, before any offset.

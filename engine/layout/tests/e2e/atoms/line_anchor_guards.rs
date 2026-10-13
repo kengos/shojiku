@@ -176,3 +176,22 @@ sections:
         assert!(l.x2.is_finite() && l.y2.is_finite(), "{l:?}");
     }
 }
+
+#[test]
+fn a_hostile_coordinate_half_of_an_anchored_line_names_the_line() {
+    // The coordinate half of a mixed line resolves in the drain, after the
+    // walk has left every item — so its range warning has to be located by
+    // the drain itself, or it lands at document scope.
+    let (_, diags) = run(
+        "page: { size: { w: 200, h: 200 }, margin: 0 }\n\
+         sections:\n  body:\n    type: absolute\n    items:\n      \
+         - { type: rect, id: target, box: { x: 100, y: 100, w: 40, h: 20 }, style: { borderWidth: 1 } }\n      \
+         - { type: line, from: { x: 1e300, y: 0 }, to: { item: target } }\n",
+        json!({}),
+    );
+    let d = diags
+        .iter()
+        .find(|d| d.code == "length_out_of_range")
+        .unwrap_or_else(|| panic!("must warn: {diags:?}"));
+    assert_eq!(d.path.as_deref(), Some("sections.body.items[1]"));
+}

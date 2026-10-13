@@ -176,7 +176,7 @@ inline:
 | `header_group_span_clamped` | warning | `headerGroups` spans exceed the table's columns |
 | `anchor_unknown_target` | warning | a `line` endpoint or an `ellipse` names an `id:` no item carries; the anchored item is not drawn ([line.md](line.md)) |
 | `anchor_cross_page` | warning | a line's two anchored endpoints land on different pages; the line is not drawn |
-| `anchor_ambiguous_target` | warning | the anchored id is placed more than once on the page (a `repeat` element, a duplicate id); the FIRST placement in document order is used |
+| `anchor_ambiguous_target` | warning | the anchored id is placed more than once on the page (a `repeat` element, a duplicate id); the FIRST placement on that page in document order is used |
 <!-- rf:table:end -->
 
 ## Layout — content & data
@@ -201,7 +201,7 @@ inline:
 | `unknown_currency` | a currency code without display data; the code itself used as symbol/name |
 | `unknown_unit` | a semantic unit key missing from the locale pack; rendered verbatim |
 | `format_pattern_ignored` | an inline `format: { pattern }` on a non-dated type; the default form rendered |
-| `mark_missing_size` | a form mark without a positive `box.w`/`box.h` (a checkbox may omit them — it auto-sizes; an `ellipse` may not); skipped |
+| `mark_missing_size` | a form mark without a positive `box.w`/`box.h` (a checkbox may omit them — it auto-sizes; an `ellipse` only with `anchor:`, and an axis it does author must still be positive); skipped |
 | `mark_equals_type_mismatch` | a mark's params value type differs from its `equals` literal; not drawn. Also raised at validate when the DECLARED field type differs, which no params value can satisfy |
 | `mark_equals_not_declared` | a mark's `equals` literal is outside the field's declared `enum`, so the mark can never be drawn |
 | `mark_value_not_bool` | an `equals`-less mark binding's value is not a boolean; not drawn |

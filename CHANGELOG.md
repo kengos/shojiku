@@ -881,6 +881,36 @@ platform binaries.
 
 ### Fixed
 
+- **Hiding a container now hides the attached lines and circles inside it.**
+  A `line` with an end attached to another item, or an `ellipse` circling
+  one, was still drawn when its own `visible:` failed inside a container
+  row, column or grid, or when a container holding it was hidden. It now
+  paints nothing there and is reported hidden, like the rest of the hidden
+  subtree.
+
+- **An attached line or circle in a header or footer is drawn once on every
+  page.** The band repeats on each page, but its attached items were all
+  drawn on the first page their target appeared on — stacked there, and
+  missing from every other page. Each page's copy now attaches on its own
+  page. One attached to an item in the body appears only on the pages that
+  item is on.
+
+- **A circle around another item with a zero or negative size is skipped
+  with a warning.** An `ellipse` with `anchor:` drew a mirrored or collapsed
+  oval when its `box.w` or `box.h` was zero or negative. It now warns
+  `mark_missing_size` and is skipped, like any other ellipse; leaving the
+  size out still fits the circle to its target.
+
+- **A range warning on the free end of an attached line names that line.**
+  When the end given as `x`/`y` of a line whose other end is attached is out
+  of range, `length_out_of_range` carried no item path, so the Designer
+  could not point at the line.
+
+- **A container with a collapsed child is measured without it.** A child
+  hidden with `visible: { collapse: true }` still counted toward its row's
+  width when a parent sized that row to its content (`flexBasis: content`,
+  or a grid `auto` column), so the row was laid out too wide.
+
 - **The hosted Designer now serves each font's license beside the font.**
   The Designer site ships the bundled font packs so the editor can draw
   with them, but it copied only the font files and their manifests, so

@@ -21,6 +21,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         }
         let mut out = PageBuild::default();
         let band_mark = self.enter_item(base.to_string());
+        let anchors = self.pending_anchors.len();
         let visibility = self.child_visibility(&band.items);
         for (i, item) in band.items.iter().enumerate() {
             if visibility[i].is_collapsed() {
@@ -150,6 +151,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
         }
         self.leave_item(band_mark);
+        // Every anchored item this band deferred is a copy for THIS page.
+        self.pin_to_band_page(anchors, page_no - 1);
         out
     }
 

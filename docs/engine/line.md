@@ -153,6 +153,12 @@ endpoints — an older engine rejects the string form on `from`/`to`),
   the page; a second placement of the same id there warns
   (`anchor_ambiguous_target`). Two anchored endpoints whose targets land
   on different pages draw nothing (`anchor_cross_page`).
+- In the body, "the page" is the first page the target is placed on. A
+  line in a header or footer is drawn once per page the band appears on,
+  and each copy resolves on its **own** page: a leader to another band
+  item repeats with the band, and a leader to a body item draws only on
+  the pages that item is placed on (no warning on the others — the id is
+  not unknown, just not there).
 - Ids are not checked for uniqueness, and a line anchored to its own `id:`
   resolves to nothing (`anchor_unknown_target`) — an anchored item is
   never itself an anchor target, because the index is built from the

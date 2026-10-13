@@ -57,15 +57,24 @@ Wire types stay in core; content measurement stays in layout.
   included). Plus `line_placed_box` (endpoint bounding box) and
   `placed_box_rect` (an explicit rectangle — the deferred anchored marks,
   whose geometry comes from another item's placement).
-- `engine/anchor.rs` (+ `anchor/band.rs`, `anchor/resolve.rs`) — cross-item
+- `engine/anchor.rs` (+ `anchor/band.rs`, `anchor/defer.rs`,
+  `anchor/index.rs`, `anchor/resolve.rs`) — cross-item
   anchoring. An `item:` on a `line` endpoint, or `anchor:` on an
   `ellipse`, makes that item ABSOLUTELY POSITIONED (CSS anchor
   positioning requires it): the walk draws nothing, reserves nothing, and
-  pushes one `PendingAnchor` onto `Ctx.pending_anchors`; `assemble.rs`
+  pushes one `PendingAnchor` onto `Ctx.pending_anchors` — built ONLY in
+  `anchor/defer.rs` (`defer`, plus `defer_ellipse`, which also applies the
+  unanchored ellipse's positive-size guard per authored axis); `assemble.rs`
   drains them after the per-page loop, so the box index they read is
   already in sheet coordinates and anchored items paint LAST on their
   page. The page is the TARGET's page, which is what makes
-  `anchor_cross_page` precise. `band.rs` reads the target's inked band
+  `anchor_cross_page` precise. `anchor/index.rs` (`TargetIndex`) keys
+  placements by id then page: a body item resolves on its id's FIRST page,
+  while a header/footer copy — `layout_band` runs once per page and pins
+  what it deferred via `pin_to_band_page` — resolves on its OWN page, and
+  draws nothing (silently) where the id is placed only on other pages.
+  The drain stamps each record's `path` onto whatever resolving it raised
+  (`set_missing_paths`), since it runs outside every item. `band.rs` reads the target's inked band
   from `PlacedBox.text` (`Lines`/`Columns`), falling back to the border
   box; an unsized oval takes that band plus `BAND_PAD_FRACTION` clearance,
   the deferred analogue of the text `mark:` overlay's `DEFAULT_PAD_EM`.
@@ -78,8 +87,8 @@ Wire types stay in core; content measurement stays in layout.
   **`Ctx.pending_anchors` is parked by `begin_measure`/`end_measure`**: a
   throwaway measure pass (flex cross-size, table row, grid cell) would
   otherwise leave a record behind and the item would be drawn twice. Hidden (`visible:`) deferred items are STAMPED by
-  `visibility::blank_since` rather than dropped — a deferred item never
-  rides the atom that blanking transforms.
+  `visibility::blank_since` / `Ctx::blank_child` rather than dropped — a
+  deferred item never rides the atom that blanking transforms.
 - `engine/translate.rs` — whole-item y/x shifts, recursing into clip groups.
 - `engine/resolve.rs` — thin `Ctx` bridges to layout-box; page-margin
   resolution; `resolved_chain` (the font-resolution funnel); the layered
@@ -105,8 +114,10 @@ Wire types stay in core; content measurement stays in layout.
   (`Draw`/`Hidden`/`Collapsed`) computed ONCE per child list by
   `child_visibility` (the predicate's array path is O(params length) and its
   faults are pushed at evaluation, so a second pass would double both cost and
-  diagnostics). Hiding has two mechanisms because the walks differ: `blank`/
-  `blank_if` strip an ATOM the flex/grid walks hand back, while `draw_mark`/
+  diagnostics). Hiding has two mechanisms because the walks differ:
+  `Ctx::hide_mark` (taken before the child is laid out) + `Ctx::blank_child`
+  strip an ATOM the flex/grid walks hand back AND stamp the anchored items
+  deferred meanwhile, which never ride the atom, while `draw_mark`/
   `blank_since` bracket the walks whose arms push straight into the pages and
   return nothing (a split text block, a table, a `repeat`) — pages a hidden
   item opened stay, since it still reserves what it would have occupied. A
@@ -114,8 +125,9 @@ Wire types stay in core; content measurement stays in layout.
   so "reserve the box, paint nothing" has nothing to mean for it.
   Every placement walk consults the verdict — flow (whose gap accounting keys
   off "has something been placed", not document position), band, absolute body,
-  `flex.rs`'s `kinds` pre-pass AND its loop, and `grid.rs`'s `n_grid` +
-  `plan_cells`.
+  `flex.rs`'s `kinds` pre-pass AND its loop, `grid.rs`'s `n_grid` +
+  `plan_cells`, and `intrinsic/leaf.rs`'s container measurement (a collapsed
+  child adds no width and no gap).
 - `engine/overflow.rs` — the horizontal-overflow POLICY, all three bounds
   in one file so they read against each other. Each emits its OWN
   number-only code (`sheet_overflow` / `child_overflow` /
@@ -135,7 +147,8 @@ Wire types stay in core; content measurement stays in layout.
   content box; states the overflow MAGNITUDE and never a side, because
   `cross_offset` has not run yet and `alignItems: center`/`end` push the
   excess LEFT), and `check_track_width` (grid child vs its column-track
-  run, reported as `grid_cell_overflow` with `extent` naming the axis).
+  run, reported as `grid_column_overflow` with the run's track count; the
+  row axis is `grid.rs`'s `grid_cell_overflow`).
   A filling item (`rb.w` unset) is never checked; each fires inside the
   child's own `items[i]` mark. The flex ROW check stays in
   `flex/offsets.rs::plan_row` — it speaks for the whole row, which is why
@@ -211,7 +224,7 @@ Wire types stay in core; content measurement stays in layout.
   share-based behavior. `engine/intrinsic/leaf.rs` — the measured kinds:
   horizontal plain text (widest authored line, shaped through
   `run_width`) and containers (Σ children + gaps in a `row`, the widest
-  in a `column`).
+  in a `column`; collapsed children skipped).
 - `engine/link.rs` — `link:`: `resolve_link` (scope-aware interpolation) +
   `check_link_url` (scheme allowlist + length/control gates) — layout is
   the trust boundary; renderers emit what the tree carries. Plus `linked`,

@@ -7,6 +7,7 @@
 //! Geometry is asserted with `rect`s, which need no font measurement, so
 //! every y below is exact.
 
+mod anchored;
 mod contexts;
 mod faults;
 mod nested;
