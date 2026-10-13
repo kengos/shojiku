@@ -76,6 +76,7 @@ import { registryNames } from '../panel/itemView';
 import { containerLayoutFor } from '../panel/layoutModel';
 import { basisOps, modeSwitchOps } from '../panel/layoutModeOps';
 import { directionOp, gapOp, justifyContentOp, ratioOp } from '../panel/layoutOps';
+import { lineOffsetOps, readLineOffset } from '../panel/lineOffset';
 import { lineArmOps, readLinePoints } from '../panel/linePoints';
 import { readMark } from '../panel/markModel';
 import { repointMarkOps, setCheckedOps, setMarkEqualsOp } from '../panel/markOps';
@@ -4305,6 +4306,64 @@ describe('anchoring by picking, in a document with no names, resolved by the rea
     expect(line).toBeDefined();
     expect((line?.x ?? 0) + (line?.w ?? 0)).toBeCloseTo(220, 0);
     expect((line?.y ?? 0) + (line?.h ?? 0)).toBeCloseTo(120, 0);
+  });
+
+  describe("an attached end's offset", () => {
+    /** The DOC with the line's end already on the rect's centre (220, 120). */
+    const attached = () => {
+      const editor = Editor.create(DOC);
+      const picked = pick(editor, LINE, RECT);
+      const view = readLinePoints((p) => editor.read(p), LINE);
+      expect(
+        editor.applyAll([...picked.ops, ...lineArmOps(LINE, view, 'to', 'anchor', picked.id)]).ok,
+      ).toBe(true);
+      return editor;
+    };
+    const offset = (editor: Editor, axis: 'x' | 'y', raw: string) => {
+      const view = readLineOffset((p) => editor.read(p), LINE, 'to');
+      expect(editor.applyAll(lineOffsetOps(LINE, view, 'to', axis, raw, true)).ok).toBe(true);
+    };
+    const corner = async (editor: Editor) => {
+      const { boxes, codes } = await render(editor);
+      const line = boxes.find((b) => b.path === LINE)?.border;
+      return { codes, x: (line?.x ?? 0) + (line?.w ?? 0), y: (line?.y ?? 0) + (line?.h ?? 0) };
+    };
+
+    it('moves the drawn end by exactly the typed points, negatives included', async () => {
+      const editor = attached();
+      offset(editor, 'x', '4');
+      offset(editor, 'y', '-2');
+      const end = await corner(editor);
+      expect(end.codes).toEqual([]);
+      expect(end.x).toBeCloseTo(224, 3);
+      expect(end.y).toBeCloseTo(118, 3);
+    });
+
+    it('is gone from the document, and the end back on the centre, once both axes are cleared', async () => {
+      const editor = attached();
+      offset(editor, 'x', '4');
+      offset(editor, 'y', '-2');
+      offset(editor, 'x', '');
+      offset(editor, 'y', '0');
+      expect(editor.text()).not.toContain('offset');
+      const end = await corner(editor);
+      expect(end.x).toBeCloseTo(220, 3);
+      expect(end.y).toBeCloseTo(120, 3);
+    });
+
+    it('past the cap, warns on the LINE naming the coordinate that broke it', async () => {
+      // The x stays small; the y lands at 120 + 1e6. The warning must point at
+      // the line (so the diagnostics row can select it) and name that y — not
+      // the offset's x, which is what it used to report.
+      const editor = attached();
+      offset(editor, 'x', '3');
+      offset(editor, 'y', '1000000');
+      const outcome = await transport.renderRaw(editor.text(), '{}', undefined, { scale: 1 });
+      const warning = outcome.diagnostics.items.find((d) => d.code === 'length_out_of_range');
+      expect(warning?.path).toBe(LINE);
+      expect(warning?.args).toEqual({ value: 1_000_120, max: 1_000_000 });
+      expect(outcome.inspect?.boxes.pages.flat().some((b) => b.path === LINE)).toBe(false);
+    });
   });
 });
 

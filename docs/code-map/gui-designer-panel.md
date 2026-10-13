@@ -352,7 +352,7 @@ read side, never the reverse.
   back off the screen by reseeding after every committing blur, which is also
   why it does not consult the apply result: that reports ok and bumps the
   revision for `[]`. The ANCHORED arm
-  (`{ item, edge? }`, capability `line.anchor`) is rendered from the WIRE
+  (`{ item, edge?, offset? }`, capability `line.anchor`) is rendered from the WIRE
   — `isAnchored` reads whether the endpoint carries `item`, never a UI
   mode flag, so an externally-authored document displays honestly — and
   `lineArmOps` switches arms in ONE transactional op list (one undo step,
@@ -367,6 +367,21 @@ read side, never the reverse.
   trimmed, so a name in any script reads back and re-picks. Attaching
   picks its target in the same action: switching first would write
   `item: ''` and the line would vanish before the user chose anything.
+- `panel/lineOffset.ts` + `panel/LineOffsetFields.tsx` — an ANCHORED
+  endpoint's `offset: { x, y }`, as two `StepperField`s under its row
+  (rendered only when the wire carries `item`: an offset without it is a
+  parse error, so nothing here writes to a coordinate endpoint). The wire
+  takes bare pt NUMBERS only — a unit or numeric string fails the parse and
+  refuses the whole document — so a commit writes a number, refuses a unit,
+  exponent or sign-only entry, and the field carries no mm/cm/in hint and a
+  decimal keypad. Zero is the normal form of absence: an empty, `0` or `-0`
+  entry removes the axis, and the last axis removes `offset` (never
+  `offset: {}`). The reader keeps a present-but-unreadable value (`"2mm"`,
+  `offset: 5`) apart from absent so it can be shown and replaced; a bare
+  `offset:` is NOT one of them — the engine reads it as no shift — but, like
+  any non-map offset, it is replaced whole in one batch on the first write.
+  A numeral at or past 1e21 is refused (it would print in exponent form). ▲▼ step by the canvas grid
+  (1pt when off) through the same builder, so a step onto 0 removes too.
 - `panel/BorderEditor.tsx` — the Excel-style border editor shared by the
   decoration tab + toolbar popover; keyed by path at each host so the pen
   resets on selection change. The SHELL only: pen state, the

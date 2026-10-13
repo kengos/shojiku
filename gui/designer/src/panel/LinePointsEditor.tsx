@@ -15,6 +15,7 @@ import { FIELD_LABEL } from '../ui/chrome';
 import { AnchorTargetSelect } from './AnchorTargetSelect';
 import { AutoNamedNote, useAutoNamed } from './AutoNamedNote';
 import { hasCapability } from './itemPanelProps';
+import { LineOffsetFields } from './LineOffsetFields';
 import {
   isAnchored,
   LINE_EDGES,
@@ -34,6 +35,8 @@ export interface LinePointsEditorProps {
   readonly controller: EditorController;
   /** Engine capability keys; `undefined` = ungated (no engine to ask). */
   readonly capabilities?: readonly string[];
+  /** The canvas grid step (pt) — the offset steppers' increment. */
+  readonly gridStep: number;
 }
 
 const SELECT = 'h-8 w-28 rounded-md border border-border bg-surface px-1 text-sm text-text';
@@ -46,7 +49,13 @@ const ANCHOR_LABELS: Readonly<Record<LineAnchorField, string>> = {
   'to.edge': 'panel.line.toEdge',
 };
 
-export function LinePointsEditor({ view, path, controller, capabilities }: LinePointsEditorProps) {
+export function LinePointsEditor({
+  view,
+  path,
+  controller,
+  capabilities,
+  gridStep,
+}: LinePointsEditorProps) {
   const { t } = useI18n();
   // The items an endpoint may name — the document's, never the preview's box
   // index, so a template with no `id:` anywhere still offers them, and picking
@@ -116,47 +125,55 @@ export function LinePointsEditor({ view, path, controller, capabilities }: LineP
   const endpoint = (end: LineEnd) => {
     const anchored = isAnchored(view, end);
     return (
-      <div className="mb-1.5 flex flex-wrap items-end gap-2" key={end}>
-        {anchored ? (
-          <>
-            {labelled(
-              `${end}.item`,
-              t(ANCHOR_LABELS[`${end}.item`]),
-              target(end, (id) => lineAnchorOps(path, view, `${end}.item`, id)),
-            )}
-            {edge(`${end}.edge`)}
-          </>
-        ) : (
-          <>
-            {field(`${end}.x`)}
-            {field(`${end}.y`)}
-          </>
-        )}
-        {canAnchor && anchored && (
-          <button
-            type="button"
-            className="h-8 rounded-md border border-border px-2 text-sm text-muted"
-            // One transactional op list: the other arm's keys go in the same
-            // undo step, so the document is never in the mixed shape.
-            onClick={() => controller.applyAll(lineArmOps(path, view, end, 'xy'))}
-          >
-            {t('panel.line.useCoordinates')}
-          </button>
-        )}
-        {canAnchor &&
-          !anchored &&
-          // Attaching PICKS its target in the same action. Switching first
-          // and asking after would write `item: ''`, and the line would
-          // vanish from the canvas before the user was asked for anything.
-          // Rendered whenever the engine reads the key — DISABLED with its
-          // reason when nothing can be named, as the ellipse's is: a control
-          // that appears and disappears reads as a bug.
-          labelled(
-            `${end}.attach`,
-            t('panel.line.useAnchor'),
-            target(end, (id) => lineArmOps(path, view, end, 'anchor', id)),
+      <div key={end}>
+        <div className="mb-1.5 flex flex-wrap items-end gap-2">
+          {anchored ? (
+            <>
+              {labelled(
+                `${end}.item`,
+                t(ANCHOR_LABELS[`${end}.item`]),
+                target(end, (id) => lineAnchorOps(path, view, `${end}.item`, id)),
+              )}
+              {edge(`${end}.edge`)}
+            </>
+          ) : (
+            <>
+              {field(`${end}.x`)}
+              {field(`${end}.y`)}
+            </>
           )}
-        <AutoNamedNote name={autoNamed.noteFor(end, anchored ? view[`${end}.item`] : '')} />
+          {canAnchor && anchored && (
+            <button
+              type="button"
+              className="h-8 rounded-md border border-border px-2 text-sm text-muted"
+              // One transactional op list: the other arm's keys go in the same
+              // undo step, so the document is never in the mixed shape.
+              onClick={() => controller.applyAll(lineArmOps(path, view, end, 'xy'))}
+            >
+              {t('panel.line.useCoordinates')}
+            </button>
+          )}
+          {canAnchor &&
+            !anchored &&
+            // Attaching PICKS its target in the same action. Switching first
+            // and asking after would write `item: ''`, and the line would
+            // vanish from the canvas before the user was asked for anything.
+            // Rendered whenever the engine reads the key — DISABLED with its
+            // reason when nothing can be named, as the ellipse's is: a control
+            // that appears and disappears reads as a bug.
+            labelled(
+              `${end}.attach`,
+              t('panel.line.useAnchor'),
+              target(end, (id) => lineArmOps(path, view, end, 'anchor', id)),
+            )}
+          <AutoNamedNote name={autoNamed.noteFor(end, anchored ? view[`${end}.item`] : '')} />
+        </div>
+        {/* The shift an anchored point takes off its target. Keyed on the
+        WIRE's `item` like the row above — an offset without one is a parse
+        error, so a coordinate endpoint never shows it. */}
+        {anchored && (
+          <LineOffsetFields end={end} path={path} gridStep={gridStep} controller={controller} />
+        )}
       </div>
     );
   };
