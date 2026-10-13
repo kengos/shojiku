@@ -2578,6 +2578,15 @@ platform binaries.
   of them (`vertical_style_ignored` never fired in a release), so the only
   thing to change is a catalog or a matcher that still lists them.
 
+- **A grid child taller than its rows now reports `grid_row_overflow` or
+  `grid_span_overflow`, and `grid_cell_overflow` is deprecated.** The old
+  code named the case in an English `extent` argument (`row track` /
+  `spanned rows`), so a translated warning showed those words untranslated.
+  Each case now has its own code carrying only numbers: `child` and `track`,
+  plus `span`, the number of rows spanned. Nothing emits `grid_cell_overflow`
+  from 0.3.0, and it leaves the registry in 0.4.0, so a matcher keyed on it
+  should add the two new codes.
+
 - **Removals now follow a written rule.** A template form or a diagnostic
   code is deprecated one release before it is removed: before 1.0 in the
   next minor release, from 1.0 at the next major. Until now the wire and

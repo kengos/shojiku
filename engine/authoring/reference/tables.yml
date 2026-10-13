@@ -1795,6 +1795,16 @@
         "Code": "`grid_column_overflow`"
         "Meaning": "a grid child (`child` pt) is wider than the `track` pt run of `span` column tracks it sits in, so it spills over its neighbour (an `auto` column sizes to its content; a fixed or `fr` one does not)"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["grid_row_overflow"]
+      cells:
+        "Code": "`grid_row_overflow`"
+        "Meaning": "a grid child (`child` pt) is taller than its explicit `track` pt row track and overflows it visually (an auto row grows instead of warning)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
+    - keys: ["grid_span_overflow"]
+      cells:
+        "Code": "`grid_span_overflow`"
+        "Meaning": "a grid child (`child` pt) spanning `span` rows, the last of them explicit, is taller than the `track` pt those rows give it and overflows visually (an auto last row grows instead)"
+      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
     - keys: ["page_overflow"]
       cells:
         "Code": "`page_overflow`"
@@ -1808,7 +1818,7 @@
     - keys: ["grid_cell_overflow"]
       cells:
         "Code": "`grid_cell_overflow`"
-        "Meaning": "grid child TALLER than its explicit row track; the `extent` arg says `row track` or `spanned rows` (auto rows grow instead of warning). The width axis is `grid_column_overflow` above"
+        "Meaning": "**DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing.** It reported a grid child taller than its row track, with an `extent` arg naming the axis in English (`row track` / `spanned rows`) that a translating consumer could only pass through. The two cases are now `grid_row_overflow` and `grid_span_overflow`. A catalog entry for it can be dropped once a host no longer supports 0.3"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
     - keys: ["imposition_grid_clamped"]
       cells:

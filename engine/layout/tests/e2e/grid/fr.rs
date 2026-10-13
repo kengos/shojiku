@@ -171,7 +171,7 @@ fn fr_entries_count_toward_the_track_clamp() {
 }
 
 #[test]
-fn a_child_taller_than_its_fr_row_warns_grid_cell_overflow() {
+fn a_child_taller_than_its_fr_row_warns_grid_row_overflow() {
     // h 40, one 1fr row → 40pt; a 60pt child overflows it.
     let yaml = container_body(
         "{ x: 0, y: 0, w: 200, h: 40, type: grid, columns: 1, rows: [\"1fr\"] }",
@@ -179,7 +179,7 @@ fn a_child_taller_than_its_fr_row_warns_grid_cell_overflow() {
     );
     let (_, diags) = run(&yaml, json!({}));
     assert!(
-        diags.iter().any(|d| d.code == "grid_cell_overflow"),
+        diags.iter().any(|d| d.code == "grid_row_overflow"),
         "{diags:?}"
     );
 }
@@ -207,7 +207,7 @@ fn fr_rows_subtract_the_measured_height_of_an_auto_row() {
             &children,
         );
         let (_, diags) = run(&yaml, json!({}));
-        let hit = diags.iter().any(|d| d.code == "grid_cell_overflow");
+        let hit = diags.iter().any(|d| d.code == "grid_row_overflow");
         hit
     };
     assert!(

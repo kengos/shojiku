@@ -57,12 +57,12 @@ Child keys (on a grid child's `box`, like `flexGrow` in flex):
   child takes the first free run that fits in fill order (a span that
   cannot fit in the row's remaining columns wraps whole). A row-spanning
   child pours any height its spanned rows don't cover into its **last**
-  spanned auto row (the v1 distribution); over explicit tracks it warns
-  `grid_cell_overflow` instead. Span keys outside a `type: grid` parent
+  spanned auto row (the v1 distribution); when that last row is explicit
+  it warns `grid_span_overflow` instead. Span keys outside a `type: grid` parent
   warn `span_outside_grid` and are inert.
 - **Cells**: a child fills its track width (`%` resolves against the
   cell); horizontal auto margins center/push within the cell. A child
-  taller than its explicit row track warns `grid_cell_overflow` and
+  taller than its explicit row track warns `grid_row_overflow` and
   overflows visually, CSS-like — to clip, author `overflow: hidden` on
   the child container itself. A child *wider* than its column-track run
   warns `grid_column_overflow` (its own code, carrying only numbers —
@@ -155,7 +155,8 @@ box: { type: grid, columns: ["auto", "1fr"] }   # label column fits its
   size as auto rows instead (`grid_fr_no_basis`).
 - A child wider than its track run spills over its neighbour
   (`grid_column_overflow`); taller than an EXPLICIT row track it warns
-  (`grid_cell_overflow`) — auto rows grow instead.
+  (`grid_row_overflow`, or `grid_span_overflow` across several rows) —
+  auto rows grow instead.
 - Span keys on a child of a non-grid box are inert (`span_outside_grid`).
 - No named areas and no auto-placement algorithm: children fill the tracks in
   order.
@@ -165,8 +166,10 @@ box: { type: grid, columns: ["auto", "1fr"] }   # label column fits its
 | Code | Meaning |
 | --- | --- |
 | `grid_tracks_clamped` | `columns`/`rows` outside 1..=64 tracks (or an empty list); clamped |
-| `grid_cell_overflow` | child TALLER than its explicit row track; overflows visually |
+| `grid_row_overflow` | child TALLER than its explicit row track; overflows visually |
+| `grid_span_overflow` | row-spanning child TALLER than the rows it spans (the last one explicit); overflows visually |
 | `grid_column_overflow` | child WIDER than the column-track run it spans; overflows visually |
+| `grid_cell_overflow` | **deprecated in 0.3.0, removed in 0.4.0** — emitted by nothing; the two rows above replace it |
 | `grid_key_ignored` | grid keys authored without `box.type: grid` |
 | `grid_span_clamped` | `columnSpan`/`rowSpan` beyond the axis; clamped |
 | `span_outside_grid` | span keys on a child of a non-grid box; ignored |

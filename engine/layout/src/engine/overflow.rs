@@ -109,7 +109,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
 
     /// Warns `grid_column_overflow` when a grid child is wider than the
     /// column-track run it was placed in — the column-axis counterpart of
-    /// the row-track `grid_cell_overflow` check, with its own code and the
+    /// the row-track `grid_row_overflow` check, with its own code and the
     /// number of tracks the run spans.
     ///
     /// Column tracks are always definite (unlike auto rows, which grow to

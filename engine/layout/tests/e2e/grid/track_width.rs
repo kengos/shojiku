@@ -1,7 +1,7 @@
 //! `grid_column_overflow`: a child wider than the column-track run it was
-//! placed in spills over its neighbour. The row axis keeps the older
-//! `grid_cell_overflow` (exercised in the parent module); the column axis
-//! gets its own number-only code rather than an English `extent` value a
+//! placed in spills over its neighbour. The row axis has its own
+//! number-only codes (`grid_row_overflow` / `grid_span_overflow`, exercised
+//! in the parent module and `spans`); no axis carries an English arg a
 //! translating consumer could only pass through.
 
 use crate::common::*;
@@ -58,15 +58,18 @@ fn a_child_wider_than_its_spanned_columns_names_the_span() {
 }
 
 #[test]
-fn the_row_axis_code_is_left_alone_by_a_column_overflow() {
-    // `grid_cell_overflow` keeps its pre-existing row-only meaning; the
-    // column axis never widens its English `extent` set.
+fn a_column_overflow_raises_no_row_axis_code() {
+    // Each code names one axis: a child too WIDE never reports as too tall,
+    // and nothing emits the deprecated `grid_cell_overflow`.
     let diags = grid(
         "2",
         "          - { type: rect, style: { borderWidth: 1 }, box: { w: 140, h: 10 } }\n",
     );
     assert!(
-        diags.iter().all(|d| d.code != "grid_cell_overflow"),
+        diags.iter().all(|d| !matches!(
+            d.code.as_str(),
+            "grid_cell_overflow" | "grid_row_overflow" | "grid_span_overflow"
+        )),
         "{diags:?}"
     );
 }

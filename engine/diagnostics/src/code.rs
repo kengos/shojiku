@@ -170,6 +170,10 @@ diagnostic_codes! {
     QrModuleTooSmall = "qr_module_too_small", Warning, Layout, "qr modules are {module}pt (< {min}pt); the printed code may not scan";
     MarkMissingSize = "mark_missing_size", Warning, Layout, "ellipse/checkbox items need a positive box.w and box.h; item skipped";
     ContainerOverflow = "container_overflow", Warning, Layout, "container content ({content}pt) exceeds its content height ({avail}pt)";
+    // DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing. Its
+    // `{extent}` arg named the axis in English (`row track` / `spanned
+    // rows`), which a translating consumer could only pass through; the two
+    // reasons became `grid_row_overflow` and `grid_span_overflow` below.
     GridCellOverflow = "grid_cell_overflow", Warning, Layout, "grid child ({child}pt) exceeds its {track}pt {extent}";
     // DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing. Its
     // single free-text `{detail}` arg held a whole English sentence, which a
@@ -243,6 +247,10 @@ diagnostic_codes! {
     FlowItemOverflow = "flow_item_overflow", Warning, Layout, "item reaches {over}pt past the right edge of the {avail}pt flow region and renders off-sheet";
     FlexRowOverflow = "flex_row_overflow", Warning, Layout, "row children need {needed}pt but the content box is only {avail}pt wide; the row overflows";
     VerticalTextOverflow = "vertical_text_overflow", Warning, Layout, "vertical text needs {columns} columns ({needed}pt) but the box is {avail}pt wide";
+    // The grid's vertical axis, split the same way: a child taller than its
+    // explicit row track, or than the explicit rows it spans. Numbers only.
+    GridRowOverflow = "grid_row_overflow", Warning, Layout, "grid child ({child}pt) is taller than its {track}pt row track";
+    GridSpanOverflow = "grid_span_overflow", Warning, Layout, "grid child ({child}pt) is taller than the {track}pt of the {span} rows it spans";
     // An item's `visible:` presence binding. The same four faults the form
     // marks and table row conditions each carry, under this surface's own
     // codes: every message names what the fault COSTS ("item not shown"),

@@ -146,6 +146,9 @@ export const en: LanguageCatalog = {
       'an item spills {over}pt past the inside of its box ({avail}pt); make the item smaller or the box bigger',
     grid_column_overflow:
       'grid child ({child}pt) is wider than the {track}pt column run it spans ({span} tracks)',
+    grid_row_overflow: 'grid child ({child}pt) is taller than its {track}pt row track',
+    grid_span_overflow:
+      'grid child ({child}pt) is taller than the {track}pt of the {span} rows it spans',
     text_overflow:
       'text does not fit its box ({content}pt tall, the box has {avail}pt); make the box taller or the text smaller',
     char_grid_overflow:
