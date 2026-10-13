@@ -510,8 +510,8 @@ describe('a rename cascade, read by the real engine', () => {
   });
 });
 
-describe('the carriers only the GUI walks (layout reads them, validate does not)', () => {
-  const ONLY_GUI = `sections:
+describe('band tables and header labels, read by the real engine', () => {
+  const BANDS_AND_LABELS = `sections:
   header:
     items:
       - type: table
@@ -526,11 +526,22 @@ describe('the carriers only the GUI walks (layout reads them, validate does not)
         columns: [ { label: "{zz_label}", data: { key: amt } } ]
 `;
 
-  it('the walk finds them and the engine reports none — the GUI rewrites them on its own', async () => {
-    const spelled = (readDataRefs(ONLY_GUI)?.refs ?? []).map((ref) => ref.spelled);
+  it('the engine reports them at the places the walk finds them', async () => {
+    const refs = readDataRefs(BANDS_AND_LABELS)?.refs ?? [];
+    const spelled = refs.map((ref) => ref.spelled);
     expect(spelled).toEqual(expect.arrayContaining(['zz_rows', 'zz_col', 'zz_group', 'zz_label']));
-    const diagnostics = await transport.validate(ONLY_GUI, CENSUS_PARAMS, CENSUS_DEFS);
-    expect(unknown(diagnostics.items)).toEqual([]);
+    const diagnostics = await transport.validate(BANDS_AND_LABELS, CENSUS_PARAMS, CENSUS_DEFS);
+    // Every `zz_` key is undefined. A column is checked against its table's
+    // source only once that resolves, so `zz_col` under the unknown `zz_rows`
+    // is masked; every other undefined place is reported where the walk has it.
+    const undefinedRefs = refs.filter(
+      (ref) => ref.spelled.startsWith('zz_') && ref.spelled !== 'zz_col',
+    );
+    const places = (paths: readonly string[]) => [...new Set(paths)].sort();
+    expect(places(unknown(diagnostics.items).map((d) => d.path ?? ''))).toEqual(
+      places(undefinedRefs.map(diagnosticPath)),
+    );
+    expect(undefinedRefs).toHaveLength(3);
   });
 });
 

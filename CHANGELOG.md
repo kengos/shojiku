@@ -911,6 +911,27 @@ platform binaries.
   advisory is ignored, and the one ignore is that notice, argued in
   `deny.toml` and removed with the move off serde_yaml.
 
+- **Images in a header or footer table are drawn.** A table placed in the
+  header or footer is drawn on every page it repeats on, but the images of
+  its `type: image` columns, and the data-bound images inside its `cell:`
+  columns, were only loaded for tables in the body. In a band table those
+  cells stayed empty with a `missing_asset` warning. They now load the
+  same way as in the body.
+
+- **A typo in a header or footer table is now reported, and so is one in a
+  table heading.** Validation used to check tables and repeats only in the
+  body, so a table placed in the header or footer could bind an unknown
+  key — its data, a column, a row condition or a cell — and simply print
+  blank with no diagnostic. Those keys now get the same
+  `unknown_data_key` / `missing_data` checks as in the body, at the
+  band's own path. A `repeat` or `repeat_flow` left in a band is still
+  skipped (`repeat_in_band`), but its keys are checked too. A column's
+  `label` and a header group's `label` were never checked anywhere,
+  although they read `{key}` from the top-level params like any static
+  text. An unknown or missing key and an unknown format pick are now
+  reported at that column or group, and a `{…}` that cannot be a key
+  (`interpolation_key_charset`) at the table.
+
 - **The warning for a line end shifted too far now names that line and the
   real number.** When an attached end's offset puts it past ±1,000,000pt,
   the line is not drawn and `length_out_of_range` warns. The warning used

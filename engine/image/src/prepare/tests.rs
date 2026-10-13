@@ -16,7 +16,7 @@ use crate::raster::RasterFormat;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use serde_json::json;
-use shojiku_core::parse_template;
+use shojiku_core::{parse_template, Body};
 use std::path::PathBuf;
 
 pub(super) const SVG: &str =

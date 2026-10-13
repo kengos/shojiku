@@ -1159,7 +1159,7 @@
       cells:
         "Key": "`label`"
         "Type": "string"
-        "Description": "Header cell text (a `cell:` column's header is still a plain label). **Interpolates `{key}` like static text**, against **top-level** params — header chrome belongs to the document, not to any row — so `label: \"{labels.amount}\"` lets one template print its headings in whichever language the params carry. A label with no `{…}` resolves to itself."
+        "Description": "Header cell text (a `cell:` column's header is still a plain label). **Interpolates `{key}` like static text**, against **top-level** params — header chrome belongs to the document, not to any row — so `label: \"{labels.amount}\"` lets one template print its headings in whichever language the params carry. A label with no `{…}` resolves to itself. Validation checks its keys like any static text's: `unknown_data_key` / `missing_data` at the column's path, and a `{…}` that cannot be a key warns `interpolation_key_charset` at the table's."
     - keys: ["data"]
       cells:
         "Key": "`data`"
@@ -1496,7 +1496,7 @@
     - keys: ["unknown_data_key"]
       cells:
         "Code": "`unknown_data_key`"
-        "Meaning": "a binding key is not in definitions (scalar, column, cell, or card scope)"
+        "Meaning": "a binding key is not in definitions (scalar, column, cell, or card scope; a table's header `label` is scalar scope). Checked in the header and footer bands as in the body"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
     - keys: ["empty_definitions"]
       cells:

@@ -1,6 +1,7 @@
 //! Unit tests for template validation; shared fixtures live here,
 //! grouped cases in the child modules.
 
+mod band_tables;
 mod binding_scope;
 mod bindings;
 mod bindings_decl;
@@ -21,6 +22,7 @@ mod schema;
 mod shapes;
 mod spans;
 mod structure;
+mod table_labels;
 mod tables;
 mod visibility;
 

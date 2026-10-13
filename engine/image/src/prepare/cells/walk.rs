@@ -2,16 +2,16 @@
 //! columns, and which `data:`-bound `image` items sit inside a cell —
 //! a `repeat`/`repeat_flow` cell or a table column's `cell:`.
 
-use shojiku_core::{Body, Item, TableItem, Template};
+use shojiku_core::{Item, TableItem, Template};
 
 use super::CellImage;
 
-/// Every table in the body — the flow ones AND the bounded ones nested
-/// in containers — with its diagnostics path. Mirrors the recursion
-/// `validate`'s table walk does: a table placed in a container is a
-/// bounded block, but its `type: image` columns load per-element assets
-/// exactly like a flow table's.
-pub(super) fn body_tables(template: &Template) -> Vec<(String, &TableItem)> {
+/// Every table the template holds — the flow ones, the bounded ones
+/// nested in containers, and the ones in the header and footer bands —
+/// with its diagnostics path. Mirrors the recursion `validate`'s table
+/// walk does: a bounded or band table is one block, but its `type: image`
+/// columns load per-element assets exactly like a flow table's.
+pub(super) fn tables(template: &Template) -> Vec<(String, &TableItem)> {
     fn push_from<'a>(items: &'a [Item], prefix: &str, out: &mut Vec<(String, &'a TableItem)>) {
         for (index, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{index}]");
@@ -25,11 +25,9 @@ pub(super) fn body_tables(template: &Template) -> Vec<(String, &TableItem)> {
         }
     }
     let mut out = Vec::new();
-    let body_items: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    push_from(body_items, "sections.body.items", &mut out);
+    for (prefix, items) in template.sections.item_lists() {
+        push_from(items, prefix, &mut out);
+    }
     out
 }
 
@@ -72,17 +70,20 @@ pub(super) fn element_cell_images(template: &Template) -> Vec<CellImage<'_>> {
             }
         }
     }
-    fn walk<'a>(items: &'a [Item], prefix: &str, out: &mut Vec<CellImage<'a>>) {
+    /// `repeats` is false in a header/footer band, where layout skips a
+    /// `repeat`/`repeat_flow` (`repeat_in_band`): loading assets nothing
+    /// draws would only spend the shared cap the drawn cells need.
+    fn walk<'a>(items: &'a [Item], prefix: &str, repeats: bool, out: &mut Vec<CellImage<'a>>) {
         for (i, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{i}]");
             match item {
-                Item::Repeat(repeat) => cell_items(
+                Item::Repeat(repeat) if repeats => cell_items(
                     &repeat.cell.items,
                     &repeat.data.key,
                     &format!("{path}.cell.items"),
                     out,
                 ),
-                Item::RepeatFlow(rf) => cell_items(
+                Item::RepeatFlow(rf) if repeats => cell_items(
                     &rf.item.items,
                     &rf.data.key,
                     &format!("{path}.item.items"),
@@ -103,17 +104,15 @@ pub(super) fn element_cell_images(template: &Template) -> Vec<CellImage<'_>> {
                     }
                 }
                 Item::Container(container) => {
-                    walk(&container.items, &format!("{path}.items"), out);
+                    walk(&container.items, &format!("{path}.items"), repeats, out);
                 }
                 _ => {}
             }
         }
     }
     let mut out = Vec::new();
-    let body_items: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    walk(body_items, "sections.body.items", &mut out);
+    for (prefix, items) in template.sections.item_lists() {
+        walk(items, prefix, prefix == "sections.body.items", &mut out);
+    }
     out
 }

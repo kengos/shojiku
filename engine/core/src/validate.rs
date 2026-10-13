@@ -4,7 +4,7 @@
 use crate::catalog::Catalog;
 use crate::definitions::Definitions;
 use crate::params::resolve_path;
-use crate::template::{Body, Item, Template};
+use crate::template::Template;
 use serde_json::Value;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
@@ -77,24 +77,10 @@ pub fn validate(
             check_scalar_binding(&binding_ctx, key, format, placeholder, path, &mut diags);
         };
 
-    if let Some(header) = &template.sections.header {
-        for (i, item) in header.items.iter().enumerate() {
-            let path = format!("sections.header.items[{i}]");
-            walk_item(item, &path, &mut check_binding);
-        }
-    }
-    let body_items: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    for (i, item) in body_items.iter().enumerate() {
-        let path = format!("sections.body.items[{i}]");
-        walk_item(item, &path, &mut check_binding);
-    }
-    if let Some(footer) = &template.sections.footer {
-        for (i, item) in footer.items.iter().enumerate() {
-            let path = format!("sections.footer.items[{i}]");
-            walk_item(item, &path, &mut check_binding);
+    let sections = template.sections.item_lists();
+    for (prefix, items) in &sections {
+        for (i, item) in items.iter().enumerate() {
+            walk_item(item, &format!("{prefix}[{i}]"), &mut check_binding);
         }
     }
 
@@ -107,24 +93,14 @@ pub fn validate(
     // interpolated strings. A separate walk because it reports on the
     // DECLARATION rather than on the reference, so it writes diagnostics
     // directly instead of going through the per-key check above.
-    if let Some(header) = &template.sections.header {
-        let prefix = "sections.header.items";
-        check_declarations(&header.items, &binding_ctx, prefix, &mut diags);
-    }
-    check_declarations(body_items, &binding_ctx, "sections.body.items", &mut diags);
-    if let Some(footer) = &template.sections.footer {
-        let prefix = "sections.footer.items";
-        check_declarations(&footer.items, &binding_ctx, prefix, &mut diags);
+    for (prefix, items) in &sections {
+        check_declarations(items, &binding_ctx, prefix, &mut diags);
     }
 
     // Container nesting depth is a structural cap (layout enforces it
     // independently; validating catches it before render time).
-    if let Some(header) = &template.sections.header {
-        check_container_depth(&header.items, 1, "sections.header.items", &mut diags);
-    }
-    check_container_depth(body_items, 1, "sections.body.items", &mut diags);
-    if let Some(footer) = &template.sections.footer {
-        check_container_depth(&footer.items, 1, "sections.footer.items", &mut diags);
+    for (prefix, items) in &sections {
+        check_container_depth(items, 1, prefix, &mut diags);
     }
 
     // Images need a structural check: exactly one of src/data.

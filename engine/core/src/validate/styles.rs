@@ -3,7 +3,7 @@
 
 use crate::length::snippet;
 use crate::style::{Style, MAX_STYLES, MAX_STYLE_NAMES};
-use crate::template::{Body, Item, Template};
+use crate::template::{Item, Template};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 use std::collections::BTreeMap;
 
@@ -20,16 +20,8 @@ pub(super) fn check_style_names(template: &Template, diags: &mut Diagnostics) {
                 .arg("max", MAX_STYLES),
         );
     }
-    if let Some(header) = &template.sections.header {
-        walk_style_names(&header.items, "sections.header.items", known, diags);
-    }
-    let body_items: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    walk_style_names(body_items, "sections.body.items", known, diags);
-    if let Some(footer) = &template.sections.footer {
-        walk_style_names(&footer.items, "sections.footer.items", known, diags);
+    for (prefix, items) in template.sections.item_lists() {
+        walk_style_names(items, prefix, known, diags);
     }
 }
 

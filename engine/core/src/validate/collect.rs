@@ -1,10 +1,12 @@
 //! Template walks that gather items for cross-checks (tables, images,
-//! repeats) and enforce the container depth cap.
+//! repeats) and enforce the container depth cap. Every walk starts from
+//! `Sections::item_lists`, so all of them cover the header and footer
+//! bands as well as the body.
 
-use crate::template::{Body, Item, Template, MAX_CONTAINER_DEPTH};
+use crate::template::{Item, Template, MAX_CONTAINER_DEPTH};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
-/// A data-driven repeat construct found in the body — the n-up `repeat`
+/// A data-driven repeat construct found in any section — the n-up `repeat`
 /// or the flow `repeat_flow` — normalized so `validate` runs one shared
 /// array-group + cell-binding check over both.
 pub(super) struct RepeatRef<'a> {
@@ -20,6 +22,10 @@ pub(super) struct RepeatRef<'a> {
     pub cell_path: String,
 }
 
+/// Every repeat the template holds. A band-level one is skipped by layout
+/// (`repeat_in_band`), as a nested one is (`repeat_in_container`) — both
+/// still get their binding check, so the fix is not hidden behind the
+/// placement warning.
 pub(super) fn collect_repeats(template: &Template) -> Vec<RepeatRef<'_>> {
     fn push_from<'a>(items: &'a [Item], prefix: &str, repeats: &mut Vec<RepeatRef<'a>>) {
         for (i, item) in items.iter().enumerate() {
@@ -71,11 +77,9 @@ pub(super) fn collect_repeats(template: &Template) -> Vec<RepeatRef<'_>> {
         }
     }
     let mut repeats = Vec::new();
-    let body_items: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    push_from(body_items, "sections.body.items", &mut repeats);
+    for (prefix, items) in template.sections.item_lists() {
+        push_from(items, prefix, &mut repeats);
+    }
     repeats
 }
 
@@ -166,16 +170,8 @@ pub(super) fn walk_sections(template: &Template, f: &mut impl FnMut(&Item, &str)
             }
         }
     }
-    if let Some(header) = &template.sections.header {
-        walk(&header.items, "sections.header.items", f);
-    }
-    let body_items: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    walk(body_items, "sections.body.items", f);
-    if let Some(footer) = &template.sections.footer {
-        walk(&footer.items, "sections.footer.items", f);
+    for (prefix, items) in template.sections.item_lists() {
+        walk(items, prefix, f);
     }
 }
 
@@ -223,16 +219,8 @@ pub(super) fn collect_images(template: &Template) -> Vec<(String, &crate::templa
         }
     }
     let mut images = Vec::new();
-    if let Some(header) = &template.sections.header {
-        push_from(&header.items, "sections.header.items", &mut images);
-    }
-    let body_items: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    push_from(body_items, "sections.body.items", &mut images);
-    if let Some(footer) = &template.sections.footer {
-        push_from(&footer.items, "sections.footer.items", &mut images);
+    for (prefix, items) in template.sections.item_lists() {
+        push_from(items, prefix, &mut images);
     }
     images
 }
@@ -255,11 +243,11 @@ pub(super) fn collect_tables(template: &Template) -> Vec<(String, &crate::templa
             }
         }
     }
+    // A band table is one bounded block layout draws on every page it
+    // repeats on, so it is checked like a body one.
     let mut tables = Vec::new();
-    let body_items: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    push_from(body_items, "sections.body.items", &mut tables);
+    for (prefix, items) in template.sections.item_lists() {
+        push_from(items, prefix, &mut tables);
+    }
     tables
 }

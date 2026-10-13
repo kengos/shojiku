@@ -13,8 +13,7 @@ use super::equals::{equals_fault, reads_as_boolean, resolve_target, EqualsFault,
 use crate::catalog::Catalog;
 use crate::params::resolve_path;
 use crate::template::{
-    BindingScope, Body, CheckboxItem, EllipseItem, EqualsValue, Item, MarkBinding, Template,
-    TextItem,
+    BindingScope, CheckboxItem, EllipseItem, EqualsValue, Item, MarkBinding, Template, TextItem,
 };
 use serde_json::Value;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
@@ -53,16 +52,8 @@ pub(super) fn check_presence(
         params,
         diags,
     };
-    if let Some(header) = &template.sections.header {
-        cx.walk(&header.items, None, "sections.header.items");
-    }
-    let body: &[Item] = match &template.sections.body {
-        Body::Flow(flow) => &flow.items,
-        Body::Absolute(abs) => &abs.items,
-    };
-    cx.walk(body, None, "sections.body.items");
-    if let Some(footer) = &template.sections.footer {
-        cx.walk(&footer.items, None, "sections.footer.items");
+    for (prefix, items) in template.sections.item_lists() {
+        cx.walk(items, None, prefix);
     }
 }
 
