@@ -13,64 +13,73 @@ platform binaries.
 
 ## [Unreleased]
 
-This release is mostly the Designer. In 0.2.0 a good part of the template
-format could be written in YAML and nowhere else; in this one most of it has a
-control in the Designer — tables, conditional formatting, grids and n-up
-sheets, rich text, vertical Japanese text and ruby, links, names and anchors,
-the data dictionary itself. The second track is the engine, and it matters
-more if you author templates by hand or through an AI agent: the engine checks
-more of what it is given, refuses oversized and deeply nested input before
-building a document from it, reports warnings at the item they belong to, and
-serves its own syntax reference over MCP. Where a feature depends on the
-engine, the capability key an engine reports for it is given in parentheses,
-so a host can tell whether the engine it loaded has it.
+This release is mostly about the Designer. In 0.2.0 a good part of the
+template format could be written in YAML and nowhere else; in this one most of
+it has a control in the Designer — tables, conditional formatting, grids and
+n-up sheets, rich text, vertical Japanese text and ruby, links, names and
+anchors, and the data dictionary. The other half of the release is the engine,
+which matters most if you author templates by hand or through an AI agent: it
+checks more of what it is given, refuses oversized and deeply nested input
+before building a document from it, reports warnings at the item they belong
+to, and serves its own syntax reference over MCP. Some entries name a
+capability key in parentheses. An engine that reports the key has the feature,
+so a program embedding the engine (a host) can check before relying on it.
 
-Upgrading: three changes affect how an existing template parses or renders —
-`mergeEmptyCells` now merges leftward the way a spreadsheet does, a table's
-`verticalAlign` now reaches the cells it is set above, and a style or format
-named by a bare number (`5:`) must now be quoted (`"5":`). Fixed lists the
-places where output changes because it was wrong before. The template form
-under Deprecated still parses, with a warning, until 0.4.0.
+Upgrading: three changes affect how an existing template parses or renders.
+`mergeEmptyCells` now merges an empty cell into the cell on its left, as a
+spreadsheet does; a table's `verticalAlign` set on a row or on the table now
+reaches its cells; and a mapping key that is not a string is refused, so a
+style or format named by a bare number (`5:`), which used to work, must now be
+quoted (`"5":`). Two changes affect integrations: the MCP tools
+`get_reference` and `get_example` return their content as embedded resources,
+and a key an item does not take is reported at the item rather than at the
+page body. The Fixed section lists where output changes because it was wrong
+before, and the one template form under Deprecated still parses, with a
+warning, until 0.4.0.
 
 ### Added
 
 #### Designer
 
-- **Tables.** A selected table's panel is folded into sections, the way
-  Google Docs shows table properties, each closed section stating its
-  settings in one line. From there you can set the header row, body rows,
-  banded rows and every column with the same font, size, bold, italic,
-  colour, background and alignment controls; pick one of six looks; set a
-  **Text (whole table)** default every cell starts from; add and remove
-  header groups; choose body row height (auto with a minimum, or fixed),
-  header height, cell padding, what an empty table shows and whether empty
-  cells merge; and, for a table in the page flow, whether rows continue on
-  the next page, the header repeats and the table is kept on one page. The
-  controls show the value a cell actually renders with and say where it came
-  from when the document set it. A column can print text, a QR code, an
-  image or a free layout of items (**Column type**), and the column sheet
-  (the table's columns laid out side by side) compares and switches them.
-  The header row can be hidden on the page while staying in the PDF's text
-  layer.
+- **Tables.** A selected table's panel is split into collapsible sections,
+  as Google Docs shows table properties, and a closed section summarises its
+  settings in one line. The header row, the body rows, banded rows and every
+  column share one set of format controls (font, size, bold, italic, colour,
+  background, alignment), and **Text (whole table)** sets the default every
+  cell starts from. Six preset styles apply a look in one click. Header
+  groups can be added and removed. The rows section sets body row height
+  (auto with a minimum, or fixed), header height, cell padding, what an
+  empty table shows and whether empty cells merge; a table placed directly
+  in the page body also gets the page-break switches (continue rows on the
+  next page, repeat the header, keep the table on one page). Each control
+  shows the value a cell actually renders with, and says when that value
+  comes from the document's defaults. A column can print text, a QR code, an
+  image or a free layout of items (**Column type**), and the column sheet,
+  which lays the columns out side by side, compares and switches their
+  types. The header row can be hidden on the page while its labels stay in
+  the PDF's text layer.
 - **Conditional formatting works the way it does in Google Sheets.** Rules
-  are listed as sentences with chips of what each one adds; opening one
-  shows its condition, format presets and controls, and every change shows
-  on the page at once. A rule's value is picked from the field's choices,
-  the sample data, or **Yes**/**No** — and **No** is new, writing the
-  boolean `false` so a rule, a show-when condition or a checkbox can match a
-  false flag. Rules reorder by drag or by buttons, the top rule winning; the
-  engine's limit of 16 rules per table is enforced at **Add a rule**.
+  are listed as sentences, each with tags for the formatting it adds;
+  opening one shows its condition, format presets and controls, and every
+  change shows on the page at once. A rule's value is picked from the
+  field's choices, the sample data, or **Yes**/**No** — and **No** is new:
+  it writes the boolean `false`, so a rule, a **When to show** condition or
+  a checkbox can match a false flag. Rules reorder by drag or by buttons,
+  the top rule winning; the engine's limit of 16 rules per table is enforced
+  at **Add a rule**.
 - **Containers, grids and repeats.** A container switches between side by
   side, stacked and grid at any time without losing an item, and gains
-  distribution, cross-axis alignment, baseline alignment and ratios that
-  share out space exactly. A grid sets each column's width and each row's
-  height (fit content, ratio or fixed), spacing per direction, fill order
-  and how many cells a child spans. **Insert ▸ Place list data ▸ Grid**
-  makes an n-up sheet — tickets, labels, cards cut from one page — with
-  columns, rows, gaps, fill order, a new-page switch and cut marks. A grid
-  cell, a card and a column's free-layout cell each get a frame form
-  (arrangement, size, padding, fill, border, overflow, opacity) and a row of
-  their own in Structure; a card list sets the space between cards.
+  settings for distributing free space, aligning items across the row or
+  column (including by the first line of text), and dividing the space by
+  ratios. A grid sets each column's width and each row's height (fit
+  content, ratio or fixed), spacing per direction, fill order and how many
+  cells a child spans. **Insert ▸ Place list data ▸ Grid** makes an n-up
+  sheet — tickets, labels, cards cut from one page — with columns, rows,
+  gaps, fill order, whether it starts on a new page, and cut marks. The
+  repeated frame of a grid cell, a card or a column's free-layout cell has
+  its own settings (arrangement, size, padding, fill, border, overflow,
+  opacity) and its own row in the **Structure** panel, and a list of cards
+  sets **Space between cards**.
 - **Text styling that only YAML could set.** The Style tab is folded into
   sections and gains letter spacing, underline and strikethrough (together,
   if you want both), vertical alignment, what text does when it does not fit
@@ -81,28 +90,28 @@ under Deprecated still parses, with a warning, until 0.4.0.
 - **Rich text is written on the page.** Double-click a text, select some
   words and press bold, italic, underline, strikethrough or a colour, and
   only those words change; plain text becomes mixed-style text on the first
-  such change, in one undo step. Fragments split and merge underneath
-  without you placing a boundary, fragments you did not edit stay exactly as
-  written in the file, and deleting a fragment's words deletes the fragment.
-  The panel lists the fragments for what the page cannot show — size, font,
-  named styles, a fragment's own link, and a bound value's field, format and
-  blank text.
-- **Japanese typesetting.** A **縦書き・禁則** (vertical text and line-break
-  rules) section sets text direction, character orientation, 縦中横 (digits set
-  across inside vertical text, also on selected characters), the line-break
-  rules, bracket and punctuation spacing and hanging punctuation. A
-  **ルビ（ふりがな）** section adds readings to fixed text, a data field or
-  mixed-style text. A **丸囲み** (circle) section draws an oval around the
-  printed characters, always or only when a field has a given value — one
-  template circles whichever option the data picks. Manuscript paper's grid,
-  ruling, ruby notation, ruby size, line-break rules and named styles all
-  have controls now.
-- **Names and anchors.** Every item, column and cell frame has a **名前（ID）**
-  field; duplicates are refused, and a rename carries every anchor that
-  points at the old name. An ellipse can circle another item and a line end
-  can attach to one by picking the item from a list grouped by section —
-  picking an unnamed item names it in the same undo step — and an attached
-  end can be shifted by a few points.
+  such change, in one undo step. The text's styled pieces (fragments) are
+  split and merged for you, pieces you did not edit stay exactly as written
+  in the file, and deleting a fragment's words deletes the fragment.
+  Settings the on-page bar has no button for (size, font, named styles, a
+  fragment's own link, and a bound value's field, format and blank text) are
+  set per fragment in the panel.
+- **Japanese typesetting.** A **Vertical text & line breaks** section sets
+  text direction, character orientation, 縦中横 (digits set across inside
+  vertical text, which can also be applied to selected characters), the
+  line-break rules (禁則), bracket and punctuation spacing and hanging
+  punctuation. A **Ruby (furigana)** section adds readings to fixed text, a
+  data field or mixed-style text. A **Circle** section draws an oval around
+  the printed characters, always or only when a field has a given value, so
+  a single template can circle whichever option the data picks. Manuscript
+  paper's grid, ruling, ruby notation, ruby size, line-break rules and named
+  styles all have controls now.
+- **Names and anchors.** Every item, column and cell frame has a **Name
+  (ID)** field; duplicates are refused, and a rename updates every anchor
+  that points at the old name. An ellipse can be drawn around another item,
+  and a line end attached to one, by picking the item from a list grouped by
+  section; picking an unnamed item names it in the same undo step. An
+  attached end can be offset by a set distance in points.
 - **Links.** A text, an image or a single rich-text fragment takes a
   **Link** whose URL can include a data field; a URL the engine would refuse
   is refused at the field. Linked items carry a chain mark on the canvas,
@@ -110,70 +119,77 @@ under Deprecated still parses, with a warning, until 0.4.0.
 - **The data dictionary.** The data-item editor shows the definitions as a
   tree of groups, tables and lists, adds an item anywhere in it, and renames
   or deletes one — a rename rewrites every place this template uses it and
-  every sample data set, in one undoable step, and says what it will rewrite
-  first. It also sets a field's choices (with printed text), value and
-  length ranges, required, blank text, an example for sample generation,
-  currency, decimal places, unit, a default display format and the list of
-  formats a field allows. A gear on each field in the palette opens the
-  editor on that field.
+  every sample data set, in one undoable step, and lists what it will
+  rewrite before you confirm. It also sets a field's allowed values (each
+  with optional text to print in its place), value and length ranges,
+  required, blank text, an example for sample generation, currency, decimal
+  places, unit, a default display format and the list of formats a field
+  allows. A gear on each field in the palette opens the editor on that
+  field.
 - **Display formats.** Document settings gain a display-formats section: how
   dates, times and money look throughout the document, and a registry of
-  named patterns, previewed by the engine as you type and built from token
-  buttons. The format picker on a bound item offers only what the engine
-  will honour for that field's type, shows the field's own declared formats
-  first, offers a locale pack's own variants (和暦, Japanese era dates, among
-  them) and marks the date-only ones on a datetime field. Renaming or
-  deleting a named format rewrites every reference, including those inside
-  text such as `{issued:closing}`.
+  named patterns, which the engine previews as you type and which you can
+  build by pressing buttons for each part (weekday, month, era). The format
+  picker on a bound item offers only what the engine will honour for that
+  field's type, shows the field's own declared formats first, offers a
+  locale pack's own variants (和暦, Japanese era dates, among them) and marks
+  the date-only ones on a datetime field. Renaming or deleting a named
+  format rewrites every reference, including a format named inside a text
+  placeholder such as `{issued:closing}`.
 - **Creating things.** Insert gains Line (with editable endpoints), Ellipse,
   Checkbox, Character grid, Page break, Header and Footer; a header or
-  footer's height and the pages it prints on are editable, and the body can
-  be switched between flowing and fixed-position (asking first, and listing
-  what changes) with its spacing and area. A QR code's error correction, a
-  line's opacity, a template's name and version, and whether an image is a
-  fixed picture or a data field are now set in the panel. Images can be
-  pasted from the clipboard, and GIF and WebP can be placed.
-- **Moving things.** Items can be dragged into a different parent on the
-  canvas or in Structure, by moving left and right as well as up and down.
-  Right-click offers duplicate, delete and borders. Dragging a column in the
-  column sheet shows where it will land, and Escape cancels any list drag.
+  footer's height and the pages it prints on are editable, and the page body
+  can be switched between flowing and fixed-position (asking first, and
+  listing what changes), with its own item spacing and area. A QR code's
+  error correction, a line's opacity, a template's name and version, and
+  whether an image is a fixed picture or a data field are now set in the
+  panel. Images can be pasted from the clipboard, and GIF and WebP can be
+  placed.
+- **Moving things.** Items can be dragged into a different container on the
+  canvas or in **Structure**, where moving the pointer left or right changes
+  the nesting level. Right-click offers duplicate, delete and borders.
+  Dragging a column in the column sheet shows where it will land, and Escape
+  cancels any list drag.
 - **Seeing what the page does.** The margin box is outlined on the canvas
   with its `0,0` corner marked; the diagnostics panel lists printed text
-  that has landed on other text; typing in the text field re-renders the
-  page as you type; a hidden header row is outlined rather than left as a
-  gap; the border editor explains that you pick the pen, then the edges; and
-  more warnings have a one-click **Fix**, some offering a choice of two.
-- **A data field placed in text can be repointed** by clicking its chip and
-  picking another field, leaving the wording around it and its format alone.
+  that overlaps other text; the page re-renders as you type into the text
+  field; a hidden header row is outlined rather than left as a gap; the
+  border editor explains that you pick the pen, then the edges; and more
+  warnings have a one-click **Fix**, some offering a choice of two.
+- **A data field placed in text can be swapped for another** by clicking its
+  placeholder and picking another field, leaving the wording around it and
+  its format alone.
 
 #### Template format and engine
 
-- **`visible:` shows or hides any item by the data**, as in
-  `visible: { key: status, equals: approved }`, keeping its space by
-  default, or closing up with `collapse: true`, like CSS
-  `visibility: hidden` and `display: none`.
+- **`visible:` shows or hides any item based on the data** (the Designer's
+  **When to show**), as in `visible: { key: status, equals: approved }`,
+  keeping its space by default, or closing up with `collapse: true`, like
+  CSS `visibility: hidden` and `display: none`.
 - **A line end can attach to another item and an ellipse can be drawn around
   one:** `to: { item: total_box, edge: left }` and `anchor: <id>`. An
-  anchored item follows its target wherever the layout puts it, on the
-  target's page (in a header or footer, on every page); it hides with its
-  container, and a missing target warns and draws nothing.
+  anchored item follows its target wherever the layout puts it and is drawn
+  on the target's page; one in a header or footer is drawn on every page. It
+  is hidden when its own container is hidden, and a missing target warns and
+  draws nothing.
 - **`header: { visuallyHidden: true }`** paints nothing for a table's header
   row but keeps its labels in the PDF's text layer, so a text extractor or
   an AI can still read what each column means.
 - **`textDecoration: underline line_through`** draws both lines, as CSS
   `text-decoration-line` does (capability `style.textDecoration.combined`).
-- **A linked flag in the box index** (`inspect.boxes.linked`), set only
-  where the PDF will contain a clickable link.
-- **`localeFacts`** renders what a locale will print for a date, a number
-  and an amount, through the same path a bound field takes (capability
-  `locale.facts`).
+- **A `linked` flag in the layout box index** (the per-item positions the
+  engine reports to the Designer), set only where the PDF will contain a
+  clickable link (capability `inspect.boxes.linked`).
+- **A `localeFacts` engine query** renders what a locale will print for a
+  date, a number and an amount, through the same path a bound field takes
+  (capability `locale.facts`).
 - **New warnings.** `row_condition_scope_ignored` for a `scope:` a row
   condition ignores, `deprecated_syntax` for a form that is being removed,
   and `grid_row_overflow` / `grid_span_overflow`, whose arguments are
   numbers only, so a translated message has no English left in it.
-- **The key catalog says what every key means.** All of its nodes carry a
-  `description`, and a description of a closed set of values names every
-  value.
+- **The key catalog says what every key means.** Every key in the
+  machine-readable catalog carries a `description`, and a key that takes a
+  fixed list of values has each value described.
 
 #### CLI, MCP and SDKs
 
@@ -182,56 +198,60 @@ under Deprecated still parses, with a warning, until 0.4.0.
   pattern before you author it.
 - **The MCP server serves the syntax reference.** `list_reference` and
   `get_reference` (or `resources/read` on `shojiku://reference/<page>`)
-  return each reference page's markdown beside its keys as a JSON Schema
-  fragment, and `#<key>` narrows to a key (capability `mcp.reference`). An
-  agent set up with `docker pull` plus `claude mcp add` has no checkout, and
-  can now read the reference anyway.
-- **`format_catalog`**, a new MCP tool, answers the format vocabulary the
-  same way the CLI and the Designer do, with or without a template.
+  return a reference page's markdown together with a JSON Schema fragment
+  for the keys it documents, and `#<key>` narrows to one key (capability
+  `mcp.reference`). An agent set up with `docker pull` plus `claude mcp add`
+  has no copy of the repository, and can now read the reference anyway.
+- **`format_catalog`**, a new MCP tool, lists the format spellings each
+  field type accepts, as the CLI and the Designer do, with or without a
+  template.
 
 #### Site and documentation
 
-- **A Features page written for people** (`/features`, `/ja/features`):
+- **A Features page on the site** (`/features`, `/ja/features`) covers
   document kinds, layout, typesetting, data binding, fonts, output and
-  signing, with the limits stated as plainly as the capabilities.
+  signing, with each area's limits beside what it can do.
 - **What 1.0 will freeze is written down** in `docs/architecture.md`: the
-  surfaces 1.0 promises to hold still, the rules each may change under, and
-  what it will not promise, such as identical rendered bytes across versions
-  (determinism means the same version and inputs give the same bytes).
+  interfaces 1.0 promises to hold still, the rules each may change under,
+  and what it will not promise, such as identical rendered bytes across
+  versions (determinism means the same version and inputs give the same
+  bytes).
 
 ### Changed
 
 #### Changes that affect existing templates
 
 - **`mergeEmptyCells` merges the way a spreadsheet does.** An empty cell
-  joins the nearest cell with a value on its LEFT; in `[A][ ][B]` it is A
-  that now spans the empty column. A leading empty cell stays its own, and
-  an all-empty row keeps every column. A section heading meant to span the
-  row now goes in the first column — a template with its heading in the last
-  column draws that row with its column rules until the heading moves to the
-  first column.
-- **A table's `verticalAlign` reaches the cells it is set above.** On
-  `row.style`, a conditional rule, the zebra row or the table's own `style`
-  it used to be ignored. A body cell now looks in this order and takes the
-  first value it finds: its column, a matching rule, the zebra row, the body
-  row, the table; it centres only when none sets one (capability
+  joins the nearest cell with a value on its left; in `[A][ ][B]` it is A
+  that now spans the empty column. A leading empty cell stays a separate
+  cell, and an all-empty row keeps every column. A section heading meant to
+  span the row now goes in the first column; a template that puts it in the
+  last column draws that row as separate cells, with the lines between
+  columns, until the heading is moved.
+- **A table's `verticalAlign` set on a row or on the table reaches its
+  cells.** Set on `row.style`, on a conditional rule, on the banded row
+  (`row.alternateStyle`) or on the table's own `style`, it used to be
+  ignored. A body cell now looks in this order and takes the first value it
+  finds: its column, a matching rule, the banded row, `row.style`, the
+  table; it centres only when none sets one (capability
   `table.style.verticalAlign`).
 - **A template mapping key must be a string.** A key written as a number,
-  `true`, `null` or a collection is refused with a parse error, so a style
-  or format named `5` has to be written `"5":` (see Security).
+  `true`, `null` or a collection is refused with a parse error. A style or
+  format named `5:` used to be read as the name `5`; write `"5":` instead
+  (see Security for the case inside an item).
 
 #### Designer
 
-- **100% zoom is the printed size** — 96 pixels per inch, as in Google Docs
-  or a PDF viewer. It used to show the page at 150%; a document still opens
-  fitted to the window.
+- **100% zoom is the printed size**, 96 pixels per inch as in Google Docs or
+  a PDF viewer. The old 100% showed the page at one and a half times that; a
+  document still opens fitted to the window.
 - **The preview is drawn at the screen's real resolution**, so small text on
   a Retina display is as sharp as the interface around it.
 - **The interface reads in a clearer order.** The property panel opens on
-  what you came for, with show-when and long explanations behind a `?`; a
-  dialog has one filled main button and is titled after the label that
-  opened it; labels that open something end in "…"; layer-tree labels wrap
-  to show the bound field; every colour is named in a 36-colour picker;
+  what you came for, with **When to show** and long explanations behind a
+  `?`; a dialog has one filled main button and is titled after the label
+  that opened it; labels that open something end in "…"; layer-tree labels
+  wrap to show the bound field; every colour is named in a 36-colour picker;
   steppers sit flush against their field and name that field to a screen
   reader; and buttons that showed a typed ▲, ▼ or grip now draw icons.
 - **Layout warnings print readable numbers** (13.3pt rather than
@@ -242,8 +262,8 @@ under Deprecated still parses, with a warning, until 0.4.0.
   explains a pick with the engine's own output.
 - **The template-size readout shows both amounts**: the template's size
   against the Designer's adjustable limit ("12 KB / 2 MB").
-- **A downloaded PDF keeps the document's name in its own script** — 「領収書」
-  used to arrive as `template.pdf`.
+- **A downloaded PDF keeps the document's name**, Japanese or Chinese
+  characters included; 「領収書」 used to arrive as `template.pdf`.
 
 #### CLI, MCP and SDKs
 
@@ -256,13 +276,14 @@ under Deprecated still parses, with a warning, until 0.4.0.
   SDKs, with the key as a separate `key` value; it used to point at the
   whole page body.
 - **A format-catalog probe list is capped at 16** everywhere: the CLI's
-  `--probe`, the MCP `format_catalog` tool and the browser build.
+  `--probe`, the MCP `format_catalog` tool and the WebAssembly engine the
+  Designer uses.
 
 #### Docker image
 
 - **The runtime base is `gcr.io/distroless/base-nossl-debian12`** instead of
   `cc-debian12`. Nothing in the image links OpenSSL — the one TLS client,
-  the authoring-time font fetch, is rustls — so `libssl3` is gone and its
+  the CLI's font download, is rustls — so `libssl3` is gone and its
   advisories with it; the image adds only `libgcc_s.so.1`, which the
   binaries need.
 
@@ -271,10 +292,10 @@ under Deprecated still parses, with a warning, until 0.4.0.
 - **The site lives at [shojiku.kengos.jp](https://shojiku.kengos.jp)**, and
   every package's homepage points there; `shojiku.pages.dev` keeps working,
   since v0.2.0's metadata still names it. Page titles name their subject and
-  end in a per-language suffix.
-- **`docs/engine/features.md` is no longer a reference route on the site.**
-  It is the development record; it stays in the repository and `llms.txt`
-  points at it.
+  end in the product's name and a one-line description, in each language.
+- **`docs/engine/features.md` is no longer a page of the site's reference.**
+  It records why the engine is built as it is rather than how to author
+  anything; it stays in the repository, and `llms.txt` points at it.
 - **The committed SBOMs describe the latest release,** refreshed as part of
   each release. Each is generated from a lockfile alone and records that
   lockfile's sha256.
@@ -282,85 +303,93 @@ under Deprecated still parses, with a warning, until 0.4.0.
 ### Deprecated
 
 Each of these is removed in 0.4.0. From now on a template form or a diagnostic
-code is deprecated one release before it goes: before 1.0 it is removed in the
-next minor release, and from 1.0 in the next major one.
+code is deprecated one release before it is removed: before 1.0 it is removed
+in the next minor release, and from 1.0 in the next major one.
 
 - **`page.margin` as a `[top, right, bottom, left]` array.** It still
   applies, with a `deprecated_syntax` warning in `validate`, the CLI, the
   MCP server, the Designer and the SDKs (capability
-  `diagnostics.deprecated_syntax`). Write the map
-  `{ top, right, bottom, left }`, or one number for all four sides. The Designer rewrites the array
+  `diagnostics.deprecated_syntax`). Write the map `{ top, right, bottom,
+  left }`, or one number for all four sides. The Designer rewrites the array
   on the first margin edit.
 - **The diagnostic codes `horizontal_overflow` and
-  `vertical_style_ignored`.** Nothing emits either; drop them from a catalog
-  or matcher.
-- **The diagnostic code `grid_cell_overflow`.** Nothing emits it from 0.3.0;
-  a matcher keyed on it should match `grid_row_overflow` and
-  `grid_span_overflow` instead.
+  `vertical_style_ignored`.** Nothing emits either, but both stay in the
+  code registry until 0.4.0; a host that translates or matches on them can
+  drop them.
+- **The diagnostic code `grid_cell_overflow`.** Nothing emits it from 0.3.0
+  and it stays in the code registry until 0.4.0; a host that matches on it
+  should match `grid_row_overflow` and `grid_span_overflow` instead.
 
 ### Fixed
 
 #### Engine
 
 - **Header and footer tables are checked and drawn like body ones.** Their
-  data, columns, row conditions and cells now get `unknown_data_key` and
-  `missing_data`, and their image columns load instead of warning
-  `missing_asset`. A column's or header group's `label` is checked anywhere.
-- **A locale pack's own date format is reachable by its name.**
-  `format: date` on a datetime field under ja-JP now prints the pack's
+  data, columns, row conditions and cells are now checked and report
+  `unknown_data_key` and `missing_data`, and their image columns load
+  instead of warning `missing_asset`. A column's or header group's `label`
+  is now checked wherever the table sits.
+- **A locale pack's own date format is reachable by its name.** `format:
+  date` on a datetime field under ja-JP now prints the pack's
   `2026年11月3日(火)`, not the plain default.
-- **A form mark reading a `scope: document` flag inside a repeat** no longer
-  reports a false undeclared-key error.
+- **A checkbox or ellipse reading a `scope: document` flag inside a repeat**
+  no longer reports a false undeclared-key error.
 - **A very long date pattern renders in linear time**; it used to be
   quadratic in the pattern's length.
 
 #### Designer
 
 - **Inserts land where they draw.** Items inserted or dragged into a header
-  or footer appear where the band prints (a footer item at its foot);
-  inserting into a container in a band joins the container's layout; a saved
-  block, Grid or Cards is disabled with the reason where it would never
-  draw, and one that would land half-drawn (a table in a repeating cell) is
-  refused.
-- **Group into a container no longer moves, narrows or resizes the item**,
+  or footer appear where the band prints (a footer item at its foot); and
+  inserting into a container in a band joins the container's layout. Where a
+  saved block, a Grid or Cards would never draw, its Insert row is disabled
+  and says why; a saved block that would land half-drawn (a table in a
+  repeating cell) is refused.
+- **Group into a container** no longer moves, narrows or resizes the item,
   including one sized in percent, and is not offered where the result could
   not be preserved or would not draw.
-- **Panel fields show what the document holds.** A number the panel refuses
-  or rewrites snaps back to the value kept, sample values included; a typed
-  line break stays where you put it and is saved as a block literal; a field
-  you only clicked into adds no undo step.
+- **Panel fields show what the document holds.** A value the panel refuses
+  or adjusts is replaced in the field by the value the document actually
+  kept, sample values included; a typed line break stays where you put it
+  and is saved as a block literal; a field you only clicked into adds no
+  undo step.
 - **Panel fields that broke the document are gone.** A line or page break no
   longer has a placement tab, a line no longer offers named styles, a
   `repeat` no longer offers a box, and a line placed in a band no longer
   writes a `box:`.
 - **Thin lines can be selected on the canvas**, a canvas multi-selection no
-  longer survives a selection made elsewhere, and a runaway YAML alias no
-  longer crashes the Designer when its item is selected.
+  longer survives a selection made elsewhere, and selecting an item whose
+  YAML alias expands past the Designer's reading limit no longer crashes the
+  Designer.
 - **Tooltips stay readable**: nine were cut at a panel edge and two had
   never been visible; each now hangs off the side that fits.
 - **In the dark theme**, unset colour fields, swatches, resize handles and
   the condition value field are visible again.
 - **A template that fails to load** offers a way back to the template list.
 - **Restoring a draft** of a bundled template keeps its data-item edits.
-- **A comment above a list's first entry** moves with that entry.
+- **A YAML comment above a list's first entry** moves with that entry when
+  the entry is reordered.
 - **IME conversion** no longer inserts a line break on Enter, and leaving
   the text field by switching tabs keeps the edit.
 - **The hosted Designer ships each font's license beside it** (`OFL.txt`,
-  `BIZ_UD_Gothic_OFL.txt`, the IPA Font License Agreement); a pack without
-  one now fails the build.
+  `BIZ_UD_Gothic_OFL.txt`, the IPA Font License Agreement); a font pack
+  without one now fails the build.
 
 #### Packages and docs
 
-- **`VERSION` exported by the npm package** said `0.1.0` in 0.2.0.
-- **The Java deploy recipe** asked for 0.1.0 after 0.2.0 shipped.
-- **The diagnostics reference** explains nine codes it used to drop from a
-  malformed table, and the reference's key and diagnostics tables are now
-  generated against the parser and the code registry.
+- **The npm package's exported `VERSION`** matches the package; in 0.2.0 it
+  said `0.1.0`.
+- **The Java deploy recipe** asks for the current release; it still named
+  0.1.0 after 0.2.0 shipped.
+- **The diagnostics reference** explains nine codes whose descriptions a
+  malformed Markdown table dropped, and the reference's key and diagnostics
+  tables are now generated against the parser and the code registry.
 - **`docs/designer-mount.md`** says the Designer can rename and delete data
   items, what each changes, and that the template and definitions saves are
   separate requests.
-- **The security page and `SECURITY.md`** no longer claim cargo-deny ignores
-  no advisory (see Security).
+- **The security page and `SECURITY.md`** now say that cargo-deny ignores
+  one advisory, the unmaintained notice below; they used to say it ignored
+  none.
 
 ### Security
 
@@ -368,23 +397,25 @@ next minor release, and from 1.0 in the next major one.
   or pack over 16 MB is refused before it is parsed, and nesting past the
   caps (32 levels of containers, 16 of a definitions schema) is checked
   before the document is built — a deep chain used to run the reading thread
-  out of stack and end the whole process, SDK and MCP server included. A
-  numeric mapping key (`5:`) was silently read as one of the item's fields
-  by its position, which let a chain get past the nesting check; any
-  non-string key is now a parse error. YAML alias amplification is not
-  covered by either bound and remains a documented exposure of the YAML
-  parser.
-- **rustls 0.23.45** (RUSTSEC-2026-0285) for the CLI's font download, which
-  accepted a TLS 1.3 handshake message at the wrong encryption level.
-  Rendering, signing and verifying open no connection.
+  out of stack and end the whole process, SDK and MCP server included.
+  Inside an item, a numeric key (`5:`) was silently read as one of the
+  item's fields by its position, which let a chain get past the nesting
+  check; any non-string key is now a parse error. YAML alias amplification
+  is not covered by either bound and remains a documented exposure of the
+  YAML parser.
+- **rustls 0.23.45** (RUSTSEC-2026-0285) for the CLI's font download
+  (authoring time only), which accepted a TLS 1.3 handshake message at the
+  wrong encryption level. Rendering, signing and verifying open no
+  connection.
 - **libssl is gone from the Docker image** (see Changed), which clears six
-  OpenSSL advisories, and any later advisory against libssl no longer
-  applies.
-- **Two accepted findings, each with a written reason.** cargo-deny ignores
-  RUSTSEC-2024-0449, an *unmaintained* notice for unsafe-libyaml under
-  `serde_yaml`, not a vulnerability; it is dropped when the engine moves off
-  `serde_yaml`. The image scan accepts DLA-4792-1, a tzdata refresh the
-  runtime never reads, until 2026-12-31, when it is reported again.
+  OpenSSL advisories; a later advisory against libssl cannot apply to the
+  image.
+- **Two findings are accepted, with the reason written beside each.**
+  cargo-deny ignores RUSTSEC-2024-0449, an *unmaintained* notice for
+  unsafe-libyaml under `serde_yaml`, not a vulnerability; it is dropped when
+  the engine moves off `serde_yaml`. The image scan accepts DLA-4792-1, a
+  tzdata refresh the runtime never reads, until 2026-12-31, when it is
+  reported again.
 - **The committed SBOMs list the dependencies and nothing else.** They used
   to pick up lockfile copies under `target/` — 1,757 components where the
   lockfile lists 254.
@@ -404,8 +435,8 @@ next minor release, and from 1.0 in the next major one.
 - `docs/code-map/engine-structure.md` is generated (`make engine:map`).
 - Test files are outside the line budget, and `docs/guidelines.md` says what
   the budget is for.
-- `make skills:verify` checks the product skills' eval cases;
-  `make skills:eval` runs them, with `ABLATION=1` for a without-skill run.
+- `make skills:verify` checks the product skills' eval cases; `make
+  skills:eval` runs them, with `ABLATION=1` for a without-skill run.
 - The Designer's browser test runs on every pull request; the engine suites
   that read `docs/engine/` run on docs-only pull requests.
 - `make engine:render` works again, and `make engine:preview` renders a PNG.
