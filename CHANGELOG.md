@@ -13,2619 +13,403 @@ platform binaries.
 
 ## [Unreleased]
 
-### Added
-
-- **Choose a QR code's error correction in the Designer.** A QR code's
-  Content tab now has an Error correction choice under its content: the
-  default (M) or one of L, M, Q and H, which let the printed code survive
-  about 7, 15, 25 or 30 percent damage. Picking the default removes the
-  setting and picking M writes it, and each pick is one undo step. A
-  higher level can pack more, smaller modules into the same box; in a
-  small box they can drop under 1pt, and the code is still drawn with a
-  warning that it may not scan. The level is a minimum: while a short content
-  still fits the same code size at a higher level, it is drawn at that
-  level, so picking a lower one need not change the code. A QR code
-  column in a table has no such setting and always uses M, while a QR
-  code placed in a column's Free layout cell has it like any other. Until
-  now the level could only be written in the YAML.
-
-- **Fade a line in the Designer.** A line's Style tab now has the
-  Opacity section a rectangle or a text already has, under its Line
-  settings: 100% is fully opaque and 0% makes the line invisible. A
-  typed value is kept between 0% and 100%, emptying the field removes
-  the setting, and each change or ▲▼ click is one undo step. A value
-  written in the YAML above that range, such as `1.5`, shows as 150% and
-  draws the line fully opaque with a warning; one ▼ brings it back to
-  100%. Until now a line's opacity could only be written in the YAML.
-
-- **Shift an attached line end by a few points.** When a line's end is
-  attached to another item, its Layout tab now shows two fields under that
-  end — Start offset X / Y or End offset X / Y — that move the end off the
-  point it was attached to, for example 4pt short of a total's left edge.
-  The fields take points only, negatives included; a positive Y moves the
-  end down. Emptying a field or entering 0 removes that shift, a value with
-  a unit such as `2mm` is not accepted, and each change or ▲▼ click is one
-  undo step. An end placed by coordinates has no such fields, because its
-  own X and Y already say where it goes. Until now the shift could only be
-  written in the YAML.
-
-- **Switch an image between a fixed picture and a data field.** An image's
-  Content tab now opens with the same Content source choice a text has:
-  Fixed image or Data binding. Switching to Data binding removes the
-  picture, and the image shows nothing until you pick a data field.
-  Switching to Fixed image brings back the picture this image had a moment
-  ago — embedded or linked from the assets folder alike — and opens the
-  file picker only when there is none; switching back to Data binding the
-  same way brings back its field. Cancelling the picker changes nothing,
-  and every switch is one undo step. The Fit choice now shows on a
-  data-bound image too, and works the same way it does on a fixed one;
-  the panel used to offer it on a fixed image only. Until now an image
-  stayed whichever kind it was inserted as.
-
-- **Give a value inside mixed-style text its own format and blank text.**
-  When part of a mixed-style text shows a data value, selecting that part
-  in the text's Content tab now offers the same choices as a text bound to
-  a value: the data field, its display format (the field's own formats
-  first) and what to print when the value is empty. Inside a repeat, a
-  table cell or a card, the field list also offers the document's own
-  fields, so the part can show a shop name on every row. Until now only the
-  field could be changed there; everything else meant editing the YAML.
-
-- **Name a template and give it a version in the Designer.** Document
-  settings › Document properties now opens with the template's name and
-  version. The name is what a PDF viewer shows as the document's title
-  whenever no title is set, and until now it could only be changed in the
-  YAML file — even though the Title field already said the name would be
-  used. The version is for your own records and is not written into the
-  PDF. The rail line for the section follows the same order the PDF does:
-  the title, else the template name. On an engine that does not support
-  document properties, the name and version are still offered there and
-  the other fields are not. The name's hint also says what happens when
-  both are empty (a default title is used). A name or version the field
-  cannot show (a list, say) is marked "Unreadable value" and can be
-  cleared from the field.
-
-- **Pick a data field's own display formats where it is placed.** When a
-  data field lists the display formats it supports (the "Format
-  restriction" list in its editor), the format picker of every item bound
-  to it — a text, a table column, a column in the column sheet — now shows
-  those formats first, under their own heading and by the names the list
-  gives them; picking one writes it in one step. Until now the list could
-  only be chosen from by typing the format's name. Because a field with
-  such a list refuses any other format (an error, and the document does
-  not print until it is fixed), the picker also stops offering the locale
-  formats the list leaves out. The list's explanation in the field editor
-  said such a pick only warned and printing went on; it now says what
-  actually happens.
-
-- **Format part of a text in the Designer.** Double-click a fixed text on
-  the page, select some words and press bold, italic, underline,
-  strikethrough or a colour, and only those words change — the way a word
-  processor works. Until now this was possible only on text that already had
-  mixed styles; plain text could only be styled as a whole. Text that nobody
-  formats stays exactly as it was in the file, and the first formatted word
-  turns it into mixed-style text in one step, which one undo reverses. On
-  vertical text the same bar can set selected characters upright side by side
-  (縦中横), so "12" in 令和12年 reads across the column without affecting the
-  rest. Mixed-style text cannot shrink to fit, end in "…", size itself to its
-  text inside a row or a grid, or hang punctuation in horizontal lines, so when
-  an item relies on one of these the editor says which before the first
-  change.
-
-- **Circle text in the Designer.** A text item's Content tab has a new
-  「丸囲み」 section that draws an oval around the printed characters — centred
-  on them and sized to fit, so it follows when the font or the wording
-  changes, and never moves anything on the page. Draw it always, or only when
-  a data field has a given value, which is how a form circles the chosen
-  option: one template, and the circle appears on whichever label the data
-  picks. The same section sets the space between the circle and the
-  characters (0.4em when left empty; a negative space is not accepted, since
-  it would cut through the characters), the outline width and colour, a fill,
-  and named styles for the circle itself. Turning the circle off removes all
-  of it in one step, which one undo brings back. It works on fixed text, on a
-  data field and on text with mixed styles; on vertical text the engine does
-  not draw it, and the section says so.
-- **Add ruby (furigana) to text in the Designer.** A text item's Content tab
-  has a new 「ルビ（ふりがな）」 section: each row pairs the characters to
-  annotate with their reading, and the reading prints above them (beside
-  them, in vertical text). It works on fixed text, on a data field — the
-  characters are matched in the value that prints — and on text with mixed
-  styles. A new reading is written only once both sides are filled in, and
-  the last one removed takes the list with it. The reading size defaults to
-  half the text size; pick 5–8pt or type a size, but not a percentage, which
-  the engine would read against the width of the surrounding box. Readings
-  sit in the space between lines without pushing them apart, and the first
-  line's readings stand outside the text's box; the section says so, and
-  points at the line height and the padding that make room.
-- **Write text vertically, and set the Japanese line-breaking rules, in the
-  Designer.** The Style tab has a new 「縦書き・禁則」 section for text, page
-  numbers, lists, tables and containers: text direction (横書き / 縦書き),
-  and for vertical text the character orientation and 縦中横 (two to four
-  digits, or the whole text, set horizontally in one character space); then
-  the line-break rules (禁則処理: standard, 強い禁則, 弱い禁則 or none),
-  bracket and punctuation spacing (括弧・句読点の詰め) and hanging punctuation
-  (句読点のぶら下げ).
-  Each type gets only the settings its text actually takes — a list, whose
-  entries never wrap, gets the vertical three — and the two vertical-only
-  settings appear once the text is vertical, or while one is still set. A
-  container or table passes its settings to the text it holds, and a value
-  that comes from there, from a named style or from the document defaults is
-  shown with where it came from. On a text that is circled (`mark:`), the
-  section says the circle is not drawn while the text is vertical, which is
-  what the engine does. Until now these were only reachable by editing the
-  template by hand or through the AI copilot.
-- **Set up the page body and remove a header or footer in the Designer.**
-  Selecting 本文 in the layer tree now opens its own panel instead of the
-  ordinary item panel, whose name field could write an `id:` the body does
-  not take and stop the document from opening. There the body can be switched
-  between 流し込み (items stack and continue onto the next pages) and 自由配置
-  (each item fixed at its own position on page 1): switching to 自由配置 pins
-  every item — lines included — where the preview drew it, and asks first,
-  listing each change that happens: items that start on page 2 or later are
-  deleted (a fixed-position body draws everything on page 1, where they would
-  overlap), items that run past page 1 are cut there, items the preview did
-  not draw (hidden by a condition in the sample data) go to the top of page 1,
-  repeats and page breaks are skipped, and tables lose their page-break
-  settings (`repeatHeader` / `autoPageBreak` / `keepTogether`), which only act
-  in a flowing body. Switching back stacks the items top to bottom in the
-  order they appeared, starting where the topmost one was and stopping above
-  the footer. Either switch is one undo step. A flowing body also gets 「要素の間隔」 and its area on the
-  page (「本文の範囲」, empty = everything inside the margins; filling in one
-  field fills the others with their whole-area values). A
-  header or footer band can now be deleted from its own panel, with a
-  confirmation saying how many items go with it.
-
-- **Arrange and size the frame of a repeat and the cards of a repeat_flow,
-  and space the cards, in the Designer.** A repeat's cell frame and a
-  repeat_flow's card frame now carry the same 「子の並べ方」 as a container —
-  side by side, stacked or a grid, with distribution, alignment and ratios —
-  and their own width and height, shown as 「自動」 when empty with a line
-  saying what that means (a cell fills its cell, a card fills the list's
-  width and fits its content). A cell counts as having a height (its cell's),
-  so equal rows and distribution work in it without one being typed.
-  Selecting an item inside a cell or a card shows the frame — named 「セルの枠」
-  or 「カードの枠」 — as its parent container, as an item in a container does.
-  The space between cards, written as 8 when the cards are inserted, is now
-  「カードの間隔」 on the repeat_flow's own panel, a `%` of the flowing area
-  included.
-
-- **Set each grid column's width, each row's height, the spacing per
-  direction, the fill order and cell spans in the Designer.** A 表組み
-  container's 「列の幅」 is either 「すべて同じ幅」 or 「列ごとに指定」, and per
-  column you pick 中身に合わせる, 比率 or 固定 and type only the number;
-  「行の高さ」 does the same for rows, with 「すべて中身に合わせる」 as the
-  default and a note when shares or equal heights need the container to have
-  a height. 「列の間隔」 and 「行の間隔」 replace the single spacing field in a
-  grid (the shared spacing still shows as their placeholder), 「並べる順」
-  picks 横→縦 or 縦→横, and a child in a grid gets 「表組みでの大きさ」 — how
-  many cells it covers across and down. Adding or removing columns now keeps
-  per-column widths (a new column copies the last one) instead of flattening
-  them to equal columns, follows the fill order (in a 縦→横 grid a column
-  change adds or removes whole columns), and ignores items placed by
-  coordinates and lines, which occupy no cell; while an item covers more than
-  one cell the counts are not offered, with a note saying how to get them
-  back. 「すべて同じ高さ」 is offered only once the container has a height of
-  its own, since equal rows need one. The tutorial's ratio steps
-  now describe what the numbers do: they share out the width left over after
-  each slot's text.
-
-- **Change how a container arranges its items after inserting it.** The
-  container's 「子の並べ方」 now switches between 横並び, 縦積み and 表組み at
-  any time, in one undo step, without losing an item: a row becomes a one-row
-  grid with a column per item, each as wide as the item was — its own width,
-  its ratio as a share, or its content's width — so the row looks the same
-  (an engine that cannot read such column widths gets equal columns); a
-  stack becomes a one-column grid (its left/centre/right alignment does not
-  carry over, since a grid aligns its items vertically); and a grid turned
-  back into a row or a stack sheds the settings only a grid reads (columns,
-  rows, per-direction spacing, items spanning cells) instead of leaving them
-  to warn. A line, or an item placed by coordinates, takes no part in any of
-  this — it gets no ratio input and no column. A new 「空きの配り方」 dropdown packs the items to one end or the
-  middle, or spreads them out three ways; it shows for a row and a stack, and
-  for a grid only when its columns have individual widths, since a column
-  count leaves no space over. The alignment buttons now follow the direction
-  that alignment actually works in — a stack aligns its items left, centre or
-  right, where it used to show top, middle and bottom — appear for a grid
-  too, and a row adds 「1行目の文字の高さでそろえる」 (`alignItems: baseline`).
-  A stack gets ratio inputs as well, sharing spare height when the container
-  is taller than its contents, and a row gets 「中身の幅を無視して、比率どおりに
-  分ける」, which starts every item without its own width from zero
-  (`flexBasis: 0`) so the ratio divides the row exactly. An item with no
-  ratio of its own now shows an empty input marked 「自動」 instead of a 1:
-  the engine gives such an item no share when it can measure its content and
-  a share of 1 when it cannot (a table, vertical text), so the 1 was wrong
-  for ordinary text. Against an engine that cannot lay out a grid, the 表組み
-  option is greyed out with the reason; the baseline button and the ratio
-  checkbox are left out against an engine that would reject them.
-
-- **Circle an item, or run a line to one, by picking it — no name needed
-  first.** The ellipse's 「要素を囲む」 and a line end's 「要素に付ける」 now
-  list the document's own items, labelled as in the layer tree and grouped by
-  section, instead of only the names the last preview reported — so a
-  document made in the Designer, with no names anywhere, can be anchored
-  straight away, and the list no longer waits for a preview. Picking an item
-  that has no name gives it one in the same undo step: its data key (dots
-  become `_`) when it is bound, otherwise its type and a number
-  (`text_1`), counting on past any name already in use — and the panel says
-  which name it gave. A target no item carries any more is marked
-  「（見つかりません）」 instead of looking like an ordinary choice, and choices that
-  would read the same (「長方形」, 「長方形」) are numbered. Left out of the list:
-  anything inside a repeat, a table column's cell or a repeated card (each is
-  drawn once per row, and an anchor finds only the first), page breaks, a
-  repeat placed anywhere but directly in a flowing body or a page number
-  anywhere but directly in a header or footer (neither is drawn there), and
-  items that are themselves anchored. A line's anchor control now shows
-  whenever the engine supports it, greyed out with the reason when there is
-  nothing to attach to, as the ellipse's already did, and a line end anchored
-  to a name in any script (`合計`) now shows that name and can be picked back.
-  The line's labels now say 要素, as the ellipse's do.
-
-- **Name any item in the Designer.** Every item, table column and cell or
-  card frame has a 「名前（ID）」 field — the name a circle or a line anchored
-  to it points at, and the id the layout output reports for it. A name
-  another item already uses is refused, naming that item; renaming carries
-  every anchor that points at the old name, in one undo step; and clearing a
-  name that anchors still use asks first, since they stop drawing without it.
-  Duplicating an item (⌘D) or inserting a saved block gives the copy's names
-  a fresh number (`total` → `total_2`), and a circle inside the copy follows
-  its own copy rather than the original; a copy too large to renumber is not
-  made, and the bar above the canvas says why.
-
-- **A table column can print a QR code or an image, or hold freely placed
-  items, from the Designer.** The column form gains 「列の種類」 — text, QR code,
-  image or free layout — and the column sheet a row to compare and switch it
-  per column; the columns list names each non-text column's kind. A QR code or
-  image column keeps its data key, an image column picks how the picture fits
-  its cell, and a bound text or QR code column sets what a row with no value
-  prints (a QR code column prints that text as a QR code). On a QR code or
-  image column the column style offers only what reaches the page — the
-  background, and the alignment its header label takes.
-
-  Switching to free layout moves the column's binding into one item inside
-  the cell, in a frame that keeps the table's cell padding and the column's
-  vertical alignment, so the page looks the same until you add more (a row
-  rule's alignment, which can differ row by row, is not carried).
-  Switching a free-layout column back asks first, naming the column, how many
-  items the cell loses and of which kinds, and which data key the column keeps
-  (the first item with one). Leaving the image kind removes the fit setting,
-  which no other kind reads; the format and blank text stay in the file and
-  come back when the column prints text again.
-
-  The image fit picker — on image columns and on placed images — now names
-  each mode by its result (fit inside, fill the box, stretch, original size)
-  and draws it, instead of listing the engine's spellings.
-
-- **The data-item editor shows the whole data dictionary as a tree, and items
-  can be added anywhere in it.** Groups, tables (a repeating set of rows) and
-  lists (a repeating set of values) are rows you can select, with their items
-  indented beneath them at any depth, each container opening and closing on
-  its own. A group, table or list now has its own form — its label,
-  description and whether it is required — with links to the items inside, and
-  a 「データ全体の情報」 row edits the definitions file's own label, description
-  and version. Every item can be marked **required**, which warns in
-  Diagnostics when the data lacks it — for an item inside a group or a table,
-  wherever that group or row is present; printing never stops.
-
-  **Add data field** now asks where the item goes (the top level, a group, or
-  each row of a table), its display label, its data name and its type, and
-  can create a group, a table or a list as well as a text, number, integer or
-  yes/no field; each place is named by its path from the top, so two groups
-  with the same label are told apart. A data name containing 「.」, or
-  characters that draw nothing, is refused with the reason, and the new item
-  is selected (its group opened) once it is added.
-
-  Editing a field of a table nested inside another table's rows changed a
-  different place in the file than the one shown; every item is now edited at
-  the place it was read from. Sample values for a table inside a group can now
-  be edited row by row, including adding its first row. When the definitions were worked out from the sample
-  data rather than supplied, the editor says so above the form, and on a
-  mounted host the note that the definitions are shared with the whole
-  project now sits there too, over every edit.
-
-- **A data item can be renamed or deleted in the data-item editor.** Its
-  header says where this template uses it — 「このテンプレートで N か所」 opens
-  the list, each place named as the layer tree names it, with what it does
-  there (the value, inside the text, the row condition …), counting the header,
-  the footer and the document information too; the palette's used count now
-  counts the same places, so a field used only in a row condition, a character
-  grid's text or the document title no longer reads as unused.
-
-  **Change data name** rewrites every place this template uses the item — one
-  step of the template's undo — and renames the key in every sample data set,
-  the ones not shown included. It says what it will rewrite before you
-  confirm, and refuses, saying why, a name that a text insertion could not
-  spell, a name another insertion on the same item already uses, more places
-  than one change can rewrite, or a result too large for the editor. Renaming
-  a group rewrites the places that use what is inside it; renaming a table
-  rewrites the places that repeat it (inside its rows, its fields keep their
-  own names).
-  **Delete** removes the item from the definitions and its value from every
-  sample data set; places in the template that used it stay, and Diagnostics
-  reports them as not defined. An item this template does not use is deleted
-  at once, with a note on how to undo it; anything else asks first, naming the
-  places. When the definitions are shared across a project, both say that
-  other templates cannot be checked from here, and a delete always asks. On a
-  host that manages its own sample data, neither changes it, and both say so.
-  For integrators, `readBindings` now also returns these places — a reference
-  in the document block comes back with the path `document`, which selects
-  nothing on the canvas.
-
-  One 「定義の編集を元に戻す」 undoes a rename or a delete in the definitions,
-  the template and the sample data together, keeping any template edit made
-  since. The template's own ⌘Z after a rename puts back only the template's
-  references (Diagnostics then reports them). Definition edits in one session
-  are capped at 256, as a restored draft always was; an edit past the cap is
-  refused with a note instead of being dropped when the draft is reopened.
-
-- **A data item's value rules can be set in the data-item editor.**
-  **選択肢** limits a field to a list of choices: each choice is the value the
-  data carries plus, optionally, the text printed for it; choices are added,
-  edited, removed and put in order by dragging or with the up / down buttons,
-  and a number field takes only numbers. A value the list does not hold
-  warns in Diagnostics. Turning choices off asks before removing them, and the
-  editor says when the printed text will not be used — the item is not plain
-  text, so its value prints in its own form — and marks a choice whose value is
-  not of the field's type, which can never match. A hand-written list the
-  editor could not write back exactly as it is (an unusual form, a number
-  spelled like `2.0`, or more choices than one change can hold) is shown with a
-  note and left alone, though it can still be turned off; an empty list, which
-  makes every value warn, says so.
-
-  Ranges are set by what they bound — a number's value, a text's length, a
-  table's rows, a list's values — refusing a negative, fractional or oversized
-  entry where the file needs a whole number; a value outside one warns in
-  Diagnostics and printing goes on. **空欄のときに出す文字** sets the text
-  printed when an item's data is empty, and **サンプルを生成するときの例** sets
-  the value sample generation uses first, typed by the field and shared by
-  every sample variant. A list's **1 つ 1 つの値** sets what each of its values
-  is — its type first, when the file gives it none — with its own length or
-  value range and choices; a list prints each value as it is, so the editor
-  says that its blank text and printed text are kept in the definitions but not
-  printed. The item tree marks a field limited to choices. Editing a list of choices rewrites that list whole, so a
-  comment written inside it is not kept; the rest of the file is untouched.
-
-- **How a data item shows can be set in the data-item editor.** An amount
-  takes its own **通貨** — suggested from the currencies every shipped locale
-  knows, any code accepted — and **小数の桁数** (0 to 20, also on a percentage);
-  a quantity takes its **単位**, and a unit no locale declares prints as written
-  with a warning in Diagnostics. **既定の表示形式** picks what an item shows as
-  when the placed item picks no format, from the formats the engine offers for
-  that kind of item, each beside what it prints — in the item's own currency
-  when it has one. **表示形式の絞り込み** declares the formats an item's
-  placements may use; the editor says that an empty list restricts nothing,
-  that once it has entries an item on the page using a format outside it (and
-  outside the document's named formats, apart from a few such as a type name)
-  warns in Diagnostics, and that the format picker does not offer the list
-  yet. **ほかのツール向けの情報** records a
-  suggested alignment and bold for other authoring tools — nothing in the
-  Designer or the printed page reads it — keeping anything else written
-  there, and a table's name for one row. A value written by hand
-  that the controls do not offer is kept as it is until another is picked.
-  The document's own 通貨 suggestions now list the same currencies, so KRW and
-  HKD, which no locale prints a symbol or name for, are no longer suggested
-  (they can still be typed).
-
-- **Text and box styling that could only be written by hand can now be set in
-  the Designer.** Every item's Style tab is now folded into sections — Text,
-  Overflow, Fill and border (a line's or a form mark's own stroke), Opacity and
-  Styles — each saying what it is set to while closed, and it gained the
-  settings the engine already had:
-
-  - **Letter spacing**, **underline** and **strikethrough** (as two
-    checkboxes, both at once allowed) and **vertical alignment** for text, and
-    letter spacing and the two lines for a page number and a list. A table's
-    **Text (whole table)** section gains letter spacing too, which every cell
-    inherits.
-  - **What text does when it does not fit** a fixed-height box — run past it,
-    shrink to fit, end with "…" or be cut off at the edge — and, for a
-    container, whether items sticking out of it are cut off.
-  - **Opacity**, as a percentage, on every item that has one. On a QR code and
-    a container it fades only the item's own fill and border.
-
-  A **page number** and a **list** now have a Style tab with the font controls,
-  fill and border, and the format toolbar treats them as text. A **container**
-  gets the font controls too; they are not drawn by the container itself but
-  used by every item inside it that sets no value of its own. **Manuscript
-  paper** gets a Style tab for its characters' colour, font, weight and size,
-  its fill and its opacity; its named styles moved there from the Layout tab.
-
-  The Layout tab gains **Spacing** and **Size limits** sections. Padding and
-  margin can be set for all sides at once or side by side, each side taking a
-  unit (5mm, 10%); a margin may be negative, and where the page flow or a
-  container shares out free space a margin side can be **Auto** — which is how
-  a fixed-width item is centred. A table in the page flow uses only its left
-  and right spacing, so only those two are offered. Minimum and maximum width
-  and height keep an item within bounds. A grid cell, a card and a column cell
-  get side-by-side padding, overflow and opacity on their frame form as well.
-  A control is offered only on the items where the engine does something with
-  it.
-
-- **`textDecoration` can draw an underline and a line-through together.**
-  Write both lines in one value, `textDecoration: underline line_through` (in
-  either order), the way CSS `text-decoration-line` takes two values; a span
-  can carry the pair too, and vertical text draws both side lines. The single
-  keywords are unchanged. In the Designer the U and S buttons of the inline
-  text bar are now independent, so pressing U over struck-through text adds
-  the underline instead of replacing the strike. An engine that supports it
-  reports the capability `style.textDecoration.combined`; older engines reject
-  the two-word value.
-
-- **A table's look can now be finished in the Designer.** Every styled part of a
-  table — the header row, the body rows, a column, a conditional-formatting rule
-  and now a header group — has the same format controls, in the order Google's
-  toolbar uses: font, size, bold, italic, text colour, background, alignment
-  and vertical alignment. A new **Text (whole table)** section sets the font,
-  size, bold, italic, colour, alignment and vertical alignment every cell
-  starts from, and the format
-  toolbar does the same when a table is selected — it used to offer a fill,
-  which a table never paints. Banded rows get a colour you can change after
-  switching them on. Named styles can be applied to the header row, the body
-  rows, the even rows, a rule and a header group, in a
-  **Named styles** fold-out that says how many are applied while it is closed.
-
-  **Conditional formatting works the way it does in Google Sheets.** The section
-  lists the rules as sentences with chips of what each one adds; clicking one
-  opens that rule on its own, with its condition, a row of format presets drawn
-  as samples, the format controls and **Done**. Every change shows on the page
-  at once, so there is nothing to confirm or cancel. A rule's value is picked
-  rather than typed where that is possible: a field with a fixed list of values
-  offers them as chips (or a list, past twelve), with **not set** to take a
-  value back; any other field offers the values found in the sample
-  data, and a yes/no field is a **Yes**/**No** choice. **No** is new — a rule can
-  now apply to the rows where a flag is false (`equals: false`), and so can an
-  item's show-when condition and a checkbox bound to data. It writes the boolean
-  `false`: the engine compares types strictly, so the text `"false"` would never
-  match.
-
-  Rules can be put in order, as in Sheets: once there are two, drag a rule by
-  its grip or use its **Move rule up** / **Move rule down** buttons. Every rule
-  that matches a row applies to it, and where two set the same thing the one
-  higher in the list wins — the list
-  shows the file's `row.conditionalStyles` bottom-up, because the engine lets a
-  later entry override an earlier one, and a note under the list says so once
-  there are two rules. A new rule is added at the top, where it wins. A move is
-  one undo step and carries the rule across as it is written in the file, and a
-  rule you have open stays open on the same rule when a move under it is undone.
-  The engine uses at most 16 rules per table, so **Add a rule** stops there and
-  says why, and a rule past the limit in a hand-edited file is marked as not
-  applied. The buttons that add and remove a rule now say "rule", like the rest
-  of the section.
-
-- **A table's rows and page behaviour can now be set in the Designer.** Select a
-  table and its Content tab holds a new **Rows and pages** section under the
-  columns: whether the body rows fit their content (with a minimum height) or sit
-  at a fixed height, the header row's height, the cell padding, what the table
-  shows when its data is empty — nothing, or just the header row — and whether an
-  empty cell merges into the cell on its left. For a table placed directly in
-  the page's flow it also offers the three page-end switches: continue rows on
-  the next page, repeat the header row on each page, and keep the table on one
-  page when it fits. A table inside a container, a band or an absolute page is
-  drawn as one block and never continues, so there the section says so instead
-  of offering switches that would do nothing. Before this none of these settings
-  could be made in the Designer.
-
-  Header groups can now be added and removed there too: **Add header group**
-  puts a new group over every column no group covers yet and selects it, and the
-  group's own form has **Remove this group**. A group starts where the one before
-  it ends, so removing any but the last moves the later groups left onto other
-  columns; the form says so under the button before you click. Removing the last
-  group — with that button or the Delete key — removes the `headerGroups` key with
-  it, where Delete used to leave an empty `headerGroups: []` behind. Turning a
-  switch or the empty-data choice back to its default removes its key rather than
-  spelling the default out, and a field you only clicked into writes nothing, so a
-  table you only looked at saves unchanged. A height takes pt, mm, cm
-  or in. A percentage height already in the file is shown as written and kept,
-  but the panel neither steps one nor writes one.
-
-- **An n-up sheet — tickets, labels, cards cut from one page — can now be made and
-  edited in the Designer.** Insert ▸ Place list data offers a fourth way to show
-  the rows, **Grid**, which lays one cell per row onto each page, two across and
-  two down to start. Select the grid and its Layout tab holds the sheet: how many
-  columns and rows each page takes, the gaps between them, the order the cells
-  fill in, whether the grid starts on a new page, and whether cut marks are drawn.
-  Before this a `repeat` could only arrive in a file written elsewhere, and
-  selecting one showed nothing to edit but its show-when condition.
-
-  The panel refuses a size the engine would clamp — more than 64 cells a page —
-  rather than writing one, and clearing a count returns that axis to a single
-  cell; a negative gap is written as zero. What a cell shows is the items listed under the grid's
-  Cell row in Structure, edited like any others; the cell's own padding, fill and
-  border are edited on that Cell row (below).
-
-- **A grid cell, a card and a table column's cell can now have their padding,
-  fill and border changed.** Each is a frame drawn once per row — the Grid and
-  Cards inserts start it with 8pt of padding and a thin border, and labels and
-  tickets are often wanted without one. Clicking one on the canvas already
-  selected it, but the panel then said "This item type has no editable fields
-  yet" — and for a grid cell or a card the label over the canvas called it a
-  section. Selecting one now opens a form of its
-  own: padding, background and border, headed by a line saying that every cell
-  or card uses it. It also has a row of its own in Structure (Cell, Card) with its
-  fields under it; the grid, the cards and a column that has one offer "Edit the
-  cell frame" or "Edit the card frame"; and the label over every one of them
-  now says it is a repeating part.
-
-  Padding is new to the Designer — no container could set it before. The field
-  takes one number for every side. A document that gives the sides different
-  values says so under the field, and a number typed there replaces them with
-  one.
-
-- **The Designer now shows you where the links are.** A hyperlink has no
-  visual form of its own — the engine never underlines or recolours one, that
-  is the author's choice — so on the canvas a linked item looked exactly like
-  an unlinked one, and finding the links meant selecting items one at a time
-  and watching the property panel. Every linked item now carries a small chain
-  mark beside its text, and images get one too.
-
-  The mark follows what the PDF will actually contain rather than what the
-  template says: a URL the engine refused — anything outside `http`, `https`,
-  `mailto` and `tel`, or over the length cap — is not marked, because there
-  will be no link there to click. Neither is an item your `visible:` condition
-  hid. A rich text item is marked once, at the item, even when only one word
-  inside it carries the link.
-
-  For anything reading the engine directly, this is a `linked` flag on each
-  placement in the box index, behind the capability key
-  `inspect.boxes.linked`. It is absent unless true, so a document with no
-  links produces exactly the bytes it did before.
-
-- **The canvas says where a link goes, not just that there is one.** The chain
-  mark above answers "is there a link here?" and stops; finding out where it
-  went meant selecting the item and reading the property panel. Hovering a
-  linked item — or reaching it with the Tab key — now shows its destination on
-  the page, just under the mark.
-
-  What it shows is what you authored. For a link that is a data field —
-  `{web.tracking_url}`, which is the common case — that is the field's name
-  rather than a finished address: the engine fills those in when it renders, so
-  the page cannot know the answer before then.
-
-  The same fact reaches a screen reader, which never hovers: a linked item's box
-  on the canvas describes itself as carrying a link, whether or not anything is
-  pointed at.
-
-- **Rich text can now be written in the Designer, not just read.** A text item
-  built from `spans:` — a run in bold, a struck-through clause, one word in a
-  different colour — could be listed and linked, but the words themselves still
-  had to be typed into the YAML by hand. Double-clicking such an item on the
-  page now opens it as flowing text: select a few words, press bold (or ⌘B), and
-  the fragments underneath split to fit. You never see a fragment boundary and
-  never place one, which is how every editor you have met behaves.
-
-  What the page cannot show, the property panel does — a fragment's size and
-  font, its named styles, and a bound fragment's data field. The panel keeps its
-  fragment list, because it is still the only place that answers "which one
-  carries a link" at a glance.
-
-  Editing one fragment rewrites one fragment: a document with eighteen
-  hand-authored fragments comes back with the seventeen you did not touch on
-  their original lines, keeping their own named styles and links. Splitting a
-  linked fragment leaves both halves linked.
-
-  While you are editing this way, the toolbar's own bold, italic and text
-  colour stand down — they act on the whole block, and two controls with one
-  name is a choice you cannot make. Size, font and fill stay live, because the
-  page's bar offers none of them. And if a change is too large for the document
-  to accept in one step, the editor stays open with your words in it rather
-  than closing over them.
-
-- **A failed eval grader can now be read rather than re-run.** `make skills:eval`
-  scored a transcript and threw it away, so the one moment you need the answer —
-  a grader just said it was wrong — was the moment it was gone, and a second run
-  is a different sample that need not reproduce. Each run now writes its
-  prompt, transcript and tool trace under `<cases>/results/<timestamp>/`, and a
-  failing grader names the directory on its own line. The two ablation arms get
-  separate leaves, so the no-skill run cannot overwrite the evidence for the one
-  beside it. `--no-save` turns it off.
-
-- **The skills can now be tested, not just read.** A skill is a page of rules,
-  and nothing here could say whether one still WORKS — a grep proves the
-  sentence is present, and presence was never the question. `make skills:verify`
-  is the new gate: it parses every eval case under `skills/evals/`, validates it
-  against the schema `claude plugin eval` itself enforces, and fails when a
-  product skill has neither a case nor an exemption carrying a reason. It never
-  calls a model, so it costs nothing, and it runs on markdown-only pull requests
-  too — which is what a skill change usually is.
-
-  `make skills:eval` is the other half, and deliberately not a gate: it puts each
-  case to a fresh agent that has the skill and nothing else, then scores the
-  answer. Add `ABLATION=1` and it runs each case a second time WITHOUT the skill
-  and prints the delta — the only thing that says whether the skill did anything,
-  since a case that scores the same either way is measuring the model. Measured
-  on the first case: 1.00 with the skill, 0.00 without it.
-
-  The case format uses the official `claude plugin eval` schema's key names and
-  bounds and rejects what it rejects, so the cases survive if that command
-  becomes available. It never executes author-supplied code: a case carrying
-  `scaffold_script` is refused rather than gated behind a flag. Both halves need
-  PyYAML.
-
-- **The Designer shows the fragments a rich-text item is made of, and can give
-  one of them its own link.** A text item can be built from `spans` — several
-  fragments drawn as one wrapped block, so part of a sentence can be bold, or
-  coloured, or a link on its own. The Designer had no surface for them at all,
-  and the consequence was worse than a missing feature: because a NON-EMPTY `spans`
-  takes precedence over both `text` and `data`, the content tab was showing —
-  and letting you edit — a `text:` the engine ignores. Typing in it changed
-  nothing on the page and made the document report a conflict.
-
-  Selecting such an item now lists its fragments instead, one row each, showing
-  what the fragment holds and marking the ones that already carry a link.
-  Picking a row opens a **Link** field for that fragment alone, with the same
-  insert-a-data-field button and the same refusals as the item-level one. A
-  fragment's link wins over the item's for the words it covers, which is what
-  the item-level `?` now says.
-
-  If such an item still carries the plain `text:` that is not being drawn, the
-  panel says so and offers to remove it — previously the only surface that
-  could clear it was the one that should never have been editing it.
-
-  A fragment's row names it by what it holds, clipped at the same length the
-  layer tree uses — the engine puts no bound on a fragment's text, and that
-  name is what a screen reader re-reads on every visit to the row.
-
-  Not yet: creating, reordering or retyping a fragment. The words themselves
-  are still written in the file.
-
-- **The Designer can see and edit a hyperlink.** `link: { url }` has been in
-  the template format since links shipped, and the Designer carried only the
-  three diagnostics that report a bad one — so a text item or an image could
-  neither be given a link nor, more to the point, be shown the one it already
-  had. Ten of the bundled examples carry a hyperlink; opening any of them
-  showed nothing about it anywhere. Selecting a text item or an image now
-  offers a **Link** field on the content tab, with the same insert-a-data-field
-  button the text editor has, so a URL that has to differ on every document
-  (`https://example.com/invoices/{order.code}`) is picked rather than typed.
-  Its `?` says the thing the screen otherwise cannot: a link is a PDF
-  annotation, so nothing about the preview changes when you add one.
-
-  A URL the engine would refuse — a scheme other than `http`, `https`,
-  `mailto` or `tel`, or one past its 2048-byte cap — is now refused at the
-  field, with the reason, instead of being written to the file and coming back
-  as a warning after the next render. A URL that interpolates a data field is
-  always accepted: the engine judges it after the field is filled in, and so
-  neither can the Designer before then.
-
-  Not yet: any indication on the canvas — the layout box index carries no link,
-  so there is nothing there for an overlay to draw.
-
-- **Insert ▸ Character grid and Insert ▸ Page break.** Both have been in the
-  template format for a long time and neither could be created from the GUI: a
-  character grid — manuscript paper, a kanji workbook sheet, the boxed entry
-  cells on an application form — could only reach a document by opening one of
-  the three bundled presets that happened to carry one, and a page break by
-  opening the one bundled preset that did. Insert ▸ Character grid drops a
-  20×10 ruled sheet, sized from the page width, that the existing character-grid
-  panel then edits. Insert ▸ Page break drops a break, and because the engine
-  only paginates the body's flow, the row shows itself disabled — with the
-  reason — when what you have selected would put the break in a header, a footer,
-  a container or an absolute-positioned body.
-
-- **The Designer can draw an ellipse and a checkbox, and edit what makes them
-  draw.** Both have been in the template format since form marks shipped, and
-  neither could be created from the GUI at all. Selecting one in a file that
-  already used them offered its size and position, and the show-conditionally
-  row every item has — and nothing about the mark itself: not the tick, not the
-  data that decides it, not the outline. Insert ▸ Ellipse and Insert ▸ Checkbox
-  now sit beside Line, and selecting either opens a real panel: what makes it
-  draw (always, or when a data field says so — and for a checkbox, ticked or
-  blank), its outline width and colour and its fill, and its size and position.
-  An ellipse can also
-  be told to **circle another item** instead of standing on its own
-  coordinates — the "circle the chosen answer" mark forms are full of. It picks
-  its target from the items the page has actually placed, which means the ones
-  carrying an `id:`; the Designer does not yet author ids itself, so today that
-  list fills up only for a template that already has them. While an ellipse is
-  circling something, the panel stops offering the coordinates the engine does
-  not read.
-
-  A fresh checkbox deliberately authors no size: unset, the engine matches its
-  frame to the surrounding text's cap height, which is the size you want beside
-  a label and the one you cannot work out yourself. That is also why a band item
-  had to learn an exception on the way in: an item with no width of its own is
-  given the full margin box, a rule written for text, which would have drawn a
-  checkbox in a header as a frame the width of the page. A fixed-aspect mark now
-  takes the position and nothing else.
-
-### Changed
-
-- **Parallel worktrees no longer each build their own 13 GB cargo
-  target.** The local gates kept the engine's build output in every
-  checkout's `engine/target`, and a handful of worktrees running gates at
-  once filled a 460 GB disk. Engine containers now lease one of three
-  shared Docker volumes for the length of a gate, so the disk spent on
-  builds is bounded by the number of slots rather than the number of
-  worktrees (`make clean:target` resets a slot that has grown); a tree
-  gets back the slot it used last, and a busy pool makes a gate wait
-  rather than fail. `make investigate:gates` shows who holds what and
-  `make clean:target` frees the space. CI is unchanged — the pool is off
-  there.
-
-- **The site now lives at
-  [shojiku.kengos.jp](https://shojiku.kengos.jp).** It was served from a
-  Cloudflare Pages subdomain, which search engines treat as a free shared
-  host carrying none of its own standing. The READMEs, the docs and every
-  package's homepage field point at the new host. The old
-  `shojiku.pages.dev` keeps working: a published package's metadata
-  cannot be rewritten after the fact, and v0.2.0 still names it.
-
-- **Every site page's browser title now says what the page covers and
-  what Shojiku is.** Titles were a bare page name ("Tech", 「技術」), and
-  the English and Japanese homepages shared one, "Shojiku". Every
-  page's title now ends in a per-language suffix, "Shojiku — call it
-  from any language" or 「好きな開発言語から使える帳票エンジン shojiku」,
-  and most pages' titles now name their subject ("Technology, licensing
-  and the security model"). The
-  navigation labels are unchanged. The homepage also gains a short
-  section on why the format is shaped the way it is, linking to Concept.
-
-- **`get_reference` and `get_example` answer their content directly.** The
-  MCP tools used to wrap the whole `resources/read` result in one more
-  pretty-printed JSON string, so a model read escaped markdown and an
-  escaped schema, and the heaviest reference page cost about half again as
-  many bytes as it needed to. They now return the read's own parts as
-  embedded `resource` content (each keeps its URI and MIME type), and the
-  schema half and a key's node are compact JSON. Clients that parsed the
-  old single text part as JSON need to read the `resource` parts instead.
-- **`resources/list` reports what a reference page costs to read.** The
-  `size` of a reference page counted its markdown only, about a tenth of
-  the real read for the largest pages; it now counts the markdown plus the
-  schema part.
-- **A format-catalog probe list is capped the same way everywhere.** Asking
-  for more than 16 probes is now refused whole by the CLI (`--probe`), the
-  MCP `format_catalog` tool and the browser build alike. The CLI used to
-  accept any number and mark the overflow one by one, and the browser build
-  refused only past 32.
-
-- **A table's vertical alignment now reaches the text cells it is set above.**
-  `verticalAlign` on `row.style`, on a `row.conditionalStyles` entry, on the
-  zebra `row.alternateStyle` or on the table's own `style` used to be ignored:
-  a body cell took its column's value, or centred. Now a body cell takes its
-  column's, then a matching rule's, then the zebra row's, then the body row's,
-  then the table's, and centres only when none of them sets one; a header label
-  falls back from its column to `header.style` and then to the table, and a
-  header group from its own style to the table. Named styles on each of those
-  count too. A template that set `verticalAlign` on one of those places for no
-  effect will now see it take effect. Engines that do this declare the
-  capability `table.style.verticalAlign`, and the Designer offers vertical
-  alignment on the body rows, a rule and **Text (whole table)** only against
-  such an engine.
-
-- **Dragging a column in a table's column sheet now shows where it will land,
-  and can be called off.** A line runs down the whole column strip at the gap
-  the column would drop into, and only where letting go would actually move it.
-  Escape cancels the drag, as it does in the layer tree and the
-  conditional-formatting list. All three lists now share one drag gesture, so
-  they also agree on the details: when the browser cancels a second pointer
-  (another finger on a touch screen), a drag in progress now carries on. On a
-  touch screen a finger on a column header now drags the column instead of
-  scrolling the sheet, as it does on a layer-tree row and a rule's grip.
-
-- **Designer buttons that showed a typed character now draw an icon.** The ▲▼
-  on every number stepper, the ▼ that opens the character grid's ruling-width
-  and ruby-size presets, the − and + beside the zoom level and the font size,
-  the column sheet's drag grip, the move-up, move-down and remove buttons on a
-  table's column list, and the remove button on the list-data dialog's fields
-  were text, so they drew in whatever font the system picked — the braille grip
-  and the arrows most visibly. They now use the same icon set as the rest of
-  the chrome, and every button keeps the name a screen reader announces.
-
-- **`mergeEmptyCells` now merges a table's empty cells the way a spreadsheet
-  does.** In a body row an empty cell joins the nearest cell with a value on its
-  LEFT, which widens to the right over it: in `[A][ ][B]` it is now A's cell
-  that spans the empty column, where B's cell used to widen leftward over it. An
-  empty cell with no value to its left now stays a cell of its own — so a
-  leading run of empty cells no longer widens the value after it, and a row that
-  is empty throughout keeps every column's cell and its column rules instead of
-  becoming one full-width cell. A section-heading row that should read as one
-  wide cell now puts its heading in the FIRST column and leaves the rest of the
-  row empty — and the merged cell is then that first column's own cell, so an
-  alignment the column authors for its values wins over a row style's; a
-  template that relied on the old behaviour, with its heading in the last
-  column, draws that row with its column rules until the data is moved.
-  The key's name and its default (off) are unchanged. In the Designer the switch
-  reads "Merge empty cells into the cell on their left", and its ? says where
-  the heading goes. The bundled layout showcase's résumé-style table now puts
-  its section headings in the first column.
-
-- **A selected table's settings are now folded into sections, the way Google
-  Docs shows table properties.** The Content tab lists **Columns**, **Rows and
-  cells**, **When the table crosses a page**, **Blanks** and **Header groups**;
-  the Decoration tab lists **Table style**, **Border**, **Header row format**,
-  **Body row format**, **Conditional formatting** and **Named styles**. Only the first section of each tab starts open. A closed
-  section shows what it is set to in one line — "Row height auto (min 24pt) ·
-  Header Auto · Padding 4pt", "Rules: 2" — so you can read a table's settings
-  without opening anything, and open only the part you want to change. Which
-  sections you opened stays that way while you switch tabs and select other
-  items, until the Designer is reloaded. The Header groups section now lists
-  the groups, each with the number of columns it covers; clicking one selects
-  it. Every section but Border has one ? beside its title that explains the
-  whole section, in place of the ? that sat beside single switches (the border
-  editor inside Border keeps its own); the 「Detailed
-  formatting」 disclosure is gone, split into the two row-format sections. Some
-  labels are plainer: the page switches read "Continue rows that do not fit on
-  the next page", "Repeat the header row on the next page too" and "Do not
-  split the table", the row-height choice is Auto or Fixed, and a header
-  group's column count is labelled "Columns covered".
-
-  The border editor's note on a table was also wrong and is corrected. It said
-  a table's border draws the outer frame only, but one width for all four
-  sides — which is what **All sides** sets — is the grid between the cells;
-  only a per-side setting draws an outer frame.
-
-- **The template-size readout says what it is a size of.** A template holding
-  an image showed "Template size 0%" in the toolbar — true, since the bundled
-  invoice and receipt are each well under 1% of the 2 MB limit, but it did not
-  say what the percent was of, and it read 0% for any template under about
-  10 KB. It now shows the two amounts, "Template size 12 KB / 2 MB", with a ?
-  beside it that says what the limit is for. Near the limit it still turns bold and offers to raise it,
-  or says the template is at the largest limit there is.
-
-- **Document settings no longer draw a blank page next to the real one.** The
-  page-setup section showed a white outline of the page's shape under the
-  margin field while the rendered page sat in the column beside it, so it read
-  as a preview that had failed to load. The outline is gone; a named size now
-  states its dimensions as a line of text under the orientation select
-  ("210 × 297 mm", or "297 × 210 mm" when landscape).
-
-- **The Designer's zoom percentage now means the printed size.** At 100% an
-  inch of the page takes the 96 pixels a browser counts as an inch — the same
-  100% as Google Docs, Word or a PDF viewer. (How closely that matches a ruler
-  held to the glass depends on the display, exactly as it does in those apps.)
-  Before, 100% showed the page at one and a half times that, so every number in
-  the zoom control was a third smaller than what it showed: a page opening at
-  36% was really at about 55%, and picking 100% drew an 80mm receipt as wide as
-  120mm.
-
-  A document still opens fitted to the window, at the same size as before, and
-  the number beside it is now the true one. The steps are the same numbers as
-  before, so the largest, 400%, now shows the page at four times its printed
-  size rather than six — which also means a page small enough to need more than
-  that to fill the window (a label or a business card on a large screen) now
-  opens at 400% rather than filling it.
-
-- **Internal tracking codes no longer appear in the source.** Two dozen
-  comments in tests and example templates named an item in a planning queue,
-  which is private and whose entries are deleted once the work ships. So they pointed at nothing: a reader met a label they could
-  not look up, attached to an explanation that was perfectly good without it.
-  Each now says what it means instead. Nothing about behaviour changed; this is
-  the comments only.
-
-  A check now sweeps the repository for them, so the next one fails a build
-  instead of waiting to be noticed. There was a rule and a Claude Code hook,
-  but the hook only sees an edit as it is made — it could not see what was
-  already there, and it never fires for an edit made any other way.
-
-- **The Designer's browser test now runs on every pull request.** It already
-  existed and already passed; nothing ran it unless somebody typed the command.
-  Every other check on the Designer runs in jsdom, which never lays anything
-  out — so "nothing is clipped", "nothing overlaps", "this menu opens the right
-  way" were claims no gate could read, however green the build was. The
-  tooltip fix below is what made that concrete: nine tooltips were being
-  cut in the shipped app, across four different parts of the window, while
-  every check we had called the build green.
-
-  It adds no time to a pull request — the checks run in parallel and this one
-  finishes inside the slowest of them — and on failure it now uploads the
-  browser's own report, with a trace and a screenshot of the moment it broke.
-
-### Fixed
-
-- **Hiding a container now hides the attached lines and circles inside it.**
-  A `line` with an end attached to another item, or an `ellipse` circling
-  one, was still drawn when its own `visible:` failed inside a container
-  row, column or grid, or when a container holding it was hidden. It now
-  paints nothing there and is reported hidden, like the rest of the hidden
-  subtree.
-
-- **An attached line or circle in a header or footer is drawn once on every
-  page.** The band repeats on each page, but its attached items were all
-  drawn on the first page their target appeared on — stacked there, and
-  missing from every other page. Each page's copy now attaches on its own
-  page. One attached to an item in the body appears only on the pages that
-  item is on.
-
-- **A circle around another item with a zero or negative size is skipped
-  with a warning.** An `ellipse` with `anchor:` drew a mirrored or collapsed
-  oval when its `box.w` or `box.h` was zero or negative. It now warns
-  `mark_missing_size` and is skipped, like any other ellipse; leaving the
-  size out still fits the circle to its target.
-
-- **A range warning on the free end of an attached line names that line.**
-  When the end given as `x`/`y` of a line whose other end is attached is out
-  of range, `length_out_of_range` carried no item path, so the Designer
-  could not point at the line.
-
-- **A container with a collapsed child is measured without it.** A child
-  hidden with `visible: { collapse: true }` still counted toward its row's
-  width when a parent sized that row to its content (`flexBasis: content`,
-  or a grid `auto` column), so the row was laid out too wide.
-
-- **The hosted Designer now serves each font's license beside the font.**
-  The Designer site ships the bundled font packs so the editor can draw
-  with them, but it copied only the font files and their manifests, so
-  `OFL.txt`, `BIZ_UD_Gothic_OFL.txt` and the IPA Font License Agreement
-  never reached it. Those licenses are what make redistributing the fonts
-  allowed, and both require the license text to travel with the font.
-  Each pack's text files (its license, plus IPAmj Mincho's own readme)
-  are now copied with it, and a pack with no license text fails the build
-  instead of deploying. The Docker image and the CLI's packs archive
-  already carried them.
-
-- **The guide for hosting the Designer now says it can rename and delete
-  data items.** `docs/designer-mount.md` still promised that the Designer
-  never renames or deletes a field, after the data-item editor learned to
-  do both. A host that relied on the promise would miss that a saved
-  definitions file can now drop or rename a key. The guide now says what
-  a rename rewrites (the open template and the definitions), what a
-  delete changes (the definitions only), and what both leave alone: the
-  project's other templates, your stored params and the sample params,
-  which keep the old name. It also says that the template and
-  definitions saves are separate requests, so a stored template can name
-  a key the stored definitions do not have yet.
-
-- **The security page and `SECURITY.md` no longer say that cargo-deny
-  ignores no advisory.** Since the notice that unsafe-libyaml (the YAML
-  parser serde_yaml uses) is unmaintained was accepted, `deny.toml` has
-  carried one ignore. They now say what is true: no vulnerability
-  advisory is ignored, and the one ignore is that notice, argued in
-  `deny.toml` and removed with the move off serde_yaml.
-
-- **Images in a header or footer table are drawn.** A table placed in the
-  header or footer is drawn on every page it repeats on, but the images of
-  its `type: image` columns, and the data-bound images inside its `cell:`
-  columns, were only loaded for tables in the body. In a band table those
-  cells stayed empty with a `missing_asset` warning. They now load the
-  same way as in the body.
-
-- **A typo in a header or footer table is now reported, and so is one in a
-  table heading.** Validation used to check tables and repeats only in the
-  body, so a table placed in the header or footer could bind an unknown
-  key — its data, a column, a row condition or a cell — and simply print
-  blank with no diagnostic. Those keys now get the same
-  `unknown_data_key` / `missing_data` checks as in the body, at the
-  band's own path. A `repeat` or `repeat_flow` left in a band is still
-  skipped (`repeat_in_band`), but its keys are checked too. A column's
-  `label` and a header group's `label` were never checked anywhere,
-  although they read `{key}` from the top-level params like any static
-  text. An unknown or missing key and an unknown format pick are now
-  reported at that column or group, and a `{…}` that cannot be a key
-  (`interpolation_key_charset`) at the table.
-- **An item type's own keys are addressable in the MCP reference.**
-  `shojiku://reference/image#fit` and `#qr_code`'s keys, and
-  `template#Item.image`, used to answer "reference node not found" because
-  the item types exist only as branches of `Item`; the item pages now
-  answer for their own keys.
-- **The format catalog no longer slows down on a huge `formats:` registry.**
-  Deduplicating spellings was quadratic and the registry half was not
-  capped; it is now linear, and offers at most 256 of the document's own
-  entries (the limit `validate` already reports).
-
-- **The warning for a line end shifted too far now names that line and the
-  real number.** When an attached end's offset puts it past ±1,000,000pt,
-  the line is not drawn and `length_out_of_range` warns. The warning used
-  to carry no item path, so the Designer could not point at the line, and
-  it quoted the offset's X even when the Y was at fault. It now carries the
-  line's path and the coordinate the end would have landed on.
-
-- **Switching a text back from Data binding no longer brings back another
-  item's sentence.** The mixed text a switch to Data binding drops is kept
-  for the way back; after items were reordered, inserted or removed, or an
-  undo or redo, it could be offered to whichever item then sat in that
-  place. It is now forgotten as soon as such an edit happens (the image
-  switch above works the same way).
-
-- **The image reference now says what happens to an image with neither a
-  picture nor a data field:** the document does not render
-  (`image_source_missing`), just as with an image that has both. It used to
-  describe this as a warning. The same page now also lists the warnings a
-  data-bound image gets when its field has no value.
-
-- **Formatting part of a text keeps that text's size and font.** Making one
-  word of a mixed-style text bold (or any other change on the formatting
-  bar that splits it) used to give the new pieces the text block's size,
-  font and letter spacing instead of the ones that part had, so the word
-  and the rest of its part could shrink or change face. Text typed right
-  after a data value takes that value's size too.
-
-- **Leaving a data value's Blank placeholder unchanged no longer adds an
-  undo step.** Clicking into the field under a bound text's format (and now
-  under a data value inside mixed-style text) and leaving without changing
-  anything recorded an edit nobody made.
-
-- **Leaving a document-properties field unchanged no longer adds an undo
-  step.** Clicking into Title, Description or Language under Document
-  settings › Document properties and leaving without changing anything
-  used to put an edit nobody made on the undo stack; now nothing is
-  recorded.
-
-- **Line breaks in mixed-style text are kept.** Pressing Enter while editing
-  mixed-style text on the canvas now starts a new line that stays after the
-  edit is saved; before, the new line was joined back onto the one before it.
-  The formatting bar also sits above the text now, instead of pushing the
-  words being edited below where the page prints them.
-
-- **Selecting a table column that names its kind opens the column's own form.**
-  A column with `type: qr_code`, `type: image` or a spelled-out `type: text`
-  opened the property panel of an item of that type — a QR code or an image
-  item — instead of the column form, so its label, width and binding could not
-  be edited there.
-
-- **Escape inside a dialog closes only the dialog.** It also cleared the
-  canvas selection, so pressing Escape in a confirm opened from the column
-  sheet closed the sheet along with it.
-
-- **Restoring a draft of a bundled template in the standalone app keeps its
-  data-item edits.** Edits made in the data-item editor were saved with the
-  draft but dropped when the draft was restored, so the template reopened with
-  the definitions it started from; they now come back, as they already did on
-  a mounted host.
-
-- **A conditional-formatting rule on a table's rows now says when its `scope`
-  does nothing.** A rule's condition is written like a form mark's
-  (`when: { key, equals? }`), so `scope: document` was accepted there too — and
-  silently ignored: a rule always reads the key from each row, never from the
-  top-level params. Validation now warns `row_condition_scope_ignored` on the
-  rule, translated wherever the other row-condition warnings are, and the
-  Designer's diagnostics panel offers **Fix** to remove the `scope` — the rule
-  editor does not show it, so that button is the way to clear it there. How the
-  table renders is unchanged, and `scope: element` (what a rule does anyway)
-  stays quiet.
-
-- **Reordering a list in the Designer takes the first entry's comment with it.**
-  A `# comment` written directly above the first entry of a list stayed at the
-  top when that entry was moved — dragged in the layer tree, the column sheet,
-  the conditional-formatting rules or on the canvas — and ended up above
-  whichever entry came first instead. It now travels with its entry, the way
-  every other entry's comment already did. A comment separated from the first
-  entry by a blank line is read as a note about the whole list and stays at the
-  top.
-
-- **Layout warnings in the Designer show measured sizes as readable numbers,
-  and five of them are reworded in plain terms.** A warning comparing two sizes used to
-  print the engine's raw floating-point value — 「内容 13.299999999999999pt に対し
-  利用可能 12pt」 — and now prints at most two decimals (13.3pt); counts and other
-  whole numbers are unchanged, and because the engine only warns past a 0.01pt
-  margin the two numbers never round to the same value. The text-overflow,
-  row-overflow, vertical-text, child-overflow and layout-settings warnings were
-  also reworded in English, Japanese and both Chinese catalogs: they no longer
-  lean on internal words such as "content box", and each overflow names the
-  remedy (make the box taller, the text smaller, and so on). The engine's own
-  message text, which the CLI prints, is unchanged.
-
-- **A template or definitions file nested past its cap is refused before it is
-  read, so it can no longer take down the process reading it.** Containers nest at
-  most 32 levels and a definitions schema at most 16, but both caps were checked
-  only after the document had been read into the engine's model — and reading a
-  deep enough chain, still well inside the YAML parser's own limit, could run the
-  reading thread out of stack. That ends the whole process rather than failing the
-  call, so an SDK, the MCP server or the CLI could be stopped by one hostile file
-  instead of reporting it. The caps are now checked first. The limits are
-  unchanged, and so is what they report: `container_depth_exceeded` naming the same
-  container, and the same located parse error for a schema. A template past the
-  container cap now reports that diagnostic on its own, since it never becomes a
-  document for the other checks to run over.
-
-- **Choosing a named style on a line no longer breaks the whole document.**
-  A line's Style tab offered the named-style list, but a line cannot take
-  named styles: ticking one wrote a key the engine rejects, and the preview
-  went blank with a parse error pointing at the page body rather than the
-  line. The list is gone from lines (and only from the types that cannot use
-  it), and a document already carrying that key can be repaired from the
-  diagnostics list: its row now names the line and offers to remove the key.
-
-- **A mistyped or unsupported key on an item is reported on the item itself.**
-  Anywhere a template is checked — the Designer, `shojiku validate`, the MCP
-  tools, the SDKs — a key an item does not take used to be reported against
-  the whole page body (`sections.body`), with a line number pointing at the
-  body too. It now names the item (`sections.body.items[3]`, or deeper inside
-  a container, a repeating cell or a table column cell) and, as a separate
-  `key` value, the offending key when it is one of the item's own. The line
-  and column are left out for these, since they only ever located the body.
-
-- **A saved block that carries a table is no longer offered inside a repeating
-  cell.** The engine does not draw a table inside a repeat's cell, a card or a
-  table cell yet — it skips the table and warns — and inserting a saved block
-  was how one got there: the row looked like any other, the block landed, and
-  the table simply did not appear. That row now shows the reason and does
-  nothing, the way it already stands down for a page number outside a header or
-  footer, and clicking it while the selection moves is refused a second time.
-
-  The block is looked into, so a table wrapped in a container is refused as
-  well — **and the refusal is of the whole block, which is wider than the
-  engine's**. Grouped with other items, a table used to be the only thing
-  missing: the container and everything beside it drew. Those now do not
-  arrive either. That is the trade: a block that lands half-drawn is the
-  failure this exists to prevent, and it cannot be stated as a reason on the
-  row without also being true of the insert.
-
-  Nothing else about a table changes: inside a container in a header, a footer
-  or an ordinary body it still draws, and that is still offered. Dragging a
-  table into a cell, pasting one and placing one from the data panel were never
-  possible and still are not. Two cases are deliberately not refused — a block
-  whose own repeat cell, card or table cell holds a table, and a block whose
-  container holds a page number. Neither draws wherever it lands, so refusing
-  them would leave a block you had saved insertable nowhere at all; both are
-  now noted on the row instead (below).
-
-- **A saved block that holds an item which can never draw now says so in the
-  Insert menu.** A page number lays out only directly in a header or footer,
-  and a page break, a Grid or Cards only directly in a body that flows. Saved
-  inside a container — or inside the block's own repeat cell, card or table
-  cell — such an item has no place it can go. The same is true of a table
-  inside the block's own repeat cell, card or table cell. The engine skips
-  either with a warning wherever the block lands, and the block arrives with a
-  gap, often an empty frame where the page number was meant to be. The row
-  used to look like any other. It now carries a second line, "Contains an item
-  that never draws".
-
-  The row stays usable. No target fixes this, so a row that stood down would
-  leave a block you had saved insertable nowhere — and a reason naming a place
-  would be untrue. Inserting it behaves exactly as before, and the diagnostics
-  panel still names the skipped item. A block that holds only the item itself,
-  not wrapped, is unchanged: it goes where that item draws — and so is a table
-  that is merely wrapped in a container, which still draws everywhere but
-  inside a repeating cell. The check looks a
-  bounded distance into the block, the same limits the table refusal uses, and
-  says nothing about a block past them.
-
-- **Group into a container no longer narrows an item whose width is a
-  percentage.** A width written as a percentage is a share of whatever holds
-  the item, and a new container starts at the item's own left edge — so a
-  container holding an item that sat 100pt from the left edge of the text area
-  was 100pt narrower than that area, and the item's share was taken from that. A
-  half-width rectangle 100pt in came out 50pt narrower than before it was
-  grouped. The container now takes the percentage width, its minimum and maximum
-  widths and its margin, and an item that had a width of its own fills the
-  container, so it keeps the width it had. An item whose width came from what
-  holds it — one with only a minimum or maximum in percent — is left without
-  one, so a side-by-side or grid layout still measures it the same way. An item
-  at the very left edge was never affected, which is why this went unnoticed.
-
-- **Group into a container no longer resizes an item whose height is a
-  percentage.** A height written as a percentage is a share of whatever holds
-  the item, and a new container is only as tall as what is inside it — so once
-  the item was inside one, its height had nothing left to be a share of. The
-  engine dropped it and warned; a rectangle, which needs a height to exist at
-  all, stopped being drawn. The container now takes the percentage height, its
-  minimum and maximum heights and its margin, and the item fills the container,
-  so it keeps the size it had. Two shapes cannot be preserved this way wherever
-  the item sits — a minimum or maximum height in percent with no height of its
-  own to carry it, and a line with an end written as a percentage — and Group
-  into a container is no longer offered for those, the way it already stands
-  down for a page number. The command is withheld for them wherever the item
-  sits. Almost everywhere the shape is simply lost: the height collapses to the
-  text and a warning appears where there was none. The one place it can come
-  through unchanged is a side-by-side container, and only for a line or for a
-  height written as the full 100%; any other percentage there loses the height
-  the item had with nothing said about it. So the command stays away from that
-  case too, rather than appearing for one particular number.
-
-- **Group into a container no longer moves the item.** The new container
-  started at the corner of whatever held the item, so in a header, a footer or a
-  fixed-position body its outline and handles sat at the top of the page, away
-  from the item. An item with its own position could also move: inside a
-  flowing body or another container it was placed from the new container's
-  corner instead of where it had been, and a position written as a percentage
-  sent it to the top of the page. An item that shared a row or a grid with its
-  neighbours, stretched across the row or spanning grid columns, lost that share
-  and shrank. The container now takes the item's position and its share of the
-  row or grid, so the item stays where it was, at its size, and the container's
-  outline is around it. A line has no box, so the container takes the height of
-  the line's topmost end and the line is redrawn relative to it, except in a
-  flowing body, which does not read a container's height. One size can still
-  change: an item whose width is a percentage and that sits away from the left
-  edge is now narrower by that distance, because the percentage is of the
-  container.
-
-  Group into a container is also no longer offered for a page number, a page
-  break, a Repeat grid or a Repeat flow. None of them can be drawn inside a
-  container, so grouping one made it disappear from the page.
-
-- **Dragging an item onto the header or footer in the Structure pane puts it
-  where that band prints.** An item from the body, or from inside a container,
-  has no position on the page, so after the drag it sat at the top of the page
-  even when it went into the footer. It now lands at the top of a header, or at
-  the foot of a footer. An item moved between the header and the footer, or out
-  of a fixed-position body, keeps the position it already had.
-
-- **A container, a data field or an image inserted into a header or footer now
-  appears where that header or footer prints.** Inserting text or a shape there
-  already placed it, but the container picker, the new-data-field dialog and
-  image import put the item at the top of the page, far from the footer it
-  belonged to. They are now placed like any other header or footer insert. In a
-  footer, an item with a fixed height — an image, a rectangle, an oval, a QR code — is
-  also lined up with the bottom edge instead of hanging past it.
-
-- **Inserting into a container inside a header or footer now behaves like any
-  other container.** With such a container selected, Insert ▸ Page number was
-  offered and then skipped, because a page number only works placed directly
-  in the header or footer. It is now disabled there with that reason. Text and
-  other elements put into the container used to be pinned to a spot on the
-  page, outside the container's own layout; they now join the container like
-  anywhere else. The reasons on the Page number and Page break rows also read
-  true everywhere they appear: the page-break reason used to say "only the body
-  can hold one" even inside the résumé's body, which does not flow.
-
-- **Inserting a saved block no longer places something that never draws.** A
-  reusable block holds whatever item it was saved from, and some items lay out in
-  only one kind of place: a Grid, Cards or a page break needs a body that flows,
-  and a page number has to sit directly in a header or footer. The Insert menu
-  only kept the first group out of headers and footers, so a Grid saved on an
-  invoice went into the résumé's fixed-position body, or into a container, and
-  the engine skipped it with a warning. A block whose item needs one particular
-  kind of place now stays in the menu but is disabled everywhere else, and says
-  where it can go.
-
-- **Choosing Cards for list data no longer inserts something that never draws.**
-  On a document whose body places items at fixed positions (the résumé preset is
-  one), the cards were offered like any other presentation, and the engine then
-  skipped them with a warning. Cards and the new Grid now stay visible there but
-  cannot be picked, and the dialog says why; Table and List, which lay out
-  anywhere, are unchanged.
-
-- **A template with a runaway YAML alias no longer crashes the Designer when you
-  select the item holding it.** YAML aliases can expand a few lines into
-  millions of values, and the Designer refuses to read past a safe limit. The
-  property panel and the Structure pane already treated such an item as
-  unreadable and showed the whole document instead, but the format bar above the
-  canvas read it anyway and took the entire Designer down with it. The format
-  bar, the column editor, the reusable-block library and the placement label
-  now all read the selection the same careful way, so selecting the item leaves
-  everything working — and you can still delete it.
-
-- **Selecting from the layer tree or the breadcrumb clears a canvas
-  multi-selection.** With two boxes selected on the canvas, clicking another
-  item in the Structure pane — or a crumb in the selection path — moved the
-  selection but left the other box highlighted and the align buttons showing,
-  so aligning would have moved a box together with one you had just deselected.
-  Those clicks, and a field in the data palette, now select just that item, as a
-  plain click on the canvas does. A multi-selection also goes away when anything
-  else replaces the selected item — a jump from the problems list, an insert —
-  and when an undo, a redo, or an insert, move or delete changes which items its
-  members point at. Aligning keeps it, so you can still align and then
-  distribute the same boxes.
-
-- **The Designer no longer tells you nothing is selected while it shows
-  something as selected.** With no item chosen, the layer tree marks the whole
-  document as the current row and the property panel shows the document's page
-  size and margins — yet the panel's sentence said "Nothing selected" and
-  pointed at a "layer list" the sidebar actually calls Structure. It now says the
-  panel is for the whole document, and what selecting an item will do, in words
-  that also hold in a document with no items yet.
-
-  Shift-clicking an item with nothing selected used to be worse: it started a
-  multi-selection with no primary item, so the toolbar counted "2 selected" and
-  offered the align buttons while the tree and the panel both still said the
-  document was current. A Shift-click or Shift-drag with nothing selected now
-  simply selects, as it does in other design tools, and a multi-selection
-  goes away whenever its primary item does — including when you open the
-  document settings and come back.
-
-- **The document preview is drawn at your screen's real resolution.** On a
-  Retina or any other high-density display, the page in the middle of the
-  Designer was the one soft thing on the screen: the engine rendered it at one
-  pixel per CSS pixel and the browser then stretched that over the two or three
-  real pixels the screen has, while every label, menu and tree row around it was
-  drawn sharp. Small text in a document — an address line, a table cell — was
-  the first thing to go, which is exactly the text you are checking when you
-  look at a preview. The preview is now rasterized for the pixels your display
-  actually has, so it is as crisp as the chrome around it. It occupies the same
-  space on screen as before; only the sharpness changed.
-
-  The safety limit on how large a single page render may get is unchanged, and
-  it is applied after the display's density is taken into account — so a very
-  dense screen cannot turn into a very large allocation. A standard-density
-  display renders exactly what it did before.
-
-- **Two tooltips that had never been visible now show.** The placement mode
-  picker — "Let the container position this" / "Pin this at its current
-  position" — carries a hint on each option, and both were being cut away
-  completely: not shortened, not clipped at an edge, but zero visible pixels,
-  for as long as that control has existed. The control draws itself as one
-  rounded box by clipping its own contents, and a tooltip hangs just below the
-  row it is clipping. It rounds its end segments instead now, and clips
-  nothing.
-
-  Nothing had caught it because the browser check added alongside these fixes
-  only looked left and right. It looks up and down too now, and it knows the
-  difference between a tooltip you could scroll to and one you could not —
-  below a pane that scrolls is fine, below a box that cannot scroll is a hint
-  nobody can read.
-
-- **A long tooltip no longer hangs out of the panel it belongs to.** A hint too
-  wide for the room beside its control used to spill past the property panel,
-  which let the panel be dragged sideways into empty space. Each tooltip is now
-  bounded by the room actually available where it hangs, so an over-long one
-  ends in an ellipsis inside the panel instead of escaping it. Spotted on the
-  stepper's "values in percent or em cannot be stepped" hint, which was
-  stretching the panel by 90px.
-
-- **Tooltips are readable wherever they appear.** A tooltip sat centred under
-  the control it explains, which is wider than the control itself — so on a
-  narrow button near the edge of a panel that scrolls, the overhanging part was
-  cut off, and cut off for good: it hung past the edge the panel scrolls FROM,
-  where scrolling cannot reach it. It is not a translation problem, though
-  longer names make it worse — four tooltips were being cut on the English
-  editor screen, the worst by 63px. In Japanese the property panel's
-  「リンクにデータ項目を挿入」 lost its first four characters and read as
-  「データ項目を挿入」 — which is, word for word, a different control's tooltip
-  on the same screen, so the hint did not look broken, it looked wrong.
-
-  A tooltip now measures the box that would clip it and hangs off whichever
-  side fits. It is not something a control opts into: the same handful of
-  shared controls appear in both columns of the property panel, and two halves
-  of one row can overflow in opposite directions, so the side that works is a
-  property of where the control ended up rather than of what it is. Nine
-  tooltips were being cut across four different parts of the window — the
-  toolbar, the Structure pane, the property panel, and inside a single segmented
-  control — and three of the nine were cut on the RIGHT.
-
-  A side effect worth naming: a cut-off tooltip was also stretching the
-  Structure pane's sideways scrolling by 82px while nobody was hovering it, so the pane
-  could be dragged sideways into empty space. That is gone with it.
-
-- **The canvas resize handles stay white on the page in dark chrome.** A handle
-  took its fill from the chrome's surface colour, so in the dark scheme it
-  turned into a near-black square sitting on a page that is white in both
-  schemes. The snap grid had gone the same way once before, as a stroke that
-  faded to nothing in dark chrome. Every mark the selection overlay draws on the
-  page is now checked — it has to use either a fixed colour or one that still
-  reads as ink on white — instead of the rule being written in a comment beside
-  each mark and remembered by whoever adds the next one.
-
-- **Deleting a rich-text fragment's words now deletes the fragment.** It used to
-  leave an empty one behind — invisible on the page, listed in the property
-  panel as `(empty fragment)`, and impossible to remove from there. A fragment
-  your document carries as deliberately empty still survives a commit
-  untouched; only one you emptied yourself goes.
-
-- **A development guard no longer reads a `|` inside a quoted argument as a
-  shell pipe.** This is repository tooling rather than the engine: the hooks
-  under `.claude/` decide a handful of development rules, and two of them
-  scanned the raw command text. That refused ordinary calls like
-  `make gui:test F='a|b'` — and, the way round that matters, let a genuinely
-  piped gate through when an argument happened to contain a `;`. Every
-  predicate now scans the command with its quoted spans blanked out.
-
-- **`make make:check` runs in CI, which its own documentation had claimed for
-  some time.** The Makefile's target-to-CI-job table filed it under the
-  `versions` job; that job ran only `make version:check`. Unwatched, the gate
-  had gone red on a sentence in the MCP reference reading "would only make it
-  unreachable", which its detector reads as a reference to a target named `it`.
-  Both halves are fixed: the sentence, and the wiring that would have caught it.
-
-- **The property panel no longer offers a size-and-position tab that breaks the
-  file.** Selecting a `repeat` (the n-up imposition grid) offered exactly one
-  tab, size and position, over an item the format gives no `box` at all — so
-  typing a width there stopped the whole document rendering until it was undone.
-  A `repeat_flow` had the same tab beside its content one. Neither offers it now.
-  That is a stopped mistake rather than a finished panel: a `repeat` still has
-  no way to edit its data source, its cell or its grid.
-
-### Changed
-
-- **The line budget says what it is for, and stops counting tests.** Every
-  component caps how long a source file may be, and nothing anywhere said why —
-  so the number read as arbitrary, and a file that would not fit got trimmed
-  rather than split. The reasons are now written down once, in
-  `docs/guidelines.md`: an over-long file is read wrong, most sharply by an AI
-  that reads an excerpt and generalises from it, and length is a smell in the
-  same sense `rubocop` means by `Metrics/ClassLength`. Both reasons are about
-  the design, which settles what to do at the cap — seams are chosen for
-  cohesion, the cap wins over both, and a cohesive unit that will not fit is an
-  implementation threading too much through one place, never an argument for a
-  waiver. Test files are out of the length budget on both sides now, matching
-  what the gui gate has always done: a suite is a list of independent cases
-  rather than a unit of design, so neither reason reaches it, and splitting one
-  to fit a number moves cases across a seam chosen by arithmetic. Sixteen
-  engine files that still kept their tests inline moved them to the sibling
-  files the other 165 already use, which took 1,070 lines of tests out of the
-  production budget they were being charged to — `layout/src/boxes.rs` was 296
-  lines against a 300 cap and is 133 lines of code.
-
-- **The development rules an AI session works under are enforced now, not
-  recited.** `.claude/hooks/`, with the `.claude/settings.json` that registers
-  them, is the only tracked part of that directory: two hooks Claude Code runs
-  against its own tool calls in this checkout. They refuse a `make` gate feeding
-  a pipe (a pipeline reports the last command's status, so it exits 0 over a
-  failed gate), `make -n` (not a dry run here — recipe lines containing
-  `$(MAKE)` still run for real, and one such run took the gate lock away from a
-  live gate), a `cargo` invocation on a host that has no Rust toolchain, a
-  commit made with signing disabled against a ruleset that requires signatures,
-  an attribution trailer in a commit message or PR body, and a push at the
-  protected `main`; a merge asks first. Every one of those was already written
-  down in two to five places and broken anyway, which is the argument for a
-  control rather than another reminder. Nothing here changes what a human
-  contributor may run — but review a change to the hooks themselves as code,
-  since they execute in whatever checkout they sit in. `make hooks:verify` is
-  the gate over them, and it asserts both halves: every refusal still fires,
-  and the legitimate spelling beside each one still passes.
-
-- **The value field on a conditional rule is no longer a white box.** Wherever
-  you say "…when the data equals this" — a table's row conditions, an item's
-  show-conditionally setting, and now a form mark — that one field was drawn by
-  the browser rather than by the app: in dark chrome it was a white rectangle,
-  the brightest thing on the panel, on the one control that is asking you for
-  something. It now looks like every other field beside it.
-
-- **The Designer's property panel puts the common things first.** Selecting a
-  rectangle opened on 「表示する条件」 — the setting that hides an item unless the
-  data says otherwise — with a two-sentence explanation and a full-width
-  button, above the background and border controls that are why anyone opened
-  the panel. That setting now sits BELOW the tabs, and until it is used it
-  costs a single row: the same explanation is behind the `?` beside it. The
-  corner-radius field was in the same shape from the other direction — a
-  four-line paragraph wrapping next to a field a third of the row wide, ending
-  on an orphaned `pt / mm / em` — and its explanation has moved behind a `?`
-  too, so the field gets the whole row. The border preview beside them was the
-  brightest thing on the panel, a near-white sheet in dark chrome outshouting
-  every control that can actually be pressed; it is one step calmer and now
-  wears the same hairline outline as everything else, and its four clickable
-  edges say so more clearly on hover.
-
-- **Every stepper button now names its own field.** The ▲ and ▼ were called
-  just "Increase" and "Decrease", so a screen reader met six identically named
-  buttons on the page-setup view and eight more on a typical item's placement
-  tab — x, y, width and height, two buttons each — with nothing to tell them
-  apart. They read "Increase width", "Decrease all sides" and so on, in every
-  language. The three page-setup numerals — custom
-  width, custom height and the all-sides margin — also ask for a numeric
-  keyboard again on a touch device: they had one as plain browser number
-  inputs and lost it when they gained the house stepper.
-
-- **A field picker's ▼ sits flush against its box**, the way the steppers and
-  the font-size box already did; the scope badge that used to be wedged
-  between them has moved to the line underneath, beside the description of
-  what the field is. Buttons that act on a ROW rather than filling an input
-  deliberately keep their gap and all four of their borders — a list row's
-  delete button, and the ▼ that opens a format row's variants.
-
-- **The property panel says something when nothing is selected.** It used to
-  be one apology and one button in an otherwise empty column. It now names the
-  page and the margins the document is set to, and says what to do next. It
-  states neither when it cannot read them honestly — a page size this build
-  does not recognise, or a margin whose value it would have to invent, is
-  simply not shown.
-
-- **The Designer reads better at a glance.** Three things were competing for
-  the eye in the wrong order. In the layer tree, a row showing a bound value
-  put the item's text and its binding on one line that could not wrap, so on
-  the delivery-note template every such row was cut mid-key — `納品番号
-  {delivery.n…` — and the whole point of the row, which field it shows, was
-  the part that got cut. Those labels now wrap to as many as three lines, so
-  ten of that template's fifteen bound rows read in full where none did
-  before; a label that is a whole sentence is still shortened, because a tree
-  row is an index. The first-run invite under the menubar rendered its whole
-  sentence as a coloured, underlined link, which made it the loudest thing on
-  a screen whose subject is the document: it is now ordinary quiet text with
-  an ordinary button beside it. And the toolbar's VIEW controls — grid, sample
-  data, zoom and the capacity readout — ran together as one band with no rule
-  between them, while the format and align clusters beside them were divided
-  normally; each of those view groups now has its own rule, and a group that is
-  not showing takes its rule with it.
-
-- **The Designer's number fields now read as one control.** Every ▲▼ stepper
-  in the property panel floated four pixels
-  off the box it belongs to, so the pair read as an input and two unrelated
-  buttons rather than as a single spinner; the arrows now sit flush against
-  the field, sharing its border, the way a macOS stepper and a word
-  processor's numeric box do. Three fields did not have that stepper at all —
-  the custom page width and height, and the all-sides margin — because they
-  were plain browser number inputs, so the browser drew its own spinner on
-  them instead. They are now the same field as every other stepper: ▲▼ that step the page
-  dimensions by one of whatever unit is selected and the margin by a point,
-  each click a single undo step. The buttons author only what typing the same
-  value would be accepted for, so they stop at a zero-width page and at a
-  zero margin instead of stepping past them.
+This release is mostly the Designer. In 0.2.0 a good part of the template
+format could be written in YAML and nowhere else; in this one most of it has a
+control in the Designer — tables, conditional formatting, grids and n-up
+sheets, rich text, vertical Japanese text and ruby, links, names and anchors,
+the data dictionary itself. The second track is the engine, and it matters
+more if you author templates by hand or through an AI agent: the engine checks
+more of what it is given, refuses oversized and deeply nested input before
+building a document from it, reports warnings at the item they belong to, and
+serves its own syntax reference over MCP. Where a feature depends on the
+engine, the capability key an engine reports for it is given in parentheses,
+so a host can tell whether the engine it loaded has it.
+
+Upgrading: three changes affect how an existing template parses or renders —
+`mergeEmptyCells` now merges leftward the way a spreadsheet does, a table's
+`verticalAlign` now reaches the cells it is set above, and a style or format
+named by a bare number (`5:`) must now be quoted (`"5":`). Fixed lists the
+places where output changes because it was wrong before. The template form
+under Deprecated still parses, with a warning, until 0.4.0.
 
 ### Added
 
-- **The reference's hand-written diagnostics sections are held to the
-  engine.** Twenty-two pages of the syntax reference carry a `Code | Meaning`
-  table under `## Diagnostics` that nothing generates — 174 code claims in
-  those tables — and a twenty-third states its codes as a sentence instead.
-  None of it was checked by anybody. A diagnostic renamed or retired could
-  leave any of them pointing at a code the engine no longer emits, and a
-  reader looking it up in `diagnostics.md` would find nothing there. Each of
-  the 174 table claims is now held to the code registry alone; every name the
-  same sections quote outside a table — the twenty-third page's codes among
-  them, plus capability keys and wire values — is held to the registry, the
-  capability list and the key catalog together, so a prose name that collides
-  with a capability key or a wire value still passes there. `make engine:test`
-  holds it, and `make reference:generate` audits before it writes, so a page
-  naming a stale code stops the run with the tree untouched.
-- **The syntax reference is on the MCP wire.** An agent installed the
-  advertised way — `docker pull` plus `claude mcp add` — has no checkout,
-  so until now it could see working examples and `validate`'s objections
-  but never the reference that says which construct to pick. All 33
-  reference pages are now served: `list_reference` for the index, and
-  `get_reference` (or `resources/read`) on
-  `shojiku://reference/<page>` for a page, which answers its markdown —
-  syntax, defaults, limitations — beside its keys as a JSON Schema
-  fragment from the same key catalog the site renders. Append `#<key>`
-  for that key's node on every shape of the page carrying it — where a
-  key sits on several shapes of one page (`table#style` is on five) every
-  match comes back, each naming its owner — and `#<Shape>` /
-  `#<Shape>.<key>` narrow. Each page documents the shapes it owns and no
-  others, so the fragment's `$ref`s point at other pages; it carries a
-  `$comment` saying that `#/$defs/<Name>` resolves at
-  `shojiku://reference/<page>#<Name>`, and `list_reference`'s `shapes`
-  says which page owns which name. Capability key `mcp.reference`.
-  `resources/list` now carries both families — 34 bundled examples and 33
-  reference pages.
-- **A name in the reference's prose that is spelled like a diagnostic code is
-  now checked.** The first entry in this section — the one holding those
-  sections to the engine — reads only what sits under a page's
-  `## Diagnostics` heading, so a backticked code-shaped name anywhere else
-  went unread —
-  and `fonts.md` had two, for `font_embedding_restricted`, which is a tag in a
-  font-loading error message rather than a diagnostic code. A reader who met
-  it in a real failure and looked it up in `diagnostics.md` found nothing.
-  Every page but `features.md` — the decision log, which names Rust and C ABI
-  symbols in that shape by design — now has its ordinary prose read as well:
-  666 backticked code-shaped names, held to the same three lookups. The eight that are
-  legitimately not codes (a serde attribute, five MCP tool names, a pipeline
-  stage, and that font tag) are excused by name with a reason, and a test
-  requires every excusal to still be needed, so the list cannot quietly become
-  a blindfold. `fonts.md` now says what the tag is where it uses it.
-- **Regenerating the reference refuses as a whole, and something checks that.**
-  The first entry in this section says `make reference:generate` audits before
-  it writes. That
-  was true of the audit and of nothing after it: a page whose tables could not
-  be rendered still aborted part-way through the loop, leaving exactly the
-  half-regenerated tree the rule exists to prevent. Every output is now
-  computed before any is written, so a refusal of any kind — a stale code, an
-  unrenderable table, a spec that does not parse — leaves the tree
-  byte-identical. The claim itself was also unheld: the ordering lived in the
-  generator's `main`, which no test runs and no coverage build compiles. It
-  now lives in the library, where tests drive it over a throwaway tree and
-  assert both the refusal and that nothing was written.
+#### Designer
 
-### Fixed
+- **Tables.** A selected table's panel is folded into sections, the way
+  Google Docs shows table properties, each closed section stating its
+  settings in one line. From there you can set the header row, body rows,
+  banded rows and every column with the same font, size, bold, italic,
+  colour, background and alignment controls; pick one of six looks; set a
+  **Text (whole table)** default every cell starts from; add and remove
+  header groups; choose body row height (auto with a minimum, or fixed),
+  header height, cell padding, what an empty table shows and whether empty
+  cells merge; and, for a table in the page flow, whether rows continue on
+  the next page, the header repeats and the table is kept on one page. The
+  controls show the value a cell actually renders with and say where it came
+  from when the document set it. A column can print text, a QR code, an
+  image or a free layout of items (**Column type**), and the column sheet
+  (the table's columns laid out side by side) compares and switches them.
+  The header row can be hidden on the page while staying in the PDF's text
+  layer.
+- **Conditional formatting works the way it does in Google Sheets.** Rules
+  are listed as sentences with chips of what each one adds; opening one
+  shows its condition, format presets and controls, and every change shows
+  on the page at once. A rule's value is picked from the field's choices,
+  the sample data, or **Yes**/**No** — and **No** is new, writing the
+  boolean `false` so a rule, a show-when condition or a checkbox can match a
+  false flag. Rules reorder by drag or by buttons, the top rule winning; the
+  engine's limit of 16 rules per table is enforced at **Add a rule**.
+- **Containers, grids and repeats.** A container switches between side by
+  side, stacked and grid at any time without losing an item, and gains
+  distribution, cross-axis alignment, baseline alignment and ratios that
+  share out space exactly. A grid sets each column's width and each row's
+  height (fit content, ratio or fixed), spacing per direction, fill order
+  and how many cells a child spans. **Insert ▸ Place list data ▸ Grid**
+  makes an n-up sheet — tickets, labels, cards cut from one page — with
+  columns, rows, gaps, fill order, a new-page switch and cut marks. A grid
+  cell, a card and a column's free-layout cell each get a frame form
+  (arrangement, size, padding, fill, border, overflow, opacity) and a row of
+  their own in Structure; a card list sets the space between cards.
+- **Text styling that only YAML could set.** The Style tab is folded into
+  sections and gains letter spacing, underline and strikethrough (together,
+  if you want both), vertical alignment, what text does when it does not fit
+  (overflow, shrink, "…", clip), opacity, padding and margin per side (with
+  **Auto** margins to centre a fixed-width item) and minimum/maximum sizes.
+  A page number, a list and a container get font controls; manuscript paper
+  gets a Style tab.
+- **Rich text is written on the page.** Double-click a text, select some
+  words and press bold, italic, underline, strikethrough or a colour, and
+  only those words change; plain text becomes mixed-style text on the first
+  such change, in one undo step. Fragments split and merge underneath
+  without you placing a boundary, fragments you did not edit stay exactly as
+  written in the file, and deleting a fragment's words deletes the fragment.
+  The panel lists the fragments for what the page cannot show — size, font,
+  named styles, a fragment's own link, and a bound value's field, format and
+  blank text.
+- **Japanese typesetting.** A **縦書き・禁則** (vertical text and line-break
+  rules) section sets text direction, character orientation, 縦中横 (digits set
+  across inside vertical text, also on selected characters), the line-break
+  rules, bracket and punctuation spacing and hanging punctuation. A
+  **ルビ（ふりがな）** section adds readings to fixed text, a data field or
+  mixed-style text. A **丸囲み** (circle) section draws an oval around the
+  printed characters, always or only when a field has a given value — one
+  template circles whichever option the data picks. Manuscript paper's grid,
+  ruling, ruby notation, ruby size, line-break rules and named styles all
+  have controls now.
+- **Names and anchors.** Every item, column and cell frame has a **名前（ID）**
+  field; duplicates are refused, and a rename carries every anchor that
+  points at the old name. An ellipse can circle another item and a line end
+  can attach to one by picking the item from a list grouped by section —
+  picking an unnamed item names it in the same undo step — and an attached
+  end can be shifted by a few points.
+- **Links.** A text, an image or a single rich-text fragment takes a
+  **Link** whose URL can include a data field; a URL the engine would refuse
+  is refused at the field. Linked items carry a chain mark on the canvas,
+  and hovering or tabbing to one shows where it goes.
+- **The data dictionary.** The data-item editor shows the definitions as a
+  tree of groups, tables and lists, adds an item anywhere in it, and renames
+  or deletes one — a rename rewrites every place this template uses it and
+  every sample data set, in one undoable step, and says what it will rewrite
+  first. It also sets a field's choices (with printed text), value and
+  length ranges, required, blank text, an example for sample generation,
+  currency, decimal places, unit, a default display format and the list of
+  formats a field allows. A gear on each field in the palette opens the
+  editor on that field.
+- **Display formats.** Document settings gain a display-formats section: how
+  dates, times and money look throughout the document, and a registry of
+  named patterns, previewed by the engine as you type and built from token
+  buttons. The format picker on a bound item offers only what the engine
+  will honour for that field's type, shows the field's own declared formats
+  first, offers a locale pack's own variants (和暦, Japanese era dates, among
+  them) and marks the date-only ones on a datetime field. Renaming or
+  deleting a named format rewrites every reference, including those inside
+  text such as `{issued:closing}`.
+- **Creating things.** Insert gains Line (with editable endpoints), Ellipse,
+  Checkbox, Character grid, Page break, Header and Footer; a header or
+  footer's height and the pages it prints on are editable, and the body can
+  be switched between flowing and fixed-position (asking first, and listing
+  what changes) with its spacing and area. A QR code's error correction, a
+  line's opacity, a template's name and version, and whether an image is a
+  fixed picture or a data field are now set in the panel. Images can be
+  pasted from the clipboard, and GIF and WebP can be placed.
+- **Moving things.** Items can be dragged into a different parent on the
+  canvas or in Structure, by moving left and right as well as up and down.
+  Right-click offers duplicate, delete and borders. Dragging a column in the
+  column sheet shows where it will land, and Escape cancels any list drag.
+- **Seeing what the page does.** The margin box is outlined on the canvas
+  with its `0,0` corner marked; the diagnostics panel lists printed text
+  that has landed on other text; typing in the text field re-renders the
+  page as you type; a hidden header row is outlined rather than left as a
+  gap; the border editor explains that you pick the pen, then the edges; and
+  more warnings have a one-click **Fix**, some offering a choice of two.
+- **A data field placed in text can be repointed** by clicking its chip and
+  picking another field, leaving the wording around it and its format alone.
 
-- **A line placed in a header or footer broke the document.** Band items are
-  positioned by coordinates, and the Designer supplied those by writing a box —
-  but a line has no box: it is two endpoints, and the engine rejects the key
-  outright. So a rule saved as a reusable block and then inserted into a header
-  produced ``unknown field `box` `` instead of a line. A line placed in a band now
-  takes the offset in its own endpoints, which also puts a footer rule down at
-  the foot of the page rather than at the top of the margin.
-- **A thin rule could not be selected on the canvas.** A line is two points, so
-  the box the Designer draws its selection outline in has no thickness — and a
-  zero-height outline is not drawn and cannot be clicked. Any line, including
-  the one inside a cut-here scaffold, was therefore invisible to the pointer:
-  reachable only from the layer tree. Zero-thickness outlines now get a small
-  band around what they mark, so a rule can be clicked and shows a selection
-  like anything else.
-- **A reusable block could break the whole document.** Blocks can hold any
-  element, but a list, a repeat or a page break only lays out in the body — and
-  inside a header or footer it is not a misplaced item, it stops the document
-  rendering at all. Those blocks are now greyed out with the reason while a
-  band is selected, instead of being offered.
-- **`make engine:render` could not render anything.** It passed `--template`
-  where the CLI takes `--templates`, and treated the required `--params` as
-  optional, so every invocation died on the argument parser. Its PNG sibling
-  `make engine:preview` is new beside it — until now the only command that
-  rasterized anything was the one that re-renders the committed examples, so
-  looking at a hand-written template meant opening the Designer in a browser.
+#### Template format and engine
 
-- **Nine diagnostic codes had no explanation on the rendered reference.** The
-  diagnostics page's placement-rules table declared two columns while nine of
-  its fourteen rows carried three — a half-finished edit — and a Markdown table
-  drops every cell past its header's count. So `grid_span_clamped`,
-  `span_outside_grid`, `grid_fr_no_basis`, `reflow_budget_exhausted`,
-  `cut_marks_clipped`, `header_group_span_clamped` and the three `anchor_*`
-  codes showed their severity and nothing else. The table now has the three
-  columns its rows were already using, and the five rows that never had a
-  severity have one.
+- **`visible:` shows or hides any item by the data**, as in
+  `visible: { key: status, equals: approved }`, keeping its space by
+  default, or closing up with `collapse: true`, like CSS
+  `visibility: hidden` and `display: none`.
+- **A line end can attach to another item and an ellipse can be drawn around
+  one:** `to: { item: total_box, edge: left }` and `anchor: <id>`. An
+  anchored item follows its target wherever the layout puts it, on the
+  target's page (in a header or footer, on every page); it hides with its
+  container, and a missing target warns and draws nothing.
+- **`header: { visuallyHidden: true }`** paints nothing for a table's header
+  row but keeps its labels in the PDF's text layer, so a text extractor or
+  an AI can still read what each column means.
+- **`textDecoration: underline line_through`** draws both lines, as CSS
+  `text-decoration-line` does (capability `style.textDecoration.combined`).
+- **A linked flag in the box index** (`inspect.boxes.linked`), set only
+  where the PDF will contain a clickable link.
+- **`localeFacts`** renders what a locale will print for a date, a number
+  and an amount, through the same path a bound field takes (capability
+  `locale.facts`).
+- **New warnings.** `row_condition_scope_ignored` for a `scope:` a row
+  condition ignores, `deprecated_syntax` for a form that is being removed,
+  and `grid_row_overflow` / `grid_span_overflow`, whose arguments are
+  numbers only, so a translated message has no English left in it.
+- **The key catalog says what every key means.** All of its nodes carry a
+  `description`, and a description of a closed set of values names every
+  value.
 
-### Added
+#### CLI, MCP and SDKs
 
-- **The Designer can draw a line.** Insert ▸ Line puts a plain horizontal rule
-  in the document, next to Rectangle in the menu — which is what people were
-  reaching for instead, flattening a rectangle to a hairline to get a signature
-  line. The rule spans whatever it sits in rather than a fixed measurement, so
-  it still fits after a page-size change or after being nested in a column, and
-  its thickness, colour, dash pattern and both endpoints are editable in the
-  property panel. The dashed cut-here scaffold is unchanged and still its own
-  menu entry.
+- **`shojiku formats`** lists the display variants each field type can take
+  for a template and locale, with what each renders; `--probe` previews a
+  pattern before you author it.
+- **The MCP server serves the syntax reference.** `list_reference` and
+  `get_reference` (or `resources/read` on `shojiku://reference/<page>`)
+  return each reference page's markdown beside its keys as a JSON Schema
+  fragment, and `#<key>` narrows to a key (capability `mcp.reference`). An
+  agent set up with `docker pull` plus `claude mcp add` has no checkout, and
+  can now read the reference anyway.
+- **`format_catalog`**, a new MCP tool, answers the format vocabulary the
+  same way the CLI and the Designer do, with or without a template.
 
-- **The reference's key and diagnostics tables are now checked against the
-  engine.** Thirty-five tables across twenty-four pages — every key table plus
-  the whole diagnostics registry — are assembled from a committed description
-  of each table and held to the parser's own catalog and the diagnostic-code
-  enum. What that buys a reader is what can no longer happen: on the pages whose
-  tables claim to be complete, a key added to the wire and to no table fails
-  the build by name; a table naming a key the wire no longer has fails the same
-  way, everywhere; and a row can no longer carry a cell the page silently
-  drops. Every one of the 157 diagnostic codes is now held to
-  appearing on the diagnostics page, which until now was a matter of
-  remembering.
+#### Site and documentation
 
-  Each severity column is read from the code registry rather than typed
-  alongside it, so a page and a real diagnostic cannot disagree about whether
-  something is an error or a warning. That is the one column whose VALUES the
-  engine supplies; every other cell is written by hand, deliberately, because a
-  description that says what a key does *on this page*, or a bound like `≥ 0`
-  that the parser enforces without recording it in the schema, is not something
-  the catalog can supply. Each page now says which of its parts are generated,
-  so it is visible which half you are reading.
-
-- **The key catalog now says what every key MEANS, not just what shape it
-  is.** The machine-readable description of the authorable wire has carried
-  the structure — types, allowed values, which keys are required — since it
-  shipped, and nothing else: an agent reading it could see that `textOverflow`
-  takes four spellings without learning what any of them does. All 420 of its
-  nodes now carry prose, authored beside the schema and merged in as the
-  document's own `description` fields, so a tool that reads the catalog can
-  explain a key without a second source to go stale. Rust doc comments are
-  still stripped rather than reused: they are written for whoever maintains
-  the engine, in a different register from anything an author reads.
-
-  A gate keeps it complete. A key added to the wire without a description
-  fails the build by name, a description naming a key that no longer exists
-  fails the same way, and a description of a closed set of values — the
-  `left`/`center`/`right` kind — must name every one of them, which is what
-  stops the prose quietly describing more than the parser accepts.
-
-- **The locale picker no longer offers a locale that will not render.** It
-  listed the Designer's own interface languages, five of which — English (UK),
-  (Australia), (Canada), (India), (Philippines) — the engine holds no data
-  for: a document set to one of them failed to render outside the Designer,
-  while the settings panel described it as though it were fine. The list is now
-  the locales the engine can actually resolve. Typing a value by hand still
-  works, and a document that already carries one keeps it; when the data used
-  to describe a pick is not the value written in the file, the panel now says
-  which it was.
-
-- **The document-settings panel now explains a locale pick with the engine's
-  own output.** It used to carry its own table of per-locale example strings —
-  a date, a grouped number, an amount — copied from the locale packs by hand
-  and kept honest by a test. Those examples are now rendered by the engine
-  through the same path a bound field takes, so they cannot drift from what the
-  page prints, and a locale the preview is not running can still be described.
-  A new `localeFacts` query answers it, reported by the capability key
-  `locale.facts`; an engine without it leaves the panel explaining nothing
-  rather than guessing. A locale pack is now fetched once per locale rather
-  than once per settings edit, so editing an unrelated document default no
-  longer re-downloads it — and a brief network failure can no longer leave
-  the panel silent afterwards.
-
-- **A manuscript-paper item can now be given a named style, and told whether to
-  read ruby notation.** Neither had a control: `styleNames` decides where the
-  item's font size, ruling width and cell alignment come from, and its only
-  picker lived on a tab this item type does not get. The ruby switch sits with
-  the content it interprets, and says what turning it on means — while it is off,
-  `《》` and `［＃…］` print as the characters they are, and turning it on makes
-  those marks meaningful in data bound from params too.
-
-- **A colour field now says which colour is in it without being opened.** The
-  swatch alone told you the field existed, not what was set, so a reader who
-  cannot tell two swatches apart had to open the palette every time. The name and
-  the code sit beside the chip. This ships on the text colour, the fill colour
-  and the manuscript-grid ruling colour; the border pen, the line stroke, the
-  table band rows, the named-style form, the defaults page and the format
-  toolbar follow.
-
-- Manuscript paper still has no control of its own for the characters' ink
-  colour or their font family, which is a narrower gap than before rather than
-  a new one: both can now be applied through a named style from the panel.
-
-- **The manuscript-grid controls explain themselves.** Ruling width, ruby size,
-  line-break rules and styles each carry a `?` with a two-sentence explanation in
-  the reader's language — what an unset ruling draws, what the line-break rule
-  moves, which named style wins when two are applied. `Cell size` deliberately
-  has none: the name already says it.
-
-- **A manuscript-paper item's ruling, ruby size and line-break rules can now be
-  edited.** The bundled genkoyoshi templates set a ruling colour that nothing in
-  the Designer could change, and the ruling width, the ruby size and the
-  line-break rule had no control at all — the only way to reach any of them was
-  to edit the file by hand. The width and the ruby size are pickable from a menu
-  as well as typed, and each numeric choice shows what it does: a rule drawn at
-  that width, text set at that size. Turning the ruling off is one of those
-  choices rather than a number to guess — leaving the width unset draws the
-  standard 0.5pt ruling, and choosing "no ruling" draws none.
-
-- **The Designer's colour picker now names every colour, and says which one you
-  are pointing at.** The palette is laid out as hue columns against darkness
-  rows, with the hue named above each column and the step beside each row, and a
-  line under the grid reads out the colour under the pointer — or under the
-  keyboard focus — by name and by code. Picking a colour no longer depends on
-  being able to tell it from the one beside it. The palette also grew from
-  twelve colours to thirty-six; the previous twelve are all still in it, at the
-  same values, so nothing an existing template authored has moved.
-
-
-- **A line break typed into the Designer's text field now stays where you put
-  it.** Pressing Enter at the end of a value inserted the break, but the caret
-  could not rest after it, so the next thing you typed landed back on the line
-  you were trying to leave: `line1` Enter `line2` came out as `line1line2`.
-  Enter is now left to the browser, whose own line handling has no such
-  trouble, and the editor reads back whatever line structure it produces.
-- **A multi-line value is saved as a block literal.** The same field used to be
-  written one of two ways depending on what happened to be inside it: an
-  ordinary address became a plain YAML scalar whose blank lines WERE the line
-  breaks, while one interpolation or one colon made it a `|-` block. Deleting
-  what looked like a stray blank line in the first form silently joined two
-  lines together. Every multi-line value now takes the block form, where the
-  breaks are visible as breaks. Values a block literal cannot spell — one
-  carrying a carriage return — still fall back to a quoted form.
-
-- **The Designer offers a date field's locale variants, and says which ones
-  drop the time.** The format picker on a binding listed a fixed set of
-  spellings the editor carried in its own table, so a locale pack's own
-  vocabulary — 和暦 on a Japanese date field — could be typed but never
-  chosen; it was already offered on the document-defaults picker, which reads
-  the engine's catalog. That picker now reads the same catalog, so a pack
-  shipped after the editor was built is pickable without an editor change.
-  A datetime field also resolves date-only patterns, which are honoured
-  silently and simply stop showing the time; those rows now carry a
-  「時刻なし」 mark, and the engine reports the fact by rendering each variant
-  at two times of day rather than keeping a list of which spellings mean what.
-
-- **The Designer can now add a header or footer to a document that has
-  none.** Every blank start ships without either, and nothing in the editor
-  ever created one — so the page-number row sat greyed out with no way to
-  satisfy it, and the tutorial's footer chapter asked you to select a footer
-  its practice document did not have. Insert now carries a Header and a
-  Footer row, and the Structure tab lists the missing band as a row saying it
-  has nothing in it; either one creates the band and selects it, in a single
-  step you can undo. A band that already exists is simply selected, so the
-  rows never grey out or disappear.
-- **A header or footer's height and which pages it prints on are editable.**
-  Selecting the band opens a form for its two properties — every page, the
-  first page only, everything but the first page, or the last page only, plus
-  the band height. Neither could be changed anywhere in the editor before,
-  not even in the bundled templates that ship with a band.
-
-- **Items can be dragged into a different parent in the Designer.** Until now
-  both the canvas and the layer tree could only reorder an item among its own
-  siblings, so moving something into or out of a container meant deleting it
-  and building it again. Now a canvas drag lands in whatever container is under
-  the pointer — it outlines while you hover it, with the insertion line drawn
-  inside — and a layer-tree drag lands wherever the drop line sits, which you
-  aim by moving left or right as well as up and down, one indent step per
-  nesting level. The flow body, flex containers, the absolute body and the
-  header/footer bands can all receive an item; a grid container and a
-  repeating cell template cannot, and neither can a destination where the item
-  would not lay out at all (a page number outside a band, for example), so the
-  drop is refused rather than leaving the item somewhere it would silently
-  vanish. Moving into a container drops the item's `x`/`y` — the container
-  decides its position from then on, and the canvas says so before you let go;
-  moving into a band or an absolute body writes them from where you dropped it.
-  The whole move is one undo step, and the item keeps its own comments and
-  YAML anchors — a move that would leave an anchor defined after something
-  that refers to it is refused instead, since that document could not be
-  saved.
-
-- **A place to say what a date looks like, and to name a format once.** The
-  engine has accepted document-wide format defaults (`defaults.formats`) and a
-  named `formats:` registry since v0.2, but the Designer had no way to author
-  either — you edited the YAML by hand or set the format on every field. The
-  document settings view gains a display-formats section covering both: pick
-  how dates, times and money look throughout the document, and register a
-  pattern under a name so a field can just say `format: closing`.
-
-  Every sample on that screen comes from the engine rather than from a table
-  the editor keeps by hand. A picker row shows what the variant actually
-  renders; an unset row shows what happens if you leave it alone; a pattern
-  you are typing is previewed line by line as you type it, and each token you
-  can insert shows its own output — so you press 「火曜日」 rather than
-  remember that `EEEE` spells a weekday, typing the literal 年 / 月 / 日
-  between presses. Number, percentage and quantity have no variants to choose
-  from yet, so they show what they render and offer no control rather than a
-  menu whose every entry would be refused.
-
-  Renaming or deleting a registered format rewrites every place that names it
-  — bound fields and the per-type defaults alike — in a single step you can
-  undo in one go, and refuses the whole operation rather than half-doing it
-  when the document is too large to walk safely.
-
-  New: the `shojiku formats` command answers the same question outside the
-  Designer — which display variants each field type can take for a given
-  template and locale, and what each one renders. `--probe date:'yyyy年M月d日'`
-  previews a pattern before you author it.
-
-- **An AI agent can ask the same question.** That vocabulary reached the
-  command line and the Designer but not the MCP server, so an agent authoring
-  through it guessed a `format:` spelling and learned from the warning. The
-  server gains a `format_catalog` tool answering the same question — every
-  pickable spelling per field type, where it comes from, what
-  this engine renders for it, and a preview of a pattern you have not authored
-  yet. Every argument is optional: with no template at all it answers the
-  locale's own vocabulary, which is what you need before there is a document
-  to pass it. A template that does not parse still gets an answer, with the
-  parse error beside it, so an empty registry half is never left unexplained.
-
-- A table's header row can be drawn invisibly with
-  `header: { visuallyHidden: true }`. Nothing about the row is painted — no
-  label text, no band fill, no grid ruling — but the column labels stay in the
-  PDF's text layer, so anything reading the file (a text extractor, a search
-  index, an AI) can still tell what each column means while a person reads the
-  cells. The row keeps its height, and a `headerGroups` row hides with it.
-
-- **Manuscript-paper items are editable in the Designer.** A `char_grid`
-  previously had no content surface and no way to change its grid, so a
-  manuscript-paper template opened from the gallery could not be rebound,
-  retyped, or resized. It now carries a content tab (the bound field or static
-  text) and a 「manuscript grid」 section on the placement tab — cells per line,
-  lines, cell size, line gap, cell gap and the writing direction. The section
-  also says the thing that was costing people the most time: the drawn size
-  comes from the CELLS, not from the width field above it, and clearing the cell
-  size derives it from the item's width instead.
-- **A gear on each data field opens the data-item editor already on that
-  field.** Previously the only gear was on the tab header, so finding a field's
-  sample text meant hunting for it a second time in the editor's own list.
+- **A Features page written for people** (`/features`, `/ja/features`):
+  document kinds, layout, typesetting, data binding, fonts, output and
+  signing, with the limits stated as plainly as the capabilities.
+- **What 1.0 will freeze is written down** in `docs/architecture.md`: the
+  surfaces 1.0 promises to hold still, the rules each may change under, and
+  what it will not promise, such as identical rendered bytes across versions
+  (determinism means the same version and inputs give the same bytes).
 
 ### Changed
 
-- **A dialog now carries the name of the thing you clicked to open it.** Ten
-  pairs disagreed: *Container…* opened "Insert a container", *Download as
-  PDF…* opened "PDF preview", *Edit data fields…* opened a screen titled
-  "Data fields" — the same words as the sidebar tab beside it — and both
-  *Save selection as block…* and *Save as block…* opened one modal that could
-  not be named after either. The two block labels are now the same label, the
-  style-update dialog names the style it is about to overwrite, and the rest
-  take the wording of the row that opened them. In every language, not only
-  English.
-
-- **The Help menu's *Tutorial* row now reads *Tutorial…*.** The ellipsis is the
-  promise that a row will ask you something rather than act — the launcher asks
-  which chapter to start from. Its two neighbours, *Keyboard shortcuts* and
-  *Glossary*, only show you something and stay bare.
-
-- **The Japanese tutorial quotes menu labels without their trailing ellipsis**,
-  as the English one always has: 「挿入」→「コンテナ」 rather than
-  「挿入」→「コンテナ…」. The ellipsis belongs to the button you press, not to
-  the name of it in a sentence about it.
-
-- **A footer placed before the first render lands on the page on Letter.**
-  Positioning an item in a band used the last render to find the bottom of the
-  page, and fell back to a fixed number when nothing had rendered yet — the
-  number being A4's, which every A4 template got right by coincidence and every
-  Letter one got wrong by half an inch, putting the item off the paper where it
-  simply did not appear. The page size and margins the document itself declares
-  are used now, so the answer is exact before anything has rendered; when they
-  cannot be resolved the item goes to the top of the band rather than to a
-  guessed position.
-
-- **An item placed in a header or footer no longer gets a fixed height.**
-  A band insert authored a 14pt-tall box, which is shorter than the line the
-  blank templates' own default text draws (10.5pt) — so the first page number
-  you added to a footer warned that the text did not fit, on every document
-  that starts blank. Text-shaped items now size to their text, the way they
-  already do in the body; rectangles, QR codes and images keep the size they
-  come with, since those need one.
-
-- **Each document section has its own mark in the Structure tab.** The
-  header, body and footer shared one icon, which said only "a section" —
-  the same thing the label beside it already said. They now share a page
-  outline with the band drawn where that section actually prints.
-
-- **A single enormous document is now refused instead of parsed.** Templates,
-  params, definitions and locale packs had no size limit at all: hand one of
-  them a 500 MB file and the engine would read it — twice, since a located
-  parse error needs a second pass over the source. Anything over 16 MB is now
-  refused before it is parsed at all — a host still reads the file, but the
-  engine no longer builds a document out of it — with an error saying how big
-  it was and what the limit is, and nothing of the file quoted back. That covers every door a host
-  can reach: the three document doors, both arms of the locale-pack door, and
-  all four places a font-pack manifest is parsed — including the one a browser
-  hands straight to `addFontPack`. 16 MB is twice the
-  Designer's documented template ceiling, so no real document comes near it;
-  the MCP server keeps its own, much tighter inline limit. Everything under
-  the limit behaves exactly as before. This is a bound on the cost of a large
-  document, and not a fix for YAML alias amplification: that limit belongs to
-  the YAML parser and scales with the input, so it stays a known exposure —
-  written down in the engine rather than implied away.
-
-- **Three things the Designer could do but never said it could.** A layer-tree
-  row has been draggable into another group since cross-parent moves shipped,
-  and nothing on screen said so — one walkthrough found the gesture by
-  accident. The tree now carries a line saying what a row does, with a `?`
-  explaining that dragging sideways is what changes which group an item belongs
-  to, and the keyboard equivalent (Alt+↑ / Alt+↓) has joined the shortcuts
-  list. Any length field accepts `25mm` where it shows points, which was
-  documented in exactly one sentence beside the corner-radius control; the
-  nine fields where that is true now say so on hover — and the three where it
-  is NOT stay quiet, because a plain number, a number-only input and a ratio
-  do not take a unit however similar they look. The glossary explains the full
-  set, including the ones a hover bubble has no room for. And the language switch, previously a grey globe beside an
-  equally grey theme icon — both walkthroughs reached for it and opened the
-  theme menu — now shows the current language in its own name and comes first.
-
-- **Designer buttons now say which one is the main action, and which labels
-  open something.** A dialog's confirming button — Insert, Create, Save,
-  Register, Propose edits, and the confirm on the save/export review — is
-  filled, its cancel sits beside it as a plain outlined button, and there is
-  exactly one filled button per dialog. Seven dialog footers previously drew
-  their confirming action as an outlined button — five of them merely a size
-  larger than the cancel beside it, one with no cancel at all — so nothing on
-  those screens said where to go; four others painted the same fill by hand, which drifted from the shared
-  one. Editing chrome — the toolbar, the property
-  panel, the menubar, the layer tree — deliberately stays unfilled, because
-  those are peers rather than one main action; the empty canvas keeps its
-  filled *Add text*, which is the only thing on the page at that moment.
-  Separately, **File ▸ Save and File ▸ Export now read `Save…` and `Export…`**:
-  both open the review pane before anything is written, and the trailing
-  ellipsis is the long-standing convention for a label that opens something
-  rather than acting at once. The review pane's own confirm still reads
-  `Save` / `Export`, because pressing it does act. One section heading that
-  had picked up the same ellipsis in English and Filipino — while reading as
-  an ordinary heading in the other four languages — has lost it. No template,
-  parameter or produced file changes.
-- **Every `make` gate reads scope-first, and each job has exactly one name.**
-  The commands that check your work were spelled verb-first (`lint:engine`,
-  `verify:sdk:ruby`) and most of them had a second, verbose twin one
-  punctuation mark away (`gui-lint` beside `lint:gui`) — so the grid did not
-  read down a column, and the two spellings of one job were easy to pick
-  wrong. They are now `engine:lint`, `sdk:ruby:verify`, `gui:lint`: scope
-  first, outside-in, colons all the way. Verbosity became a flag rather than a
-  name — every gate prints one PASS/FAIL line by default, and `V=1`
-  (`make gui:verify V=1`) gives the raw output while you debug. The old
-  spellings are gone rather than aliased, and `make help` is the full
-  inventory. Contributors and CI both move with them; nothing about the
-  published packages changes.
-- **The 1900-line Makefile is split one file per scope** — `mk/engine.mk`,
-  `mk/gui.mk`, `mk/site.mk`, `mk/sdk.mk`, `mk/docker.mk`, `mk/proof.mk` — with
-  the root file keeping the shared machinery and the gates that belong to no
-  single scope. A new gate, `make make:check`, keeps it that way: it refuses a
-  target filed under the wrong scope, and — the reason it exists — any
-  tracked file naming a `make` target that does not exist, a CI matrix's
-  interpolated name included.
-
-- **What 1.0 will freeze is written down.** The README has warned that this is
-  pre-1.0 software since the first release, and the one thing it never said was
-  what changes when that warning goes away. The architecture doc now names the
-  surfaces 1.0 promises to hold still — the authored wire (templates, params,
-  definitions), the diagnostics registry, capability keys, the C ABI, the CLI
-  contract the SDKs script, the SDK lifecycle contract, the MCP tool surface and
-  the WASM boundary the browser calls — each with the rule it may change under,
-  and the meaning that gives major, minor and patch from then on. It is equally explicit about what 1.0 will not
-  promise, which is the half that gets assumed: rendered bytes are not
-  identical between versions (determinism means same version, same inputs, same
-  bytes, and a 1.x may still fix a layout bug), the Rust crate APIs stay
-  unfrozen, the Designer versions on its own, and a wrong locale pattern
-  remains a bug to correct. None of this declares 1.0 — it writes the promise
-  down before it is made, so it can be argued with while that is still cheap.
-  The features page said in both languages that the same input renders identical
-  bytes "at any time", which is the reading this now rules out; it says "on the
-  same engine version" instead.
-
-### Fixed
-
-- **The restore-points dialog no longer shows two filled buttons at once.**
-  Arming a saved point's restore left the standing *Save point* button filled
-  beside the confirm's own filled *Restore*, so at the moment the dialog was
-  asking whether to replace your current work, two controls were competing for
-  the eye and neither was clearly the answer. While a restore is armed, the
-  capture button now steps down to an outlined one — it still works, it just
-  stops shouting — and takes its emphasis back when you cancel or restore.
-
-- **The format pickers show their engine-rendered samples again, and the date
-  pattern editor has its token buttons back.** In the standalone app the
-  Designer was running without the engine's format catalog entirely: every
-  picker offered bare wire spellings with no example beside them, a locale
-  pack's own date variants (Japanese `wareki` among them) could not be reached
-  from a binding's panel at all, and the pattern field under 文書設定 →
-  表示形式 showed neither the token buttons nor the live preview line for any
-  input. The catalog was reaching the browser correctly; the app's font-loading
-  transport wrapper simply listed the engine calls it passed on and had never
-  been told about this one. It now passes on everything it does not itself
-  handle, so an engine call added later is far less likely to be dropped the
-  same way.
-
-- **A pattern field that cannot preview says so, instead of asking for a
-  pattern that is already typed.** When the editor gets no answer from the
-  engine it showed “Press a token above, or type a pattern.” — with no tokens
-  above and typing changing nothing. That state now has its own line.
-
-- **A colour field that is not set is now visible in dark mode.** It was drawn
-  as a plain square in the page colour with a hairline border, both of which sit
-  at about 1.2 contrast against the dark panel — invisible, and indistinguishable
-  from a colour too dark to make out. It now carries a chequerboard and an
-  outline that reads against either theme. This is the state every colour field
-  starts in, so it affected all of them: fills, text colours, table bands, rule
-  chips, line stroke colours, the named-style form, the border pen and the
-  document defaults.
-- **The colour palette no longer opens off the edge of the window.** A colour
-  control low in the property panel, or near its right edge, opened a palette
-  that ran past the bottom or the side of the window with no way to scroll to
-  it. It now opens upward or leftward when there is not room the other way.
-
-- **The layer tree and the breadcrumb no longer squash a multi-line value into
-  one line.** A three-line address showed as its lines joined by single
-  spaces, which read as a typo with nothing to say the label had been
-  shortened. A row now shows the first line followed by a `⏎…` marker.
-- **A line break the browser made for you is no longer swallowed on save.**
-  When a native undo, dictation, or an IME left the field's lines wrapped in
-  their own elements rather than separated by plain breaks, saving joined them
-  back together — the field showed three lines and the file kept one, and
-  nothing reported it.
-- **A locale pack's own date format is reachable by the name it was given.**
-  A `format:` pick that happens to be spelled like a field type — `date` is
-  both — was read as re-typing the field before anything looked at the locale
-  pack, so a pack's `datetimeFormats.date` could never be selected under its
-  own name. On a Japanese document that meant picking 「日付のみ」 on a datetime
-  field rendered `2026/11/03(火)`, the plain date default, instead of the
-  pack's `2026年11月3日(火)`; the label promised one thing and the page showed
-  another, with no warning anywhere. A pick on a date or datetime field now
-  consults the locale pack and the document's `formats:` registry first, and
-  only a name neither of them declares changes the field's type. **Documents
-  affected**: any that picks `format: date` on a datetime field under a pack
-  whose `datetimeFormats.date` differs from its `dateFormats.default` — of the
-  seven packs that ships, only ja-JP does, which is why this went unnoticed.
-
-- **The property panel tells a keyboard user where a table band's formatting
-  came from.** The little "from document defaults" bubble on a band's
-  alignment, colour and bold controls only ever appeared on hover, so it was
-  invisible to anyone not using a mouse — and on two of the three it appeared
-  only when you hovered the LABEL, not the control the value belongs to.
-  Pointing anywhere in the row now shows it, and each control carries the
-  origin as its description, so a screen reader reads it too.
-
-- **A row condition no longer looks like it does nothing.** A rule that sets no
-  formatting of its own showed an empty strip while its opened card showed Bold
-  and Center ticked — both true, since the card shows what the matching rows
-  actually render, but nothing said so. The strip now names itself as what the
-  rule ADDS, and says outright when a rule adds nothing — counting every way a
-  rule can add something, including a named style, an explicit "not bold", and
-  the formatting properties the panel does not draw a control for.
-
-- **「Hide the header row on the page」 has moved out from under 「Detailed
-  formatting」** and sits beside the banded-rows switch, where a table-level
-  setting is looked for. The note explaining that the header band's fields stop
-  being drawn stays with those fields, inside the disclosure.
-
-- **A long data key in the field palette wraps instead of painting out of the
-  row.** A key comes from your definitions file verbatim, so nothing bounded
-  its width; the display label and the sample value beside it have always
-  wrapped. A very long one is now shortened for display as well, so a single
-  row cannot bury the rest of the list; dragging and picking still use the
-  whole key.
-
-- **A date pattern too long to preview now says so.** The engine declines to
-  render a preview past a length limit, and the Designer showed the "press a
-  token above, or type a pattern" prompt instead — to someone who had just
-  typed several hundred characters.
-
-- **Renaming a named format no longer rewrites places that were never
-  referring to it.** `symbol`, `name`, `value` and `default` are built-in
-  format names on other field types — `format: symbol` on a money field asks
-  for ¥, not for a registry entry — but the Designer matched references by
-  spelling alone. So registering a date format called `symbol` and then
-  renaming it also rewrote every money field spelling it, and
-  `defaults.formats.currency` with them, silently changing how amounts
-  displayed; deleting the entry stripped those keys outright. The editor now
-  decides what a reference IS from the field's declared type rather than from
-  the word: a named format can only be reached from a date or datetime field,
-  so nothing else is touched, and the "used in N places" count says how many
-  places would really change. A name that shadows a locale's own variant is
-  still a real reference on a date field and is still rewritten. Where the
-  data dictionary cannot answer — no definitions loaded, or a key it does not
-  declare — the old behaviour stands and the reference is rewritten, since a
-  visible over-rewrite beats a name left dangling.
-
-- **A rename now reaches formats written inside text.** `{issued:closing}` in
-  a text item, a link URL, a QR code, a table header label or the document
-  title picks a named format exactly as a field's `format:` does, and none of
-  them were being rewritten — so a rename left those spots naming an entry
-  that no longer existed, and the page fell back to the default form with a
-  warning. They are rewritten now, in the same single undo step as everything
-  else, and a delete strips the format from them rather than the text around
-  it.
-
-- **The Designer refuses to create or rename a format into one of those
-  ambiguous names.** Nothing stopped you calling an entry `symbol` in the
-  first place, which is what made the document able to say one word meaning
-  two things. It now says so and writes nothing, so a new document never
-  acquires the ambiguity. (The engine still accepts such a template; this is
-  the editor declining to author one.)
-
-- **"Used in 1 places" now reads "Used in 1 place".** The reference count
-  shown on a named style and a named format had one wording for every number.
-  It was easy to miss while counts were usually plural; the fix above makes a
-  count of one common, so it is fixed here rather than filed. Languages
-  without a plural distinction are unaffected.
-
-- **A hidden table header no longer looks like a hole in the page.** A table
-  can hide its header row — the labels stay in the PDF's text layer while
-  nothing paints — and the Designer had no way to tell that strip apart from
-  empty space, because the box index reported those cells exactly like painted
-  ones. It now marks them the way it already marks an item hidden by its
-  `visible:` condition, so the canvas draws its faint dashed outline over the
-  header instead of leaving a gap the author cannot explain, on every page the
-  header repeats on. The flag's meaning widened with it, from one cause to
-  exactly two — and to two, not to a general rule about anything that
-  reserves space without painting. An `opacity: 0` you wrote yourself is
-  deliberately not one of them, because that is your own paint choice rather
-  than the document's structure; nor is a mark whose data does not match,
-  which holds its space on purpose so a blank form and a filled one lay out
-  identically. Documents that trigger neither cause are unchanged, byte for
-  byte.
-
-- **Typing into the Designer's text field now shows on the page as you type.**
-  The field wrote its edit to the document only when you left it, so the page
-  beside it kept showing the old words — a newly placed item still reading
-  "Text" while you typed a heading into the panel. Two people trying the
-  Designer for the first time read that as the app being broken: one retyped
-  the same heading several times, the other assumed nothing had saved. The page
-  now re-renders from what is in the field, through the real engine, so what
-  you see while typing is what the document will hold; nothing is written until
-  you leave the field, so undo still takes back the whole edit in one step and
-  saving or exporting mid-edit still writes the text you actually committed.
-  A Japanese, Chinese or other composed entry updates the page when you confirm
-  the conversion rather than mid-conversion.
-
-  While you are converting Japanese or Chinese text, pressing Enter to accept the
-  conversion no longer inserts a line break into the field instead — the editor
-  now stands aside for the whole conversion, as every other field in the app
-  already did.
-
-  Leaving the field a way that is not a click elsewhere now keeps your text too:
-  switching the panel's tab, or selecting something else, used to throw the
-  edit away because the field was removed from the page before it could be
-  written.
-
-- **A PDF downloaded from the Designer keeps the name you gave the document.**
-  The download name was reduced to ASCII letters and digits before it reached
-  your filesystem, which is fine for `Invoice` and destroys a name written in
-  Japanese, Chinese or Hindi: 「領収書」 arrived as `template.pdf`, and
-  「白紙 (A4)」 as `a4.pdf` — the only part of the name that survived was the
-  paper size. Names now keep their own script, and only what is genuinely
-  unsafe in a file name is removed: control characters, the invisible
-  formatting characters — among them the direction marks that can make a file
-  appear to have a different extension than it has — path separators, and the
-  punctuation Windows refuses. The two zero-width characters that carry meaning
-  in Devanagari and in emoji are kept.
-  A very long name is shortened to the 251 bytes a filesystem leaves for one
-  name once `.pdf` is accounted for — by BYTES rather than by characters,
-  because a 120-character Japanese title is around 360 of them and would
-  otherwise produce a name that cannot be written. An English title of the
-  same length is untouched, as it always was.
-
-- **The PDF preview says which page size it rendered.** Changing the page to
-  B5 and previewing showed a correctly-sized B5 page while the document was
-  still called "Blank (A4)" — the name carries the size by convention and does
-  not follow the setting, so the only size stated on screen was the wrong one.
-  The preview now names the page it actually rendered, dimensions included,
-  beneath the preview itself.
-
-- **Opening a blank template no longer logs a missing-file error.** The app
-  asked every template for an optional `definitions.yml` and let the miss pass
-  quietly — but the browser still recorded the failed request, so starting from
-  a blank document, which is where a first-time user starts, opened with what
-  looked like a broken build in the console. The app now asks only when the
-  template actually ships one.
-
-- **The Designer's format picker no longer offers a format the field cannot
-  use.** A template's `formats:` entries were listed on every binding whatever
-  it was bound to, so a date pattern turned up in the menu for a money field,
-  and picking it printed the bare amount with a warning instead of the format
-  you asked for. On a text field the same pick was quieter and worse: unless
-  the field declares a set of choices, nothing happened at all and nothing said
-  so. The menu now lists only the entries the engine will actually honour for
-  that field's type, read from the same engine answer the document-settings
-  pickers have read since they shipped. The box beside the menu is still free
-  text, so a spelling the menu does not list can still be typed, and a format
-  already written into a template is left exactly as it is.
-
-- **A very long date pattern no longer slows a render to a crawl.** The
-  pattern renderer copied the remaining pattern on every character it read,
-  which made rendering quadratic in the pattern's length, so a template
-  carrying a large pattern could stall a render. Patterns now match in place,
-  and a pattern sent for preview is length-capped as well.
-
-- **The npm package reported the wrong version.** `import { VERSION } from
-  'shojiku'` returned `0.1.0` from the 0.2.0 package: the constant is written
-  by hand in its own file and the 0.2.0 bump missed it, while
-  `package.json` — the version npm itself serves — was correct. Only the
-  exported constant was wrong, so nothing resolved or installed the wrong
-  package; code that reports the SDK version in a log or a user agent did.
-
-- **The java deploy recipe installed the previous release.**
-  `examples/deploy/java/pom.xml` still asked Maven Central for 0.1.0 after
-  0.2.0 shipped, so anyone starting from that recipe got the older engine.
-  Its dotnet sibling was already correct.
-
-- **Manuscript paper takes a display format and a blank-form placeholder
-  again.** Both controls were withheld from a `char_grid` on the grounds that
-  the item type does not carry those keys — but they are written on the
-  BINDING (`data.format` / `data.placeholder`), which a `char_grid` carries
-  and resolves exactly as a text item does. A template binding a placeholder
-  for a blank manuscript sheet could not see or clear it in the Designer.
-- **The manuscript grid's steppers no longer look available when they are
-  not.** A cell size, line gap or cell gap written as `5%` or `0.4em` is legal
-  and the engine resolves it, but the panel cannot step a relative unit by
-  points — the arrows now grey out and say why, the same as the width field.
-- **The manuscript-grid hint no longer contradicts itself.** It said the drawn
-  size never comes from the width field, and then told the author to clear the
-  cell size — which is precisely the state in which it does.
-- **A hidden header row looks hidden in the table-style preview.** Ticking
-  「hide the header row on the page」 left the little preview above it painting
-  a full header band, and left the header fill, text colour and weight fields
-  offered as though they still drew something. The preview now shows the row
-  ink-free but full height, and the fields say they are not drawn while the
-  row is hidden.
-- **A data field's description no longer crowds the field palette.** It moves
-  into the same `?` the data-item editor already uses for it, so a long
-  description cannot push a row's usage badge out of view.
-- **The steppers' "percent or em" explanation is only shown for percent and
-  em.** It also fired on a value the panel simply could not read — `auto`, a
-  stray space, a typo — telling the author their typo was a relative unit.
-
-- **The width field says why its steppers are unavailable.** A width of `100%`
-  or `2em` is a perfectly good value the engine resolves at layout, but not one
-  the ▲▼ can step by points — and they simply went quiet, which read as the
-  field breaking. They now carry a note explaining it.
-- **The sample-value section no longer prints its own label twice.** The heading
-  says 「sample value」 once; the editor under it is named after the field, the
-  way an array field's rows always were. A `?` beside the heading explains what
-  the data is for — a preview placeholder, not the value your documents will
-  actually carry.
-- **The bundled manuscript-paper examples name their field properly.** The ruby
-  notation reference had been packed into the field's NAME, where it read as
-  gibberish; it moved to the description, which the Designer already shows in
-  its own right.
-
-- **A table's style controls now show what the page actually does, not just what
-  that one band spells out.** A column sitting in a bold row band showed an
-  unchecked Bold box; a body row taking its colour from the document defaults
-  showed no colour at all — the panel was contradicting the document. The
-  heading-row, body-row and per-column style controls, and the column sheet's
-  alignment row, now show the value the cell renders with, and say where it came
-  from when the document is what set it. Clicking a value the band already
-  supplies leaves the file alone instead of writing a key that changes nothing,
-  and switching one off writes the override that actually turns it off. The
-  Table style miniature follows the same values, so a colour a table inherits
-  reaches the preview. A row-condition rule's own four controls behave the same
-  way, since a rule is one more layer over the body row.
-
-### Added
-
-- **Tables can be styled in the Designer: a heading-row fill, banded rows, and
-  per-column alignment.** A tinted heading row and striped body rows are how a
-  business form is expected to look, and neither was reachable — the panel's
-  fill and border controls only ever reached the element's own style. The table
-  now has a *Table style* section on its Decoration tab: a live miniature of the
-  banding, six one-click looks to pick from, a Banded rows checkbox, and — folded
-  away, since most tables never need it — background, text colour, bold and
-  alignment for the heading row and for the body rows separately. Picking a look
-  is a single undo step and touches only the keys that look owns; anything you
-  set by hand stays.
-
-- **A table column can be aligned.** Right-aligning an amount column or centring
-  a quantity column had no control anywhere, and whether the format toolbar
-  responded to a selected column depended on whether the template happened to
-  spell out a default the column did not need. Clicking a cell now opens the
-  column's own style — alignment, background, text colour, bold — the column
-  sheet gained an alignment row so columns can be lined up against each other,
-  and the toolbar now works on every column rather than some of them. A column's
-  alignment also applies to its own heading, which the panel now says.
-
-- **The border editor explains the order it works in, and its controls line
-  up again.** Setting a border is pen-then-edges — pick the width, colour and
-  line type, then click the edges you want them on, the way a spreadsheet's
-  border tool works — and clicking an edge that already matches the pen removes
-  that edge. None of that was written down; a `?` now carries the whole
-  explanation, in all three places the border editor appears, replacing the
-  one-line hint that only described the click. The pen's three controls had also
-  drifted out of alignment (their labels sat on different baselines and the
-  width box was too narrow to show its own value beside the `pt` badge).
-
-- **The Designer now outlines the page's margin box on the canvas, and the
-  Layout tab explains it.** Coordinates are measured from the corner of the
-  area inside the page margins, not from the paper corner — so an element you
-  place at X 0, Y 0 lands a margin's width in from the edge, and nothing on
-  screen said why. That rectangle is now drawn on every page (dashed, so it
-  cannot be mistaken for something in your document) with its corner marked
-  `0,0`, and the Layout tab carries a `?` that says where coordinates start and
-  why placing something outside the margins is allowed and reported as fine —
-  only content that leaves the paper is a problem. The glossary gained an entry
-  for the margin box. A document with no margins at all shows no outline: there
-  the margin box already is the sheet.
-
-- **Right-clicking an element in the Designer now offers duplicate,
-  delete and borders.** The menu previously carried only "group into a
-  container" and "save as block", so the two most frequent actions on a
-  selected element were reachable by keyboard or through the Edit menu
-  but not where the pointer already was. Borders opens the same editor
-  the format toolbar and the decoration tab use, at the click point. Rows
-  that do not apply to what you clicked are absent rather than greyed
-  out, and every one of them still has its keyboard and menu path — the
-  menu is a shortcut, never the only way through.
-
-- **The site has a Features page written for people.** What the engine
-  can do was only readable as `docs/engine/features.md`, a 2,300-line
-  development record that answers "why is it shaped this way" for
-  contributors and AI agents. It was also rendered as a reference page,
-  where a reader looking for "can it do vertical Japanese, and can it
-  sign a PDF" had to mine it for the answer. The new `/features` page
-  (and its `/ja` twin) walks through the document kinds, layout,
-  typesetting, data binding, fonts, output and signing, with a link into
-  the reference for each, and it states the limits as plainly as the
-  capabilities.
-
-### Changed
-
-- **Colour swatches stay visible in both themes.** A black swatch disappeared
-  into the dark chrome and a white or pale one disappeared into the light
-  chrome. Every colour chip in the Designer — the toolbar's text colour and
-  fill, the border pen, the document's default colour, and the new table
-  controls — now draws a hairline outline chosen from the colour's own
-  brightness, so the swatch reads as a swatch whichever theme you are in.
-
-- **The alignment field is called the same thing everywhere.** The row-condition
-  editor, the new table controls and the Document settings → Defaults form all
-  used to name it differently; they now share one label (English "Text
-  alignment", 日本語「文字配置」), which changes the wording on the Defaults form
-  in every language.
-
-- **A table no longer offers a fill control that does nothing.** Setting a
-  background on a table itself was never drawn on the page. The control is gone
-  for tables; if a template already carries such a fill, the panel shows it,
-  says it is not drawn, and offers to remove it.
-
-- **The committed SBOMs now describe the latest release rather than the
-  latest commit.** The CycloneDX inventories under `sbom/` are refreshed
-  as part of each release, so between releases they can lag the
-  lockfiles. Nothing about them became less checkable: each is generated
-  from a lockfile and records that lockfile's sha256, so you can always
-  tell exactly which dependency resolution an inventory describes — and
-  the tech page now states the release cadence instead of implying the
-  two are held together commit by commit. The old rule asked every commit
-  to carry a matching inventory, which is stricter than what an SBOM is a
-  statement about, and it made routine dependency updates fail on arrival
-  for no reader's benefit.
-
-- **`docs/engine/features.md` is no longer rendered on the site.** It
-  stays exactly where it is in the repository, and every link to it keeps
-  working; it is simply no longer one of the reference's routes, since it
-  records development history rather than authorable syntax. Its raw copy
-  under `/data/reference/` is gone with the route, and `llms.txt` now
-  names the file under Repository truth so anyone who wants the decision
-  log knows where it lives. (`llms-full.txt` never inlined it, and is
-  unchanged.)
-
-- **More warnings can now be fixed in one click, and a fix can offer a
-  choice.** The diagnostics panel could only ever offer "remove the key
-  that causes this", so the warnings people actually get stuck on had no
-  button at all. Three kinds join it. An image that sets both `src` and
-  `data` now offers two buttons — keep one or keep the other — because
-  only you know which source is the real one; they are labelled by what
-  SURVIVES, not by what gets dropped. A shape with no size (`rect`,
-  `image`, `qr_code`, an ellipse or checkbox) can be given one, and only
-  the dimension that is actually missing is written, so a rect you
-  already gave a width to keeps it. And an item hanging off the right
-  edge can be pulled back by exactly the amount the warning reports.
-  A fix that writes a value says which value in its own label — you
-  never press a button to find out what number it chose — and every one
-  of them is still a single Undo away, as before.
-
-- **An image on the clipboard can be pasted straight onto the page.** In
-  the Designer, adding a screenshot or a logo meant saving it to a file
-  first and then picking that file. Pressing ⌘V / Ctrl+V anywhere outside
-  a text field now imports it through the same path as the file picker —
-  same size limits, same notices, same single Undo step. Pasting inside a
-  text field still pastes text, and a paste that carries no image is left
-  alone, so the Insert menu's "paste data" flow is unaffected.
-
-- **GIF and WebP images can now be placed.** The engine already drew
-  both; the Designer accepted only PNG, JPEG and SVG. They are embedded
-  exactly as supplied rather than re-encoded, so an animated GIF stays
-  animated — which also means one over the size limit is refused rather
-  than shrunk, since shrinking it would quietly change what it is.
-
-- **A binding declaration nothing uses can be removed in one click.** The
-  warning already said which declaration was orphaned; the diagnostics
-  row now carries the same "Fix" button the other mechanical warnings
-  have. Mostly of use on a document written by hand or by an AI — the
-  Designer's own editing already cleans up after itself.
-
-- **A data field placed in text can now be swapped for another one
-  without retyping the sentence.** In the Designer, a `{customer.name}`
-  chip could only be changed by deleting it and inserting a replacement
-  from the field menu — fine for a bare placeholder, tedious for a line
-  like "Dear {customer.name}, your order {order.code} shipped", where the
-  wrong field is surrounded by wording you would rather not touch.
-  Clicking a chip now selects it, and a control naming the field it
-  stands for offers the same list of fields; picking one repoints the
-  chip where it sits. Everything around it is left exactly as authored,
-  including the chip's own display format — so a `{total:currency}`
-  pointed at a different amount is still a currency. If the field being
-  dropped needed a named binding to be reachable at all, that binding
-  goes with it, and the replacement brings its own; both land in the
-  single step that Undo reverses.
-
-- **A line can now point at another item, and an oval can circle one.**
-  Give a `line` endpoint `to: { item: total_box, edge: left }` instead of
-  coordinates and it follows that item wherever the layout puts it —
-  handy for leader lines and callouts, which used to need coordinates
-  re-measured by hand every time the content above them changed. An
-  `ellipse` gains `anchor: <id>`, which centres it on that item's text
-  rather than on its box, so circling an answer no longer needs per-font
-  tuning. Following CSS anchor positioning, an anchored item is drawn on
-  the page its target landed on and paints over the content there. When
-  the target cannot be found, nothing is drawn and a warning says which
-  id was missing.
-
-- **Any item can now be shown or hidden by the data.** Add
-  `visible: { key: status, equals: approved }` to a text block, an image,
-  a table — anything — and it draws only when the params say so. An
-  approved stamp that appears on approved orders and nowhere else, a
-  paragraph that belongs only to one kind of customer, a page break that
-  happens only for long documents: each is one key on the item that needs
-  it, rather than a second template. The predicate is the one the form
-  marks already use, unchanged — a plain value, a list to mean "any of
-  these", or a bare key read as a yes/no — so there is nothing new to
-  learn and a wrong literal is still reported before you render.
-  By default a hidden item keeps its space, exactly as a blank form field
-  does today, so a document does not reshuffle depending on the data.
-  Adding `collapse: true` says the opposite: take the item out of the
-  layout entirely and let everything after it close up, gaps and grid
-  cells included. The two match CSS `visibility: hidden` and
-  `display: none`, and hiding an item hides everything inside it.
-
-- **The Designer tells you when text has landed on other text.** Change a
-  document's page size and the parts pinned in points stay exactly where
-  they were, while anything sized `100%` grows with the sheet — so a
-  centred heading can drift across a block of details that never moved.
-  Nothing was wrong with the document, so the engine reports nothing and
-  the diagnostics panel said "no problems" while the two overlapped on
-  screen. It now lists the items whose printed text collides, and
-  clicking one selects it on the canvas. It reads the text the engine
-  actually drew rather than the boxes it drew into: boxes routinely
-  overlap in a perfectly good document — a full-width heading's box
-  spans whatever is pinned inside it — so the boxes cannot tell a broken
-  page from a working one, and the printed lines can. Deliberate overlaps
-  stay quiet, since a stamp over a rule or a watermark behind a paragraph
-  is not text meeting text.
-
-- **A line's endpoints can be edited in the Designer.** A `line` is
-  positioned by its two endpoints rather than a box, and nothing in the
-  property panel could author them — so a line placed by the cut-here
-  scaffold could be restyled but never moved. Its placement tab now
-  carries the four endpoint fields. They take what the engine takes: a
-  plain number is points, or write `100%` to reach the parent's edge. A
-  value outside that is refused rather than written, since both
-  endpoints are required and a rejected one would stop the document
-  parsing.
-
-### Changed
-
-- **The fix button reads 「修正」 in Japanese** (it said 「直す」). The
-  Chinese catalogues already said 修正 for the same button, and the rest
-  of the Japanese interface labels its buttons the same way.
-
-- **Colour swatches announce a colour name instead of a hex code.** A
-  screen reader read the fill and text-colour palettes as "#b91c1c";
-  they now say "Red".
-
-- **The page-size list stops offering the same size twice.** The common
-  sizes for your locale were repeated in the full list below them, with
-  nothing to tell the two entries apart.
-
-- **Clearing a data field says what to do about it.** The message read
-  "data key `` is not declared in definitions", echoing the empty key
-  back; it now asks you to pick a field.
-
-### Fixed
-
-- **A form mark reading a page-global flag no longer reports a false error.**
-  A `data: { key: …, scope: document }` binding inside a repeated block is the
-  documented way to let one top-level field tick a mark in every row — but
-  checking it looked the key up among the row's own fields, found nothing, and
-  reported it as an undeclared data key. The document rendered correctly the
-  whole time; only the check was wrong, which is the worse way round, because
-  it puts a red error on a file that has nothing wrong with it.
-
-- **The Designer no longer offers layout fields on items that cannot take
-  them.** A `line` draws between two points and a `page_break` carries
-  nothing but an id — neither accepts a `box:` — but the property panel
-  showed both a placement tab anyway, and typing a value into it wrote a
-  key the engine rejects, breaking the document you were editing. A line
-  now opens straight on its stroke controls, and a page break says
-  plainly that it has nothing to edit.
-- **A template that fails to open is no longer a dead end.** If the
-  engine or a font pack could not be fetched, the Designer reported the
-  failure on the loading panel and left you there with no way out but a
-  page reload. The panel now carries a way back to the template list —
-  during the wait as well as after a failure, so a load that is simply
-  taking too long can be abandoned too. Backing out is final: an open
-  that finishes afterwards no longer drags you into the editor you left.
-- **The published dependency inventories now describe the dependencies,
-  and only those.** The CycloneDX SBOMs under `sbom/` are what a
-  vulnerability scanner reads to decide what this project depends on.
-  They were generated by scanning each component's whole DIRECTORY, so on
-  a machine that had built the engine, syft also found the lockfile
-  copies cargo leaves under `target/` and inventoried them as real
-  dependencies — 1757 components where the lockfile lists 254. The
-  inventory therefore depended on what the host had last compiled, which
-  is the one thing an inventory may not do. They are now generated from
-  the lockfile alone, and each records the sha256 of the lockfile it
-  describes, so it is checkable which resolution it came from. A new
-  check refuses a release whose committed inventory has fallen behind its
-  lockfile, or a lockfile nobody has decided to inventory.
-
-### Fixed
-
-- **A number the Designer will not accept no longer stays in the box.**
-  Typing something a field cannot take — a blank cells-per-line, a
-  fractional column span, a page margin in the wrong form — was correctly
-  refused, but the panel left the rejected text sitting there. The document
-  still held the old value, the canvas still drew it, and nothing said the
-  edit had been thrown away; the number on screen simply disagreed with the
-  page for as long as you left it. Every such field now snaps back to the
-  value that is actually in the document, so what you read is what the
-  template says. This covers every commit-on-blur field in the property panel,
-  document settings, page setup and the toolbar, and a rejected edit still
-  authors nothing and still adds no undo step. It also covers the quieter
-  version of the same problem: an entry the Designer ACCEPTS but rewrites — a
-  negative gap clamped to zero, an oversized pen width, `40.0` where the column
-  is already 40pt, a keyword typed with stray spaces — used to leave your
-  version on screen while the document held the rewritten one. Now the field
-  shows you what was actually kept.
-- **The same fix reaches the data editor's sample values.** Clearing a
-  date-and-time sample writes nothing — there is no blank value to store — and
-  the box used to sit empty over a sample that was still there. Typing `100.0`
-  into a number sample stored `100` while the box kept showing `100.0`. Both
-  now show what was kept, and tabbing through a date-and-time field no longer
-  rewrites the sample it just read.
+#### Changes that affect existing templates
+
+- **`mergeEmptyCells` merges the way a spreadsheet does.** An empty cell
+  joins the nearest cell with a value on its LEFT; in `[A][ ][B]` it is A
+  that now spans the empty column. A leading empty cell stays its own, and
+  an all-empty row keeps every column. A section heading meant to span the
+  row now goes in the first column — a template with its heading in the last
+  column draws that row with its column rules until the heading moves to the
+  first column.
+- **A table's `verticalAlign` reaches the cells it is set above.** On
+  `row.style`, a conditional rule, the zebra row or the table's own `style`
+  it used to be ignored. A body cell now looks in this order and takes the
+  first value it finds: its column, a matching rule, the zebra row, the body
+  row, the table; it centres only when none sets one (capability
+  `table.style.verticalAlign`).
+- **A template mapping key must be a string.** A key written as a number,
+  `true`, `null` or a collection is refused with a parse error, so a style
+  or format named `5` has to be written `"5":` (see Security).
+
+#### Designer
+
+- **100% zoom is the printed size** — 96 pixels per inch, as in Google Docs
+  or a PDF viewer. It used to show the page at 150%; a document still opens
+  fitted to the window.
+- **The preview is drawn at the screen's real resolution**, so small text on
+  a Retina display is as sharp as the interface around it.
+- **The interface reads in a clearer order.** The property panel opens on
+  what you came for, with show-when and long explanations behind a `?`; a
+  dialog has one filled main button and is titled after the label that
+  opened it; labels that open something end in "…"; layer-tree labels wrap
+  to show the bound field; every colour is named in a 36-colour picker;
+  steppers sit flush against their field and name that field to a screen
+  reader; and buttons that showed a typed ▲, ▼ or grip now draw icons.
+- **Layout warnings print readable numbers** (13.3pt rather than
+  13.299999999999999pt), and the overflow, row, vertical-text,
+  child-overflow and layout-settings warnings are reworded in plain terms in
+  English, Japanese, and Simplified and Traditional Chinese.
+- **The locale picker offers only locales the engine can resolve**, and
+  explains a pick with the engine's own output.
+- **The template-size readout shows both amounts**: the template's size
+  against the Designer's adjustable limit ("12 KB / 2 MB").
+- **A downloaded PDF keeps the document's name in its own script** — 「領収書」
+  used to arrive as `template.pdf`.
+
+#### CLI, MCP and SDKs
+
+- **`get_reference` and `get_example` return embedded `resource` parts**
+  rather than one escaped JSON string; a client that parsed the old text
+  part as JSON needs to read the parts instead. `resources/list` reports a
+  reference page's real size.
+- **A key an item does not take is reported at the item**
+  (`sections.body.items[3]`) by `validate`, the CLI, the MCP tools and the
+  SDKs, with the key as a separate `key` value; it used to point at the
+  whole page body.
+- **A format-catalog probe list is capped at 16** everywhere: the CLI's
+  `--probe`, the MCP `format_catalog` tool and the browser build.
+
+#### Docker image
+
+- **The runtime base is `gcr.io/distroless/base-nossl-debian12`** instead of
+  `cc-debian12`. Nothing in the image links OpenSSL — the one TLS client,
+  the authoring-time font fetch, is rustls — so `libssl3` is gone and its
+  advisories with it; the image adds only `libgcc_s.so.1`, which the
+  binaries need.
+
+#### Site
+
+- **The site lives at [shojiku.kengos.jp](https://shojiku.kengos.jp)**, and
+  every package's homepage points there; `shojiku.pages.dev` keeps working,
+  since v0.2.0's metadata still names it. Page titles name their subject and
+  end in a per-language suffix.
+- **`docs/engine/features.md` is no longer a reference route on the site.**
+  It is the development record; it stays in the repository and `llms.txt`
+  points at it.
+- **The committed SBOMs describe the latest release,** refreshed as part of
+  each release. Each is generated from a lockfile alone and records that
+  lockfile's sha256.
 
 ### Deprecated
 
-- **Writing `page.margin` as a `[top, right, bottom, left]` array is
-  deprecated, and 0.4.0 stops reading it.** It still applies the four
-  margins, but `validate`, the CLI's report, the MCP server, the Designer
-  and the SDKs now show a `deprecated_syntax` warning naming the
-  replacement: the per-side map `{ top, right, bottom, left }`, or a bare
-  number for all four. The Designer already rewrites the array to the map
-  on the first margin edit. Engines that report the capability key
-  `diagnostics.deprecated_syntax` emit the warning.
+Each of these is removed in 0.4.0. From now on a template form or a diagnostic
+code is deprecated one release before it goes: before 1.0 it is removed in the
+next minor release, and from 1.0 in the next major one.
 
-- **The diagnostic codes `horizontal_overflow` and `vertical_style_ignored`
-  are deprecated and leave the registry in 0.4.0.** Nothing emits either
-  of them (`vertical_style_ignored` never fired in a release), so the only
-  thing to change is a catalog or a matcher that still lists them.
+- **`page.margin` as a `[top, right, bottom, left]` array.** It still
+  applies, with a `deprecated_syntax` warning in `validate`, the CLI, the
+  MCP server, the Designer and the SDKs (capability
+  `diagnostics.deprecated_syntax`). Write the map
+  `{ top, right, bottom, left }`, or one number for all four sides. The Designer rewrites the array
+  on the first margin edit.
+- **The diagnostic codes `horizontal_overflow` and
+  `vertical_style_ignored`.** Nothing emits either; drop them from a catalog
+  or matcher.
+- **The diagnostic code `grid_cell_overflow`.** Nothing emits it from 0.3.0;
+  a matcher keyed on it should match `grid_row_overflow` and
+  `grid_span_overflow` instead.
 
-- **A grid child taller than its rows now reports `grid_row_overflow` or
-  `grid_span_overflow`, and `grid_cell_overflow` is deprecated.** The old
-  code named the case in an English `extent` argument (`row track` /
-  `spanned rows`), so a translated warning showed those words untranslated.
-  Each case now has its own code carrying only numbers: `child` and `track`,
-  plus `span`, the number of rows spanned. Nothing emits `grid_cell_overflow`
-  from 0.3.0, and it leaves the registry in 0.4.0, so a matcher keyed on it
-  should add the two new codes.
+### Fixed
 
-- **Removals now follow a written rule.** A template form or a diagnostic
-  code is deprecated one release before it is removed: before 1.0 in the
-  next minor release, from 1.0 at the next major. Until now the wire and
-  the code registry were described as append-only.
+#### Engine
+
+- **Header and footer tables are checked and drawn like body ones.** Their
+  data, columns, row conditions and cells now get `unknown_data_key` and
+  `missing_data`, and their image columns load instead of warning
+  `missing_asset`. A column's or header group's `label` is checked anywhere.
+- **A locale pack's own date format is reachable by its name.**
+  `format: date` on a datetime field under ja-JP now prints the pack's
+  `2026年11月3日(火)`, not the plain default.
+- **A form mark reading a `scope: document` flag inside a repeat** no longer
+  reports a false undeclared-key error.
+- **A very long date pattern renders in linear time**; it used to be
+  quadratic in the pattern's length.
+
+#### Designer
+
+- **Inserts land where they draw.** Items inserted or dragged into a header
+  or footer appear where the band prints (a footer item at its foot);
+  inserting into a container in a band joins the container's layout; a saved
+  block, Grid or Cards is disabled with the reason where it would never
+  draw, and one that would land half-drawn (a table in a repeating cell) is
+  refused.
+- **Group into a container no longer moves, narrows or resizes the item**,
+  including one sized in percent, and is not offered where the result could
+  not be preserved or would not draw.
+- **Panel fields show what the document holds.** A number the panel refuses
+  or rewrites snaps back to the value kept, sample values included; a typed
+  line break stays where you put it and is saved as a block literal; a field
+  you only clicked into adds no undo step.
+- **Panel fields that broke the document are gone.** A line or page break no
+  longer has a placement tab, a line no longer offers named styles, a
+  `repeat` no longer offers a box, and a line placed in a band no longer
+  writes a `box:`.
+- **Thin lines can be selected on the canvas**, a canvas multi-selection no
+  longer survives a selection made elsewhere, and a runaway YAML alias no
+  longer crashes the Designer when its item is selected.
+- **Tooltips stay readable**: nine were cut at a panel edge and two had
+  never been visible; each now hangs off the side that fits.
+- **In the dark theme**, unset colour fields, swatches, resize handles and
+  the condition value field are visible again.
+- **A template that fails to load** offers a way back to the template list.
+- **Restoring a draft** of a bundled template keeps its data-item edits.
+- **A comment above a list's first entry** moves with that entry.
+- **IME conversion** no longer inserts a line break on Enter, and leaving
+  the text field by switching tabs keeps the edit.
+- **The hosted Designer ships each font's license beside it** (`OFL.txt`,
+  `BIZ_UD_Gothic_OFL.txt`, the IPA Font License Agreement); a pack without
+  one now fails the build.
+
+#### Packages and docs
+
+- **`VERSION` exported by the npm package** said `0.1.0` in 0.2.0.
+- **The Java deploy recipe** asked for 0.1.0 after 0.2.0 shipped.
+- **The diagnostics reference** explains nine codes it used to drop from a
+  malformed table, and the reference's key and diagnostics tables are now
+  generated against the parser and the code registry.
+- **`docs/designer-mount.md`** says the Designer can rename and delete data
+  items, what each changes, and that the template and definitions saves are
+  separate requests.
+- **The security page and `SECURITY.md`** no longer claim cargo-deny ignores
+  no advisory (see Security).
 
 ### Security
 
-- **The CLI's font download no longer accepts a malformed TLS 1.3 handshake.**
-  Fetching a pinned font face (`url:` in a font pack) goes through rustls, and
-  rustls 0.23.43 accepted handshake messages sent at the wrong encryption level
-  (RUSTSEC-2026-0285). The handshake is still authenticated, so a peer could not
-  use it to alter a connection, but the engine now carries rustls 0.23.45, which
-  rejects it as TLS 1.3 requires. Rendering, signing and verifying never open a
-  connection and are unaffected.
+- **Hostile input is refused earlier.** A template, params, definitions file
+  or pack over 16 MB is refused before it is parsed, and nesting past the
+  caps (32 levels of containers, 16 of a definitions schema) is checked
+  before the document is built — a deep chain used to run the reading thread
+  out of stack and end the whole process, SDK and MCP server included. A
+  numeric mapping key (`5:`) was silently read as one of the item's fields
+  by its position, which let a chain get past the nesting check; any
+  non-string key is now a parse error. YAML alias amplification is not
+  covered by either bound and remains a documented exposure of the YAML
+  parser.
+- **rustls 0.23.45** (RUSTSEC-2026-0285) for the CLI's font download, which
+  accepted a TLS 1.3 handshake message at the wrong encryption level.
+  Rendering, signing and verifying open no connection.
+- **libssl is gone from the Docker image** (see Changed), which clears six
+  OpenSSL advisories, and any later advisory against libssl no longer
+  applies.
+- **Two accepted findings, each with a written reason.** cargo-deny ignores
+  RUSTSEC-2024-0449, an *unmaintained* notice for unsafe-libyaml under
+  `serde_yaml`, not a vulnerability; it is dropped when the engine moves off
+  `serde_yaml`. The image scan accepts DLA-4792-1, a tzdata refresh the
+  runtime never reads, until 2026-12-31, when it is reported again.
+- **The committed SBOMs list the dependencies and nothing else.** They used
+  to pick up lockfile copies under `target/` — 1,757 components where the
+  lockfile lists 254.
 
-- **A template key written as a number is refused, closing a second way past
-  the nesting cap.** Inside an item or the page body, a plain integer key such
-  as `5:` was read as one of that object's fields by position rather than
-  rejected, so `{ type: container, 5: [ … ] }` quietly meant `items: [ … ]`.
-  The check that refuses containers nested past 32 levels before the document
-  is read counts only keys spelled `items`, so a chain written with the number
-  got past it, and a deep enough one could again run the reading thread out of
-  stack and end the process. A template now refuses any mapping key that is not
-  a string (a number, `true`, `null`, or a list or map used as a key) with a
-  parse error naming where it sits. No valid template needed one. A style or
-  format named by a number now has to be quoted (`"5":`), where it used to be
-  read as the name `5`.
+### For contributors
+
+- `make` targets read scope-first with one name each (`engine:lint`,
+  `sdk:ruby:verify`), quiet by default with `V=1` for raw output; the
+  Makefile is split into `mk/<scope>.mk`, and `make make:check` refuses a
+  target named in the tree that does not exist.
+- Tracked Claude Code hooks under `.claude/hooks/` refuse a piped gate,
+  `make -n`, commits with signing turned off, attribution trailers, pushes
+  to `main` and a local squash onto a remote ref; `make hooks:verify` gates
+  them.
+- Engine gates share three pooled cargo-target volumes across worktrees
+  (`make clean:target` resets one); CI is unchanged.
+- `docs/code-map/engine-structure.md` is generated (`make engine:map`).
+- Test files are outside the line budget, and `docs/guidelines.md` says what
+  the budget is for.
+- `make skills:verify` checks the product skills' eval cases;
+  `make skills:eval` runs them, with `ABLATION=1` for a without-skill run.
+- The Designer's browser test runs on every pull request; the engine suites
+  that read `docs/engine/` run on docs-only pull requests.
+- `make engine:render` works again, and `make engine:preview` renders a PNG.
+- A check refuses internal work-item codes anywhere in tracked text.
 
 ## [0.2.0] - 2026-08-08
 
