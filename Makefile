@@ -236,8 +236,10 @@ endif
 # `make <gate> JOBS=N` caps parallelism (cargo --jobs / Vitest --maxWorkers) for
 # a machine that `make verify` would otherwise thrash.
 
-# Keep in sync with .github/workflows/ci.yml (RUST_VERSION) and docker/Dockerfile.
-RUST_VERSION := 1.98.1
+# Keep in sync with the three Dockerfile builders (docker/, engine/wasm/e2e/,
+# gui/designer-app/), .github/workflows/release-artifacts.yml (RUST_VERSION)
+# and scripts/install-proof/published-crates.sh.
+RUST_VERSION := 1.99.0
 RUST_IMAGE   := rust:$(RUST_VERSION)-slim-bookworm
 TRIVY_IMAGE  := aquasec/trivy:latest
 # Pinned to a DIGEST, and the pin is load-bearing: `make sbom:check` compares
