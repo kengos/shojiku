@@ -47,6 +47,19 @@ too_many_lines = "warn"
 # `unexpected_cfgs` stays clean under clippy -D warnings.
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(coverage)"] }
 
+# The dev/test/coverage profile is tuned for DISK, not for debugger use: a pooled
+# cargo target slot (scripts/target-slot.sh) measured 13.5 GB with full debuginfo
+# and incremental caches, 4.6 GB without (same gates, same or better times).
+# Workspace crates keep line tables, so panic locations and backtraces still name
+# our files; third-party crates carry none. Incremental is off because the gate
+# containers rebuild from a pooled target, where its caches only add size.
+[profile.dev]
+debug = "line-tables-only"
+incremental = false
+
+[profile.dev.package."*"]
+debug = false
+
 # Size-tuned profile for the WASM bindings (Makefile `engine:wasm` builds
 # `--profile wasm-release`); the CLI/MCP release builds stay untouched.
 [profile.wasm-release]

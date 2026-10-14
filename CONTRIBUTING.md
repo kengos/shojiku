@@ -315,7 +315,7 @@ takes `version-check-exempt: <reason>`, the same shape as
 > do not collide — those belong to the docker daemon, not to your tree.
 >
 > **The cargo target is a shared pool, not `engine/target`.** A full
-> build is about 13 GB (debug, coverage, release and wasm32 — the
+> build is about 5 GB (debug, coverage, release and wasm32 — the
 > cross builds of the dist targets add more), and one per worktree
 > filled a disk. Every engine container instead leases one of
 > three Docker volumes, `shojiku-target-1` to `-3`, for the length of the
@@ -331,8 +331,8 @@ takes `version-check-exempt: <reason>`, the same shape as
 > pre-pool `engine/target` a tree may still carry. `TARGET_SLOTS=<n>`
 > changes the pool size, `TARGET_SLOTS=0` turns it off; CI runs with it
 > off. On macOS, Docker Desktop's disk image (Settings → Resources) must
-> hold the slots on top of the images and caches — about 40 GB for
-> three, so give it 96 GB or more.
+> hold the slots on top of the images and caches — about 15 GB for
+> three, so give it 64 GB or more.
 
 > **You need GNU Make 4 or newer.** make is the one tool that does not
 > run in a container, and macOS still ships 3.81 (2006), which parses
