@@ -20,8 +20,10 @@
 //! document that fails at a top-level key is still walked to the items below
 //! it. What bounds its recursion is the nesting check that ran before the
 //! typed parse ([`super::nesting`]), which counts every `items:` sequence
-//! this walk can reach. Its cost at the full input cap is not pinned by a test.
+//! this walk can reach. Its cost at the full input cap is not pinned by a test;
+//! the path it reports is spelled only for the culprit ([`super::trail`]).
 
+use super::trail::Trail;
 use crate::template::Item;
 use serde::Deserialize;
 use serde_yaml::Value;
@@ -46,7 +48,7 @@ struct Culprit<'a> {
 /// on its own or when the one that does is not what `message` reports — the
 /// original error then stands as serde gave it.
 pub(crate) fn item_fault(raw: &Value, message: &str) -> Option<ItemFault> {
-    let found = walk(raw, "")?;
+    let found = walk(raw, &mut Trail::default())?;
     message.contains(&found.message).then(|| ItemFault {
         key: unknown_key(found.node, &found.message),
         path: found.path,
@@ -54,44 +56,42 @@ pub(crate) fn item_fault(raw: &Value, message: &str) -> Option<ItemFault> {
 }
 
 /// The first failing item under `node` in document order, deepest first.
-fn walk<'a>(node: &'a Value, path: &str) -> Option<Culprit<'a>> {
+fn walk<'a>(node: &'a Value, trail: &mut Trail<'a>) -> Option<Culprit<'a>> {
     match node {
         Value::Mapping(map) => map.iter().find_map(|(key, value)| {
             let key = key.as_str()?;
-            let here = join(path, key);
-            match (key, value) {
-                ("items", Value::Sequence(items)) => failing_item(items, &here),
-                _ => walk(value, &here),
-            }
+            trail.push_key(key);
+            let found = match (key, value) {
+                ("items", Value::Sequence(items)) => failing_item(items, trail),
+                _ => walk(value, trail),
+            };
+            trail.pop();
+            found
         }),
-        Value::Sequence(seq) => seq
-            .iter()
-            .enumerate()
-            .find_map(|(i, value)| walk(value, &format!("{path}[{i}]"))),
+        Value::Sequence(seq) => seq.iter().enumerate().find_map(|(i, value)| {
+            trail.push_index(i);
+            let found = walk(value, trail);
+            trail.pop();
+            found
+        }),
         _ => None,
     }
 }
 
 /// The first element of an `items:` sequence that fails to parse, narrowed to
 /// the deepest failing item inside it.
-fn failing_item<'a>(items: &'a [Value], path: &str) -> Option<Culprit<'a>> {
+fn failing_item<'a>(items: &'a [Value], trail: &mut Trail<'a>) -> Option<Culprit<'a>> {
     items.iter().enumerate().find_map(|(i, node)| {
         let err = Item::deserialize(node).err()?;
-        let here = format!("{path}[{i}]");
-        Some(walk(node, &here).unwrap_or(Culprit {
-            path: here,
+        trail.push_index(i);
+        let found = walk(node, trail).unwrap_or_else(|| Culprit {
+            path: trail.spell(),
             message: err.to_string(),
             node,
-        }))
+        });
+        trail.pop();
+        Some(found)
     })
-}
-
-fn join(path: &str, key: &str) -> String {
-    if path.is_empty() {
-        key.to_owned()
-    } else {
-        format!("{path}.{key}")
-    }
 }
 
 /// The item's own top-level key the error rejects as unknown. The message

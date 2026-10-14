@@ -6,7 +6,7 @@
 
 use crate::locale::{load_pack, valid_locale_id, LocaleError, MAX_LOCALE_ID};
 use shojiku_diagnostics::Echo;
-use shojiku_formatter::{LangPack, LangPackError};
+use shojiku_formatter::{read_pack_file, LangPack, LangPackError};
 use std::path::PathBuf;
 use thiserror::Error;
 
@@ -86,7 +86,9 @@ pub fn find_locale_file(locale: &str, locale_dirs: &[PathBuf]) -> Option<PathBuf
 /// Loads the locale pack for `locale`: guards the id (it becomes a file
 /// name), finds any `<id>.yml` overlay, and hands its content to
 /// [`load_pack`], which merges over the builtin or parses a standalone
-/// pack. The not-found result becomes the dir-listing error.
+/// pack. The overlay is read under the pack input cap ([`read_pack_file`]),
+/// so an oversize file is refused at the read rather than read whole. The
+/// not-found result becomes the dir-listing error.
 pub fn load_locale_pack(locale: &str, locale_dirs: &[PathBuf]) -> Result<LangPack, FsPackError> {
     if !valid_locale_id(locale) {
         // The id's own domain cap: past MAX_LOCALE_ID the value is
@@ -97,9 +99,7 @@ pub fn load_locale_pack(locale: &str, locale_dirs: &[PathBuf]) -> Result<LangPac
         )));
     }
     let overlay = find_locale_file(locale, locale_dirs)
-        .map(|path| {
-            std::fs::read_to_string(&path).map_err(|source| FsPackError::Io { path, source })
-        })
+        .map(|path| read_pack_file(&path).map_err(|source| FsPackError::Io { path, source }))
         .transpose()?;
     match load_pack(locale, overlay.as_deref()) {
         Ok(pack) => Ok(pack),

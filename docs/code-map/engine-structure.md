@@ -144,13 +144,14 @@ first sentence of its `//!` header.
 ▲ = within 10% of the 300-line cap (≥270); ■ = over it under a
 `line-budget-exempt` waiver. Test files are summarised per crate.
 
-### `diagnostics` (L0) — 6 files / 933 lines; tests 5 files / 628 lines
+### `diagnostics` (L0) — 7 files / 1001 lines; tests 6 files / 704 lines
 
 - `src/arg.rs` 132 — Typed diagnostic argument values.
 - `src/category.rs` 32 — Semantic domain grouping for diagnostics.
-- `src/code.rs` 273 ▲ — The closed diagnostic-code registry.
+- `src/code.rs` 288 ▲ — The closed diagnostic-code registry.
+- `src/deprecation.rs` 51 — When a deprecated thing goes: the release that deprecated it and the one that removes it, for a wire form (`deprecated_syntax`) and for a diagnostic code alike — readable by a consumer, and checked by the engine's own tests so a removal cannot be forgotten once its release arrives (`docs/architecture.md` § Deprecation).
 - `src/echo.rs` 229 — The one bounded-echo guard, and the type that applies it structurally.
-- `src/lib.rs` 219 — Structured diagnostics shared across the Shojiku engine.
+- `src/lib.rs` 221 — Structured diagnostics shared across the Shojiku engine.
 - `src/render.rs` 48 — Single-pass message-template substitution.
 
 ### `signing` (L0) — 25 files / 2817 lines; tests 27 files / 4012 lines
@@ -181,7 +182,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 80 files / 10503 lines; tests 98 files / 14062 lines
+### `core` (L1) — 81 files / 10574 lines; tests 99 files / 14130 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -201,10 +202,11 @@ first sentence of its `//!` header.
 - `src/length.rs` 229 — Template length values: absolute points/physical units, a percentage of the parent, or a font-relative `em`/`rem`.
 - `src/lib.rs` 67 — Shojiku data model.
 - `src/params.rs` 50 — `params` — runtime data supplied by the calling application.
-- `src/parse.rs` 89 — Two-pass typed parse shared by the template and definitions entry points.
-- `src/parse/keys.rs` 99 — Every mapping key in a template is a string, checked on the pass-1 `Value` before the typed parse reads the document.
+- `src/parse.rs` 90 — Two-pass typed parse shared by the template and definitions entry points.
+- `src/parse/keys.rs` 97 — Every mapping key in a template is a string, checked on the pass-1 `Value` before the typed parse reads the document.
 - `src/parse/locate.rs` 127 — Re-locates a template parse failure that the tagged-enum buffering cut short.
-- `src/parse/nesting.rs` 124 — The template nesting bound, checked on the pass-1 `Value` before the typed parse reads the document.
+- `src/parse/nesting.rs` 126 — The template nesting bound, checked on the pass-1 `Value` before the typed parse reads the document.
+- `src/parse/trail.rs` 68 — The path a walk over the pass-1 tree is at, kept as segments borrowed from the tree and spelled out only when a walk reports it.
 - `src/ruby.rs` 283 ▲ — Aozora-bunko markup (`|base《reading》` ruby + `［＃…］` notes) — the `markup: aozora` grammar for `char_grid` content.
 - `src/ruby/grammar.rs` 121 — `［＃…］` note-body grammars beyond the sheet break: the large-writing span notes and the per-line placement notes.
 - `src/ruby/note.rs` 42 — `［＃…］` aozora notes inside `markup: aozora` content: the scan that finds a note's body and recognizes the sheet break.
@@ -251,7 +253,7 @@ first sentence of its `//!` header.
 - `src/validate/bindings/entry.rs` 115 — A `list`'s per-ENTRY scope: its `text:` template and its own `bindings:` declarations resolve against ONE ELEMENT of the array it binds, not against the ambient scope.
 - `src/validate/box_keys.rs` 86 — Context-inert authoring-key checks: keys that lay out nothing where they are written.
 - `src/validate/collect.rs` 253 — Template walks that gather items for cross-checks (tables, images, repeats) and enforce the container depth cap.
-- `src/validate/deprecated.rs` 57 — Wire forms that still parse and render but are marked for removal, each reported as `deprecated_syntax` so an author sees it a release before the form stops parsing.
+- `src/validate/deprecated.rs` 59 — Wire forms that still parse and render but are marked for removal, each reported as `deprecated_syntax` so an author sees it a release before the form stops parsing.
 - `src/validate/document.rs` 66 — `document:` metadata checks: the interpolation keys each metadata string references, the charset scan that catches a `{品名}` mistake, and the two list caps.
 - `src/validate/equals.rs` 108 — What a declarative `{ key, equals?
 - `src/validate/formats.rs` 56 — Presentation-defaults checks: the `formats:` registry (reserved names, size cap) and `defaults.formats` (inline patterns only make sense on date/datetime).
@@ -281,7 +283,7 @@ first sentence of its `//!` header.
 - `src/testkit.rs` 204 — Test-only fixtures: minimal signable documents, and signed ones.
 - `src/testkit/keys.rs` 65 — Test key material, generated fresh for every test process.
 
-### `formatter` (L2) — 16 files / 2000 lines; tests 20 files / 3826 lines
+### `formatter` (L2) — 17 files / 2056 lines; tests 21 files / 3908 lines
 
 - `src/format.rs` 235 — `format(value, type, locale, options) -> string`
 - `src/format/dated.rs` 121 — Resolving a date/datetime pick: which tables a dated field reads, and whether a name is one it can already resolve.
@@ -289,14 +291,15 @@ first sentence of its `//!` header.
 - `src/format/money.rs` 125 — Currency and quantity rendering: the three currency variants (`default` = bare amount, `symbol`, `name`), the CLDR fractions precision chain, and semantic-unit quantities with plural words from the pack.
 - `src/format/number.rs` 70 — Number rendering shared by every numeric type: precision clamping, trailing-zero trimming, and locale-separator grouping.
 - `src/format/text.rs` 77 — The text arm: values that draw as words — plain strings, booleans and image references — plus the `enum` display-label lookup layered over them.
-- `src/lang.rs` 182 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
+- `src/lang.rs` 188 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
 - `src/lang/builtin.rs` 119 — Builtin locale packs (CLDR-generated YAML, compiled in via `include_str!`) and the per-key overlay merge over them.
 - `src/lang/era.rs` 104 — Era tables (wareki): the `eras:` wire types and the date→era lookup.
-- `src/lang/fonts.rs` 185 — Font-pack manifest + locale font-policy wire types.
+- `src/lang/fonts.rs` 190 — Font-pack manifest + locale font-policy wire types.
 - `src/lang/fonts/pack_id.rs` 45 — What a font pack id may be.
-- `src/lang/packs.rs` 143 — Font-pack resolution: find each `uses` pack's `manifest.yml` across the font search dirs, confine face paths to the pack dir, and merge faces into one ordered list.
+- `src/lang/packs.rs` 144 — Font-pack resolution: find each `uses` pack's `manifest.yml` across the font search dirs, confine face paths to the pack dir, and merge faces into one ordered list.
 - `src/lang/packs/bytes.rs` 192 — Bytes-first font-pack resolution: the host injects each `uses` pack's `manifest.yml` source plus the bytes of the face files it declares (browser/Workers WASM, the MCP server), and this parses/confines/dedupes them into loadable specs exactly like the filesystem resolver — no directory walk, no file reads.
 - `src/lang/packs/confine.rs` 78 — Path confinement for font-pack resolution: what a pack id may look like, and what a manifest's `file` may point at.
+- `src/lang/read.rs` 44 — Reads a pack file from disk under the pack input cap, so the cap holds at the read and not only at the parse that follows it.
 - `src/lang/specs.rs` 101 — Pack value specs: number separators, per-code currency display, and semantic-unit display (plural categories + layout strings).
 - `src/lib.rs` 21 — Locale-aware value formatting.
 
@@ -512,7 +515,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 38 files / 4594 lines; tests 42 files / 5475 lines
+### `authoring` (L5) — 38 files / 4594 lines; tests 42 files / 5492 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -573,7 +576,7 @@ first sentence of its `//!` header.
 - `src/status.rs` 171 — Status codes, the panic shield, and the failure type every operation funnels into.
 - `src/status/wire.rs` 93 — How a [`Failure`] renders for the caller, and the JSON encoder the whole crate shares.
 
-### `cli` (L6) — 15 files / 2104 lines; tests 33 files / 5072 lines
+### `cli` (L6) — 15 files / 2105 lines; tests 33 files / 5072 lines
 
 - `src/args.rs` 204 — The flags each command takes, as clap types.
 - `src/args/font.rs` 108 — Flags for the `font` command — creating a user font pack on disk.
@@ -583,7 +586,7 @@ first sentence of its `//!` header.
 - `src/external.rs` 132 — The `sign-prepare` / `sign-complete` pair: signing without a private key.
 - `src/font.rs` 189 — `shojiku font add` — creating a user font pack on disk.
 - `src/font/ids.rs` 105 — The id rules `font add` applies, as pure functions.
-- `src/font/write.rs` 154 — The filesystem half of `font add`: reading the source face, reading any existing manifest, and committing both files.
+- `src/font/write.rs` 155 — The filesystem half of `font add`: reading the source face, reading any existing manifest, and committing both files.
 - `src/formats.rs` 59 — `shojiku formats`: the format catalog as JSON — which display variants a document can pick per field type, what each one renders, and previews of patterns that are not authored yet.
 - `src/lib.rs` 86 — Implementation of the `shojiku` CLI commands.
 - `src/main.rs` 176 — `shojiku` binary entry point.

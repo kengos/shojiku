@@ -73,6 +73,13 @@ the manifest wire's key list) lives in `docs/engine/`
   and is the arm every host takes for a builtin id (`ja-JP` is the default,
   reachable from a browser via `set_locale`). A pack is host-supplied data,
   so it is parsed under the same posture as a template.
+- `lang/read.rs` — **`read_pack_file`**: the ONE way a pack file is read
+  from disk (`LangPack::load`, the manifest in `packs.rs`, the CLI's
+  `font add`): refuses a path that is not a regular file after symlinks
+  (`/dev/zero`, a FIFO, a dir → `InvalidInput`) BEFORE opening it, refuses
+  a recorded size over the core cap, and reads through `take(cap + 1)` —
+  so the cap holds at the read, not only at `ensure_pack_size`. Oversize →
+  `InvalidData` (an I/O error at the read, not `TooLarge`).
 - `lang/specs.rs` — pack value specs: **`NumberSpec`** (separators +
   group sizes; the Indian `#,##,##0` rule is pack DATA, not code),
   **`CurrencySpec`** (symbol/name + formats + optional precision),

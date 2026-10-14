@@ -144,11 +144,16 @@ impl PackManifest {
     /// here so a generator round-trips through the same pair the resolver
     /// parses with instead of carrying its own YAML dependency.
     ///
-    /// Oversize input is refused unread, by the same `ensure_pack_size`
+    /// Oversize input is refused unparsed, by the same `ensure_pack_size`
     /// every other pack door goes through — a manifest arrives from a host
     /// exactly the way a locale pack does. This is the ONE manifest door:
     /// the filesystem resolver, injected packs, the wasm session and the CLI
-    /// all parse through it and none checks the size first. The refusal comes
+    /// all parse through it, and none checks the size of the text it hands
+    /// over. The two that read
+    /// a manifest from disk (the resolver and the CLI) read it through
+    /// [`crate::read_pack_file`], which holds the same bound at the read and
+    /// refuses a path that is not a regular file, so text in hand is the only
+    /// thing this door ever has to refuse. The refusal comes
     /// back as a `serde_yaml::Error` (built with `de::Error::custom`, since
     /// serde_yaml has no public constructor) because that is this
     /// signature's error type; its message names the two numbers only.

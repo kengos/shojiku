@@ -25,8 +25,10 @@
 //! the template parse refuses it before this walk runs ([`super::keys`]).
 //!
 //! The walk itself recurses once per `Value` level and so shares the parser's
-//! bound, like every other walk over the pass-1 tree.
+//! bound, like every other walk over the pass-1 tree; the holder's path is
+//! spelled only when it refuses ([`super::trail`]).
 
+use super::trail::Trail;
 use crate::error::CoreError;
 use crate::template::MAX_CONTAINER_DEPTH;
 use serde_yaml::Value;
@@ -43,40 +45,48 @@ const STRUCTURAL: [&str; 8] = [
 /// Refuses a template whose `items:` sequences nest deeper than validation's
 /// [`MAX_CONTAINER_DEPTH`] allows.
 pub(crate) fn template(raw: &Value) -> Result<(), CoreError> {
-    walk(raw, "", "", 0)
+    walk(raw, &mut Trail::default(), 0, 0)
 }
 
-/// `level` is how many `items:` sequences enclose `node`; `holder` is the path
-/// of the nearest sequence element enclosing it.
-fn walk(node: &Value, path: &str, holder: &str, level: usize) -> Result<(), CoreError> {
+/// `level` is how many `items:` sequences enclose `node`; `holder` is how deep
+/// in `trail` the nearest sequence element enclosing it sits.
+fn walk<'a>(
+    node: &'a Value,
+    trail: &mut Trail<'a>,
+    holder: usize,
+    level: usize,
+) -> Result<(), CoreError> {
     match untag(node) {
         Value::Mapping(map) => {
             for (key, value) in map {
                 let Some(key) = key.as_str() else { continue };
-                let here = join(path, key);
+                trail.push_key(key);
                 match (key, untag(value)) {
                     ("items", Value::Sequence(items)) => {
                         // Body items are level 1, so a holder at depth `d`
                         // opens level `d + 1`: past the cap is `d > MAX`.
                         if level > MAX_CONTAINER_DEPTH {
-                            return Err(refusal(holder));
+                            return Err(refusal(&trail.spell_to(holder)));
                         }
-                        elements(items, &here, level + 1)?;
+                        elements(items, trail, level + 1)?;
                     }
-                    _ => walk(value, &here, holder, level)?,
+                    _ => walk(value, trail, holder, level)?,
                 }
+                trail.pop();
             }
             Ok(())
         }
-        Value::Sequence(seq) => elements(seq, path, level),
+        Value::Sequence(seq) => elements(seq, trail, level),
         _ => Ok(()),
     }
 }
 
-fn elements(seq: &[Value], path: &str, level: usize) -> Result<(), CoreError> {
+fn elements<'a>(seq: &'a [Value], trail: &mut Trail<'a>, level: usize) -> Result<(), CoreError> {
     for (i, value) in seq.iter().enumerate() {
-        let here = format!("{path}[{i}]");
-        walk(value, &here, &here, level)?;
+        trail.push_index(i);
+        let holder = trail.depth();
+        walk(value, trail, holder, level)?;
+        trail.pop();
     }
     Ok(())
 }
@@ -87,14 +97,6 @@ fn untag(mut node: &Value) -> &Value {
         node = &tagged.value;
     }
     node
-}
-
-fn join(path: &str, key: &str) -> String {
-    if path.is_empty() {
-        key.to_owned()
-    } else {
-        format!("{path}.{key}")
-    }
 }
 
 fn refusal(holder: &str) -> CoreError {

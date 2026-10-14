@@ -6,6 +6,7 @@ mod builtin;
 mod era;
 mod fonts;
 mod packs;
+mod read;
 mod specs;
 #[cfg(test)]
 mod tests;
@@ -17,6 +18,7 @@ pub use packs::{
     resolve_face_bytes, resolve_face_bytes_subset, resolve_face_specs, resolve_face_specs_with,
     FaceBytes, InjectedPack, PackError, SubsetFaces,
 };
+pub use read::read_pack_file;
 pub use specs::{CurrencySpec, NumberSpec, UnitSpec};
 
 use serde::{Deserialize, Serialize};
@@ -39,6 +41,9 @@ pub enum LangPackError {
     /// through `ensure_pack_size` — the locale pack, the builtin overlay,
     /// and the font-pack manifest (`PackManifest::from_yaml`, the one door
     /// every manifest caller parses through). Worded for any of the three.
+    /// Text handed over in memory arrives here unparsed; a pack read from
+    /// disk is bounded earlier, at the read ([`read_pack_file`]), and an
+    /// oversize file fails there as an I/O error instead.
     #[error("pack is {bytes} bytes, over the {limit}-byte input cap")]
     TooLarge { bytes: usize, limit: usize },
 }
@@ -143,9 +148,10 @@ impl LangPack {
         Ok(serde_yaml::from_str(input)?)
     }
 
-    /// Loads a locale pack from `<file>` (`packs/locale/<id>.yml`).
+    /// Loads a locale pack from `<file>` (`packs/locale/<id>.yml`), read
+    /// under the same cap ([`read_pack_file`]).
     pub fn load(file: &Path) -> Result<Self, LangPackError> {
-        let content = std::fs::read_to_string(file).map_err(|source| LangPackError::Io {
+        let content = read_pack_file(file).map_err(|source| LangPackError::Io {
             path: Echo::from(file),
             source,
         })?;

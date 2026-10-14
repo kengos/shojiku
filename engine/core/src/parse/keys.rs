@@ -14,8 +14,10 @@
 //!
 //! A quoted key (`"5":`) is a string and passes; only the typed parse decides
 //! whether it names anything. The walk recurses once per `Value` level and so
-//! shares the parser's bound, like every other walk over the pass-1 tree.
+//! shares the parser's bound, like every other walk over the pass-1 tree; the
+//! path it reports is spelled only when it refuses ([`super::trail`]).
 
+use super::trail::Trail;
 use crate::error::CoreError;
 use serde_yaml::Value;
 use shojiku_diagnostics::Echo;
@@ -23,27 +25,31 @@ use shojiku_diagnostics::Echo;
 /// Refuses a template holding a mapping key that is not a string, naming the
 /// mapping that holds the first one in document order.
 pub(crate) fn template(raw: &Value) -> Result<(), CoreError> {
-    walk(raw, "")
+    walk(raw, &mut Trail::default())
 }
 
-fn walk(node: &Value, path: &str) -> Result<(), CoreError> {
+fn walk<'a>(node: &'a Value, trail: &mut Trail<'a>) -> Result<(), CoreError> {
     match node {
         Value::Mapping(map) => {
             for (key, value) in map {
                 let Some(key) = name(key) else {
-                    return Err(refusal(path, key));
+                    return Err(refusal(&trail.spell(), key));
                 };
-                walk(value, &join(path, key))?;
+                trail.push_key(key);
+                walk(value, trail)?;
+                trail.pop();
             }
             Ok(())
         }
         Value::Sequence(seq) => {
             for (i, value) in seq.iter().enumerate() {
-                walk(value, &format!("{path}[{i}]"))?;
+                trail.push_index(i);
+                walk(value, trail)?;
+                trail.pop();
             }
             Ok(())
         }
-        Value::Tagged(tagged) => walk(&tagged.value, path),
+        Value::Tagged(tagged) => walk(&tagged.value, trail),
         _ => Ok(()),
     }
 }
@@ -84,14 +90,6 @@ fn describe(key: &Value) -> String {
         Value::Tagged(tagged) => describe(&tagged.value),
         // A mapping — a string key never reaches here.
         _ => "a mapping".to_owned(),
-    }
-}
-
-fn join(path: &str, key: &str) -> String {
-    if path.is_empty() {
-        key.to_owned()
-    } else {
-        format!("{path}.{key}")
     }
 }
 

@@ -304,7 +304,12 @@ warning, until 0.4.0.
 
 Each of these is removed in 0.4.0. From now on a template form or a diagnostic
 code is deprecated one release before it is removed: before 1.0 it is removed
-in the next minor release, and from 1.0 in the next major one.
+in the next minor release, and from 1.0 in the next major one. Two cases go
+further. A code replaced by more specific codes may stop being emitted in the
+release that deprecates it, as `grid_cell_overflow` does below. A fix for a
+hostile-input hole may refuse a form at once, with no deprecation release,
+and is listed under Security; in this release that is a mapping key that is
+not a string.
 
 - **`page.margin` as a `[top, right, bottom, left]` array.** It still
   applies, with a `deprecated_syntax` warning in `validate`, the CLI, the
@@ -316,9 +321,10 @@ in the next minor release, and from 1.0 in the next major one.
   `vertical_style_ignored`.** Nothing emits either, but both stay in the
   code registry until 0.4.0; a host that translates or matches on them can
   drop them.
-- **The diagnostic code `grid_cell_overflow`.** Nothing emits it from 0.3.0
-  and it stays in the code registry until 0.4.0; a host that matches on it
-  should match `grid_row_overflow` and `grid_span_overflow` instead.
+- **The diagnostic code `grid_cell_overflow`.** Nothing emits it from 0.3.0,
+  because `grid_row_overflow` and `grid_span_overflow` now report the two
+  conditions it covered; it stays in the code registry until 0.4.0. A host
+  that matches on it has to match those two from 0.3.0 on.
 
 ### Fixed
 
@@ -397,12 +403,19 @@ in the next minor release, and from 1.0 in the next major one.
   or pack over 16 MB is refused before it is parsed, and nesting past the
   caps (32 levels of containers, 16 of a definitions schema) is checked
   before the document is built — a deep chain used to run the reading thread
-  out of stack and end the whole process, SDK and MCP server included.
-  Inside an item, a numeric key (`5:`) was silently read as one of the
-  item's fields by its position, which let a chain get past the nesting
-  check; any non-string key is now a parse error. YAML alias amplification
-  is not covered by either bound and remains a documented exposure of the
-  YAML parser.
+  out of stack and end the whole process, SDK and MCP server included. YAML
+  alias amplification is not covered by either bound and remains a
+  documented exposure of the YAML parser. A pack read from disk (a locale
+  pack or a font-pack manifest) is read only when it is a regular file, and
+  never past the 16 MB cap: a manifest linked to `/dev/zero` or to a named
+  pipe used to be read without end or to block the read. An oversize pack
+  file is now reported as a read error that names the cap.
+- **A template mapping key must be a string.** Inside an item, a numeric
+  key (`5:`) was silently read as one of the item's fields by its position,
+  which let a chain get past the nesting check; any non-string key is now a
+  parse error, in an item or anywhere else. It is refused at once rather
+  than deprecated first, the exception the deprecation policy makes for
+  security fixes (see Deprecated).
 - **rustls 0.23.45** (RUSTSEC-2026-0285) for the CLI's font download
   (authoring time only), which accepted a TLS 1.3 handshake message at the
   wrong encryption level. Rendering, signing and verifying open no

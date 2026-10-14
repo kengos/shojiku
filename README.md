@@ -13,7 +13,8 @@ tutorials, and a playground that renders in your browser.
 > Rust crate API **may change between minor releases** while the design
 > settles, so templates you write today may need rework. A form removed
 > from the template format is deprecated one release first, and
-> `validate` warns about it while it still works. What is
+> `validate` warns about it while it still works; only a fix for a
+> security hole may refuse a form at once. What is
 > already solid: the engine renders every document in the Gallery below,
 > under a CI gate at 100% line coverage, and its output is byte-identical
 > across machines.

@@ -1,5 +1,6 @@
 //! Deprecated wire forms: each is reported as `deprecated_syntax` with or
-//! without definitions, and the current spellings report nothing.
+//! without definitions, the current spellings report nothing, and every row
+//! is removed in a later release the workspace has not reached yet.
 
 use super::*;
 use shojiku_diagnostics::{ArgValue, Severity};
@@ -59,16 +60,20 @@ fn the_current_margin_spellings_are_not_reported() {
 }
 
 #[test]
-fn every_deprecated_form_names_a_later_removal() {
+fn every_deprecated_form_is_removed_in_a_later_release_not_yet_reached() {
     // A row must say when it goes; a removal at or before the deprecation
-    // would be a table typo that no other test reads.
-    let version =
-        |v: &str| -> Vec<u32> { v.split('.').map(|p| p.parse().expect("number")).collect() };
+    // would be a table typo that no other test reads. And once the workspace
+    // reaches that release the row must be gone, with its form refused.
+    let current = env!("CARGO_PKG_VERSION");
     for form in crate::validate::deprecated::DEPRECATED_FORMS {
+        let window = form.window;
+        assert!(window.is_release(), "{}", form.key);
+        assert!(!window.is_due_at(window.since), "{}", form.key);
         assert!(
-            version(form.since) < version(form.removed_in),
-            "{}",
-            form.key
+            !window.is_due_at(current),
+            "`{}` is marked for removal in {} and the workspace is at {current}; remove it",
+            form.key,
+            window.removed_in
         );
     }
 }

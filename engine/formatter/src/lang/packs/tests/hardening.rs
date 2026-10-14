@@ -159,9 +159,10 @@ fn a_symlinked_pack_directory_is_refused() {
 }
 
 #[test]
-fn an_oversize_manifest_on_disk_is_refused_before_the_parse() {
+fn an_oversize_manifest_on_disk_is_refused_at_the_read() {
     // A font dir is whatever the caller pointed at, so a manifest on disk is
-    // host-supplied data under the same bound as an injected one.
+    // host-supplied data under the same bound as an injected one — and the
+    // bound holds at the read, so the file is never read whole.
     let root = tmp("oversize-manifest");
     let big = format!(
         "version: 1\nlicense: X\nfaces: []\n{}",
@@ -170,10 +171,26 @@ fn an_oversize_manifest_on_disk_is_refused_before_the_parse() {
     write_pack(&root, "a", &big);
     let dirs = [root.clone()];
     let err = resolve_face_specs(&locale("[a]"), &dirs).expect_err("must refuse");
-    let PackError::Parse { detail, .. } = &err else { panic!("wrong variant: {err:?}") };
-    assert!(detail.as_str().contains("input cap"), "detail: {detail}");
+    assert!(
+        matches!(&err, PackError::Io { source, .. } if source.to_string().contains("input cap")),
+        "{err:?}"
+    );
     // Positive control: the same pack UNDER the cap resolves, so the refusal
     // is the bound and not a broken fixture.
     write_pack(&root, "a", "version: 1\nlicense: X\nfaces: []\n");
     resolve_face_specs(&locale("[a]"), &dirs).expect("a small manifest resolves");
+}
+
+#[test]
+fn a_manifest_linked_to_a_device_is_refused_unread() {
+    // The pack directory may not be a symlink, but the manifest inside it
+    // could be one — to `/dev/zero`, which a whole-file read never finishes.
+    let root = tmp("device-manifest");
+    fs::create_dir_all(root.join("a")).expect("pack dir");
+    std::os::unix::fs::symlink("/dev/zero", root.join("a/manifest.yml")).expect("symlink");
+    let err = resolve_face_specs(&locale("[a]"), &[root]).expect_err("must refuse");
+    assert!(
+        matches!(&err, PackError::Io { source, .. } if source.kind() == std::io::ErrorKind::InvalidInput),
+        "{err:?}"
+    );
 }

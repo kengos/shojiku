@@ -260,22 +260,29 @@ inline:
 ## Limitations
 
 - An existing code never changes meaning and its argument keys never
-  change, so a consumer that matches on one keeps working until the code
-  is removed. A code is removed only after a release marked it deprecated:
+  change. A code is removed only after a release marked it deprecated:
   before 1.0 in the next minor release, from 1.0 at the next major. A
   removed code's name is never reused, so a matcher keyed on it cannot
   start matching something else.
+- A consumer that matches on a code keeps receiving it until the code is
+  removed, except in one case: a code replaced by more specific codes may
+  stop being emitted in the release that deprecates it, because from then
+  on the new codes report the same conditions. The deprecation notice names
+  the new codes, and a matcher has to add them from that release on.
 - The engine does not translate. Messages are English and carry typed
   arguments; rendering them in another language is the consumer's job.
 - Three codes are emitted by nothing, and all are deprecated in 0.3.0 and
   removed in 0.4.0 (`horizontal_overflow`, `vertical_style_ignored`,
-  `grid_cell_overflow`). The last one still fired in 0.2.x; from 0.3.0
-  the same two conditions report their own codes instead
-  (`grid_row_overflow`, `grid_span_overflow`), so a matcher keyed on it has
-  to add those.
+  `grid_cell_overflow`). The last one is the replaced-code case above: it
+  still fired in 0.2.x, and from 0.3.0 the same two conditions report their
+  own codes instead (`grid_row_overflow`, `grid_span_overflow`), so a
+  matcher keyed on it has to add those.
 - A wire form that still parses but is marked for removal draws a warning
   from `validate` until the release that removes it (`deprecated_syntax`).
-  Today that is only `page.margin` written as an array.
+  Today that is only `page.margin` written as an array. The exception is a
+  form refused to close a hostile-input hole, which becomes a parse error at
+  once with no warning release: in 0.3.0, a mapping key that is not a
+  string ([architecture.md](../architecture.md) § Deprecation).
 
 ## See also
 
