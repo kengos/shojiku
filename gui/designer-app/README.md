@@ -22,7 +22,8 @@ pnpm --filter @shojiku/designer-app assemble  # -> dist/data/ (catalog, fonts, p
 
 `dist/` is then servable as-is on Cloudflare Pages (or any static host). The
 [`public/_headers`](public/_headers) file sets the Pages CSP: fully same-origin,
-`wasm-unsafe-eval` the only script relaxation.
+`wasm-unsafe-eval` the only script relaxation, `blob:` allowed only for images
+(the image codec) and frames (the PDF preview).
 
 - **Presets** are the bundled [`examples/`](../../examples) that carry a
   `preset.yml` manifest (locale tags + engine locale + localized names +
