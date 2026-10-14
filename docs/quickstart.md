@@ -13,9 +13,9 @@ docker pull ghcr.io/kengos/shojiku:edge
 ```
 
 `edge` tracks `main`; released versions are tagged by their number
-(`0.2.0`). There is no `latest` tag — Shojiku is pre-1.0. The same image
-is mirrored to Docker Hub as `kengos/shojiku:edge` if you prefer that
-registry; ghcr is what the rest of this page uses because it does not
+(for example `0.3.0`). There is no `latest` tag — Shojiku is pre-1.0. The
+same image is mirrored to Docker Hub as `kengos/shojiku:edge` if you prefer
+that registry; ghcr is what the rest of this page uses because it does not
 rate-limit anonymous pulls.
 
 Prefer to build it yourself, or want the binaries outside a container?
