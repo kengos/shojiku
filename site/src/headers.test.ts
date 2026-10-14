@@ -27,6 +27,15 @@ describe("_headers", () => {
     expect(designerScopeCsp).toBe(designerCanonical);
   });
 
+  it("lets the Designer load its own object URLs as images and frames, nothing wider", () => {
+    // The image codec decodes through `new Image()` on a Blob URL; the PDF
+    // dialog previews in an iframe on a Blob URL. Both broke on the host
+    // while dev (no CSP) stayed green.
+    expect(designerCanonical).toContain("img-src 'self' data: blob:;");
+    expect(designerCanonical).toContain("frame-src blob:;");
+    expect(designerCanonical).not.toContain("*");
+  });
+
   it("detaches the site CSP before re-setting it in the /designer/* scope", () => {
     const scope = SITE_HEADERS.slice(SITE_HEADERS.indexOf("/designer/*"));
     expect(scope).toMatch(/^\s*! Content-Security-Policy$/m);
