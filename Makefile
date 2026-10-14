@@ -443,7 +443,7 @@ WASM_MAX_GZIP := 3145728
 # SHOJIKU_TARGET_IMAGE=$(RUST_IMAGE) in the environment (make exports both),
 # not just the `docker run` flags: the target mount is added at run time, and
 # only under a gate lock with the pool on, so a bare copy builds into the host
-# engine/target — a different target from the gates', and the 13 GB the pool
+# engine/target — a different target from the gates', and the ~5 GB the pool
 # exists to save:
 #   * mount the REPO ROOT at /repo and let -w select the subdirectory. A
 #     `cd engine` first, or a `$(pwd)` mount taken from the wrong cwd, makes a
