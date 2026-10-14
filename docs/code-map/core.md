@@ -152,6 +152,11 @@ injected at parse). The template model splits along CSS lines.
   tagged-enum buffering reads a plain integer key as a field NUMBER
   (`5:` on a container = `items:`), which also slipped past nesting's
   `items:` count — pinned by a 61-deep `5:` chain on a 2 MiB thread.
+  `parse/trail.rs` — `Trail`: the path all three template walks (keys,
+  nesting, locate) carry as BORROWED segments, spelled only when one
+  reports. Formatting the path at every node copied the whole prefix per
+  child — a long explicit key over a long sequence was quadratic inside
+  the input cap; pinned by a 1 MiB key × 200k elements under a deadline.
   `parse/nesting.rs` — the template bound: counts nesting of `items:`
   SEQUENCES whatever the `type` beside them (every Item-in-Item passes through
   one, and `locate` re-reads every one), refusing past `MAX_CONTAINER_DEPTH`
@@ -343,7 +348,13 @@ injected at parse). The template model splits along CSS lines.
   § Deprecation) —
   one `diagnostic_codes!` table maps each variant → wire string +
   severity + category + English `{arg}` template (`ALL`/`as_str`/
-  `from_wire`). The complete code list: `docs/engine/diagnostics.md`.
+  `from_wire`); a deprecated row ends `deprecated(since, removed_in)`,
+  read back as `deprecation()`, and a registry test fails once
+  `CARGO_PKG_VERSION` reaches a listed `removed_in`. The complete code
+  list: `docs/engine/diagnostics.md`.
+- `deprecation.rs` — `Deprecation { since, removed_in }` + `is_due_at`
+  (major.minor.patch, pre-release ignored so an rc is already due) — shared
+  by the code registry and core's `DEPRECATED_FORMS` table.
 - `category.rs` — `Category` (semantic domain). `arg.rs` — `ArgValue`
   String|Number|Bool (strings control-char-stripped + clipped;
   non-finite clamped). `render.rs` — single-pass `{name}` template

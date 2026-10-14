@@ -15,6 +15,7 @@ fn every_code_exposes_metadata() {
         // Exercises the severity/category/template match arms for all codes.
         let _ = code.severity();
         let _ = code.category();
+        let _ = code.deprecation();
         assert!(
             !code.template().is_empty(),
             "{} has empty template",
@@ -74,4 +75,35 @@ fn templates_are_icu_safe() {
 #[test]
 fn from_wire_rejects_unknown() {
     assert_eq!(DiagnosticCode::from_wire("nope"), None);
+}
+
+#[test]
+fn no_deprecated_code_outlives_its_removal_release() {
+    // A deprecation names the release that removes it; once the workspace
+    // reaches that release the code must be gone from the registry, so a
+    // removal cannot ride along unnoticed past its announced date.
+    let deprecated: Vec<_> = DiagnosticCode::ALL
+        .iter()
+        .filter_map(|code| code.deprecation().map(|window| (code.as_str(), window)))
+        .collect();
+    for (code, window) in deprecated {
+        assert!(window.is_release(), "{code}");
+        assert!(!window.is_due_at(window.since), "{code}");
+        assert!(
+            !window.is_due_at(env!("CARGO_PKG_VERSION")),
+            "`{code}` is marked for removal in {} and the workspace is at {}; remove it",
+            window.removed_in,
+            env!("CARGO_PKG_VERSION")
+        );
+    }
+    // The marks are read at all: one row's, spelled out (the PR that removes
+    // that code removes this line with it), and an unmarked row's.
+    assert_eq!(
+        DiagnosticCode::GridCellOverflow.deprecation(),
+        Some(crate::Deprecation {
+            since: "0.3.0",
+            removed_in: "0.4.0"
+        })
+    );
+    assert_eq!(DiagnosticCode::TextOverflow.deprecation(), None);
 }

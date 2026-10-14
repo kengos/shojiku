@@ -1,4 +1,5 @@
-//! Unit tests for the two-pass typed parse.
+//! Unit tests for the two-pass typed parse, and the cost of the template
+//! walks over a long key above a long sequence.
 
 use super::*;
 use serde::Deserialize;
@@ -49,4 +50,37 @@ fn malformed_yaml_surfaces_as_parse_error() {
     let err =
         parse_checked::<Doc>("items: [unterminated\n", "doc", |_| Ok(())).expect_err("reject");
     assert!(matches!(err, CoreError::Parse(_)), "got: {err:?}");
+}
+
+/// Parses `yaml` as a template on another thread and gives up after a
+/// deadline, so a walk that went quadratic again fails instead of hanging.
+fn template_within_deadline(yaml: String) -> Result<crate::template::Template, CoreError> {
+    let (send, recv) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        // The receiver is gone only after the deadline already failed.
+        send.send(crate::template::parse_template(&yaml)).ok();
+    });
+    recv.recv_timeout(std::time::Duration::from_secs(60))
+        .expect("the pass-1 walks finish in time")
+}
+
+#[test]
+fn a_long_key_over_a_long_sequence_costs_the_walks_their_sum_not_product() {
+    // Spelling the path at every node copied the 4 MiB key into each of the
+    // million elements' paths: ~4 TB of copying, inside the input cap, which
+    // no machine finishes within the deadline.
+    let key = "k".repeat(4 << 20);
+    let zeros = vec!["0"; 1_000_000].join(",");
+    let body = "sections:\n  body:\n    type: flow\n    items: [ { type: text, text: x } ]\n";
+    // The key walk runs over all of it before the refusal after it, whose
+    // path is spelled as before.
+    let refused = format!("? {key}\n: [{zeros}]\nstyles:\n  5: {{}}\n{body}");
+    let err = template_within_deadline(refused).expect_err("refused");
+    let CoreError::Located { path, .. } = &err else { panic!("{err:?}") };
+    assert_eq!(path, "styles");
+    // String keys only: the nesting walk and, once the typed parse rejects
+    // the unknown key, the re-locating walk both cross the sequence too.
+    let unknown = format!("{body}? {key}\n: [{zeros}]\n");
+    let err = template_within_deadline(unknown).expect_err("unknown key");
+    assert!(matches!(err, CoreError::Located { .. }), "{err:?}");
 }

@@ -93,6 +93,23 @@ fn malformed_overlay_file_is_a_pack_error() {
 }
 
 #[test]
+fn an_oversize_overlay_file_is_refused_at_the_read() {
+    let dir = temp_locale_dir("oversize", "ja-jp.yml", "");
+    // Sparse: refused from its recorded size, never read whole.
+    std::fs::File::options()
+        .write(true)
+        .open(dir.join("ja-jp.yml"))
+        .expect("open")
+        .set_len(shojiku_core::MAX_INPUT_BYTES as u64 + 1)
+        .expect("set_len");
+    let err = load_locale_pack("ja-JP", std::slice::from_ref(&dir)).unwrap_err();
+    assert!(
+        matches!(&err, FsPackError::Io { source, .. } if source.to_string().contains("input cap")),
+        "{err:?}"
+    );
+}
+
+#[test]
 fn non_builtin_locale_loads_its_file_standalone() {
     let dir = temp_locale_dir(
         "standalone",

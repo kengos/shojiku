@@ -106,12 +106,13 @@ fn load_pack(pack_id: &str, font_dirs: &[PathBuf]) -> Result<(PackManifest, Path
             Ok(_) => {}
         }
         let manifest_path = pack_dir.join("manifest.yml");
-        match std::fs::read_to_string(&manifest_path) {
+        match crate::lang::read_pack_file(&manifest_path) {
             Ok(content) => {
-                // Through `from_yaml`, not `serde_yaml::from_str`: that is the
-                // one door carrying the input-size bound, and a manifest on
-                // disk is still host-supplied data — a font dir is whatever
-                // the caller pointed at.
+                // Read through `read_pack_file` and parsed through
+                // `from_yaml`, not `serde_yaml::from_str`: both carry the
+                // input-size bound, and a manifest on disk is still
+                // host-supplied data — a font dir is whatever the caller
+                // pointed at, and its manifest may be a link to a device.
                 let manifest =
                     PackManifest::from_yaml(&content).map_err(|err| PackError::Parse {
                         path: Echo::from(manifest_path.as_path()),

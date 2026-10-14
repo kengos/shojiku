@@ -6,13 +6,15 @@
 //! detector over the parsed model, never a new diagnostic code. The rule for
 //! when a form may be deprecated and removed is `docs/architecture.md`
 //! § Deprecation. When a form is removed, its row goes with it; the table and
-//! the code stay as the standing mechanism, empty or not.
+//! the code stay as the standing mechanism, empty or not. A row still listed
+//! once the workspace reaches its `removed_in` fails a test, so the removal
+//! happens in the release that announced it.
 //!
 //! Runs on every template, with or without definitions: a deprecated form is
 //! a fact about the document's own spelling.
 
 use crate::template::Template;
-use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
+use shojiku_diagnostics::{Deprecation, Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 /// One deprecated wire form and how to recognise it.
 pub(super) struct DeprecatedForm {
@@ -22,10 +24,8 @@ pub(super) struct DeprecatedForm {
     pub(super) form: &'static str,
     /// The spelling to write instead, as YAML.
     pub(super) replacement: &'static str,
-    /// The release that deprecated it.
-    pub(super) since: &'static str,
-    /// The release that stops parsing it.
-    pub(super) removed_in: &'static str,
+    /// The release that deprecated it and the one that stops parsing it.
+    pub(super) window: Deprecation,
     /// Whether the parsed template was written in this form.
     pub(super) used_by: fn(&Template) -> bool,
 }
@@ -36,8 +36,10 @@ pub(super) const DEPRECATED_FORMS: &[DeprecatedForm] = &[DeprecatedForm {
     key: "page.margin",
     form: "[top, right, bottom, left]",
     replacement: "{ top, right, bottom, left }",
-    since: "0.3.0",
-    removed_in: "0.4.0",
+    window: Deprecation {
+        since: "0.3.0",
+        removed_in: "0.4.0",
+    },
     used_by: |template| template.page.margin.is_legacy_array(),
 }];
 
@@ -49,8 +51,8 @@ pub(super) fn check_deprecated(template: &Template, diags: &mut Diagnostics) {
                 .arg("key", form.key)
                 .arg("form", form.form)
                 .arg("replacement", form.replacement)
-                .arg("since", form.since)
-                .arg("removed_in", form.removed_in)
+                .arg("since", form.window.since)
+                .arg("removed_in", form.window.removed_in)
                 .with_path(form.key),
         );
     }

@@ -87,3 +87,4 @@ pub(crate) mod locate;
 mod nesting;
 #[cfg(test)]
 mod tests;
+mod trail;

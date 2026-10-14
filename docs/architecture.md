@@ -450,7 +450,9 @@ somewhere the tie-break above then decides in favour of.
 
 The authored wire (item 1) and the diagnostics registry (item 2) change
 incompatibly in one way only: a form or code is deprecated first and
-removed in a later release.
+removed in a later release. Two cases, both below, go further while
+deprecated: a code replaced by more specific codes may stop being emitted,
+and a security fix may refuse a form with no deprecation release at all.
 
 - Before 1.0, it is deprecated in one minor release and removed in the
   next. The first ones were deprecated in 0.3 and go in 0.4.
@@ -466,7 +468,29 @@ server, the Designer and every SDK before the release that stops reading
 it. One table in the engine lists those forms, and a new deprecation is a
 row in it, never a new code. A code that nothing emits any more gets no
 warning, since no document can trigger it; the changelog and the
-reference carry its notice.
+reference carry its notice. Each table row and each deprecated code in the
+registry records the release that removes it, and an engine test fails
+once the workspace version reaches that release with the row or code still
+there.
+
+A code that more specific codes replace may stop being emitted in the
+release that deprecates it, since from then on the new codes report the
+same conditions; it stays in the registry until its removal release, and
+its changelog entry and reference row name the codes to match instead. `grid_cell_overflow`
+is the case in 0.3.
+
+**Security exception.** A change that closes a hostile-input hole may
+refuse a form at once, with no deprecation release, when accepting the form
+for one more release would keep the hole open, or when telling the harmless
+uses of the form from the harmful ones would make the check depend on the
+parser's internals. It is listed under `Security` in the changelog, and
+under `Changed` too when existing templates are affected. The first such
+case is in 0.3: a mapping key that is not a string is a parse error. Inside
+an item, the typed parse read a numeric key as one of the item's fields by
+its position, which let a chain of containers get past the nesting check.
+A style or format named by a bare number was harmless, but which mappings
+the typed parse buffers is a detail of serde, not of the wire, so the key
+is refused everywhere.
 
 Capability keys stay append-only (item 3): a key that disappeared would
 read to every consumer as a feature that disappeared. The MCP tool

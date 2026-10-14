@@ -368,7 +368,8 @@ so layout/render/sign/verify stay socket-free.
   browser-side builder mints, the face file-name guard); `write.rs` = the
   FS half only, deciding nothing — pack dir via
   `authoring::fs::primary_font_dir`, the size cap + parse probe, the
-  existing-manifest read, and the face-then-manifest commit with the
+  existing-manifest read (through the formatter's bounded
+  `read_pack_file`), and the face-then-manifest commit with the
   manifest written tmp+rename. Its tests provoke every IO refusal with a
   DIRECTORY where a file belongs: the gates run as root, so an unreadable
   file proves nothing.

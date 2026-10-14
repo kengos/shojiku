@@ -10,14 +10,23 @@
 //! and a removed wire string is never reused.** New codes are added freely; a
 //! code is removed only after a release has marked it deprecated (before 1.0
 //! the next minor, after it the next major — `docs/architecture.md`
-//! § Deprecation).
+//! § Deprecation). The mark is the row's `deprecated(since, removed_in)`,
+//! read back through [`DiagnosticCode::deprecation`], and a test fails once
+//! the workspace version reaches a `removed_in` the row is still listed under.
 
 use crate::category::Category;
+use crate::Deprecation;
 use crate::Severity;
 
-/// Expands one table into the [`DiagnosticCode`] enum plus its accessors.
+/// Expands one table into the [`DiagnosticCode`] enum plus its accessors. A
+/// row ending in `deprecated(since, removed_in)` is a code marked for removal.
 macro_rules! diagnostic_codes {
-    ($( $variant:ident = $wire:literal, $sev:ident, $cat:ident, $template:literal; )*) => {
+    (@window) => { None };
+    (@window $since:literal, $removed:literal) => {
+        Some(Deprecation { since: $since, removed_in: $removed })
+    };
+    ($( $variant:ident = $wire:literal, $sev:ident, $cat:ident, $template:literal
+        $(, deprecated($since:literal, $removed:literal))?; )*) => {
         /// A stable, machine-readable diagnostic identifier.
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         pub enum DiagnosticCode {
@@ -46,6 +55,14 @@ macro_rules! diagnostic_codes {
             /// The English message template, with `{arg}` placeholders.
             pub fn template(self) -> &'static str {
                 match self { $( DiagnosticCode::$variant => $template, )* }
+            }
+
+            /// The release that deprecated this code and the one that removes
+            /// it, or `None` for a code that is not deprecated.
+            pub fn deprecation(self) -> Option<Deprecation> {
+                match self {
+                    $( DiagnosticCode::$variant => diagnostic_codes!(@window $($since, $removed)?), )*
+                }
             }
 
             /// Parses a wire string back into a code, if known.
@@ -170,17 +187,16 @@ diagnostic_codes! {
     QrModuleTooSmall = "qr_module_too_small", Warning, Layout, "qr modules are {module}pt (< {min}pt); the printed code may not scan";
     MarkMissingSize = "mark_missing_size", Warning, Layout, "ellipse/checkbox items need a positive box.w and box.h; item skipped";
     ContainerOverflow = "container_overflow", Warning, Layout, "container content ({content}pt) exceeds its content height ({avail}pt)";
-    // DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing. Its
-    // `{extent}` arg named the axis in English (`row track` / `spanned
-    // rows`), which a translating consumer could only pass through; the two
-    // reasons became `grid_row_overflow` and `grid_span_overflow` below.
-    GridCellOverflow = "grid_cell_overflow", Warning, Layout, "grid child ({child}pt) exceeds its {track}pt {extent}";
-    // DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing. Its
-    // single free-text `{detail}` arg held a whole English sentence, which a
-    // translating consumer could only pass through. The reasons it covered
-    // were enumerable, so each became its own number-carrying code (see the
-    // layout tail below).
-    HorizontalOverflow = "horizontal_overflow", Warning, Layout, "{detail}";
+    // DEPRECATED — emitted by nothing. Its `{extent}` arg named the axis in
+    // English (`row track` / `spanned rows`), which a translating consumer
+    // could only pass through; the two reasons became `grid_row_overflow`
+    // and `grid_span_overflow` below.
+    GridCellOverflow = "grid_cell_overflow", Warning, Layout, "grid child ({child}pt) exceeds its {track}pt {extent}", deprecated("0.3.0", "0.4.0");
+    // DEPRECATED — emitted by nothing. Its single free-text `{detail}` arg
+    // held a whole English sentence, which a translating consumer could only
+    // pass through. The reasons it covered were enumerable, so each became
+    // its own number-carrying code (see the layout tail below).
+    HorizontalOverflow = "horizontal_overflow", Warning, Layout, "{detail}", deprecated("0.3.0", "0.4.0");
     TextOverflow = "text_overflow", Warning, Layout, "text overflows the box height ({content}pt content vs {avail}pt available)";
     CharGridOverflow = "char_grid_overflow", Warning, Layout, "char_grid content exceeds the single sheet ({cells} cells) available outside a flow body; {dropped} characters dropped";
     RubyOverflow = "ruby_overflow", Warning, Layout, "a ruby reading is longer than its base run even at the {min}pt floor and overflows it";
@@ -199,10 +215,9 @@ diagnostic_codes! {
     CutMarksClipped = "cut_marks_clipped", Warning, Layout, "cutMarks have no room outside the grid on the {sides} side(s) of the sheet; those ticks are omitted";
     VerticalTextUnsupported = "vertical_text_unsupported", Warning, Layout, "{feature} does not support vertical writing (writingMode: vertical_rl) in v1";
     RubyBaseNotFound = "ruby_base_not_found", Warning, Layout, "ruby base `{base}` was not found in the drawn text; reading skipped";
-    // DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing, in any
-    // release: the block-level knobs it was reserved for apply to vertical
-    // text instead.
-    VerticalStyleIgnored = "vertical_style_ignored", Warning, Layout, "`{prop}` is ignored on a vertical (writingMode: vertical_rl) block";
+    // DEPRECATED — emitted by nothing, in any release: the block-level knobs
+    // it was reserved for apply to vertical text instead.
+    VerticalStyleIgnored = "vertical_style_ignored", Warning, Layout, "`{prop}` is ignored on a vertical (writingMode: vertical_rl) block", deprecated("0.3.0", "0.4.0");
     PageNumberInBody = "page_number_in_body", Warning, Layout, "page_number items are only supported in header/footer bands";
     PageNumberInContainer = "page_number_in_container", Warning, Layout, "page_number items are only supported directly in header/footer bands; item skipped";
     RepeatInAbsoluteBody = "repeat_in_absolute_body", Warning, Layout, "repeat items require a flow body; item skipped";

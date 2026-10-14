@@ -8,7 +8,7 @@
 use super::{FontPackError, MAX_FONT_FILE};
 use shojiku_authoring::fs::primary_font_dir;
 use shojiku_diagnostics::Echo;
-use shojiku_formatter::PackManifest;
+use shojiku_formatter::{read_pack_file, PackManifest};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -53,14 +53,15 @@ pub(super) fn read_font(path: &Path) -> Result<Arc<Vec<u8>>, FontPackError> {
     Ok(face.data)
 }
 
-/// Reads `<dir>/manifest.yml` if the pack already exists.
+/// Reads `<dir>/manifest.yml` if the pack already exists, under the pack
+/// input cap and only if it is a regular file ([`read_pack_file`]).
 ///
 /// A malformed existing manifest is an ERROR rather than a fresh start: the
 /// alternative is overwriting a file whose contents nobody could read, which
 /// would silently drop faces a user had already added.
 pub(super) fn read_manifest(dir: &Path) -> Result<Option<PackManifest>, FontPackError> {
     let path = dir.join("manifest.yml");
-    let content = match std::fs::read_to_string(&path) {
+    let content = match read_pack_file(&path) {
         Ok(content) => content,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(source) => {
