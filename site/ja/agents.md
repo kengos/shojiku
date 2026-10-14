@@ -21,7 +21,7 @@ claude mcp add shojiku -- \
 
 ## スキルを入れる
 
-テンプレート作成、スキーマからの定義生成、レンダリングデバッグ、Thinreports移行の4つのスキルをリポジトリに同梱しています。
+テンプレート作成、スキーマからの定義生成、レンダリングデバッグ、Thinreports移行、料理動画からのレシピ冊子作成の5つのスキルをリポジトリに同梱しています。
 
 ```bash
 npx skills add kengos/shojiku

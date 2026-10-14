@@ -79,7 +79,10 @@ Context for anyone auditing, and the baseline a report is measured
 against:
 
 - **Rendering, signing and verification make no network calls.** Fetch
-  exists only at authoring and bundle time, in a host-only crate.
+  exists only in a host-only crate the CLI uses to fill the font cache
+  before a render starts, when a pack pins a face that is not on disk
+  (`--offline` turns it off); the library hosts and the MCP server do
+  not carry it.
 - **`engine/deny.toml` ignores no vulnerability advisory**, with `yanked =
   "deny"`. It carries one ignore: RUSTSEC-2024-0449, the notice that
   unsafe-libyaml (the YAML parser under serde_yaml) is unmaintained. The
@@ -87,9 +90,11 @@ against:
   entry is dropped with the move off serde_yaml. Adding an ignore requires
   written justification, and the krilla/fontations migration removed the
   two earlier exceptions by dropping those dependencies entirely.
-- **Five fuzz targets** run against the hostile-input surface:
-  `pdf_document`, `contents_window`, `cms_container`, `trust_anchors`
-  and `verify_document`.
+- **Every parser that reads unvetted input has a libFuzzer target**
+  (`engine/fuzz/fuzz_targets/`), in two groups: the PDF reader and the
+  signature-container decoders on the signing/verification side, and
+  the authored-input doors (template, params, definitions, the ruby
+  scanner, and the locale and font pack manifests).
 - **The verification report states what it did not check**, rather than
   reducing to a boolean.
 - **Errors are bounded** on the PDF-reading paths, so malformed input

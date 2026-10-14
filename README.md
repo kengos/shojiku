@@ -280,7 +280,9 @@ locale's standard size — A4 or Letter), not a document sample.
 
 - **The engine** renders, signs and verifies. Everything in the Gallery
   above is its output, and the CLI covers `render` / `validate` /
-  `inspect` / `preview` / `sign` / `verify` / `capabilities`.
+  `inspect` / `preview` / `sign` (plus `sign-prepare` / `sign-complete`
+  for a key held elsewhere) / `verify` / `font add` / `formats` /
+  `capabilities`.
   [docs/engine/features.md](docs/engine/features.md) is the capability
   inventory.
 - **The Designer** — a browser GUI that round-trips the same YAML the

@@ -31,8 +31,9 @@ for the details.
 
 ## Install the skills
 
-Four skills ship in the repository: template authoring, definitions from
-your schema, render debugging, and Thinreports migration.
+Five skills ship in the repository: template authoring, definitions from
+your schema, render debugging, Thinreports migration, and a recipe
+booklet built from a Japanese cooking video.
 
 ```bash
 npx skills add kengos/shojiku

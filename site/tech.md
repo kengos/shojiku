@@ -8,8 +8,14 @@ description: "The security policy, the licensing, and how the Rust engine and th
 ## Security policy
 
 Everything is designed and implemented on the assumption that no input
-can be trusted. The engine is zero-network: it has no networking
-capability at all.
+can be trusted. Layout, rendering, signing and verification contain no
+network code.
+
+The one network path sits outside them. When a font pack pins a face
+that is not on disk, the CLI downloads it from an allowlisted host
+before the render starts, checks it against the pinned sha256 and
+caches it; `--offline` turns this off. The browser build and the
+in-process library the native SDKs load have no network code at all.
 
 Templates, params, fonts, images and PDFs under verification are all
 parsed as untrusted input.
@@ -114,6 +120,7 @@ with Vite. It talks to the engine through WASM.
   [Biome](https://github.com/kengos/shojiku/blob/main/gui/biome.json),
   with zero warnings allowed
 - TypeScript typecheck
-- **100% coverage** in all four packages
+- **100% coverage** of lines, branches, functions and statements in all
+  three packages
 - An effective **150-line cap** per file (blank lines and comments are
   not counted)
