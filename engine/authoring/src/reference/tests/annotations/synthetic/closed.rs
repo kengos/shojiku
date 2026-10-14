@@ -214,10 +214,23 @@ fn a_union_that_also_takes_a_map_still_owes_its_literal_names() {
             ]}
         }
     });
-    let vague = BTreeMap::from([(
+    // The map form's keys are nodes of their own; describing them keeps this
+    // test about the literal clause alone.
+    let keys = [
+        (
+            "Paper.w".to_string(),
+            prose("The custom paper's width, in points."),
+        ),
+        (
+            "Paper.h".to_string(),
+            prose("The custom paper's height, in points."),
+        ),
+    ];
+    let mut vague = BTreeMap::from(keys.clone());
+    vague.insert(
         "Paper".to_string(),
         prose("One of the named papers, or a custom size given as a map."),
-    )]);
+    );
     assert_eq!(
         audit(&catalog, &vague),
         vec![
@@ -232,9 +245,10 @@ fn a_union_that_also_takes_a_map_still_owes_its_literal_names() {
         ]
     );
 
-    let named = BTreeMap::from([(
+    let mut named = BTreeMap::from(keys);
+    named.insert(
         "Paper".to_string(),
         prose("`A4` or `Letter`, or a custom size given as a `{ w, h }` map."),
-    )]);
+    );
     assert_eq!(audit(&catalog, &named), vec![]);
 }

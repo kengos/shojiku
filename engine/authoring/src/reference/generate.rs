@@ -24,6 +24,14 @@ use shojiku_core::{Definitions, Template};
 /// spellings of one thing.
 const CATALOG_ID: &str = "https://shojiku.pages.dev/reference/catalog.schema.json";
 
+/// The two roots' prose. They are `$ref`s built here rather than shapes in
+/// `$defs`, so the annotation file has no node to address them by — and an
+/// agent walking the document's own `properties` reads these two first.
+const TEMPLATE_ROOT: &str = "The template file (`templates.yml`): what a document \
+                             LOOKS like. Its keys are the `Template` shape's.";
+const DEFINITIONS_ROOT: &str = "The definitions file (`definitions.yml`): what the \
+                                params MEAN. Its keys are the `Definitions` shape's.";
+
 /// Removes the prose schemars lifts out of Rust doc comments.
 ///
 /// Not thrift — a decision. Doc comments in this workspace are engine
@@ -64,8 +72,10 @@ pub fn generate() -> String {
         .with_transform(StripDeveloperProse)
         .into_generator();
 
-    let template = generator.subschema_for::<Template>();
-    let definitions = generator.subschema_for::<Definitions>();
+    let mut template = generator.subschema_for::<Template>();
+    template.insert("description".into(), TEMPLATE_ROOT.into());
+    let mut definitions = generator.subschema_for::<Definitions>();
+    definitions.insert("description".into(), DEFINITIONS_ROOT.into());
     let mut defs = generator.take_definitions(true);
 
     // The annotation file is embedded, so a failure here is a developer error

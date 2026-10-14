@@ -9,7 +9,8 @@
 mod synthetic;
 
 use crate::reference::annotations::{
-    anonymous_branches, audit, branches, closed_union, closed_values, literal_values, nodes, parse,
+    anonymous, anonymous_branches, audit, branches, closed_union, closed_values, literal_values,
+    nodes, parse,
 };
 use crate::reference::{ANNOTATIONS, CATALOG};
 use serde_json::Value;
@@ -76,6 +77,11 @@ fn every_description_in_the_artifact_is_exactly_its_annotation() {
                         .find(|(name, _)| name == segment)
                         .map(|(_, branch)| branch)
                 })
+                .or_else(|| {
+                    anonymous(schema)
+                        .into_iter()
+                        .find_map(|branch| branch.get("properties")?.get(segment))
+                })
                 .unwrap_or_else(|| panic!("`{node}` addresses nothing in the catalog"));
         }
         assert_eq!(
@@ -90,31 +96,34 @@ fn every_description_in_the_artifact_is_exactly_its_annotation() {
 /// the two body kinds live — and where a set built from named shapes alone is
 /// complete and empty at the same time.
 ///
-/// Both numbers are pinned because the EXCLUSION needs a guard, not just the
-/// inclusion: a shape that grows a discriminated branch would otherwise add
-/// keys nothing asks prose for. An anonymous branch stays excluded because it
-/// has no name to address it by, and its keys are described by the parent
-/// shape's prose or by the shape each one `$ref`s.
+/// It reaches into both corners an earlier grammar excluded: a branch's own
+/// `type` key, and the keys of a branch with no discriminator (`PageSize`'s
+/// `{ w, h }`, `PointSpec`'s two forms), which are addressed through the shape.
+/// The anonymous-branch numbers are pinned so a new object form of a value
+/// shape is a visible change rather than one more address through the shape.
 #[test]
 fn the_node_set_reaches_into_the_tagged_unions() {
     let doc = catalog();
-    assert_eq!(nodes(&doc).len(), 420, "annotatable nodes");
+    assert_eq!(nodes(&doc).len(), 457, "annotatable nodes");
     for node in [
         "Item.text",
         "Item.text.data",
+        "Item.text.type",
         "Item.table.columns",
         "Item.char_grid.grid",
         "Body.flow",
         "Body.flow.gap",
+        "Body.flow.type",
+        "PageSize.w",
+        "PointSpec.item",
+        "BorderWidth.top",
+        "TextCombineUpright.digits",
     ] {
         assert!(
             nodes(&doc).iter().any(|n| n == node),
-            "`{node}` is a node the item and body unions own"
+            "`{node}` is a node the unions own"
         );
     }
-    // A branch's own discriminator is the branch, so it owes no prose of its
-    // own — asserted rather than left to the count.
-    assert!(!nodes(&doc).iter().any(|n| n == "Item.text.type"));
     assert_eq!(
         anonymous_branches(&doc),
         (7, 20),
@@ -159,6 +168,55 @@ fn no_description_survives_outside_the_node_set() {
         descriptions(&doc["$defs"]),
         nodes(&doc).len(),
         "a description sits somewhere the node grammar does not name"
+    );
+}
+
+/// The claim the release notes make, asserted over the artifact itself rather
+/// than over the node grammar: every key an author can write — every entry of
+/// every `properties` map, anywhere in the document, the two roots included —
+/// carries a description.
+///
+/// The audit above is only as complete as the grammar that lists its nodes,
+/// and that grammar once skipped 37 keys by design. This walk knows nothing
+/// about shapes or branches, so a key in a corner the grammar does not reach
+/// is named here instead of shipping undescribed.
+#[test]
+fn every_property_in_the_catalog_carries_a_description() {
+    fn undescribed(node: &Value, path: &str, out: &mut Vec<String>) {
+        match node {
+            Value::Object(map) => {
+                for (key, value) in map {
+                    let here = format!("{path}/{key}");
+                    if key != "properties" {
+                        undescribed(value, &here, out);
+                        continue;
+                    }
+                    // A `properties` map is keyed by WIRE names, and one of
+                    // them is literally `properties`, so each value is walked
+                    // as a schema rather than the map itself.
+                    for (name, property) in value.as_object().into_iter().flatten() {
+                        let text = property.get("description").and_then(Value::as_str);
+                        if text.is_none_or(|t| t.trim().is_empty()) {
+                            out.push(format!("{here}/{name}"));
+                        }
+                        undescribed(property, &format!("{here}/{name}"), out);
+                    }
+                }
+            }
+            Value::Array(items) => {
+                for (at, item) in items.iter().enumerate() {
+                    undescribed(item, &format!("{path}/{at}"), out);
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut missing = Vec::new();
+    undescribed(&catalog(), "", &mut missing);
+    assert_eq!(
+        missing,
+        Vec::<String>::new(),
+        "catalog keys with no description"
     );
 }
 

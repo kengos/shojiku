@@ -15,19 +15,19 @@
 //! built from named shapes alone would be complete over 279 nodes while
 //! `type: text` had no prose at all.
 //!
-//! What is deliberately NOT a node: a branch with no discriminator, and a
-//! branch's own `type` key. An anonymous branch has no name to address it BY —
-//! it is the alternative FORM of a value shape (`BorderColor`'s per-side map,
-//! `PageSize`'s `{ w, h }`, `PointSpec`'s anchor arm), and its keys are
-//! described either by the parent shape's own prose or by the shape each one
-//! `$ref`s. The gate asserts that every branch it skips really is anonymous,
-//! so a discriminated one added later cannot slip through the same door. A
-//! branch's `type` key IS the branch; annotating it 17 times would restate the
-//! `const` beside it.
+//! Two corners of the unions are nodes too, because an agent reading the
+//! catalog reads every PROPERTY, and an undescribed one is a gap whatever the
+//! parent's prose says. A branch's own discriminator is `Item.text.type`. A
+//! branch with no discriminator — the alternative FORM of a value shape
+//! (`BorderColor`'s per-side map, `PageSize`'s `{ w, h }`, `PointSpec`'s anchor
+//! arm) — has no name of its own, so its keys are addressed through the shape:
+//! `PageSize.w`, `PointSpec.item`. That spelling is unambiguous only while no
+//! two branches of a shape share a key and no key shares a discriminated
+//! branch's name, which the gate pins by refusing a duplicate node.
 //!
 //! Neither a shape name, a property name nor a discriminator contains a dot,
-//! and no shape carries both `oneOf` and `properties`, so the flat spelling is
-//! unambiguous. A NESTED file shape was rejected for a concrete reason: three
+//! and no shape carries both `oneOf` and `properties`, so a dotted spelling
+//! splits one way only. A NESTED file shape was rejected for a concrete reason: three
 //! wire keys are literally named `description`, so a
 //! `{ description:, properties: }` envelope would collide with the data it
 //! describes.
@@ -68,6 +68,9 @@ pub enum Problem {
     Missing(String),
     /// An annotation naming something the catalog does not define.
     Unknown(String),
+    /// A node spelling that addresses more than one key, so one annotation
+    /// would describe both.
+    Ambiguous(String),
     /// An annotation that is empty or only whitespace.
     Blank(String),
     /// An annotation too short to be prose.
@@ -82,6 +85,9 @@ impl fmt::Display for Problem {
             Self::Missing(node) => write!(f, "`{node}` has no annotation"),
             Self::Unknown(node) => {
                 write!(f, "annotation `{node}` names no node in the catalog")
+            }
+            Self::Ambiguous(node) => {
+                write!(f, "`{node}` addresses more than one key in the catalog")
             }
             Self::Blank(node) => write!(f, "`{node}` is annotated with blank text"),
             Self::Stub { node, len } => {
@@ -112,7 +118,7 @@ pub fn parse(src: &str) -> Result<BTreeMap<String, String>, serde_yaml::Error> {
 ///
 /// A shape, each of its properties as `Shape.property`, then each
 /// discriminated `oneOf` branch as `Shape.<discriminator>` with its own keys
-/// below it. The two roots (`template`, `definitions`) are `$ref`s into
+/// below it, then the keys of each anonymous branch as `Shape.property`. The two roots (`template`, `definitions`) are `$ref`s into
 /// `$defs`, so they own no prose of their own.
 #[must_use]
 pub fn nodes(catalog: &Value) -> Vec<String> {
@@ -125,28 +131,25 @@ pub fn nodes(catalog: &Value) -> Vec<String> {
         for (name, branch) in branches(schema) {
             out.push(format!("{shape}.{name}"));
             for property in properties(branch).keys() {
-                if property != DISCRIMINATOR {
-                    out.push(format!("{shape}.{name}.{property}"));
-                }
+                out.push(format!("{shape}.{name}.{property}"));
+            }
+        }
+        for branch in anonymous(schema) {
+            for property in properties(branch).keys() {
+                out.push(format!("{shape}.{property}"));
             }
         }
     }
     out
 }
 
-/// The key whose `const` names a tagged union's branch — and the one key a
-/// branch does not owe prose for, since the branch's own description is what
-/// says when to write it.
+/// The key whose `const` names a tagged union's branch.
 const DISCRIMINATOR: &str = "type";
 
 /// A shape's discriminated `oneOf` branches, paired with the literal that
 /// selects each.
 ///
-/// A branch with no discriminator is skipped rather than reported: with no
-/// name there is nothing to address it by, and its keys are described by the
-/// parent shape's prose or by the shape each one `$ref`s. That exclusion is
-/// only safe while it stays narrow, which is what [`anonymous_branches`]
-/// exists to keep true.
+/// A branch with no discriminator is not here: [`anonymous`] returns those.
 pub fn branches(schema: &Value) -> Vec<(String, &Value)> {
     schema
         .get("oneOf")
@@ -157,27 +160,33 @@ pub fn branches(schema: &Value) -> Vec<(String, &Value)> {
         .collect()
 }
 
-/// How many branches of a shape carry no discriminator, and how many keys they
-/// hold between them.
+/// A shape's `oneOf` branches that carry keys but no discriminator — the
+/// alternative object FORM of a value shape, whose keys are addressed through
+/// the shape itself.
+pub fn anonymous(schema: &Value) -> Vec<&Value> {
+    schema
+        .get("oneOf")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter(|branch| branch.get("properties").is_some() && discriminator(branch).is_none())
+        .collect()
+}
+
+/// How many anonymous branches the catalog holds, and how many keys they hold
+/// between them.
 ///
-/// The gate pins both numbers. A shape that grows a discriminated branch would
-/// otherwise gain 8 un-annotated keys and stay green, because the node set
-/// simply would not mention them.
+/// Pinned by the gate so a new object form of a value shape is a visible
+/// change: its keys are addressed through the shape, and a key it shares with
+/// a sibling form would make that address ambiguous.
 #[must_use]
 pub fn anonymous_branches(catalog: &Value) -> (usize, usize) {
     let mut count = 0;
     let mut keys = 0;
     for (_, schema) in defs(catalog) {
-        for branch in schema
-            .get("oneOf")
-            .and_then(Value::as_array)
-            .into_iter()
-            .flatten()
-        {
-            if branch.get("properties").is_some() && discriminator(branch).is_none() {
-                count += 1;
-                keys += properties(branch).len();
-            }
+        for branch in anonymous(schema) {
+            count += 1;
+            keys += properties(branch).len();
         }
     }
     (count, keys)
@@ -201,7 +210,12 @@ fn discriminator(branch: &Value) -> Option<String> {
 #[must_use]
 pub fn audit(catalog: &Value, annotations: &BTreeMap<String, String>) -> Vec<Problem> {
     let mut problems = Vec::new();
+    let mut seen = std::collections::BTreeSet::new();
     for node in nodes(catalog) {
+        if !seen.insert(node.clone()) {
+            problems.push(Problem::Ambiguous(node));
+            continue;
+        }
         match annotations.get(&node).map(String::as_str) {
             None => problems.push(Problem::Missing(node)),
             Some(text) if text.trim().is_empty() => problems.push(Problem::Blank(node)),
@@ -212,9 +226,8 @@ pub fn audit(catalog: &Value, annotations: &BTreeMap<String, String>) -> Vec<Pro
             Some(_) => {}
         }
     }
-    let known: std::collections::BTreeSet<String> = nodes(catalog).into_iter().collect();
     for node in annotations.keys() {
-        if !known.contains(node) {
+        if !seen.contains(node) {
             problems.push(Problem::Unknown(node.clone()));
         }
     }

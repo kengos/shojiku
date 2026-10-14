@@ -186,8 +186,10 @@ relative to the row element, carries its own diagnostic codes, and
 ignores `scope` (`row_condition_scope_ignored`).
 
 `equals` accepts a string, number, or boolean scalar; a map or sequence is
-a parse error. A **missing** params value draws nothing, silently — a
-blank form simply omits the key.
+a parse error. A **missing** params value draws nothing — a blank form
+simply omits the key. Validation still lists a key absent from top-level
+params as `missing_data` (a key missing from one repeat element is not
+reported).
 
 ## Sizing
 

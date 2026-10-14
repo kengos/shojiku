@@ -515,7 +515,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 38 files / 4594 lines; tests 42 files / 5492 lines
+### `authoring` (L5) — 38 files / 4625 lines; tests 43 files / 5651 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -537,10 +537,10 @@ first sentence of its `//!` header.
 - `src/prepare.rs` 114 — The layout pipeline shared by `inspect` / `preview` / `render`: gate validation errors, load (or accept injected) assets, lay out, dedupe diagnostics.
 - `src/preview.rs` 81 — Preview rasterization: every page to PNG bytes (the export/download form) or raw RGBA pixels (the canvas form, skipping the PNG encode).
 - `src/reference.rs` 81 — `reference` — the key catalog: the machine-readable facts of the authorable wire, held ONCE so every surface that describes a key renders the same source.
-- `src/reference/annotate.rs` 91 — Merging the annotation layer into the derived catalog.
-- `src/reference/annotations.rs` 280 ▲ — The annotation layer's RULE: every catalog node carries prose, and every annotation names a real node.
+- `src/reference/annotate.rs` 99 — Merging the annotation layer into the derived catalog.
+- `src/reference/annotations.rs` 293 ▲ — The annotation layer's RULE: every catalog node carries prose, and every annotation names a real node.
 - `src/reference/annotations/closed.rs` 90 — Which shapes have a CLOSED value set, and what those values are.
-- `src/reference/generate.rs` 100 — Catalog generation — the half that needs the schema derive.
+- `src/reference/generate.rs` 110 — Catalog generation — the half that needs the schema derive.
 - `src/reference/pages.rs` 240 — The rule that keeps a page's HAND-WRITTEN diagnostics section honest against the engine's own registries.
 - `src/reference/pages/prose.rs` 93 — The third rule: a code-SHAPED name in the prose OUTSIDE any `## Diagnostics` section.
 - `src/reference/pages/scan.rs` 206 — The scan itself: one pass over a page's lines.

@@ -145,16 +145,19 @@ false`), no clap.
   `src/bin/reference-gen.rs` — `[[bin]]` with `required-features =
   ["schema"]`, so a default build never compiles it. Wiring over
   `reference::run` (below); it takes no arguments and reads no environment.
-  Artifact: `reference/catalog.schema.json` — 84 named shapes, and **420
+  Artifact: `reference/catalog.schema.json` — 84 named shapes, and **457
   annotatable NODES**, which is not the same set: the wire's tagged unions
   are internally tagged, so schemars emits them as `oneOf` branches rather
   than named shapes and the 15 item types plus the 2 body kinds live only
   there. A node is a shape, one of its properties, a DISCRIMINATED branch,
-  or one of that branch's properties (`Item.text.data`). Excluded, both
-  pinned by the gate rather than trusted: the 7 anonymous branches and their
-  20 keys (no name to address them by; described by the parent's prose or by
-  the shape each key `$ref`s), and a branch's own `type` key, which IS the
-  branch.
+  or one of that branch's properties, its `type` included (`Item.text.data`,
+  `Item.text.type`), or a key of one of the 7 ANONYMOUS branches (20 keys),
+  addressed through the shape (`PageSize.w`, `PointSpec.item`); `audit`
+  refuses a spelling that addresses two keys (`Problem::Ambiguous`). The two
+  roots (`template`, `definitions`) are `$ref`s `generate.rs` builds, so
+  their prose is a constant there. A second, grammar-free test walks every
+  `properties` map in the artifact and fails on any key without a
+  description — the release-note claim, asserted directly.
   Gates: `make reference:generate` regenerates the catalog AND rewrites the
   generated tables in `docs/engine/*.md`; `make reference:check` runs the
   schema tests **and** the drift comparison — the comparison alone is an

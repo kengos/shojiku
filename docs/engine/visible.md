@@ -40,8 +40,13 @@ Equality is **type-strict**: `equals: "2"` never matches a numeric `2`. An
 `equals`, which is what a checkbox group's params look like.
 
 A key that is missing from params, or whose value simply does not match, hides
-the item **silently** — a blank form draws nothing and says nothing. Only a
-value the predicate *cannot use* warns (see [diagnostics](#diagnostics)).
+the item. A value that does not match says nothing. A key that is *absent* is
+reported once, as the `missing_data` warning every binding gets: validation
+runs on `validate`, `inspect` and `render` alike, so a blank form that hides an
+item this way still lists the key. That check reads top-level params only — an
+item outside a `repeat`, or one with `scope: document` — so a key missing from
+one element of a repeat hides that copy without a warning. A value the
+predicate *cannot use* warns as well (see [diagnostics](#diagnostics)).
 
 Inside a `repeat` cell the key resolves against the bound element, so each
 element decides for itself. `scope: document` is the escape a page-global flag

@@ -1,7 +1,9 @@
 # The English annotation layer for the key catalog.
 #
 # One entry per catalog node: `Shape` for a named shape, `Shape.property` for
-# one of its keys. Flat because three wire keys are literally named
+# one of its keys, `Shape.<type>` and `Shape.<type>.key` for a tagged union's
+# branch and its keys (its `type` included), and `Shape.key` for a key of a
+# value shape's object form, which has no name of its own. Flat because three wire keys are literally named
 # `description`, so a nested envelope would collide with the data it describes.
 #
 # What belongs here: what the key MEANS, the CSS property it mirrors, what it
@@ -152,9 +154,29 @@ BorderColor: >-
   A border colour: one `#rrggbb` string for all four sides, or a map naming
   `top`, `right`, `bottom` and `left` individually. An unset side in the map
   inherits nothing — it simply has no colour of its own.
+BorderColor.top: >-
+  The top side's border colour, as an `#rrggbb` string. Unset, that side has
+  no colour of its own.
+BorderColor.right: >-
+  The right side's border colour, as an `#rrggbb` string. Unset, that side has
+  no colour of its own.
+BorderColor.bottom: >-
+  The bottom side's border colour, as an `#rrggbb` string. Unset, that side
+  has no colour of its own.
+BorderColor.left: >-
+  The left side's border colour, as an `#rrggbb` string. Unset, that side has
+  no colour of its own.
 BorderStyle: >-
   A border stroke pattern: one keyword for all four sides, or a map naming
   `top`, `right`, `bottom` and `left` individually.
+BorderStyle.top: >-
+  The top side's stroke pattern: one `BorderStyleKind` keyword.
+BorderStyle.right: >-
+  The right side's stroke pattern: one `BorderStyleKind` keyword.
+BorderStyle.bottom: >-
+  The bottom side's stroke pattern: one `BorderStyleKind` keyword.
+BorderStyle.left: >-
+  The left side's stroke pattern: one `BorderStyleKind` keyword.
 BorderStyleKind: >-
   One border stroke pattern. `solid` is a continuous line; `double` splits the
   side's width into two lines of a third each; `dashed` paints three stroke
@@ -164,6 +186,14 @@ BorderWidth: >-
   A border stroke width in points: one number for all four sides, or a map
   naming `top`, `right`, `bottom` and `left` individually, whose unset sides
   are 0.
+BorderWidth.top: >-
+  The top side's stroke width in points, at least 0. Unset, that side is 0.
+BorderWidth.right: >-
+  The right side's stroke width in points, at least 0. Unset, that side is 0.
+BorderWidth.bottom: >-
+  The bottom side's stroke width in points, at least 0. Unset, that side is 0.
+BorderWidth.left: >-
+  The left side's stroke width in points, at least 0. Unset, that side is 0.
 FontStyle: >-
   A font style keyword. `normal` is upright; `italic` is a synthetic
   baseline-anchored skew rather than a real italic face.
@@ -192,6 +222,9 @@ TextCombineUpright: >-
   Tate-chu-yoko: `none` combines nothing, `all` combines the whole styled scope
   into one upright cell, and the map form `{ digits: n }` combines runs of up
   to n consecutive ASCII digits, with n from 2 to 4.
+TextCombineUpright.digits: >-
+  The map form's only key: the longest run of consecutive ASCII digits
+  combined into one upright cell, from 2 to 4. A longer run stays uncombined.
 TextDecoration: >-
   The decoration lines drawn on text. `none` draws nothing; `underline` draws
   below the baseline; `line_through` draws across the glyphs; `underline
@@ -374,6 +407,9 @@ Item.table: >-
   grid cell — it renders as one bounded block that never paginates, and the
   pagination keys warn `table_pagination_key_ignored`. Not supported inside a
   cell (`table_in_cell`).
+Item.table.type: >-
+  Required. `table` selects a data-driven table with one row per element of a
+  bound array.
 Item.table.id: >-
   A stable name for this table, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -386,7 +422,8 @@ Item.table.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.table.data: >-
   The array params key, one row per element. Required. A source that is not an
   array warns `not_an_array`; an absent one warns `missing_data`.
@@ -632,6 +669,9 @@ Body: >-
 Body.flow: >-
   A stacking body: items lay out top-down with `gap` between them and paginate
   across as many pages as they need.
+Body.flow.type: >-
+  Required. `flow` selects the stacking body, which paginates across as many
+  pages as its items need.
 Body.flow.box: >-
   The flow region, resolved against the page margin box. Omitted means the
   whole margin box.
@@ -642,6 +682,9 @@ Body.flow.items: >-
 Body.absolute: >-
   A single-page body: items place at their authored coordinates with no
   pagination, and the margin box is their parent box.
+Body.absolute.type: >-
+  Required. `absolute` selects the single-page body, whose items keep their
+  authored coordinates.
 Body.absolute.items: >-
   The items to place, each at its own coordinates.
 BoxSpec: >-
@@ -844,6 +887,9 @@ Item.text: >-
   `empty_text_item`. Where both `text` and `data` are set, `data` wins
   silently, and a non-empty `spans` wins over both with
   `span_content_conflict`.
+Item.text.type: >-
+  Required. `text` selects a text item: one wrapped block drawn from `text`,
+  `data` or `spans`.
 Item.text.id: >-
   A stable name for this item, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -860,7 +906,8 @@ Item.text.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.text.link: >-
   A hyperlink, written into the PDF as a link annotation over the item's box.
 Item.text.text: >-
@@ -954,6 +1001,9 @@ Item.char_grid: >-
   params. In a flow body, content past one sheet continues on FULL sheets on
   the following pages; everywhere else the item draws exactly one sheet and the
   overflow is dropped with `char_grid_overflow`.
+Item.char_grid.type: >-
+  Required. `char_grid` selects a fixed grid that draws one character per
+  cell.
 Item.char_grid.id: >-
   A stable name for this item, landing in the box index once per sheet page.
 Item.char_grid.box: >-
@@ -973,7 +1023,8 @@ Item.char_grid.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.char_grid.text: >-
   Static content with `{key}` interpolation. `\n` starts a new line and `\r` is
   ignored; an EMPTY STRING draws a blank sheet, which is how printable
@@ -1106,6 +1157,9 @@ Item.line: >-
   what makes an underline under a flex child expressible — the child's real
   width is decided at layout time, so no point value could be written down
   while authoring, but `to: { x: "100%" }` reaches its edge.
+Item.line.type: >-
+  Required. `line` selects a stroked segment between the `from` and `to`
+  endpoints.
 Item.line.id: >-
   A stable name for this line, adding a lookup alias beside its path in the
   `inspect` box index, and the name another item's anchor can target.
@@ -1114,7 +1168,8 @@ Item.line.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.line.from: >-
   Required. The segment's first endpoint: a coordinate pair, or an anchor naming another
   item.
@@ -1151,6 +1206,22 @@ PointSpec: >-
   One endpoint of a line: either a coordinate pair resolved against the parent
   box, or an anchor naming another item's id. An endpoint is one arm or the
   other — naming both a coordinate and an item is a parse error.
+PointSpec.x: >-
+  The coordinate form's horizontal position, from the parent box's left edge;
+  `%` resolves against the parent width. Required together with `y`.
+PointSpec.y: >-
+  The coordinate form's vertical position, from the parent box's top edge; `%`
+  resolves against the parent height. Required together with `x`.
+PointSpec.item: >-
+  The anchor form's required key: the `id` of the item this endpoint attaches
+  to. It makes the whole line absolutely positioned, and an id no item carries
+  warns `anchor_unknown_target` and draws nothing.
+PointSpec.edge: >-
+  The anchor form's landing point on the target's border box: `top`, `right`,
+  `bottom`, `left` or `center`, which is the default.
+PointSpec.offset: >-
+  The anchor form's shift in points, applied after the target's edge resolves;
+  either axis may be omitted.
 AnchorEdge: >-
   Which point of an anchored target's border box the endpoint lands on — the
   `<anchor-side>` subset CSS Anchor Positioning defines. `top`, `right`,
@@ -1192,7 +1263,8 @@ ContainerItem.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 ContainerItem.items: >-
   The children. One that authors neither `box.x` nor `box.y` is a flex or grid
   item; one that authors either is absolutely placed within the container.
@@ -1205,6 +1277,9 @@ Item.container: >-
   `overflow: hidden`. `page_number`, `repeat`, `repeat_flow` and `page_break`
   are not allowed inside one and skip with a warning; a `table` child IS
   allowed and renders as one bounded block.
+Item.container.type: >-
+  Required. `container` selects a box that gives its child items an origin, a
+  resolved size and inherited style.
 Item.container.id: >-
   A stable name for this container, adding a lookup alias beside its path in
   the `inspect` box index.
@@ -1223,7 +1298,8 @@ Item.container.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.container.items: >-
   The children. One that authors neither `box.x` nor `box.y` is a flex or grid
   item; one that authors either is absolutely placed within the container.
@@ -1233,6 +1309,9 @@ Item.repeat: >-
   data-scoped to its element, so the cell template is authored once with no
   per-instance field renaming. Flow-body only. Cells fill the grid, and when a
   page's grid is full the next cell starts a fresh page's grid.
+Item.repeat.type: >-
+  Required. `repeat` selects n-up imposition: one fixed-size cell per element
+  of a bound array, laid onto each page.
 Item.repeat.id: >-
   A stable name for this item, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1241,7 +1320,8 @@ Item.repeat.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.repeat.data: >-
   The array params key, one cell per element in order. Required.
 Item.repeat.grid: >-
@@ -1295,6 +1375,9 @@ Item.repeat_flow: >-
   does not fit moves whole to the next page and keep-together is inherent —
   there is no key for it. A card taller than the region warns
   `section_overflow`.
+Item.repeat_flow.type: >-
+  Required. `repeat_flow` selects one auto-height card per element of a bound
+  array, stacked in normal flow.
 Item.repeat_flow.id: >-
   A stable name for this item, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1303,7 +1386,8 @@ Item.repeat_flow.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.repeat_flow.data: >-
   The array params key, one card per element in order. Required.
 Item.repeat_flow.gap: >-
@@ -1321,6 +1405,9 @@ Item.image: >-
   params-bound `data`, and exactly one should be set. Width and height are
   REQUIRED — layout never sizes from the image's own pixels — and an image
   never paints outside its content box.
+Item.image.type: >-
+  Required. `image` selects a raster or SVG image, from a template-time `src`
+  or a params-bound `data`.
 Item.image.id: >-
   A stable name for this item, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1340,7 +1427,8 @@ Item.image.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.image.link: >-
   A hyperlink over the drawn box, written into the PDF as a link annotation.
 Item.image.src: >-
@@ -1372,6 +1460,9 @@ Item.qr_code: >-
   it. The encoded string is the FORMATTED value, like any text placement, so a
   field with enum display labels encodes its label — bind `format: value` to
   encode the machine value instead.
+Item.qr_code.type: >-
+  Required. `qr_code` selects a QR code, encoded at layout time into vector
+  module rectangles.
 Item.qr_code.id: >-
   A stable name for this item, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1391,7 +1482,8 @@ Item.qr_code.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.qr_code.text: >-
   Static content with `{key}` interpolation, exactly like a text item's.
 Item.qr_code.data: >-
@@ -1418,6 +1510,9 @@ Item.list: >-
   entry, never wrapped: an entry wider than the box takes the per-entry
   ellipsis instead. At most 1000 entries, and the capped ones still count into
   the overflow line's total.
+Item.list.type: >-
+  Required. `list` selects an array field drawn one entry per line, clamped at
+  the last entry that fits.
 Item.list.id: >-
   A stable name for this item, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1434,7 +1529,8 @@ Item.list.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.list.data: >-
   The array to render: a params key, or — inside a repeat cell or a card — a
   field of the bound element. Required.
@@ -1456,6 +1552,9 @@ Item.page_number: >-
   `page_number_in_body` and in a container `page_number_in_container`, and is
   skipped either way. Pair it with the band's own `repeat` mode to choose which
   pages show it.
+Item.page_number.type: >-
+  Required. `page_number` selects the current page number, which belongs in a
+  band; in a body it warns.
 Item.page_number.id: >-
   A stable name for this item, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1473,7 +1572,8 @@ Item.page_number.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.page_number.format: >-
   The line's template, where `{page}` is the current one-based page and
   `{pages}` the total. Any other text passes through. Defaults to
@@ -1485,6 +1585,9 @@ Item.rect: >-
   NOTHING DRAWS unless a style layer authors it — a bare rect is invisible,
   since there is no implicit default stroke. Width and height are required
   (`rect_missing_size`).
+Item.rect.type: >-
+  Required. `rect` selects a rectangle, drawn purely by its style's fill and
+  borders.
 Item.rect.id: >-
   A stable name for this item, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1502,10 +1605,13 @@ Item.rect.visible: >-
   default is that the box is still reserved and nothing is painted, so a
   blank-versus-filled params pair cannot shift the layout by a point;
   `collapse: true` removes it from layout instead. A key missing from
-  params, or a value that simply does not match, hides it SILENTLY.
+  params, or a value that simply does not match, hides it; a key absent
+  from top-level params also warns `missing_data`.
 Item.page_break: >-
   Forces the flow to continue on a new page. It takes only an id and a
   visibility predicate — there is nothing else to author.
+Item.page_break.type: >-
+  Required. `page_break` forces the flow to continue on a new page.
 Item.page_break.id: >-
   A stable name for this break, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1519,6 +1625,9 @@ Item.ellipse: >-
   have the same layout. Unlike a rect, a mark whose layers author no border
   width keeps a 1 pt outline default, because a mark's visible outline is the
   point of it. A per-side border width warns `shape_border_sides_ignored`.
+Item.ellipse.type: >-
+  Required. `ellipse` selects an oval mark whose geometry the template fixes
+  and whose presence params decide.
 Item.ellipse.id: >-
   A stable name for this mark, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1550,6 +1659,9 @@ Item.checkbox: >-
   MARK is content, drawn when `checked: true` is authored or when `data:`
   matches, so an empty box is the blank-form state. Its geometry is
   template-fixed, so a blank form and a filled one have the same layout.
+Item.checkbox.type: >-
+  Required. `checkbox` selects a checkbox: the frame always draws, the check
+  mark only when `checked` or `data` says so.
 Item.checkbox.id: >-
   A stable name for this checkbox, adding a lookup alias beside its path in the
   `inspect` box index.
@@ -1604,6 +1716,12 @@ PageSize: >-
   `Legal` and `Tabloid`. Anything else is a parse error, so a size this list
   does not carry has to be written as dimensions. Every named size gets the
   same 25 pt default margin.
+PageSize.w: >-
+  The custom size's page width, as a length in absolute units. Required
+  together with `h`.
+PageSize.h: >-
+  The custom size's page height, as a length in absolute units. Required
+  together with `w`.
 Orientation: >-
   The sheet's orientation. `portrait` is the default; `landscape` swaps the two
   dimensions of a named size and does nothing to a custom one.
@@ -1637,8 +1755,10 @@ VisibleBinding: >-
   is the form-mark presence binding generalized to the whole item vocabulary —
   the same keys, the same truth table, the same diagnostics about a literal
   that can never match — plus a choice about the SPACE the item leaves behind.
-  A key missing from params, or one that simply does not match, hides the item
-  SILENTLY, so a blank form draws nothing and says nothing.
+  A key missing from params, or one that simply does not match, hides the item.
+  A mismatch says nothing; a key absent from top-level params (outside a repeat
+  element, or with `scope: document`) also warns `missing_data`, as any binding
+  does, while a key absent from one repeat element hides that copy quietly.
 VisibleBinding.key: >-
   The params field to read, as a dotted path. Required.
 VisibleBinding.equals: >-
