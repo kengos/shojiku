@@ -192,7 +192,7 @@ printf '%s\n' \
 
 You should get two JSON lines back: the server naming itself
 `shojiku-mcp` — alongside a short `instructions` string your client hands
-to the model — then the six tools with their schemas. If the first line
+to the model — then the tools listed above with their schemas. If the first line
 never arrives, the usual cause is a missing `-i` — without it the server
 sees EOF and exits before answering.
 
@@ -209,7 +209,10 @@ are:
 - [skills/shojiku-template-author/](../skills/shojiku-template-author/SKILL.md)
   — authoring a template from natural-language requirements (its
   **Engine access** section is the canonical MCP-first / CLI-fallback
-  command table the other two reference).
+  command table the other skills reference).
+- [skills/shojiku-definitions-author/](../skills/shojiku-definitions-author/SKILL.md)
+  — producing `definitions.yml` and the params-building code from a
+  database schema, ORM models or an API response.
 - [skills/shojiku-render-debugger/](../skills/shojiku-render-debugger/SKILL.md)
   — diagnosing why an existing template renders wrong.
 - [skills/shojiku-thinreports-migrator/](../skills/shojiku-thinreports-migrator/SKILL.md)

@@ -24,7 +24,11 @@ job; the edit → validate → preview loop lives there.
 
 ## 2. Embed it in your app (the published SDKs)
 
-Packages for five languages are on the public registries. Every SDK has the
+Packages for all seven languages are on the public registries. The five
+shown here carry the engine inside the package; the
+[PHP](https://github.com/kengos/shojiku/blob/main/sdk/php/README.md) and
+[Go](https://github.com/kengos/shojiku/blob/main/sdk/go/README.md) packages
+run the `shojiku` binary instead, which you install separately. Every SDK has the
 same shape: construct a client, pass a template name and params, write out
 the returned bytes. Errors come back as a typed `failure`, not an exception.
 
@@ -200,7 +204,7 @@ The exact rules (auto-fetch via pinned `url:`, fallback chains) are in
 ## 5. Ship it (the Dockerfile recipes)
 
 Once the template is right, bake the app, the templates and the packs
-into one image. These are the real recipe files for all five languages —
+into one image. These are the real recipe files for the five languages above —
 the same files `make proof:deploy` builds and renders against the public
 registries.
 
@@ -243,6 +247,6 @@ store is never consulted.
 
 ## Next
 
-- The template language itself: the [reference](/reference/) — 31 pages, one per feature
+- The template language itself: the [reference](/reference/) — one page per feature
 - To feel how it behaves: the [playground](/playground)
 - To hand the writing to an AI: the [agents](/agents) page
