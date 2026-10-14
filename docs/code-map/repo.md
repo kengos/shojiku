@@ -324,24 +324,27 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   hook only records the intent. Every DENY does work under that mode, which is
   why the rules that must hold are denies.
   **The deny/note predicates are scoped to the command they are about, and that
-  is load-bearing rather than tidy.** `make -n` and a piped gate both
-  locate the make invocation and stop at the first `;`/`&&`/`|` before looking
-  for their flag, because a whole-string test denies `grep -n`, `head -n` and
-  `sort -n` whenever make is mentioned anywhere in the same call — which is the
-  ordinary shape of running a gate and then reading its log.
-  **Which characters count as those separators is decided by QUOTING, and
-  `unquoted_view` is the one place that decision is made**: it returns the
-  command with every quoted span blanked to spaces, so a `|`, `;`, `&&` or `-n`
-  inside an argument is no longer read as one outside. `piped_after_make`,
-  `dry_run_after_make` and `at_command_position` scan that view (the `$MAKE`
-  presence test and `make_targets` still read the raw string, so a quoted
-  `; make …` can still earn the worktree NOTE). Matching the raw string instead was wrong in BOTH
-  directions, and the second is the serious one: a quoted `|` or `-n` DENIED a
+  is load-bearing rather than tidy.** `make -n` and a piped gate are decided
+  per INVOCATION of make, from that invocation's own words (`make_verdicts`, over
+  the `GITSCAN` whole-command read below, which records each command-position
+  `make`, its arguments and whether an unquoted `|` ends it), because a
+  whole-string test denies `grep -n`, `head -n` and `sort -n` whenever make is
+  mentioned anywhere in the same call — which is the ordinary shape of running
+  a gate and then reading its log. Only a GATE counts: `make`, `make help` and
+  `make --version` ask for nothing that can be reported green.
+  **Separators are decided by the shell's reading — quoting, every line, heredoc
+  bodies as data — and each earlier approximation failed open somewhere.** A raw
+  string match was wrong in BOTH directions: a quoted `|` or `-n` DENIED a
   legitimate call (`make gui:test F='a|b'` is the ordinary way to run two
-  suites), while a quoted `;`, `&&` or `||` truncated the scan early and let a
-  genuinely piped gate THROUGH — `make gui:test F='a;b' | tail -40` was allowed,
-  i.e. the control failed open, which is the failure this directory exists to
-  prevent.
+  suites), while a quoted `;`, `&&` or `||` truncated the scan and let
+  `make gui:test F='a;b' | tail -40` THROUGH. A quote-blanking per-line view
+  fixed that but `exit`ed on the first line, so `cd x` then a piped gate on line
+  2 was allowed. Reading the whole command once settles all three and keeps a
+  heredoc body that merely names a piped gate — prose about this rule — from
+  being one; `||`, `>|` and `2>&1` are not pipes. A scan that fails denies, as
+  for the git rules. The `$MAKE` regex survives only as the worktree NOTE's
+  presence test, which reads the raw string (so a quoted `; make …` can still
+  earn the note).
   `at_command_position` is the general form of "is this a command or just a
   name", and the cargo rule uses it. It reads the command names `GITSCAN`
   (below) records, so the shell's own reading decides. It used to tokenize
@@ -383,12 +386,12 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   the length of `s` (an 850 KB command took 14 s; mawk and gawk stayed fast),
   and quadratic in every awk on a burst of unclosed `<<`. So characters are read
   from a moving 4096-character window, heredocs through a line table built once.
-  A third pass found the SAME cost one layer out: `unquoted_view`, which every
-  command goes through for the make and cargo rules, was quadratic too (a
-  400 KB single-line command took 11 s), and now uses the same window and
-  builds its output in pieces. `scripts/check-hooks.sh` carries three large
-  commands — many lines, many unclosed heredocs, one long line — that must be
-  denied within 5 s. A scan that FAILS denies rather than going quiet — the
+  A third pass found the SAME cost one layer out in the per-line quote-blanking
+  view the make rules then used (a 400 KB single-line command took 11 s); that
+  view is gone, and the make rules ride the same scan. `scripts/check-hooks.sh`
+  carries four large commands — many lines (ending in a push, and in a piped
+  gate), many unclosed heredocs, one long line — that must be denied within
+  5 s. A scan that FAILS denies rather than going quiet — the
   self-test breaks awk to prove it. That pass also found a `0x01` byte splitting
   the awk record and discarding the push before it, a shift inside `$(( … ))`
   arming a heredoc skip, and a substitution inside DOUBLE quotes going unscanned;
