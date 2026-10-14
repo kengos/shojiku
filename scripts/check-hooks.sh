@@ -201,6 +201,62 @@ case_bash 'gate piped in a sh heredoc'  deny 'sh <<EOF
 make engine:test | tail -40
 EOF'
 
+# ---- Bash guard: heavy commands piped into a filter --------------------
+# The output of an expensive command piped into tail/head/grep is lost, and a
+# miss means running it again. One row per member of the heavy set, then the
+# filters, then the spellings that keep the output.
+case_bash 'docker run to tail'          deny 'docker run --rm img render 2>&1 | tail -20'
+case_bash 'docker build to grep'        deny 'docker build -t x . | grep -i error'
+case_bash 'docker compose run to head'  deny 'docker compose run --rm app test | head -50'
+case_bash 'cargo to grep -c'            deny 'cargo test | grep -c ok'
+case_bash 'cargo to rg'                 deny 'cargo clippy 2>&1 | rg warning'
+case_bash 'pnpm test to tail'           deny 'pnpm -C gui test 2>&1 | tail -40'
+case_bash 'npm run build to less'       deny 'npm run build | less'
+case_bash 'npx tsc to head'             deny 'npx tsc --noEmit | head'
+case_bash 'npx vitest to sed -n'        deny 'npx vitest run | sed -n 1,5p'
+case_bash 'vitest to grep -E'           deny 'vitest run | grep -E "FAIL|PASS"'
+case_bash 'playwright to tail'          deny 'playwright test 2>&1 | tail -30'
+case_bash 'gh run view --log to grep'   deny 'gh run view 123 --log | grep error'
+case_bash 'gh run view --log-failed'    deny 'gh run view 123 --log-failed |& head -50'
+case_bash 'gh run watch to tail'        deny 'gh run watch 123 | tail -5'
+case_bash 'claude -p to head'           deny 'claude -p "hi" | head -3'
+case_bash 'heavy to awk NR'             deny 'docker run x | awk "NR<3"'
+case_bash 'heavy to tee then tail'      deny 'docker run x 2>&1 | tee /tmp/a.log | tail'
+case_bash 'heavy on a later line'       deny 'cd x
+pnpm test | tail'
+case_bash 'heavy after &&'              deny 'cd gui && pnpm test 2>&1 | tail'
+
+# The deny message names the per-session scratch path the replacement writes to.
+msg=$(jq -n '{session_id:"sess-42", cwd:"/tmp", tool_input:{command:"docker run x | tail"}}' |
+	"$hooks/guard-bash.sh" 2>/dev/null | jq -r '.hookSpecificOutput.permissionDecisionReason // ""')
+case $msg in
+*'~/shojiku-work/tmp/sess-42/'*) check 'deny message carries session path' deny deny ;;
+*) check 'deny message carries session path' deny "message: $msg" ;;
+esac
+case_bash 'heavy into the session dir' silent 'docker run x > ~/shojiku-work/tmp/s1/a.log 2>&1'
+case_bash 'heavy into /tmp stays ok'   silent 'docker run x > /tmp/a.log 2>&1'
+case_bash 'heavy redirected to a file'  silent 'docker run x > /tmp/a.log 2>&1'
+case_bash 'heavy &> a file'             silent 'pnpm test &> /tmp/a.log'
+case_bash 'heavy to tee only'           silent 'docker run x 2>&1 | tee /tmp/a.log'
+case_bash 'file read in its own call'   silent 'grep -n error /tmp/a.log'
+case_bash 'file read, tail -n'          silent 'tail -n 50 /tmp/a.log'
+case_bash 'heavy then read the file'    silent 'pnpm test > /tmp/a.log 2>&1; grep -n FAIL /tmp/a.log'
+case_bash 'git log to grep'             silent 'git log --oneline | grep fix'
+case_bash 'ls to head'                  silent 'ls | head'
+case_bash 'docker ps to grep'           silent 'docker ps | grep shojiku'
+case_bash 'docker images to head'       silent 'docker images | head'
+case_bash 'gh pr list to head'          silent 'gh pr list | head'
+case_bash 'gh run view without log'     silent 'gh run view 123 | head'
+case_bash 'pnpm install to tail'        silent 'pnpm install | tail -3'
+case_bash 'npm view to head'            silent 'npm view left-pad | head'
+case_bash 'claude --version to head'    silent 'claude --version | head -1'
+case_bash 'echo naming a piped heavy'   silent 'echo "cargo test | tail"'
+case_bash 'commit msg naming one'       silent "git commit -m 'deny docker run x | tail and cargo test | head'"
+case_bash 'heredoc naming one'          silent 'cat <<EOF
+docker run x | tail
+cargo test | grep ok
+EOF'
+
 # ---- Bash guard: the legitimate spellings beside them -------------------
 case_bash 'redirected gate'             silent 'make engine:test > /tmp/e.log 2>&1'
 case_bash 'make help piped'             silent 'make help | grep engine'
