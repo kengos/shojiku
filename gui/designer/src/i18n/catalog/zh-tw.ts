@@ -1478,6 +1478,7 @@ export const zhTw: LanguageCatalog = {
     'data.requiredHintGroup': '資料中有「{parent}」而缺少此項目時，診斷會顯示警告。列印不會停止。',
     'data.requiredHintRows': '「{parent}」的某一列缺少此項目時，診斷會顯示警告。列印不會停止。',
     'data.undo': '復原定義編輯',
+    'data.undoShortcut': '復原（{mod}Z）',
     'data.undoHint.delete': '復原：刪除 {name}',
     'data.undoHint.rename': '復原：資料名稱變更 {from} → {to}',
     'data.delete.samplesUntouched': '範例資料由技術人員管理，因此不會被改寫。按「{undo}」可復原。',
@@ -1526,8 +1527,6 @@ export const zhTw: LanguageCatalog = {
       '所有範例資料中的「{label}」也會被刪除。按「{undo}」可連同範例資料一起復原。',
     'data.delete.confirm': '刪除「{label}」',
     'data.notice.deleted': '已刪除「{label}」。按「{undo}」可復原。',
-    'data.notice.undoRefused':
-      '無法復原資料名稱的變更：把目前的範本和範例資料改回原名稱會超過大小上限，或有無法改寫的位置。沒有做任何變更。',
     'data.error.not_interpolatable':
       '文中插入只能使用半形英文字母、數字和 _。此範本中有在文中使用此資料的位置，因此不能使用這個名稱。',
     'data.error.binding_capture':

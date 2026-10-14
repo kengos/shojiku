@@ -13,6 +13,7 @@
 
 import { MAX_BATCH_OPS } from '@shojiku/designer-core';
 import { useId, useState } from 'react';
+import { isMacPlatform, modifierGlyph } from '../help/shortcutsModel';
 import { useI18n } from '../i18n/context';
 import { MAX_FIELD_NAME_CHARS } from '../insert/fieldModel';
 import { BTN_SM, FIELD_LABEL, INPUT } from '../ui/chrome';
@@ -58,6 +59,9 @@ function samplesKey(count: number, readOnly: boolean): string {
 
 export function RenameForm({ node, refs, actions, onClose }: RenameFormProps) {
   const { t } = useI18n();
+  // The undo the rename names is the ONE undo stack's (toolbar / ⌘Z), which
+  // takes back the template, the definitions and the samples together.
+  const undoShortcut = t('data.undoShortcut', { mod: modifierGlyph(isMacPlatform()) });
   const refusalText = useRefusalText();
   const [name, setName] = useState(node.name);
   const [late, setLate] = useState<RestructureRefusal | null>(null);
@@ -121,7 +125,7 @@ export function RenameForm({ node, refs, actions, onClose }: RenameFormProps) {
               <UsageList refs={refs} />
             </>
           ) : null}
-          <span>{t(samplesKey(count, actions.sampleReadOnly), { undo: t('data.undo') })}</span>
+          <span>{t(samplesKey(count, actions.sampleReadOnly), { undo: undoShortcut })}</span>
         </div>
       ) : null}
       {actions.projectScoped ? (

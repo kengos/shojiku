@@ -1476,6 +1476,7 @@ export const zhCn: LanguageCatalog = {
     'data.requiredHintGroup': '数据中有“{parent}”而缺少此项目时，诊断会显示警告。打印不会停止。',
     'data.requiredHintRows': '“{parent}”的某一行缺少此项目时，诊断会显示警告。打印不会停止。',
     'data.undo': '撤销定义编辑',
+    'data.undoShortcut': '撤销（{mod}Z）',
     'data.undoHint.delete': '撤销：删除 {name}',
     'data.undoHint.rename': '撤销：数据名更改 {from} → {to}',
     'data.delete.samplesUntouched': '示例数据由技术人员管理，因此不会被改写。点“{undo}”可恢复。',
@@ -1524,8 +1525,6 @@ export const zhCn: LanguageCatalog = {
       '所有示例数据中的“{label}”也会被删除。点“{undo}”可连同示例数据一起恢复。',
     'data.delete.confirm': '删除“{label}”',
     'data.notice.deleted': '已删除“{label}”。点“{undo}”可恢复。',
-    'data.notice.undoRefused':
-      '无法撤销数据名的更改：把当前模板和示例数据改回原名称会超过大小上限，或有无法改写的位置。没有做任何更改。',
     'data.error.not_interpolatable':
       '文中插入只能使用半角英文字母、数字和 _。此模板中有在文中使用此数据的位置，因此不能使用这个名称。',
     'data.error.binding_capture':

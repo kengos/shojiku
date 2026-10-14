@@ -7,9 +7,9 @@
 // the grid it swaps out.
 
 import { DataEditorView } from '../data/DataEditorView';
-import { canUndoDefs, peekDefsHistory } from '../data/defsHistory';
+import type { DefsEdits, DefsEffect } from '../data/defsStep';
 import { undoHint } from '../data/undoHint';
-import type { EditorController } from '../editor/useEditor';
+import type { DocumentEditor } from '../editor/useEditor';
 import type { DefinitionsOwnership } from '../hooks/useDefinitionsOwnership';
 import { useDefsRestructure } from '../hooks/useDefsRestructure';
 import type { DocDerived } from '../hooks/useDocDerived';
@@ -22,7 +22,7 @@ import { DocumentSettingsPage } from '../panel/DocumentSettingsPage';
 import { canUndoSample } from '../sample/history';
 
 export interface FullscreenViewProps {
-  readonly editor: EditorController;
+  readonly editor: DocumentEditor<DefsEdits, DefsEffect>;
   readonly views: DocViews;
   readonly defs: DefinitionsOwnership;
   readonly sample: SampleData;
@@ -98,9 +98,9 @@ export function FullscreenView({
       }}
       canUndo={canUndoSample(sample.sampleHistory)}
       onUndo={sample.undoSample}
-      canUndoDefinition={canUndoDefs(defs.defsHistory)}
+      canUndoDefinition={editor.undoEffect !== undefined}
       onUndoDefinition={restructure.undo}
-      undoDefinitionHint={undoHint(peekDefsHistory(defs.defsHistory)?.companion, t)}
+      undoDefinitionHint={undoHint(editor.undoEffect, t)}
       restructure={restructure}
       initialSelection={views.dataFocus ?? undefined}
       formatCatalog={derived.formats}

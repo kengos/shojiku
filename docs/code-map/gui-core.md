@@ -152,19 +152,35 @@ files and `e2e/` excluded, with NO waiver list.
 - `path.ts` — the structural **path grammar** shared with the engine box
   index (`sections.body.items[3]` → `PathSegment[]`); `parsePath`/
   `formatPath`/`toYamlPath`, `PathSyntaxError`.
-- `history.ts` — what the undo stack IS: `HistoryEntry`, the
+- `history.ts` — what the undo stack IS: `HistoryEntry`
+  `{text, selection, companion, effect?, bytes}` built by `historyEntry`
+  (weighs the text + the serialized companion and effect once), the
   `MAX_HISTORY` count + `MAX_HISTORY_BYTES` budget, the pure
   `trimHistory`.
+- `undoStack.ts` — `UndoStack`, the undo/redo pair: `record` forks and
+  trims; `back` / `forward` park the current state on the opposite stack
+  carrying the crossed step's effect, so it is reported again whichever way
+  the step is crossed next; `undoEffect` peeks.
+- `editorTypes.ts` — the Editor's wire types (`EditorOptions`,
+  `EditorStep {companion, effect?}`, `EditorChange {ops, source, effect?}`,
+  `EditorListener`), re-exported through `editor.ts`; type-only.
 - `editor.ts` — **`Editor`** session = live `Document` +
-  `serializeTemplate` snapshot undo/redo, each `HistoryEntry
-  {text, selection}` restoring BOTH text AND selection (undo of a
+  `serializeTemplate` snapshot undo/redo, each `HistoryEntry` restoring
+  text, selection AND the host's COMPANION state (undo of a
   `moveItem` re-selects at the OLD path; redo re-selects an inserted
   item); a selection-only change is NOT a history step; selection is
-  keyed by the path grammar. **`create(source, {maxBytes})`** +
+  keyed by the path grammar. `Editor<C, E>`: a host may keep a companion
+  document beside the template (the Designer's definitions edit list) —
+  `create(source, {companion})` seeds it, `companion()` reads it,
+  `applyAll(ops, {companion, effect})` changes it in the SAME undo step as
+  the ops (with no ops: a companion-only step), and the step's `effect` is
+  reported with the batch and with every undo/redo that crosses it
+  (`undoEffect()` peeks the next one), so an action spanning both documents
+  is one undo. **`create(source, {maxBytes})`** +
   **`setMaxBytes`** thread the template-size cap through EVERY re-parse
   (rollback / undo / redo) so a legally-oversized document stays
   editable. **`subscribe(listener)`** reports each COMMITTED change
-  (`{ops, source: 'apply'|'batch'|'undo'|'redo'}`) after the document
+  (`{ops, source: 'apply'|'batch'|'undo'|'redo', effect?}`) after the document
   and history settle — observation only (a refused op and an empty
   batch report nothing), so the op surface stays the single mutation
   path. **`applyAll`** applies a batch transactionally — all land as
@@ -187,7 +203,9 @@ Tests are sibling-per-module (`keyOps.test.ts` = the five map-key ops,
 `seqOps.test.ts` = the four sequence ops, `seqMove.test.ts` = what a
 SECOND sequence brings to `moveItem` plus whose the comment above a
 seq's first entry is (`headComment.ts`), `snippet.test.ts` =
-`isSnippetValue`, `history.test.ts` = `trimHistory`, `ops.test.ts` =
+`isSnippetValue`, `history.test.ts` = `trimHistory` + `historyEntry`,
+`editorCompanion.test.ts` = the Editor's companion channel (and `undoStack.ts`
+through it), `ops.test.ts` =
 dispatch + the root-addressed form), all exercised through `applyOp` —
 `opTarget.ts`/`opCreate.ts`/`opTypes.ts` have no separate public surface
 and are pinned through those suites (their headers say so). Round-trip

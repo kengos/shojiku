@@ -1334,6 +1334,7 @@ export const hi: LanguageCatalog = {
     'data.requiredHintRows':
       'जब “{parent}” की किसी पंक्ति में यह आइटम न हो, तो निदान चेतावनी दिखाता है। प्रिंटिंग नहीं रुकती।',
     'data.undo': 'परिभाषा संपादन पूर्ववत करें',
+    'data.undoShortcut': 'पूर्ववत ({mod}Z)',
     'data.undoHint.delete': 'पूर्ववत करें: {name} हटाना',
     'data.undoHint.rename': 'पूर्ववत करें: डेटा नाम बदलाव {from} → {to}',
     'data.delete.samplesUntouched':
@@ -1386,8 +1387,6 @@ export const hi: LanguageCatalog = {
       'हर नमूना डेटा से “{label}” भी हट जाएगा। “{undo}” से यह नमूना डेटा सहित वापस आ जाता है।',
     'data.delete.confirm': '“{label}” हटाएँ',
     'data.notice.deleted': '“{label}” हटा दिया गया। “{undo}” से वापस लाएँ।',
-    'data.notice.undoRefused':
-      'डेटा नाम का बदलाव पूर्ववत नहीं हो सका: मौजूदा टेम्पलेट और नमूना डेटा में पुराना नाम लौटाने से आकार सीमा पार होगी या कोई जगह बदली नहीं जा सकती। कुछ नहीं बदला।',
     'data.error.not_interpolatable':
       'टेक्स्ट इंसर्ट में केवल a–z, A–Z, 0–9 और _ चल सकते हैं। यह टेम्पलेट इस डेटा को टेक्स्ट में इंसर्ट करता है, इसलिए यह नाम नहीं रखा जा सकता।',
     'data.error.binding_capture':

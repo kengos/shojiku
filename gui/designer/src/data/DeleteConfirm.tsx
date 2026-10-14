@@ -6,6 +6,7 @@
 // loses the value, and how to undo; a shared file adds that the project's other
 // templates cannot be checked from here.
 
+import { isMacPlatform, modifierGlyph } from '../help/shortcutsModel';
 import { useI18n } from '../i18n/context';
 import { BTN_SM } from '../ui/chrome';
 import type { DefsNode } from './defsTree';
@@ -24,6 +25,9 @@ export interface DeleteConfirmProps {
 
 export function DeleteConfirm({ node, refs, actions, onClose }: DeleteConfirmProps) {
   const { t } = useI18n();
+  // The undo the delete names is the ONE undo stack's (toolbar / ⌘Z), which
+  // brings the samples back too.
+  const undoShortcut = t('data.undoShortcut', { mod: modifierGlyph(isMacPlatform()) });
   const label = nodeLabel(node);
   const inside = flattenTree(node).length - 1;
   const count = placeCount(refs);
@@ -46,9 +50,9 @@ export function DeleteConfirm({ node, refs, actions, onClose }: DeleteConfirmPro
       ) : null}
       {actions.projectScoped ? <span>{t('data.delete.shared')}</span> : null}
       {actions.sampleReadOnly ? (
-        <span>{t('data.delete.samplesUntouched', { undo: t('data.undo') })}</span>
+        <span>{t('data.delete.samplesUntouched', { undo: undoShortcut })}</span>
       ) : (
-        <span>{t('data.delete.samples', { label, undo: t('data.undo') })}</span>
+        <span>{t('data.delete.samples', { label, undo: undoShortcut })}</span>
       )}
       <div className="flex gap-1">
         <button

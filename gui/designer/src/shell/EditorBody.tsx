@@ -8,7 +8,8 @@
 // `CanvasArea` (direct manipulation), `PanelColumn` (placement geometry). This
 // file is the grid and the fullscreen switch, nothing else.
 
-import type { EditorController } from '../editor/useEditor';
+import type { DefsEdits, DefsEffect } from '../data/defsStep';
+import type { DocumentEditor } from '../editor/useEditor';
 import type { ChromeDialogs } from '../hooks/useChromeDialogs';
 import type { ContainerMarks } from '../hooks/useContainerMarks';
 import type { DefinitionsOwnership } from '../hooks/useDefinitionsOwnership';
@@ -33,7 +34,7 @@ import { PanelColumn } from './PanelColumn';
 import { SidePane } from './SidePane';
 
 export interface EditorBodyProps {
-  readonly editor: EditorController;
+  readonly editor: DocumentEditor<DefsEdits, DefsEffect>;
   readonly views: DocViews;
   readonly prefs: EditorPrefs;
   readonly defs: DefinitionsOwnership;

@@ -1,14 +1,14 @@
 // Planning a delete (the template is never touched; every variant loses the
-// value; the parent's required list drops the name) and the reverse halves a
-// definitions undo applies — a delete's values put back by variant id, a
-// rename's cascade back to the old name, a node gone from the tree needing none.
+// value; the parent's required list drops the name) and what an undo / redo of a
+// step does to the samples — a delete's values put back by variant id or
+// removed again, a rename re-keyed back or forward, a plain edit nothing.
 
 import type { Op } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
 import type { SampleSet } from '../sample/variants';
 import { MAX_DEFS_EDITS } from './defsPlan';
 import { type DefsNode, readDefsTree } from './defsTree';
-import { planDelete, reversePlan } from './deletePlan';
+import { planDelete, samplesAcross } from './deletePlan';
 import { SELECTION_SEP } from './editorModel';
 import { readDataRefs } from './refs/walk';
 import type { RestructureInput } from './renamePlan';
@@ -65,8 +65,9 @@ describe('planDelete', () => {
     ]);
     // The untouched variant keeps its very text.
     expect(plan.sampleSet.variants[1]).toBe(SET.variants[1]);
-    expect(plan.companion).toEqual({
+    expect(plan.effect).toEqual({
       kind: 'delete',
+      keysPath: ['properties', 'a'],
       name: 'a',
       variants: [{ id: 'one', removed: [{ path: ['a'], value: 1, position: 0 }] }],
     });
@@ -83,56 +84,32 @@ describe('planDelete', () => {
   });
 });
 
-describe('reversePlan', () => {
-  it('puts a delete’s values back by variant id, skipping a variant since removed', () => {
+describe('samplesAcross', () => {
+  it('puts a delete’s values back by variant id, skipping a variant since removed, and redoes it', () => {
     const plan = planDelete(input(), nodeA());
-    if (!plan.ok || plan.companion.kind !== 'delete') {
-      throw new Error('expected a delete');
+    if (!plan.ok) {
+      throw new Error(plan.reason);
     }
     const after: SampleSet = { ...plan.sampleSet, variants: plan.sampleSet.variants.slice(0, 1) };
-    const reverse = reversePlan(input({ sampleSet: after }), tree(), plan.companion);
+    const back = samplesAcross(after, plan.effect, true);
+    expect(JSON.parse(back.variants[0]?.text ?? '')).toEqual({ a: 1, b: 2 });
     // A variant the delete took nothing from is left exactly as it is.
-    const both = reversePlan(input({ sampleSet: plan.sampleSet }), tree(), plan.companion);
-    expect(both.ok && both.sampleSet.variants[1]).toBe(plan.sampleSet.variants[1]);
-    expect(reverse.ok && JSON.parse(reverse.sampleSet.variants[0]?.text ?? '')).toEqual({
-      a: 1,
-      b: 2,
-    });
-    expect(reverse.ok && reverse.templateOps).toEqual([]);
+    const both = samplesAcross(plan.sampleSet, plan.effect, true);
+    expect(both.variants[1]).toBe(plan.sampleSet.variants[1]);
+    expect(samplesAcross(SET, plan.effect, false)).toEqual(plan.sampleSet);
   });
 
-  it('cascades a rename back to the old name over the documents as they are now', () => {
-    const renamed = 'type: object\nproperties:\n  z: { type: string }\n';
-    const text = 'sections:\n  body:\n    items:\n      - { type: text, text: "{z}" }\n';
-    const reverse = reversePlan(
-      input({ definitions: renamed, templateText: text, refs: readDataRefs(text) }),
-      tree(renamed),
-      { kind: 'rename', keysPath: ['properties', 'z'], name: 'a' },
-    );
-    expect(reverse.ok && reverse.templateOps).toEqual([
-      { op: 'setScalar', path: 'sections.body.items[0]', keys: ['text'], value: '{a}' },
+  it('re-keys a rename back and forward, and leaves the samples alone for a plain edit', () => {
+    const effect = { kind: 'rename', parent: ['properties'], from: 'a', to: 'z' } as const;
+    const renamed = samplesAcross(SET, effect, false);
+    expect(renamed.variants.map((variant) => JSON.parse(variant.text))).toEqual([
+      { z: 1, b: 2 },
+      { b: 3 },
     ]);
-  });
-
-  it('needs no reverse for a node the tree no longer holds, and refuses one that cannot apply', () => {
-    const gone = reversePlan(input(), tree(), {
-      kind: 'rename',
-      keysPath: ['properties', 'q'],
-      name: 'a',
-    });
-    expect(
-      reversePlan(input(), null, { kind: 'rename', keysPath: ['properties', 'a'], name: 'x' }),
-    ).toEqual({
-      ok: true,
-      templateOps: [],
-      sampleSet: SET,
-    });
-    expect(gone).toEqual({ ok: true, templateOps: [], sampleSet: SET });
-    const refused = reversePlan(input({ refs: null }), tree(), {
-      kind: 'rename',
-      keysPath: ['properties', 'a'],
-      name: 'x',
-    });
-    expect(refused).toEqual({ ok: false });
+    expect(samplesAcross(renamed, effect, true).variants.map((v) => JSON.parse(v.text))).toEqual([
+      { a: 1, b: 2 },
+      { b: 3 },
+    ]);
+    expect(samplesAcross(SET, { kind: 'edit' }, true)).toBe(SET);
   });
 });

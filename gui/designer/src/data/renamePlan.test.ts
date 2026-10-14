@@ -203,10 +203,11 @@ describe('planRename — the template cascade', () => {
       'properties',
       'title',
     ]);
-    expect(plan.ok && plan.companion).toEqual({
+    expect(plan.ok && plan.effect).toEqual({
       kind: 'rename',
-      keysPath: ['properties', 'items', 'items', 'properties', 'title'],
-      name: 'name',
+      parent: ['properties', 'items', 'items', 'properties'],
+      from: 'name',
+      to: 'title',
     });
   });
 });

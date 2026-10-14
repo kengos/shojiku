@@ -690,17 +690,17 @@ and `edit.ts` both import `model.ts` and never each other.
   `SampleSet`), `renameRefusal` (per keystroke: the add form's name rules,
   `same_name`, `key_exists`, and the template's `not_interpolatable` /
   `binding_capture` / `too_many_refs` / `walk_truncated`; only `too_large`
-  and `edit_cap` wait for the full plan), `cascadePlan` (template + samples,
-  measured: template vs `maxBytes`, each variant vs `MAX_PARAMS_BYTES`) and
-  `planRename` (+ the edit list, the parent's `required` entry renamed in
-  place, the `MAX_DEFS_EDITS` cap, the definitions cap) → one
-  `Restructure {templateOps, sampleSet, edits, companion, keysPath}`;
+  and `edit_cap` wait for the full plan) and `planRename` (the template +
+  sample cascade measured — template vs `maxBytes`, each variant vs
+  `MAX_PARAMS_BYTES` — + the edit list, the parent's `required` entry renamed
+  in place, the `MAX_DEFS_EDITS` cap, the definitions cap) → one
+  `Restructure {templateOps, sampleSet, edits, effect, keysPath}`;
   `applyScratch`, `mapVariants`.
 - `data/deletePlan.ts` — `planDelete` (no template ops — references stay;
-  every variant loses the value, the companion records what and where) and
-  `reversePlan` (what a definitions undo re-applies: a delete's values put
-  back by variant id; a rename's cascade BACK, planned over the documents as
-  they are now; refused whole).
+  every variant loses the value, the effect records what and where) and
+  `samplesAcross` (what an undo / redo that crosses a definitions step does to
+  the samples: a rename re-keyed back or forward, a delete's values put back
+  by variant id or removed again, a plain edit nothing).
 - `data/refs/` — the data-reference census every usage count, usage list and
   rename shares: `types.ts` (`DataRef` at its LEAF — `path` + `keys`, `form`
   whole / inline / strings, `frame`, `spelled`, `carrier`, `owner`, the
@@ -734,12 +734,12 @@ and `edit.ts` both import `model.ts` and never each other.
   selectors stay allowed; returns the OP and the
   new `keysPath`) + `sanitizeDefsEdits` (the persisted-edit-list restore
   guard; deep validation stays with designer-core at apply).
-- `data/defsHistory.ts` — panel-local DEFINITION undo ring (a faithful
-  parallel of `sample/history.ts` — definitions are a distinct undo
-  document; three independent undo contexts). An entry is `{ops,
-  companion?}`: a rename / delete carries what reverting the template and
-  samples takes (`DefsCompanion`), counted in the byte budget;
-  `peekDefsHistory` lets the undo plan its reverse before popping.
+- `data/defsStep.ts` — what a definitions edit IS on the template's undo
+  stack: `DefsEdits` (the edit list = that history's companion) and
+  `DefsEffect` (`edit` / `rename {parent, from, to}` / `delete {keysPath,
+  name, variants}` — what the step did to the samples, re-applied on
+  undo/redo; every definitions step carries one, which is how the data-item
+  editor tells its own steps from template edits). Types only.
 
 The fullscreen editor is a SHELL plus per-responsibility panes; inside
 `data/` imports run one way (shell → pane → row/form → pure model) and
@@ -755,9 +755,9 @@ the panes never import each other.
   builds ONE `DetailContext` for the right pane; `sampleDataReadOnly` renders
   sample values as text. The definition actions live in `useNodeActions`.
 - `data/useNodeActions.ts` — the definition edit (`false` from the host =
-  refused at the edit-list cap), the definitions undo (`false` = its reverse
-  was refused; a keys path = where an undone rename put the node back, which
-  stays selected), and the `RestructureActions` (armed only with the host's
+  refused at the edit-list cap), the definitions undo (`false` = the host
+  took nothing back; a keys path = where an undone rename put the node back,
+  which stays selected), and the `RestructureActions` (armed only with the host's
   `restructure` over editable definitions): rename selects the renamed node,
   delete selects its parent; each outcome lands in the rail's status line.
 - `data/editorProps.ts` — `DataEditorViewProps` (optionality carries

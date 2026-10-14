@@ -18,6 +18,7 @@ export {
   type EditorChangeSource,
   type EditorListener,
   type EditorOptions,
+  type EditorStep,
   MAX_BATCH_OPS,
   type ReadFn,
 } from './editor';

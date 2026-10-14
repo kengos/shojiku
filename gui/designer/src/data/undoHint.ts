@@ -3,21 +3,18 @@
 // which, and of what (「元に戻す: total → grand のデータ名の変更」), so the
 // control never surprises anyone with how much it reverts.
 
-import type { DefsCompanion } from './defsHistory';
+import type { DefsEffect } from './defsStep';
 
 /** The definitions undo control's description when its next step is a rename or
  * a delete: which one, and of what. */
 export function undoHint(
-  companion: DefsCompanion | undefined,
+  effect: DefsEffect | undefined,
   t: (key: string, args?: Record<string, string>) => string,
 ): string | undefined {
-  if (companion === undefined) {
+  if (effect === undefined || effect.kind === 'edit') {
     return undefined;
   }
-  return companion.kind === 'rename'
-    ? t('data.undoHint.rename', {
-        from: companion.name,
-        to: companion.keysPath.slice(-1).join(''),
-      })
-    : t('data.undoHint.delete', { name: companion.name });
+  return effect.kind === 'rename'
+    ? t('data.undoHint.rename', { from: effect.from, to: effect.to })
+    : t('data.undoHint.delete', { name: effect.name });
 }

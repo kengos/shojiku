@@ -281,7 +281,8 @@ REQUIRED-only (no `?:`/defaults) so the split added no new branch legs.
 - `shell/FullscreenView.tsx` — the `DocumentSettingsPage`/`DataEditorView`
   branch (either takes the whole editor area); wires `useDefsRestructure`
   into the data-item editor (its `rename` / `remove`, and its `undo` as the
-  definitions undo, described by `data/undoHint`).
+  data-item editor's undo — enabled while the editor's `undoEffect` says the
+  newest step is a definitions one, described by `data/undoHint`).
 - `shell/DialogHost.tsx` — every modal/overlay/popup, open-flag driven
   (shortcuts/glossary, `PdfPreviewModal`, the `Offcanvas` column sheet).
   The preview's `pageLabel` comes from `usePdfAction`, snapshotted WITH the
@@ -329,7 +330,9 @@ lists name the destructured stable fields, never `editor` itself.
   floor). (Which band an insert target is: `insert/flowPlacement`'s
   `insertTargetBand`.)
 - `hooks/useDocumentCore.ts` — the head: transport + i18n handles,
-  `useTemplateCap`, `useEditor`, `useSampleData`,
+  `useTemplateCap`, `useEditor` (a `DocumentEditor` whose history carries
+  the definitions edit list as its companion, seeded once from
+  `sanitizeDefsEdits`), `useSampleData`, `useDefsStepSamples`,
   `useDefinitionsOwnership`, `usePreviewSession` (at base
   `ACTUAL_SIZE_SCALE`), theme style memo.
 - `hooks/useCanvasWiring.ts` — the tail: `usePageNav`, `usePaletteDrag`,
@@ -343,22 +346,28 @@ lists name the destructured stable fields, never `editor` itself.
   from non-empty params.
 - `hooks/useDefinitionsOwnership.ts` — definitions ownership: base
   (engineer file | workshop stub | minimal doc) + the data-item editor's
-  coalesced op list re-applied over it each render (live list capped at
-  `MAX_DEFS_EDITS` — `editDefinition` returns `false` past it;
-  `restructure(edits, companion)` replaces the list as one undo step;
+  coalesced op list — the editor history's COMPANION, so it has no undo of
+  its own — re-applied over it each render (the live list, read through
+  `readCompanion`, capped at `MAX_DEFS_EDITS` — `editDefinition` returns
+  `false` past it, and lands each edit as one companion-only step;
   `edits` / `base` exposed for planning); `effectiveDefinitions`
   feeds palette/editor, `definitionsForEngine` feeds preview/validate (a
   pristine stub never reaches the engine); reports text + ops with a
-  dedup ref seeded to the base; own undo ring. Also derives
-  `paletteGroups`.
-- `hooks/useDefsRestructure.ts` — rename / delete as ONE action over the
-  template (one `applyAll`), every sample variant (`handleVariantCommit`,
+  dedup ref seeded to the base. Also derives `paletteGroups`.
+- `hooks/useDefsRestructure.ts` — rename / delete as ONE action: the
+  template batch and the new edit list land as ONE `applyAll` step carrying
+  the plan's `DefsEffect`, then every sample variant (`handleVariantCommit`,
   which also clears the sample undo ring — its entries hold the old key; a
-  `sampleReadOnly` host's samples are left alone) and
-  the definitions (`restructure`), template first; `undo` plans the reverse
-  from the newest entry's companion BEFORE popping and applies it as a new
-  forward template batch, refusing whole when it cannot (after a rename it
-  returns the node's old keys path, so the editor keeps it selected).
+  `sampleReadOnly` host's samples are left alone); `undo` is the data-item
+  editor's undo — the editor's own undo, taken only when the newest step is
+  a definitions one (after a rename it returns the node's old keys path, so
+  the editor keeps it selected; `false` otherwise).
+- `hooks/useDefsStepSamples.ts` — the sample half of an undo / redo that
+  crosses a definitions step, from ANY control (toolbar, ⌘Z, the data-item
+  editor): subscribes to the editor and re-applies the step's effect to the
+  live sample set backward or forward (`samplesAcross`). Mounted with the
+  document, since the toolbar undo runs while the data-item editor is
+  closed.
 - `hooks/useZoom.ts` + `hooks/useAutoFit.ts` — zoom is Designer-local UI
   state, never in the template: `renderScale` + instant `cssFactor`,
   ⌘/Ctrl+wheel via a non-passive native listener through a callback ref;

@@ -1585,6 +1585,7 @@ export const en: LanguageCatalog = {
     'data.requiredHintRows':
       'If a row of “{parent}” lacks this item, Diagnostics shows a warning. Printing does not stop.',
     'data.undo': 'Undo definition edit',
+    'data.undoShortcut': 'Undo ({mod}Z)',
     'data.undoHint.delete': 'Undo: deleting {name}',
     'data.undoHint.rename': 'Undo: the data name change {from} → {to}',
     'data.delete.samplesUntouched':
@@ -1639,8 +1640,6 @@ export const en: LanguageCatalog = {
       '“{label}” is removed from every sample data set too. “{undo}” brings it back, sample data included.',
     'data.delete.confirm': 'Delete “{label}”',
     'data.notice.deleted': 'Deleted “{label}”. “{undo}” brings it back.',
-    'data.notice.undoRefused':
-      'The data name change could not be undone: putting the old name back into the current template and sample data would go over a size limit or reach a place that cannot be rewritten. Nothing was changed.',
     'data.error.not_interpolatable':
       'Text insertions can only use a–z, A–Z, 0–9 and _. This template inserts this data into text, so it cannot take this name.',
     'data.error.binding_capture':
