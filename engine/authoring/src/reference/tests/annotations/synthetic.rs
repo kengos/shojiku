@@ -8,7 +8,8 @@
 //!
 //! Split by what the disagreement IS: `missing` covers a node with no prose
 //! and prose naming no node, `closed` covers the clause about naming every
-//! value of a fixed set. What stays here is the shared fixture pair, the
+//! value of a fixed set, `unions` covers the nodes a `oneOf` contributes.
+//! What stays here is the shared fixture pair, the
 //! positive control over it, and the two claims about the rule's own surface.
 
 use crate::reference::annotations::{audit, Problem};
@@ -17,6 +18,7 @@ use std::collections::BTreeMap;
 
 mod closed;
 mod missing;
+mod unions;
 
 /// One object shape with one property, plus one closed enum.
 pub(super) fn catalog() -> Value {
@@ -65,6 +67,7 @@ fn every_problem_says_which_node_and_why() {
     let problems = [
         Problem::Missing("Box".into()),
         Problem::Unknown("Ghost".into()),
+        Problem::Ambiguous("Pair.x".into()),
         Problem::Blank("Box.w".into()),
         Problem::Stub {
             node: "Box.w".into(),
@@ -81,6 +84,7 @@ fn every_problem_says_which_node_and_why() {
         [
             "`Box` has no annotation",
             "annotation `Ghost` names no node in the catalog",
+            "`Pair.x` addresses more than one key in the catalog",
             "`Box.w` is annotated with blank text",
             "`Box.w` is annotated with 4 chars — a stub",
             "`Align` accepts `right` and its annotation never names it",

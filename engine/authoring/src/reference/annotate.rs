@@ -1,8 +1,8 @@
 //! Merging the annotation layer into the derived catalog.
 //!
 //! Prose lands on the addresses the node grammar names — `$defs/<Shape>`, one
-//! of its properties, a discriminated `oneOf` branch, or one of THAT branch's
-//! properties — and this module writes them by lookup rather than by walking
+//! of its properties, a discriminated `oneOf` branch, one of THAT branch's
+//! properties, or a key of a branch with no discriminator — and this module writes them by lookup rather than by walking
 //! the document. That is the point: a recursive walk would have a depth to
 //! bound and would let a mistyped annotation key decorate an arbitrary
 //! subschema. A lookup driven by the node name can only ever reach a node the
@@ -47,11 +47,14 @@ fn resolve<'a>(schema: &'a mut Value, tail: std::str::Split<'_, char>) -> Option
     Some(node)
 }
 
-/// One segment: a property first, then a branch discriminator.
+/// One segment: a property first, then a branch discriminator, then a key of
+/// a branch with no discriminator.
 ///
 /// Property before branch is not a preference — no shape in the catalog
 /// carries both `oneOf` and `properties`, which the gate pins, so at most one
-/// arm can ever match.
+/// of the first two arms can ever match. The third reaches only branches with
+/// no discriminator: a discriminated branch's keys are addressed through the
+/// branch, and the audit refuses a spelling that would match both.
 fn step<'a>(node: &'a mut Value, segment: &str) -> Option<&'a mut Value> {
     if node.get("properties").is_some() {
         return node
@@ -59,9 +62,14 @@ fn step<'a>(node: &'a mut Value, segment: &str) -> Option<&'a mut Value> {
             .and_then(Value::as_object_mut)
             .and_then(|props| props.get_mut(segment));
     }
-    node.get_mut("oneOf")
-        .and_then(Value::as_array_mut)
-        .and_then(|branches| branches.iter_mut().find(|branch| selects(branch, segment)))
+    let branches = node.get_mut("oneOf").and_then(Value::as_array_mut)?;
+    if let Some(at) = branches.iter().position(|branch| selects(branch, segment)) {
+        return branches.get_mut(at);
+    }
+    branches
+        .iter_mut()
+        .filter(|branch| branch.pointer("/properties/type/const").is_none())
+        .find_map(|branch| branch.get_mut("properties")?.get_mut(segment))
 }
 
 /// Whether a branch's discriminator is pinned to `name`.

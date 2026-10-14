@@ -172,6 +172,7 @@
             },
             "type": {
               "const": "flow",
+              "description": "Required. `flow` selects the stacking body, which paginates across as many pages as its items need.",
               "type": "string"
             }
           },
@@ -193,6 +194,7 @@
             },
             "type": {
               "const": "absolute",
+              "description": "Required. `absolute` selects the single-page body, whose items keep their authored coordinates.",
               "type": "string"
             }
           },
@@ -213,15 +215,19 @@
           "additionalProperties": false,
           "properties": {
             "bottom": {
+              "description": "The bottom side's border colour, as an `#rrggbb` string. Unset, that side has no colour of its own.",
               "type": "string"
             },
             "left": {
+              "description": "The left side's border colour, as an `#rrggbb` string. Unset, that side has no colour of its own.",
               "type": "string"
             },
             "right": {
+              "description": "The right side's border colour, as an `#rrggbb` string. Unset, that side has no colour of its own.",
               "type": "string"
             },
             "top": {
+              "description": "The top side's border colour, as an `#rrggbb` string. Unset, that side has no colour of its own.",
               "type": "string"
             }
           },
@@ -239,16 +245,20 @@
           "additionalProperties": false,
           "properties": {
             "bottom": {
-              "$ref": "#/$defs/BorderStyleKind"
+              "$ref": "#/$defs/BorderStyleKind",
+              "description": "The bottom side's stroke pattern: one `BorderStyleKind` keyword."
             },
             "left": {
-              "$ref": "#/$defs/BorderStyleKind"
+              "$ref": "#/$defs/BorderStyleKind",
+              "description": "The left side's stroke pattern: one `BorderStyleKind` keyword."
             },
             "right": {
-              "$ref": "#/$defs/BorderStyleKind"
+              "$ref": "#/$defs/BorderStyleKind",
+              "description": "The right side's stroke pattern: one `BorderStyleKind` keyword."
             },
             "top": {
-              "$ref": "#/$defs/BorderStyleKind"
+              "$ref": "#/$defs/BorderStyleKind",
+              "description": "The top side's stroke pattern: one `BorderStyleKind` keyword."
             }
           },
           "type": "object"
@@ -276,18 +286,22 @@
           "additionalProperties": false,
           "properties": {
             "bottom": {
+              "description": "The bottom side's stroke width in points, at least 0. Unset, that side is 0.",
               "minimum": 0,
               "type": "number"
             },
             "left": {
+              "description": "The left side's stroke width in points, at least 0. Unset, that side is 0.",
               "minimum": 0,
               "type": "number"
             },
             "right": {
+              "description": "The right side's stroke width in points, at least 0. Unset, that side is 0.",
               "minimum": 0,
               "type": "number"
             },
             "top": {
+              "description": "The top side's stroke width in points, at least 0. Unset, that side is 0.",
               "minimum": 0,
               "type": "number"
             }
@@ -552,7 +566,7 @@
               "type": "null"
             }
           ],
-          "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+          "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
         }
       },
       "type": "object"
@@ -1207,6 +1221,7 @@
             },
             "type": {
               "const": "text",
+              "description": "Required. `text` selects a text item: one wrapped block drawn from `text`, `data` or `spans`.",
               "type": "string"
             },
             "visible": {
@@ -1218,7 +1233,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1254,6 +1269,7 @@
             },
             "type": {
               "const": "rect",
+              "description": "Required. `rect` selects a rectangle, drawn purely by its style's fill and borders.",
               "type": "string"
             },
             "visible": {
@@ -1265,7 +1281,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this rectangle is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this rectangle is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1299,6 +1315,7 @@
             },
             "type": {
               "const": "line",
+              "description": "Required. `line` selects a stroked segment between the `from` and `to` endpoints.",
               "type": "string"
             },
             "visible": {
@@ -1310,7 +1327,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this line is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this line is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1435,6 +1452,7 @@
             },
             "type": {
               "const": "table",
+              "description": "Required. `table` selects a data-driven table with one row per element of a bound array.",
               "type": "string"
             },
             "visible": {
@@ -1446,7 +1464,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this table is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this table is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1498,6 +1516,7 @@
             },
             "type": {
               "const": "page_number",
+              "description": "Required. `page_number` selects the current page number, which belongs in a band; in a body it warns.",
               "type": "string"
             },
             "visible": {
@@ -1509,7 +1528,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this page number is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this page number is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1599,6 +1618,7 @@
             },
             "type": {
               "const": "image",
+              "description": "Required. `image` selects a raster or SVG image, from a template-time `src` or a params-bound `data`.",
               "type": "string"
             },
             "visible": {
@@ -1610,7 +1630,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this image is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this image is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1660,6 +1680,7 @@
             },
             "type": {
               "const": "container",
+              "description": "Required. `container` selects a box that gives its child items an origin, a resolved size and inherited style.",
               "type": "string"
             },
             "visible": {
@@ -1671,7 +1692,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1722,6 +1743,7 @@
             },
             "type": {
               "const": "repeat",
+              "description": "Required. `repeat` selects n-up imposition: one fixed-size cell per element of a bound array, laid onto each page.",
               "type": "string"
             },
             "visible": {
@@ -1733,7 +1755,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this imposition grid is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this imposition grid is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1775,6 +1797,7 @@
             },
             "type": {
               "const": "repeat_flow",
+              "description": "Required. `repeat_flow` selects one auto-height card per element of a bound array, stacked in normal flow.",
               "type": "string"
             },
             "visible": {
@@ -1786,7 +1809,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this card list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this card list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1867,6 +1890,7 @@
             },
             "type": {
               "const": "qr_code",
+              "description": "Required. `qr_code` selects a QR code, encoded at layout time into vector module rectangles.",
               "type": "string"
             },
             "visible": {
@@ -1878,7 +1902,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this code is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this code is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1946,6 +1970,7 @@
             },
             "type": {
               "const": "list",
+              "description": "Required. `list` selects an array field drawn one entry per line, clamped at the last entry that fits.",
               "type": "string"
             },
             "visible": {
@@ -1957,7 +1982,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             }
           },
           "required": [
@@ -1979,6 +2004,7 @@
             },
             "type": {
               "const": "page_break",
+              "description": "Required. `page_break` forces the flow to continue on a new page.",
               "type": "string"
             },
             "visible": {
@@ -2095,6 +2121,7 @@
             },
             "type": {
               "const": "char_grid",
+              "description": "Required. `char_grid` selects a fixed grid that draws one character per cell.",
               "type": "string"
             },
             "visible": {
@@ -2106,7 +2133,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it SILENTLY."
+              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
             },
             "writingMode": {
               "anyOf": [
@@ -2179,6 +2206,7 @@
             },
             "type": {
               "const": "ellipse",
+              "description": "Required. `ellipse` selects an oval mark whose geometry the template fixes and whose presence params decide.",
               "type": "string"
             },
             "visible": {
@@ -2251,6 +2279,7 @@
             },
             "type": {
               "const": "checkbox",
+              "description": "Required. `checkbox` selects a checkbox: the frame always draws, the check mark only when `checked` or `data` says so.",
               "type": "string"
             },
             "visible": {
@@ -2801,10 +2830,12 @@
           "additionalProperties": false,
           "properties": {
             "h": {
-              "$ref": "#/$defs/Length"
+              "$ref": "#/$defs/Length",
+              "description": "The custom size's page height, as a length in absolute units. Required together with `w`."
             },
             "w": {
-              "$ref": "#/$defs/Length"
+              "$ref": "#/$defs/Length",
+              "description": "The custom size's page width, as a length in absolute units. Required together with `h`."
             }
           },
           "required": [
@@ -2841,10 +2872,12 @@
           "additionalProperties": false,
           "properties": {
             "x": {
-              "$ref": "#/$defs/Length"
+              "$ref": "#/$defs/Length",
+              "description": "The coordinate form's horizontal position, from the parent box's left edge; `%` resolves against the parent width. Required together with `y`."
             },
             "y": {
-              "$ref": "#/$defs/Length"
+              "$ref": "#/$defs/Length",
+              "description": "The coordinate form's vertical position, from the parent box's top edge; `%` resolves against the parent height. Required together with `x`."
             }
           },
           "required": [
@@ -2857,13 +2890,16 @@
           "additionalProperties": false,
           "properties": {
             "edge": {
-              "$ref": "#/$defs/AnchorEdge"
+              "$ref": "#/$defs/AnchorEdge",
+              "description": "The anchor form's landing point on the target's border box: `top`, `right`, `bottom`, `left` or `center`, which is the default."
             },
             "item": {
+              "description": "The anchor form's required key: the `id` of the item this endpoint attaches to. It makes the whole line absolutely positioned, and an id no item carries warns `anchor_unknown_target` and draws nothing.",
               "type": "string"
             },
             "offset": {
-              "$ref": "#/$defs/AnchorOffset"
+              "$ref": "#/$defs/AnchorOffset",
+              "description": "The anchor form's shift in points, applied after the target's edge resolves; either axis may be omitted."
             }
           },
           "required": [
@@ -3671,6 +3707,7 @@
           "additionalProperties": false,
           "properties": {
             "digits": {
+              "description": "The map form's only key: the longest run of consecutive ASCII digits combined into one upright cell, from 2 to 4. A longer run stays uncombined.",
               "maximum": 4,
               "minimum": 2,
               "type": "integer"
@@ -3822,7 +3859,7 @@
     },
     "VisibleBinding": {
       "additionalProperties": false,
-      "description": "The predicate deciding whether an item is shown, available on every item. It is the form-mark presence binding generalized to the whole item vocabulary — the same keys, the same truth table, the same diagnostics about a literal that can never match — plus a choice about the SPACE the item leaves behind. A key missing from params, or one that simply does not match, hides the item SILENTLY, so a blank form draws nothing and says nothing.",
+      "description": "The predicate deciding whether an item is shown, available on every item. It is the form-mark presence binding generalized to the whole item vocabulary — the same keys, the same truth table, the same diagnostics about a literal that can never match — plus a choice about the SPACE the item leaves behind. A key missing from params, or one that simply does not match, hides the item. A mismatch says nothing; a key absent from top-level params (outside a repeat element, or with `scope: document`) also warns `missing_data`, as any binding does, while a key absent from one repeat element hides that copy quietly.",
       "properties": {
         "collapse": {
           "description": "Whether a hidden item is removed from layout entirely rather than reserving its box. Defaults to false, the form-mark posture, where everything around the item stays exactly where it was so a blank-versus-filled params pair never shifts the layout by a point. True closes the siblings up over it and takes the separating gap with it.",
@@ -3882,10 +3919,12 @@
   "description": "Per-key facts of the Shojiku template and definitions wire, derived from the parser. Regenerate with `make reference:generate`; `make reference:check` fails on drift.",
   "properties": {
     "definitions": {
-      "$ref": "#/$defs/Definitions"
+      "$ref": "#/$defs/Definitions",
+      "description": "The definitions file (`definitions.yml`): what the params MEAN. Its keys are the `Definitions` shape's."
     },
     "template": {
-      "$ref": "#/$defs/Template"
+      "$ref": "#/$defs/Template",
+      "description": "The template file (`templates.yml`): what a document LOOKS like. Its keys are the `Template` shape's."
     }
   },
   "title": "Shojiku authorable wire",

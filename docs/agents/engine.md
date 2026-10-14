@@ -304,14 +304,18 @@ emits them as `oneOf` branches rather than named `$ref` shapes: the 15
 item types and the two body kinds — the keys an agent actually asks for —
 live only there. So the node grammar is a named shape, one of its
 properties, a DISCRIMINATED branch, and one of that branch's properties:
-`Style`, `Style.fontSize`, `Item.text`, `Item.text.data`. Two exclusions,
-both gate-pinned rather than trusted: a branch with no discriminator has no
-name to address it by — it is the alternative FORM of a value shape
-(`BorderColor`'s per-side map, `PageSize`'s `{ w, h }`, `PointSpec`'s anchor
-arm) — and its keys are described either by the parent shape's own prose or by
-the shape each one `$ref`s; and a branch's own `type` key IS the branch. The gate pins how many anonymous branches exist
-and how many keys they hold, so a discriminated one added later cannot
-slip through the same door.
+`Style`, `Style.fontSize`, `Item.text`, `Item.text.data`. Two corners of the
+unions are nodes as well, because an agent reads every PROPERTY and an
+undescribed one is a gap whatever the parent's prose says: a branch's own
+`type` key (`Item.text.type`), and the keys of a branch with no discriminator
+— the alternative FORM of a value shape (`BorderColor`'s per-side map,
+`PageSize`'s `{ w, h }`, `PointSpec`'s anchor arm) — which has no name of its
+own and so is addressed through the shape (`PageSize.w`). That spelling is
+unambiguous only while no two branches of a shape share a key, so the audit
+refuses a node spelling that addresses two keys, and the gate pins how many
+anonymous branches exist. The two roots are described where they are built.
+Over all of it, one test that knows nothing of the grammar walks every
+`properties` map in the artifact and fails on a key with no description.
 
 **A closed value set must have every value named in its prose.** A derived
 schema describes the Rust shape, so prose is where the accepted set gets
