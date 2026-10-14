@@ -156,6 +156,40 @@ export class Engine {
         }
     }
     /**
+     * The format catalog for a template source: the pickable display
+     * variants per field type, each with an engine-rendered sample against
+     * fixed exemplar values, plus one result per requested pattern probe.
+     *
+     * `probes` is a JSON array (`[{ fieldType, pattern }]`); pass `"[]"` for
+     * none. A template that does not parse still answers — the catalog
+     * drops the document's registry names and keeps the locale's own.
+     * @param {string} template
+     * @param {string} probes
+     * @returns {string}
+     */
+    formatCatalog(template, probes) {
+        let deferred4_0;
+        let deferred4_1;
+        try {
+            const ptr0 = passStringToWasm0(template, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(probes, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.engine_formatCatalog(this.__wbg_ptr, ptr0, len0, ptr1, len1);
+            var ptr3 = ret[0];
+            var len3 = ret[1];
+            if (ret[3]) {
+                ptr3 = 0; len3 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred4_0 = ptr3;
+            deferred4_1 = len3;
+            return getStringFromWasm0(ptr3, len3);
+        } finally {
+            wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+        }
+    }
+    /**
      * Builds the retained font store from the injected packs (sha256 +
      * embedding verified).
      */
@@ -188,6 +222,43 @@ export class Engine {
             return getStringFromWasm0(ptr1, len1);
         } finally {
             wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * What picking `localeId` would do to a date, a number and an amount,
+     * under this template's own `defaults.currency`.
+     *
+     * Answers for a locale the session is NOT rendering through — it loads
+     * the pack from `overlay` and discards it, leaving `setLocale`'s pack
+     * untouched — because a document's `defaults.locale` is a CLI/MCP render
+     * fallback rather than the tag the preview runs.
+     * @param {string} template
+     * @param {string} locale_id
+     * @param {string | null} [overlay]
+     * @returns {string}
+     */
+    localeFacts(template, locale_id, overlay) {
+        let deferred5_0;
+        let deferred5_1;
+        try {
+            const ptr0 = passStringToWasm0(template, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(locale_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            var ptr2 = isLikeNone(overlay) ? 0 : passStringToWasm0(overlay, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len2 = WASM_VECTOR_LEN;
+            const ret = wasm.engine_localeFacts(this.__wbg_ptr, ptr0, len0, ptr1, len1, ptr2, len2);
+            var ptr4 = ret[0];
+            var len4 = ret[1];
+            if (ret[3]) {
+                ptr4 = 0; len4 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred5_0 = ptr4;
+            deferred5_1 = len4;
+            return getStringFromWasm0(ptr4, len4);
+        } finally {
+            wasm.__wbindgen_free(deferred5_0, deferred5_1, 1);
         }
     }
     /**

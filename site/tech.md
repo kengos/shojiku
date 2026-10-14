@@ -50,7 +50,7 @@ The supply chain is checked too.
   dependency that would need another ignore is not adopted
 <!-- sbom:generated:start (regenerate with `make site:data`) -->
 - **A CycloneDX SBOM is committed to the repository**
-  ([sbom/](https://github.com/kengos/shojiku/tree/main/sbom)): 255 components for the engine, 243 for the gui, 127 for sdk-js. Each is generated from the lockfile
+  ([sbom/](https://github.com/kengos/shojiku/tree/main/sbom)): 257 components for the engine, 236 for the gui, 127 for sdk-js. Each is generated from the lockfile
   itself and records that lockfile's sha256, so you can check exactly
   which resolution it describes. They are refreshed at each release, so
   between releases they can lag the lockfiles

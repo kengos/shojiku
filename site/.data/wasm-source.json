@@ -1,9 +1,9 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "files": {
-    "shojiku_wasm.d.ts": "0dc5b231fbbc3d38ebdedfe3a0f9f4f9e0c4a6b42d7743c689a53387f49a63a5",
-    "shojiku_wasm.js": "3be3a9c99374f26b6e02d3c47791e8dd9c1c577fb539c37becb5ccf187443697",
-    "shojiku_wasm_bg.wasm": "13d82acaaea52760e4a9ccd8b9b20ac81ddcc0e5ed1ad85ff67df156202c6914",
-    "shojiku_wasm_bg.wasm.d.ts": "15a42e0b82baffbe4596931c68939bf8ce5a98959276566a5cf5d7442924ec2c"
+    "shojiku_wasm.d.ts": "8ce377c11d956ee1a4c66e0ab3d8d4879a531f14e7c47e99c00f1b9e1918c951",
+    "shojiku_wasm.js": "91ef6c487847af634c3a1aa11a98281a14010393d862b2fcbfb21b3d42ee7fd3",
+    "shojiku_wasm_bg.wasm": "aa3e8dab42a898e6163bdfb4414d8b235cd5efc30a2ae0e056654a2a8fbf0c79",
+    "shojiku_wasm_bg.wasm.d.ts": "1bd3cfc82f176b587dabda3a02bf651704c4bc74de6d949fa9e3364d1ca7d536"
   }
 }

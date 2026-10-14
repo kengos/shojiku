@@ -41,6 +41,16 @@ export class Engine {
      */
     fontPacksNeeded(): string;
     /**
+     * The format catalog for a template source: the pickable display
+     * variants per field type, each with an engine-rendered sample against
+     * fixed exemplar values, plus one result per requested pattern probe.
+     *
+     * `probes` is a JSON array (`[{ fieldType, pattern }]`); pass `"[]"` for
+     * none. A template that does not parse still answers — the catalog
+     * drops the document's registry names and keeps the locale's own.
+     */
+    formatCatalog(template: string, probes: string): string;
+    /**
      * Builds the retained font store from the injected packs (sha256 +
      * embedding verified).
      */
@@ -52,6 +62,16 @@ export class Engine {
      * `missing_glyph` diagnostic appears. The primary pack is still required.
      */
     loadFontsSubset(): string;
+    /**
+     * What picking `localeId` would do to a date, a number and an amount,
+     * under this template's own `defaults.currency`.
+     *
+     * Answers for a locale the session is NOT rendering through — it loads
+     * the pack from `overlay` and discards it, leaving `setLocale`'s pack
+     * untouched — because a document's `defaults.locale` is a CLI/MCP render
+     * fallback rather than the tag the preview runs.
+     */
+    localeFacts(template: string, locale_id: string, overlay?: string | null): string;
     /**
      * A fresh engine with no locale, fonts, or assets.
      */
@@ -102,8 +122,10 @@ export interface InitOutput {
     readonly engine_fontFacesNeeded: (a: number, b: number, c: number) => [number, number, number, number];
     readonly engine_fontFilesNeeded: (a: number, b: number, c: number) => [number, number, number, number];
     readonly engine_fontPacksNeeded: (a: number) => [number, number, number, number];
+    readonly engine_formatCatalog: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
     readonly engine_loadFonts: (a: number) => [number, number];
     readonly engine_loadFontsSubset: (a: number) => [number, number, number, number];
+    readonly engine_localeFacts: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number, number, number];
     readonly engine_new: () => number;
     readonly engine_renderPdf: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number, number];
     readonly engine_renderPng: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number, number];
