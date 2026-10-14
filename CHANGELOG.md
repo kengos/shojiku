@@ -13,6 +13,8 @@ platform binaries.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-14
+
 This release is mostly about the Designer. In 0.2.0 a good part of the
 template format could be written in YAML and nowhere else; in this one most of
 it has a control in the Designer — tables, conditional formatting, grids and
@@ -396,6 +398,11 @@ not a string.
 - **The security page and `SECURITY.md`** now say that cargo-deny ignores
   one advisory, the unmaintained notice below; they used to say it ignored
   none.
+- **`SECURITY.md` and the site's technology page** say where the one
+  network path is: layout, rendering, signing and verifying carry
+  no network code, and the CLI fills its font cache from an allowlisted
+  host, checked by sha256 and turned off with `--offline`. They used to say
+  Shojiku had no network code at all.
 
 ### Security
 
@@ -429,6 +436,10 @@ not a string.
   the engine moves off `serde_yaml`. The image scan accepts DLA-4792-1, a
   tzdata refresh the runtime never reads, until 2026-12-31, when it is
   reported again.
+- **The high npm advisories on build tooling are cleared**:
+  `source-map-js` 1.2.2 in the Designer's, the npm package's and the
+  site's lockfiles, and `@vue/server-renderer` 3.5.43 in the site's. Both
+  are build and test tooling; no published package depends on either.
 - **The committed SBOMs list the dependencies and nothing else.** They used
   to pick up lockfile copies under `target/` — 1,757 components where the
   lockfile lists 254.
@@ -1104,6 +1115,7 @@ Docker, every SDK and browser WASM.
 - **SDKs** — Python, Ruby, Node, .NET, Java, Go and PHP, all against one
   frozen lifecycle contract.
 
-[Unreleased]: https://github.com/kengos/shojiku/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/kengos/shojiku/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/kengos/shojiku/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/kengos/shojiku/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/kengos/shojiku/releases/tag/v0.1.0
