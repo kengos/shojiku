@@ -102,7 +102,7 @@ GITSCAN='
 	function begin_scan(s,   p, k, t) {
 		n = 0; cur = 0; tok = ""; have = 0; at_start = 1; in_git = 0; opener = 0; decl = 0
 		q = ""; pending = ""; hd_on = 0; heredoc_word = 0; depth = 0; word_q = 0
-		sign_env_off = 0; sign_key = 0; sign_val = 0; cn = 0; curcmd = ""; mkn = 0; mk = 0
+		sign_env_off = 0; sign_key = 0; sign_val = 0; cn = 0; curcmd = ""; mkn = 0; mk = 0; ck = 0; pipe_from = 0
 		split("sh bash zsh dash ksh", p, " ")
 		for (k in p) SHELLS[p[k]] = 1
 		split("sudo env command exec time nohup nice then do else { ! if while until", p, " ")
@@ -171,11 +171,16 @@ GITSCAN='
 			if (w in DECL) { at_start = 0; opener = 0; decl = 1; return }
 			at_start = 0; opener = 0
 			cmdname[++cn] = w; curcmd = w
+			ck = cn; cargs[ck] = ""; cred[ck] = 0; cprev[ck] = pipe_from; pipe_from = 0
 			in_git = (w == "git")
 			mk = (w ~ /^g?make$/) ? ++mkn : 0
 			if (mk) { margs[mk] = ""; mpiped[mk] = 0 }
 			if (in_git) { cur = ++n; gopts[cur] = ""; subc[cur] = ""; args[cur] = ""; phase = "global"; takes_value = 0 }
 			return
+		}
+		if (ck) {
+			if (!wq && w ~ /^(1|&)?>>?/ && w !~ /^1?>&/) cred[ck] = 1
+			if (length(cargs[ck]) < 2000) cargs[ck] = cargs[ck] "\037" w
 		}
 		if (mk) { margs[mk] = margs[mk] "\037" w; return }
 		if (!in_git) return
@@ -189,7 +194,7 @@ GITSCAN='
 		}
 		args[cur] = args[cur] "\037" w
 	}
-	function command_end() { word_end(); at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""; mk = 0 }
+	function command_end() { word_end(); at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""; mk = 0; ck = 0; pipe_from = 0 }
 	function add(c, quoted) {
 		if (!have) lead_quoted = quoted
 		if (quoted) word_q = 1
@@ -204,8 +209,8 @@ GITSCAN='
 		st_tv[depth] = takes_value; st_at[depth] = at_start; st_op[depth] = opener
 		st_have[depth] = have; st_tok[depth] = tok; st_lq[depth] = lead_quoted
 		st_wq[depth] = word_q; st_decl[depth] = decl
-		st_bt[depth] = by_backtick; st_word[depth] = in_word; st_cmd[depth] = curcmd; st_mk[depth] = mk
-		have = 0; tok = ""; word_q = 0; at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""; mk = 0
+		st_bt[depth] = by_backtick; st_word[depth] = in_word; st_cmd[depth] = curcmd; st_mk[depth] = mk; st_ck[depth] = ck
+		have = 0; tok = ""; word_q = 0; at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""; mk = 0; ck = 0
 	}
 	# Leave it: the outer command resumes, and a substitution inside a word
 	# stands in that word as one placeholder character.
@@ -215,7 +220,7 @@ GITSCAN='
 		takes_value = st_tv[depth]; at_start = st_at[depth]; opener = st_op[depth]
 		have = st_have[depth]; tok = st_tok[depth]; lead_quoted = st_lq[depth]
 		word_q = st_wq[depth]; decl = st_decl[depth]; q = st_q[depth]
-		in_word = st_word[depth]; curcmd = st_cmd[depth]; mk = st_mk[depth]
+		in_word = st_word[depth]; curcmd = st_cmd[depth]; mk = st_mk[depth]; ck = st_ck[depth]
 		depth--
 		if (in_word) add("_", 0)
 	}
@@ -267,7 +272,10 @@ GITSCAN='
 				if (ch(i + 1) == "|") { command_end(); i++; continue }
 				word_end()
 				if (mk) mpiped[mk] = 1
+				pf = ck
 				command_end()
+				pipe_from = pf
+				if (ch(i + 1) == "&") i++
 				continue
 			}
 			if (c == ";" || c == "&") { command_end(); continue }
@@ -420,6 +428,95 @@ make_verdicts() {
 		}'
 }
 
+# One scan answers the rule about heavy commands: prints `<heavy> <filter>` for
+# the first HEAVY command whose stdout is piped into a truncating filter, else
+# `-`. Same whole-command read as the rules above (`GITSCAN` records every
+# command-position command with its words, whether its stdout is redirected to a
+# file, and which command's pipe feeds it).
+#
+# WHY. A heavy command's output piped to `tail`/`head`/`grep` is lost: the run
+# that missed the line has to be repeated, and each repeat is minutes of gate
+# and thousands of tokens. Redirect to a file and read the file, as often as
+# needed. `| tee file` keeps the full output on disk, so it is allowed — but a
+# filter AFTER the tee is the same loss and is denied.
+#
+# THE HEAVY SET lives in `is_heavy` below and nowhere else; add to it there.
+# A command is heavy by its name and, for the multiplexers, its subcommand:
+#   cargo (any subcommand) · docker run|build · docker compose run|build ·
+#   docker buildx build · pnpm|npm|npx|yarn running test|build|vitest|
+#   playwright|tsc · vitest · playwright · gh run view --log|--log-failed ·
+#   gh run watch · claude -p|--print
+# Light commands (`git log | grep`, `ls | head`, `docker ps | grep`,
+# `gh pr list | head`) are not in it and stay unrestricted. make gates keep
+# their own rule above.
+heavy_verdict() {
+	printf '%s' "$cmd" | awk "$GITSCAN"'
+		BEGIN { RS = "\001" }
+		{ all = all (NR > 1 ? "\001" : "") $0 }
+		function is_heavy(k,   name, m, a, j, t, p1, p2, np, flag_log, flag_p, any) {
+			name = cmdname[k]
+			sub(/^.*\//, "", name)
+			m = split(substr(cargs[k], 2), a, "\037")
+			np = 0; flag_log = 0; flag_p = 0
+			for (j = 1; j <= m; j++) {
+				t = a[j]
+				if (t ~ /^--log(-failed)?$/) flag_log = 1
+				if (t == "-p" || t == "--print") flag_p = 1
+				if (t ~ /^-/) continue
+				np++
+				if (np == 1) p1 = t
+				else if (np == 2) p2 = t
+			}
+			if (name == "cargo") return "cargo" (np ? " " p1 : "")
+			if (name == "vitest" || name == "playwright") return name
+			if (name == "docker") {
+				if (p1 == "run" || p1 == "build") return "docker " p1
+				if ((p1 == "compose" && (p2 == "run" || p2 == "build")) || (p1 == "buildx" && p2 == "build")) return "docker " p1 " " p2
+				return ""
+			}
+			if (name == "pnpm" || name == "npm" || name == "npx" || name == "yarn") {
+				if (p1 ~ /^(install|add|i|ci|remove|uninstall|update|up|link)$/) return ""
+				for (j = 1; j <= m; j++) {
+					t = a[j]
+					if (t ~ /^-/) continue
+					if (t ~ /^(test|build|vitest|playwright|tsc)$/ || t ~ /^(test|build):/) return name " " t
+				}
+				return ""
+			}
+			if (name == "gh") {
+				if (p1 == "run" && p2 == "watch") return "gh run watch"
+				if (p1 == "run" && p2 == "view" && flag_log) return "gh run view --log"
+				return ""
+			}
+			if (name == "claude" && flag_p) return "claude -p"
+			return ""
+		}
+		function is_filter(k,   name, m, a, j, t) {
+			name = cmdname[k]
+			sub(/^.*\//, "", name)
+			if (name ~ /^(tail|head|grep|egrep|fgrep|rg|less|more)$/) return 1
+			m = split(substr(cargs[k], 2), a, "\037")
+			for (j = 1; j <= m; j++) {
+				t = a[j]
+				if (name == "awk" && t ~ /NR/) return 1
+				if (name == "sed" && t ~ /^-[a-zA-Z]*n[a-zA-Z]*$/) return 1
+			}
+			return 0
+		}
+		END {
+			scan(all)
+			for (k = 1; k <= cn; k++) {
+				if (!is_filter(k)) continue
+				p = cprev[k]
+				while (p && cmdname[p] == "tee") p = cprev[p]
+				if (!p) continue
+				h = is_heavy(p)
+				if (h != "" && !cred[p]) { print h; exit }
+			}
+			print "-"
+		}'
+}
+
 case $cmd in
 *make*)
 	make_verdict=$(make_verdicts) || make_verdict=''
@@ -448,6 +545,16 @@ a refusal rather than as safe. Split the command into smaller calls.'
 	esac
 	;;
 *) git_verdict='- 0' ;;
+esac
+
+case $cmd in
+*'|'*)
+	heavy_verdict=$(heavy_verdict) || heavy_verdict=''
+	[ -n "$heavy_verdict" ] || decide deny 'The Bash guard could not read this command to check it for a piped heavy
+command — its scan did not produce an answer, which it treats as a refusal
+rather than as safe. Split the command into smaller calls.'
+	;;
+*) heavy_verdict='-' ;;
 esac
 
 # ---------------------------------------------------------------- deny ----
@@ -480,6 +587,18 @@ if [ "${make_verdict#* }" = 1 ]; then
 	decide deny '`make -n` is not a dry run here: recipe lines containing $(MAKE) still
 run for real (the documented GNU recursion rule), so a dry run takes the gate
 lock and has killed a gate mid-run. Read the recipe, or run `make help`.'
+fi
+
+# A heavy command's output piped into tail/head/grep/less/awk NR/sed -n is
+# lost, and the miss means running it again (`heavy_verdict` has the set).
+if [ "$heavy_verdict" != - ]; then
+	decide deny "\`$heavy_verdict\` is a heavy command and its output is piped into a filter: the
+output is lost, and a miss means re-running it. Write it to a file and read the
+file as often as needed:
+  $heavy_verdict ... > /tmp/<name>.log 2>&1
+  grep -n <pattern> /tmp/<name>.log        (or tail -n 50, cat)
+For a long run use run_in_background and read the log when it notifies.
+\`| tee /tmp/<name>.log\` keeps the full output too, but nothing may filter after it."
 fi
 
 # There is no Rust toolchain on this host, and a hand-built invocation is not a

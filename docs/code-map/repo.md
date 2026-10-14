@@ -307,7 +307,11 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   two hook scripts and the settings file that registers them, three files in
   all (`git ls-files .claude`). Two POSIX-sh scripts reading a
   hook event on stdin and writing at most one decision: `guard-bash.sh`
-  (PreToolUse over Bash — denies a piped gate, `make -n`, a host `cargo`, a
+  (PreToolUse over Bash — denies a piped gate, a HEAVY command (`is_heavy` in
+  `heavy_verdict`, the one list: cargo, docker run/build, pnpm/npm/npx
+  test·build·tsc·vitest·playwright, gh run view --log / watch, claude -p)
+  piped into tail/head/grep/less/awk NR/sed -n — redirect to a file and read
+  it; `| tee file` is allowed, a filter after it is not — `make -n`, a host `cargo`, a
   commit with signing disabled or an attribution trailer, a push at `main`, a
   `git reset --soft` onto a remote-tracking ref (no local squash: GitHub's
   squash merge makes the one commit);
