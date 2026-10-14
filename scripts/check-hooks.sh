@@ -226,6 +226,15 @@ case_bash 'heavy on a later line'       deny 'cd x
 pnpm test | tail'
 case_bash 'heavy after &&'              deny 'cd gui && pnpm test 2>&1 | tail'
 
+# The deny message names the per-session scratch path the replacement writes to.
+msg=$(jq -n '{session_id:"sess-42", cwd:"/tmp", tool_input:{command:"docker run x | tail"}}' |
+	"$hooks/guard-bash.sh" 2>/dev/null | jq -r '.hookSpecificOutput.permissionDecisionReason // ""')
+case $msg in
+*'~/shojiku-work/tmp/sess-42/'*) check 'deny message carries session path' deny deny ;;
+*) check 'deny message carries session path' deny "message: $msg" ;;
+esac
+case_bash 'heavy into the session dir' silent 'docker run x > ~/shojiku-work/tmp/s1/a.log 2>&1'
+case_bash 'heavy into /tmp stays ok'   silent 'docker run x > /tmp/a.log 2>&1'
 case_bash 'heavy redirected to a file'  silent 'docker run x > /tmp/a.log 2>&1'
 case_bash 'heavy &> a file'             silent 'pnpm test &> /tmp/a.log'
 case_bash 'heavy to tee only'           silent 'docker run x 2>&1 | tee /tmp/a.log'

@@ -26,6 +26,8 @@ command -v jq >/dev/null 2>&1 || exit 0
 event=$(cat 2>/dev/null) || exit 0
 cmd=$(printf '%s' "$event" | jq -r '.tool_input.command // ""' 2>/dev/null) || exit 0
 cwd=$(printf '%s' "$event" | jq -r '.cwd // ""' 2>/dev/null) || exit 0
+sid=$(printf '%s' "$event" | jq -r '.session_id // ""' 2>/dev/null | tr -cd 'A-Za-z0-9_-')
+[ -n "$sid" ] || sid=unknown
 [ -n "$cmd" ] || exit 0
 
 decide() {
@@ -592,13 +594,14 @@ fi
 # A heavy command's output piped into tail/head/grep/less/awk NR/sed -n is
 # lost, and the miss means running it again (`heavy_verdict` has the set).
 if [ "$heavy_verdict" != - ]; then
+	log="~/shojiku-work/tmp/$sid/<name>.log"
 	decide deny "\`$heavy_verdict\` is a heavy command and its output is piped into a filter: the
 output is lost, and a miss means re-running it. Write it to a file and read the
-file as often as needed:
-  $heavy_verdict ... > /tmp/<name>.log 2>&1
-  grep -n <pattern> /tmp/<name>.log        (or tail -n 50, cat)
+file as often as needed (this directory is disposable and may be deleted at any time):
+  mkdir -p ~/shojiku-work/tmp/$sid && $heavy_verdict ... > $log 2>&1
+  grep -n <pattern> $log        (or tail -n 50, cat)
 For a long run use run_in_background and read the log when it notifies.
-\`| tee /tmp/<name>.log\` keeps the full output too, but nothing may filter after it."
+\`| tee $log\` keeps the full output too, but nothing may filter after it."
 fi
 
 # There is no Rust toolchain on this host, and a hand-built invocation is not a
