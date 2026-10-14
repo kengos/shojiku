@@ -14,9 +14,9 @@ import { MAX_PARAMS_BYTES } from '../sample/model';
 import { renameSampleKey } from '../sample/rekey';
 import type { SampleSet } from '../sample/variants';
 import { coalesceDefsEdit } from './definitionsEdit';
-import type { DefsCompanion } from './defsHistory';
 import { type AddFieldRefusal, holds, MAX_DEFS_EDITS, nameRefusal } from './defsPlan';
 import { renameInEdits } from './defsRestructure';
+import type { DefsEffect } from './defsStep';
 import type { DefsNode } from './defsTree';
 import { refsUnder, relativeKey } from './refs/match';
 import { type RewriteRefusal, rewritePlan } from './refs/rewrite';
@@ -50,7 +50,8 @@ export interface Restructure {
   readonly templateOps: readonly Op[];
   readonly sampleSet: SampleSet;
   readonly edits: readonly Op[];
-  readonly companion: DefsCompanion;
+  /** What the step records for undo/redo to re-apply to the samples. */
+  readonly effect: DefsEffect;
   /** Where the node is afterwards (`null` = gone). */
   readonly keysPath: readonly string[] | null;
 }
@@ -129,8 +130,9 @@ export function mapVariants(
   return changed ? { ...set, variants } : set;
 }
 
-/** The template and sample halves alone — what an undo re-applies in reverse. */
-export function cascadePlan(
+/** The template and sample halves of a rename `renameRefusal` already let
+ * through (so the template half has its ops), measured against their caps. */
+function cascadePlan(
   input: RestructureInput,
   node: DefsNode,
   name: string,
@@ -141,9 +143,6 @@ export function cascadePlan(
       readonly reason: RestructureRefusal;
     } {
   const template = templateHalf(input.refs, node, name);
-  if (template.reason !== null) {
-    return { ok: false, reason: template.reason };
-  }
   const result = applyScratch(input.templateText, template.ops, input.maxBytes);
   if (result === null || bytes(result) > input.maxBytes) {
     return { ok: false, reason: 'too_large' };
@@ -183,7 +182,8 @@ export function planRename(input: RestructureInput, node: DefsNode, name: string
   if (defs === null || bytes(defs) > MAX_TEMPLATE_BYTES) {
     return { ok: false, reason: 'too_large' };
   }
-  const companion: DefsCompanion = { kind: 'rename', keysPath, name: node.name };
+  const parent = node.keysPath.slice(0, -1);
+  const effect: DefsEffect = { kind: 'rename', parent, from: node.name, to: name };
   const { templateOps, sampleSet } = cascade;
-  return { ok: true, templateOps, sampleSet, edits, companion, keysPath };
+  return { ok: true, templateOps, sampleSet, edits, effect, keysPath };
 }

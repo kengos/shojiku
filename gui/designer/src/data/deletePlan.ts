@@ -1,4 +1,6 @@
-// Planning a node DELETE, and the reverse halves a definitions undo applies.
+// Planning a node DELETE, and what an undo/redo of a rename or delete does to
+// the sample data (the template and the definitions ride the undo stack's own
+// snapshots; the samples are re-keyed against what they are at that moment).
 //
 // A delete touches two documents: the definitions edit list (the node and every
 // edit under it go, `defsRestructure.ts`) and every sample variant (the key goes
@@ -7,21 +9,19 @@
 // which is why the confirmation names those places first.
 
 import type { Op } from '@shojiku/designer-core';
-import { type RemovedValue, removeSampleKey, restoreSampleValues } from '../sample/rekey';
+import {
+  type RemovedValue,
+  removeSampleKey,
+  renameSampleKey,
+  restoreSampleValues,
+} from '../sample/rekey';
 import type { SampleSet } from '../sample/variants';
 import { coalesceDefsEdit, requiredOp } from './definitionsEdit';
-import type { DefsCompanion } from './defsHistory';
 import { MAX_DEFS_EDITS } from './defsPlan';
 import { deleteInEdits } from './defsRestructure';
+import type { DefsEffect } from './defsStep';
 import type { DefsNode } from './defsTree';
-import { sameFrame } from './refs/match';
-import {
-  cascadePlan,
-  mapVariants,
-  type RestructureInput,
-  type RestructurePlan,
-} from './renamePlan';
-import { flattenTree } from './treeModel';
+import { mapVariants, type RestructureInput, type RestructurePlan } from './renamePlan';
 
 /** Plan deleting `node` (and everything under it). */
 export function planDelete(input: RestructureInput, node: DefsNode): RestructurePlan {
@@ -41,35 +41,33 @@ export function planDelete(input: RestructureInput, node: DefsNode): Restructure
     }
     return result.text;
   });
-  const companion: DefsCompanion = { kind: 'delete', name: node.name, variants: removed };
-  return { ok: true, templateOps: [], sampleSet, edits, companion, keysPath: null };
+  const effect: DefsEffect = {
+    kind: 'delete',
+    keysPath: node.keysPath,
+    name: node.name,
+    variants: removed,
+  };
+  return { ok: true, templateOps: [], sampleSet, edits, effect, keysPath: null };
 }
 
-/** What undoing a rename / delete re-applies to the template and the samples
- * (the definitions half is the restored op list). A rename's reverse is the
- * same cascade back to the old name, planned against the documents as they are
- * NOW — so a template edit made since survives — and refused whole on the same
- * grounds. A node the tree no longer holds needs no reverse. */
-export function reversePlan(
-  input: RestructureInput,
-  tree: DefsNode | null,
-  companion: DefsCompanion,
-):
-  | { readonly ok: true; readonly templateOps: readonly Op[]; readonly sampleSet: SampleSet }
-  | { readonly ok: false } {
-  if (companion.kind === 'delete') {
-    const byId = new Map(companion.variants.map((entry) => [entry.id, entry.removed]));
-    const sampleSet = mapVariants(input.sampleSet, (text, id) => {
-      const removed = byId.get(id);
-      return removed === undefined ? text : restoreSampleValues(text, removed);
-    });
-    return { ok: true, templateOps: [], sampleSet };
+/** The sample set after an undo (`back`) or a redo crosses a step with
+ * `effect`: a rename re-keys the node back or forward, a delete puts its values
+ * back by variant id or removes them again. A plain edit, and a variant the step
+ * never touched, are left exactly as they are. */
+export function samplesAcross(set: SampleSet, effect: DefsEffect, back: boolean): SampleSet {
+  if (effect.kind === 'rename') {
+    const [at, to] = back ? [effect.to, effect.from] : [effect.from, effect.to];
+    return mapVariants(set, (text) => renameSampleKey(text, [...effect.parent, at], to));
   }
-  const nodes = tree === null ? [] : flattenTree(tree);
-  const node = nodes.find((entry) => sameFrame(entry.keysPath, companion.keysPath));
-  if (node === undefined) {
-    return { ok: true, templateOps: [], sampleSet: input.sampleSet };
+  if (effect.kind === 'edit') {
+    return set;
   }
-  const cascade = cascadePlan(input, node, companion.name);
-  return cascade.ok ? cascade : { ok: false };
+  if (!back) {
+    return mapVariants(set, (text) => removeSampleKey(text, effect.keysPath).text);
+  }
+  const byId = new Map(effect.variants.map((entry) => [entry.id, entry.removed]));
+  return mapVariants(set, (text, id) => {
+    const removed = byId.get(id);
+    return removed === undefined ? text : restoreSampleValues(text, removed);
+  });
 }

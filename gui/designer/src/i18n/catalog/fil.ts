@@ -1398,6 +1398,7 @@ export const fil: LanguageCatalog = {
     'data.requiredHintRows':
       'Kapag wala ang item na ito sa isang hilera ng “{parent}”, magpapakita ng babala ang Mga diagnostic. Hindi titigil ang pag-print.',
     'data.undo': 'I-undo ang pag-edit ng depinisyon',
+    'data.undoShortcut': 'Undo ({mod}Z)',
     'data.undoHint.delete': 'I-undo: pagbura ng {name}',
     'data.undoHint.rename': 'I-undo: pagpapalit ng pangalan ng data {from} → {to}',
     'data.delete.samplesUntouched':
@@ -1453,8 +1454,6 @@ export const fil: LanguageCatalog = {
       'Mabubura rin ang “{label}” sa bawat sample data. Maibabalik ito ng “{undo}”, kasama ang sample data.',
     'data.delete.confirm': 'Burahin ang “{label}”',
     'data.notice.deleted': 'Nabura ang “{label}”. Maibabalik ito ng “{undo}”.',
-    'data.notice.undoRefused':
-      'Hindi na-undo ang pagpapalit ng pangalan ng data: lalampas sa limitasyon ng laki o may lugar na hindi mapapalitan kapag ibinalik ang lumang pangalan sa kasalukuyang template at sample data. Walang nagbago.',
     'data.error.not_interpolatable':
       'Ang mga insert sa teksto ay puwede lang gumamit ng a–z, A–Z, 0–9 at _. Isinisingit ng template na ito ang data na ito sa teksto, kaya hindi puwede ang pangalang ito.',
     'data.error.binding_capture':

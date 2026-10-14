@@ -264,12 +264,6 @@ describe('arming', () => {
     fireEvent.click(screen.getByRole('button', { name: '定義の編集を元に戻す' }));
     expect(heading().textContent).toBe('合計');
   });
-
-  it('says a refused definitions undo in the rail', () => {
-    draw({ canUndoDefinition: true, onUndoDefinition: () => false });
-    fireEvent.click(screen.getByRole('button', { name: '定義の編集を元に戻す' }));
-    expect(screen.getByRole('status').textContent).toMatch(/戻せませんでした/);
-  });
 });
 
 describe('the remaining arms', () => {
@@ -342,17 +336,17 @@ describe('the remaining arms', () => {
 });
 
 describe('a host that manages its own sample data', () => {
-  it('says the sample data is not changed, in the rename and the delete', () => {
+  it('says the sample data is not changed, and names the one Undo, in the rename and the delete', () => {
     draw({ sampleDataReadOnly: true });
     select('合計');
     fireEvent.click(screen.getByRole('button', { name: 'データ名を変更' }));
     expect(
       screen.getByText(
-        /書き換わりません。「定義の編集を元に戻す」1 回で、テンプレートもまとめて戻ります/,
+        /書き換わりません。「元に戻す（.+Z）」1 回で、テンプレートもまとめて戻ります/,
       ),
     ).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '削除' }));
-    expect(screen.getByText(/書き換わりません。「定義の編集を元に戻す」で戻せます/)).not.toBeNull();
+    expect(screen.getByText(/書き換わりません。「元に戻す（.+Z）」で戻せます/)).not.toBeNull();
   });
 
   it('says so for an unused item’s rename too', () => {

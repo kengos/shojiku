@@ -4,12 +4,15 @@
 // on every successful mutation to drive re-renders. The mutation callbacks are
 // stable (memoized on the stable editor), so passing them down never re-fires a
 // child's effects. `text` is the serialized document the preview loop keys on;
-// it re-serializes only when the revision changes.
+// it re-serializes only when the revision changes. A COMPANION document rides
+// the same history (`C`, the Designer's definitions edits), with the effect a
+// step records (`E`) — see designer-core's `Editor`.
 
 import {
   type BatchResult,
   Editor,
   type EditorListener,
+  type EditorStep,
   type Op,
   type OpResult,
 } from '@shojiku/designer-core';
@@ -38,23 +41,43 @@ export interface EditorController {
    * subscriber never has to re-subscribe (and never holds a dead Editor). */
   subscribe(listener: EditorListener): () => void;
   /** Replace the whole document with `text` — a fresh session over the same
-   * size cap. The undo history does NOT cross the swap (the tutorial's
-   * practice-document swap, whose exit restores the caller's own snapshot).
+   * size cap and the current companion. The undo history does NOT cross the
+   * swap (the tutorial's practice-document swap, whose exit restores the
+   * caller's own snapshot).
    * Throws `TemplateParseError` if `text` is malformed or over the cap. */
   replaceDocument(text: string): void;
+}
+
+/** The controller with the history's COMPANION channel: what the document
+ * composer holds (the panels take the plain `EditorController`). */
+export interface DocumentEditor<C, E> extends EditorController {
+  /** The companion state at the current history position. */
+  readonly companion: C;
+  /** The effect of the step the next undo takes back (`undefined` for a plain
+   * template edit or an empty stack). */
+  readonly undoEffect: E | undefined;
+  /** The companion read LIVE — two steps in one tick must each see the other. */
+  readCompanion(): C;
+  /** One undo step: the ops, plus the `step`'s companion and effect. */
+  applyAll(ops: readonly Op[], step?: EditorStep<C, E>): BatchResult;
+  subscribe(listener: EditorListener<E>): () => void;
 }
 
 /** Seed an editing session from template `source` (once — the Editor then owns
  * the document state; a host swapping templates remounts via `key`).
  * `maxBytes` seeds the template-size cap at that initial parse; later raises go
- * through `setMaxBytes`. */
-export function useEditor(source: string, maxBytes?: number): EditorController {
-  const editorRef = useRef<Editor | null>(null);
+ * through `setMaxBytes`; `companion` seeds the companion state the same once. */
+export function useEditor<C = undefined, E = never>(
+  source: string,
+  maxBytes?: number,
+  companion?: C,
+): DocumentEditor<C, E> {
+  const editorRef = useRef<Editor<C, E> | null>(null);
   // The hook's OWN listener set, bridged onto the current Editor at creation
   // (never in an effect — an edit committed before the effect ran would be
   // missed). A document swap re-bridges; subscribers keep their registration.
-  const listenersRef = useRef<Set<EditorListener>>(new Set());
-  const bridge = useCallback((ed: Editor) => {
+  const listenersRef = useRef<Set<EditorListener<E>>>(new Set());
+  const bridge = useCallback((ed: Editor<C, E>) => {
     ed.subscribe((change) => {
       for (const listener of listenersRef.current) {
         listener(change);
@@ -64,13 +87,13 @@ export function useEditor(source: string, maxBytes?: number): EditorController {
   }, []);
   let editor = editorRef.current;
   if (editor === null) {
-    editor = bridge(Editor.create(source, { maxBytes }));
+    editor = bridge(Editor.create<C, E>(source, { maxBytes, companion }));
     editorRef.current = editor;
   }
   const [revision, setRevision] = useState(0);
   const bump = useCallback(() => setRevision((r) => r + 1), []);
 
-  const subscribe = useCallback((listener: EditorListener) => {
+  const subscribe = useCallback((listener: EditorListener<E>) => {
     listenersRef.current.add(listener);
     return () => {
       listenersRef.current.delete(listener);
@@ -81,7 +104,9 @@ export function useEditor(source: string, maxBytes?: number): EditorController {
     (text: string) => {
       // Carry the session's current cap so a swap back into a legally-large
       // document (inline images) parses under the same limit it was made with.
-      editorRef.current = bridge(Editor.create(text, { maxBytes: editor.maxBytes() }));
+      editorRef.current = bridge(
+        Editor.create<C, E>(text, { maxBytes: editor.maxBytes(), companion: editor.companion() }),
+      );
       bump();
     },
     [editor, bridge, bump],
@@ -99,8 +124,8 @@ export function useEditor(source: string, maxBytes?: number): EditorController {
   );
 
   const applyAll = useCallback(
-    (ops: readonly Op[]) => {
-      const result = editor.applyAll(ops);
+    (ops: readonly Op[], step?: EditorStep<C, E>) => {
+      const result = editor.applyAll(ops, step);
       if (result.ok) {
         bump();
       }
@@ -110,6 +135,7 @@ export function useEditor(source: string, maxBytes?: number): EditorController {
   );
 
   const read = useCallback((path: string) => editor.read(path), [editor]);
+  const readCompanion = useCallback(() => editor.companion(), [editor]);
 
   const undo = useCallback(() => {
     if (editor.undo()) {
@@ -150,6 +176,9 @@ export function useEditor(source: string, maxBytes?: number): EditorController {
     selection: editor.selection(),
     canUndo: editor.canUndo(),
     canRedo: editor.canRedo(),
+    companion: editor.companion(),
+    undoEffect: editor.undoEffect(),
+    readCompanion,
     apply,
     applyAll,
     read,

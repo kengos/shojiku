@@ -1,6 +1,6 @@
 // The data-item editor's definition ACTIONS and what follows them: a plain edit
-// (refused at the edit-list cap), the definitions undo (refused when its
-// template / sample reverse cannot be applied), and rename / delete — after
+// (refused at the edit-list cap), the definitions undo (nothing taken back when
+// the newest step is not a definitions one), and rename / delete — after
 // which the selection follows the renamed node or moves to the deleted one's
 // parent, and the rail's status line says what happened.
 
@@ -66,7 +66,7 @@ export function useNodeActions(options: NodeActionsOptions): NodeActions {
       ? undefined
       : () => {
           const outcome = onUndoDefinition();
-          setNotice(outcome === false ? t('data.notice.undoRefused') : null);
+          setNotice(null);
           // An undone rename puts the node back under its old name: keep it
           // selected there rather than dropping the selection.
           if (Array.isArray(outcome)) {

@@ -1595,6 +1595,7 @@ export const ja: LanguageCatalog = {
     'data.requiredHintRows':
       '「{parent}」の各行に、この項目が無いと診断に警告が出ます。印刷は止まりません。',
     'data.undo': '定義の編集を元に戻す',
+    'data.undoShortcut': '元に戻す（{mod}Z）',
     'data.undoHint.delete': '元に戻す: {name} の削除',
     'data.undoHint.rename': '元に戻す: {from} → {to} のデータ名の変更',
     'data.delete.samplesUntouched':
@@ -1647,8 +1648,6 @@ export const ja: LanguageCatalog = {
       'すべてのサンプルデータの「{label}」も消えます。「{undo}」で、サンプルデータも含めて戻せます。',
     'data.delete.confirm': '「{label}」を削除する',
     'data.notice.deleted': '「{label}」を削除しました。「{undo}」で戻せます。',
-    'data.notice.undoRefused':
-      'データ名の変更を元に戻せませんでした。いまのテンプレートやサンプルデータを元の名前に戻すと、扱える大きさを超えるか、書き換えられない場所があるためです。何も変更していません。',
     'data.error.not_interpolatable':
       '文中の差し込みで使えるのは、半角英数字と _ だけです。このテンプレートには文中でこのデータを使っている場所があるため、この名前にはできません。',
     'data.error.binding_capture':

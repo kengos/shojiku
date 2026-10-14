@@ -5,14 +5,17 @@
 // effect in its original position.
 
 import type { CSSProperties } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ACTUAL_SIZE_SCALE } from '../canvas/zoom';
-import { useEditor } from '../editor/useEditor';
+import { sanitizeDefsEdits } from '../data/defsPlan';
+import type { DefsEdits, DefsEffect } from '../data/defsStep';
+import { type DocumentEditor, useEditor } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
 import { useEngineTransport } from '../preview/context';
 import type { DesignerProps } from '../props';
 import { cssVars, resolveTheme } from '../theme/resolve';
 import { useDefinitionsOwnership } from './useDefinitionsOwnership';
+import { useDefsStepSamples } from './useDefsStepSamples';
 import { usePreviewSession } from './usePreviewSession';
 import { useSampleData } from './useSampleData';
 import { useTemplateCap } from './useTemplateCap';
@@ -22,7 +25,7 @@ export interface DocumentCore {
   readonly t: ReturnType<typeof useI18n>['t'];
   readonly locale: string;
   readonly cap: ReturnType<typeof useTemplateCap>;
-  readonly editor: ReturnType<typeof useEditor>;
+  readonly editor: DocumentEditor<DefsEdits, DefsEffect>;
   readonly sample: ReturnType<typeof useSampleData>;
   readonly defs: ReturnType<typeof useDefinitionsOwnership>;
   readonly session: ReturnType<typeof usePreviewSession>;
@@ -46,7 +49,10 @@ export function useDocumentCore({
   const transport = useEngineTransport();
   const { t, locale } = useI18n();
   const cap = useTemplateCap(templateMaxBytes, source);
-  const editor = useEditor(source, cap.maxBytes);
+  // The definitions edit list rides the template's history as its companion,
+  // seeded ONCE from a restored session's edits (untrusted host storage).
+  const [seedEdits] = useState(() => sanitizeDefsEdits(initialDefinitionsEdits));
+  const editor = useEditor<DefsEdits, DefsEffect>(source, cap.maxBytes, seedEdits);
 
   const sample = useSampleData({
     initialParams,
@@ -56,10 +62,11 @@ export function useDocumentCore({
     definitions,
     sampleDataReadOnly,
   });
+  useDefsStepSamples(editor, sample, sampleDataReadOnly);
   const defs = useDefinitionsOwnership({
     definitions,
     stub: sample.stub,
-    initialDefinitionsEdits,
+    editor,
     onDefinitionsChange,
   });
   // Zoom → render → auto-fit, in that order (the zoom picks the render scale;

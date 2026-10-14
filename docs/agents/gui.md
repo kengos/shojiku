@@ -105,18 +105,24 @@ daily users. Consequences:
   undefined keys) and removes the value from every sample variant (a host
   that manages its own sample data keeps it, rename included); it is
   immediate for a node unused here in an unshared file and confirmed
-  otherwise, naming the places. One definitions undo reverts all three
-  documents — the template half re-applied as a NEW forward batch, so a
-  template edit made since survives, and refused whole if it cannot apply.
-  The template's own ⌘Z after a rename reverts only the template half.
+  otherwise, naming the places. A rename or delete is ONE step on the
+  template's undo stack, so one Undo (toolbar, ⌘Z, or the data-item editor's
+  control) reverts all three documents and one Redo re-applies them.
   A project-scoped file cannot reach the project's other templates, and both
   confirmations say so.
-  These definition edits have their OWN panel-local undo — a left-rail
-  control over snapshots of the coalesced op layer, separate from both the
-  sample-data undo ring and the template's undo stack (three distinct undo
-  documents; no redo, v1). It lives in the left rail so it is reachable
-  with no field selected and stays available on a mounted host where the
-  sample is read-only but definitions are not.
+  The definitions edit list rides the template's undo history as its
+  COMPANION (designer-core's `Editor` snapshots it with every entry), so
+  definition edits and template edits share ONE undo/redo stack — a split
+  history let the toolbar Undo revert a rename's template half alone,
+  leaving references to a key the definitions no longer had. The sample data
+  stays its own undo document (its value edits keep their ring); a rename /
+  delete step records what it did to the samples as an EFFECT, re-applied
+  backward on undo and forward on redo against the samples as they are then.
+  The data-item editor's left-rail undo walks the same stack but only takes
+  back a definitions step (disabled when the newest step is a template
+  edit); it lives in the left rail so it is reachable with no field selected
+  and stays available on a mounted host where the sample is read-only but
+  definitions are not.
   On a mounted host the definitions doc is PROJECT-scoped (one save changes
   what every template in the project validates against); the editor shows an
   impact-scope band at the top of the right pane, over every edit, app-derived

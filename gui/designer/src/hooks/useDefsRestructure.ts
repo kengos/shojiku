@@ -1,18 +1,18 @@
 // Renaming and deleting a data item as ONE user action across the three
-// documents it touches — the template (one `applyAll` batch, one ⌘Z step), every
-// sample variant, and the definitions edit list (one definitions-undo step that
-// carries what reverting the other two takes) — and the definitions undo that
-// reverts all three.
+// documents it touches — the template (its rewrite) and the definitions edit
+// list land as ONE step on the template's undo stack (the edit list is that
+// history's companion, `data/defsStep.ts`), and every sample variant moves with
+// them — and the data-item editor's undo, which walks that same stack.
 //
 // The plans are pure (`data/renamePlan.ts`, `data/deletePlan.ts`); this hook
 // reads the live documents, asks for a plan, and applies it template-first: the
 // template batch is the one half that can still refuse at apply time, so the
-// samples and the edit list move only after it lands. A definitions undo plans
-// its reverse BEFORE popping, so a refused reverse changes nothing at all.
+// samples move only after it lands. An undo or redo of the step re-applies its
+// sample half wherever the history is moved from (`useDefsStepSamples`).
 
-import { peekDefsHistory } from '../data/defsHistory';
-import { type DefsNode, readDefsTree } from '../data/defsTree';
-import { planDelete, reversePlan } from '../data/deletePlan';
+import type { DefsEdits, DefsEffect } from '../data/defsStep';
+import type { DefsNode } from '../data/defsTree';
+import { planDelete } from '../data/deletePlan';
 import { readDataRefs } from '../data/refs/walk';
 import {
   planRename,
@@ -20,7 +20,7 @@ import {
   type RestructurePlan,
   type RestructureRefusal,
 } from '../data/renamePlan';
-import type { EditorController } from '../editor/useEditor';
+import type { DocumentEditor } from '../editor/useEditor';
 import type { SampleSet } from '../sample/variants';
 import type { DefinitionsOwnership } from './useDefinitionsOwnership';
 import type { SampleData } from './useSampleData';
@@ -30,14 +30,14 @@ export interface DefsRestructure {
   readonly rename: (node: DefsNode, name: string) => RestructureRefusal | null;
   /** Delete `node`; the refusal when nothing changed. */
   readonly remove: (node: DefsNode) => RestructureRefusal | null;
-  /** Undo the newest definitions edit (with its template / sample halves):
-   * `false` when the reverse was refused and nothing changed; after a rename,
-   * the keys path the node is back at (so the editor can keep it selected). */
+  /** Undo the newest step when it is a definitions step (with its template /
+   * sample halves): after a rename, the keys path the node is back at (so the
+   * editor can keep it selected); `false` when the next undo is not one. */
   readonly undo: () => boolean | readonly string[];
 }
 
 export interface DefsRestructureOptions {
-  readonly editor: EditorController;
+  readonly editor: DocumentEditor<DefsEdits, DefsEffect>;
   readonly sample: SampleData;
   readonly defs: DefinitionsOwnership;
   readonly maxBytes: number;
@@ -58,9 +58,8 @@ export function useDefsRestructure({
       sample.handleVariantCommit(next);
     }
   };
-  const definitions = defs.effectiveDefinitions ?? '';
   const input = (): RestructureInput => ({
-    definitions,
+    definitions: defs.effectiveDefinitions ?? '',
     base: defs.base,
     edits: defs.edits,
     templateText: editor.text,
@@ -69,36 +68,28 @@ export function useDefsRestructure({
     sampleSet: sample.sampleSet,
   });
 
-  // Template first (the one half that can still refuse), then the samples, then
-  // the definitions — so a refusal leaves every document as it was.
+  // Template and definitions in one step (the template half is the one that can
+  // still refuse), then the samples — so a refusal leaves every document as it
+  // was.
   const apply = (plan: RestructurePlan): RestructureRefusal | null => {
     if (!plan.ok) {
       return plan.reason;
     }
-    if (plan.templateOps.length > 0 && !editor.applyAll(plan.templateOps).ok) {
+    const step = { companion: plan.edits, effect: plan.effect };
+    if (!editor.applyAll(plan.templateOps, step).ok) {
       return 'too_large';
     }
     commitSamples(plan.sampleSet);
-    defs.restructure(plan.edits, plan.companion);
     return null;
   };
 
   const undo = (): boolean | readonly string[] => {
-    const companion = peekDefsHistory(defs.defsHistory)?.companion;
-    if (companion !== undefined) {
-      const reverse = reversePlan(input(), readDefsTree(definitions), companion);
-      if (!reverse.ok) {
-        return false;
-      }
-      if (reverse.templateOps.length > 0 && !editor.applyAll(reverse.templateOps).ok) {
-        return false;
-      }
-      commitSamples(reverse.sampleSet);
+    const effect = editor.undoEffect;
+    if (effect === undefined) {
+      return false;
     }
-    defs.undoDefinition();
-    return companion?.kind === 'rename'
-      ? [...companion.keysPath.slice(0, -1), companion.name]
-      : true;
+    editor.undo();
+    return effect.kind === 'rename' ? [...effect.parent, effect.from] : true;
   };
 
   return {

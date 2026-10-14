@@ -47,13 +47,14 @@ export interface DataEditorViewProps {
   /** Panel-local sample undo (separate from the template ⌘Z). */
   readonly canUndo?: boolean;
   readonly onUndo?: () => void;
-  /** Panel-local DEFINITION undo (separate again from the sample undo + template
-   * ⌘Z). Present when definitions are editable; shown in the left rail so it is
-   * reachable with no field selected and stays available on a mounted host where
-   * the sample is read-only but the definitions are not. */
+  /** The DEFINITION undo: the template's own undo stack (definitions edits
+   * ride it), enabled while its newest step is a definitions one. Present when
+   * definitions are editable; shown in the left rail so it is reachable with no
+   * field selected and stays available on a mounted host where the sample is
+   * read-only but the definitions are not. */
   readonly canUndoDefinition?: boolean;
-  /** Returning `false` says the undo was refused and nothing changed; a keys
-   * path says where an undone rename put the node back (it stays selected). */
+  /** Returning `false` says nothing was taken back; a keys path says where an
+   * undone rename put the node back (it stays selected). */
   readonly onUndoDefinition?: () => boolean | readonly string[] | undefined;
   /** What the definitions undo would take back, when it is a rename or a
    * delete (the undo control's description). */
