@@ -35,6 +35,7 @@ thiserror = { workspace = true }
 shojiku-authoring = { workspace = true }
 shojiku-core = { workspace = true }
 shojiku-diagnostics = { workspace = true }
+shojiku-formatter = { workspace = true }
 shojiku-image = { workspace = true }
 shojiku-layout = { workspace = true }
 
