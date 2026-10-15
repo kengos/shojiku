@@ -75,7 +75,7 @@ the manifest wire's key list) lives in `docs/engine/`
   so it is parsed under the same posture as a template.
 - `lang/read.rs` — **`read_pack_file`**: the ONE way a pack file is read
   from disk (`LangPack::load`, the manifest in `packs.rs`, the CLI's
-  `font add`): refuses a path that is not a regular file after symlinks
+  `font add`, and the MCP server's `*Path` source arguments): refuses a path that is not a regular file after symlinks
   (`/dev/zero`, a FIFO, a dir → `InvalidInput`) BEFORE opening it, refuses
   a recorded size over the core cap, and reads through `take(cap + 1)` —
   so the cap holds at the read, not only at `ensure_pack_size`. Oversize →

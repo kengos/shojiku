@@ -31,7 +31,7 @@ drop the `shojiku-` prefix; a crate depends only on lower layers.
 | 5 | `authoring` | core, diagnostics, formatter, image, layout, render-png | — |
 | 6 | `capi` | authoring, diagnostics, formatter, image, layout, render-pdf, render-png, signing, verify | — |
 | 6 | `cli` | authoring, core, diagnostics, fetch, formatter, image, layout, render-pdf, render-png, signing, verify | — |
-| 6 | `mcp` | authoring, core, diagnostics, image, layout | — |
+| 6 | `mcp` | authoring, core, diagnostics, formatter, image, layout | — |
 | 6 | `wasm` | authoring, core, diagnostics, formatter, image, layout, render-pdf, render-png | — |
 | 7 | `napi` | capi | signing |
 
@@ -594,7 +594,7 @@ first sentence of its `//!` header.
 - `src/sign.rs` 115 — The `sign` command: a rendered PDF in, a signed one out.
 - `src/verify.rs` 58 — The `verify` command: a signed PDF and a trust anchor in, a report out.
 
-### `mcp` (L6) — 27 files / 2776 lines; tests 29 files / 4230 lines
+### `mcp` (L6) — 27 files / 2783 lines; tests 29 files / 4293 lines
 
 - `src/examples.rs` 180 — The bundled-example read surface's data model: the embedded source files (`embed`), the `shojiku://example/…` grammar (`uri`), and the catalog that gives each entry a human title and a line saying what it exercises.
 - `src/examples/embed.rs` 156 — The compile-time example table: every bundled entry's source files, embedded with `include_str!` so the surface works identically from a checkout and from the docker image, needs no root path, and cannot be pointed at anything outside this list.
@@ -621,7 +621,7 @@ first sentence of its `//!` header.
 - `src/tools/preview.rs` 100 — The `render_preview` tool: lay out, rasterize, and answer one PNG image part per selected page followed by the diagnostics JSON — never an image alone.
 - `src/tools/reference.rs` 67 — The two reference-reading tools.
 - `src/tools/schema.rs` 233 — Tool descriptors: names, descriptions, and hand-written JSON schemas.
-- `src/tools/sources.rs` 98 — Source arguments: each of definitions/template/params arrives either as a `*Path` file reference or as an inline string (a client without a shared filesystem passes the text itself).
+- `src/tools/sources.rs` 105 — Source arguments: each of definitions/template/params arrives either as a `*Path` file reference or as an inline string (a client without a shared filesystem passes the text itself).
 - `src/tools/validate.rs` 38 — The `validate` tool: parse + validate the sources and answer the full diagnostics list (parse failures surface as diagnostics, not errors — the client renders them like any other finding).
 
 ### `wasm` (L6) — 7 files / 1072 lines; tests 7 files / 1244 lines

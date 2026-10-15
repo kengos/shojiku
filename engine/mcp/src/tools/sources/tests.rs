@@ -1,5 +1,6 @@
 //! Source-argument parsing: the inline/path either-or, the inline cap, and
-//! how each form resolves to text and to an assets directory.
+//! how each form resolves to text and to an assets directory — including the
+//! bounded path read, which refuses an oversize or non-regular file unread.
 
 use super::*;
 use serde_json::json;
@@ -128,4 +129,66 @@ fn an_unreadable_path_fails_in_band_with_the_clipped_path() {
 #[test]
 fn inline_text_has_no_directory() {
     assert!(Source::Inline("page: {}".into()).dir().is_none());
+}
+
+/// A fresh per-process scratch directory for one path-read case.
+fn scratch(name: &str) -> PathBuf {
+    let dir = std::env::temp_dir().join(format!("shojiku-mcp-{}-{name}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).expect("scratch dir");
+    dir
+}
+
+fn read_failure(path: &Path) -> String {
+    let Err(ToolFailure::Message(message)) = Source::Path(path.to_path_buf()).read() else {
+        panic!("expected a refusal for {}", path.display());
+    };
+    message
+}
+
+#[test]
+fn a_path_source_over_the_input_cap_is_refused_naming_the_path_and_the_cap() {
+    let cap = shojiku_core::MAX_INPUT_BYTES;
+    let big = scratch("oversize").join("big-template.yml");
+    // Sparse, so the case costs no disk: refused from its recorded size.
+    let file = std::fs::File::create(&big).expect("create");
+    file.set_len(cap as u64 + 1).expect("set_len");
+    let message = read_failure(&big);
+    assert!(message.contains("big-template.yml"), "{message}");
+    assert!(message.contains(&cap.to_string()), "{message}");
+
+    // Positive control: the same file at the cap is read whole, so inline
+    // and path sources meet the one engine door.
+    file.set_len(cap as u64).expect("set_len");
+    let Ok(text) = Source::Path(big).read() else { panic!("expected the file at the cap") };
+    assert_eq!(text.len(), cap);
+}
+
+#[test]
+fn a_directory_path_source_is_refused_unread() {
+    let dir = scratch("directory");
+    let message = read_failure(&dir);
+    assert!(message.contains("not a regular file"), "{message}");
+    assert!(message.contains("directory"), "{message}");
+}
+
+#[cfg(unix)]
+#[test]
+fn a_fifo_or_an_endless_device_path_source_is_refused_without_blocking() {
+    let dir = scratch("special");
+    // A FIFO with no writer: opening it for reading would block the whole
+    // stdio server; refusal must come from its metadata alone.
+    let fifo = dir.join("params.json");
+    let made = std::process::Command::new("mkfifo")
+        .arg(&fifo)
+        .status()
+        .expect("mkfifo runs");
+    assert!(made.success());
+    // A symlink to an endless device: read whole, it never ends.
+    let zero = dir.join("template.yml");
+    std::os::unix::fs::symlink("/dev/zero", &zero).expect("symlink");
+    for path in [fifo, zero] {
+        let message = read_failure(&path);
+        assert!(message.contains("not a regular file"), "{message}");
+    }
 }

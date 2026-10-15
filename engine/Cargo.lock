@@ -1709,6 +1709,7 @@ dependencies = [
  "shojiku-authoring",
  "shojiku-core",
  "shojiku-diagnostics",
+ "shojiku-formatter",
  "shojiku-image",
  "shojiku-layout",
  "thiserror",

@@ -417,6 +417,15 @@ not a string.
   never past the 16 MB cap: a manifest linked to `/dev/zero` or to a named
   pipe used to be read without end or to block the read. An oversize pack
   file is now reported as a read error that names the cap.
+- **The MCP server reads a `*Path` argument only when it names a regular
+  file, and never past 16 MB.** `templatePath`, `paramsPath` and
+  `definitionsPath` (on every tool that takes them, `format_catalog`
+  included) used to be read whole with no size check: a path to
+  `/dev/zero` ran the server out of memory, and a path to a named pipe
+  blocked the stdio server for every later request. Such a path is now
+  refused with a tool error that names it, and a file over the 16 MB input
+  cap — the same limit inline text already meets at the parse — is refused
+  with an error that names the cap, without being read past it.
 - **A template mapping key must be a string.** Inside an item, a numeric
   key (`5:`) was silently read as one of the item's fields by its position,
   which let a chain get past the nesting check; any non-string key is now a

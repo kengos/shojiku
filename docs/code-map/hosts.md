@@ -545,7 +545,12 @@ host over authoring.
   also answers the other family's URI — kept deliberately (the URI is
   unambiguous), said in both descriptors, pinned in both directions by
   `tools/reference/tests.rs`. `tools/sources.rs` — `Source` Path|Inline (`<name>`
-  XOR `<name>Path`, `MAX_INLINE_BYTES` per-argument cap).
+  XOR `<name>Path`, `MAX_INLINE_BYTES` per-argument cap). A path source is
+  read through the formatter's bounded `read_pack_file` (regular file after
+  symlinks, `take(cap + 1)` under `shojiku_core::MAX_INPUT_BYTES`), never
+  `read_to_string`: `/dev/zero` or a FIFO is refused in-band as a
+  `ToolFailure` naming the clipped path, not read without end or left
+  blocking the stdio loop.
   `tools/assets.rs` — `AssetArgs` → `AssetPolicy` + root (capped id
   lists). `tools/pipeline.rs` — args → `prepare_from` (validation gate
   BEFORE pack/font loading — CLI-parity precedence). Per-tool impls in

@@ -7,6 +7,7 @@
 use super::pipeline::{opt_string, ToolFailure};
 use crate::rpc::{clip, INVALID_PARAMS};
 use serde_json::Value;
+use shojiku_formatter::read_pack_file;
 use std::path::{Path, PathBuf};
 
 /// Longest accepted inline source, per argument. Explicit and transport
@@ -35,11 +36,17 @@ impl Source {
         }
     }
 
-    /// Resolves to text. A read failure surfaces in-band so the client sees
-    /// which path was unreadable (bounded like any other hostile string).
+    /// Resolves to text. A file is read the way a pack file is
+    /// ([`read_pack_file`]): only when it is a regular file once symlinks are
+    /// followed, and never past the engine's input cap — so `/dev/zero`
+    /// cannot exhaust memory, a FIFO cannot block the stdio server, and a
+    /// path source meets the same 16 MiB door as the text the parse would
+    /// refuse anyway. A read failure surfaces in-band so the client sees
+    /// which path was unreadable (bounded like any other hostile string)
+    /// and, for an oversize file, the cap.
     pub(crate) fn read(&self) -> Result<String, ToolFailure> {
         match self {
-            Source::Path(path) => std::fs::read_to_string(path).map_err(|err| {
+            Source::Path(path) => read_pack_file(path).map_err(|err| {
                 ToolFailure::Message(format!("failed to read {}: {err}", clip_path(path)))
             }),
             Source::Inline(text) => Ok(text.clone()),
