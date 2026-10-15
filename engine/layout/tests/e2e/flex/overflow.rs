@@ -4,8 +4,7 @@
 //! region's right edge), `sheet_overflow` (a band / absolute-body item
 //! past the SHEET edge, a `line`'s endpoints included) and
 //! `child_overflow` (a column or absolute child past its parent's content
-//! box). The retired `horizontal_overflow` carried all of these in one
-//! free-text arg and is emitted by nothing.
+//! box).
 
 use crate::common::*;
 
@@ -192,30 +191,4 @@ fn an_over_wide_row_child_is_reported_once_by_the_row_check_only() {
         diags.iter().all(|d| d.code != "child_overflow"),
         "{diags:?}"
     );
-}
-
-#[test]
-fn the_retired_free_text_code_is_emitted_by_nothing() {
-    // `horizontal_overflow` kept its registry entry (codes and arg keys
-    // are append-only, and a consumer may still hold a catalog key) but
-    // every reason it covered now has its own number-carrying code. The
-    // shapes that used to raise it must raise a successor instead — one
-    // per reason, so a mis-routed emit shows up as a MISSING successor
-    // rather than as a still-passing generic assertion.
-    let row = page(
-        "      - type: container\n        box: { w: 100, direction: row }\n        items:\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 80, h: 10 } }\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 80, h: 10 } }\n",
-    );
-    let flow =
-        page("      - { type: rect, style: { borderWidth: 1 }, box: { x: 150, w: 100, h: 10 } }\n");
-    for (yaml, successor) in [(row, "flex_row_overflow"), (flow, "flow_item_overflow")] {
-        let (_, diags) = run(&yaml, json!({}));
-        assert!(
-            diags.iter().all(|d| d.code != "horizontal_overflow"),
-            "retired code was emitted: {diags:?}"
-        );
-        assert!(
-            diags.iter().any(|d| d.code == successor),
-            "expected `{successor}`: {diags:?}"
-        );
-    }
 }

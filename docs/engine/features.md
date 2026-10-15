@@ -509,9 +509,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   UA-defined; line-through on the column axis; per-run bands for
   spans); `textSpacingTrim` as a vertical half-width-punctuation pass sharing the
   horizontal class tables (measure == draw through `vertical_extent`).
-  `vertical_style_ignored` no longer fires (the code is deprecated in
-  0.3.0 and removed in 0.4.0). Rich shrink/ellipsis keep warning
-  `span_overflow_unsupported` (horizontal parity).
+  Rich shrink/ellipsis keep warning `span_overflow_unsupported`
+  (horizontal parity).
 - **Column pagination**: a direct-flow vertical block whose columns
   overflow the box width continues on the next page (whole columns,
   reading order preserved, fragments re-anchored at each page's right
@@ -2359,10 +2358,12 @@ identified by their wire spellings, never by internal work-item codes.
   after it ([architecture.md](../architecture.md) § Deprecation). An
   author-writable form warns through ONE code, `deprecated_syntax`, fed
   by one table of forms, because every arg is a YAML spelling or a
-  version and a code per form would only grow the registry. Codes that
-  nothing emits get no registry flag: they leave one release later, so
-  a flag would live for exactly that release. Capability keys stay
-  append-only — a removed key reads as a removed feature.
+  version and a code per form would only grow the registry. A code that
+  nothing emits still carries a `deprecated(since, removed_in)` mark on
+  its registry row, and a registry test fails once the workspace reaches
+  that release, so the removal cannot ride past its announced date.
+  Capability keys stay append-only — a removed key reads as a removed
+  feature.
 - **The GENERAL page break is an item, not a per-item `breakBefore`
   key**: an item is discoverable (GUI palette, one YAML line) and
   touches no other wire struct; a break key on every struct would widen

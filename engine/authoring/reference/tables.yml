@@ -1760,11 +1760,6 @@
         "Code": "`section_overflow`"
         "Meaning": "an unsplittable item is taller than the flow region"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
-    - keys: ["horizontal_overflow"]
-      cells:
-        "Code": "`horizontal_overflow`"
-        "Meaning": "**DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing.** It carried a whole English sentence in one free-text `detail` arg, which a translating consumer could only pass through. Every reason it covered now has its own number-carrying code (the five below). A catalog entry for it can be dropped once a host no longer supports 0.3"
-      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
     - keys: ["flow_item_overflow"]
       cells:
         "Code": "`flow_item_overflow`"
@@ -1815,11 +1810,6 @@
         "Code": "`grid_tracks_clamped`"
         "Meaning": "grid `columns`/`rows` outside 1..=64 tracks; clamped"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
-    - keys: ["grid_cell_overflow"]
-      cells:
-        "Code": "`grid_cell_overflow`"
-        "Meaning": "**DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing.** It reported a grid child taller than its row track, with an `extent` arg naming the axis in English (`row track` / `spanned rows`) that a translating consumer could only pass through. The two cases are now `grid_row_overflow` and `grid_span_overflow`. A catalog entry for it can be dropped once a host no longer supports 0.3"
-      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
     - keys: ["imposition_grid_clamped"]
       cells:
         "Code": "`imposition_grid_clamped`"
@@ -1844,11 +1834,6 @@
       cells:
         "Code": "`vertical_text_unsupported`"
         "Meaning": "`writingMode: vertical_rl` reached a text `mark:` (the circled-text overlay), whose glyph-band overlay is horizontal-only; the mark is skipped. Rich `spans` / `list` / table cells / `page_number` now render vertically. See [vertical_text.md](vertical_text.md)"
-      reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
-    - keys: ["vertical_style_ignored"]
-      cells:
-        "Code": "`vertical_style_ignored`"
-        "Meaning": "**DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing**, in any release: the block-level knobs (`textOverflow`, `textDecoration`, `verticalAlign`, `textSpacingTrim`, `hangingPunctuation`) apply on vertical blocks instead ([vertical_text.md](vertical_text.md))"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
 
 "diagnostics#layout-placement-rules":

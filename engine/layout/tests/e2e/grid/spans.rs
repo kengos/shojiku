@@ -132,9 +132,7 @@ sections:
     // The span COUNT is the arg — a locale phrases "2 rows" its own way.
     assert_eq!(arg_num(hit, "span"), Some(2.0));
     assert!(
-        diags
-            .iter()
-            .all(|d| d.code != "grid_cell_overflow" && d.code != "grid_row_overflow"),
+        diags.iter().all(|d| d.code != "grid_row_overflow"),
         "{diags:?}"
     );
 }

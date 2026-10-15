@@ -55,7 +55,7 @@ fn an_overflowing_clipped_stack_stays_anchored_right() {
         ),
         json!({}),
     );
-    assert_eq!(count_code(&diags, "vertical_style_ignored"), 0);
+    assert!(diags.is_empty(), "{diags:?}");
     let clip = crate::clip::only_clip(&doc.pages[0]);
     let block = clip
         .items

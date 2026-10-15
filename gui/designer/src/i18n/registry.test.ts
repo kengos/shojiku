@@ -6,7 +6,8 @@
 // code without a catalog entry reds here, catching the drift at the source
 // rather than as an English-fallback surprise in the GUI. Partial languages
 // (chrome-only, e.g. hi/fil) are exempt by design — they fall through to English
-// per key. (Node env: it reads the file off disk, like the round-trip suite.)
+// per key. The reverse holds for every language: no entry for a code the
+// engine does not define. (Node env: it reads the file off disk, like the round-trip suite.)
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -33,6 +34,20 @@ describe('diagnostics catalog covers the engine registry', () => {
       const table = DEFAULT_CATALOG[lang].diagnostics;
       const missing = codes.filter((code) => !(code in table));
       expect(missing, `${lang} missing diagnostics`).toEqual([]);
+    }
+  });
+
+  // The other direction: a code the engine removed must leave every catalog
+  // too, or its entry lingers as a key nothing can ever look up. Every
+  // language, partial ones included — a stale key is stale wherever it sits.
+  // A `<code>.<variant>` key (the GUI's own wording for one case of a code,
+  // like `unknown_data_key.empty`) belongs to its code.
+  it('no language keeps an entry for a code the engine does not define', () => {
+    const codes = new Set(engineCodes());
+    for (const lang of Object.keys(DEFAULT_CATALOG)) {
+      const table = DEFAULT_CATALOG[lang].diagnostics;
+      const stale = Object.keys(table).filter((key) => !codes.has(key.split('.')[0] ?? key));
+      expect(stale, `${lang} stale diagnostics`).toEqual([]);
     }
   });
 });

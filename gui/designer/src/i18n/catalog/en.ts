@@ -133,8 +133,6 @@ export const en: LanguageCatalog = {
     qr_module_too_small: 'qr modules are {module}pt (< {min}pt); the printed code may not scan',
     mark_missing_size: 'ellipse/checkbox items need a positive box.w and box.h; item skipped',
     container_overflow: 'container content ({content}pt) exceeds its content height ({avail}pt)',
-    grid_cell_overflow: 'grid child ({child}pt) exceeds its {track}pt {extent}',
-    horizontal_overflow: '{detail}',
     flow_item_overflow:
       'item reaches {over}pt past the right edge of the {avail}pt flow region and renders off-sheet',
     flex_row_overflow:
@@ -179,7 +177,6 @@ export const en: LanguageCatalog = {
     vertical_text_unsupported:
       '{feature} does not support vertical writing (writingMode: vertical_rl) in v1',
     ruby_base_not_found: 'ruby base `{base}` was not found in the drawn text; reading skipped',
-    vertical_style_ignored: '`{prop}` is ignored on a vertical (writingMode: vertical_rl) block',
     page_number_in_body: 'page_number items are only supported in header/footer bands',
     page_number_in_container:
       'page_number items are only supported directly in header/footer bands; item skipped',

@@ -1,11 +1,10 @@
 //! Vertical (縦書き) degrade paths: a `writingMode: vertical_rl` that
 //! reaches a context v1 still does not render vertically is reported
 //! (`vertical_text_unsupported` for a text `mark:` — the one remaining
-//! warned fallback), and the block-level knobs that don't apply to a
-//! column are reported inert (`vertical_style_ignored`). Mistakes surface
-//! as diagnostics, never silently drop. Rich `spans` / `list` / table
-//! cells / `page_number` now render vertically — their positive coverage
-//! lives beside each surface.
+//! warned fallback), while the block-level knobs apply to a column and
+//! warn nothing. Mistakes surface as diagnostics, never silently drop.
+//! Rich `spans` / `list` / table cells / `page_number` now render
+//! vertically — their positive coverage lives beside each surface.
 
 use crate::common::*;
 
@@ -41,7 +40,7 @@ sections:
 #[test]
 fn block_knobs_apply_instead_of_warning() {
     // textDecoration + verticalAlign on a vertical block are honored now:
-    // no `vertical_style_ignored`, a side-band decoration on the block,
+    // no warning, a side-band decoration on the block,
     // and the middle stack shift moves the single column off the right
     // edge (details pinned in the vertical_knobs suite).
     let (doc, diags) = run(
@@ -59,7 +58,7 @@ sections:
 "#,
         json!({}),
     );
-    assert_eq!(count(&diags, "vertical_style_ignored"), 0);
+    assert!(diags.is_empty(), "{diags:?}");
     let block = text_blocks(&doc.pages[0])[0];
     assert!(!block.decorations.is_empty());
 }

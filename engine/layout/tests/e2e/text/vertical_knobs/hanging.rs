@@ -4,7 +4,6 @@
 //! (`TextLine.width`), excluded from the alignment basis.
 
 use super::tmpl;
-use super::valign::count_code;
 use crate::common::*;
 
 #[test]
@@ -19,7 +18,7 @@ fn a_comma_hangs_past_the_column_bottom() {
         ),
         json!({}),
     );
-    assert_eq!(count_code(&diags, "vertical_style_ignored"), 0);
+    assert!(diags.is_empty(), "{diags:?}");
     let block = text_blocks(&doc.pages[0])[0];
     let texts = line_texts(block);
     assert_eq!(texts, vec!["ああああ、", "いい"]);

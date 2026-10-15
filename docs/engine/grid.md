@@ -169,7 +169,6 @@ box: { type: grid, columns: ["auto", "1fr"] }   # label column fits its
 | `grid_row_overflow` | child TALLER than its explicit row track; overflows visually |
 | `grid_span_overflow` | row-spanning child TALLER than the rows it spans (the last one explicit); overflows visually |
 | `grid_column_overflow` | child WIDER than the column-track run it spans; overflows visually |
-| `grid_cell_overflow` | **deprecated in 0.3.0, removed in 0.4.0** — emitted by nothing; the two rows above replace it |
 | `grid_key_ignored` | grid keys authored without `box.type: grid` |
 | `grid_span_clamped` | `columnSpan`/`rowSpan` beyond the axis; clamped |
 | `span_outside_grid` | span keys on a child of a non-grid box; ignored |

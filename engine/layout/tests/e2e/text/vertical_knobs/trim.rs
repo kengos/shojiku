@@ -5,7 +5,6 @@
 //! untrimmed cell exactly 10pt.
 
 use super::tmpl;
-use super::valign::count_code;
 use crate::common::*;
 
 #[test]
@@ -16,7 +15,7 @@ fn adjacent_punctuation_trims_to_half_em() {
         &tmpl("あ」、「い", "w: 200, h: 100", ", textSpacingTrim: normal"),
         json!({}),
     );
-    assert_eq!(count_code(&diags, "vertical_style_ignored"), 0);
+    assert!(diags.is_empty(), "{diags:?}");
     let block = text_blocks(&doc.pages[0])[0];
     assert!(
         (block.lines[0].width - 35.0).abs() < 0.5,
