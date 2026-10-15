@@ -119,7 +119,7 @@ schemars = { version = "1", default-features = false, features = [
 # named explicitly (ureq only auto-selects ring behind its private `_ring`
 # feature), so no private feature is relied on.
 ureq = { version = "3", default-features = false, features = ["rustls-no-provider"] }
-rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12", "logging"] }
 rustls-native-certs = "0.8"
 imagesize = "0.15"
 kurbo = "0.13"

@@ -423,10 +423,15 @@ not a string.
   parse error, in an item or anywhere else. It is refused at once rather
   than deprecated first, the exception the deprecation policy makes for
   security fixes (see Deprecated).
-- **rustls 0.23.45** (RUSTSEC-2026-0285) for the CLI's font download
-  (authoring time only), which accepted a TLS 1.3 handshake message at the
-  wrong encryption level. Rendering, signing and verifying open no
-  connection.
+- **rustls 0.23.46** for the CLI's font download (authoring time only).
+  It clears RUSTSEC-2026-0285, a TLS 1.3 handshake message accepted at the
+  wrong encryption level, and four advisories against 0.23.45:
+  RUSTSEC-2026-0346 (session `Debug` output exposing TLS secrets),
+  RUSTSEC-2026-0347 (data sent to the outer server after an ECH rejection),
+  RUSTSEC-2026-0348 (certificate decompression allocating up to 1 GiB before
+  authentication) and RUSTSEC-2026-0349 (an unauthenticated ServerHello
+  downgrading later connections to classical key exchange). Rendering,
+  signing and verifying open no connection.
 - **libssl is gone from the Docker image** (see Changed), which clears six
   OpenSSL advisories; a later advisory against libssl cannot apply to the
   image.
