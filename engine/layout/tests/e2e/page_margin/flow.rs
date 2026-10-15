@@ -56,7 +56,7 @@ sections:
 fn percent_flow_width_resolves_against_the_margin_box() {
     let (doc, diags) = run(
         r##"
-page: { margin: [0, 45.28, 0, 50] }
+page: { margin: { top: 0, right: 45.28, bottom: 0, left: 50 } }
 sections:
   body:
     type: flow
@@ -96,7 +96,7 @@ sections:
 fn pagination_respects_the_bottom_margin() {
     let (doc, diags) = run(
         r#"
-page: { margin: [100, 0, 100, 0] }
+page: { margin: { top: 100, right: 0, bottom: 100, left: 0 } }
 sections:
   body:
     type: flow

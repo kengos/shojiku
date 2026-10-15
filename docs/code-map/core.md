@@ -88,9 +88,9 @@ injected at parse). The template model splits along CSS lines.
   naming the offending key; per-variant `Serialize` keeps both authored
   forms byte-exact. `schema/point.rs` states the two arms rather than
   forwarding the permissive helper.
-  `geometry/page_margin.rs` — `PageMargin` (bare | per-side |
-  legacy array, authored form round-trips; the margin box is the
-  coordinate origin). `geometry/flex.rs` — flex wire enums (`BoxType`/
+  `geometry/page_margin.rs` — `PageMargin` (bare | per-side, authored
+  form round-trips; the removed positional array is refused with a
+  migration hint; the margin box is the coordinate origin). `geometry/flex.rs` — flex wire enums (`BoxType`/
   `FlexDirection`/`AlignItems` incl. baseline/`JustifyContent`).
   `geometry/grid.rs` — `TrackSpec` = count | track list + gaps;
   `geometry/grid/track.rs` — `GridTrack` Fixed|Fr (`fr` is a
@@ -230,8 +230,8 @@ injected at parse). The template model splits along CSS lines.
   `FlexBasis` (`content` | `0`), `GridTrack` (number | `auto` | `<n>fr` |
   length), `TrackSpec` (integer count | track sequence).
   `schema/edges.rs` — `EdgeValue`, `EdgeSpec` (number | `$ref`
-  `EdgeMapRepr` — the one genuinely delegated arm), `PageMargin` (+ the
-  legacy positional array), `PageSize` (8 names | `{w,h}`).
+  `EdgeMapRepr` — the one genuinely delegated arm), `PageMargin` (the
+  two `EdgeSpec` forms), `PageSize` (8 names | `{w,h}`).
   `schema/border.rs` — `BorderWidth`/`BorderColor`/`BorderStyle` (scalar |
   per-side map) + `TextCombineUpright` (`none`/`all` | `{digits: 2..=4}`).
   `schema/value.rs` — `EqualsValue` (scalars only), `EnumEntry`

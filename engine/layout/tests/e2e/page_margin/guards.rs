@@ -11,7 +11,7 @@ fn has_code(diags: &Diagnostics, code: &str) -> bool {
 fn horizontal_margins_consuming_the_page_fall_back_to_zero() {
     let out = run_full(
         r#"
-page: { margin: [10, 300, 10, 300] }
+page: { margin: { top: 10, right: 300, bottom: 10, left: 300 } }
 sections:
   body:
     type: absolute
@@ -30,7 +30,7 @@ sections:
 fn vertical_margins_consuming_the_page_fall_back_to_zero() {
     let out = run_full(
         r#"
-page: { margin: [500, 10, 400, 10] }
+page: { margin: { top: 500, right: 10, bottom: 400, left: 10 } }
 sections:
   body: { type: absolute, items: [] }
 "#,
@@ -44,7 +44,7 @@ sections:
 fn margin_side_past_the_resolve_cap_drops_to_zero() {
     let out = run_full(
         r#"
-page: { margin: [2000000, 0, 0, 0] }
+page: { margin: { top: 2000000, right: 0, bottom: 0, left: 0 } }
 sections:
   body: { type: absolute, items: [] }
 "#,
@@ -60,7 +60,7 @@ fn degenerate_margins_with_no_flow_box_still_terminate() {
     // lays out normally.
     let out = run_full(
         r#"
-page: { margin: [500, 300, 400, 300] }
+page: { margin: { top: 500, right: 300, bottom: 400, left: 300 } }
 sections:
   body:
     type: flow
@@ -106,7 +106,7 @@ sections:
         json!({"rows": [{"a": "x"}]}),
     );
     let (shifted, d1) = run(
-        &template("page: { margin: [15, 0, 0, 35] }"),
+        &template("page: { margin: { top: 15, right: 0, bottom: 0, left: 35 } }"),
         json!({"rows": [{"a": "x"}]}),
     );
     assert!(d0.is_empty() && d1.is_empty(), "{d0:?} {d1:?}");

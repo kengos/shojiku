@@ -10,7 +10,7 @@ fn absolute_origin_is_the_margin_corner() {
     // block and its lines land at the margin corner.
     let (doc, diags) = run(
         r#"
-page: { margin: [10, 20, 30, 40] }
+page: { margin: { top: 10, right: 20, bottom: 30, left: 40 } }
 sections:
   body:
     type: absolute
@@ -32,7 +32,7 @@ sections:
 fn band_items_shift_with_the_margin() {
     let (doc, diags) = run(
         r#"
-page: { margin: [10, 0, 0, 40] }
+page: { margin: { top: 10, right: 0, bottom: 0, left: 40 } }
 sections:
   header:
     items:
@@ -109,7 +109,7 @@ sections:
 fn box_index_reports_sheet_absolute_placements() {
     let out = run_full(
         r#"
-page: { margin: [10, 0, 0, 40] }
+page: { margin: { top: 10, right: 0, bottom: 0, left: 40 } }
 sections:
   body:
     type: absolute
@@ -131,7 +131,7 @@ sections:
 fn resolved_margin_is_reported_in_authored_order() {
     let out = run_full(
         r#"
-page: { margin: [10, 20, 30, 40] }
+page: { margin: { top: 10, right: 20, bottom: 30, left: 40 } }
 sections:
   body: { type: absolute, items: [] }
 "#,

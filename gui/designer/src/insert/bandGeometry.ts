@@ -47,7 +47,11 @@ export function documentContentHeightPt(read: ReadFn): number | null {
   if (dims === null || !Number.isFinite(dims.h)) {
     return null;
   }
-  const sides = readMarginView(pageRaw).sides;
+  const view = readMarginView(pageRaw);
+  if (view.backing === 'unknown') {
+    return null;
+  }
+  const sides = view.sides;
   const top = sidePt(sides.top);
   const bottom = sidePt(sides.bottom);
   if (top === null || bottom === null) {

@@ -3,7 +3,7 @@
 //! `EdgeSpec` and `PageMargin` share the "number for all sides, or a
 //! per-side map" shape and both refuse strings outright — the visitors say
 //! so in their own error messages, so the schema must not offer a string
-//! arm. `PageMargin` adds the legacy positional array.
+//! arm.
 
 use super::sub;
 use crate::edges::EdgeMapRepr;
@@ -49,10 +49,8 @@ impl JsonSchema for EdgeSpec {
     }
 }
 
-/// `page.margin`: the two [`EdgeSpec`] forms plus the positional
-/// `[top, right, bottom, left]` array, marked `deprecated` (removed in
-/// 0.4.0). Negative sides and `auto` are rejected at parse — a value
-/// constraint the shape cannot carry.
+/// `page.margin`: the two [`EdgeSpec`] forms. Negative sides and `auto`
+/// are rejected at parse — a value constraint the shape cannot carry.
 impl JsonSchema for PageMargin {
     fn schema_name() -> Cow<'static, str> {
         "PageMargin".into()
@@ -60,18 +58,10 @@ impl JsonSchema for PageMargin {
 
     fn json_schema(generator: &mut SchemaGenerator) -> Schema {
         let map = sub::<EdgeMapRepr>(generator).to_value();
-        let length = sub::<Length>(generator).to_value();
         json_schema!({
             "oneOf": [
                 { "type": "number" },
                 map,
-                {
-                    "type": "array",
-                    "items": length,
-                    "minItems": 4,
-                    "maxItems": 4,
-                    "deprecated": true,
-                },
             ],
         })
     }

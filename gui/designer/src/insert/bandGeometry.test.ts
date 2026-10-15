@@ -45,6 +45,10 @@ describe('documentContentHeightPt', () => {
     for (const source of [
       page('page:\n  size: Letter\n  margin: { top: "10%", bottom: 20 }\n\n'),
       page('page:\n  size: Postcard\n  margin: 25\n\n'),
+      // A margin node no form describes: the shown 25pt is the default, not
+      // the document's — the removed array, and a string.
+      page('page:\n  size: Letter\n  margin: [72, 25, 72, 25]\n\n'),
+      page('page:\n  size: Letter\n  margin: "1in"\n\n'),
     ]) {
       expect(documentContentHeightPt(reader(source))).toBeNull();
     }

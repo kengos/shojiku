@@ -1,7 +1,6 @@
 //! Unit tests for the `page.margin` wire forms, guards, and round-trip.
 
 use super::*;
-use crate::PhysicalUnit;
 
 fn parse(yaml: &str) -> PageMargin {
     serde_yaml::from_str(yaml).expect("page margin should parse")
@@ -28,12 +27,18 @@ fn map_sets_named_sides_and_defaults_the_rest_to_zero() {
 }
 
 #[test]
-fn legacy_array_maps_to_css_order_and_accepts_units() {
-    let e = parse("[25, \"5%\", \"10mm\", 40]").edges();
-    assert_eq!(e[0], Length::Pt(25.0));
-    assert_eq!(e[1], Length::Percent(5.0));
-    assert_eq!(e[2], Length::Physical(10.0, PhysicalUnit::Mm));
-    assert_eq!(e[3], Length::Pt(40.0));
+fn the_removed_array_is_refused_with_the_map_to_write() {
+    // Every length, a wrong length included: the hint answers the FORM, so
+    // an author who miscounted still learns the array is gone.
+    for yaml in ["[25, \"5%\", \"10mm\", 40]", "[1, 2, 3]", "[]"] {
+        assert_eq!(parse_err(yaml), ARRAY_REMOVED, "{yaml}");
+    }
+}
+
+#[test]
+fn the_array_refusal_echoes_none_of_the_authored_values() {
+    let err = parse_err(&format!("[\"{}\", 0, 0, 0]", "z".repeat(4096)));
+    assert!(!err.contains("zzz"), "{err}");
 }
 
 #[test]
@@ -46,14 +51,9 @@ fn negative_sides_are_rejected_in_every_form() {
     for yaml in [
         "-1",
         "{ top: -1 }",
-        "[0, 0, -1, 0]",
-        "[0, \"-5%\", 0, 0]",
-        // Array forms route through the legacy-array guard (`negative`),
-        // not `EdgeSpec::any_negative` — cover em/rem on both paths.
+        "{ right: \"-5%\" }",
         "{ top: \"-1em\" }",
         "{ left: \"-2rem\" }",
-        "[0, \"-1em\", 0, 0]",
-        "[0, 0, \"-2rem\", 0]",
     ] {
         assert!(parse_err(yaml).contains("must not be negative"), "{yaml}");
     }
@@ -62,12 +62,6 @@ fn negative_sides_are_rejected_in_every_form() {
 #[test]
 fn auto_is_rejected() {
     assert!(parse_err("{ left: auto }").contains("must not be `auto`"));
-}
-
-#[test]
-fn wrong_array_length_is_rejected() {
-    assert!(parse_err("[1, 2, 3]").contains("invalid length"));
-    assert!(parse_err("[1, 2, 3, 4, 5]").contains("invalid length"));
 }
 
 #[test]
@@ -109,7 +103,6 @@ fn every_form_parses_inside_a_template() {
         ("25", 25.0),
         ("18.5", 18.5),
         ("{ top: 10, left: \"5%\" }", 10.0),
-        ("[30, 25, 25, 25]", 30.0),
     ] {
         let tpl = crate::parse_template(&template_yaml(margin))
             .unwrap_or_else(|e| panic!("{margin}: {e}"));
@@ -119,7 +112,7 @@ fn every_form_parses_inside_a_template() {
 
 #[test]
 fn every_rejection_surfaces_through_a_template() {
-    for margin in ["-1", "{ left: auto }", "\"25 40\"", "true", "[1, 2, 3]"] {
+    for margin in ["-1", "{ left: auto }", "\"25 40\"", "true"] {
         assert!(
             crate::parse_template(&template_yaml(margin)).is_err(),
             "{margin} should be rejected"
@@ -128,14 +121,20 @@ fn every_rejection_surfaces_through_a_template() {
 }
 
 #[test]
+fn the_array_refusal_is_located_at_the_margin_inside_a_template() {
+    let err = crate::parse_template(&template_yaml("[30, 25, 25, 25]"))
+        .expect_err("the array is removed")
+        .to_string();
+    assert!(err.contains("at `page.margin`"), "{err}");
+    assert!(err.contains(ARRAY_REMOVED), "{err}");
+}
+
+#[test]
 fn overflowing_numbers_are_rejected() {
     // serde_yaml hands an overflowing bare number over as a *string*
-    // (see the edges tests), so the string rejection catches it; inside
-    // the array the `Length` parser rejects it as unitless.
+    // (see the edges tests), so the string rejection catches it.
     let err = parse_err("1e309");
     assert!(err.contains("mapping"), "{err}");
-    let err = parse_err("[1e309, 0, 0, 0]");
-    assert!(!err.is_empty(), "{err}");
 }
 
 #[test]
@@ -143,8 +142,7 @@ fn authored_form_round_trips() {
     for (yaml, expected) in [
         ("25", "25.0"),
         ("{ top: 10 }", "top: 10.0"),
-        ("[25, 25, 25, 25]", "- 25.0\n- 25.0\n- 25.0\n- 25.0"),
-        ("[25, \"10mm\", 0, 0]", "- 25.0\n- 10mm\n- 0.0\n- 0.0"),
+        ("{ right: \"10mm\" }", "right: 10mm"),
     ] {
         let out = serde_yaml::to_string(&parse(yaml)).expect("serialize");
         assert_eq!(out.trim(), expected, "round-trip of {yaml}");

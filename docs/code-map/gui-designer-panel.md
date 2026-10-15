@@ -2092,7 +2092,8 @@ conditional rules the next section owns).
   keypad can type every value they accept — which is what a plain
   `<input type="number">` gave them before the stepper absorbed them.
 - `panel/marginModel.ts` — pure page-margin model (`readMarginView`
-  uniform/perSide/legacy-array; mode-switch ops seed all four sides;
+  uniform/perSide, any other node shown as the uniform default; mode-switch
+  ops seed all four sides;
   per-side values carried VERBATIM, no unit conversion). The uniform ▲▼ pair
   (`canStepUniformMargin`/`stepUniformMarginOp`) steps by a POINT and
   re-authors through `uniformMarginOp` rather than through the shared

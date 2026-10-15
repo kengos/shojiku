@@ -267,13 +267,12 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   `flow.gap.length`.
 
 ### Page geometry (`engine/core`, `engine/layout`)
-- **`page.margin` is the coordinate origin**: bare number, per-side
-  map, or the `[t,r,b,l]` array, deprecated since 0.3.0 and removed in
-  0.4.0 (all `Length` forms; authored form
-  round-trips; default 25pt). `x: 0`/`y: 0` mean the margin corner;
-  absolute items reach into the margin with negative coordinates
-  (bleed/crop marks); margins that would consume a page axis fall back
-  to 0 with `page_margin_too_large`. Resolved margins are returned in
+- **`page.margin` is the coordinate origin**: bare number or per-side
+  map (all `Length` forms; authored form round-trips; default 25pt; the
+  `[t,r,b,l]` array is a parse error from 0.4.0). `x: 0`/`y: 0` mean
+  the margin corner; absolute items reach into the margin with negative
+  coordinates (bleed/crop marks); margins that would consume a page axis
+  fall back to 0 with `page_margin_too_large`. Resolved margins are returned in
   `LayoutOutput`/`inspect` so the GUI draws guides without
   re-implementing resolution.
 - **Flow body `box` optional**: omitted = the whole margin box.
@@ -1245,9 +1244,9 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   parses but is marked for removal as `deprecated_syntax` (warning;
   `args` `key` / `form` / `replacement` / `since` / `removed_in`, `path`
   = the key), with or without definitions, so it reaches the CLI report,
-  MCP, the Designer and the SDKs. Today: the `page.margin`
-  `[t, r, b, l]` array (deprecated in 0.3.0, removed in 0.4.0). The
-  catalog schema marks that array arm `deprecated: true`. Capability key
+  MCP, the Designer and the SDKs. No form is marked today (the
+  `page.margin` `[t, r, b, l]` array was deprecated in 0.3.0 and is a
+  parse error from 0.4.0). Capability key
   `diagnostics.deprecated_syntax`.
 - **Located layout diagnostics**: a layout-stage diagnostic names the
   item that raised it, in the box-index path grammar — the walk stamps
@@ -2346,8 +2345,8 @@ identified by their wire spellings, never by internal work-item codes.
   key (pre-1.0 hard change; examples re-based in the same PR); the top
   margin is one assembly-time translate so the resolve pass stays
   y-less. The `[t,r,b,l]` array stayed accepted to ease coordinate
-  imports; it is deprecated since 0.3.0 and removed in 0.4.0 (see
-  the deprecation entry below).
+  imports; it was deprecated in 0.3.0 and removed in 0.4.0 (see the
+  deprecation entry below).
 - **Deprecate, then remove — one release apart**: the wire and the
   diagnostic codes were described as append-only, which left a form
   nobody should write (the `page.margin` array: its import use is gone,

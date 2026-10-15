@@ -53,10 +53,10 @@ describe('documentGlance', () => {
     expect(glance.margin).toBe('5 / 10mm / 5 / 10mm');
   });
 
-  it('reads an ARRAY margin as its four sides', () => {
-    expect(documentGlance(makeController({ margin: [1, 2, 3, 4] }).read).margin).toBe(
-      '1 / 2 / 3 / 4',
-    );
+  it('declines an ARRAY margin, which the engine refuses', () => {
+    // `readMarginView` shows an array as the 25pt default, so reading its
+    // sides through it would name four values the document does not hold.
+    expect(documentGlance(makeController({ margin: [1, 2, 3, 4] }).read).margin).toBeNull();
   });
 
   it('declines a page it cannot describe rather than naming one', () => {

@@ -1726,10 +1726,10 @@ Orientation: >-
   The sheet's orientation. `portrait` is the default; `landscape` swaps the two
   dimensions of a named size and does nothing to a custom one.
 PageMargin: >-
-  The printable-area insets: a bare point number for all four sides, a per-side
-  map whose unset sides are 0, or the top-right-bottom-left array, which is
-  deprecated since 0.3.0 and removed in 0.4.0. The authored form round-trips. Negative sides, `auto`, wrong array lengths and
-  unknown map keys are all parse errors.
+  The printable-area insets: a bare point number for all four sides, or a
+  per-side map whose unset sides are 0. The authored form round-trips.
+  Negative sides, `auto` and unknown map keys are all parse errors, and so is
+  the top-right-bottom-left array, removed in 0.4.0.
 DocumentMeta: >-
   What the file says it IS, as opposed to what it draws: the metadata that
   lands in the PDF's document properties, where a reader's panel shows it, a

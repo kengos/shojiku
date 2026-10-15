@@ -94,11 +94,12 @@ fn border_style_takes_a_closed_keyword_set_or_a_side_map() {
 }
 
 #[test]
-fn page_margin_takes_a_number_a_side_map_or_a_positional_array() {
+fn page_margin_takes_a_number_or_a_side_map() {
     pin::<PageMargin>(
-        &["10", "{ top: 5 }", "[1, 2, 3, 4]"],
-        // Negative and `auto` are rejected at parse; strings outright.
-        &["-1", "{ top: auto }", "\"10mm\""],
+        &["10", "{ top: 5 }"],
+        // Negative and `auto` are rejected at parse; strings outright; the
+        // positional array since 0.4.0.
+        &["-1", "{ top: auto }", "\"10mm\"", "[1, 2, 3, 4]"],
     );
 }
 
