@@ -1,6 +1,14 @@
 // Public surface of designer-core.
 
 export {
+  itemInitialOverrides,
+  itemStyleKeys,
+  type StyleKeyFacts,
+  spanStyleKeys,
+  styleKeyFacts,
+  styleKeys,
+} from './catalog';
+export {
   clampTemplateMaxBytes,
   MAX_ALIAS_COUNT,
   MAX_TEMPLATE_BYTES,

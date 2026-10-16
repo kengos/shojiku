@@ -63,7 +63,11 @@ export function TextLookFields({
           optionLabel={(option) => styleOptionLabel(t, key, option)}
           onCommit={(v) => dispatch(plainTextOp(path, ['style', key], v))}
         />
-        <OriginBadge effective={effective} onNavigate={onNavigate} />
+        <OriginBadge
+          effective={effective}
+          onNavigate={onNavigate}
+          valueLabel={(v) => styleOptionLabel(t, key, v)}
+        />
       </div>
     );
   };
