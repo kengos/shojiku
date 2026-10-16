@@ -19,9 +19,9 @@
 //! `child_overflow`, `grid_column_overflow`. One code per reason,
 //! because a shared code with a `{where}` arg would put an English enum
 //! value in front of a non-English reader, and a free-text `{detail}`
-//! arg (what the now-retired `horizontal_overflow` carried) hands the
-//! consumer a whole English sentence it can only pass through. The rest
-//! of the family follows the same rule from its own modules:
+//! arg hands the consumer a whole English sentence it can only pass
+//! through. The rest of the family follows the same rule from its own
+//! modules:
 //! `flow_item_overflow` (`flow::layouter`), `flex_row_overflow`
 //! (`flex::offsets::plan_row`), `vertical_text_overflow`
 //! (`text::vblock`).

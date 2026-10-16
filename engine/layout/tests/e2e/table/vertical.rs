@@ -91,22 +91,22 @@ fn a_definite_row_height_wraps_columns() {
 #[test]
 fn a_text_overflow_knob_on_a_vertical_cell_no_longer_warns() {
     // The block knobs apply on vertical columns now (textOverflow runs
-    // against the cell width), so `vertical_style_ignored` never fires —
-    // from neither the silent measure pass nor the render pass.
+    // against the cell width), so nothing warns — from neither the silent
+    // measure pass nor the render pass.
     let (_doc, diags) = run(
         &tmpl("height: 30", ", textOverflow: ellipsis"),
         json_items("あいうえお"),
     );
-    assert_eq!(count(&diags, "vertical_style_ignored"), 0);
+    assert!(diags.is_empty(), "{diags:?}");
 }
 
 #[test]
 fn the_table_default_valign_does_not_warn_on_a_vertical_cell() {
     // A plain vertical cell sets no inert knob; the table's own default
-    // `verticalAlign: Middle` must NOT surface as `vertical_style_ignored`
-    // (it is a table default, not an authored knob).
+    // `verticalAlign: Middle` must NOT surface as a warning (it is a table
+    // default, not an authored knob).
     let (_doc, diags) = run_auto("あいう");
-    assert_eq!(count(&diags, "vertical_style_ignored"), 0);
+    assert!(diags.is_empty(), "{diags:?}");
 }
 
 /// Two rows so both the measure and the placement paths run; the params

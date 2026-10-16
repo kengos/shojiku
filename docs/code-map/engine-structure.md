@@ -144,11 +144,11 @@ first sentence of its `//!` header.
 ▲ = within 10% of the 300-line cap (≥270); ■ = over it under a
 `line-budget-exempt` waiver. Test files are summarised per crate.
 
-### `diagnostics` (L0) — 7 files / 1001 lines; tests 6 files / 704 lines
+### `diagnostics` (L0) — 7 files / 989 lines; tests 6 files / 754 lines
 
 - `src/arg.rs` 132 — Typed diagnostic argument values.
 - `src/category.rs` 32 — Semantic domain grouping for diagnostics.
-- `src/code.rs` 288 ▲ — The closed diagnostic-code registry.
+- `src/code.rs` 276 ▲ — The closed diagnostic-code registry.
 - `src/deprecation.rs` 51 — When a deprecated thing goes: the release that deprecated it and the one that removes it, for a wire form (`deprecated_syntax`) and for a diagnostic code alike — readable by a consumer, and checked by the engine's own tests so a removal cannot be forgotten once its release arrives (`docs/architecture.md` § Deprecation).
 - `src/echo.rs` 229 — The one bounded-echo guard, and the type that applies it structurally.
 - `src/lib.rs` 221 — Structured diagnostics shared across the Shojiku engine.
@@ -362,7 +362,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19580 lines; tests 269 files / 37903 lines
+### `layout` (L3) — 132 files / 19580 lines; tests 269 files / 37864 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -515,7 +515,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 38 files / 4625 lines; tests 43 files / 5651 lines
+### `authoring` (L5) — 38 files / 4626 lines; tests 43 files / 5651 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -523,7 +523,7 @@ first sentence of its `//!` header.
 - `src/capabilities/list/boxes.rs` 81 — Capability keys — the box model, page geometry, and length units.
 - `src/capabilities/list/hosts.rs` 198 — Capability keys — output surfaces and host bindings.
 - `src/capabilities/list/items.rs` 169 — Capability keys — item types and item-level features.
-- `src/capabilities/list/style.rs` 281 ▲ — Capability keys — style properties and the styled wire surface.
+- `src/capabilities/list/style.rs` 282 ▲ — Capability keys — style properties and the styled wire surface.
 - `src/formats.rs` 189 — The format catalog: which display variants a document can pick per field type, what each one actually renders, and a preview of a pattern that is not in the document yet.
 - `src/formats/exemplar.rs` 107 — The fixed exemplar values a format sample is rendered against, and the `FieldSpec`s that carry them.
 - `src/formats/facts.rs` 95 — What a document's `defaults.locale` / `defaults.currency` pick actually DOES, as the engine's own rendered output.

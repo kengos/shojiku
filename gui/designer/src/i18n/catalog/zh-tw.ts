@@ -114,8 +114,6 @@ export const zhTw: LanguageCatalog = {
     qr_module_too_small: 'QR 模組為 {module}pt（小於 {min}pt）；列印出的碼可能無法掃描',
     mark_missing_size: 'ellipse/checkbox 項目需要正的 box.w 與 box.h；已略過項目',
     container_overflow: '容器內容（{content}pt）超過其內容高度（{avail}pt）',
-    grid_cell_overflow: '格線子項（{child}pt）超過其 {track}pt 的{extent}',
-    horizontal_overflow: '{detail}',
     flow_item_overflow: '項目超出流動區域（{avail}pt）右緣 {over}pt，將繪製於紙面之外',
     flex_row_overflow:
       '這一列的內容需要 {needed}pt 寬，但框內只有 {avail}pt，內容會溢出。請減少內容寬度或加寬框',
@@ -148,7 +146,6 @@ export const zhTw: LanguageCatalog = {
     cut_marks_clipped: 'cutMarks 在紙張 {sides} 側沒有可繪製的邊界；該側的裁切標記已省略',
     vertical_text_unsupported: '{feature} 在 v1 中不支援直書（writingMode: vertical_rl）',
     ruby_base_not_found: 'ruby 基底文字 `{base}` 未出現在繪製文字中；已略過讀音',
-    vertical_style_ignored: '`{prop}` 在直書（writingMode: vertical_rl）區塊中會被忽略',
     page_number_in_body: 'page_number 項目僅支援於 header/footer 帶區',
     page_number_in_container: 'page_number 項目僅支援直接置於 header/footer 帶區；已略過項目',
     repeat_in_absolute_body: 'repeat 項目需要流動主體；已略過項目',

@@ -161,10 +161,10 @@ fn dedup_collapses_identical_pathless_duplicates() {
 #[test]
 fn dedup_keeps_pathless_diagnostics_with_distinct_args() {
     let mut diags = Diagnostics::new();
-    diags.push(Diagnostic::new(DiagnosticCode::VerticalStyleIgnored).arg("prop", "textOverflow"));
-    diags.push(Diagnostic::new(DiagnosticCode::VerticalStyleIgnored).arg("prop", "verticalAlign"));
+    diags.push(Diagnostic::new(DiagnosticCode::VerticalTextUnsupported).arg("feature", "ruby"));
+    diags.push(Diagnostic::new(DiagnosticCode::VerticalTextUnsupported).arg("feature", "spans"));
     diags.dedup();
-    // Same code and path (None) but different `prop` arg → different message → both kept.
+    // Same code and path (None) but different `feature` arg → different message → both kept.
     assert_eq!(diags.len(), 2);
 }
 

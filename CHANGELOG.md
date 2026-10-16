@@ -12,6 +12,20 @@ page carries the same notes with the install instructions and the
 platform binaries.
 
 ## [Unreleased]
+### Removed
+
+- **The diagnostic code `horizontal_overflow`**, deprecated in 0.3.0.
+  Nothing has emitted it since 0.3.0, and it is gone from the code registry
+  and the Designer's catalogs. Each reason it covered has its own code:
+  `sheet_overflow`, `child_overflow`, `grid_column_overflow`,
+  `flow_item_overflow`, `flex_row_overflow` and `vertical_text_overflow`.
+- **The diagnostic code `vertical_style_ignored`**, deprecated in 0.3.0.
+  No release ever emitted it, since the block-level knobs it was reserved
+  for apply to vertical text. A host that translates or matches on it can
+  drop it.
+- **The diagnostic code `grid_cell_overflow`**, deprecated in 0.3.0.
+  Nothing has emitted it since 0.3.0. Match `grid_row_overflow` and
+  `grid_span_overflow`, which report the two conditions it covered.
 
 ## [0.3.0] - 2026-10-14
 

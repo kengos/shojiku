@@ -143,8 +143,6 @@ export const ja: LanguageCatalog = {
     mark_missing_size:
       'ellipse/checkbox 項目には正の box.w と box.h が必要です。項目はスキップされました',
     container_overflow: 'コンテナの内容（{content}pt）が内容高さ（{avail}pt）を超えています',
-    grid_cell_overflow: 'グリッドの子要素（{child}pt）が {track}pt の {extent} を超えています',
-    horizontal_overflow: '{detail}',
     flow_item_overflow:
       '項目がフロー領域（{avail}pt）の右端を {over}pt はみ出しており、紙面外に描画されます',
     flex_row_overflow:
@@ -190,7 +188,6 @@ export const ja: LanguageCatalog = {
       '{feature} は v1 では縦書き（writingMode: vertical_rl）に対応していません',
     ruby_base_not_found:
       'ルビの親文字 `{base}` が描画テキストに見つかりません。読みをスキップしました',
-    vertical_style_ignored: '`{prop}` は縦書き（writingMode: vertical_rl）ブロックでは無視されます',
     page_number_in_body: 'page_number 項目は header/footer バンドでのみサポートされます',
     page_number_in_container:
       'page_number 項目は header/footer バンド直下でのみサポートされます。項目はスキップされました',

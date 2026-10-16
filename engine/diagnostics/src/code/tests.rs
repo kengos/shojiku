@@ -77,16 +77,31 @@ fn from_wire_rejects_unknown() {
     assert_eq!(DiagnosticCode::from_wire("nope"), None);
 }
 
+/// Every wire string a release has removed. A removed code's name is never
+/// reused, so a matcher keyed on it cannot start matching something else;
+/// a removal appends here in the same change.
+const REMOVED: &[&str] = &[
+    // Removed in 0.4.0.
+    "grid_cell_overflow",
+    "horizontal_overflow",
+    "vertical_style_ignored",
+];
+
 #[test]
-fn no_deprecated_code_outlives_its_removal_release() {
-    // A deprecation names the release that removes it; once the workspace
-    // reaches that release the code must be gone from the registry, so a
-    // removal cannot ride along unnoticed past its announced date.
-    let deprecated: Vec<_> = DiagnosticCode::ALL
-        .iter()
-        .filter_map(|code| code.deprecation().map(|window| (code.as_str(), window)))
-        .collect();
-    for (code, window) in deprecated {
+fn no_removed_wire_string_is_reused() {
+    for wire in REMOVED {
+        assert_eq!(
+            DiagnosticCode::from_wire(wire),
+            None,
+            "`{wire}` was removed"
+        );
+    }
+}
+
+/// Asserts each marked row names a plain release and a removal the
+/// workspace has not reached yet.
+fn assert_windows_open(marked: &[(&str, Deprecation)]) {
+    for (code, window) in marked {
         assert!(window.is_release(), "{code}");
         assert!(!window.is_due_at(window.since), "{code}");
         assert!(
@@ -96,14 +111,49 @@ fn no_deprecated_code_outlives_its_removal_release() {
             env!("CARGO_PKG_VERSION")
         );
     }
-    // The marks are read at all: one row's, spelled out (the PR that removes
-    // that code removes this line with it), and an unmarked row's.
-    assert_eq!(
-        DiagnosticCode::GridCellOverflow.deprecation(),
-        Some(crate::Deprecation {
-            since: "0.3.0",
-            removed_in: "0.4.0"
-        })
-    );
+}
+
+#[test]
+fn no_deprecated_code_outlives_its_removal_release() {
+    // A deprecation names the release that removes it; once the workspace
+    // reaches that release the code must be gone from the registry, so a
+    // removal cannot ride along unnoticed past its announced date.
+    let marked: Vec<_> = DiagnosticCode::ALL
+        .iter()
+        .filter_map(|code| code.deprecation().map(|window| (code.as_str(), window)))
+        .collect();
+    assert_windows_open(&marked);
     assert_eq!(DiagnosticCode::TextOverflow.deprecation(), None);
+}
+
+/// A two-row table through the same macro, one row marked: between
+/// deprecations the registry marks nothing, and the mark must still read
+/// back and still be checked.
+mod marked {
+    use crate::category::Category;
+    use crate::{Deprecation, Severity};
+
+    diagnostic_codes! {
+        Kept = "kept", Warning, Layout, "kept {arg}";
+        Going = "going", Error, Parse, "going", deprecated("0.3.0", "99.0.0");
+    }
+}
+
+#[test]
+fn a_marked_row_reads_back_its_window() {
+    use marked::DiagnosticCode as Probe;
+    let window = Deprecation {
+        since: "0.3.0",
+        removed_in: "99.0.0",
+    };
+    assert_eq!(Probe::Going.deprecation(), Some(window));
+    assert_eq!(Probe::Kept.deprecation(), None);
+    assert_windows_open(&[(Probe::Going.as_str(), window)]);
+    // The rest of the expansion, so the probe table is the whole macro.
+    assert_eq!(Probe::ALL, [Probe::Kept, Probe::Going]);
+    assert_eq!(Probe::from_wire("going"), Some(Probe::Going));
+    assert_eq!(Probe::from_wire("nope"), None);
+    assert_eq!(Probe::Kept.severity(), Severity::Warning);
+    assert_eq!(Probe::Going.category(), Category::Parse);
+    assert_eq!(Probe::Kept.template(), "kept {arg}");
 }

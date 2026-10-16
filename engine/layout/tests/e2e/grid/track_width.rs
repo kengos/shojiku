@@ -59,17 +59,15 @@ fn a_child_wider_than_its_spanned_columns_names_the_span() {
 
 #[test]
 fn a_column_overflow_raises_no_row_axis_code() {
-    // Each code names one axis: a child too WIDE never reports as too tall,
-    // and nothing emits the deprecated `grid_cell_overflow`.
+    // Each code names one axis: a child too WIDE never reports as too tall.
     let diags = grid(
         "2",
         "          - { type: rect, style: { borderWidth: 1 }, box: { w: 140, h: 10 } }\n",
     );
     assert!(
-        diags.iter().all(|d| !matches!(
-            d.code.as_str(),
-            "grid_cell_overflow" | "grid_row_overflow" | "grid_span_overflow"
-        )),
+        diags
+            .iter()
+            .all(|d| !matches!(d.code.as_str(), "grid_row_overflow" | "grid_span_overflow")),
         "{diags:?}"
     );
 }

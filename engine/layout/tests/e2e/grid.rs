@@ -240,10 +240,6 @@ fn rows_count_on_auto_height_and_cell_overflow_degrade_with_diagnostics() {
     assert!(args_all_numeric(hit), "{hit:?}");
     assert_eq!(arg_num(hit, "child"), Some(30.0));
     assert_eq!(arg_num(hit, "track"), Some(10.0));
-    assert!(
-        diags.iter().all(|d| d.code != "grid_cell_overflow"),
-        "the deprecated code is emitted by nothing: {diags:?}"
-    );
     // Negative gaps clamp to 0.
     let negative = container_body(
         "{ x: 0, y: 0, w: 200, type: grid, columns: 2, columnGap: -50 }",

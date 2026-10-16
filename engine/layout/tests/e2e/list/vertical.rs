@@ -170,12 +170,12 @@ sections:
 #[test]
 fn text_decoration_draws_a_side_band_per_column() {
     // The vertical list mirrors the horizontal list's per-line decoration
-    // rect: one side band per column, and no `vertical_style_ignored`.
+    // rect: one side band per column, and warns nothing.
     let (doc, diags) = run(
         &tmpl("x: 0, y: 0, w: 200, h: 100", ", textDecoration: underline"),
         json!({ "rows": ["あい", "うえ"] }),
     );
-    assert!(diags.iter().all(|d| d.code != "vertical_style_ignored"));
+    assert!(diags.is_empty(), "{diags:?}");
     let block = text_blocks(&doc.pages[0])[0];
     let d = block.decorations.first().copied().expect("side band");
     // Band left edge = col_w/2 (5) + em/2 (5), right of the em cell.

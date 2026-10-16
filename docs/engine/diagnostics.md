@@ -143,7 +143,6 @@ inline:
 | `container_depth_exceeded` | error | nesting > 32; subtree skipped |
 | `container_overflow` | warning | content taller than a definite-`h` content box; suppressed by `overflow: hidden` |
 | `section_overflow` | warning | an unsplittable item is taller than the flow region |
-| `horizontal_overflow` | warning | **DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing.** It carried a whole English sentence in one free-text `detail` arg, which a translating consumer could only pass through. Every reason it covered now has its own number-carrying code (the five below). A catalog entry for it can be dropped once a host no longer supports 0.3 |
 | `flow_item_overflow` | warning | a definite-width flow item reaches `over` pt past the right edge of the `avail` pt flow region and renders off-sheet |
 | `flex_row_overflow` | warning | a row's fixed children + gaps need `needed` pt but the parent content box is only `avail` pt wide; unsized children shrink instead and never warn, and `overflow: hidden` suppresses it |
 | `vertical_text_overflow` | warning | a vertical text block needs `columns` columns (`needed` pt) but its box is `avail` pt wide. The flow paginator reads this code's PRESENCE as "a policy already resolved this block's overflow", so it places whole instead of paginating its columns |
@@ -154,13 +153,11 @@ inline:
 | `grid_span_overflow` | warning | a grid child (`child` pt) spanning `span` rows, the last of them explicit, is taller than the `track` pt those rows give it and overflows visually (an auto last row grows instead) |
 | `page_overflow` | error | layout exceeded 500 pages; output truncated |
 | `grid_tracks_clamped` | warning | grid `columns`/`rows` outside 1..=64 tracks; clamped |
-| `grid_cell_overflow` | warning | **DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing.** It reported a grid child taller than its row track, with an `extent` arg naming the axis in English (`row track` / `spanned rows`) that a translating consumer could only pass through. The two cases are now `grid_row_overflow` and `grid_span_overflow`. A catalog entry for it can be dropped once a host no longer supports 0.3 |
 | `imposition_grid_clamped` | warning | `repeat` grid over 64 cells/page (or a zero axis); clamped |
 | `char_grid_clamped` | warning | `char_grid` outside 1..=4096 cells/sheet; clamped |
 | `char_grid_markup_clamped` | warning | an aozora note asks for more cells than the grid holds (a large-writing scale > `min(columns, lines)`, an indent/raise past the line); clamped |
 | `invalid_cell_size` | warning | `char_grid` cell size not positive and finite; item skipped |
 | `vertical_text_unsupported` | warning | `writingMode: vertical_rl` reached a text `mark:` (the circled-text overlay), whose glyph-band overlay is horizontal-only; the mark is skipped. Rich `spans` / `list` / table cells / `page_number` now render vertically. See [vertical_text.md](vertical_text.md) |
-| `vertical_style_ignored` | warning | **DEPRECATED in 0.3.0, removed in 0.4.0 — emitted by nothing**, in any release: the block-level knobs (`textOverflow`, `textDecoration`, `verticalAlign`, `textSpacingTrim`, `hangingPunctuation`) apply on vertical blocks instead ([vertical_text.md](vertical_text.md)) |
 <!-- rf:table:end -->
 
 ## Layout — placement rules
@@ -271,12 +268,6 @@ inline:
   the new codes, and a matcher has to add them from that release on.
 - The engine does not translate. Messages are English and carry typed
   arguments; rendering them in another language is the consumer's job.
-- Three codes are emitted by nothing, and all are deprecated in 0.3.0 and
-  removed in 0.4.0 (`horizontal_overflow`, `vertical_style_ignored`,
-  `grid_cell_overflow`). The last one is the replaced-code case above: it
-  still fired in 0.2.x, and from 0.3.0 the same two conditions report their
-  own codes instead (`grid_row_overflow`, `grid_span_overflow`), so a
-  matcher keyed on it has to add those.
 - A wire form that still parses but is marked for removal draws a warning
   from `validate` until the release that removes it (`deprecated_syntax`).
   Today that is only `page.margin` written as an array. The exception is a

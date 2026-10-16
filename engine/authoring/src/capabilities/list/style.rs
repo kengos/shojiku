@@ -205,8 +205,9 @@ pub(super) const KEYS: &[&str] = &[
     // CSS-logical column-stack shift, hangingPunctuation past the column
     // bottom, textDecoration as a side band (underline right — JLREQ
     // side-line), textSpacingTrim in the vertical arrangement — and a flow
-    // vertical block paginates at column boundaries. Older engines warn
-    // `vertical_style_ignored` and place as one unit.
+    // vertical block paginates at column boundaries. An engine without
+    // this key ignores these knobs on a vertical block and places it as
+    // one unit.
     "style.writingMode.block_styles",
     // A `symbol`/`name` format pick on a plain NUMBER value coerces it
     // to the currency type with that variant (the code rides the

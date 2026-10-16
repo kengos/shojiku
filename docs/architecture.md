@@ -476,8 +476,7 @@ there.
 A code that more specific codes replace may stop being emitted in the
 release that deprecates it, since from then on the new codes report the
 same conditions; it stays in the registry until its removal release, and
-its changelog entry and reference row name the codes to match instead. `grid_cell_overflow`
-is the case in 0.3.
+its changelog entry and reference row name the codes to match instead.
 
 **Security exception.** A change that closes a hostile-input hole may
 refuse a form at once, with no deprecation release, when accepting the form

@@ -4,7 +4,6 @@
 //! reading (offset = from the column left to the band's left edge).
 
 use super::tmpl;
-use super::valign::count_code;
 use crate::common::*;
 
 #[test]
@@ -13,7 +12,7 @@ fn underline_bands_sit_right_of_the_em_cell() {
         &tmpl("あいう", "w: 200, h: 100", ", textDecoration: underline"),
         json!({}),
     );
-    assert_eq!(count_code(&diags, "vertical_style_ignored"), 0);
+    assert!(diags.is_empty(), "{diags:?}");
     let block = text_blocks(&doc.pages[0])[0];
     let d = block.decorations.first().copied().expect("side band");
     // col_w 10 (axis at 5) + half the 10pt em = the band starts at the em
@@ -53,7 +52,7 @@ sections:
 "#,
         json!({}),
     );
-    assert_eq!(count_code(&diags, "vertical_style_ignored"), 0);
+    assert!(diags.is_empty(), "{diags:?}");
     let block = text_blocks(&doc.pages[0])[0];
     assert!(block.decorations.is_empty(), "rich decoration is per run");
     let runs = &block.lines[0].runs;
