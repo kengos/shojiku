@@ -191,8 +191,8 @@ pub(super) const KEYS: &[&str] = &[
     "style.shapes.unified",
     // `validate` reports a wire form that still parses but is marked for
     // removal as a `deprecated_syntax` WARNING (`args` `key` / `form` /
-    // `replacement` / `since` / `removed_in`, `path` = the key) — today the
-    // `page.margin` `[t, r, b, l]` array. Absent this key, a deprecated form
-    // is accepted silently until the release that stops parsing it.
+    // `replacement` / `since` / `removed_in`, `path` = the key); no form is
+    // marked today. Absent this key, a deprecated form is accepted silently
+    // until the release that stops parsing it.
     "diagnostics.deprecated_syntax",
 ];

@@ -733,9 +733,9 @@
     - keys: ["margin"]
       cells:
         "Key": "`margin`"
-        "Type": "number | map | array (deprecated)"
+        "Type": "number | map"
         "Default": "`25` (all sides)"
-        "Description": "Printable-area insets. **The all-sides form is a bare pt number only** — `margin: 15mm` (one value with a unit) is a parse error; for units use the per-side map (`{ top: \"15mm\", right: \"15mm\", bottom: \"15mm\", left: \"15mm\" }`). Sides accept every length unit; `%` resolves against the page **width** for all four sides (the CSS edge rule). **A per-side map specifies all four sides: an unset side is 0, not 25** — `margin: { top: 30 }` zeroes the other three. Negative sides, `auto`, wrong array lengths, and unknown map keys are parse errors. The authored form round-trips. **The positional `[top, right, bottom, left]` array is deprecated since 0.3.0 and removed in 0.4.0**: it still applies, with a `deprecated_syntax` warning; write the per-side map instead."
+        "Description": "Printable-area insets. **The all-sides form is a bare pt number only** — `margin: 15mm` (one value with a unit) is a parse error; for units use the per-side map (`{ top: \"15mm\", right: \"15mm\", bottom: \"15mm\", left: \"15mm\" }`). Sides accept every length unit; `%` resolves against the page **width** for all four sides (the CSS edge rule). **A per-side map specifies all four sides: an unset side is 0, not 25** — `margin: { top: 30 }` zeroes the other three. Negative sides, `auto`, and unknown map keys are parse errors. The authored form round-trips. **The positional `[top, right, bottom, left]` array was removed in 0.4.0**: it is a parse error that names the per-side map to write instead."
 
 "page_number#keys":
   page: page_number
@@ -1506,7 +1506,7 @@
     - keys: ["deprecated_syntax"]
       cells:
         "Code": "`deprecated_syntax`"
-        "Meaning": "a wire form that still parses and renders but will be removed: `args` `key` (the wire key, also the diagnostic's `path`), `form` and `replacement` (YAML spellings), and the two versions `since` and removed_in. Reported with or without definitions. Today only `page.margin` written as a `[top, right, bottom, left]` array ([page.md](page.md)). A deprecated form is removed in the next minor before 1.0, at the next major after it"
+        "Meaning": "a wire form that still parses and renders but will be removed: `args` `key` (the wire key, also the diagnostic's `path`), `form` and `replacement` (YAML spellings), and the two versions `since` and removed_in. Reported with or without definitions. No form is marked today. A deprecated form is removed in the next minor before 1.0, at the next major after it"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
     - keys: ["unknown_format"]
       cells:

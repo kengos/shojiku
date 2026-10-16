@@ -30,7 +30,7 @@ use bindings::{
 };
 use box_keys::{check_box_keys, check_table_pagination_keys};
 use collect::{check_container_depth, collect_images, collect_repeats, walk_sections};
-use deprecated::check_deprecated;
+use deprecated::{check_deprecated, DeprecatedForm, DEPRECATED_FORMS};
 use document::check_document;
 use formats::check_formats;
 use presence::check_presence;
@@ -50,6 +50,17 @@ pub fn validate(
     template: &Template,
     params: Option<&Value>,
 ) -> Diagnostics {
+    validate_with(DEPRECATED_FORMS, definitions, template, params)
+}
+
+/// [`validate`] against a given deprecated-form table, so the tests can
+/// drive a row through the whole pass while the real table is empty.
+fn validate_with(
+    forms: &[DeprecatedForm],
+    definitions: Option<&Definitions>,
+    template: &Template,
+    params: Option<&Value>,
+) -> Diagnostics {
     let catalog = definitions.map(Catalog::from_definitions);
     let mut diags = Diagnostics::new();
 
@@ -61,7 +72,7 @@ pub fn validate(
     }
     // Deprecated wire forms are a fact about the template's own spelling,
     // so they are reported whether or not definitions came with it.
-    check_deprecated(template, &mut diags);
+    check_deprecated(forms, template, &mut diags);
     if let Some(defs) = definitions {
         // Known semantic `format` values on a base type they don't apply
         // to are declared-schema mistakes; unknown values are hints.

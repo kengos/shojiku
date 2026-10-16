@@ -32,20 +32,16 @@ pub(super) struct DeprecatedForm {
 
 /// Every deprecated form the parser still accepts. Each arg is a YAML
 /// literal or a version, so no English reaches a translated message.
-pub(super) const DEPRECATED_FORMS: &[DeprecatedForm] = &[DeprecatedForm {
-    key: "page.margin",
-    form: "[top, right, bottom, left]",
-    replacement: "{ top, right, bottom, left }",
-    window: Deprecation {
-        since: "0.3.0",
-        removed_in: "0.4.0",
-    },
-    used_by: |template| template.page.margin.is_legacy_array(),
-}];
+pub(super) const DEPRECATED_FORMS: &[DeprecatedForm] = &[];
 
-/// Reports each deprecated form `template` uses, in table order.
-pub(super) fn check_deprecated(template: &Template, diags: &mut Diagnostics) {
-    for form in DEPRECATED_FORMS.iter().filter(|f| (f.used_by)(template)) {
+/// Reports each form in `forms` that `template` uses, in table order —
+/// [`DEPRECATED_FORMS`] in a real run.
+pub(super) fn check_deprecated(
+    forms: &[DeprecatedForm],
+    template: &Template,
+    diags: &mut Diagnostics,
+) {
+    for form in forms.iter().filter(|f| (f.used_by)(template)) {
         diags.push(
             Diagnostic::new(Code::DeprecatedSyntax)
                 .arg("key", form.key)

@@ -44,8 +44,8 @@ pub(super) const KEYS: &[&str] = &[
     "image.opacity",
     // `auto` margin sides (flex free-space absorption).
     "margin.auto",
-    // page.margin is the coordinate origin (EdgeSpec forms + legacy
-    // array; absolute items escape into it with negative coordinates).
+    // page.margin is the coordinate origin (the EdgeSpec forms; absolute
+    // items escape into it with negative coordinates).
     "page.margin",
     // The flow body `box` may be omitted (= the whole margin box).
     "flow.box.optional",

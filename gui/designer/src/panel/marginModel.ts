@@ -6,8 +6,9 @@
 // MAP = per-side. Per-side values are carried and written VERBATIM (a bare
 // numeral → a pt number, a unit/`%` value → the string as-is): no display↔wire
 // unit conversion, so a mere tab-through can never rewrite an authored length
-// (the round-trip trap the custom-size code hit). A legacy `[t,r,b,l]` array is
-// shown per-side and canonicalized to a map on the first edit.
+// (the round-trip trap the custom-size code hit). Any other node (the
+// `[t,r,b,l]` array the engine refuses since 0.4.0 included) shows the uniform
+// default, and the first edit replaces it.
 
 import type { Op } from '@shojiku/designer-core';
 import { stepNumeral } from './model';
@@ -15,7 +16,7 @@ import { stepNumeral } from './model';
 export type MarginMode = 'uniform' | 'perSide';
 export type MarginSide = 'top' | 'right' | 'bottom' | 'left';
 
-/** The four sides in wire order (also the legacy array order [t, r, b, l]). */
+/** The four sides in wire order (CSS order: top, right, bottom, left). */
 export const MARGIN_SIDES: readonly MarginSide[] = ['top', 'right', 'bottom', 'left'];
 
 /** The engine's default all-sides margin (pt) when `page.margin` is absent. */
@@ -40,8 +41,10 @@ export interface MarginView {
   readonly sides: Sides;
   readonly hasMarginKey: boolean;
   /** The wire form currently under `page.margin` — drives the per-side edit op
-   * (a `map` takes a single-side set; anything else materializes the full map). */
-  readonly backing: 'none' | 'scalar' | 'map' | 'array';
+   * (a `map` takes a single-side set; anything else materializes the full map).
+   * `unknown` is a node no form describes, whose shown values are the default
+   * rather than the document's. */
+  readonly backing: 'none' | 'scalar' | 'map' | 'unknown';
 }
 
 function record(value: unknown): Record<string, unknown> | undefined {
@@ -91,23 +94,15 @@ export function readMarginView(pageRaw: unknown): MarginView {
     };
     return { mode: 'perSide', uniform: uniformSeed(sides), sides, hasMarginKey, backing: 'map' };
   }
-  if (Array.isArray(raw)) {
-    const sides = {
-      top: sideText(raw[0]),
-      right: sideText(raw[1]),
-      bottom: sideText(raw[2]),
-      left: sideText(raw[3]),
-    };
-    return { mode: 'perSide', uniform: uniformSeed(sides), sides, hasMarginKey, backing: 'array' };
-  }
-  // Absent, or an unrecognized scalar (a hand-authored bad value the engine
-  // reports separately): show the uniform default; a uniform write replaces it.
+  // Absent, or an unrecognized node (a hand-authored bad value, or the removed
+  // array, which the engine reports as a parse error): show the uniform
+  // default; a uniform write replaces it.
   return {
     mode: 'uniform',
     uniform: DEFAULT_MARGIN,
     sides: uniformSides(DEFAULT_MARGIN),
     hasMarginKey,
-    backing: hasMarginKey ? 'scalar' : 'none',
+    backing: hasMarginKey ? 'unknown' : 'none',
   };
 }
 
@@ -201,8 +196,9 @@ export function enterUniformOps(view: MarginView): Op[] {
 }
 
 /** The op(s) for one per-side input commit: a single-side set when the map
- * already backs the margin; otherwise (a legacy array, or a not-yet-materialized
- * form) the full map is rebuilt with this edit applied. null on an invalid value. */
+ * already backs the margin; otherwise (a scalar, an unrecognized node, or no
+ * margin yet) the full map is rebuilt with this edit applied. null on an
+ * invalid value. */
 export function perSideOp(view: MarginView, side: MarginSide, text: string): Op[] | null {
   const scalar = sideScalar(text);
   if (scalar === null) {

@@ -2,11 +2,10 @@
 //! coordinate origin.
 //!
 //! Wire forms: the [`EdgeSpec`] forms — a bare number (all sides) or a
-//! per-side `{ top/right/bottom/left }` mapping — plus the positional array
-//! `[top, right, bottom, left]`, deprecated since 0.3.0 and removed in
-//! 0.4.0: it still parses and applies, and `validate` reports it as
-//! `deprecated_syntax` ([`PageMargin::is_legacy_array`]). Side values accept
-//! every [`Length`] unit; `%` resolves against the *page width* for all
+//! per-side `{ top/right/bottom/left }` mapping. The positional array
+//! `[top, right, bottom, left]` was removed in 0.4.0 and is refused at
+//! parse with the map to write instead. Side values accept every
+//! [`Length`] unit; `%` resolves against the *page width* for all
 //! four sides (the CSS edge rule). Negative sides and `auto` are
 //! rejected at parse — a print margin cannot be negative, and items
 //! escape into the margin with negative coordinates instead. The
@@ -16,38 +15,22 @@ use crate::edges::EdgeSpec;
 use crate::length::{snippet, Length};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-/// The page margins in one of the three wire forms. Resolution to pt is
-/// layout's job ([`Self::edges`] hands over the authored lengths).
+/// The page margins in one of the two wire forms, kept verbatim for
+/// round-trip serialization. Resolution to pt is layout's job
+/// ([`Self::edges`] hands over the authored lengths).
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct PageMargin(Repr);
-
-/// The authored wire form, kept verbatim for round-trip serialization.
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum Repr {
-    /// Bare number or per-side mapping (the item-edge forms).
-    Edges(EdgeSpec),
-    /// The deprecated positional `[top, right, bottom, left]` array.
-    Array([Length; 4]),
-}
+pub struct PageMargin(EdgeSpec);
 
 impl PageMargin {
     /// Margin lengths in CSS order `[top, right, bottom, left]`.
     pub fn edges(&self) -> [Length; 4] {
-        match &self.0 {
-            Repr::Edges(spec) => spec.edges(),
-            Repr::Array(sides) => *sides,
-        }
-    }
-
-    /// Whether the margin was authored as the deprecated positional array.
-    pub fn is_legacy_array(&self) -> bool {
-        matches!(self.0, Repr::Array(_))
+        self.0.edges()
     }
 
     /// All four sides the same pt value (bare-number form); the
     /// engine-default constructor.
     pub(crate) fn uniform_pt(v: f64) -> Self {
-        Self(Repr::Edges(EdgeSpec::uniform_pt(v)))
+        Self(EdgeSpec::uniform_pt(v))
     }
 }
 
@@ -67,39 +50,29 @@ impl Default for PageMargin {
     }
 }
 
-/// True when the length is negative (rejected for page margins). Every
-/// variant carries its sign in the value — the em/rem bases are positive.
-fn negative(len: &Length) -> bool {
-    match len {
-        Length::Pt(v)
-        | Length::Percent(v)
-        | Length::Physical(v, _)
-        | Length::Em(v)
-        | Length::Rem(v) => *v < 0.0,
-    }
-}
-
 /// Validates a parsed form: no negative sides, no `auto`.
-fn guard<E: serde::de::Error>(margin: PageMargin) -> Result<PageMargin, E> {
-    let rejected = match &margin.0 {
-        Repr::Edges(spec) if spec.any_auto() => {
-            Some("page margin must not be `auto` (auto is a flex-margin concept)")
-        }
-        Repr::Edges(spec) if spec.any_negative() => Some(NEGATIVE_MSG),
-        Repr::Array(sides) if sides.iter().any(negative) => Some(NEGATIVE_MSG),
-        _ => None,
-    };
-    match rejected {
-        Some(msg) => Err(E::custom(msg)),
-        None => Ok(margin),
+fn guard<E: serde::de::Error>(spec: EdgeSpec) -> Result<PageMargin, E> {
+    if spec.any_auto() {
+        return Err(E::custom(
+            "page margin must not be `auto` (auto is a flex-margin concept)",
+        ));
     }
+    if spec.any_negative() {
+        return Err(E::custom(
+            "page margin must not be negative (items reach into the margin with negative coordinates)",
+        ));
+    }
+    Ok(PageMargin(spec))
 }
 
-const NEGATIVE_MSG: &str =
-    "page margin must not be negative (items reach into the margin with negative coordinates)";
+/// The parse error for the removed positional array: it names the
+/// removal and the map to write, and echoes none of the authored values.
+const ARRAY_REMOVED: &str = "`page.margin` no longer takes the `[top, right, bottom, left]` \
+     array (removed in 0.4.0); write the per-side map `{ top, right, bottom, left }` instead";
 
 /// Hand-rolled like [`EdgeSpec`]'s: keeps the inner error messages
-/// verbatim and adds the array arm.
+/// verbatim, and refuses the removed array with a migration hint rather
+/// than serde's generic invalid-type error.
 impl<'de> Deserialize<'de> for PageMargin {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         struct MarginVisitor;
@@ -108,10 +81,7 @@ impl<'de> Deserialize<'de> for PageMargin {
             type Value = PageMargin;
 
             fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                f.write_str(
-                    "a number (all sides), a { top/right/bottom/left } mapping, \
-                     or a [top, right, bottom, left] array",
-                )
+                f.write_str("a number (all sides) or a { top/right/bottom/left } mapping")
             }
 
             fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<PageMargin, E> {
@@ -123,8 +93,7 @@ impl<'de> Deserialize<'de> for PageMargin {
             }
 
             fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<PageMargin, E> {
-                let spec = crate::edges::all_sides(v).map_err(E::custom)?;
-                guard(PageMargin(Repr::Edges(spec)))
+                guard(crate::edges::all_sides(v).map_err(E::custom)?)
             }
 
             // Explicit so the error echoes a bounded snippet, not the
@@ -132,9 +101,8 @@ impl<'de> Deserialize<'de> for PageMargin {
             // invalid-type error echoes it verbatim).
             fn visit_str<E: serde::de::Error>(self, s: &str) -> Result<PageMargin, E> {
                 Err(E::custom(format!(
-                    "page margin takes a number (all sides), a \
-                     {{ top/right/bottom/left }} mapping, or a \
-                     [top, right, bottom, left] array, got string `{}`",
+                    "page margin takes a number (all sides) or a \
+                     {{ top/right/bottom/left }} mapping, got string `{}`",
                     snippet(s)
                 )))
             }
@@ -143,18 +111,16 @@ impl<'de> Deserialize<'de> for PageMargin {
                 self,
                 map: A,
             ) -> Result<PageMargin, A::Error> {
-                let spec =
-                    EdgeSpec::deserialize(serde::de::value::MapAccessDeserializer::new(map))?;
-                guard(PageMargin(Repr::Edges(spec)))
+                guard(EdgeSpec::deserialize(
+                    serde::de::value::MapAccessDeserializer::new(map),
+                )?)
             }
 
             fn visit_seq<A: serde::de::SeqAccess<'de>>(
                 self,
-                seq: A,
+                _seq: A,
             ) -> Result<PageMargin, A::Error> {
-                let sides =
-                    <[Length; 4]>::deserialize(serde::de::value::SeqAccessDeserializer::new(seq))?;
-                guard(PageMargin(Repr::Array(sides)))
+                Err(serde::de::Error::custom(ARRAY_REMOVED))
             }
         }
 
@@ -164,10 +130,7 @@ impl<'de> Deserialize<'de> for PageMargin {
 
 impl Serialize for PageMargin {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match &self.0 {
-            Repr::Edges(spec) => spec.serialize(serializer),
-            Repr::Array(sides) => sides.serialize(serializer),
-        }
+        self.0.serialize(serializer)
     }
 }
 

@@ -9,7 +9,7 @@ name: sample
 page:
   size: A4
   orientation: portrait
-  margin: [25, 25, 25, 25]
+  margin: { top: 25, right: 25, bottom: 25, left: 25 }
 sections:
   header:
     repeat: every_page

@@ -26,6 +26,12 @@ platform binaries.
 - **The diagnostic code `grid_cell_overflow`**, deprecated in 0.3.0.
   Nothing has emitted it since 0.3.0. Match `grid_row_overflow` and
   `grid_span_overflow`, which report the two conditions it covered.
+- **`page.margin` as a `[top, right, bottom, left]` array**, deprecated in
+  0.3.0. It is now a parse error, and the message names the per-side map
+  to write instead, `{ top, right, bottom, left }`; one number for all four
+  sides works too.
+  The catalog schema no longer offers the array. The Designer shows an
+  array margin as the 25pt default, and the first margin edit replaces it.
 
 ## [0.3.0] - 2026-10-14
 

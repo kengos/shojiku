@@ -182,7 +182,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 81 files / 10574 lines; tests 99 files / 14130 lines
+### `core` (L1) — 81 files / 10534 lines; tests 99 files / 14163 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -196,7 +196,7 @@ first sentence of its `//!` header.
 - `src/geometry/flex.rs` 142 — Flex layout keys on item boxes (box-model Phase 2): the layout-mode key and the content-alignment enums.
 - `src/geometry/grid.rs` 104 — Static-grid track spec (box-model Phase 3): how a `box.type: grid` container divides its axes into tracks.
 - `src/geometry/grid/track.rs` 102 — One entry in a grid `columns`/`rows` track list: a fixed [`Length`] or an `fr` weight.
-- `src/geometry/page_margin.rs` 175 — `page.margin` wire type: the printable-area insets that become the coordinate origin.
+- `src/geometry/page_margin.rs` 138 — `page.margin` wire type: the printable-area insets that become the coordinate origin.
 - `src/geometry/point_spec.rs` 185 — A `line` endpoint: authored coordinates, or an anchor to another item.
 - `src/interpolate.rs` 178 — `{key}` / `{key:format}` interpolation inside static text.
 - `src/length.rs` 229 — Template length values: absolute points/physical units, a percentage of the parent, or a font-relative `em`/`rem`.
@@ -215,7 +215,7 @@ first sentence of its `//!` header.
 - `src/ruby/warning.rs` 84 — Recoverable aozora-markup mistakes: what the parser reports when notation is well-formed enough to recognize but not to act on.
 - `src/schema.rs` 63 — `schema` — hand-written `JsonSchema` impls for the wire types whose `Deserialize` is hand-written too.
 - `src/schema/border.rs` 102 — Schemas for the per-side border properties, `textCombineUpright` and `textDecoration`.
-- `src/schema/edges.rs` 106 — Schemas for the edge/page geometry wire types.
+- `src/schema/edges.rs` 96 — Schemas for the edge/page geometry wire types.
 - `src/schema/length.rs` 91 — Schemas for the length- and track-shaped wire types.
 - `src/schema/point.rs` 42 — The schema for a `line` endpoint.
 - `src/schema/value.rs` 43 — Schemas for the two wire types that parse through `serde_json::Value`.
@@ -244,7 +244,7 @@ first sentence of its `//!` header.
 - `src/template/table/column.rs` 84 — Table columns: what one column binds and renders per row — a bound value (text / QR / image) or a freely composed `cell:` sub-template.
 - `src/template/table/row.rs` 90 — Body-row sizing and styling: the base/zebra layers and the per-row conditional layers a row's own data selects.
 - `src/template/visibility.rs` 75 — Params-conditional visibility: the `visible:` key every item carries.
-- `src/validate.rs` 227 — Binding validation: do the template's data keys exist, are formats valid, does the params tree actually contain the data?
+- `src/validate.rs` 238 — Binding validation: do the template's data keys exist, are formats valid, does the params tree actually contain the data?
 - `src/validate/bindings.rs` 247 — Per-item scalar binding checks: `data:` keys, interpolation segments, and their format variants.
 - `src/validate/bindings/cell.rs` 193 — Array-scoped binding checks for `repeat` cell / `repeat_flow` card / table `cell:` column contents: every `data:` key and `{{key}}` segment must be a declared field of the bound array group (table-column style) — unless the binding authors `scope: document`, which is checked against the top-level scalars instead.
 - `src/validate/bindings/decl.rs` 239 — Named binding declarations (`bindings:`): does each declaration point at a real key, can its name be referenced, is it actually used, and does it quietly shadow an ambient key of the same name?
@@ -253,7 +253,7 @@ first sentence of its `//!` header.
 - `src/validate/bindings/entry.rs` 115 — A `list`'s per-ENTRY scope: its `text:` template and its own `bindings:` declarations resolve against ONE ELEMENT of the array it binds, not against the ambient scope.
 - `src/validate/box_keys.rs` 86 — Context-inert authoring-key checks: keys that lay out nothing where they are written.
 - `src/validate/collect.rs` 253 — Template walks that gather items for cross-checks (tables, images, repeats) and enforce the container depth cap.
-- `src/validate/deprecated.rs` 59 — Wire forms that still parse and render but are marked for removal, each reported as `deprecated_syntax` so an author sees it a release before the form stops parsing.
+- `src/validate/deprecated.rs` 55 — Wire forms that still parse and render but are marked for removal, each reported as `deprecated_syntax` so an author sees it a release before the form stops parsing.
 - `src/validate/document.rs` 66 — `document:` metadata checks: the interpolation keys each metadata string references, the charset scan that catches a `{品名}` mistake, and the two list caps.
 - `src/validate/equals.rs` 108 — What a declarative `{ key, equals?
 - `src/validate/formats.rs` 56 — Presentation-defaults checks: the `formats:` registry (reserved names, size cap) and `defaults.formats` (inline patterns only make sense on date/datetime).
@@ -515,7 +515,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 38 files / 4626 lines; tests 43 files / 5651 lines
+### `authoring` (L5) — 38 files / 4626 lines; tests 43 files / 5656 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).

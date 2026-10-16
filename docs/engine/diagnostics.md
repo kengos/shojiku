@@ -87,7 +87,7 @@ inline:
 | --- | --- | --- |
 | `unknown_data_key` | error | a binding key is not in definitions (scalar, column, cell, or card scope; a table's header `label` is scalar scope). Checked in the header and footer bands as in the body |
 | `empty_definitions` | warning | definitions was supplied but declares no properties; every binding will read as `unknown_data_key` (check the file's top-level structure) |
-| `deprecated_syntax` | warning | a wire form that still parses and renders but will be removed: `args` `key` (the wire key, also the diagnostic's `path`), `form` and `replacement` (YAML spellings), and the two versions `since` and removed_in. Reported with or without definitions. Today only `page.margin` written as a `[top, right, bottom, left]` array ([page.md](page.md)). A deprecated form is removed in the next minor before 1.0, at the next major after it |
+| `deprecated_syntax` | warning | a wire form that still parses and renders but will be removed: `args` `key` (the wire key, also the diagnostic's `path`), `form` and `replacement` (YAML spellings), and the two versions `since` and removed_in. Reported with or without definitions. No form is marked today. A deprecated form is removed in the next minor before 1.0, at the next major after it |
 | `unknown_format` | error | a format variant not declared for the field |
 | `not_an_array` | error | a table/repeat/list source key is not an array property |
 | `interpolation_key_charset` | warning | a `{…}` that looks like an intended key uses characters outside `[A-Za-z0-9_.]`, so it prints its own braces; declare a name under `bindings:` to reach the key |
@@ -270,7 +270,7 @@ inline:
   arguments; rendering them in another language is the consumer's job.
 - A wire form that still parses but is marked for removal draws a warning
   from `validate` until the release that removes it (`deprecated_syntax`).
-  Today that is only `page.margin` written as an array. The exception is a
+  No form is marked today. The exception is a
   form refused to close a hostile-input hole, which becomes a parse error at
   once with no warning release: in 0.3.0, a mapping key that is not a
   string ([architecture.md](../architecture.md) § Deprecation).

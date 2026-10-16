@@ -35,9 +35,10 @@ export interface DocumentGlance {
 }
 
 /** The margin as one phrase, or null when no honest one exists: a finite scalar
- * is the uniform value in points, a map/array is its four sides in CSS order
+ * is the uniform value in points, a map is its four sides in CSS order
  * (top right bottom left), an absent key is the engine's own default — and
- * anything else (a string, a hostile node) declines. Side values are carried
+ * anything else (a string, the array the engine refuses, a hostile node)
+ * declines. Side values are carried
  * VERBATIM because the wire does: a per-side entry may state its own unit. */
 function marginPhrase(raw: unknown, fallback: string): string | null {
   const page = typeof raw === 'object' && raw !== null && !Array.isArray(raw) ? raw : undefined;
@@ -48,7 +49,7 @@ function marginPhrase(raw: unknown, fallback: string): string | null {
   if (typeof margin === 'number') {
     return Number.isFinite(margin) ? `${margin} pt` : null;
   }
-  if (typeof margin !== 'object' || margin === null) {
+  if (typeof margin !== 'object' || margin === null || Array.isArray(margin)) {
     return null;
   }
   const view = readMarginView(raw);

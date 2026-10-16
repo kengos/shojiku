@@ -11,7 +11,7 @@ import {
 } from './marginModel';
 
 describe('MARGIN_SIDES', () => {
-  it('is the wire/array order [top, right, bottom, left]', () => {
+  it('is the wire order [top, right, bottom, left]', () => {
     expect(MARGIN_SIDES).toEqual(['top', 'right', 'bottom', 'left']);
   });
 });
@@ -39,13 +39,13 @@ describe('readMarginView', () => {
     expect(view.sides.left).toBe('30');
   });
 
-  it('treats a non-finite number margin as the uniform default (scalar backing)', () => {
+  it('treats a non-finite number margin as the uniform default (unknown backing)', () => {
     const view = readMarginView({ margin: Number.POSITIVE_INFINITY });
     expect(view).toMatchObject({
       mode: 'uniform',
       uniform: '25',
       hasMarginKey: true,
-      backing: 'scalar',
+      backing: 'unknown',
     });
   });
 
@@ -73,19 +73,26 @@ describe('readMarginView', () => {
     expect(view.sides.top).toBe('0');
   });
 
-  it('reads a legacy [t, r, b, l] array per-side', () => {
+  it('reads the removed [t, r, b, l] array as the replaceable uniform default', () => {
+    // The engine refuses the array since 0.4.0; reading its sides back would
+    // show values the document cannot render with.
     const view = readMarginView({ margin: [10, 20, 30, 40] });
-    expect(view).toMatchObject({ mode: 'perSide', backing: 'array', hasMarginKey: true });
-    expect(view.sides).toEqual({ top: '10', right: '20', bottom: '30', left: '40' });
+    expect(view).toMatchObject({
+      mode: 'uniform',
+      uniform: '25',
+      hasMarginKey: true,
+      backing: 'unknown',
+    });
+    expect(view.sides).toEqual({ top: '25', right: '25', bottom: '25', left: '25' });
   });
 
-  it('treats an unrecognized scalar margin as the uniform default (replaceable scalar)', () => {
+  it('treats an unrecognized scalar margin as the uniform default (unknown backing)', () => {
     const view = readMarginView({ margin: 'nonsense' });
     expect(view).toMatchObject({
       mode: 'uniform',
       uniform: '25',
       hasMarginKey: true,
-      backing: 'scalar',
+      backing: 'unknown',
     });
   });
 
@@ -165,14 +172,27 @@ describe('perSideOp', () => {
     ]);
   });
 
-  it('materializes the full map from a legacy array, applying the edit', () => {
-    const view = readMarginView({ margin: ['garbage', 20, 30, 40] });
+  it('replaces the removed array with the full map, applying the edit', () => {
+    const view = readMarginView({ margin: [10, 20, 30, 40] });
     expect(perSideOp(view, 'right', '50')).toEqual([
       { op: 'removeKey', keys: ['page', 'margin'] },
-      { op: 'setScalar', keys: ['page', 'margin', 'top'], value: 0 },
+      { op: 'setScalar', keys: ['page', 'margin', 'top'], value: 25 },
       { op: 'setScalar', keys: ['page', 'margin', 'right'], value: 50 },
-      { op: 'setScalar', keys: ['page', 'margin', 'bottom'], value: 30 },
-      { op: 'setScalar', keys: ['page', 'margin', 'left'], value: 40 },
+      { op: 'setScalar', keys: ['page', 'margin', 'bottom'], value: 25 },
+      { op: 'setScalar', keys: ['page', 'margin', 'left'], value: 25 },
+    ]);
+  });
+
+  it('seeds 0 for a side whose shown value is not a writable margin', () => {
+    // A negative bare number reads as a uniform scalar the per-side input
+    // refuses to write back, so the rebuilt map takes the wire's unset 0.
+    const view = readMarginView({ margin: -5 });
+    expect(perSideOp(view, 'top', '10')).toEqual([
+      { op: 'removeKey', keys: ['page', 'margin'] },
+      { op: 'setScalar', keys: ['page', 'margin', 'top'], value: 10 },
+      { op: 'setScalar', keys: ['page', 'margin', 'right'], value: 0 },
+      { op: 'setScalar', keys: ['page', 'margin', 'bottom'], value: 0 },
+      { op: 'setScalar', keys: ['page', 'margin', 'left'], value: 0 },
     ]);
   });
 
