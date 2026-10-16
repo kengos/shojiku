@@ -327,3 +327,19 @@ fn a_listed_pair_replaces_the_naming_rule_and_whole_families_are_gated() {
     let grid = branch(&catalog, "char_grid");
     assert_eq!(grid["x-shojiku-initial-overrides"]["fontSize"], Value::Null);
 }
+
+/// The committed artifact already carries every keyword the tables produce,
+/// with the value they produce — the generator merged them. The drift gate
+/// then holds the file to the generator.
+#[test]
+fn the_committed_catalog_carries_every_fact_keyword() {
+    let committed = catalog();
+    let mut defs = committed["$defs"].as_object().expect("$defs").clone();
+    let extensions = extensions(&committed);
+    assert!(extensions.len() > 200, "{} keywords", extensions.len());
+    for e in &extensions {
+        let node = crate::reference::address::locate(&mut defs, &e.node)
+            .unwrap_or_else(|| panic!("no node `{}`", e.node));
+        assert_eq!(node[e.keyword], e.value, "`{}` {}", e.node, e.keyword);
+    }
+}

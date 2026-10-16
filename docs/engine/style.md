@@ -118,7 +118,8 @@ and named styles like everything else, and — like everything else —
 gone). Form marks (`ellipse`/`checkbox`/`mark`) keep a 1pt outline
 default when no layer authors a width, stroke uniformly (a per-side map
 warns `shape_border_sides_ignored`), and warn `shape_style_ignored` for
-inert text keys on their inline styles. The retired `fillColor`
+inert text keys and a border pattern (`borderStyle`, which their single
+stroked path does not draw) on their inline styles. The retired `fillColor`
 spelling is a parse error pointing at `backgroundColor`.
 
 `line`'s style **rejects unknown keys like every other wire struct** —

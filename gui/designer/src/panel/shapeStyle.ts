@@ -8,12 +8,10 @@
 //   * `borderRadius` warns `border_radius_ignored` ("a form mark") and draws
 //     square corners — a mark's outline is an oval or a check, not a rectangle
 //     whose corners could be rounded;
-//   * `borderStyle` (dashed/dotted) is inert and says NOTHING: `shape_paint`
-//     never reads `computed.border_styles`, `PathShape` has no dash field, and
-//     `Style::ignored_shape_keys` does not list it either, so no
-//     `shape_style_ignored` fires. That is why this editor offers no
-//     line-style picker — and why a document already carrying one gets no
-//     word about it from anywhere.
+//   * `borderStyle` (dashed/dotted) draws nothing: `shape_paint` never reads
+//     `computed.border_styles` and `PathShape` has no dash field, so
+//     validation answers one with `shape_style_ignored`. That is why this
+//     editor offers no line-style picker.
 //
 // So this model reads through `uniformBorder` (the same rule the char_grid
 // ruling follows) and writes SCALARS only. It authors neither key the engine

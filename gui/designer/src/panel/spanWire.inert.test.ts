@@ -1,55 +1,48 @@
 // @vitest-environment node
 //
-// What a split carries over, pinned to the ENGINE's per-span style list. The
+// What a split carries over, pinned to the ENGINE's per-span facts. The
 // inherited set is every key a span honours minus the ones the flow surface
 // edits itself; a key added to `Style` and left honoured by spans would
 // otherwise be dropped from every split half without anyone deciding so.
 //
-// Read from the Rust rather than restated: the `Style` struct's fields (wire
-// names are their camelCase) and the `ignored_span_keys` list in
-// `engine/core/src/style/inert.rs`.
+// Read from the key catalog rather than restated: the `Span` shape's
+// `x-shojiku-style-keys` (the keys a span paints with, in `Style` field order)
+// and the `Style` shape's properties, in the committed
+// `engine/authoring/reference/catalog.schema.json` the engine generates from
+// its fact tables.
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { COMBINE_KEY, INHERITED_STYLE_KEYS, MARK_KEYS } from './spanWire';
 
-const rust = (path: string) =>
-  readFileSync(fileURLToPath(new URL(`../../../../engine/core/src/${path}`, import.meta.url)), {
-    encoding: 'utf8',
-  });
-
-const camel = (snake: string) => snake.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
-
-/** The `Style` struct's wire names, in declaration order. */
-function styleKeys(): readonly string[] {
-  const source = rust('style.rs');
-  const start = source.indexOf('pub struct Style {');
-  const body = source.slice(start, source.indexOf('\n}', start));
-  return [...body.matchAll(/^ {4}pub (\w+):/gm)].map((m) => camel(m[1] ?? ''));
+interface Shape {
+  readonly properties?: Readonly<Record<string, unknown>>;
+  readonly 'x-shojiku-style-keys'?: readonly string[];
 }
 
-/** The names `ignored_span_keys` reports — the keys a span does NOT honour. */
-function ignoredSpanKeys(): readonly string[] {
-  const source = rust('style/inert.rs');
-  const start = source.indexOf('pub fn ignored_span_keys');
-  const body = source.slice(start, source.indexOf('\n    }', start));
-  return [...body.matchAll(/\.is_some\(\), "(\w+)"\)/g)].map((m) => m[1] ?? '');
-}
+const catalog = JSON.parse(
+  readFileSync(
+    fileURLToPath(
+      new URL('../../../../engine/authoring/reference/catalog.schema.json', import.meta.url),
+    ),
+    { encoding: 'utf8' },
+  ),
+) as { readonly $defs: Readonly<Record<string, Shape>> };
 
 describe('the keys a split carries over', () => {
-  const fields = styleKeys();
-  const ignored = ignoredSpanKeys();
-  const honoured = fields.filter((key) => !ignored.includes(key));
+  const fields = Object.keys(catalog.$defs.Style?.properties ?? {});
+  const honoured = catalog.$defs.Span?.['x-shojiku-style-keys'] ?? [];
+  const ignored = fields.filter((key) => !honoured.includes(key));
 
-  it('reads the Rust it is pinned to (positive controls)', () => {
+  it('reads the catalog it is pinned to (positive controls)', () => {
     // Without these, a parse that matched nothing would compare two empty
     // sets and pass.
     expect(fields).toHaveLength(24);
     expect(fields).toContain('fontSize');
     expect(ignored).toHaveLength(16);
     expect(ignored).toContain('lineHeight');
-    expect(ignored.every((key) => fields.includes(key))).toBe(true);
+    expect(honoured.every((key) => fields.includes(key))).toBe(true);
     expect(honoured).toEqual([
       'fontSize',
       'fontFamily',

@@ -96,10 +96,12 @@ Wire types stay in core; content measurement stays in layout.
   order ← inline). `engine/resolve/sane.rs` — the per-scalar sanity
   guards every layer feeds (`color_or_black`, `sane_font_size`,
   `sane_line_height`, `sane_letter_spacing`, `sane_border_width`,
-  `sane_line_width`, `sane_opacity`) and the caps behind them: font size
-  and line height cap at 1000 each — chosen so their PRODUCT, the tallest
-  admitted line box, is exactly `MAX_RESOLVED_PT` — and one shared
-  `MAX_STROKE_WIDTH_PT` bounds both stroke widths. The guards run at USE,
+  `sane_line_width`, `sane_opacity`); the caps and fallbacks behind them
+  are `shojiku_core::facts`'s range consts (`FONT_SIZE`, `LINE_HEIGHT`,
+  `LETTER_SPACING`, `BORDER_WIDTH`, `LINE_WIDTH`, `OPACITY`), which the
+  key catalog publishes too: font size and line height cap at 1000 each —
+  chosen so their PRODUCT, the tallest admitted line box, is exactly
+  `MAX_RESOLVED_PT` — and one stroke cap bounds both stroke widths. The guards run at USE,
   not in the cascade, since an inherited value can be hostile too.
 - `engine/flow.rs` — flow/absolute item walks; `engine/flow/layouter.rs` —
   `FlowLayouter`, the paginating cursor (page breaks, the `MAX_PAGES`

@@ -12,6 +12,28 @@ page carries the same notes with the install instructions and the
 platform binaries.
 
 ## [Unreleased]
+### Added
+
+- **The key catalog now says what each style key does, not only what it
+  accepts.** `catalog.schema.json` states each `Style` key's initial value,
+  whether it inherits, and the bounds the engine holds a number to; which
+  style keys change each item type's output; which values name an item id,
+  a named style, a format or a data key; and which capability key an older
+  engine would lack. A tool building a property panel or checking a
+  template reads them from the same document as the shapes, so it no longer
+  has to copy them from the engine by hand. They are `x-shojiku-*` keywords
+  a validator ignores, plus `minimum`/`maximum` on the numeric keys; no
+  `default` is written, since a form generator would copy it into the
+  template and stop the key inheriting.
+
+### Changed
+
+- **A `borderStyle` on an ellipse, a checkbox or a text mark now warns
+  `shape_style_ignored`.** These marks draw their outline as one solid
+  stroke, so a dashed, dotted or double pattern there never did anything;
+  validation now says so, as it already did for text keys on them. A
+  template that sets one renders exactly as before, with one more warning.
+
 ### Removed
 
 - **The diagnostic code `horizontal_overflow`**, deprecated in 0.3.0.

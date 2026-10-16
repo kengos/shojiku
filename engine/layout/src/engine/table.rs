@@ -24,8 +24,9 @@ use super::{Atom, Basis, Ctx};
 /// The default header fill when no header style sets a `backgroundColor`.
 const TABLE_HEADER_FILL: &str = "#ededed";
 
-/// The grid default when no table style sets a `borderWidth`.
-const TABLE_BORDER_WIDTH: f64 = 0.5;
+/// The grid default when no table style sets a `borderWidth` — the fact
+/// table's value, so the key catalog states it too.
+const TABLE_BORDER_WIDTH: f64 = shojiku_core::facts::GRID_STROKE_PT;
 
 /// The resolved grid stroke (row outlines + column separators) plus the
 /// optional per-side outer frame (map form), drawn per page

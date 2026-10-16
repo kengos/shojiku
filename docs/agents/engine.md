@@ -52,8 +52,9 @@ advertises.)
 ## The key catalog (built: the artifact, its prose layer, and both gates)
 
 The per-key facts of the authorable wire — key name, type, allowed
-values, default, the tagged union of item types — are held ONCE as
-machine-readable data, and every surface that describes a key renders
+values, initial value, inheritance, the bounds a guard holds a number to,
+which keys each item type takes, the tagged union of item types — are held
+ONCE as machine-readable data, and every surface that describes a key renders
 that one source: the MCP answer an agent asks for, a reader-facing
 reference on the site, the Designer's property help, and the key tables
 inside the template reference ([../engine/](../engine/) — the doc pages,
@@ -164,6 +165,33 @@ the key it constrains. Rust doc comments stay what they are: engine
 developer material, in a different register, and unable to carry a
 second locale. The engine serves English only, per its non-translating
 rule; a localized reference is the site's to render.
+
+**Facts: engine tables, merged as keywords.** What a key DOES — its
+initial value, whether it inherits, the bounds a layout guard holds it to,
+which surfaces paint with it, what a value refers to, which capability
+gates it — is not in the parser's types, so the derive cannot produce it.
+The style facts are tables in `shojiku_core::facts`, each an exhaustive
+`match` over `StyleKey`, and those tables are what the layout guards
+(`sane.rs`) and validation's inert-key lists read. The two facts about
+catalog NODES rather than style keys — which values are references, which
+capability gates which node — are tables beside the catalog
+(`engine/authoring` `reference/facts/`), checked against every node and
+every declared capability. The catalog generator writes all of them onto
+the nodes as keywords (`reference/facts.rs`), so the catalog and the guard
+cannot disagree; the Designer still carries hand copies until it reads the
+catalog. Two choices in that mapping are deliberate:
+
+- **No `default`.** JSON Schema's `default` is what a form generator writes
+  into the document, and a written `fontSize: 10` stops the key inheriting
+  from its container (and a key an older engine lacks is then refused at
+  parse). The initial value is `x-shojiku-initial`, with
+  `x-shojiku-initial-overrides` on the surfaces that start a key elsewhere.
+- **The bounds use the standard `minimum`/`maximum`, though the engine
+  does not refuse past them.** A guard warns and falls back rather than
+  failing the document, so here the catalog is NARROWER than the parser —
+  the one direction that never teaches an agent to emit what the engine
+  throws away. (The parse-time constraints the paragraph above names, like
+  `count ≥ 1`, are still not in the artifact.)
 
 **Home: `engine/authoring`.** The data files live under it and are
 embedded with `include_str!`, so the surface needs no root path and a URI

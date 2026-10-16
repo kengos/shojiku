@@ -36,6 +36,38 @@ fn inert_keys_on_shape_inline_styles_warn_by_item_and_name() {
         .is_some_and(|p| p.ends_with(".mark")));
 }
 
+/// An ellipse, a checkbox and a mark stroke their outline as one path, so a
+/// border pattern on them is reported; a rect draws it. A radius on the
+/// marks is left to layout's `border_radius_ignored`.
+#[test]
+fn a_border_pattern_on_a_form_mark_warns_and_on_a_rect_does_not() {
+    let template = tpl(r#"
+      - type: rect
+        box: { x: 0, y: 0, w: 10, h: 10 }
+        style: { borderStyle: dashed, borderRadius: 2 }
+      - type: ellipse
+        box: { x: 0, y: 20, w: 20, h: 10 }
+        style: { borderStyle: dashed, borderRadius: 2 }
+      - type: checkbox
+        box: { x: 0, y: 40, w: 8, h: 8 }
+        style: { borderStyle: dotted }
+      - type: text
+        text: 現金
+        mark: { style: { borderStyle: double } }
+"#);
+    let diags = validate(None, &template, None);
+    let inert: Vec<_> = diags
+        .iter()
+        .filter(|d| d.code == "shape_style_ignored")
+        .collect();
+    assert_eq!(inert.len(), 3, "got: {inert:?}");
+    for (warning, item) in inert.iter().zip(["ellipse", "checkbox", "mark"]) {
+        assert!(warning.message.contains(item), "{warning:?}");
+        assert!(warning.message.contains("borderStyle"), "{warning:?}");
+        assert!(!warning.message.contains("borderRadius"), "{warning:?}");
+    }
+}
+
 #[test]
 fn named_styles_on_shapes_are_not_flagged_for_inert_keys() {
     // A named style is a shared bag: its text keys may serve other users.

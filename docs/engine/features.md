@@ -292,7 +292,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   nothing unless authored. Marks keep a 1 pt outline default when no
   layer authors a width, stroke uniformly (per-side maps reduce to the
   top side, `shape_border_sides_ignored`), and inert text keys on shape
-  inline styles warn `shape_style_ignored`. `line` deliberately keeps
+  inline styles warn `shape_style_ignored` — as does a `borderStyle` on a
+  form mark, whose single stroked path is always solid. `line` deliberately keeps
   `width`/`color` (a stroke primitive, not a box). Capability key
   `style.shapes.unified`.
 - **Per-side borders**: `borderWidth`/`borderColor` take a
@@ -1750,6 +1751,24 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   node, and every closed value set naming all of its values — so a key
   added to the wire arrives un-annotated and is named rather than shipping
   as a silent gap (`docs/agents/engine.md` § The key catalog).
+- **The catalog carries the engine's per-key facts as keywords.** Each
+  `Style` key states its initial value (`x-shojiku-initial`), whether it
+  inherits (`x-shojiku-inherited`) and, for the numeric ones, the bounds
+  the layout guards hold it to (`minimum`/`exclusiveMinimum`/`maximum`);
+  each item type, `Span`, `TextMark`, a repeat's `ContainerItem` and
+  `defaults.style` lists the style keys that change its output
+  (`x-shojiku-style-keys`) and where it starts one elsewhere
+  (`x-shojiku-initial-overrides`); a value naming an item id, a named
+  style, a format or a data key says so (`x-shojiku-ref`); a node an older
+  engine lacks names its capability key (`x-shojiku-capability`); and the
+  two forms of a line endpoint are tagged (`x-shojiku-form`). No `default`
+  is written: a form generator copies a `default` into the document, which
+  would stop a key inheriting. The style facts are `shojiku_core::facts`,
+  the same tables the layout guards and validation's inert-key lists read,
+  so a fact is written once; the reference and capability facts are tables
+  beside the catalog, checked against every node and every declared
+  capability. A table's own style layers (column, row, header)
+  carry no `x-shojiku-style-keys` yet.
 - **The reference's tables are assembled from a spec and audited against
   it.** 35 tables across 24 pages of `docs/engine/` — the 28 key tables and
   `diagnostics.md`'s 7 — are written between markers by

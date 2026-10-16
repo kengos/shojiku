@@ -128,14 +128,17 @@ false`), no clap.
   `NAMED`/`BOX`/template lists (a listed pair replaces the naming rule for
   its node), and `UNGATED`, the keys with no node of
   their own (a new value of an older key, a behaviour, a host feature). The
-  tests merge into a copy of `CATALOG` and require every address to land,
+  tests require the committed `CATALOG` to carry every keyword with its
+  value, merge into a copy and require every address to land,
   every capability to be gated or `UNGATED` (exactly one), and the `Style`
   properties and item types to equal `StyleKey::ALL` / `ItemKind::ALL`.
   `reference/generate.rs` (`schema` feature only) — two roots
   (`Template`, `Definitions`) into one `$defs`, `for_deserialize`, and the
   `StripDeveloperProse` transform that removes the `description`/`title`
   schemars lifts out of Rust doc comments, so the prose in the artifact is
-  the AUTHORED layer rather than developer text in the wrong register.
+  the AUTHORED layer rather than developer text in the wrong register;
+  then the fact keywords (`reference/facts.rs`), refusing an address that
+  lands nowhere.
   `reference/annotate.rs` (`schema` only) — merges the annotations onto
   the nodes they name, by LOOKUP not by walking, so a mistyped key cannot
   decorate an arbitrary subschema; it upgrades a boolean schema (`true`,
