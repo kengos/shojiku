@@ -9,7 +9,7 @@
 //! two-clause way as the rest: every declared form parses, and a form the
 //! schema excludes does not.
 
-use super::{pin, schema_of};
+use super::{pin, schema_narrower, schema_of, strings_agree};
 use crate::edges::EdgeMapRepr;
 use crate::{EdgeSpec, FlexBasis, GridTrack, Length, PageSize};
 
@@ -23,6 +23,47 @@ fn length_takes_a_number_or_a_unit_suffixed_string() {
         // whole reason the schema carries a pattern rather than `"string"`.
         &["\"10\"", "\"10px\"", "\"abc\""],
     );
+}
+
+/// The string arm's pattern against the parser, both ways. `abc10mm`,
+/// `10 10mm` and `x5%` all END in a unit, which is what an unanchored
+/// pattern admitted; `inf`/`nan` parse as numbers and are then refused as
+/// non-finite; `1e2em`/`1eem` sit where the exponent's `e` meets the unit's;
+/// a leading byte-order mark is matched by a JavaScript `\s` but kept by
+/// `trim`; and Arabic-Indic digits are matched by a Python `\d`. Those last
+/// two are refused here by the regex-lite classes whatever the spelling (they
+/// are ASCII): what keeps the spelling portable is
+/// [`patterns_use_only_portable_classes`]. An overflowing exponent (`"1e400mm"`) is left out on purpose: the pattern
+/// states a shape, and that is a value bound.
+#[test]
+fn length_pattern_agrees_with_the_parser() {
+    strings_agree::<Length>(&[
+        "10mm",
+        "+.5mm",
+        "-3pt",
+        "5.em",
+        "1e2pt",
+        "1e2em",
+        "2.5E-1in",
+        " 5 mm ",
+        "50%",
+        "1rem",
+        "abc10mm",
+        "10 10mm",
+        "x5%",
+        "10",
+        "10PT",
+        "1fr",
+        "infpt",
+        "nanmm",
+        "- 3pt",
+        "1eem",
+        "\u{feff}10mm",
+        "\u{661}\u{660}mm",
+    ]);
+    // `trim` drops a no-break space; the pattern's ASCII class does not offer
+    // one. Narrower, the direction that never teaches a rejected input.
+    schema_narrower::<Length>(&["\u{a0}10mm"]);
 }
 
 /// The extreme case, and the one that falsified the forwarding premise:
@@ -66,6 +107,40 @@ fn grid_track_takes_a_number_auto_an_fr_weight_or_a_length() {
         &["100", "auto", "\"1fr\"", "\"30%\"", "\"20mm\""],
         &["\"1x\"", "\"fill\""],
     );
+}
+
+/// The spelling the length and track patterns must keep so every regex
+/// dialect reads them alike: no `\d` (non-ASCII digits in Python and .NET),
+/// no `\s` (U+FEFF in JavaScript) and no unescaped `-` in a class (a syntax
+/// error under JavaScript's `v` flag).
+#[test]
+fn patterns_use_only_portable_classes() {
+    let schemas = [schema_of::<Length>(), schema_of::<GridTrack>()];
+    let patterns: Vec<String> = schemas
+        .iter()
+        .flat_map(|schema| schema["oneOf"].as_array().expect("a oneOf").clone())
+        .filter_map(|arm| arm["pattern"].as_str().map(str::to_owned))
+        .collect();
+    assert_eq!(patterns.len(), 3, "one length arm per type plus the fr arm");
+    for pattern in &patterns {
+        for banned in [r"\d", r"\s", "[+-", "+-]"] {
+            assert!(!pattern.contains(banned), "`{pattern}` spells `{banned}`");
+        }
+    }
+}
+
+/// Both string patterns of a track, against the parser: the `fr` weight
+/// (its non-finite and negative refusals included) and the length arm.
+#[test]
+fn grid_track_patterns_agree_with_the_parser() {
+    strings_agree::<GridTrack>(&[
+        "1fr", " 2.5 fr", "+1fr", ".5fr", "auto", "20mm", "30%", "-1fr", "abc1fr", "1 1fr", "1x",
+        "fr", "inffr", "nanfr", "infFR",
+    ]);
+    // Deliberately narrower: a padded `" auto "` (the canonical spelling is
+    // the bare keyword) and `"-0fr"` (a negative zero the weight check lets
+    // through).
+    schema_narrower::<GridTrack>(&[" auto ", "-0fr"]);
 }
 
 /// `EdgeSpec` is the one arm that really is delegated: `visit_map` parses

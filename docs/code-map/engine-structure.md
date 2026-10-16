@@ -182,7 +182,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 81 files / 10534 lines; tests 99 files / 14163 lines
+### `core` (L1) — 81 files / 10564 lines; tests 99 files / 14298 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -216,7 +216,7 @@ first sentence of its `//!` header.
 - `src/schema.rs` 63 — `schema` — hand-written `JsonSchema` impls for the wire types whose `Deserialize` is hand-written too.
 - `src/schema/border.rs` 102 — Schemas for the per-side border properties, `textCombineUpright` and `textDecoration`.
 - `src/schema/edges.rs` 96 — Schemas for the edge/page geometry wire types.
-- `src/schema/length.rs` 91 — Schemas for the length- and track-shaped wire types.
+- `src/schema/length.rs` 121 — Schemas for the length- and track-shaped wire types.
 - `src/schema/point.rs` 42 — The schema for a `line` endpoint.
 - `src/schema/value.rs` 43 — Schemas for the two wire types that parse through `serde_json::Value`.
 - `src/style.rs` 254 — Painting core — the appearance property bag.
