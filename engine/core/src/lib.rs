@@ -14,6 +14,7 @@ mod catalog;
 mod definitions;
 mod edges;
 mod error;
+pub mod facts;
 mod geometry;
 mod interpolate;
 mod length;
@@ -47,7 +48,7 @@ pub use ruby::{
 };
 pub use style::{
     BorderColor, BorderStyle, BorderStyleKind, BorderWidth, FontStyle, FontWeight,
-    HangingPunctuation, LineBreak, LineStyle, Overflow, Style, TextAlign, TextCombine,
+    HangingPunctuation, LineBreak, LineStyle, Overflow, Style, StyleKey, TextAlign, TextCombine,
     TextCombineUpright, TextDecoration, TextOrientation, TextOverflow, TextSpacingTrim,
     VerticalAlign, WritingMode, DEFAULT_LINE_HEIGHT, DEFAULT_STROKE_PT, MAX_STYLES,
     MAX_STYLE_NAMES,
@@ -56,12 +57,13 @@ pub use template::{
     parse_template, Band, Binding, BindingScope, Bindings, Body, BreakBefore, CharGridItem,
     CharGridSpec, CheckboxItem, Column, ColumnType, ContainerItem, DocumentMeta, EcLevel,
     EllipseItem, EmptyBehavior, EqualsValue, FlowBody, FormatDefaults, FormatRef, GridDirection,
-    GridSpec, HeaderGroup, ImageFit, ImageItem, InlineFormat, Item, KinsokuMode, LineItem, Link,
-    ListItem, MarkBinding, Markup, NamedFormat, NamedFormatKind, PageBreakItem, PageNumberItem,
-    QrCodeItem, RectItem, Repeat, RepeatFlowItem, RepeatItem, RowConditionalStyle, RowSpec,
-    RubyPair, Sections, Span, TableHeaderSpec, TableItem, Template, TemplateDefaults, TextItem,
-    TextMark, MAX_BINDINGS, MAX_CHAR_GRID_CELLS, MAX_CONTAINER_DEPTH, MAX_DOCUMENT_ENTRIES,
-    MAX_FORMATS, MAX_IMPOSITION_PER_PAGE, MAX_ROW_CONDITIONAL_STYLES, MAX_RUBY_ENTRIES, MAX_SPANS,
+    GridSpec, HeaderGroup, ImageFit, ImageItem, InlineFormat, Item, ItemKind, KinsokuMode,
+    LineItem, Link, ListItem, MarkBinding, Markup, NamedFormat, NamedFormatKind, PageBreakItem,
+    PageNumberItem, QrCodeItem, RectItem, Repeat, RepeatFlowItem, RepeatItem, RowConditionalStyle,
+    RowSpec, RubyPair, Sections, Span, TableHeaderSpec, TableItem, Template, TemplateDefaults,
+    TextItem, TextMark, MAX_BINDINGS, MAX_CHAR_GRID_CELLS, MAX_CONTAINER_DEPTH,
+    MAX_DOCUMENT_ENTRIES, MAX_FORMATS, MAX_IMPOSITION_PER_PAGE, MAX_ROW_CONDITIONAL_STYLES,
+    MAX_RUBY_ENTRIES, MAX_SPANS,
 };
 pub use validate::validate;
 pub use yaml::MAX_INPUT_BYTES;
