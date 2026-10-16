@@ -87,9 +87,27 @@ export const PADDING_TYPES: ReadonlySet<string> = new Set([
 
 /** A `char_grid`'s glyph keys: its characters take colour, face, weight and
  * slant, and a size only when the ITEM authors one (otherwise the cell decides,
- * `char_grid.rs`). Alignment, line height and letter spacing are not honoured
- * for its cells, so they are not offered. */
+ * `char_grid.rs`). Line height and letter spacing are not honoured for its
+ * cells, so they are not offered; alignment is, where the engine declares
+ * `char_grid.textAlign` (`charGridTextKeys`). */
 export const CHAR_GRID_GLYPH_KEYS = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle'] as const;
+
+/** The capability under which a `char_grid` honours its own `textAlign`: a
+ * partly filled line moves toward its end (downward when vertical). */
+export const CHAR_GRID_ALIGN_CAPABILITY = 'char_grid.textAlign';
+
+/** The keys a `char_grid` reads from its OWN style layers (its named styles and
+ * its inline style) and never inherits: its cells are cell-relative, so an
+ * ancestor's size or alignment must not shift them (`char_grid.rs`). Unset, the
+ * size follows the cell and the alignment is the start of the line. */
+export const CHAR_GRID_OWN_KEYS: ReadonlySet<string> = new Set(['fontSize', 'textAlign']);
+
+/** A `char_grid`'s text rows against this engine. */
+export function charGridTextKeys(capabilities: readonly string[] | undefined): readonly string[] {
+  return hasCapability(capabilities, CHAR_GRID_ALIGN_CAPABILITY)
+    ? [...CHAR_GRID_GLYPH_KEYS, 'textAlign']
+    : CHAR_GRID_GLYPH_KEYS;
+}
 
 /** The section-level `?` for the text section: only where the section does
  * something a reader would not expect — a container's text keys style what it

@@ -25,6 +25,15 @@ platform binaries.
   a validator ignores, plus `minimum`/`maximum` on the numeric keys; no
   `default` is written, since a form generator would copy it into the
   template and stop the key inheriting.
+- **The Designer sets a character grid's alignment and tate-chu-yoko.** A
+  `char_grid` now offers Text alignment (`textAlign`), which moves a partly
+  filled line toward its end — named top, middle and bottom when the grid is
+  vertical — and, on a vertical grid, Horizontal in vertical
+  (`textCombineUpright`, digit runs only, as the grid combines nothing for
+  `all`). The engine already drew both; until now they could only be written
+  in the file. The grid's size and alignment fields also stop showing a value
+  inherited from a container or the document defaults, which the grid never
+  uses.
 
 ### Changed
 

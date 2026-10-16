@@ -29,6 +29,8 @@ WORKDIR /repo
 COPY gui ./gui
 COPY packs ./packs
 COPY examples ./examples
+# The engine's key catalog, which designer-core imports at build time.
+COPY engine/authoring/reference/catalog.schema.json ./engine/authoring/reference/catalog.schema.json
 COPY --from=wasm /out/pkg ./engine/wasm/pkg
 WORKDIR /repo/gui
 RUN pnpm install --frozen-lockfile

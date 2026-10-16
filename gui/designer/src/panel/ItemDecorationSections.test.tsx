@@ -8,6 +8,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useEditor } from '../editor/useEditor';
 import { I18nProvider } from '../i18n/context';
+import { ENGINE_STYLE_DEFAULTS } from './engineDefaults';
 import { PropertyPanel } from './PropertyPanel';
 
 const P = 'sections.body.items[0]';
@@ -25,23 +26,29 @@ function Harness({
   text,
   capabilities,
   path = P,
+  floor,
 }: {
   text: string;
   capabilities?: readonly string[];
   path?: string;
+  floor?: Readonly<Record<string, unknown>>;
 }) {
   const editor = useEditor(text);
   return (
     <I18nProvider locale="en">
-      <PropertyPanel controller={editor} path={path} capabilities={capabilities} />
+      <PropertyPanel controller={editor} path={path} capabilities={capabilities} floor={floor} />
       <pre data-testid="doc">{editor.text}</pre>
       <output data-testid="revision">{editor.revision}</output>
     </I18nProvider>
   );
 }
 
-function open(text: string, capabilities?: readonly string[]) {
-  render(<Harness text={text} capabilities={capabilities} />);
+function open(
+  text: string,
+  capabilities?: readonly string[],
+  floor?: Readonly<Record<string, unknown>>,
+) {
+  render(<Harness text={text} capabilities={capabilities} floor={floor} />);
   fireEvent.click(screen.getByRole('tab', { name: 'Style' }));
 }
 
@@ -136,7 +143,7 @@ describe('which sections a type gets', () => {
     expect(sectionTitles()).toEqual(['Text', 'Fill', 'Opacity', 'Styles']);
     expect(screen.getByLabelText('Font family')).not.toBeNull();
     expect(screen.getByLabelText('Font size')).not.toBeNull();
-    expect(screen.queryByLabelText('Text alignment')).toBeNull();
+    expect(screen.getByLabelText('Text alignment')).not.toBeNull();
     expect(screen.queryByLabelText('Line height')).toBeNull();
     expect(screen.queryByLabelText('Letter spacing')).toBeNull();
     openSection('Fill');
@@ -504,5 +511,71 @@ describe('closed-section summaries', () => {
   it('says not set when nothing is authored', () => {
     open(doc('{ type: text, text: hi }'));
     expect(screen.getAllByText('Not set').length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('a char_grid’s own alignment', () => {
+  const GRID = '{ type: char_grid, grid: { charsPerLine: 20, lines: 10 } }';
+  const alignment = () => screen.getByRole('combobox', { name: 'Text alignment' });
+  /** Every effective-value hint the open sections show. */
+  const hints = () =>
+    [...document.querySelectorAll('p')]
+      .map((p) => p.textContent ?? '')
+      .filter((text) => text.startsWith('Effective'));
+  const optionLabels = () =>
+    [...(alignment() as HTMLSelectElement).options].map((o) => o.textContent);
+
+  it('is withheld against an engine without char_grid.textAlign', () => {
+    open(doc(GRID), ['char_grid', 'style.opacity']);
+    expect(screen.getByLabelText('Font size')).not.toBeNull();
+    expect(screen.queryByLabelText('Text alignment')).toBeNull();
+  });
+
+  it('names the line’s start and end as top and bottom when the grid is vertical', () => {
+    open(
+      doc('{ type: char_grid, writingMode: vertical_rl, grid: { charsPerLine: 20, lines: 10 } }'),
+      undefined,
+      ENGINE_STYLE_DEFAULTS,
+    );
+    expect(optionLabels()).toEqual(expect.arrayContaining(['Top', 'Middle', 'Bottom']));
+    expect(optionLabels()).not.toContain('Left');
+    // Unset, no hint: its source line would name the document defaults, which
+    // a grid never reads.
+    expect(hints().some((h) => h.includes('Top') || h.includes('Left'))).toBe(false);
+    fireEvent.change(alignment(), { target: { value: 'right' } });
+    expect(file()).toContain('textAlign: right');
+  });
+
+  it('keeps left and right for a horizontal grid', () => {
+    open(doc(GRID));
+    expect(optionLabels()).toEqual(expect.arrayContaining(['Left', 'Center', 'Right']));
+  });
+
+  it('shows neither an inherited alignment nor an inherited size, which the grid ignores', () => {
+    open(
+      doc(GRID, 'defaults:\n  style: { textAlign: center, fontSize: 14 }\n'),
+      undefined,
+      ENGINE_STYLE_DEFAULTS,
+    );
+    // The alignment falls to the engine's start of the line, not the document's
+    // centre; the size has no hint at all, since the cell decides it.
+    expect(hints().some((h) => /Center|Left|14/.test(h))).toBe(false);
+    // The keys the grid does inherit still show where they come from.
+    expect(hints()).toContainEqual(expect.stringContaining('Regular'));
+  });
+});
+
+describe('an enum hint names its value as the options do', () => {
+  it('reads a named style’s vertical alignment in words, not the wire spelling', () => {
+    open(
+      doc(
+        '{ type: text, text: hi, styleNames: [box] }',
+        'styles:\n  box: { verticalAlign: middle, fontWeight: bold }\n',
+      ),
+    );
+    const hints = [...document.querySelectorAll('p')].map((p) => p.textContent ?? '');
+    expect(hints).toContainEqual(expect.stringContaining('Effective Middle'));
+    expect(hints).toContainEqual(expect.stringContaining('Effective Bold'));
+    expect(hints.some((h) => /Effective (middle|bold)/.test(h))).toBe(false);
   });
 });
