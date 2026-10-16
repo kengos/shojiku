@@ -97,6 +97,11 @@ krilla = { version = "0.8", default-features = false }
 # only ever see RectShapes.
 qrcodegen = "1.8"
 base64 = "0.23"
+# Test-only: evaluating the key catalog's string `pattern`s against the real
+# parser. One crate, no dependencies, MIT/Apache-2.0. Its classes are ASCII,
+# so it cannot itself tell `\d` or `\s` from the portable spelling the
+# patterns use; a separate test holds that spelling.
+regex-lite = "0.1"
 # Test-only: reading back a rendered PDF's content stream. Already in the
 # tree via krilla and png, so this adds no new supply-chain surface.
 flate2 = "1"
