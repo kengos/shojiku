@@ -60,6 +60,8 @@ pub mod tables;
 /// those claims to `DiagnosticCode`, the capability list and the catalog.
 pub mod pages;
 
+pub mod address;
+
 #[cfg(feature = "schema")]
 mod annotate;
 
