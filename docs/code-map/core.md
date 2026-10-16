@@ -19,7 +19,9 @@ injected at parse). The template model splits along CSS lines.
   `Item` + `parse_template` + `Version` (number|string round-trip) +
   `defaults: TemplateDefaults` + the named-style registry
   `Template.styles`; re-exports submodules so `shojiku_core::X` paths stay
-  stable.
+  stable. `template/kind.rs` — `ItemKind` (the 15 `type:` values,
+  `ALL`, `as_str`) + `Item::kind()`: the kind without the payload, which the
+  fact tables key on and a walk that only needs to know the kind can match.
 - `template/sections.rs` — `Sections::item_lists`: each present
   section's top-level items with its path prefix (header, body, footer).
   The one place a walk learns where items live — validate's walks and
@@ -105,12 +107,35 @@ injected at parse). The template model splits along CSS lines.
   serde: one keyword or `underline line_through` (either order, canonical on
   write) + `underline()`/`line_through()`. `style/shapes.rs` — non-cascading `LineStyle` (the one
   shape off the unified `Style`). `style/inert.rs` — the context-inert
-  key lists (`ignored_span_keys`/`ignored_shape_keys`).
+  key lists (`ignored_span_keys`/`ignored_shape_keys`). `style/key.rs` —
+  `StyleKey` (one variant per `Style` field, `ALL` in field order, `as_str`
+  = the wire name) + `Style::is_set`; a test holds the key set equal to the
+  fields the wire writes, so a field without a key reds.
   `style/writing.rs` — vertical-writing vocabulary: `WritingMode`
   (canonical home; char_grid re-uses it), `TextOrientation`,
   `TextCombineUpright` (tate-chu-yoko; `active()` → the layout/tree carrier
   `TextCombine`). The inherited-vs-not split per property is documented in
   `docs/engine/style.md`.
+- `facts.rs` + `facts/` — the engine's per-key facts about the style
+  wire, each an exhaustive `match` over `StyleKey`: `inherits` (the 14/10
+  CSS split the layout cascade applies), `initial` (the document-root value;
+  `line_initial` for the `line` item's `LineStyle`; `surface_initial` for
+  the surfaces that start a key elsewhere — a form mark's 1pt outline, a
+  table's and a char_grid's 0.5pt ruling, a table's middle-aligned cells,
+  and `Initial::FromSurface` for a char_grid's cell-relative glyph size),
+  `range` → `ScalarRange` (the guard bounds and fallbacks, on the RESOLVED
+  pt for the two lengths; `LINE_WIDTH`, and `OPACITY` shared with the line
+  stroke), and `facts/paint.rs` — `painted_by` → the `Surface`s
+  (`Item(ItemKind)`, `Span`, `Mark`, `Document` = `defaults.style`) that
+  paint with a key on their own `style:`, read from the layout consumers;
+  `takes` adds what inherits into held content (`holds_content`: container,
+  table, document). A table's own layers (column, row, header) are not
+  covered yet. The key catalog renders them (`engine/authoring`
+  `reference/facts.rs`); `facts/tests.rs` holds the span and shape rows
+  against the two `inert.rs` lists, each form mark's row on its own, and
+  every initial value against the parser, and `shojiku-layout`'s
+  `style/tests/facts.rs` holds the inheritance and initial rows against
+  `ComputedStyle`.
 - `length.rs` — `Length`: pt/%/physical (authored form kept for
   round-trip)/em/rem (`FontRel` bases; `resolve(basis, font)` is total);
   rejects non-finite.

@@ -1,5 +1,7 @@
 //! Unit tests for the style cascade (`ComputedStyle` + primitives).
 
+mod facts;
+
 use super::*;
 use shojiku_core::{BorderColor, BorderStyle, BorderWidth, Length, TextCombineUpright};
 

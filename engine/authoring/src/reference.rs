@@ -60,6 +60,12 @@ pub mod tables;
 /// those claims to `DiagnosticCode`, the capability list and the catalog.
 pub mod pages;
 
+pub(crate) mod address;
+
+/// The engine's fact tables as catalog keywords: defaults, ranges,
+/// inheritance, which keys each surface takes, references and capabilities.
+pub mod facts;
+
 #[cfg(feature = "schema")]
 mod annotate;
 
