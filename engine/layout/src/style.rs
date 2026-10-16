@@ -137,12 +137,10 @@ impl Default for ComputedStyle {
 
 impl ComputedStyle {
     /// The starting point for resolving an item's style: inherited
-    /// properties (`color`, `fontSize`, `fontFamily`, `fontWeight`,
-    /// `fontStyle`, `letterSpacing`, `lineHeight`, `textAlign`,
-    /// `lineBreak`) carry the ancestor's computed value, while
-    /// non-inherited ones (`verticalAlign`, `backgroundColor`,
-    /// `borderWidth`, `borderColor`) reset to the initial value so they
-    /// never flow down the tree.
+    /// properties carry the ancestor's computed value, while non-inherited
+    /// ones reset to the initial value so they never flow down the tree.
+    /// Which is which is `shojiku_core::facts::inherits`, and a test holds
+    /// this copy to it.
     pub fn base(inherited: &ComputedStyle) -> ComputedStyle {
         ComputedStyle {
             font_size: inherited.font_size,

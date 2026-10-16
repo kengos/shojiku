@@ -9,34 +9,19 @@
 //! every consumer funnels through these methods.
 
 use crate::color::{parse_color, snippet};
-use shojiku_core::{DEFAULT_FONT_SIZE_PT, DEFAULT_LINE_HEIGHT, DEFAULT_STROKE_PT};
+use shojiku_core::facts::{
+    BORDER_WIDTH, FONT_SIZE, LETTER_SPACING, LINE_HEIGHT, LINE_WIDTH, OPACITY,
+};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::super::{Ctx, BLACK};
 
-/// Sanity bound on `letterSpacing` magnitude. Spacing is added to *every*
-/// character advance, so a huge template value multiplies by the content
-/// length and can overflow width math to non-finite; anything past this is
-/// authoring garbage, not typography.
-const MAX_LETTER_SPACING_PT: f64 = 1_000.0;
-
-/// Sanity bound on a stroke width — `borderWidth` and the `line` item's
-/// `style.width` alike, since both reach the renderers' stroke math
-/// directly. A stroke wider than this is authoring garbage (the A4 long
-/// edge is ~842pt).
-const MAX_STROKE_WIDTH_PT: f64 = 1_000.0;
-
-/// Sanity bound on `fontSize`. It is the one Length-shaped value the
-/// box-resolution cap never sees — the cascade resolves it through
-/// `Length::resolve`, not `resolve_x` — so without this a huge finite
-/// size drives `size × lineHeight` and the advance sums toward
-/// non-finite geometry. Paired with [`MAX_LINE_HEIGHT`] so the tallest
-/// line box the guards admit is exactly `MAX_RESOLVED_PT`.
-const MAX_FONT_SIZE_PT: f64 = 1_000.0;
-
-/// Sanity bound on the `lineHeight` multiplier — see [`MAX_FONT_SIZE_PT`]
-/// for why the pair is what matters.
-const MAX_LINE_HEIGHT: f64 = 1_000.0;
+// The bounds and fallbacks are `shojiku_core::facts`'s range table, which
+// the key catalog publishes too, so a bound is written once. Font size and
+// line height cap at 1000 each, so their PRODUCT — the tallest line box the
+// guards admit — is exactly `MAX_RESOLVED_PT`; one stroke cap bounds both
+// `borderWidth` and the `line` width, since both reach the renderers'
+// stroke math directly.
 
 impl Ctx<'_, '_> {
     pub(in crate::engine) fn color_or_black(&mut self, color: Option<&str>) -> (f32, f32, f32) {
@@ -61,44 +46,44 @@ impl Ctx<'_, '_> {
     /// measurement; sizes past the cap would drive the line-box and
     /// advance math off the scale the rest of the engine resolves.
     pub(in crate::engine) fn sane_font_size(&mut self, size: f64) -> f64 {
-        if !size.is_finite() || size <= 0.0 {
+        if !FONT_SIZE.clears_min(size) {
             self.diags.push(
                 Diagnostic::new(Code::InvalidFontSize)
                     .arg("value", size)
-                    .arg("default", DEFAULT_FONT_SIZE_PT),
+                    .arg("default", FONT_SIZE.fallback),
             );
-            return DEFAULT_FONT_SIZE_PT;
+            return FONT_SIZE.fallback;
         }
-        if size > MAX_FONT_SIZE_PT {
+        if size > FONT_SIZE.max {
             self.diags.push(
                 Diagnostic::new(Code::FontSizeOutOfRange)
                     .arg("value", size)
-                    .arg("max", MAX_FONT_SIZE_PT)
-                    .arg("default", DEFAULT_FONT_SIZE_PT),
+                    .arg("max", FONT_SIZE.max)
+                    .arg("default", FONT_SIZE.fallback),
             );
-            return DEFAULT_FONT_SIZE_PT;
+            return FONT_SIZE.fallback;
         }
         size
     }
 
     /// Same guard for the line-height multiplier.
     pub(in crate::engine) fn sane_line_height(&mut self, multiplier: f64) -> f64 {
-        if !multiplier.is_finite() || multiplier <= 0.0 {
+        if !LINE_HEIGHT.clears_min(multiplier) {
             self.diags.push(
                 Diagnostic::new(Code::InvalidLineHeight)
                     .arg("value", multiplier)
-                    .arg("default", DEFAULT_LINE_HEIGHT),
+                    .arg("default", LINE_HEIGHT.fallback),
             );
-            return DEFAULT_LINE_HEIGHT;
+            return LINE_HEIGHT.fallback;
         }
-        if multiplier > MAX_LINE_HEIGHT {
+        if multiplier > LINE_HEIGHT.max {
             self.diags.push(
                 Diagnostic::new(Code::LineHeightOutOfRange)
                     .arg("value", multiplier)
-                    .arg("max", MAX_LINE_HEIGHT)
-                    .arg("default", DEFAULT_LINE_HEIGHT),
+                    .arg("max", LINE_HEIGHT.max)
+                    .arg("default", LINE_HEIGHT.fallback),
             );
-            return DEFAULT_LINE_HEIGHT;
+            return LINE_HEIGHT.fallback;
         }
         multiplier
     }
@@ -108,15 +93,15 @@ impl Ctx<'_, '_> {
     /// poison every advance in the run, so they fall back to 0 with a
     /// diagnostic.
     pub(in crate::engine) fn sane_letter_spacing(&mut self, spacing: f64) -> f64 {
-        if spacing.is_finite() && spacing.abs() <= MAX_LETTER_SPACING_PT {
+        if LETTER_SPACING.admits(spacing) {
             spacing
         } else {
             self.diags.push(
                 Diagnostic::new(Code::InvalidLetterSpacing)
                     .arg("value", spacing)
-                    .arg("max", MAX_LETTER_SPACING_PT),
+                    .arg("max", LETTER_SPACING.max),
             );
-            0.0
+            LETTER_SPACING.fallback
         }
     }
 
@@ -124,15 +109,15 @@ impl Ctx<'_, '_> {
     /// initial value, checked without a diagnostic); negative, non-finite,
     /// or absurd widths fall back to 0 with a diagnostic.
     pub(in crate::engine) fn sane_border_width(&mut self, width: f64) -> f64 {
-        if width.is_finite() && (0.0..=MAX_STROKE_WIDTH_PT).contains(&width) {
+        if BORDER_WIDTH.admits(width) {
             width
         } else {
             self.diags.push(
                 Diagnostic::new(Code::InvalidBorderWidth)
                     .arg("value", width)
-                    .arg("max", MAX_STROKE_WIDTH_PT),
+                    .arg("max", BORDER_WIDTH.max),
             );
-            0.0
+            BORDER_WIDTH.fallback
         }
     }
 
@@ -143,16 +128,16 @@ impl Ctx<'_, '_> {
     /// so a hostile width degrades to the wire default instead. An
     /// authored `0` still passes through undiagnosed.
     pub(in crate::engine) fn sane_line_width(&mut self, width: f64) -> f64 {
-        if width.is_finite() && (0.0..=MAX_STROKE_WIDTH_PT).contains(&width) {
+        if LINE_WIDTH.admits(width) {
             width
         } else {
             self.diags.push(
                 Diagnostic::new(Code::InvalidLineWidth)
                     .arg("value", width)
-                    .arg("max", MAX_STROKE_WIDTH_PT)
-                    .arg("default", DEFAULT_STROKE_PT),
+                    .arg("max", LINE_WIDTH.max)
+                    .arg("default", LINE_WIDTH.fallback),
             );
-            DEFAULT_STROKE_PT
+            LINE_WIDTH.fallback
         }
     }
 
@@ -161,12 +146,12 @@ impl Ctx<'_, '_> {
     /// hiding content would be worse than ignoring it. Template values are
     /// finite (yaml_guard), but the guard re-checks for defense in depth.
     pub(in crate::engine) fn sane_opacity(&mut self, opacity: f64) -> f32 {
-        if opacity.is_finite() && (0.0..=1.0).contains(&opacity) {
+        if OPACITY.admits(opacity) {
             opacity as f32
         } else {
             self.diags
                 .push(Diagnostic::new(Code::InvalidOpacity).arg("value", opacity));
-            1.0
+            OPACITY.fallback as f32
         }
     }
 }

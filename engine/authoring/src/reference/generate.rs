@@ -85,7 +85,7 @@ pub fn generate() -> String {
         .expect("the committed annotation file is a flat map of node to prose");
     super::annotate::merge(&mut defs, &annotations);
 
-    let document = serde_json::json!({
+    let mut document = serde_json::json!({
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": CATALOG_ID,
         "title": "Shojiku authorable wire",
@@ -100,6 +100,18 @@ pub fn generate() -> String {
         },
         "$defs": defs,
     });
+
+    // The engine's fact tables, as keywords on the nodes they describe. Every
+    // address is checked against this same catalog by the default suite, so
+    // one that names no node is a developer error in a committed table.
+    let extensions = super::facts::extensions(&document);
+    if let Some(defs) = document["$defs"].as_object_mut() {
+        let missing = super::facts::merge(defs, &extensions);
+        assert!(
+            missing.is_empty(),
+            "fact keywords name no node: {missing:?}"
+        );
+    }
 
     // Serializing a `serde_json::Value` has no failing path: every value in
     // it came out of the same library and carries no custom Serialize.

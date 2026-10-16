@@ -22,11 +22,9 @@ use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx, BLACK};
 const KAPPA: f64 = 0.552_284_749_830_793_9;
 
 /// Default outline width (pt) for form marks when NO style layer authors
-/// a `borderWidth`: a mark's visible geometry is its function (the
-/// blank-form state must print), unlike `rect` which follows the plain
-/// Style rule (nothing draws unless authored). Mirrors the table grid's
-/// own 0.5pt default — an item-level default on top of the unified Style.
-const DEFAULT_MARK_STROKE_PT: f64 = 1.0;
+/// a `borderWidth` — the fact table's value, so the key catalog states it
+/// too.
+const DEFAULT_MARK_STROKE_PT: f64 = shojiku_core::facts::MARK_STROKE_PT;
 
 /// A shape's resolved paint: one uniform stroke + fill + alpha, reduced
 /// from the unified [`Style`] by [`Ctx::shape_paint`].

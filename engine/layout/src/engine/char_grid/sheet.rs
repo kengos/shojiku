@@ -128,7 +128,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
         opacity: f32,
     ) {
         let geom = &prep.geom;
-        let width = prep.grid_border.unwrap_or(0.5);
+        let width = prep
+            .grid_border
+            .unwrap_or(shojiku_core::facts::GRID_STROKE_PT);
         if width <= 0.0 {
             return;
         }

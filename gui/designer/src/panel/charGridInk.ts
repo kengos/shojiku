@@ -34,7 +34,8 @@ export const KINSOKU_MODES = ['school', 'none'] as const;
 export type KinsokuMode = (typeof KINSOKU_MODES)[number];
 export const DEFAULT_KINSOKU: KinsokuMode = 'school';
 
-/** The engine's stroke sanity range (`MAX_STROKE_WIDTH_PT`). A width outside it is
+/** The engine's stroke sanity range (`shojiku_core::facts::BORDER_WIDTH`; the
+ * key catalog's `maximum` on `Style.borderWidth`). A width outside it is
  * refused here rather than authored, because the engine answers one with an
  * `invalid_border_width` diagnostic and falls back — an author would see the panel
  * accept a value the document then ignores. */

@@ -45,11 +45,11 @@ function combineWire(token: string): SnippetValue | null {
 export const MARK_KEYS = ['fontWeight', 'fontStyle', 'textDecoration', 'color'] as const;
 
 /** The style keys a span honours that this surface does NOT edit — the
- * engine's per-span list (`Style::ignored_span_keys`'s complement in
- * `engine/core/src/style/inert.rs`) minus `MARK_KEYS` and the combine key.
+ * engine's per-span list (the `Span` shape's `x-shojiku-style-keys` in the
+ * key catalog) minus `MARK_KEYS` and the combine key.
  * A fragment split out of another copies them, or marking one word of a 12pt
  * fragment would drop the rest of it back to the block's size. Pinned against
- * the Rust by `spanWire.inert.test.ts`. */
+ * the catalog by `spanWire.inert.test.ts`. */
 export const INHERITED_STYLE_KEYS = ['fontSize', 'fontFamily', 'letterSpacing'] as const;
 
 /** What each mark spells on the wire, or `null` for "this fragment sets none",
