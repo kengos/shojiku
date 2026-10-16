@@ -3,6 +3,10 @@
 //! [`Style::ignored_span_keys`].
 
 use super::*;
+use crate::facts::Surface;
+
+/// The shape that paints with the whole box-decoration subset.
+const RECT: Surface = Surface::Item(crate::ItemKind::Rect);
 
 #[test]
 fn writing_mode_variants_round_trip() {
@@ -164,7 +168,7 @@ fn text_combine_upright_is_shape_inert_but_span_honored() {
         ..Style::default()
     };
     assert!(!s.ignored_span_keys().contains(&"textCombineUpright"));
-    assert!(s.ignored_shape_keys().contains(&"textCombineUpright"));
+    assert!(s.ignored_on(RECT).contains(&"textCombineUpright"));
 }
 
 #[test]

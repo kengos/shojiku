@@ -131,7 +131,7 @@ describe('rulingWidthOp', () => {
   });
 
   it('REFUSES a width the engine would not honour, rather than authoring one it ignores', () => {
-    // Outside `0.0..=MAX_STROKE_WIDTH_PT` the engine emits `invalid_border_width`
+    // Outside the `borderWidth` range (0..=1000) the engine emits `invalid_border_width`
     // and falls back, so accepting it would show a width the document does not use.
     for (const bad of ['-1', String(MAX_RULING_WIDTH_PT + 1), 'wide', 'Infinity', 'NaN']) {
       expect(rulingWidthOp(PATH, bad), bad).toBeNull();

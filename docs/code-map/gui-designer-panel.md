@@ -265,7 +265,7 @@ the ruling stays here with the grid.
   this file only calls it; and `authored()` consults `styleNames`
   (later name wins) then the item's own style and NOTHING below — no
   defaults, no inheritance — so a control here must not badge an effective
-  value from anywhere else. An over-cap width (`MAX_STROKE_WIDTH_PT` 1000)
+  value from anywhere else. An over-cap width (the `borderWidth` range, 1000)
   authors nothing rather than a value the engine answers with a diagnostic
   and ignores. **Empty CLEARS the width**: an absent key IS the documented
   default, so clearing returns the ruling to it, and without that an
@@ -621,9 +621,10 @@ surface too, and the first mark converts it (`panel/spanConversion.ts`).
   fails and `applyAll` then discards the whole batch. What a split copies onto
   the new half is three narrowed pieces: `inheritedKeys` (`styleNames`/`link`),
   `inheritedStyle` (`INHERITED_STYLE_KEYS` — fontSize, fontFamily,
-  letterSpacing: the span-honoured keys of `engine/core/src/style/inert.rs`
-  minus `MARK_KEYS` and the combine key, pinned against the Rust by
-  `spanWire.inert.test.ts`), and `inheritedBinding` (a BOUND run's
+  letterSpacing: the span-honoured keys — the key catalog's `Span`
+  `x-shojiku-style-keys` — minus `MARK_KEYS` and the combine key, pinned
+  against the committed catalog by `spanWire.inert.test.ts`), and
+  `inheritedBinding` (a BOUND run's
   format/placeholder/scope from a source bound to the same key — a defence: no
   measured edit re-inserts a bound fragment). `spanOps.insertValue` lays the
   run's marks over the inherited metrics in ONE `style:` map. Tate-chu-yoko is the
@@ -717,11 +718,11 @@ presence is not a text binding.
   the reason is the engine rather than taste — THREE of the four things
   `BorderEditor` authors do not reach a shape. Two warn: a per-side map reduces
   to its top side (`shape_border_sides_ignored`) and `borderRadius` is answered
-  with `border_radius_ignored` ("a form mark"). The third, `borderStyle`, is
-  SILENTLY inert — `shape_paint` never reads `border_styles`, `PathShape` has no
-  dash field, and `ignored_shape_keys` does not list it — which is why the
-  editor offers no line-style picker and why an already-authored one gets no
-  diagnostic. So the model writes SCALARS only, and a negative test pins that
+  with `border_radius_ignored` ("a form mark"). The third, `borderStyle`, draws
+  nothing — `shape_paint` never reads `border_styles` and `PathShape` has no
+  dash field — and validation answers it with `shape_style_ignored`, which is
+  why the editor offers no line-style picker. So the model writes SCALARS
+  only, and a negative test pins that
   neither warning-producing key can ever be authored. Empty
   CLEARS the width, because an absent key IS the documented 1 pt default (the
   `charGridInk` rule, different constant); `0` stays its own value, which is
@@ -1218,7 +1219,8 @@ presence is not a text binding.
   the cascade as INHERITED keys (`toolbar/effective` names them beside the
   defaults editor's inherited set, which does not offer them).
 - `panel/textLookOps.ts` (pure) — `letterSpacingOp` (signed, units but no `%`,
-  ±`MAX_LETTER_SPACING_PT`), `opacityPercent`/`opacityOp` (the field shows a
+  ±`MAX_LETTER_SPACING_PT` — the engine's `letterSpacing` range, 1000),
+  `opacityPercent`/`opacityOp` (the field shows a
   percentage of the 0..1 alpha; a commit that would author the value already
   carried is `null`, so a converted view is never written back untouched),
   `steppedOpacity`, and the ▲▼ op builders.

@@ -107,7 +107,9 @@ injected at parse). The template model splits along CSS lines.
   serde: one keyword or `underline line_through` (either order, canonical on
   write) + `underline()`/`line_through()`. `style/shapes.rs` — non-cascading `LineStyle` (the one
   shape off the unified `Style`). `style/inert.rs` — the context-inert
-  key lists (`ignored_span_keys`/`ignored_shape_keys`). `style/key.rs` —
+  keys, `Style::ignored_on(Surface)` (+ `ignored_span_keys`), derived from
+  `facts::painted_by` minus what layout reports itself (a form mark's
+  `borderRadius`). `style/key.rs` —
   `StyleKey` (one variant per `Style` field, `ALL` in field order, `as_str`
   = the wire name) + `Style::is_set`; a test holds the key set equal to the
   fields the wire writes, so a field without a key reds.
@@ -130,12 +132,14 @@ injected at parse). The template model splits along CSS lines.
   paint with a key on their own `style:`, read from the layout consumers;
   `takes` adds what inherits into held content (`holds_content`: container,
   table, document). A table's own layers (column, row, header) are not
-  covered yet. The key catalog renders them (`engine/authoring`
-  `reference/facts.rs`); `facts/tests.rs` holds the span and shape rows
-  against the two `inert.rs` lists, each form mark's row on its own, and
-  every initial value against the parser, and `shojiku-layout`'s
-  `style/tests/facts.rs` holds the inheritance and initial rows against
-  `ComputedStyle`.
+  covered yet. Read by layout's guards (`sane.rs` takes every bound and
+  fallback from the range consts; the mark outline, grid ruling and table
+  cell alignment defaults from `MARK_STROKE_PT` / `GRID_STROKE_PT` /
+  `TABLE_CELL_VERTICAL_ALIGN`), by `style/inert.rs`, and by the key catalog
+  (`engine/authoring` `reference/facts.rs`); `facts/tests.rs` holds each
+  form mark's row on its own and every initial value against the parser,
+  and `shojiku-layout`'s `style/tests/facts.rs` holds the inheritance and
+  initial rows against `ComputedStyle`.
 - `length.rs` — `Length`: pt/%/physical (authored form kept for
   round-trip)/em/rem (`FontRel` bases; `resolve(basis, font)` is total);
   rejects non-finite.
@@ -333,7 +337,8 @@ injected at parse). The template model splits along CSS lines.
   only that spelling.**
 - `validate/styles.rs` — named-style refs (spans, shapes, text mark,
   conditional-style entries included). `validate/shapes.rs` — inert keys
-  on shape styles. `validate/spans.rs` — span shape + inert span keys.
+  on shape styles, per surface (`Item::kind()` → `Style::ignored_on`).
+  `validate/spans.rs` — span shape + inert span keys.
   `validate/ruby.rs` — ruby entry caps/emptiness. `validate/formats.rs` —
   format-name checks + pattern-on-non-dated. `validate/box_keys.rs` —
   context-inert authoring keys (flex/grid keys on leaves, grid keys

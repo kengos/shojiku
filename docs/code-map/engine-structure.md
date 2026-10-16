@@ -184,7 +184,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 92 files / 11704 lines; tests 106 files / 15140 lines
+### `core` (L1) — 92 files / 11716 lines; tests 106 files / 15171 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -193,11 +193,11 @@ first sentence of its `//!` header.
 - `src/definitions/shape.rs` 165 — Structural checks over a definitions schema: the root must be an object, nesting/node/enum caps hold, and structural keys sit on the right base types (serde can't express those conditionals).
 - `src/edges.rs` 262 — Box-edge insets: per-side `margin` / `padding` values on item boxes.
 - `src/error.rs` 190 — The crate error type for parsing untrusted input artifacts.
-- `src/facts.rs` 51 — The engine's per-key facts about the style wire, as data.
+- `src/facts.rs` 54 — The engine's per-key facts about the style wire, as data.
 - `src/facts/inherit.rs` 34 — Which style keys inherit: the CSS split, as the layout cascade applies it.
-- `src/facts/initial.rs` 96 — The value each style key takes when nothing authors it — the CSS "initial" value every cascade starts from at the document root.
+- `src/facts/initial.rs` 103 — The value each style key takes when nothing authors it — the CSS "initial" value every cascade starts from at the document root.
 - `src/facts/paint.rs` 138 — Which surfaces paint with which style keys.
-- `src/facts/ranges.rs` 101 — The bounds a numeric style key is held to where it is used, and what an out-of-range value falls back to.
+- `src/facts/ranges.rs` 135 — The bounds a numeric style key is held to where it is used, and what an out-of-range value falls back to.
 - `src/geometry.rs` 225 — Positioning core — page geometry and box model.
 - `src/geometry/box_model.rs` 214 — Box geometry: the rectangles items occupy.
 - `src/geometry/flex.rs` 142 — Flex layout keys on item boxes (box-model Phase 2): the layout-mode key and the content-alignment enums.
@@ -229,7 +229,7 @@ first sentence of its `//!` header.
 - `src/style/border.rs` 261 — Per-side border wire: the scalar-or-map forms of `borderWidth` / `borderColor` and the new `borderStyle` (solid | double).
 - `src/style/decoration.rs` 83 — `textDecoration`'s wire spelling: `none`, `underline`, `line_through`, or both lines as one whitespace-separated string (`underline line_through`, either order — CSS `text-decoration-line`).
 - `src/style/enums.rs` 207 — The keyword enums of the style system: line breaking, font variants, overflow policies, alignment, text decoration, and the JP micro-typography knobs (spacing trim, hanging punctuation).
-- `src/style/inert.rs` 85 — Context-inert style keys: which authored properties have no effect on a rich-text span or on a shape item, reported by wire name.
+- `src/style/inert.rs` 47 — Context-inert style keys: which authored properties have no effect on the surface they are authored on, reported by wire name.
 - `src/style/key.rs` 133 — [`StyleKey`] — one property of a [`Style`], as a value.
 - `src/style/shapes.rs` 51 — Non-cascading paint style for the `line` item — a stroke primitive with no box, so the unified box-decoration [`super::Style`] does not apply (`rect` and the form marks converged onto `Style`; `line` keeps `width`/`color` deliberately).
 - `src/style/writing.rs` 179 — Writing-mode vocabulary: line direction (`writing-mode`), the character orientation within a vertical line (`text-orientation`), and tate-chu-yoko digit combining (`text-combine-upright`).
@@ -268,7 +268,7 @@ first sentence of its `//!` header.
 - `src/validate/presence.rs` 242 — Presence-binding validation, for both surfaces that carry one: a form mark's `data:` and any item's `visible:`.
 - `src/validate/ruby.rs` 54 — Structural checks for text-item `ruby` readings: empty entries, the MAX_RUBY_ENTRIES cap, and the per-entry length cap.
 - `src/validate/schema.rs` 237 — Definitions-schema checks: params-vs-schema validation (required keys, value types, ranges, enum membership, unknown keys) and the format/base-type coherence warning.
-- `src/validate/shapes.rs` 39 — Shape-style checks: inert style keys on the inline style of `rect`/ `ellipse`/`checkbox`/text `mark` items (`shape_style_ignored`) — shapes honor only the box-decoration subset of [`Style`].
+- `src/validate/shapes.rs` 45 — Shape-style checks: inert style keys on the inline style of `rect`/ `ellipse`/`checkbox`/text `mark` items (`shape_style_ignored`) — each shape paints with only part of the box-decoration subset of [`Style`] (`crate::facts::painted_by`).
 - `src/validate/spans.rs` 65 — Structural checks for rich-text `spans`: content exclusivity, the MAX_SPANS cap, and span-inapplicable style keys.
 - `src/validate/styles.rs` 141 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 - `src/validate/tables.rs` 232 — Table checks: the bound array group, per-column content shape (`data` vs `cell` exclusivity), row-relative column keys, the row `conditionalStyles` predicates (and the `scope` they ignore), and the array-scoped bindings inside a `cell:` column's sub-template.
@@ -375,7 +375,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19590 lines; tests 270 files / 37968 lines
+### `layout` (L3) — 132 files / 19574 lines; tests 270 files / 37968 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -401,7 +401,7 @@ first sentence of its `//!` header.
 - `src/engine/char_grid/glyph.rs` 114 — Per-cell / per-block glyph placement for a `char_grid` sheet: the pure geometry turning one [`CellChar`] into a positioned [`TextLine`] and its font size.
 - `src/engine/char_grid/markup.rs` 44 — `char_grid` content → ruby segments: the opt-in `markup: aozora` parse and the diagnostics its warnings become.
 - `src/engine/char_grid/ruby.rs` 158 — Ruby (furigana) placement for `char_grid`: each annotated base run gets its reading laid along the run — above it (horizontal) or to its right (vertical, as a real vertical column the renderers shape with GSUB `vert`) — shrunk to fit the run's extent with a 4pt floor.
-- `src/engine/char_grid/sheet.rs` 247 — One `char_grid` sheet's atom: background fill, the stroked cell grid, and the per-cell text blocks.
+- `src/engine/char_grid/sheet.rs` 249 — One `char_grid` sheet's atom: background fill, the stroked cell grid, and the per-cell text blocks.
 - `src/engine/container.rs` 287 ▲ — Containers: box resolution, the style cascade push/restore, and the absolutely-positioned child atoms of the shared box-children walk (the walk itself, with flex placement, lives in `super::flex`).
 - `src/engine/decoration.rs` 159 — Box decoration: the `backgroundColor` fill and the border stroke, emitted over an item's border box using existing tree primitives so renderers never change.
 - `src/engine/decoration/dash.rs` 54 — Dash-pattern derivation for `borderStyle: dashed | dotted`.
@@ -426,7 +426,7 @@ first sentence of its `//!` header.
 - `src/engine/link.rs` 155 — Hyperlink resolution: interpolates `link.url` against the current data scope, then gates the resolved value before it enters the tree — layout is the trust boundary; renderers emit whatever the tree carries without judgment.
 - `src/engine/list.rs` 249 — List items: a bounded per-element list — one line per array entry, clamped at the last fitting entry with a count-aware overflow line (`他{count}件`).
 - `src/engine/list/vertical.rs` 163 — Vertical list building: each array entry is one COLUMN, laid right-to-left (the first entry rightmost).
-- `src/engine/marks.rs` 274 ▲ — Form marks (`ellipse`, `checkbox`): box-inscribed vector shapes whose *presence* is params-driven but whose *geometry* is template-fixed — an unmatched mark still reserves its box, so the blank↔filled one-template workflow never shifts layout between params sets.
+- `src/engine/marks.rs` 272 ▲ — Form marks (`ellipse`, `checkbox`): box-inscribed vector shapes whose *presence* is params-driven but whose *geometry* is template-fixed — an unmatched mark still reserves its box, so the blank↔filled one-template workflow never shifts layout between params sets.
 - `src/engine/marks/presence.rs` 59 — Form-mark presence: turns a `MarkBinding` into "draw / don't draw" against the current data scope, warning on the two params shapes the predicate cannot use.
 - `src/engine/meta.rs` 197 — Document-metadata resolution: interpolates the `document:` block against params, then gates every resolved value before it enters the tree — layout is the trust boundary here exactly as it is for `link.url` (see `engine/link.rs`); renderers write what the tree carries without judgment.
 - `src/engine/overflow.rs` 135 — The horizontal-overflow policy: the one home for every "does this reach past the box that holds it?" check, so the rules can be read against each other instead of being inferred from three call sites.
@@ -439,9 +439,9 @@ first sentence of its `//!` header.
 - `src/engine/repeat/pages.rs` 126 — Pure imposition page math: how many grid rows fit on the first page, and which page/slot each bound element lands in.
 - `src/engine/repeat_flow.rs` 78 — Flow repeat (`type: repeat_flow`): one auto-height card per array element, stacked in flow with `gap` and paginating card-by-card.
 - `src/engine/resolve.rs` 135 — Resolve-pass primitives: thin `Ctx` bridges to the box-model math in `shojiku-layout-box` (length/edge resolution, `ResolvedBox`), the page margin resolution, and the layered style resolver (engine default <- inherited <- named styles <- inline).
-- `src/engine/resolve/sane.rs` 172 — Sanity guards over the style scalars a template can set to anything: color, font size, line height, letter spacing, and the two stroke widths.
+- `src/engine/resolve/sane.rs` 157 — Sanity guards over the style scalars a template can set to anything: color, font size, line height, letter spacing, and the two stroke widths.
 - `src/engine/sheet.rs` 21 — Sheet-level placement: the one emit tail every band and absolute-body item goes through, and the page-edge overflow check it carries.
-- `src/engine/table.rs` 238 — Tables: row-by-row pagination, repeating headers, keep-together, and the id-addressable table fragments.
+- `src/engine/table.rs` 239 — Tables: row-by-row pagination, repeating headers, keep-together, and the id-addressable table fragments.
 - `src/engine/table/atom.rs` 117 — The bounded (non-paginating) table atom: a `table` rendered as ONE stacked block for every context that is not the flow body — a container child, an absolute body, a band, or a grid cell.
 - `src/engine/table/content.rs` 94 — Non-text cell rendering: `type: qr_code` / `type: image` columns draw into the cell box (decoration + centered media), scaling to the row height rather than driving it.
 - `src/engine/table/geom.rs` 98 — Table geometry resolution: `Length` column widths (with the unsized equal-share fallback) and the guarded row/header heights + cell padding, all resolved against the flow region.
@@ -496,7 +496,7 @@ first sentence of its `//!` header.
 - `src/font/vertical/shaped/trim.rs` 102 — Vertical half-width punctuation: fullwidth-punctuation trimming over an arranged column — the `textSpacingTrim` mechanism with the axes swapped.
 - `src/font/vertical/uax50.rs` 116 — UAX#50 Vertical_Orientation upright ranges — GENERATED by `scripts/gen-uax50.py` from VerticalOrientation.txt (Unicode 16.0.0); do not edit by hand.
 - `src/lib.rs` 29 — Shojiku layout engine.
-- `src/style.rs` 269 — The style cascade: resolving authored [`Style`]s against inherited context into a fully concrete [`ComputedStyle`].
+- `src/style.rs` 267 — The style cascade: resolving authored [`Style`]s against inherited context into a fully concrete [`ComputedStyle`].
 - `src/tree.rs` 213 — The layout tree: fully positioned, fully formatted primitives.
 - `src/tree/meta.rs` 44 — Resolved document metadata: what the PDF says the document IS.
 - `src/tree/round.rs` 111 — Rounded-corner + dash vocabulary for the tree's stroked primitives, and the one rounded-rectangle path builder both renderers replay.
@@ -528,7 +528,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 42 files / 5147 lines; tests 44 files / 5985 lines
+### `authoring` (L5) — 42 files / 5159 lines; tests 44 files / 6001 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -557,7 +557,7 @@ first sentence of its `//!` header.
 - `src/reference/facts.rs` 165 — The engine's fact tables, written into the catalog as JSON Schema keywords so a reader of the artifact — the Designer's generic property panel, an agent — learns them from the same document as the shapes.
 - `src/reference/facts/capabilities.rs` 230 — Which catalog nodes an older engine may not carry, and the capability key that says this one does — so a panel built from the catalog can leave out a field the engine it talks to would refuse.
 - `src/reference/facts/refs.rs` 91 — Which catalog values name something defined elsewhere: another item's `id`, a named style, a named format, or a key of the params data.
-- `src/reference/generate.rs` 110 — Catalog generation — the half that needs the schema derive.
+- `src/reference/generate.rs` 122 — Catalog generation — the half that needs the schema derive.
 - `src/reference/pages.rs` 240 — The rule that keeps a page's HAND-WRITTEN diagnostics section honest against the engine's own registries.
 - `src/reference/pages/prose.rs` 93 — The third rule: a code-SHAPED name in the prose OUTSIDE any `## Diagnostics` section.
 - `src/reference/pages/scan.rs` 206 — The scan itself: one pass over a page's lines.

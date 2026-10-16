@@ -116,7 +116,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     ) -> VerticalAlign {
         self.valign_of(names, inline)
             .or_else(|| outer.iter().find_map(|v| *v))
-            .unwrap_or(VerticalAlign::Middle)
+            .unwrap_or(shojiku_core::facts::TABLE_CELL_VERTICAL_ALIGN)
     }
 
     /// The body-row style: `row.style`/`styleNames` over the inherited

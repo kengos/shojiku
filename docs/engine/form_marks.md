@@ -35,8 +35,9 @@ styles via `styleNames`). Unlike `rect`, a mark whose layers author no
 `borderWidth` keeps a **1 pt black outline default** — a mark's visible
 geometry is its function, so the blank-form state must print. Marks
 stroke one closed path: a per-side `borderWidth` map reduces to the top
-side and warns `shape_border_sides_ignored`; text keys on the inline
-style warn `shape_style_ignored`.
+side and warns `shape_border_sides_ignored`; text keys and a border
+pattern (`borderStyle` — the one stroked path is always solid) on the
+inline style warn `shape_style_ignored`.
 
 To circle a **text choice** (the common case), do not hand-place a
 standalone `ellipse` over the label — its glyph band sits a couple pt
@@ -222,7 +223,8 @@ glyphs).
 - Per-side `borderWidth` is reduced to the top side
   (`shape_border_sides_ignored`), and a radius is refused
   (`border_radius_ignored`).
-- Text and box style keys are inert on a mark (`shape_style_ignored`).
+- Text keys and a border pattern are inert on a mark
+  (`shape_style_ignored`).
 - An `equals`-less binding must target a boolean
   (`mark_binding_not_boolean`, `mark_value_not_bool`). With `equals`, the
   literal must sit inside the field's declared enum

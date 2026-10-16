@@ -88,8 +88,15 @@ pub fn surface_initial(surface: Surface, key: StyleKey) -> Option<Initial> {
     }
 }
 
-/// A form mark's outline width when its style authors none.
+/// A form mark's outline width when its style authors none: a mark's
+/// visible geometry is its function (the blank-form state must print),
+/// unlike a `rect`, which draws nothing unless authored.
 pub const MARK_STROKE_PT: f64 = 1.0;
+
+/// Where a table cell sits when no layer of the table authors a
+/// `verticalAlign`. [`surface_initial`] states it as its wire keyword, and a
+/// test holds the two together.
+pub const TABLE_CELL_VERTICAL_ALIGN: crate::VerticalAlign = crate::VerticalAlign::Middle;
 
 /// A table's and a character grid's ruling width when the style authors
 /// none.

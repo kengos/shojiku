@@ -1,6 +1,10 @@
 //! Unit tests for the wire keys: `textDecoration` and `opacity`.
 
 use super::*;
+use crate::facts::Surface;
+
+/// The shape that paints with the whole box-decoration subset.
+const RECT: Surface = Surface::Item(crate::ItemKind::Rect);
 
 #[test]
 fn text_decoration_parses_round_trips_and_defaults_to_none() {
@@ -101,7 +105,7 @@ fn opacity_parses_and_round_trips() {
 }
 
 #[test]
-fn ignored_shape_keys_names_the_inert_set_and_passes_the_honored_one() {
+fn a_rect_names_the_inert_set_in_field_order_and_passes_the_honored_one() {
     // Every shape-inert key set → all names, in wire spelling.
     let all = serde_yaml::from_str::<Style>(
         "{ fontSize: 12, fontFamily: f, fontWeight: bold, fontStyle: italic, \
@@ -112,13 +116,10 @@ fn ignored_shape_keys_names_the_inert_set_and_passes_the_honored_one() {
     )
     .expect("style");
     assert_eq!(
-        all.ignored_shape_keys(),
+        all.ignored_on(RECT),
         vec![
             "fontSize",
             "fontFamily",
-            "fontWeight",
-            "fontStyle",
-            "letterSpacing",
             "lineHeight",
             "color",
             "textAlign",
@@ -127,6 +128,9 @@ fn ignored_shape_keys_names_the_inert_set_and_passes_the_honored_one() {
             "textSpacingTrim",
             "hangingPunctuation",
             "textOverflow",
+            "fontWeight",
+            "fontStyle",
+            "letterSpacing",
             "overflow",
             "textDecoration",
             "writingMode",
@@ -139,7 +143,7 @@ fn ignored_shape_keys_names_the_inert_set_and_passes_the_honored_one() {
            borderStyle: double, opacity: 0.5 }",
     )
     .expect("style");
-    assert!(honored.ignored_shape_keys().is_empty());
+    assert!(honored.ignored_on(RECT).is_empty());
 }
 
 #[test]

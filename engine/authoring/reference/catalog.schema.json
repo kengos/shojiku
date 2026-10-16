@@ -91,18 +91,21 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-ref": "format"
         },
         "key": {
           "description": "The params key, as a dot-separated path. Required.",
-          "type": "string"
+          "type": "string",
+          "x-shojiku-ref": "dataKey"
         },
         "placeholder": {
           "description": "Text drawn when the value is ABSENT, `null` or the empty string, instead of leaving the field empty and reporting it. This is the \"intentionally blank\" signal a fillable form needs, so one template renders both a blank form and a filled one from two params files. Drawn VERBATIM — never interpolated, and it bypasses the type formatter entirely. The placement's own wins over the field's declared one, and the empty string suppresses the diagnostic without drawing anything. A value that is present but unusable is a different case and still reports.",
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "binding.placeholder"
         },
         "scope": {
           "anyOf": [
@@ -113,7 +116,8 @@
               "type": "null"
             }
           ],
-          "description": "Which data this binding resolves against. Defaults to `element` inside a table row, a repeat cell or a card, and to the top-level params everywhere else."
+          "description": "Which data this binding resolves against. Defaults to `element` inside a table row, a repeat cell or a card, and to the top-level params everywhere else.",
+          "x-shojiku-capability": "binding.scope"
         }
       },
       "required": [
@@ -434,7 +438,8 @@
               "type": "null"
             }
           ],
-          "description": "A per-row sub-template drawn instead of a bound value: any items a container may hold, laid out with the CELL's own top-left as the coordinate origin. Bindings inside it are row-scoped, exactly like the column's own. Exclusive with `data`, `type` and `fit`."
+          "description": "A per-row sub-template drawn instead of a bound value: any items a container may hold, laid out with the CELL's own top-left as the coordinate origin. Bindings inside it are row-scoped, exactly like the column's own. Exclusive with `data`, `type` and `fit`.",
+          "x-shojiku-capability": "table.column.cell"
         },
         "data": {
           "anyOf": [
@@ -481,7 +486,9 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-capability": "styleNames",
+          "x-shojiku-ref": "style"
         },
         "type": {
           "anyOf": [
@@ -492,7 +499,8 @@
               "type": "null"
             }
           ],
-          "description": "How the bound value renders. Defaults to `text`. Meaningful only beside `data`; on a `cell:` column it is a `column_content_conflict`."
+          "description": "How the bound value renders. Defaults to `text`. Meaningful only beside `data`; on a `cell:` column it is a `column_content_conflict`.",
+          "x-shojiku-capability": "table.column.type"
         },
         "width": {
           "anyOf": [
@@ -555,7 +563,9 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-capability": "styleNames",
+          "x-shojiku-ref": "style"
         },
         "visible": {
           "anyOf": [
@@ -566,10 +576,35 @@
               "type": "null"
             }
           ],
-          "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+          "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+          "x-shojiku-capability": "item.visible"
         }
       },
-      "type": "object"
+      "type": "object",
+      "x-shojiku-holds-content": true,
+      "x-shojiku-style-keys": [
+        "fontSize",
+        "fontFamily",
+        "lineHeight",
+        "color",
+        "textAlign",
+        "lineBreak",
+        "textSpacingTrim",
+        "hangingPunctuation",
+        "backgroundColor",
+        "borderWidth",
+        "borderColor",
+        "borderStyle",
+        "borderRadius",
+        "fontWeight",
+        "fontStyle",
+        "letterSpacing",
+        "overflow",
+        "opacity",
+        "writingMode",
+        "textOrientation",
+        "textCombineUpright"
+      ]
     },
     "Definitions": {
       "additionalProperties": false,
@@ -901,7 +936,8 @@
           "$ref": "#/$defs/InlineFormat"
         }
       ],
-      "description": "A format choice: a variant NAME the locale pack or the `formats:` registry declares, or an inline pattern map written in place. The name form stays a bare string when the template is written back and the map form stays a map."
+      "description": "A format choice: a variant NAME the locale pack or the `formats:` registry declares, or an inline pattern map written in place. The name form stays a bare string when the template is written back and the map form stays a map.",
+      "x-shojiku-ref": "format"
     },
     "FormatVariant": {
       "additionalProperties": false,
@@ -981,7 +1017,8 @@
               "type": "null"
             }
           ],
-          "description": "Both axes at once, the CSS shorthand. Defaults to 0; a per-axis key wins over it."
+          "description": "Both axes at once, the CSS shorthand. Defaults to 0; a per-axis key wins over it.",
+          "x-shojiku-capability": "repeat.grid.gap"
         },
         "rowGap": {
           "anyOf": [
@@ -1068,7 +1105,9 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-capability": "styleNames",
+          "x-shojiku-ref": "style"
         }
       },
       "required": [
@@ -1123,7 +1162,8 @@
                 "$ref": "#/$defs/Binding"
               },
               "description": "Named declarations for this item's `{name}` interpolations, carrying the options the bare `{key}` grammar cannot — a format, a placeholder, a document scope, or a key outside `[A-Za-z0-9_.]`.",
-              "type": "object"
+              "type": "object",
+              "x-shojiku-capability": "binding.declarations"
             },
             "box": {
               "anyOf": [
@@ -1163,7 +1203,8 @@
                   "type": "null"
                 }
               ],
-              "description": "A hyperlink, written into the PDF as a link annotation over the item's box."
+              "description": "A hyperlink, written into the PDF as a link annotation over the item's box.",
+              "x-shojiku-capability": "link.url"
             },
             "mark": {
               "anyOf": [
@@ -1174,14 +1215,16 @@
                   "type": "null"
                 }
               ],
-              "description": "An oval overlaid on the item's glyph band, auto-centred and auto-sized to it — the \"circle the chosen option\" mark, with no hand-measured coordinates, so a font change never invalidates the fit. Paint-only: it never changes the text's reserved box, so a blank-versus-filled params pair cannot shift the layout. A multi-line label gets one oval spanning all its lines."
+              "description": "An oval overlaid on the item's glyph band, auto-centred and auto-sized to it — the \"circle the chosen option\" mark, with no hand-measured coordinates, so a font change never invalidates the fit. Paint-only: it never changes the text's reserved box, so a blank-versus-filled params pair cannot shift the layout. A multi-line label gets one oval spanning all its lines.",
+              "x-shojiku-capability": "text.mark"
             },
             "ruby": {
               "description": "Readings drawn above the base runs in horizontal writing, and beside them in vertical. Entries apply in listed order and non-overlapping against the DRAWN text; an unmatched base warns `ruby_base_not_found` and the later entries still apply. The line box never grows — this is a fixed-leading model — so give the line enough `lineHeight` for the band.",
               "items": {
                 "$ref": "#/$defs/RubyPair"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "text.ruby"
             },
             "rubySize": {
               "anyOf": [
@@ -1192,14 +1235,16 @@
                   "type": "null"
                 }
               ],
-              "description": "The reading font size. Unset means half the item's font size. A reading longer than its base shrinks linearly to the run's width, with a 4 pt readability floor past which `ruby_overflow` warns."
+              "description": "The reading font size. Unset means half the item's font size. A reading longer than its base shrinks linearly to the run's width, with a 4 pt readability floor past which `ruby_overflow` warns.",
+              "x-shojiku-capability": "text.ruby"
             },
             "spans": {
               "description": "Inline rich text: styled fragments concatenated in order with no separator and drawn as ONE wrapped block, so a Latin word crossing a fragment boundary still wraps as one word and kinsoku moves characters across the edges. At most 256 spans (`too_many_spans`); the rest are dropped.",
               "items": {
                 "$ref": "#/$defs/Span"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "text.spans"
             },
             "style": {
               "$ref": "#/$defs/Style",
@@ -1210,7 +1255,9 @@
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "styleNames",
+              "x-shojiku-ref": "style"
             },
             "text": {
               "description": "Static content with `{key}` and `{key:format}` interpolation; `{{` escapes a literal brace. The bare `{key}` grammar admits `[A-Za-z0-9_.]` only — a key outside it needs a `bindings:` declaration.",
@@ -1233,13 +1280,40 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "text",
+          "x-shojiku-style-keys": [
+            "fontSize",
+            "fontFamily",
+            "lineHeight",
+            "color",
+            "textAlign",
+            "verticalAlign",
+            "lineBreak",
+            "textSpacingTrim",
+            "hangingPunctuation",
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "borderStyle",
+            "borderRadius",
+            "textOverflow",
+            "fontWeight",
+            "fontStyle",
+            "letterSpacing",
+            "textDecoration",
+            "opacity",
+            "writingMode",
+            "textOrientation",
+            "textCombineUpright"
+          ]
         },
         {
           "additionalProperties": false,
@@ -1258,14 +1332,17 @@
             },
             "style": {
               "$ref": "#/$defs/Style",
-              "description": "This rectangle's inline style — background, border and opacity. Text-level keys are inert and warn `shape_style_ignored`."
+              "description": "This rectangle's inline style — background, border and opacity. Text-level keys are inert and warn `shape_style_ignored`.",
+              "x-shojiku-capability": "style.shapes.unified"
             },
             "styleNames": {
               "description": "Named `styles:` entries layered under this rectangle's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "style.shapes.unified",
+              "x-shojiku-ref": "style"
             },
             "type": {
               "const": "rect",
@@ -1281,14 +1358,24 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this rectangle is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this rectangle is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type",
             "box"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "rect",
+          "x-shojiku-style-keys": [
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "borderStyle",
+            "borderRadius",
+            "opacity"
+          ]
         },
         {
           "additionalProperties": false,
@@ -1327,7 +1414,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this line is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this line is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
@@ -1335,7 +1423,8 @@
             "from",
             "to"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "line"
         },
         {
           "additionalProperties": false,
@@ -1357,7 +1446,8 @@
                   "type": "null"
                 }
               ],
-              "description": "The table's geometry. In the flow body it narrows the table horizontally — width, x offset, `auto` side margins to centre it — while y and height stay flow-owned. Everywhere else it places the table as one bounded block."
+              "description": "The table's geometry. In the flow body it narrows the table horizontally — width, x offset, `auto` side margins to centre it — while y and height stay flow-owned. Everywhere else it places the table as one bounded block.",
+              "x-shojiku-capability": "table.box"
             },
             "cellPadding": {
               "description": "Inner padding of every text, QR and image cell, in points. Defaults to 4. A container cell is inset by its own `cell.box.padding` instead. Negative clamps with `invalid_cell_padding`.",
@@ -1405,7 +1495,8 @@
               "items": {
                 "$ref": "#/$defs/HeaderGroup"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "table.headerGroups"
             },
             "id": {
               "description": "A stable name for this table, adding a lookup alias beside its path in the `inspect` box index.",
@@ -1419,14 +1510,16 @@
               "type": [
                 "boolean",
                 "null"
-              ]
+              ],
+              "x-shojiku-capability": "table.keepTogether"
             },
             "mergeEmptyCells": {
               "description": "Whether empty text cells in a body row merge the way a spreadsheet merges cells: an empty cell joins the nearest non-empty cell to its left, which extends rightward over it. An empty cell with no value to its left stays its own cell, so a leading run and an all-empty row draw as authored; put a section heading in the first column to have it read as one wide cell. The merged cell is the absorbing column's own, so that column's `style` (its `textAlign` above all) governs the whole merged width. Defaults to false. Absorbed cells lose their column-`id` placement, and QR, image and `cell:` cells always count as content.",
               "type": [
                 "boolean",
                 "null"
-              ]
+              ],
+              "x-shojiku-capability": "table.mergeEmptyCells"
             },
             "repeatHeader": {
               "description": "Whether the header row is redrawn on continuation pages. Defaults to true. Inert outside a flow body.",
@@ -1441,14 +1534,17 @@
             },
             "style": {
               "$ref": "#/$defs/Style",
-              "description": "The table's own style layer. `borderWidth` is the grid stroke — 0.5 pt by default, and 0 removes the grid — while the per-side map form draws an OUTER FRAME around each page fragment instead, leaving the inner grid at its default. Inherited properties cascade into every cell. `borderRadius` is refused with `border_radius_ignored`: a ruled grid cannot meet a curve."
+              "description": "The table's own style layer. `borderWidth` is the grid stroke — 0.5 pt by default, and 0 removes the grid — while the per-side map form draws an OUTER FRAME around each page fragment instead, leaving the inner grid at its default. Inherited properties cascade into every cell. `borderRadius` is refused with `border_radius_ignored`: a ruled grid cannot meet a curve.",
+              "x-shojiku-capability": "table.style"
             },
             "styleNames": {
               "description": "Named `styles:` entries layered under this table's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "styleNames",
+              "x-shojiku-ref": "style"
             },
             "type": {
               "const": "table",
@@ -1464,7 +1560,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this table is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this table is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
@@ -1472,7 +1569,33 @@
             "data",
             "columns"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "table",
+          "x-shojiku-holds-content": true,
+          "x-shojiku-initial-overrides": {
+            "borderWidth": 0.5,
+            "verticalAlign": "middle"
+          },
+          "x-shojiku-style-keys": [
+            "fontSize",
+            "fontFamily",
+            "lineHeight",
+            "color",
+            "textAlign",
+            "verticalAlign",
+            "lineBreak",
+            "textSpacingTrim",
+            "hangingPunctuation",
+            "borderWidth",
+            "borderColor",
+            "borderStyle",
+            "fontWeight",
+            "fontStyle",
+            "letterSpacing",
+            "writingMode",
+            "textOrientation",
+            "textCombineUpright"
+          ]
         },
         {
           "additionalProperties": false,
@@ -1512,7 +1635,9 @@
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "styleNames",
+              "x-shojiku-ref": "style"
             },
             "type": {
               "const": "page_number",
@@ -1528,13 +1653,40 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this page number is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this page number is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "page_number",
+          "x-shojiku-style-keys": [
+            "fontSize",
+            "fontFamily",
+            "lineHeight",
+            "color",
+            "textAlign",
+            "verticalAlign",
+            "lineBreak",
+            "textSpacingTrim",
+            "hangingPunctuation",
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "borderStyle",
+            "borderRadius",
+            "textOverflow",
+            "fontWeight",
+            "fontStyle",
+            "letterSpacing",
+            "textDecoration",
+            "opacity",
+            "writingMode",
+            "textOrientation",
+            "textCombineUpright"
+          ]
         },
         {
           "additionalProperties": false,
@@ -1545,7 +1697,8 @@
                 "$ref": "#/$defs/Binding"
               },
               "description": "Named declarations for the `{name}` interpolations in this item's link URL.",
-              "type": "object"
+              "type": "object",
+              "x-shojiku-capability": "binding.declarations"
             },
             "box": {
               "anyOf": [
@@ -1596,7 +1749,8 @@
                   "type": "null"
                 }
               ],
-              "description": "A hyperlink over the drawn box, written into the PDF as a link annotation."
+              "description": "A hyperlink over the drawn box, written into the PDF as a link annotation.",
+              "x-shojiku-capability": "link.url"
             },
             "src": {
               "description": "A template-time source: a bundled path, a `data:` URI, or inline SVG markup. A path resolves against the ASSETS ROOT, which defaults to the template file's own directory; a path escaping the root is rejected with `asset_traversal`. A remote URL is recognized and rejected with `remote_asset_unsupported` — the render path has no network I/O, and unlike a font there is no hash pin that would make fetching an image deterministic.",
@@ -1614,7 +1768,9 @@
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "styleNames",
+              "x-shojiku-ref": "style"
             },
             "type": {
               "const": "image",
@@ -1630,13 +1786,23 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this image is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this image is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "image",
+          "x-shojiku-style-keys": [
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "borderStyle",
+            "borderRadius",
+            "opacity"
+          ]
         },
         {
           "additionalProperties": false,
@@ -1676,7 +1842,9 @@
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "styleNames",
+              "x-shojiku-ref": "style"
             },
             "type": {
               "const": "container",
@@ -1692,13 +1860,39 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this container and its children is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "container",
+          "x-shojiku-holds-content": true,
+          "x-shojiku-style-keys": [
+            "fontSize",
+            "fontFamily",
+            "lineHeight",
+            "color",
+            "textAlign",
+            "lineBreak",
+            "textSpacingTrim",
+            "hangingPunctuation",
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "borderStyle",
+            "borderRadius",
+            "fontWeight",
+            "fontStyle",
+            "letterSpacing",
+            "overflow",
+            "opacity",
+            "writingMode",
+            "textOrientation",
+            "textCombineUpright"
+          ]
         },
         {
           "additionalProperties": false,
@@ -1713,7 +1907,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Where the grid starts. Defaults to `page`."
+              "description": "Where the grid starts. Defaults to `page`.",
+              "x-shojiku-capability": "repeat.breakBefore"
             },
             "cell": {
               "$ref": "#/$defs/ContainerItem",
@@ -1724,7 +1919,8 @@
               "type": [
                 "boolean",
                 "null"
-              ]
+              ],
+              "x-shojiku-capability": "repeat.cutMarks"
             },
             "data": {
               "$ref": "#/$defs/Binding",
@@ -1755,7 +1951,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this imposition grid is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this imposition grid is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
@@ -1763,7 +1960,8 @@
             "data",
             "cell"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "repeat"
         },
         {
           "additionalProperties": false,
@@ -1809,7 +2007,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this card list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this card list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
@@ -1817,7 +2016,8 @@
             "data",
             "item"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "repeat_flow"
         },
         {
           "additionalProperties": false,
@@ -1828,7 +2028,8 @@
                 "$ref": "#/$defs/Binding"
               },
               "description": "Named declarations for this item's `{name}` interpolations, carrying the options the bare `{key}` grammar cannot.",
-              "type": "object"
+              "type": "object",
+              "x-shojiku-capability": "binding.declarations"
             },
             "box": {
               "anyOf": [
@@ -1879,7 +2080,9 @@
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "styleNames",
+              "x-shojiku-ref": "style"
             },
             "text": {
               "description": "Static content with `{key}` interpolation, exactly like a text item's.",
@@ -1902,13 +2105,23 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this code is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this code is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "qr_code",
+          "x-shojiku-style-keys": [
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "borderStyle",
+            "borderRadius",
+            "opacity"
+          ]
         },
         {
           "additionalProperties": false,
@@ -1919,7 +2132,8 @@
                 "$ref": "#/$defs/Binding"
               },
               "description": "Named declarations for the `{name}` interpolations in `text`. They resolve per ENTRY like the template itself, unless one authors a document scope.",
-              "type": "object"
+              "type": "object",
+              "x-shojiku-capability": "binding.declarations"
             },
             "box": {
               "anyOf": [
@@ -1959,7 +2173,9 @@
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "styleNames",
+              "x-shojiku-ref": "style"
             },
             "text": {
               "description": "A per-entry template, interpolating `{key}` against the ENTRY object. The keys are the fields the array's `items:` schema declares, so a typo warns `unknown_data_key` at validate, and each resolves through its declared field spec. Unset, scalar entries print directly — strings as they are and numbers in plain form, with no locale formatting.",
@@ -1982,14 +2198,36 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this list is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type",
             "data"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "list",
+          "x-shojiku-style-keys": [
+            "fontSize",
+            "fontFamily",
+            "lineHeight",
+            "color",
+            "textAlign",
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "borderStyle",
+            "borderRadius",
+            "fontWeight",
+            "fontStyle",
+            "letterSpacing",
+            "textDecoration",
+            "opacity",
+            "writingMode",
+            "textOrientation",
+            "textCombineUpright"
+          ]
         },
         {
           "additionalProperties": false,
@@ -2016,13 +2254,15 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this break happens. It generates no box either way, so the `collapse` choice makes no difference here."
+              "description": "Whether this break happens. It generates no box either way, so the `collapse` choice makes no difference here.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "page_break"
         },
         {
           "additionalProperties": false,
@@ -2033,7 +2273,8 @@
                 "$ref": "#/$defs/Binding"
               },
               "description": "Named declarations for this item's `{name}` interpolations, carrying the options the bare `{key}` grammar cannot.",
-              "type": "object"
+              "type": "object",
+              "x-shojiku-capability": "binding.declarations"
             },
             "box": {
               "anyOf": [
@@ -2088,7 +2329,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Opt-in content markup. Unset, EVERY character renders verbatim — including the notation's own delimiters — because bound user data is never interpreted by default."
+              "description": "Opt-in content markup. Unset, EVERY character renders verbatim — including the notation's own delimiters — because bound user data is never interpreted by default.",
+              "x-shojiku-capability": "char_grid.markup.aozora"
             },
             "rubySize": {
               "anyOf": [
@@ -2110,7 +2352,9 @@
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "styleNames",
+              "x-shojiku-ref": "style"
             },
             "text": {
               "description": "Static content with `{key}` interpolation. `\\n` starts a new line and `\\r` is ignored; an EMPTY STRING draws a blank sheet, which is how printable manuscript paper is authored. Neither this nor `data` warns `empty_char_grid_item`.",
@@ -2133,7 +2377,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`."
+              "description": "Whether this item is SHOWN. When the predicate does not hold, the default is that the box is still reserved and nothing is painted, so a blank-versus-filled params pair cannot shift the layout by a point; `collapse: true` removes it from layout instead. A key missing from params, or a value that simply does not match, hides it; a key absent from top-level params also warns `missing_data`.",
+              "x-shojiku-capability": "item.visible"
             },
             "writingMode": {
               "anyOf": [
@@ -2151,7 +2396,25 @@
             "type",
             "grid"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "char_grid",
+          "x-shojiku-initial-overrides": {
+            "borderWidth": 0.5,
+            "fontSize": null
+          },
+          "x-shojiku-style-keys": [
+            "fontSize",
+            "fontFamily",
+            "color",
+            "textAlign",
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "fontWeight",
+            "fontStyle",
+            "opacity",
+            "textCombineUpright"
+          ]
         },
         {
           "additionalProperties": false,
@@ -2162,7 +2425,9 @@
               "type": [
                 "string",
                 "null"
-              ]
+              ],
+              "x-shojiku-capability": "ellipse.anchor",
+              "x-shojiku-ref": "item"
             },
             "box": {
               "anyOf": [
@@ -2195,14 +2460,17 @@
             },
             "style": {
               "$ref": "#/$defs/Style",
-              "description": "This mark's inline style, the decoration subset, with a 1 pt outline default when no layer authors a width. Inert text keys warn `shape_style_ignored`."
+              "description": "This mark's inline style, the decoration subset, with a 1 pt outline default when no layer authors a width. Inert text keys and a border pattern (the one outline stroke is always solid) warn `shape_style_ignored`.",
+              "x-shojiku-capability": "style.shapes.unified"
             },
             "styleNames": {
               "description": "Named `styles:` entries layered under this mark's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "style.shapes.unified",
+              "x-shojiku-ref": "style"
             },
             "type": {
               "const": "ellipse",
@@ -2218,13 +2486,24 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this mark is SHOWN. Distinct from `data:`, which decides whether the oval DRAWS while the box is reserved either way — `visible:` decides whether the item participates at all, and `collapse: true` takes its box out of layout."
+              "description": "Whether this mark is SHOWN. Distinct from `data:`, which decides whether the oval DRAWS while the box is reserved either way — `visible:` decides whether the item participates at all, and `collapse: true` takes its box out of layout.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "ellipse",
+          "x-shojiku-initial-overrides": {
+            "borderWidth": 1.0
+          },
+          "x-shojiku-style-keys": [
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "opacity"
+          ]
         },
         {
           "additionalProperties": false,
@@ -2268,14 +2547,17 @@
             },
             "style": {
               "$ref": "#/$defs/Style",
-              "description": "This checkbox's inline style, the decoration subset, with a 1 pt outline default when no layer authors a width. Inert text keys warn `shape_style_ignored`."
+              "description": "This checkbox's inline style, the decoration subset, with a 1 pt outline default when no layer authors a width. Inert text keys and a border pattern (the one outline stroke is always solid) warn `shape_style_ignored`.",
+              "x-shojiku-capability": "style.shapes.unified"
             },
             "styleNames": {
               "description": "Named `styles:` entries layered under this checkbox's inline style, in listed order.",
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-shojiku-capability": "style.shapes.unified",
+              "x-shojiku-ref": "style"
             },
             "type": {
               "const": "checkbox",
@@ -2291,13 +2573,24 @@
                   "type": "null"
                 }
               ],
-              "description": "Whether this checkbox is SHOWN. Distinct from `checked` and `data:`, which decide whether the CHECK MARK draws inside a frame that is there either way — `visible:` decides whether the item participates at all, and `collapse: true` takes its box out of layout."
+              "description": "Whether this checkbox is SHOWN. Distinct from `checked` and `data:`, which decide whether the CHECK MARK draws inside a frame that is there either way — `visible:` decides whether the item participates at all, and `collapse: true` takes its box out of layout.",
+              "x-shojiku-capability": "item.visible"
             }
           },
           "required": [
             "type"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "checkbox",
+          "x-shojiku-initial-overrides": {
+            "borderWidth": 1.0
+          },
+          "x-shojiku-style-keys": [
+            "backgroundColor",
+            "borderWidth",
+            "borderColor",
+            "opacity"
+          ]
         }
       ]
     },
@@ -2355,7 +2648,8 @@
         "value",
         "label"
       ],
-      "type": "object"
+      "type": "object",
+      "x-shojiku-capability": "definitions.enum.labels"
     },
     "Length": {
       "description": "Every geometry value. The canonical unit is the PDF point, so a bare number is points. A string may carry `pt`, `mm`, `cm` or `in`, all absolute and usable where no layout basis exists; `%` of the parent's resolved size along the same axis, except on margin and padding sides, which resolve against the parent's WIDTH on all four edges; `em`, multiples of the INHERITED font size, so an item's own inline size does not affect its own box lengths; or `rem`, multiples of the engine default size, which is a stable scale unit. `px` is deliberately not a template unit, and `fr` is not a length — it is a grid-track weight, so writing it where a length is expected is a parse error. A resolved length past a million points falls back to the key's default with `length_out_of_range`.",
@@ -2399,15 +2693,20 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-initial": "#000000"
         },
         "opacity": {
           "description": "Paint alpha for the stroke, from 0 to 1; defaults to 1. Out of range warns `invalid_opacity` and draws opaque.",
           "format": "double",
+          "maximum": 1.0,
+          "minimum": 0.0,
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "style.opacity",
+          "x-shojiku-initial": 1.0
         },
         "style": {
           "anyOf": [
@@ -2418,15 +2717,20 @@
               "type": "null"
             }
           ],
-          "description": "The stroke pattern, sharing the border wire's keyword set. `double` draws two parallel lines a third of the width each, offset either side of the authored geometry along its normal, so a diagonal doubles correctly."
+          "description": "The stroke pattern, sharing the border wire's keyword set. `double` draws two parallel lines a third of the width each, offset either side of the authored geometry along its normal, so a diagonal doubles correctly.",
+          "x-shojiku-capability": "line.style",
+          "x-shojiku-initial": "solid"
         },
         "width": {
           "description": "The stroke width in points; defaults to 1. Capped from 0 to 1000, the same bound border widths carry, since both reach the renderers' stroke maths directly. A negative, non-finite or over-cap value warns `invalid_line_width` and strokes at 1 pt — unlike a border, where 0 legitimately means no border, a line that strokes nothing draws nothing. An authored 0 passes through undiagnosed.",
           "format": "double",
+          "maximum": 1000.0,
+          "minimum": 0.0,
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "x-shojiku-initial": 1.0
         }
       },
       "type": "object"
@@ -2462,7 +2766,8 @@
         },
         "key": {
           "description": "The params field to read, as a dotted path. Required.",
-          "type": "string"
+          "type": "string",
+          "x-shojiku-ref": "dataKey"
         },
         "scope": {
           "anyOf": [
@@ -2473,7 +2778,8 @@
               "type": "null"
             }
           ],
-          "description": "Which data the key resolves against inside a cell. `element` is the default; `document` reads top-level params, which a page-global flag needs. Ignored on a table row condition, which warns `row_condition_scope_ignored`."
+          "description": "Which data the key resolves against inside a cell. `element` is the default; `document` reads top-level params, which a page-global flag needs. Ignored on a table row condition, which warns `row_condition_scope_ignored`.",
+          "x-shojiku-capability": "binding.scope"
         }
       },
       "required": [
@@ -2530,7 +2836,8 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `align-items`: cross-axis alignment of the children. `stretch`, the default, fills an unset cross size. A cross-axis `auto` margin opts a child out, since an auto margin beats alignment everywhere else here too."
+          "description": "Mirrors CSS `align-items`: cross-axis alignment of the children. `stretch`, the default, fills an unset cross size. A cross-axis `auto` margin opts a child out, since an auto margin beats alignment everywhere else here too.",
+          "x-shojiku-capability": "box.flex"
         },
         "columnGap": {
           "anyOf": [
@@ -2541,7 +2848,8 @@
               "type": "null"
             }
           ],
-          "description": "The space between grid column tracks, winning over the `gap` shorthand. Defaults to 0; negative becomes 0."
+          "description": "The space between grid column tracks, winning over the `gap` shorthand. Defaults to 0; negative becomes 0.",
+          "x-shojiku-capability": "box.grid"
         },
         "columnSpan": {
           "description": "How many grid column tracks this child spans; the cell run is the spanned widths plus the gaps between them. Defaults to 1 and clamps to the track count with `grid_span_clamped`. Outside a `type: grid` parent it warns `span_outside_grid` and is inert.",
@@ -2550,7 +2858,8 @@
           "type": [
             "integer",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "grid.span"
         },
         "columns": {
           "anyOf": [
@@ -2561,7 +2870,8 @@
               "type": "null"
             }
           ],
-          "description": "The grid's column tracks: a COUNT, which splits the content width equally after the gaps, or a track LIST mixing lengths, `fr` weights and `auto`, where an `auto` track is sized to the widest cell placed in it. Defaults to one column. Without `box.type: grid` it warns `grid_key_ignored`."
+          "description": "The grid's column tracks: a COUNT, which splits the content width equally after the gaps, or a track LIST mixing lengths, `fr` weights and `auto`, where an `auto` track is sized to the widest cell placed in it. Defaults to one column. Without `box.type: grid` it warns `grid_key_ignored`.",
+          "x-shojiku-capability": "box.grid"
         },
         "direction": {
           "anyOf": [
@@ -2572,7 +2882,8 @@
               "type": "null"
             }
           ],
-          "description": "Under flex, the main axis: `column` stacks children and `row` sets them side by side. Under grid, the fill order, the CSS `grid-auto-flow` analogue. Defaults to `column` under flex and `row` under grid."
+          "description": "Under flex, the main axis: `column` stacks children and `row` sets them side by side. Under grid, the fill order, the CSS `grid-auto-flow` analogue. Defaults to `column` under flex and `row` under grid.",
+          "x-shojiku-capability": "box.flex"
         },
         "flexBasis": {
           "anyOf": [
@@ -2583,7 +2894,8 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `flex-basis`, narrowed to two spellings. The main size this child STARTS FROM before `flexGrow` shares out the rest. `content`, the default, is its max-content width — the width at which its text would not wrap; `0` starts it at nothing so `flexGrow` divides the whole row, which is CSS's `flex: 1`. A length basis is deliberately not accepted, because `w` already sizes a child. A row key: a column child's basis is its content height, which the engine measures rather than letting you name."
+          "description": "Mirrors CSS `flex-basis`, narrowed to two spellings. The main size this child STARTS FROM before `flexGrow` shares out the rest. `content`, the default, is its max-content width — the width at which its text would not wrap; `0` starts it at nothing so `flexGrow` divides the whole row, which is CSS's `flex: 1`. A length basis is deliberately not accepted, because `w` already sizes a child. A row key: a column child's basis is its content height, which the engine measures rather than letting you name.",
+          "x-shojiku-capability": "box.flexBasis"
         },
         "flexGrow": {
           "description": "Mirrors CSS `flex-grow`: this child's share of the LEFTOVER main-axis size, among the children with no authored size on that axis. Defaults to 0 — the CSS default, where nothing grows unless asked. A child key, so it is valid on a leaf; inert on a child with an authored main-axis size and under grid, where cells are track-sized. Works on both axes, each on its own main axis.",
@@ -2591,7 +2903,8 @@
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "box.flexGrow"
         },
         "gap": {
           "anyOf": [
@@ -2602,7 +2915,8 @@
               "type": "null"
             }
           ],
-          "description": "The main-axis space between flex children, and the both-axes shorthand under grid, where the per-axis keys win. `%` resolves against the main-axis content size; negative becomes 0. Defaults to 0. Absolutely placed children ignore it."
+          "description": "The main-axis space between flex children, and the both-axes shorthand under grid, where the per-axis keys win. `%` resolves against the main-axis content size; negative becomes 0. Defaults to 0. Absolutely placed children ignore it.",
+          "x-shojiku-capability": "box.flex"
         },
         "h": {
           "anyOf": [
@@ -2624,7 +2938,8 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `justify-content`: how leftover main-axis space is distributed, which needs a definite main size — an auto-height column has none, so it is inert there. Under grid it distributes leftover width across tracks, which is meaningful only for a track list. Defaults to `start`. Negative free space degrades the CSS way."
+          "description": "Mirrors CSS `justify-content`: how leftover main-axis space is distributed, which needs a definite main size — an auto-height column has none, so it is inert there. Under grid it distributes leftover width across tracks, which is meaningful only for a track list. Defaults to `start`. Negative free space degrades the CSS way.",
+          "x-shojiku-capability": "box.flex"
         },
         "margin": {
           "anyOf": [
@@ -2635,7 +2950,8 @@
               "type": "null"
             }
           ],
-          "description": "Outer spacing: a bare number for all four sides, or a per-side map whose UNSET SIDES ARE 0 rather than inherited. `%` resolves against the parent's WIDTH on all four sides, the CSS margin rule, so vertical edges stay definite inside auto-height containers. Flow siblings space additively with `gap` — there is no margin collapse. Negative values are allowed; a side may also be `auto`, which absorbs free space under flex placement and horizontally in a flow, and resolves to 0 elsewhere. Positional shorthand strings are rejected with a pointer to the map form, and the bare string `auto` likewise."
+          "description": "Outer spacing: a bare number for all four sides, or a per-side map whose UNSET SIDES ARE 0 rather than inherited. `%` resolves against the parent's WIDTH on all four sides, the CSS margin rule, so vertical edges stay definite inside auto-height containers. Flow siblings space additively with `gap` — there is no margin collapse. Negative values are allowed; a side may also be `auto`, which absorbs free space under flex placement and horizontally in a flow, and resolves to 0 elsewhere. Positional shorthand strings are rejected with a pointer to the map form, and the bare string `auto` likewise.",
+          "x-shojiku-capability": "box.margin"
         },
         "maxHeight": {
           "anyOf": [
@@ -2646,7 +2962,8 @@
               "type": "null"
             }
           ],
-          "description": "An upper bound on the border-box height. Shorter than the content it behaves like a too-short explicit height: the content overflows visually and does not warn, because the author set the bound."
+          "description": "An upper bound on the border-box height. Shorter than the content it behaves like a too-short explicit height: the content overflows visually and does not warn, because the author set the bound.",
+          "x-shojiku-capability": "box.minmax"
         },
         "maxWidth": {
           "anyOf": [
@@ -2657,7 +2974,8 @@
               "type": "null"
             }
           ],
-          "description": "An upper bound on the border-box width, resolving `%` against the parent width. Loses to `minWidth` where the two conflict, as in CSS."
+          "description": "An upper bound on the border-box width, resolving `%` against the parent width. Loses to `minWidth` where the two conflict, as in CSS.",
+          "x-shojiku-capability": "box.minmax"
         },
         "minHeight": {
           "anyOf": [
@@ -2668,7 +2986,8 @@
               "type": "null"
             }
           ],
-          "description": "A lower bound on the border-box height. Taller than the content, it reserves the extra space for `verticalAlign` to distribute — and a flow text carries that reservation across a page split, leading the first fragment and trailing the last. A `%` bound against an auto-height parent drops with `percent_of_auto`."
+          "description": "A lower bound on the border-box height. Taller than the content, it reserves the extra space for `verticalAlign` to distribute — and a flow text carries that reservation across a page split, leading the first fragment and trailing the last. A `%` bound against an auto-height parent drops with `percent_of_auto`.",
+          "x-shojiku-capability": "box.minmax"
         },
         "minWidth": {
           "anyOf": [
@@ -2679,7 +2998,8 @@
               "type": "null"
             }
           ],
-          "description": "A lower bound on the border-box width, resolving `%` against the parent width. Bounds clamp in CSS order — min wins over max wins over the size — so a minimum of 200 beside a maximum of 100 resolves to 200."
+          "description": "A lower bound on the border-box width, resolving `%` against the parent width. Bounds clamp in CSS order — min wins over max wins over the size — so a minimum of 200 beside a maximum of 100 resolves to 200.",
+          "x-shojiku-capability": "box.minmax"
         },
         "padding": {
           "anyOf": [
@@ -2690,7 +3010,8 @@
               "type": "null"
             }
           ],
-          "description": "Inner spacing, in the same forms as `margin` but without `auto` and without negative values. Insets the content WITHOUT growing the box, as border-box sizing implies: it narrows a text item's wrap width, a container's child basis, an image's fit box and a `repeat` cell. An auto height grows by the vertical padding; an explicit one does not, and content past the content box then warns. `rect` has no content and ignores it."
+          "description": "Inner spacing, in the same forms as `margin` but without `auto` and without negative values. Insets the content WITHOUT growing the box, as border-box sizing implies: it narrows a text item's wrap width, a container's child basis, an image's fit box and a `repeat` cell. An auto height grows by the vertical padding; an explicit one does not, and content past the content box then warns. `rect` has no content and ignores it.",
+          "x-shojiku-capability": "box.padding"
         },
         "rowGap": {
           "anyOf": [
@@ -2701,7 +3022,8 @@
               "type": "null"
             }
           ],
-          "description": "The space between grid row tracks, winning over the `gap` shorthand. Defaults to 0; negative becomes 0."
+          "description": "The space between grid row tracks, winning over the `gap` shorthand. Defaults to 0; negative becomes 0.",
+          "x-shojiku-capability": "box.grid"
         },
         "rowSpan": {
           "description": "How many grid row tracks this child spans, reserving the cells beneath. Defaults to 1 and clamps to 64 with `grid_span_clamped`. Outside a `type: grid` parent it warns `span_outside_grid` and is inert.",
@@ -2710,7 +3032,8 @@
           "type": [
             "integer",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "grid.span"
         },
         "rows": {
           "anyOf": [
@@ -2721,7 +3044,8 @@
               "type": "null"
             }
           ],
-          "description": "The grid's row tracks, in the same forms as `columns`. Defaults to auto rows sized by their tallest child. A count needs a definite container height, and an auto-height container degrades to auto rows with a diagnostic; an `fr` row likewise degrades with `grid_fr_no_basis`. Rows past an explicit list are implicit and auto."
+          "description": "The grid's row tracks, in the same forms as `columns`. Defaults to auto rows sized by their tallest child. A count needs a definite container height, and an auto-height container degrades to auto rows with a diagnostic; an `fr` row likewise degrades with `grid_fr_no_basis`. Rows past an explicit list are implicit and auto.",
+          "x-shojiku-capability": "box.grid"
         },
         "type": {
           "anyOf": [
@@ -2732,7 +3056,8 @@
               "type": "null"
             }
           ],
-          "description": "The layout mode for this box's children. Unset behaves like `flex`; `grid` is explicit-only, which is why grid keys never imply the mode on their own. Only meaningful on a box with children — on a leaf it warns `layout_key_on_leaf`."
+          "description": "The layout mode for this box's children. Unset behaves like `flex`; `grid` is explicit-only, which is why grid keys never imply the mode on their own. Only meaningful on a box with children — on a leaf it warns `layout_key_on_leaf`.",
+          "x-shojiku-capability": "box.flex"
         },
         "w": {
           "anyOf": [
@@ -2875,7 +3200,8 @@
             "x",
             "y"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-form": "point"
         },
         {
           "additionalProperties": false,
@@ -2886,7 +3212,8 @@
             },
             "item": {
               "description": "The anchor form's required key: the `id` of the item this endpoint attaches to. It makes the whole line absolutely positioned, and an id no item carries warns `anchor_unknown_target` and draws nothing.",
-              "type": "string"
+              "type": "string",
+              "x-shojiku-ref": "item"
             },
             "offset": {
               "$ref": "#/$defs/AnchorOffset",
@@ -2896,7 +3223,9 @@
           "required": [
             "item"
           ],
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "line.anchor",
+          "x-shojiku-form": "anchor"
         }
       ]
     },
@@ -2923,7 +3252,9 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-capability": "styleNames",
+          "x-shojiku-ref": "style"
         },
         "when": {
           "$ref": "#/$defs/MarkBinding",
@@ -2948,14 +3279,16 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-ref": "style"
         },
         "conditionalStyles": {
           "description": "Data-driven layers applied in listed order AFTER the base and zebra layers, so a later entry wins over an earlier one and any of them wins over the zebra layer. At most 16 entries per table (`too_many_row_conditions`); every body row evaluates every entry.",
           "items": {
             "$ref": "#/$defs/RowConditionalStyle"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-capability": "table.row.conditionalStyles"
         },
         "height": {
           "anyOf": [
@@ -2966,7 +3299,8 @@
               "type": "null"
             }
           ],
-          "description": "A fixed height for every body row, which is what activates the column-level `textOverflow` policies. `%` resolves against the region height; negative falls back to auto with `invalid_row_height`."
+          "description": "A fixed height for every body row, which is what activates the column-level `textOverflow` policies. `%` resolves against the region height; negative falls back to auto with `invalid_row_height`.",
+          "x-shojiku-capability": "table.row.height"
         },
         "minHeight": {
           "anyOf": [
@@ -2988,7 +3322,9 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-capability": "styleNames",
+          "x-shojiku-ref": "style"
         }
       },
       "type": "object"
@@ -3035,7 +3371,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-ref": "format"
         },
         "displayFormats": {
           "description": "The display variants declared for this field, which is the set a binding's `format:` may pick from and the list an authoring tool offers. A pick outside it — and outside the template's `formats:` registry, the currency variants, the `value` label escape and the type overrides — warns `unknown_format`.",
@@ -3132,7 +3469,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "binding.placeholder"
         },
         "precision": {
           "description": "Decimal places for a numeric field, overriding the locale's own default for this field alone.",
@@ -3256,7 +3594,8 @@
               "type": "null"
             }
           ],
-          "description": "A hyperlink over this fragment alone, written into the PDF as a link annotation."
+          "description": "A hyperlink over this fragment alone, written into the PDF as a link annotation.",
+          "x-shojiku-capability": "link.url"
         },
         "style": {
           "$ref": "#/$defs/Style",
@@ -3267,7 +3606,9 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-capability": "styleNames",
+          "x-shojiku-ref": "style"
         },
         "text": {
           "description": "Static content for this fragment, interpolating `{key}` like the item's own text.",
@@ -3277,7 +3618,17 @@
           ]
         }
       },
-      "type": "object"
+      "type": "object",
+      "x-shojiku-style-keys": [
+        "fontSize",
+        "fontFamily",
+        "color",
+        "fontWeight",
+        "fontStyle",
+        "letterSpacing",
+        "textDecoration",
+        "textCombineUpright"
+      ]
     },
     "Style": {
       "additionalProperties": false,
@@ -3288,7 +3639,9 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "style.backgroundColor",
+          "x-shojiku-inherited": false
         },
         "borderColor": {
           "anyOf": [
@@ -3299,7 +3652,10 @@
               "type": "null"
             }
           ],
-          "description": "Border stroke colour, as one `#rrggbb` string or a per-side map. Inert while the side's width is 0, so a named style can carry a palette colour that items opt into by giving a width. Not inherited; defaults to black."
+          "description": "Border stroke colour, as one `#rrggbb` string or a per-side map. Inert while the side's width is 0, so a named style can carry a palette colour that items opt into by giving a width. Not inherited; defaults to black.",
+          "x-shojiku-capability": "style.border",
+          "x-shojiku-inherited": false,
+          "x-shojiku-initial": "#000000"
         },
         "borderRadius": {
           "anyOf": [
@@ -3310,7 +3666,9 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `border-radius`, as a single value for all four corners — there is no per-corner form. `%` resolves against both axes independently, so `50%` is a circle on a square box. An absolute radius too large to fit shrinks by one uniform factor, the CSS overlapping-curves rule, which is what makes a large value a stadium rather than an ellipse. Not inherited; defaults to 0. Refused with `border_radius_ignored` on a per-side or `double` border, a `table` and the form marks; negative or non-finite warns `invalid_border_radius`."
+          "description": "Mirrors CSS `border-radius`, as a single value for all four corners — there is no per-corner form. `%` resolves against both axes independently, so `50%` is a circle on a square box. An absolute radius too large to fit shrinks by one uniform factor, the CSS overlapping-curves rule, which is what makes a large value a stadium rather than an ellipse. Not inherited; defaults to 0. Refused with `border_radius_ignored` on a per-side or `double` border, a `table` and the form marks; negative or non-finite warns `invalid_border_radius`.",
+          "x-shojiku-capability": "style.borderRadius",
+          "x-shojiku-inherited": false
         },
         "borderStyle": {
           "anyOf": [
@@ -3321,7 +3679,10 @@
               "type": "null"
             }
           ],
-          "description": "Border stroke pattern, as one keyword or a per-side map. `double` splits the side's width into two lines of a third each, as CSS does. Not inherited; defaults to `solid`."
+          "description": "Border stroke pattern, as one keyword or a per-side map. `double` splits the side's width into two lines of a third each, as CSS does. Not inherited; defaults to `solid`.",
+          "x-shojiku-capability": "style.borderStyle",
+          "x-shojiku-inherited": false,
+          "x-shojiku-initial": "solid"
         },
         "borderWidth": {
           "anyOf": [
@@ -3332,21 +3693,29 @@
               "type": "null"
             }
           ],
-          "description": "Border stroke width over the border box, in points, as one number for all four sides or a per-side map whose unset sides are 0. A side draws only where its computed width is above 0. Does NOT change geometry — each side is drawn centred on the box edge. Not inherited; defaults to 0. Negative widths are parse errors; over 1000 pt falls back with `invalid_border_width`."
+          "description": "Border stroke width over the border box, in points, as one number for all four sides or a per-side map whose unset sides are 0. A side draws only where its computed width is above 0. Does NOT change geometry — each side is drawn centred on the box edge. Not inherited; defaults to 0. Negative widths are parse errors; over 1000 pt falls back with `invalid_border_width`.",
+          "maximum": 1000.0,
+          "minimum": 0.0,
+          "x-shojiku-capability": "style.border",
+          "x-shojiku-inherited": false,
+          "x-shojiku-initial": 0.0
         },
         "color": {
           "description": "Text colour as an `#rrggbb` string. Inherited; defaults to black. Any other spelling warns `invalid_color` and draws the default.",
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "#000000"
         },
         "fontFamily": {
           "description": "The face id to draw with, resolved against the loaded font packs. Inherited; defaults to the pack's own default face. An id no pack ships warns `unknown_font_family`.",
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-inherited": true
         },
         "fontSize": {
           "anyOf": [
@@ -3357,7 +3726,11 @@
               "type": "null"
             }
           ],
-          "description": "Text size, in points or as a length string. Strings take `pt`/`mm`/`cm`/`in`, `em`/`%` of the INHERITED size (nested relative sizes multiply), or `rem` of the engine default. Inherited; defaults to 10. Non-positive or non-finite falls back with `invalid_font_size`; over 1000 pt with `font_size_out_of_range`."
+          "description": "Text size, in points or as a length string. Strings take `pt`/`mm`/`cm`/`in`, `em`/`%` of the INHERITED size (nested relative sizes multiply), or `rem` of the engine default. Inherited; defaults to 10. Non-positive or non-finite falls back with `invalid_font_size`; over 1000 pt with `font_size_out_of_range`.",
+          "exclusiveMinimum": 0.0,
+          "maximum": 1000.0,
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": 10.0
         },
         "fontStyle": {
           "anyOf": [
@@ -3368,7 +3741,10 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `font-style`, as a two-value subset. `italic` is a synthetic baseline-anchored skew of about 12 degrees with advances unchanged; no real italic face is selected. Inherited; defaults to `normal`."
+          "description": "Mirrors CSS `font-style`, as a two-value subset. `italic` is a synthetic baseline-anchored skew of about 12 degrees with advances unchanged; no real italic face is selected. Inherited; defaults to `normal`.",
+          "x-shojiku-capability": "style.fontStyle",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "normal"
         },
         "fontWeight": {
           "anyOf": [
@@ -3379,7 +3755,10 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `font-weight`, as a two-value subset. `bold` selects the family's real bold face when it ships one, otherwise synthetic emboldening — glyphs stroked in the text colour, advances unchanged. Inherited; defaults to `normal`."
+          "description": "Mirrors CSS `font-weight`, as a two-value subset. `bold` selects the family's real bold face when it ships one, otherwise synthetic emboldening — glyphs stroked in the text colour, advances unchanged. Inherited; defaults to `normal`.",
+          "x-shojiku-capability": "style.fontWeight",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "normal"
         },
         "hangingPunctuation": {
           "anyOf": [
@@ -3390,7 +3769,10 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `hanging-punctuation`, as a subset over line-terminating commas and full stops. Lets such a character hang past the end edge rather than forcing a wrap. Inherited; defaults to `none`."
+          "description": "Mirrors CSS `hanging-punctuation`, as a subset over line-terminating commas and full stops. Lets such a character hang past the end edge rather than forcing a wrap. Inherited; defaults to `none`.",
+          "x-shojiku-capability": "style.hangingPunctuation",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "none"
         },
         "letterSpacing": {
           "anyOf": [
@@ -3401,7 +3783,12 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `letter-spacing`. Added to every character advance, so measurement, wrapping, alignment and drawing share one policy. Points or a length string taking `pt`/`mm`/`cm`/`in` or `em`/`rem`, where `em` is the item's own computed size; `%` is a parse error, as in CSS. Negative values are allowed. Inherited; defaults to 0. Magnitude over 1000 pt falls back to 0 with `invalid_letter_spacing`."
+          "description": "Mirrors CSS `letter-spacing`. Added to every character advance, so measurement, wrapping, alignment and drawing share one policy. Points or a length string taking `pt`/`mm`/`cm`/`in` or `em`/`rem`, where `em` is the item's own computed size; `%` is a parse error, as in CSS. Negative values are allowed. Inherited; defaults to 0. Magnitude over 1000 pt falls back to 0 with `invalid_letter_spacing`.",
+          "maximum": 1000.0,
+          "minimum": -1000.0,
+          "x-shojiku-capability": "style.letterSpacing",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": 0.0
         },
         "lineBreak": {
           "anyOf": [
@@ -3412,23 +3799,35 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `line-break`. `normal`, `strict` and `loose` pick the CJK kinsoku strictness; `anywhere` breaks between any two characters with no kinsoku at all. Inherited; defaults to `normal`."
+          "description": "Mirrors CSS `line-break`. `normal`, `strict` and `loose` pick the CJK kinsoku strictness; `anywhere` breaks between any two characters with no kinsoku at all. Inherited; defaults to `normal`.",
+          "x-shojiku-capability": "style.lineBreak",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "normal"
         },
         "lineHeight": {
           "description": "Mirrors CSS `line-height` in its unitless form: a multiplier of the computed font size, which sets the line box height. Inherited; defaults to 1.4. Non-positive or non-finite falls back with `invalid_line_height`; over 1000 with `line_height_out_of_range`.",
+          "exclusiveMinimum": 0.0,
           "format": "double",
+          "maximum": 1000.0,
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": 1.4
         },
         "opacity": {
           "description": "Paint alpha from 0 to 1 for the item's own painting — glyphs, decoration line, background fill and border stroke alike. Per-item alpha, NOT CSS group compositing: nested items do not multiply, and a container's opacity does not reach its children. QR modules ignore it, to protect scannability. Not inherited; defaults to 1. Out of range warns `invalid_opacity` and draws opaque.",
           "format": "double",
+          "maximum": 1.0,
+          "minimum": 0.0,
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "style.opacity",
+          "x-shojiku-inherited": false,
+          "x-shojiku-initial": 1.0
         },
         "overflow": {
           "anyOf": [
@@ -3439,7 +3838,10 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `overflow`, deciding what a container-like box does with children outside its border box. `hidden` clips children to the border box and suppresses `container_overflow`; decoration stays outside, because it IS the box. Inert on items that are not container-like — text uses `textOverflow` instead. Not inherited; defaults to `visible`."
+          "description": "Mirrors CSS `overflow`, deciding what a container-like box does with children outside its border box. `hidden` clips children to the border box and suppresses `container_overflow`; decoration stays outside, because it IS the box. Inert on items that are not container-like — text uses `textOverflow` instead. Not inherited; defaults to `visible`.",
+          "x-shojiku-capability": "style.overflow",
+          "x-shojiku-inherited": false,
+          "x-shojiku-initial": "visible"
         },
         "textAlign": {
           "anyOf": [
@@ -3450,7 +3852,9 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `text-align`. On a vertical block the keyword names the line's end along the column, so `right` is the bottom. A `char_grid` honours it to fill a partly filled line toward its end, but reads it from the item only, never inherited. Inherited; defaults to `left`."
+          "description": "Mirrors CSS `text-align`. On a vertical block the keyword names the line's end along the column, so `right` is the bottom. A `char_grid` honours it to fill a partly filled line toward its end, but reads it from the item only, never inherited. Inherited; defaults to `left`.",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "left"
         },
         "textCombineUpright": {
           "anyOf": [
@@ -3461,7 +3865,10 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `text-combine-upright`, as a subset — tate-chu-yoko. `none` combines nothing; `{ digits: n }` with n from 2 to 4 makes runs of up to n consecutive ASCII digits share one upright cell of a vertical column; `all` combines the whole styled scope into one cell, which is meant for a short span. Longer runs stay uncombined; out-of-range digits and unknown keywords are parse errors. Inert in horizontal text. Inherited; defaults to `none`."
+          "description": "Mirrors CSS `text-combine-upright`, as a subset — tate-chu-yoko. `none` combines nothing; `{ digits: n }` with n from 2 to 4 makes runs of up to n consecutive ASCII digits share one upright cell of a vertical column; `all` combines the whole styled scope into one cell, which is meant for a short span. Longer runs stay uncombined; out-of-range digits and unknown keywords are parse errors. Inert in horizontal text. Inherited; defaults to `none`.",
+          "x-shojiku-capability": "style.textCombineUpright",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "none"
         },
         "textDecoration": {
           "anyOf": [
@@ -3472,7 +3879,10 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `text-decoration-line`: one keyword, or both lines at once as `underline line_through` (either order). Position and thickness come from the font's own metrics, drawn in the text colour and sized to each measured line. Not inherited, matching CSS, since decoration PROPAGATION is not modelled — set it on the text item itself. Defaults to `none`."
+          "description": "Mirrors CSS `text-decoration-line`: one keyword, or both lines at once as `underline line_through` (either order). Position and thickness come from the font's own metrics, drawn in the text colour and sized to each measured line. Not inherited, matching CSS, since decoration PROPAGATION is not modelled — set it on the text item itself. Defaults to `none`.",
+          "x-shojiku-capability": "style.textDecoration",
+          "x-shojiku-inherited": false,
+          "x-shojiku-initial": "none"
         },
         "textOrientation": {
           "anyOf": [
@@ -3483,7 +3893,10 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `text-orientation`, as a subset, and is consulted only inside a vertical block. Inherited; defaults to `mixed`."
+          "description": "Mirrors CSS `text-orientation`, as a subset, and is consulted only inside a vertical block. Inherited; defaults to `mixed`.",
+          "x-shojiku-capability": "style.textOrientation",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "mixed"
         },
         "textOverflow": {
           "anyOf": [
@@ -3494,7 +3907,10 @@
               "type": "null"
             }
           ],
-          "description": "What text does when it exceeds a DEFINITE box height; an auto-height box grows instead and never consults this. On a vertical block the overflow axis is the box width. Not inherited; defaults to `visible`."
+          "description": "What text does when it exceeds a DEFINITE box height; an auto-height box grows instead and never consults this. On a vertical block the overflow axis is the box width. Not inherited; defaults to `visible`.",
+          "x-shojiku-capability": "style.textOverflow",
+          "x-shojiku-inherited": false,
+          "x-shojiku-initial": "visible"
         },
         "textSpacingTrim": {
           "anyOf": [
@@ -3505,7 +3921,10 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `text-spacing-trim`, as a subset. Trims the internal space between adjacent fullwidth punctuation glyphs to half-width. Synthesized after shaping, so it works on every face rather than depending on font features. Inherited; defaults to `space_all`, which trims nothing."
+          "description": "Mirrors CSS `text-spacing-trim`, as a subset. Trims the internal space between adjacent fullwidth punctuation glyphs to half-width. Synthesized after shaping, so it works on every face rather than depending on font features. Inherited; defaults to `space_all`, which trims nothing.",
+          "x-shojiku-capability": "style.textSpacingTrim",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "space_all"
         },
         "verticalAlign": {
           "anyOf": [
@@ -3516,7 +3935,10 @@
               "type": "null"
             }
           ],
-          "description": "Vertical alignment of content within the item's own box, which needs a definite height or `minHeight` slack to have room to act. On a vertical block it maps CSS-logically onto the column stack — top is the right edge, bottom the left. Not inherited; defaults to `top`."
+          "description": "Vertical alignment of content within the item's own box, which needs a definite height or `minHeight` slack to have room to act. On a vertical block it maps CSS-logically onto the column stack — top is the right edge, bottom the left. Not inherited; defaults to `top`.",
+          "x-shojiku-capability": "style.verticalAlign",
+          "x-shojiku-inherited": false,
+          "x-shojiku-initial": "top"
         },
         "writingMode": {
           "anyOf": [
@@ -3527,7 +3949,10 @@
               "type": "null"
             }
           ],
-          "description": "Mirrors CSS `writing-mode`, as a two-value subset. `vertical_rl` turns a text item into a vertical block — characters fill top to bottom and columns lay out right to left. Honoured on every text surface; a text `mark:` is the one warned fallback, `vertical_text_unsupported`. Inherited; defaults to `horizontal_tb`."
+          "description": "Mirrors CSS `writing-mode`, as a two-value subset. `vertical_rl` turns a text item into a vertical block — characters fill top to bottom and columns lay out right to left. Honoured on every text surface; a text `mark:` is the one warned fallback, `vertical_text_unsupported`. Inherited; defaults to `horizontal_tb`.",
+          "x-shojiku-capability": "style.writingMode",
+          "x-shojiku-inherited": true,
+          "x-shojiku-initial": "horizontal_tb"
         }
       },
       "type": "object"
@@ -3563,14 +3988,17 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-capability": "styleNames",
+          "x-shojiku-ref": "style"
         },
         "visuallyHidden": {
           "description": "Whether the header row paints nothing — no label glyphs, no band fill, no grid ruling — while the labels stay in the PDF's text layer, so an extractor, a search index or an AI can still tell what each column means. Defaults to false. The row KEEPS its height, and a `headerGroups` row is hidden with it. Not a structure tree: no tagged PDF is emitted, so a screen reader gets the labels as flowing text with no header-to-column association. The table's own outer frame is not the row's and still draws across the strip.",
           "type": [
             "boolean",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "table.header.visuallyHidden"
         }
       },
       "type": "object"
@@ -3581,18 +4009,21 @@
       "properties": {
         "defaults": {
           "$ref": "#/$defs/TemplateDefaults",
-          "description": "The document's presentation defaults: the style cascade root, which the `rem` unit also follows, and the per-type format defaults."
+          "description": "The document's presentation defaults: the style cascade root, which the `rem` unit also follows, and the per-type format defaults.",
+          "x-shojiku-capability": "template.defaults"
         },
         "document": {
           "$ref": "#/$defs/DocumentMeta",
-          "description": "Metadata written into the PDF's `/Info` dictionary and XMP. PDF only: PNG previews carry no metadata."
+          "description": "Metadata written into the PDF's `/Info` dictionary and XMP. PDF only: PNG previews carry no metadata.",
+          "x-shojiku-capability": "template.document.metadata"
         },
         "formats": {
           "additionalProperties": {
             "$ref": "#/$defs/NamedFormat"
           },
           "description": "The named format registry a binding's `format:` may reference — date and datetime patterns given a name once and reused. At most 256 entries.",
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "template.formats"
         },
         "name": {
           "description": "The template's own name. Informational — the engine never renders it.",
@@ -3614,7 +4045,8 @@
             "$ref": "#/$defs/Style"
           },
           "description": "The named-style registry items reference through `styleNames`, the CSS-class analogue. At most 256 entries (`too_many_styles`); styles are flat, so one cannot reference another.",
-          "type": "object"
+          "type": "object",
+          "x-shojiku-capability": "styles"
         },
         "version": {
           "anyOf": [
@@ -3642,7 +4074,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "template.defaults.document"
         },
         "formats": {
           "anyOf": [
@@ -3660,7 +4093,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "x-shojiku-capability": "template.defaults.document"
         },
         "style": {
           "anyOf": [
@@ -3671,7 +4105,24 @@
               "type": "null"
             }
           ],
-          "description": "The cascade ROOT style. Inherited properties flow from here into every item, and the `rem` unit resolves against this style's computed font size, falling back to the engine's 10 pt when unset."
+          "description": "The cascade ROOT style. Inherited properties flow from here into every item, and the `rem` unit resolves against this style's computed font size, falling back to the engine's 10 pt when unset.",
+          "x-shojiku-holds-content": true,
+          "x-shojiku-style-keys": [
+            "fontSize",
+            "fontFamily",
+            "lineHeight",
+            "color",
+            "textAlign",
+            "lineBreak",
+            "textSpacingTrim",
+            "hangingPunctuation",
+            "fontWeight",
+            "fontStyle",
+            "letterSpacing",
+            "writingMode",
+            "textOrientation",
+            "textCombineUpright"
+          ]
         }
       },
       "type": "object"
@@ -3749,17 +4200,29 @@
         },
         "style": {
           "$ref": "#/$defs/Style",
-          "description": "The oval's decoration subset — border width and colour, background colour and opacity — with a 1 pt outline default when no layer authors a width."
+          "description": "The oval's decoration subset — border width and colour, background colour and opacity — with a 1 pt outline default when no layer authors a width. Text keys and a border pattern warn `shape_style_ignored`.",
+          "x-shojiku-capability": "style.shapes.unified"
         },
         "styleNames": {
           "description": "Named `styles:` entries layered under the mark's inline style, in listed order.",
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-shojiku-capability": "style.shapes.unified",
+          "x-shojiku-ref": "style"
         }
       },
-      "type": "object"
+      "type": "object",
+      "x-shojiku-initial-overrides": {
+        "borderWidth": 1.0
+      },
+      "x-shojiku-style-keys": [
+        "backgroundColor",
+        "borderWidth",
+        "borderColor",
+        "opacity"
+      ]
     },
     "TextOrientation": {
       "description": "How characters sit inside a vertical column. `mixed` keeps CJK and kana upright and rotates Latin and digits 90 degrees clockwise; `upright` keeps every character upright.",
@@ -3872,7 +4335,8 @@
         },
         "key": {
           "description": "The params field to read, as a dotted path. Required.",
-          "type": "string"
+          "type": "string",
+          "x-shojiku-ref": "dataKey"
         },
         "scope": {
           "anyOf": [
