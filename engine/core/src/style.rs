@@ -24,6 +24,7 @@ mod enums;
 mod inert;
 #[cfg(test)]
 mod inert_tests;
+mod key;
 #[cfg(test)]
 mod length_tests;
 #[cfg(test)]
@@ -44,6 +45,7 @@ pub use enums::{
     FontStyle, FontWeight, HangingPunctuation, LineBreak, Overflow, TextAlign, TextDecoration,
     TextOverflow, TextSpacingTrim, VerticalAlign,
 };
+pub use key::StyleKey;
 pub use shapes::{LineStyle, DEFAULT_STROKE_PT};
 pub use writing::{TextCombine, TextCombineUpright, TextOrientation, WritingMode};
 
@@ -52,13 +54,16 @@ pub use writing::{TextCombine, TextCombineUpright, TextOrientation, WritingMode}
 /// Used both as an item's inline `style:` and as a named entry in the
 /// template's `styles:` registry.
 ///
-/// Adding a field here is a FIVE-place change, and only this one is
-/// compiler-checked: ② `ComputedStyle` in `shojiku-layout`'s `style.rs`
-/// (+ its ③ `base` — the inherit-or-not decision — and ④ `overlaid`),
-/// and ⑤ a capability key in `engine/authoring/src/capabilities/` (the GUI
-/// gates syntax on it; nothing references it from here, so a missed key
-/// only surfaces in e2e). If spans (or shapes) must NOT honor the
-/// new key, also list it in `style/inert.rs`.
+/// Adding a field here also means: ② a [`StyleKey`] variant in
+/// `style/key.rs` (a test fails while the field has none), after which
+/// every fact table in `crate::facts` stops compiling until it says how the
+/// key inherits, its initial value, its range and who paints with it;
+/// ③ `ComputedStyle` in `shojiku-layout`'s `style.rs` (+ its `base` — the
+/// inherit-or-not decision — and `overlaid`); and ④ a capability key in
+/// `engine/authoring/src/capabilities/` (the GUI gates syntax on it;
+/// nothing references it from here, so a missed key only surfaces in e2e).
+/// If spans (or shapes) must NOT honor the new key, also list it in
+/// `style/inert.rs`.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

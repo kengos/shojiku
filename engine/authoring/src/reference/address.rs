@@ -32,7 +32,9 @@ fn resolve<'a>(schema: &'a mut Value, tail: std::str::Split<'_, char>) -> Option
 }
 
 /// One segment: a property first, then a branch discriminator, then a key of
-/// a branch with no discriminator.
+/// a branch with no discriminator. A segment spelled `@<key>` names the
+/// branch with no discriminator that carries `<key>` — the alternative FORM
+/// itself rather than one of its keys (`PointSpec.@item`).
 ///
 /// Property before branch is not a preference — no shape in the catalog
 /// carries both `oneOf` and `properties`, which the gate pins, so at most one
@@ -40,6 +42,14 @@ fn resolve<'a>(schema: &'a mut Value, tail: std::str::Split<'_, char>) -> Option
 /// no discriminator: a discriminated branch's keys are addressed through the
 /// branch, and the audit refuses a spelling that would match both.
 fn step<'a>(node: &'a mut Value, segment: &str) -> Option<&'a mut Value> {
+    if let Some(key) = segment.strip_prefix('@') {
+        return node
+            .get_mut("oneOf")
+            .and_then(Value::as_array_mut)?
+            .iter_mut()
+            .filter(|branch| branch.pointer("/properties/type/const").is_none())
+            .find(|branch| branch.pointer(&format!("/properties/{key}")).is_some());
+    }
     if node.get("properties").is_some() {
         return node
             .get_mut("properties")
