@@ -195,6 +195,16 @@ files and `e2e/` excluded, with NO waiver list.
   mirroring `engine/core` serde names (`data` is a `DataBinding
   {key?,format?}` map, never a bare string; enum unions copied from the
   engine); no runtime code.
+- `catalog.ts` — the engine's key catalog
+  (`engine/authoring/reference/catalog.schema.json`) as a build-time JSON
+  import (`resolveJsonModule` in `tsconfig.base.json`; the gui container
+  mounts the whole repo, and `gui/designer-app/Dockerfile` COPYs the one
+  file into its app stage), read lazily inside each function so a bundle
+  calling none of them drops the JSON — and the reads a panel needs from its fact keywords:
+  `styleKeys`, `styleKeyFacts` (initial value, inheritance, bounds),
+  `itemStyleKeys` / `spanStyleKeys` (the style keys a surface takes),
+  `itemInitialOverrides`. The JSON is typed to the three shapes the reads use,
+  so an unknown type or key falls to an empty answer, never a throw.
 - `scripts/normalize-examples.ts` — the `normalize:examples` one-shot:
   rewrites every `examples/*/*/templates.yml` to the
   `serializeTemplate` fixed point.

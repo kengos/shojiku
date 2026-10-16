@@ -109,6 +109,29 @@ describe('which keys a type shows', () => {
     expect(field('Line-break rules')).not.toBeNull();
   });
 
+  it('gives a vertical char_grid its tate-chu-yoko, and nothing else', () => {
+    open(
+      doc('{ type: char_grid, writingMode: vertical_rl, grid: { charsPerLine: 20, lines: 10 } }'),
+    );
+    expect(shownFields()).toEqual(['Horizontal in vertical']);
+    const values = [...(field('Horizontal in vertical') as HTMLSelectElement).options].map(
+      (o) => o.value,
+    );
+    expect(values).toContain('digits2');
+    expect(values).not.toContain('all');
+    pick('Horizontal in vertical', 'digits2');
+    expect(file()).toContain('digits: 2');
+  });
+
+  it('keeps a horizontal char_grid’s authored tate-chu-yoko visible so it can be cleared', () => {
+    open(
+      doc(
+        '{ type: char_grid, style: { textCombineUpright: all }, grid: { charsPerLine: 20, lines: 10 } }',
+      ),
+    );
+    expect(shownFields()).toEqual(['Horizontal in vertical']);
+  });
+
   it('gives no section to a char_grid, which takes its own grid settings', () => {
     render(
       <Harness text={doc('{ type: char_grid, grid: { charsPerLine: 20, lines: 10 } }')} path={P} />,

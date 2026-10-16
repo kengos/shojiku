@@ -11,7 +11,9 @@
 // read all six (`table/rows.rs`, `rows/measure.rs`); a container reads none
 // itself and hands all six to what it holds (`container.rs`); a list reads only
 // the vertical three — its entries never wrap, its trim is forced to
-// `space_all` and nothing hangs (`list.rs`, `list/vertical.rs`). Horizontal
+// `space_all` and nothing hangs (`list.rs`, `list/vertical.rs`); a char_grid
+// reads only tate-chu-yoko, and only while its OWN `writingMode` field is
+// vertical (`char_grid.rs` — its direction is not a style key). Horizontal
 // `spans` never hang punctuation (`wrap/rich.rs` hard-codes none), so a
 // spans-carrying text drops that key while it is horizontal.
 
@@ -49,6 +51,7 @@ const KEYS_BY_TYPE: Readonly<Record<string, readonly TypesettingKey[]>> = {
   table: TYPESETTING_KEYS,
   container: TYPESETTING_KEYS,
   list: VERTICAL_KEYS,
+  char_grid: ['textCombineUpright'],
 };
 
 /** The wire's vertical writing mode (`WritingMode::VerticalRl`). */
@@ -92,6 +95,11 @@ const OPTION_CAPABILITY: Readonly<Record<string, string>> = {
  * warn `vertical_text_unsupported` and stay horizontal). */
 const SURFACES_CAPABILITY = 'style.writingMode.surfaces';
 
+/** Types whose vertical keys arrived with the keys themselves, so the key's own
+ * capability is the whole gate: a container hands them to what it holds, and a
+ * vertical char_grid combined its digits from the start. */
+const OWN_SURFACE_TYPES: ReadonlySet<string> = new Set(['container', 'char_grid']);
+
 /** Where the item's text comes from, as far as the key table cares. */
 export interface TypesettingSubject {
   readonly type: string;
@@ -116,7 +124,8 @@ function keyOffered(
     return false;
   }
   const verticalFamily = VERTICAL_KEYS.includes(key);
-  if (verticalFamily && !plainText(subject) && subject.type !== 'container') {
+  // A vertical char_grid has combined its digits since the key existed.
+  if (verticalFamily && !plainText(subject) && !OWN_SURFACE_TYPES.has(subject.type)) {
     // A list and spans also need `.all` for tate-chu-yoko: that key is what
     // marks it honoured per span and in a vertical list.
     const extra =
@@ -143,8 +152,14 @@ export function typesettingKeys(
 export function typesettingOptions(
   key: TypesettingKey,
   capabilities: readonly string[] | undefined,
+  type?: string,
 ): readonly string[] {
   return OPTIONS[key].filter((option) => {
+    // A char_grid combines digit runs only: its cells take `{ digits: N }`,
+    // and `all` combines nothing there (`TextCombineUpright::digits`).
+    if (type === 'char_grid' && key === 'textCombineUpright' && option === 'all') {
+      return false;
+    }
     const gate = OPTION_CAPABILITY[`${key}.${option}`];
     return gate === undefined || hasCapability(capabilities, gate);
   });

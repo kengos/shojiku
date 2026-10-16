@@ -19,6 +19,7 @@ import type { ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import { type CascadeContext, cascadeContext } from '../toolbar/cascade';
 import { effectiveValueIn } from '../toolbar/effective';
+import { charGridCombineHint, charGridVertical } from './charGridText';
 import { SelectField } from './choiceFields';
 import type { ItemPanelProps } from './itemPanelProps';
 import { applyPanelOp } from './model';
@@ -61,7 +62,11 @@ export function typesettingParts(
   const { t } = i18n;
   const { controller, path, view, capabilities } = props;
   const ctx = cascadeContext(controller.read, path, props.floor);
-  const vertical = effectiveValueIn(ctx, 'writingMode').value === VERTICAL_RL;
+  // A char_grid's direction is its own `writingMode` field, not a style key.
+  const vertical =
+    view.type === 'char_grid'
+      ? charGridVertical(controller.read, path)
+      : effectiveValueIn(ctx, 'writingMode').value === VERTICAL_RL;
   const subject = { type: view.type, hasSpans: view.hasSpans, vertical };
   // One predicate over every key the type can take in EITHER mode: shown when
   // the item authors it, or when it is offered and honoured in the mode the
@@ -123,13 +128,20 @@ function TypesettingFields({ props, ctx, keys, note }: TypesettingFieldsProps) {
             <SelectField
               label={t(`panel.field.${key}`)}
               value={effective.own}
-              options={withAuthored(typesettingOptions(key, capabilities), effective.own)}
+              options={withAuthored(
+                typesettingOptions(key, capabilities, props.view.type),
+                effective.own,
+              )}
               noneLabel={t('panel.itemSection.typesetting.notSet')}
               optionLabel={(option) => ownOptionLabel(t, key, option)}
               onCommit={(next) => dispatch(typesettingOp(path, key, effective.own, next))}
             />
             <OriginBadge
-              effective={effective}
+              effective={
+                props.view.type === 'char_grid' && key === 'textCombineUpright'
+                  ? charGridCombineHint(effective)
+                  : effective
+              }
               onNavigate={props.onNavigateDefaults}
               valueLabel={(value) => styleOptionLabel(t, key, value)}
             />

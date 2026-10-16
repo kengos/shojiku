@@ -90,6 +90,22 @@ export function styleOptionLabel(t: Translate, field: string, option: string): s
   return Object.hasOwn(perField, option) ? t(perField[option]) : option;
 }
 
+/** A `textAlign` option where the line runs VERTICALLY (a vertical char_grid):
+ * the engine reads `left`/`center`/`right` as the start/middle/end of the line,
+ * which is top/middle/bottom there. */
+const VERTICAL_TEXT_ALIGN: Readonly<Record<string, string>> = {
+  left: 'style.value.textAlign.vertical.left',
+  center: 'style.value.textAlign.vertical.center',
+  right: 'style.value.textAlign.vertical.right',
+};
+
+/** `styleOptionLabel`, with `textAlign` named for a vertical line. */
+export function verticalOptionLabel(t: Translate, field: string, option: string): string {
+  return field === 'textAlign' && Object.hasOwn(VERTICAL_TEXT_ALIGN, option)
+    ? t(VERTICAL_TEXT_ALIGN[option])
+    : styleOptionLabel(t, field, option);
+}
+
 /** The label for a defaults-surface select's UNSET option. The document has
  * authored nothing, so the option says so AND names the value the engine will
  * use — the state the old surface expressed by filling the box with that value

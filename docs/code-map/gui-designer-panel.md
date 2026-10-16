@@ -1166,11 +1166,26 @@ presence is not a text binding.
   stroke alpha is the same `style.opacity` key and its own alone; plus
   `OPACITY_DECORATION_ONLY`: a QR code and a container fade only their own
   fill and border), `PADDING_TYPES` (rect and the marks inset
-  nothing), `CHAR_GRID_GLYPH_KEYS`, plus `textHelpKey`/`overflowKeyOf`/
+  nothing), `CHAR_GRID_GLYPH_KEYS` + `charGridTextKeys` (alignment too under
+  `char_grid.textAlign`) + `CHAR_GRID_OWN_KEYS` (size and alignment, read from
+  the grid's own layers only), plus `textHelpKey`/`overflowKeyOf`/
   `fillTitleKey`/`openingSection`/`opacityOffered`.
-  `styleSurfaces.test.ts` pins the rows against the engine matrix.
+  `styleSurfaces.test.ts` pins the rows against the engine matrix, and
+  `keyCatalog.test.ts` holds every row — and the typesetting table, the engine
+  default floor and the inherited-key mirror — against the engine's key
+  catalog (`@shojiku/designer-core`'s reads): a control may only be offered
+  where the catalog says the type takes the key.
+- `panel/charGridText.ts` (pure) — a char_grid's text-row reads:
+  `ownLayersContext` (the cascade context without ancestors, `defaults.style`
+  or the floor — an unset own-layer row shows no hint, since the hint would
+  name the document defaults as its source), `charGridContextFor` (routes the two
+  own-layer keys through it), `charGridVertical` (the grid's own `writingMode`
+  field). `styleLabels.verticalOptionLabel` names `textAlign` top/middle/bottom
+  for a vertical grid.
 - `panel/ItemDecorationSections.tsx` — builds the section list above; bodies are
-  `ItemTextFields` (`TypographyFields` — restricted by `only` for a char_grid —
+  `ItemTextFields` (`TypographyFields.tsx` — restricted by `only` for a
+  char_grid, whose `rows` give its own-layer contexts and vertical labels; an
+  enum row's hint names its value in the option's words —
   + text colour + `TextLookFields`), `OverflowField` (`OverflowFields.tsx`:
   `textOverflow` on a text surface, `overflow` on a container or frame; `clip`
   behind `style.textOverflow.clip`), `FillBorderFields` (+`hasFillBorder`: a
@@ -1183,9 +1198,11 @@ presence is not a text binding.
   (`writingMode`, `textOrientation`, `textCombineUpright`, `lineBreak`,
   `textSpacingTrim`, `hangingPunctuation`) as data: which types' layout reads
   which key (text/page_number/table/container all six, a list the vertical
-  three, horizontal `spans` no `hangingPunctuation`; char_grid, shapes and media
-  none — each cited to `engine/layout/src/engine/`), the per-key and per-option
-  capability gates (`style.writingMode.surfaces` past a plain text block,
+  three, horizontal `spans` no `hangingPunctuation`; a char_grid only
+  `textCombineUpright`, while its own `writingMode` field is vertical; shapes
+  and media none — each cited to `engine/layout/src/engine/`), the per-key and
+  per-option capability gates (`style.writingMode.surfaces` past a plain text
+  block, a container or a char_grid,
   `.all` for tate-chu-yoko in a list or spans, `strict_loose`), the
   `textCombineUpright` codec (`combineToken`: `{ digits: N }` ↔ `digitsN`;
   absent is unset, and any other PRESENT shape the engine cannot parse is

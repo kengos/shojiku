@@ -50,10 +50,24 @@ describe('which keys a type is offered', () => {
     ]);
   });
 
-  it('gives a char_grid, the shapes and the media nothing (they ignore the style keys)', () => {
-    for (const type of ['char_grid', 'rect', 'ellipse', 'checkbox', 'line', 'image', 'qr_code']) {
+  it('gives the shapes and the media nothing (they ignore the style keys)', () => {
+    for (const type of ['rect', 'ellipse', 'checkbox', 'line', 'image', 'qr_code']) {
       expect(typesettingKeys(subject(type), undefined)).toEqual([]);
     }
+  });
+
+  it('gives a char_grid only tate-chu-yoko, under the key’s own capability', () => {
+    expect(typesettingKeys(subject('char_grid'), undefined)).toEqual(['textCombineUpright']);
+    expect(typesettingKeys(subject('char_grid'), ['style.textCombineUpright'])).toEqual([
+      'textCombineUpright',
+    ]);
+    expect(typesettingKeys(subject('char_grid'), [])).toEqual([]);
+  });
+
+  it('offers a char_grid digit runs only, since it combines nothing for `all`', () => {
+    expect(typesettingOptions('textCombineUpright', undefined, 'char_grid')).not.toContain('all');
+    expect(typesettingOptions('textCombineUpright', undefined, 'char_grid')).toContain('digits2');
+    expect(typesettingOptions('textCombineUpright', undefined, 'text')).toContain('all');
   });
 
   it('drops hanging punctuation from horizontal spans only', () => {
