@@ -36,6 +36,17 @@ file is only for output that could not answer **which file / which line
 
 ## Open
 
+- [ ] `make_issue_coverage_why_misses_an_unrun_closure` — **When**: `make
+      engine:coverage` failed with every test green; the uncovered line was
+      a closure that never ran (`unwrap_or_else(|| …)` on a line whose outer
+      expression did run), so `cargo llvm-cov`'s own line total was one
+      short. **Not detected by**: the FAIL block's `--- which lines? ---`
+      (`scripts/coverage-why.sh`), which printed "every line is covered in
+      every instantiation" — it reads `DA:` records, where that line shows
+      the outer expression's hits. **Recovered by**: comparing each `SF`
+      block's `LF:` with its `LH:` in `engine/lcov.info`, then the block's
+      `FNDA:0` entry for the closure.
+
 - [ ] `make_issue_lock_remedy_matches_the_recipe_echo` — **When**: `make
       engine:lint` failed at `== fmt ==` on a plain rustfmt diff, with no
       other gate running. **Not detected by**: the FAIL block's diagnosis
