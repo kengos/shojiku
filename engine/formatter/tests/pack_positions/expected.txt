@@ -12,6 +12,10 @@ ok id=xx dateFormats={}
 ## lang-non-string-key.yml
 ok id=xx dateFormats={"1":"yyyy"}
 
+## lang-null-table.yml
+parse
+message: dateFormats: invalid type: unit value, expected a map at line 2 column 14
+
 ## lang-ok-minimal.yml
 ok id=xx dateFormats={}
 
@@ -67,12 +71,22 @@ message: faces[0].weight: unknown variant `heavyish`, expected `normal` or `bold
 parse
 message: dateFormats: duplicate entry with key "compact" at line 2 column 3
 
+## overlay-empty.yml
+parse
+message: missing field `id`
+
 ## overlay-nesting-125-levels.yml
 ok id=ja-JP dateFormats={"compact":"yyyy/MM/dd","default":"yyyy/MM/dd(E)","long":"yyyy年M月d日(E)","wareki":"Gy年M月d日","wareki-compact":"GGy.M.d"}
 
 ## overlay-non-string-key.yml
 parse
 message: invalid type: integer `1`, expected a string
+
+## overlay-null-list.yml
+ok id=ja-JP dateFormats={"compact":"yyyy/MM/dd","default":"yyyy/MM/dd(E)","long":"yyyy年M月d日(E)","wareki":"Gy年M月d日","wareki-compact":"GGy.M.d"}
+
+## overlay-null-table.yml
+ok id=ja-JP dateFormats={}
 
 ## overlay-ok-per-key.yml
 ok id=ja-JP dateFormats={"compact":"yy/MM/dd","default":"yyyy/MM/dd(E)","long":"yyyy年M月d日(E)","wareki":"Gy年M月d日","wareki-compact":"GGy.M.d"}

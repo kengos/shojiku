@@ -6,6 +6,13 @@ line: 4
 column: 11
 message: properties.name.type: unknown variant `strin`, expected one of `string`, `number`, `integer`, `boolean`, `object`, `array` at line 4 column 11
 
+## definitions-duplicate-key.yml
+parse
+message: properties.name: duplicate entry with key "type" at line 4 column 5
+
+## definitions-local-tag.yml
+ok
+
 ## definitions-non-string-property-key.yml
 ok
 
@@ -29,6 +36,14 @@ line: 5
 column: 5
 message: properties.name: unknown field `lable`, expected one of `type`, `format`, `title`, `description`, `example`, `enum`, `minLength`, `maxLength`, `minimum`, `maximum`, `minItems`, `maxItems`, `required`,…
 
+## definitions-v1-groups-with-non-string-key.yml
+located definitions
+path: groups
+key: -
+line: 0
+column: 0
+message: the `groups` list is the retired v1 form; definitions now use the OpenAPI-schema shape (`type: object` + `properties`) — see docs/engine/definitions.md
+
 ## definitions-v1-groups.yml
 located definitions
 path: groups
@@ -40,6 +55,9 @@ message: the `groups` list is the retired v1 form; definitions now use the OpenA
 ## params-duplicate-key.yml
 parse
 message: order: duplicate entry with key "code" at line 2 column 3
+
+## params-empty.yml
+ok null
 
 ## params-integer-past-64-bits.yml
 parse
