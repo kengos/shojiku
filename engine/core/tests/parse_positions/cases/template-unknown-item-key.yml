@@ -1,0 +1,7 @@
+sections:
+  body:
+    type: flow
+    items:
+      - type: text
+        text: x
+        colour: red

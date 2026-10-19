@@ -182,7 +182,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 81 files / 10534 lines; tests 99 files / 14163 lines
+### `core` (L1) — 87 files / 11195 lines; tests 104 files / 14615 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -200,7 +200,7 @@ first sentence of its `//!` header.
 - `src/geometry/point_spec.rs` 185 — A `line` endpoint: authored coordinates, or an anchor to another item.
 - `src/interpolate.rs` 178 — `{key}` / `{key:format}` interpolation inside static text.
 - `src/length.rs` 229 — Template length values: absolute points/physical units, a percentage of the parent, or a font-relative `em`/`rem`.
-- `src/lib.rs` 67 — Shojiku data model.
+- `src/lib.rs` 68 — Shojiku data model.
 - `src/params.rs` 50 — `params` — runtime data supplied by the calling application.
 - `src/parse.rs` 90 — Two-pass typed parse shared by the template and definitions entry points.
 - `src/parse/keys.rs` 97 — Every mapping key in a template is a string, checked on the pass-1 `Value` before the typed parse reads the document.
@@ -264,6 +264,12 @@ first sentence of its `//!` header.
 - `src/validate/spans.rs` 65 — Structural checks for rich-text `spans`: content exclusivity, the MAX_SPANS cap, and span-inapplicable style keys.
 - `src/validate/styles.rs` 141 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 - `src/validate/tables.rs` 232 — Table checks: the bound array group, per-column content shape (`data` vs `cell` exclusivity), row-relative column keys, the row `conditionalStyles` predicates (and the `scope` they ignore), and the array-scoped bindings inside a `cell:` column's sub-template.
+- `src/yaml.rs` 104 — The one door YAML (and JSON, a subset of it) enters the engine through.
+- `src/yaml/build.rs` 217 — Reads a document into a [`Value`], refusing what the door refuses at the node that breaks the rule rather than in a walk afterwards.
+- `src/yaml/build/key.rs` 83 — The visitor for a mapping key: a string is the key, anything else is refused as the key of the mapping that holds it.
+- `src/yaml/error.rs` 77 — What the YAML door reports when it refuses a document.
+- `src/yaml/read.rs` 111 — Typed reads: from a document's source, and from a [`Value`] subtree.
+- `src/yaml/value.rs` 68 — The tree a YAML document is read into, owned by the engine rather than by the parser.
 - `src/yaml_guard.rs` 103 — Input sanitation shared by the YAML/JSON parse entry points.
 
 ### `verify` (L1) — 14 files / 1577 lines; tests 20 files / 2453 lines

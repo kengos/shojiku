@@ -25,6 +25,7 @@ mod schema;
 mod style;
 mod template;
 mod validate;
+pub mod yaml;
 mod yaml_guard;
 
 pub use catalog::{ArrayElement, Catalog, FieldSpec};

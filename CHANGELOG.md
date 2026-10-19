@@ -12,6 +12,16 @@ page carries the same notes with the install instructions and the
 platform binaries.
 
 ## [Unreleased]
+### Added
+
+- **`shojiku_core::yaml`, one door for reading YAML in the Rust crate.**
+  While it reads a document it refuses an oversize input, nesting past 120
+  levels, a mapping key that is not a string or appears twice, a NaN or
+  infinite number, an integer from 65 to 128 bits wide and a local YAML
+  tag (`!name`), and it hands back the engine's own `Value` tree. The
+  engine's parse entry points do not go through it yet, so how a template,
+  definitions or params document is read is unchanged.
+
 ### Removed
 
 - **The diagnostic code `horizontal_overflow`**, deprecated in 0.3.0.

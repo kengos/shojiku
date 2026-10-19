@@ -1,0 +1,6 @@
+sections:
+  body:
+    type: flow
+    items:
+      - type: container
+        5: []

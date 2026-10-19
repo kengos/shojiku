@@ -17,16 +17,16 @@ enum Segment<'a> {
 
 /// The segments from the document root to the node a walk is visiting.
 #[derive(Default)]
-pub(super) struct Trail<'a> {
+pub(crate) struct Trail<'a> {
     segments: Vec<Segment<'a>>,
 }
 
 impl<'a> Trail<'a> {
-    pub(super) fn push_key(&mut self, key: &'a str) {
+    pub(crate) fn push_key(&mut self, key: &'a str) {
         self.segments.push(Segment::Key(key));
     }
 
-    pub(super) fn push_index(&mut self, index: usize) {
+    pub(crate) fn push_index(&mut self, index: usize) {
         self.segments.push(Segment::Index(index));
     }
 
@@ -40,7 +40,7 @@ impl<'a> Trail<'a> {
     }
 
     /// The whole path, spelled.
-    pub(super) fn spell(&self) -> String {
+    pub(crate) fn spell(&self) -> String {
         self.spell_to(self.depth())
     }
 

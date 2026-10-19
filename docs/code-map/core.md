@@ -154,7 +154,8 @@ injected at parse). The template model splits along CSS lines.
   `items:` count — pinned by a 61-deep `5:` chain on a 2 MiB thread.
   `parse/trail.rs` — `Trail`: the path all three template walks (keys,
   nesting, locate) carry as BORROWED segments, spelled only when one
-  reports. Formatting the path at every node copied the whole prefix per
+  reports (the `yaml` door spells its refusal paths through it
+  too). Formatting the path at every node copied the whole prefix per
   child — a long explicit key over a long sequence was quadratic inside
   the input cap; pinned by a 1 MiB key × 200k elements under a deadline.
   `parse/nesting.rs` — the template bound: counts nesting of `items:`
@@ -331,6 +332,34 @@ injected at parse). The template model splits along CSS lines.
   diagnostic args) and `TooLarge` (numbers only, never any of the input;
   maps onto the existing `parse_error` code rather than minting one — a
   refused input never became a document).
+- `yaml.rs` (+ `yaml/`) — **`shojiku_core::yaml`, the one YAML door, with
+  no caller yet**: the parse entry points above still read through
+  `parse.rs` + `yaml_guard.rs`, and routing them (and the formatter,
+  authoring and mcp readers) through it is the next step of the serde_yaml
+  move. `parse(input) -> Document` reads into the engine's own `Value`
+  (`yaml/value.rs`: Null/Bool/Int/UInt/Float/String/Sequence/Mapping as
+  `Vec<(String, Value)>` in document order, `get`, `Serialize`) and makes
+  every refusal DURING that one read, in `yaml/build.rs` (the `serde`
+  visitor; `build/key.rs` the key visitor): size (`MAX_INPUT_BYTES`), depth
+  (`MAX_DEPTH` = 120, counted here and set below serde_yaml's 128 so this
+  bound is the one that fires), non-string key, duplicate key, non-finite
+  number, integer of 65–128 bits (serde_yaml reads a wider one as a float,
+  and past `f64` as a string; both pass), local tag (`!name`; standard `!!str` tags are serde_yaml's
+  to resolve and pass, and `!!int abc` is serde_yaml's own refusal, kind
+  `Syntax`). A refusal's path is gathered as the error unwinds and
+  spelled through `parse/trail.rs` (root = `.`, unlike the template key
+  walk's empty string). `Document::typed` / `from_str` re-read the SOURCE
+  with `serde_path_to_error` (parser scalar rules, line/column);
+  `from_value` reads a subtree through `yaml/read.rs`'s `Deserializer` for
+  `&Value` (strict: a scalar is the type it was read as; path, no
+  location). `YamlError { kind: YamlErrorKind, path, line, column, message }`
+  (`yaml/error.rs`, `#[non_exhaustive]`, Echo fields). Alias resolutions are
+  NOT bounded by it. `tests/parse_positions/` (near-e2e) is the golden
+  record of what today's template/definitions/params doors report on
+  broken documents — variant, path, key, line, column, message, or `ok`
+  (params: with the JSON read, pinning scalar edges like `yes`, `017`,
+  `<<`, `!!str`) — in one `expected.txt`, so the parser swap is read as
+  that file's diff.
 
 ## engine/diagnostics — the structured-diagnostic type + registry
 

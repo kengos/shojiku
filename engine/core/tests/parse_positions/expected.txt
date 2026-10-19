@@ -1,0 +1,164 @@
+## definitions-bad-type-variant.yml
+located definitions
+path: properties.name.type
+key: -
+line: 4
+column: 11
+message: properties.name.type: unknown variant `strin`, expected one of `string`, `number`, `integer`, `boolean`, `object`, `array` at line 4 column 11
+
+## definitions-root-not-object.yml
+located definitions
+path: type
+key: -
+line: 0
+column: 0
+message: the definitions root must be `type: object` with `properties`
+
+## definitions-syntax-bad-indent.yml
+parse
+message: did not find expected key at line 5 column 4, while parsing a block mapping at line 3 column 3
+
+## definitions-unknown-property-key.yml
+located definitions
+path: properties.name.lable
+key: -
+line: 5
+column: 5
+message: properties.name: unknown field `lable`, expected one of `type`, `format`, `title`, `description`, `example`, `enum`, `minLength`, `maxLength`, `minimum`, `maximum`, `minItems`, `maxItems`, `required`,…
+
+## definitions-v1-groups.yml
+located definitions
+path: groups
+key: -
+line: 0
+column: 0
+message: the `groups` list is the retired v1 form; definitions now use the OpenAPI-schema shape (`type: object` + `properties`) — see docs/engine/definitions.md
+
+## params-integer-past-64-bits.yml
+parse
+message: order.total: invalid type: integer `18446744073709551616` as u128, expected any YAML value at line 2 column 10
+
+## params-non-finite.yml
+non-finite params
+
+## params-scalar-edges.yml
+ok {"base":{"x":1},"merged":{"<<":{"x":1},"y":2},"octal":"017","octal_prefixed":15,"past_128_bits":1e+40,"past_f64":"10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","standard_tag":"5","underscored":"1_000","yes":"yes"}
+
+## params-syntax-unclosed-brace.yml
+parse
+message: did not find expected ',' or '}' at line 2 column 1, while parsing a flow mapping at line 1 column 11
+
+## template-bad-enum-variant.yml
+located template
+path: sections.body.items[0]
+key: -
+line: 0
+column: 0
+message: sections: unknown variant `show_empty`, expected `collapse` or `reserve` at line 2 column 3
+
+## template-non-finite.yml
+non-finite template
+
+## template-non-string-key-at-root.yml
+located template
+path: (empty)
+key: -
+line: 0
+column: 0
+message: mapping key `5` is not a string; every template key must be one (quote it if it is a name)
+
+## template-non-string-key.yml
+located template
+path: sections.body.items[0]
+key: -
+line: 0
+column: 0
+message: mapping key `5` is not a string; every template key must be one (quote it if it is a name)
+
+## template-not-a-mapping.yml
+located template
+path: .
+key: -
+line: 1
+column: 1
+message: invalid type: sequence, expected struct Template
+
+## template-syntax-duplicate-key.yml
+parse
+message: sections.body: duplicate entry with key "type" at line 3 column 5
+
+## template-syntax-tab-indent.yml
+parse
+message: found character that cannot start any token at line 3 column 1, while scanning for the next token
+
+## template-syntax-undefined-alias.yml
+parse
+message: unknown anchor at line 4 column 12
+
+## template-syntax-unterminated-flow.yml
+parse
+message: did not find expected ',' or ']' at line 5 column 1, while parsing a flow sequence at line 4 column 12
+
+## template-table-column-wrong-key.yml
+located template
+path: sections.body.items[0]
+key: -
+line: 0
+column: 0
+message: sections: unknown field `key`, expected one of `id`, `label`, `type`, `fit`, `data`, `cell`, `width`, `styleNames`, `style` at line 2 column 3
+
+## template-tagged-value.yml
+located template
+path: sections.body.items[0]
+key: -
+line: 0
+column: 0
+message: sections.body.items[0].text: untagged and internally tagged enums do not support enum input at line 6 column 15
+
+## template-unknown-body-type.yml
+located template
+path: sections.body.type
+key: -
+line: 3
+column: 11
+message: sections.body.type: unknown variant `sideways`, expected `flow` or `absolute` at line 3 column 11
+
+## template-unknown-item-key.yml
+located template
+path: sections.body.items[0]
+key: colour
+line: 0
+column: 0
+message: sections: unknown field `colour`, expected one of `id`, `visible`, `box`, `text`, `data`, `bindings`, `spans`, `styleNames`, `style`, `link`, `mark`, `ruby`, `rubySize` at line 2 column 3
+
+## template-unknown-item-type.yml
+located template
+path: sections.body.items[0]
+key: -
+line: 0
+column: 0
+message: sections: unknown variant `txt`, expected one of `text`, `rect`, `line`, `table`, `page_number`, `image`, `container`, `repeat`, `repeat_flow`, `qr_code`, `list`, `page_break`, `char_grid`, `ellipse`,…
+
+## template-unknown-key-nested-item.yml
+located template
+path: sections.body.items[1].items[0]
+key: bogus
+line: 0
+column: 0
+message: sections: unknown field `bogus`, expected one of `id`, `visible`, `box`, `text`, `data`, `bindings`, `spans`, `styleNames`, `style`, `link`, `mark`, `ruby`, `rubySize` at line 2 column 3
+
+## template-unknown-top-level-key.yml
+located template
+path: bogusTop
+key: -
+line: 1
+column: 1
+message: unknown field `bogusTop`, expected one of `version`, `name`, `document`, `page`, `styles`, `defaults`, `formats`, `sections`
+
+## template-wrong-type-top-level.yml
+located template
+path: styles
+key: -
+line: 1
+column: 9
+message: styles: invalid type: sequence, expected a map at line 1 column 9
