@@ -1,3 +1,6 @@
+## lang-duplicate-key-in-table.yml
+ok id=xx dateFormats={"compact":"b"}
+
 ## lang-duplicate-key.yml
 parse
 message: duplicate field `id`
@@ -24,6 +27,9 @@ parse
 message: mapping values are not allowed in this context at line 4 column 8
 
 ## lang-tagged-value.yml
+ok id=xx dateFormats={}
+
+## lang-unknown-key-integer-past-64-bits.yml
 ok id=xx dateFormats={}
 
 ## lang-unknown-key-non-finite.yml
