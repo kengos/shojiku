@@ -184,8 +184,8 @@ fn parse_number(text: &str) -> Result<f64, String> {
 }
 
 /// Truncates template-supplied text before echoing it into an error:
-/// the input is attacker-controlled and unbounded (yaml_guard caps
-/// non-finite numbers, not string sizes). Shared with other template
+/// the input is attacker-controlled and unbounded (the YAML door refuses
+/// non-finite numbers, not long strings). Shared with other template
 /// string parsers (e.g. `PageSize`).
 pub(crate) fn snippet(text: &str) -> String {
     shojiku_diagnostics::sanitize_marked(text, MAX_SNIPPET)
@@ -195,7 +195,7 @@ pub(crate) fn snippet(text: &str) -> String {
 /// a well-formed length is a handful of characters.
 const MAX_SNIPPET: usize = 32;
 
-/// YAML numbers are already guarded by `yaml_guard`, but string forms
+/// YAML numbers are already guarded by the YAML door, but string forms
 /// (`"1e309%"`) parse through `str::parse` and can produce infinities —
 /// reject them here so no non-finite length ever reaches layout math.
 pub(crate) fn finite(length: Length, value: f64) -> Result<Length, String> {

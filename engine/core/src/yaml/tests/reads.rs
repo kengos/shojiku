@@ -117,3 +117,31 @@ fn get_finds_a_key_only_in_a_mapping() {
     assert_eq!(tree.get("c"), None);
     assert_eq!(Value::Int(1).get("a"), None);
 }
+
+#[derive(Debug, Deserialize, PartialEq)]
+struct Pair(u8, u8);
+
+#[derive(Debug, Default, Deserialize, PartialEq)]
+#[serde(default)]
+struct Table {
+    rows: Vec<u8>,
+    names: std::collections::BTreeMap<String, String>,
+}
+
+#[test]
+fn a_null_subtree_reads_as_an_empty_list_or_mapping() {
+    // As the read it replaced did: a locale overlay clears a table this way.
+    let tree = parse("rows: ~\nnames: ~\n").expect("parses").into_tree();
+    assert_eq!(from_value::<Table>(&tree).expect("reads"), Table::default());
+    assert_eq!(
+        from_value::<Table>(&Value::Null).expect("reads"),
+        Table::default()
+    );
+    // A tuple takes the same path, so an empty one is too short for it.
+    assert!(from_value::<(u8, u8)>(&Value::Null).is_err());
+    assert!(from_value::<Pair>(&Value::Null).is_err());
+    // The non-null spellings still read through the same methods.
+    let pair = parse("[1, 2]\n").expect("parses").into_tree();
+    assert_eq!(from_value::<Pair>(&pair).expect("reads"), Pair(1, 2));
+    assert_eq!(from_value::<(u8, u8)>(&pair).expect("reads"), (1, 2));
+}

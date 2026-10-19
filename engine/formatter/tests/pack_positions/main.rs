@@ -48,9 +48,9 @@ fn file_name(path: &Path) -> String {
 fn record(name: &str, text: &str) -> String {
     match name.split('-').next() {
         Some("lang") => lang(LangPack::from_yaml_str(text)),
-        Some("overlay") => lang(
-            LangPack::builtin("ja-JP", Some(text)).map(|pack| pack.expect("ja-JP is builtin")),
-        ),
+        Some("overlay") => {
+            lang(LangPack::builtin("ja-JP", Some(text)).map(|pack| pack.expect("ja-JP is builtin")))
+        }
         Some("manifest") => match PackManifest::from_yaml(text) {
             Ok(manifest) => format!(
                 "ok version={} license={} faces={}",

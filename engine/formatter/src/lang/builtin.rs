@@ -7,7 +7,8 @@
 //! (recursively), scalars and sequences replace.
 
 use super::{LangPack, LangPackError};
-use serde_yaml::Value;
+use shojiku_core::yaml::{self, Value};
+use std::collections::HashMap;
 
 /// Locale ids compiled into this engine build (surfaced through
 /// `shojiku capabilities` for GUI gating).
@@ -34,7 +35,7 @@ pub fn currency_fraction_digits(code: &str) -> u32 {
         // The file is generated + checked in; a parse failure is a build
         // defect caught by tests, so degrade to an empty table (every
         // code then gets the CLDR DEFAULT of 2) rather than panic.
-        serde_yaml::from_str(FRACTIONS_YAML).unwrap_or_default()
+        yaml::from_str(FRACTIONS_YAML).unwrap_or_default()
     });
     table.get(code).copied().unwrap_or(2)
 }
@@ -58,16 +59,24 @@ fn canonical_id(id: &str, ids: &[&'static str]) -> Option<&'static str> {
 }
 
 /// Deep-merges `overlay` into `base`: mappings merge per key
-/// (recursively); scalars, sequences, and nulls replace. Recursion depth
-/// is bounded by the YAML parser's own nesting limit.
+/// (recursively), a new key going after the base's; scalars, sequences, and
+/// nulls replace. Recursion depth is bounded by the YAML door's
+/// ([`yaml::MAX_DEPTH`]). Each key is found through an index, so a
+/// host-supplied overlay with many keys costs their count, not its square.
 fn deep_merge(base: &mut Value, overlay: Value) {
     match (base, overlay) {
         (Value::Mapping(b), Value::Mapping(o)) => {
+            let mut index: HashMap<String, usize> = b
+                .iter()
+                .enumerate()
+                .map(|(i, (key, _))| (key.clone(), i))
+                .collect();
             for (key, value) in o {
-                match b.get_mut(&key) {
-                    Some(slot) => deep_merge(slot, value),
+                match index.get(&key) {
+                    Some(&i) => deep_merge(&mut b[i].1, value),
                     None => {
-                        b.insert(key, value);
+                        index.insert(key.clone(), b.len());
+                        b.push((key, value));
                     }
                 }
             }
@@ -98,9 +107,9 @@ impl LangPack {
                 // case. `yaml` itself is compiled into the binary and needs
                 // no bound.
                 crate::lang::ensure_pack_size(overlay)?;
-                let mut base: Value = serde_yaml::from_str(yaml)?;
-                deep_merge(&mut base, serde_yaml::from_str(overlay)?);
-                serde_yaml::from_value(base)?
+                let mut base = yaml::parse(yaml)?.into_tree();
+                deep_merge(&mut base, yaml::parse(overlay)?.into_tree());
+                yaml::from_value(&base)?
             }
         };
         Ok(Some(pack))

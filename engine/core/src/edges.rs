@@ -163,7 +163,7 @@ pub(crate) struct EdgeMapRepr {
 }
 
 /// Builds the all-sides form from a bare number, rejecting non-finite
-/// values (YAML `1e309` parses to `inf` before `yaml_guard` can see it
+/// values (YAML `1e309` parses to `inf` before the YAML door can see it
 /// here). Shared with the `page.margin` deserializer.
 pub(crate) fn all_sides(v: f64) -> Result<EdgeSpec, String> {
     let len = crate::length::finite(Length::Pt(v), v)?;

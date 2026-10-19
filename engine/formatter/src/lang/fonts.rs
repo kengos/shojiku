@@ -153,14 +153,19 @@ impl PackManifest {
     /// a manifest from disk (the resolver and the CLI) read it through
     /// [`crate::read_pack_file`], which holds the same bound at the read and
     /// refuses a path that is not a regular file, so text in hand is the only
-    /// thing this door ever has to refuse. The refusal comes
-    /// back as a `serde_yaml::Error` (built with `de::Error::custom`, since
-    /// serde_yaml has no public constructor) because that is this
-    /// signature's error type; its message names the two numbers only.
+    /// thing this door ever has to refuse. The rest is read through the YAML
+    /// door ([`shojiku_core::yaml`]). Every refusal comes back as a
+    /// `serde_yaml::Error` (built with `de::Error::custom`, since serde_yaml
+    /// has no public constructor) because that is this signature's error
+    /// type: it carries the message and where it happened
+    /// ([`shojiku_core::yaml::YamlError::located_message`]), and no
+    /// `location()`; the size refusal's
+    /// message names the two numbers only.
     pub fn from_yaml(text: &str) -> Result<Self, serde_yaml::Error> {
         crate::lang::ensure_pack_size(text)
             .map_err(<serde_yaml::Error as serde::de::Error>::custom)?;
-        serde_yaml::from_str(text)
+        shojiku_core::yaml::from_str(text)
+            .map_err(|err| <serde_yaml::Error as serde::de::Error>::custom(err.located_message()))
     }
 
     /// Resolved faces of this pack, files joined onto `pack_dir` and

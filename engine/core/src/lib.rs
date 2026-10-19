@@ -26,7 +26,6 @@ mod style;
 mod template;
 mod validate;
 pub mod yaml;
-mod yaml_guard;
 
 pub use catalog::{ArrayElement, Catalog, FieldSpec};
 pub use definitions::{
@@ -65,4 +64,4 @@ pub use template::{
     MAX_FORMATS, MAX_IMPOSITION_PER_PAGE, MAX_ROW_CONDITIONAL_STYLES, MAX_RUBY_ENTRIES, MAX_SPANS,
 };
 pub use validate::validate;
-pub use yaml_guard::MAX_INPUT_BYTES;
+pub use yaml::MAX_INPUT_BYTES;

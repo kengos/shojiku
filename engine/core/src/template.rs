@@ -100,7 +100,7 @@ pub struct Template {
 /// Accepts what authors naturally write — `version: 1`, `1.5`, or
 /// `"2.0"` — and serializes back in the authored form (the bare
 /// number was the universal miss in the external acceptance run).
-/// Numbers are finite by construction (`yaml_guard`).
+/// Numbers are finite by construction (the YAML door, [`crate::yaml`]).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]

@@ -34,7 +34,12 @@
 //!
 //! Alias expansion is NOT bounded here beyond what the parser does, so a
 //! document inside the input cap can still expand to a tree far larger than
-//! itself.
+//! itself. Today's parser caps repetitions at `events.len() * 100`, which
+//! SCALES with the input: measured, a 197-byte bomb tops out at 2,351 nodes,
+//! the same document padded to 400 KB at 2,545,689, roughly 6 nodes per
+//! source byte — order 10^8 inside [`MAX_INPUT_BYTES`]. Closing that needs a
+//! bound on alias RESOLUTIONS, inside the parser; the Designer holds the
+//! browser side with `MAX_ALIAS_COUNT` over a different YAML library.
 
 use serde::de::DeserializeOwned;
 
@@ -45,7 +50,16 @@ use serde::de::DeserializeOwned;
 /// own then changes nothing about which documents are read.
 pub const MAX_DEPTH: usize = 120;
 
-pub use crate::yaml_guard::MAX_INPUT_BYTES;
+/// The largest input the door reads, in bytes.
+///
+/// 16 MiB — twice the Designer's documented 8 MiB template ceiling, so no
+/// legal document is anywhere near it, while a hostile one cannot make the
+/// engine hold and walk an arbitrarily large tree. The MCP surface keeps
+/// its own, much tighter inline cap (512 KiB) for its own reasons. A door
+/// that reports the refusal in an error type of its own (the formatter's
+/// `LangPackError::TooLarge`) compares against this one number.
+pub const MAX_INPUT_BYTES: usize = 16 * 1024 * 1024;
+
 pub use error::{YamlError, YamlErrorKind};
 pub use value::Value;
 

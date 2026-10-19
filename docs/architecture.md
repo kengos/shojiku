@@ -489,7 +489,8 @@ an item, the typed parse read a numeric key as one of the item's fields by
 its position, which let a chain of containers get past the nesting check.
 A style or format named by a bare number was harmless, but which mappings
 the typed parse buffers is a detail of serde, not of the wire, so the key
-is refused everywhere.
+is refused everywhere — and, since every document is read through one YAML
+reader, in params, definitions and packs as well.
 
 Capability keys stay append-only (item 3): a key that disappeared would
 read to every consumer as a feature that disappeared. The MCP tool

@@ -159,7 +159,7 @@ impl Ctx<'_, '_> {
     /// Guards a paint alpha (`opacity`): `0..=1` passes through,
     /// anything else warns and draws opaque — a typo'd opacity silently
     /// hiding content would be worse than ignoring it. Template values are
-    /// finite (yaml_guard), but the guard re-checks for defense in depth.
+    /// finite (the YAML door), but the guard re-checks for defense in depth.
     pub(in crate::engine) fn sane_opacity(&mut self, opacity: f64) -> f32 {
         if opacity.is_finite() && (0.0..=1.0).contains(&opacity) {
             opacity as f32

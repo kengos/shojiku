@@ -183,3 +183,79 @@ fn a_local_tag_is_refused_on_a_value_and_on_a_key() {
     assert_eq!(err.path, None);
     assert!(err.line > 0, "{err:?}");
 }
+
+#[test]
+fn the_cap_is_sixteen_mebibytes() {
+    // The boundary tests are written RELATIVE to the constant, so they hold
+    // for ANY value of it — including a value nobody chose. This is the one
+    // assertion that pins the number itself, and it is the number the
+    // CHANGELOG and the docs quote.
+    assert_eq!(MAX_INPUT_BYTES, 16 * 1024 * 1024);
+}
+
+/// The parser's OWN alias limit, pinned. The door does not bound alias
+/// expansion itself, which is exactly why it is worth a test: swap the
+/// parser and this is the hole that reopens with no other gate noticing.
+#[test]
+fn the_parser_refuses_runaway_alias_expansion_at_this_input_size() {
+    // The billion-laughs shape at ~200 source bytes. The limit this pins is
+    // REAL but it is not a constant: serde_yaml's repetition budget is
+    // `events.len() * 100`, so it scales with the input and a padded
+    // document buys a proportionally bigger bomb — measured at roughly 6
+    // nodes per source byte, so a document inside the input cap can still
+    // expand to order 10^8 nodes. What this pins is that the budget exists
+    // at all and that a small bomb cannot walk past it.
+    let laughs = |levels: usize| {
+        let mut src = String::from("a0: &a0 \"x\"\n");
+        for i in 1..=levels {
+            let prev = format!("*a{}", i - 1);
+            let refs = vec![prev; 10].join(", ");
+            src.push_str(&format!("a{i}: &a{i} [{refs}]\n"));
+        }
+        src.push_str(&format!("root: *a{levels}\n"));
+        src
+    };
+    // Positive control: the shape itself parses, so the refusal below is the
+    // LIMIT talking and not a syntax error in the fixture.
+    parse(&laughs(3)).expect("parses");
+    let err = refused(&laughs(4), YamlErrorKind::Syntax);
+    assert!(err.message.contains("repetition"), "{err:?}");
+}
+
+#[test]
+fn an_empty_document_is_null() {
+    // The parser reports an empty document as no value at all; it reads as
+    // `null`, the way a document of just `~` does.
+    assert_eq!(parse("").expect("parses").into_tree(), Value::Null);
+    assert_eq!(
+        parse("# only a comment\n").expect("parses").into_tree(),
+        Value::Null
+    );
+}
+
+#[test]
+fn a_located_message_adds_only_what_the_message_lacks() {
+    // A refusal gains its path and line/column.
+    let err = refused("a:\n  b: 1\n  b: 2\n", YamlErrorKind::DuplicateKey);
+    assert_eq!(
+        err.located_message(),
+        format!(
+            "{} at `a`, line {} column {}",
+            err.message, err.line, err.column
+        )
+    );
+    // A syntax error and a typed read already carry theirs.
+    let err = refused("a: [1\n", YamlErrorKind::Syntax);
+    assert_eq!(err.located_message(), err.message.as_str());
+    let err = crate::yaml::from_str::<Vec<u8>>("a: 1\n").expect_err("not a list");
+    assert!(err.line > 0, "{err:?}");
+    assert_eq!(err.located_message(), err.message.as_str());
+    // A subtree read has a path and no location.
+    let tree = parse("a: x\n").expect("parses").into_tree();
+    let err = crate::yaml::from_value::<std::collections::BTreeMap<String, u8>>(&tree)
+        .expect_err("not a number");
+    assert_eq!(err.located_message(), format!("{} at `a`", err.message));
+    // A size refusal has neither.
+    let err = refused(&" ".repeat(MAX_INPUT_BYTES + 1), YamlErrorKind::TooLarge);
+    assert_eq!(err.located_message(), err.message.as_str());
+}

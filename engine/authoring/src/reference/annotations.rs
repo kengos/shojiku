@@ -109,9 +109,12 @@ impl fmt::Display for Problem {
 ///
 /// # Errors
 ///
-/// Returns the YAML error when the file is not a flat map of string to string.
+/// Returns the YAML error when the file is not a flat map of string to string,
+/// or when the YAML door ([`shojiku_core::yaml`]) refuses it; the door's
+/// refusal carries its message and where it happened, and no `location()`.
 pub fn parse(src: &str) -> Result<BTreeMap<String, String>, serde_yaml::Error> {
-    serde_yaml::from_str(src)
+    shojiku_core::yaml::from_str(src)
+        .map_err(|err| <serde_yaml::Error as serde::de::Error>::custom(err.located_message()))
 }
 
 /// Every node the catalog expects prose for, in catalog order.

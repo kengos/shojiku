@@ -48,9 +48,35 @@ pub struct YamlError {
     /// 1-based column, or 0 when the location is unavailable.
     pub column: usize,
     pub message: Echo,
+    /// The whole message, unclipped, for the crate's own comparisons (the
+    /// template parse matches it against an item's own error). Never shown:
+    /// [`YamlError::message`] is the bounded copy.
+    pub(crate) full: String,
 }
 
 impl YamlError {
+    /// The message with where it happened, for a door whose error is one
+    /// string. A typed read's message already names its field and the
+    /// parser's line/column, and a syntax error its line/column, so those
+    /// are returned as they are; any other refusal gains its path and, when
+    /// known, its line/column — after the message, so a long path is what
+    /// a bounded rendering clips, not the reason.
+    pub fn located_message(&self) -> String {
+        if self.kind == YamlErrorKind::Syntax
+            || (self.kind == YamlErrorKind::Shape && self.line > 0)
+        {
+            return self.message.to_string();
+        }
+        let mut text = self.message.to_string();
+        if let Some(path) = &self.path {
+            text.push_str(&format!(" at `{path}`"));
+        }
+        if self.line > 0 {
+            text.push_str(&format!(", line {} column {}", self.line, self.column));
+        }
+        text
+    }
+
     pub(super) fn new(kind: YamlErrorKind, message: impl AsRef<str>) -> Self {
         YamlError {
             kind,
@@ -58,6 +84,7 @@ impl YamlError {
             line: 0,
             column: 0,
             message: Echo::from(message.as_ref()),
+            full: message.as_ref().to_owned(),
         }
     }
 

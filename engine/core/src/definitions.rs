@@ -58,38 +58,27 @@ pub struct Definitions {
 /// path (see [`crate::parse`]), enforces the schema caps, and answers the
 /// retired v1 `groups` form with a migration hint.
 pub fn parse_definitions(input: &str) -> Result<Definitions, CoreError> {
-    // The size bound is checked HERE as well as inside `parse_checked`,
-    // because the error arm below reaches for `v1_form_hint`, which parses
-    // the whole input again with no bound of its own. Without this line the
-    // cap changes which error this door returns and nothing else: a 500 MB
-    // document is still materialized into a `serde_yaml::Value` before the
-    // refusal comes back.
-    crate::yaml_guard::ensure_bounded_size(input, "definitions")?;
-    let defs: Definitions =
-        match crate::parse::parse_checked(input, "definitions", shape::check_depth) {
-            Ok(defs) => defs,
-            Err(e) => return Err(v1_form_hint(input).unwrap_or(e)),
-        };
+    let doc = crate::parse::read(input, "definitions")?;
+    let defs: Definitions = crate::parse::typed(&doc, "definitions", shape::check_depth)
+        .map_err(|e| v1_form_hint(doc.tree()).unwrap_or(e))?;
     shape::check_shape(&defs)?;
     Ok(defs)
 }
 
 /// Detects the retired v1 form (a top-level `groups:` list) so its parse
-/// error carries a migration pointer instead of a bare unknown-field.
-fn v1_form_hint(input: &str) -> Option<CoreError> {
-    let raw: serde_yaml::Value = serde_yaml::from_str(input).ok()?;
-    let key = serde_yaml::Value::String("groups".to_string());
-    raw.as_mapping()?
-        .contains_key(&key)
-        .then(|| CoreError::Located {
-            what: "definitions",
-            path: Echo::from("groups"),
-            key: None,
-            line: 0,
-            column: 0,
-            message: "the `groups` list is the retired v1 form; definitions now use the \
+/// error carries a migration pointer instead of a bare unknown-field. It
+/// reads the tree the door already returned, so a refused document is never
+/// read a second time.
+fn v1_form_hint(tree: &crate::yaml::Value) -> Option<CoreError> {
+    tree.get("groups").is_some().then(|| CoreError::Located {
+        what: "definitions",
+        path: Echo::from("groups"),
+        key: None,
+        line: 0,
+        column: 0,
+        message: "the `groups` list is the retired v1 form; definitions now use the \
                   OpenAPI-schema shape (`type: object` + `properties`) — see \
                   docs/engine/definitions.md"
-                .into(),
-        })
+            .into(),
+    })
 }

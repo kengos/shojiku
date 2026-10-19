@@ -19,16 +19,20 @@ struct Item {
     name: String,
 }
 
+/// The two passes over a document with no bound of its own.
+fn parse_checked<T: serde::de::DeserializeOwned>(input: &str) -> Result<T, CoreError> {
+    typed(&read(input, "doc")?, "doc", |_| Ok(()))
+}
+
 #[test]
 fn parses_valid_input() {
-    let doc: Doc = parse_checked("items:\n  - name: a\n", "doc", |_| Ok(())).expect("parse");
+    let doc: Doc = parse_checked("items:\n  - name: a\n").expect("parse");
     assert_eq!(doc.items.len(), 1);
 }
 
 #[test]
 fn unknown_key_error_carries_path_and_location() {
-    let err = parse_checked::<Doc>("items:\n  - name: a\n    bogus: x\n", "doc", |_| Ok(()))
-        .expect_err("must reject");
+    let err = parse_checked::<Doc>("items:\n  - name: a\n    bogus: x\n").expect_err("must reject");
     // Plain structs (no tagged enum) keep the full path — the unknown
     // key is appended — and an accurate location.
     let CoreError::Located { path, line, .. } = &err else { panic!("{err:?}") };
@@ -40,15 +44,13 @@ fn unknown_key_error_carries_path_and_location() {
 fn non_finite_is_rejected_before_typed_parse() {
     // Guard order: the finiteness check runs on pass 1, so `.inf`
     // is a `NonFinite`, never a located type error.
-    let err =
-        parse_checked::<Doc>("items:\n  - name: .inf\n", "doc", |_| Ok(())).expect_err("reject");
+    let err = parse_checked::<Doc>("items:\n  - name: .inf\n").expect_err("reject");
     assert!(matches!(err, CoreError::NonFinite("doc")), "got: {err:?}");
 }
 
 #[test]
 fn malformed_yaml_surfaces_as_parse_error() {
-    let err =
-        parse_checked::<Doc>("items: [unterminated\n", "doc", |_| Ok(())).expect_err("reject");
+    let err = parse_checked::<Doc>("items: [unterminated\n").expect_err("reject");
     assert!(matches!(err, CoreError::Parse(_)), "got: {err:?}");
 }
 

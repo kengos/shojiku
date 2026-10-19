@@ -453,7 +453,7 @@ host over authoring.
 - `examples.rs` — the bundled-example catalog: `SourceFile`,
   `CatalogEntry { id, title, description, files }`, `catalog()` (built
   once behind a `OnceLock`) and `find(id)`. Prose COMPOSES from
-  `examples/gallery.yml` (`include_str!` + serde_yaml) for the 25 listed
+  `examples/gallery.yml` (`include_str!` + `shojiku_core::yaml`) for the 25 listed
   entries plus an `EXTRAS` table for the 9 the gallery does not list (2
   `dev/` + the 7 presets) — never a second copy of the gallery text.
   `examples/embed.rs` — the

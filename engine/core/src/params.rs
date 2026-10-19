@@ -3,15 +3,13 @@
 use crate::error::CoreError;
 use serde_json::Value;
 
-/// Parses params from JSON or YAML into a JSON value tree. Non-finite
-/// numbers are rejected: `serde_json` would silently turn them into
-/// `null`, hiding data problems from validation.
+/// Parses params from JSON or YAML into a JSON value tree, through the YAML
+/// door ([`crate::yaml`]; YAML is a superset of JSON). Non-finite numbers
+/// are refused there: `serde_json` would silently turn them into `null`,
+/// hiding data problems from validation.
 pub fn parse_params(input: &str) -> Result<Value, CoreError> {
-    crate::yaml_guard::ensure_bounded_size(input, "params")?;
-    // serde_yaml handles JSON as well (YAML is a superset).
-    let value: serde_yaml::Value = serde_yaml::from_str(input)?;
-    crate::yaml_guard::ensure_finite(&value, "params")?;
-    Ok(serde_json::to_value(value)?)
+    let doc = crate::parse::read(input, "params")?;
+    Ok(serde_json::to_value(doc.into_tree())?)
 }
 
 /// Resolves a dotted binding path like `order.code` against a params tree.

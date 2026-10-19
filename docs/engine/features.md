@@ -16,8 +16,10 @@ Pipeline: `Template/Definitions → Bundle → Layout → Render → Preview →
 ### Core model & validation (`engine/core`)
 - **Template model split along CSS lines**: structure (`template.rs`),
   positioning (`geometry.rs`), painting (`style.rs`). Untrusted input
-  degrades to diagnostics, never panics; `yaml_guard` rejects non-finite
-  numbers at the parse boundary.
+  degrades to diagnostics, never panics; every authored YAML/JSON reader
+  goes through one door, `shojiku_core::yaml`, which refuses non-finite
+  numbers, non-string and duplicate keys, integers past 64 bits, local tags
+  (`!name`) and nesting past 120 levels while the document is read.
 - **AI-authorability hardening**: `version:` accepts bare numbers and
   strings (authored form round-trips); **every wire struct is
   `deny_unknown_fields`** (a typo'd key is a parse error, never a silent
@@ -1219,8 +1221,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   512 KiB inline cap. **What this does NOT bound is YAML alias
   amplification**: serde_yaml's repetition budget is `events.len() * 100`, so
   it scales with the input — a document inside the cap can still expand to
-  order 10^8 nodes. Nesting depth IS bounded (the parser refuses past 128,
-  which is what makes the recursive finiteness walk safe). The amplification
+  order 10^8 nodes. Nesting depth IS bounded (the YAML door refuses past 120
+  levels, which is what keeps every walk over the read tree safe). The amplification
   half is a known, written-down exposure rather than a closed one.
 - **`shojiku capabilities`**: `{ version, capabilities }` JSON with no
   inputs; the key list is the GUI's feature gate. **Every

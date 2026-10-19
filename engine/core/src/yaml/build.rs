@@ -134,6 +134,11 @@ impl<'de> Visitor<'de> for Node<'_> {
         Ok(Value::Null)
     }
 
+    /// An empty document: the parser reports it as no value at all.
+    fn visit_none<E: de::Error>(self) -> Result<Value, E> {
+        Ok(Value::Null)
+    }
+
     fn visit_bool<E: de::Error>(self, b: bool) -> Result<Value, E> {
         Ok(Value::Bool(b))
     }

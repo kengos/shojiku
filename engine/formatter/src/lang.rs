@@ -22,6 +22,7 @@ pub use read::read_pack_file;
 pub use specs::{CurrencySpec, NumberSpec, UnitSpec};
 
 use serde::{Deserialize, Serialize};
+use shojiku_core::yaml::YamlError;
 use shojiku_diagnostics::Echo;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -51,6 +52,14 @@ pub enum LangPackError {
 impl From<serde_yaml::Error> for LangPackError {
     fn from(err: serde_yaml::Error) -> Self {
         LangPackError::Parse(Echo::from(err.to_string()))
+    }
+}
+
+/// A refusal of the YAML door every pack is read through
+/// ([`shojiku_core::yaml`]), with where it happened.
+impl From<YamlError> for LangPackError {
+    fn from(err: YamlError) -> Self {
+        LangPackError::Parse(Echo::from(err.located_message()))
     }
 }
 
@@ -142,10 +151,11 @@ impl LangPack {
     ///
     /// Refuses an oversize input unread, on the same bound the core wire
     /// doors use (`shojiku_core::MAX_INPUT_BYTES`) — a pack arrives from a
-    /// host the same way a template does.
+    /// host the same way a template does — and reads the rest through the
+    /// same YAML door ([`shojiku_core::yaml`]).
     pub fn from_yaml_str(input: &str) -> Result<Self, LangPackError> {
         ensure_pack_size(input)?;
-        Ok(serde_yaml::from_str(input)?)
+        Ok(shojiku_core::yaml::from_str(input)?)
     }
 
     /// Loads a locale pack from `<file>` (`packs/locale/<id>.yml`), read

@@ -55,7 +55,9 @@ struct Meta {
 /// does not carry the four fields, an empty `summary`, or no H1.
 pub(crate) fn parse(stem: &'static str, source: &'static str) -> Option<Page> {
     let (front, body) = split(source)?;
-    let meta = serde_yaml::from_str::<FrontMatter>(front).ok()?.reference;
+    let meta = shojiku_core::yaml::from_str::<FrontMatter>(front)
+        .ok()?
+        .reference;
     if meta.summary.trim().is_empty() {
         return None;
     }

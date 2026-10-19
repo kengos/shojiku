@@ -4,7 +4,9 @@
 //! rules for the field it lands in (`text: 2024` is the string `"2024"`),
 //! and the error carries its line/column. The subtree read is this module's
 //! `Deserializer` over [`Value`], which is strict the way a tree is: a scalar
-//! is the type it was read as.
+//! is the type it was read as. A `null` where a list or a mapping (a struct
+//! included) is wanted reads as an empty one, as the read it replaced did —
+//! a locale overlay clears a table that way.
 
 use super::error::{YamlError, YamlErrorKind};
 use super::value::Value;
@@ -87,6 +89,46 @@ impl<'de> Deserializer<'de> for &'de Value {
         }
     }
 
+    fn deserialize_seq<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, DeError> {
+        match self {
+            Value::Null => visitor.visit_seq(SeqDeserializer::new(std::iter::empty::<&Value>())),
+            _ => self.deserialize_any(visitor),
+        }
+    }
+
+    fn deserialize_tuple<V: Visitor<'de>>(
+        self,
+        _len: usize,
+        visitor: V,
+    ) -> Result<V::Value, DeError> {
+        self.deserialize_seq(visitor)
+    }
+
+    fn deserialize_tuple_struct<V: Visitor<'de>>(
+        self,
+        _name: &'static str,
+        _len: usize,
+        visitor: V,
+    ) -> Result<V::Value, DeError> {
+        self.deserialize_seq(visitor)
+    }
+
+    fn deserialize_map<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, DeError> {
+        match self {
+            Value::Null => visitor.visit_map(entries(&[])),
+            _ => self.deserialize_any(visitor),
+        }
+    }
+
+    fn deserialize_struct<V: Visitor<'de>>(
+        self,
+        _name: &'static str,
+        _fields: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, DeError> {
+        self.deserialize_map(visitor)
+    }
+
     fn deserialize_newtype_struct<V: Visitor<'de>>(
         self,
         _name: &'static str,
@@ -97,8 +139,7 @@ impl<'de> Deserializer<'de> for &'de Value {
 
     serde::forward_to_deserialize_any! {
         bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
-        bytes byte_buf unit unit_struct seq tuple tuple_struct map struct
-        identifier ignored_any
+        bytes byte_buf unit unit_struct identifier ignored_any
     }
 }
 

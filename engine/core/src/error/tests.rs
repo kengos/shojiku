@@ -136,3 +136,22 @@ fn an_item_fault_carries_its_key_and_no_location() {
     assert!(!diag.args.contains_key("line"));
     assert!(!diag.args.contains_key("column"));
 }
+
+#[test]
+fn the_size_refusal_quotes_none_of_the_input() {
+    // A refusal must not echo a document nobody vetted. The rendered message
+    // is two numbers and the artifact name — the marker below is in the
+    // input and must not reach the message.
+    let marker = "SECRET-\u{1b}]0;pwned\u{7}";
+    let oversize = format!("{marker}{}", "#".repeat(crate::MAX_INPUT_BYTES));
+    let err = crate::parse_template(&oversize).expect_err("over");
+    let rendered = err.to_string();
+    assert!(!rendered.contains("SECRET"), "message: {rendered}");
+    assert!(!rendered.contains('\u{1b}'), "message: {rendered}");
+    assert!(rendered.contains("template"));
+    // …and the same holds through the diagnostic the GUI reads.
+    let diag = err.to_diagnostic();
+    assert_eq!(diag.code, "parse_error");
+    let args = format!("{diag:?}");
+    assert!(!args.contains("SECRET"), "diagnostic: {args}");
+}

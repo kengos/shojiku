@@ -18,8 +18,8 @@ pub fn parse_color(input: &str) -> Option<(f32, f32, f32)> {
 }
 
 /// Truncates a template-supplied color string before echoing it into a
-/// diagnostic: colors are attacker-controlled and unbounded (yaml_guard
-/// caps non-finite numbers, not string sizes).
+/// diagnostic: colors are attacker-controlled and unbounded (the YAML door
+/// refuses non-finite numbers, not long strings).
 ///
 /// This used to be a hand-copied mirror of `shojiku_core::length::snippet`,
 /// because that one is crate-private there. Both now call the workspace's

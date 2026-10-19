@@ -182,15 +182,15 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 87 files / 11195 lines; tests 104 files / 14615 lines
+### `core` (L1) — 85 files / 11015 lines; tests 103 files / 14658 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
-- `src/definitions.rs` 95 — `definitions` — the data dictionary for the Designer, AI, and validation.
+- `src/definitions.rs` 84 — `definitions` — the data dictionary for the Designer, AI, and validation.
 - `src/definitions/schema.rs` 279 ▲ — The OpenAPI-style schema node: types, constraints, the Shojiku authoring keys, and the `(type, format)` → field-type mapping.
-- `src/definitions/shape.rs` 196 — Structural checks over a definitions schema: the root must be an object, nesting/node/enum caps hold, and structural keys sit on the right base types (serde can't express those conditionals).
+- `src/definitions/shape.rs` 165 — Structural checks over a definitions schema: the root must be an object, nesting/node/enum caps hold, and structural keys sit on the right base types (serde can't express those conditionals).
 - `src/edges.rs` 262 — Box-edge insets: per-side `margin` / `padding` values on item boxes.
-- `src/error.rs` 187 — The crate error type for parsing untrusted input artifacts.
+- `src/error.rs` 190 — The crate error type for parsing untrusted input artifacts.
 - `src/geometry.rs` 225 — Positioning core — page geometry and box model.
 - `src/geometry/box_model.rs` 214 — Box geometry: the rectangles items occupy.
 - `src/geometry/flex.rs` 142 — Flex layout keys on item boxes (box-model Phase 2): the layout-mode key and the content-alignment enums.
@@ -200,12 +200,11 @@ first sentence of its `//!` header.
 - `src/geometry/point_spec.rs` 185 — A `line` endpoint: authored coordinates, or an anchor to another item.
 - `src/interpolate.rs` 178 — `{key}` / `{key:format}` interpolation inside static text.
 - `src/length.rs` 229 — Template length values: absolute points/physical units, a percentage of the parent, or a font-relative `em`/`rem`.
-- `src/lib.rs` 68 — Shojiku data model.
-- `src/params.rs` 50 — `params` — runtime data supplied by the calling application.
-- `src/parse.rs` 90 — Two-pass typed parse shared by the template and definitions entry points.
-- `src/parse/keys.rs` 97 — Every mapping key in a template is a string, checked on the pass-1 `Value` before the typed parse reads the document.
-- `src/parse/locate.rs` 127 — Re-locates a template parse failure that the tagged-enum buffering cut short.
-- `src/parse/nesting.rs` 126 — The template nesting bound, checked on the pass-1 `Value` before the typed parse reads the document.
+- `src/lib.rs` 67 — Shojiku data model.
+- `src/params.rs` 48 — `params` — runtime data supplied by the calling application.
+- `src/parse.rs` 78 — Two-pass typed parse shared by the template and definitions entry points.
+- `src/parse/locate.rs` 124 — Re-locates a template parse failure that the tagged-enum buffering cut short.
+- `src/parse/nesting.rs` 116 — The template nesting bound, checked on the pass-1 tree before the typed parse reads the document.
 - `src/parse/trail.rs` 68 — The path a walk over the pass-1 tree is at, kept as segments borrowed from the tree and spelled out only when a walk reports it.
 - `src/ruby.rs` 283 ▲ — Aozora-bunko markup (`|base《reading》` ruby + `［＃…］` notes) — the `markup: aozora` grammar for `char_grid` content.
 - `src/ruby/grammar.rs` 121 — `［＃…］` note-body grammars beyond the sheet break: the large-writing span notes and the per-line placement notes.
@@ -264,13 +263,12 @@ first sentence of its `//!` header.
 - `src/validate/spans.rs` 65 — Structural checks for rich-text `spans`: content exclusivity, the MAX_SPANS cap, and span-inapplicable style keys.
 - `src/validate/styles.rs` 141 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 - `src/validate/tables.rs` 232 — Table checks: the bound array group, per-column content shape (`data` vs `cell` exclusivity), row-relative column keys, the row `conditionalStyles` predicates (and the `scope` they ignore), and the array-scoped bindings inside a `cell:` column's sub-template.
-- `src/yaml.rs` 104 — The one door YAML (and JSON, a subset of it) enters the engine through.
-- `src/yaml/build.rs` 217 — Reads a document into a [`Value`], refusing what the door refuses at the node that breaks the rule rather than in a walk afterwards.
+- `src/yaml.rs` 118 — The one door YAML (and JSON, a subset of it) enters the engine through.
+- `src/yaml/build.rs` 222 — Reads a document into a [`Value`], refusing what the door refuses at the node that breaks the rule rather than in a walk afterwards.
 - `src/yaml/build/key.rs` 83 — The visitor for a mapping key: a string is the key, anything else is refused as the key of the mapping that holds it.
-- `src/yaml/error.rs` 77 — What the YAML door reports when it refuses a document.
-- `src/yaml/read.rs` 111 — Typed reads: from a document's source, and from a [`Value`] subtree.
+- `src/yaml/error.rs` 104 — What the YAML door reports when it refuses a document.
+- `src/yaml/read.rs` 152 — Typed reads: from a document's source, and from a [`Value`] subtree.
 - `src/yaml/value.rs` 68 — The tree a YAML document is read into, owned by the engine rather than by the parser.
-- `src/yaml_guard.rs` 103 — Input sanitation shared by the YAML/JSON parse entry points.
 
 ### `verify` (L1) — 14 files / 1577 lines; tests 20 files / 2453 lines
 
@@ -289,7 +287,7 @@ first sentence of its `//!` header.
 - `src/testkit.rs` 204 — Test-only fixtures: minimal signable documents, and signed ones.
 - `src/testkit/keys.rs` 65 — Test key material, generated fresh for every test process.
 
-### `formatter` (L2) — 17 files / 2056 lines; tests 21 files / 3908 lines
+### `formatter` (L2) — 17 files / 2080 lines; tests 22 files / 4007 lines
 
 - `src/format.rs` 235 — `format(value, type, locale, options) -> string`
 - `src/format/dated.rs` 121 — Resolving a date/datetime pick: which tables a dated field reads, and whether a name is one it can already resolve.
@@ -297,10 +295,10 @@ first sentence of its `//!` header.
 - `src/format/money.rs` 125 — Currency and quantity rendering: the three currency variants (`default` = bare amount, `symbol`, `name`), the CLDR fractions precision chain, and semantic-unit quantities with plural words from the pack.
 - `src/format/number.rs` 70 — Number rendering shared by every numeric type: precision clamping, trailing-zero trimming, and locale-separator grouping.
 - `src/format/text.rs` 77 — The text arm: values that draw as words — plain strings, booleans and image references — plus the `enum` display-label lookup layered over them.
-- `src/lang.rs` 188 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
-- `src/lang/builtin.rs` 119 — Builtin locale packs (CLDR-generated YAML, compiled in via `include_str!`) and the per-key overlay merge over them.
+- `src/lang.rs` 198 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
+- `src/lang/builtin.rs` 128 — Builtin locale packs (CLDR-generated YAML, compiled in via `include_str!`) and the per-key overlay merge over them.
 - `src/lang/era.rs` 104 — Era tables (wareki): the `eras:` wire types and the date→era lookup.
-- `src/lang/fonts.rs` 190 — Font-pack manifest + locale font-policy wire types.
+- `src/lang/fonts.rs` 195 — Font-pack manifest + locale font-policy wire types.
 - `src/lang/fonts/pack_id.rs` 45 — What a font pack id may be.
 - `src/lang/packs.rs` 144 — Font-pack resolution: find each `uses` pack's `manifest.yml` across the font search dirs, confine face paths to the pack dir, and merge faces into one ordered list.
 - `src/lang/packs/bytes.rs` 192 — Bytes-first font-pack resolution: the host injects each `uses` pack's `manifest.yml` source plus the bytes of the face files it declares (browser/Workers WASM, the MCP server), and this parses/confines/dedupes them into loadable specs exactly like the filesystem resolver — no directory walk, no file reads.
@@ -521,7 +519,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 38 files / 4626 lines; tests 43 files / 5656 lines
+### `authoring` (L5) — 38 files / 4632 lines; tests 43 files / 5656 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -544,7 +542,7 @@ first sentence of its `//!` header.
 - `src/preview.rs` 81 — Preview rasterization: every page to PNG bytes (the export/download form) or raw RGBA pixels (the canvas form, skipping the PNG encode).
 - `src/reference.rs` 81 — `reference` — the key catalog: the machine-readable facts of the authorable wire, held ONCE so every surface that describes a key renders the same source.
 - `src/reference/annotate.rs` 99 — Merging the annotation layer into the derived catalog.
-- `src/reference/annotations.rs` 293 ▲ — The annotation layer's RULE: every catalog node carries prose, and every annotation names a real node.
+- `src/reference/annotations.rs` 296 ▲ — The annotation layer's RULE: every catalog node carries prose, and every annotation names a real node.
 - `src/reference/annotations/closed.rs` 90 — Which shapes have a CLOSED value set, and what those values are.
 - `src/reference/generate.rs` 110 — Catalog generation — the half that needs the schema derive.
 - `src/reference/pages.rs` 240 — The rule that keeps a page's HAND-WRITTEN diagnostics section honest against the engine's own registries.
@@ -557,7 +555,7 @@ first sentence of its `//!` header.
 - `src/reference/tables/generate.rs` 80 — Generating every page's tables, and putting them back.
 - `src/reference/tables/registry.rs` 39 — The code→severity map, and the one place it is assembled.
 - `src/reference/tables/render.rs` 117 — Rendering a spec into GFM table markdown.
-- `src/reference/tables/spec.rs` 163 — The table spec: the editorial half of a generated table.
+- `src/reference/tables/spec.rs` 166 — The table spec: the editorial half of a generated table.
 - `src/reference/tables/splice.rs` 101 — Putting a generated table back into its page, between markers.
 - `src/sources.rs` 73 — Parsing + validation of the three source strings.
 - `src/test_support.rs` 63 — Shared fixtures for the crate's unit tests: the builtin ja pack, its filesystem-loaded font store (cached — sha256-verifying the ~47MB IPAmj fallback per test is far too slow), and a known-good single-page run.
@@ -600,7 +598,7 @@ first sentence of its `//!` header.
 - `src/sign.rs` 115 — The `sign` command: a rendered PDF in, a signed one out.
 - `src/verify.rs` 58 — The `verify` command: a signed PDF and a trust anchor in, a report out.
 
-### `mcp` (L6) — 27 files / 2783 lines; tests 29 files / 4293 lines
+### `mcp` (L6) — 27 files / 2785 lines; tests 29 files / 4293 lines
 
 - `src/examples.rs` 180 — The bundled-example read surface's data model: the embedded source files (`embed`), the `shojiku://example/…` grammar (`uri`), and the catalog that gives each entry a human title and a line saying what it exercises.
 - `src/examples/embed.rs` 156 — The compile-time example table: every bundled entry's source files, embedded with `include_str!` so the surface works identically from a checkout and from the docker image, needs no root path, and cannot be pointed at anything outside this list.
@@ -611,7 +609,7 @@ first sentence of its `//!` header.
 - `src/reference.rs` 48 — The authoring-reference read surface's data model: the embedded pages (`embed`), their front matter and body (`page`), the `shojiku://reference/…` grammar (`uri`), and resolution into the key catalog (`nodes`).
 - `src/reference/embed.rs` 72 — The compile-time reference table: every page of the authoring reference, embedded with `include_str!` so the surface works identically from a checkout and from the docker image, needs no root path, and cannot be pointed at anything outside this list.
 - `src/reference/nodes.rs` 204 — Resolution into the key catalog: a page's declared shapes as a JSON Schema fragment, and a fragment selector as the catalog node(s) it names.
-- `src/reference/page.rs` 90 — One reference page's data model: the YAML front matter split off the markdown, parsed for the four fields this surface serves, plus the H1 title and the body.
+- `src/reference/page.rs` 92 — One reference page's data model: the YAML front matter split off the markdown, parsed for the four fields this surface serves, plus the H1 title and the body.
 - `src/reference/uri.rs` 86 — The `shojiku://reference/<page>[#<fragment>]` grammar: parsing a client-supplied string into a page reference, and formatting the two forms back.
 - `src/resources.rs` 155 — The MCP `resources` area: `resources/list` and `resources/read` over the two resource families — the bundled examples (served from this file) and the authoring reference (`resources/reference`).
 - `src/resources/reference.rs` 102 — The `resources` view of the authoring reference: the `resources/list` entries for the 33 pages, and the read of one page or one node.

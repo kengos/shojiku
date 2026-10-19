@@ -21,8 +21,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// characters (newlines/tabs) are ignored — they legitimately have no
     /// glyph.
     ///
-    /// `content` is attacker-controlled and unbounded (yaml_guard caps
-    /// non-finite numbers, not string sizes), so the offender set is
+    /// `content` is attacker-controlled and unbounded (the YAML door
+    /// refuses non-finite numbers, not long strings), so the offender set is
     /// capped: the scan stops after [`MAX_MISSING_GLYPHS`] distinct
     /// characters, bounding both the O(n·cap) `contains` cost and the echo
     /// length in the diagnostic message.
