@@ -1,0 +1,5 @@
+sections:
+  body:
+    type: flow
+    type: absolute
+    items: []

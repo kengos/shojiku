@@ -1,0 +1,5 @@
+bogusTop: 1
+sections:
+  body:
+    type: absolute
+    items: []

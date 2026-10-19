@@ -1,0 +1,11 @@
+sections:
+  body:
+    type: flow
+    items:
+      - type: text
+        text: ok
+      - type: container
+        items:
+          - type: text
+            text: x
+            bogus: 1

@@ -1,0 +1,8 @@
+sections:
+  body:
+    type: flow
+    items:
+      - type: table
+        data: { key: items }
+        columns: []
+        emptyBehavior: show_empty
