@@ -1,0 +1,6 @@
+version: 1
+license: OFL-1.1
+faces:
+  - id: a
+    file: a.ttf
+    sha256: 00

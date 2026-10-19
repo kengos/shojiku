@@ -1,0 +1,4 @@
+type: object
+properties:
+  1:
+    type: string

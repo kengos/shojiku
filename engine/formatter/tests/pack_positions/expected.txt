@@ -1,0 +1,92 @@
+## lang-duplicate-key.yml
+parse
+message: duplicate field `id`
+
+## lang-integer-past-64-bits.yml
+parse
+message: number.groupSize: invalid type: integer `18446744073709551616` as u128, expected u32 at line 5 column 14
+
+## lang-nesting-125-levels.yml
+ok id=xx dateFormats={}
+
+## lang-non-string-key.yml
+ok id=xx dateFormats={"1":"yyyy"}
+
+## lang-ok-minimal.yml
+ok id=xx dateFormats={}
+
+## lang-syntax-bad-indent.yml
+parse
+message: mapping values are not allowed in this context at line 4 column 8
+
+## lang-tagged-value.yml
+ok id=xx dateFormats={}
+
+## lang-unknown-key-non-finite.yml
+ok id=xx dateFormats={}
+
+## lang-wrong-type.yml
+parse
+message: weekdaysShort: invalid type: integer `5`, expected a sequence at line 2 column 16
+
+## manifest-duplicate-key.yml
+error
+message: duplicate field `version`
+
+## manifest-empty.yml
+error
+message: missing field `version`
+
+## manifest-integer-past-64-bits.yml
+error
+message: version: invalid type: integer `18446744073709551616` as u128, expected u32 at line 1 column 10
+
+## manifest-non-string-key.yml
+error
+message: unknown field `1`, expected one of `version`, `license`, `redistributable`, `embeddingAttested`, `faces` at line 4 column 1
+
+## manifest-ok.yml
+ok version=1 license=OFL-1.1 faces=1
+
+## manifest-syntax-tab-indent.yml
+error
+message: found character that cannot start any token at line 3 column 1, while scanning for the next token
+
+## manifest-tagged-value.yml
+ok version=1 license=OFL-1.1 faces=0
+
+## manifest-unknown-key.yml
+error
+message: unknown field `licence`, expected one of `version`, `license`, `redistributable`, `embeddingAttested`, `faces` at line 4 column 1
+
+## manifest-unknown-weight.yml
+error
+message: faces[0].weight: unknown variant `heavyish`, expected `normal` or `bold` at line 7 column 13
+
+## overlay-duplicate-key.yml
+parse
+message: dateFormats: duplicate entry with key "compact" at line 2 column 3
+
+## overlay-nesting-125-levels.yml
+ok id=ja-JP dateFormats={"compact":"yyyy/MM/dd","default":"yyyy/MM/dd(E)","long":"yyyy年M月d日(E)","wareki":"Gy年M月d日","wareki-compact":"GGy.M.d"}
+
+## overlay-non-string-key.yml
+parse
+message: invalid type: integer `1`, expected a string
+
+## overlay-ok-per-key.yml
+ok id=ja-JP dateFormats={"compact":"yy/MM/dd","default":"yyyy/MM/dd(E)","long":"yyyy年M月d日(E)","wareki":"Gy年M月d日","wareki-compact":"GGy.M.d"}
+
+## overlay-syntax-unclosed-brace.yml
+parse
+message: did not find expected ',' or '}' at line 2 column 1, while parsing a flow mapping at line 1 column 14
+
+## overlay-tagged-value.yml
+ok id=ja-JP dateFormats={"compact":"a","default":"yyyy/MM/dd(E)","long":"yyyy年M月d日(E)","wareki":"Gy年M月d日","wareki-compact":"GGy.M.d"}
+
+## overlay-unknown-key-non-finite.yml
+ok id=ja-JP dateFormats={"compact":"yyyy/MM/dd","default":"yyyy/MM/dd(E)","long":"yyyy年M月d日(E)","wareki":"Gy年M月d日","wareki-compact":"GGy.M.d"}
+
+## overlay-wrong-type.yml
+parse
+message: invalid type: integer `5`, expected a sequence

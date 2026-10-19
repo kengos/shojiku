@@ -6,6 +6,9 @@ line: 4
 column: 11
 message: properties.name.type: unknown variant `strin`, expected one of `string`, `number`, `integer`, `boolean`, `object`, `array` at line 4 column 11
 
+## definitions-non-string-property-key.yml
+ok
+
 ## definitions-root-not-object.yml
 located definitions
 path: type
@@ -34,12 +37,22 @@ line: 0
 column: 0
 message: the `groups` list is the retired v1 form; definitions now use the OpenAPI-schema shape (`type: object` + `properties`) — see docs/engine/definitions.md
 
+## params-duplicate-key.yml
+parse
+message: order: duplicate entry with key "code" at line 2 column 3
+
 ## params-integer-past-64-bits.yml
 parse
 message: order.total: invalid type: integer `18446744073709551616` as u128, expected any YAML value at line 2 column 10
 
+## params-nesting-125-levels.yml
+ok {"deep":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}
+
 ## params-non-finite.yml
 non-finite params
+
+## params-non-string-key.yml
+ok {"totals":{"2024":100,"2025":120}}
 
 ## params-scalar-edges.yml
 ok {"base":{"x":1},"merged":{"<<":{"x":1},"y":2},"octal":"017","octal_prefixed":15,"past_128_bits":1e+40,"past_f64":"10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","standard_tag":"5","underscored":"1_000","yes":"yes"}
