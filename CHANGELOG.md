@@ -22,6 +22,17 @@ platform binaries.
   engine's parse entry points do not go through it yet, so how a template,
   definitions or params document is read is unchanged.
 
+### Changed
+
+- **Text is shaped by a newer HarfBuzz (harfrust 0.14, matching HarfBuzz
+  14.5.1).** Every bundled example renders to the same bytes as before,
+  across Latin, Japanese (horizontal and vertical), Chinese, Thai and
+  Devanagari; other fonts and scripts may still shape differently. When
+  the shaper reports that it hit its length, operation or nesting limit
+  on a stretch of text (a hostile font's substitutions can provoke it),
+  that stretch now falls back to unshaped per-character advances instead
+  of drawing what the shaper left behind.
+
 ### Removed
 
 - **The diagnostic code `horizontal_overflow`**, deprecated in 0.3.0.

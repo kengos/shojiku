@@ -433,8 +433,9 @@ Wire types stay in core; content measurement stays in layout.
   functions (`face_sha256`, `embedding_restricted`, crate-root
   re-exported) so a pack GENERATOR (`shojiku font add`) satisfies exactly
   what the loader checks instead of carrying a second definition of a
-  valid pack; `verify_face` is written in terms of them. `font/face.rs` — `FontFace`: skrifa metrics, cached
-  harfrust `ShaperData`, `glyph_path` outline extraction for PNG;
+  valid pack; `verify_face` is written in terms of them. `font/face.rs` — `FontFace`: skrifa metrics, a
+  harfrust `Font` over the shared bytes (its shaping tables built once,
+  inside it), `glyph_path` outline extraction for PNG;
   `face/pen.rs` (outline→`PathCmd`, y-flip + quad→cubic),
   `face/metrics.rs` (vertical band metrics + hostile-value fallbacks),
   `face/decoration.rs` (underline/strikeout metrics + clamps).
@@ -447,7 +448,9 @@ Wire types stay in core; content measurement stays in layout.
   `is_open`/`is_close` class tables); `shape/itemize.rs` (same-face
   segmentation, first-covering-face rule); `shape/harf.rs` (the harfrust
   adapter; `shape_segment_vertical` = the top-to-bottom variant, GSUB
-  `vert` auto-applied).
+  `vert` auto-applied; a buffer harfrust marks as failed
+  (`allocation_successful() == false`) is not read, and the run degrades
+  per-char).
 - `font/vertical.rs` — the vertical-writing arrangement, the ONE home both renderers
   call so vertical draw == measure: `orientation(c)` (full UAX#50),
   `down_advance` (the wrapper's break estimate), `arrange_vertical(…) →

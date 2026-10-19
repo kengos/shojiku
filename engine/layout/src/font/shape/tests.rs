@@ -212,6 +212,23 @@ fn down_pt_flips_hostile_extremes_without_overflow() {
 }
 
 #[test]
+fn a_buffer_over_the_shaping_limits_reads_as_no_shaping() {
+    use super::harf::{shape_buffer, shaped_glyphs};
+    use harfrust::Direction;
+    let face = noto();
+    let mut buffer = shape_buffer(&face, "AVfi", Direction::LeftToRight, &[]).expect("noto shapes");
+    let ids = |b: &harfrust::Buffer| shaped_glyphs(b, |info, _| info.glyph_id);
+    // Positive control: the same buffer reads back its glyphs while every
+    // allocation succeeded (`fi` ligates, so fewer glyphs than chars).
+    assert_eq!(ids(&buffer).map(|g| g.len()), Some(3));
+    // A request past harfrust's length limit marks the buffer the way a
+    // hostile font's runaway substitution does; it is then not read.
+    assert!(!buffer.reserve(usize::MAX));
+    assert!(!buffer.allocation_successful());
+    assert_eq!(ids(&buffer), None);
+}
+
+#[test]
 fn cluster_ends_clamps_hostile_cluster_values() {
     // Out-of-range and non-monotone clusters must still yield ranges the
     // renderers can consume: every end is bounded by seg_len (the
